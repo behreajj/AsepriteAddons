@@ -20,9 +20,11 @@ local defaults = {
     yOrigin = dimensions.y / 2,
     angle = 90,
     cw = false,
-    aColor = Color{r=0, g=0, b=0, a=255},
-    bColor = Color{r=255, g=255, b=255, a=255},
-    colorMode = colorModes[1],
+    -- aColor = Color{r=0, g=0, b=0, a=255},
+    -- bColor = Color{r=255, g=255, b=255, a=255},
+    aColor = app.fgColor,
+    bColor = app.bgColor,
+    colorMode = "RGB",
     easingFuncRGB = "LINEAR",
     easingFuncHSV = "NEAR"
 }
@@ -103,7 +105,7 @@ local function smoothRGB(ar, ag, ab, aa, br, bg, bb, ba, t)
         t * t * (3.0 - (t + t)))
 end
 
-local function lerpHueNear(origin, dest, t)
+local function lerpAngleNear(origin, dest, t)
     local o = origin % 360.0
     local d = dest % 360.0
     local diff = d - o
@@ -120,7 +122,7 @@ local function lerpHueNear(origin, dest, t)
     end
 end
 
-local function lerpHueFar(origin, dest, t)
+local function lerpAngleFar(origin, dest, t)
     local o = origin % 360.0
     local d = dest % 360.0
     local diff = d - o
@@ -138,7 +140,7 @@ end
 local function lerpHSVFar(ah, as, av, aa, bh, bs, bv, ba, t)
     local u = 1.0 - t
     return toHexHSVA(
-        lerpHueFar(ah, bh, t),
+        lerpAngleFar(ah, bh, t),
         u * as + t * bs,
         u * av + t * bv,
         math.tointeger(u * aa + t * ba))
@@ -147,7 +149,7 @@ end
 local function lerpHSVNear(ah, as, av, aa, bh, bs, bv, ba, t)
     local u = 1.0 - t
     return toHexHSVA(
-        lerpHueNear(ah, bh, t),
+        lerpAngleNear(ah, bh, t),
         u * as + t * bs,
         u * av + t * bv,
         math.tointeger(u * aa + t * ba))
@@ -167,8 +169,22 @@ local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMo
     local w = dimensions.x
     local h = dimensions.y
 
-    local wInv = 1.0 / (w - 1.0)
-    local hInv = 1.0 / (h - 1.0)
+    local shortEdge = math.min(w, h)
+    local longEdge = math.max(w, h)
+
+    -- Compensate for image aspect ratio.
+    local wInv = 1.0
+    local hInv = 1.0
+    if shortEdge == longEdge then
+        wInv = 1.0 / (w - 1.0)
+        hInv = 1.0 / (h - 1.0)
+    elseif w == shortEdge then
+        wInv = (shortEdge / longEdge) / (w - 1.0)
+        hInv = 1.0 / (h - 1.0)
+    elseif h == shortEdge then
+        wInv = (longEdge / shortEdge) / (w - 1.0)
+        hInv = 1.0 / (h - 1.0)
+    end
 
     -- Bring origin into range [0.0, 1.0].
     local xOriginNorm = xOrigin * wInv
@@ -176,8 +192,7 @@ local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMo
 
     -- Bring origin from [0.0, 1.0] to [-1.0, 1.0].
     local xOriginSigned = xOriginNorm + xOriginNorm - 1.0
-    local yOriginSigned = yOriginNorm + yOriginNorm - 1.0
-    if cw then yOriginSigned = -yOriginSigned end
+    local yOriginSigned = 1.0 - (yOriginNorm + yOriginNorm)
 
     -- Convert from degrees to radians (multiply by math.pi / 180.0).
     local angleRadians = math.rad(angle)
@@ -195,6 +210,7 @@ local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMo
 
     local easing = lerpRGB
 
+    -- Choose channels and easing based on color mode.
     if colorMode == "HSV" then
         a0 = aColor.hue
         a1 = aColor.saturation
@@ -240,13 +256,16 @@ local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMo
         local yNorm = yPoint * hInv
 
         -- Bring coordinates from [0.0, 1.0] to [-1.0, 1.0],
-        -- include the origin.
-        local xSigned = xNorm + xNorm - xOriginSigned - 1.0
-        local ySigned = 1.0 - (yNorm + yNorm + yOriginSigned)
-        if cw then ySigned = -ySigned end
+        local xSigned = xNorm + xNorm - 1.0
+        local ySigned = 1.0 - (yNorm + yNorm)
 
-        -- Find the signed angle in [-math.pi, math.pi], subtract the offset.
-        local angleSigned = math.atan(ySigned, xSigned) - angleRadians
+        -- Subtract the origin.
+        local xOffset = xSigned - xOriginSigned
+        local yOffset = ySigned - yOriginSigned
+        if cw then yOffset = -yOffset end
+
+        -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
+        local angleSigned = math.atan(yOffset, xOffset) - angleRadians
 
         -- Bring angle into range [-0.5, 0.5]. Divide by 2 * math.pi .
         local angleNormed = angleSigned * 0.15915494309189535
@@ -288,6 +307,12 @@ dlg:slider{
     max=180,
     value=defaults.angle}
 
+dlg:check{
+    id="cw",
+    label="Chirality: ",
+    text="Flip y axis.",
+    selected=defaults.cw}
+
 dlg:color{
     id="aColor",
     label="Color A: ",
@@ -297,12 +322,6 @@ dlg:color{
     id="bColor",
     label="Color B: ",
     color=defaults.bColor}
-
-dlg:check{
-    id="cw",
-    label="CW: ",
-    text="Flip y axis.",
-    selected=defaults.cw}
 
 dlg:combobox{
     id="colorMode",
@@ -332,7 +351,7 @@ dlg:button{
         if args.colorMode == "HSV" then
             easingFunc = args.easingFuncHSV
         end
-        
+
         app.transaction(function()
             create_conic(
                 args.xOrigin,
