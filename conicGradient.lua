@@ -157,14 +157,11 @@ end
 
 local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMode, easingFunc)
 
+    -- Create new layer.
     local sprite = app.activeSprite
     local layer = sprite:newLayer()
     layer.name = "Gradient"
     local cel = sprite:newCel(layer, 1)
-
-    local img = app.activeImage
-    local iterator = img:pixels()
-    local i = 0
 
     local w = dimensions.x
     local h = dimensions.y
@@ -174,16 +171,13 @@ local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMo
 
     -- Compensate for image aspect ratio.
     local wInv = 1.0
-    local hInv = 1.0
+    local hInv = 1.0 / (h - 1.0)
     if shortEdge == longEdge then
         wInv = 1.0 / (w - 1.0)
-        hInv = 1.0 / (h - 1.0)
     elseif w == shortEdge then
         wInv = (shortEdge / longEdge) / (w - 1.0)
-        hInv = 1.0 / (h - 1.0)
     elseif h == shortEdge then
         wInv = (longEdge / shortEdge) / (w - 1.0)
-        hInv = 1.0 / (h - 1.0)
     end
 
     -- Bring origin into range [0.0, 1.0].
@@ -197,7 +191,7 @@ local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMo
     -- Convert from degrees to radians (multiply by math.pi / 180.0).
     local angleRadians = math.rad(angle)
 
-    -- Unpack colors.
+    -- Choose channels and easing based on color mode.
     local a0 = 0
     local a1 = 0
     local a2 = 0
@@ -210,7 +204,6 @@ local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMo
 
     local easing = lerpRGB
 
-    -- Choose channels and easing based on color mode.
     if colorMode == "HSV" then
         a0 = aColor.hue
         a1 = aColor.saturation
@@ -244,6 +237,11 @@ local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMo
         end
 
     end
+
+    -- Get image, get its iterator.
+    local img = app.activeImage
+    local iterator = img:pixels()
+    local i = 0
 
     for elm in iterator do
 
@@ -284,7 +282,8 @@ local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMo
     end
 end
 
-local dlg = Dialog("Conic Gradient")
+local dlg = Dialog{
+    title="Conic Gradient"}
 
 dlg:slider{
     id="xOrigin",
