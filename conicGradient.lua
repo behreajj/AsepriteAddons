@@ -1,9 +1,4 @@
-local dimensions = {
-    x = app.activeSprite.width,
-    y = app.activeSprite.height
-}
-
-local colorModes = {
+local easingModes = {
     "RGB", "HSV"
 }
 
@@ -16,15 +11,13 @@ local hsvEasing = {
 }
 
 local defaults = {
-    xOrigin = dimensions.x / 2,
-    yOrigin = dimensions.y / 2,
+    xOrigin = app.activeSprite.width / 2,
+    yOrigin = app.activeSprite.height / 2,
     angle = 90,
     cw = false,
-    -- aColor = Color{r=0, g=0, b=0, a=255},
-    -- bColor = Color{r=255, g=255, b=255, a=255},
     aColor = app.fgColor,
     bColor = app.bgColor,
-    colorMode = "RGB",
+    easingMode = "RGB",
     easingFuncRGB = "LINEAR",
     easingFuncHSV = "NEAR"
 }
@@ -155,16 +148,18 @@ local function lerpHSVNear(ah, as, av, aa, bh, bs, bv, ba, t)
         math.tointeger(u * aa + t * ba))
 end
 
-local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMode, easingFunc)
+local function create_conic(
+    w, h,
+    xOrigin, yOrigin,
+    angle, cw,
+    aColor, bColor,
+    easingMode, easingFunc)
 
     -- Create new layer.
     local sprite = app.activeSprite
     local layer = sprite:newLayer()
     layer.name = "Gradient"
     local cel = sprite:newCel(layer, 1)
-
-    local w = dimensions.x
-    local h = dimensions.y
 
     local shortEdge = math.min(w, h)
     local longEdge = math.max(w, h)
@@ -204,7 +199,7 @@ local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMo
 
     local easing = lerpRGB
 
-    if colorMode == "HSV" then
+    if easingMode == "HSV" then
         a0 = aColor.hue
         a1 = aColor.saturation
         a2 = aColor.value
@@ -253,7 +248,7 @@ local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMo
         local xNorm = xPoint * wInv
         local yNorm = yPoint * hInv
 
-        -- Bring coordinates from [0.0, 1.0] to [-1.0, 1.0],
+        -- Bring coordinates from [0.0, 1.0] to [-1.0, 1.0].
         local xSigned = xNorm + xNorm - 1.0
         local ySigned = 1.0 - (yNorm + yNorm)
 
@@ -265,11 +260,11 @@ local function create_conic(xOrigin, yOrigin, angle, cw, aColor, bColor, colorMo
         -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
         local angleSigned = math.atan(yOffset, xOffset) - angleRadians
 
-        -- Bring angle into range [-0.5, 0.5]. Divide by 2 * math.pi .
+        -- Bring angle into range [-0.5, 0.5]. Divide by 2 * math.pi.
         local angleNormed = angleSigned * 0.15915494309189535
 
         -- Bring angle into range [0.0, 1.0] by subtracting floor.
-        -- Alternatively, use angleNormed % 1.0 .
+        -- Alternatively, use angleNormed % 1.0.
         local t = angleNormed - math.floor(angleNormed)
 
         -- Set element to integer composite.
@@ -289,14 +284,14 @@ dlg:slider{
     id="xOrigin",
     label="Origin X:",
     min=0,
-    max=dimensions.x,
+    max=app.activeSprite.width,
     value=defaults.xOrigin}
 
 dlg:slider{
     id="yOrigin",
     label="Origin Y:",
     min=0,
-    max=dimensions.y,
+    max=app.activeSprite.height,
     value=defaults.yOrigin}
 
 dlg:slider{
@@ -323,10 +318,10 @@ dlg:color{
     color=defaults.bColor}
 
 dlg:combobox{
-    id="colorMode",
-    label="Color Mode: ",
-    option=defaults.colorMode,
-    options=colorModes}
+    id="easingMode",
+    label="Easing Mode: ",
+    option=defaults.easingMode,
+    options=easingModes}
 
 dlg:combobox{
     id="easingFuncHSV",
@@ -347,23 +342,23 @@ dlg:button{
         local args = dlg.data
 
         local easingFunc = args.easingFuncRGB
-        if args.colorMode == "HSV" then
+        if args.easingMode == "HSV" then
             easingFunc = args.easingFuncHSV
         end
 
-        app.transaction(function()
-            create_conic(
-                args.xOrigin,
-                args.yOrigin,
-                args.angle,
-                args.cw,
-                args.aColor,
-                args.bColor,
-                args.colorMode,
-                easingFunc)
-        end)
-        app.command.Undo()
-        app.command.Redo()
+        create_conic(
+            app.activeSprite.width,
+            app.activeSprite.height,
+            args.xOrigin,
+            args.yOrigin,
+            args.angle,
+            args.cw,
+            args.aColor,
+            args.bColor,
+            args.easingMode,
+            easingFunc)
+
+        app.refresh()
     end}
 
 dlg:show{wait=false}
