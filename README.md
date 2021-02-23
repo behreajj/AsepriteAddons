@@ -46,7 +46,7 @@ for i = 0, lenArr, 1 do
 end
 ```
 
-`for` loops follow the same three-part structure as programming languages like C#, Java and JavaScript; the syntax is different. A loop is initiated by `do` and conclued with `end`.
+`for` loops follow the same three-part structure as programming languages like C#, Java and JavaScript; the syntax is different. A loop is initiated by `do` and concluded with `end`.
 
 `tables`, not arrays, are the fundamental collection in Lua. `tables` have borders and so care must be taken when using the length operator, `#`. See the reference [section 3.4.7](https://www.lua.org/manual/5.4/manual.html#3).
 

@@ -1,10 +1,12 @@
 local defaults = {
-    sides = 3,
+    sides = 6,
+    angle = 90,
     scale = math.min(app.activeImage.width,
                      app.activeImage.height) / 3,
-    angle = 90,
     xOrigin = app.activeSprite.width / 2,
     yOrigin = app.activeSprite.height / 2,
+    strokeClr = app.fgColor,
+    fillClr = app.bgColor
 }
 
 local dlg = Dialog{
@@ -13,16 +15,9 @@ local dlg = Dialog{
 dlg:slider{
     id="sides",
     label="Sides: ",
-    min=6,
+    min=3,
     max=16,
     value=defaults.sides}
-
-dlg:slider{
-    id="scale",
-    label="Scale: ",
-    min=1,
-    max=256,
-    value=defaults.scale}
 
 dlg:slider{
     id="angle",
@@ -31,20 +26,33 @@ dlg:slider{
     max=180,
     value=defaults.angle}
 
--- TODO: Make these number inputs, not sliders
-dlg:slider{
-    id="xOrigin",
-    label="Origin X:",
-    min=0,
-    max=app.activeSprite.width,
-    value=defaults.xOrigin}
+dlg:number{
+    id="scale",
+    label="Scale: ",
+    text=string.format("%.2f", defaults.scale),
+    decimals=5}
 
-dlg:slider{
+dlg:number{
+    id="xOrigin",
+    label="Origin X: ",
+    text=string.format("%.2f", defaults.xOrigin),
+    decimals=5}
+
+dlg:number{
     id="yOrigin",
-    label="Origin Y:",
-    min=0,
-    max=app.activeSprite.height,
-    value=defaults.yOrigin}
+    label="Origin Y: ",
+    text=string.format("%.2f", defaults.yOrigin),
+    decimals=5}
+
+dlg:color{
+    id="strokeClr",
+    label="Stroke Color: ",
+    color=defaults.strokeClr}
+
+dlg:color{
+    id="fillClr",
+    label="Fill Color: ",
+    color=defaults.fillClr}
 
 dlg:button{
     id="ok",
@@ -68,6 +76,11 @@ dlg:button{
             table.insert(points, point)
         end
 
+        -- local brush = app.activeBrush
+        local brush = Brush{
+            type=BrushType.CIRCLE,
+            size=1.0}
+
         -- TODO: More options for useTool,
         -- brush that allows strokeweight?
         local prev = points[sides]
@@ -75,14 +88,18 @@ dlg:button{
             local curr = points[i]
             app.useTool{
                 tool="line",
-                color=app.fgColor,
-                bgColor=app.bgColor,
-                points={prev, curr},
-                contiguous=true
-            }
+                color=args.strokeClr,
+                brush=brush,
+                points={prev, curr}}
             prev = curr
         end
         
+        app.useTool{
+            tool="paint_bucket",
+            color=args.fillClr,
+            points={Point(xo, yo)}
+        }
+
         app.refresh()
     end}
 
