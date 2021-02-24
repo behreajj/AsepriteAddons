@@ -66,6 +66,8 @@ end
 
 For custom classes, method syntax uses the colon `:` while field syntax uses the period `.`. If you're encountering a `nil` error at a method call, double-check check for this error.
 
+Multi-line `string`s are demarcated with double square brackets, e.g., `[[The quick brown fox...]]`.
+
 
 ### Aseprite
 

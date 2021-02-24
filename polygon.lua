@@ -1,12 +1,13 @@
 local defaults = {
     sides = 6,
     angle = 90,
-    scale = math.min(app.activeImage.width,
-                     app.activeImage.height) / 3,
-    xOrigin = app.activeSprite.width / 2,
-    yOrigin = app.activeSprite.height / 2,
-    strokeClr = app.fgColor,
-    fillClr = app.bgColor
+    scale = 32,
+    xOrigin = 0,
+    yOrigin = 0,
+    useFill = true,
+    strokeWeight = 1,
+    strokeClr = Color(32, 32, 32, 255),
+    fillClr = Color(255, 245, 215, 255)
 }
 
 local dlg = Dialog{
@@ -44,6 +45,18 @@ dlg:number{
     text=string.format("%.2f", defaults.yOrigin),
     decimals=5}
 
+dlg:check{
+    id="useFill",
+    label="Use Fill: ",
+    selected=defaults.useFill}
+
+dlg:slider{
+    id="strokeWeight",
+    label="Stroke Weight:",
+    min=1,
+    max=64,
+    value=defaults.strokeWeight}
+
 dlg:color{
     id="strokeClr",
     label="Stroke Color: ",
@@ -77,12 +90,30 @@ dlg:button{
         end
 
         -- local brush = app.activeBrush
-        local brush = Brush{
-            type=BrushType.CIRCLE,
-            size=1.0}
+        local brush = Brush(args.strokeWeight)
 
-        -- TODO: More options for useTool,
-        -- brush that allows strokeweight?
+        local sprite = app.activeSprite
+        local layer = sprite:newLayer()
+        local cel = sprite:newCel(layer, 1)
+
+        layer.name = "Polygon"
+        if sides == 3 then
+            layer.name = "Triangle"
+        elseif sides == 4 then
+            layer.name = "Quadrilateral"
+        elseif sides == 5 then
+            layer.name = "Pentagon"
+        elseif sides == 6 then
+            layer.name = "Hexagon"
+        elseif sides == 7 then
+            layer.name = "Heptagon"
+        elseif sides == 8 then
+            layer.name = "Octagon"
+        elseif sides == 9 then
+            layer.name = "Nonagon"
+        end
+
+        -- Polygon tool doesn't work with this.
         local prev = points[sides]
         for i=1,sides + 1,1 do
             local curr = points[i]
@@ -90,15 +121,20 @@ dlg:button{
                 tool="line",
                 color=args.strokeClr,
                 brush=brush,
-                points={prev, curr}}
+                points={prev, curr},
+                cel=cel,
+                layer=layer}
             prev = curr
         end
-        
-        app.useTool{
-            tool="paint_bucket",
-            color=args.fillClr,
-            points={Point(xo, yo)}
-        }
+
+        if args.useFill then
+            app.useTool{
+                tool="paint_bucket",
+                color=args.fillClr,
+                points={Point(xo, yo)},
+                cel=cel,
+                layer=layer}
+        end
 
         app.refresh()
     end}

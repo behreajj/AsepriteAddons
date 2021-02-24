@@ -11,12 +11,12 @@ local hsvEasing = {
 }
 
 local defaults = {
-    xOrigin = app.activeSprite.width / 2,
-    yOrigin = app.activeSprite.height / 2,
+    xOrigin = 0,
+    yOrigin = 0,
     angle = 90,
     cw = false,
-    aColor = app.fgColor,
-    bColor = app.bgColor,
+    aColor = Color(255, 245, 215, 255),
+    bColor = Color(32, 32, 32, 255),
     easingMode = "RGB",
     easingFuncRGB = "LINEAR",
     easingFuncHSV = "NEAR"

@@ -81,7 +81,7 @@ function Vec2:angleBetween(a, b)
     end
 end
 
----Evaluates if any vector components are non-zero.
+--- Evaluates if any vector components are non-zero.
 ---@param a table left operand
 ---@return boolean
 function Vec2:any(a)
@@ -541,7 +541,7 @@ function Vec2:step(edge, x)
     return Vec2:new(cx, cy)
 end
 
---- Subtract the right vector from the left.
+--- Subtracts the right vector from the left.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -571,6 +571,6 @@ function Vec2:trunc(a)
 end
 
 -- create and use an Vec2
-n = Vec2:new(3.12,4.45)
-m = Vec2:new(1.0, 0.1)
-print(Vec2:quantize(m, 8))
+-- n = Vec2:new(3.12,4.45)
+-- m = Vec2:new(1.0, 0.1)
+-- print(Vec2:quantize(m, 8))
