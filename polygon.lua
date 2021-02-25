@@ -1,6 +1,6 @@
 local defaults = {
     sides = 6,
-    angle = 90,
+    angle = -90,
     scale = 32,
     xOrigin = 0,
     yOrigin = 0,
@@ -50,6 +50,11 @@ dlg:check{
     label="Use Fill: ",
     selected=defaults.useFill}
 
+dlg:color{
+    id="fillClr",
+    label="Fill Color: ",
+    color=defaults.fillClr}
+
 dlg:slider{
     id="strokeWeight",
     label="Stroke Weight:",
@@ -62,11 +67,6 @@ dlg:color{
     label="Stroke Color: ",
     color=defaults.strokeClr}
 
-dlg:color{
-    id="fillClr",
-    label="Fill Color: ",
-    color=defaults.fillClr}
-
 dlg:button{
     id="ok",
     text="OK",
@@ -78,19 +78,21 @@ dlg:button{
         local rads = math.rad(args.angle)
         local xo = args.xOrigin
         local yo = args.yOrigin
-        local points = {}
+        local pts = {}
 
         local toTheta = 6.283185307179586 / sides
-        for i=0,sides,1 do
+        for i = 0, sides - 1, 1 do
             local theta = rads + i * toTheta
-            local point = Point(
+            -- print(theta)
+            local pt = Point(
                 xo + math.cos(theta) * scale,
                 yo + math.sin(theta) * scale)
-            table.insert(points, point)
+            -- print(pt)
+            table.insert(pts, pt)
         end
 
         -- local brush = app.activeBrush
-        local brush = Brush(args.strokeWeight)
+        local brsh = Brush(args.strokeWeight)
 
         local sprite = app.activeSprite
         local layer = sprite:newLayer()
@@ -113,14 +115,24 @@ dlg:button{
             layer.name = "Nonagon"
         end
 
-        -- Polygon tool doesn't work with this.
-        local prev = points[sides]
-        for i=1,sides + 1,1 do
-            local curr = points[i]
+        -- Polygon tool doesn't work with this?
+        -- app.useTool{
+        --     tool="polygon",
+        --     color=args.strokeClr,
+        --     bgColor=args.fillClr,
+        --     brush=brush,
+        --     points=points,
+        --     cel=cel,
+        --     layer=layer}
+
+        local ptsLen = #pts
+        local prev = pts[ptsLen]
+        for i = 1, ptsLen, 1 do
+            local curr = pts[i]
             app.useTool{
                 tool="line",
                 color=args.strokeClr,
-                brush=brush,
+                brush=brsh,
                 points={prev, curr},
                 cel=cel,
                 layer=layer}

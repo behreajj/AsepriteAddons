@@ -38,15 +38,15 @@ Array subscript accesses start at an index of `1`. When using them to represent 
 ```lua
 local arr = { 1, 2, 3, 4, 5 }
 local lenArr = #arr
-for i = 0, lenArr, 1 do
+for i = 0, lenArr - 1, 1 do
     local prev = arr[1 + (i - 1) % lenArr]
-    local curr = arr[1 + i % lenArr]
+    local curr = arr[1 + i]
     local next = arr[1 + (i + 1) % lenArr]
-    print(prev, curr, next)
+    print(i.." "..prev.." "..curr.." "..next)
 end
 ```
 
-`for` loops follow the same three-part structure as programming languages like C#, Java and JavaScript; the syntax is different. A loop is initiated by `do` and concluded with `end`.
+`for` loops follow the same tripartite structure as programming languages like C#, Java and JavaScript. The comparison in the second portion and increment in the third are implied. However, the comparison is upper bound _inclusive_, not exclusive. A loop is initiated by `do` and concluded with `end`.
 
 `tables`, not arrays, are the fundamental collection in Lua. `tables` have borders and so care must be taken when using the length operator, `#`. See the reference [section 3.4.7](https://www.lua.org/manual/5.4/manual.html#3).
 
@@ -66,8 +66,7 @@ end
 
 For custom classes, method syntax uses the colon `:` while field syntax uses the period `.`. If you're encountering a `nil` error at a method call, double-check check for this error.
 
-Multi-line `string`s are demarcated with double square brackets, e.g., `[[The quick brown fox...]]`.
-
+Multi-line `string`s are demarcated with double square brackets, for example, `[[The quick brown fox]]`. Strings are concatenated with `..`, for example, `"a" .. "b"` yields `"ab"`.
 
 ### Aseprite
 
