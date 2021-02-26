@@ -1,7 +1,7 @@
 Vec2 = {}
 Vec2.__index = Vec2
 
---- Constructs a new vector from two numbers.
+---Constructs a new vector from two numbers.
 ---@param x number x component
 ---@param y number y component
 ---@return table
@@ -52,7 +52,7 @@ function Vec2:__unm()
     return Vec2:negate(self)
 end
 
---- Finds a vector's absolute value, component-wise.
+---Finds a vector's absolute value, component-wise.
 ---@param a table vector
 ---@return table
 function Vec2:abs(a)
@@ -61,14 +61,14 @@ function Vec2:abs(a)
         math.abs(a.y))
 end
 
---- Evaluates if all vector components are non-zero.
+---Evaluates if all vector components are non-zero.
 ---@param a table left operand
 ---@return boolean
 function Vec2:all(a)
     return a.x ~= 0.0 and a.y ~= 0.0
 end
 
---- Finds the angle between two vectors.
+---Finds the angle between two vectors.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -81,14 +81,14 @@ function Vec2:angleBetween(a, b)
     end
 end
 
---- Evaluates if any vector components are non-zero.
+---Evaluates if any vector components are non-zero.
 ---@param a table left operand
 ---@return boolean
 function Vec2:any(a)
     return a.x ~= 0.0 or a.y ~= 0.0
 end
 
---- Finds the sum of two vectors.
+---Finds the sum of two vectors.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -98,8 +98,8 @@ function Vec2:add(a, b)
         a.y + b.y)
 end
 
---- Evaluates whether two vectors are, within a
---- tolerance, approximately equal.
+---Evaluates whether two vectors are, within a
+---tolerance, approximately equal.
 ---@param a table left operand
 ---@param b table right operand
 ---@param tol any tolerance
@@ -110,7 +110,7 @@ function Vec2:approx(a, b, tol)
         and math.abs(b.y - a.y) <= eps
 end
 
---- Finds the ceiling of the vector.
+---Finds the ceiling of the vector.
 ---@param a table left operand
 ---@return table
 function Vec2:ceil(a)
@@ -119,7 +119,7 @@ function Vec2:ceil(a)
         math.ceil(a.y))
 end
 
---- Clamps a vector to a lower and upper bound
+---Clamps a vector to a lower and upper bound
 ---@param a table left operand
 ---@param lb table lower bound
 ---@param ub table upper bound
@@ -130,7 +130,7 @@ function Vec2:clamp(a, lb, ub)
         math.min(math.max(a.y, lb.y), ub.y))
 end
 
---- Finds the cross product of two vectors, z component.
+---Finds the cross product of two vectors, z component.
 ---@param a table left operand
 ---@param b table right operand
 ---@return number
@@ -138,7 +138,7 @@ function Vec2:cross(a, b)
     return a.x * b.y - a.y * b.x
 end
 
---- Finds the absolute difference between two vectors.
+---Finds the absolute difference between two vectors.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -148,7 +148,7 @@ function Vec2:diff(a, b)
         math.abs(a.y - b.y))
 end
 
---- Divides the left vector by the right, component-wise.
+---Divides the left vector by the right, component-wise.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -160,7 +160,7 @@ function Vec2:div(a, b)
     return Vec2:new(cx, cy)
 end
 
---- Finds the dot product between two vectors.
+---Finds the dot product between two vectors.
 ---@param a table left operand
 ---@param b table right operand
 ---@return number
@@ -168,7 +168,7 @@ function Vec2:dot(a, b)
     return a.x * b.x + a.y * b.y
 end
 
---- Finds the floor of the vector.
+---Finds the floor of the vector.
 ---@param a table left operand
 ---@return table
 function Vec2:floor(a)
@@ -177,7 +177,7 @@ function Vec2:floor(a)
         math.floor(a.y))
 end
 
---- Finds the floor division of two vectors.
+---Finds the floor division of two vectors.
 ---@param a table left operand
 ---@param b table left operand
 ---@return table
@@ -189,9 +189,9 @@ function Vec2:floorDiv(a, b)
     return Vec2:new(cx, cy)
 end
 
---- Finds the remainder of the division of the left
---- operand by the right that rounds the quotient
---- towards zero.
+---Finds the remainder of the division of the left
+---operand by the right that rounds the quotient
+---towards zero.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -203,7 +203,7 @@ function Vec2:fmod(a, b)
     return Vec2:new(cx, cy)
 end
 
---- Finds the fractional portion of of a vector.
+---Finds the fractional portion of of a vector.
 ---@param a table left operand
 ---@return table
 function Vec2:fract(a)
@@ -212,9 +212,9 @@ function Vec2:fract(a)
         a.y - math.tointeger(a.y))
 end
 
---- Converts from polar to Cartesian coordinates.
---- The heading, or azimuth, is in radians.
---- The radius defaults to 1.0.
+---Converts from polar to Cartesian coordinates.
+---The heading, or azimuth, is in radians.
+---The radius defaults to 1.0.
 ---@param heading number heading
 ---@param radius number radius
 ---@return table
@@ -225,31 +225,31 @@ function Vec2:fromPolar(heading, radius)
         r * math.sin(heading))
 end
 
---- Finds a vector's heading.
---- Defaults to the signed heading.
+---Finds a vector's heading.
+---Defaults to the signed heading.
 ---@param a table left operand
 ---@return number
 function Vec2:heading(a)
     return Vec2:headingSigned(a)
 end
 
---- Finds a vector's signed heading, in [-pi, pi].
+---Finds a vector's signed heading, in [-pi, pi].
 ---@param a table left operand
 ---@return number
 function Vec2:headingSigned(a)
     return math.atan(a.y, a.x)
 end
 
---- Finds a vector's unsigned heading, in [0.0, tau].
+---Finds a vector's unsigned heading, in [0.0, tau].
 ---@param a table left operand
 ---@return number
 function Vec2:headingUnsigned(a)
     return math.atan(a.y, a.x) % 6.283185307179586
 end
 
---- Limits a vector's magnitude to a scalar.
---- Returns a copy of the vector if it is beneath
---- the limit.
+---Limits a vector's magnitude to a scalar.
+---Returns a copy of the vector if it is beneath
+---the limit.
 ---@param a table the vector
 ---@param limit number the limit number
 ---@return table
@@ -264,8 +264,8 @@ function Vec2:limit(a, limit)
     return Vec2:new(a.x, a.y)
 end
 
---- Finds the linear step between a left and
---- right edge given a factor.
+---Finds the linear step between a left and
+---right edge given a factor.
 ---@param edge0 table left edge
 ---@param edge1 table right edge
 ---@param x table factor
@@ -289,21 +289,21 @@ function Vec2:linearstep(edge0, edge1, x)
     return Vec2:new(cx, cy)
 end
 
---- Finds a vector's magnitude, or length.
+---Finds a vector's magnitude, or length.
 ---@param a table left operand
 ---@return number
 function Vec2:mag(a)
     return math.sqrt(a.x * a.x + a.y * a.y)
 end
 
---- Finds a vector's magnitude squared.
+---Finds a vector's magnitude squared.
 ---@param a table left operand
 ---@return number
 function Vec2:magSq(a)
     return a.x * a.x + a.y * a.y
 end
 
---- Finds the greater of two vectors.
+---Finds the greater of two vectors.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -313,7 +313,7 @@ function Vec2:max(a, b)
         math.max(a.y, b.y))
 end
 
---- Finds the lesser of two vectors.
+---Finds the lesser of two vectors.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -323,7 +323,7 @@ function Vec2:min(a, b)
         math.min(a.y, b.y))
 end
 
---- Mixes two vectors together by a step.
+---Mixes two vectors together by a step.
 ---@param a table origin
 ---@param b table destination
 ---@param t table step
@@ -334,7 +334,7 @@ function Vec2:mix(a, b, t)
         (1.0 - t.y) * a.y + t.y * b.y)
 end
 
---- Finds the remainder of floor division of two vectors.
+---Finds the remainder of floor division of two vectors.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -346,8 +346,8 @@ function Vec2:mod(a, b)
     return Vec2:new(cx, cy)
 end
 
---- Multiplies two vectors component-wise.
---- A shortcut for multiplying a matrix and vector.
+---Multiplies two vectors component-wise.
+---A shortcut for multiplying a matrix and vector.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -357,7 +357,7 @@ function Vec2:mul(a, b)
         a.y * b.y)
 end
 
---- Negates a vector.
+---Negates a vector.
 ---@param a table vector
 ---@return table
 function Vec2:negate(a)
@@ -371,8 +371,8 @@ function Vec2:none(a)
     return a.x == 0.0 and a.y == 0.0
 end
 
---- Divides a vector by its magnitude, such that it
---- lies on the unit circle.
+---Divides a vector by its magnitude, such that it
+---lies on the unit circle.
 ---@param a table vector
 ---@return table
 function Vec2:normalize(a)
@@ -386,30 +386,30 @@ function Vec2:normalize(a)
     return Vec2:new(0.0, 0.0)
 end
 
---- Finds the perpendicular to a vector.
---- Defaults to the counter-clockwise direction.
+---Finds the perpendicular to a vector.
+---Defaults to the counter-clockwise direction.
 ---@param a table vector
 ---@return table
 function Vec2:perpendicular(a)
     return Vec2:perpendicularCCW(a)
 end
 
---- Finds the clockwise perpendicular to a vector.
+---Finds the clockwise perpendicular to a vector.
 ---@param a table vector
 ---@return table
 function Vec2:perpendicularCW(a)
     return Vec2:new(a.y, -a.x)
 end
 
---- Finds the counter-clockwise perpendicular to
---- a vector.
+---Finds the counter-clockwise perpendicular to
+---a vector.
 ---@param a table vector
 ---@return table
 function Vec2:perpendicularCCW(a)
     return Vec2:new(-a.y, a.x)
 end
 
---- Raises a vector to the power of another.
+---Raises a vector to the power of another.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -419,8 +419,8 @@ function Vec2:pow(a, b)
         a.y ^ b.y)
 end
 
---- Finds the scalar projection of the left
---- operand onto the right.
+---Finds the scalar projection of the left
+---operand onto the right.
 ---@param a table left operand
 ---@param b table right operand
 ---@return number
@@ -433,8 +433,8 @@ function Vec2:projectScalar(a, b)
     end
 end
 
---- Finds the vector projection of the left
---- operand onto the right.
+---Finds the vector projection of the left
+---operand onto the right.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -442,7 +442,7 @@ function Vec2:projectVector(a, b)
     return Vec2:scale(b, Vec2:projectScalar(a, b))
 end
 
---- Reduces the granularity of a vector's components.
+---Reduces the granularity of a vector's components.
 ---@param a table vector
 ---@param levels number levels
 ---@return table
@@ -456,7 +456,7 @@ function Vec2:quantize(a, levels)
     return Vec2:new(a.x, a.y)
 end
 
---- Rescales a vector to the target magnitude.
+---Rescales a vector to the target magnitude.
 ---@param a table vector
 ---@param b number magnitude
 ---@return table
@@ -471,7 +471,44 @@ function Vec2:rescale(a, b)
     return Vec2:new(0.0, 0.0)
 end
 
---- Rotates a vector by an angle in radians.
+---Rotates a vector by an angle in radians
+---around the x axis. For use in 2.5D.
+---@param a table left operand
+---@param radians number angle
+---@return table
+function Vec2:rotateX(a, radians)
+    return Vec2:rotateXInternal(a, math.cos(radians))
+end
+
+---Rotates a vector by the cosine of an angle.
+---Used when rotating many vectors by the same angle.
+---@param a table left operand
+---@param cosa number cosine of the angle
+---@return table
+function Vec2:rotateXInternal(a, cosa)
+    return Vec2:new(a.x, a.y * cosa)
+end
+
+---Rotates a vector by an angle in radians
+---around the y axis. For use in 2.5D.
+---@param a table left operand
+---@param radians number angle
+---@return table
+function Vec2:rotateY(a, radians)
+    return Vec2:rotateYInternal(a, math.cos(radians))
+end
+
+---Rotates a vector by the cosine of an angle.
+---Used when rotating many vectors by the same angle.
+---@param a table left operand
+---@param cosa number cosine of the angle
+---@return table
+function Vec2:rotateYInternal(a, cosa)
+    return Vec2:new(a.x * cosa, a.y)
+end
+
+---Rotates a vector by an angle in radians
+---around the z axis.
 ---@param a table left operand
 ---@param radians number angle
 ---@return table
@@ -481,8 +518,8 @@ function Vec2:rotateZ(a, radians)
         math.sin(radians))
 end
 
---- Rotates a vector by the cosine and sine of an angle.
---- Used when rotating many vectors by the same angle.
+---Rotates a vector by the cosine and sine of an angle.
+---Used when rotating many vectors by the same angle.
 ---@param a table left operand
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
@@ -493,7 +530,7 @@ function Vec2:rotateZInternal(a, cosa, sina)
         cosa * a.y + sina * a.x)
 end
 
---- Scales a vector by a number.
+---Scales a vector by a number.
 ---@param a table left operand
 ---@param b number right operand
 ---@return table
@@ -501,8 +538,8 @@ function Vec2:scale(a, b)
     return Vec2:new(a.x * b, a.y * b)
 end
 
---- Finds the smooth step between a left and
---- right edge given a factor.
+---Finds the smooth step between a left and
+---right edge given a factor.
 ---@param edge0 table left edge
 ---@param edge1 table right edge
 ---@param x table factor
@@ -527,7 +564,7 @@ function Vec2:smoothstep(edge0, edge1, x)
         cy * cy * (3.0 - (cy + cy)))
 end
 
---- Finds the step between an edge and factor.
+---Finds the step between an edge and factor.
 ---@param edge table the edge
 ---@param x table the factor
 ---@return table
@@ -541,7 +578,7 @@ function Vec2:step(edge, x)
     return Vec2:new(cx, cy)
 end
 
---- Subtracts the right vector from the left.
+---Subtracts the right vector from the left.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -551,8 +588,8 @@ function Vec2:sub(a, b)
         a.y - b.y)
 end
 
---- Converts a vector to polar coordinates.
---- Returns a table with 'heading' and 'radius'.
+---Converts a vector to polar coordinates.
+---Returns a table with 'heading' and 'radius'.
 ---@param a table vector
 ---@return table
 function Vec2:toPolar(a)
@@ -561,7 +598,7 @@ function Vec2:toPolar(a)
         radius = Vec2:mag(a) }
 end
 
---- Truncates a vector's components to integers.
+---Truncates a vector's components to integers.
 ---@param a table vector
 ---@return table
 function Vec2:trunc(a)
@@ -570,7 +607,4 @@ function Vec2:trunc(a)
         math.tointeger(a.y))
 end
 
--- create and use an Vec2
--- n = Vec2:new(3.12,4.45)
--- m = Vec2:new(1.0, 0.1)
--- print(Vec2:quantize(m, 8))
+return Vec2

@@ -1,8 +1,8 @@
 Mat3 = {}
 Mat3.__index = Mat3
 
---- Constructs a row major 3x3 matrix from numbers.
---- Intended for use as an affine transform.
+---Constructs a row major 3x3 matrix from numbers.
+---Intended for use as a 2D affine transform.
 ---@param m00 number row 0, col 0 right x
 ---@param m01 number row 0, col 1 right y
 ---@param m02 number row 0, col 2 translation x
@@ -65,7 +65,7 @@ function Mat3:__unm()
     return Mat3:negate(self)
 end
 
---- Finds the sum of two matrices.
+---Finds the sum of two matrices.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -76,7 +76,7 @@ function Mat3:add(a, b)
         a.m20 + b.m20, a.m21 + b.m21, a.m22 + b.m22)
 end
 
---- Multiplies the left operand and the inverse of the right.
+---Multiplies the left operand and the inverse of the right.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -84,7 +84,7 @@ function Mat3:div(a, b)
     return Mat3:mul(a, Mat3:inverse(b))
 end
 
---- Finds the matrix determinant.
+---Finds the matrix determinant.
 ---@param a table matrix
 ---@return number
 function Mat3:determinant(a)
@@ -93,7 +93,7 @@ function Mat3:determinant(a)
            a.m02 * (a.m21 * a.m10 - a.m11 * a.m20)
 end
 
---- Constructs a matrix from an angle in radians.
+---Constructs a matrix from an angle in radians.
 ---@param radians number angle
 ---@return table
 function Mat3:fromRotZ(radians)
@@ -102,7 +102,7 @@ function Mat3:fromRotZ(radians)
         math.sin(radians))
 end
 
---- Constructs a matrix from the cosine and sine of an angle.
+---Constructs a matrix from the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return table
@@ -113,7 +113,7 @@ function Mat3:fromRotZInternal(cosa, sina)
          0.0,   0.0, 1.0)
 end
 
---- Constructs a matrix from a nonuniform scale.
+---Constructs a matrix from a nonuniform scale.
 ---@param width number width
 ---@param depth number depth
 ---@return table
@@ -134,7 +134,7 @@ function Mat3:fromScale(width, depth)
         0.0, 0.0, 1.0)
 end
 
---- Constructs a matrix from a translation.
+---Constructs a matrix from a translation.
 ---@param x number x
 ---@param y number y
 ---@return table
@@ -145,7 +145,7 @@ function Mat3:fromTranslation(x, y)
         0.0, 0.0, 1.0)
 end
 
---- Finds the matrix inverse.
+---Finds the matrix inverse.
 ---@param a table matrix
 ---@return table
 function Mat3:inverse(a)
@@ -170,7 +170,7 @@ function Mat3:inverse(a)
     end
 end
 
---- Finds the product of two matrices.
+---Finds the product of two matrices.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -187,7 +187,7 @@ function Mat3:mul(a, b)
         a.m20 * b.m02 + a.m21 * b.m12 + a.m22 * b.m22)
 end
 
---- Negates a matrix.
+---Negates a matrix.
 ---@param a table matrix
 ---@return table
 function Mat3:negate(a)
@@ -197,7 +197,7 @@ function Mat3:negate(a)
         -a.m20, -a.m21, -a.m22)
 end
 
---- Subtracts the right matrix from the left.
+---Subtracts the right matrix from the left.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -208,7 +208,7 @@ function Mat3:sub(a, b)
         a.m20 - b.m20, a.m21 - b.m21, a.m22 - b.m22)
 end
 
---- Transposes a matrix's columns and rows.
+---Transposes a matrix's columns and rows.
 ---@param a table matrix
 ---@return table
 function Mat3:transpose(a)
@@ -218,6 +218,4 @@ function Mat3:transpose(a)
             a.m02, a.m12, a.m22)
 end
 
-b = Mat3:fromRotZ(math.pi * 0.5)
-c = Mat3:fromScale(2,1)
-print(b * c)
+return Mat3

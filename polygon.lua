@@ -5,6 +5,7 @@ local defaults = {
     xOrigin = 0,
     yOrigin = 0,
     useFill = true,
+    useStroke = true,
     strokeWeight = 1,
     strokeClr = Color(32, 32, 32, 255),
     fillClr = Color(255, 245, 215, 255)
@@ -54,6 +55,11 @@ dlg:color{
     id="fillClr",
     label="Fill Color: ",
     color=defaults.fillClr}
+
+dlg:check{
+    id="useStroke",
+    label="Use Stroke: ",
+    selected=defaults.useStroke}
 
 dlg:slider{
     id="strokeWeight",
@@ -115,40 +121,41 @@ dlg:button{
             layer.name = "Nonagon"
         end
 
-        -- Polygon tool doesn't work with this?
-        -- app.useTool{
-        --     tool="polygon",
-        --     color=args.strokeClr,
-        --     bgColor=args.fillClr,
-        --     brush=brush,
-        --     points=points,
-        --     cel=cel,
-        --     layer=layer}
-
-        local ptsLen = #pts
-        local prev = pts[ptsLen]
-        for i = 1, ptsLen, 1 do
-            local curr = pts[i]
-            app.useTool{
-                tool="line",
-                color=args.strokeClr,
-                brush=brsh,
-                points={prev, curr},
-                cel=cel,
-                layer=layer}
-            prev = curr
-        end
-
         if args.useFill then
             app.useTool{
-                tool="paint_bucket",
+                tool="contour",
                 color=args.fillClr,
-                points={Point(xo, yo)},
+                brush=brsh,
+                points=pts,
                 cel=cel,
+                contiguous=true,
                 layer=layer}
+        end
+
+        if args.useStroke then
+            local ptsLen = #pts
+            local prev = pts[ptsLen]
+            for i = 1, ptsLen, 1 do
+                local curr = pts[i]
+                app.useTool{
+                    tool="line",
+                    color=args.strokeClr,
+                    brush=brsh,
+                    points={prev, curr},
+                    cel=cel,
+                    layer=layer}
+                prev = curr
+            end
         end
 
         app.refresh()
     end}
 
-    dlg:show{wait=false}
+dlg:button{
+    id="cancel",
+    text="CANCEL",
+    onclick=function()
+        dlg:close()
+    end}
+
+dlg:show{wait=false}

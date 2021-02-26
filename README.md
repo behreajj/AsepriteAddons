@@ -29,9 +29,13 @@ The `^` operator is for exponentiation, e.g., `3 ^ 4` yields `81`.
 
 The `//` is for floor division, e.g., `5 // 2` yields `2`.
 
-The `#` operator finds the length of a variable.
+The `#` operator finds the length of a `table`.
+
+`tables`, not arrays, are the fundamental collection in Lua. `tables` have borders and so care must be taken when using the length operator. See the reference [section 3.4.7](https://www.lua.org/manual/5.4/manual.html#3).
 
 The `%` operator designates [floor modulo](https://www.wikiwand.com/en/Modulo_operation). This is similar to Python; it is different from C#, Java and JavaScript.
+
+Multi-line `string`s are demarcated with double square brackets, for example, `[[The quick brown fox]]`. Strings are concatenated with `..`, for example, `"a" .. "b"` yields `"ab"`.
 
 Array subscript accesses start at an index of `1`. When using them to represent closed loops, either cache a `prev` variable outside the loop or use `%` like so:
 
@@ -47,8 +51,6 @@ end
 ```
 
 `for` loops follow the same tripartite structure as programming languages like C#, Java and JavaScript. The comparison in the second portion and increment in the third are implied. However, the comparison is upper bound _inclusive_, not exclusive. A loop is initiated by `do` and concluded with `end`.
-
-`tables`, not arrays, are the fundamental collection in Lua. `tables` have borders and so care must be taken when using the length operator, `#`. See the reference [section 3.4.7](https://www.lua.org/manual/5.4/manual.html#3).
 
 Conditional blocks are structured as in the following example,
 
@@ -66,13 +68,13 @@ end
 
 For custom classes, method syntax uses the colon `:` while field syntax uses the period `.`. If you're encountering a `nil` error at a method call, double-check check for this error.
 
-Multi-line `string`s are demarcated with double square brackets, for example, `[[The quick brown fox]]`. Strings are concatenated with `..`, for example, `"a" .. "b"` yields `"ab"`.
-
 ### Aseprite
+
+`require("myclass")` is [not supported](https://community.aseprite.org/t/can-you-import-lua-libraries-from-a-script-solved/3528) in Aseprite; instead use `dofile("./myclass.lua")`.
 
 As in Processing, working with colors in bulk involves packing and unpacking integers. To print an integer as hex, use `string.format("%x", 0xaabbccdd)`.
 
-Looks like color integers are ordered ABGR. Packing for numbers in [0, 255] would be `ca << 0x18 | cb << 0x10 | cg << 0x8 | cr`.
+Color integer channels are ordered ABGR. Given four numbers in the range [0, 255], the packed integer would arise from `ca << 0x18 | cb << 0x10 | cg << 0x8 | cr`. To unpack, use `ca = (c >> 0x18) & 0xff` and so on.
 
 For certain API classes, more information can be gleened from the source code:
  - [Color](https://github.com/aseprite/aseprite/blob/6c4621a26a2acf70e184aa247a5cd40be2e652ef/src/app/script/color_class.cpp)
