@@ -43,10 +43,6 @@ function Mat3:__div(b)
     return Mat3.div(self, b)
 end
 
-function Mat3:__eq(b)
-    return Mat3.approx(self, b)
-end
-
 function Mat3:__len()
     return 9
 end

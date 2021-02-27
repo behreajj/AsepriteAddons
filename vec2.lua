@@ -22,7 +22,7 @@ function Vec2:__div(b)
 end
 
 function Vec2:__eq(b)
-    return Vec2.approx(self, b)
+    return self.x == b.x and self.y == b.y
 end
 
 function Vec2:__idiv(b)

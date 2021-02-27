@@ -84,6 +84,7 @@ local defaults = {
     scale = 32,
     xOrigin = 0,
     yOrigin = 0,
+    margin = 0,
     useStroke = true,
     strokeWeight = 1,
     strokeClr = Color(128, 119, 102, 255),
@@ -111,20 +112,27 @@ dlg:slider{
 dlg:number{
     id="scale",
     label="Scale: ",
-    text=string.format("%.2f", defaults.scale),
+    text=string.format("%.1f", defaults.scale),
     decimals=5}
 
 dlg:number{
     id="xOrigin",
     label="Origin X: ",
-    text=string.format("%.2f", defaults.xOrigin),
+    text=string.format("%.1f", defaults.xOrigin),
     decimals=5}
 
 dlg:number{
     id="yOrigin",
     label="Origin Y: ",
-    text=string.format("%.2f", defaults.yOrigin),
+    text=string.format("%.1f", defaults.yOrigin),
     decimals=5}
+
+dlg:slider{
+    id="margin",
+    label="Margin: ",
+    min=0,
+    max=100,
+    value=defaults.margin}
 
 dlg:check{
     id="useStroke",
@@ -167,6 +175,15 @@ dlg:button{
     local sclval = args.scale
     if sclval < 2.0 then
         sclval = 2.0
+    end
+
+    -- Convert margin from [0, 100] to [0.0, 1.0].
+    -- Ensure that it is less than 100%.
+    local mrgval = args.margin * 0.01
+    if mrgval > 0.0 then
+        mrgval = math.min(mrgval, 0.99)
+        Mesh2.uniformData(mesh, mesh)
+        mesh:scaleFacesIndiv(1.0 - mrgval)
     end
 
     local t = Mat3.fromTranslation(

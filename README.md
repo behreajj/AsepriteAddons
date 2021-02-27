@@ -17,7 +17,7 @@ For Lua scripting in general, see:
 
 ### Lua
 
-Two hyphens, `--`, designate a single line comment.
+Two hyphens, `--`, designate a single line comment. There are no shortcuts for decrementing or incrementing numbers by one (`++i`, `--i`).
 
 `nil`  (not `null`) is the unique, absent value.
 
@@ -50,7 +50,7 @@ for i = 0, lenArr - 1, 1 do
 end
 ```
 
-`for` loops follow the same tripartite structure as programming languages like C#, Java and JavaScript. The comparison in the second portion and increment in the third are implied. However, the comparison is upper bound _inclusive_, not exclusive. A loop is initiated by `do` and concluded with `end`.
+`for` loops follow a tripartite structure similar to programming languages like C#, Java and JavaScript. The comparison in the second portion and increment in the third are implied. In Lua, the comparison is upper bound _inclusive_, not exclusive. A loop is initiated by `do` and concluded with `end`.
 
 Conditional blocks are structured as in the following example,
 
@@ -66,7 +66,7 @@ end
 
 `elseif` (not `elif`) is one word. Conditions are followed by `then`. The entire block concludes with `end`.
 
-For custom classes, methods called with `:` pass `self` as the first parameter implicitly, while methods called with `.` do not. I use it to distinguish instance methods from static methods. If you're encountering a `nil` error at a method call, double-check check for this error. See discussion [here](https://stackoverflow.com/questions/3779671/why-cant-i-use-setunion-instead-of-set-union).
+For custom classes, methods called with `:` pass `self` as the first parameter implicitly, while methods called with `.` do not. I use it to distinguish instance methods from static methods. If you're encountering a `nil` error at a method call, double-check for this error. See discussion [here](https://stackoverflow.com/questions/3779671/why-cant-i-use-setunion-instead-of-set-union).
 
 ### Aseprite
 

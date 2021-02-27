@@ -20,6 +20,10 @@ function Mesh2:new(fs, vs, name)
     return inst
 end
 
+function Mesh2:__len()
+    return #self.fs
+end
+
 function Mesh2:__tostring()
     local str = "{ name: \""
     str = str .. self.name
@@ -48,6 +52,45 @@ function Mesh2:__tostring()
     str = str .. " ] }"
 
     return str
+end
+
+---Scales each face of a mesh individually,
+---based on its median center. Meshes should
+---call uniformData first for best results.
+---@param scale number scale
+---@return table
+function Mesh2:scaleFacesIndiv(scale)
+
+    -- Validate that scale is non-zero.
+    local vscl = 1.0
+    if scale ~= 0.0 then vscl = scale end
+
+    local fsLen = #self.fs
+    for i = 1, fsLen, 1 do
+        local f = self.fs[i]
+        local fLen = #f
+
+        -- Find center.
+        local center = Vec2:new(0.0, 0.0)
+        for j = 1, fLen, 1 do
+            local vert = f[j]
+            local v = self.vs[vert]
+            center = Vec2.add(center, v)
+        end
+        center = Vec2.scale(center, 1.0 / fLen)
+
+        -- Treat center as a pivot:
+        -- Subtract center, scale, add center.
+        for j = 1, fLen, 1 do
+            local vert = f[j]
+            local v = self.vs[vert]
+            self.vs[vert] = Vec2.add(
+                Vec2.scale(Vec2.sub(v,
+                center), vscl), center)
+        end
+    end
+
+    return self
 end
 
 ---Transforms a mesh by a matrix.
@@ -206,14 +249,18 @@ function Mesh2.uniformData(source, target)
     for i = 1, fsSrcLen, 1 do
         local fSrc = fsSrc[i]
         local fSrcLen = #fSrc
+        local fTrg = {}
+
         for j = 1, fSrcLen, 1 do
             local vertSrc = fSrc[j]
             local vSrc = vsSrc[vertSrc]
             local vTrg = Vec2:new(vSrc.x, vSrc.y)
             table.insert(vsTrg, vTrg)
-            table.insert(fsTrg, k)
+            table.insert(fTrg, k)
             k = k + 1
         end
+
+        table.insert(fsTrg, fTrg)
     end
 
     trg.fs = fsTrg
