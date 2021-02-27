@@ -36,19 +36,27 @@ function Mat3:new(
 end
 
 function Mat3:__add(b)
-    return Mat3:add(self, b)
+    return Mat3.add(self, b)
 end
 
 function Mat3:__div(b)
-    return Mat3:div(self, b)
+    return Mat3.div(self, b)
+end
+
+function Mat3:__eq(b)
+    return Mat3.approx(self, b)
+end
+
+function Mat3:__len()
+    return 9
 end
 
 function Mat3:__mul(b)
-    return Mat3:mul(self, b)
+    return Mat3.mul(self, b)
 end
 
 function Mat3:__sub(b)
-    return Mat3:sub(self, b)
+    return Mat3.sub(self, b)
 end
 
 function Mat3:__tostring()
@@ -62,32 +70,51 @@ function Mat3:__tostring()
 end
 
 function Mat3:__unm()
-    return Mat3:negate(self)
+    return Mat3.negate(self)
 end
 
 ---Finds the sum of two matrices.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
-function Mat3:add(a, b)
+function Mat3.add(a, b)
     return Mat3:new(
         a.m00 + b.m00, a.m01 + b.m01, a.m02 + b.m02,
         a.m10 + b.m10, a.m11 + b.m11, a.m12 + b.m12,
         a.m20 + b.m20, a.m21 + b.m21, a.m22 + b.m22)
 end
 
+---Evaluates whether two matrices are, within a
+---tolerance, approximately equal.
+---@param a table left operand
+---@param b table right operand
+---@param tol number tolerance
+---@return boolean
+function Mat3.approx(a, b, tol)
+    local eps = tol or 0.000001
+    return math.abs(b.m00 - a.m00) <= eps
+        and math.abs(b.m01 - a.m01) <= eps
+        and math.abs(b.m02 - a.m02) <= eps
+        and math.abs(b.m10 - a.m10) <= eps
+        and math.abs(b.m11 - a.m11) <= eps
+        and math.abs(b.m12 - a.m12) <= eps
+        and math.abs(b.m20 - a.m20) <= eps
+        and math.abs(b.m21 - a.m21) <= eps
+        and math.abs(b.m22 - a.m22) <= eps
+end
+
 ---Multiplies the left operand and the inverse of the right.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
-function Mat3:div(a, b)
-    return Mat3:mul(a, Mat3:inverse(b))
+function Mat3.div(a, b)
+    return Mat3.mul(a, Mat3.inverse(b))
 end
 
 ---Finds the matrix determinant.
 ---@param a table matrix
 ---@return number
-function Mat3:determinant(a)
+function Mat3.determinant(a)
     return a.m00 * (a.m22 * a.m11 - a.m12 * a.m21) +
            a.m01 * (a.m12 * a.m20 - a.m22 * a.m10) +
            a.m02 * (a.m21 * a.m10 - a.m11 * a.m20)
@@ -96,8 +123,8 @@ end
 ---Constructs a matrix from an angle in radians.
 ---@param radians number angle
 ---@return table
-function Mat3:fromRotZ(radians)
-    return Mat3:fromRotZInternal(
+function Mat3.fromRotZ(radians)
+    return Mat3.fromRotZInternal(
         math.cos(radians),
         math.sin(radians))
 end
@@ -106,7 +133,7 @@ end
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return table
-function Mat3:fromRotZInternal(cosa, sina)
+function Mat3.fromRotZInternal(cosa, sina)
     return Mat3:new(
         cosa, -sina, 0.0,
         sina,  cosa, 0.0,
@@ -117,7 +144,7 @@ end
 ---@param width number width
 ---@param depth number depth
 ---@return table
-function Mat3:fromScale(width, depth)
+function Mat3.fromScale(width, depth)
     local w = 1.0
     if width and width ~= 0.0 then
         w = width
@@ -138,17 +165,18 @@ end
 ---@param x number x
 ---@param y number y
 ---@return table
-function Mat3:fromTranslation(x, y)
+function Mat3.fromTranslation(x, y)
     return Mat3:new(
-        1.0, 0.0, x,
-        0.0, 1.0, y,
+        1.0, 0.0,   x,
+        0.0, 1.0,   y,
         0.0, 0.0, 1.0)
 end
 
 ---Finds the matrix inverse.
+---Returns the identity if not possible.
 ---@param a table matrix
 ---@return table
-function Mat3:inverse(a)
+function Mat3.inverse(a)
     local b01 = a.m22 * a.m11 - a.m12 * a.m21
     local b11 = a.m12 * a.m20 - a.m22 * a.m10
     local b21 = a.m21 * a.m10 - a.m11 * a.m20
@@ -166,7 +194,10 @@ function Mat3:inverse(a)
             (a.m01 * a.m20 - a.m21 * a.m00) * detInv,
             (a.m11 * a.m00 - a.m01 * a.m10) * detInv)
     else
-        return Mat3:new()
+        return Mat3:new(
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0)
     end
 end
 
@@ -174,7 +205,7 @@ end
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
-function Mat3:mul(a, b)
+function Mat3.mul(a, b)
     return Mat3:new(
         a.m00 * b.m00 + a.m01 * b.m10 + a.m02 * b.m20,
         a.m00 * b.m01 + a.m01 * b.m11 + a.m02 * b.m21,
@@ -190,7 +221,7 @@ end
 ---Negates a matrix.
 ---@param a table matrix
 ---@return table
-function Mat3:negate(a)
+function Mat3.negate(a)
     return Mat3:new(
         -a.m00, -a.m01, -a.m02,
         -a.m10, -a.m11, -a.m12,
@@ -201,7 +232,7 @@ end
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
-function Mat3:sub(a, b)
+function Mat3.sub(a, b)
     return Mat3:new(
         a.m00 - b.m00, a.m01 - b.m01, a.m02 - b.m02,
         a.m10 - b.m10, a.m11 - b.m11, a.m12 - b.m12,
@@ -211,7 +242,7 @@ end
 ---Transposes a matrix's columns and rows.
 ---@param a table matrix
 ---@return table
-function Mat3:transpose(a)
+function Mat3.transpose(a)
     return Mat3:new(
             a.m00, a.m10, a.m20,
             a.m01, a.m11, a.m21,

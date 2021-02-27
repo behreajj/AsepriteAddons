@@ -18,7 +18,7 @@ end
 ---@param a table matrix
 ---@param b table vector
 ---@return table
-function Utilities:mulMat3Vec2(a, b)
+function Utilities.mulMat3Vec2(a, b)
     local w = a.m20 * b.x + a.m21 * b.y + a.m22
     if w ~= 0.0 then
         local wInv = 1.0 / w

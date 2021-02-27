@@ -27,9 +27,7 @@ local function drawMesh(
     local pts = {}
     for i = 1, vsLen, 1 do
         local v = vs[i]
-        local pt = Point(
-            math.tointeger(v.x),
-            math.tointeger(v.y))
+        local pt = Point(v.x, v.y)
         table.insert(pts, pt)
     end
 
@@ -88,7 +86,7 @@ local defaults = {
     yOrigin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = Color(32, 32, 32, 255),
+    strokeClr = Color(128, 119, 102, 255),
     useFill = true,
     fillClr = Color(255, 245, 215, 255)
 }
@@ -162,7 +160,7 @@ dlg:button{
 
     local args = dlg.data
 
-    local mesh = Mesh2:gridDimetric(
+    local mesh = Mesh2.gridDimetric(
         args.cols,
         args.rows)
 
@@ -171,12 +169,12 @@ dlg:button{
         sclval = 2.0
     end
 
-    local t = Mat3:fromTranslation(
+    local t = Mat3.fromTranslation(
         args.xOrigin,
         args.yOrigin)
-    local s = Mat3:fromScale(sclval)
-    local m = Mat3:mul(t, s)
-    local trMesh = Mesh2:transform(mesh, m)
+    local s = Mat3.fromScale(sclval)
+    local mat = Mat3.mul(t, s)
+    local trMesh = mesh:transform(mat)
 
     local brsh = Brush(args.strokeWeight)
     local sprite = app.activeSprite

@@ -66,7 +66,7 @@ end
 
 `elseif` (not `elif`) is one word. Conditions are followed by `then`. The entire block concludes with `end`.
 
-For custom classes, method syntax uses the colon `:` while field syntax uses the period `.`. If you're encountering a `nil` error at a method call, double-check check for this error.
+For custom classes, methods called with `:` pass `self` as the first parameter implicitly, while methods called with `.` do not. I use it to distinguish instance methods from static methods. If you're encountering a `nil` error at a method call, double-check check for this error. See discussion [here](https://stackoverflow.com/questions/3779671/why-cant-i-use-setunion-instead-of-set-union).
 
 ### Aseprite
 

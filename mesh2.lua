@@ -31,7 +31,6 @@ function Mesh2:__tostring()
         local fLen = #f
         str = str .. "[ "
         for j = 1, fLen, 1 do
-            -- str = str .. tostring(f[j])
             str = str .. f[j]
             if j < fLen then str = str .. ", " end
         end
@@ -51,11 +50,25 @@ function Mesh2:__tostring()
     return str
 end
 
+---Transforms a mesh by a matrix.
+---The mesh is transformed in place.
+---@param matrix table matrix
+---@return table
+function Mesh2:transform(matrix)
+
+    local vsLen = #self.vs
+    for i = 1, vsLen, 1 do
+        self.vs[i] = Utilities.mulMat3Vec2(
+            matrix, self.vs[i])
+    end
+    return self
+end
+
 ---Creates a grid of rectangles.
 ---@param cols number columns
 ---@param rows number rows
 ---@return table
-function Mesh2:gridCartesian(cols, rows)
+function Mesh2.gridCartesian(cols, rows)
 
     -- Create vertical positions in [-0.5, 0.5].
     local rval = 2
@@ -122,27 +135,27 @@ end
 ---@param cols number columns
 ---@param rows number rows
 ---@return table
-function Mesh2:gridDimetric(cols, rows)
-    local mesh = Mesh2:gridCartesian(cols, rows)
+function Mesh2.gridDimetric(cols, rows)
+    local mesh = Mesh2.gridCartesian(cols, rows)
 
-    -- 45 degree rotation.
-    local r = Mat3:fromRotZ(0.7853981633974483)
+    -- local r = Mat3:fromRotZ(math.rad(45))
+    -- local s = Mat3:fromScale(
+    --     1.0 / math.sqrt(2.0),
+    --     0.5 / math.sqrt(2.0))
+    -- local m = Mat3:mul(s, r)
 
-    -- Scale by 1.0 / math.sqrt(2.0).
-    local s = Mat3:fromScale(
-        0.7071067811865475,
-        0.35355339059327373)
-
-    -- Composite matrices & apply.
-    local m = Mat3:mul(s, r)
-    local trMesh = Mesh2:transform(mesh, m)
-    return trMesh
+    local mat = Mat3:new(
+        0.5, -0.5, 0.0,
+        0.25, 0.25, 0.0,
+        0.0, 0.0, 1.0)
+    return mesh:transform(mat)
 end
 
 ---Creates a regular convex polygon
 ---@param sectors number sides
 ---@return table
-function Mesh2:polygon(sectors)
+function Mesh2.polygon(sectors)
+    -- TODO: Test
     local vsect = 3
     if sectors > 3 then vsect = sectors end
     local toTheta = 6.283185307179586 / vsect
@@ -156,42 +169,56 @@ function Mesh2:polygon(sectors)
         table.insert(vs, v)
         table.insert(f, 1 + i)
     end
-    local fs = {}
-    table.insert(fs, f)
+    local fs = { f }
 
     local name = "Polygon"
     if vsect == 3 then
         name = "Triangle"
     elseif vsect == 4 then
-        name = "Quadrilateral"
+        name = "Rhombus"
     elseif vsect == 5 then
         name = "Pentagon"
     elseif vsect == 6 then
         name = "Hexagon"
-    elseif vsect == 7 then
-        name = "Heptagon"
     elseif vsect == 8 then
         name = "Octagon"
-    elseif vsect == 9 then
-        name = "Nonagon"
     end
 
     return Mesh2:new(fs, vs, name)
 end
 
----Transforms a mesh by a matrix.
----The mesh is transformed in place.
----@param mesh table mesh
----@param matrix table matrix
+---Restructures the mesh so that each face index
+---refers to unique data.
+---@param source table source mesh
+---@param target table target mesh
 ---@return table
-function Mesh2:transform(mesh, matrix)
+function Mesh2.uniformData(source, target)
+    local trg = target or source
 
-    local vs = mesh.vs
-    local vsLen = #vs
-    for i = 1, vsLen, 1 do
-        vs[i] = Utilities:mulMat3Vec2(matrix, vs[i])
+    local fsSrc = source.fs
+    local vsSrc = source.vs
+
+    local fsTrg = {}
+    local vsTrg = {}
+
+    local k = 1
+    local fsSrcLen = #fsSrc
+    for i = 1, fsSrcLen, 1 do
+        local fSrc = fsSrc[i]
+        local fSrcLen = #fSrc
+        for j = 1, fSrcLen, 1 do
+            local vertSrc = fSrc[j]
+            local vSrc = vsSrc[vertSrc]
+            local vTrg = Vec2:new(vSrc.x, vSrc.y)
+            table.insert(vsTrg, vTrg)
+            table.insert(fsTrg, k)
+            k = k + 1
+        end
     end
-    return mesh
+
+    trg.fs = fsTrg
+    trg.vs = vsTrg
+    return trg
 end
 
 return Mesh2
