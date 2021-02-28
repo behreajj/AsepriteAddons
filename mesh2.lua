@@ -143,6 +143,8 @@ function Mesh2.gridCartesian(cols, rows)
     end
 
     -- Combine horizontal and vertical.
+    -- TODO: Could make this more efficient
+    -- by starting at 1 not 0?
     local vs = {}
     for i = 0, rval, 1 do
         for j = 0, cval, 1 do
@@ -163,13 +165,11 @@ function Mesh2.gridCartesian(cols, rows)
             local n11 = n01 + 1
 
             -- Create face loop.
-            local f = {}
-
-            -- Insert vertices into loop.
-            table.insert(f, 1 + n00)
-            table.insert(f, 1 + n10)
-            table.insert(f, 1 + n11)
-            table.insert(f, 1 + n01)
+            local f = {
+                1 + n00,
+                1 + n10,
+                1 + n11,
+                1 + n01 }
 
             -- Insert face loop into faces.
             table.insert(fs, f)
@@ -179,7 +179,7 @@ function Mesh2.gridCartesian(cols, rows)
     return Mesh2.new(fs, vs, "Grid")
 end
 
----Creates a grid of rhombi
+---Creates a grid of rhombi.
 ---@param cols integer columns
 ---@param rows integer rows
 ---@return table
@@ -197,6 +197,59 @@ function Mesh2.gridDimetric(cols, rows)
         0.25, 0.25, 0.0,
         0.0, 0.0, 1.0)
     return mesh:transform(mat)
+end
+
+---Creates a grid of hexagons in rings around
+---a central cell.
+---@param rings integer
+---@return table
+function Mesh2.gridHex(rings)
+    local vRings = 1
+    if rings > 1 then vRings = rings end
+    local vRad = 0.5
+    local extent = vRad * 1.7320508075688772
+    local halfExt = extent * 0.5
+    local rad15 = vRad * 1.5
+    local radrt32 = vRad * 0.8660254037844386
+    local halfRad = vRad * 0.5
+
+    local iMax = vRings - 1
+    local iMin = -iMax
+
+    local fs = {}
+    local vs = {}
+    local vIdx = 1
+    for i = iMin, iMax, 1 do
+        local jMin = math.max(iMin, iMin - i)
+        local jMax = math.min(iMax, iMax - i)
+        local iExt = i * extent
+
+        for j = jMin, jMax, 1 do
+            local x = iExt + j * halfExt
+            local y = j * rad15
+
+            local left = x - radrt32
+            local right = x + radrt32
+            local top = y + halfRad
+            local bottom = y - halfRad
+
+            table.insert(vs, Vec2.new(x, y + vRad))
+            table.insert(vs, Vec2.new(left, top))
+            table.insert(vs, Vec2.new(left, bottom))
+            table.insert(vs, Vec2.new(x, y - vRad))
+            table.insert(vs, Vec2.new(right, bottom))
+            table.insert(vs, Vec2.new(right, top))
+
+            local f = {
+                vIdx    , vIdx + 1, vIdx + 2,
+                vIdx + 3, vIdx + 4, vIdx + 5 }
+            table.insert(fs, f)
+
+            vIdx = vIdx + 6
+        end
+    end
+
+    return Mesh2.new(fs, vs, "Grid")
 end
 
 ---Creates a regular convex polygon

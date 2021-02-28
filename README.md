@@ -23,11 +23,11 @@ Two hyphens, `--`, designate a single line comment. There are no shortcuts for d
 
 `boolean`s (not `bool`s) are `false` or `true` (lower case).
 
-Inequality is signified with `~=` (not `!=`).
+Inequality is signified with `~=` (not `!=`). Unary not and bitwise not are the same, `~`.
 
-The `^` operator is for exponentiation, e.g., `3 ^ 4` yields `81`.
+The `^` operator is for exponentiation. For example, `3.0 ^ 4.0` yields `81.0`. Bitwise xor, also, is symbolized by `^`. In cases where the expected result of `3 ^ 4` is `7`, remember that a naive definition of exclusive or is '_a_ or _b_ but not both,' `(a | b) & ~(a & b)`.
 
-The `//` is for floor division, e.g., `5 // 2` yields `2`.
+The `//` is for floor division. For example, `5 // 2` yields `2`. Floor division and integer division are not the same, as can be more easily seen with negative operands: `-5 // 2` is `-3`.
 
 The `#` operator finds the length of a `table`.
 

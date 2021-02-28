@@ -12,8 +12,7 @@ local defaults = {
     useStroke = true,
     strokeWeight = 1,
     strokeClr = Color(32, 32, 32, 255),
-    fillClr = Color(255, 245, 215, 255)
-}
+    fillClr = Color(255, 245, 215, 255)}
 
 local dlg = Dialog{
     title="Convex Polygon"}

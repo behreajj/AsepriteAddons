@@ -3,8 +3,7 @@ dofile("./mesh2.lua")
 dofile("./aseutilities.lua")
 
 local defaults = {
-    cols = 8,
-    rows = 8,
+    rings = 4,
     scale = 32,
     xOrigin = 0,
     yOrigin = 0,
@@ -16,21 +15,14 @@ local defaults = {
     fillClr = Color(255, 245, 215, 255)}
 
 local dlg = Dialog{
-    title="Dimetric Grid"}
+    title="Hexagon Grid"}
 
 dlg:slider{
-    id="cols",
-    label="Columns: ",
-    min=2,
+    id="rings",
+    label="Rings: ",
+    min=1,
     max=32,
-    value=defaults.cols}
-
-dlg:slider{
-    id="rows",
-    label="Rows: ",
-    min=2,
-    max=32,
-    value=defaults.rows}
+    value=defaults.rings}
 
 dlg:number{
     id="scale",
@@ -91,9 +83,7 @@ dlg:button{
 
     local args = dlg.data
 
-    local mesh = Mesh2.gridDimetric(
-        args.cols,
-        args.rows)
+    local mesh = Mesh2.gridHex(args.rings)
 
     local sclval = args.scale
     if sclval < 2.0 then
@@ -105,7 +95,6 @@ dlg:button{
     local mrgval = args.margin * 0.01
     if mrgval > 0.0 then
         mrgval = math.min(mrgval, 0.99)
-        Mesh2.uniformData(mesh, mesh)
         mesh:scaleFacesIndiv(1.0 - mrgval)
     end
 
@@ -119,7 +108,7 @@ dlg:button{
     local brsh = Brush(args.strokeWeight)
     local sprite = app.activeSprite
     local layer = sprite:newLayer()
-    layer.name = "Dimetric Grid"
+    layer.name = "Hexagon Grid"
     local cel = sprite:newCel(layer, 1)
 
     AseUtilities.drawMesh(
