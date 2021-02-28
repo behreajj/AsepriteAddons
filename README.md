@@ -66,18 +66,62 @@ end
 
 `elseif` (not `elif`) is one word. Conditions are followed by `then`. The entire block concludes with `end`.
 
-For custom classes, methods called with `:` pass `self` as the first parameter implicitly, while methods called with `.` do not. I use it to distinguish instance methods from static methods. If you're encountering a `nil` error at a method call, double-check for this error. See discussion [here](https://stackoverflow.com/questions/3779671/why-cant-i-use-setunion-instead-of-set-union).
+For [object oriented](http://lua-users.org/wiki/ObjectOrientationTutorial) programming, I follow the template below.
+
+```lua
+Vec2 = {}
+Vec2.__index = Vec2
+
+-- Allow Vec2(3, 4) syntax without new.
+setmetatable(Vec2, {
+    __call = function (cls, ...)
+        return cls.new(...)
+    end})
+
+function Vec2.new(x, y)
+    local inst = {}
+    setmetatable(inst, Vec2)
+    inst.x = x or 0.0
+    inst.y = y or inst.x
+    return inst
+end
+
+-- Define metamethods (:__)
+-- Define instance methods (:)
+-- Define static methods (.)
+
+return Vec2
+```
+
+Methods called with `:` pass `self` as the first parameter implicitly, while methods called with `.` do not. I use colons to distinguish instance methods from static methods. If you see a `nil` error at a method call, check for this error. See discussion [here](https://stackoverflow.com/questions/3779671/why-cant-i-use-setunion-instead-of-set-union).
+
+Metamethods allow for operator overloading:
+
+| Operator | Metamethod |
+| :------: | :--------- |
+|   `+`    | `__add`    |
+|   `/`    | `__div`    |
+|   `==`   | `__eq`     |
+|   `//`   | `__idiv`   |
+|   `<=`   | `__le`     |
+|   `#`    | `__len`    |
+|   `<`    | `__lt`     |
+|   `%`    | `__mod`    |
+|   `*`    | `__mul`    |
+|   `^`    | `__pow`    |
+|   `-`    | `__sub`    |
+|   `-`    | `__unm`    |
+
+Metamethods are preceded by two underscores. The operators `>` and `>=` are inferred from `<` (`__lt`) and `<=` (`__le`).
 
 ### Aseprite
 
 `require("myclass")` is [not supported](https://community.aseprite.org/t/can-you-import-lua-libraries-from-a-script-solved/3528) in Aseprite; instead use `dofile("./myclass.lua")`.
 
-As in Processing, working with colors in bulk involves packing and unpacking integers. To print an integer as hex, use `string.format("%x", 0xaabbccdd)`.
+As in Processing, working with colors in bulk involves packing and unpacking integers. Color integer channels are ordered ABGR. Given four numbers in the range [0, 255], the packed integer would arise from `ca << 0x18 | cb << 0x10 | cg << 0x8 | cr`. To unpack, use `ca = (c >> 0x18) & 0xff` and so on. To print an integer as hex, use `string.format("%x", 0xaabbccdd)`.
 
-Color integer channels are ordered ABGR. Given four numbers in the range [0, 255], the packed integer would arise from `ca << 0x18 | cb << 0x10 | cg << 0x8 | cr`. To unpack, use `ca = (c >> 0x18) & 0xff` and so on.
-
-For certain API classes, more information can be gleened from the source code:
+For certain API classes, more information can be gleened directly from the source code than from the docs:
  - [Color](https://github.com/aseprite/aseprite/blob/6c4621a26a2acf70e184aa247a5cd40be2e652ef/src/app/script/color_class.cpp)
  - [Point](https://github.com/aseprite/aseprite/blob/6c4621a26a2acf70e184aa247a5cd40be2e652ef/src/app/script/point_class.cpp)
 
-HSV color is in the range [0.0, 360.0] for hue, [0.0, 1.0] for saturation, [0.0, 1.0] for value.
+HSV color is in the range [0.0, 360.0] for hue, [0.0, 1.0] for saturation, [0.0, 1.0] for value. RGBA color is in [0, 255].

@@ -5,13 +5,18 @@ dofile("./utilities.lua")
 Mesh2 = {}
 Mesh2.__index = Mesh2
 
+setmetatable(Mesh2, {
+    __call = function (cls, ...)
+        return cls.new(...)
+    end})
+
 ---Constructs a 2D mesh with a variable
 ---number of vertices per face.
 ---@param fs table faces
 ---@param vs table coordinates
 ---@param name string name
 ---@return table
-function Mesh2:new(fs, vs, name)
+function Mesh2.new(fs, vs, name)
     local inst = {}
     setmetatable(inst, Mesh2)
     inst.fs = fs or {}
@@ -71,7 +76,7 @@ function Mesh2:scaleFacesIndiv(scale)
         local fLen = #f
 
         -- Find center.
-        local center = Vec2:new(0.0, 0.0)
+        local center = Vec2.new(0.0, 0.0)
         for j = 1, fLen, 1 do
             local vert = f[j]
             local v = self.vs[vert]
@@ -108,8 +113,8 @@ function Mesh2:transform(matrix)
 end
 
 ---Creates a grid of rectangles.
----@param cols number columns
----@param rows number rows
+---@param cols integer columns
+---@param rows integer rows
 ---@return table
 function Mesh2.gridCartesian(cols, rows)
 
@@ -141,7 +146,7 @@ function Mesh2.gridCartesian(cols, rows)
     local vs = {}
     for i = 0, rval, 1 do
         for j = 0, cval, 1 do
-            local v = Vec2:new(xs[1 + j], ys[1 + i])
+            local v = Vec2.new(xs[1 + j], ys[1 + i])
             table.insert(vs, v)
         end
     end
@@ -171,23 +176,23 @@ function Mesh2.gridCartesian(cols, rows)
         end
     end
 
-    return Mesh2:new(fs, vs, "Grid")
+    return Mesh2.new(fs, vs, "Grid")
 end
 
 ---Creates a grid of rhombi
----@param cols number columns
----@param rows number rows
+---@param cols integer columns
+---@param rows integer rows
 ---@return table
 function Mesh2.gridDimetric(cols, rows)
     local mesh = Mesh2.gridCartesian(cols, rows)
 
-    -- local r = Mat3:fromRotZ(math.rad(45))
-    -- local s = Mat3:fromScale(
+    -- local r = Mat3.fromRotZ(math.rad(45))
+    -- local s = Mat3.fromScale(
     --     1.0 / math.sqrt(2.0),
     --     0.5 / math.sqrt(2.0))
-    -- local m = Mat3:mul(s, r)
+    -- local m = Mat3.mul(s, r)
 
-    local mat = Mat3:new(
+    local mat = Mat3.new(
         0.5, -0.5, 0.0,
         0.25, 0.25, 0.0,
         0.0, 0.0, 1.0)
@@ -195,10 +200,9 @@ function Mesh2.gridDimetric(cols, rows)
 end
 
 ---Creates a regular convex polygon
----@param sectors number sides
+---@param sectors integer sides
 ---@return table
 function Mesh2.polygon(sectors)
-    -- TODO: Test
     local vsect = 3
     if sectors > 3 then vsect = sectors end
     local toTheta = 6.283185307179586 / vsect
@@ -206,7 +210,7 @@ function Mesh2.polygon(sectors)
     local f = {}
     for i = 0, vsect - 1, 1 do
         local theta = i * toTheta
-        local v = Vec2:new(
+        local v = Vec2.new(
             0.5 * math.cos(theta),
             0.5 * math.sin(theta))
         table.insert(vs, v)
@@ -227,7 +231,7 @@ function Mesh2.polygon(sectors)
         name = "Octagon"
     end
 
-    return Mesh2:new(fs, vs, name)
+    return Mesh2.new(fs, vs, name)
 end
 
 ---Restructures the mesh so that each face index
@@ -254,7 +258,7 @@ function Mesh2.uniformData(source, target)
         for j = 1, fSrcLen, 1 do
             local vertSrc = fSrc[j]
             local vSrc = vsSrc[vertSrc]
-            local vTrg = Vec2:new(vSrc.x, vSrc.y)
+            local vTrg = Vec2.new(vSrc.x, vSrc.y)
             table.insert(vsTrg, vTrg)
             table.insert(fTrg, k)
             k = k + 1

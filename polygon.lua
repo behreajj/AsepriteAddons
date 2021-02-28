@@ -1,3 +1,7 @@
+dofile("./mat3.lua")
+dofile("./mesh2.lua")
+dofile("./aseutilities.lua")
+
 local defaults = {
     sides = 6,
     angle = -90,
@@ -31,30 +35,20 @@ dlg:slider{
 dlg:number{
     id="scale",
     label="Scale: ",
-    text=string.format("%.2f", defaults.scale),
+    text=string.format("%.1f", defaults.scale),
     decimals=5}
 
 dlg:number{
     id="xOrigin",
     label="Origin X: ",
-    text=string.format("%.2f", defaults.xOrigin),
+    text=string.format("%.1f", defaults.xOrigin),
     decimals=5}
 
 dlg:number{
     id="yOrigin",
     label="Origin Y: ",
-    text=string.format("%.2f", defaults.yOrigin),
+    text=string.format("%.1f", defaults.yOrigin),
     decimals=5}
-
-dlg:check{
-    id="useFill",
-    label="Use Fill: ",
-    selected=defaults.useFill}
-
-dlg:color{
-    id="fillClr",
-    label="Fill Color: ",
-    color=defaults.fillClr}
 
 dlg:check{
     id="useStroke",
@@ -73,82 +67,53 @@ dlg:color{
     label="Stroke Color: ",
     color=defaults.strokeClr}
 
+dlg:check{
+    id="useFill",
+    label="Use Fill: ",
+    selected=defaults.useFill}
+
+dlg:color{
+    id="fillClr",
+    label="Fill Color: ",
+    color=defaults.fillClr}
+
 dlg:button{
     id="ok",
     text="OK",
     onclick=function()
-        local args = dlg.data
 
-        local sides = args.sides
-        local scale = args.scale
-        local rads = math.rad(args.angle)
-        local xo = args.xOrigin
-        local yo = args.yOrigin
-        local pts = {}
+    local args = dlg.data
+    local mesh = Mesh2.polygon(args.sides)
 
-        local toTheta = 6.283185307179586 / sides
-        for i = 0, sides - 1, 1 do
-            local theta = rads + i * toTheta
-            -- print(theta)
-            local pt = Point(
-                xo + math.cos(theta) * scale,
-                yo + math.sin(theta) * scale)
-            -- print(pt)
-            table.insert(pts, pt)
-        end
+    local sclval = args.scale
+    if sclval < 2.0 then
+        sclval = 2.0
+    end
 
-        -- local brush = app.activeBrush
-        local brsh = Brush(args.strokeWeight)
+    local t = Mat3.fromTranslation(
+        args.xOrigin,
+        args.yOrigin)
+    local r = Mat3.fromRotZ(math.rad(args.angle))
+    local s = Mat3.fromScale(sclval)
+    local mat = t * r * s
+    mesh:transform(mat)
 
-        local sprite = app.activeSprite
-        local layer = sprite:newLayer()
-        local cel = sprite:newCel(layer, 1)
+    local brsh = Brush(args.strokeWeight)
+    local sprite = app.activeSprite
+    local layer = sprite:newLayer()
+    layer.name = mesh.name
+    local cel = sprite:newCel(layer, 1)
 
-        layer.name = "Polygon"
-        if sides == 3 then
-            layer.name = "Triangle"
-        elseif sides == 4 then
-            layer.name = "Quadrilateral"
-        elseif sides == 5 then
-            layer.name = "Pentagon"
-        elseif sides == 6 then
-            layer.name = "Hexagon"
-        elseif sides == 7 then
-            layer.name = "Heptagon"
-        elseif sides == 8 then
-            layer.name = "Octagon"
-        elseif sides == 9 then
-            layer.name = "Nonagon"
-        end
+    AseUtilities.drawMesh(
+        mesh,
+        args.useFill,
+        args.fillClr,
+        args.useStroke,
+        args.strokeClr,
+        brsh,
+        cel,
+        layer)
 
-        if args.useFill then
-            app.useTool{
-                tool="contour",
-                color=args.fillClr,
-                brush=brsh,
-                points=pts,
-                cel=cel,
-                contiguous=true,
-                layer=layer}
-        end
-
-        if args.useStroke then
-            local ptsLen = #pts
-            local prev = pts[ptsLen]
-            for i = 1, ptsLen, 1 do
-                local curr = pts[i]
-                app.useTool{
-                    tool="line",
-                    color=args.strokeClr,
-                    brush=brsh,
-                    points={prev, curr},
-                    cel=cel,
-                    layer=layer}
-                prev = curr
-            end
-        end
-
-        app.refresh()
     end}
 
 dlg:button{

@@ -1,6 +1,11 @@
 Mat3 = {}
 Mat3.__index = Mat3
 
+setmetatable(Mat3, {
+    __call = function (cls, ...)
+        return cls.new(...)
+    end})
+
 ---Constructs a row major 3x3 matrix from numbers.
 ---Intended for use as a 2D affine transform.
 ---@param m00 number row 0, col 0 right x
@@ -13,7 +18,7 @@ Mat3.__index = Mat3
 ---@param m21 number row 2, col 1 forward z
 ---@param m22 number row 2, col 2 translation z
 ---@return table
-function Mat3:new(
+function Mat3.new(
     m00, m01, m02,
     m10, m11, m12,
     m20, m21, m22)
@@ -74,7 +79,7 @@ end
 ---@param b table right operand
 ---@return table
 function Mat3.add(a, b)
-    return Mat3:new(
+    return Mat3.new(
         a.m00 + b.m00, a.m01 + b.m01, a.m02 + b.m02,
         a.m10 + b.m10, a.m11 + b.m11, a.m12 + b.m12,
         a.m20 + b.m20, a.m21 + b.m21, a.m22 + b.m22)
@@ -130,7 +135,7 @@ end
 ---@param sina number sine of the angle
 ---@return table
 function Mat3.fromRotZInternal(cosa, sina)
-    return Mat3:new(
+    return Mat3.new(
         cosa, -sina, 0.0,
         sina,  cosa, 0.0,
          0.0,   0.0, 1.0)
@@ -151,7 +156,7 @@ function Mat3.fromScale(width, depth)
         d = depth
     end
 
-    return Mat3:new(
+    return Mat3.new(
           w, 0.0, 0.0,
         0.0,   d, 0.0,
         0.0, 0.0, 1.0)
@@ -162,7 +167,7 @@ end
 ---@param y number y
 ---@return table
 function Mat3.fromTranslation(x, y)
-    return Mat3:new(
+    return Mat3.new(
         1.0, 0.0,   x,
         0.0, 1.0,   y,
         0.0, 0.0, 1.0)
@@ -179,7 +184,7 @@ function Mat3.inverse(a)
     local det = a.m00 * b01 + a.m01 * b11 + a.m02 * b21
     if det ~= 0.0 then
         local detInv = 1.0 / det
-        return Mat3:new(
+        return Mat3.new(
             b01 * detInv,
             (a.m02 * a.m21 - a.m22 * a.m01) * detInv,
             (a.m12 * a.m01 - a.m02 * a.m11) * detInv,
@@ -190,7 +195,7 @@ function Mat3.inverse(a)
             (a.m01 * a.m20 - a.m21 * a.m00) * detInv,
             (a.m11 * a.m00 - a.m01 * a.m10) * detInv)
     else
-        return Mat3:new(
+        return Mat3.new(
             1.0, 0.0, 0.0,
             0.0, 1.0, 0.0,
             0.0, 0.0, 1.0)
@@ -202,7 +207,7 @@ end
 ---@param b table right operand
 ---@return table
 function Mat3.mul(a, b)
-    return Mat3:new(
+    return Mat3.new(
         a.m00 * b.m00 + a.m01 * b.m10 + a.m02 * b.m20,
         a.m00 * b.m01 + a.m01 * b.m11 + a.m02 * b.m21,
         a.m00 * b.m02 + a.m01 * b.m12 + a.m02 * b.m22,
@@ -218,7 +223,7 @@ end
 ---@param a table matrix
 ---@return table
 function Mat3.negate(a)
-    return Mat3:new(
+    return Mat3.new(
         -a.m00, -a.m01, -a.m02,
         -a.m10, -a.m11, -a.m12,
         -a.m20, -a.m21, -a.m22)
@@ -229,7 +234,7 @@ end
 ---@param b table right operand
 ---@return table
 function Mat3.sub(a, b)
-    return Mat3:new(
+    return Mat3.new(
         a.m00 - b.m00, a.m01 - b.m01, a.m02 - b.m02,
         a.m10 - b.m10, a.m11 - b.m11, a.m12 - b.m12,
         a.m20 - b.m20, a.m21 - b.m21, a.m22 - b.m22)
@@ -239,7 +244,7 @@ end
 ---@param a table matrix
 ---@return table
 function Mat3.transpose(a)
-    return Mat3:new(
+    return Mat3.new(
             a.m00, a.m10, a.m20,
             a.m01, a.m11, a.m21,
             a.m02, a.m12, a.m22)
