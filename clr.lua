@@ -80,7 +80,7 @@ function Clr.any(a)
     return a.a > 0.0
 end
 
----Finds the bitwise and for two colors.
+---Finds the bitwise and (&) for two colors.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -88,14 +88,14 @@ function Clr.bitAnd(a, b)
     return Clr.fromHex(Clr.toHex(a) & Clr.toHex(b))
 end
 
----Finds the bitwise not for a color.
+---Finds the bitwise not (~) for a color.
 ---@param a table left operand
 ---@return table
 function Clr.bitNot(a)
     return Clr.fromHex(~Clr.toHex(a))
 end
 
----Finds the bitwise inclusive or for two colors.
+---Finds the bitwise inclusive or (|) for two colors.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -103,7 +103,7 @@ function Clr.bitOr(a, b)
     return Clr.fromHex(Clr.toHex(a) | Clr.toHex(b))
 end
 
----Shifts a color left by a number of places.
+---Shifts a color left (<<) by a number of places.
 ---@param a table left operand
 ---@param places integer shift
 ---@return table
@@ -112,7 +112,7 @@ function Clr.bitShiftLeft(a, places)
     return Clr.fromHex(Clr.toHex(a) << p)
 end
 
----Shifts a color right by a number of places.
+---Shifts a color right (>>) by a number of places.
 ---@param a table left operand
 ---@param places integer shift
 ---@return table
@@ -121,14 +121,12 @@ function Clr.bitShiftRight(a, places)
     return Clr.fromHex(Clr.toHex(a) >> p)
 end
 
----Finds the bitwise exclusive or for two colors.
+---Finds the bitwise exclusive or (~) for two colors.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
 function Clr.bitXor(a, b)
-    local x = Clr.toHex(a)
-    local y = Clr.toHex(b)
-    return Clr.fromHex((x | y) & ~(x & y))
+    return Clr.fromHex(Clr.toHex(a) ~ Clr.toHex(b))
 end
 
 ---Clamps a color to a lower and upper bound

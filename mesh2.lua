@@ -66,6 +66,10 @@ end
 ---@return table
 function Mesh2:scaleFacesIndiv(scale)
 
+    -- TODO: Allow for nonuniform scaling!
+    -- Deal with cases like a 2x1 square
+    -- where inset amt would be greater.
+
     -- Validate that scale is non-zero.
     local vscl = 1.0
     if scale ~= 0.0 then vscl = scale end
@@ -205,7 +209,6 @@ function Mesh2.arc(
         table.insert(fs, f)
 
     end
-
 
     return Mesh2.new(fs, vs, "Grid")
 end
