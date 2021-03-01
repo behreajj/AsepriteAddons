@@ -112,6 +112,104 @@ function Mesh2:transform(matrix)
     return self
 end
 
+---Creates an arc. Start and stop weights
+---specify the inset of an oculus.
+---Sectors specifies the number of sides
+---to approximate a full circle.
+---@param startAngle number start angle
+---@param stopAngle number stop angle
+---@param startWeight number start weight
+---@param stopWeight number stop weight
+---@param sectors integer sectors
+---@param useQuads boolean use quads
+---@return table
+function Mesh2.arc(
+    startAngle,
+    stopAngle,
+    startWeight,
+    stopWeight,
+    sectors,
+    useQuads)
+
+    local a = startAngle % 6.283185307179586
+    local b = stopAngle % 6.283185307179586
+    local arcLen = (b - a) % 6.283185307179586
+    local c = a + arcLen
+
+    -- If arc len is less than TAU / 720
+    if arcLen < 0.00873 then
+        target = Mesh2.polygon(sectors)
+        -- TODO: Inset face, delete faces
+        return target
+    end
+
+    local sctVal = math.max(3, sectors)
+    local sctCount = math.ceil(1.0 + sctVal *
+        arcLen * 0.15915494309189535)
+    local sctCount2 = sctCount + sctCount
+
+    local radius = 0.5
+    local oculFac0 = math.min(math.max(startWeight,
+        0.000001), 0.999999)
+    local oculFac1 = math.min(math.max(stopWeight,
+        0.000001), 0.999999)
+    local oculRad0 = radius * (1.0 - oculFac0)
+    local oculRad1 = radius * (1.0 - oculFac1)
+
+    local vs = {}
+    local fs = {}
+
+    local toStep = 1.0 / (sctCount - 1.0)
+    for i = 0, sctCount - 1, 1 do
+        local t = i * toStep
+        local u = 1.0 - t
+
+        local oculRad = u * oculRad0 + t * oculRad1
+
+        local theta = u * a + t * c
+        local cosTheta = math.cos(theta)
+        local sinTheta = math.sin(theta)
+
+        table.insert(vs, Vec2.new(
+            cosTheta * radius,
+            sinTheta * radius))
+
+        table.insert(vs, Vec2.new(
+            cosTheta * oculRad,
+            sinTheta * oculRad))
+    end
+
+    if useQuads then
+
+        for k = 0, sctCount - 2, 1 do
+            local i = k * 2
+            local j = 1 + k * 2
+            local m = i + 2
+            local n = j + 2
+            local f = {
+                1 + i,
+                1 + m,
+                1 + n,
+                1 + j }
+            table.insert(fs, f)
+        end
+
+    else
+
+        local f = {}
+        for i = 0, sctCount - 1, 1 do
+            local j = i * 2
+            f[1 + i] = 1 + j
+            f[1 + sctCount + i] = 1 + (sctCount2 - 1) - j
+        end
+        table.insert(fs, f)
+
+    end
+
+
+    return Mesh2.new(fs, vs, "Grid")
+end
+
 ---Creates a grid of rectangles.
 ---@param cols integer columns
 ---@param rows integer rows
@@ -190,7 +288,7 @@ function Mesh2.gridDimetric(cols, rows)
     -- local s = Mat3.fromScale(
     --     1.0 / math.sqrt(2.0),
     --     0.5 / math.sqrt(2.0))
-    -- local m = Mat3.mul(s, r)
+    -- local mat = Mat3.mul(s, r)
 
     local mat = Mat3.new(
         0.5, -0.5, 0.0,
@@ -258,15 +356,15 @@ end
 function Mesh2.polygon(sectors)
     local vsect = 3
     if sectors > 3 then vsect = sectors end
+    local radius = 0.5
     local toTheta = 6.283185307179586 / vsect
     local vs = {}
     local f = {}
     for i = 0, vsect - 1, 1 do
         local theta = i * toTheta
-        local v = Vec2.new(
-            0.5 * math.cos(theta),
-            0.5 * math.sin(theta))
-        table.insert(vs, v)
+        table.insert(vs, Vec2.new(
+            radius * math.cos(theta),
+            radius * math.sin(theta)))
         table.insert(f, 1 + i)
     end
     local fs = { f }

@@ -87,6 +87,7 @@ dlg:color{
 dlg:button{
     id="ok",
     text="OK",
+    focus=true,
     onclick=function()
 
     local args = dlg.data

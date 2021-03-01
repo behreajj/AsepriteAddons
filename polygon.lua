@@ -4,7 +4,7 @@ dofile("./aseutilities.lua")
 
 local defaults = {
     sides = 6,
-    angle = -90,
+    angle = 90,
     scale = 32,
     xOrigin = 0,
     yOrigin = 0,
@@ -79,6 +79,7 @@ dlg:color{
 dlg:button{
     id="ok",
     text="OK",
+    focus=true,
     onclick=function()
 
     local args = dlg.data
@@ -93,7 +94,7 @@ dlg:button{
         args.xOrigin,
         args.yOrigin)
     local r = Mat3.fromRotZ(math.rad(args.angle))
-    local s = Mat3.fromScale(sclval)
+    local s = Mat3.fromScale(sclval, -sclval)
     local mat = t * r * s
     mesh:transform(mat)
 

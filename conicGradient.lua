@@ -15,8 +15,8 @@ local defaults = {
     yOrigin = 0,
     angle = 90,
     cw = false,
-    aColor = Color(255, 245, 215, 255),
-    bColor = Color(32, 32, 32, 255),
+    aColor = Color(32, 32, 32, 255),
+    bColor = Color(255, 245, 215, 255),
     easingMode = "RGB",
     easingFuncRGB = "LINEAR",
     easingFuncHSV = "NEAR"
@@ -297,8 +297,8 @@ dlg:slider{
 dlg:slider{
     id="angle",
     label="Angle:",
-    min=-180,
-    max=180,
+    min=0,
+    max=360,
     value=defaults.angle}
 
 dlg:check{
@@ -338,6 +338,7 @@ dlg:combobox{
 dlg:button{
     id="ok",
     text="OK",
+    focus=true,
     onclick=function()
         local args = dlg.data
 
@@ -359,6 +360,13 @@ dlg:button{
             easingFunc)
 
         app.refresh()
+    end}
+
+dlg:button{
+    id="cancel",
+    text="CANCEL",
+    onclick=function()
+        dlg:close()
     end}
 
 dlg:show{wait=false}

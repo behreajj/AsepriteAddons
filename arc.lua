@@ -3,26 +3,65 @@ dofile("./mesh2.lua")
 dofile("./aseutilities.lua")
 
 local defaults = {
-    rings = 4,
+    startAngle = 0,
+    stopAngle = 90,
+    startWeight = 50,
+    stopWeight = 50,
+    sectors = 32,
+    margin = 0,
     scale = 32,
     xOrigin = 0,
     yOrigin = 0,
-    margin = 0,
+    useFill = true,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = Color(128, 119, 102, 255),
-    useFill = true,
+    strokeClr = Color(32, 32, 32, 255),
     fillClr = Color(255, 245, 215, 255)}
 
 local dlg = Dialog{
-    title="Hexagon Grid"}
+    title="Arc"}
 
 dlg:slider{
-    id="rings",
-    label="Rings: ",
-    min=1,
+    id="startAngle",
+    label="Start Angle:",
+    min=0,
+    max=360,
+    value=defaults.startAngle}
+
+dlg:slider{
+    id="stopAngle",
+    label="Stop Angle:",
+    min=0,
+    max=360,
+    value=defaults.stopAngle}
+
+dlg:slider{
+    id="startWeight",
+    label="Start Weight:",
+    min=0,
+    max=100,
+    value=defaults.startWeight}
+
+dlg:slider{
+    id="stopWeight",
+    label="Stop Weight:",
+    min=0,
+    max=100,
+    value=defaults.stopWeight}
+
+dlg:slider{
+    id="sectors",
+    label="Sectors: ",
+    min=3,
     max=32,
-    value=defaults.rings}
+    value=defaults.sectors}
+
+dlg:slider{
+    id="margin",
+    label="Margin: ",
+    min=0,
+    max=100,
+    value=defaults.margin}
 
 dlg:number{
     id="scale",
@@ -41,13 +80,6 @@ dlg:number{
     label="Origin Y: ",
     text=string.format("%.1f", defaults.yOrigin),
     decimals=5}
-
-dlg:slider{
-    id="margin",
-    label="Margin: ",
-    min=0,
-    max=100,
-    value=defaults.margin}
 
 dlg:check{
     id="useStroke",
@@ -83,33 +115,38 @@ dlg:button{
     onclick=function()
 
     local args = dlg.data
-
-    local mesh = Mesh2.gridHex(args.rings)
+    local useQuads = args.margin > 0
+    local mesh = Mesh2.arc(
+        math.rad(args.startAngle),
+        math.rad(args.stopAngle),
+        0.01 * args.startWeight,
+        0.01 * args.stopWeight,
+        args.sectors,
+        useQuads)
 
     local sclval = args.scale
     if sclval < 2.0 then
         sclval = 2.0
     end
 
-    -- Convert margin from [0, 100] to [0.0, 1.0].
-    -- Ensure that it is less than 100%.
     local mrgval = args.margin * 0.01
     if mrgval > 0.0 then
         mrgval = math.min(mrgval, 0.99)
+        Mesh2.uniformData(mesh, mesh)
         mesh:scaleFacesIndiv(1.0 - mrgval)
     end
 
     local t = Mat3.fromTranslation(
         args.xOrigin,
         args.yOrigin)
-    local s = Mat3.fromScale(sclval)
-    local mat = Mat3.mul(t, s)
+    local s = Mat3.fromScale(sclval, -sclval)
+    local mat = t * s
     mesh:transform(mat)
 
     local brsh = Brush(args.strokeWeight)
     local sprite = app.activeSprite
     local layer = sprite:newLayer()
-    layer.name = "Hexagon Grid"
+    layer.name = mesh.name
     local cel = sprite:newCel(layer, 1)
 
     AseUtilities.drawMesh(
