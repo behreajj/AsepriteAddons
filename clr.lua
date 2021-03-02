@@ -27,12 +27,12 @@ function Clr:__band(b)
     return Clr.bitAnd(self, b)
 end
 
-function Clr:__bor(b)
-    return Clr.bitOr(self, b)
-end
-
 function Clr:__bnot()
     return Clr.bitNot(self)
+end
+
+function Clr:__bor(b)
+    return Clr.bitOr(self, b)
 end
 
 function Clr:__bxor(b)
@@ -103,22 +103,46 @@ function Clr.bitOr(a, b)
     return Clr.fromHex(Clr.toHex(a) | Clr.toHex(b))
 end
 
+---Rotates a color left by a number of places.
+---Use 8, 16, 24 for complete channel rotations.
+---@param a table left operand
+---@param places integer shift
+---@return table
+function Clr.bitRotateLeft(a, places)
+    local x = Clr.toHex(a)
+    return Clr.fromHex(
+        (x << places) |
+        (x >> (-places & 0x1f)))
+end
+
+---Rotates a color right by a number of places.
+---Use 8, 16, 24 for complete channel rotations.
+---@param a table left operand
+---@param places integer shift
+---@return table
+function Clr.bitRotateRight(a, places)
+    local x = Clr.toHex(a)
+    return Clr.fromHex(
+        (x >> places) |
+        (x << (-places & 0x1f)))
+end
+
 ---Shifts a color left (<<) by a number of places.
+---Use 8, 16, 24 for complete channel shifts.
 ---@param a table left operand
 ---@param places integer shift
 ---@return table
 function Clr.bitShiftLeft(a, places)
-    local p = places or 8
-    return Clr.fromHex(Clr.toHex(a) << p)
+    return Clr.fromHex(Clr.toHex(a) << places)
 end
 
 ---Shifts a color right (>>) by a number of places.
+---Use 8, 16, 24 for complete channel shifts.
 ---@param a table left operand
 ---@param places integer shift
 ---@return table
 function Clr.bitShiftRight(a, places)
-    local p = places or 8
-    return Clr.fromHex(Clr.toHex(a) >> p)
+    return Clr.fromHex(Clr.toHex(a) >> places)
 end
 
 ---Finds the bitwise exclusive or (~) for two colors.

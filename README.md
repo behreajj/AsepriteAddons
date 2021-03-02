@@ -19,21 +19,15 @@ For Lua scripting in general, see:
 
 Two hyphens, `--`, designate a single line comment. There are no shortcuts for decrementing or incrementing numbers by one (`++i`, `--i`).
 
+Lua is dynamically typed, like Python and JavaScript. The `type` method can be used to find a variable's type as a `string`.
+
 `nil`  (not `null`) is the unique, absent value.
 
 `boolean`s (not `bool`s) are `false` or `true` (lower case).
 
-Inequality is signified with `~=` (not `!=`). Unary not and bitwise not are the same, `~`.
+Inequality is signified with `~=` (not `!=`).
 
-The `^` operator is for exponentiation. For example, `3.0 ^ 4.0` yields `81.0`. Bitwise xor is symbolized by `~`.
-
-The `//` is for floor division. For example, `5 // 2` yields `2`. Floor division and integer division are not the same, as can be more easily seen with negative operands: `-5 // 2` is `-3`.
-
-The `#` operator finds the length of a `table`.
-
-`tables`, not arrays, are the fundamental collection in Lua. `tables` have borders and so care must be taken when using the length operator. See the reference [section 3.4.7](https://www.lua.org/manual/5.4/manual.html#3).
-
-The `%` operator designates [floor modulo](https://www.wikiwand.com/en/Modulo_operation). This is similar to Python; it is different from C#, Java and JavaScript.
+`tables`, not arrays, are the fundamental collection in Lua. `tables` have borders and so care must be taken when using the length operator, `#`. See the reference [section 3.4.7](https://www.lua.org/manual/5.4/manual.html#3).
 
 Multi-line `string`s are demarcated with double square brackets, for example, `[[The quick brown fox]]`. Strings are concatenated with `..`, for example, `"a" .. "b"` yields `"ab"`.
 
@@ -93,26 +87,51 @@ end
 return Vec2
 ```
 
-Methods called with `:` pass `self` as the first parameter implicitly, while methods called with `.` do not. I use colons to distinguish instance methods from static methods. If you see a `nil` error at a method call, check for this error. See discussion [here](https://stackoverflow.com/questions/3779671/why-cant-i-use-setunion-instead-of-set-union).
+Methods called with `:` implicitly pass `self` as the first parameter. Methods called with `.` do not. I use colons to distinguish instance methods from static methods. If you see a `nil` error at a method call, check for this error. See discussion [here](https://stackoverflow.com/questions/3779671/why-cant-i-use-setunion-instead-of-set-union).
 
-Metamethods allow for operator overloading:
+Metamethods allow for operator overloading. Bitwise operators are
+
+| Operator | Metamethod | Note                                                           |
+| :------: | :--------- | :------------------------------------------------------------- |
+|   `&`    | `__band`   | [AND gate](https://www.wikiwand.com/en/AND_gate).              |
+|   `~`    | `__bnot`   | [NOT gate](https://www.wikiwand.com/en/Inverter_(logic_gate)). |
+|   `\|`   | `__bor`    | [OR gate](https://www.wikiwand.com/en/OR_gate).                |
+|   `~`    | `__bxor`   | [XOR gate](https://www.wikiwand.com/en/XOR_gate).              |
+|   `<<`   | `__shl`    | Left bit shift.                                                |
+|   `>>`   | `__shr`    | Right bit shift.                                               |
+
+Comparison operators are
 
 | Operator | Metamethod |
 | :------: | :--------- |
-|   `+`    | `__add`    |
-|   `/`    | `__div`    |
 |   `==`   | `__eq`     |
-|   `//`   | `__idiv`   |
 |   `<=`   | `__le`     |
-|   `#`    | `__len`    |
 |   `<`    | `__lt`     |
-|   `%`    | `__mod`    |
-|   `*`    | `__mul`    |
-|   `^`    | `__pow`    |
-|   `-`    | `__sub`    |
-|   `-`    | `__unm`    |
 
-Metamethods are preceded by two underscores. The operators `>` and `>=` are inferred from `<` (`__lt`) and `<=` (`__le`).
+ The operators `>` and `>=` are inferred from `<` (`__lt`) and `<=` (`__le`).
+ 
+ Arithmetic operators are
+
+| Operator | Metamethod | Note                                                          |
+| :------: | :--------- | :------------------------------------------------------------ |
+|   `+`    | `__add`    |                                                               |
+|   `/`    | `__div`    |                                                               |
+|   `//`   | `__idiv`   | Floor division.                                               |
+|   `%`    | `__mod`    | [Floor modulo](https://www.wikiwand.com/en/Modulo_operation). |
+|   `*`    | `__mul`    |                                                               |
+|   `^`    | `__pow`    | Exponentiation.                                               |
+|   `-`    | `__sub`    |                                                               |
+|   `-`    | `__unm`    | Unary negation.                                               |
+
+Other operators are
+
+| Operator | Metamethod   |
+| :------: | :----------- |
+|   `..`   | `__concat`   |
+|   `#`    | `__len`      |
+|          | `__tostring` |
+
+Metamethods are preceded by two underscores.
 
 ### Aseprite
 

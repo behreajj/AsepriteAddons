@@ -25,6 +25,11 @@ function Mesh2.new(fs, vs, name)
     return inst
 end
 
+function Mesh2:__index(key)
+    -- TODO: Test
+    return self.fs[key]
+end
+
 function Mesh2:__len()
     return #self.fs
 end
