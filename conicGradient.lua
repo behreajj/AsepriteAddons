@@ -159,6 +159,8 @@ local function create_conic(
     local sprite = app.activeSprite
     local layer = sprite:newLayer()
     layer.name = "Gradient"
+
+    -- TODO: Redo this to acquire image from the cel?
     local cel = sprite:newCel(layer, 1)
 
     local shortEdge = math.min(w, h)
@@ -242,7 +244,7 @@ local function create_conic(
 
         -- Convert from array index to Cartesian coordinates.
         local xPoint = i % w
-        local yPoint = i / w
+        local yPoint = i // w
 
         -- Bring coordinates into range [0.0, 1.0].
         local xNorm = xPoint * wInv

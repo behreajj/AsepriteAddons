@@ -55,6 +55,31 @@ dlg:button{
         for i = 1, newLen, 1 do
             local cel = sprite:newCel(layer, sprite.frames[i])
             local theta = (i - 1) * toTheta
+
+            local pt = Point(
+                xCenter,
+                yCenter + scl * math.sin(theta))
+
+            app.useTool{
+                tool="pencil",
+                color=Color(0, 255, 0, 255),
+                brush=brsh,
+                points={pt},
+                cel=cel,
+                layer=layer}
+
+            local pt = Point(
+                xCenter + scl * math.cos(theta),
+                yCenter)
+
+            app.useTool{
+                tool="pencil",
+                color=Color(255, 0, 0, 255),
+                brush=brsh,
+                points={pt},
+                cel=cel,
+                layer=layer}
+
             local pt = Point(
                 xCenter + scl * math.cos(theta),
                 yCenter + scl * math.sin(theta))

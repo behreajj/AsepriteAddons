@@ -107,6 +107,9 @@ dlg:button{
     if mrgval > 0.0 then
         mrgval = math.min(mrgval, 0.99)
         Mesh2.uniformData(mesh, mesh)
+
+        -- TODO: Deal with cases like a 2x1 square
+        -- where inset amt would be greater.
         mesh:scaleFacesIndiv(1.0 - mrgval)
     end
 

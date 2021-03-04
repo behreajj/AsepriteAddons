@@ -43,54 +43,61 @@ function AseUtilities.drawMesh(
     local pts = {}
     for i = 1, vsLen, 1 do
         local v = vs[i]
-        -- local v = Vec2.round(vs[i])
         local pt = Point(v.x, v.y)
         table.insert(pts, pt)
     end
 
-    -- Loop over faces.
-    local fs = mesh.fs
-    local fsLen = #fs
-    for i = 1, fsLen, 1 do
-        local f = fs[i]
-        local fLen = #f
+    -- Group all drawing into a transaction
+    -- so it can be undone with one Ctrl+Z.
+    app.transaction( function()
 
-        -- Group points by face.
-        local ptsFace = {}
-        for j = 1, fLen, 1 do
-            local vert = f[j]
-            local pt = pts[vert]
-            table.insert(ptsFace, pt)
-        end
+        -- TODO: Regroup so that fill and stroke
+        -- can be undone separately?
 
-        -- Draw fill with contour tool.
-        if useFill then
-            app.useTool{
-                tool="contour",
-                color=fillClr,
-                brush=brsh,
-                points=ptsFace,
-                cel=cel,
-                contiguous=true,
-                layer=layer}
-        end
+        -- Loop over faces.
+        local fs = mesh.fs
+        local fsLen = #fs
+        for i = 1, fsLen, 1 do
+            local f = fs[i]
+            local fLen = #f
 
-        -- Draw stroke with line tool, per edge.
-        if useStroke then
-            local ptPrev = ptsFace[fLen]
+            -- Group points by face.
+            local ptsFace = {}
             for j = 1, fLen, 1 do
-                local ptCurr = ptsFace[j]
+                local vert = f[j]
+                local pt = pts[vert]
+                table.insert(ptsFace, pt)
+            end
+
+            -- Draw fill with contour tool.
+            if useFill then
                 app.useTool{
-                    tool="line",
-                    color=strokeClr,
+                    tool="contour",
+                    color=fillClr,
                     brush=brsh,
-                    points={ptPrev, ptCurr},
+                    points=ptsFace,
                     cel=cel,
+                    contiguous=true,
                     layer=layer}
-                ptPrev = ptCurr
+            end
+
+            -- Draw stroke with line tool, per edge.
+            if useStroke then
+                local ptPrev = ptsFace[fLen]
+                for j = 1, fLen, 1 do
+                    local ptCurr = ptsFace[j]
+                    app.useTool{
+                        tool="line",
+                        color=strokeClr,
+                        brush=brsh,
+                        points={ptPrev, ptCurr},
+                        cel=cel,
+                        layer=layer}
+                    ptPrev = ptCurr
+                end
             end
         end
-    end
+    end)
 
     app.refresh()
 end

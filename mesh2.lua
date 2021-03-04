@@ -25,11 +25,6 @@ function Mesh2.new(fs, vs, name)
     return inst
 end
 
-function Mesh2:__index(key)
-    -- TODO: Test
-    return self.fs[key]
-end
-
 function Mesh2:__len()
     return #self.fs
 end
@@ -71,13 +66,17 @@ end
 ---@return table
 function Mesh2:scaleFacesIndiv(scale)
 
-    -- TODO: Allow for nonuniform scaling!
-    -- Deal with cases like a 2x1 square
-    -- where inset amt would be greater.
-
     -- Validate that scale is non-zero.
-    local vscl = 1.0
-    if scale ~= 0.0 then vscl = scale end
+    local vscl = Vec2.new(1.0, 1.0)
+    if type(scale) == "number" then
+        if scale ~= 0.0 then
+            vscl = Vec2.new(scale, scale)
+        end
+    else
+        if Vec2.all(scale) then
+            vscl = scale
+        end
+    end
 
     local fsLen = #self.fs
     for i = 1, fsLen, 1 do
@@ -99,7 +98,7 @@ function Mesh2:scaleFacesIndiv(scale)
             local vert = f[j]
             local v = self.vs[vert]
             self.vs[vert] = Vec2.add(
-                Vec2.scale(Vec2.sub(v,
+                Vec2.mul(Vec2.sub(v,
                 center), vscl), center)
         end
     end
