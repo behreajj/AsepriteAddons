@@ -53,7 +53,7 @@ dlg:slider{
     id="sectors",
     label="Sectors: ",
     min=3,
-    max=32,
+    max=64,
     value=defaults.sectors}
 
 dlg:slider{

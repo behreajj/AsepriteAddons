@@ -9,9 +9,9 @@ setmetatable(Mat3, {
 ---Constructs a row major 3x3 matrix from numbers.
 ---Intended for use as a 2D affine transform.
 ---@param m00 number row 0, col 0 right x
----@param m01 number row 0, col 1 right y
+---@param m01 number row 0, col 1 forward x
 ---@param m02 number row 0, col 2 translation x
----@param m10 number row 1, col 0 forward x
+---@param m10 number row 1, col 0 right y
 ---@param m11 number row 1, col 1 forward y
 ---@param m12 number row 1, col 2 translation y
 ---@param m20 number row 2, col 0 right z

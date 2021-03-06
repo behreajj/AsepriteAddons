@@ -554,7 +554,7 @@ function Vec2.rotateZInternal(a, cosa, sina)
         cosa * a.y + sina * a.x)
 end
 
----Rounds the vector by sign and fraction.
+---Rounds a vector according to its sign.
 ---@param a table left operand
 ---@return table
 function Vec2.round(a)

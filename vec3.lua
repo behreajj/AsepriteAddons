@@ -147,6 +147,28 @@ function Vec3.approx(a, b, tol)
        and math.abs(b.z - a.z) <= eps
 end
 
+---Finds a vector's azimuth.
+---Defaults to the signed azimuth.
+---@param a table left operand
+---@return number
+function Vec3.azimuth(a)
+    return Vec3.azimuthSigned(a)
+end
+
+---Finds a vector's signed azimuth, in [-pi, pi].
+---@param a table left operand
+---@return number
+function Vec3.azimuthSigned(a)
+    return math.atan2(a.y, a.x)
+end
+
+---Finds a vector's unsigned azimuth, in [0.0, tau].
+---@param a table left operand
+---@return number
+function Vec3.azimuthSigned(a)
+    return math.atan2(a.y, a.x) % 6.283185307179586
+end
+
 ---Finds the ceiling of the vector.
 ---@param a table left operand
 ---@return table
@@ -265,6 +287,33 @@ function Vec3.fract(a)
         a.z - math.tointeger(a.z))
 end
 
+---Finds the vector's inclination.
+---Defaults to signed inclination.
+---@param a table left operand
+---@return number
+function Vec3.inclination(a)
+    return Vec3.inclinationSigned(a)
+end
+
+---Finds the vector's signed inclination.
+---@param a table left operand
+---@return number
+function Vec3.inclinationSigned(a)
+    local mSq = a.x * a.x + a.y * a.y + a.z * a.z
+    if mSq > 0.0 then
+        return math.asin(a.z / math.sqrt(mSq))
+    else
+        return 0.0
+    end
+end
+
+---Finds the vector's unsigned inclination.
+---@param a table left operand
+---@return number
+function Vec3.inclinationUnsigned(a)
+    return Vec3.inclinationSigned(a) % 6.283185307179586
+end
+
 ---Limits a vector's magnitude to a scalar.
 ---Returns a copy of the vector if it is beneath
 ---the limit.
@@ -280,7 +329,7 @@ function Vec3.limit(a, limit)
             a.y * mInv,
             a.z * mInv)
     end
-    return Vec3.new(a.x, a.y)
+    return Vec3.new(a.x, a.y, a.z)
 end
 
 ---Finds the linear step between a left and
@@ -491,8 +540,30 @@ function Vec3.rescale(a, b)
     return Vec3.new(0.0, 0.0, 0.0)
 end
 
----Rotates a vector by an angle in radians
----around the z axis.
+---Rotates a vector around the x axis by an angle
+---in radians.
+---@param a table left operand
+---@param radians number angle
+---@return table
+function Vec3.rotateX(a, radians)
+    return Vec3.rotateXInternal(a,
+        math.cos(radians),
+        math.sin(radians))
+end
+
+---Rotates a vector around the y axis by an angle
+---in radians.
+---@param a table left operand
+---@param radians number angle
+---@return table
+function Vec3.rotateY(a, radians)
+    return Vec3.rotateYInternal(a,
+        math.cos(radians),
+        math.sin(radians))
+end
+
+---Rotates a vector around the z axis by an angle
+---in radians.
 ---@param a table left operand
 ---@param radians number angle
 ---@return table
@@ -502,8 +573,37 @@ function Vec3.rotateZ(a, radians)
         math.sin(radians))
 end
 
----Rotates a vector by the cosine and sine of an angle.
----Used when rotating many vectors by the same angle.
+---Rotates a vector around the x axis by the cosine
+---and sine of an angle. Used when rotating many
+---vectors by the same angle.
+---@param a table left operand
+---@param cosa number cosine of the angle
+---@param sina number sine of the angle
+---@return table
+function Vec3.rotateXInternal(a, cosa, sina)
+    return Vec3.new(
+        a.x,
+        cosa * a.y - sina * a.z,
+        cosa * a.z + sina * a.y)
+end
+
+---Rotates a vector around the y axis by the cosine
+---and sine of an angle. Used when rotating many
+---vectors by the same angle.
+---@param a table left operand
+---@param cosa number cosine of the angle
+---@param sina number sine of the angle
+---@return table
+function Vec3.rotateYInternal(a, cosa, sina)
+    return Vec3.new(
+        cosa * a.x + sina * a.z,
+        a.y,
+        cosa * a.z - sina * a.x)
+end
+
+---Rotates a vector around the z axis by the cosine
+---and sine of an angle. Used when rotating many
+---vectors by the same angle.
 ---@param a table left operand
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle

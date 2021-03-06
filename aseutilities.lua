@@ -38,66 +38,67 @@ function AseUtilities.drawMesh(
     layer)
 
     -- Convert Vec2s to Points.
+    -- Round Vec2 for improved accuracy.
     local vs = mesh.vs
     local vsLen = #vs
     local pts = {}
     for i = 1, vsLen, 1 do
-        local v = vs[i]
-        local pt = Point(v.x, v.y)
-        table.insert(pts, pt)
+        -- local v = vs[i]
+        local v = Vec2.round(vs[i])
+        table.insert(pts, Point(v.x, v.y))
     end
 
-    -- Group all drawing into a transaction
-    -- so it can be undone with one Ctrl+Z.
-    app.transaction( function()
+    -- Group points by face.
+    local fs = mesh.fs
+    local fsLen = #fs
+    local ptsGrouped = {}
+    for i = 1, fsLen, 1 do
+        local f = fs[i]
+        local fLen = #f
+        local ptsFace = {}
+        for j = 1, fLen, 1 do
+            table.insert(ptsFace, pts[f[j]])
+        end
+        table.insert(ptsGrouped, ptsFace)
+    end
 
-        -- TODO: Regroup so that fill and stroke
-        -- can be undone separately?
-
-        -- Loop over faces.
-        local fs = mesh.fs
-        local fsLen = #fs
-        for i = 1, fsLen, 1 do
-            local f = fs[i]
-            local fLen = #f
-
-            -- Group points by face.
-            local ptsFace = {}
-            for j = 1, fLen, 1 do
-                local vert = f[j]
-                local pt = pts[vert]
-                table.insert(ptsFace, pt)
+    -- Group fills into one transaction.
+    if useFill then
+        app.transaction(function()
+            for i = 1, fsLen, 1 do
+                app.useTool {
+                    tool = "contour",
+                    color = fillClr,
+                    brush = brsh,
+                    points = ptsGrouped[i],
+                    cel = cel,
+                    layer = layer }
             end
+        end)
+    end
 
-            -- Draw fill with contour tool.
-            if useFill then
-                app.useTool{
-                    tool="contour",
-                    color=fillClr,
-                    brush=brsh,
-                    points=ptsFace,
-                    cel=cel,
-                    contiguous=true,
-                    layer=layer}
-            end
-
-            -- Draw stroke with line tool, per edge.
-            if useStroke then
-                local ptPrev = ptsFace[fLen]
-                for j = 1, fLen, 1 do
-                    local ptCurr = ptsFace[j]
-                    app.useTool{
-                        tool="line",
-                        color=strokeClr,
-                        brush=brsh,
-                        points={ptPrev, ptCurr},
-                        cel=cel,
-                        layer=layer}
+    -- Group strokes into one transaction.
+    -- Draw strokes line by line.
+    if useStroke then
+        app.transaction(function()
+            for i = 1, fsLen, 1 do
+                local ptGroup = ptsGrouped[i]
+                local ptgLen = #ptGroup
+                local ptPrev = ptGroup[ptgLen]
+                for j = 1, ptgLen, 1 do
+                    local ptCurr = ptGroup[j]
+                    app.useTool {
+                        tool = "line",
+                        color = strokeClr,
+                        brush = brsh,
+                        points = { ptPrev, ptCurr },
+                        cel = cel,
+                        layer = layer }
                     ptPrev = ptCurr
                 end
             end
-        end
-    end)
+        end)
+    end
 
     app.refresh()
 end
