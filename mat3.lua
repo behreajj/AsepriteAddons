@@ -162,6 +162,26 @@ function Mat3.fromScale(width, depth)
         0.0, 0.0, 1.0)
 end
 
+---Creates a skew matrix on the x axis.
+---@param radians number angle
+---@return table
+function Mat3.fromShearX(radians)
+    return Mat3.new(
+        1.0, math.tan(radians), 0.0,
+        0.0,               1.0, 0.0,
+        0.0,               0.0, 1.0)
+end
+
+---Creates a skew matrix on the y axis.
+---@param radians number angle
+---@return table
+function Mat3.fromShearY(radians)
+    return Mat3.new(
+                      1.0, 0.0, 0.0,
+        math.tan(radians), 1.0, 0.0,
+                      0.0, 0.0, 1.0)
+end
+
 ---Constructs a matrix from a translation.
 ---@param x number x
 ---@param y number y
@@ -245,9 +265,9 @@ end
 ---@return table
 function Mat3.transpose(a)
     return Mat3.new(
-            a.m00, a.m10, a.m20,
-            a.m01, a.m11, a.m21,
-            a.m02, a.m12, a.m22)
+        a.m00, a.m10, a.m20,
+        a.m01, a.m11, a.m21,
+        a.m02, a.m12, a.m22)
 end
 
 return Mat3

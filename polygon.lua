@@ -12,115 +12,129 @@ local defaults = {
     useStroke = true,
     strokeWeight = 1,
     strokeClr = Color(32, 32, 32, 255),
-    fillClr = Color(255, 245, 215, 255)}
+    fillClr = Color(255, 245, 215, 255)
+}
 
-local dlg = Dialog{
-    title="Convex Polygon"}
+local dlg = Dialog { title = "Convex Polygon" }
 
-dlg:slider{
-    id="sides",
-    label="Sides: ",
-    min=3,
-    max=16,
-    value=defaults.sides}
+dlg:slider {
+    id = "sides",
+    label = "Sides: ",
+    min = 3,
+    max = 16,
+    value = defaults.sides
+}
 
-dlg:slider{
-    id="angle",
-    label="Angle:",
-    min=-180,
-    max=180,
-    value=defaults.angle}
+dlg:slider {
+    id = "angle",
+    label = "Angle:",
+    min = -180,
+    max = 180,
+    value = defaults.angle
+}
 
-dlg:number{
-    id="scale",
-    label="Scale: ",
-    text=string.format("%.1f", defaults.scale),
-    decimals=5}
+dlg:number {
+    id = "scale",
+    label = "Scale: ",
+    text = string.format("%.1f", defaults.scale),
+    decimals = 5
+}
 
-dlg:number{
-    id="xOrigin",
-    label="Origin X: ",
-    text=string.format("%.1f", defaults.xOrigin),
-    decimals=5}
+dlg:number {
+    id = "xOrigin",
+    label = "Origin X: ",
+    text = string.format("%.1f", defaults.xOrigin),
+    decimals = 5
+}
 
-dlg:number{
-    id="yOrigin",
-    label="Origin Y: ",
-    text=string.format("%.1f", defaults.yOrigin),
-    decimals=5}
+dlg:number {
+    id = "yOrigin",
+    label = "Origin Y: ",
+    text = string.format("%.1f", defaults.yOrigin),
+    decimals = 5
+}
 
-dlg:check{
-    id="useStroke",
-    label="Use Stroke: ",
-    selected=defaults.useStroke}
+dlg:check {
+    id = "useStroke",
+    label = "Use Stroke: ",
+    selected = defaults.useStroke
+}
 
-dlg:slider{
-    id="strokeWeight",
-    label="Stroke Weight:",
-    min=1,
-    max=64,
-    value=defaults.strokeWeight}
+dlg:slider {
+    id = "strokeWeight",
+    label = "Stroke Weight:",
+    min = 1,
+    max = 64,
+    value = defaults.strokeWeight
+}
 
-dlg:color{
-    id="strokeClr",
-    label="Stroke Color: ",
-    color=defaults.strokeClr}
+dlg:color {
+    id = "strokeClr",
+    label = "Stroke Color: ",
+    color = defaults.strokeClr
+}
 
-dlg:check{
-    id="useFill",
-    label="Use Fill: ",
-    selected=defaults.useFill}
+dlg:check {
+    id = "useFill",
+    label = "Use Fill: ",
+    selected = defaults.useFill
+}
 
-dlg:color{
-    id="fillClr",
-    label="Fill Color: ",
-    color=defaults.fillClr}
+dlg:color {
+    id = "fillClr",
+    label = "Fill Color: ",
+    color = defaults.fillClr
+}
 
-dlg:button{
-    id="ok",
-    text="OK",
-    focus=true,
-    onclick=function()
+dlg:button {
+    id = "ok",
+    text = "OK",
+    focus = true,
+    onclick = function()
 
     local args = dlg.data
-    local mesh = Mesh2.polygon(args.sides)
+    if args.ok then
+        local mesh = Mesh2.polygon(args.sides)
 
-    local sclval = args.scale
-    if sclval < 2.0 then
-        sclval = 2.0
+        -- Translate, rotate then scale the mesh.
+        local t = Mat3.fromTranslation(
+            args.xOrigin,
+            args.yOrigin)
+        local r = Mat3.fromRotZ(math.rad(args.angle))
+        local sclval = args.scale
+        if sclval < 2.0 then sclval = 2.0 end
+        local s = Mat3.fromScale(sclval, sclval)
+        local mat = Mat3.mul(Mat3.mul(t, r), s)
+        mesh:transform(mat)
+
+        local sprite = app.activeSprite
+        if sprite == nil then
+            sprite = Sprite(64, 64)
+            app.activeSprite = sprite
+        end
+
+        local layer = sprite:newLayer()
+        layer.name = mesh.name
+
+        AseUtilities.drawMesh(
+            mesh,
+            args.useFill,
+            args.fillClr,
+            args.useStroke,
+            args.strokeClr,
+            Brush(args.strokeWeight),
+            sprite:newCel(layer, 1),
+            layer)
+        end
     end
+}
 
-    local t = Mat3.fromTranslation(
-        args.xOrigin,
-        args.yOrigin)
-    local r = Mat3.fromRotZ(math.rad(args.angle))
-    local s = Mat3.fromScale(sclval, -sclval)
-    local mat = t * r * s
-    mesh:transform(mat)
-
-    local brsh = Brush(args.strokeWeight)
-    local sprite = app.activeSprite
-    local layer = sprite:newLayer()
-    layer.name = mesh.name
-    local cel = sprite:newCel(layer, 1)
-
-    AseUtilities.drawMesh(
-        mesh,
-        args.useFill,
-        args.fillClr,
-        args.useStroke,
-        args.strokeClr,
-        brsh,
-        cel,
-        layer)
-
-    end}
-
-dlg:button{
-    id="cancel",
-    text="CANCEL",
-    onclick=function()
+dlg:button {
+    id = "cancel",
+    text = "CANCEL",
+    onclick = function()
         dlg:close()
-    end}
+    end
+}
 
-dlg:show{wait=false}
+dlg:show { wait = false }

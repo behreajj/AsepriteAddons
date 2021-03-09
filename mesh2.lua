@@ -111,7 +111,6 @@ end
 ---@param matrix table matrix
 ---@return table
 function Mesh2:transform(matrix)
-
     local vsLen = #self.vs
     for i = 1, vsLen, 1 do
         self.vs[i] = Utilities.mulMat3Vec2(
@@ -146,7 +145,7 @@ function Mesh2.arc(
 
     -- If arc len is less than TAU / 720
     if arcLen < 0.00873 then
-        target = Mesh2.polygon(sectors)
+        local target = Mesh2.polygon(sectors)
         -- TODO: Inset face, delete faces
         return target
     end

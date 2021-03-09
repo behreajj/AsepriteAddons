@@ -23,6 +23,7 @@ local defaults = {
 }
 
 local function toHexRGBA(cr, cg, cb, ca)
+    -- TODO: Shouldn't need to use this.
     -- '|' is bitwise or.
     -- '<<' is bitwise shift left.
     -- RGBA are already in [0, 255].
@@ -159,9 +160,8 @@ local function create_conic(
     local sprite = app.activeSprite
     local layer = sprite:newLayer()
     layer.name = "Gradient"
-
-    -- TODO: Redo this to acquire image from the cel?
     local cel = sprite:newCel(layer, 1)
+    local img = cel.image
 
     local shortEdge = math.min(w, h)
     local longEdge = math.max(w, h)
@@ -235,8 +235,7 @@ local function create_conic(
 
     end
 
-    -- Get image, get its iterator.
-    local img = app.activeImage
+    -- Get image iterator.
     local iterator = img:pixels()
     local i = 0
 
@@ -279,69 +278,78 @@ local function create_conic(
     end
 end
 
-local dlg = Dialog{
-    title="Conic Gradient"}
+local dlg = Dialog{ title = "Conic Gradient" }
 
-dlg:slider{
-    id="xOrigin",
-    label="Origin X:",
-    min=0,
-    max=app.activeSprite.width,
-    value=defaults.xOrigin}
+-- TODO: Normalize these to percentages?
+dlg:slider {
+    id = "xOrigin",
+    label = "Origin X:",
+    min = 0,
+    max = app.activeSprite.width,
+    value = defaults.xOrigin
+}
 
-dlg:slider{
-    id="yOrigin",
-    label="Origin Y:",
-    min=0,
-    max=app.activeSprite.height,
-    value=defaults.yOrigin}
+dlg:slider {
+    id = "yOrigin",
+    label = "Origin Y:",
+    min = 0,
+    max = app.activeSprite.height,
+    value = defaults.yOrigin
+}
 
-dlg:slider{
-    id="angle",
-    label="Angle:",
-    min=0,
-    max=360,
-    value=defaults.angle}
+dlg:slider {
+    id = "angle",
+    label = "Angle:",
+    min = 0,
+    max = 360,
+    value = defaults.angle
+}
 
-dlg:check{
-    id="cw",
-    label="Chirality: ",
-    text="Flip y axis.",
-    selected=defaults.cw}
+dlg:check {
+    id = "cw",
+    label = "Chirality: ",
+    text = "Flip y axis.",
+    selected = defaults.cw
+}
 
-dlg:color{
-    id="aColor",
-    label="Color A: ",
-    color=defaults.aColor}
+dlg:color {
+    id = "aColor",
+    label = "Color A: ",
+    color = defaults.aColor
+}
 
-dlg:color{
-    id="bColor",
-    label="Color B: ",
-    color=defaults.bColor}
+dlg:color {
+    id = "bColor",
+    label = "Color B: ",
+    color = defaults.bColor
+}
 
-dlg:combobox{
-    id="easingMode",
-    label="Easing Mode: ",
-    option=defaults.easingMode,
-    options=easingModes}
+dlg:combobox {
+    id = "easingMode",
+    label = "Easing Mode: ",
+    option = defaults.easingMode,
+    options = easingModes
+}
 
-dlg:combobox{
-    id="easingFuncHSV",
-    label="HSV Easing: ",
-    option=defaults.easingFuncHSV,
-    options=hsvEasing}
+dlg:combobox {
+    id = "easingFuncHSV",
+    label = "HSV Easing: ",
+    option = defaults.easingFuncHSV,
+    options = hsvEasing
+}
 
-dlg:combobox{
-    id="easingFuncRGB",
-    label="RGB Easing: ",
-    option=defaults.easingFuncRGB,
-    options=rgbEasing}
+dlg:combobox {
+    id = "easingFuncRGB",
+    label = "RGB Easing: ",
+    option = defaults.easingFuncRGB,
+    options = rgbEasing
+}
 
-dlg:button{
-    id="ok",
-    text="OK",
-    focus=true,
-    onclick=function()
+dlg:button {
+    id = "ok",
+    text = "OK",
+    focus = true,
+    onclick = function()
         local args = dlg.data
 
         local easingFunc = args.easingFuncRGB
@@ -362,13 +370,15 @@ dlg:button{
             easingFunc)
 
         app.refresh()
-    end}
+    end
+}
 
-dlg:button{
-    id="cancel",
-    text="CANCEL",
-    onclick=function()
+dlg:button {
+    id = "cancel",
+    text = "CANCEL",
+    onclick = function()
         dlg:close()
-    end}
+    end
+}
 
-dlg:show{wait=false}
+dlg:show { wait = false }

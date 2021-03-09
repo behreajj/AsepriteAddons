@@ -43,7 +43,6 @@ function AseUtilities.drawMesh(
     local vsLen = #vs
     local pts = {}
     for i = 1, vsLen, 1 do
-        -- local v = vs[i]
         local v = Vec2.round(vs[i])
         table.insert(pts, Point(v.x, v.y))
     end
