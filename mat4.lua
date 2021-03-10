@@ -6,7 +6,7 @@ setmetatable(Mat4, {
         return cls.new(...)
     end})
 
----comment
+---Constructs a row major 4x4 matrix from numbers.
 ---@param m00 number row 0, col 0 right x
 ---@param m01 number row 0, col 1 forward x
 ---@param m02 number row 0, col 2 up x
@@ -101,6 +101,146 @@ function Mat4.add(a, b)
         a.m10 + b.m10, a.m11 + b.m11, a.m12 + b.m12, a.m13 + b.m13,
         a.m20 + b.m20, a.m21 + b.m21, a.m22 + b.m22, a.m23 + b.m23,
         a.m30 + b.m30, a.m31 + b.m31, a.m32 + b.m32, a.m33 + b.m33)
+end
+
+---Creates an orbiting camera matrix.
+---The camera looks from its location
+---at its focal target with reference
+---to the world up axis (0.0, 1.0, 1.0)
+---or (0.0, 1.0, 0.0). Handedness is a
+---string, either "RIGHT" or "LEFT".
+---@param xLoc number location x
+---@param yLoc number location y
+---@param zLoc number location z
+---@param xFocus number focus x
+---@param yFocus number focus y
+---@param zFocus number focus z
+---@param xRef number reference x
+---@param yRef number reference y
+---@param zRef number reference z
+---@param handedness string handedness
+---@return table
+function Mat4.camera(
+    xLoc, yLoc, zLoc,
+    xFocus, yFocus, zFocus,
+    xRef, yRef, zRef,
+    handedness)
+
+    --Optional args for handedness.
+    --Default to right-handed.
+    local hval = "RIGHT"
+    if handedness and handedness == "LEFT" then
+        hval = handedness
+    end
+
+    --Optional args for reference up.
+    --Default to z-up.
+    local zrv = zRef or 1.0
+    local yrv = yRef or 0.0
+    local xrv = xRef or 0.0
+
+    --Optional args for focus.
+    --Default to origin.
+    local zfv = zFocus or 0.0
+    local yfv = yFocus or 0.0
+    local xfv = xFocus or 0.0
+
+    --Find k by subtractinglocation from focus.
+    local kx = xLoc - xfv
+    local ky = yLoc - yfv
+    local kz = zLoc - zfv
+
+    --Normalize k.
+    local kmsq = kx * kx + ky * ky + kz * kz
+    if kmsq ~= 0.0 then
+        local kminv = 1.0 / math.sqrt(kmsq)
+        kx = kx * kminv
+        ky = ky * kminv
+        kz = kz * kminv
+    end
+
+    --Check for parallel forward and up.
+    local dotp = kx * xrv + ky * yrv + kz * zrv
+    local tol = 0.999999
+    if dotp < -tol or dotp > tol then
+        return Mat4.fromTranslation(xLoc, yLoc, zLoc)
+    end
+
+    local ix = 1.0
+    local iy = 0.0
+    local iz = 0.0
+
+    local jx = 0.0
+    local jy = 1.0
+    local jz = 0.0
+
+    if hval == "LEFT" then
+
+        --Cross k with ref to get i.
+        ix = ky * zrv - kz * yrv
+        iy = kz * xrv - kx * zrv
+        iz = kx * yrv - ky * xrv
+
+        --Normalize i.
+        local imsq = ix * ix + iy * iy + iz * iz
+        if imsq ~= 0.0 then
+            local iminv = 1.0 / math.sqrt(imsq)
+            ix = ix * iminv
+            iy = iy * iminv
+            iz = iz * iminv
+        end
+
+        --Cross i with k to get j.
+        jx = iy * kz - iz * ky
+        jy = iz * kx - ix * kz
+        jz = ix * ky - iy * kx
+
+        --Normalize j.
+        local jmsq = jx * jx + jy * jy + jz * jz
+        if jmsq ~= 0.0 then
+            local jminv = 1.0 / math.sqrt(jmsq)
+            jx = jx * jminv
+            jy = jy * jminv
+            jz = jz * jminv
+        end
+
+    else
+
+        --Cross ref with k to get i.
+        ix = yrv * kz - zrv * ky
+        iy = zrv * kx - xrv * kz
+        iz = xrv * ky - yrv * kx
+
+        --Normalize i.
+        local imsq = ix * ix + iy * iy + iz * iz
+        if imsq ~= 0.0 then
+            local iminv = 1.0 / math.sqrt(imsq)
+            ix = ix * iminv
+            iy = iy * iminv
+            iz = iz * iminv
+        end
+
+        --Cross k with i to get j.
+        jx = ky * iz - kz * iy
+        jy = kz * ix - kx * iz
+        jz = kx * iy - ky * ix
+
+        --Normalize j.
+        local jmsq = jx * jx + jy * jy + jz * jz
+        if jmsq ~= 0.0 then
+            local jminv = 1.0 / math.sqrt(jmsq)
+            jx = jx * jminv
+            jy = jy * jminv
+            jz = jz * jminv
+        end
+
+    end
+
+    return Mat4.new(
+        ix, iy, iz, -xLoc * ix - yLoc * iy - zLoc * iz,
+        jx, jy, jz, -xLoc * jx - yLoc * jy - zLoc * jz,
+        kx, ky, kz, -xLoc * kx - yLoc * ky - zLoc * kz,
+        0.0, 0.0, 0.0, 1.0)
 end
 
 ---Multiplies the left operand and the inverse of the right.
@@ -269,8 +409,8 @@ function Mat4.inverse(a)
     local b11 = a.m22 * a.m33 - a.m23 * a.m32
 
     local det = b00 * b11 - b01 * b10 +
-        b02 * b09 + b03 * b08 -
-        b04 * b07 + b05 * b06
+                b02 * b09 + b03 * b08 -
+                b04 * b07 + b05 * b06
     if det ~= 0.0 then
         local detInv = 1.0 / det
         return Mat4.new(

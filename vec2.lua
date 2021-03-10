@@ -480,6 +480,26 @@ function Vec2.quantize(a, levels)
     return Vec2.new(a.x, a.y)
 end
 
+---Creates a random point in Cartesian space given
+---a lower and an upper bound.
+---@param lb table lower bound
+---@param ub table upper bound
+---@param seed number seed
+---@return table
+function Vec2.randomCartesian(lb, ub, seed)
+    if seed then
+        math.randomseed(seed)
+        math.random()
+    end
+
+    local rx = math.random()
+    local ry = math.random()
+
+    return Vec2.new(
+        (1.0 - rx) * lb.x + rx * ub.x,
+        (1.0 - ry) * lb.y + ry * ub.y)
+end
+
 ---Rescales a vector to the target magnitude.
 ---@param a table vector
 ---@param b number magnitude

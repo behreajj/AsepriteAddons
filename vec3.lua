@@ -524,6 +524,28 @@ function Vec3.quantize(a, levels)
     return Vec3.new(a.x, a.y, a.z)
 end
 
+---Creates a random point in Cartesian space given
+---a lower and an upper bound.
+---@param lb table lower bound
+---@param ub table upper bound
+---@param seed number seed
+---@return table
+function Vec3.randomCartesian(lb, ub, seed)
+    if seed then
+        math.randomseed(seed)
+        math.random()
+    end
+
+    local rx = math.random()
+    local ry = math.random()
+    local rz = math.random()
+
+    return Vec3.new(
+        (1.0 - rx) * lb.x + rx * ub.x,
+        (1.0 - ry) * lb.y + ry * ub.y,
+        (1.0 - rz) * lb.z + rz * ub.z)
+end
+
 ---Rescales a vector to the target magnitude.
 ---@param a table vector
 ---@param b number magnitude

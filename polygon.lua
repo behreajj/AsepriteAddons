@@ -96,7 +96,6 @@ dlg:button {
     if args.ok then
         local mesh = Mesh2.polygon(args.sides)
 
-        -- Translate, rotate then scale the mesh.
         local t = Mat3.fromTranslation(
             args.xOrigin,
             args.yOrigin)

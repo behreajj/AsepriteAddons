@@ -59,6 +59,71 @@ function Mesh2:__tostring()
     return str
 end
 
+---Insets a face by calculating its center then
+---easing from the face's vertices toward the center
+---by the factor, in range [0.0, 1.0].
+---@param faceIndex number
+---@param fac number
+---@return table
+function Mesh2:insetFace(faceIndex, fac)
+    local t = fac or 0.5
+
+    if t <= 0.0 then
+        return self
+    end
+
+    if t >= 1.0 then
+        -- TODO: subdivFaceFan
+        return self
+    end
+
+    local facesLen = #self.fs
+    local i = 1 + faceIndex % facesLen
+    local face = self.fs[i]
+    local faceLen = #face
+
+    local vsOldLen = #self.vs
+    local centerFace = {}
+
+    local vCenter = Vec2.new(0.0, 0.0)
+    for j = 1, faceLen, 1 do
+        local vertCurr = face[j]
+        vCenter = Vec2.add(vCenter, self.vs[vertCurr])
+    end
+
+    if faceLen > 0 then
+        vCenter = Vec2.scale(vCenter, 1.0 / faceLen)
+    end
+
+    local u = 1.0 - t
+    for j = 0, faceLen - 1, 1 do
+        local k = (j + 1) % (faceLen)
+        local vertCurr = face[1 + j]
+        local vertNext = face[1 + k]
+
+        local vCurr = self.vs[vertCurr]
+        local vNew = Vec2.new(
+            u * vCurr.x + t * vCenter.x,
+            u * vCurr.y + t * vCenter.y)
+        table.insert(self.vs, vNew)
+
+        local vSubdivIdx = vsOldLen + j
+        local fNew = {
+            vertCurr,
+            vertNext,
+            1 + vsOldLen + k,
+            1 + vSubdivIdx
+        }
+
+        table.insert(self.fs, fNew)
+        table.insert(centerFace, 1 + vSubdivIdx)
+    end
+
+    table.insert(self.fs, centerFace)
+    table.remove(self.fs, i)
+    return self
+end
+
 ---Scales each face of a mesh individually,
 ---based on its median center. Meshes should
 ---call uniformData first for best results.
@@ -146,7 +211,12 @@ function Mesh2.arc(
     -- If arc len is less than TAU / 720
     if arcLen < 0.00873 then
         local target = Mesh2.polygon(sectors)
-        -- TODO: Inset face, delete faces
+        target.name = "Ring"
+        target:transform(Mat3.fromRotZ(startAngle))
+        local r = math.min(0.999999, math.max(0.000001,
+            0.5 * startWeight + stopWeight))
+        target:insetFace(0, r)
+        table.remove(target.fs, #target.fs)
         return target
     end
 
@@ -213,7 +283,7 @@ function Mesh2.arc(
 
     end
 
-    return Mesh2.new(fs, vs, "Grid")
+    return Mesh2.new(fs, vs, "Arc")
 end
 
 ---Creates a grid of rectangles.
@@ -222,22 +292,9 @@ end
 ---@return table
 function Mesh2.gridCartesian(cols, rows)
 
-    -- Create vertical positions in [-0.5, 0.5].
-    local rval = 2
-    if rows and rows > 2 then rval = rows end
-    local rvaln1 = rval - 1
-    local iToStep = 1.0 / rval
-    local ys = {}
-    for i = 0, rval, 1 do
-        table.insert(ys, i * iToStep - 0.5)
-    end
-
     -- Create horizontal positions in [-0.5, 0.5].
-    local cval = rval
-    if cols then
-        cval = 2
-        if cols > 2 then cval = cols end
-    end
+    local cval = 2
+    if cols and cols > 2 then cval = cols end
     local cvaln1 = cval - 1
     local cvalp1 = cval + 1
     local jToStep = 1.0 / cval
@@ -246,13 +303,22 @@ function Mesh2.gridCartesian(cols, rows)
         table.insert(xs, j * jToStep - 0.5)
     end
 
-    -- Combine horizontal and vertical.
-    -- TODO: Could make this more efficient
-    -- by starting at 1 not 0?
-    local vs = {}
+    -- Create vertical positions in [-0.5, 0.5].
+    local rval = cval
+    if rows and rows > 2 then rval = rows end
+    local rvaln1 = rval - 1
+    local rvalp1 = rval + 1
+    local iToStep = 1.0 / rval
+    local ys = {}
     for i = 0, rval, 1 do
-        for j = 0, cval, 1 do
-            local v = Vec2.new(xs[1 + j], ys[1 + i])
+        table.insert(ys, i * iToStep - 0.5)
+    end
+
+    -- Combine horizontal and vertical.
+    local vs = {}
+    for i = 1, rvalp1, 1 do
+        for j = 1, cvalp1, 1 do
+            local v = Vec2.new(xs[j], ys[i])
             table.insert(vs, v)
         end
     end
@@ -284,11 +350,10 @@ function Mesh2.gridCartesian(cols, rows)
 end
 
 ---Creates a grid of rhombi.
----@param cols integer columns
----@param rows integer rows
+---@param cells integer cells
 ---@return table
-function Mesh2.gridDimetric(cols, rows)
-    local mesh = Mesh2.gridCartesian(cols, rows)
+function Mesh2.gridDimetric(cells)
+    local mesh = Mesh2.gridCartesian(cells, cells)
 
     -- local r = Mat3.fromRotZ(math.rad(45))
     -- local s = Mat3.fromScale(
