@@ -769,4 +769,53 @@ function Vec3.trunc(a)
         math.tointeger(a.z))
 end
 
+---Creates a right facing vector,
+---(1.0, 0.0, 0.0).
+---@return table
+function Vec3.right()
+    return Vec3.new(1.0, 0.0, 0.0)
+end
+
+---Creates a forward facing vector,
+---(0.0, 1.0, 0.0).
+---@return table
+function Vec3.forward()
+    return Vec3.new(0.0, 1.0, 0.0)
+end
+
+---Creates an up facing vector,
+---(0.0, 0.0, 1.0).
+---@return table
+function Vec3.up()
+    return Vec3.new(0.0, 0.0, 1.0)
+end
+
+---Creates a left facing vector,
+---(-1.0, 0.0, 0.0).
+---@return table
+function Vec3.left()
+    return Vec3.new(-1.0, 0.0, 0.0)
+end
+
+---Creates a back facing vector,
+---(0.0, -1.0, 0.0).
+---@return table
+function Vec3.back()
+    return Vec3.new(0.0, -1.0, 0.0)
+end
+
+---Creates a down facing vector,
+---(0.0, 0.0, -1.0).
+---@return table
+function Vec3.down()
+    return Vec3.new(0.0, 0.0, -1.0)
+end
+
+---Creates a vector with all components
+---set to 1.0.
+---@return table
+function Vec3.one()
+    return Vec3.new(1.0, 1.0, 1.0)
+end
+
 return Vec3

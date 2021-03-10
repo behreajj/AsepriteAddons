@@ -144,4 +144,4 @@ dlg:button {
     end
 }
 
-dlg:show{ wait = false }
+dlg:show { wait = false }

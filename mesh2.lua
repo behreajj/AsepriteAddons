@@ -318,30 +318,21 @@ function Mesh2.gridCartesian(cols, rows)
     local vs = {}
     for i = 1, rvalp1, 1 do
         for j = 1, cvalp1, 1 do
-            local v = Vec2.new(xs[j], ys[i])
-            table.insert(vs, v)
+            table.insert(vs, Vec2.new(xs[j], ys[i]))
         end
     end
 
     -- Create faces.
     local fs = {}
     for i = 0, rvaln1, 1 do
-        local noff0 = i * cvalp1
+        local noff0 = 1 + i * cvalp1
         local noff1 = noff0 + cvalp1
         for j = 0, cvaln1, 1 do
             local n00 = noff0 + j
-            local n10 = n00 + 1
             local n01 = noff1  + j
-            local n11 = n01 + 1
-
-            -- Create face loop.
             local f = {
-                1 + n00,
-                1 + n10,
-                1 + n11,
-                1 + n01 }
-
-            -- Insert face loop into faces.
+                n00, n00 + 1,
+                n01 + 1, n01 }
             table.insert(fs, f)
         end
     end
@@ -355,10 +346,10 @@ end
 function Mesh2.gridDimetric(cells)
     local mesh = Mesh2.gridCartesian(cells, cells)
 
-    -- local r = Mat3.fromRotZ(math.rad(45))
     -- local s = Mat3.fromScale(
     --     1.0 / math.sqrt(2.0),
     --     0.5 / math.sqrt(2.0))
+    -- local r = Mat3.fromRotZ(math.rad(45))
     -- local mat = Mat3.mul(s, r)
 
     local mat = Mat3.new(
@@ -441,16 +432,12 @@ function Mesh2.polygon(sectors)
     local fs = { f }
 
     local name = "Polygon"
-    if vsect == 3 then
-        name = "Triangle"
-    elseif vsect == 4 then
-        name = "Rhombus"
-    elseif vsect == 5 then
-        name = "Pentagon"
-    elseif vsect == 6 then
-        name = "Hexagon"
-    elseif vsect == 8 then
-        name = "Octagon"
+    if vsect == 3 then name = "Triangle"
+    elseif vsect == 4 then name = "Quadrilateral"
+    elseif vsect == 5 then name = "Pentagon"
+    elseif vsect == 6 then name = "Hexagon"
+    elseif vsect == 7 then name = "Heptagon"
+    elseif vsect == 8 then name = "Octagon"
     end
 
     return Mesh2.new(fs, vs, name)
@@ -463,12 +450,11 @@ end
 ---@return table
 function Mesh2.uniformData(source, target)
     local trg = target or source
+    local fsTrg = {}
+    local vsTrg = {}
 
     local fsSrc = source.fs
     local vsSrc = source.vs
-
-    local fsTrg = {}
-    local vsTrg = {}
 
     local k = 1
     local fsSrcLen = #fsSrc

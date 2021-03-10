@@ -139,8 +139,4 @@ Metamethods are preceded by two underscores.
 
 As in Processing, working with colors in bulk involves packing and unpacking integers. Color integer channels are ordered ABGR. Given four numbers in the range [0, 255], the packed integer would arise from `ca << 0x18 | cb << 0x10 | cg << 0x8 | cr`. To unpack, use `ca = (c >> 0x18) & 0xff` and so on. To print an integer as hex, use `string.format("%x", 0xaabbccdd)`.
 
-For certain API classes, more information can be gleened directly from the source code than from the docs:
- - [Color](https://github.com/aseprite/aseprite/blob/6c4621a26a2acf70e184aa247a5cd40be2e652ef/src/app/script/color_class.cpp)
- - [Point](https://github.com/aseprite/aseprite/blob/6c4621a26a2acf70e184aa247a5cd40be2e652ef/src/app/script/point_class.cpp)
-
 HSV color is in the range [0.0, 360.0] for hue, [0.0, 1.0] for saturation, [0.0, 1.0] for value. RGBA color is in [0, 255].

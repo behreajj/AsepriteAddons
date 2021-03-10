@@ -1,3 +1,5 @@
+dofile("./utilities.lua")
+
 local easingModes = {
     "RGB", "HSV"
 }
@@ -11,8 +13,8 @@ local hsvEasing = {
 }
 
 local defaults = {
-    xOrigin = 0,
-    yOrigin = 0,
+    xOrigin = 50,
+    yOrigin = 50,
     angle = 90,
     cw = false,
     aColor = Color(32, 32, 32, 255),
@@ -21,17 +23,6 @@ local defaults = {
     easingFuncRGB = "LINEAR",
     easingFuncHSV = "NEAR"
 }
-
-local function toHexRGBA(cr, cg, cb, ca)
-    -- TODO: Shouldn't need to use this.
-    -- '|' is bitwise or.
-    -- '<<' is bitwise shift left.
-    -- RGBA are already in [0, 255].
-    return ca << 0x18
-         | cb << 0x10
-         | cg << 0x8
-         | cr
-end
 
 local function toHexHSVA(ch, cs, cv, ca)
     -- hue is in [0, 360].
@@ -47,37 +38,37 @@ local function toHexHSVA(ch, cs, cv, ca)
     local tint3 = cv * (1.0 - cs * (1.0 + sector - h))
 
     if sector == 0 then
-        return toHexRGBA(
+        return app.pixelColor.rgba(
             math.tointeger(0.5 + 255.0 * cv),
             math.tointeger(0.5 + 255.0 * tint3),
             math.tointeger(0.5 + 255.0 * tint1),
             ca)
     elseif sector == 1 then
-        return toHexRGBA(
+        return app.pixelColor.rgba(
             math.tointeger(0.5 + 255.0 * tint2),
             math.tointeger(0.5 + 255.0 * cv),
             math.tointeger(0.5 + 255.0 * tint1),
             ca)
     elseif sector == 2 then
-        return toHexRGBA(
+        return app.pixelColor.rgba(
             math.tointeger(0.5 + 255.0 * tint1),
             math.tointeger(0.5 + 255.0 * cv),
             math.tointeger(0.5 + 255.0 * tint3),
             ca)
     elseif sector == 3 then
-        return toHexRGBA(
+        return app.pixelColor.rgba(
             math.tointeger(0.5 + 255.0 * tint1),
             math.tointeger(0.5 + 255.0 * tint2),
             math.tointeger(0.5 + 255.0 * cv),
             ca)
     elseif sector == 4 then
-        return toHexRGBA(
+        return app.pixelColor.rgba(
             math.tointeger(0.5 + 255.0 * tint3),
             math.tointeger(0.5 + 255.0 * tint1),
             math.tointeger(0.5 + 255.0 * cv),
             ca)
     else
-        return toHexRGBA(
+        return app.pixelColor.rgba(
             math.tointeger(0.5 + 255.0 * cv),
             math.tointeger(0.5 + 255.0 * tint1),
             math.tointeger(0.5 + 255.0 * tint2),
@@ -85,65 +76,43 @@ local function toHexHSVA(ch, cs, cv, ca)
     end
 end
 
-local function lerpRGB(ar, ag, ab, aa, br, bg, bb, ba, t)
+local function lerpRGB(
+    ar, ag, ab, aa,
+    br, bg, bb, ba, t)
     local u = 1.0 - t
-    return toHexRGBA(
+    return app.pixelColor.rgba(
         math.tointeger(u * ar + t * br),
         math.tointeger(u * ag + t * bg),
         math.tointeger(u * ab + t * bb),
         math.tointeger(u * aa + t * ba))
 end
 
-local function smoothRGB(ar, ag, ab, aa, br, bg, bb, ba, t)
-    return lerpRGB(ar, ag, ab, aa, br, bg, bb, ba,
+local function smoothRGB(
+    ar, ag, ab, aa,
+    br, bg, bb, ba, t)
+    return lerpRGB(
+        ar, ag, ab, aa,
+        br, bg, bb, ba,
         t * t * (3.0 - (t + t)))
 end
 
-local function lerpAngleNear(origin, dest, t)
-    local o = origin % 360.0
-    local d = dest % 360.0
-    local diff = d - o
-    local u = 1.0 - t
-
-    if diff == 0.0 then
-        return o
-    elseif o < d and diff > 180.0 then
-        return (u * (o + 360.0) + t * d) % 360.0
-    elseif o > d and diff < -180.0 then
-        return (u * o + t * (d + 360.0)) % 360.0
-    else
-        return u * o + t * d
-    end
-end
-
-local function lerpAngleFar(origin, dest, t)
-    local o = origin % 360.0
-    local d = dest % 360.0
-    local diff = d - o
-    local u = 1.0 - t
-
-    if diff == 0.0 or (o < d and diff < 180.0) then
-        return (u * (o + 360.0) + t * d) % 360.0
-    elseif o > d and diff > -180.0 then
-        return (u * o + t * (d + 360.0)) % 360.0
-    else
-        return u * o + t * d
-    end
-end
-
-local function lerpHSVFar(ah, as, av, aa, bh, bs, bv, ba, t)
+local function lerpHSVFar(
+    ah, as, av, aa,
+    bh, bs, bv, ba, t)
     local u = 1.0 - t
     return toHexHSVA(
-        lerpAngleFar(ah, bh, t),
+        Utilities.lerpAngleFar(ah, bh, t, 360.0),
         u * as + t * bs,
         u * av + t * bv,
         math.tointeger(u * aa + t * ba))
 end
 
-local function lerpHSVNear(ah, as, av, aa, bh, bs, bv, ba, t)
+local function lerpHSVNear(
+    ah, as, av, aa,
+    bh, bs, bv, ba, t)
     local u = 1.0 - t
     return toHexHSVA(
-        lerpAngleNear(ah, bh, t),
+        Utilities.lerpAngleNear(ah, bh, t, 360.0),
         u * as + t * bs,
         u * av + t * bv,
         math.tointeger(u * aa + t * ba))
@@ -157,6 +126,8 @@ local function create_conic(
     easingMode, easingFunc)
 
     -- Create new layer.
+    -- TODO: Conic gradient should not be
+    --- conducting any app logic...
     local sprite = app.activeSprite
     local layer = sprite:newLayer()
     layer.name = "Gradient"
@@ -168,13 +139,13 @@ local function create_conic(
 
     -- Compensate for image aspect ratio.
     local wInv = 1.0
-    local hInv = 1.0 / (h - 1.0)
+    local hInv = 1.0 / h
     if shortEdge == longEdge then
-        wInv = 1.0 / (w - 1.0)
+        wInv = 1.0 / w
     elseif w == shortEdge then
-        wInv = (shortEdge / longEdge) / (w - 1.0)
+        wInv = (shortEdge / longEdge) / w
     elseif h == shortEdge then
-        wInv = (longEdge / shortEdge) / (w - 1.0)
+        wInv = (longEdge / shortEdge) / w
     end
 
     -- Bring origin into range [0.0, 1.0].
@@ -278,14 +249,13 @@ local function create_conic(
     end
 end
 
-local dlg = Dialog{ title = "Conic Gradient" }
+local dlg = Dialog { title = "Conic Gradient" }
 
--- TODO: Normalize these to percentages?
 dlg:slider {
     id = "xOrigin",
     label = "Origin X:",
     min = 0,
-    max = app.activeSprite.width,
+    max = 100,
     value = defaults.xOrigin
 }
 
@@ -293,7 +263,7 @@ dlg:slider {
     id = "yOrigin",
     label = "Origin Y:",
     min = 0,
-    max = app.activeSprite.height,
+    max = 100,
     value = defaults.yOrigin
 }
 
@@ -351,25 +321,28 @@ dlg:button {
     focus = true,
     onclick = function()
         local args = dlg.data
+        if args.ok then
+            local easingFunc = args.easingFuncRGB
+            if args.easingMode == "HSV" then
+                easingFunc = args.easingFuncHSV
+            end
 
-        local easingFunc = args.easingFuncRGB
-        if args.easingMode == "HSV" then
-            easingFunc = args.easingFuncHSV
+            local w = app.activeSprite.width
+            local h = app.activeSprite.height
+
+            create_conic(
+                w, h,
+                w * 0.01 * args.xOrigin,
+                h * 0.01 * args.yOrigin,
+                args.angle,
+                args.cw,
+                args.aColor,
+                args.bColor,
+                args.easingMode,
+                easingFunc)
+
+            app.refresh()
         end
-
-        create_conic(
-            app.activeSprite.width,
-            app.activeSprite.height,
-            args.xOrigin,
-            args.yOrigin,
-            args.angle,
-            args.cw,
-            args.aColor,
-            args.bColor,
-            args.easingMode,
-            easingFunc)
-
-        app.refresh()
     end
 }
 

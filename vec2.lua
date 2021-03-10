@@ -415,13 +415,13 @@ end
 ---@param a table vector
 ---@return table
 function Vec2.perpendicular(a)
-    return Vec2.perpendicularCCW(a)
+    return Vec2.perpendicularCcw(a)
 end
 
 ---Finds the clockwise perpendicular to a vector.
 ---@param a table vector
 ---@return table
-function Vec2.perpendicularCW(a)
+function Vec2.perpendicularCw(a)
     return Vec2.new(a.y, -a.x)
 end
 
@@ -429,7 +429,7 @@ end
 ---a vector.
 ---@param a table vector
 ---@return table
-function Vec2.perpendicularCCW(a)
+function Vec2.perpendicularCcw(a)
     return Vec2.new(-a.y, a.x)
 end
 
@@ -687,6 +687,37 @@ function Vec2.trunc(a)
     return Vec2.new(
         math.tointeger(a.x),
         math.tointeger(a.y))
+end
+
+---Creates a right facing vector, (1.0, 0.0).
+---@return table
+function Vec2.right()
+    return Vec2.new(1.0, 0.0)
+end
+
+---Creates a forward facing vector, (0.0, 1.0).
+---@return table
+function Vec2.forward()
+    return Vec2.new(0.0, 1.0)
+end
+
+---Creates a left facing vector, (-1.0, 0.0).
+---@return table
+function Vec2.left()
+    return Vec2.new(-1.0, 0.0)
+end
+
+---Creates a back facing vector, (0.0, -1.0).
+---@return table
+function Vec2.back()
+    return Vec2.new(0.0, -1.0)
+end
+
+---Creates a vector with all components
+---set to 1.0.
+---@return table
+function Vec2.one()
+    return Vec2.new(1.0, 1.0)
 end
 
 return Vec2

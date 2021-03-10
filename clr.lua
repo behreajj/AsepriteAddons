@@ -247,6 +247,72 @@ function Clr.hsvaToRgba(hue, sat, val, alpha)
     end
 end
 
+---Mixes two colors in HSVA space by a step.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Clr.mixHsva(a, b, t)
+    local u = t or 0.5
+
+    if u <= 0.0 then
+        return Clr.new(a.r, a.g, a.b, a.a)
+    end
+
+    if u >= 1.0 then
+        return Clr.new(b.r, b.g, b.b, b.a)
+    end
+
+    local v = 1.0 - u
+    local aHsva = Clr.rgbaToHsva(a.r, a.g, a.b, a.a)
+    local bHsva = Clr.rgbaToHsva(b.r, b.g, b.b, b.a)
+
+    -- Default to hue near easing.
+    local o = aHsva.h % 1.0
+    local d = bHsva.h % 1.0
+    local diff = d - o
+    local hueTrg = o
+    if diff ~= 0.0 then
+        if o < d and diff > 0.5 then
+            hueTrg = (v * (o + 1.0) + u * d) % 1.0
+        elseif o > d and diff < -0.5 then
+            hueTrg = (v * o + u * (d + 1.0)) % 1.0
+        else
+            hueTrg = v * o + u * d
+        end
+    end
+
+    return Clr.hsvaToRgba(
+        hueTrg,
+        v * aHsva.s + u * bHsva.s,
+        v * aHsva.v + u * bHsva.v,
+        v * aHsva.a + u * bHsva.a)
+end
+
+---Mixes two colors in RGBA space by a step.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Clr.mixRgba(a, b, t)
+    local u = t or 0.5
+
+    if u <= 0.0 then
+        return Clr.new(a.r, a.g, a.b, a.a)
+    end
+
+    if u >= 1.0 then
+        return Clr.new(b.r, b.g, b.b, b.a)
+    end
+
+    local v = 1.0 - u
+    return Clr.new(
+        v * a.r + u * b.r,
+        v * a.g + u * b.g,
+        v * a.b + u * b.b,
+        v * a.a + u * b.a)
+end
+
 ---Evaluates whether the color's alpha channel
 ---is less than or equal to zero.
 ---@param a table
@@ -309,6 +375,66 @@ function Clr.toHex(c)
          | math.tointeger(c.b * 0xff + 0.5) << 0x10
          | math.tointeger(c.g * 0xff + 0.5) <<  0x8
          | math.tointeger(c.r * 0xff + 0.5)
+end
+
+---Creates a red color.
+---@return table
+function Clr.red()
+    return Clr.new(1.0, 0.0, 0.0, 1.0)
+end
+
+---Creates a green color.
+---@return table
+function Clr.green()
+    return Clr.new(0.0, 1.0, 0.0, 1.0)
+end
+
+---Creates a blue color.
+---@return table
+function Clr.blue()
+    return Clr.new(0.0, 0.0, 1.0, 1.0)
+end
+
+---Creates a cyan color.
+---@return table
+function Clr.cyan()
+    return Clr.new(0.0, 1.0, 1.0, 1.0)
+end
+
+---Creates a magenta color.
+---@return table
+function Clr.magenta()
+    return Clr.new(1.0, 0.0, 1.0, 1.0)
+end
+
+---Creates a yellow color.
+---@return table
+function Clr.yellow()
+    return Clr.new(1.0, 1.0, 0.0, 1.0)
+end
+
+---Creates a black color.
+---@return table
+function Clr.black()
+    return Clr.new(0.0, 0.0, 0.0, 1.0)
+end
+
+---Creates a white color.
+---@return table
+function Clr.white()
+    return Clr.new(1.0, 1.0, 1.0, 1.0)
+end
+
+---Creates a transparent black color.
+---@return table
+function Clr.clearBlack()
+    return Clr.new(0.0, 0.0, 0.0, 0.0)
+end
+
+---Creates a transparent white color.
+---@return table
+function Clr.clearWhite()
+    return Clr.new(1.0, 1.0, 1.0, 0.0)
 end
 
 return Clr
