@@ -1,16 +1,10 @@
-dofile("./utilities.lua")
+dofile("./aseutilities.lua")
 
-local easingModes = {
-    "RGB", "HSV"
-}
-
-local rgbEasing = {
-    "LINEAR", "SMOOTH"
-}
-
-local hsvEasing = {
-    "NEAR", "FAR"
-}
+-- Supported easing modes as presented in dialog.
+-- Analogous to enumerations.
+local easingModes = { "RGB", "HSV" }
+local rgbEasing = { "LINEAR", "SMOOTH" }
+local hsvEasing = { "NEAR", "FAR" }
 
 local defaults = {
     xOrigin = 50,
@@ -24,115 +18,21 @@ local defaults = {
     easingFuncHSV = "NEAR"
 }
 
-local function toHexHSVA(ch, cs, cv, ca)
-    -- hue is in [0, 360].
-    -- sat is in [0.0, 1.0].
-    -- val is in [0.0, 1.0].
-
-    -- Bring hue into [0.0, 1.0] by dividing by 360.0.
-    local h = ((ch * 0.002777777777777778) % 1.0) * 6.0
-
-    local sector = math.tointeger(h)
-    local tint1 = cv * (1.0 - cs)
-    local tint2 = cv * (1.0 - cs * (h - sector))
-    local tint3 = cv * (1.0 - cs * (1.0 + sector - h))
-
-    if sector == 0 then
-        return app.pixelColor.rgba(
-            math.tointeger(0.5 + 255.0 * cv),
-            math.tointeger(0.5 + 255.0 * tint3),
-            math.tointeger(0.5 + 255.0 * tint1),
-            ca)
-    elseif sector == 1 then
-        return app.pixelColor.rgba(
-            math.tointeger(0.5 + 255.0 * tint2),
-            math.tointeger(0.5 + 255.0 * cv),
-            math.tointeger(0.5 + 255.0 * tint1),
-            ca)
-    elseif sector == 2 then
-        return app.pixelColor.rgba(
-            math.tointeger(0.5 + 255.0 * tint1),
-            math.tointeger(0.5 + 255.0 * cv),
-            math.tointeger(0.5 + 255.0 * tint3),
-            ca)
-    elseif sector == 3 then
-        return app.pixelColor.rgba(
-            math.tointeger(0.5 + 255.0 * tint1),
-            math.tointeger(0.5 + 255.0 * tint2),
-            math.tointeger(0.5 + 255.0 * cv),
-            ca)
-    elseif sector == 4 then
-        return app.pixelColor.rgba(
-            math.tointeger(0.5 + 255.0 * tint3),
-            math.tointeger(0.5 + 255.0 * tint1),
-            math.tointeger(0.5 + 255.0 * cv),
-            ca)
-    else
-        return app.pixelColor.rgba(
-            math.tointeger(0.5 + 255.0 * cv),
-            math.tointeger(0.5 + 255.0 * tint1),
-            math.tointeger(0.5 + 255.0 * tint2),
-            ca)
-    end
-end
-
-local function lerpRGB(
-    ar, ag, ab, aa,
-    br, bg, bb, ba, t)
-    local u = 1.0 - t
-    return app.pixelColor.rgba(
-        math.tointeger(u * ar + t * br),
-        math.tointeger(u * ag + t * bg),
-        math.tointeger(u * ab + t * bb),
-        math.tointeger(u * aa + t * ba))
-end
-
-local function smoothRGB(
-    ar, ag, ab, aa,
-    br, bg, bb, ba, t)
-    return lerpRGB(
-        ar, ag, ab, aa,
-        br, bg, bb, ba,
-        t * t * (3.0 - (t + t)))
-end
-
-local function lerpHSVFar(
-    ah, as, av, aa,
-    bh, bs, bv, ba, t)
-    local u = 1.0 - t
-    return toHexHSVA(
-        Utilities.lerpAngleFar(ah, bh, t, 360.0),
-        u * as + t * bs,
-        u * av + t * bv,
-        math.tointeger(u * aa + t * ba))
-end
-
-local function lerpHSVNear(
-    ah, as, av, aa,
-    bh, bs, bv, ba, t)
-    local u = 1.0 - t
-    return toHexHSVA(
-        Utilities.lerpAngleNear(ah, bh, t, 360.0),
-        u * as + t * bs,
-        u * av + t * bv,
-        math.tointeger(u * aa + t * ba))
-end
-
-local function create_conic(
-    w, h,
+local function createConic(
+    sprite,
     xOrigin, yOrigin,
     angle, cw,
     aColor, bColor,
     easingMode, easingFunc)
 
     -- Create new layer.
-    -- TODO: Conic gradient should not be
-    --- conducting any app logic...
-    local sprite = app.activeSprite
     local layer = sprite:newLayer()
-    layer.name = "Gradient"
+    layer.name = "Conic Gradient"
     local cel = sprite:newCel(layer, 1)
     local img = cel.image
+
+    local w = sprite.width
+    local h = sprite.height
 
     local shortEdge = math.min(w, h)
     local longEdge = math.max(w, h)
@@ -140,24 +40,28 @@ local function create_conic(
     -- Compensate for image aspect ratio.
     local wInv = 1.0
     local hInv = 1.0 / h
+    local xOriginNorm = xOrigin or 0.0
+    local yOriginNorm = yOrigin or 0.0
+
     if shortEdge == longEdge then
         wInv = 1.0 / w
     elseif w == shortEdge then
-        wInv = (shortEdge / longEdge) / w
+        local aspect = (shortEdge / longEdge)
+        wInv = aspect / w
+        xOriginNorm = xOriginNorm * aspect
     elseif h == shortEdge then
-        wInv = (longEdge / shortEdge) / w
+        local aspect = (longEdge / shortEdge)
+        wInv = aspect / w
+        xOriginNorm = xOriginNorm * aspect
     end
-
-    -- Bring origin into range [0.0, 1.0].
-    local xOriginNorm = xOrigin * wInv
-    local yOriginNorm = yOrigin * hInv
 
     -- Bring origin from [0.0, 1.0] to [-1.0, 1.0].
     local xOriginSigned = xOriginNorm + xOriginNorm - 1.0
     local yOriginSigned = 1.0 - (yOriginNorm + yOriginNorm)
 
-    -- Convert from degrees to radians (multiply by math.pi / 180.0).
-    local angleRadians = math.rad(angle)
+    -- Validate angle.
+    local ang = 0.0
+    if angle then ang = angle % 6.283185307179586 end
 
     -- Choose channels and easing based on color mode.
     local a0 = 0
@@ -170,9 +74,9 @@ local function create_conic(
     local b2 = 0
     local b3 = 0
 
-    local easing = lerpRGB
+    local easing = AseUtilities.lerpRgba
 
-    if easingMode == "HSV" then
+    if easingMode and easingMode == "HSV" then
         a0 = aColor.hue
         a1 = aColor.saturation
         a2 = aColor.value
@@ -183,10 +87,10 @@ local function create_conic(
         b2 = bColor.value
         b3 = bColor.alpha
 
-        if easingFunc == "FAR" then
-            easing = lerpHSVFar
+        if easingFunc and easingFunc == "FAR" then
+            easing = AseUtilities.lerpHsvaFar
         else
-            easing = lerpHSVNear
+            easing = AseUtilities.lerpHsvaNear
         end
 
     else
@@ -200,8 +104,8 @@ local function create_conic(
         b2 = bColor.blue
         b3 = bColor.alpha
 
-        if easingFunc == "SMOOTH" then
-            easing = smoothRGB
+        if easingFunc and easingFunc == "SMOOTH" then
+            easing = AseUtilities.smoothRgba
         end
 
     end
@@ -230,20 +134,20 @@ local function create_conic(
         if cw then yOffset = -yOffset end
 
         -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
-        local angleSigned = math.atan(yOffset, xOffset) - angleRadians
+        local angleSigned = math.atan(yOffset, xOffset) - ang
 
         -- Bring angle into range [-0.5, 0.5]. Divide by 2 * math.pi.
         local angleNormed = angleSigned * 0.15915494309189535
 
         -- Bring angle into range [0.0, 1.0] by subtracting floor.
         -- Alternatively, use angleNormed % 1.0.
-        local t = angleNormed - math.floor(angleNormed)
+        local fac = angleNormed - math.floor(angleNormed)
 
         -- Set element to integer composite.
         elm(easing(
             a0, a1, a2, a3,
             b0, b1, b2, b3,
-            t))
+            fac))
 
         i = i + 1
     end
@@ -327,14 +231,17 @@ dlg:button {
                 easingFunc = args.easingFuncHSV
             end
 
-            local w = app.activeSprite.width
-            local h = app.activeSprite.height
+            local sprite = app.activeSprite
+            if sprite == nil then
+                sprite = Sprite(64, 64)
+                app.activeSprite = sprite
+            end
 
-            create_conic(
-                w, h,
-                w * 0.01 * args.xOrigin,
-                h * 0.01 * args.yOrigin,
-                args.angle,
+            createConic(
+                sprite,
+                0.01 * args.xOrigin,
+                0.01 * args.yOrigin,
+                math.rad(args.angle),
                 args.cw,
                 args.aColor,
                 args.bColor,

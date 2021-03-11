@@ -16,11 +16,15 @@ setmetatable(Clr, {
 function Clr.new(r, g, b, a)
     local inst = {}
     setmetatable(inst, Clr)
-    inst.r = r or 1.0
-    inst.g = g or 1.0
-    inst.b = b or 1.0
     inst.a = a or 1.0
+    inst.b = b or 1.0
+    inst.g = g or 1.0
+    inst.r = r or 1.0
     return inst
+end
+
+function Clr:__add(b)
+    Clr.add(self, b)
 end
 
 function Clr:__band(b)
@@ -47,6 +51,10 @@ function Clr:__len()
     return 4
 end
 
+function Clr:__mul(b)
+    return Clr.mul(self, b)
+end
+
 function Clr:__shl(b)
     return Clr.bitShiftLeft(self, Clr.toHex(b))
 end
@@ -55,10 +63,31 @@ function Clr:__shr(b)
     return Clr.bitShiftRight(self, Clr.toHex(b))
 end
 
+function Clr:__sub(b)
+    return Clr.sub(self, b)
+end
+
 function Clr:__tostring()
     return string.format(
         "{ r: %.4f, g: %.4f, b: %.4f, a: %.4f }",
         self.r, self.g, self.b, self.a)
+end
+
+---Adds two colors, including alpha.
+---Clamps the result to [0.0, 1.0].
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Clr.add(a, b)
+    return Clr.new(
+        math.min(1.0, math.max(0.0,
+            a.r + b.r)),
+        math.min(1.0, math.max(0.0,
+            a.g + b.g)),
+        math.min(1.0, math.max(0.0,
+            a.b + b.b)),
+        math.min(1.0, math.max(0.0,
+            a.a + b.a)))
 end
 
 ---Evaluates whether all color channels are 
@@ -247,6 +276,16 @@ function Clr.hsvaToRgba(hue, sat, val, alpha)
     end
 end
 
+---Finds the relative luminance of the color.
+---https://www.wikiwand.com/en/Relative_luminance
+---@param a table color
+---@return number
+function Clr.luminance(a)
+    return 0.2126 * a.r
+         + 0.7152 * a.g
+         + 0.0722 * a.b
+end
+
 ---Mixes two colors in HSVA space by a step.
 ---@param a table origin
 ---@param b table destination
@@ -268,8 +307,11 @@ function Clr.mixHsva(a, b, t)
     local bHsva = Clr.rgbaToHsva(b.r, b.g, b.b, b.a)
 
     -- Default to hue near easing.
-    local o = aHsva.h % 1.0
-    local d = bHsva.h % 1.0
+    -- Shouldn't need to mod the hues.
+    -- local o = aHsva.h % 1.0
+    -- local d = bHsva.h % 1.0
+    local o = aHsva.h
+    local d = bHsva.h
     local diff = d - o
     local hueTrg = o
     if diff ~= 0.0 then
@@ -311,6 +353,23 @@ function Clr.mixRgba(a, b, t)
         v * a.g + u * b.g,
         v * a.b + u * b.b,
         v * a.a + u * b.a)
+end
+
+---Multiplies two colors, including alpha.
+---Clamps the result to [0.0, 1.0].
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Clr.mul(a, b)
+    return Clr.new(
+        math.min(1.0, math.max(0.0,
+            a.r * b.r)),
+        math.min(1.0, math.max(0.0,
+            a.g * b.g)),
+        math.min(1.0, math.max(0.0,
+            a.b * b.b)),
+        math.min(1.0, math.max(0.0,
+            a.a * b.a)))
 end
 
 ---Evaluates whether the color's alpha channel
@@ -364,6 +423,23 @@ function Clr.rgbaToHsva(red, green, blue, alpha)
     if bri ~= 0.0 then sat = dlt / bri end
     local a = alpha or 1.0
     return { h = hue, s = sat, v = bri, a = a }
+end
+
+---Subtracts two colors, including alpha.
+---Clamps the result to [0.0, 1.0].
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Clr.sub(a, b)
+    return Clr.new(
+        math.min(1.0, math.max(0.0,
+            a.r - b.r)),
+        math.min(1.0, math.max(0.0,
+            a.g - b.g)),
+        math.min(1.0, math.max(0.0,
+            a.b - b.b)),
+        math.min(1.0, math.max(0.0,
+            a.a - b.a)))
 end
 
 ---Converts from a color to a hexadecimal integer;
