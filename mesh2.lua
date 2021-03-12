@@ -54,8 +54,8 @@ function Mesh2:__tostring()
         str = str .. tostring(self.vs[i])
         if i < vsLen then str = str .. ", " end
     end
-    str = str .. " ] }"
 
+    str = str .. " ] }"
     return str
 end
 
@@ -261,12 +261,12 @@ function Mesh2.arc(
         for k = 0, sctCount - 2, 1 do
             local i = k * 2
             local j = 1 + k * 2
-            local m = i + 2
-            local n = j + 2
+            -- local m = i + 2
+            -- local n = j + 2
             local f = {
                 1 + i,
-                1 + m,
-                1 + n,
+                3 + i,
+                3 + j,
                 1 + j }
             table.insert(fs, f)
         end
