@@ -124,6 +124,55 @@ function Mesh2:insetFace(faceIndex, fac)
     return self
 end
 
+
+---Rotates all coordinates in a mesh by
+---an angle in radians.
+---@param radians number angle
+---@return table
+function Mesh2:rotateZ(radians)
+    return self:rotateZInternal(
+        math.cos(radians),
+        math.sin(radians))
+end
+
+---Rotates all coordinates in a mesh by
+---the cosine and sine of an angle.
+---@param cosa number cosine of the angle
+---@param sina number sine of the angle
+---@return table
+function Mesh2:rotateZInternal(cosa, sina)
+    local vsLen = #self.vs
+    for i = 1, vsLen, 1 do
+        self.vs[i] = Vec2.rotateZInternal(
+            self.vs[i], cosa, sina)
+    end
+    return self
+end
+
+---Scales all coordinates in a mesh.
+---@param scale table scale
+---@return table
+function Mesh2:scale(scale)
+
+    -- Validate that scale is non-zero.
+    local vscl = nil
+    if type(scale) == "number" then
+        if scale ~= 0.0 then
+            vscl = Vec2.new(scale, scale)
+        else vscl = Vec2.new(1.0, 1.0) end
+    else
+        if Vec2.all(scale) then vscl = scale
+        else vscl = Vec2.new(1.0, 1.0) end
+    end
+
+    local vsLen = #self.vs
+    for i = 1, vsLen, 1 do
+        self.vs[i] = Vec2.add(self.vs[i], vscl)
+    end
+
+    return self
+end
+
 ---Scales each face of a mesh individually,
 ---based on its median center. Meshes should
 ---call uniformData first for best results.
@@ -132,15 +181,14 @@ end
 function Mesh2:scaleFacesIndiv(scale)
 
     -- Validate that scale is non-zero.
-    local vscl = Vec2.new(1.0, 1.0)
+    local vscl = nil
     if type(scale) == "number" then
         if scale ~= 0.0 then
             vscl = Vec2.new(scale, scale)
-        end
+        else vscl = Vec2.new(1.0, 1.0) end
     else
-        if Vec2.all(scale) then
-            vscl = scale
-        end
+        if Vec2.all(scale) then vscl = scale
+        else vscl = Vec2.new(1.0, 1.0) end
     end
 
     local fsLen = #self.fs
@@ -176,10 +224,24 @@ end
 ---@param matrix table matrix
 ---@return table
 function Mesh2:transform(matrix)
+    -- TODO: This should be in utilities instead
+    -- for consistency, lower risk of circular
+    -- dependencies.
     local vsLen = #self.vs
     for i = 1, vsLen, 1 do
         self.vs[i] = Utilities.mulMat3Vec2(
             matrix, self.vs[i])
+    end
+    return self
+end
+
+---Translates all coordinates in a mesh.
+---@param tr table translation
+---@return table
+function Mesh2:translate(tr)
+    local vsLen = #self.vs
+    for i = 1, vsLen, 1 do
+        self.vs[i] = Vec2.add(self.vs[i], tr)
     end
     return self
 end
@@ -212,7 +274,7 @@ function Mesh2.arc(
     if arcLen < 0.00873 then
         local target = Mesh2.polygon(sectors)
         target.name = "Ring"
-        target:transform(Mat3.fromRotZ(startAngle))
+        target:rotateZ(startAngle)
         local r = math.min(0.999999, math.max(0.000001,
             0.5 * startWeight + stopWeight))
         target:insetFace(0, r)
@@ -261,8 +323,6 @@ function Mesh2.arc(
         for k = 0, sctCount - 2, 1 do
             local i = k * 2
             local j = 1 + k * 2
-            -- local m = i + 2
-            -- local n = j + 2
             local f = {
                 1 + i,
                 3 + i,
@@ -356,6 +416,9 @@ function Mesh2.gridDimetric(cells)
         0.5, -0.5, 0.0,
         0.25, 0.25, 0.0,
         0.0, 0.0, 1.0)
+
+    -- TODO: Inline all of this! Avoid dependency
+    -- on mesh transform and mat3.
     return mesh:transform(mat)
 end
 
@@ -438,6 +501,7 @@ function Mesh2.polygon(sectors)
     elseif vsect == 6 then name = "Hexagon"
     elseif vsect == 7 then name = "Heptagon"
     elseif vsect == 8 then name = "Octagon"
+    elseif vsect == 9 then name = "Enneagon"
     end
 
     return Mesh2.new(fs, vs, name)

@@ -1,6 +1,6 @@
-dofile("./mat3.lua")
-dofile("./mesh2.lua")
-dofile("./aseutilities.lua")
+dofile("./Support/mat3.lua")
+dofile("./Support/mesh2.lua")
+dofile("./Support/aseutilities.lua")
 
 local defaults = {
     sides = 6,
