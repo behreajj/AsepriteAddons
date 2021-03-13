@@ -1,6 +1,5 @@
 dofile("./vec2.lua")
 dofile("./mat3.lua")
-dofile("./utilities.lua")
 
 Mesh2 = {}
 Mesh2.__index = Mesh2
@@ -219,22 +218,6 @@ function Mesh2:scaleFacesIndiv(scale)
     return self
 end
 
----Transforms a mesh by a matrix.
----The mesh is transformed in place.
----@param matrix table matrix
----@return table
-function Mesh2:transform(matrix)
-    -- TODO: This should be in utilities instead
-    -- for consistency, lower risk of circular
-    -- dependencies.
-    local vsLen = #self.vs
-    for i = 1, vsLen, 1 do
-        self.vs[i] = Utilities.mulMat3Vec2(
-            matrix, self.vs[i])
-    end
-    return self
-end
-
 ---Translates all coordinates in a mesh
 ---by a vector.
 ---@param tr table translation
@@ -407,20 +390,16 @@ end
 function Mesh2.gridDimetric(cells)
     local mesh = Mesh2.gridCartesian(cells, cells)
 
-    -- local s = Mat3.fromScale(
-    --     1.0 / math.sqrt(2.0),
-    --     0.5 / math.sqrt(2.0))
-    -- local r = Mat3.fromRotZ(math.rad(45))
-    -- local mat = Mat3.mul(s, r)
+    local vs = mesh.vs
+    local vsLen = #vs
+    for i = 1, vsLen, 1 do
+        local vSrc = vs[i]
+        vs[i] = Vec2.new(
+            0.5  * vSrc.x - 0.5  * vSrc.y,
+            0.25 * vSrc.x + 0.25 * vSrc.y)
+    end
 
-    local mat = Mat3.new(
-        0.5, -0.5, 0.0,
-        0.25, 0.25, 0.0,
-        0.0, 0.0, 1.0)
-
-    -- TODO: Inline all of this! Avoid dependency
-    -- on mesh transform and mat3.
-    return mesh:transform(mat)
+    return mesh
 end
 
 ---Creates a grid of hexagons in rings around

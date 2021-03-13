@@ -1,5 +1,6 @@
 dofile("./Support/mat3.lua")
 dofile("./Support/mesh2.lua")
+dofile("./Support/utilities.lua")
 dofile("./Support/aseutilities.lua")
 
 local defaults = {
@@ -110,9 +111,9 @@ dlg:button {
             args.yOrigin)
         local sclval = args.scale
         if sclval < 2.0 then sclval = 2.0 end
-        local s = Mat3.fromScale(sclval)
+        local s = Mat3.fromScale(sclval, -sclval)
         local mat = Mat3.mul(t, s)
-        mesh:transform(mat)
+        Utilities.mulMat3Mesh2(mat, mesh)
 
         local sprite = app.activeSprite
         if sprite == nil then

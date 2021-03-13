@@ -1,6 +1,7 @@
 dofile("./vec2.lua")
 dofile("./vec3.lua")
 dofile("./mat3.lua")
+dofile("./mesh2.lua")
 
 Utilities = {}
 Utilities.__index = Utilities
@@ -91,6 +92,20 @@ function Utilities.mulMat3Vec2(a, b)
     else
         return Vec2.new(0.0, 0.0)
     end
+end
+
+---Multiplies a matrix with a mesh.
+---Changes the mesh in place.
+---@param a table matrix
+---@param b table mesh
+---@return table
+function Utilities.mulMat3Mesh2(a, b)
+    local vs = b.vs
+    local vsLen = #vs
+    for i = 1, vsLen, 1 do
+        vs[i] = Utilities.mulMat3Vec2(a, vs[i])
+    end
+    return b
 end
 
 ---Promotes a Vec2 to a Vec3.

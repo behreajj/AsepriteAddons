@@ -1,5 +1,6 @@
 dofile("./Support/mat3.lua")
 dofile("./Support/mesh2.lua")
+dofile("./Support/utilities.lua")
 dofile("./Support/aseutilities.lua")
 
 local defaults = {
@@ -19,7 +20,7 @@ local dlg = Dialog { title="Hexagon Grid" }
 
 dlg:slider {
     id = "rings",
-    label = "Rings: ",
+    label = "Rings:",
     min = 1,
     max = 32,
     value = defaults.rings
@@ -27,28 +28,28 @@ dlg:slider {
 
 dlg:number {
     id = "scale",
-    label = "Scale: ",
+    label = "Cell Size:",
     text = string.format("%.1f", defaults.scale),
     decimals = 5
 }
 
 dlg:number {
     id = "xOrigin",
-    label = "Origin X: ",
+    label = "Origin X:",
     text = string.format("%.1f", defaults.xOrigin),
     decimals = 5
 }
 
 dlg:number {
     id = "yOrigin",
-    label = "Origin Y: ",
+    label = "Origin Y:",
     text = string.format("%.1f", defaults.yOrigin),
     decimals = 5
 }
 
 dlg:slider {
     id = "margin",
-    label = "Margin: ",
+    label = "Margin:",
     min = 0,
     max = 100,
     value = defaults.margin
@@ -56,7 +57,7 @@ dlg:slider {
 
 dlg:check {
     id = "useStroke",
-    label = "Use Stroke: ",
+    label = "Use Stroke:",
     selected = defaults.useStroke
 }
 
@@ -70,19 +71,19 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    label = "Stroke Color: ",
+    label = "Stroke Color:",
     color = defaults.strokeClr
 }
 
 dlg:check {
     id = "useFill",
-    label = "Use Fill: ",
+    label = "Use Fill:",
     selected = defaults.useFill
 }
 
 dlg:color {
     id = "fillClr",
-    label = "Fill Color: ",
+    label = "Fill Color:",
     color = defaults.fillClr
 }
 
@@ -111,18 +112,18 @@ dlg:button {
             local t = Mat3.fromTranslation(
                 args.xOrigin,
                 args.yOrigin)
-            local s = Mat3.fromScale(sclval)
+            local s = Mat3.fromScale(sclval, -sclval)
             local mat = Mat3.mul(t, s)
-            mesh:transform(mat)
+            Utilities.mulMat3Mesh2(mat, mesh)
 
-            local brsh = Brush(args.strokeWeight)
-
-            -- TODO: Make this more robust, as with
-            -- other examples, i.e. check for nil.
             local sprite = app.activeSprite
+            if sprite == nil then
+                sprite = Sprite(64, 64)
+                app.activeSprite = sprite
+            end
+
             local layer = sprite:newLayer()
             layer.name = "Hexagon Grid"
-            local cel = sprite:newCel(layer, 1)
 
             AseUtilities.drawMesh(
                 mesh,
@@ -130,8 +131,8 @@ dlg:button {
                 args.fillClr,
                 args.useStroke,
                 args.strokeClr,
-                brsh,
-                cel,
+                Brush(args.strokeWeight),
+                sprite:newCel(layer, 1),
                 layer)
         end
     end

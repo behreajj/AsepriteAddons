@@ -1,5 +1,6 @@
 dofile("./Support/mat3.lua")
 dofile("./Support/mesh2.lua")
+dofile("./Support/utilities.lua")
 dofile("./Support/aseutilities.lua")
 
 local defaults = {
@@ -140,14 +141,17 @@ dlg:button{
         args.xOrigin,
         args.yOrigin)
     local s = Mat3.fromScale(sclval, -sclval)
-    local mat = t * s
-    mesh:transform(mat)
+    local mat = Mat3.mul(t, s)
+    Utilities.mulMat3Mesh2(mat, mesh)
 
-    local brsh = Brush(args.strokeWeight)
     local sprite = app.activeSprite
+    if sprite == nil then
+        sprite = Sprite(64, 64)
+        app.activeSprite = sprite
+    end
+
     local layer = sprite:newLayer()
     layer.name = mesh.name
-    local cel = sprite:newCel(layer, 1)
 
     AseUtilities.drawMesh(
         mesh,
@@ -155,8 +159,8 @@ dlg:button{
         args.fillClr,
         args.useStroke,
         args.strokeClr,
-        brsh,
-        cel,
+        Brush(args.strokeWeight),
+        sprite:newCel(layer, 1),
         layer)
 
     end}

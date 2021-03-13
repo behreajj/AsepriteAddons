@@ -1,5 +1,6 @@
 dofile("./Support/mat3.lua")
 dofile("./Support/mesh2.lua")
+dofile("./Support/utilities.lua")
 dofile("./Support/aseutilities.lua")
 
 local defaults = {
@@ -28,8 +29,8 @@ dlg:slider {
 dlg:slider {
     id = "angle",
     label = "Angle:",
-    min = -180,
-    max = 180,
+    min = 0,
+    max = 360,
     value = defaults.angle
 }
 
@@ -102,9 +103,10 @@ dlg:button {
         local r = Mat3.fromRotZ(math.rad(args.angle))
         local sclval = args.scale
         if sclval < 2.0 then sclval = 2.0 end
-        local s = Mat3.fromScale(sclval, sclval)
-        local mat = Mat3.mul(Mat3.mul(t, r), s)
-        mesh:transform(mat)
+        local s = Mat3.fromScale(sclval, -sclval)
+        -- local mat = t * s * r
+        local mat = Mat3.mul(Mat3.mul(t, s), r)
+        Utilities.mulMat3Mesh2(mat, mesh)
 
         local sprite = app.activeSprite
         if sprite == nil then

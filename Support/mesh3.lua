@@ -1,7 +1,6 @@
 dofile("./vec3.lua")
 dofile("./mat4.lua")
 dofile("./index3.lua")
-dofile("./utilities.lua")
 
 Mesh3 = {}
 Mesh3.__index = Mesh3

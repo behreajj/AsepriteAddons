@@ -15,23 +15,19 @@ local ryb = {
     Color(191, 0, 64, 255)
 }
 
-local viridis = {
-    Color(68, 1, 84, 255),
-    Color(72, 26, 107, 255),
-    Color(70, 47, 124, 255),
-    Color(65, 68, 135, 255),
-    Color(57, 87, 140, 255),
-    Color(49, 103, 141, 255),
-    Color(42, 120, 142, 255),
-    Color(36, 136, 141, 255),
-    Color(31, 152, 138, 255),
-    Color(36, 168, 132, 255),
-    Color(54, 183, 120, 255),
-    Color(83, 197, 104, 255),
-    Color(122, 210, 81, 255),
-    Color(165, 219, 53, 255),
-    Color(210, 226, 29, 255),
-    Color(253, 231, 37, 255)
+local rgb = {
+    Color(255,   0,   0, 255), -- Red
+    Color(255, 128,   0, 255), -- Orange
+    Color(255, 255,   0, 255), -- Yellow
+    Color(128, 255,   0, 255),
+    Color(  0, 255,   0, 255), -- Green
+    Color(  0, 255, 128, 255),
+    Color(  0, 255, 255, 255), -- Cyan
+    Color(  0, 128, 255, 255),
+    Color(  0,   0, 255, 255), -- Blue
+    Color(128,   0, 255, 255),
+    Color(255,   0, 255, 255), -- Magenta
+    Color(255,   0, 128, 255)
 }
 
 dlg:shades {
@@ -77,6 +73,12 @@ dlg:slider {
     value = 85
 }
 
+dlg:check {
+    id = "inclGray",
+    label = "Include Gray: ",
+    selected = true
+}
+
 dlg:button {
     id = "ok",
     text = "OK",
@@ -84,27 +86,28 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         if args.ok then
-            -- TODO: Add include gray scale tick box.
-            -- If true add ramp from black to white
-            -- or min lum to max lum.
             -- hue shift for if lum is < or > 0.5?
 
             local lenHues = #args.hues
-            local lenShades = args.shades
+            local lenShades = args.shades or 8
+            local inclGray = args.inclGray or false
             local totLen = lenHues * lenShades
-            local palette = Palette(totLen)
+            local grayLen = 0
+            if inclGray then grayLen = lenShades end
+            local palette = Palette(totLen + grayLen)
 
             local lmin = args.minLight * 0.01
             local lmax = args.maxLight * 0.01
 
             local k = 0
+            local jToFac = 1.0 / (lenShades - 1.0)
             for i = 1, lenHues, 1 do
                 local clr = args.hues[i]
                 local h = clr.hslHue
                 local s = clr.hslSaturation
                 local a = clr.alpha
                 for j = 1, lenShades, 1 do
-                    local t = (j - 1.0) / (lenShades - 1.0)
+                    local t = (j - 1.0) * jToFac
                     local u = 1.0 - t
                     local lnew = u * lmin + t * lmax
 
@@ -118,7 +121,23 @@ dlg:button {
                 end
             end
 
+            if inclGray then
+                for j = 1, lenShades, 1 do
+                    local t = (j - 1.0) * jToFac
+                    local u = 1.0 - t
+                    local lnew = u * lmin + t * lmax
+                    local grayClr = Color {
+                        h = 0.0,
+                        s = 0.0,
+                        l = lnew,
+                        a = 255 }
+                    palette:setColor(k, grayClr)
+                    k = k + 1
+                end
+            end
+
             app.activeSprite:setPalette(palette)
+            app.refresh()
         end
     end
 }
