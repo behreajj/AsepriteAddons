@@ -124,7 +124,6 @@ function Mesh2:insetFace(faceIndex, fac)
     return self
 end
 
-
 ---Rotates all coordinates in a mesh by
 ---an angle in radians.
 ---@param radians number angle
@@ -150,6 +149,7 @@ function Mesh2:rotateZInternal(cosa, sina)
 end
 
 ---Scales all coordinates in a mesh.
+---The scale can be either a number or Vec2.
 ---@param scale table scale
 ---@return table
 function Mesh2:scale(scale)
@@ -167,7 +167,7 @@ function Mesh2:scale(scale)
 
     local vsLen = #self.vs
     for i = 1, vsLen, 1 do
-        self.vs[i] = Vec2.add(self.vs[i], vscl)
+        self.vs[i] = Vec2.mul(self.vs[i], vscl)
     end
 
     return self
@@ -235,7 +235,8 @@ function Mesh2:transform(matrix)
     return self
 end
 
----Translates all coordinates in a mesh.
+---Translates all coordinates in a mesh
+---by a vector.
 ---@param tr table translation
 ---@return table
 function Mesh2:translate(tr)

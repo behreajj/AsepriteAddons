@@ -70,6 +70,43 @@ function Mesh3:__tostring()
     return str
 end
 
+---Scales all coordinates in a mesh.
+---The scale can be either a number or Vec3.
+---@param scale table scale
+---@return table
+function Mesh3:scale(scale)
+
+    -- Validate that scale is non-zero.
+    local vscl = nil
+    if type(scale) == "number" then
+        if scale ~= 0.0 then
+            vscl = Vec3.new(scale, scale)
+        else vscl = Vec3.new(1.0, 1.0, 1.0) end
+    else
+        if Vec3.all(scale) then vscl = scale
+        else vscl = Vec3.new(1.0, 1.0, 1.0) end
+    end
+
+    local vsLen = #self.vs
+    for i = 1, vsLen, 1 do
+        self.vs[i] = Vec3.mul(self.vs[i], vscl)
+    end
+
+    return self
+end
+
+---Translates all coordinates in a mesh
+---by a vector.
+---@param tr table translation
+---@return table
+function Mesh3:translate(tr)
+    local vsLen = #self.vs
+    for i = 1, vsLen, 1 do
+        self.vs[i] = Vec3.add(self.vs[i], tr)
+    end
+    return self
+end
+
 ---Creates a cube.
 ---@return table
 function Mesh3.cube()
