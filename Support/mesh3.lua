@@ -69,6 +69,81 @@ function Mesh3:__tostring()
     return str
 end
 
+---Rotates all coordinates in a mesh
+---around the x axis by an angle in radians.
+---@param radians number angle
+---@return table
+function Mesh3:rotateX(radians)
+    return self:rotateXInternal(
+        math.cos(radians),
+        math.sin(radians))
+end
+
+---Rotates all coordinates in a mesh
+---around the y axis by an angle in radians.
+---@param radians number angle
+---@return table
+function Mesh3:rotateY(radians)
+    return self:rotateYInternal(
+        math.cos(radians),
+        math.sin(radians))
+end
+
+---Rotates all coordinates in a mesh
+---around the z axis by an angle in radians.
+---@param radians number angle
+---@return table
+function Mesh3:rotateZ(radians)
+    return self:rotateZInternal(
+        math.cos(radians),
+        math.sin(radians))
+end
+
+---Rotates all coordinates in a mesh
+---around the x axis by the cosine and
+---sine of an angle.
+---@param cosa number cosine of the angle
+---@param sina number sine of the angle
+---@return table
+function Mesh3:rotateXInternal(cosa, sina)
+    local vsLen = #self.vs
+    for i = 1, vsLen, 1 do
+        self.vs[i] = Vec3.rotateXInternal(
+            self.vs[i], cosa, sina)
+    end
+    return self
+end
+
+---Rotates all coordinates in a mesh
+---around the y axis by the cosine and
+---sine of an angle.
+---@param cosa number cosine of the angle
+---@param sina number sine of the angle
+---@return table
+function Mesh3:rotateYInternal(cosa, sina)
+    local vsLen = #self.vs
+    for i = 1, vsLen, 1 do
+        self.vs[i] = Vec3.rotateYInternal(
+            self.vs[i], cosa, sina)
+    end
+    return self
+end
+
+---Rotates all coordinates in a mesh
+---around the z axis by the cosine and
+---sine of an angle.
+---@param cosa number cosine of the angle
+---@param sina number sine of the angle
+---@return table
+function Mesh3:rotateZInternal(cosa, sina)
+    local vsLen = #self.vs
+    for i = 1, vsLen, 1 do
+        self.vs[i] = Vec3.rotateZInternal(
+            self.vs[i], cosa, sina)
+    end
+    return self
+end
+
 ---Scales all coordinates in a mesh.
 ---The scale can be either a number or Vec3.
 ---@param scale table scale

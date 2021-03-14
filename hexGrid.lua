@@ -125,7 +125,7 @@ dlg:button {
             local layer = sprite:newLayer()
             layer.name = "Hexagon Grid"
 
-            AseUtilities.drawMesh(
+            AseUtilities.drawMesh2(
                 mesh,
                 args.useFill,
                 args.fillClr,

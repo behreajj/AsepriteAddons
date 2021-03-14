@@ -135,15 +135,15 @@ function Mat4.camera(
 
     --Optional args for reference up.
     --Default to z-up.
-    local zrv = zRef or 1.0
-    local yrv = yRef or 0.0
     local xrv = xRef or 0.0
+    local yrv = yRef or 0.0
+    local zrv = zRef or 1.0
 
     --Optional args for focus.
     --Default to origin.
-    local zfv = zFocus or 0.0
-    local yfv = yFocus or 0.0
     local xfv = xFocus or 0.0
+    local yfv = yFocus or 0.0
+    local zfv = zFocus or 0.0
 
     --Find k by subtractinglocation from focus.
     local kx = xLoc - xfv
@@ -431,11 +431,7 @@ function Mat4.inverse(a)
             (a.m31 * b01 - a.m30 * b03 - a.m32 * b00) * detInv,
             (a.m20 * b03 - a.m21 * b01 + a.m22 * b00) * detInv)
     else
-        return Mat4.new(
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.0)
+        return Mat4.identity()
     end
 end
 
@@ -566,6 +562,16 @@ function Mat4.transpose(a)
         a.m01, a.m11, a.m21, a.m31,
         a.m02, a.m12, a.m22, a.m32,
         a.m03, a.m13, a.m23, a.m33)
+end
+
+---Creates the identity matrix.
+---@return table
+function Mat4.identity()
+    return Mat4.new(
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0)
 end
 
 return Mat4

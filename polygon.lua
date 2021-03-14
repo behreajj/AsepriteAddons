@@ -104,7 +104,6 @@ dlg:button {
         local sclval = args.scale
         if sclval < 2.0 then sclval = 2.0 end
         local s = Mat3.fromScale(sclval, -sclval)
-        -- local mat = t * s * r
         local mat = Mat3.mul(Mat3.mul(t, s), r)
         Utilities.mulMat3Mesh2(mat, mesh)
 
@@ -117,7 +116,7 @@ dlg:button {
         local layer = sprite:newLayer()
         layer.name = mesh.name
 
-        AseUtilities.drawMesh(
+        AseUtilities.drawMesh2(
             mesh,
             args.useFill,
             args.fillClr,

@@ -58,6 +58,42 @@ function Mesh2:__tostring()
     return str
 end
 
+---Subdivides a convex face by calculating its
+---center, then connecting its vertices to the center.
+---Generates a triangle for the number of edges
+---in the face.
+---@param faceIndex integer face index
+---@return table
+function Mesh2:subdivFaceFan(faceIndex)
+
+    local facesLen = #self.fs
+    local i = 1 + (faceIndex - 1) % facesLen
+    local face = self.fs[i]
+    local faceLen = #face
+
+    local vCenter = Vec2.new(0.0, 0.0)
+    local vCenterIdx = 1 + #self.vs
+
+    for j = 0, faceLen - 1, 1 do
+        local k = (j + 1) % faceLen
+        local vertCurr = face[1 + j]
+        local vertNext = face[1 + k]
+
+        vCenter = Vec2.add(vCenter, self.vs[vertCurr])
+
+        local fNew = { vCenterIdx, vertCurr, vertNext }
+        table.insert(self.fs, fNew)
+    end
+
+    if faceLen > 0 then
+        vCenter = Vec2.scale(vCenter, 1.0 / faceLen)
+    end
+
+    table.remove(self.fs, i)
+    table.insert(self.vs, vCenter)
+    return self
+end
+
 ---Insets a face by calculating its center then
 ---easing from the face's vertices toward the center
 ---by the factor, in range [0.0, 1.0].
@@ -72,12 +108,11 @@ function Mesh2:insetFace(faceIndex, fac)
     end
 
     if t >= 1.0 then
-        -- TODO: subdivFaceFan
-        return self
+        return self:subdivFaceFan(faceIndex)
     end
 
     local facesLen = #self.fs
-    local i = 1 + faceIndex % facesLen
+    local i = 1 + (faceIndex - 1) % facesLen
     local face = self.fs[i]
     local faceLen = #face
 
@@ -96,7 +131,7 @@ function Mesh2:insetFace(faceIndex, fac)
 
     local u = 1.0 - t
     for j = 0, faceLen - 1, 1 do
-        local k = (j + 1) % (faceLen)
+        local k = (j + 1) % faceLen
         local vertCurr = face[1 + j]
         local vertNext = face[1 + k]
 
@@ -202,7 +237,10 @@ function Mesh2:scaleFacesIndiv(scale)
             local v = self.vs[vert]
             center = Vec2.add(center, v)
         end
-        center = Vec2.scale(center, 1.0 / fLen)
+
+        if fLen > 0 then
+            center = Vec2.scale(center, 1.0 / fLen)
+        end
 
         -- Treat center as a pivot:
         -- Subtract center, scale, add center.
@@ -261,7 +299,7 @@ function Mesh2.arc(
         target:rotateZ(startAngle)
         local r = math.min(0.999999, math.max(0.000001,
             0.5 * startWeight + stopWeight))
-        target:insetFace(0, r)
+        target:insetFace(1, r)
         table.remove(target.fs, #target.fs)
         return target
     end
@@ -305,13 +343,12 @@ function Mesh2.arc(
     if useQuads then
 
         for k = 0, sctCount - 2, 1 do
-            local i = k * 2
-            local j = 1 + k * 2
+            local i = k + k
             local f = {
                 1 + i,
                 3 + i,
-                3 + j,
-                1 + j }
+                4 + i,
+                2 + i }
             table.insert(fs, f)
         end
 
@@ -319,7 +356,7 @@ function Mesh2.arc(
 
         local f = {}
         for i = 0, sctCount - 1, 1 do
-            local j = i * 2
+            local j = i + i
             f[1 + i] = 1 + j
             f[1 + sctCount + i] = 1 + (sctCount2 - 1) - j
         end
@@ -409,12 +446,12 @@ end
 function Mesh2.gridHex(rings)
     local vRings = 1
     if rings > 1 then vRings = rings end
-    local vRad = 0.5
-    local extent = vRad * 1.7320508075688772
+    local vrad = 0.5
+    local extent = vrad * 1.7320508075688772
     local halfExt = extent * 0.5
-    local rad15 = vRad * 1.5
-    local radrt32 = vRad * 0.8660254037844386
-    local halfRad = vRad * 0.5
+    local rad15 = vrad * 1.5
+    local radrt32 = vrad * 0.8660254037844386
+    local halfRad = vrad * 0.5
 
     local iMax = vRings - 1
     local iMin = -iMax
@@ -436,10 +473,10 @@ function Mesh2.gridHex(rings)
             local top = y + halfRad
             local bottom = y - halfRad
 
-            table.insert(vs, Vec2.new(x, y + vRad))
+            table.insert(vs, Vec2.new(x, y + vrad))
             table.insert(vs, Vec2.new(left, top))
             table.insert(vs, Vec2.new(left, bottom))
-            table.insert(vs, Vec2.new(x, y - vRad))
+            table.insert(vs, Vec2.new(x, y - vrad))
             table.insert(vs, Vec2.new(right, bottom))
             table.insert(vs, Vec2.new(right, top))
 
@@ -461,15 +498,15 @@ end
 function Mesh2.polygon(sectors)
     local vsect = 3
     if sectors > 3 then vsect = sectors end
-    local radius = 0.5
+    local vrad = 0.5
     local toTheta = 6.283185307179586 / vsect
     local vs = {}
     local f = {}
     for i = 0, vsect - 1, 1 do
         local theta = i * toTheta
         table.insert(vs, Vec2.new(
-            radius * math.cos(theta),
-            radius * math.sin(theta)))
+            vrad * math.cos(theta),
+            vrad * math.sin(theta)))
         table.insert(f, 1 + i)
     end
     local fs = { f }

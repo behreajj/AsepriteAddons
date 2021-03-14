@@ -215,10 +215,7 @@ function Mat3.inverse(a)
             (a.m01 * a.m20 - a.m21 * a.m00) * detInv,
             (a.m11 * a.m00 - a.m01 * a.m10) * detInv)
     else
-        return Mat3.new(
-            1.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 0.0, 1.0)
+        return Mat3.identity()
     end
 end
 
@@ -268,6 +265,15 @@ function Mat3.transpose(a)
         a.m00, a.m10, a.m20,
         a.m01, a.m11, a.m21,
         a.m02, a.m12, a.m22)
+end
+
+---Creates the identity matrix.
+---@return table
+function Mat3.identity()
+    return Mat3.new(
+        1.0, 0.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 0.0, 1.0)
 end
 
 return Mat3

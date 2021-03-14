@@ -159,14 +159,14 @@ end
 ---@param a table left operand
 ---@return number
 function Vec3.azimuthSigned(a)
-    return math.atan2(a.y, a.x)
+    return math.atan(a.y, a.x)
 end
 
 ---Finds a vector's unsigned azimuth, in [0.0, tau].
 ---@param a table left operand
 ---@return number
-function Vec3.azimuthSigned(a)
-    return math.atan2(a.y, a.x) % 6.283185307179586
+function Vec3.azimuthUnsigned(a)
+    return math.atan(a.y, a.x) % 6.283185307179586
 end
 
 ---Finds the ceiling of the vector.

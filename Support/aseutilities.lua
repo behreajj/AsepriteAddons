@@ -29,7 +29,7 @@ end
 ---@param brsh table
 ---@param cel table
 ---@param layer table
-function AseUtilities.drawMesh(
+function AseUtilities.drawMesh2(
     mesh,
     useFill,
     fillClr,

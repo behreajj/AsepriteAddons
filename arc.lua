@@ -153,7 +153,7 @@ dlg:button{
     local layer = sprite:newLayer()
     layer.name = mesh.name
 
-    AseUtilities.drawMesh(
+    AseUtilities.drawMesh2(
         mesh,
         args.useFill,
         args.fillClr,
