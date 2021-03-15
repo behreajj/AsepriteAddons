@@ -1,5 +1,4 @@
 dofile("./vec3.lua")
-dofile("./mat4.lua")
 dofile("./index3.lua")
 
 Mesh3 = {}

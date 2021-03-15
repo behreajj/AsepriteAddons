@@ -20,7 +20,7 @@ local dlg = Dialog { title = "Convex Polygon" }
 
 dlg:slider {
     id = "sides",
-    label = "Sides: ",
+    label = "Sides:",
     min = 3,
     max = 16,
     value = defaults.sides
@@ -36,28 +36,28 @@ dlg:slider {
 
 dlg:number {
     id = "scale",
-    label = "Scale: ",
+    label = "Scale:",
     text = string.format("%.1f", defaults.scale),
     decimals = 5
 }
 
 dlg:number {
     id = "xOrigin",
-    label = "Origin X: ",
+    label = "Origin X:",
     text = string.format("%.1f", defaults.xOrigin),
     decimals = 5
 }
 
 dlg:number {
     id = "yOrigin",
-    label = "Origin Y: ",
+    label = "Origin Y:",
     text = string.format("%.1f", defaults.yOrigin),
     decimals = 5
 }
 
 dlg:check {
     id = "useStroke",
-    label = "Use Stroke: ",
+    label = "Use Stroke:",
     selected = defaults.useStroke
 }
 
@@ -71,19 +71,19 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    label = "Stroke Color: ",
+    label = "Stroke Color:",
     color = defaults.strokeClr
 }
 
 dlg:check {
     id = "useFill",
-    label = "Use Fill: ",
+    label = "Use Fill:",
     selected = defaults.useFill
 }
 
 dlg:color {
     id = "fillClr",
-    label = "Fill Color: ",
+    label = "Fill Color:",
     color = defaults.fillClr
 }
 

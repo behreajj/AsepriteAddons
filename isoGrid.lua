@@ -76,7 +76,7 @@ dlg:color {
 
 dlg:check{
     id = "useFill",
-    label = "Use Fill: ",
+    label = "Use Fill:",
     selected = defaults.useFill
 }
 

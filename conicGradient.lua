@@ -20,16 +20,11 @@ local defaults = {
 
 local function createConic(
     sprite,
+    img,
     xOrigin, yOrigin,
     angle, cw,
     aColor, bColor,
     easingMode, easingFunc)
-
-    -- Create new layer.
-    local layer = sprite:newLayer()
-    layer.name = "Conic Gradient"
-    local cel = sprite:newCel(layer, 1)
-    local img = cel.image
 
     local w = sprite.width
     local h = sprite.height
@@ -181,40 +176,40 @@ dlg:slider {
 
 dlg:check {
     id = "cw",
-    label = "Chirality: ",
+    label = "Chirality:",
     text = "Flip y axis.",
     selected = defaults.cw
 }
 
 dlg:color {
     id = "aColor",
-    label = "Color A: ",
+    label = "Color A:",
     color = defaults.aColor
 }
 
 dlg:color {
     id = "bColor",
-    label = "Color B: ",
+    label = "Color B:",
     color = defaults.bColor
 }
 
 dlg:combobox {
     id = "easingMode",
-    label = "Easing Mode: ",
+    label = "Easing Mode:",
     option = defaults.easingMode,
     options = easingModes
 }
 
 dlg:combobox {
     id = "easingFuncHSV",
-    label = "HSV Easing: ",
+    label = "HSV Easing:",
     option = defaults.easingFuncHSV,
     options = hsvEasing
 }
 
 dlg:combobox {
     id = "easingFuncRGB",
-    label = "RGB Easing: ",
+    label = "RGB Easing:",
     option = defaults.easingFuncRGB,
     options = rgbEasing
 }
@@ -237,8 +232,13 @@ dlg:button {
                 app.activeSprite = sprite
             end
 
+            local layer = sprite:newLayer()
+            layer.name = "Conic Gradient"
+            local cel = sprite:newCel(layer, 1)
+
             createConic(
                 sprite,
+                cel.image,
                 0.01 * args.xOrigin,
                 0.01 * args.yOrigin,
                 math.rad(args.angle),

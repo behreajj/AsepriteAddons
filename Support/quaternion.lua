@@ -9,15 +9,38 @@ setmetatable(Quaternion, {
     end})
 
 ---Constructs a new quaternion.
----The imaginary vector is assigned by reference.
+---Defaults to passing the vector by value.
 ---@param real number real
 ---@param imag table imaginary
 ---@return table
 function Quaternion.new(real, imag)
+    return Quaternion.newByVal(real, imag)
+end
+
+---Constructs a new quaternion.
+---The imaginary vector is assigned by reference.
+---@param real number real
+---@param imag table imaginary
+---@return table
+function Quaternion.newByRef(real, imag)
     local inst = {}
     setmetatable(inst, Quaternion)
     inst.real = real or 1.0
     inst.imag = imag or Vec3.new(0.0, 0.0, 0.0)
+    return inst
+end
+
+---Constructs a new quaternion.
+---The imaginary vector is copied by value.
+---@param real number real
+---@param imag table imaginary
+---@return table
+function Quaternion.newByVal(real, imag)
+    local inst = {}
+    setmetatable(inst, Quaternion)
+    inst.real = real or 1.0
+    inst.imag = Vec3.new(imag.x, imag.y, imag.z)
+        or Vec3.new(0.0, 0.0, 0.0)
     return inst
 end
 
@@ -64,7 +87,7 @@ end
 function Quaternion.add(a, b)
     local ai = a.imag
     local bi = b.imag
-    return Quaternion.new(
+    return Quaternion.newByRef(
         a.real + b.real,
         Vec3.new(
             ai.x + bi.x,
@@ -93,7 +116,7 @@ end
 ---@return table
 function Quaternion.conj(a)
     local ai = a.imag
-    return Quaternion.new(
+    return Quaternion.newByRef(
         a.real,
         Vec3.new(-ai.x, -ai.y, -ai.z))
 end
@@ -120,7 +143,7 @@ function Quaternion.div(a, b)
         local ai = a.imag
         local aw = a.real
 
-        return Quaternion.new(
+        return Quaternion.newByRef(
             aw * bwInv - ai.x * bxInv - ai.y * byInv - ai.z * bzInv,
             Vec3.new(
                 ai.x * bwInv + aw * bxInv + ai.y * bzInv - ai.z * byInv,
@@ -155,7 +178,7 @@ function Quaternion.inverse(a)
         + ai.z * ai.z
     if mSq ~= 0.0 then
         local mSqInv = 1.0 / mSq
-        return Quaternion.new(
+        return Quaternion.newByRef(
             a.real * mSqInv,
             Vec3.new(
                 -ai.x * mSqInv,
@@ -200,7 +223,7 @@ function Quaternion.mul(a, b)
     local aw = a.real
     local bw = b.real
 
-    return Quaternion.new(
+    return Quaternion.newByRef(
         aw * bw - (ai.x * bi.x + ai.y * bi.y + ai.z * bi.z),
         Vec3.new(
             ai.x * bw + aw * bi.x + ai.y * bi.z - ai.z * bi.y,
@@ -213,7 +236,7 @@ end
 ---@return table
 function Quaternion.negate(a)
     local ai = a.imag
-    return Quaternion.new(
+    return Quaternion.newByRef(
         -a.real,
         Vec3.new(-ai.x, -ai.y, -ai.z))
 end
@@ -230,7 +253,7 @@ function Quaternion.normalize(a)
         + ai.z * ai.z
     if mSq ~= 0.0 then
         local mInv = 1.0 / math.sqrt(mSq)
-        return Quaternion.new(
+        return Quaternion.newByRef(
             a.real * mInv,
             Vec3.new(
                 ai.x * mInv,
@@ -249,12 +272,96 @@ function Quaternion.random()
     local r1 = math.random()
     local x0 = math.sqrt(1.0 - r1)
     local x1 = math.sqrt(r1)
-    return Quaternion.new(
+    return Quaternion.newByRef(
         x0 * math.sin(t0),
         Vec3.new(
             x0 * math.cos(t0),
             x1 * math.sin(t1),
             x1 * math.cos(t1)))
+end
+
+---Rotates a quaternion around the x axis by an angle
+---in radians.
+---@param q table quaternion
+---@param radians number angle
+---@return table
+function Quaternion.rotateX(q, radians)
+    local half = 0.5 * (radians % 6.283185307179586)
+    return Quaternion.rotateXInternal(
+        q, math.cos(half), math.sin(half))
+end
+
+---Rotates a quaternion around the y axis by an angle
+---in radians.
+---@param q table quaternion
+---@param radians number angle
+---@return table
+function Quaternion.rotateY(q, radians)
+    local half = 0.5 * (radians % 6.283185307179586)
+    return Quaternion.rotateYInternal(
+        q, math.cos(half), math.sin(half))
+end
+
+---Rotates a quaternion around the z axis by an angle
+---in radians.
+---@param q table quaternion
+---@param radians number angle
+---@return table
+function Quaternion.rotateZ(q, radians)
+    local half = 0.5 * (radians % 6.283185307179586)
+    return Quaternion.rotateZInternal(
+        q, math.cos(half), math.sin(half))
+end
+
+---Rotates a quaternion around the x axis.
+---Internal helper that takes cosine and sine of
+---half the angle.
+---@param q table quaternion
+---@param cosah number cosine of half angle
+---@param sinah number sine of half angle
+---@return table
+function Quaternion.rotateXInternal(q, cosah, sinah)
+    local i = q.imag
+    return Quaternion.newByRef(
+        cosah * q.real - sinah * i.x,
+        Vec3.new(
+            cosah * i.x + sinah * q.real,
+            cosah * i.y + sinah * i.z,
+            cosah * i.z - sinah * i.y))
+end
+
+---Rotates a quaternion around the y axis.
+---Internal helper that takes cosine and sine of
+---half the angle.
+---@param q table quaternion
+---@param cosah number cosine of half angle
+---@param sinah number sine of half angle
+---@return table
+function Quaternion.rotateYInternal(q, cosah, sinah)
+    local i = q.imag
+    return Quaternion.newByRef(
+        cosah * q.real - sinah * i.y,
+        Vec3.new(
+            cosah * i.x - sinah * i.z,
+            cosah * i.y + sinah * q.real,
+            cosah * i.z + sinah * i.x))
+end
+
+---Rotates a quaternion around the z axis.
+---Internal helper that takes cosine and sine of
+---half the angle.
+---@param q table quaternion
+---@param cosah number cosine of half angle
+---@param sinah number sine of half angle
+---@return table
+function Quaternion.rotateZInternal(q, cosah, sinah)
+    local i = q.imag
+    return Quaternion.newByRef(
+        cosah * q.real - sinah * i.z,
+        Vec3.new(
+            cosah * i.x + sinah * i.y,
+            cosah * i.y - sinah * i.x,
+            cosah * i.z + sinah * q.real))
 end
 
 ---Scales a quaternion, left, by a number, right.
@@ -264,7 +371,7 @@ end
 function Quaternion.scale(a, b)
     if b ~= 0.0 then
         local ai = a.imag
-        return Quaternion.new(
+        return Quaternion.newByRef(
             a.real * b,
             Vec3.new(
                 ai.x * b,
@@ -282,7 +389,7 @@ end
 function Quaternion.sub(a, b)
     local ai = a.imag
     local bi = b.imag
-    return Quaternion.new(
+    return Quaternion.newByRef(
         a.real - b.real,
         Vec3.new(
             ai.x - bi.x,
@@ -294,7 +401,8 @@ end
 ---(1.0, 0.0, 0.0, 0.0).
 ---@return table
 function Quaternion.identity()
-    return Quaternion.new(1.0, Vec3.new(0.0, 0.0, 0.0))
+    return Quaternion.newByRef(
+        1.0, Vec3.new(0.0, 0.0, 0.0))
 end
 
 return Quaternion
