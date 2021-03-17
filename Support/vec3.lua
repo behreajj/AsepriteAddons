@@ -169,6 +169,40 @@ function Vec3.azimuthUnsigned(a)
     return math.atan(a.y, a.x) % 6.283185307179586
 end
 
+---Finds a point on a cubic Bezier curve
+---according to a step in [0.0, 1.0] .
+---@param ap0 table anchor point 0
+---@param cp0 table control point 0
+---@param cp1 table control point 1
+---@param ap1 table anchor point 1
+---@param step number step
+---@return table
+function Vec3.bezierPoint(ap0, cp0, cp1, ap1, step)
+    local t = step or 0.5
+    if t <= 0.0 then
+        return Vec3.new(ap0.x, ap0.y, ap0.z)
+    end
+    if t >= 1.0 then
+        return Vec3.new(ap1.x, ap1.y, ap1.z)
+    end
+
+    local u = 1.0 - t
+    local tsq = t * t
+    local usq = u * u
+    local usq3t = usq * (t + t + t)
+    local tsq3u = tsq * (u + u + u)
+    local tcb = tsq * t
+    local ucb = usq * u
+
+    return Vec3.new(
+        ap0.x * ucb + cp0.x * usq3t +
+        cp1.x * tsq3u + ap1.x * tcb,
+        ap0.y * ucb + cp0.y * usq3t +
+        cp1.y * tsq3u + ap1.y * tcb,
+        ap0.z * ucb + cp0.z * usq3t +
+        cp1.z * tsq3u + ap1.z * tcb)
+end
+
 ---Finds the ceiling of the vector.
 ---@param a table left operand
 ---@return table
@@ -481,11 +515,38 @@ function Vec3.min(a, b)
 end
 
 ---Mixes two vectors together by a step.
+---Defaults to mixing by a vector.
+---@param a table origin
+---@param b table destination
+---@param t any step
+---@return table
+function Vec3.mix(a, b, t)
+    return Vec3.mixByVec3(a, b, t)
+end
+
+---Mixes two vectors together by a step.
+---The step is a number.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Vec3.mixByNumber(a, b, t)
+    local v = t or 0.5
+    local u = 1.0 - v
+    return Vec3.new(
+        u * a.x + v * b.x,
+        u * a.y + v * b.y,
+        u * a.z + v * b.z)
+end
+
+---Mixes two vectors together by a step.
+---The step is a vector; use in conjunction
+---with step, linearstep and smoothstep.
 ---@param a table origin
 ---@param b table destination
 ---@param t table step
 ---@return table
-function Vec3.mix(a, b, t)
+function Vec3.mixByVec3(a, b, t)
     return Vec3.new(
          (1.0 - t.x) * a.x + t.x * b.x,
          (1.0 - t.y) * a.y + t.y * b.y,

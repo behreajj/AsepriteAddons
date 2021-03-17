@@ -77,6 +77,46 @@ function Utilities.lerpAngleNear(origin, dest, t, range)
     end
 end
 
+---Multiplies a matrix with a 2D curve.
+---Changes the curve in place.
+---@param a table matrix
+---@param b table curve
+---@return table
+function Utilities.mulMat3Curve2(a, b)
+    local kns = b.knots
+    local knsLen = #kns
+    for i = 1, knsLen, 1 do
+        kns[i] = Utilities.mulMat3Knot2(a, kns[i])
+    end
+    return b
+end
+
+---Multiplies a matrix with a 2D knot.
+---Changes the knot in place.
+---@param a table matrix
+---@param b table knot
+---@return table
+function Utilities.mulMat3Knot2(a, b)
+    b.co = Utilities.mulMat3Vec2(a, b.co)
+    b.fh = Utilities.mulMat3Vec2(a, b.fh)
+    b.rh = Utilities.mulMat3Vec2(a, b.rh)
+    return b
+end
+
+---Multiplies a matrix with a 2D mesh.
+---Changes the mesh in place.
+---@param a table matrix
+---@param b table mesh
+---@return table
+function Utilities.mulMat3Mesh2(a, b)
+    local vs = b.vs
+    local vsLen = #vs
+    for i = 1, vsLen, 1 do
+        vs[i] = Utilities.mulMat3Vec2(a, vs[i])
+    end
+    return b
+end
+
 ---Multiplies a matrix with a vector.
 ---The vector is treated as a point.
 ---@param a table matrix
@@ -92,20 +132,6 @@ function Utilities.mulMat3Vec2(a, b)
     else
         return Vec2.new(0.0, 0.0)
     end
-end
-
----Multiplies a matrix with a mesh.
----Changes the mesh in place.
----@param a table matrix
----@param b table mesh
----@return table
-function Utilities.mulMat3Mesh2(a, b)
-    local vs = b.vs
-    local vsLen = #vs
-    for i = 1, vsLen, 1 do
-        vs[i] = Utilities.mulMat3Vec2(a, vs[i])
-    end
-    return b
 end
 
 ---Promotes a Vec2 to a Vec3.

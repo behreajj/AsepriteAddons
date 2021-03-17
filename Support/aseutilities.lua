@@ -1,6 +1,7 @@
-dofile("./vec2.lua")
+dofile("./curve2.lua")
 dofile("./mesh2.lua")
 dofile("./utilities.lua")
+dofile("./vec2.lua")
 
 AseUtilities = {}
 AseUtilities.__index = AseUtilities
@@ -17,6 +18,98 @@ function AseUtilities.new()
     local inst = {}
     setmetatable(inst, AseUtilities)
     return inst
+end
+
+function AseUtilities.drawCurve2(
+    curve,
+    resolution,
+    useFill,
+    fillClr,
+    useStroke,
+    strokeClr,
+    brsh,
+    cel,
+    layer)
+
+    -- Work in progress.
+
+    local vres = 2
+    if resolution > 2 then vres = resolution end
+
+    local isLoop = curve.closedLoop
+    local kns = curve.knots
+    local knsLen = #kns
+    local toPercent = 1.0 / vres
+    local pts = {}
+    local start = 2
+    local prevKnot = kns[1]
+    if isLoop then
+        start = 1
+        prevKnot = kns[knsLen]
+    end
+
+    for i = start, knsLen, 1 do
+        local currKnot = kns[i]
+
+        local coPrev = prevKnot.co
+        local fhPrev = prevKnot.fh
+        local rhNext = currKnot.rh
+        local coNext = currKnot.co
+
+        local v = Vec2.round(coPrev)
+        table.insert(pts, Point(v.x, v.y))
+
+        for j = 1, vres, 1 do
+            v = Vec2.round(
+                Vec2.bezierPoint(
+                    coPrev, fhPrev,
+                    rhNext, coNext,
+                    j * toPercent))
+            table.insert(pts, Point(v.x, v.y))
+        end
+
+        prevKnot = currKnot
+    end
+
+    -- Draw fill.
+    if isLoop and useFill then
+        app.transaction(function()
+            app.useTool {
+                tool = "contour",
+                color = fillClr,
+                brush = brsh,
+                points = pts,
+                cel = cel,
+                layer = layer,
+                freehandAlgorithm = 1 }
+        end)
+    end
+
+    -- Draw stroke.
+    if useStroke then
+        app.transaction(function()
+            local ptPrev = pts[1]
+            local ptsLen = #pts
+            if isLoop then
+                ptPrev = pts[ptsLen]
+            end
+
+            for i = start, ptsLen, 1 do
+                local ptCurr = pts[i]
+                app.useTool {
+                    tool = "line",
+                    color = strokeClr,
+                    brush = brsh,
+                    points = { ptPrev, ptCurr },
+                    cel = cel,
+                    layer = layer,
+                    freehandAlgorithm = 1 }
+                ptPrev = ptCurr
+            end
+        end)
+    end
+
+    app.refresh()
 end
 
 ---Draws a mesh in Aseprite with the contour tool.
