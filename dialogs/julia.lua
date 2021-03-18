@@ -1,4 +1,4 @@
-dofile("./Support/complex.lua")
+dofile("../Support/complex.lua")
 
 local dlg = Dialog { title = "Julia Set" }
 
@@ -56,6 +56,7 @@ local function lerpRGB(
     ar, ag, ab, aa,
     br, bg, bb, ba, t)
     local u = 1.0 - t
+    -- TODO: Refer to AseUtilities instead.
     return app.pixelColor.rgba(
         math.tointeger(u * ar + t * br),
         math.tointeger(u * ag + t * bg),

@@ -1,4 +1,4 @@
-dofile("./Support/aseutilities.lua")
+dofile("../Support/aseutilities.lua")
 
 -- Supported easing modes as presented in dialog.
 -- Analogous to enumerations.

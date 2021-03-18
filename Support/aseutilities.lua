@@ -20,6 +20,129 @@ function AseUtilities.new()
     return inst
 end
 
+---Draws a knot for diagnostic purposes.
+---Color arguments are optional.
+---@param knot table knot
+---@param cel table cel
+---@param layer table layer
+---@param lnColor table line color
+---@param coColor table coordinate color
+---@param fhColor table fore handle color
+---@param rhColor table rear handle color
+function AseUtilities.drawKnot2(
+    knot,
+    cel,
+    layer,
+    lnColor,
+    coColor,
+    fhColor,
+    rhColor)
+
+    -- #02A7EB, #EBE128, #EB1A40
+    local lnClrVal = lnColor or Color(0xffafafaf)
+    local rhClrVal = rhColor or Color(0xffeba702)
+    local coClrVal = coColor or Color(0xff28e1eb)
+    local fhClrVal = fhColor or Color(0xff401aeb)
+
+    local lnBrush = Brush { size = 1 }
+    local rhBrush = Brush { size = 4 }
+    local coBrush = Brush { size = 6 }
+    local fhBrush = Brush { size = 5 }
+
+    local coRnd = Vec2.round(knot.co)
+    local fhRnd = Vec2.round(knot.fh)
+    local rhRnd = Vec2.round(knot.rh)
+
+    local coPt = Point(coRnd.x, coRnd.y)
+    local fhPt = Point(fhRnd.x, fhRnd.y)
+    local rhPt = Point(rhRnd.x, rhRnd.y)
+
+    app.transaction(function()
+        app.useTool {
+            tool = "line",
+            color = lnClrVal,
+            brush = lnBrush,
+            points = { coPt, rhPt },
+            cel = cel,
+            layer = layer }
+
+        app.useTool {
+            tool = "line",
+            color = lnClrVal,
+            brush = lnBrush,
+            points = { coPt, fhPt },
+            cel = cel,
+            layer = layer }
+
+        app.useTool {
+            tool = "pencil",
+            color = rhClrVal,
+            brush = rhBrush,
+            points = { rhPt },
+            cel = cel,
+            layer = layer }
+
+        app.useTool {
+            tool = "pencil",
+            color = coClrVal,
+            brush = coBrush,
+            points = { coPt },
+            cel = cel,
+            layer = layer }
+
+        app.useTool {
+            tool = "pencil",
+            color = fhClrVal,
+            brush = fhBrush,
+            points = { fhPt },
+            cel = cel,
+            layer = layer }
+    end)
+end
+
+---Draws the knot handles of a curve.
+---Color arguments are optional.
+---@param curve table curve
+---@param cel table cel
+---@param layer table layer
+---@param lnColor table line color
+---@param coColor table coordinate color
+---@param fhColor table fore handle color
+---@param rhColor table rear handle color
+function AseUtilities.drawHandles2(
+    curve,
+    cel,
+    layer,
+    lnColor,
+    coColor,
+    fhColor,
+    rhColor)
+
+    local kns = curve.knots
+    local knsLen = #kns
+    for i = 1, knsLen, 1 do
+        AseUtilities.drawKnot2(
+            kns[i],
+            cel,
+            layer,
+            lnColor,
+            coColor,
+            fhColor,
+            rhColor)
+    end
+end
+
+---Draws a curve in Aseprite with the contour tool.
+---If a stroke is used, draws the stroke line by line.
+---@param curve table curve
+---@param resolution integer curve resolution
+---@param useFill boolean use fill
+---@param fillClr table fill color
+---@param useStroke boolean use stroke
+---@param strokeClr table stroke color
+---@param brsh table brush
+---@param cel table cel
+---@param layer table layer
 function AseUtilities.drawCurve2(
     curve,
     resolution,
@@ -30,8 +153,6 @@ function AseUtilities.drawCurve2(
     brsh,
     cel,
     layer)
-
-    -- Work in progress.
 
     local vres = 2
     if resolution > 2 then vres = resolution end
@@ -114,14 +235,14 @@ end
 
 ---Draws a mesh in Aseprite with the contour tool.
 ---If a stroke is used, draws the stroke line by line.
----@param mesh table
----@param useFill boolean
----@param fillClr table
----@param useStroke boolean
----@param strokeClr table
----@param brsh table
----@param cel table
----@param layer table
+---@param mesh table mesh
+---@param useFill boolean use fill
+---@param fillClr table fill color
+---@param useStroke boolean use stroke
+---@param strokeClr table stroke color
+---@param brsh table brush
+---@param cel table cel
+---@param layer table layer
 function AseUtilities.drawMesh2(
     mesh,
     useFill,

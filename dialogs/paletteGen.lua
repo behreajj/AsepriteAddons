@@ -86,7 +86,6 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         if args.ok then
-            -- hue shift for if lum is < or > 0.5?
 
             local lenHues = #args.hues
             local lenShades = args.shades or 8

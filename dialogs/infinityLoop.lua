@@ -1,7 +1,7 @@
-dofile("./Support/mat3.lua")
-dofile("./Support/curve2.lua")
-dofile("./Support/utilities.lua")
-dofile("./Support/aseutilities.lua")
+dofile("../Support/mat3.lua")
+dofile("../Support/curve2.lua")
+dofile("../Support/utilities.lua")
+dofile("../Support/aseutilities.lua")
 
 local defaults = {
     resolution = 32,
@@ -13,7 +13,8 @@ local defaults = {
     useStroke = true,
     strokeWeight = 1,
     strokeClr = Color(255, 245, 215, 255),
-    fillClr = Color(32, 32, 32, 255)
+    fillClr = Color(32, 32, 32, 255),
+    handles = 0
 }
 
 local dlg = Dialog { title = "Infinity Loop" }
@@ -87,12 +88,12 @@ dlg:color {
     color = defaults.fillClr
 }
 
-dlg:button {
-    id = "cancel",
-    text = "CANCEL",
-    onclick = function()
-        dlg:close()
-    end
+dlg:slider {
+    id = "handles",
+    label = "Handles:",
+    min = 0,
+    max = 255,
+    value = defaults.handles
 }
 
 dlg:button {
@@ -133,10 +134,27 @@ dlg:button {
                 args.strokeClr,
                 Brush(args.strokeWeight),
                 sprite:newCel(layer, 1),
-                layer
-            )
+                layer)
+
+            if args.handles > 0 then
+                local hlLyr = sprite:newLayer()
+                hlLyr.name = curve.name .. ".Handles"
+                hlLyr.opacity = args.handles
+                AseUtilities.drawHandles2(
+                    curve,
+                    sprite:newCel(hlLyr, 1),
+                    hlLyr)
+            end
         end
 
+    end
+}
+
+dlg:button {
+    id = "cancel",
+    text = "CANCEL",
+    onclick = function()
+        dlg:close()
     end
 }
 
