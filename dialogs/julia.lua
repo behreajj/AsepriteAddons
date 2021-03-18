@@ -1,4 +1,4 @@
-dofile("../Support/complex.lua")
+dofile("../support/complex.lua")
 
 local dlg = Dialog { title = "Julia Set" }
 

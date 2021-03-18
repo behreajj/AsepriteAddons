@@ -1,4 +1,4 @@
-dofile("../Support/aseutilities.lua")
+dofile("../support/aseutilities.lua")
 
 -- https://github.com/aseprite/aseprite/issues/2613
 

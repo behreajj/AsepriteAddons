@@ -1,7 +1,7 @@
-dofile("../Support/mat3.lua")
-dofile("../Support/mesh2.lua")
-dofile("../Support/utilities.lua")
-dofile("../Support/aseutilities.lua")
+dofile("../support/mat3.lua")
+dofile("../support/mesh2.lua")
+dofile("../support/utilities.lua")
+dofile("../support/aseutilities.lua")
 
 local defaults = {
     rings = 4,

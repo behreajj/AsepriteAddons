@@ -1,7 +1,7 @@
-dofile("../Support/mat3.lua")
-dofile("../Support/curve2.lua")
-dofile("../Support/utilities.lua")
-dofile("../Support/aseutilities.lua")
+dofile("../support/mat3.lua")
+dofile("../support/curve2.lua")
+dofile("../support/utilities.lua")
+dofile("../support/aseutilities.lua")
 
 local defaults = {
     resolution = 32,
