@@ -2,9 +2,9 @@ dofile("../support/aseutilities.lua")
 
 -- Supported easing modes as presented in dialog.
 -- Analogous to enumerations.
-local easingModes = { "RGB", "HSV" }
+local easingModes = { "RGB", "HSL", "HSV" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
-local hsvEasing = { "NEAR", "FAR" }
+local hueEasing = { "NEAR", "FAR" }
 
 local defaults = {
     xOrigin = 50,
@@ -15,7 +15,7 @@ local defaults = {
     bColor = Color(255, 245, 215, 255),
     easingMode = "RGB",
     easingFuncRGB = "LINEAR",
-    easingFuncHSV = "NEAR"
+    easingFuncHue = "NEAR"
 }
 
 local function createConic(
@@ -62,24 +62,25 @@ local function createConic(
     local a0 = 0
     local a1 = 0
     local a2 = 0
-    local a3 = 0
+    local a3 = 255
 
     local b0 = 0
     local b1 = 0
     local b2 = 0
-    local b3 = 0
+    local b3 = 255
 
     local easing = AseUtilities.lerpRgba
 
-    if easingMode and easingMode == "HSV" then
-        a0 = aColor.hue
-        a1 = aColor.saturation
-        a2 = aColor.value
+    if easingMode == "HSV" then
+
+        a0 = aColor.hsvHue
+        a1 = aColor.hsvSaturation
+        a2 = aColor.hsvValue
         a3 = aColor.alpha
 
-        b0 = bColor.hue
-        b1 = bColor.saturation
-        b2 = bColor.value
+        b0 = bColor.hsvHue
+        b1 = bColor.hsvSaturation
+        b2 = bColor.hsvValue
         b3 = bColor.alpha
 
         if easingFunc and easingFunc == "FAR" then
@@ -88,7 +89,26 @@ local function createConic(
             easing = AseUtilities.lerpHsvaNear
         end
 
+    elseif easingMode == "HSL" then
+
+        a0 = aColor.hslHue
+        a1 = aColor.hslSaturation
+        a2 = aColor.hslLightness
+        a3 = aColor.alpha
+
+        b0 = bColor.hslHue
+        b1 = bColor.hslSaturation
+        b2 = bColor.hslLightness
+        b3 = bColor.alpha
+
+        if easingFunc and easingFunc == "FAR" then
+            easing = AseUtilities.lerpHslaFar
+        else
+            easing = AseUtilities.lerpHslaNear
+        end
+
     else
+
         a0 = aColor.red
         a1 = aColor.green
         a2 = aColor.blue
@@ -201,10 +221,10 @@ dlg:combobox {
 }
 
 dlg:combobox {
-    id = "easingFuncHSV",
-    label = "HSV Easing:",
-    option = defaults.easingFuncHSV,
-    options = hsvEasing
+    id = "easingFuncHue",
+    label = "Hue Easing:",
+    option = defaults.easingFuncHue,
+    options = hueEasing
 }
 
 dlg:combobox {
@@ -223,7 +243,9 @@ dlg:button {
         if args.ok then
             local easingFunc = args.easingFuncRGB
             if args.easingMode == "HSV" then
-                easingFunc = args.easingFuncHSV
+                easingFunc = args.easingFuncHue
+            elseif args.easingMode == "HSL" then
+                easingFunc = args.easingFuncHue
             end
 
             local sprite = app.activeSprite

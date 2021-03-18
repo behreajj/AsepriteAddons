@@ -11,8 +11,7 @@ setmetatable(Index3, {
 ---@param vn integer normal index
 ---@return table
 function Index3.new(v, vn)
-    local inst = {}
-    setmetatable(inst, Index3)
+    local inst = setmetatable({}, Index3)
     inst.v = v or 1
     inst.vn = vn or 1
     return inst

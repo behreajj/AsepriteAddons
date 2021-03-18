@@ -14,8 +14,7 @@ setmetatable(Clr, {
 ---@param a number transparency
 ---@return table
 function Clr.new(r, g, b, a)
-    local inst = {}
-    setmetatable(inst, Clr)
+    local inst = setmetatable({}, Clr)
     inst.a = a or 1.0
     inst.b = b or 1.0
     inst.g = g or 1.0
@@ -237,7 +236,7 @@ end
 function Clr.fromHex(c)
     return Clr.new(
         (c         & 0xff) * 0.00392156862745098,
-        (c >>  0x8 & 0xff) * 0.00392156862745098,
+        (c >> 0x08 & 0xff) * 0.00392156862745098,
         (c >> 0x10 & 0xff) * 0.00392156862745098,
         (c >> 0x18 & 0xff) * 0.00392156862745098)
 end
@@ -449,7 +448,7 @@ end
 function Clr.toHex(c)
     return math.tointeger(c.a * 0xff + 0.5) << 0x18
          | math.tointeger(c.b * 0xff + 0.5) << 0x10
-         | math.tointeger(c.g * 0xff + 0.5) <<  0x8
+         | math.tointeger(c.g * 0xff + 0.5) << 0x08
          | math.tointeger(c.r * 0xff + 0.5)
 end
 

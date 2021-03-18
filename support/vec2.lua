@@ -11,8 +11,7 @@ setmetatable(Vec2, {
 ---@param y number y component
 ---@return table
 function Vec2.new(x, y)
-    local inst = {}
-    setmetatable(inst, Vec2)
+    local inst = setmetatable({}, Vec2)
     inst.x = x or 0.0
     inst.y = y or 0.0
     return inst

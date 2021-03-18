@@ -17,8 +17,7 @@ setmetatable(Mesh3, {
 ---@param name string name
 ---@return table
 function Mesh3.new(fs, vs, vns, name)
-    local inst = {}
-    setmetatable(inst, Mesh3)
+    local inst = setmetatable({}, Mesh3)
     inst.fs = fs or {}
     inst.vs = vs or {}
     inst.vns = vns or {}

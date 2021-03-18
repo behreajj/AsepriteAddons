@@ -15,8 +15,7 @@ setmetatable(AseUtilities, {
 ---Aseprite add-ons.
 ---@return table
 function AseUtilities.new()
-    local inst = {}
-    setmetatable(inst, AseUtilities)
+    local inst = setmetatable({}, AseUtilities)
     return inst
 end
 
@@ -126,31 +125,24 @@ end
 ---@param curve table curve
 ---@param cel table cel
 ---@param layer table layer
----@param lnColor table line color
----@param coColor table coordinate color
----@param fhColor table fore handle color
----@param rhColor table rear handle color
+---@param lnClr table line color
+---@param coClr table coordinate color
+---@param fhClr table fore handle color
+---@param rhClr table rear handle color
 function AseUtilities.drawHandles2(
-    curve,
-    cel,
-    layer,
-    lnColor,
-    coColor,
-    fhColor,
-    rhColor)
+    curve, cel, layer,
+    lnClr, coClr, fhClr, rhClr)
 
     local kns = curve.knots
     local knsLen = #kns
-    for i = 1, knsLen, 1 do
-        AseUtilities.drawKnot2(
-            kns[i],
-            cel,
-            layer,
-            lnColor,
-            coColor,
-            fhColor,
-            rhColor)
-    end
+    app.transaction(function()
+        for i = 1, knsLen, 1 do
+            AseUtilities.drawKnot2(
+                kns[i], cel, layer,
+                lnClr, coClr,
+                fhClr, rhClr)
+        end
+    end)
 end
 
 ---Draws a knot for diagnostic purposes.
@@ -158,24 +150,19 @@ end
 ---@param knot table knot
 ---@param cel table cel
 ---@param layer table layer
----@param lnColor table line color
----@param coColor table coordinate color
----@param fhColor table fore handle color
----@param rhColor table rear handle color
+---@param lnClr table line color
+---@param coClr table coordinate color
+---@param fhClr table fore handle color
+---@param rhClr table rear handle color
 function AseUtilities.drawKnot2(
-    knot,
-    cel,
-    layer,
-    lnColor,
-    coColor,
-    fhColor,
-    rhColor)
+    knot, cel, layer,
+    lnClr, coClr, fhClr, rhClr)
 
     -- #02A7EB, #EBE128, #EB1A40
-    local lnClrVal = lnColor or Color(0xffafafaf)
-    local rhClrVal = rhColor or Color(0xffeba702)
-    local coClrVal = coColor or Color(0xff28e1eb)
-    local fhClrVal = fhColor or Color(0xff401aeb)
+    local lnClrVal = lnClr or Color(0xffafafaf)
+    local rhClrVal = rhClr or Color(0xffeba702)
+    local coClrVal = coClr or Color(0xff28e1eb)
+    local fhClrVal = fhClr or Color(0xff401aeb)
 
     local lnBrush = Brush { size = 1 }
     local rhBrush = Brush { size = 4 }
@@ -195,7 +182,7 @@ function AseUtilities.drawKnot2(
             tool = "line",
             color = lnClrVal,
             brush = lnBrush,
-            points = { coPt, rhPt },
+            points = { rhPt, coPt },
             cel = cel,
             layer = layer }
 
@@ -319,6 +306,58 @@ function AseUtilities.drawMesh2(
 end
 
 ---Mixes an origin and destination color
+---in HSL by a factor. The factor is assumed to
+---be in [0.0, 1.0], but the mix is unclamped.
+---The hue is interpolated in the furthest
+---direction.
+---@param ah number origin hue
+---@param as number origin saturation
+---@param al number origin lightness
+---@param aa number origin alpha
+---@param bh number destination hue
+---@param bs number destination saturation
+---@param bl number destination lightness
+---@param ba number destination alpha
+---@param t number factor
+---@return integer
+function AseUtilities.lerpHslaFar(
+    ah, as, al, aa,
+    bh, bs, bl, ba, t)
+    local u = 1.0 - t
+    return AseUtilities.toHexHsla(
+        Utilities.lerpAngleFar(ah, bh, t, 360.0),
+        u * as + t * bs,
+        u * al + t * bl,
+        math.tointeger(u * aa + t * ba))
+end
+
+---Mixes an origin and destination color
+---in HSL by a factor. The factor is assumed to
+---be in [0.0, 1.0], but the mix is unclamped.
+---The hue is interpolated in the nearest
+---direction.
+---@param ah number origin hue
+---@param as number origin saturation
+---@param al number origin lightness
+---@param aa number origin alpha
+---@param bh number destination hue
+---@param bs number destination saturation
+---@param bl number destination lightness
+---@param ba number destination alpha
+---@param t number factor
+---@return integer
+function AseUtilities.lerpHslaNear(
+    ah, as, al, aa,
+    bh, bs, bl, ba, t)
+    local u = 1.0 - t
+    return AseUtilities.toHexHsla(
+        Utilities.lerpAngleNear(ah, bh, t, 360.0),
+        u * as + t * bs,
+        u * al + t * bl,
+        math.tointeger(u * aa + t * ba))
+end
+
+---Mixes an origin and destination color
 ---in HSV by a factor. The factor is assumed to
 ---be in [0.0, 1.0], but the mix is unclamped.
 ---The hue is interpolated in the furthest
@@ -421,15 +460,92 @@ function AseUtilities.smoothRgba(
         t * t * (3.0 - (t + t)))
 end
 
+---Converts an unpacked hue, saturation, lightness and
+---alpha channel to a hexadecimal integer.
+---The hue should be in [0.0, 360.0].
+---The saturation should be in [0.0, 1.0].
+---The lightness should be in [0.0, 1.0].
+---The alpha should be in [0, 255].
+---@param ch number hue
+---@param cs number saturation
+---@param cl number lightness
+---@param ca integer alpha
+---@return integer
+function AseUtilities.toHexHsla(ch, cs, cl, ca)
+    if cl <= 0.0 then
+        return app.pixelColor.rgba(
+            0, 0, 0, ca)
+    end
+
+    if cl >= 1.0 then
+        return app.pixelColor.rgba(
+            255, 255, 255, ca)
+    end
+
+    if cs <= 0.0 then
+        local l255 = math.tointeger(0.5 + 255.0 * cl)
+        return app.pixelColor.rgba(
+            l255, l255, l255, ca)
+    end
+
+    local scl = math.min(cs, 1.0)
+    local q = cl + scl - cl * scl
+    if cl < 0.5 then
+        q = cl * (1.0 + scl)
+    end
+    local p = cl + cl - q
+    local qnp6 = (q - p) * 6.0
+
+    local hue1 = ch * 0.002777777777777778
+    local huer = (hue1 + 0.3333333333333333) % 1.0
+    local hueg = hue1 % 1.0
+    local hueb = (hue1 - 0.3333333333333333) % 1.0
+
+    local r = p
+    local g = p
+    local b = p
+
+    if huer < 0.16666666666666667 then
+        r = p + qnp6 * huer
+    elseif huer < 0.5 then
+        r = q;
+    elseif huer < 0.6666666666666667 then
+        r = p + qnp6 * (0.6666666666666667 - huer)
+    end
+
+    if hueg < 0.16666666666666667 then
+        g = p + qnp6 * hueg
+    elseif hueg < 0.5 then
+        g = q;
+    elseif hueg < 0.6666666666666667 then
+        g = p + qnp6 * (0.6666666666666667 - hueg)
+    end
+
+    if hueb < 0.16666666666666667 then
+        b = p + qnp6 * hueb
+    elseif hueb < 0.5 then
+        b = q;
+    elseif hueb < 0.6666666666666667 then
+        b = p + qnp6 * (0.6666666666666667 - hueb)
+    end
+
+    return app.pixelColor.rgba(
+        math.tointeger(0.5 + 255.0 * r),
+        math.tointeger(0.5 + 255.0 * g),
+        math.tointeger(0.5 + 255.0 * b),
+        ca)
+end
+
 ---Converts an unpacked hue, saturation, value and
 ---alpha channel to a hexadecimal integer.
 ---The hue should be in [0.0, 360.0].
 ---The saturation should be in [0.0, 1.0].
 ---The value should be in [0.0, 1.0].
+---The alpha should be in [0, 255].
 ---@param ch number hue
 ---@param cs number saturation
 ---@param cv number value
----@param ca number alpha
+---@param ca integer alpha
 ---@return integer
 function AseUtilities.toHexHsva(ch, cs, cv, ca)
     -- Bring hue into [0.0, 1.0] by dividing by 360.0.

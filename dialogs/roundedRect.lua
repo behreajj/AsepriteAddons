@@ -9,10 +9,10 @@ local defaults = {
     lby = 5,
     ubx = 95,
     uby = 95,
-    tl = 0,
-    tr = 0,
-    br = 0,
-    bl = 0,
+    tl = 7,
+    tr = 7,
+    br = 7,
+    bl = 7,
     useFill = true,
     useStroke = true,
     strokeWeight = 1,
@@ -39,10 +39,11 @@ dlg:slider {
     value = defaults.handles
 }
 
-dlg:separator {
-    id = "separator1",
-    text = "Edges"
-}
+-- There is just not enough room for these.
+-- dlg:separator {
+--     id = "separator1",
+--     text = "Edges"
+-- }
 
 dlg:slider {
     id = "lbx",
@@ -76,10 +77,10 @@ dlg:slider {
     value = defaults.uby
 }
 
-dlg:separator {
-    id = "separator2",
-    text = "Corners"
-}
+-- dlg:separator {
+--     id = "separator2",
+--     text = "Corners"
+-- }
 
 dlg:slider {
     id = "tl",
@@ -113,10 +114,10 @@ dlg:slider {
     value = defaults.bl
 }
 
-dlg:separator {
-    id = "separator3",
-    text = "Display"
-}
+-- dlg:separator {
+--     id = "separator3",
+--     text = "Display"
+-- }
 
 dlg:check {
     id = "useStroke",

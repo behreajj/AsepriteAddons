@@ -16,8 +16,7 @@ setmetatable(Knot2, {
 ---@param rh table rear handle
 ---@return table
 function Knot2.new(co, fh, rh)
-    local inst = {}
-    setmetatable(inst, Knot2)
+    local inst = setmetatable({}, Knot2)
     inst.co = co or Vec2.new(0.0, 0.0)
     inst.fh = fh or Vec2.new(inst.co.x + 0.000001, inst.co.y)
     inst.rh = rh or (inst.co - (inst.fh - inst.co))

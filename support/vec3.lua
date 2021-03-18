@@ -12,8 +12,7 @@ setmetatable(Vec3, {
 ---@param z number z component
 ---@return table
 function Vec3.new(x, y, z)
-    local inst = {}
-    setmetatable(inst, Vec3)
+    local inst = setmetatable({}, Vec3)
     inst.x = x or 0.0
     inst.y = y or 0.0
     inst.z = z or 0.0

@@ -14,8 +14,7 @@ setmetatable(Utilities, {
 ---Houses utility methods not included in Lua.
 ---@return table
 function Utilities.new()
-    local inst = {}
-    setmetatable(inst, Utilities)
+    local inst = setmetatable({}, Utilities)
     return inst
 end
 

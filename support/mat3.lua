@@ -22,8 +22,7 @@ function Mat3.new(
     m00, m01, m02,
     m10, m11, m12,
     m20, m21, m22)
-    local inst = {}
-    setmetatable(inst, Mat3)
+    local inst = setmetatable({}, Mat3)
 
     inst.m00 = m00 or 1.0
     inst.m01 = m01 or 0.0

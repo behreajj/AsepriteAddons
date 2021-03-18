@@ -11,8 +11,6 @@ local metrics = {
     "MANHATTAN",
     "MINKOWSKI" }
 
-local dlg = Dialog { title = "Radial Gradient" }
-
 local defaults = {
     xOrigin = 50,
     yOrigin = 50,
@@ -49,6 +47,8 @@ local function minkDist(ax, ay, bx, by, c)
           + math.abs(by - ay) ^ c)
           ^ (1.0 / c)
 end
+
+local dlg = Dialog { title = "Radial Gradient" }
 
 dlg:slider {
     id = "xOrigin",
@@ -166,14 +166,14 @@ local function createRadial(
     -- local relMaxDist = 2.0 / distFunc(0.0, 0.0, w * maxrval, h * maxrval)
 
     if easingMode and easingMode == "HSV" then
-        a0 = aColor.hue
-        a1 = aColor.saturation
-        a2 = aColor.value
+        a0 = aColor.hsvHue
+        a1 = aColor.hsvSaturation
+        a2 = aColor.hsvValue
         a3 = aColor.alpha
 
-        b0 = bColor.hue
-        b1 = bColor.saturation
-        b2 = bColor.value
+        b0 = bColor.hsvHue
+        b1 = bColor.hsvSaturation
+        b2 = bColor.hsvValue
         b3 = bColor.alpha
 
         if easingFunc and easingFunc == "FAR" then

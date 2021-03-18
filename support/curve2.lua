@@ -14,8 +14,7 @@ setmetatable(Curve2, {
 ---@param name string name
 ---@return table
 function Curve2.new(cl, knots, name)
-    local inst = {}
-    setmetatable(inst, Curve2)
+    local inst = setmetatable({}, Curve2)
     inst.closedLoop = cl or false
     inst.knots = knots or {}
     inst.name = name or "Curve2"
@@ -230,6 +229,8 @@ function Curve2.rect(
         Vec2.new(0.0, 0.0),
         Vec2.new(lft, u * btmIns1 + t * topIns1))
 
+    -- 0.5773502691896258
+    -- Or, from Blender, 0.552125?
     t = 0.5
     u = 0.5
 

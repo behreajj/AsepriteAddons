@@ -11,8 +11,7 @@ setmetatable(Complex, {
 ---@param imag number imaginary
 ---@return table
 function Complex.new(real, imag)
-    local inst = {}
-    setmetatable(inst, Complex)
+    local inst = setmetatable({}, Complex)
     inst.real = real or 0.0
     inst.imag = imag or 0.0
     return inst

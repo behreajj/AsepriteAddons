@@ -29,8 +29,7 @@ function Mat4.new(
     m10, m11, m12, m13,
     m20, m21, m22, m23,
     m30, m31, m32, m33)
-    local inst = {}
-    setmetatable(inst, Mat4)
+    local inst = setmetatable({}, Mat4)
 
     inst.m00 = m00 or 1.0
     inst.m01 = m01 or 0.0

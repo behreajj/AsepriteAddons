@@ -30,10 +30,21 @@ local rgb = {
     Color(255,   0, 128, 255)
 }
 
+local viridis = {
+    Color(68, 1, 84, 255),
+    Color(70, 50, 126, 255),
+    Color(54, 92, 140, 255),
+    Color(39, 127, 142, 255),
+    Color(34, 161, 135, 255),
+    Color(75, 193, 109, 255),
+    Color(159, 217, 57, 255),
+    Color(253, 231, 37, 255)
+}
+
 dlg:shades {
     id = "hues",
     label = "Hues:",
-    colors = ryb,
+    colors = viridis,
     -- mode = "pick",
     mode = "sort",
     onclick = function(ev)
