@@ -32,8 +32,21 @@ dlg:slider {
 }
 
 dlg:slider {
+    id = "handles",
+    label = "Handles:",
+    min = 0,
+    max = 255,
+    value = defaults.handles
+}
+
+dlg:separator {
+    id = "separator1",
+    text = "Edges"
+}
+
+dlg:slider {
     id = "lbx",
-    label = "Left:",
+    label = "Left %:",
     min = 0,
     max = 100,
     value = defaults.lbx
@@ -41,7 +54,7 @@ dlg:slider {
 
 dlg:slider {
     id = "lby",
-    label = "Top:",
+    label = "Top %:",
     min = 0,
     max = 100,
     value = defaults.lby
@@ -49,7 +62,7 @@ dlg:slider {
 
 dlg:slider {
     id = "ubx",
-    label = "Right:",
+    label = "Right %:",
     min = 0,
     max = 100,
     value = defaults.ubx
@@ -57,15 +70,20 @@ dlg:slider {
 
 dlg:slider {
     id = "uby",
-    label = "Bottom:",
+    label = "Bottom %:",
     min = 0,
     max = 100,
     value = defaults.uby
 }
 
+dlg:separator {
+    id = "separator2",
+    text = "Corners"
+}
+
 dlg:slider {
     id = "tl",
-    label = "Top Left:",
+    label = "Top Left %:",
     min = -50,
     max = 50,
     value = defaults.tl
@@ -73,7 +91,7 @@ dlg:slider {
 
 dlg:slider {
     id = "tr",
-    label = "Top Right:",
+    label = "Top Right %:",
     min = -50,
     max = 50,
     value = defaults.tr
@@ -81,7 +99,7 @@ dlg:slider {
 
 dlg:slider {
     id = "br",
-    label = "Bottom Right:",
+    label = "Bottom Right %:",
     min = -50,
     max = 50,
     value = defaults.br
@@ -89,10 +107,15 @@ dlg:slider {
 
 dlg:slider {
     id = "bl",
-    label = "Bottom Left:",
+    label = "Bottom Left %:",
     min = -50,
     max = 50,
     value = defaults.bl
+}
+
+dlg:separator {
+    id = "separator3",
+    text = "Display"
 }
 
 dlg:check {
@@ -125,14 +148,6 @@ dlg:color {
     id = "fillClr",
     label = "Fill Color:",
     color = defaults.fillClr
-}
-
-dlg:slider {
-    id = "handles",
-    label = "Handles:",
-    min = 0,
-    max = 255,
-    value = defaults.handles
 }
 
 dlg:button {
