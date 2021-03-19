@@ -495,38 +495,36 @@ function AseUtilities.toHexHsla(ch, cs, cl, ca)
     end
     local p = cl + cl - q
     local qnp6 = (q - p) * 6.0
-
     local hue1 = ch * 0.002777777777777778
-    local huer = (hue1 + 0.3333333333333333) % 1.0
-    local hueg = hue1 % 1.0
-    local hueb = (hue1 - 0.3333333333333333) % 1.0
 
     local r = p
-    local g = p
-    local b = p
-
-    if huer < 0.16666666666666667 then
-        r = p + qnp6 * huer
-    elseif huer < 0.5 then
+    local rHue = (hue1 + 0.3333333333333333) % 1.0
+    if rHue < 0.16666666666666667 then
+        r = p + qnp6 * rHue
+    elseif rHue < 0.5 then
         r = q;
-    elseif huer < 0.6666666666666667 then
-        r = p + qnp6 * (0.6666666666666667 - huer)
+    elseif rHue < 0.6666666666666667 then
+        r = p + qnp6 * (0.6666666666666667 - rHue)
     end
 
-    if hueg < 0.16666666666666667 then
-        g = p + qnp6 * hueg
-    elseif hueg < 0.5 then
+    local g = p
+    local gHue = hue1 % 1.0
+    if gHue < 0.16666666666666667 then
+        g = p + qnp6 * gHue
+    elseif gHue < 0.5 then
         g = q;
-    elseif hueg < 0.6666666666666667 then
-        g = p + qnp6 * (0.6666666666666667 - hueg)
+    elseif gHue < 0.6666666666666667 then
+        g = p + qnp6 * (0.6666666666666667 - gHue)
     end
 
-    if hueb < 0.16666666666666667 then
-        b = p + qnp6 * hueb
-    elseif hueb < 0.5 then
+    local b = p
+    local bHue = (hue1 - 0.3333333333333333) % 1.0
+    if bHue < 0.16666666666666667 then
+        b = p + qnp6 * bHue
+    elseif bHue < 0.5 then
         b = q;
-    elseif hueb < 0.6666666666666667 then
-        b = p + qnp6 * (0.6666666666666667 - hueb)
+    elseif bHue < 0.6666666666666667 then
+        b = p + qnp6 * (0.6666666666666667 - bHue)
     end
 
     return app.pixelColor.rgba(

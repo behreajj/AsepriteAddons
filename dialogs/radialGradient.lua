@@ -1,8 +1,6 @@
 dofile("../support/aseutilities.lua")
 
--- https://github.com/aseprite/aseprite/issues/2613
-
-local easingModes = { "RGB", "HSV" }
+local easingModes = { "RGB", "HSL" , "HSV" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
 local hsvEasing = { "NEAR", "FAR" }
 local metrics = {
@@ -14,16 +12,147 @@ local metrics = {
 local defaults = {
     xOrigin = 50,
     yOrigin = 50,
-    minRad = 0,
+    -- minRad = 0,
     maxRad = 100,
     distMetric = "EUCLIDEAN",
     minkExp = 2.0,
+    quantization = 0,
     aColor = Color(32, 32, 32, 255),
     bColor = Color(255, 245, 215, 255),
     easingMode = "RGB",
     easingFuncRGB = "LINEAR",
-    easingFuncHSV = "NEAR"
+    easingFuncHue = "NEAR"
 }
+
+
+local function createRadial(
+    sprite,
+    img,
+    xOrigin, yOrigin,
+    -- minRad,
+    maxRad,
+    distFunc,
+    quantLvl,
+    aColor, bColor,
+    easingMode, easingFunc)
+
+    local w = sprite.width
+    local h = sprite.height
+
+    local useQuantize = quantLvl > 0.0
+    local delta = 1.0
+    local levels = 1.0
+    local wInv = 1.0
+    local hInv = 1.0
+    if useQuantize then
+        levels = quantLvl
+        delta = 1.0 / levels
+        wInv = 1.0 / w
+        hInv = 1.0 / h
+    end
+
+    local a0 = 0
+    local a1 = 0
+    local a2 = 0
+    local a3 = 0
+
+    local b0 = 0
+    local b1 = 0
+    local b2 = 0
+    local b3 = 0
+
+    local easing = AseUtilities.lerpRgba
+
+    local xOrigPx = xOrigin * w
+    local yOrigPx = yOrigin * h
+
+    -- TODO: Test is maxRad in the numerator or denom?
+    local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, w, h))
+
+    if easingMode and easingMode == "HSV" then
+
+        a0 = aColor.hsvHue
+        a1 = aColor.hsvSaturation
+        a2 = aColor.hsvValue
+        a3 = aColor.alpha
+
+        b0 = bColor.hsvHue
+        b1 = bColor.hsvSaturation
+        b2 = bColor.hsvValue
+        b3 = bColor.alpha
+
+        if easingFunc and easingFunc == "FAR" then
+            easing = AseUtilities.lerpHsvaFar
+        else
+            easing = AseUtilities.lerpHsvaNear
+        end
+
+    elseif easingMode == "HSL" then
+
+        a0 = aColor.hslHue
+        a1 = aColor.hslSaturation
+        a2 = aColor.hslLightness
+        a3 = aColor.alpha
+
+        b0 = bColor.hslHue
+        b1 = bColor.hslSaturation
+        b2 = bColor.hslLightness
+        b3 = bColor.alpha
+
+        if easingFunc and easingFunc == "FAR" then
+            easing = AseUtilities.lerpHslaFar
+        else
+            easing = AseUtilities.lerpHslaNear
+        end
+
+    else
+
+        a0 = aColor.red
+        a1 = aColor.green
+        a2 = aColor.blue
+        a3 = aColor.alpha
+
+        b0 = bColor.red
+        b1 = bColor.green
+        b2 = bColor.blue
+        b3 = bColor.alpha
+
+        if easingFunc and easingFunc == "SMOOTH" then
+            easing = AseUtilities.smoothRgba
+        end
+
+    end
+
+    local iterator = img:pixels()
+    local i = 0
+
+    for elm in iterator do
+        local xPx = i % w
+        local yPx = i // w
+
+        if useQuantize then
+            xPx = xPx * wInv
+            yPx = yPx * hInv
+
+            xPx = delta * math.floor(0.5 + xPx * levels)
+            yPx = delta * math.floor(0.5 + yPx * levels)
+
+            xPx = xPx * w
+            yPx = yPx * h
+        end
+
+        local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
+        local fac = dst * normDist
+        fac = math.min(1.0, math.max(0.0, fac))
+        elm(easing(
+            a0, a1, a2, a3,
+            b0, b1, b2, b3,
+            fac))
+
+        i = i + 1
+    end
+
+end
 
 local function chebDist(ax, ay, bx, by)
     return math.max(
@@ -66,13 +195,14 @@ dlg:slider {
     value = defaults.yOrigin
 }
 
-dlg:slider {
-    id = "minRad",
-    label = "Min Radius:",
-    min = 0,
-    max = 99,
-    value = defaults.minRad
-}
+-- https://github.com/aseprite/aseprite/issues/2613
+-- dlg:slider {
+--     id = "minRad",
+--     label = "Min Radius:",
+--     min = 0,
+--     max = 99,
+--     value = defaults.minRad
+-- }
 
 dlg:slider {
     id = "maxRad",
@@ -96,6 +226,14 @@ dlg:number {
     decimals = 5
 }
 
+dlg:slider {
+    id = "quantization",
+    label = "Quantize:",
+    min = 0,
+    max = 32,
+    value = defaults.quantization
+}
+
 dlg:color {
     id = "aColor",
     label = "Color A:",
@@ -116,9 +254,9 @@ dlg:combobox {
 }
 
 dlg:combobox {
-    id = "easingFuncHSV",
+    id = "easingFuncHue",
     label = "HSV Easing:",
-    option = defaults.easingFuncHSV,
+    option = defaults.easingFuncHue,
     options = hsvEasing
 }
 
@@ -129,96 +267,6 @@ dlg:combobox {
     options = rgbEasing
 }
 
-local function createRadial(
-    sprite,
-    img,
-    xOrigin, yOrigin,
-    minRad, maxRad,
-    distFunc,
-    aColor, bColor,
-    easingMode, easingFunc)
-
-    local w = sprite.width
-    local h = sprite.height
-
-    local a0 = 0
-    local a1 = 0
-    local a2 = 0
-    local a3 = 0
-
-    local b0 = 0
-    local b1 = 0
-    local b2 = 0
-    local b3 = 0
-
-    local easing = AseUtilities.lerpRgba
-
-    local xOrigPx = xOrigin * w
-    local yOrigPx = yOrigin * h
-    local normDist = 2.0 / distFunc(0.0, 0.0, w, h)
-
-    -- local minrval = math.min(minRad, maxRad)
-    -- local maxrval = math.max(minRad, maxRad)
-
-    local minrval = 1-math.max(minRad, maxRad)
-    local maxrval = 1-math.min(minRad, maxRad)
-
-    -- local relMaxDist = 2.0 / distFunc(0.0, 0.0, w * maxrval, h * maxrval)
-
-    if easingMode and easingMode == "HSV" then
-        a0 = aColor.hsvHue
-        a1 = aColor.hsvSaturation
-        a2 = aColor.hsvValue
-        a3 = aColor.alpha
-
-        b0 = bColor.hsvHue
-        b1 = bColor.hsvSaturation
-        b2 = bColor.hsvValue
-        b3 = bColor.alpha
-
-        if easingFunc and easingFunc == "FAR" then
-            easing = AseUtilities.lerpHsvaFar
-        else
-            easing = AseUtilities.lerpHsvaNear
-        end
-
-    else
-        a0 = aColor.red
-        a1 = aColor.green
-        a2 = aColor.blue
-        a3 = aColor.alpha
-
-        b0 = bColor.red
-        b1 = bColor.green
-        b2 = bColor.blue
-        b3 = bColor.alpha
-
-        if easingFunc and easingFunc == "SMOOTH" then
-            easing = AseUtilities.smoothRgba
-        end
-
-    end
-
-    local iterator = img:pixels()
-    local i = 0
-
-    for elm in iterator do
-        local xPoint = i % w
-        local yPoint = i // w
-
-        local dst = distFunc(xPoint, yPoint, xOrigPx, yOrigPx)
-        local fac = dst * normDist
-        fac = math.min(1.0, math.max(0.0, fac))
-        elm(easing(
-            a0, a1, a2, a3,
-            b0, b1, b2, b3,
-            fac))
-
-        i = i + 1
-    end
-
-end
-
 dlg:button {
     id = "ok",
     text = "OK",
@@ -226,6 +274,13 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         if args.ok then
+            local easingFunc = args.easingFuncRGB
+            if args.easingMode == "HSV" then
+                easingFunc = args.easingFuncHue
+            elseif args.easingMode == "HSL" then
+                easingFunc = args.easingFuncHue
+            end
+
             local sprite = app.activeSprite
             if sprite == nil then
                 sprite = Sprite(64, 64)
@@ -253,19 +308,15 @@ dlg:button {
                 end
             end
 
-            local easingFunc = args.easingFuncRGB
-            if args.easingMode == "HSV" then
-                easingFunc = args.easingFuncHSV
-            end
-
             createRadial(
                 sprite,
                 cel.image,
                 0.01 * args.xOrigin,
                 0.01 * args.yOrigin,
-                0.01 * args.minRad,
+                -- 0.01 * args.minRad,
                 0.01 * args.maxRad,
                 distFunc,
+                args.quantization,
                 args.aColor,
                 args.bColor,
                 args.easingMode,

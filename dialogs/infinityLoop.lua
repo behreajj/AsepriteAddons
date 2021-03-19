@@ -7,15 +7,15 @@ local defaults = {
     resolution = 32,
     frames = 1,
     dots = 1,
+    dotOff = 15,
     angle = 0,
     scale = 32,
     xOrigin = 0,
     yOrigin = 0,
-    useFill = false,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = Color(255, 245, 215, 255),
-    fillClr = Color(32, 32, 32, 255),
+    strokeClr = Color(32, 32, 32, 255),
+    fillClr = Color(255, 245, 215, 255),
     handles = 0
 }
 
@@ -49,8 +49,16 @@ dlg:slider {
     id = "dots",
     label = "Dots:",
     min = 1,
-    max = 12,
+    max = 16,
     value = defaults.frames
+}
+
+dlg:slider {
+    id = "dotOff",
+    label = "Dot Offset:",
+    min = 0,
+    max = 100,
+    value = defaults.dotOff
 }
 
 dlg:slider {
@@ -102,22 +110,18 @@ dlg:color {
     color = defaults.strokeClr
 }
 
-dlg:check {
-    id = "useFill",
-    label = "Use Fill:",
-    selected = defaults.useFill
-}
-
 dlg:color {
     id = "fillClr",
-    label = "Fill Color:",
+    label = "Dot Color:",
     color = defaults.fillClr
 }
 
+-- Because ENTER is the key to start an animation loop,
+-- dialog focus is set to false here.
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = false,
     onclick = function()
 
         local args = dlg.data
@@ -147,7 +151,7 @@ dlg:button {
             AseUtilities.drawCurve2(
                 curve,
                 args.resolution,
-                args.useFill,
+                false,
                 args.fillClr,
                 args.useStroke,
                 args.strokeClr,
@@ -182,16 +186,19 @@ dlg:button {
                     local frameToFac = 1.0 / frames
                     local dotCount = args.dots
                     local dotToFac = 1.0 / (dotCount - 1.0)
-                    local offset = 0.15
+                    local offset = 0.01 * args.dotOff
 
                     -- Create new brushes and colors for contrails.
                     local animBrushes = {}
                     local animColors = {}
+                    local dtr = args.fillClr.red
+                    local dtg = args.fillClr.green
+                    local dtb = args.fillClr.blue
                     for j = dotCount, 1, -1 do
                         local jFac = j / dotCount
                         local alpha = math.tointeger(0.5 + jFac * 255.0)
                         local animBrsh = Brush{ size = 3 + j }
-                        local animClr = Color(255, 255, 255, alpha)
+                        local animClr = Color(dtr, dtg, dtb, alpha)
                         table.insert(animBrushes, animBrsh)
                         table.insert(animColors, animClr)
                     end
@@ -217,6 +224,8 @@ dlg:button {
                                 layer = animLyr }
                         end
                     end
+
+                    app.activeFrame = sprite.frames[1]
                 end)
             end
 

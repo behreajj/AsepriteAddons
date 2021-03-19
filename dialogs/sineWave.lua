@@ -1,3 +1,7 @@
+dofile("../support/clr.lua")
+
+local easingModes = { "RGB", "HSL", "HSV" }
+
 local dlg = Dialog { title="Sine Wave" }
 
 dlg:slider {
@@ -17,6 +21,14 @@ dlg:slider {
 }
 
 dlg:slider {
+    id = "freq",
+    label = "Frequency:",
+    min = 1,
+    max = 8,
+    value = 1
+}
+
+dlg:slider {
     id = "amp",
     label = "Amplitude:",
     min = 0,
@@ -24,22 +36,10 @@ dlg:slider {
     value = 50
 }
 
-dlg:color {
-    id = "aClr",
-    label = "Color A:",
-    color = Color(0, 127, 255, 255)
-}
-
-dlg:color {
-    id = "bClr",
-    label = "Color B:",
-    color = Color(255, 0, 127, 255)
-}
-
 dlg:number {
     id = "minScale",
     label = "Min Scale:",
-    text = string.format("%.1f", 5.0),
+    text = string.format("%.1f", 8.0),
     decimals = 5
 }
 
@@ -50,21 +50,29 @@ dlg:number {
     decimals = 5
 }
 
-local function lerpColor(a, b, t)
-    if t <= 0.0 then return Color(a) end
-    if t >= 1.0 then return Color(b) end
-    local u = 1.0 - t
-    return Color(
-        math.tointeger(u * a.red   + t * b.red),
-        math.tointeger(u * a.green + t * b.green),
-        math.tointeger(u * a.blue  + t * b.blue),
-        math.tointeger(u * a.alpha + t * b.alpha))
-end
+dlg:color {
+    id = "aColor",
+    label = "Color A:",
+    color = Color(0, 127, 255, 255)
+}
+
+dlg:color {
+    id = "bColor",
+    label = "Color B:",
+    color = Color(255, 0, 127, 255)
+}
+
+dlg:combobox {
+    id = "easingMode",
+    label = "Easing Mode:",
+    option = "HSL",
+    options = easingModes
+}
 
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = false,
     onclick = function()
         local args = dlg.data
         if args.ok then
@@ -87,9 +95,11 @@ dlg:button {
             local reqFrames = args.frames
             local oldLen = #sprite.frames
             local needed = math.max(0, reqFrames - oldLen)
+            -- app.transaction(function()
             for i = 1, needed, 1 do
                 sprite:newEmptyFrame()
             end
+            -- end)
 
             local yCenter = h * 0.5
             local ampx = h * 0.005 * args.amp
@@ -97,11 +107,11 @@ dlg:button {
             local right = w - left
 
             local elmCount = args.elements
-            local iToFac = 1.0 / (reqFrames - 1.0)
+            -- local iToFac = 1.0 / (reqFrames - 1.0)
             local jToFac = 1.0 / (elmCount - 1.0)
 
             local tau = math.pi * 2.0
-            local halfPi = math.pi * 0.5
+            -- local halfPi = math.pi * 0.5
             local iToPeriod = tau / reqFrames
             local jToPeriod = tau / elmCount
 
@@ -118,15 +128,15 @@ dlg:button {
                 local cel = sprite:newCel(layer, frame)
                 table.insert(cels, cel)
 
-                local ifac = i * iToFac
-                local theta = i * iToPeriod
+                -- local ifac = i * iToFac
+                local theta = args.freq * i * iToPeriod
                 local ptsInFrame = {}
                 local brushesInFrame = {}
                 local scalePulse = 0.5 + 0.5 * math.cos(theta + math.pi)
                 local minScaleAtFrame = (1.0 - scalePulse) * absMinScale
-                                              + scalePulse * args.minScale
+                                             + scalePulse * args.minScale
                 local maxScaleAtFrame = (1.0 - scalePulse) * halfMaxScale
-                                              + scalePulse * args.maxScale
+                                             + scalePulse * args.maxScale
 
                 for j = 0, elmCount - 1, 1 do
                     local jfac = j * jToFac
@@ -150,30 +160,58 @@ dlg:button {
                 table.insert(brushes, brushesInFrame)
             end
 
-            local colors = {}
+            local aClrAse = args.aColor
+            local aClr = Clr.new(
+                0.00392156862745098 * aClrAse.red,
+                0.00392156862745098 * aClrAse.green,
+                0.00392156862745098 * aClrAse.blue,
+                0.00392156862745098 * aClrAse.alpha)
+
+            local bClrAse = args.bColor
+            local bClr = Clr.new(
+                0.00392156862745098 * bClrAse.red,
+                0.00392156862745098 * bClrAse.green,
+                0.00392156862745098 * bClrAse.blue,
+                0.00392156862745098 * bClrAse.alpha)
+
+            local easingFunc = Clr.mixRgba
+            if args.easingMode == "HSV" then
+                easingFunc = Clr.mixHsva
+            elseif args.easingMode == "HSL" then
+                easingFunc = Clr.mixHsla
+            end
+
+            local aseClrs = {}
             for j = 0, elmCount - 1, 1 do
                 local jfac = j * jToFac
-                local color = lerpColor(args.aClr, args.bClr, jfac)
-                table.insert(colors, color)
+                local clr = easingFunc(aClr, bClr, jfac)
+                local aseClr = Color(
+                    math.tointeger(0.5 + 255.0 * clr.r),
+                    math.tointeger(0.5 + 255.0 * clr.g),
+                    math.tointeger(0.5 + 255.0 * clr.b),
+                    math.tointeger(0.5 + 255.0 * clr.a))
+                table.insert(aseClrs, aseClr)
             end
 
             -- Draw.
-            app.activeFrame = 1
-            for i = 1, reqFrames, 1 do
-                local cel = cels[i]
-                local ptsInFrame = points[i]
-                local brushesInFrame = brushes[i]
-                for j = 1, elmCount, 1 do
-                    app.useTool {
-                        tool = "pencil",
-                        color = colors[j],
-                        brush = brushesInFrame[j],
-                        points = { ptsInFrame[j] },
-                        cel = cel,
-                        layer = layer
-                    }
+            app.transaction(function()
+                app.activeFrame = 1
+                for i = 1, reqFrames, 1 do
+                    local cel = cels[i]
+                    local ptsInFrame = points[i]
+                    local brushesInFrame = brushes[i]
+                        for j = 1, elmCount, 1 do
+                            app.useTool {
+                                tool = "pencil",
+                                color = aseClrs[j],
+                                brush = brushesInFrame[j],
+                                points = { ptsInFrame[j] },
+                                cel = cel,
+                                layer = layer
+                            }
+                        end
                 end
-            end
+            end)
         end
     end
 }

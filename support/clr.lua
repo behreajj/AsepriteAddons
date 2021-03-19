@@ -241,6 +241,63 @@ function Clr.fromHex(c)
         (c >> 0x18 & 0xff) * 0.00392156862745098)
 end
 
+---Converts hue, saturation and lightness to a color.
+---@param hue number hue
+---@param sat number saturation
+---@param light number lightness
+---@param alpha number transparency
+---@return table
+function Clr.hslaToRgba(hue, sat, light, alpha)
+
+    local l = light or 1.0
+    local a = alpha or 1.0
+
+    if l <= 0.0 then return Clr.new(0.0, 0.0, 0.0, a) end
+    if l >= 1.0 then return Clr.new(1.0, 1.0, 1.0, a) end
+
+    local s = sat or 1.0
+    if s <= 0.0 then return Clr.new(l, l, l, a) end
+
+    local q = l + s - l * s
+    if l < 0.5 then q = l * (1.0 + s) end
+    local p = l + l - q
+    local qnp6 = (q - p) * 6.0
+
+    local h = hue or 0.0
+
+    local r = p
+    local rHue = (h + 0.3333333333333333) % 1.0
+    if rHue < 0.16666666666666667 then
+        r = p + qnp6 * rHue
+    elseif rHue < 0.5 then
+        r = q;
+    elseif rHue < 0.6666666666666667 then
+        r = p + qnp6 * (0.6666666666666667 - rHue)
+    end
+
+    local g = p
+    local gHue = h % 1.0
+    if gHue < 0.16666666666666667 then
+        g = p + qnp6 * gHue
+    elseif gHue < 0.5 then
+        g = q;
+    elseif gHue < 0.6666666666666667 then
+        g = p + qnp6 * (0.6666666666666667 - gHue)
+    end
+
+    local b = p
+    local bHue = (h - 0.3333333333333333) % 1.0
+    if bHue < 0.16666666666666667 then
+        b = p + qnp6 * bHue
+    elseif bHue < 0.5 then
+        b = q;
+    elseif bHue < 0.6666666666666667 then
+        b = p + qnp6 * (0.6666666666666667 - bHue)
+    end
+
+    return Clr.new(r, g, b, a)
+end
+
 ---Converts hue, saturation and value to a color.
 ---@param hue number hue
 ---@param sat number saturation
@@ -283,6 +340,51 @@ function Clr.luminance(a)
     return 0.2126 * a.r
          + 0.7152 * a.g
          + 0.0722 * a.b
+end
+
+---Mixes two colors in HSLA space by a step.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Clr.mixHsla(a, b, t)
+    local u = t or 0.5
+
+    if u <= 0.0 then
+        return Clr.new(a.r, a.g, a.b, a.a)
+    end
+
+    if u >= 1.0 then
+        return Clr.new(b.r, b.g, b.b, b.a)
+    end
+
+    local v = 1.0 - u
+    local aHsla = Clr.rgbaToHsla(a.r, a.g, a.b, a.a)
+    local bHsla = Clr.rgbaToHsla(b.r, b.g, b.b, b.a)
+
+    -- Default to hue near easing.
+    -- Shouldn't need to mod the hues.
+    -- local o = aHsva.h % 1.0
+    -- local d = bHsva.h % 1.0
+    local o = aHsla.h
+    local d = bHsla.h
+    local diff = d - o
+    local hueTrg = o
+    if diff ~= 0.0 then
+        if o < d and diff > 0.5 then
+            hueTrg = (v * (o + 1.0) + u * d) % 1.0
+        elseif o > d and diff < -0.5 then
+            hueTrg = (v * o + u * (d + 1.0)) % 1.0
+        else
+            hueTrg = v * o + u * d
+        end
+    end
+
+    return Clr.hslaToRgba(
+        hueTrg,
+        v * aHsla.s + u * bHsla.s,
+        v * aHsla.l + u * bHsla.l,
+        v * aHsla.a + u * bHsla.a)
 end
 
 ---Mixes two colors in HSVA space by a step.
@@ -395,6 +497,43 @@ function Clr.quantize(a, levels)
     return Clr.new(a.r, a.g, a.b, a.a)
 end
 
+---Converts RGBA channels to hue, saturation and lightness.
+---The return table uses the keys h, s, l and a.
+---@param red number red channel
+---@param green number green channel
+---@param blue number blue channel
+---@param alpha number transparency
+---@return table
+function Clr.rgbaToHsla(red, green, blue, alpha)
+    local mx = math.max(red, green, blue)
+    local mn = math.min(red, green, blue)
+    local sum = mx + mn
+    local light = sum * 0.5
+    local a = alpha or 1.0
+    if mx == mn then
+        return { h = 0.0, s = 0.0, l = light, a = a }
+    else
+        local diff = mx - mn
+        local sat = diff / sum
+        if light > 0.5 then sat = diff / (2.0 - sum) end
+
+        local hue = 0.0
+        if mx == red then
+            hue = (green - blue) / diff
+            if green < blue then
+                hue = hue + 6.0
+            end
+        elseif mx == green then
+            hue = 2.0 + (blue - red) / diff
+        elseif mx == blue then
+            hue = 4.0 + (red - green) / diff
+        end
+
+        hue = hue * 0.16666666666666667
+        return { h = hue, s = sat, l = light, a = a }
+    end
+end
+
 ---Converts RGBA channels to hue, saturation and value.
 ---The return table uses the keys h, s, v and a.
 ---@param red number red channel
@@ -403,13 +542,13 @@ end
 ---@param alpha number transparency
 ---@return table
 function Clr.rgbaToHsva(red, green, blue, alpha)
-    local bri = math.max(red, green, blue)
-    local dlt = bri - math.min(red, green, blue)
+    local mx = math.max(red, green, blue)
+    local dlt = mx - math.min(red, green, blue)
     local hue = 0.0
     if dlt ~= 0.0 then
-        if red == bri then
+        if red == mx then
             hue = (green - blue) / dlt
-        elseif green == bri then
+        elseif green == mx then
             hue = 2.0 + (blue - red) / dlt
         else
             hue = 4.0 + (red - green) / dlt
@@ -419,9 +558,9 @@ function Clr.rgbaToHsva(red, green, blue, alpha)
         if hue < -0.0 then hue = hue + 1.0 end
     end
     local sat = 0.0
-    if bri ~= 0.0 then sat = dlt / bri end
+    if mx ~= 0.0 then sat = dlt / mx end
     local a = alpha or 1.0
-    return { h = hue, s = sat, v = bri, a = a }
+    return { h = hue, s = sat, v = mx, a = a }
 end
 
 ---Subtracts two colors, including alpha.
