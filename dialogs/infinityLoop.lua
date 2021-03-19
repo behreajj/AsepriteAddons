@@ -5,6 +5,8 @@ dofile("../support/aseutilities.lua")
 
 local defaults = {
     resolution = 32,
+    frames = 1,
+    dots = 1,
     angle = 0,
     scale = 32,
     xOrigin = 0,
@@ -25,6 +27,30 @@ dlg:slider {
     min = 1,
     max = 64,
     value = defaults.resolution
+}
+
+dlg:slider {
+    id = "handles",
+    label = "Handles:",
+    min = 0,
+    max = 255,
+    value = defaults.handles
+}
+
+dlg:slider {
+    id = "frames",
+    label = "Frames:",
+    min = 1,
+    max = 64,
+    value = defaults.frames
+}
+
+dlg:slider {
+    id = "dots",
+    label = "Dots:",
+    min = 1,
+    max = 12,
+    value = defaults.frames
 }
 
 dlg:slider {
@@ -88,14 +114,6 @@ dlg:color {
     color = defaults.fillClr
 }
 
-dlg:slider {
-    id = "handles",
-    label = "Handles:",
-    min = 0,
-    max = 255,
-    value = defaults.handles
-}
-
 dlg:button {
     id = "ok",
     text = "OK",
@@ -113,7 +131,7 @@ dlg:button {
             local sclval = args.scale
             if sclval < 2.0 then sclval = 2.0 end
             local s = Mat3.fromScale(sclval, -sclval)
-            local mat = Mat3.mul(Mat3.mul(t, s), r)
+            local mat = t * r * s
             Utilities.mulMat3Curve2(mat, curve)
 
             local sprite = app.activeSprite
@@ -124,6 +142,7 @@ dlg:button {
 
             local layer = sprite:newLayer()
             layer.name = curve.name
+            local cel = sprite:newCel(layer, 1)
 
             AseUtilities.drawCurve2(
                 curve,
@@ -133,7 +152,7 @@ dlg:button {
                 args.useStroke,
                 args.strokeClr,
                 Brush(args.strokeWeight),
-                sprite:newCel(layer, 1),
+                cel,
                 layer)
 
             if args.handles > 0 then
@@ -145,8 +164,64 @@ dlg:button {
                     sprite:newCel(hlLyr, 1),
                     hlLyr)
             end
-        end
 
+            local frames = args.frames
+            if frames > 1 then
+                app.transaction(function()
+
+                    -- Allocate new frames.
+                    local oldLen = #sprite.frames
+                    local needed = math.max(0, frames - oldLen)
+                    for i = 1, needed, 1 do
+                        sprite:newEmptyFrame()
+                    end
+
+                    local animLyr = sprite:newLayer()
+                    animLyr.name = curve.name .. ".Loop"
+
+                    local frameToFac = 1.0 / frames
+                    local dotCount = args.dots
+                    local dotToFac = 1.0 / (dotCount - 1.0)
+                    local offset = 0.15
+
+                    -- Create new brushes and colors for contrails.
+                    local animBrushes = {}
+                    local animColors = {}
+                    for j = dotCount, 1, -1 do
+                        local jFac = j / dotCount
+                        local alpha = math.tointeger(0.5 + jFac * 255.0)
+                        local animBrsh = Brush{ size = 3 + j }
+                        local animClr = Color(255, 255, 255, alpha)
+                        table.insert(animBrushes, animBrsh)
+                        table.insert(animColors, animClr)
+                    end
+
+                    for i = 1, #sprite.frames, 1 do
+                        local frame = sprite.frames[i]
+                        local animCel = sprite:newCel(animLyr, frame)
+                        local iFac = (i - 1.0) * frameToFac
+
+                        for j = 1, dotCount, 1 do
+                            local jFac = (j - 1.0) * dotToFac
+                            local fac = iFac - jFac * offset
+                            local place = Curve2.eval(curve, fac)
+                            place = Vec2.round(place)
+                            local plpt = Point(place.x, place.y)
+
+                            app.useTool {
+                                tool = "pencil",
+                                color = animColors[j],
+                                brush = animBrushes[j],
+                                points = { plpt },
+                                cel = animCel,
+                                layer = animLyr }
+                        end
+                    end
+                end)
+            end
+
+            app.refresh()
+        end
     end
 }
 

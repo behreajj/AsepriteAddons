@@ -1,7 +1,5 @@
 dofile("../support/aseutilities.lua")
 
--- Supported easing modes as presented in dialog.
--- Analogous to enumerations.
 local easingModes = { "RGB", "HSL", "HSV" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
 local hueEasing = { "NEAR", "FAR" }
@@ -11,6 +9,7 @@ local defaults = {
     yOrigin = 50,
     angle = 90,
     cw = false,
+    quantization = 0,
     aColor = Color(32, 32, 32, 255),
     bColor = Color(255, 245, 215, 255),
     easingMode = "RGB",
@@ -19,10 +18,10 @@ local defaults = {
 }
 
 local function createConic(
-    sprite,
-    img,
+    sprite, img,
     xOrigin, yOrigin,
     angle, cw,
+    quantLvl,
     aColor, bColor,
     easingMode, easingFunc)
 
@@ -37,6 +36,14 @@ local function createConic(
     local hInv = 1.0 / h
     local xOriginNorm = xOrigin or 0.0
     local yOriginNorm = yOrigin or 0.0
+
+    local useQuantize = quantLvl > 0.0
+    local delta = 1.0
+    local levels = 1.0
+    if useQuantize then
+        levels = quantLvl
+        delta = 1.0 / levels
+    end
 
     if shortEdge == longEdge then
         wInv = 1.0 / w
@@ -139,6 +146,11 @@ local function createConic(
         local xNorm = xPoint * wInv
         local yNorm = yPoint * hInv
 
+        if useQuantize then
+            xNorm = delta * math.floor(0.5 + xNorm * levels)
+            yNorm = delta * math.floor(0.5 + yNorm * levels)
+        end
+
         -- Bring coordinates from [0.0, 1.0] to [-1.0, 1.0].
         local xSigned = xNorm + xNorm - 1.0
         local ySigned = 1.0 - (yNorm + yNorm)
@@ -172,7 +184,7 @@ local dlg = Dialog { title = "Conic Gradient" }
 
 dlg:slider {
     id = "xOrigin",
-    label = "Origin X:",
+    label = "Origin X %:",
     min = 0,
     max = 100,
     value = defaults.xOrigin
@@ -180,7 +192,7 @@ dlg:slider {
 
 dlg:slider {
     id = "yOrigin",
-    label = "Origin Y:",
+    label = "Origin Y %:",
     min = 0,
     max = 100,
     value = defaults.yOrigin
@@ -199,6 +211,14 @@ dlg:check {
     label = "Chirality:",
     text = "Flip y axis.",
     selected = defaults.cw
+}
+
+dlg:slider {
+    id = "quantization",
+    label = "Quantize:",
+    min = 0,
+    max = 32,
+    value = defaults.quantization
 }
 
 dlg:color {
@@ -265,6 +285,7 @@ dlg:button {
                 0.01 * args.yOrigin,
                 math.rad(args.angle),
                 args.cw,
+                args.quantization,
                 args.aColor,
                 args.bColor,
                 args.easingMode,

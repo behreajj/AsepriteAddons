@@ -229,11 +229,6 @@ function Curve2.rect(
         Vec2.new(0.0, 0.0),
         Vec2.new(lft, u * btmIns1 + t * topIns1))
 
-    -- 0.5773502691896258
-    -- Or, from Blender, 0.552125?
-    t = 0.5
-    u = 0.5
-
     local rgt23 = u * rgt
     local btm23 = u * btm
     local top23 = u * top
