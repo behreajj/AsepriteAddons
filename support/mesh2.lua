@@ -416,7 +416,7 @@ function Mesh2.gridCartesian(cols, rows)
         end
     end
 
-    return Mesh2.new(fs, vs, "Grid")
+    return Mesh2.new(fs, vs, "Grid.Cartesian")
 end
 
 ---Creates a grid of rhombi.
@@ -434,6 +434,7 @@ function Mesh2.gridDimetric(cells)
             0.25 * vSrc.x + 0.25 * vSrc.y)
     end
 
+    mesh.name = "Grid.Dimetric"
     return mesh
 end
 
@@ -487,7 +488,7 @@ function Mesh2.gridHex(rings)
         end
     end
 
-    return Mesh2.new(fs, vs, "Grid")
+    return Mesh2.new(fs, vs, "Grid.Hexagon")
 end
 
 ---Creates a regular convex polygon

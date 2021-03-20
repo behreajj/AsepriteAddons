@@ -70,7 +70,7 @@ local function julia(seed, z, power, res)
     local i = 0
     local zn = Complex.new(z.real, z.imag)
     while i < res and Complex.absSq(zn) <= 4.0 do
-        zn = Complex.pow(zn, power)
+        zn = Complex.powNumber(zn, power)
         zn = Complex.add(seed, zn)
         i = i + 1
     end
@@ -83,7 +83,9 @@ local function julia(seed, z, power, res)
 end
 
 local function juliaSmooth(seed, z, power, res)
-    -- https://stackoverflow.com/questions/369438/smooth-spectrum-for-mandelbrot-set-rendering/1243788#1243788
+    -- https://stackoverflow.com/questions/369438/
+    -- smooth-spectrum-for-mandelbrot-set-rendering/
+    -- 1243788#1243788
 
     if z.real == 0.0 and z.imag == 0.0 then return 0.0 end
 
@@ -92,7 +94,7 @@ local function juliaSmooth(seed, z, power, res)
     local ab = Complex.abs(zn)
     local fac = math.exp(-ab)
     while i < res and ab <= 2.0 do
-        zn = Complex.pow(zn, power)
+        zn = Complex.powNumber(zn, power)
         zn = Complex.add(seed, zn)
         ab = Complex.abs(zn)
         fac = fac + math.exp(-ab)
@@ -135,7 +137,8 @@ dlg:button {
             local rpx = 0.01 * args.rSeed
             local phirad = math.rad(args.phiSeed)
             local seed = Complex.rect(rpx, phirad)
-            local power = Complex.new(args.power, 0.0)
+            -- local power = Complex.new(args.power, 0.0)
+            local power = args.power
 
             local aColor = args.aColor
             local bColor = args.bColor

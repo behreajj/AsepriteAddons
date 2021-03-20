@@ -12,11 +12,11 @@ local metrics = {
 local defaults = {
     xOrigin = 50,
     yOrigin = 50,
-    -- minRad = 0,
     maxRad = 100,
     distMetric = "EUCLIDEAN",
     minkExp = 2.0,
     quantization = 0,
+    bias = 1.0,
     aColor = Color(32, 32, 32, 255),
     bColor = Color(255, 245, 215, 255),
     easingMode = "RGB",
@@ -24,6 +24,28 @@ local defaults = {
     easingFuncHue = "NEAR"
 }
 
+local function chebDist(ax, ay, bx, by)
+    return math.max(
+        math.abs(bx - ax),
+        math.abs(by - ay))
+end
+
+local function euclDist(ax, ay, bx, by)
+    local dx = bx - ax
+    local dy = by - ay
+    return math.sqrt(dx * dx + dy * dy)
+end
+
+local function manhDist(ax, ay, bx, by)
+    return math.abs(bx - ax)
+         + math.abs(by - ay)
+end
+
+local function minkDist(ax, ay, bx, by, c, d)
+    return (math.abs(bx - ax) ^ c
+          + math.abs(by - ay) ^ c)
+          ^ d
+end
 
 local function createRadial(
     sprite,
@@ -33,12 +55,15 @@ local function createRadial(
     maxRad,
     distFunc,
     quantLvl,
+    bias,
     aColor, bColor,
     easingMode, easingFunc)
 
     local w = sprite.width
     local h = sprite.height
 
+    -- TODO: Quantization options for
+    -- polar and Cartesian?
     local useQuantize = quantLvl > 0.0
     local delta = 1.0
     local levels = 1.0
@@ -49,6 +74,18 @@ local function createRadial(
         delta = 1.0 / levels
         wInv = 1.0 / w
         hInv = 1.0 / h
+    end
+
+    local xOrigPx = xOrigin * w
+    local yOrigPx = yOrigin * h
+
+    -- Corners look bad with Chebyshev and Manhattan?
+    local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, w, h))
+
+    -- See https://github.com/aseprite/aseprite/issues/2613
+    local valBias = 1.0
+    if bias and bias ~= 0.0 then
+        valBias = bias
     end
 
     local a0 = 0
@@ -62,12 +99,6 @@ local function createRadial(
     local b3 = 0
 
     local easing = AseUtilities.lerpRgba
-
-    local xOrigPx = xOrigin * w
-    local yOrigPx = yOrigin * h
-
-    -- TODO: Test is maxRad in the numerator or denom?
-    local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, w, h))
 
     if easingMode and easingMode == "HSV" then
 
@@ -144,6 +175,7 @@ local function createRadial(
         local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
         local fac = dst * normDist
         fac = math.min(1.0, math.max(0.0, fac))
+        fac = fac ^ valBias
         elm(easing(
             a0, a1, a2, a3,
             b0, b1, b2, b3,
@@ -152,29 +184,6 @@ local function createRadial(
         i = i + 1
     end
 
-end
-
-local function chebDist(ax, ay, bx, by)
-    return math.max(
-        math.abs(bx - ax),
-        math.abs(by - ay))
-end
-
-local function euclDist(ax, ay, bx, by)
-    local dx = bx - ax
-    local dy = by - ay
-    return math.sqrt(dx * dx + dy * dy)
-end
-
-local function manhDist(ax, ay, bx, by)
-    return math.abs(bx - ax)
-         + math.abs(by - ay)
-end
-
-local function minkDist(ax, ay, bx, by, c)
-    return (math.abs(bx - ax) ^ c
-          + math.abs(by - ay) ^ c)
-          ^ (1.0 / c)
 end
 
 local dlg = Dialog { title = "Radial Gradient" }
@@ -195,15 +204,6 @@ dlg:slider {
     value = defaults.yOrigin
 }
 
--- https://github.com/aseprite/aseprite/issues/2613
--- dlg:slider {
---     id = "minRad",
---     label = "Min Radius:",
---     min = 0,
---     max = 99,
---     value = defaults.minRad
--- }
-
 dlg:slider {
     id = "maxRad",
     label = "Max Radius:",
@@ -223,6 +223,13 @@ dlg:number {
     id = "minkExp",
     label = "Minkowski Power:",
     text = string.format("%.1f", defaults.minkExp),
+    decimals = 5
+}
+
+dlg:number {
+    id = "bias",
+    label = "Bias:",
+    text = string.format("%.1f", defaults.bias),
     decimals = 5
 }
 
@@ -299,12 +306,15 @@ dlg:button {
                 distFunc = manhDist
             elseif distMetric == "MINKOWSKI" then
                 local minkExp = 2.0
+                local invMinkExp = 0.5
                 if args.minkExp ~= 0.0 then
                     minkExp = args.minkExp
+                    invMinkExp = 1.0 / minkExp
                 end
 
                 distFunc = function(ax, ay, bx, by)
-                    return minkDist(ax, ay, bx, by, minkExp)
+                    return minkDist(ax, ay, bx, by,
+                        minkExp, invMinkExp)
                 end
             end
 
@@ -313,10 +323,10 @@ dlg:button {
                 cel.image,
                 0.01 * args.xOrigin,
                 0.01 * args.yOrigin,
-                -- 0.01 * args.minRad,
                 0.01 * args.maxRad,
                 distFunc,
                 args.quantization,
+                args.bias,
                 args.aColor,
                 args.bColor,
                 args.easingMode,

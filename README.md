@@ -1,6 +1,18 @@
 # Aseprite Add-ons
 
-An appendix to the Medium article, ["How To Script Aseprite Tools in Lua"](https://behreajj.medium.com/how-to-script-aseprite-tools-in-lua-8f849b08733). Open scripts from the `dialogs` directory in Aseprite to see results.
+An appendix to the Medium article, ["How To Script Aseprite Tools in Lua"](https://behreajj.medium.com/how-to-script-aseprite-tools-in-lua-8f849b08733). Open scripts from the `dialogs` directory in Aseprite to see results. Keyboard shortcuts can be assigned to scripts by going to `Edit > Keyboard Shortcuts` (`Ctrl+Alt+Shift+K`) and looking in the `Menu` category, then in the `Scripts` heading.
+
+## References
+
+For more info, see
+
+- [Aseprite Scripting API](https://github.com/aseprite/api)
+- [Aseprite General Documentation](https://www.aseprite.org/docs/)
+  - [Run Aseprite in Debug Mode](https://www.aseprite.org/docs/debug/)
+  - [Aseprite Command Line Interface](https://www.aseprite.org/docs/cli/)
+- [Example Scripts](https://github.com/aseprite/Aseprite-Script-Examples)
+- [Aseprite Forum](https://community.aseprite.org/)
+- [Lua Documentation](http://www.lua.org/docs.html)
 
 ## Gallery
 
@@ -14,7 +26,7 @@ This repo includes
 
   ![Checker](screencaps/checker.png)
 
-- A Conic gradient.
+- A conic gradient.
 
   ![Conic Gradient](screencaps/conicGradient.png)
 
@@ -34,7 +46,7 @@ This repo includes
 
   ![Julia Set](screencaps/juliaSet.png)
 
-- A Linear gradient.
+- A linear gradient.
  
   ![Linear Gradient](screencaps/linearGradient.png)
 
@@ -55,15 +67,3 @@ This repo includes
   ![Sine Wave](screencaps/sineWave.png)
 
 Appearances may vary as features are added to or removed from underlying scripts.
-
-## References
-
-For more info, see
-
-- [Aseprite General Documentation](https://www.aseprite.org/docs/)
-  - [Run Aseprite in Debug Mode](https://www.aseprite.org/docs/debug/)
-  - [Aseprite Command Line Interface](https://www.aseprite.org/docs/cli/)
-- [Aseprite Scripting API](https://github.com/aseprite/api)
-- [Example Scripts](https://github.com/aseprite/Aseprite-Script-Examples)
-- [Aseprite Forum](https://community.aseprite.org/)
-- [Lua Documentation](http://www.lua.org/docs.html)

@@ -1,3 +1,4 @@
+dofile("./vec2.lua")
 dofile("./knot2.lua")
 
 Curve2 = {}

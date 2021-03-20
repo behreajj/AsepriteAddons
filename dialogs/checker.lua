@@ -36,12 +36,15 @@ dlg:button {
         local args = dlg.data
         if args.ok then
             local sprite = app.activeSprite
+            local layer = nil
             if sprite == nil then
                 sprite = Sprite(64, 64)
                 app.activeSprite = sprite
+                layer = sprite.layers[1]
+            else
+                layer = sprite:newLayer()
             end
 
-            local layer = sprite:newLayer()
             layer.name = "Checker"
             local cel = sprite:newCel(layer, 1)
             local image = cel.image

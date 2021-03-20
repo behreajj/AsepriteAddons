@@ -39,7 +39,7 @@ function Complex:__mul(b)
 end
 
 function Complex:__pow(b)
-    return Complex.pow(self, b)
+    return Complex.powComplex(self, b)
 end
 
 function Complex:__sub(b)
@@ -225,11 +225,20 @@ function Complex.polar(z)
         phi = Complex.abs(z) }
 end
 
----Raises a complex number to the power of another.
+---Raises a left operand to the power of the right.
+---Defaults to complex-complex exponentiation.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
 function Complex.pow(a, b)
+    return Complex.powComplex(a, b)
+end
+
+---Raises a complex number to the power of another.
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Complex.powComplex(a, b)
     local ar = a.real
     local ai = a.imag
     local br = b.real
@@ -239,6 +248,23 @@ function Complex.pow(a, b)
     local logImag = math.atan(ai, ar)
     local rd = math.exp(br * logReal - bi * logImag)
     local phid = br * logImag + bi * logReal
+
+    return Complex.new(
+        rd * math.cos(phid),
+        rd * math.sin(phid))
+end
+
+---Raises a complex number to the power of a number.
+---@param a table left operand
+---@param b number right operand
+---@return table
+function Complex.powNumber(a, b)
+    local ar = a.real
+    local ai = a.imag
+
+    local rd = math.exp(b * math.log(
+        math.sqrt(ar * ar + ai * ai)))
+    local phid = b * math.atan(ai, ar)
 
     return Complex.new(
         rd * math.cos(phid),

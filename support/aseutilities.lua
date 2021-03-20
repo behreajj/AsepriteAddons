@@ -305,6 +305,48 @@ function AseUtilities.drawMesh2(
     app.refresh()
 end
 
+---Initializes a sprite and layer.
+---Sets palette to the colors provided,
+---or, if nil, a default set.
+---@param wDefault integer default width
+---@param hDefault integer default height
+---@param layerName string layer name
+---@param colors table array of colors
+---@return table
+function AseUtilities.initCanvas(
+    wDefault,
+    hDefault,
+    layerName,
+    colors)
+
+    local clrs = colors or {
+        Color(255,   0,   0, 255),
+        Color(  0, 255,   0, 255),
+        Color(  0,   0, 255, 255),
+        Color(  0,   0,   0, 255),
+        Color(255, 255, 255, 255) }
+
+    local sprite = app.activeSprite
+    local layer = nil
+
+    if sprite == nil then
+        sprite = Sprite(wDefault, hDefault)
+        app.activeSprite = sprite
+        layer = sprite.layers[1]
+        local lenClrs = #clrs
+        local pal = Palette(lenClrs)
+        for i = 1, lenClrs, 1 do
+            pal:setColor(i - 1, clrs[i])
+        end
+        sprite:setPalette(pal)
+    else
+        layer = sprite:newLayer()
+    end
+
+    layer.name = layerName
+    return sprite
+end
+
 ---Mixes an origin and destination color
 ---in HSL by a factor. The factor is assumed to
 ---be in [0.0, 1.0], but the mix is unclamped.

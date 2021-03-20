@@ -115,14 +115,11 @@ dlg:button {
         local mat = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
-        local sprite = app.activeSprite
-        if sprite == nil then
-            sprite = Sprite(64, 64)
-            app.activeSprite = sprite
-        end
-
-        local layer = sprite:newLayer()
-        layer.name = "Dimetric Grid"
+        local sprite = AseUtilities.initCanvas(
+            64, 64,
+            mesh.name,
+            { args.fillClr, args.strokeClr })
+        local layer = sprite.layers[#sprite.layers]
 
         AseUtilities.drawMesh2(
             mesh,

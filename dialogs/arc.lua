@@ -16,7 +16,7 @@ local defaults = {
     useFill = true,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = Color(32, 32, 32, 255),
+    strokeClr = Color(128, 119, 102, 255),
     fillClr = Color(255, 245, 215, 255)}
 
 local dlg = Dialog{
@@ -144,14 +144,12 @@ dlg:button{
     local mat = Mat3.mul(t, s)
     Utilities.mulMat3Mesh2(mat, mesh)
 
-    local sprite = app.activeSprite
-    if sprite == nil then
-        sprite = Sprite(64, 64)
-        app.activeSprite = sprite
-    end
-
-    local layer = sprite:newLayer()
-    layer.name = mesh.name
+    -- TODO: Update layers behaviour for all.
+    local sprite = AseUtilities.initCanvas(
+        64, 64,
+        mesh.name,
+        { args.fillClr, args.strokeClr })
+    local layer = sprite.layers[#sprite.layers]
 
     AseUtilities.drawMesh2(
         mesh,
