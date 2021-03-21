@@ -26,6 +26,10 @@ This repo includes
 
   ![Checker](screencaps/checker.png)
 
+- Color curve presets. ([Test image source](https://en.wikipedia.org/wiki/File:Vermeer-view-of-delft.jpg).)
+
+  ![Color Curve](screencaps/colorCurve.png)
+
 - A conic gradient.
 
   ![Conic Gradient](screencaps/conicGradient.png)
@@ -49,6 +53,10 @@ This repo includes
 - A linear gradient.
  
   ![Linear Gradient](screencaps/linearGradient.png)
+
+- A noise generator.
+
+  ![Noise](screencaps/noise.png)
 
 - A regular convex polygon.
 

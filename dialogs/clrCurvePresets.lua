@@ -7,6 +7,19 @@ local prsStrs = {
     "PINGPONG"
 }
 
+local defaults = {
+    resolution = 8,
+    preset = "SMOOTHER",
+    useRed = true,
+    useGreen = true,
+    useBlue = true,
+    useAlpha = false,
+    useGray = true,
+    useIdx = false,
+    gamma = 2.2,
+    quantization = 0
+}
+
 local function quantize(x, levels)
     return math.floor(0.5 + x * levels) / levels
 end
@@ -19,6 +32,11 @@ local function linear(x)
     return math.max(0.0, math.min(1.0, x))
 end
 
+local function pingPong(x)
+    return 0.5 + 0.5 * math.cos(
+        6.283185307179586 * x - math.pi)
+end
+
 local function smoothStep(x)
     return math.max(0.0, math.min(1.0,
         x * x * (3.0 - (x + x))))
@@ -29,11 +47,6 @@ local function smootherStep(x)
         x * x * x * (x * (x * 6.0 - 15.0) + 10.0)))
 end
 
-local function pingPong(x)
-    return 0.5 + 0.5 * math.cos(
-        6.283185307179586 * x - math.pi)
-end
-
 local dlg = Dialog { title = "Color Curve Presets" }
 
 dlg:slider {
@@ -41,56 +54,56 @@ dlg:slider {
     label = "Resolution:",
     min = 1,
     max = 64,
-    value = 8
+    value = defaults.resolution
 }
 
 dlg:combobox {
     id = "preset",
     label = "Preset:",
-    option = "LINEAR",
-    options = prsStrs
+    options = prsStrs,
+    option = defaults.preset
 }
 
 dlg:check {
     id = "useRed",
     label = "Red:",
-    selected = true
+    selected = defaults.useRed
 }
 
 dlg:check {
     id = "useGreen",
     label = "Green:",
-    selected = true
+    selected = defaults.useGreen
 }
 
 dlg:check {
     id = "useBlue",
     label = "Blue:",
-    selected = true
+    selected = defaults.useBlue
 }
 
 dlg:check {
     id = "useAlpha",
     label = "Alpha:",
-    selected = false
+    selected = defaults.useAlpha
 }
 
 dlg:check {
     id = "useGray",
     label = "Gray:",
-    selected = true
+    selected = defaults.useGray
 }
 
 dlg:check {
     id = "useIdx",
     label = "Index:",
-    selected = false
+    selected = defaults.useIdx
 }
 
 dlg:number {
     id = "gamma",
     label = "Gamma:",
-    text = string.format("%.1f", 2.2),
+    text = string.format("%.1f", defaults.gamma),
     decimals = 5
 }
 
@@ -99,7 +112,7 @@ dlg:slider {
     label = "Quantize:",
     min = 0,
     max = 32,
-    value = 0
+    value = defaults.quantization
 }
 
 dlg:button {

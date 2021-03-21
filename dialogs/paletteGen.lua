@@ -1,18 +1,15 @@
 local dlg = Dialog { title="Palette Generator" }
 
 local ryb = {
-    Color(255, 0, 0, 255),
-    Color(255, 64, 0, 255),
-    Color(255, 128, 0, 255),
-    Color(255, 191, 0, 255),
-    Color(255, 255, 0, 255),
-    Color(129, 212, 26, 255),
-    Color(0, 169, 51, 255),
-    Color(21, 132, 102, 255),
-    Color(42, 96, 153, 255),
-    Color(85, 48, 141, 255),
-    Color(128, 0, 128, 255),
-    Color(191, 0, 64, 255)
+    Color(255,   0,   0, 255),
+    Color(255, 125,   0, 255),
+    Color(255, 192,   0, 255),
+    Color(255, 255,   0, 255),
+    Color( 86, 198,  34, 255),
+    Color( 14, 144,  85, 255),
+    Color( 17,  89, 166, 255),
+    Color( 75,  32, 142, 255),
+    Color(148,   4, 101, 255)
 }
 
 local rgb = {
@@ -44,7 +41,7 @@ local viridis = {
 dlg:shades {
     id = "hues",
     label = "Hues:",
-    colors = viridis,
+    colors = ryb,
     -- mode = "pick",
     mode = "sort",
     onclick = function(ev)

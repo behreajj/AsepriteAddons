@@ -1,7 +1,10 @@
 dofile("../support/clr.lua")
 dofile("../support/simplex.lua")
+dofile("../support/aseutilities.lua")
 
 local easingModes = { "RGB", "HSL", "HSV" }
+local rgbEasing = { "LINEAR", "SMOOTH" }
+local hueEasing = { "NEAR", "FAR" }
 
 local dlg = Dialog { title = "Noise" }
 
@@ -88,6 +91,20 @@ dlg:combobox {
     options = easingModes
 }
 
+dlg:combobox {
+    id = "easingFuncHue",
+    label = "Hue Easing:",
+    option = "NEAR",
+    options = hueEasing
+}
+
+dlg:combobox {
+    id = "easingFuncRGB",
+    label = "RGB Easing:",
+    option = "LINEAR",
+    options = rgbEasing
+}
+
 dlg:button {
     id = "ok",
     text = "OK",
@@ -113,9 +130,21 @@ dlg:button {
             local w = sprite.width
             local h = sprite.height
 
-            -- TODO: Aspect correctio needed.
-            local wInv = 1.0 / w
+            local shortEdge = math.min(w, h)
+            local longEdge = math.max(w, h)
+
+            local wInv = 1.0
             local hInv = 1.0 / h
+
+            if shortEdge == longEdge then
+                wInv = 1.0 / w
+            elseif w == shortEdge then
+                local aspect = (shortEdge / longEdge)
+                wInv = aspect / w
+            elseif h == shortEdge then
+                local aspect = (longEdge / shortEdge)
+                wInv = aspect / w
+            end
 
             local seed = 0
             if args.useSeed then
@@ -142,26 +171,15 @@ dlg:button {
                 delta = 1.0 / levels   
             end
 
-            local aClrAse = args.aColor
-            local aClr = Clr.new(
-                0.00392156862745098 * aClrAse.red,
-                0.00392156862745098 * aClrAse.green,
-                0.00392156862745098 * aClrAse.blue,
-                0.00392156862745098 * aClrAse.alpha)
+            local aClr = AseUtilities.aseColorToClr(
+                args.aColor)
+            local bClr = AseUtilities.aseColorToClr(
+                args.bColor)
 
-            local bClrAse = args.bColor
-            local bClr = Clr.new(
-                0.00392156862745098 * bClrAse.red,
-                0.00392156862745098 * bClrAse.green,
-                0.00392156862745098 * bClrAse.blue,
-                0.00392156862745098 * bClrAse.alpha)
-
-            local easingFunc = Clr.mixRgba
-            if args.easingMode == "HSV" then
-                easingFunc = Clr.mixHsva
-            elseif args.easingMode == "HSL" then
-                easingFunc = Clr.mixHsla
-            end
+            local easing = AseUtilities.easingFuncPresets(
+                args.easingMode,
+                args.easingFuncRGB,
+                args.easingFuncHue)
 
             local iterator = img:pixels()
             local i = 0
@@ -186,10 +204,7 @@ dlg:button {
                 local fac = math.max(0.0, math.min(1.0,
                     facSgned * 0.5 + 0.5))
 
-                local clr = easingFunc(aClr, bClr, fac)
-                local clrInt = Clr.toHex(clr)
-                elm(clrInt)
-
+                elm(Clr.toHex(easing(aClr, bClr, fac)))
                 i = i + 1
             end
 

@@ -347,7 +347,7 @@ end
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Clr.mixHsla(a, b, t)
+function Clr.mixHsla(a, b, t, hueFunc)
     local u = t or 0.5
 
     if u <= 0.0 then
@@ -358,25 +358,29 @@ function Clr.mixHsla(a, b, t)
         return Clr.new(b.r, b.g, b.b, b.a)
     end
 
-    local v = 1.0 - u
     local aHsla = Clr.rgbaToHsla(a.r, a.g, a.b, a.a)
     local bHsla = Clr.rgbaToHsla(b.r, b.g, b.b, b.a)
 
-    -- Default to hue near easing.
-    -- Shouldn't need to mod the hues.
-    -- local o = aHsva.h % 1.0
-    -- local d = bHsva.h % 1.0
-    local o = aHsla.h
-    local d = bHsla.h
-    local diff = d - o
-    local hueTrg = o
-    if diff ~= 0.0 then
-        if o < d and diff > 0.5 then
-            hueTrg = (v * (o + 1.0) + u * d) % 1.0
-        elseif o > d and diff < -0.5 then
-            hueTrg = (v * o + u * (d + 1.0)) % 1.0
-        else
-            hueTrg = v * o + u * d
+    local hueTrg = 0.0
+    local v = 1.0 - u
+    if hueFunc then
+        hueTrg = hueFunc(aHsla.h, bHsla.h, u)
+    else
+        -- Default to hue near easing.
+        -- Shouldn't need to mod the hues.
+        -- local o = aHsla.h % 1.0
+        -- local d = bHsla.h % 1.0
+        local o = aHsla.h
+        local d = bHsla.h
+        local diff = d - o
+        if diff ~= 0.0 then
+            if o < d and diff > 0.5 then
+                hueTrg = (v * (o + 1.0) + u * d) % 1.0
+            elseif o > d and diff < -0.5 then
+                hueTrg = (v * o + u * (d + 1.0)) % 1.0
+            else
+                hueTrg = v * o + u * d
+            end
         end
     end
 
@@ -392,7 +396,7 @@ end
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Clr.mixHsva(a, b, t)
+function Clr.mixHsva(a, b, t, hueFunc)
     local u = t or 0.5
 
     if u <= 0.0 then
@@ -403,25 +407,29 @@ function Clr.mixHsva(a, b, t)
         return Clr.new(b.r, b.g, b.b, b.a)
     end
 
-    local v = 1.0 - u
     local aHsva = Clr.rgbaToHsva(a.r, a.g, a.b, a.a)
     local bHsva = Clr.rgbaToHsva(b.r, b.g, b.b, b.a)
 
-    -- Default to hue near easing.
-    -- Shouldn't need to mod the hues.
-    -- local o = aHsva.h % 1.0
-    -- local d = bHsva.h % 1.0
-    local o = aHsva.h
-    local d = bHsva.h
-    local diff = d - o
-    local hueTrg = o
-    if diff ~= 0.0 then
-        if o < d and diff > 0.5 then
-            hueTrg = (v * (o + 1.0) + u * d) % 1.0
-        elseif o > d and diff < -0.5 then
-            hueTrg = (v * o + u * (d + 1.0)) % 1.0
-        else
-            hueTrg = v * o + u * d
+    local hueTrg = 0.0
+    local v = 1.0 - u
+    if hueFunc then
+        hueTrg = hueFunc(aHsva.h, bHsva.h, u)
+    else
+        -- Default to hue near easing.
+        -- Shouldn't need to mod the hues.
+        -- local o = aHsva.h % 1.0
+        -- local d = bHsva.h % 1.0
+        local o = aHsva.h
+        local d = bHsva.h
+        local diff = d - o
+        if diff ~= 0.0 then
+            if o < d and diff > 0.5 then
+                hueTrg = (v * (o + 1.0) + u * d) % 1.0
+            elseif o > d and diff < -0.5 then
+                hueTrg = (v * o + u * (d + 1.0)) % 1.0
+            else
+                hueTrg = v * o + u * d
+            end
         end
     end
 

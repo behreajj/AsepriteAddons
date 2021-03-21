@@ -1,3 +1,4 @@
+dofile("./clr.lua")
 dofile("./curve2.lua")
 dofile("./mesh2.lua")
 dofile("./utilities.lua")
@@ -17,6 +18,17 @@ setmetatable(AseUtilities, {
 function AseUtilities.new()
     local inst = setmetatable({}, AseUtilities)
     return inst
+end
+
+---Converts an Aseprite Color object to a Clr.
+---@param aseClr table Aseprite color
+---@return table
+function AseUtilities.aseColorToClr(aseClr)
+    return Clr.new(
+        0.00392156862745098 * aseClr.red,
+        0.00392156862745098 * aseClr.green,
+        0.00392156862745098 * aseClr.blue,
+        0.00392156862745098 * aseClr.alpha)
 end
 
 ---Draws a curve in Aseprite with the contour tool.
@@ -305,6 +317,62 @@ function AseUtilities.drawMesh2(
     app.refresh()
 end
 
+---Returns an appropriate easing function
+---based on string presets:
+---"RGB", "HSL" or "HSV" easing modes;
+---"LINEAR" or "SMOOTH" RGB functions;
+---"NEAR" or "FAR" hue functions.
+---@param easingMode string
+---@param easingFuncRGB string
+---@param easingFuncHue string
+---@return function
+function AseUtilities.easingFuncPresets(
+    easingMode,
+    easingFuncRGB,
+    easingFuncHue)
+
+    local easing = nil
+    if easingMode == "HSV" then
+        easing = Clr.mixHsva
+
+        if easingFuncHue == "FAR" then
+            easing = function(a, b, t)
+                return Clr.mixHsva(
+                    a, b, t,
+                    function(x, y, z)
+                        return Utilities.lerpAngleFar(
+                            x, y, z, 1.0)
+                    end)
+            end
+        end
+    elseif easingMode == "HSL" then
+        easing = Clr.mixHsla
+
+        if easingFuncHue == "FAR" then
+            easing = function(a, b, t)
+                return Clr.mixHsla(
+                    a, b, t,
+                    function(x, y, z)
+                        return Utilities.lerpAngleFar(
+                            x, y, z, 1.0)
+                    end)
+            end
+        end
+    else
+        easing = Clr.mixRgba
+
+        if easingFuncRGB == "SMOOTH" then
+            easing = function(a, b, t)
+                return Clr.mixRgba(a, b,
+                    t * t * (3.0 - (t + t)))
+            end
+        end
+    end
+
+    return easing
+
+end
+
 ---Initializes a sprite and layer.
 ---Sets palette to the colors provided,
 ---or, if nil, a default set.
@@ -355,11 +423,11 @@ end
 ---@param ah number origin hue
 ---@param as number origin saturation
 ---@param al number origin lightness
----@param aa number origin alpha
+---@param aa integer origin alpha
 ---@param bh number destination hue
 ---@param bs number destination saturation
 ---@param bl number destination lightness
----@param ba number destination alpha
+---@param ba integer destination alpha
 ---@param t number factor
 ---@return integer
 function AseUtilities.lerpHslaFar(
@@ -381,11 +449,11 @@ end
 ---@param ah number origin hue
 ---@param as number origin saturation
 ---@param al number origin lightness
----@param aa number origin alpha
+---@param aa integer origin alpha
 ---@param bh number destination hue
 ---@param bs number destination saturation
 ---@param bl number destination lightness
----@param ba number destination alpha
+---@param ba integer destination alpha
 ---@param t number factor
 ---@return integer
 function AseUtilities.lerpHslaNear(
@@ -400,18 +468,19 @@ function AseUtilities.lerpHslaNear(
 end
 
 ---Mixes an origin and destination color
----in HSV by a factor. The factor is assumed to
----be in [0.0, 1.0], but the mix is unclamped.
+---in HSV by a factor; returns an integer.
+-- The factor is assumed to be in [0.0, 1.0],
+-- but the mix is unclamped.
 ---The hue is interpolated in the furthest
 ---direction.
 ---@param ah number origin hue
 ---@param as number origin saturation
 ---@param av number origin value
----@param aa number origin alpha
+---@param aa integer origin alpha
 ---@param bh number destination hue
 ---@param bs number destination saturation
 ---@param bv number destination value
----@param ba number destination alpha
+---@param ba integer destination alpha
 ---@param t number factor
 ---@return integer
 function AseUtilities.lerpHsvaFar(
@@ -426,18 +495,19 @@ function AseUtilities.lerpHsvaFar(
 end
 
 ---Mixes an origin and destination color
----in HSV by a factor. The factor is assumed to
----be in [0.0, 1.0], but the mix is unclamped.
+---in HSV by a factor; returns an integer.
+-- The factor is assumed to be in [0.0, 1.0],
+-- but the mix is unclamped.
 ---The hue is interpolated in the nearest
 ---direction.
 ---@param ah number origin hue
 ---@param as number origin saturation
 ---@param av number origin value
----@param aa number origin alpha
+---@param aa integer origin alpha
 ---@param bh number destination hue
 ---@param bs number destination saturation
 ---@param bv number destination value
----@param ba number destination alpha
+---@param ba integer destination alpha
 ---@param t number factor
 ---@return integer
 function AseUtilities.lerpHsvaNear(
@@ -452,18 +522,19 @@ function AseUtilities.lerpHsvaNear(
 end
 
 ---Mixes an origin and destination color
----by a factor. The factor is assumed to
----be in [0.0, 1.0], but the mix is unclamped.
+---by a factor; returns an integer.
+-- The factor is assumed to be in [0.0, 1.0],
+-- but the mix is unclamped.
 ---The color channels should be unpacked and
 ---in the range [0, 255].
----@param ar number origin red
----@param ag number origin green
----@param ab number origin blue
----@param aa number origin alpha
----@param br number destination red
----@param bg number destination green
----@param bb number destination blue
----@param ba number destination alpha
+---@param ar integer origin red
+---@param ag integer origin green
+---@param ab integer origin blue
+---@param aa integer origin alpha
+---@param br integer destination red
+---@param bg integer destination green
+---@param bb integer destination blue
+---@param ba integer destination alpha
 ---@param t number factor
 ---@return integer
 function AseUtilities.lerpRgba(
@@ -478,19 +549,20 @@ function AseUtilities.lerpRgba(
 end
 
 ---Mixes an origin and destination color
----by a factor. The factor is assumed to
----be in [0.0, 1.0], but the mix is unclamped.
+---by a factor; returns an integer.
+---The factor is assumed to be in [0.0, 1.0],
+---but the mix is unclamped.
 ---The color channels should be unpacked and
 ---in the range [0, 255].
 ---Smooths the factor.
----@param ar number origin red
----@param ag number origin green
----@param ab number origin blue
----@param aa number origin alpha
----@param br number destination red
----@param bg number destination green
----@param bb number destination blue
----@param ba number destination alpha
+---@param ar integer origin red
+---@param ag integer origin green
+---@param ab integer origin blue
+---@param aa integer origin alpha
+---@param br integer destination red
+---@param bg integer destination green
+---@param bb integer destination blue
+---@param ba integer destination alpha
 ---@param t number factor
 ---@return integer
 function AseUtilities.smoothRgba(
@@ -502,8 +574,8 @@ function AseUtilities.smoothRgba(
         t * t * (3.0 - (t + t)))
 end
 
----Converts an unpacked hue, saturation, lightness and
----alpha channel to a hexadecimal integer.
+---Converts an unpacked hue, saturation, lightness
+---and alpha channel to a hexadecimal integer.
 ---The hue should be in [0.0, 360.0].
 ---The saturation should be in [0.0, 1.0].
 ---The lightness should be in [0.0, 1.0].
@@ -576,8 +648,8 @@ function AseUtilities.toHexHsla(ch, cs, cl, ca)
         ca)
 end
 
----Converts an unpacked hue, saturation, value and
----alpha channel to a hexadecimal integer.
+---Converts an unpacked hue, saturation, value
+---and alpha channel to a hexadecimal integer.
 ---The hue should be in [0.0, 360.0].
 ---The saturation should be in [0.0, 1.0].
 ---The value should be in [0.0, 1.0].
