@@ -18,6 +18,20 @@ function Utilities.new()
     return inst
 end
 
+---Forces an overflow wrap for 32 bit integers.
+---@param x integer the integer
+---@return integer
+function Utilities.intOverflow32(x)
+    -- https://stackoverflow.com/questions/
+    -- 300840/force-php-integer-overflow
+    local y = x & 0xffffffff
+    if y & 0x80000000 then
+        return -((~y & 0xffffffff) + 1)
+    else
+        return y
+    end
+end
+
 ---Unclamped linear interpolation from an origin angle
 ---to a destination by a factor, t, in [0.0, 1.0].
 ---The range defaults to 360.0 for degrees, but can be

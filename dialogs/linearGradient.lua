@@ -213,8 +213,8 @@ local function createLinear(
             xPx = xPx * wInv
             yPx = yPx * hInv
 
-            xPx = delta * math.floor(0.5 + xPx * levels)
-            yPx = delta * math.floor(0.5 + yPx * levels)
+            xPx = delta * math.floor(xPx * levels)
+            yPx = delta * math.floor(yPx * levels)
 
             xPx = xPx * w
             yPx = yPx * h

@@ -51,7 +51,6 @@ local function createRadial(
     sprite,
     img,
     xOrigin, yOrigin,
-    -- minRad,
     maxRad,
     distFunc,
     quantLvl,
