@@ -613,6 +613,44 @@ function Mesh2.polygon(sectors)
     return Mesh2.new(fs, vs, name)
 end
 
+---Separates a mesh into several meshes with one
+---face per mesh.
+---@param source table source mesh
+---@param from number start index
+---@param to number stop index
+---@return table
+function Mesh2.separateFaces(source, from, to)
+    local meshes = {}
+    local fsSrc = source.fs
+    local vsSrc = source.vs
+    local fsSrcLen = #fsSrc
+
+    local origin = 1
+    local dest = fsSrcLen
+
+    if from and from > 1 then origin = from end
+    if to and to < fsSrcLen then dest = to end
+
+    for i = origin, dest, 1 do
+        local fSrc = fsSrc[i]
+        local fSrcLen = #fSrc
+        local vsTrg = {}
+        local fTrg = {}
+        for j = 1, fSrcLen, 1 do
+            local vertSrc = fSrc[j]
+            local vSrc = vsSrc[vertSrc]
+            local vTrg = Vec2.new(vSrc.x, vSrc.y) 
+            table.insert(vsTrg, vTrg)
+            table.insert(fTrg, j)
+        end
+
+        local mesh = Mesh2.new({ fTrg }, vsTrg, "Mesh2")
+        table.insert(meshes, mesh)
+    end
+
+    return meshes
+end
+
 ---Restructures the mesh so that each face index
 ---refers to unique data.
 ---@param source table source mesh

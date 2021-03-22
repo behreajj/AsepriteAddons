@@ -14,7 +14,8 @@ local defaults = {
     yOrigin = 0,
     mortarThick = 1,
     mortarClr = Color(231, 231, 231, 255),
-    brickClr = Color(203, 65, 84, 255)
+    brickClr = Color(203, 65, 84, 255),
+    variance = 10
 }
 
 local dlg = Dialog { title="Brick" }
@@ -99,6 +100,14 @@ dlg:color{
     color = defaults.brickClr
 }
 
+dlg:slider {
+    id = "variance",
+    label = "Variance:",
+    min = 0,
+    max = 100,
+    value = defaults.variance
+}
+
 dlg:button {
     id = "ok",
     text = "OK",
@@ -112,6 +121,10 @@ dlg:button {
                 0.01 * args.offset,
                 args.aspect,
                 args.frequency)
+
+            -- TODO: Option for color variation,
+            -- if so, separate meshes, shift hue
+            -- and lightness.
 
             local t = Mat3.fromTranslation(
                 args.xOrigin,
@@ -127,16 +140,62 @@ dlg:button {
                 mesh.name,
                 { args.fillClr, args.strokeClr })
             local layer = sprite.layers[#sprite.layers]
+            local cel = sprite:newCel(layer, 1)
+            local brush = Brush(args.mortarThick)
 
-            AseUtilities.drawMesh2(
-                mesh,
-                true,
-                args.brickClr,
-                true,
-                args.mortarClr,
-                Brush(args.mortarThick),
-                sprite:newCel(layer, 1),
-                layer)
+            local mortarClr = args.mortarClr
+            local brickClr = args.brickClr
+
+            if args.variance > 0 then
+
+                -- Separate into HSLA.
+                local hueBrick = brickClr.hslHue
+                local satBrick = brickClr.hslSaturation
+                local lgtBrick = brickClr.hslLightness
+                local alpBrick = brickClr.alpha
+
+                -- Calculate offset.
+                local varNrm = args.variance * 0.01
+                local vnHalf = varNrm * 0.5
+                local varHue = varNrm * 360.0
+                local vhHalf = varHue * 0.5
+
+                -- Separate faces.
+                local separated = Mesh2.separateFaces(mesh)
+                local sepLen = #separated
+                app.transaction(function()
+                    for i = 1, sepLen, 1 do
+
+                        -- Shift HSL by random amount.
+                        local hue = (hueBrick +
+                            (varHue * math.random() - vhHalf)) % 360.0
+                        local saturation = math.max(0.0, math.min(1.0,
+                            satBrick + (varNrm * math.random() - vnHalf)))
+                        local lightness = math.max(0.0, math.min(1.0,
+                            lgtBrick + (varNrm * math.random() - vnHalf)))
+
+                        -- Composite HSLA.
+                        local variety = Color {
+                            hue = hue,
+                            saturation = saturation,
+                            lightness = lightness,
+                            alpha = alpBrick
+                        }
+
+                        AseUtilities.drawMesh2(
+                            separated[i],
+                            true, variety,
+                            true, mortarClr,
+                            brush, cel, layer)
+                    end
+                end)
+            else
+                AseUtilities.drawMesh2(
+                    mesh,
+                    true, brickClr,
+                    true, mortarClr,
+                    brush, cel, layer)
+            end
         end
     end
 }

@@ -58,10 +58,6 @@ This repo includes
  
   ![Linear Gradient](screencaps/linearGradient.png)
 
-- A noise generator.
-
-  ![Noise](screencaps/noise.png)
-
 - A regular convex polygon.
 
   ![Polygon](screencaps/polygon.png)
