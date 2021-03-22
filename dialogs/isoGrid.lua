@@ -15,7 +15,7 @@ local defaults = {
     useFill = true,
     fillClr = Color(255, 245, 215, 255)}
 
-local dlg = Dialog { title="Dimetric Grid" }
+local dlg = Dialog { title = "Dimetric Grid" }
 
 dlg:slider {
     id = "cells",
@@ -74,13 +74,13 @@ dlg:color {
     color = defaults.strokeClr
 }
 
-dlg:check{
+dlg:check {
     id = "useFill",
     label = "Use Fill:",
     selected = defaults.useFill
 }
 
-dlg:color{
+dlg:color {
     id = "fillClr",
     label = "Fill Color:",
     color = defaults.fillClr

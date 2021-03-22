@@ -110,6 +110,7 @@ dlg:button {
     text = "OK",
     focus = true,
     onclick = function()
+
         local args = dlg.data
         if args.ok then
 
@@ -146,11 +147,15 @@ dlg:button {
                 wInv = aspect / w
             end
 
+            -- Certain seed / octave combinations
+            -- cause repetitions, jaggies with the result.
+            -- The forced overflow is to try to fix it.
             local seed = 0
             if args.useSeed then
-                seed = math.tointeger(args.seed)
+                seed = Utilities.intOverflow32(
+                    math.tointeger(args.seed))
             else
-                seed = os.time()
+                seed = Utilities.intOverflow32(os.time())
             end
 
             local oct = args.octaves
@@ -190,6 +195,9 @@ dlg:button {
 
                 local xNrm = xPx * wInv
                 local yNrm = yPx * hInv
+
+                -- xNrm = xNrm + xNrm - 1.0
+                -- yNrm = yNrm + yNrm - 1.0
 
                 local vx = ox + scl * xNrm
                 local vy = oy + scl * yNrm

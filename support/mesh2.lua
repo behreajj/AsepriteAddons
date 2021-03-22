@@ -365,6 +365,96 @@ function Mesh2.arc(
     return Mesh2.new(fs, vs, "Arc")
 end
 
+---Creates a grid of bricks.
+---The frequency describes interval before an offset.
+---The aspect is the ratio of brick width to height.
+---The offset is how far to displace offset rows.
+---@param cols integer columns
+---@param rows integer rows
+---@param offset number offset
+---@param aspect number ratio width / height
+---@param freq integer frequency
+---@return table
+function Mesh2.gridBricks(
+    cols, rows,
+    offset, aspect, freq)
+
+    -- Assume defaults.
+    local vcols = 4
+    local vrows = 4
+    local voff = 0.5
+    local vasp = 2.0
+    local vfrq = 2
+
+    -- Validate inputs.
+    if cols and cols > 2 then vcols = cols end
+    if rows and rows > 2 then vrows = rows end
+    if offset then
+        voff = math.max(-1.0, math.min(1.0, offset))
+    end
+    if aspect and aspect ~= 0.0 then vasp = aspect end
+    if freq and freq > 2 then vfrq = freq end
+
+    local halfOff = voff * 0.5
+    local invAspect = 1.0 / vasp
+    local vcolsp1 = vcols + 1
+    local vrowsp1 = vrows + 1
+
+    -- Create horizontal positions.
+    -- Displace by +/- half the offset.
+    local jToStep = 1.0 / vcols
+    local xs = {}
+    local xOffs = {}
+    for j = 0, vcolsp1, 1 do
+        local jStp = (j + halfOff) * jToStep
+        local jOff = (j - halfOff) * jToStep
+        table.insert(xs, jStp - 0.5)
+        table.insert(xOffs, jOff - 0.5)
+    end
+
+    -- Create vertical positions.
+    -- Scale by aspect ratio.
+    local iToStep = 1.0 / vrows
+    local ys = {}
+    for i = 0, vrowsp1, 1 do
+        local iStp = i * iToStep
+        table.insert(ys, invAspect * (0.5 - iStp))
+    end
+
+    local fs = {}
+    local vs = {}
+
+    -- Unique vertices per face.
+    local k = 1
+    for i = 1, vrows, 1 do
+        local y0 = ys[i]
+        local y1 = ys[i + 1]
+        local useOffset = (i - 1) % vfrq == 0
+        for j = 1, vcols, 1 do
+            local x0 = 0.0
+            local x1 = 0.0
+            if useOffset then
+                x0 = xOffs[j]
+                x1 = xOffs[j + 1]
+            else
+                x0 = xs[j]
+                x1 = xs[j + 1]
+            end
+
+            table.insert(vs, Vec2.new(x0, y0))
+            table.insert(vs, Vec2.new(x1, y0))
+            table.insert(vs, Vec2.new(x1, y1))
+            table.insert(vs, Vec2.new(x0, y1))
+
+            table.insert(fs, {
+                k, k + 1, k + 2, k + 3 })
+            k = k + 4
+        end
+    end
+
+    return Mesh2.new(fs, vs, "Bricks")
+end
+
 ---Creates a grid of rectangles.
 ---@param cols integer columns
 ---@param rows integer rows
@@ -372,41 +462,41 @@ end
 function Mesh2.gridCartesian(cols, rows)
 
     -- Create horizontal positions in [-0.5, 0.5].
-    local cval = 2
-    if cols and cols > 2 then cval = cols end
-    local cvaln1 = cval - 1
-    local cvalp1 = cval + 1
-    local jToStep = 1.0 / cval
+    local vcols = 2
+    if cols and cols > 2 then vcols = cols end
+    local vcolsn1 = vcols - 1
+    local vcolsp1 = vcols + 1
+    local jToStep = 1.0 / vcols
     local xs = {}
-    for j = 0, cval, 1 do
+    for j = 0, vcols, 1 do
         table.insert(xs, j * jToStep - 0.5)
     end
 
     -- Create vertical positions in [-0.5, 0.5].
-    local rval = cval
-    if rows and rows > 2 then rval = rows end
-    local rvaln1 = rval - 1
-    local rvalp1 = rval + 1
-    local iToStep = 1.0 / rval
+    local vrows = vcols
+    if rows and rows > 2 then vrows = rows end
+    local vrowsn1 = vrows - 1
+    local vrowsp1 = vrows + 1
+    local iToStep = 1.0 / vrows
     local ys = {}
-    for i = 0, rval, 1 do
+    for i = 0, vrows, 1 do
         table.insert(ys, i * iToStep - 0.5)
     end
 
     -- Combine horizontal and vertical.
     local vs = {}
-    for i = 1, rvalp1, 1 do
-        for j = 1, cvalp1, 1 do
+    for i = 1, vrowsp1, 1 do
+        for j = 1, vcolsp1, 1 do
             table.insert(vs, Vec2.new(xs[j], ys[i]))
         end
     end
 
     -- Create faces.
     local fs = {}
-    for i = 0, rvaln1, 1 do
-        local noff0 = 1 + i * cvalp1
-        local noff1 = noff0 + cvalp1
-        for j = 0, cvaln1, 1 do
+    for i = 0, vrowsn1, 1 do
+        local noff0 = 1 + i * vcolsp1
+        local noff1 = noff0 + vcolsp1
+        for j = 0, vcolsn1, 1 do
             local n00 = noff0 + j
             local n01 = noff1  + j
             local f = {

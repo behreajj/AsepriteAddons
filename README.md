@@ -22,6 +22,10 @@ This repo includes
 
   ![Arc](screencaps/arc.png)
 
+- A brick maker.
+
+  ![Bricks](screencaps/bricks.png)
+
 - A checkerboard maker.
 
   ![Checker](screencaps/checker.png)

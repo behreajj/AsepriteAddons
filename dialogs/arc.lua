@@ -17,157 +17,174 @@ local defaults = {
     useStroke = true,
     strokeWeight = 1,
     strokeClr = Color(128, 119, 102, 255),
-    fillClr = Color(255, 245, 215, 255)}
+    fillClr = Color(255, 245, 215, 255)
+}
 
-local dlg = Dialog{
-    title="Arc"}
+local dlg = Dialog { title="Arc" }
 
-dlg:slider{
-    id="startAngle",
-    label="Start Angle:",
-    min=0,
-    max=360,
-    value=defaults.startAngle}
+dlg:slider {
+    id = "startAngle",
+    label = "Start Angle:",
+    min = 0,
+    max = 360,
+    value = defaults.startAngle
+}
 
-dlg:slider{
-    id="stopAngle",
-    label="Stop Angle:",
-    min=0,
-    max=360,
-    value=defaults.stopAngle}
+dlg:slider {
+    id = "stopAngle",
+    label = "Stop Angle:",
+    min = 0,
+    max = 360,
+    value = defaults.stopAngle
+}
 
-dlg:slider{
-    id="startWeight",
-    label="Start Weight:",
-    min=0,
-    max=100,
-    value=defaults.startWeight}
+dlg:slider {
+    id = "startWeight",
+    label = "Start Weight:",
+    min = 0,
+    max = 100,
+    value = defaults.startWeight
+}
 
-dlg:slider{
-    id="stopWeight",
-    label="Stop Weight:",
-    min=0,
-    max=100,
-    value=defaults.stopWeight}
+dlg:slider {
+    id = "stopWeight",
+    label = "Stop Weight:",
+    min = 0,
+    max = 100,
+    value = defaults.stopWeight
+}
 
-dlg:slider{
-    id="sectors",
-    label="Sectors: ",
-    min=3,
-    max=64,
-    value=defaults.sectors}
+dlg:slider {
+    id = "sectors",
+    label = "Sectors: ",
+    min = 3,
+    max = 64,
+    value = defaults.sectors
+}
 
-dlg:slider{
-    id="margin",
-    label="Margin: ",
-    min=0,
-    max=100,
-    value=defaults.margin}
+dlg:slider {
+    id = "margin",
+    label = "Margin: ",
+    min = 0,
+    max = 100,
+    value = defaults.margin
+}
 
-dlg:number{
-    id="scale",
-    label="Scale: ",
-    text=string.format("%.1f", defaults.scale),
-    decimals=5}
+dlg:number {
+    id = "scale",
+    label = "Scale: ",
+    text = string.format("%.1f", defaults.scale),
+    decimals = 5
+}
 
-dlg:number{
-    id="xOrigin",
-    label="Origin X: ",
-    text=string.format("%.1f", defaults.xOrigin),
-    decimals=5}
+dlg:number {
+    id = "xOrigin",
+    label = "Origin X: ",
+    text = string.format("%.1f", defaults.xOrigin),
+    decimals = 5
+}
 
-dlg:number{
-    id="yOrigin",
-    label="Origin Y: ",
-    text=string.format("%.1f", defaults.yOrigin),
-    decimals=5}
+dlg:number {
+    id = "yOrigin",
+    label = "Origin Y: ",
+    text = string.format("%.1f", defaults.yOrigin),
+    decimals = 5
+}
 
-dlg:check{
-    id="useStroke",
-    label="Use Stroke: ",
-    selected=defaults.useStroke}
+dlg:check {
+    id = "useStroke",
+    label = "Use Stroke: ",
+    selected = defaults.useStroke
+}
 
-dlg:slider{
-    id="strokeWeight",
-    label="Stroke Weight:",
-    min=1,
-    max=64,
-    value=defaults.strokeWeight}
+dlg:slider {
+    id = "strokeWeight",
+    label = "Stroke Weight:",
+    min = 1,
+    max = 64,
+    value = defaults.strokeWeight
+}
 
-dlg:color{
-    id="strokeClr",
-    label="Stroke Color: ",
-    color=defaults.strokeClr}
+dlg:color {
+    id = "strokeClr",
+    label = "Stroke Color: ",
+    color = defaults.strokeClr
+}
 
-dlg:check{
-    id="useFill",
-    label="Use Fill: ",
-    selected=defaults.useFill}
+dlg:check {
+    id = "useFill",
+    label = "Use Fill: ",
+    selected = defaults.useFill
+}
 
-dlg:color{
-    id="fillClr",
-    label="Fill Color: ",
-    color=defaults.fillClr}
+dlg:color {
+    id = "fillClr",
+    label = "Fill Color: ",
+    color = defaults.fillClr
+}
 
-dlg:button{
-    id="ok",
-    text="OK",
-    focus=true,
-    onclick=function()
+dlg:button {
+    id = "ok",
+    text = "OK",
+    focus = true,
+    onclick = function()
 
     local args = dlg.data
-    local useQuads = args.margin > 0
-    local mesh = Mesh2.arc(
-        math.rad(args.startAngle),
-        math.rad(args.stopAngle),
-        0.01 * args.startWeight,
-        0.01 * args.stopWeight,
-        args.sectors,
-        useQuads)
+    if args.ok then
+        local useQuads = args.margin > 0
+        local mesh = Mesh2.arc(
+            math.rad(args.startAngle),
+            math.rad(args.stopAngle),
+            0.01 * args.startWeight,
+            0.01 * args.stopWeight,
+            args.sectors,
+            useQuads)
 
-    local sclval = args.scale
-    if sclval < 2.0 then
-        sclval = 2.0
+        local sclval = args.scale
+        if sclval < 2.0 then
+            sclval = 2.0
+        end
+
+        local mrgval = args.margin * 0.01
+        if mrgval > 0.0 then
+            mrgval = math.min(mrgval, 0.99)
+            Mesh2.uniformData(mesh, mesh)
+            mesh:scaleFacesIndiv(1.0 - mrgval)
+        end
+
+        local t = Mat3.fromTranslation(
+            args.xOrigin,
+            args.yOrigin)
+        local s = Mat3.fromScale(sclval, -sclval)
+        local mat = Mat3.mul(t, s)
+        Utilities.mulMat3Mesh2(mat, mesh)
+
+        -- TODO: Update layers behaviour for all.
+        local sprite = AseUtilities.initCanvas(
+            64, 64,
+            mesh.name,
+            { args.fillClr, args.strokeClr })
+        local layer = sprite.layers[#sprite.layers]
+
+        AseUtilities.drawMesh2(
+            mesh,
+            args.useFill,
+            args.fillClr,
+            args.useStroke,
+            args.strokeClr,
+            Brush(args.strokeWeight),
+            sprite:newCel(layer, 1),
+            layer)
+        end
     end
+}
 
-    local mrgval = args.margin * 0.01
-    if mrgval > 0.0 then
-        mrgval = math.min(mrgval, 0.99)
-        Mesh2.uniformData(mesh, mesh)
-        mesh:scaleFacesIndiv(1.0 - mrgval)
-    end
-
-    local t = Mat3.fromTranslation(
-        args.xOrigin,
-        args.yOrigin)
-    local s = Mat3.fromScale(sclval, -sclval)
-    local mat = Mat3.mul(t, s)
-    Utilities.mulMat3Mesh2(mat, mesh)
-
-    -- TODO: Update layers behaviour for all.
-    local sprite = AseUtilities.initCanvas(
-        64, 64,
-        mesh.name,
-        { args.fillClr, args.strokeClr })
-    local layer = sprite.layers[#sprite.layers]
-
-    AseUtilities.drawMesh2(
-        mesh,
-        args.useFill,
-        args.fillClr,
-        args.useStroke,
-        args.strokeClr,
-        Brush(args.strokeWeight),
-        sprite:newCel(layer, 1),
-        layer)
-
-    end}
-
-dlg:button{
-    id="cancel",
-    text="CANCEL",
-    onclick=function()
+dlg:button {
+    id = "cancel",
+    text = "CANCEL",
+    onclick = function()
         dlg:close()
-    end}
+    end
+}
 
-dlg:show{wait=false}
+dlg:show { wait = false }
