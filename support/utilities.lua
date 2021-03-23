@@ -1,5 +1,6 @@
 dofile("./vec2.lua")
 dofile("./vec3.lua")
+dofile("./vec4.lua")
 dofile("./mat3.lua")
 dofile("./mesh2.lua")
 
@@ -148,10 +149,24 @@ function Utilities.mulMat3Vec2(a, b)
 end
 
 ---Promotes a Vec2 to a Vec3.
----@param a table vector 2
+---@param a table vector
 ---@return table
 function Utilities.promoteVec2ToVec3(a)
     return Vec3.new(a.x, a.y, 0.0)
+end
+
+---Promotes a Vec2 to a Vec4.
+---@param a table vector
+---@return table
+function Utilities.promoteVec2ToVec4(a)
+    return Vec4.new(a.x, a.y, 0.0, 0.0)
+end
+
+---Promotes a Vec3 to a Vec4.
+---@param a table vector
+---@return table
+function Utilities.promoteVec3ToVec4(a)
+    return Vec4.new(a.x, a.y, a.z, 0.0)
 end
 
 return Utilities

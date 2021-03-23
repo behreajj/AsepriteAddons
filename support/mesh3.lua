@@ -148,6 +148,9 @@ end
 ---@return table
 function Mesh3:scale(scale)
 
+    -- TODO: Separate into scaleByNumber,
+    -- scaleByVector
+
     -- Validate that scale is non-zero.
     local vscl = nil
     if type(scale) == "number" then

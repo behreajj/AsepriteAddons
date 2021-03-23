@@ -6,7 +6,7 @@ dofile("../support/aseutilities.lua")
 local defaults = {
     resolution = 32,
     frames = 1,
-    dots = 1,
+    dots = 8,
     dotOff = 15,
     angle = 0,
     scale = 32,
@@ -48,9 +48,9 @@ dlg:slider {
 dlg:slider {
     id = "dots",
     label = "Dots:",
-    min = 1,
+    min = 0,
     max = 16,
-    value = defaults.frames
+    value = defaults.dots
 }
 
 dlg:slider {
@@ -170,7 +170,8 @@ dlg:button {
             end
 
             local frames = args.frames
-            if frames > 1 then
+            local dotCount = args.dots
+            if dotCount > 0 and frames > 1 then
                 app.transaction(function()
 
                     -- Allocate new frames.
@@ -184,7 +185,6 @@ dlg:button {
                     animLyr.name = curve.name .. ".Loop"
 
                     local frameToFac = 1.0 / frames
-                    local dotCount = args.dots
                     local dotToFac = 1.0 / (dotCount - 1.0)
                     local offset = 0.01 * args.dotOff
 

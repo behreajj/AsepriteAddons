@@ -1,6 +1,6 @@
 # Aseprite Add-ons
 
-An appendix to the Medium article, ["How To Script Aseprite Tools in Lua"](https://behreajj.medium.com/how-to-script-aseprite-tools-in-lua-8f849b08733). Open scripts from the `dialogs` directory in Aseprite to see results. Keyboard shortcuts can be assigned to scripts by going to `Edit > Keyboard Shortcuts` (`Ctrl+Alt+Shift+K`) and looking in the `Menu` category, then in the `Scripts` heading.
+An appendix to the Medium article, ["How To Script Aseprite Tools in Lua"](https://behreajj.medium.com/how-to-script-aseprite-tools-in-lua-8f849b08733). Open scripts from the `dialogs` directory in Aseprite to see results.
 
 ## References
 

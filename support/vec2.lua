@@ -574,7 +574,7 @@ end
 function Vec2.projectScalar(a, b)
     local bSq = b.x * b.x + b.y * b.y
     if bSq > 0.0 then
-        return Vec2.dot(a, b) / bSq
+        return (a.x * b.x + a.y * b.y) / bSq
     else
         return 0.0
     end

@@ -56,42 +56,6 @@ function Mesh2:__tostring()
     return str
 end
 
----Subdivides a convex face by calculating its
----center, then connecting its vertices to the center.
----Generates a triangle for the number of edges
----in the face.
----@param faceIndex integer face index
----@return table
-function Mesh2:subdivFaceFan(faceIndex)
-
-    local facesLen = #self.fs
-    local i = 1 + (faceIndex - 1) % facesLen
-    local face = self.fs[i]
-    local faceLen = #face
-
-    local vCenter = Vec2.new(0.0, 0.0)
-    local vCenterIdx = 1 + #self.vs
-
-    for j = 0, faceLen - 1, 1 do
-        local k = (j + 1) % faceLen
-        local vertCurr = face[1 + j]
-        local vertNext = face[1 + k]
-
-        vCenter = Vec2.add(vCenter, self.vs[vertCurr])
-
-        local fNew = { vCenterIdx, vertCurr, vertNext }
-        table.insert(self.fs, fNew)
-    end
-
-    if faceLen > 0 then
-        vCenter = Vec2.scale(vCenter, 1.0 / faceLen)
-    end
-
-    table.remove(self.fs, i)
-    table.insert(self.vs, vCenter)
-    return self
-end
-
 ---Insets a face by calculating its center then
 ---easing from the face's vertices toward the center
 ---by the factor, in range [0.0, 1.0].
@@ -186,6 +150,9 @@ end
 ---@return table
 function Mesh2:scale(scale)
 
+    -- TODO: Separate into scaleByNumber,
+    -- scaleByVector
+
     -- Validate that scale is non-zero.
     local vscl = nil
     if type(scale) == "number" then
@@ -251,6 +218,42 @@ function Mesh2:scaleFacesIndiv(scale)
         end
     end
 
+    return self
+end
+
+---Subdivides a convex face by calculating its
+---center, then connecting its vertices to the center.
+---Generates a triangle for the number of edges
+---in the face.
+---@param faceIndex integer face index
+---@return table
+function Mesh2:subdivFaceFan(faceIndex)
+
+    local facesLen = #self.fs
+    local i = 1 + (faceIndex - 1) % facesLen
+    local face = self.fs[i]
+    local faceLen = #face
+
+    local vCenter = Vec2.new(0.0, 0.0)
+    local vCenterIdx = 1 + #self.vs
+
+    for j = 0, faceLen - 1, 1 do
+        local k = (j + 1) % faceLen
+        local vertCurr = face[1 + j]
+        local vertNext = face[1 + k]
+
+        vCenter = Vec2.add(vCenter, self.vs[vertCurr])
+
+        local fNew = { vCenterIdx, vertCurr, vertNext }
+        table.insert(self.fs, fNew)
+    end
+
+    if faceLen > 0 then
+        vCenter = Vec2.scale(vCenter, 1.0 / faceLen)
+    end
+
+    table.remove(self.fs, i)
+    table.insert(self.vs, vCenter)
     return self
 end
 
@@ -494,14 +497,14 @@ function Mesh2.gridCartesian(cols, rows)
     -- Create faces.
     local fs = {}
     for i = 0, vrowsn1, 1 do
-        local noff0 = 1 + i * vcolsp1
-        local noff1 = noff0 + vcolsp1
+        local voff0 = 1 + i * vcolsp1
+        local voff1 = voff0 + vcolsp1
         for j = 0, vcolsn1, 1 do
-            local n00 = noff0 + j
-            local n01 = noff1  + j
+            local v00 = voff0 + j
+            local v01 = voff1  + j
             local f = {
-                n00, n00 + 1,
-                n01 + 1, n01 }
+                v00, v00 + 1,
+                v01 + 1, v01 }
             table.insert(fs, f)
         end
     end
@@ -616,8 +619,8 @@ end
 ---Separates a mesh into several meshes with one
 ---face per mesh.
 ---@param source table source mesh
----@param from number start index
----@param to number stop index
+---@param from integer start index
+---@param to integer stop index
 ---@return table
 function Mesh2.separateFaces(source, from, to)
     local meshes = {}
