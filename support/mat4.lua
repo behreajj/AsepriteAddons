@@ -125,31 +125,31 @@ function Mat4.camera(
     xRef, yRef, zRef,
     handedness)
 
-    --Optional args for handedness.
-    --Default to right-handed.
+    -- Optional args for handedness.
+    -- Default to right-handed.
     local hval = "RIGHT"
     if handedness and handedness == "LEFT" then
         hval = handedness
     end
 
-    --Optional args for reference up.
-    --Default to z-up.
+    -- Optional args for reference up.
+    -- Default to z-up.
     local xrv = xRef or 0.0
     local yrv = yRef or 0.0
     local zrv = zRef or 1.0
 
-    --Optional args for focus.
-    --Default to origin.
+    -- Optional args for focus.
+    -- Default to origin.
     local xfv = xFocus or 0.0
     local yfv = yFocus or 0.0
     local zfv = zFocus or 0.0
 
-    --Find k by subtractinglocation from focus.
+    -- Find k by subtractinglocation from focus.
     local kx = xLoc - xfv
     local ky = yLoc - yfv
     local kz = zLoc - zfv
 
-    --Normalize k.
+    -- Normalize k.
     local kmsq = kx * kx + ky * ky + kz * kz
     if kmsq ~= 0.0 then
         local kminv = 1.0 / math.sqrt(kmsq)
@@ -158,7 +158,7 @@ function Mat4.camera(
         kz = kz * kminv
     end
 
-    --Check for parallel forward and up.
+    -- Check for parallel forward and up.
     local dotp = kx * xrv + ky * yrv + kz * zrv
     local tol = 0.999999
     if dotp < -tol or dotp > tol then
@@ -175,12 +175,12 @@ function Mat4.camera(
 
     if hval == "LEFT" then
 
-        --Cross k with ref to get i.
+        -- Cross k with ref to get i.
         ix = ky * zrv - kz * yrv
         iy = kz * xrv - kx * zrv
         iz = kx * yrv - ky * xrv
 
-        --Normalize i.
+        -- Normalize i.
         local imsq = ix * ix + iy * iy + iz * iz
         if imsq ~= 0.0 then
             local iminv = 1.0 / math.sqrt(imsq)
@@ -189,12 +189,12 @@ function Mat4.camera(
             iz = iz * iminv
         end
 
-        --Cross i with k to get j.
+        -- Cross i with k to get j.
         jx = iy * kz - iz * ky
         jy = iz * kx - ix * kz
         jz = ix * ky - iy * kx
 
-        --Normalize j.
+        -- Normalize j.
         local jmsq = jx * jx + jy * jy + jz * jz
         if jmsq ~= 0.0 then
             local jminv = 1.0 / math.sqrt(jmsq)
@@ -205,12 +205,12 @@ function Mat4.camera(
 
     else
 
-        --Cross ref with k to get i.
+        -- Cross ref with k to get i.
         ix = yrv * kz - zrv * ky
         iy = zrv * kx - xrv * kz
         iz = xrv * ky - yrv * kx
 
-        --Normalize i.
+        -- Normalize i.
         local imsq = ix * ix + iy * iy + iz * iz
         if imsq ~= 0.0 then
             local iminv = 1.0 / math.sqrt(imsq)
@@ -219,12 +219,12 @@ function Mat4.camera(
             iz = iz * iminv
         end
 
-        --Cross k with i to get j.
+        -- Cross k with i to get j.
         jx = ky * iz - kz * iy
         jy = kz * ix - kx * iz
         jz = kx * iy - ky * ix
 
-        --Normalize j.
+        -- Normalize j.
         local jmsq = jx * jx + jy * jy + jz * jz
         if jmsq ~= 0.0 then
             local jminv = 1.0 / math.sqrt(jmsq)
@@ -240,6 +240,39 @@ function Mat4.camera(
         jx, jy, jz, -xLoc * jx - yLoc * jy - zLoc * jz,
         kx, ky, kz, -xLoc * kx - yLoc * ky - zLoc * kz,
         0.0, 0.0, 0.0, 1.0)
+end
+
+---Creates a dimetric camera at a location.
+---@param xLoc number location x
+---@param yLoc number location y
+---@param zLoc number location z
+---@param handedness string handedness
+---@return table
+function Mat4.cameraDimetric(xLoc, yLoc, zLoc, handedness)
+    local hval = "RIGHT"
+    if handedness and handedness == "LEFT" then
+        hval = handedness
+    end
+
+    if hval == "LEFT" then
+        return Mat4.new(
+            0.70710677, 0.0, 0.70710677,
+            -xLoc * 0.70710677 - zLoc * 0.70710677,
+            -0.38960868, 0.8345119, 0.38960868,
+            xLoc * 0.38960868 - yLoc * 0.8345119 - zLoc * 0.38960868,
+            0.590089, 0.55098987, -0.590089,
+            -xLoc * 0.590089 - yLoc * 0.55098987 + zLoc * 0.590089,
+            0.0, 0.0, 0.0, 1.0)
+    else
+        return Mat4.new(
+            0.70710677, 0.70710677, 0.0,
+            -xLoc * 0.70710677 - yLoc * 0.70710677,
+            -0.38960868, 0.38960868, 0.8345119,
+            xLoc * 0.38960868 - yLoc * 0.38960868 - zLoc * 0.8345119,
+            0.590089, -0.590089, 0.55098987,
+            -xLoc * 0.590089 + yLoc * 0.590089 - zLoc * 0.55098987,
+            0.0, 0.0, 0.0, 1.0)
+    end
 end
 
 ---Multiplies the left operand and the inverse of the right.
@@ -281,6 +314,31 @@ function Mat4.determinant(a)
 end
 
 ---Constructs a rotation matrix from an angle in radians
+---around an arbitrary axis. Checks the magnitude of
+---the axis and normalizes it. Returns the identity
+---if the axis magnitude is zero.
+---@param radians number angle
+---@param ax number axis x
+---@param ay number axis y
+---@param az number axis z
+---@return table
+function Mat4.fromRotation(radians, ax, ay, az)
+    local xv = ax or 0.0
+    local yv = ay or 0.0
+    local zv = az or 0.0
+    local mSq = xv * xv + yv * yv + zv * zv
+    if mSq ~= 0.0 then
+        local mInv = 1.0 / math.sqrt(mSq)
+        return Mat4.fromRotInternal(
+            math.cos(radians),
+            math.sin(radians),
+            xv * mInv, yv * mInv, zv * mInv)
+    else
+        return Mat4.identity()
+    end
+end
+
+---Constructs a rotation matrix from an angle in radians
 ---around the x axis.
 ---@param radians number angle
 ---@return table
@@ -308,6 +366,36 @@ function Mat4.fromRotZ(radians)
     return Mat4.fromRotZInternal(
         math.cos(radians),
         math.sin(radians))
+end
+
+---Constructs a rotation matrix from the cosine and sine
+---of an angle around an arbitrary axis.
+---Does not check if axis is well-formed.
+---A well-formed axis should have unit length.
+---@param cosa number cosine of the angle
+---@param sina number sine of the angle
+---@param ax number axis x
+---@param ay number axis y
+---@param az number axis z
+---@return table
+function Mat4.fromRotInternal(
+    cosa, sina,
+    ax, ay, az)
+
+    local d = 1.0 - cosa
+    local x = ax * d
+    local y = ay * d
+    local z = az * d
+
+    local axay = x * ay
+    local axaz = x * az
+    local ayaz = y * az
+
+    return Mat4.new(
+        cosa + x * ax, axay - sina * az, axaz + sina * ay, 0.0,
+        axay + sina * az, cosa + y * ay, ayaz - sina * ax, 0.0,
+        axaz - sina * ay, ayaz + sina * ax, cosa + z * az, 0.0,
+        0.0, 0.0, 0.0, 1.0)
 end
 
 ---Constructs a rotation matrix from the cosine and sine
@@ -382,10 +470,11 @@ end
 ---@param z number z
 ---@return table
 function Mat4.fromTranslation(x, y, z)
+    local zv = z or 0.0
     return Mat4.new(
         1.0, 0.0, 0.0,   x,
         0.0, 1.0, 0.0,   y,
-        0.0, 0.0, 1.0,   z,
+        0.0, 0.0, 1.0,  zv,
         0.0, 0.0, 0.0, 1.0)
 end
 

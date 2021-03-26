@@ -15,7 +15,7 @@ local defaults = {
     useStroke = true,
     strokeWeight = 1,
     strokeClr = Color(32, 32, 32, 255),
-    fillClr = Color(255, 245, 215, 255),
+    dotClr = Color(255, 245, 215, 255),
     handles = 0
 }
 
@@ -111,9 +111,9 @@ dlg:color {
 }
 
 dlg:color {
-    id = "fillClr",
+    id = "dotClr",
     label = "Dot Color:",
-    color = defaults.fillClr
+    color = defaults.dotClr
 }
 
 -- Because ENTER is the key to start an animation loop,
@@ -138,21 +138,17 @@ dlg:button {
             local mat = t * r * s
             Utilities.mulMat3Curve2(mat, curve)
 
-            local sprite = app.activeSprite
-            if sprite == nil then
-                sprite = Sprite(64, 64)
-                app.activeSprite = sprite
-            end
-
-            local layer = sprite:newLayer()
-            layer.name = curve.name
+            local sprite = AseUtilities.initCanvas(
+                64, 64, curve.name,
+                { args.strokeClr, args.dotClr })
+            local layer = sprite.layers[#sprite.layers]
             local cel = sprite:newCel(layer, 1)
 
             AseUtilities.drawCurve2(
                 curve,
                 args.resolution,
                 false,
-                args.fillClr,
+                args.dotClr,
                 args.useStroke,
                 args.strokeClr,
                 Brush(args.strokeWeight),
@@ -191,9 +187,9 @@ dlg:button {
                     -- Create new brushes and colors for contrails.
                     local animBrushes = {}
                     local animColors = {}
-                    local dtr = args.fillClr.red
-                    local dtg = args.fillClr.green
-                    local dtb = args.fillClr.blue
+                    local dtr = args.dotClr.red
+                    local dtg = args.dotClr.green
+                    local dtb = args.dotClr.blue
                     for j = dotCount, 1, -1 do
                         local jFac = j / dotCount
                         local alpha = math.tointeger(0.5 + jFac * 255.0)

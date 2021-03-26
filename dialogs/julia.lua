@@ -1,4 +1,5 @@
 dofile("../support/complex.lua")
+dofile("../support/aseutilities.lua")
 
 local dlg = Dialog { title = "Julia Set" }
 
@@ -37,13 +38,13 @@ dlg:slider {
 dlg:color {
     id = "aColor",
     label = "Color A:",
-    color = Color(0, 0, 0, 255)
+    color = Color(32, 32, 32, 255)
 }
 
 dlg:color {
     id = "bColor",
     label = "Color B:",
-    color = Color(255, 255, 255, 255)
+    color = Color(255, 245, 215, 255)
 }
 
 dlg:check {
@@ -115,14 +116,14 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         if args.ok then
-            local sprite = app.activeSprite
-            if sprite == nil then
-                sprite = Sprite(64, 64)
-                app.activeSprite = sprite
-            end
 
-            local layer = sprite:newLayer()
-            layer.name = "Julia Set"
+            local aColor = args.aColor
+            local bColor = args.bColor
+
+            local sprite = AseUtilities.initCanvas(
+                64, 64, "Julia Set",
+                { aColor, bColor })
+            local layer = sprite.layers[#sprite.layers]
             local cel = sprite:newCel(layer, 1)
             local image = cel.image
 
@@ -137,11 +138,7 @@ dlg:button {
             local rpx = 0.01 * args.rSeed
             local phirad = math.rad(args.phiSeed)
             local seed = Complex.rect(rpx, phirad)
-            -- local power = Complex.new(args.power, 0.0)
             local power = args.power
-
-            local aColor = args.aColor
-            local bColor = args.bColor
 
             local a0 = 0
             local a1 = 0

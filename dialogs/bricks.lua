@@ -122,10 +122,6 @@ dlg:button {
                 args.aspect,
                 args.frequency)
 
-            -- TODO: Option for color variation,
-            -- if so, separate meshes, shift hue
-            -- and lightness.
-
             local t = Mat3.fromTranslation(
                 args.xOrigin,
                 args.yOrigin)
@@ -135,16 +131,15 @@ dlg:button {
             local mat = Mat3.mul(t, s)
             Utilities.mulMat3Mesh2(mat, mesh)
 
+            local brickClr = args.brickClr
+            local mortarClr = args.mortarClr
+
             local sprite = AseUtilities.initCanvas(
-                64, 64,
-                mesh.name,
-                { args.fillClr, args.strokeClr })
+                64, 64, mesh.name,
+                { brickClr, mortarClr })
             local layer = sprite.layers[#sprite.layers]
             local cel = sprite:newCel(layer, 1)
             local brush = Brush(args.mortarThick)
-
-            local mortarClr = args.mortarClr
-            local brickClr = args.brickClr
 
             if args.variance > 0 then
 

@@ -1,7 +1,7 @@
-dofile("../Support/mat3.lua")
-dofile("../Support/curve2.lua")
-dofile("../Support/utilities.lua")
-dofile("../Support/aseutilities.lua")
+dofile("../support/aseutilities.lua")
+dofile("../support/curve2.lua")
+dofile("../support/mat3.lua")
+dofile("../support/utilities.lua")
 
 local defaults = {
     resolution = 32,
@@ -159,11 +159,10 @@ dlg:button {
 
         local args = dlg.data
         if args.ok then
-            local sprite = app.activeSprite
-            if sprite == nil then
-                sprite = Sprite(64, 64)
-                app.activeSprite = sprite
-            end
+            local sprite = AseUtilities.initCanvas(
+                64, 64, "Rectangle",
+                { args.fillClr, args.strokeClr })
+            local layer = sprite.layers[#sprite.layers]
 
             local wPrc = sprite.width * 0.01
             local hPrc = sprite.height * 0.01
@@ -173,9 +172,6 @@ dlg:button {
                 wPrc * args.ubx, hPrc * args.uby,
                 prc * args.bl, prc * args.br,
                 prc * args.tr, prc * args.tl)
-
-            local layer = sprite:newLayer()
-            layer.name = curve.name
 
             AseUtilities.drawCurve2(
                 curve,

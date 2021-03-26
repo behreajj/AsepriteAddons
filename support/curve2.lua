@@ -47,6 +47,74 @@ function Curve2:__tostring()
     return str
 end
 
+---Rotates this curve around the z axis by
+---an angle in radians.
+---@param radians number angle
+---@return table
+function Curve2:rotateZ(radians)
+    return self:rotateZInternal(
+        math.cos(radians),
+        math.sin(radians))
+end
+
+---Rotates this curve around the z axis by
+---the cosine and sine of an angle.
+---@param cosa number cosine of the angle
+---@param sina number sine of the angle
+---@return table
+function Curve2:rotateZInternal(cosa, sina)
+    local knsLen = #self.knots
+    for i = 1, knsLen, 1 do
+        self.knots[i]:rotateZInternal(cosa, sina)
+    end
+    return self
+end
+
+---Scales this curve.
+---Defaults to scale by a vector.
+---@param v table scalar
+---@return table
+function Curve2:scale(v)
+    return self:scaleByVec2(v)
+end
+
+---Scales this curve by a number.
+---@param n table uniform scalar
+---@return table
+function Curve2:scaleByNumber(n)
+    if n ~= 0.0 then
+        local knsLen = #self.knots
+        for i = 1, knsLen, 1 do
+            self.knots[i]:scaleByNumber(n)
+        end
+    end
+    return self
+end
+
+---Scales this curve by a vector.
+---@param v table nonuniform scalar
+---@return table
+function Curve2:scaleByVec2(v)
+    if Vec2.all(v) then
+        local knsLen = #self.knots
+        for i = 1, knsLen, 1 do
+            self.knots[i]:scaleByVec2(v)
+        end
+    end
+    return self
+end
+
+---Translates this curve by a vector.
+---@param v table vector
+---@return table
+function Curve2:translate(v)
+    local knsLen = #self.knots
+    for i = 1, knsLen, 1 do
+        self.knots[i]:translate(v)
+    end
+    return self
+end
+
 ---Evaluates a curve by a step in [0.0, 1.0].
 ---Returns a vector representing a point on the curve.
 ---@param curve table curve
@@ -85,6 +153,9 @@ function Curve2.eval(curve, step)
 
     end
 
+    -- Eval tangent as well, return table?
+    -- Or rename to evalPoint and make separate
+    -- function for tangent?
     local tsni = tScaled - i
     return Knot2.bezierPoint(a, b, tsni)
 end

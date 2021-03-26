@@ -284,7 +284,7 @@ end
 ---@param radians number angle
 ---@return table
 function Quaternion.rotateX(q, radians)
-    local half = 0.5 * (radians % 6.283185307179586)
+    local half = 0.5 * math.fmod(radians, 6.283185307179586)
     return Quaternion.rotateXInternal(
         q, math.cos(half), math.sin(half))
 end
@@ -295,7 +295,7 @@ end
 ---@param radians number angle
 ---@return table
 function Quaternion.rotateY(q, radians)
-    local half = 0.5 * (radians % 6.283185307179586)
+    local half = 0.5 * math.fmod(radians, 6.283185307179586)
     return Quaternion.rotateYInternal(
         q, math.cos(half), math.sin(half))
 end
@@ -306,7 +306,7 @@ end
 ---@param radians number angle
 ---@return table
 function Quaternion.rotateZ(q, radians)
-    local half = 0.5 * (radians % 6.283185307179586)
+    local half = 0.5 * math.fmod(radians, 6.283185307179586)
     return Quaternion.rotateZInternal(
         q, math.cos(half), math.sin(half))
 end

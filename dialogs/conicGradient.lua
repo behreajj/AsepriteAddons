@@ -270,14 +270,9 @@ dlg:button {
                 easingFunc = args.easingFuncHue
             end
 
-            local sprite = app.activeSprite
-            if sprite == nil then
-                sprite = Sprite(64, 64)
-                app.activeSprite = sprite
-            end
-
-            local layer = sprite:newLayer()
-            layer.name = "Conic Gradient"
+            local sprite = AseUtilities.initCanvas(
+                64, 64, "Conic Gradient")
+            local layer = sprite.layers[#sprite.layers]
             local cel = sprite:newCel(layer, 1)
 
             createConic(

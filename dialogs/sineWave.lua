@@ -1,8 +1,9 @@
+dofile("../support/aseutilities.lua")
 dofile("../support/clr.lua")
 
 local easingModes = { "RGB", "HSL", "HSV" }
 
-local dlg = Dialog { title="Sine Wave" }
+local dlg = Dialog { title = "Sine Wave" }
 
 dlg:slider {
     id = "elements",
@@ -77,19 +78,16 @@ dlg:button {
         local args = dlg.data
         if args.ok then
 
-            -- Create sprite.
-            local sprite = app.activeSprite
-            if sprite == nil then
-                sprite = Sprite(256, 256)
-                app.activeSprite = sprite
-            end
+            local aClrAse = args.aColor
+            local bClrAse = args.bColor
+
+            local sprite = AseUtilities.initCanvas(
+                64, 64, "Sine Wave",
+                { aClrAse, bClrAse })
+            local layer = sprite.layers[#sprite.layers]
 
             local w = sprite.width
             local h = sprite.height
-
-            -- Create layer.
-            local layer = sprite:newLayer()
-            layer.name = "Sine Wave"
 
             -- Add requested number of frames.
             local reqFrames = args.frames
@@ -160,19 +158,8 @@ dlg:button {
                 table.insert(brushes, brushesInFrame)
             end
 
-            local aClrAse = args.aColor
-            local aClr = Clr.new(
-                0.00392156862745098 * aClrAse.red,
-                0.00392156862745098 * aClrAse.green,
-                0.00392156862745098 * aClrAse.blue,
-                0.00392156862745098 * aClrAse.alpha)
-
-            local bClrAse = args.bColor
-            local bClr = Clr.new(
-                0.00392156862745098 * bClrAse.red,
-                0.00392156862745098 * bClrAse.green,
-                0.00392156862745098 * bClrAse.blue,
-                0.00392156862745098 * bClrAse.alpha)
+            local aClr = AseUtilities.aseColorToClr(aClrAse)
+            local bClr = AseUtilities.aseColorToClr(bClrAse)
 
             local easingFunc = Clr.mixRgba
             if args.easingMode == "HSV" then
@@ -185,11 +172,7 @@ dlg:button {
             for j = 0, elmCount - 1, 1 do
                 local jfac = j * jToFac
                 local clr = easingFunc(aClr, bClr, jfac)
-                local aseClr = Color(
-                    math.tointeger(0.5 + 255.0 * clr.r),
-                    math.tointeger(0.5 + 255.0 * clr.g),
-                    math.tointeger(0.5 + 255.0 * clr.b),
-                    math.tointeger(0.5 + 255.0 * clr.a))
+                local aseClr = AseUtilities.clrToAseColor(clr)
                 table.insert(aseClrs, aseClr)
             end
 

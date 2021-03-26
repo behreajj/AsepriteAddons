@@ -117,8 +117,7 @@ dlg:button {
             Utilities.mulMat3Mesh2(mat, mesh)
 
             local sprite = AseUtilities.initCanvas(
-                64, 64,
-                mesh.name,
+                64, 64, mesh.name,
                 { args.fillClr, args.strokeClr })
             local layer = sprite.layers[#sprite.layers]
 

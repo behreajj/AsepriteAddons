@@ -92,14 +92,6 @@ dlg:combobox {
     options = rgbEasing
 }
 
-dlg:button {
-    id = "cancel",
-    text = "CANCEL",
-    onclick = function()
-        dlg:close()
-    end
-}
-
 local function createLinear(
     sprite, img,
     xOrigin, yOrigin,
@@ -250,14 +242,9 @@ dlg:button {
                 easingFunc = args.easingFuncHue
             end
 
-            local sprite = app.activeSprite
-            if sprite == nil then
-                sprite = Sprite(256, 32)
-                app.activeSprite = sprite
-            end
-
-            local layer = sprite:newLayer()
-            layer.name = "Linear Gradient"
+            local sprite = AseUtilities.initCanvas(
+                256, 32, "Linear Gradient")
+            local layer = sprite.layers[#sprite.layers]
             local cel = sprite:newCel(layer, 1)
 
             createLinear(
@@ -275,6 +262,14 @@ dlg:button {
 
             app.refresh()
         end
+    end
+}
+
+dlg:button {
+    id = "cancel",
+    text = "CANCEL",
+    onclick = function()
+        dlg:close()
     end
 }
 

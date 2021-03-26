@@ -1,3 +1,5 @@
+dofile("../support/aseutilities.lua")
+
 local dlg = Dialog { title = "Checker" }
 
 dlg:slider {
@@ -35,28 +37,21 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         if args.ok then
-            local sprite = app.activeSprite
-            local layer = nil
-            if sprite == nil then
-                sprite = Sprite(64, 64)
-                app.activeSprite = sprite
-                layer = sprite.layers[1]
-            else
-                layer = sprite:newLayer()
-            end
-
-            layer.name = "Checker"
+            local sprite = AseUtilities.initCanvas(
+                64, 64, "Checker",
+                { args.aClr, args.bClr })
+            local layer = sprite.layers[#sprite.layers]
             local cel = sprite:newCel(layer, 1)
             local image = cel.image
 
             local w = image.width
             local h = image.height
 
-            --Get integer hexadecimal from each color.
+            -- Get integer hexadecimal from each color.
             local aClr = args.aClr.rgbaPixel
             local bClr = args.bClr.rgbaPixel
 
-            --Find size of each checker.
+            -- Find size of each checker.
             local wch = w // args.cols
             local hch = h // args.rows
 
@@ -66,11 +61,11 @@ dlg:button {
                 local x = i % w
                 local y = i // w
 
-                --Divide coordinate by checker size.
+                -- Divide coordinate by checker size.
                 local xmd = x // wch
                 local ymd = y // hch
 
-                --If both x and y are even, then use color.
+                -- If both x and y are even, then use color.
                 if (xmd + ymd) % 2 == 0 then elm(bClr)
                 else elm(aClr) end
 

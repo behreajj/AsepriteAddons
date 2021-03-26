@@ -46,8 +46,16 @@ function Clr:__eq(b)
     return Clr.fromHex(self) == Clr.fromHex(b)
 end
 
+function Clr:__le(b)
+    return Clr.fromHex(self) < Clr.fromHex(b)
+end
+
 function Clr:__len()
     return 4
+end
+
+function Clr:__lt(b)
+    return Clr.fromHex(self) <= Clr.fromHex(b)
 end
 
 function Clr:__mul(b)
@@ -342,10 +350,40 @@ function Clr.luminance(a)
          + 0.0722 * a.b
 end
 
+---Finds the maximum, or lightest, color.
+---Clamps the result to [0.0, 1.0].
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Clr.max(a, b)
+    return Clr.new(
+        math.min(math.max(a.r, b.r, 0.0), 1.0),
+        math.min(math.max(a.g, b.g, 0.0), 1.0),
+        math.min(math.max(a.b, b.b, 0.0), 1.0),
+        math.min(math.max(a.a, b.a, 0.0), 1.0))
+end
+
+---Finds the minimum, or darkest, color.
+---Clamps the result to [0.0, 1.0].
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Clr.min(a, b)
+    return Clr.new(
+        math.max(math.min(a.r, b.r, 1.0), 0.0),
+        math.max(math.min(a.g, b.g, 1.0), 0.0),
+        math.max(math.min(a.b, b.b, 1.0), 0.0),
+        math.max(math.min(a.a, b.a, 1.0), 0.0))
+end
+
 ---Mixes two colors in HSLA space by a step.
+---The hue function should accept an origin,
+---destination and factor, all numbers.
+---If it is nil, nearest is the default.
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
+---@param hueFunc function hue function
 ---@return table
 function Clr.mixHsla(a, b, t, hueFunc)
     local u = t or 0.5
@@ -366,10 +404,6 @@ function Clr.mixHsla(a, b, t, hueFunc)
     if hueFunc then
         hueTrg = hueFunc(aHsla.h, bHsla.h, u)
     else
-        -- Default to hue near easing.
-        -- Shouldn't need to mod the hues.
-        -- local o = aHsla.h % 1.0
-        -- local d = bHsla.h % 1.0
         local o = aHsla.h
         local d = bHsla.h
         local diff = d - o
@@ -392,9 +426,13 @@ function Clr.mixHsla(a, b, t, hueFunc)
 end
 
 ---Mixes two colors in HSVA space by a step.
+---The hue function should accept an origin,
+---destination and factor, all numbers.
+---If it is nil, nearest is the default.
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
+---@param hueFunc function hue function
 ---@return table
 function Clr.mixHsva(a, b, t, hueFunc)
     local u = t or 0.5
@@ -415,10 +453,6 @@ function Clr.mixHsva(a, b, t, hueFunc)
     if hueFunc then
         hueTrg = hueFunc(aHsva.h, bHsva.h, u)
     else
-        -- Default to hue near easing.
-        -- Shouldn't need to mod the hues.
-        -- local o = aHsva.h % 1.0
-        -- local d = bHsva.h % 1.0
         local o = aHsva.h
         local d = bHsva.h
         local diff = d - o

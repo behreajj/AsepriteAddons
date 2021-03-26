@@ -12,6 +12,23 @@ setmetatable(AseUtilities, {
         return cls.new(...)
     end})
 
+AseUtilities.DEFAULT_PALETTE = {
+    Color(255,   0,   0, 255),
+    Color(255, 106,   0, 255),
+    Color(255, 162,   0, 255),
+    Color(255, 207,   0, 255),
+    Color(255, 255,   0, 255),
+    Color(129, 212,  26, 255),
+    Color(  0, 169,  51, 255),
+    Color( 21, 132, 102, 255),
+    Color( 17,  89, 166, 255),
+    Color( 60,  42, 146, 255),
+    Color(105,  12, 133, 255),
+    Color(170,   0,  85, 255),
+    Color(  0,   0,   0, 255),
+    Color(255, 255, 255, 255)
+}
+
 ---Houses utility methods for scripting
 ---Aseprite add-ons.
 ---@return table
@@ -29,6 +46,17 @@ function AseUtilities.aseColorToClr(aseClr)
         0.00392156862745098 * aseClr.green,
         0.00392156862745098 * aseClr.blue,
         0.00392156862745098 * aseClr.alpha)
+end
+
+---Converts a Clr to an Aseprite Color.
+---@param clr table clr
+---@return table
+function AseUtilities.clrToAseColor(clr)
+    return Color(
+        math.tointeger(0.5 + 255.0 * clr.r),
+        math.tointeger(0.5 + 255.0 * clr.g),
+        math.tointeger(0.5 + 255.0 * clr.b),
+        math.tointeger(0.5 + 255.0 * clr.a))
 end
 
 ---Draws a curve in Aseprite with the contour tool.
@@ -387,12 +415,10 @@ function AseUtilities.initCanvas(
     layerName,
     colors)
 
-    local clrs = colors or {
-        Color(255,   0,   0, 255),
-        Color(  0, 255,   0, 255),
-        Color(  0,   0, 255, 255),
-        Color(  0,   0,   0, 255),
-        Color(255, 255, 255, 255) }
+    local clrs = AseUtilities.DEFAULT_PALETTE
+    if colors and #colors > 0 then
+        clrs = colors
+    end
 
     local sprite = app.activeSprite
     local layer = nil
@@ -404,14 +430,17 @@ function AseUtilities.initCanvas(
         local lenClrs = #clrs
         local pal = Palette(lenClrs)
         for i = 1, lenClrs, 1 do
-            pal:setColor(i - 1, clrs[i])
+            local clr = clrs[i]
+            if clr then
+                pal:setColor(i - 1, clr)
+            end
         end
         sprite:setPalette(pal)
     else
         layer = sprite:newLayer()
     end
 
-    layer.name = layerName
+    layer.name = layerName or "Layer"
     return sprite
 end
 

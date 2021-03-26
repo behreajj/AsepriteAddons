@@ -370,6 +370,16 @@ function Vec4.min(a, b)
 end
 
 ---Mixes two vectors together by a step.
+---Defaults to mixing by a vector.
+---@param a table origin
+---@param b table destination
+---@param t any step
+---@return table
+function Vec4.mix(a, b, t)
+    return Vec4.mixByVec4(a, b, t)
+end
+
+---Mixes two vectors together by a step.
 ---The step is a number.
 ---@param a table origin
 ---@param b table destination
@@ -414,16 +424,6 @@ function Vec4.mod(a, b)
     if b.z ~= 0.0 then cz = a.z % b.z end
     if b.w ~= 0.0 then cw = a.w % b.w end
     return Vec4.new(cx, cy, cz, cw)
-end
-
----Mixes two vectors together by a step.
----Defaults to mixing by a vector.
----@param a table origin
----@param b table destination
----@param t any step
----@return table
-function Vec4.mix(a, b, t)
-    return Vec4.mixByVec4(a, b, t)
 end
 
 ---Multiplies two vectors component-wise.

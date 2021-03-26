@@ -99,7 +99,7 @@ function Knot2:reverse()
     return self
 end
 
----Rotates a knot around the z axis by
+---Rotates this knot around the z axis by
 ---an angle in radians.
 ---@param radians number angle
 ---@return table
@@ -109,7 +109,7 @@ function Knot2:rotateZ(radians)
         math.sin(radians))
 end
 
----Rotates a knot around the z axis by
+---Rotates this knot around the z axis by
 ---the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
@@ -124,23 +124,35 @@ function Knot2:rotateZInternal(cosa, sina)
     return self
 end
 
----Scales a knot by a number or vector.
+---Scales this knot.
+---Defaults to scale by a vector.
 ---@param v table scalar
 ---@return table
 function Knot2:scale(v)
-    if type(v) == "number" then
-        self.co = Vec2.scale(self.co, v)
-        self.fh = Vec2.scale(self.fh, v)
-        self.rh = Vec2.scale(self.rh, v)
-    else
-        self.co = Vec2.mul(self.co, v)
-        self.fh = Vec2.mul(self.fh, v)
-        self.rh = Vec2.mul(self.rh, v)
-    end
+    return self:scaleByVec2(v)
+end
+
+---Scales this knot by a number.
+---@param n number uniform scalar
+---@return table
+function Knot2:scaleByNumber(n)
+        self.co = Vec2.scale(self.co, n)
+        self.fh = Vec2.scale(self.fh, n)
+        self.rh = Vec2.scale(self.rh, n)
     return self
 end
 
----Translates a knot by a vector.
+---Scales this knot by a vector.
+---@param v number nonuniform scalar
+---@return table
+function Knot2:scaleByVec2(v)
+        self.co = Vec2.mul(self.co, v)
+        self.fh = Vec2.mul(self.fh, v)
+        self.rh = Vec2.mul(self.rh, v)
+    return self
+end
+
+---Translates this knot by a vector.
 ---@param v table vector
 ---@return table
 function Knot2:translate(v)

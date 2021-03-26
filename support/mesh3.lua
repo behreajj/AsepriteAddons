@@ -143,30 +143,38 @@ function Mesh3:rotateZInternal(cosa, sina)
 end
 
 ---Scales all coordinates in a mesh.
----The scale can be either a number or Vec3.
----@param scale table scale
+---Defaults to scale by a vector.
+---@param v table scalar
 ---@return table
-function Mesh3:scale(scale)
+function Mesh3:scale(v)
+    return self:scaleByVec3(v)
+end
 
-    -- TODO: Separate into scaleByNumber,
-    -- scaleByVector
-
-    -- Validate that scale is non-zero.
-    local vscl = nil
-    if type(scale) == "number" then
-        if scale ~= 0.0 then
-            vscl = Vec3.new(scale, scale)
-        else vscl = Vec3.new(1.0, 1.0, 1.0) end
-    else
-        if Vec3.all(scale) then vscl = scale
-        else vscl = Vec3.new(1.0, 1.0, 1.0) end
+---Scales all coordinates in this mesh
+---by a number
+---@param n table uniform scalar
+---@return table
+function Mesh3:scaleByNumber(n)
+    if n ~= 0.0 then
+        local vsLen = #self.vs
+        for i = 1, vsLen, 1 do
+            self.vs[i] = Vec3.scale(self.vs[i], n)
+        end
     end
+    return self
+end
 
-    local vsLen = #self.vs
-    for i = 1, vsLen, 1 do
-        self.vs[i] = Vec3.mul(self.vs[i], vscl)
+---Scales all coordinates in this mesh
+---by a vector.
+---@param v table nonuniform scalar
+---@return table
+function Mesh3:scaleByVec3(v)
+    if Vec3.all(v) then
+        local vsLen = #self.vs
+        for i = 1, vsLen, 1 do
+            self.vs[i] = Vec3.mul(self.vs[i], v)
+        end
     end
-
     return self
 end
 

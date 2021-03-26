@@ -1,4 +1,4 @@
-local dlg = Dialog { title="Chromatic Aberration" }
+local dlg = Dialog { title = "Chromatic Aberration" }
 
 dlg:number {
     id = "xRed",
@@ -47,14 +47,6 @@ dlg:number {
 --     label = "Invert Mask:",
 --     selected = false
 -- }
-
-dlg:button {
-    id = "cancel",
-    text = "CANCEL",
-    onclick = function()
-        dlg:close()
-    end
-}
 
 dlg:button {
     id = "ok",
@@ -113,10 +105,10 @@ dlg:button {
                             i = i + 1
                         end
 
-                        local redMask =   0xff0000ff
+                        local redMask   = 0xff0000ff
                         local greenMask = 0xff00ff00
-                        local blueMask =  0xffff0000
-                        local bkgClr = 0xff000000
+                        local blueMask  = 0xffff0000
+                        local bkgClr    = 0xff000000
                         -- if args.invertMask then
                             -- redMask =   0xffffff00
                             -- greenMask = 0xffff00ff
@@ -127,7 +119,6 @@ dlg:button {
                             -- greenLayer.blendMode = BlendMode.SUBTRACT
                             -- blueLayer.blendMode = BlendMode.SUBTRACT
                         -- end
-
 
                         -- Fill background.
                         local bkgCel = sprite:newCel(bkgLayer, cel.frame)
@@ -170,6 +161,14 @@ dlg:button {
                 end
             end
         end
+    end
+}
+
+dlg:button {
+    id = "cancel",
+    text = "CANCEL",
+    onclick = function()
+        dlg:close()
     end
 }
 
