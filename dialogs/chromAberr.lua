@@ -62,7 +62,7 @@ dlg:button {
                     local cel = app.activeCel
                     if cel then
 
-                        -- TODO: Look at grayFromLum,
+                        -- TODO: Look at lumRemap
                         -- might have same issue with data with alpha
                         -- or an offset position.
 
@@ -160,6 +160,8 @@ dlg:button {
                         blueCel.position = blueCel.position
                             + Point(args.xBlue, args.yBlue)
 
+                        app.activeLayer = layer
+                        app.activeCel = cel
                         app.refresh()
                     end
                 end

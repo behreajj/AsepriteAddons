@@ -58,6 +58,10 @@ This repo includes
  
   ![Linear Gradient](screencaps/linearGradient.png)
 
+- Luminance (grayscale) remapping. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
+
+  ![Luminance remapping](screencaps/lumRemap.png)
+
 - A regular convex polygon.
 
   ![Polygon](screencaps/polygon.png)

@@ -1,20 +1,9 @@
 dofile("../support/aseutilities.lua")
 
-local easingModes = { "RGB", "HSL", "HSV", "VIRIDIS" }
+local easingModes = { "RGB", "HSL", "HSV", "PALETTE" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
 local hueEasing = { "NEAR", "FAR" }
 local methods = { "AVERAGE", "HSV", "HSL", "REC_240", "REC_601", "REC_709" }
-
-local viridis = {
-    Color(68, 1, 84, 255),
-    Color(70, 50, 126, 255),
-    Color(54, 92, 140, 255),
-    Color(39, 127, 142, 255),
-    Color(34, 161, 135, 255),
-    Color(75, 193, 109, 255),
-    Color(159, 217, 57, 255),
-    Color(253, 231, 37, 255)
-}
 
 local defaults = {
     standard = "REC_709",
@@ -106,21 +95,19 @@ local function hslLight(r01, g01, b01)
                 + math.min(r01, g01, b01))
 end
 
-local function lerpViridis(
-    ah, as, av, aa,
-    bh, bs, bv, ba, t)
+local function lerpPalette(arr, t)
     if t <= 0.0  then
-        return viridis[1].rgbaPixel
+        return arr[1].rgbaPixel
     end
 
     if t >= 1.0 then
-        return viridis[#viridis].rgbaPixel
+        return arr[#arr].rgbaPixel
     end
 
-    local tScaled = t * (#viridis - 1)
+    local tScaled = t * (#arr - 1)
     local i = math.tointeger(tScaled)
-    local a = viridis[1 + i]
-    local b = viridis[2 + i]
+    local a = arr[1 + i]
+    local b = arr[2 + i]
     return AseUtilities.lerpRgba(
         a.red, a.green, a.blue, a.alpha,
         b.red, b.green, b.blue, b.alpha,
@@ -163,78 +150,119 @@ dlg:button {
                 easingPreset = args.easingFuncHue
             end
 
-            -- Choose channels and easing based on color mode.
-            local a0 = 0
-            local a1 = 0
-            local a2 = 0
-            local a3 = 255
-
-            local b0 = 0
-            local b1 = 0
-            local b2 = 0
-            local b3 = 255
-
-            local easing = AseUtilities.lerpRgba
-            if easingMode == "HSV" then
-
-                a0 = blk.hsvHue
-                a1 = blk.hsvSaturation
-                a2 = blk.hsvValue
-                a3 = blk.alpha
-
-                b0 = wht.hsvHue
-                b1 = wht.hsvSaturation
-                b2 = wht.hsvValue
-                b3 = wht.alpha
-
-                if easingPreset and easingPreset == "FAR" then
-                    easing = AseUtilities.lerpHsvaFar
-                else
-                    easing = AseUtilities.lerpHsvaNear
-                end
-
-            elseif easingMode == "HSL" then
-
-                a0 = blk.hslHue
-                a1 = blk.hslSaturation
-                a2 = blk.hslLightness
-                a3 = blk.alpha
-
-                b0 = wht.hslHue
-                b1 = wht.hslSaturation
-                b2 = wht.hslLightness
-                b3 = wht.alpha
-
-                if easingPreset and easingPreset == "FAR" then
-                    easing = AseUtilities.lerpHslaFar
-                else
-                    easing = AseUtilities.lerpHslaNear
-                end
-
-            elseif easingMode == "VIRIDIS" then
-
-                easing = lerpViridis
-
-            else
-
-                a0 = blk.red
-                a1 = blk.green
-                a2 = blk.blue
-                a3 = blk.alpha
-
-                b0 = wht.red
-                b1 = wht.green
-                b2 = wht.blue
-                b3 = wht.alpha
-
-                if easingPreset and easingPreset == "SMOOTH" then
-                    easing = AseUtilities.smoothRgba
-                end
-
-            end
-
             local sprite = app.activeSprite
             if sprite then
+
+                -- Choose channels and easing based on color mode.
+                local a0 = 0
+                local a1 = 0
+                local a2 = 0
+                local a3 = 255
+
+                local b0 = 0
+                local b1 = 0
+                local b2 = 0
+                local b3 = 255
+
+                local easing = function(t) return 0xffffffff end
+                if easingMode == "HSV" then
+
+                    a0 = blk.hsvHue
+                    a1 = blk.hsvSaturation
+                    a2 = blk.hsvValue
+                    a3 = blk.alpha
+
+                    b0 = wht.hsvHue
+                    b1 = wht.hsvSaturation
+                    b2 = wht.hsvValue
+                    b3 = wht.alpha
+
+                    if easingPreset and easingPreset == "FAR" then
+                        easing = function(t)
+                            return AseUtilities.lerpHsvaFar(
+                                a0, a1, a2, a3,
+                                b0, b1, b2, b3, t)
+                        end
+                    else
+                        easing = function(t)
+                            return AseUtilities.lerpHsvaNear(
+                                a0, a1, a2, a3,
+                                b0, b1, b2, b3, t)
+                        end
+                    end
+
+                elseif easingMode == "HSL" then
+
+                    a0 = blk.hslHue
+                    a1 = blk.hslSaturation
+                    a2 = blk.hslLightness
+                    a3 = blk.alpha
+
+                    b0 = wht.hslHue
+                    b1 = wht.hslSaturation
+                    b2 = wht.hslLightness
+                    b3 = wht.alpha
+
+                    if easingPreset and easingPreset == "FAR" then
+                        easing = function(t)
+                            return AseUtilities.lerpHslaFar(
+                                a0, a1, a2, a3,
+                                b0, b1, b2, b3, t)
+                        end
+                    else
+                        easing = function(t)
+                            return AseUtilities.lerpHsvaNear(
+                                a0, a1, a2, a3,
+                                b0, b1, b2, b3, t)
+                        end
+                    end
+
+                elseif easingMode == "PALETTE" then
+
+                    -- TODO: Revise all gradients to use this pattern.
+                    local pal = sprite.palettes[1]
+                    local clrs = {}
+                    if pal then
+                        local len = #pal
+                        for i = 1, len, 1 do
+                            local srcClr = pal:getColor(i - 1)
+                            clrs[i] = srcClr
+                        end
+                    else
+                        clrs = AseUtilities.DEFAULT_PALETTE
+                    end
+
+                    easing = function(t)
+                        return lerpPalette(clrs, t)
+                    end
+
+                else
+
+                    a0 = blk.red
+                    a1 = blk.green
+                    a2 = blk.blue
+                    a3 = blk.alpha
+
+                    b0 = wht.red
+                    b1 = wht.green
+                    b2 = wht.blue
+                    b3 = wht.alpha
+
+                    if easingPreset and easingPreset == "SMOOTH" then
+                        easing = function(t)
+                            return AseUtilities.smoothRgba(
+                                a0, a1, a2, a3,
+                                b0, b1, b2, b3, t)
+                        end
+                    else
+                        easing = function(t)
+                            return AseUtilities.lerpRgba(
+                                a0, a1, a2, a3,
+                                b0, b1, b2, b3, t)
+                        end
+                    end
+
+                end
                 local srcLyr = app.activeLayer
                 if srcLyr and not srcLyr.isGroup then
                     local srcCel = app.activeCel
@@ -248,20 +276,20 @@ dlg:button {
                             local hex = srcClr()
                             local b = (hex >> 0x10 & 0xff) * 0.00392156862745098
                             local g = (hex >> 0x08 & 0xff) * 0.00392156862745098
-                            local r = (hex >> 0x00 & 0xff) * 0.00392156862745098
+                            local r = (hex         & 0xff) * 0.00392156862745098
 
                             r = r ^ gm
                             g = g ^ gm
                             b = b ^ gm
 
                             local lum = lmethod(r, g, b)
-                            local gryclr = easing(
-                                a0, a1, a2, a3,
-                                b0, b1, b2, b3,
-                                lum)
+                            local gryclr = easing(lum)
 
-                            px[i] = (0xff000000 & hex)
-                                  | (0x00ffffff & gryclr)
+                            -- Take alpha minimum.
+                            local aSrc = (hex >> 0x18 & 0xff)
+                            local aTrg = (gryclr >> 0x18 & 0xff)
+                            local amin = math.min(aSrc, aTrg) << 0x18
+                            px[i] = amin | (0x00ffffff & gryclr)
 
                             i = i + 1
                         end
