@@ -62,6 +62,10 @@ dlg:button {
                     local cel = app.activeCel
                     if cel then
 
+                        -- TODO: Look at grayFromLum,
+                        -- might have same issue with data with alpha
+                        -- or an offset position.
+
                         -- Create new layers.
                         local bkgLayer = sprite:newLayer()
                         local redLayer = sprite:newLayer()

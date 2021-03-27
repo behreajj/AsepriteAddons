@@ -342,6 +342,7 @@ end
 
 ---Finds the relative luminance of the color.
 ---https://www.wikiwand.com/en/Relative_luminance
+---according to recommendation 709.
 ---@param a table color
 ---@return number
 function Clr.luminance(a)
