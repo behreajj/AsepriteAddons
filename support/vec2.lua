@@ -65,10 +65,7 @@ function Vec2:__sub(b)
 end
 
 function Vec2:__tostring()
-    return string.format(
-        "{ x: %.4f, y: %.4f }",
-        self.x,
-        self.y)
+    return Vec2.toJson(self)
 end
 
 function Vec2:__unm()
@@ -785,6 +782,15 @@ function Vec2.sub(a, b)
     return Vec2.new(
         a.x - b.x,
         a.y - b.y)
+end
+
+---Returns a JSON string of a vector.
+---@param v table vector
+---@return string
+function Vec2.toJson(v)
+    return string.format(
+        "{\"x\":%.4f,\"y\":%.4f}",
+        v.x, v.y)
 end
 
 ---Converts a vector to polar coordinates.

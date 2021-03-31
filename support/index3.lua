@@ -18,10 +18,18 @@ function Index3.new(v, vn)
 end
 
 function Index3:__tostring()
+    return Index3.toJson(self)
+end
+
+---Returns a JSON string of an index.
+---One is subtracted from the fields
+---so indices will begin at zero.
+---@param i table index
+---@return string
+function Index3.toJson(i)
     return string.format(
-        "{ v: %03d, vn: %03d }",
-        self.v,
-        self.vn)
+        "{\"v\":%d,\"vn\":%d}",
+        i.v - 1, i.vn - 1)
 end
 
 return Index3

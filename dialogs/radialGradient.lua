@@ -1,6 +1,6 @@
 dofile("../support/aseutilities.lua")
 
-local easingModes = { "RGB", "HSL" , "HSV" }
+local easingModes = { "RGB", "HSL" , "HSV", "PALETTE" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
 local hsvEasing = { "NEAR", "FAR" }
 local metrics = {
@@ -56,7 +56,7 @@ local function createRadial(
     quantLvl,
     bias,
     aColor, bColor,
-    easingMode, easingFunc)
+    easingMode, easingPreset)
 
     local w = sprite.width
     local h = sprite.height
@@ -97,8 +97,7 @@ local function createRadial(
     local b2 = 0
     local b3 = 0
 
-    local easing = AseUtilities.lerpRgba
-
+    local easing = function(t) return 0xffffffff end
     if easingMode and easingMode == "HSV" then
 
         a0 = aColor.hsvHue
@@ -111,10 +110,18 @@ local function createRadial(
         b2 = bColor.hsvValue
         b3 = bColor.alpha
 
-        if easingFunc and easingFunc == "FAR" then
-            easing = AseUtilities.lerpHsvaFar
+        if easingPreset and easingPreset == "FAR" then
+            easing = function(t)
+                return AseUtilities.lerpHsvaFar(
+                    a0, a1, a2, a3,
+                    b0, b1, b2, b3, t)
+            end
         else
-            easing = AseUtilities.lerpHsvaNear
+            easing = function(t)
+                return AseUtilities.lerpHsvaNear(
+                    a0, a1, a2, a3,
+                    b0, b1, b2, b3, t)
+            end
         end
 
     elseif easingMode == "HSL" then
@@ -129,10 +136,27 @@ local function createRadial(
         b2 = bColor.hslLightness
         b3 = bColor.alpha
 
-        if easingFunc and easingFunc == "FAR" then
-            easing = AseUtilities.lerpHslaFar
+        if easingPreset and easingPreset == "FAR" then
+            easing = function(t)
+                return AseUtilities.lerpHslaFar(
+                    a0, a1, a2, a3,
+                    b0, b1, b2, b3, t)
+            end
         else
-            easing = AseUtilities.lerpHslaNear
+            easing = function(t)
+                return AseUtilities.lerpHsvaNear(
+                    a0, a1, a2, a3,
+                    b0, b1, b2, b3, t)
+            end
+        end
+
+    elseif easingMode == "PALETTE" then
+
+        local clrs = AseUtilities.paletteToColorArr(
+            sprite.palettes[1])
+        easing = function(t)
+            return AseUtilities.lerpColorArr(
+                clrs, t)
         end
 
     else
@@ -147,8 +171,18 @@ local function createRadial(
         b2 = bColor.blue
         b3 = bColor.alpha
 
-        if easingFunc and easingFunc == "SMOOTH" then
-            easing = AseUtilities.smoothRgba
+        if easingPreset and easingPreset == "SMOOTH" then
+            easing = function(t)
+                return AseUtilities.smoothRgba(
+                    a0, a1, a2, a3,
+                    b0, b1, b2, b3, t)
+            end
+        else
+            easing = function(t)
+                return AseUtilities.lerpRgba(
+                    a0, a1, a2, a3,
+                    b0, b1, b2, b3, t)
+            end
         end
 
     end
@@ -175,10 +209,7 @@ local function createRadial(
         local fac = dst * normDist
         fac = math.min(1.0, math.max(0.0, fac))
         fac = fac ^ valBias
-        elm(easing(
-            a0, a1, a2, a3,
-            b0, b1, b2, b3,
-            fac))
+        elm(easing(fac))
 
         i = i + 1
     end
@@ -189,7 +220,7 @@ local dlg = Dialog { title = "Radial Gradient" }
 
 dlg:slider {
     id = "xOrigin",
-    label = "Origin X:",
+    label = "Origin X %:",
     min = 0,
     max = 100,
     value = defaults.xOrigin
@@ -197,7 +228,7 @@ dlg:slider {
 
 dlg:slider {
     id = "yOrigin",
-    label = "Origin Y:",
+    label = "Origin Y %:",
     min = 0,
     max = 100,
     value = defaults.yOrigin

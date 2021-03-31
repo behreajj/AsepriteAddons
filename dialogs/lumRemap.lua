@@ -87,31 +87,12 @@ local function arithMean(r01, g01, b01)
 end
 
 local function hsvVal(r01, g01, b01)
-    return math.max(r01, g01, b01)
+    return math.min(1.0, math.max(r01, g01, b01))
 end
 
 local function hslLight(r01, g01, b01)
-    return 0.5 * (math.max(r01, g01, b01)
-                + math.min(r01, g01, b01))
-end
-
-local function lerpPalette(arr, t)
-    if t <= 0.0  then
-        return arr[1].rgbaPixel
-    end
-
-    if t >= 1.0 then
-        return arr[#arr].rgbaPixel
-    end
-
-    local tScaled = t * (#arr - 1)
-    local i = math.tointeger(tScaled)
-    local a = arr[1 + i]
-    local b = arr[2 + i]
-    return AseUtilities.lerpRgba(
-        a.red, a.green, a.blue, a.alpha,
-        b.red, b.green, b.blue, b.alpha,
-        tScaled - i)
+    return 0.5 * (math.max(0.0, r01, g01, b01)
+                + math.min(1.0, r01, g01, b01))
 end
 
 dlg:button {
@@ -220,20 +201,11 @@ dlg:button {
                 elseif easingMode == "PALETTE" then
 
                     -- TODO: Revise all gradients to use this pattern.
-                    local pal = sprite.palettes[1]
-                    local clrs = {}
-                    if pal then
-                        local len = #pal
-                        for i = 1, len, 1 do
-                            local srcClr = pal:getColor(i - 1)
-                            clrs[i] = srcClr
-                        end
-                    else
-                        clrs = AseUtilities.DEFAULT_PALETTE
-                    end
-
+                    local clrs = AseUtilities.paletteToColorArr(
+                        sprite.palettes[1])
                     easing = function(t)
-                        return lerpPalette(clrs, t)
+                        return AseUtilities.lerpColorArr(
+                            clrs, t)
                     end
 
                 else

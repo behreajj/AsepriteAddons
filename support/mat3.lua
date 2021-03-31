@@ -60,13 +60,7 @@ function Mat3:__sub(b)
 end
 
 function Mat3:__tostring()
-    return string.format(
-        [[{ m00: %.4f, m01: %.4f, m02: %.4f,
-  m10: %.4f, m11: %.4f, m12: %.4f,
-  m20: %.4f, m21: %.4f, m22: %.4f }]],
-        self.m00, self.m01, self.m02,
-        self.m10, self.m11, self.m12,
-        self.m20, self.m21, self.m22)
+    return Mat3.toJson(self)
 end
 
 function Mat3:__unm()
@@ -254,6 +248,22 @@ function Mat3.sub(a, b)
         a.m00 - b.m00, a.m01 - b.m01, a.m02 - b.m02,
         a.m10 - b.m10, a.m11 - b.m11, a.m12 - b.m12,
         a.m20 - b.m20, a.m21 - b.m21, a.m22 - b.m22)
+end
+
+---Returns a JSON string of a matrix.
+---@param a table matrix
+---@return string
+function Mat3.toJson(a)
+    local m0 = string.format(
+        "{\"m00\":%.4f,\"m01\":%.4f,\"m02\":%.4f,",
+        a.m00, a.m01, a.m02)
+    local m1 = string.format(
+        "\"m10\":%.4f,\"m11\":%.4f,\"m12\":%.4f,",
+        a.m10, a.m11, a.m12)
+    local m2 = string.format(
+        "\"m20\":%.4f,\"m21\":%.4f,\"m22\":%.4f}",
+        a.m20, a.m21, a.m22)
+    return m0 .. m1 .. m2
 end
 
 ---Transposes a matrix's columns and rows.

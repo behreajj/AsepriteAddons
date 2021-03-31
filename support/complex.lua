@@ -47,10 +47,7 @@ function Complex:__sub(b)
 end
 
 function Complex:__tostring()
-    return string.format(
-        "{ real: %.4f, imag: %.4f }",
-        self.real,
-        self.imag)
+    return Complex.toJson(self)
 end
 
 function Complex:__unm()
@@ -299,6 +296,16 @@ function Complex.sub(a, b)
     return Complex.new(
         a.real - b.real,
         a.imag - b.imag)
+end
+
+---Returns a JSON string of a complex
+---number.
+---@param z table complex number
+---@return string
+function Complex.toJson(z)
+    return string.format(
+        "{\"real\":%.4f,\"imag\":%.4f}",
+        z.real, z.imag)
 end
 
 return Complex

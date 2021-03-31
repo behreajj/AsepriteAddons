@@ -24,9 +24,7 @@ function Knot2.new(co, fh, rh)
 end
 
 function Knot2:__tostring()
-    return string.format(
-        "{ co: %s, fh: %s, rh: %s }",
-        self.co, self.fh, self.rh)
+    return Knot2.toJson(self)
 end
 
 ---Aligns the knot's handles.
@@ -215,6 +213,19 @@ end
 ---@return table
 function Knot2.rearVec(knot)
     return Vec2.sub(knot.rh, knot.co)
+end
+
+---Returns a JSON string of a knot.
+---@param knot table knot
+---@return string
+function Knot2.toJson(knot)
+    return "{\"co\":"
+        .. Vec2.toJson(knot.co)
+        .. ",\"fh\":"
+        .. Vec2.toJson(knot.fh)
+        .. ",\"rh\":"
+        .. Vec2.toJson(knot.rh)
+        .. "}"
 end
 
 return Knot2

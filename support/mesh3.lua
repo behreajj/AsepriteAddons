@@ -30,41 +30,7 @@ function Mesh3:__len()
 end
 
 function Mesh3:__tostring()
-    local str = "{ name: \""
-    str = str .. self.name
-    str = str .. "\", fs: [ "
-
-    local fsLen = #self.fs
-    for i = 1, fsLen, 1 do
-        local f = self.fs[i]
-        local fLen = #f
-        str = str .. "[ "
-        for j = 1, fLen, 1 do
-            str = str .. tostring(f[j])
-            if j < fLen then str = str .. ", " end
-        end
-        str = str .. " ]"
-        if i < fsLen then str = str .. ", " end
-    end
-
-    str = str .. " ], vs: [ "
-
-    local vsLen = #self.vs
-    for i = 1, vsLen, 1 do
-        str = str .. tostring(self.vs[i])
-        if i < vsLen then str = str .. ", " end
-    end
-
-    str = str .. " ], vns: [ "
-
-    local vnsLen = #self.vns
-    for i = 1, vnsLen, 1 do
-        str = str .. tostring(self.vns[i])
-        if i < vnsLen then str = str .. ", " end
-    end
-
-    str = str .. " ] }"
-    return str
+    return Mesh3.toJson(self)
 end
 
 ---Rotates all coordinates in a mesh
@@ -176,6 +142,50 @@ function Mesh3:scaleByVec3(v)
         end
     end
     return self
+end
+
+---Returns a JSON string for a mesh.
+---@param a table mesh
+---@return string
+function Mesh3.toJson(a)
+    local str = "{\"name\":\""
+    str = str .. a.name
+    str = str .. "\",\"fs\":["
+
+    local fs = a.fs
+    local fsLen = #fs
+    for i = 1, fsLen, 1 do
+        local f = fs[i]
+        local fLen = #f
+        str = str .. "["
+        for j = 1, fLen, 1 do
+            str = str .. Index3.toJson(f[j])
+            if j < fLen then str = str .. "," end
+        end
+        str = str .. "]"
+        if i < fsLen then str = str .. "," end
+    end
+
+    str = str .. "],\"vs\":["
+
+    local vs = a.vs
+    local vsLen = #vs
+    for i = 1, vsLen, 1 do
+        str = str .. Vec3.toJson(vs[i])
+        if i < vsLen then str = str .. ", " end
+    end
+
+    str = str .. "],\"vns\":["
+
+    local vns = a.vns
+    local vnsLen = #vns
+    for i = 1, vnsLen, 1 do
+        str = str .. Vec3.toJson(vns[i])
+        if i < vnsLen then str = str .. "," end
+    end
+
+    str = str .. "]}"
+    return str
 end
 
 ---Translates all coordinates in a mesh

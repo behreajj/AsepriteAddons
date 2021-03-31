@@ -27,24 +27,7 @@ function Curve2:__len()
 end
 
 function Curve2:__tostring()
-    local str = "{ name: \""
-    str = str .. self.name
-    str = str .. "\", closedLoop: "
-    if self.closedLoop then
-        str = str .. "true"
-    else
-        str = str .. "false"
-    end
-    str = str .. ", knots: [ "
-
-    local knsLen = #self.knots
-    for i = 1, knsLen, 1 do
-        str = str .. tostring(self.knots[i])
-        if i < knsLen then str = str .. ", " end
-    end
-
-    str = str .. " ] }"
-    return str
+    return Curve2.toJson(self)
 end
 
 ---Rotates this curve around the z axis by
@@ -374,6 +357,31 @@ function Curve2.rect(
     return Curve2.new(true, {
         k0, k1, k2, k3, k4, k5, k6, k7
         }, "Rectangle")
+end
+
+---Returns a JSON string of a curve.
+---@param c table curve
+---@return string
+function Curve2.toJson(c)
+    local str = "{\"name\":\""
+    str = str .. c.name
+    str = str .. "\",\"closedLoop\":"
+    if c.closedLoop then
+        str = str .. "true"
+    else
+        str = str .. "false"
+    end
+    str = str .. ",\"knots\":["
+
+    local kns = c.knots
+    local knsLen = #kns
+    for i = 1, knsLen, 1 do
+        str = str .. Knot2.toJson(kns[i])
+        if i < knsLen then str = str .. "," end
+    end
+
+    str = str .. "]}"
+    return str
 end
 
 return Curve2

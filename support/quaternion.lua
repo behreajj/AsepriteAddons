@@ -68,10 +68,7 @@ function Quaternion:__sub(b)
 end
 
 function Quaternion:__tostring()
-    return string.format(
-        "{ real: %.4f, imag: %s }",
-        self.real,
-        tostring(self.imag))
+    return Quaternion.toJson(self)
 end
 
 function Quaternion:__unm()
@@ -393,6 +390,16 @@ function Quaternion.sub(a, b)
             ai.x - bi.x,
             ai.y - bi.y,
             ai.z - bi.z))
+end
+
+---Returns a JSON string of a quaternion.
+---@param q table quaternion
+---@return string
+function Quaternion.toJson(q)
+    return string.format(
+        "{\"real\":%.4f,\"imag\":%s}",
+        q.real,
+        Vec3.toJson(q.imag))
 end
 
 ---Returns the identity quaternion,

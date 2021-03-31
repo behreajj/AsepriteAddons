@@ -550,6 +550,30 @@ function AseUtilities.lerpHsvaNear(
         math.tointeger(u * aa + t * ba))
 end
 
+---Mixes between elements in a color array
+---by a factor with linear RGB.
+---@param arr table array of colors
+---@param t number factor
+---@return integer
+function AseUtilities.lerpColorArr(arr, t)
+    if t <= 0.0  then
+        return arr[1].rgbaPixel
+    end
+
+    if t >= 1.0 then
+        return arr[#arr].rgbaPixel
+    end
+
+    local tScaled = t * (#arr - 1)
+    local i = math.tointeger(tScaled)
+    local a = arr[1 + i]
+    local b = arr[2 + i]
+    return AseUtilities.lerpRgba(
+        a.red, a.green, a.blue, a.alpha,
+        b.red, b.green, b.blue, b.alpha,
+        tScaled - i)
+end
+
 ---Mixes an origin and destination color
 ---by a factor; returns an integer.
 -- The factor is assumed to be in [0.0, 1.0],
@@ -575,6 +599,24 @@ function AseUtilities.lerpRgba(
         math.tointeger(u * ag + t * bg),
         math.tointeger(u * ab + t * bb),
         math.tointeger(u * aa + t * ba))
+end
+
+---Converts an Aseprite palette to a table
+---of Aseprite Colors. If the palette is nil
+---returns a default table.
+---@param pal table
+---@return table
+function AseUtilities.paletteToColorArr(pal)
+    if pal then
+        local clrs = {}
+        local len = #pal
+        for i = 1, len, 1 do
+            clrs[i] = pal:getColor(i - 1)
+        end
+        return clrs
+    else
+        return AseUtilities.DEFAULT_PALETTE
+    end
 end
 
 ---Mixes an origin and destination color

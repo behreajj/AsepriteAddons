@@ -27,33 +27,7 @@ function Mesh2:__len()
 end
 
 function Mesh2:__tostring()
-    local str = "{ name: \""
-    str = str .. self.name
-    str = str .. "\", fs: [ "
-
-    local fsLen = #self.fs
-    for i = 1, fsLen, 1 do
-        local f = self.fs[i]
-        local fLen = #f
-        str = str .. "[ "
-        for j = 1, fLen, 1 do
-            str = str .. f[j]
-            if j < fLen then str = str .. ", " end
-        end
-        str = str .. " ]"
-        if i < fsLen then str = str .. ", " end
-    end
-
-    str = str .. " ], vs: [ "
-
-    local vsLen = #self.vs
-    for i = 1, vsLen, 1 do
-        str = str .. tostring(self.vs[i])
-        if i < vsLen then str = str .. ", " end
-    end
-
-    str = str .. " ] }"
-    return str
+    return Mesh2.toJson(self)
 end
 
 ---Insets a face by calculating its center then
@@ -660,6 +634,41 @@ function Mesh2.separateFaces(source, from, to)
     end
 
     return meshes
+end
+
+---Returns a JSON string for a mesh.
+---@param a table mesh
+---@return string
+function Mesh2.toJson(a)
+    local str = "{\"name\":\""
+    str = str .. a.name
+    str = str .. "\",\"fs\":["
+
+    local fs = a.fs
+    local fsLen = #fs
+    for i = 1, fsLen, 1 do
+        local f = fs[i]
+        local fLen = #f
+        str = str .. "["
+        for j = 1, fLen, 1 do
+            str = str .. (f[j] - 1)
+            if j < fLen then str = str .. "," end
+        end
+        str = str .. "]"
+        if i < fsLen then str = str .. "," end
+    end
+
+    str = str .. "],\"vs\":["
+
+    local vs = a.vs
+    local vsLen = #vs
+    for i = 1, vsLen, 1 do
+        str = str .. Vec2.toJson(vs[i])
+        if i < vsLen then str = str .. "," end
+    end
+
+    str = str .. "]}"
+    return str
 end
 
 ---Restructures the mesh so that each face index

@@ -23,7 +23,7 @@ function Clr.new(r, g, b, a)
 end
 
 function Clr:__add(b)
-    Clr.add(self, b)
+    return Clr.add(self, b)
 end
 
 function Clr:__band(b)
@@ -75,9 +75,7 @@ function Clr:__sub(b)
 end
 
 function Clr:__tostring()
-    return string.format(
-        "{ r: %.4f, g: %.4f, b: %.4f, a: %.4f }",
-        self.r, self.g, self.b, self.a)
+    return Clr.toJson(self)
 end
 
 ---Adds two colors, including alpha.
@@ -585,6 +583,7 @@ end
 ---@param alpha number transparency
 ---@return table
 function Clr.rgbaToHsva(red, green, blue, alpha)
+    -- TODO: Make hue calc consistent w/ hsla.
     local mx = math.max(red, green, blue)
     local dlt = mx - math.min(red, green, blue)
     local hue = 0.0
@@ -632,6 +631,15 @@ function Clr.toHex(c)
          | math.tointeger(c.b * 0xff + 0.5) << 0x10
          | math.tointeger(c.g * 0xff + 0.5) << 0x08
          | math.tointeger(c.r * 0xff + 0.5)
+end
+
+---Returns a JSON string of a color.
+---@param c table color
+---@return string
+function Clr.toJson(c)
+    return string.format(
+        "{\"r\":%.4f,\"g\":%.4f,\"b\":%.4f,\"a\":%.4f}",
+        c.r, c.g, c.b, c.a)
 end
 
 ---Creates a red color.

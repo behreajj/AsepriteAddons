@@ -75,12 +75,7 @@ function Vec4:__sub(b)
 end
 
 function Vec4:__tostring()
-    return string.format(
-        "{ x: %.4f, y: %.4f, z: %.4f, w: %.4f }",
-        self.x,
-        self.y,
-        self.z,
-        self.w)
+    return Vec4.toJson(self)
 end
 
 function Vec4:__unm()
@@ -715,6 +710,15 @@ function Vec4.sub(a, b)
         a.y - b.y,
         a.z - b.z,
         a.w - b.w)
+end
+
+---Returns a JSON string of a vector.
+---@param v table vector
+---@return string
+function Vec4.toJson(v)
+    return string.format(
+        "{\"x\":%.4f,\"y\":%.4f,\"z\":%.4f,\"w\":%.4f}",
+        v.x, v.y, v.z, v.w)
 end
 
 ---Truncates a vector's components to integers.
