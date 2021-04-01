@@ -29,6 +29,8 @@ dlg:slider {
     value = defaults.resolution
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "handles",
     label = "Handles:",
@@ -36,6 +38,8 @@ dlg:slider {
     max = 255,
     value = defaults.handles
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "frames",
@@ -45,6 +49,8 @@ dlg:slider {
     value = defaults.frames
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "dots",
     label = "Dots:",
@@ -52,6 +58,8 @@ dlg:slider {
     max = 16,
     value = defaults.dots
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "dotOff",
@@ -61,6 +69,8 @@ dlg:slider {
     value = defaults.dotOff
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "angle",
     label = "Angle:",
@@ -69,6 +79,8 @@ dlg:slider {
     value = defaults.angle
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "scale",
     label = "Scale:",
@@ -76,29 +88,32 @@ dlg:number {
     decimals = 5
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "xOrigin",
-    label = "Origin X:",
+    label = "Origin:",
     text = string.format("%.1f", defaults.xOrigin),
     decimals = 5
 }
 
 dlg:number {
     id = "yOrigin",
-    label = "Origin Y:",
     text = string.format("%.1f", defaults.yOrigin),
     decimals = 5
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useStroke",
-    label = "Use Stroke:",
+    label = "Stroke:",
+    text = "Enable",
     selected = defaults.useStroke
 }
 
 dlg:slider {
     id = "strokeWeight",
-    label = "Stroke Weight:",
     min = 1,
     max = 64,
     value = defaults.strokeWeight
@@ -106,15 +121,18 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    label = "Stroke Color:",
     color = defaults.strokeClr
 }
+
+dlg:newrow { always = false }
 
 dlg:color {
     id = "dotClr",
     label = "Dot Color:",
     color = defaults.dotClr
 }
+
+dlg:newrow { always = false }
 
 -- Because ENTER is the key to start an animation loop,
 -- dialog focus is set to false here.

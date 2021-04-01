@@ -125,7 +125,7 @@ local function createConic(
             end
         else
             easing = function(t)
-                return AseUtilities.lerpHsvaNear(
+                return AseUtilities.lerpHslaNear(
                     a0, a1, a2, a3,
                     b0, b1, b2, b3, t)
             end
@@ -217,7 +217,7 @@ local dlg = Dialog { title = "Conic Gradient" }
 
 dlg:slider {
     id = "xOrigin",
-    label = "Origin X %:",
+    label = "Origin %:",
     min = 0,
     max = 100,
     value = defaults.xOrigin
@@ -225,11 +225,12 @@ dlg:slider {
 
 dlg:slider {
     id = "yOrigin",
-    label = "Origin Y %:",
     min = 0,
     max = 100,
     value = defaults.yOrigin
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "angle",
@@ -239,12 +240,16 @@ dlg:slider {
     value = defaults.angle
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "cw",
     label = "Chirality:",
     text = "Flip y axis.",
     selected = defaults.cw
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "quantization",
@@ -254,17 +259,20 @@ dlg:slider {
     value = defaults.quantization
 }
 
+dlg:newrow { always = false }
+
 dlg:color {
     id = "aColor",
-    label = "Color A:",
+    label = "Colors:",
     color = defaults.aColor
 }
 
 dlg:color {
     id = "bColor",
-    label = "Color B:",
     color = defaults.bColor
 }
+
+dlg:newrow { always = false }
 
 dlg:combobox {
     id = "easingMode",
@@ -273,19 +281,22 @@ dlg:combobox {
     options = easingModes
 }
 
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "easingFuncHue",
-    label = "Hue Easing:",
+    label = "Easing:",
     option = defaults.easingFuncHue,
     options = hueEasing
 }
 
 dlg:combobox {
     id = "easingFuncRGB",
-    label = "RGB Easing:",
     option = defaults.easingFuncRGB,
     options = rgbEasing
 }
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",

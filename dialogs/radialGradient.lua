@@ -144,7 +144,7 @@ local function createRadial(
             end
         else
             easing = function(t)
-                return AseUtilities.lerpHsvaNear(
+                return AseUtilities.lerpHslaNear(
                     a0, a1, a2, a3,
                     b0, b1, b2, b3, t)
             end
@@ -220,7 +220,7 @@ local dlg = Dialog { title = "Radial Gradient" }
 
 dlg:slider {
     id = "xOrigin",
-    label = "Origin X %:",
+    label = "Origin %:",
     min = 0,
     max = 100,
     value = defaults.xOrigin
@@ -228,11 +228,12 @@ dlg:slider {
 
 dlg:slider {
     id = "yOrigin",
-    label = "Origin Y %:",
     min = 0,
     max = 100,
     value = defaults.yOrigin
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "maxRad",
@@ -242,12 +243,16 @@ dlg:slider {
     value = defaults.maxRad
 }
 
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "distMetric",
     label = "Metric:",
     option = defaults.distMetric,
     options = metrics
 }
+
+dlg:newrow { always = false }
 
 dlg:number {
     id = "minkExp",
@@ -256,12 +261,16 @@ dlg:number {
     decimals = 5
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "bias",
     label = "Bias:",
     text = string.format("%.1f", defaults.bias),
     decimals = 5
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "quantization",
@@ -271,17 +280,20 @@ dlg:slider {
     value = defaults.quantization
 }
 
+dlg:newrow { always = false }
+
 dlg:color {
     id = "aColor",
-    label = "Color A:",
+    label = "Colors:",
     color = defaults.aColor
 }
 
 dlg:color {
     id = "bColor",
-    label = "Color B:",
     color = defaults.bColor
 }
+
+dlg:newrow { always = false }
 
 dlg:combobox {
     id = "easingMode",
@@ -290,19 +302,22 @@ dlg:combobox {
     options = easingModes
 }
 
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "easingFuncHue",
-    label = "HSV Easing:",
+    label = "Easing:",
     option = defaults.easingFuncHue,
     options = hsvEasing
 }
 
 dlg:combobox {
     id = "easingFuncRGB",
-    label = "RGB Easing:",
     option = defaults.easingFuncRGB,
     options = rgbEasing
 }
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",

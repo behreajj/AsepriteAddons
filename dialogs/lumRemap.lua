@@ -31,6 +31,13 @@ dlg:number {
     decimals = 5
 }
 
+dlg:check {
+    id = "normalize",
+    label = "Normalize:",
+    text = "Stretch Contrast",
+    selected = false
+}
+
 dlg:combobox {
     id = "easingMode",
     label = "Easing Mode:",
@@ -108,8 +115,8 @@ dlg:button {
             local blk = args.blk
             local wht = args.wht
             local easingMode = args.easingMode
+            local useNormalize = args.normalize
 
-            -- Determine method by standard.
             local lmethod = rec709
             if stdstr == "AVERAGE" then
                 lmethod = arithMean
@@ -192,7 +199,7 @@ dlg:button {
                         end
                     else
                         easing = function(t)
-                            return AseUtilities.lerpHsvaNear(
+                            return AseUtilities.lerpHslaNear(
                                 a0, a1, a2, a3,
                                 b0, b1, b2, b3, t)
                         end
@@ -243,7 +250,12 @@ dlg:button {
                         local srcItr = srcImg:pixels()
 
                         local i = 1
-                        local px = {}
+
+                        local minlum = 1.0
+                        local maxlum = 0.0
+                        local lums = {}
+                        local alphasSrc = {}
+
                         for srcClr in srcItr do
                             local hex = srcClr()
                             local b = (hex >> 0x10 & 0xff) * 0.00392156862745098
@@ -255,15 +267,17 @@ dlg:button {
                             b = b ^ gm
 
                             local lum = lmethod(r, g, b)
-                            local gryclr = easing(lum)
-
-                            -- Take alpha minimum.
-                            local aSrc = (hex >> 0x18 & 0xff)
-                            local aTrg = (gryclr >> 0x18 & 0xff)
-                            local amin = math.min(aSrc, aTrg) << 0x18
-                            px[i] = amin | (0x00ffffff & gryclr)
-
+                            minlum = math.min(minlum, lum)
+                            maxlum = math.max(maxlum, lum)
+                            lums[i] = lum
+                            alphasSrc[i] = hex >> 0x18 & 0xff
                             i = i + 1
+                        end
+
+                        local rangelum = maxlum - minlum
+                        local invrangelum = 1.0
+                        if rangelum ~= 0 then
+                            invrangelum = 1.0 / rangelum
                         end
 
                         local trgLyr = sprite:newLayer()
@@ -278,7 +292,17 @@ dlg:button {
 
                         i = 1
                         for trgClr in trgItr do
-                            trgClr(px[i])
+                            local lum = lums[i]
+                            if useNormalize then
+                                lum = (lum - minlum) * invrangelum
+                            end
+
+                            local gryclr = easing(lum)
+                            local aSrc = alphasSrc[i]
+                            local aTrg = (gryclr >> 0x18 & 0xff)
+                            local amin = math.min(aSrc, aTrg) << 0x18
+                            local hex = amin | (0x00ffffff & gryclr)
+                            trgClr(hex)
                             i = i + 1
                         end
 

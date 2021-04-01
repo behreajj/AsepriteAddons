@@ -17,80 +17,6 @@ local defaults = {
     easingFuncHue = "NEAR"
 }
 
-local dlg = Dialog { title = "Linear Gradient" }
-
-dlg:slider {
-    id = "xOrigin",
-    label = "Origin X %:",
-    min = 0,
-    max = 100,
-    value = defaults.xOrigin
-}
-
-dlg:slider {
-    id = "yOrigin",
-    label = "Origin Y %:",
-    min = 0,
-    max = 100,
-    value = defaults.yOrigin
-}
-
-dlg:slider {
-    id = "xDest",
-    label = "Dest X %:",
-    min = 0,
-    max = 100,
-    value = defaults.xDest
-}
-
-dlg:slider {
-    id = "yDest",
-    label = "Dest Y %:",
-    min = 0,
-    max = 100,
-    value = defaults.yDest
-}
-
-dlg:slider {
-    id = "quantization",
-    label = "Quantize:",
-    min = 0,
-    max = 32,
-    value = defaults.quantization
-}
-
-dlg:color {
-    id = "aColor",
-    label = "Color A:",
-    color = defaults.aColor
-}
-
-dlg:color {
-    id = "bColor",
-    label = "Color B:",
-    color = defaults.bColor
-}
-
-dlg:combobox {
-    id = "easingMode",
-    label = "Easing Mode:",
-    option = defaults.easingMode,
-    options = easingModes
-}
-
-dlg:combobox {
-    id = "easingFuncHue",
-    label = "Hue Easing:",
-    option = defaults.easingFuncHue,
-    options = hueEasing
-}
-
-dlg:combobox {
-    id = "easingFuncRGB",
-    label = "RGB Easing:",
-    option = defaults.easingFuncRGB,
-    options = rgbEasing
-}
 
 local function createLinear(
     sprite, img,
@@ -184,7 +110,7 @@ local function createLinear(
             end
         else
             easing = function(t)
-                return AseUtilities.lerpHsvaNear(
+                return AseUtilities.lerpHslaNear(
                     a0, a1, a2, a3,
                     b0, b1, b2, b3, t)
             end
@@ -258,6 +184,87 @@ local function createLinear(
         i = i + 1
     end
 end
+
+local dlg = Dialog { title = "Linear Gradient" }
+
+dlg:slider {
+    id = "xOrigin",
+    label = "Origin %:",
+    min = 0,
+    max = 100,
+    value = defaults.xOrigin
+}
+
+dlg:slider {
+    id = "yOrigin",
+    min = 0,
+    max = 100,
+    value = defaults.yOrigin
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "xDest",
+    label = "Dest %:",
+    min = 0,
+    max = 100,
+    value = defaults.xDest
+}
+
+dlg:slider {
+    id = "yDest",
+    min = 0,
+    max = 100,
+    value = defaults.yDest
+}
+
+dlg:slider {
+    id = "quantization",
+    label = "Quantize:",
+    min = 0,
+    max = 32,
+    value = defaults.quantization
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "aColor",
+    label = "Colors:",
+    color = defaults.aColor
+}
+
+dlg:color {
+    id = "bColor",
+    color = defaults.bColor
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "easingMode",
+    label = "Easing Mode:",
+    option = defaults.easingMode,
+    options = easingModes
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "easingFuncHue",
+    label = "Easing:",
+    option = defaults.easingFuncHue,
+    options = hueEasing
+}
+
+dlg:combobox {
+    id = "easingFuncRGB",
+    option = defaults.easingFuncRGB,
+    options = rgbEasing
+}
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",

@@ -1,34 +1,43 @@
 dofile("../support/aseutilities.lua")
 
+local defaults = {
+    cols = 8,
+    rows = 8,
+    aClr = Color(170, 170, 170, 255),
+    bClr = Color(85, 85, 85, 255)
+}
+
 local dlg = Dialog { title = "Checker" }
 
 dlg:slider {
     id = "cols",
-    label = "Columns:",
+    label = "Cells:",
     min = 2,
     max = 32,
-    value = 8
+    value = defaults.cols
 }
 
 dlg:slider {
     id = "rows",
-    label = "Rows:",
     min = 2,
     max = 32,
-    value = 8
+    value = defaults.rows
 }
+
+dlg:newrow { always = false }
 
 dlg:color {
     id = "aClr",
-    label = "Color A:",
-    color = Color(170, 170, 170, 255)
+    label = "Colors:",
+    color = defaults.aClr
 }
 
 dlg:color {
     id = "bClr",
-    label = "Color B:",
-    color = Color(85, 85, 85, 255)
+    color = defaults.bClr
 }
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",

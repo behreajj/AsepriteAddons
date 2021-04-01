@@ -20,11 +20,11 @@ local defaults = {
     fillClr = Color(255, 245, 215, 255)
 }
 
-local dlg = Dialog { title="Arc" }
+local dlg = Dialog { title = "Arc" }
 
 dlg:slider {
     id = "startAngle",
-    label = "Start Angle:",
+    label = "Angles:",
     min = 0,
     max = 360,
     value = defaults.startAngle
@@ -32,15 +32,17 @@ dlg:slider {
 
 dlg:slider {
     id = "stopAngle",
-    label = "Stop Angle:",
+    text = "Stop",
     min = 0,
     max = 360,
     value = defaults.stopAngle
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "startWeight",
-    label = "Start Weight:",
+    label = "Weights:",
     min = 0,
     max = 100,
     value = defaults.startWeight
@@ -48,58 +50,66 @@ dlg:slider {
 
 dlg:slider {
     id = "stopWeight",
-    label = "Stop Weight:",
     min = 0,
     max = 100,
     value = defaults.stopWeight
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "sectors",
-    label = "Sectors: ",
+    label = "Sectors:",
     min = 3,
     max = 64,
     value = defaults.sectors
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "margin",
-    label = "Margin: ",
+    label = "Margin:",
     min = 0,
     max = 100,
     value = defaults.margin
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "scale",
-    label = "Scale: ",
+    label = "Scale:",
     text = string.format("%.1f", defaults.scale),
     decimals = 5
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "xOrigin",
-    label = "Origin X: ",
+    label = "Origin:",
     text = string.format("%.1f", defaults.xOrigin),
     decimals = 5
 }
 
 dlg:number {
     id = "yOrigin",
-    label = "Origin Y: ",
     text = string.format("%.1f", defaults.yOrigin),
     decimals = 5
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useStroke",
-    label = "Use Stroke: ",
+    label = "Stroke:",
+    text = "Enable",
     selected = defaults.useStroke
 }
 
 dlg:slider {
     id = "strokeWeight",
-    label = "Stroke Weight:",
     min = 1,
     max = 64,
     value = defaults.strokeWeight
@@ -107,21 +117,24 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    label = "Stroke Color: ",
     color = defaults.strokeClr
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useFill",
-    label = "Use Fill: ",
+    label = "Fill:",
+    text = "Enable",
     selected = defaults.useFill
 }
 
 dlg:color {
     id = "fillClr",
-    label = "Fill Color: ",
     color = defaults.fillClr
 }
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",

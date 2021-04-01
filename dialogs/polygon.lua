@@ -26,6 +26,8 @@ dlg:slider {
     value = defaults.sides
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "angle",
     label = "Angle:",
@@ -34,6 +36,8 @@ dlg:slider {
     value = defaults.angle
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "scale",
     label = "Scale:",
@@ -41,29 +45,32 @@ dlg:number {
     decimals = 5
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "xOrigin",
-    label = "Origin X:",
+    label = "Origin:",
     text = string.format("%.1f", defaults.xOrigin),
     decimals = 5
 }
 
 dlg:number {
     id = "yOrigin",
-    label = "Origin Y:",
     text = string.format("%.1f", defaults.yOrigin),
     decimals = 5
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useStroke",
-    label = "Use Stroke:",
+    label = "Stroke:",
+    text = "Enable",
     selected = defaults.useStroke
 }
 
 dlg:slider {
     id = "strokeWeight",
-    label = "Stroke Weight:",
     min = 1,
     max = 64,
     value = defaults.strokeWeight
@@ -71,21 +78,24 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    label = "Stroke Color:",
     color = defaults.strokeClr
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useFill",
-    label = "Use Fill:",
+    label = "Fill:",
+    text = "Enable",
     selected = defaults.useFill
 }
 
 dlg:color {
     id = "fillClr",
-    label = "Fill Color:",
     color = defaults.fillClr
 }
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",

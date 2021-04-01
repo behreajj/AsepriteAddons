@@ -18,11 +18,11 @@ local defaults = {
     variance = 10
 }
 
-local dlg = Dialog { title="Brick" }
+local dlg = Dialog { title = "Brick" }
 
 dlg:slider {
     id = "cols",
-    label = "Columns:",
+    label = "Cells:",
     min = 2,
     max = 32,
     value = defaults.cols
@@ -30,19 +30,22 @@ dlg:slider {
 
 dlg:slider {
     id = "rows",
-    label = "Rows:",
     min = 2,
     max = 32,
     value = defaults.rows
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "offset",
-    label = "Offset:",
+    label = "Offset %:",
     min = -50,
     max = 50,
     value = defaults.offset
 }
+
+dlg:newrow { always = false }
 
 dlg:number {
     id = "aspect",
@@ -50,6 +53,8 @@ dlg:number {
     text = string.format("%.1f", defaults.aspect),
     decimals = 5
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "frequency",
@@ -59,6 +64,8 @@ dlg:slider {
     value = defaults.frequency
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "scale",
     label = "Scale:",
@@ -66,19 +73,22 @@ dlg:number {
     decimals = 5
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "xOrigin",
-    label = "Origin X:",
+    label = "Origin:",
     text = string.format("%.1f", defaults.xOrigin),
     decimals = 5
 }
 
 dlg:number {
     id = "yOrigin",
-    label = "Origin Y:",
     text = string.format("%.1f", defaults.yOrigin),
     decimals = 5
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "mortarThick",
@@ -88,17 +98,23 @@ dlg:slider {
     value = defaults.mortarThick
 }
 
+dlg:newrow { always = false }
+
 dlg:color {
     id = "mortarClr",
     label = "Mortar Color:",
     color = defaults.mortarClr
 }
 
+dlg:newrow { always = false }
+
 dlg:color{
     id = "brickClr",
     label = "Brick Color:",
     color = defaults.brickClr
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "variance",
@@ -107,6 +123,8 @@ dlg:slider {
     max = 100,
     value = defaults.variance
 }
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",

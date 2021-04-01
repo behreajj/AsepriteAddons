@@ -2,45 +2,48 @@ local dlg = Dialog { title = "Chromatic Aberration" }
 
 dlg:number {
     id = "xRed",
-    label = "Red Shift X:",
+    label = "Red Shift:",
     text = string.format("%.1f", 0.0),
     decimals = 5
 }
 
 dlg:number {
     id = "yRed",
-    label = "Red Shift Y:",
     text = string.format("%.1f", 0.0),
     decimals = 5
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "xGreen",
-    label = "Green Shift X:",
+    label = "Green Shift:",
     text = string.format("%.1f", 0.0),
     decimals = 5
 }
 
 dlg:number {
     id = "yGreen",
-    label = "Green Shift Y:",
     text = string.format("%.1f", 0.0),
     decimals = 5
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "xBlue",
-    label = "Blue Shift X:",
+    label = "Blue Shift:",
     text = string.format("%.1f", 0.0),
     decimals = 5
 }
 
 dlg:number {
     id = "yBlue",
-    label = "Blue Shift Y:",
     text = string.format("%.1f", 0.0),
     decimals = 5
 }
+
+dlg:newrow { always = false }
 
 -- dlg:check {
 --     id = "invertMask",

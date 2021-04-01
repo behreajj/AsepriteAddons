@@ -8,7 +8,7 @@ local prsStrs = {
 }
 
 local defaults = {
-    resolution = 8,
+    resolution = 16,
     preset = "SMOOTHER",
     useRed = true,
     useGreen = true,
@@ -57,6 +57,8 @@ dlg:slider {
     value = defaults.resolution
 }
 
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "preset",
     label = "Preset:",
@@ -64,41 +66,52 @@ dlg:combobox {
     option = defaults.preset
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useRed",
-    label = "Red:",
+    -- label = "Red:",
+    label = "Channels:",
+    text = "R",
     selected = defaults.useRed
 }
 
 dlg:check {
     id = "useGreen",
-    label = "Green:",
+    -- label = "Green:",
+    text = "G",
     selected = defaults.useGreen
 }
 
 dlg:check {
     id = "useBlue",
-    label = "Blue:",
+    -- label = "Blue:",
+    text = "B",
     selected = defaults.useBlue
 }
 
 dlg:check {
     id = "useAlpha",
-    label = "Alpha:",
+    -- label = "Alpha:",
+    text = "A",
     selected = defaults.useAlpha
 }
 
 dlg:check {
     id = "useGray",
-    label = "Gray:",
+    -- label = "Gray:",
+    text = "V",
     selected = defaults.useGray
 }
 
 dlg:check {
     id = "useIdx",
-    label = "Index:",
+    -- label = "Index:",
+    text = "I",
     selected = defaults.useIdx
 }
+
+dlg:newrow { always = false }
 
 dlg:number {
     id = "gamma",
@@ -106,6 +119,8 @@ dlg:number {
     text = string.format("%.1f", defaults.gamma),
     decimals = 5
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "quantization",
@@ -115,13 +130,7 @@ dlg:slider {
     value = defaults.quantization
 }
 
-dlg:button {
-    id = "cancel",
-    text = "CANCEL",
-    onclick = function()
-        dlg:close()
-    end
-}
+dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",
@@ -180,6 +189,14 @@ dlg:button {
             }
 
         end
+    end
+}
+
+dlg:button {
+    id = "cancel",
+    text = "CANCEL",
+    onclick = function()
+        dlg:close()
     end
 }
 

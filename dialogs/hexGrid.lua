@@ -16,7 +16,7 @@ local defaults = {
     fillClr = Color(255, 245, 215, 255)
 }
 
-local dlg = Dialog { title="Hexagon Grid" }
+local dlg = Dialog { title = "Hexagon Grid" }
 
 dlg:slider {
     id = "rings",
@@ -26,6 +26,8 @@ dlg:slider {
     value = defaults.rings
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "scale",
     label = "Cell Size:",
@@ -33,19 +35,22 @@ dlg:number {
     decimals = 5
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "xOrigin",
-    label = "Origin X:",
+    label = "Origin:",
     text = string.format("%.1f", defaults.xOrigin),
     decimals = 5
 }
 
 dlg:number {
     id = "yOrigin",
-    label = "Origin Y:",
     text = string.format("%.1f", defaults.yOrigin),
     decimals = 5
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "margin",
@@ -55,15 +60,17 @@ dlg:slider {
     value = defaults.margin
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useStroke",
-    label = "Use Stroke:",
+    label = "Stroke:",
+    text = "Enable",
     selected = defaults.useStroke
 }
 
 dlg:slider {
     id = "strokeWeight",
-    label = "Stroke Weight:",
     min = 1,
     max = 64,
     value = defaults.strokeWeight
@@ -71,21 +78,24 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    label = "Stroke Color:",
     color = defaults.strokeClr
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useFill",
-    label = "Use Fill:",
+    label = "Fill:",
+    text = "Enable",
     selected = defaults.useFill
 }
 
 dlg:color {
     id = "fillClr",
-    label = "Fill Color:",
     color = defaults.fillClr
 }
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",
