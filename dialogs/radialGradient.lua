@@ -194,21 +194,16 @@ local function createRadial(
         local xPx = i % w
         local yPx = i // w
 
-        if useQuantize then
-            xPx = xPx * wInv
-            yPx = yPx * hInv
-
-            xPx = delta * math.floor(0.5 + xPx * levels)
-            yPx = delta * math.floor(0.5 + yPx * levels)
-
-            xPx = xPx * w
-            yPx = yPx * h
-        end
-
         local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
         local fac = dst * normDist
+
         fac = math.min(1.0, math.max(0.0, fac))
         fac = fac ^ valBias
+
+        if useQuantize then
+            fac = delta * math.floor(0.5 + fac * levels)
+        end
+
         elm(easing(fac))
 
         i = i + 1

@@ -17,7 +17,6 @@ local defaults = {
     easingFuncHue = "NEAR"
 }
 
-
 local function createLinear(
     sprite, img,
     xOrigin, yOrigin,
@@ -161,23 +160,16 @@ local function createLinear(
         local xPx = i % w
         local yPx = i // w
 
-        if useQuantize then
-            xPx = xPx * wInv
-            yPx = yPx * hInv
-
-            xPx = delta * math.floor(xPx * levels)
-            yPx = delta * math.floor(yPx * levels)
-
-            xPx = xPx * w
-            yPx = yPx * h
-        end
-
         local cx = xOrPx - xPx
         local cy = yOrPx - yPx
 
         -- dot(c, b) / dot(b, b)
         local cb = (cx * bx + cy * by) * bbInv
         local fac = math.max(0.0, math.min(1.0, cb))
+
+        if useQuantize then
+            fac = delta * math.floor(0.5 + fac * levels)
+        end
 
         elm(easing(fac))
 

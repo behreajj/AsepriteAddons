@@ -1,3 +1,8 @@
+dofile("../support/utilities.lua")
+dofile("../support/aseutilities.lua")
+
+local hueEasing = { "NEAR", "FAR" }
+
 local dlg = Dialog { title="Palette Generator" }
 
 local ryb = {
@@ -17,6 +22,7 @@ local ryb = {
     Color( 94,  19, 136), -- 0xFF88135E
     Color(137,   6, 109), -- 0xFF6D0689
     Color(191,   0,  64), -- 0xFF4000BF
+    Color(255,  0,    0), -- 0xFF0000FF
 }
 
 local rgb = {
@@ -36,7 +42,7 @@ local rgb = {
 
 dlg:shades {
     id = "hues",
-    label = "Hues:",
+    label = "Preview:",
     colors = ryb,
     -- mode = "pick",
     mode = "sort",
@@ -54,11 +60,38 @@ dlg:shades {
 }
 
 dlg:slider {
+    id = "samples",
+    label = "Samples:",
+    min = 1,
+    max = 32,
+    value = 12
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
     id = "shades",
     label = "Shades:",
     min = 1,
     max = 32,
-    value = 8
+    value = 7
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "hueStart",
+    label = "Hue:",
+    min = 0,
+    max = 360,
+    value = 0
+}
+
+dlg:slider {
+    id = "hueEnd",
+    min = 0,
+    max = 360,
+    value = 240
 }
 
 dlg:newrow { always = false }
@@ -66,7 +99,7 @@ dlg:newrow { always = false }
 dlg:slider {
     id = "saturation",
     label = "Saturation:",
-    min = 1,
+    min = 0,
     max = 100,
     value = 100
 }
@@ -76,16 +109,25 @@ dlg:newrow { always = false }
 dlg:slider {
     id = "minLight",
     label = "Light:",
-    min = 1,
+    min = 0,
     max = 100,
-    value = 15
+    value = 10
 }
 
 dlg:slider {
     id = "maxLight",
     min = 0,
-    max = 99,
+    max = 100,
     value = 85
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "easingFuncHue",
+    label = "Easing:",
+    option = "NEAR",
+    options = hueEasing
 }
 
 dlg:newrow { always = false }
@@ -93,7 +135,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "inclGray",
     label = "Include Gray: ",
-    selected = true
+    selected = false
 }
 
 dlg:newrow { always = false }
@@ -106,39 +148,67 @@ dlg:button {
         local args = dlg.data
         if args.ok then
 
-            local lenHues = #args.hues
+            local sat = args.saturation * 0.01
+
+            local lenSamples = args.samples or 8
             local lenShades = args.shades or 8
-            local inclGray = args.inclGray or false
-            local totLen = lenHues * lenShades
+            local inclGray = args.inclGray or (sat <= 0)
+            local totLen = 0
+            if sat > 0 then
+                totLen = lenSamples * lenShades
+            end
             local grayLen = 0
             if inclGray then grayLen = lenShades end
             local palette = Palette(totLen + grayLen)
 
+            local hueStart = args.hueStart * 0.002777777777777778
+            local hueEnd = args.hueEnd * 0.002777777777777778
+
+            local hueFunc = nil
+            if args.easingFuncHue == "NEAR" then
+                hueFunc = function(a, b, t) 
+                    return Utilities.lerpAngleNear(a, b, t, 1.0)
+                end
+            elseif args.easingFuncHue == "FAR" then
+                hueFunc = function(a, b, t)
+                    return Utilities.lerpAngleFar(a, b, t, 1.0)
+                end
+            end
+
             local lmin = args.minLight * 0.01
             local lmax = args.maxLight * 0.01
 
-            local sat = args.saturation * 0.01
-
             local k = 0
-            local jToFac = 1.0 / (lenShades - 1.0)
-            for i = 1, lenHues, 1 do
-                local clr = args.hues[i]
-                local h = clr.hslHue
-                local sold = clr.hslSaturation
-                local a = clr.alpha
-                local snew = sold * sat
-                for j = 1, lenShades, 1 do
-                    local t = (j - 1.0) * jToFac
-                    local u = 1.0 - t
-                    local lnew = u * lmin + t * lmax
+            local jToFac = 1.0
+            if lenShades > 1 then jToFac = 1.0 / (lenShades - 1.0) end
 
-                    local newclr = Color {
-                        h = h,
-                        s = snew,
-                        l = lnew,
-                        a = a }
-                    palette:setColor(k, newclr)
-                    k = k + 1
+            if sat > 0 then
+                local iToFac = 1.0
+                if lenSamples > 1 then iToFac = 1.0 / (lenSamples - 1.0) end
+                for i = 1, lenSamples, 1 do
+                    local iFac = (i - 1.0) * iToFac
+                    local hueFac = hueFunc(hueStart, hueEnd, iFac)
+                    local hex = AseUtilities.lerpColorArr(args.hues, hueFac)
+                    local clr = Color(hex)
+
+                    -- TODO: How to factor in source lightness?
+                    local h = clr.hslHue
+                    local sold = clr.hslSaturation
+                    local snew = sold * sat
+                    local a = clr.alpha
+
+                    for j = 1, lenShades, 1 do
+                        local jFac = (j - 1.0) * jToFac
+                        local lnew = (1.0 - jFac) * lmin + jFac * lmax
+
+                        local newclr = Color {
+                            h = h,
+                            s = snew,
+                            l = lnew,
+                            a = a }
+                        palette:setColor(k, newclr)
+                        k = k + 1
+                    end
                 end
             end
 
@@ -157,7 +227,11 @@ dlg:button {
                 end
             end
 
-            app.activeSprite:setPalette(palette)
+            local sprite = app.activeSprite
+            if sprite == nil then
+                sprite = Sprite(64, 64) 
+            end
+            sprite:setPalette(palette)
             app.refresh()
         end
     end

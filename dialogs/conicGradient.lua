@@ -182,11 +182,6 @@ local function createConic(
         local xNorm = xPoint * wInv
         local yNorm = yPoint * hInv
 
-        if useQuantize then
-            xNorm = delta * math.floor(0.5 + xNorm * levels)
-            yNorm = delta * math.floor(0.5 + yNorm * levels)
-        end
-
         -- Bring coordinates from [0.0, 1.0] to [-1.0, 1.0].
         local xSigned = xNorm + xNorm - 1.0
         local ySigned = 1.0 - (yNorm + yNorm)
@@ -205,6 +200,10 @@ local function createConic(
         -- Bring angle into range [0.0, 1.0] by subtracting floor.
         -- Alternatively, use angleNormed % 1.0.
         local fac = angleNormed - math.floor(angleNormed)
+
+        if useQuantize then
+            fac = delta * math.floor(0.5 + fac * levels)
+        end
 
         -- Set element to integer composite.
         elm(easing(fac))

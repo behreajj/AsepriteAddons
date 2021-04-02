@@ -76,7 +76,7 @@ dlg:button {
                         local blueLayer = sprite:newLayer()
 
                         -- Name layers.
-                        bkgLayer.name = "Background"
+                        bkgLayer.name = "Black"
                         redLayer.name = "Red"
                         greenLayer.name = "Green"
                         blueLayer.name = "Blue"
@@ -116,16 +116,6 @@ dlg:button {
                         local greenMask = 0xff00ff00
                         local blueMask  = 0xffff0000
                         local bkgClr    = 0xff000000
-                        -- if args.invertMask then
-                            -- redMask =   0xffffff00
-                            -- greenMask = 0xffff00ff
-                            -- blueMask =  0xff00ffff
-                            -- bkgClr = 0xffffffff
-
-                            -- redLayer.blendMode = BlendMode.SUBTRACT
-                            -- greenLayer.blendMode = BlendMode.SUBTRACT
-                            -- blueLayer.blendMode = BlendMode.SUBTRACT
-                        -- end
 
                         -- Fill background.
                         local bkgCel = sprite:newCel(bkgLayer, cel.frame)

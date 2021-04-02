@@ -37,31 +37,35 @@ dlg:slider {
     value = 50
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "minScale",
-    label = "Min Scale:",
+    label = "Scale:",
     text = string.format("%.1f", 8.0),
     decimals = 5
 }
 
 dlg:number {
     id = "maxScale",
-    label = "Max Scale:",
     text = string.format("%.1f", 18.0),
     decimals = 5
 }
 
+dlg:newrow { always = false }
+
 dlg:color {
     id = "aColor",
-    label = "Color A:",
+    label = "Colors:",
     color = Color(0, 127, 255, 255)
 }
 
 dlg:color {
     id = "bColor",
-    label = "Color B:",
     color = Color(255, 0, 127, 255)
 }
+
+dlg:newrow { always = false }
 
 dlg:combobox {
     id = "easingMode",

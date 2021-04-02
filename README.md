@@ -1,6 +1,6 @@
 # Aseprite Add-ons
 
-An appendix to the Medium article, ["How To Script Aseprite Tools in Lua"](https://behreajj.medium.com/how-to-script-aseprite-tools-in-lua-8f849b08733). Open scripts from the `dialogs` directory in Aseprite to see results.
+An appendix to the Medium article, ["How To Script Aseprite Tools in Lua"](https://behreajj.medium.com/how-to-script-aseprite-tools-in-lua-8f849b08733). Copy `dialog` and `support` folders to Aseprite scripts folder. In Aseprite, open scripts from the `dialogs` folder.
 
 ## References
 
@@ -30,7 +30,7 @@ This repo includes
 
   ![Checker](screencaps/checker.png)
 
-- Color curve presets. ([Test image source](https://en.wikipedia.org/wiki/File:Vermeer-view-of-delft.jpg).)
+- Color curve presets. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
 
   ![Color Curve](screencaps/colorCurve.png)
 
@@ -61,6 +61,10 @@ This repo includes
 - Luminance (grayscale) remapping. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
 
   ![Luminance remapping](screencaps/lumRemap.png)
+
+- An RYB palette generator.
+
+  ![Palette Generator](screencaps/paletteGen.png)
 
 - A regular convex polygon.
 

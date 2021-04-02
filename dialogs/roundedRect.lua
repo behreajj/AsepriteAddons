@@ -39,52 +39,45 @@ dlg:slider {
     value = defaults.handles
 }
 
--- There is just not enough room for these.
--- dlg:separator {
---     id = "separator1",
---     text = "Edges"
--- }
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "lbx",
-    label = "Left %:",
+    label = "Horizontal %:",
     min = 0,
     max = 100,
     value = defaults.lbx
 }
 
 dlg:slider {
+    id = "ubx",
+    min = 0,
+    max = 100,
+    value = defaults.ubx
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
     id = "lby",
-    label = "Top %:",
+    label = "Vertical %:",
     min = 0,
     max = 100,
     value = defaults.lby
 }
 
 dlg:slider {
-    id = "ubx",
-    label = "Right %:",
-    min = 0,
-    max = 100,
-    value = defaults.ubx
-}
-
-dlg:slider {
     id = "uby",
-    label = "Bottom %:",
     min = 0,
     max = 100,
     value = defaults.uby
 }
 
--- dlg:separator {
---     id = "separator2",
---     text = "Corners"
--- }
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "tl",
-    label = "Top Left %:",
+    label = "Corners %:",
     min = -50,
     max = 50,
     value = defaults.tl
@@ -92,15 +85,15 @@ dlg:slider {
 
 dlg:slider {
     id = "tr",
-    label = "Top Right %:",
     min = -50,
     max = 50,
     value = defaults.tr
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "br",
-    label = "Bottom Right %:",
     min = -50,
     max = 50,
     value = defaults.br
@@ -108,26 +101,22 @@ dlg:slider {
 
 dlg:slider {
     id = "bl",
-    label = "Bottom Left %:",
     min = -50,
     max = 50,
     value = defaults.bl
 }
 
--- dlg:separator {
---     id = "separator3",
---     text = "Display"
--- }
+dlg:newrow { always = false }
 
 dlg:check {
     id = "useStroke",
-    label = "Use Stroke:",
+    label = "Stroke:",
+    text = "Enable",
     selected = defaults.useStroke
 }
 
 dlg:slider {
     id = "strokeWeight",
-    label = "Stroke Weight:",
     min = 1,
     max = 64,
     value = defaults.strokeWeight
@@ -135,21 +124,24 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    label = "Stroke Color:",
     color = defaults.strokeClr
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useFill",
-    label = "Use Fill:",
+    label = "Fill:",
+    text = "Enable",
     selected = defaults.useFill
 }
 
 dlg:color {
     id = "fillClr",
-    label = "Fill Color:",
     color = defaults.fillClr
 }
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",

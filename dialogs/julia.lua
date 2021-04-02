@@ -11,6 +11,8 @@ dlg:slider {
     value = 16
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "rSeed",
     label = "Seed R:",
@@ -18,6 +20,8 @@ dlg:slider {
     max = 100,
     value = 80
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "phiSeed",
@@ -27,6 +31,8 @@ dlg:slider {
     value = 90
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "power",
     label = "Power:",
@@ -35,35 +41,26 @@ dlg:slider {
     value = 2
 }
 
+dlg:newrow { always = false }
+
 dlg:color {
     id = "aColor",
-    label = "Color A:",
+    label = "Colors:",
     color = Color(32, 32, 32, 255)
 }
 
 dlg:color {
     id = "bColor",
-    label = "Color B:",
     color = Color(255, 245, 215, 255)
 }
+
+dlg:newrow { always = false }
 
 dlg:check {
     id = "useSmooth",
     label = "Smooth Gradient:",
     selected = false
 }
-
-local function lerpRGB(
-    ar, ag, ab, aa,
-    br, bg, bb, ba, t)
-    local u = 1.0 - t
-    -- TODO: Refer to AseUtilities instead.
-    return app.pixelColor.rgba(
-        math.tointeger(u * ar + t * br),
-        math.tointeger(u * ag + t * bg),
-        math.tointeger(u * ab + t * bb),
-        math.tointeger(u * aa + t * ba))
-end
 
 local function julia(seed, z, power, res)
     if z.real == 0.0 and z.imag == 0.0 then return 0.0 end
@@ -180,7 +177,7 @@ dlg:button {
                 local st = Complex.new(xSigned, ySigned)
                 local fac = func(seed, st, power, res)
 
-                local clr = lerpRGB(
+                local clr = AseUtilities.lerpRgba(
                     a0, a1, a2, a3,
                     b0, b1, b2, b3,
                     fac)

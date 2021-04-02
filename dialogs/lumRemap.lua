@@ -24,12 +24,16 @@ dlg:combobox {
     options = methods
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "gamma",
     label = "Gamma:",
     text = string.format("%.1f", defaults.gamma),
     decimals = 5
 }
+
+dlg:newrow { always = false }
 
 dlg:check {
     id = "normalize",
@@ -38,6 +42,8 @@ dlg:check {
     selected = false
 }
 
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "easingMode",
     label = "Easing Mode:",
@@ -45,31 +51,36 @@ dlg:combobox {
     options = easingModes
 }
 
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "easingFuncHue",
-    label = "Hue Easing:",
+    label = "Easing:",
     option = defaults.easingFuncHue,
     options = hueEasing
 }
 
 dlg:combobox {
     id = "easingFuncRGB",
-    label = "RGB Easing:",
     option = defaults.easingFuncRGB,
     options = rgbEasing
 }
 
+dlg:newrow { always = false }
+
 dlg:color {
     id = "blk",
-    label = "Black:",
+    label = "Colors:",
     color = defaults.blk
 }
 
 dlg:color {
     id = "wht",
-    label = "White:",
+    -- label = "White:",
     color = defaults.wht
 }
+
+dlg:newrow { always = false }
 
 local function rec240(r01, g01, b01)
     return 0.212 * r01
