@@ -3,8 +3,6 @@ dofile("../support/aseutilities.lua")
 
 local hueEasing = { "NEAR", "FAR" }
 
-local dlg = Dialog { title="Palette Generator" }
-
 local ryb = {
     Color(255,  0,    0), -- 0xFF0000FF
     Color(255,  80,   0), -- 0xFF0050FF
@@ -40,12 +38,14 @@ local rgb = {
     Color(255,   0, 128, 255)
 }
 
+local dlg = Dialog { title = "Palette Generator" }
+
 dlg:shades {
     id = "hues",
     label = "Preview:",
     colors = ryb,
-    -- mode = "pick",
-    mode = "sort",
+    mode = "pick",
+    -- mode = "sort",
     onclick = function(ev)
 
         -- Needs to be "sort" to iterate over
@@ -108,7 +108,7 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "minLight",
-    label = "Light:",
+    label = "Lightness:",
     min = 0,
     max = 100,
     value = 10
@@ -188,7 +188,7 @@ dlg:button {
                 for i = 1, lenSamples, 1 do
                     local iFac = (i - 1.0) * iToFac
                     local hueFac = hueFunc(hueStart, hueEnd, iFac)
-                    local hex = AseUtilities.lerpColorArr(args.hues, hueFac)
+                    local hex = AseUtilities.lerpColorArr(ryb, hueFac)
                     local clr = Color(hex)
 
                     -- TODO: How to factor in source lightness?
@@ -229,7 +229,7 @@ dlg:button {
 
             local sprite = app.activeSprite
             if sprite == nil then
-                sprite = Sprite(64, 64) 
+                sprite = Sprite(64, 64)
             end
             sprite:setPalette(palette)
             app.refresh()
