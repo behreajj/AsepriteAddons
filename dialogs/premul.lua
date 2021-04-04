@@ -19,7 +19,6 @@ dlg:button {
                         local cel = cels[j]
                         local image = cel.image
                         local pxitr = image:pixels()
-
                         for clr in pxitr do
                             local hex = clr()
                             local ai = hex >> 0x18 & 0xff

@@ -23,21 +23,6 @@ local ryb = {
     Color(255,  0,    0), -- 0xFF0000FF
 }
 
-local rgb = {
-    Color(255,   0,   0, 255), -- Red
-    Color(255, 128,   0, 255), -- Orange
-    Color(255, 255,   0, 255), -- Yellow
-    Color(128, 255,   0, 255),
-    Color(  0, 255,   0, 255), -- Green
-    Color(  0, 255, 128, 255),
-    Color(  0, 255, 255, 255), -- Cyan
-    Color(  0, 128, 255, 255),
-    Color(  0,   0, 255, 255), -- Blue
-    Color(128,   0, 255, 255),
-    Color(255,   0, 255, 255), -- Magenta
-    Color(255,   0, 128, 255)
-}
-
 local dlg = Dialog { title = "Palette Generator" }
 
 dlg:shades {
