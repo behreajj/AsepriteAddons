@@ -2,11 +2,11 @@ local preview = {
     Color(255, 128, 128),
     Color(218, 218, 128),
     Color(127, 255, 128),
-    Color(37, 218, 128),
-    Color(0, 128, 128),
-    Color(37, 37, 128),
-    Color(127, 0, 128),
-    Color(218, 37, 128)
+    Color( 37, 218, 128),
+    Color(  0, 128, 128),
+    Color( 37,  37, 128),
+    Color(127,   0, 128),
+    Color(218,  37, 128)
 }
 
 local dlg = Dialog { title = "Normal Palette" }

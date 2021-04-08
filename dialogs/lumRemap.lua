@@ -1,9 +1,17 @@
 dofile("../support/aseutilities.lua")
 
+-- TODO: Add indexed support?
 local easingModes = { "RGB", "HSL", "HSV", "PALETTE" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
 local hueEasing = { "NEAR", "FAR" }
-local methods = { "AVERAGE", "HSV", "HSL", "REC_240", "REC_601", "REC_709" }
+local methods = {
+    "AVERAGE",
+    "HSV",
+    "HSL",
+    "REC_240",
+    "REC_601",
+    "REC_709"
+}
 
 local defaults = {
     standard = "REC_709",
@@ -76,7 +84,6 @@ dlg:color {
 
 dlg:color {
     id = "wht",
-    -- label = "White:",
     color = defaults.wht
 }
 
@@ -218,7 +225,6 @@ dlg:button {
 
                 elseif easingMode == "PALETTE" then
 
-                    -- TODO: Revise all gradients to use this pattern.
                     local clrs = AseUtilities.paletteToColorArr(
                         sprite.palettes[1])
                     easing = function(t)
@@ -294,7 +300,7 @@ dlg:button {
                         local trgLyr = sprite:newLayer()
                         trgLyr.name = args.standard
 
-                        local trgCel = sprite:newCel(trgLyr, 1)
+                        local trgCel = sprite:newCel(trgLyr, srcCel.frame)
                         trgCel.position = srcCel.position
                         trgCel.image = srcImg:clone()
 

@@ -30,12 +30,7 @@ dlg:shades {
     label = "Preview:",
     colors = ryb,
     mode = "pick",
-    -- mode = "sort",
     onclick = function(ev)
-
-        -- Needs to be "sort" to iterate over
-        -- in OK, but needs to be "pick" to fire this.
-
         if ev.button == MouseButton.LEFT then
             app.fgColor = ev.color
         elseif ev.button == MouseButton.RIGHT then

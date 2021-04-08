@@ -37,8 +37,6 @@ local function createConic(
     local xOriginNorm = xOrigin or 0.0
     local yOriginNorm = yOrigin or 0.0
 
-    -- TODO: Quantization options for
-    -- polar and Cartesian?
     local useQuantize = quantLvl > 0.0
     local delta = 1.0
     local levels = 1.0
@@ -316,6 +314,7 @@ dlg:button {
             local layer = sprite.layers[#sprite.layers]
             local cel = sprite:newCel(layer, 1)
 
+            -- TODO: Option to animate?
             createConic(
                 sprite,
                 cel.image,

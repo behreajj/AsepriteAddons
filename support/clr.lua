@@ -97,7 +97,7 @@ end
 
 ---Evaluates whether all color channels are 
 ---greater than zero.
----@param a table
+---@param a table color
 ---@return boolean
 function Clr.all(a)
     return a.a > 0.0
@@ -108,7 +108,7 @@ end
 
 ---Evaluates whether the color's alpha channel
 ---is greater than zero.
----@param a table
+---@param a table color
 ---@return boolean
 function Clr.any(a)
     return a.a > 0.0
@@ -258,11 +258,18 @@ function Clr.hslaToRgba(hue, sat, light, alpha)
     local l = light or 1.0
     local a = alpha or 1.0
 
-    if l <= 0.0 then return Clr.new(0.0, 0.0, 0.0, a) end
-    if l >= 1.0 then return Clr.new(1.0, 1.0, 1.0, a) end
+    if l <= 0.0 then
+        return Clr.new(0.0, 0.0, 0.0, a)
+    end
+
+    if l >= 1.0 then
+        return Clr.new(1.0, 1.0, 1.0, a)
+    end
 
     local s = sat or 1.0
-    if s <= 0.0 then return Clr.new(l, l, l, a) end
+    if s <= 0.0 then
+        return Clr.new(l, l, l, a)
+    end
 
     local q = l + s - l * s
     if l < 0.5 then q = l * (1.0 + s) end
@@ -311,11 +318,12 @@ end
 ---@param alpha number transparency
 ---@return table
 function Clr.hsvaToRgba(hue, sat, val, alpha)
-    local h = 6.0 * (hue % 1.0)
+    local h = hue or 0.0
     local s = sat or 1.0
     local v = val or 1.0
     local a = alpha or 1.0
 
+    h = 6.0 * (h % 1.0)
     local sector = math.tointeger(h)
     local tint1 = v * (1.0 - s)
     local tint2 = v * (1.0 - s * (h - sector))
@@ -516,10 +524,22 @@ end
 
 ---Evaluates whether the color's alpha channel
 ---is less than or equal to zero.
----@param a table
+---@param a table color
 ---@return boolean
 function Clr.none(a)
     return a.a <= 0.0
+end
+
+---Multiplies a color's red, green and blue
+---channels by its alpha channel.
+---@param a table color
+---@return table
+function Clr.preMul(a)
+    return Clr.new(
+        a.r * a.a,
+        a.g * a.a,
+        a.b * a.a,
+        a.a)
 end
 
 ---Reduces the granularity of a color's components.
@@ -583,24 +603,26 @@ end
 ---@param alpha number transparency
 ---@return table
 function Clr.rgbaToHsva(red, green, blue, alpha)
-    -- TODO: Make hue calc consistent w/ hsla.
     local mx = math.max(red, green, blue)
-    local dlt = mx - math.min(red, green, blue)
+    local mn = math.min(red, green, blue)
+    local diff = mx - mn
     local hue = 0.0
-    if dlt ~= 0.0 then
+    if diff ~= 0.0 then
         if red == mx then
-            hue = (green - blue) / dlt
+            hue = (green - blue) / diff
+            if green < blue then
+                hue = hue + 6.0
+            end
         elseif green == mx then
-            hue = 2.0 + (blue - red) / dlt
+            hue = 2.0 + (blue - red) / diff
         else
-            hue = 4.0 + (red - green) / dlt
+            hue = 4.0 + (red - green) / diff
         end
 
         hue = hue * 0.16666666666666667
-        if hue < -0.0 then hue = hue + 1.0 end
     end
     local sat = 0.0
-    if mx ~= 0.0 then sat = dlt / mx end
+    if mx ~= 0.0 then sat = diff / mx end
     local a = alpha or 1.0
     return { h = hue, s = sat, v = mx, a = a }
 end
@@ -624,13 +646,24 @@ end
 
 ---Converts from a color to a hexadecimal integer;
 ---channels are packed in 0xAABBGGRR order.
----@param c table
+---@param c table color
 ---@return integer
 function Clr.toHex(c)
     return math.tointeger(c.a * 0xff + 0.5) << 0x18
          | math.tointeger(c.b * 0xff + 0.5) << 0x10
          | math.tointeger(c.g * 0xff + 0.5) << 0x08
          | math.tointeger(c.r * 0xff + 0.5)
+end
+
+---Converts from a color to a web-friendly hexadecimal
+---string; channels are packed in #RRGGBB order.
+---@param c table color
+---@return string
+function Clr.toHexWeb(c)
+    return "#" .. string.format("%X",
+        math.tointeger(c.r * 0xff + 0.5) << 0x10
+      | math.tointeger(c.g * 0xff + 0.5) << 0x08
+      | math.tointeger(c.b * 0xff + 0.5))
 end
 
 ---Returns a JSON string of a color.
