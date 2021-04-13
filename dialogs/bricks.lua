@@ -126,6 +126,26 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "varyHue",
+    text = "H",
+    selected = false
+}
+
+dlg:check {
+    id = "varySat",
+    text = "S",
+    selected = true
+}
+
+dlg:check {
+    id = "varyLight",
+    text = "L",
+    selected = true
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "ok",
     text = "OK",
@@ -156,6 +176,8 @@ dlg:button {
                 64, 64, mesh.name,
                 { brickClr, mortarClr })
             local layer = sprite.layers[#sprite.layers]
+
+            -- TODO: Set this to current frame?
             local cel = sprite:newCel(layer, 1)
             local brush = Brush(args.mortarThick)
 
@@ -179,13 +201,23 @@ dlg:button {
                 app.transaction(function()
                     for i = 1, sepLen, 1 do
 
-                        -- Shift HSL by random amount.
-                        local hue = (hueBrick +
-                            (varHue * math.random() - vhHalf)) % 360.0
-                        local saturation = math.max(0.0, math.min(1.0,
-                            satBrick + (varNrm * math.random() - vnHalf)))
-                        local lightness = math.max(0.0, math.min(1.0,
-                            lgtBrick + (varNrm * math.random() - vnHalf)))
+                        local hue = hueBrick
+                        if args.varyHue then
+                            hue = (hueBrick +
+                                (varHue * math.random() - vhHalf)) % 360.0
+                        end
+
+                        local saturation = satBrick
+                        if args.varySat then
+                            saturation = math.max(0.0, math.min(1.0,
+                                satBrick + (varNrm * math.random() - vnHalf)))
+                        end
+
+                        local lightness = lgtBrick
+                        if args.varyLight then
+                            lightness = math.max(0.0, math.min(1.0,
+                                lgtBrick + (varNrm * math.random() - vnHalf)))
+                        end
 
                         -- Composite HSLA.
                         local variety = Color {

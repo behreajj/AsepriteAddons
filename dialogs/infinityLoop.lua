@@ -109,19 +109,31 @@ dlg:check {
     id = "useStroke",
     label = "Stroke:",
     text = "Enable",
-    selected = defaults.useStroke
+    selected = defaults.useStroke,
+    onclick = function()
+        dlg:modify {
+            id = "strokeWeight",
+            visible = dlg.data.useStroke
+        }
+        dlg:modify {
+            id = "strokeClr",
+            visible = dlg.data.useStroke
+        }
+    end
 }
 
 dlg:slider {
     id = "strokeWeight",
     min = 1,
     max = 64,
-    value = defaults.strokeWeight
+    value = defaults.strokeWeight,
+    visible = defaults.useStroke
 }
 
 dlg:color {
     id = "strokeClr",
-    color = defaults.strokeClr
+    color = defaults.strokeClr,
+    visible = defaults.useStroke
 }
 
 dlg:newrow { always = false }

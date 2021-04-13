@@ -1,13 +1,14 @@
 dofile("../support/aseutilities.lua")
 
-local easingModes = { "RGB", "HSL" , "HSV", "PALETTE" }
+local easingModes = { "HSL" , "HSV", "PALETTE", "RGB" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
-local hsvEasing = { "NEAR", "FAR" }
+local hsvEasing = { "FAR", "NEAR" }
 local metrics = {
     "CHEBYSHEV",
     "EUCLIDEAN",
     "MANHATTAN",
-    "MINKOWSKI" }
+    "MINKOWSKI"
+}
 
 local defaults = {
     xOrigin = 50,
@@ -61,18 +62,12 @@ local function createRadial(
     local w = sprite.width
     local h = sprite.height
 
-    -- TODO: Quantization options for
-    -- polar and Cartesian?
     local useQuantize = quantLvl > 0.0
     local delta = 1.0
     local levels = 1.0
-    local wInv = 1.0
-    local hInv = 1.0
     if useQuantize then
         levels = quantLvl
         delta = 1.0 / levels
-        wInv = 1.0 / w
-        hInv = 1.0 / h
     end
 
     local xOrigPx = xOrigin * w
@@ -244,16 +239,23 @@ dlg:combobox {
     id = "distMetric",
     label = "Metric:",
     option = defaults.distMetric,
-    options = metrics
+    options = metrics,
+    onchange = function()
+        dlg:modify {
+            id = "minkExp",
+            visible = dlg.data.distMetric == "MINKOWSKI"
+        }
+    end
 }
 
 dlg:newrow { always = false }
 
 dlg:number {
     id = "minkExp",
-    label = "Minkowski Power:",
+    label = "Exponent:",
     text = string.format("%.1f", defaults.minkExp),
-    decimals = 5
+    decimals = 5,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -277,6 +279,52 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "easingMode",
+    label = "Easing Mode:",
+    option = defaults.easingMode,
+    options = easingModes,
+    onchange = function()
+        local md = dlg.data.easingMode
+        local showColors = md ~= "PALETTE"
+        dlg:modify {
+            id = "aColor",
+            visible = showColors
+        }
+        dlg:modify {
+            id = "bColor",
+            visible = showColors
+        }
+        dlg:modify {
+            id = "easingFuncHue",
+            visible = md == "HSL" or md == "HSV"
+        }
+        dlg:modify {
+            id = "easingFuncRGB",
+            visible = md == "RGB"
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "easingFuncHue",
+    label = "Easing:",
+    option = defaults.easingFuncHue,
+    options = hsvEasing,
+    visible = false
+}
+
+dlg:combobox {
+    id = "easingFuncRGB",
+    label = "Easing:",
+    option = defaults.easingFuncRGB,
+    options = rgbEasing
+}
+
+dlg:newrow { always = false }
+
 dlg:color {
     id = "aColor",
     label = "Colors:",
@@ -286,30 +334,6 @@ dlg:color {
 dlg:color {
     id = "bColor",
     color = defaults.bColor
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "easingMode",
-    label = "Easing Mode:",
-    option = defaults.easingMode,
-    options = easingModes
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "easingFuncHue",
-    label = "Easing:",
-    option = defaults.easingFuncHue,
-    options = hsvEasing
-}
-
-dlg:combobox {
-    id = "easingFuncRGB",
-    option = defaults.easingFuncRGB,
-    options = rgbEasing
 }
 
 dlg:newrow { always = false }

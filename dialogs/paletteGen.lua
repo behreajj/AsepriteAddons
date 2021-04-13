@@ -1,7 +1,7 @@
 dofile("../support/utilities.lua")
 dofile("../support/aseutilities.lua")
 
-local hueEasing = { "NEAR", "FAR" }
+local hueEasing = { "FAR", "NEAR" }
 
 local ryb = {
     Color(255,  0,    0), -- 0xFF0000FF
@@ -20,7 +20,7 @@ local ryb = {
     Color( 94,  19, 136), -- 0xFF88135E
     Color(137,   6, 109), -- 0xFF6D0689
     Color(191,   0,  64), -- 0xFF4000BF
-    Color(255,  0,    0), -- 0xFF0000FF
+    Color(255,   0,   0)  -- 0xFF0000FF
 }
 
 local dlg = Dialog { title = "Palette Generator" }
@@ -114,7 +114,7 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "inclGray",
-    label = "Include Gray: ",
+    label = "Include Gray:",
     selected = false
 }
 

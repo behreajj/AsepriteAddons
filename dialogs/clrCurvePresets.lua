@@ -1,10 +1,10 @@
 local prsStrs = {
     "GAMMA",
     "LINEAR",
+    "PINGPONG",
     "QUANTIZE",
     "SMOOTH",
-    "SMOOTHER",
-    "PINGPONG"
+    "SMOOTHER"
 }
 
 local defaults = {
@@ -63,52 +63,33 @@ dlg:combobox {
     id = "preset",
     label = "Preset:",
     options = prsStrs,
-    option = defaults.preset
-}
+    option = defaults.preset,
+    onchange = function()
+        local prs = dlg.data.preset
+        if prs == "GAMMA" then
+            dlg:modify {
+                id = "gamma",
+                visible = true
+            }
+        else
+            dlg:modify {
+                id = "gamma",
+                visible = false
+            }
+        end
 
-dlg:newrow { always = false }
-
-dlg:check {
-    id = "useRed",
-    -- label = "Red:",
-    label = "Channels:",
-    text = "R",
-    selected = defaults.useRed
-}
-
-dlg:check {
-    id = "useGreen",
-    -- label = "Green:",
-    text = "G",
-    selected = defaults.useGreen
-}
-
-dlg:check {
-    id = "useBlue",
-    -- label = "Blue:",
-    text = "B",
-    selected = defaults.useBlue
-}
-
-dlg:check {
-    id = "useAlpha",
-    -- label = "Alpha:",
-    text = "A",
-    selected = defaults.useAlpha
-}
-
-dlg:check {
-    id = "useGray",
-    -- label = "Gray:",
-    text = "V",
-    selected = defaults.useGray
-}
-
-dlg:check {
-    id = "useIdx",
-    -- label = "Index:",
-    text = "I",
-    selected = defaults.useIdx
+        if prs == "QUANTIZE" then
+            dlg:modify {
+                id = "quantization",
+                visible = true
+            }
+        else
+            dlg:modify {
+                id = "quantization",
+                visible = false
+            }
+        end
+    end
 }
 
 dlg:newrow { always = false }
@@ -117,7 +98,8 @@ dlg:number {
     id = "gamma",
     label = "Gamma:",
     text = string.format("%.1f", defaults.gamma),
-    decimals = 5
+    decimals = 5,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -127,7 +109,47 @@ dlg:slider {
     label = "Quantize:",
     min = 0,
     max = 32,
-    value = defaults.quantization
+    value = defaults.quantization,
+    visible = false
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useRed",
+    label = "Channels:",
+    text = "R",
+    selected = defaults.useRed
+}
+
+dlg:check {
+    id = "useGreen",
+    text = "G",
+    selected = defaults.useGreen
+}
+
+dlg:check {
+    id = "useBlue",
+    text = "B",
+    selected = defaults.useBlue
+}
+
+dlg:check {
+    id = "useAlpha",
+    text = "A",
+    selected = defaults.useAlpha
+}
+
+dlg:check {
+    id = "useGray",
+    text = "V",
+    selected = defaults.useGray
+}
+
+dlg:check {
+    id = "useIdx",
+    text = "I",
+    selected = defaults.useIdx
 }
 
 dlg:newrow { always = false }
@@ -179,7 +201,7 @@ dlg:button {
                 local point = Point(
                     math.tointeger(0.5 + 255.0 * x),
                     math.tointeger(0.5 + 255.0 * y))
-                    table.insert(points, point)
+                points[i] = point
             end
 
             app.command.ColorCurve {

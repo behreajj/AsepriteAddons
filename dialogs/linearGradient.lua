@@ -1,8 +1,8 @@
 dofile("../support/aseutilities.lua")
 
-local easingModes = { "RGB", "HSL", "HSV", "PALETTE" }
+local easingModes = { "HSL", "HSV", "PALETTE", "RGB" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
-local hueEasing = { "NEAR", "FAR" }
+local hueEasing = { "FAR", "NEAR" }
 
 local defaults = {
     xOrigin = 0,
@@ -31,13 +31,9 @@ local function createLinear(
     local useQuantize = quantLvl > 0.0
     local delta = 1.0
     local levels = 1.0
-    local wInv = 1.0
-    local hInv = 1.0
     if useQuantize then
         levels = quantLvl
         delta = 1.0 / levels
-        wInv = 1.0 / w
-        hInv = 1.0 / h
     end
 
     local xOrPx = xOrigin * w
@@ -221,6 +217,52 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "easingMode",
+    label = "Easing Mode:",
+    option = defaults.easingMode,
+    options = easingModes,
+    onchange = function()
+        local md = dlg.data.easingMode
+        local showColors = md ~= "PALETTE"
+        dlg:modify {
+            id = "aColor",
+            visible = showColors
+        }
+        dlg:modify {
+            id = "bColor",
+            visible = showColors
+        }
+        dlg:modify {
+            id = "easingFuncHue",
+            visible = md == "HSL" or md == "HSV"
+        }
+        dlg:modify {
+            id = "easingFuncRGB",
+            visible = md == "RGB"
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "easingFuncHue",
+    label = "Easing:",
+    option = defaults.easingFuncHue,
+    options = hueEasing,
+    visible = false
+}
+
+dlg:combobox {
+    id = "easingFuncRGB",
+    label = "Easing:",
+    option = defaults.easingFuncRGB,
+    options = rgbEasing
+}
+
+dlg:newrow { always = false }
+
 dlg:color {
     id = "aColor",
     label = "Colors:",
@@ -230,30 +272,6 @@ dlg:color {
 dlg:color {
     id = "bColor",
     color = defaults.bColor
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "easingMode",
-    label = "Easing Mode:",
-    option = defaults.easingMode,
-    options = easingModes
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "easingFuncHue",
-    label = "Easing:",
-    option = defaults.easingFuncHue,
-    options = hueEasing
-}
-
-dlg:combobox {
-    id = "easingFuncRGB",
-    option = defaults.easingFuncRGB,
-    options = rgbEasing
 }
 
 dlg:newrow { always = false }

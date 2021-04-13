@@ -1,13 +1,13 @@
 dofile("../support/aseutilities.lua")
 
 -- TODO: Add indexed support?
-local easingModes = { "RGB", "HSL", "HSV", "PALETTE" }
+local easingModes = { "HSL", "HSV", "PALETTE", "RGB" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
-local hueEasing = { "NEAR", "FAR" }
+local hueEasing = { "FAR", "NEAR" }
 local methods = {
     "AVERAGE",
-    "HSV",
     "HSL",
+    "HSV",
     "REC_240",
     "REC_601",
     "REC_709"
@@ -56,7 +56,27 @@ dlg:combobox {
     id = "easingMode",
     label = "Easing Mode:",
     option = defaults.easingMode,
-    options = easingModes
+    options = easingModes,
+    onchange = function()
+        local md = dlg.data.easingMode
+        local showColors = md ~= "PALETTE"
+        dlg:modify {
+            id = "blk",
+            visible = showColors
+        }
+        dlg:modify {
+            id = "wht",
+            visible = showColors
+        }
+        dlg:modify {
+            id = "easingFuncHue",
+            visible = md == "HSL" or md == "HSV"
+        }
+        dlg:modify {
+            id = "easingFuncRGB",
+            visible = md == "RGB"
+        }
+    end
 }
 
 dlg:newrow { always = false }
@@ -65,11 +85,13 @@ dlg:combobox {
     id = "easingFuncHue",
     label = "Easing:",
     option = defaults.easingFuncHue,
-    options = hueEasing
+    options = hueEasing,
+    visible = false
 }
 
 dlg:combobox {
     id = "easingFuncRGB",
+    label = "Easing:",
     option = defaults.easingFuncRGB,
     options = rgbEasing
 }
@@ -228,8 +250,7 @@ dlg:button {
                     local clrs = AseUtilities.paletteToColorArr(
                         sprite.palettes[1])
                     easing = function(t)
-                        return AseUtilities.lerpColorArr(
-                            clrs, t)
+                        return AseUtilities.lerpColorArr(clrs, t)
                     end
 
                 else
@@ -259,6 +280,7 @@ dlg:button {
                     end
 
                 end
+
                 local srcLyr = app.activeLayer
                 if srcLyr and not srcLyr.isGroup then
                     local srcCel = app.activeCel
@@ -314,11 +336,13 @@ dlg:button {
                                 lum = (lum - minlum) * invrangelum
                             end
 
+                            -- TODO: Add quantization?
+
                             local gryclr = easing(lum)
                             local aSrc = alphasSrc[i]
                             local aTrg = (gryclr >> 0x18 & 0xff)
-                            local amin = math.min(aSrc, aTrg) << 0x18
-                            local hex = amin | (0x00ffffff & gryclr)
+                            local aMin = math.min(aSrc, aTrg) << 0x18
+                            local hex = aMin | (0x00ffffff & gryclr)
                             trgClr(hex)
                             i = i + 1
                         end

@@ -1,6 +1,16 @@
 dofile("../support/complex.lua")
 dofile("../support/aseutilities.lua")
 
+local defaults = {
+    res = 16,
+    rSeed = 80,
+    phiSeed = 90,
+    power = 2,
+    aColor = Color(32, 32, 32, 255),
+    bColor = Color(255, 245, 215, 255),
+    useSmooth = false
+}
+
 local dlg = Dialog { title = "Julia Set" }
 
 dlg:slider {
@@ -8,7 +18,7 @@ dlg:slider {
     label = "Resolution:",
     min = 1,
     max = 64,
-    value = 16
+    value = defaults.res
 }
 
 dlg:newrow { always = false }
@@ -18,7 +28,7 @@ dlg:slider {
     label = "Seed R:",
     min = 1,
     max = 100,
-    value = 80
+    value = defaults.rSeed
 }
 
 dlg:newrow { always = false }
@@ -28,7 +38,7 @@ dlg:slider {
     label = "Seed Phi:",
     min = 0,
     max = 360,
-    value = 90
+    value = defaults.phiSeed
 }
 
 dlg:newrow { always = false }
@@ -38,7 +48,7 @@ dlg:slider {
     label = "Power:",
     min = 1,
     max = 16,
-    value = 2
+    value = defaults.power
 }
 
 dlg:newrow { always = false }
@@ -46,12 +56,12 @@ dlg:newrow { always = false }
 dlg:color {
     id = "aColor",
     label = "Colors:",
-    color = Color(32, 32, 32, 255)
+    color = defaults.aColor
 }
 
 dlg:color {
     id = "bColor",
-    color = Color(255, 245, 215, 255)
+    color = defaults.bColor
 }
 
 dlg:newrow { always = false }
@@ -59,7 +69,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "useSmooth",
     label = "Smooth Gradient:",
-    selected = false
+    selected = defaults.useSmooth
 }
 
 local function julia(seed, z, power, res)

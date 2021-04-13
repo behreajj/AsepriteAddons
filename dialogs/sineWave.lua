@@ -1,7 +1,19 @@
 dofile("../support/aseutilities.lua")
 dofile("../support/clr.lua")
 
-local easingModes = { "RGB", "HSL", "HSV" }
+local easingModes = { "HSL", "HSV", "RGB" }
+
+local defaults = {
+    elements = 12,
+    frames = 24,
+    frequency = 1,
+    amplitude = 50,
+    minScale = 8.0,
+    maxScale = 16.0,
+    aColor = Color(0, 127, 255, 255),
+    bColor = Color(255, 0, 127, 255),
+    easingMode = "HSL"
+}
 
 local dlg = Dialog { title = "Sine Wave" }
 
@@ -10,7 +22,7 @@ dlg:slider {
     label = "Elements:",
     min = 2,
     max = 32,
-    value = 12
+    value = defaults.elements
 }
 
 dlg:slider {
@@ -18,7 +30,7 @@ dlg:slider {
     label = "Frames:",
     min = 1,
     max = 60,
-    value = 24
+    value = defaults.frames
 }
 
 dlg:slider {
@@ -26,7 +38,7 @@ dlg:slider {
     label = "Frequency:",
     min = 1,
     max = 8,
-    value = 1
+    value = defaults.frequency
 }
 
 dlg:slider {
@@ -34,7 +46,7 @@ dlg:slider {
     label = "Amplitude:",
     min = 0,
     max = 100,
-    value = 50
+    value = defaults.amplitude
 }
 
 dlg:newrow { always = false }
@@ -42,27 +54,14 @@ dlg:newrow { always = false }
 dlg:number {
     id = "minScale",
     label = "Scale:",
-    text = string.format("%.1f", 8.0),
+    text = string.format("%.1f", defaults.minScale),
     decimals = 5
 }
 
 dlg:number {
     id = "maxScale",
-    text = string.format("%.1f", 18.0),
+    text = string.format("%.1f", defaults.maxScale),
     decimals = 5
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "aColor",
-    label = "Colors:",
-    color = Color(0, 127, 255, 255)
-}
-
-dlg:color {
-    id = "bColor",
-    color = Color(255, 0, 127, 255)
 }
 
 dlg:newrow { always = false }
@@ -70,9 +69,24 @@ dlg:newrow { always = false }
 dlg:combobox {
     id = "easingMode",
     label = "Easing Mode:",
-    option = "HSL",
+    option = defaults.easingMode,
     options = easingModes
 }
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "aColor",
+    label = "Colors:",
+    color = defaults.aColor
+}
+
+dlg:color {
+    id = "bColor",
+    color = defaults.bColor
+}
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",

@@ -83,6 +83,8 @@ dlg:button {
                         greenLyr.color = Color(0, 192, 0, 255)
                         blueLyr.color = Color(0, 0, 192, 255)
 
+                        -- Can these be composited together manually
+                        -- in a new layer with normal blend mode?
                         redLyr.blendMode = BlendMode.ADDITION
                         greenLyr.blendMode = BlendMode.ADDITION
                         blueLyr.blendMode = BlendMode.ADDITION
