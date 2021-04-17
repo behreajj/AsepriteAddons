@@ -123,11 +123,9 @@ dlg:button {
             local right = w - left
 
             local elmCount = args.elements
-            -- local iToFac = 1.0 / (reqFrames - 1.0)
             local jToFac = 1.0 / (elmCount - 1.0)
 
             local tau = math.pi * 2.0
-            -- local halfPi = math.pi * 0.5
             local iToPeriod = tau / reqFrames
             local jToPeriod = tau / elmCount
 

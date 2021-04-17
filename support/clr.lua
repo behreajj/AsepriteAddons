@@ -47,7 +47,7 @@ function Clr:__eq(b)
 end
 
 function Clr:__le(b)
-    return Clr.fromHex(self) < Clr.fromHex(b)
+    return Clr.fromHex(self) <= Clr.fromHex(b)
 end
 
 function Clr:__len()
@@ -55,7 +55,7 @@ function Clr:__len()
 end
 
 function Clr:__lt(b)
-    return Clr.fromHex(self) <= Clr.fromHex(b)
+    return Clr.fromHex(self) < Clr.fromHex(b)
 end
 
 function Clr:__mul(b)

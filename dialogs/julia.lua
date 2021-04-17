@@ -131,7 +131,8 @@ dlg:button {
                 64, 64, "Julia Set",
                 { aColor, bColor })
             local layer = sprite.layers[#sprite.layers]
-            local cel = sprite:newCel(layer, 1)
+            local frame = app.activeFrame or 1
+            local cel = sprite:newCel(layer, frame)
             local image = cel.image
 
             -- TODO: Account for aspect ratio?

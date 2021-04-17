@@ -140,6 +140,8 @@ dlg:button {
             64, 64, mesh.name,
             { args.fillClr, args.strokeClr })
         local layer = sprite.layers[#sprite.layers]
+        local frame = app.activeFrame or 1
+        local cel = sprite:newCel(layer, frame)
 
         AseUtilities.drawMesh2(
             mesh,
@@ -148,7 +150,7 @@ dlg:button {
             args.useStroke,
             args.strokeClr,
             Brush(args.strokeWeight),
-            sprite:newCel(layer, 1),
+            cel,
             layer)
         end
     end

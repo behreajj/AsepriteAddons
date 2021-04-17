@@ -334,7 +334,8 @@ dlg:button {
             local sprite = AseUtilities.initCanvas(
                 64, 64, "Conic Gradient")
             local layer = sprite.layers[#sprite.layers]
-            local cel = sprite:newCel(layer, 1)
+            local frame = app.activeFrame or 1
+            local cel = sprite:newCel(layer, frame)
 
             -- TODO: Option to animate?
             createConic(

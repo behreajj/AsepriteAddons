@@ -2,13 +2,16 @@ dofile("../support/aseutilities.lua")
 
 local easingModes = { "HSL" , "HSV", "PALETTE", "RGB" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
-local hsvEasing = { "FAR", "NEAR" }
+local hueEasing = { "FAR", "NEAR" }
+local extensions = { "CLAMP", "WRAP" }
 local metrics = {
     "CHEBYSHEV",
     "EUCLIDEAN",
     "MANHATTAN",
     "MINKOWSKI"
 }
+
+--TODO: Uniform vs. Sprite aspect...
 
 local defaults = {
     xOrigin = 50,
@@ -18,6 +21,7 @@ local defaults = {
     minkExp = 2.0,
     quantization = 0,
     bias = 1.0,
+    extension = "CLAMP",
     aColor = Color(32, 32, 32, 255),
     bColor = Color(255, 245, 215, 255),
     easingMode = "RGB",
@@ -48,6 +52,14 @@ local function minkDist(ax, ay, bx, by, c, d)
           ^ d
 end
 
+local function clamp01(x)
+    return math.max(0.0, math.min(1.0, x))
+end
+
+local function mod1(x)
+    return x % 1.0
+end
+
 local function createRadial(
     sprite,
     img,
@@ -56,6 +68,7 @@ local function createRadial(
     distFunc,
     quantLvl,
     bias,
+    wrapFunc,
     aColor, bColor,
     easingMode, easingPreset)
 
@@ -191,8 +204,7 @@ local function createRadial(
 
         local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
         local fac = dst * normDist
-
-        fac = math.min(1.0, math.max(0.0, fac))
+        fac = wrapFunc(fac)
         fac = fac ^ valBias
 
         if useQuantize then
@@ -280,6 +292,15 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:combobox {
+    id = "extension",
+    label = "Extension:",
+    option = defaults.extension,
+    options = extensions
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
     id = "easingMode",
     label = "Easing Mode:",
     option = defaults.easingMode,
@@ -312,7 +333,7 @@ dlg:combobox {
     id = "easingFuncHue",
     label = "Easing:",
     option = defaults.easingFuncHue,
-    options = hsvEasing,
+    options = hueEasing,
     visible = false
 }
 
@@ -352,10 +373,16 @@ dlg:button {
                 easingFunc = args.easingFuncHue
             end
 
+            local wrapFunc = clamp01
+            if args.extension == "WRAP" then
+                wrapFunc = mod1
+            end
+
             local sprite = AseUtilities.initCanvas(
                 64, 64, "Radial Gradient")
             local layer = sprite.layers[#sprite.layers]
-            local cel = sprite:newCel(layer, 1)
+            local frame = app.activeFrame or 1
+            local cel = sprite:newCel(layer, frame)
 
             local distFunc = euclDist
             local distMetric = args.distMetric
@@ -386,6 +413,7 @@ dlg:button {
                 distFunc,
                 args.quantization,
                 args.bias,
+                wrapFunc,
                 args.aColor,
                 args.bColor,
                 args.easingMode,

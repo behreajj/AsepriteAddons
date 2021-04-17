@@ -177,8 +177,8 @@ dlg:button {
                 { brickClr, mortarClr })
             local layer = sprite.layers[#sprite.layers]
 
-            -- TODO: Set this to current frame?
-            local cel = sprite:newCel(layer, 1)
+            local frame = app.activeFrame or 1
+            local cel = sprite:newCel(layer, frame)
             local brush = Brush(args.mortarThick)
 
             if args.variance > 0 then

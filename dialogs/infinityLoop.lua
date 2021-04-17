@@ -172,7 +172,7 @@ dlg:button {
                 64, 64, curve.name,
                 { args.strokeClr, args.dotClr })
             local layer = sprite.layers[#sprite.layers]
-            local cel = sprite:newCel(layer, 1)
+            local actframe = app.activeFrame or 1
 
             AseUtilities.drawCurve2(
                 curve,
@@ -182,7 +182,7 @@ dlg:button {
                 args.useStroke,
                 args.strokeClr,
                 Brush(args.strokeWeight),
-                cel,
+                sprite:newCel(layer, actframe),
                 layer)
 
             if args.handles > 0 then
@@ -191,7 +191,7 @@ dlg:button {
                 hlLyr.opacity = args.handles
                 AseUtilities.drawHandles2(
                     curve,
-                    sprite:newCel(hlLyr, 1),
+                    sprite:newCel(hlLyr, actframe),
                     hlLyr)
             end
 

@@ -21,7 +21,9 @@ local defaults = {
 }
 
 local function quantize(x, levels)
-    return math.floor(0.5 + x * levels) / levels
+    return math.max(0.0, math.min(1.0,
+        (math.ceil(x * levels) - 1.0)
+        / (levels - 1.0)))
 end
 
 local function gamma(x, c)

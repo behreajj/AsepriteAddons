@@ -50,7 +50,8 @@ dlg:button {
                 64, 64, "Checker",
                 { args.aClr, args.bClr })
             local layer = sprite.layers[#sprite.layers]
-            local cel = sprite:newCel(layer, 1)
+            local frame = app.activeFrame or 1
+            local cel = sprite:newCel(layer, frame)
             local image = cel.image
 
             local w = image.width

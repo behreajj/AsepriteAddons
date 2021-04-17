@@ -23,6 +23,25 @@ local ryb = {
     Color(255,   0,   0)  -- 0xFF0000FF
 }
 
+local hues = {
+    [0xFF0000FF] = 0.0,
+    [0xFF0050FF] = 22.5,
+    [0xFF0086FF] = 45.0,
+    [0xFF00AEFF] = 67.5,
+    [0xFF00CFFF] = 90.0,
+    [0xFF00F3FF] = 112.5,
+    [0xFF0DEAC0] = 135.0,
+    [0xFF20C961] = 157.5,
+    [0xFF33A900] = 180.0,
+    [0xFF598D10] = 202.5,
+    [0xFF866E13] = 225.0,
+    [0xFFA14D1C] = 247.5,
+    [0xFF922A3C] = 270.0,
+    [0xFF88135E] = 292.5,
+    [0xFF6D0689] = 315.0,
+    [0xFF4000BF] = 337.5
+}
+
 local dlg = Dialog { title = "Palette Generator" }
 
 dlg:shades {
@@ -32,9 +51,19 @@ dlg:shades {
     mode = "pick",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
-            app.fgColor = ev.color
+            -- app.fgColor = ev.color
+            local hue = math.tointeger(hues[ev.color.rgbaPixel])
+            dlg:modify {
+                id = "hueStart",
+                value = hue
+            }
         elseif ev.button == MouseButton.RIGHT then
-            app.bgColor = ev.color
+            -- app.bgColor = ev.color
+            local hue = math.tointeger(hues[ev.color.rgbaPixel])
+            dlg:modify {
+                id = "hueEnd",
+                value = hue
+            }
         end
     end
 }

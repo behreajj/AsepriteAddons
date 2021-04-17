@@ -174,6 +174,8 @@ dlg:button {
                 64, 64, "Rectangle",
                 { args.fillClr, args.strokeClr })
             local layer = sprite.layers[#sprite.layers]
+            local frame = app.activeFrame or 1
+            local cel = sprite:newCel(layer, frame)
 
             local wPrc = sprite.width * 0.01
             local hPrc = sprite.height * 0.01
@@ -192,7 +194,7 @@ dlg:button {
                 args.useStroke,
                 args.strokeClr,
                 Brush(args.strokeWeight),
-                sprite:newCel(layer, 1),
+                cel,
                 layer
             )
 
@@ -202,7 +204,7 @@ dlg:button {
                 hlLyr.opacity = args.handles
                 AseUtilities.drawHandles2(
                     curve,
-                    sprite:newCel(hlLyr, 1),
+                    sprite:newCel(hlLyr, frame),
                     hlLyr)
             end
 

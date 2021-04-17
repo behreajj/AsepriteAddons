@@ -3,6 +3,7 @@ dofile("../support/aseutilities.lua")
 local easingModes = { "HSL", "HSV", "PALETTE", "RGB" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
 local hueEasing = { "FAR", "NEAR" }
+local extensions = { "CLAMP", "WRAP" }
 
 local defaults = {
     xOrigin = 0,
@@ -10,6 +11,7 @@ local defaults = {
     xDest = 100,
     yDest = 50,
     quantization = 0,
+    extension = "CLAMP",
     aColor = Color(32, 32, 32, 255),
     bColor = Color(255, 245, 215, 255),
     easingMode = "RGB",
@@ -17,11 +19,25 @@ local defaults = {
     easingFuncHue = "NEAR"
 }
 
+local function clamp01(x)
+    return math.max(0.0, math.min(1.0, x))
+end
+
+local function mod1(x)
+    return x % 1.0
+end
+
+local function quantizeUnsigned(x, z)
+    -- return math.floor(x * z) / (z - 1.0)
+    return (math.ceil(x * z) - 1.0) / (z - 1.0)
+end
+
 local function createLinear(
     sprite, img,
     xOrigin, yOrigin,
     xDest, yDest,
     quantLvl,
+    wrapFunc,
     aColor, bColor,
     easingMode, easingPreset)
 
@@ -161,7 +177,7 @@ local function createLinear(
 
         -- dot(c, b) / dot(b, b)
         local cb = (cx * bx + cy * by) * bbInv
-        local fac = math.max(0.0, math.min(1.0, cb))
+        local fac = wrapFunc(cb)
 
         if useQuantize then
             fac = delta * math.floor(0.5 + fac * levels)
@@ -207,12 +223,23 @@ dlg:slider {
     value = defaults.yDest
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "quantization",
     label = "Quantize:",
     min = 0,
     max = 32,
     value = defaults.quantization
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "extension",
+    label = "Extension:",
+    option = defaults.extension,
+    options = extensions
 }
 
 dlg:newrow { always = false }
@@ -254,6 +281,8 @@ dlg:combobox {
     visible = false
 }
 
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "easingFuncRGB",
     label = "Easing:",
@@ -290,10 +319,16 @@ dlg:button {
                 easingFunc = args.easingFuncHue
             end
 
+            local wrapFunc = clamp01
+            if args.extension == "WRAP" then
+                wrapFunc = mod1
+            end
+
             local sprite = AseUtilities.initCanvas(
                 256, 32, "Linear Gradient")
             local layer = sprite.layers[#sprite.layers]
-            local cel = sprite:newCel(layer, 1)
+            local frame = app.activeFrame or 1
+            local cel = sprite:newCel(layer, frame)
 
             createLinear(
                 sprite,
@@ -303,6 +338,7 @@ dlg:button {
                 0.01 * args.xDest,
                 0.01 * args.yDest,
                 args.quantization,
+                wrapFunc,
                 args.aColor,
                 args.bColor,
                 args.easingMode,
