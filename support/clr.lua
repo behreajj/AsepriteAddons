@@ -223,7 +223,7 @@ function Clr.fromDir(x, y, z)
     local yv = y or 0.0
     local zv = z or 0.0
     local msq = xv * xv + yv * yv + zv * zv
-    if msq ~= 0.0 then
+    if msq > 0.0 then
         local minv = 1.0 / math.sqrt(msq)
         return Clr.new(
             0.5 + 0.5 * (xv * minv),
@@ -346,15 +346,48 @@ function Clr.hsvaToRgba(hue, sat, val, alpha)
     end
 end
 
+---Converts a color from linear RGB to standard RGB (sRGB).
+---See https://www.wikiwand.com/en/SRGB .
+---@param a table color
+---@return table
+function Clr.linearToStandard(a)
+    local sr = a.r
+    local sg = a.g
+    local sb = a.b
+
+    -- 1.0 / 2.4 = 0.4166666666666667
+
+    if sr <= 0.0031308 then
+        sr = sr * 12.92
+    else
+        sr = (sr ^ 0.4166666666666667) * 1.055 - 0.055
+    end
+
+    if sg <= 0.0031308 then
+        sg = sg * 12.92
+    else
+        sg = (sg ^ 0.4166666666666667) * 1.055 - 0.055
+    end
+
+    if sb <= 0.0031308 then
+        sb = sb * 12.92
+    else
+        sb = (sb ^ 0.4166666666666667) * 1.055 - 0.055
+    end
+
+    return Clr.new(sr, sg, sb, a.a)
+end
+
 ---Finds the relative luminance of the color.
 ---https://www.wikiwand.com/en/Relative_luminance
 ---according to recommendation 709.
 ---@param a table color
 ---@return number
 function Clr.luminance(a)
-    return 0.2126 * a.r
-         + 0.7152 * a.g
-         + 0.0722 * a.b
+    local linear = Clr.standardToLinear(a)
+    return 0.2126 * linear.r
+         + 0.7152 * linear.g
+         + 0.0722 * linear.b
 end
 
 ---Finds the maximum, or lightest, color.
@@ -482,11 +515,22 @@ function Clr.mixHsva(a, b, t, hueFunc)
 end
 
 ---Mixes two colors in RGBA space by a step.
+---Assumes linear RGB, not sRGB.
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
 ---@return table
 function Clr.mixRgba(a, b, t)
+    return Clr.mixRgbaLinear(a, b, t)
+end
+
+---Mixes two colors in RGBA space by a step.
+---Assumes that the colors are in linear space.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Clr.mixRgbaLinear(a, b, t)
     local u = t or 0.5
 
     if u <= 0.0 then
@@ -503,6 +547,21 @@ function Clr.mixRgba(a, b, t)
         v * a.g + u * b.g,
         v * a.b + u * b.b,
         v * a.a + u * b.a)
+end
+
+---Mixes two colors in RGBA space by a step.
+---Converts the colors from standard to linear,
+---interpolates, then converts from linear
+---to standard.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Clr.mixRgbaStandard(a, b, t)
+    return Clr.linearToStandard(
+        Clr.mixRgbaLinear(
+        Clr.standardToLinear(a),
+        Clr.standardToLinear(b), t))
 end
 
 ---Multiplies two colors, including alpha.
@@ -556,6 +615,23 @@ function Clr.quantize(a, levels)
             delta * math.floor(0.5 + a.a * levels))
     end
     return Clr.new(a.r, a.g, a.b, a.a)
+end
+
+---Converts a color to gray scale.
+---Finds the luminance, then converts the luminance
+---to standard RGB.
+---@param a table the color
+---@return table
+function Clr.rgbaToGray(a)
+    local lum = Clr.luminance(a)
+    local val = lum
+    if val <= 0.0031308 then
+        val = val * 12.92
+    else
+        val = (val ^ 0.4166666666666667) * 1.055 - 0.055
+    end
+
+    return Clr(val, val, val, a.a)
 end
 
 ---Converts RGBA channels to hue, saturation and lightness.
@@ -625,6 +701,39 @@ function Clr.rgbaToHsva(red, green, blue, alpha)
     if mx ~= 0.0 then sat = diff / mx end
     local a = alpha or 1.0
     return { h = hue, s = sat, v = mx, a = a }
+end
+
+---Converts a color from standard RGB (sRGB) to linear RGB.
+---See https://www.wikiwand.com/en/SRGB .
+---@param a table color
+---@return table
+function Clr.standardToLinear(a)
+    local lr = a.r
+    local lg = a.g
+    local lb = a.b
+
+    -- 1.0 / 12.92 = 0.07739938080495357
+    -- 1.0 / 1.055 = 0.9478672985781991
+
+    if lr <= 0.04045 then
+        lr = lr * 0.07739938080495357
+    else
+        lr = ((lr + 0.055) * 0.9478672985781991) ^ 2.4
+    end
+
+    if lg <= 0.04045 then
+        lg = lg * 0.07739938080495357
+    else
+        lg = ((lg + 0.055) * 0.9478672985781991) ^ 2.4
+    end
+
+    if lb <= 0.04045 then
+        lb = lb * 0.07739938080495357
+    else
+        lb = ((lb + 0.055) * 0.9478672985781991) ^ 2.4
+    end
+
+    return Clr.new(lr, lg, lb, a.a)
 end
 
 ---Subtracts two colors, including alpha.

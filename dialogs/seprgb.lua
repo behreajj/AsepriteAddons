@@ -58,6 +58,8 @@ dlg:button {
                 if srcLyr and not srcLyr.isGroup then
                     local srcCel = app.activeCel
                     if srcCel then
+                        app.command.ChangePixelFormat { format = "rgb" }
+
                         local srcImg = srcCel.image
                         local srcFrame = srcCel.frame
                         local srcPos = srcCel.position

@@ -330,6 +330,13 @@ dlg:button {
             local frame = app.activeFrame or 1
             local cel = sprite:newCel(layer, frame)
 
+            -- Cache old color mode.
+            -- https://github.com/aseprite/aseprite/blob/
+            -- b0d76d096f76ef862157297b29616877e8bbbdfd/
+            -- src/app/commands/cmd_change_pixel_format.cpp#L456
+            local oldMode = sprite.colorMode
+            app.command.ChangePixelFormat { format = "rgb" }
+
             createLinear(
                 sprite,
                 cel.image,
@@ -343,6 +350,12 @@ dlg:button {
                 args.bColor,
                 args.easingMode,
                 easingFunc)
+
+            if oldMode == ColorMode.INDEXED then
+                app.command.ChangePixelFormat { format = "indexed" }
+            elseif oldMode == ColorMode.GRAY then
+                app.command.ChangePixelFormat { format = "gray" }
+            end
 
             app.refresh()
         end

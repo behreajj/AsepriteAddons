@@ -1,6 +1,9 @@
 dofile("../support/aseutilities.lua")
 
--- TODO: Add indexed support?
+-- TODO: Should be updated to reflect
+-- https://github.com/aseprite/api/blob/main/api/colorspace.md#colorspace
+-- No alpha adjust.
+
 local easingModes = { "HSL", "HSV", "PALETTE", "RGB" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
 local hueEasing = { "FAR", "NEAR" }
@@ -32,14 +35,14 @@ dlg:combobox {
     options = methods
 }
 
-dlg:newrow { always = false }
+-- dlg:newrow { always = false }
 
-dlg:number {
-    id = "gamma",
-    label = "Gamma:",
-    text = string.format("%.1f", defaults.gamma),
-    decimals = 5
-}
+-- dlg:number {
+--     id = "gamma",
+--     label = "Gamma:",
+--     text = string.format("%.1f", defaults.gamma),
+--     decimals = 5
+-- }
 
 dlg:newrow { always = false }
 
@@ -151,7 +154,7 @@ dlg:button {
         if args.ok then
 
             local stdstr = args.standard
-            local gm = args.gamma
+            -- local gm = args.gamma
             local blk = args.blk
             local wht = args.wht
             local easingMode = args.easingMode
@@ -283,6 +286,9 @@ dlg:button {
 
                 local srcLyr = app.activeLayer
                 if srcLyr and not srcLyr.isGroup then
+                    local oldMode = sprite.colorMode
+                    app.command.ChangePixelFormat { format = "rgb" }
+
                     local srcCel = app.activeCel
                     if srcCel then
                         local srcImg = srcCel.image
@@ -301,9 +307,9 @@ dlg:button {
                             local g = (hex >> 0x08 & 0xff) * 0.00392156862745098
                             local r = (hex         & 0xff) * 0.00392156862745098
 
-                            r = r ^ gm
-                            g = g ^ gm
-                            b = b ^ gm
+                            -- r = r ^ gm
+                            -- g = g ^ gm
+                            -- b = b ^ gm
 
                             local lum = lmethod(r, g, b)
                             minlum = math.min(minlum, lum)
@@ -349,6 +355,13 @@ dlg:button {
 
                         app.activeLayer = srcLyr
                         app.activeCel = srcCel
+
+                        if oldMode == ColorMode.INDEXED then
+                            app.command.ChangePixelFormat { format = "indexed" }
+                        elseif oldMode == ColorMode.GRAY then
+                            app.command.ChangePixelFormat { format = "gray" }
+                        end
+
                         app.refresh()
                     else
                         app.alert("There is no active cel.")

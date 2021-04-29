@@ -45,14 +45,16 @@ local function createConic(
         delta = 1.0 / levels
     end
 
+    -- TODO: This is unnecessarily convoluted.
+    -- aspect is w / h either way.
     if shortEdge == longEdge then
         wInv = 1.0 / w
     elseif w == shortEdge then
-        local aspect = (shortEdge / longEdge)
+        local aspect = shortEdge / longEdge
         wInv = aspect / w
         xOriginNorm = xOriginNorm * aspect
     elseif h == shortEdge then
-        local aspect = (longEdge / shortEdge)
+        local aspect = longEdge / shortEdge
         wInv = aspect / w
         xOriginNorm = xOriginNorm * aspect
     end
@@ -337,7 +339,9 @@ dlg:button {
             local frame = app.activeFrame or 1
             local cel = sprite:newCel(layer, frame)
 
-            -- TODO: Option to animate?
+            local oldMode = sprite.colorMode
+            app.command.ChangePixelFormat { format = "rgb" }
+
             createConic(
                 sprite,
                 cel.image,
@@ -350,6 +354,12 @@ dlg:button {
                 args.bColor,
                 args.easingMode,
                 easingFunc)
+
+            if oldMode == ColorMode.INDEXED then
+                app.command.ChangePixelFormat { format = "indexed" }
+            elseif oldMode == ColorMode.GRAY then
+                app.command.ChangePixelFormat { format = "gray" }
+            end
 
             app.refresh()
         end

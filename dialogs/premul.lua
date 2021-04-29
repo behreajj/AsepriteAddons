@@ -9,6 +9,10 @@ dlg:button {
         if args.ok then
             local sprite = app.activeSprite
             if sprite then
+
+                local oldMode = sprite.colorMode
+                app.command.ChangePixelFormat { format = "rgb" }
+
                 local layers = sprite.layers
                 local layerLen = #layers
                 for i = 1, layerLen, 1 do
@@ -40,6 +44,13 @@ dlg:button {
                         end
                     end
                 end
+
+                if oldMode == ColorMode.INDEXED then
+                    app.command.ChangePixelFormat { format = "indexed" }
+                elseif oldMode == ColorMode.GRAY then
+                    app.command.ChangePixelFormat { format = "gray" }
+                end
+
                 app.refresh()
             else
                 app.alert("No active sprite.")

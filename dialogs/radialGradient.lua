@@ -404,6 +404,9 @@ dlg:button {
                 end
             end
 
+            local oldMode = sprite.colorMode
+            app.command.ChangePixelFormat { format = "rgb" }
+
             createRadial(
                 sprite,
                 cel.image,
@@ -418,6 +421,12 @@ dlg:button {
                 args.bColor,
                 args.easingMode,
                 easingFunc)
+
+            if oldMode == ColorMode.INDEXED then
+                app.command.ChangePixelFormat { format = "indexed" }
+            elseif oldMode == ColorMode.GRAY then
+                app.command.ChangePixelFormat { format = "gray" }
+            end
 
             app.refresh()
         end
