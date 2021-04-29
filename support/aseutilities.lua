@@ -29,6 +29,13 @@ AseUtilities.DEFAULT_PALETTE = {
     Color(255, 255, 255, 255)
 }
 
+AseUtilities.EASING_MODES = {
+    "HSL",
+    "HSV",
+    "PALETTE",
+    "RGB"
+}
+
 ---Houses utility methods for scripting
 ---Aseprite add-ons.
 ---@return table
@@ -601,6 +608,18 @@ function AseUtilities.lerpRgba(
         math.tointeger(u * aa + t * ba))
 end
 
+---Converts a color channel from linear to sRGB.
+---@param x number input channel
+---@return number
+function AseUtilities.linearToStandard(x)
+    -- 1.0 / 2.4 = 0.4166666666666667
+    if x <= 0.0031308 then
+        return x * 12.92
+    else
+        return (x ^ 0.4166666666666667) * 1.055 - 0.055
+    end
+end
+
 ---Converts an Aseprite palette to a table
 ---of Aseprite Colors. If the palette is nil
 ---returns a default table.
@@ -643,6 +662,19 @@ function AseUtilities.smoothRgba(
         ar, ag, ab, aa,
         br, bg, bb, ba,
         t * t * (3.0 - (t + t)))
+end
+
+---Converts a color channel from sRGB to linear RGB.
+---@param x number input channel
+---@return number
+function AseUtilities.standardToLinear(x)
+    -- 1.0 / 12.92 = 0.07739938080495357
+    -- 1.0 / 1.055 = 0.9478672985781991
+    if x <= 0.04045 then
+        return x * 0.07739938080495357
+    else
+        return ((x + 0.055) * 0.9478672985781991) ^ 2.4
+    end
 end
 
 ---Converts an unpacked hue, saturation, lightness

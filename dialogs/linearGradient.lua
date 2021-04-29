@@ -1,6 +1,5 @@
 dofile("../support/aseutilities.lua")
 
-local easingModes = { "HSL", "HSV", "PALETTE", "RGB" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
 local hueEasing = { "FAR", "NEAR" }
 local extensions = { "CLAMP", "WRAP" }
@@ -25,11 +24,6 @@ end
 
 local function mod1(x)
     return x % 1.0
-end
-
-local function quantizeUnsigned(x, z)
-    -- return math.floor(x * z) / (z - 1.0)
-    return (math.ceil(x * z) - 1.0) / (z - 1.0)
 end
 
 local function createLinear(
@@ -248,7 +242,7 @@ dlg:combobox {
     id = "easingMode",
     label = "Easing Mode:",
     option = defaults.easingMode,
-    options = easingModes,
+    options = AseUtilities.EASING_MODES,
     onchange = function()
         local md = dlg.data.easingMode
         local showColors = md ~= "PALETTE"

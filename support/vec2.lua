@@ -343,6 +343,23 @@ function Vec2.fromPolar(heading, radius)
         r * math.sin(heading))
 end
 
+---Finds a signed integer hash code for a vector.
+---@param a table vector
+---@return integer
+function Vec2.hashCode(a)
+    local xBits = string.unpack("i",
+        string.pack("f", a.x))
+    local yBits = string.unpack("i",
+        string.pack("f", a.y))
+    local hsh = (84696351 ~ xBits) * 16777619 ~ yBits
+    local hshInt = hsh & 0xffffffff
+    if hshInt & 0x80000000 then
+        return -((~hshInt & 0xffffffff) + 1)
+    else
+        return hshInt
+    end
+end
+
 ---Finds a vector's heading.
 ---Defaults to the signed heading.
 ---@param a table left operand

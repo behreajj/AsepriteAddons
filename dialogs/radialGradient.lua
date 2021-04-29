@@ -1,6 +1,5 @@
 dofile("../support/aseutilities.lua")
 
-local easingModes = { "HSL" , "HSV", "PALETTE", "RGB" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
 local hueEasing = { "FAR", "NEAR" }
 local extensions = { "CLAMP", "WRAP" }
@@ -304,7 +303,7 @@ dlg:combobox {
     id = "easingMode",
     label = "Easing Mode:",
     option = defaults.easingMode,
-    options = easingModes,
+    options = AseUtilities.EASING_MODES,
     onchange = function()
         local md = dlg.data.easingMode
         local showColors = md ~= "PALETTE"

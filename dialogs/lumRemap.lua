@@ -1,10 +1,5 @@
 dofile("../support/aseutilities.lua")
 
--- TODO: Should be updated to reflect
--- https://github.com/aseprite/api/blob/main/api/colorspace.md#colorspace
--- No alpha adjust.
-
-local easingModes = { "HSL", "HSV", "PALETTE", "RGB" }
 local rgbEasing = { "LINEAR", "SMOOTH" }
 local hueEasing = { "FAR", "NEAR" }
 local methods = {
@@ -59,7 +54,7 @@ dlg:combobox {
     id = "easingMode",
     label = "Easing Mode:",
     option = defaults.easingMode,
-    options = easingModes,
+    options = AseUtilities.EASING_MODES,
     onchange = function()
         local md = dlg.data.easingMode
         local showColors = md ~= "PALETTE"
@@ -184,6 +179,10 @@ dlg:button {
             local sprite = app.activeSprite
             if sprite then
 
+                -- TODO: Gamma correction?
+                -- local colorSpace = sprite.spec.colorSpace
+                -- print(colorSpace.name) -- "sRGB"
+
                 -- Choose channels and easing based on color mode.
                 local a0 = 0
                 local a1 = 0
@@ -306,10 +305,6 @@ dlg:button {
                             local b = (hex >> 0x10 & 0xff) * 0.00392156862745098
                             local g = (hex >> 0x08 & 0xff) * 0.00392156862745098
                             local r = (hex         & 0xff) * 0.00392156862745098
-
-                            -- r = r ^ gm
-                            -- g = g ^ gm
-                            -- b = b ^ gm
 
                             local lum = lmethod(r, g, b)
                             minlum = math.min(minlum, lum)

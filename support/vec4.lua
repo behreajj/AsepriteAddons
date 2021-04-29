@@ -258,6 +258,31 @@ function Vec4.fract(a)
         a.w - math.tointeger(a.w))
 end
 
+---Finds a signed integer hash code for a vector.
+---@param a table vector
+---@return integer
+function Vec4.hashCode(a)
+    local xBits = string.unpack("i",
+        string.pack("f", a.x))
+    local yBits = string.unpack("i",
+        string.pack("f", a.y))
+    local zBits = string.unpack("i",
+        string.pack("f", a.z))
+    local wBits = string.unpack("i",
+        string.pack("f", a.w))
+
+    local hsh = (((84696351 ~ xBits)
+        * 16777619 ~ yBits)
+        * 16777619 ~ zBits)
+        * 16777619 ~ wBits
+    local hshInt = hsh & 0xffffffff
+    if hshInt & 0x80000000 then
+        return -((~hshInt & 0xffffffff) + 1)
+    else
+        return hshInt
+    end
+end
+
 ---Limits a vector's magnitude to a scalar.
 ---Returns a copy of the vector if it is beneath
 ---the limit.

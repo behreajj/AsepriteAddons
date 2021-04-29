@@ -391,6 +391,28 @@ function Vec3.fract(a)
         a.z - math.tointeger(a.z))
 end
 
+---Finds a signed integer hash code for a vector.
+---@param a table vector
+---@return integer
+function Vec3.hashCode(a)
+    local xBits = string.unpack("i",
+        string.pack("f", a.x))
+    local yBits = string.unpack("i",
+        string.pack("f", a.y))
+    local zBits = string.unpack("i",
+        string.pack("f", a.z))
+
+    local hsh = ((84696351 ~ xBits)
+        * 16777619 ~ yBits)
+        * 16777619 ~ zBits
+    local hshInt = hsh & 0xffffffff
+    if hshInt & 0x80000000 then
+        return -((~hshInt & 0xffffffff) + 1)
+    else
+        return hshInt
+    end
+end
+
 ---Finds the vector's inclination.
 ---Defaults to signed inclination.
 ---@param a table left operand
