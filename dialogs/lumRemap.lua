@@ -13,7 +13,7 @@ local methods = {
 
 local defaults = {
     standard = "REC_709",
-    gamma = 1.0,
+    quantization = 0,
     blk = Color(0, 0, 0, 255),
     wht = Color(255, 255, 255, 255),
     easingMode = "RGB",
@@ -30,14 +30,15 @@ dlg:combobox {
     options = methods
 }
 
--- dlg:newrow { always = false }
+dlg:newrow { always = false }
 
--- dlg:number {
---     id = "gamma",
---     label = "Gamma:",
---     text = string.format("%.1f", defaults.gamma),
---     decimals = 5
--- }
+dlg:slider {
+    id = "quantization",
+    label = "Quantize:",
+    min = 0,
+    max = 32,
+    value = defaults.quantization
+}
 
 dlg:newrow { always = false }
 
@@ -148,40 +149,39 @@ dlg:button {
         local args = dlg.data
         if args.ok then
 
-            local stdstr = args.standard
-            -- local gm = args.gamma
-            local blk = args.blk
-            local wht = args.wht
-            local easingMode = args.easingMode
-            local useNormalize = args.normalize
-
-            local lmethod = rec709
-            if stdstr == "AVERAGE" then
-                lmethod = arithMean
-            elseif stdstr == "HSV" then
-                lmethod = hsvVal
-            elseif stdstr == "HSL" then
-                lmethod = hslLight
-            elseif stdstr == "REC_240" then
-                lmethod = rec240
-            elseif stdstr == "REC_601" then
-                lmethod = rec601
-            end
-
-            -- Determine category of easing func.
-            local easingPreset = args.easingFuncRGB
-            if easingMode == "HSV" then
-                easingPreset = args.easingFuncHue
-            elseif easingMode == "HSL" then
-                easingPreset = args.easingFuncHue
-            end
-
             local sprite = app.activeSprite
             if sprite then
 
-                -- TODO: Gamma correction?
-                -- local colorSpace = sprite.spec.colorSpace
-                -- print(colorSpace.name) -- "sRGB"
+                local stdstr = args.standard
+                local blk = args.blk
+                local wht = args.wht
+                local easingMode = args.easingMode
+                local useNormalize = args.normalize
+
+                local lmethod = rec709
+                if stdstr == "AVERAGE" then
+                    lmethod = arithMean
+                elseif stdstr == "HSV" then
+                    lmethod = hsvVal
+                elseif stdstr == "HSL" then
+                    lmethod = hslLight
+                elseif stdstr == "REC_240" then
+                    lmethod = rec240
+                elseif stdstr == "REC_601" then
+                    lmethod = rec601
+                end
+
+                -- Determine category of easing func.
+                local easingPreset = args.easingFuncRGB
+                if easingMode == "HSV" then
+                    easingPreset = args.easingFuncHue
+                elseif easingMode == "HSL" then
+                    easingPreset = args.easingFuncHue
+                end
+
+                local oldColorSpace = sprite.colorSpace
+                sprite:convertColorSpace(
+                    ColorSpace{ sRGB = false })
 
                 -- Choose channels and easing based on color mode.
                 local a0 = 0
@@ -283,6 +283,15 @@ dlg:button {
 
                 end
 
+                local quantLvl = args.quantization
+                local useQuantize = quantLvl > 0.0
+                local delta = 1.0
+                local levels = 1.0
+                if useQuantize then
+                    levels = quantLvl
+                    delta = 1.0 / levels
+                end
+
                 local srcLyr = app.activeLayer
                 if srcLyr and not srcLyr.isGroup then
                     local oldMode = sprite.colorMode
@@ -337,7 +346,9 @@ dlg:button {
                                 lum = (lum - minlum) * invrangelum
                             end
 
-                            -- TODO: Add quantization?
+                            if useQuantize then
+                                lum = delta * math.floor(0.5 + lum * levels)
+                            end
 
                             local gryclr = easing(lum)
                             local aSrc = alphasSrc[i]
@@ -350,6 +361,8 @@ dlg:button {
 
                         app.activeLayer = srcLyr
                         app.activeCel = srcCel
+
+                        sprite:assignColorSpace(oldColorSpace)
 
                         if oldMode == ColorMode.INDEXED then
                             app.command.ChangePixelFormat { format = "indexed" }
