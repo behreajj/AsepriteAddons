@@ -85,18 +85,10 @@ dlg:button {
     text = "OK",
     focus = true,
     onclick = function()
-
         local args = dlg.data
         if args.ok then
             local sprite = app.activeSprite
             if sprite then
-
-                -- Cache old color mode.
-                -- https://github.com/aseprite/aseprite/blob/
-                -- b0d76d096f76ef862157297b29616877e8bbbdfd/
-                -- src/app/commands/cmd_change_pixel_format.cpp#L456
-                local oldMode = sprite.colorMode
-                app.command.ChangePixelFormat { format = "rgb" }
 
                 local aPal = nil
                 local aPalType = args.aPalType
@@ -119,6 +111,9 @@ dlg:button {
                 end
 
                 if aPal and bPal then
+                    local oldMode = sprite.colorMode
+                    app.command.ChangePixelFormat { format = "rgb" }
+
                     local cPal = nil
                     local aLen = #aPal
                     local bLen = #bPal
@@ -169,11 +164,11 @@ dlg:button {
                         local cLen = aLen + bLen
                         cPal = Palette(cLen)
 
-                        for i = 0, #aPal - 1, 1 do
+                        for i = 0, aLen - 1, 1 do
                             cPal:setColor(i, aPal:getColor(i))
                         end
 
-                        for j = 0, #bPal - 1, 1 do
+                        for j = 0, bLen - 1, 1 do
                             local k = #aPal + j
                             cPal:setColor(k, bPal:getColor(j))
                         end

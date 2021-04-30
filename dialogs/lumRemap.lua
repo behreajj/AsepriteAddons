@@ -159,16 +159,22 @@ dlg:button {
                 local useNormalize = args.normalize
 
                 local lmethod = rec709
+                local convertToLinear = true
                 if stdstr == "AVERAGE" then
                     lmethod = arithMean
+                    convertToLinear = false
                 elseif stdstr == "HSV" then
                     lmethod = hsvVal
+                    convertToLinear = false
                 elseif stdstr == "HSL" then
                     lmethod = hslLight
+                    convertToLinear = false
                 elseif stdstr == "REC_240" then
                     lmethod = rec240
+                    convertToLinear = true
                 elseif stdstr == "REC_601" then
                     lmethod = rec601
+                    convertToLinear = true
                 end
 
                 -- Determine category of easing func.
@@ -180,8 +186,23 @@ dlg:button {
                 end
 
                 local oldColorSpace = sprite.colorSpace
-                sprite:convertColorSpace(
-                    ColorSpace{ sRGB = false })
+                if convertToLinear then
+                    -- Documentation:
+                    -- Converts all the sprite pixels to a
+                    -- new color space so the image looks the
+                    -- same as in the previous color space
+                    -- (all pixels will be adjusted to the
+                    -- new color space).
+                    -- sprite:convertColorSpace(
+                    --     ColorSpace{ sRGB = false })
+
+
+                    -- Documentation:
+                    -- Assign a new color space to the sprite
+                    -- without modifying the sprite pixels.
+                    sprite:assignColorSpace(
+                        ColorSpace{ sRGB = false })
+                end
 
                 -- Choose channels and easing based on color mode.
                 local a0 = 0
@@ -362,7 +383,10 @@ dlg:button {
                         app.activeLayer = srcLyr
                         app.activeCel = srcCel
 
-                        sprite:assignColorSpace(oldColorSpace)
+                        if convertToLinear then
+                            -- sprite:assignColorSpace(oldColorSpace)
+                            sprite:convertColorSpace(oldColorSpace)
+                        end
 
                         if oldMode == ColorMode.INDEXED then
                             app.command.ChangePixelFormat { format = "indexed" }
