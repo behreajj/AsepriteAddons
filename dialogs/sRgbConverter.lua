@@ -1,7 +1,7 @@
--- https://blog.johnnovak.net/2016/09/21/what-every-coder-should-know-about-gamma/#image-resizing
---http://www.ericbrasseur.org/gamma.html
+dofile("../support/clr.lua")
 
-dofile("./support/clr.lua")
+-- https://blog.johnnovak.net/2016/09/21/what-every-coder-should-know-about-gamma/
+-- http://www.ericbrasseur.org/gamma.html
 
 local invPowPrev = {
     Color(0xff000000),
