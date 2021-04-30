@@ -1,4 +1,4 @@
-local dlg = Dialog { title = "Sample Palette" }
+local dlg = Dialog { title = "Extract From Palette" }
 
 dlg:combobox {
     id = "palType",
@@ -42,9 +42,9 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "startIdx",
-    label = "Start Index:",
+    label = "Scaled Index:",
     min = 0,
-    max = 256,
+    max = 32,
     value = 0
 }
 
@@ -53,9 +53,19 @@ dlg:newrow { always = false }
 dlg:slider {
     id = "stride",
     label = "Stride:",
-    min = 0,
-    max = 256,
+    min = 2,
+    max = 32,
     value = 8
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "cycle",
+    label = "Cycle:",
+    min = 0,
+    max = 32,
+    value = 0
 }
 
 dlg:newrow { always = false }
@@ -82,15 +92,19 @@ dlg:button {
 
                 if srcPal then
                     local oldMode = sprite.colorMode
-                app.command.ChangePixelFormat { format = "rgb" }
+                    app.command.ChangePixelFormat { format = "rgb" }
 
                     local origin = args.startIdx
                     local stride = args.stride
+                    local cycle = args.cycle
+                    local sclOrig = stride * origin
                     local trgPal = Palette(stride)
                     local srcLen = #srcPal
                     for i = 0, stride - 1, 1 do
-                        local j = (origin + i) % srcLen
-                        trgPal:setColor(i, srcPal:getColor(j))
+                        -- local j = (sclOrig + i) % srcLen
+                        local j = (cycle + i) % stride
+                        local k = (sclOrig + j) % srcLen
+                        trgPal:setColor(i, srcPal:getColor(k))
                     end
 
                     sprite:setPalette(trgPal)
