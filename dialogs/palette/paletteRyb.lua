@@ -98,7 +98,7 @@ dlg:slider {
     id = "hueEnd",
     min = 0,
     max = 360,
-    value = 240
+    value = 359
 }
 
 dlg:newrow { always = false }
@@ -133,7 +133,7 @@ dlg:newrow { always = false }
 dlg:combobox {
     id = "easingFuncHue",
     label = "Easing:",
-    option = "NEAR",
+    option = "FAR",
     options = hueEasing
 }
 
@@ -154,6 +154,14 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         if args.ok then
+
+            local sprite = app.activeSprite
+            if sprite == nil then
+                sprite = Sprite(64, 64)
+            end
+
+            local oldMode = sprite.colorMode
+            app.command.ChangePixelFormat { format = "rgb" }
 
             local sat = args.saturation * 0.01
 
@@ -189,6 +197,8 @@ dlg:button {
             local jToFac = 1.0
             if lenShades > 1 then jToFac = 1.0 / (lenShades - 1.0) end
 
+            -- TODO: Add option to saturate values as
+            -- they get darker?
             if sat > 0 then
                 local iToFac = 1.0
                 if lenSamples > 1 then iToFac = 1.0 / (lenSamples - 1.0) end
@@ -198,15 +208,19 @@ dlg:button {
                     local hex = AseUtilities.lerpColorArr(ryb, hueFac)
                     local clr = Color(hex)
 
-                    -- TODO: How to factor in source lightness?
                     local h = clr.hslHue
                     local sold = clr.hslSaturation
                     local snew = sold * sat
+                    local lold = clr.hslLightness
+                    local diff = 0.5 * (0.5 - lold)
                     local a = clr.alpha
 
                     for j = 1, lenShades, 1 do
                         local jFac = (j - 1.0) * jToFac
-                        local lnew = (1.0 - jFac) * lmin + jFac * lmax
+
+                        local jFacAdj = math.min(1.0, math.max(0.0, jFac - diff))
+                        jFacAdj = jFacAdj ^ (1.5)
+                        local lnew = (1.0 - jFacAdj) * lmin + jFacAdj * lmax
 
                         local newclr = Color {
                             h = h,
@@ -234,11 +248,14 @@ dlg:button {
                 end
             end
 
-            local sprite = app.activeSprite
-            if sprite == nil then
-                sprite = Sprite(64, 64)
-            end
             sprite:setPalette(palette)
+
+            if oldMode == ColorMode.INDEXED then
+                app.command.ChangePixelFormat { format = "indexed" }
+            elseif oldMode == ColorMode.GRAY then
+                app.command.ChangePixelFormat { format = "gray" }
+            end
+
             app.refresh()
         end
     end

@@ -33,7 +33,7 @@ dlg:newrow { always = false }
 
 dlg:entry {
     id = "palPreset",
-    text = "...",
+    text = "",
     focus = false,
     visible = false
 }
@@ -80,12 +80,21 @@ dlg:button {
             local sprite = app.activeSprite
             if sprite then
 
+                local oldMode = sprite.colorMode
+                app.command.ChangePixelFormat { format = "rgb" }
+
                 local srcPal = nil
                 local palType = args.palType
                 if palType == "FILE" then
-                    srcPal = Palette { fromFile = args.palFile }
+                    local fp =  args.palFile
+                    if fp and #fp > 0 then
+                        srcPal = Palette { fromFile = fp }
+                    end
                 elseif palType == "PRESET" then
-                    srcPal = Palette { fromResource = args.palPreset }
+                    local pr = args.palPreset
+                    if pr and #pr > 0 then
+                        srcPal = Palette { fromResource = args.palPreset }
+                    end
                 else
                     srcPal = sprite.palettes[1]
                 end
@@ -113,6 +122,8 @@ dlg:button {
                     elseif oldMode == ColorMode.GRAY then
                         app.command.ChangePixelFormat { format = "gray" }
                     end
+                else
+                    app.alert("The source palette could not be found.")
                 end
 
             else

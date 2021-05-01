@@ -3,6 +3,8 @@ dofile("../../support/curve2.lua")
 dofile("../../support/mat3.lua")
 dofile("../../support/utilities.lua")
 
+local cornerInputs = { "NON_UNIFORM", "UNIFORM" }
+
 local defaults = {
     resolution = 32,
     lbx = 5,
@@ -13,6 +15,8 @@ local defaults = {
     tr = 7,
     br = 7,
     bl = 7,
+    crnrUni = 7,
+    cornerInput = "UNIFORM",
     useFill = true,
     useStroke = true,
     strokeWeight = 1,
@@ -75,21 +79,49 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
--- TODO: Add a toggle between uniform and nonuniform corners.
+dlg:slider {
+    id = "crnrUni",
+    label = "Corners %:",
+    min = -50,
+    max = 50,
+    value = defaults.crnrUni,
+    visible = true,
+    onchange = function()
+        local uni = dlg.data.crnrUni
+        dlg:modify {
+            id = "tl",
+            value = uni
+        }
+        dlg:modify {
+            id = "tr",
+            value = uni
+        }
+        dlg:modify {
+            id = "br",
+            value = uni
+        }
+        dlg:modify {
+            id = "bl",
+            value = uni
+        }
+    end
+}
 
 dlg:slider {
     id = "tl",
     label = "Corners %:",
     min = -50,
     max = 50,
-    value = defaults.tl
+    value = defaults.tl,
+    visible = false
 }
 
 dlg:slider {
     id = "tr",
     min = -50,
     max = 50,
-    value = defaults.tr
+    value = defaults.tr,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -98,14 +130,49 @@ dlg:slider {
     id = "br",
     min = -50,
     max = 50,
-    value = defaults.br
+    value = defaults.br,
+    visible = false
 }
 
 dlg:slider {
     id = "bl",
     min = -50,
     max = 50,
-    value = defaults.bl
+    value = defaults.bl,
+    visible = false
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "cornerInput",
+    option = defaults.cornerInput,
+    options = cornerInputs,
+    onchange = function()
+        local md = dlg.data.cornerInput
+        local isnu = md == "NON_UNIFORM"
+        dlg:modify {
+            id = "tl",
+            visible = isnu
+        }
+        dlg:modify {
+            id = "tr",
+            visible = isnu
+        }
+        dlg:modify {
+            id = "br",
+            visible = isnu
+        }
+        dlg:modify {
+            id = "bl",
+            visible = isnu
+        }
+
+        dlg:modify {
+            id = "crnrUni",
+            visible = not isnu
+        }
+    end
 }
 
 dlg:newrow { always = false }
@@ -182,6 +249,7 @@ dlg:button {
             local wPrc = sprite.width * 0.01
             local hPrc = sprite.height * 0.01
             local prc = math.min(wPrc, hPrc)
+
             local curve = Curve2.rect(
                 wPrc * args.lbx, hPrc * args.lby,
                 wPrc * args.ubx, hPrc * args.uby,

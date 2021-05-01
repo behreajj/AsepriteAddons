@@ -29,7 +29,7 @@ dlg:file {
 
 dlg:entry {
     id = "aPalPreset",
-    text = "...",
+    text = "",
     focus = false,
     visible = false
 }
@@ -65,7 +65,7 @@ dlg:file {
 
 dlg:entry {
     id = "bPalPreset",
-    text = "...",
+    text = "",
     focus = false,
     visible = false
 }
@@ -93,9 +93,15 @@ dlg:button {
                 local aPal = nil
                 local aPalType = args.aPalType
                 if aPalType == "FILE" then
-                    aPal = Palette { fromFile = args.aPalFile }
+                    local afp = args.aPalFile
+                    if afp and #afp > 0 then
+                        aPal = Palette { fromFile = afp }
+                    end
                 elseif aPalType == "PRESET" then
-                    aPal = Palette { fromResource = args.aPalPreset }
+                    local apr = args.aPalPreset
+                    if apr and #apr > 0 then
+                        aPal = Palette { fromResource = apr }
+                    end
                 else
                     aPal = sprite.palettes[1]
                 end
@@ -103,9 +109,15 @@ dlg:button {
                 local bPal = nil
                 local bPalType = args.bPalType
                 if bPalType == "FILE" then
-                    bPal = Palette { fromFile = args.bPalFile }
+                    local bfp = args.bPalFile
+                    if bfp and #bfp > 0 then
+                        bPal = Palette { fromFile = bfp }
+                    end
                 elseif bPalType == "PRESET" then
-                    bPal = Palette { fromResource = args.bPalPreset }
+                    local bpr = args.bPalPreset
+                    if bpr and #bpr > 0 then
+                        bPal = Palette { fromResource = bpr }
+                    end
                 else
                     bPal = sprite.palettes[1]
                 end
@@ -181,6 +193,8 @@ dlg:button {
                     elseif oldMode == ColorMode.GRAY then
                         app.command.ChangePixelFormat { format = "gray" }
                     end
+                else
+                    app.alert("One of the palettes could not be found.")
                 end
             else
                 app.alert("There is no active sprite.")

@@ -624,14 +624,13 @@ end
 ---@return table
 function Clr.rgbaToGray(a)
     local lum = Clr.luminance(a)
-    local val = lum
-    if val <= 0.0031308 then
-        val = val * 12.92
+    if lum <= 0.0031308 then
+        lum = lum * 12.92
     else
-        val = (val ^ 0.4166666666666667) * 1.055 - 0.055
+        lum = (lum ^ 0.4166666666666667) * 1.055 - 0.055
     end
 
-    return Clr(val, val, val, a.a)
+    return Clr(lum, lum, lum, a.a)
 end
 
 ---Converts RGBA channels to hue, saturation and lightness.

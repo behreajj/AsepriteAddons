@@ -99,7 +99,18 @@ dlg:button {
             if sprite == nil then
                 sprite = Sprite(64, 64)
             end
+
+            local oldMode = sprite.colorMode
+            app.command.ChangePixelFormat { format = "rgb" }
+
             sprite:setPalette(palette)
+
+            if oldMode == ColorMode.INDEXED then
+                app.command.ChangePixelFormat { format = "indexed" }
+            elseif oldMode == ColorMode.GRAY then
+                app.command.ChangePixelFormat { format = "gray" }
+            end
+
             app.refresh()
         end
     end
