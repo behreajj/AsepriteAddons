@@ -1,26 +1,14 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 
 local rgbEasing = { "LINEAR", "SMOOTH" }
 local hueEasing = { "FAR", "NEAR" }
-local extensions = { "CLAMP", "WRAP" }
-local metrics = {
-    "CHEBYSHEV",
-    "EUCLIDEAN",
-    "MANHATTAN",
-    "MINKOWSKI"
-}
-
---TODO: Uniform vs. Sprite aspect...
 
 local defaults = {
     xOrigin = 50,
     yOrigin = 50,
-    maxRad = 100,
-    distMetric = "EUCLIDEAN",
-    minkExp = 2.0,
+    angle = 90,
+    cw = false,
     quantization = 0,
-    bias = 1.0,
-    extension = "CLAMP",
     aColor = Color(32, 32, 32, 255),
     bColor = Color(255, 245, 215, 255),
     easingMode = "RGB",
@@ -28,51 +16,25 @@ local defaults = {
     easingFuncHue = "NEAR"
 }
 
-local function chebDist(ax, ay, bx, by)
-    return math.max(
-        math.abs(bx - ax),
-        math.abs(by - ay))
-end
-
-local function euclDist(ax, ay, bx, by)
-    local dx = bx - ax
-    local dy = by - ay
-    return math.sqrt(dx * dx + dy * dy)
-end
-
-local function manhDist(ax, ay, bx, by)
-    return math.abs(bx - ax)
-         + math.abs(by - ay)
-end
-
-local function minkDist(ax, ay, bx, by, c, d)
-    return (math.abs(bx - ax) ^ c
-          + math.abs(by - ay) ^ c)
-          ^ d
-end
-
-local function clamp01(x)
-    return math.max(0.0, math.min(1.0, x))
-end
-
-local function mod1(x)
-    return x % 1.0
-end
-
-local function createRadial(
-    sprite,
-    img,
+local function createConic(
+    sprite, img,
     xOrigin, yOrigin,
-    maxRad,
-    distFunc,
+    angle, cw,
     quantLvl,
-    bias,
-    wrapFunc,
     aColor, bColor,
     easingMode, easingPreset)
 
     local w = sprite.width
     local h = sprite.height
+
+    local shortEdge = math.min(w, h)
+    local longEdge = math.max(w, h)
+
+    -- Compensate for image aspect ratio.
+    local wInv = 1.0
+    local hInv = 1.0 / h
+    local xOriginNorm = xOrigin or 0.0
+    local yOriginNorm = yOrigin or 0.0
 
     local useQuantize = quantLvl > 0.0
     local delta = 1.0
@@ -82,30 +44,41 @@ local function createRadial(
         delta = 1.0 / levels
     end
 
-    local xOrigPx = xOrigin * w
-    local yOrigPx = yOrigin * h
-
-    -- Corners look bad with Chebyshev and Manhattan?
-    local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, w, h))
-
-    -- See https://github.com/aseprite/aseprite/issues/2613
-    local valBias = 1.0
-    if bias and bias ~= 0.0 then
-        valBias = bias
+    -- TODO: This is unnecessarily convoluted.
+    -- aspect is w / h either way.
+    if shortEdge == longEdge then
+        wInv = 1.0 / w
+    elseif w == shortEdge then
+        local aspect = shortEdge / longEdge
+        wInv = aspect / w
+        xOriginNorm = xOriginNorm * aspect
+    elseif h == shortEdge then
+        local aspect = longEdge / shortEdge
+        wInv = aspect / w
+        xOriginNorm = xOriginNorm * aspect
     end
 
+    -- Bring origin from [0.0, 1.0] to [-1.0, 1.0].
+    local xOriginSigned = xOriginNorm + xOriginNorm - 1.0
+    local yOriginSigned = 1.0 - (yOriginNorm + yOriginNorm)
+
+    -- Validate angle.
+    local ang = 0.0
+    if angle then ang = angle % 6.283185307179586 end
+
+    -- Choose channels and easing based on color mode.
     local a0 = 0
     local a1 = 0
     local a2 = 0
-    local a3 = 0
+    local a3 = 255
 
     local b0 = 0
     local b1 = 0
     local b2 = 0
-    local b3 = 0
+    local b3 = 255
 
     local easing = function(t) return 0xffffffff end
-    if easingMode and easingMode == "HSV" then
+    if easingMode == "HSV" then
 
         a0 = aColor.hsvHue
         a1 = aColor.hsvSaturation
@@ -194,30 +167,51 @@ local function createRadial(
 
     end
 
+    -- Get image iterator.
     local iterator = img:pixels()
     local i = 0
 
     for elm in iterator do
-        local xPx = i % w
-        local yPx = i // w
 
-        local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
-        local fac = dst * normDist
-        fac = wrapFunc(fac)
-        fac = fac ^ valBias
+        -- Convert from array index to Cartesian coordinates.
+        local xPoint = i % w
+        local yPoint = i // w
+
+        -- Bring coordinates into range [0.0, 1.0].
+        local xNorm = xPoint * wInv
+        local yNorm = yPoint * hInv
+
+        -- Bring coordinates from [0.0, 1.0] to [-1.0, 1.0].
+        local xSigned = xNorm + xNorm - 1.0
+        local ySigned = 1.0 - (yNorm + yNorm)
+
+        -- Subtract the origin.
+        local xOffset = xSigned - xOriginSigned
+        local yOffset = ySigned - yOriginSigned
+        if cw then yOffset = -yOffset end
+
+        -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
+        local angleSigned = math.atan(yOffset, xOffset) - ang
+
+        -- Bring angle into range [-0.5, 0.5]. Divide by 2 * math.pi.
+        local angleNormed = angleSigned * 0.15915494309189535
+
+        -- Bring angle into range [0.0, 1.0] by subtracting floor.
+        -- Alternatively, use angleNormed % 1.0.
+        local fac = angleNormed - math.floor(angleNormed)
 
         if useQuantize then
             fac = delta * math.floor(0.5 + fac * levels)
         end
 
+        -- Set element to integer composite.
         elm(easing(fac))
 
         i = i + 1
     end
-
 end
 
-local dlg = Dialog { title = "Radial Gradient" }
+local dlg = Dialog { title = "Conic Gradient" }
 
 dlg:slider {
     id = "xOrigin",
@@ -237,45 +231,20 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "maxRad",
-    label = "Max Radius:",
-    min = 1,
-    max = 100,
-    value = defaults.maxRad
+    id = "angle",
+    label = "Angle:",
+    min = 0,
+    max = 360,
+    value = defaults.angle
 }
 
 dlg:newrow { always = false }
 
-dlg:combobox {
-    id = "distMetric",
-    label = "Metric:",
-    option = defaults.distMetric,
-    options = metrics,
-    onchange = function()
-        dlg:modify {
-            id = "minkExp",
-            visible = dlg.data.distMetric == "MINKOWSKI"
-        }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:number {
-    id = "minkExp",
-    label = "Exponent:",
-    text = string.format("%.1f", defaults.minkExp),
-    decimals = 5,
-    visible = false
-}
-
-dlg:newrow { always = false }
-
-dlg:number {
-    id = "bias",
-    label = "Bias:",
-    text = string.format("%.1f", defaults.bias),
-    decimals = 5
+dlg:check {
+    id = "cw",
+    label = "Chirality:",
+    text = "Flip y axis.",
+    selected = defaults.cw
 }
 
 dlg:newrow { always = false }
@@ -286,15 +255,6 @@ dlg:slider {
     min = 0,
     max = 32,
     value = defaults.quantization
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "extension",
-    label = "Extension:",
-    option = defaults.extension,
-    options = extensions
 }
 
 dlg:newrow { always = false }
@@ -372,50 +332,23 @@ dlg:button {
                 easingFunc = args.easingFuncHue
             end
 
-            local wrapFunc = clamp01
-            if args.extension == "WRAP" then
-                wrapFunc = mod1
-            end
-
             local sprite = AseUtilities.initCanvas(
-                64, 64, "Radial Gradient")
+                64, 64, "Conic Gradient")
             local layer = sprite.layers[#sprite.layers]
             local frame = app.activeFrame or 1
             local cel = sprite:newCel(layer, frame)
 
-            local distFunc = euclDist
-            local distMetric = args.distMetric
-            if distMetric == "CHEBYSHEV" then
-                distFunc = chebDist
-            elseif distMetric == "MANHATTAN" then
-                distFunc = manhDist
-            elseif distMetric == "MINKOWSKI" then
-                local minkExp = 2.0
-                local invMinkExp = 0.5
-                if args.minkExp ~= 0.0 then
-                    minkExp = args.minkExp
-                    invMinkExp = 1.0 / minkExp
-                end
-
-                distFunc = function(ax, ay, bx, by)
-                    return minkDist(ax, ay, bx, by,
-                        minkExp, invMinkExp)
-                end
-            end
-
             local oldMode = sprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
-            createRadial(
+            createConic(
                 sprite,
                 cel.image,
                 0.01 * args.xOrigin,
                 0.01 * args.yOrigin,
-                0.01 * args.maxRad,
-                distFunc,
+                math.rad(args.angle),
+                args.cw,
                 args.quantization,
-                args.bias,
-                wrapFunc,
                 args.aColor,
                 args.bColor,
                 args.easingMode,

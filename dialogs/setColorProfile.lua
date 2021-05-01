@@ -34,19 +34,12 @@ dlg:button {
             if sprite then
                 local icc = ColorSpace { fromFile = args.prf }
                 if icc then
-                    local func = nil
                     local transfer = args.transfer
                     if transfer == "CONVERT" then
-                        func = function(x)
-                            sprite:convertColorSpace(x)
-                        end
+                        sprite:convertColorSpace(icc)
                     else
-                        func = function(x)
-                            sprite:assignColorSpace(x)
-                        end
+                        sprite:assignColorSpace(icc)
                     end
-
-                    func(icc)
                     app.refresh()
                 else
                     app.alert("File not found.")

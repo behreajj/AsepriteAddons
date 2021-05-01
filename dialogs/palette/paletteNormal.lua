@@ -65,6 +65,7 @@ dlg:button {
             local toTheta = tau / azimuths
 
             for i = 0, inclinations - 1, 1 do
+                -- TODO: Refactor to use one for loop?
 
                 local phi = math.pi - i * toPhi
                 local cosPhi = math.cos(phi)

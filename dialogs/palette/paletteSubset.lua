@@ -1,4 +1,4 @@
-local dlg = Dialog { title = "Extract From Palette" }
+local dlg = Dialog { title = "Palette Subset" }
 
 dlg:combobox {
     id = "palType",
@@ -101,7 +101,6 @@ dlg:button {
                     local trgPal = Palette(stride)
                     local srcLen = #srcPal
                     for i = 0, stride - 1, 1 do
-                        -- local j = (sclOrig + i) % srcLen
                         local j = (cycle + i) % stride
                         local k = (sclOrig + j) % srcLen
                         trgPal:setColor(i, srcPal:getColor(k))

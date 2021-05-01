@@ -1,39 +1,28 @@
-dofile("../support/mat3.lua")
-dofile("../support/mesh2.lua")
-dofile("../support/utilities.lua")
-dofile("../support/aseutilities.lua")
+dofile("../../support/mat3.lua")
+dofile("../../support/mesh2.lua")
+dofile("../../support/utilities.lua")
+dofile("../../support/aseutilities.lua")
 
 local defaults = {
-    sides = 6,
-    angle = 90,
+    cells = 8,
     scale = 32,
     xOrigin = 0,
     yOrigin = 0,
-    useFill = true,
+    margin = 0,
     useStroke = true,
     strokeWeight = 1,
     strokeClr = Color(128, 119, 102, 255),
-    fillClr = Color(255, 245, 215, 255)
-}
+    useFill = true,
+    fillClr = Color(255, 245, 215, 255)}
 
-local dlg = Dialog { title = "Convex Polygon" }
-
-dlg:slider {
-    id = "sides",
-    label = "Sides:",
-    min = 3,
-    max = 16,
-    value = defaults.sides
-}
-
-dlg:newrow { always = false }
+local dlg = Dialog { title = "Dimetric Grid" }
 
 dlg:slider {
-    id = "angle",
-    label = "Angle:",
-    min = 0,
-    max = 360,
-    value = defaults.angle
+    id = "cells",
+    label = "Cells:",
+    min = 2,
+    max = 32,
+    value = defaults.cells
 }
 
 dlg:newrow { always = false }
@@ -58,6 +47,16 @@ dlg:number {
     id = "yOrigin",
     text = string.format("%.1f", defaults.yOrigin),
     decimals = 5
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "margin",
+    label = "Margin:",
+    min = 0,
+    max = 100,
+    value = defaults.margin
 }
 
 dlg:newrow { always = false }
@@ -124,16 +123,25 @@ dlg:button {
 
     local args = dlg.data
     if args.ok then
-        local mesh = Mesh2.polygon(args.sides)
+        local mesh = Mesh2.gridDimetric(args.cells)
+
+        -- Convert margin from [0, 100] to [0.0, 1.0].
+        -- Ensure that it is less than 100%.
+        if args.margin > 0 then
+            local mrgval = math.min(
+                0.999999,
+                args.margin * 0.01)
+            Mesh2.uniformData(mesh, mesh)
+            mesh:scaleFacesIndiv(1.0 - mrgval)
+        end
 
         local t = Mat3.fromTranslation(
             args.xOrigin,
             args.yOrigin)
-        local r = Mat3.fromRotZ(math.rad(args.angle))
         local sclval = args.scale
         if sclval < 2.0 then sclval = 2.0 end
         local s = Mat3.fromScale(sclval, -sclval)
-        local mat = Mat3.mul(Mat3.mul(t, s), r)
+        local mat = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
         local sprite = AseUtilities.initCanvas(

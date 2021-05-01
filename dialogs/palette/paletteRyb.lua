@@ -1,5 +1,5 @@
-dofile("../support/utilities.lua")
-dofile("../support/aseutilities.lua")
+dofile("../../support/utilities.lua")
+dofile("../../support/aseutilities.lua")
 
 local hueEasing = { "FAR", "NEAR" }
 
@@ -51,14 +51,12 @@ dlg:shades {
     mode = "pick",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
-            -- app.fgColor = ev.color
             local hue = math.tointeger(hues[ev.color.rgbaPixel])
             dlg:modify {
                 id = "hueStart",
                 value = hue
             }
         elseif ev.button == MouseButton.RIGHT then
-            -- app.bgColor = ev.color
             local hue = math.tointeger(hues[ev.color.rgbaPixel])
             dlg:modify {
                 id = "hueEnd",

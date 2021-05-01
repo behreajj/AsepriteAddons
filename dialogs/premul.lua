@@ -13,6 +13,7 @@ dlg:button {
                 local oldMode = sprite.colorMode
                 app.command.ChangePixelFormat { format = "rgb" }
 
+                --TODO: Switch to only calling active layer and active cel.
                 local layers = sprite.layers
                 local layerLen = #layers
                 for i = 1, layerLen, 1 do

@@ -100,8 +100,7 @@ dlg:button {
     text = "OK",
     onclick = function()
         -- Option to apply to palette instead of sprite?
-
-
+        -- TODO: Switch to using activeLayer?
         local args = dlg.data
         if args.ok then
             local sprite = app.activeSprite

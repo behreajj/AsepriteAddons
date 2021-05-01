@@ -1,7 +1,7 @@
-dofile("../support/aseutilities.lua")
-dofile("../support/curve2.lua")
-dofile("../support/mat3.lua")
-dofile("../support/utilities.lua")
+dofile("../../support/aseutilities.lua")
+dofile("../../support/curve2.lua")
+dofile("../../support/mat3.lua")
+dofile("../../support/utilities.lua")
 
 local defaults = {
     resolution = 32,
@@ -74,6 +74,8 @@ dlg:slider {
 }
 
 dlg:newrow { always = false }
+
+-- TODO: Add a toggle between uniform and nonuniform corners.
 
 dlg:slider {
     id = "tl",
