@@ -3,7 +3,7 @@
 -- https://github.com/ellelstone/elles_icc_profiles
 
 local colorModes = {"RGB", "INDEXED", "GRAY"}
-local paletteTypes = { "ACTIVE", "FILE", "PRESET" }
+local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
 
 local defaults = {
     targetSprite = "NEW",
@@ -11,7 +11,7 @@ local defaults = {
     height = 64,
     colorMode = "RGB",
     background = Color(0, 0, 0, 0),
-    paletteType = "ACTIVE",
+    paletteType = "DEFAULT",
     frames = 1,
     transfer = "CONVERT"
 }
@@ -45,18 +45,6 @@ dlg:combobox {
         }
         dlg:modify {
             id = "background",
-            visible = isNew
-        }
-        dlg:modify {
-            id = "palType",
-            visible = isNew
-        }
-        dlg:modify {
-            id = "palFile",
-            visible = isNew
-        }
-        dlg:modify {
-            id = "palPreset",
             visible = isNew
         }
         dlg:modify {
@@ -100,7 +88,14 @@ dlg:combobox {
     label = "Color Mode:",
     option = "RGB",
     options = colorModes,
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.targetSprite == "NEW",
+    onchange = function()
+        local state = dlg.data.colorMode
+        dlg:modify {
+            id = "background",
+            visible = state ~= "INDEXED"
+        }
+    end
 }
 
 dlg:newrow { always = false }
@@ -110,6 +105,7 @@ dlg:color {
     label = "Background:",
     color = defaults.background,
     visible = defaults.targetSprite == "NEW"
+        and defaults.colorMode ~= "INDEXED"
 }
 
 dlg:newrow { always = false }
@@ -122,14 +118,13 @@ dlg:slider {
     value = defaults.frames
 }
 
-dlg:newrow { always = false }
+dlg:separator {}
 
 dlg:combobox {
     id = "palType",
     label = "Palette:",
-    option = "ACTIVE",
+    option = defaults.paletteType,
     options = paletteTypes,
-    visible = defaults.targetSprite == "NEW",
     onchange = function()
         local state = dlg.data.palType
 
@@ -151,8 +146,7 @@ dlg:file {
     id = "palFile",
     filetypes = { "gpl", "pal" },
     open = true,
-    visible = defaults.targetSprite == "NEW"
-        and defaults.paletteType == "FILE"
+    visible = defaults.paletteType == "FILE"
 }
 
 dlg:newrow { always = false }
@@ -161,8 +155,7 @@ dlg:entry {
     id = "palPreset",
     text = "",
     focus = false,
-    visible = defaults.targetSprite == "NEW"
-        and defaults.paletteType == "PRESET"
+    visible = defaults.paletteType == "PRESET"
 }
 
 dlg:separator {}
@@ -207,23 +200,14 @@ dlg:button {
                 if pr and #pr > 0 then
                     pal = Palette { fromResource = args.palPreset }
                 end
-            else
-                local active = app.activeSprite
-                if active then
-                    pal = active.palettes[1]
+            elseif palType == "ACTIVE" then
+                local activeSprite = app.activeSprite
+                if activeSprite then
+                    pal = activeSprite.palettes[1]
                 end
             end
 
-            -- Create a default palette.
-            if pal == nil or #pal < 1 then
-                pal = Palette(16)
-                for i = 0, 15, 1 do
-                    local val = math.tointeger(0.5 + (255 * i / 15.0))
-                    pal:setColor(i, Color(val, val, val, 255))
-                end
-            end
-
-            -- Create sprite.
+            -- Search for active or file sprite.
             local sprite = nil
             local targetSprite = args.targetSprite
             if targetSprite == "FILE" then
@@ -236,6 +220,20 @@ dlg:button {
                 sprite = app.activeSprite
             end
 
+            -- Last resort to establish a palette.
+            if pal == nil or #pal < 1 then
+                if sprite ~= nil then
+                    pal = sprite.palettes[1]
+                else
+                    pal = Palette(16)
+                    for i = 0, 15, 1 do
+                        local val = math.tointeger(0.5 + (255 * i / 15.0))
+                        pal:setColor(i, Color(val, val, val, 255))
+                    end
+                end
+            end
+
+            -- Create a new sprite.
             if targetSprite == "NEW" or sprite == nil then
                 local w = math.max(1,
                     math.tointeger(
@@ -244,20 +242,23 @@ dlg:button {
                     math.tointeger(
                     0.5 + math.abs(args.height)))
 
-                sprite = Sprite(w, h, ColorMode.RGB)
-                sprite:setPalette(pal)
-                app.activeSprite = sprite
-
                 -- Create image.
-                local img = Image(w, h, ColorMode.RGB)
+                -- Do these BEFORE sprite is created
+                -- and palette is set.
                 local bkgClr = args.background
+                local colorMode = args.colorMode
+                local img = Image(w, h, ColorMode.RGB)
                 local alpha = bkgClr.alpha
-                local fillCels = alpha > 0
+                local fillCels = alpha > 0 and colorMode ~= "INDEXED"
                 if fillCels then
                     local itr = img:pixels()
                     local hex = bkgClr.rgbaPixel
                     for elm in itr do elm(hex) end
                 end
+
+                sprite = Sprite(w, h, ColorMode.RGB)
+                sprite:setPalette(pal)
+                app.activeSprite = sprite
 
                 -- Create frames.
                 local frameReqs = args.frames
@@ -277,10 +278,20 @@ dlg:button {
                 end
 
                 -- Set color mode.
-                local colorMode = args.colorMode
                 if colorMode == "INDEXED" then
                     app.command.ChangePixelFormat { format = "indexed" }
                 elseif colorMode == "GRAY" then
+                    app.command.ChangePixelFormat { format = "gray" }
+                end
+            elseif sprite ~= nil then
+                local oldMode = sprite.colorMode
+                app.command.ChangePixelFormat { format = "rgb" }
+
+                sprite:setPalette(pal)
+
+                if oldMode == ColorMode.INDEXED then
+                    app.command.ChangePixelFormat { format = "indexed" }
+                elseif oldMode == ColorMode.GRAY then
                     app.command.ChangePixelFormat { format = "gray" }
                 end
             end
