@@ -53,7 +53,7 @@ function Vec2:__mod(b)
 end
 
 function Vec2:__mul(b)
-    return Vec2.mul(self, b)
+    return Vec2.hadamard(self, b)
 end
 
 function Vec2:__pow(b)
@@ -343,15 +343,27 @@ function Vec2.fromPolar(heading, radius)
         r * math.sin(heading))
 end
 
+---Multiplies two vectors component-wise.
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Vec2.hadamard(a, b)
+    return Vec2.new(
+        a.x * b.x,
+        a.y * b.y)
+end
+
 ---Finds a signed integer hash code for a vector.
 ---@param a table vector
 ---@return integer
 function Vec2.hashCode(a)
-    local xBits = string.unpack("i",
+    local xBits = string.unpack("i4",
         string.pack("f", a.x))
-    local yBits = string.unpack("i",
+    local yBits = string.unpack("i4",
         string.pack("f", a.y))
     local hsh = (84696351 ~ xBits) * 16777619 ~ yBits
+
+    -- QUERY: Use another string pack/unpack instead?
     local hshInt = hsh & 0xffffffff
     if hshInt & 0x80000000 then
         return -((~hshInt & 0xffffffff) + 1)
@@ -505,17 +517,6 @@ function Vec2.mod(a, b)
     if b.x ~= 0.0 then cx = a.x % b.x end
     if b.y ~= 0.0 then cy = a.y % b.y end
     return Vec2.new(cx, cy)
-end
-
----Multiplies two vectors component-wise.
----A shortcut for multiplying a matrix and vector.
----@param a table left operand
----@param b table right operand
----@return table
-function Vec2.mul(a, b)
-    return Vec2.new(
-        a.x * b.x,
-        a.y * b.y)
 end
 
 ---Negates a vector.

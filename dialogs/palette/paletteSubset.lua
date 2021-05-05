@@ -1,3 +1,6 @@
+-- TODO: Refine this to be able to get a square of w, h from a top
+-- left corner x, y given the number of columns in a palette to make
+-- it form a square. Perhaps consider toggle from 1D to 2D.
 local dlg = Dialog { title = "Palette Subset" }
 
 dlg:combobox {

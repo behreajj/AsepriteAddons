@@ -16,7 +16,11 @@ local defaults = {
     useAlpha = false,
     useGray = true,
     useIdx = false,
+    slope = 1.0,
+    intercept = 0.0,
     gamma = 2.2,
+    amplitude = 1.0,
+    offset = 0.0,
     quantization = 0
 }
 
@@ -26,12 +30,14 @@ local function quantize(x, levels)
         / (levels - 1.0)))
 end
 
-local function gamma(x, c)
-    return math.max(0.0, math.min(1.0, x ^ c))
+local function gamma(x, c, amplitude, offset)
+    return math.max(0.0, math.min(1.0,
+        amplitude * (x ^ c) + offset))
 end
 
-local function linear(x)
-    return math.max(0.0, math.min(1.0, x))
+local function linear(x, slope, intercept)
+    return math.max(0.0, math.min(1.0,
+        slope * x + intercept))
 end
 
 local function pingPong(x)
@@ -73,9 +79,45 @@ dlg:combobox {
                 id = "gamma",
                 visible = true
             }
+            dlg:modify {
+                id = "amplitude",
+                visible = true
+            }
+            dlg:modify {
+                id = "offset",
+                visible = true
+            }
         else
             dlg:modify {
                 id = "gamma",
+                visible = false
+            }
+            dlg:modify {
+                id = "amplitude",
+                visible = false
+            }
+            dlg:modify {
+                id = "offset",
+                visible = false
+            }
+        end
+
+        if prs == "LINEAR" then
+            dlg:modify {
+                id = "slope",
+                visible = true
+            }
+            dlg:modify {
+                id = "intercept",
+                visible = true
+            }
+        else
+            dlg:modify {
+                id = "slope",
+                visible = false
+            }
+            dlg:modify {
+                id = "intercept",
                 visible = false
             }
         end
@@ -97,9 +139,43 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:number {
+    id = "slope",
+    label = "Slope:",
+    text = string.format("%.1f", defaults.slope),
+    decimals = 5,
+    visible = false
+}
+
+dlg:number {
+    id = "intercept",
+    label = "Intercept:",
+    text = string.format("%.1f", defaults.intercept),
+    decimals = 5,
+    visible = false
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
     id = "gamma",
     label = "Gamma:",
     text = string.format("%.1f", defaults.gamma),
+    decimals = 5,
+    visible = false
+}
+
+dlg:number {
+    id = "amplitude",
+    label = "Amplitude:",
+    text = string.format("%.1f", defaults.amplitude),
+    decimals = 5,
+    visible = false
+}
+
+dlg:number {
+    id = "offset",
+    label = "Offset:",
+    text = string.format("%.1f", defaults.offset),
     decimals = 5,
     visible = false
 }
@@ -171,7 +247,12 @@ dlg:button {
             if args.useGray then channels = channels | FilterChannels.GRAY end
             if args.useIndex then channels = channels | FilterChannels.INDEX end
 
-            local func = linear
+            local slope = args.slope or defaults.slope
+            local intercept = args.intercept or defaults.intercept
+            local func = function(x)
+                return linear(x, slope, intercept)
+            end
+
             local preset = args.preset
             if preset == "SMOOTH" then
                 func = smoothStep
@@ -188,8 +269,10 @@ dlg:button {
             elseif preset == "GAMMA" then
                 local g = 1.0
                 if args.gamma ~= 0.0 then g = args.gamma end
+                local amplitude = args.amplitude or defaults.amplitude
+                local offset = args.offset or defaults.offset
                 func = function(x)
-                    return gamma(x, g)
+                    return gamma(x, g, amplitude, offset)
                 end
             end
 

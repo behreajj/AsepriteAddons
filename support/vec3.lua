@@ -58,7 +58,7 @@ function Vec3:__mod(b)
 end
 
 function Vec3:__mul(b)
-    return Vec3.mul(self, b)
+    return Vec3.hadamard(self, b)
 end
 
 function Vec3:__pow(b)
@@ -391,20 +391,32 @@ function Vec3.fract(a)
         a.z - math.tointeger(a.z))
 end
 
+---Multiplies two vectors component-wise.
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Vec3.hadamard(a, b)
+    return Vec3.new(
+        a.x * b.x,
+        a.y * b.y,
+        a.z * b.z)
+end
+
 ---Finds a signed integer hash code for a vector.
 ---@param a table vector
 ---@return integer
 function Vec3.hashCode(a)
-    local xBits = string.unpack("i",
+    local xBits = string.unpack("i4",
         string.pack("f", a.x))
-    local yBits = string.unpack("i",
+    local yBits = string.unpack("i4",
         string.pack("f", a.y))
-    local zBits = string.unpack("i",
+    local zBits = string.unpack("i4",
         string.pack("f", a.z))
 
     local hsh = ((84696351 ~ xBits)
         * 16777619 ~ yBits)
         * 16777619 ~ zBits
+
     local hshInt = hsh & 0xffffffff
     if hshInt & 0x80000000 then
         return -((~hshInt & 0xffffffff) + 1)
@@ -582,18 +594,6 @@ function Vec3.mod(a, b)
     if b.y ~= 0.0 then cy = a.y % b.y end
     if b.z ~= 0.0 then cz = a.z % b.z end
     return Vec3.new(cx, cy, cz)
-end
-
----Multiplies two vectors component-wise.
----A shortcut for multiplying a matrix and vector.
----@param a table left operand
----@param b table right operand
----@return table
-function Vec3.mul(a, b)
-    return Vec3.new(
-        a.x * b.x,
-        a.y * b.y,
-        a.z * b.z)
 end
 
 ---Negates a vector.

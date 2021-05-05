@@ -148,7 +148,7 @@ function Mesh2:scaleByVec2(v)
     if Vec2.all(v) then
         local vsLen = #self.vs
         for i = 1, vsLen, 1 do
-            self.vs[i] = Vec2.mul(self.vs[i], v)
+            self.vs[i] = Vec2.hadamard(self.vs[i], v)
         end
     end
     return self
@@ -195,7 +195,7 @@ function Mesh2:scaleFacesIndiv(scale)
             local vert = f[j]
             local v = self.vs[vert]
             self.vs[vert] = Vec2.add(
-                Vec2.mul(Vec2.sub(v,
+                Vec2.hadamard(Vec2.sub(v,
                 center), vscl), center)
         end
     end

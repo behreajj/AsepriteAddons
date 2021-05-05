@@ -144,9 +144,9 @@ end
 ---@param v number nonuniform scalar
 ---@return table
 function Knot2:scaleByVec2(v)
-        self.co = Vec2.mul(self.co, v)
-        self.fh = Vec2.mul(self.fh, v)
-        self.rh = Vec2.mul(self.rh, v)
+        self.co = Vec2.hadamard(self.co, v)
+        self.fh = Vec2.hadamard(self.fh, v)
+        self.rh = Vec2.hadamard(self.rh, v)
     return self
 end
 

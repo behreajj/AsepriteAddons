@@ -316,7 +316,9 @@ dlg:button {
                 -- app.alert("File not found.")
             end
 
+            dlg:close()
         else
+            -- app.alert("Inputs not ok.")
         end
     end
 }

@@ -110,6 +110,8 @@ dlg:color {
 
 dlg:newrow { always = false }
 
+-- Source for more ideas.
+-- http://paulbourke.net/miscellaneous/imageprocess/
 local function rec240(r01, g01, b01)
     return 0.212 * r01
          + 0.701 * g01
@@ -123,9 +125,12 @@ local function rec601(r01, g01, b01)
 end
 
 local function rec709(r01, g01, b01)
-    return 0.2126 * r01
-         + 0.7152 * g01
-         + 0.0722 * b01
+    -- return 0.2126 * r01
+    --      + 0.7152 * g01
+    --      + 0.0722 * b01
+    return 0.21264934272065283 * r01
+         + 0.7151691357059038 * g01
+         + 0.07218152157344333 * b01
 end
 
 local function arithMean(r01, g01, b01)
@@ -188,20 +193,9 @@ dlg:button {
                 local oldColorSpace = sprite.colorSpace
                 if convertToLinear then
                     -- Documentation:
-                    -- Converts all the sprite pixels to a
-                    -- new color space so the image looks the
-                    -- same as in the previous color space
-                    -- (all pixels will be adjusted to the
-                    -- new color space).
-                    -- sprite:convertColorSpace(
-                    --     ColorSpace{ sRGB = false })
-
-
-                    -- Documentation:
                     -- Assign a new color space to the sprite
                     -- without modifying the sprite pixels.
-                    sprite:assignColorSpace(
-                        ColorSpace{ sRGB = false })
+                    sprite:assignColorSpace(ColorSpace{ sRGB = false })
                 end
 
                 -- Choose channels and easing based on color mode.
@@ -384,7 +378,12 @@ dlg:button {
                         app.activeCel = srcCel
 
                         if convertToLinear then
-                            -- sprite:assignColorSpace(oldColorSpace)
+                            -- Documentation:
+                            -- Converts all the sprite pixels to a
+                            -- new color space so the image looks the
+                            -- same as in the previous color space
+                            -- (all pixels will be adjusted to the
+                            -- new color space).
                             sprite:convertColorSpace(oldColorSpace)
                         end
 

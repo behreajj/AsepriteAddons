@@ -138,7 +138,7 @@ function Mesh3:scaleByVec3(v)
     if Vec3.all(v) then
         local vsLen = #self.vs
         for i = 1, vsLen, 1 do
-            self.vs[i] = Vec3.mul(self.vs[i], v)
+            self.vs[i] = Vec3.hadamard(self.vs[i], v)
         end
     end
     return self

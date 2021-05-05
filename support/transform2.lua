@@ -155,7 +155,7 @@ end
 ---@param v table nonuniform scalar
 ---@return table
 function Transform2:scaleByNonuniform(v)
-    self.scale = Vec2.mul(self.scale, v)
+    self.scale = Vec2.hadamard(self.scale, v)
     return self
 end
 

@@ -385,9 +385,9 @@ end
 ---@return number
 function Clr.luminance(a)
     local linear = Clr.standardToLinear(a)
-    return 0.2126 * linear.r
-         + 0.7152 * linear.g
-         + 0.0722 * linear.b
+    return 0.21264934272065283 * linear.r
+         + 0.7151691357059038 * linear.g
+         + 0.07218152157344333 * linear.b
 end
 
 ---Finds the maximum, or lightest, color.

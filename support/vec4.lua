@@ -63,7 +63,7 @@ function Vec4:__mod(b)
 end
 
 function Vec4:__mul(b)
-    return Vec4.mul(self, b)
+    return Vec4.hadamard(self, b)
 end
 
 function Vec4:__pow(b)
@@ -258,23 +258,36 @@ function Vec4.fract(a)
         a.w - math.tointeger(a.w))
 end
 
+---Multiplies two vectors component-wise.
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Vec4.hadamard(a, b)
+    return Vec4.new(
+        a.x * b.x,
+        a.y * b.y,
+        a.z * b.z,
+        a.w * b.w)
+end
+
 ---Finds a signed integer hash code for a vector.
 ---@param a table vector
 ---@return integer
 function Vec4.hashCode(a)
-    local xBits = string.unpack("i",
+    local xBits = string.unpack("i4",
         string.pack("f", a.x))
-    local yBits = string.unpack("i",
+    local yBits = string.unpack("i4",
         string.pack("f", a.y))
-    local zBits = string.unpack("i",
+    local zBits = string.unpack("i4",
         string.pack("f", a.z))
-    local wBits = string.unpack("i",
+    local wBits = string.unpack("i4",
         string.pack("f", a.w))
 
     local hsh = (((84696351 ~ xBits)
         * 16777619 ~ yBits)
         * 16777619 ~ zBits)
         * 16777619 ~ wBits
+
     local hshInt = hsh & 0xffffffff
     if hshInt & 0x80000000 then
         return -((~hshInt & 0xffffffff) + 1)
@@ -444,19 +457,6 @@ function Vec4.mod(a, b)
     if b.z ~= 0.0 then cz = a.z % b.z end
     if b.w ~= 0.0 then cw = a.w % b.w end
     return Vec4.new(cx, cy, cz, cw)
-end
-
----Multiplies two vectors component-wise.
----A shortcut for multiplying a matrix and vector.
----@param a table left operand
----@param b table right operand
----@return table
-function Vec4.mul(a, b)
-    return Vec4.new(
-        a.x * b.x,
-        a.y * b.y,
-        a.z * b.z,
-        a.w * b.w)
 end
 
 ---Negates a vector.
