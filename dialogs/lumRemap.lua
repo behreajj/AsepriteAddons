@@ -51,6 +51,7 @@ dlg:check {
 
 dlg:newrow { always = false }
 
+-- TODO: Show a palette load option if palette is selected?
 dlg:combobox {
     id = "easingMode",
     label = "Easing Mode:",
@@ -59,14 +60,8 @@ dlg:combobox {
     onchange = function()
         local md = dlg.data.easingMode
         local showColors = md ~= "PALETTE"
-        dlg:modify {
-            id = "blk",
-            visible = showColors
-        }
-        dlg:modify {
-            id = "wht",
-            visible = showColors
-        }
+        dlg:modify { id = "blk", visible = showColors }
+        dlg:modify { id = "wht", visible = showColors }
         dlg:modify {
             id = "easingFuncHue",
             visible = md == "HSL" or md == "HSV"

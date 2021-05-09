@@ -1,26 +1,34 @@
 local prsStrs = {
     "GAMMA",
     "LINEAR",
-    "PINGPONG",
+    "SINE_WAVE",
     "QUANTIZE",
-    "SMOOTH",
-    "SMOOTHER"
+    -- "SMOOTH",
+    -- "SMOOTHER"
 }
 
 local defaults = {
     resolution = 16,
-    preset = "SMOOTHER",
+    preset = "SINE_WAVE",
     useRed = true,
     useGreen = true,
     useBlue = true,
     useAlpha = false,
     useGray = true,
     useIdx = false,
+
+    phase = -90,
+    freq = 0.5,
+    sw_amp = 1.0,
+    basis = 0.0,
+
     slope = 1.0,
     intercept = 0.0,
+
     gamma = 2.2,
     amplitude = 1.0,
     offset = 0.0,
+
     quantization = 0
 }
 
@@ -40,20 +48,27 @@ local function linear(x, slope, intercept)
         slope * x + intercept))
 end
 
-local function pingPong(x)
-    return 0.5 + 0.5 * math.cos(
-        6.283185307179586 * x - math.pi)
+local function sineWave(x, freq, phase, amp, basis)
+    local sclBas = basis
+    return math.max(0.0, math.min(1.0,
+        0.5 + 0.5 * (sclBas + amp * math.sin(
+        6.283185307179586 * freq * x + phase))))
 end
 
-local function smoothStep(x)
-    return math.max(0.0, math.min(1.0,
-        x * x * (3.0 - (x + x))))
-end
+-- local function pingPong(x)
+--     return 0.5 + 0.5 * math.cos(
+--         6.283185307179586 * x - math.pi)
+-- end
 
-local function smootherStep(x)
-    return math.max(0.0, math.min(1.0,
-        x * x * x * (x * (x * 6.0 - 15.0) + 10.0)))
-end
+-- local function smoothStep(x)
+--     return math.max(0.0, math.min(1.0,
+--         x * x * (3.0 - (x + x))))
+-- end
+
+-- local function smootherStep(x)
+--     return math.max(0.0, math.min(1.0,
+--         x * x * x * (x * (x * 6.0 - 15.0) + 10.0)))
+-- end
 
 local dlg = Dialog { title = "Color Curve Presets" }
 
@@ -74,66 +89,84 @@ dlg:combobox {
     option = defaults.preset,
     onchange = function()
         local prs = dlg.data.preset
-        if prs == "GAMMA" then
-            dlg:modify {
-                id = "gamma",
-                visible = true
-            }
-            dlg:modify {
-                id = "amplitude",
-                visible = true
-            }
-            dlg:modify {
-                id = "offset",
-                visible = true
-            }
+
+        if prs == "SINE_WAVE" then
+            dlg:modify { id = "phase", visible = true }
+            dlg:modify { id = "freq", visible = true }
+            dlg:modify { id = "sw_amp", visible = true }
+            dlg:modify { id = "basis", visible = true }
         else
-            dlg:modify {
-                id = "gamma",
-                visible = false
-            }
-            dlg:modify {
-                id = "amplitude",
-                visible = false
-            }
-            dlg:modify {
-                id = "offset",
-                visible = false
-            }
+            dlg:modify { id = "phase", visible = false }
+            dlg:modify { id = "freq", visible = false }
+            dlg:modify { id = "sw_amp", visible = false }
+            dlg:modify { id = "basis", visible = false }
+        end
+
+        if prs == "GAMMA" then
+            dlg:modify { id = "gamma", visible = true }
+            dlg:modify { id = "amplitude", visible = true }
+            dlg:modify { id = "offset", visible = true }
+        else
+            dlg:modify { id = "gamma", visible = false }
+            dlg:modify { id = "amplitude", visible = false }
+            dlg:modify { id = "offset", visible = false }
         end
 
         if prs == "LINEAR" then
-            dlg:modify {
-                id = "slope",
-                visible = true
-            }
-            dlg:modify {
-                id = "intercept",
-                visible = true
-            }
+            dlg:modify { id = "slope", visible = true }
+            dlg:modify { id = "intercept", visible = true }
         else
-            dlg:modify {
-                id = "slope",
-                visible = false
-            }
-            dlg:modify {
-                id = "intercept",
-                visible = false
-            }
+            dlg:modify { id = "slope", visible = false }
+            dlg:modify { id = "intercept", visible = false }
         end
 
         if prs == "QUANTIZE" then
-            dlg:modify {
-                id = "quantization",
-                visible = true
-            }
+            dlg:modify { id = "quantization", visible = true }
         else
-            dlg:modify {
-                id = "quantization",
-                visible = false
-            }
+            dlg:modify { id = "quantization", visible = false }
         end
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "phase",
+    label = "Phase:",
+    min = -90,
+    max = 90,
+    value = defaults.phase,
+    visible = true
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "freq",
+    label = "Frequency:",
+    text = string.format("%.1f", defaults.freq),
+    decimals = 5,
+    visible = true
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "sw_amp",
+    label = "Amplitude:",
+    text = string.format("%.1f", defaults.sw_amp),
+    decimals = 5,
+    visible = true
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "basis",
+    label = "Basis:",
+    text = string.format("%.1f", defaults.basis),
+    decimals = 5,
+    visible = true
 }
 
 dlg:newrow { always = false }
@@ -145,6 +178,8 @@ dlg:number {
     decimals = 5,
     visible = false
 }
+
+dlg:newrow { always = false }
 
 dlg:number {
     id = "intercept",
@@ -164,6 +199,8 @@ dlg:number {
     visible = false
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
     id = "amplitude",
     label = "Amplitude:",
@@ -171,6 +208,8 @@ dlg:number {
     decimals = 5,
     visible = false
 }
+
+dlg:newrow { always = false }
 
 dlg:number {
     id = "offset",
@@ -255,11 +294,19 @@ dlg:button {
 
             local preset = args.preset
             if preset == "SMOOTH" then
-                func = smoothStep
+                -- func = smoothStep
             elseif preset == "SMOOTHER" then
-                func = smootherStep
-            elseif preset == "PINGPONG" then
-                func = pingPong
+                -- func = smootherStep
+            elseif preset == "SINE_WAVE" then
+                local freq = args.freq or defaults.freq
+                local phase = (args.phase or defaults.phase)
+                phase = 0.017453292519943295 * phase
+                local amp = args.sw_amp or defaults.sw_amp
+                local basis = args.basis or defaults.basis
+
+                func = function(x)
+                    return sineWave(x, freq, phase, amp, basis)
+                end
             elseif preset == "QUANTIZE" then
                 if args.quantization > 0 then
                     func = function(x)

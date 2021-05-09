@@ -162,6 +162,50 @@ function Quaternion.dot(a, b)
         + ai.z * bi.z
 end
 
+---Creates a rotation from an origin direction to
+---a destination direction.
+---@param a table origin vector
+---@param b table destination vector
+---@return table
+function Quaternion.fromTo(a, b)
+    local anx = a.x
+    local any = a.y
+    local anz = a.z
+    local amSq = anx * anx + any * any + anz * anz
+    if amSq <= 0.0 then
+        return Quaternion.identity()
+    end
+
+    local bnx = b.x
+    local bny = b.y
+    local bnz = b.z
+    local bmSq = bnx * bnx + bny * bny + bnz * bnz
+    if bmSq <= 0.0 then
+        return Quaternion.identity()
+    end
+
+    if amSq ~= 1.0 then
+        local amInv = 1.0 / math.sqrt(amSq);
+        anx = anx * amInv
+        any = any * amInv
+        anz = anz * amInv
+    end
+
+    if bmSq ~= 1.0 then
+        local bmInv = 1.0 / math.sqrt(bmSq);
+        bnx = bnx * bmInv
+        bny = bny * bmInv
+        bnz = bnz * bmInv
+    end
+
+    return Quaternion.newByRef(
+        anx * bnx + any * bny + anz * bnz,
+        Vec3.new(
+            any * bnz - anz * bny,
+            anz * bnx - anx * bnz,
+            anx * bny - any * bnx))
+end
+
 ---Finds the inverse of a quaternion.
 ---@param a table left operand
 ---@return table
@@ -375,6 +419,77 @@ function Quaternion.scale(a, b)
     else
         return Quaternion.identity()
     end
+end
+
+---Spherical linear interpolation from an origin
+---to a destination by a number step.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Quaternion.slerp(a, b, t)
+    if t <= 0.0 then return Quaternion.normalize(a) end
+    if t >= 1.0 then return Quaternion.normalize(b) end
+    return Quaternion.slerpUnclamped(a, b, t)
+end
+
+---Spherical linear interpolation from an origin
+---to a destination by a number step. Does not
+---check if the step is greater than one or less
+---than zero.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Quaternion.slerpUnclamped(a, b, t)
+    local ai = a.imag
+    local aw = a.real
+    local ax = ai.x
+    local ay = ai.y
+    local az = ai.z
+
+    local bi = b.imag
+    local bw = b.real
+    local bx = bi.x
+    local by = bi.y
+    local bz = bi.z
+
+    local dotp = math.max(-1.0, math.min(1.0,
+        aw * bw + ax * bx + ay * by + az * bz))
+    if dotp < 0.0 then
+        bw = -bw
+        bx = -bx
+        by = -by
+        bz = -bz
+        dotp = -dotp
+    end
+
+    local v = t
+    local u = 1.0 - v
+    local sinTheta = 1.0 / math.sqrt(1.0 - dotp * dotp)
+    if sinTheta > 0.000001 then
+        local theta = math.acos(dotp)
+        local thetaStep = theta * t
+        u = sinTheta * math.sin(theta - thetaStep);
+        v = sinTheta * math.sin(thetaStep);
+    end
+
+    local cw = u * aw + v * bw
+    local cx = u * ax + v * bx
+    local cy = u * ay + v * by
+    local cz = u * az + v * bz
+
+    local mSq = cw * cw + cx * cx + cy * cy + cz * cz
+    if mSq < 0.000001 then
+        return Quaternion.identity()
+    end
+    local mInv = 1.0 / math.sqrt(mSq)
+    return Quaternion.newByRef(
+        cw * mInv,
+        Vec3.new(
+            cx * mInv,
+            cy * mInv,
+            cz * mInv))
 end
 
 ---Subtracts the right quaternion from the left.
