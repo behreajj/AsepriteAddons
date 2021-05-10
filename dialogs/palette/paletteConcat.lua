@@ -156,17 +156,6 @@ dlg:button {
                             clrVals[m] = k
                         end
 
-                        -- Sort by HSL Lightness.
-                        -- local function sorter(a, b)
-                        --     local aObj = Color(a)
-                        --     local bObj = Color(b)
-                        --     local aLight = aObj.hslLightness
-                        --     local bLight = bObj.hslLightness
-                        --     return aLight < bLight
-                        -- end
-
-                        -- table.sort(clrVals, sorter)
-
                         local cLen = #clrVals
                         cPal = Palette(cLen)
                         for m = 0, cLen - 1, 1 do

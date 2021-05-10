@@ -43,6 +43,7 @@ local dlg = Dialog { title = "sRGB Conversion" }
 
 dlg:shades {
     id = "invPowPrev",
+    label = "1.0 / 2.4:",
     colors = invPowPrev,
     mode = "pick",
     onclick = function(ev0)
@@ -58,6 +59,7 @@ dlg:newrow { always = false }
 
 dlg:shades {
     id = "linearPrev",
+    label = "1.0:",
     colors = linearPrev,
     mode = "pick",
     onclick = function(ev1)
@@ -73,6 +75,7 @@ dlg:newrow { always = false }
 
 dlg:shades {
     id = "powerPrev",
+    label = "2.4:",
     colors = powerPrev,
     mode = "pick",
     onclick = function(ev2)

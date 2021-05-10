@@ -162,10 +162,37 @@ function Quaternion.dot(a, b)
         + ai.z * bi.z
 end
 
+---Finds the exponent of a quaternion. Returns
+---the identity when the quaternion's imaginary
+---vector has zero magnitude.
+---@param a table quaternion
+---@return table
+function Quaternion.exp(a)
+    local ai = a.imag
+    local x = ai.x
+    local y = ai.y
+    local z = ai.z
+
+    local mgImSq = x * x + y * y + z * z
+    if mgImSq > 0.000001 then
+        local wExp = math.exp(a.real)
+        local mgIm = math.sqrt(mgImSq)
+        local scalar = wExp * math.sin(mgIm) / mgIm
+        return Quaternion.newByRef(
+            wExp * math.cos(mgIm),
+            Vec3.new(
+                x * scalar,
+                y * scalar,
+                z * scalar))
+    else
+        return Quaternion.identity()
+    end
+end
+
 ---Creates a rotation from an origin direction to
----a destination direction.
----@param a table origin vector
----@param b table destination vector
+---a destination direction. Normalizes the directions.
+---@param a table origin direction
+---@param b table destination direction
 ---@return table
 function Quaternion.fromTo(a, b)
     local anx = a.x
@@ -226,6 +253,44 @@ function Quaternion.inverse(a)
     else
         return Quaternion.identity()
     end
+end
+
+---Finds the natural logarithm of a quaternion.
+---@param a table quaternion
+---@return table
+function Quaternion.log(a)
+    local ai = a.imag
+    local aw = a.real
+    local ax = ai.x
+    local ay = ai.y
+    local az = ai.z
+
+    local cx = 0.0
+    local cy = 0.0
+    local cz = 0.0
+
+    local mgImSq = ax * ax + ay * ay + az * az
+    if mgImSq > 0.000001 then
+        local mgIm = math.sqrt(mgImSq)
+        local t = math.atan(mgIm, aw) / mgIm
+        cx = ax * t
+        cy = ay * t
+        cz = az * t
+    end
+
+    return Quaternion.newByRef(
+        0.5 * math.log(aw * aw + mgImSq),
+        Vec3.new(cx, cy, cz))
+end
+
+---Raises a quaternion to the power of a number.
+---@param a table quaternion
+---@param b number number
+---@return table
+function Quaternion.pow(a, b)
+    return Quaternion.exp(
+        Quaternion.scale(
+        Quaternion.log(a), b))
 end
 
 ---Finds a quaternion's magnitude, or length.
@@ -436,7 +501,8 @@ end
 ---Spherical linear interpolation from an origin
 ---to a destination by a number step. Does not
 ---check if the step is greater than one or less
----than zero.
+---than zero. Inverts dot product to find minimum
+---torque.
 ---@param a table origin
 ---@param b table destination
 ---@param t number step

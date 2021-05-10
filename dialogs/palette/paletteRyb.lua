@@ -197,8 +197,6 @@ dlg:button {
             local jToFac = 1.0
             if lenShades > 1 then jToFac = 1.0 / (lenShades - 1.0) end
 
-            -- TODO: Add option to saturate values as
-            -- they get darker?
             if sat > 0 then
                 local iToFac = 1.0
                 if lenSamples > 1 then iToFac = 1.0 / (lenSamples - 1.0) end
