@@ -348,6 +348,7 @@ end
 
 ---Converts a color from linear RGB to standard RGB (sRGB).
 ---See https://www.wikiwand.com/en/SRGB .
+---Does not transform the alpha channel.
 ---@param a table color
 ---@return table
 function Clr.linearToStandard(a)
@@ -378,16 +379,33 @@ function Clr.linearToStandard(a)
     return Clr.new(sr, sg, sb, a.a)
 end
 
----Finds the relative luminance of the color.
----https://www.wikiwand.com/en/Relative_luminance
----according to recommendation 709.
+---Finds the relative luminance of a color.
+---Assumes the color is in sRGB.
 ---@param a table color
 ---@return number
 function Clr.luminance(a)
-    local linear = Clr.standardToLinear(a)
-    return 0.21264934272065283 * linear.r
-         + 0.7151691357059038 * linear.g
-         + 0.07218152157344333 * linear.b
+    return Clr.lumStandard(a)
+end
+
+---Finds the relative luminance of a linear color,
+---https://www.wikiwand.com/en/Relative_luminance,
+---according to recommendation 709.
+---@param a table color
+---@return number
+function Clr.lumLinear(a)
+    return 0.21264934272065283 * a.r
+         + 0.7151691357059038 * a.g
+         + 0.07218152157344333 * a.b
+end
+
+---Finds the relative luminance of an sRGB color,
+---https://www.wikiwand.com/en/Relative_luminance,
+---according to recommendation 709.
+---@param a table color
+---@return number
+function Clr.lumStandard(a)
+    return Clr.lumLinear(
+        Clr.standardToLinear(a))
 end
 
 ---Finds the maximum, or lightest, color.
@@ -623,7 +641,7 @@ end
 ---@param a table the color
 ---@return table
 function Clr.rgbaToGray(a)
-    local lum = Clr.luminance(a)
+    local lum = Clr.lumStandard(a)
     if lum <= 0.0031308 then
         lum = lum * 12.92
     else
@@ -704,6 +722,7 @@ end
 
 ---Converts a color from standard RGB (sRGB) to linear RGB.
 ---See https://www.wikiwand.com/en/SRGB .
+---Does not transform the alpha channel.
 ---@param a table color
 ---@return table
 function Clr.standardToLinear(a)

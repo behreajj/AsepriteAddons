@@ -30,10 +30,10 @@ function Vec4:__div(b)
 end
 
 function Vec4:__eq(b)
-    return self.x == b.x
-       and self.y == b.y
+    return self.w == b.w
        and self.z == b.z
-       and self.w == b.w
+       and self.y == b.y
+       and self.x == b.x
 end
 
 function Vec4:__idiv(b)
@@ -41,10 +41,10 @@ function Vec4:__idiv(b)
 end
 
 function Vec4:__le(b)
-    return self.x <= b.x
-       and self.y <= b.y
+    return self.w <= b.w
        and self.z <= b.z
-       and self.w <= b.w
+       and self.y <= b.y
+       and self.x <= b.x
 end
 
 function Vec4:__len()
@@ -52,10 +52,10 @@ function Vec4:__len()
 end
 
 function Vec4:__lt(b)
-    return self.x < b.x
-       and self.y < b.y
+    return self.w < b.w
        and self.z < b.z
-       and self.w < b.w
+       and self.y < b.y
+       and self.x < b.x
 end
 
 function Vec4:__mod(b)

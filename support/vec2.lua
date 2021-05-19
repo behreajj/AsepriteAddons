@@ -26,8 +26,8 @@ function Vec2:__div(b)
 end
 
 function Vec2:__eq(b)
-    return self.x == b.x
-       and self.y == b.y
+    return self.y == b.y
+       and self.x == b.x
 end
 
 function Vec2:__idiv(b)
@@ -35,8 +35,8 @@ function Vec2:__idiv(b)
 end
 
 function Vec2:__le(b)
-    return self.x <= b.x
-       and self.y <= b.y
+    return self.y <= b.y
+       and self.x <= b.x
 end
 
 function Vec2:__len()
@@ -44,8 +44,8 @@ function Vec2:__len()
 end
 
 function Vec2:__lt(b)
-    return self.x < b.x
-       and self.y < b.y
+    return self.y < b.y
+       and self.x < b.x
 end
 
 function Vec2:__mod(b)

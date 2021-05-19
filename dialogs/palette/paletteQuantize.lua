@@ -1,7 +1,12 @@
--- TODO: Refine this to be able to get a square of w, h from a top
--- left corner x, y given the number of columns in a palette to make
--- it form a square. Perhaps consider toggle from 1D to 2D.
-local dlg = Dialog { title = "Palette Subset" }
+local function quantize(x, levels)
+    return math.max(0.0, math.min(1.0,
+       (math.ceil(x * levels) - 1.0)
+       / (levels - 1.0)))
+
+    -- return math.floor(0.5 + x * levels) / levels
+end
+
+local dlg = Dialog { title = "Palette Quantize" }
 
 dlg:combobox {
     id = "palType",
@@ -44,31 +49,11 @@ dlg:entry {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "startIdx",
-    label = "Scaled Index:",
-    min = 0,
-    max = 32,
-    value = 0
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "stride",
-    label = "Stride:",
-    min = 2,
-    max = 32,
-    value = 8
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "cycle",
-    label = "Cycle:",
-    min = 0,
-    max = 32,
-    value = 0
+    id = "quantization",
+    label = "Quantize:",
+    min = 1,
+    max = 128,
+    value = 16
 }
 
 dlg:newrow { always = false }
@@ -82,7 +67,6 @@ dlg:button {
         if args.ok then
             local sprite = app.activeSprite
             if sprite then
-
                 local oldMode = sprite.colorMode
                 app.command.ChangePixelFormat { format = "rgb" }
 
@@ -103,20 +87,52 @@ dlg:button {
                 end
 
                 if srcPal then
-
-                    local origin = args.startIdx
-                    local stride = args.stride
-                    local cycle = args.cycle
-                    local sclOrig = stride * origin
-                    local trgPal = Palette(stride)
+                    local ql = math.min(255, math.max(1, args.quantization))
+                    local dictionary = {}
+                    local idx = 0
                     local srcLen = #srcPal
-                    for i = 0, stride - 1, 1 do
-                        local j = (cycle + i) % stride
-                        local k = (sclOrig + j) % srcLen
-                        trgPal:setColor(i, srcPal:getColor(k))
+                    for i = 1, srcLen, 1 do
+                        local srcClr = srcPal:getColor(i - 1)
+
+                        local ai = srcClr.alpha
+                        local bi = srcClr.blue
+                        local gi = srcClr.green
+                        local ri = srcClr.red
+
+                        local af = ai * 0.00392156862745098
+                        local bf = bi * 0.00392156862745098
+                        local gf = gi * 0.00392156862745098
+                        local rf = ri * 0.00392156862745098
+
+                        local aq = quantize(af, ql)
+                        local bq = quantize(bf, ql)
+                        local gq = quantize(gf, ql)
+                        local rq = quantize(rf, ql)
+
+                        local hq = math.tointeger(aq * 0xff + 0.5) << 0x18
+                                 | math.tointeger(bq * 0xff + 0.5) << 0x10
+                                 | math.tointeger(gq * 0xff + 0.5) << 0x08
+                                 | math.tointeger(rq * 0xff + 0.5)
+
+                        if not dictionary[hq] then
+                            if aq > 0 then
+                                idx = idx + 1
+                                dictionary[hq] = idx
+                            end
+                        end
+
                     end
 
-                    sprite:setPalette(trgPal)
+                    if idx > 0 then
+                        local palette = Palette(idx)
+                        for k, m in pairs(dictionary) do
+                            local hex = k
+                            palette:setColor(m - 1, hex)
+                        end
+
+                        sprite:setPalette(palette)
+                    end
+
                 else
                     app.alert("The source palette could not be found.")
                 end
@@ -128,7 +144,6 @@ dlg:button {
                 end
 
                 app.refresh()
-
             else
                 app.alert("There is no active sprite.")
             end

@@ -182,6 +182,8 @@ dlg:button {
                     elseif oldMode == ColorMode.GRAY then
                         app.command.ChangePixelFormat { format = "gray" }
                     end
+
+                    app.refresh()
                 else
                     app.alert("One of the palettes could not be found.")
                 end

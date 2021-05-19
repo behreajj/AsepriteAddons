@@ -159,22 +159,30 @@ dlg:button {
                 local useNormalize = args.normalize
 
                 local lmethod = rec709
-                local convertToLinear = true
+                local unsetColorProfile = true
+                local useSRGB = false
                 if stdstr == "AVERAGE" then
                     lmethod = arithMean
-                    convertToLinear = false
+                    unsetColorProfile = false
+                    useSRGB = false
                 elseif stdstr == "HSV" then
                     lmethod = hsvVal
-                    convertToLinear = false
+                    -- unsetColorProfile = false
+                    unsetColorProfile = true
+                    useSRGB = true
                 elseif stdstr == "HSL" then
                     lmethod = hslLight
-                    convertToLinear = false
+                    -- unsetColorProfile = false
+                    unsetColorProfile = true
+                    useSRGB = true
                 elseif stdstr == "REC_240" then
                     lmethod = rec240
-                    convertToLinear = true
+                    unsetColorProfile = true
+                    useSRGB = false
                 elseif stdstr == "REC_601" then
                     lmethod = rec601
-                    convertToLinear = true
+                    unsetColorProfile = true
+                    useSRGB = false
                 end
 
                 -- Determine category of easing func.
@@ -186,11 +194,13 @@ dlg:button {
                 end
 
                 local oldColorSpace = sprite.colorSpace
-                if convertToLinear then
+                if unsetColorProfile then
                     -- Documentation:
                     -- Assign a new color space to the sprite
                     -- without modifying the sprite pixels.
-                    sprite:assignColorSpace(ColorSpace{ sRGB = false })
+
+                    -- TODO: Shouldn't this also be convert?
+                    sprite:assignColorSpace(ColorSpace{ sRGB = useSRGB })
                 end
 
                 -- Choose channels and easing based on color mode.
@@ -372,7 +382,7 @@ dlg:button {
                         app.activeLayer = srcLyr
                         app.activeCel = srcCel
 
-                        if convertToLinear then
+                        if unsetColorProfile then
                             -- Documentation:
                             -- Converts all the sprite pixels to a
                             -- new color space so the image looks the

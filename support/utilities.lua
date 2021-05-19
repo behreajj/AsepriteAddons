@@ -102,7 +102,8 @@ function Utilities.mulMat3Curve2(a, b)
     local kns = b.knots
     local knsLen = #kns
     for i = 1, knsLen, 1 do
-        kns[i] = Utilities.mulMat3Knot2(a, kns[i])
+        -- Knot is changed in place.
+        Utilities.mulMat3Knot2(a, kns[i])
     end
     return b
 end

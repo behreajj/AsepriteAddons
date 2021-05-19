@@ -139,6 +139,8 @@ end
 ---@param depth number depth
 ---@return table
 function Mat3.fromScale(width, depth)
+    -- TODO: Separate into
+    -- fromScaleUniform and NonUniform.
     local w = 1.0
     if width and width ~= 0.0 then
         w = width

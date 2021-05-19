@@ -283,16 +283,6 @@ function Quaternion.log(a)
         Vec3.new(cx, cy, cz))
 end
 
----Raises a quaternion to the power of a number.
----@param a table quaternion
----@param b number number
----@return table
-function Quaternion.pow(a, b)
-    return Quaternion.exp(
-        Quaternion.scale(
-        Quaternion.log(a), b))
-end
-
 ---Finds a quaternion's magnitude, or length.
 ---@param a table left operand
 ---@return number

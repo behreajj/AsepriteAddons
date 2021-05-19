@@ -28,9 +28,9 @@ function Vec3:__div(b)
 end
 
 function Vec3:__eq(b)
-    return self.x == b.x
+    return self.z == b.z
        and self.y == b.y
-       and self.z == b.z
+       and self.x == b.x
 end
 
 function Vec3:__idiv(b)
@@ -38,9 +38,9 @@ function Vec3:__idiv(b)
 end
 
 function Vec3:__le(b)
-    return self.x <= b.x
+    return self.z <= b.z
        and self.y <= b.y
-       and self.z <= b.z
+       and self.x <= b.x
 end
 
 function Vec3:__len()
@@ -48,9 +48,9 @@ function Vec3:__len()
 end
 
 function Vec3:__lt(b)
-    return self.x < b.x
+    return self.z < b.z
        and self.y < b.y
-       and self.z < b.z
+       and self.x < b.x
 end
 
 function Vec3:__mod(b)
