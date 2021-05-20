@@ -177,7 +177,7 @@ dlg:button {
             local aClr = AseUtilities.aseColorToClr(aClrAse)
             local bClr = AseUtilities.aseColorToClr(bClrAse)
 
-            local easingFunc = Clr.mixRgba
+            local easingFunc = Clr.mix
             if args.easingMode == "HSV" then
                 easingFunc = Clr.mixHsva
             elseif args.easingMode == "HSL" then

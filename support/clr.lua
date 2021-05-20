@@ -346,30 +346,93 @@ function Clr.hsvaToRgba(hue, sat, val, alpha)
     end
 end
 
+---Converts a color from CIE L*a*b* to standard RGB.
+---The alpha channel is unaffected by the transform.
+---@param l number perceptual lightness
+---@param a number a, green to red
+---@param b number b, blue to yellow
+---@param alpha number alpha channel
+---@return table
+function Clr.labToRgba(l, a, b, alpha)
+    local xyz = Clr.labToXyz(l, a, b, alpha)
+    return Clr.xyzToRgba(xyz.x, xyz.y, xyz.z, xyz.a)
+end
+
+---Converts a color from CIE L*a*b* to CIE XYZ.
+---Assumes D65 illuminant, CIE 1965 2 degrees referents.
+---The return table uses the keys x, y, z and a.
+---The alpha channel is unaffected by the transform.
+---See https://www.wikiwand.com/en/CIELAB_color_space
+---and http://www.easyrgb.com/en/math.php.
+---@param l number perceptual lightness
+---@param a number a, green to red
+---@param b number b, blue to yellow
+---@param alpha number alpha channel
+---@return table
+function Clr.labToXyz(l, a, b, alpha)
+    -- D65, CIE 1931 2 degrees
+    -- 95.047, 100.0, 108.883
+    -- 16.0 / 116.0 = 0.13793103448275862
+    -- 1.0 / 116.0 = 0.008620689655172414
+    -- 1.0 / 7.787 = 0.12841751101180157
+
+    local vy = (l + 16.0) * 0.008620689655172414
+    local vx = a * 0.002 + vy
+    local vz = vy - b * 0.005
+
+    local vye3 = vy * vy * vy
+    if vye3 > 0.008856 then
+        vy = vye3
+    else
+        vy = (vy - 0.13793103448275862) * 0.12841751101180157
+    end
+
+    local vxe3 = vx * vx * vx
+    if vxe3 > 0.008856 then
+        vx = vxe3
+    else
+        vx = (vx - 0.13793103448275862) * 0.12841751101180157
+    end
+
+    local vze3 = vz * vz * vz
+    if vze3 > 0.008856 then
+        vz = vze3
+    else
+        vz = (vz - 0.13793103448275862) * 0.12841751101180157
+    end
+
+    local aVerif = alpha or 1.0
+    return {
+        x = vx * 0.95047,
+        y = vy,
+        z = vz * 1.08883,
+        a = aVerif }
+end
+
 ---Converts a color from linear RGB to standard RGB (sRGB).
 ---See https://www.wikiwand.com/en/SRGB .
 ---Does not transform the alpha channel.
 ---@param a table color
 ---@return table
 function Clr.linearToStandard(a)
-    local sr = a.r
-    local sg = a.g
-    local sb = a.b
 
     -- 1.0 / 2.4 = 0.4166666666666667
 
+    local sr = a.r
     if sr <= 0.0031308 then
         sr = sr * 12.92
     else
         sr = (sr ^ 0.4166666666666667) * 1.055 - 0.055
     end
 
+    local sg = a.g
     if sg <= 0.0031308 then
         sg = sg * 12.92
     else
         sg = (sg ^ 0.4166666666666667) * 1.055 - 0.055
     end
 
+    local sb = a.b
     if sb <= 0.0031308 then
         sb = sb * 12.92
     else
@@ -434,6 +497,18 @@ function Clr.min(a, b)
         math.max(math.min(a.a, b.a, 1.0), 0.0))
 end
 
+---Mixes two colors by a step.
+---Defaults to the fastest algorithm, i.e.,
+---applies linear interpolation to each channel
+---with no transformation.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Clr.mix(a, b, t)
+    return Clr.mixRgbaLinear(a, b, t)
+end
+
 ---Mixes two colors in HSLA space by a step.
 ---The hue function should accept an origin,
 ---destination and factor, all numbers.
@@ -454,8 +529,8 @@ function Clr.mixHsla(a, b, t, hueFunc)
         return Clr.new(b.r, b.g, b.b, b.a)
     end
 
-    local aHsla = Clr.rgbaToHsla(a.r, a.g, a.b, a.a)
-    local bHsla = Clr.rgbaToHsla(b.r, b.g, b.b, b.a)
+    local aHsla = Clr.rgbaToHsla(a)
+    local bHsla = Clr.rgbaToHsla(b)
 
     local hueTrg = 0.0
     local v = 1.0 - u
@@ -503,8 +578,8 @@ function Clr.mixHsva(a, b, t, hueFunc)
         return Clr.new(b.r, b.g, b.b, b.a)
     end
 
-    local aHsva = Clr.rgbaToHsva(a.r, a.g, a.b, a.a)
-    local bHsva = Clr.rgbaToHsva(b.r, b.g, b.b, b.a)
+    local aHsva = Clr.rgbaToHsva(a)
+    local bHsva = Clr.rgbaToHsva(b)
 
     local hueTrg = 0.0
     local v = 1.0 - u
@@ -532,14 +607,31 @@ function Clr.mixHsva(a, b, t, hueFunc)
         v * aHsva.a + u * bHsva.a)
 end
 
----Mixes two colors in RGBA space by a step.
----Assumes linear RGB, not sRGB.
+---Mixes two colors in CIE L*a*b* space by a step,
+---then converts the result to an sRGB color.
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Clr.mixRgba(a, b, t)
-    return Clr.mixRgbaLinear(a, b, t)
+function Clr.mixLab(a, b, t)
+    local u = t or 0.5
+
+    if u <= 0.0 then
+        return Clr.new(a.r, a.g, a.b, a.a)
+    end
+
+    if u >= 1.0 then
+        return Clr.new(b.r, b.g, b.b, b.a)
+    end
+
+    local v = 1.0 - u
+    local aLab = Clr.rgbaToLab(a)
+    local bLab = Clr.rgbaToLab(b)
+    return Clr.labToRgba(
+        v * aLab.l + u * bLab.l,
+        v * aLab.a + u * bLab.a,
+        v * aLab.b + u * bLab.b,
+        v * aLab.alpha + u * bLab.alpha)
 end
 
 ---Mixes two colors in RGBA space by a step.
@@ -582,6 +674,33 @@ function Clr.mixRgbaStandard(a, b, t)
         Clr.standardToLinear(b), t))
 end
 
+---Mixes two colors in CIE XYZ space by a step,
+---then converts the result to an sRGB color.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Clr.mixXyz(a, b, t)
+    local u = t or 0.5
+
+    if u <= 0.0 then
+        return Clr.new(a.r, a.g, a.b, a.a)
+    end
+
+    if u >= 1.0 then
+        return Clr.new(b.r, b.g, b.b, b.a)
+    end
+
+    local v = 1.0 - u
+    local aXyz = Clr.rgbaToXyz(a)
+    local bXyz = Clr.rgbaToXyz(b)
+    return Clr.xyzToRgba(
+        v * aXyz.x + u * bXyz.x,
+        v * aXyz.y + u * bXyz.y,
+        v * aXyz.z + u * bXyz.z,
+        v * aXyz.a + u * bXyz.a)
+end
+
 ---Multiplies two colors, including alpha.
 ---Clamps the result to [0.0, 1.0].
 ---@param a table left operand
@@ -620,6 +739,7 @@ function Clr.preMul(a)
 end
 
 ---Reduces the granularity of a color's components.
+---Performs no color conversion, so sRGB is assumed.
 ---@param a table color
 ---@param levels integer levels
 ---@return table
@@ -635,9 +755,10 @@ function Clr.quantize(a, levels)
     return Clr.new(a.r, a.g, a.b, a.a)
 end
 
----Converts a color to gray scale.
----Finds the luminance, then converts the luminance
----to standard RGB.
+---Converts an sRGB color to a gray scale color.
+---Converts from standard to linear, finds the luminance,
+---then converts the luminance to standard.
+---The alpha channel remains unaffected.
 ---@param a table the color
 ---@return table
 function Clr.rgbaToGray(a)
@@ -651,14 +772,25 @@ function Clr.rgbaToGray(a)
     return Clr(lum, lum, lum, a.a)
 end
 
+---Converts a color to hue, saturation and value.
+---The return table uses the keys h, s, l and a,
+---with values in the range [0.0, 1.0].
+---@param a table color
+---@return table
+function Clr.rgbaToHsla(a)
+    return Clr.rgbaToHslaInternal(a.r, a.g, a.b, a.a)
+end
+
 ---Converts RGBA channels to hue, saturation and lightness.
+---Assumes each channel is in the range [0.0, 1.0].
 ---The return table uses the keys h, s, l and a.
+---Return values are also in the range [0.0, 1.0].
 ---@param red number red channel
 ---@param green number green channel
 ---@param blue number blue channel
 ---@param alpha number transparency
 ---@return table
-function Clr.rgbaToHsla(red, green, blue, alpha)
+function Clr.rgbaToHslaInternal(red, green, blue, alpha)
     local mx = math.max(red, green, blue)
     local mn = math.min(red, green, blue)
     local sum = mx + mn
@@ -688,14 +820,25 @@ function Clr.rgbaToHsla(red, green, blue, alpha)
     end
 end
 
+---Converts a color to hue, saturation and value.
+---The return table uses the keys h, s, v and a,
+---with values in the range [0.0, 1.0].
+---@param a table color
+---@return table
+function Clr.rgbaToHsva(a)
+    return Clr.rgbaToHsvaInternal(a.r, a.g, a.b, a.a)
+end
+
 ---Converts RGBA channels to hue, saturation and value.
+---Assumes each channel is in the range [0.0, 1.0].
 ---The return table uses the keys h, s, v and a.
+---Return values are also in the range [0.0, 1.0].
 ---@param red number red channel
 ---@param green number green channel
 ---@param blue number blue channel
 ---@param alpha number transparency
 ---@return table
-function Clr.rgbaToHsva(red, green, blue, alpha)
+function Clr.rgbaToHsvaInternal(red, green, blue, alpha)
     local mx = math.max(red, green, blue)
     local mn = math.min(red, green, blue)
     local diff = mx - mn
@@ -720,31 +863,78 @@ function Clr.rgbaToHsva(red, green, blue, alpha)
     return { h = hue, s = sat, v = mx, a = a }
 end
 
+---Converts a color from standard RGB to CIE L*a*b*.
+---The return table uses the keys l, a, b and alpha.
+---The alpha channel is unaffected by the transform.
+---@param a table color
+---@return table
+function Clr.rgbaToLab(a)
+    local xyz = Clr.rgbaToXyz(a)
+    return Clr.xyzToLab(xyz.x, xyz.y, xyz.z, xyz.a)
+end
+
+---Converts a color from standard RGB to CIE XYZ.
+---The return table uses the keys x, y, z and a.
+---The alpha channel is unaffected by the transform.
+---@param a table color
+---@return table
+function Clr.rgbaToXyz(a)
+    local l = Clr.standardToLinear(a)
+    return Clr.rgbaLinearToXyzInternal(l.r, l.g, l.b, l.a)
+end
+
+---Converts a color from linear RGBA to CIE XYZ.
+---Assumes each channel is in the range [0.0, 1.0].
+---The return table uses the keys x, y, z and a.
+---The alpha channel is unaffected by the transform.
+---@param red number red channel
+---@param green number green channel
+---@param blue number blue channel
+---@param alpha number alpha channel
+---@return table
+function Clr.rgbaLinearToXyzInternal(red, green, blue, alpha)
+    local aVerif = alpha or 1.0
+    return {
+        x = 0.4124108464885388   * red
+          + 0.3575845678529519   * green
+          + 0.18045380393360833  * blue,
+
+        y = 0.21264934272065283  * red
+          + 0.7151691357059038   * green
+          + 0.07218152157344333  * blue,
+
+        z = 0.019331758429150258 * red
+          + 0.11919485595098397  * green
+          + 0.9503900340503373   * blue,
+
+        a = aVerif }
+end
+
 ---Converts a color from standard RGB (sRGB) to linear RGB.
 ---See https://www.wikiwand.com/en/SRGB .
 ---Does not transform the alpha channel.
 ---@param a table color
 ---@return table
 function Clr.standardToLinear(a)
-    local lr = a.r
-    local lg = a.g
-    local lb = a.b
 
     -- 1.0 / 12.92 = 0.07739938080495357
     -- 1.0 / 1.055 = 0.9478672985781991
 
+    local lr = a.r
     if lr <= 0.04045 then
         lr = lr * 0.07739938080495357
     else
         lr = ((lr + 0.055) * 0.9478672985781991) ^ 2.4
     end
 
+    local lg = a.g
     if lg <= 0.04045 then
         lg = lg * 0.07739938080495357
     else
         lg = ((lg + 0.055) * 0.9478672985781991) ^ 2.4
     end
 
+    local lb = a.b
     if lb <= 0.04045 then
         lb = lb * 0.07739938080495357
     else
@@ -800,6 +990,90 @@ function Clr.toJson(c)
     return string.format(
         "{\"r\":%.4f,\"g\":%.4f,\"b\":%.4f,\"a\":%.4f}",
         c.r, c.g, c.b, c.a)
+end
+
+---Converts a color from CIE XYZ to CIE L*a*b*.
+---Assumes D65 illuminant, CIE 1965 2 degrees referents.
+---The return table uses the keys l, a, b and alpha.
+---The alpha channel is unaffected by the transform.
+---See https://www.wikiwand.com/en/CIELAB_color_space
+---and http://www.easyrgb.com/en/math.php.
+---@param x number x channel
+---@param y number y channel
+---@param z number z channel
+---@param alpha number alpha channel
+---@return table
+function Clr.xyzToLab(x, y, z, alpha)
+    -- D65, CIE 1931 2 degrees
+    -- 95.047, 100.0, 108.883
+    -- 100.0 / 95.047 = 1.0521110608435826
+    -- 100.0 / 108.883 = 0.9184170164304805
+    -- 16.0 / 116.0 = 0.13793103448275862
+
+    local vx = x * 1.0521110608435826
+    if vx > 0.008856 then
+        vx = vx ^ 0.3333333333333333
+    else
+        vx = 7.787 * vx + 0.13793103448275862
+    end
+
+    local vy = y
+    if vy > 0.008856 then
+        vy = vy ^ 0.3333333333333333
+    else
+        vy = 7.787 * vy + 0.13793103448275862
+    end
+
+    local vz = z * 0.9184170164304805
+    if vz > 0.008856 then
+        vz = vz ^ 0.3333333333333333
+    else
+        vz = 7.787 * vz + 0.13793103448275862
+    end
+
+    local aVerif = alpha or 1.0
+    return {
+        l = 116.0 * vy - 16.0,
+        a = 500.0 * (vx - vy),
+        b = 200.0 * (vy - vz),
+        alpha = aVerif }
+end
+
+---Converts a color from CIE XYZ to standard RGB.
+---The alpha channel is unaffected by the transform.
+---@param x number x channel
+---@param y number y channel
+---@param z number z channel
+---@param alpha number alpha channel
+---@return table
+function Clr.xyzToRgba(x, y, z, alpha)
+    return Clr.linearToStandard(
+        Clr.xyzaToRgbaLinear(x, y, z, alpha))
+end
+
+---Converts a color from CIE XYZ to linear RGB.
+---The alpha channel is unaffected by the transform.
+---@param x number x channel
+---@param y number y channel
+---@param z number z channel
+---@param alpha number alpha channel
+---@return table
+function Clr.xyzaToRgbaLinear(x, y, z, alpha)
+    local aVerif = alpha or 1.0
+    return Clr.new(
+          3.240812398895283    * x
+        - 1.5373084456298136   * y
+        - 0.4985865229069666   * z,
+
+         -0.9692430170086407   * x
+        + 1.8759663029085742   * y
+        + 0.04155503085668564  * z,
+
+          0.055638398436112804 * x
+        - 0.20400746093241362  * y
+        + 1.0571295702861434   * z,
+
+        aVerif)
 end
 
 ---Creates a red color.

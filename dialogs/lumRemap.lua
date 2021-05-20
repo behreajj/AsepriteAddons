@@ -195,12 +195,8 @@ dlg:button {
 
                 local oldColorSpace = sprite.colorSpace
                 if unsetColorProfile then
-                    -- Documentation:
-                    -- Assign a new color space to the sprite
-                    -- without modifying the sprite pixels.
-
-                    -- TODO: Shouldn't this also be convert?
-                    sprite:assignColorSpace(ColorSpace{ sRGB = useSRGB })
+                    -- sprite:assignColorSpace(ColorSpace{ sRGB = useSRGB })
+                    sprite:convertColorSpace(ColorSpace{ sRGB = useSRGB })
                 end
 
                 -- Choose channels and easing based on color mode.

@@ -446,49 +446,43 @@ end
 ---@return table
 function Mesh2.gridCartesian(cols, rows)
 
-    -- Create horizontal positions in [-0.5, 0.5].
-    local vcols = 2
-    if cols and cols > 2 then vcols = cols end
-    local vcolsn1 = vcols - 1
-    local vcolsp1 = vcols + 1
-    local jToStep = 1.0 / vcols
-    local xs = {}
-    for j = 0, vcols, 1 do
-        table.insert(xs, j * jToStep - 0.5)
-    end
+    -- Validate inputs.
+    local cVal = cols or 2
+    if cVal < 2 then cVal = 2 end
+    local rVal = rows or cVal
+    if rVal < 2 then rVal = 2 end
 
-    -- Create vertical positions in [-0.5, 0.5].
-    local vrows = vcols
-    if rows and rows > 2 then vrows = rows end
-    local vrowsn1 = vrows - 1
-    local vrowsp1 = vrows + 1
-    local iToStep = 1.0 / vrows
-    local ys = {}
-    for i = 0, vrows, 1 do
-        table.insert(ys, i * iToStep - 0.5)
-    end
+    -- Fence posting problem:
+    -- There is one more edge than cell.
+    local rVal1 = rVal + 1
+    local cVal1 = cVal + 1
 
-    -- Combine horizontal and vertical.
+    -- Set vertex coordinates.
     local vs = {}
-    for i = 1, vrowsp1, 1 do
-        for j = 1, vcolsp1, 1 do
-            table.insert(vs, Vec2.new(xs[j], ys[i]))
-        end
+    local iToStep = 1.0 / rVal
+    local jToStep = 1.0 / cVal
+    local fLen1n1 = (rVal1 * cVal1) - 1
+    for k = 0, fLen1n1, 1 do
+        vs[1 + k] = Vec2.new(
+            (k % cVal1) * jToStep - 0.5,
+            (k // cVal1) * iToStep - 0.5)
     end
 
-    -- Create faces.
+    -- Set face indices.
     local fs = {}
-    for i = 0, vrowsn1, 1 do
-        local voff0 = 1 + i * vcolsp1
-        local voff1 = voff0 + vcolsp1
-        for j = 0, vcolsn1, 1 do
-            local v00 = voff0 + j
-            local v01 = voff1  + j
-            local f = {
-                v00, v00 + 1,
-                v01 + 1, v01 }
-            table.insert(fs, f)
-        end
+    local fLenn1 = (rVal * cVal) - 1
+    for k = 0, fLenn1, 1 do
+        local i = k // cVal
+        local j = k % cVal
+
+        local cOff0 = 1 + i * cVal1
+
+        local c00 = cOff0 + j
+        local c10 = c00 + 1
+        local c01 = cOff0 + cVal1 + j
+        local c11 = c01 + 1
+
+        fs[1 + k] = { c00, c10, c11, c01 }
     end
 
     return Mesh2.new(fs, vs, "Grid.Cartesian")

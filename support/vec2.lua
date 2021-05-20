@@ -212,8 +212,8 @@ end
 ---@return number
 function Vec2.distChebyshev(a, b)
     return math.max(
-        math.abs(a.x - b.x),
-        math.abs(a.y - b.y))
+        math.abs(b.x - a.x),
+        math.abs(b.y - a.y))
 end
 
 ---Finds the Euclidean distance between two vectors.

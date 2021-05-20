@@ -394,11 +394,11 @@ function AseUtilities.easingFuncPresets(
             end
         end
     else
-        easing = Clr.mixRgba
+        easing = Clr.mix
 
         if easingFuncRGB == "SMOOTH" then
             easing = function(a, b, t)
-                return Clr.mixRgba(a, b,
+                return Clr.mix(a, b,
                     t * t * (3.0 - (t + t)))
             end
         end
