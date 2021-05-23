@@ -15,18 +15,40 @@ local metrics = {
 local defaults = {
     xOrigin = 50,
     yOrigin = 50,
+    minRad = 0,
     maxRad = 100,
     distMetric = "EUCLIDEAN",
     minkExp = 2.0,
     quantization = 0,
     bias = 1.0,
     extension = "CLAMP",
-    aColor = Color(32, 32, 32, 255),
-    bColor = Color(255, 245, 215, 255),
+    aColor = AseUtilities.DEFAULT_STROKE,
+    bColor = AseUtilities.DEFAULT_FILL,
     easingMode = "RGB",
     easingFuncRGB = "LINEAR",
     easingFuncHue = "NEAR"
 }
+
+local function linearstep(edge0, edge1, x)
+    local denom = edge1 - edge0
+    if denom ~= 0.0 then
+        return math.min(1.0, math.max(0.0,
+            (x - edge0) / denom))
+    else
+        return 0.0
+    end
+end
+
+local function smoothstep(edge0, edge1, x)
+    local denom = edge1 - edge0
+    if denom ~= 0.0 then
+        local t = math.min(1.0, math.max(0.0,
+            (x - edge0) / denom))
+        return t * t * (3.0 - (t + t))
+    else
+        return 0.0
+    end
+end
 
 local function chebDist(ax, ay, bx, by)
     return math.max(
@@ -63,7 +85,7 @@ local function createRadial(
     sprite,
     img,
     xOrigin, yOrigin,
-    maxRad,
+    minRad, maxRad,
     distFunc,
     quantLvl,
     bias,
@@ -204,7 +226,8 @@ local function createRadial(
         local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
         local fac = dst * normDist
         fac = wrapFunc(fac)
-        fac = fac ^ valBias
+        -- fac = fac ^ valBias
+        fac = linearstep(minRad, maxRad, fac)
 
         if useQuantize then
             fac = delta * math.floor(0.5 + fac * levels)
@@ -237,9 +260,17 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:slider {
+    id = "minRad",
+    label = "Min Radius:",
+    min = 0,
+    max = 100,
+    value = defaults.minRad
+}
+
+dlg:slider {
     id = "maxRad",
     label = "Max Radius:",
-    min = 1,
+    min = 0,
     max = 100,
     value = defaults.maxRad
 }
@@ -271,12 +302,12 @@ dlg:number {
 
 dlg:newrow { always = false }
 
-dlg:number {
-    id = "bias",
-    label = "Bias:",
-    text = string.format("%.1f", defaults.bias),
-    decimals = 5
-}
+-- dlg:number {
+--     id = "bias",
+--     label = "Bias:",
+--     text = string.format("%.1f", defaults.bias),
+--     decimals = 5
+-- }
 
 dlg:newrow { always = false }
 
@@ -406,18 +437,30 @@ dlg:button {
             local oldMode = sprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
+            local minRad = 0.01 * math.min(args.minRad, args.maxRad)
+            local maxRad = 0.01 * math.max(args.minRad, args.maxRad)
+
+            local aClr = args.aColor
+            local bClr = args.bColor
+            if args.minRad > args.maxRad then
+                local temp = aClr
+                aClr = bClr
+                bClr = temp
+            end
+
             createRadial(
                 sprite,
                 cel.image,
                 0.01 * args.xOrigin,
                 0.01 * args.yOrigin,
-                0.01 * args.maxRad,
+                minRad,
+                maxRad,
                 distFunc,
                 args.quantization,
                 args.bias,
                 wrapFunc,
-                args.aColor,
-                args.bColor,
+                aClr,
+                bClr,
                 args.easingMode,
                 easingFunc)
 

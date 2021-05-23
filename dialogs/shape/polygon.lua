@@ -9,11 +9,11 @@ local defaults = {
     scale = 32,
     xOrigin = 0,
     yOrigin = 0,
-    useFill = true,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = Color(128, 119, 102, 255),
-    fillClr = Color(255, 245, 215, 255)
+    strokeClr = AseUtilities.DEFAULT_STROKE,
+    useFill = true,
+    fillClr = AseUtilities.DEFAULT_FILL
 }
 
 local dlg = Dialog { title = "Convex Polygon" }

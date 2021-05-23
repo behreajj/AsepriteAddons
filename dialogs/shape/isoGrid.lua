@@ -11,9 +11,10 @@ local defaults = {
     margin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = Color(128, 119, 102, 255),
+    strokeClr = AseUtilities.DEFAULT_STROKE,
     useFill = true,
-    fillClr = Color(255, 245, 215, 255)}
+    fillClr = AseUtilities.DEFAULT_FILL
+}
 
 local dlg = Dialog { title = "Dimetric Grid" }
 

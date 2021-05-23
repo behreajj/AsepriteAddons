@@ -43,11 +43,11 @@ function Clr:__bxor(b)
 end
 
 function Clr:__eq(b)
-    return Clr.fromHex(self) == Clr.fromHex(b)
+    return Clr.toHex(self) == Clr.toHex(b)
 end
 
 function Clr:__le(b)
-    return Clr.fromHex(self) <= Clr.fromHex(b)
+    return Clr.toHex(self) <= Clr.toHex(b)
 end
 
 function Clr:__len()
@@ -55,7 +55,7 @@ function Clr:__len()
 end
 
 function Clr:__lt(b)
-    return Clr.fromHex(self) < Clr.fromHex(b)
+    return Clr.toHex(self) < Clr.toHex(b)
 end
 
 function Clr:__mul(b)
@@ -84,15 +84,19 @@ end
 ---@param b table right operand
 ---@return table
 function Clr.add(a, b)
+    return Clr.clamp01(Clr.addUnchecked(a, b))
+end
+
+---Adds two colors, including alpha.
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Clr.addUnchecked(a, b)
     return Clr.new(
-        math.min(1.0, math.max(0.0,
-            a.r + b.r)),
-        math.min(1.0, math.max(0.0,
-            a.g + b.g)),
-        math.min(1.0, math.max(0.0,
-            a.b + b.b)),
-        math.min(1.0, math.max(0.0,
-            a.a + b.a)))
+        a.r + b.r,
+        a.g + b.g,
+        a.b + b.b,
+        a.a + b.a)
 end
 
 ---Evaluates whether all color channels are 
@@ -410,7 +414,7 @@ function Clr.labToXyz(l, a, b, alpha)
 end
 
 ---Converts a color from linear RGB to standard RGB (sRGB).
----See https://www.wikiwand.com/en/SRGB .
+---See https://www.wikiwand.com/en/SRGB.
 ---Does not transform the alpha channel.
 ---@param a table color
 ---@return table
@@ -461,7 +465,7 @@ function Clr.lumLinear(a)
          + 0.07218152157344333 * a.b
 end
 
----Finds the relative luminance of an sRGB color,
+---Finds the relative luminance of a sRGB color,
 ---https://www.wikiwand.com/en/Relative_luminance,
 ---according to recommendation 709.
 ---@param a table color
@@ -477,11 +481,19 @@ end
 ---@param b table right operand
 ---@return table
 function Clr.max(a, b)
+    return Clr.clamp01(Clr.maxUnchecked(a, b));
+end
+
+---Finds the maximum, or lightest, color.
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Clr.maxUnchecked(a, b)
     return Clr.new(
-        math.min(math.max(a.r, b.r, 0.0), 1.0),
-        math.min(math.max(a.g, b.g, 0.0), 1.0),
-        math.min(math.max(a.b, b.b, 0.0), 1.0),
-        math.min(math.max(a.a, b.a, 0.0), 1.0))
+        math.max(a.r, b.r),
+        math.max(a.g, b.g),
+        math.max(a.b, b.b),
+        math.max(a.a, b.a))
 end
 
 ---Finds the minimum, or darkest, color.
@@ -490,11 +502,19 @@ end
 ---@param b table right operand
 ---@return table
 function Clr.min(a, b)
+    return Clr.clamp01(Clr.minUnchecked(a, b));
+end
+
+---Finds the minimum, or darkest, color.
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Clr.minUnchecked(a, b)
     return Clr.new(
-        math.max(math.min(a.r, b.r, 1.0), 0.0),
-        math.max(math.min(a.g, b.g, 1.0), 0.0),
-        math.max(math.min(a.b, b.b, 1.0), 0.0),
-        math.max(math.min(a.a, b.a, 1.0), 0.0))
+        math.min(a.r, b.r),
+        math.min(a.g, b.g),
+        math.min(a.b, b.b),
+        math.min(a.a, b.a))
 end
 
 ---Mixes two colors by a step.
@@ -608,7 +628,7 @@ function Clr.mixHsva(a, b, t, hueFunc)
 end
 
 ---Mixes two colors in CIE L*a*b* space by a step,
----then converts the result to an sRGB color.
+---then converts the result to a sRGB color.
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
@@ -675,7 +695,7 @@ function Clr.mixRgbaStandard(a, b, t)
 end
 
 ---Mixes two colors in CIE XYZ space by a step,
----then converts the result to an sRGB color.
+---then converts the result to a sRGB color.
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
@@ -707,15 +727,19 @@ end
 ---@param b table right operand
 ---@return table
 function Clr.mul(a, b)
+    return Clr.clamp01(Clr.mulUnchecked(a, b))
+end
+
+---Multiplies two colors, including alpha.
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Clr.mulUnchecked(a, b)
     return Clr.new(
-        math.min(1.0, math.max(0.0,
-            a.r * b.r)),
-        math.min(1.0, math.max(0.0,
-            a.g * b.g)),
-        math.min(1.0, math.max(0.0,
-            a.b * b.b)),
-        math.min(1.0, math.max(0.0,
-            a.a * b.a)))
+        a.r * b.r,
+        a.g * b.g,
+        a.b * b.b,
+        a.a * b.a)
 end
 
 ---Evaluates whether the color's alpha channel
@@ -730,7 +754,7 @@ end
 ---channels by its alpha channel.
 ---@param a table color
 ---@return table
-function Clr.preMul(a)
+function Clr.premul(a)
     return Clr.new(
         a.r * a.a,
         a.g * a.a,
@@ -755,7 +779,7 @@ function Clr.quantize(a, levels)
     return Clr.new(a.r, a.g, a.b, a.a)
 end
 
----Converts an sRGB color to a gray scale color.
+---Converts a sRGB color to a gray scale color.
 ---Converts from standard to linear, finds the luminance,
 ---then converts the luminance to standard.
 ---The alpha channel remains unaffected.
@@ -773,7 +797,7 @@ function Clr.rgbaToGray(a)
 end
 
 ---Converts a color to hue, saturation and value.
----The return table uses the keys h, s, l and a,
+---The return table uses the keys h, s, l and a
 ---with values in the range [0.0, 1.0].
 ---@param a table color
 ---@return table
@@ -821,7 +845,7 @@ function Clr.rgbaToHslaInternal(red, green, blue, alpha)
 end
 
 ---Converts a color to hue, saturation and value.
----The return table uses the keys h, s, v and a,
+---The return table uses the keys h, s, v and a
 ---with values in the range [0.0, 1.0].
 ---@param a table color
 ---@return table
@@ -911,7 +935,7 @@ function Clr.rgbaLinearToXyzInternal(red, green, blue, alpha)
 end
 
 ---Converts a color from standard RGB (sRGB) to linear RGB.
----See https://www.wikiwand.com/en/SRGB .
+---See https://www.wikiwand.com/en/SRGB.
 ---Does not transform the alpha channel.
 ---@param a table color
 ---@return table
@@ -950,22 +974,35 @@ end
 ---@param b table right operand
 ---@return table
 function Clr.sub(a, b)
+    return Clr.clamp01(Clr.subUnchecked(a, b))
+end
+
+---Subtracts two colors, including alpha.
+---@param a table left operand
+---@param b table right operand
+---@return table
+function Clr.subUnchecked(a, b)
     return Clr.new(
-        math.min(1.0, math.max(0.0,
-            a.r - b.r)),
-        math.min(1.0, math.max(0.0,
-            a.g - b.g)),
-        math.min(1.0, math.max(0.0,
-            a.b - b.b)),
-        math.min(1.0, math.max(0.0,
-            a.a - b.a)))
+        a.r + b.r,
+        a.g + b.g,
+        a.b + b.b,
+        a.a + b.a)
+end
+
+---Converts from a color to a hexadecimal integer;
+---channels are packed in 0xAABBGGRR order.
+---Ensures that color values are valid, in [0.0, 1.0].
+---@param c table color
+---@return integer
+function Clr.toHex(c)
+    return Clr.toHexUnchecked(Clr.clamp01(c))
 end
 
 ---Converts from a color to a hexadecimal integer;
 ---channels are packed in 0xAABBGGRR order.
 ---@param c table color
 ---@return integer
-function Clr.toHex(c)
+function Clr.toHexUnchecked(c)
     return math.tointeger(c.a * 0xff + 0.5) << 0x18
          | math.tointeger(c.b * 0xff + 0.5) << 0x10
          | math.tointeger(c.g * 0xff + 0.5) << 0x08
@@ -974,9 +1011,18 @@ end
 
 ---Converts from a color to a web-friendly hexadecimal
 ---string; channels are packed in #RRGGBB order.
+---Ensures that color values are valid, in [0.0, 1.0].
 ---@param c table color
 ---@return string
 function Clr.toHexWeb(c)
+    return Clr.toHexWebUnchecked(Clr.clamp01(c))
+end
+
+---Converts from a color to a web-friendly hexadecimal
+---string; channels are packed in #RRGGBB order.
+---@param c table color
+---@return string
+function Clr.toHexWebUnchecked(c)
     return "#" .. string.format("%X",
         math.tointeger(c.r * 0xff + 0.5) << 0x10
       | math.tointeger(c.g * 0xff + 0.5) << 0x08
@@ -990,6 +1036,24 @@ function Clr.toJson(c)
     return string.format(
         "{\"r\":%.4f,\"g\":%.4f,\"b\":%.4f,\"a\":%.4f}",
         c.r, c.g, c.b, c.a)
+end
+
+---Divides a color's red, green and blue
+---channels by its alpha channel, reversing
+---the premultiply operation.
+---@param a table color
+---@return table
+function Clr.unpremul(a)
+    if a.a <= 0.0 then
+        return Clr.new(a.x, a.y, a.z, 0.0)
+    else
+        local aInv = 1.0 / a.a
+        return Clr.new(
+            a.r * aInv,
+            a.g * aInv,
+            a.b * aInv,
+            a.a)
+    end
 end
 
 ---Converts a color from CIE XYZ to CIE L*a*b*.

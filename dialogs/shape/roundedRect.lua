@@ -17,11 +17,11 @@ local defaults = {
     bl = 7,
     crnrUni = 7,
     cornerInput = "UNIFORM",
-    useFill = true,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = Color(255, 245, 215, 255),
-    fillClr = Color(32, 32, 32, 255),
+    strokeClr = AseUtilities.DEFAULT_STROKE,
+    useFill = true,
+    fillClr = AseUtilities.DEFAULT_FILL,
     handles = 0
 }
 

@@ -16,8 +16,8 @@ local defaults = {
     useFill = true,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = Color(128, 119, 102, 255),
-    fillClr = Color(255, 245, 215, 255)
+    strokeClr = AseUtilities.DEFAULT_STROKE,
+    fillClr = AseUtilities.DEFAULT_FILL
 }
 
 local dlg = Dialog { title = "Arc" }

@@ -477,7 +477,7 @@ end
 ---@param t any step
 ---@return table
 function Vec2.mix(a, b, t)
-    return Vec2.mixByVec2(a, b, t)
+    return Vec2.mixVec2(a, b, t)
 end
 
 ---Mixes two vectors together by a step.
@@ -486,7 +486,7 @@ end
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Vec2.mixByNumber(a, b, t)
+function Vec2.mixNum(a, b, t)
     local v = t or 0.5
     local u = 1.0 - v
     return Vec2.new(
@@ -501,7 +501,7 @@ end
 ---@param b table destination
 ---@param t table step
 ---@return table
-function Vec2.mixByVec2(a, b, t)
+function Vec2.mixVec2(a, b, t)
    return Vec2.new(
         (1.0 - t.x) * a.x + t.x * b.x,
         (1.0 - t.y) * a.y + t.y * b.y)
@@ -828,6 +828,29 @@ function Vec2.trunc(a)
     return Vec2.new(
         math.tointeger(a.x),
         math.tointeger(a.y))
+end
+
+---Wraps a vector's components around a range
+---defined by a lower and upper bound. If the
+---range is invalid, the component is unchanged.
+---@param a table vector
+---@param lb table lower bound
+---@param ub table upper bound
+---@return table
+function Vec2.wrap(a, lb, ub)
+    local cx = a.x
+    local rx = ub.x - lb.x
+    if rx ~= 0.0 then
+        cx = a.x - (rx * math.floor((a.x - lb.x) / rx))
+    end
+
+    local cy = a.y
+    local ry = ub.y - lb.y
+    if ry ~= 0.0 then
+        cy = a.y - (ry * math.floor((a.y - lb.y) / ry))
+    end
+
+    return Vec2.new(cx, cy);
 end
 
 ---Creates a right facing vector, (1.0, 0.0).

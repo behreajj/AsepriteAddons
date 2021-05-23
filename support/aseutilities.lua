@@ -12,6 +12,8 @@ setmetatable(AseUtilities, {
         return cls.new(...)
     end})
 
+AseUtilities.DEFAULT_FILL = Color(255, 245, 215, 255)
+
 AseUtilities.DEFAULT_PALETTE = {
     Color(255,   0,   0, 255),
     Color(255, 106,   0, 255),
@@ -28,6 +30,8 @@ AseUtilities.DEFAULT_PALETTE = {
     Color(  0,   0,   0, 255),
     Color(255, 255, 255, 255)
 }
+
+AseUtilities.DEFAULT_STROKE = Color(32, 32, 32, 255)
 
 AseUtilities.EASING_MODES = {
     "HSL",
@@ -559,26 +563,34 @@ end
 
 ---Mixes between elements in a color array
 ---by a factor with linear RGB.
----@param arr table array of colors
----@param t number factor
+---The major easing function adjusts the step
+---relative to the array span.
+---The minor easing function adjusts the step
+---between colors within the array.
+---@param array table array of colors
+---@param step number factor
+---@param funcMajor function easing function
+---@param funcMinor function easing function
 ---@return integer
-function AseUtilities.lerpColorArr(arr, t)
-    if t <= 0.0  then
-        return arr[1].rgbaPixel
+function AseUtilities.lerpColorArr(array, step, funcMajor, funcMinor)
+    if step <= 0.0  then
+        return array[1].rgbaPixel
     end
 
-    if t >= 1.0 then
-        return arr[#arr].rgbaPixel
+    if step >= 1.0 then
+        return array[#array].rgbaPixel
     end
 
-    local tScaled = t * (#arr - 1)
+    local f = funcMajor or function(x) return x end
+    local tScaled = f(step) * (#array - 1)
     local i = math.tointeger(tScaled)
-    local a = arr[1 + i]
-    local b = arr[2 + i]
+    local a = array[1 + i]
+    local b = array[2 + i]
+    local g = funcMinor or function(y) return y end
     return AseUtilities.lerpRgba(
         a.red, a.green, a.blue, a.alpha,
         b.red, b.green, b.blue, b.alpha,
-        tScaled - i)
+        g(tScaled - i))
 end
 
 ---Mixes an origin and destination color

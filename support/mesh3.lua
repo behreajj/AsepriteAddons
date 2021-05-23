@@ -113,14 +113,14 @@ end
 ---@param v table scalar
 ---@return table
 function Mesh3:scale(v)
-    return self:scaleByVec3(v)
+    return self:scaleVec3(v)
 end
 
 ---Scales all coordinates in this mesh
 ---by a number
 ---@param n table uniform scalar
 ---@return table
-function Mesh3:scaleByNumber(n)
+function Mesh3:scaleNum(n)
     if n ~= 0.0 then
         local vsLen = #self.vs
         for i = 1, vsLen, 1 do
@@ -134,7 +134,7 @@ end
 ---by a vector.
 ---@param v table nonuniform scalar
 ---@return table
-function Mesh3:scaleByVec3(v)
+function Mesh3:scaleVec3(v)
     if Vec3.all(v) then
         local vsLen = #self.vs
         for i = 1, vsLen, 1 do

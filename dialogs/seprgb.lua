@@ -1,4 +1,4 @@
-local dlg = Dialog { title = "Chromatic Aberration" }
+local dlg = Dialog { title = "Separate RGB" }
 
 dlg:number {
     id = "xRed",

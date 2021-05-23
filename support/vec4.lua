@@ -495,7 +495,7 @@ end
 ---@param t any step
 ---@return table
 function Vec4.mix(a, b, t)
-    return Vec4.mixByVec4(a, b, t)
+    return Vec4.mixVec4(a, b, t)
 end
 
 ---Mixes two vectors together by a step.
@@ -504,7 +504,7 @@ end
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Vec4.mixByNumber(a, b, t)
+function Vec4.mixNum(a, b, t)
     local v = t or 0.5
     local u = 1.0 - v
     return Vec4.new(
@@ -521,7 +521,7 @@ end
 ---@param b table destination
 ---@param t table step
 ---@return table
-function Vec4.mixByVec4(a, b, t)
+function Vec4.mixVec4(a, b, t)
     return Vec4.new(
          (1.0 - t.x) * a.x + t.x * b.x,
          (1.0 - t.y) * a.y + t.y * b.y,
@@ -841,6 +841,41 @@ function Vec4.trunc(a)
         math.tointeger(a.y),
         math.tointeger(a.z),
         math.tointeger(a.w))
+end
+
+---Wraps a vector's components around a range
+---defined by a lower and upper bound. If the
+---range is invalid, the component is unchanged.
+---@param a table vector
+---@param lb table lower bound
+---@param ub table upper bound
+---@return table
+function Vec4.wrap(a, lb, ub)
+    local cx = a.x
+    local rx = ub.x - lb.x
+    if rx ~= 0.0 then
+        cx = a.x - (rx * math.floor((a.x - lb.x) / rx))
+    end
+
+    local cy = a.y
+    local ry = ub.y - lb.y
+    if ry ~= 0.0 then
+        cy = a.y - (ry * math.floor((a.y - lb.y) / ry))
+    end
+
+    local cz = a.z
+    local rz = ub.z - lb.z
+    if rz ~= 0.0 then
+        cz = a.z - (rz * math.floor((a.z - lb.z) / rz))
+    end
+
+    local cw = a.w
+    local rw = ub.w - lb.w
+    if rw ~= 0.0 then
+        cw = a.w - (rw * math.floor((a.w - lb.w) / rw))
+    end
+
+    return Vec4.new(cx, cy, cz, cw);
 end
 
 ---Creates a right facing vector,

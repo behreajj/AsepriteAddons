@@ -128,7 +128,7 @@ dlg:button {
                         for clr in pxitr do
                             local fromRgb = Clr.fromHex(clr())
                             local toRgb = func(fromRgb)
-                            local hex = Clr.toHex(toRgb)
+                            local hex = Clr.toHexUnchecked(toRgb)
                             clr(hex)
                         end
 

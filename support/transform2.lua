@@ -86,7 +86,7 @@ function Transform2:moveTo(loc, step)
         return self
     end
 
-    self.translation = Vec2.mixByNumber(
+    self.translation = Vec2.mixNum(
         self.translation, loc, t)
     return self
 end
@@ -140,13 +140,13 @@ end
 ---@param v table scalar
 ---@return table
 function Transform2:scaleBy(v)
-    return self:scaleByNonuniform(v)
+    return self:scaleByVec3(v)
 end
 
 ---Scales a transform by a number.
 ---@param v number uniform scalar
 ---@return table
-function Transform2:scaleByUniform(v)
+function Transform2:scaleByNum(v)
     self.scale = Vec2.scale(self.scale, v)
     return self
 end
@@ -154,7 +154,7 @@ end
 ---Moves a transform by a vector.
 ---@param v table nonuniform scalar
 ---@return table
-function Transform2:scaleByNonuniform(v)
+function Transform2:scaleByVec3(v)
     self.scale = Vec2.hadamard(self.scale, v)
     return self
 end
@@ -165,7 +165,7 @@ end
 ---@param step number step
 ---@return table
 function Transform2:scaleTo(v, step)
-    return self:scaleToNonuniform(v, step)
+    return self:scaleToVec3(v, step)
 end
 
 ---Scales a transform to a nonuniform scale
@@ -174,7 +174,7 @@ end
 ---@param scl table scale
 ---@param step number step
 ---@return table
-function Transform2:scaleToNonuniform(scl, step)
+function Transform2:scaleToVec3(scl, step)
     local t = step or 1.0
 
     if t >= 1.0 then
@@ -186,7 +186,7 @@ function Transform2:scaleToNonuniform(scl, step)
         return self
     end
 
-    self.scale = Vec2.mixByNumber(
+    self.scale = Vec2.mixNum(
         self.scale, scl, t)
     return self
 end
@@ -197,7 +197,7 @@ end
 ---@param scl number scale
 ---@param step number step
 ---@return table
-function Transform2:scaleToUniform(scl, step)
+function Transform2:scaleToNum(scl, step)
     local t = step or 1.0
 
     if t >= 1.0 then
@@ -209,7 +209,7 @@ function Transform2:scaleToUniform(scl, step)
         return self
     end
 
-    self.scale = Vec2.mixByNumber(
+    self.scale = Vec2.mixNum(
         self.scale,
         Vec2.new(scl, scl), t)
     return self

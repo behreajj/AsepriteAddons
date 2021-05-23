@@ -123,14 +123,14 @@ end
 ---@param v table scalar
 ---@return table
 function Mesh2:scale(v)
-    return self:scaleByVec2(v)
+    return self:scaleVec2(v)
 end
 
 ---Scales all coordinates in this mesh
 ---by a number
 ---@param n table uniform scalar
 ---@return table
-function Mesh2:scaleByNumber(n)
+function Mesh2:scaleNum(n)
     if n ~= 0.0 then
         local vsLen = #self.vs
         for i = 1, vsLen, 1 do
@@ -144,7 +144,7 @@ end
 ---by a vector.
 ---@param v table nonuniform scalar
 ---@return table
-function Mesh2:scaleByVec2(v)
+function Mesh2:scaleVec2(v)
     if Vec2.all(v) then
         local vsLen = #self.vs
         for i = 1, vsLen, 1 do
