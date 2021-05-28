@@ -78,7 +78,7 @@ local function julia(seed, z, power, res)
     local i = 0
     local zn = Complex.new(z.real, z.imag)
     while i < res and Complex.absSq(zn) <= 4.0 do
-        zn = Complex.powNumber(zn, power)
+        zn = Complex.powNum(zn, power)
         zn = Complex.add(seed, zn)
         i = i + 1
     end
@@ -102,7 +102,7 @@ local function juliaSmooth(seed, z, power, res)
     local ab = Complex.abs(zn)
     local fac = math.exp(-ab)
     while i < res and ab <= 2.0 do
-        zn = Complex.powNumber(zn, power)
+        zn = Complex.powNum(zn, power)
         zn = Complex.add(seed, zn)
         ab = Complex.abs(zn)
         fac = fac + math.exp(-ab)

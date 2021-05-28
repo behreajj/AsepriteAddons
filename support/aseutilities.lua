@@ -14,7 +14,7 @@ setmetatable(AseUtilities, {
 
 AseUtilities.DEFAULT_FILL = Color(255, 245, 215, 255)
 
-AseUtilities.DEFAULT_PALETTE = {
+AseUtilities.DEFAULT_PAL_ARR = {
     Color(255,   0,   0, 255),
     Color(255, 106,   0, 255),
     Color(255, 162,   0, 255),
@@ -372,11 +372,11 @@ function AseUtilities.easingFuncPresets(
 
     local easing = nil
     if easingMode == "HSV" then
-        easing = Clr.mixHsva
+        easing = Clr.mixHsvaInternal
 
         if easingFuncHue == "FAR" then
             easing = function(a, b, t)
-                return Clr.mixHsva(
+                return Clr.mixHsvaInternal(
                     a, b, t,
                     function(x, y, z)
                         return Utilities.lerpAngleFar(
@@ -385,11 +385,11 @@ function AseUtilities.easingFuncPresets(
             end
         end
     elseif easingMode == "HSL" then
-        easing = Clr.mixHsla
+        easing = Clr.mixHslaInternal
 
         if easingFuncHue == "FAR" then
             easing = function(a, b, t)
-                return Clr.mixHsla(
+                return Clr.mixHslaInternal(
                     a, b, t,
                     function(x, y, z)
                         return Utilities.lerpAngleFar(
@@ -426,7 +426,7 @@ function AseUtilities.initCanvas(
     layerName,
     colors)
 
-    local clrs = AseUtilities.DEFAULT_PALETTE
+    local clrs = AseUtilities.DEFAULT_PAL_ARR
     if colors and #colors > 0 then
         clrs = colors
     end
@@ -637,7 +637,7 @@ end
 ---returns a default table.
 ---@param pal table
 ---@return table
-function AseUtilities.paletteToColorArr(pal)
+function AseUtilities.paletteToAseColorArr(pal)
     if pal then
         local clrs = {}
         local len = #pal
@@ -646,7 +646,32 @@ function AseUtilities.paletteToColorArr(pal)
         end
         return clrs
     else
-        return AseUtilities.DEFAULT_PALETTE
+        return AseUtilities.DEFAULT_PAL_ARR
+    end
+end
+
+---Converts an Aseprite palette to a table
+---of Aseprite Colors. If the palette is nil
+---returns a default table.
+---@param pal table
+---@return table
+function AseUtilities.paletteToClrArr(pal)
+    if pal then
+        local clrs = {}
+        local len = #pal
+        for i = 1, len, 1 do
+            clrs[i] = AseUtilities.aseColorToClr(
+                pal:getColor(i - 1))
+        end
+
+        if len == 1 then
+            table.insert(clrs, 1, Clr.black())
+            clrs[3] = Clr.white()
+        end
+
+        return clrs
+    else
+        return { Clr.clearBlack(), Clr.white() }
     end
 end
 

@@ -206,7 +206,7 @@ function Vec2.dist(a, b)
 end
 
 ---Finds the Chebyshev distance between two vectors.
----Forms a square pattern when plotted.
+---Forms a square when plotted.
 ---@param a table left operand
 ---@param b table right operand
 ---@return number
@@ -764,6 +764,7 @@ function Vec2.smoothstep(edge0, edge1, x)
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
             (x.x - edge0.x) / xDenom))
+        cx = cx * cx * (3.0 - (cx + cx))
     end
 
     local cy = 0.0
@@ -771,11 +772,10 @@ function Vec2.smoothstep(edge0, edge1, x)
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,
             (x.y - edge0.y) / yDenom))
+        cy = cy * cy * (3.0 - (cy + cy))
     end
 
-    return Vec2.new(
-        cx * cx * (3.0 - (cx + cx)),
-        cy * cy * (3.0 - (cy + cy)))
+    return Vec2.new(cx, cy)
 end
 
 ---Finds the step between an edge and factor.

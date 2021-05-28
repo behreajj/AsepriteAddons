@@ -255,7 +255,7 @@ end
 ---@param a table left operand
 ---@param b number right operand
 ---@return table
-function Complex.powNumber(a, b)
+function Complex.powNum(a, b)
     local ar = a.real
     local ai = a.imag
 

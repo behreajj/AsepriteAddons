@@ -252,7 +252,7 @@ function Vec3.dist(a, b)
 end
 
 ---Finds the Chebyshev distance between two vectors.
----Forms a square pattern when plotted.
+---Forms a cube when plotted.
 ---@param a table left operand
 ---@param b table right operand
 ---@return number
@@ -264,7 +264,7 @@ function Vec3.distChebyshev(a, b)
 end
 
 ---Finds the Euclidean distance between two vectors.
----Forms a circle when plotted.
+---Forms a sphere when plotted.
 ---@param a table left operand
 ---@param b table right operand
 ---@return number
@@ -276,7 +276,7 @@ function Vec3.distEuclidean(a, b)
 end
 
 ---Finds the Manhattan distance between two vectors.
----Forms a diamond when plotted.
+---Forms an octahedron when plotted.
 ---@param a table left operand
 ---@param b table right operand
 ---@return number
@@ -437,19 +437,19 @@ end
 ---@param a table left operand
 ---@return number
 function Vec3.inclinationSigned(a)
-    local mSq = a.x * a.x + a.y * a.y + a.z * a.z
-    if mSq > 0.0 then
-        return math.asin(a.z / math.sqrt(mSq))
-    else
-        return 0.0
-    end
+    return 1.5707963267948966 - Vec3.inclinationUnsigned(a)
 end
 
 ---Finds the vector's unsigned inclination.
 ---@param a table left operand
 ---@return number
 function Vec3.inclinationUnsigned(a)
-    return Vec3.inclinationSigned(a) % 6.283185307179586
+    local mSq = a.x * a.x + a.y * a.y + a.z * a.z
+    if mSq > 0.0 then
+        return math.acos(a.z / math.sqrt(mSq))
+    else
+        return 1.5707963267948966
+    end
 end
 
 ---Limits a vector's magnitude to a scalar.
@@ -859,6 +859,7 @@ function Vec3.smoothstep(edge0, edge1, x)
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
             (x.x - edge0.x) / xDenom))
+        cx = cx * cx * (3.0 - (cx + cx))
     end
 
     local cy = 0.0
@@ -866,6 +867,7 @@ function Vec3.smoothstep(edge0, edge1, x)
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,
             (x.y - edge0.y) / yDenom))
+        cy = cy * cy * (3.0 - (cy + cy))
     end
 
     local cz = 0.0
@@ -873,12 +875,10 @@ function Vec3.smoothstep(edge0, edge1, x)
     if zDenom ~= 0.0 then
         cz = math.min(1.0, math.max(0.0,
             (x.z - edge0.z) / zDenom))
+        cz = cz * cz * (3.0 - (cz + cz))
     end
 
-    return Vec3.new(
-        cx * cx * (3.0 - (cx + cx)),
-        cy * cy * (3.0 - (cy + cy)),
-        cz * cz * (3.0 - (cz + cz)))
+    return Vec3.new(cx, cy, cz)
 end
 
 ---Finds the step between an edge and factor.

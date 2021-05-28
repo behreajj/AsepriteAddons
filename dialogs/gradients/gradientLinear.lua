@@ -1,8 +1,5 @@
 dofile("../../support/aseutilities.lua")
-
-local rgbEasing = { "LINEAR", "SMOOTH" }
-local hueEasing = { "FAR", "NEAR" }
-local extensions = { "CLAMP", "WRAP" }
+dofile("../../support/gradientutilities.lua")
 
 local defaults = {
     xOrigin = 0,
@@ -10,178 +7,13 @@ local defaults = {
     xDest = 100,
     yDest = 50,
     quantization = 0,
-    extension = "CLAMP",
+    tweenOps = "PAIR",
     aColor = AseUtilities.DEFAULT_STROKE,
     bColor = AseUtilities.DEFAULT_FILL,
-    easingMode = "RGB",
+    clrSpacePreset = "S_RGB",
     easingFuncRGB = "LINEAR",
     easingFuncHue = "NEAR"
 }
-
-local function clamp01(x)
-    return math.max(0.0, math.min(1.0, x))
-end
-
-local function mod1(x)
-    return x % 1.0
-end
-
-local function createLinear(
-    sprite, img,
-    xOrigin, yOrigin,
-    xDest, yDest,
-    quantLvl,
-    wrapFunc,
-    aColor, bColor,
-    easingMode, easingPreset)
-
-    local w = sprite.width
-    local h = sprite.height
-
-    local useQuantize = quantLvl > 0.0
-    local delta = 1.0
-    local levels = 1.0
-    if useQuantize then
-        levels = quantLvl
-        delta = 1.0 / levels
-    end
-
-    local xOrPx = xOrigin * w
-    local yOrPx = yOrigin * h
-
-    local xDsPx = xDest * w
-    local yDsPx = yDest * h
-
-    local bx = xOrPx - xDsPx
-    local by = yOrPx - yDsPx
-    local bbInv = 1.0 / math.max(0.000001,
-        bx * bx + by * by)
-
-    -- Choose channels and easing based on color mode.
-    local a0 = 0
-    local a1 = 0
-    local a2 = 0
-    local a3 = 255
-
-    local b0 = 0
-    local b1 = 0
-    local b2 = 0
-    local b3 = 255
-
-    local easing = function(t) return 0xffffffff end
-    if easingMode == "HSV" then
-
-        a0 = aColor.hsvHue
-        a1 = aColor.hsvSaturation
-        a2 = aColor.hsvValue
-        a3 = aColor.alpha
-
-        b0 = bColor.hsvHue
-        b1 = bColor.hsvSaturation
-        b2 = bColor.hsvValue
-        b3 = bColor.alpha
-
-        if easingPreset and easingPreset == "FAR" then
-            easing = function(t)
-                return AseUtilities.lerpHsvaFar(
-                    a0, a1, a2, a3,
-                    b0, b1, b2, b3, t)
-            end
-        else
-            easing = function(t)
-                return AseUtilities.lerpHsvaNear(
-                    a0, a1, a2, a3,
-                    b0, b1, b2, b3, t)
-            end
-        end
-
-    elseif easingMode == "HSL" then
-
-        a0 = aColor.hslHue
-        a1 = aColor.hslSaturation
-        a2 = aColor.hslLightness
-        a3 = aColor.alpha
-
-        b0 = bColor.hslHue
-        b1 = bColor.hslSaturation
-        b2 = bColor.hslLightness
-        b3 = bColor.alpha
-
-        if easingPreset and easingPreset == "FAR" then
-            easing = function(t)
-                return AseUtilities.lerpHslaFar(
-                    a0, a1, a2, a3,
-                    b0, b1, b2, b3, t)
-            end
-        else
-            easing = function(t)
-                return AseUtilities.lerpHslaNear(
-                    a0, a1, a2, a3,
-                    b0, b1, b2, b3, t)
-            end
-        end
-
-    elseif easingMode == "PALETTE" then
-
-        local clrs = AseUtilities.paletteToColorArr(
-            sprite.palettes[1])
-        easing = function(t)
-            return AseUtilities.lerpColorArr(
-                clrs, t)
-        end
-
-    else
-
-        a0 = aColor.red
-        a1 = aColor.green
-        a2 = aColor.blue
-        a3 = aColor.alpha
-
-        b0 = bColor.red
-        b1 = bColor.green
-        b2 = bColor.blue
-        b3 = bColor.alpha
-
-        if easingPreset and easingPreset == "SMOOTH" then
-            easing = function(t)
-                return AseUtilities.smoothRgba(
-                    a0, a1, a2, a3,
-                    b0, b1, b2, b3, t)
-            end
-        else
-            easing = function(t)
-                return AseUtilities.lerpRgba(
-                    a0, a1, a2, a3,
-                    b0, b1, b2, b3, t)
-            end
-        end
-
-    end
-
-    -- Get image iterator.
-    local iterator = img:pixels()
-    local i = 0
-
-    for elm in iterator do
-        local xPx = i % w
-        local yPx = i // w
-
-        local cx = xOrPx - xPx
-        local cy = yOrPx - yPx
-
-        -- dot(c, b) / dot(b, b)
-        local cb = (cx * bx + cy * by) * bbInv
-        local fac = wrapFunc(cb)
-
-        if useQuantize then
-            fac = delta * math.floor(0.5 + fac * levels)
-        end
-
-        elm(easing(fac))
-
-        i = i + 1
-    end
-end
 
 local dlg = Dialog { title = "Linear Gradient" }
 
@@ -230,37 +62,67 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:combobox {
-    id = "extension",
-    label = "Extension:",
-    option = defaults.extension,
-    options = extensions
+    id = "tweenOps",
+    label = "Tween:",
+    option = defaults.tweenOps,
+    options = GradientUtilities.TWEEN_PRESETS,
+    onchange = function()
+        local isPair = dlg.data.tweenOps == "PAIR"
+        local md = dlg.data.clrSpacePreset
+        dlg:modify {
+            id = "aColor",
+            visible = isPair
+        }
+
+        dlg:modify {
+            id = "bColor",
+            visible = isPair
+        }
+
+        dlg:modify {
+            id = "easingFuncHue",
+            visible = md == "HSL" or md == "HSV"
+        }
+
+        dlg:modify {
+            id = "easingFuncRGB",
+            visible = md == "S_RGB" or md == "LINEAR_RGB"
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "aColor",
+    label = "Colors:",
+    color = defaults.aColor,
+    visible = defaults.tweenOps == "PAIR"
+}
+
+dlg:color {
+    id = "bColor",
+    color = defaults.bColor,
+    visible = defaults.tweenOps == "PAIR"
 }
 
 dlg:newrow { always = false }
 
 dlg:combobox {
-    id = "easingMode",
-    label = "Easing Mode:",
-    option = defaults.easingMode,
-    options = AseUtilities.EASING_MODES,
+    id = "clrSpacePreset",
+    label = "Color Space:",
+    option = defaults.clrSpacePreset,
+    options = GradientUtilities.CLR_SPC_PRESETS,
+    visible = defaults.tweenOps == "PAIR",
     onchange = function()
-        local md = dlg.data.easingMode
-        local showColors = md ~= "PALETTE"
-        dlg:modify {
-            id = "aColor",
-            visible = showColors
-        }
-        dlg:modify {
-            id = "bColor",
-            visible = showColors
-        }
+        local md = dlg.data.clrSpacePreset
         dlg:modify {
             id = "easingFuncHue",
             visible = md == "HSL" or md == "HSV"
         }
         dlg:modify {
             id = "easingFuncRGB",
-            visible = md == "RGB"
+            visible = md == "S_RGB" or md == "LINEAR_RGB"
         }
     end
 }
@@ -271,30 +133,18 @@ dlg:combobox {
     id = "easingFuncHue",
     label = "Easing:",
     option = defaults.easingFuncHue,
-    options = hueEasing,
-    visible = false
+    options = GradientUtilities.HUE_EASING_PRESETS,
+    visible = defaults.clrSpacePreset == "HSL"
+        or defaults.clrSpacePreset == "HSV"
 }
-
-dlg:newrow { always = false }
 
 dlg:combobox {
     id = "easingFuncRGB",
     label = "Easing:",
     option = defaults.easingFuncRGB,
-    options = rgbEasing
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "aColor",
-    label = "Colors:",
-    color = defaults.aColor
-}
-
-dlg:color {
-    id = "bColor",
-    color = defaults.bColor
+    options = GradientUtilities.RGB_EASING_PRESETS,
+    visible = defaults.clrSpacePreset == "S_RGB"
+        or defaults.clrSpacePreset == "LINEAR_RGB"
 }
 
 dlg:newrow { always = false }
@@ -306,55 +156,102 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         if args.ok then
-            local easingFunc = args.easingFuncRGB
-            if args.easingMode == "HSV" then
-                easingFunc = args.easingFuncHue
-            elseif args.easingMode == "HSL" then
-                easingFunc = args.easingFuncHue
-            end
-
-            local wrapFunc = clamp01
-            if args.extension == "WRAP" then
-                wrapFunc = mod1
-            end
-
             local sprite = AseUtilities.initCanvas(
-                256, 32, "Linear Gradient")
-            local layer = sprite.layers[#sprite.layers]
-            local frame = app.activeFrame or 1
-            local cel = sprite:newCel(layer, frame)
+                64, 64, "Linear Gradient")
+            if sprite.colorMode == ColorMode.RGB then
+                local layer = sprite.layers[#sprite.layers]
+                local frame = app.activeFrame or 1
+                local cel = sprite:newCel(layer, frame)
 
-            -- Cache old color mode.
-            -- https://github.com/aseprite/aseprite/blob/
-            -- b0d76d096f76ef862157297b29616877e8bbbdfd/
-            -- src/app/commands/cmd_change_pixel_format.cpp#L456
-            local oldMode = sprite.colorMode
-            app.command.ChangePixelFormat { format = "rgb" }
+                --Easing mode.
+                local tweenOps = args.tweenOps
+                local rgbPreset = args.easingFuncRGB
+                local huePreset = args.easingFuncHue
+                local clrSpacePreset = args.clrSpacePreset
 
-            createLinear(
-                sprite,
-                cel.image,
-                0.01 * args.xOrigin,
-                0.01 * args.yOrigin,
-                0.01 * args.xDest,
-                0.01 * args.yDest,
-                args.quantization,
-                wrapFunc,
-                args.aColor,
-                args.bColor,
-                args.easingMode,
-                easingFunc)
+                local easeFuncFinal = nil
+                if tweenOps == "PALETTE" then
 
-            if oldMode == ColorMode.INDEXED then
-                app.command.ChangePixelFormat { format = "indexed" }
-            elseif oldMode == ColorMode.GRAY then
-                app.command.ChangePixelFormat { format = "gray" }
+                    local pal = sprite.palettes[1]
+                    local clrArr = AseUtilities.paletteToClrArr(pal)
+
+                    local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                        clrSpacePreset,
+                        rgbPreset,
+                        huePreset)
+
+                    easeFuncFinal = function(t)
+                        return Clr.mixArr(clrArr, t, pairFunc)
+                    end
+                else
+                    local aColorAse = args.aColor
+                    local bColorAse = args.bColor
+
+                    local aClr = AseUtilities.aseColorToClr(aColorAse)
+                    local bClr = AseUtilities.aseColorToClr(bColorAse)
+
+                    local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                        clrSpacePreset,
+                        rgbPreset,
+                        huePreset)
+
+                    easeFuncFinal = function(t)
+                        return pairFunc(aClr, bClr, t)
+                    end
+                end
+
+                local w = sprite.width
+                local h = sprite.height
+
+                local xOrigin = 0.01 * args.xOrigin
+                local yOrigin = 0.01 * args.yOrigin
+                local xDest = 0.01 * args.xDest
+                local yDest = 0.01 * args.yDest
+
+                local xOrPx = xOrigin * w
+                local yOrPx = yOrigin * h
+                local xDsPx = xDest * w
+                local yDsPx = yDest * h
+
+                local bx = xOrPx - xDsPx
+                local by = yOrPx - yDsPx
+                local bbInv = 1.0 / math.max(0.000001,
+                    bx * bx + by * by)
+
+                local levels = args.quantization
+
+                local img = cel.image
+                local iterator = img:pixels()
+                local i = 0
+                for elm in iterator do
+                    local xPx = i % w
+                    local yPx = i // w
+
+                    local cx = xOrPx - xPx
+                    local cy = yOrPx - yPx
+
+                    local cb = (cx * bx + cy * by) * bbInv
+
+                    -- Unsigned quantize will already clamp to
+                    -- 0.0 minimum.
+                    local fac = Utilities.quantizeUnsigned(
+                        cb, levels)
+                    fac = math.min(1.0, fac)
+
+                    elm(Clr.toHex(easeFuncFinal(fac)))
+                    i = i + 1
+                end
+
+                app.refresh()
+            else
+                app.alert("Only RGB color mode is supported.")
             end
-
-            app.refresh()
+        else
+            app.alert("Dialog arguments are invalid.")
         end
     end
 }
+
 
 dlg:button {
     id = "cancel",

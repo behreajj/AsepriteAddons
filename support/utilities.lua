@@ -39,7 +39,59 @@ end
 ---to a destination by a factor, t, in [0.0, 1.0].
 ---The range defaults to 360.0 for degrees, but can be
 ---math.pi * 2.0 for radians.
----Uses the furthest clockwise direction.
+---Uses the counter-clockwise angular direction.
+---@param origin number origin angle
+---@param dest number destination angle
+---@param t number factor
+---@param range number range
+---@return number
+function Utilities.lerpAngleCcw(origin, dest, t, range)
+    local valRange = range or 360.0
+    local o = origin % valRange
+    local d = dest % valRange
+    local diff = d - o
+    local u = 1.0 - t
+
+    if diff == 0.0 then
+        return o
+    elseif o > d then
+        return (u * o + t * (d + valRange)) % valRange
+    else
+        return u * o + t * d
+    end
+end
+
+---Unclamped linear interpolation from an origin angle
+---to a destination by a factor, t, in [0.0, 1.0].
+---The range defaults to 360.0 for degrees, but can be
+---math.pi * 2.0 for radians.
+---Uses the clockwise angular direction.
+---@param origin number origin angle
+---@param dest number destination angle
+---@param t number factor
+---@param range number range
+---@return number
+function Utilities.lerpAngleCw(origin, dest, t, range)
+    local valRange = range or 360.0
+    local o = origin % valRange
+    local d = dest % valRange
+    local diff = d - o
+    local u = 1.0 - t
+
+    if diff == 0.0 then
+        return d
+    elseif o < d then
+        return (u * (o + valRange) + t * d) % valRange
+    else
+        return u * o + t * d
+    end
+end
+
+---Unclamped linear interpolation from an origin angle
+---to a destination by a factor, t, in [0.0, 1.0].
+---The range defaults to 360.0 for degrees, but can be
+---math.pi * 2.0 for radians.
+---Uses the furthest angular direction.
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -48,7 +100,6 @@ end
 function Utilities.lerpAngleFar(origin, dest, t, range)
     local valRange = range or 360.0
     local halfRange = valRange * 0.5
-
     local o = origin % valRange
     local d = dest % valRange
     local diff = d - o
@@ -67,7 +118,7 @@ end
 ---to a destination by a factor, t, in [0.0, 1.0].
 ---The range defaults to 360.0 for degrees, but can be
 ---math.pi * 2.0 for radians.
----Uses the nearest clockwise direction.
+---Uses the nearest angular direction.
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -76,7 +127,6 @@ end
 function Utilities.lerpAngleNear(origin, dest, t, range)
     local valRange = range or 360.0
     local halfRange = valRange * 0.5
-
     local o = origin % valRange
     local d = dest % valRange
     local diff = d - o
@@ -251,6 +301,45 @@ end
 function Utilities.promoteVec3ToVec4(a, w)
     local vw = w or 0.0
     return Vec4.new(a.x, a.y, a.z, vw)
+end
+
+---Quantizes a number.
+---Defaults to signed quantization.
+---@param a number value
+---@param levels number levels
+---@return number
+function Utilities.quantize(a, levels)
+    return Utilities.quantizeSigned(a, levels)
+end
+
+---Quantizes a signed number according
+---to a number of levels; the quantization
+---is centered about the range.
+---@param a number value
+---@param levels number levels
+---@return number
+function Utilities.quantizeSigned(a, levels)
+    if levels ~= 0.0 then
+        return math.floor(0.5 + a * levels) / levels
+    else
+        return a
+    end
+end
+
+---Quantizes an unsigned number according
+---to a number of levels; the quantization
+---is based on the left edge.
+---@param a number value
+---@param levels number levels
+---@return number
+function Utilities.quantizeUnsigned(a, levels)
+    if levels ~= 0.0 then
+        return math.max(0.0,
+            (math.ceil(a * levels) - 1.0)
+            / (levels - 1.0))
+    else
+        return a
+    end
 end
 
 return Utilities

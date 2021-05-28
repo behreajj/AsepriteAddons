@@ -144,7 +144,7 @@ end
 ---Rotates a color left by a number of places.
 ---Use 8, 16, 24 for complete channel rotations.
 ---@param a table left operand
----@param places integer shift
+---@param places number shift
 ---@return table
 function Clr.bitRotateLeft(a, places)
     local x = Clr.toHex(a)
@@ -156,7 +156,7 @@ end
 ---Rotates a color right by a number of places.
 ---Use 8, 16, 24 for complete channel rotations.
 ---@param a table left operand
----@param places integer shift
+---@param places number shift
 ---@return table
 function Clr.bitRotateRight(a, places)
     local x = Clr.toHex(a)
@@ -168,7 +168,7 @@ end
 ---Shifts a color left (<<) by a number of places.
 ---Use 8, 16, 24 for complete channel shifts.
 ---@param a table left operand
----@param places integer shift
+---@param places number shift
 ---@return table
 function Clr.bitShiftLeft(a, places)
     return Clr.fromHex(Clr.toHex(a) << places)
@@ -177,7 +177,7 @@ end
 ---Shifts a color right (>>) by a number of places.
 ---Use 8, 16, 24 for complete channel shifts.
 ---@param a table left operand
----@param places integer shift
+---@param places number shift
 ---@return table
 function Clr.bitShiftRight(a, places)
     return Clr.fromHex(Clr.toHex(a) >> places)
@@ -241,7 +241,7 @@ end
 
 ---Converts from a hexadecimal representation
 ---of a color stored as 0xAABBGGRR.
----@param c integer hexadecimal color
+---@param c number hexadecimal color
 ---@return table
 function Clr.fromHex(c)
     return Clr.new(
@@ -363,7 +363,7 @@ function Clr.labToRgba(l, a, b, alpha)
 end
 
 ---Converts a color from CIE L*a*b* to CIE XYZ.
----Assumes D65 illuminant, CIE 1965 2 degrees referents.
+---Assumes D65 illuminant, CIE 1931 2 degrees referents.
 ---The return table uses the keys x, y, z and a.
 ---The alpha channel is unaffected by the transform.
 ---See https://www.wikiwand.com/en/CIELAB_color_space
@@ -529,10 +529,36 @@ function Clr.mix(a, b, t)
     return Clr.mixRgbaLinear(a, b, t)
 end
 
+---Mixes colors in an array by a step.
+---@param arr table array
+---@param t number step
+---@param func function easing function
+---@return table
+function Clr.mixArr(arr, t, func)
+    local u = t or 0.5
+    local lenArr = #arr
+    if u <= 0.0 or lenArr == 1 then
+        local src = arr[1]
+        return Clr.new(src.r, src.g, src.b, src.a)
+    end
+
+    if u >= 1.0 then
+        local src = arr[lenArr]
+        return Clr.new(src.r, src.g, src.b, src.a)
+    end
+
+    local uScaled = u * (lenArr - 1.0)
+    local i = math.tointeger(uScaled)
+    local v = uScaled - i
+    local f = func or Clr.mixRgbaLinearInternal
+    return f(arr[1 + i], arr[2 + i], v)
+end
+
 ---Mixes two colors in HSLA space by a step.
 ---The hue function should accept an origin,
 ---destination and factor, all numbers.
----If it is nil, nearest is the default.
+---The step is clamped to [0.0, 1.0].
+---The hue function defaults to near.
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
@@ -540,48 +566,57 @@ end
 ---@return table
 function Clr.mixHsla(a, b, t, hueFunc)
     local u = t or 0.5
-
     if u <= 0.0 then
         return Clr.new(a.r, a.g, a.b, a.a)
     end
-
     if u >= 1.0 then
         return Clr.new(b.r, b.g, b.b, b.a)
     end
 
-    local aHsla = Clr.rgbaToHsla(a)
-    local bHsla = Clr.rgbaToHsla(b)
-
-    local hueTrg = 0.0
-    local v = 1.0 - u
-    if hueFunc then
-        hueTrg = hueFunc(aHsla.h, bHsla.h, u)
-    else
-        local o = aHsla.h
-        local d = bHsla.h
+    local f = hueFunc or function(o, d, x)
         local diff = d - o
         if diff ~= 0.0 then
+            local y = 1.0 - x
             if o < d and diff > 0.5 then
-                hueTrg = (v * (o + 1.0) + u * d) % 1.0
+                return (y * (o + 1.0) + x * d) % 1.0
             elseif o > d and diff < -0.5 then
-                hueTrg = (v * o + u * (d + 1.0)) % 1.0
+                return (y * o + x * (d + 1.0)) % 1.0
             else
-                hueTrg = v * o + u * d
+                return y * o + x * d
             end
+        else
+            return o
         end
     end
 
-    return Clr.hslaToRgba(
-        hueTrg,
-        v * aHsla.s + u * bHsla.s,
-        v * aHsla.l + u * bHsla.l,
-        v * aHsla.a + u * bHsla.a)
+    return Clr.mixHslaInternal(a, b, u, f)
 end
+
+---Mixes two colors in HSLA space by a step.
+---The hue function should accept an origin,
+---destination and factor, all numbers.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@param hueFunc function hue function
+---@return table
+function Clr.mixHslaInternal(a, b, t, hueFunc)
+    local aHsva = Clr.rgbaToHsla(a)
+    local bHsva = Clr.rgbaToHsla(b)
+    local u = 1.0 - t
+    return Clr.hslaToRgba(
+        hueFunc(aHsva.h, bHsva.h, t),
+        u * aHsva.s + t * bHsva.s,
+        u * aHsva.l + t * bHsva.l,
+        u * aHsva.a + t * bHsva.a)
+end
+
 
 ---Mixes two colors in HSVA space by a step.
 ---The hue function should accept an origin,
 ---destination and factor, all numbers.
----If it is nil, nearest is the default.
+---The step is clamped to [0.0, 1.0].
+---The hue function defaults to near.
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
@@ -589,42 +624,67 @@ end
 ---@return table
 function Clr.mixHsva(a, b, t, hueFunc)
     local u = t or 0.5
-
     if u <= 0.0 then
         return Clr.new(a.r, a.g, a.b, a.a)
     end
-
     if u >= 1.0 then
         return Clr.new(b.r, b.g, b.b, b.a)
     end
 
-    local aHsva = Clr.rgbaToHsva(a)
-    local bHsva = Clr.rgbaToHsva(b)
-
-    local hueTrg = 0.0
-    local v = 1.0 - u
-    if hueFunc then
-        hueTrg = hueFunc(aHsva.h, bHsva.h, u)
-    else
-        local o = aHsva.h
-        local d = bHsva.h
+    local f = hueFunc or function(o, d, x)
         local diff = d - o
         if diff ~= 0.0 then
+            local y = 1.0 - x
             if o < d and diff > 0.5 then
-                hueTrg = (v * (o + 1.0) + u * d) % 1.0
+                return (y * (o + 1.0) + x * d) % 1.0
             elseif o > d and diff < -0.5 then
-                hueTrg = (v * o + u * (d + 1.0)) % 1.0
+                return (y * o + x * (d + 1.0)) % 1.0
             else
-                hueTrg = v * o + u * d
+                return y * o + x * d
             end
+        else
+            return o
         end
     end
 
+    return Clr.mixHsvaInternal(a, b, u, f)
+end
+
+---Mixes two colors in HSVA space by a step.
+---The hue function should accept an origin,
+---destination and factor, all numbers.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@param hueFunc function hue function
+---@return table
+function Clr.mixHsvaInternal(a, b, t, hueFunc)
+    local aHsva = Clr.rgbaToHsva(a)
+    local bHsva = Clr.rgbaToHsva(b)
+    local u = 1.0 - t
     return Clr.hsvaToRgba(
-        hueTrg,
-        v * aHsva.s + u * bHsva.s,
-        v * aHsva.v + u * bHsva.v,
-        v * aHsva.a + u * bHsva.a)
+        hueFunc(aHsva.h, bHsva.h, t),
+        u * aHsva.s + t * bHsva.s,
+        u * aHsva.v + t * bHsva.v,
+        u * aHsva.a + t * bHsva.a)
+end
+
+---Mixes two colors in CIE L*a*b* space by a step,
+---then converts the result to a sRGB color.
+---Clamps the step to [0.0, 1.0].
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Clr.mixLab(a, b, t)
+    local u = t or 0.5
+    if u <= 0.0 then
+        return Clr.new(a.r, a.g, a.b, a.a)
+    end
+    if u >= 1.0 then
+        return Clr.new(b.r, b.g, b.b, b.a)
+    end
+    return Clr.mixLabInternal(a, b, u)
 end
 
 ---Mixes two colors in CIE L*a*b* space by a step,
@@ -633,25 +693,33 @@ end
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Clr.mixLab(a, b, t)
-    local u = t or 0.5
-
-    if u <= 0.0 then
-        return Clr.new(a.r, a.g, a.b, a.a)
-    end
-
-    if u >= 1.0 then
-        return Clr.new(b.r, b.g, b.b, b.a)
-    end
-
-    local v = 1.0 - u
+function Clr.mixLabInternal(a, b, t)
+    local u = 1.0 - t
     local aLab = Clr.rgbaToLab(a)
     local bLab = Clr.rgbaToLab(b)
     return Clr.labToRgba(
-        v * aLab.l + u * bLab.l,
-        v * aLab.a + u * bLab.a,
-        v * aLab.b + u * bLab.b,
-        v * aLab.alpha + u * bLab.alpha)
+        u * aLab.l + t * bLab.l,
+        u * aLab.a + t * bLab.a,
+        u * aLab.b + t * bLab.b,
+        u * aLab.alpha + t * bLab.alpha)
+end
+
+---Mixes two colors in RGBA space by a step.
+---Assumes that the colors are in linear space.
+---Clamps the step to [0.0, 1.0].
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Clr.mixRgbaLinear(a, b, t)
+    local u = t or 0.5
+    if u <= 0.0 then
+        return Clr.new(a.r, a.g, a.b, a.a)
+    end
+    if u >= 1.0 then
+        return Clr.new(b.r, b.g, b.b, b.a)
+    end
+    return Clr.mixRgbaLinearInternal(a, b, u)
 end
 
 ---Mixes two colors in RGBA space by a step.
@@ -660,23 +728,32 @@ end
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Clr.mixRgbaLinear(a, b, t)
-    local u = t or 0.5
+function Clr.mixRgbaLinearInternal(a, b, t)
+    local u = 1.0 - t
+    return Clr.new(
+        u * a.r + t * b.r,
+        u * a.g + t * b.g,
+        u * a.b + t * b.b,
+        u * a.a + t * b.a)
+end
 
+---Mixes two colors in RGBA space by a step.
+---Converts the colors from standard to linear,
+---interpolates, then converts from linear
+---to standard. Clamps the step to [0.0, 1.0].
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Clr.mixRgbaStandard(a, b, t)
+    local u = t or 0.5
     if u <= 0.0 then
         return Clr.new(a.r, a.g, a.b, a.a)
     end
-
     if u >= 1.0 then
         return Clr.new(b.r, b.g, b.b, b.a)
     end
-
-    local v = 1.0 - u
-    return Clr.new(
-        v * a.r + u * b.r,
-        v * a.g + u * b.g,
-        v * a.b + u * b.b,
-        v * a.a + u * b.a)
+    return Clr.mixRgbaStandardInternal(a, b, u)
 end
 
 ---Mixes two colors in RGBA space by a step.
@@ -687,11 +764,29 @@ end
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Clr.mixRgbaStandard(a, b, t)
+function Clr.mixRgbaStandardInternal(a, b, t)
     return Clr.linearToStandard(
-        Clr.mixRgbaLinear(
+        Clr.mixRgbaLinearInternal(
         Clr.standardToLinear(a),
         Clr.standardToLinear(b), t))
+end
+
+---Mixes two colors in CIE XYZ space by a step,
+---then converts the result to a sRGB color.
+---Clamps the step to [0.0, 1.0].
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@return table
+function Clr.mixXyz(a, b, t)
+    local u = t or 0.5
+    if u <= 0.0 then
+        return Clr.new(a.r, a.g, a.b, a.a)
+    end
+    if u >= 1.0 then
+        return Clr.new(b.r, b.g, b.b, b.a)
+    end
+    return Clr.mixXyzInternal(a, b, u)
 end
 
 ---Mixes two colors in CIE XYZ space by a step,
@@ -700,25 +795,15 @@ end
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Clr.mixXyz(a, b, t)
-    local u = t or 0.5
-
-    if u <= 0.0 then
-        return Clr.new(a.r, a.g, a.b, a.a)
-    end
-
-    if u >= 1.0 then
-        return Clr.new(b.r, b.g, b.b, b.a)
-    end
-
-    local v = 1.0 - u
+function Clr.mixXyzInternal(a, b, t)
+    local u = 1.0 - t
     local aXyz = Clr.rgbaToXyz(a)
     local bXyz = Clr.rgbaToXyz(b)
     return Clr.xyzToRgba(
-        v * aXyz.x + u * bXyz.x,
-        v * aXyz.y + u * bXyz.y,
-        v * aXyz.z + u * bXyz.z,
-        v * aXyz.a + u * bXyz.a)
+        u * aXyz.x + t * bXyz.x,
+        u * aXyz.y + t * bXyz.y,
+        u * aXyz.z + t * bXyz.z,
+        u * aXyz.a + t * bXyz.a)
 end
 
 ---Multiplies two colors, including alpha.
@@ -755,19 +840,26 @@ end
 ---@param a table color
 ---@return table
 function Clr.premul(a)
-    return Clr.new(
-        a.r * a.a,
-        a.g * a.a,
-        a.b * a.a,
-        a.a)
+    if a.a <= 0.0 then
+        return Clr.new(0.0, 0.0, 0.0, 0.0)
+    elseif a.a >= 1.0 then
+        return Clr.new(a.r, a.g, a.b, 1.0)
+    else
+        return Clr.new(
+            a.r * a.a,
+            a.g * a.a,
+            a.b * a.a,
+            a.a)
+    end
 end
 
 ---Reduces the granularity of a color's components.
 ---Performs no color conversion, so sRGB is assumed.
 ---@param a table color
----@param levels integer levels
+---@param levels number levels
 ---@return table
 function Clr.quantize(a, levels)
+    -- TODO: Unsigned quantize instead?
     if levels and levels > 1 and levels < 256 then
         local delta = 1.0 / levels
         return Clr.new(
@@ -777,23 +869,6 @@ function Clr.quantize(a, levels)
             delta * math.floor(0.5 + a.a * levels))
     end
     return Clr.new(a.r, a.g, a.b, a.a)
-end
-
----Converts a sRGB color to a gray scale color.
----Converts from standard to linear, finds the luminance,
----then converts the luminance to standard.
----The alpha channel remains unaffected.
----@param a table the color
----@return table
-function Clr.rgbaToGray(a)
-    local lum = Clr.lumStandard(a)
-    if lum <= 0.0031308 then
-        lum = lum * 12.92
-    else
-        lum = (lum ^ 0.4166666666666667) * 1.055 - 0.055
-    end
-
-    return Clr(lum, lum, lum, a.a)
 end
 
 ---Converts a color to hue, saturation and value.
@@ -993,7 +1068,7 @@ end
 ---channels are packed in 0xAABBGGRR order.
 ---Ensures that color values are valid, in [0.0, 1.0].
 ---@param c table color
----@return integer
+---@return number
 function Clr.toHex(c)
     return Clr.toHexUnchecked(Clr.clamp01(c))
 end
@@ -1001,7 +1076,7 @@ end
 ---Converts from a color to a hexadecimal integer;
 ---channels are packed in 0xAABBGGRR order.
 ---@param c table color
----@return integer
+---@return number
 function Clr.toHexUnchecked(c)
     return math.tointeger(c.a * 0xff + 0.5) << 0x18
          | math.tointeger(c.b * 0xff + 0.5) << 0x10
@@ -1045,7 +1120,9 @@ end
 ---@return table
 function Clr.unpremul(a)
     if a.a <= 0.0 then
-        return Clr.new(a.x, a.y, a.z, 0.0)
+        return Clr.new(0.0, 0.0, 0.0, 0.0)
+    elseif a.a >= 1.0 then
+        return Clr.new(a.x, a.y, a.z, 1.0)
     else
         local aInv = 1.0 / a.a
         return Clr.new(
@@ -1057,7 +1134,7 @@ function Clr.unpremul(a)
 end
 
 ---Converts a color from CIE XYZ to CIE L*a*b*.
----Assumes D65 illuminant, CIE 1965 2 degrees referents.
+---Assumes D65 illuminant, CIE 1931 2 degrees referents.
 ---The return table uses the keys l, a, b and alpha.
 ---The alpha channel is unaffected by the transform.
 ---See https://www.wikiwand.com/en/CIELAB_color_space

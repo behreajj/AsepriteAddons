@@ -185,7 +185,6 @@ function Vec4.dist(a, b)
 end
 
 ---Finds the Chebyshev distance between two vectors.
----Forms a square pattern when plotted.
 ---@param a table left operand
 ---@param b table right operand
 ---@return number
@@ -198,7 +197,6 @@ function Vec4.distChebyshev(a, b)
 end
 
 ---Finds the Euclidean distance between two vectors.
----Forms a circle when plotted.
 ---@param a table left operand
 ---@param b table right operand
 ---@return number
@@ -214,7 +212,6 @@ function Vec4.distEuclidean(a, b)
 end
 
 ---Finds the Manhattan distance between two vectors.
----Forms a diamond when plotted.
 ---@param a table left operand
 ---@param b table right operand
 ---@return number
@@ -763,6 +760,7 @@ function Vec4.smoothstep(edge0, edge1, x)
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
             (x.x - edge0.x) / xDenom))
+        cx = cx * cx * (3.0 - (cx + cx))
     end
 
     local cy = 0.0
@@ -770,6 +768,7 @@ function Vec4.smoothstep(edge0, edge1, x)
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,
             (x.y - edge0.y) / yDenom))
+        cy = cy * cy * (3.0 - (cy + cy))
     end
 
     local cz = 0.0
@@ -777,6 +776,7 @@ function Vec4.smoothstep(edge0, edge1, x)
     if zDenom ~= 0.0 then
         cz = math.min(1.0, math.max(0.0,
             (x.z - edge0.z) / zDenom))
+        cz = cz * cz * (3.0 - (cz + cz))
     end
 
     local cw = 0.0
@@ -784,13 +784,10 @@ function Vec4.smoothstep(edge0, edge1, x)
     if wDenom ~= 0.0 then
         cw = math.min(1.0, math.max(0.0,
             (x.w - edge0.w) / wDenom))
+        cw = cw * cw * (3.0 - (cw + cw))
     end
 
-    return Vec4.new(
-        cx * cx * (3.0 - (cx + cx)),
-        cy * cy * (3.0 - (cy + cy)),
-        cz * cz * (3.0 - (cz + cz)),
-        cw * cw * (3.0 - (cw + cw)))
+    return Vec4.new(cx, cy, cz, cw)
 end
 
 ---Finds the step between an edge and factor.

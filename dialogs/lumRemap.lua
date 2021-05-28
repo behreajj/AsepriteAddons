@@ -265,7 +265,7 @@ dlg:button {
 
                 elseif easingMode == "PALETTE" then
 
-                    local clrs = AseUtilities.paletteToColorArr(
+                    local clrs = AseUtilities.paletteToAseColorArr(
                         sprite.palettes[1])
                     easing = function(t)
                         return AseUtilities.lerpColorArr(clrs, t)

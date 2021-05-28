@@ -207,7 +207,7 @@ end
 ---center, then connecting its vertices to the center.
 ---Generates a triangle for the number of edges
 ---in the face.
----@param faceIndex integer face index
+---@param faceIndex number face index
 ---@return table
 function Mesh2:subdivFaceFan(faceIndex)
 
@@ -259,7 +259,7 @@ end
 ---@param stopAngle number stop angle
 ---@param startWeight number start weight
 ---@param stopWeight number stop weight
----@param sectors integer sectors
+---@param sectors number sectors
 ---@param useQuads boolean use quads
 ---@return table
 function Mesh2.arc(
@@ -354,11 +354,11 @@ end
 ---The frequency describes interval before an offset.
 ---The aspect is the ratio of brick width to height.
 ---The offset is how far to displace offset rows.
----@param cols integer columns
----@param rows integer rows
+---@param cols number columns
+---@param rows number rows
 ---@param offset number offset
 ---@param aspect number ratio width / height
----@param freq integer frequency
+---@param freq number frequency
 ---@return table
 function Mesh2.gridBricks(
     cols, rows,
@@ -441,8 +441,8 @@ function Mesh2.gridBricks(
 end
 
 ---Creates a grid of rectangles.
----@param cols integer columns
----@param rows integer rows
+---@param cols number columns
+---@param rows number rows
 ---@return table
 function Mesh2.gridCartesian(cols, rows)
 
@@ -489,7 +489,7 @@ function Mesh2.gridCartesian(cols, rows)
 end
 
 ---Creates a grid of rhombi.
----@param cells integer cells
+---@param cells number cells
 ---@return table
 function Mesh2.gridDimetric(cells)
     local mesh = Mesh2.gridCartesian(cells, cells)
@@ -509,7 +509,7 @@ end
 
 ---Creates a grid of hexagons in rings around
 ---a central cell.
----@param rings integer
+---@param rings number
 ---@return table
 function Mesh2.gridHex(rings)
     local vRings = 1
@@ -528,8 +528,8 @@ function Mesh2.gridHex(rings)
     local vs = {}
     local vIdx = 1
     for i = iMin, iMax, 1 do
-        local jMin = math.max(iMin, iMin - i)
-        local jMax = math.min(iMax, iMax - i)
+        local jMin = iMin + math.max(0, -i)
+        local jMax = iMax + math.min(0, -i)
         local iExt = i * extent
 
         for j = jMin, jMax, 1 do
@@ -561,7 +561,7 @@ function Mesh2.gridHex(rings)
 end
 
 ---Creates a regular convex polygon
----@param sectors integer sides
+---@param sectors number sides
 ---@return table
 function Mesh2.polygon(sectors)
     local vsect = 3
@@ -595,8 +595,8 @@ end
 ---Separates a mesh into several meshes with one
 ---face per mesh.
 ---@param source table source mesh
----@param from integer start index
----@param to integer stop index
+---@param from number start index
+---@param to number stop index
 ---@return table
 function Mesh2.separateFaces(source, from, to)
     local meshes = {}

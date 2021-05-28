@@ -179,9 +179,9 @@ dlg:button {
 
             local easingFunc = Clr.mix
             if args.easingMode == "HSV" then
-                easingFunc = Clr.mixHsva
+                easingFunc = Clr.mixHsvaInternal
             elseif args.easingMode == "HSL" then
-                easingFunc = Clr.mixHsla
+                easingFunc = Clr.mixHslaInternal
             end
 
             local aseClrs = {}

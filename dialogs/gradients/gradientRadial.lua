@@ -1,16 +1,12 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/gradientutilities.lua")
 
-local rgbEasing = { "LINEAR", "SMOOTH" }
-local hueEasing = { "FAR", "NEAR" }
-local extensions = { "CLAMP", "WRAP" }
 local metrics = {
     "CHEBYSHEV",
     "EUCLIDEAN",
     "MANHATTAN",
     "MINKOWSKI"
 }
-
---TODO: Uniform vs. Sprite aspect...
 
 local defaults = {
     xOrigin = 50,
@@ -20,35 +16,13 @@ local defaults = {
     distMetric = "EUCLIDEAN",
     minkExp = 2.0,
     quantization = 0,
-    bias = 1.0,
-    extension = "CLAMP",
+    tweenOps = "PAIR",
     aColor = AseUtilities.DEFAULT_STROKE,
     bColor = AseUtilities.DEFAULT_FILL,
-    easingMode = "RGB",
+    clrSpacePreset = "S_RGB",
     easingFuncRGB = "LINEAR",
     easingFuncHue = "NEAR"
 }
-
-local function linearstep(edge0, edge1, x)
-    local denom = edge1 - edge0
-    if denom ~= 0.0 then
-        return math.min(1.0, math.max(0.0,
-            (x - edge0) / denom))
-    else
-        return 0.0
-    end
-end
-
-local function smoothstep(edge0, edge1, x)
-    local denom = edge1 - edge0
-    if denom ~= 0.0 then
-        local t = math.min(1.0, math.max(0.0,
-            (x - edge0) / denom))
-        return t * t * (3.0 - (t + t))
-    else
-        return 0.0
-    end
-end
 
 local function chebDist(ax, ay, bx, by)
     return math.max(
@@ -73,171 +47,27 @@ local function minkDist(ax, ay, bx, by, c, d)
           ^ d
 end
 
-local function clamp01(x)
-    return math.max(0.0, math.min(1.0, x))
-end
+local function distFuncFromPreset(distMetric, me)
+    if distMetric == "CHEBYSHEV" then
+        return chebDist
+    elseif distMetric == "MANHATTAN" then
+        return manhDist
+    elseif distMetric == "MINKOWSKI" then
+        local minkExp = 2.0
+        local invMinkExp = 0.5
 
-local function mod1(x)
-    return x % 1.0
-end
-
-local function createRadial(
-    sprite,
-    img,
-    xOrigin, yOrigin,
-    minRad, maxRad,
-    distFunc,
-    quantLvl,
-    bias,
-    wrapFunc,
-    aColor, bColor,
-    easingMode, easingPreset)
-
-    local w = sprite.width
-    local h = sprite.height
-
-    local useQuantize = quantLvl > 0.0
-    local delta = 1.0
-    local levels = 1.0
-    if useQuantize then
-        levels = quantLvl
-        delta = 1.0 / levels
-    end
-
-    local xOrigPx = xOrigin * w
-    local yOrigPx = yOrigin * h
-
-    -- Corners look bad with Chebyshev and Manhattan?
-    local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, w, h))
-
-    -- See https://github.com/aseprite/aseprite/issues/2613
-    local valBias = 1.0
-    if bias and bias ~= 0.0 then
-        valBias = bias
-    end
-
-    local a0 = 0
-    local a1 = 0
-    local a2 = 0
-    local a3 = 0
-
-    local b0 = 0
-    local b1 = 0
-    local b2 = 0
-    local b3 = 0
-
-    local easing = function(t) return 0xffffffff end
-    if easingMode and easingMode == "HSV" then
-
-        a0 = aColor.hsvHue
-        a1 = aColor.hsvSaturation
-        a2 = aColor.hsvValue
-        a3 = aColor.alpha
-
-        b0 = bColor.hsvHue
-        b1 = bColor.hsvSaturation
-        b2 = bColor.hsvValue
-        b3 = bColor.alpha
-
-        if easingPreset and easingPreset == "FAR" then
-            easing = function(t)
-                return AseUtilities.lerpHsvaFar(
-                    a0, a1, a2, a3,
-                    b0, b1, b2, b3, t)
-            end
-        else
-            easing = function(t)
-                return AseUtilities.lerpHsvaNear(
-                    a0, a1, a2, a3,
-                    b0, b1, b2, b3, t)
-            end
+        if me ~= 0.0 then
+            minkExp = me
+            invMinkExp = 1.0 / minkExp
         end
 
-    elseif easingMode == "HSL" then
-
-        a0 = aColor.hslHue
-        a1 = aColor.hslSaturation
-        a2 = aColor.hslLightness
-        a3 = aColor.alpha
-
-        b0 = bColor.hslHue
-        b1 = bColor.hslSaturation
-        b2 = bColor.hslLightness
-        b3 = bColor.alpha
-
-        if easingPreset and easingPreset == "FAR" then
-            easing = function(t)
-                return AseUtilities.lerpHslaFar(
-                    a0, a1, a2, a3,
-                    b0, b1, b2, b3, t)
-            end
-        else
-            easing = function(t)
-                return AseUtilities.lerpHslaNear(
-                    a0, a1, a2, a3,
-                    b0, b1, b2, b3, t)
-            end
+        return function(ax, ay, bx, by)
+            return minkDist(ax, ay, bx, by,
+                minkExp, invMinkExp)
         end
-
-    elseif easingMode == "PALETTE" then
-
-        local clrs = AseUtilities.paletteToColorArr(
-            sprite.palettes[1])
-        easing = function(t)
-            return AseUtilities.lerpColorArr(
-                clrs, t)
-        end
-
     else
-
-        a0 = aColor.red
-        a1 = aColor.green
-        a2 = aColor.blue
-        a3 = aColor.alpha
-
-        b0 = bColor.red
-        b1 = bColor.green
-        b2 = bColor.blue
-        b3 = bColor.alpha
-
-        if easingPreset and easingPreset == "SMOOTH" then
-            easing = function(t)
-                return AseUtilities.smoothRgba(
-                    a0, a1, a2, a3,
-                    b0, b1, b2, b3, t)
-            end
-        else
-            easing = function(t)
-                return AseUtilities.lerpRgba(
-                    a0, a1, a2, a3,
-                    b0, b1, b2, b3, t)
-            end
-        end
-
+        return euclDist
     end
-
-    local iterator = img:pixels()
-    local i = 0
-
-    for elm in iterator do
-        local xPx = i % w
-        local yPx = i // w
-
-        local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
-        local fac = dst * normDist
-        fac = wrapFunc(fac)
-        -- fac = fac ^ valBias
-        fac = linearstep(minRad, maxRad, fac)
-
-        if useQuantize then
-            fac = delta * math.floor(0.5 + fac * levels)
-        end
-
-        elm(easing(fac))
-
-        i = i + 1
-    end
-
 end
 
 local dlg = Dialog { title = "Radial Gradient" }
@@ -261,7 +91,7 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "minRad",
-    label = "Min Radius:",
+    label = "Radii %:",
     min = 0,
     max = 100,
     value = defaults.minRad
@@ -269,7 +99,6 @@ dlg:slider {
 
 dlg:slider {
     id = "maxRad",
-    label = "Max Radius:",
     min = 0,
     max = 100,
     value = defaults.maxRad
@@ -302,15 +131,6 @@ dlg:number {
 
 dlg:newrow { always = false }
 
--- dlg:number {
---     id = "bias",
---     label = "Bias:",
---     text = string.format("%.1f", defaults.bias),
---     decimals = 5
--- }
-
-dlg:newrow { always = false }
-
 dlg:slider {
     id = "quantization",
     label = "Quantize:",
@@ -322,37 +142,67 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:combobox {
-    id = "extension",
-    label = "Extension:",
-    option = defaults.extension,
-    options = extensions
+    id = "tweenOps",
+    label = "Tween:",
+    option = defaults.tweenOps,
+    options = GradientUtilities.TWEEN_PRESETS,
+    onchange = function()
+        local isPair = dlg.data.tweenOps == "PAIR"
+        local md = dlg.data.clrSpacePreset
+        dlg:modify {
+            id = "aColor",
+            visible = isPair
+        }
+
+        dlg:modify {
+            id = "bColor",
+            visible = isPair
+        }
+
+        dlg:modify {
+            id = "easingFuncHue",
+            visible = md == "HSL" or md == "HSV"
+        }
+
+        dlg:modify {
+            id = "easingFuncRGB",
+            visible = md == "S_RGB" or md == "LINEAR_RGB"
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "aColor",
+    label = "Colors:",
+    color = defaults.aColor,
+    visible = defaults.tweenOps == "PAIR"
+}
+
+dlg:color {
+    id = "bColor",
+    color = defaults.bColor,
+    visible = defaults.tweenOps == "PAIR"
 }
 
 dlg:newrow { always = false }
 
 dlg:combobox {
-    id = "easingMode",
-    label = "Easing Mode:",
-    option = defaults.easingMode,
-    options = AseUtilities.EASING_MODES,
+    id = "clrSpacePreset",
+    label = "Color Space:",
+    option = defaults.clrSpacePreset,
+    options = GradientUtilities.CLR_SPC_PRESETS,
+    visible = defaults.tweenOps == "PAIR",
     onchange = function()
-        local md = dlg.data.easingMode
-        local showColors = md ~= "PALETTE"
-        dlg:modify {
-            id = "aColor",
-            visible = showColors
-        }
-        dlg:modify {
-            id = "bColor",
-            visible = showColors
-        }
+        local md = dlg.data.clrSpacePreset
         dlg:modify {
             id = "easingFuncHue",
             visible = md == "HSL" or md == "HSV"
         }
         dlg:modify {
             id = "easingFuncRGB",
-            visible = md == "RGB"
+            visible = md == "S_RGB" or md == "LINEAR_RGB"
         }
     end
 }
@@ -363,28 +213,18 @@ dlg:combobox {
     id = "easingFuncHue",
     label = "Easing:",
     option = defaults.easingFuncHue,
-    options = hueEasing,
-    visible = false
+    options = GradientUtilities.HUE_EASING_PRESETS,
+    visible = defaults.clrSpacePreset == "HSL"
+        or defaults.clrSpacePreset == "HSV"
 }
 
 dlg:combobox {
     id = "easingFuncRGB",
     label = "Easing:",
     option = defaults.easingFuncRGB,
-    options = rgbEasing
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "aColor",
-    label = "Colors:",
-    color = defaults.aColor
-}
-
-dlg:color {
-    id = "bColor",
-    color = defaults.bColor
+    options = GradientUtilities.RGB_EASING_PRESETS,
+    visible = defaults.clrSpacePreset == "S_RGB"
+        or defaults.clrSpacePreset == "LINEAR_RGB"
 }
 
 dlg:newrow { always = false }
@@ -396,81 +236,112 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         if args.ok then
-            local easingFunc = args.easingFuncRGB
-            if args.easingMode == "HSV" then
-                easingFunc = args.easingFuncHue
-            elseif args.easingMode == "HSL" then
-                easingFunc = args.easingFuncHue
-            end
-
-            local wrapFunc = clamp01
-            if args.extension == "WRAP" then
-                wrapFunc = mod1
-            end
-
             local sprite = AseUtilities.initCanvas(
                 64, 64, "Radial Gradient")
-            local layer = sprite.layers[#sprite.layers]
-            local frame = app.activeFrame or 1
-            local cel = sprite:newCel(layer, frame)
+            if sprite.colorMode == ColorMode.RGB then
 
-            local distFunc = euclDist
-            local distMetric = args.distMetric
-            if distMetric == "CHEBYSHEV" then
-                distFunc = chebDist
-            elseif distMetric == "MANHATTAN" then
-                distFunc = manhDist
-            elseif distMetric == "MINKOWSKI" then
-                local minkExp = 2.0
-                local invMinkExp = 0.5
-                if args.minkExp ~= 0.0 then
-                    minkExp = args.minkExp
-                    invMinkExp = 1.0 / minkExp
+                local layer = sprite.layers[#sprite.layers]
+                local frame = app.activeFrame or 1
+                local cel = sprite:newCel(layer, frame)
+
+                --Easing mode.
+                local tweenOps = args.tweenOps
+                local rgbPreset = args.easingFuncRGB
+                local huePreset = args.easingFuncHue
+                local clrSpacePreset = args.clrSpacePreset
+
+                local easeFuncFinal = nil
+                if tweenOps == "PALETTE" then
+
+                    local pal = sprite.palettes[1]
+                    local clrArr = AseUtilities.paletteToClrArr(pal)
+
+                    local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                        clrSpacePreset,
+                        rgbPreset,
+                        huePreset)
+
+                    easeFuncFinal = function(t)
+                        return Clr.mixArr(clrArr, t, pairFunc)
+                    end
+                else
+                    local aColorAse = args.aColor
+                    local bColorAse = args.bColor
+
+                    local aClr = AseUtilities.aseColorToClr(aColorAse)
+                    local bClr = AseUtilities.aseColorToClr(bColorAse)
+
+                    local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                        clrSpacePreset,
+                        rgbPreset,
+                        huePreset)
+
+                    easeFuncFinal = function(t)
+                        return pairFunc(aClr, bClr, t)
+                    end
                 end
 
-                distFunc = function(ax, ay, bx, by)
-                    return minkDist(ax, ay, bx, by,
-                        minkExp, invMinkExp)
+                -- Choose distance metric based on preset.
+                local distMetric = args.distMetric
+                local minkExp = args.minkExp
+                local distFunc = distFuncFromPreset(distMetric, minkExp)
+
+                -- Validate minimum and maximum radii.
+                local minRad = 0.01 * math.min(
+                    args.minRad, args.maxRad)
+                local maxRad = 0.01 * math.max(
+                    args.minRad, args.maxRad)
+
+                -- If radii are approximately equal, offset.
+                if math.abs(maxRad - minRad) <= 0.000001 then
+                    minRad = minRad - 0.01
+                    maxRad = maxRad + 0.01
                 end
+
+                local diffRad = maxRad - minRad
+                local linDenom = 1.0 / diffRad
+
+                -- local wrapPreset = args.extension
+                -- local wrapFunc = wrapFuncFromPreset(wrapPreset, minRad, maxRad)
+                local levels = args.quantization
+
+                -- Shift origin from [0, 100] to [0.0, 1.0].
+                local xOrigin = 0.01 * args.xOrigin
+                local yOrigin = 0.01 * args.yOrigin
+
+                local w = sprite.width
+                local h = sprite.height
+
+                -- Convert from normalized to pixel size.
+                local xOrigPx = xOrigin * w
+                local yOrigPx = yOrigin * h
+
+                -- Need a scalar to normalize distance to [0.0, 1.0]
+                local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, w, h))
+
+                local img = cel.image
+                local iterator = img:pixels()
+                local i = 0
+                for elm in iterator do
+                    local xPx = i % w
+                    local yPx = i // w
+
+                    local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
+                    local fac = dst * normDist
+                    fac = math.max(0.0, math.min(1.0, fac))
+                    fac = (fac - minRad) * linDenom
+                    fac = Utilities.quantizeSigned(fac, levels)
+
+                    elm(Clr.toHex(easeFuncFinal(fac)))
+                    i = i + 1
+                end
+
+                app.refresh()
+            else
+                app.alert("Only RGB color mode is supported.")
             end
-
-            local oldMode = sprite.colorMode
-            app.command.ChangePixelFormat { format = "rgb" }
-
-            local minRad = 0.01 * math.min(args.minRad, args.maxRad)
-            local maxRad = 0.01 * math.max(args.minRad, args.maxRad)
-
-            local aClr = args.aColor
-            local bClr = args.bColor
-            if args.minRad > args.maxRad then
-                local temp = aClr
-                aClr = bClr
-                bClr = temp
-            end
-
-            createRadial(
-                sprite,
-                cel.image,
-                0.01 * args.xOrigin,
-                0.01 * args.yOrigin,
-                minRad,
-                maxRad,
-                distFunc,
-                args.quantization,
-                args.bias,
-                wrapFunc,
-                aClr,
-                bClr,
-                args.easingMode,
-                easingFunc)
-
-            if oldMode == ColorMode.INDEXED then
-                app.command.ChangePixelFormat { format = "indexed" }
-            elseif oldMode == ColorMode.GRAY then
-                app.command.ChangePixelFormat { format = "gray" }
-            end
-
-            app.refresh()
+        else
+            app.alert("Dialog arguments are invalid.")
         end
     end
 }

@@ -2,9 +2,7 @@ local prsStrs = {
     "GAMMA",
     "LINEAR",
     "SINE_WAVE",
-    "QUANTIZE",
-    -- "SMOOTH",
-    -- "SMOOTHER"
+    "QUANTIZE"
 }
 
 local defaults = {
@@ -29,7 +27,7 @@ local defaults = {
     amplitude = 1.0,
     offset = 0.0,
 
-    quantization = 0
+    quantization = 8
 }
 
 local function quantize(x, levels)
@@ -54,21 +52,6 @@ local function sineWave(x, freq, phase, amp, basis)
         0.5 + 0.5 * (sclBas + amp * math.sin(
         6.283185307179586 * freq * x + phase))))
 end
-
--- local function pingPong(x)
---     return 0.5 + 0.5 * math.cos(
---         6.283185307179586 * x - math.pi)
--- end
-
--- local function smoothStep(x)
---     return math.max(0.0, math.min(1.0,
---         x * x * (3.0 - (x + x))))
--- end
-
--- local function smootherStep(x)
---     return math.max(0.0, math.min(1.0,
---         x * x * x * (x * (x * 6.0 - 15.0) + 10.0)))
--- end
 
 local dlg = Dialog { title = "Color Curve Presets" }
 
@@ -308,7 +291,7 @@ dlg:button {
                     return sineWave(x, freq, phase, amp, basis)
                 end
             elseif preset == "QUANTIZE" then
-                if args.quantization > 0 then
+                if args.quantization > 1 then
                     func = function(x)
                         return quantize(x, args.quantization)
                     end
