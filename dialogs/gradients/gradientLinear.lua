@@ -252,7 +252,6 @@ dlg:button {
     end
 }
 
-
 dlg:button {
     id = "cancel",
     text = "CANCEL",

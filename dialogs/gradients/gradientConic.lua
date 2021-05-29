@@ -159,7 +159,7 @@ dlg:button {
         local args = dlg.data
         if args.ok then
             local sprite = AseUtilities.initCanvas(
-                64, 64, "Radial Gradient")
+                64, 64, "Conic Gradient")
             if sprite.colorMode == ColorMode.RGB then
 
                 local layer = sprite.layers[#sprite.layers]

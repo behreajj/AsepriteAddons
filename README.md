@@ -51,10 +51,6 @@ This repo includes
 
   ![Dimetric Grid](screencaps/isoGrid.png)
 
-- A Julia set generator.
-
-  ![Julia Set](screencaps/juliaSet.png)
-
 - A linear gradient.
  
   ![Linear Gradient](screencaps/linearGradient.png)
