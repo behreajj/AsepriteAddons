@@ -4,8 +4,12 @@ dofile("../../support/utilities.lua")
 dofile("../../support/aseutilities.lua")
 
 local defaults = {
-    sides = 6,
-    angle = 90,
+    startAngle = 0,
+    stopAngle = 90,
+    startWeight = 50,
+    stopWeight = 50,
+    sectors = 32,
+    margin = 0,
     scale = 32,
     xOrigin = 0,
     yOrigin = 0,
@@ -17,24 +21,59 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Convex Polygon" }
+local dlg = Dialog { title = "Mesh Arc" }
 
 dlg:slider {
-    id = "sides",
-    label = "Sides:",
-    min = 3,
-    max = 16,
-    value = defaults.sides
+    id = "startAngle",
+    label = "Angles:",
+    min = 0,
+    max = 360,
+    value = defaults.startAngle
+}
+
+dlg:slider {
+    id = "stopAngle",
+    text = "Stop",
+    min = 0,
+    max = 360,
+    value = defaults.stopAngle
 }
 
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "angle",
-    label = "Angle:",
+    id = "startWeight",
+    label = "Weights:",
     min = 0,
-    max = 360,
-    value = defaults.angle
+    max = 100,
+    value = defaults.startWeight
+}
+
+dlg:slider {
+    id = "stopWeight",
+    min = 0,
+    max = 100,
+    value = defaults.stopWeight
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "sectors",
+    label = "Sectors:",
+    min = 3,
+    max = 64,
+    value = defaults.sectors
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "margin",
+    label = "Margin:",
+    min = 0,
+    max = 100,
+    value = defaults.margin
 }
 
 dlg:newrow { always = false }
@@ -43,7 +82,7 @@ dlg:number {
     id = "scale",
     label = "Scale:",
     text = string.format("%.1f", defaults.scale),
-    decimals = AseUtilities.DISPLAY_DECIMAL
+    decimals = 5
 }
 
 dlg:newrow { always = false }
@@ -52,13 +91,13 @@ dlg:number {
     id = "xOrigin",
     label = "Origin:",
     text = string.format("%.1f", defaults.xOrigin),
-    decimals = AseUtilities.DISPLAY_DECIMAL
+    decimals = 5
 }
 
 dlg:number {
     id = "yOrigin",
     text = string.format("%.1f", defaults.yOrigin),
-    decimals = AseUtilities.DISPLAY_DECIMAL
+    decimals = 5
 }
 
 dlg:newrow { always = false }
@@ -125,20 +164,37 @@ dlg:button {
 
     local args = dlg.data
     if args.ok then
-        local mesh = Mesh2.polygon(args.sides)
+        local useQuads = args.margin > 0
+        local mesh = Mesh2.arc(
+            math.rad(args.startAngle),
+            math.rad(args.stopAngle),
+            0.01 * args.startWeight,
+            0.01 * args.stopWeight,
+            args.sectors,
+            useQuads)
+
+        local sclval = args.scale
+        if sclval < 2.0 then
+            sclval = 2.0
+        end
+
+        local mrgval = args.margin * 0.01
+        if mrgval > 0.0 then
+            mrgval = math.min(mrgval, 0.99)
+            Mesh2.uniformData(mesh, mesh)
+            mesh:scaleFacesIndiv(1.0 - mrgval)
+        end
 
         local t = Mat3.fromTranslation(
             args.xOrigin,
             args.yOrigin)
-        local r = Mat3.fromRotZ(math.rad(args.angle))
-        local sclval = args.scale
-        if sclval < 2.0 then sclval = 2.0 end
         local s = Mat3.fromScale(sclval, -sclval)
-        local mat = Mat3.mul(Mat3.mul(t, s), r)
+        local mat = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
         local sprite = AseUtilities.initCanvas(
-            64, 64, mesh.name,
+            64, 64,
+            mesh.name,
             { args.fillClr, args.strokeClr })
         local layer = sprite.layers[#sprite.layers]
         local frame = app.activeFrame or 1

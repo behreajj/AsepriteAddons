@@ -9,7 +9,8 @@ local defaults = {
     bColor = Color(255, 255, 255, 255),
     clrSpacePreset = "S_RGB",
     easingFuncRGB = "LINEAR",
-    easingFuncHue = "NEAR"
+    easingFuncHue = "NEAR",
+    pullFocus = false
 }
 
 local dlg = Dialog { title = "Gradient Map" }
@@ -124,7 +125,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
         if args.ok then

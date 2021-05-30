@@ -127,13 +127,13 @@ end
 ---@param v table scalar
 ---@return table
 function Knot2:scale(v)
-    return self:scaleByVec2(v)
+    return self:scaleVec2(v)
 end
 
 ---Scales this knot by a number.
 ---@param n number uniform scalar
 ---@return table
-function Knot2:scaleByNumber(n)
+function Knot2:scaleNum(n)
         self.co = Vec2.scale(self.co, n)
         self.fh = Vec2.scale(self.fh, n)
         self.rh = Vec2.scale(self.rh, n)
@@ -143,7 +143,7 @@ end
 ---Scales this knot by a vector.
 ---@param v number nonuniform scalar
 ---@return table
-function Knot2:scaleByVec2(v)
+function Knot2:scaleVec2(v)
         self.co = Vec2.hadamard(self.co, v)
         self.fh = Vec2.hadamard(self.fh, v)
         self.rh = Vec2.hadamard(self.rh, v)
@@ -171,6 +171,45 @@ function Knot2.bezierPoint(a, b, step)
         a.co, a.fh,
         b.rh, b.co,
         step)
+end
+
+---Forms a knot to be used in arcs and circles
+---at an origin with a given radius.
+---For internal use only; does not validate arguments.
+---@param cosa number cosine of an angle
+---@param sina number sine of an angle
+---@param radius number radius
+---@param handleMag number handle magnitude
+---@param xCenter number x center
+---@param yCenter number y center
+---@return table
+function Knot2.fromPolarInternal(
+    cosa, sina,
+    radius, handleMag,
+    xCenter, yCenter)
+
+    -- Save for fromPolar external
+    -- local yoVerif = yCenter or 0.0
+    -- local xoVerif = xCenter or 0.0
+    -- local hmVerif = handleMag or 1.3333333333333333
+    -- local radVerif = radius or 0.5
+    -- local sa = sina or 0.0
+    -- local ca = cosa or 1.0
+
+    local hmsina = sina * handleMag;
+    local hmcosa = cosa * handleMag;
+
+    local co = Vec2.new(
+        xCenter + radius * cosa,
+        yCenter + radius * sina)
+    local fh = Vec2.new(
+        co.x - hmsina,
+        co.y + hmcosa)
+    local rh = Vec2.new(
+        co.x + hmsina,
+        co.y - hmcosa)
+
+    return Knot2.new(co, fh, rh)
 end
 
 ---Gets the knot's fore handle as a direction.

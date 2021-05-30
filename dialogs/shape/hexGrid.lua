@@ -1,6 +1,3 @@
-dofile("../../support/mat3.lua")
-dofile("../../support/mesh2.lua")
-dofile("../../support/utilities.lua")
 dofile("../../support/aseutilities.lua")
 
 local defaults = {
@@ -13,7 +10,8 @@ local defaults = {
     strokeWeight = 1,
     strokeClr = AseUtilities.DEFAULT_STROKE,
     useFill = true,
-    fillClr = AseUtilities.DEFAULT_FILL
+    fillClr = AseUtilities.DEFAULT_FILL,
+    pullFocus = false
 }
 
 local dlg = Dialog { title = "Hexagon Grid" }
@@ -119,7 +117,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
         if args.ok then
@@ -161,6 +159,8 @@ dlg:button {
                 Brush(args.strokeWeight),
                 cel,
                 layer)
+        else
+            app.alert("Dialog arguments are invalid.")
         end
     end
 }

@@ -1,7 +1,4 @@
 dofile("../../support/aseutilities.lua")
-dofile("../../support/curve2.lua")
-dofile("../../support/mat3.lua")
-dofile("../../support/utilities.lua")
 
 local cornerInputs = { "NON_UNIFORM", "UNIFORM" }
 
@@ -22,7 +19,8 @@ local defaults = {
     strokeClr = AseUtilities.DEFAULT_STROKE,
     useFill = true,
     fillClr = AseUtilities.DEFAULT_FILL,
-    handles = 0
+    handles = 0,
+    pullFocus = false
 }
 
 local dlg = Dialog { title = "Rounded Rectangle" }
@@ -234,7 +232,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = defaults.pullFocus,
     onclick = function()
 
         local args = dlg.data
@@ -265,8 +263,7 @@ dlg:button {
                 args.strokeClr,
                 Brush(args.strokeWeight),
                 cel,
-                layer
-            )
+                layer)
 
             if args.handles > 0 then
                 local hlLyr = sprite:newLayer()

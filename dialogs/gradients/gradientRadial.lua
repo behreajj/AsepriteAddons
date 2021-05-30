@@ -21,7 +21,8 @@ local defaults = {
     bColor = AseUtilities.DEFAULT_FILL,
     clrSpacePreset = "S_RGB",
     easingFuncRGB = "LINEAR",
-    easingFuncHue = "NEAR"
+    easingFuncHue = "NEAR",
+    pullFocus = false
 }
 
 local function chebDist(ax, ay, bx, by)
@@ -232,7 +233,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
         if args.ok then

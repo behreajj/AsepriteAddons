@@ -33,6 +33,8 @@ AseUtilities.DEFAULT_PAL_ARR = {
 
 AseUtilities.DEFAULT_STROKE = Color(32, 32, 32, 255)
 
+AseUtilities.DISPLAY_DECIMAL = 3
+
 AseUtilities.EASING_MODES = {
     "HSL",
     "HSV",

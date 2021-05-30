@@ -270,6 +270,8 @@ function Mesh2.arc(
     sectors,
     useQuads)
 
+    -- TODO: Needs to be refactored to use
+    -- NGONs with n resolution per sector.
     local a = startAngle % 6.283185307179586
     local b = stopAngle % 6.283185307179586
     local arcLen = (b - a) % 6.283185307179586
@@ -314,6 +316,7 @@ function Mesh2.arc(
         local cosTheta = math.cos(theta)
         local sinTheta = math.sin(theta)
 
+        -- TODO: Refactor to avoid table.insert
         table.insert(vs, Vec2.new(
             cosTheta * radius,
             sinTheta * radius))
@@ -382,59 +385,41 @@ function Mesh2.gridBricks(
 
     local halfOff = voff * 0.5
     local invAspect = 1.0 / vasp
-    local vcolsp1 = vcols + 1
-    local vrowsp1 = vrows + 1
 
-    -- Create horizontal positions.
-    -- Displace by +/- half the offset.
     local jToStep = 1.0 / vcols
-    local xs = {}
-    local xOffs = {}
-    for j = 0, vcolsp1, 1 do
-        local jStp = (j + halfOff) * jToStep
-        local jOff = (j - halfOff) * jToStep
-        table.insert(xs, jStp - 0.5)
-        table.insert(xOffs, jOff - 0.5)
-    end
-
-    -- Create vertical positions.
-    -- Scale by aspect ratio.
     local iToStep = 1.0 / vrows
-    local ys = {}
-    for i = 0, vrowsp1, 1 do
-        local iStp = i * iToStep
-        table.insert(ys, invAspect * (0.5 - iStp))
-    end
 
     local fs = {}
     local vs = {}
 
-    -- Unique vertices per face.
-    local k = 1
-    for i = 1, vrows, 1 do
-        local y0 = ys[i]
-        local y1 = ys[i + 1]
-        local useOffset = (i - 1) % vfrq == 0
-        for j = 1, vcols, 1 do
-            local x0 = 0.0
-            local x1 = 0.0
-            if useOffset then
-                x0 = xOffs[j]
-                x1 = xOffs[j + 1]
-            else
-                x0 = xs[j]
-                x1 = xs[j + 1]
-            end
+    local len2n1 = vcols * vrows - 1
+    for k = 0, len2n1, 1 do
+        local i = k // vcols
+        local j = k % vcols
 
-            table.insert(vs, Vec2.new(x0, y0))
-            table.insert(vs, Vec2.new(x1, y0))
-            table.insert(vs, Vec2.new(x1, y1))
-            table.insert(vs, Vec2.new(x0, y1))
+        local iStp0 = i * iToStep
+        local iStp1 = (i + 1) * iToStep
+        local y0 = invAspect * (0.5 - iStp0)
+        local y1 = invAspect * (0.5 - iStp1)
 
-            table.insert(fs, {
-                k, k + 1, k + 2, k + 3 })
-            k = k + 4
+        local x0 = 0.0
+        local x1 = 0.0
+        local useOffset = i % vfrq == 0
+        if useOffset then
+            x0 = (j - halfOff) * jToStep - 0.5
+            x1 = (j + 1 - halfOff) * jToStep - 0.5
+        else
+            x0 = (j + halfOff) * jToStep - 0.5
+            x1 = (j + 1 + halfOff) * jToStep - 0.5
         end
+
+        local n4 = k * 4
+        vs[1 + n4] = Vec2.new(x0, y0)
+        vs[2 + n4] = Vec2.new(x1, y0)
+        vs[3 + n4] = Vec2.new(x1, y1)
+        vs[4 + n4] = Vec2.new(x0, y1)
+
+        fs[1 + k] = { 1 + n4, 2 + n4, 3 + n4, 4 + n4 }
     end
 
     return Mesh2.new(fs, vs, "Bricks")

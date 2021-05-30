@@ -1,26 +1,24 @@
-dofile("../../support/mat3.lua")
-dofile("../../support/mesh2.lua")
-dofile("../../support/utilities.lua")
 dofile("../../support/aseutilities.lua")
 
 local defaults = {
     startAngle = 0,
     stopAngle = 90,
-    startWeight = 50,
-    stopWeight = 50,
-    sectors = 32,
-    margin = 0,
+    thickness = 25,
+    thickOffset = 0,
+    resolution = 32,
     scale = 32,
     xOrigin = 0,
     yOrigin = 0,
-    useFill = true,
     useStroke = true,
     strokeWeight = 1,
     strokeClr = AseUtilities.DEFAULT_STROKE,
-    fillClr = AseUtilities.DEFAULT_FILL
+    useFill = true,
+    fillClr = AseUtilities.DEFAULT_FILL,
+    handles = 0,
+    pullFocus = false
 }
 
-local dlg = Dialog { title = "Arc" }
+local dlg = Dialog { title = "Curve Arc" }
 
 dlg:slider {
     id = "startAngle",
@@ -32,7 +30,6 @@ dlg:slider {
 
 dlg:slider {
     id = "stopAngle",
-    text = "Stop",
     min = 0,
     max = 360,
     value = defaults.stopAngle
@@ -40,39 +37,41 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:slider {
-    id = "startWeight",
-    label = "Weights:",
-    min = 0,
-    max = 100,
-    value = defaults.startWeight
-}
-
-dlg:slider {
-    id = "stopWeight",
-    min = 0,
-    max = 100,
-    value = defaults.stopWeight
+dlg:number {
+    id = "thickness",
+    label = "Thickness:",
+    text = string.format("%.1f", defaults.thickness),
+    decimals = 5
 }
 
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "sectors",
-    label = "Sectors:",
-    min = 3,
+    id = "thickOffset",
+    label = "Offset:",
+    min = -100,
+    max = 100,
+    value = defaults.thickOffset
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "resolution",
+    label = "Resolution:",
+    min = 1,
     max = 64,
-    value = defaults.sectors
+    value = defaults.resolution
 }
 
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "margin",
-    label = "Margin:",
+    id = "handles",
+    label = "Handles:",
     min = 0,
-    max = 100,
-    value = defaults.margin
+    max = 255,
+    value = defaults.handles
 }
 
 dlg:newrow { always = false }
@@ -158,56 +157,48 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = defaults.pullFocus,
     onclick = function()
+        local args = dlg.data
+        if args.ok then
+            local sprite = AseUtilities.initCanvas(
+                64, 64, "Arc",
+                { args.fillClr, args.strokeClr })
+            local layer = sprite.layers[#sprite.layers]
+            local frame = app.activeFrame or 1
+            local cel = sprite:newCel(layer, frame)
 
-    local args = dlg.data
-    if args.ok then
-        local useQuads = args.margin > 0
-        local mesh = Mesh2.arc(
-            math.rad(args.startAngle),
-            math.rad(args.stopAngle),
-            0.01 * args.startWeight,
-            0.01 * args.stopWeight,
-            args.sectors,
-            useQuads)
+            local curve = Curve2.arcSector(
+                math.rad(360 - args.startAngle),
+                math.rad(360 - args.stopAngle),
+                args.scale,
+                args.thickness,
+                0.01 * args.thickOffset,
+                args.xOrigin,
+                args.yOrigin)
 
-        local sclval = args.scale
-        if sclval < 2.0 then
-            sclval = 2.0
-        end
+            AseUtilities.drawCurve2(
+                curve,
+                args.resolution,
+                args.useFill,
+                args.fillClr,
+                args.useStroke,
+                args.strokeClr,
+                Brush(args.strokeWeight),
+                cel,
+                layer)
 
-        local mrgval = args.margin * 0.01
-        if mrgval > 0.0 then
-            mrgval = math.min(mrgval, 0.99)
-            Mesh2.uniformData(mesh, mesh)
-            mesh:scaleFacesIndiv(1.0 - mrgval)
-        end
-
-        local t = Mat3.fromTranslation(
-            args.xOrigin,
-            args.yOrigin)
-        local s = Mat3.fromScale(sclval, -sclval)
-        local mat = Mat3.mul(t, s)
-        Utilities.mulMat3Mesh2(mat, mesh)
-
-        local sprite = AseUtilities.initCanvas(
-            64, 64,
-            mesh.name,
-            { args.fillClr, args.strokeClr })
-        local layer = sprite.layers[#sprite.layers]
-        local frame = app.activeFrame or 1
-        local cel = sprite:newCel(layer, frame)
-
-        AseUtilities.drawMesh2(
-            mesh,
-            args.useFill,
-            args.fillClr,
-            args.useStroke,
-            args.strokeClr,
-            Brush(args.strokeWeight),
-            cel,
-            layer)
+            if args.handles > 0 then
+                local hlLyr = sprite:newLayer()
+                hlLyr.name = curve.name .. ".Handles"
+                hlLyr.opacity = args.handles
+                AseUtilities.drawHandles2(
+                    curve,
+                    sprite:newCel(hlLyr, frame),
+                    hlLyr)
+            end
+        else
+            app.alert("Dialog arguments are invalid.")
         end
     end
 }
