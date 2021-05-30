@@ -305,6 +305,8 @@ function Mesh2.arc(
     local vs = {}
     local fs = {}
 
+    local cos = math.cos
+    local sin = math.sin
     local toStep = 1.0 / (sctCount - 1.0)
     for i = 0, sctCount - 1, 1 do
         local t = i * toStep
@@ -313,8 +315,8 @@ function Mesh2.arc(
         local oculRad = u * oculRad0 + t * oculRad1
 
         local theta = u * a + t * c
-        local cosTheta = math.cos(theta)
-        local sinTheta = math.sin(theta)
+        local cosTheta = cos(theta)
+        local sinTheta = sin(theta)
 
         -- TODO: Refactor to avoid table.insert
         table.insert(vs, Vec2.new(
@@ -555,12 +557,15 @@ function Mesh2.polygon(sectors)
     local toTheta = 6.283185307179586 / vsect
     local vs = {}
     local f = {}
+
+    local cos = math.cos
+    local sin = math.sin
     for i = 0, vsect - 1, 1 do
         local theta = i * toTheta
-        table.insert(vs, Vec2.new(
-            vrad * math.cos(theta),
-            vrad * math.sin(theta)))
-        table.insert(f, 1 + i)
+        vs[1 + i] = Vec2.new(
+            vrad * cos(theta),
+            vrad * sin(theta))
+        f[1 + i] = 1 + i
     end
     local fs = { f }
 

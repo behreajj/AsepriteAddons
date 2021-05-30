@@ -126,7 +126,7 @@ dlg:number {
     id = "minkExp",
     label = "Exponent:",
     text = string.format("%.1f", defaults.minkExp),
-    decimals = 5,
+    decimals = 6,
     visible = false
 }
 

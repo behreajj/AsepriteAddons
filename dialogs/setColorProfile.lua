@@ -289,11 +289,11 @@ dlg:button {
 
                 sprite:setPalette(pal)
 
-                if oldMode == ColorMode.INDEXED then
-                    app.command.ChangePixelFormat { format = "indexed" }
-                elseif oldMode == ColorMode.GRAY then
-                    app.command.ChangePixelFormat { format = "gray" }
-                end
+                -- if oldMode == ColorMode.INDEXED then
+                --     app.command.ChangePixelFormat { format = "indexed" }
+                -- elseif oldMode == ColorMode.GRAY then
+                --     app.command.ChangePixelFormat { format = "gray" }
+                -- end
             end
 
             local profilepath = args.prf

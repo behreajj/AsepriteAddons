@@ -175,28 +175,22 @@ dlg:button {
                             end
 
                             -- Find alpha from source image.
-                            local minLum = 1.0
-                            local maxLum = 0.0
-                            local lums = {}
-                            local alphasSrc = {}
 
-                            local i = 1
+                            local srcClrDict = {}
                             local srcItr = srcImg:pixels()
                             for srcClr in srcItr do
                                 local hex = srcClr()
+                                srcClrDict[hex] = true
+                            end
 
-                                -- local b = (hex >> 0x10 & 0xff) * 0.00392156862745098
-                                -- local g = (hex >> 0x08 & 0xff) * 0.00392156862745098
-                                -- local r = (hex         & 0xff) * 0.00392156862745098
+                            local srcAlphaDict = {}
 
-                                -- local lum = r * 0.21264934272065283
-                                --           + g * 0.7151691357059038
-                                --           + b * 0.07218152157344333
+                            local lumDict = {}
+                            local minLum = 1.0
+                            local maxLum = 0.0
 
-                                -- local lum = 10E-12 *
-                                --      ((hex         & 0xff) *  83391899.0
-                                --     + (hex >> 0x08 & 0xff) * 280458484.0
-                                --     + (hex >> 0x10 & 0xff) *  28306479.0)
+                            -- Cache luminosities and source alphas in dictionaries.
+                            for hex, _ in pairs(srcClrDict) do
 
                                 local lum = Clr.lumStandard(Clr.fromHex(hex))
                                 if lum <= 0.0031308 then
@@ -207,9 +201,35 @@ dlg:button {
 
                                 if lum < minLum then minLum = lum end
                                 if lum > maxLum then maxLum = lum end
-                                lums[i] = lum
-                                alphasSrc[i] = hex >> 0x18 & 0xff
-                                i = i + 1
+
+                                lumDict[hex] = lum
+
+                                srcAlphaDict[hex] = hex >> 0x18 & 0xff
+                            end
+
+                            -- Normalize range if requested.
+                            local useNormalize = args.useNormalize
+                            local rangeLum = maxLum - minLum
+                            local invRangeLum = 1.0 / rangeLum
+                            if useNormalize and rangeLum ~= 0 then
+                                for hex, lum in pairs(lumDict) do
+                                    lumDict[hex] =  (lum - minLum) * invRangeLum
+                                end
+                            end
+
+                            -- Create target colors.
+                            local trgClrDict = {}
+                            local levels = args.quantization
+                            for hex, _ in pairs(srcClrDict) do
+                                local lum = lumDict[hex]
+                                local aSrc = srcAlphaDict[hex]
+
+                                lum = Utilities.quantizeUnsigned(lum, levels)
+                                local grayClr = Clr.toHex(easeFuncFinal(lum))
+                                local aTrg = (grayClr >> 0x18 & 0xff)
+
+                                trgClrDict[hex] = math.min(aSrc, aTrg) << 0x18
+                                | (0x00ffffff & grayClr)
                             end
 
                             -- Create target layer, cel, image.
@@ -220,31 +240,10 @@ dlg:button {
                             trgCel.image = srcImg:clone()
                             local trgImg = trgCel.image
 
-                            -- Normalize range if requested.
-                            local useNormalize = args.useNormalize
-                            local rangeLum = maxLum - minLum
-                            if useNormalize and rangeLum ~= 0 then
-                                local invRangeLum = 1.0 / rangeLum
-                                for j = 1, #lums, 1 do
-                                    lums[j] = (lums[j] - minLum) * invRangeLum
-                                end
-                            end
-
                             -- Assign color from gradient function.
-                            i = 1
-                            local levels = args.quantization
                             local trgItr = trgImg:pixels()
                             for trgClr in trgItr do
-                                local lum = lums[i]
-                                lum = Utilities.quantizeUnsigned(lum, levels)
-                                local grayClr = Clr.toHex(easeFuncFinal(lum))
-
-                                -- Take the minimum of source and target alpha.
-                                local aTrg = (grayClr >> 0x18 & 0xff)
-                                local hex = math.min(alphasSrc[i], aTrg) << 0x18
-                                    | (0x00ffffff & grayClr)
-                                trgClr(hex)
-                                i = i + 1
+                                trgClr(trgClrDict[trgClr()])
                             end
 
                             -- TODO: Might be causing a problem in 1.3 beta?

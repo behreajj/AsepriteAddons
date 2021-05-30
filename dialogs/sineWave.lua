@@ -55,13 +55,13 @@ dlg:number {
     id = "minScale",
     label = "Scale:",
     text = string.format("%.1f", defaults.minScale),
-    decimals = 5
+    decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
     id = "maxScale",
     text = string.format("%.1f", defaults.maxScale),
-    decimals = 5
+    decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:newrow { always = false }

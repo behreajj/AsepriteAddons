@@ -225,6 +225,8 @@ function Curve2.arcSector(
 
     local kns = {}
 
+    local cos = math.cos
+    local sin = math.sin
     local len2n1 = knCtVerif + knCtVerif - 1
     for i = 0, len2n1, 1 do
         local j = i // 2
@@ -237,12 +239,12 @@ function Curve2.arcSector(
         local a1 = u * edAngVerif + t * stAngVerif
 
         kns[k] = Knot2.fromPolarInternal(
-            math.cos(a0), math.sin(a0),
+            cos(a0), sin(a0),
             outerEdge, outerMag,
             xoVerif, yoVerif)
 
         kns[knCtVerif + k] = Knot2.fromPolarInternal(
-            math.cos(a1), math.sin(a1),
+            cos(a1), sin(a1),
             innerEdge, innerMag,
             xoVerif, yoVerif)
     end
