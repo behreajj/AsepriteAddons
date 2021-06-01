@@ -135,6 +135,8 @@ dlg:button {
             else
                 app.alert("There is no active sprite.")
             end
+        else
+            app.alert("Dialog arguments are invalid.")
         end
     end
 }

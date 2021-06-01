@@ -1,42 +1,57 @@
+local unitOptions = { "PERCENT", "PIXEL" }
+
+local defaults = {
+    pxWidth = 64,
+    pxHeight = 64,
+    prcWidth = 100,
+    prcHeight = 100,
+    units = "PERCENT",
+    clipImage = true,
+    copyToLayer = true,
+    preserveAspect = true,
+    printElapsed = false,
+    pullFocus = false
+}
+
 local dlg = Dialog { title = "Resize Cel Bicubic" }
 
 dlg:number {
     id = "pxWidth",
     label = "Width Px:",
-    text = string.format("%.0f", 64),
-    decimals = 0
+    text = string.format("%.0f", defaults.pxWidth),
+    decimals = 5,
+    visible = defaults.units == "PIXEL"
 }
 
 dlg:number {
     id = "pxHeight",
     label = "Height Px:",
-    text = string.format("%.0f", 64),
-    decimals = 0
+    text = string.format("%.0f", defaults.pxHeight),
+    decimals = 5,
+    visible = defaults.units == "PIXEL"
 }
 
-dlg:slider {
+dlg:number {
     id = "prcWidth",
     label = "Width %:",
-    min = 25,
-    max = 200,
-    value = 100,
-    visible = false
+    text = string.format("%.0f", defaults.prcWidth),
+    decimals = 5,
+    visible = defaults.units == "PERCENT"
 }
 
-dlg:slider {
+dlg:number {
     id = "prcHeight",
     label = "Height %:",
-    min = 25,
-    max = 200,
-    value = 100,
-    visible = false
+    text = string.format("%.0f", defaults.prcHeight),
+    decimals = 5,
+    visible = defaults.units == "PERCENT"
 }
 
 dlg:combobox {
     id = "units",
     label = "Units:",
-    option = "PIXEL",
-    options = { "PERCENT", "PIXEL" },
+    option = defaults.units,
+    options = unitOptions,
     onchange = function()
         local unitType = dlg.data.units
         dlg:modify {
@@ -59,51 +74,140 @@ dlg:combobox {
     end
 }
 
+dlg:check {
+    id = "clipImage",
+    label = "Clip Source To Visible:",
+    selected = defaults.clipImage
+}
+
+dlg:check {
+    id = "copyToLayer",
+    label = "Copy To New Layer:",
+    selected = defaults.copyToLayer
+}
+
+dlg:check {
+    id = "preserveAspect",
+    label = "Preserve Aspect:",
+    selected = defaults.preserveAspect
+}
+
+dlg:check {
+    id = "printElapsed",
+    label = "Print Diagnostic:",
+    selected = defaults.printElapsed
+}
+
 dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
         if args.ok then
             local sprite = app.activeSprite
             if sprite then
-                local cel = app.activeCel
-                if cel then
-                    local srcImg = cel.image
-                    if srcImg then
+                local srcCel = app.activeCel
+                if srcCel then
+                    local srcImg = srcCel.image
+                    if srcImg ~= nil then
+
+                        local printElapsed = args.printElapsed
+                        local startTime = 0
+                        local endTime = 0
+                        local elapsed = 0
+                        if printElapsed then
+                            startTime = os.time()
+                        end
 
                         -- Cache global functions to locals.
                         local max = math.max
                         local min = math.min
-                        local trunc = math.tointeger                        
-                        
+                        local trunc = math.tointeger
+
                         -- Find source and destination dimensions.
                         local sw = srcImg.width
                         local sh = srcImg.height
-                        local dw = args.pxWidth or sw
-                        local dh = args.pxHeight or sh
+
+                        local clipImage = args.clipImage
+                        local srcBounds = nil
+                        if clipImage then
+
+                            -- A cel may be located at a negative position
+                            -- and/or have a width, height that exceed the
+                            -- sprite boundaries.
+                            local celBounds = srcCel.bounds
+                            local spriteRect = Rectangle(
+                                0, 0, sprite.width, sprite.height)
+                            local intersect = celBounds:intersect(spriteRect)
+
+                            -- The image sample rectangle, however, treats
+                            -- the cel boundary position as (0, 0), so
+                            -- invert the translation.
+                            intersect.x = intersect.x - celBounds.x
+                            intersect.y = intersect.y - celBounds.y
+
+                            srcBounds = intersect
+                            sw = intersect.width
+                            sh = intersect.height
+                        else
+                            sw = trunc(0.5 + sw)
+                            sh = trunc(0.5 + sh)
+                            srcBounds = Rectangle(0, 0, sw, sh)
+                        end
+
+                        local dw = sw
+                        local dh = sh
 
                         local unitType = args.units
+                        local preserveAspect = args.preserveAspect
                         if unitType == "PERCENT" then
-                            dw = trunc(0.5 + sw * 0.01 * args.prcWidth)
-                            dh = trunc(0.5 + sh * 0.01 * args.prcHeight)
+                            local wPrc = args.prcWidth or defaults.prcWidth
+                            local hPrc = args.prcHeight or defaults.prcHeight
+
+                            wPrc = max(1, wPrc)
+                            hPrc = max(1, hPrc)
+
+                            if preserveAspect then
+                                -- local pcComp = (wPrc + hPrc) * 0.5
+                                local pcComp = min(wPrc, hPrc)
+                                wPrc = pcComp
+                                hPrc = pcComp
+                            end
+
+                            dw = trunc(0.5 + sw * 0.01 * wPrc)
+                            dh = trunc(0.5 + sh * 0.01 * hPrc)
                         else
-                            dw = max(2, dw)
-                            dh = max(2, dh)
+                            local wPxl = args.pxWidth or sw
+                            local hPxl = args.pxHeight or sh
+
+                            dw = max(2, wPxl)
+                            dh = max(2, hPxl)
+
+                            if preserveAspect then
+                                local wRatio = dw / sw
+                                local hRatio = dh / sh
+                                -- local pxComp = (wRatio + hRatio) * 0.5
+                                local pxComp = min(wRatio, hRatio)
+                                dw = pxComp * sw
+                                dh = pxComp * sh
+                            end
+
+                            dw = trunc(0.5 + dw)
+                            dh = trunc(0.5 + dh)
                         end
 
                         -- Return early if no resize is needed.
                         if dw == sw and dh == sh then return end
-        
+
                         local oldMode = sprite.colorMode
                         app.command.ChangePixelFormat { format = "rgb" }
 
                         -- Acquire pixels from source image.
                         local srcpx = {}
-                        local srcpxitr = srcImg:pixels()
+                        local srcpxitr = srcImg:pixels(srcBounds)
                         local srcidx = 1
                         for elm in srcpxitr do
                             srcpx[srcidx] = elm()
@@ -112,14 +216,14 @@ dlg:button {
 
                         local frameSize = 4
                         local chnlCount = 4
-                        local frame = { 0, 0, 0, 0 }
+                        local kernel = { 0, 0, 0, 0 }
 
                         -- Adjust resize by a fudge factor.
                         local bias = 0.00405
                         local tx = sw / (dw * (1.0 + bias))
                         local ty = sh / (dh * (1.0 + bias))
 
-                        local newPxlLen = dw * dh
+                        -- local newPxlLen = dw * dh
                         local clrs = {}
                         local len2 = frameSize * chnlCount
                         local len3 = dw * len2
@@ -147,14 +251,19 @@ dlg:button {
                             local d2 = 0
                             local d3 = 0
 
+                            -- If sample frame is in-bounds vertically.
                             local z = y - 1 + j
                             if z > -1 and z < sh then
+                                -- The i index represents the channel loop.
+                                -- It is multiplied by 8 to indicate 8 bytes
+                                -- needed to unsocket a channel packed in hex.
                                 local i8 = 8 * (n // frameSize)
                                 local x1 = x - 1
                                 local x2 = x + 1
                                 local x3 = x + 2
                                 local zw = z * sw
 
+                                -- If sample frame is in-bounds horizontally.
                                 if x > -1 and x < sw then
                                     a0 = srcpx[1 + zw + x] >> i8 & 0xff
                                 end
@@ -181,15 +290,15 @@ dlg:button {
                             local a2 = 0.5 * (d0 + d2)
                             local a3 = -d0 / 6.0 - 0.5 * d2 + d36
 
-                            frame[1 + j] = max(0, min(255,
+                            kernel[1 + j] = max(0, min(255,
                                 a0 + trunc(a1 * dx
                                          + a2 * dxsq
                                          + a3 * (dx * dxsq))))
 
-                            a0 = frame[2]
-                            d0 = frame[1] - a0
-                            d2 = frame[3] - a0
-                            d3 = frame[4] - a0
+                            a0 = kernel[2]
+                            d0 = kernel[1] - a0
+                            d2 = kernel[3] - a0
+                            d3 = kernel[4] - a0
 
                             d36 = d3 / 6.0;
                             a1 = -d0 / 3.0 + d2 - d36
@@ -200,8 +309,6 @@ dlg:button {
                                 a0 + trunc(a1 * dy
                                          + a2 * dysq
                                          + a3 * (dy * dysq))))
-
-                            k = k + 1
                         end
 
                         -- Set target image pixels.
@@ -218,16 +325,31 @@ dlg:button {
                         end
 
                         app.transaction(function()
-                            -- Set cel image to target image.
-                            cel.image = trgImg
 
-                            -- Center the cel.
-                            local celPos = cel.position
-                            local xCenter = celPos.x + sw / 2
-                            local yCenter = celPos.y + sh / 2
+                            local copyToLayer = args.copyToLayer
+                            local cel = nil
+                            if copyToLayer then
+                                local trgLayer = sprite:newLayer()
+                                trgLayer.name = srcCel.layer.name
+                                    .. "." .. dw .. 'x' .. dh
+                                local frame = app.activeFrame or 1
+                                local trgCel = sprite:newCel(trgLayer, frame)
+                                trgCel.image = trgImg
+                                trgCel.position = srcCel.position
+                                cel = trgCel
+                            else
+                                srcCel.image = trgImg
+                                cel = srcCel
+                            end
+
+                            -- Put the cel at sprite center, regardless
+                            -- of original cel's position.
+                            local xCenter = sprite.width * 0.5
+                            local yCenter = sprite.height * 0.5
                             cel.position = Point(
-                                xCenter - dw / 2,
-                                yCenter - dh / 2)
+                                xCenter - dw * 0.5,
+                                yCenter - dh * 0.5)
+
                         end)
 
                         if oldMode == ColorMode.INDEXED then
@@ -235,8 +357,18 @@ dlg:button {
                         elseif oldMode == ColorMode.GRAY then
                             app.command.ChangePixelFormat { format = "gray" }
                         end
-        
+
                         app.refresh()
+
+                        if printElapsed then
+                            endTime = os.time()
+                            elapsed = os.difftime(endTime, startTime)
+                            print("Source Dimensions: " .. sw .. " x " .. sh)
+                            print("Target Dimensions: " .. dw .. " x " .. dh)
+                            print("Start Time: " .. startTime)
+                            print("End Time: " .. endTime)
+                            print("Elapsed Time: " .. elapsed)
+                        end
                     else
                         app.alert("The cel has no image.");
                     end
