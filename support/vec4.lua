@@ -512,7 +512,7 @@ function Vec4.mixNum(a, b, t)
 end
 
 ---Mixes two vectors together by a step.
----The step is a vector; use in conjunction
+---The step is a vector. Use in conjunction
 ---with step, linearstep and smoothstep.
 ---@param a table origin
 ---@param b table destination
@@ -872,7 +872,7 @@ function Vec4.wrap(a, lb, ub)
         cw = a.w - (rw * math.floor((a.w - lb.w) / rw))
     end
 
-    return Vec4.new(cx, cy, cz, cw);
+    return Vec4.new(cx, cy, cz, cw)
 end
 
 ---Creates a right facing vector,

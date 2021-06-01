@@ -114,6 +114,9 @@ dlg:button {
                     local srcImg = srcCel.image
                     if srcImg ~= nil then
 
+                        -- Adapted from
+                        -- https://stackoverflow.com/questions/17640173/implementation-of-bi-cubic-resize
+
                         local printElapsed = args.printElapsed
                         local startTime = 0
                         local endTime = 0
@@ -285,7 +288,7 @@ dlg:button {
                             d2 = d2 - a0
                             d3 = d3 - a0
 
-                            local d36 = d3 / 6.0;
+                            local d36 = d3 / 6.0
                             local a1 = -d0 / 3.0 + d2 - d36
                             local a2 = 0.5 * (d0 + d2)
                             local a3 = -d0 / 6.0 - 0.5 * d2 + d36
@@ -300,7 +303,7 @@ dlg:button {
                             d2 = kernel[3] - a0
                             d3 = kernel[4] - a0
 
-                            d36 = d3 / 6.0;
+                            d36 = d3 / 6.0
                             a1 = -d0 / 3.0 + d2 - d36
                             a2 = 0.5 * (d0 + d2)
                             a3 = -d0 / 6.0 - 0.5 * d2 + d36
@@ -363,20 +366,19 @@ dlg:button {
                         if printElapsed then
                             endTime = os.time()
                             elapsed = os.difftime(endTime, startTime)
-                            print("Source Dimensions: " .. sw .. " x " .. sh)
-                            print("Target Dimensions: " .. dw .. " x " .. dh)
-                            print("Start Time: " .. startTime)
-                            print("End Time: " .. endTime)
-                            print("Elapsed Time: " .. elapsed)
+                            local msg = string.format(
+                                "Source: %d x %d\nTarget: %d x %d\nStart: %d\nEnd: %d\nElapsed: %d",
+                                sw, sh, dw, dh, startTime, endTime, elapsed)
+                            print(msg)
                         end
                     else
-                        app.alert("The cel has no image.");
+                        app.alert("The cel has no image.")
                     end
                 else
-                    app.alert("There is no active cel.");
+                    app.alert("There is no active cel.")
                 end
             else
-                app.alert("There is no active sprite.");
+                app.alert("There is no active sprite.")
             end
         else
             app.alert("Dialog arguments are invalid.")

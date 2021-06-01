@@ -495,7 +495,7 @@ function Vec2.mixNum(a, b, t)
 end
 
 ---Mixes two vectors together by a step.
----The step is a vector; use in conjunction
+---The step is a vector. Use in conjunction
 ---with step, linearstep and smoothstep.
 ---@param a table origin
 ---@param b table destination
@@ -850,7 +850,7 @@ function Vec2.wrap(a, lb, ub)
         cy = a.y - (ry * math.floor((a.y - lb.y) / ry))
     end
 
-    return Vec2.new(cx, cy);
+    return Vec2.new(cx, cy)
 end
 
 ---Creates a right facing vector, (1.0, 0.0).

@@ -569,7 +569,7 @@ function Vec3.mixNum(a, b, t)
 end
 
 ---Mixes two vectors together by a step.
----The step is a vector; use in conjunction
+---The step is a vector. Use in conjunction
 ---with step, linearstep and smoothstep.
 ---@param a table origin
 ---@param b table destination
@@ -953,7 +953,7 @@ function Vec3.wrap(a, lb, ub)
         cz = a.z - (rz * math.floor((a.z - lb.z) / rz))
     end
 
-    return Vec3.new(cx, cy, cz);
+    return Vec3.new(cx, cy, cz)
 end
 
 ---Creates a right facing vector,

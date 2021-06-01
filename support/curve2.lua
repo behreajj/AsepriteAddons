@@ -163,7 +163,7 @@ end
 
 ---Creates a curve sector from a start to
 ---to a stop angle. The stroke defines the
----thickness; the offset is the relationship
+---thickness. The offset is the relationship
 ---of the stroke to the spine.
 ---@param startAngle number start angle
 ---@param stopAngle number stop angle

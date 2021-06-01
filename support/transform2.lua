@@ -10,7 +10,7 @@ setmetatable(Transform2, {
 
 ---Constructs a new transform from translation,
 ---rotation and scale. Translation and scale
----are Vec2s; rotation is a number, in radians.
+---are Vec2s. Rotation is a number, in radians.
 ---@param t table translation
 ---@param r number rotation
 ---@param s table scale
@@ -230,7 +230,7 @@ end
 ---@return table
 function Transform2.getForward(tr)
     return Vec2.perpendicularCcw(
-        Vec2.fromPolar(tr.rotation, 1.0));
+        Vec2.fromPolar(tr.rotation, 1.0))
 end
 
 ---Gets the transform's right axis.

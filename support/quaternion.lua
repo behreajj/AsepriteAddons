@@ -212,14 +212,14 @@ function Quaternion.fromTo(a, b)
     end
 
     if amSq ~= 1.0 then
-        local amInv = 1.0 / math.sqrt(amSq);
+        local amInv = 1.0 / math.sqrt(amSq)
         anx = anx * amInv
         any = any * amInv
         anz = anz * amInv
     end
 
     if bmSq ~= 1.0 then
-        local bmInv = 1.0 / math.sqrt(bmSq);
+        local bmInv = 1.0 / math.sqrt(bmSq)
         bnx = bnx * bmInv
         bny = bny * bmInv
         bnz = bnz * bmInv
@@ -526,8 +526,8 @@ function Quaternion.slerpUnclamped(a, b, t)
     if sinTheta > 0.000001 then
         local theta = math.acos(dotp)
         local thetaStep = theta * t
-        u = sinTheta * math.sin(theta - thetaStep);
-        v = sinTheta * math.sin(thetaStep);
+        u = sinTheta * math.sin(theta - thetaStep)
+        v = sinTheta * math.sin(thetaStep)
     end
 
     local cw = u * aw + v * bw

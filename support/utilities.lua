@@ -351,7 +351,7 @@ function Utilities.quantize(a, levels)
 end
 
 ---Quantizes a signed number according
----to a number of levels; the quantization
+---to a number of levels. The quantization
 ---is centered about the range.
 ---@param a number value
 ---@param levels number levels
@@ -365,7 +365,7 @@ function Utilities.quantizeSigned(a, levels)
 end
 
 ---Quantizes an unsigned number according
----to a number of levels; the quantization
+---to a number of levels. The quantization
 ---is based on the left edge.
 ---@param a number value
 ---@param levels number levels

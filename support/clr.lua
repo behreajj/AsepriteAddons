@@ -287,7 +287,7 @@ function Clr.hslaToRgba(hue, sat, light, alpha)
     if rHue < 0.16666666666666667 then
         r = p + qnp6 * rHue
     elseif rHue < 0.5 then
-        r = q;
+        r = q
     elseif rHue < 0.6666666666666667 then
         r = p + qnp6 * (0.6666666666666667 - rHue)
     end
@@ -297,7 +297,7 @@ function Clr.hslaToRgba(hue, sat, light, alpha)
     if gHue < 0.16666666666666667 then
         g = p + qnp6 * gHue
     elseif gHue < 0.5 then
-        g = q;
+        g = q
     elseif gHue < 0.6666666666666667 then
         g = p + qnp6 * (0.6666666666666667 - gHue)
     end
@@ -307,7 +307,7 @@ function Clr.hslaToRgba(hue, sat, light, alpha)
     if bHue < 0.16666666666666667 then
         b = p + qnp6 * bHue
     elseif bHue < 0.5 then
-        b = q;
+        b = q
     elseif bHue < 0.6666666666666667 then
         b = p + qnp6 * (0.6666666666666667 - bHue)
     end
@@ -481,7 +481,7 @@ end
 ---@param b table right operand
 ---@return table
 function Clr.max(a, b)
-    return Clr.clamp01(Clr.maxUnchecked(a, b));
+    return Clr.clamp01(Clr.maxUnchecked(a, b))
 end
 
 ---Finds the maximum, or lightest, color.
@@ -502,7 +502,7 @@ end
 ---@param b table right operand
 ---@return table
 function Clr.min(a, b)
-    return Clr.clamp01(Clr.minUnchecked(a, b));
+    return Clr.clamp01(Clr.minUnchecked(a, b))
 end
 
 ---Finds the minimum, or darkest, color.
@@ -1064,8 +1064,8 @@ function Clr.subUnchecked(a, b)
         a.a + b.a)
 end
 
----Converts from a color to a hexadecimal integer;
----channels are packed in 0xAABBGGRR order.
+---Converts from a color to a hexadecimal integer.
+---Channels are packed in 0xAABBGGRR order.
 ---Ensures that color values are valid, in [0.0, 1.0].
 ---@param c table color
 ---@return number
@@ -1073,8 +1073,8 @@ function Clr.toHex(c)
     return Clr.toHexUnchecked(Clr.clamp01(c))
 end
 
----Converts from a color to a hexadecimal integer;
----channels are packed in 0xAABBGGRR order.
+---Converts from a color to a hexadecimal integer.
+---Channels are packed in 0xAABBGGRR order.
 ---@param c table color
 ---@return number
 function Clr.toHexUnchecked(c)
@@ -1085,7 +1085,7 @@ function Clr.toHexUnchecked(c)
 end
 
 ---Converts from a color to a web-friendly hexadecimal
----string; channels are packed in #RRGGBB order.
+---string. Channels are packed in #RRGGBB order.
 ---Ensures that color values are valid, in [0.0, 1.0].
 ---@param c table color
 ---@return string
@@ -1094,7 +1094,7 @@ function Clr.toHexWeb(c)
 end
 
 ---Converts from a color to a web-friendly hexadecimal
----string; channels are packed in #RRGGBB order.
+---string. Channels are packed in #RRGGBB order.
 ---@param c table color
 ---@return string
 function Clr.toHexWebUnchecked(c)

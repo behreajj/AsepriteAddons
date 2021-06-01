@@ -175,7 +175,7 @@ end
 
 ---Forms a knot to be used in arcs and circles
 ---at an origin with a given radius.
----For internal use only; does not validate arguments.
+---For internal use only. Does not validate arguments.
 ---@param cosa number cosine of an angle
 ---@param sina number sine of an angle
 ---@param radius number radius
@@ -196,8 +196,8 @@ function Knot2.fromPolarInternal(
     -- local sa = sina or 0.0
     -- local ca = cosa or 1.0
 
-    local hmsina = sina * handleMag;
-    local hmcosa = cosa * handleMag;
+    local hmsina = sina * handleMag
+    local hmcosa = cosa * handleMag
 
     local co = Vec2.new(
         xCenter + radius * cosa,

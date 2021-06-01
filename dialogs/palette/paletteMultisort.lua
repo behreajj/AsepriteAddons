@@ -129,7 +129,7 @@ local function lumSorter(a, b)
     local blg01 = sRgbTolRgb(bsg01)
     local blb01 = sRgbTolRgb(bsb01)
 
-    -- Convert to the Y in CIE XYZ; this is a
+    -- Convert to the Y in CIE XYZ. This is a
     -- matrix transformation of a vector.
     local aLum = 0.21264934272065283 * alr01
         + 0.7151691357059038 * alg01

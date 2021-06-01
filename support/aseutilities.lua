@@ -360,8 +360,8 @@ end
 
 ---Returns an appropriate easing function
 ---based on string presets:
----"RGB", "HSL" or "HSV" easing modes;
----"LINEAR" or "SMOOTH" RGB functions;
+---"RGB", "HSL" or "HSV" easing modes.
+---"LINEAR" or "SMOOTH" RGB functions.
 ---"NEAR" or "FAR" hue functions.
 ---@param easingMode string
 ---@param easingFuncRGB string
@@ -510,7 +510,7 @@ function AseUtilities.lerpHslaNear(
 end
 
 ---Mixes an origin and destination color
----in HSV by a factor; returns an integer.
+---in HSV by a factor. Returns an integer.
 -- The factor is assumed to be in [0.0, 1.0],
 -- but the mix is unclamped.
 ---The hue is interpolated in the furthest
@@ -537,7 +537,7 @@ function AseUtilities.lerpHsvaFar(
 end
 
 ---Mixes an origin and destination color
----in HSV by a factor; returns an integer.
+---in HSV by a factor. Returns an integer.
 -- The factor is assumed to be in [0.0, 1.0],
 -- but the mix is unclamped.
 ---The hue is interpolated in the nearest
@@ -596,7 +596,7 @@ function AseUtilities.lerpColorArr(array, step, funcMajor, funcMinor)
 end
 
 ---Mixes an origin and destination color
----by a factor; returns an integer.
+---by a factor. Returns an integer.
 -- The factor is assumed to be in [0.0, 1.0],
 -- but the mix is unclamped.
 ---The color channels should be unpacked and
@@ -678,7 +678,7 @@ function AseUtilities.paletteToClrArr(pal)
 end
 
 ---Mixes an origin and destination color
----by a factor; returns an integer.
+---by a factor. Returns an integer.
 ---The factor is assumed to be in [0.0, 1.0],
 ---but the mix is unclamped.
 ---The color channels should be unpacked and
@@ -758,7 +758,7 @@ function AseUtilities.toHexHsla(ch, cs, cl, ca)
     if rHue < 0.16666666666666667 then
         r = p + qnp6 * rHue
     elseif rHue < 0.5 then
-        r = q;
+        r = q
     elseif rHue < 0.6666666666666667 then
         r = p + qnp6 * (0.6666666666666667 - rHue)
     end
@@ -768,7 +768,7 @@ function AseUtilities.toHexHsla(ch, cs, cl, ca)
     if gHue < 0.16666666666666667 then
         g = p + qnp6 * gHue
     elseif gHue < 0.5 then
-        g = q;
+        g = q
     elseif gHue < 0.6666666666666667 then
         g = p + qnp6 * (0.6666666666666667 - gHue)
     end
@@ -778,7 +778,7 @@ function AseUtilities.toHexHsla(ch, cs, cl, ca)
     if bHue < 0.16666666666666667 then
         b = p + qnp6 * bHue
     elseif bHue < 0.5 then
-        b = q;
+        b = q
     elseif bHue < 0.6666666666666667 then
         b = p + qnp6 * (0.6666666666666667 - bHue)
     end

@@ -172,7 +172,7 @@ end
 function Complex.mobius(a, b, c, d, z)
     local czdr = c.real * z.real - c.imag * z.imag + d.real
     local czdi = c.real * z.imag + c.imag * z.real + d.imag
-    local mSq = czdr * czdr + czdi * czdi;
+    local mSq = czdr * czdr + czdi * czdi
     if mSq ~= 0.0 then
         local azbr = a.real * z.real - a.imag * z.imag + b.real
         local azbi = a.real * z.imag + a.imag * z.real + b.imag
