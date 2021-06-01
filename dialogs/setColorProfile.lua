@@ -1,9 +1,10 @@
--- To download some profiles
--- https://ninedegreesbelow.com/photography/lcms-make-icc-profiles.html
--- https://github.com/ellelstone/elles_icc_profiles
-
+--[[ To download some profiles:
+ https://ninedegreesbelow.com/photography/lcms-make-icc-profiles.html
+ https://github.com/ellelstone/elles_icc_profiles --]]
+local targetOptions = {"ACTIVE", "FILE", "NEW"}
 local colorModes = {"RGB", "INDEXED", "GRAY"}
-local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
+local paletteTypes = {"ACTIVE", "DEFAULT", "FILE", "PRESET"}
+local colorSpaceTransfers = {"ASSIGN", "CONVERT"}
 
 local defaults = {
     targetSprite = "NEW",
@@ -13,58 +14,65 @@ local defaults = {
     background = Color(0, 0, 0, 0),
     paletteType = "DEFAULT",
     frames = 1,
-    transfer = "CONVERT"
+    transfer = "CONVERT",
+    pullFocus = true
 }
 
-local dlg = Dialog { title = "Set Color Profile" }
+local dlg = Dialog {
+    title = "Set Color Profile"
+}
 
-dlg:combobox {
+dlg:combobox{
     id = "targetSprite",
     label = "Sprite:",
     option = defaults.targetSprite,
-    options = {"ACTIVE", "FILE", "NEW"},
+    options = targetOptions,
     onchange = function()
         local state = dlg.data.targetSprite
         local isNew = state == "NEW"
-        dlg:modify {
+        dlg:modify{
             id = "spriteFile",
             visible = state == "FILE"
         }
 
-        dlg:modify {
+        dlg:modify{
             id = "width",
             visible = isNew
         }
-        dlg:modify {
+        dlg:modify{
             id = "height",
             visible = isNew
         }
-        dlg:modify {
+        dlg:modify{
             id = "colorMode",
             visible = isNew
         }
-        dlg:modify {
+        dlg:modify{
             id = "background",
             visible = isNew
         }
-        dlg:modify {
+        dlg:modify{
             id = "frames",
             visible = isNew
         }
     end
 }
 
-dlg:newrow { always = false }
+dlg:newrow{
+    always = false
+}
 
-dlg:file {
+dlg:file{
     id = "spriteFile",
     open = true,
     visible = defaults.targetSprite == "FILE"
 }
 
-dlg:newrow { always = false }
+dlg:newrow{
+    always = false
+}
 
-dlg:number {
+dlg:number{
     id = "width",
     -- label = "Width:",
     label = "Size:",
@@ -73,7 +81,7 @@ dlg:number {
     visible = defaults.targetSprite == "NEW"
 }
 
-dlg:number {
+dlg:number{
     id = "height",
     -- label = "Height:",
     text = string.format("%.0f", defaults.height),
@@ -81,9 +89,11 @@ dlg:number {
     visible = defaults.targetSprite == "NEW"
 }
 
-dlg:newrow { always = false }
+dlg:newrow{
+    always = false
+}
 
-dlg:combobox {
+dlg:combobox{
     id = "colorMode",
     label = "Color Mode:",
     option = "RGB",
@@ -91,26 +101,29 @@ dlg:combobox {
     visible = defaults.targetSprite == "NEW",
     onchange = function()
         local state = dlg.data.colorMode
-        dlg:modify {
+        dlg:modify{
             id = "background",
             visible = state ~= "INDEXED"
         }
     end
 }
 
-dlg:newrow { always = false }
+dlg:newrow{
+    always = false
+}
 
-dlg:color {
+dlg:color{
     id = "background",
     label = "Background:",
     color = defaults.background,
-    visible = defaults.targetSprite == "NEW"
-        and defaults.colorMode ~= "INDEXED"
+    visible = defaults.targetSprite == "NEW" and defaults.colorMode ~= "INDEXED"
 }
 
-dlg:newrow { always = false }
+dlg:newrow{
+    always = false
+}
 
-dlg:slider {
+dlg:slider{
     id = "frames",
     label = "Frames:",
     min = 1,
@@ -118,9 +131,9 @@ dlg:slider {
     value = defaults.frames
 }
 
-dlg:separator {}
+dlg:separator{}
 
-dlg:combobox {
+dlg:combobox{
     id = "palType",
     label = "Palette:",
     option = defaults.paletteType,
@@ -128,61 +141,69 @@ dlg:combobox {
     onchange = function()
         local state = dlg.data.palType
 
-        dlg:modify {
+        dlg:modify{
             id = "palFile",
             visible = state == "FILE"
         }
 
-        dlg:modify {
+        dlg:modify{
             id = "palPreset",
             visible = state == "PRESET"
         }
     end
 }
 
-dlg:newrow { always = false }
+dlg:newrow{
+    always = false
+}
 
-dlg:file {
+dlg:file{
     id = "palFile",
-    filetypes = { "gpl", "pal" },
+    filetypes = {"gpl", "pal"},
     open = true,
     visible = defaults.paletteType == "FILE"
 }
 
-dlg:newrow { always = false }
+dlg:newrow{
+    always = false
+}
 
-dlg:entry {
+dlg:entry{
     id = "palPreset",
     text = "",
     focus = false,
     visible = defaults.paletteType == "PRESET"
 }
 
-dlg:separator {}
+dlg:separator{}
 
-dlg:file {
+dlg:file{
     id = "prf",
     label = "Profile:",
-    filetypes = { "icc" },
+    filetypes = {"icc"},
     open = true,
     visible = true
 }
 
-dlg:newrow { always = false }
+dlg:newrow{
+    always = false
+}
 
-dlg:combobox {
+dlg:combobox{
     id = "transfer",
     label = "Transfer:",
     option = defaults.transfer,
-    options = { "ASSIGN", "CONVERT" }
+    options = colorSpaceTransfers
 }
 
-dlg:newrow { always = false }
+dlg:newrow{
+    always = false
+}
 
-dlg:button {
+dlg:button{
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
         if args.ok then
@@ -191,14 +212,18 @@ dlg:button {
             local pal = nil
             local palType = args.palType
             if palType == "FILE" then
-                local fp =  args.palFile
+                local fp = args.palFile
                 if fp and #fp > 0 then
-                    pal = Palette { fromFile = fp }
+                    pal = Palette {
+                        fromFile = fp
+                    }
                 end
             elseif palType == "PRESET" then
                 local pr = args.palPreset
                 if pr and #pr > 0 then
-                    pal = Palette { fromResource = args.palPreset }
+                    pal = Palette {
+                        fromResource = args.palPreset
+                    }
                 end
             elseif palType == "ACTIVE" then
                 local activeSprite = app.activeSprite
@@ -213,7 +238,9 @@ dlg:button {
             if targetSprite == "FILE" then
                 local pathName = args.spriteFile
                 if pathName and #pathName > 0 then
-                    sprite = Sprite { fromFile = pathName }
+                    sprite = Sprite {
+                        fromFile = pathName
+                    }
                     app.activeSprite = sprite
                 end
             elseif targetSprite == "ACTIVE" then
@@ -225,37 +252,48 @@ dlg:button {
                 if sprite ~= nil then
                     pal = sprite.palettes[1]
                 else
-                    pal = Palette(16)
-                    for i = 0, 15, 1 do
-                        local val = math.tointeger(0.5 + (255 * i / 15.0))
-                        pal:setColor(i, Color(val, val, val, 255))
+                    local defCount = 12
+                    local toPercent = 1.0 / (defCount - 1)
+                    local gammaAdj = 1.0 / 1.7
+                    local int = math.tointeger
+
+                    -- Shift from gamma adjusted to linear
+                    -- as the value approaches white.
+                    local g = function (x, y)
+                        return (1.0 - x) * (x ^ y) + x * x
+                    end
+                    pal = Palette(defCount)
+                    for i = 0, defCount - 1, 1 do
+                        local val = (i * toPercent)
+                        val = g(val, gammaAdj)
+                        local v255 = int(0.5 + (255 * val))
+                        pal:setColor(i, Color(v255, v255, v255, 255))
                     end
                 end
             end
 
             -- Create a new sprite.
             if targetSprite == "NEW" or sprite == nil then
-                local w = math.max(1,
-                    math.tointeger(
-                    0.5 + math.abs(args.width)))
-                local h = math.max(1,
-                    math.tointeger(
-                    0.5 + math.abs(args.height)))
+                local w = math.max(1, math.tointeger(0.5 + math.abs(args.width)))
+                local h = math.max(1, math.tointeger(0.5 + math.abs(args.height)))
 
                 -- Create image.
                 -- Do these BEFORE sprite is created
                 -- and palette is set.
                 local bkgClr = args.background
-                local colorMode = args.colorMode
                 local img = Image(w, h, ColorMode.RGB)
                 local alpha = bkgClr.alpha
                 local fillCels = alpha > 0 and colorMode ~= "INDEXED"
                 if fillCels then
                     local itr = img:pixels()
                     local hex = bkgClr.rgbaPixel
-                    for elm in itr do elm(hex) end
+                    for elm in itr do
+                        elm(hex)
+                    end
                 end
 
+                -- Create sprite with RGB color mode,
+                -- set its palette.
                 sprite = Sprite(w, h, ColorMode.RGB)
                 sprite:setPalette(pal)
                 app.activeSprite = sprite
@@ -278,15 +316,24 @@ dlg:button {
                 end
 
                 -- Set color mode.
+                local colorMode = args.colorMode
                 if colorMode == "INDEXED" then
-                    app.command.ChangePixelFormat { format = "indexed" }
+                    app.command.ChangePixelFormat {
+                        format = "indexed"
+                    }
                 elseif colorMode == "GRAY" then
-                    app.command.ChangePixelFormat { format = "gray" }
+                    app.command.ChangePixelFormat {
+                        format = "gray"
+                    }
                 end
             elseif sprite ~= nil then
-                local oldMode = sprite.colorMode
-                app.command.ChangePixelFormat { format = "rgb" }
+                -- This is commented out because the conversion to
+                -- indexed mode just cannot be trusted when loading sprites.
 
+                -- local oldMode = sprite.colorMode
+                app.command.ChangePixelFormat {
+                    format = "rgb"
+                }
                 sprite:setPalette(pal)
 
                 -- if oldMode == ColorMode.INDEXED then
@@ -299,7 +346,9 @@ dlg:button {
             local profilepath = args.prf
             local icc = nil
             if profilepath and #profilepath > 0 then
-                icc = ColorSpace { fromFile = profilepath }
+                icc = ColorSpace {
+                    fromFile = profilepath
+                }
             else
                 icc = ColorSpace()
             end
@@ -312,18 +361,16 @@ dlg:button {
                     sprite:assignColorSpace(icc)
                 end
                 app.refresh()
-            else
-                -- app.alert("File not found.")
             end
 
             dlg:close()
         else
-            -- app.alert("Inputs not ok.")
+            app.alert("Dialog arguments are invalid.")
         end
     end
 }
 
-dlg:button {
+dlg:button{
     id = "cancel",
     text = "CANCEL",
     onclick = function()
@@ -331,4 +378,6 @@ dlg:button {
     end
 }
 
-dlg:show { wait = false }
+dlg:show{
+    wait = false
+}

@@ -198,25 +198,32 @@ dlg:button {
                 -- Separate faces.
                 local separated = Mesh2.separateFaces(mesh)
                 local sepLen = #separated
+
+                -- Localize functions.
+                local rng = math.random
+                local max = math.max
+                local min = math.min
+                local drawMesh2 = AseUtilities.drawMesh2
+
                 app.transaction(function()
                     for i = 1, sepLen, 1 do
 
                         local hue = hueBrick
                         if args.varyHue then
                             hue = (hueBrick +
-                                (varHue * math.random() - vhHalf)) % 360.0
+                                (varHue * rng() - vhHalf)) % 360.0
                         end
 
                         local saturation = satBrick
                         if args.varySat then
-                            saturation = math.max(0.0, math.min(1.0,
-                                satBrick + (varNrm * math.random() - vnHalf)))
+                            saturation = max(0.0, min(1.0,
+                                satBrick + (varNrm * rng() - vnHalf)))
                         end
 
                         local lightness = lgtBrick
                         if args.varyLight then
-                            lightness = math.max(0.0, math.min(1.0,
-                                lgtBrick + (varNrm * math.random() - vnHalf)))
+                            lightness = max(0.0, min(1.0,
+                                lgtBrick + (varNrm * rng() - vnHalf)))
                         end
 
                         -- Composite HSLA.
@@ -227,7 +234,7 @@ dlg:button {
                             alpha = alpBrick
                         }
 
-                        AseUtilities.drawMesh2(
+                        drawMesh2(
                             separated[i],
                             true, variety,
                             true, mortarClr,

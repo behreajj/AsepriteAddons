@@ -174,8 +174,7 @@ dlg:button {
                                 end
                             end
 
-                            -- Find alpha from source image.
-
+                            -- Cache source colors.
                             local srcClrDict = {}
                             local srcItr = srcImg:pixels()
                             for srcClr in srcItr do
@@ -188,11 +187,24 @@ dlg:button {
                             local lumDict = {}
                             local minLum = 1.0
                             local maxLum = 0.0
+                            local stlLut = Utilities.STL_LUT
 
                             -- Cache luminosities and source alphas in dictionaries.
                             for hex, _ in pairs(srcClrDict) do
 
-                                local lum = Clr.lumStandard(Clr.fromHex(hex))
+                                local sbi = hex >> 0x18 & 0xff
+                                local sgi = hex >> 0x08 & 0xff
+                                local sri = hex & 0xff
+
+                                local lbi = stlLut[1 + sbi]
+                                local lgi = stlLut[1 + sgi]
+                                local lri = stlLut[1 + sri]
+
+                                -- local lum = Clr.lumStandard(Clr.fromHex(hex))
+                                local lum = 0.0008339189910613837 * lri
+                                    + 0.002804584845905505 * lgi
+                                    + 0.0002830647904840915 * lbi
+
                                 if lum <= 0.0031308 then
                                     lum = lum * 12.92
                                 else
@@ -220,15 +232,21 @@ dlg:button {
                             -- Create target colors.
                             local trgClrDict = {}
                             local levels = args.quantization
+
+                            -- Micro-optimization (apparently lua likes locals).
+                            local min = math.min
+                            local qu = Utilities.quantizeUnsigned
+                            local tohex = Clr.toHex
+
                             for hex, _ in pairs(srcClrDict) do
                                 local lum = lumDict[hex]
-                                local aSrc = srcAlphaDict[hex]
+                                lum = qu(lum, levels)
+                                local grayClr = tohex(easeFuncFinal(lum))
 
-                                lum = Utilities.quantizeUnsigned(lum, levels)
-                                local grayClr = Clr.toHex(easeFuncFinal(lum))
+                                local aSrc = srcAlphaDict[hex]
                                 local aTrg = (grayClr >> 0x18 & 0xff)
 
-                                trgClrDict[hex] = math.min(aSrc, aTrg) << 0x18
+                                trgClrDict[hex] = min(aSrc, aTrg) << 0x18
                                 | (0x00ffffff & grayClr)
                             end
 
@@ -245,10 +263,6 @@ dlg:button {
                             for trgClr in trgItr do
                                 trgClr(trgClrDict[trgClr()])
                             end
-
-                            -- TODO: Might be causing a problem in 1.3 beta?
-                            -- app.activeLayer = srcLyr
-                            -- app.activeCel = srcCel
 
                             app.refresh()
                         else

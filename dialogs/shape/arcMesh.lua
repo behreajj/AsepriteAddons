@@ -1,6 +1,3 @@
-dofile("../../support/mat3.lua")
-dofile("../../support/mesh2.lua")
-dofile("../../support/utilities.lua")
 dofile("../../support/aseutilities.lua")
 
 local defaults = {

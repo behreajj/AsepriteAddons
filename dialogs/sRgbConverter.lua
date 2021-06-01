@@ -1,4 +1,5 @@
-dofile("../support/clr.lua")
+dofile("../support/utilities.lua")
+-- dofile("../support/clr.lua")
 
 -- https://blog.johnnovak.net/2016/09/21/what-every-coder-should-know-about-gamma/
 -- http://www.ericbrasseur.org/gamma.html
@@ -102,8 +103,6 @@ dlg:button {
     id = "ok",
     text = "OK",
     onclick = function()
-        -- Option to apply to palette instead of sprite?
-        -- TODO: Switch to using activeLayer?
         local args = dlg.data
         if args.ok then
             local sprite = app.activeSprite
@@ -117,20 +116,58 @@ dlg:button {
                         local image = cel.image
                         local pxitr = image:pixels()
 
-                        local func = nil
+                        -- local func = nil
                         local dir = args.direction
                         if dir == "LINEAR_TO_STANDARD" then
-                            func = Clr.linearToStandard
+                            -- func = Clr.linearToStandard
+
+                            local ltsLut = Utilities.LTS_LUT
+                            for clr in pxitr do
+                                local hex = clr()
+                                local a = hex >> 0x18 & 0xff
+
+                                local lb = hex >> 0x10 & 0xff
+                                local lg = hex >> 0x08 & 0xff
+                                local lr = hex & 0xff
+
+                                local sb = ltsLut[1 + lb]
+                                local sg = ltsLut[1 + lg]
+                                local sr = ltsLut[1 + lr]
+
+                                clr(a << 0x18
+                                    | sb << 0x10
+                                    | sg << 0x08
+                                    | sr)
+                            end
                         else
-                            func = Clr.standardToLinear
+                            -- func = Clr.standardToLinear
+
+                            local stlLut = Utilities.STL_LUT
+                            for clr in pxitr do
+                                local hex = clr()
+                                local a = hex >> 0x18 & 0xff
+
+                                local sb = hex >> 0x10 & 0xff
+                                local sg = hex >> 0x08 & 0xff
+                                local sr = hex & 0xff
+
+                                local lb = stlLut[1 + sb]
+                                local lg = stlLut[1 + sg]
+                                local lr = stlLut[1 + sr]
+
+                                clr(a << 0x18
+                                    | lb << 0x10
+                                    | lg << 0x08
+                                    | lr)
+                            end
                         end
 
-                        for clr in pxitr do
-                            local fromRgb = Clr.fromHex(clr())
-                            local toRgb = func(fromRgb)
-                            local hex = Clr.toHexUnchecked(toRgb)
-                            clr(hex)
-                        end
+                        -- for clr in pxitr do
+                        --     local fromRgb = Clr.fromHex(clr())
+                        --     local toRgb = func(fromRgb)
+                        --     local hex = Clr.toHex(toRgb)
+                        --     clr(hex)
+                        -- end
 
                         if oldMode == ColorMode.INDEXED then
                             app.command.ChangePixelFormat { format = "indexed" }
@@ -148,6 +185,8 @@ dlg:button {
         else
             app.alert("There is no active sprite.")
         end
+    else
+        app.alert("Dialog arguments are invalid.")
     end
 end
 }

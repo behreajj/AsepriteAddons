@@ -75,7 +75,7 @@ end
 ---Draws a curve in Aseprite with the contour tool.
 ---If a stroke is used, draws the stroke line by line.
 ---@param curve table curve
----@param resolution integer curve resolution
+---@param resolution number curve resolution
 ---@param useFill boolean use fill
 ---@param fillClr table fill color
 ---@param useStroke boolean use stroke
@@ -417,8 +417,8 @@ end
 ---Initializes a sprite and layer.
 ---Sets palette to the colors provided,
 ---or, if nil, a default set.
----@param wDefault integer default width
----@param hDefault integer default height
+---@param wDefault number default width
+---@param hDefault number default height
 ---@param layerName string layer name
 ---@param colors table array of colors
 ---@return table
@@ -465,13 +465,13 @@ end
 ---@param ah number origin hue
 ---@param as number origin saturation
 ---@param al number origin lightness
----@param aa integer origin alpha
+---@param aa number origin alpha
 ---@param bh number destination hue
 ---@param bs number destination saturation
 ---@param bl number destination lightness
----@param ba integer destination alpha
+---@param ba number destination alpha
 ---@param t number factor
----@return integer
+---@return number
 function AseUtilities.lerpHslaFar(
     ah, as, al, aa,
     bh, bs, bl, ba, t)
@@ -491,13 +491,13 @@ end
 ---@param ah number origin hue
 ---@param as number origin saturation
 ---@param al number origin lightness
----@param aa integer origin alpha
+---@param aa number origin alpha
 ---@param bh number destination hue
 ---@param bs number destination saturation
 ---@param bl number destination lightness
----@param ba integer destination alpha
+---@param ba number destination alpha
 ---@param t number factor
----@return integer
+---@return number
 function AseUtilities.lerpHslaNear(
     ah, as, al, aa,
     bh, bs, bl, ba, t)
@@ -518,13 +518,13 @@ end
 ---@param ah number origin hue
 ---@param as number origin saturation
 ---@param av number origin value
----@param aa integer origin alpha
+---@param aa number origin alpha
 ---@param bh number destination hue
 ---@param bs number destination saturation
 ---@param bv number destination value
----@param ba integer destination alpha
+---@param ba number destination alpha
 ---@param t number factor
----@return integer
+---@return number
 function AseUtilities.lerpHsvaFar(
     ah, as, av, aa,
     bh, bs, bv, ba, t)
@@ -545,13 +545,13 @@ end
 ---@param ah number origin hue
 ---@param as number origin saturation
 ---@param av number origin value
----@param aa integer origin alpha
+---@param aa number origin alpha
 ---@param bh number destination hue
 ---@param bs number destination saturation
 ---@param bv number destination value
----@param ba integer destination alpha
+---@param ba number destination alpha
 ---@param t number factor
----@return integer
+---@return number
 function AseUtilities.lerpHsvaNear(
     ah, as, av, aa,
     bh, bs, bv, ba, t)
@@ -573,7 +573,7 @@ end
 ---@param step number factor
 ---@param funcMajor function easing function
 ---@param funcMinor function easing function
----@return integer
+---@return number
 function AseUtilities.lerpColorArr(array, step, funcMajor, funcMinor)
     if step <= 0.0  then
         return array[1].rgbaPixel
@@ -601,16 +601,16 @@ end
 -- but the mix is unclamped.
 ---The color channels should be unpacked and
 ---in the range [0, 255].
----@param ar integer origin red
----@param ag integer origin green
----@param ab integer origin blue
----@param aa integer origin alpha
----@param br integer destination red
----@param bg integer destination green
----@param bb integer destination blue
----@param ba integer destination alpha
+---@param ar number origin red
+---@param ag number origin green
+---@param ab number origin blue
+---@param aa number origin alpha
+---@param br number destination red
+---@param bg number destination green
+---@param bb number destination blue
+---@param ba number destination alpha
 ---@param t number factor
----@return integer
+---@return number
 function AseUtilities.lerpRgba(
     ar, ag, ab, aa,
     br, bg, bb, ba, t)
@@ -684,16 +684,16 @@ end
 ---The color channels should be unpacked and
 ---in the range [0, 255].
 ---Smooths the factor.
----@param ar integer origin red
----@param ag integer origin green
----@param ab integer origin blue
----@param aa integer origin alpha
----@param br integer destination red
----@param bg integer destination green
----@param bb integer destination blue
----@param ba integer destination alpha
+---@param ar number origin red
+---@param ag number origin green
+---@param ab number origin blue
+---@param aa number origin alpha
+---@param br number destination red
+---@param bg number destination green
+---@param bb number destination blue
+---@param ba number destination alpha
 ---@param t number factor
----@return integer
+---@return number
 function AseUtilities.smoothRgba(
     ar, ag, ab, aa,
     br, bg, bb, ba, t)
@@ -725,8 +725,8 @@ end
 ---@param ch number hue
 ---@param cs number saturation
 ---@param cl number lightness
----@param ca integer alpha
----@return integer
+---@param ca number alpha
+---@return number
 function AseUtilities.toHexHsla(ch, cs, cl, ca)
     if cl <= 0.0 then
         return app.pixelColor.rgba(
@@ -799,8 +799,8 @@ end
 ---@param ch number hue
 ---@param cs number saturation
 ---@param cv number value
----@param ca integer alpha
----@return integer
+---@param ca number alpha
+---@return number
 function AseUtilities.toHexHsva(ch, cs, cv, ca)
     -- Bring hue into [0.0, 1.0] by dividing by 360.0.
     local h = ((ch * 0.002777777777777778) % 1.0) * 6.0
