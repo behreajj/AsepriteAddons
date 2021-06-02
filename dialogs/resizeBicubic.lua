@@ -222,9 +222,8 @@ dlg:button {
                         local kernel = { 0, 0, 0, 0 }
 
                         -- Adjust resize by a fudge factor.
-                        local bias = 0.00405
-                        local tx = sw / (dw * (1.0 + bias))
-                        local ty = sh / (dh * (1.0 + bias))
+                        local tx = sw / dw
+                        local ty = sh / dh
 
                         -- local newPxlLen = dw * dh
                         local clrs = {}
@@ -232,57 +231,41 @@ dlg:button {
                         local len3 = dw * len2
                         local len4 = dh * len3
 
+                        local swn1 = sw - 1
+                        local shn1 = sh - 1
+
                         for k = 0, len4, 1 do
                             local g = k // len3
                             local m = k - g * len3
                             local h = m // len2
                             local n = m - h * len2
+                            local i = n // frameSize
                             local j = n % frameSize
 
                             -- Row.
                             local y = trunc(ty * g)
-                            local dy = ty * (g - bias) - y
+                            local dy = ty * g - y
                             local dysq = dy * dy
 
                             -- Column.
                             local x = trunc(tx * h)
-                            local dx = tx * (h - bias) - x
+                            local dx = tx * h - x
                             local dxsq = dx * dx
 
-                            local a0 = 0
-                            local d0 = 0
-                            local d2 = 0
-                            local d3 = 0
+                            -- Clamp kernel to image bounds.
+                            local z = max(0, min(shn1, y - 1 + j))
+                            local x0 = max(0, min(swn1, x))
+                            local x1 = max(0, min(swn1, x - 1))
+                            local x2 = max(0, min(swn1, x + 1))
+                            local x3 = max(0, min(swn1, x + 2))
 
-                            -- If sample frame is in-bounds vertically.
-                            local z = y - 1 + j
-                            if z > -1 and z < sh then
-                                -- The i index represents the channel loop.
-                                -- It is multiplied by 8 to indicate 8 bytes
-                                -- needed to unsocket a channel packed in hex.
-                                local i8 = 8 * (n // frameSize)
-                                local x1 = x - 1
-                                local x2 = x + 1
-                                local x3 = x + 2
-                                local zw = z * sw
+                            local zw = z * sw
+                            local i8 = i * 8
 
-                                -- If sample frame is in-bounds horizontally.
-                                if x > -1 and x < sw then
-                                    a0 = srcpx[1 + zw + x] >> i8 & 0xff
-                                end
-
-                                if x1 > -1 and x1 < sw then
-                                    d0 = srcpx[1 + zw + x1] >> i8 & 0xff
-                                end
-
-                                if x2 > -1 and x2 < sw then
-                                    d2 = srcpx[1 + zw + x2] >> i8 & 0xff
-                                end
-
-                                if x3 > -1 and x3 < sw then
-                                    d3 = srcpx[1 + zw + x3] >> i8 & 0xff
-                                end
-                            end
+                            local a0 = srcpx[1 + zw + x0] >> i8 & 0xff
+                            local d0 = srcpx[1 + zw + x1] >> i8 & 0xff
+                            local d2 = srcpx[1 + zw + x2] >> i8 & 0xff
+                            local d3 = srcpx[1 + zw + x3] >> i8 & 0xff
 
                             d0 = d0 - a0
                             d2 = d2 - a0
