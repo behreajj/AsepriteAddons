@@ -217,7 +217,7 @@ dlg:button {
                             srcidx = srcidx + 1
                         end
 
-                        local frameSize = 4
+                        local kernelSize = 4
                         local chnlCount = 4
                         local kernel = { 0, 0, 0, 0 }
 
@@ -227,7 +227,7 @@ dlg:button {
 
                         -- local newPxlLen = dw * dh
                         local clrs = {}
-                        local len2 = frameSize * chnlCount
+                        local len2 = kernelSize * chnlCount
                         local len3 = dw * len2
                         local len4 = dh * len3
 
@@ -239,8 +239,8 @@ dlg:button {
                             local m = k - g * len3
                             local h = m // len2
                             local n = m - h * len2
-                            local i = n // frameSize
-                            local j = n % frameSize
+                            local i = n // kernelSize
+                            local j = n % kernelSize
 
                             -- Row.
                             local y = trunc(ty * g)
@@ -291,7 +291,7 @@ dlg:button {
                             a2 = 0.5 * (d0 + d2)
                             a3 = -d0 / 6.0 - 0.5 * d2 + d36
 
-                            clrs[1 + (k // frameSize)] = max(0, min(255,
+                            clrs[1 + (k // kernelSize)] = max(0, min(255,
                                 a0 + trunc(a1 * dy
                                          + a2 * dysq
                                          + a3 * (dy * dysq))))

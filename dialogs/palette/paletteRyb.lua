@@ -3,41 +3,42 @@ dofile("../../support/aseutilities.lua")
 
 local hueEasing = {"FAR", "NEAR"}
 
-local ryb = {Color(255, 0, 0), -- 0xFF0000FF
-Color(255, 80, 0), -- 0xFF0050FF
-Color(255, 134, 0), -- 0xFF0086FF
-Color(255, 174, 0), -- 0xFF00AEFF
-Color(255, 207, 0), -- 0xFF00CFFF
-Color(255, 243, 0), -- 0xFF00F3FF
-Color(192, 234, 13), -- 0xFF0DEAC0
-Color(97, 201, 32), -- 0xFF20C961
-Color(0, 169, 51), -- 0xFF33A900
-Color(16, 141, 89), -- 0xFF598D10
-Color(19, 110, 134), -- 0xFF866E13
-Color(28, 77, 161), -- 0xFFA14D1C
-Color(60, 42, 146), -- 0xFF922A3C
-Color(94, 19, 136), -- 0xFF88135E
-Color(137, 6, 109), -- 0xFF6D0689
-Color(191, 0, 64), -- 0xFF4000BF
-Color(255, 0, 0) -- 0xFF0000FF
+local ryb = {
+    Color(255, 0, 0), -- FF0000
+    Color(255, 92, 0), -- FF5C00
+    Color(255, 136, 0), -- FF8800
+    Color(255, 173, 0), -- FFAD00
+    Color(255, 209, 0), -- FFD100
+    Color(255, 243, 0), -- FFF300
+    Color(170, 218, 17), -- AADA11
+    Color(85, 194, 34), -- 55C222
+    Color(0, 169, 51), -- 00A933
+    Color(9, 138, 88), -- 098A58
+    Color(19, 108, 124), -- 136C7C
+    Color(28, 77, 161), -- 1C4DA1
+    Color(69, 58, 137), -- 453A89
+    Color(110, 39, 113), -- 6E2771
+    Color(150, 19, 88), -- 961358
+    Color(191, 0, 64), -- BF0040
+    Color(255, 0, 0) -- FF0000
 }
 
 local hues = {
     [0xFF0000FF] = 0.0,
-    [0xFF0050FF] = 22.5,
-    [0xFF0086FF] = 45.0,
-    [0xFF00AEFF] = 67.5,
-    [0xFF00CFFF] = 90.0,
+    [0xFF005CFF] = 22.5,
+    [0xFF0088FF] = 45.0,
+    [0xFF00ADFF] = 67.5,
+    [0xFF00D1FF] = 90.0,
     [0xFF00F3FF] = 112.5,
-    [0xFF0DEAC0] = 135.0,
-    [0xFF20C961] = 157.5,
+    [0xFF11DAAA] = 135.0,
+    [0xFF22C255] = 157.5,
     [0xFF33A900] = 180.0,
-    [0xFF598D10] = 202.5,
-    [0xFF866E13] = 225.0,
+    [0xFF588A09] = 202.5,
+    [0xFF7C6C13] = 225.0,
     [0xFFA14D1C] = 247.5,
-    [0xFF922A3C] = 270.0,
-    [0xFF88135E] = 292.5,
-    [0xFF6D0689] = 315.0,
+    [0xFF893A45] = 270.0,
+    [0xFF71276E] = 292.5,
+    [0xFF581396] = 315.0,
     [0xFF4000BF] = 337.5
 }
 

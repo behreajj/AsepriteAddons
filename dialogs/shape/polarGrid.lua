@@ -185,44 +185,44 @@ dlg:button {
             local halfAngMargin = angMargin * 0.5
             local halfRingMargin = ringMargin * 0.5
             local thickness = scale / rings - halfRingMargin
-
-            local curves = {}
             local len2n1 = rings * sectors - 1
-            for k = 0, len2n1, 1 do
-                local i = k // sectors
-                local j = k % sectors
-                -- local iStep = i * toStep
-                local iStep = (i + 1) * toScale
-                local offset = i * angOffset
-                local radius = iStep * scale - halfRingMargin
 
-                local startAngle = offset + j * toTheta
-                local stopAngle = offset + (j + 1) * toTheta
-
-                startAngle = startAngle + halfAngMargin
-                stopAngle = stopAngle - halfAngMargin
-
-                curves[1 + k] = Curve2.arcSector(
-                    startAngle, stopAngle,
-                    radius,
-                    thickness, -1.0,
-                    xOrigin, yOrigin)
-            end
+            local brush = Brush(args.strokeWeight)
+            local strokeClr = args.strokeClr
+            local useStroke = args.useStroke
+            local fillClr = args.fillClr
+            local useFill = args.useFill
+            local resolution = args.resolution
 
             app.transaction(function ()
-                for i = 1, #curves, 1 do
+                for k = 0, len2n1, 1 do
+                    local i = k // sectors
+                    local j = k % sectors
+                    local iStep = (i + 1) * toScale
+                    local offset = i * angOffset
+                    local radius = iStep * scale - halfRingMargin
+
+                    local startAngle = offset + j * toTheta
+                    local stopAngle = offset + (j + 1) * toTheta
+
+                    startAngle = startAngle + halfAngMargin
+                    stopAngle = stopAngle - halfAngMargin
+
+                    local curve = Curve2.arcSector(
+                        startAngle, stopAngle,
+                        radius,
+                        thickness, -1.0,
+                        xOrigin, yOrigin)
+
                     AseUtilities.drawCurve2(
-                        curves[i],
-                        args.resolution,
-                        args.useFill,
-                        args.fillClr,
-                        args.useStroke,
-                        args.strokeClr,
-                        Brush(args.strokeWeight),
-                        cel,
-                        layer)
+                        curve,
+                        resolution,
+                        useFill, fillClr,
+                        useStroke, strokeClr,
+                        brush, cel, layer)
                 end
             end)
+
         else
             app.alert("Dialog arguments are invalid.")
         end
