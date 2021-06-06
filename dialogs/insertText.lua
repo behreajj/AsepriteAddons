@@ -1,5 +1,23 @@
 dofile("../support/utilities.lua")
 
+local alignVerts = {"BOTTOM", "CENTER", "TOP"}
+local alignHorizs = {"LEFT", "CENTER", "RIGHT"}
+local orientations = {"HORIZONTAL", "VERTICAL"}
+
+local defaults = {
+    msg = "Lorem ipsum dolor sit amet",
+    fillClr = Color(255, 255, 255, 255),
+    shadowClr = Color(0, 0, 0, 204),
+    xOrigin = 0,
+    yOrigin = 0,
+    useShadow = true,
+    orientation = "HORIZONTAL",
+    alignHoriz = "LEFT",
+    alignVert = "TOP",
+    scale = 2,
+    pullFocus = false
+}
+
 local function rotateCcw(v, w, h)
     local lenn1 = (w * h) - 1
     local wn1 = w - 1
@@ -17,141 +35,182 @@ local function rotateCcw(v, w, h)
     return vr
 end
 
-local function displayGlyph(
-    image, glyph, hex,
-    xLoc, yLoc,
-    glyphWidth, glyphHeight)
+local function displayGlyph(image, glyph, clr, x, y, gw, gh)
 
-    local h = glyphHeight or 5
-    local w = glyphWidth or 3
-    local y = yLoc or 0
-    local x = xLoc or 0
-    local clr = hex or 0xffffffff
-    local g = glyph or 0
-
-    local len = w * h
+    local len = gw * gh
     local lenn1 = len - 1
 
-    -- TODO: How to upscale a glyph by 2x, 3x, etc.?
     for i = 0, lenn1, 1 do
         local shift = lenn1 - i
-        local mark = (g >> shift) & 1
+        local mark = (glyph >> shift) & 1
         if mark ~= 0 then
-            image:drawPixel(x + (i % w), y + (i // w), clr)
+            image:drawPixel(x + (i % gw), y + (i // gw), clr)
         end
     end
 end
 
-local function displayStringVert(image, chars, clr, x, y, w, h, lut)
+local function displayGlyphNearest(image, glyph, clr, x, y, gw, gh, dw, dh)
+
+    if gw == dw and gh == dh then
+        return displayGlyph(image, glyph, clr, x, y, gw, gh)
+    end
+
+    local lenTrg = dw * dh
+    local lenTrgn1 = lenTrg - 1
+    local lenSrcn1 = gw * gh - 1
+    local tx = gw / dw
+    local ty = gh / dh
+    local trunc = math.tointeger
+    for k = 0, lenTrgn1, 1 do
+        local xTrg = k % dw
+        local yTrg = k // dw
+
+        local xSrc = trunc(xTrg * tx)
+        local ySrc = trunc(yTrg * ty)
+        local idxSrc = ySrc * gw + xSrc
+
+        local shift = lenSrcn1 - idxSrc
+        local mark = (glyph >> shift) & 1
+        if mark ~= 0 then
+            image:drawPixel(x + xTrg, y + yTrg, clr)
+        end
+    end
+end
+
+local function displayStringVert(lut, image, chars, clr, x, y, gw, gh, scale)
 
     local writeChar = y
     local writeLine = x
     local charLen = #chars
 
+    local dw = gw * scale
+    local dh = gh * scale
+    local scale2 = scale + scale
+
     for i = 1, charLen, 1 do
         local ch = chars[i]
         if ch == '\n' then
-            writeLine = writeLine + w + 2
+            writeLine = writeLine + dw + scale2
             writeChar = y
         else
             local glyph = lut[ch]
-            glyph = rotateCcw(glyph, w, h)
+            glyph = rotateCcw(glyph, gw, gh)
 
-            displayGlyph(image, glyph, clr, writeLine, writeChar, h, w)
-            writeChar = writeChar - h + 1
+            displayGlyphNearest(image, glyph, clr, writeLine, writeChar, gh, gw, dh, dw)
+            writeChar = writeChar - dh + scale
         end
     end
 end
 
-local function displayStringHoriz(image, chars, clr, x, y, w, h, lut)
+local function displayStringHoriz(lut, image, chars, clr, x, y, gw, gh, scale)
 
     local writeChar = x
     local writeLine = y
     local charLen = #chars
+
+    local dw = gw * scale
+    local dh = gh * scale
+    local scale2 = scale + scale
+
     for i = 1, charLen, 1 do
         local ch = chars[i]
         -- print(ch)
         if ch == '\n' then
             -- Add 2, not 1, due to drop shadow.
-            writeLine = writeLine + h + 2
+            writeLine = writeLine + dh + scale2
             writeChar = x
         else
             local glyph = lut[ch]
             -- print(glyph)
 
-            displayGlyph(image, glyph, clr, writeChar, writeLine, w, h)
-            writeChar = writeChar + w + 1
+            displayGlyphNearest(image, glyph, clr, writeChar, writeLine, gw, gh, dw, dh)
+            writeChar = writeChar + dw + scale
         end
     end
 end
 
 local dlg = Dialog {
-    title = "Print Message Test"
+    title = "Insert Text"
 }
 
 dlg:entry{
     id = "msg",
     label = "Message",
-    text = "Lorem ipsum dolor sit amet",
+    text = defaults.msg,
     focus = "false"
-}
-
-dlg:color{
-    id = "fillClr",
-    label = "Fill:",
-    color = Color(255, 255, 255, 255)
-}
-
-dlg:color{
-    id = "shadowClr",
-    label = "Shadow:",
-    color = Color(0, 0, 0, 204)
 }
 
 dlg:number{
     id = "xOrigin",
     label = "Origin:",
-    text = string.format("%.1f", 0),
+    text = string.format("%.1f", defaults.xOrigin),
     decimals = 5
 }
 
 dlg:number{
     id = "yOrigin",
-    text = string.format("%.1f", 0),
+    text = string.format("%.1f", defaults.yOrigin),
     decimals = 5
 }
 
-dlg:check {
-    id = "useShadow",
-    label = "Drop Shadow:",
-    selected = true
+dlg:slider{
+    id = "scale",
+    label = "Scale:",
+    min = 1,
+    max = 24,
+    value = defaults.scale
 }
 
-dlg:combobox {
+dlg:combobox{
     id = "orientation",
     label = "Orientation:",
-    option = "HORIZONTAL",
-    options = {"HORIZONTAL", "VERTICAL"},
+    option = defaults.orientation,
+    options = orientations
 }
 
-dlg:combobox {
+dlg:combobox{
     id = "alignHoriz",
     label = "Line:",
-    option = "LEFT",
-    options = {"LEFT", "CENTER", "RIGHT"},
+    option = defaults.alignHoriz,
+    options = alignHorizs
 }
 
-dlg:combobox {
+dlg:combobox{
     id = "alignVert",
     label = "Char:",
-    option = "TOP",
-    options = {"BOTTOM", "CENTER", "TOP"},
+    option = defaults.alignVert,
+    options = alignVerts
+}
+
+dlg:check{
+    id = "useShadow",
+    label = "Drop Shadow:",
+    selected = defaults.useShadow,
+    onclick = function()
+        dlg:modify{
+            id = "shadowClr",
+            visible = dlg.data.useShadow
+        }
+    end
+}
+
+dlg:color{
+    id = "fillClr",
+    label = "Fill:",
+    color = defaults.fillClr
+}
+
+dlg:color{
+    id = "shadowClr",
+    label = "Shadow:",
+    color = defaults.shadowClr,
+    visible = defaults.useShadow
 }
 
 dlg:button{
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
         if args.ok then
@@ -168,9 +227,18 @@ dlg:button{
                 local hexShd = args.shadowClr.rgbaPixel
                 local xLoc = args.xOrigin or 0
                 local yLoc = args.yOrigin or 0
+                local useShadow = args.useShadow
                 local orientation = args.orientation
                 local alignHoriz = args.alignHoriz
                 local alignVert = args.alignVert
+                local scale = args.scale
+
+                -- QUERY: Disallow alpha in fill color?
+                -- This is due to the limitation of setting
+                -- pixels w/ drawPixel rather than compositing.
+                if useShadow then
+                    hexFill = 0xff000000 | hexFill
+                end
 
                 -- Create layer, cel.
                 local layer = sprite:newLayer()
@@ -182,7 +250,7 @@ dlg:button{
                 local msg = args.msg
                 local msgLen = #msg
                 if msg == nil or msgLen < 1 then
-                    msg = "Lorem ipsum dolor sit amet"
+                    msg = "Lorem ipsum\ndolor sit amet"
                     msgLen = #msg
                 end
 
@@ -197,6 +265,9 @@ dlg:button{
                     chars[i] = msgUpper:sub(i, i)
                 end
 
+                local dw = gw * scale
+                local dh = gh * scale
+
                 local displayString = displayStringHoriz
                 if orientation == "VERTICAL" then
                     displayString = displayStringVert
@@ -204,42 +275,44 @@ dlg:button{
                     -- Because of rotation pivot,
                     -- characters need to be shifted up
                     -- by one glyph.
-                    yLoc = yLoc - gw
+                    yLoc = yLoc - dw
 
                     if alignHoriz == "CENTER" then
-                        local gwLen = msgLen * (gw + 1)
-                        yLoc = yLoc + gwLen // 2
+                        local dwLen = msgLen * (dw + scale)
+                        yLoc = yLoc + dwLen // 2
                     elseif alignHoriz == "RIGHT" then
-                        local gwLen = msgLen * (gw + 1)
-                        yLoc = yLoc + gwLen
+                        local dwLen = msgLen * (dw + scale)
+                        yLoc = yLoc + dwLen
                     end
 
                     if alignVert == "CENTER" then
-                        xLoc = xLoc - (gh + 1) // 2
+                        xLoc = xLoc - dh // 2
                     elseif alignVert == "BOTTOM" then
-                        xLoc = xLoc - (gh - 1)
+                        xLoc = xLoc - dh
                     end
                 else
+
+                    -- Horizontal case is default case.
                     if alignHoriz == "CENTER" then
-                        local gwLen = msgLen * (gw + 1)
-                        xLoc = xLoc - gwLen // 2
+                        local dwLen = msgLen * (dw + scale)
+                        xLoc = xLoc - dwLen // 2
                     elseif alignHoriz == "RIGHT" then
-                        local gwLen = msgLen * (gw + 1)
-                        xLoc = xLoc - gwLen
+                        local dwLen = msgLen * (dw + scale)
+                        xLoc = xLoc - dwLen
                     end
 
                     if alignVert == "CENTER" then
-                        yLoc = yLoc - (gh + 1) // 2
+                        yLoc = yLoc - dh // 2
                     elseif alignVert == "BOTTOM" then
-                        yLoc = yLoc - (gh - 1)
+                        yLoc = yLoc - dh
                     end
                 end
 
                 -- Display string, optionally with shadow.
-                if args.useShadow then
-                    displayString(image, chars, hexShd, xLoc, yLoc + 1, gw, gh, lut)
+                if useShadow then
+                    displayString(lut, image, chars, hexShd, xLoc, yLoc + scale, gw, gh, scale)
                 end
-                displayString(image, chars, hexFill, xLoc, yLoc, gw, gh, lut)
+                displayString(lut, image, chars, hexFill, xLoc, yLoc, gw, gh, scale)
 
                 app.refresh()
             else

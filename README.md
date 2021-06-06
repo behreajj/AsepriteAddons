@@ -47,6 +47,10 @@ This repo includes
 
   ![Infinity Loop](screencaps/infinityLoop.png)
 
+- A text insertion dialog.
+
+  ![Insert Text](screencaps/insertText.png)
+
 - A pixel art isometric (dimetric) grid.
 
   ![Dimetric Grid](screencaps/isoGrid.png)
