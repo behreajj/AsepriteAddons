@@ -86,15 +86,16 @@ end
 ---@return boolean
 function Mat3.approx(a, b, tol)
     local eps = tol or 0.000001
-    return math.abs(b.m00 - a.m00) <= eps
-        and math.abs(b.m01 - a.m01) <= eps
-        and math.abs(b.m02 - a.m02) <= eps
-        and math.abs(b.m10 - a.m10) <= eps
-        and math.abs(b.m11 - a.m11) <= eps
-        and math.abs(b.m12 - a.m12) <= eps
-        and math.abs(b.m20 - a.m20) <= eps
-        and math.abs(b.m21 - a.m21) <= eps
-        and math.abs(b.m22 - a.m22) <= eps
+    local abs = math.abs
+    return abs(b.m00 - a.m00) <= eps
+        and abs(b.m01 - a.m01) <= eps
+        and abs(b.m02 - a.m02) <= eps
+        and abs(b.m10 - a.m10) <= eps
+        and abs(b.m11 - a.m11) <= eps
+        and abs(b.m12 - a.m12) <= eps
+        and abs(b.m20 - a.m20) <= eps
+        and abs(b.m21 - a.m21) <= eps
+        and abs(b.m22 - a.m22) <= eps
 end
 
 ---Multiplies the left operand and the inverse of the right.

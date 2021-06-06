@@ -97,7 +97,7 @@ end
 ---Creates an orbiting camera matrix.
 ---The camera looks from its location
 ---at its focal target with reference
----to the world up axis (0.0, 1.0, 1.0)
+---to the world up axis (0.0, 0.0, 1.0)
 ---or (0.0, 1.0, 0.0). Handedness is a
 ---string, either "RIGHT" or "LEFT".
 ---@param xLoc number location x
@@ -136,7 +136,8 @@ function Mat4.camera(
     local yfv = yFocus or 0.0
     local zfv = zFocus or 0.0
 
-    -- Find k by subtractinglocation from focus.
+    -- Find k by subtracting
+    -- location from focus.
     local kx = xLoc - xfv
     local ky = yLoc - yfv
     local kz = zLoc - zfv
