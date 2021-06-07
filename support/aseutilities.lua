@@ -35,11 +35,28 @@ AseUtilities.DEFAULT_STROKE = Color(32, 32, 32, 255)
 
 AseUtilities.DISPLAY_DECIMAL = 3
 
+AseUtilities.GLYPH_ALIGN_HORIZ = {
+    "CENTER",
+    "LEFT",
+    "RIGHT"
+}
+
+AseUtilities.GLYPH_ALIGN_VERT = {
+    "BOTTOM",
+    "CENTER",
+    "TOP"
+}
+
 AseUtilities.EASING_MODES = {
     "HSL",
     "HSV",
     "PALETTE",
     "RGB"
+}
+
+AseUtilities.ORIENTATIONS = {
+    "HORIZONTAL",
+    "VERTICAL"
 }
 
 ---Houses utility methods for scripting
@@ -171,6 +188,85 @@ function AseUtilities.drawCurve2(
     end
 
     app.refresh()
+end
+
+---Draws a glyph at its native scale to an image.
+---The glyph is to be represented as a binary matrix
+---with a width and height, where 1 draws a pixel
+---and zero does not, packed in to a number
+---in row major order. The color is to be represented
+---as a hexadecimal in AABBGGR order.
+---@param image table image
+---@param glyph number glyph
+---@param hex number hexadecimal color
+---@param x number x top left corner
+---@param y number y top left corner
+---@param gw number glyph width
+---@param gh number glyph height
+function AseUtilities.drawGlyph(
+    image, glyph, hex,
+    x, y, gw, gh)
+
+    local len = gw * gh
+    local lenn1 = len - 1
+
+    for i = 0, lenn1, 1 do
+        local shift = lenn1 - i
+        local mark = (glyph >> shift) & 1
+        if mark ~= 0 then
+            image:drawPixel(
+                x + (i % gw),
+                y + (i // gw),
+                hex)
+        end
+    end
+end
+
+---Draws a glyph to an image at a pixel scale;
+---resizes the glyph according to nearest neighbor.
+---The glyph is to be represented as a binary matrix
+---with a width and height, where 1 draws a pixel
+---and zero does not, packed in to a number
+---in row major order. The color is to be represented
+---as a hexadecimal in AABBGGR order.
+---@param image table image
+---@param glyph number glyph
+---@param hex number hexadecimal color
+---@param x number x top left corner
+---@param y number y top left corner
+---@param gw number glyph width
+---@param gh number glyph height
+---@param dw number display width
+---@param dh number display height
+function AseUtilities.drawGlyphNearest(
+    image, glyph, hex,
+    x, y, gw, gh, dw, dh)
+
+    if gw == dw and gh == dh then
+        return AseUtilities.drawGlyph(
+            image, glyph, hex,
+            x, y, gw, gh)
+    end
+
+    local lenTrgn1 = dw * dh - 1
+    local lenSrcn1 = gw * gh - 1
+    local tx = gw / dw
+    local ty = gh / dh
+    local trunc = math.tointeger
+    for k = 0, lenTrgn1, 1 do
+        local xTrg = k % dw
+        local yTrg = k // dw
+
+        local xSrc = trunc(xTrg * tx)
+        local ySrc = trunc(yTrg * ty)
+        local idxSrc = ySrc * gw + xSrc
+
+        local shift = lenSrcn1 - idxSrc
+        local mark = (glyph >> shift) & 1
+        if mark ~= 0 then
+            image:drawPixel(x + xTrg, y + yTrg, hex)
+        end
+    end
 end
 
 ---Draws the knot handles of a curve.
@@ -356,6 +452,85 @@ function AseUtilities.drawMesh2(
     end
 
     app.refresh()
+end
+
+
+
+---Draws an array of characters to an image
+---horizontally according to the coordinates.
+---@param lut table glyph look up table
+---@param image table image
+---@param chars table characters table
+---@param hex number hexadecimal color
+---@param x number x top left corner
+---@param y number y top left corner
+---@param gw number glyph width
+---@param gh number glyph height
+---@param scale number display scale
+function AseUtilities.drawStringHoriz(
+    lut, image, chars, hex,
+    x, y, gw, gh, scale)
+
+    local writeChar = x
+    local writeLine = y
+    local charLen = #chars
+    local dw = gw * scale
+    local dh = gh * scale
+    local scale2 = scale + scale
+    local drawGlyph = AseUtilities.drawGlyphNearest
+    local defGlyph = lut[' ']
+    for i = 1, charLen, 1 do
+        local ch = chars[i]
+        -- print(ch)
+        if ch == '\n' then
+            writeLine = writeLine + dh + scale2
+            writeChar = x
+        else
+            local glyph = lut[ch] or defGlyph
+            -- print(glyph)
+
+            drawGlyph(image, glyph, hex, writeChar, writeLine, gw, gh, dw, dh)
+            writeChar = writeChar + dw + scale
+        end
+    end
+end
+
+---Draws an array of characters to an image
+---vertically according to the coordinates.
+---@param lut table glyph look up table
+---@param image table image
+---@param chars table characters table
+---@param hex number hexadecimal color
+---@param x number x top left corner
+---@param y number y top left corner
+---@param gw number glyph width
+---@param gh number glyph height
+---@param scale number display scale
+function AseUtilities.drawStringVert(
+    lut, image, chars, hex,
+    x, y, gw, gh, scale)
+
+    local writeChar = y
+    local writeLine = x
+    local charLen = #chars
+    local dw = gw * scale
+    local dh = gh * scale
+    local scale2 = scale + scale
+    local rotateCcw = AseUtilities.rotateGlyphCcw
+    local drawGlyph = AseUtilities.drawGlyphNearest
+    local defGlyph = lut[' ']
+    for i = 1, charLen, 1 do
+        local ch = chars[i]
+        if ch == '\n' then
+            writeLine = writeLine + dw + scale2
+            writeChar = y
+        else
+            local glyph = lut[ch] or defGlyph
+            glyph = rotateCcw(glyph, gw, gh)
+            drawGlyph(image, glyph, hex, writeLine, writeChar, gh, gw, dh, dw)
+            writeChar = writeChar - dh + scale
+        end
+    end
 end
 
 ---Returns an appropriate easing function
@@ -675,6 +850,32 @@ function AseUtilities.paletteToClrArr(pal)
     else
         return { Clr.clearBlack(), Clr.white() }
     end
+end
+
+---Rotates a glyph counter-clockwise.
+---The glyph is to be represented as a binary matrix
+---with a width and height, where 1 draws a pixel
+---and zero does not, packed in to a number
+---in row major order.
+---@param gl number glyph
+---@param w number width
+---@param h number height
+---@return number
+function AseUtilities.rotateGlyphCcw(gl, w, h)
+    local lenn1 = (w * h) - 1
+    local wn1 = w - 1
+    local vr = 0
+    for i = 0, lenn1, 1 do
+        local shift0 = lenn1 - i
+        local bit = (gl >> shift0) & 1
+
+        local x = i // w
+        local y = wn1 - (i % w)
+        local j = y * h + x
+        local shift1 = lenn1 - j
+        vr = vr | (bit << shift1)
+    end
+    return vr
 end
 
 ---Mixes an origin and destination color

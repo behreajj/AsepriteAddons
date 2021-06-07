@@ -1,8 +1,4 @@
-dofile("../support/utilities.lua")
-
-local alignVerts = {"BOTTOM", "CENTER", "TOP"}
-local alignHorizs = {"LEFT", "CENTER", "RIGHT"}
-local orientations = {"HORIZONTAL", "VERTICAL"}
+dofile("../support/aseutilities.lua")
 
 local defaults = {
     msg = "Lorem ipsum dolor sit amet",
@@ -17,117 +13,6 @@ local defaults = {
     scale = 2,
     pullFocus = false
 }
-
-local function rotateCcw(v, w, h)
-    local lenn1 = (w * h) - 1
-    local wn1 = w - 1
-    local vr = 0
-    for i = 0, lenn1, 1 do
-        local shift0 = lenn1 - i
-        local bit = (v >> shift0) & 1
-
-        local x = i // w
-        local y = wn1 - (i % w)
-        local j = y * h + x
-        local shift1 = lenn1 - j
-        vr = vr | (bit << shift1)
-    end
-    return vr
-end
-
-local function displayGlyph(image, glyph, clr, x, y, gw, gh)
-
-    local len = gw * gh
-    local lenn1 = len - 1
-
-    for i = 0, lenn1, 1 do
-        local shift = lenn1 - i
-        local mark = (glyph >> shift) & 1
-        if mark ~= 0 then
-            image:drawPixel(x + (i % gw), y + (i // gw), clr)
-        end
-    end
-end
-
-local function displayGlyphNearest(image, glyph, clr, x, y, gw, gh, dw, dh)
-
-    if gw == dw and gh == dh then
-        return displayGlyph(image, glyph, clr, x, y, gw, gh)
-    end
-
-    local lenTrg = dw * dh
-    local lenTrgn1 = lenTrg - 1
-    local lenSrcn1 = gw * gh - 1
-    local tx = gw / dw
-    local ty = gh / dh
-    local trunc = math.tointeger
-    for k = 0, lenTrgn1, 1 do
-        local xTrg = k % dw
-        local yTrg = k // dw
-
-        local xSrc = trunc(xTrg * tx)
-        local ySrc = trunc(yTrg * ty)
-        local idxSrc = ySrc * gw + xSrc
-
-        local shift = lenSrcn1 - idxSrc
-        local mark = (glyph >> shift) & 1
-        if mark ~= 0 then
-            image:drawPixel(x + xTrg, y + yTrg, clr)
-        end
-    end
-end
-
-local function displayStringVert(lut, image, chars, clr, x, y, gw, gh, scale)
-
-    local writeChar = y
-    local writeLine = x
-    local charLen = #chars
-
-    local dw = gw * scale
-    local dh = gh * scale
-    local scale2 = scale + scale
-
-    for i = 1, charLen, 1 do
-        local ch = chars[i]
-        if ch == '\n' then
-            writeLine = writeLine + dw + scale2
-            writeChar = y
-        else
-            local glyph = lut[ch]
-            glyph = rotateCcw(glyph, gw, gh)
-
-            displayGlyphNearest(image, glyph, clr, writeLine, writeChar, gh, gw, dh, dw)
-            writeChar = writeChar - dh + scale
-        end
-    end
-end
-
-local function displayStringHoriz(lut, image, chars, clr, x, y, gw, gh, scale)
-
-    local writeChar = x
-    local writeLine = y
-    local charLen = #chars
-
-    local dw = gw * scale
-    local dh = gh * scale
-    local scale2 = scale + scale
-
-    for i = 1, charLen, 1 do
-        local ch = chars[i]
-        -- print(ch)
-        if ch == '\n' then
-            -- Add 2, not 1, due to drop shadow.
-            writeLine = writeLine + dh + scale2
-            writeChar = x
-        else
-            local glyph = lut[ch]
-            -- print(glyph)
-
-            displayGlyphNearest(image, glyph, clr, writeChar, writeLine, gw, gh, dw, dh)
-            writeChar = writeChar + dw + scale
-        end
-    end
-end
 
 local dlg = Dialog {
     title = "Insert Text"
@@ -165,21 +50,21 @@ dlg:combobox{
     id = "orientation",
     label = "Orientation:",
     option = defaults.orientation,
-    options = orientations
+    options = AseUtilities.ORIENTATIONS
 }
 
 dlg:combobox{
     id = "alignHoriz",
     label = "Line:",
     option = defaults.alignHoriz,
-    options = alignHorizs
+    options = AseUtilities.GLYPH_ALIGN_HORIZ
 }
 
 dlg:combobox{
     id = "alignVert",
     label = "Char:",
     option = defaults.alignVert,
-    options = alignVerts
+    options = AseUtilities.GLYPH_ALIGN_VERT
 }
 
 dlg:check{
@@ -268,9 +153,9 @@ dlg:button{
                 local dw = gw * scale
                 local dh = gh * scale
 
-                local displayString = displayStringHoriz
+                local displayString = AseUtilities.drawStringHoriz
                 if orientation == "VERTICAL" then
-                    displayString = displayStringVert
+                    displayString = AseUtilities.drawStringVert
 
                     -- Because of rotation pivot,
                     -- characters need to be shifted up
