@@ -21,6 +21,7 @@ Utilities.GLYPH_LUT = {
     ['-'] = 448, --   000000111000000
     ['*'] = 2728, --  000101010101000
     ['/'] = 4772, --  001001010100100
+    ['#'] = 24445, -- 101111101111101
     ['0'] = 31599, -- 111101101101111
     ['1'] = 11415, -- 010110010010111
     ['2'] = 29671, -- 111001111100111
@@ -104,8 +105,8 @@ end
 
 ---Forces an overflow wrap to make 64 bit
 ---integers behave like 32 bit integers.
----@param x integer the integer
----@return integer
+---@param x number the integer
+---@return number
 function Utilities.int32Overflow(x)
     -- https://stackoverflow.com/questions/
     -- 300840/force-php-integer-overflow

@@ -196,6 +196,8 @@ end
 ---and zero does not, packed in to a number
 ---in row major order. The color is to be represented
 ---as a hexadecimal in AABBGGR order.
+---Operates on pixel by pixel level. Its use
+---should not be mixed with app.useTool.
 ---@param image table image
 ---@param glyph number glyph
 ---@param hex number hexadecimal color
@@ -207,9 +209,7 @@ function AseUtilities.drawGlyph(
     image, glyph, hex,
     x, y, gw, gh)
 
-    local len = gw * gh
-    local lenn1 = len - 1
-
+    local lenn1 = gw * gh - 1
     for i = 0, lenn1, 1 do
         local shift = lenn1 - i
         local mark = (glyph >> shift) & 1
@@ -229,6 +229,8 @@ end
 ---and zero does not, packed in to a number
 ---in row major order. The color is to be represented
 ---as a hexadecimal in AABBGGR order.
+---Operates on pixel by pixel level. Its use
+---should not be mixed with app.useTool.
 ---@param image table image
 ---@param glyph number glyph
 ---@param hex number hexadecimal color
@@ -454,10 +456,10 @@ function AseUtilities.drawMesh2(
     app.refresh()
 end
 
-
-
 ---Draws an array of characters to an image
 ---horizontally according to the coordinates.
+---Operates on pixel by pixel level. Its use
+---should not be mixed with app.useTool.
 ---@param lut table glyph look up table
 ---@param image table image
 ---@param chars table characters table
@@ -497,6 +499,8 @@ end
 
 ---Draws an array of characters to an image
 ---vertically according to the coordinates.
+---Operates on pixel by pixel level. Its use
+---should not be mixed with app.useTool.
 ---@param lut table glyph look up table
 ---@param image table image
 ---@param chars table characters table

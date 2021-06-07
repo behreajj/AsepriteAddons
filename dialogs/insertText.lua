@@ -3,7 +3,7 @@ dofile("../support/aseutilities.lua")
 local defaults = {
     msg = "Lorem ipsum dolor sit amet",
     fillClr = Color(255, 255, 255, 255),
-    shadowClr = Color(0, 0, 0, 204),
+    shdColor = Color(0, 0, 0, 204),
     xOrigin = 0,
     yOrigin = 0,
     useShadow = true,
@@ -73,7 +73,7 @@ dlg:check{
     selected = defaults.useShadow,
     onclick = function()
         dlg:modify{
-            id = "shadowClr",
+            id = "shdColor",
             visible = dlg.data.useShadow
         }
     end
@@ -86,9 +86,9 @@ dlg:color{
 }
 
 dlg:color{
-    id = "shadowClr",
+    id = "shdColor",
     label = "Shadow:",
-    color = defaults.shadowClr,
+    color = defaults.shdColor,
     visible = defaults.useShadow
 }
 
@@ -109,7 +109,7 @@ dlg:button{
 
                 -- Unpack user inputs.
                 local hexFill = args.fillClr.rgbaPixel
-                local hexShd = args.shadowClr.rgbaPixel
+                local hexShd = args.shdColor.rgbaPixel
                 local xLoc = args.xOrigin or 0
                 local yLoc = args.yOrigin or 0
                 local useShadow = args.useShadow

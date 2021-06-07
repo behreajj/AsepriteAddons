@@ -47,8 +47,6 @@ local defaults = {
 
 local dlg = Dialog { title = "Color Wheel" }
 
-dlg:newrow { always = false }
-
 dlg:check {
     id = "setPalette",
     label = "Set Palette:",

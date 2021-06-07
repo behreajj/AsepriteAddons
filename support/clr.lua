@@ -1098,7 +1098,7 @@ end
 ---@param c table color
 ---@return string
 function Clr.toHexWebUnchecked(c)
-    return "#" .. string.format("%X",
+    return "#" .. string.format("%06X",
         math.tointeger(c.r * 0xff + 0.5) << 0x10
       | math.tointeger(c.g * 0xff + 0.5) << 0x08
       | math.tointeger(c.b * 0xff + 0.5))
