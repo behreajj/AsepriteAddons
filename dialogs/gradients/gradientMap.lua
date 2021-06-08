@@ -54,12 +54,15 @@ dlg:combobox {
 
         dlg:modify {
             id = "easingFuncHue",
-            visible = md == "HSL" or md == "HSV"
+            visible = md == "CIE_LCH"
+                or md == "HSL"
+                or md == "HSV"
         }
 
         dlg:modify {
             id = "easingFuncRGB",
-            visible = md == "S_RGB" or md == "LINEAR_RGB"
+            visible = md == "S_RGB"
+                or md == "LINEAR_RGB"
         }
     end
 }
@@ -91,7 +94,9 @@ dlg:combobox {
         local md = dlg.data.clrSpacePreset
         dlg:modify {
             id = "easingFuncHue",
-            visible = md == "HSL" or md == "HSV"
+            visible = md == "CIE_LCH"
+                or md == "HSL"
+                or md == "HSV"
         }
         dlg:modify {
             id = "easingFuncRGB",
@@ -107,7 +112,8 @@ dlg:combobox {
     label = "Easing:",
     option = defaults.easingFuncHue,
     options = GradientUtilities.HUE_EASING_PRESETS,
-    visible = defaults.clrSpacePreset == "HSL"
+    visible = defaults.clrSpacePreset == "CIE_LCH"
+        or defaults.clrSpacePreset == "HSL"
         or defaults.clrSpacePreset == "HSV"
 }
 

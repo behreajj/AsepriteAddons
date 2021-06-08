@@ -11,6 +11,7 @@ setmetatable(GradientUtilities, {
 
 GradientUtilities.CLR_SPC_PRESETS = {
     "CIE_LAB",
+    "CIE_LCH",
     "CIE_XYZ",
     "HSL",
     "HSV",
@@ -45,6 +46,11 @@ GradientUtilities.TWEEN_PRESETS = {
 function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, rgbPreset, huePreset)
     if clrSpcPreset == "CIE_LAB" then
         return Clr.mixLabInternal
+    elseif clrSpcPreset == "CIE_LCH" then
+        local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
+        return function(a, b, t)
+            return Clr.mixLchInternal(a, b, t, hef)
+        end
     elseif clrSpcPreset == "CIE_XYZ" then
         return Clr.mixXyzInternal
     elseif clrSpcPreset == "HSL" then

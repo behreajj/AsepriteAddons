@@ -350,9 +350,28 @@ function Clr.hsvaToRgba(hue, sat, val, alpha)
     end
 end
 
+---Converts a color from CIE L*a*b* to CIE LCh.
+---Returns a table with the keys l, c, h, a.
+---The a stands for the alpha. Neither alpha nor
+---lightness are affected by the transformation.
+---The hue is stored in [0.0, 1.0].
+---@param l number lightness
+---@param a number a, green to red
+---@param b number b, blue to yellow
+---@param alpha number alpha channel
+---@return table
+function Clr.labToLch(l, a, b, alpha)
+    return {
+        l = l,
+        c = math.sqrt(a * a + b * b),
+        h = (math.atan(b, a) * 0.15915494309189535) % 1.0,
+        a = alpha or 1.0
+    }
+end
+
 ---Converts a color from CIE L*a*b* to standard RGB.
 ---The alpha channel is unaffected by the transform.
----@param l number perceptual lightness
+---@param l number lightness
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
 ---@param alpha number alpha channel
@@ -368,7 +387,7 @@ end
 ---The alpha channel is unaffected by the transform.
 ---See https://www.wikiwand.com/en/CIELAB_color_space
 ---and http://www.easyrgb.com/en/math.php.
----@param l number perceptual lightness
+---@param l number lightness
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
 ---@param alpha number alpha channel
@@ -411,6 +430,37 @@ function Clr.labToXyz(l, a, b, alpha)
         y = vy,
         z = vz * 1.08883,
         a = aVerif }
+end
+
+---Converts a color from CIE LCh to CIE L*a*b*.
+---The hue is expected to be in [0.0, 1.0].
+---Neither alpha nor lightness are affected by the
+---transformation.
+---@param l number lightness
+---@param c number chromaticity
+---@param h number hue in degrees
+---@param a number alpha channel
+---@return table
+function Clr.lchToLab(l, c, h, a)
+    local hRad = (h % 1.0) * 6.283185307179586
+    return {
+        l = l,
+        a = c * math.cos(hRad),
+        b = c * math.sin(hRad),
+        alpha = a or 1.0
+    }
+end
+
+---Converts a color from CIE LCh to standard RGB.
+---The hue is expected to be in [0.0, 1.0].
+---@param l number lightness
+---@param c number chromaticity
+---@param h number hue in degrees
+---@param a number alpha channel
+---@return table
+function Clr.lchToRgba(l, c, h, a)
+    local lab = Clr.lchToLab(l, c, h, a)
+    return Clr.labToRgba(lab.l, lab.a, lab.b, lab.alpha)
 end
 
 ---Converts a color from linear RGB to standard RGB (sRGB).
@@ -623,6 +673,7 @@ end
 ---@param hueFunc function hue function
 ---@return table
 function Clr.mixHsva(a, b, t, hueFunc)
+
     local u = t or 0.5
     if u <= 0.0 then
         return Clr.new(a.r, a.g, a.b, a.a)
@@ -702,6 +753,62 @@ function Clr.mixLabInternal(a, b, t)
         u * aLab.a + t * bLab.a,
         u * aLab.b + t * bLab.b,
         u * aLab.alpha + t * bLab.alpha)
+end
+
+---Mixes two colors in LCh space by a step.
+---The hue function should accept an origin,
+---destination and factor, all numbers.
+---The step is clamped to [0.0, 1.0].
+---The hue function defaults to near.
+---@param a table origin
+---@param b table destination
+---@param t number step
+---@param hueFunc function hue function
+---@return table
+function Clr.mixLch(a, b, t, hueFunc)
+
+    local u = t or 0.5
+    if u <= 0.0 then
+        return Clr.new(a.r, a.g, a.b, a.a)
+    end
+    if u >= 1.0 then
+        return Clr.new(b.r, b.g, b.b, b.a)
+    end
+
+    local f = hueFunc or function(o, d, x)
+        local diff = d - o
+        if diff ~= 0.0 then
+            local y = 1.0 - x
+            if o < d and diff > 0.5 then
+                return (y * (o + 1.0) + x * d) % 1.0
+            elseif o > d and diff < -0.5 then
+                return (y * o + x * (d + 1.0)) % 1.0
+            else
+                return y * o + x * d
+            end
+        else
+            return o
+        end
+    end
+
+    return Clr.mixLchInternal(a, b, u, f)
+end
+
+---
+---@param a table origin
+---@param b table color
+---@param t number step
+---@param hueFunc function hue function
+---@return table
+function Clr.mixLchInternal(a, b, t, hueFunc)
+    local aLch = Clr.rgbaToLch(a)
+    local bLch = Clr.rgbaToLch(b)
+    local u = 1.0 - t
+    return Clr.lchToRgba(
+        u * aLch.l + t * bLch.l,
+        u * aLch.c + t * bLch.c,
+        hueFunc(aLch.h, bLch.h, t),
+        u * aLch.a + t * bLch.a)
 end
 
 ---Mixes two colors in RGBA space by a step.
@@ -970,6 +1077,17 @@ end
 function Clr.rgbaToLab(a)
     local xyz = Clr.rgbaToXyz(a)
     return Clr.xyzToLab(xyz.x, xyz.y, xyz.z, xyz.a)
+end
+
+---Converts a color from standard RGB to CIE LCh.
+---The return table uses the keys l, c, h and a.
+---The hue is stored as degrees in [0.0, 1.0].
+---The alpha channel is unaffected by the transform.
+---@param a table color
+---@return table
+function Clr.rgbaToLch(a)
+    local lab = Clr.rgbaToLab(a)
+    return Clr.labToLch(lab.l, lab.a, lab.b, lab.alpha)
 end
 
 ---Converts a color from standard RGB to CIE XYZ.
