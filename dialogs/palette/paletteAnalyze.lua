@@ -43,14 +43,14 @@ dlg:entry {
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "manifest",
-    label = "Manifest:",
+    id = "lchLc",
+    label = "CIE LCH Hue:",
     selected = true,
 }
 
 dlg:check {
-    id = "labab",
-    label = "CIE LAB Lightness:",
+    id = "labLa",
+    label = "CIE LAB Blue Yellow:",
     selected = true,
 }
 
@@ -61,9 +61,23 @@ dlg:check {
 }
 
 dlg:check {
-    id = "labLa",
-    label = "CIE LAB Blue Yellow:",
+    id = "labab",
+    label = "CIE LAB Lightness:",
     selected = true,
+}
+
+dlg:check {
+    id = "manifest",
+    label = "Manifest:",
+    selected = true,
+}
+
+dlg:newrow { always = false }
+
+dlg:color{
+    id = "bkgColor",
+    label = "Background:",
+    color = Color(38, 38, 38, 255)
 }
 
 dlg:newrow { always = false }
@@ -76,33 +90,11 @@ dlg:color{
 
 dlg:newrow { always = false }
 
-dlg:check{
-    id = "useShadow",
-    label = "Drop Shadow:",
-    selected = true,
-    onclick = function()
-        dlg:modify{
-            id = "shdColor",
-            visible = dlg.data.useShadow
-        }
-    end
-}
-
-dlg:newrow { always = false }
-
 dlg:color{
     id = "shdColor",
     label = "Shadow:",
     color = Color(0, 0, 0, 255),
     visible = true
-}
-
-dlg:newrow { always = false }
-
-dlg:color{
-    id = "bkgColor",
-    label = "Background:",
-    color = Color(38, 38, 38, 255)
 }
 
 dlg:newrow { always = false }
@@ -378,35 +370,42 @@ dlg:button {
 
                     -- Unpack source palette to universally used data.
                     local clrs = {}
-                    local labs = {}
                     local hexes = {}
+                    local labs = {}
+                    local lchs = {}
 
                     -- Find lab minimums and maximums.
                     local lMin = 999999
                     local aMin = 999999
                     local bMin = 999999
+                    local cMin = 999999
 
                     local lMax = -999999
                     local aMax = -999999
                     local bMax = -999999
+                    local cMax = -999999
 
                     for i = 1, srcPalLen, 1 do
                         local aseColor = srcPal:getColor(i - 1)
                         local clr = AseUtilities.aseColorToClr(aseColor)
+                        local hex = 0xff000000 | Clr.toHex(clr)
                         local lab = Clr.rgbaToLab(clr)
-                        local hex = Clr.toHex(clr)
+                        local lch = Clr.labToLch(lab.l, lab.a, lab.b, lab.alpha)
 
                         if lab.l < lMin then lMin = lab.l end
                         if lab.a < aMin then aMin = lab.a end
                         if lab.b < bMin then bMin = lab.b end
+                        if lch.c < cMin then cMin = lch.c end
 
                         if lab.l > lMax then lMax = lab.l end
                         if lab.a > aMax then aMax = lab.a end
                         if lab.b > bMax then bMax = lab.b end
+                        if lch.c > cMax then cMax = lch.c end
 
                         clrs[i] = clr
-                        labs[i] = lab
                         hexes[i] = hex
+                        labs[i] = lab
+                        lchs[i] = lch
                     end
 
                     local manifest = args.manifest
@@ -540,6 +539,33 @@ dlg:button {
                         txtHex, shdHex, 6)
 
                         labLaCel.image = labLaImage
+                    end
+
+                    local lchLc = args.lchLc
+                    if lchLc then
+                        -- Initialize layer.
+                        local lchLcLayer = sprite:newLayer()
+                        lchLcLayer.name = "CIE.LCH.Hue"
+                        local lchLcCel = sprite:newCel(lchLcLayer, frame)
+                        local lchLcImage = Image(sprite.width, sprite.height)
+                        fill(lchLcImage, bkgHex)
+
+                        -- Convert lab data to coordinates.
+                        local coords = {}
+                        for i = 1, #lchs, 1 do
+                            local lch = lchs[i]
+                            coords[i] = { x = lch.c, y = lch.l }
+                        end
+
+                        drawGraph(lchLcImage, lut, gw, gh, 2,
+                        "CIE LCH HUE",
+                        "CHROMA",
+                        "LIGHTNESS",
+                        5, cMin, cMax, lMin, lMax,
+                        coords, hexes,
+                        txtHex, shdHex, 6)
+
+                        lchLcCel.image = lchLcImage
                     end
                 else
                     app.alert("The source palette could not be found.")

@@ -990,9 +990,9 @@ end
 ---@param a table color
 ---@return boolean
 function Clr.rgbIsInGamut(a)
-    return a.r >= 0.0 and a.r <= 1.0
-        and a.g >= 0.0 and a.g <= 1.0
-        and a.b >= 0.0 and a.b <= 1.0
+    return (a.r >= 0.0 and a.r <= 1.0)
+        and (a.g >= 0.0 and a.g <= 1.0)
+        and (a.b >= 0.0 and a.b <= 1.0)
 end
 
 ---Returns true if all color channels are

@@ -5,6 +5,42 @@ local dlg = Dialog {
     title = "CIE LCh Color Picker"
 }
 
+local function setFromAse(aseClr)
+    local clr = AseUtilities.aseColorToClr(aseClr)
+    local lch = Clr.rgbaToLch(clr)
+    local trunc = math.tointeger
+
+    dlg:modify{
+        id = "lightness",
+        value = trunc(lch.l)
+    }
+
+    dlg:modify{
+        id = "chroma",
+        value = trunc(lch.c)
+    }
+
+    dlg:modify{
+        id = "hue",
+        value = trunc(0.5 + lch.h * 360.0)
+    }
+
+    dlg:modify{
+        id = "alpha",
+        value = trunc(0.5 + lch.a * 100.0)
+    }
+
+    dlg:modify{
+        id = "clr",
+        colors = {aseClr}
+    }
+
+    dlg:modify{
+        id = "hexCode",
+        text = Clr.toHexWeb(clr)
+    }
+end
+
 local function updateClrs(data)
     local l = data.lightness
     local c = data.chroma
@@ -12,7 +48,7 @@ local function updateClrs(data)
     local a = data.alpha * 0.01
     local clr = Clr.lchToRgba(l, c, h, a)
 
-    if Clr.rgbaIsInGamut(clr) then
+    if Clr.rgbIsInGamut(clr) then
         dlg:modify{
             id = "warning0",
             visible = false
@@ -57,7 +93,7 @@ end
 
 dlg:shades{
     id = "clr",
-    label = "Color:",
+    label = "Preview:",
     -- mode = "pick",
     mode = "sort",
     colors = {Color(230, 9, 122, 255)},
@@ -78,14 +114,34 @@ dlg:label{
     text = "#E6097A"
 }
 
--- dlg:button{
---     id = "swapClr",
---     label = "Fore-Back:",
---     text = "SWAP",
---     onclick = function()
---        app.command.SwitchColors()
---     end
--- }
+dlg:newrow{
+    always = false
+}
+
+dlg:button{
+    id = "fgGet",
+    label = "Get:",
+    text = "FG",
+    focus = false,
+    onclick = function()
+       setFromAse(app.fgColor)
+    end
+}
+
+dlg:button{
+    id = "bgGet",
+    text = "BG",
+    focus = false,
+    onclick = function()
+       app.command.SwitchColors()
+       setFromAse(app.fgColor)
+       app.command.SwitchColors()
+    end
+}
+
+dlg:newrow{
+    always = false
+}
 
 dlg:slider{
     id = "lightness",
@@ -167,7 +223,8 @@ dlg:newrow{
 }
 
 dlg:button{
-    id = "fg",
+    id = "fgSet",
+    label = "Set:",
     text = "FG",
     focus = false,
     onclick = function()
@@ -176,7 +233,7 @@ dlg:button{
 }
 
 dlg:button{
-    id = "bg",
+    id = "bgSet",
     text = "BG",
     focus = false,
     onclick = function()
@@ -187,6 +244,10 @@ dlg:button{
         app.fgColor = dlg.data.clr[1]
         app.command.SwitchColors()
     end
+}
+
+dlg:newrow{
+    always = false
 }
 
 dlg:button{

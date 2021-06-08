@@ -424,6 +424,9 @@ dlg:button {
                         end
 
                         local clr = Clr.labToRgba(l, c * cos(h), c * sin(h), 1.0)
+
+                        -- TODO: Consider shifting chroma here or making an
+                        -- appropriate chroma map per hue ranges.
                         clr = Clr.clamp01(clr)
                         fillClr = AseUtilities.clrToAseColor(clr)
                     else
