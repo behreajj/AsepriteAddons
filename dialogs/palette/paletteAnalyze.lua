@@ -377,7 +377,6 @@ dlg:button {
                     local srcPalLen = math.min(256, #srcPal)
 
                     -- Unpack source palette to universally used data.
-                    local aseColors = {}
                     local clrs = {}
                     local labs = {}
                     local hexes = {}
@@ -405,7 +404,6 @@ dlg:button {
                         if lab.a > aMax then aMax = lab.a end
                         if lab.b > bMax then bMax = lab.b end
 
-                        aseColors[i] = aseColor
                         clrs[i] = clr
                         labs[i] = lab
                         hexes[i] = hex

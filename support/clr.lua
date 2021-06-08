@@ -110,6 +110,14 @@ function Clr.all(a)
        and a.r > 0.0
 end
 
+---Returns true if the alpha channel is within
+---the range [0.0, 1.0].
+---@param a table color
+---@return boolean
+function Clr.alphaIsInGamut(a)
+    return a.a >= 0.0 and a.a <= 1.0
+end
+
 ---Evaluates whether the color's alpha channel
 ---is greater than zero.
 ---@param a table color
@@ -966,7 +974,6 @@ end
 ---@param levels number levels
 ---@return table
 function Clr.quantize(a, levels)
-    -- TODO: Unsigned quantize instead?
     if levels and levels > 1 and levels < 256 then
         local delta = 1.0 / levels
         return Clr.new(
@@ -976,6 +983,25 @@ function Clr.quantize(a, levels)
             delta * math.floor(0.5 + a.a * levels))
     end
     return Clr.new(a.r, a.g, a.b, a.a)
+end
+
+---Returns true if the red, green and blue
+---channels are within the range [0.0, 1.0].
+---@param a table color
+---@return boolean
+function Clr.rgbIsInGamut(a)
+    return a.r >= 0.0 and a.r <= 1.0
+        and a.g >= 0.0 and a.g <= 1.0
+        and a.b >= 0.0 and a.b <= 1.0
+end
+
+---Returns true if all color channels are
+---within the range [0.0, 1.0].
+---@param a table color
+---@return boolean
+function Clr.rgbaIsInGamut(a)
+    return Clr.rgbIsInGamut(a)
+        and Clr.alphaIsInGamut(a)
 end
 
 ---Converts a color to hue, saturation and value.
