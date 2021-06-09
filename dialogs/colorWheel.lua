@@ -5,7 +5,6 @@ local representations = {
     "S_RGB_HSL"
 }
 
--- TODO: Consolidate RYB palette gen with this.
 local rgbAxes = {
     "SATURATION",
     "LIGHTNESS"
@@ -371,6 +370,8 @@ dlg:button {
             local representation = args.representation
             local rgbAxis = args.rgbAxis
             local lchAxis = args.lchAxis
+            local min = math.min
+            local max = math.max
             local cos = math.cos
             local sin = math.sin
 
@@ -386,9 +387,17 @@ dlg:button {
             local lchChromaMax = args.lchChromaMax or defaults.lchChromaMax
             local lchChromaStable = args.lchChromaStable or defaults.lchChromaStable
 
+            lchChromaMin = max(lchChromaMin, 0)
+            lchChromaMax = min(lchChromaMax, 132)
+            lchChromaStable = max(0, min(132, lchChromaStable))
+
             local lchLumMin = args.lchLumMin or defaults.lchLumMin
             local lchLumMax = args.lchLumMax or defaults.lchLumMax
             local lchLumStable = args.lchLumStable or defaults.lchLumStable
+
+            lchLumMin = max(lchLumMin, 0)
+            lchLumMax = min(lchLumMax, 100)
+            lchLumStable = max(0, min(100, lchLumStable))
 
             local clrs = {}
 
@@ -423,12 +432,33 @@ dlg:button {
                                       + iStep0 * lchLumMax
                         end
 
-                        local clr = Clr.labToRgba(l, c * cos(h), c * sin(h), 1.0)
+                        local cosHue = cos(h)
+                        local sinHue = sin(h)
+                        local clr = Clr.labToRgba(l, c * cosHue, c * sinHue, 1.0)
 
-                        -- TODO: Consider shifting chroma here or making an
-                        -- appropriate chroma map per hue ranges.
-                        clr = Clr.clamp01(clr)
-                        fillClr = AseUtilities.clrToAseColor(clr)
+                        if Clr.rgbIsInGamut(clr) then
+                            clr = Clr.clamp01(clr)
+                            fillClr = AseUtilities.clrToAseColor(clr)
+                        else
+
+                            -- Desaturate to bring into gamut,
+                            -- effectively, excess is treated as blowout.
+                            -- Get greedier as the search precedes be increasing
+                            -- the search step as you go.
+                            -- local satNew = c
+                            -- local searchStep = 1.0
+                            -- local limit = 10
+                            -- local g = 0
+                            -- while (g < limit) and (not Clr.rgbIsInGamut(clr)) do
+                            --     satNew = satNew - searchStep
+                            --     clr = Clr.labToRgba(l, satNew * cosHue, satNew * sinHue, 1.0)
+                            --     g = g + 1
+                            --     searchStep = searchStep + 1.0
+                            -- end
+
+                            clr = Clr.clamp01(clr)
+                            fillClr = AseUtilities.clrToAseColor(clr)
+                        end
                     else
                         if rgbAxis == "SATURATION" then
                             local sat = (1.0 - iStep0) * rgbSatMin

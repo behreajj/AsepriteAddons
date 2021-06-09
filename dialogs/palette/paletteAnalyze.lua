@@ -128,6 +128,69 @@ local function drawSwatch(image, x, y, w, h, hex)
     end
 end
 
+local function drawCircleFill(image, xo, yo, r, hex)
+    local rsq = r * r
+    local r2 = r * 2
+    local lenn1 = r2 * r2 - 1
+    for i = 0, lenn1, 1 do
+        local x = (i % r2) - r
+        local y = (i // r2) - r
+        if (x * x + y * y) < rsq then
+        image:drawPixel(
+            xo + x,
+            yo + y,
+            hex)
+        end
+    end
+end
+
+local function midPointCircleStroke(image, clr, xOrigin, yOrigin, radius)
+
+    -- Validate for edges?
+    local r = radius or 16
+    if r < 0 then r = -r end
+    if r == 0 then r = 1 end
+
+    local yo = yOrigin or 0
+    local xo = xOrigin or 0
+    local hex = clr or 0xffffffff
+
+    local x = r
+    local y = 0
+
+    image:drawPixel(xo + r, yo, hex)
+    image:drawPixel(xo - r, yo, hex)
+    image:drawPixel(xo, yo + r, hex)
+    image:drawPixel(xo, yo - r, hex)
+
+    local p = 1 - r
+    while x > y do
+        y = y + 1
+        if p <= 0 then
+            p = p + 2 * y + 1
+        else
+            x = x - 1
+            p = p + 2 * y - 2 * x + 1
+        end
+
+        if x < y then
+            break
+        end
+
+        image:drawPixel(xo + x, yo + y, hex)
+        image:drawPixel(xo - x, yo + y, hex)
+        image:drawPixel(xo + x, yo - y, hex)
+        image:drawPixel(xo - x, yo - y, hex)
+
+        if x ~= y then
+            image:drawPixel(xo + y, yo + x, hex)
+            image:drawPixel(xo - y, yo + x, hex)
+            image:drawPixel(xo + y, yo - x, hex)
+            image:drawPixel(xo - y, yo - x, hex)
+        end
+    end
+end
+
 local function strToCharArr(str)
     local chars = {}
     for i = 1, #str, 1 do
@@ -160,7 +223,7 @@ local function drawVertShd(
         x, y, gw, gh, scale)
 end
 
-local function drawGraph(
+local function drawScatter(
     image,
     lut,
     gw, gh,
@@ -177,7 +240,7 @@ local function drawGraph(
     dataHexes,
     txtHex,
     shdHex,
-    swatchSize)
+    dotRad)
 
     -- Cache global functions to local.
     local trunc = math.tointeger
@@ -190,6 +253,7 @@ local function drawGraph(
     local gwp1 = gw + 1
     local ghp1 = gh + 1
 
+    -- TODO: Externalize to parameters?
     local titleDisplScl = 2
     local txtDisplScl = 1
 
@@ -224,10 +288,10 @@ local function drawGraph(
     local yRuleBottom = xAxisPipsTop - margin - 1
     local xRuley = yRuleBottom
 
-    local swatchHalf = swatchSize // 2
+    local swatchHalf = dotRad // 2
 
-    local displayLeft = yRulex + margin + swatchHalf + 1
-    local displayBottom = xRuley - margin - swatchHalf - swatchSize
+    local displayLeft = yRulex + margin + margin + dotRad
+    local displayBottom = xRuley - margin - swatchHalf - dotRad
 
     displayRight = displayRight - swatchHalf
 
@@ -312,7 +376,8 @@ local function drawGraph(
         xReal = trunc(0.5 + xReal) - swatchHalf
         yReal = trunc(0.5 + yReal) + swatchHalf
 
-        drawSwatch(image, xReal, yReal, swatchSize, swatchSize, hex)
+        -- drawSwatch(image, xReal, yReal, swatchSize, swatchSize, hex)
+        drawCircleFill(image, xReal, yReal, dotRad, hex)
     end
 
 end
@@ -360,6 +425,9 @@ dlg:button {
                     local bkgHex = args.bkgColor.rgbaPixel
                     local txtHex = args.txtColor.rgbaPixel
                     local shdHex = args.shdColor.rgbaPixel
+                    local dotRad = 5
+                    local pipCount = 5
+                    local plotMargin = 2
 
                     -- No alpha allowed in text colors.
                     txtHex = 0xff000000 | txtHex
@@ -474,13 +542,13 @@ dlg:button {
                             coords[i] = { x = lab.a, y = lab.b }
                         end
 
-                        drawGraph(lababImage, lut, gw, gh, 2,
+                        drawScatter(lababImage, lut, gw, gh, plotMargin,
                         "CIE LAB LIGHTNESS",
                         "GREEN TO RED",
                         "BLUE TO YELLOW",
-                        5, aMin, aMax, bMin, bMax,
+                        pipCount, aMin, aMax, bMin, bMax,
                         coords, hexes,
-                        txtHex, shdHex, 6)
+                        txtHex, shdHex, dotRad)
 
                         lababCel.image = lababImage
                     end
@@ -502,13 +570,13 @@ dlg:button {
                             coords[i] = { x = lab.b, y = lab.l }
                         end
 
-                        drawGraph(labLbImage, lut, gw, gh, 2,
+                        drawScatter(labLbImage, lut, gw, gh, plotMargin,
                         "CIE LAB GREEN TO RED",
                         "BLUE TO YELLOW",
                         "LIGHTNESS",
-                        5, bMin, bMax, lMin, lMax,
+                        pipCount, bMin, bMax, lMin, lMax,
                         coords, hexes,
-                        txtHex, shdHex, 6)
+                        txtHex, shdHex, dotRad)
 
                         labLbCel.image = labLbImage
                     end
@@ -530,13 +598,13 @@ dlg:button {
                             coords[i] = { x = lab.a, y = lab.l }
                         end
 
-                        drawGraph(labLaImage, lut, gw, gh, 2,
+                        drawScatter(labLaImage, lut, gw, gh, plotMargin,
                         "CIE LAB BLUE TO YELLOW",
                         "GREEN TO RED",
                         "LIGHTNESS",
-                        5, aMin, aMax, lMin, lMax,
+                        pipCount, aMin, aMax, lMin, lMax,
                         coords, hexes,
-                        txtHex, shdHex, 6)
+                        txtHex, shdHex, dotRad)
 
                         labLaCel.image = labLaImage
                     end
@@ -557,13 +625,13 @@ dlg:button {
                             coords[i] = { x = lch.c, y = lch.l }
                         end
 
-                        drawGraph(lchLcImage, lut, gw, gh, 2,
+                        drawScatter(lchLcImage, lut, gw, gh, 2,
                         "CIE LCH HUE",
                         "CHROMA",
                         "LIGHTNESS",
-                        5, cMin, cMax, lMin, lMax,
+                        pipCount, cMin, cMax, lMin, lMax,
                         coords, hexes,
-                        txtHex, shdHex, 6)
+                        txtHex, shdHex, dotRad)
 
                         lchLcCel.image = lchLcImage
                     end

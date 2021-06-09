@@ -113,6 +113,8 @@ dlg:button {
             end
 
             app.refresh()
+        else
+            app.alert("Dialog arguments are invalid.")
         end
     end
 }

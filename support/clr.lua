@@ -113,9 +113,11 @@ end
 ---Returns true if the alpha channel is within
 ---the range [0.0, 1.0].
 ---@param a table color
+---@param tol number tolerance
 ---@return boolean
-function Clr.alphaIsInGamut(a)
-    return a.a >= 0.0 and a.a <= 1.0
+function Clr.alphaIsInGamut(a, tol)
+    local eps = tol or 0.0
+    return a.a >= -eps and a.a <= (1.0 + eps)
 end
 
 ---Evaluates whether the color's alpha channel
@@ -988,20 +990,26 @@ end
 ---Returns true if the red, green and blue
 ---channels are within the range [0.0, 1.0].
 ---@param a table color
+---@param tol number tolerance
 ---@return boolean
-function Clr.rgbIsInGamut(a)
-    return (a.r >= 0.0 and a.r <= 1.0)
-        and (a.g >= 0.0 and a.g <= 1.0)
-        and (a.b >= 0.0 and a.b <= 1.0)
+function Clr.rgbIsInGamut(a, tol)
+    -- Account for [0.0, 1.0] to [0, 255]
+    -- conversion sloppiness. 0.5/255 is
+    -- approximately 0.002.
+    local eps = tol or 0.0
+    return (a.r >= -eps and a.r <= 1.0 + eps)
+        and (a.g >= -eps and a.g <= 1.0 + eps)
+        and (a.b >= -eps and a.b <= 1.0 + eps)
 end
 
 ---Returns true if all color channels are
 ---within the range [0.0, 1.0].
 ---@param a table color
+---@param tol number tolerance
 ---@return boolean
-function Clr.rgbaIsInGamut(a)
-    return Clr.rgbIsInGamut(a)
-        and Clr.alphaIsInGamut(a)
+function Clr.rgbaIsInGamut(a, tol)
+    return Clr.rgbIsInGamut(a, tol)
+        and Clr.alphaIsInGamut(a, tol)
 end
 
 ---Converts a color to hue, saturation and value.

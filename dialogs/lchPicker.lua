@@ -12,12 +12,12 @@ local function setFromAse(aseClr)
 
     dlg:modify{
         id = "lightness",
-        value = trunc(lch.l)
+        value = trunc(0.5 + lch.l)
     }
 
     dlg:modify{
         id = "chroma",
-        value = trunc(lch.c)
+        value = trunc(0.5 + lch.c)
     }
 
     dlg:modify{
@@ -47,8 +47,7 @@ local function updateClrs(data)
     local h = data.hue / 360.0
     local a = data.alpha * 0.01
     local clr = Clr.lchToRgba(l, c, h, a)
-
-    if Clr.rgbIsInGamut(clr) then
+    if Clr.rgbIsInGamut(clr, 0.000001) then
         dlg:modify{
             id = "warning0",
             visible = false
@@ -96,7 +95,7 @@ dlg:shades{
     label = "Preview:",
     -- mode = "pick",
     mode = "sort",
-    colors = {Color(230, 9, 122, 255)},
+    colors = {Color(253, 10, 2, 255)},
     -- onclick = function(ev)
     --     if ev.button == MouseButton.LEFT then
     --         app.fgColor = ev.color
@@ -111,7 +110,7 @@ dlg:shades{
 dlg:label{
     id = "hexCode",
     label = "Hex:",
-    text = "#E6097A"
+    text = "#FD0A02"
 }
 
 dlg:newrow{
@@ -148,7 +147,7 @@ dlg:slider{
     label = "Lightness:",
     min = 0,
     max = 100,
-    value = 50,
+    value = 53,
     onchange = function()
         updateClrs(dlg.data)
     end
@@ -159,7 +158,7 @@ dlg:slider{
     label = "Chroma:",
     min = 0,
     max = 132,
-    value = 78,
+    value = 103,
     onchange = function()
         updateClrs(dlg.data)
     end
@@ -170,7 +169,7 @@ dlg:slider{
     label = "Hue:",
     min = 0,
     max = 360,
-    value = 0,
+    value = 40,
     onchange = function()
         updateClrs(dlg.data)
     end
