@@ -1,12 +1,113 @@
 dofile("../support/clr.lua")
 dofile("../support/aseutilities.lua")
 
+local harmonies = {
+    "ANALOGOUS",
+    "COMPLEMENT",
+    "SQUARE",
+    "TRIADIC"
+}
+
+local defaults = {
+    shade = Color(254, 2, 0, 255),
+    hexCode = "#FE0200",
+    lightness = 53,
+    chroma = 104,
+    hue = 40,
+    alpha = 100,
+    showHarmonies = false,
+    harmonyType = "TRIADIC"
+}
+
 local dlg = Dialog {
     title = "CIE LCh Color Picker"
 }
 
+local function updateHarmonies(l, c, h, a)
+    local oneThird = 1.0 / 3.0
+    local oneTwelve = 1.0 / 12.0
+
+    local ana0 = Clr.lchToRgba(l, c, h - oneTwelve, a)
+    local ana1 = Clr.lchToRgba(l, c, h + oneTwelve, a)
+
+    local tri0 = Clr.lchToRgba(l, c, h - oneThird, a)
+    local tri1 = Clr.lchToRgba(l, c, h + oneThird, a)
+
+    local tetr0 = Clr.lchToRgba(l, c, h + 0.25, a)
+    local tetr1 = Clr.lchToRgba(l, c, h + 0.5, a)
+    local tetr2 = Clr.lchToRgba(l, c, h + 0.75, a)
+
+    local tris = {
+        AseUtilities.clrToAseColor(Clr.clamp01(tri0)),
+        AseUtilities.clrToAseColor(Clr.clamp01(tri1))
+    }
+
+    local analogues = {
+        AseUtilities.clrToAseColor(Clr.clamp01(ana0)),
+        AseUtilities.clrToAseColor(Clr.clamp01(ana1))
+    }
+
+    local squares = {
+        AseUtilities.clrToAseColor(Clr.clamp01(tetr0)),
+        AseUtilities.clrToAseColor(Clr.clamp01(tetr1)),
+        AseUtilities.clrToAseColor(Clr.clamp01(tetr2))
+    }
+
+    dlg:modify {
+        id = "COMPLEMENT",
+        colors = { squares[2] }
+    }
+
+    dlg:modify {
+        id = "triadic",
+        colors = tris
+    }
+
+    dlg:modify {
+        id = "analogous",
+        colors = analogues
+    }
+
+    dlg:modify {
+        id = "square",
+        colors = squares
+    }
+end
+
+
+local function updateWarning(clr)
+    if Clr.rgbIsInGamut(clr, 0.025) then
+        dlg:modify{
+            id = "warning0",
+            visible = false
+        }
+        dlg:modify{
+            id = "warning1",
+            visible = false
+        }
+        dlg:modify{
+            id = "warning2",
+            visible = false
+        }
+    else
+        dlg:modify{
+            id = "warning0",
+            visible = true
+        }
+        dlg:modify{
+            id = "warning1",
+            visible = true
+        }
+        dlg:modify{
+            id = "warning2",
+            visible = true
+        }
+    end
+end
+
 local function setFromAse(aseClr)
     local clr = AseUtilities.aseColorToClr(aseClr)
+    updateWarning(clr)
     local lch = Clr.rgbaToLch(clr)
     local trunc = math.tointeger
 
@@ -39,6 +140,8 @@ local function setFromAse(aseClr)
         id = "hexCode",
         text = Clr.toHexWeb(clr)
     }
+
+    updateHarmonies(lch.l, lch.c, lch.h, lch.a)
 end
 
 local function updateClrs(data)
@@ -47,33 +150,7 @@ local function updateClrs(data)
     local h = data.hue / 360.0
     local a = data.alpha * 0.01
     local clr = Clr.lchToRgba(l, c, h, a)
-    if Clr.rgbIsInGamut(clr, 0.000001) then
-        dlg:modify{
-            id = "warning0",
-            visible = false
-        }
-        dlg:modify{
-            id = "warning1",
-            visible = false
-        }
-        dlg:modify{
-            id = "warning2",
-            visible = false
-        }
-    else
-        dlg:modify{
-            id = "warning0",
-            visible = true
-        }
-        dlg:modify{
-            id = "warning1",
-            visible = true
-        }
-        dlg:modify{
-            id = "warning2",
-            visible = true
-        }
-    end
+    updateWarning(clr)
 
     -- See
     -- https://github.com/LeaVerou/css.land/issues/10
@@ -88,29 +165,25 @@ local function updateClrs(data)
         id = "hexCode",
         text = Clr.toHexWeb(clr)
     }
+
+    updateHarmonies(l, c, h, a)
 end
 
 dlg:shades{
     id = "clr",
     label = "Preview:",
-    -- mode = "pick",
     mode = "sort",
-    colors = {Color(253, 10, 2, 255)},
-    -- onclick = function(ev)
-    --     if ev.button == MouseButton.LEFT then
-    --         app.fgColor = ev.color
-    --     elseif ev.button == MouseButton.RIGHT then
-    --         app.command.SwitchColors()
-    --         app.fgColor = ev.color
-    --         app.command.SwitchColors()
-    --     end
-    -- end
+    colors = {defaults.shade}
+}
+
+dlg:newrow{
+    always = false
 }
 
 dlg:label{
     id = "hexCode",
     label = "Hex:",
-    text = "#FD0A02"
+    text = defaults.hexCode
 }
 
 dlg:newrow{
@@ -147,7 +220,7 @@ dlg:slider{
     label = "Lightness:",
     min = 0,
     max = 100,
-    value = 53,
+    value = defaults.lightness,
     onchange = function()
         updateClrs(dlg.data)
     end
@@ -158,7 +231,7 @@ dlg:slider{
     label = "Chroma:",
     min = 0,
     max = 132,
-    value = 103,
+    value = defaults.chroma,
     onchange = function()
         updateClrs(dlg.data)
     end
@@ -169,7 +242,7 @@ dlg:slider{
     label = "Hue:",
     min = 0,
     max = 360,
-    value = 40,
+    value = defaults.hue,
     onchange = function()
         updateClrs(dlg.data)
     end
@@ -180,9 +253,157 @@ dlg:slider{
     label = "Alpha:",
     min = 0,
     max = 100,
-    value = 100,
+    value = defaults.alpha,
     onchange = function()
         updateClrs(dlg.data)
+    end
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:check {
+    id = "showHarmonies",
+    label = "Harmonies:",
+    selected = defaults.showHarmonies,
+    onclick = function()
+        local show = dlg.data.showHarmonies
+        dlg:modify {
+            id = "harmonyType",
+            visible = show
+        }
+
+        local md = dlg.data.harmonyType
+        dlg:modify {
+            id = "COMPLEMENT",
+            visible = show and md == "COMPLEMENT"
+        }
+
+        dlg:modify {
+            id = "triadic",
+            visible = show and md == "TRIADIC"
+        }
+
+        dlg:modify {
+            id = "analogous",
+            visible = show and md == "ANALOGOUS"
+        }
+
+        dlg:modify {
+            id = "square",
+            visible = show and md == "SQUARE"
+        }
+    end
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:combobox {
+    id = "harmonyType",
+    label = "Harmony:",
+    option = defaults.harmonyType,
+    options = harmonies,
+    visible = defaults.showHarmonies,
+    onchange = function()
+        local md = dlg.data.harmonyType
+        dlg:modify {
+            id = "COMPLEMENT",
+            visible = md == "COMPLEMENT"
+        }
+
+        dlg:modify {
+            id = "triadic",
+            visible = md == "TRIADIC"
+        }
+
+        dlg:modify {
+            id = "analogous",
+            visible = md == "ANALOGOUS"
+        }
+
+        dlg:modify {
+            id = "square",
+            visible = md == "SQUARE"
+        }
+    end
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:shades{
+    -- TODO: Maybe change to pick then
+    -- set the main clr with this.
+
+    id = "COMPLEMENT",
+    label = "Complement:",
+    mode = "pick",
+    colors = { Color(0xffffa100) },
+    visible = defaults.showHarmonies
+        and defaults.harmonyType == "COMPLEMENT",
+    onclick = function(ev)
+            setFromAse(ev.color)
+    end
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:shades{
+    -- TODO: Maybe change to pick then
+    -- set the main clr with this.
+
+    id = "triadic",
+    label = "Triadic:",
+    mode = "pick",
+    colors = { Color(0xffff8200), Color(0xff3b9d00) },
+    visible = defaults.showHarmonies
+        and defaults.harmonyType == "TRIADIC",
+    onclick = function(ev)
+            setFromAse(ev.color)
+    end
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:shades{
+    id = "analogous",
+    label = "Analogous:",
+    mode = "pick",
+    colors = {
+        Color(0xff6600ff),
+        Color(0xff0062ca)
+    },
+    visible = defaults.showHarmonies
+        and defaults.harmonyType == "ANALOGOUS",
+    onclick = function(ev)
+        setFromAse(ev.color)
+    end
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:shades{
+    id = "square",
+    label = "Square:",
+    mode = "pick",
+    colors = {
+        Color(0xff009600),
+        Color(0xffffa100),
+        Color(0xffff519d) },
+    visible = defaults.showHarmonies
+        and defaults.harmonyType == "SQUARE",
+    onclick = function(ev)
+        setFromAse(ev.color)
     end
 }
 
