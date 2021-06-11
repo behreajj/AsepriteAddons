@@ -49,6 +49,12 @@ dlg:check {
 }
 
 dlg:check {
+    id = "lchLh",
+    label = "CIE LCH Chroma:",
+    selected = true,
+}
+
+dlg:check {
     id = "lchLc",
     label = "CIE LCH Hue:",
     selected = true,
@@ -68,8 +74,8 @@ dlg:check {
 
 dlg:check {
     id = "labab",
-    label = "CIE LAB Lightness:",
-    selected = true,
+    label = "CIE LAB Light:",
+    selected = false,
 }
 
 dlg:check {
@@ -256,11 +262,11 @@ end
 
 local function drawRadial(
     image, lut, gw, gh, margin, title,
-    sectors, rings, rMin, rMax,
+    sectors, rings,
+    rLabel, rMin, rMax,
     coords, dataHexes,
     txtHex, shdHex, dotRad,
-    titleDisplScl, txtDisplScl
-)
+    titleDisplScl, txtDisplScl)
 
     -- Cache global functions to local.
     local trunc = math.tointeger
@@ -278,23 +284,24 @@ local function drawRadial(
     local gwp1 = gw + 1
     local ghp1 = gh + 1
 
+    -- Draw title.
     local titleChars = strToCharArr(title)
     local titleGlyphLen = #titleChars
     local titlePxHalfLen = (titleGlyphLen * gwp1 * titleDisplScl) // 2
     drawHorizShd(lut, image, titleChars, txtHex, shdHex,
     xCenter - titlePxHalfLen, margin, gw, gh, titleDisplScl)
 
-    -- A positive or negative sign,
-    -- plus 3 digits
-    local digLen = 3
+    -- All numbers expected to be positive.
+    local digLen = 4
 
-    local marginScale = 0.85
+    local marginScale = 0.9
     local maxDisplRad = marginScale * 0.5
         * (wImage - margin * 2)
         - digLen * gwp1
     local minDisplRad = 0.125 * maxDisplRad
         + digLen * gwp1
 
+    -- Draw concentric rings.
     local iToStep = 1.0 / (rings - 1.0)
     for i = 0, rings - 1, 1 do
         local t = i * iToStep
@@ -308,9 +315,32 @@ local function drawRadial(
             xCenter, yCenter, displRad)
     end
 
+    -- Draw radial min and max label.
+    local rMinStr = strfmt("%03d", trunc(rMin))
+    rMinStr = rLabel .. "  " .. rMinStr
+    local chars = strToCharArr(rMinStr)
+    drawHorizShd(
+        lut, image, chars,
+        txtHex, shdHex,
+        xCenter - (#rMinStr * gwp1 * txtDisplScl) // 2,
+        yCenter - gh * txtDisplScl // 2,
+        gw, gh, txtDisplScl)
+
+    local rMaxStr = strfmt("%03d", trunc(rMax))
+    chars = strToCharArr(rMaxStr)
+    drawHorizShd(
+        lut, image, chars,
+        txtHex, shdHex,
+        xCenter + maxDisplRad
+            + gw * txtDisplScl * 2,
+        yCenter - gh * txtDisplScl // 2,
+        gw, gh, txtDisplScl)
+
+    -- Draw labels and sector lines.
     local jToTheta = 6.283185307179586 / sectors
     local jToDeg = 360.0 / sectors
     local labelDisplRad = maxDisplRad * 1.122
+    -- local degChar = utf8.char(176)
     for j = 0, sectors - 1 , 1 do
         local theta = j * jToTheta
         local cosTheta = cos(theta)
@@ -333,11 +363,12 @@ local function drawRadial(
 
         bresenham(image, txtHex, x0, y0, x1, y1)
 
+        -- Skip theta == 0 or 360 degrees.
         if j > 0 then
             local degrees = j * jToDeg
             degrees = trunc(0.5 + degrees)
-            local degStr = string.format("%03d", degrees)
-            local chars = strToCharArr(degStr)
+            local degStr = strfmt("%03d", degrees)
+            chars = strToCharArr(degStr)
 
             local xLabel = labelDisplRad * cosTheta
             local yLabel = labelDisplRad * sinTheta
@@ -345,8 +376,8 @@ local function drawRadial(
             xLabel = xLabel + xCenter
             yLabel = yLabel + yCenter
 
-            xLabel = xLabel - gwp1 * txtDisplScl * 0.5
-            yLabel = yLabel - ghp1 * txtDisplScl * 0.5
+            xLabel = xLabel - digLen * gw * txtDisplScl * 0.5
+            yLabel = yLabel - gh * txtDisplScl * 0.5
 
             xLabel = trunc(0.5 + xLabel)
             yLabel = trunc(0.5 + yLabel)
@@ -359,6 +390,7 @@ local function drawRadial(
         end
     end
 
+    -- Draw swatches.
     local origDiff = rMax - rMin
     local displDiff = maxDisplRad - minDisplRad
     local denom = 0.0
@@ -789,11 +821,39 @@ dlg:button {
                         lchLcCel.image = lchLcImage
                     end
 
+                    local lchLh = args.lchLh
+                    if lchLh then
+                        -- Initialize layer.
+                        local lchLhLayer = sprite:newLayer()
+                        lchLhLayer.name = "CIE.LCH.Chroma"
+                        local lchLhCel = sprite:newCel(lchLhLayer, frame)
+                        local lchLhImage = Image(sprite.width, sprite.height)
+                        fill(lchLhImage, bkgHex)
+
+                        -- Convert lab data to coordinates.
+                        local coords = {}
+                        for i = 1, #lchs, 1 do
+                            local lch = lchs[i]
+                            coords[i] = {
+                                t = lch.h * 6.283185307179586,
+                                r = lch.l }
+                        end
+
+                        drawRadial(
+                            lchLhImage, lut, gw, gh, 2,
+                            "CIE LCH CHROMA", 12, 6,
+                            "LIGHT", lMin, lMax,
+                            coords, hexes,
+                            txtHex, shdHex, dotRad, 2, 1)
+
+                        lchLhCel.image = lchLhImage
+                    end
+
                     local lchCh = args.lchCh
                     if lchCh then
                         -- Initialize layer.
                         local lchChLayer = sprite:newLayer()
-                        lchChLayer.name = "CIE.LCH.Light"
+                        lchChLayer.name = "CIE.LCH.Lightness"
                         local lchChCel = sprite:newCel(lchChLayer, frame)
                         local lchChImage = Image(sprite.width, sprite.height)
                         fill(lchChImage, bkgHex)
@@ -810,12 +870,12 @@ dlg:button {
                         drawRadial(
                             lchChImage, lut, gw, gh, 2,
                             "CIE LCH LIGHTNESS", 12, 6,
-                            cMin, cMax, coords, hexes,
+                            "CHROMA", cMin, cMax,
+                            coords, hexes,
                             txtHex, shdHex, dotRad, 2, 1)
 
                         lchChCel.image = lchChImage
                     end
-
 
                 else
                     app.alert("The source palette could not be found.")

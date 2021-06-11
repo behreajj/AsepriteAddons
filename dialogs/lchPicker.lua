@@ -4,6 +4,7 @@ dofile("../support/aseutilities.lua")
 local harmonies = {
     "ANALOGOUS",
     "COMPLEMENT",
+    "SPLIT",
     "SQUARE",
     "TRIADIC"
 }
@@ -26,6 +27,8 @@ local dlg = Dialog {
 local function updateHarmonies(l, c, h, a)
     local oneThird = 1.0 / 3.0
     local oneTwelve = 1.0 / 12.0
+    local splHue0 = 0.4166666666666667
+    local splHue1 = 0.5833333333333334
 
     local ana0 = Clr.lchToRgba(l, c, h - oneTwelve, a)
     local ana1 = Clr.lchToRgba(l, c, h + oneTwelve, a)
@@ -33,9 +36,12 @@ local function updateHarmonies(l, c, h, a)
     local tri0 = Clr.lchToRgba(l, c, h - oneThird, a)
     local tri1 = Clr.lchToRgba(l, c, h + oneThird, a)
 
-    local tetr0 = Clr.lchToRgba(l, c, h + 0.25, a)
-    local tetr1 = Clr.lchToRgba(l, c, h + 0.5, a)
-    local tetr2 = Clr.lchToRgba(l, c, h + 0.75, a)
+    local split0 = Clr.lchToRgba(l, c, h + splHue0, a)
+    local split1 = Clr.lchToRgba(l, c, h + splHue1, a)
+
+    local square0 = Clr.lchToRgba(l, c, h + 0.25, a)
+    local square1 = Clr.lchToRgba(l, c, h + 0.5, a)
+    local square2 = Clr.lchToRgba(l, c, h + 0.75, a)
 
     local tris = {
         AseUtilities.clrToAseColor(Clr.clamp01(tri0)),
@@ -47,10 +53,15 @@ local function updateHarmonies(l, c, h, a)
         AseUtilities.clrToAseColor(Clr.clamp01(ana1))
     }
 
+    local splits = {
+        AseUtilities.clrToAseColor(Clr.clamp01(split0)),
+        AseUtilities.clrToAseColor(Clr.clamp01(split1))
+    }
+
     local squares = {
-        AseUtilities.clrToAseColor(Clr.clamp01(tetr0)),
-        AseUtilities.clrToAseColor(Clr.clamp01(tetr1)),
-        AseUtilities.clrToAseColor(Clr.clamp01(tetr2))
+        AseUtilities.clrToAseColor(Clr.clamp01(square0)),
+        AseUtilities.clrToAseColor(Clr.clamp01(square1)),
+        AseUtilities.clrToAseColor(Clr.clamp01(square2))
     }
 
     dlg:modify {
@@ -66,6 +77,11 @@ local function updateHarmonies(l, c, h, a)
     dlg:modify {
         id = "analogous",
         colors = analogues
+    }
+
+    dlg:modify {
+        id = "split",
+        colors = splits
     }
 
     dlg:modify {
@@ -350,6 +366,11 @@ dlg:check {
         }
 
         dlg:modify {
+            id = "split",
+            visible = show and md == "SPLIT"
+        }
+
+        dlg:modify {
             id = "square",
             visible = show and md == "SQUARE"
         }
@@ -381,6 +402,11 @@ dlg:combobox {
         dlg:modify {
             id = "analogous",
             visible = md == "ANALOGOUS"
+        }
+
+        dlg:modify {
+            id = "split",
+            visible = md == "SPLIT"
         }
 
         dlg:modify {
@@ -444,6 +470,28 @@ dlg:shades{
     },
     visible = defaults.showHarmonies
         and defaults.harmonyType == "ANALOGOUS",
+    onclick = function(ev)
+        if ev.button == MouseButton.LEFT then
+            setFromAse(ev.color)
+        elseif ev.button == MouseButton.RIGHT then
+            app.fgColor = ev.color
+        end
+    end
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:shades{
+    id = "split",
+    label = "Split:",
+    mode = "pick",
+    colors = {
+        Color(0xff9ca100),
+        Color(0xffff9a00) },
+    visible = defaults.showHarmonies
+        and defaults.harmonyType == "SPLIT",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
             setFromAse(ev.color)
