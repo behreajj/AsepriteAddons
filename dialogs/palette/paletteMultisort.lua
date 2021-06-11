@@ -9,7 +9,8 @@ local criteria = {
     "HSV_SATURATION",
     "HSV_VALUE",
 
-    "LUMINANCE",
+    -- Disable for now.
+    -- "LUMINANCE",
 
     "RED",
     "GREEN",
@@ -17,14 +18,10 @@ local criteria = {
 }
 
 local defaults = {
-    primary = "HSL_LIGHTNESS",
-    secondary = "HSL_SATURATION",
-    tertiary = "HSL_HUE"
+    stride = 6,
+    primary = "HSL_HUE",
+    secondary = "HSL_LIGHTNESS"
 }
-
-local function quantize(x, levels)
-    return math.floor(0.5 + x * levels) / levels
-end
 
 local function sRgbTolRgb(x)
     -- 1.0 / 12.92 = 0.07739938080495357
@@ -36,81 +33,7 @@ local function sRgbTolRgb(x)
     end
 end
 
-local function hslHueSorter(a, b)
-    -- Hue depends on saturation being greater than 0
-    -- and lightness being bewteen 0 and 1.
-    local aSat = a.hslSaturation
-    if aSat < 0.000001 then return 0 end
-    local bSat = b.hslSaturation
-    if bSat < 0.000001 then return 0 end
-
-    local aLgt = a.hslLightness
-    if aLgt < 0.000001 or aLgt > 0.999999 then
-        return 0
-    end
-    local bLgt = b.hslLightness
-    if bLgt < 0.000001 or bLgt > 0.999999 then
-        return 0
-    end
-
-    local aHue = quantize(a.hslHue, 180)
-    local bHue = quantize(b.hslHue, 180)
-    if aHue > bHue then return 1
-    elseif aHue < bHue then return -1
-    else return 0 end
-end
-
-local function hslSatSorter(a, b)
-    local aSat = a.hslSaturation
-    local bSat = b.hslSaturation
-    if aSat > bSat then return 1
-    elseif aSat < bSat then return -1
-    else return 0 end
-end
-
-local function hslLightSorter(a, b)
-    local aLight = a.hslLightness
-    local bLight = b.hslLightness
-    if aLight > bLight then return 1
-    elseif aLight < bLight then return -1
-    else return 0 end
-end
-
-local function hsvHueSorter(a, b)
-    local aSat = a.hsvSaturation
-    if aSat < 0.000001 then return 0 end
-    local bSat = b.hsvSaturation
-    if bSat < 0.000001 then return 0 end
-
-    local aVal = a.hsvValue
-    if aVal < 0.000001 then return 0 end
-    local bVal = b.hsvValue
-    if bVal < 0.000001 then return 0 end
-
-    local aHue = quantize(a.hsvHue, 180)
-    local bHue = quantize(b.hsvHue, 180)
-    if aHue > bHue then return 1
-    elseif aHue < bHue then return -1
-    else return 0 end
-end
-
-local function hsvSatSorter(a, b)
-    local aSat = a.hsvSaturation
-    local bSat = b.hsvSaturation
-    if aSat > bSat then return 1
-    elseif aSat < bSat then return -1
-    else return 0 end
-end
-
-local function hsvValSorter(a, b)
-    local aVal = a.hsvValue
-    local bVal = b.hsvValue
-    if aVal > bVal then return 1
-    elseif aVal < bVal then return -1
-    else return 0 end
-end
-
-local function lumSorter(a, b)
+local function lumSorter1(a, b)
     -- Divide by 255 to convert to range [0.0, 1.0].
     local asr01 = 0.00392156862745098 * a.red
     local asg01 = 0.00392156862745098 * a.green
@@ -139,70 +62,326 @@ local function lumSorter(a, b)
         + 0.7151691357059038 * blg01
         + 0.07218152157344333 * blb01
 
-    if aLum > bLum then return 1
-    elseif aLum < bLum then return -1
-    else return 0 end
+    return aLum < bLum
 end
 
-local function redSorter(a, b)
+local function quantize(x, levels)
+    return math.floor(0.5 + x * levels) / levels
+end
+
+local function hslHueSorter1(a, b)
+    -- local aHue = quantize(a.hslHue, 180)
+    -- local bHue = quantize(b.hslHue, 180)
+    local aHue = a.hslHue
+    local bHue = b.hslHue
+    return aHue < bHue
+end
+
+local function hslSatSorter1(a, b)
+    local aSat = a.hslSaturation
+    local bSat = b.hslSaturation
+    return aSat < bSat
+end
+
+local function hslLightSorter1(a, b)
+    local aLight = a.hslLightness
+    local bLight = b.hslLightness
+    return aLight < bLight
+end
+
+local function hsvHueSorter1(a, b)
+    local aHue = a.hsvHue
+    local bHue = b.hsvHue
+    return aHue < bHue
+end
+
+local function hsvSatSorter1(a, b)
+    local aSat = a.hsvSaturation
+    local bSat = b.hsvSaturation
+    return aSat < bSat
+end
+
+local function hsvValSorter1(a, b)
+    local aVal = a.hsvValue
+    local bVal = b.hsvValue
+    return aVal < bVal
+end
+
+local function redSorter1(a, b)
     local aRed = a.red
     local bRed = b.red
-    if aRed > bRed then return 1
-    elseif aRed < bRed then return -1
-    else return 0 end
+    return aRed < bRed
 end
 
-local function greenSorter(a, b)
+local function greenSorter1(a, b)
     local aGreen = a.green
     local bGreen = b.green
-    if aGreen > bGreen then return 1
-    elseif aGreen < bGreen then return -1
-    else return 0 end
+    return aGreen < bGreen
 end
 
-local function blueSorter(a, b)
+local function blueSorter1(a, b)
     local aBlue = a.blue
     local bBlue = b.blue
-    if aBlue > bBlue then return 1
-    elseif aBlue < bBlue then return -1
-    else return 0 end
+    return aBlue < bBlue
 end
 
-local function alphaSorter(a, b)
+local function alphaSorter1(a, b)
     local aAlpha = a.alpha
     local bAlpha = b.alpha
-    if aAlpha > bAlpha then return 1
-    elseif aAlpha < bAlpha then return -1
-    else return 0 end
+    return aAlpha < bAlpha
 end
 
-local function presetToMethod(preset)
+local function avgHslHue(arr)
+    local avg = 0
+    local lenarr = #arr
+    for i = 1, #arr, 1 do
+         avg = avg + arr[i].hslHue
+    end
+
+    if lenarr > 0 then
+        avg = avg / lenarr
+    end
+    return avg
+end
+
+local function avgHslSat(arr)
+    local avg = 0
+    local lenarr = #arr
+    for i = 1, #arr, 1 do
+         avg = avg + arr[i].hslSaturation
+    end
+
+    if lenarr > 0 then
+        avg = avg / lenarr
+    end
+    return avg
+end
+
+local function avgHslLight(arr)
+    local avg = 0
+    local lenarr = #arr
+    for i = 1, #arr, 1 do
+         avg = avg + arr[i].hslLightness
+    end
+
+    if lenarr > 0 then
+        avg = avg / lenarr
+    end
+    return avg
+end
+
+local function avgHsvHue(arr)
+    local avg = 0
+    local lenarr = #arr
+    for i = 1, #arr, 1 do
+         avg = avg + arr[i].hsvHue
+    end
+
+    if lenarr > 0 then
+        avg = avg / lenarr
+    end
+    return avg
+end
+
+local function avgHsvSat(arr)
+    local avg = 0
+    local lenarr = #arr
+    for i = 1, #arr, 1 do
+         avg = avg + arr[i].hsvSaturation
+    end
+
+    if lenarr > 0 then
+        avg = avg / lenarr
+    end
+    return avg
+end
+
+local function avgHsvVal(arr)
+    local avg = 0
+    local lenarr = #arr
+    for i = 1, #arr, 1 do
+         avg = avg + arr[i].hsvValue
+    end
+
+    if lenarr > 0 then
+        avg = avg / lenarr
+    end
+    return avg
+end
+
+local function avgRed(arr)
+    local avg = 0
+    local lenarr = #arr
+    for i = 1, #arr, 1 do
+         avg = avg + arr[i].red
+    end
+
+    if lenarr > 0 then
+        avg = avg / lenarr
+    end
+    return avg
+end
+
+local function avgGreen(arr)
+    local avg = 0
+    local lenarr = #arr
+    for i = 1, #arr, 1 do
+         avg = avg + arr[i].green
+    end
+
+    if lenarr > 0 then
+        avg = avg / lenarr
+    end
+    return avg
+end
+
+local function avgBlue(arr)
+    local avg = 0
+    local lenarr = #arr
+    for i = 1, #arr, 1 do
+         avg = avg + arr[i].blue
+    end
+
+    if lenarr > 0 then
+        avg = avg / lenarr
+    end
+    return avg
+end
+
+local function avgAlpha(arr)
+    local avg = 0
+    local lenarr = #arr
+    for i = 1, #arr, 1 do
+         avg = avg + arr[i].alpha
+    end
+
+    if lenarr > 0 then
+        avg = avg / lenarr
+    end
+    return avg
+end
+
+local function hslHueSorter2(a, b)
+    local aVal = avgHslHue(a)
+    local bVal = avgHslHue(b)
+    return aVal < bVal
+end
+
+local function hslSatSorter2(a, b)
+    local aVal = avgHslSat(a)
+    local bVal = avgHslSat(b)
+    return aVal < bVal
+end
+
+local function hslLightSorter2(a, b)
+    local aVal = avgHslLight(a)
+    local bVal = avgHslLight(b)
+    return aVal < bVal
+end
+
+local function hsvHueSorter2(a, b)
+    local aHue = avgHsvHue(a)
+    local bHue = avgHsvHue(b)
+    return aHue < bHue
+end
+
+local function hsvSatSorter2(a, b)
+    local aSat = avgHsvSat(a)
+    local bSat = avgHsvSat(b)
+    return aSat < bSat
+end
+
+local function hsvValSorter2(a, b)
+    local aVal = avgHsvVal(a)
+    local bVal = avgHsvVal(b)
+    return aVal < bVal
+end
+
+local function redSorter2(a, b)
+    local aRed = avgRed(a)
+    local bRed = avgRed(b)
+    return aRed < bRed
+end
+
+local function greenSorter2(a, b)
+    local aGreen = avgGreen(a)
+    local bGreen = avgGreen(b)
+    return aGreen < bGreen
+end
+
+local function blueSorter2(a, b)
+    local aBlue = avgBlue(a)
+    local bBlue = avgBlue(b)
+    return aBlue < bBlue
+end
+
+local function alphaSorter2(a, b)
+    local aAlpha = avgAlpha(a)
+    local bAlpha = avgAlpha(b)
+    return aAlpha < bAlpha
+end
+
+local function presetToMethod1(preset)
     if preset == "HSL_HUE" then
-        return hslHueSorter
+        return hslHueSorter1
     elseif preset == "HSL_SATURATION" then
-        return hslSatSorter
+        return hslSatSorter1
     elseif preset == "HSL_LIGHTNESS" then
-        return hslLightSorter
+        return hslLightSorter1
     elseif preset == "HSV_HUE" then
-        return hsvHueSorter
+        return hsvHueSorter1
     elseif preset == "HSV_SATURATION" then
-        return hsvSatSorter
+        return hsvSatSorter1
     elseif preset == "HSV_VALUE" then
-        return hsvValSorter
-    elseif preset == "LUMINANCE" then
-        return lumSorter
+        return hsvValSorter1
+    -- elseif preset == "LUMINANCE" then
+    --     return lumSorter1
     elseif preset == "RED" then
-        return redSorter
+        return redSorter1
     elseif preset == "GREEN" then
-        return greenSorter
+        return greenSorter1
     elseif preset == "BLUE" then
-        return blueSorter
+        return blueSorter1
     else -- default to ALPHA
-        return alphaSorter
+        return alphaSorter1
+    end
+end
+
+local function presetToMethod2(preset)
+    if preset == "HSL_HUE" then
+        return hslHueSorter2
+    elseif preset == "HSL_SATURATION" then
+        return hslSatSorter2
+    elseif preset == "HSL_LIGHTNESS" then
+        return hslLightSorter2
+    elseif preset == "HSV_HUE" then
+        return hsvHueSorter2
+    elseif preset == "HSV_SATURATION" then
+        return hsvSatSorter2
+    elseif preset == "HSV_VALUE" then
+        return hsvValSorter2
+    elseif preset == "RED" then
+        return redSorter2
+    elseif preset == "GREEN" then
+        return greenSorter2
+    elseif preset == "BLUE" then
+        return blueSorter2
+    else -- default to ALPHA
+        return alphaSorter2
     end
 end
 
 local dlg = Dialog { title = "Sort Palette Multiple Criteria" }
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "stride",
+    label = "Stride:",
+    value = defaults.stride,
+    min = 2,
+    max = 32
+}
 
 dlg:combobox {
     id = "primary",
@@ -222,15 +401,6 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-dlg:combobox {
-    id = "tertiary",
-    label = "Tertiary:",
-    option = defaults.tertiary,
-    options = criteria
-}
-
-dlg:newrow { always = false }
-
 dlg:button {
     id = "ok",
     text = "OK",
@@ -243,42 +413,58 @@ dlg:button {
                 local oldMode = sprite.colorMode
                 app.command.ChangePixelFormat { format = "rgb" }
 
+                local stride = args.stride
+
                 local srcPal = sprite.palettes[1] or Palette()
                 local srcPalLen = #srcPal
-                local palTable = {}
-                for i = 1, srcPalLen, 1 do
-                    palTable[i] = srcPal:getColor(i - 1)
+                local pal2d = {}
+                -- local rowCount = srcPalLen // stride
+                local rowCount = math.ceil(srcPalLen / stride)
+                for i = 1, rowCount, 1 do
+                    pal2d[i] = {}
+                end
+
+                local idxfl0 = 0
+                for i = 1, rowCount, 1 do
+                    local row = pal2d[i]
+                    for j = 1, stride, 1 do
+                        if idxfl0 < srcPalLen then
+                            local aseColor = srcPal:getColor(idxfl0)
+                            row[j] = aseColor
+                            -- print(i .. ", " .. j .. ": " ..
+                            --     string.format("%X", aseColor.rgbaPixel))
+                        end
+                        idxfl0 = idxfl0 + 1
+                    end
                 end
 
                 local strPrimary = args.primary
+                local funcPrimary = presetToMethod2(strPrimary)
+                table.sort(pal2d, funcPrimary)
+
+                -- Sort inner arrays.
                 local strSecondary = args.secondary
-                local strTertiary = args.tertiary
-
-                local funcPrimary = presetToMethod(strPrimary)
-                local funcSecondary = presetToMethod(strSecondary)
-                local funcTertiary = presetToMethod(strTertiary)
-
-                local funcs = {
-                    funcPrimary,
-                    funcSecondary,
-                    funcTertiary
-                }
-
-                local sorter = function(a, b)
-                    for i = 1, #funcs, 1 do
-                        local eval = funcs[i](a, b)
-                        if eval ~= 0 then
-                            return eval < 0
-                        end
+                local funcSecondary = presetToMethod1(strSecondary)
+                for i = 1, rowCount, 1 do
+                    local row = pal2d[i]
+                    if row then
+                        table.sort(row, funcSecondary)
                     end
-                    return false
                 end
 
-                table.sort(palTable, sorter)
-
-                local trgPal = Palette(srcPalLen)
-                for i = 1, srcPalLen, 1 do
-                    trgPal:setColor(i - 1, palTable[i])
+                -- Flatten out sorted 2d array to a palette.
+                local newLen = rowCount * stride
+                local trgPal = Palette(newLen)
+                for i = 1, rowCount, 1 do
+                    local row = pal2d[i]
+                    for j = 1, stride, 1 do
+                        local idxfl1 = ((i - 1) * stride + (j - 1))
+                        if idxfl1 < newLen then
+                            trgPal:setColor(idxfl1, row[j])
+                        else
+                            trgPal:setColor(idxfl1, Color(0, 0, 0, 0))
+                        end
+                    end
                 end
                 sprite:setPalette(trgPal)
 

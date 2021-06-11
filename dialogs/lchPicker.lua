@@ -169,27 +169,6 @@ local function updateClrs(data)
     updateHarmonies(l, c, h, a)
 end
 
-dlg:shades{
-    id = "clr",
-    label = "Preview:",
-    mode = "sort",
-    colors = {defaults.shade}
-}
-
-dlg:newrow{
-    always = false
-}
-
-dlg:label{
-    id = "hexCode",
-    label = "Hex:",
-    text = defaults.hexCode
-}
-
-dlg:newrow{
-    always = false
-}
-
 dlg:button{
     id = "fgGet",
     label = "Get:",
@@ -209,6 +188,27 @@ dlg:button{
        setFromAse(app.fgColor)
        app.command.SwitchColors()
     end
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:shades{
+    id = "clr",
+    label = "Preview:",
+    mode = "sort",
+    colors = {defaults.shade}
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:label{
+    id = "hexCode",
+    label = "Hex:",
+    text = defaults.hexCode
 }
 
 dlg:newrow{
@@ -256,6 +256,65 @@ dlg:slider{
     value = defaults.alpha,
     onchange = function()
         updateClrs(dlg.data)
+    end
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:label{
+    id = "warning0",
+    label = "Warning:",
+    text = "Clipped to sRGB.",
+    visible = false
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:label{
+    id = "warning1",
+    text = "Hue may shift.",
+    visible = false
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:label{
+    id = "warning2",
+    text = "Reduce chroma.",
+    visible = false
+}
+
+dlg:newrow{
+    always = false
+}
+
+dlg:button{
+    id = "fgSet",
+    label = "Set:",
+    text = "FG",
+    focus = false,
+    onclick = function()
+        app.fgColor = dlg.data.clr[1]
+    end
+}
+
+dlg:button{
+    id = "bgSet",
+    text = "BG",
+    focus = false,
+    onclick = function()
+        -- Bug where assigning to app.bgColor
+        -- leads to unlocked palette colors
+        -- being assigned instead.
+        app.command.SwitchColors()
+        app.fgColor = dlg.data.clr[1]
+        app.command.SwitchColors()
     end
 }
 
@@ -336,9 +395,6 @@ dlg:newrow{
 }
 
 dlg:shades{
-    -- TODO: Maybe change to pick then
-    -- set the main clr with this.
-
     id = "COMPLEMENT",
     label = "Complement:",
     mode = "pick",
@@ -346,7 +402,11 @@ dlg:shades{
     visible = defaults.showHarmonies
         and defaults.harmonyType == "COMPLEMENT",
     onclick = function(ev)
+        if ev.button == MouseButton.LEFT then
             setFromAse(ev.color)
+        elseif ev.button == MouseButton.RIGHT then
+            app.fgColor = ev.color
+        end
     end
 }
 
@@ -355,9 +415,6 @@ dlg:newrow{
 }
 
 dlg:shades{
-    -- TODO: Maybe change to pick then
-    -- set the main clr with this.
-
     id = "triadic",
     label = "Triadic:",
     mode = "pick",
@@ -365,7 +422,11 @@ dlg:shades{
     visible = defaults.showHarmonies
         and defaults.harmonyType == "TRIADIC",
     onclick = function(ev)
+        if ev.button == MouseButton.LEFT then
             setFromAse(ev.color)
+        elseif ev.button == MouseButton.RIGHT then
+            app.fgColor = ev.color
+        end
     end
 }
 
@@ -384,7 +445,11 @@ dlg:shades{
     visible = defaults.showHarmonies
         and defaults.harmonyType == "ANALOGOUS",
     onclick = function(ev)
-        setFromAse(ev.color)
+        if ev.button == MouseButton.LEFT then
+            setFromAse(ev.color)
+        elseif ev.button == MouseButton.RIGHT then
+            app.fgColor = ev.color
+        end
     end
 }
 
@@ -403,66 +468,11 @@ dlg:shades{
     visible = defaults.showHarmonies
         and defaults.harmonyType == "SQUARE",
     onclick = function(ev)
-        setFromAse(ev.color)
-    end
-}
-
-dlg:newrow{
-    always = false
-}
-
-dlg:label{
-    id = "warning0",
-    label = "Warning:",
-    text = "Clipped to sRGB.",
-    visible = false
-}
-
-dlg:newrow{
-    always = false
-}
-
-dlg:label{
-    id = "warning1",
-    text = "Hue may shift.",
-    visible = false
-}
-
-dlg:newrow{
-    always = false
-}
-
-dlg:label{
-    id = "warning2",
-    text = "Reduce chroma.",
-    visible = false
-}
-
-dlg:newrow{
-    always = false
-}
-
-dlg:button{
-    id = "fgSet",
-    label = "Set:",
-    text = "FG",
-    focus = false,
-    onclick = function()
-        app.fgColor = dlg.data.clr[1]
-    end
-}
-
-dlg:button{
-    id = "bgSet",
-    text = "BG",
-    focus = false,
-    onclick = function()
-        -- Bug where assigning to app.bgColor
-        -- leads to unlocked palette colors
-        -- being assigned instead.
-        app.command.SwitchColors()
-        app.fgColor = dlg.data.clr[1]
-        app.command.SwitchColors()
+        if ev.button == MouseButton.LEFT then
+            setFromAse(ev.color)
+        elseif ev.button == MouseButton.RIGHT then
+            app.fgColor = ev.color
+        end
     end
 }
 

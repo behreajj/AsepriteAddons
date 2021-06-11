@@ -59,7 +59,7 @@ end
 ---@return table
 function Bounds3.center(b)
     return Vec3.scale(
-        Vec3.add(b.min, b.max), 0.5)
+        Vec3.add(b.mn, b.mx), 0.5)
 end
 
 ---Evaluates whether a point is within the
@@ -71,13 +71,16 @@ function Bounds3.containsInclusive(b, v)
     local y = 0.0
     local z = 0.0
 
-    if v.x >= b.min.x and v.x <= b.max.x then
+    local mx = b.mx
+    local mn = b.mn
+
+    if v.x >= mn.x and v.x <= mx.x then
         x = 1.0
     end
-    if v.y >= b.min.y and v.y <= b.max.y then
+    if v.y >= mn.y and v.y <= mx.y then
         y = 1.0
     end
-    if v.z >= b.min.z and v.z <= b.max.z then
+    if v.z >= mn.z and v.z <= mx.z then
         z = 1.0
     end
 
@@ -90,7 +93,7 @@ end
 ---@param b table bound
 ---@return table
 function Bounds3.extent(b)
-    return Vec3.diff(b.max, b.min)
+    return Vec3.diff(b.mx, b.mn)
 end
 
 ---Creates a bounding volume from a center
