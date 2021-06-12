@@ -1,11 +1,24 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/curve3.lua")
+
+local defaults = {
+    palType = "ACTIVE",
+    startIndex = 0,
+    count = 256,
+    contiguous = false,
+    closeLoop = false,
+    resolution = 64,
+    bkgColor = Color(38, 38, 38, 255),
+    txtColor = Color(255, 245, 215, 255),
+    shdColor = Color(0, 0, 0, 255)
+}
 
 local dlg = Dialog { title = "Palette Analysis" }
 
 dlg:combobox {
     id = "palType",
     label = "Palette:",
-    option = "ACTIVE",
+    option = defaults.palType,
     options = { "ACTIVE", "FILE", "PRESET" },
     onchange = function()
         local state = dlg.data.palType
@@ -42,40 +55,62 @@ dlg:entry {
 
 dlg:newrow { always = false }
 
+dlg:slider{
+    id = "startIndex",
+    label = "Start:",
+    min = 0,
+    max = 255,
+    value = defaults.startIndex
+}
+
+dlg:newrow { always = false }
+
+dlg:slider{
+    id = "count",
+    label = "Count:",
+    min = 1,
+    max = 256,
+    value = defaults.count
+}
+
+dlg:newrow { always = false }
+
 dlg:check {
     id = "lchCh",
-    label = "CIE LCH Light:",
+    label = "CIE LCH:",
+    text = "Light",
     selected = true,
 }
 
 dlg:check {
     id = "lchLh",
-    label = "CIE LCH Chroma:",
+    text = "Chroma",
     selected = true,
 }
 
 dlg:check {
     id = "lchLc",
-    label = "CIE LCH Hue:",
-    selected = true,
-}
-
-dlg:check {
-    id = "labLa",
-    label = "CIE LAB Blue Yellow:",
-    selected = true,
-}
-
-dlg:check {
-    id = "labLb",
-    label = "CIE LAB Red Green:",
+    text = "Hue",
     selected = true,
 }
 
 dlg:check {
     id = "labab",
-    label = "CIE LAB Light:",
+    label = "CIE LAB:",
+    text = "Light",
     selected = false,
+}
+
+dlg:check {
+    id = "labLb",
+    text = "A",
+    selected = true,
+}
+
+dlg:check {
+    id = "labLa",
+    text = "B",
+    selected = true,
 }
 
 dlg:check {
@@ -84,12 +119,46 @@ dlg:check {
     selected = true,
 }
 
+dlg:check {
+    id = "contiguous",
+    label = "Contiguous:",
+    selected = defaults.contiguous,
+    onclick = function()
+        local contig = dlg.data.contiguous
+        dlg:modify{
+            id = "closedLoop",
+            visible = contig
+        }
+
+        dlg:modify{
+            id = "resolution",
+            visible = contig
+        }
+    end
+}
+
+dlg:check {
+    id = "closedLoop",
+    label = "Closed Loop:",
+    selected = defaults.closedLoop,
+    visible = defaults.contiguous == true
+}
+
+dlg:slider{
+    id = "resolution",
+    label = "Resolution:",
+    min = 0,
+    max = 128,
+    value = defaults.resolution,
+    visible = defaults.contiguous == true
+}
+
 dlg:newrow { always = false }
 
 dlg:color{
     id = "bkgColor",
     label = "Background:",
-    color = Color(38, 38, 38, 255)
+    color = defaults.bkgColor
 }
 
 dlg:newrow { always = false }
@@ -97,7 +166,7 @@ dlg:newrow { always = false }
 dlg:color{
     id = "txtColor",
     label = "Text:",
-    color = Color(255, 245, 215, 255)
+    color = defaults.txtColor
 }
 
 dlg:newrow { always = false }
@@ -105,7 +174,7 @@ dlg:newrow { always = false }
 dlg:color{
     id = "shdColor",
     label = "Shadow:",
-    color = Color(0, 0, 0, 255),
+    color = defaults.shdColor,
     visible = true
 }
 
@@ -282,7 +351,7 @@ local function drawRadial(
 
     -- Account for drop shadow offset
     local gwp1 = gw + 1
-    local ghp1 = gh + 1
+    -- local ghp1 = gh + 1
 
     -- Draw title.
     local titleChars = strToCharArr(title)
@@ -292,14 +361,14 @@ local function drawRadial(
     xCenter - titlePxHalfLen, margin, gw, gh, titleDisplScl)
 
     -- All numbers expected to be positive.
-    local digLen = 4
+    local digLen = 3
 
-    local marginScale = 0.9
+    local marginScale = 0.85
     local maxDisplRad = marginScale * 0.5
         * (wImage - margin * 2)
-        - digLen * gwp1
+        - digLen * gw
     local minDisplRad = 0.125 * maxDisplRad
-        + digLen * gwp1
+        + digLen * gw
 
     -- Draw concentric rings.
     local iToStep = 1.0 / (rings - 1.0)
@@ -614,11 +683,43 @@ dlg:button {
                     shdHex = 0xff000000 | shdHex
 
                     -- Clamp source palette to 256.
-                    local srcPalLen = math.min(256, #srcPal)
+                    local startIndex = math.min(
+                        #srcPal - 1,
+                        args.startIndex)
+                    local count = math.min(
+                        256,
+                        args.count,
+                        #srcPal - startIndex)
 
-                    -- Unpack source palette to universally used data.
-                    local clrs = {}
+                    -- Unique values only.
+                    -- Alpha is masked out of hexadecimal values.
+                    local hexDict = {}
+                    for i = 0, count - 1, 1 do
+                        local idx = startIndex + i
+                        local aseColor = srcPal:getColor(idx)
+                        local hex = 0xff000000 | aseColor.rgbaPixel
+                        hexDict[hex] = idx
+                    end
+
+                    -- Store hexes and indices separately.
                     local hexes = {}
+                    local indices = {}
+                    local counter = 1
+                    for key, value in pairs(hexDict) do
+                        indices[counter] = value
+                        hexes[counter] = key
+                        counter = counter + 1
+                    end
+
+                    -- Sort.
+                    table.sort(hexes,
+                        function(a, b)
+                            return hexDict[a] < hexDict[b]
+                        end)
+                    table.sort(indices)
+
+                    -- Unpack unique entries to data for all displays.
+                    local clrs = {}
                     local labs = {}
                     local lchs = {}
 
@@ -633,15 +734,9 @@ dlg:button {
                     local bMax = -999999
                     local cMax = -999999
 
-                    -- TODO: This needs to be completely reworked into
-                    -- a multi-step process: Aseprite colors are unpacked
-                    -- from palette, then hexadecimal dictionary is created
-                    -- then only uniques are found, while still being
-                    -- associated with their indices.
-                    for i = 1, srcPalLen, 1 do
-                        local aseColor = srcPal:getColor(i - 1)
-                        local clr = AseUtilities.aseColorToClr(aseColor)
-                        local hex = 0xff000000 | Clr.toHex(clr)
+                    for i = 1, #hexes, 1 do
+
+                        local clr = Clr.fromHex(hexes[i])
                         local lab = Clr.rgbaToLab(clr)
                         local lch = Clr.labToLch(lab.l, lab.a, lab.b, lab.alpha)
 
@@ -655,10 +750,9 @@ dlg:button {
                         if lab.b > bMax then bMax = lab.b end
                         if lch.c > cMax then cMax = lch.c end
 
-                        clrs[i] = clr
-                        hexes[i] = hex
                         labs[i] = lab
                         lchs[i] = lch
+                        clrs[i] = clr
                     end
 
                     local manifest = args.manifest
@@ -677,13 +771,14 @@ dlg:button {
 
                         local x = 2
                         local y = 2
-                        for i = 1, srcPalLen, 1 do
+                        for i = 1, #hexes, 1 do
                             local hex = hexes[i]
+                            local index = indices[i]
                             drawSwatch(manifestImage,
                                 x + 12, y, brSize, brSize,
                                 hex)
 
-                            local idxStr = string.format("%3d", i - 1)
+                            local idxStr = string.format("%3d", index)
                             local chars = strToCharArr(idxStr)
 
                             drawHorizShd(
@@ -875,6 +970,65 @@ dlg:button {
                             txtHex, shdHex, dotRad, 2, 1)
 
                         lchChCel.image = lchChImage
+                    end
+
+                    local contiguous = args.contiguous
+                    if contiguous then
+                        local closedLoop = args.closedLoop
+                        local resolution = args.resolution
+
+                        local points = {}
+                        for i = 1, #labs, 1 do
+                            local lab = labs[i]
+                            points[i] = Vec3.new(lab.a, lab.b, lab.l)
+                        end
+
+                        local curve = Curve3.fromPoints(closedLoop, points)
+
+                        local sampledPoints = {}
+                        local sampledHexes = {}
+                        local iToStep = 1.0
+                        if closedLoop then
+                            iToStep = 1.0 / resolution
+                        else
+                            iToStep = 1.0 / (resolution - 1)
+                        end
+
+                        for i = 0, resolution, 1 do
+                            local step = i * iToStep
+                            local point = Curve3.eval(curve, step)
+                            local clr = Clr.labToRgba(
+                                point.z, point.x, point.y, 1.0)
+                            local hex = Clr.toHex(clr)
+
+                            local j = i + 1
+
+                            -- Arbitrary 2D projection.
+                            sampledPoints[j] = {
+                                x = point.x,
+                                y = point.y
+                            }
+                            sampledHexes[j] = hex
+                        end
+
+                        -- Initialize layer.
+                        local contigLayer = sprite:newLayer()
+                        contigLayer.name = "Contiguous"
+                        local contigCel = sprite:newCel(contigLayer, frame)
+                        local contigImage = Image(sprite.width, sprite.height)
+                        fill(contigImage, bkgHex)
+
+                        drawScatter(
+                            contigImage, lut, gw, gh, plotMargin,
+                            "CONTIGUOUS",
+                            "GREEN TO RED",
+                            "BLUE TO YELLOW",
+                            pipCount, aMin, aMax, bMin, bMax,
+                            sampledPoints, sampledHexes,
+                            txtHex, shdHex, dotRad, 2, 1)
+
+                        contigCel.image = contigImage
+
                     end
 
                 else

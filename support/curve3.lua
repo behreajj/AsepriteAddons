@@ -225,7 +225,9 @@ function Curve3.fromPoints(closedLoop, points)
         kns[i] = Knot3.new(Vec3.new(
             pt.x, pt.y, pt.z))
     end
-    return Curve3.new(closedLoop, kns, "Constellation")
+    local crv = Curve3.new(closedLoop, kns, "Curve3")
+    Curve3.smoothHandles(crv)
+    return crv
 end
 
 ---Adjusts knot handles so as to create
@@ -254,6 +256,7 @@ function Curve3.smoothHandles(target)
     else
         local prev = first
         local curr = knots[2]
+
         Knot3.smoothHandlesFirstInternal(
             prev, curr, carry)
         Knot3.mirrorHandlesForward(curr)

@@ -55,6 +55,10 @@ This repo includes
 
   ![Dimetric Grid](screencaps/isoGrid.png)
 
+- LCh color picker.
+
+  ![LCh Color Picker](screencaps/lchPicker.png)
+
 - A linear gradient.
  
   ![Linear Gradient](screencaps/linearGradient.png)
@@ -62,6 +66,10 @@ This repo includes
 - Luminance (grayscale) remapping. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
 
   ![Luminance remapping](screencaps/lumRemap.png)
+
+- Palette Analysis.
+
+  ![Palette Analysis](screencaps/paletteAnalyze.png)
 
 - An RYB palette generator.
 

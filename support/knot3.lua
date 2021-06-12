@@ -45,7 +45,8 @@ function Knot3:alignHandlesBackward()
     if rMagSq > 0.0 then
         self.fh = Vec3.sub(self.co,
             Vec3.scale(rDir,
-            Vec3.dist(self.fh, self.co) / math.sqrt(rMagSq)))
+            Vec3.dist(self.fh, self.co)
+            / math.sqrt(rMagSq)))
     end
     return self
 end
@@ -59,7 +60,8 @@ function Knot3:alignHandlesForward()
     if fMagSq > 0.0 then
         self.rh = Vec3.sub(self.co,
             Vec3.scale(fDir,
-            Vec3.dist(self.rh, self.co) / math.sqrt(fMagSq)))
+            Vec3.dist(self.rh, self.co)
+            / math.sqrt(fMagSq)))
     end
     return self
 end
@@ -334,8 +336,8 @@ end
 function Knot3.smoothHandlesFirstInternal(
     curr, next, carry)
 
-    local coCurr = curr.coord
-    local coNext = next.coord
+    local coCurr = curr.co
+    local coNext = next.co
 
     local xRear = -coCurr.x
     local yRear = -coCurr.y
