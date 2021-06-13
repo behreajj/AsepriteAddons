@@ -159,6 +159,14 @@ dlg:check{
     selected = false
 }
 
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "prependMask",
+    label = "Prepend Mask:",
+    selected = true,
+}
+
 dlg:newrow{
     always = false
 }
@@ -166,7 +174,7 @@ dlg:newrow{
 dlg:button{
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = false,
     onclick = function()
         local args = dlg.data
         if args.ok then
@@ -186,15 +194,25 @@ dlg:button{
             local lenSamples = args.samples or 8
             local lenShades = args.shades or 8
             local inclGray = args.inclGray or (sat <= 0)
-            local totLen = 0
+            local prependMask = args.prependMask
+
+            local flatLen = 0
             if sat > 0 then
-                totLen = lenSamples * lenShades
+                flatLen = lenSamples * lenShades
             end
+
             local grayLen = 0
             if inclGray then
                 grayLen = lenShades
             end
-            local palette = Palette(totLen + grayLen)
+
+            local maskLen = 0
+            if prependMask then
+                maskLen = 1
+            end
+
+            local totLen = flatLen + grayLen + maskLen
+            local palette = Palette(totLen)
 
             local hueStart = args.hueStart * 0.002777777777777778
             local hueEnd = args.hueEnd * 0.002777777777777778
@@ -210,10 +228,15 @@ dlg:button{
                 end
             end
 
-            local lmin = args.minLight * 0.01
-            local lmax = args.maxLight * 0.01
+            local lMin = args.minLight * 0.01
+            local lMax = args.maxLight * 0.01
 
             local k = 0
+            if prependMask then
+                k = 1
+                palette:setColor(0, Color(0, 0, 0, 0))
+            end
+
             local jToFac = 1.0
             if lenShades > 1 then
                 jToFac = 1.0 / (lenShades - 1.0)
@@ -246,7 +269,7 @@ dlg:button{
                         local jFacAdj = min(1.0, max(0.0, jFac - diff))
                         -- fudge factor
                         jFacAdj = jFacAdj ^ (1.5)
-                        local lnew = (1.0 - jFacAdj) * lmin + jFacAdj * lmax
+                        local lnew = (1.0 - jFacAdj) * lMin + jFacAdj * lMax
 
                         local newclr = Color {
                             h = h,
@@ -264,7 +287,7 @@ dlg:button{
                 for j = 1, lenShades, 1 do
                     local t = (j - 1.0) * jToFac
                     local u = 1.0 - t
-                    local lnew = u * lmin + t * lmax
+                    local lnew = u * lMin + t * lMax
                     local grayClr = Color {
                         h = 0.0,
                         s = 0.0,
@@ -289,6 +312,8 @@ dlg:button{
             end
 
             app.refresh()
+        else
+            app.alert("Dialog arguments are invalid.")
         end
     end
 }

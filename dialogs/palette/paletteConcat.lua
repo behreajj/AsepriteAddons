@@ -75,7 +75,15 @@ dlg:newrow { always = false }
 dlg:check {
     id = "uniquesOnly",
     label = "Uniques Only:",
-    selected = false
+    selected = true
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "prependMask",
+    label = "Prepend Mask:",
+    selected = true,
 }
 
 dlg:newrow { always = false }
@@ -83,7 +91,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = false,
     onclick = function()
         local args = dlg.data
         if args.ok then
@@ -130,10 +138,16 @@ dlg:button {
                     local aLen = #aPal
                     local bLen = #bPal
 
-                    if args.uniquesOnly then
+                    local prependMask = args.prependMask
+                    local uniquesOnly = args.uniquesOnly
+
+                    if uniquesOnly then
 
                         local clrKeys = {}
                         local idx = 0
+                        if prependMask then
+                            idx = 1
+                        end
 
                         for i = 0, aLen - 1, 1 do
                             local hex = aPal:getColor(i).rgbaPixel
@@ -151,6 +165,10 @@ dlg:button {
                             end
                         end
 
+                        if prependMask then
+                            clrKeys[0] = 1
+                        end
+
                         local clrVals = {}
                         for k, m in pairs(clrKeys) do
                             clrVals[m] = k
@@ -163,15 +181,25 @@ dlg:button {
                         end
                     else
                         local cLen = aLen + bLen
+                        local offset = 0
+                        local noMask = aPal:getColor(0).rgbaPixel ~= 0
+                        if prependMask and noMask then
+                            offset = 1
+                            cLen = cLen + 1
+                        end
                         cPal = Palette(cLen)
 
                         for i = 0, aLen - 1, 1 do
-                            cPal:setColor(i, aPal:getColor(i))
+                            cPal:setColor(offset + i, aPal:getColor(i))
                         end
 
                         for j = 0, bLen - 1, 1 do
                             local k = #aPal + j
-                            cPal:setColor(k, bPal:getColor(j))
+                            cPal:setColor(offset + k, bPal:getColor(j))
+                        end
+
+                        if prependMask and noMask then
+                            cPal:setColor(0, Color(0, 0, 0, 0))
                         end
                     end
 
@@ -190,6 +218,8 @@ dlg:button {
             else
                 app.alert("There is no active sprite.")
             end
+        else
+            app.alert("Dialog arguments are invalid.")
         end
 
     end

@@ -222,8 +222,15 @@ function Curve3.fromPoints(closedLoop, points)
     local len = #points
     for i = 1, len, 1 do
         local pt = points[i]
-        kns[i] = Knot3.new(Vec3.new(
-            pt.x, pt.y, pt.z))
+
+        -- Rear and fore handles will be updated
+        -- by smooth handles method, so it's better
+        -- to do this then let the constructor
+        -- guess as to what they should be.
+        kns[i] = Knot3.new(
+            Vec3.new(pt.x, pt.y, pt.z),
+            Vec3.new(0.0, 0.0, 0.0),
+            Vec3.new(0.0, 0.0, 0.0))
     end
     local crv = Curve3.new(closedLoop, kns, "Curve3")
     Curve3.smoothHandles(crv)

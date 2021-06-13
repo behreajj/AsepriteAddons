@@ -22,10 +22,6 @@ function Clr.new(r, g, b, a)
     return inst
 end
 
-function Clr:__add(b)
-    return Clr.add(self, b)
-end
-
 function Clr:__band(b)
     return Clr.bitAnd(self, b)
 end
@@ -58,10 +54,6 @@ function Clr:__lt(b)
     return Clr.toHex(self) < Clr.toHex(b)
 end
 
-function Clr:__mul(b)
-    return Clr.mul(self, b)
-end
-
 function Clr:__shl(b)
     return Clr.bitShiftLeft(self, Clr.toHex(b))
 end
@@ -70,33 +62,8 @@ function Clr:__shr(b)
     return Clr.bitShiftRight(self, Clr.toHex(b))
 end
 
-function Clr:__sub(b)
-    return Clr.sub(self, b)
-end
-
 function Clr:__tostring()
     return Clr.toJson(self)
-end
-
----Adds two colors, including alpha.
----Clamps the result to [0.0, 1.0].
----@param a table left operand
----@param b table right operand
----@return table
-function Clr.add(a, b)
-    return Clr.clamp01(Clr.addUnchecked(a, b))
-end
-
----Adds two colors, including alpha.
----@param a table left operand
----@param b table right operand
----@return table
-function Clr.addUnchecked(a, b)
-    return Clr.new(
-        a.r + b.r,
-        a.g + b.g,
-        a.b + b.b,
-        a.a + b.a)
 end
 
 ---Evaluates whether all color channels are 
@@ -375,8 +342,7 @@ function Clr.labToLch(l, a, b, alpha)
         l = l,
         c = math.sqrt(a * a + b * b),
         h = (math.atan(b, a) * 0.15915494309189535) % 1.0,
-        a = alpha or 1.0
-    }
+        a = alpha or 1.0 }
 end
 
 ---Converts a color from CIE L*a*b* to standard RGB.
@@ -457,8 +423,7 @@ function Clr.lchToLab(l, c, h, a)
         l = l,
         a = c * math.cos(hRad),
         b = c * math.sin(hRad),
-        alpha = a or 1.0
-    }
+        alpha = a or 1.0 }
 end
 
 ---Converts a color from CIE LCh to standard RGB.
@@ -923,27 +888,6 @@ function Clr.mixXyzInternal(a, b, t)
         u * aXyz.a + t * bXyz.a)
 end
 
----Multiplies two colors, including alpha.
----Clamps the result to [0.0, 1.0].
----@param a table left operand
----@param b table right operand
----@return table
-function Clr.mul(a, b)
-    return Clr.clamp01(Clr.mulUnchecked(a, b))
-end
-
----Multiplies two colors, including alpha.
----@param a table left operand
----@param b table right operand
----@return table
-function Clr.mulUnchecked(a, b)
-    return Clr.new(
-        a.r * b.r,
-        a.g * b.g,
-        a.b * b.b,
-        a.a * b.a)
-end
-
 ---Evaluates whether the color's alpha channel
 ---is less than or equal to zero.
 ---@param a table color
@@ -1193,27 +1137,6 @@ function Clr.standardToLinear(a)
     end
 
     return Clr.new(lr, lg, lb, a.a)
-end
-
----Subtracts two colors, including alpha.
----Clamps the result to [0.0, 1.0].
----@param a table left operand
----@param b table right operand
----@return table
-function Clr.sub(a, b)
-    return Clr.clamp01(Clr.subUnchecked(a, b))
-end
-
----Subtracts two colors, including alpha.
----@param a table left operand
----@param b table right operand
----@return table
-function Clr.subUnchecked(a, b)
-    return Clr.new(
-        a.r + b.r,
-        a.g + b.g,
-        a.b + b.b,
-        a.a + b.a)
 end
 
 ---Converts from a color to a hexadecimal integer.

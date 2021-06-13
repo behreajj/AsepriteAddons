@@ -2,7 +2,7 @@ local dlg = Dialog { title = "Palette From Cel" }
 
 dlg:check {
    id = "removeAlpha",
-   label = "Remove Alpha:",
+   label = "Opaque Colors:",
    selected = true
 }
 
@@ -10,12 +10,20 @@ dlg:check {
     id = "clampTo256",
     label = "Clamp To 256:",
     selected = true
+}
+
+ dlg:newrow { always = false }
+
+ dlg:check {
+     id = "prependMask",
+     label = "Prepend Mask:",
+     selected = true,
  }
 
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = false,
     onclick = function()
         local args = dlg.data
         if args.ok then
@@ -32,6 +40,12 @@ dlg:button {
                         local dictionary = {}
                         local idx = 0
                         local removeAlpha = args.removeAlpha
+                        local prependMask = args.prependMask
+
+                        if prependMask then
+                            idx = idx + 1
+                            dictionary[0x00000000] = idx
+                        end
 
                         if removeAlpha then
                             for elm in itr do
@@ -59,9 +73,11 @@ dlg:button {
 
                         if idx > 0 then
                             local len = idx
-                            if args.clampTo256 then
+                            local clampTo256 = args.clampTo256
+                            if clampTo256 then
                                 len = math.min(256, len)
                             end
+
                             local palette = Palette(len)
                             for hex, i in pairs(dictionary) do
                                 local j = i - 1

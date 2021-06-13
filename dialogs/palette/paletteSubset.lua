@@ -1,6 +1,3 @@
--- TODO: Refine this to be able to get a square of w, h from a top
--- left corner x, y given the number of columns in a palette to make
--- it form a square. Perhaps consider toggle from 1D to 2D.
 local dlg = Dialog { title = "Palette Subset" }
 
 dlg:combobox {
@@ -44,12 +41,12 @@ dlg:entry {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "startIdx",
-    label = "Scaled Index:",
-    min = 0,
-    max = 32,
-    value = 0
-}
+        id = "startIdx",
+        label = "Start Index:",
+        min = 0,
+        max = 255,
+        value = 0
+    }
 
 dlg:newrow { always = false }
 
@@ -63,12 +60,10 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:slider {
-    id = "cycle",
-    label = "Cycle:",
-    min = 0,
-    max = 32,
-    value = 0
+dlg:check {
+    id = "prependMask",
+    label = "Prepend Mask:",
+    selected = true,
 }
 
 dlg:newrow { always = false }
@@ -106,14 +101,31 @@ dlg:button {
 
                     local origin = args.startIdx
                     local stride = args.stride
-                    local cycle = args.cycle
-                    local sclOrig = stride * origin
-                    local trgPal = Palette(stride)
+
                     local srcLen = #srcPal
+                    local srcClrIdx = origin % srcLen
+                    local srcFirstClr = srcPal:getColor(srcClrIdx)
+
+                    local prependMask = args.prependMask
+                        and srcFirstClr.rgbaPixel ~= 0
+                    local trgPalLen = stride
+                    local offByOne = 0
+                    if prependMask then
+                        offByOne = 1
+                        trgPalLen = trgPalLen + 1
+                    end
+
+                    local trgPal = Palette(trgPalLen)
                     for i = 0, stride - 1, 1 do
-                        local j = (cycle + i) % stride
-                        local k = (sclOrig + j) % srcLen
-                        trgPal:setColor(i, srcPal:getColor(k))
+                        local j = i % stride
+                        local k = (origin + j) % srcLen
+                        trgPal:setColor(
+                            offByOne + i,
+                            srcPal:getColor(k))
+                    end
+
+                    if prependMask then
+                        trgPal:setColor(0, Color(0, 0, 0, 0))
                     end
 
                     sprite:setPalette(trgPal)

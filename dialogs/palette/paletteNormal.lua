@@ -20,7 +20,9 @@ dlg:shades {
         if ev.button == MouseButton.LEFT then
             app.fgColor = ev.color
         elseif ev.button == MouseButton.RIGHT then
-            app.bgColor = ev.color
+            app.command.SwitchColors()
+            app.fgColor = ev.color
+            app.command.SwitchColors()
         end
     end
 }
@@ -47,35 +49,55 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "prependMask",
+    label = "Prepend Mask:",
+    selected = true,
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = false,
     onclick = function()
         local args = dlg.data
         if args.ok then
             local inclinations = args.inclinations
             local azimuths = args.azimuths
-            local palette = Palette(inclinations * azimuths)
+            local prependMask = args.prependMask
+            local len = inclinations * azimuths
             local k = 0
+
+            if prependMask then
+                len = len + 1
+                k = 1
+            end
+
+            local palette = Palette(len)
 
             local tau = math.pi * 2.0
             local halfPi = math.pi * 0.5
             local toPhi = halfPi / inclinations
             local toTheta = tau / azimuths
 
+            local cos = math.cos
+            local sin = math.sin
+            local trunc = math.tointeger
+
             for i = 0, inclinations - 1, 1 do
                 -- TODO: Refactor to use one for loop?
 
                 local phi = math.pi - i * toPhi
-                local cosPhi = math.cos(phi)
-                local sinPhi = math.sin(phi)
+                local cosPhi = cos(phi)
+                local sinPhi = sin(phi)
 
                 for j = 0, azimuths - 1, 1 do
 
                     local theta = j * toTheta - math.pi
-                    local cosTheta = math.cos(theta)
-                    local sinTheta = math.sin(theta)
+                    local cosTheta = cos(theta)
+                    local sinTheta = sin(theta)
 
                     local x = cosPhi * cosTheta
                     local y = cosPhi * sinTheta
@@ -85,14 +107,18 @@ dlg:button {
                     local g01 = 0.5 + y * 0.5
                     local b01 = 0.5 + z * 0.5
 
-                    local r = math.tointeger(r01 * 255.0 + 0.5)
-                    local g = math.tointeger(g01 * 255.0 + 0.5)
-                    local b = math.tointeger(b01 * 255.0 + 0.5)
+                    local r = trunc(r01 * 255.0 + 0.5)
+                    local g = trunc(g01 * 255.0 + 0.5)
+                    local b = trunc(b01 * 255.0 + 0.5)
 
                     local clr = Color(r, g, b, 255)
                     palette:setColor(k, clr)
                     k = k + 1
                 end
+            end
+
+            if prependMask then
+                palette:setColor(0, 0x00000000)
             end
 
             local sprite = app.activeSprite
@@ -112,6 +138,8 @@ dlg:button {
             end
 
             app.refresh()
+        else
+            app.alert("Dialog arguments are invalid.")
         end
     end
 }
