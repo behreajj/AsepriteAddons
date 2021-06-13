@@ -8,6 +8,8 @@ local defaults = {
     yDest = 50,
     quantization = 0,
     tweenOps = "PAIR",
+    startIndex = 0,
+    count = 256,
     aColor = AseUtilities.DEFAULT_STROKE,
     bColor = AseUtilities.DEFAULT_FILL,
     clrSpacePreset = "S_RGB",
@@ -69,7 +71,9 @@ dlg:combobox {
     options = GradientUtilities.TWEEN_PRESETS,
     onchange = function()
         local isPair = dlg.data.tweenOps == "PAIR"
+        local isPalette = dlg.data.tweenOps == "PALETTE"
         local md = dlg.data.clrSpacePreset
+
         dlg:modify {
             id = "aColor",
             visible = isPair
@@ -78,6 +82,16 @@ dlg:combobox {
         dlg:modify {
             id = "bColor",
             visible = isPair
+        }
+
+        dlg:modify {
+            id = "startIndex",
+            visible = isPalette
+        }
+
+        dlg:modify {
+            id = "count",
+            visible = isPalette
         }
 
         dlg:modify {
@@ -93,6 +107,28 @@ dlg:combobox {
                 or md == "LINEAR_RGB"
         }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider{
+    id = "startIndex",
+    label = "Start:",
+    min = 0,
+    max = 255,
+    value = defaults.startIndex,
+    visible = defaults.tweenOps == "PALETTE"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider{
+    id = "count",
+    label = "Count:",
+    min = 1,
+    max = 256,
+    value = defaults.count,
+    visible = defaults.tweenOps == "PALETTE"
 }
 
 dlg:newrow { always = false }
@@ -179,8 +215,11 @@ dlg:button {
                 local easeFuncFinal = nil
                 if tweenOps == "PALETTE" then
 
+                    local startIndex = args.startIndex
+                    local count = args.count
                     local pal = sprite.palettes[1]
-                    local clrArr = AseUtilities.paletteToClrArr(pal)
+                    local clrArr = AseUtilities.paletteToClrArr(
+                        pal, startIndex, count)
 
                     local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
                         clrSpacePreset,

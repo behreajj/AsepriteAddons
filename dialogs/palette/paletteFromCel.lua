@@ -1,15 +1,22 @@
+local defaults = {
+    removeAlpha = true,
+    clampTo256 = true,
+    prependMask = true,
+    pullFocus = false
+}
+
 local dlg = Dialog { title = "Palette From Cel" }
 
 dlg:check {
    id = "removeAlpha",
    label = "Opaque Colors:",
-   selected = true
+   selected = defaults.removeAlpha
 }
 
 dlg:check {
     id = "clampTo256",
     label = "Clamp To 256:",
-    selected = true
+    selected = defaults.clampTo256
 }
 
  dlg:newrow { always = false }
@@ -17,13 +24,13 @@ dlg:check {
  dlg:check {
      id = "prependMask",
      label = "Prepend Mask:",
-     selected = true,
+     selected = defaults.prependMask,
  }
 
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = false,
+    focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
         if args.ok then

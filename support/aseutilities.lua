@@ -819,6 +819,8 @@ end
 ---@param pal table
 ---@return table
 function AseUtilities.paletteToAseColorArr(pal)
+    -- TODO: Update to match clr array below.
+    -- Where is this used?
     if pal then
         local clrs = {}
         local len = #pal
@@ -834,18 +836,29 @@ end
 ---Converts an Aseprite palette to a table
 ---of Aseprite Colors. If the palette is nil
 ---returns a default table.
----@param pal table
+---@param pal table Aseprite palette
+---@param startIndex number start index
+---@param count number sample count
 ---@return table
-function AseUtilities.paletteToClrArr(pal)
+function AseUtilities.paletteToClrArr(pal, startIndex, count)
     if pal then
+        local palLen = #pal
+
+        local si = startIndex or 0
+        si = math.min(palLen - 1, math.max(0, si))
+        local vc = count or 256
+        vc = math.min(palLen - si, math.max(2, vc))
+
         local clrs = {}
-        local len = #pal
-        for i = 1, len, 1 do
-            clrs[i] = AseUtilities.aseColorToClr(
-                pal:getColor(i - 1))
+        for i = 0, vc - 1, 1 do
+            clrs[1 + i] = AseUtilities.aseColorToClr(
+                pal:getColor(si + i))
         end
 
-        if len == 1 then
+        -- This is intended for gradient work, so it
+        -- returns an array with a length greater than
+        -- one no matter what.
+        if #clrs == 1 then
             table.insert(clrs, 1, Clr.black())
             clrs[3] = Clr.white()
         end

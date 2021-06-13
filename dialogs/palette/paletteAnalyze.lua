@@ -7,10 +7,11 @@ local defaults = {
     count = 256,
     contiguous = false,
     closeLoop = false,
-    resolution = 64,
+    resolution = 48,
     bkgColor = Color(38, 38, 38, 255),
     txtColor = Color(255, 245, 215, 255),
-    shdColor = Color(0, 0, 0, 255)
+    shdColor = Color(0, 0, 0, 255),
+    pullFocus = false
 }
 
 local dlg = Dialog { title = "Palette Analysis" }
@@ -633,7 +634,7 @@ end
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = false,
+    focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
         if args.ok then
