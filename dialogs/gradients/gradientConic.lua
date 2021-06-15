@@ -98,8 +98,8 @@ dlg:combobox {
         dlg:modify {
             id = "easingFuncHue",
             visible = md == "CIE_LCH"
-            or md == "HSL"
-            or md == "HSV"
+                or md == "HSL"
+                or md == "HSV"
         }
 
         dlg:modify {
@@ -126,7 +126,7 @@ dlg:newrow { always = false }
 dlg:slider{
     id = "count",
     label = "Count:",
-    min = 1,
+    min = 3,
     max = 256,
     value = defaults.count,
     visible = defaults.tweenOps == "PALETTE"
@@ -160,12 +160,13 @@ dlg:combobox {
         dlg:modify {
             id = "easingFuncHue",
             visible = md == "CIE_LCH"
-            or md == "HSL"
-            or md == "HSV"
+                or md == "HSL"
+                or md == "HSV"
         }
         dlg:modify {
             id = "easingFuncRGB",
-            visible = md == "S_RGB" or md == "LINEAR_RGB"
+            visible = md == "S_RGB"
+                or md == "LINEAR_RGB"
         }
     end
 }
@@ -203,6 +204,8 @@ dlg:button {
             local sprite = AseUtilities.initCanvas(
                 64, 64, "Conic Gradient")
             if sprite.colorMode == ColorMode.RGB then
+
+                local atan2 = math.atan
 
                 local layer = sprite.layers[#sprite.layers]
                 local frame = app.activeFrame or 1
@@ -252,9 +255,6 @@ dlg:button {
                 local h = sprite.height
 
                 local aspect = w / h
-                -- local shortEdge = math.min(w, h)
-                -- local longEdge = math.max(w, h)
-
                 local wInv = aspect / w
                 local hInv = 1.0 / h
 
@@ -269,7 +269,6 @@ dlg:button {
                 local yOriginSigned = 1.0 - (yOriginNorm + yOriginNorm)
 
                 local angRadians = math.rad(args.angle)
-                -- local cw = args.cw
                 local cw = 1.0
                 if args.cw then cw = -1.0 end
                 local levels = args.quantization
@@ -292,7 +291,7 @@ dlg:button {
                     local yOffset = cw * (ySigned - yOriginSigned)
 
                     -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
-                    local angleSigned = math.atan(yOffset, xOffset) - angRadians
+                    local angleSigned = atan2(yOffset, xOffset) - angRadians
 
                     -- Bring angle into range [-0.5, 0.5]. Divide by 2 * math.pi.
                     local angleNormed = angleSigned * 0.15915494309189535

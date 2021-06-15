@@ -619,11 +619,24 @@ function Vec2.quantize(a, levels)
 end
 
 ---Creates a random point in Cartesian space given
----a lower and an upper bound.
+---a lower and an upper bound. If lower and upper
+---bounds are not given, defaults to [-1.0, 1.0].
 ---@param lb table lower bound
 ---@param ub table upper bound
 ---@return table
 function Vec2.randomCartesian(lb, ub)
+    local lval = lb or Vec2.new(-1.0, -1.0)
+    local uval = ub or Vec2.new(1.0, 1.0)
+    return Vec2.randomCartesianInternal(lval, uval)
+end
+
+---Creates a random point in Cartesian space given
+---a lower and an upper bound. Does not validate
+---upper or lower bounds.
+---@param lb table lower bound
+---@param ub table upper bound
+---@return table
+function Vec2.randomCartesianInternal(lb, ub)
     local rx = math.random()
     local ry = math.random()
 

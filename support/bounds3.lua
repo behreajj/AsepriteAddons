@@ -42,10 +42,21 @@ end
 ---@return table
 function Bounds3.newByVal(mn, mx)
     local inst = setmetatable({}, Bounds3)
-    inst.mn = Vec3.new(mn.x, mn.y, mn.z)
-        or Vec3.new(-0.5, -0.5, -0.5)
-    inst.mx = Vec3.new(mx.x, mx.y, mx.z)
-        or Vec3.new(0.5, 0.5, 0.5)
+
+    inst.mn = nil
+    if mn then
+        inst.mn = Vec3.new(mn.x, mn.y, mn.z)
+    else
+        inst.mn = Vec3.new(-0.5, -0.5, -0.5)
+    end
+
+    inst.mx = nil
+    if mx then
+        inst.mx = Vec3.new(mx.x, mx.y, mx.z)
+    else
+        inst.mx = Vec3.new(0.5, 0.5, 0.5)
+    end
+
     return inst
 end
 
@@ -63,28 +74,17 @@ function Bounds3.center(b)
 end
 
 ---Evaluates whether a point is within the
----bounding volume, including the bounds's
----edges. A Vec3 is returned, where each
----component is 1.0 if true, 0.0 if false.
-function Bounds3.containsInclusive(b, v)
-    local x = 0.0
-    local y = 0.0
-    local z = 0.0
-
-    local mx = b.mx
+---bounding volume, lower bounds inclusive,
+---upper bounds exclusive.
+---@param b table
+---@param pt table
+---@return boolean
+function Bounds3.containsInclExcl(b, pt)
     local mn = b.mn
-
-    if v.x >= mn.x and v.x <= mx.x then
-        x = 1.0
-    end
-    if v.y >= mn.y and v.y <= mx.y then
-        y = 1.0
-    end
-    if v.z >= mn.z and v.z <= mx.z then
-        z = 1.0
-    end
-
-    return Vec3.new(x, y, z)
+    local mx = b.mx
+    return (pt.x >= mn.x and pt.x < mx.x)
+        and (pt.y >= mn.y and pt.y < mx.y)
+        and (pt.z >= mn.z and pt.z < mx.z)
 end
 
 ---Finds the extent of the bounds.
@@ -109,6 +109,61 @@ function Bounds3.fromCenterExtent(center, extent)
         Vec3.add(center, halfExtent))
 end
 
+---Evaluates whether two bounding volumes intersect.
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Bounds3.intersectsBounds(a, b)
+    return a.max.x > b.min.x
+        or a.min.x < b.max.x
+        or a.max.y > b.min.y
+        or a.min.y < b.max.y
+        or a.max.z > b.min.z
+        or a.min.z < b.max.z
+end
+
+---Evaluates whether a bounding volume intersects
+---a sphere. The sphere is defined as a Vec3 center
+---and a number radius.
+---@param a table bounds
+---@param center table sphere center
+---@param radius number sphere radius
+---@return boolean
+function Bounds3.intersectsSphere(a, center, radius)
+
+    local aMin = a.mn
+    local aMax = a.mx
+
+    local xDist = 0.0
+    local yDist = 0.0
+    local zDist = 0.0
+
+    if center.x < aMin.x then
+        xDist = center.x - aMin.x
+    elseif center.x > (center.x - aMax.x) then
+        xDist = aMax.x
+    end
+
+    if center.y < aMin.y then
+        yDist = center.y - aMin.y
+    elseif center.y > (center.y - aMax.y) then
+        yDist = aMax.y
+    end
+
+    if center.z < aMin.z then
+        zDist = center.z - aMin.z
+    elseif center.z > (center.z - aMax.z) then
+        zDist = aMax.z
+    end
+
+    local dsq = xDist * xDist
+              + yDist * yDist
+              + zDist * zDist
+    local rsq = radius * radius
+    return dsq < rsq
+    -- return math.sqrt(dsq) < radius
+end
+
 ---Splits a bounding volume into octants
 ---according to three factors in the range
 ---[0.0, 1.0]. The factor on the x axis
@@ -118,19 +173,19 @@ end
 ---@param xFac number vertical factor
 ---@param yFac number horizontal vector
 ---@param zFac number depth factor
----@param bbl table back bottom left
----@param bbr table back bottom right
----@param btl table back top left
----@param btr table back top right
----@param fbl table front bottom left
----@param fbr table front bottom right
----@param ftl table front top left
----@param ftr table front top right
+---@param bsw table back south west
+---@param bse table back south east
+---@param bnw table back north west
+---@param bne table back north east
+---@param fsw table front south west
+---@param fse table front south east
+---@param fnw table front north west
+---@param fne table front north east
 function Bounds3.splitInternal(
-    b,
-    xFac, yFac, zFac,
-    bbl, bbr, btl, btr,
-    fbl, fbr, ftl, ftr)
+    b, xFac, yFac, zFac,
+    bsw, bse, bnw, bne,
+    fsw, fse, fnw, fne)
+
     local bMin = b.mn
     local bMax = b.mx
 
@@ -145,23 +200,23 @@ function Bounds3.splitInternal(
     local y = ( 1.0 - ty ) * bMin.y + ty * bMax.y
     local z = ( 1.0 - tz ) * bMin.z + tz * bMax.z
 
-    bbl.mn = Vec3.new(bMin.x, bMin.y, bMin.z)
-    bbr.mn = Vec3.new(     x, bMin.y, bMin.z)
-    btl.mn = Vec3.new(bMin.x,      y, bMin.z)
-    btr.mn = Vec3.new(     x,      y, bMin.z)
-    fbl.mn = Vec3.new(bMin.x, bMin.y,      z)
-    fbr.mn = Vec3.new(     x, bMin.y,      z)
-    ftl.mn = Vec3.new(bMin.x,      y,      z)
-    ftr.mn = Vec3.new(     x,      y,      z)
+    bsw.mn = Vec3.new(bMin.x, bMin.y, bMin.z)
+    bse.mn = Vec3.new(     x, bMin.y, bMin.z)
+    bnw.mn = Vec3.new(bMin.x,      y, bMin.z)
+    bne.mn = Vec3.new(     x,      y, bMin.z)
+    fsw.mn = Vec3.new(bMin.x, bMin.y,      z)
+    fse.mn = Vec3.new(     x, bMin.y,      z)
+    fnw.mn = Vec3.new(bMin.x,      y,      z)
+    fne.mn = Vec3.new(     x,      y,      z)
 
-    bbl.mx = Vec3.new(     x,      y,      z)
-    bbr.mx = Vec3.new(bMax.x,      y,      z)
-    btl.mx = Vec3.new(     x, bMax.y,      z)
-    btr.mx = Vec3.new(bMax.x, bMax.y,      z)
-    fbl.mx = Vec3.new(     x,      y, bMax.z)
-    fbr.mx = Vec3.new(bMax.x,      y, bMax.z)
-    ftl.mx = Vec3.new(     x, bMax.y, bMax.z)
-    ftr.mx = Vec3.new(bMax.x, bMax.y, bMax.z)
+    bsw.mx = Vec3.new(     x,      y,      z)
+    bse.mx = Vec3.new(bMax.x,      y,      z)
+    bnw.mx = Vec3.new(     x, bMax.y,      z)
+    bne.mx = Vec3.new(bMax.x, bMax.y,      z)
+    fsw.mx = Vec3.new(     x,      y, bMax.z)
+    fse.mx = Vec3.new(bMax.x,      y, bMax.z)
+    fnw.mx = Vec3.new(     x, bMax.y, bMax.z)
+    fne.mx = Vec3.new(bMax.x, bMax.y, bMax.z)
 
 end
 

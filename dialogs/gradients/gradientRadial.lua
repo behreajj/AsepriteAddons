@@ -176,8 +176,8 @@ dlg:combobox {
         dlg:modify {
             id = "easingFuncHue",
             visible = md == "CIE_LCH"
-            or md == "HSL"
-            or md == "HSV"
+                or md == "HSL"
+                or md == "HSV"
         }
 
         dlg:modify {
@@ -204,7 +204,7 @@ dlg:newrow { always = false }
 dlg:slider{
     id = "count",
     label = "Count:",
-    min = 1,
+    min = 3,
     max = 256,
     value = defaults.count,
     visible = defaults.tweenOps == "PALETTE"
@@ -282,6 +282,9 @@ dlg:button {
                 64, 64, "Radial Gradient")
             if sprite.colorMode == ColorMode.RGB then
 
+                local min = math.min
+                local max = math.max
+
                 local layer = sprite.layers[#sprite.layers]
                 local frame = app.activeFrame or 1
                 local cel = sprite:newCel(layer, frame)
@@ -332,9 +335,9 @@ dlg:button {
                 local distFunc = distFuncFromPreset(distMetric, minkExp)
 
                 -- Validate minimum and maximum radii.
-                local minRad = 0.01 * math.min(
+                local minRad = 0.01 * min(
                     args.minRad, args.maxRad)
-                local maxRad = 0.01 * math.max(
+                local maxRad = 0.01 * max(
                     args.minRad, args.maxRad)
 
                 -- If radii are approximately equal, offset.
@@ -373,7 +376,7 @@ dlg:button {
 
                     local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
                     local fac = dst * normDist
-                    fac = math.max(0.0, math.min(1.0, fac))
+                    fac = max(0.0, min(1.0, fac))
                     fac = (fac - minRad) * linDenom
                     fac = Utilities.quantizeSigned(fac, levels)
 

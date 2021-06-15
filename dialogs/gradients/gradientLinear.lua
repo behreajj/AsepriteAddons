@@ -125,7 +125,7 @@ dlg:newrow { always = false }
 dlg:slider{
     id = "count",
     label = "Count:",
-    min = 1,
+    min = 3,
     max = 256,
     value = defaults.count,
     visible = defaults.tweenOps == "PALETTE"
@@ -159,12 +159,13 @@ dlg:combobox {
         dlg:modify {
             id = "easingFuncHue",
             visible = md == "CIE_LCH"
-            or md == "HSL"
-            or md == "HSV"
+                or md == "HSL"
+                or md == "HSV"
         }
         dlg:modify {
             id = "easingFuncRGB",
-            visible = md == "S_RGB" or md == "LINEAR_RGB"
+            visible = md == "S_RGB"
+                or md == "LINEAR_RGB"
         }
     end
 }

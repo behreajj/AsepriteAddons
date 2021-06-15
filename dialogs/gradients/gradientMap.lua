@@ -96,7 +96,7 @@ dlg:newrow { always = false }
 dlg:slider{
     id = "count",
     label = "Count:",
-    min = 1,
+    min = 3,
     max = 256,
     value = defaults.count,
     visible = defaults.tweenOps == "PALETTE"
@@ -135,7 +135,8 @@ dlg:combobox {
         }
         dlg:modify {
             id = "easingFuncRGB",
-            visible = md == "S_RGB" or md == "LINEAR_RGB"
+            visible = md == "S_RGB"
+                or md == "LINEAR_RGB"
         }
     end
 }
@@ -236,19 +237,22 @@ dlg:button {
                             -- Cache luminosities and source alphas in dictionaries.
                             for hex, _ in pairs(srcClrDict) do
 
+                                -- Decompose hexadecimal to sRGB in [0, 255].
                                 local sbi = hex >> 0x18 & 0xff
                                 local sgi = hex >> 0x08 & 0xff
                                 local sri = hex & 0xff
 
+                                -- Convert to linear via look up table.
                                 local lbi = stlLut[1 + sbi]
                                 local lgi = stlLut[1 + sgi]
                                 local lri = stlLut[1 + sri]
 
-                                -- local lum = Clr.lumStandard(Clr.fromHex(hex))
+                                -- Find luminance.
                                 local lum = 0.0008339189910613837 * lri
                                     + 0.002804584845905505 * lgi
                                     + 0.0002830647904840915 * lbi
 
+                                -- Convert luminance to sRGB grayscale.
                                 if lum <= 0.0031308 then
                                     lum = lum * 12.92
                                 else
@@ -259,7 +263,6 @@ dlg:button {
                                 if lum > maxLum then maxLum = lum end
 
                                 lumDict[hex] = lum
-
                                 srcAlphaDict[hex] = hex >> 0x18 & 0xff
                             end
 

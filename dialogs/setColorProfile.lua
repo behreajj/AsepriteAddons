@@ -3,13 +3,14 @@
  https://github.com/ellelstone/elles_icc_profiles --]]
 local targetOptions = {"ACTIVE", "FILE", "NEW"}
 local colorModes = {"RGB", "INDEXED", "GRAY"}
-local paletteTypes = {"ACTIVE", "DEFAULT", "FILE", "PRESET"}
-local colorSpaceTransfers = {"ASSIGN", "CONVERT"}
+local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
+local colorSpaceTransfers = { "ASSIGN", "CONVERT" }
 
 local defaults = {
     targetSprite = "NEW",
     width = 64,
     height = 64,
+    -- TODO: Hide palette type when color mode is gray?
     colorMode = "RGB",
     background = Color(0, 0, 0, 0),
     paletteType = "DEFAULT",

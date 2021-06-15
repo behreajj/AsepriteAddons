@@ -143,12 +143,12 @@ function Mat4.camera(
     local kz = zLoc - zfv
 
     -- Normalize k.
-    local kmsq = kx * kx + ky * ky + kz * kz
-    if kmsq ~= 0.0 then
-        local kminv = 1.0 / math.sqrt(kmsq)
-        kx = kx * kminv
-        ky = ky * kminv
-        kz = kz * kminv
+    local kmSq = kx * kx + ky * ky + kz * kz
+    if kmSq ~= 0.0 then
+        local kmInv = 1.0 / math.sqrt(kmSq)
+        kx = kx * kmInv
+        ky = ky * kmInv
+        kz = kz * kmInv
     end
 
     -- Check for parallel forward and up.
@@ -174,12 +174,12 @@ function Mat4.camera(
         iz = kx * yrv - ky * xrv
 
         -- Normalize i.
-        local imsq = ix * ix + iy * iy + iz * iz
-        if imsq ~= 0.0 then
-            local iminv = 1.0 / math.sqrt(imsq)
-            ix = ix * iminv
-            iy = iy * iminv
-            iz = iz * iminv
+        local imSq = ix * ix + iy * iy + iz * iz
+        if imSq ~= 0.0 then
+            local imInv = 1.0 / math.sqrt(imSq)
+            ix = ix * imInv
+            iy = iy * imInv
+            iz = iz * imInv
         end
 
         -- Cross i with k to get j.
@@ -188,12 +188,12 @@ function Mat4.camera(
         jz = ix * ky - iy * kx
 
         -- Normalize j.
-        local jmsq = jx * jx + jy * jy + jz * jz
-        if jmsq ~= 0.0 then
-            local jminv = 1.0 / math.sqrt(jmsq)
-            jx = jx * jminv
-            jy = jy * jminv
-            jz = jz * jminv
+        local jmSq = jx * jx + jy * jy + jz * jz
+        if jmSq ~= 0.0 then
+            local jmInv = 1.0 / math.sqrt(jmSq)
+            jx = jx * jmInv
+            jy = jy * jmInv
+            jz = jz * jmInv
         end
 
     else
@@ -204,12 +204,12 @@ function Mat4.camera(
         iz = xrv * ky - yrv * kx
 
         -- Normalize i.
-        local imsq = ix * ix + iy * iy + iz * iz
-        if imsq ~= 0.0 then
-            local iminv = 1.0 / math.sqrt(imsq)
-            ix = ix * iminv
-            iy = iy * iminv
-            iz = iz * iminv
+        local imSq = ix * ix + iy * iy + iz * iz
+        if imSq ~= 0.0 then
+            local imInv = 1.0 / math.sqrt(imSq)
+            ix = ix * imInv
+            iy = iy * imInv
+            iz = iz * imInv
         end
 
         -- Cross k with i to get j.
@@ -218,12 +218,12 @@ function Mat4.camera(
         jz = kx * iy - ky * ix
 
         -- Normalize j.
-        local jmsq = jx * jx + jy * jy + jz * jz
-        if jmsq ~= 0.0 then
-            local jminv = 1.0 / math.sqrt(jmsq)
-            jx = jx * jminv
-            jy = jy * jminv
-            jz = jz * jminv
+        local jmSq = jx * jx + jy * jy + jz * jz
+        if jmSq ~= 0.0 then
+            local jmInv = 1.0 / math.sqrt(jmSq)
+            jx = jx * jmInv
+            jy = jy * jmInv
+            jz = jz * jmInv
         end
 
     end
