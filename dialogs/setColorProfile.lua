@@ -361,9 +361,9 @@ dlg:button{
                 else
                     sprite:assignColorSpace(icc)
                 end
-                app.refresh()
             end
 
+            app.refresh()
             dlg:close()
         else
             app.alert("Dialog arguments are invalid.")

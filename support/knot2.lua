@@ -188,14 +188,6 @@ function Knot2.fromPolarInternal(
     radius, handleMag,
     xCenter, yCenter)
 
-    -- Save for fromPolar external
-    -- local yoVerif = yCenter or 0.0
-    -- local xoVerif = xCenter or 0.0
-    -- local hmVerif = handleMag or 1.3333333333333333
-    -- local radVerif = radius or 0.5
-    -- local sa = sina or 0.0
-    -- local ca = cosa or 1.0
-
     local hmsina = sina * handleMag
     local hmcosa = cosa * handleMag
 

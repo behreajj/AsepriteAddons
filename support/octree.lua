@@ -85,8 +85,7 @@ function Octree.insertAll(o, points)
     local len = #points
     local flag = true
     for i = 1, len, 1 do
-        local success = Octree.insert(o, points[i])
-        flag = flag and success
+        flag = flag and Octree.insert(o, points[i])
     end
     return flag
 end
@@ -135,8 +134,14 @@ function Octree.querySpherical(o, center, radius)
     table.sort(found, function(a, b)
         return Vec3.distSq(a, center) < Vec3.distSq(b, center)
     end)
-
     return found
+
+    -- local result = {}
+    -- for _, v in pairs(found) do
+    --     table.insert(result, v)
+    -- end
+    -- return result
+
 end
 
 ---Queries the octree with a spherical range, returning
@@ -151,28 +156,31 @@ function Octree.querySphericalInternal(
 
     if Bounds3.intersectsSphere(o.bounds, center, radius) then
 
-        if Octree.isLeaf(o) then
+        local children = o.children
+        local isLeaf = true
+        for i = 1, 8, 1 do
+            local child = children[i]
+            if child then
+                isLeaf = false
+                Octree.querySphericalInternal(
+                    child, center, radius, found)
+            end
+        end
 
+        if isLeaf then
             local pts = o.points
             local ptsLen = #pts
             local rsq = radius * radius
             for i = 1, ptsLen, 1 do
                 local pt = pts[i]
                 local currDist = Vec3.distSq(center, pt)
+
+                -- TODO: Look at JS or C# implementations
+                -- of color gradient with bisect left, right, etc.
                 if currDist < rsq then
                     table.insert(found, pt)
                 end
             end
-
-        else
-
-            local children = o.children
-            for i = 1, 8, 1 do
-                local child = children[i]
-                Octree.querySphericalInternal(
-                    child, center, radius, found)
-            end
-
         end
 
     end

@@ -161,7 +161,6 @@ function Bounds3.intersectsSphere(a, center, radius)
               + zDist * zDist
     local rsq = radius * radius
     return dsq < rsq
-    -- return math.sqrt(dsq) < radius
 end
 
 ---Splits a bounding volume into octants
