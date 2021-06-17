@@ -109,6 +109,42 @@ function Bounds3.fromCenterExtent(center, extent)
         Vec3.add(center, halfExtent))
 end
 
+---Creates a bounding volume that encompasses
+---an array of points.
+---@param points table points
+---@return table
+function Bounds3.fromPoints(points)
+    local lbx = 999999
+    local lby = 999999
+    local lbz = 999999
+
+    local ubx = -999999
+    local uby = -999999
+    local ubz = -999999
+
+    local len = #points
+    for i = 1, len, 1 do
+        local p = points[i]
+
+        if p.x < lbx then lbx = p.x end
+        if p.x > ubx then ubx = p.x end
+        if p.y < lby then lby = p.y end
+        if p.y > uby then uby = p.y end
+        if p.z < lbz then lbz = p.z end
+        if p.z > ubz then ubz = p.z end
+    end
+
+    return Bounds3.new(
+        Vec3.new(
+            lbx - 0.000001,
+            lby - 0.000001,
+            lbz - 0.000001),
+        Vec3.new(
+            ubx + 0.000001,
+            uby + 0.000001,
+            ubz + 0.000001))
+end
+
 ---Evaluates whether two bounding volumes intersect.
 ---@param a table left comparisand
 ---@param b table right comparisand
@@ -131,36 +167,28 @@ end
 ---@return boolean
 function Bounds3.intersectsSphere(a, center, radius)
 
-    local aMin = a.mn
-    local aMax = a.mx
-
-    local xDist = 0.0
-    local yDist = 0.0
-    local zDist = 0.0
-
-    if center.x < aMin.x then
-        xDist = center.x - aMin.x
-    elseif center.x > (center.x - aMax.x) then
-        xDist = aMax.x
+    local xd = 0.0
+    if center.x < a.mn.x then
+        xd = center.x - a.mn.x
+    elseif center.x > a.mx.x then
+        xd = center.x - a.mx.x
     end
 
-    if center.y < aMin.y then
-        yDist = center.y - aMin.y
-    elseif center.y > (center.y - aMax.y) then
-        yDist = aMax.y
+    local yd = 0.0
+    if center.y < a.mn.y then
+        yd = center.y - a.mn.y
+    elseif center.y > a.mx.y then
+        yd = center.y - a.mx.y
     end
 
-    if center.z < aMin.z then
-        zDist = center.z - aMin.z
-    elseif center.z > (center.z - aMax.z) then
-        zDist = aMax.z
+    local zd = 0.0
+    if center.z < a.mn.z then
+        zd = center.z - a.mn.z
+    elseif center.z > a.mx.z then
+        zd = center.z - a.mx.z
     end
 
-    local dsq = xDist * xDist
-              + yDist * yDist
-              + zDist * zDist
-    local rsq = radius * radius
-    return dsq < rsq
+    return (xd * xd + yd * yd + zd * zd) < (radius * radius)
 end
 
 ---Splits a bounding volume into octants

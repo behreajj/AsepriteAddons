@@ -49,6 +49,27 @@ function Octree:__tostring()
     return Octree.toJson(self)
 end
 
+---Internal sorting function to assist with
+---query arrays.
+---@param arr table the array
+---@param dist number the point distance
+---@return table
+function Octree.bisectRight(arr, dist)
+    local low = 1
+    local high = #arr
+
+    while low < high do
+        local middle = (low + high) / 2 | 0
+        if dist < arr[middle].dist then
+            high = middle
+        else
+            low = middle + 1
+        end
+    end
+
+    return low
+end
+
 ---Inserts a point into the octree node. Returns
 ---true if the point was successfully inserted
 ---into either the node or its children. Returns
@@ -90,6 +111,17 @@ function Octree.insertAll(o, points)
     return flag
 end
 
+---Internal insertion function to assist with
+---query arrays.
+---@param arr table the array
+---@param key table the insertion key
+---@return table
+function Octree.insortRight(arr, key)
+    local i = Octree.bisectRight(arr, key.dist)
+    table.insert(arr, i, key)
+    return arr
+end
+
 ---Evaluates whether an octree node has
 ---any children. Returns true if not.
 ---Otherwise returns false.
@@ -128,20 +160,12 @@ function Octree.querySpherical(o, center, radius)
     local found = {}
     Octree.querySphericalInternal(o, center, radius, found)
 
-    -- Treating "found" as a dictionary where distSq
-    -- is the key and the point is the value doesn't
-    -- seem to help, so this is a last resort.
-    table.sort(found, function(a, b)
-        return Vec3.distSq(a, center) < Vec3.distSq(b, center)
-    end)
-    return found
+    local result = {}
+    for i = 1, #found, 1 do
+        result[i] = found[i].point
+    end
 
-    -- local result = {}
-    -- for _, v in pairs(found) do
-    --     table.insert(result, v)
-    -- end
-    -- return result
-
+    return result
 end
 
 ---Queries the octree with a spherical range, returning
@@ -171,14 +195,14 @@ function Octree.querySphericalInternal(
             local pts = o.points
             local ptsLen = #pts
             local rsq = radius * radius
+            local distf = Vec3.distSq
             for i = 1, ptsLen, 1 do
                 local pt = pts[i]
-                local currDist = Vec3.distSq(center, pt)
-
-                -- TODO: Look at JS or C# implementations
-                -- of color gradient with bisect left, right, etc.
+                local currDist = distf(center, pt)
                 if currDist < rsq then
-                    table.insert(found, pt)
+                    Octree.insortRight(found,
+                        { dist = currDist,
+                          point = pt })
                 end
             end
         end

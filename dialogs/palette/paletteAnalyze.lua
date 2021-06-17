@@ -167,7 +167,7 @@ dlg:slider {
 dlg:slider {
     id = "cvgRad",
     label = "Radius:",
-    min = 50,
+    min = 25,
     max = 250,
     value = defaults.cvgRad,
     visible = defaults.coverage == true
@@ -1069,31 +1069,41 @@ dlg:button {
                         local cvgCel = sprite:newCel(cvgLayer, frame)
 
                         -- Create image.
-                        local w = sprite.width
-                        local h = sprite.height
+                        local w = math.min(384, sprite.width)
+                        local h = math.min(384, sprite.height)
+                        cvgCel.position = Point(
+                            (sprite.width - w) * 0.5,
+                            (sprite.height - h) * 0.5)
                         local cvgImage = Image(w, h)
                         local pxlitr = cvgImage:pixels()
                         local i = 0
 
                         local xToNorm = 1.0 / w
                         local yToNorm = 1.0 / h
+
+                        local hslaToRgba = Clr.hslaToRgba
+                        local rgbaToLab = Clr.rgbaToLab
+                        local labToRgba = Clr.labToRgba
+                        local query = Octree.querySpherical
+                        local toHex = Clr.toHex -- QUERY: use toHexUnchecked?
+
                         for elm in pxlitr do
                             local y = i // w
                             local x = i % w
 
-                            local clr = Clr.hslaToRgba(
+                            local clr = hslaToRgba(
                                 x * xToNorm,
                                 cvgSat,
                                 1.0 - y * yToNorm,
                                 1.0)
-                            local lab = Clr.rgbaToLab(clr)
+                            local lab = rgbaToLab(clr)
                             local labpt = Vec3.new(lab.a, lab.b, lab.l)
 
-                            local results = Octree.querySpherical(octree, labpt, cvgRad)
+                            local results = query(octree, labpt, cvgRad)
                             if #results > 1 then
                                 local near = results[1]
-                                local nearestRgba = Clr.labToRgba(near.z, near.x, near.y, 1.0)
-                                elm(Clr.toHex(nearestRgba))
+                                local nearRgb = labToRgba(near.z, near.x, near.y, 1.0)
+                                elm(toHex(nearRgb))
                             else
                                 elm(0x00000000)
                             end
