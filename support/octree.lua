@@ -178,6 +178,8 @@ end
 function Octree.querySphericalInternal(
     o, center, radius, found)
 
+    -- TODO: Try box-box intersection test intead.
+
     if Bounds3.intersectsSphere(o.bounds, center, radius) then
 
         local children = o.children

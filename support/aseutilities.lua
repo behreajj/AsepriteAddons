@@ -398,7 +398,8 @@ function AseUtilities.drawMesh2(
     local pts = {}
     for i = 1, vsLen, 1 do
         local v = Vec2.round(vs[i])
-        table.insert(pts, Point(v.x, v.y))
+        -- table.insert(pts, Point(v.x, v.y))
+        pts[i] = Point(v.x, v.y)
     end
 
     -- Group points by face.
@@ -410,9 +411,11 @@ function AseUtilities.drawMesh2(
         local fLen = #f
         local ptsFace = {}
         for j = 1, fLen, 1 do
-            table.insert(ptsFace, pts[f[j]])
+            -- table.insert(ptsFace, pts[f[j]])
+            ptsFace[j] = pts[f[j]]
         end
-        table.insert(ptsGrouped, ptsFace)
+        -- table.insert(ptsGrouped, ptsFace)
+        ptsGrouped[i] = ptsFace
     end
 
     -- Group fills into one transaction.

@@ -221,6 +221,7 @@ dlg:newrow{
     always = false
 }
 
+-- TODO: Make this a text or number input field?
 dlg:label{
     id = "hexCode",
     label = "Hex:",

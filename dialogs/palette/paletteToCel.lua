@@ -174,14 +174,15 @@ dlg:button {
                             local oldMode = sprite.colorMode
                             app.command.ChangePixelFormat { format = "rgb" }
 
-                            local srcpxitr = srcImg:pixels()
 
                             -- Get all unique hexadecimal values from image.
+                            local srcpxitr = srcImg:pixels()
                             local hexesUnique = {}
                             for elm in srcpxitr do
                                 hexesUnique[elm()] = true
                             end
 
+                            -- Select which conversion functions to use.
                             local clrSpacePreset = args.clrSpacePreset
                             local clrV3Func = clrToV3FuncFromPreset(clrSpacePreset)
                             local v3ClrFunc = v3ToClrFuncFromPreset(clrSpacePreset)
@@ -191,9 +192,6 @@ dlg:button {
                             local queries = {}
                             for k, _ in pairs(hexesUnique) do
                                 local clr = Clr.fromHex(k)
-                                -- TODO: Generalize to multiple color spaces?
-                                -- local lab = Clr.rgbaToLab(clr)
-                                -- local pt = Vec3.new(lab.a, lab.b, lab.l)
                                 local pt = clrV3Func(clr)
                                 table.insert(queries, { hex = k, point = pt })
                             end
@@ -205,15 +203,13 @@ dlg:button {
                             for i = 0, srcPalLen - 1, 1 do
                                 local aseColor = srcPal:getColor(i)
                                 local clr = AseUtilities.aseColorToClr(aseColor)
-                                -- local lab = Clr.rgbaToLab(clr)
-                                -- local pt = Vec3.new(lab.a, lab.b, lab.l)
                                 local pt = clrV3Func(clr)
                                 table.insert(palPts, pt)
                             end
 
                             -- Create an octree.
                             local cvgCapacity = args.cvgCapacity
-                            octBounds = Bounds3.fromPoints(palPts)
+                            local octBounds = Bounds3.fromPoints(palPts)
                             local octree = Octree.new(octBounds, cvgCapacity, 0)
                             Octree.insertAll(octree, palPts)
                             -- print(octree)
@@ -221,12 +217,11 @@ dlg:button {
                             -- Find nearest color in palette.
                             local cvgRad = args.cvgRad
                             local correspDict = {}
-                            local corresp = {}
                             for i = 1, #queries, 1 do
                                 local query = queries[i]
                                 local center = query.point
                                 local near = Octree.querySpherical(octree, center, cvgRad)
-                                local resultHex = 0x0
+                                local resultHex = 0x00000000
                                 if #near > 0 then
                                     local nearestPt = near[1]
                                     local nearestClr = v3ClrFunc(nearestPt)
@@ -235,6 +230,7 @@ dlg:button {
                                 correspDict[query.hex] = resultHex
                             end
 
+                            -- Apply colors to image.
                             local trgImg = srcImg:clone()
                             local trgpxitr = trgImg:pixels()
                             for elm in trgpxitr do

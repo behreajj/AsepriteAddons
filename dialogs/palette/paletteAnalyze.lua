@@ -1065,7 +1065,7 @@ dlg:button {
 
                         -- Initialize layer.
                         local cvgLayer = sprite:newLayer()
-                        cvgLayer.name = "Coverage"
+                        cvgLayer.name = "Coverage." .. string.format("%03d", args.cvgSat)
                         local cvgCel = sprite:newCel(cvgLayer, frame)
 
                         -- Create image.

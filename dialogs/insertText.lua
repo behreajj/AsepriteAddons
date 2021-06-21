@@ -18,27 +18,27 @@ local dlg = Dialog {
     title = "Insert Text"
 }
 
-dlg:entry{
+dlg:entry {
     id = "msg",
     label = "Message",
     text = defaults.msg,
     focus = "false"
 }
 
-dlg:number{
+dlg:number {
     id = "xOrigin",
     label = "Origin:",
     text = string.format("%.1f", defaults.xOrigin),
     decimals = 5
 }
 
-dlg:number{
+dlg:number {
     id = "yOrigin",
     text = string.format("%.1f", defaults.yOrigin),
     decimals = 5
 }
 
-dlg:slider{
+dlg:slider {
     id = "scale",
     label = "Scale:",
     min = 1,
@@ -46,28 +46,28 @@ dlg:slider{
     value = defaults.scale
 }
 
-dlg:combobox{
+dlg:combobox {
     id = "orientation",
     label = "Orientation:",
     option = defaults.orientation,
     options = AseUtilities.ORIENTATIONS
 }
 
-dlg:combobox{
+dlg:combobox {
     id = "alignHoriz",
     label = "Line:",
     option = defaults.alignHoriz,
     options = AseUtilities.GLYPH_ALIGN_HORIZ
 }
 
-dlg:combobox{
+dlg:combobox {
     id = "alignVert",
     label = "Char:",
     option = defaults.alignVert,
     options = AseUtilities.GLYPH_ALIGN_VERT
 }
 
-dlg:check{
+dlg:check {
     id = "useShadow",
     label = "Drop Shadow:",
     selected = defaults.useShadow,
@@ -79,20 +79,20 @@ dlg:check{
     end
 }
 
-dlg:color{
+dlg:color {
     id = "fillClr",
     label = "Fill:",
     color = defaults.fillClr
 }
 
-dlg:color{
+dlg:color {
     id = "shdColor",
     label = "Shadow:",
     color = defaults.shdColor,
     visible = defaults.useShadow
 }
 
-dlg:button{
+dlg:button {
     id = "ok",
     text = "OK",
     focus = defaults.pullFocus,
@@ -209,7 +209,7 @@ dlg:button{
     end
 }
 
-dlg:button{
+dlg:button {
     id = "cancel",
     text = "CANCEL",
     onclick = function()
@@ -217,6 +217,6 @@ dlg:button{
     end
 }
 
-dlg:show{
+dlg:show {
     wait = false
 }

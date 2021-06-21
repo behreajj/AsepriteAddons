@@ -238,7 +238,7 @@ dlg:button {
                             for hex, _ in pairs(srcClrDict) do
 
                                 -- Decompose hexadecimal to sRGB in [0, 255].
-                                local sbi = hex >> 0x18 & 0xff
+                                local sbi = hex >> 0x10 & 0xff
                                 local sgi = hex >> 0x08 & 0xff
                                 local sri = hex & 0xff
 
@@ -248,6 +248,9 @@ dlg:button {
                                 local lri = stlLut[1 + sri]
 
                                 -- Find luminance.
+                                -- 0.212 / 255.0,
+                                -- 0.715 / 255.0
+                                -- 0.072 / 255.0
                                 local lum = 0.0008339189910613837 * lri
                                     + 0.002804584845905505 * lgi
                                     + 0.0002830647904840915 * lbi
@@ -300,6 +303,9 @@ dlg:button {
                             -- Create target layer, cel, image.
                             local trgLyr = sprite:newLayer()
                             trgLyr.name = "Gradient Map"
+                            if useNormalize then
+                                trgLyr.name = trgLyr.name .. ".Contrast"
+                            end
                             local trgCel = sprite:newCel(trgLyr, srcCel.frame)
                             trgCel.position = srcCel.position
                             trgCel.image = srcImg:clone()
