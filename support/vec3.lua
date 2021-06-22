@@ -391,6 +391,62 @@ function Vec3.fract(a)
         a.z - math.tointeger(a.z))
 end
 
+---Creates a one-dimensional table of vectors
+---arranged in a Cartesian grid from the lower
+---to the upper bound. Both bounds are vectors.
+---@param cols number columns
+---@param rows number rows
+---@param layers number layers
+---@param lb table lower bound
+---@param ub table upper bound
+---@return table
+function Vec3.gridCartesian(cols, rows, layers, lb, ub)
+    local ubVal = ub or Vec3.new(1.0, 1.0, 1.0)
+    local lbVal = lb or Vec3.new(-1.0, -1.0, -1.0)
+
+    local lVal = layers or 2
+    local rVal = rows or 2
+    local cVal = cols or 2
+
+    if lVal < 2 then lVal = 2 end
+    if rVal < 2 then rVal = 2 end
+    if cVal < 2 then cVal = 2 end
+
+    local lbx = lbVal.x
+    local lby = lbVal.y
+    local lbz = lbVal.z
+
+    local ubx = ubVal.x
+    local uby = ubVal.y
+    local ubz = ubVal.z
+
+    local hToStep = 1.0 / (lVal - 1.0)
+    local iToStep = 1.0 / (rVal - 1.0)
+    local jToStep = 1.0 / (cVal - 1.0)
+
+    local rcVal = rVal * cVal
+    local length = lVal * rcVal - 1
+    local result = {}
+
+    for k = 0, length, 1 do    
+        local h = k // rcVal
+        local m = k - h * rcVal
+        local i = m // cVal
+        local j = m % cVal
+
+        local hStep = h * hToStep
+        local iStep = i * iToStep
+        local jStep = j * jToStep
+
+        result[1 + k] = Vec3.new(
+            (1.0 - jStep) * lbx + jStep * ubx,
+            (1.0 - iStep) * lby + iStep * uby,
+            (1.0 - hStep) * lbz + hStep * ubz)
+    end
+
+    return result
+end
+
 ---Multiplies two vectors component-wise.
 ---@param a table left operand
 ---@param b table right operand

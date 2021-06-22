@@ -104,8 +104,8 @@ dlg:button {
 
                 -- Constants, as far as we're concerned.
                 local lut = Utilities.GLYPH_LUT
-                local gw = 3
-                local gh = 5
+                local gw = 8
+                local gh = 8
 
                 -- Unpack user inputs.
                 local hexFill = args.fillClr.rgbaPixel
@@ -144,10 +144,9 @@ dlg:button {
                 layer.name = msg
 
                 -- Unpack string to characters table.
-                local msgUpper = string.upper(msg)
                 local chars = {}
                 for i = 1, msgLen, 1 do
-                    chars[i] = msgUpper:sub(i, i)
+                    chars[i] = msg:sub(i, i)
                 end
 
                 local dw = gw * scale

@@ -209,6 +209,8 @@ function AseUtilities.drawGlyph(
     image, glyph, hex,
     x, y, gw, gh)
 
+    -- TODO: Return xCaret position?
+
     local lenn1 = gw * gh - 1
     for i = 0, lenn1, 1 do
         local shift = lenn1 - i
@@ -243,6 +245,8 @@ end
 function AseUtilities.drawGlyphNearest(
     image, glyph, hex,
     x, y, gw, gh, dw, dh)
+
+    -- TODO: Return xCaret position?
 
     if gw == dw and gh == dh then
         return AseUtilities.drawGlyph(

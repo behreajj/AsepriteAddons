@@ -937,9 +937,6 @@ end
 ---@param tol number tolerance
 ---@return boolean
 function Clr.rgbIsInGamut(a, tol)
-    -- Account for [0.0, 1.0] to [0, 255]
-    -- conversion sloppiness. 0.5/255 is
-    -- approximately 0.002.
     local eps = tol or 0.0
     return (a.r >= -eps and a.r <= (1.0 + eps))
         and (a.g >= -eps and a.g <= (1.0 + eps))

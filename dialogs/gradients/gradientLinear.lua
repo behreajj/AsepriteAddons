@@ -200,8 +200,9 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         if args.ok then
+            local clrSpacePreset = args.clrSpacePreset
             local sprite = AseUtilities.initCanvas(
-                64, 64, "Linear Gradient")
+                64, 64, "Gradient.Linear")
             if sprite.colorMode == ColorMode.RGB then
                 local layer = sprite.layers[#sprite.layers]
                 local frame = app.activeFrame or 1
@@ -211,7 +212,6 @@ dlg:button {
                 local tweenOps = args.tweenOps
                 local rgbPreset = args.easingFuncRGB
                 local huePreset = args.easingFuncHue
-                local clrSpacePreset = args.clrSpacePreset
 
                 local easeFuncFinal = nil
                 if tweenOps == "PALETTE" then

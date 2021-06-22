@@ -270,8 +270,8 @@ function Mesh2.arc(
     sectors,
     useQuads)
 
-    -- TODO: Needs to be refactored to use
-    -- NGONs with n resolution per sector.
+    -- TODO: Refactor to use NGONs with n
+    -- resolution per sector.
     local a = startAngle % 6.283185307179586
     local b = stopAngle % 6.283185307179586
     local arcLen = (b - a) % 6.283185307179586

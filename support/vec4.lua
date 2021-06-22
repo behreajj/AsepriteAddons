@@ -341,6 +341,73 @@ function Vec4.fract(a)
         a.w - math.tointeger(a.w))
 end
 
+---Creates a one-dimensional table of vectors
+---arranged in a Cartesian grid from the lower
+---to the upper bound. Both bounds are vectors.
+---@param cols number columns
+---@param rows number rows
+---@param layers number layers
+---@param strata number strata
+---@param lb table lower bound
+---@param ub table upper bound
+---@return table
+function Vec4.gridCartesian(cols, rows, layers, strata, lb, ub)
+    local ubVal = ub or Vec4.new(1.0, 1.0, 1.0, 1.0)
+    local lbVal = lb or Vec4.new(-1.0, -1.0, -1.0, -1.0)
+
+    local sVal = strata or 2
+    local lVal = layers or 2
+    local rVal = rows or 2
+    local cVal = cols or 2
+
+    if sVal < 2 then sVal = 2 end
+    if lVal < 2 then lVal = 2 end
+    if rVal < 2 then rVal = 2 end
+    if cVal < 2 then cVal = 2 end
+
+    local lbx = lbVal.x
+    local lby = lbVal.y
+    local lbz = lbVal.z
+    local lbw = lbVal.w
+
+    local ubx = ubVal.x
+    local uby = ubVal.y
+    local ubz = ubVal.z
+    local ubw = ubVal.w
+
+    local gToStep = 1.0 / (sVal - 1.0)
+    local hToStep = 1.0 / (lVal - 1.0)
+    local iToStep = 1.0 / (rVal - 1.0)
+    local jToStep = 1.0 / (cVal - 1.0)
+
+    local rcVal = rVal * cVal
+    local lrcVal = lVal * rcVal
+    local length = sVal * lrcVal - 1
+    local result = {}
+
+    for k = 0, length, 1 do
+        local g = k // lrcVal
+        local m = k - g * lrcVal
+        local h = m // rcVal
+        local n = m - h * rcVal
+        local i = n // cVal
+        local j = n % cVal
+
+        local gStep = g * gToStep
+        local hStep = h * hToStep
+        local iStep = i * iToStep
+        local jStep = j * jToStep
+
+        result[1 + k] = Vec4.new(
+            (1.0 - jStep) * lbx + jStep * ubx,
+            (1.0 - iStep) * lby + iStep * uby,
+            (1.0 - hStep) * lbz + hStep * ubz,
+            (1.0 - gStep) * lbw + gStep * ubw)
+    end
+
+    return result
+end
+
 ---Multiplies two vectors component-wise.
 ---@param a table left operand
 ---@param b table right operand

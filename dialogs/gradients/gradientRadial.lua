@@ -278,8 +278,9 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         if args.ok then
+            local clrSpacePreset = args.clrSpacePreset
             local sprite = AseUtilities.initCanvas(
-                64, 64, "Radial Gradient")
+                64, 64, "Gradient.Radial")
             if sprite.colorMode == ColorMode.RGB then
 
                 local min = math.min
@@ -293,7 +294,6 @@ dlg:button {
                 local tweenOps = args.tweenOps
                 local rgbPreset = args.easingFuncRGB
                 local huePreset = args.easingFuncHue
-                local clrSpacePreset = args.clrSpacePreset
 
                 local easeFuncFinal = nil
                 if tweenOps == "PALETTE" then

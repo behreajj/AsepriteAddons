@@ -428,7 +428,7 @@ local function drawRadial(
 
     local marginScale = 0.85
     local maxDisplRad = marginScale * 0.5
-        * (wImage - margin * 2)
+        * (math.min(wImage, hImage) - margin * 2)
         - digLen * gw
     local minDisplRad = 0.125 * maxDisplRad
         + digLen * gw
@@ -728,8 +728,8 @@ dlg:button {
                 if srcPal then
 
                     -- Localize character display constants.
-                    local gw = 3
-                    local gh = 5
+                    local gw = 8
+                    local gh = 8
                     local lut = Utilities.GLYPH_LUT
 
                     -- Unpack arguments.
@@ -834,11 +834,14 @@ dlg:button {
 
                         local x = 2
                         local y = 2
+
+                        local gw3 = gw * 3
+                        local gw11 = gw * 11
                         for i = 1, #hexes, 1 do
                             local hex = hexes[i]
                             local index = indices[i]
                             drawSwatch(manifestImage,
-                                x + 12, y, brSize, brSize,
+                                x + gw3 + 2, y, brSize, brSize,
                                 hex)
 
                             local idxStr = string.format("%3d", index)
@@ -856,12 +859,12 @@ dlg:button {
                             drawHorizShd(
                                 lut, manifestImage, chars,
                                 txtHex, shdHex,
-                                x + brSize + 13, y + 1, gw, gh, 1)
+                                x + brSize + gw3 + 2, y + 1, gw, gh, 1)
 
                             y = y + brSize + 1
 
                             if i % rows == 0 then
-                                x = x + brSize + 44
+                                x = x + brSize + 4 + gw11
                                 y = 2
                             end
                         end
@@ -886,9 +889,9 @@ dlg:button {
                         end
 
                         drawScatter(lababImage, lut, gw, gh, plotMargin,
-                        "CIE LAB LIGHTNESS",
-                        "GREEN TO RED",
-                        "BLUE TO YELLOW",
+                        "CIE LAB Lightness",
+                        "Green to Red",
+                        "Blue to Yellow",
                         pipCount, aMin, aMax, bMin, bMax,
                         coords, hexes,
                         txtHex, shdHex, dotRad, 2, 1)
@@ -914,9 +917,9 @@ dlg:button {
                         end
 
                         drawScatter(labLbImage, lut, gw, gh, plotMargin,
-                        "CIE LAB GREEN TO RED",
-                        "BLUE TO YELLOW",
-                        "LIGHTNESS",
+                        "CIE LAB Green to Red",
+                        "Blue to Yellow",
+                        "Lightness",
                         pipCount, bMin, bMax, lMin, lMax,
                         coords, hexes,
                         txtHex, shdHex, dotRad, 2, 1)
@@ -942,9 +945,9 @@ dlg:button {
                         end
 
                         drawScatter(labLaImage, lut, gw, gh, plotMargin,
-                        "CIE LAB BLUE TO YELLOW",
-                        "GREEN TO RED",
-                        "LIGHTNESS",
+                        "CIE LAB Blue to Yellow",
+                        "Green to Red",
+                        "Lightness",
                         pipCount, aMin, aMax, lMin, lMax,
                         coords, hexes,
                         txtHex, shdHex, dotRad, 2, 1)
@@ -969,9 +972,9 @@ dlg:button {
                         end
 
                         drawScatter(lchLcImage, lut, gw, gh, 2,
-                        "CIE LCH HUE",
-                        "CHROMA",
-                        "LIGHTNESS",
+                        "CIE LCH Hue",
+                        "Chroma",
+                        "Lightness",
                         pipCount, cMin, cMax, lMin, lMax,
                         coords, hexes,
                         txtHex, shdHex, dotRad, 2, 1)
@@ -999,8 +1002,8 @@ dlg:button {
 
                         drawRadial(
                             lchLhImage, lut, gw, gh, 2,
-                            "CIE LCH CHROMA", 12, 6,
-                            "LIGHT", lMin, lMax,
+                            "CIE LCH Chroma", 12, 6,
+                            "Light", lMin, lMax,
                             coords, hexes,
                             txtHex, shdHex, dotRad, 2, 1)
 
@@ -1027,8 +1030,8 @@ dlg:button {
 
                         drawRadial(
                             lchChImage, lut, gw, gh, 2,
-                            "CIE LCH LIGHTNESS", 12, 6,
-                            "CHROMA", cMin, cMax,
+                            "CIE LCH Lightness", 12, 6,
+                            "Chroma", cMin, cMax,
                             coords, hexes,
                             txtHex, shdHex, dotRad, 2, 1)
 
@@ -1166,9 +1169,9 @@ dlg:button {
 
                         drawScatter(
                             contigImage, lut, gw, gh, plotMargin,
-                            "CONTIGUOUS",
-                            "GREEN TO RED",
-                            "BLUE TO YELLOW",
+                            "Contiguous",
+                            "Green to Red",
+                            "Blue to Yellow",
                             pipCount, aMin, aMax, bMin, bMax,
                             sampledPoints, sampledHexes,
                             txtHex, shdHex, dotRad, 2, 1)

@@ -343,6 +343,50 @@ function Vec2.fromPolar(heading, radius)
         r * math.sin(heading))
 end
 
+---Creates a one-dimensional table of vectors
+---arranged in a Cartesian grid from the lower
+---to the upper bound. Both bounds are vectors.
+---@param cols number columns
+---@param rows number rows
+---@param lb table lower bound
+---@param ub table upper bound
+---@return table
+function Vec2.gridCartesian(cols, rows, lb, ub)
+    local ubVal = ub or Vec2.new(1.0, 1.0)
+    local lbVal = lb or Vec2.new(-1.0, -1.0)
+
+    local rVal = rows or 2
+    local cVal = cols or 2
+
+    if rVal < 2 then rVal = 2 end
+    if cVal < 2 then cVal = 2 end
+
+    local lbx = lbVal.x
+    local lby = lbVal.y
+
+    local ubx = ubVal.x
+    local uby = ubVal.y
+
+    local iToStep = 1.0 / (rVal - 1.0)
+    local jToStep = 1.0 / (cVal - 1.0)
+
+    local length = rVal * cVal - 1
+    local result = {}
+
+    for k = 0, length, 1 do
+        local i = k // cVal
+        local j = k % cVal
+        local iStep = i * iToStep
+        local jStep = j * jToStep
+
+        result[1 + k] = Vec2.new(
+            (1.0 - jStep) * lbx + jStep * ubx,
+            (1.0 - iStep) * lby + iStep * uby)
+    end
+
+    return result
+end
+
 ---Multiplies two vectors component-wise.
 ---@param a table left operand
 ---@param b table right operand

@@ -242,24 +242,43 @@ dlg:button {
                                 local sgi = hex >> 0x08 & 0xff
                                 local sri = hex & 0xff
 
-                                -- Convert to linear via look up table.
-                                local lbi = stlLut[1 + sbi]
-                                local lgi = stlLut[1 + sgi]
-                                local lri = stlLut[1 + sri]
+                                local lum = 0.0
 
-                                -- Find luminance.
-                                -- 0.212 / 255.0,
-                                -- 0.715 / 255.0
-                                -- 0.072 / 255.0
-                                local lum = 0.0008339189910613837 * lri
-                                    + 0.002804584845905505 * lgi
-                                    + 0.0002830647904840915 * lbi
+                                if sbi == sgi and sbi == sri and sri == sgi then
 
-                                -- Convert luminance to sRGB grayscale.
-                                if lum <= 0.0031308 then
-                                    lum = lum * 12.92
+                                    lum = sbi * 0.00392156862745098
+
                                 else
-                                    lum = (lum ^ 0.4166666666666667) * 1.055 - 0.055
+
+                                    -- Convert to linear via look up table.
+                                    local lbi = stlLut[1 + sbi]
+                                    local lgi = stlLut[1 + sgi]
+                                    local lri = stlLut[1 + sri]
+
+                                    -- Find luminance. Same as the Y in CIE XYZ.
+                                    -- 0.212 / 255.0,
+                                    -- 0.715 / 255.0
+                                    -- 0.072 / 255.0
+                                    -- local lum = 0.0008339189910613837 * lri
+                                    --     + 0.002804584845905505 * lgi
+                                    --     + 0.0002830647904840915 * lbi
+
+                                    -- Convert luminance to sRGB grayscale.
+                                    -- if lum <= 0.0031308 then
+                                    --     lum = lum * 12.92
+                                    -- else
+                                    --     lum = (lum ^ 0.4166666666666667) * 1.055 - 0.055
+                                    -- end
+
+                                    local xyz = Clr.rgbaLinearToXyzInternal(
+                                        lri * 0.00392156862745098,
+                                        lgi * 0.00392156862745098,
+                                        lbi * 0.00392156862745098,
+                                        1.0)
+                                    local lab = Clr.xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
+
+                                    lum = lab.l * 0.01
+
                                 end
 
                                 if lum < minLum then minLum = lum end
@@ -297,12 +316,12 @@ dlg:button {
                                 local aTrg = (grayClr >> 0x18 & 0xff)
 
                                 trgClrDict[hex] = min(aSrc, aTrg) << 0x18
-                                | (0x00ffffff & grayClr)
+                                    | (0x00ffffff & grayClr)
                             end
 
                             -- Create target layer, cel, image.
                             local trgLyr = sprite:newLayer()
-                            trgLyr.name = "Gradient Map"
+                            trgLyr.name = "Gradient.Map." .. clrSpacePreset
                             if useNormalize then
                                 trgLyr.name = trgLyr.name .. ".Contrast"
                             end
