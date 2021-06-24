@@ -9,10 +9,13 @@ local colorSpaces = {
     "S_RGB"
 }
 
+-- TODO: Adopt any palette, not just active.
+
 local defaults = {
     palType = "ACTIVE",
     copyToLayer = true,
-    cvgRad = 175,
+    cvgLabRad = 175,
+    cvgNormRad = 100,
     cvgCapacity = 16,
     printElapsed = false,
     clrSpacePreset = "LINEAR_RGB",
@@ -38,11 +41,6 @@ local function clrToVec3Lab(clr)
     return Vec3.new(lab.a, lab.b, lab.l)
 end
 
-local function clrToVec3Lch(clr)
-    local lch = Clr.rgbaToLch(clr)
-    return Vec3.new(lch.h, lch.c, lch.l)
-end
-
 local function vec3ToClrsRgb(v)
     return Clr.new(v.x, v.y, v.z, 1.0)
 end
@@ -60,15 +58,9 @@ local function vec3ToClrLab(v)
     return Clr.labToRgba(v.z, v.x, v.y, 1.0)
 end
 
-local function vec3ToClrLch(v)
-    return Clr.lchToRgba(v.z, v.y, v.x, 1.0)
-end
-
 local function clrToV3FuncFromPreset(preset)
     if preset == "CIE_LAB" then
         return clrToVec3Lab
-    elseif preset == "CIE_LCH" then
-        return clrToVec3Lch
     elseif preset == "CIE_XYZ" then
         return clrToVec3Xyz
     elseif preset == "LINEAR_RGB" then
@@ -81,8 +73,6 @@ end
 local function v3ToClrFuncFromPreset(preset)
     if preset == "CIE_LAB" then
         return vec3ToClrLab
-    elseif preset == "CIE_LCH" then
-        return vec3ToClrLch
     elseif preset == "CIE_XYZ" then
         return vec3ToClrXyz
     elseif preset == "LINEAR_RGB" then
@@ -94,13 +84,90 @@ end
 
 local dlg = Dialog { title = "Adopt Palette" }
 
+dlg:combobox {
+    id = "palType",
+    label = "Palette:",
+    option = defaults.palType,
+    options = { "ACTIVE", "FILE", "PRESET" },
+    onchange = function()
+        local state = dlg.data.palType
+
+        dlg:modify {
+            id = "palFile",
+            visible = state == "FILE"
+        }
+
+        dlg:modify {
+            id = "palPreset",
+            visible = state == "PRESET"
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "palFile",
+    filetypes = { "gpl", "pal" },
+    open = true,
+    visible = defaults.palType == "FILE"
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "palPreset",
+    text = "",
+    focus = false,
+    visible = defaults.palType == "PRESET"
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "clrSpacePreset",
+    label = "Color Space:",
+    option = defaults.clrSpacePreset,
+    options = colorSpaces,
+    onchange = function()
+        local state = dlg.data.clrSpacePreset
+        local isLab = state == "CIE_LAB"
+
+        dlg:modify {
+            id = "cvgLabRad",
+            visible = isLab
+        }
+
+        dlg:modify {
+            id = "cvgNormRad",
+            visible = not isLab
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:slider {
-    id = "cvgRad",
+    id = "cvgLabRad",
     label = "Radius:",
     min = 25,
     max = 250,
-    value = defaults.cvgRad
+    value = defaults.cvgLabRad,
+    visible = defaults.clrSpacePreset == "CIE_LAB"
 }
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "cvgNormRad",
+    label = "Radius:",
+    min = 5,
+    max = 173,
+    value = defaults.cvgNormRad,
+    visible = defaults.clrSpacePreset ~= "CIE_LAB"
+}
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "cvgCapacity",
@@ -110,11 +177,15 @@ dlg:slider {
     value = defaults.cvgCapacity
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "copyToLayer",
     label = "Copy To New Layer:",
     selected = defaults.copyToLayer
 }
+
+dlg:newrow { always = false }
 
 dlg:check {
     id = "printElapsed",
@@ -122,12 +193,7 @@ dlg:check {
     selected = defaults.printElapsed
 }
 
-dlg:combobox {
-    id = "clrSpacePreset",
-    label = "Color Space:",
-    option = defaults.clrSpacePreset,
-    options = colorSpaces
-}
+dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",
@@ -214,7 +280,13 @@ dlg:button {
                             -- print(octree)
 
                             -- Find nearest color in palette.
-                            local cvgRad = args.cvgRad
+                            local cvgRad = 0.0
+                            if clrSpacePreset == "CIE_LAB" then
+                                cvgRad = args.cvgLabRad
+                            else
+                                cvgRad = args.cvgNormRad * 0.01
+                            end
+
                             local correspDict = {}
                             for i = 1, #queries, 1 do
                                 local query = queries[i]

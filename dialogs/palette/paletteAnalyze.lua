@@ -54,7 +54,7 @@ dlg:file {
     id = "palFile",
     filetypes = { "gpl", "pal" },
     open = true,
-    visible = false
+    visible = defaults.palType == "FILE"
 }
 
 dlg:newrow { always = false }
@@ -63,7 +63,7 @@ dlg:entry {
     id = "palPreset",
     text = "",
     focus = false,
-    visible = false
+    visible = defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
