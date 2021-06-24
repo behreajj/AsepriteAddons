@@ -88,8 +88,11 @@ function Octree.insert(o, point)
         end
 
         for i = 1, 8, 1 do
-            if Octree.insert(o.children[i], point) then
-                return true
+            local child = o.children[i]
+            if child then
+                if Octree.insert(child, point) then
+                    return true
+                end
             end
         end
     end
@@ -178,8 +181,6 @@ end
 function Octree.querySphericalInternal(
     o, center, radius, found)
 
-    -- TODO: Try box-box intersection test intead.
-
     if Bounds3.intersectsSphere(o.bounds, center, radius) then
 
         local children = o.children
@@ -266,7 +267,7 @@ function Octree.toJson(o)
     local isLeaf = true
     for i = 1, 8, 1 do
         local child = o.children[i]
-        if child ~= nil then
+        if child then
             isLeaf = false
             str = str .. Octree.toJson(child)
         else

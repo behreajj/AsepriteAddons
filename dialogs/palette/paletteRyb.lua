@@ -1,7 +1,7 @@
 dofile("../../support/utilities.lua")
 dofile("../../support/aseutilities.lua")
 
-local hueEasing = {"FAR", "NEAR"}
+local hueEasing = { "FAR", "NEAR" }
 
 local ryb = {
     Color(255, 0, 0), -- FF0000
@@ -42,11 +42,26 @@ local hues = {
     [0xFF4000BF] = 337.5
 }
 
-local dlg = Dialog {
-    title = "Palette Generator"
+local defaults = {
+    samples = 12,
+    shades = 7,
+    hueStart = 0,
+    hueEnd = 330,
+    saturation = 100,
+    minLight = 10,
+    maxLight = 85,
+    easingFuncHue = "FAR",
+    inclGray = false,
+    prependMask = true,
+    target = "ACTIVE",
+    pullFocus = false
 }
 
-dlg:shades{
+local dlg = Dialog {
+    title = "Red Yellow Blue Palette"
+}
+
+dlg:shades {
     id = "hues",
     label = "Preview:",
     colors = ryb,
@@ -54,13 +69,13 @@ dlg:shades{
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
             local hue = math.tointeger(hues[ev.color.rgbaPixel])
-            dlg:modify{
+            dlg:modify {
                 id = "hueStart",
                 value = hue
             }
         elseif ev.button == MouseButton.RIGHT then
             local hue = math.tointeger(hues[ev.color.rgbaPixel])
-            dlg:modify{
+            dlg:modify {
                 id = "hueEnd",
                 value = hue
             }
@@ -68,95 +83,83 @@ dlg:shades{
     end
 }
 
-dlg:slider{
+dlg:slider {
     id = "samples",
     label = "Samples:",
     min = 1,
     max = 32,
-    value = 12
+    value = defaults.samples
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:slider{
+dlg:slider {
     id = "shades",
     label = "Shades:",
     min = 1,
     max = 32,
-    value = 7
+    value = defaults.shades
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:slider{
+dlg:slider {
     id = "hueStart",
     label = "Hue:",
     min = 0,
     max = 360,
-    value = 0
+    value = defaults.hueStart
 }
 
-dlg:slider{
+dlg:slider {
     id = "hueEnd",
     min = 0,
     max = 360,
-    value = 359
+    value = defaults.hueEnd
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:slider{
+dlg:slider {
     id = "saturation",
     label = "Saturation:",
     min = 0,
     max = 100,
-    value = 100
+    value = defaults.saturation
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:slider{
+dlg:slider {
     id = "minLight",
     label = "Lightness:",
     min = 0,
     max = 100,
-    value = 10
+    value = defaults.minLight
 }
 
-dlg:slider{
+dlg:slider {
     id = "maxLight",
     min = 0,
     max = 100,
-    value = 85
+    value = defaults.maxLight
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:combobox{
+dlg:combobox {
     id = "easingFuncHue",
     label = "Easing:",
-    option = "FAR",
+    option = defaults.easingFuncHue,
     options = hueEasing
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:check{
+dlg:check {
     id = "inclGray",
     label = "Include Gray:",
-    selected = false
+    selected = defaults.inclGray
 }
 
 dlg:newrow { always = false }
@@ -164,17 +167,40 @@ dlg:newrow { always = false }
 dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
-    selected = true,
+    selected = defaults.prependMask,
 }
 
-dlg:newrow{
-    always = false
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "target",
+    label = "Target:",
+    option = defaults.target,
+    options = { "ACTIVE", "SAVE" },
+    onchange = function()
+        local md = dlg.data.target
+        dlg:modify {
+            id = "filepath",
+            visible = md == "SAVE"
+        }
+    end
 }
 
-dlg:button{
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "filepath",
+    filetypes = { "gpl", "pal" },
+    save = true,
+    visible = defaults.target == "SAVE"
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
     id = "ok",
     text = "OK",
-    focus = false,
+    focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
         if args.ok then
@@ -271,6 +297,7 @@ dlg:button{
                         jFacAdj = jFacAdj ^ (1.5)
                         local lnew = (1.0 - jFacAdj) * lMin + jFacAdj * lMax
 
+                        -- TODO: Use Clr LCH instead?
                         local newclr = Color {
                             h = h,
                             s = snew,
@@ -299,7 +326,13 @@ dlg:button{
                 end
             end
 
-            sprite:setPalette(palette)
+            local target = args.target
+            if target == "SAVE" then
+                local filepath = args.filepath
+                palette:saveAs(filepath)
+            else
+                sprite:setPalette(palette)
+            end
 
             if oldMode == ColorMode.INDEXED then
                 app.command.ChangePixelFormat {
@@ -318,7 +351,7 @@ dlg:button{
     end
 }
 
-dlg:button{
+dlg:button {
     id = "cancel",
     text = "CANCEL",
     onclick = function()
@@ -326,6 +359,4 @@ dlg:button{
     end
 }
 
-dlg:show{
-    wait = false
-}
+dlg:show { wait = false }

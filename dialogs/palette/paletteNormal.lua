@@ -9,6 +9,14 @@ local preview = {
     Color(218,  37, 128)
 }
 
+local defaults = {
+    inclinations = 4,
+    azimuths = 12,
+    prependMask = true,
+    target = "ACTIVE",
+    pullFocus = false
+}
+
 local dlg = Dialog { title = "Normal Palette" }
 
 dlg:shades {
@@ -34,7 +42,7 @@ dlg:slider {
     label = "Latitudes:",
     min = 1,
     max = 32,
-    value = 4
+    value = defaults.inclinations
 }
 
 dlg:newrow { always = false }
@@ -44,7 +52,7 @@ dlg:slider {
     label = "Longitudes:",
     min = 1,
     max = 32,
-    value = 12
+    value = defaults.azimuths
 }
 
 dlg:newrow { always = false }
@@ -52,7 +60,32 @@ dlg:newrow { always = false }
 dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
-    selected = true,
+    selected = defaults.prependMask,
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "target",
+    label = "Target:",
+    option = defaults.target,
+    options = { "ACTIVE", "SAVE" },
+    onchange = function()
+        local md = dlg.data.target
+        dlg:modify {
+            id = "filepath",
+            visible = md == "SAVE"
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "filepath",
+    filetypes = { "gpl", "pal" },
+    save = true,
+    visible = defaults.target == "SAVE"
 }
 
 dlg:newrow { always = false }
@@ -60,7 +93,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = false,
+    focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
         if args.ok then
@@ -129,7 +162,13 @@ dlg:button {
             local oldMode = sprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
-            sprite:setPalette(palette)
+            local target = args.target
+            if target == "SAVE" then
+                local filepath = args.filepath
+                palette:saveAs(filepath)
+            else
+                sprite:setPalette(palette)
+            end
 
             if oldMode == ColorMode.INDEXED then
                 app.command.ChangePixelFormat { format = "indexed" }

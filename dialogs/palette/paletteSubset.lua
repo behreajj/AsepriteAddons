@@ -2,7 +2,7 @@ local dlg = Dialog { title = "Palette Subset" }
 
 dlg:combobox {
     id = "palType",
-    label = "Palette:",
+    label = "Source:",
     option = "ACTIVE",
     options = { "ACTIVE", "FILE", "PRESET" },
     onchange = function()
@@ -68,6 +68,31 @@ dlg:check {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "target",
+    label = "Target:",
+    option = "ACTIVE",
+    options = { "ACTIVE", "SAVE" },
+    onchange = function()
+        local md = dlg.data.target
+        dlg:modify {
+            id = "filepath",
+            visible = md == "SAVE"
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "filepath",
+    filetypes = { "gpl", "pal" },
+    save = true,
+    visible = false
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "ok",
     text = "OK",
@@ -128,7 +153,15 @@ dlg:button {
                         trgPal:setColor(0, Color(0, 0, 0, 0))
                     end
 
-                    sprite:setPalette(trgPal)
+                    -- sprite:setPalette(trgPal)
+
+                    local target = args.target
+                    if target == "SAVE" then
+                        local filepath = args.filepath
+                        trgPal:saveAs(filepath)
+                    else
+                        sprite:setPalette(trgPal)
+                    end
                 else
                     app.alert("The source palette could not be found.")
                 end

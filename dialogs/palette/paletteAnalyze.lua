@@ -175,8 +175,8 @@ dlg:slider {
 
 dlg:slider {
     id = "cvgCapacity",
-    label = "Capacity:",
-    min = 1,
+    label = "Cell Capacity:",
+    min = 3,
     max = 32,
     value = defaults.cvgCapacity,
     visible = defaults.coverage == true

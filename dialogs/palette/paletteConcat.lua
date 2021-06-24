@@ -1,10 +1,21 @@
+local palTypes = { "ACTIVE", "FILE", "PRESET" }
+
+local defaults = {
+    aPalType = "ACTIVE",
+    bPalType = "FILE",
+    uniquesOnly = true,
+    prependMask = true,
+    target = "ACTIVE",
+    pullFocus = false
+}
+
 local dlg = Dialog { title = "Concatenate Palettes" }
 
 dlg:combobox {
     id = "aPalType",
-    label = "Palette A:",
-    option = "ACTIVE",
-    options = { "ACTIVE", "FILE", "PRESET" },
+    label = "Source A:",
+    option = defaults.aPalType,
+    options = palTypes,
     onchange = function()
         local state = dlg.data.aPalType
 
@@ -24,23 +35,23 @@ dlg:file {
     id = "aPalFile",
     filetypes = { "gpl", "pal" },
     open = true,
-    visible = false
+    visible = defaults.aPalType == "FILE"
 }
 
 dlg:entry {
     id = "aPalPreset",
     text = "",
     focus = false,
-    visible = false
+    visible = defaults.aPalType == "PRESET"
 }
 
 dlg:newrow { always = false }
 
 dlg:combobox {
     id = "bPalType",
-    label = "Palette B:",
-    option = "FILE",
-    options = { "ACTIVE", "FILE", "PRESET" },
+    label = "Source B:",
+    option = defaults.bPalType,
+    options = palTypes,
     onchange = function()
         local state = dlg.data.bPalType
 
@@ -60,14 +71,14 @@ dlg:file {
     id = "bPalFile",
     filetypes = { "gpl", "pal" },
     open = true,
-    visible = true
+    visible = defaults.bPalType == "FILE"
 }
 
 dlg:entry {
     id = "bPalPreset",
     text = "",
     focus = false,
-    visible = false
+    visible = defaults.bPalType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -75,7 +86,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "uniquesOnly",
     label = "Uniques Only:",
-    selected = true
+    selected = defaults.uniquesOnly
 }
 
 dlg:newrow { always = false }
@@ -83,7 +94,32 @@ dlg:newrow { always = false }
 dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
-    selected = true,
+    selected = defaults.prependMask,
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "target",
+    label = "Target:",
+    option = defaults.target,
+    options = { "ACTIVE", "SAVE" },
+    onchange = function()
+        local md = dlg.data.target
+        dlg:modify {
+            id = "filepath",
+            visible = md == "SAVE"
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "filepath",
+    filetypes = { "gpl", "pal" },
+    save = true,
+    visible = defaults.target == "SAVE"
 }
 
 dlg:newrow { always = false }
@@ -91,7 +127,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = false,
+    focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
         if args.ok then
@@ -203,7 +239,13 @@ dlg:button {
                         end
                     end
 
-                    sprite:setPalette(cPal)
+                    local target = args.target
+                    if target == "SAVE" then
+                        local filepath = args.filepath
+                        cPal:saveAs(filepath)
+                    else
+                        sprite:setPalette(cPal)
+                    end
 
                     if oldMode == ColorMode.INDEXED then
                         app.command.ChangePixelFormat { format = "indexed" }

@@ -104,8 +104,8 @@ dlg:slider {
 
 dlg:slider {
     id = "cvgCapacity",
-    label = "Capacity:",
-    min = 1,
+    label = "Cell Capacity:",
+    min = 3,
     max = 32,
     value = defaults.cvgCapacity
 }
@@ -174,7 +174,6 @@ dlg:button {
                             local oldMode = sprite.colorMode
                             app.command.ChangePixelFormat { format = "rgb" }
 
-
                             -- Get all unique hexadecimal values from image.
                             local srcpxitr = srcImg:pixels()
                             local hexesUnique = {}
@@ -231,10 +230,15 @@ dlg:button {
                             end
 
                             -- Apply colors to image.
+                            -- Use source color alpha.
                             local trgImg = srcImg:clone()
                             local trgpxitr = trgImg:pixels()
                             for elm in trgpxitr do
-                                elm(correspDict[elm()])
+                                local srcHex = elm()
+                                local trgHex = correspDict[srcHex]
+                                local comp = srcHex & 0xff000000
+                                           | trgHex & 0x00ffffff
+                                elm(comp)
                             end
 
                             local copyToLayer = args.copyToLayer
