@@ -94,91 +94,87 @@ dlg:file {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = false,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local sprite = app.activeSprite
-            if sprite then
+        local sprite = app.activeSprite
+        if sprite then
 
-                local oldMode = sprite.colorMode
-                app.command.ChangePixelFormat { format = "rgb" }
+            local oldMode = sprite.colorMode
+            app.command.ChangePixelFormat { format = "rgb" }
 
-                local srcPal = nil
-                local palType = args.palType
-                if palType == "FILE" then
-                    local fp =  args.palFile
-                    if fp and #fp > 0 then
-                        srcPal = Palette { fromFile = fp }
-                    end
-                elseif palType == "PRESET" then
-                    local pr = args.palPreset
-                    if pr and #pr > 0 then
-                        srcPal = Palette { fromResource = pr }
-                    end
-                else
-                    srcPal = sprite.palettes[1]
+            local srcPal = nil
+            local palType = args.palType
+            if palType == "FILE" then
+                local fp =  args.palFile
+                if fp and #fp > 0 then
+                    srcPal = Palette { fromFile = fp }
                 end
-
-                if srcPal then
-
-                    local origin = args.startIdx
-                    local stride = args.stride
-
-                    local srcLen = #srcPal
-                    local srcClrIdx = origin % srcLen
-                    local srcFirstClr = srcPal:getColor(srcClrIdx)
-
-                    local prependMask = args.prependMask
-                        and srcFirstClr.rgbaPixel ~= 0
-                    local trgPalLen = stride
-                    local offByOne = 0
-                    if prependMask then
-                        offByOne = 1
-                        trgPalLen = trgPalLen + 1
-                    end
-
-                    local trgPal = Palette(trgPalLen)
-                    for i = 0, stride - 1, 1 do
-                        local j = i % stride
-                        local k = (origin + j) % srcLen
-                        trgPal:setColor(
-                            offByOne + i,
-                            srcPal:getColor(k))
-                    end
-
-                    if prependMask then
-                        trgPal:setColor(0, Color(0, 0, 0, 0))
-                    end
-
-                    -- sprite:setPalette(trgPal)
-
-                    local target = args.target
-                    if target == "SAVE" then
-                        local filepath = args.filepath
-                        trgPal:saveAs(filepath)
-                    else
-                        sprite:setPalette(trgPal)
-                    end
-                else
-                    app.alert("The source palette could not be found.")
+            elseif palType == "PRESET" then
+                local pr = args.palPreset
+                if pr and #pr > 0 then
+                    srcPal = Palette { fromResource = pr }
                 end
-
-                if oldMode == ColorMode.INDEXED then
-                    app.command.ChangePixelFormat { format = "indexed" }
-                elseif oldMode == ColorMode.GRAY then
-                    app.command.ChangePixelFormat { format = "gray" }
-                end
-
-                app.refresh()
-
             else
-                app.alert("There is no active sprite.")
+                srcPal = sprite.palettes[1]
             end
+
+            if srcPal then
+
+                local origin = args.startIdx
+                local stride = args.stride
+
+                local srcLen = #srcPal
+                local srcClrIdx = origin % srcLen
+                local srcFirstClr = srcPal:getColor(srcClrIdx)
+
+                local prependMask = args.prependMask
+                    and srcFirstClr.rgbaPixel ~= 0
+                local trgPalLen = stride
+                local offByOne = 0
+                if prependMask then
+                    offByOne = 1
+                    trgPalLen = trgPalLen + 1
+                end
+
+                local trgPal = Palette(trgPalLen)
+                for i = 0, stride - 1, 1 do
+                    local j = i % stride
+                    local k = (origin + j) % srcLen
+                    trgPal:setColor(
+                        offByOne + i,
+                        srcPal:getColor(k))
+                end
+
+                if prependMask then
+                    trgPal:setColor(0, Color(0, 0, 0, 0))
+                end
+
+                -- sprite:setPalette(trgPal)
+
+                local target = args.target
+                if target == "SAVE" then
+                    local filepath = args.filepath
+                    trgPal:saveAs(filepath)
+                else
+                    sprite:setPalette(trgPal)
+                end
+            else
+                app.alert("The source palette could not be found.")
+            end
+
+            if oldMode == ColorMode.INDEXED then
+                app.command.ChangePixelFormat { format = "indexed" }
+            elseif oldMode == ColorMode.GRAY then
+                app.command.ChangePixelFormat { format = "gray" }
+            end
+
+            app.refresh()
+
         else
-            app.alert("Dialog arguments are invalid.")
+            app.alert("There is no active sprite.")
         end
     end
 }

@@ -168,28 +168,27 @@ function Clr.bitXor(a, b)
     return Clr.fromHex(Clr.toHex(a) ~ Clr.toHex(b))
 end
 
----Clamps a color to a lower and upper bound
----@param a table left operand
----@param lb table lower bound
----@param ub table upper bound
----@return table
-function Clr.clamp(a, lb, ub)
-    return Clr.new(
-        math.min(math.max(a.r, lb.r), ub.r),
-        math.min(math.max(a.g, lb.g), ub.g),
-        math.min(math.max(a.b, lb.b), ub.b),
-        math.min(math.max(a.a, lb.a), ub.a))
-end
-
 ---Clamps a color to [0.0, 1.0].
 ---@param a table left operand
 ---@return table
 function Clr.clamp01(a)
-    return Clr.new(
-        math.min(math.max(a.r, 0.0), 1.0),
-        math.min(math.max(a.g, 0.0), 1.0),
-        math.min(math.max(a.b, 0.0), 1.0),
-        math.min(math.max(a.a, 0.0), 1.0))
+    local cr = a.r
+    if cr < 0.0 then cr = 0.0
+    elseif cr > 1.0 then cr = 1.0 end
+
+    local cg = a.g
+    if cg < 0.0 then cg = 0.0
+    elseif cg > 1.0 then cg = 1.0 end
+
+    local cb = a.b
+    if cb < 0.0 then cb = 0.0
+    elseif cb > 1.0 then cb = 1.0 end
+
+    local ca = a.a
+    if ca < 0.0 then ca = 0.0
+    elseif ca > 1.0 then ca = 1.0 end
+
+    return Clr.new(cr, cg, cb, ca)
 end
 
 ---Converts from a direction to a color.
@@ -226,6 +225,22 @@ function Clr.fromHex(c)
         (c >> 0x08 & 0xff) * 0.00392156862745098,
         (c >> 0x10 & 0xff) * 0.00392156862745098,
         (c >> 0x18 & 0xff) * 0.00392156862745098)
+end
+
+---Converts from a web-friendly hexadecimal
+---string, such as #AABBCC, to a color.
+---@param hexstr string web string
+---@return table
+function Clr.fromHexWeb(hexstr)
+    local s = hexstr
+    if string.sub(s, 1, 1) == '#' then
+        s = string.sub(s, 2)
+    end
+    local sn = tonumber(s, 16)
+    if sn then
+        return Clr.fromHex(0xff000000 | sn)
+    end
+    return Clr.new()
 end
 
 ---Converts hue, saturation and lightness to a color.
@@ -916,6 +931,8 @@ end
 
 ---Reduces the granularity of a color's components.
 ---Performs no color conversion, so sRGB is assumed.
+---Used signed quantization, as the color may be
+---out of gamut.
 ---@param a table color
 ---@param levels number levels
 ---@return table

@@ -558,6 +558,8 @@ local function drawScatter(
     txtHex, shdHex,
     dotRad, titleDisplScl, txtDisplScl)
 
+    -- TODO: Distinguish vertical from horizontal pip count.
+
     -- Cache global functions to local.
     local trunc = math.tointeger
     local strfmt = string.format
@@ -694,510 +696,506 @@ local function drawScatter(
 end
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local sprite = app.activeSprite
-            if sprite then
+        local sprite = app.activeSprite
+        if sprite then
 
-                local oldMode = sprite.colorMode
-                app.command.ChangePixelFormat { format = "rgb" }
+            local oldMode = sprite.colorMode
+            app.command.ChangePixelFormat { format = "rgb" }
 
-                local frame = app.activeFrame or 1
+            local frame = app.activeFrame or 1
 
-                -- Search for appropriate source palette.
-                local srcPal = nil
-                local palType = args.palType
-                if palType == "FILE" then
-                    local fp =  args.palFile
-                    if fp and #fp > 0 then
-                        srcPal = Palette { fromFile = fp }
-                    end
-                elseif palType == "PRESET" then
-                    local pr = args.palPreset
-                    if pr and #pr > 0 then
-                        srcPal = Palette { fromResource = pr }
-                    end
-                else
-                    srcPal = sprite.palettes[1]
+            -- Search for appropriate source palette.
+            local srcPal = nil
+            local palType = args.palType
+            if palType == "FILE" then
+                local fp =  args.palFile
+                if fp and #fp > 0 then
+                    srcPal = Palette { fromFile = fp }
+                end
+            elseif palType == "PRESET" then
+                local pr = args.palPreset
+                if pr and #pr > 0 then
+                    srcPal = Palette { fromResource = pr }
+                end
+            else
+                srcPal = sprite.palettes[1]
+            end
+
+            if srcPal then
+
+                -- Localize character display constants.
+                local gw = 8
+                local gh = 8
+                local lut = Utilities.GLYPH_LUT
+
+                -- Unpack arguments.
+                local bkgHex = args.bkgColor.rgbaPixel
+                local txtHex = args.txtColor.rgbaPixel
+                local shdHex = args.shdColor.rgbaPixel
+                local dotRad = math.tointeger(0.5 +
+                    math.min(sprite.width, sprite.height) / 52)
+                local pipCount = 5
+                local plotMargin = 2
+
+                -- No alpha allowed in text colors.
+                txtHex = 0xff000000 | txtHex
+                shdHex = 0xff000000 | shdHex
+
+                -- Clamp source palette to 256.
+                local startIndex = math.min(
+                    #srcPal - 1,
+                    args.startIndex)
+                local count = math.min(
+                    256,
+                    args.count,
+                    #srcPal - startIndex)
+
+                -- Unique values only.
+                -- Alpha is masked out of hexadecimal values.
+                local hexDict = {}
+                for i = 0, count - 1, 1 do
+                    local idx = startIndex + i
+                    local aseColor = srcPal:getColor(idx)
+                    local hex = 0xff000000 | aseColor.rgbaPixel
+                    hexDict[hex] = idx
                 end
 
-                if srcPal then
+                -- Store hexes and indices separately.
+                local hexes = {}
+                local indices = {}
+                local counter = 1
+                for key, value in pairs(hexDict) do
+                    indices[counter] = value
+                    hexes[counter] = key
+                    counter = counter + 1
+                end
 
-                    -- Localize character display constants.
-                    local gw = 8
-                    local gh = 8
-                    local lut = Utilities.GLYPH_LUT
+                -- Sort.
+                table.sort(hexes,
+                    function(a, b)
+                        return hexDict[a] < hexDict[b]
+                    end)
+                table.sort(indices)
 
-                    -- Unpack arguments.
-                    local bkgHex = args.bkgColor.rgbaPixel
-                    local txtHex = args.txtColor.rgbaPixel
-                    local shdHex = args.shdColor.rgbaPixel
-                    local dotRad = math.tointeger(0.5 +
-                        math.min(sprite.width, sprite.height) / 52)
-                    local pipCount = 5
-                    local plotMargin = 2
+                -- Unpack unique entries to data for all displays.
+                local clrs = {}
+                local labs = {}
+                local lchs = {}
 
-                    -- No alpha allowed in text colors.
-                    txtHex = 0xff000000 | txtHex
-                    shdHex = 0xff000000 | shdHex
+                -- Find lab minimums and maximums.
+                local lMin = 999999
+                local aMin = 999999
+                local bMin = 999999
+                local cMin = 999999
 
-                    -- Clamp source palette to 256.
-                    local startIndex = math.min(
-                        #srcPal - 1,
-                        args.startIndex)
-                    local count = math.min(
-                        256,
-                        args.count,
-                        #srcPal - startIndex)
+                local lMax = -999999
+                local aMax = -999999
+                local bMax = -999999
+                local cMax = -999999
 
-                    -- Unique values only.
-                    -- Alpha is masked out of hexadecimal values.
-                    local hexDict = {}
-                    for i = 0, count - 1, 1 do
-                        local idx = startIndex + i
-                        local aseColor = srcPal:getColor(idx)
-                        local hex = 0xff000000 | aseColor.rgbaPixel
-                        hexDict[hex] = idx
-                    end
+                for i = 1, #hexes, 1 do
 
-                    -- Store hexes and indices separately.
-                    local hexes = {}
-                    local indices = {}
-                    local counter = 1
-                    for key, value in pairs(hexDict) do
-                        indices[counter] = value
-                        hexes[counter] = key
-                        counter = counter + 1
-                    end
+                    local clr = Clr.fromHex(hexes[i])
+                    local lab = Clr.rgbaToLab(clr)
+                    local lch = Clr.labToLch(lab.l, lab.a, lab.b, lab.alpha)
 
-                    -- Sort.
-                    table.sort(hexes,
-                        function(a, b)
-                            return hexDict[a] < hexDict[b]
-                        end)
-                    table.sort(indices)
+                    if lab.l < lMin then lMin = lab.l end
+                    if lab.a < aMin then aMin = lab.a end
+                    if lab.b < bMin then bMin = lab.b end
+                    if lch.c < cMin then cMin = lch.c end
 
-                    -- Unpack unique entries to data for all displays.
-                    local clrs = {}
-                    local labs = {}
-                    local lchs = {}
+                    if lab.l > lMax then lMax = lab.l end
+                    if lab.a > aMax then aMax = lab.a end
+                    if lab.b > bMax then bMax = lab.b end
+                    if lch.c > cMax then cMax = lch.c end
 
-                    -- Find lab minimums and maximums.
-                    local lMin = 999999
-                    local aMin = 999999
-                    local bMin = 999999
-                    local cMin = 999999
+                    labs[i] = lab
+                    lchs[i] = lch
+                    clrs[i] = clr
+                end
 
-                    local lMax = -999999
-                    local aMax = -999999
-                    local bMax = -999999
-                    local cMax = -999999
+                local manifest = args.manifest
+                if manifest then
 
+                    -- Initialize layer.
+                    local manifestLayer = sprite:newLayer()
+                    manifestLayer.name = "Manifest"
+                    local manifestCel = sprite:newCel(manifestLayer, frame)
+                    local manifestImage = Image(768, math.max(256, sprite.height))
+                    fill(manifestImage, bkgHex)
+
+                    local brSizeHalf = 4
+                    local brSize = brSizeHalf * 2
+                    local rows = manifestImage.height // 9
+
+                    local x = 2
+                    local y = 2
+
+                    local gw3 = gw * 3
+                    local gw11 = gw * 11
                     for i = 1, #hexes, 1 do
+                        local hex = hexes[i]
+                        local index = indices[i]
+                        drawSwatch(manifestImage,
+                            x + gw3 + 2, y, brSize, brSize,
+                            hex)
 
-                        local clr = Clr.fromHex(hexes[i])
-                        local lab = Clr.rgbaToLab(clr)
-                        local lch = Clr.labToLch(lab.l, lab.a, lab.b, lab.alpha)
+                        local idxStr = string.format("%3d", index)
+                        local chars = strToCharArr(idxStr)
 
-                        if lab.l < lMin then lMin = lab.l end
-                        if lab.a < aMin then aMin = lab.a end
-                        if lab.b < bMin then bMin = lab.b end
-                        if lch.c < cMin then cMin = lch.c end
+                        drawHorizShd(
+                            lut, manifestImage, chars,
+                            txtHex, shdHex,
+                            x, y + 1, gw, gh, 1)
 
-                        if lab.l > lMax then lMax = lab.l end
-                        if lab.a > aMax then aMax = lab.a end
-                        if lab.b > bMax then bMax = lab.b end
-                        if lch.c > cMax then cMax = lch.c end
+                        local clr = clrs[i]
+                        local hexStr = Clr.toHexWeb(clr)
+                        chars = strToCharArr(hexStr)
 
-                        labs[i] = lab
-                        lchs[i] = lch
-                        clrs[i] = clr
+                        drawHorizShd(
+                            lut, manifestImage, chars,
+                            txtHex, shdHex,
+                            x + brSize + gw3 + 2, y + 1, gw, gh, 1)
+
+                        y = y + brSize + 1
+
+                        if i % rows == 0 then
+                            x = x + brSize + 4 + gw11
+                            y = 2
+                        end
                     end
 
-                    local manifest = args.manifest
-                    if manifest then
+                    manifestCel.image = manifestImage
+                end
 
-                        -- Initialize layer.
-                        local manifestLayer = sprite:newLayer()
-                        manifestLayer.name = "Manifest"
-                        local manifestCel = sprite:newCel(manifestLayer, frame)
-                        local manifestImage = Image(768, math.max(256, sprite.height))
-                        fill(manifestImage, bkgHex)
+                local labab = args.labab
+                if labab then
+                    -- Initialize layer.
+                    local lababLayer = sprite:newLayer()
+                    lababLayer.name = "CIE.LAB.Lightness"
+                    local lababCel = sprite:newCel(lababLayer, frame)
+                    local lababImage = Image(sprite.width, sprite.height)
+                    fill(lababImage, bkgHex)
 
-                        local brSizeHalf = 4
-                        local brSize = brSizeHalf * 2
-                        local rows = manifestImage.height // 9
-
-                        local x = 2
-                        local y = 2
-
-                        local gw3 = gw * 3
-                        local gw11 = gw * 11
-                        for i = 1, #hexes, 1 do
-                            local hex = hexes[i]
-                            local index = indices[i]
-                            drawSwatch(manifestImage,
-                                x + gw3 + 2, y, brSize, brSize,
-                                hex)
-
-                            local idxStr = string.format("%3d", index)
-                            local chars = strToCharArr(idxStr)
-
-                            drawHorizShd(
-                                lut, manifestImage, chars,
-                                txtHex, shdHex,
-                                x, y + 1, gw, gh, 1)
-
-                            local clr = clrs[i]
-                            local hexStr = Clr.toHexWeb(clr)
-                            chars = strToCharArr(hexStr)
-
-                            drawHorizShd(
-                                lut, manifestImage, chars,
-                                txtHex, shdHex,
-                                x + brSize + gw3 + 2, y + 1, gw, gh, 1)
-
-                            y = y + brSize + 1
-
-                            if i % rows == 0 then
-                                x = x + brSize + 4 + gw11
-                                y = 2
-                            end
-                        end
-
-                        manifestCel.image = manifestImage
+                    -- Convert lab data to coordinates.
+                    local coords = {}
+                    for i = 1, #labs, 1 do
+                        local lab = labs[i]
+                        coords[i] = { x = lab.a, y = lab.b }
                     end
 
-                    local labab = args.labab
-                    if labab then
-                        -- Initialize layer.
-                        local lababLayer = sprite:newLayer()
-                        lababLayer.name = "CIE.LAB.Lightness"
-                        local lababCel = sprite:newCel(lababLayer, frame)
-                        local lababImage = Image(sprite.width, sprite.height)
-                        fill(lababImage, bkgHex)
+                    drawScatter(lababImage, lut, gw, gh, plotMargin,
+                    "CIE LAB Lightness",
+                    "Green to Red",
+                    "Blue to Yellow",
+                    pipCount, aMin, aMax, bMin, bMax,
+                    coords, hexes,
+                    txtHex, shdHex, dotRad, 2, 1)
 
-                        -- Convert lab data to coordinates.
-                        local coords = {}
-                        for i = 1, #labs, 1 do
-                            local lab = labs[i]
-                            coords[i] = { x = lab.a, y = lab.b }
+                    lababCel.image = lababImage
+                end
+
+                local labLb = args.labLb
+                if labLb then
+
+                    -- Initialize layer.
+                    local labLbLayer = sprite:newLayer()
+                    labLbLayer.name = "CIE.LAB.Green.Red"
+                    local labLbCel = sprite:newCel(labLbLayer, frame)
+                    local labLbImage = Image(sprite.width, sprite.height)
+                    fill(labLbImage, bkgHex)
+
+                    -- Convert lab data to coordinates.
+                    local coords = {}
+                    for i = 1, #labs, 1 do
+                        local lab = labs[i]
+                        coords[i] = { x = lab.b, y = lab.l }
+                    end
+
+                    drawScatter(labLbImage, lut, gw, gh, plotMargin,
+                    "CIE LAB Green to Red",
+                    "Blue to Yellow",
+                    "Lightness",
+                    pipCount, bMin, bMax, lMin, lMax,
+                    coords, hexes,
+                    txtHex, shdHex, dotRad, 2, 1)
+
+                    labLbCel.image = labLbImage
+                end
+
+                local labLa = args.labLa
+                if labLa then
+
+                    -- Initialize layer.
+                    local labLaLayer = sprite:newLayer()
+                    labLaLayer.name = "CIE.LAB.Blue.Yellow"
+                    local labLaCel = sprite:newCel(labLaLayer, frame)
+                    local labLaImage = Image(sprite.width, sprite.height)
+                    fill(labLaImage, bkgHex)
+
+                    -- Convert lab data to coordinates.
+                    local coords = {}
+                    for i = 1, #labs, 1 do
+                        local lab = labs[i]
+                        coords[i] = { x = lab.a, y = lab.l }
+                    end
+
+                    drawScatter(labLaImage, lut, gw, gh, plotMargin,
+                    "CIE LAB Blue to Yellow",
+                    "Green to Red",
+                    "Lightness",
+                    pipCount, aMin, aMax, lMin, lMax,
+                    coords, hexes,
+                    txtHex, shdHex, dotRad, 2, 1)
+
+                    labLaCel.image = labLaImage
+                end
+
+                local lchLc = args.lchLc
+                if lchLc then
+                    -- Initialize layer.
+                    local lchLcLayer = sprite:newLayer()
+                    lchLcLayer.name = "CIE.LCH.Hue"
+                    local lchLcCel = sprite:newCel(lchLcLayer, frame)
+                    local lchLcImage = Image(sprite.width, sprite.height)
+                    fill(lchLcImage, bkgHex)
+
+                    -- Convert lab data to coordinates.
+                    local coords = {}
+                    for i = 1, #lchs, 1 do
+                        local lch = lchs[i]
+                        coords[i] = { x = lch.c, y = lch.l }
+                    end
+
+                    drawScatter(lchLcImage, lut, gw, gh, 2,
+                    "CIE LCH Hue",
+                    "Chroma",
+                    "Lightness",
+                    pipCount, cMin, cMax, lMin, lMax,
+                    coords, hexes,
+                    txtHex, shdHex, dotRad, 2, 1)
+
+                    lchLcCel.image = lchLcImage
+                end
+
+                local lchLh = args.lchLh
+                if lchLh then
+                    -- Initialize layer.
+                    local lchLhLayer = sprite:newLayer()
+                    lchLhLayer.name = "CIE.LCH.Chroma"
+                    local lchLhCel = sprite:newCel(lchLhLayer, frame)
+                    local lchLhImage = Image(sprite.width, sprite.height)
+                    fill(lchLhImage, bkgHex)
+
+                    -- Convert lab data to coordinates.
+                    local coords = {}
+                    for i = 1, #lchs, 1 do
+                        local lch = lchs[i]
+                        coords[i] = {
+                            t = lch.h * 6.283185307179586,
+                            r = lch.l }
+                    end
+
+                    drawRadial(
+                        lchLhImage, lut, gw, gh, 2,
+                        "CIE LCH Chroma", 12, 6,
+                        "Light", lMin, lMax,
+                        coords, hexes,
+                        txtHex, shdHex, dotRad, 2, 1)
+
+                    lchLhCel.image = lchLhImage
+                end
+
+                local lchCh = args.lchCh
+                if lchCh then
+                    -- Initialize layer.
+                    local lchChLayer = sprite:newLayer()
+                    lchChLayer.name = "CIE.LCH.Lightness"
+                    local lchChCel = sprite:newCel(lchChLayer, frame)
+                    local lchChImage = Image(sprite.width, sprite.height)
+                    fill(lchChImage, bkgHex)
+
+                    -- Convert lab data to coordinates.
+                    local coords = {}
+                    for i = 1, #lchs, 1 do
+                        local lch = lchs[i]
+                        coords[i] = {
+                            t = lch.h * 6.283185307179586,
+                            r = lch.c }
+                    end
+
+                    drawRadial(
+                        lchChImage, lut, gw, gh, 2,
+                        "CIE LCH Lightness", 12, 6,
+                        "Chroma", cMin, cMax,
+                        coords, hexes,
+                        txtHex, shdHex, dotRad, 2, 1)
+
+                    lchChCel.image = lchChImage
+                end
+
+                local coverage = args.coverage
+                if coverage then
+                    local startTime = os.time()
+
+                    local cvgSat = args.cvgSat * 0.01
+                    local cvgRad = args.cvgRad
+                    local cvgCapacity = args.cvgCapacity
+
+                    -- Convert from labs to Vec3s.
+                    local points = {}
+                    for i = 1, #labs, 1 do
+                        local lab = labs[i]
+                        points[i] = Vec3.new(lab.a, lab.b, lab.l)
+                    end
+
+                    -- Create Octree.
+                    local bounds = Bounds3.new(
+                        Vec3.new(
+                            aMin - 0.00001,
+                            bMin - 0.00001,
+                            lMin - 0.00001),
+                        Vec3.new(
+                            aMax + 0.00001,
+                            bMax + 0.00001,
+                            lMax + 0.00001))
+                    local octree = Octree.new(bounds, cvgCapacity, 0)
+                    Octree.insertAll(octree, points)
+
+                    -- Initialize layer.
+                    local cvgLayer = sprite:newLayer()
+                    cvgLayer.name = "Coverage." .. string.format("%03d", args.cvgSat)
+                    local cvgCel = sprite:newCel(cvgLayer, frame)
+
+                    -- Create image.
+                    local w = math.min(384, sprite.width)
+                    local h = math.min(384, sprite.height)
+                    cvgCel.position = Point(
+                        (sprite.width - w) * 0.5,
+                        (sprite.height - h) * 0.5)
+                    local cvgImage = Image(w, h)
+                    local pxlitr = cvgImage:pixels()
+                    local i = 0
+
+                    local xToNorm = 1.0 / w
+                    local yToNorm = 1.0 / h
+
+                    local hslaToRgba = Clr.hslaToRgba
+                    local rgbaToLab = Clr.rgbaToLab
+                    local labToRgba = Clr.labToRgba
+                    local query = Octree.querySpherical
+                    local toHex = Clr.toHex -- QUERY: use toHexUnchecked?
+
+                    for elm in pxlitr do
+                        local y = i // w
+                        local x = i % w
+
+                        local clr = hslaToRgba(
+                            x * xToNorm,
+                            cvgSat,
+                            1.0 - y * yToNorm,
+                            1.0)
+                        local lab = rgbaToLab(clr)
+                        local labpt = Vec3.new(lab.a, lab.b, lab.l)
+
+                        local results = query(octree, labpt, cvgRad)
+                        if #results > 1 then
+                            local near = results[1]
+                            local nearRgb = labToRgba(near.z, near.x, near.y, 1.0)
+                            elm(toHex(nearRgb))
+                        else
+                            elm(0x00000000)
                         end
 
-                        drawScatter(lababImage, lut, gw, gh, plotMargin,
-                        "CIE LAB Lightness",
+                        i = i + 1
+                    end
+
+                    cvgCel.image = cvgImage
+
+                    local endTime = os.time()
+                    local elapsed = os.difftime(endTime, startTime)
+                    -- print("elapsed: " .. string.format("%d", elapsed))
+                end
+
+                local contiguous = args.contiguous
+                if contiguous then
+                    local closedLoop = args.closedLoop
+                    local resolution = args.resolution
+
+                    local points = {}
+                    for i = 1, #labs, 1 do
+                        local lab = labs[i]
+                        points[i] = Vec3.new(lab.a, lab.b, lab.l)
+                    end
+
+                    local curve = Curve3.fromPoints(closedLoop, points)
+
+                    local sampledPoints = {}
+                    local sampledHexes = {}
+                    local iToStep = 1.0
+                    if closedLoop then
+                        iToStep = 1.0 / resolution
+                    else
+                        iToStep = 1.0 / (resolution - 1)
+                    end
+
+                    for i = 0, resolution, 1 do
+                        local step = i * iToStep
+                        local point = Curve3.eval(curve, step)
+                        local clr = Clr.labToRgba(
+                            point.z, point.x, point.y, 1.0)
+                        local hex = Clr.toHex(clr)
+
+                        local j = i + 1
+
+                        -- Arbitrary 2D projection.
+                        sampledPoints[j] = {
+                            x = point.x,
+                            y = point.y
+                        }
+                        sampledHexes[j] = hex
+                    end
+
+                    -- Initialize layer.
+                    local contigLayer = sprite:newLayer()
+                    contigLayer.name = "Contiguous"
+                    local contigCel = sprite:newCel(contigLayer, frame)
+                    local contigImage = Image(sprite.width, sprite.height)
+                    fill(contigImage, bkgHex)
+
+                    drawScatter(
+                        contigImage, lut, gw, gh, plotMargin,
+                        "Contiguous",
                         "Green to Red",
                         "Blue to Yellow",
                         pipCount, aMin, aMax, bMin, bMax,
-                        coords, hexes,
+                        sampledPoints, sampledHexes,
                         txtHex, shdHex, dotRad, 2, 1)
 
-                        lababCel.image = lababImage
-                    end
+                    contigCel.image = contigImage
 
-                    local labLb = args.labLb
-                    if labLb then
-
-                        -- Initialize layer.
-                        local labLbLayer = sprite:newLayer()
-                        labLbLayer.name = "CIE.LAB.Green.Red"
-                        local labLbCel = sprite:newCel(labLbLayer, frame)
-                        local labLbImage = Image(sprite.width, sprite.height)
-                        fill(labLbImage, bkgHex)
-
-                        -- Convert lab data to coordinates.
-                        local coords = {}
-                        for i = 1, #labs, 1 do
-                            local lab = labs[i]
-                            coords[i] = { x = lab.b, y = lab.l }
-                        end
-
-                        drawScatter(labLbImage, lut, gw, gh, plotMargin,
-                        "CIE LAB Green to Red",
-                        "Blue to Yellow",
-                        "Lightness",
-                        pipCount, bMin, bMax, lMin, lMax,
-                        coords, hexes,
-                        txtHex, shdHex, dotRad, 2, 1)
-
-                        labLbCel.image = labLbImage
-                    end
-
-                    local labLa = args.labLa
-                    if labLa then
-
-                        -- Initialize layer.
-                        local labLaLayer = sprite:newLayer()
-                        labLaLayer.name = "CIE.LAB.Blue.Yellow"
-                        local labLaCel = sprite:newCel(labLaLayer, frame)
-                        local labLaImage = Image(sprite.width, sprite.height)
-                        fill(labLaImage, bkgHex)
-
-                        -- Convert lab data to coordinates.
-                        local coords = {}
-                        for i = 1, #labs, 1 do
-                            local lab = labs[i]
-                            coords[i] = { x = lab.a, y = lab.l }
-                        end
-
-                        drawScatter(labLaImage, lut, gw, gh, plotMargin,
-                        "CIE LAB Blue to Yellow",
-                        "Green to Red",
-                        "Lightness",
-                        pipCount, aMin, aMax, lMin, lMax,
-                        coords, hexes,
-                        txtHex, shdHex, dotRad, 2, 1)
-
-                        labLaCel.image = labLaImage
-                    end
-
-                    local lchLc = args.lchLc
-                    if lchLc then
-                        -- Initialize layer.
-                        local lchLcLayer = sprite:newLayer()
-                        lchLcLayer.name = "CIE.LCH.Hue"
-                        local lchLcCel = sprite:newCel(lchLcLayer, frame)
-                        local lchLcImage = Image(sprite.width, sprite.height)
-                        fill(lchLcImage, bkgHex)
-
-                        -- Convert lab data to coordinates.
-                        local coords = {}
-                        for i = 1, #lchs, 1 do
-                            local lch = lchs[i]
-                            coords[i] = { x = lch.c, y = lch.l }
-                        end
-
-                        drawScatter(lchLcImage, lut, gw, gh, 2,
-                        "CIE LCH Hue",
-                        "Chroma",
-                        "Lightness",
-                        pipCount, cMin, cMax, lMin, lMax,
-                        coords, hexes,
-                        txtHex, shdHex, dotRad, 2, 1)
-
-                        lchLcCel.image = lchLcImage
-                    end
-
-                    local lchLh = args.lchLh
-                    if lchLh then
-                        -- Initialize layer.
-                        local lchLhLayer = sprite:newLayer()
-                        lchLhLayer.name = "CIE.LCH.Chroma"
-                        local lchLhCel = sprite:newCel(lchLhLayer, frame)
-                        local lchLhImage = Image(sprite.width, sprite.height)
-                        fill(lchLhImage, bkgHex)
-
-                        -- Convert lab data to coordinates.
-                        local coords = {}
-                        for i = 1, #lchs, 1 do
-                            local lch = lchs[i]
-                            coords[i] = {
-                                t = lch.h * 6.283185307179586,
-                                r = lch.l }
-                        end
-
-                        drawRadial(
-                            lchLhImage, lut, gw, gh, 2,
-                            "CIE LCH Chroma", 12, 6,
-                            "Light", lMin, lMax,
-                            coords, hexes,
-                            txtHex, shdHex, dotRad, 2, 1)
-
-                        lchLhCel.image = lchLhImage
-                    end
-
-                    local lchCh = args.lchCh
-                    if lchCh then
-                        -- Initialize layer.
-                        local lchChLayer = sprite:newLayer()
-                        lchChLayer.name = "CIE.LCH.Lightness"
-                        local lchChCel = sprite:newCel(lchChLayer, frame)
-                        local lchChImage = Image(sprite.width, sprite.height)
-                        fill(lchChImage, bkgHex)
-
-                        -- Convert lab data to coordinates.
-                        local coords = {}
-                        for i = 1, #lchs, 1 do
-                            local lch = lchs[i]
-                            coords[i] = {
-                                t = lch.h * 6.283185307179586,
-                                r = lch.c }
-                        end
-
-                        drawRadial(
-                            lchChImage, lut, gw, gh, 2,
-                            "CIE LCH Lightness", 12, 6,
-                            "Chroma", cMin, cMax,
-                            coords, hexes,
-                            txtHex, shdHex, dotRad, 2, 1)
-
-                        lchChCel.image = lchChImage
-                    end
-
-                    local coverage = args.coverage
-                    if coverage then
-                        local startTime = os.time()
-
-                        local cvgSat = args.cvgSat * 0.01
-                        local cvgRad = args.cvgRad
-                        local cvgCapacity = args.cvgCapacity
-
-                        -- Convert from labs to Vec3s.
-                        local points = {}
-                        for i = 1, #labs, 1 do
-                            local lab = labs[i]
-                            points[i] = Vec3.new(lab.a, lab.b, lab.l)
-                        end
-
-                        -- Create Octree.
-                        local bounds = Bounds3.new(
-                            Vec3.new(
-                                aMin - 0.00001,
-                                bMin - 0.00001,
-                                lMin - 0.00001),
-                            Vec3.new(
-                                aMax + 0.00001,
-                                bMax + 0.00001,
-                                lMax + 0.00001))
-                        local octree = Octree.new(bounds, cvgCapacity, 0)
-                        Octree.insertAll(octree, points)
-
-                        -- Initialize layer.
-                        local cvgLayer = sprite:newLayer()
-                        cvgLayer.name = "Coverage." .. string.format("%03d", args.cvgSat)
-                        local cvgCel = sprite:newCel(cvgLayer, frame)
-
-                        -- Create image.
-                        local w = math.min(384, sprite.width)
-                        local h = math.min(384, sprite.height)
-                        cvgCel.position = Point(
-                            (sprite.width - w) * 0.5,
-                            (sprite.height - h) * 0.5)
-                        local cvgImage = Image(w, h)
-                        local pxlitr = cvgImage:pixels()
-                        local i = 0
-
-                        local xToNorm = 1.0 / w
-                        local yToNorm = 1.0 / h
-
-                        local hslaToRgba = Clr.hslaToRgba
-                        local rgbaToLab = Clr.rgbaToLab
-                        local labToRgba = Clr.labToRgba
-                        local query = Octree.querySpherical
-                        local toHex = Clr.toHex -- QUERY: use toHexUnchecked?
-
-                        for elm in pxlitr do
-                            local y = i // w
-                            local x = i % w
-
-                            local clr = hslaToRgba(
-                                x * xToNorm,
-                                cvgSat,
-                                1.0 - y * yToNorm,
-                                1.0)
-                            local lab = rgbaToLab(clr)
-                            local labpt = Vec3.new(lab.a, lab.b, lab.l)
-
-                            local results = query(octree, labpt, cvgRad)
-                            if #results > 1 then
-                                local near = results[1]
-                                local nearRgb = labToRgba(near.z, near.x, near.y, 1.0)
-                                elm(toHex(nearRgb))
-                            else
-                                elm(0x00000000)
-                            end
-
-                            i = i + 1
-                        end
-
-                        cvgCel.image = cvgImage
-
-                        local endTime = os.time()
-                        local elapsed = os.difftime(endTime, startTime)
-                        -- print("elapsed: " .. string.format("%d", elapsed))
-                    end
-
-                    local contiguous = args.contiguous
-                    if contiguous then
-                        local closedLoop = args.closedLoop
-                        local resolution = args.resolution
-
-                        local points = {}
-                        for i = 1, #labs, 1 do
-                            local lab = labs[i]
-                            points[i] = Vec3.new(lab.a, lab.b, lab.l)
-                        end
-
-                        local curve = Curve3.fromPoints(closedLoop, points)
-
-                        local sampledPoints = {}
-                        local sampledHexes = {}
-                        local iToStep = 1.0
-                        if closedLoop then
-                            iToStep = 1.0 / resolution
-                        else
-                            iToStep = 1.0 / (resolution - 1)
-                        end
-
-                        for i = 0, resolution, 1 do
-                            local step = i * iToStep
-                            local point = Curve3.eval(curve, step)
-                            local clr = Clr.labToRgba(
-                                point.z, point.x, point.y, 1.0)
-                            local hex = Clr.toHex(clr)
-
-                            local j = i + 1
-
-                            -- Arbitrary 2D projection.
-                            sampledPoints[j] = {
-                                x = point.x,
-                                y = point.y
-                            }
-                            sampledHexes[j] = hex
-                        end
-
-                        -- Initialize layer.
-                        local contigLayer = sprite:newLayer()
-                        contigLayer.name = "Contiguous"
-                        local contigCel = sprite:newCel(contigLayer, frame)
-                        local contigImage = Image(sprite.width, sprite.height)
-                        fill(contigImage, bkgHex)
-
-                        drawScatter(
-                            contigImage, lut, gw, gh, plotMargin,
-                            "Contiguous",
-                            "Green to Red",
-                            "Blue to Yellow",
-                            pipCount, aMin, aMax, bMin, bMax,
-                            sampledPoints, sampledHexes,
-                            txtHex, shdHex, dotRad, 2, 1)
-
-                        contigCel.image = contigImage
-
-                    end
-
-                else
-                    app.alert("The source palette could not be found.")
                 end
-
-                -- Restore old color mode.
-                if oldMode == ColorMode.INDEXED then
-                    app.command.ChangePixelFormat { format = "indexed" }
-                elseif oldMode == ColorMode.GRAY then
-                    app.command.ChangePixelFormat { format = "gray" }
-                end
-
-                app.refresh()
 
             else
-                app.alert("There is no active sprite.")
+                app.alert("The source palette could not be found.")
             end
+
+            -- Restore old color mode.
+            if oldMode == ColorMode.INDEXED then
+                app.command.ChangePixelFormat { format = "indexed" }
+            elseif oldMode == ColorMode.GRAY then
+                app.command.ChangePixelFormat { format = "gray" }
+            end
+
+            app.refresh()
+
         else
-            app.alert("Dialog arguments are invalid.")
+            app.alert("There is no active sprite.")
         end
     end
 }

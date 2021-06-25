@@ -125,143 +125,139 @@ dlg:file {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local sprite = app.activeSprite
-            if sprite then
+        local sprite = app.activeSprite
+        if sprite then
 
-                local aPal = nil
-                local aPalType = args.aPalType
-                if aPalType == "FILE" then
-                    local afp = args.aPalFile
-                    if afp and #afp > 0 then
-                        aPal = Palette { fromFile = afp }
-                    end
-                elseif aPalType == "PRESET" then
-                    local apr = args.aPalPreset
-                    if apr and #apr > 0 then
-                        aPal = Palette { fromResource = apr }
-                    end
-                else
-                    aPal = sprite.palettes[1]
+            local aPal = nil
+            local aPalType = args.aPalType
+            if aPalType == "FILE" then
+                local afp = args.aPalFile
+                if afp and #afp > 0 then
+                    aPal = Palette { fromFile = afp }
                 end
-
-                local bPal = nil
-                local bPalType = args.bPalType
-                if bPalType == "FILE" then
-                    local bfp = args.bPalFile
-                    if bfp and #bfp > 0 then
-                        bPal = Palette { fromFile = bfp }
-                    end
-                elseif bPalType == "PRESET" then
-                    local bpr = args.bPalPreset
-                    if bpr and #bpr > 0 then
-                        bPal = Palette { fromResource = bpr }
-                    end
-                else
-                    bPal = sprite.palettes[1]
-                end
-
-                if aPal and bPal then
-                    local oldMode = sprite.colorMode
-                    app.command.ChangePixelFormat { format = "rgb" }
-
-                    local cPal = nil
-                    local aLen = #aPal
-                    local bLen = #bPal
-
-                    local prependMask = args.prependMask
-                    local uniquesOnly = args.uniquesOnly
-
-                    if uniquesOnly then
-
-                        local clrKeys = {}
-                        local idx = 0
-                        if prependMask then
-                            idx = 1
-                        end
-
-                        for i = 0, aLen - 1, 1 do
-                            local hex = aPal:getColor(i).rgbaPixel
-                            if not clrKeys[hex] then
-                                idx = idx + 1
-                                clrKeys[hex] = idx
-                            end
-                        end
-
-                        for j = 0, bLen - 1, 1 do
-                            local hex = bPal:getColor(j).rgbaPixel
-                            if not clrKeys[hex] then
-                                idx = idx + 1
-                                clrKeys[hex] = idx
-                            end
-                        end
-
-                        if prependMask then
-                            clrKeys[0] = 1
-                        end
-
-                        local clrVals = {}
-                        for k, m in pairs(clrKeys) do
-                            clrVals[m] = k
-                        end
-
-                        local cLen = #clrVals
-                        cPal = Palette(cLen)
-                        for m = 0, cLen - 1, 1 do
-                            cPal:setColor(m, Color(clrVals[m + 1]))
-                        end
-                    else
-                        local cLen = aLen + bLen
-                        local offset = 0
-                        local noMask = aPal:getColor(0).rgbaPixel ~= 0
-                        if prependMask and noMask then
-                            offset = 1
-                            cLen = cLen + 1
-                        end
-                        cPal = Palette(cLen)
-
-                        for i = 0, aLen - 1, 1 do
-                            cPal:setColor(offset + i, aPal:getColor(i))
-                        end
-
-                        for j = 0, bLen - 1, 1 do
-                            local k = #aPal + j
-                            cPal:setColor(offset + k, bPal:getColor(j))
-                        end
-
-                        if prependMask and noMask then
-                            cPal:setColor(0, Color(0, 0, 0, 0))
-                        end
-                    end
-
-                    local target = args.target
-                    if target == "SAVE" then
-                        local filepath = args.filepath
-                        cPal:saveAs(filepath)
-                    else
-                        sprite:setPalette(cPal)
-                    end
-
-                    if oldMode == ColorMode.INDEXED then
-                        app.command.ChangePixelFormat { format = "indexed" }
-                    elseif oldMode == ColorMode.GRAY then
-                        app.command.ChangePixelFormat { format = "gray" }
-                    end
-
-                    app.refresh()
-                else
-                    app.alert("One of the palettes could not be found.")
+            elseif aPalType == "PRESET" then
+                local apr = args.aPalPreset
+                if apr and #apr > 0 then
+                    aPal = Palette { fromResource = apr }
                 end
             else
-                app.alert("There is no active sprite.")
+                aPal = sprite.palettes[1]
+            end
+
+            local bPal = nil
+            local bPalType = args.bPalType
+            if bPalType == "FILE" then
+                local bfp = args.bPalFile
+                if bfp and #bfp > 0 then
+                    bPal = Palette { fromFile = bfp }
+                end
+            elseif bPalType == "PRESET" then
+                local bpr = args.bPalPreset
+                if bpr and #bpr > 0 then
+                    bPal = Palette { fromResource = bpr }
+                end
+            else
+                bPal = sprite.palettes[1]
+            end
+
+            if aPal and bPal then
+                local oldMode = sprite.colorMode
+                app.command.ChangePixelFormat { format = "rgb" }
+
+                local cPal = nil
+                local aLen = #aPal
+                local bLen = #bPal
+
+                local prependMask = args.prependMask
+                local uniquesOnly = args.uniquesOnly
+
+                if uniquesOnly then
+
+                    local clrKeys = {}
+                    local idx = 0
+                    if prependMask then
+                        idx = 1
+                    end
+
+                    for i = 0, aLen - 1, 1 do
+                        local hex = aPal:getColor(i).rgbaPixel
+                        if not clrKeys[hex] then
+                            idx = idx + 1
+                            clrKeys[hex] = idx
+                        end
+                    end
+
+                    for j = 0, bLen - 1, 1 do
+                        local hex = bPal:getColor(j).rgbaPixel
+                        if not clrKeys[hex] then
+                            idx = idx + 1
+                            clrKeys[hex] = idx
+                        end
+                    end
+
+                    if prependMask then
+                        clrKeys[0] = 1
+                    end
+
+                    local clrVals = {}
+                    for k, m in pairs(clrKeys) do
+                        clrVals[m] = k
+                    end
+
+                    local cLen = #clrVals
+                    cPal = Palette(cLen)
+                    for m = 0, cLen - 1, 1 do
+                        cPal:setColor(m, Color(clrVals[m + 1]))
+                    end
+                else
+                    local cLen = aLen + bLen
+                    local offset = 0
+                    local noMask = aPal:getColor(0).rgbaPixel ~= 0
+                    if prependMask and noMask then
+                        offset = 1
+                        cLen = cLen + 1
+                    end
+                    cPal = Palette(cLen)
+
+                    for i = 0, aLen - 1, 1 do
+                        cPal:setColor(offset + i, aPal:getColor(i))
+                    end
+
+                    for j = 0, bLen - 1, 1 do
+                        local k = #aPal + j
+                        cPal:setColor(offset + k, bPal:getColor(j))
+                    end
+
+                    if prependMask and noMask then
+                        cPal:setColor(0, Color(0, 0, 0, 0))
+                    end
+                end
+
+                local target = args.target
+                if target == "SAVE" then
+                    local filepath = args.filepath
+                    cPal:saveAs(filepath)
+                else
+                    sprite:setPalette(cPal)
+                end
+
+                if oldMode == ColorMode.INDEXED then
+                    app.command.ChangePixelFormat { format = "indexed" }
+                elseif oldMode == ColorMode.GRAY then
+                    app.command.ChangePixelFormat { format = "gray" }
+                end
+
+                app.refresh()
+            else
+                app.alert("One of the palettes could not be found.")
             end
         else
-            app.alert("Dialog arguments are invalid.")
+            app.alert("There is no active sprite.")
         end
 
     end

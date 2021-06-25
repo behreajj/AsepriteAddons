@@ -236,47 +236,43 @@ dlg:button {
     onclick = function()
 
         local args = dlg.data
-        if args.ok then
-            local sprite = AseUtilities.initCanvas(
-                64, 64, "Rectangle",
-                { args.fillClr, args.strokeClr })
-            local layer = sprite.layers[#sprite.layers]
-            local frame = app.activeFrame or 1
-            local cel = sprite:newCel(layer, frame)
+        local sprite = AseUtilities.initCanvas(
+            64, 64, "Rectangle",
+            { args.fillClr, args.strokeClr })
+        local layer = sprite.layers[#sprite.layers]
+        local frame = app.activeFrame or 1
+        local cel = sprite:newCel(layer, frame)
 
-            local wPrc = sprite.width * 0.01
-            local hPrc = sprite.height * 0.01
-            local prc = math.min(wPrc, hPrc)
+        local wPrc = sprite.width * 0.01
+        local hPrc = sprite.height * 0.01
+        local prc = math.min(wPrc, hPrc)
 
-            local curve = Curve2.rect(
-                wPrc * args.lbx, hPrc * args.lby,
-                wPrc * args.ubx, hPrc * args.uby,
-                prc * args.bl, prc * args.br,
-                prc * args.tr, prc * args.tl)
+        local curve = Curve2.rect(
+            wPrc * args.lbx, hPrc * args.lby,
+            wPrc * args.ubx, hPrc * args.uby,
+            prc * args.bl, prc * args.br,
+            prc * args.tr, prc * args.tl)
 
-            AseUtilities.drawCurve2(
+        AseUtilities.drawCurve2(
+            curve,
+            args.resolution,
+            args.useFill,
+            args.fillClr,
+            args.useStroke,
+            args.strokeClr,
+            Brush(args.strokeWeight),
+            cel,
+            layer)
+
+        if args.handles > 0 then
+            local hlLyr = sprite:newLayer()
+            hlLyr.name = curve.name .. ".Handles"
+            hlLyr.opacity = args.handles
+            AseUtilities.drawHandles2(
                 curve,
-                args.resolution,
-                args.useFill,
-                args.fillClr,
-                args.useStroke,
-                args.strokeClr,
-                Brush(args.strokeWeight),
-                cel,
-                layer)
-
-            if args.handles > 0 then
-                local hlLyr = sprite:newLayer()
-                hlLyr.name = curve.name .. ".Handles"
-                hlLyr.opacity = args.handles
-                AseUtilities.drawHandles2(
-                    curve,
-                    sprite:newCel(hlLyr, frame),
-                    hlLyr)
-            end
-
+                sprite:newCel(hlLyr, frame),
+                hlLyr)
         end
-
     end
 }
 

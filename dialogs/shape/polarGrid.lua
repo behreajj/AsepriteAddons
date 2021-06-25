@@ -158,74 +158,69 @@ dlg:color {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local sprite = AseUtilities.initCanvas(
-                64, 64, "Grid.Polar",
-                { args.fillClr, args.strokeClr })
-            local layer = sprite.layers[#sprite.layers]
-            local frame = app.activeFrame or 1
-            local cel = sprite:newCel(layer, frame)
+        local sprite = AseUtilities.initCanvas(
+            64, 64, "Grid.Polar",
+            { args.fillClr, args.strokeClr })
+        local layer = sprite.layers[#sprite.layers]
+        local frame = app.activeFrame or 1
+        local cel = sprite:newCel(layer, frame)
 
-            local sectors = args.sectors
-            local rings = args.rings
-            local angOffset = math.rad(args.angOffset)
-            local angMargin = math.rad(args.angMargin)
-            local ringMargin = args.ringMargin or defaults.ringMargin
-            local scale = args.scale or defaults.scale
-            local xOrigin = args.xOrigin or defaults.xOrigin
-            local yOrigin = args.yOrigin or defaults.yOrigin
+        local sectors = args.sectors
+        local rings = args.rings
+        local angOffset = math.rad(args.angOffset)
+        local angMargin = math.rad(args.angMargin)
+        local ringMargin = args.ringMargin or defaults.ringMargin
+        local scale = args.scale or defaults.scale
+        local xOrigin = args.xOrigin or defaults.xOrigin
+        local yOrigin = args.yOrigin or defaults.yOrigin
 
-            local toScale = 1.0 / rings
-            local toTheta = 6.283185307179586 / sectors
-            local halfAngMargin = angMargin * 0.5
-            local halfRingMargin = ringMargin * 0.5
-            local thickness = scale / rings - halfRingMargin
-            local len2n1 = rings * sectors - 1
+        local toScale = 1.0 / rings
+        local toTheta = 6.283185307179586 / sectors
+        local halfAngMargin = angMargin * 0.5
+        local halfRingMargin = ringMargin * 0.5
+        local thickness = scale / rings - halfRingMargin
+        local len2n1 = rings * sectors - 1
 
-            local brush = Brush(args.strokeWeight)
-            local strokeClr = args.strokeClr
-            local useStroke = args.useStroke
-            local fillClr = args.fillClr
-            local useFill = args.useFill
-            local resolution = args.resolution
+        local brush = Brush(args.strokeWeight)
+        local strokeClr = args.strokeClr
+        local useStroke = args.useStroke
+        local fillClr = args.fillClr
+        local useFill = args.useFill
+        local resolution = args.resolution
 
-            app.transaction(function ()
-                for k = 0, len2n1, 1 do
-                    local i = k // sectors
-                    local j = k % sectors
-                    local iStep = (i + 1) * toScale
-                    local offset = i * angOffset
-                    local radius = iStep * scale - halfRingMargin
+        app.transaction(function ()
+            for k = 0, len2n1, 1 do
+                local i = k // sectors
+                local j = k % sectors
+                local iStep = (i + 1) * toScale
+                local offset = i * angOffset
+                local radius = iStep * scale - halfRingMargin
 
-                    local startAngle = offset + j * toTheta
-                    local stopAngle = offset + (j + 1) * toTheta
+                local startAngle = offset + j * toTheta
+                local stopAngle = offset + (j + 1) * toTheta
 
-                    startAngle = startAngle + halfAngMargin
-                    stopAngle = stopAngle - halfAngMargin
+                startAngle = startAngle + halfAngMargin
+                stopAngle = stopAngle - halfAngMargin
 
-                    local curve = Curve2.arcSector(
-                        startAngle, stopAngle,
-                        radius,
-                        thickness, -1.0,
-                        xOrigin, yOrigin)
+                local curve = Curve2.arcSector(
+                    startAngle, stopAngle,
+                    radius,
+                    thickness, -1.0,
+                    xOrigin, yOrigin)
 
-                    AseUtilities.drawCurve2(
-                        curve,
-                        resolution,
-                        useFill, fillClr,
-                        useStroke, strokeClr,
-                        brush, cel, layer)
-                end
-            end)
-
-        else
-            app.alert("Dialog arguments are invalid.")
-        end
+                AseUtilities.drawCurve2(
+                    curve,
+                    resolution,
+                    useFill, fillClr,
+                    useStroke, strokeClr,
+                    brush, cel, layer)
+            end
+        end)
     end
 }
 

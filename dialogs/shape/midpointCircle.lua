@@ -101,42 +101,38 @@ dlg:color{
 }
 
 dlg:button{
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = false,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local sprite = app.activeSprite
-            if sprite then
-                -- Create layer, cel.
-                local layer = sprite:newLayer()
-                local frame = app.activeFrame or 1
-                local cel = sprite:newCel(layer, frame)
-                local image = Image(sprite.width, sprite.height)
+        local sprite = app.activeSprite
+        if sprite then
+            -- Create layer, cel.
+            local layer = sprite:newLayer()
+            local frame = app.activeFrame or 1
+            local cel = sprite:newCel(layer, frame)
+            local image = Image(sprite.width, sprite.height)
 
-                midPointCircleFill(
-                    image,
-                    args.fillClr.rgbaPixel,
-                    math.tointeger(args.xOrigin),
-                    math.tointeger(args.yOrigin),
-                    math.tointeger(args.radius))
+            midPointCircleFill(
+                image,
+                args.fillClr.rgbaPixel,
+                math.tointeger(args.xOrigin),
+                math.tointeger(args.yOrigin),
+                math.tointeger(args.radius))
 
-                midPointCircleStroke(
-                    image,
-                    args.strokeClr.rgbaPixel,
-                    args.xOrigin,
-                    args.yOrigin,
-                    args.radius)
+            midPointCircleStroke(
+                image,
+                args.strokeClr.rgbaPixel,
+                args.xOrigin,
+                args.yOrigin,
+                args.radius)
 
-                cel.image = image
+            cel.image = image
 
-                app.refresh()
-            else
-                app.alert("There is no active sprite.")
-            end
+            app.refresh()
         else
-            app.alert("Dialog arguments are invalid.")
+            app.alert("There is no active sprite.")
         end
     end
 }

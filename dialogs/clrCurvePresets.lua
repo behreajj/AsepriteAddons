@@ -255,77 +255,75 @@ dlg:check {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = true,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local channels = 0x0
-            if args.useRed then channels = channels | FilterChannels.RED end
-            if args.useGreen then channels = channels | FilterChannels.GREEN end
-            if args.useBlue then channels = channels | FilterChannels.BLUE end
-            if args.useAlpha then channels = channels | FilterChannels.ALPHA end
-            if args.useGray then channels = channels | FilterChannels.GRAY end
-            if args.useIndex then channels = channels | FilterChannels.INDEX end
 
-            local slope = args.slope or defaults.slope
-            local intercept = args.intercept or defaults.intercept
-            local func = function(x)
-                return linear(x, slope, intercept)
-            end
+        local channels = 0x0
+        if args.useRed then channels = channels | FilterChannels.RED end
+        if args.useGreen then channels = channels | FilterChannels.GREEN end
+        if args.useBlue then channels = channels | FilterChannels.BLUE end
+        if args.useAlpha then channels = channels | FilterChannels.ALPHA end
+        if args.useGray then channels = channels | FilterChannels.GRAY end
+        if args.useIndex then channels = channels | FilterChannels.INDEX end
 
-            local preset = args.preset
-            if preset == "SMOOTH" then
-                -- func = smoothStep
-            elseif preset == "SMOOTHER" then
-                -- func = smootherStep
-            elseif preset == "SINE_WAVE" then
-                local freq = args.freq or defaults.freq
-                local phase = (args.phase or defaults.phase)
-                phase = 0.017453292519943295 * phase
-                local amp = args.sw_amp or defaults.sw_amp
-                local basis = args.basis or defaults.basis
-
-                func = function(x)
-                    return sineWave(x, freq, phase, amp, basis)
-                end
-            elseif preset == "QUANTIZE" then
-                if args.quantization > 1 then
-                    func = function(x)
-                        return quantize(x, args.quantization)
-                    end
-                end
-            elseif preset == "GAMMA" then
-                local g = 1.0
-                if args.gamma ~= 0.0 then g = args.gamma end
-                local amplitude = args.amplitude or defaults.amplitude
-                local offset = args.offset or defaults.offset
-                func = function(x)
-                    return gamma(x, g, amplitude, offset)
-                end
-            end
-
-            local points = {}
-            local res = args.resolution
-            local tox = 1.0 / (res - 1.0)
-
-            for i = 0, res - 1, 1 do
-                local x = i * tox
-                local y = func(x)
-                local point = Point(
-                    math.tointeger(0.5 + 255.0 * x),
-                    math.tointeger(0.5 + 255.0 * y))
-                points[i] = point
-            end
-
-            app.command.ColorCurve {
-                ui = true,
-                channels = channels,
-                curve = points
-            }
-
+        local slope = args.slope or defaults.slope
+        local intercept = args.intercept or defaults.intercept
+        local func = function(x)
+            return linear(x, slope, intercept)
         end
+
+        local preset = args.preset
+        if preset == "SMOOTH" then
+            -- func = smoothStep
+        elseif preset == "SMOOTHER" then
+            -- func = smootherStep
+        elseif preset == "SINE_WAVE" then
+            local freq = args.freq or defaults.freq
+            local phase = (args.phase or defaults.phase)
+            phase = 0.017453292519943295 * phase
+            local amp = args.sw_amp or defaults.sw_amp
+            local basis = args.basis or defaults.basis
+
+            func = function(x)
+                return sineWave(x, freq, phase, amp, basis)
+            end
+        elseif preset == "QUANTIZE" then
+            if args.quantization > 1 then
+                func = function(x)
+                    return quantize(x, args.quantization)
+                end
+            end
+        elseif preset == "GAMMA" then
+            local g = 1.0
+            if args.gamma ~= 0.0 then g = args.gamma end
+            local amplitude = args.amplitude or defaults.amplitude
+            local offset = args.offset or defaults.offset
+            func = function(x)
+                return gamma(x, g, amplitude, offset)
+            end
+        end
+
+        local points = {}
+        local res = args.resolution
+        local tox = 1.0 / (res - 1.0)
+
+        for i = 0, res - 1, 1 do
+            local x = i * tox
+            local y = func(x)
+            local point = Point(
+                math.tointeger(0.5 + 255.0 * x),
+                math.tointeger(0.5 + 255.0 * y))
+            points[i] = point
+        end
+
+        app.command.ColorCurve {
+            ui = true,
+            channels = channels,
+            curve = points
+        }
     end
 }
 

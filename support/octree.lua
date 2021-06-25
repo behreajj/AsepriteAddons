@@ -79,7 +79,20 @@ end
 ---@return boolean
 function Octree.insert(o, point)
     if Bounds3.containsInclExcl(o.bounds, point) then
-        if Octree.isLeaf(o) then
+
+        local ochl = o.children
+        local isLeaf = true
+        for i = 1, 8, 1 do
+            local child = ochl[i]
+            if child then
+                isLeaf = false
+                if Octree.insert(child, point) then
+                    return true
+                end
+            end
+        end
+
+        if isLeaf then
             table.insert(o.points, point)
             if #o.points > o.capacity then
                 Octree.split(o)
@@ -87,15 +100,8 @@ function Octree.insert(o, point)
             return true
         end
 
-        for i = 1, 8, 1 do
-            local child = o.children[i]
-            if child then
-                if Octree.insert(child, point) then
-                    return true
-                end
-            end
-        end
     end
+
     return false
 end
 
@@ -131,8 +137,9 @@ end
 ---@param o table octree node
 ---@return boolean
 function Octree.isLeaf(o)
+    local ochl = o.children
     for i = 1, 8, 1 do
-        if o.children[i] then return false end
+        if ochl[i] then return false end
     end
     return true
 end
@@ -143,8 +150,9 @@ end
 ---@return number
 function Octree.maxLevel(o)
     local mxLvl = o.level
+    local ochl = o.children
     for i = 1, 8, 1 do
-        local child = o.children[i]
+        local child = ochl[i]
         if child then
             local lvl = Octree.maxLevel(child)
             if lvl > mxLvl then mxLvl = lvl end
@@ -220,23 +228,26 @@ end
 ---@return table
 function Octree.split(o)
     local nxtLvl = o.level + 1
+    local ochl = o.children
+    local ocap = o.capacity
+
     for i = 1, 8, 1 do
-        o.children[i] = Octree.new(
+        ochl[i] = Octree.new(
             Bounds3.newByRef(),
-            o.capacity,
+            ocap,
             nxtLvl)
     end
 
     Bounds3.splitInternal(
         o.bounds, 0.5, 0.5, 0.5,
-        o.children[Octree.BACK_SOUTH_WEST].bounds,
-        o.children[Octree.BACK_SOUTH_EAST].bounds,
-        o.children[Octree.BACK_NORTH_WEST].bounds,
-        o.children[Octree.BACK_NORTH_EAST].bounds,
-        o.children[Octree.FRONT_SOUTH_WEST].bounds,
-        o.children[Octree.FRONT_SOUTH_EAST].bounds,
-        o.children[Octree.FRONT_NORTH_WEST].bounds,
-        o.children[Octree.FRONT_NORTH_EAST].bounds)
+        ochl[Octree.BACK_SOUTH_WEST].bounds,
+        ochl[Octree.BACK_SOUTH_EAST].bounds,
+        ochl[Octree.BACK_NORTH_WEST].bounds,
+        ochl[Octree.BACK_NORTH_EAST].bounds,
+        ochl[Octree.FRONT_SOUTH_WEST].bounds,
+        ochl[Octree.FRONT_SOUTH_EAST].bounds,
+        ochl[Octree.FRONT_NORTH_WEST].bounds,
+        ochl[Octree.FRONT_NORTH_EAST].bounds)
 
     local pts = o.points
     local ptsLen = #pts
@@ -244,7 +255,7 @@ function Octree.split(o)
         local pt = pts[i]
         local flag = false
         for j = 1, 8, 1 do
-            flag = Octree.insert(o.children[j], pt)
+            flag = Octree.insert(ochl[j], pt)
             if flag then break end
         end
     end

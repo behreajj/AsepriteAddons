@@ -134,7 +134,7 @@ function Bounds3.fromPoints(points)
         if p.z > ubz then ubz = p.z end
     end
 
-    return Bounds3.new(
+    return Bounds3.newByRef(
         Vec3.new(
             lbx - 0.000001,
             lby - 0.000001,
@@ -216,12 +216,17 @@ function Bounds3.splitInternal(
     local bMin = b.mn
     local bMax = b.mx
 
-    local tx = math.min(math.max(
-        xFac, 0.000001), 0.999999)
-    local ty = math.min(math.max(
-        yFac, 0.000001), 0.999999)
-    local tz = math.min(math.max(
-        zFac, 0.000001), 0.999999)
+    local tx = xFac
+    if tx < 0.000001 then tx = 0.000001
+    elseif tx > 0.999999 then tx = 0.999999 end
+
+    local ty = yFac
+    if ty < 0.000001 then ty = 0.000001
+    elseif ty > 0.999999 then ty = 0.999999 end
+
+    local tz = zFac
+    if tz < 0.000001 then tz = 0.000001
+    elseif tz > 0.999999 then tz = 0.999999 end
 
     local x = ( 1.0 - tx ) * bMin.x + tx * bMax.x
     local y = ( 1.0 - ty ) * bMin.y + ty * bMax.y

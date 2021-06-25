@@ -40,50 +40,49 @@ dlg:color {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = false,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local sprite = AseUtilities.initCanvas(
-                64, 64, "Checker",
-                { args.aClr, args.bClr })
-            local layer = sprite.layers[#sprite.layers]
-            local frame = app.activeFrame or 1
-            local cel = sprite:newCel(layer, frame)
-            local image = cel.image
 
-            local w = image.width
-            local h = image.height
+        local sprite = AseUtilities.initCanvas(
+            64, 64, "Checker",
+            { args.aClr, args.bClr })
+        local layer = sprite.layers[#sprite.layers]
+        local frame = app.activeFrame or 1
+        local cel = sprite:newCel(layer, frame)
+        local image = cel.image
 
-            -- Get integer hexadecimal from each color.
-            local aClr = args.aClr.rgbaPixel
-            local bClr = args.bClr.rgbaPixel
+        local w = image.width
+        local h = image.height
 
-            -- Find size of each checker.
-            local wch = w // args.cols
-            local hch = h // args.rows
+        -- Get integer hexadecimal from each color.
+        local aClr = args.aClr.rgbaPixel
+        local bClr = args.bClr.rgbaPixel
 
-            local i = 0
-            local iterator = image:pixels()
-            for elm in iterator do
-                local x = i % w
-                local y = i // w
+        -- Find size of each checker.
+        local wch = w // args.cols
+        local hch = h // args.rows
 
-                -- Divide coordinate by checker size.
-                local xmd = x // wch
-                local ymd = y // hch
+        local i = 0
+        local iterator = image:pixels()
+        for elm in iterator do
+            local x = i % w
+            local y = i // w
 
-                -- If both x and y are even, then use color.
-                if (xmd + ymd) % 2 == 0 then elm(bClr)
-                else elm(aClr) end
+            -- Divide coordinate by checker size.
+            local xmd = x // wch
+            local ymd = y // hch
 
-                i = i + 1
-            end
+            -- If both x and y are even, then use color.
+            if (xmd + ymd) % 2 == 0 then elm(bClr)
+            else elm(aClr) end
 
-            app.refresh()
+            i = i + 1
         end
+
+        app.refresh()
     end
 }
 

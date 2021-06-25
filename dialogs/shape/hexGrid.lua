@@ -115,53 +115,50 @@ dlg:color {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local mesh = Mesh2.gridHex(args.rings)
 
-            local sclval = args.scale
-            if sclval < 2.0 then
-                sclval = 2.0
-            end
+        local mesh = Mesh2.gridHex(args.rings)
 
-            -- Convert margin from [0, 100] to [0.0, 1.0].
-            -- Ensure that it is less than 100%.
-            local mrgval = args.margin * 0.01
-            if mrgval > 0.0 then
-                mrgval = math.min(mrgval, 0.99)
-                mesh:scaleFacesIndiv(1.0 - mrgval)
-            end
-
-            local t = Mat3.fromTranslation(
-                args.xOrigin,
-                args.yOrigin)
-            local s = Mat3.fromScale(sclval, -sclval)
-            local mat = Mat3.mul(t, s)
-            Utilities.mulMat3Mesh2(mat, mesh)
-
-            local sprite = AseUtilities.initCanvas(
-                64, 64, mesh.name,
-                { args.fillClr, args.strokeClr })
-            local layer = sprite.layers[#sprite.layers]
-            local frame = app.activeFrame or 1
-            local cel = sprite:newCel(layer, frame)
-
-            AseUtilities.drawMesh2(
-                mesh,
-                args.useFill,
-                args.fillClr,
-                args.useStroke,
-                args.strokeClr,
-                Brush(args.strokeWeight),
-                cel,
-                layer)
-        else
-            app.alert("Dialog arguments are invalid.")
+        local sclval = args.scale
+        if sclval < 2.0 then
+            sclval = 2.0
         end
+
+        -- Convert margin from [0, 100] to [0.0, 1.0].
+        -- Ensure that it is less than 100%.
+        local mrgval = args.margin * 0.01
+        if mrgval > 0.0 then
+            mrgval = math.min(mrgval, 0.99)
+            mesh:scaleFacesIndiv(1.0 - mrgval)
+        end
+
+        local t = Mat3.fromTranslation(
+            args.xOrigin,
+            args.yOrigin)
+        local s = Mat3.fromScale(sclval, -sclval)
+        local mat = Mat3.mul(t, s)
+        Utilities.mulMat3Mesh2(mat, mesh)
+
+        local sprite = AseUtilities.initCanvas(
+            64, 64, mesh.name,
+            { args.fillClr, args.strokeClr })
+        local layer = sprite.layers[#sprite.layers]
+        local frame = app.activeFrame or 1
+        local cel = sprite:newCel(layer, frame)
+
+        AseUtilities.drawMesh2(
+            mesh,
+            args.useFill,
+            args.fillClr,
+            args.useStroke,
+            args.strokeClr,
+            Brush(args.strokeWeight),
+            cel,
+            layer)
     end
 }
 

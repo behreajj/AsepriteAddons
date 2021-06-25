@@ -194,107 +194,104 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local clrSpacePreset = args.clrSpacePreset
-            local sprite = AseUtilities.initCanvas(
-                64, 64, "Gradient.Linear")
-            if sprite.colorMode == ColorMode.RGB then
-                local layer = sprite.layers[#sprite.layers]
-                local frame = app.activeFrame or 1
-                local cel = sprite:newCel(layer, frame)
 
-                --Easing mode.
-                local tweenOps = args.tweenOps
-                local rgbPreset = args.easingFuncRGB
-                local huePreset = args.easingFuncHue
+        local clrSpacePreset = args.clrSpacePreset
+        local sprite = AseUtilities.initCanvas(
+            64, 64, "Gradient.Linear")
+        if sprite.colorMode == ColorMode.RGB then
+            local layer = sprite.layers[#sprite.layers]
+            local frame = app.activeFrame or 1
+            local cel = sprite:newCel(layer, frame)
 
-                local easeFuncFinal = nil
-                if tweenOps == "PALETTE" then
+            --Easing mode.
+            local tweenOps = args.tweenOps
+            local rgbPreset = args.easingFuncRGB
+            local huePreset = args.easingFuncHue
 
-                    local startIndex = args.startIndex
-                    local count = args.count
-                    local pal = sprite.palettes[1]
-                    local clrArr = AseUtilities.paletteToClrArr(
-                        pal, startIndex, count)
+            local easeFuncFinal = nil
+            if tweenOps == "PALETTE" then
 
-                    local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                        clrSpacePreset,
-                        rgbPreset,
-                        huePreset)
+                local startIndex = args.startIndex
+                local count = args.count
+                local pal = sprite.palettes[1]
+                local clrArr = AseUtilities.paletteToClrArr(
+                    pal, startIndex, count)
 
-                    easeFuncFinal = function(t)
-                        return Clr.mixArr(clrArr, t, pairFunc)
-                    end
-                else
-                    local aColorAse = args.aColor
-                    local bColorAse = args.bColor
+                local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                    clrSpacePreset,
+                    rgbPreset,
+                    huePreset)
 
-                    local aClr = AseUtilities.aseColorToClr(aColorAse)
-                    local bClr = AseUtilities.aseColorToClr(bColorAse)
-
-                    local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                        clrSpacePreset,
-                        rgbPreset,
-                        huePreset)
-
-                    easeFuncFinal = function(t)
-                        return pairFunc(aClr, bClr, t)
-                    end
+                easeFuncFinal = function(t)
+                    return Clr.mixArr(clrArr, t, pairFunc)
                 end
-
-                local w = sprite.width
-                local h = sprite.height
-
-                local xOrigin = 0.01 * args.xOrigin
-                local yOrigin = 0.01 * args.yOrigin
-                local xDest = 0.01 * args.xDest
-                local yDest = 0.01 * args.yDest
-
-                local xOrPx = xOrigin * w
-                local yOrPx = yOrigin * h
-                local xDsPx = xDest * w
-                local yDsPx = yDest * h
-
-                local bx = xOrPx - xDsPx
-                local by = yOrPx - yDsPx
-                local bbInv = 1.0 / math.max(0.000001,
-                    bx * bx + by * by)
-
-                local levels = args.quantization
-
-                local img = cel.image
-                local iterator = img:pixels()
-                local i = 0
-                for elm in iterator do
-                    local xPx = i % w
-                    local yPx = i // w
-
-                    local cx = xOrPx - xPx
-                    local cy = yOrPx - yPx
-
-                    local cb = (cx * bx + cy * by) * bbInv
-
-                    -- Unsigned quantize will already clamp to
-                    -- 0.0 minimum.
-                    local fac = Utilities.quantizeUnsigned(
-                        cb, levels)
-                    fac = math.min(1.0, fac)
-
-                    elm(Clr.toHex(easeFuncFinal(fac)))
-                    i = i + 1
-                end
-
-                app.refresh()
             else
-                app.alert("Only RGB color mode is supported.")
+                local aColorAse = args.aColor
+                local bColorAse = args.bColor
+
+                local aClr = AseUtilities.aseColorToClr(aColorAse)
+                local bClr = AseUtilities.aseColorToClr(bColorAse)
+
+                local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                    clrSpacePreset,
+                    rgbPreset,
+                    huePreset)
+
+                easeFuncFinal = function(t)
+                    return pairFunc(aClr, bClr, t)
+                end
             end
+
+            local w = sprite.width
+            local h = sprite.height
+
+            local xOrigin = 0.01 * args.xOrigin
+            local yOrigin = 0.01 * args.yOrigin
+            local xDest = 0.01 * args.xDest
+            local yDest = 0.01 * args.yDest
+
+            local xOrPx = xOrigin * w
+            local yOrPx = yOrigin * h
+            local xDsPx = xDest * w
+            local yDsPx = yDest * h
+
+            local bx = xOrPx - xDsPx
+            local by = yOrPx - yDsPx
+            local bbInv = 1.0 / math.max(0.000001,
+                bx * bx + by * by)
+
+            local levels = args.quantization
+
+            local img = cel.image
+            local iterator = img:pixels()
+            local i = 0
+            for elm in iterator do
+                local xPx = i % w
+                local yPx = i // w
+
+                local cx = xOrPx - xPx
+                local cy = yOrPx - yPx
+
+                local cb = (cx * bx + cy * by) * bbInv
+
+                -- Unsigned quantize will already clamp to
+                -- 0.0 minimum.
+                local fac = Utilities.quantizeUnsigned(
+                    cb, levels)
+                fac = math.min(1.0, fac)
+
+                elm(Clr.toHex(easeFuncFinal(fac)))
+                i = i + 1
+            end
+
+            app.refresh()
         else
-            app.alert("Dialog arguments are invalid.")
+            app.alert("Only RGB color mode is supported.")
         end
     end
 }

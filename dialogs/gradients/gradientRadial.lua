@@ -272,124 +272,120 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local clrSpacePreset = args.clrSpacePreset
-            local sprite = AseUtilities.initCanvas(
-                64, 64, "Gradient.Radial")
-            if sprite.colorMode == ColorMode.RGB then
+        local clrSpacePreset = args.clrSpacePreset
+        local sprite = AseUtilities.initCanvas(
+            64, 64, "Gradient.Radial")
+        if sprite.colorMode == ColorMode.RGB then
 
-                local min = math.min
-                local max = math.max
+            local min = math.min
+            local max = math.max
 
-                local layer = sprite.layers[#sprite.layers]
-                local frame = app.activeFrame or 1
-                local cel = sprite:newCel(layer, frame)
+            local layer = sprite.layers[#sprite.layers]
+            local frame = app.activeFrame or 1
+            local cel = sprite:newCel(layer, frame)
 
-                --Easing mode.
-                local tweenOps = args.tweenOps
-                local rgbPreset = args.easingFuncRGB
-                local huePreset = args.easingFuncHue
+            --Easing mode.
+            local tweenOps = args.tweenOps
+            local rgbPreset = args.easingFuncRGB
+            local huePreset = args.easingFuncHue
 
-                local easeFuncFinal = nil
-                if tweenOps == "PALETTE" then
+            local easeFuncFinal = nil
+            if tweenOps == "PALETTE" then
 
-                    local startIndex = args.startIndex
-                    local count = args.count
-                    local pal = sprite.palettes[1]
-                    local clrArr = AseUtilities.paletteToClrArr(
-                        pal, startIndex, count)
+                local startIndex = args.startIndex
+                local count = args.count
+                local pal = sprite.palettes[1]
+                local clrArr = AseUtilities.paletteToClrArr(
+                    pal, startIndex, count)
 
-                    local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                        clrSpacePreset,
-                        rgbPreset,
-                        huePreset)
+                local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                    clrSpacePreset,
+                    rgbPreset,
+                    huePreset)
 
-                    easeFuncFinal = function(t)
-                        return Clr.mixArr(clrArr, t, pairFunc)
-                    end
-                else
-                    local aColorAse = args.aColor
-                    local bColorAse = args.bColor
-
-                    local aClr = AseUtilities.aseColorToClr(aColorAse)
-                    local bClr = AseUtilities.aseColorToClr(bColorAse)
-
-                    local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                        clrSpacePreset,
-                        rgbPreset,
-                        huePreset)
-
-                    easeFuncFinal = function(t)
-                        return pairFunc(aClr, bClr, t)
-                    end
+                easeFuncFinal = function(t)
+                    return Clr.mixArr(clrArr, t, pairFunc)
                 end
-
-                -- Choose distance metric based on preset.
-                local distMetric = args.distMetric
-                local minkExp = args.minkExp
-                local distFunc = distFuncFromPreset(distMetric, minkExp)
-
-                -- Validate minimum and maximum radii.
-                local minRad = 0.01 * min(
-                    args.minRad, args.maxRad)
-                local maxRad = 0.01 * max(
-                    args.minRad, args.maxRad)
-
-                -- If radii are approximately equal, offset.
-                if math.abs(maxRad - minRad) <= 0.000001 then
-                    minRad = minRad - 0.01
-                    maxRad = maxRad + 0.01
-                end
-
-                local diffRad = maxRad - minRad
-                local linDenom = 1.0 / diffRad
-
-                -- local wrapPreset = args.extension
-                -- local wrapFunc = wrapFuncFromPreset(wrapPreset, minRad, maxRad)
-                local levels = args.quantization
-
-                -- Shift origin from [0, 100] to [0.0, 1.0].
-                local xOrigin = 0.01 * args.xOrigin
-                local yOrigin = 0.01 * args.yOrigin
-
-                local w = sprite.width
-                local h = sprite.height
-
-                -- Convert from normalized to pixel size.
-                local xOrigPx = xOrigin * w
-                local yOrigPx = yOrigin * h
-
-                -- Need a scalar to normalize distance to [0.0, 1.0]
-                local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, w, h))
-
-                local img = cel.image
-                local iterator = img:pixels()
-                local i = 0
-                for elm in iterator do
-                    local xPx = i % w
-                    local yPx = i // w
-
-                    local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
-                    local fac = dst * normDist
-                    fac = max(0.0, min(1.0, fac))
-                    fac = (fac - minRad) * linDenom
-                    fac = Utilities.quantizeSigned(fac, levels)
-
-                    elm(Clr.toHex(easeFuncFinal(fac)))
-                    i = i + 1
-                end
-
-                app.refresh()
             else
-                app.alert("Only RGB color mode is supported.")
+                local aColorAse = args.aColor
+                local bColorAse = args.bColor
+
+                local aClr = AseUtilities.aseColorToClr(aColorAse)
+                local bClr = AseUtilities.aseColorToClr(bColorAse)
+
+                local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                    clrSpacePreset,
+                    rgbPreset,
+                    huePreset)
+
+                easeFuncFinal = function(t)
+                    return pairFunc(aClr, bClr, t)
+                end
             end
+
+            -- Choose distance metric based on preset.
+            local distMetric = args.distMetric
+            local minkExp = args.minkExp
+            local distFunc = distFuncFromPreset(distMetric, minkExp)
+
+            -- Validate minimum and maximum radii.
+            local minRad = 0.01 * min(
+                args.minRad, args.maxRad)
+            local maxRad = 0.01 * max(
+                args.minRad, args.maxRad)
+
+            -- If radii are approximately equal, offset.
+            if math.abs(maxRad - minRad) <= 0.000001 then
+                minRad = minRad - 0.01
+                maxRad = maxRad + 0.01
+            end
+
+            local diffRad = maxRad - minRad
+            local linDenom = 1.0 / diffRad
+
+            -- local wrapPreset = args.extension
+            -- local wrapFunc = wrapFuncFromPreset(wrapPreset, minRad, maxRad)
+            local levels = args.quantization
+
+            -- Shift origin from [0, 100] to [0.0, 1.0].
+            local xOrigin = 0.01 * args.xOrigin
+            local yOrigin = 0.01 * args.yOrigin
+
+            local w = sprite.width
+            local h = sprite.height
+
+            -- Convert from normalized to pixel size.
+            local xOrigPx = xOrigin * w
+            local yOrigPx = yOrigin * h
+
+            -- Need a scalar to normalize distance to [0.0, 1.0]
+            local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, w, h))
+
+            local img = cel.image
+            local iterator = img:pixels()
+            local i = 0
+            for elm in iterator do
+                local xPx = i % w
+                local yPx = i // w
+
+                local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
+                local fac = dst * normDist
+                fac = max(0.0, min(1.0, fac))
+                fac = (fac - minRad) * linDenom
+                fac = Utilities.quantizeSigned(fac, levels)
+
+                elm(Clr.toHex(easeFuncFinal(fac)))
+                i = i + 1
+            end
+
+            app.refresh()
         else
-            app.alert("Dialog arguments are invalid.")
+            app.alert("Only RGB color mode is supported.")
         end
     end
 }

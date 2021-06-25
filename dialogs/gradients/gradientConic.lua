@@ -195,123 +195,119 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local clrSpacePreset = args.clrSpacePreset
-            local sprite = AseUtilities.initCanvas(
-                64, 64, "Gradient.Conic")
-            if sprite.colorMode == ColorMode.RGB then
+        local clrSpacePreset = args.clrSpacePreset
+        local sprite = AseUtilities.initCanvas(
+            64, 64, "Gradient.Conic")
+        if sprite.colorMode == ColorMode.RGB then
 
-                local atan2 = math.atan
+            local atan2 = math.atan
 
-                local layer = sprite.layers[#sprite.layers]
-                local frame = app.activeFrame or 1
-                local cel = sprite:newCel(layer, frame)
+            local layer = sprite.layers[#sprite.layers]
+            local frame = app.activeFrame or 1
+            local cel = sprite:newCel(layer, frame)
 
-                --Easing mode.
-                local tweenOps = args.tweenOps
-                local rgbPreset = args.easingFuncRGB
-                local huePreset = args.easingFuncHue
+            --Easing mode.
+            local tweenOps = args.tweenOps
+            local rgbPreset = args.easingFuncRGB
+            local huePreset = args.easingFuncHue
 
-                local easeFuncFinal = nil
-                if tweenOps == "PALETTE" then
+            local easeFuncFinal = nil
+            if tweenOps == "PALETTE" then
 
-                    local startIndex = args.startIndex
-                    local count = args.count
-                    local pal = sprite.palettes[1]
-                    local clrArr = AseUtilities.paletteToClrArr(
-                        pal, startIndex, count)
+                local startIndex = args.startIndex
+                local count = args.count
+                local pal = sprite.palettes[1]
+                local clrArr = AseUtilities.paletteToClrArr(
+                    pal, startIndex, count)
 
-                    local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                        clrSpacePreset,
-                        rgbPreset,
-                        huePreset)
+                local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                    clrSpacePreset,
+                    rgbPreset,
+                    huePreset)
 
-                    easeFuncFinal = function(t)
-                        return Clr.mixArr(clrArr, t, pairFunc)
-                    end
-                else
-                    local aColorAse = args.aColor
-                    local bColorAse = args.bColor
-
-                    local aClr = AseUtilities.aseColorToClr(aColorAse)
-                    local bClr = AseUtilities.aseColorToClr(bColorAse)
-
-                    local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                        clrSpacePreset,
-                        rgbPreset,
-                        huePreset)
-
-                    easeFuncFinal = function(t)
-                        return pairFunc(aClr, bClr, t)
-                    end
+                easeFuncFinal = function(t)
+                    return Clr.mixArr(clrArr, t, pairFunc)
                 end
-
-                local w = sprite.width
-                local h = sprite.height
-
-                local aspect = w / h
-                local wInv = aspect / w
-                local hInv = 1.0 / h
-
-                -- Shift origin from [0, 100] to [0.0, 1.0].
-                local xOrigin = 0.01 * args.xOrigin
-                local yOrigin = 0.01 * args.yOrigin
-                local xOriginNorm = xOrigin * aspect
-                local yOriginNorm = yOrigin
-
-                -- Bring origin from [0.0, 1.0] to [-1.0, 1.0].
-                local xOriginSigned = xOriginNorm + xOriginNorm - 1.0
-                local yOriginSigned = 1.0 - (yOriginNorm + yOriginNorm)
-
-                local angRadians = math.rad(args.angle)
-                local cw = 1.0
-                if args.cw then cw = -1.0 end
-                local levels = args.quantization
-
-                local img = cel.image
-                local iterator = img:pixels()
-                local i = 0
-                for elm in iterator do
-
-                    -- Bring coordinates into range [0.0, 1.0].
-                    local xNorm = (i % w) * wInv
-                    local yNorm = (i // w) * hInv
-
-                    -- Bring coordinates from [0.0, 1.0] to [-1.0, 1.0].
-                    local xSigned = xNorm + xNorm - 1.0
-                    local ySigned = 1.0 - (yNorm + yNorm)
-
-                    -- Subtract the origin.
-                    local xOffset = xSigned - xOriginSigned
-                    local yOffset = cw * (ySigned - yOriginSigned)
-
-                    -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
-                    local angleSigned = atan2(yOffset, xOffset) - angRadians
-
-                    -- Bring angle into range [-0.5, 0.5]. Divide by 2 * math.pi.
-                    local angleNormed = angleSigned * 0.15915494309189535
-
-                    -- Bring angle into range [0.0, 1.0] by subtracting floor.
-                    -- Alternatively, use angleNormed % 1.0.
-                    local fac = angleNormed % 1.0
-
-                    fac = Utilities.quantizeUnsigned(fac, levels)
-
-                    elm(Clr.toHex(easeFuncFinal(fac)))
-                    i = i + 1
-                end
-
-                app.refresh()
             else
-                app.alert("Only RGB color mode is supported.")
+                local aColorAse = args.aColor
+                local bColorAse = args.bColor
+
+                local aClr = AseUtilities.aseColorToClr(aColorAse)
+                local bClr = AseUtilities.aseColorToClr(bColorAse)
+
+                local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                    clrSpacePreset,
+                    rgbPreset,
+                    huePreset)
+
+                easeFuncFinal = function(t)
+                    return pairFunc(aClr, bClr, t)
+                end
             end
+
+            local w = sprite.width
+            local h = sprite.height
+
+            local aspect = w / h
+            local wInv = aspect / w
+            local hInv = 1.0 / h
+
+            -- Shift origin from [0, 100] to [0.0, 1.0].
+            local xOrigin = 0.01 * args.xOrigin
+            local yOrigin = 0.01 * args.yOrigin
+            local xOriginNorm = xOrigin * aspect
+            local yOriginNorm = yOrigin
+
+            -- Bring origin from [0.0, 1.0] to [-1.0, 1.0].
+            local xOriginSigned = xOriginNorm + xOriginNorm - 1.0
+            local yOriginSigned = 1.0 - (yOriginNorm + yOriginNorm)
+
+            local angRadians = math.rad(args.angle)
+            local cw = 1.0
+            if args.cw then cw = -1.0 end
+            local levels = args.quantization
+
+            local img = cel.image
+            local iterator = img:pixels()
+            local i = 0
+            for elm in iterator do
+
+                -- Bring coordinates into range [0.0, 1.0].
+                local xNorm = (i % w) * wInv
+                local yNorm = (i // w) * hInv
+
+                -- Bring coordinates from [0.0, 1.0] to [-1.0, 1.0].
+                local xSigned = xNorm + xNorm - 1.0
+                local ySigned = 1.0 - (yNorm + yNorm)
+
+                -- Subtract the origin.
+                local xOffset = xSigned - xOriginSigned
+                local yOffset = cw * (ySigned - yOriginSigned)
+
+                -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
+                local angleSigned = atan2(yOffset, xOffset) - angRadians
+
+                -- Bring angle into range [-0.5, 0.5]. Divide by 2 * math.pi.
+                local angleNormed = angleSigned * 0.15915494309189535
+
+                -- Bring angle into range [0.0, 1.0] by subtracting floor.
+                -- Alternatively, use angleNormed % 1.0.
+                local fac = angleNormed % 1.0
+
+                fac = Utilities.quantizeUnsigned(fac, levels)
+
+                elm(Clr.toHex(easeFuncFinal(fac)))
+                i = i + 1
+            end
+
+            app.refresh()
         else
-            app.alert("Dialog arguments are invalid.")
+            app.alert("Only RGB color mode is supported.")
         end
     end
 }

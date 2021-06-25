@@ -147,107 +147,105 @@ dlg:check {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = true,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local mesh = Mesh2.gridBricks(
-                args.cols,
-                args.rows,
-                0.01 * args.offset,
-                args.aspect,
-                args.frequency)
+        local mesh = Mesh2.gridBricks(
+            args.cols,
+            args.rows,
+            0.01 * args.offset,
+            args.aspect,
+            args.frequency)
 
-            local t = Mat3.fromTranslation(
-                args.xOrigin,
-                args.yOrigin)
-            local sclval = args.scale
-            if sclval < 2.0 then sclval = 2.0 end
-            local s = Mat3.fromScale(sclval, -sclval)
-            local mat = Mat3.mul(t, s)
-            Utilities.mulMat3Mesh2(mat, mesh)
+        local t = Mat3.fromTranslation(
+            args.xOrigin,
+            args.yOrigin)
+        local sclval = args.scale
+        if sclval < 2.0 then sclval = 2.0 end
+        local s = Mat3.fromScale(sclval, -sclval)
+        local mat = Mat3.mul(t, s)
+        Utilities.mulMat3Mesh2(mat, mesh)
 
-            local brickClr = args.brickClr
-            local mortarClr = args.mortarClr
+        local brickClr = args.brickClr
+        local mortarClr = args.mortarClr
 
-            local sprite = AseUtilities.initCanvas(
-                64, 64, mesh.name,
-                { brickClr, mortarClr })
-            local layer = sprite.layers[#sprite.layers]
+        local sprite = AseUtilities.initCanvas(
+            64, 64, mesh.name,
+            { brickClr, mortarClr })
+        local layer = sprite.layers[#sprite.layers]
 
-            local frame = app.activeFrame or 1
-            local cel = sprite:newCel(layer, frame)
-            local brush = Brush(args.mortarThick)
+        local frame = app.activeFrame or 1
+        local cel = sprite:newCel(layer, frame)
+        local brush = Brush(args.mortarThick)
 
-            if args.variance > 0 then
+        if args.variance > 0 then
 
-                -- Separate into HSLA.
-                local hueBrick = brickClr.hslHue
-                local satBrick = brickClr.hslSaturation
-                local lgtBrick = brickClr.hslLightness
-                local alpBrick = brickClr.alpha
+            -- Separate into HSLA.
+            local hueBrick = brickClr.hslHue
+            local satBrick = brickClr.hslSaturation
+            local lgtBrick = brickClr.hslLightness
+            local alpBrick = brickClr.alpha
 
-                -- Calculate offset.
-                local varNrm = args.variance * 0.01
-                local vnHalf = varNrm * 0.5
-                local varHue = varNrm * 360.0
-                local vhHalf = varHue * 0.5
+            -- Calculate offset.
+            local varNrm = args.variance * 0.01
+            local vnHalf = varNrm * 0.5
+            local varHue = varNrm * 360.0
+            local vhHalf = varHue * 0.5
 
-                -- Separate faces.
-                local separated = Mesh2.separateFaces(mesh)
-                local sepLen = #separated
+            -- Separate faces.
+            local separated = Mesh2.separateFaces(mesh)
+            local sepLen = #separated
 
-                -- Localize functions.
-                local rng = math.random
-                local max = math.max
-                local min = math.min
-                local drawMesh2 = AseUtilities.drawMesh2
+            -- Localize functions.
+            local rng = math.random
+            local max = math.max
+            local min = math.min
+            local drawMesh2 = AseUtilities.drawMesh2
 
-                app.transaction(function()
-                    for i = 1, sepLen, 1 do
+            app.transaction(function()
+                for i = 1, sepLen, 1 do
 
-                        local hue = hueBrick
-                        if args.varyHue then
-                            hue = (hueBrick +
-                                (varHue * rng() - vhHalf)) % 360.0
-                        end
-
-                        local saturation = satBrick
-                        if args.varySat then
-                            saturation = max(0.0, min(1.0,
-                                satBrick + (varNrm * rng() - vnHalf)))
-                        end
-
-                        local lightness = lgtBrick
-                        if args.varyLight then
-                            lightness = max(0.0, min(1.0,
-                                lgtBrick + (varNrm * rng() - vnHalf)))
-                        end
-
-                        -- Composite HSLA.
-                        local variety = Color {
-                            hue = hue,
-                            saturation = saturation,
-                            lightness = lightness,
-                            alpha = alpBrick
-                        }
-
-                        drawMesh2(
-                            separated[i],
-                            true, variety,
-                            true, mortarClr,
-                            brush, cel, layer)
+                    local hue = hueBrick
+                    if args.varyHue then
+                        hue = (hueBrick +
+                            (varHue * rng() - vhHalf)) % 360.0
                     end
-                end)
-            else
-                AseUtilities.drawMesh2(
-                    mesh,
-                    true, brickClr,
-                    true, mortarClr,
-                    brush, cel, layer)
-            end
+
+                    local saturation = satBrick
+                    if args.varySat then
+                        saturation = max(0.0, min(1.0,
+                            satBrick + (varNrm * rng() - vnHalf)))
+                    end
+
+                    local lightness = lgtBrick
+                    if args.varyLight then
+                        lightness = max(0.0, min(1.0,
+                            lgtBrick + (varNrm * rng() - vnHalf)))
+                    end
+
+                    -- Composite HSLA.
+                    local variety = Color {
+                        hue = hue,
+                        saturation = saturation,
+                        lightness = lightness,
+                        alpha = alpBrick
+                    }
+
+                    drawMesh2(
+                        separated[i],
+                        true, variety,
+                        true, mortarClr,
+                        brush, cel, layer)
+                end
+            end)
+        else
+            AseUtilities.drawMesh2(
+                mesh,
+                true, brickClr,
+                true, mortarClr,
+                brush, cel, layer)
         end
     end
 }

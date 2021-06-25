@@ -103,62 +103,58 @@ dlg:button {
     text = "OK",
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local sprite = app.activeSprite
-            if sprite then
-                local layer = app.activeLayer
-                if layer and not layer.isGroup then
-                    local cel = app.activeCel
-                    if cel then
-                        local oldMode = sprite.colorMode
-                        app.command.ChangePixelFormat { format = "rgb" }
-                        local image = cel.image
-                        local pxitr = image:pixels()
+        local sprite = app.activeSprite
+        if sprite then
+            local layer = app.activeLayer
+            if layer and not layer.isGroup then
+                local cel = app.activeCel
+                if cel then
+                    local oldMode = sprite.colorMode
+                    app.command.ChangePixelFormat { format = "rgb" }
+                    local image = cel.image
+                    local pxitr = image:pixels()
 
-                        local dir = args.direction
-                        local lut = {}
-                        if dir == "LINEAR_TO_STANDARD" then
-                            lut = Utilities.LTS_LUT
-                        else
-                            lut = Utilities.STL_LUT
-                        end
-
-                        for clr in pxitr do
-                            local hex = clr()
-                            local a = hex >> 0x18 & 0xff
-
-                            local bOrigin = hex >> 0x10 & 0xff
-                            local gOrigin = hex >> 0x08 & 0xff
-                            local rOrigin = hex & 0xff
-
-                            local bDest = lut[1 + bOrigin]
-                            local gDest = lut[1 + gOrigin]
-                            local rDest = lut[1 + rOrigin]
-
-                            clr(a << 0x18
-                                | bDest << 0x10
-                                | gDest << 0x08
-                                | rDest)
-                        end
-
-                        if oldMode == ColorMode.INDEXED then
-                            app.command.ChangePixelFormat { format = "indexed" }
-                        elseif oldMode == ColorMode.GRAY then
-                            app.command.ChangePixelFormat { format = "gray" }
-                        end
-
-                        app.refresh()
+                    local dir = args.direction
+                    local lut = {}
+                    if dir == "LINEAR_TO_STANDARD" then
+                        lut = Utilities.LTS_LUT
                     else
-                        app.alert("There is no active cel.")
+                        lut = Utilities.STL_LUT
                     end
+
+                    for clr in pxitr do
+                        local hex = clr()
+                        local a = hex >> 0x18 & 0xff
+
+                        local bOrigin = hex >> 0x10 & 0xff
+                        local gOrigin = hex >> 0x08 & 0xff
+                        local rOrigin = hex & 0xff
+
+                        local bDest = lut[1 + bOrigin]
+                        local gDest = lut[1 + gOrigin]
+                        local rDest = lut[1 + rOrigin]
+
+                        clr(a << 0x18
+                            | bDest << 0x10
+                            | gDest << 0x08
+                            | rDest)
+                    end
+
+                    if oldMode == ColorMode.INDEXED then
+                        app.command.ChangePixelFormat { format = "indexed" }
+                    elseif oldMode == ColorMode.GRAY then
+                        app.command.ChangePixelFormat { format = "gray" }
+                    end
+
+                    app.refresh()
                 else
-                    app.alert("There is no active layer.")
+                    app.alert("There is no active cel.")
                 end
-        else
-            app.alert("There is no active sprite.")
-        end
+            else
+                app.alert("There is no active layer.")
+            end
     else
-        app.alert("Dialog arguments are invalid.")
+        app.alert("There is no active sprite.")
     end
 end
 }

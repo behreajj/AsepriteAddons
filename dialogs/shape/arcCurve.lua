@@ -155,50 +155,46 @@ dlg:color {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        if args.ok then
-            local sprite = AseUtilities.initCanvas(
-                64, 64, "Arc",
-                { args.fillClr, args.strokeClr })
-            local layer = sprite.layers[#sprite.layers]
-            local frame = app.activeFrame or 1
-            local cel = sprite:newCel(layer, frame)
+        local sprite = AseUtilities.initCanvas(
+            64, 64, "Arc",
+            { args.fillClr, args.strokeClr })
+        local layer = sprite.layers[#sprite.layers]
+        local frame = app.activeFrame or 1
+        local cel = sprite:newCel(layer, frame)
 
-            local curve = Curve2.arcSector(
-                math.rad(360 - args.startAngle),
-                math.rad(360 - args.stopAngle),
-                args.scale,
-                args.thickness,
-                0.01 * args.thickOffset,
-                args.xOrigin,
-                args.yOrigin)
+        local curve = Curve2.arcSector(
+            math.rad(360 - args.startAngle),
+            math.rad(360 - args.stopAngle),
+            args.scale,
+            args.thickness,
+            0.01 * args.thickOffset,
+            args.xOrigin,
+            args.yOrigin)
 
-            AseUtilities.drawCurve2(
+        AseUtilities.drawCurve2(
+            curve,
+            args.resolution,
+            args.useFill,
+            args.fillClr,
+            args.useStroke,
+            args.strokeClr,
+            Brush(args.strokeWeight),
+            cel,
+            layer)
+
+        if args.handles > 0 then
+            local hlLyr = sprite:newLayer()
+            hlLyr.name = curve.name .. ".Handles"
+            hlLyr.opacity = args.handles
+            AseUtilities.drawHandles2(
                 curve,
-                args.resolution,
-                args.useFill,
-                args.fillClr,
-                args.useStroke,
-                args.strokeClr,
-                Brush(args.strokeWeight),
-                cel,
-                layer)
-
-            if args.handles > 0 then
-                local hlLyr = sprite:newLayer()
-                hlLyr.name = curve.name .. ".Handles"
-                hlLyr.opacity = args.handles
-                AseUtilities.drawHandles2(
-                    curve,
-                    sprite:newCel(hlLyr, frame),
-                    hlLyr)
-            end
-        else
-            app.alert("Dialog arguments are invalid.")
+                sprite:newCel(hlLyr, frame),
+                hlLyr)
         end
     end
 }

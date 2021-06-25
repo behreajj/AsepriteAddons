@@ -149,114 +149,112 @@ dlg:newrow { always = false }
 -- Because ENTER is the key to start an animation loop,
 -- dialog focus is set to false here.
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = false,
     onclick = function()
 
         local args = dlg.data
-        if args.ok then
-            local curve = Curve2.infinity()
+        local curve = Curve2.infinity()
 
-            local t = Mat3.fromTranslation(
-                args.xOrigin,
-                args.yOrigin)
-            local r = Mat3.fromRotZ(math.rad(args.angle))
-            local sclval = args.scale
-            if sclval < 2.0 then sclval = 2.0 end
-            local s = Mat3.fromScale(sclval, -sclval)
-            local mat = t * r * s
-            Utilities.mulMat3Curve2(mat, curve)
+        local t = Mat3.fromTranslation(
+            args.xOrigin,
+            args.yOrigin)
+        local r = Mat3.fromRotZ(math.rad(args.angle))
+        local sclval = args.scale
+        if sclval < 2.0 then sclval = 2.0 end
+        local s = Mat3.fromScale(sclval, -sclval)
+        local mat = t * r * s
+        Utilities.mulMat3Curve2(mat, curve)
 
-            local sprite = AseUtilities.initCanvas(
-                64, 64, curve.name,
-                { args.strokeClr, args.dotClr })
-            local layer = sprite.layers[#sprite.layers]
-            local actframe = app.activeFrame or 1
+        local sprite = AseUtilities.initCanvas(
+            64, 64, curve.name,
+            { args.strokeClr, args.dotClr })
+        local layer = sprite.layers[#sprite.layers]
+        local actframe = app.activeFrame or 1
 
-            AseUtilities.drawCurve2(
+        AseUtilities.drawCurve2(
+            curve,
+            args.resolution,
+            false,
+            args.dotClr,
+            args.useStroke,
+            args.strokeClr,
+            Brush(args.strokeWeight),
+            sprite:newCel(layer, actframe),
+            layer)
+
+        if args.handles > 0 then
+            local hlLyr = sprite:newLayer()
+            hlLyr.name = curve.name .. ".Handles"
+            hlLyr.opacity = args.handles
+            AseUtilities.drawHandles2(
                 curve,
-                args.resolution,
-                false,
-                args.dotClr,
-                args.useStroke,
-                args.strokeClr,
-                Brush(args.strokeWeight),
-                sprite:newCel(layer, actframe),
-                layer)
-
-            if args.handles > 0 then
-                local hlLyr = sprite:newLayer()
-                hlLyr.name = curve.name .. ".Handles"
-                hlLyr.opacity = args.handles
-                AseUtilities.drawHandles2(
-                    curve,
-                    sprite:newCel(hlLyr, actframe),
-                    hlLyr)
-            end
-
-            local frames = args.frames
-            local dotCount = args.dots
-            if dotCount > 0 and frames > 1 then
-                app.transaction(function()
-
-                    -- Allocate new frames.
-                    local oldLen = #sprite.frames
-                    local needed = math.max(0, frames - oldLen)
-                    for i = 1, needed, 1 do
-                        sprite:newEmptyFrame()
-                    end
-
-                    local animLyr = sprite:newLayer()
-                    animLyr.name = curve.name .. ".Loop"
-
-                    local frameToFac = 1.0 / frames
-                    local dotToFac = 1.0 / (dotCount - 1.0)
-                    local offset = 0.01 * args.dotOff
-
-                    -- Create new brushes and colors for contrails.
-                    local animBrushes = {}
-                    local animColors = {}
-                    local dtr = args.dotClr.red
-                    local dtg = args.dotClr.green
-                    local dtb = args.dotClr.blue
-                    for j = dotCount, 1, -1 do
-                        local jFac = j / dotCount
-                        local alpha = math.tointeger(0.5 + jFac * 255.0)
-                        local animBrsh = Brush{ size = 3 + j }
-                        local animClr = Color(dtr, dtg, dtb, alpha)
-                        table.insert(animBrushes, animBrsh)
-                        table.insert(animColors, animClr)
-                    end
-
-                    for i = 1, #sprite.frames, 1 do
-                        local frame = sprite.frames[i]
-                        local animCel = sprite:newCel(animLyr, frame)
-                        local iFac = (i - 1.0) * frameToFac
-
-                        for j = 1, dotCount, 1 do
-                            local jFac = (j - 1.0) * dotToFac
-                            local fac = iFac - jFac * offset
-                            local place = Curve2.eval(curve, fac)
-                            place = Vec2.round(place)
-                            local plpt = Point(place.x, place.y)
-
-                            app.useTool {
-                                tool = "pencil",
-                                color = animColors[j],
-                                brush = animBrushes[j],
-                                points = { plpt },
-                                cel = animCel,
-                                layer = animLyr }
-                        end
-                    end
-
-                    app.activeFrame = sprite.frames[1]
-                end)
-            end
-
-            app.refresh()
+                sprite:newCel(hlLyr, actframe),
+                hlLyr)
         end
+
+        local frames = args.frames
+        local dotCount = args.dots
+        if dotCount > 0 and frames > 1 then
+            app.transaction(function()
+
+                -- Allocate new frames.
+                local oldLen = #sprite.frames
+                local needed = math.max(0, frames - oldLen)
+                for i = 1, needed, 1 do
+                    sprite:newEmptyFrame()
+                end
+
+                local animLyr = sprite:newLayer()
+                animLyr.name = curve.name .. ".Loop"
+
+                local frameToFac = 1.0 / frames
+                local dotToFac = 1.0 / (dotCount - 1.0)
+                local offset = 0.01 * args.dotOff
+
+                -- Create new brushes and colors for contrails.
+                local animBrushes = {}
+                local animColors = {}
+                local dtr = args.dotClr.red
+                local dtg = args.dotClr.green
+                local dtb = args.dotClr.blue
+                for j = dotCount, 1, -1 do
+                    local jFac = j / dotCount
+                    local alpha = math.tointeger(0.5 + jFac * 255.0)
+                    local animBrsh = Brush{ size = 3 + j }
+                    local animClr = Color(dtr, dtg, dtb, alpha)
+                    table.insert(animBrushes, animBrsh)
+                    table.insert(animColors, animClr)
+                end
+
+                for i = 1, #sprite.frames, 1 do
+                    local frame = sprite.frames[i]
+                    local animCel = sprite:newCel(animLyr, frame)
+                    local iFac = (i - 1.0) * frameToFac
+
+                    for j = 1, dotCount, 1 do
+                        local jFac = (j - 1.0) * dotToFac
+                        local fac = iFac - jFac * offset
+                        local place = Curve2.eval(curve, fac)
+                        place = Vec2.round(place)
+                        local plpt = Point(place.x, place.y)
+
+                        app.useTool {
+                            tool = "pencil",
+                            color = animColors[j],
+                            brush = animBrushes[j],
+                            points = { plpt },
+                            cel = animCel,
+                            layer = animLyr }
+                    end
+                end
+
+                app.activeFrame = sprite.frames[1]
+            end)
+        end
+
+        app.refresh()
     end
 }
 

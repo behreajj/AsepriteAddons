@@ -124,36 +124,34 @@ dlg:button {
     onclick = function()
 
     local args = dlg.data
-    if args.ok then
-        local mesh = Mesh2.polygon(args.sides)
+    local mesh = Mesh2.polygon(args.sides)
 
-        local t = Mat3.fromTranslation(
-            args.xOrigin,
-            args.yOrigin)
-        local r = Mat3.fromRotZ(math.rad(args.angle))
-        local sclval = args.scale
-        if sclval < 2.0 then sclval = 2.0 end
-        local s = Mat3.fromScale(sclval, -sclval)
-        local mat = Mat3.mul(Mat3.mul(t, s), r)
-        Utilities.mulMat3Mesh2(mat, mesh)
+    local t = Mat3.fromTranslation(
+        args.xOrigin,
+        args.yOrigin)
+    local r = Mat3.fromRotZ(math.rad(args.angle))
+    local sclval = args.scale
+    if sclval < 2.0 then sclval = 2.0 end
+    local s = Mat3.fromScale(sclval, -sclval)
+    local mat = Mat3.mul(Mat3.mul(t, s), r)
+    Utilities.mulMat3Mesh2(mat, mesh)
 
-        local sprite = AseUtilities.initCanvas(
-            64, 64, mesh.name,
-            { args.fillClr, args.strokeClr })
-        local layer = sprite.layers[#sprite.layers]
-        local frame = app.activeFrame or 1
-        local cel = sprite:newCel(layer, frame)
+    local sprite = AseUtilities.initCanvas(
+        64, 64, mesh.name,
+        { args.fillClr, args.strokeClr })
+    local layer = sprite.layers[#sprite.layers]
+    local frame = app.activeFrame or 1
+    local cel = sprite:newCel(layer, frame)
 
-        AseUtilities.drawMesh2(
-            mesh,
-            args.useFill,
-            args.fillClr,
-            args.useStroke,
-            args.strokeClr,
-            Brush(args.strokeWeight),
-            cel,
-            layer)
-        end
+    AseUtilities.drawMesh2(
+        mesh,
+        args.useFill,
+        args.fillClr,
+        args.useStroke,
+        args.strokeClr,
+        Brush(args.strokeWeight),
+        cel,
+        layer)
     end
 }
 

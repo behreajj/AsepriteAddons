@@ -318,26 +318,25 @@ function Mesh2.arc(
         local cosTheta = cos(theta)
         local sinTheta = sin(theta)
 
-        -- TODO: Refactor to avoid table.insert
-        table.insert(vs, Vec2.new(
+        local i2 = i + i
+        vs[i2 + 1] = Vec2.new(
             cosTheta * radius,
-            sinTheta * radius))
+            sinTheta * radius)
 
-        table.insert(vs, Vec2.new(
+        vs[i2 + 2] = Vec2.new(
             cosTheta * oculRad,
-            sinTheta * oculRad))
+            sinTheta * oculRad)
     end
 
     if useQuads then
 
         for k = 0, sctCount - 2, 1 do
             local i = k + k
-            local f = {
+            fs[1 + k] = {
                 1 + i,
                 3 + i,
                 4 + i,
                 2 + i }
-            table.insert(fs, f)
         end
 
     else
@@ -433,6 +432,8 @@ end
 ---@return table
 function Mesh2.gridCartesian(cols, rows)
 
+    -- TODO: Option for QUADS or TRIS to support tri grid?
+
     -- Validate inputs.
     local cVal = cols or 2
     if cVal < 2 then cVal = 2 end
@@ -513,10 +514,15 @@ function Mesh2.gridHex(rings)
 
     local fs = {}
     local vs = {}
+    local fIdx = 1
     local vIdx = 1
     for i = iMin, iMax, 1 do
-        local jMin = iMin + math.max(0, -i)
-        local jMax = iMax + math.min(0, -i)
+        local jMin = iMin
+        local jMax = iMax
+
+        if i < 0 then jMin = jMin - i end
+        if i > 0 then jMax = jMax - i end
+
         local iExt = i * extent
 
         for j = jMin, jMax, 1 do
@@ -528,18 +534,18 @@ function Mesh2.gridHex(rings)
             local top = y + halfRad
             local bottom = y - halfRad
 
-            table.insert(vs, Vec2.new(x, y + vrad))
-            table.insert(vs, Vec2.new(left, top))
-            table.insert(vs, Vec2.new(left, bottom))
-            table.insert(vs, Vec2.new(x, y - vrad))
-            table.insert(vs, Vec2.new(right, bottom))
-            table.insert(vs, Vec2.new(right, top))
+            vs[vIdx] = Vec2.new(x, y + vrad)
+            vs[vIdx + 1] = Vec2.new(left, top)
+            vs[vIdx + 2] = Vec2.new(left, bottom)
+            vs[vIdx + 3] = Vec2.new(x, y - vrad)
+            vs[vIdx + 4] = Vec2.new(right, bottom)
+            vs[vIdx + 5] = Vec2.new(right, top)
 
-            local f = {
+            fs[fIdx] = {
                 vIdx    , vIdx + 1, vIdx + 2,
                 vIdx + 3, vIdx + 4, vIdx + 5 }
-            table.insert(fs, f)
 
+            fIdx = fIdx + 1
             vIdx = vIdx + 6
         end
     end

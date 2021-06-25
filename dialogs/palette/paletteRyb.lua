@@ -198,156 +198,152 @@ dlg:file {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        if args.ok then
 
-            local sprite = app.activeSprite
-            if sprite == nil then
-                sprite = Sprite(64, 64)
+        local sprite = app.activeSprite
+        if sprite == nil then
+            sprite = Sprite(64, 64)
+        end
+
+        local oldMode = sprite.colorMode
+        app.command.ChangePixelFormat {
+            format = "rgb"
+        }
+
+        local sat = args.saturation * 0.01
+
+        local lenSamples = args.samples or 8
+        local lenShades = args.shades or 8
+        local inclGray = args.inclGray or (sat <= 0)
+        local prependMask = args.prependMask
+
+        local flatLen = 0
+        if sat > 0 then
+            flatLen = lenSamples * lenShades
+        end
+
+        local grayLen = 0
+        if inclGray then
+            grayLen = lenShades
+        end
+
+        local maskLen = 0
+        if prependMask then
+            maskLen = 1
+        end
+
+        local totLen = flatLen + grayLen + maskLen
+        local palette = Palette(totLen)
+
+        local hueStart = args.hueStart * 0.002777777777777778
+        local hueEnd = args.hueEnd * 0.002777777777777778
+
+        local hueFunc = nil
+        if args.easingFuncHue == "NEAR" then
+            hueFunc = function(a, b, t)
+                return Utilities.lerpAngleNear(a, b, t, 1.0)
             end
-
-            local oldMode = sprite.colorMode
-            app.command.ChangePixelFormat {
-                format = "rgb"
-            }
-
-            local sat = args.saturation * 0.01
-
-            local lenSamples = args.samples or 8
-            local lenShades = args.shades or 8
-            local inclGray = args.inclGray or (sat <= 0)
-            local prependMask = args.prependMask
-
-            local flatLen = 0
-            if sat > 0 then
-                flatLen = lenSamples * lenShades
+        elseif args.easingFuncHue == "FAR" then
+            hueFunc = function(a, b, t)
+                return Utilities.lerpAngleFar(a, b, t, 1.0)
             end
+        end
 
-            local grayLen = 0
-            if inclGray then
-                grayLen = lenShades
+        local lMin = args.minLight * 0.01
+        local lMax = args.maxLight * 0.01
+
+        local k = 0
+        if prependMask then
+            k = 1
+            palette:setColor(0, Color(0, 0, 0, 0))
+        end
+
+        local jToFac = 1.0
+        if lenShades > 1 then
+            jToFac = 1.0 / (lenShades - 1.0)
+        end
+
+        if sat > 0 then
+            local iToFac = 1.0
+            if lenSamples > 1 then
+                iToFac = 1.0 / (lenSamples - 1.0)
             end
+            local lerpArr = AseUtilities.lerpColorArr
+            local min = math.min
+            local max = math.max
+            for i = 1, lenSamples, 1 do
+                local iFac = (i - 1.0) * iToFac
+                local hueFac = hueFunc(hueStart, hueEnd, iFac)
+                local hex = lerpArr(ryb, hueFac)
+                local clr = Color(hex)
 
-            local maskLen = 0
-            if prependMask then
-                maskLen = 1
-            end
+                local h = clr.hslHue
+                local sold = clr.hslSaturation
+                local snew = sold * sat
+                local lold = clr.hslLightness
+                local diff = 0.5 * (0.5 - lold)
+                local a = clr.alpha
 
-            local totLen = flatLen + grayLen + maskLen
-            local palette = Palette(totLen)
-
-            local hueStart = args.hueStart * 0.002777777777777778
-            local hueEnd = args.hueEnd * 0.002777777777777778
-
-            local hueFunc = nil
-            if args.easingFuncHue == "NEAR" then
-                hueFunc = function(a, b, t)
-                    return Utilities.lerpAngleNear(a, b, t, 1.0)
-                end
-            elseif args.easingFuncHue == "FAR" then
-                hueFunc = function(a, b, t)
-                    return Utilities.lerpAngleFar(a, b, t, 1.0)
-                end
-            end
-
-            local lMin = args.minLight * 0.01
-            local lMax = args.maxLight * 0.01
-
-            local k = 0
-            if prependMask then
-                k = 1
-                palette:setColor(0, Color(0, 0, 0, 0))
-            end
-
-            local jToFac = 1.0
-            if lenShades > 1 then
-                jToFac = 1.0 / (lenShades - 1.0)
-            end
-
-            if sat > 0 then
-                local iToFac = 1.0
-                if lenSamples > 1 then
-                    iToFac = 1.0 / (lenSamples - 1.0)
-                end
-                local lerpArr = AseUtilities.lerpColorArr
-                local min = math.min
-                local max = math.max
-                for i = 1, lenSamples, 1 do
-                    local iFac = (i - 1.0) * iToFac
-                    local hueFac = hueFunc(hueStart, hueEnd, iFac)
-                    local hex = lerpArr(ryb, hueFac)
-                    local clr = Color(hex)
-
-                    local h = clr.hslHue
-                    local sold = clr.hslSaturation
-                    local snew = sold * sat
-                    local lold = clr.hslLightness
-                    local diff = 0.5 * (0.5 - lold)
-                    local a = clr.alpha
-
-                    for j = 1, lenShades, 1 do
-                        local jFac = (j - 1.0) * jToFac
-
-                        local jFacAdj = min(1.0, max(0.0, jFac - diff))
-                        -- fudge factor
-                        jFacAdj = jFacAdj ^ (1.5)
-                        local lnew = (1.0 - jFacAdj) * lMin + jFacAdj * lMax
-
-                        -- TODO: Use Clr LCH instead?
-                        local newclr = Color {
-                            h = h,
-                            s = snew,
-                            l = lnew,
-                            a = a
-                        }
-                        palette:setColor(k, newclr)
-                        k = k + 1
-                    end
-                end
-            end
-
-            if inclGray then
                 for j = 1, lenShades, 1 do
-                    local t = (j - 1.0) * jToFac
-                    local u = 1.0 - t
-                    local lnew = u * lMin + t * lMax
-                    local grayClr = Color {
-                        h = 0.0,
-                        s = 0.0,
+                    local jFac = (j - 1.0) * jToFac
+
+                    local jFacAdj = min(1.0, max(0.0, jFac - diff))
+                    -- fudge factor
+                    jFacAdj = jFacAdj ^ (1.5)
+                    local lnew = (1.0 - jFacAdj) * lMin + jFacAdj * lMax
+
+                    -- TODO: Use Clr LCH instead?
+                    local newclr = Color {
+                        h = h,
+                        s = snew,
                         l = lnew,
-                        a = 255
+                        a = a
                     }
-                    palette:setColor(k, grayClr)
+                    palette:setColor(k, newclr)
                     k = k + 1
                 end
             end
-
-            local target = args.target
-            if target == "SAVE" then
-                local filepath = args.filepath
-                palette:saveAs(filepath)
-            else
-                sprite:setPalette(palette)
-            end
-
-            if oldMode == ColorMode.INDEXED then
-                app.command.ChangePixelFormat {
-                    format = "indexed"
-                }
-            elseif oldMode == ColorMode.GRAY then
-                app.command.ChangePixelFormat {
-                    format = "gray"
-                }
-            end
-
-            app.refresh()
-        else
-            app.alert("Dialog arguments are invalid.")
         end
+
+        if inclGray then
+            for j = 1, lenShades, 1 do
+                local t = (j - 1.0) * jToFac
+                local u = 1.0 - t
+                local lnew = u * lMin + t * lMax
+                local grayClr = Color {
+                    h = 0.0,
+                    s = 0.0,
+                    l = lnew,
+                    a = 255
+                }
+                palette:setColor(k, grayClr)
+                k = k + 1
+            end
+        end
+
+        local target = args.target
+        if target == "SAVE" then
+            local filepath = args.filepath
+            palette:saveAs(filepath)
+        else
+            sprite:setPalette(palette)
+        end
+
+        if oldMode == ColorMode.INDEXED then
+            app.command.ChangePixelFormat {
+                format = "indexed"
+            }
+        elseif oldMode == ColorMode.GRAY then
+            app.command.ChangePixelFormat {
+                format = "gray"
+            }
+        end
+
+        app.refresh()
     end
 }
 
