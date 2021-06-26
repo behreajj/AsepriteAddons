@@ -269,10 +269,9 @@ dlg:button {
 
             local img = cel.image
             local iterator = img:pixels()
-            local i = 0
             for elm in iterator do
-                local xPx = i % w
-                local yPx = i // w
+                local xPx = elm.x
+                local yPx = elm.y
 
                 local cx = xOrPx - xPx
                 local cy = yOrPx - yPx
@@ -286,7 +285,6 @@ dlg:button {
                 fac = math.min(1.0, fac)
 
                 elm(Clr.toHex(easeFuncFinal(fac)))
-                i = i + 1
             end
 
             app.refresh()

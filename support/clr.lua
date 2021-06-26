@@ -654,16 +654,30 @@ end
 ---@param hueFunc function hue function
 ---@return table
 function Clr.mixHslaInternal(a, b, t, hueFunc)
-    local aHsva = Clr.rgbaToHsla(a)
-    local bHsva = Clr.rgbaToHsla(b)
+    local aHsla = Clr.rgbaToHsla(a)
+    local bHsla = Clr.rgbaToHsla(b)
+
+    local aHue = aHsla.h
+    local aSat = aHsla.s
+
+    local bHue = bHsla.h
+    local bSat = bHsla.s
+
+    if aSat <= 0.0 and bSat > 0.0 then
+        aHue = bHue
+    end
+
+    if bSat <= 0.0 and aSat > 0.0 then
+        bHue = aHue
+    end
+
     local u = 1.0 - t
     return Clr.hslaToRgba(
-        hueFunc(aHsva.h, bHsva.h, t),
-        u * aHsva.s + t * bHsva.s,
-        u * aHsva.l + t * bHsva.l,
-        u * aHsva.a + t * bHsva.a)
+        hueFunc(aHue, bHue, t),
+        u * aSat + t * bSat,
+        u * aHsla.l + t * bHsla.l,
+        u * aHsla.a + t * bHsla.a)
 end
-
 
 ---Mixes two colors in HSVA space by a step.
 ---The hue function should accept an origin,
@@ -715,10 +729,25 @@ end
 function Clr.mixHsvaInternal(a, b, t, hueFunc)
     local aHsva = Clr.rgbaToHsva(a)
     local bHsva = Clr.rgbaToHsva(b)
+
+    local aHue = aHsva.h
+    local aSat = aHsva.s
+
+    local bHue = bHsva.h
+    local bSat = bHsva.s
+
+    if aSat <= 0.0 and bSat > 0.0 then
+        aHue = bHue
+    end
+
+    if bSat <= 0.0 and aSat > 0.0 then
+        bHue = aHue
+    end
+
     local u = 1.0 - t
     return Clr.hsvaToRgba(
-        hueFunc(aHsva.h, bHsva.h, t),
-        u * aHsva.s + t * bHsva.s,
+        hueFunc(aHue, bHue, t),
+        u * aSat + t * bSat,
         u * aHsva.v + t * bHsva.v,
         u * aHsva.a + t * bHsva.a)
 end
@@ -807,10 +836,25 @@ function Clr.mixLchInternal(a, b, t, hueFunc)
     local aLch = Clr.rgbaToLch(a)
     local bLch = Clr.rgbaToLch(b)
     local u = 1.0 - t
+
+    local aChroma = aLch.c
+    local aHue = aLch.h
+
+    local bChroma = bLch.c
+    local bHue = bLch.h
+
+    if aChroma <= 0.0 and bChroma > 0.0 then
+        aHue = bHue
+    end
+
+    if bChroma <= 0.0 and aChroma > 0.0 then
+        bHue = aHue
+    end
+
     return Clr.lchToRgba(
         u * aLch.l + t * bLch.l,
-        u * aLch.c + t * bLch.c,
-        hueFunc(aLch.h, bLch.h, t),
+        u * aChroma + t * bChroma,
+        hueFunc(aHue, bHue, t),
         u * aLch.a + t * bLch.a)
 end
 

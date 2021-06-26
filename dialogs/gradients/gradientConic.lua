@@ -274,12 +274,11 @@ dlg:button {
 
             local img = cel.image
             local iterator = img:pixels()
-            local i = 0
             for elm in iterator do
 
                 -- Bring coordinates into range [0.0, 1.0].
-                local xNorm = (i % w) * wInv
-                local yNorm = (i // w) * hInv
+                local xNorm = elm.x * wInv
+                local yNorm = elm.y * hInv
 
                 -- Bring coordinates from [0.0, 1.0] to [-1.0, 1.0].
                 local xSigned = xNorm + xNorm - 1.0
@@ -302,7 +301,6 @@ dlg:button {
                 fac = Utilities.quantizeUnsigned(fac, levels)
 
                 elm(Clr.toHex(easeFuncFinal(fac)))
-                i = i + 1
             end
 
             app.refresh()
