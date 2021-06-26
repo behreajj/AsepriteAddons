@@ -558,9 +558,11 @@ function AseUtilities.easingFuncPresets(
     easingFuncRGB,
     easingFuncHue)
 
+    -- TODO: Deprecated ?
+
     local easing = nil
     if easingMode == "HSV" then
-        easing = Clr.mixHsvaInternal
+        easing = Clr.mixHsva
 
         if easingFuncHue == "FAR" then
             easing = function(a, b, t)
@@ -573,7 +575,7 @@ function AseUtilities.easingFuncPresets(
             end
         end
     elseif easingMode == "HSL" then
-        easing = Clr.mixHslaInternal
+        easing = Clr.mixHsla
 
         if easingFuncHue == "FAR" then
             easing = function(a, b, t)

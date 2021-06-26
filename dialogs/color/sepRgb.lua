@@ -48,7 +48,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "OK",
-    focus = true,
+    focus = false,
     onclick = function()
         local args = dlg.data
         local sprite = app.activeSprite

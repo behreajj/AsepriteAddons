@@ -233,11 +233,24 @@ end
 ---@return table
 function Clr.fromHexWeb(hexstr)
     local s = hexstr
+
+    -- Remove prefix.
     if string.sub(s, 1, 1) == '#' then
         s = string.sub(s, 2)
     end
+
+    -- Account for #abc.
+    if #s == 3 then
+        local r = string.sub(s, 1, 1)
+        local g = string.sub(s, 2, 2)
+        local b = string.sub(s, 3, 3)
+        s = r .. r .. g .. g .. b .. b
+    end
+
+    -- tonumber may return fail.
     local sn = tonumber(s, 16)
     if sn then
+        -- Append opaque alpha.
         return Clr.fromHex(0xff000000 | sn)
     end
     return Clr.new()

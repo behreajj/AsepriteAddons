@@ -27,10 +27,6 @@ This repo includes
 
   ![Bricks](screencaps/bricks.png)
 
-- A checkerboard maker.
-
-  ![Checker](screencaps/checker.png)
-
 - Color curve presets. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
 
   ![Color Curve](screencaps/colorCurve.png)
@@ -74,6 +70,10 @@ This repo includes
 - An RYB palette generator.
 
   ![Palette Generator](screencaps/paletteGen.png)
+
+- Palette To Cel Assignment.
+
+  ![Palette To Cel](screencaps/paletteToCel.png)
 
 - A regular convex polygon.
 

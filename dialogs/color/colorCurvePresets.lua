@@ -257,7 +257,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "OK",
-    focus = true,
+    focus = false,
     onclick = function()
         local args = dlg.data
 
@@ -276,13 +276,9 @@ dlg:button {
         end
 
         local preset = args.preset
-        if preset == "SMOOTH" then
-            -- func = smoothStep
-        elseif preset == "SMOOTHER" then
-            -- func = smootherStep
-        elseif preset == "SINE_WAVE" then
+        if preset == "SINE_WAVE" then
             local freq = args.freq or defaults.freq
-            local phase = (args.phase or defaults.phase)
+            local phase = args.phase or defaults.phase
             phase = 0.017453292519943295 * phase
             local amp = args.sw_amp or defaults.sw_amp
             local basis = args.basis or defaults.basis

@@ -1,5 +1,5 @@
-dofile("../support/clr.lua")
-dofile("../support/aseutilities.lua")
+dofile("../../support/clr.lua")
+dofile("../../support/aseutilities.lua")
 
 local harmonies = {
     "ANALOGOUS",
@@ -127,32 +127,34 @@ local function setFromAse(aseClr)
     local lch = Clr.rgbaToLch(clr)
     local trunc = math.tointeger
 
-    dlg:modify{
+    dlg:modify {
         id = "lightness",
         value = trunc(0.5 + lch.l)
     }
 
-    dlg:modify{
+    dlg:modify {
         id = "chroma",
         value = trunc(0.5 + lch.c)
     }
 
-    dlg:modify{
+    dlg:modify {
         id = "hue",
         value = trunc(0.5 + lch.h * 360.0)
+        -- Familiar hue:
+        -- value = (trunc(0.5 + lch.h * 360.0) - 40) % 360
     }
 
-    dlg:modify{
+    dlg:modify {
         id = "alpha",
         value = trunc(0.5 + lch.a * 100.0)
     }
 
-    dlg:modify{
+    dlg:modify {
         id = "clr",
-        colors = {aseClr}
+        colors = { aseClr }
     }
 
-    dlg:modify{
+    dlg:modify {
         id = "hexCode",
         text = Clr.toHexWeb(clr)
     }
@@ -164,6 +166,8 @@ local function updateClrs(data)
     local l = data.lightness
     local c = data.chroma
     local h = data.hue / 360.0
+    -- Familiar hue:
+    -- local h = ((data.hue + 40) % 360) / 360.0
     local a = data.alpha * 0.01
     local clr = Clr.lchToRgba(l, c, h, a)
     updateWarning(clr)
@@ -174,7 +178,7 @@ local function updateClrs(data)
 
     dlg:modify{
         id = "clr",
-        colors = {AseUtilities.clrToAseColor(clr)}
+        colors = { AseUtilities.clrToAseColor(clr) }
     }
 
     dlg:modify{
@@ -185,7 +189,7 @@ local function updateClrs(data)
     updateHarmonies(l, c, h, a)
 end
 
-dlg:button{
+dlg:button {
     id = "fgGet",
     label = "Get:",
     text = "FG",
@@ -195,7 +199,7 @@ dlg:button{
     end
 }
 
-dlg:button{
+dlg:button {
     id = "bgGet",
     text = "BG",
     focus = false,
@@ -206,33 +210,27 @@ dlg:button{
     end
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:shades{
+dlg:shades {
     id = "clr",
     label = "Preview:",
     mode = "sort",
-    colors = {defaults.shade}
+    colors = { defaults.shade }
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
 -- TODO: Make this a text or number input field?
-dlg:label{
+dlg:label {
     id = "hexCode",
     label = "Hex:",
     text = defaults.hexCode
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:slider{
+dlg:slider {
     id = "lightness",
     label = "Lightness:",
     min = 0,
@@ -243,7 +241,7 @@ dlg:slider{
     end
 }
 
-dlg:slider{
+dlg:slider {
     id = "chroma",
     label = "Chroma:",
     min = 0,
@@ -254,7 +252,7 @@ dlg:slider{
     end
 }
 
-dlg:slider{
+dlg:slider {
     id = "hue",
     label = "Hue:",
     min = 0,
@@ -265,7 +263,7 @@ dlg:slider{
     end
 }
 
-dlg:slider{
+dlg:slider {
     id = "alpha",
     label = "Alpha:",
     min = 0,
@@ -276,42 +274,34 @@ dlg:slider{
     end
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:label{
+dlg:label {
     id = "warning0",
     label = "Warning:",
     text = "Clipped to sRGB.",
     visible = false
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:label{
+dlg:label {
     id = "warning1",
     text = "Hue may shift.",
     visible = false
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:label{
+dlg:label {
     id = "warning2",
     text = "Reduce chroma.",
     visible = false
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:button{
+dlg:button {
     id = "fgSet",
     label = "Set:",
     text = "FG",
@@ -321,7 +311,7 @@ dlg:button{
     end
 }
 
-dlg:button{
+dlg:button {
     id = "bgSet",
     text = "BG",
     focus = false,
@@ -335,9 +325,7 @@ dlg:button{
     end
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
 dlg:check {
     id = "showHarmonies",
@@ -378,9 +366,7 @@ dlg:check {
     end
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
 dlg:combobox {
     id = "harmonyType",
@@ -417,11 +403,9 @@ dlg:combobox {
     end
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow{ always = false }
 
-dlg:shades{
+dlg:shades {
     id = "COMPLEMENT",
     label = "Complement:",
     mode = "pick",
@@ -437,9 +421,7 @@ dlg:shades{
     end
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
 dlg:shades{
     id = "triadic",
@@ -457,11 +439,9 @@ dlg:shades{
     end
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow{ always = false }
 
-dlg:shades{
+dlg:shades {
     id = "analogous",
     label = "Analogous:",
     mode = "pick",
@@ -480,9 +460,7 @@ dlg:shades{
     end
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
 dlg:shades{
     id = "split",
@@ -502,11 +480,9 @@ dlg:shades{
     end
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:shades{
+dlg:shades {
     id = "square",
     label = "Square:",
     mode = "pick",
@@ -525,11 +501,9 @@ dlg:shades{
     end
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:button{
+dlg:button {
     id = "cancel",
     text = "CANCEL",
     focus = false,
@@ -538,6 +512,4 @@ dlg:button{
     end
 }
 
-dlg:show{
-    wait = false
-}
+dlg:show { wait = false }

@@ -1,4 +1,4 @@
-dofile("../support/utilities.lua")
+dofile("../../support/utilities.lua")
 
 -- https://blog.johnnovak.net/2016/09/21/what-every-coder-should-know-about-gamma/
 -- http://www.ericbrasseur.org/gamma.html

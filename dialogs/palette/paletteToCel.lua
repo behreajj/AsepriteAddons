@@ -9,8 +9,6 @@ local colorSpaces = {
     "S_RGB"
 }
 
--- TODO: Adopt any palette, not just active.
-
 local defaults = {
     palType = "ACTIVE",
     copyToLayer = true,
@@ -346,8 +344,8 @@ dlg:button {
                             endTime = os.time()
                             elapsed = os.difftime(endTime, startTime)
                             local msg = string.format(
-                                "Start: %d\nEnd: %d\nElapsed: %d",
-                                startTime, endTime, elapsed)
+                                "Start: %d\nEnd: %d\nElapsed: %d\nUnique Colors: %d",
+                                startTime, endTime, elapsed, #queries)
                             print(msg)
                         end
 

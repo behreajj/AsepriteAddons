@@ -1080,7 +1080,6 @@ dlg:button {
                         (sprite.height - h) * 0.5)
                     local cvgImage = Image(w, h)
                     local pxlitr = cvgImage:pixels()
-                    local i = 0
 
                     local xToNorm = 1.0 / w
                     local yToNorm = 1.0 / h
@@ -1092,8 +1091,8 @@ dlg:button {
                     local toHex = Clr.toHex -- QUERY: use toHexUnchecked?
 
                     for elm in pxlitr do
-                        local y = i // w
-                        local x = i % w
+                        local x = elm.x
+                        local y = elm.y
 
                         local clr = hslaToRgba(
                             x * xToNorm,
@@ -1111,8 +1110,6 @@ dlg:button {
                         else
                             elm(0x00000000)
                         end
-
-                        i = i + 1
                     end
 
                     cvgCel.image = cvgImage
