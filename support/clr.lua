@@ -366,10 +366,30 @@ end
 ---@param alpha number alpha channel
 ---@return table
 function Clr.labToLch(l, a, b, alpha)
+    local chromasq = a * a + b * b
+    local chroma = 0.0
+    local hue = 0.0
+
+    -- 0.00004 is the square chroma for #FFFFFF.
+    if chromasq < 0.00005 then
+        local fac = l * 0.01
+        if fac < 0.0 then fac = 0.0
+        elseif fac > 1.0 then fac = 1.0 end
+
+        -- Ease from violet to yellow based on light.
+        hue = (1.0 - fac) * 0.8666666666666667
+                   + fac * 1.275
+        hue = hue % 1.0
+    else
+        hue = math.atan(b, a) * 0.15915494309189535
+        hue = hue % 1.0
+        chroma = math.sqrt(chromasq)
+    end
+
     return {
         l = l,
-        c = math.sqrt(a * a + b * b),
-        h = (math.atan(b, a) * 0.15915494309189535) % 1.0,
+        c = chroma,
+        h = hue,
         a = alpha or 1.0 }
 end
 
@@ -648,6 +668,9 @@ end
 ---Mixes two colors in HSLA space by a step.
 ---The hue function should accept an origin,
 ---destination and factor, all numbers.
+---If one color's saturation is near zero and
+---the other's is not, the former will adopt
+---the hue of the latter.
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
@@ -659,23 +682,36 @@ function Clr.mixHslaInternal(a, b, t, hueFunc)
 
     local aHue = aHsla.h
     local aSat = aHsla.s
+    local aLgt = aHsla.l
 
     local bHue = bHsla.h
     local bSat = bHsla.s
+    local bLgt = bHsla.l
 
     if aSat <= 0.0 and bSat > 0.0 then
-        aHue = bHue
+        aHue = bHsla.h
     end
 
     if bSat <= 0.0 and aSat > 0.0 then
-        bHue = aHue
+        bHue = aHsla.h
     end
 
+    if aLgt <= 0.0 and bLgt > 0.0 then
+        aSat = bHsla.s
+    end
+
+    if bLgt <= 0.0 and aLgt > 0.0 then
+        bSat = aHsla.s
+    end
+
+    -- Light needs smoothing.
+    local v = t * t * (3.0 - (t + t))
+    local w = 1.0 - v
     local u = 1.0 - t
     return Clr.hslaToRgba(
         hueFunc(aHue, bHue, t),
         u * aSat + t * bSat,
-        u * aHsla.l + t * bHsla.l,
+        w * aLgt + v * bLgt,
         u * aHsla.a + t * bHsla.a)
 end
 
@@ -721,6 +757,9 @@ end
 ---Mixes two colors in HSVA space by a step.
 ---The hue function should accept an origin,
 ---destination and factor, all numbers.
+---If one color's saturation is near zero and
+---the other's is not, the former will adopt
+---the hue of the latter.
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
@@ -732,23 +771,34 @@ function Clr.mixHsvaInternal(a, b, t, hueFunc)
 
     local aHue = aHsva.h
     local aSat = aHsva.s
+    local aVal = aHsva.v
 
     local bHue = bHsva.h
     local bSat = bHsva.s
+    local bVal = bHsva.v
 
     if aSat <= 0.0 and bSat > 0.0 then
-        aHue = bHue
+        aHue = bHsva.h
     end
 
     if bSat <= 0.0 and aSat > 0.0 then
-        bHue = aHue
+        bHue = aHsva.h
     end
 
+    if aVal <= 0.0 and bVal > 0.0 then
+        aSat = bHsva.s
+    end
+
+    if bVal <= 0.0 and aVal > 0.0 then
+        bSat = aHsva.s
+    end
+
+    -- Sat and value need smoothing.
     local u = 1.0 - t
     return Clr.hsvaToRgba(
         hueFunc(aHue, bHue, t),
         u * aSat + t * bSat,
-        u * aHsva.v + t * bHsva.v,
+        u * aVal + t * bVal,
         u * aHsva.a + t * bHsva.a)
 end
 
@@ -826,7 +876,12 @@ function Clr.mixLch(a, b, t, hueFunc)
     return Clr.mixLchInternal(a, b, u, f)
 end
 
----
+---Mixes two colors in LCh space by a step.
+---The hue function should accept an origin,
+---destination and factor, all numbers.
+---If one color's chroma is near zero and the
+---other's is not, the former will adopt the
+---hue of the latter.
 ---@param a table origin
 ---@param b table color
 ---@param t number step
@@ -835,7 +890,6 @@ end
 function Clr.mixLchInternal(a, b, t, hueFunc)
     local aLch = Clr.rgbaToLch(a)
     local bLch = Clr.rgbaToLch(b)
-    local u = 1.0 - t
 
     local aChroma = aLch.c
     local aHue = aLch.h
@@ -843,14 +897,15 @@ function Clr.mixLchInternal(a, b, t, hueFunc)
     local bChroma = bLch.c
     local bHue = bLch.h
 
-    if aChroma <= 0.0 and bChroma > 0.0 then
+    if aChroma <= 0.007 and bChroma > 0.007 then
         aHue = bHue
     end
 
-    if bChroma <= 0.0 and aChroma > 0.0 then
+    if bChroma <= 0.007 and aChroma > 0.007 then
         bHue = aHue
     end
 
+    local u = 1.0 - t
     return Clr.lchToRgba(
         u * aLch.l + t * bLch.l,
         u * aChroma + t * bChroma,
@@ -1052,7 +1107,11 @@ function Clr.rgbaToHslaInternal(red, green, blue, alpha)
     local light = sum * 0.5
     local a = alpha or 1.0
     if mx == mn then
-        return { h = 0.0, s = 0.0, l = light, a = a }
+        -- Violet (270/360) is assumed to be the hue of shadows,
+        -- Yellow (048/360) is assumed to be the hue of lights.
+        local hue = (1.0 - light) * 0.75 + light * 1.13333333333333333
+        hue = hue % 1.0
+        return { h = hue, s = 0.0, l = light, a = a }
     else
         local diff = mx - mn
         local sat = diff / sum
@@ -1111,7 +1170,14 @@ function Clr.rgbaToHsvaInternal(red, green, blue, alpha)
         end
 
         hue = hue * 0.16666666666666667
+    else
+        -- Violet (270/360) is assumed to be the hue of shadows,
+        -- Yellow (048/360) is assumed to be the hue of lights.
+        local light = (mx + mn) * 0.5
+        hue = (1.0 - light) * 0.75 + light * 1.13333333333333333
+        hue = hue % 1.0
     end
+
     local sat = 0.0
     if mx ~= 0.0 then sat = diff / mx end
     local a = alpha or 1.0

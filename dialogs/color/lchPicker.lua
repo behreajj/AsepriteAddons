@@ -169,6 +169,7 @@ local function updateClrs(data)
     -- Familiar hue:
     -- local h = ((data.hue + 40) % 360) / 360.0
     local a = data.alpha * 0.01
+
     local clr = Clr.lchToRgba(l, c, h, a)
     updateWarning(clr)
 
