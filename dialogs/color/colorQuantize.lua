@@ -6,8 +6,10 @@ dlg:slider {
     id = "levels",
     label = "Levels:",
     min = 2,
-    max = 128,
-    value = 32
+    max = 96,
+    value = 16
+    -- 5 brings 256x256x256 it within 256.
+    -- value = 5
 }
 
 dlg:newrow { always = false }
@@ -34,19 +36,30 @@ dlg:button {
                 if srcImg ~= nil then
                     local srcpxitr = srcImg:pixels()
 
+                    -- Gather unique colors in image.
                     local srcHexDict = {}
                     for elm in srcpxitr do
                         srcHexDict[elm()] = true
                     end
 
+                    -- Cache methods to local.
+                    local fromHex = Clr.fromHex
+                    local toHex = Clr.toHexUnchecked
+                    local quantize = Clr.quantizeInternal
+
+                    -- Find levels and 1.0 / levels.
                     local levels = args.levels
+                    local delta = 1.0 / levels
+
+                    -- Quantize colors, place in dictionary.
                     local quantizedDict = {}
                     for k, _ in pairs(srcHexDict) do
-                        local srcClr = Clr.fromHex(k)
-                        local qtzClr = Clr.quantize(srcClr, levels)
-                        quantizedDict[k] = Clr.toHex(qtzClr)
+                        local srcClr = fromHex(k)
+                        local qtzClr = quantize(srcClr, levels, delta)
+                        quantizedDict[k] = toHex(qtzClr)
                     end
 
+                    -- Clone image, replace color with quantized.
                     local trgImg = srcImg:clone()
                     local trgpxitr = trgImg:pixels()
                     for elm in trgpxitr do
@@ -56,16 +69,14 @@ dlg:button {
                     local copyToLayer = args.copyToLayer
                     if copyToLayer then
                         local trgLayer = sprite:newLayer()
-                        trgLayer.name = srcCel.layer.name .. ".Quantized"
+                        trgLayer.name = srcCel.layer.name .. ".Quantized." .. levels
                         local frame = app.activeFrame or 1
                         local trgCel = sprite:newCel(trgLayer, frame)
                         trgCel.image = trgImg
                         trgCel.position = srcCel.position
-
                     else
                         srcCel.image = trgImg
                     end
-
 
                     app.refresh()
                 else

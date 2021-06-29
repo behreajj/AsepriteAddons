@@ -93,28 +93,28 @@ end
 
 local function updateWarning(clr)
     if Clr.rgbIsInGamut(clr, 0.025) then
-        dlg:modify{
+        dlg:modify {
             id = "warning0",
             visible = false
         }
-        dlg:modify{
+        dlg:modify {
             id = "warning1",
             visible = false
         }
-        dlg:modify{
+        dlg:modify {
             id = "warning2",
             visible = false
         }
     else
-        dlg:modify{
+        dlg:modify {
             id = "warning0",
             visible = true
         }
-        dlg:modify{
+        dlg:modify {
             id = "warning1",
             visible = true
         }
-        dlg:modify{
+        dlg:modify {
             id = "warning2",
             visible = true
         }
@@ -177,12 +177,12 @@ local function updateClrs(data)
     -- https://github.com/LeaVerou/css.land/issues/10
     clr = Clr.clamp01(clr)
 
-    dlg:modify{
+    dlg:modify {
         id = "clr",
         colors = { AseUtilities.clrToAseColor(clr) }
     }
 
-    dlg:modify{
+    dlg:modify {
         id = "hexCode",
         text = Clr.toHexWeb(clr)
     }
@@ -404,7 +404,7 @@ dlg:combobox {
     end
 }
 
-dlg:newrow{ always = false }
+dlg:newrow { always = false }
 
 dlg:shades {
     id = "COMPLEMENT",
@@ -424,7 +424,7 @@ dlg:shades {
 
 dlg:newrow { always = false }
 
-dlg:shades{
+dlg:shades {
     id = "triadic",
     label = "Triadic:",
     mode = "pick",
@@ -440,7 +440,7 @@ dlg:shades{
     end
 }
 
-dlg:newrow{ always = false }
+dlg:newrow { always = false }
 
 dlg:shades {
     id = "analogous",
@@ -463,7 +463,7 @@ dlg:shades {
 
 dlg:newrow { always = false }
 
-dlg:shades{
+dlg:shades {
     id = "split",
     label = "Split:",
     mode = "pick",

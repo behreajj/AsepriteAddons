@@ -82,7 +82,7 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-dlg:slider{
+dlg:slider {
     id = "startIndex",
     label = "Start:",
     min = 0,
@@ -93,7 +93,7 @@ dlg:slider{
 
 dlg:newrow { always = false }
 
-dlg:slider{
+dlg:slider {
     id = "count",
     label = "Count:",
     min = 3,
@@ -277,7 +277,6 @@ dlg:button {
                                 local lab = Clr.xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
 
                                 lum = lab.l * 0.01
-
                             end
 
                             if lum < minLum then minLum = lum end

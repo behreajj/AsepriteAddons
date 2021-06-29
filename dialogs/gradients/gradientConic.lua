@@ -112,7 +112,7 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-dlg:slider{
+dlg:slider {
     id = "startIndex",
     label = "Start:",
     min = 0,
@@ -123,7 +123,7 @@ dlg:slider{
 
 dlg:newrow { always = false }
 
-dlg:slider{
+dlg:slider {
     id = "count",
     label = "Count:",
     min = 3,
@@ -202,7 +202,7 @@ dlg:button {
         local args = dlg.data
         local clrSpacePreset = args.clrSpacePreset
         local sprite = AseUtilities.initCanvas(
-            64, 64, "Gradient.Conic")
+            64, 64, "Gradient.Conic." .. clrSpacePreset)
         if sprite.colorMode == ColorMode.RGB then
 
             local atan2 = math.atan

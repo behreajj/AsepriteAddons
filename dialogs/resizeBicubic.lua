@@ -303,9 +303,9 @@ dlg:button {
                     local h = 0
                     for elm in trgpxitr do
                         local hex = clrs[h + 1]
-                                    | clrs[h + 2] << 0x08
-                                    | clrs[h + 3] << 0x10
-                                    | clrs[h + 4] << 0x18
+                                  | clrs[h + 2] << 0x08
+                                  | clrs[h + 3] << 0x10
+                                  | clrs[h + 4] << 0x18
                         elm(hex)
                         h = h + 4
                     end

@@ -31,70 +31,68 @@ dlg:combobox{
     onchange = function()
         local state = dlg.data.targetSprite
         local isNew = state == "NEW"
-        dlg:modify{
+        dlg:modify {
             id = "spriteFile",
             visible = state == "FILE"
         }
 
-        dlg:modify{
+        dlg:modify {
             id = "width",
             visible = isNew
         }
-        dlg:modify{
+        dlg:modify {
             id = "height",
             visible = isNew
         }
-        dlg:modify{
+        dlg:modify {
             id = "colorMode",
             visible = isNew
         }
-        dlg:modify{
+        dlg:modify {
             id = "background",
             visible = isNew
         }
-        dlg:modify{
+        dlg:modify {
             id = "frames",
             visible = isNew
         }
     end
 }
 
-dlg:newrow{
+dlg:newrow {
     always = false
 }
 
-dlg:file{
+dlg:file {
     id = "spriteFile",
     open = true,
     visible = defaults.targetSprite == "FILE"
 }
 
-dlg:newrow{
+dlg:newrow {
     always = false
 }
 
-dlg:number{
+dlg:number {
     id = "width",
-    -- label = "Width:",
     label = "Size:",
     text = string.format("%.0f", defaults.width),
     decimals = 0,
     visible = defaults.targetSprite == "NEW"
 }
 
-dlg:number{
+dlg:number {
     id = "height",
-    -- label = "Height:",
     text = string.format("%.0f", defaults.height),
     decimals = 0,
     visible = defaults.targetSprite == "NEW"
 }
 
-dlg:newrow{
+dlg:newrow {
     always = false
 }
 
-dlg:combobox{
+dlg:combobox {
     id = "colorMode",
     label = "Color Mode:",
     option = "RGB",
@@ -102,29 +100,26 @@ dlg:combobox{
     visible = defaults.targetSprite == "NEW",
     onchange = function()
         local state = dlg.data.colorMode
-        dlg:modify{
+        dlg:modify {
             id = "background",
             visible = state ~= "INDEXED"
         }
     end
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:color{
+dlg:color {
     id = "background",
     label = "Background:",
     color = defaults.background,
-    visible = defaults.targetSprite == "NEW" and defaults.colorMode ~= "INDEXED"
+    visible = defaults.targetSprite == "NEW"
+        and defaults.colorMode ~= "INDEXED"
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:slider{
+dlg:slider {
     id = "frames",
     label = "Frames:",
     min = 1,
@@ -134,7 +129,7 @@ dlg:slider{
 
 dlg:separator{}
 
-dlg:combobox{
+dlg:combobox {
     id = "palType",
     label = "Palette:",
     option = defaults.paletteType,
@@ -142,34 +137,30 @@ dlg:combobox{
     onchange = function()
         local state = dlg.data.palType
 
-        dlg:modify{
+        dlg:modify {
             id = "palFile",
             visible = state == "FILE"
         }
 
-        dlg:modify{
+        dlg:modify {
             id = "palPreset",
             visible = state == "PRESET"
         }
     end
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:file{
+dlg:file {
     id = "palFile",
     filetypes = {"gpl", "pal"},
     open = true,
     visible = defaults.paletteType == "FILE"
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:entry{
+dlg:entry {
     id = "palPreset",
     text = "",
     focus = false,
@@ -178,7 +169,7 @@ dlg:entry{
 
 dlg:separator{}
 
-dlg:file{
+dlg:file {
     id = "prf",
     label = "Profile:",
     filetypes = {"icc"},
@@ -186,22 +177,18 @@ dlg:file{
     visible = true
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:combobox{
+dlg:combobox {
     id = "transfer",
     label = "Transfer:",
     option = defaults.transfer,
     options = colorSpaceTransfers
 }
 
-dlg:newrow{
-    always = false
-}
+dlg:newrow { always = false }
 
-dlg:button{
+dlg:button {
     id = "ok",
     text = "OK",
     focus = defaults.pullFocus,
@@ -354,7 +341,7 @@ dlg:button{
     end
 }
 
-dlg:button{
+dlg:button {
     id = "cancel",
     text = "CANCEL",
     onclick = function()
@@ -362,6 +349,4 @@ dlg:button{
     end
 }
 
-dlg:show{
-    wait = false
-}
+dlg:show { wait = false }

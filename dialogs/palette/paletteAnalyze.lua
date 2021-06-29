@@ -138,10 +138,10 @@ dlg:check {
     selected = defaults.coverage,
     onclick = function()
         local cvg = dlg.data.coverage
-        dlg:modify{
-            id = "cvgSat",
-            visible = cvg
-        }
+        -- dlg:modify{
+        --     id = "cvgSat",
+        --     visible = cvg
+        -- }
 
         dlg:modify{
             id = "cvgRad",
@@ -155,14 +155,14 @@ dlg:check {
     end
 }
 
-dlg:slider {
-    id = "cvgSat",
-    label = "Saturation:",
-    min = 0,
-    max = 100,
-    value = defaults.cvgSat,
-    visible = defaults.coverage == true
-}
+-- dlg:slider {
+--     id = "cvgSat",
+--     label = "Saturation:",
+--     min = 0,
+--     max = 100,
+--     value = defaults.cvgSat,
+--     visible = defaults.coverage == true
+-- }
 
 dlg:slider {
     id = "cvgRad",
@@ -1041,9 +1041,9 @@ dlg:button {
 
                 local coverage = args.coverage
                 if coverage then
-                    local startTime = os.time()
+                    -- local startTime = os.time()
 
-                    local cvgSat = args.cvgSat * 0.01
+                    -- local cvgSat = args.cvgSat * 0.01
                     local cvgRad = args.cvgRad
                     local cvgCapacity = args.cvgCapacity
 
@@ -1069,12 +1069,12 @@ dlg:button {
 
                     -- Initialize layer.
                     local cvgLayer = sprite:newLayer()
-                    cvgLayer.name = "Coverage." .. string.format("%03d", args.cvgSat)
+                    cvgLayer.name = "Coverage"
                     local cvgCel = sprite:newCel(cvgLayer, frame)
 
                     -- Create image.
-                    local w = math.min(384, sprite.width)
-                    local h = math.min(384, sprite.height)
+                    local w = sprite.width
+                    local h = sprite.height
                     cvgCel.position = Point(
                         (sprite.width - w) * 0.5,
                         (sprite.height - h) * 0.5)
@@ -1084,21 +1084,29 @@ dlg:button {
                     local xToNorm = 1.0 / w
                     local yToNorm = 1.0 / h
 
-                    local hslaToRgba = Clr.hslaToRgba
+                    -- local hslaToRgba = Clr.hslaToRgba
                     local rgbaToLab = Clr.rgbaToLab
                     local labToRgba = Clr.labToRgba
                     local query = Octree.querySpherical
                     local toHex = Clr.toHex -- QUERY: use toHexUnchecked?
+                    local sqrt = math.sqrt
 
                     for elm in pxlitr do
                         local x = elm.x
                         local y = elm.y
 
-                        local clr = hslaToRgba(
-                            x * xToNorm,
-                            cvgSat,
-                            1.0 - y * yToNorm,
-                            1.0)
+                        local xPrc = x * xToNorm
+                        local yPrc = y * yToNorm
+
+                        -- local clr = hslaToRgba(
+                        --     x * xToNorm,
+                        --     cvgSat,
+                        --     1.0 - y * yToNorm,
+                        --     1.0)
+                        local clr = Clr.new(
+                            1.0 - yPrc,
+                            xPrc,
+                            sqrt(yPrc * yPrc) * 0.5)
                         local lab = rgbaToLab(clr)
                         local labpt = Vec3.new(lab.a, lab.b, lab.l)
 
@@ -1114,8 +1122,8 @@ dlg:button {
 
                     cvgCel.image = cvgImage
 
-                    local endTime = os.time()
-                    local elapsed = os.difftime(endTime, startTime)
+                    -- local endTime = os.time()
+                    -- local elapsed = os.difftime(endTime, startTime)
                     -- print("elapsed: " .. string.format("%d", elapsed))
                 end
 
