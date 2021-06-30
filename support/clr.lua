@@ -261,6 +261,54 @@ function Clr.fromHexWeb(hexstr)
     return Clr.new()
 end
 
+---Creates a one-dimensional table of colors
+---arranged in a Cartesian grid from (0.0, 0.0, 0.0)
+---to (1.0, 1.0, 1.0), representing the standard
+---RGB color space.
+---@param cols number columns
+---@param rows number rows
+---@param layers number layers
+---@param alpha number transparency
+---@return table
+function Clr.gridsRgb(cols, rows, layers, alpha)
+    local lVal = layers or 2
+    local rVal = rows or 2
+    local cVal = cols or 2
+    local aVal = alpha or 1.0
+
+    if lVal < 2 then lVal = 2 end
+    if rVal < 2 then rVal = 2 end
+    if cVal < 2 then cVal = 2 end
+    if aVal < 0.0 then
+        aVal = 0.0
+    elseif aVal > 1.0 then
+        aVal = 1.0
+    end
+
+    local hToStep = 1.0 / (lVal - 1.0)
+    local iToStep = 1.0 / (rVal - 1.0)
+    local jToStep = 1.0 / (cVal - 1.0)
+
+    local rcVal = rVal * cVal
+    local length = lVal * rcVal - 1
+    local result = {}
+
+    for k = 0, length, 1 do
+        local h = k // rcVal
+        local m = k - h * rcVal
+        local i = m // cVal
+        local j = m % cVal
+
+        result[1 + k] = Clr.new(
+            j * jToStep,
+            i * iToStep,
+            h * hToStep,
+            aVal)
+    end
+
+    return result
+end
+
 ---Converts hue, saturation and lightness to a color.
 ---@param hue number hue
 ---@param sat number saturation
@@ -711,6 +759,7 @@ function Clr.mixHslaInternal(a, b, t, hueFunc)
 
     -- Light needs smoothing.
     local v = t * t * (3.0 - (t + t))
+    -- local v = t ^ 0.6666666666666666
     local w = 1.0 - v
     local u = 1.0 - t
     return Clr.hslaToRgba(
@@ -800,7 +849,6 @@ function Clr.mixHsvaInternal(a, b, t, hueFunc)
         bSat = aHsva.s
     end
 
-    -- Sat and value need smoothing.
     local u = 1.0 - t
     return Clr.hsvaToRgba(
         hueFunc(aHue, bHue, t),
@@ -1144,7 +1192,6 @@ function Clr.rgbaToHslaInternal(red, green, blue, alpha)
             a = alpha }
     elseif light >= 0.996078431372549 then
         -- White.
-        -- White's saturation is indeterminate.
         return {
             h = Clr.HSL_HUE_LIGHT,
             s = 0.0,
@@ -1235,7 +1282,6 @@ function Clr.rgbaToHsvaInternal(red, green, blue, alpha)
             local light = 0.5 * (mx + mn)
             if light >= 0.996078431372549 then
                 -- White.
-
                 return {
                     h = Clr.HSL_HUE_LIGHT,
                     s = 0.0,
@@ -1243,9 +1289,8 @@ function Clr.rgbaToHsvaInternal(red, green, blue, alpha)
                     a = alpha }
             else
                 -- Gray.
-
                 local hue = (1.0 - light) * Clr.HSL_HUE_SHADOW
-                        + light * (1.0 + Clr.HSL_HUE_LIGHT)
+                           + light * (1.0 + Clr.HSL_HUE_LIGHT)
                 hue = hue % 1.0
                 return {
                     h = hue,
@@ -1255,7 +1300,6 @@ function Clr.rgbaToHsvaInternal(red, green, blue, alpha)
             end
         else
             -- Saturated color.
-
             local hue = 0.0
             if math.abs(mx - red) <= 0.00392156862745098 then
                 hue = (green - blue) / diff

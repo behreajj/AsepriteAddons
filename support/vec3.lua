@@ -428,7 +428,7 @@ function Vec3.gridCartesian(cols, rows, layers, lb, ub)
     local length = lVal * rcVal - 1
     local result = {}
 
-    for k = 0, length, 1 do    
+    for k = 0, length, 1 do
         local h = k // rcVal
         local m = k - h * rcVal
         local i = m // cVal
@@ -780,9 +780,26 @@ function Vec3.rescale(a, b)
     return Vec3.new(0.0, 0.0, 0.0)
 end
 
+---Rotates a vector around an axis by an angle
+---in radians. Validates the axis to see if it is
+---of unit length. Defaults to rotateZ.
+---@param a table vector
+---@param radians number angle
+---@param axis table
+---@return table
+function Vec3.rotate(a, radians, axis)
+    if axis and Vec3.any(axis) then
+        return Vec3.rotateInternal(a,
+            math.cos(radians), math.sin(radians),
+            Vec3.normalize(axis))
+    else
+        return Vec3.rotateZ(a, radians)
+    end
+end
+
 ---Rotates a vector around the x axis by an angle
 ---in radians.
----@param a table left operand
+---@param a table vector
 ---@param radians number angle
 ---@return table
 function Vec3.rotateX(a, radians)
@@ -793,7 +810,7 @@ end
 
 ---Rotates a vector around the y axis by an angle
 ---in radians.
----@param a table left operand
+---@param a table vector
 ---@param radians number angle
 ---@return table
 function Vec3.rotateY(a, radians)
@@ -804,7 +821,7 @@ end
 
 ---Rotates a vector around the z axis by an angle
 ---in radians.
----@param a table left operand
+---@param a table vector
 ---@param radians number angle
 ---@return table
 function Vec3.rotateZ(a, radians)
@@ -813,10 +830,46 @@ function Vec3.rotateZ(a, radians)
         math.sin(radians))
 end
 
+---Rotates a vector around an axis by an angle
+---in radians. The axis is assumed to be of unit
+---length.
+---@param a table vector
+---@param cosa number cosine of the angle
+---@param sina number sine of the angle
+---@param axis table axis
+---@return table
+function Vec3.rotateInternal(a, cosa, sina, axis)
+    local xAxis = axis.x
+    local yAxis = axis.y
+    local zAxis = axis.z
+
+    local complCos = 1.0 - cosa
+    local xyCompl = complCos * xAxis * yAxis
+    local xzCompl = complCos * xAxis * zAxis
+    local yzCompl = complCos * yAxis * zAxis
+
+    local xSin = sina * xAxis
+    local ySin = sina * yAxis
+    local zSin = sina * zAxis
+
+    return Vec3.new(
+        (complCos * xAxis * xAxis + cosa) * a.x +
+        (xyCompl - zSin) * a.y +
+        (xzCompl + ySin) * a.z,
+
+        (xyCompl + zSin) * a.x +
+        (complCos * yAxis * yAxis + cosa) * a.y +
+        (yzCompl - xSin) * a.z,
+
+        (xzCompl - ySin) * a.x +
+        (yzCompl + xSin) * a.y +
+        (complCos * zAxis * zAxis + cosa) * a.z)
+end
+
 ---Rotates a vector around the x axis by the cosine
 ---and sine of an angle. Used when rotating many
 ---vectors by the same angle.
----@param a table left operand
+---@param a table vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return table
@@ -830,7 +883,7 @@ end
 ---Rotates a vector around the y axis by the cosine
 ---and sine of an angle. Used when rotating many
 ---vectors by the same angle.
----@param a table left operand
+---@param a table vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return table
@@ -844,7 +897,7 @@ end
 ---Rotates a vector around the z axis by the cosine
 ---and sine of an angle. Used when rotating many
 ---vectors by the same angle.
----@param a table left operand
+---@param a table vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return table

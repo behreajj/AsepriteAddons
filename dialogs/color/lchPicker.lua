@@ -448,8 +448,7 @@ dlg:shades {
     mode = "pick",
     colors = {
         Color(0xff6600ff),
-        Color(0xff0062ca)
-    },
+        Color(0xff0062ca) },
     visible = defaults.showHarmonies
         and defaults.harmonyType == "ANALOGOUS",
     onclick = function(ev)

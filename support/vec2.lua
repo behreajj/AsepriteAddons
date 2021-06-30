@@ -706,7 +706,7 @@ end
 
 ---Rotates a vector by an angle in radians
 ---around the x axis. For use in 2.5D.
----@param a table left operand
+---@param a table vector
 ---@param radians number angle
 ---@return table
 function Vec2.rotateX(a, radians)
@@ -715,7 +715,7 @@ end
 
 ---Rotates a vector by the cosine of an angle.
 ---Used when rotating many vectors by the same angle.
----@param a table left operand
+---@param a table vector
 ---@param cosa number cosine of the angle
 ---@return table
 function Vec2.rotateXInternal(a, cosa)
@@ -724,7 +724,7 @@ end
 
 ---Rotates a vector by an angle in radians
 ---around the y axis. For use in 2.5D.
----@param a table left operand
+---@param a table vector
 ---@param radians number angle
 ---@return table
 function Vec2.rotateY(a, radians)
@@ -733,7 +733,7 @@ end
 
 ---Rotates a vector by the cosine of an angle.
 ---Used when rotating many vectors by the same angle.
----@param a table left operand
+---@param a table vector
 ---@param cosa number cosine of the angle
 ---@return table
 function Vec2.rotateYInternal(a, cosa)
@@ -742,7 +742,7 @@ end
 
 ---Rotates a vector by an angle in radians
 ---around the z axis.
----@param a table left operand
+---@param a table vector
 ---@param radians number angle
 ---@return table
 function Vec2.rotateZ(a, radians)
@@ -753,7 +753,7 @@ end
 
 ---Rotates a vector by the cosine and sine of an angle.
 ---Used when rotating many vectors by the same angle.
----@param a table left operand
+---@param a table vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return table

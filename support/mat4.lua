@@ -653,6 +653,28 @@ function Mat4.toJson(a)
     return m0 .. m1 .. m2 .. m3
 end
 
+---Returns a console print friendly string
+---of a matrix, where each row is separated
+---by a line break, '\n', and each column
+---is separated by three spaces.
+---@param a table matrix
+---@return string
+function Mat4.toStringCol(a)
+    local m0 = string.format(
+        "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
+        a.m00, a.m01, a.m02, a.m03)
+    local m1 = string.format(
+        "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
+        a.m10, a.m11, a.m12, a.m13)
+    local m2 = string.format(
+        "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
+        a.m20, a.m21, a.m22, a.m23)
+    local m3 = string.format(
+        "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
+        a.m30, a.m31, a.m32, a.m33)
+    return m0 .. m1 .. m2 .. m3
+end
+
 ---Transposes a matrix's columns and rows.
 ---@param a table matrix
 ---@return table

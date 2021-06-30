@@ -31,7 +31,7 @@ Utilities.GLYPH_LUT = {
     ['-'] = 532575944704,
     ['.'] = 1579008,
     ['/'] = 289365106780807200,
-    
+
     ['0'] = 1739555093715621888,
     ['1'] = 583224982331988992,
     ['2'] = 4324586061027097600,
@@ -48,7 +48,7 @@ Utilities.GLYPH_LUT = {
     ['='] = 136341522219008,
     ['>'] = 1155177711124615168,
     ['?'] = 4054440365960200208,
-    
+
     ['@'] = 4342201927465582652,
     ['A'] = 1164255564608586752,
     ['B'] = 8666126866299779072,
@@ -65,7 +65,7 @@ Utilities.GLYPH_LUT = {
     ['M'] = -9023337257158671872,
     ['N'] = 4783476233180692992,
     ['O'] = 4342105843085491200,
-    
+
     ['P'] = 8666126866232393728,
     ['Q'] = 4342105843086015496,
     ['R'] = 8666126866501354496,
@@ -82,7 +82,7 @@ Utilities.GLYPH_LUT = {
     [']'] = 1009371474131288590,
     ['^'] = 1164255270465961984,
     ['_'] = 126,
-    
+
     ['`'] = 2314867869373956096,
     ['a'] = 26405931072512,
     ['b'] = 2314885633965045760,
@@ -99,7 +99,7 @@ Utilities.GLYPH_LUT = {
     ['m'] = 57493678606848,
     ['n'] = 61727876326400,
     ['o'] = 26543504234496,
-    
+
     ['p'] = 1739555179547598848,
     ['q'] = 1883670229782905404,
     ['r'] = 26543436865536,
@@ -518,6 +518,41 @@ function Utilities.quantizeUnsigned(a, levels)
     else
         return a
     end
+end
+
+---Finds a point on the screen given a modelview,
+---projection and 3D point.
+---@param modelview table modelview
+---@param projection table projection
+---@param pt3 table point
+---@param width number screen width
+---@param height number screen height
+---@return table
+function Utilities.toScreen(
+    modelview, projection, pt3, width, height)
+    local pt4 = Utilities.promoteVec3ToVec4(pt3, 1.0)
+    local mvpt4 = Utilities.mulMat4Vec4(modelview, pt4)
+    local scr = Utilities.mulMat4Vec4(projection, mvpt4)
+
+    local w = scr.w
+    local x = scr.x
+    local y = scr.y
+    local z = scr.z
+
+    -- Convert from homogenous coordinate.
+    if w ~= 0.0 then
+        x = x / w
+        y = y / w
+        z = z / w
+    end
+
+    -- Convert from normalized coordinates to
+    -- screen dimensions.
+    x =         width * (1.0 + x) * 0.5
+    y = height * (1.0 - (1.0 + y) * 0.5)
+    z =                 (1.0 + z) * 0.5
+
+    return Vec3.new(x, y, z)
 end
 
 return Utilities

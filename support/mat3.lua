@@ -269,6 +269,25 @@ function Mat3.toJson(a)
     return m0 .. m1 .. m2
 end
 
+---Returns a console print friendly string
+---of a matrix, where each row is separated
+---by a line break, '\n', and each column
+---is separated by three spaces.
+---@param a table matrix
+---@return string
+function Mat3.toStringCol(a)
+    local m0 = string.format(
+        "%+3.4f   %+3.4f   %+3.4f\n",
+        a.m00, a.m01, a.m02)
+    local m1 = string.format(
+        "%+3.4f   %+3.4f   %+3.4f\n",
+        a.m10, a.m11, a.m12)
+    local m2 = string.format(
+        "%+3.4f   %+3.4f   %+3.4f\n",
+        a.m20, a.m21, a.m22)
+    return m0 .. m1 .. m2
+end
+
 ---Transposes a matrix's columns and rows.
 ---@param a table matrix
 ---@return table
