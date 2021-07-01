@@ -447,6 +447,102 @@ function Vec3.gridCartesian(cols, rows, layers, lb, ub)
     return result
 end
 
+---Creates a one-dimensional table of vectors
+---arranged in a spherical grid. The table
+---is ordered by layers, latitudes, then
+---longitudes. If poles are included, they are
+---appended at the end of the table.
+---@param longitudes number longitudes or azimuths
+---@param latitudes number latitudes or inclinations
+---@param layers number layers or radii
+---@param radiusMin number minimum radius
+---@param radiusMax number maximum radius
+---@param includePoles boolean include the poles
+function Vec3.gridSpherical(
+    longitudes, latitudes, layers,
+    radiusMin, radiusMax,
+    includePoles)
+
+    -- Cache methods.
+    local cos = math.cos
+    local sin = math.sin
+    local max = math.max
+    local min = math.min
+
+    -- Assign default arguments.
+    local vPoles = includePoles or false
+    local vrMax = radiusMax or 0.5
+    local vrMin = radiusMin or 0.5
+    local vLayers = layers or 1
+    local vLats = latitudes or 16
+    local vLons = longitudes or 32
+
+    -- Validate.
+    if vLons < 3 then vLons = 3 end
+    if vLats < 3 then vLats = 3 end
+    if vLayers < 1 then vLayers = 1 end
+
+    vrMax = max(0.000001, vrMin, vrMax)
+    local oneLayer = vLayers == 1
+    if oneLayer then
+        vrMin = vrMax
+    else
+        vrMin = max(0.000001, min(vrMin, vrMax))
+    end
+
+    local toPrc = 1.0
+    if not oneLayer then
+        toPrc = 1.0 / (vLayers - 1.0)
+    end
+    local toIncl = 3.141592653589793 / (vLats + 1.0)
+    local toAzim = 6.283185307179586 / vLons
+
+    local len2 = vLats * vLons
+    local len3 = vLayers * len2
+
+    local result = {}
+    for k = 0, len3 - 1, 1 do
+        local h = k // len2
+        local m = k - h * len2
+        local i = m // vLons
+        local j = m % vLons
+
+        local prc = h * toPrc
+        local radius = (1.0 - prc) * vrMin
+                             + prc * vrMax
+
+        local incl = 1.5707963267948966 - (i + 1.0) * toIncl
+        local rhoCosIncl = radius * cos(incl)
+        local rhoSinIncl = radius * sin(incl)
+
+        local azim = j * toAzim
+        local cosAzim = cos(azim)
+        local sinAzim = sin(azim)
+
+        result[1 + k] = Vec3.new(
+            rhoCosIncl * cosAzim,
+            rhoCosIncl * sinAzim,
+            -rhoSinIncl)
+    end
+
+    -- Append poles at the end of the array.
+    if vPoles then
+        for h = 0, vLayers - 1, 1 do
+            local prc = h * toPrc
+            local radius = (1.0 - prc) * vrMax
+                                 + prc * vrMin
+            local south = Vec3.new(0.0, 0.0, -radius)
+            local north = Vec3.new(0.0, 0.0, radius)
+            local idx0 = 1 + len3 + h
+
+            result[1 + len3 + vLayers + 1 - h] = north
+            result[idx0] = south
+        end
+    end
+
+    return result
+end
+
 ---Multiplies two vectors component-wise.
 ---@param a table left operand
 ---@param b table right operand

@@ -235,35 +235,92 @@ function Mat4.camera(
         0.0, 0.0, 0.0, 1.0)
 end
 
+---Creates a true isometric camera at a location.
+---@param xLoc number location x
+---@param yLoc number location y
+---@param zLoc number location z
+---@param handedness string handedness
+---@return table
+function Mat4.cameraIsometric(xLoc, yLoc, zLoc, handedness)
+    local hVal = "RIGHT"
+    local xVal = 0.0
+    local yVal = 0.0
+    local zVal = 0.0
+    if handedness and handedness == "LEFT" then
+        hVal = handedness
+        xVal = xLoc or 1.0
+        yVal = yLoc or 1.0
+        zVal = zLoc or -1.0
+    else
+        xVal = xLoc or 1.0
+        yVal = yLoc or -1.0
+        zVal = zLoc or 1.0
+    end
+
+    if hVal == "LEFT" then
+        return Mat4.new(
+            0.70710677, 0.0, 0.70710677,
+            -xVal * 0.70710677 - zVal * 0.70710677,
+            -0.40824828, 0.81649655, 0.40824828,
+            xVal * 0.40824828 - yVal * 0.81649655 - zVal * 0.40824828,
+            0.5773503, 0.5773503, -0.5773503,
+            -xVal * 0.5773503 - yVal * 0.5773503 + zVal * 0.5773503,
+            0.0, 0.0, 0.0, 1.0)
+    else
+        return Mat4.new(
+            0.70710677, 0.70710677, 0.0,
+            -xVal * 0.70710677 - yVal * 0.70710677,
+            -0.40824828, 0.40824828, 0.81649655,
+            xVal * 0.40824828 - yVal * 0.40824828 - zVal * 0.81649655,
+            0.5773503, -0.5773503, 0.5773503,
+            -xVal * 0.5773503 + yVal * 0.5773503 - zVal * 0.5773503,
+            0.0, 0.0, 0.0, 1.0)
+    end
+
+end
+
 ---Creates a dimetric camera at a location.
+---A dimetric camera is similar to isometric, except
+---that it follows the pixel art convention of a 2:1
+---rise over run.
 ---@param xLoc number location x
 ---@param yLoc number location y
 ---@param zLoc number location z
 ---@param handedness string handedness
 ---@return table
 function Mat4.cameraDimetric(xLoc, yLoc, zLoc, handedness)
-    local hval = "RIGHT"
+    local hVal = "RIGHT"
+    local xVal = 0.0
+    local yVal = 0.0
+    local zVal = 0.0
     if handedness and handedness == "LEFT" then
-        hval = handedness
+        hVal = handedness
+        xVal = xLoc or 1.0
+        yVal = yLoc or 1.0
+        zVal = zLoc or -1.0
+    else
+        xVal = xLoc or 1.0
+        yVal = yLoc or -1.0
+        zVal = zLoc or 1.0
     end
 
-    if hval == "LEFT" then
+    if hVal == "LEFT" then
         return Mat4.new(
             0.70710677, 0.0, 0.70710677,
-            -xLoc * 0.70710677 - zLoc * 0.70710677,
+            -xVal * 0.70710677 - zVal * 0.70710677,
             -0.38960868, 0.8345119, 0.38960868,
-            xLoc * 0.38960868 - yLoc * 0.8345119 - zLoc * 0.38960868,
+            xVal * 0.38960868 - yVal * 0.8345119 - zVal * 0.38960868,
             0.590089, 0.55098987, -0.590089,
-            -xLoc * 0.590089 - yLoc * 0.55098987 + zLoc * 0.590089,
+            -xVal * 0.590089 - yVal * 0.55098987 + zVal * 0.590089,
             0.0, 0.0, 0.0, 1.0)
     else
         return Mat4.new(
             0.70710677, 0.70710677, 0.0,
-            -xLoc * 0.70710677 - yLoc * 0.70710677,
+            -xVal * 0.70710677 - yVal * 0.70710677,
             -0.38960868, 0.38960868, 0.8345119,
-            xLoc * 0.38960868 - yLoc * 0.38960868 - zLoc * 0.8345119,
+            xVal * 0.38960868 - yVal * 0.38960868 - zVal * 0.8345119,
             0.590089, -0.590089, 0.55098987,
-            -xLoc * 0.590089 + yLoc * 0.590089 - zLoc * 0.55098987,
+            -xVal * 0.590089 + yVal * 0.590089 - zVal * 0.55098987,
             0.0, 0.0, 0.0, 1.0)
     end
 end

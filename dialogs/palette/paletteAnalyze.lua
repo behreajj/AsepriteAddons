@@ -13,10 +13,6 @@ local defaults = {
     labLb = true, -- a
     labLa = true, -- b
     manifest = true,
-    coverage = false,
-    cvgSat = 100,
-    cvgRad = 175,
-    cvgCapacity = 16,
     contiguous = false,
     closeLoop = false,
     resolution = 48,
@@ -130,56 +126,6 @@ dlg:check {
     id = "manifest",
     label = "Manifest:",
     selected = defaults.manifest
-}
-
-dlg:check {
-    id = "coverage",
-    label = "Coverage:",
-    selected = defaults.coverage,
-    onclick = function()
-        local cvg = dlg.data.coverage
-        -- dlg:modify{
-        --     id = "cvgSat",
-        --     visible = cvg
-        -- }
-
-        dlg:modify{
-            id = "cvgRad",
-            visible = cvg
-        }
-
-        dlg:modify{
-            id = "cvgCapacity",
-            visible = cvg
-        }
-    end
-}
-
--- dlg:slider {
---     id = "cvgSat",
---     label = "Saturation:",
---     min = 0,
---     max = 100,
---     value = defaults.cvgSat,
---     visible = defaults.coverage == true
--- }
-
-dlg:slider {
-    id = "cvgRad",
-    label = "Radius:",
-    min = 25,
-    max = 250,
-    value = defaults.cvgRad,
-    visible = defaults.coverage == true
-}
-
-dlg:slider {
-    id = "cvgCapacity",
-    label = "Cell Capacity:",
-    min = 3,
-    max = 32,
-    value = defaults.cvgCapacity,
-    visible = defaults.coverage == true
 }
 
 dlg:check {
@@ -1037,94 +983,6 @@ dlg:button {
                         txtHex, shdHex, dotRad, 2, 1)
 
                     lchChCel.image = lchChImage
-                end
-
-                local coverage = args.coverage
-                if coverage then
-                    -- local startTime = os.time()
-
-                    -- local cvgSat = args.cvgSat * 0.01
-                    local cvgRad = args.cvgRad
-                    local cvgCapacity = args.cvgCapacity
-
-                    -- Convert from labs to Vec3s.
-                    local points = {}
-                    for i = 1, #labs, 1 do
-                        local lab = labs[i]
-                        points[i] = Vec3.new(lab.a, lab.b, lab.l)
-                    end
-
-                    -- Create Octree.
-                    local bounds = Bounds3.new(
-                        Vec3.new(
-                            aMin - 0.00001,
-                            bMin - 0.00001,
-                            lMin - 0.00001),
-                        Vec3.new(
-                            aMax + 0.00001,
-                            bMax + 0.00001,
-                            lMax + 0.00001))
-                    local octree = Octree.new(bounds, cvgCapacity, 0)
-                    Octree.insertAll(octree, points)
-
-                    -- Initialize layer.
-                    local cvgLayer = sprite:newLayer()
-                    cvgLayer.name = "Coverage"
-                    local cvgCel = sprite:newCel(cvgLayer, frame)
-
-                    -- Create image.
-                    local w = sprite.width
-                    local h = sprite.height
-                    cvgCel.position = Point(
-                        (sprite.width - w) * 0.5,
-                        (sprite.height - h) * 0.5)
-                    local cvgImage = Image(w, h)
-                    local pxlitr = cvgImage:pixels()
-
-                    local xToNorm = 1.0 / w
-                    local yToNorm = 1.0 / h
-
-                    -- local hslaToRgba = Clr.hslaToRgba
-                    local rgbaToLab = Clr.rgbaToLab
-                    local labToRgba = Clr.labToRgba
-                    local query = Octree.querySpherical
-                    local toHex = Clr.toHex -- QUERY: use toHexUnchecked?
-                    local sqrt = math.sqrt
-
-                    for elm in pxlitr do
-                        local x = elm.x
-                        local y = elm.y
-
-                        local xPrc = x * xToNorm
-                        local yPrc = y * yToNorm
-
-                        -- local clr = hslaToRgba(
-                        --     x * xToNorm,
-                        --     cvgSat,
-                        --     1.0 - y * yToNorm,
-                        --     1.0)
-                        local clr = Clr.new(
-                            1.0 - yPrc,
-                            xPrc,
-                            sqrt(yPrc * yPrc) * 0.5)
-                        local lab = rgbaToLab(clr)
-                        local labpt = Vec3.new(lab.a, lab.b, lab.l)
-
-                        local results = query(octree, labpt, cvgRad)
-                        if #results > 1 then
-                            local near = results[1]
-                            local nearRgb = labToRgba(near.z, near.x, near.y, 1.0)
-                            elm(toHex(nearRgb))
-                        else
-                            elm(0x00000000)
-                        end
-                    end
-
-                    cvgCel.image = cvgImage
-
-                    -- local endTime = os.time()
-                    -- local elapsed = os.difftime(endTime, startTime)
-                    -- print("elapsed: " .. string.format("%d", elapsed))
                 end
 
                 local contiguous = args.contiguous

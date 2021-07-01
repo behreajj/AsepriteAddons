@@ -67,6 +67,10 @@ This repo includes
 
   ![Palette Analysis](screencaps/paletteAnalyze.png)
 
+- Palette Coverage.
+
+  ![Palette Coverage](screencaps/paletteCoverage.png)
+
 - An RYB palette generator.
 
   ![Palette Generator](screencaps/paletteGen.png)

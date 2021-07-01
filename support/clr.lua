@@ -262,6 +262,84 @@ function Clr.fromHexWeb(hexstr)
 end
 
 ---Creates a one-dimensional table of colors
+---arranged as a UV Sphere where HSL is mapped
+---to inclination, hue is mapped to azimuth and
+---saturation is mapped to radius.
+---@param longitudes number longitudes or hues
+---@param latitudes number latitudes or lumas
+---@param layers number layers or saturations
+---@param satMin number minimum saturation
+---@param satMax number maximum saturation
+---@param alpha number transparency
+---@return table
+function Clr.gridHsl(
+    longitudes, latitudes, layers,
+    satMin, satMax,
+    alpha)
+
+    -- TODO: Support including poles?
+
+    local max = math.max
+    local min = math.min
+
+    -- Default arguments.
+    local aVal = alpha or 1.0
+    local vsMax = satMax or 1.0
+    local vsMin = satMin or 0.1
+    local vLayers = layers or 1
+    local vLats = latitudes or 16
+    local vLons = longitudes or 32
+
+    -- Validate.
+    if vLons < 3 then vLons = 3 end
+    if vLats < 3 then vLats = 3 end
+    if vLayers < 1 then vLayers = 1 end
+
+    vsMax = min(1.0, max(0.000001, vsMax))
+    vsMin = min(1.0, max(0.000001, vsMin))
+    vsMax = max(vsMin, vsMax)
+    local oneLayer = vLayers == 1
+    if oneLayer then
+        vsMin = vsMax
+    else
+        vsMin = min(vsMin, vsMax)
+    end
+
+    local toPrc = 1.0
+    if not oneLayer then
+        toPrc = 1.0 / (vLayers - 1.0)
+    end
+    local toLgt = 1.0 / (vLats + 1.0)
+    local toHue = 1.0 / vLons
+
+    local len2 = vLats * vLons
+    local len3 = vLayers * len2
+
+    local result = {}
+    for k = 0, len3 - 1, 1 do
+        local h = k // len2
+        local m = k - h * len2
+        local i = m // vLons
+        local j = m % vLons
+
+        local hue = j * toHue
+
+        local prc = h * toPrc
+        local sat = (1.0 - prc) * vsMin
+                          + prc * vsMax
+
+        -- Smooth step approximates sine wave.
+        local lgt = (i + 1.0) * toLgt
+        lgt = lgt * lgt * (3.0 - (lgt + lgt))
+
+        result[1 + k] = Clr.hslaToRgba(
+            hue, sat, lgt, aVal)
+    end
+
+    return result
+end
+
+---Creates a one-dimensional table of colors
 ---arranged in a Cartesian grid from (0.0, 0.0, 0.0)
 ---to (1.0, 1.0, 1.0), representing the standard
 ---RGB color space.
@@ -271,19 +349,22 @@ end
 ---@param alpha number transparency
 ---@return table
 function Clr.gridsRgb(cols, rows, layers, alpha)
+
+    -- Default arguments.
+    local aVal = alpha or 1.0
     local lVal = layers or 2
     local rVal = rows or 2
     local cVal = cols or 2
-    local aVal = alpha or 1.0
 
-    if lVal < 2 then lVal = 2 end
-    if rVal < 2 then rVal = 2 end
-    if cVal < 2 then cVal = 2 end
+    -- Validate arguments.
     if aVal < 0.0 then
         aVal = 0.0
     elseif aVal > 1.0 then
         aVal = 1.0
     end
+    if lVal < 2 then lVal = 2 end
+    if rVal < 2 then rVal = 2 end
+    if cVal < 2 then cVal = 2 end
 
     local hToStep = 1.0 / (lVal - 1.0)
     local iToStep = 1.0 / (rVal - 1.0)
@@ -759,7 +840,6 @@ function Clr.mixHslaInternal(a, b, t, hueFunc)
 
     -- Light needs smoothing.
     local v = t * t * (3.0 - (t + t))
-    -- local v = t ^ 0.6666666666666666
     local w = 1.0 - v
     local u = 1.0 - t
     return Clr.hslaToRgba(
@@ -1182,16 +1262,15 @@ function Clr.rgbaToHslaInternal(red, green, blue, alpha)
     local diff = mx - mn
     local light = 0.5 * sum
 
-    -- Epsilon is 1.0 / 255.0 and 1.0 - 1.0 / 255.0.
     if light <= 0.00392156862745098 then
-        -- Black.
+        -- Black (epsilon is 1/255).
         return {
             h = Clr.HSL_HUE_SHADOW,
             s = 0.0,
             l = 0.0,
             a = alpha }
     elseif light >= 0.996078431372549 then
-        -- White.
+        -- White (epsilon is 1-1/255).
         return {
             h = Clr.HSL_HUE_LIGHT,
             s = 0.0,
@@ -1199,7 +1278,6 @@ function Clr.rgbaToHslaInternal(red, green, blue, alpha)
             a = alpha }
     elseif diff <= 0.00392156862745098 then
         -- Gray.
-        -- Add 1.0 for nearest angle easing, hue light < shadow.
         local hue = (1.0 - light) * Clr.HSL_HUE_SHADOW
                    + light * (1.0 + Clr.HSL_HUE_LIGHT)
         hue = hue % 1.0
