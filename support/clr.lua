@@ -7,7 +7,10 @@ setmetatable(Clr, {
     end})
 
 ---Constructs a new color from red, green
----blue and transparency channels in [0.0, 1.0].
+---blue and transparency channels.
+---The expected range is [0.0, 1.0], however,
+---to accomodate other color spaces, these
+---bounds are not checked in the constructor.
 ---@param r number red channel
 ---@param g number green channel
 ---@param b number blue channel
@@ -276,8 +279,6 @@ function Clr.gridHsl(
     longitudes, latitudes, layers,
     satMin, satMax,
     alpha)
-
-    -- TODO: Support including poles?
 
     local max = math.max
     local min = math.min
@@ -814,38 +815,18 @@ function Clr.mixHslaInternal(a, b, t, hueFunc)
     local aHsla = Clr.rgbaToHslaInternal(a.r, a.g, a.b, a.a)
     local bHsla = Clr.rgbaToHslaInternal(b.r, b.g, b.b, b.a)
 
-    local aHue = aHsla.h
     local aSat = aHsla.s
-    local aLgt = aHsla.l
-
-    local bHue = bHsla.h
     local bSat = bHsla.s
-    local bLgt = bHsla.l
 
-    if aSat <= 0.0 and bSat > 0.0 then
-        aHue = bHsla.h
+    if aSat <= 0.000001 or bSat <= 0.000001 then
+        return Clr.mixRgbaLinearInternal(a, b, t)
     end
 
-    if bSat <= 0.0 and aSat > 0.0 then
-        bHue = aHsla.h
-    end
-
-    if aLgt <= 0.0 and bLgt > 0.0 then
-        aSat = bHsla.s
-    end
-
-    if bLgt <= 0.0 and aLgt > 0.0 then
-        bSat = aHsla.s
-    end
-
-    -- Light needs smoothing.
-    local v = t * t * (3.0 - (t + t))
-    local w = 1.0 - v
     local u = 1.0 - t
     return Clr.hslaToRgba(
-        hueFunc(aHue, bHue, t),
+        hueFunc(aHsla.h, bHsla.h, t),
         u * aSat + t * bSat,
-        w * aLgt + v * bLgt,
+        u * aHsla.l + t * bHsla.l,
         u * aHsla.a + t * bHsla.a)
 end
 
@@ -901,39 +882,21 @@ end
 ---@param hueFunc function hue function
 ---@return table
 function Clr.mixHsvaInternal(a, b, t, hueFunc)
-
     local aHsva = Clr.rgbaToHsvaInternal(a.r, a.g, a.b, a.a)
     local bHsva = Clr.rgbaToHsvaInternal(b.r, b.g, b.b, b.a)
 
-    local aHue = aHsva.h
     local aSat = aHsva.s
-    local aVal = aHsva.v
-
-    local bHue = bHsva.h
     local bSat = bHsva.s
-    local bVal = bHsva.v
 
-    if aSat <= 0.0 and bSat > 0.0 then
-        aHue = bHsva.h
-    end
-
-    if bSat <= 0.0 and aSat > 0.0 then
-        bHue = aHsva.h
-    end
-
-    if aVal <= 0.0 and bVal > 0.0 then
-        aSat = bHsva.s
-    end
-
-    if bVal <= 0.0 and aVal > 0.0 then
-        bSat = aHsva.s
+    if aSat <= 0.000001 or bSat <= 0.000001 then
+        return Clr.mixRgbaLinearInternal(a, b, t)
     end
 
     local u = 1.0 - t
     return Clr.hsvaToRgba(
-        hueFunc(aHue, bHue, t),
+        hueFunc(aHsva.h, bHsva.h, t),
         u * aSat + t * bSat,
-        u * aVal + t * bVal,
+        u * aHsva.v + t * bHsva.v,
         u * aHsva.a + t * bHsva.a)
 end
 
@@ -1023,29 +986,38 @@ end
 ---@param hueFunc function hue function
 ---@return table
 function Clr.mixLchInternal(a, b, t, hueFunc)
-    local aLch = Clr.rgbaToLch(a)
-    local bLch = Clr.rgbaToLch(b)
+    local aLab = Clr.rgbaToLab(a)
+    local aa = aLab.a
+    local ab = aLab.b
+    local acsq = aa * aa + ab * ab
 
-    local aChroma = aLch.c
-    local aHue = aLch.h
-
-    local bChroma = bLch.c
-    local bHue = bLch.h
-
-    if aChroma <= 0.007 and bChroma > 0.007 then
-        aHue = bHue
-    end
-
-    if bChroma <= 0.007 and aChroma > 0.007 then
-        bHue = aHue
-    end
+    local bLab = Clr.rgbaToLab(b)
+    local ba = bLab.a
+    local bb = bLab.b
+    local bcsq = ba * ba + bb * bb
 
     local u = 1.0 - t
-    return Clr.lchToRgba(
-        u * aLch.l + t * bLch.l,
-        u * aChroma + t * bChroma,
-        hueFunc(aHue, bHue, t),
-        u * aLch.a + t * bLch.a)
+    if acsq < 0.00005 or bcsq < 0.00005 then
+        return Clr.labToRgba(
+            u * aLab.l + t * bLab.l,
+            u * aa + t * ba,
+            u * ab + t * bb,
+            u * aLab.alpha + t * bLab.alpha)
+    else
+        local aChr = math.sqrt(acsq)
+        local aHue = math.atan(ab, aa) * 0.15915494309189535
+        aHue = aHue % 1.0
+
+        local bChr = math.sqrt(bcsq)
+        local bHue = math.atan(bb, ba) * 0.15915494309189535
+        bHue = bHue % 1.0
+
+        return Clr.lchToRgba(
+            u * aLab.l + t * bLab.l,
+            u * aChr + t * bChr,
+            hueFunc(aHue, bHue, t),
+            u * aLab.alpha + t * bLab.alpha)
+    end
 end
 
 ---Mixes two colors in RGBA space by a step.

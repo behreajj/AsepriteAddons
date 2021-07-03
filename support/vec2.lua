@@ -167,17 +167,6 @@ function Vec2.ceil(a)
         math.ceil(a.y))
 end
 
----Clamps a vector to a lower and upper bound
----@param a table left operand
----@param lb table lower bound
----@param ub table upper bound
----@return table
-function Vec2.clamp(a, lb, ub)
-    return Vec2.new(
-        math.min(math.max(a.x, lb.x), ub.x),
-        math.min(math.max(a.y, lb.y), ub.y))
-end
-
 ---Finds the cross product of two vectors, z component.
 ---@param a table left operand
 ---@param b table right operand
@@ -687,6 +676,36 @@ function Vec2.randomCartesianInternal(lb, ub)
     return Vec2.new(
         (1.0 - rx) * lb.x + rx * ub.x,
         (1.0 - ry) * lb.y + ry * ub.y)
+end
+
+---Remaps a vector from an origin range to
+---a destination range. For invalid origin
+---ranges, the component remains unchanged.
+---@param v table vector
+---@param lbOrigin table origin lower bound
+---@param ubOrigin table origin upper bound
+---@param lbDest table destination lower bound
+---@param ubDest table destination upper bound
+---@return table
+function Vec2.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
+
+    local mx = v.x
+    local my = v.y
+
+    local xDenom = ubOrigin.x - lbOrigin.x
+    local yDenom = ubOrigin.y - lbOrigin.y
+
+    if xDenom ~= 0.0 then
+        mx = lbDest.x + (ubDest.x - lbDest.x)
+            * ((mx - lbOrigin.x) / xDenom)
+    end
+
+    if yDenom ~= 0.0 then
+        my = lbDest.y + (ubDest.y - lbDest.y)
+            * ((my - lbOrigin.y) / yDenom)
+    end
+
+    return Vec2.new(mx, my)
 end
 
 ---Rescales a vector to the target magnitude.

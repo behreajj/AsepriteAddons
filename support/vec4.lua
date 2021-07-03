@@ -150,19 +150,6 @@ function Vec4.ceil(a)
         math.ceil(a.w))
 end
 
----Clamps a vector to a lower and upper bound
----@param a table left operand
----@param lb table lower bound
----@param ub table upper bound
----@return table
-function Vec4.clamp(a, lb, ub)
-    return Vec4.new(
-        math.min(math.max(a.x, lb.x), ub.x),
-        math.min(math.max(a.y, lb.y), ub.y),
-        math.min(math.max(a.z, lb.z), ub.z),
-        math.min(math.max(a.w, lb.w), ub.w))
-end
-
 ---Finds the absolute difference between two vectors.
 ---@param a table left operand
 ---@param b table right operand
@@ -732,6 +719,50 @@ function Vec4.randomCartesianInternal(lb, ub)
         (1.0 - ry) * lb.y + ry * ub.y,
         (1.0 - rz) * lb.z + rz * ub.z,
         (1.0 - rw) * lb.w + rw * ub.w)
+end
+
+---Remaps a vector from an origin range to
+---a destination range. For invalid origin
+---ranges, the component remains unchanged.
+---@param v table vector
+---@param lbOrigin table origin lower bound
+---@param ubOrigin table origin upper bound
+---@param lbDest table destination lower bound
+---@param ubDest table destination upper bound
+---@return table
+function Vec4.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
+
+    local mx = v.x
+    local my = v.y
+    local mz = v.z
+    local mw = v.w
+
+    local xDenom = ubOrigin.x - lbOrigin.x
+    local yDenom = ubOrigin.y - lbOrigin.y
+    local zDenom = ubOrigin.z - lbOrigin.z
+    local wDenom = ubOrigin.w - lbOrigin.w
+
+    if xDenom ~= 0.0 then
+        mx = lbDest.x + (ubDest.x - lbDest.x)
+            * ((mx - lbOrigin.x) / xDenom)
+    end
+
+    if yDenom ~= 0.0 then
+        my = lbDest.y + (ubDest.y - lbDest.y)
+            * ((my - lbOrigin.y) / yDenom)
+    end
+
+    if zDenom ~= 0.0 then
+        mz = lbDest.z + (ubDest.z - lbDest.z)
+            * ((mz - lbOrigin.z) / zDenom)
+    end
+
+    if wDenom ~= 0.0 then
+        mw = lbDest.w + (ubDest.w - lbDest.w)
+            * ((mw - lbOrigin.w) / wDenom)
+    end
+
+    return Vec4.new(mx, my, mz, mw)
 end
 
 ---Rescales a vector to the target magnitude.

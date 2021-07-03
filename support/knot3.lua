@@ -236,6 +236,84 @@ function Knot3.foreVec(knot)
     return Vec3.sub(knot.fh, knot.co)
 end
 
+---Sets a knot from a line segment. Assumes that
+---the previous knot's coordinate is set to the
+---first anchor point. The previous knot's fore handle,
+---the next knot's rear handle and the next knot's
+---coordinate are set by this function.
+---@param nextAnchor table next anchor point
+---@param prevKnot table previous knot
+---@param nextKnot table next knot
+---@return table
+function Knot3.fromSegLinear(
+    nextAnchor, prevKnot, nextKnot)
+
+    nextKnot.co = Vec3.new(
+        nextAnchor.x,
+        nextAnchor.y,
+        nextAnchor.z)
+
+    local prevCoord = prevKnot.co
+    local nextCoord = nextKnot.co
+
+    prevKnot.fh = Vec3.new(
+          prevCoord.x * 0.6666666666666667
+        + nextCoord.x * 0.3333333333333333,
+          prevCoord.y * 0.6666666666666667
+        + nextCoord.y * 0.3333333333333333,
+          prevCoord.z * 0.6666666666666667
+        + nextCoord.z * 0.3333333333333333)
+
+    nextKnot.rh = Vec3.new(
+          nextCoord.x * 0.6666666666666667
+        + prevCoord.x * 0.3333333333333333,
+          nextCoord.y * 0.6666666666666667
+        + prevCoord.y * 0.3333333333333333,
+          nextCoord.z * 0.6666666666666667
+        + prevCoord.z * 0.3333333333333333)
+
+    return nextKnot
+end
+
+---Sets two knots from a segment of a Catmull-Rom
+---curve. The default curve tightness is 0.0. Assumes
+---that the previous knot's coordinate is set to a
+---prior anchor point. The previous knot's fore handle,
+---the next knot's rear handle and the next knot's
+---coordinate are set by this function.
+---@param prevAnchor table previous anchor point
+---@param currAnchor table current anchor point
+---@param nextAnchor table next anchor point
+---@param advAnchor table advance anchor point
+---@param tightness number curve tightness
+---@param prevKnot table previous knot
+---@param nextKnot table next knot
+---@return table
+function Knot3.fromSegCatmull(
+    prevAnchor, currAnchor, nextAnchor, advAnchor,
+    tightness, prevKnot, nextKnot)
+
+    if math.abs(tightness - 1.0) <= 0.000001 then
+        return Knot3.fromSegLinear(
+            nextAnchor, prevKnot, nextKnot)
+    end
+
+    local fac = (tightness - 1.0) * 0.16666666666666666
+
+    prevKnot.fh = Vec3.sub(currAnchor,
+        Vec3.scale(Vec3.sub(
+            nextAnchor, prevAnchor), fac))
+    nextKnot.rh = Vec3.add(nextAnchor,
+        Vec3.scale(Vec3.sub(
+            advAnchor, currAnchor), fac))
+    nextKnot.co = Vec3.new(
+        nextAnchor.x,
+        nextAnchor.y,
+        nextAnchor.z)
+
+    return nextKnot
+end
+
 ---Gets the knot's rear handle as a direction.
 ---@param knot table knot
 ---@return table

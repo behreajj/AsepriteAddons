@@ -89,26 +89,6 @@ dlg:entry {
     visible = defaults.palType == "PRESET"
 }
 
--- dlg:newrow { always = false }
-
--- dlg:slider {
---     id = "startIndex",
---     label = "Start Idx:",
---     min = 0,
---     max = 255,
---     value = defaults.startIndex
--- }
-
--- dlg:newrow { always = false }
-
--- dlg:slider {
---     id = "palCount",
---     label = "Pal Count:",
---     min = 1,
---     max = 256,
---     value = defaults.palCount
--- }
-
 dlg:newrow { always = false }
 
 dlg:slider {
@@ -153,12 +133,6 @@ dlg:combobox {
         dlg:modify { id = "cols", visible = isCube }
         dlg:modify { id = "rows", visible = isCube }
         dlg:modify { id = "layersCube", visible = isCube }
-        -- dlg:modify { id = "lbx", visible = isCube }
-        -- dlg:modify { id = "lby", visible = isCube }
-        -- dlg:modify { id = "lbz", visible = isCube }
-        -- dlg:modify { id = "ubx", visible = isCube }
-        -- dlg:modify { id = "uby", visible = isCube }
-        -- dlg:modify { id = "ubz", visible = isCube }
 
         dlg:modify { id = "lons", visible = isSphere }
         -- dlg:modify { id = "lats", visible = isSphere }
@@ -246,54 +220,6 @@ dlg:slider {
     value = defaults.layersCube,
     visible = defaults.geometry == "CUBE"
 }
-
--- dlg:newrow { always = false }
-
--- dlg:number {
---     id = "lbx",
---     label = "Lower Bound:",
---     text = string.format("%.5f", defaults.lbx),
---     decimals = 5,
---     visible = defaults.geometry == "CUBE"
--- }
-
--- dlg:number {
---     id = "lby",
---     text = string.format("%.5f", defaults.lby),
---     decimals = 5,
---     visible = defaults.geometry == "CUBE"
--- }
-
--- dlg:number {
---     id = "lbz",
---     text = string.format("%.5f", defaults.lbz),
---     decimals = 5,
---     visible = defaults.geometry == "CUBE"
--- }
-
--- dlg:newrow { always = false }
-
--- dlg:number {
---     id = "ubx",
---     label = "Upper Bound:",
---     text = string.format("%.5f", defaults.ubx),
---     decimals = 5,
---     visible = defaults.geometry == "CUBE"
--- }
-
--- dlg:number {
---     id = "uby",
---     text = string.format("%.5f", defaults.uby),
---     decimals = 5,
---     visible = defaults.geometry == "CUBE"
--- }
-
--- dlg:number {
---     id = "ubz",
---     text = string.format("%.5f", defaults.ubz),
---     decimals = 5,
---     visible = defaults.geometry == "CUBE"
--- }
 
 dlg:newrow { always = false }
 
@@ -403,13 +329,9 @@ dlg:button {
                     hexDict[hex] = idx
                 end
 
-                -- Store hexes and indices separately.
                 local hexes = {}
-                local indices = {}
                 local incr = 1
-                
-                for key, value in pairs(hexDict) do
-                    indices[incr] = value
+                for key, _ in pairs(hexDict) do
                     hexes[incr] = key
                     incr = incr + 1
                 end
@@ -419,7 +341,6 @@ dlg:button {
                     function(a, b)
                         return hexDict[a] < hexDict[b]
                     end)
-                table.sort(indices)
 
                 -- Find lab minimums and maximums.
                 local lMin = 999999
@@ -430,14 +351,11 @@ dlg:button {
                 local aMax = -999999
                 local bMax = -999999
 
-                -- Unpack unique entries to data for all displays.
+                -- Unpack unique entries to data.
                 local points = {}
-
                 for i = 1, #hexes, 1 do
                     local clr = Clr.fromHex(hexes[i])
                     local lab = Clr.rgbaToLab(clr)
-
-                    -- TODO: Offer choice of color space?
                     local point = Vec3.new(lab.a, lab.b, lab.l)
 
                     if lab.l < lMin then lMin = lab.l end
@@ -524,7 +442,6 @@ dlg:button {
                     if #results > 1 then
                         local nearestPt = results[1]
 
-                        -- TODO: Offer choice of color space.
                         local nearestClr = Clr.labToRgba(
                             nearestPt.z,
                             nearestPt.x,
@@ -593,11 +510,11 @@ dlg:button {
                 local maxSwatchSize = args.maxSwatchSize
                 local swatchDiff = maxSwatchSize - minSwatchSize
 
-                local ptsScreen = {}
+                local pts2d = {}
                 local zMin = 999999
                 local zMax = -999999
                 for h = 1, reqFrames, 1 do
-                    local frameScreen = {}
+                    local frame2d = {}
                     local theta = (h - 1) * hToTheta
                     local cosa = cos(theta)
                     local sina = sin(theta)
@@ -611,16 +528,17 @@ dlg:button {
                         if scrpt.z < zMin then zMin = scrpt.z end
                         if scrpt.z > zMax then zMax = scrpt.z end
 
-                        frameScreen[i] = {
+                        frame2d[i] = {
                             point = scrpt,
                             color = replaceClrs[i] }
                     end
 
-                    table.sort(frameScreen,
+                    -- Depth sorting.
+                    table.sort(frame2d,
                         function(a, b)
                             return b.point.z < a.point.z
                         end)
-                    ptsScreen[h] = frameScreen
+                    pts2d[h] = frame2d
                 end
 
                 -- Create layer.
@@ -633,15 +551,16 @@ dlg:button {
                 local zDenom = 1.0
                 if zDiff ~= 0.0 then zDenom = 1.0 / zDiff end
 
+                -- TODO: This wouldn't work for anything with labels.
                 app.transaction(function()
                     for h = 1, reqFrames, 1 do
                         local frame = sprite.frames[h]
                         local cel = sprite:newCel(layer, frame)
-                        local frameScreen = ptsScreen[h]
+                        local frame2d = pts2d[h]
 
                         for i = 1, gridLen, 1 do
 
-                            local packet = frameScreen[i]
+                            local packet = frame2d[i]
                             local scrpt = packet.point
                             local clr = packet.color
 

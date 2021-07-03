@@ -15,6 +15,7 @@ local defaults = {
     manifest = true,
     contiguous = false,
     closeLoop = false,
+    tension = 0,
     resolution = 48,
     bkgColor = Color(38, 38, 38, 255),
     txtColor = Color(255, 245, 215, 255),
@@ -143,6 +144,11 @@ dlg:check {
             id = "resolution",
             visible = contig
         }
+
+        dlg:modify{
+            id = "tension",
+            visible = contig
+        }
     end
 }
 
@@ -150,6 +156,15 @@ dlg:check {
     id = "closedLoop",
     label = "Closed Loop:",
     selected = defaults.closedLoop,
+    visible = defaults.contiguous == true
+}
+
+dlg:slider {
+    id = "tension",
+    label = "Tension:",
+    min = -30,
+    max = 30,
+    value = defaults.tension,
     visible = defaults.contiguous == true
 }
 
@@ -996,7 +1011,10 @@ dlg:button {
                         points[i] = Vec3.new(lab.a, lab.b, lab.l)
                     end
 
-                    local curve = Curve3.fromPoints(closedLoop, points)
+                    -- local curve = Curve3.fromPoints(closedLoop, points)
+                    local tension = args.tension or defaults.tension
+                    tension = tension * 0.1
+                    local curve = Curve3.fromCatmull(closedLoop, points, tension)
 
                     local sampledPoints = {}
                     local sampledHexes = {}

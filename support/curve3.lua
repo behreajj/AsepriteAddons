@@ -212,6 +212,131 @@ function Curve3.evalLast(curve)
         kLast.co.z)
 end
 
+---Converts a set of points on a Catmull-Rom spline
+---to a Bezier curve. The default tightness is 0.0.
+---There must be at least 4 points in the array.
+---@param closedLoop boolean closed loop flag
+---@param points table array of points
+---@param tightness number curve tightness
+---@return table
+function Curve3.fromCatmull(closedLoop, points, tightness)
+
+    local ptsLen = #points
+    if ptsLen < 2 then
+        return Curve3.new()
+    elseif ptsLen < 3 then
+        return Curve3.fromCatmull(false, {
+            points[1], points[1],
+            points[2], points[2]
+        }, tightness)
+    elseif ptsLen < 4 then
+        return Curve3.fromCatmull(false, {
+            points[1], points[1],
+            points[2],
+            points[3], points[3]
+        }, tightness)
+    end
+
+    local ptsLast = ptsLen - 1
+    local knotCount = 0
+
+    -- TODO: TEST
+    local valPts = points
+    if closedLoop then
+        if Vec3.approx(
+            points[1],
+            points[ptsLen]) then
+            valPts = {}
+            for i = 1, ptsLast, 1 do
+                valPts[i] = points[i]
+            end
+
+            ptsLen = #valPts
+            ptsLast = ptsLen - 1
+        end
+
+        knotCount = ptsLen
+    else
+        valPts = {}
+        for i = 1, #points, 1 do
+            valPts[i] = points[i]
+        end
+
+        if not Vec3.approx(
+            points[1],
+            points[2]) then
+            table.insert(valPts, 1, points[1])
+        end
+
+        if not Vec3.approx(
+            points[#points],
+            points[#points - 1]) then
+            table.insert(valPts, points[#points])
+        end
+
+        ptsLen = #valPts
+        ptsLast = ptsLen - 1
+        knotCount = ptsLen - 2
+    end
+
+    local kns = {}
+    local firstKnot = Knot3.new(
+        valPts[2],
+        valPts[2],
+        valPts[2])
+    kns[1] = firstKnot
+
+    local valTight = tightness or 0.0
+    for i = 0, knotCount - 2, 1 do
+        local i1 = i + 1
+        local i2 = i + 2
+        local i3 = i + 3
+
+        if closedLoop then
+            i1 = i1 % ptsLen
+            i2 = i2 % ptsLen
+            i3 = i3 % ptsLen
+        elseif i3 > ptsLast then
+            i3 = ptsLast
+        end
+
+        local nextKnot = Knot3.new(
+            valPts[1 + i2],
+            valPts[1 + i2],
+            valPts[1 + i2])
+        kns[2 + i] = nextKnot
+
+        Knot3.fromSegCatmull(
+            valPts[1 + i],
+            valPts[1 + i1],
+            valPts[1 + i2],
+            valPts[1 + i3],
+            valTight,
+            kns[1 + i],
+            nextKnot)
+    end
+
+    if closedLoop then
+        Knot3.fromSegCatmull(
+            valPts[ptsLen],
+            valPts[1],
+            valPts[2],
+            valPts[3],
+            valTight,
+            kns[#kns],
+            firstKnot)
+    else
+        firstKnot.co = Vec3.new(
+            valPts[2].x,
+            valPts[2].y,
+            valPts[2].z)
+        firstKnot:mirrorHandlesForward()
+        kns[#kns]:mirrorHandlesBackward()
+    end
+
+    return Curve3.new(closedLoop, kns, "Curve3")
+end
+
 ---Creates a curve from a series of points.
 ---Smoothes the fore and rear handles of knots.
 ---@param closedLoop boolean closed loop
@@ -219,18 +344,24 @@ end
 ---@return table
 function Curve3.fromPoints(closedLoop, points)
     local kns = {}
-    local len = #points
-    for i = 1, len, 1 do
-        local pt = points[i]
 
-        -- Rear and fore handles will be updated
-        -- by smooth handles method, so it's better
-        -- to do this then let the constructor
-        -- guess as to what they should be.
-        kns[i] = Knot3.new(
-            Vec3.new(pt.x, pt.y, pt.z),
-            Vec3.new(0.0, 0.0, 0.0),
-            Vec3.new(0.0, 0.0, 0.0))
+    local valPts = points
+    if closedLoop
+        and Vec3.approx(
+            points[1],
+            points[#points]) then
+
+        valPts = {}
+        for i = 1, #points - 1, 1 do
+            valPts[i] = points[i]
+        end
+    end
+
+    --TODO: Use knot from line seg instead?
+    local len = #valPts
+    for i = 1, len, 1 do
+        local pt = valPts[i]
+        kns[i] = Knot3.new(Vec3.new(pt.x, pt.y, pt.z))
     end
     local crv = Curve3.new(closedLoop, kns, "Curve3")
     Curve3.smoothHandles(crv)

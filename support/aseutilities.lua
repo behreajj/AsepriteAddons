@@ -79,14 +79,46 @@ function AseUtilities.aseColorToClr(aseClr)
 end
 
 ---Converts a Clr to an Aseprite Color.
+---Clamps the Clr's channels to [0.0, 1.0] before
+---they are converted.
 ---@param clr table clr
 ---@return table
 function AseUtilities.clrToAseColor(clr)
+
+    local r = clr.r
+    local g = clr.g
+    local b = clr.b
+    local a = clr.a
+
+    if r < 0.0 then
+        r = 0.0
+    elseif r > 1.0 then
+        r = 1.0
+    end
+
+    if g < 0.0 then
+        g = 0.0
+    elseif g > 1.0 then
+        g = 1.0
+    end
+
+    if b < 0.0 then
+        b = 0.0
+    elseif b > 1.0 then
+        b = 1.0
+    end
+
+    if a < 0.0 then
+        a = 0.0
+    elseif a > 1.0 then
+        a = 1.0
+    end
+
     return Color(
-        math.tointeger(0.5 + 255.0 * clr.r),
-        math.tointeger(0.5 + 255.0 * clr.g),
-        math.tointeger(0.5 + 255.0 * clr.b),
-        math.tointeger(0.5 + 255.0 * clr.a))
+        math.tointeger(0.5 + 255.0 * r),
+        math.tointeger(0.5 + 255.0 * g),
+        math.tointeger(0.5 + 255.0 * b),
+        math.tointeger(0.5 + 255.0 * a))
 end
 
 ---Draws a curve in Aseprite with the contour tool.
