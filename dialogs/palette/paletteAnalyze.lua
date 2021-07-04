@@ -13,10 +13,10 @@ local defaults = {
     labLb = true, -- a
     labLa = true, -- b
     manifest = true,
-    contiguous = false,
-    closeLoop = false,
-    tension = 0,
-    resolution = 48,
+    -- contiguous = false,
+    -- closeLoop = false,
+    -- tension = 0,
+    -- resolution = 48,
     bkgColor = Color(38, 38, 38, 255),
     txtColor = Color(255, 245, 215, 255),
     shdColor = Color(0, 0, 0, 255),
@@ -129,53 +129,53 @@ dlg:check {
     selected = defaults.manifest
 }
 
-dlg:check {
-    id = "contiguous",
-    label = "Contiguous:",
-    selected = defaults.contiguous,
-    onclick = function()
-        local contig = dlg.data.contiguous
-        dlg:modify{
-            id = "closedLoop",
-            visible = contig
-        }
+-- dlg:check {
+--     id = "contiguous",
+--     label = "Contiguous:",
+--     selected = defaults.contiguous,
+--     onclick = function()
+--         local contig = dlg.data.contiguous
+--         dlg:modify{
+--             id = "closedLoop",
+--             visible = contig
+--         }
 
-        dlg:modify{
-            id = "resolution",
-            visible = contig
-        }
+--         dlg:modify{
+--             id = "resolution",
+--             visible = contig
+--         }
 
-        dlg:modify{
-            id = "tension",
-            visible = contig
-        }
-    end
-}
+--         dlg:modify{
+--             id = "tension",
+--             visible = contig
+--         }
+--     end
+-- }
 
-dlg:check {
-    id = "closedLoop",
-    label = "Closed Loop:",
-    selected = defaults.closedLoop,
-    visible = defaults.contiguous == true
-}
+-- dlg:check {
+--     id = "closedLoop",
+--     label = "Closed Loop:",
+--     selected = defaults.closedLoop,
+--     visible = defaults.contiguous == true
+-- }
 
-dlg:slider {
-    id = "tension",
-    label = "Tension:",
-    min = -30,
-    max = 30,
-    value = defaults.tension,
-    visible = defaults.contiguous == true
-}
+-- dlg:slider {
+--     id = "tension",
+--     label = "Tension:",
+--     min = -30,
+--     max = 30,
+--     value = defaults.tension,
+--     visible = defaults.contiguous == true
+-- }
 
-dlg:slider {
-    id = "resolution",
-    label = "Resolution:",
-    min = 0,
-    max = 128,
-    value = defaults.resolution,
-    visible = defaults.contiguous == true
-}
+-- dlg:slider {
+--     id = "resolution",
+--     label = "Resolution:",
+--     min = 0,
+--     max = 128,
+--     value = defaults.resolution,
+--     visible = defaults.contiguous == true
+-- }
 
 dlg:newrow { always = false }
 
@@ -233,21 +233,21 @@ local function drawSwatch(image, x, y, w, h, hex)
     end
 end
 
-local function drawCircleFill(image, xo, yo, r, hex)
-    local rsq = r * r
-    local r2 = r * 2
-    local lenn1 = r2 * r2 - 1
-    for i = 0, lenn1, 1 do
-        local x = (i % r2) - r
-        local y = (i // r2) - r
-        if (x * x + y * y) < rsq then
-        image:drawPixel(
-            xo + x,
-            yo + y,
-            hex)
-        end
-    end
-end
+-- local function drawCircleFill(image, xo, yo, r, hex)
+--     local rsq = r * r
+--     local r2 = r * 2
+--     local lenn1 = r2 * r2 - 1
+--     for i = 0, lenn1, 1 do
+--         local x = (i % r2) - r
+--         local y = (i // r2) - r
+--         if (x * x + y * y) < rsq then
+--         image:drawPixel(
+--             xo + x,
+--             yo + y,
+--             hex)
+--         end
+--     end
+-- end
 
 local function bresenham(image, clr, x0, y0, x1, y1)
     if x0 == x1 and y0 == y1 then return end
@@ -502,7 +502,7 @@ local function drawRadial(
         local x = xCenter + displRad * cosTheta
         local y = yCenter + displRad * sinTheta
 
-        drawCircleFill(image, x, y, dotRad,
+        AseUtilities.drawCircleFill(image, x, y, dotRad,
             dataHexes[k])
     end
 
@@ -651,7 +651,7 @@ local function drawScatter(
         xReal = trunc(0.5 + xReal) - swatchHalf
         yReal = trunc(0.5 + yReal) + swatchHalf
 
-        drawCircleFill(image, xReal, yReal, dotRad, hex)
+        AseUtilities.drawCircleFill(image, xReal, yReal, dotRad, hex)
     end
 
 end
@@ -998,68 +998,6 @@ dlg:button {
                         txtHex, shdHex, dotRad, 2, 1)
 
                     lchChCel.image = lchChImage
-                end
-
-                local contiguous = args.contiguous
-                if contiguous then
-                    local closedLoop = args.closedLoop
-                    local resolution = args.resolution
-
-                    local points = {}
-                    for i = 1, #labs, 1 do
-                        local lab = labs[i]
-                        points[i] = Vec3.new(lab.a, lab.b, lab.l)
-                    end
-
-                    -- local curve = Curve3.fromPoints(closedLoop, points)
-                    local tension = args.tension or defaults.tension
-                    tension = tension * 0.1
-                    local curve = Curve3.fromCatmull(closedLoop, points, tension)
-
-                    local sampledPoints = {}
-                    local sampledHexes = {}
-                    local iToStep = 1.0
-                    if closedLoop then
-                        iToStep = 1.0 / resolution
-                    else
-                        iToStep = 1.0 / (resolution - 1)
-                    end
-
-                    for i = 0, resolution, 1 do
-                        local step = i * iToStep
-                        local point = Curve3.eval(curve, step)
-                        local clr = Clr.labToRgba(
-                            point.z, point.x, point.y, 1.0)
-                        local hex = Clr.toHex(clr)
-
-                        local j = i + 1
-
-                        -- Arbitrary 2D projection.
-                        sampledPoints[j] = {
-                            x = point.x,
-                            y = point.y
-                        }
-                        sampledHexes[j] = hex
-                    end
-
-                    -- Initialize layer.
-                    local contigLayer = sprite:newLayer()
-                    contigLayer.name = "Contiguous"
-                    local contigCel = sprite:newCel(contigLayer, frame)
-                    local contigImage = Image(sprite.width, sprite.height)
-                    fill(contigImage, bkgHex)
-
-                    drawScatter(
-                        contigImage, lut, gw, gh, plotMargin,
-                        "Contiguous",
-                        "Green to Red",
-                        "Blue to Yellow",
-                        pipCount, aMin, aMax, bMin, bMax,
-                        sampledPoints, sampledHexes,
-                        txtHex, shdHex, dotRad, 2, 1)
-
-                    contigCel.image = contigImage
-
                 end
 
             else

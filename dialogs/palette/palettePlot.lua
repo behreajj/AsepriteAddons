@@ -19,9 +19,9 @@ local defaults = {
     axx = 0.0,
     axy = 0.0,
     axz = 1.0,
-    minSwatchSize = 4,
-    maxSwatchSize = 12,
-    swatchAlpha = 85,
+    minSwatchSize = 2,
+    maxSwatchSize = 10,
+    bkgColor = Color(0xff202020),
     frames = 16,
     pullFocus = false
 }
@@ -171,12 +171,10 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:slider {
-    id = "swatchAlpha",
-    label = "Alpha:",
-    min = 1,
-    max = 100,
-    value = defaults.swatchAlpha
+dlg:color {
+    id = "bkgColor",
+    label = "Background:",
+    color = defaults.bkgColor
 }
 
 dlg:newrow { always = false }
@@ -258,8 +256,7 @@ dlg:button {
                     iToStep = 1.0 / (resolution - 1)
                 end
 
-                local swatchAlpha = args.swatchAlpha or defaults.swatchAlpha
-                swatchAlpha = swatchAlpha * 255.0 / 100.0
+                local swatchAlpha = 1.0
                 for i = 0, resolution, 1 do
                     local step = i * iToStep
                     local point = Curve3.eval(curve, step)
@@ -268,14 +265,10 @@ dlg:button {
                     ptsSampled[j] = point
 
                     local clr = Clr.labToRgba(
-                        point.z, point.x, point.y, 1.0)
+                        point.z, point.x, point.y, swatchAlpha)
 
-                    -- local hex = Clr.toHex(clr)
-                    -- clrsSampled[j] = hex
-
-                    local ase = AseUtilities.clrToAseColor(clr)
-                    ase.alpha = swatchAlpha
-                    clrsSampled[j] = ase
+                    local hex = Clr.toHex(clr)
+                    clrsSampled[j] = hex
                 end
 
                 local width = sprite.width
@@ -298,7 +291,7 @@ dlg:button {
                 end
 
                 -- Create camera and modelview matrices.
-                local uniformScale = 1.75 * math.min(width, height)
+                local uniformScale = 1.414 * math.min(width, height)
                 local model = Mat4.fromScale(uniformScale)
                 local camera = Mat4.cameraIsometric(
                     1.0, -1.0, 1.25, "RIGHT")
@@ -329,15 +322,15 @@ dlg:button {
                 local swatchDiff = maxSwatchSize - minSwatchSize
 
                 local pts2d = {}
-                local zMin = 999999
-                local zMax = -999999
+                local zMin = 999999.0
+                local zMax = -999999.0
 
-                local aMin = -110
-                local aMax = 110
-                local bMin = -110
-                local bMax = 110
-                local lMin = 0
-                local lMax = 100
+                local aMin = -110.0
+                local aMax = 110.0
+                local bMin = -110.0
+                local bMax = 110.0
+                local lMin = 0.0
+                local lMax = 100.0
 
                 -- Find original scale.
                 local lDiff = lMax - lMin
@@ -388,37 +381,41 @@ dlg:button {
                 local zDiff = zMin - zMax
                 local zDenom = 1.0
                 if zDiff ~= 0.0 then zDenom = 1.0 / zDiff end
+                local trunc = math.tointeger
+                local drawCirc = AseUtilities.drawCircleFill
 
-                -- TODO: This wouldn't work for anything with labels.
-                app.transaction(function()
-                    for h = 1, reqFrames, 1 do
-                        local frame = sprite.frames[h]
-                        local cel = sprite:newCel(layer, frame)
-                        local frame2d = pts2d[h]
+                -- Create background image once, then clone.
+                local bkgImg = Image(width, height)
+                local bkgHex = args.bkgColor.rgbaPixel
+                for elm in bkgImg:pixels() do
+                    elm(bkgHex)
+                end
 
-                        for i = 1, resolution, 1 do
+                for h = 1, reqFrames, 1 do
+                    local frame = sprite.frames[h]
+                    local cel = sprite:newCel(layer, frame)
+                    local img = bkgImg:clone()
+                    local frame2d = pts2d[h]
 
-                            local packet = frame2d[i]
-                            local scrpt = packet.point
-                            local clr = packet.color
+                    for i = 1, resolution, 1 do
 
-                            -- Remap z to swatch size based on min and max.
-                            local scl = minSwatchSize + swatchDiff
-                                * ((scrpt.z - zMax) * zDenom)
+                        local packet = frame2d[i]
+                        local scrpt = packet.point
 
-                            app.useTool {
-                                tool = "pencil",
-                                color = clr,
-                                points = { Point(scrpt.x, scrpt.y) },
-                                brush = Brush {
-                                        type = BrushType.CIRCLE,
-                                        size = scl },
-                                cel = cel,
-                                layer = layer
-                            }
-                        end
+                        -- Remap z to swatch size based on min and max.
+                        local scl = minSwatchSize + swatchDiff
+                            * ((scrpt.z - zMax) * zDenom)
+
+                        drawCirc(
+                            img,
+                            trunc(0.5 + scrpt.x),
+                            trunc(0.5 + scrpt.y),
+                            trunc(0.5 + scl),
+                            packet.color)
                     end
-                end)
+
+                    cel.image = img
+                end
 
             else
                 app.alert("The source palette could not be found.")

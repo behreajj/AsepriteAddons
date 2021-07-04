@@ -123,7 +123,7 @@ dlg:slider {
     id = "frames",
     label = "Frames:",
     min = 1,
-    max = 64,
+    max = 96,
     value = defaults.frames
 }
 

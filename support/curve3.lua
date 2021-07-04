@@ -240,7 +240,6 @@ function Curve3.fromCatmull(closedLoop, points, tightness)
     local ptsLast = ptsLen - 1
     local knotCount = 0
 
-    -- TODO: TEST
     local valPts = points
     if closedLoop then
         if Vec3.approx(

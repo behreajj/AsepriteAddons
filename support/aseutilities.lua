@@ -121,6 +121,74 @@ function AseUtilities.clrToAseColor(clr)
         math.tointeger(0.5 + 255.0 * a))
 end
 
+
+---Blends a source and desination color according to
+---their alpha components.
+---@param src number source color
+---@param dst number destination color
+---@return integer
+function AseUtilities.blendNormal(src, dst)
+
+    -- See
+    -- https://stackoverflow.com/questions/5336409/how-to-make-argb-transparency-using-bitwise-operators
+    -- https://stackoverflow.com/questions/35285324/how-to-divide-16-bit-integer-by-255-with-using-sse/35285458
+    -- inline int DivideBy255(int value)
+    --{
+    --    return (value + 1 + (value >> 8)) >> 8;
+    --}
+
+    local b_a = dst >> 0x18 & 0xff
+    if b_a > 0xfe then
+        return dst
+    end
+
+    local a_a = src >> 0x18 & 0xff
+    -- if a_a > 0x7e then
+    --     a_a = a_a + 1
+    -- end
+
+    local c_a = b_a * (0x100 - a_a)
+
+    local a_b = src >> 0x10 & 0xff
+    local a_g = src >> 0x08 & 0xff
+    local a_r = src & 0xff
+
+    local b_b = dst >> 0x10 & 0xff
+    local b_g = dst >> 0x08 & 0xff
+    local b_r = dst & 0xff
+
+    -- TODO: This results in a lightening of the color..
+    return math.min(255, a_a + c_a) << 0x18
+        | ((a_b * a_a + b_b * c_a) >> 0x08) << 0x10
+        | ((a_g * a_a + b_g * c_a) >> 0x08) << 0x08
+        | ((a_r * a_a + b_r * c_a) >> 0x08)
+end
+
+---Draws a filled circle. Uses the Aseprite image
+---instance method drawPixel. This means that the
+---pixel changes will not be tracked as a transaction.
+---@param image table Aseprite image
+---@param xo number origin x
+---@param yo number origin y
+---@param r number radius
+---@param hex number hexadecimal color
+function AseUtilities.drawCircleFill(image, xo, yo, r, hex)
+    local rsq = r * r
+    local r2 = r * 2
+    local lenn1 = r2 * r2 - 1
+    for i = 0, lenn1, 1 do
+        local x = (i % r2) - r
+        local y = (i // r2) - r
+        if (x * x + y * y) < rsq then
+            local xLocal = xo + x
+            local yLocal = yo + y
+            -- local srcHex = image:getPixel(xLocal, yLocal)
+            -- local trgHex = AseUtilities.blendNormal(srcHex, hex)
+            image:drawPixel(xLocal, yLocal, hex)
+        end
+    end
+end
+
 ---Draws a curve in Aseprite with the contour tool.
 ---If a stroke is used, draws the stroke line by line.
 ---@param curve table curve
@@ -590,7 +658,7 @@ function AseUtilities.easingFuncPresets(
     easingFuncRGB,
     easingFuncHue)
 
-    -- TODO: Deprecated ?
+    -- TODO: Deprecate ?
 
     local easing = nil
     if easingMode == "HSV" then
@@ -834,6 +902,8 @@ end
 function AseUtilities.lerpRgba(
     ar, ag, ab, aa,
     br, bg, bb, ba, t)
+
+    --TODO: Deprecate?
     local u = 1.0 - t
     return app.pixelColor.rgba(
         math.tointeger(u * ar + t * br),
@@ -956,6 +1026,9 @@ end
 function AseUtilities.smoothRgba(
     ar, ag, ab, aa,
     br, bg, bb, ba, t)
+
+    -- TODO: Deprecate ?
+
     return AseUtilities.lerpRgba(
         ar, ag, ab, aa,
         br, bg, bb, ba,
@@ -987,6 +1060,9 @@ end
 ---@param ca number alpha
 ---@return number
 function AseUtilities.toHexHsla(ch, cs, cl, ca)
+
+    -- TODO: Deprecate ?
+
     if cl <= 0.0 then
         return app.pixelColor.rgba(
             0, 0, 0, ca)
@@ -1061,6 +1137,9 @@ end
 ---@param ca number alpha
 ---@return number
 function AseUtilities.toHexHsva(ch, cs, cv, ca)
+
+    -- TODO: Deprecate ?
+
     -- Bring hue into [0.0, 1.0] by dividing by 360.0.
     local h = ((ch * 0.002777777777777778) % 1.0) * 6.0
 

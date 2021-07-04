@@ -589,19 +589,19 @@ function Vec2.perpendicular(a)
     return Vec2.perpendicularCcw(a)
 end
 
----Finds the clockwise perpendicular to a vector.
----@param a table vector
----@return table
-function Vec2.perpendicularCw(a)
-    return Vec2.new(a.y, -a.x)
-end
-
 ---Finds the counter-clockwise perpendicular to
 ---a vector.
 ---@param a table vector
 ---@return table
 function Vec2.perpendicularCcw(a)
     return Vec2.new(-a.y, a.x)
+end
+
+---Finds the clockwise perpendicular to a vector.
+---@param a table vector
+---@return table
+function Vec2.perpendicularCw(a)
+    return Vec2.new(a.y, -a.x)
 end
 
 ---Raises a vector to the power of another.
