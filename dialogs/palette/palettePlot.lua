@@ -20,9 +20,10 @@ local defaults = {
     axy = 0.0,
     axz = 1.0,
     minSwatchSize = 2,
-    maxSwatchSize = 10,
+    maxSwatchSize = 8,
     bkgColor = Color(0xff202020),
     frames = 16,
+    -- duration = 100.0,
     pullFocus = false
 }
 
@@ -189,6 +190,15 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+-- dlg:number {
+--     id = "duration",
+--     label = "Duration:",
+--     text = string.format("%.0f", defaults.duration),
+--     decimals = 0
+-- }
+
+-- dlg:newrow { always = false }
+
 dlg:button {
     id = "confirm",
     text = "OK",
@@ -291,7 +301,7 @@ dlg:button {
                 end
 
                 -- Create camera and modelview matrices.
-                local uniformScale = 1.414 * math.min(width, height)
+                local uniformScale = 1.25 * math.min(width, height)
                 local model = Mat4.fromScale(uniformScale)
                 local camera = Mat4.cameraIsometric(
                     1.0, -1.0, 1.25, "RIGHT")
@@ -381,6 +391,7 @@ dlg:button {
                 local zDiff = zMin - zMax
                 local zDenom = 1.0
                 if zDiff ~= 0.0 then zDenom = 1.0 / zDiff end
+
                 local trunc = math.tointeger
                 local drawCirc = AseUtilities.drawCircleFill
 
@@ -391,8 +402,12 @@ dlg:button {
                     elm(bkgHex)
                 end
 
+                -- local duration = args.duration or defaults.duration
+                -- duration = trunc(0.5 + duration * 0.001)
                 for h = 1, reqFrames, 1 do
                     local frame = sprite.frames[h]
+                    -- frame.duration = duration
+
                     local cel = sprite:newCel(layer, frame)
                     local img = bkgImg:clone()
                     local frame2d = pts2d[h]

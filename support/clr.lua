@@ -108,6 +108,7 @@ end
 ---@param b table right operand
 ---@return table
 function Clr.bitAnd(a, b)
+    -- TODO: Make checked and unchecked versions of these?
     return Clr.fromHex(Clr.toHex(a) & Clr.toHex(b))
 end
 
@@ -174,6 +175,51 @@ end
 ---@return table
 function Clr.bitXor(a, b)
     return Clr.fromHex(Clr.toHex(a) ~ Clr.toHex(b))
+end
+
+---Blends two colors together by their alpha.
+---Premultiplies each color by its alpha prior
+---to blending. Unpremultiplies the result.
+---@param a table source color
+---@param b table destination color
+---@return table
+function Clr.blend(a, b)
+    return Clr.blendInternal(
+        Clr.clamp01(a),
+        Clr.clamp01(b))
+end
+
+---Blends two colors together by their alpha.
+---Premultiplies each color by its alpha prior
+---to blending. Unpremultiplies the result.
+---Does not check to see if color channels
+---are in gamut. For more information,
+---see https://www.w3.org/TR/compositing-1/ .
+---@param a table source color
+---@param b table destination color
+---@return table
+function Clr.blendInternal(a, b)
+    local t = b.a
+    local u = 1.0 - t
+    local v = a.a
+    local uv = v * u
+    local tuv = t + uv
+    if tuv > 0.996078431372549 then
+        return Clr.new(
+            (b.r * t + a.r * uv),
+            (b.g * t + a.g * uv),
+            (b.b * t + a.b * uv),
+            1.0)
+    elseif tuv >= 0.00392156862745098 then
+        local tuvInv = 1.0 / tuv
+        return Clr.new(
+            (b.r * t + a.r * uv) * tuvInv,
+            (b.g * t + a.g * uv) * tuvInv,
+            (b.b * t + a.b * uv) * tuvInv,
+            tuv)
+    else
+        return Clr.new(0.0, 0.0, 0.0, 0.0)
+    end
 end
 
 ---Clamps a color to [0.0, 1.0].
@@ -490,7 +536,7 @@ function Clr.hsvaToRgba(hue, sat, val, alpha)
     end
 end
 
----Converts a color from CIE L*a*b* to CIE LCh.
+---Converts a color from CIE LAB to CIE LCH.
 ---Returns a table with the keys l, c, h, a.
 ---The a stands for the alpha. Neither alpha nor
 ---lightness are affected by the transformation.
@@ -526,8 +572,11 @@ function Clr.labToLch(l, a, b, alpha)
         a = alpha or 1.0 }
 end
 
----Converts a color from CIE L*a*b* to standard RGB.
+---Converts a color from CIE LAB to standard RGB.
 ---The alpha channel is unaffected by the transform.
+---The a and b components are unbounded but for sRGB
+---[-110.0, 110.0] suffice. For light, the expected
+---range is [0.0, 100.0].
 ---@param l number lightness
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
@@ -538,7 +587,7 @@ function Clr.labToRgba(l, a, b, alpha)
     return Clr.xyzToRgba(xyz.x, xyz.y, xyz.z, xyz.a)
 end
 
----Converts a color from CIE L*a*b* to CIE XYZ.
+---Converts a color from CIE LAB to CIE XYZ.
 ---Assumes D65 illuminant, CIE 1931 2 degrees referents.
 ---The return table uses the keys x, y, z and a.
 ---The alpha channel is unaffected by the transform.
@@ -589,7 +638,7 @@ function Clr.labToXyz(l, a, b, alpha)
         a = aVerif }
 end
 
----Converts a color from CIE LCh to CIE L*a*b*.
+---Converts a color from CIE LCH to CIE LAB.
 ---The hue is expected to be in [0.0, 1.0].
 ---Neither alpha nor lightness are affected by the
 ---transformation.
@@ -607,7 +656,7 @@ function Clr.lchToLab(l, c, h, a)
         alpha = a or 1.0 }
 end
 
----Converts a color from CIE LCh to standard RGB.
+---Converts a color from CIE LCH to standard RGB.
 ---The hue is expected to be in [0.0, 1.0].
 ---@param l number lightness
 ---@param c number chromaticity
@@ -900,7 +949,7 @@ function Clr.mixHsvaInternal(a, b, t, hueFunc)
         u * aHsva.a + t * bHsva.a)
 end
 
----Mixes two colors in CIE L*a*b* space by a step,
+---Mixes two colors in CIE LAB space by a step,
 ---then converts the result to a sRGB color.
 ---Clamps the step to [0.0, 1.0].
 ---@param a table origin
@@ -918,7 +967,7 @@ function Clr.mixLab(a, b, t)
     return Clr.mixLabInternal(a, b, u)
 end
 
----Mixes two colors in CIE L*a*b* space by a step,
+---Mixes two colors in CIE LAB space by a step,
 ---then converts the result to a sRGB color.
 ---@param a table origin
 ---@param b table destination
@@ -935,7 +984,7 @@ function Clr.mixLabInternal(a, b, t)
         u * aLab.alpha + t * bLab.alpha)
 end
 
----Mixes two colors in LCh space by a step.
+---Mixes two colors in LCH space by a step.
 ---The hue function should accept an origin,
 ---destination and factor, all numbers.
 ---The step is clamped to [0.0, 1.0].
@@ -974,7 +1023,7 @@ function Clr.mixLch(a, b, t, hueFunc)
     return Clr.mixLchInternal(a, b, u, f)
 end
 
----Mixes two colors in LCh space by a step.
+---Mixes two colors in LCH space by a step.
 ---The hue function should accept an origin,
 ---destination and factor, all numbers.
 ---If one color's chroma is near zero and the
@@ -1179,6 +1228,45 @@ function Clr.quantizeInternal(a, levels, delta)
         delta * math.floor(0.5 + a.a * levels))
 end
 
+---Creates a random color in CIE LAB space,
+---converts it to sRGB, then clips to gamut.
+---@param dark number light lower bound
+---@param light number light upper bound
+---@param green number a lower bound
+---@param red number a upper bound
+---@param blue number b lower bound
+---@param yellow number b upper bound
+---@param trns number alpha lower bound
+---@param opaque number alpha upper bound
+---@return table
+function Clr.random(
+    dark, light,
+    green, red,
+    blue, yellow,
+    trns, opaque)
+
+    local lMin = dark or 0.0
+    local lMax = light or 100.0
+    local aMin = green or -110.0
+    local aMax = red or 110.0
+    local bMin = blue or -110.0
+    local bMax = yellow or 110.0
+    local alphaMin = trns or 1.0
+    local alphaMax = opaque or 1.0
+
+    local lt = math.random()
+    local at = math.random()
+    local bt = math.random()
+    local pt = math.random()
+
+    return Clr.clamp01(Clr.labToRgba(
+        (1.0 - lt) * lMin + lt * lMax,
+        (1.0 - at) * aMin + at * aMax,
+        (1.0 - bt) * bMin + bt * bMax,
+        (1.0 - pt) * alphaMin
+            + pt * alphaMax))
+end
+
 ---Returns true if the red, green and blue
 ---channels are within the range [0.0, 1.0].
 ---@param a table color
@@ -1234,21 +1322,21 @@ function Clr.rgbaToHslaInternal(red, green, blue, alpha)
     local diff = mx - mn
     local light = 0.5 * sum
 
-    if light <= 0.00392156862745098 then
-        -- Black (epsilon is 1/255).
+    if light < 0.00392156862745098 then
+        -- Black (epsilon is 1.0 / 255.0).
         return {
             h = Clr.HSL_HUE_SHADOW,
             s = 0.0,
             l = 0.0,
             a = alpha }
-    elseif light >= 0.996078431372549 then
-        -- White (epsilon is 1-1/255).
+    elseif light > 0.996078431372549 then
+        -- White (epsilon is 245.0 / 255.0).
         return {
             h = Clr.HSL_HUE_LIGHT,
             s = 0.0,
             l = 1.0,
             a = alpha }
-    elseif diff <= 0.00392156862745098 then
+    elseif diff < 0.00392156862745098 then
         -- Gray.
         local hue = (1.0 - light) * Clr.HSL_HUE_SHADOW
                    + light * (1.0 + Clr.HSL_HUE_LIGHT)
@@ -1312,7 +1400,7 @@ function Clr.rgbaToHsvaInternal(red, green, blue, alpha)
     local mx = red
     if gbmx > red then mx = gbmx end
 
-    if mx <= 0.00392156862745098 then
+    if mx < 0.00392156862745098 then
         -- Black.
         return {
             h = Clr.HSL_HUE_SHADOW,
@@ -1328,9 +1416,9 @@ function Clr.rgbaToHsvaInternal(red, green, blue, alpha)
 
         -- Find difference between max and min.
         local diff = mx - mn
-        if diff <= 0.00392156862745098 then
+        if diff < 0.00392156862745098 then
             local light = 0.5 * (mx + mn)
-            if light >= 0.996078431372549 then
+            if light > 0.996078431372549 then
                 -- White.
                 return {
                     h = Clr.HSL_HUE_LIGHT,
@@ -1372,7 +1460,7 @@ function Clr.rgbaToHsvaInternal(red, green, blue, alpha)
     end
 end
 
----Converts a color from standard RGB to CIE L*a*b*.
+---Converts a color from standard RGB to CIE LAB.
 ---The return table uses the keys l, a, b and alpha.
 ---The alpha channel is unaffected by the transform.
 ---@param a table color
@@ -1382,7 +1470,7 @@ function Clr.rgbaToLab(a)
     return Clr.xyzToLab(xyz.x, xyz.y, xyz.z, xyz.a)
 end
 
----Converts a color from standard RGB to CIE LCh.
+---Converts a color from standard RGB to CIE LCH.
 ---The return table uses the keys l, c, h and a.
 ---The hue is stored as degrees in [0.0, 1.0].
 ---The alpha channel is unaffected by the transform.
@@ -1533,7 +1621,7 @@ function Clr.unpremul(a)
     end
 end
 
----Converts a color from CIE XYZ to CIE L*a*b*.
+---Converts a color from CIE XYZ to CIE LAB.
 ---Assumes D65 illuminant, CIE 1931 2 degrees referents.
 ---The return table uses the keys l, a, b and alpha.
 ---The alpha channel is unaffected by the transform.

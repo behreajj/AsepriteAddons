@@ -42,9 +42,10 @@ local defaults = {
     axx = 0.0,
     axy = 0.0,
     axz = 1.0,
-    minSwatchSize = 4,
-    maxSwatchSize = 12,
+    minSwatchSize = 2,
+    maxSwatchSize = 8,
     swatchAlpha = 85,
+    bkgColor = Color(0xff202020),
     frames = 16,
     pullFocus = false
 }
@@ -271,6 +272,14 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:color {
+    id = "bkgColor",
+    label = "Background:",
+    color = defaults.bkgColor
+}
+
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "frames",
     label = "Frames:",
@@ -387,7 +396,8 @@ dlg:button {
                 local gridPts = nil
                 local gridClrs = nil
 
-                local swatchAlpha = args.swatchAlpha * 0.01
+                local swatchAlpha = args.swatchAlpha or defaults.swatchAlpha
+                swatchAlpha = swatchAlpha * 0.01
                 local geometry = args.geometry
                 if geometry == "SPHERE" then
 
@@ -431,7 +441,7 @@ dlg:button {
                 local queryRad = args.queryRad or defaults.queryRad
                 local replaceClrs = {}
                 local gridLen = #gridPts
-                local alpha255 = math.tointeger(255 * swatchAlpha + 0.5)
+                -- local alpha255 = math.tointeger(255 * swatchAlpha + 0.5)
                 for i = 1, gridLen, 1 do
                     local srcClr = gridClrs[i]
                     local srcLab = Clr.rgbaToLab(srcClr)
@@ -445,12 +455,14 @@ dlg:button {
                         local nearestClr = Clr.labToRgba(
                             nearestPt.z,
                             nearestPt.x,
-                            nearestPt.y)
-                        local aseColor = AseUtilities.clrToAseColor(nearestClr)
-                        aseColor.alpha = alpha255
-                        replaceClrs[i] = aseColor
+                            nearestPt.y,
+                            swatchAlpha)
+                        -- local aseColor = AseUtilities.clrToAseColor(nearestClr)
+                        -- aseColor.alpha = alpha255
+                        -- replaceClrs[i] = aseColor
+                        replaceClrs[i] = Clr.toHex(nearestClr)
                     else
-                        replaceClrs[i] = Color(0, 0, 0, 0)
+                        replaceClrs[i] = 0x00000000
                     end
                 end
 
@@ -551,36 +563,41 @@ dlg:button {
                 local zDenom = 1.0
                 if zDiff ~= 0.0 then zDenom = 1.0 / zDiff end
 
-                -- TODO: This wouldn't work for anything with labels.
-                app.transaction(function()
-                    for h = 1, reqFrames, 1 do
-                        local frame = sprite.frames[h]
-                        local cel = sprite:newCel(layer, frame)
-                        local frame2d = pts2d[h]
+                local trunc = math.tointeger
+                local drawCirc = AseUtilities.drawCircleFill
 
-                        for i = 1, gridLen, 1 do
+                -- Create background image once, then clone.
+                local bkgImg = Image(width, height)
+                local bkgHex = args.bkgColor.rgbaPixel
+                for elm in bkgImg:pixels() do
+                    elm(bkgHex)
+                end
 
-                            local packet = frame2d[i]
-                            local scrpt = packet.point
-                            local clr = packet.color
+                for h = 1, reqFrames, 1 do
+                    local frame = sprite.frames[h]
+                    local cel = sprite:newCel(layer, frame)
+                    local img = bkgImg:clone()
+                    local frame2d = pts2d[h]
 
-                            -- Remap z to swatch size based on min and max.
-                            local scl = minSwatchSize + swatchDiff
-                                * ((scrpt.z - zMax) * zDenom)
+                    for i = 1, gridLen, 1 do
 
-                            app.useTool {
-                                tool = "pencil",
-                                color = clr,
-                                points = { Point(scrpt.x, scrpt.y) },
-                                brush = Brush {
-                                        type = BrushType.CIRCLE,
-                                        size = scl },
-                                cel = cel,
-                                layer = layer
-                            }
-                        end
+                        local packet = frame2d[i]
+                        local scrpt = packet.point
+
+                        -- Remap z to swatch size based on min and max.
+                        local scl = minSwatchSize + swatchDiff
+                            * ((scrpt.z - zMax) * zDenom)
+
+                        drawCirc(
+                            img,
+                            trunc(0.5 + scrpt.x),
+                            trunc(0.5 + scrpt.y),
+                            trunc(0.5 + scl),
+                            packet.color)
                     end
-                end)
+
+                    cel.image = img
+                end
 
             else
                 app.alert("The source palette could not be found.")

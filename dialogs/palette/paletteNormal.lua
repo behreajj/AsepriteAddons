@@ -120,7 +120,6 @@ dlg:button {
         local trunc = math.tointeger
 
         for i = 0, inclinations - 1, 1 do
-            -- TODO: Refactor to use one for loop?
 
             local phi = 3.141592653589793 - i * toPhi
             local cosPhi = cos(phi)

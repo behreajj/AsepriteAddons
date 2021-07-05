@@ -84,7 +84,6 @@ end
 ---@param clr table clr
 ---@return table
 function AseUtilities.clrToAseColor(clr)
-
     local r = clr.r
     local g = clr.g
     local b = clr.b
@@ -121,47 +120,64 @@ function AseUtilities.clrToAseColor(clr)
         math.tointeger(0.5 + 255.0 * a))
 end
 
+---Blends together two hexadecimal colors.
+---Premultiplies each color by its alpha prior
+---to blending. Unpremultiplies the result.
+---For more information,
+---see https://www.w3.org/TR/compositing-1/ .
+---@param a number backdrop color
+---@param b number overlay color
+---@return number
+function AseUtilities.blend(a, b)
 
----Blends a source and desination color according to
----their alpha components.
----@param src number source color
----@param dst number destination color
----@return integer
-function AseUtilities.blendNormal(src, dst)
+    -- There is a noticeable issue with accuracy
+    -- between this and the real number Clr version,
+    -- particularly in the tuv > 0x1 case, where two
+    -- alphas need to be blended. Subtracting one
+    -- from tuv when it's >= 127 seems to
+    -- alleviate the issue?
 
-    -- See
-    -- https://stackoverflow.com/questions/5336409/how-to-make-argb-transparency-using-bitwise-operators
-    -- https://stackoverflow.com/questions/35285324/how-to-divide-16-bit-integer-by-255-with-using-sse/35285458
-    -- inline int DivideBy255(int value)
-    --{
-    --    return (value + 1 + (value >> 8)) >> 8;
-    --}
+    local t = b >> 0x18 & 0xff
+    if t > 0xfe then return b end
+    if t > 0x7e then t = t + 1 end
 
-    local b_a = dst >> 0x18 & 0xff
-    if b_a > 0xfe then
-        return dst
+    local bb = b >> 0x10 & 0xff
+    local bg = b >> 0x08 & 0xff
+    local br = b & 0xff
+
+    local ab = a >> 0x10 & 0xff
+    local ag = a >> 0x08 & 0xff
+    local ar = a & 0xff
+
+    local u = 0x100 - t
+    local v = a >> 0x18 & 0xff
+    local uv = (v * u) // 0xff
+    local tuv = t + uv
+
+    if tuv > 0xfe then
+        -- TODO: This branch needs further testing.
+        local denom = 0xff
+        -- if uv > 0x7f then denom = 0x100 end
+        local cr = (bb * t + ab * uv) // denom
+        local cg = (bg * t + ag * uv) // denom
+        local cb = (br * t + ar * uv) // denom
+        if cr > 255 then cr = 255 elseif cr < 0 then cr = 0 end
+        if cg > 255 then cg = 255 elseif cg < 0 then cg = 0 end
+        if cb > 255 then cb = 255 elseif cb < 0 then cb = 0 end
+        return 0xff000000
+            | cr << 0x10
+            | cg << 0x08
+            | cb
+    elseif tuv > 0x1 then
+        local tuvn1 = tuv
+        if tuv > 0x7e then tuvn1 = tuv - 1 end
+        return tuv << 0x18
+            | ((bb * t + ab * uv) // tuvn1) << 0x10
+            | ((bg * t + ag * uv) // tuvn1) << 0x08
+            | ((br * t + ar * uv) // tuvn1)
+    else
+        return 0x00000000
     end
-
-    local a_a = src >> 0x18 & 0xff
-    -- if a_a > 0x7e then
-    --     a_a = a_a + 1
-    -- end
-
-    local c_a = b_a * (0x100 - a_a)
-
-    local a_b = src >> 0x10 & 0xff
-    local a_g = src >> 0x08 & 0xff
-    local a_r = src & 0xff
-
-    local b_b = dst >> 0x10 & 0xff
-    local b_g = dst >> 0x08 & 0xff
-    local b_r = dst & 0xff
-
-    -- TODO: This results in a lightening of the color..
-    return math.min(255, a_a + c_a) << 0x18
-        | ((a_b * a_a + b_b * c_a) >> 0x08) << 0x10
-        | ((a_g * a_a + b_g * c_a) >> 0x08) << 0x08
-        | ((a_r * a_a + b_r * c_a) >> 0x08)
 end
 
 ---Draws a filled circle. Uses the Aseprite image
@@ -182,9 +198,10 @@ function AseUtilities.drawCircleFill(image, xo, yo, r, hex)
         if (x * x + y * y) < rsq then
             local xLocal = xo + x
             local yLocal = yo + y
-            -- local srcHex = image:getPixel(xLocal, yLocal)
-            -- local trgHex = AseUtilities.blendNormal(srcHex, hex)
-            image:drawPixel(xLocal, yLocal, hex)
+            local srcHex = image:getPixel(xLocal, yLocal)
+            local trgHex = AseUtilities.blend(srcHex, hex)
+            image:drawPixel(xLocal, yLocal, trgHex)
+            -- image:drawPixel(xLocal, yLocal, hex)
         end
     end
 end
@@ -658,8 +675,6 @@ function AseUtilities.easingFuncPresets(
     easingFuncRGB,
     easingFuncHue)
 
-    -- TODO: Deprecate ?
-
     local easing = nil
     if easingMode == "HSV" then
         easing = Clr.mixHsva
@@ -745,205 +760,6 @@ function AseUtilities.initCanvas(
     return sprite
 end
 
----Mixes an origin and destination color
----in HSL by a factor. The factor is assumed to
----be in [0.0, 1.0], but the mix is unclamped.
----The hue is interpolated in the furthest
----direction.
----@param ah number origin hue
----@param as number origin saturation
----@param al number origin lightness
----@param aa number origin alpha
----@param bh number destination hue
----@param bs number destination saturation
----@param bl number destination lightness
----@param ba number destination alpha
----@param t number factor
----@return number
-function AseUtilities.lerpHslaFar(
-    ah, as, al, aa,
-    bh, bs, bl, ba, t)
-    local u = 1.0 - t
-    return AseUtilities.toHexHsla(
-        Utilities.lerpAngleFar(ah, bh, t, 360.0),
-        u * as + t * bs,
-        u * al + t * bl,
-        math.tointeger(u * aa + t * ba))
-end
-
----Mixes an origin and destination color
----in HSL by a factor. The factor is assumed to
----be in [0.0, 1.0], but the mix is unclamped.
----The hue is interpolated in the nearest
----direction.
----@param ah number origin hue
----@param as number origin saturation
----@param al number origin lightness
----@param aa number origin alpha
----@param bh number destination hue
----@param bs number destination saturation
----@param bl number destination lightness
----@param ba number destination alpha
----@param t number factor
----@return number
-function AseUtilities.lerpHslaNear(
-    ah, as, al, aa,
-    bh, bs, bl, ba, t)
-    local u = 1.0 - t
-    return AseUtilities.toHexHsla(
-        Utilities.lerpAngleNear(ah, bh, t, 360.0),
-        u * as + t * bs,
-        u * al + t * bl,
-        math.tointeger(u * aa + t * ba))
-end
-
----Mixes an origin and destination color
----in HSV by a factor. Returns an integer.
--- The factor is assumed to be in [0.0, 1.0],
--- but the mix is unclamped.
----The hue is interpolated in the furthest
----direction.
----@param ah number origin hue
----@param as number origin saturation
----@param av number origin value
----@param aa number origin alpha
----@param bh number destination hue
----@param bs number destination saturation
----@param bv number destination value
----@param ba number destination alpha
----@param t number factor
----@return number
-function AseUtilities.lerpHsvaFar(
-    ah, as, av, aa,
-    bh, bs, bv, ba, t)
-    local u = 1.0 - t
-    return AseUtilities.toHexHsva(
-        Utilities.lerpAngleFar(ah, bh, t, 360.0),
-        u * as + t * bs,
-        u * av + t * bv,
-        math.tointeger(u * aa + t * ba))
-end
-
----Mixes an origin and destination color
----in HSV by a factor. Returns an integer.
--- The factor is assumed to be in [0.0, 1.0],
--- but the mix is unclamped.
----The hue is interpolated in the nearest
----direction.
----@param ah number origin hue
----@param as number origin saturation
----@param av number origin value
----@param aa number origin alpha
----@param bh number destination hue
----@param bs number destination saturation
----@param bv number destination value
----@param ba number destination alpha
----@param t number factor
----@return number
-function AseUtilities.lerpHsvaNear(
-    ah, as, av, aa,
-    bh, bs, bv, ba, t)
-    local u = 1.0 - t
-    return AseUtilities.toHexHsva(
-        Utilities.lerpAngleNear(ah, bh, t, 360.0),
-        u * as + t * bs,
-        u * av + t * bv,
-        math.tointeger(u * aa + t * ba))
-end
-
----Mixes between elements in a color array
----by a factor with linear RGB.
----The major easing function adjusts the step
----relative to the array span.
----The minor easing function adjusts the step
----between colors within the array.
----@param array table array of colors
----@param step number factor
----@param funcMajor function easing function
----@param funcMinor function easing function
----@return number
-function AseUtilities.lerpColorArr(array, step, funcMajor, funcMinor)
-    if step <= 0.0  then
-        return array[1].rgbaPixel
-    end
-
-    if step >= 1.0 then
-        return array[#array].rgbaPixel
-    end
-
-    local f = funcMajor or function(x) return x end
-    local tScaled = f(step) * (#array - 1)
-    local i = math.tointeger(tScaled)
-    local a = array[1 + i]
-    local b = array[2 + i]
-    local g = funcMinor or function(y) return y end
-    return AseUtilities.lerpRgba(
-        a.red, a.green, a.blue, a.alpha,
-        b.red, b.green, b.blue, b.alpha,
-        g(tScaled - i))
-end
-
----Mixes an origin and destination color
----by a factor. Returns an integer.
--- The factor is assumed to be in [0.0, 1.0],
--- but the mix is unclamped.
----The color channels should be unpacked and
----in the range [0, 255].
----@param ar number origin red
----@param ag number origin green
----@param ab number origin blue
----@param aa number origin alpha
----@param br number destination red
----@param bg number destination green
----@param bb number destination blue
----@param ba number destination alpha
----@param t number factor
----@return number
-function AseUtilities.lerpRgba(
-    ar, ag, ab, aa,
-    br, bg, bb, ba, t)
-
-    --TODO: Deprecate?
-    local u = 1.0 - t
-    return app.pixelColor.rgba(
-        math.tointeger(u * ar + t * br),
-        math.tointeger(u * ag + t * bg),
-        math.tointeger(u * ab + t * bb),
-        math.tointeger(u * aa + t * ba))
-end
-
----Converts a color channel from linear to sRGB.
----@param x number input channel
----@return number
-function AseUtilities.linearToStandard(x)
-    -- 1.0 / 2.4 = 0.4166666666666667
-    if x <= 0.0031308 then
-        return x * 12.92
-    else
-        return (x ^ 0.4166666666666667) * 1.055 - 0.055
-    end
-end
-
----Converts an Aseprite palette to a table
----of Aseprite Colors. If the palette is nil
----returns a default table.
----@param pal table
----@return table
-function AseUtilities.paletteToAseColorArr(pal)
-    -- TODO: Update to match clr array below.
-    -- Where is this used?
-    if pal then
-        local clrs = {}
-        local len = #pal
-        for i = 1, len, 1 do
-            clrs[i] = pal:getColor(i - 1)
-        end
-        return clrs
-    else
-        return AseUtilities.DEFAULT_PAL_ARR
-    end
-end
-
 ---Converts an Aseprite palette to a table
 ---of Aseprite Colors. If the palette is nil
 ---returns a default table.
@@ -961,9 +777,9 @@ function AseUtilities.paletteToClrArr(pal, startIndex, count)
         vc = math.min(palLen - si, math.max(2, vc))
 
         local clrs = {}
+        local convert = AseUtilities.aseColorToClr
         for i = 0, vc - 1, 1 do
-            clrs[1 + i] = AseUtilities.aseColorToClr(
-                pal:getColor(si + i))
+            clrs[1 + i] = convert(pal:getColor(si + i))
         end
 
         -- This is intended for gradient work, so it
@@ -1006,185 +822,29 @@ function AseUtilities.rotateGlyphCcw(gl, w, h)
     return vr
 end
 
----Mixes an origin and destination color
----by a factor. Returns an integer.
----The factor is assumed to be in [0.0, 1.0],
----but the mix is unclamped.
----The color channels should be unpacked and
----in the range [0, 255].
----Smooths the factor.
----@param ar number origin red
----@param ag number origin green
----@param ab number origin blue
----@param aa number origin alpha
----@param br number destination red
----@param bg number destination green
----@param bb number destination blue
----@param ba number destination alpha
----@param t number factor
----@return number
-function AseUtilities.smoothRgba(
-    ar, ag, ab, aa,
-    br, bg, bb, ba, t)
+-- for i = 1, 10, 1 do
+--     local aClr = Clr.random(
+--         0, 100,
+--         -110, 110,
+--         -110, 110,
+--         0.0, 1.0)
+--     local aHex = Clr.toHex(aClr)
 
-    -- TODO: Deprecate ?
+--     local bClr = Clr.random(
+--         0, 100,
+--         -110, 110,
+--         -110, 110,
+--         0.0, 1.0)
+--     local bHex = Clr.toHex(bClr)
 
-    return AseUtilities.lerpRgba(
-        ar, ag, ab, aa,
-        br, bg, bb, ba,
-        t * t * (3.0 - (t + t)))
-end
+--     local cClr = Clr.blend(aClr, bClr)
+--     local cHex = AseUtilities.blend(aHex, bHex)
 
----Converts a color channel from sRGB to linear RGB.
----@param x number input channel
----@return number
-function AseUtilities.standardToLinear(x)
-    -- 1.0 / 12.92 = 0.07739938080495357
-    -- 1.0 / 1.055 = 0.9478672985781991
-    if x <= 0.04045 then
-        return x * 0.07739938080495357
-    else
-        return ((x + 0.055) * 0.9478672985781991) ^ 2.4
-    end
-end
+--     print(cClr)
+--     print(Clr.fromHex(cHex))
 
----Converts an unpacked hue, saturation, lightness
----and alpha channel to a hexadecimal integer.
----The hue should be in [0.0, 360.0].
----The saturation should be in [0.0, 1.0].
----The lightness should be in [0.0, 1.0].
----The alpha should be in [0, 255].
----@param ch number hue
----@param cs number saturation
----@param cl number lightness
----@param ca number alpha
----@return number
-function AseUtilities.toHexHsla(ch, cs, cl, ca)
-
-    -- TODO: Deprecate ?
-
-    if cl <= 0.0 then
-        return app.pixelColor.rgba(
-            0, 0, 0, ca)
-    end
-
-    if cl >= 1.0 then
-        return app.pixelColor.rgba(
-            255, 255, 255, ca)
-    end
-
-    if cs <= 0.0 then
-        local l255 = math.tointeger(0.5 + 255.0 * cl)
-        return app.pixelColor.rgba(
-            l255, l255, l255, ca)
-    end
-
-    local scl = math.min(cs, 1.0)
-    local q = cl + scl - cl * scl
-    if cl < 0.5 then
-        q = cl * (1.0 + scl)
-    end
-    local p = cl + cl - q
-    local qnp6 = (q - p) * 6.0
-    local hue1 = ch * 0.002777777777777778
-
-    local r = p
-    local rHue = (hue1 + 0.3333333333333333) % 1.0
-    if rHue < 0.16666666666666667 then
-        r = p + qnp6 * rHue
-    elseif rHue < 0.5 then
-        r = q
-    elseif rHue < 0.6666666666666667 then
-        r = p + qnp6 * (0.6666666666666667 - rHue)
-    end
-
-    local g = p
-    local gHue = hue1 % 1.0
-    if gHue < 0.16666666666666667 then
-        g = p + qnp6 * gHue
-    elseif gHue < 0.5 then
-        g = q
-    elseif gHue < 0.6666666666666667 then
-        g = p + qnp6 * (0.6666666666666667 - gHue)
-    end
-
-    local b = p
-    local bHue = (hue1 - 0.3333333333333333) % 1.0
-    if bHue < 0.16666666666666667 then
-        b = p + qnp6 * bHue
-    elseif bHue < 0.5 then
-        b = q
-    elseif bHue < 0.6666666666666667 then
-        b = p + qnp6 * (0.6666666666666667 - bHue)
-    end
-
-    return app.pixelColor.rgba(
-        math.tointeger(0.5 + 255.0 * r),
-        math.tointeger(0.5 + 255.0 * g),
-        math.tointeger(0.5 + 255.0 * b),
-        ca)
-end
-
----Converts an unpacked hue, saturation, value
----and alpha channel to a hexadecimal integer.
----The hue should be in [0.0, 360.0].
----The saturation should be in [0.0, 1.0].
----The value should be in [0.0, 1.0].
----The alpha should be in [0, 255].
----@param ch number hue
----@param cs number saturation
----@param cv number value
----@param ca number alpha
----@return number
-function AseUtilities.toHexHsva(ch, cs, cv, ca)
-
-    -- TODO: Deprecate ?
-
-    -- Bring hue into [0.0, 1.0] by dividing by 360.0.
-    local h = ((ch * 0.002777777777777778) % 1.0) * 6.0
-
-    local sector = math.tointeger(h)
-    local tint1 = cv * (1.0 - cs)
-    local tint2 = cv * (1.0 - cs * (h - sector))
-    local tint3 = cv * (1.0 - cs * (1.0 + sector - h))
-
-    if sector == 0 then
-        return app.pixelColor.rgba(
-            math.tointeger(0.5 + 255.0 * cv),
-            math.tointeger(0.5 + 255.0 * tint3),
-            math.tointeger(0.5 + 255.0 * tint1),
-            ca)
-    elseif sector == 1 then
-        return app.pixelColor.rgba(
-            math.tointeger(0.5 + 255.0 * tint2),
-            math.tointeger(0.5 + 255.0 * cv),
-            math.tointeger(0.5 + 255.0 * tint1),
-            ca)
-    elseif sector == 2 then
-        return app.pixelColor.rgba(
-            math.tointeger(0.5 + 255.0 * tint1),
-            math.tointeger(0.5 + 255.0 * cv),
-            math.tointeger(0.5 + 255.0 * tint3),
-            ca)
-    elseif sector == 3 then
-        return app.pixelColor.rgba(
-            math.tointeger(0.5 + 255.0 * tint1),
-            math.tointeger(0.5 + 255.0 * tint2),
-            math.tointeger(0.5 + 255.0 * cv),
-            ca)
-    elseif sector == 4 then
-        return app.pixelColor.rgba(
-            math.tointeger(0.5 + 255.0 * tint3),
-            math.tointeger(0.5 + 255.0 * tint1),
-            math.tointeger(0.5 + 255.0 * cv),
-            ca)
-    else
-        return app.pixelColor.rgba(
-            math.tointeger(0.5 + 255.0 * cv),
-            math.tointeger(0.5 + 255.0 * tint1),
-            math.tointeger(0.5 + 255.0 * tint2),
-            ca)
-    end
-end
+--     print(string.format("%08X", Clr.toHex(cClr)))
+--     print(string.format("%08X\n", cHex))
+-- end
 
 return AseUtilities
