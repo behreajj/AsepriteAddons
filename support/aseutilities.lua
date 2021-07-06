@@ -78,48 +78,6 @@ function AseUtilities.aseColorToClr(aseClr)
         0.00392156862745098 * aseClr.alpha)
 end
 
----Converts a Clr to an Aseprite Color.
----Clamps the Clr's channels to [0.0, 1.0] before
----they are converted.
----@param clr table clr
----@return table
-function AseUtilities.clrToAseColor(clr)
-    local r = clr.r
-    local g = clr.g
-    local b = clr.b
-    local a = clr.a
-
-    if r < 0.0 then
-        r = 0.0
-    elseif r > 1.0 then
-        r = 1.0
-    end
-
-    if g < 0.0 then
-        g = 0.0
-    elseif g > 1.0 then
-        g = 1.0
-    end
-
-    if b < 0.0 then
-        b = 0.0
-    elseif b > 1.0 then
-        b = 1.0
-    end
-
-    if a < 0.0 then
-        a = 0.0
-    elseif a > 1.0 then
-        a = 1.0
-    end
-
-    return Color(
-        math.tointeger(0.5 + 255.0 * r),
-        math.tointeger(0.5 + 255.0 * g),
-        math.tointeger(0.5 + 255.0 * b),
-        math.tointeger(0.5 + 255.0 * a))
-end
-
 ---Blends together two hexadecimal colors.
 ---Premultiplies each color by its alpha prior
 ---to blending. Unpremultiplies the result.
@@ -132,13 +90,13 @@ function AseUtilities.blend(a, b)
 
     -- There is a noticeable issue with accuracy
     -- between this and the real number Clr version,
-    -- particularly in the tuv > 0x1 case, where two
-    -- alphas need to be blended. Subtracting one
-    -- from tuv when it's >= 127 seems to
-    -- alleviate the issue?
+    -- In the tuv > 1 case, subtracting one from tuv
+    -- when it's >= 127 seems to alleviate the issue?
 
     local t = b >> 0x18 & 0xff
-    if t > 0xfe then return b end
+    local v = a >> 0x18 & 0xff
+
+    if v < 0x01 or t > 0xfe then return b end
     if t > 0x7e then t = t + 1 end
 
     local bb = b >> 0x10 & 0xff
@@ -150,17 +108,13 @@ function AseUtilities.blend(a, b)
     local ar = a & 0xff
 
     local u = 0x100 - t
-    local v = a >> 0x18 & 0xff
     local uv = (v * u) // 0xff
     local tuv = t + uv
 
     if tuv > 0xfe then
-        -- TODO: This branch needs further testing.
-        local denom = 0xff
-        -- if uv > 0x7f then denom = 0x100 end
-        local cr = (bb * t + ab * uv) // denom
-        local cg = (bg * t + ag * uv) // denom
-        local cb = (br * t + ar * uv) // denom
+        local cr = (bb * t + ab * uv) // 0xff
+        local cg = (bg * t + ag * uv) // 0xff
+        local cb = (br * t + ar * uv) // 0xff
         if cr > 255 then cr = 255 elseif cr < 0 then cr = 0 end
         if cg > 255 then cg = 255 elseif cg < 0 then cg = 0 end
         if cb > 255 then cb = 255 elseif cb < 0 then cb = 0 end
@@ -180,28 +134,210 @@ function AseUtilities.blend(a, b)
     end
 end
 
+---Converts a Clr to an Aseprite Color.
+---Clamps the Clr's channels to [0.0, 1.0] before
+---they are converted.
+---@param clr table clr
+---@return table
+function AseUtilities.clrToAseColor(clr)
+    local r = clr.r
+    local g = clr.g
+    local b = clr.b
+    local a = clr.a
+
+    if r < 0.0 then r = 0.0 elseif r > 1.0 then r = 1.0 end
+    if g < 0.0 then g = 0.0 elseif g > 1.0 then g = 1.0 end
+    if b < 0.0 then b = 0.0 elseif b > 1.0 then b = 1.0 end
+    if a < 0.0 then a = 0.0 elseif a > 1.0 then a = 1.0 end
+
+    return Color(
+        math.tointeger(0.5 + 255.0 * r),
+        math.tointeger(0.5 + 255.0 * g),
+        math.tointeger(0.5 + 255.0 * b),
+        math.tointeger(0.5 + 255.0 * a))
+end
+
+---Draws a line with Bresenham's algorithm.
+---Uses the Aseprite image instance method
+---drawPixel. This means that the pixel changes
+---will not be tracked as a transaction.
+---@param image table Aseprite image
+---@param clr number hexadecimal color
+---@param xo number origin x
+---@param yo number origin y
+---@param xd number destination x
+---@param yd number destination y
+function AseUtilities.drawLine(image, xo, yo, xd, yd, clr)
+    if xo == xd and yo == yd then return end
+
+    local dx = xd - xo
+    local dy = yd - yo
+    local x = xo
+    local y = yo
+    local sx = 0
+    local sy = 0
+
+    if xo < xd then
+        sx = 1
+    else
+        sx = -1
+        dx = -dx
+    end
+
+    if yo < yd then
+        sy = 1
+    else
+        sy = -1
+        dy = -dy
+    end
+
+    local err = 0
+    if dx > dy then err = dx // 2
+    else err = -dy // 2 end
+    local e2 = 0
+    local hex = clr or 0xffffffff
+    local blend = AseUtilities.blend
+
+    while true do
+        -- print("(" .. x .. ", " .. y .. ")")
+
+        -- image:drawPixel(x, y, hex)
+        local srcHex = image:getPixel(x, y)
+        local trgHex = blend(srcHex, hex)
+        image:drawPixel(x, y, trgHex)
+
+        if x == xd and y == yd then break end
+        e2 = err
+        if e2 > -dx then
+            err = err - dy
+            x = x + sx
+        end
+
+        if e2 < dy then
+            err = err + dx
+            y = y + sy
+        end
+    end
+end
+
 ---Draws a filled circle. Uses the Aseprite image
 ---instance method drawPixel. This means that the
 ---pixel changes will not be tracked as a transaction.
 ---@param image table Aseprite image
----@param xo number origin x
----@param yo number origin y
+---@param xc number center x
+---@param yc number center y
 ---@param r number radius
 ---@param hex number hexadecimal color
-function AseUtilities.drawCircleFill(image, xo, yo, r, hex)
+function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
     local rsq = r * r
     local r2 = r * 2
     local lenn1 = r2 * r2 - 1
+    local blend = AseUtilities.blend
     for i = 0, lenn1, 1 do
         local x = (i % r2) - r
         local y = (i // r2) - r
         if (x * x + y * y) < rsq then
-            local xLocal = xo + x
-            local yLocal = yo + y
-            local srcHex = image:getPixel(xLocal, yLocal)
-            local trgHex = AseUtilities.blend(srcHex, hex)
-            image:drawPixel(xLocal, yLocal, trgHex)
-            -- image:drawPixel(xLocal, yLocal, hex)
+            local xMark = xc + x
+            local yMark = yc + y
+            local srcHex = image:getPixel(xMark, yMark)
+            local trgHex = blend(srcHex, hex)
+            image:drawPixel(xMark, yMark, trgHex)
+        end
+    end
+end
+
+---Draws a circle with a 1 pixel stroke.
+---Uses the Aseprite image instance method
+---drawPixel. This means that the pixel
+---changes will not be tracked as a transaction.
+---@param image table Aseprite image
+---@param xc number center x
+---@param yc number center y
+---@param r number radius
+---@param hex number hexadecimal color
+function AseUtilities.drawCircleStroke(image, xc, yc, r, hex)
+    -- See for circle stroke with line thickness:
+    -- https://stackoverflow.com/questions/27755514/circle-with-thickness-drawing-algorithm
+
+    local x = r
+    local y = 0
+
+    local xcpr = xc + r
+    local xcnr = xc - r
+    local ycpr = yc + r
+    local ycnr = yc - r
+
+    local srcHex0 = image:getPixel(xcpr, yc)
+    local srcHex1 = image:getPixel(xcnr, yc)
+    local srcHex2 = image:getPixel(xc, ycpr)
+    local srcHex3 = image:getPixel(xc, ycnr)
+
+    local blend = AseUtilities.blend
+    local trgHex0 = blend(srcHex0, hex)
+    local trgHex1 = blend(srcHex1, hex)
+    local trgHex2 = blend(srcHex2, hex)
+    local trgHex3 = blend(srcHex3, hex)
+
+    image:drawPixel(xcpr, yc, trgHex0)
+    image:drawPixel(xcnr, yc, trgHex1)
+    image:drawPixel(xc, ycpr, trgHex2)
+    image:drawPixel(xc, ycnr, trgHex3)
+
+    local p = 1 - r
+    while x > y do
+        y = y + 1
+        if p <= 0 then
+            p = p + 2 * y + 1
+        else
+            x = x - 1
+            p = p + 2 * y - 2 * x + 1
+        end
+
+        if x < y then
+            break
+        end
+
+        local xcpx = xc + x
+        local xcnx = xc - x
+        local ycpy = yc + y
+        local ycny = yc - y
+
+        srcHex0 = image:getPixel(xcpx, ycpy)
+        srcHex1 = image:getPixel(xcnx, ycpy)
+        srcHex2 = image:getPixel(xcpx, ycny)
+        srcHex3 = image:getPixel(xcnx, ycny)
+
+        trgHex0 = blend(srcHex0, hex)
+        trgHex1 = blend(srcHex1, hex)
+        trgHex2 = blend(srcHex2, hex)
+        trgHex3 = blend(srcHex3, hex)
+
+        image:drawPixel(xcpx, ycpy, trgHex0)
+        image:drawPixel(xcnx, ycpy, trgHex1)
+        image:drawPixel(xcpx, ycny, trgHex2)
+        image:drawPixel(xcnx, ycny, trgHex3)
+
+        if x ~= y then
+
+            local xcpy = xc + y
+            local xcny = xc - y
+            local ycpx = yc + x
+            local ycnx = yc - x
+
+            srcHex0 = image:getPixel(xcpy, ycpx)
+            srcHex1 = image:getPixel(xcny, ycpx)
+            srcHex2 = image:getPixel(xcpy, ycnx)
+            srcHex3 = image:getPixel(xcny, ycnx)
+
+            trgHex0 = blend(srcHex0, hex)
+            trgHex1 = blend(srcHex1, hex)
+            trgHex2 = blend(srcHex2, hex)
+            trgHex3 = blend(srcHex3, hex)
+
+            image:drawPixel(xcpy, ycpx, trgHex0)
+            image:drawPixel(xcny, ycpx, trgHex1)
+            image:drawPixel(xcpy, ycnx, trgHex2)
+            image:drawPixel(xcny, ycnx, trgHex3)
         end
     end
 end
@@ -329,14 +465,16 @@ function AseUtilities.drawGlyph(
     -- TODO: Return xCaret position?
 
     local lenn1 = gw * gh - 1
+    local blend = AseUtilities.blend
     for i = 0, lenn1, 1 do
         local shift = lenn1 - i
         local mark = (glyph >> shift) & 1
         if mark ~= 0 then
-            image:drawPixel(
-                x + (i % gw),
-                y + (i // gw),
-                hex)
+            local xMark = x + (i % gw)
+            local yMark = y + (i // gw)
+            local srcHex = image:getPixel(xMark, yMark)
+            local trgHex = blend(srcHex, hex)
+            image:drawPixel(xMark, yMark, trgHex)
         end
     end
 end
@@ -376,6 +514,7 @@ function AseUtilities.drawGlyphNearest(
     local tx = gw / dw
     local ty = gh / dh
     local trunc = math.tointeger
+    local blend = AseUtilities.blend
     for k = 0, lenTrgn1, 1 do
         local xTrg = k % dw
         local yTrg = k // dw
@@ -387,7 +526,11 @@ function AseUtilities.drawGlyphNearest(
         local shift = lenSrcn1 - idxSrc
         local mark = (glyph >> shift) & 1
         if mark ~= 0 then
-            image:drawPixel(x + xTrg, y + yTrg, hex)
+            local xMark = x + xTrg
+            local yMark = y + yTrg
+            local srcHex = image:getPixel(xMark, yMark)
+            local trgHex = blend(srcHex, hex)
+            image:drawPixel(xMark, yMark, trgHex)
         end
     end
 end
@@ -429,6 +572,10 @@ end
 function AseUtilities.drawKnot2(
     knot, cel, layer,
     lnClr, coClr, fhClr, rhClr)
+
+    -- TODO: Transfer all of this over to
+    -- avoid app commands and instead use
+    -- custom blitting.
 
     -- #02A7EB, #EBE128, #EB1A40
     local lnClrVal = lnClr or Color(0xffafafaf)
@@ -827,7 +974,7 @@ end
 --         0, 100,
 --         -110, 110,
 --         -110, 110,
---         0.0, 1.0)
+--         1.0, 1.0)
 --     local aHex = Clr.toHex(aClr)
 
 --     local bClr = Clr.random(

@@ -12,11 +12,6 @@ local defaults = {
     labab = false, -- L
     labLb = true, -- a
     labLa = true, -- b
-    manifest = true,
-    -- contiguous = false,
-    -- closeLoop = false,
-    -- tension = 0,
-    -- resolution = 48,
     bkgColor = Color(38, 38, 38, 255),
     txtColor = Color(255, 245, 215, 255),
     shdColor = Color(0, 0, 0, 255),
@@ -123,62 +118,6 @@ dlg:check {
     selected = defaults.labLa
 }
 
-dlg:check {
-    id = "manifest",
-    label = "Manifest:",
-    selected = defaults.manifest
-}
-
--- dlg:check {
---     id = "contiguous",
---     label = "Contiguous:",
---     selected = defaults.contiguous,
---     onclick = function()
---         local contig = dlg.data.contiguous
---         dlg:modify{
---             id = "closedLoop",
---             visible = contig
---         }
-
---         dlg:modify{
---             id = "resolution",
---             visible = contig
---         }
-
---         dlg:modify{
---             id = "tension",
---             visible = contig
---         }
---     end
--- }
-
--- dlg:check {
---     id = "closedLoop",
---     label = "Closed Loop:",
---     selected = defaults.closedLoop,
---     visible = defaults.contiguous == true
--- }
-
--- dlg:slider {
---     id = "tension",
---     label = "Tension:",
---     min = -30,
---     max = 30,
---     value = defaults.tension,
---     visible = defaults.contiguous == true
--- }
-
--- dlg:slider {
---     id = "resolution",
---     label = "Resolution:",
---     min = 0,
---     max = 128,
---     value = defaults.resolution,
---     visible = defaults.contiguous == true
--- }
-
-dlg:newrow { always = false }
-
 dlg:color {
     id = "bkgColor",
     label = "Background:",
@@ -233,94 +172,6 @@ local function drawSwatch(image, x, y, w, h, hex)
     end
 end
 
--- local function drawCircleFill(image, xo, yo, r, hex)
---     local rsq = r * r
---     local r2 = r * 2
---     local lenn1 = r2 * r2 - 1
---     for i = 0, lenn1, 1 do
---         local x = (i % r2) - r
---         local y = (i // r2) - r
---         if (x * x + y * y) < rsq then
---         image:drawPixel(
---             xo + x,
---             yo + y,
---             hex)
---         end
---     end
--- end
-
-local function bresenham(image, clr, x0, y0, x1, y1)
-    if x0 == x1 and y0 == y1 then return end
-    local hex = clr or 0xffffffff
-    local dx = math.abs(x1 - x0)
-    local dy = math.abs(y1 - y0)
-    local x = x0
-    local y = y0
-    local sx = 0
-    local sy = 0
-
-    if x0 < x1 then sx = 1 else sx = -1 end
-    if y0 < y1 then sy = 1 else sy = -1 end
-
-    local err = 0
-    if dx > dy then err = dx // 2
-    else err = -dy // 2 end
-    local e2 = 0
-
-    while true do
-        -- print("(" .. x .. ", " .. y .. ")")
-        image:drawPixel(x, y, hex)
-        if x == x1 and y == y1 then break end
-        e2 = err
-        if e2 > -dx then
-            err = err - dy
-            x = x + sx
-        end
-        if e2 < dy then
-            err = err + dx
-            y = y + sy
-        end
-    end
-end
-
-local function midPointCircleStroke(image, hex, xo, yo, radius)
-
-    local x = radius
-    local y = 0
-
-    image:drawPixel(xo + radius, yo, hex)
-    image:drawPixel(xo - radius, yo, hex)
-    image:drawPixel(xo, yo + radius, hex)
-    image:drawPixel(xo, yo - radius, hex)
-
-    local p = 1 - radius
-    while x > y do
-        y = y + 1
-        if p <= 0 then
-            p = p + 2 * y + 1
-        else
-            x = x - 1
-            p = p + 2 * y - 2 * x + 1
-        end
-
-        if x < y then
-            break
-        end
-
-        image:drawPixel(xo + x, yo + y, hex)
-        image:drawPixel(xo - x, yo + y, hex)
-        image:drawPixel(xo + x, yo - y, hex)
-        image:drawPixel(xo - x, yo - y, hex)
-
-        if x ~= y then
-            image:drawPixel(xo + y, yo + x, hex)
-            image:drawPixel(xo - y, yo + x, hex)
-            image:drawPixel(xo + y, yo - x, hex)
-            image:drawPixel(xo - y, yo - x, hex)
-        end
-    end
-end
-
 local function strToCharArr(str)
     local chars = {}
     for i = 1, #str, 1 do
@@ -366,6 +217,9 @@ local function drawRadial(
     local strfmt = string.format
     local cos = math.cos
     local sin = math.sin
+    local bresenham = AseUtilities.drawLine
+    local circStrk = AseUtilities.drawCircleStroke
+    local circFill = AseUtilities.drawCircleFill
 
     local wImage = image.width
     local hImage = image.height
@@ -391,7 +245,7 @@ local function drawRadial(
     local maxDisplRad = marginScale * 0.5
         * (math.min(wImage, hImage) - margin * 2)
         - digLen * gw
-    local minDisplRad = 0.125 * maxDisplRad
+    local minDisplRad = 0.15 * maxDisplRad
         + digLen * gw
 
     -- Draw concentric rings.
@@ -403,9 +257,10 @@ local function drawRadial(
                        + t * minDisplRad
         displRad = trunc(0.5 + displRad)
 
-        midPointCircleStroke(
-            image, txtHex,
-            xCenter, yCenter, displRad)
+        circStrk(
+            image,
+            xCenter, yCenter, displRad,
+            txtHex)
     end
 
     -- Draw radial min and max label.
@@ -433,28 +288,27 @@ local function drawRadial(
     local jToTheta = 6.283185307179586 / sectors
     local jToDeg = 360.0 / sectors
     local labelDisplRad = maxDisplRad * 1.122
-    -- local degChar = utf8.char(176)
     for j = 0, sectors - 1 , 1 do
         local theta = j * jToTheta
         local cosTheta = cos(theta)
         local sinTheta = -sin(theta)
 
-        local x0 = minDisplRad * cosTheta
-        local y0 = minDisplRad * sinTheta
-        local x1 = maxDisplRad * cosTheta
-        local y1 = maxDisplRad * sinTheta
+        local xo = minDisplRad * cosTheta
+        local yo = minDisplRad * sinTheta
+        local xd = maxDisplRad * cosTheta
+        local yd = maxDisplRad * sinTheta
 
-        x0 = x0 + xCenter
-        y0 = y0 + yCenter
-        x1 = x1 + xCenter
-        y1 = y1 + yCenter
+        xo = xo + xCenter
+        yo = yo + yCenter
+        xd = xd + xCenter
+        yd = yd + yCenter
 
-        x0 = trunc(0.5 + x0)
-        y0 = trunc(0.5 + y0)
-        x1 = trunc(0.5 + x1)
-        y1 = trunc(0.5 + y1)
+        xo = trunc(0.5 + xo)
+        yo = trunc(0.5 + yo)
+        xd = trunc(0.5 + xd)
+        yd = trunc(0.5 + yd)
 
-        bresenham(image, txtHex, x0, y0, x1, y1)
+        bresenham(image, xo, yo, xd, yd, txtHex)
 
         -- Skip theta == 0 or 360 degrees.
         if j > 0 then
@@ -502,7 +356,7 @@ local function drawRadial(
         local x = xCenter + displRad * cosTheta
         local y = yCenter + displRad * sinTheta
 
-        AseUtilities.drawCircleFill(image, x, y, dotRad,
+        circFill(image, x, y, dotRad,
             dataHexes[k])
     end
 
@@ -703,10 +557,6 @@ dlg:button {
                 local pipCount = 5
                 local plotMargin = 2
 
-                -- No alpha allowed in text colors.
-                txtHex = 0xff000000 | txtHex
-                shdHex = 0xff000000 | shdHex
-
                 -- Clamp source palette to 256.
                 local startIndex = math.min(
                     #srcPal - 1,
@@ -790,9 +640,9 @@ dlg:button {
                     local manifestImage = Image(768, math.max(256, sprite.height))
                     fill(manifestImage, bkgHex)
 
-                    local brSizeHalf = 4
-                    local brSize = brSizeHalf * 2
-                    local rows = manifestImage.height // 9
+                    local brSize = 9
+                    -- local brSizeHalf = brSize // 2
+                    local rows = manifestImage.height // (brSize + 1)
 
                     local x = 2
                     local y = 2

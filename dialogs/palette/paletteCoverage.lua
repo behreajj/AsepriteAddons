@@ -537,6 +537,9 @@ dlg:button {
                             modelview, projection, vr,
                             width, height)
 
+                        -- TODO: Introduce frustum near plane
+                        -- culling so that a cross-section of
+                        -- the cube or sphere can be seen.
                         if scrpt.z < zMin then zMin = scrpt.z end
                         if scrpt.z > zMax then zMax = scrpt.z end
 

@@ -120,9 +120,9 @@ dlg:button {
             -- QUERY: Disallow alpha in fill color?
             -- This is due to the limitation of setting
             -- pixels w/ drawPixel rather than compositing.
-            if useShadow then
-                hexFill = 0xff000000 | hexFill
-            end
+            -- if useShadow then
+            --     hexFill = 0xff000000 | hexFill
+            -- end
 
             -- Create layer, cel.
             local layer = sprite:newLayer()
