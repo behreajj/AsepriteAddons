@@ -296,6 +296,9 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
+
+        -- TODO: Make palette analysis tools create a new sprite instead,
+        -- so that sprite width and height are more reliable.
         local sprite = app.activeSprite
         if sprite then
 

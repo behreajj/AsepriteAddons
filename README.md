@@ -63,17 +63,13 @@ This repo includes
 
   ![Luminance remapping](screencaps/lumRemap.png)
 
-- Palette Analysis.
-
-  ![Palette Analysis](screencaps/paletteAnalyze.png)
-
 - Palette Coverage.
 
   ![Palette Coverage](screencaps/paletteCoverage.png)
 
-- An RYB palette generator.
+- Palette Manifest.
 
-  ![Palette Generator](screencaps/paletteGen.png)
+  ![Palette Manifest](screencaps/paletteManifest.png)
 
 - Palette To Cel Assignment.
 

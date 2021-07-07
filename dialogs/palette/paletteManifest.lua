@@ -1,16 +1,20 @@
 dofile("../../support/aseutilities.lua")
 
 local palOptions = { "ACTIVE", "FILE", "PRESET" }
-local grayHues = {"SHADING", "OMIT", "RED"}
+local grayHues = { "OMIT", "SHADING", "ZERO" }
+local sortOptions = { "CHROMA", "HUE", "INDEX", "LUMA" }
 
 local defaults = {
+    title = "Manifest",
     palType = "ACTIVE",
     startIndex = 0,
     count = 256,
+    sortPreset = "INDEX",
     txtColor = Color(255, 245, 215, 255),
     shdColor = Color(0, 0, 0, 235),
-    hdrTxtColor = Color(0, 143, 255, 255),
+    hdrTxtColor = Color(215, 183, 121, 255),
     hdrBkgColor = Color(40, 40, 40, 235),
+    hdrRepeatRate = 16,
     bkgColor =  Color(16, 16, 16, 255),
     rowColor0 = Color(24, 24, 24, 235),
     rowColor1 = Color(32, 32, 32, 235),
@@ -36,16 +40,35 @@ local function drawCharsHorizShd(
         x, y, gw, gh, scale)
 end
 
-local function round(x)
+local function drawSwatch(image, hex, x, y, w, h)
+    local lenn1 = (w * h) - 1
+    for i = 0, lenn1, 1 do
+        image:drawPixel(
+            x + (i % w),
+            y + (i // w),
+            hex)
+    end
+end
 
-    if x < -0.0 then
+local function reverse(t)
+    -- https://programming-idioms.org/
+    -- idiom/19/reverse-a-list/1314/lua
+    local n = #t
+    local i = 1
+    while i < n do
+        t[i], t[n] = t[n], t[i]
+        i = i + 1
+        n = n - 1
+    end
+end
+
+local function round(x)
+    if x < -0.000001 then
         return math.tointeger(x - 0.5)
     end
-
-    if x > 0.0 then
+    if x > 0.000001 then
         return math.tointeger(x + 0.5)
     end
-
     return 0
 end
 
@@ -57,18 +80,16 @@ local function strToCharArr(str)
     return chars
 end
 
-local function drawSwatch(image, hex, x, y, w, h)
-    local lenn1 = (w * h) - 1
-    for i = 0, lenn1, 1 do
-        image:drawPixel(
-            x + (i % w),
-            y + (i // w),
-            hex)
-    end
-end
-
 local dlg = Dialog { title = "Palette Manifest" }
 
+dlg:entry {
+    id = "title",
+    label = "Title:",
+    text = defaults.title,
+    focus = false
+}
+
+dlg:newrow { always = false }
 dlg:combobox {
     id = "palType",
     label = "Palette:",
@@ -129,55 +150,17 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:color {
-    id = "txtColor",
-    label = "Text:",
-    color = defaults.txtColor
+dlg:combobox {
+    id = "sortPreset",
+    label = "Sort:",
+    option = defaults.sortPreset,
+    options = sortOptions
 }
 
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "shdColor",
-    label = "Shadow:",
-    color = defaults.shdColor
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "hdrTxtColor",
-    label = "Header Text:",
-    color = defaults.hdrTxtColor
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "hdrBkgColor",
-    label = "Header Bkg:",
-    color = defaults.hdrBkgColor
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "bkgColor",
-    label = "Background:",
-    color = defaults.bkgColor
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "rowColor0",
-    label = "Row:",
-    color = defaults.rowColor0
-}
-
-dlg:color {
-    id = "rowColor1",
-    color = defaults.rowColor1
+dlg:combobox {
+    id = "ascDesc",
+    option = "ASCENDING",
+    options = {"ASCENDING", "DESCENDING"}
 }
 
 dlg:newrow { always = false }
@@ -239,6 +222,69 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
+dlg:color {
+    id = "txtColor",
+    label = "Text:",
+    color = defaults.txtColor
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "shdColor",
+    label = "Shadow:",
+    color = defaults.shdColor
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "hdrTxtColor",
+    label = "Header Text:",
+    color = defaults.hdrTxtColor
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "hdrBkgColor",
+    label = "Header Bkg:",
+    color = defaults.hdrBkgColor
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "hdrRepeatRate",
+    label = "Frequency:",
+    min = 0,
+    max = 128,
+    value = defaults.hdrRepeatRate
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "rowColor0",
+    label = "Row:",
+    color = defaults.rowColor0
+}
+
+dlg:color {
+    id = "rowColor1",
+    color = defaults.rowColor1
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "bkgColor",
+    label = "Background:",
+    color = defaults.bkgColor
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "confirm",
     text = "OK",
@@ -265,17 +311,17 @@ dlg:button {
 
          if srcPal then
 
+            -- TODO: Add title to top.
             -- TODO: Option to repeat column headers every n rows.
+            -- TODO: Margins between rows?
 
-            -- QUERY: Margins between rows?
-
-            -- TODO: Cache more of your functions to local.
             local strfmt = string.format
             local trunc = math.tointeger
             local min = math.min
             local rgbToLab = Clr.rgbaToLab
             local labToLch = Clr.labToLch
             local toHexWeb = Clr.toHexWebUnchecked
+            local lerpNear = Utilities.lerpAngleNear
             local aseToClr = AseUtilities.aseColorToClr
 
             local startIndex = args.startIndex or defaults.startIndex
@@ -303,15 +349,25 @@ dlg:button {
             startIndex = min(srcPalLen - 1, startIndex)
             count = min(256, count, srcPalLen - startIndex)
 
+            -- TODO: Sorting options? sort by hue, lum, chrm
             local palData = {}
             for i = 0, count - 1, 1 do
                 local idx = startIndex + i
                 local aseColor = srcPal:getColor(idx)
                 local clr = aseToClr(aseColor)
+                local lab = rgbToLab(clr)
+                local lch = labToLch(
+                    lab.l, lab.a, lab.b, lab.alpha)
+
                 local palEntry = {
-                    idx = idx,
+                    a = lab.a,
+                    b = lab.b,
+                    chroma = lch.c,
                     hex =  0xff000000 | aseColor.rgbaPixel,
-                    hexWebStr = toHexWeb(clr)
+                    hexWebStr = toHexWeb(clr),
+                    hue = lch.h * 360.0,
+                    idx = idx,
+                    lum = lab.l
                 }
 
                 if alphaDisplay then
@@ -324,25 +380,30 @@ dlg:button {
                     palEntry.blue = aseColor.blue
                 end
 
-                if lumDisplay then
-                    local lab = rgbToLab(clr)
-                    palEntry.lum = lab.l
-
-                    if labDisplay then
-                        palEntry.a = lab.a
-                        palEntry.b = lab.b
-                    end
-
-                    if lchDisplay then
-                        local lch = labToLch(
-                            lab.l, lab.a, lab.b, lab.alpha)
-
-                        palEntry.chroma = lch.c
-                        palEntry.hue = lch.h * 360.0
-                    end
-                end
-
                 palData[1 + i] = palEntry
+            end
+
+            local sortPreset = args.sortPreset or defaults.sortPreset
+            if sortPreset == "CHROMA" then
+                local f = function(a, b)
+                    return a.chroma < b.chroma
+                end
+                table.sort(palData, f)
+            elseif sortPreset == "HUE" then
+                local f = function(a, b)
+                    return a.hue < b.hue
+                end
+                table.sort(palData, f)
+            elseif sortPreset == "LUMA" then
+                local f = function(a, b)
+                    return a.lum < b.lum
+                end
+                table.sort(palData, f)
+            end
+
+            local ascDesc = args.ascDesc
+            if ascDesc == "DESCENDING" then
+                reverse(palData)
             end
 
             local frame = 1
@@ -361,12 +422,12 @@ dlg:button {
 
             -- Calculate column offets.
             local idxColOffset = dw * 4 + entryPadding
-            local hexColOffset = dw * 8 + entryPadding
+            local hexColOffset = dw * 9 + entryPadding
             local alphaColOffset = dw * 4 + entryPadding
-            local rgbColOffset = dw * 12 + entryPadding
+            local rgbColOffset = dw * 13 + entryPadding
             local lumColOffset = dw * 4 + entryPadding
             local abColOffset = dw * 11 + entryPadding
-            local chColOffset = dw * 8 + entryPadding
+            local chColOffset = dw * 9 + entryPadding
             -- chColOffset has not been tested to make
             -- sure it is right because there is nothing
             -- to the right of it.
@@ -391,12 +452,29 @@ dlg:button {
             if lumDisplay then layerWidth = layerWidth + lumColOffset end
             if labDisplay then layerWidth = layerWidth + abColOffset end
             if lchDisplay then layerWidth = layerWidth + chColOffset end
+            layerWidth = layerWidth - dw
+            layerWidth = math.max(layerWidth, swatchSize + entryPadding * 2)
 
-            -- Account for header by adding 1 to palDataLen.
-            local spriteHeight = layerHeight * (palDataLen + 1) + spriteMargin * 2
+            local hdrRepeatRate = args.hdrRepeatRate or defaults.hdrRepeatRate
+            local hdrUseRepeat = true
+            if hdrRepeatRate >= palDataLen or hdrRepeatRate < 3 then
+                hdrUseRepeat = false
+            end
+            -- Account for header and title by adding 2 to palDataLen.
+            local spriteHeight = layerHeight * (palDataLen + 2) + spriteMargin * 2
+            if hdrUseRepeat then
+                local extraHeaders = palDataLen // hdrRepeatRate
+                if palDataLen % hdrRepeatRate == 0 then
+                    extraHeaders = extraHeaders - 1
+                end
+                spriteHeight = spriteHeight + layerHeight * (extraHeaders)
+            end
+
             local spriteWidth = colCount * layerWidth + spriteMargin * 2
 
             local sprite = Sprite(spriteWidth, spriteHeight)
+            local title = args.title or defaults.title
+            sprite.filename = title
             sprite:setPalette(srcPal)
 
             -- Create background.
@@ -408,6 +486,15 @@ dlg:button {
             end
             local bkgCel = sprite:newCel(bkgLayer, frame)
             bkgCel.position = Point(0, 0)
+
+            local xCenter = spriteWidth // 2
+            local titleChars = strToCharArr(title)
+            local titleHalfLen = dw * #titleChars // 2
+            drawCharsHorizShd(lut, bkgImg, titleChars,
+                hdrTxtHex, shdHex,
+                xCenter - titleHalfLen, entryPadding + 1,
+                gw, gh, txtDispScl)
+
             bkgCel.image = bkgImg
 
             local row0Bkg = Image(layerWidth, layerHeight)
@@ -479,7 +566,20 @@ dlg:button {
 
             -- Proceed in reverse order so layers read from the top down.
             local yCaret = spriteHeight - layerHeight - spriteMargin
+
             for i = palDataLen, 1, -1 do
+                if hdrUseRepeat and i ~= palDataLen and i % hdrRepeatRate == 0 then
+                    -- This mechanism would need to be reconsidered
+                    -- if you ever offered a multiple columns option.
+                    local hdrRptLayer = sprite:newLayer()
+                    hdrRptLayer.name = "HEADER"
+                    local hdrRptCel = sprite:newCel(hdrRptLayer, frame)
+                    hdrRptCel.position = Point(spriteMargin, yCaret)
+                    hdrRptCel.image = hdrImg
+
+                    yCaret = yCaret - layerHeight
+                end
+
                 local palEntry = palData[i]
                 local palIdx = palEntry.idx
                 local palHex = palEntry.hex
@@ -489,7 +589,7 @@ dlg:button {
                 rowLayer.name = strfmt("%03d.%s",
                     palIdx,
                     string.sub(palHexWeb, 2))
-                -- TODO: Set layer data to JSON with idx and abgrHex
+                rowLayer.data = strfmt("{\"idx\":%d,\"abgr\":%d}", palIdx, palHex)
 
                 local rowImg = nil
                 if i % 2 ~= 1 then
@@ -564,11 +664,48 @@ dlg:button {
                         local chroma = trunc(0.5 + palEntry.chroma)
                         local chStr = strfmt("%3d", chroma)
 
-                        -- TODO: Maybe a GRADIENT hue mode would lerp between
-                        -- previous Lch hue and next lch hue?
-                        if chroma < 1 and grayHue == "RED" then
-                            chStr = chStr .. "   0"
-                        elseif chroma > 1 or grayHue == "SHADING" then
+                        if chroma < 1 then
+                            if grayHue == "ZERO" then
+                                -- This option was formerly called "RED", but
+                                -- in LCH, red is hue 40, not 0.
+                                chStr = chStr .. "   0"
+                            elseif grayHue == "GRADIENT" then
+                                -- TODO: This wouldn't make sense if the palData
+                                -- were sorted anyway.
+
+                            --     if i <= 1 then
+                            --         local firstHue = palEntry.hue
+                            --         local nextEntry = palData[2]
+                            --         local nextChroma = nextEntry.chroma
+                            --         if nextChroma > 0 then
+                            --             firstHue = nextEntry.hue
+                            --         end
+                            --         firstHue = trunc(0.5 + firstHue)
+                            --         chStr = chStr .. strfmt(" %3d", firstHue)
+                            --     elseif i >= palDataLen then
+                            --         local lastHue = palEntry.hue
+                            --         local prevEntry = palData[palDataLen - 1]
+                            --         local prevChroma = prevEntry.chroma
+                            --         if prevChroma > 0 then
+                            --             lastHue = prevEntry.hue
+                            --         end
+                            --         lastHue = trunc(0.5 + lastHue)
+                            --         chStr = chStr .. strfmt(" %3d", lastHue)
+                            --     else
+                            --         local prevEntry = palData[i - 1]
+                            --         local nextEntry = palData[i + 1]
+                            --         local prevHue = prevEntry.hue
+                            --         local nextHue = nextEntry.hue
+                            --         local mixHue = lerpNear(
+                            --             prevHue, nextHue, 0.5, 360.0)
+                            --         mixHue = trunc(0.5 + mixHue)
+                            --         chStr = chStr .. strfmt(" %3d", mixHue)
+                            --     end
+                            elseif grayHue == "SHADING" then
+                                local hue = trunc(0.5 + palEntry.hue)
+                                chStr = chStr .. strfmt(" %3d", hue)
+                            end
+                        elseif chroma > 0 then
                             local hue = trunc(0.5 + palEntry.hue)
                             chStr = chStr .. strfmt(" %3d", hue)
                         end
