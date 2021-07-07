@@ -349,7 +349,6 @@ dlg:button {
             startIndex = min(srcPalLen - 1, startIndex)
             count = min(256, count, srcPalLen - startIndex)
 
-            -- TODO: Sorting options? sort by hue, lum, chrm
             local palData = {}
             for i = 0, count - 1, 1 do
                 local idx = startIndex + i
@@ -391,6 +390,18 @@ dlg:button {
                 table.sort(palData, f)
             elseif sortPreset == "HUE" then
                 local f = function(a, b)
+                    if a.chroma < 1 and b.chroma < 1 then
+                        return a.lum < b.lum
+                    elseif a.chroma < 1 then
+                        return true
+                    elseif b.chroma < 1 then
+                        return false
+                    end
+
+                    if math.abs(b.hue - a.hue) < 0.00001 then
+                        return a.lum < b.lum
+                    end
+
                     return a.hue < b.hue
                 end
                 table.sort(palData, f)
@@ -567,166 +578,137 @@ dlg:button {
             -- Proceed in reverse order so layers read from the top down.
             local yCaret = spriteHeight - layerHeight - spriteMargin
 
-            for i = palDataLen, 1, -1 do
-                if hdrUseRepeat and i ~= palDataLen and i % hdrRepeatRate == 0 then
-                    -- This mechanism would need to be reconsidered
-                    -- if you ever offered a multiple columns option.
-                    local hdrRptLayer = sprite:newLayer()
-                    hdrRptLayer.name = "HEADER"
-                    local hdrRptCel = sprite:newCel(hdrRptLayer, frame)
-                    hdrRptCel.position = Point(spriteMargin, yCaret)
-                    hdrRptCel.image = hdrImg
+            app.transaction(function()
+                for i = palDataLen, 1, -1 do
+                    if hdrUseRepeat and i ~= palDataLen and i % hdrRepeatRate == 0 then
+                        -- This mechanism would need to be reconsidered
+                        -- if you ever offered a multiple columns option.
+                        local hdrRptLayer = sprite:newLayer()
+                        hdrRptLayer.name = "HEADER"
+                        local hdrRptCel = sprite:newCel(hdrRptLayer, frame)
+                        hdrRptCel.position = Point(spriteMargin, yCaret)
+                        hdrRptCel.image = hdrImg
 
-                    yCaret = yCaret - layerHeight
-                end
-
-                local palEntry = palData[i]
-                local palIdx = palEntry.idx
-                local palHex = palEntry.hex
-                local palHexWeb = palEntry.hexWebStr
-
-                local rowLayer = sprite:newLayer()
-                rowLayer.name = strfmt("%03d.%s",
-                    palIdx,
-                    string.sub(palHexWeb, 2))
-                rowLayer.data = strfmt("{\"idx\":%d,\"abgr\":%d}", palIdx, palHex)
-
-                local rowImg = nil
-                if i % 2 ~= 1 then
-                    rowImg = row0Bkg:clone()
-                else
-                    rowImg = row1Bkg:clone()
-                end
-
-                local rowCel = sprite:newCel(rowLayer, frame)
-                rowCel.position = Point(spriteMargin, yCaret)
-
-                drawSwatch(rowImg, palHex,
-                    entryPadding, entryPadding,
-                    swatchSize, swatchSize)
-
-                local xCaret = swatchSize + entryPadding
-
-                if idxDisplay then
-                    local idxStr = strfmt("%3d", palIdx)
-                    local idxChars = strToCharArr(idxStr)
-                    drawCharsHorizShd(lut, rowImg, idxChars, txtHex, shdHex,
-                        xCaret, entryPadding + 1, gw, gh, txtDispScl)
-                    xCaret = xCaret + idxColOffset
-                end
-
-                if hexDisplay then
-                    local hexChars = strToCharArr(palHexWeb)
-                    drawCharsHorizShd(lut, rowImg, hexChars, txtHex, shdHex,
-                        xCaret, entryPadding + 1, gw, gh, txtDispScl)
-                    xCaret = xCaret + hexColOffset
-                end
-
-                if alphaDisplay then
-                    local alpha = palEntry.alpha
-                    local alphaStr = strfmt("%3d", alpha)
-                    local alphaChars = strToCharArr(alphaStr)
-                    drawCharsHorizShd(lut, rowImg, alphaChars, txtHex, shdHex,
-                        xCaret, entryPadding + 1, gw, gh, txtDispScl)
-                    xCaret = xCaret + alphaColOffset
-                end
-
-                if rgbDisplay then
-                    local r = palEntry.red
-                    local g = palEntry.green
-                    local b = palEntry.blue
-                    local rgbStr = strfmt("%3d %3d %3d", r, g, b)
-                    local rgbChars = strToCharArr(rgbStr)
-                    drawCharsHorizShd(lut, rowImg, rgbChars, txtHex, shdHex,
-                        xCaret, entryPadding + 1, gw, gh, txtDispScl)
-                    xCaret = xCaret + rgbColOffset
-                end
-
-                if lumDisplay then
-                    local lum = trunc(0.5 + palEntry.lum)
-                    local lumStr = strfmt("%3d", lum)
-                    local lumChars = strToCharArr(lumStr)
-                    drawCharsHorizShd(lut, rowImg, lumChars, txtHex, shdHex,
-                        xCaret, entryPadding + 1, gw, gh, txtDispScl)
-                    xCaret = xCaret + lumColOffset
-
-                    if labDisplay then
-                        local a = round(palEntry.a)
-                        local b = round(palEntry.b)
-                        local abStr = strfmt("%+04d %+04d", a, b)
-                        local abChars = strToCharArr(abStr)
-                        drawCharsHorizShd(lut, rowImg, abChars, txtHex, shdHex,
-                            xCaret, entryPadding + 1, gw, gh, txtDispScl)
-                        xCaret = xCaret + abColOffset
+                        yCaret = yCaret - layerHeight
                     end
 
-                    if lchDisplay then
-                        local chroma = trunc(0.5 + palEntry.chroma)
-                        local chStr = strfmt("%3d", chroma)
+                    local palEntry = palData[i]
+                    local palIdx = palEntry.idx
+                    local palHex = palEntry.hex
+                    local palHexWeb = palEntry.hexWebStr
 
-                        if chroma < 1 then
-                            if grayHue == "ZERO" then
-                                -- This option was formerly called "RED", but
-                                -- in LCH, red is hue 40, not 0.
-                                chStr = chStr .. "   0"
-                            elseif grayHue == "GRADIENT" then
-                                -- TODO: This wouldn't make sense if the palData
-                                -- were sorted anyway.
+                    local rowLayer = sprite:newLayer()
+                    rowLayer.name = strfmt("%03d.%s",
+                        palIdx,
+                        string.sub(palHexWeb, 2))
+                    rowLayer.data = strfmt("{\"idx\":%d,\"abgr\":%d}", palIdx, palHex)
 
-                            --     if i <= 1 then
-                            --         local firstHue = palEntry.hue
-                            --         local nextEntry = palData[2]
-                            --         local nextChroma = nextEntry.chroma
-                            --         if nextChroma > 0 then
-                            --             firstHue = nextEntry.hue
-                            --         end
-                            --         firstHue = trunc(0.5 + firstHue)
-                            --         chStr = chStr .. strfmt(" %3d", firstHue)
-                            --     elseif i >= palDataLen then
-                            --         local lastHue = palEntry.hue
-                            --         local prevEntry = palData[palDataLen - 1]
-                            --         local prevChroma = prevEntry.chroma
-                            --         if prevChroma > 0 then
-                            --             lastHue = prevEntry.hue
-                            --         end
-                            --         lastHue = trunc(0.5 + lastHue)
-                            --         chStr = chStr .. strfmt(" %3d", lastHue)
-                            --     else
-                            --         local prevEntry = palData[i - 1]
-                            --         local nextEntry = palData[i + 1]
-                            --         local prevHue = prevEntry.hue
-                            --         local nextHue = nextEntry.hue
-                            --         local mixHue = lerpNear(
-                            --             prevHue, nextHue, 0.5, 360.0)
-                            --         mixHue = trunc(0.5 + mixHue)
-                            --         chStr = chStr .. strfmt(" %3d", mixHue)
-                            --     end
-                            elseif grayHue == "SHADING" then
+                    local rowImg = nil
+                    if i % 2 ~= 1 then
+                        rowImg = row0Bkg:clone()
+                    else
+                        rowImg = row1Bkg:clone()
+                    end
+
+                    local rowCel = sprite:newCel(rowLayer, frame)
+                    rowCel.position = Point(spriteMargin, yCaret)
+
+                    drawSwatch(rowImg, palHex,
+                        entryPadding, entryPadding,
+                        swatchSize, swatchSize)
+
+                    local xCaret = swatchSize + entryPadding
+
+                    if idxDisplay then
+                        local idxStr = strfmt("%3d", palIdx)
+                        local idxChars = strToCharArr(idxStr)
+                        drawCharsHorizShd(lut, rowImg, idxChars, txtHex, shdHex,
+                            xCaret, entryPadding + 1, gw, gh, txtDispScl)
+                        xCaret = xCaret + idxColOffset
+                    end
+
+                    if hexDisplay then
+                        local hexChars = strToCharArr(palHexWeb)
+                        drawCharsHorizShd(lut, rowImg, hexChars, txtHex, shdHex,
+                            xCaret, entryPadding + 1, gw, gh, txtDispScl)
+                        xCaret = xCaret + hexColOffset
+                    end
+
+                    if alphaDisplay then
+                        local alpha = palEntry.alpha
+                        local alphaStr = strfmt("%3d", alpha)
+                        local alphaChars = strToCharArr(alphaStr)
+                        drawCharsHorizShd(lut, rowImg, alphaChars, txtHex, shdHex,
+                            xCaret, entryPadding + 1, gw, gh, txtDispScl)
+                        xCaret = xCaret + alphaColOffset
+                    end
+
+                    if rgbDisplay then
+                        local r = palEntry.red
+                        local g = palEntry.green
+                        local b = palEntry.blue
+                        local rgbStr = strfmt("%3d %3d %3d", r, g, b)
+                        local rgbChars = strToCharArr(rgbStr)
+                        drawCharsHorizShd(lut, rowImg, rgbChars, txtHex, shdHex,
+                            xCaret, entryPadding + 1, gw, gh, txtDispScl)
+                        xCaret = xCaret + rgbColOffset
+                    end
+
+                    if lumDisplay then
+                        local lum = trunc(0.5 + palEntry.lum)
+                        local lumStr = strfmt("%3d", lum)
+                        local lumChars = strToCharArr(lumStr)
+                        drawCharsHorizShd(lut, rowImg, lumChars, txtHex, shdHex,
+                            xCaret, entryPadding + 1, gw, gh, txtDispScl)
+                        xCaret = xCaret + lumColOffset
+
+                        if labDisplay then
+                            local a = round(palEntry.a)
+                            local b = round(palEntry.b)
+                            local abStr = strfmt("%+04d %+04d", a, b)
+                            local abChars = strToCharArr(abStr)
+                            drawCharsHorizShd(lut, rowImg, abChars, txtHex, shdHex,
+                                xCaret, entryPadding + 1, gw, gh, txtDispScl)
+                            xCaret = xCaret + abColOffset
+                        end
+
+                        if lchDisplay then
+                            local chroma = trunc(0.5 + palEntry.chroma)
+                            local chStr = strfmt("%3d", chroma)
+
+                            if chroma < 1 then
+                                if grayHue == "ZERO" then
+                                    -- This option was formerly called "RED", but
+                                    -- in LCH, red is hue 40, not 0.
+                                    chStr = chStr .. "   0"
+                                elseif grayHue == "SHADING" then
+                                    local hue = trunc(0.5 + palEntry.hue)
+                                    chStr = chStr .. strfmt(" %3d", hue)
+                                end
+                            elseif chroma > 0 then
                                 local hue = trunc(0.5 + palEntry.hue)
                                 chStr = chStr .. strfmt(" %3d", hue)
                             end
-                        elseif chroma > 0 then
-                            local hue = trunc(0.5 + palEntry.hue)
-                            chStr = chStr .. strfmt(" %3d", hue)
+                            local chChars = strToCharArr(chStr)
+                            drawCharsHorizShd(lut, rowImg, chChars, txtHex, shdHex,
+                                xCaret, entryPadding + 1, gw, gh, txtDispScl)
+                            xCaret = xCaret + chColOffset
                         end
-                        local chChars = strToCharArr(chStr)
-                        drawCharsHorizShd(lut, rowImg, chChars, txtHex, shdHex,
-                            xCaret, entryPadding + 1, gw, gh, txtDispScl)
-                        xCaret = xCaret + chColOffset
                     end
+
+                    rowCel.image = rowImg
+                    yCaret = yCaret - layerHeight
                 end
 
-                rowCel.image = rowImg
-                yCaret = yCaret - layerHeight
-            end
+                -- Draw header.
+                local hdrLayer = sprite:newLayer()
+                hdrLayer.name = "HEADER"
+                local hdrCel = sprite:newCel(hdrLayer, frame)
+                hdrCel.position = Point(spriteMargin, yCaret)
+                hdrCel.image = hdrImg
 
-            -- Draw header.
-            local hdrLayer = sprite:newLayer()
-            hdrLayer.name = "HEADER"
-            local hdrCel = sprite:newCel(hdrLayer, frame)
-            hdrCel.position = Point(spriteMargin, yCaret)
-            hdrCel.image = hdrImg
-
+            end)
+            
             app.activeSprite = sprite
             app.refresh()
          else

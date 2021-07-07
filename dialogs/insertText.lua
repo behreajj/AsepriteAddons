@@ -117,13 +117,6 @@ dlg:button {
             local alignVert = args.alignVert
             local scale = args.scale
 
-            -- QUERY: Disallow alpha in fill color?
-            -- This is due to the limitation of setting
-            -- pixels w/ drawPixel rather than compositing.
-            -- if useShadow then
-            --     hexFill = 0xff000000 | hexFill
-            -- end
-
             -- Create layer, cel.
             local layer = sprite:newLayer()
             local frame = app.activeFrame or 1
@@ -142,6 +135,10 @@ dlg:button {
             -- Alternatively, assign to cel data?
             layer.name = msg
 
+            -- TODO: Add animated text feature.
+            -- Create all new frames for each char so that
+            -- there's no risk of uneven frame count. Assign
+            -- a tag to the frames that fall under this anim.
             -- Unpack string to characters table.
             local chars = {}
             for i = 1, msgLen, 1 do
