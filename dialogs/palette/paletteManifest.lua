@@ -398,7 +398,9 @@ dlg:button {
                         return false
                     end
 
-                    if math.abs(b.hue - a.hue) < 0.00001 then
+                    -- Epsilon is guesswork.
+                    local diff = b.hue - a.hue
+                    if math.abs(diff) < 0.275 then
                         return a.lum < b.lum
                     end
 
