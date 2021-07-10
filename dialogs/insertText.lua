@@ -3,21 +3,20 @@ dofile("../support/aseutilities.lua")
 local defaults = {
     msg = "Lorem ipsum dolor sit amet",
     animate = false,
+    duration = 100.0,
     fillClr = Color(255, 255, 255, 255),
     shdColor = Color(0, 0, 0, 204),
-    xOrigin = 0,
-    yOrigin = 0,
+    bkgColor = Color(20, 20, 20, 0),
+    xOrigin = 50,
+    yOrigin = 50,
     useShadow = true,
-    orientation = "HORIZONTAL",
-    alignLine = "LEFT",
-    alignChar = "TOP",
+    alignLine = "CENTER",
+    alignChar = "CENTER",
     scale = 2,
     pullFocus = false
 }
 
-local dlg = Dialog {
-    title = "Insert Text"
-}
+local dlg = Dialog { title = "Insert Text" }
 
 dlg:entry {
     id = "msg",
@@ -26,23 +25,43 @@ dlg:entry {
     focus = "false"
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "animate",
     label = "Animate:",
-    selected = defaults.animate
+    selected = defaults.animate,
+    onclick = function()
+        dlg:modify {
+            id = "duration",
+            visible = dlg.data.animate
+        }
+    end
 }
 
+dlg:newrow { always = false }
+
 dlg:number {
+    id = "duration",
+    label = "Duration:",
+    text = string.format("%.1f", defaults.duration),
+    decimals = 1,
+    visible = defaults.animate
+}
+
+dlg:slider {
     id = "xOrigin",
     label = "Origin:",
-    text = string.format("%.1f", defaults.xOrigin),
-    decimals = 5
+    min = 0,
+    max = 100,
+    value = defaults.xOrigin
 }
 
-dlg:number {
+dlg:slider {
     id = "yOrigin",
-    text = string.format("%.1f", defaults.yOrigin),
-    decimals = 5
+    min = 0,
+    max = 100,
+    value = defaults.yOrigin
 }
 
 dlg:slider {
@@ -51,13 +70,6 @@ dlg:slider {
     min = 1,
     max = 24,
     value = defaults.scale
-}
-
-dlg:combobox {
-    id = "orientation",
-    label = "Orientation:",
-    option = defaults.orientation,
-    options = AseUtilities.ORIENTATIONS
 }
 
 dlg:combobox {
@@ -74,18 +86,6 @@ dlg:combobox {
     options = AseUtilities.GLYPH_ALIGN_VERT
 }
 
-dlg:check {
-    id = "useShadow",
-    label = "Drop Shadow:",
-    selected = defaults.useShadow,
-    onclick = function()
-        dlg:modify{
-            id = "shdColor",
-            visible = dlg.data.useShadow
-        }
-    end
-}
-
 dlg:color {
     id = "fillClr",
     label = "Fill:",
@@ -99,16 +99,16 @@ dlg:color {
     visible = defaults.useShadow
 }
 
+dlg:color {
+    id = "bkgColor",
+    label = "Background:",
+    color = defaults.bkgColor
+}
+
 local function slice (tbl, start, finish)
-    -- https://stackoverflow.com/questions/
-    -- 39802578/in-lua-array-sub-element
     local pos = 1
     local sl = {}
     local stop = finish
-
-    -- if tbl[finish] == ' ' then
-    --     stop = stop - 1
-    -- end
 
     for i = start, stop, 1 do
         sl[pos] = tbl[i]
@@ -118,156 +118,165 @@ local function slice (tbl, start, finish)
     return sl
 end
 
-local function setOffset(
-    xOrigin, yOrigin, msgLen, orientation,
-    dw, dh, scale, alignLine, alignChar)
-
-    local xLoc = xOrigin
-    local yLoc = yOrigin
-
-    if orientation == "VERTICAL" then
-        yLoc = yLoc - dw
-
-        if alignLine == "CENTER" then
-            local dwLen = msgLen * (dw - scale)
-            yLoc = yLoc + dwLen // 2
-        elseif alignLine == "RIGHT" then
-            local dwLen = msgLen * (dw - scale)
-            yLoc = yLoc + dwLen
-        end
-
-        if alignChar == "CENTER" then
-            xLoc = xLoc - dh // 2
-        elseif alignChar == "BOTTOM" then
-            xLoc = xLoc - dh
-        end
-    else
-        -- Horizontal case is default case.
-        if alignLine == "CENTER" then
-            local dwLen = msgLen * (dw + scale)
-            xLoc = xLoc - dwLen // 2
-        elseif alignLine == "RIGHT" then
-            local dwLen = msgLen * (dw + scale)
-            xLoc = xLoc - dwLen
-        end
-
-        if alignChar == "CENTER" then
-            yLoc = yLoc - dh // 2
-        elseif alignChar == "BOTTOM" then
-            yLoc = yLoc - dh
-        end
-    end
-
-    return xLoc, yLoc
-end
-
 dlg:button {
     id = "confirm",
     text = "OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        local sprite = app.activeSprite
-        if sprite then
 
-            -- Constants, as far as we're concerned.
-            local lut = Utilities.GLYPH_LUT
-            local gw = 8
-            local gh = 8
+        -- Constants, as far as we're concerned.
+        local lut = Utilities.GLYPH_LUT
+        local gw = 8
+        local gh = 8
 
-            -- Unpack user inputs.
-            local hexFill = args.fillClr.rgbaPixel
-            local hexShd = args.shdColor.rgbaPixel
-            local xOrigin = args.xOrigin or 0
-            local yOrigin = args.yOrigin or 0
-            local useShadow = args.useShadow
-            local orientation = args.orientation
-            local alignLine = args.alignHoriz
-            local alignChar = args.alignVert
-            local scale = args.scale
-            local animate = args.animate
+        -- Unpack arguments.
+        local msg = args.msg
+        local animate = args.animate
+        local xOrigin = args.xOrigin
+        local yOrigin = args.yOrigin
+        local scale = args.scale
+        local orientation = args.orientation
+        local alignLine = args.alignHoriz
+        local alignChar = args.alignVert
+        local aseFill = args.fillClr
+        local aseShd = args.shdColor
+        local aseBkg = args.bkgColor
 
-            -- Create layer, cel.
-            local layer = sprite:newLayer()
+        -- Validate message.
+        local msgLen = #msg
+        if msg == nil or msgLen < 1 then
+            msg = defaults.msg
+            msgLen = #msg
+        end
 
-            -- Validate message.
-            local msg = args.msg
-            local msgLen = #msg
-            if msg == nil or msgLen < 1 then
-                msg = "Lorem ipsum\ndolor sit amet"
-                msgLen = #msg
+        -- Unpack string to characters table.
+        local staticChars = {}
+        for i = 1, msgLen, 1 do
+            staticChars[i] = msg:sub(i, i)
+        end
+
+        -- Cache Aseprite colors to hexadecimals.
+        local hexBkg = aseBkg.rgbaPixel
+        local hexShd = aseShd.rgbaPixel
+        local hexFill = aseFill.rgbaPixel
+
+        local dw = gw * scale
+        local dh = gh * scale
+        local useBkg = (hexBkg & 0xff000000) > 0
+        local useShadow = (hexShd & 0xff000000) > 0
+
+        -- Determine dimensions of new image.
+        local widthImg = dw * msgLen
+        local heightImg = dh
+        if useShadow then heightImg = heightImg + scale end
+
+        -- Acquire or create sprite.
+        -- Acquire top layer.
+        local sprite = AseUtilities.initCanvas(widthImg, heightImg, msg)
+        local widthSprite = sprite.width
+        local heightSprite = sprite.height
+        local layer = sprite.layers[#sprite.layers]
+
+        -- Convert from percentage to pixel dimensions.
+        xOrigin = math.tointeger(0.5 + xOrigin * 0.01 * widthSprite)
+        yOrigin = math.tointeger(0.5 + yOrigin * 0.01 * heightSprite)
+
+        -- Choose display function based on vertical or horizontal.
+        local displayString = nil
+        if orientation == "VERTICAL" then
+            displayString = AseUtilities.drawStringVert
+        else
+            displayString = AseUtilities.drawStringHoriz
+        end
+
+        -- Create background source image to copy.
+        local bkgSrcImg = Image(widthImg, heightImg)
+        if useBkg then
+            local bkgPxItr = bkgSrcImg:pixels()
+            for elm in bkgPxItr do
+                elm(hexBkg)
             end
+        end
 
-            -- Name layer after message.
-            -- Alternatively, assign to cel data?
-            layer.name = msg
+        -- Find the display width and center of a line.
+        local dispWidth = msgLen * dw
+        local dispCenter = dispWidth // 2
 
-            -- Unpack string to characters table.
-            local staticChars = {}
-            for i = 1, msgLen, 1 do
-                staticChars[i] = msg:sub(i, i)
-            end
+        -- For static text, the cel position can be set.
+        local staticPos = Point(xOrigin, yOrigin)
+        if alignLine == "CENTER" then
+            staticPos.x = staticPos.x - dispCenter
+        elseif alignLine == "RIGHT" then
+            staticPos.x = staticPos.x - dispWidth
+        end
 
-            local dw = gw * scale
-            local dh = gh * scale
+        if alignChar == "CENTER" then
+            staticPos.y = staticPos.y - math.ceil((dh + scale) * 0.5)
+        elseif alignChar == "BOTTOM" then
+            staticPos.y = staticPos.y - (dh + scale)
+        end
 
-            local displayString = nil
-            if orientation == "VERTICAL" then
-                displayString = AseUtilities.drawStringVert
-            else
-                displayString = AseUtilities.drawStringHoriz
-            end
+        -- TODO: Allow for parsing of line breaks from \n?
+        if animate then
 
-            if animate then
-
+            local duration = args.duration or defaults.duration
+            duration = duration * 0.001
+            app.transaction(function()
                 for i = 1, msgLen, 1 do
+                    local animSlice = slice(staticChars, 1, i)
+                    local slLen = #animSlice
+
+                    -- For animated text, the dynamic text needs
+                    -- to be compared to the static text.
+                    local animPosx = 0
+                    if alignLine == "CENTER" then
+                        animPosx = dispCenter - (slLen * dw) // 2
+                    elseif alignLine == "RIGHT" then
+                        animPosx = dispWidth - slLen * dw
+                    end
 
                     local animFrame = sprite:newEmptyFrame()
+                    animFrame.duration = duration
                     local animCel = sprite:newCel(layer, animFrame)
-                    local animImage = animCel.image
-                    local sl = slice(staticChars, 1, i)
-                    local slLen = #sl
+                    animCel.position = staticPos
 
-                    local xLoc, yLoc = setOffset(
-                        xOrigin, yOrigin, slLen, orientation,
-                        dw, dh, scale, alignLine, alignChar)
+                    local animImage = bkgSrcImg:clone()
 
                     if useShadow then
                         displayString(
-                            lut, animImage, sl, hexShd,
-                            xLoc, yLoc + scale, gw, gh, scale)
+                            lut, animImage, animSlice, hexShd,
+                            animPosx, scale, gw, gh, scale)
                     end
                     displayString(
-                        lut, animImage, sl, hexFill,
-                        xLoc, yLoc, gw, gh, scale)
+                        lut, animImage, animSlice, hexFill,
+                        animPosx, 0, gw, gh, scale)
+
+                    animCel.image = animImage
                 end
+            end)
 
-            else
-
-                local staticFrame = app.activeFrame or 1
-                local staticCel = sprite:newCel(layer, staticFrame)
-                local staticImage = staticCel.image
-
-                local xLoc, yLoc = setOffset(
-                    xOrigin, yOrigin, msgLen, orientation,
-                    dw, dh, scale, alignLine, alignChar)
-
-                if useShadow then
-                    displayString(
-                        lut, staticImage, staticChars, hexShd,
-                        xLoc, yLoc + scale, gw, gh, scale)
-                end
-                displayString(
-                    lut, staticImage, staticChars, hexFill,
-                    xLoc, yLoc, gw, gh, scale)
-
-            end
-
-            app.refresh()
         else
-            app.alert("There is no active sprite.")
+
+            -- Static text is the default.
+            local staticFrame = app.activeFrame or 1
+            local staticCel = sprite:newCel(layer, staticFrame)
+            staticCel.position = staticPos
+
+            if useShadow then
+                displayString(
+                    lut, bkgSrcImg, staticChars, hexShd,
+                    0, scale, gw, gh, scale)
+            end
+            displayString(
+                lut, bkgSrcImg, staticChars, hexFill,
+                0, 0, gw, gh, scale)
+
+            staticCel.image = bkgSrcImg
+
         end
 
+        app.refresh()
     end
 }
 

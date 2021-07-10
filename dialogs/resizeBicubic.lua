@@ -106,7 +106,6 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-
         local sprite = app.activeSprite
         if sprite then
             local srcCel = app.activeCel

@@ -309,10 +309,8 @@ dlg:button {
             srcPal = app.activeSprite.palettes[1]
         end
 
-         if srcPal then
+        if srcPal then
 
-            -- TODO: Add title to top.
-            -- TODO: Option to repeat column headers every n rows.
             -- TODO: Margins between rows?
 
             local strfmt = string.format
@@ -321,7 +319,6 @@ dlg:button {
             local rgbToLab = Clr.rgbaToLab
             local labToLch = Clr.labToLch
             local toHexWeb = Clr.toHexWebUnchecked
-            local lerpNear = Utilities.lerpAngleNear
             local aseToClr = AseUtilities.aseColorToClr
 
             local startIndex = args.startIndex or defaults.startIndex
@@ -435,12 +432,12 @@ dlg:button {
 
             -- Calculate column offets.
             local idxColOffset = dw * 4 + entryPadding
-            local hexColOffset = dw * 9 + entryPadding
+            local hexColOffset = dw * 8 + entryPadding
             local alphaColOffset = dw * 4 + entryPadding
-            local rgbColOffset = dw * 13 + entryPadding
+            local rgbColOffset = dw * 12 + entryPadding
             local lumColOffset = dw * 4 + entryPadding
-            local abColOffset = dw * 11 + entryPadding
-            local chColOffset = dw * 9 + entryPadding
+            local abColOffset = dw * 10 + entryPadding
+            local chColOffset = dw * 8 + entryPadding
             -- chColOffset has not been tested to make
             -- sure it is right because there is nothing
             -- to the right of it.
@@ -570,7 +567,7 @@ dlg:button {
                 end
 
                 if lchDisplay then
-                    local chChars = strToCharArr("CHM HUE")
+                    local chChars = strToCharArr("CRM HUE")
                     drawCharsHorizShd(lut, hdrImg, chChars, hdrTxtHex, shdHex,
                         xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
                     xCrtHdr = xCrtHdr + chColOffset
@@ -710,7 +707,7 @@ dlg:button {
                 hdrCel.image = hdrImg
 
             end)
-            
+
             app.activeSprite = sprite
             app.refresh()
          else

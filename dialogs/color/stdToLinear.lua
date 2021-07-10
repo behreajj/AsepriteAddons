@@ -50,7 +50,9 @@ dlg:shades {
         if ev0.button == MouseButton.LEFT then
             app.fgColor = ev0.color
         elseif ev0.button == MouseButton.RIGHT then
-            app.bgColor = ev0.color
+            app.command.SwitchColors()
+            app.fgColor = ev0.color
+            app.command.SwitchColors()
         end
     end
 }
@@ -66,7 +68,9 @@ dlg:shades {
         if ev1.button == MouseButton.LEFT then
             app.fgColor = ev1.color
         elseif ev1.button == MouseButton.RIGHT then
-            app.bgColor = ev1.color
+            app.command.SwitchColors()
+            app.fgColor = ev1.color
+            app.command.SwitchColors()
         end
     end
 }
@@ -82,7 +86,9 @@ dlg:shades {
         if ev2.button == MouseButton.LEFT then
             app.fgColor = ev2.color
         elseif ev2.button == MouseButton.RIGHT then
-            app.bgColor = ev2.color
+            app.command.SwitchColors()
+            app.fgColor = ev2.color
+            app.command.SwitchColors()
         end
     end
 }

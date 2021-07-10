@@ -23,7 +23,7 @@ local defaults = {
     maxSwatchSize = 8,
     bkgColor = Color(0xff202020),
     frames = 16,
-    -- duration = 100.0,
+    duration = 100.0,
     pullFocus = false
 }
 
@@ -105,16 +105,6 @@ dlg:check {
     selected = defaults.closedLoop
 }
 
--- dlg:newrow { always = false }
-
--- dlg:slider {
---     id = "tension",
---     label = "Tension:",
---     min = -30,
---     max = 30,
---     value = defaults.tension
--- }
-
 dlg:slider {
     id = "resolution",
     label = "Resolution:",
@@ -190,14 +180,14 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
--- dlg:number {
---     id = "duration",
---     label = "Duration:",
---     text = string.format("%.0f", defaults.duration),
---     decimals = 0
--- }
+dlg:number {
+    id = "duration",
+    label = "Duration:",
+    text = string.format("%.1f", defaults.duration),
+    decimals = 1
+}
 
--- dlg:newrow { always = false }
+dlg:newrow { always = false }
 
 dlg:button {
     id = "confirm",
@@ -206,210 +196,212 @@ dlg:button {
     onclick = function()
         local args = dlg.data
 
-        -- TODO: Make palette analysis tools create a new sprite instead,
-        -- so that sprite width and height are more reliable.
-        local sprite = app.activeSprite
-        if sprite then
+        -- Search for appropriate source palette.
+        local srcPal = nil
+        local palType = args.palType
+        if palType == "FILE" then
+            local fp =  args.palFile
+            if fp and #fp > 0 then
+                srcPal = Palette { fromFile = fp }
+            end
+        elseif palType == "PRESET" then
+            local pr = args.palPreset
+            if pr and #pr > 0 then
+                srcPal = Palette { fromResource = pr }
+            end
+        else
+            srcPal = app.activeSprite.palettes[1]
+        end
 
-            local oldMode = sprite.colorMode
-            app.command.ChangePixelFormat { format = "rgb" }
+        if srcPal then
+            local sprite = Sprite(512, 512)
+            sprite:setPalette(srcPal)
 
-            -- Search for appropriate source palette.
-            local srcPal = nil
-            local palType = args.palType
-            if palType == "FILE" then
-                local fp =  args.palFile
-                if fp and #fp > 0 then
-                    srcPal = Palette { fromFile = fp }
-                end
-            elseif palType == "PRESET" then
-                local pr = args.palPreset
-                if pr and #pr > 0 then
-                    srcPal = Palette { fromResource = pr }
-                end
-            else
-                srcPal = sprite.palettes[1]
+            -- Validate range of palette to sample.
+            local palStart = args.palStart or defaults.palStart
+            local palCount = args.palCount or defaults.palCount
+            local palSkip = args.palSkip or defaults.palSkip
+
+            palSkip = 1 + palSkip
+            palStart = math.min(#srcPal - 1, palStart)
+            palCount = math.min(palCount, #srcPal - palStart, 256)
+
+            -- Create points.
+            local srcPts = {}
+            for i = 0, palCount - 1, palSkip do
+                local ase = srcPal:getColor(palStart + i)
+                local clr = AseUtilities.aseColorToClr(ase)
+                local lab = Clr.rgbaToLab(clr)
+                local srcPt = Vec3.new(lab.a, lab.b, lab.l)
+                table.insert(srcPts, srcPt)
             end
 
-            if srcPal then
-                -- Validate range of palette to sample.
-                local palStart = args.palStart or defaults.palStart
-                local palCount = args.palCount or defaults.palCount
-                local palSkip = args.palSkip or defaults.palSkip
+            local closedLoop = args.closedLoop or defaults.closeLoop
+            local resolution = args.resolution or defaults.resolution
+            local curve = Curve3.fromPoints(closedLoop, srcPts)
 
-                palSkip = 1 + palSkip
-                palStart = math.min(#srcPal - 1, palStart)
-                palCount = math.min(palCount, #srcPal - palStart, 256)
+            local ptsSampled = {}
+            local clrsSampled = {}
 
-                -- Create points.
-                local srcPts = {}
-                for i = 0, palCount - 1, palSkip do
-                    local ase = srcPal:getColor(palStart + i)
-                    local clr = AseUtilities.aseColorToClr(ase)
-                    local lab = Clr.rgbaToLab(clr)
-                    local srcPt = Vec3.new(lab.a, lab.b, lab.l)
-                    table.insert(srcPts, srcPt)
-                end
+            local iToStep = 1.0
+            if closedLoop then
+                iToStep = 1.0 / resolution
+            else
+                iToStep = 1.0 / (resolution - 1.0)
+            end
 
-                local closedLoop = args.closedLoop or defaults.closeLoop
-                local resolution = args.resolution or defaults.resolution
-                local tension = args.tension or defaults.tension
-                tension = tension * 0.1
+            local swatchAlpha = 1.0
+            for i = 0, resolution, 1 do
+                local step = i * iToStep
+                local point = Curve3.eval(curve, step)
 
-                -- local curve = Curve3.fromCatmull(closedLoop, srcPts, tension)
-                local curve = Curve3.fromPoints(closedLoop, srcPts)
+                local j = i + 1
+                ptsSampled[j] = point
 
-                local ptsSampled = {}
-                local clrsSampled = {}
+                local clr = Clr.labToRgba(
+                    point.z, point.x, point.y, swatchAlpha)
 
-                local iToStep = 1.0
-                if closedLoop then
-                    iToStep = 1.0 / resolution
-                else
-                    iToStep = 1.0 / (resolution - 1)
-                end
+                local hex = Clr.toHex(clr)
+                clrsSampled[j] = hex
+            end
 
-                local swatchAlpha = 1.0
-                for i = 0, resolution, 1 do
-                    local step = i * iToStep
-                    local point = Curve3.eval(curve, step)
+            local width = sprite.width
+            local height = sprite.height
+            local halfWidth = width * 0.5
+            local halfHeight = height * 0.5
 
-                    local j = i + 1
-                    ptsSampled[j] = point
+            local projection = nil
+            local projPreset = args.projection or defaults.projection
+            if projPreset == "PERSPECTIVE" then
+                local fov = 0.8660254037844386
+                local aspect = width / height
+                projection = Mat4.perspective(
+                    fov, aspect)
+            else
+                projection = Mat4.orthographic(
+                    -halfWidth, halfWidth,
+                    -halfHeight, halfHeight,
+                    0.001, 1000.0)
+            end
 
-                    local clr = Clr.labToRgba(
-                        point.z, point.x, point.y, swatchAlpha)
+            -- Create camera and modelview matrices.
+            local uniformScale = 1.25 * math.min(width, height)
+            local model = Mat4.fromScale(uniformScale)
+            local camera = Mat4.cameraIsometric(
+                1.0, -1.0, 1.25, "RIGHT")
+            local modelview = model * camera
 
-                    local hex = Clr.toHex(clr)
-                    clrsSampled[j] = hex
-                end
+            -- Create geometry rotation axis.
+            local axx = args.axx or defaults.axx
+            local axy = args.axy or defaults.axy
+            local axz = args.axz or defaults.axz
+            local axis = Vec3.new(axx, axy, axz)
+            if Vec3.any(axis) then
+                axis = Vec3.normalize(axis)
+            else
+                axis = Vec3.forward()
+            end
 
-                local width = sprite.width
-                local height = sprite.height
-                local halfWidth = width * 0.5
-                local halfHeight = height * 0.5
-
-                local projection = nil
-                local projPreset = args.projection or defaults.projection
-                if projPreset == "PERSPECTIVE" then
-                    local fov = 0.8660254037844386
-                    local aspect = width / height
-                    projection = Mat4.perspective(
-                        fov, aspect)
-                else
-                    projection = Mat4.orthographic(
-                        -halfWidth, halfWidth,
-                        -halfHeight, halfHeight,
-                        0.001, 1000.0)
-                end
-
-                -- Create camera and modelview matrices.
-                local uniformScale = 1.25 * math.min(width, height)
-                local model = Mat4.fromScale(uniformScale)
-                local camera = Mat4.cameraIsometric(
-                    1.0, -1.0, 1.25, "RIGHT")
-                local modelview = model * camera
-
-                -- Create geometry rotation axis.
-                local axx = args.axx or defaults.axx
-                local axy = args.axy or defaults.axy
-                local axz = args.axz or defaults.axz
-                local axis = Vec3.new(axx, axy, axz)
-                if Vec3.any(axis) then
-                    axis = Vec3.normalize(axis)
-                else
-                    axis = Vec3.forward()
-                end
-
-                -- Add requested number of frames.
-                local oldFrameLen = #sprite.frames
-                local reqFrames = args.frames
-                local needed = math.max(0, reqFrames - oldFrameLen)
-                for h = 1, needed, 1 do
+            -- Add requested number of frames.
+            local oldFrameLen = #sprite.frames
+            local reqFrames = args.frames
+            local needed = math.max(0, reqFrames - oldFrameLen)
+            app.transaction(function()
+                for _ = 1, needed, 1 do
                     sprite:newEmptyFrame()
                 end
+            end)
 
-                local hToTheta = 6.283185307179586 / reqFrames
-                local minSwatchSize = args.minSwatchSize
-                local maxSwatchSize = args.maxSwatchSize
-                local swatchDiff = maxSwatchSize - minSwatchSize
+            local hToTheta = 6.283185307179586 / reqFrames
+            local minSwatchSize = args.minSwatchSize
+            local maxSwatchSize = args.maxSwatchSize
+            local swatchDiff = maxSwatchSize - minSwatchSize
 
-                local pts2d = {}
-                local zMin = 999999.0
-                local zMax = -999999.0
+            local pts2d = {}
+            local zMin = 999999.0
+            local zMax = -999999.0
 
-                local aMin = -110.0
-                local aMax = 110.0
-                local bMin = -110.0
-                local bMax = 110.0
-                local lMin = 0.0
-                local lMax = 100.0
+            local aMin = -110.0
+            local aMax = 110.0
+            local bMin = -110.0
+            local bMax = 110.0
+            local lMin = 0.0
+            local lMax = 100.0
 
-                -- Find original scale.
-                local lDiff = lMax - lMin
-                local aDiff = aMax - aMin
-                local bDiff = bMax - bMin
+            -- Find original scale.
+            local lDiff = lMax - lMin
+            local aDiff = aMax - aMin
+            local bDiff = bMax - bMin
 
-                local pivot = Vec3.new(
-                    0.5 * (aMin + aMax),
-                    0.5 * (bMin + bMax), 0.0)
-                local inv = 1.0 / math.max(aDiff, bDiff, lDiff)
-                for h = 1, reqFrames, 1 do
-                    local frame2d = {}
-                    local theta = (h - 1) * hToTheta
-                    local cosa = math.cos(theta)
-                    local sina = math.sin(theta)
-                    for i = 1, resolution, 1 do
-                        local vec = ptsSampled[i]
+            local pivot = Vec3.new(
+                0.5 * (aMin + aMax),
+                0.5 * (bMin + bMax), 0.0)
+            local inv = 1.0 / math.max(aDiff, bDiff, lDiff)
 
-                        vec = Vec3.sub(vec, pivot)
-                        vec = Vec3.scale(vec, inv)
+            -- Cache global methods.
+            local cos = math.cos
+            local sin = math.sin
+            local v3sub = Vec3.sub
+            local v3scl = Vec3.scale
+            local v3rot = Vec3.rotateInternal
+            local toScreen = Utilities.toScreen
+            local trunc = math.tointeger
+            local drawCirc = AseUtilities.drawCircleFill
 
-                        local vr = Vec3.rotateInternal(
-                            vec, cosa, sina, axis)
-                        local scrpt = Utilities.toScreen(
-                            modelview, projection, vr,
-                            width, height)
+            for h = 1, reqFrames, 1 do
+                local frame2d = {}
+                local theta = (h - 1) * hToTheta
+                local cosa = cos(theta)
+                local sina = sin(theta)
+                for i = 1, resolution, 1 do
+                    local vec = ptsSampled[i]
 
-                        if scrpt.z < zMin then zMin = scrpt.z end
-                        if scrpt.z > zMax then zMax = scrpt.z end
+                    vec = v3sub(vec, pivot)
+                    vec = v3scl(vec, inv)
 
-                        frame2d[i] = {
-                            point = scrpt,
-                            color = clrsSampled[i] }
-                    end
+                    local vr = v3rot(
+                        vec, cosa, sina, axis)
+                    local scrpt = toScreen(
+                        modelview, projection, vr,
+                        width, height)
 
-                    -- Depth sorting.
-                    table.sort(frame2d,
-                        function(a, b)
-                            return b.point.z < a.point.z
-                        end)
-                    pts2d[h] = frame2d
+                    if scrpt.z < zMin then zMin = scrpt.z end
+                    if scrpt.z > zMax then zMax = scrpt.z end
+
+                    frame2d[i] = {
+                        point = scrpt,
+                        color = clrsSampled[i] }
                 end
 
-                -- Create layer.
-                local layer = sprite:newLayer()
-                layer.name = "Palette.Plot"
+                -- Depth sorting.
+                table.sort(frame2d,
+                    function(a, b)
+                        return b.point.z < a.point.z
+                    end)
+                pts2d[h] = frame2d
+            end
 
-                local zDiff = zMin - zMax
-                local zDenom = 1.0
-                if zDiff ~= 0.0 then zDenom = 1.0 / zDiff end
+            -- Create layer.
+            local layer = sprite.layers[#sprite.layers]
+            layer.name = "Palette.Plot"
 
-                local trunc = math.tointeger
-                local drawCirc = AseUtilities.drawCircleFill
+            local zDiff = zMin - zMax
+            local zDenom = 1.0
+            if zDiff ~= 0.0 then zDenom = 1.0 / zDiff end
 
-                -- Create background image once, then clone.
-                local bkgImg = Image(width, height)
-                local bkgHex = args.bkgColor.rgbaPixel
-                for elm in bkgImg:pixels() do
-                    elm(bkgHex)
-                end
+            -- Create background image once, then clone.
+            local bkgImg = Image(width, height)
+            local bkgHex = args.bkgColor.rgbaPixel
+            for elm in bkgImg:pixels() do
+                elm(bkgHex)
+            end
 
-                -- local duration = args.duration or defaults.duration
-                -- duration = trunc(0.5 + duration * 0.001)
+            local duration = args.duration or defaults.duration
+            duration = duration * 0.001
+            app.transaction(function()
                 for h = 1, reqFrames, 1 do
                     local frame = sprite.frames[h]
-                    -- frame.duration = duration
+                    frame.duration = duration
 
                     local cel = sprite:newCel(layer, frame)
                     local img = bkgImg:clone()
@@ -434,21 +426,12 @@ dlg:button {
 
                     cel.image = img
                 end
+            end)
 
-            else
-                app.alert("The source palette could not be found.")
-            end
-
-            if oldMode == ColorMode.INDEXED then
-                app.command.ChangePixelFormat { format = "indexed" }
-            elseif oldMode == ColorMode.GRAY then
-                app.command.ChangePixelFormat { format = "gray" }
-            end
-
+            app.activeSprite = sprite
             app.refresh()
-
         else
-            app.alert("There is no active sprite.")
+            app.alert("The source palette could not be found.")
         end
     end
 }

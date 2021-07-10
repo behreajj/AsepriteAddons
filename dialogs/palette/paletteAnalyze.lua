@@ -234,7 +234,7 @@ local function drawRadial(
     -- Draw title.
     local titleChars = strToCharArr(title)
     local titleGlyphLen = #titleChars
-    local titlePxHalfLen = (titleGlyphLen * gwp1 * titleDisplScl) // 2
+    local titlePxHalfLen = (titleGlyphLen * gw * titleDisplScl) // 2
     drawHorizShd(lut, image, titleChars, txtHex, shdHex,
     xCenter - titlePxHalfLen, margin, gw, gh, titleDisplScl)
 
@@ -373,8 +373,6 @@ local function drawScatter(
     txtHex, shdHex,
     dotRad, titleDisplScl, txtDisplScl)
 
-    -- TODO: Distinguish vertical from horizontal pip count.
-
     -- Cache global functions to local.
     local trunc = math.tointeger
     local strfmt = string.format
@@ -393,7 +391,7 @@ local function drawScatter(
     -- Draw title.
     local titleChars = strToCharArr(title)
     local titleGlyphLen = #titleChars
-    local titlePxHalfLen = (titleGlyphLen * gwp1 * titleDisplScl) // 2
+    local titlePxHalfLen = (titleGlyphLen * gw * titleDisplScl) // 2
     local xImgCenter = wImage // 2
     drawHorizShd(lut, image, titleChars, txtHex, shdHex,
     xImgCenter - titlePxHalfLen, margin, gw, gh, titleDisplScl)
@@ -403,7 +401,6 @@ local function drawScatter(
 
     local xAxisPipsRight = displayRight - gwp1 * digLen * txtDisplScl
 
-    -- TODO: Clean this up.
     local xAxisPipsTop = hImage - margin
         - ghp1 * txtDisplScl - margin -- x axis label
         - ghp1 * txtDisplScl-- horizontal pips
@@ -594,7 +591,7 @@ dlg:button {
                 table.sort(indices)
 
                 -- Unpack unique entries to data for all displays.
-                local clrs = {}
+                -- local clrs = {}
                 local labs = {}
                 local lchs = {}
 
@@ -627,61 +624,7 @@ dlg:button {
 
                     labs[i] = lab
                     lchs[i] = lch
-                    clrs[i] = clr
-                end
-
-                local manifest = args.manifest
-                if manifest then
-
-                    -- Initialize layer.
-                    local manifestLayer = sprite:newLayer()
-                    manifestLayer.name = "Manifest"
-                    local manifestCel = sprite:newCel(manifestLayer, frame)
-                    local manifestImage = Image(768, math.max(256, sprite.height))
-                    fill(manifestImage, bkgHex)
-
-                    local brSize = 9
-                    -- local brSizeHalf = brSize // 2
-                    local rows = manifestImage.height // (brSize + 1)
-
-                    local x = 2
-                    local y = 2
-
-                    local gw3 = gw * 3
-                    local gw11 = gw * 11
-                    for i = 1, #hexes, 1 do
-                        local hex = hexes[i]
-                        local index = indices[i]
-                        drawSwatch(manifestImage,
-                            x + gw3 + 2, y, brSize, brSize,
-                            hex)
-
-                        local idxStr = string.format("%3d", index)
-                        local chars = strToCharArr(idxStr)
-
-                        drawHorizShd(
-                            lut, manifestImage, chars,
-                            txtHex, shdHex,
-                            x, y + 1, gw, gh, 1)
-
-                        local clr = clrs[i]
-                        local hexStr = Clr.toHexWeb(clr)
-                        chars = strToCharArr(hexStr)
-
-                        drawHorizShd(
-                            lut, manifestImage, chars,
-                            txtHex, shdHex,
-                            x + brSize + gw3 + 2, y + 1, gw, gh, 1)
-
-                        y = y + brSize + 1
-
-                        if i % rows == 0 then
-                            x = x + brSize + 4 + gw11
-                            y = 2
-                        end
-                    end
-
-                    manifestCel.image = manifestImage
+                    -- clrs[i] = clr
                 end
 
                 local labab = args.labab

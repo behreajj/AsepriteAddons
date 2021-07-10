@@ -88,16 +88,10 @@ end
 ---@return number
 function AseUtilities.blend(a, b)
 
-    -- There is a noticeable issue with accuracy
-    -- between this and the real number Clr version,
-    -- In the tuv > 1 case, subtracting one from tuv
-    -- when it's >= 127 seems to alleviate the issue?
-
     local t = b >> 0x18 & 0xff
+    if t > 0xfe then return b end
     local v = a >> 0x18 & 0xff
-
-    if v < 0x01 or t > 0xfe then return b end
-    if t > 0x7e then t = t + 1 end
+    if v < 0x01 then return b end
 
     local bb = b >> 0x10 & 0xff
     local bg = b >> 0x08 & 0xff
@@ -107,7 +101,15 @@ function AseUtilities.blend(a, b)
     local ag = a >> 0x08 & 0xff
     local ar = a & 0xff
 
-    local u = 0x100 - t
+    -- Experimented with subtracting
+    -- from 0x100 instead of 0xff, due to 255/2
+    -- not having a whole number middle, but 0xff
+    -- lead to more accurate results.
+    local u = 0xff - t
+    if t > 0x7e then
+        t = t + 1
+    end
+
     local uv = (v * u) // 0xff
     local tuv = t + uv
 
@@ -115,9 +117,10 @@ function AseUtilities.blend(a, b)
         local cr = (bb * t + ab * uv) // 0xff
         local cg = (bg * t + ag * uv) // 0xff
         local cb = (br * t + ar * uv) // 0xff
-        if cr > 255 then cr = 255 elseif cr < 0 then cr = 0 end
-        if cg > 255 then cg = 255 elseif cg < 0 then cg = 0 end
-        if cb > 255 then cb = 255 elseif cb < 0 then cb = 0 end
+
+        if cr > 0xff then cr = 0xff end
+        if cg > 0xff then cg = 0xff end
+        if cb > 0xff then cb = 0xff end
         return 0xff000000
             | cr << 0x10
             | cg << 0x08
@@ -664,9 +667,9 @@ function AseUtilities.drawMesh2(
     local vs = mesh.vs
     local vsLen = #vs
     local pts = {}
+    local vRnd = Vec2.round
     for i = 1, vsLen, 1 do
-        local v = Vec2.round(vs[i])
-        -- table.insert(pts, Point(v.x, v.y))
+        local v = vRnd(vs[i])
         pts[i] = Point(v.x, v.y)
     end
 
@@ -679,18 +682,17 @@ function AseUtilities.drawMesh2(
         local fLen = #f
         local ptsFace = {}
         for j = 1, fLen, 1 do
-            -- table.insert(ptsFace, pts[f[j]])
             ptsFace[j] = pts[f[j]]
         end
-        -- table.insert(ptsGrouped, ptsFace)
         ptsGrouped[i] = ptsFace
     end
 
     -- Group fills into one transaction.
+    local useTool = app.useTool
     if useFill then
         app.transaction(function()
             for i = 1, fsLen, 1 do
-                app.useTool {
+                useTool {
                     tool = "contour",
                     color = fillClr,
                     brush = brsh,
@@ -711,7 +713,7 @@ function AseUtilities.drawMesh2(
                 local ptPrev = ptGroup[ptgLen]
                 for j = 1, ptgLen, 1 do
                     local ptCurr = ptGroup[j]
-                    app.useTool {
+                    useTool {
                         tool = "line",
                         color = strokeClr,
                         brush = brsh,
@@ -762,8 +764,11 @@ function AseUtilities.drawStringHoriz(
             local glyph = lut[ch] or defGlyph
             -- print(glyph)
 
-            drawGlyph(image, glyph, hex, writeChar, writeLine, gw, gh, dw, dh)
-            writeChar = writeChar + dw + scale
+            drawGlyph(
+                image, glyph, hex,
+                writeChar, writeLine,
+                gw, gh, dw, dh)
+            writeChar = writeChar + dw
         end
     end
 end
@@ -802,8 +807,11 @@ function AseUtilities.drawStringVert(
         else
             local glyph = lut[ch] or defGlyph
             glyph = rotateCcw(glyph, gw, gh)
-            drawGlyph(image, glyph, hex, writeLine, writeChar, gh, gw, dh, dw)
-            writeChar = writeChar - dh + scale
+            drawGlyph(
+                image, glyph, hex,
+                writeLine, writeChar,
+                gh, gw, dh, dw)
+            writeChar = writeChar - dh
         end
     end
 end
@@ -969,7 +977,7 @@ function AseUtilities.rotateGlyphCcw(gl, w, h)
     return vr
 end
 
--- for i = 1, 10, 1 do
+-- for i = 1, 20, 1 do
 --     local aClr = Clr.random(
 --         0, 100,
 --         -110, 110,
