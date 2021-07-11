@@ -895,7 +895,13 @@ function AseUtilities.initCanvas(
     local layer = nil
 
     if sprite == nil then
-        sprite = Sprite(wDefault, hDefault)
+        local wVal = 32
+        local hVal = 32
+
+        if wDefault and wDefault > 0 then wVal = wDefault end
+        if hDefault and hDefault > 0 then hVal = hDefault end
+        sprite = Sprite(wVal, hVal)
+        
         app.activeSprite = sprite
         layer = sprite.layers[1]
         local lenClrs = #clrs

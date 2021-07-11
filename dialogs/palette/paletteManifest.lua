@@ -90,6 +90,7 @@ dlg:entry {
 }
 
 dlg:newrow { always = false }
+
 dlg:combobox {
     id = "palType",
     label = "Palette:",

@@ -1,28 +1,63 @@
 dofile("../support/aseutilities.lua")
 
+local msgSrcs = { "ENTRY", "FILE" }
+local txtFormats = { "gpl", "pal", "txt" }
+
 local defaults = {
-    msg = "Lorem ipsum dolor sit amet",
+    msgSrc = "ENTRY",
+    msgEntry = "Lorem ipsum dolor sit amet",
     animate = false,
     duration = 100.0,
     fillClr = Color(255, 255, 255, 255),
     shdColor = Color(0, 0, 0, 204),
-    bkgColor = Color(20, 20, 20, 0),
-    xOrigin = 50,
-    yOrigin = 50,
+    bkgColor = Color(20, 20, 20, 204),
+    xOrigin = 0,
+    yOrigin = 0,
     useShadow = true,
-    alignLine = "CENTER",
-    alignChar = "CENTER",
+    alignLine = "LEFT",
+    alignChar = "TOP",
     scale = 2,
     pullFocus = false
 }
 
 local dlg = Dialog { title = "Insert Text" }
 
+dlg:combobox {
+    id = "msgSrc",
+    label = "Text:",
+    option = defaults.msgSrc,
+    options = msgSrcs,
+    onchange = function()
+        local state = dlg.data.msgSrc
+
+        dlg:modify {
+            id = "msgEntry",
+            visible = state == "ENTRY"
+        }
+
+        dlg:modify {
+            id = "msgFile",
+            visible = state == "FILE"
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:entry {
-    id = "msg",
-    label = "Message",
-    text = defaults.msg,
-    focus = "false"
+    id = "msgEntry",
+    text = defaults.msgEntry,
+    focus = "false",
+    visible = defaults.msgSrc == "ENTRY"
+}
+
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "msgFile",
+    filetypes = txtFormats,
+    open = true,
+    visible = defaults.msgSrc == "FILE"
 }
 
 dlg:newrow { always = false }
@@ -74,14 +109,14 @@ dlg:slider {
 
 dlg:combobox {
     id = "alignHoriz",
-    label = "Line:",
+    label = "Horizontal:",
     option = defaults.alignLine,
     options = AseUtilities.GLYPH_ALIGN_HORIZ
 }
 
 dlg:combobox {
     id = "alignVert",
-    label = "Char:",
+    label = "Vertical:",
     option = defaults.alignChar,
     options = AseUtilities.GLYPH_ALIGN_VERT
 }
@@ -131,29 +166,105 @@ dlg:button {
         local gh = 8
 
         -- Unpack arguments.
-        local msg = args.msg
+        local msgSrc = args.msgSrc
         local animate = args.animate
         local xOrigin = args.xOrigin
         local yOrigin = args.yOrigin
         local scale = args.scale
-        local orientation = args.orientation
         local alignLine = args.alignHoriz
         local alignChar = args.alignVert
         local aseFill = args.fillClr
         local aseShd = args.shdColor
         local aseBkg = args.bkgColor
 
-        -- Validate message.
-        local msgLen = #msg
-        if msg == nil or msgLen < 1 then
-            msg = defaults.msg
-            msgLen = #msg
-        end
-
-        -- Unpack string to characters table.
+        local lineCount = 0
         local staticChars = {}
-        for i = 1, msgLen, 1 do
-            staticChars[i] = msg:sub(i, i)
+        local lineWidths = {}
+        local maxLineWidth = 0
+
+        -- TODO: Handle operation from CLI?
+        -- TODO: Handle unreasonably long lines?
+
+        if msgSrc == "FILE" then
+
+            local msgFilePath = args.msgFile
+            if msgFilePath and #msgFilePath > 0 then
+                -- print(msgFilePath)
+                local file = io.open(msgFilePath, "r")
+                if file then
+                    local linesItr = io.lines(msgFilePath)
+                    for strLine in linesItr do
+                        -- print(strLine)
+                        local lineLen = #strLine
+                        local charLine = {}
+                        for i = 1, lineLen, 1 do
+                            local currChar = strLine:sub(i, i)
+                            -- Still append spaces, as someone
+                            -- might use them for distribution.
+                            -- if not ((i == 1 or i == lineLen)
+                            --     and currChar == ' ') then
+                            table.insert(charLine, currChar)
+                            -- end
+                        end
+
+                        table.insert(staticChars, charLine)
+
+                        -- Calculate line widths.
+                        local lineWidth = #charLine
+                        table.insert(lineWidths, lineWidth)
+                        if lineWidth > maxLineWidth then
+                            maxLineWidth = lineWidth
+                        end
+
+                        lineCount = lineCount + 1
+                    end
+                    file:close()
+                end
+            end
+
+        else
+            local msg = args.msgEntry
+            if msg == nil or #msg < 1 then
+                msg = defaults.msgEntry
+            end
+
+            local msgLen = #msg
+            local prevChar = ''
+            local currChar = ''
+            local charLine = {}
+            for i = 1, msgLen, 1 do
+                currChar = msg:sub(i, i)
+                if prevChar == '\\' then
+                    if currChar == 'n' then
+                        local lineWidth = #charLine
+                        table.insert(lineWidths, lineWidth)
+                        if lineWidth > maxLineWidth then
+                            maxLineWidth = lineWidth
+                        end
+
+                        table.insert(staticChars, charLine)
+                        lineCount = lineCount + 1
+                        charLine = {}
+                    else
+                        table.insert(charLine, currChar)
+                    end
+                elseif currChar ~= '\\' then
+                    table.insert(charLine, currChar)
+                end
+
+                prevChar = currChar
+            end
+
+            -- Final line.
+            if prevChar ~= '\\' and currChar ~= 'n' then
+                table.insert(staticChars, charLine)
+                local lineWidth = #charLine
+                table.insert(lineWidths, lineWidth)
+                if lineWidth > maxLineWidth then
+                    maxLineWidth = lineWidth
+                end
+                lineCount = lineCount + 1
+            end
         end
 
         -- Cache Aseprite colors to hexadecimals.
@@ -165,15 +276,15 @@ dlg:button {
         local dh = gh * scale
         local useBkg = (hexBkg & 0xff000000) > 0
         local useShadow = (hexShd & 0xff000000) > 0
+        local stCharLen = #staticChars
 
         -- Determine dimensions of new image.
-        local widthImg = dw * msgLen
-        local heightImg = dh
-        if useShadow then heightImg = heightImg + scale end
+        local widthImg = dw * maxLineWidth
+        local heightImg = dh * lineCount + scale * (lineCount - 1)
 
         -- Acquire or create sprite.
         -- Acquire top layer.
-        local sprite = AseUtilities.initCanvas(widthImg, heightImg, msg)
+        local sprite = AseUtilities.initCanvas(widthImg, heightImg, "Text")
         local widthSprite = sprite.width
         local heightSprite = sprite.height
         local layer = sprite.layers[#sprite.layers]
@@ -183,12 +294,7 @@ dlg:button {
         yOrigin = math.tointeger(0.5 + yOrigin * 0.01 * heightSprite)
 
         -- Choose display function based on vertical or horizontal.
-        local displayString = nil
-        if orientation == "VERTICAL" then
-            displayString = AseUtilities.drawStringVert
-        else
-            displayString = AseUtilities.drawStringHoriz
-        end
+        local displayString = AseUtilities.drawStringHoriz
 
         -- Create background source image to copy.
         local bkgSrcImg = Image(widthImg, heightImg)
@@ -200,59 +306,81 @@ dlg:button {
         end
 
         -- Find the display width and center of a line.
-        local dispWidth = msgLen * dw
+        local dispWidth = maxLineWidth * dw
         local dispCenter = dispWidth // 2
 
         -- For static text, the cel position can be set.
         local staticPos = Point(xOrigin, yOrigin)
+        local lineOffsets = {}
         if alignLine == "CENTER" then
             staticPos.x = staticPos.x - dispCenter
+
+            for i = 1, lineCount, 1 do
+                lineOffsets[i] = (maxLineWidth - lineWidths[i]) // 2
+            end
         elseif alignLine == "RIGHT" then
             staticPos.x = staticPos.x - dispWidth
+
+            for i = 1, lineCount, 1 do
+                lineOffsets[i] = maxLineWidth - lineWidths[i]
+            end
+        else
+            for i = 1, lineCount, 1 do
+                lineOffsets[i] = 0
+            end
         end
 
         if alignChar == "CENTER" then
-            staticPos.y = staticPos.y - math.ceil((dh + scale) * 0.5)
+            staticPos.y = staticPos.y - heightImg // 2
         elseif alignChar == "BOTTOM" then
-            staticPos.y = staticPos.y - (dh + scale)
+            staticPos.y = staticPos.y - heightImg
         end
 
-        -- TODO: Allow for parsing of line breaks from \n?
         if animate then
 
             local duration = args.duration or defaults.duration
             duration = duration * 0.001
             app.transaction(function()
-                for i = 1, msgLen, 1 do
-                    local animSlice = slice(staticChars, 1, i)
-                    local slLen = #animSlice
 
-                    -- For animated text, the dynamic text needs
-                    -- to be compared to the static text.
-                    local animPosx = 0
-                    if alignLine == "CENTER" then
-                        animPosx = dispCenter - (slLen * dw) // 2
-                    elseif alignLine == "RIGHT" then
-                        animPosx = dispWidth - slLen * dw
-                    end
+                local yCaret = 0
+                for i = 1, stCharLen, 1 do
+                    local charLine = staticChars[i]
+                    local charCount = #charLine
+                    local animImage = nil
 
-                    local animFrame = sprite:newEmptyFrame()
-                    animFrame.duration = duration
-                    local animCel = sprite:newCel(layer, animFrame)
-                    animCel.position = staticPos
+                    for j = 1, charCount, 1 do
+                        local animSlice = slice(charLine, 1, j)
+                        local slLen = #animSlice
 
-                    local animImage = bkgSrcImg:clone()
+                        local animFrame = sprite:newEmptyFrame()
+                        animFrame.duration = duration
+                        local animCel = sprite:newCel(layer, animFrame)
+                        animCel.position = staticPos
 
-                    if useShadow then
+                        local animPosx = 0
+                        if alignLine == "CENTER" then
+                            animPosx = animPosx + dispCenter - (slLen * dw) // 2
+                        elseif alignLine == "RIGHT" then
+                            animPosx = animPosx + dispWidth - slLen * dw
+                        end
+
+                        animImage = bkgSrcImg:clone()
+
+                        if useShadow then
+                            displayString(
+                                lut, animImage, animSlice, hexShd,
+                                animPosx, yCaret + scale, gw, gh, scale)
+                        end
                         displayString(
-                            lut, animImage, animSlice, hexShd,
-                            animPosx, scale, gw, gh, scale)
-                    end
-                    displayString(
-                        lut, animImage, animSlice, hexFill,
-                        animPosx, 0, gw, gh, scale)
+                            lut, animImage, animSlice, hexFill,
+                            animPosx, yCaret, gw, gh, scale)
 
-                    animCel.image = animImage
+                        animCel.image = animImage
+                    end
+
+                    yCaret = yCaret + dh + scale
+
+                    bkgSrcImg = animImage:clone()
                 end
             end)
 
@@ -263,14 +391,22 @@ dlg:button {
             local staticCel = sprite:newCel(layer, staticFrame)
             staticCel.position = staticPos
 
-            if useShadow then
+            local yCaret = 0
+            for i = 1, stCharLen, 1 do
+                local charLine = staticChars[i]
+                local lineOffset = lineOffsets[i] * dw
+
+                if useShadow then
+                    displayString(
+                        lut, bkgSrcImg, charLine, hexShd,
+                        lineOffset, yCaret + scale, gw, gh, scale)
+                end
                 displayString(
-                    lut, bkgSrcImg, staticChars, hexShd,
-                    0, scale, gw, gh, scale)
+                    lut, bkgSrcImg, charLine, hexFill,
+                    lineOffset, yCaret, gw, gh, scale)
+
+                yCaret = yCaret + dh + scale
             end
-            displayString(
-                lut, bkgSrcImg, staticChars, hexFill,
-                0, 0, gw, gh, scale)
 
             staticCel.image = bkgSrcImg
 
