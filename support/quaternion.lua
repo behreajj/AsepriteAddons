@@ -90,6 +90,22 @@ function Quaternion.add(a, b)
             ai.z + bi.z))
 end
 
+---Evaluates if all quaternion components are
+---non-zero.
+---@param a table quaternion
+---@return boolean
+function Quaternion.all(a)
+    return a.real ~= 0.0 and Vec3.all(a.imag)
+end
+
+---Evaluates if any quaternion components are
+---non-zero.
+---@param a table quaternion
+---@return boolean
+function Quaternion.any(a)
+    return a.real ~= 0.0 or Vec3.any(a.imag)
+end
+
 ---Evaluates whether two quaternions are,
 ---within a tolerance, approximately equal.
 ---@param a table left operand
@@ -187,6 +203,75 @@ function Quaternion.exp(a)
     else
         return Quaternion.identity()
     end
+end
+
+---Creates a quaternion from three axes. Normalizes the
+---inputs.
+---@param right table right axis
+---@param forward table forward axis
+---@param up table up axis
+---@return table
+function Quaternion.fromAxes(right, forward, up)
+    return Quaternion.fromAxesInternal(
+        Vec3.normalize(right),
+        Vec3.normalize(forward),
+        Vec3.normalize(up))
+end
+
+---Creates a quaternion from three axes. Does not normalize
+---the inputs or check for their validity.
+---@param right table right axis
+---@param forward table forward axis
+---@param up table up axis
+---@return table
+function Quaternion.fromAxesInternal(right, forward, up)
+    local cx = 1.0 + right.x - forward.y - up.z
+    if cx > 0.0 then
+        local dx = forward.z - up.y
+        if dx < -0.0 then
+            cx = -0.5 * math.sqrt(cx)
+        elseif dx > 0.0 then
+            cx = 0.5 * math.sqrt(cx)
+        else
+            cx = 0.0
+        end
+    else
+        cx = 0.0
+    end
+
+    local cy = 1.0 - right.x + forward.y - up.z
+    if cy > 0.0 then
+        local dy = up.x - right.z
+        if dy < -0.0 then
+            cy = -0.5 * math.sqrt(cy)
+        elseif dy > 0.0 then
+            cy = 0.5 * math.sqrt(cy)
+        else
+            cy = 0.0
+        end
+    else
+        cy = 0.0
+    end
+
+    local cz = 1.0 - right.x - forward.y + up.z
+    if cz > 0.0 then
+        local dz = right.y - forward.x
+        if dz < -0.0 then
+            cz = -0.5 * math.sqrt(cz)
+        elseif dz > 0.0 then
+            cz = 0.5 * math.sqrt(cz)
+        else
+            cz = 0.0
+        end
+    else
+        cz = 0.0
+    end
+
+    local cw = 1.0 + right.x + forward.y + up.z
+    if cw > 0.0 then cw = 0.5 * math.sqrt(cw) else cw = 0.0 end
+
+    return Quaternion.newByRef(
+        cw, Vec3.new(cx, cy, cz))
 end
 
 ---Creates a rotation from an origin direction to
@@ -333,6 +418,13 @@ function Quaternion.negate(a)
     return Quaternion.newByRef(
         -a.real,
         Vec3.new(-ai.x, -ai.y, -ai.z))
+end
+
+---Evaluates if all quaternion components are zero.
+---@param a table quaternion
+---@return boolean
+function Quaternion.none(a)
+    return a.real == 0.0 and Vec3.none(a.imag)
 end
 
 ---Divides a quaternion by its magnitude so

@@ -119,7 +119,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",
-    text = "OK",
+    text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
 
@@ -157,7 +157,7 @@ dlg:button {
 
 dlg:button {
     id = "cancel",
-    text = "CANCEL",
+    text = "&CANCEL",
     onclick = function()
         dlg:close()
     end

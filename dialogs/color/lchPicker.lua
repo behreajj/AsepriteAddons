@@ -1,6 +1,8 @@
 dofile("../../support/clr.lua")
 dofile("../../support/aseutilities.lua")
 
+-- TODO: Make Get, set FG, BG buttons alt-hotkey friendly.
+
 local harmonies = {
     "ANALOGOUS",
     "COMPLEMENT",
@@ -505,7 +507,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "cancel",
-    text = "CANCEL",
+    text = "&CANCEL",
     focus = false,
     onclick = function()
         dlg:close()

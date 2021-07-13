@@ -3,6 +3,19 @@ dofile("../support/aseutilities.lua")
 local msgSrcs = { "ENTRY", "FILE" }
 local txtFormats = { "gpl", "pal", "txt" }
 
+local function slice (tbl, start, finish)
+    local pos = 1
+    local sl = {}
+    local stop = finish
+
+    for i = start, stop, 1 do
+        sl[pos] = tbl[i]
+        pos = pos + 1
+    end
+
+    return sl
+end
+
 local defaults = {
     msgSrc = "ENTRY",
     msgEntry = "Lorem ipsum dolor sit amet",
@@ -84,6 +97,8 @@ dlg:number {
     visible = defaults.animate
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "xOrigin",
     label = "Origin:",
@@ -99,6 +114,8 @@ dlg:slider {
     value = defaults.yOrigin
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "scale",
     label = "Scale:",
@@ -107,25 +124,30 @@ dlg:slider {
     value = defaults.scale
 }
 
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "alignHoriz",
-    label = "Horizontal:",
+    label = "Pivot:",
     option = defaults.alignLine,
     options = AseUtilities.GLYPH_ALIGN_HORIZ
 }
 
 dlg:combobox {
     id = "alignVert",
-    label = "Vertical:",
     option = defaults.alignChar,
     options = AseUtilities.GLYPH_ALIGN_VERT
 }
+
+dlg:newrow { always = false }
 
 dlg:color {
     id = "fillClr",
     label = "Fill:",
     color = defaults.fillClr
 }
+
+dlg:newrow { always = false }
 
 dlg:color {
     id = "shdColor",
@@ -134,28 +156,17 @@ dlg:color {
     visible = defaults.useShadow
 }
 
+dlg:newrow { always = false }
+
 dlg:color {
     id = "bkgColor",
     label = "Background:",
     color = defaults.bkgColor
 }
 
-local function slice (tbl, start, finish)
-    local pos = 1
-    local sl = {}
-    local stop = finish
-
-    for i = start, stop, 1 do
-        sl[pos] = tbl[i]
-        pos = pos + 1
-    end
-
-    return sl
-end
-
 dlg:button {
     id = "confirm",
-    text = "OK",
+    text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
@@ -418,7 +429,7 @@ dlg:button {
 
 dlg:button {
     id = "cancel",
-    text = "CANCEL",
+    text = "&CANCEL",
     onclick = function()
         dlg:close()
     end

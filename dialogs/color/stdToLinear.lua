@@ -106,7 +106,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",
-    text = "OK",
+    text = "&OK",
     onclick = function()
         local args = dlg.data
         local sprite = app.activeSprite
@@ -167,7 +167,7 @@ end
 
 dlg:button {
     id = "cancel",
-    text = "CANCEL",
+    text = "&CANCEL",
     onclick = function()
         dlg:close()
     end

@@ -559,7 +559,7 @@ function Vec2.negate(a)
     return Vec2.new(-a.x, -a.y)
 end
 
----Evaluates if no vector components are non-zero.
+---Evaluates if all vector components are zero.
 ---@param a table
 ---@return boolean
 function Vec2.none(a)
@@ -888,13 +888,13 @@ function Vec2.toJson(v)
 end
 
 ---Converts a vector to polar coordinates.
----Returns a table with 'heading' and 'radius'.
+---Returns a table with 'radius' and 'heading'.
 ---@param a table vector
 ---@return table
 function Vec2.toPolar(a)
     return {
-        heading = Vec2.headingSigned(a),
-        radius = Vec2.mag(a) }
+        radius = Vec2.mag(a),
+        heading = Vec2.headingSigned(a) }
 end
 
 ---Truncates a vector's components to integers.

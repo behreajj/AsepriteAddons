@@ -603,7 +603,7 @@ function Vec4.negate(a)
     return Vec4.new(-a.x, -a.y, -a.z, -a.w)
 end
 
----Evaluates if no vector components are non-zero.
+---Evaluates if all vector components are zero.
 ---@param a table
 ---@return boolean
 function Vec4.none(a)

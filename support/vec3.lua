@@ -379,6 +379,50 @@ function Vec3.fract(a)
         a.z - math.tointeger(a.z))
 end
 
+---Creates a vector from an azimuth (or yaw),
+---inclination (or pitch) and radius. Expects the
+---inclination to be a signed value between -pi / 2
+---and pi / 2. The poles are upright in a Z-Up
+---coordinate system.
+---@param azimuth number
+---@param inclination number
+---@param radius number
+---@return table
+function Vec3.fromSpherical(
+    azimuth,
+    inclination,
+    radius)
+
+    local a = azimuth or 0.0
+    local i = inclination or 0.0
+    local r = radius or 1.0
+
+    return Vec3.fromSphericalInternal(
+        math.cos(a), math.sin(a),
+        math.cos(i), math.sin(i), r)
+end
+
+---Creates a vector from the cosine and sine
+---of azimuth and inclination. Multiplies by
+---the radius.
+---@param cosAzim number azimuth cosine
+---@param sinAzim number azimuth sine
+---@param cosIncl number inclination cosine
+---@param sinIncl number inclination sine
+---@param radius number radius
+---@return table
+function Vec3.fromSphericalInternal(
+    cosAzim, sinAzim,
+    cosIncl, sinIncl,
+    radius)
+
+    local rhoCosIncl = radius * cosIncl
+    return Vec3.new(
+        rhoCosIncl * cosAzim,
+        rhoCosIncl * sinAzim,
+        radius * sinIncl)
+end
+
 ---Creates a one-dimensional table of vectors
 ---arranged in a Cartesian grid from the lower
 ---to the upper bound. Both bounds are vectors.
@@ -743,7 +787,7 @@ function Vec3.negate(a)
     return Vec3.new(-a.x, -a.y, -a.z)
 end
 
----Evaluates if no vector components are non-zero.
+---Evaluates if all vector components are zero.
 ---@param a table
 ---@return boolean
 function Vec3.none(a)
@@ -1158,6 +1202,18 @@ function Vec3.toJson(v)
     return string.format(
         "{\"x\":%.4f,\"y\":%.4f,\"z\":%.4f}",
         v.x, v.y, v.z)
+end
+
+---Converts a vector to spherical coordinates.
+---Returns a table with 'radius', 'azimuth' and
+---inclination.
+---@param a table vector
+---@return table
+function Vec3.toSpherical(a)
+    return {
+        radius = Vec3.mag(a),
+        azimuth = Vec3.azimuthSigned(a),
+        inclination = Vec3.inclinationSigned(a) }
 end
 
 ---Truncates a vector's components to integers.

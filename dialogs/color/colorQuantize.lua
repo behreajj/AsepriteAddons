@@ -24,7 +24,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "ok",
-    text = "OK",
+    text = "&OK",
     focus = false,
     onclick = function()
         local args = dlg.data
@@ -94,7 +94,7 @@ dlg:button {
 
 dlg:button {
     id = "cancel",
-    text = "CANCEL",
+    text = "&CANCEL",
     onclick = function()
         dlg:close()
     end

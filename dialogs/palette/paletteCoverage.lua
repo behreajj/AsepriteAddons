@@ -2,11 +2,6 @@ dofile("../../support/mat4.lua")
 dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
-local projections = {
-    "ORTHO",
-    "PERSPECTIVE"
-}
-
 local geometries = {
     "CUBE",
     "SPHERE"
@@ -14,7 +9,7 @@ local geometries = {
 
 local defaults = {
     palType = "ACTIVE",
-    startIndex = 0,
+    palStart = 0,
     palCount = 256,
 
     queryRad = 175,
@@ -117,7 +112,7 @@ dlg:combobox {
     id = "projection",
     label = "Projection:",
     option = defaults.projection,
-    options = projections
+    options = AseUtilities.PROJECTIONS
 }
 
 dlg:newrow { always = false }
@@ -302,7 +297,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "confirm",
-    text = "OK",
+    text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
@@ -320,7 +315,7 @@ dlg:button {
             if pr and #pr > 0 then
                 srcPal = Palette { fromResource = pr }
             end
-        else
+        elseif palType == "ACTIVE" and app.activeSprite then
             srcPal = app.activeSprite.palettes[1]
         end
 
@@ -329,17 +324,16 @@ dlg:button {
             sprite:setPalette(srcPal)
 
             -- Validate range of palette to sample.
-            local startIndex = defaults.startIndex
+            local palStart = defaults.palStart
             local palCount = defaults.palCount
-
-            startIndex = math.min(#srcPal - 1, startIndex)
-            palCount = math.min(palCount, #srcPal - startIndex, 256)
+            palStart = math.min(#srcPal - 1, palStart)
+            palCount = math.min(palCount, #srcPal - palStart, 256)
 
             -- Find palette's unique values only.
             -- Alpha is masked out of hexadecimal values.
             local hexDict = {}
             for i = 0, palCount - 1, 1 do
-                local idx = startIndex + i
+                local idx = palStart + i
                 local aseColor = srcPal:getColor(idx)
                 local hex = 0xff000000 | aseColor.rgbaPixel
                 hexDict[hex] = idx
@@ -367,7 +361,7 @@ dlg:button {
             local aMax = -999999
             local bMax = -999999
 
-            local stlLut = Utilities.STL_LUT
+            -- Cache global functions used in for loops.
             local linearToXyz = Clr.rgbaLinearToXyzInternal
             local xyzToLab = Clr.xyzToLab
             local rgbaToLab = Clr.rgbaToLab
@@ -375,6 +369,12 @@ dlg:button {
             local toHex = Clr.toHex
             local fromHex = Clr.fromHex
             local stdToLin = Clr.standardToLinear
+            local cos = math.cos
+            local sin = math.sin
+            local rotax = Vec3.rotateInternal
+            local screen = Utilities.toScreen
+            local trunc = math.tointeger
+            local drawCirc = AseUtilities.drawCircleFill
 
             -- Unpack unique entries to data.
             local points = {}
@@ -386,23 +386,6 @@ dlg:button {
                 -- the color picker should be able to match
                 -- to the palette without being put into
                 -- Best Fit Index mode.
-
-                -- Unpack hexadecimal to standard RGB.
-                -- local sbi = hex >> 0x10 & 0xff
-                -- local sgi = hex >> 0x08 & 0xff
-                -- local sri = hex & 0xff
-
-                -- Convert standard to linear by look-up table.
-                -- local lbi = stlLut[1 + sbi]
-                -- local lgi = stlLut[1 + sgi]
-                -- local lri = stlLut[1 + sri]
-
-                -- Convert linear to CIE XYZ.
-                -- local xyz = linearToXyz(
-                --     lri * 0.00392156862745098,
-                --     lgi * 0.00392156862745098,
-                --     lbi * 0.00392156862745098,
-                --     1.0)
 
                 local srgb = fromHex(hex)
                 local lrgb = stdToLin(srgb)
@@ -424,7 +407,7 @@ dlg:button {
 
             -- Create Octree.
             local octCapacity = args.octCapacity
-            local bounds = Bounds3.new(
+            local bounds = Bounds3.newByRef(
                 Vec3.new(
                     aMin - 0.00001,
                     bMin - 0.00001,
@@ -555,11 +538,6 @@ dlg:button {
             local modelview = model * camera
 
             local hToTheta = 6.283185307179586 / reqFrames
-            local cos = math.cos
-            local sin = math.sin
-            local rotax = Vec3.rotateInternal
-            local screen = Utilities.toScreen
-
             local minSwatchSize = args.minSwatchSize
             local maxSwatchSize = args.maxSwatchSize
             local swatchDiff = maxSwatchSize - minSwatchSize
@@ -610,9 +588,6 @@ dlg:button {
             local zDenom = 1.0
             if zDiff ~= 0.0 then zDenom = 1.0 / zDiff end
 
-            local trunc = math.tointeger
-            local drawCirc = AseUtilities.drawCircleFill
-
             -- Create background image once, then clone.
             local bkgImg = Image(width, height)
             local bkgHex = args.bkgColor.rgbaPixel
@@ -661,7 +636,7 @@ dlg:button {
 
 dlg:button {
     id = "cancel",
-    text = "CANCEL",
+    text = "&CANCEL",
     focus = false,
     onclick = function()
         dlg:close()

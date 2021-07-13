@@ -2,10 +2,7 @@ dofile("../../support/mat4.lua")
 dofile("../../support/aseutilities.lua")
 dofile("../../support/curve3.lua")
 
-local projections = {
-    "ORTHO",
-    "PERSPECTIVE"
-}
+-- TODO: Offer option to show primary colors, red, green, blue and yellow, as reference points?
 
 local defaults = {
     palType = "ACTIVE",
@@ -119,7 +116,7 @@ dlg:combobox {
     id = "projection",
     label = "Projection:",
     option = defaults.projection,
-    options = projections
+    options = AseUtilities.PROJECTIONS
 }
 
 dlg:newrow { always = false }
@@ -191,7 +188,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "confirm",
-    text = "OK",
+    text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
@@ -209,7 +206,7 @@ dlg:button {
             if pr and #pr > 0 then
                 srcPal = Palette { fromResource = pr }
             end
-        else
+        elseif palType == "ACTIVE" and app.activeSprite then
             srcPal = app.activeSprite.palettes[1]
         end
 
@@ -333,6 +330,7 @@ dlg:button {
             local aDiff = aMax - aMin
             local bDiff = bMax - bMin
 
+            -- TODO: Redo pivot and perspecitve with nearest as reference.
             local pivot = Vec3.new(
                 0.5 * (aMin + aMax),
                 0.5 * (bMin + bMax), 0.0)
@@ -438,7 +436,7 @@ dlg:button {
 
 dlg:button {
     id = "cancel",
-    text = "CANCEL",
+    text = "&CANCEL",
     onclick = function()
         dlg:close()
     end

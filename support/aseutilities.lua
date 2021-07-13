@@ -59,6 +59,11 @@ AseUtilities.ORIENTATIONS = {
     "VERTICAL"
 }
 
+AseUtilities.PROJECTIONS = {
+    "ORTHO",
+    "PERSPECTIVE"
+}
+
 ---Houses utility methods for scripting
 ---Aseprite add-ons.
 ---@return table

@@ -150,7 +150,7 @@ dlg:newrow { always = false }
 -- dialog focus is set to false here.
 dlg:button {
     id = "confirm",
-    text = "OK",
+    text = "&OK",
     focus = false,
     onclick = function()
 
@@ -260,7 +260,7 @@ dlg:button {
 
 dlg:button {
     id = "cancel",
-    text = "CANCEL",
+    text = "&CANCEL",
     onclick = function()
         dlg:close()
     end
