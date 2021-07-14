@@ -28,7 +28,7 @@ Octree.FRONT_SOUTH_WEST = 5
 function Octree.new(bounds, capacity, level)
     local inst = setmetatable({}, Octree)
     inst.bounds = bounds or Bounds3.newByRef()
-    inst.capacity = capacity or 8
+    inst.capacity = capacity or 16
     inst.children = {
         nil, nil, nil, nil,
         nil, nil, nil, nil }

@@ -358,6 +358,7 @@ dlg:button {
 
                 local palEntry = {
                     a = lab.a,
+                    ase = aseColor,
                     b = lab.b,
                     chroma = lch.c,
                     hex =  0xff000000 | aseColor.rgbaPixel,
@@ -601,6 +602,7 @@ dlg:button {
                     rowLayer.name = strfmt("%03d.%s",
                         palIdx,
                         string.sub(palHexWeb, 2))
+                    -- rowLayer.color = palEntry.ase
                     rowLayer.data = strfmt("{\"idx\":%d,\"abgr\":%d}", palIdx, palHex)
 
                     local rowImg = nil

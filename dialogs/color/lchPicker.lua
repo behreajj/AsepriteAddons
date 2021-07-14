@@ -1,8 +1,6 @@
 dofile("../../support/clr.lua")
 dofile("../../support/aseutilities.lua")
 
--- TODO: Make Get, set FG, BG buttons alt-hotkey friendly.
-
 local harmonies = {
     "ANALOGOUS",
     "COMPLEMENT",
@@ -22,9 +20,7 @@ local defaults = {
     harmonyType = "TRIADIC"
 }
 
-local dlg = Dialog {
-    title = "CIE LCh Color Picker"
-}
+local dlg = Dialog { title = "LCh Color Picker" }
 
 local function updateHarmonies(l, c, h, a)
     local oneThird = 1.0 / 3.0
@@ -195,7 +191,7 @@ end
 dlg:button {
     id = "fgGet",
     label = "Get:",
-    text = "FG",
+    text = "F&ORE",
     focus = false,
     onclick = function()
        setFromAse(app.fgColor)
@@ -204,7 +200,7 @@ dlg:button {
 
 dlg:button {
     id = "bgGet",
-    text = "BG",
+    text = "B&ACK",
     focus = false,
     onclick = function()
        app.command.SwitchColors()
@@ -307,7 +303,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "fgSet",
     label = "Set:",
-    text = "FG",
+    text = "&FORE",
     focus = false,
     onclick = function()
         app.fgColor = dlg.data.clr[1]
@@ -316,7 +312,7 @@ dlg:button {
 
 dlg:button {
     id = "bgSet",
-    text = "BG",
+    text = "&BACK",
     focus = false,
     onclick = function()
         -- Bug where assigning to app.bgColor

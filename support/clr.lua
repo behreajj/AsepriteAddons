@@ -338,6 +338,11 @@ function Clr.gridHsl(
     local vLons = longitudes or 32
 
     -- Validate.
+    if aVal < 0.00392156862745098 then
+        aVal = 0.00392156862745098
+    elseif aVal > 1.0 then
+        aVal = 1.0
+    end
     if vLons < 3 then vLons = 3 end
     if vLats < 3 then vLats = 3 end
     if vLayers < 1 then vLayers = 1 end
@@ -404,14 +409,18 @@ function Clr.gridsRgb(cols, rows, layers, alpha)
     local cVal = cols or 2
 
     -- Validate arguments.
-    if aVal < 0.0 then
-        aVal = 0.0
+    if aVal < 0.00392156862745098 then
+        aVal = 0.00392156862745098
     elseif aVal > 1.0 then
         aVal = 1.0
     end
-    if lVal < 2 then lVal = 2 end
-    if rVal < 2 then rVal = 2 end
-    if cVal < 2 then cVal = 2 end
+
+    if lVal < 2 then lVal = 2
+    elseif lVal > 256 then lVal = 256 end
+    if rVal < 2 then rVal = 2
+    elseif rVal > 256 then rVal = 256 end
+    if cVal < 2 then cVal = 2
+    elseif cVal > 256 then cVal = 256 end
 
     local hToStep = 1.0 / (lVal - 1.0)
     local iToStep = 1.0 / (rVal - 1.0)
