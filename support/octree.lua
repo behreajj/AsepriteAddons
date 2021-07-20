@@ -208,6 +208,8 @@ function Octree.querySphericalInternal(
             local rsq = radius * radius
             local distf = Vec3.distSq
             for i = 1, ptsLen, 1 do
+                -- TODO: Early out if found exceeds an upper limit?
+
                 local pt = pts[i]
                 local currDist = distf(center, pt)
                 if currDist < rsq then
@@ -273,35 +275,38 @@ function Octree.toJson(o)
     str = str .. Bounds3.toJson(o.bounds)
     str = str .. ",\"capacity\":"
     str = str .. string.format("%d", o.capacity)
-    str = str .. ",\"children\":["
 
-    local isLeaf = true
-    for i = 1, 8, 1 do
-        local child = o.children[i]
-        if child then
-            isLeaf = false
-            str = str .. Octree.toJson(child)
-        else
-            str = str .. "null"
-        end
-        if i < 8 then str = str .. "," end
-    end
-
-    str = str .. "]"
-    str = str .. ",\"points\":["
+    -- Cannot use shortcuts here. Octree node
+    -- should be determined to be a leaf first, before
+    -- any string concatenation is done!!
+    local isLeaf = Octree.isLeaf(o)
 
     if isLeaf then
+        str = str .. ",\"points\":["
         local pts = o.points
         local ptsLen = #pts
         for i = 1, ptsLen, 1 do
             str = str .. Vec3.toJson(pts[i])
             if i < ptsLen then str = str .. "," end
         end
+        str = str .. "]"
+    else
+        str = str .. ",\"children\":["
+        local children = o.children
+        for i = 1, 8, 1 do
+            local child = children[i]
+            if child then
+                str = str .. Octree.toJson(child)
+            else
+                str = str .. "null"
+            end
+
+            if i < 8 then str = str .. "," end
+        end
+        str = str .. "]"
     end
 
-    str = str .. "]"
     str = str .. "}"
-
     return str
 end
 

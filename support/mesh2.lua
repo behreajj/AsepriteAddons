@@ -576,7 +576,7 @@ function Mesh2.polygon(sectors)
     local fs = { f }
 
     local name = "Polygon"
-    if vsect == 3 then name = "Triangle"
+        if vsect == 3 then name = "Triangle"
     elseif vsect == 4 then name = "Quadrilateral"
     elseif vsect == 5 then name = "Pentagon"
     elseif vsect == 6 then name = "Hexagon"

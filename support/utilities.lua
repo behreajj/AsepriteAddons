@@ -13,7 +13,9 @@ setmetatable(Utilities, {
         return cls.new(...)
     end})
 
--- Characters occupy an 8x8 grid.
+---Glyph look up table. Glyphs occupy
+---an 8 x 8 grid, where 1 represents
+---a mark and 0 represents empty.
 Utilities.GLYPH_LUT = {
     [' '] = 0,
     ['!'] = 1736164113350932496,
@@ -117,6 +119,8 @@ Utilities.GLYPH_LUT = {
     ['~'] = 3624271800126406656
 }
 
+---Look up table for linear to standard
+---color space conversion.
 Utilities.LTS_LUT = {
     0, 13, 22, 28, 34, 38, 42, 46, 50, 53, 56, 59, 61, 64, 66, 69,
     71, 73, 75, 77, 79, 81, 83, 85, 86, 88, 90, 92, 93, 95, 96, 98,
@@ -135,6 +139,8 @@ Utilities.LTS_LUT = {
     241, 241, 242, 242, 243, 243, 244, 244, 245, 245, 246, 246, 246, 247, 247, 248,
     248, 249, 249, 250, 250, 251, 251, 251, 252, 252, 253, 253, 254, 254, 255, 255 }
 
+---Look up table for standard to linear
+---color space conversion.
 Utilities.STL_LUT = {
     0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3,
@@ -516,7 +522,7 @@ function Utilities.quantizeUnsigned(a, levels)
             (math.ceil(a * levels) - 1.0)
             / (levels - 1.0))
     else
-        return a
+        return math.max(0.0, a)
     end
 end
 
@@ -529,8 +535,11 @@ end
 ---@param height number screen height
 ---@return table
 function Utilities.toScreen(
-    modelview, projection, pt3, width, height)
-    local pt4 = Utilities.promoteVec3ToVec4(pt3, 1.0)
+    modelview, projection,
+    pt3, width, height)
+
+    -- Promote to homogenous coordinate.
+    local pt4 = Vec4.new(pt3.x, pt3.y, pt3.z, 1.0)
     local mvpt4 = Utilities.mulMat4Vec4(modelview, pt4)
     local scr = Utilities.mulMat4Vec4(projection, mvpt4)
 
@@ -539,18 +548,22 @@ function Utilities.toScreen(
     local y = scr.y
     local z = scr.z
 
-    -- Convert from homogenous coordinate.
+    -- Demote from homogenous coordinate.
     if w ~= 0.0 then
-        x = x / w
-        y = y / w
-        z = z / w
+        local wInv = 1.0 / w
+        x = x * wInv
+        y = y * wInv
+        z = z * wInv
+    else
+        return Vec3.new(0.0, 0.0, 0.0)
     end
 
     -- Convert from normalized coordinates to
-    -- screen dimensions.
-    x =         width * (1.0 + x) * 0.5
-    y = height * (1.0 - (1.0 + y) * 0.5)
-    z =                 (1.0 + z) * 0.5
+    -- screen dimensions. Flip y axis. Retain
+    -- z coordinate for purpose of depth sort.
+    x = width  * (0.5 + 0.5 * x)
+    y = height * (0.5 - 0.5 * y)
+    z =           0.5 + 0.5 * z
 
     return Vec3.new(x, y, z)
 end

@@ -25,9 +25,20 @@ function Clr.new(r, g, b, a)
     return inst
 end
 
+---Arbitrary hue assigned to darker grays
+---in hue conversion functions.
 Clr.HSL_HUE_SHADOW = 255.0 / 360.0
+
+---Arbitrary hue assigned to lighter grays
+---in hue conversion functions.
 Clr.HSL_HUE_LIGHT = 48.0 / 360.0
+
+---Arbitrary hue assigned to darker grays
+---in LCh conversion functions.
 Clr.LCH_HUE_SHADOW = 308.0 / 360.0
+
+---Arbitrary hue assigned to lighter grays
+---in LCh conversion functions.
 Clr.LCH_HUE_LIGHT = 99.0 / 360.0
 
 function Clr:__band(b)
@@ -453,25 +464,29 @@ end
 ---@param alpha number transparency
 ---@return table
 function Clr.hslaToRgba(hue, sat, light, alpha)
-
-    local l = light or 1.0
     local a = alpha or 1.0
-
+    
+    local l = light or 1.0
     if l <= 0.0 then
         return Clr.new(0.0, 0.0, 0.0, a)
-    end
-
-    if l >= 1.0 then
+    elseif l >= 1.0 then
         return Clr.new(1.0, 1.0, 1.0, a)
     end
 
     local s = sat or 1.0
     if s <= 0.0 then
         return Clr.new(l, l, l, a)
+    elseif s >= 1.0 then
+        s = 1.0
     end
 
-    local q = l + s - l * s
-    if l < 0.5 then q = l * (1.0 + s) end
+    local q = 0.0
+    if l < 0.5 then
+        q = l * (1.0 + s)
+    else
+        q = l + s - l * s
+    end
+
     local p = l + l - q
     local qnp6 = (q - p) * 6.0
 
@@ -517,13 +532,27 @@ end
 ---@param alpha number transparency
 ---@return table
 function Clr.hsvaToRgba(hue, sat, val, alpha)
-    local h = hue or 0.0
-    local s = sat or 1.0
-    local v = val or 1.0
     local a = alpha or 1.0
+    
+    local v = val or 1.0
+    if v <= 0.0 then
+        return Clr.new(0.0, 0.0, 0.0, a)
+    elseif v >= 1.0 then
+        v = 1.0
+    end
 
-    h = 6.0 * (h % 1.0)
+    local s = sat or 1.0
+    if s <= 0.0 then
+        return Clr.new(v, v, v, a)
+    elseif s >= 1.0 then
+        s = 1.0
+    end
+
+    local h = hue or 0.0
+    h = h % 1.0
+    h = 6.0 * h
     local sector = math.tointeger(h)
+
     local tint1 = v * (1.0 - s)
     local tint2 = v * (1.0 - s * (h - sector))
     local tint3 = v * (1.0 - s * (1.0 + sector - h))
@@ -657,11 +686,15 @@ end
 ---@param a number alpha channel
 ---@return table
 function Clr.lchToLab(l, c, h, a)
+    -- TODO: Split into an internal and external
+    -- function, the former does no validation?
     local hRad = (h % 1.0) * 6.283185307179586
+    local cVal = c
+    if cVal < 0.0 then cVal = 0.0 end
     return {
         l = l,
-        a = c * math.cos(hRad),
-        b = c * math.sin(hRad),
+        a = cVal * math.cos(hRad),
+        b = cVal * math.sin(hRad),
         alpha = a or 1.0 }
 end
 

@@ -232,6 +232,8 @@ dlg:button {
                         local minLum = 1.0
                         local maxLum = 0.0
                         local stlLut = Utilities.STL_LUT
+                        local lRgbToXyz = Clr.rgbaLinearToXyzInternal
+                        local xyzToLab = Clr.xyzToLab
 
                         -- Cache luminosities and source alphas in dictionaries.
                         for hex, _ in pairs(srcClrDict) do
@@ -269,12 +271,12 @@ dlg:button {
                                 --     lum = (lum ^ 0.4166666666666667) * 1.055 - 0.055
                                 -- end
 
-                                local xyz = Clr.rgbaLinearToXyzInternal(
+                                local xyz = lRgbToXyz(
                                     lri * 0.00392156862745098,
                                     lgi * 0.00392156862745098,
                                     lbi * 0.00392156862745098,
                                     1.0)
-                                local lab = Clr.xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
+                                local lab = xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
 
                                 lum = lab.l * 0.01
                             end
@@ -292,7 +294,7 @@ dlg:button {
                         local invRangeLum = 1.0 / rangeLum
                         if useNormalize and rangeLum ~= 0 then
                             for hex, lum in pairs(lumDict) do
-                                lumDict[hex] =  (lum - minLum) * invRangeLum
+                                lumDict[hex] = (lum - minLum) * invRangeLum
                             end
                         end
 

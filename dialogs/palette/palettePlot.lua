@@ -2,8 +2,6 @@ dofile("../../support/mat4.lua")
 dofile("../../support/aseutilities.lua")
 dofile("../../support/curve3.lua")
 
--- TODO: Offer option to show primary colors, red, green, blue and yellow, as reference points?
-
 local defaults = {
     palType = "ACTIVE",
     palStart = 0,

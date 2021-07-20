@@ -148,16 +148,6 @@ dlg:slider {
     value = defaults.maxSwatchSize
 }
 
--- dlg:newrow { always = false }
-
--- dlg:slider {
---     id = "swatchAlpha",
---     label = "Alpha:",
---     min = 1,
---     max = 100,
---     value = defaults.swatchAlpha
--- }
-
 dlg:newrow { always = false }
 
 dlg:color {
@@ -228,17 +218,19 @@ dlg:button {
             local axz = args.axz or defaults.axz
 
             -- Cache global functions used in for loops.
-            local trunc = math.tointeger
-            local drawCirc = AseUtilities.drawCircleFill
-            local aseToClr = AseUtilities.aseColorToClr
-            local rgbToLab = Clr.rgbaToLab
             local cos = math.cos
             local sin = math.sin
-            local rotax = Vec3.rotateInternal
+            local trunc = math.tointeger
+            local strfmt = string.format
+            local rgbToLab = Clr.rgbaToLab
             local screen = Utilities.toScreen
-            local v3sub = Vec3.sub
+            local drawCirc = AseUtilities.drawCircleFill
+            local aseToClr = AseUtilities.aseColorToClr
+            local rotax = Vec3.rotateInternal
             local v3scl = Vec3.scale
+            local v3sub = Vec3.sub
             local v3hsh = Vec3.hashCode
+            local octquery = Octree.querySphericalInternal
 
             -- Create background image once, then clone.
             local width = sprite.width
@@ -270,8 +262,6 @@ dlg:button {
                     sprite:newCel(bkgLayer, sprite.frames[j], bkgImg)
                 end
             end)
-
-            local octquery = Octree.querySphericalInternal
 
             -- Validate range of palette to sample.
             palStart = math.min(#srcPal - 1, palStart)
@@ -308,7 +298,7 @@ dlg:button {
 
                     local layer = sprite:newLayer()
                     layers[palCount - i] = layer
-                    layer.name = string.format("%03d.%06X", i,
+                    layer.name = strfmt("%03d.%06X", i,
                         r255 << 0x10 | g255 << 0x08 | b255)
 
                     if lab.l < lMin then lMin = lab.l end
@@ -396,17 +386,6 @@ dlg:button {
                     -halfHeight, halfHeight,
                     0.001, 1000.0)
             end
-
-            -- aMin = -110.0
-            -- aMax = 110.0
-            -- bMin = -110.0
-            -- bMax = 110.0
-            -- lMin = 0.0
-            -- lMax = 100.0
-
-            -- aDiff = aMax - aMin
-            -- bDiff = bMax - bMin
-            -- lDiff = lMax - lMin
 
             -- Create camera and modelview matrices.
             local uniformScale = 0.825 * math.min(width, height)

@@ -238,9 +238,9 @@ dlg:button {
                         app.command.ChangePixelFormat { format = "rgb" }
 
                         -- Get all unique hexadecimal values from image.
-                        local srcpxitr = srcImg:pixels()
+                        local srcPxItr = srcImg:pixels()
                         local hexesUnique = {}
-                        for elm in srcpxitr do
+                        for elm in srcPxItr do
                             hexesUnique[elm()] = true
                         end
 
@@ -295,6 +295,9 @@ dlg:button {
                         for i = 1, #queries, 1 do
                             local query = queries[i]
                             local center = query.point
+
+                            -- TODO: Consider using Octree.query internal
+                            -- remembering to declare a found array...
                             local near = search(octree, center, cvgRad)
                             local resultHex = 0x00000000
                             if #near > 0 then

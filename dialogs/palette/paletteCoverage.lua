@@ -473,6 +473,9 @@ dlg:button {
                 local srcLab = rgbaToLab(srcClr)
                 local srcLabPt = Vec3.new(
                     srcLab.a, srcLab.b, srcLab.l)
+
+                -- TODO: Consider using Octree.query internal
+                -- remembering to declare a found array...
                 local results = Octree.querySpherical(
                     octree, srcLabPt, queryRad)
                 if #results > 1 then

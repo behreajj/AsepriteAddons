@@ -250,15 +250,24 @@ dlg:button {
             local w = sprite.width
             local h = sprite.height
 
-            local xOrigin = 0.01 * args.xOrigin
-            local yOrigin = 0.01 * args.yOrigin
-            local xDest = 0.01 * args.xDest
-            local yDest = 0.01 * args.yDest
+            local xOrigin = args.xOrigin
+            local yOrigin = args.yOrigin
+            local xDest = args.xDest
+            local yDest = args.yDest
 
-            local xOrPx = xOrigin * w
-            local yOrPx = yOrigin * h
-            local xDsPx = xDest * w
-            local yDsPx = yDest * h
+            local invalidFlag = xOrigin == xDest and yOrigin == yDest
+            if invalidFlag then
+                xOrigin = defaults.xOrigin
+                yOrigin = defaults.yOrigin
+                xDest = defaults.xDest
+                yDest = defaults.yDest
+            end
+
+            -- Divide by 100 to account for percentage.
+            local xOrPx = xOrigin * w * 0.01
+            local yOrPx = yOrigin * h * 0.01
+            local xDsPx = xDest * w * 0.01
+            local yDsPx = yDest * h * 0.01
 
             local bx = xOrPx - xDsPx
             local by = yOrPx - yDsPx
@@ -270,24 +279,24 @@ dlg:button {
             local img = cel.image
             local iterator = img:pixels()
             for elm in iterator do
-                local xPx = elm.x
-                local yPx = elm.y
-
-                local cx = xOrPx - xPx
-                local cy = yOrPx - yPx
-
+                local cx = xOrPx - elm.x
+                local cy = yOrPx - elm.y
                 local cb = (cx * bx + cy * by) * bbInv
 
                 -- Unsigned quantize will already clamp to
-                -- 0.0 minimum.
+                -- 0.0 lower bound.
                 local fac = Utilities.quantizeUnsigned(
                     cb, levels)
-                fac = math.min(1.0, fac)
+                if fac > 1.0 then fac = 1.0 end
 
                 elm(Clr.toHex(easeFuncFinal(fac)))
             end
 
             app.refresh()
+
+            if invalidFlag then
+                app.alert("Origin and destination are the same.")
+            end
         else
             app.alert("Only RGB color mode is supported.")
         end
