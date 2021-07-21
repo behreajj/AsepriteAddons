@@ -28,18 +28,18 @@ local function updateHarmonies(l, c, h, a)
     local splHue0 = 0.4166666666666667
     local splHue1 = 0.5833333333333334
 
-    local ana0 = Clr.lchToRgba(l, c, h - oneTwelve, a)
-    local ana1 = Clr.lchToRgba(l, c, h + oneTwelve, a)
+    local ana0 = Clr.lchTosRgba(l, c, h - oneTwelve, a)
+    local ana1 = Clr.lchTosRgba(l, c, h + oneTwelve, a)
 
-    local tri0 = Clr.lchToRgba(l, c, h - oneThird, a)
-    local tri1 = Clr.lchToRgba(l, c, h + oneThird, a)
+    local tri0 = Clr.lchTosRgba(l, c, h - oneThird, a)
+    local tri1 = Clr.lchTosRgba(l, c, h + oneThird, a)
 
-    local split0 = Clr.lchToRgba(l, c, h + splHue0, a)
-    local split1 = Clr.lchToRgba(l, c, h + splHue1, a)
+    local split0 = Clr.lchTosRgba(l, c, h + splHue0, a)
+    local split1 = Clr.lchTosRgba(l, c, h + splHue1, a)
 
-    local square0 = Clr.lchToRgba(l, c, h + 0.25, a)
-    local square1 = Clr.lchToRgba(l, c, h + 0.5, a)
-    local square2 = Clr.lchToRgba(l, c, h + 0.75, a)
+    local square0 = Clr.lchTosRgba(l, c, h + 0.25, a)
+    local square1 = Clr.lchTosRgba(l, c, h + 0.5, a)
+    local square2 = Clr.lchTosRgba(l, c, h + 0.75, a)
 
     local tris = {
         AseUtilities.clrToAseColor(Clr.clamp01(tri0)),
@@ -90,7 +90,7 @@ end
 
 
 local function updateWarning(clr)
-    if Clr.rgbIsInGamut(clr, 0.025) then
+    if Clr.sRgbIsInGamut(clr, 0.025) then
         dlg:modify {
             id = "warning0",
             visible = false
@@ -122,7 +122,7 @@ end
 local function setFromAse(aseClr)
     local clr = AseUtilities.aseColorToClr(aseClr)
     updateWarning(clr)
-    local lch = Clr.rgbaToLch(clr)
+    local lch = Clr.sRgbaToLch(clr)
     local trunc = math.tointeger
 
     dlg:modify {
@@ -168,7 +168,7 @@ local function updateClrs(data)
     -- local h = ((data.hue + 40) % 360) / 360.0
     local a = data.alpha * 0.01
 
-    local clr = Clr.lchToRgba(l, c, h, a)
+    local clr = Clr.lchTosRgba(l, c, h, a)
     updateWarning(clr)
 
     -- See

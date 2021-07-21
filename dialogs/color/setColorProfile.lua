@@ -234,24 +234,31 @@ dlg:button {
             if sprite ~= nil then
                 pal = sprite.palettes[1]
             else
-                local defCount = 12
-                local toPercent = 1.0 / (defCount - 1)
-                local gammaAdj = 1.0 / 1.7
-                local int = math.tointeger
-
-                -- Shift from gamma adjusted to linear
-                -- as the value approaches white.
-                local g = function (x, y)
-                    return (1.0 - x) * (x ^ y) + x * x
-                end
-                pal = Palette(defCount)
-                for i = 0, defCount - 1, 1 do
-                    local val = (i * toPercent)
-                    val = g(val, gammaAdj)
-                    local v255 = int(0.5 + (255 * val))
-                    pal:setColor(i, Color(v255, v255, v255, 255))
-                end
+                pal = Palette(9)
+                pal:setColor(0, Color(  0,   0,   0,   0))
+                pal:setColor(1, Color(  0,   0,   0, 255))
+                pal:setColor(2, Color(255, 255, 255, 255))
+                pal:setColor(3, Color(255,   0,   0, 255))
+                pal:setColor(4, Color(255, 255,   0, 255))
+                pal:setColor(5, Color(  0, 255,   0, 255))
+                pal:setColor(6, Color(  0, 255, 255, 255))
+                pal:setColor(7, Color(  0,   0, 255, 255))
+                pal:setColor(8, Color(255,   0, 255, 255))
             end
+        end
+
+        -- Ensure that palette contains alpha in slot zero.
+        local firstColor = pal:getColor(0)
+        if firstColor.rgbaPixel ~= 0x0 then
+            pal:resize(#pal + 1)
+            for i = #pal - 1, 1, -1 do
+                pal:setColor(i, pal:getColor(i - 1))
+            end
+            pal:setColor(0, Color(0, 0, 0, 0))
+        elseif firstColor.alpha < 1 then
+            -- It's possible that the first color could have
+            -- non-zero channels aside from alpha.
+            pal:setColor(0, Color(0, 0, 0, 0))
         end
 
         -- Create a new sprite.

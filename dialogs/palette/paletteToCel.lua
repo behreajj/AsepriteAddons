@@ -25,17 +25,17 @@ local function clrToVec3sRgb(clr)
 end
 
 local function clrToVec3lRgb(clr)
-    local lin = Clr.standardToLinear(clr)
+    local lin = Clr.sRgbaTolRgbaInternal(clr)
     return Vec3.new(lin.r, lin.g, lin.b)
 end
 
 local function clrToVec3Xyz(clr)
-    local xyz = Clr.rgbaToXyz(clr)
+    local xyz = Clr.sRgbaToXyz(clr)
     return Vec3.new(xyz.x, xyz.y, xyz.z)
 end
 
 local function clrToVec3Lab(clr)
-    local lab = Clr.rgbaToLab(clr)
+    local lab = Clr.sRgbaToLab(clr)
     return Vec3.new(lab.a, lab.b, lab.l)
 end
 
@@ -45,7 +45,7 @@ end
 
 local function vec3ToClrlRgb(v)
     local lin = Clr.new(v.x, v.y, v.z, 1.0)
-    return Clr.linearToStandard(lin)
+    return Clr.lRgbaTosRgbaInternal(lin)
 end
 
 local function vec3ToClrXyz(v)
@@ -53,7 +53,7 @@ local function vec3ToClrXyz(v)
 end
 
 local function vec3ToClrLab(v)
-    return Clr.labToRgba(v.z, v.x, v.y, 1.0)
+    return Clr.labTosRgba(v.z, v.x, v.y, 1.0)
 end
 
 local function clrToV3FuncFromPreset(preset)

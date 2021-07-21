@@ -362,13 +362,13 @@ dlg:button {
             local bMax = -999999
 
             -- Cache global functions used in for loops.
-            local linearToXyz = Clr.rgbaLinearToXyzInternal
+            local linearToXyz = Clr.lRgbaToXyzInternal
             local xyzToLab = Clr.xyzToLab
-            local rgbaToLab = Clr.rgbaToLab
-            local labToRgba = Clr.labToRgba
+            local rgbaToLab = Clr.sRgbaToLab
+            local labToRgba = Clr.labTosRgba
             local toHex = Clr.toHex
             local fromHex = Clr.fromHex
-            local stdToLin = Clr.standardToLinear
+            local stdToLin = Clr.sRgbaTolRgbaInternal
             local cos = math.cos
             local sin = math.sin
             local rotax = Vec3.rotateInternal

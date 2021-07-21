@@ -226,7 +226,7 @@ dlg:button {
             for i = 0, palCount - 1, palSkip do
                 local ase = srcPal:getColor(palStart + i)
                 local clr = AseUtilities.aseColorToClr(ase)
-                local lab = Clr.rgbaToLab(clr)
+                local lab = Clr.sRgbaToLab(clr)
                 local srcPt = Vec3.new(lab.a, lab.b, lab.l)
                 table.insert(srcPts, srcPt)
             end
@@ -253,7 +253,7 @@ dlg:button {
                 local j = i + 1
                 ptsSampled[j] = point
 
-                local clr = Clr.labToRgba(
+                local clr = Clr.labTosRgba(
                     point.z, point.x, point.y, swatchAlpha)
 
                 local hex = Clr.toHex(clr)

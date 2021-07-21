@@ -66,12 +66,12 @@ function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, rgbPreset, huePres
     elseif clrSpcPreset == "LINEAR_RGB" then
         local rgbef = GradientUtilities.rgbEasingFuncFromPreset(rgbPreset)
         return function(a, b, t)
-            return Clr.mixRgbaStandardInternal(a, b, rgbef(t))
+            return Clr.mixsRgbaInternal(a, b, rgbef(t))
         end
     else
         local rgbef = GradientUtilities.rgbEasingFuncFromPreset(rgbPreset)
         return function(a, b, t)
-            return Clr.mixRgbaLinearInternal(a, b, rgbef(t))
+            return Clr.mixlRgbaInternal(a, b, rgbef(t))
         end
     end
 end

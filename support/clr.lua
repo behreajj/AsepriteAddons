@@ -395,7 +395,7 @@ function Clr.gridHsl(
         local lgt = (i + 1.0) * toLgt
         lgt = lgt * lgt * (3.0 - (lgt + lgt))
 
-        result[1 + k] = Clr.hslaToRgba(
+        result[1 + k] = Clr.hslaTosRgba(
             hue, sat, lgt, aVal)
     end
 
@@ -463,9 +463,9 @@ end
 ---@param light number lightness
 ---@param alpha number transparency
 ---@return table
-function Clr.hslaToRgba(hue, sat, light, alpha)
+function Clr.hslaTosRgba(hue, sat, light, alpha)
     local a = alpha or 1.0
-    
+
     local l = light or 1.0
     if l <= 0.0 then
         return Clr.new(0.0, 0.0, 0.0, a)
@@ -531,9 +531,9 @@ end
 ---@param val number value
 ---@param alpha number transparency
 ---@return table
-function Clr.hsvaToRgba(hue, sat, val, alpha)
+function Clr.hsvaTosRgba(hue, sat, val, alpha)
     local a = alpha or 1.0
-    
+
     local v = val or 1.0
     if v <= 0.0 then
         return Clr.new(0.0, 0.0, 0.0, a)
@@ -620,7 +620,7 @@ end
 ---@param b number b, blue to yellow
 ---@param alpha number alpha channel
 ---@return table
-function Clr.labToRgba(l, a, b, alpha)
+function Clr.labTosRgba(l, a, b, alpha)
     local xyz = Clr.labToXyz(l, a, b, alpha)
     return Clr.xyzToRgba(xyz.x, xyz.y, xyz.z, xyz.a)
 end
@@ -686,16 +686,40 @@ end
 ---@param a number alpha channel
 ---@return table
 function Clr.lchToLab(l, c, h, a)
-    -- TODO: Split into an internal and external
-    -- function, the former does no validation?
-    local hRad = (h % 1.0) * 6.283185307179586
-    local cVal = c
+    -- Return earliers cannot be done here because
+    -- saturated colors are still possible at light = 0
+    -- and light = 100.
+    local lVal = l or 0.0
+    if lVal < 0.0 then
+        lVal = 0.0
+    elseif lVal > 100.0 then
+        lVal = 100.0
+    end
+
+    -- TODO: Are there any functions where internal
+    -- version can replace public?
+    local cVal = c or 0.0
     if cVal < 0.0 then cVal = 0.0 end
+    local hVal = h % 1.0
+    local aVal = a or 1.0
+    return Clr.lchToLabInternal(lVal, cVal, hVal, aVal)
+end
+
+---Converts a color from CIE LCH to CIE LAB.
+---Does not validate arguments for defaults or
+---out-of-bounds.
+---@param l number lightness
+---@param c number chromaticity
+---@param h number hue in degrees
+---@param a number alpha channel
+---@return table
+function Clr.lchToLabInternal(l, c, h, a)
+    local hRad = h * 6.283185307179586
     return {
         l = l,
-        a = cVal * math.cos(hRad),
-        b = cVal * math.sin(hRad),
-        alpha = a or 1.0 }
+        a = c * math.cos(hRad),
+        b = c * math.sin(hRad),
+        alpha = a }
 end
 
 ---Converts a color from CIE LCH to standard RGB.
@@ -705,18 +729,27 @@ end
 ---@param h number hue in degrees
 ---@param a number alpha channel
 ---@return table
-function Clr.lchToRgba(l, c, h, a)
+function Clr.lchTosRgba(l, c, h, a)
     local lab = Clr.lchToLab(l, c, h, a)
-    return Clr.labToRgba(lab.l, lab.a, lab.b, lab.alpha)
+    return Clr.labTosRgba(lab.l, lab.a, lab.b, lab.alpha)
 end
 
 ---Converts a color from linear RGB to standard RGB (sRGB).
----See https://www.wikiwand.com/en/SRGB.
+---Clamps the input color to [0.0, 1.0].
 ---Does not transform the alpha channel.
 ---@param a table color
 ---@return table
-function Clr.linearToStandard(a)
+function Clr.lRgbaTosRgba(a)
+    local aCl = Clr.clamp01(a)
+    return Clr.lRgbaTosRgbaInternal(aCl)
+end
 
+---Converts a color from linear RGB to standard RGB (sRGB).
+---Does not transform the alpha channel.
+---See https://www.wikiwand.com/en/SRGB.
+---@param a table color
+---@return table
+function Clr.lRgbaTosRgbaInternal(a)
     -- 1.0 / 2.4 = 0.4166666666666667
 
     local sr = a.r
@@ -743,12 +776,39 @@ function Clr.linearToStandard(a)
     return Clr.new(sr, sg, sb, a.a)
 end
 
+---Converts a color from linear RGBA to CIE XYZ.
+---Assumes each channel is in the range [0.0, 1.0].
+---The return table uses the keys x, y, z and a.
+---The alpha channel is unaffected by the transform.
+---@param red number red channel
+---@param green number green channel
+---@param blue number blue channel
+---@param alpha number alpha channel
+---@return table
+function Clr.lRgbaToXyzInternal(red, green, blue, alpha)
+    local aVerif = alpha or 1.0
+    return {
+        x = 0.4124108464885388   * red
+          + 0.3575845678529519   * green
+          + 0.18045380393360833  * blue,
+
+        y = 0.21264934272065283  * red
+          + 0.7151691357059038   * green
+          + 0.07218152157344333  * blue,
+
+        z = 0.019331758429150258 * red
+          + 0.11919485595098397  * green
+          + 0.9503900340503373   * blue,
+
+        a = aVerif }
+end
+
 ---Finds the relative luminance of a color.
 ---Assumes the color is in sRGB.
 ---@param a table color
 ---@return number
 function Clr.luminance(a)
-    return Clr.lumStandard(a)
+    return Clr.lumsRgb(a)
 end
 
 ---Finds the relative luminance of a linear color,
@@ -756,10 +816,10 @@ end
 ---according to recommendation 709.
 ---@param a table color
 ---@return number
-function Clr.lumLinear(a)
-    return 0.21264934272065283 * a.r
-         + 0.7151691357059038 * a.g
-         + 0.07218152157344333 * a.b
+function Clr.lumlRgb(a)
+    return a.r * 0.21264934272065283
+         + a.g * 0.7151691357059038
+         + a.b * 0.07218152157344333
 end
 
 ---Finds the relative luminance of a sRGB color,
@@ -767,51 +827,8 @@ end
 ---according to recommendation 709.
 ---@param a table color
 ---@return number
-function Clr.lumStandard(a)
-    return Clr.lumLinear(
-        Clr.standardToLinear(a))
-end
-
----Finds the maximum, or lightest, color.
----Clamps the result to [0.0, 1.0].
----@param a table left operand
----@param b table right operand
----@return table
-function Clr.max(a, b)
-    return Clr.clamp01(Clr.maxUnchecked(a, b))
-end
-
----Finds the maximum, or lightest, color.
----@param a table left operand
----@param b table right operand
----@return table
-function Clr.maxUnchecked(a, b)
-    return Clr.new(
-        math.max(a.r, b.r),
-        math.max(a.g, b.g),
-        math.max(a.b, b.b),
-        math.max(a.a, b.a))
-end
-
----Finds the minimum, or darkest, color.
----Clamps the result to [0.0, 1.0].
----@param a table left operand
----@param b table right operand
----@return table
-function Clr.min(a, b)
-    return Clr.clamp01(Clr.minUnchecked(a, b))
-end
-
----Finds the minimum, or darkest, color.
----@param a table left operand
----@param b table right operand
----@return table
-function Clr.minUnchecked(a, b)
-    return Clr.new(
-        math.min(a.r, b.r),
-        math.min(a.g, b.g),
-        math.min(a.b, b.b),
-        math.min(a.a, b.a))
+function Clr.lumsRgb(a)
+    return Clr.lumlRgb(Clr.sRgbaTolRgbaInternal(a))
 end
 
 ---Mixes two colors by a step.
@@ -823,7 +840,7 @@ end
 ---@param t number step
 ---@return table
 function Clr.mix(a, b, t)
-    return Clr.mixRgbaLinear(a, b, t)
+    return Clr.mixlRgba(a, b, t)
 end
 
 ---Mixes colors in an array by a step.
@@ -847,7 +864,7 @@ function Clr.mixArr(arr, t, func)
     local uScaled = u * (lenArr - 1.0)
     local i = math.tointeger(uScaled)
     local v = uScaled - i
-    local f = func or Clr.mixRgbaLinearInternal
+    local f = func or Clr.mixlRgbaInternal
     return f(arr[1 + i], arr[2 + i], v)
 end
 
@@ -903,18 +920,18 @@ end
 ---@return table
 function Clr.mixHslaInternal(a, b, t, hueFunc)
 
-    local aHsla = Clr.rgbaToHslaInternal(a.r, a.g, a.b, a.a)
-    local bHsla = Clr.rgbaToHslaInternal(b.r, b.g, b.b, b.a)
+    local aHsla = Clr.sRgbaToHslaInternal(a.r, a.g, a.b, a.a)
+    local bHsla = Clr.sRgbaToHslaInternal(b.r, b.g, b.b, b.a)
 
     local aSat = aHsla.s
     local bSat = bHsla.s
 
     if aSat <= 0.000001 or bSat <= 0.000001 then
-        return Clr.mixRgbaLinearInternal(a, b, t)
+        return Clr.mixlRgbaInternal(a, b, t)
     end
 
     local u = 1.0 - t
-    return Clr.hslaToRgba(
+    return Clr.hslaTosRgba(
         hueFunc(aHsla.h, bHsla.h, t),
         u * aSat + t * bSat,
         u * aHsla.l + t * bHsla.l,
@@ -973,18 +990,18 @@ end
 ---@param hueFunc function hue function
 ---@return table
 function Clr.mixHsvaInternal(a, b, t, hueFunc)
-    local aHsva = Clr.rgbaToHsvaInternal(a.r, a.g, a.b, a.a)
-    local bHsva = Clr.rgbaToHsvaInternal(b.r, b.g, b.b, b.a)
+    local aHsva = Clr.sRgbaToHsvaInternal(a.r, a.g, a.b, a.a)
+    local bHsva = Clr.sRgbaToHsvaInternal(b.r, b.g, b.b, b.a)
 
     local aSat = aHsva.s
     local bSat = bHsva.s
 
     if aSat <= 0.000001 or bSat <= 0.000001 then
-        return Clr.mixRgbaLinearInternal(a, b, t)
+        return Clr.mixlRgbaInternal(a, b, t)
     end
 
     local u = 1.0 - t
-    return Clr.hsvaToRgba(
+    return Clr.hsvaTosRgba(
         hueFunc(aHsva.h, bHsva.h, t),
         u * aSat + t * bSat,
         u * aHsva.v + t * bHsva.v,
@@ -1017,9 +1034,9 @@ end
 ---@return table
 function Clr.mixLabInternal(a, b, t)
     local u = 1.0 - t
-    local aLab = Clr.rgbaToLab(a)
-    local bLab = Clr.rgbaToLab(b)
-    return Clr.labToRgba(
+    local aLab = Clr.sRgbaToLab(a)
+    local bLab = Clr.sRgbaToLab(b)
+    return Clr.labTosRgba(
         u * aLab.l + t * bLab.l,
         u * aLab.a + t * bLab.a,
         u * aLab.b + t * bLab.b,
@@ -1077,19 +1094,19 @@ end
 ---@param hueFunc function hue function
 ---@return table
 function Clr.mixLchInternal(a, b, t, hueFunc)
-    local aLab = Clr.rgbaToLab(a)
+    local aLab = Clr.sRgbaToLab(a)
     local aa = aLab.a
     local ab = aLab.b
     local acsq = aa * aa + ab * ab
 
-    local bLab = Clr.rgbaToLab(b)
+    local bLab = Clr.sRgbaToLab(b)
     local ba = bLab.a
     local bb = bLab.b
     local bcsq = ba * ba + bb * bb
 
     local u = 1.0 - t
     if acsq < 0.00005 or bcsq < 0.00005 then
-        return Clr.labToRgba(
+        return Clr.labTosRgba(
             u * aLab.l + t * bLab.l,
             u * aa + t * ba,
             u * ab + t * bb,
@@ -1103,7 +1120,7 @@ function Clr.mixLchInternal(a, b, t, hueFunc)
         local bHue = math.atan(bb, ba) * 0.15915494309189535
         bHue = bHue % 1.0
 
-        return Clr.lchToRgba(
+        return Clr.lchTosRgba(
             u * aLab.l + t * bLab.l,
             u * aChr + t * bChr,
             hueFunc(aHue, bHue, t),
@@ -1118,7 +1135,7 @@ end
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Clr.mixRgbaLinear(a, b, t)
+function Clr.mixlRgba(a, b, t)
     local u = t or 0.5
     if u <= 0.0 then
         return Clr.new(a.r, a.g, a.b, a.a)
@@ -1126,7 +1143,7 @@ function Clr.mixRgbaLinear(a, b, t)
     if u >= 1.0 then
         return Clr.new(b.r, b.g, b.b, b.a)
     end
-    return Clr.mixRgbaLinearInternal(a, b, u)
+    return Clr.mixlRgbaInternal(a, b, u)
 end
 
 ---Mixes two colors in RGBA space by a step.
@@ -1135,7 +1152,7 @@ end
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Clr.mixRgbaLinearInternal(a, b, t)
+function Clr.mixlRgbaInternal(a, b, t)
     local u = 1.0 - t
     return Clr.new(
         u * a.r + t * b.r,
@@ -1160,7 +1177,7 @@ function Clr.mixRgbaStandard(a, b, t)
     if u >= 1.0 then
         return Clr.new(b.r, b.g, b.b, b.a)
     end
-    return Clr.mixRgbaStandardInternal(a, b, u)
+    return Clr.mixsRgbaInternal(a, b, u)
 end
 
 ---Mixes two colors in RGBA space by a step.
@@ -1171,11 +1188,11 @@ end
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Clr.mixRgbaStandardInternal(a, b, t)
-    return Clr.linearToStandard(
-        Clr.mixRgbaLinearInternal(
-        Clr.standardToLinear(a),
-        Clr.standardToLinear(b), t))
+function Clr.mixsRgbaInternal(a, b, t)
+    return Clr.lRgbaTosRgbaInternal(
+        Clr.mixlRgbaInternal(
+        Clr.sRgbaTolRgbaInternal(a),
+        Clr.sRgbaTolRgbaInternal(b), t))
 end
 
 ---Mixes two colors in CIE XYZ space by a step,
@@ -1204,8 +1221,8 @@ end
 ---@return table
 function Clr.mixXyzInternal(a, b, t)
     local u = 1.0 - t
-    local aXyz = Clr.rgbaToXyz(a)
-    local bXyz = Clr.rgbaToXyz(b)
+    local aXyz = Clr.sRgbaToXyz(a)
+    local bXyz = Clr.sRgbaToXyz(b)
     return Clr.xyzToRgba(
         u * aXyz.x + t * bXyz.x,
         u * aXyz.y + t * bXyz.y,
@@ -1301,12 +1318,11 @@ function Clr.random(
     local bt = math.random()
     local pt = math.random()
 
-    return Clr.clamp01(Clr.labToRgba(
+    return Clr.clamp01(Clr.labTosRgba(
         (1.0 - lt) * lMin + lt * lMax,
         (1.0 - at) * aMin + at * aMax,
         (1.0 - bt) * bMin + bt * bMax,
-        (1.0 - pt) * alphaMin
-            + pt * alphaMax))
+        (1.0 - pt) * alphaMin + pt * alphaMax))
 end
 
 ---Returns true if the red, green and blue
@@ -1314,7 +1330,7 @@ end
 ---@param a table color
 ---@param tol number tolerance
 ---@return boolean
-function Clr.rgbIsInGamut(a, tol)
+function Clr.sRgbIsInGamut(a, tol)
     local eps = tol or 0.0
     return (a.r >= -eps and a.r <= (1.0 + eps))
         and (a.g >= -eps and a.g <= (1.0 + eps))
@@ -1326,8 +1342,8 @@ end
 ---@param a table color
 ---@param tol number tolerance
 ---@return boolean
-function Clr.rgbaIsInGamut(a, tol)
-    return Clr.rgbIsInGamut(a, tol)
+function Clr.sRgbaIsInGamut(a, tol)
+    return Clr.sRgbIsInGamut(a, tol)
         and Clr.alphaIsInGamut(a, tol)
 end
 
@@ -1336,8 +1352,9 @@ end
 ---with values in the range [0.0, 1.0].
 ---@param a table color
 ---@return table
-function Clr.rgbaToHsla(a)
-    return Clr.rgbaToHslaInternal(Clr.clamp01(a))
+function Clr.sRgbaToHsla(a)
+    local aCl = Clr.clamp01(a)
+    return Clr.sRgbaToHslaInternal(aCl.r, aCl.g, aCl.b, aCl.a)
 end
 
 ---Converts RGBA channels to hue, saturation and lightness.
@@ -1349,7 +1366,7 @@ end
 ---@param blue number blue channel
 ---@param alpha number transparency
 ---@return table
-function Clr.rgbaToHslaInternal(red, green, blue, alpha)
+function Clr.sRgbaToHslaInternal(red, green, blue, alpha)
     local gbmx = blue
     if green > blue then gbmx = green end
     local gbmn = blue
@@ -1422,8 +1439,9 @@ end
 ---with values in the range [0.0, 1.0].
 ---@param a table color
 ---@return table
-function Clr.rgbaToHsva(a)
-    return Clr.rgbaToHsvaInternal(Clr.clamp01(a))
+function Clr.sRgbaToHsva(a)
+    local aCl = Clr.clamp01(a)
+    return Clr.sRgbaToHsvaInternal(aCl.r, aCl.g, aCl.b, aCl.a)
 end
 
 ---Converts RGBA channels to hue, saturation and value.
@@ -1435,7 +1453,7 @@ end
 ---@param blue number blue channel
 ---@param alpha number transparency
 ---@return table
-function Clr.rgbaToHsvaInternal(red, green, blue, alpha)
+function Clr.sRgbaToHsvaInternal(red, green, blue, alpha)
     -- Find maximum color channel.
     local gbmx = blue
     if green > blue then gbmx = green end
@@ -1507,8 +1525,8 @@ end
 ---The alpha channel is unaffected by the transform.
 ---@param a table color
 ---@return table
-function Clr.rgbaToLab(a)
-    local xyz = Clr.rgbaToXyz(a)
+function Clr.sRgbaToLab(a)
+    local xyz = Clr.sRgbaToXyz(a)
     return Clr.xyzToLab(xyz.x, xyz.y, xyz.z, xyz.a)
 end
 
@@ -1518,55 +1536,27 @@ end
 ---The alpha channel is unaffected by the transform.
 ---@param a table color
 ---@return table
-function Clr.rgbaToLch(a)
-    local lab = Clr.rgbaToLab(a)
+function Clr.sRgbaToLch(a)
+    local lab = Clr.sRgbaToLab(a)
     return Clr.labToLch(lab.l, lab.a, lab.b, lab.alpha)
 end
 
----Converts a color from standard RGB to CIE XYZ.
----The return table uses the keys x, y, z and a.
----The alpha channel is unaffected by the transform.
----@param a table color
----@return table
-function Clr.rgbaToXyz(a)
-    local l = Clr.standardToLinear(a)
-    return Clr.rgbaLinearToXyzInternal(l.r, l.g, l.b, l.a)
-end
-
----Converts a color from linear RGBA to CIE XYZ.
----Assumes each channel is in the range [0.0, 1.0].
----The return table uses the keys x, y, z and a.
----The alpha channel is unaffected by the transform.
----@param red number red channel
----@param green number green channel
----@param blue number blue channel
----@param alpha number alpha channel
----@return table
-function Clr.rgbaLinearToXyzInternal(red, green, blue, alpha)
-    local aVerif = alpha or 1.0
-    return {
-        x = 0.4124108464885388   * red
-          + 0.3575845678529519   * green
-          + 0.18045380393360833  * blue,
-
-        y = 0.21264934272065283  * red
-          + 0.7151691357059038   * green
-          + 0.07218152157344333  * blue,
-
-        z = 0.019331758429150258 * red
-          + 0.11919485595098397  * green
-          + 0.9503900340503373   * blue,
-
-        a = aVerif }
-end
-
 ---Converts a color from standard RGB (sRGB) to linear RGB.
----See https://www.wikiwand.com/en/SRGB.
+---Clamps the input color to [0.0, 1.0].
 ---Does not transform the alpha channel.
 ---@param a table color
 ---@return table
-function Clr.standardToLinear(a)
+function Clr.sRgbaTolRgba(a)
+    local aCl = Clr.clamp01(a)
+    return Clr.sRgbaTolRgbaInternal(aCl)
+end
 
+---Converts a color from standard RGB (sRGB) to linear RGB.
+---Does not transform the alpha channel.
+---See https://www.wikiwand.com/en/SRGB.
+---@param a table color
+---@return table
+function Clr.sRgbaTolRgbaInternal(a)
     -- 1.0 / 12.92 = 0.07739938080495357
     -- 1.0 / 1.055 = 0.9478672985781991
 
@@ -1592,6 +1582,16 @@ function Clr.standardToLinear(a)
     end
 
     return Clr.new(lr, lg, lb, a.a)
+end
+
+---Converts a color from standard RGB to CIE XYZ.
+---The return table uses the keys x, y, z and a.
+---The alpha channel is unaffected by the transform.
+---@param a table color
+---@return table
+function Clr.sRgbaToXyz(a)
+    local l = Clr.sRgbaTolRgbaInternal(a)
+    return Clr.lRgbaToXyzInternal(l.r, l.g, l.b, l.a)
 end
 
 ---Converts from a color to a hexadecimal integer.
@@ -1718,8 +1718,8 @@ end
 ---@param alpha number alpha channel
 ---@return table
 function Clr.xyzToRgba(x, y, z, alpha)
-    return Clr.linearToStandard(
-        Clr.xyzaToRgbaLinear(x, y, z, alpha))
+    return Clr.lRgbaTosRgbaInternal(
+        Clr.xyzaTolRgba(x, y, z, alpha))
 end
 
 ---Converts a color from CIE XYZ to linear RGB.
@@ -1729,7 +1729,7 @@ end
 ---@param z number z channel
 ---@param alpha number alpha channel
 ---@return table
-function Clr.xyzaToRgbaLinear(x, y, z, alpha)
+function Clr.xyzaTolRgba(x, y, z, alpha)
     local aVerif = alpha or 1.0
     return Clr.new(
           3.240812398895283    * x

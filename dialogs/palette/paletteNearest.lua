@@ -222,7 +222,7 @@ dlg:button {
             local sin = math.sin
             local trunc = math.tointeger
             local strfmt = string.format
-            local rgbToLab = Clr.rgbaToLab
+            local rgbToLab = Clr.sRgbaToLab
             local screen = Utilities.toScreen
             local drawCirc = AseUtilities.drawCircleFill
             local aseToClr = AseUtilities.aseColorToClr

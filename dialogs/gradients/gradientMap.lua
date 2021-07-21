@@ -232,7 +232,7 @@ dlg:button {
                         local minLum = 1.0
                         local maxLum = 0.0
                         local stlLut = Utilities.STL_LUT
-                        local lRgbToXyz = Clr.rgbaLinearToXyzInternal
+                        local lRgbToXyz = Clr.lRgbaToXyzInternal
                         local xyzToLab = Clr.xyzToLab
 
                         -- Cache luminosities and source alphas in dictionaries.

@@ -317,7 +317,7 @@ dlg:button {
             local strfmt = string.format
             local trunc = math.tointeger
             local min = math.min
-            local rgbToLab = Clr.rgbaToLab
+            local rgbToLab = Clr.sRgbaToLab
             local labToLch = Clr.labToLch
             local toHexWeb = Clr.toHexWebUnchecked
             local aseToClr = AseUtilities.aseColorToClr
