@@ -180,7 +180,9 @@ function Octree.querySpherical(o, center, radius)
 end
 
 ---Queries the octree with a spherical range, returning
----points inside the range.
+---an array where each entry is a table containing a point
+---and a dist. The array should be sorted, but it does not
+---check for duplicates.
 ---@param o table octree
 ---@param center table sphere center
 ---@param radius number sphere radius

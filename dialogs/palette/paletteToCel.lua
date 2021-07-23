@@ -13,7 +13,7 @@ local defaults = {
     palType = "ACTIVE",
     copyToLayer = true,
     cvgLabRad = 175,
-    cvgNormRad = 100,
+    cvgNormRad = 120,
     cvgCapacity = 16,
     printElapsed = false,
     clrSpacePreset = "LINEAR_RGB",
@@ -54,6 +54,14 @@ end
 
 local function vec3ToClrLab(v)
     return Clr.labTosRgba(v.z, v.x, v.y, 1.0)
+end
+
+local function boundsFromPreset(preset)
+    if preset == "CIE_LAB" then
+        return Bounds3.cieLab()
+    else
+        return Bounds3.unitCubeUnsigned()
+    end
 end
 
 local function clrToV3FuncFromPreset(preset)
@@ -149,7 +157,7 @@ dlg:slider {
     id = "cvgLabRad",
     label = "Radius:",
     min = 25,
-    max = 250,
+    max = 242,
     value = defaults.cvgLabRad,
     visible = defaults.clrSpacePreset == "CIE_LAB"
 }
@@ -160,7 +168,7 @@ dlg:slider {
     id = "cvgNormRad",
     label = "Radius:",
     min = 5,
-    max = 173,
+    max = 174,
     value = defaults.cvgNormRad,
     visible = defaults.clrSpacePreset ~= "CIE_LAB"
 }
@@ -246,13 +254,14 @@ dlg:button {
 
                         -- Select which conversion functions to use.
                         local clrSpacePreset = args.clrSpacePreset
+                        local octBounds = boundsFromPreset(clrSpacePreset)
                         local clrV3Func = clrToV3FuncFromPreset(clrSpacePreset)
                         local v3ClrFunc = v3ToClrFuncFromPreset(clrSpacePreset)
 
                         -- Cache global methods.
                         local fromHex = Clr.fromHex
                         local aseToClr = AseUtilities.aseColorToClr
-                        local search = Octree.querySpherical
+                        local search = Octree.querySphericalInternal
                         local toHex = Clr.toHexUnchecked
 
                         -- Create a dictionary where unique hexes are associated
@@ -267,19 +276,17 @@ dlg:button {
                         -- Convert source palette colors to points
                         -- inserted into octree.
                         local srcPalLen = #srcPal
-                        local palPts = {}
+                        local cvgCapacity = args.cvgCapacity
+                        local octree = Octree.new(octBounds, cvgCapacity, 0)
                         for i = 0, srcPalLen - 1, 1 do
                             local aseColor = srcPal:getColor(i)
                             local clr = aseToClr(aseColor)
                             local pt = clrV3Func(clr)
-                            palPts[1 + i] = pt
+                            Octree.insert(octree, pt)
                         end
 
                         -- Create an octree.
-                        local cvgCapacity = args.cvgCapacity
-                        local octBounds = Bounds3.fromPoints(palPts)
-                        local octree = Octree.new(octBounds, cvgCapacity, 0)
-                        Octree.insertAll(octree, palPts)
+                        -- Octree.insertAll(octree, palPts)
                         -- print(octree)
 
                         -- Select query radius according to color space.
@@ -295,13 +302,11 @@ dlg:button {
                         for i = 1, #queries, 1 do
                             local query = queries[i]
                             local center = query.point
-
-                            -- TODO: Consider using Octree.query internal
-                            -- remembering to declare a found array...
-                            local near = search(octree, center, cvgRad)
+                            local near = {}
+                            search(octree, center, cvgRad, near)
                             local resultHex = 0x00000000
                             if #near > 0 then
-                                local nearestPt = near[1]
+                                local nearestPt = near[1].point
                                 local nearestClr = v3ClrFunc(nearestPt)
                                 resultHex = toHex(nearestClr)
                             end

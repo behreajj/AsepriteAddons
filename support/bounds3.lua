@@ -271,4 +271,25 @@ function Bounds3.volume(b)
     return dff.x * dff.y * dff.z
 end
 
+---Returns a bounds with the dimensions
+---of the CIE LAB color space. Intended
+---for use with an octree containing
+---points of color.
+---@return table
+function Bounds3.cieLab()
+    return Bounds3.newByRef(
+        Vec3.new(-110.0, -110.0,  -1.0),
+        Vec3.new( 110.0,  110.0, 101.0))
+end
+
+---Returns a bounds containing an unsigned
+---unit cube in Cartesian coordinates, from
+---[0.0, 1.0].
+---@return table
+function Bounds3.unitCubeUnsigned()
+    return Bounds3.newByRef(
+        Vec3.new(-0.000001, -0.000001, -0.000001),
+        Vec3.new( 1.000001,  1.000001,  1.000001))
+end
+
 return Bounds3

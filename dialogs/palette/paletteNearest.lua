@@ -329,9 +329,7 @@ dlg:button {
 
             -- Create Octree.
             local octCapacity = args.octCapacity
-            local bounds = Bounds3.newByRef(
-                Vec3.new(-110.0, -110.0, -1.0),
-                Vec3.new(110.0, 110.0, 101.0))
+            local bounds = Bounds3.cieLab()
             local octree = Octree.new(bounds, octCapacity, 0)
             Octree.insertAll(octree, srcPts)
             -- print(octree)

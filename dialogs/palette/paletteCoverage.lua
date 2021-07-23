@@ -416,9 +416,7 @@ dlg:button {
             --         aMax + 0.00001,
             --         bMax + 0.00001,
             --         lMax + 0.00001))
-            local bounds = Bounds3.newByRef(
-                Vec3.new(-110.0, -110.0, -1.0),
-                Vec3.new(110.0, 110.0, 101.0))
+            local bounds = Bounds3.cieLab()
             local octree = Octree.new(bounds, octCapacity, 0)
             Octree.insertAll(octree, points)
 
