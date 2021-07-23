@@ -49,7 +49,7 @@ local function vec3ToClrlRgb(v)
 end
 
 local function vec3ToClrXyz(v)
-    return Clr.xyzToRgba(v.x, v.y, v.z, 1.0)
+    return Clr.xyzTosRgba(v.x, v.y, v.z, 1.0)
 end
 
 local function vec3ToClrLab(v)

@@ -15,6 +15,9 @@ setmetatable(AseUtilities, {
 AseUtilities.DEFAULT_FILL = Color(255, 245, 215, 255)
 
 AseUtilities.DEFAULT_PAL_ARR = {
+    Color(  0,   0,   0,   0),
+    Color(  0,   0,   0, 255),
+    Color(255, 255, 255, 255),
     Color(255,   0,   0, 255),
     Color(255, 106,   0, 255),
     Color(255, 162,   0, 255),
@@ -26,9 +29,7 @@ AseUtilities.DEFAULT_PAL_ARR = {
     Color( 17,  89, 166, 255),
     Color( 60,  42, 146, 255),
     Color(105,  12, 133, 255),
-    Color(170,   0,  85, 255),
-    Color(  0,   0,   0, 255),
-    Color(255, 255, 255, 255)
+    Color(170,   0,  85, 255)
 }
 
 AseUtilities.DEFAULT_STROKE = Color(32, 32, 32, 255)

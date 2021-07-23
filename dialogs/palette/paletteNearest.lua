@@ -282,6 +282,12 @@ dlg:button {
             local ptHexDict = {}
             local layers = {}
             app.transaction(function()
+
+                -- Create layers in reverse order.
+                for i = 0, palCount - 1, 1 do
+                    layers[palCount - i] = sprite:newLayer()
+                end
+
                 for i = 0, palCount - 1, 1 do
                     local ase = srcPal:getColor(palStart + i)
                     local hex = ase.rgbaPixel
@@ -296,9 +302,7 @@ dlg:button {
                     local g255 = hex >> 0x08 & 0xff
                     local r255 = hex & 0xff
 
-                    local layer = sprite:newLayer()
-                    layers[palCount - i] = layer
-                    layer.name = strfmt("%03d.%06X", i,
+                    layers[1 + i].name = strfmt("%03d.%06X", i,
                         r255 << 0x10 | g255 << 0x08 | b255)
 
                     if lab.l < lMin then lMin = lab.l end
@@ -326,14 +330,8 @@ dlg:button {
             -- Create Octree.
             local octCapacity = args.octCapacity
             local bounds = Bounds3.newByRef(
-                Vec3.new(
-                    aMin - 0.00001,
-                    bMin - 0.00001,
-                    lMin - 0.00001),
-                Vec3.new(
-                    aMax + 0.00001,
-                    bMax + 0.00001,
-                    lMax + 0.00001))
+                Vec3.new(-110.0, -110.0, -1.0),
+                Vec3.new(110.0, 110.0, 101.0))
             local octree = Octree.new(bounds, octCapacity, 0)
             Octree.insertAll(octree, srcPts)
             -- print(octree)

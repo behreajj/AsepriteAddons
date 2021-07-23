@@ -234,6 +234,7 @@ dlg:button {
             if sprite ~= nil then
                 pal = sprite.palettes[1]
             else
+                -- TODO: Use AseUtilities default instead?
                 pal = Palette(9)
                 pal:setColor(0, Color(  0,   0,   0,   0))
                 pal:setColor(1, Color(  0,   0,   0, 255))
@@ -327,9 +328,7 @@ dlg:button {
         local profilepath = args.prf
         local icc = nil
         if profilepath and #profilepath > 0 then
-            icc = ColorSpace {
-                fromFile = profilepath
-            }
+            icc = ColorSpace { fromFile = profilepath }
         else
             icc = ColorSpace()
         end

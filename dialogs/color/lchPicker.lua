@@ -90,7 +90,7 @@ end
 
 
 local function updateWarning(clr)
-    if Clr.sRgbIsInGamut(clr, 0.025) then
+    if Clr.rgbIsInGamut(clr, 0.025) then
         dlg:modify {
             id = "warning0",
             visible = false

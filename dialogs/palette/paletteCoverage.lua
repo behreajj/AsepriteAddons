@@ -353,13 +353,13 @@ dlg:button {
                 end)
 
             -- Find lab minimums and maximums.
-            local lMin = 999999
-            local aMin = 999999
-            local bMin = 999999
+            -- local lMin = 999999
+            -- local aMin = 999999
+            -- local bMin = 999999
 
-            local lMax = -999999
-            local aMax = -999999
-            local bMax = -999999
+            -- local lMax = -999999
+            -- local aMax = -999999
+            -- local bMax = -999999
 
             -- Cache global functions used in for loops.
             local linearToXyz = Clr.lRgbaToXyzInternal
@@ -394,28 +394,31 @@ dlg:button {
 
                 local point = Vec3.new(lab.a, lab.b, lab.l)
 
-                if lab.l < lMin then lMin = lab.l end
-                if lab.a < aMin then aMin = lab.a end
-                if lab.b < bMin then bMin = lab.b end
+                -- if lab.l < lMin then lMin = lab.l end
+                -- if lab.a < aMin then aMin = lab.a end
+                -- if lab.b < bMin then bMin = lab.b end
 
-                if lab.l > lMax then lMax = lab.l end
-                if lab.a > aMax then aMax = lab.a end
-                if lab.b > bMax then bMax = lab.b end
+                -- if lab.l > lMax then lMax = lab.l end
+                -- if lab.a > aMax then aMax = lab.a end
+                -- if lab.b > bMax then bMax = lab.b end
 
                 points[i] = point
             end
 
             -- Create Octree.
             local octCapacity = args.octCapacity
+            -- local bounds = Bounds3.newByRef(
+            --     Vec3.new(
+            --         aMin - 0.00001,
+            --         bMin - 0.00001,
+            --         lMin - 0.00001),
+            --     Vec3.new(
+            --         aMax + 0.00001,
+            --         bMax + 0.00001,
+            --         lMax + 0.00001))
             local bounds = Bounds3.newByRef(
-                Vec3.new(
-                    aMin - 0.00001,
-                    bMin - 0.00001,
-                    lMin - 0.00001),
-                Vec3.new(
-                    aMax + 0.00001,
-                    bMax + 0.00001,
-                    lMax + 0.00001))
+                Vec3.new(-110.0, -110.0, -1.0),
+                Vec3.new(110.0, 110.0, 101.0))
             local octree = Octree.new(bounds, octCapacity, 0)
             Octree.insertAll(octree, points)
 

@@ -622,7 +622,7 @@ end
 ---@return table
 function Clr.labTosRgba(l, a, b, alpha)
     local xyz = Clr.labToXyz(l, a, b, alpha)
-    return Clr.xyzToRgba(xyz.x, xyz.y, xyz.z, xyz.a)
+    return Clr.xyzTosRgba(xyz.x, xyz.y, xyz.z, xyz.a)
 end
 
 ---Converts a color from CIE LAB to CIE XYZ.
@@ -1137,6 +1137,8 @@ end
 ---@return table
 function Clr.mixlRgba(a, b, t)
     local u = t or 0.5
+
+    -- TODO: Clamp a and b?
     if u <= 0.0 then
         return Clr.new(a.r, a.g, a.b, a.a)
     end
@@ -1169,7 +1171,9 @@ end
 ---@param b table destination
 ---@param t number step
 ---@return table
-function Clr.mixRgbaStandard(a, b, t)
+function Clr.mixsRgba(a, b, t)
+
+    -- TODO: Clamp a and b?
     local u = t or 0.5
     if u <= 0.0 then
         return Clr.new(a.r, a.g, a.b, a.a)
@@ -1223,7 +1227,7 @@ function Clr.mixXyzInternal(a, b, t)
     local u = 1.0 - t
     local aXyz = Clr.sRgbaToXyz(a)
     local bXyz = Clr.sRgbaToXyz(b)
-    return Clr.xyzToRgba(
+    return Clr.xyzTosRgba(
         u * aXyz.x + t * bXyz.x,
         u * aXyz.y + t * bXyz.y,
         u * aXyz.z + t * bXyz.z,
@@ -1330,7 +1334,7 @@ end
 ---@param a table color
 ---@param tol number tolerance
 ---@return boolean
-function Clr.sRgbIsInGamut(a, tol)
+function Clr.rgbIsInGamut(a, tol)
     local eps = tol or 0.0
     return (a.r >= -eps and a.r <= (1.0 + eps))
         and (a.g >= -eps and a.g <= (1.0 + eps))
@@ -1342,8 +1346,8 @@ end
 ---@param a table color
 ---@param tol number tolerance
 ---@return boolean
-function Clr.sRgbaIsInGamut(a, tol)
-    return Clr.sRgbIsInGamut(a, tol)
+function Clr.rgbaIsInGamut(a, tol)
+    return Clr.rgbIsInGamut(a, tol)
         and Clr.alphaIsInGamut(a, tol)
 end
 
@@ -1717,7 +1721,7 @@ end
 ---@param z number z channel
 ---@param alpha number alpha channel
 ---@return table
-function Clr.xyzToRgba(x, y, z, alpha)
+function Clr.xyzTosRgba(x, y, z, alpha)
     return Clr.lRgbaTosRgbaInternal(
         Clr.xyzaTolRgba(x, y, z, alpha))
 end
