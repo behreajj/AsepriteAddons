@@ -99,10 +99,10 @@ local function updateWarning(clr)
             id = "warning1",
             visible = false
         }
-        dlg:modify {
-            id = "warning2",
-            visible = false
-        }
+        -- dlg:modify {
+        --     id = "warning2",
+        --     visible = false
+        -- }
     else
         dlg:modify {
             id = "warning0",
@@ -112,10 +112,10 @@ local function updateWarning(clr)
             id = "warning1",
             visible = true
         }
-        dlg:modify {
-            id = "warning2",
-            visible = true
-        }
+        -- dlg:modify {
+        --     id = "warning2",
+        --     visible = true
+        -- }
     end
 end
 
@@ -124,6 +124,13 @@ local function setFromAse(aseClr)
     updateWarning(clr)
     local lch = Clr.sRgbaToLch(clr)
     local trunc = math.tointeger
+    local chroma = trunc(0.5 + lch.c)
+    local alpha = trunc(0.5 + lch.a * 100.0)
+
+    dlg:modify {
+        id = "alpha",
+        value = alpha
+    }
 
     dlg:modify {
         id = "lightness",
@@ -132,29 +139,26 @@ local function setFromAse(aseClr)
 
     dlg:modify {
         id = "chroma",
-        value = trunc(0.5 + lch.c)
+        value = chroma
     }
 
-    dlg:modify {
-        id = "hue",
-        value = trunc(0.5 + lch.h * 360.0)
-        -- Familiar hue:
-        -- value = (trunc(0.5 + lch.h * 360.0) - 40) % 360
-    }
+    -- Preserve hue unchanged for gray colors
+    -- where hue would be invalid.
+    if chroma > 0 then
+        dlg:modify {
+            id = "hue",
+            value = trunc(0.5 + lch.h * 360.0)
+        }
+    end
 
     dlg:modify {
-        id = "alpha",
-        value = trunc(0.5 + lch.a * 100.0)
+        id = "hexCode",
+        text = Clr.toHexWeb(clr)
     }
 
     dlg:modify {
         id = "clr",
         colors = { aseClr }
-    }
-
-    dlg:modify {
-        id = "hexCode",
-        text = Clr.toHexWeb(clr)
     }
 
     updateHarmonies(lch.l, lch.c, lch.h, lch.a)
@@ -292,13 +296,13 @@ dlg:label {
 
 dlg:newrow { always = false }
 
-dlg:label {
-    id = "warning2",
-    text = "Reduce chroma.",
-    visible = false
-}
+-- dlg:label {
+--     id = "warning2",
+--     text = "Reduce chroma.",
+--     visible = false
+-- }
 
-dlg:newrow { always = false }
+-- dlg:newrow { always = false }
 
 dlg:button {
     id = "fgSet",

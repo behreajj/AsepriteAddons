@@ -166,10 +166,13 @@ end
 ---@param o table octree
 ---@param center table sphere center
 ---@param radius number sphere radius
+---@param limit number size limit on found table
 ---@return table
-function Octree.querySpherical(o, center, radius)
+function Octree.querySpherical(o, center, radius, limit)
     local found = {}
-    Octree.querySphericalInternal(o, center, radius, found)
+    local valLimit = limit or 999999
+    Octree.querySphericalInternal(o, center, radius,
+        found, valLimit)
 
     local result = {}
     for i = 1, #found, 1 do
@@ -187,9 +190,10 @@ end
 ---@param center table sphere center
 ---@param radius number sphere radius
 ---@param found table array containing results
+---@param limit number size limit on found table
 ---@return table
 function Octree.querySphericalInternal(
-    o, center, radius, found)
+    o, center, radius, found, limit)
 
     if Bounds3.intersectsSphere(o.bounds, center, radius) then
 
@@ -200,7 +204,7 @@ function Octree.querySphericalInternal(
             if child then
                 isLeaf = false
                 Octree.querySphericalInternal(
-                    child, center, radius, found)
+                    child, center, radius, found, limit)
             end
         end
 
@@ -210,14 +214,16 @@ function Octree.querySphericalInternal(
             local rsq = radius * radius
             local distf = Vec3.distSq
             for i = 1, ptsLen, 1 do
-                -- TODO: Early out if found exceeds an upper limit?
-
                 local pt = pts[i]
                 local currDist = distf(center, pt)
                 if currDist < rsq then
                     Octree.insortRight(found,
                         { dist = currDist,
                           point = pt })
+                end
+
+                if #found >= limit then
+                    return
                 end
             end
         end

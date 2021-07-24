@@ -299,11 +299,12 @@ dlg:button {
 
                         -- Find nearest color in palette.
                         local correspDict = {}
+                        local resultLimit = 256
                         for i = 1, #queries, 1 do
                             local query = queries[i]
                             local center = query.point
                             local near = {}
-                            search(octree, center, cvgRad, near)
+                            search(octree, center, cvgRad, near, resultLimit)
                             local resultHex = 0x00000000
                             if #near > 0 then
                                 local nearestPt = near[1].point

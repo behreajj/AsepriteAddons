@@ -115,6 +115,7 @@ dlg:button {
 
                         -- TODO: Option presets for quantize, octree, one-bit.
 
+                        local resultLimit = 256
                         local octCapacity = args.octCapacity or defaults.octCapacity
                         local queryRad = args.queryRad and defaults.queryRad
                         local factor100 = args.factor or defaults.factor
@@ -183,7 +184,7 @@ dlg:button {
                             local bTrg = 0
 
                             local nearestPts = {}
-                            Octree.querySphericalInternal(octree, query, queryRad, nearestPts)
+                            Octree.querySphericalInternal(octree, query, queryRad, nearestPts, resultLimit)
                             if #nearestPts > 0 then
                                 local nearestHash = Vec3.hashCode(nearestPts[1].point)
                                 local nearestHex = ptToHexDict[nearestHash]

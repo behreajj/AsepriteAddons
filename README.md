@@ -35,6 +35,10 @@ This repo includes
 
   ![Conic Gradient](screencaps/conicGradient.png)
 
+- A Floyd-Steinberg filter ([Test model source](https://www.myminifactory.com/object/3d-print-horseman-at-maria-theresia-platz-152331))
+
+  ![FS Dither](screencaps/dither.png)
+
 - A hexagon grid generator.
 
   ![Hexagon Grid](screencaps/hexGrid.png)

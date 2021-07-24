@@ -230,7 +230,7 @@ dlg:button {
             local v3scl = Vec3.scale
             local v3sub = Vec3.sub
             local v3hsh = Vec3.hashCode
-            local octquery = Octree.querySphericalInternal
+            local search = Octree.querySphericalInternal
 
             -- Create background image once, then clone.
             local width = sprite.width
@@ -335,10 +335,11 @@ dlg:button {
             -- print(octree)
 
             local results = {}
+            local resultLimit = 256
             for i = 1, palCount, 1 do
                 local srcPt = srcPts[i]
                 local found = {}
-                octquery(octree, srcPt, queryRad, found)
+                search(octree, srcPt, queryRad, found, resultLimit)
 
                 local nearHexes = {}
                 local nearPts = {}
