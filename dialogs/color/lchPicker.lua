@@ -23,6 +23,10 @@ local defaults = {
 local dlg = Dialog { title = "LCh Color Picker" }
 
 local function updateHarmonies(l, c, h, a)
+
+    -- Hue wrapping is taken care of by lchTosRgba.
+    -- Clamping is taken care of by clToAseColor.
+
     local oneThird = 1.0 / 3.0
     local oneTwelve = 1.0 / 12.0
     local splHue0 = 0.4166666666666667
@@ -42,24 +46,24 @@ local function updateHarmonies(l, c, h, a)
     local square2 = Clr.lchTosRgba(l, c, h + 0.75, a)
 
     local tris = {
-        AseUtilities.clrToAseColor(Clr.clamp01(tri0)),
-        AseUtilities.clrToAseColor(Clr.clamp01(tri1))
+        AseUtilities.clrToAseColor(tri0),
+        AseUtilities.clrToAseColor(tri1)
     }
 
     local analogues = {
-        AseUtilities.clrToAseColor(Clr.clamp01(ana0)),
-        AseUtilities.clrToAseColor(Clr.clamp01(ana1))
+        AseUtilities.clrToAseColor(ana0),
+        AseUtilities.clrToAseColor(ana1)
     }
 
     local splits = {
-        AseUtilities.clrToAseColor(Clr.clamp01(split0)),
-        AseUtilities.clrToAseColor(Clr.clamp01(split1))
+        AseUtilities.clrToAseColor(split0),
+        AseUtilities.clrToAseColor(split1)
     }
 
     local squares = {
-        AseUtilities.clrToAseColor(Clr.clamp01(square0)),
-        AseUtilities.clrToAseColor(Clr.clamp01(square1)),
-        AseUtilities.clrToAseColor(Clr.clamp01(square2))
+        AseUtilities.clrToAseColor(square0),
+        AseUtilities.clrToAseColor(square1),
+        AseUtilities.clrToAseColor(square2)
     }
 
     dlg:modify {
@@ -90,7 +94,11 @@ end
 
 
 local function updateWarning(clr)
-    if Clr.rgbIsInGamut(clr, 0.025) then
+
+    -- Tolerance is based on blue being deemed
+    -- out of gamut, as it has the highest possible
+    -- chroma: L 32, C 134, H 306 .
+    if Clr.rgbIsInGamut(clr, 0.115) then
         dlg:modify {
             id = "warning0",
             visible = false
@@ -168,8 +176,6 @@ local function updateClrs(data)
     local l = data.lightness
     local c = data.chroma
     local h = data.hue / 360.0
-    -- Familiar hue:
-    -- local h = ((data.hue + 40) % 360) / 360.0
     local a = data.alpha * 0.01
 
     local clr = Clr.lchTosRgba(l, c, h, a)
@@ -177,7 +183,6 @@ local function updateClrs(data)
 
     -- See
     -- https://github.com/LeaVerou/css.land/issues/10
-    clr = Clr.clamp01(clr)
 
     dlg:modify {
         id = "clr",
@@ -248,7 +253,7 @@ dlg:slider {
     id = "chroma",
     label = "Chroma:",
     min = 0,
-    max = 132,
+    max = 135,
     value = defaults.chroma,
     onchange = function()
         updateClrs(dlg.data)

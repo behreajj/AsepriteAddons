@@ -696,8 +696,6 @@ function Clr.lchToLab(l, c, h, a)
         lVal = 100.0
     end
 
-    -- TODO: Are there any functions where internal
-    -- version can replace public?
     local cVal = c or 0.0
     if cVal < 0.0 then cVal = 0.0 end
     local hVal = h % 1.0
@@ -1138,7 +1136,6 @@ end
 function Clr.mixlRgba(a, b, t)
     local u = t or 0.5
 
-    -- TODO: Clamp a and b?
     if u <= 0.0 then
         return Clr.new(a.r, a.g, a.b, a.a)
     end
@@ -1173,7 +1170,6 @@ end
 ---@return table
 function Clr.mixsRgba(a, b, t)
 
-    -- TODO: Clamp a and b?
     local u = t or 0.5
     if u <= 0.0 then
         return Clr.new(a.r, a.g, a.b, a.a)

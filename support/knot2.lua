@@ -134,9 +134,9 @@ end
 ---@param n number uniform scalar
 ---@return table
 function Knot2:scaleNum(n)
-        self.co = Vec2.scale(self.co, n)
-        self.fh = Vec2.scale(self.fh, n)
-        self.rh = Vec2.scale(self.rh, n)
+    self.co = Vec2.scale(self.co, n)
+    self.fh = Vec2.scale(self.fh, n)
+    self.rh = Vec2.scale(self.rh, n)
     return self
 end
 
@@ -144,9 +144,9 @@ end
 ---@param v number nonuniform scalar
 ---@return table
 function Knot2:scaleVec2(v)
-        self.co = Vec2.hadamard(self.co, v)
-        self.fh = Vec2.hadamard(self.fh, v)
-        self.rh = Vec2.hadamard(self.rh, v)
+    self.co = Vec2.hadamard(self.co, v)
+    self.fh = Vec2.hadamard(self.fh, v)
+    self.rh = Vec2.hadamard(self.rh, v)
     return self
 end
 
@@ -250,13 +250,11 @@ end
 ---@param knot table knot
 ---@return string
 function Knot2.toJson(knot)
-    return "{\"co\":"
-        .. Vec2.toJson(knot.co)
-        .. ",\"fh\":"
-        .. Vec2.toJson(knot.fh)
-        .. ",\"rh\":"
-        .. Vec2.toJson(knot.rh)
-        .. "}"
+    return string.format(
+        "{\"co\":%s,\"fh\":%s,\"rh\":%s}",
+        Vec3.toJson(knot.co),
+        Vec3.toJson(knot.fh),
+        Vec3.toJson(knot.rh))
 end
 
 return Knot2

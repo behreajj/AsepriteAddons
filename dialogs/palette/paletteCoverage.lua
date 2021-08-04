@@ -352,15 +352,6 @@ dlg:button {
                     return hexDict[a] < hexDict[b]
                 end)
 
-            -- Find lab minimums and maximums.
-            -- local lMin = 999999
-            -- local aMin = 999999
-            -- local bMin = 999999
-
-            -- local lMax = -999999
-            -- local aMax = -999999
-            -- local bMax = -999999
-
             -- Cache global functions used in for loops.
             local linearToXyz = Clr.lRgbaToXyzInternal
             local xyzToLab = Clr.xyzToLab
@@ -393,29 +384,11 @@ dlg:button {
                 local lab = xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
 
                 local point = Vec3.new(lab.a, lab.b, lab.l)
-
-                -- if lab.l < lMin then lMin = lab.l end
-                -- if lab.a < aMin then aMin = lab.a end
-                -- if lab.b < bMin then bMin = lab.b end
-
-                -- if lab.l > lMax then lMax = lab.l end
-                -- if lab.a > aMax then aMax = lab.a end
-                -- if lab.b > bMax then bMax = lab.b end
-
                 points[i] = point
             end
 
             -- Create Octree.
             local octCapacity = args.octCapacity
-            -- local bounds = Bounds3.newByRef(
-            --     Vec3.new(
-            --         aMin - 0.00001,
-            --         bMin - 0.00001,
-            --         lMin - 0.00001),
-            --     Vec3.new(
-            --         aMax + 0.00001,
-            --         bMax + 0.00001,
-            --         lMax + 0.00001))
             local bounds = Bounds3.cieLab()
             local octree = Octree.new(bounds, octCapacity, 0)
             Octree.insertAll(octree, points)
@@ -475,13 +448,13 @@ dlg:button {
                 local srcLabPt = Vec3.new(
                     srcLab.a, srcLab.b, srcLab.l)
 
-                -- TODO: Consider using Octree.query internal
-                -- remembering to declare a found array...
-                local results = Octree.querySpherical(
-                    octree, srcLabPt, queryRad)
+                local results = {}
+                Octree.querySphericalInternal(
+                    octree, srcLabPt, queryRad, results, 256)
                 if #results > 1 then
-                    local nearestPt = results[1]
+                    local nearestPt = results[1].point
 
+                    -- TODO: Use ptToHexDict instead?
                     local nearestClr = labToRgba(
                         nearestPt.z,
                         nearestPt.x,
@@ -556,6 +529,9 @@ dlg:button {
                 local sina = sin(theta)
                 for i = 1, gridLen, 1 do
                     local vec = gridPts[i]
+
+                    -- TODO: Would this rotation be better if you
+                    -- used a quaternion instead?
                     local vr = rotax(vec, cosa, sina, axis)
                     local scrpt = screen(
                         modelview, projection, vr,

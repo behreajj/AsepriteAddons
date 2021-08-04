@@ -189,7 +189,7 @@ function Knot3:scaleVec3(v)
     self.co = Vec3.hadamard(self.co, v)
     self.fh = Vec3.hadamard(self.fh, v)
     self.rh = Vec3.hadamard(self.rh, v)
-return self
+    return self
 end
 
 ---Translates this knot by a Vec3.
@@ -530,13 +530,11 @@ end
 ---@param knot table knot
 ---@return string
 function Knot3.toJson(knot)
-    return "{\"co\":"
-        .. Vec3.toJson(knot.co)
-        .. ",\"fh\":"
-        .. Vec3.toJson(knot.fh)
-        .. ",\"rh\":"
-        .. Vec3.toJson(knot.rh)
-        .. "}"
+    return string.format(
+        "{\"co\":%s,\"fh\":%s,\"rh\":%s}",
+        Vec3.toJson(knot.co),
+        Vec3.toJson(knot.fh),
+        Vec3.toJson(knot.rh))
 end
 
 return Knot3

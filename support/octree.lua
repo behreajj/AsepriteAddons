@@ -178,7 +178,6 @@ function Octree.querySpherical(o, center, radius, limit)
     for i = 1, #found, 1 do
         result[i] = found[i].point
     end
-
     return result
 end
 
@@ -196,7 +195,6 @@ function Octree.querySphericalInternal(
     o, center, radius, found, limit)
 
     if Bounds3.intersectsSphere(o.bounds, center, radius) then
-
         local children = o.children
         local isLeaf = true
         for i = 1, 8, 1 do
@@ -213,11 +211,12 @@ function Octree.querySphericalInternal(
             local ptsLen = #pts
             local rsq = radius * radius
             local distf = Vec3.distSq
+            local insort = Octree.insortRight
             for i = 1, ptsLen, 1 do
                 local pt = pts[i]
                 local currDist = distf(center, pt)
                 if currDist < rsq then
-                    Octree.insortRight(found,
+                    insort(found,
                         { dist = currDist,
                           point = pt })
                 end
@@ -263,10 +262,10 @@ function Octree.split(o)
     local ptsLen = #pts
     for i = 1, ptsLen, 1 do
         local pt = pts[i]
-        local flag = false
         for j = 1, 8, 1 do
-            flag = Octree.insert(ochl[j], pt)
-            if flag then break end
+            if Octree.insert(ochl[j], pt) then
+                break
+            end
         end
     end
 
@@ -277,8 +276,7 @@ end
 ---Returns a JSON string of the octree node.
 ---@param o table octree
 function Octree.toJson(o)
-    local str = "{\"level\":"
-    str = str .. string.format("%d", o.level)
+    local str = string.format("{\"level\":%d", o.level)
     str = str .. ",\"bounds\":"
     str = str .. Bounds3.toJson(o.bounds)
     str = str .. ",\"capacity\":"
