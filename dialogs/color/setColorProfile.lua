@@ -219,14 +219,23 @@ dlg:button {
         -- Search for active or file sprite.
         local sprite = nil
         local targetSprite = args.targetSprite
+        local reapplyIndexMode = false
         if targetSprite == "FILE" then
             local pathName = args.spriteFile
             if pathName and #pathName > 0 then
                 sprite = Sprite { fromFile = pathName }
                 app.activeSprite = sprite
+                reapplyIndexMode = sprite.colorMode == ColorMode.INDEXED
+                app.command.ChangePixelFormat {
+                    format = "rgb"
+                }
             end
         elseif targetSprite == "ACTIVE" then
             sprite = app.activeSprite
+            reapplyIndexMode = sprite.colorMode == ColorMode.INDEXED
+            app.command.ChangePixelFormat {
+                format = "rgb"
+            }
         end
 
         -- Last resort to establish a palette.
@@ -249,6 +258,13 @@ dlg:button {
                 pal:setColor(8, Color(255,   0, 255, 255))
             end
         end
+
+        -- TODO: See Sprite.transparentColor: The sprite's
+        -- transparent color index could be something other than 0.
+        -- On the other hand, Aseprite's gif handling is so
+        -- bugged that you'd have to test to see if non-zero
+        -- alpha even works before you consider supporting it...
+        -- You could also SET the transparent index to 0.
 
         -- Ensure that palette contains alpha in slot zero.
         local firstColor = pal:getColor(0)
@@ -276,8 +292,8 @@ dlg:button {
             -- and palette is set.
             local bkgClr = args.background
             local img = Image(w, h, ColorMode.RGB)
-            local alpha = bkgClr.alpha
-            local fillCels = alpha > 0 and colorMode ~= "INDEXED"
+            local bkgAlpha = bkgClr.alpha
+            local fillCels = bkgAlpha > 0 and colorMode ~= "INDEXED"
             if fillCels then
                 local itr = img:pixels()
                 local hex = bkgClr.rgbaPixel
@@ -322,11 +338,6 @@ dlg:button {
                     format = "gray"
                 }
             end
-        elseif sprite ~= nil then
-            -- Indexed mode just cannot be trusted when loading sprites.
-            app.command.ChangePixelFormat {
-                format = "rgb"
-            }
         end
 
         local profilepath = args.prf
@@ -347,8 +358,18 @@ dlg:button {
         end
 
         -- This needs to be set AFTER the color space
-        -- assignment, otherwise it will be impacted.
+        -- assignment, otherwise it will be altered.
         sprite:setPalette(pal)
+
+        -- If an active sprite or sprite from filepath
+        -- is indexed color mode, its colors may be
+        -- screwed up due to a transparent mask being
+        -- prepended to the palette.
+        if reapplyIndexMode then
+            app.command.ChangePixelFormat {
+                format = "indexed"
+            }
+        end
 
         app.refresh()
         dlg:close()
