@@ -50,7 +50,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "filepath",
-    filetypes = { "gpl", "pal" },
+    filetypes = { "aseprite", "gpl", "pal" },
     save = true,
     visible = defaults.target == "SAVE"
 }

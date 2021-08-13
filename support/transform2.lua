@@ -45,14 +45,14 @@ end
 ---@param v table vector
 ---@return table
 function Transform2:moveBy(v)
-    return self:moveGlobal(v)
+    return self:moveByGlobal(v)
 end
 
 ---Moves a transform by a vector
 ---in global space.
 ---@param v table vector
 ---@return table
-function Transform2:moveGlobal(v)
+function Transform2:moveByGlobal(v)
     self.translation = Vec2.add(
         self.translation, v)
     return self

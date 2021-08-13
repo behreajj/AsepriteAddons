@@ -153,7 +153,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "palFile",
-    filetypes = {"gpl", "pal"},
+    filetypes = {"aseprite", "gpl", "pal"},
     open = true,
     visible = defaults.paletteType == "FILE"
 }
@@ -234,7 +234,9 @@ dlg:button {
             if sprite ~= nil then
                 pal = sprite.palettes[1]
             else
-                -- TODO: Use AseUtilities default instead?
+                -- This doesn't use AseUtilities palette default
+                -- on purpose so that the script can be copied
+                -- and used without the rest of the repository.
                 pal = Palette(9)
                 pal:setColor(0, Color(  0,   0,   0,   0))
                 pal:setColor(1, Color(  0,   0,   0, 255))
@@ -287,7 +289,6 @@ dlg:button {
             -- Create sprite with RGB color mode,
             -- set its palette.
             sprite = Sprite(w, h, ColorMode.RGB)
-            sprite:setPalette(pal)
             app.activeSprite = sprite
 
             -- Create frames.
@@ -295,16 +296,20 @@ dlg:button {
             local layer = sprite.layers[1]
             local firstCel = layer.cels[1]
             firstCel.image = img
-            for i = 0, frameReqs - 2, 1 do
-                sprite:newEmptyFrame()
-            end
+            app.transaction(function()
+                for i = 0, frameReqs - 2, 1 do
+                    sprite:newEmptyFrame()
+                end
+            end)
 
             -- Create cels.
             if fillCels then
                 local pos = Point(0, 0)
-                for i = 0, frameReqs - 2, 1 do
-                    sprite:newCel(layer, i + 2, img, pos)
-                end
+                app.transaction(function()
+                    for i = 0, frameReqs - 2, 1 do
+                        sprite:newCel(layer, i + 2, img, pos)
+                    end
+                end)
             end
 
             -- Set color mode.
@@ -322,7 +327,6 @@ dlg:button {
             app.command.ChangePixelFormat {
                 format = "rgb"
             }
-            sprite:setPalette(pal)
         end
 
         local profilepath = args.prf
@@ -341,6 +345,10 @@ dlg:button {
                 sprite:assignColorSpace(icc)
             end
         end
+
+        -- This needs to be set AFTER the color space
+        -- assignment, otherwise it will be impacted.
+        sprite:setPalette(pal)
 
         app.refresh()
         dlg:close()

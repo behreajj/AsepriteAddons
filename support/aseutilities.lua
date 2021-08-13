@@ -453,15 +453,12 @@ function AseUtilities.drawCurve2(
 end
 
 ---Draws a glyph at its native scale to an image.
----The glyph is to be represented as a binary matrix
----with a width and height, where 1 draws a pixel
----and zero does not, packed in to a number
----in row major order. The color is to be represented
----as a hexadecimal in AABBGGR order.
----Operates on pixel by pixel level. Its use
----should not be mixed with app.useTool.
+---The color is to be represented in hexadecimal
+---with AABBGGR order.
+---Operates on pixels. This should not be used
+---with app.useTool.
 ---@param image table image
----@param glyph number glyph
+---@param glyph table glyph
 ---@param hex number hexadecimal color
 ---@param x number x top left corner
 ---@param y number y top left corner
@@ -475,12 +472,15 @@ function AseUtilities.drawGlyph(
 
     local lenn1 = gw * gh - 1
     local blend = AseUtilities.blend
+    local glMat = glyph.matrix
+    local glDrop = glyph.drop
+    local ypDrop = y + glDrop
     for i = 0, lenn1, 1 do
         local shift = lenn1 - i
-        local mark = (glyph >> shift) & 1
+        local mark = (glMat >> shift) & 1
         if mark ~= 0 then
             local xMark = x + (i % gw)
-            local yMark = y + (i // gw)
+            local yMark = ypDrop + (i // gw)
             local srcHex = image:getPixel(xMark, yMark)
             local trgHex = blend(srcHex, hex)
             image:drawPixel(xMark, yMark, trgHex)
@@ -490,15 +490,12 @@ end
 
 ---Draws a glyph to an image at a pixel scale;
 ---resizes the glyph according to nearest neighbor.
----The glyph is to be represented as a binary matrix
----with a width and height, where 1 draws a pixel
----and zero does not, packed in to a number
----in row major order. The color is to be represented
----as a hexadecimal in AABBGGR order.
----Operates on pixel by pixel level. Its use
----should not be mixed with app.useTool.
+---The color is to be represented in hexadecimal
+---with AABBGGR order.
+---Operates on pixels. This should not be used
+---with app.useTool.
 ---@param image table image
----@param glyph number glyph
+---@param glyph table glyph
 ---@param hex number hexadecimal color
 ---@param x number x top left corner
 ---@param y number y top left corner
@@ -524,6 +521,9 @@ function AseUtilities.drawGlyphNearest(
     local ty = gh / dh
     local trunc = math.tointeger
     local blend = AseUtilities.blend
+    local glMat = glyph.matrix
+    local glDrop = glyph.drop
+    local ypDrop = y + glDrop * (dh / gh)
     for k = 0, lenTrgn1, 1 do
         local xTrg = k % dw
         local yTrg = k // dw
@@ -533,10 +533,10 @@ function AseUtilities.drawGlyphNearest(
         local idxSrc = ySrc * gw + xSrc
 
         local shift = lenSrcn1 - idxSrc
-        local mark = (glyph >> shift) & 1
+        local mark = (glMat >> shift) & 1
         if mark ~= 0 then
             local xMark = x + xTrg
-            local yMark = y + yTrg
+            local yMark = ypDrop + yTrg
             local srcHex = image:getPixel(xMark, yMark)
             local trgHex = blend(srcHex, hex)
             image:drawPixel(xMark, yMark, trgHex)

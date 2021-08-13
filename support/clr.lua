@@ -119,7 +119,6 @@ end
 ---@param b table right operand
 ---@return table
 function Clr.bitAnd(a, b)
-    -- TODO: Make checked and unchecked versions of these?
     return Clr.fromHex(Clr.toHex(a) & Clr.toHex(b))
 end
 
@@ -622,7 +621,7 @@ end
 ---@return table
 function Clr.labTosRgba(l, a, b, alpha)
     local xyz = Clr.labToXyz(l, a, b, alpha)
-    return Clr.xyzTosRgba(xyz.x, xyz.y, xyz.z, xyz.a)
+    return Clr.xyzaTosRgba(xyz.x, xyz.y, xyz.z, xyz.a)
 end
 
 ---Converts a color from CIE LAB to CIE XYZ.
@@ -1223,7 +1222,7 @@ function Clr.mixXyzInternal(a, b, t)
     local u = 1.0 - t
     local aXyz = Clr.sRgbaToXyz(a)
     local bXyz = Clr.sRgbaToXyz(b)
-    return Clr.xyzTosRgba(
+    return Clr.xyzaTosRgba(
         u * aXyz.x + t * bXyz.x,
         u * aXyz.y + t * bXyz.y,
         u * aXyz.z + t * bXyz.z,
@@ -1264,7 +1263,7 @@ end
 ---@param levels number levels
 ---@return table
 function Clr.quantize(a, levels)
-    if levels and levels > 1 and levels < 256 then
+    if levels and levels > 0 and levels < 256 then
         return Clr.quantizeInternal(
             a, levels, 1.0 / levels)
     end
@@ -1710,18 +1709,6 @@ function Clr.xyzToLab(x, y, z, alpha)
         alpha = aVerif }
 end
 
----Converts a color from CIE XYZ to standard RGB.
----The alpha channel is unaffected by the transform.
----@param x number x channel
----@param y number y channel
----@param z number z channel
----@param alpha number alpha channel
----@return table
-function Clr.xyzTosRgba(x, y, z, alpha)
-    return Clr.lRgbaTosRgbaInternal(
-        Clr.xyzaTolRgba(x, y, z, alpha))
-end
-
 ---Converts a color from CIE XYZ to linear RGB.
 ---The alpha channel is unaffected by the transform.
 ---@param x number x channel
@@ -1745,6 +1732,18 @@ function Clr.xyzaTolRgba(x, y, z, alpha)
         + 1.0571295702861434   * z,
 
         aVerif)
+end
+
+---Converts a color from CIE XYZ to standard RGB.
+---The alpha channel is unaffected by the transform.
+---@param x number x channel
+---@param y number y channel
+---@param z number z channel
+---@param alpha number alpha channel
+---@return table
+function Clr.xyzaTosRgba(x, y, z, alpha)
+    return Clr.lRgbaTosRgbaInternal(
+        Clr.xyzaTolRgba(x, y, z, alpha))
 end
 
 ---Creates a red color.

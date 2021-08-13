@@ -176,6 +176,9 @@ dlg:button {
         local gw = 8
         local gh = 8
 
+        -- print(lut['A'])
+        -- print(lut['N'])
+
         -- Unpack arguments.
         local msgSrc = args.msgSrc
         local animate = args.animate

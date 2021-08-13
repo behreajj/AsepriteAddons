@@ -47,7 +47,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "palFile",
-    filetypes = { "gpl", "pal" },
+    filetypes = { "aseprite", "gpl", "pal" },
     open = true,
     visible = defaults.palType == "FILE"
 }

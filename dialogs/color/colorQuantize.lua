@@ -8,8 +8,6 @@ dlg:slider {
     min = 2,
     max = 96,
     value = 16
-    -- 5 brings 256x256x256 it within 256.
-    -- value = 5
 }
 
 dlg:newrow { always = false }
