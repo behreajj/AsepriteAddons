@@ -226,6 +226,7 @@ dlg:button {
                             srcClrDict[hex] = true
                         end
 
+                        -- TODO: This functions poorly for complex anti-aliasing with alpha.
                         local srcAlphaDict = {}
 
                         local lumDict = {}

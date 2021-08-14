@@ -2,7 +2,7 @@
  https://ninedegreesbelow.com/photography/lcms-make-icc-profiles.html
  https://github.com/ellelstone/elles_icc_profiles --]]
 local targetOptions = {"ACTIVE", "FILE", "NEW"}
-local colorModes = {"RGB", "INDEXED", "GRAY"}
+local colorModes = { "RGB", "INDEXED", "GRAY" }
 local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
 local colorSpaceTransfers = { "ASSIGN", "CONVERT" }
 
@@ -10,10 +10,15 @@ local defaults = {
     targetSprite = "NEW",
     width = 256,
     height = 256,
-    -- TODO: Hide palette type when color mode is gray?
+    -- TODO: For grayscale, change color selector to
+    -- 0-255 slider plus preview shades?
+
+    -- TODO: For indexed, add a bkg index?
     colorMode = "RGB",
     background = Color(0, 0, 0, 0),
-    paletteType = "DEFAULT",
+    -- This MUST be index ZERO.
+    transparencyMask = 0,
+    palType = "DEFAULT",
     frames = 1,
     transfer = "CONVERT",
     pullFocus = true
@@ -29,13 +34,17 @@ dlg:combobox{
     option = defaults.targetSprite,
     options = targetOptions,
     onchange = function()
-        local state = dlg.data.targetSprite
+        local args = dlg.data
+        local state = args.targetSprite
+        local cm = args.colorMode
+
         local isNew = state == "NEW"
+        local isIndex = cm == "INDEXED"
+
         dlg:modify {
             id = "spriteFile",
             visible = state == "FILE"
         }
-
         dlg:modify {
             id = "width",
             visible = isNew
@@ -50,12 +59,20 @@ dlg:combobox{
         }
         dlg:modify {
             id = "background",
-            visible = isNew
+            visible = isNew and not isIndex
         }
+        -- dlg:modify {
+        --     id = "transparencyMask",
+        --     visible = isNew and isIndex
+        -- }
         dlg:modify {
             id = "frames",
             visible = isNew
         }
+
+        -- Because grayscale images allow color palettes
+        -- it is not a priority to hide this when gray
+        -- is selected.
     end
 }
 
@@ -100,10 +117,15 @@ dlg:combobox {
     visible = defaults.targetSprite == "NEW",
     onchange = function()
         local state = dlg.data.colorMode
+        local isIndexed = state == "INDEXED"
         dlg:modify {
             id = "background",
-            visible = state ~= "INDEXED"
+            visible = not isIndexed
         }
+        -- dlg:modify {
+        --     id = "transparencyMask",
+        --     visible = isIndexed
+        -- }
     end
 }
 
@@ -116,6 +138,18 @@ dlg:color {
     visible = defaults.targetSprite == "NEW"
         and defaults.colorMode ~= "INDEXED"
 }
+
+dlg:newrow { always = false }
+
+-- dlg:slider {
+--     id = "transparencyMask",
+--     label = "Mask Index:",
+--     min = 0,
+--     max = 255,
+--     value = defaults.transparencyMask,
+--     visible = defaults.targetSprite == "NEW"
+--         and defaults.colorMode == "INDEXED"
+-- }
 
 dlg:newrow { always = false }
 
@@ -132,7 +166,7 @@ dlg:separator{}
 dlg:combobox {
     id = "palType",
     label = "Palette:",
-    option = defaults.paletteType,
+    option = defaults.palType,
     options = paletteTypes,
     onchange = function()
         local state = dlg.data.palType
@@ -155,7 +189,7 @@ dlg:file {
     id = "palFile",
     filetypes = {"aseprite", "gpl", "pal"},
     open = true,
-    visible = defaults.paletteType == "FILE"
+    visible = defaults.palType == "FILE"
 }
 
 dlg:newrow { always = false }
@@ -164,7 +198,7 @@ dlg:entry {
     id = "palPreset",
     text = "",
     focus = false,
-    visible = defaults.paletteType == "PRESET"
+    visible = defaults.palType == "PRESET"
 }
 
 dlg:separator{}
@@ -172,9 +206,8 @@ dlg:separator{}
 dlg:file {
     id = "prf",
     label = "Profile:",
-    filetypes = {"icc"},
-    open = true,
-    visible = true
+    filetypes = { "icc" },
+    open = true
 }
 
 dlg:newrow { always = false }
@@ -194,8 +227,8 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        local palType = args.palType
-        local colorMode = args.colorMode
+        local palType = args.palType or defaults.palType
+        local colorMode = args.colorMode or defaults.colorMode
 
         -- Set palette.
         local pal = nil
@@ -218,24 +251,30 @@ dlg:button {
 
         -- Search for active or file sprite.
         local sprite = nil
-        local targetSprite = args.targetSprite
+        local targetSprite = args.targetSprite or defaults.targetSprite
         local reapplyIndexMode = false
+
+        local maskClrIdx = args.transparencyMask or defaults.transparencyMask
         if targetSprite == "FILE" then
             local pathName = args.spriteFile
             if pathName and #pathName > 0 then
                 sprite = Sprite { fromFile = pathName }
                 app.activeSprite = sprite
                 reapplyIndexMode = sprite.colorMode == ColorMode.INDEXED
-                app.command.ChangePixelFormat {
-                    format = "rgb"
-                }
+                app.command.ChangePixelFormat { format = "rgb" }
+
+                -- This MUST be index ZERO.
+                sprite.transparentColor = 0
+                maskClrIdx = sprite.transparentColor
             end
         elseif targetSprite == "ACTIVE" then
             sprite = app.activeSprite
             reapplyIndexMode = sprite.colorMode == ColorMode.INDEXED
-            app.command.ChangePixelFormat {
-                format = "rgb"
-            }
+            app.command.ChangePixelFormat { format = "rgb" }
+
+            -- This MUST be index ZERO.
+            sprite.transparentColor = 0
+            maskClrIdx = sprite.transparentColor
         end
 
         -- Last resort to establish a palette.
@@ -246,38 +285,46 @@ dlg:button {
                 -- This doesn't use AseUtilities palette default
                 -- on purpose so that the script can be copied
                 -- and used without the rest of the repository.
-                pal = Palette(9)
-                pal:setColor(0, Color(  0,   0,   0,   0))
-                pal:setColor(1, Color(  0,   0,   0, 255))
-                pal:setColor(2, Color(255, 255, 255, 255))
-                pal:setColor(3, Color(255,   0,   0, 255))
-                pal:setColor(4, Color(255, 255,   0, 255))
-                pal:setColor(5, Color(  0, 255,   0, 255))
-                pal:setColor(6, Color(  0, 255, 255, 255))
-                pal:setColor(7, Color(  0,   0, 255, 255))
-                pal:setColor(8, Color(255,   0, 255, 255))
+                pal = Palette(8)
+                pal:setColor(0, Color(  0,   0,   0, 255))
+                pal:setColor(1, Color(255, 255, 255, 255))
+                pal:setColor(2, Color(255,   0,   0, 255))
+                pal:setColor(3, Color(255, 255,   0, 255))
+                pal:setColor(4, Color(  0, 255,   0, 255))
+                pal:setColor(5, Color(  0, 255, 255, 255))
+                pal:setColor(6, Color(  0,   0, 255, 255))
+                pal:setColor(7, Color(255,   0, 255, 255))
             end
         end
 
-        -- TODO: See Sprite.transparentColor: The sprite's
-        -- transparent color index could be something other than 0.
-        -- On the other hand, Aseprite's gif handling is so
-        -- bugged that you'd have to test to see if non-zero
-        -- alpha even works before you consider supporting it...
-        -- You could also SET the transparent index to 0.
+        -- Ensure that mask color index is not beyond the
+        -- length of the palette. If it is, then reset to 0.
+        if maskClrIdx > #pal - 1 then
+            maskClrIdx = 0
+            if reapplyIndexMode or colorMode == "INDEXED" then
+                app.alert(
+                    "Mask Color index is out of bounds. "
+                    .. "It has been set to zero.")
+            end
+        end
 
-        -- Ensure that palette contains alpha in slot zero.
-        local firstColor = pal:getColor(0)
-        if firstColor.rgbaPixel ~= 0x0 then
+        -- Check that the color at the mask color index is clear.
+        local maskClr = pal:getColor(maskClrIdx)
+        local maskHex = maskClr.rgbaPixel
+        local maskAlpha = maskClr.alpha
+        local maskRgb = maskHex & 0x00ffffff
+        if maskAlpha < 1 and maskRgb ~= 0 then
+            -- It's possible that the first color could be
+            -- transparent red, green, white, etc.
+            pal:setColor(maskClrIdx, Color(0, 0, 0, 0))
+        elseif maskAlpha > 0 then
+            -- Loop backwards over palette, shifting entries
+            -- one forward, then insert alpha mask.
             pal:resize(#pal + 1)
-            for i = #pal - 1, 1, -1 do
+            for i = #pal - 1, maskClrIdx + 1, -1 do
                 pal:setColor(i, pal:getColor(i - 1))
             end
-            pal:setColor(0, Color(0, 0, 0, 0))
-        elseif firstColor.alpha < 1 then
-            -- It's possible that the first color could have
-            -- non-zero channels aside from alpha.
-            pal:setColor(0, Color(0, 0, 0, 0))
+            pal:setColor(maskClrIdx, Color(0, 0, 0, 0))
         end
 
         -- Create a new sprite.
@@ -288,8 +335,7 @@ dlg:button {
             h = math.max(1, math.tointeger(0.5 + math.abs(h)))
 
             -- Create image.
-            -- Do these BEFORE sprite is created
-            -- and palette is set.
+            -- Do BEFORE sprite is created & palette is set.
             local bkgClr = args.background
             local img = Image(w, h, ColorMode.RGB)
             local bkgAlpha = bkgClr.alpha
@@ -297,14 +343,13 @@ dlg:button {
             if fillCels then
                 local itr = img:pixels()
                 local hex = bkgClr.rgbaPixel
-                for elm in itr do
-                    elm(hex)
-                end
+                for elm in itr do elm(hex) end
             end
 
             -- Create sprite with RGB color mode,
             -- set its palette.
             sprite = Sprite(w, h, ColorMode.RGB)
+            sprite.transparentColor = maskClrIdx
             app.activeSprite = sprite
 
             -- Create frames.
@@ -340,10 +385,17 @@ dlg:button {
             end
         end
 
-        local profilepath = args.prf
+        -- Set color space from .icc file.
         local icc = nil
+        local profilepath = args.prf
+
+        -- TODO: Make this a user facing option?
+        -- Maybe a combo box with NONE, SRGB, FILE?
+        local defaultTosRgb = false
         if profilepath and #profilepath > 0 then
             icc = ColorSpace { fromFile = profilepath }
+        elseif defaultTosRgb then
+            icc = ColorSpace { sRGB = true }
         else
             icc = ColorSpace()
         end
@@ -357,8 +409,9 @@ dlg:button {
             end
         end
 
-        -- This needs to be set AFTER the color space
-        -- assignment, otherwise it will be altered.
+        -- It doesn't seem to matter where you set this
+        -- re: setting the color space, it's impacted
+        -- by transform either way...
         sprite:setPalette(pal)
 
         -- If an active sprite or sprite from filepath
