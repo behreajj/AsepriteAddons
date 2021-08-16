@@ -4,22 +4,47 @@
 local targetOptions = {"ACTIVE", "FILE", "NEW"}
 local colorModes = { "RGB", "INDEXED", "GRAY" }
 local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
+local colorSpaceTypes = { "FILE", "NONE", "S_RGB" }
 local colorSpaceTransfers = { "ASSIGN", "CONVERT" }
+
+local function updateColorPreviewRgba(dialog)
+    local args = dialog.data
+    dialog:modify {
+        id = "preview",
+        colors = { Color(
+            args.rChannel,
+            args.gChannel,
+            args.bChannel,
+            args.aChannel) }
+    }
+end
+
+local function updateColorPreviewGray(dialog)
+    local args = dialog.data
+    dialog:modify {
+        id = "preview",
+        colors = { Color {
+            gray = args.grayChannel,
+            alpha = args.aChannel } }
+    }
+end
 
 local defaults = {
     targetSprite = "NEW",
     width = 256,
     height = 256,
-    -- TODO: For grayscale, change color selector to
-    -- 0-255 slider plus preview shades?
-
     -- TODO: For indexed, add a bkg index?
     colorMode = "RGB",
-    background = Color(0, 0, 0, 0),
-    -- This MUST be index ZERO.
-    transparencyMask = 0,
+    rChannel = 0,
+    gChannel = 0,
+    bChannel = 0,
+    aChannel = 0,
+    grayChannel = 0,
+    transparencyMask = 0, -- This MUST be index ZERO.
+    bkgIdx = 0,
     palType = "DEFAULT",
     frames = 1,
+    spaceType = "FILE",
     transfer = "CONVERT",
     pullFocus = true
 }
@@ -39,40 +64,29 @@ dlg:combobox{
         local cm = args.colorMode
 
         local isNew = state == "NEW"
-        local isIndex = cm == "INDEXED"
+        local isRgb = cm == "RGB"
+        local isIndexed = cm == "INDEXED"
+        local minAlpha = args.aChannel > 0
 
-        dlg:modify {
-            id = "spriteFile",
-            visible = state == "FILE"
-        }
-        dlg:modify {
-            id = "width",
-            visible = isNew
-        }
-        dlg:modify {
-            id = "height",
-            visible = isNew
-        }
-        dlg:modify {
-            id = "colorMode",
-            visible = isNew
-        }
-        dlg:modify {
-            id = "background",
-            visible = isNew and not isIndex
-        }
-        -- dlg:modify {
-        --     id = "transparencyMask",
-        --     visible = isNew and isIndex
-        -- }
-        dlg:modify {
-            id = "frames",
-            visible = isNew
-        }
+        dlg:modify { id = "spriteFile", visible = state == "FILE" }
+        dlg:modify { id = "width", visible = isNew }
+        dlg:modify { id = "height", visible = isNew }
+        dlg:modify { id = "colorMode", visible = isNew }
 
-        -- Because grayscale images allow color palettes
-        -- it is not a priority to hide this when gray
-        -- is selected.
+        dlg:modify { id = "preview", visible = isNew and not isIndexed }
+        dlg:modify { id = "aChannel", visible = isNew and not isIndexed }
+
+        dlg:modify { id = "bChannel", visible = minAlpha and isNew and isRgb }
+        dlg:modify { id = "gChannel", visible = minAlpha and isNew and isRgb }
+        dlg:modify { id = "rChannel", visible = minAlpha and isNew and isRgb }
+
+        -- TODO: Should palette be hidden in gray color mode?
+        dlg:modify { id = "grayChannel", visible = minAlpha and isNew and cm == "GRAY" }
+
+        -- dlg:modify { id = "transparencyMask", visible = isNew and isIndex }
+
+        dlg:modify { id = "framesSep", visible = isNew }
+        dlg:modify { id = "frames", visible = isNew }
     end
 }
 
@@ -116,27 +130,157 @@ dlg:combobox {
     options = colorModes,
     visible = defaults.targetSprite == "NEW",
     onchange = function()
-        local state = dlg.data.colorMode
+        local args = dlg.data
+        local state = args.colorMode
         local isIndexed = state == "INDEXED"
-        dlg:modify {
-            id = "background",
-            visible = not isIndexed
-        }
-        -- dlg:modify {
-        --     id = "transparencyMask",
-        --     visible = isIndexed
-        -- }
+        local isGray = state == "GRAY"
+        local isRgb = state == "RGB"
+        local minAlpha = args.aChannel > 0
+
+        dlg:modify { id = "preview", visible = not isIndexed }
+        dlg:modify { id = "aChannel", visible = not isIndexed }
+
+        dlg:modify { id = "bChannel", visible = minAlpha and isRgb }
+        dlg:modify { id = "gChannel", visible = minAlpha and isRgb }
+        dlg:modify { id = "rChannel", visible = minAlpha and isRgb }
+
+        dlg:modify { id = "grayChannel", visible = minAlpha and state == "GRAY" }
+
+        -- dlg:modify { id = "transparencyMask", visible = isIndexed }
+
+        if isRgb then
+            updateColorPreviewRgba(dlg)
+        elseif isGray then
+            updateColorPreviewGray(dlg)
+        end
     end
 }
 
 dlg:newrow { always = false }
 
-dlg:color {
-    id = "background",
+dlg:shades {
+    id = "preview",
     label = "Background:",
-    color = defaults.background,
+    mode = "pick",
+    colors = { Color(
+        defaults.rChannel,
+        defaults.gChannel,
+        defaults.bChannel,
+        defaults.aChannel) },
     visible = defaults.targetSprite == "NEW"
-        and defaults.colorMode ~= "INDEXED"
+        and defaults.colorMode ~= "INDEXED",
+    onclick=function(ev)
+        if ev.button == MouseButton.LEFT then
+            app.fgColor = ev.color
+        elseif ev.button == MouseButton.RIGHT then
+            -- Bug where assigning to app.bgColor leads to
+            -- unlocked palette color assignment instead.
+            -- app.bgColor = ev.color
+            app.command.SwitchColors()
+            app.fgColor = ev.color
+            app.command.SwitchColors()
+        end
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "aChannel",
+    label = "Alpha:",
+    min = 0,
+    max = 255,
+    value = defaults.aChannel,
+    visible = defaults.targetSprite == "NEW"
+        and defaults.colorMode ~= "INDEXED",
+    onchange = function()
+
+        local args = dlg.data
+        local cm = args.colorMode
+        local isRgb = cm == "RGB"
+        local isGray = cm == "GRAY"
+        if isRgb then
+            updateColorPreviewRgba(dlg)
+        elseif isGray then
+            updateColorPreviewGray(dlg)
+        end
+
+        if args.aChannel < 1 then
+            dlg:modify { id = "bChannel", visible = false }
+            dlg:modify { id = "gChannel", visible = false }
+            dlg:modify { id = "rChannel", visible = false }
+            dlg:modify { id = "grayChannel", visible = false }
+        else
+            dlg:modify { id = "bChannel", visible = isRgb }
+            dlg:modify { id = "gChannel", visible = isRgb }
+            dlg:modify { id = "rChannel", visible = isRgb }
+            dlg:modify { id = "grayChannel", visible = isGray }
+        end
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "rChannel",
+    label = "Red:",
+    min = 0,
+    max = 255,
+    value = defaults.rChannel,
+    visible = defaults.targetSprite == "NEW"
+        and defaults.colorMode == "RGB"
+        and defaults.aChannel > 0,
+    onchange = function()
+        updateColorPreviewRgba(dlg)
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "gChannel",
+    label = "Green:",
+    min = 0,
+    max = 255,
+    value = defaults.gChannel,
+    visible = defaults.targetSprite == "NEW"
+        and defaults.colorMode == "RGB"
+        and defaults.aChannel > 0,
+    onchange = function()
+        updateColorPreviewRgba(dlg)
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "bChannel",
+    label = "Blue:",
+    min = 0,
+    max = 255,
+    value = defaults.bChannel,
+    visible = defaults.targetSprite == "NEW"
+        and defaults.colorMode == "RGB"
+        and defaults.aChannel > 0,
+    onchange = function()
+        updateColorPreviewRgba(dlg)
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "grayChannel",
+    label = "Value:",
+    min = 0,
+    max = 255,
+    value = defaults.grayChannel,
+    visible = defaults.targetSprite == "NEW"
+        and defaults.colorMode == "GRAY"
+        and defaults.aChannel > 0,
+    onchange = function()
+        updateColorPreviewGray(dlg)
+    end
 }
 
 dlg:newrow { always = false }
@@ -151,8 +295,12 @@ dlg:newrow { always = false }
 --         and defaults.colorMode == "INDEXED"
 -- }
 
-dlg:newrow { always = false }
+dlg:separator{
+    id = "framesSep",
+    visible = defaults.palType == "NEW"
+}
 
+-- TODO: Add frame duration.
 dlg:slider {
     id = "frames",
     label = "Frames:",
@@ -170,16 +318,8 @@ dlg:combobox {
     options = paletteTypes,
     onchange = function()
         local state = dlg.data.palType
-
-        dlg:modify {
-            id = "palFile",
-            visible = state == "FILE"
-        }
-
-        dlg:modify {
-            id = "palPreset",
-            visible = state == "PRESET"
-        }
+        dlg:modify { id = "palFile", visible = state == "FILE" }
+        dlg:modify { id = "palPreset", visible = state == "PRESET" }
     end
 }
 
@@ -187,7 +327,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "palFile",
-    filetypes = {"aseprite", "gpl", "pal"},
+    filetypes = { "aseprite", "gpl", "pal" },
     open = true,
     visible = defaults.palType == "FILE"
 }
@@ -203,11 +343,24 @@ dlg:entry {
 
 dlg:separator{}
 
+dlg:combobox {
+    id = "spaceType",
+    label = "Profile:",
+    option = defaults.spaceType,
+    options = colorSpaceTypes,
+    onchange = function()
+        local state = dlg.data.spaceType
+        dlg:modify { id = "prf", visible = state == "FILE" }
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:file {
     id = "prf",
-    label = "Profile:",
     filetypes = { "icc" },
-    open = true
+    open = true,
+    visible = defaults.spaceType == "FILE"
 }
 
 dlg:newrow { always = false }
@@ -285,15 +438,27 @@ dlg:button {
                 -- This doesn't use AseUtilities palette default
                 -- on purpose so that the script can be copied
                 -- and used without the rest of the repository.
-                pal = Palette(8)
-                pal:setColor(0, Color(  0,   0,   0, 255))
-                pal:setColor(1, Color(255, 255, 255, 255))
-                pal:setColor(2, Color(255,   0,   0, 255))
-                pal:setColor(3, Color(255, 255,   0, 255))
-                pal:setColor(4, Color(  0, 255,   0, 255))
-                pal:setColor(5, Color(  0, 255, 255, 255))
-                pal:setColor(6, Color(  0,   0, 255, 255))
-                pal:setColor(7, Color(255,   0, 255, 255))
+
+                if colorMode == "GRAY" then
+                    local grayTones = 16
+                    local toGray = 255.0 / (grayTones - 1.0)
+                    pal = Palette(grayTones)
+                    for i = 0, grayTones - 1, 1 do
+                        pal:setColor(i, Color {
+                            gray = math.tointeger(0.5 + i * toGray),
+                            alpha = 255 })
+                    end
+                else
+                    pal = Palette(8)
+                    pal:setColor(0, Color(  0,   0,   0, 255))
+                    pal:setColor(1, Color(255, 255, 255, 255))
+                    pal:setColor(2, Color(255,   0,   0, 255))
+                    pal:setColor(3, Color(255, 255,   0, 255))
+                    pal:setColor(4, Color(  0, 255,   0, 255))
+                    pal:setColor(5, Color(  0, 255, 255, 255))
+                    pal:setColor(6, Color(  0,   0, 255, 255))
+                    pal:setColor(7, Color(255,   0, 255, 255))
+                end
             end
         end
 
@@ -336,13 +501,33 @@ dlg:button {
 
             -- Create image.
             -- Do BEFORE sprite is created & palette is set.
-            local bkgClr = args.background
-            local img = Image(w, h, ColorMode.RGB)
+            -- local bkgClr = args.background
+            local bkgClr = Color(0, 0, 0, 0)
+            local img = nil
+            if colorMode == "INDEXED" then
+                -- TODO: Handle!
+                img = Image(w, h, ColorMode.RGB)
+            elseif colorMode == "GRAY" then
+                bkgClr = Color {
+                    gray = args.grayChannel or defaults.grayChannel,
+                    alpha= args.aChannel or defaults.aChannel }
+                -- QUERY: Does this handle color differently? ie, except only 0-255?
+                -- img = Image(w, h, ColorMode.GRAY)
+                img = Image(w, h, ColorMode.RGB)
+            else
+                bkgClr = Color(
+                    args.rChannel or defaults.rChannel,
+                    args.gChannel or defaults.gChannel,
+                    args.bChannel or defaults.bChannel,
+                    args.aChannel or defaults.aChannel)
+                img = Image(w, h, ColorMode.RGB)
+            end
+
             local bkgAlpha = bkgClr.alpha
             local fillCels = bkgAlpha > 0 and colorMode ~= "INDEXED"
             if fillCels then
-                local itr = img:pixels()
                 local hex = bkgClr.rgbaPixel
+                local itr = img:pixels()
                 for elm in itr do elm(hex) end
             end
 
@@ -387,26 +572,27 @@ dlg:button {
 
         -- Set color space from .icc file.
         local icc = nil
-        local profilepath = args.prf
-
-        -- TODO: Make this a user facing option?
-        -- Maybe a combo box with NONE, SRGB, FILE?
-        local defaultTosRgb = false
-        if profilepath and #profilepath > 0 then
-            icc = ColorSpace { fromFile = profilepath }
-        elseif defaultTosRgb then
+        local spaceType = args.spaceType or defaults.spaceType
+        icc = nil
+        if spaceType == "FILE" then
+            local profilepath = args.prf
+            if profilepath and #profilepath > 0 then
+                icc = ColorSpace { fromFile = profilepath }
+            end
+        elseif spaceType == "S_RGB" then
             icc = ColorSpace { sRGB = true }
-        else
+        end
+
+        -- May be nil as a result of malformed filepath.
+        if icc == nil then
             icc = ColorSpace()
         end
 
-        if icc ~= nil then
-            local transfer = args.transfer
-            if transfer == "CONVERT" then
-                sprite:convertColorSpace(icc)
-            else
-                sprite:assignColorSpace(icc)
-            end
+        local transfer = args.transfer
+        if transfer == "CONVERT" then
+            sprite:convertColorSpace(icc)
+        else
+            sprite:assignColorSpace(icc)
         end
 
         -- It doesn't seem to matter where you set this
