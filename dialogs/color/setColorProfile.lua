@@ -1,7 +1,7 @@
 --[[ To download some profiles:
  https://ninedegreesbelow.com/photography/lcms-make-icc-profiles.html
  https://github.com/ellelstone/elles_icc_profiles --]]
-local targetOptions = {"ACTIVE", "FILE", "NEW"}
+local targetOptions = { "ACTIVE", "FILE", "NEW" }
 local colorModes = { "RGB", "INDEXED", "GRAY" }
 local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
 local colorSpaceTypes = { "FILE", "NONE", "S_RGB" }
@@ -44,6 +44,7 @@ local defaults = {
     bkgIdx = 0,
     palType = "DEFAULT",
     frames = 1,
+    duration = 100.0,
     spaceType = "FILE",
     transfer = "CONVERT",
     pullFocus = true
@@ -79,20 +80,18 @@ dlg:combobox{
         dlg:modify { id = "bChannel", visible = minAlpha and isNew and isRgb }
         dlg:modify { id = "gChannel", visible = minAlpha and isNew and isRgb }
         dlg:modify { id = "rChannel", visible = minAlpha and isNew and isRgb }
-
-        -- TODO: Should palette be hidden in gray color mode?
         dlg:modify { id = "grayChannel", visible = minAlpha and isNew and cm == "GRAY" }
 
-        -- dlg:modify { id = "transparencyMask", visible = isNew and isIndex }
+        -- dlg:modify { id = "transparencyMask", visible = isNew and isIndexed }
+        dlg:modify { id = "bkgIdx", visible = isNew and isIndexed }
 
         dlg:modify { id = "framesSep", visible = isNew }
         dlg:modify { id = "frames", visible = isNew }
+        dlg:modify { id = "duration", visible = isNew }
     end
 }
 
-dlg:newrow {
-    always = false
-}
+dlg:newrow { always = false }
 
 dlg:file {
     id = "spriteFile",
@@ -100,9 +99,7 @@ dlg:file {
     visible = defaults.targetSprite == "FILE"
 }
 
-dlg:newrow {
-    always = false
-}
+dlg:newrow { always = false }
 
 dlg:number {
     id = "width",
@@ -119,9 +116,7 @@ dlg:number {
     visible = defaults.targetSprite == "NEW"
 }
 
-dlg:newrow {
-    always = false
-}
+dlg:newrow { always = false }
 
 dlg:combobox {
     id = "colorMode",
@@ -144,9 +139,10 @@ dlg:combobox {
         dlg:modify { id = "gChannel", visible = minAlpha and isRgb }
         dlg:modify { id = "rChannel", visible = minAlpha and isRgb }
 
-        dlg:modify { id = "grayChannel", visible = minAlpha and state == "GRAY" }
+        dlg:modify { id = "grayChannel", visible = minAlpha and isGray }
 
         -- dlg:modify { id = "transparencyMask", visible = isIndexed }
+        dlg:modify { id = "bkgIdx", visible = isIndexed }
 
         if isRgb then
             updateColorPreviewRgba(dlg)
@@ -223,7 +219,8 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "rChannel",
-    label = "Red:",
+    -- label = "Red:",
+    label = "RGB:",
     min = 0,
     max = 255,
     value = defaults.rChannel,
@@ -235,11 +232,11 @@ dlg:slider {
     end
 }
 
-dlg:newrow { always = false }
+-- dlg:newrow { always = false }
 
 dlg:slider {
     id = "gChannel",
-    label = "Green:",
+    -- label = "Green:",
     min = 0,
     max = 255,
     value = defaults.gChannel,
@@ -251,11 +248,11 @@ dlg:slider {
     end
 }
 
-dlg:newrow { always = false }
+-- dlg:newrow { always = false }
 
 dlg:slider {
     id = "bChannel",
-    label = "Blue:",
+    -- label = "Blue:",
     min = 0,
     max = 255,
     value = defaults.bChannel,
@@ -283,8 +280,7 @@ dlg:slider {
     end
 }
 
-dlg:newrow { always = false }
-
+-- dlg:newrow { always = false }
 -- dlg:slider {
 --     id = "transparencyMask",
 --     label = "Mask Index:",
@@ -295,18 +291,40 @@ dlg:newrow { always = false }
 --         and defaults.colorMode == "INDEXED"
 -- }
 
-dlg:separator{
-    id = "framesSep",
-    visible = defaults.palType == "NEW"
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "bkgIdx",
+    label = "Bkg Index:",
+    min = 0,
+    max = 255,
+    value = defaults.bkgIdx,
+    visible = defaults.targetSprite == "NEW"
+        and defaults.colorMode == "INDEXED"
 }
 
--- TODO: Add frame duration.
+dlg:separator{
+    id = "framesSep",
+    visible = defaults.targetSprite == "NEW"
+}
+
 dlg:slider {
     id = "frames",
     label = "Frames:",
     min = 1,
     max = 96,
-    value = defaults.frames
+    value = defaults.frames,
+    visible = defaults.targetSprite == "NEW"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "duration",
+    label = "Duration:",
+    text = string.format("%.1f", defaults.duration),
+    decimals = 1,
+    visible = defaults.targetSprite == "NEW"
 }
 
 dlg:separator{}
@@ -501,18 +519,20 @@ dlg:button {
 
             -- Create image.
             -- Do BEFORE sprite is created & palette is set.
-            -- local bkgClr = args.background
             local bkgClr = Color(0, 0, 0, 0)
             local img = nil
             if colorMode == "INDEXED" then
-                -- TODO: Handle!
+                local bkgIdx = args.bkgIdx or defaults.bkgIdx
+                if bkgIdx > #pal - 1 or bkgIdx < 0 then
+                    app.alert("Background color index is out of bounds.")
+                else
+                    bkgClr = pal:getColor(bkgIdx)
+                end
                 img = Image(w, h, ColorMode.RGB)
             elseif colorMode == "GRAY" then
                 bkgClr = Color {
                     gray = args.grayChannel or defaults.grayChannel,
                     alpha= args.aChannel or defaults.aChannel }
-                -- QUERY: Does this handle color differently? ie, except only 0-255?
-                -- img = Image(w, h, ColorMode.GRAY)
                 img = Image(w, h, ColorMode.RGB)
             else
                 bkgClr = Color(
@@ -524,7 +544,7 @@ dlg:button {
             end
 
             local bkgAlpha = bkgClr.alpha
-            local fillCels = bkgAlpha > 0 and colorMode ~= "INDEXED"
+            local fillCels = bkgAlpha > 0
             if fillCels then
                 local hex = bkgClr.rgbaPixel
                 local itr = img:pixels()
@@ -538,13 +558,19 @@ dlg:button {
             app.activeSprite = sprite
 
             -- Create frames.
-            local frameReqs = args.frames
+            local frameReqs = args.frames or defaults.frames
+            local duration = args.duration or defaults.duration
+            duration = duration * 0.001
+
+            local firstFrame = sprite.frames[1]
+            firstFrame.duration = duration
             local layer = sprite.layers[1]
             local firstCel = layer.cels[1]
             firstCel.image = img
             app.transaction(function()
                 for i = 0, frameReqs - 2, 1 do
-                    sprite:newEmptyFrame()
+                    local frame = sprite:newEmptyFrame()
+                    frame.duration = duration
                 end
             end)
 
@@ -558,11 +584,11 @@ dlg:button {
                 end)
             end
 
-            -- Set color mode.
+            -- Set color mode. Gray is set before the palette,
+            -- so that arbitrary color palettes can be assigned;
+            -- indexed palette needs to be assigned after.
             if colorMode == "INDEXED" then
-                app.command.ChangePixelFormat {
-                    format = "indexed"
-                }
+                reapplyIndexMode = true
             elseif colorMode == "GRAY" then
                 app.command.ChangePixelFormat {
                     format = "gray"
@@ -584,10 +610,7 @@ dlg:button {
         end
 
         -- May be nil as a result of malformed filepath.
-        if icc == nil then
-            icc = ColorSpace()
-        end
-
+        if icc == nil then icc = ColorSpace() end
         local transfer = args.transfer
         if transfer == "CONVERT" then
             sprite:convertColorSpace(icc)

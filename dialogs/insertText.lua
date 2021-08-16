@@ -176,9 +176,6 @@ dlg:button {
         local gw = 8
         local gh = 8
 
-        -- print(lut['A'])
-        -- print(lut['N'])
-
         -- Unpack arguments.
         local msgSrc = args.msgSrc
         local animate = args.animate
@@ -198,6 +195,9 @@ dlg:button {
 
         -- TODO: Handle operation from CLI?
         -- TODO: Handle unreasonably long lines?
+        -- TODO: Add padding to bottom of image based on
+        -- maxDrop of the last line of glyphs. That way
+        -- "qpzgy" doesn't get cut off.
 
         if msgSrc == "FILE" then
 
