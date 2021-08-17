@@ -6,8 +6,6 @@ local defaults = {
     pullFocus = false
 }
 
--- TODO: Instead of simply setting to active palette, give
--- option to save.
 local dlg = Dialog { title = "Palette From Cel" }
 
 dlg:check {
@@ -126,6 +124,7 @@ dlg:button {
                         if target == "SAVE" then
                             local filepath = args.filepath
                             palette:saveAs(filepath)
+                            app.alert("Palette saved.")
                         else
                             sprite:setPalette(palette)
                         end

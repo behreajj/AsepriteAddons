@@ -353,6 +353,9 @@ dlg:button {
                 end)
 
             -- Cache global functions used in for loops.
+            local cos = math.cos
+            local sin = math.sin
+            local trunc = math.tointeger
             local linearToXyz = Clr.lRgbaToXyzInternal
             local xyzToLab = Clr.xyzToLab
             local rgbaToLab = Clr.sRgbaToLab
@@ -360,11 +363,8 @@ dlg:button {
             local toHex = Clr.toHex
             local fromHex = Clr.fromHex
             local stdToLin = Clr.sRgbaTolRgbaInternal
-            local cos = math.cos
-            local sin = math.sin
             local rotax = Vec3.rotateInternal
             local screen = Utilities.toScreen
-            local trunc = math.tointeger
             local drawCirc = AseUtilities.drawCircleFill
 
             -- Unpack unique entries to data.

@@ -175,6 +175,7 @@ dlg:button {
         local lut = Utilities.GLYPH_LUT
         local gw = 8
         local gh = 8
+        local mxDrop = 2
 
         -- Unpack arguments.
         local msgSrc = args.msgSrc
@@ -195,10 +196,6 @@ dlg:button {
 
         -- TODO: Handle operation from CLI?
         -- TODO: Handle unreasonably long lines?
-        -- TODO: Add padding to bottom of image based on
-        -- maxDrop of the last line of glyphs. That way
-        -- "qpzgy" doesn't get cut off.
-
         if msgSrc == "FILE" then
 
             local msgFilePath = args.msgFile
@@ -294,7 +291,9 @@ dlg:button {
 
         -- Determine dimensions of new image.
         local widthImg = dw * maxLineWidth
-        local heightImg = dh * lineCount + scale * (lineCount - 1)
+        local heightImg = dh * lineCount
+            + scale * (lineCount - 1)
+            + scale * mxDrop
 
         -- Acquire or create sprite.
         -- Acquire top layer.

@@ -33,7 +33,6 @@ local defaults = {
     targetSprite = "NEW",
     width = 256,
     height = 256,
-    -- TODO: For indexed, add a bkg index?
     colorMode = "RGB",
     rChannel = 0,
     gChannel = 0,

@@ -363,15 +363,10 @@ end
 ---@param cel table cel
 ---@param layer table layer
 function AseUtilities.drawCurve2(
-    curve,
-    resolution,
-    useFill,
-    fillClr,
-    useStroke,
-    strokeClr,
-    brsh,
-    cel,
-    layer)
+    curve, resolution,
+    useFill, fillClr,
+    useStroke, strokeClr,
+    brsh, cel, layer)
 
     local vres = 2
     if resolution > 2 then vres = resolution end
@@ -380,6 +375,8 @@ function AseUtilities.drawCurve2(
     local kns = curve.knots
     local knsLen = #kns
     local toPercent = 1.0 / vres
+    local toPoint = AseUtilities.vec2ToPoint
+    local bezier = Vec2.bezierPoint
     local pts = {}
     local start = 2
     local prevKnot = kns[1]
@@ -396,16 +393,13 @@ function AseUtilities.drawCurve2(
         local rhNext = currKnot.rh
         local coNext = currKnot.co
 
-        local v = Vec2.round(coPrev)
-        table.insert(pts, Point(v.x, v.y))
-
+        table.insert(pts, toPoint(coPrev))
         for j = 1, vres, 1 do
-            v = Vec2.round(
-                Vec2.bezierPoint(
+            table.insert(pts,
+                toPoint(bezier(
                     coPrev, fhPrev,
-                    rhNext, coNext,
-                    j * toPercent))
-            table.insert(pts, Point(v.x, v.y))
+                    rhNext,coNext,
+                    j * toPercent)))
         end
 
         prevKnot = currKnot
@@ -582,10 +576,6 @@ function AseUtilities.drawKnot2(
     knot, cel, layer,
     lnClr, coClr, fhClr, rhClr)
 
-    -- TODO: Transfer all of this over to
-    -- avoid app commands and instead use
-    -- custom blitting.
-
     -- #02A7EB, #EBE128, #EB1A40
     local lnClrVal = lnClr or Color(0xffafafaf)
     local rhClrVal = rhClr or Color(0xffeba702)
@@ -597,13 +587,9 @@ function AseUtilities.drawKnot2(
     local coBrush = Brush { size = 6 }
     local fhBrush = Brush { size = 5 }
 
-    local coRnd = Vec2.round(knot.co)
-    local fhRnd = Vec2.round(knot.fh)
-    local rhRnd = Vec2.round(knot.rh)
-
-    local coPt = Point(coRnd.x, coRnd.y)
-    local fhPt = Point(fhRnd.x, fhRnd.y)
-    local rhPt = Point(rhRnd.x, rhRnd.y)
+    local coPt = AseUtilities.vec2ToPoint(knot.co)
+    local fhPt = AseUtilities.vec2ToPoint(knot.fh)
+    local rhPt = AseUtilities.vec2ToPoint(knot.rh)
 
     app.transaction(function()
         app.useTool {
@@ -673,10 +659,9 @@ function AseUtilities.drawMesh2(
     local vs = mesh.vs
     local vsLen = #vs
     local pts = {}
-    local vRnd = Vec2.round
+    local toPt = AseUtilities.vec2ToPoint
     for i = 1, vsLen, 1 do
-        local v = vRnd(vs[i])
-        pts[i] = Point(v.x, v.y)
+        pts[i] = toPt(vs[i])
     end
 
     -- Group points by face.
@@ -907,7 +892,7 @@ function AseUtilities.initCanvas(
         if wDefault and wDefault > 0 then wVal = wDefault end
         if hDefault and hDefault > 0 then hVal = hDefault end
         sprite = Sprite(wVal, hVal)
-        
+
         app.activeSprite = sprite
         layer = sprite.layers[1]
         local lenClrs = #clrs
@@ -989,29 +974,25 @@ function AseUtilities.rotateGlyphCcw(gl, w, h)
     return vr
 end
 
--- for i = 1, 20, 1 do
---     local aClr = Clr.random(
---         0, 100,
---         -110, 110,
---         -110, 110,
---         1.0, 1.0)
---     local aHex = Clr.toHex(aClr)
+---Converts a Vec2 to an Aseprite Point.
+---@param a table vector
+---@return table
+function AseUtilities.vec2ToPoint(a)
+    local cx = 0
+    if a.x < -0.0 then
+        cx = math.tointeger(a.x - 0.5)
+    elseif a.x > 0.0 then
+        cx = math.tointeger(a.x + 0.5)
+    end
 
---     local bClr = Clr.random(
---         0, 100,
---         -110, 110,
---         -110, 110,
---         0.0, 1.0)
---     local bHex = Clr.toHex(bClr)
+    local cy = 0
+    if a.y < -0.0 then
+        cy = math.tointeger(a.y - 0.5)
+    elseif a.y > 0.0 then
+        cy = math.tointeger(a.y + 0.5)
+    end
 
---     local cClr = Clr.blend(aClr, bClr)
---     local cHex = AseUtilities.blend(aHex, bHex)
-
---     print(cClr)
---     print(Clr.fromHex(cHex))
-
---     print(string.format("%08X", Clr.toHex(cClr)))
---     print(string.format("%08X\n", cHex))
--- end
+    return Point(cx, cy)
+end
 
 return AseUtilities

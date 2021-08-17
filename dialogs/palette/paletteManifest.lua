@@ -311,9 +311,6 @@ dlg:button {
         end
 
         if srcPal then
-
-            -- TODO: Margins between rows?
-
             local strfmt = string.format
             local trunc = math.tointeger
             local min = math.min

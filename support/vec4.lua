@@ -907,13 +907,15 @@ end
 ---@return table
 function Vec4.step(edge, x)
     local cx = 1.0
-    local cy = 1.0
-    local cz = 1.0
-    local cw = 1.0
-
     if x.x < edge.x then cx = 0.0 end
+
+    local cy = 1.0
     if x.y < edge.y then cy = 0.0 end
+
+    local cz = 1.0
     if x.z < edge.z then cz = 0.0 end
+
+    local cw = 1.0
     if x.w < edge.w then cw = 0.0 end
 
     return Vec4.new(cx, cy, cz, cw)

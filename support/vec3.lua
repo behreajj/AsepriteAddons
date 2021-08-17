@@ -1174,11 +1174,12 @@ end
 ---@return table
 function Vec3.step(edge, x)
     local cx = 1.0
-    local cy = 1.0
-    local cz = 1.0
-
     if x.x < edge.x then cx = 0.0 end
+
+    local cy = 1.0
     if x.y < edge.y then cy = 0.0 end
+
+    local cz = 1.0
     if x.z < edge.z then cz = 0.0 end
 
     return Vec3.new(cx, cy, cz)

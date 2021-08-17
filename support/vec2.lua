@@ -860,9 +860,9 @@ end
 ---@return table
 function Vec2.step(edge, x)
     local cx = 1.0
-    local cy = 1.0
-
     if x.x < edge.x then cx = 0.0 end
+
+    local cy = 1.0
     if x.y < edge.y then cy = 0.0 end
 
     return Vec2.new(cx, cy)
