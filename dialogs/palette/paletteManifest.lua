@@ -481,10 +481,36 @@ dlg:button {
 
             local spriteWidth = colCount * layerWidth + spriteMargin * 2
 
+            -- Adjust color space so that color conversions
+            -- from sRGB to CIE LAB work properly.
+            local sourceColorSpace = nil
+            if palType == "ACTIVE" and app.activeSprite then
+                sourceColorSpace = app.activeSprite.colorSpace
+            else
+                sourceColorSpace = ColorSpace { sRGB = true }
+            end
+            if sourceColorSpace == nil then
+                sourceColorSpace = ColorSpace()
+            end
+
+            -- local imageSpec = ImageSpec(
+            --     ColorMode.RGB,
+            --     spriteWidth,
+            --     spriteHeight,
+            --     Color(0, 0, 0, 0),
+            --     sourceColorSpace)
+
+            -- Internally, an ImageSpec's constructor signature is
+            -- color mode, width, height, transparent color, color space
+            -- but it's not clear how well the Lua constructor matches:
+            -- https://github.com/aseprite/aseprite/blob/5ecebff375bb7d331b650c57963f93bb48bfaca5/src/app/script/image_spec_class.cpp#L23 ,
+            -- https://github.com/aseprite/aseprite/blob/5ecebff375bb7d331b650c57963f93bb48bfaca5/src/doc/image_spec.h#L23
+
             local sprite = Sprite(spriteWidth, spriteHeight)
             local title = args.title or defaults.title
             sprite.filename = title
             sprite:setPalette(srcPal)
+            sprite:convertColorSpace(ColorSpace { sRGB = true })
 
             -- Create background.
             local bkgLayer = sprite.layers[1]
@@ -497,7 +523,7 @@ dlg:button {
             bkgCel.position = Point(0, 0)
 
             local xCenter = spriteWidth // 2
-            local titleChars = strToCharArr(title)
+            local titleChars = strToCharArr(title:upper())
             local titleHalfLen = dw * #titleChars // 2
             drawCharsHorizShd(lut, bkgImg, titleChars,
                 hdrTxtHex, shdHex,
@@ -708,6 +734,7 @@ dlg:button {
 
             end)
 
+            sprite:assignColorSpace(sourceColorSpace)
             app.activeSprite = sprite
             app.refresh()
          else

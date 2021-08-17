@@ -870,12 +870,17 @@ end
 ---@param hDefault number default height
 ---@param layerName string layer name
 ---@param colors table array of colors
+---@param colorspace table color space
 ---@return table
 function AseUtilities.initCanvas(
     wDefault,
     hDefault,
     layerName,
-    colors)
+    colors,
+    colorspace)
+
+    -- TODO: Consider adding color space to calls
+    -- to this function.
 
     local clrs = AseUtilities.DEFAULT_PAL_ARR
     if colors and #colors > 0 then
@@ -892,6 +897,9 @@ function AseUtilities.initCanvas(
         if wDefault and wDefault > 0 then wVal = wDefault end
         if hDefault and hDefault > 0 then hVal = hDefault end
         sprite = Sprite(wVal, hVal)
+        if colorspace then
+            sprite:assignColorSpace(colorspace)
+        end
 
         app.activeSprite = sprite
         layer = sprite.layers[1]
