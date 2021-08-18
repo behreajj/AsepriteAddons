@@ -5,7 +5,18 @@ local targetOptions = { "ACTIVE", "FILE", "NEW" }
 local colorModes = { "RGB", "INDEXED", "GRAY" }
 local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
 local colorSpaceTypes = { "FILE", "NONE", "S_RGB" }
-local colorSpaceTransfers = { "ASSIGN", "CONVERT" }
+local continuityOps = { "NUMERIC", "VISUAL" }
+
+-- As an extra precaution, but might not be necessary.
+local function paletteDeepCopy(srcPal)
+    local srcPalLen = #srcPal
+    local trgPal = Palette(srcPalLen)
+    for i = 0, srcPalLen - 1, 1 do
+        local srcClr = srcPal:getColor(i)
+        trgPal:setColor(i, srcClr)
+    end
+    return trgPal
+end
 
 local function updateColorPreviewRgba(dialog)
     local args = dialog.data
@@ -30,7 +41,7 @@ local function updateColorPreviewGray(dialog)
 end
 
 local defaults = {
-    targetSprite = "NEW",
+    trgSprPreset = "NEW",
     width = 256,
     height = 256,
     colorMode = "RGB",
@@ -45,7 +56,7 @@ local defaults = {
     frames = 1,
     duration = 100.0,
     spaceType = "FILE",
-    transfer = "CONVERT",
+    continuity = "VISUAL",
     pullFocus = true
 }
 
@@ -54,13 +65,13 @@ local dlg = Dialog {
 }
 
 dlg:combobox{
-    id = "targetSprite",
+    id = "trgSprPreset",
     label = "Sprite:",
-    option = defaults.targetSprite,
+    option = defaults.trgSprPreset,
     options = targetOptions,
     onchange = function()
         local args = dlg.data
-        local state = args.targetSprite
+        local state = args.trgSprPreset
         local cm = args.colorMode
 
         local isNew = state == "NEW"
@@ -95,7 +106,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "spriteFile",
     open = true,
-    visible = defaults.targetSprite == "FILE"
+    visible = defaults.trgSprPreset == "FILE"
 }
 
 dlg:newrow { always = false }
@@ -105,14 +116,14 @@ dlg:number {
     label = "Size:",
     text = string.format("%.0f", defaults.width),
     decimals = 0,
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.trgSprPreset == "NEW"
 }
 
 dlg:number {
     id = "height",
     text = string.format("%.0f", defaults.height),
     decimals = 0,
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.trgSprPreset == "NEW"
 }
 
 dlg:newrow { always = false }
@@ -122,7 +133,7 @@ dlg:combobox {
     label = "Color Mode:",
     option = "RGB",
     options = colorModes,
-    visible = defaults.targetSprite == "NEW",
+    visible = defaults.trgSprPreset == "NEW",
     onchange = function()
         local args = dlg.data
         local state = args.colorMode
@@ -162,7 +173,7 @@ dlg:shades {
         defaults.gChannel,
         defaults.bChannel,
         defaults.aChannel) },
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.trgSprPreset == "NEW"
         and defaults.colorMode ~= "INDEXED",
     onclick=function(ev)
         local clr = ev.color
@@ -187,7 +198,7 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.aChannel,
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.trgSprPreset == "NEW"
         and defaults.colorMode ~= "INDEXED",
     onchange = function()
 
@@ -224,7 +235,7 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.rChannel,
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.trgSprPreset == "NEW"
         and defaults.colorMode == "RGB"
         and defaults.aChannel > 0,
     onchange = function()
@@ -240,7 +251,7 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.gChannel,
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.trgSprPreset == "NEW"
         and defaults.colorMode == "RGB"
         and defaults.aChannel > 0,
     onchange = function()
@@ -256,7 +267,7 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.bChannel,
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.trgSprPreset == "NEW"
         and defaults.colorMode == "RGB"
         and defaults.aChannel > 0,
     onchange = function()
@@ -272,7 +283,7 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.grayChannel,
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.trgSprPreset == "NEW"
         and defaults.colorMode == "GRAY"
         and defaults.aChannel > 0,
     onchange = function()
@@ -287,7 +298,7 @@ dlg:slider {
 --     min = 0,
 --     max = 255,
 --     value = defaults.transparencyMask,
---     visible = defaults.targetSprite == "NEW"
+--     visible = defaults.trgSprPreset == "NEW"
 --         and defaults.colorMode == "INDEXED"
 -- }
 
@@ -299,13 +310,13 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.bkgIdx,
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.trgSprPreset == "NEW"
         and defaults.colorMode == "INDEXED"
 }
 
 dlg:separator{
     id = "framesSep",
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.trgSprPreset == "NEW"
 }
 
 dlg:slider {
@@ -314,7 +325,7 @@ dlg:slider {
     min = 1,
     max = 96,
     value = defaults.frames,
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.trgSprPreset == "NEW"
 }
 
 dlg:newrow { always = false }
@@ -324,7 +335,7 @@ dlg:number {
     label = "Duration:",
     text = string.format("%.1f", defaults.duration),
     decimals = 1,
-    visible = defaults.targetSprite == "NEW"
+    visible = defaults.trgSprPreset == "NEW"
 }
 
 dlg:separator{}
@@ -384,10 +395,10 @@ dlg:file {
 dlg:newrow { always = false }
 
 dlg:combobox {
-    id = "transfer",
-    label = "Transfer:",
-    option = defaults.transfer,
-    options = colorSpaceTransfers
+    id = "continuity",
+    label = "Continuity:",
+    option = defaults.continuity,
+    options = continuityOps
 }
 
 dlg:newrow { always = false }
@@ -400,6 +411,13 @@ dlg:button {
         local args = dlg.data
         local palType = args.palType or defaults.palType
         local colorMode = args.colorMode or defaults.colorMode
+
+        local activeSprite = app.activeSprite
+        local activeProfile = nil
+        if activeSprite then
+            activeProfile = activeSprite.colorSpace
+            activeSprite:convertColorSpace(ColorSpace{ sRGB = true })
+        end
 
         -- Set palette.
         local pal = nil
@@ -414,44 +432,48 @@ dlg:button {
                 pal = Palette { fromResource = pr }
             end
         elseif palType == "ACTIVE" then
-            local activeSprite = app.activeSprite
             if activeSprite then
-                pal = activeSprite.palettes[1]
+                pal = paletteDeepCopy(activeSprite.palettes[1])
             end
         end
 
         -- Search for active or file sprite.
-        local sprite = nil
-        local targetSprite = args.targetSprite or defaults.targetSprite
+        local targetSprite = nil
+        local trgSprPreset = args.trgSprPreset or defaults.trgSprPreset
         local reapplyIndexMode = false
 
         local maskClrIdx = args.transparencyMask or defaults.transparencyMask
-        if targetSprite == "FILE" then
+        if trgSprPreset == "FILE" then
             local pathName = args.spriteFile
             if pathName and #pathName > 0 then
-                sprite = Sprite { fromFile = pathName }
-                app.activeSprite = sprite
-                reapplyIndexMode = sprite.colorMode == ColorMode.INDEXED
+                targetSprite = Sprite { fromFile = pathName }
+                reapplyIndexMode = targetSprite.colorMode == ColorMode.INDEXED
                 app.command.ChangePixelFormat { format = "rgb" }
 
                 -- This MUST be index ZERO.
-                sprite.transparentColor = 0
-                maskClrIdx = sprite.transparentColor
+                targetSprite.transparentColor = 0
+                maskClrIdx = targetSprite.transparentColor
             end
-        elseif targetSprite == "ACTIVE" then
-            sprite = app.activeSprite
-            reapplyIndexMode = sprite.colorMode == ColorMode.INDEXED
-            app.command.ChangePixelFormat { format = "rgb" }
+        elseif trgSprPreset == "ACTIVE" then
+            targetSprite = app.activeSprite
+            if targetSprite ~= nil then
+                reapplyIndexMode = targetSprite.colorMode == ColorMode.INDEXED
+                app.command.ChangePixelFormat { format = "rgb" }
 
-            -- This MUST be index ZERO.
-            sprite.transparentColor = 0
-            maskClrIdx = sprite.transparentColor
+                -- This MUST be index ZERO.
+                targetSprite.transparentColor = 0
+                maskClrIdx = targetSprite.transparentColor
+            end
+        end
+
+        if activeSprite then
+            app.activeSprite = activeSprite
         end
 
         -- Last resort to establish a palette.
         if pal == nil or #pal < 1 then
-            if sprite ~= nil then
-                pal = sprite.palettes[1]
+            if targetSprite ~= nil then
+                pal = paletteDeepCopy(targetSprite.palettes[1])
             else
                 -- This doesn't use AseUtilities palette default
                 -- on purpose so that the script can be copied
@@ -478,6 +500,10 @@ dlg:button {
                     pal:setColor(7, Color(255,   0, 255, 255))
                 end
             end
+        end
+
+        if activeSprite then
+            activeSprite:convertColorSpace(activeProfile)
         end
 
         -- Ensure that mask color index is not beyond the
@@ -511,7 +537,7 @@ dlg:button {
         end
 
         -- Create a new sprite.
-        if targetSprite == "NEW" or sprite == nil then
+        if trgSprPreset == "NEW" or targetSprite == nil then
             local w = args.width
             local h = args.height
             w = math.max(1, math.tointeger(0.5 + math.abs(w)))
@@ -553,23 +579,22 @@ dlg:button {
 
             -- Create sprite with RGB color mode,
             -- set its palette.
-            sprite = Sprite(w, h, ColorMode.RGB)
-            sprite.transparentColor = maskClrIdx
-            app.activeSprite = sprite
+            targetSprite = Sprite(w, h, ColorMode.RGB)
+            targetSprite.transparentColor = maskClrIdx
 
             -- Create frames.
             local frameReqs = args.frames or defaults.frames
             local duration = args.duration or defaults.duration
             duration = duration * 0.001
 
-            local firstFrame = sprite.frames[1]
+            local firstFrame = targetSprite.frames[1]
             firstFrame.duration = duration
-            local layer = sprite.layers[1]
+            local layer = targetSprite.layers[1]
             local firstCel = layer.cels[1]
             firstCel.image = img
             app.transaction(function()
                 for i = 0, frameReqs - 2, 1 do
-                    local frame = sprite:newEmptyFrame()
+                    local frame = targetSprite:newEmptyFrame()
                     frame.duration = duration
                 end
             end)
@@ -579,7 +604,7 @@ dlg:button {
                 local pos = Point(0, 0)
                 app.transaction(function()
                     for i = 0, frameReqs - 2, 1 do
-                        sprite:newCel(layer, i + 2, img, pos)
+                        targetSprite:newCel(layer, i + 2, img, pos)
                     end
                 end)
             end
@@ -609,19 +634,16 @@ dlg:button {
             icc = ColorSpace { sRGB = true }
         end
 
+        targetSprite:setPalette(pal)
+
         -- May be nil as a result of malformed filepath.
         if icc == nil then icc = ColorSpace() end
-        local transfer = args.transfer
-        if transfer == "CONVERT" then
-            sprite:convertColorSpace(icc)
+        local continuity = args.continuity or defaults.continuity
+        if continuity == "VISUAL" then
+            targetSprite:convertColorSpace(icc)
         else
-            sprite:assignColorSpace(icc)
+            targetSprite:assignColorSpace(icc)
         end
-
-        -- It doesn't seem to matter where you set this
-        -- re: setting the color space, it's impacted
-        -- by transform either way...
-        sprite:setPalette(pal)
 
         -- If an active sprite or sprite from filepath
         -- is indexed color mode, its colors may be
@@ -633,6 +655,7 @@ dlg:button {
             }
         end
 
+        app.activeSprite = targetSprite
         app.refresh()
         dlg:close()
     end
