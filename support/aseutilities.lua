@@ -145,7 +145,10 @@ end
 
 ---Converts a Clr to an Aseprite Color.
 ---Clamps the Clr's channels to [0.0, 1.0] before
----they are converted.
+---they are converted. Beware that this could return
+---(255, 0, 0, 0) or (0, 255, 0, 0), which may be
+---visually indistinguishable from - and confused
+--- with - an alpha mask, (0, 0, 0, 0).
 ---@param clr table clr
 ---@return table
 function AseUtilities.clrToAseColor(clr)

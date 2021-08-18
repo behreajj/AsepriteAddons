@@ -315,7 +315,9 @@ dlg:button {
     text = "&FORE",
     focus = false,
     onclick = function()
-        app.fgColor = dlg.data.clr[1]
+        local clr = dlg.data.clr[1]
+        if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
+        app.fgColor = clr
     end
 }
 
@@ -327,8 +329,10 @@ dlg:button {
         -- Bug where assigning to app.bgColor
         -- leads to unlocked palette colors
         -- being assigned instead.
+        local clr = dlg.data.clr[1]
+        if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
         app.command.SwitchColors()
-        app.fgColor = dlg.data.clr[1]
+        app.fgColor = clr
         app.command.SwitchColors()
     end
 }
@@ -424,7 +428,9 @@ dlg:shades {
         if ev.button == MouseButton.LEFT then
             setFromAse(ev.color)
         elseif ev.button == MouseButton.RIGHT then
-            app.fgColor = ev.color
+            local clr = ev.color
+            if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
+            app.fgColor = clr
         end
     end
 }
@@ -442,7 +448,9 @@ dlg:shades {
         if ev.button == MouseButton.LEFT then
             setFromAse(ev.color)
         elseif ev.button == MouseButton.RIGHT then
-            app.fgColor = ev.color
+            local clr = ev.color
+            if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
+            app.fgColor = clr
         end
     end
 }
@@ -462,7 +470,9 @@ dlg:shades {
         if ev.button == MouseButton.LEFT then
             setFromAse(ev.color)
         elseif ev.button == MouseButton.RIGHT then
-            app.fgColor = ev.color
+            local clr = ev.color
+            if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
+            app.fgColor = clr
         end
     end
 }
@@ -482,7 +492,9 @@ dlg:shades {
         if ev.button == MouseButton.LEFT then
             setFromAse(ev.color)
         elseif ev.button == MouseButton.RIGHT then
-            app.fgColor = ev.color
+            local clr = ev.color
+            if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
+            app.fgColor = clr
         end
     end
 }
@@ -503,7 +515,9 @@ dlg:shades {
         if ev.button == MouseButton.LEFT then
             setFromAse(ev.color)
         elseif ev.button == MouseButton.RIGHT then
-            app.fgColor = ev.color
+            local clr = ev.color
+            if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
+            app.fgColor = clr
         end
     end
 }

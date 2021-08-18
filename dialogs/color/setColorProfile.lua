@@ -165,14 +165,15 @@ dlg:shades {
     visible = defaults.targetSprite == "NEW"
         and defaults.colorMode ~= "INDEXED",
     onclick=function(ev)
+        local clr = ev.color
+        if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
         if ev.button == MouseButton.LEFT then
-            app.fgColor = ev.color
+            app.fgColor = clr
         elseif ev.button == MouseButton.RIGHT then
             -- Bug where assigning to app.bgColor leads to
             -- unlocked palette color assignment instead.
-            -- app.bgColor = ev.color
             app.command.SwitchColors()
-            app.fgColor = ev.color
+            app.fgColor = clr
             app.command.SwitchColors()
         end
     end

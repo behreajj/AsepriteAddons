@@ -157,7 +157,11 @@ dlg:button {
                 local target = args.target
                 if target == "SAVE" then
                     local filepath = args.filepath
-                    trgPal:saveAs(filepath)
+                    if filepath and #filepath > 0 then
+                        trgPal:saveAs(filepath)
+                    else
+                        app.alert("Invalid filepath.")
+                    end
                 else
                     sprite:setPalette(trgPal)
                 end

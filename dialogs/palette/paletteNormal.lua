@@ -100,6 +100,7 @@ dlg:button {
         local inclinations = args.inclinations
         local azimuths = args.azimuths
         local prependMask = args.prependMask
+        local target = args.target
         local len = inclinations * azimuths
         local k = 0
 
@@ -161,11 +162,17 @@ dlg:button {
         local oldMode = sprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
-        local target = args.target
         if target == "SAVE" then
             local filepath = args.filepath
-            palette:saveAs(filepath)
+            if filepath and #filepath > 0 then
+                palette:saveAs(filepath)
+            else
+                app.alert("Invalid filepath.")
+            end
         else
+            -- This is not color data, so there should be
+            -- no color management.
+            sprite:assignColorSpace(ColorSpace())
             sprite:setPalette(palette)
         end
 

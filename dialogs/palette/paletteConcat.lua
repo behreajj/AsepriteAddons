@@ -117,7 +117,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "filepath",
-    filetypes = { "aseprite", "gpl", "pal" },
+    filetypes = { "aseprite", "gpl", "pal", "png" },
     save = true,
     visible = defaults.target == "SAVE"
 }
@@ -186,6 +186,8 @@ dlg:button {
 
                     for i = 0, aLen - 1, 1 do
                         local hex = aPal:getColor(i).rgbaPixel
+                        local alpha = hex & 0xff000000
+                        if alpha == 0 then hex = 0x00000000 end
                         if not clrKeys[hex] then
                             idx = idx + 1
                             clrKeys[hex] = idx
@@ -194,6 +196,8 @@ dlg:button {
 
                     for j = 0, bLen - 1, 1 do
                         local hex = bPal:getColor(j).rgbaPixel
+                        local alpha = hex & 0xff000000
+                        if alpha == 0 then hex = 0x00000000 end
                         if not clrKeys[hex] then
                             idx = idx + 1
                             clrKeys[hex] = idx
@@ -241,7 +245,11 @@ dlg:button {
                 local target = args.target
                 if target == "SAVE" then
                     local filepath = args.filepath
-                    cPal:saveAs(filepath)
+                    if filepath and #filepath > 0 then
+                        cPal:saveAs(filepath)
+                    else
+                        app.alert("Invalid filepath.")
+                    end
                 else
                     sprite:setPalette(cPal)
                 end
