@@ -199,7 +199,10 @@ dlg:button {
             end
         else
             if app.activeSprite then
+                local activeProfile = app.activeSprite.colorSpace
+                app.activeSprite:convertColorSpace(ColorSpace{ sRGB = true })
                 srcPal = app.activeSprite.palettes[1]
+                app.activeSprite:convertColorSpace(activeProfile)
             end
         end
 
@@ -217,9 +220,9 @@ dlg:button {
                 sourceColorSpace = ColorSpace()
             end
 
-            local sprite = Sprite(512, 512)
-            sprite:setPalette(srcPal)
-            sprite:convertColorSpace(ColorSpace { sRGB = true })
+            local nearSprite = Sprite(512, 512)
+            nearSprite:setPalette(srcPal)
+            nearSprite:convertColorSpace(ColorSpace { sRGB = true })
 
             -- Unpack args.
             local palStart = args.palStart or defaults.palStart
@@ -247,8 +250,8 @@ dlg:button {
             local search = Octree.querySphericalInternal
 
             -- Create background image once, then clone.
-            local width = sprite.width
-            local height = sprite.height
+            local width = nearSprite.width
+            local height = nearSprite.height
             local bkgImg = Image(width, height)
             local bkgHex = bkgColor.rgbaPixel
             for elm in bkgImg:pixels() do
@@ -256,24 +259,24 @@ dlg:button {
             end
 
             -- Add requested number of frames.
-            local oldFrameLen = #sprite.frames
+            local oldFrameLen = #nearSprite.frames
             local reqFrames = args.frames
             local needed = math.max(0, reqFrames - oldFrameLen)
             duration = duration * 0.001
 
             app.transaction(function()
                 for _ = 1, needed, 1 do
-                    local frame = sprite:newEmptyFrame()
+                    local frame = nearSprite:newEmptyFrame()
                     frame.duration = duration
                 end
             end)
 
             -- Create background layer across frames.
-            local bkgLayer = sprite.layers[#sprite.layers]
+            local bkgLayer = nearSprite.layers[#nearSprite.layers]
             bkgLayer.name = "Bkg"
             app.transaction(function()
                 for j = 1, reqFrames, 1 do
-                    sprite:newCel(bkgLayer, sprite.frames[j], bkgImg)
+                    nearSprite:newCel(bkgLayer, nearSprite.frames[j], bkgImg)
                 end
             end)
 
@@ -299,7 +302,7 @@ dlg:button {
 
                 -- Create layers in reverse order.
                 for i = 0, palCount - 1, 1 do
-                    layers[palCount - i] = sprite:newLayer()
+                    layers[palCount - i] = nearSprite:newLayer()
                 end
 
                 for i = 0, palCount - 1, 1 do
@@ -447,7 +450,7 @@ dlg:button {
 
                 pts2d[1 + k] = {
                     layer = result.layer,
-                    frame = sprite.frames[1 + j],
+                    frame = nearSprite.frames[1 + j],
                     hex = result.hex,
                     nearHexes = result.nearHexes,
                     source = pt2d,
@@ -473,7 +476,7 @@ dlg:button {
                     local scl = minSwatchSize + swatchDiff
                         * ((pt2d.z - zMax) * zDenom)
 
-                    local cel = sprite:newCel(layer, frame)
+                    local cel = nearSprite:newCel(layer, frame)
                     local img = Image(width, height)
 
                     for m = 1, #near2ds, 1 do
@@ -500,8 +503,8 @@ dlg:button {
                 end
             end)
 
-            sprite:assignColorSpace(sourceColorSpace)
-            app.activeSprite = sprite
+            nearSprite:assignColorSpace(sourceColorSpace)
+            app.activeSprite = nearSprite
             app.refresh()
         else
             app.alert("The source palette could not be found.")

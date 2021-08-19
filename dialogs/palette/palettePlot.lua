@@ -205,7 +205,10 @@ dlg:button {
                 srcPal = Palette { fromResource = pr }
             end
         elseif palType == "ACTIVE" and app.activeSprite then
+            local activeProfile = app.activeSprite.colorSpace
+            app.activeSprite:convertColorSpace(ColorSpace{ sRGB = true })
             srcPal = app.activeSprite.palettes[1]
+            app.activeSprite:convertColorSpace(activeProfile)
         end
 
         if srcPal then
@@ -221,9 +224,9 @@ dlg:button {
                 sourceColorSpace = ColorSpace()
             end
 
-            local sprite = Sprite(512, 512)
-            sprite:setPalette(srcPal)
-            sprite:convertColorSpace(ColorSpace { sRGB = true })
+            local plotSprite = Sprite(512, 512)
+            plotSprite:setPalette(srcPal)
+            plotSprite:convertColorSpace(ColorSpace { sRGB = true })
 
             -- Validate range of palette to sample.
             local palStart = args.palStart or defaults.palStart
@@ -273,8 +276,8 @@ dlg:button {
                 clrsSampled[j] = hex
             end
 
-            local width = sprite.width
-            local height = sprite.height
+            local width = plotSprite.width
+            local height = plotSprite.height
             local halfWidth = width * 0.5
             local halfHeight = height * 0.5
 
@@ -311,12 +314,12 @@ dlg:button {
             end
 
             -- Add requested number of frames.
-            local oldFrameLen = #sprite.frames
+            local oldFrameLen = #plotSprite.frames
             local reqFrames = args.frames
             local needed = math.max(0, reqFrames - oldFrameLen)
             app.transaction(function()
                 for _ = 1, needed, 1 do
-                    sprite:newEmptyFrame()
+                    plotSprite:newEmptyFrame()
                 end
             end)
 
@@ -391,7 +394,7 @@ dlg:button {
             end
 
             -- Create layer.
-            local layer = sprite.layers[#sprite.layers]
+            local layer = plotSprite.layers[#plotSprite.layers]
             layer.name = "Palette.Plot"
 
             local zDiff = zMin - zMax
@@ -409,10 +412,10 @@ dlg:button {
             duration = duration * 0.001
             app.transaction(function()
                 for h = 1, reqFrames, 1 do
-                    local frame = sprite.frames[h]
+                    local frame = plotSprite.frames[h]
                     frame.duration = duration
 
-                    local cel = sprite:newCel(layer, frame)
+                    local cel = plotSprite:newCel(layer, frame)
                     local img = bkgImg:clone()
                     local frame2d = pts2d[h]
 
@@ -437,8 +440,8 @@ dlg:button {
                 end
             end)
 
-            sprite:assignColorSpace(sourceColorSpace)
-            app.activeSprite = sprite
+            plotSprite:assignColorSpace(sourceColorSpace)
+            app.activeSprite = plotSprite
             app.refresh()
         else
             app.alert("The source palette could not be found.")

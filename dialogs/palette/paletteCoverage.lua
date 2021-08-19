@@ -316,7 +316,10 @@ dlg:button {
                 srcPal = Palette { fromResource = pr }
             end
         elseif palType == "ACTIVE" and app.activeSprite then
+            local activeProfile = app.activeSprite.colorSpace
+            app.activeSprite:convertColorSpace(ColorSpace{ sRGB = true })
             srcPal = app.activeSprite.palettes[1]
+            app.activeSprite:convertColorSpace(activeProfile)
         end
 
         if srcPal then
@@ -333,9 +336,9 @@ dlg:button {
                 sourceColorSpace = ColorSpace()
             end
 
-            local sprite = Sprite(512, 512)
-            sprite:setPalette(srcPal)
-            sprite:convertColorSpace(ColorSpace { sRGB = true })
+            local coverSprite = Sprite(512, 512)
+            coverSprite:setPalette(srcPal)
+            coverSprite:convertColorSpace(ColorSpace { sRGB = true })
 
             -- Validate range of palette to sample.
             local palStart = defaults.palStart
@@ -492,17 +495,17 @@ dlg:button {
             end
 
             -- Add requested number of frames.
-            local oldFrameLen = #sprite.frames
+            local oldFrameLen = #coverSprite.frames
             local reqFrames = args.frames
             local needed = math.max(0, reqFrames - oldFrameLen)
             app.transaction(function()
                 for _ = 1, needed, 1 do
-                    sprite:newEmptyFrame()
+                    coverSprite:newEmptyFrame()
                 end
             end)
 
-            local width = sprite.width
-            local height = sprite.height
+            local width = coverSprite.width
+            local height = coverSprite.height
             local halfWidth = width * 0.5
             local halfHeight = height * 0.5
 
@@ -573,7 +576,7 @@ dlg:button {
             end
 
             -- Create layer.
-            local layer = sprite.layers[#sprite.layers]
+            local layer = coverSprite.layers[#coverSprite.layers]
             layer.name = "Palette.Coverage."
                 .. geometry .. "."
                 .. projPreset
@@ -593,9 +596,9 @@ dlg:button {
             duration = duration * 0.001
             app.transaction(function()
                 for h = 1, reqFrames, 1 do
-                    local frame = sprite.frames[h]
+                    local frame = coverSprite.frames[h]
                     frame.duration = duration
-                    local cel = sprite:newCel(layer, frame)
+                    local cel = coverSprite:newCel(layer, frame)
                     local img = bkgImg:clone()
                     local frame2d = pts2d[h]
 
@@ -620,8 +623,8 @@ dlg:button {
                 end
             end)
 
-            sprite:assignColorSpace(sourceColorSpace)
-            app.activeSprite = sprite
+            coverSprite:assignColorSpace(sourceColorSpace)
+            app.activeSprite = coverSprite
             app.refresh()
         else
             app.alert("The source palette could not be found.")

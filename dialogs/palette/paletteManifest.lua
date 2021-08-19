@@ -307,7 +307,10 @@ dlg:button {
                 srcPal = Palette { fromResource = pr }
             end
         elseif palType == "ACTIVE" and app.activeSprite then
+            local activeProfile = app.activeSprite.colorSpace
+            app.activeSprite:convertColorSpace(ColorSpace{ sRGB = true })
             srcPal = app.activeSprite.palettes[1]
+            app.activeSprite:convertColorSpace(activeProfile)
         end
 
         if srcPal then
@@ -493,33 +496,20 @@ dlg:button {
                 sourceColorSpace = ColorSpace()
             end
 
-            -- local imageSpec = ImageSpec(
-            --     ColorMode.RGB,
-            --     spriteWidth,
-            --     spriteHeight,
-            --     Color(0, 0, 0, 0),
-            --     sourceColorSpace)
-
-            -- Internally, an ImageSpec's constructor signature is
-            -- color mode, width, height, transparent color, color space
-            -- but it's not clear how well the Lua constructor matches:
-            -- https://github.com/aseprite/aseprite/blob/5ecebff375bb7d331b650c57963f93bb48bfaca5/src/app/script/image_spec_class.cpp#L23 ,
-            -- https://github.com/aseprite/aseprite/blob/5ecebff375bb7d331b650c57963f93bb48bfaca5/src/doc/image_spec.h#L23
-
-            local sprite = Sprite(spriteWidth, spriteHeight)
+            local manifestSprite = Sprite(spriteWidth, spriteHeight)
             local title = args.title or defaults.title
-            sprite.filename = title
-            sprite:setPalette(srcPal)
-            sprite:convertColorSpace(ColorSpace { sRGB = true })
+            manifestSprite.filename = title
+            manifestSprite:setPalette(srcPal)
+            manifestSprite:convertColorSpace(ColorSpace { sRGB = true })
 
             -- Create background.
-            local bkgLayer = sprite.layers[1]
+            local bkgLayer = manifestSprite.layers[1]
             bkgLayer.name = "Background"
             local bkgImg = Image(spriteWidth, spriteHeight)
             for elm in bkgImg:pixels() do
                 elm(bkgHex)
             end
-            local bkgCel = sprite:newCel(bkgLayer, frame)
+            local bkgCel = manifestSprite:newCel(bkgLayer, frame)
             bkgCel.position = Point(0, 0)
 
             local xCenter = spriteWidth // 2
@@ -607,9 +597,9 @@ dlg:button {
                     if hdrUseRepeat and i ~= palDataLen and i % hdrRepeatRate == 0 then
                         -- This mechanism would need to be reconsidered
                         -- if you ever offered a multiple columns option.
-                        local hdrRptLayer = sprite:newLayer()
+                        local hdrRptLayer = manifestSprite:newLayer()
                         hdrRptLayer.name = "HEADER"
-                        local hdrRptCel = sprite:newCel(hdrRptLayer, frame)
+                        local hdrRptCel = manifestSprite:newCel(hdrRptLayer, frame)
                         hdrRptCel.position = Point(spriteMargin, yCaret)
                         hdrRptCel.image = hdrImg
 
@@ -621,11 +611,10 @@ dlg:button {
                     local palHex = palEntry.hex
                     local palHexWeb = palEntry.hexWebStr
 
-                    local rowLayer = sprite:newLayer()
+                    local rowLayer = manifestSprite:newLayer()
                     rowLayer.name = strfmt("%03d.%s",
                         palIdx,
                         string.sub(palHexWeb, 2))
-                    -- rowLayer.color = palEntry.ase
                     rowLayer.data = strfmt("{\"idx\":%d,\"abgr\":%d}", palIdx, palHex)
 
                     local rowImg = nil
@@ -635,7 +624,7 @@ dlg:button {
                         rowImg = row1Bkg:clone()
                     end
 
-                    local rowCel = sprite:newCel(rowLayer, frame)
+                    local rowCel = manifestSprite:newCel(rowLayer, frame)
                     rowCel.position = Point(spriteMargin, yCaret)
 
                     drawSwatch(rowImg, palHex,
@@ -726,16 +715,16 @@ dlg:button {
                 end
 
                 -- Draw header.
-                local hdrLayer = sprite:newLayer()
+                local hdrLayer = manifestSprite:newLayer()
                 hdrLayer.name = "HEADER"
-                local hdrCel = sprite:newCel(hdrLayer, frame)
+                local hdrCel = manifestSprite:newCel(hdrLayer, frame)
                 hdrCel.position = Point(spriteMargin, yCaret)
                 hdrCel.image = hdrImg
 
             end)
 
-            sprite:assignColorSpace(sourceColorSpace)
-            app.activeSprite = sprite
+            manifestSprite:assignColorSpace(sourceColorSpace)
+            app.activeSprite = manifestSprite
             app.refresh()
          else
             app.alert("The source palette could not be found.")
