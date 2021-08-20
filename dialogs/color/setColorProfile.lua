@@ -13,7 +13,8 @@ local function paletteDeepCopy(srcPal)
     local trgPal = Palette(srcPalLen)
     for i = 0, srcPalLen - 1, 1 do
         local srcClr = srcPal:getColor(i)
-        trgPal:setColor(i, srcClr)
+        local trgClr = Color(srcClr.rgbaPixel)
+        trgPal:setColor(i, trgClr)
     end
     return trgPal
 end
@@ -188,7 +189,6 @@ dlg:slider {
     visible = defaults.trgSprPreset == "NEW"
         and defaults.colorMode ~= "INDEXED",
     onchange = function()
-
         local args = dlg.data
         local cm = args.colorMode
         local isRgb = cm == "RGB"
@@ -398,13 +398,9 @@ dlg:button {
         local args = dlg.data
         local palType = args.palType or defaults.palType
         local colorMode = args.colorMode or defaults.colorMode
-
-        local activeSprite = app.activeSprite
-        local activeProfile = nil
-        if activeSprite then
-            activeProfile = activeSprite.colorSpace
-            activeSprite:convertColorSpace(ColorSpace{ sRGB = true })
-        end
+        
+        -- TODO: Remove all bullshit related to color space conversion.
+        -- The API tools are just not reliable enough.
 
         -- Set palette.
         local pal = nil
@@ -487,10 +483,6 @@ dlg:button {
                     pal:setColor(7, Color(255,   0, 255, 255))
                 end
             end
-        end
-
-        if activeSprite then
-            activeSprite:convertColorSpace(activeProfile)
         end
 
         -- Ensure that mask color index is not beyond the

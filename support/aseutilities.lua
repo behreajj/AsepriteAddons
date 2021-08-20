@@ -73,6 +73,42 @@ function AseUtilities.new()
     return inst
 end
 
+---Copies an Aseprite Color object by sRGB
+---channel values. This is important because
+---some fields in the app are pass by reference.
+---@param aseClr table Aseprite color
+---@return table
+function AseUtilities.aseColorCopy(aseClr)
+    return Color(
+        aseClr.red,
+        aseClr.green,
+        aseClr.blue,
+        aseClr.alpha)
+end
+
+---Returns a string containing diagnostic information
+---about an Aseprite Color object. Format lists the
+---nearest palette index, the red, green, blue and
+---alpha in unsigned byte range [0, 255], and a web
+---friendly hexadecimal representation.
+---@param aseColor table Aseprite color
+---@return string
+function AseUtilities.aseColorToString(aseColor)
+    local r = aseColor.red
+    local g = aseColor.green
+    local b = aseColor.blue
+    -- Index is meaningless, as it seems to include
+    -- nearest color in palette index, is a real number (?),
+    -- and it's not clear when it could be mutated or
+    -- by whom.
+    -- local idx = math.tointeger(aseColor.index)
+    return string.format(
+        "(%03d, %03d, %03d, %03d) #%06X",
+        r, g, b,
+        aseColor.alpha,
+        r << 0x10 | g << 0x08 | b)
+end
+
 ---Converts an Aseprite Color object to a Clr.
 ---Assumes that the Aseprite Color is in sRGB.
 ---@param aseClr table Aseprite color
@@ -85,17 +121,109 @@ function AseUtilities.aseColorToClr(aseClr)
         0.00392156862745098 * aseClr.alpha)
 end
 
----Copies an Aseprite Color object by sRGB
----channel values. This is important because
----some fields in the app are pass by reference.
----@param aseClr table Aseprite color
+---Returns a string containing diagnostic information
+---about an Aseprite Color object.
+---@param pal table Aseprite palette
+---@param startIndex number start index
+---@param count number sample count
+---@return string
+function AseUtilities.asePaletteToString(pal, startIndex, count)
+    local palLen = #pal
+
+    local si = startIndex or 0
+    si = math.min(palLen - 1, math.max(0, si))
+    local vc = count or 256
+    vc = math.min(palLen - si, math.max(2, vc)) - 1
+
+    -- Using \r for carriage returns causes formatting bug.
+    local str = ""
+    for i = 0, vc, 1 do
+        local palIdx = si + i
+        str = str
+            .. string.format("%03d. ", palIdx)
+            .. AseUtilities.aseColorToString(
+                pal:getColor(palIdx))
+        if i < vc then
+            str = str .. ",\n"
+        end
+    end
+
+    return str
+end
+
+---Converts an Aseprite palette to a table
+---of Aseprite Colors. If the palette is nil
+---returns a default table. Assumes palette
+---is in sRGB.
+---@param pal table Aseprite palette
+---@param startIndex number start index
+---@param count number sample count
 ---@return table
-function AseUtilities.copyAseColor(aseClr)
-    return Color(
-        aseClr.red,
-        aseClr.green,
-        aseClr.blue,
-        aseClr.alpha)
+function AseUtilities.asePaletteToClrArr(pal, startIndex, count)
+    if pal then
+        local palLen = #pal
+
+        local si = startIndex or 0
+        si = math.min(palLen - 1, math.max(0, si))
+        local vc = count or 256
+        vc = math.min(palLen - si, math.max(2, vc))
+
+        local clrs = {}
+        local convert = AseUtilities.aseColorToClr
+        for i = 0, vc - 1, 1 do
+            clrs[1 + i] = convert(pal:getColor(si + i))
+        end
+
+        -- This is intended for gradient work, so it
+        -- returns an array with a length greater than
+        -- one no matter what.
+        if #clrs == 1 then
+            local a = clrs[1].a
+            table.insert(clrs, 1, Clr.new(0.0, 0.0, 0.0, a))
+            clrs[3] = Clr.new(1.0, 1.0, 1.0, a)
+        end
+
+        return clrs
+    else
+        return { Clr.clearBlack(), Clr.white() }
+    end
+end
+
+---Converts an Aseprite palette to a table
+---of hexadecimal integers. If the palette is nil
+---returns a default table. Assumes palette
+---is in sRGB.
+---@param pal table Aseprite palette
+---@param startIndex number start index
+---@param count number sample count
+---@return table
+function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
+    if pal then
+        local palLen = #pal
+
+        local si = startIndex or 0
+        si = math.min(palLen - 1, math.max(0, si))
+        local vc = count or 256
+        vc = math.min(palLen - si, math.max(2, vc))
+
+        local hexes = {}
+        for i = 0, vc - 1, 1 do
+            -- Do you have to worry about overflow due to
+            -- rgb being out of gamut? Doesn't seem so, even
+            -- in cases of color profile transforms...
+            local aseColor = pal:getColor(si + i)
+            hexes[1 + i] = aseColor.rgbaPixel
+        end
+
+        if #hexes == 1 then
+            local amsk = hexes[1] & 0xff000000
+            table.insert(hexes, 1, amsk)
+            hexes[3] = amsk | 0x00ffffff
+        end
+        return hexes
+    else
+        return { 0x00000000, 0xffffffff }
+    end
 end
 
 ---Blends together two hexadecimal colors.
@@ -934,42 +1062,6 @@ function AseUtilities.initCanvas(
 
     layer.name = layerName or "Layer"
     return sprite
-end
-
----Converts an Aseprite palette to a table
----of Aseprite Colors. If the palette is nil
----returns a default table.
----@param pal table Aseprite palette
----@param startIndex number start index
----@param count number sample count
----@return table
-function AseUtilities.paletteToClrArr(pal, startIndex, count)
-    if pal then
-        local palLen = #pal
-
-        local si = startIndex or 0
-        si = math.min(palLen - 1, math.max(0, si))
-        local vc = count or 256
-        vc = math.min(palLen - si, math.max(2, vc))
-
-        local clrs = {}
-        local convert = AseUtilities.aseColorToClr
-        for i = 0, vc - 1, 1 do
-            clrs[1 + i] = convert(pal:getColor(si + i))
-        end
-
-        -- This is intended for gradient work, so it
-        -- returns an array with a length greater than
-        -- one no matter what.
-        if #clrs == 1 then
-            table.insert(clrs, 1, Clr.black())
-            clrs[3] = Clr.white()
-        end
-
-        return clrs
-    else
-        return { Clr.clearBlack(), Clr.white() }
-    end
 end
 
 ---Rotates a glyph counter-clockwise.

@@ -222,7 +222,7 @@ dlg:button {
                 local startIndex = args.startIndex
                 local count = args.count
                 local pal = sprite.palettes[1]
-                local clrArr = AseUtilities.paletteToClrArr(
+                local clrArr = AseUtilities.asePaletteToClrArr(
                     pal, startIndex, count)
 
                 local pairFunc = GradientUtilities.clrSpcFuncFromPreset(

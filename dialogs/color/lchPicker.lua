@@ -166,7 +166,7 @@ local function setFromAse(aseClr)
 
     dlg:modify {
         id = "clr",
-        colors = { AseUtilities.copyAseColor(aseClr) }
+        colors = { AseUtilities.aseColorCopy(aseClr) }
     }
 
     updateHarmonies(lch.l, lch.c, lch.h, lch.a)
@@ -220,6 +220,7 @@ dlg:button {
 
 dlg:newrow { always = false }
 
+-- TODO: Switch this from sort mode to pick.
 dlg:shades {
     id = "clr",
     label = "Preview:",
@@ -315,11 +316,14 @@ dlg:button {
     text = "&FORE",
     focus = false,
     onclick = function()
-        local clr = dlg.data.clr[1]
-        if clr.alpha < 1 then
-            app.fgColor = Color(0, 0, 0, 0)
-        else
-            app.fgColor = AseUtilities.copyAseColor(clr)
+        local args = dlg.data
+        if #args.clr > 0 then
+            local clr = args.clr[1]
+            if clr.alpha < 1 then
+                app.fgColor = Color(0, 0, 0, 0)
+            else
+                app.fgColor = AseUtilities.aseColorCopy(clr)
+            end
         end
     end
 }
@@ -329,17 +333,20 @@ dlg:button {
     text = "&BACK",
     focus = false,
     onclick = function()
-        -- Bug where assigning to app.bgColor
-        -- leads to unlocked palette colors
-        -- being assigned instead.
-        app.command.SwitchColors()
-        local clr = dlg.data.clr[1]
-        if clr.alpha < 1 then
-            app.fgColor = Color(0, 0, 0, 0)
-        else
-            app.fgColor = AseUtilities.copyAseColor(clr)
+        local args = dlg.data
+        if #args.clr > 0 then
+            -- Bug where assigning to app.bgColor
+            -- leads to unlocked palette colors
+            -- being assigned instead.
+            app.command.SwitchColors()
+            local clr = args.clr[1]
+            if clr.alpha < 1 then
+                app.fgColor = Color(0, 0, 0, 0)
+            else
+                app.fgColor = AseUtilities.aseColorCopy(clr)
+            end
+            app.command.SwitchColors()
         end
-        app.command.SwitchColors()
     end
 }
 
@@ -438,7 +445,7 @@ dlg:shades {
             if clr.alpha < 1 then
                 app.fgColor = Color(0, 0, 0, 0)
             else
-                app.fgColor = AseUtilities.copyAseColor(clr)
+                app.fgColor = AseUtilities.aseColorCopy(clr)
             end
         end
     end
@@ -450,7 +457,9 @@ dlg:shades {
     id = "triadic",
     label = "Triadic:",
     mode = "pick",
-    colors = { Color(0xffff8200), Color(0xff3b9d00) },
+    colors = {
+        Color(0xffff8200),
+        Color(0xff3b9d00) },
     visible = defaults.showHarmonies
         and defaults.harmonyType == "TRIADIC",
     onclick = function(ev)
@@ -461,7 +470,7 @@ dlg:shades {
             if clr.alpha < 1 then
                 app.fgColor = Color(0, 0, 0, 0)
             else
-                app.fgColor = AseUtilities.copyAseColor(clr)
+                app.fgColor = AseUtilities.aseColorCopy(clr)
             end
         end
     end
@@ -486,7 +495,7 @@ dlg:shades {
             if clr.alpha < 1 then
                 app.fgColor = Color(0, 0, 0, 0)
             else
-                app.fgColor = AseUtilities.copyAseColor(clr)
+                app.fgColor = AseUtilities.aseColorCopy(clr)
             end
         end
     end
@@ -511,7 +520,7 @@ dlg:shades {
             if clr.alpha < 1 then
                 app.fgColor = Color(0, 0, 0, 0)
             else
-                app.fgColor = AseUtilities.copyAseColor(clr)
+                app.fgColor = AseUtilities.aseColorCopy(clr)
             end
         end
     end
@@ -537,7 +546,7 @@ dlg:shades {
             if clr.alpha < 1 then
                 app.fgColor = Color(0, 0, 0, 0)
             else
-                app.fgColor = AseUtilities.copyAseColor(clr)
+                app.fgColor = AseUtilities.aseColorCopy(clr)
             end
         end
     end
