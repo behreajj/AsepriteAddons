@@ -1,9 +1,11 @@
 dofile("../../support/aseutilities.lua")
 
+-- TODO: Combobox to choose between SRGB and Profile RGB?
 local palTypes = { "ACTIVE", "FILE", "PRESET" }
 local palFormats = { "aseprite", "gpl", "png", "pal" }
 local sortPresets = { "ALPHA", "CHROMA", "HUE", "INDEX", "LUMA" }
 local sortOrders = { "ASCENDING", "DESCENDING" }
+local grayHues = { "OMIT", "SHADING", "ZERO" }
 
 local defaults = {
     title = "Manifest",
@@ -13,8 +15,16 @@ local defaults = {
     uniquesOnly = true,
     sortPreset = "INDEX",
     ascDesc = "ASCENDING",
-
-
+    idxDisplay = true,
+    hexDisplay = true,
+    alphaDisplay = false,
+    rgbDisplay = false,
+    labDisplay = false,
+    lchDisplay = true,
+    grayHue = "OMIT",
+    txtColor = Color(255, 245, 215, 255),
+    shdColor = Color(0, 0, 0, 235),
+    bkgColor =  Color(16, 16, 16, 255),
     pullFocus = false
 }
 
@@ -165,6 +175,87 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "idxDisplay",
+    label = "Display:",
+    text = "Index",
+    selected = defaults.idxDisplay
+}
+
+dlg:check {
+    id = "hexDisplay",
+    text = "Hex",
+    selected = defaults.hexDisplay
+}
+
+dlg:check {
+    id = "alphaDisplay",
+    text = "Alpha",
+    selected = defaults.alphaDisplay
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "rgbDisplay",
+    text = "sRGB",
+    selected = defaults.rgbDisplay
+}
+
+dlg:check {
+    id = "labDisplay",
+    text = "LAB",
+    selected = defaults.labDisplay
+}
+
+dlg:check {
+    id = "lchDisplay",
+    text = "LCH",
+    selected = defaults.lchDisplay,
+    onclick = function()
+        dlg:modify {
+            id = "grayHue",
+            visible = dlg.data.lchDisplay
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "grayHue",
+    label = "Gray Hue:",
+    option = defaults.grayHue,
+    options = grayHues,
+    visible = defaults.lchDisplay == true
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "txtColor",
+    label = "Text:",
+    color = defaults.txtColor
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "shdColor",
+    label = "Shadow:",
+    color = defaults.shdColor
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "bkgColor",
+    label = "Background:",
+    color = defaults.bkgColor
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "confirm",
     text = "&OK",
@@ -179,10 +270,44 @@ dlg:button {
         local hexesSrgb = nil
         local hexesProfile = nil
 
+        -- TODO: Global conversion to sRGB which is not reverted until
+        -- source sprite is no longer active sprite?
+
+        -- TODO: A way to indicate which palette color is indexed as
+        -- the transparency/alpha mask? If no active sprite was available
+        -- then would default to zero.
+
+        -- Force a refresh, this is an extra precaution in case
+        -- a Sprite has been opened with an embedded profile, then
+        -- closed, or in case a Sprite has been set to a
+        -- different color mode, then closed.
+        app.refresh()
+
+        -- Determine how important it is to specify the transparency mask.
+        local useMaskIndex = false
+        local srcMaskIdx = 0
+        if palType == "ACTIVE" then
+            local idxActSpr = app.activeSprite
+            if idxActSpr then
+                -- There's no point in checking: if the original image
+                -- is in indexed color mode, then the script wouldn't work
+                -- without forcing a color mode conversion...
+                -- local idxActSprClrMd = idxActSpr.colorMode
+                -- if idxActSprClrMd == ColorMode.INDEXED then
+                useMaskIndex = true
+                srcMaskIdx = idxActSpr.transparentColor
+                -- print(string.format(
+                --     "Mask Index (unvalidated): %d",
+                --     srcMaskIdx))
+                -- end
+            end
+        end
+
+        -- TODO: This should be its own function in AseUtilities.
         if palType == "FILE" then
             local fp =  args.palFile
             if fp and #fp > 0 then
-                -- Palettes loaded from a file _could_ support an
+                -- Palettes loaded from a file COULD support an
                 -- embedded color profile hypothetically, but do not.
                 -- You could check the extension, and if it is a
                 -- .png, .aseprite, etc. then load as a sprite, get
@@ -205,24 +330,25 @@ dlg:button {
                 end
             end
         elseif palType == "ACTIVE" then
-            local activeSprite = app.activeSprite
-            if activeSprite then
-                local palActive = activeSprite.palettes[1]
+            local palActSpr = app.activeSprite
+            if palActSpr then
+                local palActive = palActSpr.palettes[1]
                 if palActive then
                     hexesProfile = AseUtilities.asePaletteToHexArr(
                         palActive, startIndex, count)
 
-                    local activeProfile = activeSprite.colorSpace
+                    local activeProfile = palActSpr.colorSpace
                     if activeProfile then
                         -- This is a very cheap hack to test for equality,
                         -- but not sure what else can be done here...
                         local apName = activeProfile.name
                         local apNameLc = apName:lower()
                         if apNameLc ~= "srgb" and apNameLc ~= "none" then
-                            activeSprite:convertColorSpace(ColorSpace { sRGB = true })
+                            palActSpr:convertColorSpace(
+                                ColorSpace { sRGB = true })
                             hexesSrgb = AseUtilities.asePaletteToHexArr(
                                 palActive, startIndex, count)
-                            activeSprite:convertColorSpace(activeProfile)
+                            palActSpr:convertColorSpace(activeProfile)
                         else
                             hexesSrgb = hexesProfile
                         end
@@ -243,6 +369,13 @@ dlg:button {
             -- contain nils and premature boundaries.
             local hexesSrgbLen = #hexesSrgb
 
+            -- Stage 1 validate hex integer mask.
+            if srcMaskIdx < 0 then srcMaskIdx = 0 end
+            if srcMaskIdx > hexesSrgbLen - 1 then srcMaskIdx = 0 end
+            -- print(string.format(
+            --     "Mask Index (1 validation): %d",
+            --     srcMaskIdx))
+
             -- The goal here should be to give you
             -- diagnostic info, so if two colors are
             -- alpha zero, but otherwise different, that
@@ -253,7 +386,7 @@ dlg:button {
                 local hexDict = {}
                 for i = 1, hexesSrgbLen, 1 do
                     local hex = hexesSrgb[i]
-                    if not hexDict[hex] then
+                    if (not hexDict[hex]) or (i == srcMaskIdx) then
                         hexDict[hex] = i
                     end
                 end
@@ -269,6 +402,8 @@ dlg:button {
                 local hexSrgb = hexesSrgb[i]
                 if hexSrgb then
                     local palIdx = startIndex + i - 1
+                    local isMaskIdx = palIdx == srcMaskIdx
+
                     local alphaSrgb255 = hexSrgb >> 0x18 & 0xff
                     local blueSrgb255 = hexSrgb >> 0x10 & 0xff
                     local greenSrgb255 = hexSrgb >> 0x08 & 0xff
@@ -281,6 +416,11 @@ dlg:button {
 
                     -- print(palIdx)
                     -- print(webSrgbStr)
+
+                    -- if isMaskIdx then
+                    --     print(palIdx)
+                    --     print(webSrgbStr)
+                    -- end
 
                     local blueProfile255 = blueSrgb255
                     local greenProfile255 = greenSrgb255
@@ -314,6 +454,7 @@ dlg:button {
                     -- to visual presentation.
                     local palEntry = {
                         palIdx = palIdx,
+                        isMaskIdx = isMaskIdx,
 
                         hexSrgb = hexSrgb,
                         webSrgbStr = webSrgbStr,
@@ -341,19 +482,35 @@ dlg:button {
                 end
             end
 
+            -- Treat any transparent color as grayscale.
             local sortPreset = args.sortPreset or defaults.sortPreset
             if sortPreset == "ALPHA" then
                 local f = function(a, b)
+                    if a.alphaSrgb255 == b.alphaSrgb255 then
+                        return a.l < b.l
+                    end
                     return a.alphaSrgb255 < b.alphaSrgb255
                 end
                 table.sort(palData, f)
             elseif sortPreset == "CHROMA" then
                 local f = function(a, b)
+                    if a.alphaSrgb255 < 1 and b.alphaSrgb255 < 1 then
+                        return a.l < b.l
+                    end
+                    if a.alphaSrgb255 < 1 then return true end
+                    if b.alphaSrgb255 < 1 then return false end
                     return a.c < b.c
                 end
                 table.sort(palData, f)
             elseif sortPreset == "HUE" then
                 local f = function(a, b)
+                    if a.alphaSrgb255 < 1 and b.alphaSrgb255 < 1 then
+                        return a.l < b.l
+                    end
+                    if a.alphaSrgb255 < 1 then return true end
+                    if b.alphaSrgb255 < 1 then return false end
+
+                    -- Hue is invalid for desaturated colors.
                     if a.c < 1 and b.c < 1 then
                         return a.l < b.l
                     elseif a.c < 1 then
@@ -362,6 +519,8 @@ dlg:button {
                         return false
                     end
 
+                    -- Technically don't need to do fuzzy equals
+                    -- here, as hue has been refactored to be an int.
                     local diff = b.h - a.h
                     if math.abs(diff) < 1 then
                         return a.l < b.l
@@ -372,6 +531,11 @@ dlg:button {
                 table.sort(palData, f)
             elseif sortPreset == "LUMA" then
                 local f = function(a, b)
+                    if a.alphaSrgb255 < 1 and b.alphaSrgb255 < 1 then
+                        return a.l < b.l
+                    end
+                    if a.alphaSrgb255 < 1 then return true end
+                    if b.alphaSrgb255 < 1 then return false end
                     return a.l < b.l
                 end
                 table.sort(palData, f)
@@ -382,30 +546,46 @@ dlg:button {
                 reverse(palData)
             end
 
-            -- Pal data will not necessarily equal srcHex data
-            -- in length.
+            -- Pal data length will not equal srcHex length.
             local palDataLen = #palData
-            local mnsftPalLen = palDataLen
+            local spriteHeight = 256 -- TODO: Placeholder
+            local spriteWidth = 256 -- TODO: Placeholder
+
+            -- Create a manifest palette.
+            -- If the original does not have an alpha mask, then
+            -- one must be prepended.
+            local mnfstPalLen = palDataLen
             local palStartIdx = 0
             local prependAlpha = palData[1].hexProfile ~= 0x00000000
             if prependAlpha then
-                -- print("alpha must be prepended")
-                mnsftPalLen = mnsftPalLen + 1
+                mnfstPalLen = mnfstPalLen + 1
                 palStartIdx = palStartIdx + 1
             end
-            local mnfstPalette = Palette(mnsftPalLen)
+            local mnfstPal = Palette(mnfstPalLen)
             for i = 1, palDataLen, 1 do
                 local palHex = palData[i].hexProfile
                 local aseColor = Color(palHex)
-                mnfstPalette:setColor(palStartIdx + i - 1, aseColor)
+                mnfstPal:setColor(palStartIdx + i - 1, aseColor)
             end
+
             if prependAlpha then
-                mnfstPalette:setColor(0, Color(0, 0, 0, 0))
+                mnfstPal:setColor(0, Color(0, 0, 0, 0))
             end
 
-            print(AseUtilities.asePaletteToString(mnfstPalette))
+            -- print(AseUtilities.asePaletteToString(mnfstPal))
 
-            local frameIndex = 1
+            -- Set manifest profile.
+            local mnfstClrPrf = nil
+            if palType == "ACTIVE" and app.activeSprite then
+                mnfstClrPrf = app.activeSprite.colorSpace
+                if mnfstClrPrf == nil then
+                    mnfstClrPrf = ColorSpace()
+                end
+            else
+                mnfstClrPrf = ColorSpace { sRGB = true }
+            end
+
+            -- Declare constants.
             local gw = 8
             local gh = 8
             local lut = Utilities.GLYPH_LUT
@@ -417,6 +597,15 @@ dlg:button {
             local spriteMargin = 2
             local entryPadding = 2
             local colCount = 1
+
+            -- Get user prefs for what to display.
+            local idxDisplay = args.idxDisplay
+            local hexDisplay = args.hexDisplay
+            local alphaDisplay = args.alphaDisplay
+            local rgbDisplay = args.rgbDisplay
+            local labDisplay = args.labDisplay
+            local lchDisplay = args.lchDisplay
+            local lumDisplay = lchDisplay or labDisplay
 
             -- Calculate column offets.
             local idxColOffset = dw * 4 + entryPadding
@@ -430,6 +619,80 @@ dlg:button {
             -- sure it is right because there is nothing
             -- to the right of it.
 
+            -- Find width and height of each entry.
+            local entryHeight = swatchSize + entryPadding * 2
+            local entryWidth = swatchSize + entryPadding * 2
+            if idxDisplay then entryWidth = entryWidth + idxColOffset end
+            if hexDisplay then entryWidth = entryWidth + hexColOffset end
+            if alphaDisplay then entryWidth = entryWidth + alphaColOffset end
+            if rgbDisplay then entryWidth = entryWidth + rgbColOffset end
+            if lumDisplay then entryWidth = entryWidth + lumColOffset end
+            if labDisplay then entryWidth = entryWidth + abColOffset end
+            if lchDisplay then entryWidth = entryWidth + chColOffset end
+            entryWidth = entryWidth - dw
+            entryWidth = math.max(entryWidth, 256)
+
+            -- TODO: Order:
+            -- Create background image
+            -- Create color profile footer image
+            -- Create header image
+            -- Create row images
+            -- Create palette
+            -- Find color profile
+            -- Create sprite
+            -- Assign color profile
+
+            -- Create background image.
+            -- TODO: Update sprite width and sprite height.
+            local bkgColor = args.bkgColor or defaults.bkgColor
+            local bkgHex = bkgColor.rgbaPixel
+            local bkgImg = Image(spriteWidth, spriteHeight)
+            for elm in bkgImg:pixels() do elm(bkgHex) end
+
+            -- Unpack text and text shadow colors.
+            local txtColor = args.txtColor or defaults.txtColor
+            local shdColor = args.shdColor or defaults.shdColor
+            local txtHex = txtColor.rgbaPixel
+            local shdHex = shdColor.rgbaPixel
+
+            -- Create footer to display profile name.
+            local footImg = Image(entryWidth, entryHeight)
+            local footText = string.upper(string.sub(mnfstClrPrf.name, 1, 12))
+            footText = "PROFILE: " .. footText
+            local footChars = strToCharArr(footText)
+            drawCharsHorizShd(
+                lut, footImg, footChars,
+                txtHex, shdHex,
+                entryPadding,
+                entryPadding,
+                gw, gh, txtDispScl)
+
+            local manifestSprite = Sprite(spriteWidth, spriteHeight)
+
+            local mnfstTitle = args.title or defaults.title
+            mnfstTitle = string.upper(string.sub(mnfstTitle, 1, 12))
+            manifestSprite.filename = mnfstTitle
+            manifestSprite:setPalette(mnfstPal)
+
+            local frameIndex = 1
+
+            -- Create background layer and cel.
+            local bkgLayer = manifestSprite.layers[1]
+            bkgLayer.name = "Bkg"
+            bkgLayer.color = bkgColor
+            local bkgCel = manifestSprite:newCel(
+                bkgLayer, frameIndex, bkgImg)
+
+            local footLayer = manifestSprite:newLayer()
+            footLayer.name = "Profile"
+            local footCel = manifestSprite:newCel(
+                footLayer, frameIndex, footImg,
+                Point(spriteMargin, spriteHeight - spriteMargin - entryHeight))
+
+            -- TODO: In revision, title should be on a separate layer.
+
+            -- Assign Color Space as late as possible.
+            manifestSprite:assignColorSpace(mnfstClrPrf)
             app.refresh()
         else
             app.alert("The source palette could not be found.")

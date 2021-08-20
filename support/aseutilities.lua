@@ -74,16 +74,34 @@ function AseUtilities.new()
 end
 
 ---Copies an Aseprite Color object by sRGB
----channel values. This is important because
----some fields in the app are pass by reference.
+---channel values. This is to prevent accidental
+---pass by reference. The Color constructor does
+---no boundary checking for [0, 255]. If the flag
+---is "UNBOUNDED", then the raw values are used.
+---If the flag is "MODULAR," this will copy by
+---hexadecimal value, and hence use modular
+---arithmetic. For more info, See
+---https://www.wikiwand.com/en/Modular_arithmetic .
+---The default is saturation arithmetic.
 ---@param aseClr table Aseprite color
+---@param flag string out of bounds interpretation
 ---@return table
-function AseUtilities.aseColorCopy(aseClr)
-    return Color(
-        aseClr.red,
-        aseClr.green,
-        aseClr.blue,
-        aseClr.alpha)
+function AseUtilities.aseColorCopy(aseClr, flag)
+    if flag == "UNBOUNDED" then
+        return Color(
+            aseClr.red,
+            aseClr.green,
+            aseClr.blue,
+            aseClr.alpha)
+    elseif flag == "MODULAR" then
+        return Color(aseClr.rgbaPixel)
+    else
+        return Color(
+            math.max(0, math.min(255, aseClr.red)),
+            math.max(0, math.min(255, aseClr.green)),
+            math.max(0, math.min(255, aseClr.blue)),
+            math.max(0, math.min(255, aseClr.alpha)))
+    end
 end
 
 ---Returns a string containing diagnostic information
@@ -98,7 +116,7 @@ function AseUtilities.aseColorToString(aseColor)
     local g = aseColor.green
     local b = aseColor.blue
     -- Index is meaningless, as it seems to include
-    -- nearest color in palette index, is a real number (?),
+    -- nearest color in palette index, is a real number,
     -- and it's not clear when it could be mutated or
     -- by whom.
     -- local idx = math.tointeger(aseColor.index)
@@ -111,6 +129,9 @@ end
 
 ---Converts an Aseprite Color object to a Clr.
 ---Assumes that the Aseprite Color is in sRGB.
+---Both Aseprite Color and Clr allow arguments
+---to exceed the expected ranges, [0, 255] and
+---[0.0, 1.0], respectively.
 ---@param aseClr table Aseprite color
 ---@return table
 function AseUtilities.aseColorToClr(aseClr)

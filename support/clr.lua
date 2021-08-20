@@ -10,7 +10,7 @@ setmetatable(Clr, {
 ---blue and transparency channels.
 ---The expected range is [0.0, 1.0], however,
 ---to accomodate other color spaces, these
----bounds are not checked in the constructor.
+---bounds are not checked by the constructor.
 ---@param r number red channel
 ---@param g number green channel
 ---@param b number blue channel
