@@ -307,6 +307,9 @@ dlg:button {
                 srcPal = Palette { fromResource = pr }
             end
         elseif palType == "ACTIVE" and app.activeSprite then
+
+            -- TODO: This has become a mess, you need to test in isolation
+            -- whether this convert actually works...
             local activeProfile = app.activeSprite.colorSpace
             app.activeSprite:convertColorSpace(ColorSpace{ sRGB = true })
             srcPal = app.activeSprite.palettes[1]

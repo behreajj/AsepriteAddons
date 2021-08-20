@@ -166,7 +166,7 @@ local function setFromAse(aseClr)
 
     dlg:modify {
         id = "clr",
-        colors = { aseClr }
+        colors = { AseUtilities.copyAseColor(aseClr) }
     }
 
     updateHarmonies(lch.l, lch.c, lch.h, lch.a)
@@ -316,8 +316,11 @@ dlg:button {
     focus = false,
     onclick = function()
         local clr = dlg.data.clr[1]
-        if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
-        app.fgColor = clr
+        if clr.alpha < 1 then
+            app.fgColor = Color(0, 0, 0, 0)
+        else
+            app.fgColor = AseUtilities.copyAseColor(clr)
+        end
     end
 }
 
@@ -329,10 +332,13 @@ dlg:button {
         -- Bug where assigning to app.bgColor
         -- leads to unlocked palette colors
         -- being assigned instead.
-        local clr = dlg.data.clr[1]
-        if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
         app.command.SwitchColors()
-        app.fgColor = clr
+        local clr = dlg.data.clr[1]
+        if clr.alpha < 1 then
+            app.fgColor = Color(0, 0, 0, 0)
+        else
+            app.fgColor = AseUtilities.copyAseColor(clr)
+        end
         app.command.SwitchColors()
     end
 }
@@ -429,8 +435,11 @@ dlg:shades {
             setFromAse(ev.color)
         elseif ev.button == MouseButton.RIGHT then
             local clr = ev.color
-            if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
-            app.fgColor = clr
+            if clr.alpha < 1 then
+                app.fgColor = Color(0, 0, 0, 0)
+            else
+                app.fgColor = AseUtilities.copyAseColor(clr)
+            end
         end
     end
 }
@@ -449,8 +458,11 @@ dlg:shades {
             setFromAse(ev.color)
         elseif ev.button == MouseButton.RIGHT then
             local clr = ev.color
-            if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
-            app.fgColor = clr
+            if clr.alpha < 1 then
+                app.fgColor = Color(0, 0, 0, 0)
+            else
+                app.fgColor = AseUtilities.copyAseColor(clr)
+            end
         end
     end
 }
@@ -471,8 +483,11 @@ dlg:shades {
             setFromAse(ev.color)
         elseif ev.button == MouseButton.RIGHT then
             local clr = ev.color
-            if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
-            app.fgColor = clr
+            if clr.alpha < 1 then
+                app.fgColor = Color(0, 0, 0, 0)
+            else
+                app.fgColor = AseUtilities.copyAseColor(clr)
+            end
         end
     end
 }
@@ -493,8 +508,11 @@ dlg:shades {
             setFromAse(ev.color)
         elseif ev.button == MouseButton.RIGHT then
             local clr = ev.color
-            if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
-            app.fgColor = clr
+            if clr.alpha < 1 then
+                app.fgColor = Color(0, 0, 0, 0)
+            else
+                app.fgColor = AseUtilities.copyAseColor(clr)
+            end
         end
     end
 }
@@ -516,8 +534,11 @@ dlg:shades {
             setFromAse(ev.color)
         elseif ev.button == MouseButton.RIGHT then
             local clr = ev.color
-            if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
-            app.fgColor = clr
+            if clr.alpha < 1 then
+                app.fgColor = Color(0, 0, 0, 0)
+            else
+                app.fgColor = AseUtilities.copyAseColor(clr)
+            end
         end
     end
 }

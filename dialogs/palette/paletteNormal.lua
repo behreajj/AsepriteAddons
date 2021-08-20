@@ -23,16 +23,7 @@ dlg:shades {
     id = "preview",
     label = "Preview:",
     colors = preview,
-    mode = "pick",
-    onclick = function(ev)
-        if ev.button == MouseButton.LEFT then
-            app.fgColor = ev.color
-        elseif ev.button == MouseButton.RIGHT then
-            app.command.SwitchColors()
-            app.fgColor = ev.color
-            app.command.SwitchColors()
-        end
-    end
+    mode = "pick"
 }
 
 dlg:newrow { always = false }

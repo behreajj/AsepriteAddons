@@ -74,6 +74,7 @@ function AseUtilities.new()
 end
 
 ---Converts an Aseprite Color object to a Clr.
+---Assumes that the Aseprite Color is in sRGB.
 ---@param aseClr table Aseprite color
 ---@return table
 function AseUtilities.aseColorToClr(aseClr)
@@ -82,6 +83,19 @@ function AseUtilities.aseColorToClr(aseClr)
         0.00392156862745098 * aseClr.green,
         0.00392156862745098 * aseClr.blue,
         0.00392156862745098 * aseClr.alpha)
+end
+
+---Copies an Aseprite Color object by sRGB
+---channel values. This is important because
+---some fields in the app are pass by reference.
+---@param aseClr table Aseprite color
+---@return table
+function AseUtilities.copyAseColor(aseClr)
+    return Color(
+        aseClr.red,
+        aseClr.green,
+        aseClr.blue,
+        aseClr.alpha)
 end
 
 ---Blends together two hexadecimal colors.
@@ -112,9 +126,7 @@ function AseUtilities.blend(a, b)
     -- not having a whole number middle, but 0xff
     -- lead to more accurate results.
     local u = 0xff - t
-    if t > 0x7e then
-        t = t + 1
-    end
+    if t > 0x7e then t = t + 1 end
 
     local uv = (v * u) // 0xff
     local tuv = t + uv
@@ -144,6 +156,7 @@ function AseUtilities.blend(a, b)
 end
 
 ---Converts a Clr to an Aseprite Color.
+---Assumes that source and target are in sRGB.
 ---Clamps the Clr's channels to [0.0, 1.0] before
 ---they are converted. Beware that this could return
 ---(255, 0, 0, 0) or (0, 255, 0, 0), which may be

@@ -1,4 +1,4 @@
-dofile("../../support/utilities.lua")
+dofile("../../support/aseutilities.lua")
 
 -- https://blog.johnnovak.net/2016/09/21/what-every-coder-should-know-about-gamma/
 -- http://www.ericbrasseur.org/gamma.html
@@ -45,16 +45,7 @@ dlg:shades {
     id = "invPowPrev",
     label = "1.0 / 2.4:",
     colors = invPowPrev,
-    mode = "pick",
-    onclick = function(ev0)
-        if ev0.button == MouseButton.LEFT then
-            app.fgColor = ev0.color
-        elseif ev0.button == MouseButton.RIGHT then
-            app.command.SwitchColors()
-            app.fgColor = ev0.color
-            app.command.SwitchColors()
-        end
-    end
+    mode = "pick"
 }
 
 dlg:newrow { always = false }
@@ -63,16 +54,7 @@ dlg:shades {
     id = "linearPrev",
     label = "1.0:",
     colors = linearPrev,
-    mode = "pick",
-    onclick = function(ev1)
-        if ev1.button == MouseButton.LEFT then
-            app.fgColor = ev1.color
-        elseif ev1.button == MouseButton.RIGHT then
-            app.command.SwitchColors()
-            app.fgColor = ev1.color
-            app.command.SwitchColors()
-        end
-    end
+    mode = "pick"
 }
 
 dlg:newrow { always = false }
@@ -81,16 +63,7 @@ dlg:shades {
     id = "powerPrev",
     label = "2.4:",
     colors = powerPrev,
-    mode = "pick",
-    onclick = function(ev2)
-        if ev2.button == MouseButton.LEFT then
-            app.fgColor = ev2.color
-        elseif ev2.button == MouseButton.RIGHT then
-            app.command.SwitchColors()
-            app.fgColor = ev2.color
-            app.command.SwitchColors()
-        end
-    end
+    mode = "pick"
 }
 
 dlg:newrow { always = false }

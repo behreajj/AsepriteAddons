@@ -174,20 +174,7 @@ dlg:shades {
         defaults.bChannel,
         defaults.aChannel) },
     visible = defaults.trgSprPreset == "NEW"
-        and defaults.colorMode ~= "INDEXED",
-    onclick=function(ev)
-        local clr = ev.color
-        if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
-        if ev.button == MouseButton.LEFT then
-            app.fgColor = clr
-        elseif ev.button == MouseButton.RIGHT then
-            -- Bug where assigning to app.bgColor leads to
-            -- unlocked palette color assignment instead.
-            app.command.SwitchColors()
-            app.fgColor = clr
-            app.command.SwitchColors()
-        end
-    end
+        and defaults.colorMode ~= "INDEXED"
 }
 
 dlg:newrow { always = false }
