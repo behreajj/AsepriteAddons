@@ -326,15 +326,15 @@ dlg:button {
 
             -- Adjust color space so that color conversions
             -- from sRGB to CIE LAB work properly.
-            local sourceColorSpace = nil
-            if palType == "ACTIVE" and app.activeSprite then
-                sourceColorSpace = app.activeSprite.colorSpace
-            else
-                sourceColorSpace = ColorSpace { sRGB = true }
-            end
-            if sourceColorSpace == nil then
-                sourceColorSpace = ColorSpace()
-            end
+            -- local sourceColorSpace = nil
+            -- if palType == "ACTIVE" and app.activeSprite then
+            --     sourceColorSpace = app.activeSprite.colorSpace
+            -- else
+            --     sourceColorSpace = ColorSpace { sRGB = true }
+            -- end
+            -- if sourceColorSpace == nil then
+            --     sourceColorSpace = ColorSpace()
+            -- end
 
             local coverSprite = Sprite(512, 512)
             coverSprite:setPalette(srcPal)
@@ -623,7 +623,7 @@ dlg:button {
                 end
             end)
 
-            coverSprite:assignColorSpace(sourceColorSpace)
+            -- coverSprite:assignColorSpace(sourceColorSpace)
             app.activeSprite = coverSprite
             app.refresh()
         else

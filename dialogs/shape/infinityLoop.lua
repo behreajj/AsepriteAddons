@@ -14,8 +14,8 @@ local defaults = {
     yOrigin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = AseUtilities.DEFAULT_STROKE,
-    dotClr = AseUtilities.DEFAULT_FILL,
+    strokeClr = Color(AseUtilities.DEFAULT_STROKE),
+    dotClr = Color(AseUtilities.DEFAULT_FILL),
     handles = 0
 }
 
@@ -169,7 +169,8 @@ dlg:button {
 
         local sprite = AseUtilities.initCanvas(
             64, 64, curve.name,
-            { args.strokeClr, args.dotClr })
+            { args.strokeClr.rgbaPixel,
+              args.dotClr.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
         local actframe = app.activeFrame or 1
 

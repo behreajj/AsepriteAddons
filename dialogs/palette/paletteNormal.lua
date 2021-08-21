@@ -163,7 +163,7 @@ dlg:button {
         else
             -- This is not color data, so there should be
             -- no color management.
-            sprite:assignColorSpace(ColorSpace())
+            -- sprite:assignColorSpace(ColorSpace())
             sprite:setPalette(palette)
         end
 

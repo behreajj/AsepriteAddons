@@ -100,7 +100,8 @@ dlg:button {
 
         local sprite = AseUtilities.initCanvas(
             64, 64, "Sine Wave",
-            { aClrAse, bClrAse })
+            { aClrAse.rgbaPixel,
+              bClrAse.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
 
         local w = sprite.width

@@ -173,7 +173,8 @@ dlg:button {
 
         local sprite = AseUtilities.initCanvas(
             64, 64, mesh.name,
-            { brickClr, mortarClr })
+            { brickClr.rgbaPixel,
+              mortarClr.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
 
         local frame = app.activeFrame or 1

@@ -12,27 +12,27 @@ setmetatable(AseUtilities, {
         return cls.new(...)
     end})
 
-AseUtilities.DEFAULT_FILL = Color(255, 245, 215, 255)
+AseUtilities.DEFAULT_FILL = 0xffd7f5ff
 
 AseUtilities.DEFAULT_PAL_ARR = {
-    Color(  0,   0,   0,   0),
-    Color(  0,   0,   0, 255),
-    Color(255, 255, 255, 255),
-    Color(255,   0,   0, 255),
-    Color(255, 106,   0, 255),
-    Color(255, 162,   0, 255),
-    Color(255, 207,   0, 255),
-    Color(255, 255,   0, 255),
-    Color(129, 212,  26, 255),
-    Color(  0, 169,  51, 255),
-    Color( 21, 132, 102, 255),
-    Color( 17,  89, 166, 255),
-    Color( 60,  42, 146, 255),
-    Color(105,  12, 133, 255),
-    Color(170,   0,  85, 255)
+    0x00000000,
+    0xff000000,
+    0xffffffff,
+    0xff0000ff,
+    0xff006aff,
+    0xff00a2ff,
+    0xff00cfff,
+    0xff00ffff,
+    0xff1ad481,
+    0xff33a900,
+    0xff668415,
+    0xffa65911,
+    0xff922a3c,
+    0xff850c69,
+    0xff5500aa
 }
 
-AseUtilities.DEFAULT_STROKE = Color(32, 32, 32, 255)
+AseUtilities.DEFAULT_STROKE = 0xff202020
 
 AseUtilities.DISPLAY_DECIMAL = 3
 
@@ -170,6 +170,105 @@ function AseUtilities.asePaletteToString(pal, startIndex, count)
     end
 
     return str
+end
+
+---Loads a palette based on a string. The string is
+---expected to be either "FILE", "PRESET" or "ACTIVE".
+---Returns a tuple of tables. The first table is an
+---array of hexadecimals according to the profile; the
+---second is a copy of the first converted to SRGB.
+---If a palette is loaded from a palette or a preset the
+---two tables should match, as Aseprite does not support
+---color management for palettes.
+---@param palType string enumeration
+---@param filePath string file path
+---@param presetPath string preset path
+---@param startIndex number start index
+---@param count number count of colors to sample
+---@return table
+---@return table
+function AseUtilities.asePaletteLoad(
+    palType, filePath, presetPath, startIndex, count)
+
+    local cntVal = count or 256
+    local siVal = startIndex or 0
+
+    local hexesProfile = nil
+    local hexesSrgb = nil
+
+    if palType == "FILE" then
+        if filePath and #filePath > 0 then
+            local palFile = Palette { fromFile = filePath }
+            if palFile then
+                -- Palettes loaded from a file COULD support an
+                -- embedded color profile hypothetically, but do not.
+                -- You could check the extension, and if it is a
+                -- .png, .aseprite, etc. then load as a sprite, get
+                -- the profile, dispose of the sprite.
+                hexesProfile = AseUtilities.asePaletteToHexArr(
+                    palFile, siVal, cntVal)
+            end
+        end
+    elseif palType == "PRESET" then
+        if presetPath and #presetPath > 0 then
+            local palPreset = Palette { fromResource = presetPath }
+            if palPreset then
+                hexesProfile = AseUtilities.asePaletteToHexArr(
+                    palPreset, siVal, cntVal)
+            end
+        end
+    elseif palType == "ACTIVE" then
+        local palActSpr = app.activeSprite
+        if palActSpr then
+            local palAct = palActSpr.palettes[1]
+            if palAct then
+                hexesProfile = AseUtilities.asePaletteToHexArr(
+                    palAct, siVal, cntVal)
+
+                local profileAct = palActSpr.colorSpace
+                if profileAct then
+                    -- This is a very cheap hack to test for equality,
+                    -- but not sure what else can be done here...
+                    local apName = profileAct.name
+                    local apNameLc = apName:lower()
+                    local profileSrgb = ColorSpace { sRGB = true }
+                    local profileNone = ColorSpace()
+
+                    -- TODO: Not sure if equality check is supported.
+                    if (profileSrgb ~= profileAct
+                            and profileSrgb ~= profileNone)
+                        or (apNameLc ~= "srgb"
+                            and apNameLc ~= "none") then
+                        palActSpr:convertColorSpace(profileSrgb)
+                        hexesSrgb = AseUtilities.asePaletteToHexArr(
+                            palAct, siVal, cntVal)
+                        palActSpr:convertColorSpace(profileAct)
+                    end
+                end
+            end
+        end
+    end
+
+    -- Malformed file path could lead to nil.
+    if hexesProfile == nil then
+        hexesProfile = {}
+        local src = AseUtilities.DEFAULT_PAL_ARR
+        local srcLen = #src
+        for i = 1, srcLen, 1 do
+            hexesProfile[i] = src[i]
+        end
+    end
+
+    -- Copy by value as a precaution.
+    if hexesSrgb == nil then
+        hexesSrgb = {}
+        local srcLen = #hexesProfile
+        for i = 1, srcLen, 1 do
+            hexesSrgb[i] = hexesProfile[i]
+        end
+    end
+
+    return hexesProfile, hexesSrgb
 end
 
 ---Converts an Aseprite palette to a table
@@ -1030,11 +1129,12 @@ end
 
 ---Initializes a sprite and layer.
 ---Sets palette to the colors provided,
----or, if nil, a default set.
+---or, if nil, a default set. Colors should
+---be hexadecimal integers.
 ---@param wDefault number default width
 ---@param hDefault number default height
 ---@param layerName string layer name
----@param colors table array of colors
+---@param colors table array of hexes
 ---@param colorspace table color space
 ---@return table
 function AseUtilities.initCanvas(
@@ -1043,9 +1143,6 @@ function AseUtilities.initCanvas(
     layerName,
     colors,
     colorspace)
-
-    -- TODO: Consider adding color space to calls
-    -- to this function.
 
     local clrs = AseUtilities.DEFAULT_PAL_ARR
     if colors and #colors > 0 then
@@ -1073,7 +1170,7 @@ function AseUtilities.initCanvas(
         for i = 1, lenClrs, 1 do
             local clr = clrs[i]
             if clr then
-                pal:setColor(i - 1, clr)
+                pal:setColor(i - 1, Color(clr))
             end
         end
         sprite:setPalette(pal)

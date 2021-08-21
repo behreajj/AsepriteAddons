@@ -222,7 +222,7 @@ dlg:button {
 
             local nearSprite = Sprite(512, 512)
             nearSprite:setPalette(srcPal)
-            nearSprite:convertColorSpace(ColorSpace { sRGB = true })
+            -- nearSprite:convertColorSpace(ColorSpace { sRGB = true })
 
             -- Unpack args.
             local palStart = args.palStart or defaults.palStart

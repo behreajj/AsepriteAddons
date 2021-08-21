@@ -12,9 +12,9 @@ local defaults = {
     yOrigin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = AseUtilities.DEFAULT_STROKE,
+    strokeClr = Color(AseUtilities.DEFAULT_STROKE),
     useFill = false,
-    fillClr = AseUtilities.DEFAULT_FILL,
+    fillClr = Color(AseUtilities.DEFAULT_FILL),
     pullFocus = false
 }
 
@@ -165,7 +165,8 @@ dlg:button {
         local args = dlg.data
         local sprite = AseUtilities.initCanvas(
             64, 64, "Grid.Polar",
-            { args.fillClr, args.strokeClr })
+            { args.fillClr.rgbaPixel,
+              args.strokeClr.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
         local frame = app.activeFrame or 1
         local cel = sprite:newCel(layer, frame)

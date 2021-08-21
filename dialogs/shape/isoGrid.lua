@@ -11,9 +11,9 @@ local defaults = {
     margin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = AseUtilities.DEFAULT_STROKE,
+    strokeClr = Color(AseUtilities.DEFAULT_STROKE),
     useFill = true,
-    fillClr = AseUtilities.DEFAULT_FILL
+    fillClr = Color(AseUtilities.DEFAULT_FILL)
 }
 
 local dlg = Dialog { title = "Dimetric Grid" }
@@ -147,7 +147,8 @@ dlg:button {
 
     local sprite = AseUtilities.initCanvas(
         64, 64, mesh.name,
-        { args.fillClr, args.strokeClr })
+        { args.fillClr.rgbaPixel,
+          args.strokeClr.rgbaPixel })
     local layer = sprite.layers[#sprite.layers]
     local frame = app.activeFrame or 1
     local cel = sprite:newCel(layer, frame)

@@ -214,19 +214,19 @@ dlg:button {
         if srcPal then
             -- Adjust color space so that color conversions
             -- from sRGB to CIE LAB work properly.
-            local sourceColorSpace = nil
-            if palType == "ACTIVE" and app.activeSprite then
-                sourceColorSpace = app.activeSprite.colorSpace
-            else
-                sourceColorSpace = ColorSpace { sRGB = true }
-            end
-            if sourceColorSpace == nil then
-                sourceColorSpace = ColorSpace()
-            end
+            -- local sourceColorSpace = nil
+            -- if palType == "ACTIVE" and app.activeSprite then
+            --     sourceColorSpace = app.activeSprite.colorSpace
+            -- else
+            --     sourceColorSpace = ColorSpace { sRGB = true }
+            -- end
+            -- if sourceColorSpace == nil then
+            --     sourceColorSpace = ColorSpace()
+            -- end
 
             local plotSprite = Sprite(512, 512)
             plotSprite:setPalette(srcPal)
-            plotSprite:convertColorSpace(ColorSpace { sRGB = true })
+            -- plotSprite:convertColorSpace(ColorSpace { sRGB = true })
 
             -- Validate range of palette to sample.
             local palStart = args.palStart or defaults.palStart
@@ -344,7 +344,7 @@ dlg:button {
             local aDiff = aMax - aMin
             local bDiff = bMax - bMin
 
-            -- TODO: Redo pivot and perspecitve with nearest as reference.
+            -- TODO: Redo pivot and perspective with nearest as reference.
             local pivot = Vec3.new(
                 0.5 * (aMin + aMax),
                 0.5 * (bMin + bMax), 0.0)
@@ -440,7 +440,7 @@ dlg:button {
                 end
             end)
 
-            plotSprite:assignColorSpace(sourceColorSpace)
+            -- plotSprite:assignColorSpace(sourceColorSpace)
             app.activeSprite = plotSprite
             app.refresh()
         else
