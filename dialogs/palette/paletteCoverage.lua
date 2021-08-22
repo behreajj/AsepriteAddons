@@ -325,6 +325,9 @@ dlg:button {
         end
 
         -- Sift for unique, non-mask colors.
+        -- The dictionary must be checked to see if it contains
+        -- an entry, otherwise the resulting array will have gaps
+        -- and its length method will return a boundary with nil.
         local hexDictSrgb = {}
         local hexDictProfile = {}
         local lenHexesProfile = #hexesProfile
@@ -367,6 +370,7 @@ dlg:button {
         local stdToLin = Clr.sRgbaTolRgbaInternal
         local rotax = Vec3.rotateInternal
         local v3hsh = Vec3.hashCode
+        local search = Octree.querySphericalInternal
         local screen = Utilities.toScreen
         local drawCirc = AseUtilities.drawCircleFill
 
@@ -381,12 +385,9 @@ dlg:button {
         for i = 1, uniqueHexesSrgbLen, 1 do
             local hexSrgb = uniqueHexesSrgb[i]
 
-            -- The LUT shortcut is not used because here
-            -- accuracy is preferred over speed. Ideally,
-            -- the color picker should be able to match
-            -- to the palette without being put into
-            -- Best Fit Index mode.
-
+            -- The LUT shortcut for converting gamma
+            -- to linear sRGB is not used because here
+            -- accuracy is preferred over speed.
             local srgb = fromHex(hexSrgb)
             local lrgb = stdToLin(srgb)
             local xyz = linearToXyz(lrgb.r, lrgb.g, lrgb.b, 1.0)
@@ -403,6 +404,8 @@ dlg:button {
 
         -- TODO: Consider setting alpha to conventional
         -- range of [0, 255] instead of [0, 100].
+        -- Also, probably not necessary to assign alpha to the
+        -- original grid...
         local swatchAlpha = args.swatchAlpha or defaults.swatchAlpha
         local swatchAlpha01 = swatchAlpha * 0.01
         local geometry = args.geometry or defaults.geometry
@@ -462,8 +465,7 @@ dlg:button {
                 srcLab.a, srcLab.b, srcLab.l)
 
             local results = {}
-            Octree.querySphericalInternal(
-                octree, srcLabPt, queryRad, results, 256)
+            search(octree, srcLabPt, queryRad, results, 256)
             if #results > 1 then
                 local nearestPt = results[1].point
                 local ptHash = v3hsh(nearestPt)
@@ -641,7 +643,9 @@ dlg:button {
         end
         coverSprite:setPalette(cvrPal)
 
-        coverSprite:convertColorSpace(cvrClrPrf)
+        if cvrClrPrf ~= ColorSpace { sRGB = true } then
+            coverSprite:convertColorSpace(cvrClrPrf)
+        end
         app.refresh()
     end
 }

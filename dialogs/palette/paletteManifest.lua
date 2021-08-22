@@ -357,10 +357,10 @@ dlg:button {
         end
 
         local startIndex = args.startIndex or defaults.startIndex
-        local count = args.count or defaults.count
+        local palCount = args.count or defaults.count
         local hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
             palType, args.palFile, args.palPreset,
-            startIndex, count)
+            startIndex, palCount)
 
         -- Set manifest profile.
         -- This should be done BEFORE the manifest sprite is
@@ -689,8 +689,6 @@ dlg:button {
         local bkgImg = Image(spriteWidth, spriteHeight)
         for elm in bkgImg:pixels() do elm(bkgHex) end
 
-
-
         -- Create footer to display profile name.
         local footImg = Image(entryWidth, entryHeight)
         local footText = string.upper(string.sub(mnfstClrPrf.name, 1, 12))
@@ -976,8 +974,10 @@ dlg:button {
                 rowCel.image = rowImg
                 yCaret = yCaret - entryHeight
 
-                if i == 1
-                    or (hdrUseRepeat
+                -- Always place at least one header at the top.
+                -- Otherwise check to see if user wanted repeating headers.
+                -- Never place a header at the bottom.
+                if i == 1 or (hdrUseRepeat
                         and i < palDataLen
                         and (i - 1) % hdrRepeatRate == 0) then
                     local hdrRptLayer = manifestSprite:newLayer()
@@ -1026,7 +1026,9 @@ dlg:button {
         end
         manifestSprite:setPalette(mnfstPal)
 
-        manifestSprite:convertColorSpace(mnfstClrPrf)
+        if mnfstClrPrf ~= ColorSpace { sRGB = true } then
+            manifestSprite:convertColorSpace(mnfstClrPrf)
+        end
         app.refresh()
     end
 }

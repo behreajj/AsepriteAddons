@@ -235,6 +235,7 @@ dlg:button {
                     app.command.ChangePixelFormat { format = "rgb" }
 
                     -- Get all unique hexadecimal values from image.
+                    -- There's no need to preserve order in this case.
                     local srcPxItr = srcImg:pixels()
                     local hexesUnique = {}
                     for elm in srcPxItr do
