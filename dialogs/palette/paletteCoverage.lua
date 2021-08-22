@@ -302,6 +302,8 @@ dlg:button {
     onclick = function()
         local args = dlg.data
 
+        -- TODO: Use AseUtilities method.
+
         -- Search for appropriate source palette.
         local srcPal = nil
         local palType = args.palType
@@ -317,9 +319,9 @@ dlg:button {
             end
         elseif palType == "ACTIVE" and app.activeSprite then
             local activeProfile = app.activeSprite.colorSpace
-            app.activeSprite:convertColorSpace(ColorSpace{ sRGB = true })
+            -- app.activeSprite:convertColorSpace(ColorSpace{ sRGB = true })
             srcPal = app.activeSprite.palettes[1]
-            app.activeSprite:convertColorSpace(activeProfile)
+            -- app.activeSprite:convertColorSpace(activeProfile)
         end
 
         if srcPal then
@@ -340,12 +342,14 @@ dlg:button {
             coverSprite:setPalette(srcPal)
             coverSprite:convertColorSpace(ColorSpace { sRGB = true })
 
+
             -- Validate range of palette to sample.
             local palStart = defaults.palStart
             local palCount = defaults.palCount
             palStart = math.min(#srcPal - 1, palStart)
             palCount = math.min(palCount, #srcPal - palStart, 256)
 
+            -- TODO: Filter out hexes with no alpha instead?
             -- Find palette's unique values only.
             -- Alpha is masked out of hexadecimal values.
             local hexDict = {}
@@ -384,8 +388,12 @@ dlg:button {
             local screen = Utilities.toScreen
             local drawCirc = AseUtilities.drawCircleFill
 
+            -- Create Octree.
+            local octCapacity = args.octCapacity
+            local bounds = Bounds3.cieLab()
+            local octree = Octree.new(bounds, octCapacity, 0)
+
             -- Unpack unique entries to data.
-            local points = {}
             for i = 1, #hexes, 1 do
                 local hex = hexes[i]
 
@@ -401,14 +409,8 @@ dlg:button {
                 local lab = xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
 
                 local point = Vec3.new(lab.a, lab.b, lab.l)
-                points[i] = point
+                Octree.insert(octree, point)
             end
-
-            -- Create Octree.
-            local octCapacity = args.octCapacity
-            local bounds = Bounds3.cieLab()
-            local octree = Octree.new(bounds, octCapacity, 0)
-            Octree.insertAll(octree, points)
 
             -- Create geometry.
             local gridPts = nil
@@ -577,9 +579,9 @@ dlg:button {
 
             -- Create layer.
             local layer = coverSprite.layers[#coverSprite.layers]
-            layer.name = "Palette.Coverage."
-                .. geometry .. "."
-                .. projPreset
+            layer.name = string.format(
+                "Palette.Coverage.%s.%s",
+                geometry, projPreset)
 
             local zDiff = zMin - zMax
             local zDenom = 1.0
@@ -588,9 +590,7 @@ dlg:button {
             -- Create background image once, then clone.
             local bkgImg = Image(width, height)
             local bkgHex = args.bkgColor.rgbaPixel
-            for elm in bkgImg:pixels() do
-                elm(bkgHex)
-            end
+            for elm in bkgImg:pixels() do elm(bkgHex) end
 
             local duration = args.duration or defaults.duration
             duration = duration * 0.001
@@ -598,7 +598,6 @@ dlg:button {
                 for h = 1, reqFrames, 1 do
                     local frame = coverSprite.frames[h]
                     frame.duration = duration
-                    local cel = coverSprite:newCel(layer, frame)
                     local img = bkgImg:clone()
                     local frame2d = pts2d[h]
 
@@ -619,7 +618,7 @@ dlg:button {
                             packet.color)
                     end
 
-                    cel.image = img
+                    coverSprite:newCel(layer, frame, img)
                 end
             end)
 

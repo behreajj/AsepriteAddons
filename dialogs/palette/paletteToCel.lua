@@ -212,6 +212,8 @@ dlg:button {
         local sprite = app.activeSprite
         if sprite then
 
+            -- Add checkbox to exclude transparency mask from
+            -- consideration in palette?
             local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 args.palType, args.palFile, args.palPreset)
 

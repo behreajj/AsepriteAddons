@@ -58,7 +58,7 @@ function Clr:__bxor(b)
 end
 
 function Clr:__eq(b)
-    return Clr.toHex(self) == Clr.toHex(b)
+    return Clr.bitEq(self, b)
 end
 
 function Clr:__le(b)
@@ -85,7 +85,7 @@ function Clr:__tostring()
     return Clr.toJson(self)
 end
 
----Evaluates whether all color channels are 
+---Evaluates whether all color channels are
 ---greater than zero.
 ---@param a table color
 ---@return boolean
@@ -120,6 +120,71 @@ end
 ---@return table
 function Clr.bitAnd(a, b)
     return Clr.fromHex(Clr.toHex(a) & Clr.toHex(b))
+end
+
+---Evaluates whether two colors have equal red,
+---green, blue and alpha channels when considered
+---as 32 bit integers where overflow is clamped
+---to [0, 255].
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Clr.bitEq(a, b)
+    return Clr.bitEqAlpha(a, b)
+        and Clr.bitEqRgb(a, b)
+end
+
+---Evaluates whether two colors have equal alpha
+---when considered as a byte where overflow is
+---clamped to [0, 255].
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Clr.bitEqAlpha(a, b)
+    local aa = a.a
+    local ba = b.a
+    if aa < 0.0 then aa = 0.0 elseif aa > 1.0 then aa = 1.0 end
+    if ba < 0.0 then ba = 0.0 elseif ba > 1.0 then ba = 1.0 end
+    return math.tointeger(aa * 0xff + 0.5)
+        == math.tointeger(ba * 0xff + 0.5)
+end
+
+---Evaluates whether two colors have equal red,
+---green and blue channels when considered as
+---24 bit integers where overflow is clamped
+---to [0, 255].
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Clr.bitEqRgb(a, b)
+    local ab = a.b
+    local bb = b.b
+    if ab < 0.0 then ab = 0.0 elseif ab > 1.0 then ab = 1.0 end
+    if bb < 0.0 then bb = 0.0 elseif bb > 1.0 then bb = 1.0 end
+    if math.tointeger(ab * 0xff + 0.5)
+        ~= math.tointeger(bb * 0xff + 0.5) then
+            return false
+    end
+
+    local ag = a.g
+    local bg = b.g
+    if ag < 0.0 then ag = 0.0 elseif ag > 1.0 then ag = 1.0 end
+    if bg < 0.0 then bg = 0.0 elseif bg > 1.0 then bg = 1.0 end
+    if math.tointeger(ag * 0xff + 0.5)
+        ~= math.tointeger(bg * 0xff + 0.5) then
+            return false
+    end
+
+    local ar = a.r
+    local br = b.r
+    if ar < 0.0 then ar = 0.0 elseif ar > 1.0 then ar = 1.0 end
+    if br < 0.0 then br = 0.0 elseif br > 1.0 then br = 1.0 end
+    if math.tointeger(ar * 0xff + 0.5)
+        ~= math.tointeger(br * 0xff + 0.5) then
+            return false
+    end
+
+    return true
 end
 
 ---Finds the bitwise not (~) for a color.

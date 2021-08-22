@@ -398,9 +398,8 @@ dlg:button {
         local args = dlg.data
         local palType = args.palType or defaults.palType
         local colorMode = args.colorMode or defaults.colorMode
-        
-        -- TODO: Remove all bullshit related to color space conversion.
-        -- The API tools are just not reliable enough.
+
+        -- TODO: Refactor to use AseUtilities.
 
         -- Set palette.
         local pal = nil
@@ -415,8 +414,8 @@ dlg:button {
                 pal = Palette { fromResource = pr }
             end
         elseif palType == "ACTIVE" then
-            if activeSprite then
-                pal = paletteDeepCopy(activeSprite.palettes[1])
+            if app.activeSprite then
+                pal = paletteDeepCopy(app.activeSprite.palettes[1])
             end
         end
 
@@ -447,10 +446,6 @@ dlg:button {
                 targetSprite.transparentColor = 0
                 maskClrIdx = targetSprite.transparentColor
             end
-        end
-
-        if activeSprite then
-            app.activeSprite = activeSprite
         end
 
         -- Last resort to establish a palette.
@@ -490,6 +485,7 @@ dlg:button {
         if maskClrIdx > #pal - 1 then
             maskClrIdx = 0
             if reapplyIndexMode or colorMode == "INDEXED" then
+                -- TODO: Does this trigger when it should?
                 app.alert(
                     "Mask Color index is out of bounds. "
                     .. "It has been set to zero.")
@@ -603,7 +599,6 @@ dlg:button {
         -- Set color space from .icc file.
         local icc = nil
         local spaceType = args.spaceType or defaults.spaceType
-        icc = nil
         if spaceType == "FILE" then
             local profilepath = args.prf
             if profilepath and #profilepath > 0 then
@@ -616,12 +611,25 @@ dlg:button {
         targetSprite:setPalette(pal)
 
         -- May be nil as a result of malformed filepath.
-        if icc == nil then icc = ColorSpace() end
-        local continuity = args.continuity or defaults.continuity
-        if continuity == "VISUAL" then
-            targetSprite:convertColorSpace(icc)
+        if icc then
+            if targetSprite.colorSpace ~= icc then
+                local continuity = args.continuity or defaults.continuity
+                if continuity == "VISUAL" then
+                    targetSprite:convertColorSpace(icc)
+                else
+                    targetSprite:assignColorSpace(icc)
+                end
+            else
+                app.alert{
+                    title = "Action Cancelled",
+                    text = "Sprite already uses selected color space."
+                }
+            end
         else
-            targetSprite:assignColorSpace(icc)
+            app.alert{
+                title = "Action Cancelled",
+                text = "Color profile could not be found."
+            }
         end
 
         -- If an active sprite or sprite from filepath

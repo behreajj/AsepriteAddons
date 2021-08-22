@@ -133,6 +133,7 @@ dlg:button {
         local sprite = app.activeSprite
         if sprite then
 
+            -- TODO: AseUtilities method.
             local aPal = nil
             local aPalType = args.aPalType
             if aPalType == "FILE" then

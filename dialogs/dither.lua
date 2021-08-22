@@ -91,6 +91,8 @@ dlg:button {
         local sprite = app.activeSprite
         if sprite then
 
+            -- TODO: Add checkbox to exclude transparency mask from
+            -- consideration in palette?
             local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 args.palType, args.palFile, args.palPreset)
 
@@ -120,9 +122,6 @@ dlg:button {
                     local oldMode = sprite.colorMode
                     app.command.ChangePixelFormat { format = "rgb" }
 
-                    -- local srcPalLen = #srcPal
-                    local ptToHexDict = {}
-
                     -- Cache bounds as a separate variable in case you want
                     -- to switch color representation later.
                     local bounds = Bounds3.cieLab()
@@ -130,6 +129,7 @@ dlg:button {
 
                     -- Unpack source palette to a dictionary and an octree.
                     local palHexesLen = #hexesProfile
+                    local ptToHexDict = {}
                     for i = 1, palHexesLen, 1 do
                         local hexSrgb = hexesSrgb[i]
                         local clr = Clr.fromHex(hexSrgb)
@@ -305,16 +305,16 @@ dlg:button {
                     end
 
                     -- Either copy to new layer or reassign image.
+                    -- TODO: Expose this parameter?
                     -- local copyToLayer = args.copyToLayer
                     local copyToLayer = true
                     if copyToLayer then
                         local trgLayer = sprite:newLayer()
                         trgLayer.name = srcCel.layer.name
-                            .. string.format(".Dithered.%03d", factor100)
+                            .. string.format(".Dither.%03d", factor100)
                         local frame = app.activeFrame or 1
-                        local trgCel = sprite:newCel(trgLayer, frame)
-                        trgCel.image = trgImg
-                        trgCel.position = srcCel.position
+                        sprite:newCel(trgLayer, frame,
+                            trgImg, srcCel.position)
                     else
                         srcCel.image = trgImg
                     end

@@ -105,6 +105,7 @@ dlg:button {
             local oldMode = sprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
+            -- TODO: AseUtilities method.
             local srcPal = nil
             local palType = args.palType
             if palType == "FILE" then

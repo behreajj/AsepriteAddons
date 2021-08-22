@@ -234,29 +234,34 @@ function AseUtilities.asePaletteLoad(
         if palActSpr then
             local palAct = palActSpr.palettes[1]
             if palAct then
-                hexesProfile = AseUtilities.asePaletteToHexArr(
-                    palAct, siVal, cntVal)
+                local modeAct = palActSpr.colorMode
+                if modeAct == ColorMode.GRAY then
+                    hexesProfile = {}
+                    for i = 0, 255, 1 do
+                        hexesProfile[1 + i] = (i << 0x18)
+                            | (i << 0x10)
+                            | (i << 0x08)
+                            | i
+                    end
+                else
+                    hexesProfile = AseUtilities.asePaletteToHexArr(
+                        palAct, siVal, cntVal)
 
-                local profileAct = palActSpr.colorSpace
-                if profileAct then
-                    local apName = profileAct.name
-                    local apNameLc = apName:lower()
-                    local profileSrgb = ColorSpace { sRGB = true }
-                    local profileNone = ColorSpace()
-
-                    -- Tests a number of color profile components for
-                    -- approximate equality. See
-                    -- https://github.com/aseprite/laf/blob/
-                    -- 11ffdbd9cc6232faaff5eecd8cc628bb5a2c706f/
-                    -- gfx/color_space.cpp#L142
-                    if (profileSrgb ~= profileAct
-                            and profileSrgb ~= profileNone)
-                        and (apNameLc ~= "srgb"
-                            and apNameLc ~= "none") then
-                        palActSpr:convertColorSpace(profileSrgb)
-                        hexesSrgb = AseUtilities.asePaletteToHexArr(
-                            palAct, siVal, cntVal)
-                        palActSpr:convertColorSpace(profileAct)
+                    local profileAct = palActSpr.colorSpace
+                    if profileAct then
+                        -- Tests a number of color profile components for
+                        -- approximate equality. See
+                        -- https://github.com/aseprite/laf/blob/
+                        -- 11ffdbd9cc6232faaff5eecd8cc628bb5a2c706f/
+                        -- gfx/color_space.cpp#L142
+                        local profileSrgb = ColorSpace { sRGB = true }
+                        if profileSrgb ~= profileAct
+                                and profileSrgb ~= ColorSpace() then
+                            palActSpr:convertColorSpace(profileSrgb)
+                            hexesSrgb = AseUtilities.asePaletteToHexArr(
+                                palAct, siVal, cntVal)
+                            palActSpr:convertColorSpace(profileAct)
+                        end
                     end
                 end
             end
