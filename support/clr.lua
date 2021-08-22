@@ -291,6 +291,19 @@ function Clr.fromHex(c)
         (c >> 0x18 & 0xff) * 0.00392156862745098)
 end
 
+---Converts an array of hexadecimal values to
+---an array of colors.
+---@param arr table hexadecimal array
+---@return table
+function Clr.fromHexArray(arr)
+    local len = #arr
+    local result = {}
+    for i = 1, len, 1 do
+        result[i] = Clr.fromHex(arr[i])
+    end
+    return result
+end
+
 ---Converts from a web-friendly hexadecimal
 ---string, such as #AABBCC, to a color.
 ---@param hexstr string web string

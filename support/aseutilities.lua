@@ -12,42 +12,52 @@ setmetatable(AseUtilities, {
         return cls.new(...)
     end})
 
+---Default fill color.
 AseUtilities.DEFAULT_FILL = 0xffd7f5ff
 
+---Default palette used when no other
+---is available. Simulates a RYB
+---color wheel with black and white.
 AseUtilities.DEFAULT_PAL_ARR = {
-    0x00000000,
-    0xff000000,
-    0xffffffff,
-    0xff0000ff,
-    0xff006aff,
-    0xff00a2ff,
-    0xff00cfff,
-    0xff00ffff,
-    0xff1ad481,
-    0xff33a900,
-    0xff668415,
-    0xffa65911,
-    0xff922a3c,
-    0xff850c69,
-    0xff5500aa
+    0x00000000, -- Mask
+    0xff000000, -- Black
+    0xffffffff, -- White
+    0xff0000ff, -- Red
+    0xff006aff, -- Red-orange
+    0xff00a2ff, -- Orange
+    0xff00cfff, -- Yellow-orange
+    0xff00ffff, -- Yellow
+    0xff1ad481, -- Green-yellow
+    0xff33a900, -- Green
+    0xff668415, -- Blue-green
+    0xffa65911, -- Blue
+    0xff922a3c, -- Blue-purple
+    0xff850c69, -- Purple
+    0xff5500aa -- Red-purple
 }
 
+---Default stroke color.
 AseUtilities.DEFAULT_STROKE = 0xff202020
 
+---Number of decimals to display when
+---printing real numbers to the console.
 AseUtilities.DISPLAY_DECIMAL = 3
 
+---Text horizontal alignment.
 AseUtilities.GLYPH_ALIGN_HORIZ = {
     "CENTER",
     "LEFT",
     "RIGHT"
 }
 
+---Text vertical alignment.
 AseUtilities.GLYPH_ALIGN_VERT = {
     "BOTTOM",
     "CENTER",
     "TOP"
 }
 
+---Color gradient easing modes.
 AseUtilities.EASING_MODES = {
     "HSL",
     "HSV",
@@ -55,11 +65,13 @@ AseUtilities.EASING_MODES = {
     "RGB"
 }
 
+---Text orientations.
 AseUtilities.ORIENTATIONS = {
     "HORIZONTAL",
     "VERTICAL"
 }
 
+---Camera projections.
 AseUtilities.PROJECTIONS = {
     "ORTHO",
     "PERSPECTIVE"
@@ -227,17 +239,19 @@ function AseUtilities.asePaletteLoad(
 
                 local profileAct = palActSpr.colorSpace
                 if profileAct then
-                    -- This is a very cheap hack to test for equality,
-                    -- but not sure what else can be done here...
                     local apName = profileAct.name
                     local apNameLc = apName:lower()
                     local profileSrgb = ColorSpace { sRGB = true }
                     local profileNone = ColorSpace()
 
-                    -- TODO: Not sure if equality check is supported.
+                    -- Tests a number of color profile components for
+                    -- approximate equality. See
+                    -- https://github.com/aseprite/laf/blob/
+                    -- 11ffdbd9cc6232faaff5eecd8cc628bb5a2c706f/
+                    -- gfx/color_space.cpp#L142
                     if (profileSrgb ~= profileAct
                             and profileSrgb ~= profileNone)
-                        or (apNameLc ~= "srgb"
+                        and (apNameLc ~= "srgb"
                             and apNameLc ~= "none") then
                         palActSpr:convertColorSpace(profileSrgb)
                         hexesSrgb = AseUtilities.asePaletteToHexArr(

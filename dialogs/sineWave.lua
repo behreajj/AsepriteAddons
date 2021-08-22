@@ -142,7 +142,6 @@ dlg:button {
             local cel = sprite:newCel(layer, frame)
             table.insert(cels, cel)
 
-            -- local ifac = i * iToFac
             local theta = args.freq * i * iToPeriod
             local ptsInFrame = {}
             local brushesInFrame = {}
