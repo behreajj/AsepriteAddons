@@ -212,8 +212,8 @@ function AseUtilities.asePaletteLoad(
         if filePath and #filePath > 0 then
             local palFile = Palette { fromFile = filePath }
             if palFile then
-                -- Palettes loaded from a file COULD support an
-                -- embedded color profile hypothetically, but do not.
+                -- Palettes loaded from a file could support an
+                -- embedded color profile, but do not.
                 -- You could check the extension, and if it is a
                 -- .png, .aseprite, etc. then load as a sprite, get
                 -- the profile, dispose of the sprite.
@@ -238,7 +238,9 @@ function AseUtilities.asePaletteLoad(
                 if modeAct == ColorMode.GRAY then
                     hexesProfile = {}
                     for i = 0, 255, 1 do
-                        hexesProfile[1 + i] = (i << 0x18)
+                        -- Add opacity or no?
+                        -- hexesProfile[1 + i] = (i << 0x18)
+                        hexesProfile[1 + i] = 0xff000000
                             | (i << 0x10)
                             | (i << 0x08)
                             | i
@@ -246,7 +248,6 @@ function AseUtilities.asePaletteLoad(
                 else
                     hexesProfile = AseUtilities.asePaletteToHexArr(
                         palAct, siVal, cntVal)
-
                     local profileAct = palActSpr.colorSpace
                     if profileAct then
                         -- Tests a number of color profile components for
@@ -254,9 +255,12 @@ function AseUtilities.asePaletteLoad(
                         -- https://github.com/aseprite/laf/blob/
                         -- 11ffdbd9cc6232faaff5eecd8cc628bb5a2c706f/
                         -- gfx/color_space.cpp#L142
+
+                        -- It might be safer not to treat the NONE color
+                        -- space as equivalent to SRGB, as the user could
+                        -- have a display profile which differs radically.
                         local profileSrgb = ColorSpace { sRGB = true }
-                        if profileSrgb ~= profileAct
-                                and profileSrgb ~= ColorSpace() then
+                        if profileAct ~= profileSrgb then
                             palActSpr:convertColorSpace(profileSrgb)
                             hexesSrgb = AseUtilities.asePaletteToHexArr(
                                 palAct, siVal, cntVal)

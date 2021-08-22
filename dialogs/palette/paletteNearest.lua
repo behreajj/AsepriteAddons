@@ -184,6 +184,7 @@ dlg:button {
     onclick = function()
         local args = dlg.data
 
+        -- TODO: Use AseUtilities method.
         -- Search for appropriate source palette.
         local srcPal = nil
         local palType = args.palType

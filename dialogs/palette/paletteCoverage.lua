@@ -9,8 +9,8 @@ local geometries = {
 
 local defaults = {
     palType = "ACTIVE",
-    palStart = 0,
-    palCount = 256,
+    startIndex = 0,
+    count = 256,
 
     queryRad = 175,
     octCapacity = 16,
@@ -300,334 +300,347 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        app.refresh()
         local args = dlg.data
 
-        -- TODO: Use AseUtilities method.
-
-        -- Search for appropriate source palette.
-        local srcPal = nil
+        -- Get palette.
+        local startIndex = defaults.startIndex
+        local count = defaults.count
         local palType = args.palType
-        if palType == "FILE" then
-            local fp =  args.palFile
-            if fp and #fp > 0 then
-                srcPal = Palette { fromFile = fp }
+        local hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
+            palType, args.palFile, args.palPreset,
+            startIndex, count)
+
+        -- Create cover profile.
+        -- This should be done BEFORE the coverage sprite is
+        -- created, while the reference sprite is active.
+        local cvrClrPrf = nil
+        if palType == "ACTIVE" and app.activeSprite then
+            cvrClrPrf = app.activeSprite.colorSpace
+            if cvrClrPrf == nil then
+                cvrClrPrf = ColorSpace()
             end
-        elseif palType == "PRESET" then
-            local pr = args.palPreset
-            if pr and #pr > 0 then
-                srcPal = Palette { fromResource = pr }
-            end
-        elseif palType == "ACTIVE" and app.activeSprite then
-            local activeProfile = app.activeSprite.colorSpace
-            -- app.activeSprite:convertColorSpace(ColorSpace{ sRGB = true })
-            srcPal = app.activeSprite.palettes[1]
-            -- app.activeSprite:convertColorSpace(activeProfile)
-        end
-
-        if srcPal then
-
-            -- Adjust color space so that color conversions
-            -- from sRGB to CIE LAB work properly.
-            -- local sourceColorSpace = nil
-            -- if palType == "ACTIVE" and app.activeSprite then
-            --     sourceColorSpace = app.activeSprite.colorSpace
-            -- else
-            --     sourceColorSpace = ColorSpace { sRGB = true }
-            -- end
-            -- if sourceColorSpace == nil then
-            --     sourceColorSpace = ColorSpace()
-            -- end
-
-            local coverSprite = Sprite(512, 512)
-            coverSprite:setPalette(srcPal)
-            coverSprite:convertColorSpace(ColorSpace { sRGB = true })
-
-
-            -- Validate range of palette to sample.
-            local palStart = defaults.palStart
-            local palCount = defaults.palCount
-            palStart = math.min(#srcPal - 1, palStart)
-            palCount = math.min(palCount, #srcPal - palStart, 256)
-
-            -- TODO: Filter out hexes with no alpha instead?
-            -- Find palette's unique values only.
-            -- Alpha is masked out of hexadecimal values.
-            local hexDict = {}
-            for i = 0, palCount - 1, 1 do
-                local idx = palStart + i
-                local aseColor = srcPal:getColor(idx)
-                local hex = 0xff000000 | aseColor.rgbaPixel
-                hexDict[hex] = idx
-            end
-
-            local hexes = {}
-            local incr = 1
-            for key, _ in pairs(hexDict) do
-                hexes[incr] = key
-                incr = incr + 1
-            end
-
-            -- Sort.
-            table.sort(hexes,
-                function(a, b)
-                    return hexDict[a] < hexDict[b]
-                end)
-
-            -- Cache global functions used in for loops.
-            local cos = math.cos
-            local sin = math.sin
-            local trunc = math.tointeger
-            local linearToXyz = Clr.lRgbaToXyzInternal
-            local xyzToLab = Clr.xyzToLab
-            local rgbaToLab = Clr.sRgbaToLab
-            local labToRgba = Clr.labTosRgba
-            local toHex = Clr.toHex
-            local fromHex = Clr.fromHex
-            local stdToLin = Clr.sRgbaTolRgbaInternal
-            local rotax = Vec3.rotateInternal
-            local screen = Utilities.toScreen
-            local drawCirc = AseUtilities.drawCircleFill
-
-            -- Create Octree.
-            local octCapacity = args.octCapacity
-            local bounds = Bounds3.cieLab()
-            local octree = Octree.new(bounds, octCapacity, 0)
-
-            -- Unpack unique entries to data.
-            for i = 1, #hexes, 1 do
-                local hex = hexes[i]
-
-                -- The LUT shortcut is not used because here
-                -- accuracy is preferred over speed. Ideally,
-                -- the color picker should be able to match
-                -- to the palette without being put into
-                -- Best Fit Index mode.
-
-                local srgb = fromHex(hex)
-                local lrgb = stdToLin(srgb)
-                local xyz = linearToXyz(lrgb.r, lrgb.g, lrgb.b, 1.0)
-                local lab = xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
-
-                local point = Vec3.new(lab.a, lab.b, lab.l)
-                Octree.insert(octree, point)
-            end
-
-            -- Create geometry.
-            local gridPts = nil
-            local gridClrs = nil
-
-            local swatchAlpha = args.swatchAlpha or defaults.swatchAlpha
-            swatchAlpha = swatchAlpha * 0.01
-            local geometry = args.geometry
-            if geometry == "SPHERE" then
-
-                local lons = args.lons or defaults.lons
-                local lats = args.lats or (lons // 2)
-                local layersSphere = args.layersSphere
-                local minSat = args.minSat * 0.01
-                local maxSat = args.maxSat * 0.01
-
-                gridPts = Vec3.gridSpherical(
-                    lons, lats, layersSphere,
-                    minSat * 0.5, maxSat * 0.5, false)
-                gridClrs = Clr.gridHsl(
-                    lons, lats, layersSphere,
-                    minSat, maxSat,
-                    swatchAlpha)
-            else
-                local cols = args.cols
-                local rows = args.rows
-                local layersCube = args.layersCube
-
-                local lbx = args.lbx or defaults.lbx
-                local lby = args.lby or defaults.lby
-                local lbz = args.lbz or defaults.lbz
-
-                local ubx = args.ubx or defaults.ubx
-                local uby = args.uby or defaults.uby
-                local ubz = args.ubz or defaults.ubz
-
-                gridPts = Vec3.gridCartesian(
-                    cols, rows, layersCube,
-                    Vec3.new(lbx, lby, lbz),
-                    Vec3.new(ubx, uby, ubz))
-
-                gridClrs = Clr.gridsRgb(
-                    cols, rows, layersCube,
-                    swatchAlpha)
-            end
-
-            -- Create replacement colors.
-            local queryRad = args.queryRad or defaults.queryRad
-            local replaceClrs = {}
-            local gridLen = #gridPts
-            for i = 1, gridLen, 1 do
-                local srcClr = gridClrs[i]
-                local srcLab = rgbaToLab(srcClr)
-                local srcLabPt = Vec3.new(
-                    srcLab.a, srcLab.b, srcLab.l)
-
-                local results = {}
-                Octree.querySphericalInternal(
-                    octree, srcLabPt, queryRad, results, 256)
-                if #results > 1 then
-                    local nearestPt = results[1].point
-
-                    -- TODO: Use ptToHexDict instead?
-                    local nearestClr = labToRgba(
-                        nearestPt.z,
-                        nearestPt.x,
-                        nearestPt.y,
-                        swatchAlpha)
-                    replaceClrs[i] = toHex(nearestClr)
-                else
-                    replaceClrs[i] = 0x00000000
-                end
-            end
-
-            -- Create geometry rotation axis.
-            local axx = args.axx or defaults.axx
-            local axy = args.axy or defaults.axy
-            local axz = args.axz or defaults.axz
-            local axis = Vec3.new(axx, axy, axz)
-            if Vec3.any(axis) then
-                axis = Vec3.normalize(axis)
-            else
-                axis = Vec3.forward()
-            end
-
-            -- Add requested number of frames.
-            local oldFrameLen = #coverSprite.frames
-            local reqFrames = args.frames
-            local needed = math.max(0, reqFrames - oldFrameLen)
-            app.transaction(function()
-                for _ = 1, needed, 1 do
-                    coverSprite:newEmptyFrame()
-                end
-            end)
-
-            local width = coverSprite.width
-            local height = coverSprite.height
-            local halfWidth = width * 0.5
-            local halfHeight = height * 0.5
-
-            -- Create projection matrix.
-            local projection = nil
-            local projPreset = args.projection
-            if projPreset == "PERSPECTIVE" then
-                local fov = 0.8660254037844386
-                local aspect = width / height
-                projection = Mat4.perspective(
-                    fov, aspect)
-            else
-                projection = Mat4.orthographic(
-                    -halfWidth, halfWidth,
-                    -halfHeight, halfHeight,
-                    0.001, 1000.0)
-            end
-
-            -- Create camera and modelview matrices.
-            local camera = Mat4.cameraIsometric(
-                1.0, -1.0, 1.0, "RIGHT")
-            local model = Mat4.fromScale(
-                0.7071 * math.min(width, height))
-            local modelview = model * camera
-
-            local hToTheta = 6.283185307179586 / reqFrames
-            local minSwatchSize = args.minSwatchSize
-            local maxSwatchSize = args.maxSwatchSize
-            local swatchDiff = maxSwatchSize - minSwatchSize
-
-            local pts2d = {}
-            local zMin = 999999
-            local zMax = -999999
-            for h = 1, reqFrames, 1 do
-                local frame2d = {}
-                local theta = (h - 1) * hToTheta
-                local cosa = cos(theta)
-                local sina = sin(theta)
-                for i = 1, gridLen, 1 do
-                    local vec = gridPts[i]
-
-                    -- TODO: Would this rotation be better if you
-                    -- used a quaternion instead?
-                    local vr = rotax(vec, cosa, sina, axis)
-                    local scrpt = screen(
-                        modelview, projection, vr,
-                        width, height)
-
-                    -- TODO: Introduce frustum near plane
-                    -- culling so that a cross-section of
-                    -- the cube or sphere can be seen.
-                    -- Alternatively, quantize to a sector then
-                    -- assign to separate layers?
-                    if scrpt.z < zMin then zMin = scrpt.z end
-                    if scrpt.z > zMax then zMax = scrpt.z end
-
-                    frame2d[i] = {
-                        point = scrpt,
-                        color = replaceClrs[i] }
-                end
-
-                -- Depth sorting.
-                table.sort(frame2d,
-                    function(a, b)
-                        return b.point.z < a.point.z
-                    end)
-                pts2d[h] = frame2d
-            end
-
-            -- Create layer.
-            local layer = coverSprite.layers[#coverSprite.layers]
-            layer.name = string.format(
-                "Palette.Coverage.%s.%s",
-                geometry, projPreset)
-
-            local zDiff = zMin - zMax
-            local zDenom = 1.0
-            if zDiff ~= 0.0 then zDenom = 1.0 / zDiff end
-
-            -- Create background image once, then clone.
-            local bkgImg = Image(width, height)
-            local bkgHex = args.bkgColor.rgbaPixel
-            for elm in bkgImg:pixels() do elm(bkgHex) end
-
-            local duration = args.duration or defaults.duration
-            duration = duration * 0.001
-            app.transaction(function()
-                for h = 1, reqFrames, 1 do
-                    local frame = coverSprite.frames[h]
-                    frame.duration = duration
-                    local img = bkgImg:clone()
-                    local frame2d = pts2d[h]
-
-                    for i = 1, gridLen, 1 do
-
-                        local packet = frame2d[i]
-                        local scrpt = packet.point
-
-                        -- Remap z to swatch size based on min and max.
-                        local scl = minSwatchSize + swatchDiff
-                            * ((scrpt.z - zMax) * zDenom)
-
-                        drawCirc(
-                            img,
-                            trunc(0.5 + scrpt.x),
-                            trunc(0.5 + scrpt.y),
-                            trunc(0.5 + scl),
-                            packet.color)
-                    end
-
-                    coverSprite:newCel(layer, frame, img)
-                end
-            end)
-
-            -- coverSprite:assignColorSpace(sourceColorSpace)
-            app.activeSprite = coverSprite
-            app.refresh()
         else
-            app.alert("The source palette could not be found.")
+            cvrClrPrf = ColorSpace { sRGB = true }
         end
+
+        -- Sift for unique, non-mask colors.
+        local hexDictSrgb = {}
+        local hexDictProfile = {}
+        local lenHexesProfile = #hexesProfile
+        local idxDict = 1
+        for i = 1, lenHexesProfile, 1 do
+            local hexProfile = hexesProfile[i]
+            if hexProfile & 0xff000000 ~= 0 then
+                local hexProfNoAlpha = 0xff000000 | hexProfile
+                hexDictProfile[hexProfNoAlpha] = idxDict
+
+                local hexSrgb = hexesSrgb[i]
+                local hexSrgbNoAlpha = 0xff000000 | hexSrgb
+                hexDictSrgb[hexSrgbNoAlpha] = idxDict
+
+                idxDict = idxDict + 1
+            end
+        end
+
+        -- Convert dictionaries to lists.
+        local uniqueHexesSrgb = {}
+        for k, v in pairs(hexDictSrgb) do
+            uniqueHexesSrgb[v] = k
+        end
+
+        local uniqueHexesProfile = {}
+        for k, v in pairs(hexDictProfile) do
+            uniqueHexesProfile[v] = k
+        end
+
+        -- Cache global functions used in for loops.
+        local cos = math.cos
+        local sin = math.sin
+        local trunc = math.tointeger
+        local linearToXyz = Clr.lRgbaToXyzInternal
+        local xyzToLab = Clr.xyzToLab
+        local rgbaToLab = Clr.sRgbaToLab
+        local fromHex = Clr.fromHex
+        local stdToLin = Clr.sRgbaTolRgbaInternal
+        local rotax = Vec3.rotateInternal
+        local v3hsh = Vec3.hashCode
+        local screen = Utilities.toScreen
+        local drawCirc = AseUtilities.drawCircleFill
+
+        -- Create Octree.
+        local octCapacity = args.octCapacity
+        local bounds = Bounds3.cieLab()
+        local octree = Octree.new(bounds, octCapacity, 0)
+
+        -- Unpack unique colors to data.
+        local uniqueHexesSrgbLen = #uniqueHexesSrgb
+        local ptHexDict = {}
+        for i = 1, uniqueHexesSrgbLen, 1 do
+            local hexSrgb = uniqueHexesSrgb[i]
+
+            -- The LUT shortcut is not used because here
+            -- accuracy is preferred over speed. Ideally,
+            -- the color picker should be able to match
+            -- to the palette without being put into
+            -- Best Fit Index mode.
+
+            local srgb = fromHex(hexSrgb)
+            local lrgb = stdToLin(srgb)
+            local xyz = linearToXyz(lrgb.r, lrgb.g, lrgb.b, 1.0)
+            local lab = xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
+
+            local point = Vec3.new(lab.a, lab.b, lab.l)
+            ptHexDict[v3hsh(point)] = uniqueHexesProfile[i]
+            Octree.insert(octree, point)
+        end
+
+        -- Create geometry.
+        local gridPts = nil
+        local gridClrs = nil
+
+        -- TODO: Consider setting alpha to conventional
+        -- range of [0, 255] instead of [0, 100].
+        local swatchAlpha = args.swatchAlpha or defaults.swatchAlpha
+        local swatchAlpha01 = swatchAlpha * 0.01
+        local geometry = args.geometry or defaults.geometry
+        if geometry == "SPHERE" then
+
+            local lons = args.lons or defaults.lons
+            local lats = args.lats or (lons // 2)
+            local layersSphere = args.layersSphere
+                or defaults.layersSphere
+            local minSat = args.minSat or defaults.minSat
+            local maxSat = args.maxSat or defaults.maxSat
+
+            minSat = minSat * 0.01
+            maxSat = maxSat * 0.01
+
+            gridPts = Vec3.gridSpherical(
+                lons, lats, layersSphere,
+                minSat * 0.5, maxSat * 0.5, false)
+            gridClrs = Clr.gridHsl(
+                lons, lats, layersSphere,
+                minSat, maxSat,
+                swatchAlpha01)
+        else
+            local cols = args.cols or defaults.cols
+            local rows = args.rows or defaults.rows
+            local layersCube = args.layersCube
+                or defaults.layersCube
+
+            local lbx = args.lbx or defaults.lbx
+            local lby = args.lby or defaults.lby
+            local lbz = args.lbz or defaults.lbz
+
+            local ubx = args.ubx or defaults.ubx
+            local uby = args.uby or defaults.uby
+            local ubz = args.ubz or defaults.ubz
+
+            gridPts = Vec3.gridCartesian(
+                cols, rows, layersCube,
+                Vec3.new(lbx, lby, lbz),
+                Vec3.new(ubx, uby, ubz))
+
+            gridClrs = Clr.gridsRgb(
+                cols, rows, layersCube,
+                swatchAlpha01)
+        end
+
+        -- Create replacement colors.
+        local queryRad = args.queryRad or defaults.queryRad
+        local replaceClrs = {}
+        local gridLen = #gridPts
+        local swatchAlphaMask = trunc(0.5 + 0xff * swatchAlpha01)
+        swatchAlphaMask = swatchAlphaMask << 0x18
+        for i = 1, gridLen, 1 do
+            local srcClr = gridClrs[i]
+            local srcLab = rgbaToLab(srcClr)
+            local srcLabPt = Vec3.new(
+                srcLab.a, srcLab.b, srcLab.l)
+
+            local results = {}
+            Octree.querySphericalInternal(
+                octree, srcLabPt, queryRad, results, 256)
+            if #results > 1 then
+                local nearestPt = results[1].point
+                local ptHash = v3hsh(nearestPt)
+                replaceClrs[i] = swatchAlphaMask
+                    | (ptHexDict[ptHash] & 0x00ffffff)
+            else
+                replaceClrs[i] = 0x00000000
+            end
+        end
+
+        -- Create geometry rotation axis.
+        local axx = args.axx or defaults.axx
+        local axy = args.axy or defaults.axy
+        local axz = args.axz or defaults.axz
+        local axis = Vec3.new(axx, axy, axz)
+        if Vec3.any(axis) then
+            axis = Vec3.normalize(axis)
+        else
+            axis = Vec3.forward()
+        end
+
+        local coverSprite = Sprite(512, 512)
+        coverSprite.filename = "Coverage"
+
+        -- Add requested number of frames.
+        local oldFrameLen = #coverSprite.frames
+        local reqFrames = args.frames
+        local needed = math.max(0, reqFrames - oldFrameLen)
+        app.transaction(function()
+            for _ = 1, needed, 1 do
+                coverSprite:newEmptyFrame()
+            end
+        end)
+
+        local width = coverSprite.width
+        local height = coverSprite.height
+        local halfWidth = width * 0.5
+        local halfHeight = height * 0.5
+
+        -- Create projection matrix.
+        local projection = nil
+        local projPreset = args.projection
+        if projPreset == "PERSPECTIVE" then
+            local fov = 0.8660254037844386
+            local aspect = width / height
+            projection = Mat4.perspective(
+                fov, aspect)
+        else
+            projection = Mat4.orthographic(
+                -halfWidth, halfWidth,
+                -halfHeight, halfHeight,
+                0.001, 1000.0)
+        end
+
+        -- Create camera and modelview matrices.
+        local camera = Mat4.cameraIsometric(
+            1.0, -1.0, 1.0, "RIGHT")
+        local model = Mat4.fromScale(
+            0.7071 * math.min(width, height))
+        local modelview = model * camera
+
+        local hToTheta = 6.283185307179586 / reqFrames
+        local minSwatchSize = args.minSwatchSize
+        local maxSwatchSize = args.maxSwatchSize
+        local swatchDiff = maxSwatchSize - minSwatchSize
+
+        local pts2d = {}
+        local zMin = 999999
+        local zMax = -999999
+        for h = 1, reqFrames, 1 do
+            local frame2d = {}
+            local theta = (h - 1) * hToTheta
+            local cosa = cos(theta)
+            local sina = sin(theta)
+            for i = 1, gridLen, 1 do
+                local vec = gridPts[i]
+
+                -- TODO: Would this rotation be better if you
+                -- used a quaternion instead?
+                local vr = rotax(vec, cosa, sina, axis)
+                local scrpt = screen(
+                    modelview, projection, vr,
+                    width, height)
+
+                -- TODO: Introduce frustum near plane
+                -- culling so that a cross-section of
+                -- the cube or sphere can be seen.
+                -- Alternatively, quantize to a sector then
+                -- assign to separate layers?
+                if scrpt.z < zMin then zMin = scrpt.z end
+                if scrpt.z > zMax then zMax = scrpt.z end
+
+                frame2d[i] = {
+                    point = scrpt,
+                    color = replaceClrs[i] }
+            end
+
+            -- Depth sorting.
+            table.sort(frame2d,
+                function(a, b)
+                    return b.point.z < a.point.z
+                end)
+            pts2d[h] = frame2d
+        end
+
+        -- Create layer.
+        local layer = coverSprite.layers[#coverSprite.layers]
+        layer.name = string.format(
+            "Palette.Coverage.%s.%s",
+            geometry, projPreset)
+
+        local zDiff = zMin - zMax
+        local zDenom = 1.0
+        if zDiff ~= 0.0 then zDenom = 1.0 / zDiff end
+
+        -- Create background image once, then clone.
+        local bkgImg = Image(width, height)
+        local bkgHex = args.bkgColor.rgbaPixel
+        for elm in bkgImg:pixels() do elm(bkgHex) end
+
+        local duration = args.duration or defaults.duration
+        duration = duration * 0.001
+        app.transaction(function()
+            for h = 1, reqFrames, 1 do
+                local frame = coverSprite.frames[h]
+                frame.duration = duration
+                local img = bkgImg:clone()
+                local frame2d = pts2d[h]
+
+                for i = 1, gridLen, 1 do
+
+                    local packet = frame2d[i]
+                    local scrpt = packet.point
+
+                    -- Remap z to swatch size based on min and max.
+                    local scl = minSwatchSize + swatchDiff
+                        * ((scrpt.z - zMax) * zDenom)
+
+                    drawCirc(
+                        img,
+                        trunc(0.5 + scrpt.x),
+                        trunc(0.5 + scrpt.y),
+                        trunc(0.5 + scl),
+                        packet.color)
+                end
+
+                coverSprite:newCel(layer, frame, img)
+            end
+        end)
+
+        app.activeSprite = coverSprite
+
+        -- Create and set the coverage palette.
+        -- Wait to do this until the end, so we have greater
+        -- assurance that the coverageSprite is app.active.
+        -- If the original does not have an alpha mask, then
+        -- one must be prepended.
+        local uniqueHexesProfLen = #uniqueHexesProfile
+        local cvrPalLen = uniqueHexesProfLen
+        local palStartIdx = 0
+        local prependAlpha = uniqueHexesProfile[1] ~= 0x0
+        if prependAlpha then
+            cvrPalLen = cvrPalLen + 1
+            palStartIdx = palStartIdx + 1
+        end
+        local cvrPal = Palette(cvrPalLen)
+        for i = 1, uniqueHexesProfLen, 1 do
+            local hexProf = uniqueHexesProfile[i]
+            local aseColor = Color(hexProf)
+            cvrPal:setColor(palStartIdx + i - 1, aseColor)
+        end
+
+        if prependAlpha then
+            cvrPal:setColor(0, Color(0, 0, 0, 0))
+        end
+        coverSprite:setPalette(cvrPal)
+
+        coverSprite:convertColorSpace(cvrClrPrf)
+        app.refresh()
     end
 }
 

@@ -335,21 +335,18 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
-
-        local palType = args.palType or defaults.palType
-        local startIndex = args.startIndex or defaults.startIndex
-        local count = args.count or defaults.count
-
         -- Force a refresh, this is an extra precaution in case
         -- a Sprite has been opened with an embedded profile, then
         -- closed, or in case a Sprite has been set to a
         -- different color mode, then closed.
         app.refresh()
 
+        local args = dlg.data
+
         -- Determine how important it is to specify the transparency mask.
         local useMaskIdx = false
         local srcMaskIdx = 0
+        local palType = args.palType or defaults.palType
         if palType == "ACTIVE" then
             local idxActSpr = app.activeSprite
             if idxActSpr then
@@ -359,9 +356,24 @@ dlg:button {
             end
         end
 
+        local startIndex = args.startIndex or defaults.startIndex
+        local count = args.count or defaults.count
         local hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
             palType, args.palFile, args.palPreset,
             startIndex, count)
+
+        -- Set manifest profile.
+        -- This should be done BEFORE the manifest sprite is
+        -- created, while the reference sprite is active.
+        local mnfstClrPrf = nil
+        if palType == "ACTIVE" and app.activeSprite then
+            mnfstClrPrf = app.activeSprite.colorSpace
+            if mnfstClrPrf == nil then
+                mnfstClrPrf = ColorSpace()
+            end
+        else
+            mnfstClrPrf = ColorSpace { sRGB = true }
+        end
 
         local trunc = math.tointeger
         local strfmt = string.format
@@ -572,39 +584,7 @@ dlg:button {
         local spriteHeight = 768
         local spriteWidth = 512
 
-        -- Create a manifest palette.
-        -- If the original does not have an alpha mask, then
-        -- one must be prepended.
-        local mnfstPalLen = palDataLen
-        local palStartIdx = 0
-        local prependAlpha = palData[1].hexProfile ~= 0x00000000
-        if prependAlpha then
-            mnfstPalLen = mnfstPalLen + 1
-            palStartIdx = palStartIdx + 1
-        end
-        local mnfstPal = Palette(mnfstPalLen)
-        for i = 1, palDataLen, 1 do
-            local palHex = palData[i].hexProfile
-            local aseColor = Color(palHex)
-            mnfstPal:setColor(palStartIdx + i - 1, aseColor)
-        end
-
-        if prependAlpha then
-            mnfstPal:setColor(0, Color(0, 0, 0, 0))
-        end
-
         -- print(AseUtilities.asePaletteToString(mnfstPal))
-
-        -- Set manifest profile.
-        local mnfstClrPrf = nil
-        if palType == "ACTIVE" and app.activeSprite then
-            mnfstClrPrf = app.activeSprite.colorSpace
-            if mnfstClrPrf == nil then
-                mnfstClrPrf = ColorSpace()
-            end
-        else
-            mnfstClrPrf = ColorSpace { sRGB = true }
-        end
 
         -- Declare constants.
         local gw = 8
@@ -709,6 +689,8 @@ dlg:button {
         local bkgImg = Image(spriteWidth, spriteHeight)
         for elm in bkgImg:pixels() do elm(bkgHex) end
 
+
+
         -- Create footer to display profile name.
         local footImg = Image(entryWidth, entryHeight)
         local footText = string.upper(string.sub(mnfstClrPrf.name, 1, 12))
@@ -801,8 +783,9 @@ dlg:button {
         -- Create sprite.
         local manifestSprite = Sprite(spriteWidth, spriteHeight)
         manifestSprite.filename = mnfstTitle
-        manifestSprite:setPalette(mnfstPal)
 
+        -- This is not necessary. It is retained in case this
+        -- script ever needs to use multiple frames.
         local frameIndex = 1
 
         -- Create background layer and cel.
@@ -1017,8 +1000,33 @@ dlg:button {
             titleLayer, frameIndex, titleImg,
             Point(spriteMargin, spriteMargin))
 
-        -- Assign Color Space as late as possible.
-        manifestSprite:assignColorSpace(mnfstClrPrf)
+        app.activeSprite = manifestSprite
+
+        -- Create and set the manifest palette.
+        -- Wait to do this until the end, so we have greater
+        -- assurance that the manifestSprite is app.active.
+        -- If the original does not have an alpha mask, then
+        -- one must be prepended.
+        local mnfstPalLen = palDataLen
+        local palStartIdx = 0
+        local prependAlpha = palData[1].hexProfile ~= 0x00000000
+        if prependAlpha then
+            mnfstPalLen = mnfstPalLen + 1
+            palStartIdx = palStartIdx + 1
+        end
+        local mnfstPal = Palette(mnfstPalLen)
+        for i = 1, palDataLen, 1 do
+            local palHex = palData[i].hexProfile
+            local aseColor = Color(palHex)
+            mnfstPal:setColor(palStartIdx + i - 1, aseColor)
+        end
+
+        if prependAlpha then
+            mnfstPal:setColor(0, Color(0, 0, 0, 0))
+        end
+        manifestSprite:setPalette(mnfstPal)
+
+        manifestSprite:convertColorSpace(mnfstClrPrf)
         app.refresh()
     end
 }
