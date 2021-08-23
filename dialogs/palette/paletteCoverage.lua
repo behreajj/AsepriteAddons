@@ -621,27 +621,9 @@ dlg:button {
         -- Create and set the coverage palette.
         -- Wait to do this until the end, so we have greater
         -- assurance that the coverageSprite is app.active.
-        -- If the original does not have an alpha mask, then
-        -- one must be prepended.
-        local uniqueHexesProfLen = #uniqueHexesProfile
-        local cvrPalLen = uniqueHexesProfLen
-        local palStartIdx = 0
-        local prependAlpha = uniqueHexesProfile[1] ~= 0x0
-        if prependAlpha then
-            cvrPalLen = cvrPalLen + 1
-            palStartIdx = palStartIdx + 1
-        end
-        local cvrPal = Palette(cvrPalLen)
-        for i = 1, uniqueHexesProfLen, 1 do
-            local hexProf = uniqueHexesProfile[i]
-            local aseColor = Color(hexProf)
-            cvrPal:setColor(palStartIdx + i - 1, aseColor)
-        end
-
-        if prependAlpha then
-            cvrPal:setColor(0, Color(0, 0, 0, 0))
-        end
-        coverSprite:setPalette(cvrPal)
+        coverSprite:setPalette(
+            AseUtilities.hexArrToAsePalette(uniqueHexesProfile)
+        )
 
         if cvrClrPrf ~= ColorSpace { sRGB = true } then
             coverSprite:convertColorSpace(cvrClrPrf)

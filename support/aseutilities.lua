@@ -57,14 +57,6 @@ AseUtilities.GLYPH_ALIGN_VERT = {
     "TOP"
 }
 
----Color gradient easing modes.
-AseUtilities.EASING_MODES = {
-    "HSL",
-    "HSV",
-    "PALETTE",
-    "RGB"
-}
-
 ---Text orientations.
 AseUtilities.ORIENTATIONS = {
     "HORIZONTAL",
@@ -116,6 +108,21 @@ function AseUtilities.aseColorCopy(aseClr, flag)
     end
 end
 
+---Converts an Aseprite Color object to a Clr.
+---Assumes that the Aseprite Color is in sRGB.
+---Both Aseprite Color and Clr allow arguments
+---to exceed the expected ranges, [0, 255] and
+---[0.0, 1.0], respectively.
+---@param aseClr table Aseprite color
+---@return table
+function AseUtilities.aseColorToClr(aseClr)
+    return Clr.new(
+        0.00392156862745098 * aseClr.red,
+        0.00392156862745098 * aseClr.green,
+        0.00392156862745098 * aseClr.blue,
+        0.00392156862745098 * aseClr.alpha)
+end
+
 ---Returns a string containing diagnostic information
 ---about an Aseprite Color object. Format lists the
 ---nearest palette index, the red, green, blue and
@@ -137,21 +144,6 @@ function AseUtilities.aseColorToString(aseColor)
         r, g, b,
         aseColor.alpha,
         r << 0x10 | g << 0x08 | b)
-end
-
----Converts an Aseprite Color object to a Clr.
----Assumes that the Aseprite Color is in sRGB.
----Both Aseprite Color and Clr allow arguments
----to exceed the expected ranges, [0, 255] and
----[0.0, 1.0], respectively.
----@param aseClr table Aseprite color
----@return table
-function AseUtilities.aseColorToClr(aseClr)
-    return Clr.new(
-        0.00392156862745098 * aseClr.red,
-        0.00392156862745098 * aseClr.green,
-        0.00392156862745098 * aseClr.blue,
-        0.00392156862745098 * aseClr.alpha)
 end
 
 ---Returns a string containing diagnostic information
@@ -332,8 +324,8 @@ function AseUtilities.asePaletteToClrArr(pal, startIndex, count)
     end
 end
 
----Converts an Aseprite palette to a table
----of hexadecimal integers. If the palette is nil
+---Converts an Aseprite palette to a table of
+---hex color integers. If the palette is nil
 ---returns a default table. Assumes palette
 ---is in sRGB.
 ---@param pal table Aseprite palette
@@ -552,9 +544,6 @@ end
 ---@param r number radius
 ---@param hex number hexadecimal color
 function AseUtilities.drawCircleStroke(image, xc, yc, r, hex)
-    -- See for circle stroke with line thickness:
-    -- https://stackoverflow.com/questions/27755514/circle-with-thickness-drawing-algorithm
-
     local x = r
     local y = 0
 
@@ -1094,60 +1083,35 @@ function AseUtilities.drawStringVert(
     end
 end
 
----Returns an appropriate easing function
----based on string presets:
----"RGB", "HSL" or "HSV" easing modes.
----"LINEAR" or "SMOOTH" RGB functions.
----"NEAR" or "FAR" hue functions.
----@param easingMode string
----@param easingFuncRGB string
----@param easingFuncHue string
----@return function
-function AseUtilities.easingFuncPresets(
-    easingMode,
-    easingFuncRGB,
-    easingFuncHue)
-
-    local easing = nil
-    if easingMode == "HSV" then
-        easing = Clr.mixHsva
-
-        if easingFuncHue == "FAR" then
-            easing = function(a, b, t)
-                return Clr.mixHsvaInternal(
-                    a, b, t,
-                    function(x, y, z)
-                        return Utilities.lerpAngleFar(
-                            x, y, z, 1.0)
-                    end)
-            end
-        end
-    elseif easingMode == "HSL" then
-        easing = Clr.mixHsla
-
-        if easingFuncHue == "FAR" then
-            easing = function(a, b, t)
-                return Clr.mixHslaInternal(
-                    a, b, t,
-                    function(x, y, z)
-                        return Utilities.lerpAngleFar(
-                            x, y, z, 1.0)
-                    end)
-            end
-        end
-    else
-        easing = Clr.mix
-
-        if easingFuncRGB == "SMOOTH" then
-            easing = function(a, b, t)
-                return Clr.mix(a, b,
-                    t * t * (3.0 - (t + t)))
-            end
-        end
+---Creates an Aseprite palette from a table of
+---hex color integers. Assumes the hex colors
+---are belong to the same color profile as the
+---sprite to which the palette will be assigned.
+---If the first color in the table is not clear
+---black (0x0), then one will be prepended.
+---@param arr table
+---@return table
+function AseUtilities.hexArrToAsePalette(arr)
+    local arrLen = #arr
+    local palStartIdx = 0
+    local palLen = arrLen
+    local prependAlpha = arr[1] ~= 0x00000000
+    if prependAlpha then
+        palLen = palLen + 1
+        palStartIdx = palStartIdx + 1
+    end
+    local pal = Palette(palLen)
+    for i = 1, arrLen, 1 do
+        local hex = arr[i]
+        local aseColor = Color(hex)
+        pal:setColor(palStartIdx + i - 1, aseColor)
     end
 
-    return easing
+    if prependAlpha then
+        pal:setColor(0, Color(0, 0, 0, 0))
+    end
 
+    return pal
 end
 
 ---Initializes a sprite and layer.
@@ -1158,18 +1122,18 @@ end
 ---@param hDefault number default height
 ---@param layerName string layer name
 ---@param colors table array of hexes
----@param colorspace table color space
+---@param colorSpace table color space
 ---@return table
 function AseUtilities.initCanvas(
     wDefault,
     hDefault,
     layerName,
     colors,
-    colorspace)
+    colorSpace)
 
-    local clrs = AseUtilities.DEFAULT_PAL_ARR
+    local clrsVal = AseUtilities.DEFAULT_PAL_ARR
     if colors and #colors > 0 then
-        clrs = colors
+        clrsVal = colors
     end
 
     local sprite = app.activeSprite
@@ -1178,25 +1142,21 @@ function AseUtilities.initCanvas(
     if sprite == nil then
         local wVal = 32
         local hVal = 32
-
         if wDefault and wDefault > 0 then wVal = wDefault end
         if hDefault and hDefault > 0 then hVal = hDefault end
+
         sprite = Sprite(wVal, hVal)
-        if colorspace then
-            sprite:assignColorSpace(colorspace)
+        app.activeSprite = sprite
+
+        if colorSpace
+            and colorSpace ~= ColorSpace { sRGB = true } then
+            sprite:assignColorSpace(colorSpace)
         end
 
-        app.activeSprite = sprite
         layer = sprite.layers[1]
-        local lenClrs = #clrs
-        local pal = Palette(lenClrs)
-        for i = 1, lenClrs, 1 do
-            local clr = clrs[i]
-            if clr then
-                pal:setColor(i - 1, Color(clr))
-            end
-        end
-        sprite:setPalette(pal)
+
+        sprite:setPalette(
+            AseUtilities.hexArrToAsePalette(clrsVal))
     else
         layer = sprite:newLayer()
     end

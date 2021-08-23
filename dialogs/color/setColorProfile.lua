@@ -1,3 +1,7 @@
+--[[ To download some profiles:
+ https://ninedegreesbelow.com/photography/lcms-make-icc-profiles.html
+ https://github.com/ellelstone/elles_icc_profiles --]]
+
 local colorSpaceTypes = { "FILE", "NONE", "SRGB" }
 local continuityOps = { "NUMERIC", "VISUAL" }
 
@@ -78,7 +82,7 @@ dlg:button {
                     activeSprite:assignColorSpace(newColorSpace)
                 end
             else
-                local result = app.alert{
+                local result = app.alert {
                     title = "Warning",
                     text = { "The sprite already uses this color profile.",
                              "Do you wish to proceed anyway?" },
@@ -92,7 +96,9 @@ dlg:button {
                     end
                 end
             end
+
             app.refresh()
+            dlg:close()
         else
             app.alert("There is no active sprite.")
         end

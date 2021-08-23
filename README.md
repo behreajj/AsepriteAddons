@@ -43,6 +43,10 @@ This repo includes
 
   ![Hexagon Grid](screencaps/hexGrid.png)
 
+- A custom GPL exporter.
+
+  ![GPL Export](screencaps/exportgpl.png)
+
 - An animated infinity loop.
 
   ![Infinity Loop](screencaps/infinityLoop.png)
@@ -94,9 +98,5 @@ This repo includes
 - A rounded rectangle.
 
   ![Rounded Rectangle](screencaps/roundedRect.png)
-
-- An animated sine wave example.
-
-  ![Sine Wave](screencaps/sineWave.png)
 
 Appearances may vary as features are added to or removed from underlying scripts.

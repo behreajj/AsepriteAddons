@@ -527,6 +527,33 @@ function Utilities.quantizeUnsigned(a, levels)
     end
 end
 
+---Reverses a table used as an array.
+---Changes the table in place.
+---@param t table input table
+function Utilities.reverseTable(t)
+    -- https://programming-idioms.org/
+    -- idiom/19/reverse-a-list/1314/lua
+    local n = #t
+    local i = 1
+    while i < n do
+        t[i], t[n] = t[n], t[i]
+        i = i + 1
+        n = n - 1
+    end
+    return t
+end
+
+---Converts a string to a table of characters.
+---@param str string the string
+---@return table
+function Utilities.stringToCharTable(str)
+    local chars = {}
+    for i = 1, #str, 1 do
+        chars[i] = str:sub(i, i)
+    end
+    return chars
+end
+
 ---Finds a point on the screen given a modelview,
 ---projection and 3D point.
 ---@param modelview table modelview

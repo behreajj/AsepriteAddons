@@ -59,34 +59,14 @@ local function drawSwatch(image, hex, x, y, w, h)
     end
 end
 
-local function reverse(t)
-    -- https://programming-idioms.org/
-    -- idiom/19/reverse-a-list/1314/lua
-    local n = #t
-    local i = 1
-    while i < n do
-        t[i], t[n] = t[n], t[i]
-        i = i + 1
-        n = n - 1
-    end
-end
-
 local function round(x)
-    if x < -0.000001 then
+    if x < -0.0 then
         return math.tointeger(x - 0.5)
     end
-    if x > 0.000001 then
+    if x > 0.0 then
         return math.tointeger(x + 0.5)
     end
     return 0
-end
-
-local function strToCharArr(str)
-    local chars = {}
-    for i = 1, #str, 1 do
-        chars[i] = str:sub(i, i)
-    end
-    return chars
 end
 
 local dlg = Dialog { title = "Palette Manifest" }
@@ -379,6 +359,7 @@ dlg:button {
         local strfmt = string.format
         local sRgbToLab = Clr.sRgbaToLab
         local labToLch = Clr.labToLch
+        local strToChars = Utilities.stringToCharTable
 
         -- Do not take the length of hexesSrgb
         -- after this point, as it will potentially
@@ -576,7 +557,7 @@ dlg:button {
 
         local ascDesc = args.ascDesc or defaults.ascDesc
         if ascDesc == "DESCENDING" then
-            reverse(palData)
+            Utilities.reverseTable(palData)
         end
 
         -- Pal data length will not equal srcHex length.
@@ -694,7 +675,7 @@ dlg:button {
         local footText = string.upper(string.sub(mnfstClrPrf.name, 1, 12))
         if #footText < 1 then footText = "NONE" end
         footText = "PROFILE: " .. footText
-        local footChars = strToCharArr(footText)
+        local footChars = strToChars(footText)
         drawCharsHorizShd(
             lut, footImg, footChars,
             txtHex, shdHex,
@@ -708,7 +689,7 @@ dlg:button {
         local mnfstTitleDisp = string.sub(mnfstTitle, 1, 12)
         mnfstTitleDisp = string.upper(mnfstTitleDisp)
         local titleImg = Image(entryWidth, entryHeight)
-        local titleChars = strToCharArr(mnfstTitleDisp)
+        local titleChars = strToChars(mnfstTitleDisp)
         local titleHalfLen = dw * #titleChars // 2
         drawCharsHorizShd(
             lut, titleImg, titleChars,
@@ -730,48 +711,48 @@ dlg:button {
         local xCrtHdr = swchSizeTotal + entryPadding
 
         if idxDisplay then
-            local idxChars = strToCharArr("IDX")
+            local idxChars = strToChars("IDX")
             drawCharsHorizShd(lut, hdrImg, idxChars, hdrTxtHex, shdHex,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + idxColOffset
         end
 
         if hexDisplay then
-            local hexChars = strToCharArr("    HEX")
+            local hexChars = strToChars("    HEX")
             drawCharsHorizShd(lut, hdrImg, hexChars, hdrTxtHex, shdHex,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + hexColOffset
         end
 
         if alphaDisplay then
-            local hexChars = strToCharArr("ALP")
+            local hexChars = strToChars("ALP")
             drawCharsHorizShd(lut, hdrImg, hexChars, hdrTxtHex, shdHex,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + alphaColOffset
         end
 
         if rgbDisplay then
-            local rgbChars = strToCharArr("RED GRN BLU")
+            local rgbChars = strToChars("RED GRN BLU")
             drawCharsHorizShd(lut, hdrImg, rgbChars, hdrTxtHex, shdHex,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + rgbColOffset
         end
 
         if lumDisplay then
-            local lumChars = strToCharArr("LUM")
+            local lumChars = strToChars("LUM")
             drawCharsHorizShd(lut, hdrImg, lumChars, hdrTxtHex, shdHex,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + lumColOffset
 
             if labDisplay then
-                local abChars = strToCharArr("   A    B")
+                local abChars = strToChars("   A    B")
                 drawCharsHorizShd(lut, hdrImg, abChars, hdrTxtHex, shdHex,
                     xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
                 xCrtHdr = xCrtHdr + abColOffset
             end
 
             if lchDisplay then
-                local chChars = strToCharArr("CRM HUE")
+                local chChars = strToChars("CRM HUE")
                 drawCharsHorizShd(lut, hdrImg, chChars, hdrTxtHex, shdHex,
                     xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
                 xCrtHdr = xCrtHdr + chColOffset
@@ -883,14 +864,14 @@ dlg:button {
 
                 if idxDisplay then
                     local idxStr = strfmt("%3d", palIdx)
-                    local idxChars = strToCharArr(idxStr)
+                    local idxChars = strToChars(idxStr)
                     drawCharsHorizShd(lut, rowImg, idxChars, txtHex, shdHex,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + idxColOffset
                 end
 
                 if hexDisplay then
-                    local hexChars = strToCharArr(hexWeb)
+                    local hexChars = strToChars(hexWeb)
                     drawCharsHorizShd(lut, rowImg, hexChars, txtHex, shdHex,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + hexColOffset
@@ -899,7 +880,7 @@ dlg:button {
                 if alphaDisplay then
                     local alpha = palEntry.alphaSrgb255
                     local alphaStr = strfmt("%3d", alpha)
-                    local alphaChars = strToCharArr(alphaStr)
+                    local alphaChars = strToChars(alphaStr)
                     drawCharsHorizShd(lut, rowImg, alphaChars, txtHex, shdHex,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + alphaColOffset
@@ -920,7 +901,7 @@ dlg:button {
                     end
 
                     local rgbStr = strfmt("%3d %3d %3d", r, g, b)
-                    local rgbChars = strToCharArr(rgbStr)
+                    local rgbChars = strToChars(rgbStr)
                     drawCharsHorizShd(lut, rowImg, rgbChars, txtHex, shdHex,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + rgbColOffset
@@ -929,7 +910,7 @@ dlg:button {
                 if lumDisplay then
                     local lum = palEntry.l
                     local lumStr = strfmt("%3d", lum)
-                    local lumChars = strToCharArr(lumStr)
+                    local lumChars = strToChars(lumStr)
                     drawCharsHorizShd(lut, rowImg, lumChars, txtHex, shdHex,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + lumColOffset
@@ -944,7 +925,7 @@ dlg:button {
                         if b == 0 then abStr = abStr .. "  000"
                         else abStr = abStr .. strfmt(" %+04d", b) end
 
-                        local abChars = strToCharArr(abStr)
+                        local abChars = strToChars(abStr)
                         drawCharsHorizShd(lut, rowImg, abChars, txtHex, shdHex,
                             xCaret, entryPadding + 1, gw, gh, txtDispScl)
                         xCaret = xCaret + abColOffset
@@ -963,7 +944,7 @@ dlg:button {
                             chStr = chStr .. strfmt(" %3d", palEntry.h)
                         end
 
-                        local chChars = strToCharArr(chStr)
+                        local chChars = strToChars(chStr)
                         drawCharsHorizShd(lut, rowImg, chChars, txtHex, shdHex,
                             xCaret, entryPadding + 1, gw, gh, txtDispScl)
                         xCaret = xCaret + chColOffset
@@ -1005,26 +986,8 @@ dlg:button {
         -- Create and set the manifest palette.
         -- Wait to do this until the end, so we have greater
         -- assurance that the manifestSprite is app.active.
-        -- If the original does not have an alpha mask, then
-        -- one must be prepended.
-        local mnfstPalLen = palDataLen
-        local palStartIdx = 0
-        local prependAlpha = palData[1].hexProfile ~= 0x00000000
-        if prependAlpha then
-            mnfstPalLen = mnfstPalLen + 1
-            palStartIdx = palStartIdx + 1
-        end
-        local mnfstPal = Palette(mnfstPalLen)
-        for i = 1, palDataLen, 1 do
-            local palHex = palData[i].hexProfile
-            local aseColor = Color(palHex)
-            mnfstPal:setColor(palStartIdx + i - 1, aseColor)
-        end
-
-        if prependAlpha then
-            mnfstPal:setColor(0, Color(0, 0, 0, 0))
-        end
-        manifestSprite:setPalette(mnfstPal)
+        manifestSprite:setPalette(
+            AseUtilities.hexArrToAsePalette(hexesProfile))
 
         if mnfstClrPrf ~= ColorSpace { sRGB = true } then
             manifestSprite:convertColorSpace(mnfstClrPrf)

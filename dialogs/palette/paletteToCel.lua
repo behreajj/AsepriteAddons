@@ -90,7 +90,7 @@ end
 --     end
 -- end
 
-local dlg = Dialog { title = "Adopt Palette" }
+local dlg = Dialog { title = "Palette To Cel" }
 
 dlg:combobox {
     id = "palType",
@@ -278,10 +278,6 @@ dlg:button {
                             Octree.insert(octree, pt)
                         end
                     end
-
-                    -- Create an octree.
-                    -- Octree.insertAll(octree, palPts)
-                    -- print(octree)
 
                     -- Select query radius according to color space.
                     local cvgRad = 0.0
