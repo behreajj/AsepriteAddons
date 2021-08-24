@@ -181,18 +181,22 @@ end
 ---Returns a tuple of tables. The first table is an
 ---array of hexadecimals according to the profile; the
 ---second is a copy of the first converted to SRGB.
----If a palette is loaded from a palette or a preset the
+---If a palette is loaded from a filepath or a preset the
 ---two tables should match, as Aseprite does not support
----color management for palettes.
+---color management for palettes. The correctNoAlpha
+---flag checks for colors with zero alpha that are not
+---black and replaces them with 0x00000000.
 ---@param palType string enumeration
 ---@param filePath string file path
 ---@param presetPath string preset path
 ---@param startIndex number start index
 ---@param count number count of colors to sample
+---@param correctZeroAlpha boolean alpha correction flag
 ---@return table
 ---@return table
 function AseUtilities.asePaletteLoad(
-    palType, filePath, presetPath, startIndex, count)
+    palType, filePath, presetPath, startIndex, count,
+    correctZeroAlpha)
 
     local cntVal = count or 256
     local siVal = startIndex or 0
@@ -274,12 +278,23 @@ function AseUtilities.asePaletteLoad(
         end
     end
 
+    -- Replace colors, e.g., 0x00ff0000 (clear red),
+    -- so that all are clear black.
+    if correctZeroAlpha then
+        for i = 1, #hexesProfile, 1 do
+            local hex = hexesProfile[i]
+            local alpha = (hex >> 0x18) & 0xff
+            if alpha < 1 then
+                hexesProfile[i] = 0x0
+            end
+        end
+    end
+
     -- Copy by value as a precaution.
     if hexesSrgb == nil then
         hexesSrgb = {}
-        local srcLen = #hexesProfile
-        for i = 1, srcLen, 1 do
-            hexesSrgb[i] = hexesProfile[i]
+        for j = 1, #hexesProfile, 1 do
+            hexesSrgb[j] = hexesProfile[j]
         end
     end
 

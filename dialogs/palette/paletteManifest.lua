@@ -340,7 +340,7 @@ dlg:button {
         local palCount = args.count or defaults.count
         local hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
             palType, args.palFile, args.palPreset,
-            startIndex, palCount)
+            startIndex, palCount, false)
 
         -- Set manifest profile.
         -- This should be done BEFORE the manifest sprite is
@@ -806,10 +806,13 @@ dlg:button {
                 local hexProfile = palEntry.hexProfile
 
                 local hexWeb = nil
+                local hexCel = nil
                 if nbIsSrgb then
                     hexWeb = palEntry.webSrgbStr
+                    hexCel = hexSrgb
                 else
                     hexWeb = palEntry.webProfileStr
+                    hexCel = hexProfile
                 end
 
                 local rowImg = nil
@@ -833,6 +836,7 @@ dlg:button {
                     frameIndex,
                     rowImg,
                     Point(spriteMargin, yCaret))
+                    rowCel.color = Color(hexCel)
 
                 if hexSrgb ~= hexProfile then
                     drawSwatch(rowImg, swatchMask | hexSrgb,
@@ -988,10 +992,6 @@ dlg:button {
         -- assurance that the manifestSprite is app.active.
         manifestSprite:setPalette(
             AseUtilities.hexArrToAsePalette(hexesProfile))
-
-        if mnfstClrPrf ~= ColorSpace { sRGB = true } then
-            manifestSprite:convertColorSpace(mnfstClrPrf)
-        end
         app.refresh()
     end
 }

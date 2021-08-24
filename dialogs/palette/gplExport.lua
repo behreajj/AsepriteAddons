@@ -86,8 +86,11 @@ dlg:button {
             local useAseGpl = args.useAseGpl
 
             -- Validate arguments.
+            -- Palette name will be added no matter what.
+            -- Attrib name and URL are comments, and will
+            -- be omitted if they have no length.
+            if #palName < 1 then palName = "Palette" end
             palName = palName:sub(1, 64)
-            columns = max(0, min(16, columns))
             attribName = attribName:sub(1, 64)
             attribUrl = attribUrl:sub(1, 96)
 
@@ -101,13 +104,13 @@ dlg:button {
                 gplStr = gplStr .. "Channels: RGBA\n"
             end
 
-            if attribName and #attribName > 0 then
+            if #attribName > 0 then
                 gplStr = gplStr .. strfmt(
                     "# Author: %s\n",
                     attribName)
             end
 
-            if attribUrl and #attribUrl > 0 then
+            if #attribUrl > 0 then
                 gplStr = gplStr .. strfmt(
                     "# URL: %s\n",
                     attribUrl)
@@ -132,9 +135,6 @@ dlg:button {
             for i = 0, palLenn1, 1 do
                 local aseColor = pal:getColor(i)
 
-                -- The Color constructor allows for values
-                -- beyond the range [0, 255]; the rgbaPixel
-                -- getter uses modular, not saturation, arithmetic.
                 local r = max(0, min(255, aseColor.red))
                 local g = max(0, min(255, aseColor.green))
                 local b = max(0, min(255, aseColor.blue))

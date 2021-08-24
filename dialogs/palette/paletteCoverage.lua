@@ -624,10 +624,6 @@ dlg:button {
         coverSprite:setPalette(
             AseUtilities.hexArrToAsePalette(uniqueHexesProfile)
         )
-
-        if cvrClrPrf ~= ColorSpace { sRGB = true } then
-            coverSprite:convertColorSpace(cvrClrPrf)
-        end
         app.refresh()
     end
 }
