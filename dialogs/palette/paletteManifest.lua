@@ -678,7 +678,7 @@ dlg:button {
         local footChars = strToChars(footText)
         drawCharsHorizShd(
             lut, footImg, footChars,
-            txtHex, shdHex,
+            hdrTxtHex, shdHex,
             entryPadding,
             entryPadding,
             gw, gh, txtDispScl)

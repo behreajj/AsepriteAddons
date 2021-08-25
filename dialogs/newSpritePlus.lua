@@ -17,6 +17,7 @@ local defaults = {
     bChannel = 0,
     aChannel = 0,
     grayChannel = 0,
+    linkRgbGray = false,
     transparencyMask = 0, -- This MUST be index ZERO.
     bkgIdx = 0,
     frames = 1,
@@ -45,6 +46,25 @@ local function updateColorPreviewGray(dialog)
             gray = args.grayChannel,
             alpha = args.aChannel } }
     }
+end
+
+local function rgbToGray(r8, g8, b8)
+    -- HSL Lightness
+    local mx = math.max(r8, g8, b8)
+    local mn = math.min(r8, g8, b8)
+    return math.tointeger(0.5 + 0.5 * (mx + mn))
+end
+
+local function updateGrayLinkFromRgb(dialog)
+    local args = dialog.data
+    local link = args.linkRgbGray
+    if link then
+        local v = rgbToGray(
+            args.rChannel,
+            args.gChannel,
+            args.bChannel)
+        dialog:modify { id = "grayChannel", value = v }
+    end
 end
 
 local dlg = Dialog {
@@ -94,6 +114,7 @@ dlg:combobox {
         dlg:modify { id = "gChannel", visible = minAlpha and isRgb }
         dlg:modify { id = "rChannel", visible = minAlpha and isRgb }
         dlg:modify { id = "grayChannel", visible = minAlpha and isGray }
+        dlg:modify { id = "linkRgbGray", visible = not isIndexed }
         dlg:modify { id = "bkgIdx", visible = isIndexed }
 
         local palType = args.palType
@@ -177,6 +198,7 @@ dlg:slider {
         and defaults.aChannel > 0,
     onchange = function()
         updateColorPreviewRgba(dlg)
+        updateGrayLinkFromRgb(dlg)
     end
 }
 
@@ -192,6 +214,7 @@ dlg:slider {
         and defaults.aChannel > 0,
     onchange = function()
         updateColorPreviewRgba(dlg)
+        updateGrayLinkFromRgb(dlg)
     end
 }
 
@@ -207,6 +230,7 @@ dlg:slider {
         and defaults.aChannel > 0,
     onchange = function()
         updateColorPreviewRgba(dlg)
+        updateGrayLinkFromRgb(dlg)
     end
 }
 
@@ -222,6 +246,28 @@ dlg:slider {
         and defaults.aChannel > 0,
     onchange = function()
         updateColorPreviewGray(dlg)
+
+        local args = dlg.data
+        local link = args.linkRgbGray
+        if link then
+            local v = args.grayChannel
+            dlg:modify { id = "bChannel", value = v }
+            dlg:modify { id = "gChannel", value = v }
+            dlg:modify { id = "rChannel", value = v }
+        end
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "linkRgbGray",
+    label = "Link:",
+    text = "RGB and Gray",
+    selected = defaults.linkRgbGray,
+    visible = defaults.colorMode ~= "INDEXED",
+    onclick = function()
+        -- TODO: Update values?
     end
 }
 
@@ -329,7 +375,6 @@ dlg:button {
         end
 
         -- Do we need to change color mode? Where?
-        -- app.command.ChangePixelFormat { format = "rgb" }
         local colorModeStr = args.colorMode or defaults.colorMode
         local colorModeInt = 0
         local createBackground = false
@@ -383,6 +428,7 @@ dlg:button {
         spriteWidth = math.max(1, spriteWidth)
         spriteHeight = math.max(1, spriteHeight)
 
+        -- Create sprite, set file name, set to active.
         local filename = args.filename or defaults.filename
         if #filename < 1 then filename = defaults.filename end
         local newSprite = Sprite(
@@ -394,11 +440,11 @@ dlg:button {
         local newPal = AseUtilities.hexArrToAsePalette(hexesProfile)
         newSprite:setPalette(newPal)
 
+        -- Create frames.
         local frameReqs = args.frames or defaults.frames
         local duration = args.duration or defaults.duration
         duration = duration * 0.001
 
-        -- Create frames.
         local firstFrame = newSprite.frames[1]
         firstFrame.duration = duration
         app.transaction(function()
@@ -431,13 +477,9 @@ dlg:button {
 
         -- Set proper color mode.
         if colorModeInt == ColorMode.INDEXED then
-            app.command.ChangePixelFormat {
-                format = "indexed"
-            }
+            app.command.ChangePixelFormat { format = "indexed" }
         elseif colorModeInt == ColorMode.GRAY then
-            app.command.ChangePixelFormat {
-                format = "gray"
-            }
+            app.command.ChangePixelFormat { format = "gray" }
         end
 
         app.activeFrame = firstFrame

@@ -210,12 +210,7 @@ dlg:button {
                         local charLine = {}
                         for i = 1, lineLen, 1 do
                             local currChar = strLine:sub(i, i)
-                            -- Still append spaces, as someone
-                            -- might use them for distribution.
-                            -- if not ((i == 1 or i == lineLen)
-                            --     and currChar == ' ') then
                             table.insert(charLine, currChar)
-                            -- end
                         end
 
                         table.insert(staticChars, charLine)
@@ -351,6 +346,8 @@ dlg:button {
 
         if animate then
 
+            -- TODO: Blank initial frame in cases where a new sprite
+            -- is auto-created by the dialog.
             local duration = args.duration or defaults.duration
             duration = duration * 0.001
             app.transaction(function()
