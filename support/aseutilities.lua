@@ -204,25 +204,49 @@ function AseUtilities.asePaletteLoad(
     local hexesProfile = nil
     local hexesSrgb = nil
 
+    local errorHandler = function ( err )
+        app.alert {
+            title = "File Not Found",
+            text = {
+                "The palette could not be found.",
+                "Please check letter case (lower or upper).",
+                "A default palette will be used instead."
+            }
+        }
+     end
+
     if palType == "FILE" then
         if filePath and #filePath > 0 then
-            local palFile = Palette { fromFile = filePath }
-            if palFile then
-                -- Palettes loaded from a file could support an
-                -- embedded color profile, but do not.
-                -- You could check the extension, and if it is a
-                -- .png, .aseprite, etc. then load as a sprite, get
-                -- the profile, dispose of the sprite.
-                hexesProfile = AseUtilities.asePaletteToHexArr(
-                    palFile, siVal, cntVal)
+            local success = xpcall(
+                function(x) Palette { fromFile = x } end,
+                errorHandler, filePath)
+            if success then
+                local palFile = Palette { fromFile = filePath }
+                if palFile then
+                    -- Palettes loaded from a file could support an
+                    -- embedded color profile, but do not.
+                    -- You could check the extension, and if it is a
+                    -- .png, .aseprite, etc. then load as a sprite, get
+                    -- the profile, dispose of the sprite.
+                    hexesProfile = AseUtilities.asePaletteToHexArr(
+                        palFile, siVal, cntVal)
+                end
             end
         end
     elseif palType == "PRESET" then
         if presetPath and #presetPath > 0 then
-            local palPreset = Palette { fromResource = presetPath }
-            if palPreset then
-                hexesProfile = AseUtilities.asePaletteToHexArr(
-                    palPreset, siVal, cntVal)
+
+            -- TODO: Given how unreliable this has proven with Sprites and
+            -- ColorProfiles, maybe don't use it, use fileExists instead.
+            local success = xpcall(
+                function(y) Palette { fromResource = y } end,
+                errorHandler, presetPath)
+            if success then
+                local palPreset = Palette { fromResource = presetPath }
+                if palPreset then
+                    hexesProfile = AseUtilities.asePaletteToHexArr(
+                        palPreset, siVal, cntVal)
+                end
             end
         end
     elseif palType == "ACTIVE" then

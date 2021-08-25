@@ -13,6 +13,18 @@ local defaults = {
     pullFocus = false
 }
 
+-- TODO: Move to AseUtilities.
+local function fileExists(name)
+    -- https://stackoverflow.com/questions/4990990/check-if-a-file-exists-with-lua
+    local f = io.open(name,"r")
+    if f ~= nil then
+        io.close(f)
+        return true
+    else
+        return false
+    end
+ end
+
 local dlg = Dialog {
     title = "Open Sprite +"
 }
@@ -94,7 +106,7 @@ dlg:button {
 
             -- Palettes need to be retrieved before a new sprite
             -- is created in case it auto-sets the app.activeSprite
-            -- to the new sprite. Unfortunately, atm that means this
+            -- to the new sprite. Unfortunately, that means this
             -- is wasted effort if the palette type is "EMBEDDED"
             -- or there is no new sprite.
             local palType = args.palType or defaults.palType
@@ -113,38 +125,76 @@ dlg:button {
                     table.insert(hexesProfile, 1, 0x0)
                 end
 
-                if hexesSrgb[1] ~= 0x0 then
-                    table.insert(hexesSrgb, 1, 0x0)
-                end
+                -- if hexesSrgb[1] ~= 0x0 then
+                --     table.insert(hexesSrgb, 1, 0x0)
+                -- end
             else
                 hexesProfile = AseUtilities.DEFAULT_PAL_ARR
-                hexesSrgb = hexesProfile
+                -- hexesSrgb = hexesProfile
             end
 
-            local openSprite = Sprite  { fromFile = spriteFile }
-            if openSprite then
-                app.activeSprite = openSprite
-                app.command.ChangePixelFormat { format = "rgb" }
+            local openSprite = nil
+            -- local errorHandler = function ( err )
+            --     -- app.alert {
+            --     --     title = "File Not Found",
+            --     --     text = {
+            --     --         "The sprite could not be found."
+            --     --     }
+            --     -- }
+            --  end
 
-                local removeBkg = args.removeBkg
-                if removeBkg then
-                    local bkgLayer = openSprite.backgroundLayer
-                    if bkgLayer then
-                        app.activeLayer = bkgLayer
-                        app.command.LayerFromBackground()
-                        bkgLayer.name = "Bkg"
+            -- local success = xpcall(
+            --     function(x) Sprite  { fromFile = x } end,
+            --     errorHandler, spriteFile)
+            local success = fileExists(spriteFile)
+            if success then
+                openSprite = Sprite  { fromFile = spriteFile }
+                if openSprite then
+                    app.activeSprite = openSprite
+                    app.command.ChangePixelFormat { format = "rgb" }
+
+                    local removeBkg = args.removeBkg
+                    if removeBkg then
+                        local bkgLayer = openSprite.backgroundLayer
+                        if bkgLayer then
+                            app.activeLayer = bkgLayer
+                            app.command.LayerFromBackground()
+                            bkgLayer.name = "Bkg"
+                        end
                     end
-                end
 
-                if palType ~= "EMBEDDED" then
-                    openSprite.transparentColor = 0
+                    -- Aseprite's built-in nearest color in palette method
+                    -- cannot be trusted. Even if it could be, there's no way
+                    -- of telling the user's intent. It could be that
+                    -- index 6 should be the transparent color for both the
+                    -- old and new palette, no matter how different the colors
+                    -- in appearance. Better to reset to zero.
+                    if openSprite.transparentColor ~= 0 then
+                        app.alert(string.format(
+                            "The sprite alpha mask was reset from %d to 0.",
+                            openSprite.transparentColor))
+                        openSprite.transparentColor = 0
+                    end
+
+                    if palType == "EMBEDDED" then
+                        hexesProfile = AseUtilities.asePaletteToHexArr(
+                            openSprite.palettes[1], 0, 256)
+
+                        -- Check for a valid alpha mask at index 0.
+                        if hexesProfile[1] ~= 0x0 then
+                            table.insert(hexesProfile, 1, 0x0)
+                        end
+                    end
+
                     local newPal = AseUtilities.hexArrToAsePalette(hexesProfile)
                     openSprite:setPalette(newPal)
-                end
 
-                app.refresh()
+                    app.refresh()
+                else
+                    app.alert("Sprite could not be found.")
+                end
             else
-                app.alert("Sprite could not be found.")
+                app.alert("File does not exist at that path.")
             end
         else
             app.alert("Invalid file path.")
