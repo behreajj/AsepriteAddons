@@ -11,18 +11,6 @@ local defaults = {
     pullFocus = false
 }
 
--- TODO: Move to AseUtilities.
-local function fileExists(name)
-    -- https://stackoverflow.com/questions/4990990/check-if-a-file-exists-with-lua
-    local f = io.open(name,"r")
-    if f ~= nil then
-        io.close(f)
-        return true
-    else
-        return false
-    end
- end
-
 local dlg = Dialog {
     title = "Set Color Profile"
 }
@@ -73,8 +61,8 @@ dlg:button {
             if csType == "FILE" then
                 local profilePath = args.profilePath
                 if profilePath and #profilePath > 0 then
-                    local success = fileExists(profilePath)
-                    if success then
+                    local exists = app.fs.isFile(profilePath)
+                    if exists then
                         newColorSpace = ColorSpace { fromFile = profilePath }
                     else
                         app.alert {

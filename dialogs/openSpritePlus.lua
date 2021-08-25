@@ -13,18 +13,6 @@ local defaults = {
     pullFocus = false
 }
 
--- TODO: Move to AseUtilities.
-local function fileExists(name)
-    -- https://stackoverflow.com/questions/4990990/check-if-a-file-exists-with-lua
-    local f = io.open(name,"r")
-    if f ~= nil then
-        io.close(f)
-        return true
-    else
-        return false
-    end
- end
-
 local dlg = Dialog {
     title = "Open Sprite +"
 }
@@ -134,20 +122,8 @@ dlg:button {
             end
 
             local openSprite = nil
-            -- local errorHandler = function ( err )
-            --     -- app.alert {
-            --     --     title = "File Not Found",
-            --     --     text = {
-            --     --         "The sprite could not be found."
-            --     --     }
-            --     -- }
-            --  end
-
-            -- local success = xpcall(
-            --     function(x) Sprite  { fromFile = x } end,
-            --     errorHandler, spriteFile)
-            local success = fileExists(spriteFile)
-            if success then
+            local exists = app.fs.isFile(spriteFile)
+            if exists then
                 openSprite = Sprite  { fromFile = spriteFile }
                 if openSprite then
                     app.activeSprite = openSprite
@@ -194,7 +170,7 @@ dlg:button {
                     app.alert("Sprite could not be found.")
                 end
             else
-                app.alert("File does not exist at that path.")
+                app.alert("File does not exist at path.")
             end
         else
             app.alert("Invalid file path.")

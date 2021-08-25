@@ -217,10 +217,8 @@ function AseUtilities.asePaletteLoad(
 
     if palType == "FILE" then
         if filePath and #filePath > 0 then
-            local success = xpcall(
-                function(x) Palette { fromFile = x } end,
-                errorHandler, filePath)
-            if success then
+            local exists = app.fs.isFile(filePath)
+            if exists then
                 local palFile = Palette { fromFile = filePath }
                 if palFile then
                     -- Palettes loaded from a file could support an
@@ -237,7 +235,7 @@ function AseUtilities.asePaletteLoad(
         if presetPath and #presetPath > 0 then
 
             -- TODO: Given how unreliable this has proven with Sprites and
-            -- ColorProfiles, maybe don't use it, use fileExists instead.
+            -- ColorProfiles, maybe don't use it, use fileExists
             local success = xpcall(
                 function(y) Palette { fromResource = y } end,
                 errorHandler, presetPath)
