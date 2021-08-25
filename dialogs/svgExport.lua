@@ -16,11 +16,12 @@ local function layerToSvgStr(layer, activeFrame, spriteBounds, border, scale, ma
                 "\n<g id=\"%s\">",
                 layer.name)
 
-            -- Do these need to be sorted for draw order??
-            local groupLayers = {}
-            for i = 1, #layer.layers, 1 do
-                groupLayers[i] = layer.layers[i]
-            end
+            -- Do these need to be sorted for draw order?
+            local groupLayers = layer.layers
+            -- local groupLayers = {}
+            -- for i = 1, #layer.layers, 1 do
+            --     groupLayers[i] = layer.layers[i]
+            -- end
 
             -- table.sort(groupLayers, function(a, b)
             --     if a.isGroup and not b.isGroup then return false end
@@ -61,35 +62,22 @@ local function layerToSvgStr(layer, activeFrame, spriteBounds, border, scale, ma
                         local hex = elm()
                         local a = hex >> 0x18 & 0xff
                         if a > 0 then
-                            local xPixel = elm.x
-                            local yPixel = elm.y
-
-                            local x0 = xCel + xPixel
-                            local y0 = yCel + yPixel
+                            local x0 = xCel + elm.x
+                            local y0 = yCel + elm.y
                             local y1 = y0 + 1
                             local x1 = x0 + 1
 
-                            local x0scl = x0 * scale
-                            local y0scl = y0 * scale
-                            local x1scl = x1 * scale
-                            local y1scl = y1 * scale
+                            local x1mrg = border + x1 * margin
+                            local y1mrg = border + y1 * margin
 
-                            local x1mrg = x1 * margin
-                            local y1mrg = y1 * margin
+                            local ax = x1mrg + x0 * scale
+                            local ay = y1mrg + y0 * scale
+                            local bx = x1mrg + x1 * scale
+                            local by = y1mrg + y1 * scale
 
                             grpStr = grpStr .. string.format(
                                 "\n<path d=\"M %d %d L %d %d L %d %d L %d %d Z\" ",
-                                border + x0scl + x1mrg,
-                                border + y0scl + y1mrg,
-
-                                border + x1scl + x1mrg,
-                                border + y0scl + y1mrg,
-
-                                border + x1scl + x1mrg,
-                                border + y1scl + y1mrg,
-
-                                border + x0scl + x1mrg,
-                                border + y1scl + y1mrg)
+                                ax, ay, bx, ay, bx, by, ax, by)
 
                             if a < 255 then
                                 grpStr = grpStr .. string.format(
@@ -205,30 +193,36 @@ dlg:button {
                 + (nativeHeight + 1) * margin
                 + border * 2
 
-            local str = "<svg "
+            local str = ""
+            str = str .. "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
+            str = str .. "<svg "
             str = str .. "xmlns=\"http://www.w3.org/2000/svg\" "
             str = str .. "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
             str = str .. "shape-rendering=\"crispEdges\" "
             str = str .. "stroke=\"none\" "
-            str = str .. string.format("width=\"%d\" ", totalWidth)
-            str = str .. string.format("height=\"%d\" ", totalHeight)
+            str = str .. string.format("width=\"%d\" height=\"%d\" ",
+                totalWidth, totalHeight)
             str = str .. string.format("viewBox=\"0 0 %d %d\">",
                 totalWidth, totalHeight)
 
-            -- TODO: Add opaque background option?
-
+            -- Each path element can contain sub-paths set off by Z (close)
+            -- and M (move to) commands.
+            local wnBorder = totalWidth - border
+            local hnBorder = totalHeight - border
             if border > 0 and borderClr.alpha > 0 then
+
                 -- Create outer frame of border (clockwise).
                 str = str .. string.format(
                     "\n<path id=\"border\" d=\"M 0 0 L %d 0 L %d %d L 0 %d Z ",
                     totalWidth, totalWidth, totalHeight, totalHeight)
+
                 -- Cut out inner frame of border (counter-clockwise).
                 str = str .. string.format(
                     "M %d %d L %d %d L %d %d L %d %d Z\" ",
                     border, border,
-                    border, totalHeight - border,
-                    totalWidth - border, totalHeight - border,
-                    totalWidth - border, border)
+                    border, hnBorder,
+                    wnBorder, hnBorder,
+                    wnBorder, border)
 
                 if borderClr.alpha < 255 then
                     str = str .. string.format(
@@ -248,9 +242,9 @@ dlg:button {
                 str = str .. string.format(
                     "\n<path id=\"margins\" d=\"M %d %d L %d %d L %d %d L %d %d Z",
                     border, border,
-                    totalWidth - border, border,
-                    totalWidth - border, totalHeight - border,
-                    border, totalHeight - border)
+                    wnBorder, border,
+                    wnBorder, hnBorder,
+                    border, hnBorder)
 
                 -- Cut out a hole for each pixel (counter-clockwise).
                 for i = 0, pixelLen - 1, 1 do
@@ -259,27 +253,17 @@ dlg:button {
                     local y1 = y0 + 1
                     local x1 = x0 + 1
 
-                    local x0scl = x0 * scale
-                    local y0scl = y0 * scale
-                    local x1scl = x1 * scale
-                    local y1scl = y1 * scale
+                    local x1mrg = border + x1 * margin
+                    local y1mrg = border + y1 * margin
 
-                    local x1mrg = x1 * margin
-                    local y1mrg = y1 * margin
+                    local ax = x1mrg + x0 * scale
+                    local ay = y1mrg + y0 * scale
+                    local bx = x1mrg + x1 * scale
+                    local by = y1mrg + y1 * scale
 
                     str = str .. string.format(
                         " M %d %d L %d %d L %d %d L %d %d Z",
-                        border + x0scl + x1mrg,
-                        border + y0scl + y1mrg,
-
-                        border + x0scl + x1mrg,
-                        border + y1scl + y1mrg,
-
-                        border + x1scl + x1mrg,
-                        border + y1scl + y1mrg,
-
-                        border + x1scl + x1mrg,
-                        border + y0scl + y1mrg)
+                        ax, ay, ax, by, bx, by, bx, ay)
                 end
 
                 str = str .. "\" "
@@ -299,13 +283,14 @@ dlg:button {
 
             local activeFrame = app.activeFrame
             local spriteBounds = Rectangle(
-                0, 0,
-                nativeWidth, nativeHeight)
+                0, 0, nativeWidth, nativeHeight)
 
-            local spriteLayers = {}
-            for i = 1, #activeSprite.layers, 1 do
-                spriteLayers[i] = activeSprite.layers[i]
-            end
+            -- Sorted for draw order?
+            local spriteLayers = activeSprite.layers
+            -- local spriteLayers = {}
+            -- for i = 1, #activeSprite.layers, 1 do
+            --     spriteLayers[i] = activeSprite.layers[i]
+            -- end
 
             local spriteLayersLen = #spriteLayers
             for i = 1, spriteLayersLen, 1 do

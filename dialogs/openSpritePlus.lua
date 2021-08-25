@@ -1,0 +1,165 @@
+dofile("../support/aseutilities.lua")
+
+local paletteTypes = {
+    "ACTIVE",
+    "DEFAULT",
+    "EMBEDDED",
+    "FILE",
+    "PRESET" }
+
+local defaults = {
+    removeBkg = true,
+    palType = "EMBEDDED",
+    pullFocus = false
+}
+
+local dlg = Dialog {
+    title = "Open Sprite +"
+}
+
+dlg:file {
+    id = "spriteFile",
+    label = "File:",
+    filetypes = {
+        "ase",
+        "aseprite",
+        "gif",
+        "jpg",
+        "jpeg",
+        "png" },
+    open = true
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "removeBkg",
+    label = "Transfer Bkg:",
+    selected = defaults.removeBkg
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "clrMdWarn",
+    label = "Note:",
+    text = "Sprites open in RGB mode."
+}
+
+dlg:separator {
+    id = "palSeparate",
+    visible = defaults.colorMode ~= "GRAY"
+}
+
+dlg:combobox {
+    id = "palType",
+    label = "Palette:",
+    option = defaults.palType,
+    options = paletteTypes,
+    onchange = function()
+        local state = dlg.data.palType
+        dlg:modify { id = "palFile", visible = state == "FILE" }
+        dlg:modify { id = "palPreset", visible = state == "PRESET" }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "palFile",
+    filetypes = { "aseprite", "gpl", "pal", "png" },
+    open = true,
+    visible = defaults.palType == "FILE"
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "palPreset",
+    text = "",
+    focus = false,
+    visible = defaults.palType == "PRESET"
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "ok",
+    text = "&OK",
+    focus = defaults.pullFocus,
+    onclick = function()
+        local args = dlg.data
+        local spriteFile = args.spriteFile
+        if spriteFile and #spriteFile > 0 then
+
+            -- Palettes need to be retrieved before a new sprite
+            -- is created in case it auto-sets the app.activeSprite
+            -- to the new sprite. Unfortunately, atm that means this
+            -- is wasted effort if the palette type is "EMBEDDED"
+            -- or there is no new sprite.
+            local palType = args.palType or defaults.palType
+            local hexesSrgb = {}
+            local hexesProfile = {}
+
+            if palType ~= "DEFAULT" then
+                local palFile = args.palFile
+                local palPreset = args.palPreset
+
+                hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
+                    palType, palFile, palPreset, 0, 256, true)
+
+                -- Check for a valid alpha mask at index 0.
+                if hexesProfile[1] ~= 0x0 then
+                    table.insert(hexesProfile, 1, 0x0)
+                end
+
+                if hexesSrgb[1] ~= 0x0 then
+                    table.insert(hexesSrgb, 1, 0x0)
+                end
+            else
+                hexesProfile = AseUtilities.DEFAULT_PAL_ARR
+                hexesSrgb = hexesProfile
+            end
+
+            local openSprite = Sprite  { fromFile = spriteFile }
+            if openSprite then
+                app.activeSprite = openSprite
+                app.command.ChangePixelFormat { format = "rgb" }
+
+                local removeBkg = args.removeBkg
+                if removeBkg then
+                    local bkgLayer = openSprite.backgroundLayer
+                    if bkgLayer then
+                        app.activeLayer = bkgLayer
+                        app.command.LayerFromBackground()
+                        bkgLayer.name = "Bkg"
+                    end
+                end
+
+                if palType ~= "EMBEDDED" then
+                    openSprite.transparentColor = 0
+                    local newPal = AseUtilities.hexArrToAsePalette(hexesProfile)
+                    openSprite:setPalette(newPal)
+                end
+
+                app.refresh()
+            else
+                app.alert("Sprite could not be found.")
+            end
+        else
+            app.alert("Invalid file path.")
+        end
+
+        dlg:close()
+    end
+}
+
+dlg:button {
+    id = "cancel",
+    text = "&CANCEL",
+    onclick = function()
+        dlg:close()
+    end
+}
+
+dlg:show { wait = false }

@@ -67,8 +67,19 @@ local function updateGrayLinkFromRgb(dialog)
     end
 end
 
+local function updateRgbLinkFromGray(dialog)
+    local args = dialog.data
+    local link = args.linkRgbGray
+    if link then
+        local v = args.grayChannel
+        dialog:modify { id = "bChannel", value = v }
+        dialog:modify { id = "gChannel", value = v }
+        dialog:modify { id = "rChannel", value = v }
+    end
+end
+
 local dlg = Dialog {
-    title = "New Sprite+"
+    title = "New Sprite +"
 }
 
 dlg:entry {
@@ -246,15 +257,7 @@ dlg:slider {
         and defaults.aChannel > 0,
     onchange = function()
         updateColorPreviewGray(dlg)
-
-        local args = dlg.data
-        local link = args.linkRgbGray
-        if link then
-            local v = args.grayChannel
-            dlg:modify { id = "bChannel", value = v }
-            dlg:modify { id = "gChannel", value = v }
-            dlg:modify { id = "rChannel", value = v }
-        end
+        updateRgbLinkFromGray(dlg)
     end
 }
 
@@ -267,7 +270,12 @@ dlg:check {
     selected = defaults.linkRgbGray,
     visible = defaults.colorMode ~= "INDEXED",
     onclick = function()
-        -- TODO: Update values?
+        local args = dlg.data
+        if args.colorMode == "GRAY" then
+            updateRgbLinkFromGray(dlg)
+        elseif args.colorMode == "RGB" then
+            updateGrayLinkFromRgb(dlg)
+        end
     end
 }
 
@@ -344,17 +352,16 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-
         local args = dlg.data
 
         local palType = args.palType or defaults.palType
-        local palFile = args.palFile
-        local palPreset = args.palPreset
-
         local hexesSrgb = {}
         local hexesProfile = {}
 
         if palType ~= "DEFAULT" then
+            local palFile = args.palFile
+            local palPreset = args.palPreset
+
             hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
                 palType, palFile, palPreset, 0, 256, true)
 
