@@ -549,8 +549,8 @@ dlg:button {
             local fillSize = 5
             local strokeColor = 0xcfffffff
             for j = 1, hexesSrgbLen, 1 do
-                local hex = hexesSrgb[j]
-                local lab = sRgbaToLab(fromHex(hex))
+                local hexSrgb = hexesSrgb[j]
+                local lab = sRgbaToLab(fromHex(hexSrgb))
                 -- labs[i] = lab
 
                 -- From [-110.0, 110.0] To [-1.0, 1.0].
@@ -568,8 +568,9 @@ dlg:button {
                 local xi = trunc(0.5 + xPx)
                 local yi = trunc(0.5 + yPx)
 
+                local hexProfile = hexesProfile[j]
                 drawCircleFill(plotImage, xi, yi, strokeSize, strokeColor)
-                drawCircleFill(plotImage, xi, yi, fillSize, hex)
+                drawCircleFill(plotImage, xi, yi, fillSize, hexProfile)
             end
 
             local plotPalLayer = sprite:newLayer()
