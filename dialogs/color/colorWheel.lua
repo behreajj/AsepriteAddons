@@ -225,6 +225,38 @@ dlg:button {
         local sRgbaToLab = Clr.sRgbaToLab
         local drawCircleFill = AseUtilities.drawCircleFill
 
+        -- Must be done before a new sprite is created.
+        local hexesSrgb = {}
+        local hexesProfile = {}
+        local plotPalette = args.plotPalette or defaults.plotPalette
+        if plotPalette then
+            local palType = args.palType or defaults.palType
+            if palType ~= "DEFAULT" then
+                local palFile = args.palFile
+                local palPreset = args.palPreset
+                local palStart = args.palStart or defaults.palStart
+                local palCount = args.palCount or defaults.palCount
+
+                hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
+                    palType, palFile, palPreset, palStart, palCount, true)
+
+                -- Check for a valid alpha mask at index 0.
+                if hexesProfile[1] ~= 0x0 then
+                    table.insert(hexesProfile, 1, 0x0)
+                end
+
+                if hexesSrgb[1] ~= 0x0 then
+                    table.insert(hexesSrgb, 1, 0x0)
+                end
+            else
+                -- Since a palette will be created immediately after, pbr.
+                -- If this changes, and arrays are modified, then this
+                -- will need to be a copy.
+                hexesProfile = AseUtilities.DEFAULT_PAL_ARR
+                hexesSrgb = hexesProfile
+            end
+        end
+
         -- Create sprite.
         local size = args.size
         local xAbsCenter = trunc(0.5 + size * 0.5)
@@ -506,38 +538,7 @@ dlg:button {
             end)
         end
 
-        local plotPalette = args.plotPalette or defaults.plotPalette
         if plotPalette then
-
-            local palType = args.palType or defaults.palType
-            local hexesSrgb = {}
-            local hexesProfile = {}
-
-            if palType ~= "DEFAULT" then
-                local palFile = args.palFile
-                local palPreset = args.palPreset
-                local palStart = args.palStart or defaults.palStart
-                local palCount = args.palCount or defaults.palCount
-
-                hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
-                    palType, palFile, palPreset, palStart, palCount, true)
-
-                -- Check for a valid alpha mask at index 0.
-                if hexesProfile[1] ~= 0x0 then
-                    table.insert(hexesProfile, 1, 0x0)
-                end
-
-                if hexesSrgb[1] ~= 0x0 then
-                    table.insert(hexesSrgb, 1, 0x0)
-                end
-            else
-                -- Since a palette will be created immediately after, pbr.
-                -- If this changes, and arrays are modified, then this
-                -- will need to be a copy.
-                hexesProfile = AseUtilities.DEFAULT_PAL_ARR
-                hexesSrgb = hexesProfile
-            end
-
             sprite:setPalette(
                 AseUtilities.hexArrToAsePalette(hexesProfile))
 
