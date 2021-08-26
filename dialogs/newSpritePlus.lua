@@ -23,7 +23,7 @@ local defaults = {
     frames = 1,
     duration = 100.0,
     palType = "DEFAULT",
-    pullFocus = false
+    pullFocus = true
 }
 
 local function updateColorPreviewRgba(dialog)

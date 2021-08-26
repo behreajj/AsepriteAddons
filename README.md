@@ -31,6 +31,10 @@ This repo includes
 
   ![Color Curve](screencaps/colorCurve.png)
 
+- An LCh Color Wheel.
+
+  ![Color Wheel](screencaps/colorWheel.png)
+
 - A conic gradient.
 
   ![Conic Gradient](screencaps/conicGradient.png)
@@ -70,6 +74,10 @@ This repo includes
 - Luminance (grayscale) remapping. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
 
   ![Luminance remapping](screencaps/lumRemap.png)
+
+- Custom New Sprite
+
+  ![New Sprite](screencaps/newSpritePlus.png)
 
 - Palette Coverage.
 

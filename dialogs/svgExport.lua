@@ -232,9 +232,9 @@ dlg:button {
 
                 str = str .. string.format(
                     "fill=\"#%06X\" />",
-                    (borderClr.red << 0x10
-                    | borderClr.green << 0x08
-                    | borderClr.blue))
+                    borderClr.red << 0x10
+                        | borderClr.green << 0x08
+                        | borderClr.blue)
             end
 
             if margin > 0 and marginClr.alpha > 0 then
@@ -276,9 +276,9 @@ dlg:button {
 
                 str = str .. string.format(
                     "fill=\"#%06X\" />",
-                    (marginClr.red << 0x10
-                    | marginClr.green << 0x08
-                    | marginClr.blue))
+                    marginClr.red << 0x10
+                        | marginClr.green << 0x08
+                        | marginClr.blue)
             end
 
             local activeFrame = app.activeFrame
@@ -305,7 +305,10 @@ dlg:button {
 
             local filepath = args.filepath
             if filepath and #filepath > 0 then
-                local ext = filepath:sub(-#"svg"):lower()
+                -- app.fs.isFile doesn't apply to files
+                -- that have been typed in by the user,
+                -- but have not yet been created.
+                local ext = app.fs.fileExtension(filepath)
                 if ext ~= "svg" then
                     app.alert("Extension is not svg.")
                 else

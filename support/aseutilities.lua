@@ -234,8 +234,10 @@ function AseUtilities.asePaletteLoad(
     elseif palType == "PRESET" then
         if presetPath and #presetPath > 0 then
 
-            -- TODO: Given how unreliable this has proven with Sprites and
-            -- ColorProfiles, maybe don't use it, use fileExists
+            -- TODO: Given how unreliable xpcall has proven with Sprites and
+            -- ColorProfiles, maybe don't use it.
+
+            -- app.fs.isFile doesn't work here.
             local success = xpcall(
                 function(y) Palette { fromResource = y } end,
                 errorHandler, presetPath)
@@ -493,6 +495,7 @@ end
 ---@param xd number destination x
 ---@param yd number destination y
 function AseUtilities.drawLine(image, xo, yo, xd, yd, clr)
+    -- TODO: Where is this being used?
     if xo == xd and yo == yd then return end
 
     local dx = xd - xo
@@ -581,6 +584,7 @@ end
 ---@param r number radius
 ---@param hex number hexadecimal color
 function AseUtilities.drawCircleStroke(image, xc, yc, r, hex)
+    -- TODO: This leaves some points blank.
     local x = r
     local y = 0
 

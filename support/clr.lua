@@ -673,13 +673,12 @@ function Clr.labToLch(l, a, b, alpha)
         elseif fac > 1.0 then fac = 1.0 end
         hue = (1.0 - fac) * Clr.LCH_HUE_SHADOW
              + fac * (1.0 + Clr.LCH_HUE_LIGHT)
-        hue = hue % 1.0
     else
         hue = math.atan(b, a) * 0.15915494309189535
-        hue = hue % 1.0
         chroma = math.sqrt(chromasq)
     end
 
+    if hue ~= 1.0 then hue = hue % 1.0 end
     return {
         l = l,
         c = chroma,
@@ -1476,7 +1475,7 @@ function Clr.sRgbaToHslaInternal(red, green, blue, alpha)
         -- Gray.
         local hue = (1.0 - light) * Clr.HSL_HUE_SHADOW
                    + light * (1.0 + Clr.HSL_HUE_LIGHT)
-        hue = hue % 1.0
+        if hue ~= 1.0 then hue = hue % 1.0 end
         return {
             h = hue,
             s = 0.0,
@@ -1566,7 +1565,7 @@ function Clr.sRgbaToHsvaInternal(red, green, blue, alpha)
                 -- Gray.
                 local hue = (1.0 - light) * Clr.HSL_HUE_SHADOW
                            + light * (1.0 + Clr.HSL_HUE_LIGHT)
-                hue = hue % 1.0
+                if hue ~= 1.0 then hue = hue % 1.0 end
                 return {
                     h = hue,
                     s = 0.0,

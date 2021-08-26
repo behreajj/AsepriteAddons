@@ -167,7 +167,10 @@ dlg:button {
 
             local filepath = args.filepath
             if filepath and #filepath > 0 then
-                local ext = filepath:sub(-#"gpl"):lower()
+                -- app.fs.isFile doesn't apply to files
+                -- that have been typed in by the user,
+                -- but have not yet been created.
+                local ext = app.fs.fileExtension(filepath)
                 if ext ~= "gpl" then
                     app.alert("Extension is not gpl.")
                 else

@@ -201,6 +201,9 @@ dlg:button {
             local msgFilePath = args.msgFile
             if msgFilePath and #msgFilePath > 0 then
                 -- print(msgFilePath)
+
+                -- This is happening outside the Aseprite ecosystem
+                -- anyway, so no use in relying on app.fs .
                 local file = io.open(msgFilePath, "r")
                 if file then
                     local linesItr = io.lines(msgFilePath)

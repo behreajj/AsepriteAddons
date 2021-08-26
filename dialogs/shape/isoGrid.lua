@@ -3,6 +3,10 @@ dofile("../../support/mesh2.lua")
 dofile("../../support/utilities.lua")
 dofile("../../support/aseutilities.lua")
 
+-- TODO: Switch useFill to a combo box with "NONE",
+-- "DIAGNOSTIC", "SOLID". Diagnostic color would fill
+-- with a rg plus constant blue to make it easier to
+-- see and replace cells with no margin or stroke.
 local defaults = {
     cells = 8,
     scale = 32,

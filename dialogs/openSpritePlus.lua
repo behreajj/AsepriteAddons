@@ -10,7 +10,7 @@ local paletteTypes = {
 local defaults = {
     removeBkg = true,
     palType = "EMBEDDED",
-    pullFocus = false
+    pullFocus = true
 }
 
 local dlg = Dialog {
