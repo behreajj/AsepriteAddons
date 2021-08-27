@@ -344,6 +344,10 @@ end
 function Curve3.fromPoints(closedLoop, points)
     local kns = {}
 
+    -- TODO: Create 2D Version.
+
+    -- If a closed loop has similar start and
+    -- stop points, then the last is removed.
     local valPts = points
     if closedLoop
         and Vec3.approx(
@@ -356,7 +360,6 @@ function Curve3.fromPoints(closedLoop, points)
         end
     end
 
-    --TODO: Use knot from line seg instead?
     local len = #valPts
     for i = 1, len, 1 do
         local pt = valPts[i]

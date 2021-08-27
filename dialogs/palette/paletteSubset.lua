@@ -99,13 +99,13 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local sprite = app.activeSprite
-        if sprite then
+        local activeSprite = app.activeSprite
+        if activeSprite then
 
-            local oldMode = sprite.colorMode
+            local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
-            -- TODO: AseUtilities method.
+            -- TODO: Use AseUtilities method.
             local srcPal = nil
             local palType = args.palType
             if palType == "FILE" then
@@ -119,7 +119,7 @@ dlg:button {
                     srcPal = Palette { fromResource = pr }
                 end
             else
-                srcPal = sprite.palettes[1]
+                srcPal = activeSprite.palettes[1]
             end
 
             if srcPal then
@@ -153,8 +153,7 @@ dlg:button {
                     trgPal:setColor(0, Color(0, 0, 0, 0))
                 end
 
-                -- sprite:setPalette(trgPal)
-
+                -- TODO: Make this its own AseUtilities method!
                 local target = args.target
                 if target == "SAVE" then
                     local filepath = args.filepath
@@ -164,7 +163,7 @@ dlg:button {
                         app.alert("Invalid filepath.")
                     end
                 else
-                    sprite:setPalette(trgPal)
+                    activeSprite:setPalette(trgPal)
                 end
             else
                 app.alert("The source palette could not be found.")

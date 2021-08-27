@@ -504,7 +504,7 @@ end
 ---@param levels number levels
 ---@return number
 function Utilities.quantizeSigned(a, levels)
-    if levels ~= 0.0 then
+    if levels ~= 0 then
         return math.floor(0.5 + a * levels) / levels
     else
         return a
@@ -518,7 +518,7 @@ end
 ---@param levels number levels
 ---@return number
 function Utilities.quantizeUnsigned(a, levels)
-    if levels ~= 0.0 then
+    if levels > 1 then
         return math.max(0.0,
             (math.ceil(a * levels) - 1.0)
             / (levels - 1.0))

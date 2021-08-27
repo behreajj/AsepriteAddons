@@ -355,6 +355,7 @@ dlg:button {
             mnfstClrPrf = ColorSpace { sRGB = true }
         end
 
+        -- Cache global functions to locals.
         local trunc = math.tointeger
         local strfmt = string.format
         local sRgbToLab = Clr.sRgbaToLab
@@ -391,6 +392,9 @@ dlg:button {
             end
         end
 
+        -- Package together different representations
+        -- of color into one object, so that all can
+        -- remain affiliated when the data are sorted.
         local palData = {}
         for i = 1, hexesSrgbLen, 1 do
             local hexSrgb = hexesSrgb[i]
@@ -407,14 +411,6 @@ dlg:button {
                     (redSrgb255 << 0x10)
                     | (greenSrgb255 << 0x08)
                     | blueSrgb255)
-
-                -- print(palIdx)
-                -- print(webSrgbStr)
-
-                -- if isMaskIdx then
-                --     print(palIdx)
-                --     print(webSrgbStr)
-                -- end
 
                 local blueProfile255 = blueSrgb255
                 local greenProfile255 = greenSrgb255
@@ -564,8 +560,6 @@ dlg:button {
         local palDataLen = #palData
         local spriteHeight = 768
         local spriteWidth = 512
-
-        -- print(AseUtilities.asePaletteToString(mnfstPal))
 
         -- Declare constants.
         local gw = 8

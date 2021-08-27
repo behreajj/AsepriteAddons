@@ -454,12 +454,10 @@ dlg:button {
 
         local firstFrame = newSprite.frames[1]
         firstFrame.duration = duration
-        app.transaction(function()
-            for _ = 0, frameReqs - 2, 1 do
-                local frame = newSprite:newEmptyFrame()
-                frame.duration = duration
-            end
-        end)
+        local createdFrames = AseUtilities.createNewFrames(
+            newSprite,
+            frameReqs - 1,
+            duration)
 
         -- Assign a name to layer, avoid "Background".
         local layer = newSprite.layers[1]
@@ -475,6 +473,8 @@ dlg:button {
             local firstCel = layer.cels[1]
             firstCel.image = bkgImg
 
+            -- TODO: Replace this with a safety wrapped
+            -- AseUtilities method.
             app.transaction(function()
                 for i = 0, frameReqs - 2, 1 do
                     newSprite:newCel(layer, i + 2, bkgImg)

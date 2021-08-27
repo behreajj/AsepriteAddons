@@ -547,7 +547,7 @@ dlg:button {
             local inv110 = 1.0 / 110.0
             local strokeSize = 6
             local fillSize = 5
-            local strokeColor = 0xcfffffff
+            local strokeColor = 0xffffffff
             for j = 1, hexesSrgbLen, 1 do
                 local hexSrgb = hexesSrgb[j]
                 local lab = sRgbaToLab(fromHex(hexSrgb))

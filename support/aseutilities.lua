@@ -12,6 +12,21 @@ setmetatable(AseUtilities, {
         return cls.new(...)
     end})
 
+-- Maximum number of a cels a script may
+-- request to create before the user is
+-- prompted to confirm.
+AseUtilities.CEL_COUNT_LIMIT = 256
+
+-- Maximum number of frames a script may
+-- request to create before the user is
+-- prompted to confirm.
+AseUtilities.FRAME_COUNT_LIMIT = 96
+
+-- Maximum number of layers a script may
+-- request to create before the user is
+-- prompted to confirm.
+AseUtilities.LAYER_COUNT_LIMIT = 96
+
 ---Default fill color.
 AseUtilities.DEFAULT_FILL = 0xffd7f5ff
 
@@ -410,6 +425,8 @@ end
 ---@return number
 function AseUtilities.blend(a, b)
 
+    -- TODO: Still getting overflow here
+    -- in cases where alpha is <255
     local t = b >> 0x18 & 0xff
     if t > 0xfe then return b end
     local v = a >> 0x18 & 0xff
@@ -424,7 +441,7 @@ function AseUtilities.blend(a, b)
     local ar = a & 0xff
 
     -- Experimented with subtracting
-    -- from 0x100 instead of 0xff, due to 255/2
+    -- from 0x100 instead of 0xff, due to 255//2
     -- not having a whole number middle, but 0xff
     -- lead to more accurate results.
     local u = 0xff - t
@@ -484,70 +501,6 @@ function AseUtilities.clrToAseColor(clr)
         math.tointeger(0.5 + 255.0 * a))
 end
 
----Draws a line with Bresenham's algorithm.
----Uses the Aseprite image instance method
----drawPixel. This means that the pixel changes
----will not be tracked as a transaction.
----@param image table Aseprite image
----@param clr number hexadecimal color
----@param xo number origin x
----@param yo number origin y
----@param xd number destination x
----@param yd number destination y
-function AseUtilities.drawLine(image, xo, yo, xd, yd, clr)
-    -- TODO: Where is this being used?
-    if xo == xd and yo == yd then return end
-
-    local dx = xd - xo
-    local dy = yd - yo
-    local x = xo
-    local y = yo
-    local sx = 0
-    local sy = 0
-
-    if xo < xd then
-        sx = 1
-    else
-        sx = -1
-        dx = -dx
-    end
-
-    if yo < yd then
-        sy = 1
-    else
-        sy = -1
-        dy = -dy
-    end
-
-    local err = 0
-    if dx > dy then err = dx // 2
-    else err = -dy // 2 end
-    local e2 = 0
-    local hex = clr or 0xffffffff
-    local blend = AseUtilities.blend
-
-    while true do
-        -- print("(" .. x .. ", " .. y .. ")")
-
-        -- image:drawPixel(x, y, hex)
-        local srcHex = image:getPixel(x, y)
-        local trgHex = blend(srcHex, hex)
-        image:drawPixel(x, y, trgHex)
-
-        if x == xd and y == yd then break end
-        e2 = err
-        if e2 > -dx then
-            err = err - dy
-            x = x + sx
-        end
-
-        if e2 < dy then
-            err = err + dx
-            y = y + sy
-        end
-    end
-end
-
 ---Draws a filled circle. Uses the Aseprite image
 ---instance method drawPixel. This means that the
 ---pixel changes will not be tracked as a transaction.
@@ -570,100 +523,6 @@ function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
             local srcHex = image:getPixel(xMark, yMark)
             local trgHex = blend(srcHex, hex)
             image:drawPixel(xMark, yMark, trgHex)
-        end
-    end
-end
-
----Draws a circle with a 1 pixel stroke.
----Uses the Aseprite image instance method
----drawPixel. This means that the pixel
----changes will not be tracked as a transaction.
----@param image table Aseprite image
----@param xc number center x
----@param yc number center y
----@param r number radius
----@param hex number hexadecimal color
-function AseUtilities.drawCircleStroke(image, xc, yc, r, hex)
-    -- TODO: This leaves some points blank.
-    local x = r
-    local y = 0
-
-    local xcpr = xc + r
-    local xcnr = xc - r
-    local ycpr = yc + r
-    local ycnr = yc - r
-
-    local srcHex0 = image:getPixel(xcpr, yc)
-    local srcHex1 = image:getPixel(xcnr, yc)
-    local srcHex2 = image:getPixel(xc, ycpr)
-    local srcHex3 = image:getPixel(xc, ycnr)
-
-    local blend = AseUtilities.blend
-    local trgHex0 = blend(srcHex0, hex)
-    local trgHex1 = blend(srcHex1, hex)
-    local trgHex2 = blend(srcHex2, hex)
-    local trgHex3 = blend(srcHex3, hex)
-
-    image:drawPixel(xcpr, yc, trgHex0)
-    image:drawPixel(xcnr, yc, trgHex1)
-    image:drawPixel(xc, ycpr, trgHex2)
-    image:drawPixel(xc, ycnr, trgHex3)
-
-    local p = 1 - r
-    while x > y do
-        y = y + 1
-        if p <= 0 then
-            p = p + 2 * y + 1
-        else
-            x = x - 1
-            p = p + 2 * y - 2 * x + 1
-        end
-
-        if x < y then
-            break
-        end
-
-        local xcpx = xc + x
-        local xcnx = xc - x
-        local ycpy = yc + y
-        local ycny = yc - y
-
-        srcHex0 = image:getPixel(xcpx, ycpy)
-        srcHex1 = image:getPixel(xcnx, ycpy)
-        srcHex2 = image:getPixel(xcpx, ycny)
-        srcHex3 = image:getPixel(xcnx, ycny)
-
-        trgHex0 = blend(srcHex0, hex)
-        trgHex1 = blend(srcHex1, hex)
-        trgHex2 = blend(srcHex2, hex)
-        trgHex3 = blend(srcHex3, hex)
-
-        image:drawPixel(xcpx, ycpy, trgHex0)
-        image:drawPixel(xcnx, ycpy, trgHex1)
-        image:drawPixel(xcpx, ycny, trgHex2)
-        image:drawPixel(xcnx, ycny, trgHex3)
-
-        if x ~= y then
-
-            local xcpy = xc + y
-            local xcny = xc - y
-            local ycpx = yc + x
-            local ycnx = yc - x
-
-            srcHex0 = image:getPixel(xcpy, ycpx)
-            srcHex1 = image:getPixel(xcny, ycpx)
-            srcHex2 = image:getPixel(xcpy, ycnx)
-            srcHex3 = image:getPixel(xcny, ycnx)
-
-            trgHex0 = blend(srcHex0, hex)
-            trgHex1 = blend(srcHex1, hex)
-            trgHex2 = blend(srcHex2, hex)
-            trgHex3 = blend(srcHex3, hex)
-
-            image:drawPixel(xcpy, ycpx, trgHex0)
-            image:drawPixel(xcny, ycpx, trgHex1)
-            image:drawPixel(xcpy, ycnx, trgHex2)
-            image:drawPixel(xcny, ycnx, trgHex3)
         end
     end
 end
@@ -761,6 +620,121 @@ function AseUtilities.drawCurve2(
     end
 
     app.refresh()
+end
+
+---Creates new empty frames in a sprite. Prompts user
+---to confirm if requested count exceeds a limit. Wraps
+---the process in an app.transaction. Returns a table
+---of frames. Frame duration is assumed to have been
+---divided by 1000.0, and ready to be assigned as is.
+---@param sprite table sprite
+---@param count number frames to create
+---@param duration number frame duration
+---@return table
+function AseUtilities.createNewFrames(sprite, count, duration)
+    -- TODO: Replace all cases of creating new frames with this.
+    if not sprite then
+        app.alert("Sprite could not be found.")
+        return {}
+    end
+
+    if count > AseUtilities.FRAME_COUNT_LIMIT then
+        local response = app.alert {
+            title = "Warning",
+            text = {
+                string.format(
+                    "This script will create %d frames,",
+                    count),
+                string.format(
+                    "%d beyond the limit of %d.",
+                    count - AseUtilities.FRAME_COUNT_LIMIT,
+                    AseUtilities.FRAME_COUNT_LIMIT),
+                "Do you wish to proceed?"
+            },
+            buttons = { "&YES", "&NO" }
+        }
+
+        if response == 2 then
+            return {}
+        end
+    end
+
+    local valDur = duration or 1
+    local valCount = count or 1
+    if valCount < 1 then valCount = 1 end
+
+    local frames = {}
+    app.transaction(function()
+        for i = 1, valCount, 1 do
+            local frame = sprite:newEmptyFrame()
+            frame.duration = valDur
+            frames[i] = frame
+        end
+    end)
+    return frames
+end
+
+---Creates new layers in a sprite. Prompts user
+---to confirm if requested count exceeds a limit. Wraps
+---the process in an app.transaction. Returns a table
+---of layers.
+---@param sprite table sprite
+---@param count number number of layers to create
+---@param blendMode number blend mode
+---@param opacity number layer opacity
+---@return table
+function AseUtilities.createNewLayers(
+    sprite,
+    count,
+    blendMode,
+    opacity)
+
+    -- TODO: Replace all cases of creating new frames with this.
+    if not sprite then
+        app.alert("Sprite could not be found.")
+        return {}
+    end
+
+    if count > AseUtilities.LAYER_COUNT_LIMIT then
+        local response = app.alert {
+            title = "Warning",
+            text = {
+                string.format(
+                    "This script will create %d layers,",
+                    count),
+                string.format(
+                    "%d beyond the limit of %d.",
+                    count - AseUtilities.LAYER_COUNT_LIMIT,
+                    AseUtilities.LAYER_COUNT_LIMIT),
+                "Do you wish to proceed?"
+            },
+            buttons = { "&YES", "&NO" }
+        }
+
+        if response == 2 then
+            return {}
+        end
+    end
+
+    local valOpac = opacity or 255
+    if valOpac < 0 then valOpac = 0 end
+    if valOpac > 255 then valOpac = 255 end
+    local valBlendMode = blendMode or BlendMode.NORMAL
+    local valCount = count or 1
+    if valCount < 1 then valCount = 1 end
+
+    local oldLayerCount = #sprite.layers
+    local layers = {}
+    for i = 1, valCount, 1 do
+        local layer = sprite:newLayer()
+        layer.blendMode = valBlendMode
+        layer.opacity = valOpac
+        layer.name = string.format(
+            "Layer %d",
+            oldLayerCount + i)
+        layers[i] = layer
+    end
+    return layers
 end
 
 ---Draws a glyph at its native scale to an image.

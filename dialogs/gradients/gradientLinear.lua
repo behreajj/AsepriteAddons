@@ -213,9 +213,6 @@ dlg:button {
             local rgbPreset = args.easingFuncRGB
             local huePreset = args.easingFuncHue
 
-            -- TODO: If sprite has only one layer and its color profile is not sRGB,
-            -- then convert to target color space?
-
             local easeFuncFinal = nil
             if tweenOps == "PALETTE" then
 
