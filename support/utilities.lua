@@ -290,6 +290,122 @@ function Utilities.lerpAngleNear(origin, dest, t, range)
     end
 end
 
+---Breaks a long string into multiple lines according
+---to a character-per-line limit. The limit should be
+---in the range[16, 120]. The delimiter inserted into
+---a string is '\n'.
+---@param srcStr string source string
+---@param limit number character limit per line
+---@return string
+function Utilities.lineWrapString(srcStr, limit)
+    local chars2d = Utilities.lineWrapStringToChars(
+        srcStr, limit)
+    local dstStr = ""
+    local len2d = #chars2d
+    for i = 1, len2d, 1 do
+        local chars1d = chars2d[i]
+        for j = 1, #chars1d, 1 do
+            dstStr = dstStr .. chars1d[j]
+        end
+        if i < len2d then dstStr = dstStr .. '\n' end
+    end
+    return dstStr
+end
+
+---Breaks a long string into multiple lines according
+---to a character-per-line limit. The limit should be
+---in the range[16, 120]. Tries to find the last space
+---to use as a breaking point; breaks by character for
+---low limits or long words. Returns a table of tables;
+---each inner table contains characters representing a
+---line of text. Tabs are treated as spaces.
+---@param srcStr string source string
+---@param limit number character limit per line
+---@return table
+function Utilities.lineWrapStringToChars(srcStr, limit)
+    if srcStr and #srcStr > 0 then
+        local valLimit = limit or 80
+        if valLimit < 16 then valLimit = 16 end
+        if valLimit > 120 then valLimit = 120 end
+
+        local charTally = 0
+        local result = {}
+        local currLine = {}
+        local lastSpace = 0
+
+        local flatChars = Utilities.stringToCharTable(srcStr)
+        local flatCharLen = #flatChars
+        for i = 1, flatCharLen, 1 do
+            local srcChar = flatChars[i]
+            if srcChar == '\n' or srcChar == '\r' then
+                if #currLine < 1 then currLine = { '' } end
+                table.insert(result, currLine)
+                currLine = {}
+                charTally = 0
+                lastSpace = 0
+            else
+                table.insert(currLine, srcChar)
+                local currLnLen = #currLine
+
+                if srcChar == ' ' or srcChar == '\t' then
+                    lastSpace = #currLine
+                end
+
+                if charTally <= valLimit then
+                    charTally = charTally + 1
+                else
+                    -- Trace back to last space.
+                    -- The greater than half the char length condition
+                    -- is to handle problematic words like
+                    -- "supercalifragilisticexpialidocious".
+                    local excess = {}
+                    if lastSpace > 0 and lastSpace > currLnLen // 2 then
+                        for j = currLnLen, lastSpace + 1, -1 do
+                                table.insert(excess, 1,
+                                    table.remove(currLine, j))
+                        end
+                    else
+                        excess[1] = srcChar
+                    end
+
+                    -- Remove any initial space from excess.
+                    if excess[1] == ' ' or excess[1] == '\t' then
+                        table.remove(excess, 1)
+                    end
+
+                    -- Remove any terminal space from line.
+                    if currLine[#currLine] == ' '
+                        or currLine[#currLine] == '\t' then
+                        table.remove(currLine)
+                    end
+
+                    -- Append current line, create new one.
+                    if #currLine < 1 then currLine = { '' } end
+                    table.insert(result, currLine)
+                    currLine = {}
+                    charTally = 0
+                    lastSpace = 0
+
+                    -- Consume excess.
+                    for k = 1, #excess, 1 do
+                        table.insert(currLine, excess[k])
+                        charTally = charTally + 1
+                    end
+                end
+            end
+        end
+
+        -- Consume remaining lines.
+        if #currLine > 0 then
+            table.insert(result, currLine)
+        end
+
+        return result
+    else
+        return {{''}}
+    end
+end
+
 ---Multiplies a matrix with a 2D curve.
 ---Changes the curve in place.
 ---@param a table matrix
@@ -547,9 +663,12 @@ end
 ---@param str string the string
 ---@return table
 function Utilities.stringToCharTable(str)
+    -- For more in depth testing of efficiency, see
+    -- https://stackoverflow.com/a/49222705
     local chars = {}
+    local strsub = string.sub
     for i = 1, #str, 1 do
-        chars[i] = str:sub(i, i)
+        chars[i] = strsub(str, i, i)
     end
     return chars
 end

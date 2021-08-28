@@ -20,7 +20,7 @@ AseUtilities.CEL_COUNT_LIMIT = 256
 -- Maximum number of frames a script may
 -- request to create before the user is
 -- prompted to confirm.
-AseUtilities.FRAME_COUNT_LIMIT = 96
+AseUtilities.FRAME_COUNT_LIMIT = 256
 
 -- Maximum number of layers a script may
 -- request to create before the user is
@@ -676,20 +676,23 @@ end
 
 ---Creates new layers in a sprite. Prompts user
 ---to confirm if requested count exceeds a limit. Wraps
----the process in an app.transaction. Returns a table
----of layers.
+---the process in an app.transaction. To assign a GUI
+-- color, use a hexadecimal integer as an argument.
+---Returns a table of layers.
 ---@param sprite table sprite
 ---@param count number number of layers to create
 ---@param blendMode number blend mode
 ---@param opacity number layer opacity
+---@param guiClr number hexadecimal color
 ---@return table
 function AseUtilities.createNewLayers(
     sprite,
     count,
     blendMode,
-    opacity)
+    opacity,
+    guiClr)
 
-    -- TODO: Replace all cases of creating new frames with this.
+    -- TODO: Replace cases of creating new frames with this.
     if not sprite then
         app.alert("Sprite could not be found.")
         return {}
@@ -734,6 +737,15 @@ function AseUtilities.createNewLayers(
             oldLayerCount + i)
         layers[i] = layer
     end
+
+    local useGuiClr = guiClr and guiClr ~= 0x0
+    if useGuiClr then
+        local aseColor = Color(useGuiClr)
+        for i = 1, valCount, 1 do
+            layers[i].color = aseColor
+        end
+    end
+
     return layers
 end
 

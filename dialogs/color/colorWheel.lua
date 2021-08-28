@@ -391,18 +391,14 @@ dlg:button {
         local duration = args.duration or defaults.duration
         duration = duration * 0.001
         sprite.frames[1].duration = duration
-        app.transaction(function()
-            for _ = 1, needed, 1 do
-                local frame = sprite:newEmptyFrame()
-                frame.duration = duration
-            end
-        end)
+        local newFrames = AseUtilities.createNewFrames(sprite, needed, duration)
 
         -- Set first layer to gamut.
         local gamutLayer = sprite.layers[1]
         gamutLayer.name = "Gamut"
 
         -- Create gamut layer cels.
+        -- TODO: Replace.
         app.transaction(function()
             for i = 1, reqFrames, 1 do
                 sprite:newCel(
