@@ -622,6 +622,140 @@ function AseUtilities.drawCurve2(
     app.refresh()
 end
 
+---Creates new cels in a sprite. Prompts users to
+---confirm if requested count exceeds a limit. The
+---count is derived from frameCount x layerCount.
+---Returns a one-dimensional table of cels, where
+---layers are treated as rows, frames are treated
+---as columns and the flat ordering is row-major.
+---To assign a GUI color, use a hexadecimal integer
+---as an argument.
+---Returns a table of layers.
+---@param sprite table
+---@param frameStartIndex number frame start index
+---@param frameCount number frame count
+---@param layerStartIndex number layer start index
+---@param layerCount number layer count
+---@param image table cel image
+---@param position table cel position
+---@param guiClr number hexadecimal color
+---@return table
+function AseUtilities.createNewCels(
+    sprite,
+    frameStartIndex, frameCount,
+    layerStartIndex, layerCount,
+    image, position, guiClr)
+
+    if not sprite then
+        app.alert("Sprite could not be found.")
+        return {}
+    end
+
+    local sprLayers = sprite.layers
+    local sprFrames = sprite.frames
+    local sprLyrCt = #sprLayers
+    local sprFrmCt = #sprFrames
+
+    -- Validate layer start index.
+    -- Allow for negative indices, which are wrapped.
+    local valLyrIdx = layerStartIndex or 1
+    -- if valLyrIdx < 1 then
+    --     valLyrIdx = 1
+    -- elseif valLyrIdx > sprLyrCt  then
+    --     valLyrIdx = sprLyrCt
+    -- end
+    if valLyrIdx == 0 then
+        valLyrIdx = 1
+    else
+        valLyrIdx = 1 + ((valLyrIdx - 1) % (sprLyrCt + 1))
+    end
+    -- print("valLyrIdx: " .. valLyrIdx)
+
+    -- Validate frame start index.
+    local valFrmIdx = frameStartIndex or 1
+    if valFrmIdx == 0 then
+        valFrmIdx = 1
+    else
+        valFrmIdx = 1 + ((valFrmIdx - 1) % (sprFrmCt + 1))
+    end
+    -- print("valFrmIdx: " .. valFrmIdx)
+
+    -- Validate count for layers.
+    local valLyrCt = layerCount or sprLyrCt
+    if valLyrCt < 1 then
+        valLyrCt = 1
+    elseif valLyrCt > (1 + sprLyrCt - valLyrIdx) then
+        valLyrCt = 1 + sprLyrCt - valLyrIdx
+    end
+    -- print("valLyrCt: " .. valLyrCt)
+
+    -- Validate count for frames.
+    local valFrmCt = frameCount or sprFrmCt
+    if valFrmCt < 1 then
+        valLyrCt = 1
+    elseif valFrmCt > (1 + sprFrmCt - valFrmIdx) then
+        valFrmCt = 1 + sprFrmCt - valFrmIdx
+    end
+    -- print("valFrmCt: " .. valFrmCt)
+
+    local flatCount = valLyrCt * valFrmCt
+    -- print("flatCount: " .. flatCount)
+    if flatCount > AseUtilities.CEL_COUNT_LIMIT then
+        local response = app.alert {
+            title = "Warning",
+            text = {
+                string.format(
+                    "This script will create %d cels,",
+                    flatCount),
+                string.format(
+                    "%d beyond the limit of %d.",
+                    flatCount - AseUtilities.CEL_COUNT_LIMIT,
+                    AseUtilities.CEL_COUNT_LIMIT),
+                "Do you wish to proceed?"
+            },
+            buttons = { "&YES", "&NO" }
+        }
+
+        if response == 2 then
+            return {}
+        end
+    end
+
+    local valPos = position or Point(0, 0)
+    local valImg = image or Image(sprite.width, sprite.height)
+
+    -- Layers = y = rows
+    -- Frames = x = columns
+    local cels = {}
+    app.transaction(function()
+        for i = 0, flatCount - 1, 1 do
+            local frameIndex = valFrmIdx + (i % valFrmCt)
+            local frame = sprFrames[frameIndex]
+
+            local layerIndex = valLyrIdx + (i // valFrmCt)
+            local layer = sprLayers[layerIndex]
+
+            -- print(string.format("Frame Index %d", frameIndex))
+            -- print(string.format("Layer Index %d", layerIndex))
+
+            -- Doesn't work when trying to access existing cels.
+            cels[i] = sprite:newCel(
+                layer, frame, valImg, valPos)
+
+        end
+    end)
+
+    local useGuiClr = guiClr and guiClr ~= 0x0
+    if useGuiClr then
+        local aseColor = Color(guiClr)
+        for i = 1, flatCount, 1 do
+            cels[i].color = aseColor
+        end
+    end
+
+    return cels
+end
+
 ---Creates new empty frames in a sprite. Prompts user
 ---to confirm if requested count exceeds a limit. Wraps
 ---the process in an app.transaction. Returns a table
@@ -740,7 +874,7 @@ function AseUtilities.createNewLayers(
 
     local useGuiClr = guiClr and guiClr ~= 0x0
     if useGuiClr then
-        local aseColor = Color(useGuiClr)
+        local aseColor = Color(guiClr)
         for i = 1, valCount, 1 do
             layers[i].color = aseColor
         end
