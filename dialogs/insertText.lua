@@ -3,6 +3,19 @@ dofile("../support/aseutilities.lua")
 local msgSrcs = { "ENTRY", "FILE" }
 local txtFormats = { "gpl", "pal", "txt" }
 
+local function slice (tbl, start, finish)
+    local pos = 1
+    local sl = {}
+    local stop = finish
+
+    for i = start, stop, 1 do
+        sl[pos] = tbl[i]
+        pos = pos + 1
+    end
+
+    return sl
+end
+
 local defaults = {
     msgSrc = "ENTRY",
     msgEntry = "Lorem ipsum dolor sit amet",
@@ -83,8 +96,7 @@ dlg:check {
             id = "duration",
             visible = dlg.data.animate
         }
-    end,
-    visible = false
+    end
 }
 
 dlg:newrow { always = false }
@@ -337,6 +349,53 @@ dlg:button {
         if animate then
             local frames = AseUtilities.createNewFrames(
                 sprite, totalCharCount, duration)
+            if #frames > 0 then
+                local cels = AseUtilities.createNewCels(
+                    sprite,
+                    frames[1].frameNumber, #frames,
+                    layer.stackIndex, 1,
+                    Image(1, 1),
+                    stillPos)
+
+                if #cels > 0 then
+                    local yCaret = 0
+                    local flatIdx = 1
+                    for i = 1, lineCount, 1 do
+                        local charsLine = charTableStill[i]
+                        local lineWidth = lineWidths[i]
+                        local animImage = nil
+                        for j = 1, lineWidth, 1 do
+                            local animSlice = slice(charsLine, 1, j)
+                            local animPosx = 0
+                            if alignLine == "CENTER" then
+                                animPosx = animPosx + dispCenter - (j * dw) // 2
+                            elseif alignLine == "RIGHT" then
+                                animPosx = animPosx + dispWidth - j * dw
+                            end
+
+                            animImage = bkgSrcImg:clone()
+
+                            if useShadow then
+                                displayString(
+                                    lut, animImage, animSlice, hexShd,
+                                    animPosx, yCaret + scale, gw, gh, scale)
+                            end
+                            displayString(
+                                lut, animImage, animSlice, hexFill,
+                                animPosx, yCaret, gw, gh, scale)
+
+                            local animCel = cels[flatIdx]
+                            animCel.image = animImage
+
+                            flatIdx = flatIdx + 1
+                        end
+
+                        yCaret = yCaret + dh + scale
+                        bkgSrcImg = animImage:clone()
+                    end
+                end
+            end
+
         else
             local activeFrame = app.activeFrame or 1
             local activeCel = layer:cel(activeFrame)

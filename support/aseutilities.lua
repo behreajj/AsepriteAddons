@@ -739,7 +739,7 @@ function AseUtilities.createNewCels(
             -- print(string.format("Layer Index %d", layerIndex))
 
             -- Doesn't work when trying to access existing cels.
-            cels[i] = sprite:newCel(
+            cels[1 + i] = sprite:newCel(
                 layer, frame, valImg, valPos)
 
         end
