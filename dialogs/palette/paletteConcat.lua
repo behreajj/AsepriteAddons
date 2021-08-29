@@ -132,8 +132,10 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        local sprite = app.activeSprite
-        if sprite then
+        local activeSprite = app.activeSprite
+        if activeSprite then
+            local oldMode = activeSprite.colorMode
+            app.command.ChangePixelFormat { format = "rgb" }
 
             local aHexesProfile, aHexesSrgb = AseUtilities.asePaletteLoad(
                 args.aPalType, args.aPalFile, args.aPalPreset, 1, 256, true)
@@ -141,17 +143,16 @@ dlg:button {
             local bHexesProfile, bHexesSrgb = AseUtilities.asePaletteLoad(
                 args.bPalType, args.bPalFile, args.bPalPreset, 1, 256, true)
 
-            local aLen = #aHexesSrgb
-            local bLen = #bHexesSrgb
-            local cLen = aLen + bLen
+            local aLen = #aHexesProfile
+            local bLen = #bHexesProfile
             local cHexes = {}
 
             for i = 1, aLen, 1 do
-                cHexes[i] = aHexesSrgb[i]
+                cHexes[i] = aHexesProfile[i]
             end
 
             for j = 1, bLen, 1 do
-                cHexes[aLen + j] = bHexesSrgb[j]
+                cHexes[aLen + j] = bHexesProfile[j]
             end
 
             local noMask = false
@@ -164,11 +165,6 @@ dlg:button {
                 local maskIdx = dict[0x0]
                 if maskIdx and maskIdx ~= 1 then
                         local firstColor = uniques[1]
-                        -- This might cause repeats.
-                        -- for i = maskIdx, 3, -1 do
-                        --     uniques[i] = uniques[i - 1]
-                        -- end
-                        -- uniques[2] = firstColor
                         uniques[maskIdx] = firstColor
                         uniques[1] = 0x0
                 else
@@ -195,7 +191,7 @@ dlg:button {
                     app.alert("Invalid filepath.")
                 end
             else
-                sprite:setPalette(AseUtilities.hexArrToAsePalette(cHexes))
+                activeSprite:setPalette(AseUtilities.hexArrToAsePalette(cHexes))
             end
 
             if oldMode == ColorMode.INDEXED then

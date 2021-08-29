@@ -58,8 +58,11 @@ function Octree.bisectRight(arr, dist)
     local low = 1
     local high = #arr
 
+    -- https://github.com/python/cpython/blob/main/Lib/bisect.py
+    -- This can't be abstracted out because arr[middle]
+    -- is an object without a defined < comparator.
     while low < high do
-        local middle = (low + high) / 2 | 0
+        local middle = (low + high) // 2
         if dist < arr[middle].dist then
             high = middle
         else
@@ -94,6 +97,7 @@ function Octree.insert(o, point)
 
         if isLeaf then
             table.insert(o.points, point)
+            table.sort(o.points)
             if #o.points > o.capacity then
                 Octree.split(o)
             end
@@ -216,13 +220,16 @@ function Octree.querySphericalInternal(
                 local pt = pts[i]
                 local currDist = distf(center, pt)
                 if currDist < rsq then
+                    -- This would need to define an
+                    -- lt comparator to work with a
+                    -- generic insortRight.
                     insort(found,
                         { dist = currDist,
                           point = pt })
                 end
 
                 if #found >= limit then
-                    return
+                    return found
                 end
             end
         end

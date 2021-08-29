@@ -138,16 +138,15 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
--- TODO: Add line leading
--- dlg:slider {
---     id = "leading",
---     label = "Leading:",
---     min = 0,
---     max = 8,
---     value = defaults.leading
--- }
+dlg:slider {
+    id = "leading",
+    label = "Leading:",
+    min = 0,
+    max = 32,
+    value = defaults.leading
+}
 
--- dlg:newrow { always = false }
+dlg:newrow { always = false }
 
 dlg:combobox {
     id = "alignHoriz",
@@ -213,6 +212,7 @@ dlg:button {
         local xOrigin = args.xOrigin or defaults.xOrigin
         local yOrigin = args.yOrigin or defaults.xOrigin
         local scale = args.scale or defaults.scale
+        local leading = args.leading or defaults.leading
         local alignLine = args.alignHoriz or defaults.alignLine
         local alignChar = args.alignVert or defaults.alignChar
         local aseFill = args.fillClr or defaults.fillClr
@@ -282,8 +282,9 @@ dlg:button {
         -- Calculate dimensions of new image.
         local widthImg = dw * maxLineWidth
         local heightImg = dh * lineCount
-            + scale * (lineCount - 1)
-            + scale * mxDrop
+            + scale * (lineCount - 1) -- drop shadow
+            + leading * (lineCount - 1) -- leading
+            + (scale + 1) * mxDrop -- for descenders
 
         -- Acquire or create sprite.
         -- Acquire top layer.
@@ -389,7 +390,7 @@ dlg:button {
                             flatIdx = flatIdx + 1
                         end
 
-                        yCaret = yCaret + dh + scale
+                        yCaret = yCaret + dh + scale + leading
                         bkgSrcImg = animImage:clone()
                     end
                 end
@@ -415,7 +416,7 @@ dlg:button {
                     lut, bkgSrcImg, charsLine, hexFill,
                     lineOffset, yCaret, gw, gh, scale)
 
-                yCaret = yCaret + dh + scale
+                yCaret = yCaret + dh + scale + leading
 
                 activeCel.image = bkgSrcImg
             end

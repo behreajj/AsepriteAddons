@@ -8,6 +8,7 @@ local dlg = Dialog { title = "Import GPL" }
 
 dlg:file {
     id = "filepath",
+    label = "Path:",
     filetypes = { "gpl", "pal" },
     open = true
 }
