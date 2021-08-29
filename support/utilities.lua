@@ -335,20 +335,25 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
 
         local flatChars = Utilities.stringToCharTable(srcStr)
         local flatCharLen = #flatChars
+        local prevChar = flatChars[flatCharLen]
         for i = 1, flatCharLen, 1 do
-            local srcChar = flatChars[i]
-            if srcChar == '\n' or srcChar == '\r' then
+            local currChar = flatChars[i]
+            if currChar == '\n' or currChar == '\r' then
                 if #currLine < 1 then currLine = { '' } end
                 table.insert(result, currLine)
                 currLine = {}
                 charTally = 0
                 lastSpace = 0
             else
-                table.insert(currLine, srcChar)
+                table.insert(currLine, currChar)
                 local currLnLen = #currLine
 
-                if srcChar == ' ' or srcChar == '\t' then
+                if currChar == ' '
+                    or currChar == '\t' then
                     lastSpace = #currLine
+                elseif currChar == '-'
+                    and prevChar == '-' then
+                    lastSpace = #currLine + 1
                 end
 
                 if charTally < valLimit then
@@ -360,12 +365,10 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
                     -- "supercalifragilisticexpialidocious".
                     local excess = {}
                     if lastSpace > 0 and lastSpace > currLnLen // 2 then
-                        for j = currLnLen, lastSpace + 1, -1 do
+                        for j = currLnLen, lastSpace, -1 do
                                 table.insert(excess, 1,
                                     table.remove(currLine, j))
                         end
-                    else
-                        excess[1] = srcChar
                     end
 
                     -- Remove any initial space from excess.
@@ -377,6 +380,12 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
                     if currLine[#currLine] == ' '
                         or currLine[#currLine] == '\t' then
                         table.remove(currLine)
+                    end
+
+                    -- Remove any initial space from line.
+                    if currLine[1] == ' '
+                        or currLine[#currLine] == '\t' then
+                        table.remove(currLine, 1)
                     end
 
                     -- Append current line, create new one.
@@ -393,6 +402,7 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
                     end
                 end
             end
+            prevChar = currChar
         end
 
         -- Consume remaining lines.
