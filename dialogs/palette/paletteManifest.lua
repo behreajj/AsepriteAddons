@@ -820,7 +820,7 @@ dlg:button {
                 end
 
                 -- TODO: Can this be refactored to use
-                -- safety layer creation? Does it need to?
+                -- safety layer creation?
                 local rowLayer = manifestSprite:newLayer()
                 rowLayer.name = strfmt("%03d.%s",
                     palIdx,

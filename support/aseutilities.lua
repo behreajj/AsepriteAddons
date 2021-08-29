@@ -249,9 +249,8 @@ function AseUtilities.asePaletteLoad(
     elseif palType == "PRESET" then
         if presetPath and #presetPath > 0 then
 
-            -- TODO: Given how unreliable xpcall has proven with Sprites and
+            -- Given how unreliable xpcall has proven with Sprites and
             -- ColorProfiles, maybe don't use it.
-
             -- app.fs.isFile doesn't work here.
             local success = xpcall(
                 function(y) Palette { fromResource = y } end,
@@ -722,7 +721,7 @@ function AseUtilities.createNewCels(
     end
 
     local valPos = position or Point(0, 0)
-    local valImg = image or Image(sprite.width, sprite.height)
+    local valImg = image or Image(1, 1)
 
     -- Layers = y = rows
     -- Frames = x = columns
@@ -1256,7 +1255,9 @@ function AseUtilities.hexArrToAsePalette(arr)
     local arrLen = #arr
     local palStartIdx = 0
     local palLen = arrLen
-    local prependAlpha = arr[1] ~= 0x00000000
+
+    -- TODO: Make prepend optional?
+    local prependAlpha = arr[1] ~= 0x0
     if prependAlpha then
         palLen = palLen + 1
         palStartIdx = palStartIdx + 1

@@ -240,9 +240,10 @@ dlg:button {
                     flatStr = file:read("*all")
                     charTableStill = Utilities.lineWrapStringToChars(
                         flatStr, charLimit)
+                    file:close()
                 end
 
-                if err then
+                if err ~= nil then
                     app.alert("Error opening file: " .. err)
                 end
 
@@ -301,9 +302,7 @@ dlg:button {
         local bkgSrcImg = Image(widthImg, heightImg)
         if useBkg then
             local bkgPxItr = bkgSrcImg:pixels()
-            for elm in bkgPxItr do
-                elm(hexBkg)
-            end
+            for elm in bkgPxItr do elm(hexBkg) end
         end
 
         -- Convert from percentage to pixel dimensions.

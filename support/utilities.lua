@@ -351,7 +351,7 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
                     lastSpace = #currLine
                 end
 
-                if charTally <= valLimit then
+                if charTally < valLimit then
                     charTally = charTally + 1
                 else
                     -- Trace back to last space.
@@ -663,7 +663,7 @@ end
 ---@param str string the string
 ---@return table
 function Utilities.stringToCharTable(str)
-    -- For more in depth testing of efficiency, see
+    -- For more on different methods, see
     -- https://stackoverflow.com/a/49222705
     local chars = {}
     local strsub = string.sub
@@ -713,6 +713,44 @@ function Utilities.toScreen(
     z =           0.5 + 0.5 * z
 
     return Vec3.new(x, y, z)
+end
+
+---Finds the unique colors in a table of integers
+---representing hexadecimal colors in the format
+---AABBGGRR. If true, the flag specifies that all
+---completely transparent colors are considered
+---equal, not unique. The dictionary used to
+---create the set is the second returned value.
+---@param hexes table color array
+---@param zeroAlpha boolean all masks equal
+---@return table
+---@return table
+function Utilities.uniqueColors(hexes, zeroAlpha)
+    local za = zeroAlpha
+
+    local cDict = {}
+    local idxKey = 1
+    local cLen = #hexes
+    for i = 1, cLen, 1 do
+        local hex = hexes[i]
+
+        if za then
+            local a = (hex >> 0x18) & 0xff
+            if a < 1 then hex = 0x00000000 end
+        end
+
+        if not cDict[hex] then
+            cDict[hex] = idxKey
+            idxKey = idxKey + 1
+        end
+    end
+
+    local uniques = {}
+    for k, v in pairs(cDict) do
+        uniques[v] = k
+    end
+
+    return uniques, cDict
 end
 
 return Utilities

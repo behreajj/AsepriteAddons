@@ -250,6 +250,8 @@ dlg:button {
 
                     -- Cache global methods.
                     local fromHex = Clr.fromHex
+                    local v3Hash = Vec3.hashCode
+                    local insert = Octree.insert
                     local search = Octree.querySphericalInternal
 
                     -- Create a dictionary where unique hexes are associated
@@ -271,11 +273,11 @@ dlg:button {
                         -- Validate that the color is not an alpha mask.
                         local hexSrgb = hexesSrgb[i]
                         if hexSrgb & 0xff000000 ~= 0 then
-                            local clr = Clr.fromHex(hexSrgb)
+                            local clr = fromHex(hexSrgb)
                             local pt = clrV3Func(clr)
                             local hexProfile = hexesProfile[i]
-                            ptToHexDict[Vec3.hashCode(pt)] = hexProfile
-                            Octree.insert(octree, pt)
+                            ptToHexDict[v3Hash(pt)] = hexProfile
+                            insert(octree, pt)
                         end
                     end
 
@@ -298,7 +300,7 @@ dlg:button {
                         local resultHex = 0x00000000
                         if #near > 0 then
                             local nearestPt = near[1].point
-                            local ptHash = Vec3.hashCode(nearestPt)
+                            local ptHash = v3Hash(nearestPt)
                             resultHex = ptToHexDict[ptHash]
                         end
                         correspDict[query.hex] = resultHex
