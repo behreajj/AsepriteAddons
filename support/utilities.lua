@@ -324,6 +324,12 @@ end
 ---@return table
 function Utilities.lineWrapStringToChars(srcStr, limit)
     if srcStr and #srcStr > 0 then
+
+        local insert = table.insert
+        local remove = table.remove
+        local trimLeft = Utilities.trimCharsInitial
+        local trimRight = Utilities.trimCharsFinal
+
         local valLimit = limit or 80
         if valLimit < 16 then valLimit = 16 end
         if valLimit > 120 then valLimit = 120 end
@@ -340,18 +346,20 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
             local currChar = flatChars[i]
             if currChar == '\n' or currChar == '\r' then
                 if #currLine < 1 then currLine = { '' } end
-                table.insert(result, currLine)
+                insert(result, currLine)
                 currLine = {}
                 charTally = 0
                 lastSpace = 0
             else
-                table.insert(currLine, currChar)
+                insert(currLine, currChar)
                 local currLnLen = #currLine
 
                 if currChar == ' '
                     or currChar == '\t' then
                     lastSpace = #currLine
                 elseif currChar == '-'
+                    -- Handle case where double hyphen is used as
+                    -- a substitute for em dash.
                     and prevChar == '-' then
                     lastSpace = #currLine + 1
                 end
@@ -366,38 +374,25 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
                     local excess = {}
                     if lastSpace > 0 and lastSpace > currLnLen // 2 then
                         for j = currLnLen, lastSpace, -1 do
-                                table.insert(excess, 1,
-                                    table.remove(currLine, j))
+                            insert(excess, 1, remove(currLine, j))
                         end
                     end
 
-                    -- Remove any initial space from excess.
-                    if excess[1] == ' ' or excess[1] == '\t' then
-                        table.remove(excess, 1)
-                    end
+                    trimLeft(excess)
 
-                    -- Remove any terminal space from line.
-                    if currLine[#currLine] == ' '
-                        or currLine[#currLine] == '\t' then
-                        table.remove(currLine)
-                    end
-
-                    -- Remove any initial space from line.
-                    if currLine[1] == ' '
-                        or currLine[#currLine] == '\t' then
-                        table.remove(currLine, 1)
-                    end
+                    trimRight(currLine)
+                    trimLeft(currLine)
 
                     -- Append current line, create new one.
                     if #currLine < 1 then currLine = { '' } end
-                    table.insert(result, currLine)
+                    insert(result, currLine)
                     currLine = {}
                     charTally = 0
                     lastSpace = 0
 
                     -- Consume excess.
                     for k = 1, #excess, 1 do
-                        table.insert(currLine, excess[k])
+                        insert(currLine, excess[k])
                         charTally = charTally + 1
                     end
                 end
@@ -407,7 +402,7 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
 
         -- Consume remaining lines.
         if #currLine > 0 then
-            table.insert(result, currLine)
+            insert(result, currLine)
         end
 
         return result
@@ -723,6 +718,28 @@ function Utilities.toScreen(
     z =           0.5 + 0.5 * z
 
     return Vec3.new(x, y, z)
+end
+
+---Removes white spaces from the end,
+---or right edge, of a table of characters.
+---Mutates the table in place.
+---@param chars table
+---@return table
+function Utilities.trimCharsFinal(chars)
+    local tr = table.remove
+    while chars[#chars] == ' ' do tr(chars) end
+    return chars
+end
+
+---Removes white spaces from the start,
+---or left edge, of a table of characters.
+---Mutates the table in place.
+---@param chars table
+---@return table
+function Utilities.trimCharsInitial(chars)
+    local tr = table.remove
+    while chars[1] == ' ' do tr(chars, 1) end
+    return chars
 end
 
 ---Finds the unique colors in a table of integers

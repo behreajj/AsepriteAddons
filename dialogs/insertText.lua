@@ -142,7 +142,7 @@ dlg:slider {
     id = "leading",
     label = "Leading:",
     min = 0,
-    max = 32,
+    max = 64,
     value = defaults.leading
 }
 
@@ -360,39 +360,41 @@ dlg:button {
                 if #cels > 0 then
                     local yCaret = 0
                     local flatIdx = 1
-                    for i = 1, lineCount, 1 do
-                        local charsLine = charTableStill[i]
-                        local lineWidth = lineWidths[i]
-                        local animImage = nil
-                        for j = 1, lineWidth, 1 do
-                            local animSlice = slice(charsLine, 1, j)
-                            local animPosx = 0
-                            if alignLine == "CENTER" then
-                                animPosx = animPosx + dispCenter - (j * dw) // 2
-                            elseif alignLine == "RIGHT" then
-                                animPosx = animPosx + dispWidth - j * dw
-                            end
+                    app.transaction(function()
+                        for i = 1, lineCount, 1 do
+                            local charsLine = charTableStill[i]
+                            local lineWidth = lineWidths[i]
+                            local animImage = nil
+                            for j = 1, lineWidth, 1 do
+                                local animSlice = slice(charsLine, 1, j)
+                                local animPosx = 0
+                                if alignLine == "CENTER" then
+                                    animPosx = animPosx + dispCenter - (j * dw) // 2
+                                elseif alignLine == "RIGHT" then
+                                    animPosx = animPosx + dispWidth - j * dw
+                                end
 
-                            animImage = bkgSrcImg:clone()
+                                animImage = bkgSrcImg:clone()
 
-                            if useShadow then
+                                if useShadow then
+                                    displayString(
+                                        lut, animImage, animSlice, hexShd,
+                                        animPosx, yCaret + scale, gw, gh, scale)
+                                end
                                 displayString(
-                                    lut, animImage, animSlice, hexShd,
-                                    animPosx, yCaret + scale, gw, gh, scale)
+                                    lut, animImage, animSlice, hexFill,
+                                    animPosx, yCaret, gw, gh, scale)
+
+                                local animCel = cels[flatIdx]
+                                animCel.image = animImage
+
+                                flatIdx = flatIdx + 1
                             end
-                            displayString(
-                                lut, animImage, animSlice, hexFill,
-                                animPosx, yCaret, gw, gh, scale)
 
-                            local animCel = cels[flatIdx]
-                            animCel.image = animImage
-
-                            flatIdx = flatIdx + 1
+                            yCaret = yCaret + dh + scale + leading
+                            bkgSrcImg = animImage:clone()
                         end
-
-                        yCaret = yCaret + dh + scale + leading
-                        bkgSrcImg = animImage:clone()
-                    end
+                    end)
                 end
             end
 
@@ -403,23 +405,25 @@ dlg:button {
             activeCel.position = stillPos
 
             local yCaret = 0
-            for i = 1, lineCount, 1 do
-                local charsLine = charTableStill[i]
-                local lineOffset = lineOffsets[i] * dw
+            app.transaction(function()
+                for i = 1, lineCount, 1 do
+                    local charsLine = charTableStill[i]
+                    local lineOffset = lineOffsets[i] * dw
 
-                if useShadow then
+                    if useShadow then
+                        displayString(
+                            lut, bkgSrcImg, charsLine, hexShd,
+                            lineOffset, yCaret + scale, gw, gh, scale)
+                    end
                     displayString(
-                        lut, bkgSrcImg, charsLine, hexShd,
-                        lineOffset, yCaret + scale, gw, gh, scale)
+                        lut, bkgSrcImg, charsLine, hexFill,
+                        lineOffset, yCaret, gw, gh, scale)
+
+                    yCaret = yCaret + dh + scale + leading
+
+                    activeCel.image = bkgSrcImg
                 end
-                displayString(
-                    lut, bkgSrcImg, charsLine, hexFill,
-                    lineOffset, yCaret, gw, gh, scale)
-
-                yCaret = yCaret + dh + scale + leading
-
-                activeCel.image = bkgSrcImg
-            end
+            end)
         end
 
         app.refresh()
