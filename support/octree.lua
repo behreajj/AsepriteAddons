@@ -59,7 +59,7 @@ function Octree.bisectRight(arr, dist)
     local high = #arr
 
     -- https://github.com/python/cpython/blob/main/Lib/bisect.py
-    -- This can't be abstracted out because arr[middle]
+    -- TODO: This can't be abstracted out because arr[middle]
     -- is an object without a defined < comparator.
     while low < high do
         local middle = (low + high) // 2

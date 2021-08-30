@@ -206,6 +206,8 @@ dlg:button {
         if sprite.colorMode == ColorMode.RGB then
 
             local atan2 = math.atan
+            local toHex = Clr.toHex
+            local quantize = Utilities.quantizeUnsigned
 
             local layer = sprite.layers[#sprite.layers]
             local frame = app.activeFrame or 1
@@ -298,9 +300,8 @@ dlg:button {
                 -- Alternatively, use angleNormed % 1.0.
                 local fac = angleNormed % 1.0
 
-                fac = Utilities.quantizeUnsigned(fac, levels)
-
-                elm(Clr.toHex(easeFuncFinal(fac)))
+                fac = quantize(fac, levels)
+                elm(toHex(easeFuncFinal(fac)))
             end
 
             app.refresh()

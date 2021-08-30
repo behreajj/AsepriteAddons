@@ -12,7 +12,6 @@ local preview = {
 local defaults = {
     inclinations = 4,
     azimuths = 12,
-    prependMask = true,
     target = "ACTIVE",
     pullFocus = false
 }
@@ -44,14 +43,6 @@ dlg:slider {
     min = 1,
     max = 32,
     value = defaults.azimuths
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
-    id = "prependMask",
-    label = "Prepend Mask:",
-    selected = defaults.prependMask,
 }
 
 dlg:newrow { always = false }
@@ -90,15 +81,9 @@ dlg:button {
 
         local inclinations = args.inclinations
         local azimuths = args.azimuths
-        local prependMask = args.prependMask
         local target = args.target
         local len = inclinations * azimuths
         local k = 0
-
-        if prependMask then
-            len = len + 1
-            k = 1
-        end
 
         local palette = Palette(len)
 
@@ -141,10 +126,6 @@ dlg:button {
             end
         end
 
-        if prependMask then
-            palette:setColor(0, 0x00000000)
-        end
-
         local sprite = app.activeSprite
         if sprite == nil then
             sprite = Sprite(64, 64)
@@ -161,9 +142,6 @@ dlg:button {
                 app.alert("Invalid filepath.")
             end
         else
-            -- This is not color data, so there should be
-            -- no color management.
-            -- sprite:assignColorSpace(ColorSpace())
             sprite:setPalette(palette)
         end
 

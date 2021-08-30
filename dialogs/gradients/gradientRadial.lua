@@ -284,6 +284,8 @@ dlg:button {
 
             local min = math.min
             local max = math.max
+            local toHex = Clr.toHex
+            local quantize = Utilities.quantizeSigned
 
             local layer = sprite.layers[#sprite.layers]
             local frame = app.activeFrame or 1
@@ -376,9 +378,9 @@ dlg:button {
                 local fac = dst * normDist
                 fac = max(0.0, min(1.0, fac))
                 fac = (fac - minRad) * linDenom
-                fac = Utilities.quantizeSigned(fac, levels)
+                fac = quantize(fac, levels)
 
-                elm(Clr.toHex(easeFuncFinal(fac)))
+                elm(toHex(easeFuncFinal(fac)))
             end
 
             app.refresh()

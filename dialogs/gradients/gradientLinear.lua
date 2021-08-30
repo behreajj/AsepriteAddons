@@ -275,6 +275,8 @@ dlg:button {
                 bx * bx + by * by)
 
             local levels = args.quantization
+            local quantize = Utilities.quantizeUnsigned
+            local toHex = Clr.toHex
 
             local img = cel.image
             local iterator = img:pixels()
@@ -285,11 +287,10 @@ dlg:button {
 
                 -- Unsigned quantize will already clamp to
                 -- 0.0 lower bound.
-                local fac = Utilities.quantizeUnsigned(
-                    cb, levels)
+                local fac = quantize(cb, levels)
                 if fac > 1.0 then fac = 1.0 end
 
-                elm(Clr.toHex(easeFuncFinal(fac)))
+                elm(toHex(easeFuncFinal(fac)))
             end
 
             app.refresh()

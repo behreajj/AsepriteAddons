@@ -10,6 +10,7 @@ local paletteTypes = {
 local defaults = {
     removeBkg = true,
     palType = "EMBEDDED",
+    prependMask = true,
     pullFocus = true
 }
 
@@ -83,6 +84,14 @@ dlg:entry {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "prependMask",
+    label = "Prepend Mask:",
+    selected = defaults.prependMask,
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "ok",
     text = "&OK",
@@ -91,6 +100,8 @@ dlg:button {
         local args = dlg.data
         local spriteFile = args.spriteFile
         if spriteFile and #spriteFile > 0 then
+
+            -- TODO: Use Utilities prependMask. Add check widget.
 
             -- Palettes need to be retrieved before a new sprite
             -- is created in case it auto-sets the app.activeSprite
@@ -107,18 +118,9 @@ dlg:button {
 
                 hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
                     palType, palFile, palPreset, 0, 256, true)
-
-                -- Check for a valid alpha mask at index 0.
-                if hexesProfile[1] ~= 0x0 then
-                    table.insert(hexesProfile, 1, 0x0)
-                end
-
-                -- if hexesSrgb[1] ~= 0x0 then
-                --     table.insert(hexesSrgb, 1, 0x0)
-                -- end
             else
                 hexesProfile = AseUtilities.DEFAULT_PAL_ARR
-                -- hexesSrgb = hexesProfile
+                hexesSrgb = hexesProfile
             end
 
             local openSprite = nil
@@ -155,13 +157,12 @@ dlg:button {
                     if palType == "EMBEDDED" then
                         hexesProfile = AseUtilities.asePaletteToHexArr(
                             openSprite.palettes[1], 0, 256)
-
-                        -- Check for a valid alpha mask at index 0.
-                        if hexesProfile[1] ~= 0x0 then
-                            table.insert(hexesProfile, 1, 0x0)
-                        end
                     end
 
+                    local prependMask = args.prependMask
+                    if prependMask then
+                        Utilities.prependAlpha(hexesProfile)
+                    end
                     local newPal = AseUtilities.hexArrToAsePalette(hexesProfile)
                     openSprite:setPalette(newPal)
 

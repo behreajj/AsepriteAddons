@@ -149,6 +149,9 @@ dlg:button {
                         srcPal:getColor(k))
                 end
 
+                
+                -- TODO: For all cases, prepend mask FIRST, then do UNIQUES.
+                -- UNIQUES IS GREEDY WHEN IT COMES TO ALPHA, prepend is less so.
                 if prependMask then
                     trgPal:setColor(0, Color(0, 0, 0, 0))
                 end

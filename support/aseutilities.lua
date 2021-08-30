@@ -239,8 +239,8 @@ function AseUtilities.asePaletteLoad(
                     -- Palettes loaded from a file could support an
                     -- embedded color profile, but do not.
                     -- You could check the extension, and if it is a
-                    -- .png, .aseprite, etc. then load as a sprite, get
-                    -- the profile, dispose of the sprite.
+                    -- .png, .aseprite, etc. then load as a sprite,
+                    -- but it'd be difficult to dispose of the sprite.
                     hexesProfile = AseUtilities.asePaletteToHexArr(
                         palFile, siVal, cntVal)
                 end
@@ -658,11 +658,6 @@ function AseUtilities.createNewCels(
     -- Validate layer start index.
     -- Allow for negative indices, which are wrapped.
     local valLyrIdx = layerStartIndex or 1
-    -- if valLyrIdx < 1 then
-    --     valLyrIdx = 1
-    -- elseif valLyrIdx > sprLyrCt  then
-    --     valLyrIdx = sprLyrCt
-    -- end
     if valLyrIdx == 0 then
         valLyrIdx = 1
     else
@@ -1253,26 +1248,13 @@ end
 ---@return table
 function AseUtilities.hexArrToAsePalette(arr)
     local arrLen = #arr
-    local palStartIdx = 0
     local palLen = arrLen
-
-    -- TODO: Make prepend optional?
-    local prependAlpha = arr[1] ~= 0x0
-    if prependAlpha then
-        palLen = palLen + 1
-        palStartIdx = palStartIdx + 1
-    end
     local pal = Palette(palLen)
     for i = 1, arrLen, 1 do
         local hex = arr[i]
         local aseColor = Color(hex)
-        pal:setColor(palStartIdx + i - 1, aseColor)
+        pal:setColor(i - 1, aseColor)
     end
-
-    if prependAlpha then
-        pal:setColor(0, Color(0, 0, 0, 0))
-    end
-
     return pal
 end
 

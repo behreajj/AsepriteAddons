@@ -239,15 +239,6 @@ dlg:button {
 
                 hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
                     palType, palFile, palPreset, palStart, palCount, true)
-
-                -- Check for a valid alpha mask at index 0.
-                if hexesProfile[1] ~= 0x0 then
-                    table.insert(hexesProfile, 1, 0x0)
-                end
-
-                if hexesSrgb[1] ~= 0x0 then
-                    table.insert(hexesSrgb, 1, 0x0)
-                end
             else
                 -- Since a palette will be created immediately after, pbr.
                 -- If this changes, and arrays are modified, then this
@@ -535,9 +526,6 @@ dlg:button {
         end
 
         if plotPalette then
-            sprite:setPalette(
-                AseUtilities.hexArrToAsePalette(hexesProfile))
-
             local plotImage = Image(size, size)
             local hexesSrgbLen = #hexesSrgb
             local inv110 = 1.0 / 110.0
@@ -581,6 +569,12 @@ dlg:button {
                         plotImage)
                 end
             end)
+
+            -- This needs to be done at the very end because prependAlpha
+            -- modifies hexesProfile.
+            Utilities.prependMask(hexesProfile)
+            sprite:setPalette(
+                AseUtilities.hexArrToAsePalette(hexesProfile))
         end
 
         app.activeFrame = sprite.frames[

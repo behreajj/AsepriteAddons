@@ -167,6 +167,33 @@ function Utilities.new()
     return inst
 end
 
+---Converts an array of integers representing color
+---in hexadecimal to a dictionary. When true, the
+---flag specifies that all completely transparent
+---colors are considered equal, not unique.
+---@param hexes table
+---@param za boolean
+---@return table
+function Utilities.hexArrToDict(hexes, za)
+    local dict = {}
+    local idxKey = 1
+    local len = #hexes
+    for i = 1, len, 1 do
+        local hex = hexes[i]
+
+        if za then
+            local a = (hex >> 0x18) & 0xff
+            if a < 1 then hex = 0x00000000 end
+        end
+
+        if not dict[hex] then
+            dict[hex] = idxKey
+            idxKey = idxKey + 1
+        end
+    end
+    return dict
+end
+
 ---Forces an overflow wrap to make 64 bit
 ---integers behave like 32 bit integers.
 ---@param x number the integer
@@ -565,6 +592,31 @@ function Utilities.mulQuatVec3(a, b)
         iz * qw + iy * qx - iw * qz - ix * qy)
 end
 
+---Prepends an alpha mask to a table of
+---hexadecimal integers representing color.
+---If the table already includes a mask,
+---the input table is returned unchanged.
+---If it contains a mask at another index,
+---it is removed and placed at the start.
+---Colors with zero alpha are not considered
+---equal to an alpha mask.
+---@param hexes table
+---@return table
+function  Utilities.prependMask(hexes)
+    if hexes[1] == 0x0 then return hexes end
+    local cDict = Utilities.hexArrToDict(hexes, false)
+    local maskIdx = cDict[0x0]
+    if maskIdx then
+        if maskIdx > 1 then
+            table.remove(hexes, maskIdx)
+            table.insert(hexes, 1, 0x0)
+        end
+    else
+        table.insert(hexes, 1, 0x0)
+    end
+    return hexes
+end
+
 ---Promotes a Knot2 to a Knot3.
 ---All z components default to 0.0
 ---@param a table knot
@@ -744,40 +796,21 @@ end
 
 ---Finds the unique colors in a table of integers
 ---representing hexadecimal colors in the format
----AABBGGRR. If true, the flag specifies that all
+---AABBGGRR. When true, the flag specifies that all
 ---completely transparent colors are considered
 ---equal, not unique. The dictionary used to
 ---create the set is the second returned value.
 ---@param hexes table color array
----@param zeroAlpha boolean all masks equal
+---@param za boolean all masks equal
 ---@return table
 ---@return table
-function Utilities.uniqueColors(hexes, zeroAlpha)
-    local za = zeroAlpha
-
-    local cDict = {}
-    local idxKey = 1
-    local cLen = #hexes
-    for i = 1, cLen, 1 do
-        local hex = hexes[i]
-
-        if za then
-            local a = (hex >> 0x18) & 0xff
-            if a < 1 then hex = 0x00000000 end
-        end
-
-        if not cDict[hex] then
-            cDict[hex] = idxKey
-            idxKey = idxKey + 1
-        end
-    end
-
+function Utilities.uniqueColors(hexes, za)
+    local dict = Utilities.hexArrToDict(hexes, za)
     local uniques = {}
-    for k, v in pairs(cDict) do
+    for k, v in pairs(dict) do
         uniques[v] = k
     end
-
-    return uniques, cDict
+    return uniques, dict
 end
 
 return Utilities

@@ -138,10 +138,10 @@ dlg:button {
             app.command.ChangePixelFormat { format = "rgb" }
 
             local aHexesProfile, aHexesSrgb = AseUtilities.asePaletteLoad(
-                args.aPalType, args.aPalFile, args.aPalPreset, 1, 256, true)
+                args.aPalType, args.aPalFile, args.aPalPreset, 0, 256, true)
 
             local bHexesProfile, bHexesSrgb = AseUtilities.asePaletteLoad(
-                args.bPalType, args.bPalFile, args.bPalPreset, 1, 256, true)
+                args.bPalType, args.bPalFile, args.bPalPreset, 0, 256, true)
 
             local aLen = #aHexesProfile
             local bLen = #bHexesProfile
@@ -155,30 +155,15 @@ dlg:button {
                 cHexes[aLen + j] = bHexesProfile[j]
             end
 
-            local noMask = false
             local uniquesOnly = args.uniquesOnly
             if uniquesOnly then
                 local uniques, dict = Utilities.uniqueColors(cHexes, true)
-
-                -- Palette may include alpha mask, but
-                -- it may not be at index 1. Shift over.
-                local maskIdx = dict[0x0]
-                if maskIdx and maskIdx ~= 1 then
-                        local firstColor = uniques[1]
-                        uniques[maskIdx] = firstColor
-                        uniques[1] = 0x0
-                else
-                    noMask = true
-                end
-
                 cHexes = uniques
-            else
-                noMask = cHexes[1] ~= 0x0
             end
 
             local prependMask = args.prependMask
-            if prependMask and noMask then
-                table.insert(cHexes, 1, 0x0)
+            if prependMask then
+                Utilities.prependMask(cHexes)
             end
 
             local target = args.target

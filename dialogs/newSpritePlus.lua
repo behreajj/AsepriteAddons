@@ -23,6 +23,7 @@ local defaults = {
     frames = 1,
     duration = 100.0,
     palType = "DEFAULT",
+    prependMask = true,
     pullFocus = true
 }
 
@@ -347,6 +348,14 @@ dlg:entry {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "prependMask",
+    label = "Prepend Mask:",
+    selected = defaults.prependMask,
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "ok",
     text = "&OK",
@@ -364,15 +373,6 @@ dlg:button {
 
             hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
                 palType, palFile, palPreset, 0, 256, true)
-
-            -- Check for a valid alpha mask at index 0.
-            if hexesProfile[1] ~= 0x0 then
-                table.insert(hexesProfile, 1, 0x0)
-            end
-
-            if hexesSrgb[1] ~= 0x0 then
-                table.insert(hexesSrgb, 1, 0x0)
-            end
         else
             -- Since a palette will be created immediately after, pbr.
             -- If this changes, and arrays are modified, then this
@@ -444,6 +444,10 @@ dlg:button {
         newSprite.filename = filename
         app.activeSprite = newSprite
 
+        local prependMask = args.prependMask
+        if prependMask then
+            Utilities.prependMask(hexesProfile)
+        end
         local newPal = AseUtilities.hexArrToAsePalette(hexesProfile)
         newSprite:setPalette(newPal)
 
