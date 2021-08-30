@@ -161,7 +161,7 @@ dlg:button {
 
                     local prependMask = args.prependMask
                     if prependMask then
-                        Utilities.prependAlpha(hexesProfile)
+                        Utilities.prependMask(hexesProfile)
                     end
                     local newPal = AseUtilities.hexArrToAsePalette(hexesProfile)
                     openSprite:setPalette(newPal)
