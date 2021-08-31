@@ -716,6 +716,24 @@ function Utilities.reverseTable(t)
     return t
 end
 
+---Creates a new table from the source
+---and shuffles it
+---@param t table input table
+---@return table
+function Utilities.shuffle(t)
+    -- https://stackoverflow.com/a/68486276
+    math.randomseed(os.time())
+    local rng = math.random
+    local s = {}
+    for i = 1, #t do s[i] = t[i] end
+    for i = #t, 2, -1 do
+        local j = rng(i)
+        s[i], s[j] = s[j], s[i]
+    end
+    return s
+end
+
+
 ---Converts a string to a table of characters.
 ---@param str string the string
 ---@return table

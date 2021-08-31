@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local dlg = Dialog { title = "Palette Subset" }
+local dlg = Dialog { title = "Palette Shuffle" }
 
 dlg:combobox {
     id = "palType",
@@ -42,34 +42,6 @@ dlg:entry {
 
 dlg:newrow { always = false }
 
-dlg:slider {
-        id = "startIdx",
-        label = "Start Index:",
-        min = 0,
-        max = 255,
-        value = 0
-    }
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "stride",
-    label = "Stride:",
-    min = 2,
-    max = 32,
-    value = 8
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
-    id = "prependMask",
-    label = "Prepend Mask:",
-    selected = true,
-}
-
-dlg:newrow { always = false }
-
 dlg:combobox {
     id = "target",
     label = "Target:",
@@ -103,28 +75,13 @@ dlg:button {
         local args = dlg.data
         local activeSprite = app.activeSprite
         if activeSprite then
-
             local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
-            local aHexesProfile, aHexesSrgb = AseUtilities.asePaletteLoad(
+            local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 args.palType, args.palFile, args.palPreset, 0, 256, true)
 
-            local origin = args.startIdx
-            local stride = args.stride
-            local srcLen = #aHexesProfile
-
-            local trgHexes = {}
-            for i = 0, stride - 1, 1 do
-                local j = i % stride
-                local k = (origin + j) % srcLen
-                trgHexes[1 + i] = aHexesProfile[1 + k]
-            end
-
-            local prependMask = args.prependMask
-            if prependMask then
-                Utilities.prependMask(trgHexes)
-            end
+            local trgHexes = Utilities.shuffle(hexesProfile)
 
             local target = args.target
             if target == "SAVE" then
@@ -147,7 +104,6 @@ dlg:button {
             end
 
             app.refresh()
-
         else
             app.alert("There is no active sprite.")
         end

@@ -59,6 +59,7 @@ function Octree.bisectRight(arr, dist)
     local high = #arr
 
     -- https://github.com/python/cpython/blob/main/Lib/bisect.py
+    -- http://lua-users.org/wiki/BinarySearch
     -- TODO: This can't be abstracted out because arr[middle]
     -- is an object without a defined < comparator.
     while low < high do

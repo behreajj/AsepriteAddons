@@ -732,7 +732,9 @@ function AseUtilities.createNewCels(
             -- print(string.format("Frame Index %d", frameIndex))
             -- print(string.format("Layer Index %d", layerIndex))
 
-            -- Doesn't work when trying to access existing cels.
+            -- The approach of checking if a cel already exists
+            -- and setting it instead of creating a new one doesn't
+            -- work out too well in this case...
             cels[1 + i] = sprite:newCel(
                 layer, frame, valImg, valPos)
 

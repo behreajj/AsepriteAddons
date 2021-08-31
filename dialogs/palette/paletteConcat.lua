@@ -134,6 +134,7 @@ dlg:button {
         local args = dlg.data
         local activeSprite = app.activeSprite
         if activeSprite then
+
             local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 

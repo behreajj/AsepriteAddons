@@ -1,6 +1,8 @@
 dofile("../../support/aseutilities.lua")
 
 local defaults = {
+    uniquesOnly = false,
+    prependMask = true,
     pullFocus = false
 }
 
@@ -19,6 +21,14 @@ dlg:check {
     id = "uniquesOnly",
     label = "Uniques Only:",
     selected = defaults.uniquesOnly
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "prependMask",
+    label = "Prepend Mask:",
+    selected = defaults.prependMask,
 }
 
 dlg:newrow { always = false }
@@ -127,6 +137,11 @@ dlg:button {
                     local uniques, dict = Utilities.uniqueColors(
                         colors, true)
                     colors = uniques
+                end
+
+                local prependMask = args.prependMask
+                if prependMask then
+                    Utilities.prependMask(colors)
                 end
 
                 activeSprite:setPalette(
