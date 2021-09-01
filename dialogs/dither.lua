@@ -7,6 +7,7 @@ local defaults = {
     queryRad = 175,
     octCapacity = 16,
     factor = 100,
+    copyToLayer = true,
     pullFocus = false
 }
 
@@ -82,6 +83,14 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "copyToLayer",
+    label = "Copy To New Layer:",
+    selected = defaults.copyToLayer
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "confirm",
     text = "&OK",
@@ -111,6 +120,11 @@ dlg:button {
 
                     -- Cache global methods to local.
                     local trunc = math.tointeger
+                    local fromHex = Clr.fromHex
+                    local sRgbaToLab = Clr.sRgbaToLab
+                    local v3Hash = Vec3.hashCode
+                    local insert = Octree.insert
+                    local search = Octree.querySphericalInternal
 
                     -- Floyd-Steinberg coefficients.
                     local one_255 = 1.0 / 255.0
@@ -132,12 +146,12 @@ dlg:button {
                     local ptToHexDict = {}
                     for i = 1, palHexesLen, 1 do
                         local hexSrgb = hexesSrgb[i]
-                        local clr = Clr.fromHex(hexSrgb)
-                        local lab = Clr.sRgbaToLab(clr)
+                        local clr = fromHex(hexSrgb)
+                        local lab = sRgbaToLab(clr)
                         local point = Vec3.new(lab.a, lab.b, lab.l)
                         local hexProfile = hexesProfile[i]
-                        ptToHexDict[Vec3.hashCode(point)] = hexProfile
-                        Octree.insert(octree, point)
+                        ptToHexDict[v3Hash(point)] = hexProfile
+                        insert(octree, point)
                     end
 
                     -- Cache pixels from iterator to an array.
@@ -163,7 +177,7 @@ dlg:button {
                             rSrc * one_255,
                             gSrc * one_255,
                             bSrc * one_255, 1.0)
-                        local lab = Clr.sRgbaToLab(srgb)
+                        local lab = sRgbaToLab(srgb)
                         local query = Vec3.new(lab.a, lab.b, lab.l)
 
                         local trgHex = 0
@@ -172,11 +186,11 @@ dlg:button {
                         local bTrg = 0
 
                         local nearestPts = {}
-                        Octree.querySphericalInternal(octree,
+                        search(octree,
                             query, queryRad,
                             nearestPts, resultLimit)
                         if #nearestPts > 0 then
-                            local nearestHash = Vec3.hashCode(nearestPts[1].point)
+                            local nearestHash = v3Hash(nearestPts[1].point)
                             local nearestHex = ptToHexDict[nearestHash]
                             if nearestHex then
                                 rTrg = nearestHex & 0xff
@@ -305,9 +319,7 @@ dlg:button {
                     end
 
                     -- Either copy to new layer or reassign image.
-                    -- TODO: Expose this parameter?
-                    -- local copyToLayer = args.copyToLayer
-                    local copyToLayer = true
+                    local copyToLayer = args.copyToLayer
                     if copyToLayer then
                         local trgLayer = sprite:newLayer()
                         trgLayer.name = srcCel.layer.name

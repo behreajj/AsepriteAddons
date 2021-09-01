@@ -7,7 +7,10 @@ local defaults = {
     pullFocus = false
 }
 
-local function layerToSvgStr(layer, activeFrame, spriteBounds, border, scale, margin)
+local function layerToSvgStr(
+    layer, activeFrame, spriteBounds,
+    border, scale, margin)
+
     local str = ""
 
     if layer.isVisible then
@@ -16,7 +19,7 @@ local function layerToSvgStr(layer, activeFrame, spriteBounds, border, scale, ma
                 "\n<g id=\"%s\">",
                 layer.name)
 
-            -- Do these need to be sorted for draw order?
+            -- TODO: Do these need to be sorted for draw order?
             local groupLayers = layer.layers
             -- local groupLayers = {}
             -- for i = 1, #layer.layers, 1 do
@@ -82,7 +85,7 @@ local function layerToSvgStr(layer, activeFrame, spriteBounds, border, scale, ma
                             if a < 255 then
                                 grpStr = grpStr .. string.format(
                                     "fill-opacity=\"%.6f\" ",
-                                    a / 255.0)
+                                    a * 0.00392156862745098)
                             end
 
                             --There should be a more efficient way to do this.
@@ -158,7 +161,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "filepath",
     label = "Path:",
-    filetypes = { "gpl" },
+    filetypes = { "svg" },
     save = true
 }
 
@@ -285,7 +288,7 @@ dlg:button {
             local spriteBounds = Rectangle(
                 0, 0, nativeWidth, nativeHeight)
 
-            -- Sorted for draw order?
+            -- Sort for draw order?
             local spriteLayers = activeSprite.layers
             -- local spriteLayers = {}
             -- for i = 1, #activeSprite.layers, 1 do

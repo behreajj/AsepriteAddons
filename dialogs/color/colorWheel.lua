@@ -389,7 +389,6 @@ dlg:button {
         gamutLayer.name = "Gamut"
 
         -- Create gamut layer cels.
-        -- TODO: Replace.
         app.transaction(function()
             for i = 1, reqFrames, 1 do
                 sprite:newCel(

@@ -39,7 +39,7 @@ local defaults = {
     axz = 1.0,
     minSwatchSize = 2,
     maxSwatchSize = 10,
-    swatchAlpha = 85,
+    swatchAlpha = 217,
     bkgColor = Color(0xff202020),
     frames = 16,
     duration = 100.0,
@@ -262,7 +262,7 @@ dlg:slider {
     id = "swatchAlpha",
     label = "Alpha:",
     min = 1,
-    max = 100,
+    max = 255,
     value = defaults.swatchAlpha
 }
 
@@ -402,12 +402,8 @@ dlg:button {
         local gridPts = nil
         local gridClrs = nil
 
-        -- TODO: Consider setting alpha to conventional
-        -- range of [0, 255] instead of [0, 100].
-        -- Also, probably not necessary to assign alpha to the
-        -- original grid...
         local swatchAlpha = args.swatchAlpha or defaults.swatchAlpha
-        local swatchAlpha01 = swatchAlpha * 0.01
+        local swatchAlpha01 = swatchAlpha / 255.0
         local geometry = args.geometry or defaults.geometry
         if geometry == "SPHERE" then
 
@@ -456,8 +452,7 @@ dlg:button {
         local queryRad = args.queryRad or defaults.queryRad
         local replaceClrs = {}
         local gridLen = #gridPts
-        local swatchAlphaMask = trunc(0.5 + 0xff * swatchAlpha01)
-        swatchAlphaMask = swatchAlphaMask << 0x18
+        local swatchAlphaMask = swatchAlpha << 0x18
         for i = 1, gridLen, 1 do
             local srcClr = gridClrs[i]
             local srcLab = rgbaToLab(srcClr)
@@ -596,18 +591,17 @@ dlg:button {
                 local frame2d = pts2d[h]
 
                 for i = 1, gridLen, 1 do
-
                     local packet = frame2d[i]
-                    local scrpt = packet.point
+                    local screenPoint = packet.point
 
                     -- Remap z to swatch size based on min and max.
                     local scl = minSwatchSize + swatchDiff
-                        * ((scrpt.z - zMax) * zDenom)
+                        * ((screenPoint.z - zMax) * zDenom)
 
                     drawCirc(
                         img,
-                        trunc(0.5 + scrpt.x),
-                        trunc(0.5 + scrpt.y),
+                        trunc(0.5 + screenPoint.x),
+                        trunc(0.5 + screenPoint.y),
                         trunc(0.5 + scl),
                         packet.color)
                 end

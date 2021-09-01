@@ -101,8 +101,6 @@ dlg:button {
         local spriteFile = args.spriteFile
         if spriteFile and #spriteFile > 0 then
 
-            -- TODO: Use Utilities prependMask. Add check widget.
-
             -- Palettes need to be retrieved before a new sprite
             -- is created in case it auto-sets the app.activeSprite
             -- to the new sprite. Unfortunately, that means this

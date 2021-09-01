@@ -546,12 +546,14 @@ function AseUtilities.drawCurve2(
     local vres = 2
     if resolution > 2 then vres = resolution end
 
+    local toPoint = AseUtilities.vec2ToPoint
+    local bezier = Vec2.bezierPoint
+    local insert = table.insert
+
     local isLoop = curve.closedLoop
     local kns = curve.knots
     local knsLen = #kns
     local toPercent = 1.0 / vres
-    local toPoint = AseUtilities.vec2ToPoint
-    local bezier = Vec2.bezierPoint
     local pts = {}
     local start = 2
     local prevKnot = kns[1]
@@ -568,9 +570,9 @@ function AseUtilities.drawCurve2(
         local rhNext = currKnot.rh
         local coNext = currKnot.co
 
-        table.insert(pts, toPoint(coPrev))
+        insert(pts, toPoint(coPrev))
         for j = 1, vres, 1 do
-            table.insert(pts,
+            insert(pts,
                 toPoint(bezier(
                     coPrev, fhPrev,
                     rhNext,coNext,
@@ -762,7 +764,6 @@ end
 ---@param duration number frame duration
 ---@return table
 function AseUtilities.createNewFrames(sprite, count, duration)
-    -- TODO: Replace all cases of creating new frames with this.
     if not sprite then
         app.alert("Sprite could not be found.")
         return {}

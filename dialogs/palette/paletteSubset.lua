@@ -107,18 +107,18 @@ dlg:button {
             local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
-            local aHexesProfile, aHexesSrgb = AseUtilities.asePaletteLoad(
+            local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 args.palType, args.palFile, args.palPreset, 0, 256, true)
 
             local origin = args.startIdx
             local stride = args.stride
-            local srcLen = #aHexesProfile
+            local srcLen = #hexesProfile
 
             local trgHexes = {}
             for i = 0, stride - 1, 1 do
                 local j = i % stride
                 local k = (origin + j) % srcLen
-                trgHexes[1 + i] = aHexesProfile[1 + k]
+                trgHexes[1 + i] = hexesProfile[1 + k]
             end
 
             local prependMask = args.prependMask
@@ -147,7 +147,6 @@ dlg:button {
             end
 
             app.refresh()
-
         else
             app.alert("There is no active sprite.")
         end

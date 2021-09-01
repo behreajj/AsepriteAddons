@@ -733,7 +733,6 @@ function Utilities.shuffle(t)
     return s
 end
 
-
 ---Converts a string to a table of characters.
 ---@param str string the string
 ---@return table

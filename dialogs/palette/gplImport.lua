@@ -6,7 +6,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Import GPL" }
+local dlg = Dialog { title = "GPL Import" }
 
 dlg:file {
     id = "filepath",
@@ -44,6 +44,12 @@ dlg:button {
             local filepath = args.filepath
             local file, err = io.open(filepath, "r")
 
+            -- Cache functions to local when used in loop.
+            local strlower = string.lower
+            local strsub = string.sub
+            local strgmatch = string.gmatch
+            local tinsert = table.insert
+
             -- Implicitly tries to support JASC-PAL.
             local gplHeaderFound = 0
             local palHeaderFound = 0
@@ -60,7 +66,7 @@ dlg:button {
                 local linesItr = file:lines()
 
                 for line in linesItr do
-                    local lc = line:lower()
+                    local lc = strlower(line)
 
                     if lc == "gimp palette" then
                         gplHeaderFound = lineCount
@@ -69,14 +75,14 @@ dlg:button {
                     elseif palHeaderFound == (lineCount - 1)
                         and lc == "0100" then
                         palMagicFound = lineCount
-                    elseif lc:sub(1, 4) == "name" then
+                    elseif strsub(lc, 1, 4) == "name" then
                         nameFound = lineCount
-                    elseif lc:sub(1, 7) == "columns" then
+                    elseif strsub(lc, 1, 7) == "columns" then
                         columnsFound = lineCount
                     elseif lc == "channels: rgba" then
                         aseAlphaFound = lineCount
-                    elseif lc:sub(1, 1) == '#' then
-                        table.insert(comments, line:sub(1))
+                    elseif strsub(lc, 1, 1) == '#' then
+                        tinsert(comments, strsub(line, 1))
                     elseif #lc > 0 then
 
                         if palHeaderFound > 0
@@ -90,8 +96,8 @@ dlg:button {
                             local r = 0
 
                             local tokens = {}
-                            for token in string.gmatch(line, "%S+") do
-                                table.insert(tokens, token)
+                            for token in strgmatch(line, "%S+") do
+                                tinsert(tokens, token)
                             end
 
                             local tokensLen = #tokens
@@ -123,8 +129,10 @@ dlg:button {
                                       | (b << 0x10)
                                       | (g << 0x08)
                                       | r
-                            -- print(string.format("%d %d %d %d %08X", r, g, b, a, hex))
-                            table.insert(colors, hex)
+                            -- print(string.format(
+                            --    "%d %d %d %d %08X",
+                            --     r, g, b, a, hex))
+                            tinsert(colors, hex)
                         end
                     end
                     -- print(line)
