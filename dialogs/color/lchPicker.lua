@@ -92,7 +92,6 @@ local function updateHarmonies(l, c, h, a)
     }
 end
 
-
 local function updateWarning(clr)
 
     -- Tolerance is based on blue being deemed

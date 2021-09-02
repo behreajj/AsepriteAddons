@@ -726,17 +726,16 @@ function AseUtilities.createNewCels(
     app.transaction(function()
         for i = 0, flatCount - 1, 1 do
             local frameIndex = valFrmIdx + (i % valFrmCt)
-            local frame = sprFrames[frameIndex]
-
             local layerIndex = valLyrIdx + (i // valFrmCt)
+
+            local frame = sprFrames[frameIndex]
             local layer = sprLayers[layerIndex]
 
             -- print(string.format("Frame Index %d", frameIndex))
             -- print(string.format("Layer Index %d", layerIndex))
 
-            -- The approach of checking if a cel already exists
-            -- and setting it instead of creating a new one doesn't
-            -- work out too well in this case...
+            -- Frame and layer objects MUST be passed,
+            -- NOT their indices.
             cels[1 + i] = sprite:newCel(
                 layer, frame, valImg, valPos)
 
@@ -769,6 +768,7 @@ function AseUtilities.createNewFrames(sprite, count, duration)
         return {}
     end
 
+    if count < 1 then return {} end
     if count > AseUtilities.FRAME_COUNT_LIMIT then
         local response = app.alert {
             title = "Warning",
@@ -823,12 +823,13 @@ function AseUtilities.createNewLayers(
     opacity,
     guiClr)
 
-    -- TODO: Replace cases of creating new frames with this.
+    -- TODO: Replace cases of creating new layers with this.
     if not sprite then
         app.alert("Sprite could not be found.")
         return {}
     end
 
+    if count < 1 then return {} end
     if count > AseUtilities.LAYER_COUNT_LIMIT then
         local response = app.alert {
             title = "Warning",

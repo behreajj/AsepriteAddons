@@ -21,7 +21,7 @@ local defaults = {
     transparencyMask = 0, -- This MUST be index ZERO.
     bkgIdx = 0,
     frames = 1,
-    duration = 100.0,
+    fps = 24,
     palType = "DEFAULT",
     prependMask = true,
     pullFocus = true
@@ -301,11 +301,14 @@ dlg:slider {
     value = defaults.frames
 }
 
-dlg:number {
-    id = "duration",
-    label = "Duration:",
-    text = string.format("%.1f", defaults.duration),
-    decimals = 1
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "fps",
+    label = "FPS:",
+    min = 1,
+    max = 90,
+    value = defaults.fps
 }
 
 dlg:separator {
@@ -453,8 +456,8 @@ dlg:button {
 
         -- Create frames.
         local frameReqs = args.frames or defaults.frames
-        local duration = args.duration or defaults.duration
-        duration = duration * 0.001
+        local fps = args.fps or defaults.fps
+        local duration = 1.0 / math.max(1, fps)
 
         local firstFrame = newSprite.frames[1]
         firstFrame.duration = duration

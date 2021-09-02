@@ -10,7 +10,7 @@ local defaults = {
     minLight = 5,
     maxLight = 95,
     frames = 32,
-    duration = 100,
+    fps = 24,
     outOfGamut = 64,
     hueOverlay = true,
     offsetDeg = 40,
@@ -24,11 +24,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog {
-    title = "Color Wheel"
-}
-
-dlg:newrow { always = false }
+local dlg = Dialog { title = "Lch Color Wheel" }
 
 dlg:slider {
     id = "size",
@@ -67,11 +63,12 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:number {
-    id = "duration",
-    label = "Duration:",
-    text = string.format("%.1f", defaults.duration),
-    decimals = 1
+dlg:slider {
+    id = "fps",
+    label = "FPS:",
+    min = 1,
+    max = 90,
+    value = defaults.fps
 }
 
 dlg:newrow { always = false }
@@ -379,8 +376,8 @@ dlg:button {
         -- Create frames.
         local oldFrameLen = #sprite.frames
         local needed = math.max(0, reqFrames - oldFrameLen)
-        local duration = args.duration or defaults.duration
-        duration = duration * 0.001
+        local fps = args.fps or defaults.fps
+        local duration = 1.0 / math.max(1, fps)
         sprite.frames[1].duration = duration
         local newFrames = AseUtilities.createNewFrames(sprite, needed, duration)
 
@@ -447,11 +444,8 @@ dlg:button {
                     local currFrame = sprite.frames[i]
 
                     if ringCount > 1 then
-                        -- local jToPercent = 1.0 / ringCount
                         local jToRadius = maxRadius / ringCount
                         for j = 1, ringCount, 1 do
-                            -- local t = j * jToPercent
-                            -- local rad = maxRadius * t
                             local rad = j * jToRadius
                             app.useTool {
                                 tool = "ellipse",
@@ -559,15 +553,11 @@ dlg:button {
             local plotPalLayer = sprite:newLayer()
             plotPalLayer.name = "Palette"
 
-            local palCels = {}
-            app.transaction(function()
-                for i = 1, reqFrames, 1 do
-                    palCels[i] = sprite:newCel(
-                        plotPalLayer,
-                        sprite.frames[i],
-                        plotImage)
-                end
-            end)
+            AseUtilities.createNewCels(
+                sprite,
+                1, reqFrames,
+                plotPalLayer.stackIndex, 1,
+                plotImage)
 
             -- This needs to be done at the very end because prependAlpha
             -- modifies hexesProfile.

@@ -42,7 +42,7 @@ local defaults = {
     swatchAlpha = 217,
     bkgColor = Color(0xff202020),
     frames = 16,
-    duration = 100.0,
+    fps = 24,
     pullFocus = false
 }
 
@@ -286,11 +286,12 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:number {
-    id = "duration",
-    label = "Duration:",
-    text = string.format("%.1f", defaults.duration),
-    decimals = 1
+dlg:slider {
+    id = "fps",
+    label = "FPS:",
+    min = 1,
+    max = 90,
+    value = defaults.fps
 }
 
 dlg:newrow { always = false }
@@ -581,8 +582,8 @@ dlg:button {
         local bkgHex = args.bkgColor.rgbaPixel
         for elm in bkgImg:pixels() do elm(bkgHex) end
 
-        local duration = args.duration or defaults.duration
-        duration = duration * 0.001
+        local fps = args.fps or defaults.fps
+        local duration = 1.0 / math.max(1, fps)
         app.transaction(function()
             for h = 1, reqFrames, 1 do
                 local frame = coverSprite.frames[h]

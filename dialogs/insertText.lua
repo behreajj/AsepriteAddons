@@ -21,7 +21,7 @@ local defaults = {
     msgEntry = "Lorem ipsum dolor sit amet",
     charLimit = 72,
     animate = false,
-    duration = 100.0,
+    fps = 24,
     fillClr = Color(255, 255, 255, 255),
     shdColor = Color(0, 0, 0, 204),
     bkgColor = Color(20, 20, 20, 204),
@@ -93,7 +93,7 @@ dlg:check {
     selected = defaults.animate,
     onclick = function()
         dlg:modify {
-            id = "duration",
+            id = "fps",
             visible = dlg.data.animate
         }
     end
@@ -101,11 +101,12 @@ dlg:check {
 
 dlg:newrow { always = false }
 
-dlg:number {
-    id = "duration",
-    label = "Duration:",
-    text = string.format("%.1f", defaults.duration),
-    decimals = 1,
+dlg:slider {
+    id = "fps",
+    label = "FPS:",
+    min = 1,
+    max = 90,
+    value = defaults.fps,
     visible = defaults.animate
 }
 
@@ -208,7 +209,7 @@ dlg:button {
         local msgFilePath = args.msgFilePath
         local charLimit = args.charLimit or defaults.charLimit
         local animate = args.animate
-        local duration = args.duration or defaults.duration
+        local fps = args.fps or defaults.fps
         local xOrigin = args.xOrigin or defaults.xOrigin
         local yOrigin = args.yOrigin or defaults.xOrigin
         local scale = args.scale or defaults.scale
@@ -220,7 +221,7 @@ dlg:button {
         local aseBkg = args.bkgColor or defaults.bkgColor
 
         -- Reinterpret and validate.
-        duration = duration * 0.001
+        local duration = 1.0 / math.max(1, fps)
         if msgEntry == nil or #msgEntry < 1 then
             msgEntry = defaults.msgEntry
         end
@@ -356,7 +357,7 @@ dlg:button {
                     layer.stackIndex, 1,
                     Image(1, 1),
                     stillPos)
-
+            
                 if #cels > 0 then
                     local yCaret = 0
                     local flatIdx = 1

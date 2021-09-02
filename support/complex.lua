@@ -158,7 +158,7 @@ function Complex.log(z)
     local zi = z.imag
     return Complex.new(
         math.log(math.sqrt(zr * zr + zi * zi)),
-        math.atan2(zi, zr))
+        math.atan(zi, zr))
 end
 
 ---Finds the mobius transformation for z. See
