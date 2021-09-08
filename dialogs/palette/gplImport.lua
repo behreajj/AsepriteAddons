@@ -62,6 +62,9 @@ dlg:button {
             local colors = {}
 
             if file ~= nil then
+                local oldMode = sprite.colorMode
+                app.command.ChangePixelFormat { format = "rgb" }
+
                 local lineCount = 1
                 local linesItr = file:lines()
 
@@ -154,6 +157,12 @@ dlg:button {
 
                 activeSprite:setPalette(
                     AseUtilities.hexArrToAsePalette(colors))
+
+                if oldMode == ColorMode.INDEXED then
+                    app.command.ChangePixelFormat { format = "indexed" }
+                elseif oldMode == ColorMode.GRAY then
+                    app.command.ChangePixelFormat { format = "gray" }
+                end
                 app.refresh()
             end
 

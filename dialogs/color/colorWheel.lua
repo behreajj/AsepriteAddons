@@ -559,7 +559,7 @@ dlg:button {
                 plotPalLayer.stackIndex, 1,
                 plotImage)
 
-            -- This needs to be done at the very end because prependAlpha
+            -- This needs to be done at the very end because prependMask
             -- modifies hexesProfile.
             Utilities.prependMask(hexesProfile)
             sprite:setPalette(

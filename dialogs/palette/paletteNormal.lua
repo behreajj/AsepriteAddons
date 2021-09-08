@@ -77,6 +77,9 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        local oldMode = sprite.colorMode
+        app.command.ChangePixelFormat { format = "rgb" }
+
         local args = dlg.data
 
         local inclinations = args.inclinations
@@ -131,8 +134,6 @@ dlg:button {
             sprite = Sprite(64, 64)
         end
 
-        local oldMode = sprite.colorMode
-        app.command.ChangePixelFormat { format = "rgb" }
 
         if target == "SAVE" then
             local filepath = args.filepath

@@ -376,9 +376,10 @@ dlg:button {
 
                 local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
                 local fac = dst * normDist
-                fac = max(0.0, min(1.0, fac))
                 fac = (fac - minRad) * linDenom
+                fac = max(0.0, min(1.0, fac))
                 fac = quantize(fac, levels)
+
 
                 elm(toHex(easeFuncFinal(fac)))
             end

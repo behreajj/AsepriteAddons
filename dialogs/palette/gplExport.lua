@@ -71,6 +71,9 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if activeSprite then
+            local oldMode = sprite.colorMode
+            app.command.ChangePixelFormat { format = "rgb" }
+
             local args = dlg.data
 
             -- Cache functions.
@@ -181,6 +184,13 @@ dlg:button {
             else
                 app.alert("Filepath is empty.")
             end
+
+            if oldMode == ColorMode.INDEXED then
+                app.command.ChangePixelFormat { format = "indexed" }
+            elseif oldMode == ColorMode.GRAY then
+                app.command.ChangePixelFormat { format = "gray" }
+            end
+            app.refresh()
 
             dlg:close()
         else

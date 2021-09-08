@@ -97,7 +97,7 @@ dlg:button {
                             local hex = elm()
                             if not dictionary[hex] then
                                 local alpha = hex & 0xff000000
-                                if alpha > 0 then
+                                if alpha ~= 0 then
                                     idx = idx + 1
                                     dictionary[hex] = idx
                                 end
