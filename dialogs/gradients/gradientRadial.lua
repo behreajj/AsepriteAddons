@@ -19,8 +19,8 @@ local defaults = {
     tweenOps = "PAIR",
     startIndex = 0,
     count = 256,
-    aColor = Color(AseUtilities.DEFAULT_STROKE),
-    bColor = Color(AseUtilities.DEFAULT_FILL),
+    aColor = Color(AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE)),
+    bColor = Color(AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL)),
     clrSpacePreset = "S_RGB",
     easingFuncRGB = "LINEAR",
     easingFuncHue = "NEAR",
@@ -374,12 +374,13 @@ dlg:button {
                 local xPx = elm.x
                 local yPx = elm.y
 
+                -- Take care not to clamp fac until after basic
+                -- calculations are done.
                 local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
                 local fac = dst * normDist
                 fac = (fac - minRad) * linDenom
                 fac = max(0.0, min(1.0, fac))
                 fac = quantize(fac, levels)
-
 
                 elm(toHex(easeFuncFinal(fac)))
             end

@@ -19,7 +19,6 @@ local function layerToSvgStr(
                 "\n<g id=\"%s\">",
                 layer.name)
 
-            -- TODO: Do these need to be sorted for draw order?
             local groupLayers = layer.layers
             -- local groupLayers = {}
             -- for i = 1, #layer.layers, 1 do
@@ -110,9 +109,7 @@ local function layerToSvgStr(
     return str
 end
 
-local dlg = Dialog {
-    title = "SVG Export"
-}
+local dlg = Dialog { title = "SVG Export" }
 
 dlg:slider {
     id = "scale",
@@ -287,13 +284,7 @@ dlg:button {
             local activeFrame = app.activeFrame
             local spriteBounds = Rectangle(
                 0, 0, nativeWidth, nativeHeight)
-
-            -- Sort for draw order?
             local spriteLayers = activeSprite.layers
-            -- local spriteLayers = {}
-            -- for i = 1, #activeSprite.layers, 1 do
-            --     spriteLayers[i] = activeSprite.layers[i]
-            -- end
 
             local spriteLayersLen = #spriteLayers
             for i = 1, spriteLayersLen, 1 do
@@ -328,6 +319,7 @@ dlg:button {
             elseif oldColorMode == ColorMode.GRAY then
                 app.command.ChangePixelFormat { format = "gray" }
             end
+
             app.refresh()
             dlg:close()
         else

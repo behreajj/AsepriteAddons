@@ -16,9 +16,9 @@ local defaults = {
     cornerInput = "UNIFORM",
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = Color(AseUtilities.DEFAULT_STROKE),
+    strokeClr = Color(AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE)),
     useFill = true,
-    fillClr = Color(AseUtilities.DEFAULT_FILL),
+    fillClr = Color(AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL)),
     handles = 0,
     pullFocus = false
 }

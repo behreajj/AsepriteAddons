@@ -1,3 +1,5 @@
+dofile("../../support/aseutilities.lua")
+
 local preview = {
     Color(255, 128, 128),
     Color(218, 218, 128),
@@ -146,12 +148,7 @@ dlg:button {
             sprite:setPalette(palette)
         end
 
-        if oldMode == ColorMode.INDEXED then
-            app.command.ChangePixelFormat { format = "indexed" }
-        elseif oldMode == ColorMode.GRAY then
-            app.command.ChangePixelFormat { format = "gray" }
-        end
-
+        AseUtilities.changePixelFormat(oldMode)
         app.refresh()
     end
 }

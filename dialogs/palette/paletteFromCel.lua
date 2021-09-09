@@ -1,3 +1,5 @@
+dofile("../../support/aseutilities.lua")
+
 local defaults = {
     removeAlpha = true,
     clampTo256 = true,
@@ -112,11 +114,12 @@ dlg:button {
                             len = math.min(256, len)
                         end
 
+                        -- TODO: Replace with AseUtilities method.
                         local palette = Palette(len)
                         for hex, i in pairs(dictionary) do
                             local j = i - 1
                             if j < len then
-                                palette:setColor(j, hex)
+                                palette:setColor(j, AseUtilities.hexToAseColor(hex))
                             end
                         end
 
@@ -130,12 +133,7 @@ dlg:button {
                         end
                     end
 
-                    if oldMode == ColorMode.INDEXED then
-                        app.command.ChangePixelFormat { format = "indexed" }
-                    elseif oldMode == ColorMode.GRAY then
-                        app.command.ChangePixelFormat { format = "gray" }
-                    end
-
+                    AseUtilities.changePixelFormat(oldMode)
                     app.refresh()
 
                 else

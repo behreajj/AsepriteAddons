@@ -337,11 +337,7 @@ dlg:button {
                         srcCel.image = trgImg
                     end
 
-                    if oldMode == ColorMode.INDEXED then
-                        app.command.ChangePixelFormat { format = "indexed" }
-                    elseif oldMode == ColorMode.GRAY then
-                        app.command.ChangePixelFormat { format = "gray" }
-                    end
+                    AseUtilities.changePixelFormat(oldMode)
 
                     if printElapsed then
                         endTime = os.time()

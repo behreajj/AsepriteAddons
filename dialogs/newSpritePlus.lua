@@ -489,13 +489,7 @@ dlg:button {
             end)
         end
 
-        -- Set proper color mode.
-        if colorModeInt == ColorMode.INDEXED then
-            app.command.ChangePixelFormat { format = "indexed" }
-        elseif colorModeInt == ColorMode.GRAY then
-            app.command.ChangePixelFormat { format = "gray" }
-        end
-
+        AseUtilities.changePixelFormat(colorModeInt)
         app.activeFrame = firstFrame
         app.refresh()
         dlg:close()

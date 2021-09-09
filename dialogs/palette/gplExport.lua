@@ -1,3 +1,5 @@
+dofile("../../support/aseutilities.lua")
+
 local defaults = {
     palName = "Palette",
     columns = 0,
@@ -185,11 +187,9 @@ dlg:button {
                 app.alert("Filepath is empty.")
             end
 
-            if oldMode == ColorMode.INDEXED then
-                app.command.ChangePixelFormat { format = "indexed" }
-            elseif oldMode == ColorMode.GRAY then
-                app.command.ChangePixelFormat { format = "gray" }
-            end
+            -- TODO: Replace this and other instances with
+            -- AseUtilities.changePixelFormat.
+            AseUtilities.changePixelFormat(oldMode)
             app.refresh()
 
             dlg:close()

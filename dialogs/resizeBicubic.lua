@@ -234,12 +234,12 @@ dlg:button {
                     local shn1 = sh - 1
 
                     for k = 0, len4, 1 do
-                        local g = k // len3
-                        local m = k - g * len3
-                        local h = m // len2
-                        local n = m - h * len2
-                        local i = n // kernelSize
-                        local j = n % kernelSize
+                        local g = k // len3 -- px row index
+                        local m = k - g * len3 -- temp
+                        local h = m // len2 -- px col index
+                        local n = m - h * len2 -- temp
+                        local i = n // kernelSize -- krn row index
+                        local j = n % kernelSize -- krn col index
 
                         -- Row.
                         local y = trunc(ty * g)

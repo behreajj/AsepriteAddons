@@ -180,12 +180,7 @@ dlg:button {
                 activeSprite:setPalette(AseUtilities.hexArrToAsePalette(cHexes))
             end
 
-            if oldMode == ColorMode.INDEXED then
-                app.command.ChangePixelFormat { format = "indexed" }
-            elseif oldMode == ColorMode.GRAY then
-                app.command.ChangePixelFormat { format = "gray" }
-            end
-
+            AseUtilities.changePixelFormat(oldMode)
             app.refresh()
         else
             app.alert("There is no active sprite.")

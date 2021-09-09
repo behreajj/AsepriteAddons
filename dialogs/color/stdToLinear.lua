@@ -4,39 +4,39 @@ dofile("../../support/aseutilities.lua")
 -- http://www.ericbrasseur.org/gamma.html
 
 local invPowPrev = {
-    Color(0xff000000),
-    Color(0xff626262),
-    Color(0xff888888),
-    Color(0xffa4a4a4),
-    Color(0xffbbbbbb),
-    Color(0xffcfcfcf),
-    Color(0xffe0e0e0),
-    Color(0xfff0f0f0),
-    Color(0xffffffff)
+    Color(  0,   0,   0, 255),
+    Color( 98,  98,  98, 255),
+    Color(136, 136, 136, 255),
+    Color(164, 164, 164, 255),
+    Color(187, 187, 187, 255),
+    Color(207, 207, 207, 255),
+    Color(224, 224, 224, 255),
+    Color(240, 240, 240, 255),
+    Color(255, 255, 255, 255)
 }
 
 local linearPrev = {
-    Color(0xff000000),
-    Color(0xff1f1f1f),
-    Color(0xff3f3f3f),
-    Color(0xff5f5f5f),
-    Color(0xff7f7f7f),
-    Color(0xff9f9f9f),
-    Color(0xffbfbfbf),
-    Color(0xffdfdfdf),
-    Color(0xffffffff)
+    Color(  0,   0,   0, 255),
+    Color( 31,  31,  31, 255),
+    Color( 63,  63,  63, 255),
+    Color( 95,  95,  95, 255),
+    Color(127, 127, 127, 255),
+    Color(159, 159, 159, 255),
+    Color(191, 191, 191, 255),
+    Color(223, 223, 223, 255),
+    Color(255, 255, 255, 255)
 }
 
 local powerPrev = {
-    Color(0xff000000),
-    Color(0xff030303),
-    Color(0xff0d0d0d),
-    Color(0xff1d1d1d),
-    Color(0xff363636),
-    Color(0xff585858),
-    Color(0xff858585),
-    Color(0xffbcbcbc),
-    Color(0xffffffff)
+    Color(  0,   0,   0, 255),
+    Color(  3,   3,   3, 255),
+    Color( 13,  13,  13, 255),
+    Color( 29,  29,  29, 255),
+    Color( 54,  54,  54, 255),
+    Color( 88,  88,  88, 255),
+    Color(133, 133, 133, 255),
+    Color(188, 188, 188, 255),
+    Color(255, 255, 255, 255)
 }
 
 local dlg = Dialog { title = "sRGB Conversion" }
@@ -119,12 +119,7 @@ dlg:button {
                             | rDest)
                     end
 
-                    if oldMode == ColorMode.INDEXED then
-                        app.command.ChangePixelFormat { format = "indexed" }
-                    elseif oldMode == ColorMode.GRAY then
-                        app.command.ChangePixelFormat { format = "gray" }
-                    end
-
+                    AseUtilities.changePixelFormat(oldMode)
                     app.refresh()
                 else
                     app.alert("There is no active cel.")

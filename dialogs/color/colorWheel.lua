@@ -423,7 +423,7 @@ dlg:button {
             end
             local offsetRad = math.rad(offsetDeg)
 
-            local overlayAseClr = Color(overlayHex)
+            local overlayAseClr = AseUtilities.hexToAseColor(overlayHex)
             local overlayBrush = Brush(1)
             local reticuleBrush = Brush(3)
 

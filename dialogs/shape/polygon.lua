@@ -11,9 +11,9 @@ local defaults = {
     yOrigin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = Color(AseUtilities.DEFAULT_STROKE),
+    strokeClr = Color(AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE)),
     useFill = true,
-    fillClr = Color(AseUtilities.DEFAULT_FILL),
+    fillClr = Color(AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL)),
     pullFocus = false
 }
 

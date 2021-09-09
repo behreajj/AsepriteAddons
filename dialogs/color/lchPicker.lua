@@ -10,14 +10,28 @@ local harmonies = {
 }
 
 local defaults = {
-    shade = Color(254, 2, 0, 255),
-    hexCode = "#FE0200",
+    shade = Color(255, 0, 0, 255),
+    hexCode = "#FF0000",
     lightness = 53,
     chroma = 104,
     hue = 40,
     alpha = 100,
     showHarmonies = false,
-    harmonyType = "TRIADIC"
+    harmonyType = "TRIADIC",
+    analogies = {
+        Color(255, 0, 102, 255),
+        Color(203, 99, 0, 255) },
+    complement = { Color(0, 162, 243, 255) },
+    splits = {
+        Color(0, 161, 156, 255),
+        Color(0, 154, 255, 255) },
+    squares = {
+        Color(0, 151, 0, 255),
+        Color(0, 162, 243, 255),
+        Color(157, 82, 255, 255) },
+    triads = {
+        Color(0, 131, 255, 255),
+        Color(0, 158, 59, 255) }
 }
 
 local dlg = Dialog { title = "LCh Color Picker" }
@@ -430,62 +444,35 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:shades {
-    id = "COMPLEMENT",
-    label = "Complement:",
-    mode = "pick",
-    colors = { Color(0xffffa100) },
-    visible = defaults.showHarmonies
-        and defaults.harmonyType == "COMPLEMENT",
-    onclick = function(ev)
-        if ev.button == MouseButton.LEFT then
-            setFromAse(ev.color)
-        elseif ev.button == MouseButton.RIGHT then
-            local clr = ev.color
-            if clr.alpha < 1 then
-                app.fgColor = Color(0, 0, 0, 0)
-            else
-                app.fgColor = AseUtilities.aseColorCopy(clr)
-            end
-        end
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:shades {
-    id = "triadic",
-    label = "Triadic:",
-    mode = "pick",
-    colors = {
-        Color(0xffff8200),
-        Color(0xff3b9d00) },
-    visible = defaults.showHarmonies
-        and defaults.harmonyType == "TRIADIC",
-    onclick = function(ev)
-        if ev.button == MouseButton.LEFT then
-            setFromAse(ev.color)
-        elseif ev.button == MouseButton.RIGHT then
-            local clr = ev.color
-            if clr.alpha < 1 then
-                app.fgColor = Color(0, 0, 0, 0)
-            else
-                app.fgColor = AseUtilities.aseColorCopy(clr)
-            end
-        end
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:shades {
     id = "analogous",
     label = "Analogous:",
     mode = "pick",
-    colors = {
-        Color(0xff6600ff),
-        Color(0xff0062ca) },
+    colors = defaults.analogies,
     visible = defaults.showHarmonies
         and defaults.harmonyType == "ANALOGOUS",
+    onclick = function(ev)
+        if ev.button == MouseButton.LEFT then
+            setFromAse(ev.color)
+        elseif ev.button == MouseButton.RIGHT then
+            local clr = ev.color
+            if clr.alpha < 1 then
+                app.fgColor = Color(0, 0, 0, 0)
+            else
+                app.fgColor = AseUtilities.aseColorCopy(clr)
+            end
+        end
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:shades {
+    id = "COMPLEMENT",
+    label = "Complement:",
+    mode = "pick",
+    colors = defaults.complement,
+    visible = defaults.showHarmonies
+        and defaults.harmonyType == "COMPLEMENT",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
             setFromAse(ev.color)
@@ -506,9 +493,7 @@ dlg:shades {
     id = "split",
     label = "Split:",
     mode = "pick",
-    colors = {
-        Color(0xff9ca100),
-        Color(0xffff9a00) },
+    colors = defaults.splits,
     visible = defaults.showHarmonies
         and defaults.harmonyType == "SPLIT",
     onclick = function(ev)
@@ -531,12 +516,32 @@ dlg:shades {
     id = "square",
     label = "Square:",
     mode = "pick",
-    colors = {
-        Color(0xff009600),
-        Color(0xffffa100),
-        Color(0xffff519d) },
+    colors = defaults.squares,
     visible = defaults.showHarmonies
         and defaults.harmonyType == "SQUARE",
+    onclick = function(ev)
+        if ev.button == MouseButton.LEFT then
+            setFromAse(ev.color)
+        elseif ev.button == MouseButton.RIGHT then
+            local clr = ev.color
+            if clr.alpha < 1 then
+                app.fgColor = Color(0, 0, 0, 0)
+            else
+                app.fgColor = AseUtilities.aseColorCopy(clr)
+            end
+        end
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:shades {
+    id = "triadic",
+    label = "Triadic:",
+    mode = "pick",
+    colors = defaults.triads,
+    visible = defaults.showHarmonies
+        and defaults.harmonyType == "TRIADIC",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
             setFromAse(ev.color)
