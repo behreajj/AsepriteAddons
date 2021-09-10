@@ -73,7 +73,7 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if activeSprite then
-            local oldMode = sprite.colorMode
+            local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
             local args = dlg.data

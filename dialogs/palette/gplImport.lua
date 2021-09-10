@@ -62,7 +62,7 @@ dlg:button {
             local colors = {}
 
             if file ~= nil then
-                local oldMode = sprite.colorMode
+                local oldMode = activeSprite.colorMode
                 app.command.ChangePixelFormat { format = "rgb" }
 
                 local lineCount = 1
