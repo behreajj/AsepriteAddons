@@ -10,8 +10,8 @@ local defaults = {
     tweenOps = "PAIR",
     startIndex = 0,
     count = 256,
-    aColor = Color(AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE)),
-    bColor = Color(AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL)),
+    aColor = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
+    bColor = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
     clrSpacePreset = "S_RGB",
     easingFuncRGB = "LINEAR",
     easingFuncHue = "NEAR",
@@ -274,8 +274,9 @@ dlg:button {
             if args.cw then cw = -1.0 end
             local levels = args.quantization
 
+            local selection = AseUtilities.getSelection(sprite)
             local img = cel.image
-            local iterator = img:pixels()
+            local iterator = img:pixels(selection.bounds)
             for elm in iterator do
 
                 -- Bring coordinates into range [0.0, 1.0].

@@ -1256,6 +1256,20 @@ function AseUtilities.drawStringVert(
     end
 end
 
+---Gets a selection copied by value from a sprite.
+---If the selection is empty, returns the sprite's
+---bounds instead, i.e., from (0, 0) to (w, h).
+---@param sprite table sprite
+---@return table
+function AseUtilities.getSelection(sprite)
+    local selection = sprite.selection
+    if selection.isEmpty then
+        return Selection(sprite.bounds)
+    else
+        return Selection(selection.bounds)
+    end
+end
+
 ---Creates an Aseprite palette from a table of
 ---hex color integers. Assumes the hex colors
 ---are belong to the same color profile as the

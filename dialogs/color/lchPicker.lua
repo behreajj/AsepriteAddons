@@ -43,8 +43,8 @@ local function updateHarmonies(l, c, h, a)
 
     local oneThird = 1.0 / 3.0
     local oneTwelve = 1.0 / 12.0
-    local splHue0 = 0.4166666666666667
-    local splHue1 = 0.5833333333333334
+    local splHue0 = 0.4166666666666667 -- 150
+    local splHue1 = 0.5833333333333334 -- 210
 
     local ana0 = Clr.lchTosRgba(l, c, h - oneTwelve, a)
     local ana1 = Clr.lchTosRgba(l, c, h + oneTwelve, a)
@@ -80,30 +80,11 @@ local function updateHarmonies(l, c, h, a)
         AseUtilities.clrToAseColor(square2)
     }
 
-    dlg:modify {
-        id = "COMPLEMENT",
-        colors = { squares[2] }
-    }
-
-    dlg:modify {
-        id = "triadic",
-        colors = tris
-    }
-
-    dlg:modify {
-        id = "analogous",
-        colors = analogues
-    }
-
-    dlg:modify {
-        id = "split",
-        colors = splits
-    }
-
-    dlg:modify {
-        id = "square",
-        colors = squares
-    }
+    dlg:modify { id = "complement", colors = { squares[2] } }
+    dlg:modify { id = "triadic", colors = tris }
+    dlg:modify { id = "analogous", colors = analogues }
+    dlg:modify { id = "split", colors = splits }
+    dlg:modify { id = "square", colors = squares }
 end
 
 local function updateWarning(clr)
@@ -332,6 +313,7 @@ dlg:button {
         local args = dlg.data
         if #args.clr > 0 then
             local clr = args.clr[1]
+            -- TODO: Formalize into a method?
             if clr.alpha < 1 then
                 app.fgColor = Color(0, 0, 0, 0)
             else
@@ -370,37 +352,24 @@ dlg:check {
     label = "Harmonies:",
     selected = defaults.showHarmonies,
     onclick = function()
-        local show = dlg.data.showHarmonies
-        dlg:modify {
-            id = "harmonyType",
-            visible = show
-        }
+        local args = dlg.data
+        local show = args.showHarmonies
+        dlg:modify { id = "harmonyType", visible = show }
 
-        local md = dlg.data.harmonyType
-        dlg:modify {
-            id = "COMPLEMENT",
-            visible = show and md == "COMPLEMENT"
-        }
-
-        dlg:modify {
-            id = "triadic",
-            visible = show and md == "TRIADIC"
-        }
-
-        dlg:modify {
-            id = "analogous",
-            visible = show and md == "ANALOGOUS"
-        }
-
-        dlg:modify {
-            id = "split",
-            visible = show and md == "SPLIT"
-        }
-
-        dlg:modify {
-            id = "square",
-            visible = show and md == "SQUARE"
-        }
+        if show then
+            local md = args.harmonyType
+            dlg:modify { id = "complement", visible = md == "COMPLEMENT" }
+            dlg:modify { id = "triadic", visible = md == "TRIADIC" }
+            dlg:modify { id = "analogous", visible = md == "ANALOGOUS" }
+            dlg:modify { id = "split", visible = md == "SPLIT" }
+            dlg:modify { id = "square", visible = md == "SQUARE" }
+        else
+            dlg:modify { id = "complement", visible = false }
+            dlg:modify { id = "triadic", visible = false }
+            dlg:modify { id = "analogous", visible = false }
+            dlg:modify { id = "split", visible = false }
+            dlg:modify { id = "square", visible = false }
+        end
     end
 }
 
@@ -414,30 +383,11 @@ dlg:combobox {
     visible = defaults.showHarmonies,
     onchange = function()
         local md = dlg.data.harmonyType
-        dlg:modify {
-            id = "COMPLEMENT",
-            visible = md == "COMPLEMENT"
-        }
-
-        dlg:modify {
-            id = "triadic",
-            visible = md == "TRIADIC"
-        }
-
-        dlg:modify {
-            id = "analogous",
-            visible = md == "ANALOGOUS"
-        }
-
-        dlg:modify {
-            id = "split",
-            visible = md == "SPLIT"
-        }
-
-        dlg:modify {
-            id = "square",
-            visible = md == "SQUARE"
-        }
+        dlg:modify { id = "complement", visible = md == "COMPLEMENT" }
+        dlg:modify { id = "triadic", visible = md == "TRIADIC" }
+        dlg:modify { id = "analogous", visible = md == "ANALOGOUS" }
+        dlg:modify { id = "split", visible = md == "SPLIT" }
+        dlg:modify { id = "square", visible = md == "SQUARE" }
     end
 }
 
@@ -467,7 +417,7 @@ dlg:shades {
 dlg:newrow { always = false }
 
 dlg:shades {
-    id = "COMPLEMENT",
+    id = "complement",
     label = "Complement:",
     mode = "pick",
     colors = defaults.complement,

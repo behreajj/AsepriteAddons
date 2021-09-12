@@ -10,8 +10,8 @@ local defaults = {
     tweenOps = "PAIR",
     startIndex = 0,
     count = 256,
-    aColor = Color(AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE)),
-    bColor = Color(AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL)),
+    aColor = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
+    bColor = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
     clrSpacePreset = "S_RGB",
     easingFuncRGB = "LINEAR",
     easingFuncHue = "NEAR",
@@ -278,8 +278,10 @@ dlg:button {
             local quantize = Utilities.quantizeUnsigned
             local toHex = Clr.toHex
 
+            -- TODO: Incorporate selection support in other gradients.
+            local selection = AseUtilities.getSelection(sprite)
             local img = cel.image
-            local iterator = img:pixels()
+            local iterator = img:pixels(selection.bounds)
             for elm in iterator do
                 local cx = xOrPx - elm.x
                 local cy = yOrPx - elm.y

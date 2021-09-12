@@ -19,8 +19,8 @@ local defaults = {
     tweenOps = "PAIR",
     startIndex = 0,
     count = 256,
-    aColor = Color(AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE)),
-    bColor = Color(AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL)),
+    aColor = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
+    bColor = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
     clrSpacePreset = "S_RGB",
     easingFuncRGB = "LINEAR",
     easingFuncHue = "NEAR",
@@ -368,8 +368,9 @@ dlg:button {
             -- Need a scalar to normalize distance to [0.0, 1.0]
             local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, w, h))
 
+            local selection = AseUtilities.getSelection(sprite)
             local img = cel.image
-            local iterator = img:pixels()
+            local iterator = img:pixels(selection.bounds)
             for elm in iterator do
                 local xPx = elm.x
                 local yPx = elm.y

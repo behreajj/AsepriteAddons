@@ -67,7 +67,7 @@ dlg:slider {
     id = "fps",
     label = "FPS:",
     min = 1,
-    max = 90,
+    max = 50,
     value = defaults.fps
 }
 
@@ -528,7 +528,6 @@ dlg:button {
             for j = 1, hexesSrgbLen, 1 do
                 local hexSrgb = hexesSrgb[j]
                 local lab = sRgbaToLab(fromHex(hexSrgb))
-                -- labs[i] = lab
 
                 -- From [-110.0, 110.0] To [-1.0, 1.0].
                 local xSgn = lab.a * inv110
@@ -567,7 +566,7 @@ dlg:button {
         end
 
         app.activeFrame = sprite.frames[
-            math.max(1, #sprite.frames // 2)]
+            math.ceil(#sprite.frames / 2)]
         app.refresh()
     end
 }

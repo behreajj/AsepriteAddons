@@ -140,6 +140,7 @@ dlg:combobox {
             id = "palPreset",
             visible = palType == "PRESET" and not isGray
         }
+        dlg:modify { id = "prependMask", visible = not isGray }
 
         if isRgb then
             updateColorPreviewRgba(dlg)
@@ -307,7 +308,7 @@ dlg:slider {
     id = "fps",
     label = "FPS:",
     min = 1,
-    max = 90,
+    max = 50,
     value = defaults.fps
 }
 
@@ -355,6 +356,7 @@ dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
     selected = defaults.prependMask,
+    visible = defaults.colorMode ~= "GRAY"
 }
 
 dlg:newrow { always = false }

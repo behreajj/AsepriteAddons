@@ -105,7 +105,7 @@ dlg:slider {
     id = "fps",
     label = "FPS:",
     min = 1,
-    max = 90,
+    max = 50,
     value = defaults.fps,
     visible = defaults.animate
 }
