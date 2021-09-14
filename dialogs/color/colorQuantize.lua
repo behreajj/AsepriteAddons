@@ -68,7 +68,7 @@ dlg:button {
                     if copyToLayer then
                         local trgLayer = sprite:newLayer()
                         trgLayer.name = srcCel.layer.name .. ".Quantized." .. levels
-                        local frame = app.activeFrame or 1
+                        local frame = app.activeFrame or sprite.frames[1]
                         local trgCel = sprite:newCel(trgLayer, frame)
                         trgCel.image = trgImg
                         trgCel.position = srcCel.position

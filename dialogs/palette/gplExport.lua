@@ -133,11 +133,11 @@ dlg:button {
             local pal = activeSprite.palettes[1]
             local palLen = #pal
             gplStr = gplStr .. strfmt(
-                "# Colors: %d\n",
-                palLen)
+                "# Colors: %d", palLen)
 
             local palLenn1 = palLen - 1
             for i = 0, palLenn1, 1 do
+                gplStr = gplStr .. '\n'
                 local aseColor = pal:getColor(i)
 
                 local r = max(0, min(255, aseColor.red))
@@ -163,10 +163,6 @@ dlg:button {
                     gplStr = gplStr .. strfmt(
                         "%3d %3d %3d %06X",
                         r, g, b, hexRgb)
-                end
-
-                if i < palLenn1 then
-                    gplStr = gplStr .. '\n'
                 end
             end
 

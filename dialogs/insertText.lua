@@ -400,7 +400,7 @@ dlg:button {
             end
 
         else
-            local activeFrame = app.activeFrame or 1
+            local activeFrame = app.activeFrame or sprite.frames[1]
             local activeCel = layer:cel(activeFrame)
                 or sprite:newCel(layer, activeFrame)
             activeCel.position = stillPos

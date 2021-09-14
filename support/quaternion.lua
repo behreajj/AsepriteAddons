@@ -133,6 +133,8 @@ function Quaternion.conj(a)
 end
 
 ---Divides the left quaternion by the right.
+---If the right operand is zero, returns the
+---identity.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
@@ -319,6 +321,8 @@ function Quaternion.fromTo(a, b)
 end
 
 ---Finds the inverse of a quaternion.
+---If the operand is zero, returns the
+---identity.
 ---@param a table left operand
 ---@return table
 function Quaternion.inverse(a)
@@ -429,6 +433,8 @@ end
 
 ---Divides a quaternion by its magnitude so
 ---that it is a versor on the unit hypersphere.
+---Returns the identity if the quaternion is
+---zero.
 ---@param a table quaternion
 ---@return table
 function Quaternion.normalize(a)
@@ -551,6 +557,7 @@ function Quaternion.rotateZInternal(q, cosah, sinah)
 end
 
 ---Scales a quaternion, left, by a number, right.
+---Returns the identity if the scalar is zero.
 ---@param a table left operand
 ---@param b number right operand
 ---@return table

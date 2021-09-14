@@ -14,9 +14,7 @@ local defaults = {
     pullFocus = true
 }
 
-local dlg = Dialog {
-    title = "Open Sprite +"
-}
+local dlg = Dialog { title = "Open Sprite +" }
 
 dlg:file {
     id = "spriteFile",
@@ -124,7 +122,7 @@ dlg:button {
             local openSprite = nil
             local exists = app.fs.isFile(spriteFile)
             if exists then
-                openSprite = Sprite  { fromFile = spriteFile }
+                openSprite = Sprite { fromFile = spriteFile }
                 if openSprite then
                     app.activeSprite = openSprite
                     app.command.ChangePixelFormat { format = "rgb" }
@@ -140,7 +138,7 @@ dlg:button {
                     end
 
                     -- Aseprite's built-in nearest color in palette method
-                    -- cannot be trusted. Even if it could be, there's no way
+                    -- isn't trustworthy. Even if it were, there's no way
                     -- of telling the user's intent. It could be that
                     -- index 6 should be the transparent color for both the
                     -- old and new palette, no matter how different the colors

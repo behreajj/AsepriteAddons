@@ -172,7 +172,7 @@ dlg:button {
             { args.strokeClr.rgbaPixel,
               args.dotClr.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
-        local actframe = app.activeFrame or 1
+        local actframe = app.activeFrame or sprite.frames[1]
 
         AseUtilities.drawCurve2(
             curve,

@@ -200,17 +200,25 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
+
+        -- These need to be cached prior to the potential
+        -- creation of a new sprite, otherwise color chosen
+        -- by palette index will be incorrect.
+        local aColorAse = args.aColor
+        local bColorAse = args.bColor
+        local aClr = AseUtilities.aseColorToClr(aColorAse)
+        local bClr = AseUtilities.aseColorToClr(bColorAse)
+
         local clrSpacePreset = args.clrSpacePreset
         local sprite = AseUtilities.initCanvas(
             64, 64, "Gradient.Conic." .. clrSpacePreset)
         if sprite.colorMode == ColorMode.RGB then
-
             local atan2 = math.atan
             local toHex = Clr.toHex
             local quantize = Utilities.quantizeUnsigned
 
             local layer = sprite.layers[#sprite.layers]
-            local frame = app.activeFrame or 1
+            local frame = app.activeFrame or sprite.frames[1]
             local cel = sprite:newCel(layer, frame)
 
             --Easing mode.
@@ -236,12 +244,6 @@ dlg:button {
                     return Clr.mixArr(clrArr, t, pairFunc)
                 end
             else
-                local aColorAse = args.aColor
-                local bColorAse = args.bColor
-
-                local aClr = AseUtilities.aseColorToClr(aColorAse)
-                local bClr = AseUtilities.aseColorToClr(bColorAse)
-
                 local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
                     clrSpacePreset,
                     rgbPreset,

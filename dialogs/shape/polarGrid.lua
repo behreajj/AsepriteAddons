@@ -168,7 +168,7 @@ dlg:button {
             { args.fillClr.rgbaPixel,
               args.strokeClr.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
-        local frame = app.activeFrame or 1
+        local frame = app.activeFrame or sprite.frames[1]
         local cel = sprite:newCel(layer, frame)
 
         local sectors = args.sectors

@@ -18,7 +18,8 @@ local defaults = {
     aChannel = 0,
     grayChannel = 0,
     linkRgbGray = false,
-    transparencyMask = 0, -- This MUST be index ZERO.
+    -- Mask MUST be index ZERO.
+    transparencyMask = 0,
     bkgIdx = 0,
     frames = 1,
     fps = 24,
@@ -79,9 +80,7 @@ local function updateRgbLinkFromGray(dialog)
     end
 end
 
-local dlg = Dialog {
-    title = "New Sprite +"
-}
+local dlg = Dialog { title = "New Sprite +" }
 
 dlg:entry {
     id = "filename",

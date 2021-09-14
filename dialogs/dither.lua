@@ -324,7 +324,7 @@ dlg:button {
                         local trgLayer = sprite:newLayer()
                         trgLayer.name = srcCel.layer.name
                             .. string.format(".Dither.%03d", factor100)
-                        local frame = app.activeFrame or 1
+                        local frame = app.activeFrame or sprite.frames[1]
                         sprite:newCel(trgLayer, frame,
                             trgImg, srcCel.position)
                     else

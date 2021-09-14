@@ -70,9 +70,10 @@ dlg:combobox {
     option = defaults.tweenOps,
     options = GradientUtilities.TWEEN_PRESETS,
     onchange = function()
-        local isPair = dlg.data.tweenOps == "PAIR"
-        local isPalette = dlg.data.tweenOps == "PALETTE"
-        local md = dlg.data.clrSpacePreset
+        local args = dlg.data
+        local isPair = args.tweenOps == "PAIR"
+        local isPalette = args.tweenOps == "PALETTE"
+        local md = args.clrSpacePreset
 
         dlg:modify {
             id = "aColor",
@@ -200,12 +201,20 @@ dlg:button {
     onclick = function()
         local args = dlg.data
 
+        -- These need to be cached prior to the potential
+        -- creation of a new sprite, otherwise color chosen
+        -- by palette index will be incorrect.
+        local aColorAse = args.aColor
+        local bColorAse = args.bColor
+        local aClr = AseUtilities.aseColorToClr(aColorAse)
+        local bClr = AseUtilities.aseColorToClr(bColorAse)
+
         local clrSpacePreset = args.clrSpacePreset
         local sprite = AseUtilities.initCanvas(
             64, 64, "Gradient.Linear." .. clrSpacePreset)
         if sprite.colorMode == ColorMode.RGB then
             local layer = sprite.layers[#sprite.layers]
-            local frame = app.activeFrame or 1
+            local frame = app.activeFrame or sprite.frames[1]
             local cel = sprite:newCel(layer, frame)
 
             --Easing mode.
@@ -215,7 +224,6 @@ dlg:button {
 
             local easeFuncFinal = nil
             if tweenOps == "PALETTE" then
-
                 local startIndex = args.startIndex
                 local count = args.count
                 local pal = sprite.palettes[1]
@@ -231,12 +239,6 @@ dlg:button {
                     return Clr.mixArr(clrArr, t, pairFunc)
                 end
             else
-                local aColorAse = args.aColor
-                local bColorAse = args.bColor
-
-                local aClr = AseUtilities.aseColorToClr(aColorAse)
-                local bClr = AseUtilities.aseColorToClr(bColorAse)
-
                 local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
                     clrSpacePreset,
                     rgbPreset,
