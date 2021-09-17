@@ -58,17 +58,17 @@ end
 ---@param v table scalar
 ---@return table
 function Curve2:scale(v)
-    return self:scaleByVec2(v)
+    return self:scaleVec2(v)
 end
 
 ---Scales this curve by a number.
 ---@param n table uniform scalar
 ---@return table
-function Curve2:scaleByNumber(n)
+function Curve2:scaleNum(n)
     if n ~= 0.0 then
         local knsLen = #self.knots
         for i = 1, knsLen, 1 do
-            self.knots[i]:scaleByNumber(n)
+            self.knots[i]:scaleNum(n)
         end
     end
     return self
@@ -77,11 +77,11 @@ end
 ---Scales this curve by a vector.
 ---@param v table nonuniform scalar
 ---@return table
-function Curve2:scaleByVec2(v)
+function Curve2:scaleVec2(v)
     if Vec2.all(v) then
         local knsLen = #self.knots
         for i = 1, knsLen, 1 do
-            self.knots[i]:scaleByVec2(v)
+            self.knots[i]:scaleVec2(v)
         end
     end
     return self

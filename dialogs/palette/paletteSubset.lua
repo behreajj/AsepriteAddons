@@ -116,6 +116,9 @@ dlg:button {
 
             local trgHexes = {}
             for i = 0, stride - 1, 1 do
+                -- TODO: Is wrapping i necessary here?
+                -- Might be an artifact of when the step
+                -- in the for loop was more than 1.
                 local j = i % stride
                 local k = (origin + j) % srcLen
                 trgHexes[1 + i] = hexesProfile[1 + k]

@@ -265,7 +265,6 @@ dlg:button {
 
                     -- Convert source palette colors to points
                     -- inserted into octree.
-                    -- local octreeBuildStart = os.time()
                     local ptToHexDict = {}
                     local hexesSrgbLen = #hexesSrgb
                     local cvgCapacity = args.cvgCapacity
@@ -281,11 +280,6 @@ dlg:button {
                             insert(octree, pt)
                         end
                     end
-                    -- local octreeBuildEnd = os.time()
-                    -- print(string.format(
-                    --     "Octree Time:\nStart: %d\nEnd: %d\nElapsed: %d",
-                    --     octreeBuildStart, octreeBuildEnd,
-                    --     os.difftime(octreeBuildEnd, octreeBuildStart)))
 
                     -- Select query radius according to color space.
                     local cvgRad = 0.0
@@ -303,7 +297,7 @@ dlg:button {
                         local center = query.point
                         local near = {}
                         search(octree, center, cvgRad, near, resultLimit)
-                        local resultHex = 0x00000000
+                        local resultHex = 0
                         if #near > 0 then
                             local nearestPt = near[1].point
                             local ptHash = v3Hash(nearestPt)

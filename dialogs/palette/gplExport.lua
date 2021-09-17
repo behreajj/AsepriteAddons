@@ -76,14 +76,13 @@ dlg:button {
             local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
-            local args = dlg.data
-
             -- Cache functions.
             local min = math.min
             local max = math.max
             local strfmt = string.format
 
             -- Unpack arguments.
+            local args = dlg.data
             local palName = args.palName or defaults.palName
             local columns = args.columns or defaults.columns
             local attribName = args.attribName or defaults.attribName
@@ -183,8 +182,6 @@ dlg:button {
                 app.alert("Filepath is empty.")
             end
 
-            -- TODO: Replace this and other instances with
-            -- AseUtilities.changePixelFormat.
             AseUtilities.changePixelFormat(oldMode)
             app.refresh()
 

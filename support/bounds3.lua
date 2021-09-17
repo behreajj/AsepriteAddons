@@ -60,24 +60,57 @@ function Bounds3.newByVal(mn, mx)
     return inst
 end
 
+function Bounds3:__le(b)
+    return Bounds3.center(self) <= Bounds3.center(b)
+end
+
+function Bounds3:__lt(b)
+    return Bounds3.center(self) < Bounds3.center(b)
+end
+
 function Bounds3:__tostring()
     return Bounds3.toJson(self)
 end
 
+---Returns true if the bounds minimum and
+---maximum corner are unequal in all three
+---dimensions; i.e., the bounds is valid.
+---@param b table bounds
+---@return boolean
+function Bounds3.all(b)
+    local mn = b.mn
+    local mx = b.mx
+    return math.abs(mx.x - mn.x) > 0.000001
+       and math.abs(mx.y - mn.y) > 0.000001
+       and math.abs(mx.z - mn.z) > 0.000001
+end
+
+---Returns true if the bounds minimum and
+---maximum corner are unequal in at least
+---one dimension.
+---@param b table bounds
+---@return boolean
+function Bounds3.any(b)
+    local mn = b.mn
+    local mx = b.mx
+    return math.abs(mx.x - mn.x) > 0.000001
+       or math.abs(mx.y - mn.y) > 0.000001
+       or math.abs(mx.z - mn.z) > 0.000001
+end
+
 ---Finds the center of a bounding box.
 ---Returns a Vec3.
----@param b table bound
+---@param b table bounds
 ---@return table
 function Bounds3.center(b)
-    return Vec3.scale(
-        Vec3.add(b.mn, b.mx), 0.5)
+    return Vec3.mixNum(b.mn, b.mx, 0.5)
 end
 
 ---Evaluates whether a point is within the
----bounding volume, lower bounds inclusive,
----upper bounds exclusive.
----@param b table
----@param pt table
+---bounds, lower bounds inclusive, upper
+---bounds exclusive.
+---@param b table bounds
+---@param pt table point
 ---@return boolean
 function Bounds3.containsInclExcl(b, pt)
     local mn = b.mn
@@ -90,13 +123,13 @@ end
 ---Finds the extent of the bounds.
 ---Returns a Vec3 representing a
 ---non uniform scale.
----@param b table bound
+---@param b table bounds
 ---@return table
 function Bounds3.extent(b)
     return Vec3.diff(b.mx, b.mn)
 end
 
----Creates a bounding volume from a center
+---Creates a bounding box from a center
 ---and the volume's extent. Both the center
 ---and extent should be Vec3s.
 ---@param center table center
@@ -109,8 +142,8 @@ function Bounds3.fromCenterExtent(center, extent)
         Vec3.add(center, halfExtent))
 end
 
----Creates a bounding volume that encompasses
----an array of points.
+---Creates a bounding box that encompasses
+---a table of Vec3s.
 ---@param points table points
 ---@return table
 function Bounds3.fromPoints(points)
@@ -136,13 +169,13 @@ function Bounds3.fromPoints(points)
 
     return Bounds3.newByRef(
         Vec3.new(
-            lbx - 0.000001,
-            lby - 0.000001,
-            lbz - 0.000001),
+            lbx - 0.000002,
+            lby - 0.000002,
+            lbz - 0.000002),
         Vec3.new(
-            ubx + 0.000001,
-            uby + 0.000001,
-            ubz + 0.000001))
+            ubx + 0.000002,
+            uby + 0.000002,
+            ubz + 0.000002))
 end
 
 ---Evaluates whether two bounding volumes intersect.
@@ -150,15 +183,15 @@ end
 ---@param b table right comparisand
 ---@return boolean
 function Bounds3.intersectsBounds(a, b)
-    return a.max.x > b.min.x
-        or a.min.x < b.max.x
-        or a.max.y > b.min.y
-        or a.min.y < b.max.y
-        or a.max.z > b.min.z
-        or a.min.z < b.max.z
+    return a.mx.z > b.mn.z
+        or a.mn.z < b.mx.z
+        or a.mx.y > b.mn.y
+        or a.mn.y < b.mx.y
+        or a.mx.x > b.mn.x
+        or a.mn.x < b.mx.x
 end
 
----Evaluates whether a bounding volume intersects
+---Evaluates whether a bounding box intersects
 ---a sphere. The sphere is defined as a Vec3 center
 ---and a number radius.
 ---@param a table bounds
@@ -166,7 +199,6 @@ end
 ---@param radius number sphere radius
 ---@return boolean
 function Bounds3.intersectsSphere(a, center, radius)
-
     local xd = 0.0
     if center.x < a.mn.x then
         xd = center.x - a.mn.x
@@ -191,30 +223,40 @@ function Bounds3.intersectsSphere(a, center, radius)
     return (xd * xd + yd * yd + zd * zd) < (radius * radius)
 end
 
----Splits a bounding volume into octants
+---Returns true if the bounds minimum and
+---maximum corner are approximately equal,
+---i.e., the bounds has no volume.
+---@param b table bounds
+---@return boolean
+function Bounds3.none(b)
+    return Vec3.approx(b.mn, b.mx, 0.000001);
+end
+
+---Splits a bounding box into octants
 ---according to three factors in the range
 ---[0.0, 1.0]. The factor on the x axis
 ---governs the vertical split. On the y axis,
 ---the horizontal split. On the z axis, the
 ---depth split.
+---@param b table bounds
 ---@param xFac number vertical factor
 ---@param yFac number horizontal vector
 ---@param zFac number depth factor
----@param bsw table back south west
----@param bse table back south east
----@param bnw table back north west
----@param bne table back north east
----@param fsw table front south west
----@param fse table front south east
----@param fnw table front north west
----@param fne table front north east
+---@param bsw table back south west octant
+---@param bse table back south east octant
+---@param bnw table back north west octant
+---@param bne table back north east octant
+---@param fsw table front south west octant
+---@param fse table front south east octant
+---@param fnw table front north west octant
+---@param fne table front north east octant
 function Bounds3.splitInternal(
     b, xFac, yFac, zFac,
     bsw, bse, bnw, bne,
     fsw, fse, fnw, fne)
 
-    local bMin = b.mn
-    local bMax = b.mx
+    local bMn = b.mn
+    local bMx = b.mx
 
     local tx = xFac
     if tx < 0.000001 then tx = 0.000001
@@ -228,28 +270,27 @@ function Bounds3.splitInternal(
     if tz < 0.000001 then tz = 0.000001
     elseif tz > 0.999999 then tz = 0.999999 end
 
-    local x = ( 1.0 - tx ) * bMin.x + tx * bMax.x
-    local y = ( 1.0 - ty ) * bMin.y + ty * bMax.y
-    local z = ( 1.0 - tz ) * bMin.z + tz * bMax.z
+    local x = ( 1.0 - tx ) * bMn.x + tx * bMx.x
+    local y = ( 1.0 - ty ) * bMn.y + ty * bMx.y
+    local z = ( 1.0 - tz ) * bMn.z + tz * bMx.z
 
-    bsw.mn = Vec3.new(bMin.x, bMin.y, bMin.z)
-    bse.mn = Vec3.new(     x, bMin.y, bMin.z)
-    bnw.mn = Vec3.new(bMin.x,      y, bMin.z)
-    bne.mn = Vec3.new(     x,      y, bMin.z)
-    fsw.mn = Vec3.new(bMin.x, bMin.y,      z)
-    fse.mn = Vec3.new(     x, bMin.y,      z)
-    fnw.mn = Vec3.new(bMin.x,      y,      z)
-    fne.mn = Vec3.new(     x,      y,      z)
+    bsw.mn = Vec3.new(bMn.x, bMn.y, bMn.z)
+    bse.mn = Vec3.new(    x, bMn.y, bMn.z)
+    bnw.mn = Vec3.new(bMn.x,     y, bMn.z)
+    bne.mn = Vec3.new(    x,     y, bMn.z)
+    fsw.mn = Vec3.new(bMn.x, bMn.y,     z)
+    fse.mn = Vec3.new(    x, bMn.y,     z)
+    fnw.mn = Vec3.new(bMn.x,     y,     z)
+    fne.mn = Vec3.new(    x,     y,     z)
 
-    bsw.mx = Vec3.new(     x,      y,      z)
-    bse.mx = Vec3.new(bMax.x,      y,      z)
-    bnw.mx = Vec3.new(     x, bMax.y,      z)
-    bne.mx = Vec3.new(bMax.x, bMax.y,      z)
-    fsw.mx = Vec3.new(     x,      y, bMax.z)
-    fse.mx = Vec3.new(bMax.x,      y, bMax.z)
-    fnw.mx = Vec3.new(     x, bMax.y, bMax.z)
-    fne.mx = Vec3.new(bMax.x, bMax.y, bMax.z)
-
+    bsw.mx = Vec3.new(    x,     y,     z)
+    bse.mx = Vec3.new(bMx.x,     y,     z)
+    bnw.mx = Vec3.new(    x, bMx.y,     z)
+    bne.mx = Vec3.new(bMx.x, bMx.y,     z)
+    fsw.mx = Vec3.new(    x,     y, bMx.z)
+    fse.mx = Vec3.new(bMx.x,     y, bMx.z)
+    fnw.mx = Vec3.new(    x, bMx.y, bMx.z)
+    fne.mx = Vec3.new(bMx.x, bMx.y, bMx.z)
 end
 
 ---Returns a JSON string of the bounds.
@@ -263,14 +304,6 @@ function Bounds3.toJson(b)
         .. "}"
 end
 
----Finds the volume of the bounds.
----@param b table bounds
----@return number
-function Bounds3.volume(b)
-    local dff = Vec3.diff(b.mx, b.mn)
-    return dff.x * dff.y * dff.z
-end
-
 ---Returns a bounds with the dimensions
 ---of the CIE LAB color space. Intended
 ---for use with an octree containing
@@ -282,14 +315,24 @@ function Bounds3.cieLab()
         Vec3.new( 110.0,  110.0, 101.0))
 end
 
+---Returns a bounds containing a signed
+---unit cube in Cartesian coordinates, from
+---[-1.0, 1.0].
+---@return table
+function Bounds3.unitCubeSigned()
+    return Bounds3.newByRef(
+        Vec3.new(-1.000002, -1.000002, -1.000002),
+        Vec3.new( 1.000002,  1.000002,  1.000002))
+end
+
 ---Returns a bounds containing an unsigned
 ---unit cube in Cartesian coordinates, from
 ---[0.0, 1.0].
 ---@return table
 function Bounds3.unitCubeUnsigned()
     return Bounds3.newByRef(
-        Vec3.new(-0.000001, -0.000001, -0.000001),
-        Vec3.new( 1.000001,  1.000001,  1.000001))
+        Vec3.new(-0.000002, -0.000002, -0.000002),
+        Vec3.new( 1.000002,  1.000002,  1.000002))
 end
 
 return Bounds3
