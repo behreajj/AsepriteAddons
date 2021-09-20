@@ -282,8 +282,10 @@ dlg:button {
                                 lum = lab.l * 0.01
                             end
 
-                            if lum < minLum then minLum = lum end
-                            if lum > maxLum then maxLum = lum end
+                            if (hex & 0xff000000) ~= 0 then
+                                if lum < minLum then minLum = lum end
+                                if lum > maxLum then maxLum = lum end
+                            end
 
                             lumDict[hex] = lum
                             srcAlphaDict[hex] = hex >> 0x18 & 0xff
@@ -295,7 +297,11 @@ dlg:button {
                         local invRangeLum = 1.0 / rangeLum
                         if useNormalize and rangeLum ~= 0 then
                             for hex, lum in pairs(lumDict) do
-                                lumDict[hex] = (lum - minLum) * invRangeLum
+                                if (hex & 0xff000000) ~= 0 then
+                                    lumDict[hex] = (lum - minLum) * invRangeLum
+                                else
+                                    lumDict[hex] = 0
+                                end
                             end
                         end
 
