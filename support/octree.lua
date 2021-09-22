@@ -26,6 +26,8 @@ Octree.FRONT_SOUTH_WEST = 5
 ---@param level number
 ---@return table
 function Octree.new(bounds, capacity, level)
+    -- TODO: Implement __lt and __le with bounds.
+
     local inst = setmetatable({}, Octree)
     inst.bounds = bounds or Bounds3.newByRef()
     inst.capacity = capacity or 16

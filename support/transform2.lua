@@ -140,22 +140,26 @@ end
 ---@param v table scalar
 ---@return table
 function Transform2:scaleBy(v)
-    return self:scaleByVec3(v)
+    return self:scaleByVec2(v)
 end
 
 ---Scales a transform by a number.
 ---@param v number uniform scalar
 ---@return table
 function Transform2:scaleByNum(v)
-    self.scale = Vec2.scale(self.scale, v)
+    if v ~= 0.0 then
+        self.scale = Vec2.scale(self.scale, v)
+    end
     return self
 end
 
 ---Moves a transform by a vector.
 ---@param v table nonuniform scalar
 ---@return table
-function Transform2:scaleByVec3(v)
-    self.scale = Vec2.hadamard(self.scale, v)
+function Transform2:scaleByVec2(v)
+    if Vec2.all(v) then
+        self.scale = Vec2.hadamard(self.scale, v)
+    end
     return self
 end
 
@@ -165,7 +169,7 @@ end
 ---@param step number step
 ---@return table
 function Transform2:scaleTo(v, step)
-    return self:scaleToVec3(v, step)
+    return self:scaleToVec2(v, step)
 end
 
 ---Scales a transform to a nonuniform scale
@@ -174,11 +178,13 @@ end
 ---@param scl table scale
 ---@param step number step
 ---@return table
-function Transform2:scaleToVec3(scl, step)
+function Transform2:scaleToVec2(scl, step)
     local t = step or 1.0
 
     if t >= 1.0 then
-        self.scale = Vec2.new(scl.x, scl.y)
+        if Vec2.all(scl) then
+            self.scale = Vec2.new(scl.x, scl.y)
+        end
         return self
     end
 
@@ -186,8 +192,11 @@ function Transform2:scaleToVec3(scl, step)
         return self
     end
 
-    self.scale = Vec2.mixNum(
+    local sNew = Vec2.mixNum(
         self.scale, scl, t)
+    if Vec2.all(sNew) then
+        self.scale = sNew
+    end
     return self
 end
 
@@ -201,7 +210,9 @@ function Transform2:scaleToNum(scl, step)
     local t = step or 1.0
 
     if t >= 1.0 then
-        self.scale = Vec2.new(scl, scl)
+        if scl ~= 0 then
+            self.scale = Vec2.new(scl, scl)
+        end
         return self
     end
 
@@ -209,9 +220,12 @@ function Transform2:scaleToNum(scl, step)
         return self
     end
 
-    self.scale = Vec2.mixNum(
+    local sNew = Vec2.mixNum(
         self.scale,
         Vec2.new(scl, scl), t)
+    if Vec2.all(sNew) then
+        self.scale = sNew
+    end
     return self
 end
 

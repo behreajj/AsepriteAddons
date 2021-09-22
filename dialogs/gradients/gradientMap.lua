@@ -239,56 +239,53 @@ dlg:button {
                         -- Cache luminosities and source alphas in dictionaries.
                         for hex, _ in pairs(srcClrDict) do
 
-                            -- Decompose hexadecimal to sRGB in [0, 255].
-                            local sbi = hex >> 0x10 & 0xff
-                            local sgi = hex >> 0x08 & 0xff
-                            local sri = hex & 0xff
-
+                            local sai = hex >> 0x18 & 0xff
                             local lum = 0.0
 
-                            if sbi == sgi and sbi == sri and sri == sgi then
+                            if sai > 0 then
+                                local sbi = hex >> 0x10 & 0xff
+                                local sgi = hex >> 0x08 & 0xff
+                                local sri = hex & 0xff
 
-                                lum = sbi * 0.00392156862745098
+                                if sbi == sgi and sbi == sri and sri == sgi then
+                                    lum = sbi * 0.00392156862745098
+                                else
+                                    -- Convert to linear via look up table.
+                                    local lbi = stlLut[1 + sbi]
+                                    local lgi = stlLut[1 + sgi]
+                                    local lri = stlLut[1 + sri]
 
-                            else
+                                    -- Find luminance. Same as the Y in CIE XYZ.
+                                    -- 0.212 / 255.0,
+                                    -- 0.715 / 255.0
+                                    -- 0.072 / 255.0
+                                    -- local lum = 0.0008339189910613837 * lri
+                                    --     + 0.002804584845905505 * lgi
+                                    --     + 0.0002830647904840915 * lbi
 
-                                -- Convert to linear via look up table.
-                                local lbi = stlLut[1 + sbi]
-                                local lgi = stlLut[1 + sgi]
-                                local lri = stlLut[1 + sri]
+                                    -- Convert luminance to sRGB grayscale.
+                                    -- if lum <= 0.0031308 then
+                                    --     lum = lum * 12.92
+                                    -- else
+                                    --     lum = (lum ^ 0.4166666666666667) * 1.055 - 0.055
+                                    -- end
 
-                                -- Find luminance. Same as the Y in CIE XYZ.
-                                -- 0.212 / 255.0,
-                                -- 0.715 / 255.0
-                                -- 0.072 / 255.0
-                                -- local lum = 0.0008339189910613837 * lri
-                                --     + 0.002804584845905505 * lgi
-                                --     + 0.0002830647904840915 * lbi
+                                    local xyz = lRgbToXyz(
+                                        lri * 0.00392156862745098,
+                                        lgi * 0.00392156862745098,
+                                        lbi * 0.00392156862745098,
+                                        1.0)
+                                    local lab = xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
 
-                                -- Convert luminance to sRGB grayscale.
-                                -- if lum <= 0.0031308 then
-                                --     lum = lum * 12.92
-                                -- else
-                                --     lum = (lum ^ 0.4166666666666667) * 1.055 - 0.055
-                                -- end
+                                    lum = lab.l * 0.01
+                                end
 
-                                local xyz = lRgbToXyz(
-                                    lri * 0.00392156862745098,
-                                    lgi * 0.00392156862745098,
-                                    lbi * 0.00392156862745098,
-                                    1.0)
-                                local lab = xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
-
-                                lum = lab.l * 0.01
-                            end
-
-                            if (hex & 0xff000000) ~= 0 then
                                 if lum < minLum then minLum = lum end
                                 if lum > maxLum then maxLum = lum end
                             end
 
                             lumDict[hex] = lum
-                            srcAlphaDict[hex] = hex >> 0x18 & 0xff
+                            srcAlphaDict[hex] = sai
                         end
 
                         -- Normalize range if requested.
@@ -300,7 +297,7 @@ dlg:button {
                                 if (hex & 0xff000000) ~= 0 then
                                     lumDict[hex] = (lum - minLum) * invRangeLum
                                 else
-                                    lumDict[hex] = 0
+                                    lumDict[hex] = 0.0
                                 end
                             end
                         end

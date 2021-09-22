@@ -141,9 +141,8 @@ end
 
 ---Returns a string containing diagnostic information
 ---about an Aseprite Color object. Format lists the
----nearest palette index, the red, green, blue and
----alpha in unsigned byte range [0, 255], and a web
----friendly hexadecimal representation.
+---the red, green, blue and alpha in unsigned byte
+---range [0, 255], and a web friendly hexadecimal.
 ---@param aseColor table Aseprite color
 ---@return string
 function AseUtilities.aseColorToString(aseColor)
@@ -154,7 +153,6 @@ function AseUtilities.aseColorToString(aseColor)
     -- nearest color in palette index, is a real number,
     -- and it's not clear when it could be mutated or
     -- by whom.
-    -- local idx = math.tointeger(aseColor.index)
     return string.format(
         "(%03d, %03d, %03d, %03d) #%06X",
         r, g, b, aseColor.alpha,
@@ -162,7 +160,7 @@ function AseUtilities.aseColorToString(aseColor)
 end
 
 ---Returns a string containing diagnostic information
----about an Aseprite Color object.
+---about an Aseprite Palette object.
 ---@param pal table Aseprite palette
 ---@param startIndex number start index
 ---@param count number sample count
@@ -194,13 +192,13 @@ end
 ---Loads a palette based on a string. The string is
 ---expected to be either "FILE", "PRESET" or "ACTIVE".
 ---Returns a tuple of tables. The first table is an
----array of hexadecimals according to the profile; the
----second is a copy of the first converted to SRGB.
----If a palette is loaded from a filepath or a preset the
----two tables should match, as Aseprite does not support
----color management for palettes. The correctNoAlpha
----flag checks for colors with zero alpha that are not
----black and replaces them with 0x00000000.
+---array of hexadecimals according to the sprite color
+---profile; the second is a copy of the first converted
+---to SRGB. If a palette is loaded from a filepath or a
+---preset the two tables should match, as Aseprite does
+---not support color management for palettes. The
+---correctNoAlpha flag replaces colors with zero alpha
+---that are not with 0x00000000.
 ---@param palType string enumeration
 ---@param filePath string file path
 ---@param presetPath string preset path
@@ -248,7 +246,6 @@ function AseUtilities.asePaletteLoad(
         end
     elseif palType == "PRESET" then
         if presetPath and #presetPath > 0 then
-
             -- Given how unreliable xpcall has proven with Sprites and
             -- ColorProfiles, maybe don't use it.
             -- app.fs.isFile doesn't work here.
@@ -599,8 +596,7 @@ function AseUtilities.createNewCels(
                     "%d beyond the limit of %d.",
                     flatCount - AseUtilities.CEL_COUNT_LIMIT,
                     AseUtilities.CEL_COUNT_LIMIT),
-                "Do you wish to proceed?"
-            },
+                "Do you wish to proceed?" },
             buttons = { "&YES", "&NO" }
         }
 
@@ -671,8 +667,7 @@ function AseUtilities.createNewFrames(sprite, count, duration)
                     "%d beyond the limit of %d.",
                     count - AseUtilities.FRAME_COUNT_LIMIT,
                     AseUtilities.FRAME_COUNT_LIMIT),
-                "Do you wish to proceed?"
-            },
+                "Do you wish to proceed?" },
             buttons = { "&YES", "&NO" }
         }
 
@@ -731,8 +726,7 @@ function AseUtilities.createNewLayers(
                     "%d beyond the limit of %d.",
                     count - AseUtilities.LAYER_COUNT_LIMIT,
                     AseUtilities.LAYER_COUNT_LIMIT),
-                "Do you wish to proceed?"
-            },
+                "Do you wish to proceed?" },
             buttons = { "&YES", "&NO" }
         }
 

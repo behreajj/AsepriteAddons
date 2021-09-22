@@ -321,8 +321,9 @@ dlg:button {
                     -- Either copy to new layer or reassign image.
                     local copyToLayer = args.copyToLayer
                     if copyToLayer then
+                        local srcLayer = srcCel.layer
                         local trgLayer = sprite:newLayer()
-                        trgLayer.name = srcCel.layer.name .. "." .. clrSpacePreset
+                        trgLayer.name = srcLayer.name .. "." .. clrSpacePreset
                         local frame = app.activeFrame or sprite.frames[1]
                         local trgCel = sprite:newCel(trgLayer, frame)
                         trgCel.image = trgImg
