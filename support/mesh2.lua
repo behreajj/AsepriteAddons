@@ -85,6 +85,7 @@ function Mesh2:insetFace(faceIndex, fac)
             1 + vSubdivIdx
         }
 
+        -- TODO: Replace table insert if possible.
         table.insert(self.fs, fNew)
         table.insert(centerFace, 1 + vSubdivIdx)
     end
@@ -614,7 +615,7 @@ function Mesh2.separateFaces(source, from, to)
         for j = 1, fSrcLen, 1 do
             local vertSrc = fSrc[j]
             local vSrc = vsSrc[vertSrc]
-            local vTrg = Vec2.new(vSrc.x, vSrc.y) 
+            local vTrg = Vec2.new(vSrc.x, vSrc.y)
             table.insert(vsTrg, vTrg)
             table.insert(fTrg, j)
         end

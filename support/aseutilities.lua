@@ -621,8 +621,7 @@ function AseUtilities.createNewCels(
             -- print(string.format("Frame Index %d", frameIndex))
             -- print(string.format("Layer Index %d", layerIndex))
 
-            -- Frame and layer MUST be passed as objects,
-            -- NOT indices.
+            -- Frame and layer must objects, not indices.
             cels[1 + i] = sprite:newCel(
                 layerObj, frameObj, valImg, valPos)
 

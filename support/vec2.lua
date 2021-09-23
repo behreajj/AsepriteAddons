@@ -167,6 +167,31 @@ function Vec2.ceil(a)
         math.ceil(a.y))
 end
 
+---Copies the sign of the right operand
+---to the magnitude of the left. Both
+---operands are assumed to be Vec2s. Where
+---the sign of b is zero, the result is zero.
+---Equivalent to multiplying the
+---absolute value of a and the sign of b.
+---@param a table magnitude
+---@param b table sign
+---@return table
+function Vec2.copySign(a, b)
+    local cx = 0.0
+    local axAbs = math.abs(a.x)
+    if b.x < -0.0 then cx = -axAbs
+    elseif b.x > 0.0 then cx = axAbs
+    end
+
+    local cy = 0.0
+    local ayAbs = math.abs(a.y)
+    if b.y < -0.0 then cy = -ayAbs
+    elseif b.y > 0.0 then cy = ayAbs
+    end
+
+    return Vec2.new(cx, cy)
+end
+
 ---Finds the cross product of two vectors, z component.
 ---@param a table left operand
 ---@param b table right operand
@@ -918,13 +943,13 @@ function Vec2.wrap(a, lb, ub)
     local cx = a.x
     local rx = ub.x - lb.x
     if rx ~= 0.0 then
-        cx = a.x - (rx * math.floor((a.x - lb.x) / rx))
+        cx = a.x - rx * ((a.x - lb.x) // rx)
     end
 
     local cy = a.y
     local ry = ub.y - lb.y
     if ry ~= 0.0 then
-        cy = a.y - (ry * math.floor((a.y - lb.y) / ry))
+        cy = a.y - ry * ((a.y - lb.y) // ry)
     end
 
     return Vec2.new(cx, cy)

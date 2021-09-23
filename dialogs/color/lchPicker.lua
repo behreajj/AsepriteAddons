@@ -1,4 +1,3 @@
-dofile("../../support/clr.lua")
 dofile("../../support/aseutilities.lua")
 
 local harmonies = {
@@ -10,8 +9,16 @@ local harmonies = {
 }
 
 local defaults = {
-    shade = Color(255, 0, 0, 255),
-    hexCode = "#FF0000",
+    base = Color(255, 0, 0, 255),
+    shading = {
+        Color(170, 0, 0, 255),
+        Color(199, 0, 4, 255),
+        Color(227, 0, 16, 255),
+        Color(254, 0, 21, 255),
+        Color(255, 52, 16, 255),
+        Color(255, 103, 0, 255),
+        Color(255, 147, 0, 255) },
+    hexCode = "FF0000",
     lightness = 53,
     chroma = 104,
     hue = 40,
@@ -31,20 +38,40 @@ local defaults = {
         Color(157, 82, 255, 255) },
     triads = {
         Color(0, 131, 255, 255),
-        Color(0, 158, 59, 255) }
+        Color(0, 158, 59, 255) },
+
+    shadingCount = 7,
+    shadowLight = 0.1,
+    dayLight = 0.9,
+    srcLightWeight = 0.3333333333333333,
+    greenHue = 0.37,
+    minGreenOffset = 0.5,
+    maxGreenOffset = 0.8
 }
 
-local dlg = Dialog { title = "LCh Color Picker" }
+local function zigZag(t)
+    local a = t * 0.5
+    local b = a - math.floor(a)
+    return 1.0 - math.abs(b + b - 1.0)
+end
 
-local function updateHarmonies(l, c, h, a)
+local function assignToFore(aseColor)
+    if aseColor.alpha < 1 then
+        app.fgColor = Color(0, 0, 0, 0)
+    else
+        app.fgColor = AseUtilities.aseColorCopy(aseColor)
+    end
+end
 
+local function updateHarmonies(dialog, l, c, h, a)
     -- Hue wrapping is taken care of by lchTosRgba.
     -- Clamping is taken care of by clToAseColor.
-
-    local oneThird = 1.0 / 3.0
-    local oneTwelve = 1.0 / 12.0
-    local splHue0 = 0.4166666666666667 -- 150
-    local splHue1 = 0.5833333333333334 -- 210
+    -- 360 / 3 = 120 degrees; 360 / 12 = 30 degrees.
+    -- Split hues are 150 and 210 degrees.
+    local oneThird = 0.3333333333333333
+    local oneTwelve = 0.08333333333333333
+    local splHue0 = 0.4166666666666667
+    local splHue1 = 0.5833333333333334
 
     local ana0 = Clr.lchTosRgba(l, c, h - oneTwelve, a)
     local ana1 = Clr.lchTosRgba(l, c, h + oneTwelve, a)
@@ -80,66 +107,116 @@ local function updateHarmonies(l, c, h, a)
         AseUtilities.clrToAseColor(square2)
     }
 
-    dlg:modify { id = "complement", colors = { squares[2] } }
-    dlg:modify { id = "triadic", colors = tris }
-    dlg:modify { id = "analogous", colors = analogues }
-    dlg:modify { id = "split", colors = splits }
-    dlg:modify { id = "square", colors = squares }
+    local compl = { squares[2] }
+
+    dialog:modify { id = "complement", colors = compl }
+    dialog:modify { id = "triadic", colors = tris }
+    dialog:modify { id = "analogous", colors = analogues }
+    dialog:modify { id = "split", colors = splits }
+    dialog:modify { id = "square", colors = squares }
 end
 
-local function updateWarning(clr)
+local function updateShading(dialog, l, c, h, a)
+    -- Decide on clockwise or counter-clockwise based
+    -- on color's warmth or coolness.
+    -- The LCh hue for yellow is 103 degrees.
+    local lerpFunc = nil
+    if h < 0.3 or h >= 0.8 then
+        lerpFunc = Utilities.lerpAngleCcw
+    else
+        lerpFunc = Utilities.lerpAngleCw
+    end
 
+    -- Minimum and maximum light based on place in loop.
+    local shadowLight = defaults.shadowLight
+    local dayLight = defaults.dayLight
+    local lSrc = l * 0.01
+
+    -- Amount to mix between base light and loop light.
+    local srcLightWeight = defaults.srcLightWeight
+    local cmpLightWeight = 1.0 - srcLightWeight
+
+    -- The warm-cool dichotomy works poorly for greens.
+    -- For that reason, the closer a hue is to green,
+    -- the more it needs to use the absolute hue shifting.
+    -- Green is approximately at hue 140.
+    local offsetMix = (h - defaults.greenHue) % 1.0
+    local offsetScale = (1.0 - offsetMix) * defaults.maxGreenOffset
+                              + offsetMix * defaults.minGreenOffset
+
+    -- Absolute hues for shadow and light.
+    local shadowHue = Clr.LCH_HUE_SHADOW
+    local dayHue = Clr.LCH_HUE_LIGHT
+
+    local shades = {}
+    local shadingCount = defaults.shadingCount
+    local toFac = 1.0 / (shadingCount - 1.0)
+    for i = 1, shadingCount, 1 do
+        local iFac = (i - 1) * toFac
+        local lItr = (1.0 - iFac) * shadowLight
+                           + iFac * dayLight
+
+        -- Idealized hue from violet shadow to
+        -- off-yellow daylight.
+        local hAbs = lerpFunc(shadowHue, dayHue, lItr, 1.0)
+
+        -- We want the middle shade to be nearest to the
+        -- base color, so the fac should be 0.0. That's why
+        -- the zigzag is used to convert to an oscillation.
+        local lMixed = srcLightWeight * lSrc
+                     + cmpLightWeight * lItr
+        local fac = offsetScale * zigZag(lMixed)
+        local hShade = Utilities.lerpAngleNear(h, hAbs, fac, 1.0)
+        local clr = Clr.lchTosRgba(lMixed * 100.0, c, hShade, a)
+        local aseColor = AseUtilities.clrToAseColor(clr)
+        shades[i] = aseColor
+    end
+
+    dialog:modify { id = "shading", colors = shades }
+end
+
+local function updateHexCode(dialog, clrArr)
+    local str = ""
+    local len = #clrArr
+    local last = len - 1
+    for i = 1, len, 1 do
+        str = str .. Clr.toHexWeb(clrArr[i])
+        if i < last then str = str .. ',' end
+    end
+
+    dialog:modify { id = "hexCode", text = str }
+end
+
+local function updateWarning(dialog, clr)
     -- Tolerance is based on blue being deemed
     -- out of gamut, as it has the highest possible
     -- chroma: L 32, C 134, H 306 .
     if Clr.rgbIsInGamut(clr, 0.115) then
-        dlg:modify {
-            id = "warning0",
-            visible = false
-        }
-        dlg:modify {
-            id = "warning1",
-            visible = false
-        }
-        -- dlg:modify {
-        --     id = "warning2",
-        --     visible = false
-        -- }
+        dialog:modify { id = "warning0", visible = false }
+        dialog:modify { id = "warning1", visible = false }
     else
-        dlg:modify {
-            id = "warning0",
-            visible = true
-        }
-        dlg:modify {
-            id = "warning1",
-            visible = true
-        }
-        -- dlg:modify {
-        --     id = "warning2",
-        --     visible = true
-        -- }
+        dialog:modify { id = "warning0", visible = true }
+        dialog:modify { id = "warning1", visible = true }
     end
 end
 
-local function setFromAse(aseClr)
+local function setFromAse(dialog, aseClr)
     local clr = AseUtilities.aseColorToClr(aseClr)
-    updateWarning(clr)
     local lch = Clr.sRgbaToLch(clr)
     local trunc = math.tointeger
     local chroma = trunc(0.5 + lch.c)
-    local alpha = trunc(0.5 + lch.a * 100.0)
 
-    dlg:modify {
+    dialog:modify {
         id = "alpha",
-        value = alpha
+        value = trunc(0.5 + lch.a * 100.0)
     }
 
-    dlg:modify {
+    dialog:modify {
         id = "lightness",
         value = trunc(0.5 + lch.l)
     }
 
-    dlg:modify {
+    dialog:modify {
         id = "chroma",
         value = chroma
     }
@@ -147,49 +224,45 @@ local function setFromAse(aseClr)
     -- Preserve hue unchanged for gray colors
     -- where hue would be invalid.
     if chroma > 0 then
-        dlg:modify {
+        dialog:modify {
             id = "hue",
             value = trunc(0.5 + lch.h * 360.0)
         }
     end
 
-    dlg:modify {
-        id = "hexCode",
-        text = Clr.toHexWeb(clr)
-    }
-
-    dlg:modify {
+    dialog:modify {
         id = "clr",
         colors = { AseUtilities.aseColorCopy(aseClr) }
     }
 
-    updateHarmonies(lch.l, lch.c, lch.h, lch.a)
+    updateWarning(dialog, clr)
+    updateHexCode(dialog, { clr })
+    updateHarmonies(dialog, lch.l, lch.c, lch.h, lch.a)
+    updateShading(dialog, lch.l, lch.c, lch.h, lch.a)
 end
 
-local function updateClrs(data)
-    local l = data.lightness
-    local c = data.chroma
-    local h = data.hue / 360.0
-    local a = data.alpha * 0.01
-
+local function updateClrs(dialog)
+    local args = dialog.data
+    local l = args.lightness
+    local c = args.chroma
+    local h = args.hue / 360.0
+    local a = args.alpha * 0.01
     local clr = Clr.lchTosRgba(l, c, h, a)
-    updateWarning(clr)
 
-    -- See
+    -- For thoughts on why clipping is preferred, see
     -- https://github.com/LeaVerou/css.land/issues/10
-
-    dlg:modify {
+    dialog:modify {
         id = "clr",
         colors = { AseUtilities.clrToAseColor(clr) }
     }
 
-    dlg:modify {
-        id = "hexCode",
-        text = Clr.toHexWeb(clr)
-    }
-
-    updateHarmonies(l, c, h, a)
+    updateWarning(dialog, clr)
+    updateHexCode(dialog, { clr })
+    updateHarmonies(dialog, l, c, h, a)
+    updateShading(dialog, l, c, h, a)
 end
+
+local dlg = Dialog { title = "LCh Color Picker" }
 
 dlg:button {
     id = "fgGet",
@@ -197,7 +270,7 @@ dlg:button {
     text = "F&ORE",
     focus = false,
     onclick = function()
-       setFromAse(app.fgColor)
+       setFromAse(dlg, app.fgColor)
     end
 }
 
@@ -207,28 +280,45 @@ dlg:button {
     focus = false,
     onclick = function()
        app.command.SwitchColors()
-       setFromAse(app.fgColor)
+       setFromAse(dlg, app.fgColor)
        app.command.SwitchColors()
     end
 }
 
 dlg:newrow { always = false }
 
--- TODO: Switch this from sort mode to pick.
-dlg:shades {
-    id = "clr",
-    label = "Preview:",
-    mode = "sort",
-    colors = { defaults.shade }
+dlg: entry {
+    id = "hexCode",
+    label = "Hex: #",
+    text = defaults.hexCode,
+    focus = false
 }
 
 dlg:newrow { always = false }
 
--- TODO: Make this a text or number input field?
-dlg:label {
-    id = "hexCode",
-    label = "Hex:",
-    text = defaults.hexCode
+dlg:shades {
+    id = "clr",
+    label = "Color:",
+    mode = "sort",
+    colors = { defaults.base },
+    visible = true
+}
+
+dlg:newrow { always = false }
+
+dlg:shades {
+    id = "shading",
+    label = "Shades:",
+    mode = "pick",
+    colors = defaults.shading,
+    visible = true,
+    onclick = function(ev)
+        if ev.button == MouseButton.LEFT then
+            setFromAse(dlg, ev.color)
+        elseif ev.button == MouseButton.RIGHT then
+            assignToFore(ev.color)
+        end
+    end
 }
 
 dlg:newrow { always = false }
@@ -240,7 +330,7 @@ dlg:slider {
     max = 100,
     value = defaults.lightness,
     onchange = function()
-        updateClrs(dlg.data)
+        updateClrs(dlg)
     end
 }
 
@@ -251,7 +341,7 @@ dlg:slider {
     max = 135,
     value = defaults.chroma,
     onchange = function()
-        updateClrs(dlg.data)
+        updateClrs(dlg)
     end
 }
 
@@ -262,7 +352,7 @@ dlg:slider {
     max = 360,
     value = defaults.hue,
     onchange = function()
-        updateClrs(dlg.data)
+        updateClrs(dlg)
     end
 }
 
@@ -273,7 +363,7 @@ dlg:slider {
     max = 100,
     value = defaults.alpha,
     onchange = function()
-        updateClrs(dlg.data)
+        updateClrs(dlg)
     end
 }
 
@@ -296,29 +386,16 @@ dlg:label {
 
 dlg:newrow { always = false }
 
--- dlg:label {
---     id = "warning2",
---     text = "Reduce chroma.",
---     visible = false
--- }
-
--- dlg:newrow { always = false }
-
 dlg:button {
     id = "fgSet",
     label = "Set:",
     text = "&FORE",
     focus = false,
+    visible = true,
     onclick = function()
         local args = dlg.data
         if #args.clr > 0 then
-            local clr = args.clr[1]
-            -- TODO: Formalize into a method?
-            if clr.alpha < 1 then
-                app.fgColor = Color(0, 0, 0, 0)
-            else
-                app.fgColor = AseUtilities.aseColorCopy(clr)
-            end
+            assignToFore(args.clr[1])
         end
     end
 }
@@ -327,6 +404,7 @@ dlg:button {
     id = "bgSet",
     text = "&BACK",
     focus = false,
+    visible = true,
     onclick = function()
         local args = dlg.data
         if #args.clr > 0 then
@@ -334,12 +412,7 @@ dlg:button {
             -- leads to unlocked palette colors
             -- being assigned instead.
             app.command.SwitchColors()
-            local clr = args.clr[1]
-            if clr.alpha < 1 then
-                app.fgColor = Color(0, 0, 0, 0)
-            else
-                app.fgColor = AseUtilities.aseColorCopy(clr)
-            end
+            assignToFore(args.clr[1])
             app.command.SwitchColors()
         end
     end
@@ -402,14 +475,9 @@ dlg:shades {
         and defaults.harmonyType == "ANALOGOUS",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
-            setFromAse(ev.color)
+            setFromAse(dlg, ev.color)
         elseif ev.button == MouseButton.RIGHT then
-            local clr = ev.color
-            if clr.alpha < 1 then
-                app.fgColor = Color(0, 0, 0, 0)
-            else
-                app.fgColor = AseUtilities.aseColorCopy(clr)
-            end
+            assignToFore(ev.color)
         end
     end
 }
@@ -425,14 +493,9 @@ dlg:shades {
         and defaults.harmonyType == "COMPLEMENT",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
-            setFromAse(ev.color)
+            setFromAse(dlg, ev.color)
         elseif ev.button == MouseButton.RIGHT then
-            local clr = ev.color
-            if clr.alpha < 1 then
-                app.fgColor = Color(0, 0, 0, 0)
-            else
-                app.fgColor = AseUtilities.aseColorCopy(clr)
-            end
+            assignToFore(ev.color)
         end
     end
 }
@@ -448,14 +511,9 @@ dlg:shades {
         and defaults.harmonyType == "SPLIT",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
-            setFromAse(ev.color)
+            setFromAse(dlg, ev.color)
         elseif ev.button == MouseButton.RIGHT then
-            local clr = ev.color
-            if clr.alpha < 1 then
-                app.fgColor = Color(0, 0, 0, 0)
-            else
-                app.fgColor = AseUtilities.aseColorCopy(clr)
-            end
+            assignToFore(ev.color)
         end
     end
 }
@@ -471,14 +529,9 @@ dlg:shades {
         and defaults.harmonyType == "SQUARE",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
-            setFromAse(ev.color)
+            setFromAse(dlg, ev.color)
         elseif ev.button == MouseButton.RIGHT then
-            local clr = ev.color
-            if clr.alpha < 1 then
-                app.fgColor = Color(0, 0, 0, 0)
-            else
-                app.fgColor = AseUtilities.aseColorCopy(clr)
-            end
+            assignToFore(ev.color)
         end
     end
 }
@@ -494,14 +547,9 @@ dlg:shades {
         and defaults.harmonyType == "TRIADIC",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
-            setFromAse(ev.color)
+            setFromAse(dlg, ev.color)
         elseif ev.button == MouseButton.RIGHT then
-            local clr = ev.color
-            if clr.alpha < 1 then
-                app.fgColor = Color(0, 0, 0, 0)
-            else
-                app.fgColor = AseUtilities.aseColorCopy(clr)
-            end
+            assignToFore(ev.color)
         end
     end
 }

@@ -753,7 +753,9 @@ function Clr.labToXyz(l, a, b, alpha)
 end
 
 ---Converts a color from CIE LCH to CIE LAB.
----The hue is expected to be in [0.0, 1.0].
+---Lightness is expected to be in [0.0, 100.0].
+---Chroma is expected to be in [0.0, 135.0].
+---Hue is expected to be in [0.0, 1.0].
 ---Neither alpha nor lightness are affected by the
 ---transformation.
 ---@param l number lightness
@@ -797,7 +799,9 @@ function Clr.lchToLabInternal(l, c, h, a)
 end
 
 ---Converts a color from CIE LCH to standard RGB.
----The hue is expected to be in [0.0, 1.0].
+---Lightness is expected to be in [0.0, 100.0].
+---Chroma is expected to be in [0.0, 135.0].
+---Hue is expected to be in [0.0, 1.0].
 ---@param l number lightness
 ---@param c number chromaticity
 ---@param h number hue in degrees
@@ -1691,7 +1695,8 @@ function Clr.toHexUnchecked(c)
 end
 
 ---Converts from a color to a web-friendly hexadecimal
----string. Channels are packed in #RRGGBB order.
+---string. Channels are packed in #RRGGBB order. Does
+---not prepend a hashtag ('#').
 ---Ensures that color values are valid, in [0.0, 1.0].
 ---@param c table color
 ---@return string
@@ -1700,11 +1705,12 @@ function Clr.toHexWeb(c)
 end
 
 ---Converts from a color to a web-friendly hexadecimal
----string. Channels are packed in #RRGGBB order.
+---string. Channels are packed in RRGGBB order. Does
+---not prepend a hashtag ('#').
 ---@param c table color
 ---@return string
 function Clr.toHexWebUnchecked(c)
-    return string.format("#%06X",
+    return string.format("%06X",
         math.tointeger(c.r * 0xff + 0.5) << 0x10
       | math.tointeger(c.g * 0xff + 0.5) << 0x08
       | math.tointeger(c.b * 0xff + 0.5))

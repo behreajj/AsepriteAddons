@@ -117,7 +117,7 @@ Utilities.GLYPH_LUT = {
     ['{'] = Glyph.new('{', 1738424915953983512, 0),
     ['|'] = Glyph.new('|', 1157442765409226768, 0),
     ['}'] = Glyph.new('}', 6922050254083723360, 0),
-    ['~'] = Glyph.new('~', 362427180012640665, 0)
+    ['~'] = Glyph.new('~', 7248543600252813312, 0)
 }
 
 ---Look up table for linear to standard

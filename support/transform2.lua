@@ -29,6 +29,7 @@ end
 
 ---Flips the transform's scale on the
 ---horizontal axis.
+---@return table
 function Transform2:flipX()
     self.scale.x = -self.scale.x
     return self
@@ -36,6 +37,7 @@ end
 
 ---Flips the transform's scale on the
 ---vertical axis.
+---@return table
 function Transform2:flipY()
     self.scale.y = -self.scale.y
     return self
@@ -130,6 +132,7 @@ end
 
 ---Rotates a transform around the z axis.
 ---@param ang number the angle
+---@return table
 function Transform2:rotateZ(ang)
     self.rotation = (self.rotation + ang) % 6.283185307179586
     return self
@@ -153,7 +156,7 @@ function Transform2:scaleByNum(v)
     return self
 end
 
----Moves a transform by a vector.
+---Scales a transform by a vector.
 ---@param v table nonuniform scalar
 ---@return table
 function Transform2:scaleByVec2(v)
@@ -179,21 +182,23 @@ end
 ---@param step number step
 ---@return table
 function Transform2:scaleToVec2(scl, step)
-    local t = step or 1.0
+    local valStp = step or 1.0
 
-    if t >= 1.0 then
+    if valStp >= 1.0 then
         if Vec2.all(scl) then
-            self.scale = Vec2.new(scl.x, scl.y)
+            self.scale = Vec2.copySign(scl, self.scale)
         end
         return self
     end
 
-    if t <= 0.0 then
+    if valStp <= 0.0 then
         return self
     end
 
     local sNew = Vec2.mixNum(
-        self.scale, scl, t)
+        self.scale,
+        Vec2.copySign(scl, self.scale),
+        valStp)
     if Vec2.all(sNew) then
         self.scale = sNew
     end
@@ -207,22 +212,27 @@ end
 ---@param step number step
 ---@return table
 function Transform2:scaleToNum(scl, step)
-    local t = step or 1.0
+    local valStp = step or 1.0
 
-    if t >= 1.0 then
+    if valStp >= 1.0 then
         if scl ~= 0 then
-            self.scale = Vec2.new(scl, scl)
+            self.scale = Vec2.copySign(
+                Vec2.new(scl, scl),
+                self.scale)
         end
         return self
     end
 
-    if t <= 0.0 then
+    if valStp <= 0.0 then
         return self
     end
 
     local sNew = Vec2.mixNum(
         self.scale,
-        Vec2.new(scl, scl), t)
+        Vec2.copySign(
+            Vec2.new(scl, scl),
+            self.scale),
+        valStp)
     if Vec2.all(sNew) then
         self.scale = sNew
     end
