@@ -1695,7 +1695,7 @@ function Clr.toHexUnchecked(c)
 end
 
 ---Converts from a color to a web-friendly hexadecimal
----string. Channels are packed in #RRGGBB order. Does
+---string. Channels are packed in RRGGBB order. Does
 ---not prepend a hashtag ('#').
 ---Ensures that color values are valid, in [0.0, 1.0].
 ---@param c table color

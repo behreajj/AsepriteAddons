@@ -11,13 +11,13 @@ local harmonies = {
 local defaults = {
     base = Color(255, 0, 0, 255),
     shading = {
-        Color(170, 0, 0, 255),
-        Color(199, 0, 4, 255),
-        Color(227, 0, 16, 255),
-        Color(254, 0, 21, 255),
-        Color(255, 52, 16, 255),
-        Color(255, 103, 0, 255),
-        Color(255, 147, 0, 255) },
+        Color(152, 0, 5, 255),
+        Color(181, 0, 26, 255),
+        Color(229, 0, 24, 255),
+        Color(255, 0, 26, 255),
+        Color(255, 54, 14, 255),
+        Color(255, 113, 4, 255),
+        Color(255, 157, 0, 255) },
     hexCode = "FF0000",
     lightness = 53,
     chroma = 104,
@@ -43,10 +43,13 @@ local defaults = {
     shadingCount = 7,
     shadowLight = 0.1,
     dayLight = 0.9,
+    hYel = 0.3,
+    lgtDesatFac = 0.5,
+    shdDesatFac = 0.75,
     srcLightWeight = 0.3333333333333333,
     greenHue = 0.37,
     minGreenOffset = 0.5,
-    maxGreenOffset = 0.8
+    maxGreenOffset = 0.75
 }
 
 local function zigZag(t)
@@ -120,8 +123,10 @@ local function updateShading(dialog, l, c, h, a)
     -- Decide on clockwise or counter-clockwise based
     -- on color's warmth or coolness.
     -- The LCh hue for yellow is 103 degrees.
+    local hYel = defaults.hYel
+    local hBlu = hYel + 0.5
     local lerpFunc = nil
-    if h < 0.3 or h >= 0.8 then
+    if h < hYel or h >= hBlu then
         lerpFunc = Utilities.lerpAngleCcw
     else
         lerpFunc = Utilities.lerpAngleCw
@@ -132,6 +137,15 @@ local function updateShading(dialog, l, c, h, a)
     local dayLight = defaults.dayLight
     local lSrc = l * 0.01
 
+    -- Yellows are very saturated at high light;
+    -- we need to desaturate them to get a proper shade.
+    -- Conversely, blues easily fall out of gamut
+    -- so their shadow factor is separate.
+    local lgtDesatFac = defaults.lgtDesatFac
+    local shdDesatFac = defaults.shdDesatFac
+    local desatChromaLgt = c * lgtDesatFac
+    local desatChromaShd = c * shdDesatFac
+
     -- Amount to mix between base light and loop light.
     local srcLightWeight = defaults.srcLightWeight
     local cmpLightWeight = 1.0 - srcLightWeight
@@ -140,11 +154,14 @@ local function updateShading(dialog, l, c, h, a)
     -- For that reason, the closer a hue is to green,
     -- the more it needs to use the absolute hue shifting.
     -- Green is approximately at hue 140.
-    local offsetMix = (h - defaults.greenHue) % 1.0
+    -- local offsetMix = (h - defaults.greenHue) % 1.0
+    local offsetMix = math.abs((h % 0.5) - defaults.greenHue)
     local offsetScale = (1.0 - offsetMix) * defaults.maxGreenOffset
                               + offsetMix * defaults.minGreenOffset
 
     -- Absolute hues for shadow and light.
+    -- This could also be combined with the origin hue +/-
+    -- a shift which is then mixed with the absolute hue.
     local shadowHue = Clr.LCH_HUE_SHADOW
     local dayHue = Clr.LCH_HUE_LIGHT
 
@@ -167,7 +184,18 @@ local function updateShading(dialog, l, c, h, a)
                      + cmpLightWeight * lItr
         local fac = offsetScale * zigZag(lMixed)
         local hShade = Utilities.lerpAngleNear(h, hAbs, fac, 1.0)
-        local clr = Clr.lchTosRgba(lMixed * 100.0, c, hShade, a)
+
+        -- Desaturate bright yellows and dark blues.
+        local chroma = c
+        if lMixed > 0.6667 then
+            local hDayDist = math.abs((hShade % 0.5) - dayHue)
+            chroma = (1.0 - hDayDist) * c + hDayDist * desatChromaLgt
+        elseif lMixed < 0.3333 then
+            local hShdDist = math.abs((hShade % 0.5) - shadowHue)
+            chroma = (1.0 - hShdDist) * c + hShdDist * desatChromaShd
+        end
+
+        local clr = Clr.lchTosRgba(lMixed * 100.0, chroma, hShade, a)
         local aseColor = AseUtilities.clrToAseColor(clr)
         shades[i] = aseColor
     end
@@ -423,6 +451,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "showHarmonies",
     label = "Harmonies:",
+    text = "Show",
     selected = defaults.showHarmonies,
     onclick = function()
         local args = dlg.data
