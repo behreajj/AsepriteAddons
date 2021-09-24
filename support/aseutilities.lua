@@ -631,9 +631,11 @@ function AseUtilities.createNewCels(
     local useGuiClr = guiClr and guiClr ~= 0x0
     if useGuiClr then
         local aseColor = AseUtilities.hexToAseColor(guiClr)
-        for i = 1, flatCount, 1 do
-            cels[i].color = aseColor
-        end
+        app.transaction(function()
+            for i = 1, flatCount, 1 do
+                cels[i].color = aseColor
+            end
+        end)
     end
 
     return cels
@@ -700,13 +702,15 @@ end
 ---@param blendMode number blend mode
 ---@param opacity number layer opacity
 ---@param guiClr number hexadecimal color
+---@param parent table parent layer
 ---@return table
 function AseUtilities.createNewLayers(
     sprite,
     count,
     blendMode,
     opacity,
-    guiClr)
+    guiClr,
+    parent)
 
     if not sprite then
         app.alert("Sprite could not be found.")
@@ -741,24 +745,43 @@ function AseUtilities.createNewLayers(
     local valCount = count or 1
     if valCount < 1 then valCount = 1 end
 
+    local useGuiClr = guiClr and guiClr ~= 0x0
+    local useParent = parent and parent.isGroup
+
     local oldLayerCount = #sprite.layers
     local layers = {}
-    for i = 1, valCount, 1 do
-        local layer = sprite:newLayer()
-        layer.blendMode = valBlendMode
-        layer.opacity = valOpac
-        layer.name = string.format(
-            "Layer %d",
-            oldLayerCount + i)
-        layers[i] = layer
-    end
+    app.transaction(function()
+        for i = 1, valCount, 1 do
+            local layer = sprite:newLayer()
+            layer.blendMode = valBlendMode
+            layer.opacity = valOpac
+            layer.name = string.format(
+                "Layer %d",
+                oldLayerCount + i)
+            layers[i] = layer
+        end
+    end)
 
-    local useGuiClr = guiClr and guiClr ~= 0x0
     if useGuiClr then
         local aseColor = AseUtilities.hexToAseColor(guiClr)
-        for i = 1, valCount, 1 do
-            layers[i].color = aseColor
-        end
+        app.transaction(function()
+            for i = 1, valCount, 1 do
+                layers[i].color = aseColor
+            end
+        end)
+    end
+
+    -- TODO: The user interface does not update the parent-
+    -- child relationship when this is used. Is the problem
+    -- that app global has been used when a local should've
+    -- been passed in?
+    if useParent then
+        app.transaction(function()
+            for i = 1, valCount, 1 do
+                local layer = layers[i]
+                layer.parent = parent
+            end
+        end)
     end
 
     return layers

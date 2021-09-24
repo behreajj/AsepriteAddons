@@ -125,18 +125,18 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "br",
-    min = -50,
-    max = 50,
-    value = defaults.br,
-    visible = false
-}
-
-dlg:slider {
     id = "bl",
     min = -50,
     max = 50,
     value = defaults.bl,
+    visible = false
+}
+
+dlg:slider {
+    id = "br",
+    min = -50,
+    max = 50,
+    value = defaults.br,
     visible = false
 }
 
