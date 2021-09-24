@@ -11,13 +11,13 @@ local harmonies = {
 local defaults = {
     base = Color(255, 0, 0, 255),
     shading = {
-        Color(152, 0, 5, 255),
-        Color(181, 0, 26, 255),
-        Color(229, 0, 24, 255),
-        Color(255, 0, 26, 255),
-        Color(255, 54, 14, 255),
-        Color(255, 113, 4, 255),
-        Color(255, 157, 0, 255) },
+        Color(165,   0,   0, 255),
+        Color(192,   0,  16, 255),
+        Color(217,   0,  29, 255),
+        Color(241,  22,  37, 255),
+        Color(255,  79,  42, 255),
+        Color(255, 120,  42, 255),
+        Color(255, 160,  43, 255) },
     hexCode = "FF0000",
     lightness = 53,
     chroma = 104,
@@ -44,11 +44,12 @@ local defaults = {
     shadowLight = 0.1,
     dayLight = 0.9,
     hYel = 0.3,
-    lgtDesatFac = 0.5,
+    minChroma = 4.0,
+    lgtDesatFac = 0.75,
     shdDesatFac = 0.75,
     srcLightWeight = 0.3333333333333333,
-    greenHue = 0.37,
-    minGreenOffset = 0.5,
+    greenHue = 0.37778,
+    minGreenOffset = 0.4,
     maxGreenOffset = 0.75
 }
 
@@ -120,6 +121,12 @@ local function updateHarmonies(dialog, l, c, h, a)
 end
 
 local function updateShading(dialog, l, c, h, a)
+    -- Cache methods used in for loop.
+    local lerpNear = Utilities.lerpAngleNear
+    local lchToRgb = Clr.lchTosRgba
+    local clrToAse = AseUtilities.clrToAseColor
+    local max = math.max
+
     -- Decide on clockwise or counter-clockwise based
     -- on color's warmth or coolness.
     -- The LCh hue for yellow is 103 degrees.
@@ -143,8 +150,10 @@ local function updateShading(dialog, l, c, h, a)
     -- so their shadow factor is separate.
     local lgtDesatFac = defaults.lgtDesatFac
     local shdDesatFac = defaults.shdDesatFac
-    local desatChromaLgt = c * lgtDesatFac
-    local desatChromaShd = c * shdDesatFac
+    local minChroma = defaults.minChroma
+    local cVal = max(minChroma, c)
+    local desatChromaLgt = cVal * lgtDesatFac
+    local desatChromaShd = cVal * shdDesatFac
 
     -- Amount to mix between base light and loop light.
     local srcLightWeight = defaults.srcLightWeight
@@ -154,10 +163,12 @@ local function updateShading(dialog, l, c, h, a)
     -- For that reason, the closer a hue is to green,
     -- the more it needs to use the absolute hue shifting.
     -- Green is approximately at hue 140.
-    -- local offsetMix = (h - defaults.greenHue) % 1.0
-    local offsetMix = math.abs((h % 0.5) - defaults.greenHue)
+    local offsetMix = Utilities.distAngle(h, defaults.greenHue, 1.0)
     local offsetScale = (1.0 - offsetMix) * defaults.maxGreenOffset
                               + offsetMix * defaults.minGreenOffset
+    -- print(string.format(
+    --     "offsetMix: %.6f, offsetScale: %.6f",
+    --     offsetMix, offsetScale))
 
     -- Absolute hues for shadow and light.
     -- This could also be combined with the origin hue +/-
@@ -182,21 +193,21 @@ local function updateShading(dialog, l, c, h, a)
         -- the zigzag is used to convert to an oscillation.
         local lMixed = srcLightWeight * lSrc
                      + cmpLightWeight * lItr
-        local fac = offsetScale * zigZag(lMixed)
-        local hShade = Utilities.lerpAngleNear(h, hAbs, fac, 1.0)
+        local lZig = zigZag(lMixed)
+        local fac = offsetScale * lZig
+        local hMixed = lerpNear(h, hAbs, fac, 1.0)
 
-        -- Desaturate bright yellows and dark blues.
-        local chroma = c
-        if lMixed > 0.6667 then
-            local hDayDist = math.abs((hShade % 0.5) - dayHue)
-            chroma = (1.0 - hDayDist) * c + hDayDist * desatChromaLgt
-        elseif lMixed < 0.3333 then
-            local hShdDist = math.abs((hShade % 0.5) - shadowHue)
-            chroma = (1.0 - hShdDist) * c + hShdDist * desatChromaShd
-        end
+        -- Desaturate brights and darks.
+        local chromaTarget = desatChromaLgt
+        if lMixed < 0.5 then chromaTarget = desatChromaShd end
+        local cMixed = (1.0 - lZig) * cVal + lZig * chromaTarget
+        cMixed = max(minChroma, cMixed)
+        -- print(string.format(
+        --     "lZig: %.6f, chroma: %.6f",
+        --     lZig, chroma))
 
-        local clr = Clr.lchTosRgba(lMixed * 100.0, chroma, hShade, a)
-        local aseColor = AseUtilities.clrToAseColor(clr)
+        local clr = lchToRgb(lMixed * 100.0, cMixed, hMixed, a)
+        local aseColor = clrToAse(clr)
         shades[i] = aseColor
     end
 

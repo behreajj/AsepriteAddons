@@ -58,7 +58,7 @@ local dlg = Dialog { title = "Color Curve Presets" }
 dlg:slider {
     id = "resolution",
     label = "Resolution:",
-    min = 1,
+    min = 2,
     max = 64,
     value = defaults.resolution
 }
@@ -306,8 +306,8 @@ dlg:button {
         local res = args.resolution
         local tox = 1.0 / (res - 1.0)
 
-        for i = 0, res - 1, 1 do
-            local x = i * tox
+        for i = 1, res, 1 do
+            local x = (i - 1) * tox
             local y = func(x)
             local point = Point(
                 math.tointeger(0.5 + 255.0 * x),

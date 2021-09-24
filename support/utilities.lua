@@ -167,6 +167,18 @@ function Utilities.new()
     return inst
 end
 
+---Finds the unsigned distance between two angles.
+---The range defaults to 360.0 for degrees, but can
+---be math.pi * 2.0 for radians.
+---@param a number left operand
+---@param b number right operand
+---@param range number range
+---@return number
+function Utilities.distAngle(a, b, range)
+    local valRange = range or 360.0
+    return math.abs(b - a) % valRange
+end
+
 ---Converts an array of integers representing color
 ---in hexadecimal to a dictionary. When true, the
 ---flag specifies that all completely transparent
