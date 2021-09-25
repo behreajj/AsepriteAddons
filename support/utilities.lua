@@ -174,9 +174,12 @@ end
 ---@param b number right operand
 ---@param range number range
 ---@return number
-function Utilities.distAngle(a, b, range)
+function Utilities.distAngleUnsigned(a, b, range)
     local valRange = range or 360.0
-    return math.abs(b - a) % valRange
+    local halfRange = valRange * 0.5
+    return halfRange - math.abs(math.abs(
+        (b % valRange) - (a % valRange))
+        - halfRange)
 end
 
 ---Converts an array of integers representing color

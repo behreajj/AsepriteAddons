@@ -23,8 +23,16 @@ function Transform2.new(t, r, s)
     return inst
 end
 
+function Transform2:__le(b)
+    return self.translation <= b.translation
+end
+
 function Transform2:__tostring()
     return Transform2.toJson(self)
+end
+
+function Transform2:__lt(b)
+    return self.translation < b.translation
 end
 
 ---Flips the transform's scale on the
@@ -40,6 +48,44 @@ end
 ---@return table
 function Transform2:flipY()
     self.scale.y = -self.scale.y
+    return self
+end
+
+---Orients this transform to look at a point.
+---If the distance between transform and point is
+---zero, resets the transform's rotation to zero.
+---The step is expected to be a number in [0.0, 1.0].
+---Handedness is expected to be a string, either
+---"LEFT" or "RIGHT". "RIGHT" is the default.
+---@param point table target point
+---@param step number step
+---@param handedness string
+---@return table
+function Transform2:lookAt(point, step, handedness)
+    local t = step or 1.0
+    if t <= 0.0 then return self end
+    if t > 1.0 then t = 1.0 end
+
+    local dirTrg = Vec2.sub(point, self.translation)
+    if Vec2.none(dirTrg) then
+        self.rotation = 0.0
+        return self
+    end
+
+    -- Normalized lerp.
+    local dirMixed = Vec2.mixNum(
+        self:getForward(),
+        Vec2.normalize(dirTrg), t)
+
+    local valHand = handedness or "RIGHT"
+    local newRight = nil
+    if valHand == "LEFT" then
+        newRight = Vec2.perpendicularCcw(dirMixed)
+    else
+        newRight = Vec2.perpendicularCw(dirMixed)
+    end
+
+    self.rotation = Vec2.headingUnsigned(newRight)
     return self
 end
 
@@ -236,6 +282,18 @@ function Transform2:scaleToNum(scl, step)
     if Vec2.all(sNew) then
         self.scale = sNew
     end
+    return self
+end
+
+---Wraps the transform's location around a periodic
+---range as defined by an upper and lower bound.
+---Lower bound is inclusive; upper is exclusive.
+---Both should be defined as Vec2s.
+---@param lb table lower bound
+---@param ub table upper bound
+---@return table
+function Transform2:wrap(lb, ub)
+    self.translation = Vec2.wrap(self.translation, lb, ub)
     return self
 end
 

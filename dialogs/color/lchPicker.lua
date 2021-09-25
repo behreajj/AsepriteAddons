@@ -163,7 +163,7 @@ local function updateShading(dialog, l, c, h, a)
     -- For that reason, the closer a hue is to green,
     -- the more it needs to use the absolute hue shifting.
     -- Green is approximately at hue 140.
-    local offsetMix = Utilities.distAngle(h, defaults.greenHue, 1.0)
+    local offsetMix = Utilities.distAngleUnsigned(h, defaults.greenHue, 1.0)
     local offsetScale = (1.0 - offsetMix) * defaults.maxGreenOffset
                               + offsetMix * defaults.minGreenOffset
     -- print(string.format(
