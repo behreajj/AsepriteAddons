@@ -281,9 +281,9 @@ function Clr.blendInternal(a, b)
     local tuv = t + uv
     if tuv > 0.996078431372549 then
         return Clr.new(
-            (b.r * t + a.r * uv),
-            (b.g * t + a.g * uv),
-            (b.b * t + a.b * uv),
+            b.r * t + a.r * uv,
+            b.g * t + a.g * uv,
+            b.b * t + a.b * uv,
             1.0)
     elseif tuv >= 0.00392156862745098 then
         local tuvInv = 1.0 / tuv
@@ -1423,8 +1423,8 @@ end
 ---@param tol number tolerance
 ---@return boolean
 function Clr.rgbaIsInGamut(a, tol)
-    return Clr.rgbIsInGamut(a, tol)
-        and Clr.alphaIsInGamut(a, tol)
+    return Clr.alphaIsInGamut(a, tol)
+        and Clr.rgbIsInGamut(a, tol)
 end
 
 ---Converts a color to hue, saturation and value.
@@ -1627,8 +1627,7 @@ end
 ---@param a table color
 ---@return table
 function Clr.sRgbaTolRgba(a)
-    local aCl = Clr.clamp01(a)
-    return Clr.sRgbaTolRgbaInternal(aCl)
+    return Clr.sRgbaTolRgbaInternal(Clr.clamp01(a))
 end
 
 ---Converts a color from standard RGB (sRGB) to linear RGB.

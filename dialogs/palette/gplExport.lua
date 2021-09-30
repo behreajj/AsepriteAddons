@@ -132,38 +132,39 @@ dlg:button {
             local pal = activeSprite.palettes[1]
             local palLen = #pal
             gplStr = gplStr .. strfmt(
-                "# Colors: %d", palLen)
+                "# Colors: %d\n", palLen)
 
             local palLenn1 = palLen - 1
+            local entryStrArr = {}
             for i = 0, palLenn1, 1 do
-                gplStr = gplStr .. '\n'
                 local aseColor = pal:getColor(i)
 
-                local r = max(0, min(255, aseColor.red))
-                local g = max(0, min(255, aseColor.green))
-                local b = max(0, min(255, aseColor.blue))
+                -- Not necessary for palette colors?
+                -- local r = max(0, min(255, aseColor.red))
+                -- local g = max(0, min(255, aseColor.green))
+                -- local b = max(0, min(255, aseColor.blue))
+                local r = aseColor.red
+                local g = aseColor.green
+                local b = aseColor.blue
 
+                local entryStr = ''
                 if useAseGpl then
-                    local a = max(0, min(255, aseColor.alpha))
-
-                    local hexAbgr = (a << 0x18)
-                        | (b << 0x10)
-                        | (g << 0x08)
-                        | r
-
-                    gplStr = gplStr .. strfmt(
+                    -- local a = max(0, min(255, aseColor.alpha))
+                    local a = aseColor.alpha
+                    entryStr = strfmt(
                         "%3d %3d %3d %3d 0x%08x",
-                        r, g, b, a, hexAbgr)
+                        r, g, b, a,
+                        a << 0x18 | b << 0x10 | g << 0x08 | r)
                 else
-                    local hexRgb = (r << 0x10)
-                        | (g << 0x08)
-                        | b
-
-                    gplStr = gplStr .. strfmt(
+                    entryStr = strfmt(
                         "%3d %3d %3d %06X",
-                        r, g, b, hexRgb)
+                        r, g, b,
+                        r << 0x10 | g << 0x08 | b)
                 end
+
+                entryStrArr[1 + i] = entryStr
             end
+            gplStr = gplStr .. table.concat(entryStrArr, '\n')
 
             local filepath = args.filepath
             if filepath and #filepath > 0 then

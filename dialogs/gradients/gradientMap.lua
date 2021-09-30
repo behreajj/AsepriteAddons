@@ -291,8 +291,8 @@ dlg:button {
                         -- Normalize range if requested.
                         local useNormalize = args.useNormalize
                         local rangeLum = maxLum - minLum
-                        local invRangeLum = 1.0 / rangeLum
                         if useNormalize and rangeLum ~= 0 then
+                            local invRangeLum = 1.0 / rangeLum
                             for hex, lum in pairs(lumDict) do
                                 if (hex & 0xff000000) ~= 0 then
                                     lumDict[hex] = (lum - minLum) * invRangeLum

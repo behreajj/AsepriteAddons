@@ -1040,8 +1040,7 @@ function AseUtilities.drawKnot2(
     knot, cel, layer,
     lnClr, coClr, fhClr, rhClr)
 
-    -- Do not supply hexadecimal integers to the color
-    -- constructor if you can avoid it.
+    -- Do not supply hexadecimals to color constructor.
     local lnClrVal = lnClr or Color(175, 175, 175, 255)
     local rhClrVal = rhClr or Color(2, 167, 235, 255)
     local coClrVal = coClr or Color(235, 225, 40, 255)

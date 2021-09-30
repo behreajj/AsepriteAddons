@@ -280,7 +280,6 @@ dlg:button {
             local quantize = Utilities.quantizeUnsigned
             local toHex = Clr.toHex
 
-            -- TODO: Incorporate selection support in other gradients.
             local selection = AseUtilities.getSelection(sprite)
             local img = cel.image
             local iterator = img:pixels(selection.bounds)

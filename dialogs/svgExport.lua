@@ -12,34 +12,25 @@ local function layerToSvgStr(
     border, scale, margin)
 
     local str = ""
-
-    if layer.isVisible then
+    local layerOpacity = layer.opacity
+    if layer.isVisible and layerOpacity > 0 then
         if layer.isGroup then
             local grpStr = string.format(
                 "\n<g id=\"%s\">",
                 layer.name)
 
             local groupLayers = layer.layers
-            -- local groupLayers = {}
-            -- for i = 1, #layer.layers, 1 do
-            --     groupLayers[i] = layer.layers[i]
-            -- end
-
-            -- table.sort(groupLayers, function(a, b)
-            --     if a.isGroup and not b.isGroup then return false end
-            --     if b.isGroup and not a.isGroup then return true end
-            --     return a.stackIndex > b.stackIndex
-            -- end)
-
             local groupLayersLen = #groupLayers
+            local groupStrArr = {}
             for i = 1, groupLayersLen, 1 do
-                    grpStr = grpStr .. layerToSvgStr(
+                    groupStrArr[i] = layerToSvgStr(
                         groupLayers[i],
                         activeFrame,
                         spriteBounds,
                         border, scale, margin)
             end
 
+            grpStr = grpStr .. table.concat(groupStrArr)
             grpStr = grpStr .. "\n</g>"
             str = str .. grpStr
         else
@@ -57,9 +48,18 @@ local function layerToSvgStr(
                     local imgItr = celImg:pixels(intersect)
 
                     local grpStr = string.format(
-                        "\n<g id=\"%s\" opacity=\"%.6f\">",
-                        layer.name, layer.opacity / 255.0)
+                        "\n<g id=\"%s\"",
+                        layer.name)
 
+                    if layerOpacity < 255 then
+                        grpStr = grpStr .. string.format(
+                            " opacity=\"%.6f\"",
+                            layer.opacity * 0.00392156862745098)
+                    end
+
+                    grpStr = grpStr .. ">"
+
+                    local pathStrArr = {}
                     for elm in imgItr do
                         local hex = elm()
                         local a = hex >> 0x18 & 0xff
@@ -77,28 +77,28 @@ local function layerToSvgStr(
                             local bx = x1mrg + x1 * scale
                             local by = y1mrg + y1 * scale
 
-                            grpStr = grpStr .. string.format(
+                            local pathStr = string.format(
                                 "\n<path d=\"M %d %d L %d %d L %d %d L %d %d Z\" ",
                                 ax, ay, bx, ay, bx, by, ax, by)
 
                             if a < 255 then
-                                grpStr = grpStr .. string.format(
+                                pathStr = pathStr .. string.format(
                                     "fill-opacity=\"%.6f\" ",
                                     a * 0.00392156862745098)
                             end
 
-                            --There should be a more efficient way to do this.
-                            --https://stackoverflow.com/questions/12304848/fast-algorithm-to-invert-an-argb-color-value-to-abgr
-                            local b = hex >> 0x10 & 0xff
-                            local g = hex >> 0x08 & 0xff
-                            local r = hex & 0xff
-
-                            grpStr = grpStr .. string.format(
+                            -- Green does not need to be unpacked from the
+                            -- hexadecimal because its order is unchanged.
+                            pathStr = pathStr .. string.format(
                                 "fill=\"#%06X\" />",
-                                (r << 0x10 | g << 0x08 | b))
+                                ((hex & 0xff) << 0x10
+                                    | (hex & 0xff00)
+                                    | (hex >> 0x10 & 0xff)))
+                            table.insert(pathStrArr, pathStr)
                         end
                     end
 
+                    grpStr = grpStr .. table.concat(pathStrArr)
                     grpStr = grpStr .. "\n</g>"
                     str = str .. grpStr
                 end
@@ -227,7 +227,7 @@ dlg:button {
                 if borderClr.alpha < 255 then
                     str = str .. string.format(
                         "fill-opacity=\"%.6f\" ",
-                        borderClr.alpha / 255.0)
+                        borderClr.alpha * 0.00392156862745098)
                 end
 
                 str = str .. string.format(
@@ -247,6 +247,7 @@ dlg:button {
                     border, hnBorder)
 
                 -- Cut out a hole for each pixel (counter-clockwise).
+                local holeStrArr = {}
                 for i = 0, pixelLen - 1, 1 do
                     local y0 = i // nativeWidth
                     local x0 = i % nativeWidth
@@ -261,11 +262,12 @@ dlg:button {
                     local bx = x1mrg + x1 * scale
                     local by = y1mrg + y1 * scale
 
-                    str = str .. string.format(
+                    holeStrArr[1 + i] = string.format(
                         " M %d %d L %d %d L %d %d L %d %d Z",
                         ax, ay, ax, by, bx, by, bx, ay)
                 end
 
+                str = str .. table.concat(holeStrArr)
                 str = str .. "\" "
 
                 if marginClr.alpha < 255 then
@@ -286,15 +288,17 @@ dlg:button {
                 0, 0, nativeWidth, nativeHeight)
             local spriteLayers = activeSprite.layers
 
+            local layersStrArr = {}
             local spriteLayersLen = #spriteLayers
             for i = 1, spriteLayersLen, 1 do
-                str = str .. layerToSvgStr(
+                layersStrArr[i] = layerToSvgStr(
                     spriteLayers[i],
                     activeFrame,
                     spriteBounds,
                     border, scale, margin)
             end
 
+            str = str .. table.concat(layersStrArr)
             str = str .. "\n</svg>"
 
             local filepath = args.filepath

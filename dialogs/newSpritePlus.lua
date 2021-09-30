@@ -25,6 +25,8 @@ local defaults = {
     fps = 24,
     palType = "DEFAULT",
     prependMask = true,
+    gridRows = 0,
+    gridCols = 0,
     pullFocus = true
 }
 
@@ -358,6 +360,28 @@ dlg:check {
     visible = defaults.colorMode ~= "GRAY"
 }
 
+-- dlg:separator {
+--     id = "gridSeparate"
+-- }
+
+-- dlg:slider {
+--     id = "gridCols",
+--     label = "Columns:",
+--     min = 0,
+--     max = 32,
+--     value = defaults.gridCols
+-- }
+
+-- dlg:newrow { always = false }
+
+-- dlg:slider {
+--     id = "gridRows",
+--     label = "Rows:",
+--     min = 0,
+--     max = 32,
+--     value = defaults.gridRows
+-- }
+
 dlg:newrow { always = false }
 
 dlg:button {
@@ -365,8 +389,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
 
+        local args = dlg.data
         local palType = args.palType or defaults.palType
         local hexesSrgb = {}
         local hexesProfile = {}
@@ -481,13 +505,23 @@ dlg:button {
             local firstCel = layer.cels[1]
             firstCel.image = bkgImg
 
-            -- TODO: Replace this with a safety wrapped
-            -- AseUtilities method.
+            -- Doesn't use the AseUtilities method because
+            -- this way is easier to assign the background image.
             app.transaction(function()
                 for i = 0, frameReqs - 2, 1 do
                     newSprite:newCel(layer, i + 2, bkgImg)
                 end
             end)
+        end
+
+        local gridRows = args.gridRows or defaults.gridRows
+        local gridCols = args.gridCols or defaults.gridCols
+        local useGrid = gridRows > 0 and gridCols > 0
+        if useGrid then
+            local gw = math.max(2, math.ceil(spriteWidth / gridCols))
+            local gh = math.max(2, math.ceil(spriteHeight / gridRows))
+            newSprite.gridBounds = Rectangle(0, 0, gw, gh)
+            app.command.ShowGrid()
         end
 
         AseUtilities.changePixelFormat(colorModeInt)

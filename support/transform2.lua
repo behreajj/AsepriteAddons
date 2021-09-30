@@ -293,7 +293,8 @@ end
 ---@param ub table upper bound
 ---@return table
 function Transform2:wrap(lb, ub)
-    self.translation = Vec2.wrap(self.translation, lb, ub)
+    self.translation = Vec2.wrap(
+        self.translation, lb, ub)
     return self
 end
 
