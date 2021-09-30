@@ -38,23 +38,27 @@ local function layerToSvgStr(
             if cel then
                 local celImg = cel.image
                 if celImg then
+
+                    -- Cache functions used in for loop.
+                    local strfmt = string.format
+                    local append = table.insert
+
                     local celBounds = cel.bounds
                     local xCel = celBounds.x
                     local yCel = celBounds.y
                     local intersect = celBounds:intersect(spriteBounds)
-
                     intersect.x = intersect.x - xCel
                     intersect.y = intersect.y - yCel
                     local imgItr = celImg:pixels(intersect)
 
-                    local grpStr = string.format(
+                    local grpStr = strfmt(
                         "\n<g id=\"%s\"",
                         layer.name)
 
                     if layerOpacity < 255 then
-                        grpStr = grpStr .. string.format(
+                        grpStr = grpStr .. strfmt(
                             " opacity=\"%.6f\"",
-                            layer.opacity * 0.00392156862745098)
+                            layerOpacity * 0.00392156862745098)
                     end
 
                     grpStr = grpStr .. ">"
@@ -66,35 +70,33 @@ local function layerToSvgStr(
                         if a > 0 then
                             local x0 = xCel + elm.x
                             local y0 = yCel + elm.y
-                            local y1 = y0 + 1
-                            local x1 = x0 + 1
 
-                            local x1mrg = border + x1 * margin
-                            local y1mrg = border + y1 * margin
+                            local x1mrg = border + (x0 + 1) * margin
+                            local y1mrg = border + (y0 + 1) * margin
 
                             local ax = x1mrg + x0 * scale
                             local ay = y1mrg + y0 * scale
-                            local bx = x1mrg + x1 * scale
-                            local by = y1mrg + y1 * scale
+                            local bx = ax + scale
+                            local by = ay + scale
 
-                            local pathStr = string.format(
+                            local pathStr = strfmt(
                                 "\n<path d=\"M %d %d L %d %d L %d %d L %d %d Z\" ",
                                 ax, ay, bx, ay, bx, by, ax, by)
 
                             if a < 255 then
-                                pathStr = pathStr .. string.format(
+                                pathStr = pathStr .. strfmt(
                                     "fill-opacity=\"%.6f\" ",
                                     a * 0.00392156862745098)
                             end
 
                             -- Green does not need to be unpacked from the
                             -- hexadecimal because its order is unchanged.
-                            pathStr = pathStr .. string.format(
+                            pathStr = pathStr .. strfmt(
                                 "fill=\"#%06X\" />",
                                 ((hex & 0xff) << 0x10
                                     | (hex & 0xff00)
                                     | (hex >> 0x10 & 0xff)))
-                            table.insert(pathStrArr, pathStr)
+                            append(pathStrArr, pathStr)
                         end
                     end
 
@@ -174,6 +176,7 @@ dlg:button {
             local oldColorMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
+            -- Collect inputs.
             local args = dlg.data
             local scale = args.scale or defaults.scale
             local border = args.border or defaults.border
@@ -181,6 +184,7 @@ dlg:button {
             local margin = args.margin or defaults.margin
             local marginClr = args.marginClr or defaults.marginClr
 
+            -- Calculate dimensions.
             local nativeWidth = activeSprite.width
             local nativeHeight = activeSprite.height
             local pixelLen = nativeWidth * nativeHeight
@@ -193,6 +197,9 @@ dlg:button {
                 + (nativeHeight + 1) * margin
                 + border * 2
 
+            -- Cache any methods used in for loops.
+            local strfmt = string.format
+
             local str = ""
             str = str .. "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
             str = str .. "<svg "
@@ -200,9 +207,9 @@ dlg:button {
             str = str .. "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
             str = str .. "shape-rendering=\"crispEdges\" "
             str = str .. "stroke=\"none\" "
-            str = str .. string.format("width=\"%d\" height=\"%d\" ",
+            str = str .. strfmt("width=\"%d\" height=\"%d\" ",
                 totalWidth, totalHeight)
-            str = str .. string.format("viewBox=\"0 0 %d %d\">",
+            str = str .. strfmt("viewBox=\"0 0 %d %d\">",
                 totalWidth, totalHeight)
 
             -- Each path element can contain sub-paths set off by Z (close)
@@ -212,12 +219,12 @@ dlg:button {
             if border > 0 and borderClr.alpha > 0 then
 
                 -- Create outer frame of border (clockwise).
-                str = str .. string.format(
+                str = str .. strfmt(
                     "\n<path id=\"border\" d=\"M 0 0 L %d 0 L %d %d L 0 %d Z ",
                     totalWidth, totalWidth, totalHeight, totalHeight)
 
                 -- Cut out inner frame of border (counter-clockwise).
-                str = str .. string.format(
+                str = str .. strfmt(
                     "M %d %d L %d %d L %d %d L %d %d Z\" ",
                     border, border,
                     border, hnBorder,
@@ -225,12 +232,12 @@ dlg:button {
                     wnBorder, border)
 
                 if borderClr.alpha < 255 then
-                    str = str .. string.format(
+                    str = str .. strfmt(
                         "fill-opacity=\"%.6f\" ",
                         borderClr.alpha * 0.00392156862745098)
                 end
 
-                str = str .. string.format(
+                str = str .. strfmt(
                     "fill=\"#%06X\" />",
                     borderClr.red << 0x10
                         | borderClr.green << 0x08
@@ -239,7 +246,7 @@ dlg:button {
 
             if margin > 0 and marginClr.alpha > 0 then
                 -- Create outer frame of margins (clockwise).
-                str = str .. string.format(
+                str = str .. strfmt(
                     "\n<path id=\"margins\" d=\"M %d %d L %d %d L %d %d L %d %d Z",
                     border, border,
                     wnBorder, border,
@@ -249,20 +256,18 @@ dlg:button {
                 -- Cut out a hole for each pixel (counter-clockwise).
                 local holeStrArr = {}
                 for i = 0, pixelLen - 1, 1 do
-                    local y0 = i // nativeWidth
-                    local x0 = i % nativeWidth
-                    local y1 = y0 + 1
-                    local x1 = x0 + 1
+                    local y = i // nativeWidth
+                    local x = i % nativeWidth
 
-                    local x1mrg = border + x1 * margin
-                    local y1mrg = border + y1 * margin
+                    local x1mrg = border + (x + 1) * margin
+                    local y1mrg = border + (y + 1) * margin
 
-                    local ax = x1mrg + x0 * scale
-                    local ay = y1mrg + y0 * scale
-                    local bx = x1mrg + x1 * scale
-                    local by = y1mrg + y1 * scale
+                    local ax = x1mrg + x * scale
+                    local ay = y1mrg + y * scale
+                    local bx = ax + scale
+                    local by = ay + scale
 
-                    holeStrArr[1 + i] = string.format(
+                    holeStrArr[1 + i] = strfmt(
                         " M %d %d L %d %d L %d %d L %d %d Z",
                         ax, ay, ax, by, bx, by, bx, ay)
                 end
@@ -271,12 +276,12 @@ dlg:button {
                 str = str .. "\" "
 
                 if marginClr.alpha < 255 then
-                    str = str .. string.format(
+                    str = str .. strfmt(
                         "fill-opacity=\"%.6f\" ",
-                        marginClr.alpha / 255.0)
+                        marginClr.alpha * 0.00392156862745098)
                 end
 
-                str = str .. string.format(
+                str = str .. strfmt(
                     "fill=\"#%06X\" />",
                     marginClr.red << 0x10
                         | marginClr.green << 0x08

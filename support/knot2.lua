@@ -252,9 +252,9 @@ end
 function Knot2.toJson(knot)
     return string.format(
         "{\"co\":%s,\"fh\":%s,\"rh\":%s}",
-        Vec3.toJson(knot.co),
-        Vec3.toJson(knot.fh),
-        Vec3.toJson(knot.rh))
+        Vec2.toJson(knot.co),
+        Vec2.toJson(knot.fh),
+        Vec2.toJson(knot.rh))
 end
 
 return Knot2

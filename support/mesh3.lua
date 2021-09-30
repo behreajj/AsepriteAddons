@@ -157,12 +157,15 @@ function Mesh3.toJson(a)
     for i = 1, fsLen, 1 do
         local f = fs[i]
         local fLen = #f
+        local fsStrArr = {}
         str = str .. "["
         for j = 1, fLen, 1 do
-            str = str .. Index3.toJson(f[j])
-            if j < fLen then str = str .. "," end
+            fsStrArr[j] = Index3.toJson(f[j])
         end
+
+        str = str .. table.concat(fsStrArr, ",")
         str = str .. "]"
+
         if i < fsLen then str = str .. "," end
     end
 
@@ -170,20 +173,22 @@ function Mesh3.toJson(a)
 
     local vs = a.vs
     local vsLen = #vs
+    local vsStrArr = {}
     for i = 1, vsLen, 1 do
-        str = str .. Vec3.toJson(vs[i])
-        if i < vsLen then str = str .. ", " end
+        vsStrArr[i] = Vec3.toJson(vs[i])
     end
 
+    str = str .. table.concat(vsStrArr, ",")
     str = str .. "],\"vns\":["
 
     local vns = a.vns
     local vnsLen = #vns
+    local vnsStrArr = {}
     for i = 1, vnsLen, 1 do
-        str = str .. Vec3.toJson(vns[i])
-        if i < vnsLen then str = str .. "," end
+        vnsStrArr[i] = Vec3.toJson(vns[i])
     end
 
+    str = str .. table.concat(vnsStrArr, ",")
     str = str .. "]}"
     return str
 end
@@ -207,32 +212,32 @@ function Mesh3.cube()
     local vsz = 0.5
 
     local fs = {
-        { Index3.new(7, 1), Index3.new(8, 1), Index3.new(6, 1), Index3.new(5, 1) },
-        { Index3.new(8, 2), Index3.new(4, 2), Index3.new(2, 2), Index3.new(6, 2) },
-        { Index3.new(3, 3), Index3.new(7, 3), Index3.new(5, 3), Index3.new(1, 3) },
-        { Index3.new(5, 4), Index3.new(6, 4), Index3.new(2, 4), Index3.new(1, 4) },
-        { Index3.new(1, 5), Index3.new(2, 5), Index3.new(4, 5), Index3.new(3, 5) },
-        { Index3.new(3, 6), Index3.new(4, 6), Index3.new(8, 6), Index3.new(7, 6) }
+        { Index3.new(3, 1), Index3.new(4, 1), Index3.new(2, 1), Index3.new(1, 1) },
+        { Index3.new(2, 2), Index3.new(6, 2), Index3.new(5, 2), Index3.new(1, 2) },
+        { Index3.new(1, 3), Index3.new(5, 3), Index3.new(7, 3), Index3.new(3, 3) },
+        { Index3.new(4, 4), Index3.new(8, 4), Index3.new(6, 4), Index3.new(2, 4) },
+        { Index3.new(3, 5), Index3.new(7, 5), Index3.new(8, 5), Index3.new(4, 5) },
+        { Index3.new(8, 6), Index3.new(7, 6), Index3.new(5, 6), Index3.new(6, 6) }
     }
 
     local vs = {
         Vec3.new(-vsz, -vsz, -vsz),
-        Vec3.new(-vsz, -vsz, vsz),
-        Vec3.new(-vsz, vsz, -vsz),
-        Vec3.new(-vsz, vsz, vsz),
         Vec3.new(vsz, -vsz, -vsz),
-        Vec3.new(vsz, -vsz, vsz),
+        Vec3.new(-vsz, vsz, -vsz),
         Vec3.new(vsz, vsz, -vsz),
+        Vec3.new(-vsz, -vsz, vsz),
+        Vec3.new(vsz, -vsz, vsz),
+        Vec3.new(-vsz, vsz, vsz),
         Vec3.new(vsz, vsz, vsz)
     }
 
     local vns = {
-        Vec3.new(1.0, 0.0, 0.0),
-        Vec3.new(0.0, 0.0, 1.0),
         Vec3.new(0.0, 0.0, -1.0),
         Vec3.new(0.0, -1.0, 0.0),
         Vec3.new(-1.0, 0.0, 0.0),
-        Vec3.new(0.0, 1.0, 0.0)
+        Vec3.new(1.0, 0.0, 0.0),
+        Vec3.new(0.0, 1.0, 0.0),
+        Vec3.new(0.0, 0.0, 1.0)
     }
 
     return Mesh3.new(fs, vs, vns, "Cube")

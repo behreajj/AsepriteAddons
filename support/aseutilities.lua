@@ -174,19 +174,15 @@ function AseUtilities.asePaletteToString(pal, startIndex, count)
     valCnt = math.min(palLen - si, math.max(2, valCnt)) - 1
 
     -- Using \r for carriage returns causes formatting bug.
-    local str = ""
     local aseToStr = AseUtilities.aseColorToString
+    local strArr = {}
     for i = 0, valCnt, 1 do
         local palIdx = si + i
-        str = str
-            .. string.format("%03d. ", palIdx)
-            .. aseToStr(pal:getColor(palIdx))
-        if i < valCnt then
-            str = str .. ",\n"
-        end
+        strArr[1 + i] = string.format(
+            "%03d. %s",
+            palIdx, aseToStr(pal:getColor(palIdx)))
     end
-
-    return str
+    return table.concat(strArr, ",\n")
 end
 
 ---Loads a palette based on a string. The string is

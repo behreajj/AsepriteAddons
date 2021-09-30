@@ -653,11 +653,12 @@ function Mesh2.toJson(a)
 
     local vs = a.vs
     local vsLen = #vs
+    local strArr = {}
     for i = 1, vsLen, 1 do
-        str = str .. Vec2.toJson(vs[i])
-        if i < vsLen then str = str .. "," end
+        strArr[i] = Vec2.toJson(vs[i])
     end
 
+    str = str .. table.concat(strArr, ",")
     str = str .. "]}"
     return str
 end

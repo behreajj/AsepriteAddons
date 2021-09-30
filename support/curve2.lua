@@ -486,11 +486,12 @@ function Curve2.toJson(c)
 
     local kns = c.knots
     local knsLen = #kns
+    local strArr = {}
     for i = 1, knsLen, 1 do
-        str = str .. Knot2.toJson(kns[i])
-        if i < knsLen then str = str .. "," end
+        strArr[i] = Knot2.toJson(kns[i])
     end
 
+    str = str .. table.concat(strArr, ",")
     str = str .. "]}"
     return str
 end
