@@ -8,8 +8,8 @@ local defaults = {
     minAlpha = 24,
     maxAlpha = 96,
     useTint = false,
-    foreTint = Color(0, 0, 255, 112),
-    backTint = Color(255, 0, 0, 112)
+    foreTint = Color(0, 0, 255, 80),
+    backTint = Color(255, 0, 0, 80)
 }
 
 local dlg = Dialog { title = "Bake Onion Skin" }
@@ -183,7 +183,6 @@ dlg:button {
                         local frameIndex = startFrameIndex + (i - 1)
                         frameIndex = math.min(math.max(frameIndex, 1), frameCount)
                         frameIndices[i] = frameIndex
-                        -- print(string.format("frameIndex: %d", frameIndex))
 
                         local currCel = srcLayer:cel(frameIndex)
                         if currCel then
@@ -250,7 +249,10 @@ dlg:button {
                             end
                         else
                             lerpFunc = function(a, b, c, d)
-                                local t = (math.abs(c - d) - 1.0) / (sampleCount - 2.0)
+                                local t = 0.5
+                                if sampleCount > 2 then
+                                    t = (math.abs(c - d) - 1.0) / (sampleCount - 2.0)
+                                end
                                 return (1.0 - t) * b + t * a
                             end
                         end
@@ -315,6 +317,7 @@ dlg:button {
                                                 dest = AseUtilities.blend(shadowHex, tint)
                                             end
                                             dest = (dest & 0x00ffffff) | (compAlpha << 0x18)
+
                                             trgImg:drawPixel(x, y,
                                                 AseUtilities.blend(orig, dest))
                                         end
