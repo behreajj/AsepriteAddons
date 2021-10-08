@@ -123,6 +123,10 @@ dlg:button {
             if srcSprite.colorMode == ColorMode.RGB then
                 local srcCel = app.activeCel
                 if srcCel then
+                    -- Cache global functions used in for loops.
+                    local min = math.min
+                    local trunc = math.tointeger
+
                     -- Unpack arguments.
                     local args = dlg.data
                     local iterations = args.iterations or defaults.iterations
@@ -277,14 +281,15 @@ dlg:button {
                             end
 
                             for j = startIndex, endIndex, step do
-                                -- Only draw shadows not base.
                                 local shadowIndex = frameIndices[j]
                                 local shadowPacket = packets[j]
                                 if shadowPacket then
                                     local fadeAlpha = 255
                                     if shadowIndex ~= baseIndex then
-                                        fadeAlpha = lerpFunc(minAlpha, maxAlpha, shadowIndex, baseIndex)
-                                        fadeAlpha = math.tointeger(0.5 + fadeAlpha)
+                                        fadeAlpha = lerpFunc(
+                                            minAlpha, maxAlpha,
+                                            shadowIndex, baseIndex)
+                                        fadeAlpha = trunc(0.5 + fadeAlpha)
 
                                         local tint = 0xffffffff
                                         if shadowIndex > baseIndex then
@@ -300,26 +305,22 @@ dlg:button {
 
                                         local shadowPixelLen = #shadowPixels
                                         for k = 0, shadowPixelLen - 1, 1 do
-
-                                            -- x pixel in source image is k % baseWidth .
-                                            -- y pixel in source image is k // baseWidth .
-                                            local x = (k % shadowWidth) + xOffset
-                                            local y = (k // shadowWidth) + yOffset
-
-                                            -- Alpha is the minimum of the original and the fade.
                                             local shadowHex = shadowPixels[1 + k]
                                             local shadowAlpha = shadowHex >> 0x18 & 0xff
-                                            local compAlpha = math.min(shadowAlpha, fadeAlpha)
+                                            if shadowAlpha > 0 then
+                                                local compAlpha = min(shadowAlpha, fadeAlpha)
+                                                local x = (k % shadowWidth) + xOffset
+                                                local y = (k // shadowWidth) + yOffset
+                                                local orig = trgImg:getPixel(x, y)
+                                                local dest = shadowHex
+                                                if useTint then
+                                                    dest = AseUtilities.blend(shadowHex, tint)
+                                                end
+                                                dest = (dest & 0x00ffffff) | (compAlpha << 0x18)
 
-                                            local orig = trgImg:getPixel(x, y)
-                                            local dest = shadowHex
-                                            if useTint and (dest & 0xff000000 ~= 0) then
-                                                dest = AseUtilities.blend(shadowHex, tint)
+                                                trgImg:drawPixel(x, y,
+                                                    AseUtilities.blend(orig, dest))
                                             end
-                                            dest = (dest & 0x00ffffff) | (compAlpha << 0x18)
-
-                                            trgImg:drawPixel(x, y,
-                                                AseUtilities.blend(orig, dest))
                                         end
                                     end
                                 end
@@ -333,15 +334,17 @@ dlg:button {
                                 local baseWidth = basePacket.width
                                 local xOffset = basePacket.tlx - xMin
                                 local yOffset = basePacket.tly - yMin
-
                                 local basePixelLen = #basePixels
                                 for k = 0, basePixelLen - 1, 1 do
-                                    local x = (k % baseWidth) + xOffset
-                                    local y = (k // baseWidth) + yOffset
-                                    trgImg:drawPixel(x, y,
-                                        AseUtilities.blend(
-                                            trgImg:getPixel(x, y),
-                                            basePixels[1 + k]))
+                                    local hex = basePixels[1 + k]
+                                    if hex & 0xff000000 ~= 0 then
+                                        local x = (k % baseWidth) + xOffset
+                                        local y = (k // baseWidth) + yOffset
+                                        trgImg:drawPixel(x, y,
+                                            AseUtilities.blend(
+                                                trgImg:getPixel(x, y),
+                                                basePixels[1 + k]))
+                                    end
                                 end
                             end
 
