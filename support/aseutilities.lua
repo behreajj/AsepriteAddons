@@ -416,9 +416,6 @@ end
 ---@param b number overlay color
 ---@return number
 function AseUtilities.blend(a, b)
-
-    -- TODO: Still getting overflow here
-    -- in cases where alpha is < 255
     local t = b >> 0x18 & 0xff
     if t > 0xfe then return b end
     local v = a >> 0x18 & 0xff
@@ -450,17 +447,24 @@ function AseUtilities.blend(a, b)
         if cr > 0xff then cr = 0xff end
         if cg > 0xff then cg = 0xff end
         if cb > 0xff then cb = 0xff end
+
         return 0xff000000
             | cr << 0x10
             | cg << 0x08
             | cb
-    elseif tuv > 0x1 then
-        local tuvn1 = tuv
-        if tuv > 0x7e then tuvn1 = tuv - 1 end
+    elseif tuv > 0x0 then
+        local cr = (bb * t + ab * uv) // tuv
+        local cg = (bg * t + ag * uv) // tuv
+        local cb = (br * t + ar * uv) // tuv
+
+        if cr > 0xff then cr = 0xff end
+        if cg > 0xff then cg = 0xff end
+        if cb > 0xff then cb = 0xff end
+
         return tuv << 0x18
-            | ((bb * t + ab * uv) // tuvn1) << 0x10
-            | ((bg * t + ag * uv) // tuvn1) << 0x08
-            | ((br * t + ar * uv) // tuvn1)
+            | cr << 0x10
+            | cg << 0x08
+            | cb
     else
         return 0x00000000
     end
@@ -1013,9 +1017,10 @@ function AseUtilities.drawHandles2(
 
     local kns = curve.knots
     local knsLen = #kns
+    local drawKnot = AseUtilities.drawKnot2
     app.transaction(function()
         for i = 1, knsLen, 1 do
-            AseUtilities.drawKnot2(
+            drawKnot(
                 kns[i], cel, layer,
                 lnClr, coClr,
                 fhClr, rhClr)
@@ -1052,6 +1057,7 @@ function AseUtilities.drawKnot2(
     local rhPt = AseUtilities.vec2ToPoint(knot.rh)
 
     app.transaction(function()
+        -- Line from rear handle to coordinate.
         app.useTool {
             tool = "line",
             color = lnClrVal,
@@ -1060,6 +1066,7 @@ function AseUtilities.drawKnot2(
             cel = cel,
             layer = layer }
 
+        -- Line from coordinate to fore handle.
         app.useTool {
             tool = "line",
             color = lnClrVal,
@@ -1068,6 +1075,7 @@ function AseUtilities.drawKnot2(
             cel = cel,
             layer = layer }
 
+        -- Rear handle point.
         app.useTool {
             tool = "pencil",
             color = rhClrVal,
@@ -1076,6 +1084,7 @@ function AseUtilities.drawKnot2(
             cel = cel,
             layer = layer }
 
+        -- Coordinate point.
         app.useTool {
             tool = "pencil",
             color = coClrVal,
@@ -1084,6 +1093,7 @@ function AseUtilities.drawKnot2(
             cel = cel,
             layer = layer }
 
+        -- Fore handle point.
         app.useTool {
             tool = "pencil",
             color = fhClrVal,

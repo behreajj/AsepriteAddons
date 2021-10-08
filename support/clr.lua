@@ -25,21 +25,21 @@ function Clr.new(r, g, b, a)
     return inst
 end
 
----Arbitrary hue assigned to darker grays
----in hue conversion functions.
-Clr.HSL_HUE_SHADOW = 255.0 / 360.0
-
 ---Arbitrary hue assigned to lighter grays
 ---in hue conversion functions.
 Clr.HSL_HUE_LIGHT = 48.0 / 360.0
 
 ---Arbitrary hue assigned to darker grays
----in LCh conversion functions.
-Clr.LCH_HUE_SHADOW = 308.0 / 360.0
+---in hue conversion functions.
+Clr.HSL_HUE_SHADOW = 255.0 / 360.0
 
 ---Arbitrary hue assigned to lighter grays
 ---in LCh conversion functions.
 Clr.LCH_HUE_LIGHT = 99.0 / 360.0
+
+---Arbitrary hue assigned to darker grays
+---in LCh conversion functions.
+Clr.LCH_HUE_SHADOW = 308.0 / 360.0
 
 function Clr:__band(b)
     return Clr.bitAnd(self, b)
@@ -279,13 +279,13 @@ function Clr.blendInternal(a, b)
     local v = a.a
     local uv = v * u
     local tuv = t + uv
-    if tuv > 0.996078431372549 then
+    if tuv >= 1.0 then
         return Clr.new(
             b.r * t + a.r * uv,
             b.g * t + a.g * uv,
             b.b * t + a.b * uv,
             1.0)
-    elseif tuv >= 0.00392156862745098 then
+    elseif tuv > 0.0 then
         local tuvInv = 1.0 / tuv
         return Clr.new(
             (b.r * t + a.r * uv) * tuvInv,
@@ -1567,6 +1567,9 @@ function Clr.sRgbaToHsvaInternal(red, green, blue, alpha)
                     a = alpha }
             else
                 -- Gray.
+                -- Day is assumed to be less than shade in
+                -- terms of angle, so one is added to lerp
+                -- in proper angular direction.
                 local hue = (1.0 - light) * Clr.HSL_HUE_SHADOW
                            + light * (1.0 + Clr.HSL_HUE_LIGHT)
                 if hue ~= 1.0 then hue = hue % 1.0 end

@@ -145,9 +145,9 @@ local function updateShading(dialog, l, c, h, a)
     local lSrc = l * 0.01
 
     -- Yellows are very saturated at high light;
-    -- we need to desaturate them to get a proper shade.
+    -- Desaturate them to get a better shade.
     -- Conversely, blues easily fall out of gamut
-    -- so their shadow factor is separate.
+    -- so the shade factor is separate.
     local lgtDesatFac = defaults.lgtDesatFac
     local shdDesatFac = defaults.shdDesatFac
     local minChroma = defaults.minChroma
@@ -161,7 +161,7 @@ local function updateShading(dialog, l, c, h, a)
 
     -- The warm-cool dichotomy works poorly for greens.
     -- For that reason, the closer a hue is to green,
-    -- the more it needs to use the absolute hue shifting.
+    -- the more it uses absolute hue shifting.
     -- Green is approximately at hue 140.
     local offsetMix = Utilities.distAngleUnsigned(h, defaults.greenHue, 1.0)
     local offsetScale = (1.0 - offsetMix) * defaults.maxGreenOffset
@@ -188,9 +188,9 @@ local function updateShading(dialog, l, c, h, a)
         -- off-yellow daylight.
         local hAbs = lerpFunc(shadowHue, dayHue, lItr, 1.0)
 
-        -- We want the middle shade to be nearest to the
-        -- base color, so the fac should be 0.0. That's why
-        -- the zigzag is used to convert to an oscillation.
+        -- The middle sample should be closest to base color.
+        -- The fac needs to be 0.0. That's why zigzag is
+        -- used to convert to an oscillation.
         local lMixed = srcLightWeight * lSrc
                      + cmpLightWeight * lItr
         local lZig = zigZag(lMixed)
@@ -198,6 +198,7 @@ local function updateShading(dialog, l, c, h, a)
         local hMixed = lerpNear(h, hAbs, fac, 1.0)
 
         -- Desaturate brights and darks.
+        -- Min chroma gives even grays a slight chroma.
         local chromaTarget = desatChromaLgt
         if lMixed < 0.5 then chromaTarget = desatChromaShd end
         local cMixed = (1.0 - lZig) * cVal + lZig * chromaTarget
@@ -215,15 +216,16 @@ local function updateShading(dialog, l, c, h, a)
 end
 
 local function updateHexCode(dialog, clrArr)
-    local str = ""
     local len = #clrArr
-    local last = len - 1
+    local strArr = {}
     for i = 1, len, 1 do
-        str = str .. Clr.toHexWeb(clrArr[i])
-        if i < last then str = str .. ',' end
+        strArr[i] = Clr.toHexWeb(clrArr[i])
     end
 
-    dialog:modify { id = "hexCode", text = str }
+    dialog:modify {
+        id = "hexCode",
+        text = table.concat(strArr, ",")
+    }
 end
 
 local function updateWarning(dialog, clr)

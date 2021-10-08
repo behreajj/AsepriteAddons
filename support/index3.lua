@@ -7,12 +7,14 @@ setmetatable(Index3, {
     end})
 
 ---Constructs a vertex index for a Mesh3.
----@param v integer coordinate index
----@param vn integer normal index
+---@param v number coordinate index
+---@param vt number texture index
+---@param vn number normal index
 ---@return table
-function Index3.new(v, vn)
+function Index3.new(v, vt, vn)
     local inst = setmetatable({}, Index3)
     inst.v = v or 1
+    inst.vt = vt or 1
     inst.vn = vn or 1
     return inst
 end
@@ -28,8 +30,8 @@ end
 ---@return string
 function Index3.toJson(i)
     return string.format(
-        "{\"v\":%d,\"vn\":%d}",
-        i.v - 1, i.vn - 1)
+        "{\"v\":%d,\"vt\":%d,\"vn\":%d}",
+        i.v - 1, i.vt - 1, i.vn - 1)
 end
 
 return Index3

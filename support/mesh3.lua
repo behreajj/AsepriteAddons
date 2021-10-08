@@ -1,3 +1,4 @@
+dofile("./vec2.lua")
 dofile("./vec3.lua")
 dofile("./index3.lua")
 
@@ -13,13 +14,15 @@ setmetatable(Mesh3, {
 ---number of vertices per face.
 ---@param fs table faces
 ---@param vs table coordinates
+---@param vts table texture coordinates
 ---@param vns table normals
 ---@param name string name
 ---@return table
-function Mesh3.new(fs, vs, vns, name)
+function Mesh3.new(fs, vs, vts, vns, name)
     local inst = setmetatable({}, Mesh3)
     inst.fs = fs or {}
     inst.vs = vs or {}
+    inst.vts = vts or {}
     inst.vns = vns or {}
     inst.name = name or "Mesh3"
     return inst
@@ -144,6 +147,68 @@ function Mesh3:scaleVec3(v)
     return self
 end
 
+---Translates all coordinates in a mesh
+---by a vector.
+---@param tr table translation
+---@return table
+function Mesh3:translate(tr)
+    local vsLen = #self.vs
+    for i = 1, vsLen, 1 do
+        self.vs[i] = Vec3.add(self.vs[i], tr)
+    end
+    return self
+end
+
+---Creates a cube.
+---@param size number cube size
+---@return table
+function Mesh3.cube(size)
+    local fs = {
+        { Index3.new(3,  7, 1), Index3.new(4,  8, 1), Index3.new(2,  4, 1), Index3.new(1,  3, 1) },
+        { Index3.new(2,  4, 2), Index3.new(6,  5, 2), Index3.new(5,  2, 2), Index3.new(1,  1, 2) },
+        { Index3.new(1, 13, 3), Index3.new(5, 14, 3), Index3.new(7, 12, 3), Index3.new(3, 11, 3) },
+        { Index3.new(4,  8, 4), Index3.new(8,  9, 4), Index3.new(6,  5, 4), Index3.new(2,  4, 4) },
+        { Index3.new(3, 11, 5), Index3.new(7, 12, 5), Index3.new(8,  9, 5), Index3.new(4,  8, 5) },
+        { Index3.new(8,  9, 6), Index3.new(7, 10, 6), Index3.new(5,  6, 6), Index3.new(6,  5, 6) } }
+
+    local szVal = size or 0.35355339059327373
+    local vs = {
+        Vec3.new(-szVal, -szVal, -szVal),
+        Vec3.new( szVal, -szVal, -szVal),
+        Vec3.new(-szVal,  szVal, -szVal),
+        Vec3.new( szVal,  szVal, -szVal),
+        Vec3.new(-szVal, -szVal,  szVal),
+        Vec3.new( szVal, -szVal,  szVal),
+        Vec3.new(-szVal,  szVal,  szVal),
+        Vec3.new( szVal,  szVal,  szVal) }
+
+    local vts = {
+        Vec2.new(0.375, 0.0),
+        Vec2.new(0.625, 0.0),
+        Vec2.new(0.125, 0.25),
+        Vec2.new(0.375, 0.25),
+        Vec2.new(0.625, 0.25),
+        Vec2.new(0.875, 0.25),
+        Vec2.new(0.125, 0.50),
+        Vec2.new(0.375, 0.50),
+        Vec2.new(0.625, 0.50),
+        Vec2.new(0.875, 0.50),
+        Vec2.new(0.375, 0.75),
+        Vec2.new(0.625, 0.75),
+        Vec2.new(0.375, 1.0),
+        Vec2.new(0.625, 1.0) }
+
+    local vns = {
+        Vec3.new( 0.0,  0.0, -1.0),
+        Vec3.new( 0.0, -1.0,  0.0),
+        Vec3.new(-1.0,  0.0,  0.0),
+        Vec3.new( 1.0,  0.0,  0.0),
+        Vec3.new( 0.0,  1.0,  0.0),
+        Vec3.new( 0.0,  0.0,  1.0) }
+
+    return Mesh3.new(fs, vs, vts, vns, "Cube")
+end
+
 ---Returns a JSON string for a mesh.
 ---@param a table mesh
 ---@return string
@@ -179,6 +244,16 @@ function Mesh3.toJson(a)
     end
 
     str = str .. table.concat(vsStrArr, ",")
+    str = str .. "],\"vts\":["
+
+    local vts = a.vts
+    local vtsLen = #vts
+    local vtsStrArr = {}
+    for i = 1, vtsLen, 1 do
+        vtsStrArr[i] = Vec2.toJson(vts[i])
+    end
+
+    str = str .. table.concat(vtsStrArr, ",")
     str = str .. "],\"vns\":["
 
     local vns = a.vns
@@ -191,56 +266,6 @@ function Mesh3.toJson(a)
     str = str .. table.concat(vnsStrArr, ",")
     str = str .. "]}"
     return str
-end
-
----Translates all coordinates in a mesh
----by a vector.
----@param tr table translation
----@return table
-function Mesh3:translate(tr)
-    local vsLen = #self.vs
-    for i = 1, vsLen, 1 do
-        self.vs[i] = Vec3.add(self.vs[i], tr)
-    end
-    return self
-end
-
----Creates a cube.
----@return table
-function Mesh3.cube()
-
-    local vsz = 0.5
-
-    local fs = {
-        { Index3.new(3, 1), Index3.new(4, 1), Index3.new(2, 1), Index3.new(1, 1) },
-        { Index3.new(2, 2), Index3.new(6, 2), Index3.new(5, 2), Index3.new(1, 2) },
-        { Index3.new(1, 3), Index3.new(5, 3), Index3.new(7, 3), Index3.new(3, 3) },
-        { Index3.new(4, 4), Index3.new(8, 4), Index3.new(6, 4), Index3.new(2, 4) },
-        { Index3.new(3, 5), Index3.new(7, 5), Index3.new(8, 5), Index3.new(4, 5) },
-        { Index3.new(8, 6), Index3.new(7, 6), Index3.new(5, 6), Index3.new(6, 6) }
-    }
-
-    local vs = {
-        Vec3.new(-vsz, -vsz, -vsz),
-        Vec3.new(vsz, -vsz, -vsz),
-        Vec3.new(-vsz, vsz, -vsz),
-        Vec3.new(vsz, vsz, -vsz),
-        Vec3.new(-vsz, -vsz, vsz),
-        Vec3.new(vsz, -vsz, vsz),
-        Vec3.new(-vsz, vsz, vsz),
-        Vec3.new(vsz, vsz, vsz)
-    }
-
-    local vns = {
-        Vec3.new(0.0, 0.0, -1.0),
-        Vec3.new(0.0, -1.0, 0.0),
-        Vec3.new(-1.0, 0.0, 0.0),
-        Vec3.new(1.0, 0.0, 0.0),
-        Vec3.new(0.0, 1.0, 0.0),
-        Vec3.new(0.0, 0.0, 1.0)
-    }
-
-    return Mesh3.new(fs, vs, vns, "Cube")
 end
 
 return Mesh3
