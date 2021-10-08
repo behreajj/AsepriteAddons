@@ -3,10 +3,13 @@ dofile("../support/aseutilities.lua")
 local directOps = { "BACKWARD", "BOTH", "FORWARD" }
 
 local defaults = {
-    iterations = 6,
+    iterations = 8,
     directions = "BACKWARD",
     minAlpha = 24,
-    maxAlpha = 96
+    maxAlpha = 96,
+    useTint = false,
+    foreTint = Color(0, 0, 255, 112),
+    backTint = Color(255, 0, 0, 112)
 }
 
 local dlg = Dialog { title = "Bake Onion Skin" }
@@ -45,7 +48,67 @@ dlg:combobox {
     id = "directions",
     label = "Direction:",
     option = defaults.direcions,
-    options = directOps
+    options = directOps,
+    onchange = function()
+        local args = dlg.data
+        local md = args.directions
+        local useTint = args.useTint
+        if md == "FORWARD" then
+            dlg:modify { id = "foreTint", visible = useTint }
+            dlg:modify { id = "backTint", visible = false }
+        elseif md == "BACKWARD" then
+            dlg:modify { id = "foreTint", visible = false }
+            dlg:modify { id = "backTint", visible = useTint }
+        else
+            dlg:modify { id = "foreTint", visible = useTint }
+            dlg:modify { id = "backTint", visible = useTint }
+        end
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useTint",
+    label = "Tint:",
+    selected = defaults.useTint,
+    onclick = function()
+        local args = dlg.data
+        local md = args.directions
+        local useTint = args.useTint
+        if md == "FORWARD" then
+            dlg:modify { id = "foreTint", visible = useTint }
+            dlg:modify { id = "backTint", visible = false }
+        elseif md == "BACKWARD" then
+            dlg:modify { id = "foreTint", visible = false }
+            dlg:modify { id = "backTint", visible = useTint }
+        else
+            dlg:modify { id = "foreTint", visible = useTint }
+            dlg:modify { id = "backTint", visible = useTint }
+        end
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "backTint",
+    label = "Back:",
+    color = defaults.backTint,
+    visible = defaults.useTint
+        and (defaults.directions == "BACKWARD"
+            or defaults.direcions == "BOTH")
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "foreTint",
+    label = "Fore:",
+    color = defaults.foreTint,
+    visible = defaults.useTint
+        and (defaults.directions == "FORWARD"
+        or defaults.direcions == "BOTH")
 }
 
 dlg:newrow { always = false }
@@ -66,6 +129,9 @@ dlg:button {
                     local directions = args.directions or defaults.directions
                     local minAlpha = args.minAlpha or defaults.minAlpha
                     local maxAlpha = args.maxAlpha or defaults.maxAlpha
+                    local useTint = args.useTint
+                    local backTint = args.backTint or defaults.backTint
+                    local foreTint = args.foreTint or defaults.foreTint
 
                     -- Find directions.
                     local useBoth = directions == "BOTH"
@@ -73,6 +139,10 @@ dlg:button {
                     local useBack = directions == "BACKWARD"
                     local lookForward = useBoth or useFore
                     local lookBackward = useBoth or useBack
+
+                    -- Unpack colors.
+                    local backHex = backTint.rgbaPixel
+                    local foreHex = foreTint.rgbaPixel
 
                     local srcLayer = srcCel.layer -- row
                     local srcFrame = srcCel.frame -- column
@@ -214,20 +284,25 @@ dlg:button {
                                         fadeAlpha = lerpFunc(minAlpha, maxAlpha, shadowIndex, baseIndex)
                                         fadeAlpha = math.tointeger(0.5 + fadeAlpha)
 
+                                        local tint = 0xffffffff
+                                        if shadowIndex > baseIndex then
+                                            tint = foreHex
+                                        else
+                                            tint = backHex
+                                        end
+
                                         local shadowPixels = shadowPacket.pixels
                                         local shadowWidth = shadowPacket.width
-                                        local xShadow = shadowPacket.tlx
-                                        local yShadow = shadowPacket.tly
+                                        local xOffset = shadowPacket.tlx - xMin
+                                        local yOffset = shadowPacket.tly - yMin
 
                                         local shadowPixelLen = #shadowPixels
                                         for k = 0, shadowPixelLen - 1, 1 do
 
                                             -- x pixel in source image is k % baseWidth .
                                             -- y pixel in source image is k // baseWidth .
-                                            -- Then add original cel position.
-                                            -- Then subtract new cel position.
-                                            local x = (k % shadowWidth) + (xShadow - xMin)
-                                            local y = (k // shadowWidth) + (yShadow - yMin)
+                                            local x = (k % shadowWidth) + xOffset
+                                            local y = (k // shadowWidth) + yOffset
 
                                             -- Alpha is the minimum of the original and the fade.
                                             local shadowHex = shadowPixels[1 + k]
@@ -235,8 +310,11 @@ dlg:button {
                                             local compAlpha = math.min(shadowAlpha, fadeAlpha)
 
                                             local orig = trgImg:getPixel(x, y)
-                                            local dest = shadowHex & 0x00ffffff
-                                                            | compAlpha << 0x18
+                                            local dest = shadowHex
+                                            if useTint and (dest & 0xff000000 ~= 0) then
+                                                dest = AseUtilities.blend(shadowHex, tint)
+                                            end
+                                            dest = (dest & 0x00ffffff) | (compAlpha << 0x18)
                                             trgImg:drawPixel(x, y,
                                                 AseUtilities.blend(orig, dest))
                                         end
@@ -250,13 +328,13 @@ dlg:button {
                             if basePacket then
                                 local basePixels = basePacket.pixels
                                 local baseWidth = basePacket.width
-                                local xBase = basePacket.tlx
-                                local yBase = basePacket.tly
+                                local xOffset = basePacket.tlx - xMin
+                                local yOffset = basePacket.tly - yMin
 
                                 local basePixelLen = #basePixels
                                 for k = 0, basePixelLen - 1, 1 do
-                                    local x = (k % baseWidth) + (xBase - xMin)
-                                    local y = (k // baseWidth) + (yBase - yMin)
+                                    local x = (k % baseWidth) + xOffset
+                                    local y = (k // baseWidth) + yOffset
                                     trgImg:drawPixel(x, y,
                                         AseUtilities.blend(
                                             trgImg:getPixel(x, y),
