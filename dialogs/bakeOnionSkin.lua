@@ -123,8 +123,10 @@ dlg:button {
             if srcSprite.colorMode == ColorMode.RGB then
                 local srcCel = app.activeCel
                 if srcCel then
+
                     -- Cache global functions used in for loops.
                     local min = math.min
+                    local max = math.max
                     local trunc = math.tointeger
 
                     -- Unpack arguments.
@@ -185,22 +187,25 @@ dlg:button {
 
                     for i = 1, sampleCount, 1 do
                         local frameIndex = startFrameIndex + (i - 1)
-                        frameIndex = math.min(math.max(frameIndex, 1), frameCount)
+                        frameIndex = min(max(frameIndex, 1), frameCount)
                         frameIndices[i] = frameIndex
 
                         local currCel = srcLayer:cel(frameIndex)
                         if currCel then
                             local currImg = currCel.image
                             if currImg then
-                                local imgWidth = currImg.width
-                                local imgHeight = currImg.height
-
+                                -- Top left corner is cel's position.
                                 local currPos = currCel.position
                                 local xTopLeft = currPos.x
                                 local yTopLeft = currPos.y
-                                local xBottomRight = xTopLeft + imgWidth
-                                local yBottomRight = yTopLeft + imgHeight
 
+                                -- Bottom right corner is cel's position
+                                -- plus image dimensions.
+                                local imgWidth = currImg.width
+                                local xBottomRight = xTopLeft + imgWidth
+                                local yBottomRight = yTopLeft + currImg.height
+
+                                -- Update minima and maxima.
                                 if xTopLeft < xMin then xMin = xTopLeft end
                                 if yTopLeft < yMin then yMin = yTopLeft end
                                 if xBottomRight > xMax then xMax = xBottomRight end
@@ -270,6 +275,7 @@ dlg:button {
                             local startIndex = 1
                             local endIndex = sampleCount
                             local step = 1
+
                             if useBack then
                                 startIndex = 1
                                 endIndex = i

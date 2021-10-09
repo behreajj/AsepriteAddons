@@ -1402,6 +1402,95 @@ function AseUtilities.rotateGlyphCcw(gl, w, h)
     return vr
 end
 
+---Creates a copy of the image where excess
+---transparent pixels have been trimmed from
+---the edges. Adapted from the Stack Overflow
+---implementation by Oleg Mikhailov:
+---https://stackoverflow.com/a/36938923 .
+---Returns a tuple containing the cropped image,
+---the top left x and top left y. The top left
+---should be added to the position of the cel
+---that contained the source image.
+---@param image table aseprite image
+---@return table
+---@return number
+---@return number
+function AseUtilities.trimImageAlpha(image)
+    local width = image.width
+    local height = image.height
+    local left = 0
+    local top = 0
+    local right = width - 1
+    local bottom = height - 1
+    local minRight = width - 1
+    local minBottom = height - 1
+
+    local breakTop = false
+    for t = top, bottom - 1, 1 do
+        for x = 0, width - 1, 1 do
+            if image:getPixel(x, t) & 0xff000000 ~= 0 then
+                minRight = x
+                minBottom = t
+                top = t
+                breakTop = true
+                break
+            end
+        end
+        if breakTop then break end
+    end
+
+    local breakLeft = false
+    for l = left, minRight - 1, 1 do
+        for y = height - 1, top + 1, -1 do
+            if image:getPixel(l, y) & 0xff000000 ~= 0 then
+                minBottom = y
+                left = l
+                breakLeft = true
+                break
+            end
+        end
+        if breakLeft then break end
+    end
+
+    local breakBottom = false
+    for b = bottom, minBottom + 1, -1 do
+        for x = width - 1, left, -1 do
+            if image:getPixel(x, b) & 0xff000000 ~= 0 then
+                minRight = x
+                bottom = b
+                breakBottom = true
+                break
+            end
+        end
+        if breakBottom then break end
+    end
+
+    local breakRight = false
+    for r = right, minRight, -1 do
+        for y = bottom, top, -1 do
+            if image:getPixel(r, y) & 0xff000000 ~= 0 then
+                right = r
+                breakRight = true
+                break
+            end
+        end
+        if breakRight then break end
+    end
+
+    local trgWidth = 1 + (right - left)
+    local trgHeight = 1 + (bottom - top)
+    local target = Image(trgWidth, trgHeight)
+
+    local sampleRect = Rectangle(left, top, trgWidth, trgHeight)
+    local srcItr = image:pixels(sampleRect)
+
+    for elm in srcItr do
+        target:drawPixel(elm.x - left, elm.y - top, elm())
+    end
+
+    return target, left, top
+end
+
 ---Converts a Vec2 to an Aseprite Point.
 ---@param a table vector
 ---@return table
