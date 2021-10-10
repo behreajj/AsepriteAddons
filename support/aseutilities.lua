@@ -1416,77 +1416,86 @@ end
 ---@return number
 ---@return number
 function AseUtilities.trimImageAlpha(image)
+
+    -- Immutable.
     local width = image.width
     local height = image.height
+    local widthn1 = width - 1
+    local heightn1 = height - 1
+
+    -- Mutable.
     local left = 0
     local top = 0
-    local right = width - 1
-    local bottom = height - 1
-    local minRight = width - 1
-    local minBottom = height - 1
+    local right = widthn1
+    local bottom = heightn1
+    local minRight = widthn1
+    local minBottom = heightn1
 
-    local breakTop = false
-    for t = top, bottom - 1, 1 do
-        for x = 0, width - 1, 1 do
-            if image:getPixel(x, t) & 0xff000000 ~= 0 then
-                minRight = x
-                minBottom = t
-                top = t
-                breakTop = true
-                break
-            end
+    -- Top edge.
+    local len0 = width * bottom - 1
+    for i = 0, len0, 1 do
+        local t = top + i // width
+        local x = i % width
+        if (image:getPixel(x, t) & 0xff000000) ~= 0 then
+            minRight = x
+            minBottom = t
+            top = t
+            break
         end
-        if breakTop then break end
     end
 
-    local breakLeft = false
-    for l = left, minRight - 1, 1 do
-        for y = height - 1, top + 1, -1 do
-            if image:getPixel(l, y) & 0xff000000 ~= 0 then
-                minBottom = y
-                left = l
-                breakLeft = true
-                break
-            end
+    -- Left edge.
+    local h1 = heightn1 - top
+    local w1 = (minRight + 1) - left
+    local len1 = w1 * h1 - 1
+    for i = 0, len1, 1 do
+        local l = left + i // h1
+        local y = heightn1 - i % h1
+        if (image:getPixel(l, y) & 0xff000000) ~= 0 then
+            minBottom = y
+            left = l
+            break
         end
-        if breakLeft then break end
     end
 
-    local breakBottom = false
-    for b = bottom, minBottom + 1, -1 do
-        for x = width - 1, left, -1 do
-            if image:getPixel(x, b) & 0xff000000 ~= 0 then
-                minRight = x
-                bottom = b
-                breakBottom = true
-                break
-            end
+    -- Bottom edge.
+    local h2 = bottom - (minBottom - 1)
+    local w2 = widthn1 - (left - 1)
+    local len2 = w2 * h2 - 1
+    for i = 0, len2, 1 do
+        local b = bottom - i // w2
+        local x = widthn1 - i % w2
+        if (image:getPixel(x, b) & 0xff000000) ~= 0 then
+            minRight = x
+            bottom = b
+            break
         end
-        if breakBottom then break end
     end
 
-    local breakRight = false
-    for r = right, minRight, -1 do
-        for y = bottom, top, -1 do
-            if image:getPixel(r, y) & 0xff000000 ~= 0 then
-                right = r
-                breakRight = true
-                break
-            end
+    -- Right edge.
+    local h3 = bottom - (top - 1)
+    local w3 = right - (minRight - 1)
+    local len3 = w3 * h3 - 1
+    for i = 0, len3, 1 do
+        local r = right - i // h3
+        local y = bottom - i % h3
+        if (image:getPixel(r, y) & 0xff000000) ~= 0 then
+            right = r
+            break
         end
-        if breakRight then break end
     end
 
-    local trgWidth = 1 + (right - left)
-    local trgHeight = 1 + (bottom - top)
-    local target = Image(trgWidth, trgHeight)
+    local wTrg = 1 + (right - left)
+    local hTrg = 1 + (bottom - top)
+    local target = Image(wTrg, hTrg)
 
-    local sampleRect = Rectangle(left, top, trgWidth, trgHeight)
-    local srcItr = image:pixels(sampleRect)
+    -- local sampleRect = Rectangle(left, top, wTrg, hTrg)
+    -- local srcItr = image:pixels(sampleRect)
+    -- for elm in srcItr do
+    --     target:drawPixel(elm.x - left, elm.y - top, elm())
+    -- end
 
-    for elm in srcItr do
-        target:drawPixel(elm.x - left, elm.y - top, elm())
-    end
+    target:drawImage(image, Point(-left, -top))
 
     return target, left, top
 end

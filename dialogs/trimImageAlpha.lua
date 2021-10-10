@@ -6,33 +6,14 @@ local defaults = {
 
 local dlg = Dialog { title = "Trim Image Alpha" }
 
--- dlg:slider {
---     id = "frameStart",
---     label = "Start:",
---     min = 1,
---     max = 128,
---     value = defaults.frameStart,
---     visible = defaults.mode == "FRAMES"
--- }
-
--- dlg:newrow { always = false }
-
--- dlg:slider {
---     id = "frameCount",
---     label = "Count:",
---     min = 2,
---     max = 96,
---     value = defaults.frameCount,
---     visible = defaults.mode == "FRAMES"
--- }
-
--- dlg:newrow { always = false }
-
 dlg:button {
     id = "confirm",
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        -- TODO: Consider making this a "trim cel image" dialog
+        -- with a "ALPHA" and a "CANVAS" mode.
+
         local activeSprite = app.activeSprite
         if activeSprite then
             local cels = activeSprite.cels
