@@ -35,7 +35,7 @@ dlg:combobox {
 
 dlg:file {
     id = "aPalFile",
-    filetypes = { "aseprite", "gpl", "pal" },
+    filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
     open = true,
     visible = defaults.aPalType == "FILE"
 }
@@ -71,7 +71,7 @@ dlg:combobox {
 
 dlg:file {
     id = "bPalFile",
-    filetypes = { "aseprite", "gpl", "pal" },
+    filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
     open = true,
     visible = defaults.bPalType == "FILE"
 }
@@ -119,7 +119,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "filepath",
-    filetypes = { "aseprite", "gpl", "pal", "png" },
+    filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
     save = true,
     visible = defaults.target == "SAVE"
 }

@@ -165,7 +165,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "palFile",
-    filetypes = { "aseprite", "gpl", "pal", "png" },
+    filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
     open = true,
     visible = defaults.plotPalette
         and defaults.palType == "FILE"

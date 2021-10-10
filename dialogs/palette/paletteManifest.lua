@@ -1,7 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
 local palTypes = { "ACTIVE", "FILE", "PRESET" }
-local palFormats = { "aseprite", "gpl", "png", "pal" }
+local palFormats = { "aseprite", "gpl", "png", "pal", "webp" }
 local sortPresets = {
     "A", "ALPHA", "B",
     "CHROMA", "HUE",

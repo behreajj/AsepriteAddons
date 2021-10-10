@@ -67,7 +67,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "filepath",
-    filetypes = { "aseprite", "gpl", "pal" },
+    filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
     save = true,
     visible = defaults.target == "SAVE"
 }
