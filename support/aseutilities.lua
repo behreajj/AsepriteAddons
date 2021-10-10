@@ -189,7 +189,7 @@ end
 ---expected to be either "FILE", "PRESET" or "ACTIVE".
 ---Returns a tuple of tables. The first table is an
 ---array of hexadecimals according to the sprite color
----profile; the second is a copy of the first converted
+---profile. The second is a copy of the first converted
 ---to SRGB. If a palette is loaded from a filepath or a
 ---preset the two tables should match, as Aseprite does
 ---not support color management for palettes. The
@@ -946,8 +946,8 @@ function AseUtilities.drawGlyph(
     end
 end
 
----Draws a glyph to an image at a pixel scale;
----resizes the glyph according to nearest neighbor.
+---Draws a glyph to an image at a pixel scale.
+---Resizes the glyph according to nearest neighbor.
 ---The color is to be represented in hexadecimal
 ---with AABBGGR order.
 ---Operates on pixels. This should not be used
@@ -1446,10 +1446,11 @@ function AseUtilities.trimImageAlpha(image)
 
     -- Left edge.
     local h1 = heightn1 - top
-    local w1 = (minRight + 1) - left
+    local w1 = minRight - left
+    local leftp1 = left + 1
     local len1 = w1 * h1 - 1
     for i = 0, len1, 1 do
-        local l = left + i // h1
+        local l = leftp1 + i // h1
         local y = heightn1 - i % h1
         if (image:getPixel(l, y) & 0xff000000) ~= 0 then
             minBottom = y
@@ -1474,10 +1475,11 @@ function AseUtilities.trimImageAlpha(image)
 
     -- Right edge.
     local h3 = bottom - (top - 1)
-    local w3 = right - (minRight - 1)
+    local w3 = right - minRight
+    local rightn1 = right - 1
     local len3 = w3 * h3 - 1
     for i = 0, len3, 1 do
-        local r = right - i // h3
+        local r = rightn1 - i // h3
         local y = bottom - i % h3
         if (image:getPixel(r, y) & 0xff000000) ~= 0 then
             right = r
@@ -1496,7 +1498,6 @@ function AseUtilities.trimImageAlpha(image)
     -- end
 
     target:drawImage(image, Point(-left, -top))
-
     return target, left, top
 end
 

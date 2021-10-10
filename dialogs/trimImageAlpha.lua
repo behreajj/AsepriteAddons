@@ -16,6 +16,10 @@ dlg:button {
 
         local activeSprite = app.activeSprite
         if activeSprite then
+
+            local oldMode = activeSprite.colorMode
+            app.command.ChangePixelFormat { format = "rgb" }
+
             local cels = activeSprite.cels
             local celsLen = #cels
             local trimImage = AseUtilities.trimImageAlpha
@@ -30,6 +34,7 @@ dlg:button {
                 end
             end
 
+            AseUtilities.changePixelFormat(oldMode)
             app.refresh()
         else
             app.alert("There is no active sprite.")
