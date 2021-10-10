@@ -9,7 +9,9 @@ local defaults = {
     maxAlpha = 96,
     useTint = false,
     foreTint = Color(0, 0, 255, 80),
-    backTint = Color(255, 0, 0, 80)
+    backTint = Color(255, 0, 0, 80),
+    trimCels = true,
+    pullFocus = false
 }
 
 local dlg = Dialog { title = "Bake Onion Skin" }
@@ -113,6 +115,15 @@ dlg:color {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "trimCels",
+    label = "Trim:",
+    text = "Layer Edges",
+    selected = defaults.trimCels
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "confirm",
     text = "&OK",
@@ -128,6 +139,7 @@ dlg:button {
                     local min = math.min
                     local max = math.max
                     local trunc = math.tointeger
+                    local trimImageAlpha = AseUtilities.trimImageAlpha
 
                     -- Unpack arguments.
                     local args = dlg.data
@@ -138,6 +150,7 @@ dlg:button {
                     local useTint = args.useTint
                     local backTint = args.backTint or defaults.backTint
                     local foreTint = args.foreTint or defaults.foreTint
+                    local trimCels = args.trimCels
 
                     -- Find directions.
                     local useBoth = directions == "BOTH"
@@ -194,10 +207,18 @@ dlg:button {
                         if currCel then
                             local currImg = currCel.image
                             if currImg then
+
                                 -- Top left corner is cel's position.
                                 local currPos = currCel.position
                                 local xTopLeft = currPos.x
                                 local yTopLeft = currPos.y
+
+                                if trimCels then
+                                    local trimmed, xTr, yTr = trimImageAlpha(currImg)
+                                    currImg = trimmed
+                                    xTopLeft = xTopLeft + xTr
+                                    yTopLeft = yTopLeft + yTr
+                                end
 
                                 -- Bottom right corner is cel's position
                                 -- plus image dimensions.
@@ -217,7 +238,7 @@ dlg:button {
                                 for elm in pixelItr do
                                     local hex = elm()
                                     local alphaOnly = hex & 0xff000000
-                                    if alphaOnly ~= 0 then
+                                    if alphaOnly ~= 0x0 then
                                         pixels[pixelIdx] = hex
                                     else
                                         pixels[pixelIdx] = 0x0
