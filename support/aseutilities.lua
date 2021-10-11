@@ -1407,6 +1407,7 @@ end
 ---the edges. Adapted from the Stack Overflow
 ---implementation by Oleg Mikhailov:
 ---https://stackoverflow.com/a/36938923 .
+---
 ---Returns a tuple containing the cropped image,
 ---the top left x and top left y. The top left
 ---should be added to the position of the cel
@@ -1497,6 +1498,7 @@ function AseUtilities.trimImageAlpha(image)
     --     target:drawPixel(elm.x - left, elm.y - top, elm())
     -- end
 
+    -- This must create a transaction?
     target:drawImage(image, Point(-left, -top))
     return target, left, top
 end

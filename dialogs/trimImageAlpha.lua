@@ -23,16 +23,18 @@ dlg:button {
             local cels = activeSprite.cels
             local celsLen = #cels
             local trimImage = AseUtilities.trimImageAlpha
-            for i = 1, celsLen, 1 do
-                local cel = cels[i]
-                local srcImg = cel.image
-                if srcImg then
-                    local trgImg, x, y = trimImage(srcImg)
-                    local srcPos = cel.position
-                    cel.position = Point(srcPos.x + x, srcPos.y + y)
-                    cel.image = trgImg
+            app.transaction(function()
+                for i = 1, celsLen, 1 do
+                    local cel = cels[i]
+                    local srcImg = cel.image
+                    if srcImg then
+                        local trgImg, x, y = trimImage(srcImg)
+                        local srcPos = cel.position
+                        cel.position = Point(srcPos.x + x, srcPos.y + y)
+                        cel.image = trgImg
+                    end
                 end
-            end
+            end)
 
             AseUtilities.changePixelFormat(oldMode)
             app.refresh()

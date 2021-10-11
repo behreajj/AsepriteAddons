@@ -48,14 +48,6 @@ dlg:check {
     selected = defaults.trimCels
 }
 
-dlg:newrow { always = false }
-
-dlg:label {
-    id = "clrMdWarn",
-    label = "Note:",
-    text = "Sprites open in RGB mode."
-}
-
 dlg:separator {
     id = "palSeparate",
     visible = defaults.colorMode ~= "GRAY"
@@ -97,6 +89,14 @@ dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
     selected = defaults.prependMask,
+}
+
+dlg:separator { id = "noteSeparate" }
+
+dlg:label {
+    id = "clrMdWarn",
+    label = "Note:",
+    text = "Sprites open in RGB mode."
 }
 
 dlg:newrow { always = false }
@@ -142,9 +142,11 @@ dlg:button {
                     if removeBkg then
                         local bkgLayer = openSprite.backgroundLayer
                         if bkgLayer then
-                            app.activeLayer = bkgLayer
-                            app.command.LayerFromBackground()
-                            bkgLayer.name = "Bkg"
+                            app.transaction(function()
+                                app.activeLayer = bkgLayer
+                                app.command.LayerFromBackground()
+                                bkgLayer.name = "Bkg"
+                            end)
                         end
                     end
 
@@ -173,23 +175,30 @@ dlg:button {
                     local newPal = AseUtilities.hexArrToAsePalette(hexesProfile)
                     openSprite:setPalette(newPal)
 
-                    -- TODO: Add trim image alpha functionality?
                     local trimCels = args.trimCels or defaults.trimCels
                     if trimCels then
+
+                        -- TODO: Refactor this into its own AseUtilities function?
+                        -- Problem with the idea is that it would need to check for
+                        -- pixel color mode.
                         local cels = openSprite.cels
                         local celsLen = #cels
                         local trimImage = AseUtilities.trimImageAlpha
-                        for i = 1, celsLen, 1 do
-                            local cel = cels[i]
-                            local srcImg = cel.image
-                            if srcImg then
-                                local trgImg, x, y = trimImage(srcImg)
-                                local srcPos = cel.position
-                                cel.position = Point(srcPos.x + x, srcPos.y + y)
-                                cel.image = trgImg
+
+                        app.transaction(function ()
+                            for i = 1, celsLen, 1 do
+                                local cel = cels[i]
+                                local srcImg = cel.image
+                                if srcImg then
+                                    local trgImg, x, y = trimImage(srcImg)
+                                    local srcPos = cel.position
+                                    cel.position = Point(srcPos.x + x, srcPos.y + y)
+                                    cel.image = trgImg
+                                end
                             end
-                        end
+                        end)
                     end
+
                     app.refresh()
                 else
                     app.alert("Sprite could not be found.")

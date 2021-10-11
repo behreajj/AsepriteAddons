@@ -10,7 +10,7 @@ local defaults = {
     useTint = false,
     foreTint = Color(0, 0, 255, 80),
     backTint = Color(255, 0, 0, 80),
-    trimCels = true,
+    trimCels = false,
     pullFocus = false
 }
 
@@ -279,11 +279,14 @@ dlg:button {
                             end
                         else
                             lerpFunc = function(a, b, c, d)
-                                local t = 0.5
                                 if sampleCount > 2 then
-                                    t = (math.abs(c - d) - 1.0) / (sampleCount - 2.0)
+                                    local t = (math.abs(c - d) - 1.0) / (sampleCount - 2.0)
+                                    return (1.0 - t) * b + t * a
+                                elseif sampleCount > 1 then
+                                    return (a + b) * 0.5
+                                else
+                                    return a
                                 end
-                                return (1.0 - t) * b + t * a
                             end
                         end
 

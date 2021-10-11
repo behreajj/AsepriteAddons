@@ -382,6 +382,9 @@ dlg:button {
         local newFrames = AseUtilities.createNewFrames(sprite, needed, duration)
 
         -- Set first layer to gamut.
+        -- These are not wrapped in a transaction because
+        -- gamut layer needs to be available beyond the
+        -- transaction scope.
         local gamutLayer = sprite.layers[1]
         gamutLayer.name = "Gamut"
 

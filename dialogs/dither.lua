@@ -142,16 +142,19 @@ dlg:button {
                     local octree = Octree.new(bounds, octCapacity, 0)
 
                     -- Unpack source palette to a dictionary and an octree.
+                    -- Ignore transparent colors in palette.
                     local palHexesLen = #hexesProfile
                     local ptToHexDict = {}
                     for i = 1, palHexesLen, 1 do
                         local hexSrgb = hexesSrgb[i]
-                        local clr = fromHex(hexSrgb)
-                        local lab = sRgbaToLab(clr)
-                        local point = Vec3.new(lab.a, lab.b, lab.l)
-                        local hexProfile = hexesProfile[i]
-                        ptToHexDict[v3Hash(point)] = hexProfile
-                        insert(octree, point)
+                        if hexSrgb & 0xff000000 ~= 0 then
+                            local clr = fromHex(hexSrgb)
+                            local lab = sRgbaToLab(clr)
+                            local point = Vec3.new(lab.a, lab.b, lab.l)
+                            local hexProfile = hexesProfile[i]
+                            ptToHexDict[v3Hash(point)] = hexProfile
+                            insert(octree, point)
+                        end
                     end
 
                     -- Cache pixels from iterator to an array.
@@ -321,12 +324,14 @@ dlg:button {
                     -- Either copy to new layer or reassign image.
                     local copyToLayer = args.copyToLayer
                     if copyToLayer then
-                        local trgLayer = sprite:newLayer()
-                        trgLayer.name = srcCel.layer.name
-                            .. string.format(".Dither.%03d", factor100)
-                        local frame = app.activeFrame or sprite.frames[1]
-                        sprite:newCel(trgLayer, frame,
-                            trgImg, srcCel.position)
+                        app.transaction(function()
+                            local trgLayer = sprite:newLayer()
+                            trgLayer.name = srcCel.layer.name
+                                .. string.format(".Dither.%03d", factor100)
+                            local frame = app.activeFrame or sprite.frames[1]
+                            sprite:newCel(trgLayer, frame,
+                                trgImg, srcCel.position)
+                        end)
                     else
                         srcCel.image = trgImg
                     end
