@@ -530,26 +530,28 @@ dlg:button {
             local strokeColor = 0xffffffff
             for j = 1, hexesSrgbLen, 1 do
                 local hexSrgb = hexesSrgb[j]
-                local lab = sRgbaToLab(fromHex(hexSrgb))
+                if hexSrgb & 0xff000000 ~= 0 then
+                    local lab = sRgbaToLab(fromHex(hexSrgb))
 
-                -- From [-110.0, 110.0] To [-1.0, 1.0].
-                local xSgn = lab.a * inv110
-                local ySgn = lab.b * inv110
+                    -- From [-110.0, 110.0] To [-1.0, 1.0].
+                    local xSgn = lab.a * inv110
+                    local ySgn = lab.b * inv110
 
-                -- From [-1.0, 1.0] to [0.0, 1.0].
-                local xNrm = xSgn * 0.5 + 0.5
-                local yNrm = 0.5 - ySgn * 0.5
+                    -- From [-1.0, 1.0] to [0.0, 1.0].
+                    local xNrm = xSgn * 0.5 + 0.5
+                    local yNrm = 0.5 - ySgn * 0.5
 
-                -- From [0.0, 1.0] to [0, size].
-                local xPx = xNrm * size
-                local yPx = yNrm * size
+                    -- From [0.0, 1.0] to [0, size].
+                    local xPx = xNrm * size
+                    local yPx = yNrm * size
 
-                local xi = trunc(0.5 + xPx)
-                local yi = trunc(0.5 + yPx)
+                    local xi = trunc(0.5 + xPx)
+                    local yi = trunc(0.5 + yPx)
 
-                local hexProfile = hexesProfile[j]
-                drawCircleFill(plotImage, xi, yi, strokeSize, strokeColor)
-                drawCircleFill(plotImage, xi, yi, fillSize, hexProfile)
+                    local hexProfile = hexesProfile[j]
+                    drawCircleFill(plotImage, xi, yi, strokeSize, strokeColor)
+                    drawCircleFill(plotImage, xi, yi, fillSize, hexProfile)
+                end
             end
 
             local plotPalLayer = sprite:newLayer()
@@ -570,6 +572,7 @@ dlg:button {
 
         app.activeFrame = sprite.frames[
             math.ceil(#sprite.frames / 2)]
+        app.activeLayer = gamutLayer
         app.refresh()
     end
 }

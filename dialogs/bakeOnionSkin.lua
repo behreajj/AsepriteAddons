@@ -3,7 +3,7 @@ dofile("../support/aseutilities.lua")
 local directOps = { "BACKWARD", "BOTH", "FORWARD" }
 
 local defaults = {
-    iterations = 8,
+    iterations = 4,
     directions = "BACKWARD",
     minAlpha = 24,
     maxAlpha = 96,
@@ -338,7 +338,6 @@ dlg:button {
                                             local shadowHex = shadowPixels[1 + k]
                                             local shadowAlpha = shadowHex >> 0x18 & 0xff
                                             if shadowAlpha > 0 then
-                                                local compAlpha = min(shadowAlpha, fadeAlpha)
                                                 local x = (k % shadowWidth) + xOffset
                                                 local y = (k // shadowWidth) + yOffset
                                                 local orig = trgImg:getPixel(x, y)
@@ -346,6 +345,7 @@ dlg:button {
                                                 if useTint then
                                                     dest = AseUtilities.blend(shadowHex, tint)
                                                 end
+                                                local compAlpha = min(shadowAlpha, fadeAlpha)
                                                 dest = (dest & 0x00ffffff) | (compAlpha << 0x18)
 
                                                 trgImg:drawPixel(x, y,
@@ -383,7 +383,10 @@ dlg:button {
 
                         -- Create target layer.
                         local trgLayer = srcSprite:newLayer()
-                        trgLayer.name = srcLayer.name .. ".OnionSkin"
+                        trgLayer.name = srcLayer.name ..
+                            string.format(".Onion.%03d.%03d",
+                                startFrameIndex,
+                                endFrameIndex)
 
                         -- Create target cels in a transaction.
                         app.transaction(function()
@@ -396,6 +399,7 @@ dlg:button {
                             end
                         end)
 
+                        app.activeLayer = srcCel.layer
                         app.refresh()
                     else
                         app.alert("No pixel data found.")
