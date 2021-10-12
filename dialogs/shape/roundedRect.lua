@@ -86,22 +86,10 @@ dlg:slider {
     visible = true,
     onchange = function()
         local uni = dlg.data.crnrUni
-        dlg:modify {
-            id = "tl",
-            value = uni
-        }
-        dlg:modify {
-            id = "tr",
-            value = uni
-        }
-        dlg:modify {
-            id = "br",
-            value = uni
-        }
-        dlg:modify {
-            id = "bl",
-            value = uni
-        }
+        dlg:modify { id = "tl", value = uni }
+        dlg:modify { id = "tr", value = uni }
+        dlg:modify { id = "br", value = uni }
+        dlg:modify { id = "bl", value = uni }
     end
 }
 
@@ -149,22 +137,10 @@ dlg:combobox {
     onchange = function()
         local md = dlg.data.cornerInput
         local isnu = md == "NON_UNIFORM"
-        dlg:modify {
-            id = "tl",
-            visible = isnu
-        }
-        dlg:modify {
-            id = "tr",
-            visible = isnu
-        }
-        dlg:modify {
-            id = "br",
-            visible = isnu
-        }
-        dlg:modify {
-            id = "bl",
-            visible = isnu
-        }
+        dlg:modify { id = "tl", visible = isnu }
+        dlg:modify { id = "tr", visible = isnu }
+        dlg:modify { id = "br", visible = isnu }
+        dlg:modify { id = "bl", visible = isnu }
 
         dlg:modify {
             id = "crnrUni",

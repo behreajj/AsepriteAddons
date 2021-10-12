@@ -1433,59 +1433,60 @@ function AseUtilities.trimImageAlpha(image)
     local minBottom = heightn1
 
     -- Top edge.
-    local len0 = width * bottom - 1
-    for i = 0, len0, 1 do
-        local t = top + i // width
-        local x = i % width
-        if (image:getPixel(x, t) & 0xff000000) ~= 0 then
-            minRight = x
-            minBottom = t
-            top = t
-            break
+    local breakTop = false
+    while top < bottom do
+        for x = 0, widthn1, 1 do
+            if image:getPixel(x, top) & 0xff000000 ~= 0 then
+                minRight = x
+                minBottom = top
+                breakTop = true
+                break
+            end
         end
+        if breakTop then break end
+        top = top + 1
     end
 
     -- Left edge.
-    local h1 = heightn1 - top
-    local w1 = minRight - left
-    local leftp1 = left + 1
-    local len1 = w1 * h1 - 1
-    for i = 0, len1, 1 do
-        local l = leftp1 + i // h1
-        local y = heightn1 - i % h1
-        if (image:getPixel(l, y) & 0xff000000) ~= 0 then
-            minBottom = y
-            left = l
-            break
+    local breakLeft = false
+    local topp1 = top + 1
+    while left < minRight do
+        for y = heightn1, topp1, -1 do
+            if image:getPixel(left, y) & 0xff000000 ~= 0 then
+                minBottom = y
+                breakLeft = true
+                break
+            end
         end
+        if breakLeft then break end
+        left = left + 1
     end
 
     -- Bottom edge.
-    local h2 = bottom - (minBottom - 1)
-    local w2 = widthn1 - (left - 1)
-    local len2 = w2 * h2 - 1
-    for i = 0, len2, 1 do
-        local b = bottom - i // w2
-        local x = widthn1 - i % w2
-        if (image:getPixel(x, b) & 0xff000000) ~= 0 then
-            minRight = x
-            bottom = b
-            break
+    local breakBottom = false
+    while bottom > minBottom do
+        for x = widthn1, left, -1 do
+            if image:getPixel(x, bottom) & 0xff000000 ~= 0 then
+                minRight = x
+                breakBottom = true
+                break
+            end
         end
+        if breakBottom then break end
+        bottom = bottom - 1
     end
 
     -- Right edge.
-    local h3 = bottom - (top - 1)
-    local w3 = right - minRight
-    local rightn1 = right - 1
-    local len3 = w3 * h3 - 1
-    for i = 0, len3, 1 do
-        local r = rightn1 - i // h3
-        local y = bottom - i % h3
-        if (image:getPixel(r, y) & 0xff000000) ~= 0 then
-            right = r
-            break
+    local breakRight = false
+    while right > minRight do
+        for y = bottom, top, -1 do
+            if image:getPixel(right, y) & 0xff000000 ~= 0 then
+                breakRight = true
+                break
+            end
         end
+        if breakRight then break end
+        right = right - 1
     end
 
     local wTrg = 1 + (right - left)
