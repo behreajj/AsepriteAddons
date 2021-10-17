@@ -409,6 +409,110 @@ function AseUtilities.asePaletteToString(pal, startIndex, count)
     return table.concat(strArr, ",\n")
 end
 
+---Bakes a layer's opacity into the images of each
+---cel held by the layer. Also bakes cel opacities.
+---Does not support group layers. Resets layer and
+---cel opacities to 255.
+---@param layer table layer
+function AseUtilities.bakeLayerOpacity(layer)
+    if layer.isGroup then
+        app.alert("Layer opacity is not supported for group layers.")
+        return
+    end
+
+    local layerAlpha = layer.opacity
+    local cels = layer.cels
+    local celsLen = #cels
+
+    if layerAlpha < 0xff then
+        if layerAlpha < 0x01 then
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                local img = cel.image
+                local pxItr = img:pixels()
+                for elm in pxItr do elm(0x0) end
+                cel.opacity = 0xff
+            end
+        else
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                local celAlpha = cel.opacity
+                local img = cel.image
+                local pxItr = img:pixels()
+                if celAlpha < 0xff then
+                    if celAlpha < 0x1 then
+                        for elm in pxItr do elm(0x0) end
+                    else
+                        local layerCelAlpha = (layerAlpha * celAlpha) // 0xff
+                        for elm in pxItr do
+                            local hex = elm()
+                            local srcAlpha = hex >> 0x18 & 0xff
+                            local cmpAlpha = (layerCelAlpha * srcAlpha) // 0xff
+                            elm((cmpAlpha << 0x18)
+                                | (hex & 0x00ffffff))
+                        end
+                    end
+                else
+                    for elm in pxItr do
+                        local hex = elm()
+                        local srcAlpha = hex >> 0x18 & 0xff
+                        local cmpAlpha = (layerAlpha * srcAlpha) // 0xff
+                        elm((cmpAlpha << 0x18)
+                            | (hex & 0x00ffffff))
+                    end
+                end
+                cel.opacity = 0xff
+            end
+        end
+
+        layer.opacity = 0xff
+    else
+        for i = 1, celsLen, 1 do
+            local cel = cels[i]
+            local celAlpha = cel.opacity
+            local img = cel.image
+            local pxItr = img:pixels()
+            if celAlpha < 0xff then
+                if celAlpha < 0x1 then
+                    for elm in pxItr do elm(0x0) end
+                else
+                    for elm in pxItr do
+                        local hex = elm()
+                        local srcAlpha = hex >> 0x18 & 0xff
+                        local cmpAlpha = (celAlpha * srcAlpha) // 0xff
+                        elm((cmpAlpha << 0x18)
+                            | (hex & 0x00ffffff))
+                    end
+                end
+                cel.opacity = 0xff
+            end
+        end
+    end
+end
+
+---Bakes a cel's opacity into the colors in the cel's
+---image. Resets the cel's opacity to 255.
+---@param cel table cel
+function AseUtilities.bakeCelOpacity(cel)
+    local celAlpha = cel.opacity
+    if celAlpha < 0xff then
+        local img = cel.image
+        local pxItr = img:pixels()
+        if celAlpha < 0x01 then
+            for elm in pxItr do elm(0x0) end
+        else
+            for elm in pxItr do
+                local hex = elm()
+                local srcAlpha = hex >> 0x18 & 0xff
+                local cmpAlpha = (celAlpha * srcAlpha) // 0xff
+                elm((cmpAlpha << 0x18)
+                    | (hex & 0x00ffffff))
+            end
+        end
+        cel.opacity = 0xff
+    end
+end
+
 ---Blends together two hexadecimal colors.
 ---Premultiplies each color by its alpha prior
 ---to blending. Unpremultiplies the result.
