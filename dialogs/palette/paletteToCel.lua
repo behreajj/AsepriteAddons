@@ -319,15 +319,18 @@ dlg:button {
                     -- Either copy to new layer or reassign image.
                     local copyToLayer = args.copyToLayer
                     if copyToLayer then
+
                         -- TODO: Can this be in a transaction... might've
                         -- caused a problem with variable scoping before?
                         local srcLayer = srcCel.layer
                         local trgLayer = sprite:newLayer()
                         trgLayer.name = srcLayer.name .. "." .. clrSpacePreset
+                        trgLayer.opacity = srcLayer.opacity
                         local frame = app.activeFrame or sprite.frames[1]
-                        local trgCel = sprite:newCel(trgLayer, frame)
-                        trgCel.image = trgImg
-                        trgCel.position = srcCel.position
+                        local trgCel = sprite:newCel(
+                            trgLayer, frame,
+                            trgImg, srcCel.position)
+                        trgCel.opacity = srcCel.opacity
                     else
                         srcCel.image = trgImg
                     end

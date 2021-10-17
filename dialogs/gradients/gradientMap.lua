@@ -326,12 +326,14 @@ dlg:button {
                         -- Create target layer, cel, image.
                         local trgLyr = sprite:newLayer()
                         trgLyr.name = "Gradient.Map." .. clrSpacePreset
+                        trgLyr.opacity = srcCel.layer.opacity
                         if useNormalize then
                             trgLyr.name = trgLyr.name .. ".Contrast"
                         end
                         local trgCel = sprite:newCel(trgLyr, srcCel.frame)
                         trgCel.position = srcCel.position
                         trgCel.image = srcImg:clone()
+                        trgCel.opacity = srcCel.opacity
                         local trgImg = trgCel.image
 
                         -- Assign color from gradient function.

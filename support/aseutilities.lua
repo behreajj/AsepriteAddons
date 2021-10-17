@@ -412,7 +412,8 @@ end
 ---Bakes a layer's opacity into the images of each
 ---cel held by the layer. Also bakes cel opacities.
 ---Does not support group layers. Resets layer and
----cel opacities to 255.
+---cel opacities to 255. Layers that are not visible
+---are treated like layers with zero opacity.
 ---@param layer table layer
 function AseUtilities.bakeLayerOpacity(layer)
     if layer.isGroup then
@@ -421,6 +422,7 @@ function AseUtilities.bakeLayerOpacity(layer)
     end
 
     local layerAlpha = layer.opacity
+    if not layer.isVisible then layerAlpha = 0 end
     local cels = layer.cels
     local celsLen = #cels
 
@@ -448,8 +450,12 @@ function AseUtilities.bakeLayerOpacity(layer)
                             local hex = elm()
                             local srcAlpha = hex >> 0x18 & 0xff
                             local cmpAlpha = (layerCelAlpha * srcAlpha) // 0xff
-                            elm((cmpAlpha << 0x18)
+                            if cmpAlpha < 1 then
+                                elm(0x0)
+                            else
+                                elm((cmpAlpha << 0x18)
                                 | (hex & 0x00ffffff))
+                            end
                         end
                     end
                 else
@@ -457,8 +463,12 @@ function AseUtilities.bakeLayerOpacity(layer)
                         local hex = elm()
                         local srcAlpha = hex >> 0x18 & 0xff
                         local cmpAlpha = (layerAlpha * srcAlpha) // 0xff
-                        elm((cmpAlpha << 0x18)
+                        if cmpAlpha < 0x1 then
+                            elm(0x0)
+                        else
+                            elm((cmpAlpha << 0x18)
                             | (hex & 0x00ffffff))
+                        end
                     end
                 end
                 cel.opacity = 0xff
@@ -480,8 +490,12 @@ function AseUtilities.bakeLayerOpacity(layer)
                         local hex = elm()
                         local srcAlpha = hex >> 0x18 & 0xff
                         local cmpAlpha = (celAlpha * srcAlpha) // 0xff
-                        elm((cmpAlpha << 0x18)
+                        if cmpAlpha < 1 then
+                            elm(0x0)
+                        else
+                            elm((cmpAlpha << 0x18)
                             | (hex & 0x00ffffff))
+                        end
                     end
                 end
                 cel.opacity = 0xff
@@ -505,8 +519,12 @@ function AseUtilities.bakeCelOpacity(cel)
                 local hex = elm()
                 local srcAlpha = hex >> 0x18 & 0xff
                 local cmpAlpha = (celAlpha * srcAlpha) // 0xff
-                elm((cmpAlpha << 0x18)
+                if cmpAlpha < 1 then
+                    elm(0x0)
+                else
+                    elm((cmpAlpha << 0x18)
                     | (hex & 0x00ffffff))
+                end
             end
         end
         cel.opacity = 0xff
