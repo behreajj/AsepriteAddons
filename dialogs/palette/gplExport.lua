@@ -8,9 +8,7 @@ local defaults = {
     useAseGpl = false
 }
 
-local dlg = Dialog {
-    title = "GPL Export"
-}
+local dlg = Dialog { title = "GPL Export" }
 
 dlg:entry {
     id = "palName",

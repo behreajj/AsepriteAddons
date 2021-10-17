@@ -212,8 +212,6 @@ dlg:button {
         local sprite = app.activeSprite
         if sprite then
 
-            -- Add checkbox to exclude transparency mask from
-            -- consideration in palette?
             local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 args.palType, args.palFile, args.palPreset)
 
@@ -321,6 +319,8 @@ dlg:button {
                     -- Either copy to new layer or reassign image.
                     local copyToLayer = args.copyToLayer
                     if copyToLayer then
+                        -- TODO: Can this be in a transaction... might've
+                        -- caused a problem with variable scoping before?
                         local srcLayer = srcCel.layer
                         local trgLayer = sprite:newLayer()
                         trgLayer.name = srcLayer.name .. "." .. clrSpacePreset

@@ -190,10 +190,10 @@ dlg:button {
                     -- For the image to be as efficient (i.e., small) as
                     -- it can, find the top left and bottom right viable
                     -- corners occupied by sample images.
-                    local xMin = 99999
-                    local yMin = 99999
-                    local xMax = -99999
-                    local yMax = -99999
+                    local xMin = 2147483647
+                    local yMin = 2147483647
+                    local xMax = -2147483648
+                    local yMax = -2147483648
 
                     local packets = {}
                     local frameIndices = {}

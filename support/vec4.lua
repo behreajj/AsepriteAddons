@@ -355,6 +355,8 @@ function Vec4.fmod(a, b)
 end
 
 ---Finds the fractional portion of of a vector.
+---Subtracts the truncation of each component
+---from itself, not the floor, unlike in GLSL.
 ---@param a table left operand
 ---@return table
 function Vec4.fract(a)
@@ -499,7 +501,6 @@ end
 ---@param x table factor
 ---@return table
 function Vec4.linearstep(edge0, edge1, x)
-
     local cx = 0.0
     local xDenom = edge1.x - edge0.x
     if xDenom ~= 0.0 then
@@ -769,7 +770,6 @@ end
 ---@param ubDest table destination upper bound
 ---@return table
 function Vec4.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
-
     local mx = v.x
     local my = v.y
     local mz = v.z

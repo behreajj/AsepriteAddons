@@ -529,8 +529,8 @@ dlg:button {
         local swatchDiff = maxSwatchSize - minSwatchSize
 
         local pts2d = {}
-        local zMin = 999999
-        local zMax = -999999
+        local zMin = 2147483647
+        local zMax = -2147483648
         for h = 1, reqFrames, 1 do
             local frame2d = {}
             local theta = (h - 1) * hToTheta

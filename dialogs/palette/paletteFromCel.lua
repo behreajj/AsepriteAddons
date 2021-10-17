@@ -114,7 +114,6 @@ dlg:button {
                             len = math.min(256, len)
                         end
 
-                        -- TODO: Replace with AseUtilities method.
                         local palette = Palette(len)
                         for hex, i in pairs(dictionary) do
                             local j = i - 1

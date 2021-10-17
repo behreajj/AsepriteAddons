@@ -11,6 +11,7 @@ local defaults = {
     removeBkg = true,
     trimCels = true,
     palType = "EMBEDDED",
+    uniquesOnly = true,
     prependMask = true,
     pullFocus = true
 }
@@ -76,9 +77,17 @@ dlg:file {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "uniquesOnly",
+    label = "Uniques Only:",
+    focus = false,
+    selected = defaults.uniquesOnly
+}
+
+dlg:newrow { always = false }
+
 dlg:entry {
     id = "palPreset",
-    text = "",
     focus = false,
     visible = defaults.palType == "PRESET"
 }
@@ -168,6 +177,13 @@ dlg:button {
                             openSprite.palettes[1], 0, 256)
                     end
 
+                    local uniquesOnly = args.uniquesOnly
+                    if uniquesOnly then
+                        local uniques, dict = Utilities.uniqueColors(
+                            hexesProfile, true)
+                        hexesProfile = uniques
+                    end
+
                     local prependMask = args.prependMask
                     if prependMask then
                         Utilities.prependMask(hexesProfile)
@@ -175,12 +191,11 @@ dlg:button {
                     local newPal = AseUtilities.hexArrToAsePalette(hexesProfile)
                     openSprite:setPalette(newPal)
 
-                    local trimCels = args.trimCels or defaults.trimCels
+                    local trimCels = args.trimCels
                     if trimCels then
-
-                        -- TODO: Refactor this into its own AseUtilities function?
-                        -- Problem with the idea is that it would need to check for
-                        -- pixel color mode.
+                        -- Problem with refactoring this to its own function
+                        -- is that it would need to check for pixel color mode
+                        -- and to create its own transaction.
                         local cels = openSprite.cels
                         local celsLen = #cels
                         local trimImage = AseUtilities.trimImageAlpha

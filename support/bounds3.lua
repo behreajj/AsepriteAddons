@@ -147,13 +147,13 @@ end
 ---@param points table points
 ---@return table
 function Bounds3.fromPoints(points)
-    local lbx = 999999
-    local lby = 999999
-    local lbz = 999999
+    local lbx = 2147483647
+    local lby = 2147483647
+    local lbz = 2147483647
 
-    local ubx = -999999
-    local uby = -999999
-    local ubz = -999999
+    local ubx = -2147483648
+    local uby = -2147483648
+    local ubz = -2147483648
 
     local len = #points
     for i = 1, len, 1 do

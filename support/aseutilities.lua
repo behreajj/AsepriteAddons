@@ -12,20 +12,13 @@ setmetatable(AseUtilities, {
         return cls.new(...)
     end})
 
+-- TODO: Create a DEFAULT_PAL_FORMAT for supported palette imports.
+-- { "aseprite", "gpl", "pal", "png", "webp" }
+
 -- Maximum number of a cels a script may
 -- request to create before the user is
 -- prompted to confirm.
 AseUtilities.CEL_COUNT_LIMIT = 256
-
--- Maximum number of frames a script may
--- request to create before the user is
--- prompted to confirm.
-AseUtilities.FRAME_COUNT_LIMIT = 256
-
--- Maximum number of layers a script may
--- request to create before the user is
--- prompted to confirm.
-AseUtilities.LAYER_COUNT_LIMIT = 96
 
 ---Default fill color.
 AseUtilities.DEFAULT_FILL = 0xffd7f5ff
@@ -58,6 +51,11 @@ AseUtilities.DEFAULT_STROKE = 0xff202020
 ---printing real numbers to the console.
 AseUtilities.DISPLAY_DECIMAL = 3
 
+-- Maximum number of frames a script may
+-- request to create before the user is
+-- prompted to confirm.
+AseUtilities.FRAME_COUNT_LIMIT = 256
+
 ---Text horizontal alignment.
 AseUtilities.GLYPH_ALIGN_HORIZ = {
     "CENTER",
@@ -71,6 +69,11 @@ AseUtilities.GLYPH_ALIGN_VERT = {
     "CENTER",
     "TOP"
 }
+
+-- Maximum number of layers a script may
+-- request to create before the user is
+-- prompted to confirm.
+AseUtilities.LAYER_COUNT_LIMIT = 96
 
 ---Text orientations.
 AseUtilities.ORIENTATIONS = {
@@ -157,32 +160,6 @@ function AseUtilities.aseColorToString(aseColor)
         "(%03d, %03d, %03d, %03d) #%06X",
         r, g, b, aseColor.alpha,
         r << 0x10 | g << 0x08 | b)
-end
-
----Returns a string containing diagnostic information
----about an Aseprite Palette object.
----@param pal table Aseprite palette
----@param startIndex number start index
----@param count number sample count
----@return string
-function AseUtilities.asePaletteToString(pal, startIndex, count)
-    local palLen = #pal
-
-    local si = startIndex or 0
-    si = math.min(palLen - 1, math.max(0, si))
-    local valCnt = count or 256
-    valCnt = math.min(palLen - si, math.max(2, valCnt)) - 1
-
-    -- Using \r for carriage returns causes formatting bug.
-    local aseToStr = AseUtilities.aseColorToString
-    local strArr = {}
-    for i = 0, valCnt, 1 do
-        local palIdx = si + i
-        strArr[1 + i] = string.format(
-            "%03d. %s",
-            palIdx, aseToStr(pal:getColor(palIdx)))
-    end
-    return table.concat(strArr, ",\n")
 end
 
 ---Loads a palette based on a string. The string is
@@ -333,9 +310,8 @@ function AseUtilities.asePaletteLoad(
 end
 
 ---Converts an Aseprite palette to a table
----of Aseprite Colors. If the palette is nil
----returns a default table. Assumes palette
----is in sRGB.
+---of Clrs. If the palette is nil returns a
+---default table. Assumes palette is in sRGB.
 ---@param pal table Aseprite palette
 ---@param startIndex number start index
 ---@param count number sample count
@@ -405,6 +381,32 @@ function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
     else
         return { 0x00000000, 0xffffffff }
     end
+end
+
+---Returns a string containing diagnostic information
+---about an Aseprite Palette object.
+---@param pal table Aseprite palette
+---@param startIndex number start index
+---@param count number sample count
+---@return string
+function AseUtilities.asePaletteToString(pal, startIndex, count)
+    local palLen = #pal
+
+    local si = startIndex or 0
+    si = math.min(palLen - 1, math.max(0, si))
+    local valCnt = count or 256
+    valCnt = math.min(palLen - si, math.max(2, valCnt)) - 1
+
+    -- Using \r for carriage returns causes formatting bug.
+    local aseToStr = AseUtilities.aseColorToString
+    local strArr = {}
+    for i = 0, valCnt, 1 do
+        local palIdx = si + i
+        strArr[1 + i] = string.format(
+            "%03d. %s",
+            palIdx, aseToStr(pal:getColor(palIdx)))
+    end
+    return table.concat(strArr, ",\n")
 end
 
 ---Blends together two hexadecimal colors.
@@ -774,7 +776,8 @@ function AseUtilities.createNewLayers(
     -- TODO: The user interface does not update the parent-
     -- child relationship when this is used. Is the problem
     -- that app global has been used when a local should've
-    -- been passed in?
+    -- been passed in? or with parent not being within the
+    -- scope of transaction?
     if useParent then
         app.transaction(function()
             for i = 1, valCount, 1 do
@@ -1418,6 +1421,11 @@ end
 ---@return number
 function AseUtilities.trimImageAlpha(image)
 
+    -- 1D for-loop attempt:
+    -- https://github.com/behreajj/AsepriteAddons/blob/
+    -- c157511958578e475a3172bd16d55f8ad20ed0b3/
+    -- support/aseutilities.lua
+
     -- Immutable.
     local width = image.width
     local height = image.height
@@ -1489,8 +1497,8 @@ function AseUtilities.trimImageAlpha(image)
         right = right - 1
     end
 
-    local wTrg = 1 + (right - left)
-    local hTrg = 1 + (bottom - top)
+    local wTrg = 1 + right - left
+    local hTrg = 1 + bottom - top
     local target = Image(wTrg, hTrg)
 
     -- local sampleRect = Rectangle(left, top, wTrg, hTrg)
@@ -1499,7 +1507,7 @@ function AseUtilities.trimImageAlpha(image)
     --     target:drawPixel(elm.x - left, elm.y - top, elm())
     -- end
 
-    -- This must create a transaction?
+    -- This creates a transaction.
     target:drawImage(image, Point(-left, -top))
     return target, left, top
 end

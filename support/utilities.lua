@@ -732,7 +732,7 @@ function Utilities.reverseTable(t)
 end
 
 ---Creates a new table from the source
----and shuffles it
+---and shuffles it.
 ---@param t table input table
 ---@return table
 function Utilities.shuffle(t)

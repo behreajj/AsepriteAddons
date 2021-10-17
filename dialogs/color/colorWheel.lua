@@ -270,10 +270,10 @@ dlg:button {
         for i = 1, reqFrames, 1 do
 
             -- Cache extrema so as to find relative center.
-            local xMin = 999999
-            local yMin = 999999
-            local xMax = -999999
-            local yMax = -999999
+            local xMin = 2147483647
+            local yMin = 2147483647
+            local xMax = -2147483648
+            local yMax = -2147483648
             local xSum = 0
             local ySum = 0
             local validCount = 0
@@ -336,8 +336,8 @@ dlg:button {
                 local invValCount = 1.0 / validCount
                 xRelCenter = xSum * invValCount
                 yRelCenter = ySum * invValCount
-                local movingBrSq = -999999
-                local fixedBrSq = -999999
+                local movingBrSq = -2147483648
+                local fixedBrSq = -2147483648
 
                 for j = 1, validCount, 1 do
                     local xCurr = xsValid[j]
