@@ -295,6 +295,13 @@ dlg:button {
         local heightSprite = sprite.height
         local layer = sprite.layers[#sprite.layers]
 
+        -- Only support RGB color mode.
+        if sprite.colorMode ~= ColorMode.RGB then
+            app.alert("Only RGB color mode is supported.")
+            dlg:close()
+            return
+        end
+
         -- Determine if background and shadow should
         -- be used based on their alpha.
         local useBkg = (hexBkg & 0xff000000) ~= 0
@@ -357,7 +364,7 @@ dlg:button {
                     layer.stackIndex, 1,
                     Image(1, 1),
                     stillPos)
-            
+
                 if #cels > 0 then
                     local yCaret = 0
                     local flatIdx = 1

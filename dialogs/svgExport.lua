@@ -12,8 +12,8 @@ local function layerToSvgStr(
     border, scale, margin)
 
     local str = ""
-    local layerOpacity = layer.opacity
-    if layer.isVisible and layerOpacity > 0 then
+    local lyrAlpha = layer.opacity
+    if layer.isVisible and lyrAlpha > 0 then
         if layer.isGroup then
             local grpStr = string.format(
                 "\n<g id=\"%s\">",
@@ -55,10 +55,16 @@ local function layerToSvgStr(
                         "\n<g id=\"%s\"",
                         layer.name)
 
-                    if layerOpacity < 255 then
+                    -- Layer opacity and cel opacity are compounded
+                    -- together to simplify.
+                    local celAlpha = cel.opacity
+                    if lyrAlpha < 0xff
+                        or celAlpha < 0xff then
+                        local cmpAlpha = (lyrAlpha * 0.00392156862745098)
+                            * (celAlpha * 0.00392156862745098)
                         grpStr = grpStr .. strfmt(
                             " opacity=\"%.6f\"",
-                            layerOpacity * 0.00392156862745098)
+                            cmpAlpha)
                     end
 
                     grpStr = grpStr .. ">"

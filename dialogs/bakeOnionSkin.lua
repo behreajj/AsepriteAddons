@@ -203,6 +203,7 @@ dlg:button {
                         frameIndex = min(max(frameIndex, 1), frameCount)
                         frameIndices[i] = frameIndex
 
+                        -- TODO: Bake cel opacity.
                         local currCel = srcLayer:cel(frameIndex)
                         if currCel then
                             local currImg = currCel.image
@@ -387,6 +388,7 @@ dlg:button {
                             string.format(".Onion.%03d.%03d",
                                 startFrameIndex,
                                 endFrameIndex)
+                        trgLayer.opacity = srcLayer.opacity
 
                         -- Create target cels in a transaction.
                         app.transaction(function()

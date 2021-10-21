@@ -170,7 +170,7 @@ end
 ---to SRGB. If a palette is loaded from a filepath or a
 ---preset the two tables should match, as Aseprite does
 ---not support color management for palettes. The
----correctNoAlpha flag replaces colors with zero alpha
+---correctZeroAlpha flag replaces colors with zero alpha
 ---that are not with 0x00000000.
 ---@param palType string enumeration
 ---@param filePath string file path
@@ -286,23 +286,24 @@ function AseUtilities.asePaletteLoad(
         end
     end
 
-    -- Replace colors, e.g., 0x00ff0000 (clear red),
-    -- so that all are clear black.
-    if correctZeroAlpha then
-        for i = 1, #hexesProfile, 1 do
-            local hex = hexesProfile[i]
-            local alpha = (hex >> 0x18) & 0xff
-            if alpha < 1 then
-                hexesProfile[i] = 0x0
-            end
-        end
-    end
-
     -- Copy by value as a precaution.
     if hexesSrgb == nil then
         hexesSrgb = {}
-        for j = 1, #hexesProfile, 1 do
-            hexesSrgb[j] = hexesProfile[j]
+        for i = 1, #hexesProfile, 1 do
+            hexesSrgb[i] = hexesProfile[i]
+        end
+    end
+
+    -- Replace colors, e.g., 0x00ff0000 (clear red),
+    -- so that all are clear black. Since both arrays
+    -- should be of the same length, avoid the safety
+    -- of using separate arrays.
+    if correctZeroAlpha then
+        for i = 1, #hexesProfile, 1 do
+            if hexesProfile[i] & 0xff000000 == 0 then
+                hexesProfile[i] = 0x0
+                hexesSrgb[i] = 0x0
+            end
         end
     end
 
@@ -477,30 +478,8 @@ function AseUtilities.bakeLayerOpacity(layer)
 
         layer.opacity = 0xff
     else
-        for i = 1, celsLen, 1 do
-            local cel = cels[i]
-            local celAlpha = cel.opacity
-            local img = cel.image
-            local pxItr = img:pixels()
-            if celAlpha < 0xff then
-                if celAlpha < 0x1 then
-                    for elm in pxItr do elm(0x0) end
-                else
-                    for elm in pxItr do
-                        local hex = elm()
-                        local srcAlpha = hex >> 0x18 & 0xff
-                        local cmpAlpha = (celAlpha * srcAlpha) // 0xff
-                        if cmpAlpha < 1 then
-                            elm(0x0)
-                        else
-                            elm((cmpAlpha << 0x18)
-                            | (hex & 0x00ffffff))
-                        end
-                    end
-                end
-                cel.opacity = 0xff
-            end
-        end
+        local bakeCel = AseUtilities.bakeCelOpacity
+        for i = 1, celsLen, 1 do bakeCel(cels[i]) end
     end
 end
 
@@ -1525,6 +1504,26 @@ function AseUtilities.rotateGlyphCcw(gl, w, h)
         vr = vr | (bit << shift1)
     end
     return vr
+end
+
+---Trims a cel's image and position such that it no longer
+---exceeds the sprite's boundaries. Unlike built-in method,
+---does NOT trim the image's alpha.
+---@param cel table source cel
+---@param sprite table
+function AseUtilities.trimCelToSprite(cel, sprite)
+    app.transaction(function()
+        local celBounds = cel.bounds
+        local spriteBounds = sprite.bounds
+        local clip = celBounds:intersect(spriteBounds)
+
+        local oldPos = cel.position
+        cel.position = Point(clip.x, clip.y)
+
+        local trimImage = Image(clip.width, clip.height)
+        trimImage:drawImage(cel.image, oldPos - cel.position)
+        cel.image = trimImage
+    end)
 end
 
 ---Creates a copy of the image where excess

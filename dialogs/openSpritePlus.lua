@@ -191,6 +191,8 @@ dlg:button {
                     local newPal = AseUtilities.hexArrToAsePalette(hexesProfile)
                     openSprite:setPalette(newPal)
 
+                    -- TODO: Add trim to sprite bounds feature?
+
                     local trimCels = args.trimCels
                     if trimCels then
                         -- Problem with refactoring this to its own function
