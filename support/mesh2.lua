@@ -85,7 +85,6 @@ function Mesh2:insetFace(faceIndex, fac)
             1 + vSubdivIdx
         }
 
-        -- TODO: Replace table insert if possible.
         table.insert(self.fs, fNew)
         table.insert(centerFace, 1 + vSubdivIdx)
     end
@@ -271,8 +270,6 @@ function Mesh2.arc(
     sectors,
     useQuads)
 
-    -- TODO: Refactor to use NGONs with n
-    -- resolution per sector.
     local a = startAngle % 6.283185307179586
     local b = stopAngle % 6.283185307179586
     local arcLen = (b - a) % 6.283185307179586
@@ -432,8 +429,6 @@ end
 ---@param rows number rows
 ---@return table
 function Mesh2.gridCartesian(cols, rows)
-
-    -- TODO: Option for QUADS or TRIS to support tri grid?
 
     -- Validate inputs.
     local cVal = cols or 2

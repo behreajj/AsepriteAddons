@@ -241,9 +241,7 @@ local function updateWarning(dialog, clr)
     end
 end
 
-local function setFromAse(dialog, aseClr)
-    local clr = AseUtilities.aseColorToClr(aseClr)
-    local lch = Clr.sRgbaToLch(clr)
+local function setLch(dialog, lch, clr)
     local trunc = math.tointeger
     local chroma = trunc(0.5 + lch.c)
 
@@ -271,15 +269,43 @@ local function setFromAse(dialog, aseClr)
         }
     end
 
+    updateWarning(dialog, clr)
+    updateHarmonies(dialog, lch.l, lch.c, lch.h, lch.a)
+    updateShading(dialog, lch.l, lch.c, lch.h, lch.a)
+end
+
+local function setFromAse(dialog, aseClr)
+    local clr = AseUtilities.aseColorToClr(aseClr)
+    local lch = Clr.sRgbaToLch(clr)
+    setLch(dialog, lch, clr)
     dialog:modify {
         id = "clr",
         colors = { AseUtilities.aseColorCopy(aseClr) }
     }
-
-    updateWarning(dialog, clr)
     updateHexCode(dialog, { clr })
-    updateHarmonies(dialog, lch.l, lch.c, lch.h, lch.a)
-    updateShading(dialog, lch.l, lch.c, lch.h, lch.a)
+end
+
+local function setFromHexStr(dialog)
+    local args = dialog.data
+    local hexStr = args.hexCode
+    if #hexStr > 5 then
+        local hexRgb = tonumber(hexStr, 16)
+        if hexRgb then
+            local r255 = hexRgb >> 0x10 & 0xff
+            local g255 = hexRgb >> 0x08 & 0xff
+            local b255 = hexRgb & 0xff
+            local clr = Clr.new(
+                r255 * 0.00392156862745098,
+                g255 * 0.00392156862745098,
+                b255 * 0.00392156862745098, 1.0)
+            local lch = Clr.sRgbaToLch(clr)
+            setLch(dialog, lch, clr)
+            dialog:modify {
+                id = "clr",
+                colors = { Color(r255, g255, b255, 255) }
+            }
+        end
+    end
 end
 
 local function updateClrs(dialog)
@@ -332,7 +358,10 @@ dlg: entry {
     id = "hexCode",
     label = "Hex: #",
     text = defaults.hexCode,
-    focus = false
+    focus = false,
+    onchange = function()
+        setFromHexStr(dlg)
+    end
 }
 
 dlg:newrow { always = false }
@@ -341,8 +370,7 @@ dlg:shades {
     id = "clr",
     label = "Color:",
     mode = "sort",
-    colors = { defaults.base },
-    visible = true
+    colors = { defaults.base }
 }
 
 dlg:newrow { always = false }
@@ -354,9 +382,10 @@ dlg:shades {
     colors = defaults.shading,
     visible = true,
     onclick = function(ev)
-        if ev.button == MouseButton.LEFT then
+        local button = ev.button
+        if button == MouseButton.LEFT then
             setFromAse(dlg, ev.color)
-        elseif ev.button == MouseButton.RIGHT then
+        elseif button == MouseButton.RIGHT then
             assignToFore(ev.color)
         end
     end

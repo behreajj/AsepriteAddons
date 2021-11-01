@@ -819,8 +819,6 @@ dlg:button {
                     rowAseColor = row1Color
                 end
 
-                -- TODO: Can this be refactored to use
-                -- safety layer creation?
                 local rowLayer = manifestSprite:newLayer()
                 rowLayer.name = strfmt("%03d.%s",
                     palIdx,

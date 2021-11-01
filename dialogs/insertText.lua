@@ -297,6 +297,9 @@ dlg:button {
 
         -- Only support RGB color mode.
         if sprite.colorMode ~= ColorMode.RGB then
+            -- TODO: Can this exit be earlier? Maybe check
+            -- app.activeSprite anyway, even though you use
+            -- initCanvas?
             app.alert("Only RGB color mode is supported.")
             dlg:close()
             return

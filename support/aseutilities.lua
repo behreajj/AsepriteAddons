@@ -245,9 +245,7 @@ function AseUtilities.asePaletteLoad(
                         -- Add opacity or no?
                         -- hexesProfile[1 + i] = (i << 0x18)
                         hexesProfile[1 + i] = 0xff000000
-                            | (i << 0x10)
-                            | (i << 0x08)
-                            | i
+                            | (i << 0x10) | (i << 0x08) | i
                     end
                 else
                     hexesProfile = AseUtilities.asePaletteToHexArr(
@@ -1030,8 +1028,6 @@ function AseUtilities.drawGlyph(
     image, glyph, hex,
     x, y, gw, gh)
 
-    -- TODO: Return xCaret position?
-
     local lenn1 = gw * gh - 1
     local blend = AseUtilities.blend
     local glMat = glyph.matrix
@@ -1068,8 +1064,6 @@ end
 function AseUtilities.drawGlyphNearest(
     image, glyph, hex,
     x, y, gw, gh, dw, dh)
-
-    -- TODO: Return xCaret position?
 
     if gw == dw and gh == dh then
         return AseUtilities.drawGlyph(
@@ -1416,8 +1410,8 @@ end
 
 ---Converts a hexadecimal integer to an Aseprite
 ---Color object. Does not use the Color constructor
----created for this purpose, as the color mode
----dictates how the integer is interpreted.
+---for this purpose, as the color mode dictates
+---how the integer is interpreted.
 ---@param hex number hexadecimal color
 ---@return table
 function AseUtilities.hexToAseColor(hex)
@@ -1508,10 +1502,12 @@ end
 
 ---Trims a cel's image and position such that it no longer
 ---exceeds the sprite's boundaries. Unlike built-in method,
----does NOT trim the image's alpha.
+---does not trim the image's alpha.
 ---@param cel table source cel
 ---@param sprite table
 function AseUtilities.trimCelToSprite(cel, sprite)
+    -- TODO: Create a dialog for this function?
+
     app.transaction(function()
         local celBounds = cel.bounds
         local spriteBounds = sprite.bounds

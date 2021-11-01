@@ -497,6 +497,7 @@ dlg:button {
 
         -- Create background image. Assign to cels.
         if createBackground then
+            -- layer.isContinuous = true
             local bkgImg = Image(
                 spriteWidth, spriteHeight,
                 ColorMode.RGB)
