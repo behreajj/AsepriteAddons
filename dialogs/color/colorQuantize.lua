@@ -28,6 +28,9 @@ dlg:button {
         local args = dlg.data
         local sprite = app.activeSprite
         if sprite then
+            -- TODO: Add target options for active, all, range,
+            -- see trim image alpha dialog. This means you'd have
+            -- to rework how copy to layer works or remove it.
             local srcCel = app.activeCel
             if srcCel then
                 local srcImg = srcCel.image

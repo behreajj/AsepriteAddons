@@ -312,12 +312,12 @@ local function updateClrs(dialog)
     local args = dialog.data
     local l = args.lightness
     local c = args.chroma
-    local h = args.hue / 360.0
+    local h = args.hue * 0.002777777777777778
     local a = args.alpha * 0.01
     local clr = Clr.lchTosRgba(l, c, h, a)
 
-    -- For thoughts on why clipping is preferred, see
-    -- https://github.com/LeaVerou/css.land/issues/10
+    -- For thoughts on why clipping to gamut is preferred,
+    -- see https://github.com/LeaVerou/css.land/issues/10
     dialog:modify {
         id = "clr",
         colors = { AseUtilities.clrToAseColor(clr) }

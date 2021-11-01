@@ -91,6 +91,10 @@ This repo includes
 
   ![Palette To Cel](screencaps/paletteToCel.png)
 
+- RGB channel separation.
+
+  ![Separate RGB](screencaps/sepRgb.png)
+
 - A regular convex polygon.
 
   ![Polygon](screencaps/polygon.png)

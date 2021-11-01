@@ -1,11 +1,23 @@
 dofile("../support/aseutilities.lua")
 
+local targets = { "ACTIVE", "ALL", "RANGE" }
+
 local defaults = {
     padding = 0,
+    target = "ALL",
     pullFocus = false
 }
 
 local dlg = Dialog { title = "Trim Image Alpha" }
+
+dlg:combobox {
+    id = "target",
+    label = "Target:",
+    option = defaults.target,
+    options = targets
+}
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "padding",
@@ -22,29 +34,40 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- TODO: Consider making this a "trim cel image" dialog
-        -- with a "ALPHA" and a "CANVAS" mode.
-
         local activeSprite = app.activeSprite
         if activeSprite then
             local args = dlg.data
+            local target = args.target
             local padding = args.padding
 
             local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
-            local cels = activeSprite.cels
+            local cels = {}
+            if target == "ACTIVE" then
+                local activeCel = app.activeCel
+                if activeCel then
+                    cels[1] = activeCel
+                end
+            elseif target == "RANGE" then
+                cels = app.range.cels
+            else
+                cels = activeSprite.cels
+            end
+
             local celsLen = #cels
             local trimImage = AseUtilities.trimImageAlpha
             app.transaction(function()
                 for i = 1, celsLen, 1 do
                     local cel = cels[i]
-                    local srcImg = cel.image
-                    if srcImg then
+                    if cel then
+                        local srcImg = cel.image
+                        -- if srcImg then
                         local trgImg, x, y = trimImage(srcImg, padding)
                         local srcPos = cel.position
                         cel.position = Point(srcPos.x + x, srcPos.y + y)
                         cel.image = trgImg
+                        -- end
                     end
                 end
             end)

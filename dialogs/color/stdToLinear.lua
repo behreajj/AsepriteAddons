@@ -39,6 +39,15 @@ local powerPrev = {
     Color(255, 255, 255, 255)
 }
 
+local directions = { "LINEAR_TO_STANDARD", "STANDARD_TO_LINEAR" }
+local targets = { "ACTIVE", "ALL", "RANGE" }
+
+local defaults = {
+    target = "ALL",
+    direction = "STANDARD_TO_LINEAR",
+    pullFocus = false
+}
+
 local dlg = Dialog { title = "sRGB Conversion" }
 
 dlg:shades {
@@ -69,10 +78,19 @@ dlg:shades {
 dlg:newrow { always = false }
 
 dlg:combobox {
+    id = "target",
+    label = "Target:",
+    option = defaults.target,
+    options = targets
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
     id = "direction",
     label = "Direction:",
-    option = "STANDARD_TO_LINEAR",
-    options = { "LINEAR_TO_STANDARD", "STANDARD_TO_LINEAR" }
+    option = defaults.direction,
+    options = directions
 }
 
 dlg:newrow { always = false }
@@ -80,52 +98,70 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
+    focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
-        local sprite = app.activeSprite
-        if sprite then
-            local layer = app.activeLayer
-            if layer and not layer.isGroup then
-                local cel = app.activeCel
-                if cel then
-                    local oldMode = sprite.colorMode
-                    app.command.ChangePixelFormat { format = "rgb" }
-                    local image = cel.image
-                    local pxitr = image:pixels()
+        local activeSprite = app.activeSprite
+        if activeSprite then
+            if activeSprite.colorMode == ColorMode.RGB then
+                local args = dlg.data
+                local target = args.target
+                local direction = args.direction
 
-                    local dir = args.direction
-                    local lut = {}
-                    if dir == "LINEAR_TO_STANDARD" then
-                        lut = Utilities.LTS_LUT
-                    else
-                        lut = Utilities.STL_LUT
+                local cels = {}
+                if target == "ACTIVE" then
+                    local activeCel = app.activeCel
+                    if activeCel then
+                        cels[1] = activeCel
                     end
-
-                    for clr in pxitr do
-                        local hex = clr()
-                        local a = hex >> 0x18 & 0xff
-
-                        local bOrigin = hex >> 0x10 & 0xff
-                        local gOrigin = hex >> 0x08 & 0xff
-                        local rOrigin = hex & 0xff
-
-                        local bDest = lut[1 + bOrigin]
-                        local gDest = lut[1 + gOrigin]
-                        local rDest = lut[1 + rOrigin]
-
-                        clr(a << 0x18
-                            | bDest << 0x10
-                            | gDest << 0x08
-                            | rDest)
-                    end
-
-                    AseUtilities.changePixelFormat(oldMode)
-                    app.refresh()
+                elseif target == "RANGE" then
+                    cels = app.range.cels
                 else
-                    app.alert("There is no active cel.")
+                    cels = activeSprite.cels
                 end
+
+                local lut = {}
+                if direction == "LINEAR_TO_STANDARD" then
+                    lut = Utilities.LTS_LUT
+                else
+                    lut = Utilities.STL_LUT
+                end
+
+                local celsLen = #cels
+                app.transaction(function()
+                    for i = 1, celsLen, 1 do
+                        local cel = cels[i]
+                        if cel then
+                            local srcImg = cel.image
+                            -- if srcImg then
+                            local pxitr = srcImg:pixels()
+                            for elm in pxitr do
+                                local hex = elm()
+                                local a = hex >> 0x18 & 0xff
+                                if a > 0 then
+                                    local bOrigin = hex >> 0x10 & 0xff
+                                    local gOrigin = hex >> 0x08 & 0xff
+                                    local rOrigin = hex & 0xff
+
+                                    local bDest = lut[1 + bOrigin]
+                                    local gDest = lut[1 + gOrigin]
+                                    local rDest = lut[1 + rOrigin]
+
+                                    elm(a << 0x18
+                                        | bDest << 0x10
+                                        | gDest << 0x08
+                                        | rDest)
+                                else
+                                    elm(0x0)
+                                end
+                            end
+                            -- end
+                        end
+                    end
+                end)
+
+                app.refresh()
             else
-                app.alert("There is no active layer.")
+                app.alert("Only RGB color mode is supported.")
             end
     else
         app.alert("There is no active sprite.")
@@ -136,6 +172,7 @@ end
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
+    focus = false,
     onclick = function()
         dlg:close()
     end
