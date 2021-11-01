@@ -1524,8 +1524,9 @@ end
 
 ---Creates a copy of the image where excess
 ---transparent pixels have been trimmed from
----the edges. Adapted from the Stack Overflow
----implementation by Oleg Mikhailov:
+---the edges. Padding is expected to be a positive
+---number; it defaults to zero. Adapted from the
+---Stack Overflow implementation by Oleg Mikhailov:
 ---https://stackoverflow.com/a/36938923 .
 ---
 ---Returns a tuple containing the cropped image,
@@ -1533,10 +1534,11 @@ end
 ---should be added to the position of the cel
 ---that contained the source image.
 ---@param image table aseprite image
+---@param padding number padding
 ---@return table
 ---@return number
 ---@return number
-function AseUtilities.trimImageAlpha(image)
+function AseUtilities.trimImageAlpha(image, padding)
 
     -- 1D for-loop attempt:
     -- https://github.com/behreajj/AsepriteAddons/blob/
@@ -1614,19 +1616,27 @@ function AseUtilities.trimImageAlpha(image)
         right = right - 1
     end
 
+    local valPad = padding or 0
+    valPad = math.abs(valPad)
+
     local wTrg = 1 + right - left
     local hTrg = 1 + bottom - top
-    local target = Image(wTrg, hTrg)
+    local pad2 = valPad + valPad
+    local target = Image(wTrg + pad2, hTrg + pad2)
 
     -- local sampleRect = Rectangle(left, top, wTrg, hTrg)
     -- local srcItr = image:pixels(sampleRect)
     -- for elm in srcItr do
-    --     target:drawPixel(elm.x - left, elm.y - top, elm())
+    --     target:drawPixel(
+    --         valPad + elm.x - left,
+    --         valPad + elm.y - top,
+    --         elm())
     -- end
 
     -- This creates a transaction.
-    target:drawImage(image, Point(-left, -top))
-    return target, left, top
+    target:drawImage(image, Point(valPad - left, valPad - top))
+
+    return target, left - valPad, top - valPad
 end
 
 ---Converts a Vec2 to an Aseprite Point.

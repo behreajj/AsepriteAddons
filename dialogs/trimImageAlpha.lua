@@ -1,10 +1,21 @@
 dofile("../support/aseutilities.lua")
 
 local defaults = {
+    padding = 0,
     pullFocus = false
 }
 
 local dlg = Dialog { title = "Trim Image Alpha" }
+
+dlg:slider {
+    id = "padding",
+    label = "Padding:",
+    min = 0,
+    max = 32,
+    value = defaults.padding
+}
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "confirm",
@@ -16,6 +27,8 @@ dlg:button {
 
         local activeSprite = app.activeSprite
         if activeSprite then
+            local args = dlg.data
+            local padding = args.padding
 
             local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
@@ -28,7 +41,7 @@ dlg:button {
                     local cel = cels[i]
                     local srcImg = cel.image
                     if srcImg then
-                        local trgImg, x, y = trimImage(srcImg)
+                        local trgImg, x, y = trimImage(srcImg, padding)
                         local srcPos = cel.position
                         cel.position = Point(srcPos.x + x, srcPos.y + y)
                         cel.image = trgImg
