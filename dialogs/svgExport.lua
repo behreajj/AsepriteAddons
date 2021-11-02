@@ -12,6 +12,10 @@ local function layerToSvgStr(
     border, scale, margin)
 
     local str = ""
+
+    -- TODO: This works because of precautions
+    -- in Aseprite source code, but technically
+    -- group layers don't have opacity.
     local lyrAlpha = layer.opacity
     if layer.isVisible and lyrAlpha > 0 then
         if layer.isGroup then

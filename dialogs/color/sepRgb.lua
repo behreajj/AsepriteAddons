@@ -1,3 +1,5 @@
+dofile("../../support/aseutilities.lua")
+
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
@@ -23,6 +25,8 @@ dlg:combobox {
     option = defaults.target,
     options = targets
 }
+
+dlg:newrow { always = false }
 
 dlg:check {
     id = "fillBase",
@@ -149,17 +153,8 @@ dlg:button {
                                 cels[1] = activeCel
                             end
                         elseif target == "RANGE" then
-                            local appRange = app.range
-
-                            -- TODO: Abstract this to an AseUtilities method.
-                            local layerCels = activeLayer.cels
-                            local layerCelsLen = #layerCels
-                            for i = 1, layerCelsLen, 1 do
-                                local layerCel = layerCels[i]
-                                if appRange:contains(layerCel) then
-                                    table.insert(cels, layerCel)
-                                end
-                            end
+                            cels = AseUtilities.rangeCelsIntersect(
+                                app.range, activeLayer.cels)
                         else
                             cels = activeLayer.cels
                         end
@@ -216,6 +211,11 @@ dlg:button {
                                         greenLyr, srcFrame, srcImg, srcPos + greenShift)
                                     local blueCel = activeSprite:newCel(
                                         blueLyr, srcFrame, srcImg, srcPos + blueShift)
+
+                                    local srcOpacity = srcCel.opacity
+                                    redCel.opacity = srcOpacity
+                                    greenCel.opacity = srcOpacity
+                                    blueCel.opacity = srcOpacity
 
                                     local redImg = redCel.image
                                     local greenImg = greenCel.image
