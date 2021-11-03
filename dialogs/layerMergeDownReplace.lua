@@ -38,7 +38,7 @@ dlg:button {
                 local overIndex = overLayer.stackIndex
                 if overIndex > 1 then
 
-                    -- TODO: Possible to not require this?
+                    -- TODO: Possible to not require this change?
                     local oldMode = activeSprite.colorMode
                     app.command.ChangePixelFormat { format = "rgb" }
                     local alphaIndex = activeSprite.transparentColor
@@ -46,27 +46,13 @@ dlg:button {
                     local eval = function(hex)
                         return hex & 0xff000000 ~= 0
                     end
-                    -- if oldMode == ColorMode.INDEXED then
-                    --     local valMask = alphaIndex or 0
-                    --     eval = function(index)
-                    --         return index ~= valMask
-                    --     end
-                    -- elseif oldMode == ColorMode.GRAY then
-                    --     eval = function(hex)
-                    --         return hex & 0xff00 ~= 0
-                    --     end
-                    -- else
-                    --     eval = function(hex)
-                    --         return hex & 0xff000000 ~= 0
-                    --     end
-                    -- end
 
                     -- Unpack arguments.
                     local args = dlg.data
                     local trimCels = args.trimCels
 
                     -- Cache global functions used in loop.
-                    local trimFunc = AseUtilities.trimImageAlpha
+                    local trim = AseUtilities.trimImageAlpha
                     local min = math.min
                     local max = math.max
 
@@ -129,14 +115,16 @@ dlg:button {
                                 local xBrUnder = xTlUnder + widthUnder
                                 local yBrUnder = yTlUnder + heightUnder
 
-                                local xTlOverShift = 0
-                                local yTlOverShift = 0
-                                local xTlUnderShift = 0
-                                local yTlUnderShift = 0
-
                                 if trimCels then
-                                    overImage, xTlOverShift, yTlOverShift = trimFunc(overImage, 0, alphaIndex)
-                                    underImage, xTlUnderShift, yTlUnderShift = trimFunc(underImage, 0, alphaIndex)
+                                    local xTlOverShift = 0
+                                    local yTlOverShift = 0
+                                    local xTlUnderShift = 0
+                                    local yTlUnderShift = 0
+
+                                    overImage, xTlOverShift, yTlOverShift = trim(
+                                        overImage, 0, alphaIndex)
+                                    underImage, xTlUnderShift, yTlUnderShift = trim(
+                                        underImage, 0, alphaIndex)
 
                                     xTlOver = xTlOver + xTlOverShift
                                     yTlOver = yTlOver + yTlOverShift
@@ -192,7 +180,7 @@ dlg:button {
                                 local srcPos = overCel.position
 
                                 if trimCels then
-                                    local imgTr, xTr, yTr = trimFunc(srcImage, 0, alphaIndex)
+                                    local imgTr, xTr, yTr = trim(srcImage, 0, alphaIndex)
                                     srcImage = imgTr
                                     srcPos = srcPos + Point(xTr, yTr)
                                 end
@@ -208,7 +196,7 @@ dlg:button {
                                 local srcPos = underCel.position
 
                                 if trimCels then
-                                    local imgTr, xTr, yTr = trimFunc(srcImage, 0, alphaIndex)
+                                    local imgTr, xTr, yTr = trim(srcImage, 0, alphaIndex)
                                     srcImage = imgTr
                                     srcPos = srcPos + Point(xTr, yTr)
                                 end

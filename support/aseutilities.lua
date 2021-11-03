@@ -1524,11 +1524,6 @@ end
 ---@return number
 function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
 
-    -- 1D for-loop attempt:
-    -- https://github.com/behreajj/AsepriteAddons/blob/
-    -- c157511958578e475a3172bd16d55f8ad20ed0b3/
-    -- support/aseutilities.lua
-
     -- This cannot be extracted to a separate function,
     -- perhaps because alphaIndex needs to remain in scope.
     local colorMode = image.colorMode
@@ -1561,6 +1556,11 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     local bottom = heightn1
     local minRight = widthn1
     local minBottom = heightn1
+
+    -- 1D for-loop attempt:
+    -- https://github.com/behreajj/AsepriteAddons/blob/
+    -- c157511958578e475a3172bd16d55f8ad20ed0b3/
+    -- support/aseutilities.lua
 
     -- Top edge.
     local breakTop = false

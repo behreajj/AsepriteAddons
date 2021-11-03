@@ -8,9 +8,12 @@ local defaults = {
     target = "ALL",
     frame = "CEL",
     padding = 2,
+    scale = 1,
     saveJson = false,
     origin = "CORNER",
-    pullFocus = false
+    pullFocus = false,
+    -- missingUserData = "\"\""
+    missingUserData = "null"
 }
 
 local dlg = Dialog { title = "Export Layers" }
@@ -39,6 +42,16 @@ dlg:slider {
     min = 0,
     max = 32,
     value = defaults.padding
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "scale",
+    label = "Scale:",
+    min = 1,
+    max = 10,
+    value = defaults.scale
 }
 
 dlg:newrow { always = false }
@@ -101,9 +114,11 @@ dlg:button {
             local target = args.target or defaults.target
             local frame = args.frame or defaults.frame
             local padding = args.padding or defaults.padding
+            local scale = args.scale or defaults.scale
             local filename = args.filename
             local saveJson = args.saveJson
             local origin = args.origin or defaults.origin
+            local missingUserData = defaults.missingUserData
 
             -- Cache methods used in loops.
             local trunc = math.tointeger
@@ -115,6 +130,7 @@ dlg:button {
 
             -- app.command.ChangePixelFormat { format = "rgb" }
 
+            -- Clean file path strings.
             local filePath = app.fs.filePath(filename)
             filePath = strgsub(filePath, "\\", "\\\\")
             local pathSep = app.fs.pathSeparator
@@ -140,6 +156,7 @@ dlg:button {
 
             local useSpriteFrame = frame == "SPRITE"
             local useCenter = origin == "CENTER"
+            local useResize = scale ~= 1
             local pad2 = padding + padding
             local wPaddedSprite = widthSprite + pad2
             local hPaddedSprite = heightSprite + pad2
@@ -161,8 +178,6 @@ dlg:button {
                 "\"opacity\":%d,",
                 "\"data\":%s}"
             })
-            -- local missingUserData = "\"\""
-            local missingUserData = "null"
 
             local celsLen = #cels
             local jsonEntries = {}
@@ -200,6 +215,12 @@ dlg:button {
                         "%s%03d_%03d.%s",
                         filePrefix, stackIndex, frameNumber, fileExt)
 
+                    if useResize then
+                        trgImage:resize(
+                            trgImage.width * scale,
+                            trgImage.height * scale)
+                    end
+
                     trgImage:saveAs {
                         filename = fileNameLong,
                         palette = activePalette
@@ -209,8 +230,8 @@ dlg:button {
                         fileName = fileNameShort,
                         cel = cel,
                         layer = layer,
-                        xOrigin = xOrigin,
-                        yOrigin = yOrigin,
+                        xOrigin = xOrigin * scale,
+                        yOrigin = yOrigin * scale,
                         width = trgImage.width,
                         height = trgImage.height
                     }

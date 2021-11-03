@@ -139,7 +139,7 @@ dlg:button {
                     local min = math.min
                     local max = math.max
                     local trunc = math.tointeger
-                    local trimImageAlpha = AseUtilities.trimImageAlpha
+                    local trim = AseUtilities.trimImageAlpha
 
                     -- Unpack arguments.
                     local args = dlg.data
@@ -215,7 +215,7 @@ dlg:button {
                                 local yTopLeft = currPos.y
 
                                 if trimCels then
-                                    local trimmed, xTr, yTr = trimImageAlpha(currImg)
+                                    local trimmed, xTr, yTr = trim(currImg, 0)
                                     currImg = trimmed
                                     xTopLeft = xTopLeft + xTr
                                     yTopLeft = yTopLeft + yTr
