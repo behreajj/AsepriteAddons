@@ -40,8 +40,7 @@ dlg:button {
             local target = args.target
             local padding = args.padding
 
-            local oldMode = activeSprite.colorMode
-            app.command.ChangePixelFormat { format = "rgb" }
+            local alphaIndex = activeSprite.transparentColor
 
             local cels = {}
             if target == "ACTIVE" then
@@ -63,7 +62,7 @@ dlg:button {
                     if cel then
                         local srcImg = cel.image
                         -- if srcImg then
-                        local trgImg, x, y = trimImage(srcImg, padding)
+                        local trgImg, x, y = trimImage(srcImg, padding, alphaIndex)
                         local srcPos = cel.position
                         cel.position = Point(srcPos.x + x, srcPos.y + y)
                         cel.image = trgImg
@@ -72,7 +71,6 @@ dlg:button {
                 end
             end)
 
-            AseUtilities.changePixelFormat(oldMode)
             app.refresh()
         else
             app.alert("There is no active sprite.")

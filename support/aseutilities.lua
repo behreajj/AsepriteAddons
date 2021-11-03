@@ -142,26 +142,6 @@ function AseUtilities.aseColorToClr(aseClr)
         0.00392156862745098 * aseClr.alpha)
 end
 
----Returns a string containing diagnostic information
----about an Aseprite Color object. Format lists the
----the red, green, blue and alpha in unsigned byte
----range [0, 255], and a web friendly hexadecimal.
----@param aseColor userdata Aseprite color
----@return string
-function AseUtilities.aseColorToString(aseColor)
-    local r = aseColor.red
-    local g = aseColor.green
-    local b = aseColor.blue
-    -- Index is meaningless, as it seems to include
-    -- nearest color in palette index, is a real number,
-    -- and it's not clear when it could be mutated or
-    -- by whom.
-    return string.format(
-        "(%03d, %03d, %03d, %03d) #%06X",
-        r, g, b, aseColor.alpha,
-        r << 0x10 | g << 0x08 | b)
-end
-
 ---Loads a palette based on a string. The string is
 ---expected to be either "FILE", "PRESET" or "ACTIVE".
 ---Returns a tuple of tables. The first table is an
@@ -382,32 +362,6 @@ function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
     end
 end
 
----Returns a string containing diagnostic information
----about an Aseprite Palette object.
----@param pal userdata Aseprite palette
----@param startIndex number start index
----@param count number sample count
----@return string
-function AseUtilities.asePaletteToString(pal, startIndex, count)
-    local palLen = #pal
-
-    local si = startIndex or 0
-    si = math.min(palLen - 1, math.max(0, si))
-    local valCnt = count or 256
-    valCnt = math.min(palLen - si, math.max(2, valCnt)) - 1
-
-    -- Using \r for carriage returns causes formatting bug.
-    local aseToStr = AseUtilities.aseColorToString
-    local strArr = {}
-    for i = 0, valCnt, 1 do
-        local palIdx = si + i
-        strArr[1 + i] = string.format(
-            "%03d. %s",
-            palIdx, aseToStr(pal:getColor(palIdx)))
-    end
-    return table.concat(strArr, ",\n")
-end
-
 ---Bakes a layer's opacity into the images of each
 ---cel held by the layer. Also bakes cel opacities.
 ---Does not support group layers. Resets layer and
@@ -421,7 +375,7 @@ function AseUtilities.bakeLayerOpacity(layer)
     end
 
     local layerAlpha = layer.opacity
-    if not AseUtilities.layerIsVisible(layer) then
+    if not layer.isVisible then
         layerAlpha = 0
     end
     local cels = layer.cels
@@ -429,6 +383,7 @@ function AseUtilities.bakeLayerOpacity(layer)
 
     if layerAlpha < 0xff then
         if layerAlpha < 0x01 then
+            -- Layer is completely transparent.
             for i = 1, celsLen, 1 do
                 local cel = cels[i]
                 local img = cel.image
@@ -437,6 +392,7 @@ function AseUtilities.bakeLayerOpacity(layer)
                 cel.opacity = 0xff
             end
         else
+            -- Layer is semi-transparent.
             for i = 1, celsLen, 1 do
                 local cel = cels[i]
                 local celAlpha = cel.opacity
@@ -444,8 +400,10 @@ function AseUtilities.bakeLayerOpacity(layer)
                 local pxItr = img:pixels()
                 if celAlpha < 0xff then
                     if celAlpha < 0x1 then
+                        -- Cel is completely transparent.
                         for elm in pxItr do elm(0x0) end
                     else
+                        -- Cel and layer are both semi-transparent.
                         local layerCelAlpha = (layerAlpha * celAlpha) // 0xff
                         for elm in pxItr do
                             local hex = elm()
@@ -455,11 +413,12 @@ function AseUtilities.bakeLayerOpacity(layer)
                                 elm(0x0)
                             else
                                 elm((cmpAlpha << 0x18)
-                                | (hex & 0x00ffffff))
+                                    | (hex & 0x00ffffff))
                             end
                         end
                     end
                 else
+                    -- Cel is opaque, but layer is semi-transparent.
                     for elm in pxItr do
                         local hex = elm()
                         local srcAlpha = hex >> 0x18 & 0xff
@@ -475,16 +434,17 @@ function AseUtilities.bakeLayerOpacity(layer)
                 cel.opacity = 0xff
             end
         end
-
         layer.opacity = 0xff
     else
+        -- Layer is completely opaque.
         local bakeCel = AseUtilities.bakeCelOpacity
         for i = 1, celsLen, 1 do bakeCel(cels[i]) end
     end
 end
 
 ---Bakes a cel's opacity into the colors in the cel's
----image. Resets the cel's opacity to 255.
+---image. Resets the cel's opacity to 255. Does not
+---refer to layer visibility or opacity.
 ---@param cel userdata cel
 function AseUtilities.bakeCelOpacity(cel)
     local celAlpha = cel.opacity
@@ -1476,38 +1436,6 @@ function AseUtilities.initCanvas(
     return sprite
 end
 
----Evaluates whether a layer is visible based on its
----place in a hierarchy.
----@param layer userdata aseprite layer
----@param sprite userdata sprite
----@return boolean
-function AseUtilities.layerIsVisible(layer, sprite)
-    local l = layer
-    local spriteName = "doc::Sprite"
-    if sprite then spriteName = sprite.__name end
-    while l.__name ~= spriteName do
-        if not l.isVisible then return false end
-        l = l.parent
-    end
-    return true
-end
-
----Evaluates whether a layer is editable based on its
----place in a hierarchy.
----@param layer userdata aseprite layer
----@param sprite userdata sprite
----@return boolean
-function AseUtilities.layerIsEditable(layer, sprite)
-    local l = layer
-    local spriteName = "doc::Sprite"
-    if sprite then spriteName = sprite.__name end
-    while l.__name ~= spriteName do
-        if not l.isEditable then return false end
-        l = l.parent
-    end
-    return true
-end
-
 ---Finds an array of cels shared between an Aseprite
 ---Range object and an input array.
 ---@param range userdata aseprite range
@@ -1590,15 +1518,35 @@ end
 ---that contained the source image.
 ---@param image userdata aseprite image
 ---@param padding number padding
+---@param alphaIndex number alpha mask index
 ---@return table
 ---@return number
 ---@return number
-function AseUtilities.trimImageAlpha(image, padding)
+function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
 
     -- 1D for-loop attempt:
     -- https://github.com/behreajj/AsepriteAddons/blob/
     -- c157511958578e475a3172bd16d55f8ad20ed0b3/
     -- support/aseutilities.lua
+
+    -- This cannot be extracted to a separate function,
+    -- perhaps because alphaIndex needs to remain in scope.
+    local colorMode = image.colorMode
+    local eval = nil
+    if colorMode == ColorMode.INDEXED then
+        local valMask = alphaIndex or 0
+        eval = function(index)
+            return index ~= valMask
+        end
+    elseif colorMode == ColorMode.GRAY then
+        eval = function(hex)
+            return hex & 0xff00 ~= 0
+        end
+    else
+        eval = function(hex)
+            return hex & 0xff000000 ~= 0
+        end
+    end
 
     -- Immutable.
     local width = image.width
@@ -1618,7 +1566,7 @@ function AseUtilities.trimImageAlpha(image, padding)
     local breakTop = false
     while top < bottom do
         for x = 0, widthn1, 1 do
-            if image:getPixel(x, top) & 0xff000000 ~= 0 then
+            if eval(image:getPixel(x, top)) then
                 minRight = x
                 minBottom = top
                 breakTop = true
@@ -1634,7 +1582,7 @@ function AseUtilities.trimImageAlpha(image, padding)
     local topp1 = top + 1
     while left < minRight do
         for y = heightn1, topp1, -1 do
-            if image:getPixel(left, y) & 0xff000000 ~= 0 then
+            if eval(image:getPixel(left, y)) then
                 minBottom = y
                 breakLeft = true
                 break
@@ -1648,7 +1596,7 @@ function AseUtilities.trimImageAlpha(image, padding)
     local breakBottom = false
     while bottom > minBottom do
         for x = widthn1, left, -1 do
-            if image:getPixel(x, bottom) & 0xff000000 ~= 0 then
+            if eval(image:getPixel(x, bottom)) then
                 minRight = x
                 breakBottom = true
                 break
@@ -1662,7 +1610,7 @@ function AseUtilities.trimImageAlpha(image, padding)
     local breakRight = false
     while right > minRight do
         for y = bottom, top, -1 do
-            if image:getPixel(right, y) & 0xff000000 ~= 0 then
+            if eval(image:getPixel(right, y)) then
                 breakRight = true
                 break
             end
@@ -1677,7 +1625,7 @@ function AseUtilities.trimImageAlpha(image, padding)
     local wTrg = 1 + right - left
     local hTrg = 1 + bottom - top
     local pad2 = valPad + valPad
-    local target = Image(wTrg + pad2, hTrg + pad2)
+    local target = Image(wTrg + pad2, hTrg + pad2, colorMode)
 
     -- local sampleRect = Rectangle(left, top, wTrg, hTrg)
     -- local srcItr = image:pixels(sampleRect)
@@ -1690,7 +1638,6 @@ function AseUtilities.trimImageAlpha(image, padding)
 
     -- This creates a transaction.
     target:drawImage(image, Point(valPad - left, valPad - top))
-
     return target, left - valPad, top - valPad
 end
 

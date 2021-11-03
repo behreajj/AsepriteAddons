@@ -38,8 +38,28 @@ dlg:button {
                 local overIndex = overLayer.stackIndex
                 if overIndex > 1 then
 
+                    -- TODO: Possible to not require this?
                     local oldMode = activeSprite.colorMode
                     app.command.ChangePixelFormat { format = "rgb" }
+                    local alphaIndex = activeSprite.transparentColor
+
+                    local eval = function(hex)
+                        return hex & 0xff000000 ~= 0
+                    end
+                    -- if oldMode == ColorMode.INDEXED then
+                    --     local valMask = alphaIndex or 0
+                    --     eval = function(index)
+                    --         return index ~= valMask
+                    --     end
+                    -- elseif oldMode == ColorMode.GRAY then
+                    --     eval = function(hex)
+                    --         return hex & 0xff00 ~= 0
+                    --     end
+                    -- else
+                    --     eval = function(hex)
+                    --         return hex & 0xff000000 ~= 0
+                    --     end
+                    -- end
 
                     -- Unpack arguments.
                     local args = dlg.data
@@ -109,9 +129,20 @@ dlg:button {
                                 local xBrUnder = xTlUnder + widthUnder
                                 local yBrUnder = yTlUnder + heightUnder
 
+                                local xTlOverShift = 0
+                                local yTlOverShift = 0
+                                local xTlUnderShift = 0
+                                local yTlUnderShift = 0
+
                                 if trimCels then
-                                    overImage, xTlOver, yTlOver = trimFunc(overImage)
-                                    underImage, xTlUnder, yTlUnder = trimFunc(underImage)
+                                    overImage, xTlOverShift, yTlOverShift = trimFunc(overImage, 0, alphaIndex)
+                                    underImage, xTlUnderShift, yTlUnderShift = trimFunc(underImage, 0, alphaIndex)
+
+                                    xTlOver = xTlOver + xTlOverShift
+                                    yTlOver = yTlOver + yTlOverShift
+
+                                    xTlUnder = xTlUnder + xTlUnderShift
+                                    yTlUnder = yTlUnder + yTlUnderShift
 
                                     widthOver = overImage.width
                                     heightOver = overImage.height
@@ -142,7 +173,7 @@ dlg:button {
                                 local overItr = overImage:pixels()
                                 for elm in overItr do
                                     local hex = elm()
-                                    if hex & 0xff000000 ~= 0 then
+                                    if eval(hex) then
                                         trgImage:drawPixel(
                                             elm.x + xTlOver - xTlTarget,
                                             elm.y + yTlOver - yTlTarget,
@@ -161,9 +192,9 @@ dlg:button {
                                 local srcPos = overCel.position
 
                                 if trimCels then
-                                    local imgTr, xTr, yTr = trimFunc(srcImage)
+                                    local imgTr, xTr, yTr = trimFunc(srcImage, 0, alphaIndex)
                                     srcImage = imgTr
-                                    srcPos = Point(xTr, yTr)
+                                    srcPos = srcPos + Point(xTr, yTr)
                                 end
 
                                 activeSprite:newCel(
@@ -177,9 +208,9 @@ dlg:button {
                                 local srcPos = underCel.position
 
                                 if trimCels then
-                                    local imgTr, xTr, yTr = trimFunc(srcImage)
+                                    local imgTr, xTr, yTr = trimFunc(srcImage, 0, alphaIndex)
                                     srcImage = imgTr
-                                    srcPos = Point(xTr, yTr)
+                                    srcPos = srcPos + Point(xTr, yTr)
                                 end
 
                                 activeSprite:newCel(

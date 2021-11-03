@@ -89,6 +89,12 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if activeSprite then
+            -- Unpack sprite properties.
+            local oldMode = activeSprite.colorMode
+            local alphaIndex = activeSprite.transparentColor
+            local activePalette = activeSprite.palettes[1]
+            local widthSprite = activeSprite.width
+            local heightSprite = activeSprite.height
 
             -- Unpack arguments.
             local args = dlg.data
@@ -103,21 +109,23 @@ dlg:button {
             local trunc = math.tointeger
             local strfmt = string.format
             local strgsub = string.gsub
-            local isVisible = AseUtilities.layerIsVisible
+            local concat = table.concat
+            local insert = table.insert
             local trimAlpha = AseUtilities.trimImageAlpha
+
+            -- app.command.ChangePixelFormat { format = "rgb" }
 
             local filePath = app.fs.filePath(filename)
             filePath = strgsub(filePath, "\\", "\\\\")
-
+            local pathSep = app.fs.pathSeparator
+            pathSep = strgsub(pathSep, "\\", "\\\\")
             local fileTitle = app.fs.fileTitle(filename)
             local fileExt = app.fs.fileExtension(filename)
             fileTitle = strgsub(fileTitle, "%s+", "")
-            local pathSep = app.fs.pathSeparator
-            pathSep = strgsub(pathSep, "\\", "\\\\")
-            local filePrefix = filePath
-                .. pathSep
-                .. fileTitle
+            filePath = filePath .. pathSep
+            local filePrefix = filePath .. fileTitle
 
+            -- Determine cels by target preset.
             local cels = {}
             if target == "ACTIVE" then
                 local activeCel = app.activeCel
@@ -132,12 +140,29 @@ dlg:button {
 
             local useSpriteFrame = frame == "SPRITE"
             local useCenter = origin == "CENTER"
-            local widthSprite = activeSprite.width
-            local heightSprite = activeSprite.height
             local pad2 = padding + padding
             local wPaddedSprite = widthSprite + pad2
             local hPaddedSprite = heightSprite + pad2
             local padOffset = Point(padding, padding)
+
+            local layerFormat = concat({
+                "{\"stackIndex\":%d,",
+                "\"name\":\"%s\",",
+                "\"opacity\":%d,",
+                "\"data\":%s,",
+                "\"frames\":["
+            })
+            local frameFormat = concat({
+                "{\"frameNumber\":%d,",
+                "\"fileName\":\"%s\",",
+                "\"duration\":%d,",
+                "\"position\":{\"x\":%d,\"y\":%d},",
+                "\"dimension\":{\"x\":%d,\"y\":%d},",
+                "\"opacity\":%d,",
+                "\"data\":%s}"
+            })
+            -- local missingUserData = "\"\""
+            local missingUserData = "null"
 
             local celsLen = #cels
             local jsonEntries = {}
@@ -145,55 +170,43 @@ dlg:button {
             for i = 1, celsLen, 1 do
                 local cel = cels[i]
                 local layer = cel.layer
-                local layerOpacity = layer.opacity
-                local isVis = isVisible(layer, activeSprite)
-                if isVis and (not layer.isReference)
-                    and layerOpacity > 0 then
 
+                -- For whatever reason, the Lua hierarchical
+                -- function causes problems.
+                local isVis = layer.isVisible
+                if isVis and (not layer.isReference) then
                     local srcImage = cel.image
                     local trgImage = nil
                     local xOrigin = 0
                     local yOrigin = 0
                     if useSpriteFrame then
                         local celPos = cel.position
-                        trgImage = Image(wPaddedSprite, hPaddedSprite)
+                        trgImage = Image(wPaddedSprite, hPaddedSprite, oldMode)
                         trgImage:drawImage(srcImage, padOffset + celPos)
                     else
-                        trgImage, xOrigin, yOrigin = trimAlpha(srcImage, padding)
+                        trgImage, xOrigin, yOrigin = trimAlpha(srcImage, padding, alphaIndex)
                         local celPos = cel.position
                         xOrigin = xOrigin + celPos.x
                         yOrigin = yOrigin + celPos.y
                     end
 
-                    -- TODO: Test this aspect of the script.
-                    -- Maybe place layer and cel opacity in meta data instead
-                    -- of baking.
-                    local celOpacity = cel.opacity
-                    if celOpacity < 0xff or layerOpacity < 0xff then
-                        local celLyrAlpha = (celOpacity * layerOpacity) // 0xff
-                        local pxlItr = trgImage:pixels()
-                        for elm in pxlItr do
-                            local srcHex = elm()
-                            local srcAlpha = srcHex >> 0x18 & 0xff
-                            local cmpAlpha = (celLyrAlpha * srcAlpha) // 0xff
-                            if cmpAlpha > 0 then
-                                elm((cmpAlpha << 0x18) | (srcHex & 0x00ffffff))
-                            else
-                                elm(0x0)
-                            end
-                        end
-                    end
-
-                    local layerName = layer.name
-                    layerName = strgsub(layerName, "%s+", "")
+                    local stackIndex = layer.stackIndex
                     local frameNumber = cel.frameNumber
-                    local fileName = strfmt(
-                        "%s%s_%03d.%s",
-                        filePrefix, layerName, frameNumber, fileExt)
-                    trgImage:saveAs(fileName)
+
+                    local fileNameShort = strfmt(
+                        "%s%03d_%03d",
+                        fileTitle, stackIndex, frameNumber)
+                    local fileNameLong = strfmt(
+                        "%s%03d_%03d.%s",
+                        filePrefix, stackIndex, frameNumber, fileExt)
+
+                    trgImage:saveAs {
+                        filename = fileNameLong,
+                        palette = activePalette
+                    }
 
                     jsonEntries[j] = {
-                        fileName = fileName,
+                        fileName = fileNameShort,
                         cel = cel,
                         layer = layer,
                         xOrigin = xOrigin,
@@ -213,7 +226,7 @@ dlg:button {
                     local layer = entry.layer
                     local stackIndex = layer.stackIndex
                     if entriesByLayer[stackIndex] then
-                        table.insert(entriesByLayer[stackIndex], entry)
+                        insert(entriesByLayer[stackIndex], entry)
                     else
                         entriesByLayer[stackIndex] = { entry }
                     end
@@ -237,9 +250,10 @@ dlg:button {
                         -- Unpack cel.
                         local frameNumber = cel.frameNumber
                         local duration = trunc(cel.frame.duration * 1000)
+                        local celOpacity = cel.opacity
                         local celData = cel.data
                         if celData == nil or #celData < 1 then
-                            celData = "\"\""
+                            celData = missingUserData
                         end
 
                         if useCenter then
@@ -248,25 +262,36 @@ dlg:button {
                         end
 
                         celStrArr[i] = strfmt(
-                            "{\"filePath\":\"%s\",\"frameNumber\":%d,\"duration\":%d,\"position\":{\"x\":%d,\"y\":%d},\"dimension\":{\"x\":%d,\"y\":%d},\"data\":%s}",
-                            fileName, frameNumber, duration, xOrigin, yOrigin, width, height, celData)
+                            frameFormat,
+                            frameNumber, fileName, duration,
+                            xOrigin, yOrigin,
+                            width, height,
+                            celOpacity, celData)
                     end
 
                     -- Unpack layer.
                     local layer = celsArr[1].layer
                     local layerName = layer.name
+                    local layerOpacity = layer.opacity
                     local layerData = layer.data
                     if layerData == nil or #layerData < 1 then
-                        layerData = "\"\""
+                        layerData = missingUserData
                     end
 
                     local layerPrefix = strfmt(
-                        "{\"name\":\"%s\",\"stackIndex\":%d,\"data\":%s,\"frames\":[",
-                        layerName, stackIndex, layerData)
-                    local layerStr = layerPrefix .. table.concat(celStrArr, ",") .. "]}"
-                    table.insert(lyrStrArr, layerStr)
+                        layerFormat,
+                        stackIndex, layerName,
+                        layerOpacity, layerData)
+                    local layerStr = layerPrefix
+                        .. concat(celStrArr, ",")
+                        .. "]}"
+                    insert(lyrStrArr, layerStr)
                 end
-                local jsonString = "{\"layers\":[" .. table.concat(lyrStrArr, ",") .. "]}"
+                local jsonString = string.format(
+                    "{\"fileDir\":\"%s\",\"fileExt\":\"%s\",\"layers\":[",
+                    filePath, fileExt)
+                    .. concat(lyrStrArr, ",")
+                    .. "]}"
 
                 local jsonFilepath = filePrefix
                 if #fileTitle < 1 then
@@ -278,10 +303,7 @@ dlg:button {
                 file:close()
             end
 
-            local oldMode = activeSprite.colorMode
-            app.command.ChangePixelFormat { format = "rgb" }
-
-            AseUtilities.changePixelFormat(oldMode)
+            -- AseUtilities.changePixelFormat(oldMode)
             app.refresh()
             dlg:close()
         else

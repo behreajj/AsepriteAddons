@@ -205,7 +205,7 @@ dlg:button {
                                 local cel = cels[i]
                                 local srcImg = cel.image
                                 if srcImg then
-                                    local trgImg, x, y = trimImage(srcImg)
+                                    local trgImg, x, y = trimImage(srcImg, 0)
                                     local srcPos = cel.position
                                     cel.position = Point(srcPos.x + x, srcPos.y + y)
                                     cel.image = trgImg
