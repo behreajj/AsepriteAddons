@@ -101,6 +101,7 @@ dlg:button {
                                 local overPos = overCel.position
                                 local xTlOver = overPos.x
                                 local yTlOver = overPos.y
+
                                 local widthOver = overImage.width
                                 local heightOver = overImage.height
                                 local xBrOver = xTlOver + widthOver
@@ -110,6 +111,7 @@ dlg:button {
                                 local underPos = underCel.position
                                 local xTlUnder = underPos.x
                                 local yTlUnder = underPos.y
+
                                 local widthUnder = underImage.width
                                 local heightUnder = underImage.height
                                 local xBrUnder = xTlUnder + widthUnder
@@ -145,10 +147,8 @@ dlg:button {
 
                                 local xTlTarget = min(xTlOver, xTlUnder)
                                 local yTlTarget = min(yTlOver, yTlUnder)
-                                local xBrTarget = max(xBrOver, xBrUnder)
-                                local yBrTarget = max(yBrOver, yBrUnder)
-                                local widthTarget = 1 + xBrTarget - xTlTarget
-                                local heightTarget = 1 + yBrTarget - yTlTarget
+                                local widthTarget = 1 + max(xBrOver, xBrUnder) - xTlTarget
+                                local heightTarget = 1 + max(yBrOver, yBrUnder) - yTlTarget
                                 local trgImage = Image(widthTarget, heightTarget)
                                 local trgPos = Point(xTlTarget, yTlTarget)
 

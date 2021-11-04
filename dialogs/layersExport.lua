@@ -102,6 +102,12 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if activeSprite then
+            -- Image padding is impacted by scaling. To correct this,
+            -- you'd have to  make a separate image padding method in
+            -- AseUtililties. Then trim, then scale, then pad.
+            -- Doesn't seem worth it, though, as there's an argument
+            -- that for a pixel perfect image, scaled pad is desirable.
+
             -- Unpack sprite properties.
             local oldMode = activeSprite.colorMode
             local alphaIndex = activeSprite.transparentColor

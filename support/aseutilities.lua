@@ -1347,7 +1347,7 @@ function AseUtilities.getSelection(sprite)
     if selection.isEmpty then
         return Selection(sprite.bounds)
     else
-        return Selection(selection.bounds)
+        return Selection(selection.bounds:intersect(sprite.bounds))
     end
 end
 
