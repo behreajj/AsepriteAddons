@@ -731,6 +731,36 @@ function Utilities.reverseTable(t)
     return t
 end
 
+---Rotates an array of pixels 90 degrees counter-clockwise.
+---@param source table source pixels
+---@param w number image width
+---@param h number image height
+---@return table
+function Utilities.rotate90(source, w, h)
+    local len = #source
+    local lennh = len - h
+    local rotated = {}
+    for i = 0, len - 1, 1 do
+        rotated[1 + lennh + (i // w) - (i % w) * h] = source[1 + i]
+    end
+    return rotated
+end
+
+---Rotates an array of pixels 270 degrees counter-clockwise.
+---@param source table source pixels
+---@param w number image width
+---@param h number image height
+---@return table
+function Utilities.rotate270(source, w, h)
+    local len = #source
+    local hn1 = h - 1
+    local rotated = {}
+    for i = 0, len - 1, 1 do
+        rotated[1 + (i % w ) * h + hn1 - (i // w)] = source[1 + i]
+    end
+    return rotated
+end
+
 ---Creates a new table from the source
 ---and shuffles it.
 ---@param t table input table

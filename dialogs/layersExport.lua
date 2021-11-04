@@ -1,8 +1,8 @@
 dofile("../support/aseutilities.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE" }
 local frames = { "CEL", "SPRITE" }
 local origins = { "CENTER", "CORNER" }
+local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
     target = "ALL",

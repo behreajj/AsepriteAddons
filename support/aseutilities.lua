@@ -1343,11 +1343,12 @@ end
 ---@param sprite userdata sprite
 ---@return table
 function AseUtilities.getSelection(sprite)
-    local selection = sprite.selection
-    if selection.isEmpty then
+    local select = sprite.selection
+    if select.isEmpty then
         return Selection(sprite.bounds)
     else
-        return Selection(selection.bounds:intersect(sprite.bounds))
+        return Selection(
+            select.bounds:intersect(sprite.bounds))
     end
 end
 
@@ -1481,6 +1482,99 @@ function AseUtilities.rotateGlyphCcw(gl, w, h)
         vr = vr | (bit << shift1)
     end
     return vr
+end
+
+---Returns a copy of the source image that has
+---been rotated 90 degrees counter-clockwise.
+---Also returns displaced coordinates for the
+---top-left corner.
+---@param source userdata
+---@return userdata
+---@return number
+---@return number
+function AseUtilities.rotate90(source)
+    local px = {}
+    local i = 1
+    local srcPxItr = source:pixels()
+    for elm in srcPxItr do
+        px[i] = elm()
+        i = i + 1
+    end
+
+    local w = source.width
+    local h = source.height
+    local target = Image(h, w, source.colorMode)
+    local pxRot = Utilities.rotate90(px, w, h)
+
+    local j = 1
+    local trgPxItr = target:pixels()
+    for elm in trgPxItr do
+        elm(pxRot[j])
+        j = j + 1
+    end
+    return target, 0, 1 - w
+end
+
+---Returns a copy of the source image that has
+---been rotated 180 degrees.
+---Also returns displaced coordinates for the
+---top-left corner.
+---@param source userdata
+---@return userdata
+---@return number
+---@return number
+function AseUtilities.rotate180(source)
+    local px = {}
+    local i = 1
+    local srcPxItr = source:pixels()
+    for elm in srcPxItr do
+        px[i] = elm()
+        i = i + 1
+    end
+
+    local w = source.width
+    local h = source.height
+    local target = Image(w, h, source.colorMode)
+    local pxRot = Utilities.reverseTable(px)
+
+    local j = 1
+    local trgPxItr = target:pixels()
+    for elm in trgPxItr do
+        elm(pxRot[j])
+        j = j + 1
+    end
+    return target, 1 - w, 1 - h
+end
+
+---Returns a copy of the source image that has
+---been rotated 270 degrees counter-clockwise.
+---Also returns displaced coordinates for the
+---top-left corner.
+---@param source userdata
+---@return userdata
+---@return number
+---@return number
+function AseUtilities.rotate270(source)
+    local px = {}
+    local i = 1
+    local srcPxItr = source:pixels()
+    for elm in srcPxItr do
+        px[i] = elm()
+        i = i + 1
+    end
+
+    local w = source.width
+    local h = source.height
+    local target = Image(h, w, source.colorMode)
+    local pxRot = Utilities.rotate270(px, w, h)
+
+    local j = 1
+    local trgPxItr = target:pixels()
+    for elm in trgPxItr do
+        elm(pxRot[j])
+        j = j + 1
+    end
+    return target, 1 - h, 0
 end
 
 ---Trims a cel's image and position such that it no longer
