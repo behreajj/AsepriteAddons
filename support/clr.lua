@@ -764,7 +764,7 @@ end
 ---@param a number alpha channel
 ---@return table
 function Clr.lchToLab(l, c, h, a)
-    -- Return earliers cannot be done here because
+    -- Return early cannot be done here because
     -- saturated colors are still possible at light = 0
     -- and light = 100.
     local lVal = l or 0.0
@@ -1549,9 +1549,9 @@ function Clr.sRgbaToHsvaInternal(red, green, blue, alpha)
             a = alpha }
     else
         -- Find minimum color channel.
-        local mn = red
         local gbmn = blue
         if green < blue then gbmn = green end
+        local mn = red
         if gbmn < red then mn = gbmn end
 
         -- Find difference between max and min.

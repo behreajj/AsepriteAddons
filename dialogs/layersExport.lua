@@ -59,14 +59,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "filename",
     label = "File:",
-    filetypes = {
-        "ase",
-        "aseprite",
-        "gif",
-        "jpg",
-        "jpeg",
-        "png",
-        "webp" },
+    filetypes = AseUtilities.FILE_FORMATS,
     save = true
 }
 

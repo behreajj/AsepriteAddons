@@ -276,6 +276,10 @@ dlg:button {
             if args.cw then cw = -1.0 end
             local levels = args.quantization
 
+            -- TODO: The image used here does not match
+            -- the selection bounds size. Switch approach
+            -- to match cel position and have cel image
+            -- the size of the rectangle.
             local selection = AseUtilities.getSelection(sprite)
             local img = cel.image
             local iterator = img:pixels(selection.bounds)

@@ -148,9 +148,10 @@ dlg:button {
                         local oldActiveCel = app.activeCel
                         local cels = {}
                         if target == "ACTIVE" then
-                            local activeCel = app.activeCel
-                            if activeCel then
-                                cels[1] = activeCel
+                            -- local activeCel = app.activeCel
+                            -- if activeCel and activeCel.layer == activeLayer then
+                            if oldActiveCel then
+                                cels[1] = oldActiveCel
                             end
                         elseif target == "RANGE" then
                             cels = AseUtilities.rangeCelsIntersect(

@@ -21,14 +21,7 @@ local dlg = Dialog { title = "Open Sprite +" }
 dlg:file {
     id = "spriteFile",
     label = "File:",
-    filetypes = {
-        "ase",
-        "aseprite",
-        "gif",
-        "jpg",
-        "jpeg",
-        "png",
-        "webp" },
+    filetypes = AseUtilities.FILE_FORMATS,
     open = true
 }
 

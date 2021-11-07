@@ -369,6 +369,10 @@ dlg:button {
             -- Need a scalar to normalize distance to [0.0, 1.0]
             local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, w, h))
 
+            -- TODO: The image used here does not match
+            -- the selection bounds size. Switch approach
+            -- to match cel position and have cel image
+            -- the size of the rectangle.
             local selection = AseUtilities.getSelection(sprite)
             local img = cel.image
             local iterator = img:pixels(selection.bounds)

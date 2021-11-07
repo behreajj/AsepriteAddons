@@ -12,9 +12,6 @@ setmetatable(AseUtilities, {
         return cls.new(...)
     end})
 
--- TODO: Create a DEFAULT_PAL_FORMAT for supported palette imports.
--- { "aseprite", "gpl", "pal", "png", "webp" }
-
 -- Maximum number of a cels a script may
 -- request to create before the user is
 -- prompted to confirm.
@@ -50,6 +47,14 @@ AseUtilities.DEFAULT_STROKE = 0xff202020
 ---Number of decimals to display when
 ---printing real numbers to the console.
 AseUtilities.DISPLAY_DECIMAL = 3
+
+---Table of file extensions supported by
+---Aseprite for open and save file dialogs.
+AseUtilities.FILE_FORMATS = {
+    "ase", "aseprite", "bmp", "flc", "fli",
+    "gif", "ico", "jpeg", "jpg", "pcc", "pcx",
+    "png", "tga", "webp"
+}
 
 -- Maximum number of frames a script may
 -- request to create before the user is
@@ -1347,6 +1352,9 @@ function AseUtilities.getSelection(sprite)
     if select.isEmpty then
         return Selection(sprite.bounds)
     else
+        -- This precaution must be taken because
+        -- a transform cage can be dragged
+        -- off-canvas, causing Aseprite to crash.
         return Selection(
             select.bounds:intersect(sprite.bounds))
     end

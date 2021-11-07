@@ -207,11 +207,12 @@ dlg:button {
                             end
                         end
 
-                        AseUtilities.changePixelFormat(oldMode)
                         targetLayer.stackIndex = overIndex + 1
                         activeSprite:deleteLayer(overLayer)
                         activeSprite:deleteLayer(underLayer)
                     end)
+
+                    AseUtilities.changePixelFormat(oldMode)
                     app.refresh()
                 else
                     app.alert("There are no layers beneath this one.")
