@@ -1,4 +1,4 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 
 local defaults = {
     trimCels = false,
@@ -145,8 +145,10 @@ dlg:button {
                                     yBrUnder = yTlUnder + heightUnder
                                 end
 
+                                -- Find union of over and under.
                                 local xTlTarget = min(xTlOver, xTlUnder)
                                 local yTlTarget = min(yTlOver, yTlUnder)
+
                                 local widthTarget = 1 + max(xBrOver, xBrUnder) - xTlTarget
                                 local heightTarget = 1 + max(yBrOver, yBrUnder) - yTlTarget
                                 local trgImage = Image(widthTarget, heightTarget)

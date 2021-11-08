@@ -1,4 +1,4 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 
 local msgSrcs = { "ENTRY", "FILE" }
 local txtFormats = { "gpl", "pal", "txt" }

@@ -1,4 +1,4 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 
 local angles = { "90", "180", "270" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
@@ -11,22 +11,11 @@ local defaults = {
     pullFocus = false
 }
 
-local function round(x)
-    if x < -0.0 then
-        return math.tointeger(x - 0.5)
-    end
-    if x > 0.0 then
-        return math.tointeger(x + 0.5)
-    end
-    return 0
-end
-
 local function sign(c)
-    local d = 0.0
-    if c < -0.0 then d = -1.0
-    elseif c > 0.0 then d = 1.0
+    if c < -0.0 then return -1.0
+    elseif c > 0.0 then return 1.0
     end
-    return d
+    return 0.0
 end
 
 local function copySign(a, b)
@@ -150,8 +139,8 @@ dlg:button {
                         local xtlTrg = xtlSrc + xSrcHalf - xTrgHalf
                         local ytlTrg = ytlSrc + ySrcHalf - yTrgHalf
                         cel.position = Point(
-                            round(xtlTrg),
-                            round(ytlTrg))
+                            Utilities.round(xtlTrg),
+                            Utilities.round(ytlTrg))
 
                         cel.image = trgImg
                     end

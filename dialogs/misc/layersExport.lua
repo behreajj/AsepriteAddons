@@ -1,4 +1,4 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 
 local frames = { "CEL", "SPRITE" }
 local origins = { "CENTER", "CORNER" }
@@ -6,7 +6,7 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
     target = "ALL",
-    frame = "CEL",
+    bounds = "CEL",
     padding = 2,
     scale = 1,
     saveJson = false,
@@ -28,9 +28,9 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:combobox {
-    id = "frame",
-    label = "Frame:",
-    option = defaults.frame,
+    id = "bounds",
+    label = "Bounds:",
+    option = defaults.bounds,
     options = frames
 }
 
@@ -111,7 +111,7 @@ dlg:button {
             -- Unpack arguments.
             local args = dlg.data
             local target = args.target or defaults.target
-            local frame = args.frame or defaults.frame
+            local bounds = args.bounds or defaults.bounds
             local padding = args.padding or defaults.padding
             local scale = args.scale or defaults.scale
             local filename = args.filename
@@ -153,7 +153,7 @@ dlg:button {
                 cels = activeSprite.cels
             end
 
-            local useSpriteFrame = frame == "SPRITE"
+            local useSpriteBounds = bounds == "SPRITE"
             local useCenter = origin == "CENTER"
             local useResize = scale ~= 1
             local pad2 = padding + padding
@@ -193,7 +193,7 @@ dlg:button {
                     local trgImage = nil
                     local xOrigin = 0
                     local yOrigin = 0
-                    if useSpriteFrame then
+                    if useSpriteBounds then
                         local celPos = cel.position
                         trgImage = Image(wPaddedSprite, hPaddedSprite, oldMode)
                         trgImage:drawImage(srcImage, padOffset + celPos)

@@ -1,6 +1,6 @@
-dofile("../support/aseutilities.lua")
-dofile("../support/octree.lua")
-dofile("../support/clr.lua")
+dofile("../../support/aseutilities.lua")
+dofile("../../support/octree.lua")
+dofile("../../support/clr.lua")
 
 local defaults = {
     palType = "ACTIVE",
@@ -100,8 +100,6 @@ dlg:button {
         local sprite = app.activeSprite
         if sprite then
 
-            -- TODO: Add checkbox to exclude transparency mask from
-            -- consideration in palette?
             local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 args.palType, args.palFile, args.palPreset)
 

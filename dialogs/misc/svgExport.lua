@@ -210,6 +210,7 @@ dlg:button {
             -- Cache any methods used in for loops.
             local strfmt = string.format
 
+            -- TODO: Use table concat for this.
             local str = ""
             str = str .. "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
             str = str .. "<svg "

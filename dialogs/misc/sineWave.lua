@@ -1,5 +1,5 @@
-dofile("../support/aseutilities.lua")
-dofile("../support/clr.lua")
+dofile("../../support/aseutilities.lua")
+dofile("../../support/clr.lua")
 
 local easingModes = { "HSL", "HSV", "RGB" }
 

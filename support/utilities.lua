@@ -761,6 +761,21 @@ function Utilities.rotate270(source, w, h)
     return rotated
 end
 
+---Rounds a number to an integer based on its relationship to
+---0.5. Returns zero when the number cannot be determined
+---to be either greater than or less than zero.
+---@param x number real number
+---@return number
+function Utilities.round(x)
+    if x < -0.0 then
+        return math.tointeger(x - 0.5)
+    end
+    if x > 0.0 then
+        return math.tointeger(x + 0.5)
+    end
+    return 0
+end
+
 ---Creates a new table from the source
 ---and shuffles it.
 ---@param t table input table

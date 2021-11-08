@@ -1,4 +1,4 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 
 local directOps = { "BACKWARD", "BOTH", "FORWARD" }
 

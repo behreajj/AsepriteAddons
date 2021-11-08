@@ -225,7 +225,7 @@ dlg:button {
         -- Must be done before a new sprite is created.
         local hexesSrgb = {}
         local hexesProfile = {}
-        local plotPalette = args.plotPalette or defaults.plotPalette
+        local plotPalette = args.plotPalette
         if plotPalette then
             local palType = args.palType or defaults.palType
             if palType ~= "DEFAULT" then

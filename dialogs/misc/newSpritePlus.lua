@@ -1,4 +1,4 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 
 -- New Sprite Plus doesn't support Color Space conversion
 -- because setting color space via script interferes with

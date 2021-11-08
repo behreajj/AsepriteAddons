@@ -11,10 +11,11 @@ local grayHues = { "OMIT", "SHADING", "ZERO" }
 local numBases = { "PROFILE", "SRGB" }
 
 local defaults = {
+    maxCount = 512,
+    count = 512,
     title = "Manifest",
     palType = "ACTIVE",
     startIndex = 0,
-    count = 256,
     uniquesOnly = true,
     sortPreset = "INDEX",
     ascDesc = "ASCENDING",
@@ -57,16 +58,6 @@ local function drawSwatch(image, hex, x, y, w, h)
             y + (i // w),
             hex)
     end
-end
-
-local function round(x)
-    if x < -0.0 then
-        return math.tointeger(x - 0.5)
-    end
-    if x > 0.0 then
-        return math.tointeger(x + 0.5)
-    end
-    return 0
 end
 
 local dlg = Dialog { title = "Palette Manifest" }
@@ -134,7 +125,7 @@ dlg:slider {
     id = "count",
     label = "Count:",
     min = 1,
-    max = 256,
+    max = defaults.maxCount,
     value = defaults.count
 }
 
@@ -357,6 +348,7 @@ dlg:button {
 
         -- Cache global functions to locals.
         local trunc = math.tointeger
+        local round = Utilities.round
         local strfmt = string.format
         local sRgbToLab = Clr.sRgbaToLab
         local labToLch = Clr.labToLch
@@ -396,6 +388,7 @@ dlg:button {
         -- of color into one object, so that all can
         -- remain affiliated when the data are sorted.
         local palData = {}
+        local palIdx = 1
         for i = 1, hexesSrgbLen, 1 do
             local hexSrgb = hexesSrgb[i]
             if hexSrgb then
@@ -407,7 +400,7 @@ dlg:button {
                 local greenSrgb255 = hexSrgb >> 0x08 & 0xff
                 local redSrgb255 = hexSrgb & 0xff
 
-                local webSrgbStr = string.format("#%06X",
+                local webSrgbStr = strfmt("#%06X",
                     (redSrgb255 << 0x10)
                     | (greenSrgb255 << 0x08)
                     | blueSrgb255)
@@ -423,7 +416,7 @@ dlg:button {
                     greenProfile255 = hexProfile >> 0x08 & 0xff
                     redProfile255 = hexProfile & 0xff
 
-                    webProfileStr = string.format("#%06X",
+                    webProfileStr = strfmt("#%06X",
                         (redProfile255 << 0x10)
                         | (greenProfile255 << 0x08)
                         | blueProfile255)
@@ -468,7 +461,8 @@ dlg:button {
                     h = trunc(0.5 + lch.h * 360.0)
                 }
 
-                table.insert(palData, palEntry)
+                palData[palIdx] = palEntry
+                palIdx = palIdx + 1
             end
         end
 
