@@ -132,7 +132,7 @@ dlg:combobox {
         dlg:modify { id = "layersCube", visible = isCube }
 
         dlg:modify { id = "lons", visible = isSphere }
-        -- dlg:modify { id = "lats", visible = isSphere }
+        dlg:modify { id = "lats", visible = isSphere }
         dlg:modify { id = "layersSphere", visible = isSphere }
         dlg:modify { id = "minSat", visible = isSphere }
         dlg:modify { id = "maxSat", visible = isSphere }
@@ -150,16 +150,16 @@ dlg:slider {
     visible = defaults.geometry == "SPHERE"
 }
 
--- dlg:newrow { always = false }
+dlg:newrow { always = false }
 
--- dlg:slider {
---     id = "lats",
---     label = "Latitudes:",
---     min = 3,
---     max = 48,
---     value = defaults.lats,
---     visible = defaults.geometry == "SPHERE"
--- }
+dlg:slider {
+    id = "lats",
+    label = "Latitudes:",
+    min = 3,
+    max = 48,
+    value = defaults.lats,
+    visible = defaults.geometry == "SPHERE"
+}
 
 dlg:newrow { always = false }
 
@@ -612,6 +612,7 @@ dlg:button {
         end)
 
         app.activeSprite = coverSprite
+        app.activeFrame = coverSprite.frames[1]
 
         -- Create and set the coverage palette.
         -- Wait to do this until the end, so we have greater

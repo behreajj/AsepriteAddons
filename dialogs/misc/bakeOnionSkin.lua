@@ -129,6 +129,7 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        -- TODO: Refactor to allow for a range of cels.
         local srcSprite = app.activeSprite
         if srcSprite then
             if srcSprite.colorMode == ColorMode.RGB then

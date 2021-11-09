@@ -34,11 +34,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- TODO: Create a trim sprite to cels method.
-        -- There would be a question of whether to expand
-        -- the sprite based on cels that extend beyond
-        -- the canvas size.
-
         local activeSprite = app.activeSprite
         if activeSprite then
             local args = dlg.data

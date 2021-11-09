@@ -11,17 +11,6 @@ local defaults = {
     pullFocus = false
 }
 
-local function sign(c)
-    if c < -0.0 then return -1.0
-    elseif c > 0.0 then return 1.0
-    end
-    return 0.0
-end
-
-local function copySign(a, b)
-    return math.abs(a) * sign(b)
-end
-
 local dlg = Dialog { title = "Simple Cel Rotate" }
 
 dlg:combobox {

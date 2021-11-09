@@ -209,19 +209,18 @@ dlg:button {
 
             -- Cache any methods used in for loops.
             local strfmt = string.format
-
-            -- TODO: Use table concat for this.
-            local str = ""
-            str = str .. "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
-            str = str .. "<svg "
-            str = str .. "xmlns=\"http://www.w3.org/2000/svg\" "
-            str = str .. "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
-            str = str .. "shape-rendering=\"crispEdges\" "
-            str = str .. "stroke=\"none\" "
-            str = str .. strfmt("width=\"%d\" height=\"%d\" ",
-                totalWidth, totalHeight)
-            str = str .. strfmt("viewBox=\"0 0 %d %d\">",
-                totalWidth, totalHeight)
+            local concat = table.concat
+            local str = concat({
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n",
+            "<svg ",
+            "xmlns=\"http://www.w3.org/2000/svg\" ",
+            "xmlns:xlink=\"http://www.w3.org/1999/xlink\" ",
+            "shape-rendering=\"crispEdges\" ",
+            "stroke=\"none\" ",
+            strfmt("width=\"%d\" height=\"%d\" ",
+                totalWidth, totalHeight),
+            strfmt("viewBox=\"0 0 %d %d\">",
+                totalWidth, totalHeight)})
 
             -- Each path element can contain sub-paths set off by Z (close)
             -- and M (move to) commands.
@@ -283,7 +282,7 @@ dlg:button {
                         ax, ay, ax, by, bx, by, bx, ay)
                 end
 
-                str = str .. table.concat(holeStrArr)
+                str = str .. concat(holeStrArr)
                 str = str .. "\" "
 
                 if marginClr.alpha < 255 then
@@ -314,7 +313,7 @@ dlg:button {
                     border, scale, margin)
             end
 
-            str = str .. table.concat(layersStrArr)
+            str = str .. concat(layersStrArr)
             str = str .. "\n</svg>"
 
             local filepath = args.filepath

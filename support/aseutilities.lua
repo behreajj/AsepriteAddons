@@ -404,7 +404,7 @@ function AseUtilities.bakeLayerOpacity(layer)
                 local img = cel.image
                 local pxItr = img:pixels()
                 if celAlpha < 0xff then
-                    if celAlpha < 0x1 then
+                    if celAlpha < 0x01 then
                         -- Cel is completely transparent.
                         for elm in pxItr do elm(0x0) end
                     else
@@ -428,7 +428,7 @@ function AseUtilities.bakeLayerOpacity(layer)
                         local hex = elm()
                         local srcAlpha = hex >> 0x18 & 0xff
                         local cmpAlpha = (layerAlpha * srcAlpha) // 0xff
-                        if cmpAlpha < 0x1 then
+                        if cmpAlpha < 0x01 then
                             elm(0x0)
                         else
                             elm((cmpAlpha << 0x18)
@@ -463,7 +463,7 @@ function AseUtilities.bakeCelOpacity(cel)
                 local hex = elm()
                 local srcAlpha = hex >> 0x18 & 0xff
                 local cmpAlpha = (celAlpha * srcAlpha) // 0xff
-                if cmpAlpha < 1 then
+                if cmpAlpha < 0x01 then
                     elm(0x0)
                 else
                     elm((cmpAlpha << 0x18)
@@ -502,40 +502,25 @@ function AseUtilities.blend(a, b)
     -- not having a whole number middle, but 0xff
     -- lead to more accurate results.
     local u = 0xff - t
-    if t > 0x7e then t = t + 1 end
+    if t > 0x7f then t = t + 1 end
 
     local uv = (v * u) // 0xff
     local tuv = t + uv
+    if tuv < 0x1 then return 0x0 end
+    if tuv > 0xff then tuv = 0xff end
 
-    if tuv > 0xfe then
-        local cr = (bb * t + ab * uv) // 0xff
-        local cg = (bg * t + ag * uv) // 0xff
-        local cb = (br * t + ar * uv) // 0xff
+    local cb = (bb * t + ab * uv) // tuv
+    local cg = (bg * t + ag * uv) // tuv
+    local cr = (br * t + ar * uv) // tuv
 
-        if cr > 0xff then cr = 0xff end
-        if cg > 0xff then cg = 0xff end
-        if cb > 0xff then cb = 0xff end
+    if cb > 0xff then cb = 0xff end
+    if cg > 0xff then cg = 0xff end
+    if cr > 0xff then cr = 0xff end
 
-        return 0xff000000
-            | cr << 0x10
-            | cg << 0x08
-            | cb
-    elseif tuv > 0x0 then
-        local cr = (bb * t + ab * uv) // tuv
-        local cg = (bg * t + ag * uv) // tuv
-        local cb = (br * t + ar * uv) // tuv
-
-        if cr > 0xff then cr = 0xff end
-        if cg > 0xff then cg = 0xff end
-        if cb > 0xff then cb = 0xff end
-
-        return tuv << 0x18
-            | cr << 0x10
-            | cg << 0x08
-            | cb
-    else
-        return 0x00000000
-    end
+    return tuv << 0x18
+        | cb << 0x10
+        | cg << 0x08
+        | cr
 end
 
 ---Wrapper for app.command.ChangePixelFormat which

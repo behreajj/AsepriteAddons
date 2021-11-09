@@ -3,7 +3,7 @@ dofile("../../support/aseutilities.lua")
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
-    target = "ACTIVE",
+    target = "RANGE",
     trimCels = false,
     pullFocus = false
 }

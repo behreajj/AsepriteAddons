@@ -307,7 +307,7 @@ dlg:button {
                         .. "]}"
                     insert(lyrStrArr, layerStr)
                 end
-                local jsonString = string.format(
+                local jsonString = strfmt(
                     "{\"fileDir\":\"%s\",\"fileExt\":\"%s\",\"layers\":[",
                     filePath, fileExt)
                     .. concat(lyrStrArr, ",")
@@ -323,7 +323,6 @@ dlg:button {
                 file:close()
             end
 
-            -- AseUtilities.changePixelFormat(oldMode)
             app.refresh()
             dlg:close()
         else

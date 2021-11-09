@@ -79,6 +79,10 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        local sprite = app.activeSprite
+        if sprite == nil then
+            sprite = Sprite(64, 64)
+        end
         local oldMode = sprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
@@ -130,12 +134,6 @@ dlg:button {
                 k = k + 1
             end
         end
-
-        local sprite = app.activeSprite
-        if sprite == nil then
-            sprite = Sprite(64, 64)
-        end
-
 
         if target == "SAVE" then
             local filepath = args.filepath
