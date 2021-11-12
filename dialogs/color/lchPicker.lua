@@ -3,12 +3,18 @@ dofile("../../support/aseutilities.lua")
 local harmonies = {
     "ANALOGOUS",
     "COMPLEMENT",
+    "NONE",
     "SPLIT",
     "SQUARE",
     "TRIADIC"
 }
 
 local defaults = {
+    -- TODO: Condense by classifying shades
+    -- as a harmony, change color preview
+    -- to a picker then get rid of set fore
+    -- and set back.
+
     base = Color(255, 0, 0, 255),
     shading = {
         Color(165,   0,   0, 255),
@@ -22,8 +28,7 @@ local defaults = {
     lightness = 53,
     chroma = 104,
     hue = 40,
-    alpha = 100,
-    showHarmonies = false,
+    alpha = 255,
     harmonyType = "TRIADIC",
     analogies = {
         Color(255, 0, 102, 255),
@@ -247,7 +252,7 @@ local function setLch(dialog, lch, clr)
 
     dialog:modify {
         id = "alpha",
-        value = trunc(0.5 + lch.a * 100.0)
+        value = trunc(0.5 + lch.a * 255.0)
     }
 
     dialog:modify {
@@ -313,7 +318,7 @@ local function updateClrs(dialog)
     local l = args.lightness
     local c = args.chroma
     local h = args.hue * 0.002777777777777778
-    local a = args.alpha * 0.01
+    local a = args.alpha * 0.00392156862745098
     local clr = Clr.lchTosRgba(l, c, h, a)
 
     -- For thoughts on why clipping to gamut is preferred,
@@ -430,7 +435,7 @@ dlg:slider {
     id = "alpha",
     label = "Alpha:",
     min = 0,
-    max = 100,
+    max = 255,
     value = defaults.alpha,
     onchange = function()
         updateClrs(dlg)
@@ -490,48 +495,27 @@ dlg:button {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "showHarmonies",
-    label = "Harmonies:",
-    text = "Show",
-    selected = defaults.showHarmonies,
-    onclick = function()
-        local args = dlg.data
-        local show = args.showHarmonies
-        dlg:modify { id = "harmonyType", visible = show }
-
-        if show then
-            local md = args.harmonyType
-            dlg:modify { id = "complement", visible = md == "COMPLEMENT" }
-            dlg:modify { id = "triadic", visible = md == "TRIADIC" }
-            dlg:modify { id = "analogous", visible = md == "ANALOGOUS" }
-            dlg:modify { id = "split", visible = md == "SPLIT" }
-            dlg:modify { id = "square", visible = md == "SQUARE" }
-        else
-            dlg:modify { id = "complement", visible = false }
-            dlg:modify { id = "triadic", visible = false }
-            dlg:modify { id = "analogous", visible = false }
-            dlg:modify { id = "split", visible = false }
-            dlg:modify { id = "square", visible = false }
-        end
-    end
-}
-
-dlg:newrow { always = false }
-
 dlg:combobox {
     id = "harmonyType",
     label = "Harmony:",
     option = defaults.harmonyType,
     options = harmonies,
-    visible = defaults.showHarmonies,
     onchange = function()
         local md = dlg.data.harmonyType
-        dlg:modify { id = "complement", visible = md == "COMPLEMENT" }
-        dlg:modify { id = "triadic", visible = md == "TRIADIC" }
-        dlg:modify { id = "analogous", visible = md == "ANALOGOUS" }
-        dlg:modify { id = "split", visible = md == "SPLIT" }
-        dlg:modify { id = "square", visible = md == "SQUARE" }
+        local isNone = md == "NONE"
+        if isNone then
+            dlg:modify { id = "complement", visible = false }
+            dlg:modify { id = "triadic", visible = false }
+            dlg:modify { id = "analogous", visible = false }
+            dlg:modify { id = "split", visible = false }
+            dlg:modify { id = "square", visible = false }
+        else
+            dlg:modify { id = "complement", visible = md == "COMPLEMENT" }
+            dlg:modify { id = "triadic", visible = md == "TRIADIC" }
+            dlg:modify { id = "analogous", visible = md == "ANALOGOUS" }
+            dlg:modify { id = "split", visible = md == "SPLIT" }
+            dlg:modify { id = "square", visible = md == "SQUARE" }
+        end
     end
 }
 
@@ -542,8 +526,7 @@ dlg:shades {
     label = "Analogous:",
     mode = "pick",
     colors = defaults.analogies,
-    visible = defaults.showHarmonies
-        and defaults.harmonyType == "ANALOGOUS",
+    visible = defaults.harmonyType == "ANALOGOUS",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
             setFromAse(dlg, ev.color)
@@ -560,8 +543,7 @@ dlg:shades {
     label = "Complement:",
     mode = "pick",
     colors = defaults.complement,
-    visible = defaults.showHarmonies
-        and defaults.harmonyType == "COMPLEMENT",
+    visible = defaults.harmonyType == "COMPLEMENT",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
             setFromAse(dlg, ev.color)
@@ -578,8 +560,7 @@ dlg:shades {
     label = "Split:",
     mode = "pick",
     colors = defaults.splits,
-    visible = defaults.showHarmonies
-        and defaults.harmonyType == "SPLIT",
+    visible = defaults.harmonyType == "SPLIT",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
             setFromAse(dlg, ev.color)
@@ -596,8 +577,7 @@ dlg:shades {
     label = "Square:",
     mode = "pick",
     colors = defaults.squares,
-    visible = defaults.showHarmonies
-        and defaults.harmonyType == "SQUARE",
+    visible = defaults.harmonyType == "SQUARE",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
             setFromAse(dlg, ev.color)
@@ -614,8 +594,7 @@ dlg:shades {
     label = "Triadic:",
     mode = "pick",
     colors = defaults.triads,
-    visible = defaults.showHarmonies
-        and defaults.harmonyType == "TRIADIC",
+    visible = defaults.harmonyType == "TRIADIC",
     onclick = function(ev)
         if ev.button == MouseButton.LEFT then
             setFromAse(dlg, ev.color)

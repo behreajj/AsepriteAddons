@@ -1353,7 +1353,7 @@ end
 
 ---Reduces the granularity of a color's components.
 ---Internal helper function to color quantization.
----Assumes that levels are within [2, 255] and the
+---Assumes that levels are within [1, 255] and the
 ---inverse of levels has already been calculated.
 ---@param a table color
 ---@param levels number levels

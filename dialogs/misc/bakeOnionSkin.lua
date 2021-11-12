@@ -316,7 +316,7 @@ dlg:button {
                                 local shadowIndex = frameIndices[j]
                                 local shadowPacket = packets[j]
                                 if shadowPacket then
-                                    local fadeAlpha = 255
+                                    local fadeAlpha = 0xff
                                     if shadowIndex ~= baseIndex then
                                         fadeAlpha = lerpFunc(
                                             minAlpha, maxAlpha,
@@ -422,6 +422,7 @@ dlg:button {
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
+    focus = false,
     onclick = function()
         dlg:close()
     end

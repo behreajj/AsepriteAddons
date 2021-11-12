@@ -28,9 +28,7 @@ dlg:button {
         local args = dlg.data
         local sprite = app.activeSprite
         if sprite then
-            -- TODO: Add target options for active, all, range,
-            -- see trim image alpha dialog. This means you'd have
-            -- to rework how copy to layer works or remove it.
+            -- TODO: Update to use defaults table.
             local srcCel = app.activeCel
             if srcCel then
                 local srcImg = srcCel.image
@@ -38,9 +36,9 @@ dlg:button {
                     local srcpxitr = srcImg:pixels()
 
                     -- Gather unique colors in image.
-                    local srcHexDict = {}
+                    local srcDict = {}
                     for elm in srcpxitr do
-                        srcHexDict[elm()] = true
+                        srcDict[elm()] = true
                     end
 
                     -- Cache methods to local.
@@ -53,18 +51,18 @@ dlg:button {
                     local delta = 1.0 / levels
 
                     -- Quantize colors, place in dictionary.
-                    local quantizedDict = {}
-                    for k, _ in pairs(srcHexDict) do
+                    local trgDict = {}
+                    for k, _ in pairs(srcDict) do
                         local srcClr = fromHex(k)
                         local qtzClr = quantize(srcClr, levels, delta)
-                        quantizedDict[k] = toHex(qtzClr)
+                        trgDict[k] = toHex(qtzClr)
                     end
 
                     -- Clone image, replace color with quantized.
                     local trgImg = srcImg:clone()
                     local trgpxitr = trgImg:pixels()
                     for elm in trgpxitr do
-                        elm(quantizedDict[elm()])
+                        elm(trgDict[elm()])
                     end
 
                     local copyToLayer = args.copyToLayer
@@ -74,9 +72,9 @@ dlg:button {
                             local trgLayer = sprite:newLayer()
                             trgLayer.name = srcLayer.name .. ".Quantized." .. levels
                             trgLayer.opacity = srcLayer.opacity
-                            local frame = app.activeFrame or sprite.frames[1]
+                            local srcFrame = srcCel.frame or sprite.frames[1]
                             local trgCel = sprite:newCel(
-                                trgLayer, frame,
+                                trgLayer, srcFrame,
                                 trgImg, srcCel.position)
                             trgCel.opacity = srcCel.opacity
                         end)
@@ -101,6 +99,7 @@ dlg:button {
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
+    focus = false,
     onclick = function()
         dlg:close()
     end

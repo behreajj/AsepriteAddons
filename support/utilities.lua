@@ -183,9 +183,10 @@ function Utilities.distAngleUnsigned(a, b, range)
 end
 
 ---Converts an array of integers representing color
----in hexadecimal to a dictionary. When true, the
----flag specifies that all completely transparent
----colors are considered equal, not unique.
+---in hexadecimal to a dictionary. The value in each
+---entry is the first index where the color was found.
+---When true, the flag specifies that all completely
+---transparent colors are considered equal, not unique.
 ---@param hexes table
 ---@param za boolean
 ---@return table
