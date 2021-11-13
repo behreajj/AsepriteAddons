@@ -2,8 +2,7 @@ dofile("../../support/aseutilities.lua")
 
 local defaults = {
     uniquesOnly = false,
-    prependMask = true,
-    pullFocus = false
+    prependMask = true
 }
 
 local dlg = Dialog { title = "GPL Import" }
@@ -36,7 +35,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
 
         local args = dlg.data

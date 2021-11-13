@@ -4,14 +4,14 @@ local harmonies = {
     "ANALOGOUS",
     "COMPLEMENT",
     "NONE",
+    "SHADING",
     "SPLIT",
     "SQUARE",
     "TRIADIC"
 }
 
 local defaults = {
-    -- TODO: Condense by classifying shades
-    -- as a harmony, change color preview
+    -- TODO: Condense by changing color preview
     -- to a picker then get rid of set fore
     -- and set back.
 
@@ -29,7 +29,7 @@ local defaults = {
     chroma = 104,
     hue = 40,
     alpha = 255,
-    harmonyType = "TRIADIC",
+    harmonyType = "NONE",
     analogies = {
         Color(255, 0, 102, 255),
         Color(203, 99, 0, 255) },
@@ -380,24 +380,6 @@ dlg:shades {
 
 dlg:newrow { always = false }
 
-dlg:shades {
-    id = "shading",
-    label = "Shades:",
-    mode = "pick",
-    colors = defaults.shading,
-    visible = true,
-    onclick = function(ev)
-        local button = ev.button
-        if button == MouseButton.LEFT then
-            setFromAse(dlg, ev.color)
-        elseif button == MouseButton.RIGHT then
-            assignToFore(ev.color)
-        end
-    end
-}
-
-dlg:newrow { always = false }
-
 dlg:slider {
     id = "lightness",
     label = "Lightness:",
@@ -507,12 +489,14 @@ dlg:combobox {
             dlg:modify { id = "complement", visible = false }
             dlg:modify { id = "triadic", visible = false }
             dlg:modify { id = "analogous", visible = false }
+            dlg:modify { id = "shading", visible = false }
             dlg:modify { id = "split", visible = false }
             dlg:modify { id = "square", visible = false }
         else
             dlg:modify { id = "complement", visible = md == "COMPLEMENT" }
             dlg:modify { id = "triadic", visible = md == "TRIADIC" }
             dlg:modify { id = "analogous", visible = md == "ANALOGOUS" }
+            dlg:modify { id = "shading", visible = md == "SHADING" }
             dlg:modify { id = "split", visible = md == "SPLIT" }
             dlg:modify { id = "square", visible = md == "SQUARE" }
         end
@@ -548,6 +532,24 @@ dlg:shades {
         if ev.button == MouseButton.LEFT then
             setFromAse(dlg, ev.color)
         elseif ev.button == MouseButton.RIGHT then
+            assignToFore(ev.color)
+        end
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:shades {
+    id = "shading",
+    label = "Shading:",
+    mode = "pick",
+    colors = defaults.shading,
+    visible = defaults.harmonyType == "SHADING",
+    onclick = function(ev)
+        local button = ev.button
+        if button == MouseButton.LEFT then
+            setFromAse(dlg, ev.color)
+        elseif button == MouseButton.RIGHT then
             assignToFore(ev.color)
         end
     end

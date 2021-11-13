@@ -1,6 +1,8 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/gradientutilities.lua")
 
+local insetInputs = { "NON_UNIFORM", "UNIFORM" }
+
 local defaults = {
     columns = 8,
     aColor = Color(255, 0, 0, 255),
@@ -11,6 +13,8 @@ local defaults = {
     rInset = 0,
     tInset = 0,
     bInset = 0,
+    uniInset = 0,
+    insetInput = "UNIFORM",
     pullFocus = false
 }
 
@@ -59,12 +63,51 @@ dlg:separator {
     text = "Inset"
 }
 
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "insetInput",
+    label = "Type:",
+    option = defaults.insetInput,
+    options = insetInputs,
+    onchange = function()
+        local md = dlg.data.insetInput
+        local isnu = md == "NON_UNIFORM"
+
+        dlg:modify { id = "lInset", visible = isnu }
+        dlg:modify { id = "rInset", visible = isnu }
+        dlg:modify { id = "bInset", visible = isnu }
+        dlg:modify { id = "tInset", visible = isnu }
+        dlg:modify {
+            id = "uniInset",
+            visible = not isnu
+        }
+    end
+}
+
+dlg:slider {
+    id = "uniInset",
+    label = "Amount:",
+    min = 0,
+    max = 32,
+    value = defaults.uniInset,
+    visible = defaults.insetInput == "UNIFORM",
+    onchange = function()
+        local uni = dlg.data.uniInset
+        dlg:modify { id = "lInset", value = uni }
+        dlg:modify { id = "rInset", value = uni }
+        dlg:modify { id = "bInset", value = uni }
+        dlg:modify { id = "tInset", value = uni }
+    end
+}
+
 dlg:slider {
     id = "lInset",
     label = "Left:",
     min = 0,
     max = 32,
-    value = defaults.lInset
+    value = defaults.lInset,
+    visible = defaults.insetInput == "NON_UNIFORM"
 }
 
 dlg:newrow { always = false }
@@ -74,7 +117,8 @@ dlg:slider {
     label = "Right:",
     min = 0,
     max = 32,
-    value = defaults.rInset
+    value = defaults.rInset,
+    visible = defaults.insetInput == "NON_UNIFORM"
 }
 
 dlg:newrow { always = false }
@@ -84,7 +128,8 @@ dlg:slider {
     label = "Bottom:",
     min = 0,
     max = 32,
-    value = defaults.bInset
+    value = defaults.bInset,
+    visible = defaults.insetInput == "NON_UNIFORM"
 }
 
 dlg:newrow { always = false }
@@ -94,7 +139,8 @@ dlg:slider {
     label = "Top:",
     min = 0,
     max = 32,
-    value = defaults.tInset
+    value = defaults.tInset,
+    visible = defaults.insetInput == "NON_UNIFORM"
 }
 
 dlg:newrow { always = false }
@@ -104,6 +150,9 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
+        -- TODO: Uniform vs. nonuniform inset adjustments.
+        -- See rounded rectangle controls.
+
         local version = app.version
         if version.major < 1 or version.minor < 3 then
             app.alert("Version 1.3 or later is required to use tilemaps.")
@@ -126,10 +175,20 @@ dlg:button {
         local xPivot = args.xPivot or defaults.xPivot
         local yPivot = args.yPivot or defaults.yPivot
 
+        -- TODO: Possible to switch back from nonuniform to uniform but not update the values.
         local lInset = args.lInset or defaults.lInset
         local rInset = args.rInset or defaults.rInset
         local bInset = args.bInset or defaults.bInset
         local tInset = args.tInset or defaults.tInset
+
+        local insetInput = args.insetType or defaults.insetInput
+        if insetInput == "UNIFORM" then
+            local uniInset = args.uniInset or defaults.uniInset
+            lInset = uniInset
+            rInset = uniInset
+            bInset = uniInset
+            tInset = uniInset
+        end
 
         -- Cache methods.
         local max = math.max
@@ -145,7 +204,7 @@ dlg:button {
         local colorMode = activeSprite.colorMode
         local alphaIndex = activeSprite.transparentColor
         local tilesets = activeSprite.tilesets
-        -- TODO: Copy color profile.
+        local colorSpace = activeSprite.colorSpace
         local palHexes = AseUtilities.asePaletteToHexArr(
             activeSprite.palettes[1])
 
@@ -185,7 +244,6 @@ dlg:button {
             end
             tileCount = #imgs
 
-            -- TODO: What happens if tileCount is zero?
             local rows = max(1, ceil(tileCount / columns))
             local imgWidth = tileWidth * columns
             local imgHeight = tileHeight * rows
@@ -230,6 +288,7 @@ dlg:button {
         sliceSprite:setPalette(
             AseUtilities.hexArrToAsePalette(
                 palHexes))
+        sliceSprite:assignColorSpace(colorSpace)
         sliceSprite.spec.transparentColor = alphaIndex
 
         local aClr = AseUtilities.aseColorToClr(aColor)
@@ -237,67 +296,70 @@ dlg:button {
         local xPivFac = (xPivot * 0.01) * 0.5 + 0.5
         local yPivFac = (yPivot * 0.01) * 0.5 + 0.5
 
-        local flatIdx = 0
-        for i = 1, tilesetsLen, 1 do
-            local packet = packets[i]
-            local img = packet.img
-            local pos = packet.position
-            local rects = packet.rects
-            local tileName = packet.tileName
+        app.transaction(function()
+            local flatIdx = 0
+            for i = 1, tilesetsLen, 1 do
+                local packet = packets[i]
+                local img = packet.img
+                local pos = packet.position
+                local rects = packet.rects
+                local tileName = packet.tileName
 
-            local layer = sliceSprite:newLayer()
-            local layerName = tileName
-            layer.name = layerName
-            sliceSprite:newCel(layer, sliceFrame, img, pos)
+                local layer = sliceSprite:newLayer()
+                local layerName = tileName
+                layer.name = layerName
+                sliceSprite:newCel(layer, sliceFrame, img, pos)
 
-            local rectsLen = #rects
-            local toClrFac = 1.0 / (flatCount - 1.0)
+                local rectsLen = #rects
+                local toClrFac = 1.0 / (flatCount - 1.0)
 
-            for j = 1, rectsLen, 1 do
-                local rect = rects[j]
-                local w = rect.width
-                local h = rect.height
-                local xInsetLimit = w // 2 - 1
-                local yInsetLimit = h // 2 - 1
-                local brx = w - 1
-                local bry = h - 1
+                for j = 1, rectsLen, 1 do
+                    local rect = rects[j]
+                    local w = rect.width
+                    local h = rect.height
+                    local xInsetLimit = w // 2 - 1
+                    local yInsetLimit = h // 2 - 1
+                    local brx = w - 1
+                    local bry = h - 1
 
-                local slice = sliceSprite:newSlice(rect)
+                    local slice = sliceSprite:newSlice(rect)
 
-                slice.name = strfmt("%s.%03d", layerName, j - 1)
+                    slice.name = strfmt("%s.%03d", layerName, j - 1)
 
-                -- Center is the center rectangle of a 9-slice.
-                -- Rectangle is expressed in (x, y, w, h), so
-                -- top-left' is subtracted from bottom-right';
-                -- bottom-right' is found by subtracting the
-                -- inset from the original bottom-right.
-                local lVal = min(lInset, xInsetLimit)
-                local rVal = min(rInset, xInsetLimit)
-                local tVal = min(tInset, yInsetLimit)
-                local bVal = min(bInset, yInsetLimit)
-                slice.center = Rectangle(
-                    lVal, tVal,
-                    1 + ((brx - rVal) - lVal),
-                    1 + ((bry - bVal) - tVal)
-                )
+                    -- Center is the center rectangle of a 9-slice.
+                    -- Rectangle is expressed in (x, y, w, h), so
+                    -- top-left' is subtracted from bottom-right';
+                    -- bottom-right' is found by subtracting the
+                    -- inset from the original bottom-right.
+                    local lVal = min(lInset, xInsetLimit)
+                    local rVal = min(rInset, xInsetLimit)
+                    local tVal = min(tInset, yInsetLimit)
+                    local bVal = min(bInset, yInsetLimit)
+                    slice.center = Rectangle(
+                        lVal, tVal,
+                        1 + ((brx - rVal) - lVal),
+                        1 + ((bry - bVal) - tVal)
+                    )
 
-                -- For even numbers, the center will round to
-                -- the bottom right corner. Because (brx, bry)
-                -- is (w - 1, h - 1), this seems sensible.
-                slice.pivot = Point(
-                    trunc(0.5 + xPivFac * brx),
-                    trunc(0.5 + yPivFac * bry))
+                    -- For even numbers, the center will round to
+                    -- the bottom right corner. Because (brx, bry)
+                    -- is (w - 1, h - 1), this seems sensible.
+                    slice.pivot = Point(
+                        trunc(0.5 + xPivFac * brx),
+                        trunc(0.5 + yPivFac * bry))
 
-                local clrFac = flatIdx * toClrFac
-                local cClr = mixLch(aClr, bClr, clrFac, hueFunc);
-                local cColor = clrToAse(cClr)
-                slice.color = cColor
+                    local clrFac = flatIdx * toClrFac
+                    local cClr = mixLch(aClr, bClr, clrFac, hueFunc);
+                    local cColor = clrToAse(cClr)
+                    slice.color = cColor
 
-                flatIdx = flatIdx + 1
+                    flatIdx = flatIdx + 1
+                end
             end
-        end
 
-        sliceSprite:deleteLayer(sliceSprite.layers[1])
+            sliceSprite:deleteLayer(sliceSprite.layers[1])
+        end)
+
         app.refresh()
     end
 }

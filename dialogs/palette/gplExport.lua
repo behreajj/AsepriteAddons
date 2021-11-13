@@ -67,7 +67,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
         if activeSprite then

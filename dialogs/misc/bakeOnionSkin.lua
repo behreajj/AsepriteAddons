@@ -1,26 +1,36 @@
 dofile("../../support/aseutilities.lua")
 
 local directOps = { "BACKWARD", "BOTH", "FORWARD" }
+local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
+    target = "RANGE",
     iterations = 4,
     directions = "BACKWARD",
-    minAlpha = 24,
-    maxAlpha = 96,
-    useTint = false,
+    minAlpha = 64,
+    maxAlpha = 168,
+    useTint = true,
     foreTint = Color(0, 0, 255, 80),
     backTint = Color(255, 0, 0, 80),
-    trimCels = false,
     pullFocus = false
 }
 
 local dlg = Dialog { title = "Bake Onion Skin" }
 
+dlg:combobox {
+    id = "target",
+    label = "Target:",
+    option = defaults.target,
+    options = targets
+}
+
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "iterations",
     label = "Iterations:",
     min = 1,
-    max = 96,
+    max = 16,
     value = defaults.iterations
 }
 
@@ -115,314 +125,272 @@ dlg:color {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "trimCels",
-    label = "Trim:",
-    text = "Layer Edges",
-    selected = defaults.trimCels
-}
-
-dlg:newrow { always = false }
-
 dlg:button {
     id = "confirm",
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- TODO: Refactor to allow for a range of cels.
-        local srcSprite = app.activeSprite
-        if srcSprite then
-            if srcSprite.colorMode == ColorMode.RGB then
-                local srcCel = app.activeCel
-                if srcCel then
+        local activeSprite = app.activeSprite
+        if not activeSprite then
+            app.alert("There is no active sprite.")
+            return
+        end
 
-                    -- Cache global functions used in for loops.
-                    local min = math.min
-                    local max = math.max
-                    local trunc = math.tointeger
-                    local trim = AseUtilities.trimImageAlpha
+        -- Unpack properties from sprite.
+        local maxFrameCount = #activeSprite.frames
+        local colorMode = activeSprite.colorMode
 
-                    -- Unpack arguments.
-                    local args = dlg.data
-                    local iterations = args.iterations or defaults.iterations
-                    local directions = args.directions or defaults.directions
-                    local minAlpha = args.minAlpha or defaults.minAlpha
-                    local maxAlpha = args.maxAlpha or defaults.maxAlpha
-                    local useTint = args.useTint
-                    local backTint = args.backTint or defaults.backTint
-                    local foreTint = args.foreTint or defaults.foreTint
-                    local trimCels = args.trimCels
+        if colorMode ~= ColorMode.RGB then
+            app.alert("Only RGB color mode is supported.")
+            return
+        end
 
-                    -- Find directions.
-                    local useBoth = directions == "BOTH"
-                    local useFore = directions == "FORWARD"
-                    local useBack = directions == "BACKWARD"
-                    local lookForward = useBoth or useFore
-                    local lookBackward = useBoth or useBack
+        local srcLayer = app.activeLayer
+        if not srcLayer then
+            app.alert("There is no active layer.")
+            return
+        end
 
-                    -- Unpack colors.
-                    local backHex = backTint.rgbaPixel
-                    local foreHex = foreTint.rgbaPixel
+        if srcLayer.isGroup then
+            app.alert("Group layers are not supported.")
+            return
+        end
 
-                    local srcLayer = srcCel.layer -- row
-                    local srcFrame = srcCel.frame -- column
-                    local srcFrameIndex = srcFrame.frameNumber
-                    local frameCount = #srcSprite.frames
-                    -- print(string.format("srcFrameIndex: %d", srcFrameIndex))
+        -- Cache global functions used in for loops.
+        local abs = math.abs
+        local max = math.max
+        local min = math.min
+        local trunc = math.tointeger
 
-                    local startFrameIndex = srcFrameIndex
-                    local endFrameIndex = srcFrameIndex
+        -- Unpack arguments.
+        local args = dlg.data
+        local target = args.target
+        local iterations = args.iterations or defaults.iterations
+        local directions = args.directions or defaults.directions
+        local minAlpha = args.minAlpha or defaults.minAlpha
+        local maxAlpha = args.maxAlpha or defaults.maxAlpha
+        local useTint = args.useTint
+        local backTint = args.backTint or defaults.backTint
+        local foreTint = args.foreTint or defaults.foreTint
 
-                    if lookBackward then
-                        startFrameIndex = srcFrameIndex - iterations
-                        startFrameIndex = math.max(1, startFrameIndex)
-                    end
-                    -- print(string.format("startFrameIndex: %d", startFrameIndex))
+        -- Unpack colors.
+        local backHex = backTint.rgbaPixel
+        local foreHex = foreTint.rgbaPixel
 
-                    if lookForward then
-                        endFrameIndex = srcFrameIndex + iterations
-                        endFrameIndex = math.min(frameCount, endFrameIndex)
-                    end
-                    -- print(string.format("endFrameIndex: %d", endFrameIndex))
+        -- Find directions.
+        local useBoth = directions == "BOTH"
+        local useFore = directions == "FORWARD"
+        local useBack = directions == "BACKWARD"
+        local lookForward = useBoth or useFore
+        local lookBackward = useBoth or useBack
 
-                    local sampleCount = math.abs(1 + endFrameIndex - startFrameIndex)
-                    -- print(string.format("sampleCount: %d", sampleCount))
-
-                    -- For the image to be as efficient (i.e., small) as
-                    -- it can, find the top left and bottom right viable
-                    -- corners occupied by sample images.
-                    local xMin = 2147483647
-                    local yMin = 2147483647
-                    local xMax = -2147483648
-                    local yMax = -2147483648
-
-                    local packets = {}
-                    local frameIndices = {}
-
-                    for i = 1, sampleCount, 1 do
-                        local frameIndex = startFrameIndex + (i - 1)
-                        frameIndex = min(max(frameIndex, 1), frameCount)
-                        frameIndices[i] = frameIndex
-
-                        -- TODO: Bake cel opacity.
-                        local currCel = srcLayer:cel(frameIndex)
-                        if currCel then
-                            local currImg = currCel.image
-                            if currImg then
-
-                                -- Top left corner is cel's position.
-                                local currPos = currCel.position
-                                local xTopLeft = currPos.x
-                                local yTopLeft = currPos.y
-
-                                if trimCels then
-                                    local trimmed, xTr, yTr = trim(currImg, 0)
-                                    currImg = trimmed
-                                    xTopLeft = xTopLeft + xTr
-                                    yTopLeft = yTopLeft + yTr
-                                end
-
-                                -- Bottom right corner is cel's position
-                                -- plus image dimensions.
-                                local imgWidth = currImg.width
-                                local xBottomRight = xTopLeft + imgWidth
-                                local yBottomRight = yTopLeft + currImg.height
-
-                                -- Update minima and maxima.
-                                if xTopLeft < xMin then xMin = xTopLeft end
-                                if yTopLeft < yMin then yMin = yTopLeft end
-                                if xBottomRight > xMax then xMax = xBottomRight end
-                                if yBottomRight > yMax then yMax = yBottomRight end
-
-                                local pixels = {}
-                                local pixelIdx = 1
-                                local pixelItr = currImg:pixels()
-                                for elm in pixelItr do
-                                    local hex = elm()
-                                    local alphaOnly = hex & 0xff000000
-                                    if alphaOnly ~= 0x0 then
-                                        pixels[pixelIdx] = hex
-                                    else
-                                        pixels[pixelIdx] = 0x0
-                                    end
-                                    pixelIdx = pixelIdx + 1
-                                end
-
-                                packets[i] = {
-                                    tlx = xTopLeft,
-                                    tly = yTopLeft,
-                                    width = imgWidth,
-                                    pixels = pixels }
-                            else
-                                packets[i] = nil
-                            end
-                        else
-                            packets[i] = nil
-                        end
-                    end
-
-                    if xMax ~= xMin and yMax ~= yMin then
-                        -- Find maximum containing axis aligned bounding
-                        -- box. Find minimum for top-left corner of cels.
-                        local trgImgWidth = math.abs(xMax - xMin)
-                        local trgImgHeight = math.abs(yMax - yMin)
-                        local trgPos = Point(xMin, yMin)
-                        -- print(string.format("celPos: (%d, %d)", xMin, yMin))
-                        -- print(string.format("imgDim: (%d, %d)", trgImgWidth, trgImgHeight))
-
-                        -- Set function for both vs. forward or backward.
-                        local lerpFunc = nil
-                        if useBoth then
-                            lerpFunc = function(a, b, c, d)
-                                local t = (math.abs(c - d) - 1.0) / (0.5 * sampleCount - 1.0)
-                                t = math.min(math.max(t, 0.0), 1.0)
-                                -- print(string.format("fac: %.6f", t))
-                                return (1.0 - t) * b + t * a
-                            end
-                        else
-                            lerpFunc = function(a, b, c, d)
-                                if sampleCount > 2 then
-                                    local t = (math.abs(c - d) - 1.0) / (sampleCount - 2.0)
-                                    return (1.0 - t) * b + t * a
-                                elseif sampleCount > 1 then
-                                    return (a + b) * 0.5
-                                else
-                                    return a
-                                end
-                            end
-                        end
-
-                        -- Create target images.
-                        local trgImgs = {}
-                        for i = 1, sampleCount, 1 do
-                            local baseIndex = frameIndices[i]
-                            local trgImg = Image(trgImgWidth, trgImgHeight)
-
-                            local startIndex = 1
-                            local endIndex = sampleCount
-                            local step = 1
-
-                            if useBack then
-                                startIndex = 1
-                                endIndex = i
-                                step = 1
-                            elseif useFore then
-                                startIndex = sampleCount
-                                endIndex = i
-                                step = -1
-                            end
-
-                            for j = startIndex, endIndex, step do
-                                local shadowIndex = frameIndices[j]
-                                local shadowPacket = packets[j]
-                                if shadowPacket then
-                                    local fadeAlpha = 0xff
-                                    if shadowIndex ~= baseIndex then
-                                        fadeAlpha = lerpFunc(
-                                            minAlpha, maxAlpha,
-                                            shadowIndex, baseIndex)
-                                        fadeAlpha = trunc(0.5 + fadeAlpha)
-
-                                        local tint = 0xffffffff
-                                        if shadowIndex > baseIndex then
-                                            tint = foreHex
-                                        else
-                                            tint = backHex
-                                        end
-
-                                        local shadowPixels = shadowPacket.pixels
-                                        local shadowWidth = shadowPacket.width
-                                        local xOffset = shadowPacket.tlx - xMin
-                                        local yOffset = shadowPacket.tly - yMin
-
-                                        local shadowPixelLen = #shadowPixels
-                                        for k = 0, shadowPixelLen - 1, 1 do
-                                            local shadowHex = shadowPixels[1 + k]
-                                            local shadowAlpha = shadowHex >> 0x18 & 0xff
-                                            if shadowAlpha > 0 then
-                                                local x = (k % shadowWidth) + xOffset
-                                                local y = (k // shadowWidth) + yOffset
-                                                local orig = trgImg:getPixel(x, y)
-                                                local dest = shadowHex
-                                                if useTint then
-                                                    dest = AseUtilities.blend(shadowHex, tint)
-                                                end
-                                                local compAlpha = min(shadowAlpha, fadeAlpha)
-                                                dest = (dest & 0x00ffffff) | (compAlpha << 0x18)
-
-                                                trgImg:drawPixel(x, y,
-                                                    AseUtilities.blend(orig, dest))
-                                            end
-                                        end
-                                    end
-                                end
-                            end
-
-                            -- Always draw the current animation frame last,
-                            -- so that it is on top.
-                            local basePacket = packets[i]
-                            if basePacket then
-                                local basePixels = basePacket.pixels
-                                local baseWidth = basePacket.width
-                                local xOffset = basePacket.tlx - xMin
-                                local yOffset = basePacket.tly - yMin
-                                local basePixelLen = #basePixels
-                                for k = 0, basePixelLen - 1, 1 do
-                                    local hex = basePixels[1 + k]
-                                    if hex & 0xff000000 ~= 0 then
-                                        local x = (k % baseWidth) + xOffset
-                                        local y = (k // baseWidth) + yOffset
-                                        trgImg:drawPixel(x, y,
-                                            AseUtilities.blend(
-                                                trgImg:getPixel(x, y),
-                                                basePixels[1 + k]))
-                                    end
-                                end
-                            end
-
-                            trgImgs[i] = trgImg
-                        end
-
-                        -- Create target layer.
-                        local trgLayer = srcSprite:newLayer()
-                        trgLayer.name = srcLayer.name ..
-                            string.format(".Onion.%03d.%03d",
-                                startFrameIndex,
-                                endFrameIndex)
-                        trgLayer.opacity = srcLayer.opacity
-
-                        -- Create target cels in a transaction.
-                        app.transaction(function()
-                            for i = 1, sampleCount, 1 do
-                                local frameIndex = frameIndices[i]
-                                local frameObject = srcSprite.frames[frameIndex]
-                                local trgImg = trgImgs[i]
-                                srcSprite:newCel(
-                                    trgLayer, frameObject, trgImg, trgPos)
-                            end
-                        end)
-
-                        app.activeLayer = srcCel.layer
-                        app.refresh()
-                    else
-                        app.alert("No pixel data found.")
-                    end
-                else
-                    app.alert("There is no active cel.")
-                end
-            else
-                app.alert("Only RGB color mode is supported.")
+        -- Fill frames.
+        local frames = {}
+        if target == "ACTIVE" then
+            local activeFrame = app.activeFrame
+            if activeFrame then
+                frames[1] = activeFrame
+            end
+        elseif target == "RANGE" then
+            local appRange = app.range
+            local rangeFrames = appRange.frames
+            local rangeFramesLen = #rangeFrames
+            for i = 1, rangeFramesLen, 1 do
+                frames[i] = rangeFrames[i]
             end
         else
-            app.alert("There is no active sprite.")
+            local activeFrames = activeSprite.frames
+            local activeFramesLen = #activeFrames
+            for i = 1, activeFramesLen, 1 do
+                frames[i] = activeFrames[i]
+            end
         end
+
+        local trgLayer = activeSprite:newLayer()
+        trgLayer.name = srcLayer.name .. ".Onion"
+        trgLayer.opacity = srcLayer.opacity
+
+        local framesLen = #frames
+        app.transaction(function()
+            for i = 1, framesLen, 1 do
+                local srcFrame = frames[i]
+                local srcFrameIdx = srcFrame.frameNumber
+
+                local startFrameIdx = srcFrameIdx
+                local endFrameIdx = srcFrameIdx
+
+                if lookBackward then
+                    startFrameIdx = srcFrameIdx - iterations
+                    startFrameIdx = max(1, startFrameIdx)
+                end
+
+                if lookForward then
+                    endFrameIdx = srcFrameIdx + iterations
+                    endFrameIdx = min(maxFrameCount, endFrameIdx)
+                end
+
+                local sampleCount = abs(1 + endFrameIdx - startFrameIdx)
+
+                -- For the image to be as efficient (i.e., small) as
+                -- it can, find the top left and bottom right viable
+                -- corners occupied by sample images.
+                local xMin = 2147483647
+                local yMin = 2147483647
+                local xMax = -2147483648
+                local yMax = -2147483648
+
+                local packets = {}
+                local packetIdx = 1
+                for j = 1, sampleCount, 1 do
+                    local frameIdx = startFrameIdx + (j - 1)
+                    if frameIdx >= 1 and frameIdx <= maxFrameCount then
+                        local currCel = srcLayer:cel(frameIdx)
+                        if currCel then
+                            local currImg = currCel.image
+                            local currPos = currCel.position
+                            local xTopLeft = currPos.x
+                            local yTopLeft = currPos.y
+
+                            -- Bottom right corner is cel's position
+                            -- plus image dimensions.
+                            local imgWidth = currImg.width
+                            local imgHeight = currImg.height
+                            local xBottomRight = xTopLeft + imgWidth
+                            local yBottomRight = yTopLeft + imgHeight
+
+                            -- Update minima and maxima.
+                            if xTopLeft < xMin then xMin = xTopLeft end
+                            if yTopLeft < yMin then yMin = yTopLeft end
+                            if xBottomRight > xMax then xMax = xBottomRight end
+                            if yBottomRight > yMax then yMax = yBottomRight end
+
+                            -- Store pixels from the image.
+                            local pixels = {}
+                            local pixelIdx = 1
+                            local pixelItr = currImg:pixels()
+                            for elm in pixelItr do
+                                local hex = elm()
+                                local alphaOnly = hex & 0xff000000
+                                if alphaOnly ~= 0x0 then
+                                    pixels[pixelIdx] = hex
+                                else
+                                    pixels[pixelIdx] = 0x0
+                                end
+                                pixelIdx = pixelIdx + 1
+                            end
+
+                            -- Group all data into a packet.
+                            packets[packetIdx] = {
+                                frameIdx = frameIdx,
+                                tlx = xTopLeft,
+                                tly = yTopLeft,
+                                width = imgWidth,
+                                height = imgHeight,
+                                pixels = pixels
+                            }
+                            packetIdx = packetIdx + 1
+                        else
+                            packetIdx = packetIdx + 1
+                        end
+                    end
+                end
+
+                if xMax ~= xMin and yMax ~= yMin then
+                    -- Find maximum containing axis aligned bounding
+                    -- box. Find minimum for top-left corner of cels.
+                    local trgImgWidth = abs(xMax - xMin)
+                    local trgImgHeight = abs(yMax - yMin)
+                    local trgPos = Point(xMin, yMin)
+                    local trgImg = Image(trgImgWidth, trgImgHeight)
+
+                    -- Set function for both vs. forward or backward.
+                    local lerpFunc = nil
+                    if useBoth then
+                        lerpFunc = function(a, b, c, d)
+                            local t = (abs(c - d) - 1.0) / (0.5 * sampleCount - 1.0)
+                            t = min(max(t, 0.0), 1.0)
+                            return (1.0 - t) * b + t * a
+                        end
+                    else
+                        lerpFunc = function(a, b, c, d)
+                            if sampleCount > 2 then
+                                local t = (abs(c - d) - 1.0) / (sampleCount - 2.0)
+                                return (1.0 - t) * b + t * a
+                            elseif sampleCount > 1 then
+                                return (a + b) * 0.5
+                            else
+                                return a
+                            end
+                        end
+                    end
+
+                    for j = 1, sampleCount, 1 do
+                        local packet = packets[j]
+                        if packet then
+                            local frameIdxShd = packet.frameIdx
+                            local relFrameIdx = srcFrameIdx - frameIdxShd
+
+                            local fadeAlpha = maxAlpha
+                            if relFrameIdx ~= 0 then
+                                fadeAlpha = lerpFunc(
+                                    minAlpha, maxAlpha,
+                                    frameIdxShd, srcFrameIdx)
+                                fadeAlpha = trunc(0.5 + fadeAlpha)
+                            end
+
+                            local tint = 0x0
+                            if relFrameIdx > 0 then
+                                tint = backHex
+                            elseif relFrameIdx < 0 then
+                                tint = foreHex
+                            end
+
+                            local shadowPixels = packet.pixels
+                            local shadowWidth = packet.width
+                            local xOffset = packet.tlx - xMin
+                            local yOffset = packet.tly - yMin
+
+                            local shadowPixelLen = #shadowPixels
+                            for k = 0, shadowPixelLen - 1, 1 do
+                                local shadowHex = shadowPixels[1 + k]
+                                local shadowAlpha = shadowHex >> 0x18 & 0xff
+                                if shadowAlpha > 0 then
+                                    local x = (k % shadowWidth) + xOffset
+                                    local y = (k // shadowWidth) + yOffset
+                                    local orig = trgImg:getPixel(x, y)
+                                    local dest = shadowHex
+                                    if useTint then
+                                        dest = AseUtilities.blend(shadowHex, tint)
+                                    end
+                                    local compAlpha = min(shadowAlpha, fadeAlpha)
+                                    dest = (dest & 0x00ffffff) | (compAlpha << 0x18)
+
+                                    trgImg:drawPixel(x, y,
+                                        AseUtilities.blend(orig, dest))
+                                end
+                            end
+                        end
+                    end
+
+                    activeSprite:newCel(trgLayer, srcFrame, trgImg, trgPos)
+                end
+            end
+        end)
+
+        -- Ensure that onion skin appears below source layer.
+        app.transaction(function()
+            local swap = srcLayer.stackIndex
+            srcLayer.stackIndex = trgLayer.stackIndex
+            trgLayer.stackIndex = swap
+            app.activeLayer = srcLayer
+        end)
+        app.refresh()
     end
 }
 
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
-    focus = false,
     onclick = function()
         dlg:close()
     end

@@ -210,7 +210,7 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-
+        -- TODO: Include an option to add a slice for the rect?
         local args = dlg.data
         local sprite = AseUtilities.initCanvas(
             64, 64, "Rectangle",
@@ -224,11 +224,25 @@ dlg:button {
         local hPrc = sprite.height * 0.01
         local prc = math.min(wPrc, hPrc)
 
+        local bl = args.bl or defaults.bl
+        local br = args.br or defaults.br
+        local tr = args.tr or defaults.tr
+        local tl = args.tl or defaults.tl
+
+        local cornerInput = args.cornerInput or defaults.cornerInput
+        if cornerInput == "UNIFORM" then
+            local crnrUni = args.crnrUni or defaults.crnrUni
+            bl = crnrUni
+            br = crnrUni
+            tr = crnrUni
+            tl = crnrUni
+        end
+
         local curve = Curve2.rect(
             wPrc * args.lbx, hPrc * args.lby,
             wPrc * args.ubx, hPrc * args.uby,
-            prc * args.bl, prc * args.br,
-            prc * args.tr, prc * args.tl)
+            prc * bl, prc * br,
+            prc * tr, prc * tl)
 
         AseUtilities.drawCurve2(
             curve,

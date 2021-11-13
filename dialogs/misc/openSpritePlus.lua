@@ -12,8 +12,7 @@ local defaults = {
     trimCels = true,
     palType = "EMBEDDED",
     uniquesOnly = true,
-    prependMask = true,
-    pullFocus = true
+    prependMask = true
 }
 
 local dlg = Dialog { title = "Open Sprite +" }
@@ -22,7 +21,8 @@ dlg:file {
     id = "spriteFile",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS,
-    open = true
+    open = true,
+    focus = true
 }
 
 dlg:newrow { always = false }
@@ -106,7 +106,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local args = dlg.data
         local spriteFile = args.spriteFile
