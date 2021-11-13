@@ -3,8 +3,7 @@ local defaults = {
     margin = 0,
     marginClr = Color(0, 0, 0, 255),
     border = 0,
-    borderClr = Color(255, 255, 255, 255),
-    pullFocus = false
+    borderClr = Color(255, 255, 255, 255)
 }
 
 local function layerToSvgStr(
@@ -170,6 +169,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "filepath",
     label = "Path:",
+    focus = true,
     filetypes = { "svg" },
     save = true
 }
@@ -179,7 +179,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
         if activeSprite then
@@ -350,6 +350,7 @@ dlg:button {
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
+    focus = false,
     onclick = function()
         dlg:close()
     end

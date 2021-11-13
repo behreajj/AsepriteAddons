@@ -10,6 +10,7 @@ local dlg = Dialog { title = "GPL Import" }
 dlg:file {
     id = "filepath",
     label = "Path:",
+    focus = true,
     filetypes = { "gpl", "pal" },
     open = true
 }
@@ -194,6 +195,7 @@ dlg:button {
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
+    focus = false,
     onclick = function()
         dlg:close()
     end

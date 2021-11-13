@@ -5,6 +5,8 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 local defaults = {
     target = "RANGE",
     trimCels = false,
+    delOverLayer = false,
+    delUnderLayer = false,
     pullFocus = false
 }
 
@@ -24,6 +26,21 @@ dlg:check {
     label = "Trim:",
     text = "Layer Edges",
     selected = defaults.trimCels
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "delOverLayer",
+    label = "Delete:",
+    text = "Mask",
+    selected = defaults.delOverLayer
+}
+
+dlg:check {
+    id = "delUnderLayer",
+    text = "Source",
+    selected = defaults.delUnderLayer
 }
 
 dlg:newrow { always = false }
@@ -77,6 +94,10 @@ dlg:button {
         local args = dlg.data
         local target = args.target or defaults.target
         local trimCels = args.trimCels
+        local delOverLayer = args.delOverLayer
+        local delUnderLayer = args.delUnderLayer
+            and (not underLayer.isBackground)
+            and (not underLayer.isReference)
 
         -- Determine how a pixel is judged to be transparent.
         local alphaIndex = activeSprite.transparentColor
@@ -103,7 +124,8 @@ dlg:button {
         end
 
         local compLayer = activeSprite:newLayer()
-        compLayer.name = "Mask"
+        compLayer.name = string.format("Comp.%s.%s",
+            underLayer.name, overLayer.name)
 
         local framesLen = #frames
         app.transaction(function()
@@ -203,6 +225,10 @@ dlg:button {
                 end
             end
         end)
+
+        if delOverLayer then activeSprite:deleteLayer(overLayer) end
+        if delUnderLayer then activeSprite:deleteLayer(underLayer) end
+        app.activeLayer = compLayer
 
         app.refresh()
     end
