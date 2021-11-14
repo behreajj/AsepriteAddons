@@ -9,6 +9,8 @@ local colorSpaces = {
     "S_RGB"
 }
 
+local targets = { "ACTIVE", "ALL", "RANGE" }
+
 local defaults = {
     palType = "ACTIVE",
     copyToLayer = true,
@@ -19,6 +21,14 @@ local defaults = {
     clrSpacePreset = "LINEAR_RGB",
     pullFocus = false
 }
+
+local function boundsFromPreset(preset)
+    if preset == "CIE_LAB" then
+        return Bounds3.cieLab()
+    else
+        return Bounds3.unitCubeUnsigned()
+    end
+end
 
 local function clrToVec3sRgb(clr)
     return Vec3.new(clr.r, clr.g, clr.b)
@@ -37,31 +47,6 @@ end
 local function clrToVec3Lab(clr)
     local lab = Clr.sRgbaToLab(clr)
     return Vec3.new(lab.a, lab.b, lab.l)
-end
-
--- local function vec3ToClrsRgb(v)
---     return Clr.new(v.x, v.y, v.z, 1.0)
--- end
-
--- local function vec3ToClrlRgb(v)
---     local lin = Clr.new(v.x, v.y, v.z, 1.0)
---     return Clr.lRgbaTosRgbaInternal(lin)
--- end
-
--- local function vec3ToClrXyz(v)
---     return Clr.xyzTosRgba(v.x, v.y, v.z, 1.0)
--- end
-
--- local function vec3ToClrLab(v)
---     return Clr.labTosRgba(v.z, v.x, v.y, 1.0)
--- end
-
-local function boundsFromPreset(preset)
-    if preset == "CIE_LAB" then
-        return Bounds3.cieLab()
-    else
-        return Bounds3.unitCubeUnsigned()
-    end
 end
 
 local function clrToV3FuncFromPreset(preset)
@@ -91,6 +76,15 @@ end
 -- end
 
 local dlg = Dialog { title = "Palette To Cel" }
+
+dlg:combobox {
+    id = "target",
+    label = "Target:",
+    option = defaults.target,
+    options = targets
+}
+
+dlg:newrow { always = false }
 
 dlg:combobox {
     id = "palType",
@@ -208,154 +202,184 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
         local sprite = app.activeSprite
-        if sprite then
+        if not sprite then
+            app.alert("There is no active sprite.")
+            return
+        end
 
-            local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                args.palType, args.palFile, args.palPreset)
+        local srcLayer = app.activeLayer
+        if not srcLayer then
+            app.alert("There is no active layer.")
+            return
+        end
 
-            local srcCel = app.activeCel
-            if srcCel then
+        -- Begin timing the function elapsed.
+        local args = dlg.data
+        local printElapsed = args.printElapsed
+        local startTime = 0
+        local endTime = 0
+        local elapsed = 0
+        if printElapsed then
+            startTime = os.time()
+        end
 
-                local srcImg = srcCel.image
-                if srcImg ~= nil then
+        local oldMode = sprite.colorMode
+        app.command.ChangePixelFormat { format = "rgb" }
 
-                    local printElapsed = args.printElapsed
-                    local startTime = 0
-                    local endTime = 0
-                    local elapsed = 0
-                    if printElapsed then
-                        startTime = os.time()
-                    end
+        -- Cache global methods.
+        local fromHex = Clr.fromHex
+        local v3Hash = Vec3.hashCode
+        local octInsert = Octree.insert
+        local search = Octree.querySphericalInternal
 
-                    local oldMode = sprite.colorMode
-                    app.command.ChangePixelFormat { format = "rgb" }
+        -- Convert source palette colors to points
+        -- inserted into octree.
+        local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
+            args.palType, args.palFile, args.palPreset)
 
-                    -- Get all unique hexadecimal values from image.
-                    -- There's no need to preserve order in this case.
-                    local srcPxItr = srcImg:pixels()
-                    local hexesUnique = {}
-                    for elm in srcPxItr do
-                        hexesUnique[elm()] = true
-                    end
+        -- Select which conversion functions to use.
+        local clrSpacePreset = args.clrSpacePreset
+        local octBounds = boundsFromPreset(clrSpacePreset)
+        local clrV3Func = clrToV3FuncFromPreset(clrSpacePreset)
+        -- local v3ClrFunc = v3ToClrFuncFromPreset(clrSpacePreset)
 
-                    -- Select which conversion functions to use.
-                    local clrSpacePreset = args.clrSpacePreset
-                    local octBounds = boundsFromPreset(clrSpacePreset)
-                    local clrV3Func = clrToV3FuncFromPreset(clrSpacePreset)
-                    -- local v3ClrFunc = v3ToClrFuncFromPreset(clrSpacePreset)
+        -- Select query radius according to color space.
+        -- Limit results to 256.
+        local resultLimit = 256
+        local cvgRad = 0.0
+        if clrSpacePreset == "CIE_LAB" then
+            cvgRad = args.cvgLabRad
+        else
+            cvgRad = args.cvgNormRad * 0.01
+        end
 
-                    -- Cache global methods.
-                    local fromHex = Clr.fromHex
-                    local v3Hash = Vec3.hashCode
-                    local insert = Octree.insert
-                    local search = Octree.querySphericalInternal
+        -- Create octree.
+        local ptToHexDict = {}
+        local hexesSrgbLen = #hexesSrgb
+        local cvgCapacity = args.cvgCapacity
+        local octree = Octree.new(octBounds, cvgCapacity, 0)
+        for i = 1, hexesSrgbLen, 1 do
+            -- Validate that the color is not an alpha mask.
+            local hexSrgb = hexesSrgb[i]
+            if hexSrgb & 0xff000000 ~= 0 then
+                local clr = fromHex(hexSrgb)
+                local pt = clrV3Func(clr)
+                local hexProfile = hexesProfile[i]
+                ptToHexDict[v3Hash(pt)] = hexProfile
+                octInsert(octree, pt)
+            end
+        end
 
-                    -- Create a dictionary where unique hexes are associated
-                    -- with Vec3 queries to an octree.
-                    local queries = {}
-                    for k, _ in pairs(hexesUnique) do
-                        local clr = fromHex(k)
-                        local pt = clrV3Func(clr)
-                        table.insert(queries, { hex = k, point = pt })
-                    end
-
-                    -- Convert source palette colors to points
-                    -- inserted into octree.
-                    local ptToHexDict = {}
-                    local hexesSrgbLen = #hexesSrgb
-                    local cvgCapacity = args.cvgCapacity
-                    local octree = Octree.new(octBounds, cvgCapacity, 0)
-                    for i = 1, hexesSrgbLen, 1 do
-                        -- Validate that the color is not an alpha mask.
-                        local hexSrgb = hexesSrgb[i]
-                        if hexSrgb & 0xff000000 ~= 0 then
-                            local clr = fromHex(hexSrgb)
-                            local pt = clrV3Func(clr)
-                            local hexProfile = hexesProfile[i]
-                            ptToHexDict[v3Hash(pt)] = hexProfile
-                            insert(octree, pt)
-                        end
-                    end
-
-                    -- Select query radius according to color space.
-                    local cvgRad = 0.0
-                    if clrSpacePreset == "CIE_LAB" then
-                        cvgRad = args.cvgLabRad
-                    else
-                        cvgRad = args.cvgNormRad * 0.01
-                    end
-
-                    -- Find nearest color in palette.
-                    local correspDict = {}
-                    local resultLimit = 256
-                    for i = 1, #queries, 1 do
-                        local query = queries[i]
-                        local center = query.point
-                        local near = {}
-                        search(octree, center, cvgRad, near, resultLimit)
-                        local resultHex = 0
-                        if #near > 0 then
-                            local nearestPt = near[1].point
-                            local ptHash = v3Hash(nearestPt)
-                            resultHex = ptToHexDict[ptHash]
-                        end
-                        correspDict[query.hex] = resultHex
-                    end
-
-                    -- Apply colors to image.
-                    -- Use source color alpha.
-                    local trgImg = srcImg:clone()
-                    local trgpxitr = trgImg:pixels()
-                    for elm in trgpxitr do
-                        local srcHex = elm()
-                        local trgHex = correspDict[srcHex]
-                        local comp = srcHex & 0xff000000
-                                   | trgHex & 0x00ffffff
-                        elm(comp)
-                    end
-
-                    -- Either copy to new layer or reassign image.
-                    local copyToLayer = args.copyToLayer
-                    if copyToLayer then
-
-                        -- TODO: Can this be in a transaction... might've
-                        -- caused a problem with variable scoping before?
-                        local srcLayer = srcCel.layer
-                        local trgLayer = sprite:newLayer()
-                        trgLayer.name = srcLayer.name .. "." .. clrSpacePreset
-                        trgLayer.opacity = srcLayer.opacity
-                        local frame = app.activeFrame or sprite.frames[1]
-                        local trgCel = sprite:newCel(
-                            trgLayer, frame,
-                            trgImg, srcCel.position)
-                        trgCel.opacity = srcCel.opacity
-                    else
-                        srcCel.image = trgImg
-                    end
-
-                    AseUtilities.changePixelFormat(oldMode)
-
-                    if printElapsed then
-                        endTime = os.time()
-                        elapsed = os.difftime(endTime, startTime)
-                        local msg = string.format(
-                            "Start: %d\nEnd: %d\nElapsed: %d\nUnique Colors: %d",
-                            startTime, endTime, elapsed, #queries)
-                        print(msg)
-                    end
-
-                    app.refresh()
-                else
-                    app.alert("The cel has no image.")
-                end
-            else
-                app.alert("There is no active cel.")
+        -- Find frames from target.
+        local frames = {}
+        local target = args.target
+        if target == "ACTIVE" then
+            local activeFrame = app.activeFrame
+            if activeFrame then
+                frames[1] = activeFrame
+            end
+        elseif target == "RANGE" then
+            local appRange = app.range
+            local rangeFrames = appRange.frames
+            local rangeFramesLen = #rangeFrames
+            for i = 1, rangeFramesLen, 1 do
+                frames[i] = rangeFrames[i]
             end
         else
-            app.alert("There is no active sprite.")
+            local activeFrames = sprite.frames
+            local activeFramesLen = #activeFrames
+            for i = 1, activeFramesLen, 1 do
+                frames[i] = activeFrames[i]
+            end
         end
+
+        -- Create a new layer if necessary.
+        local copyToLayer = args.copyToLayer
+        local trgLayer = nil
+        if copyToLayer then
+            trgLayer = sprite:newLayer()
+            trgLayer.name = srcLayer.name
+                .. "." .. clrSpacePreset
+            trgLayer.opacity = srcLayer.opacity
+        end
+
+        local framesLen = #frames
+        app.transaction(function()
+            for i = 1, framesLen, 1 do
+                local srcFrame = frames[i]
+                local srcCel = srcLayer:cel(srcFrame)
+                local srcImg = srcCel.image
+
+                -- Get unique hexadecimal values from image.
+                -- There's no need to preserve order.
+                local srcPxItr = srcImg:pixels()
+                local hexesUnique = {}
+                for elm in srcPxItr do
+                    hexesUnique[elm()] = true
+                end
+
+                -- Create a dictionary where unique hexes are associated
+                -- with Vec3 queries to an octree.
+                local queries = {}
+                local queryCount = 1
+                for k, _ in pairs(hexesUnique) do
+                    local clr = fromHex(k)
+                    local pt = clrV3Func(clr)
+                    queries[queryCount] = { hex = k, point = pt }
+                    queryCount = queryCount + 1
+                end
+
+                -- Find nearest color in palette.
+                local correspDict = {}
+                local lenQueries = #queries
+                for j = 1, lenQueries, 1 do
+                    local query = queries[j]
+                    local center = query.point
+                    local near = {}
+                    search(octree, center, cvgRad, near, resultLimit)
+                    local resultHex = 0
+                    if #near > 0 then
+                        local nearestPt = near[1].point
+                        local ptHash = v3Hash(nearestPt)
+                        resultHex = ptToHexDict[ptHash]
+                    end
+                    correspDict[query.hex] = resultHex
+                end
+
+                -- Apply colors to image.
+                -- Use source color alpha.
+                local trgImg = srcImg:clone()
+                local trgpxitr = trgImg:pixels()
+                for elm in trgpxitr do
+                    local srcHex = elm()
+                    elm(srcHex & 0xff000000
+                        | correspDict[srcHex] & 0x00ffffff)
+                end
+
+                if copyToLayer then
+                    local trgCel = sprite:newCel(
+                                trgLayer, srcFrame,
+                                trgImg, srcCel.position)
+                            trgCel.opacity = srcCel.opacity
+                else
+                    srcCel.image = trgImg
+                end
+            end
+        end)
+
+        AseUtilities.changePixelFormat(oldMode)
+
+        if printElapsed then
+            endTime = os.time()
+            elapsed = os.difftime(endTime, startTime)
+            local msg = string.format(
+                "Start: %d\nEnd: %d\nElapsed: %d",
+                startTime, endTime, elapsed)
+            print(msg)
+        end
+
+        app.refresh()
     end
 }
 

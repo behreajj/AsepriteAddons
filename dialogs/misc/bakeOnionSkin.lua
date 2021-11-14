@@ -5,13 +5,16 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
     target = "RANGE",
-    iterations = 4,
+    iterations = 3,
+    maxIterations = 32,
     directions = "BACKWARD",
     minAlpha = 64,
-    maxAlpha = 168,
+    maxAlpha = 128,
     useTint = true,
-    foreTint = Color(0, 0, 255, 80),
-    backTint = Color(255, 0, 0, 80),
+    foreTint = Color(0, 0, 255, 128),
+    backTint = Color(255, 0, 0, 128),
+    -- foreTint = Color(185, 146, 57, 128),
+    -- backTint = Color(47, 0, 128, 128),
     pullFocus = false
 }
 
@@ -30,7 +33,7 @@ dlg:slider {
     id = "iterations",
     label = "Iterations:",
     min = 1,
-    max = 16,
+    max = defaults.maxIterations,
     value = defaults.iterations
 }
 
@@ -156,6 +159,11 @@ dlg:button {
             return
         end
 
+        if srcLayer.isBackground then
+            app.alert("Background layer cannot be the source.")
+            return
+        end
+
         -- Cache global functions used in for loops.
         local abs = math.abs
         local max = math.max
@@ -243,6 +251,7 @@ dlg:button {
                 local packetIdx = 1
                 for j = 1, sampleCount, 1 do
                     local frameIdx = startFrameIdx + (j - 1)
+                    -- TODO: Support looping?
                     if frameIdx >= 1 and frameIdx <= maxFrameCount then
                         local currCel = srcLayer:cel(frameIdx)
                         if currCel then

@@ -307,24 +307,27 @@ function Octree.toJson(o)
         str = str .. ",\"points\":["
         local pts = o.points
         local ptsLen = #pts
+        local ptsStrs = {}
         for i = 1, ptsLen, 1 do
-            str = str .. Vec3.toJson(pts[i])
-            if i < ptsLen then str = str .. "," end
+            ptsStrs[i] = Vec3.toJson(pts[i])
         end
+        str = str .. table.concat(ptsStrs, ",")
         str = str .. "]"
     else
         str = str .. ",\"children\":["
         local children = o.children
+        local childStrs = {
+            nil, nil, nil, nil,
+            nil, nil, nil, nil }
         for i = 1, 8, 1 do
             local child = children[i]
             if child then
-                str = str .. Octree.toJson(child)
+                childStrs[i] = Octree.toJson(child)
             else
-                str = str .. "null"
+                childStrs[i] = "null"
             end
-
-            if i < 8 then str = str .. "," end
         end
+        str = str .. table.concat(childStrs, ",")
         str = str .. "]"
     end
 
