@@ -310,61 +310,63 @@ dlg:button {
             for i = 1, framesLen, 1 do
                 local srcFrame = frames[i]
                 local srcCel = srcLayer:cel(srcFrame)
-                local srcImg = srcCel.image
+                if srcCel then
+                    local srcImg = srcCel.image
 
-                -- Get unique hexadecimal values from image.
-                -- There's no need to preserve order.
-                local srcPxItr = srcImg:pixels()
-                local hexesUnique = {}
-                for elm in srcPxItr do
-                    hexesUnique[elm()] = true
-                end
-
-                -- Create a dictionary where unique hexes are associated
-                -- with Vec3 queries to an octree.
-                local queries = {}
-                local queryCount = 1
-                for k, _ in pairs(hexesUnique) do
-                    local clr = fromHex(k)
-                    local pt = clrV3Func(clr)
-                    queries[queryCount] = { hex = k, point = pt }
-                    queryCount = queryCount + 1
-                end
-
-                -- Find nearest color in palette.
-                local correspDict = {}
-                local lenQueries = #queries
-                for j = 1, lenQueries, 1 do
-                    local query = queries[j]
-                    local center = query.point
-                    local near = {}
-                    search(octree, center, cvgRad, near, resultLimit)
-                    local resultHex = 0
-                    if #near > 0 then
-                        local nearestPt = near[1].point
-                        local ptHash = v3Hash(nearestPt)
-                        resultHex = ptToHexDict[ptHash]
+                    -- Get unique hexadecimal values from image.
+                    -- There's no need to preserve order.
+                    local srcPxItr = srcImg:pixels()
+                    local hexesUnique = {}
+                    for elm in srcPxItr do
+                        hexesUnique[elm()] = true
                     end
-                    correspDict[query.hex] = resultHex
-                end
 
-                -- Apply colors to image.
-                -- Use source color alpha.
-                local trgImg = srcImg:clone()
-                local trgpxitr = trgImg:pixels()
-                for elm in trgpxitr do
-                    local srcHex = elm()
-                    elm(srcHex & 0xff000000
-                        | correspDict[srcHex] & 0x00ffffff)
-                end
+                    -- Create a dictionary where unique hexes are associated
+                    -- with Vec3 queries to an octree.
+                    local queries = {}
+                    local queryCount = 1
+                    for k, _ in pairs(hexesUnique) do
+                        local clr = fromHex(k)
+                        local pt = clrV3Func(clr)
+                        queries[queryCount] = { hex = k, point = pt }
+                        queryCount = queryCount + 1
+                    end
 
-                if copyToLayer then
-                    local trgCel = sprite:newCel(
-                                trgLayer, srcFrame,
-                                trgImg, srcCel.position)
-                            trgCel.opacity = srcCel.opacity
-                else
-                    srcCel.image = trgImg
+                    -- Find nearest color in palette.
+                    local correspDict = {}
+                    local lenQueries = #queries
+                    for j = 1, lenQueries, 1 do
+                        local query = queries[j]
+                        local center = query.point
+                        local near = {}
+                        search(octree, center, cvgRad, near, resultLimit)
+                        local resultHex = 0
+                        if #near > 0 then
+                            local nearestPt = near[1].point
+                            local ptHash = v3Hash(nearestPt)
+                            resultHex = ptToHexDict[ptHash]
+                        end
+                        correspDict[query.hex] = resultHex
+                    end
+
+                    -- Apply colors to image.
+                    -- Use source color alpha.
+                    local trgImg = srcImg:clone()
+                    local trgpxitr = trgImg:pixels()
+                    for elm in trgpxitr do
+                        local srcHex = elm()
+                        elm(srcHex & 0xff000000
+                            | correspDict[srcHex] & 0x00ffffff)
+                    end
+
+                    if copyToLayer then
+                        local trgCel = sprite:newCel(
+                                    trgLayer, srcFrame,
+                                    trgImg, srcCel.position)
+                                trgCel.opacity = srcCel.opacity
+                    else
+                        srcCel.image = trgImg
+                    end
                 end
             end
         end)
