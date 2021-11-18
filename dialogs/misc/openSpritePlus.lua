@@ -12,7 +12,11 @@ local defaults = {
     trimCels = true,
     palType = "EMBEDDED",
     uniquesOnly = true,
-    prependMask = true
+    prependMask = true,
+    xGrid = 0,
+    yGrid = 0,
+    wGrid = 32,
+    hGrid = 32
 }
 
 local dlg = Dialog { title = "Open Sprite +" }
@@ -92,6 +96,40 @@ dlg:check {
     label = "Prepend Mask:",
     selected = defaults.prependMask,
 }
+
+-- dlg:separator { id = "gridSeparate" }
+
+-- dlg:slider {
+--     id = "xGrid",
+--     label = "Grid Offset:",
+--     min = 0,
+--     max = 32,
+--     value = defaults.xGrid
+-- }
+
+-- dlg:slider {
+--     id = "yGrid",
+--     min = 0,
+--     max = 32,
+--     value = defaults.yGrid
+-- }
+
+-- dlg:newrow { always = false }
+
+-- dlg:slider {
+--     id = "wGrid",
+--     label = "Grid Size:",
+--     min = 0,
+--     max = 96,
+--     value = defaults.wGrid
+-- }
+
+-- dlg:slider {
+--     id = "hGrid",
+--     min = 0,
+--     max = 96,
+--     value = defaults.hGrid
+-- }
 
 dlg:separator { id = "noteSeparate" }
 
@@ -205,6 +243,16 @@ dlg:button {
                                 end
                             end
                         end)
+                    end
+
+                    local xGrid = args.xGrid or defaults.xGrid
+                    local yGrid = args.yGrid or defaults.yGrid
+                    local wGrid = args.wGrid or defaults.wGrid
+                    local hGrid = args.hGrid or defaults.hGrid
+                    if wGrid > 1 and hGrid > 1 then
+                        openSprite.gridBounds = Rectangle(
+                            xGrid, yGrid, wGrid, hGrid)
+                            -- app.command.ShowGrid()
                     end
 
                     app.refresh()

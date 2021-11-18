@@ -21,12 +21,18 @@ local defaults = {
     -- Mask MUST be index ZERO.
     transparencyMask = 0,
     bkgIdx = 0,
+
     frames = 1,
     fps = 24,
+
     palType = "DEFAULT",
     prependMask = true,
-    gridRows = 0,
-    gridCols = 0,
+
+    xGrid = 0,
+    yGrid = 0,
+    wGrid = 32,
+    hGrid = 32,
+
     pullFocus = true
 }
 
@@ -360,26 +366,38 @@ dlg:check {
     visible = defaults.colorMode ~= "GRAY"
 }
 
--- dlg:separator {
---     id = "gridSeparate"
+-- dlg:separator { id = "gridSeparate" }
+
+-- dlg:slider {
+--     id = "xGrid",
+--     label = "Grid Offset:",
+--     min = 0,
+--     max = 32,
+--     value = defaults.xGrid
 -- }
 
 -- dlg:slider {
---     id = "gridCols",
---     label = "Columns:",
+--     id = "yGrid",
 --     min = 0,
 --     max = 32,
---     value = defaults.gridCols
+--     value = defaults.yGrid
 -- }
 
 -- dlg:newrow { always = false }
 
 -- dlg:slider {
---     id = "gridRows",
---     label = "Rows:",
+--     id = "wGrid",
+--     label = "Grid Size:",
 --     min = 0,
---     max = 32,
---     value = defaults.gridRows
+--     max = 96,
+--     value = defaults.wGrid
+-- }
+
+-- dlg:slider {
+--     id = "hGrid",
+--     min = 0,
+--     max = 96,
+--     value = defaults.hGrid
 -- }
 
 dlg:newrow { always = false }
@@ -515,14 +533,14 @@ dlg:button {
             end)
         end
 
-        local gridRows = args.gridRows or defaults.gridRows
-        local gridCols = args.gridCols or defaults.gridCols
-        local useGrid = gridRows > 0 and gridCols > 0
-        if useGrid then
-            local gw = math.max(2, math.ceil(spriteWidth / gridCols))
-            local gh = math.max(2, math.ceil(spriteHeight / gridRows))
-            newSprite.gridBounds = Rectangle(0, 0, gw, gh)
-            app.command.ShowGrid()
+        local xGrid = args.xGrid or defaults.xGrid
+        local yGrid = args.yGrid or defaults.yGrid
+        local wGrid = args.wGrid or defaults.wGrid
+        local hGrid = args.hGrid or defaults.hGrid
+        if wGrid > 1 and hGrid > 1 then
+            newSprite.gridBounds = Rectangle(
+                xGrid, yGrid, wGrid, hGrid)
+                -- app.command.ShowGrid()
         end
 
         AseUtilities.changePixelFormat(colorModeInt)

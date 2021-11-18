@@ -210,7 +210,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- TODO: Include an option to add a slice for the rect?
         local args = dlg.data
         local sprite = AseUtilities.initCanvas(
             64, 64, "Rectangle",

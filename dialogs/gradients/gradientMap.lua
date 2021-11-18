@@ -1,7 +1,10 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/gradientutilities.lua")
 
+local targets = { "ACTIVE", "ALL", "RANGE" }
+
 local defaults = {
+    target = "RANGE",
     quantization = 0,
     normalize = false,
     tweenOps = "PAIR",
@@ -16,6 +19,15 @@ local defaults = {
 }
 
 local dlg = Dialog { title = "Gradient Map" }
+
+dlg:combobox {
+    id = "target",
+    label = "Target:",
+    option = defaults.target,
+    options = targets
+}
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "quantization",
@@ -169,193 +181,203 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
         local sprite = app.activeSprite
-        if sprite then
-            if sprite.colorMode == ColorMode.RGB then
-                local srcCel = app.activeCel
-                if srcCel then
-                    local srcImg = app.activeImage
-                    if srcImg then
+        if not sprite then
+            app.alert("There is no active sprite.")
+            return
+        end
 
-                        --Easing mode.
-                        local tweenOps = args.tweenOps
-                        local rgbPreset = args.easingFuncRGB
-                        local huePreset = args.easingFuncHue
-                        local clrSpacePreset = args.clrSpacePreset
+        if sprite.colorMode ~= ColorMode.RGB then
+            app.alert("Only RGB color mode is supported.")
+            return
+        end
 
-                        local easeFuncFinal = nil
-                        if tweenOps == "PALETTE" then
+        local srcLayer = app.activeLayer
+        if not srcLayer then
+            app.alert("There is no active layer.")
+            return
+        end
 
-                            local startIndex = args.startIndex
-                            local count = args.count
-                            local pal = sprite.palettes[1]
-                            local clrArr = AseUtilities.asePaletteToClrArr(
-                                pal, startIndex, count)
+        -- Unpack arguments.
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local levels = args.quantization or defaults.quantization
+        local useNormalize = args.useNormalize
+        local tweenOps = args.tweenOps or defaults.tweenOps
+        local rgbPreset = args.easingFuncRGB or defaults.easingFuncRGB
+        local huePreset = args.easingFuncHue or defaults.easingFuncHue
+        local clrSpacePreset = args.clrSpacePreset or defaults.clrSpacePreset
 
-                            local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                                clrSpacePreset,
-                                rgbPreset,
-                                huePreset)
+        local easeFuncFinal = nil
+        if tweenOps == "PALETTE" then
 
-                            easeFuncFinal = function(t)
-                                return Clr.mixArr(clrArr, t, pairFunc)
-                            end
-                        else
-                            local aColorAse = args.aColor
-                            local bColorAse = args.bColor
+            local startIndex = args.startIndex
+            local count = args.count
+            local pal = sprite.palettes[1]
+            local clrArr = AseUtilities.asePaletteToClrArr(
+                pal, startIndex, count)
 
-                            local aClr = AseUtilities.aseColorToClr(aColorAse)
-                            local bClr = AseUtilities.aseColorToClr(bColorAse)
+            local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                clrSpacePreset,
+                rgbPreset,
+                huePreset)
 
-                            local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                                clrSpacePreset,
-                                rgbPreset,
-                                huePreset)
-
-                            easeFuncFinal = function(t)
-                                return pairFunc(aClr, bClr, t)
-                            end
-                        end
-
-                        -- Cache source colors.
-                        local srcClrDict = {}
-                        local srcItr = srcImg:pixels()
-                        for srcClr in srcItr do
-                            local hex = srcClr()
-                            srcClrDict[hex] = true
-                        end
-
-                        local srcAlphaDict = {}
-
-                        local lumDict = {}
-                        local minLum = 1.0
-                        local maxLum = 0.0
-                        local stlLut = Utilities.STL_LUT
-                        local lRgbToXyz = Clr.lRgbaToXyzInternal
-                        local xyzToLab = Clr.xyzToLab
-
-                        -- Cache luminosities and source alphas in dictionaries.
-                        for hex, _ in pairs(srcClrDict) do
-
-                            local sai = hex >> 0x18 & 0xff
-                            local lum = 0.0
-
-                            if sai > 0 then
-                                local sbi = hex >> 0x10 & 0xff
-                                local sgi = hex >> 0x08 & 0xff
-                                local sri = hex & 0xff
-
-                                if sbi == sgi and sbi == sri and sri == sgi then
-                                    lum = sbi * 0.00392156862745098
-                                else
-                                    -- Convert to linear via look up table.
-                                    local lbi = stlLut[1 + sbi]
-                                    local lgi = stlLut[1 + sgi]
-                                    local lri = stlLut[1 + sri]
-
-                                    -- Find luminance. Same as the Y in CIE XYZ.
-                                    -- 0.212 / 255.0,
-                                    -- 0.715 / 255.0
-                                    -- 0.072 / 255.0
-                                    -- local lum = 0.0008339189910613837 * lri
-                                    --     + 0.002804584845905505 * lgi
-                                    --     + 0.0002830647904840915 * lbi
-
-                                    -- Convert luminance to sRGB grayscale.
-                                    -- if lum <= 0.0031308 then
-                                    --     lum = lum * 12.92
-                                    -- else
-                                    --     lum = (lum ^ 0.4166666666666667) * 1.055 - 0.055
-                                    -- end
-
-                                    local xyz = lRgbToXyz(
-                                        lri * 0.00392156862745098,
-                                        lgi * 0.00392156862745098,
-                                        lbi * 0.00392156862745098,
-                                        1.0)
-                                    local lab = xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
-
-                                    lum = lab.l * 0.01
-                                end
-
-                                if lum < minLum then minLum = lum end
-                                if lum > maxLum then maxLum = lum end
-                            end
-
-                            lumDict[hex] = lum
-                            srcAlphaDict[hex] = sai
-                        end
-
-                        -- Normalize range if requested.
-                        -- A color disc with uniform perceptual luminance
-                        -- generated by Okhsl has a range of about 0.069.
-                        local useNormalize = args.useNormalize
-                        local rangeLum = math.abs(maxLum - minLum)
-                        if useNormalize and rangeLum > 0.07 then
-                            local invRangeLum = 1.0 / rangeLum
-                            for hex, lum in pairs(lumDict) do
-                                if (hex & 0xff000000) ~= 0 then
-                                    lumDict[hex] = (lum - minLum) * invRangeLum
-                                else
-                                    lumDict[hex] = 0.0
-                                end
-                            end
-                        end
-
-                        -- Create target colors.
-                        local trgClrDict = {}
-                        local levels = args.quantization
-
-                        -- Micro-optimization (apparently lua likes locals).
-                        local min = math.min
-                        local qu = Utilities.quantizeUnsigned
-                        local tohex = Clr.toHex
-
-                        for hex, _ in pairs(srcClrDict) do
-                            local lum = lumDict[hex]
-                            lum = qu(lum, levels)
-                            local grayClr = tohex(easeFuncFinal(lum))
-
-                            local aSrc = srcAlphaDict[hex]
-                            local aTrg = (grayClr >> 0x18 & 0xff)
-
-                            trgClrDict[hex] = min(aSrc, aTrg) << 0x18
-                                | (0x00ffffff & grayClr)
-                        end
-
-                        -- Create target layer, cel, image.
-                        local trgLyr = sprite:newLayer()
-                        trgLyr.name = "Gradient.Map." .. clrSpacePreset
-                        trgLyr.opacity = srcCel.layer.opacity
-                        if useNormalize then
-                            trgLyr.name = trgLyr.name .. ".Contrast"
-                        end
-                        local trgCel = sprite:newCel(trgLyr, srcCel.frame)
-                        trgCel.position = srcCel.position
-                        trgCel.image = srcImg:clone()
-                        trgCel.opacity = srcCel.opacity
-                        local trgImg = trgCel.image
-
-                        -- Assign color from gradient function.
-                        local trgItr = trgImg:pixels()
-                        for trgClr in trgItr do
-                            trgClr(trgClrDict[trgClr()])
-                        end
-
-                        app.refresh()
-                    else
-                        app.alert("There is no active image.")
-                    end
-                else
-                    app.alert("There is no active cel.")
-                end
-            else
-                app.alert("Only RGB color mode is supported.")
+            easeFuncFinal = function(t)
+                return Clr.mixArr(clrArr, t, pairFunc)
             end
         else
-            app.alert("There is no active sprite.")
+            local aColorAse = args.aColor
+            local bColorAse = args.bColor
+
+            local aClr = AseUtilities.aseColorToClr(aColorAse)
+            local bClr = AseUtilities.aseColorToClr(bColorAse)
+
+            local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                clrSpacePreset,
+                rgbPreset,
+                huePreset)
+
+            easeFuncFinal = function(t)
+                return pairFunc(aClr, bClr, t)
+            end
         end
+
+        -- Cache methods and tables used in loop.
+        local stlLut = Utilities.STL_LUT
+        local lRgbToXyz = Clr.lRgbaToXyzInternal
+        local xyzToLab = Clr.xyzToLab
+        local abs = math.abs
+        local min = math.min
+        local qu = Utilities.quantizeUnsigned
+        local tohex = Clr.toHex
+
+        -- Find frames from target.
+        local frames = {}
+        if target == "ACTIVE" then
+            local activeFrame = app.activeFrame
+            if activeFrame then
+                frames[1] = activeFrame
+            end
+        elseif target == "RANGE" then
+            local appRange = app.range
+            local rangeFrames = appRange.frames
+            local rangeFramesLen = #rangeFrames
+            for i = 1, rangeFramesLen, 1 do
+                frames[i] = rangeFrames[i]
+            end
+        else
+            local activeFrames = sprite.frames
+            local activeFramesLen = #activeFrames
+            for i = 1, activeFramesLen, 1 do
+                frames[i] = activeFrames[i]
+            end
+        end
+
+        -- Create target layer.
+        local trgLyr = sprite:newLayer()
+        trgLyr.opacity = srcLayer.opacity
+        trgLyr.name = "Gradient.Map." .. clrSpacePreset
+        if useNormalize then
+            trgLyr.name = trgLyr.name .. ".Contrast"
+        end
+
+        local framesLen = #frames
+        app.transaction(function()
+            for i = 1, framesLen, 1 do
+                local srcFrame = frames[i]
+                local srcCel = srcLayer:cel(srcFrame)
+                local srcImg = srcCel.image
+
+                -- Cache source colors.
+                local srcClrDict = {}
+                local srcItr = srcImg:pixels()
+                for srcClr in srcItr do
+                    srcClrDict[srcClr()] = true
+                end
+
+                local srcAlphaDict = {}
+                local lumDict = {}
+                local minLum = 1.0
+                local maxLum = 0.0
+
+                -- Cache luminosities and source alphas in dictionaries.
+                for hex, _ in pairs(srcClrDict) do
+                    local sai = hex >> 0x18 & 0xff
+                    local lum = 0.0
+                    if sai > 0 then
+                        local sbi = hex >> 0x10 & 0xff
+                        local sgi = hex >> 0x08 & 0xff
+                        local sri = hex & 0xff
+
+                        if sbi == sgi and sbi == sri and sri == sgi then
+                            lum = sbi * 0.00392156862745098
+                        else
+                            -- Convert to linear via look up table.
+                            local lbi = stlLut[1 + sbi]
+                            local lgi = stlLut[1 + sgi]
+                            local lri = stlLut[1 + sri]
+
+                            local xyz = lRgbToXyz(
+                                lri * 0.00392156862745098,
+                                lgi * 0.00392156862745098,
+                                lbi * 0.00392156862745098,
+                                1.0)
+                            local lab = xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
+
+                            lum = lab.l * 0.01
+                        end
+
+                        if lum < minLum then minLum = lum end
+                        if lum > maxLum then maxLum = lum end
+                    end
+                    lumDict[hex] = lum
+                    srcAlphaDict[hex] = sai
+                end
+
+                -- Normalize range if requested.
+                -- A color disc with uniform perceptual luminance
+                -- generated by Okhsl has a range of about 0.069.
+                local rangeLum = abs(maxLum - minLum)
+                if useNormalize and rangeLum > 0.07 then
+                    local invRangeLum = 1.0 / rangeLum
+                    for hex, lum in pairs(lumDict) do
+                        if (hex & 0xff000000) ~= 0 then
+                            lumDict[hex] = (lum - minLum) * invRangeLum
+                        else
+                            lumDict[hex] = 0.0
+                        end
+                    end
+                end
+
+                local trgClrDict = {}
+                for hex, _ in pairs(srcClrDict) do
+                    local lum = lumDict[hex]
+                    lum = qu(lum, levels)
+                    local grayClr = tohex(easeFuncFinal(lum))
+
+                    local aSrc = srcAlphaDict[hex]
+                    local aTrg = (grayClr >> 0x18 & 0xff)
+
+                    trgClrDict[hex] = min(aSrc, aTrg) << 0x18
+                        | (0x00ffffff & grayClr)
+                end
+
+                -- Create cel.
+                local trgCel = sprite:newCel(trgLyr, srcCel.frame)
+                trgCel.position = srcCel.position
+                trgCel.image = srcImg:clone()
+                trgCel.opacity = srcCel.opacity
+
+                -- Assign color from gradient function.
+                local trgImg = trgCel.image
+                local trgItr = trgImg:pixels()
+                for trgClr in trgItr do
+                    trgClr(trgClrDict[trgClr()])
+                end
+            end
+        end)
+
+        app.refresh()
     end
 }
 

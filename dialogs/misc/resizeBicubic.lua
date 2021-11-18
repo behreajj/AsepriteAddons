@@ -114,7 +114,8 @@ dlg:button {
                 if srcImg ~= nil then
 
                     -- Adapted from
-                    -- https://stackoverflow.com/questions/17640173/implementation-of-bi-cubic-resize
+                    -- https://stackoverflow.com/questions/
+                    -- 17640173/implementation-of-bi-cubic-resize
 
                     local printElapsed = args.printElapsed
                     local startTime = 0
@@ -329,10 +330,11 @@ dlg:button {
                             cel = srcCel
                         end
 
-                        -- Put the cel at sprite center, regardless
-                        -- of original cel's position.
-                        local xCenter = sprite.width * 0.5
-                        local yCenter = sprite.height * 0.5
+                        -- Put the cel at center. trunc is out of scope
+                        -- maybe due to the transaction.
+                        local celPos = srcCel.position
+                        local xCenter = celPos + sw * 0.5
+                        local yCenter = celPos + sh * 0.5
                         cel.position = Point(
                             xCenter - dw * 0.5,
                             yCenter - dh * 0.5)

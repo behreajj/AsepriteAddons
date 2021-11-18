@@ -12,6 +12,7 @@ local colorSpaces = {
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
+    target = "RANGE",
     palType = "ACTIVE",
     copyToLayer = true,
     cvgLabRad = 175,

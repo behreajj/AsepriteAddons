@@ -388,9 +388,13 @@ dlg:button {
 
         -- Ensure that onion skin appears below source layer.
         app.transaction(function()
-            local swap = srcLayer.stackIndex
-            srcLayer.stackIndex = trgLayer.stackIndex
-            trgLayer.stackIndex = swap
+            local oldSrcIdx = srcLayer.stackIndex
+            trgLayer.stackIndex = oldSrcIdx
+
+            local layers = activeSprite.layers
+            for i = oldSrcIdx + 1, #layers, 1 do
+                layers[i].stackIndex = i
+            end
             app.activeLayer = srcLayer
         end)
         app.refresh()

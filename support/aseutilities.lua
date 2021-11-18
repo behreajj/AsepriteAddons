@@ -155,8 +155,8 @@ end
 ---to SRGB. If a palette is loaded from a filepath or a
 ---preset the two tables should match, as Aseprite does
 ---not support color management for palettes. The
----correctZeroAlpha flag replaces colors with zero alpha
----that are not with 0x00000000.
+---correctZeroAlpha flag replaces zero alpha colors
+---with 0x00000000, regardless of other channel data.
 ---@param palType string enumeration
 ---@param filePath string file path
 ---@param presetPath string preset path
