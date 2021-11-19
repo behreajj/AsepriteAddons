@@ -50,8 +50,7 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- This could be done with a magic wand tool
-        -- and a cut and paste operation...
+        -- This could be done with a magic wand tool.
 
         local activeSprite = app.activeSprite
         if not activeSprite then
@@ -77,8 +76,11 @@ dlg:button {
             return
         end
 
+        -- A parent may be a sprite or a group layer.
+        -- Over and under layer should belong to same group.
+        local parent = overLayer.parent
         local underIndex = overIndex - 1
-        local underLayer = activeSprite.layers[underIndex]
+        local underLayer = parent.layers[underIndex]
 
         if overLayer.isGroup or underLayer.isGroup then
             app.alert("Group layers are not supported.")
@@ -95,6 +97,7 @@ dlg:button {
         local target = args.target or defaults.target
         local trimCels = args.trimCels
         local delOverLayer = args.delOverLayer
+            and (not overLayer.isReference)
         local delUnderLayer = args.delUnderLayer
             and (not underLayer.isBackground)
             and (not underLayer.isReference)
@@ -126,6 +129,7 @@ dlg:button {
         local compLayer = activeSprite:newLayer()
         compLayer.name = string.format("Comp.%s.%s",
             underLayer.name, overLayer.name)
+        compLayer.parent = parent
 
         local framesLen = #frames
         app.transaction(function()

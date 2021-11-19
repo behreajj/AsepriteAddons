@@ -374,6 +374,7 @@ dlg:button {
         local search = Octree.querySphericalInternal
         local screen = Utilities.toScreen
         local drawCirc = AseUtilities.drawCircleFill
+        local tablesort = table.sort
 
         -- Create Octree.
         local octCapacity = args.octCapacity
@@ -531,6 +532,10 @@ dlg:button {
         local pts2d = {}
         local zMin = 2147483647
         local zMax = -2147483648
+        local comparator = function(a, b)
+            return b.point.z < a.point.z
+        end
+
         for h = 1, reqFrames, 1 do
             local frame2d = {}
             local theta = (h - 1) * hToTheta
@@ -560,10 +565,7 @@ dlg:button {
             end
 
             -- Depth sorting.
-            table.sort(frame2d,
-                function(a, b)
-                    return b.point.z < a.point.z
-                end)
+            tablesort(frame2d, comparator)
             pts2d[h] = frame2d
         end
 
@@ -618,8 +620,7 @@ dlg:button {
         -- Wait to do this until the end, so we have greater
         -- assurance that the coverageSprite is app.active.
         coverSprite:setPalette(
-            AseUtilities.hexArrToAsePalette(uniqueHexesProfile)
-        )
+            AseUtilities.hexArrToAsePalette(uniqueHexesProfile))
         app.refresh()
     end
 }
