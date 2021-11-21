@@ -50,8 +50,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- This could be done with a magic wand tool.
-
         local activeSprite = app.activeSprite
         if not activeSprite then
             app.alert("There is no active sprite.")
@@ -126,9 +124,14 @@ dlg:button {
             end
         end
 
+        -- Unpack layer opacity.
+        local overLyrOpacity = overLayer.opacity
+        local underLyrOpacity = underLayer.opacity
+
+        -- Create new layer.
         local compLayer = activeSprite:newLayer()
         compLayer.name = string.format("Comp.%s.%s",
-            underLayer.name, overLayer.name)
+            overLayer.name, underLayer.name)
         compLayer.parent = parent
 
         local framesLen = #frames
@@ -194,8 +197,15 @@ dlg:button {
 
                     -- Intersection may be empty (invalid).
                     if xBrTarget > xTlTarget and yBrTarget > yTlTarget then
+
+                        local overCelOpacity = overCel.opacity
+                        local underCelOpacity = underCel.opacity
+                        local overCompOpacity = (overLyrOpacity * overCelOpacity) // 0xff
+                        local underCompOpacity = (underLyrOpacity * underCelOpacity) // 0xff
+
                         local widthTarget = xBrTarget - xTlTarget
                         local heightTarget = yBrTarget - yTlTarget
+
                         local trgImage = Image(widthTarget, heightTarget)
                         local trgPos = Point(xTlTarget, yTlTarget)
 
@@ -208,12 +218,14 @@ dlg:button {
                             local yOver = ySprite - yTlOver
                             local overHex = overImg:getPixel(xOver, yOver)
                             local overAlpha = (overHex >> 0x18) & 0xff
+                            overAlpha = (overAlpha * overCompOpacity) // 0xff
 
                             if overAlpha > 0 then
                                 local xUnder = xSprite - xTlUnder
                                 local yUnder = ySprite - yTlUnder
                                 local underHex = underImg:getPixel(xUnder, yUnder)
                                 local underAlpha = (underHex >> 0x18) & 0xff
+                                underAlpha = (underAlpha * underCompOpacity) // 0xff
 
                                 local compAlpha = (overAlpha * underAlpha) // 0xff
                                 local compHex = (compAlpha << 0x18)
