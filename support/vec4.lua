@@ -619,7 +619,6 @@ function Vec4.mixVec4(a, b, t)
 end
 
 ---Finds the remainder of floor division of two vectors.
----Also known as the Euclidean remainder.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table

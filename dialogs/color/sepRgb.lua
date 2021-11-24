@@ -145,6 +145,8 @@ dlg:button {
                         local opacityGreen = args.opacityGreen or defaults.opacityGreen
                         local opacityBlue = args.opacityBlue or defaults.opacityBlue
 
+                        -- TODO: Switch to using frames as in other scripts,
+                        -- then remove rangeCelsIntersect method.
                         local oldActiveCel = app.activeCel
                         local cels = {}
                         if target == "ACTIVE" then
@@ -164,6 +166,12 @@ dlg:button {
                         local redLyr = activeSprite:newLayer()
                         local greenLyr = activeSprite:newLayer()
                         local blueLyr = activeSprite:newLayer()
+
+                        local activeParent = activeLayer.parent
+                        baseLyr.parent = activeParent
+                        redLyr.parent = activeParent
+                        greenLyr.parent = activeParent
+                        blueLyr.parent = activeParent
 
                         baseLyr.name = "Base"
                         redLyr.name = "Red"

@@ -179,8 +179,8 @@ function Mat3.fromShearY(radians)
 end
 
 ---Constructs a matrix from a translation.
----@param x number x
----@param y number y
+---@param x number translation x
+---@param y number translation y
 ---@return table
 function Mat3.fromTranslation(x, y)
     return Mat3.new(

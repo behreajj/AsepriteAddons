@@ -67,77 +67,82 @@ dlg:button {
         if sprite then
             local cel = app.activeCel
             if cel then
+                -- local image = cel.image
+                -- if image then
+
+                -- Must be changed to RGB color mode before the
+                -- cel image is retrieved. Otherwise will throw
+                -- an error about ImageObj.
+                local oldMode = sprite.colorMode
+                app.command.ChangePixelFormat { format = "rgb" }
+
                 local image = cel.image
-                if image then
-                    local oldMode = sprite.colorMode
-                    app.command.ChangePixelFormat { format = "rgb" }
+                local itr = image:pixels()
+                local dictionary = {}
+                local idx = 0
 
-                    local itr = image:pixels()
-                    local dictionary = {}
-                    local idx = 0
-
-                    local prependMask = args.prependMask
-                    if prependMask then
-                        idx = idx + 1
-                        dictionary[0x00000000] = idx
-                    end
-
-                    local removeAlpha = args.removeAlpha
-                    if removeAlpha then
-                        for elm in itr do
-                            local hex = elm()
-                            if hex ~= 0x00000000 then
-                                local hexNoAlpha = hex | 0xff000000
-                                if not dictionary[hexNoAlpha] then
-                                    idx = idx + 1
-                                    dictionary[hexNoAlpha] = idx
-                                end
-                            end
-                        end
-                    else
-                        for elm in itr do
-                            local hex = elm()
-                            if not dictionary[hex] then
-                                local alpha = hex & 0xff000000
-                                if alpha ~= 0 then
-                                    idx = idx + 1
-                                    dictionary[hex] = idx
-                                end
-                            end
-                        end
-                    end
-
-                    if idx > 0 then
-                        local len = idx
-                        local clampTo256 = args.clampTo256
-                        if clampTo256 then
-                            len = math.min(256, len)
-                        end
-
-                        local palette = Palette(len)
-                        for hex, i in pairs(dictionary) do
-                            local j = i - 1
-                            if j < len then
-                                palette:setColor(j, AseUtilities.hexToAseColor(hex))
-                            end
-                        end
-
-                        local target = args.target
-                        if target == "SAVE" then
-                            local filepath = args.filepath
-                            palette:saveAs(filepath)
-                            app.alert("Palette saved.")
-                        else
-                            sprite:setPalette(palette)
-                        end
-                    end
-
-                    AseUtilities.changePixelFormat(oldMode)
-                    app.refresh()
-
-                else
-                    app.alert("Cel does not contain an image.")
+                local prependMask = args.prependMask
+                if prependMask then
+                    idx = idx + 1
+                    dictionary[0x00000000] = idx
                 end
+
+                local removeAlpha = args.removeAlpha
+                if removeAlpha then
+                    for elm in itr do
+                        local hex = elm()
+                        if hex ~= 0x00000000 then
+                            local hexNoAlpha = hex | 0xff000000
+                            if not dictionary[hexNoAlpha] then
+                                idx = idx + 1
+                                dictionary[hexNoAlpha] = idx
+                            end
+                        end
+                    end
+                else
+                    for elm in itr do
+                        local hex = elm()
+                        if not dictionary[hex] then
+                            local alpha = hex & 0xff000000
+                            if alpha ~= 0 then
+                                idx = idx + 1
+                                dictionary[hex] = idx
+                            end
+                        end
+                    end
+                end
+
+                if idx > 0 then
+                    local len = idx
+                    local clampTo256 = args.clampTo256
+                    if clampTo256 then
+                        len = math.min(256, len)
+                    end
+
+                    local palette = Palette(len)
+                    for hex, i in pairs(dictionary) do
+                        local j = i - 1
+                        if j < len then
+                            palette:setColor(j, AseUtilities.hexToAseColor(hex))
+                        end
+                    end
+
+                    local target = args.target
+                    if target == "SAVE" then
+                        local filepath = args.filepath
+                        palette:saveAs(filepath)
+                        app.alert("Palette saved.")
+                    else
+                        sprite:setPalette(palette)
+                    end
+                end
+
+                AseUtilities.changePixelFormat(oldMode)
+                app.refresh()
+
+                -- else
+                    -- app.alert("Cel does not contain an image.")
+                -- end
             else
                 app.alert("There is no active cel.")
             end

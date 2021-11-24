@@ -490,6 +490,7 @@ end
 ---Constructs a matrix from a nonuniform scale.
 ---@param width number width
 ---@param depth number depth
+---@param height number height
 ---@return table
 function Mat4.fromScale(width, depth, height)
     local w = 1.0
@@ -515,9 +516,9 @@ function Mat4.fromScale(width, depth, height)
 end
 
 ---Constructs a matrix from a translation.
----@param x number x
----@param y number y
----@param z number z
+---@param x number translation x
+---@param y number translation y
+---@param z number translation z
 ---@return table
 function Mat4.fromTranslation(x, y, z)
     local zv = z or 0.0
