@@ -67,9 +67,6 @@ dlg:button {
         if sprite then
             local cel = app.activeCel
             if cel then
-                -- local image = cel.image
-                -- if image then
-
                 -- Must be changed to RGB color mode before the
                 -- cel image is retrieved. Otherwise will throw
                 -- an error about ImageObj.
@@ -139,10 +136,6 @@ dlg:button {
 
                 AseUtilities.changePixelFormat(oldMode)
                 app.refresh()
-
-                -- else
-                    -- app.alert("Cel does not contain an image.")
-                -- end
             else
                 app.alert("There is no active cel.")
             end

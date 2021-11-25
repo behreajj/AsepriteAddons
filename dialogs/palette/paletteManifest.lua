@@ -373,7 +373,10 @@ dlg:button {
             local hexDict = {}
             for i = 1, hexesSrgbLen, 1 do
                 local hex = hexesSrgb[i]
-                if (not hexDict[hex]) or (i == srcMaskIdx) then
+
+                -- Mask color should be included even if it is
+                -- already present in palette at another index.
+                if (not hexDict[hex]) or ((i - 1) == srcMaskIdx) then
                     hexDict[hex] = i
                 end
             end
@@ -388,7 +391,6 @@ dlg:button {
         -- of color into one object, so that all can
         -- remain affiliated when the data are sorted.
         local palData = {}
-        local palIdx = 1
         for i = 1, hexesSrgbLen, 1 do
             local hexSrgb = hexesSrgb[i]
             if hexSrgb then
@@ -461,8 +463,7 @@ dlg:button {
                     h = trunc(0.5 + lch.h * 360.0)
                 }
 
-                palData[palIdx] = palEntry
-                palIdx = palIdx + 1
+                palData[1 + palIdx] = palEntry
             end
         end
 
@@ -655,11 +656,11 @@ dlg:button {
         -- Create background image.
         local bkgColor = args.bkgColor or defaults.bkgColor
         local bkgHex = bkgColor.rgbaPixel
-        local bkgImg = Image(spriteWidth, spriteHeight)
+        local bkgImg = Image(spriteWidth, spriteHeight, ColorMode.RGB)
         for elm in bkgImg:pixels() do elm(bkgHex) end
 
         -- Create footer to display profile name.
-        local footImg = Image(entryWidth, entryHeight)
+        local footImg = Image(entryWidth, entryHeight, ColorMode.RGB)
         local footText = string.upper(string.sub(mnfstClrPrf.name, 1, 12))
         if #footText < 1 then footText = "NONE" end
         footText = "PROFILE: " .. footText
@@ -676,7 +677,7 @@ dlg:button {
         if #mnfstTitle < 1 then mnfstTitle = defaults.title end
         local mnfstTitleDisp = string.sub(mnfstTitle, 1, 12)
         mnfstTitleDisp = string.upper(mnfstTitleDisp)
-        local titleImg = Image(entryWidth, entryHeight)
+        local titleImg = Image(entryWidth, entryHeight, ColorMode.RGB)
         local titleChars = strToChars(mnfstTitleDisp)
         local titleHalfLen = dw * #titleChars // 2
         drawCharsHorizShd(
@@ -686,14 +687,14 @@ dlg:button {
             gw, gh, txtDispScl)
 
         -- Create templates for alternating rows.
-        local row0Tmpl = Image(entryWidth, entryHeight)
+        local row0Tmpl = Image(entryWidth, entryHeight, ColorMode.RGB)
         for elm in row0Tmpl:pixels() do elm(row0Hex) end
 
-        local row1Tmpl = Image(entryWidth, entryHeight)
+        local row1Tmpl = Image(entryWidth, entryHeight, ColorMode.RGB)
         for elm in row1Tmpl:pixels() do elm(row1Hex) end
 
         -- Create header image.
-        local hdrImg = Image(entryWidth, entryHeight)
+        local hdrImg = Image(entryWidth, entryHeight, ColorMode.RGB)
         for elm in hdrImg:pixels() do elm(hdrBkgHex) end
 
         local xCrtHdr = swchSizeTotal + entryPadding
@@ -748,7 +749,7 @@ dlg:button {
         end
 
         -- Create sprite.
-        local manifestSprite = Sprite(spriteWidth, spriteHeight)
+        local manifestSprite = Sprite(spriteWidth, spriteHeight, ColorMode.RGB)
         manifestSprite.filename = mnfstTitle
 
         -- This is not necessary. It is retained in case this
