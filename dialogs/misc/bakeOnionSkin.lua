@@ -316,9 +316,15 @@ dlg:button {
                     local lerpFunc = nil
                     if useBoth then
                         lerpFunc = function(a, b, c, d)
-                            local t = (abs(c - d) - 1.0) / (0.5 * sampleCount - 1.0)
-                            t = min(max(t, 0.0), 1.0)
-                            return (1.0 - t) * b + t * a
+                            if sampleCount > 2 then
+                                local t = (abs(c - d) - 1.0) / (0.5 * sampleCount - 1.0)
+                                t = min(max(t, 0.0), 1.0)
+                                return (1.0 - t) * b + t * a
+                            elseif sampleCount > 1 then
+                                return (a + b) * 0.5
+                            else
+                                return a
+                            end
                         end
                     else
                         lerpFunc = function(a, b, c, d)
