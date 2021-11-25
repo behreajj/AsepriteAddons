@@ -619,8 +619,8 @@ dlg:button {
         local shdColor = args.shdColor or defaults.shdColor
         local hdrTxtColor = args.hdrTxtColor or defaults.hdrTxtColor
         local hdrBkgColor = args.hdrBkgColor or defaults.hdrBkgColor
-        local row0Color = args.row0Color or defaults.rowColor0
-        local row1Color = args.row1Color or defaults.rowColor1
+        local row0Color = args.rowColor0 or defaults.rowColor0
+        local row1Color = args.rowColor1 or defaults.rowColor1
 
         -- Convert to hexadecimal.
         local txtHex = txtColor.rgbaPixel
@@ -761,7 +761,7 @@ dlg:button {
         -- Create background layer and cel.
         local bkgLayer = manifestSprite.layers[1]
         bkgLayer.name = "Bkg"
-        bkgLayer.color = bkgColor
+        -- bkgLayer.color = bkgColor
         manifestSprite:newCel(
             bkgLayer, frameObj, bkgImg)
 
@@ -820,7 +820,7 @@ dlg:button {
                 rowLayer.name = strfmt("%03d.%s",
                     palIdx,
                     string.sub(hexWeb, 2))
-                rowLayer.color = rowAseColor
+                -- rowLayer.color = rowAseColor
 
                 if hexSrgb ~= hexProfile then
                     drawSwatch(rowImg, swatchMask | hexSrgb,
@@ -954,7 +954,7 @@ dlg:button {
                         and (i - 1) % hdrRepeatRate == 0) then
                     local hdrRptLayer = manifestSprite:newLayer()
                     hdrRptLayer.name = "Header"
-                    hdrRptLayer.color = hdrBkgHex
+                    -- hdrRptLayer.color = hdrBkgHex
                     manifestSprite:newCel(
                         hdrRptLayer,
                         frameObj,
