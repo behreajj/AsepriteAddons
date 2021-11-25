@@ -391,6 +391,7 @@ dlg:button {
         -- of color into one object, so that all can
         -- remain affiliated when the data are sorted.
         local palData = {}
+        local entryIdx = 1
         for i = 1, hexesSrgbLen, 1 do
             local hexSrgb = hexesSrgb[i]
             if hexSrgb then
@@ -463,7 +464,8 @@ dlg:button {
                     h = trunc(0.5 + lch.h * 360.0)
                 }
 
-                palData[1 + palIdx] = palEntry
+                palData[entryIdx] = palEntry
+                entryIdx = entryIdx + 1
             end
         end
 
@@ -754,21 +756,21 @@ dlg:button {
 
         -- This is not necessary. It is retained in case this
         -- script ever needs to use multiple frames.
-        local frameIndex = 1
+        local frameObj = manifestSprite.frames[1]
 
         -- Create background layer and cel.
         local bkgLayer = manifestSprite.layers[1]
         bkgLayer.name = "Bkg"
         bkgLayer.color = bkgColor
         manifestSprite:newCel(
-            bkgLayer, frameIndex, bkgImg)
+            bkgLayer, frameObj, bkgImg)
 
         -- Create foot layer.
         local yCaret = spriteHeight - spriteMargin - entryHeight
         local footLayer = manifestSprite:newLayer()
         footLayer.name = "Profile"
         manifestSprite:newCel(
-            footLayer, frameIndex, footImg,
+            footLayer, frameObj, footImg,
             Point(
                 spriteMargin,
                 spriteHeight - spriteMargin - entryHeight))
@@ -819,13 +821,6 @@ dlg:button {
                     palIdx,
                     string.sub(hexWeb, 2))
                 rowLayer.color = rowAseColor
-
-                local rowCel = manifestSprite:newCel(
-                    rowLayer,
-                    frameIndex,
-                    rowImg,
-                    Point(spriteMargin, yCaret))
-                    rowCel.color = Color(hexCel)
 
                 if hexSrgb ~= hexProfile then
                     drawSwatch(rowImg, swatchMask | hexSrgb,
@@ -945,7 +940,10 @@ dlg:button {
 
                 end
 
-                rowCel.image = rowImg
+                local rowCel = manifestSprite:newCel(
+                    rowLayer, frameObj, rowImg,
+                    Point(spriteMargin, yCaret))
+                rowCel.color = Color(hexCel)
                 yCaret = yCaret - entryHeight
 
                 -- Always place at least one header at the top.
@@ -959,7 +957,7 @@ dlg:button {
                     hdrRptLayer.color = hdrBkgHex
                     manifestSprite:newCel(
                         hdrRptLayer,
-                        frameIndex,
+                        frameObj,
                         hdrImg,
                         Point(spriteMargin, yCaret))
                     yCaret = yCaret - entryHeight
@@ -971,7 +969,7 @@ dlg:button {
         local titleLayer = manifestSprite:newLayer()
         titleLayer.name = "Title"
         manifestSprite:newCel(
-            titleLayer, frameIndex, titleImg,
+            titleLayer, frameObj, titleImg,
             Point(spriteMargin, spriteMargin))
 
         app.activeSprite = manifestSprite
