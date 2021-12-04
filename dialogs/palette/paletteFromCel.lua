@@ -62,7 +62,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
         local sprite = app.activeSprite
         if sprite then
             local cel = app.activeCel
@@ -78,6 +77,7 @@ dlg:button {
                 local dictionary = {}
                 local idx = 0
 
+                local args = dlg.data
                 local prependMask = args.prependMask
                 if prependMask then
                     idx = idx + 1

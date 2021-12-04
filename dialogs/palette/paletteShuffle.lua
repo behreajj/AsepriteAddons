@@ -42,6 +42,14 @@ dlg:entry {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "prependMask",
+    label = "Prepend Mask:",
+    selected = false,
+}
+
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "target",
     label = "Target:",
@@ -72,16 +80,20 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
-        local args = dlg.data
         local activeSprite = app.activeSprite
         if activeSprite then
             local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
+            local args = dlg.data
             local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 args.palType, args.palFile, args.palPreset, 0, 256, true)
 
             local trgHexes = Utilities.shuffle(hexesProfile)
+
+            if args.prependMask then
+                Utilities.prependMask(trgHexes)
+            end
 
             local target = args.target
             if target == "SAVE" then

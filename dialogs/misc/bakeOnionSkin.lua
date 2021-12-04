@@ -181,16 +181,28 @@ dlg:button {
         local backTint = args.backTint or defaults.backTint
         local foreTint = args.foreTint or defaults.foreTint
 
-        -- Unpack colors.
-        local backHex = backTint.rgbaPixel
-        local foreHex = foreTint.rgbaPixel
-
         -- Find directions.
         local useBoth = directions == "BOTH"
         local useFore = directions == "FORWARD"
         local useBack = directions == "BACKWARD"
         local lookForward = useBoth or useFore
         local lookBackward = useBoth or useBack
+
+        -- Unpack colors.
+        -- Neutral hex is when onion skin lands
+        -- on current frame. When "BOTH" directions
+        -- are used, mix between back and fore.
+        local backHex = backTint.rgbaPixel
+        local foreHex = foreTint.rgbaPixel
+        local neutHex = (maxAlpha << 0x18)
+            | (maxAlpha << 0x10)
+            | (maxAlpha << 0x08)
+            | maxAlpha
+        if useBoth then
+            neutHex = Clr.toHex(Clr.mixLab(
+                Clr.fromHex(backHex),
+                Clr.fromHex(foreHex), 0.5))
+        end
 
         -- Fill frames.
         local frames = {}
@@ -353,7 +365,7 @@ dlg:button {
                                 fadeAlpha = trunc(0.5 + fadeAlpha)
                             end
 
-                            local tint = 0x0
+                            local tint = neutHex
                             if relFrameIdx > 0 then
                                 tint = backHex
                             elseif relFrameIdx < 0 then

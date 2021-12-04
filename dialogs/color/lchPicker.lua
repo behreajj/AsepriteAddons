@@ -290,6 +290,110 @@ local function setFromAse(dialog, aseClr)
     updateHexCode(dialog, { clr })
 end
 
+local function setFromSelect(dialog, sprite, cel)
+    if sprite and cel then
+        local selection = sprite.selection
+        if selection and (not selection.isEmpty) then
+            local celPos = cel.position
+            local xCel = celPos.x
+            local yCel = celPos.y
+
+            local bounds = selection.bounds
+            local intersect = Rectangle(
+                bounds.x - xCel,
+                bounds.y - yCel,
+                bounds.width,
+                bounds.height)
+
+            local celImage = cel.image
+            local colorMode = celImage.colorMode
+            local px = celImage:pixels(intersect)
+
+            local aSum = 0
+            local bSum = 0
+            local gSum = 0
+            local rSum = 0
+            local count = 0
+
+            if colorMode == ColorMode.GRAY then
+                for elm in px do
+                    local x = elm.x
+                    local y = elm.y
+                    if selection:contains(xCel + x, yCel + y) then
+                        local hex = elm()
+                        local a = hex >> 0x08 & 0xff
+                        if a > 0 then
+                            local v = hex & 0xff
+                            rSum = rSum + v
+                            gSum = gSum + v
+                            bSum = bSum + v
+                            aSum = aSum + a
+                            count = count + 1
+                        end
+                    end
+                end
+            elseif colorMode == ColorMode.RGB then
+                for elm in px do
+                    local x = elm.x
+                    local y = elm.y
+                    if selection:contains(xCel + x, yCel + y) then
+                        local hex = elm()
+                        local a = hex >> 0x18 & 0xff
+                        if a > 0 then
+                            rSum = rSum + (hex & 0xff)
+                            gSum = gSum + (hex >> 0x08 & 0xff)
+                            bSum = bSum + (hex >> 0x10 & 0xff)
+                            aSum = aSum + a
+                            count = count + 1
+                        end
+                    end
+                end
+            elseif colorMode == ColorMode.INDEXED then
+                local palette = sprite.palettes[1]
+                local palLen = #palette
+                for elm in px do
+                    local x = elm.x
+                    local y = elm.y
+                    if selection:contains(xCel + x, yCel + y) then
+                        local idx = elm()
+                        if idx > -1 and idx < palLen then
+                            local aseColor = palette:getColor(idx)
+                            local a = aseColor.alpha
+                            if a > 0 then
+                                rSum = rSum + aseColor.red
+                                gSum = gSum + aseColor.green
+                                bSum = bSum + aseColor.blue
+                                aSum = aSum + a
+                                count = count + 1
+                            end
+                        end
+                    end
+                end
+            end
+
+            local clr = nil
+            if count > 0 then
+                local countInv = 1.0 / (count * 255.0)
+                clr = Clr.new(
+                    rSum * countInv,
+                    gSum * countInv,
+                    bSum * countInv,
+                    aSum * countInv)
+            else
+                clr = Clr.new(0.0, 0.0, 0.0, 0.0)
+            end
+
+            local lch = Clr.sRgbaToLch(clr)
+            setLch(dialog, lch, clr)
+            dialog:modify {
+                id = "clr",
+                colors = { AseUtilities.clrToAseColor(clr) }
+            }
+            updateHexCode(dialog, { clr })
+        end
+    end
+end
+
 local function setFromHexStr(dialog)
     local args = dialog.data
     local hexStr = args.hexCode
@@ -354,6 +458,19 @@ dlg:button {
        app.command.SwitchColors()
        setFromAse(dlg, app.fgColor)
        app.command.SwitchColors()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "selGet",
+    text = "&SELECTION",
+    focus = false,
+    onclick = function()
+        setFromSelect(dlg,
+            app.activeSprite,
+            app.activeCel)
     end
 }
 

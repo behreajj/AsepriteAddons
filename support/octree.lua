@@ -259,8 +259,7 @@ function Octree.split(o)
     for i = 1, 8, 1 do
         ochl[i] = Octree.new(
             Bounds3.newByRef(),
-            ocap,
-            nxtLvl)
+            ocap, nxtLvl)
     end
 
     Bounds3.splitInternal(
