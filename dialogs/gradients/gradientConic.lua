@@ -219,7 +219,6 @@ dlg:button {
 
             local layer = sprite.layers[#sprite.layers]
             local frame = app.activeFrame or sprite.frames[1]
-            local cel = sprite:newCel(layer, frame)
 
             --Easing mode.
             local tweenOps = args.tweenOps
@@ -276,18 +275,20 @@ dlg:button {
             if args.cw then cw = -1.0 end
             local levels = args.quantization
 
-            -- TODO: The image used here does not match
-            -- the selection bounds size. Switch approach
-            -- to match cel position and have cel image
-            -- the size of the rectangle.
             local selection = AseUtilities.getSelection(sprite)
-            local img = cel.image
-            local iterator = img:pixels(selection.bounds)
+            local selBounds = selection.bounds
+            local xCel = selBounds.x
+            local yCel = selBounds.y
+            local image = Image(selBounds.width, selBounds.height)
+            local iterator = image:pixels()
             for elm in iterator do
+                local x = elm.x + xCel
+                local y = elm.y + yCel
+                -- if selection:contains(x, y) then
 
                 -- Bring coordinates into range [0.0, 1.0].
-                local xNorm = elm.x * wInv
-                local yNorm = elm.y * hInv
+                local xNorm = x * wInv
+                local yNorm = y * hInv
 
                 -- Bring coordinates from [0.0, 1.0] to [-1.0, 1.0].
                 local xSigned = xNorm + xNorm - 1.0
@@ -309,8 +310,10 @@ dlg:button {
 
                 fac = quantize(fac, levels)
                 elm(toHex(easeFuncFinal(fac)))
+                -- end
             end
 
+            sprite:newCel(layer, frame, image, Point(xCel, yCel))
             app.refresh()
         else
             app.alert("Only RGB color mode is supported.")

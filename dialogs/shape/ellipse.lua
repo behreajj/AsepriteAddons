@@ -1,14 +1,16 @@
 dofile("../../support/mat3.lua")
-dofile("../../support/mesh2.lua")
+dofile("../../support/curve2.lua")
 dofile("../../support/utilities.lua")
 dofile("../../support/aseutilities.lua")
 
 local defaults = {
-    sides = 6,
-    angle = 90,
-    scale = 32,
-    xOrigin = 0,
-    yOrigin = 0,
+    resolution = 32,
+    handles = 0,
+    xRadius = 32.0,
+    yRadius = 24.0,
+    xOrigin = 0.0,
+    yOrigin = 0.0,
+    angle = 0,
     useStroke = true,
     strokeWeight = 1,
     strokeClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
@@ -17,32 +19,38 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Convex Polygon" }
+local dlg = Dialog { title = "Ellipse" }
 
 dlg:slider {
-    id = "sides",
-    label = "Sides:",
-    min = 3,
-    max = 16,
-    value = defaults.sides
+    id = "resolution",
+    label = "Resolution:",
+    min = 1,
+    max = 64,
+    value = defaults.resolution
 }
 
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "angle",
-    label = "Angle:",
+    id = "handles",
+    label = "Handles:",
     min = 0,
-    max = 360,
-    value = defaults.angle
+    max = 255,
+    value = defaults.handles
 }
 
 dlg:newrow { always = false }
 
 dlg:number {
-    id = "scale",
-    label = "Scale:",
-    text = string.format("%.1f", defaults.scale),
+    id = "xRadius",
+    label = "Radius:",
+    text = string.format("%.1f", defaults.xRadius),
+    decimals = AseUtilities.DISPLAY_DECIMAL
+}
+
+dlg:number {
+    id = "yRadius",
+    text = string.format("%.1f", defaults.yRadius),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
@@ -60,6 +68,18 @@ dlg:number {
     text = string.format("%.1f", defaults.yOrigin),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "angle",
+    label = "Angle:",
+    min = 0,
+    max = 360,
+    value = defaults.angle
+}
+
+dlg:newrow { always = false }
 
 dlg:newrow { always = false }
 
@@ -122,39 +142,47 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        local args = dlg.data
+        local curve = Curve2.ellipse(
+            args.xRadius,
+            args.yRadius)
 
-    local args = dlg.data
-    local mesh = Mesh2.polygon(args.sides)
+        local t = Mat3.fromTranslation(
+            args.xOrigin,
+            args.yOrigin)
+        local r = Mat3.fromRotZ(math.rad(args.angle))
+        local s = Mat3.fromScale(1.0, -1.0)
+        local mat = t * s * r
+        Utilities.mulMat3Curve2(mat, curve)
 
-    local t = Mat3.fromTranslation(
-        args.xOrigin,
-        args.yOrigin)
-    local r = Mat3.fromRotZ(math.rad(args.angle))
-    local sclval = args.scale
-    if sclval < 2.0 then sclval = 2.0 end
-    local s = Mat3.fromScale(sclval, -sclval)
+        local sprite = AseUtilities.initCanvas(
+            64, 64, curve.name,
+            { args.fillClr.rgbaPixel,
+              args.strokeClr.rgbaPixel })
+        local layer = sprite.layers[#sprite.layers]
+        local frame = app.activeFrame or sprite.frames[1]
+        local cel = sprite:newCel(layer, frame)
 
-    -- TODO: Does this rotate the right way?
-    local mat = Mat3.mul(Mat3.mul(t, s), r)
-    Utilities.mulMat3Mesh2(mat, mesh)
+        AseUtilities.drawCurve2(
+            curve,
+            args.resolution,
+            args.useFill,
+            args.fillClr,
+            args.useStroke,
+            args.strokeClr,
+            Brush(args.strokeWeight),
+            cel,
+            layer)
 
-    local sprite = AseUtilities.initCanvas(
-        64, 64, mesh.name,
-        { args.fillClr.rgbaPixel,
-          args.strokeClr.rgbaPixel })
-    local layer = sprite.layers[#sprite.layers]
-    local frame = app.activeFrame or sprite.frames[1]
-    local cel = sprite:newCel(layer, frame)
-
-    AseUtilities.drawMesh2(
-        mesh,
-        args.useFill,
-        args.fillClr,
-        args.useStroke,
-        args.strokeClr,
-        Brush(args.strokeWeight),
-        cel,
-        layer)
+        if args.handles > 0 then
+            local hlLyr = sprite:newLayer()
+            hlLyr.name = curve.name .. ".Handles"
+            hlLyr.opacity = args.handles
+            AseUtilities.drawHandles2(
+                curve,
+                sprite:newCel(hlLyr, frame),
+                hlLyr)
+        end
     end
 }
 

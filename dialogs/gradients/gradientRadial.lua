@@ -297,7 +297,6 @@ dlg:button {
 
             local layer = sprite.layers[#sprite.layers]
             local frame = app.activeFrame or sprite.frames[1]
-            local cel = sprite:newCel(layer, frame)
 
             --Easing mode.
             local tweenOps = args.tweenOps
@@ -369,28 +368,30 @@ dlg:button {
             -- Need a scalar to normalize distance to [0.0, 1.0]
             local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, w, h))
 
-            -- TODO: The image used here does not match
-            -- the selection bounds size. Switch approach
-            -- to match cel position and have cel image
-            -- the size of the rectangle.
             local selection = AseUtilities.getSelection(sprite)
-            local img = cel.image
-            local iterator = img:pixels(selection.bounds)
+            local selBounds = selection.bounds
+            local xCel = selBounds.x
+            local yCel = selBounds.y
+            local image = Image(selBounds.width, selBounds.height)
+            local iterator = image:pixels()
             for elm in iterator do
-                local xPx = elm.x
-                local yPx = elm.y
+                local x = elm.x + xCel
+                local y = elm.y + yCel
+                -- if selection:contains(x, y) then
 
                 -- Take care not to clamp fac until after basic
                 -- calculations are done.
-                local dst = distFunc(xPx, yPx, xOrigPx, yOrigPx)
+                local dst = distFunc(x, y, xOrigPx, yOrigPx)
                 local fac = dst * normDist
                 fac = (fac - minRad) * linDenom
                 fac = max(0.0, min(1.0, fac))
                 fac = quantize(fac, levels)
 
                 elm(toHex(easeFuncFinal(fac)))
+                -- end
             end
 
+            sprite:newCel(layer, frame, image, Point(xCel, yCel))
             app.refresh()
         else
             app.alert("Only RGB color mode is supported.")

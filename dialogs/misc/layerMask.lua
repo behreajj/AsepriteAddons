@@ -242,6 +242,8 @@ dlg:button {
             end
         end)
 
+        -- Beware: it's possible to delete all layers
+        -- in a sprite with Sprite:deleteLayer.
         if delOverLayer then activeSprite:deleteLayer(overLayer) end
         if delUnderLayer then activeSprite:deleteLayer(underLayer) end
         app.activeLayer = compLayer

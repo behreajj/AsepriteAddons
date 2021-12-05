@@ -175,7 +175,6 @@ dlg:button {
         local xPivot = args.xPivot or defaults.xPivot
         local yPivot = args.yPivot or defaults.yPivot
 
-        -- TODO: Possible to switch back from nonuniform to uniform but not update the values.
         local lInset = args.lInset or defaults.lInset
         local rInset = args.rInset or defaults.rInset
         local bInset = args.bInset or defaults.bInset
@@ -357,6 +356,8 @@ dlg:button {
                 end
             end
 
+            -- Beware: it's possible to delete all layers
+            -- in a sprite with this method.
             sliceSprite:deleteLayer(sliceSprite.layers[1])
         end)
 

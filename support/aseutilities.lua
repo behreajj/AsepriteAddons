@@ -1334,12 +1334,15 @@ end
 ---@return table
 function AseUtilities.getSelection(sprite)
     local select = sprite.selection
-    if select.isEmpty then
+    if (not select) or select.isEmpty then
         return Selection(sprite.bounds)
     else
         -- This precaution must be taken because
-        -- a transform cage can be dragged
-        -- off-canvas, causing Aseprite to crash.
+        -- a transform cage can be dragged off
+        -- canvas, causing Aseprite to crash.
+        -- Problem is that the square bounds is not
+        -- necessarily the same as the selection, e.g.,
+        -- if it's created with magic wand or circle.
         return Selection(
             select.bounds:intersect(sprite.bounds))
     end

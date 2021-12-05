@@ -272,6 +272,62 @@ function Curve2.arcSector(
     return Curve2.new(true, kns, "Arc")
 end
 
+---Creates a curve to approximate an ellipse.
+---@param xRadius number
+---@param yRadius number
+---@param xOrigin number
+---@param yOrigin number
+---@return table
+function Curve2.ellipse(
+    xRadius,
+    yRadius,
+    xOrigin,
+    yOrigin)
+
+    -- Supply default arguments.
+    local ry = yRadius or 0.5
+    local rx = xRadius or 0.5
+    local cy = yOrigin or 0.0
+    local cx = xOrigin or 0.0
+
+    -- Validate radii.
+    rx = math.max(0.000001, math.abs(rx))
+    ry = math.max(0.000001, math.abs(ry))
+
+    local right = cx + rx
+    local top = cy + ry
+    local left = cx - rx
+    local bottom = cy - ry
+
+    -- kappa := 4 * (math.sqrt(2) - 1) / 3
+    local horizHandle = rx * 0.5522847498307936
+    local vertHandle = ry * 0.5522847498307936
+
+    local xHandlePos = cx + horizHandle
+    local xHandleNeg = cx - horizHandle
+    local yHandlePos = cy + vertHandle
+    local yHandleNeg = cy - vertHandle
+
+    return Curve2.new(true, {
+        Knot2.new(
+            Vec2.new(right, cy),
+            Vec2.new(right, yHandlePos),
+            Vec2.new(right, yHandleNeg)),
+        Knot2.new(
+            Vec2.new(cx, top),
+            Vec2.new(xHandleNeg, top),
+            Vec2.new(xHandlePos, top)),
+        Knot2.new(
+            Vec2.new(left, cy),
+            Vec2.new(left, yHandleNeg),
+            Vec2.new(left, yHandlePos)),
+        Knot2.new(
+            Vec2.new(cx, bottom),
+            Vec2.new(xHandlePos, bottom),
+            Vec2.new(xHandleNeg, bottom))
+    }, "Ellipse")
+end
+
 ---Creats a curve that approximates Bernoulli's
 ---lemniscate, i.e., an infinity loop.
 ---@return table

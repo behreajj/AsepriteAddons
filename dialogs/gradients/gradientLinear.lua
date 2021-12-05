@@ -215,7 +215,6 @@ dlg:button {
         if sprite.colorMode == ColorMode.RGB then
             local layer = sprite.layers[#sprite.layers]
             local frame = app.activeFrame or sprite.frames[1]
-            local cel = sprite:newCel(layer, frame)
 
             --Easing mode.
             local tweenOps = args.tweenOps
@@ -280,16 +279,18 @@ dlg:button {
             local quantize = Utilities.quantizeUnsigned
             local toHex = Clr.toHex
 
-            -- TODO: The image used here does not match
-            -- the selection bounds size. Switch approach
-            -- to match cel position and have cel image
-            -- the size of the rectangle.
             local selection = AseUtilities.getSelection(sprite)
-            local img = cel.image
-            local iterator = img:pixels(selection.bounds)
+            local selBounds = selection.bounds
+            local xCel = selBounds.x
+            local yCel = selBounds.y
+            local image = Image(selBounds.width, selBounds.height)
+            local iterator = image:pixels()
             for elm in iterator do
-                local cx = xOrPx - elm.x
-                local cy = yOrPx - elm.y
+                local x = elm.x + xCel
+                local y = elm.y + yCel
+                -- if selection:contains(x, y) then
+                local cx = xOrPx - x
+                local cy = yOrPx - y
                 local cb = (cx * bx + cy * by) * bbInv
 
                 -- Unsigned quantize will already clamp to
@@ -298,8 +299,10 @@ dlg:button {
                 if fac > 1.0 then fac = 1.0 end
 
                 elm(toHex(easeFuncFinal(fac)))
+                -- end
             end
 
+            sprite:newCel(layer, frame, image, Point(xCel, yCel))
             app.refresh()
 
             if invalidFlag then
