@@ -417,7 +417,7 @@ dlg:button {
             local palFile = args.palFile
             local palPreset = args.palPreset
 
-            hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
+            hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 palType, palFile, palPreset, 0, 256, true)
         else
             -- Since a palette will be created immediately after, pbr.

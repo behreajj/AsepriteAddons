@@ -165,7 +165,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "palFile",
-    filetypes = AseUtilities.FILE_FORMATS,
+    filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
     open = true,
     visible = defaults.plotPalette
         and defaults.palType == "FILE"
@@ -234,7 +234,7 @@ dlg:button {
                 local palStart = args.palStart or defaults.palStart
                 local palCount = args.palCount or defaults.palCount
 
-                hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
+                hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                     palType, palFile, palPreset, palStart, palCount, true)
             else
                 -- Since a palette will be created immediately after, pbr.

@@ -163,7 +163,7 @@ dlg:button {
                 local palFile = args.palFile
                 local palPreset = args.palPreset
 
-                hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
+                hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                     palType, palFile, palPreset, 0, 256, true)
             else
                 hexesProfile = AseUtilities.DEFAULT_PAL_ARR
@@ -173,7 +173,35 @@ dlg:button {
             local openSprite = nil
             local exists = app.fs.isFile(spriteFile)
             if exists then
-                openSprite = Sprite { fromFile = spriteFile }
+                openSprite = nil
+                local fileExt = app.fs.fileExtension(spriteFile)
+                if fileExt == "gpl" or fileExt == "pal" then
+                    local spriteHexes, _ = AseUtilities.asePaletteLoad(
+                        "FILE", spriteFile, "", 0, 256, true)
+                    local colorsLen = #spriteHexes
+                    local rtLen = math.max(16,
+                    math.ceil(math.sqrt(math.max(
+                        1, colorsLen))))
+                    openSprite = Sprite(rtLen, rtLen)
+                    openSprite:setPalette(
+                        AseUtilities.hexArrToAsePalette(spriteHexes))
+
+                    local layer = openSprite.layers[1]
+                    local cel = layer.cels[1]
+                    local image = cel.image
+                    local pxItr = image:pixels()
+
+                    local index = 1
+                    for elm in pxItr do
+                        if index <= colorsLen then
+                            elm(spriteHexes[index])
+                            index = index + 1
+                        end
+                    end
+                else
+                    openSprite = Sprite { fromFile = spriteFile }
+                end
+
                 if openSprite then
                     app.activeSprite = openSprite
                     app.command.ChangePixelFormat { format = "rgb" }
@@ -193,7 +221,7 @@ dlg:button {
                     -- Aseprite's built-in nearest color in palette method
                     -- isn't trustworthy. Even if it were, there's no way
                     -- of telling the user's intent. It could be that
-                    -- index 6 should be the transparent color for both the
+                    -- index n should be the transparent color for both the
                     -- old and new palette, no matter how different the colors
                     -- in appearance. Better to reset to zero.
                     if openSprite.transparentColor ~= 0 then

@@ -134,7 +134,6 @@ dlg:button {
     if sclval < 2.0 then sclval = 2.0 end
     local s = Mat3.fromScale(sclval, -sclval)
 
-    -- TODO: Does this rotate the right way?
     local mat = Mat3.mul(Mat3.mul(t, s), r)
     Utilities.mulMat3Mesh2(mat, mesh)
 

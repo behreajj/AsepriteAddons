@@ -329,7 +329,7 @@ dlg:button {
 
         local startIndex = args.startIndex or defaults.startIndex
         local palCount = args.count or defaults.count
-        local hexesSrgb, hexesProfile = AseUtilities.asePaletteLoad(
+        local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
             palType, args.palFile, args.palPreset,
             startIndex, palCount, false)
 

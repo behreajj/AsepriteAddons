@@ -81,8 +81,6 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:newrow { always = false }
-
 dlg:check {
     id = "useStroke",
     label = "Stroke:",

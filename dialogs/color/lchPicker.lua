@@ -298,16 +298,12 @@ local function setFromSelect(dialog, sprite, cel)
             local xCel = celPos.x
             local yCel = celPos.y
 
-            local bounds = selection.bounds
-            local intersect = Rectangle(
-                bounds.x - xCel,
-                bounds.y - yCel,
-                bounds.width,
-                bounds.height)
-
+            -- Problem with selections that extend
+            -- into negative values.
+            selection:intersect(Selection(sprite.bounds))
             local celImage = cel.image
             local colorMode = celImage.colorMode
-            local px = celImage:pixels(intersect)
+            local px = celImage:pixels()
 
             local aSum = 0
             local bSum = 0
@@ -317,9 +313,9 @@ local function setFromSelect(dialog, sprite, cel)
 
             if colorMode == ColorMode.GRAY then
                 for elm in px do
-                    local x = elm.x
-                    local y = elm.y
-                    if selection:contains(xCel + x, yCel + y) then
+                    local x = xCel + elm.x
+                    local y = yCel + elm.y
+                    if selection:contains(x, y) then
                         local hex = elm()
                         local a = hex >> 0x08 & 0xff
                         if a > 0 then
@@ -334,9 +330,9 @@ local function setFromSelect(dialog, sprite, cel)
                 end
             elseif colorMode == ColorMode.RGB then
                 for elm in px do
-                    local x = elm.x
-                    local y = elm.y
-                    if selection:contains(xCel + x, yCel + y) then
+                    local x = xCel + elm.x
+                    local y = yCel + elm.y
+                    if selection:contains(x, y) then
                         local hex = elm()
                         local a = hex >> 0x18 & 0xff
                         if a > 0 then
@@ -352,9 +348,9 @@ local function setFromSelect(dialog, sprite, cel)
                 local palette = sprite.palettes[1]
                 local palLen = #palette
                 for elm in px do
-                    local x = elm.x
-                    local y = elm.y
-                    if selection:contains(xCel + x, yCel + y) then
+                    local x = xCel + elm.x
+                    local y = yCel + elm.y
+                    if selection:contains(x, y) then
                         local idx = elm()
                         if idx > -1 and idx < palLen then
                             local aseColor = palette:getColor(idx)
