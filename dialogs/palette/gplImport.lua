@@ -47,16 +47,17 @@ dlg:button {
         local strlower = string.lower
         local strsub = string.sub
         local strgmatch = string.gmatch
+        local strmatch = string.match
         local tinsert = table.insert
 
         -- Implicitly tries to support JASC-PAL.
         local gplHeaderFound = 0
         local palHeaderFound = 0
         local palMagicFound = 0
-        local columnsFound = 0
         local nameFound = 0
         local jascPalClrCountFound = 0
         local aseAlphaFound = 0
+        local columns = 0
         local comments = {}
         local colors = {}
 
@@ -77,7 +78,11 @@ dlg:button {
                 elseif strsub(lc, 1, 4) == "name" then
                     nameFound = lineCount
                 elseif strsub(lc, 1, 7) == "columns" then
-                    columnsFound = lineCount
+                    local colStr = strmatch(lc, ":(.*)")
+                    local colDraft = tonumber(colStr, 10)
+                    if colDraft then
+                        columns = colDraft
+                    end
                 elseif lc == "channels: rgba" then
                     aseAlphaFound = lineCount
                 elseif strsub(lc, 1, 1) == '#' then
@@ -103,14 +108,14 @@ dlg:button {
                         if tokensLen > 2 then
                             if aseAlphaFound > 0
                                 and tokensLen > 3 then
-                                local aPrs = tonumber(tokens[4])
+                                local aPrs = tonumber(tokens[4], 10)
                                 if aPrs then a = aPrs end
                             end
 
                             if a > 0 then
-                                local bPrs = tonumber(tokens[3])
-                                local gPrs = tonumber(tokens[2])
-                                local rPrs = tonumber(tokens[1])
+                                local bPrs = tonumber(tokens[3], 10)
+                                local gPrs = tonumber(tokens[2], 10)
+                                local rPrs = tonumber(tokens[1], 10)
 
                                 if bPrs then b = bPrs end
                                 if gPrs then g = gPrs end
@@ -153,15 +158,22 @@ dlg:button {
 
             -- If no sprite exists, then create a new
             -- sprite and place palette swatches in it.
-            -- Minimum dimensions are 16 x 16 for
-            -- a palette with 256 entries.
             local activeSprite = app.activeSprite
             if not activeSprite then
                 local colorsLen = #colors
-                local rtLen = math.max(16,
+
+                -- Try to base sprite width on columns
+                -- in GPL file. If not, find square root
+                -- of colors length.
+                local spriteWidth = columns
+                if columns < 1 then
+                    spriteWidth = math.max(8,
                     math.ceil(math.sqrt(math.max(
                         1, colorsLen))))
-                activeSprite = Sprite(rtLen, rtLen)
+                end
+                local spriteHeight = math.max(1,
+                    math.ceil(colorsLen / spriteWidth))
+                activeSprite = Sprite(spriteWidth, spriteHeight)
                 local layer = activeSprite.layers[1]
                 local cel = layer.cels[1]
                 local image = cel.image

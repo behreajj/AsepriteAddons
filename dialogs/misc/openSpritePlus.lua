@@ -173,7 +173,7 @@ dlg:button {
             local openSprite = nil
             local exists = app.fs.isFile(spriteFile)
             if exists then
-                openSprite = nil
+                -- GPL and PAL file formats cannot be loaded as sprites.
                 local fileExt = app.fs.fileExtension(spriteFile)
                 if fileExt == "gpl" or fileExt == "pal" then
                     local spriteHexes, _ = AseUtilities.asePaletteLoad(
