@@ -7,6 +7,41 @@ local paletteTypes = {
     "FILE",
     "PRESET" }
 
+local function loadSprite(spriteFile)
+    -- TODO: Move to AseUtilities?
+
+    -- GPL and PAL file formats cannot be loaded as sprites.
+    local fileExt = app.fs.fileExtension(spriteFile)
+    local sprite = nil
+    if fileExt == "gpl" or fileExt == "pal" then
+        local spriteHexes, _ = AseUtilities.asePaletteLoad(
+            "FILE", spriteFile, "", 0, 256, true)
+        local colorsLen = #spriteHexes
+        local rtLen = math.max(16,
+            math.ceil(math.sqrt(math.max(1, colorsLen))))
+        sprite = Sprite(rtLen, rtLen)
+        sprite:setPalette(
+            AseUtilities.hexArrToAsePalette(spriteHexes))
+
+        local layer = sprite.layers[1]
+        local cel = layer.cels[1]
+        local image = cel.image
+        local pxItr = image:pixels()
+
+        local index = 1
+        for elm in pxItr do
+            if index <= colorsLen then
+                elm(spriteHexes[index])
+                index = index + 1
+            end
+        end
+    else
+        sprite = Sprite { fromFile = spriteFile }
+    end
+
+    return sprite
+end
+
 local defaults = {
     removeBkg = true,
     trimCels = true,
@@ -97,40 +132,6 @@ dlg:check {
     selected = defaults.prependMask,
 }
 
--- dlg:separator { id = "gridSeparate" }
-
--- dlg:slider {
---     id = "xGrid",
---     label = "Grid Offset:",
---     min = 0,
---     max = 32,
---     value = defaults.xGrid
--- }
-
--- dlg:slider {
---     id = "yGrid",
---     min = 0,
---     max = 32,
---     value = defaults.yGrid
--- }
-
--- dlg:newrow { always = false }
-
--- dlg:slider {
---     id = "wGrid",
---     label = "Grid Size:",
---     min = 0,
---     max = 96,
---     value = defaults.wGrid
--- }
-
--- dlg:slider {
---     id = "hGrid",
---     min = 0,
---     max = 96,
---     value = defaults.hGrid
--- }
-
 dlg:separator { id = "noteSeparate" }
 
 dlg:label {
@@ -170,37 +171,12 @@ dlg:button {
                 hexesSrgb = hexesProfile
             end
 
+            -- Aseprite will automatically trigger opening an image
+            -- sequence if possible, so no point in creating a custom.
             local openSprite = nil
             local exists = app.fs.isFile(spriteFile)
             if exists then
-                -- GPL and PAL file formats cannot be loaded as sprites.
-                local fileExt = app.fs.fileExtension(spriteFile)
-                if fileExt == "gpl" or fileExt == "pal" then
-                    local spriteHexes, _ = AseUtilities.asePaletteLoad(
-                        "FILE", spriteFile, "", 0, 256, true)
-                    local colorsLen = #spriteHexes
-                    local rtLen = math.max(16,
-                    math.ceil(math.sqrt(math.max(
-                        1, colorsLen))))
-                    openSprite = Sprite(rtLen, rtLen)
-                    openSprite:setPalette(
-                        AseUtilities.hexArrToAsePalette(spriteHexes))
-
-                    local layer = openSprite.layers[1]
-                    local cel = layer.cels[1]
-                    local image = cel.image
-                    local pxItr = image:pixels()
-
-                    local index = 1
-                    for elm in pxItr do
-                        if index <= colorsLen then
-                            elm(spriteHexes[index])
-                            index = index + 1
-                        end
-                    end
-                else
-                    openSprite = Sprite { fromFile = spriteFile }
-                end
+                openSprite = loadSprite(spriteFile)
 
                 if openSprite then
                     app.activeSprite = openSprite

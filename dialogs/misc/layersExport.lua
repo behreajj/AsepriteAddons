@@ -20,7 +20,7 @@ local dlg = Dialog { title = "Export Layers" }
 
 dlg:combobox {
     id = "target",
-    label = "Target:",
+    label = "Layers:",
     option = defaults.target,
     options = targets
 }
@@ -188,53 +188,60 @@ dlg:button {
                 -- For whatever reason, the Lua hierarchical
                 -- function causes problems.
                 local isVis = layer.isVisible
-                if isVis and (not layer.isReference) then
+                local isRef = layer.isReference
+                if isVis and (not isRef) then
                     local srcImage = cel.image
-                    local trgImage = nil
-                    local xOrigin = 0
-                    local yOrigin = 0
-                    if useSpriteBounds then
-                        local celPos = cel.position
-                        trgImage = Image(wPaddedSprite, hPaddedSprite, oldMode)
-                        trgImage:drawImage(srcImage, padOffset + celPos)
-                    else
-                        trgImage, xOrigin, yOrigin = trimAlpha(srcImage, padding, alphaIndex)
-                        local celPos = cel.position
-                        xOrigin = xOrigin + celPos.x
-                        yOrigin = yOrigin + celPos.y
+                    local isEmpty = srcImage:isEmpty()
+                    if not isEmpty then
+                        local trgImage = nil
+                        local xOrigin = 0
+                        local yOrigin = 0
+                        if useSpriteBounds then
+                            local celPos = cel.position
+                            trgImage = Image(wPaddedSprite, hPaddedSprite, oldMode)
+                            trgImage:drawImage(srcImage, padOffset + celPos)
+                        else
+                            -- TODO: Promote image dimensions to
+                            -- nearest (greater) power of 2?
+                            trgImage, xOrigin, yOrigin = trimAlpha(
+                                srcImage, padding, alphaIndex)
+                            local celPos = cel.position
+                            xOrigin = xOrigin + celPos.x
+                            yOrigin = yOrigin + celPos.y
+                        end
+
+                        local stackIndex = layer.stackIndex
+                        local frameNumber = cel.frameNumber
+
+                        local fileNameShort = strfmt(
+                            "%s%03d_%03d",
+                            fileTitle, stackIndex, frameNumber)
+                        local fileNameLong = strfmt(
+                            "%s%03d_%03d.%s",
+                            filePrefix, stackIndex, frameNumber, fileExt)
+
+                        if useResize then
+                            trgImage:resize(
+                                trgImage.width * scale,
+                                trgImage.height * scale)
+                        end
+
+                        trgImage:saveAs {
+                            filename = fileNameLong,
+                            palette = activePalette
+                        }
+
+                        jsonEntries[j] = {
+                            fileName = fileNameShort,
+                            cel = cel,
+                            layer = layer,
+                            xOrigin = xOrigin * scale,
+                            yOrigin = yOrigin * scale,
+                            width = trgImage.width,
+                            height = trgImage.height
+                        }
+                        j = j + 1
                     end
-
-                    local stackIndex = layer.stackIndex
-                    local frameNumber = cel.frameNumber
-
-                    local fileNameShort = strfmt(
-                        "%s%03d_%03d",
-                        fileTitle, stackIndex, frameNumber)
-                    local fileNameLong = strfmt(
-                        "%s%03d_%03d.%s",
-                        filePrefix, stackIndex, frameNumber, fileExt)
-
-                    if useResize then
-                        trgImage:resize(
-                            trgImage.width * scale,
-                            trgImage.height * scale)
-                    end
-
-                    trgImage:saveAs {
-                        filename = fileNameLong,
-                        palette = activePalette
-                    }
-
-                    jsonEntries[j] = {
-                        fileName = fileNameShort,
-                        cel = cel,
-                        layer = layer,
-                        xOrigin = xOrigin * scale,
-                        yOrigin = yOrigin * scale,
-                        width = trgImage.width,
-                        height = trgImage.height
-                    }
-                    j = j + 1
                 end
             end
 

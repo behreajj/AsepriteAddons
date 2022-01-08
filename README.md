@@ -1,10 +1,16 @@
 # Aseprite Add-ons
 
-An appendix to the Medium article, ["How To Script Aseprite Tools in Lua"](https://behreajj.medium.com/how-to-script-aseprite-tools-in-lua-8f849b08733). Copy `dialog` and `support` folders to Aseprite scripts folder. In Aseprite, open scripts from the `dialogs` folder.
+An appendix to the Medium article, ["How To Script Aseprite Tools in Lua"](https://behreajj.medium.com/how-to-script-aseprite-tools-in-lua-8f849b08733).
+
+To install, click on the green `Code` button above. For those unfamiliar with Git, select `Download ZIP`, then unzip the file after it has finished downloading.
+
+In Aseprite, go to `File > Scripts > Open Scripts Folder`. Copy `dialog` and `support` folders from the unzipped download into the folder that Aseprite has opened. Return to Aseprite, go to `File > Scripts > Rescan Scripts Folder`.
+
+To use, go to `File > Scripts` and choose from entries in the `dialogs` folder.
 
 ## References
 
-For more info, see
+For more information, see
 
 - [Aseprite Scripting API](https://github.com/aseprite/api)
 - [Aseprite CPP source that receives Lua inputs](https://github.com/aseprite/aseprite/tree/main/src/app/script)

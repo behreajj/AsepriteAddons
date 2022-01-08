@@ -27,6 +27,8 @@ GradientUtilities.HUE_EASING_PRESETS = {
 }
 
 GradientUtilities.RGB_EASING_PRESETS = {
+    "EASE_IN_CIRC",
+    "EASE_OUT_CIRC",
     "LINEAR",
     "SMOOTH",
     "SMOOTHER"
@@ -45,6 +47,7 @@ GradientUtilities.TWEEN_PRESETS = {
 ---@return function
 function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, rgbPreset, huePreset)
     if clrSpcPreset == "CIE_LAB" then
+        -- TODO: Support rgbEasingFuncs?
         return Clr.mixLabInternal
     elseif clrSpcPreset == "CIE_LCH" then
         local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
@@ -74,6 +77,21 @@ function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, rgbPreset, huePres
             return Clr.mixlRgbaInternal(a, b, rgbef(t))
         end
     end
+end
+
+---Returns a factor that eases in by a circular arc.
+---@param t number factor
+---@return number
+function GradientUtilities.easeInCirc(t)
+    return 1.0 - math.sqrt(1.0 - t * t)
+end
+
+---Returns a factor that eases out by a circular arc.
+---@param t number factor
+---@return number
+function GradientUtilities.easeOutCirc(t)
+    local u = t - 1.0
+    return math.sqrt(1.0 - u * u)
 end
 
 ---Finds the appropriate easing function in HSL or HSV
@@ -148,7 +166,11 @@ end
 ---@param preset string rgb preset
 ---@return function
 function GradientUtilities.rgbEasingFuncFromPreset(preset)
-    if preset == "SMOOTH" then
+    if preset == "EASE_IN_CIRC" then
+        return GradientUtilities.easeInCirc
+    elseif preset == "EASE_OUT_CIRC" then
+        return GradientUtilities.easeOutCirc
+    elseif preset == "SMOOTH" then
         return GradientUtilities.smooth
     elseif preset == "SMOOTHER" then
         return GradientUtilities.smoother

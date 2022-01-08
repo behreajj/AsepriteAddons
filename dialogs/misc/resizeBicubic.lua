@@ -113,6 +113,8 @@ dlg:button {
                 local srcImg = srcCel.image
                 if srcImg ~= nil then
 
+                    -- TODO: Generalize to resizeCel, add nearest neighbor?
+
                     -- Adapted from
                     -- https://stackoverflow.com/questions/
                     -- 17640173/implementation-of-bi-cubic-resize

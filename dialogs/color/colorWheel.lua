@@ -18,9 +18,11 @@ local defaults = {
     sectorCount = 1,
     hueCenter = "ABSOLUTE",
     plotPalette = true,
-    palType = "DEFAULT",
+    palType = "ACTIVE",
     palStart = 0,
     palCount = 256,
+    strokeSize = 6,
+    fillSize = 5,
     pullFocus = false
 }
 
@@ -269,6 +271,11 @@ dlg:button {
         local oogamask = outOfGamut << 0x18
         for i = 1, reqFrames, 1 do
 
+            -- Convert i to a step, then lerp from
+            -- minimum light to maximum light.
+            local iStep = (i - 1.0) * iToStep
+            local light = (1.0 - iStep) * minLight + iStep * maxLight
+
             -- Cache extrema so as to find relative center.
             local xMin = 2147483647
             local yMin = 2147483647
@@ -295,10 +302,6 @@ dlg:button {
                 local yNrm = y * szInv
                 local ySgn = 1.0 - (yNrm + yNrm)
 
-                -- Convert i to a step, then lerp from
-                -- minimum light to maximum light.
-                local t = (i - 1.0) * iToStep
-                local light = (1.0 - t) * minLight + t * maxLight
                 local clr = labTosRgba(
                     light,
                     xSgn * 110.0,
@@ -379,7 +382,7 @@ dlg:button {
         local fps = args.fps or defaults.fps
         local duration = 1.0 / math.max(1, fps)
         sprite.frames[1].duration = duration
-        local newFrames = AseUtilities.createNewFrames(sprite, needed, duration)
+        AseUtilities.createNewFrames(sprite, needed, duration)
 
         -- Set first layer to gamut.
         -- These are not wrapped in a transaction because
@@ -525,8 +528,8 @@ dlg:button {
             local plotImage = Image(size, size)
             local hexesSrgbLen = #hexesSrgb
             local inv110 = 1.0 / 110.0
-            local strokeSize = 6
-            local fillSize = 5
+            local strokeSize = args.strokeSize or defaults.strokeSize
+            local fillSize = args.fillSize or defaults.fillSize
             local strokeColor = 0xffffffff
             for j = 1, hexesSrgbLen, 1 do
                 local hexSrgb = hexesSrgb[j]
@@ -563,12 +566,15 @@ dlg:button {
                 plotPalLayer.stackIndex, 1,
                 plotImage)
 
-            -- This needs to be done at the very end because prependMask
-            -- modifies hexesProfile.
+            -- This needs to be done at the very end because
+            -- prependMask modifies hexesProfile.
             Utilities.prependMask(hexesProfile)
             sprite:setPalette(
                 AseUtilities.hexArrToAsePalette(hexesProfile))
         end
+
+        -- TODO: Set to some sort of palette, even if none
+        -- is plotted?
 
         app.activeFrame = sprite.frames[
             math.ceil(#sprite.frames / 2)]
