@@ -293,7 +293,7 @@ dlg:button {
             local min = math.min
             local max = math.max
             local toHex = Clr.toHex
-            local quantize = Utilities.quantizeSigned
+            local quantize = Utilities.quantizeUnsigned
 
             local layer = sprite.layers[#sprite.layers]
             local frame = app.activeFrame or sprite.frames[1]
@@ -384,6 +384,7 @@ dlg:button {
                 local dst = distFunc(x, y, xOrigPx, yOrigPx)
                 local fac = dst * normDist
                 fac = (fac - minRad) * linDenom
+                -- max could be taken care of by quantize unsigned.
                 fac = max(0.0, min(1.0, fac))
                 fac = quantize(fac, levels)
 

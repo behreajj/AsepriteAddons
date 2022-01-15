@@ -6,7 +6,7 @@ setmetatable(Vec3, {
         return cls.new(...)
     end})
 
----Constructs a new vector from two numbers.
+---Constructs a new vector from three numbers.
 ---@param x number x component
 ---@param y number y component
 ---@param z number z component

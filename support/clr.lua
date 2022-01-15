@@ -1219,7 +1219,6 @@ end
 ---@return table
 function Clr.mixlRgba(a, b, t)
     local u = t or 0.5
-
     if u <= 0.0 then
         return Clr.new(a.r, a.g, a.b, a.a)
     end
@@ -1253,7 +1252,6 @@ end
 ---@param t number step
 ---@return table
 function Clr.mixsRgba(a, b, t)
-
     local u = t or 0.5
     if u <= 0.0 then
         return Clr.new(a.r, a.g, a.b, a.a)

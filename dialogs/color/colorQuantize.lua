@@ -14,7 +14,7 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "copyToLayer",
-    label = "Copy To New Layer:",
+    label = "As New Layer:",
     selected = true
 }
 

@@ -82,7 +82,7 @@ dlg:check {
 
 dlg:check {
     id = "copyToLayer",
-    label = "Copy To New Layer:",
+    label = "As New Layer:",
     selected = defaults.copyToLayer
 }
 

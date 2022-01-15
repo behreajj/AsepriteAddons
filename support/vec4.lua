@@ -6,7 +6,7 @@ setmetatable(Vec4, {
         return cls.new(...)
     end})
 
----Constructs a new vector from two numbers.
+---Constructs a new vector from four numbers.
 ---@param x number x component
 ---@param y number y component
 ---@param z number z component
@@ -137,6 +137,42 @@ function Vec4.approx(a, b, tol)
        and math.abs(b.y - a.y) <= eps
        and math.abs(b.z - a.z) <= eps
        and math.abs(b.w - a.w) <= eps
+end
+
+---Finds a point on a cubic Bezier curve
+---according to a step in [0.0, 1.0] .
+---@param ap0 table anchor point 0
+---@param cp0 table control point 0
+---@param cp1 table control point 1
+---@param ap1 table anchor point 1
+---@param step number step
+---@return table
+function Vec4.bezierPoint(ap0, cp0, cp1, ap1, step)
+    local t = step or 0.5
+    if t <= 0.0 then
+        return Vec4.new(ap0.x, ap0.y, ap0.z, ap0.w)
+    end
+    if t >= 1.0 then
+        return Vec4.new(ap1.x, ap1.y, ap1.z, ap1.w)
+    end
+
+    local u = 1.0 - t
+    local tsq = t * t
+    local usq = u * u
+    local usq3t = usq * (t + t + t)
+    local tsq3u = tsq * (u + u + u)
+    local tcb = tsq * t
+    local ucb = usq * u
+
+    return Vec4.new(
+        ap0.x * ucb + cp0.x * usq3t +
+        cp1.x * tsq3u + ap1.x * tcb,
+        ap0.y * ucb + cp0.y * usq3t +
+        cp1.y * tsq3u + ap1.y * tcb,
+        ap0.z * ucb + cp0.z * usq3t +
+        cp1.z * tsq3u + ap1.z * tcb,
+        ap0.w * ucb + cp0.w * usq3t +
+        cp1.w * tsq3u + ap1.w * tcb)
 end
 
 ---Finds the ceiling of the vector.

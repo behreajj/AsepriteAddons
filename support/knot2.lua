@@ -87,7 +87,7 @@ function Knot2:mirrorHandlesForward()
     return self
 end
 
----Reversee the knots direction by swapping
+---Reverses the knots direction by swapping
 ---its fore and rear handles.
 ---@return table
 function Knot2:reverse()

@@ -26,7 +26,6 @@ end
 
 function Glyph:__eq(b)
     return self.character == b.character
-        and self.matrix == b.matrix
 end
 
 function Glyph:__le(b)

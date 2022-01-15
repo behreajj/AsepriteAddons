@@ -9,9 +9,12 @@ setmetatable(Curve2, {
         return cls.new(...)
     end})
 
----Constructs a new vector from two numbers.
+---Constructs a piecewise cubic Bezier curve.
+---The first parameter specifies a closed loop
+---if true. The second parameter should be
+---a table of Knot2s.
 ---@param cl boolean closed loop
----@param knots number knots
+---@param knots table knots
 ---@param name string name
 ---@return table
 function Curve2.new(cl, knots, name)
@@ -136,9 +139,8 @@ function Curve2.eval(curve, step)
 
     end
 
-    -- Eval tangent as well, return table?
-    -- Or rename to evalPoint and make separate
-    -- function for tangent?
+    -- TODO: Return a tuple (separate by comma),
+    -- with bezierTangent being second value?
     local tsni = tScaled - i
     return Knot2.bezierPoint(a, b, tsni)
 end
@@ -149,7 +151,8 @@ end
 ---@return table
 function Curve2.evalFirst(curve)
     local kFirst = curve.knots[1]
-    return Vec2.new(kFirst.co.x, kFirst.co.y)
+    local coFirst = kFirst.co
+    return Vec2.new(coFirst.x, coFirst.y)
 end
 
 ---Evaluates a curve at its last knot,
@@ -158,7 +161,8 @@ end
 ---@return table
 function Curve2.evalLast(curve)
     local kLast = curve.knots[#curve.knots]
-    return Vec2.new(kLast.co.x, kLast.co.y)
+    local coLast = kLast.co
+    return Vec2.new(coLast.x, coLast.y)
 end
 
 ---Creates a curve sector from a start to

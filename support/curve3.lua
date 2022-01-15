@@ -8,9 +8,12 @@ setmetatable(Curve3, {
         return cls.new(...)
     end})
 
----Constructs a new vector from two numbers.
+---Constructs a piecewise cubic Bezier curve.
+---The first parameter specifies a closed loop
+---if true. The second parameter should be
+---a table of Knot3s.
 ---@param cl boolean closed loop
----@param knots number knots
+---@param knots table knots
 ---@param name string name
 ---@return table
 function Curve3.new(cl, knots, name)
@@ -181,9 +184,6 @@ function Curve3.eval(curve, step)
 
     end
 
-    -- Eval tangent as well, return table?
-    -- Or rename to evalPoint and make separate
-    -- function for tangent?
     local tsni = tScaled - i
     return Knot3.bezierPoint(a, b, tsni)
 end
@@ -194,10 +194,11 @@ end
 ---@return table
 function Curve3.evalFirst(curve)
     local kFirst = curve.knots[1]
+    local coFirst = kFirst.co
     return Vec3.new(
-        kFirst.co.x,
-        kFirst.co.y,
-        kFirst.co.z)
+        coFirst.x,
+        coFirst.y,
+        coFirst.z)
 end
 
 ---Evaluates a curve at its last knot,
@@ -206,10 +207,11 @@ end
 ---@return table
 function Curve3.evalLast(curve)
     local kLast = curve.knots[#curve.knots]
+    local coLast = kLast.co
     return Vec3.new(
-        kLast.co.x,
-        kLast.co.y,
-        kLast.co.z)
+        coLast.x,
+        coLast.y,
+        coLast.z)
 end
 
 ---Converts a set of points on a Catmull-Rom spline
@@ -218,23 +220,25 @@ end
 ---@param closedLoop boolean closed loop flag
 ---@param points table array of points
 ---@param tightness number curve tightness
+---@param name string curve name
 ---@return table
-function Curve3.fromCatmull(closedLoop, points, tightness)
+function Curve3.fromCatmull(
+    closedLoop, points, tightness, name)
 
     local ptsLen = #points
     if ptsLen < 2 then
-        return Curve3.new()
+        return Curve3.new(false, {}, name)
     elseif ptsLen < 3 then
         return Curve3.fromCatmull(false, {
             points[1], points[1],
             points[2], points[2]
-        }, tightness)
+        }, tightness, name)
     elseif ptsLen < 4 then
         return Curve3.fromCatmull(false, {
             points[1], points[1],
             points[2],
             points[3], points[3]
-        }, tightness)
+        }, tightness, name)
     end
 
     local ptsLast = ptsLen - 1
@@ -333,39 +337,34 @@ function Curve3.fromCatmull(closedLoop, points, tightness)
         kns[#kns]:mirrorHandlesBackward()
     end
 
-    return Curve3.new(closedLoop, kns, "Curve3")
+    return Curve3.new(closedLoop, kns, name)
 end
 
 ---Creates a curve from a series of points.
 ---Smoothes the fore and rear handles of knots.
 ---@param closedLoop boolean closed loop
 ---@param points table points array
+---@param name string curve name
 ---@return table
-function Curve3.fromPoints(closedLoop, points)
-    local kns = {}
-
+function Curve3.fromPoints(closedLoop, points, name)
     -- TODO: Create 2D Version.
 
     -- If a closed loop has similar start and
-    -- stop points, then the last is removed.
-    local valPts = points
-    if closedLoop
-        and Vec3.approx(
-            points[1],
-            points[#points]) then
-
-        valPts = {}
-        for i = 1, #points - 1, 1 do
-            valPts[i] = points[i]
-        end
+    -- stop points, then skip the last point.
+    local len = #points
+    local last = len
+    if closedLoop and Vec3.approx(
+            points[1], points[len]) then
+        last = len - 1
     end
 
-    local len = #valPts
-    for i = 1, len, 1 do
-        local pt = valPts[i]
+    local kns = {}
+    for i = 1, last, 1 do
+        local pt = points[i]
         kns[i] = Knot3.new(Vec3.new(pt.x, pt.y, pt.z))
     end
-    local crv = Curve3.new(closedLoop, kns, "Curve3")
+
+    local crv = Curve3.new(closedLoop, kns, name)
     Curve3.smoothHandles(crv)
     return crv
 end
