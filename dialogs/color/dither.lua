@@ -346,6 +346,16 @@ dlg:button {
                         local aHex = 0x00ffffff & aColorAse.rgbaPixel
                         local bHex = 0x00ffffff & bColorAse.rgbaPixel
 
+                        -- Swap colors so that origin (a) is always the
+                        -- darker color.
+                        local aLum = Clr.lumsRgb(Clr.fromHex(aHex))
+                        local bLum = Clr.lumsRgb(Clr.fromHex(bHex))
+                        if aLum > bLum then
+                            local temp = aHex
+                            aHex = bHex
+                            bHex = temp
+                        end
+
                         closestFunc = function(rSrc, gSrc, bSrc, aSrc)
                             local srgb = Clr.new(
                                 rSrc * 0.00392156862745098,
@@ -371,9 +381,8 @@ dlg:button {
                                 gSrc * 0.00392156862745098,
                                 bSrc * 0.00392156862745098,
                                 1.0)
-                            local alpha = aSrc << 0x18
                             local trgHex = Clr.toHex(Clr.quantize(srgb, levels))
-                            return alpha | (0x00ffffff & trgHex)
+                            return (aSrc << 0x18) | (0x00ffffff & trgHex)
                         end
 
                     else
