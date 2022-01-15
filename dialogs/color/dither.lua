@@ -372,7 +372,8 @@ dlg:button {
                                 bSrc * 0.00392156862745098,
                                 1.0)
                             local alpha = aSrc << 0x18
-                            return alpha | Clr.toHex(Clr.quantize(srgb, levels))
+                            local trgHex = Clr.toHex(Clr.quantize(srgb, levels))
+                            return alpha | (0x00ffffff & trgHex)
                         end
 
                     else

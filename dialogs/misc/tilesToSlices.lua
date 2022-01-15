@@ -150,8 +150,8 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
-        -- TODO: Uniform vs. nonuniform inset adjustments.
-        -- See rounded rectangle controls.
+        -- TODO: Consider deleting script. Slices are too
+        -- buggy to be relied upon.
 
         local version = app.version
         if version.major < 1 or version.minor < 3 then
