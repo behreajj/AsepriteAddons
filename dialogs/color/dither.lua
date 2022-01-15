@@ -4,14 +4,18 @@ dofile("../../support/clr.lua")
 
 
 local modes = { "ONE_BIT", "PALETTE", "QUANTIZE" }
+local greyMethods = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
 
 local defaults = {
     ditherMode = "PALETTE",
     levels = 16,
     aColor = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
     bColor = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
-    threshold = 21, -- 50 needs gamma adjustment.
+    greyMethod = "LUMINANCE",
+    threshold = 50,
     palType = "ACTIVE",
+    startIndex = 0,
+    count = 256,
     octCapacity = 16,
     factor = 100,
     copyToLayer = true,
@@ -167,6 +171,7 @@ dlg:combobox {
 
         dlg:modify { id = "aColor", visible = isOne }
         dlg:modify { id = "bColor", visible = isOne }
+        dlg:modify { id = "greyMethod", visible = isOne }
         dlg:modify { id = "threshold", visible = isOne }
 
         local palType = dlg.data.palType
@@ -178,6 +183,9 @@ dlg:combobox {
             id = "palPreset",
             visible = isPalette and palType == "PRESET" }
         dlg:modify { id = "octCapacity", visible = isPalette }
+        dlg:modify { id = "octCapacity", visible = isPalette }
+        dlg:modify { id = "startIndex", visible = isPalette }
+        dlg:modify { id = "count", visible = isPalette }
     end
 }
 
@@ -193,6 +201,16 @@ dlg:color {
 dlg:color {
     id = "bColor",
     color = defaults.bColor,
+    visible = defaults.ditherMode == "ONE_BIT"
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "greyMethod",
+    label = "Evaluate:",
+    option = defaults.greyMethod,
+    options = greyMethods,
     visible = defaults.ditherMode == "ONE_BIT"
 }
 
@@ -264,6 +282,28 @@ dlg:entry {
 dlg:newrow { always = false }
 
 dlg:slider {
+    id = "startIndex",
+    label = "Start:",
+    min = 0,
+    max = 255,
+    value = defaults.startIndex,
+    visible = defaults.ditherMode == "PALETTE"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "count",
+    label = "Count:",
+    min = 1,
+    max = 256,
+    value = defaults.count,
+    visible = defaults.ditherMode == "PALETTE"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
     id = "octCapacity",
     label = "Cell Capacity:",
     min = 3,
@@ -317,8 +357,11 @@ dlg:button {
         local sprite = app.activeSprite
         if sprite then
 
+            local startIndex = args.startIndex or defaults.startIndex
+            local palCount = args.count or defaults.count
             local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                args.palType, args.palFile, args.palPreset)
+                args.palType, args.palFile, args.palPreset,
+                startIndex, palCount, true)
 
             local srcCel = app.activeCel
             if srcCel then
@@ -339,8 +382,6 @@ dlg:button {
                         local threshold100 = args.threshold or defaults.threshold
                         local threshold = threshold100 * 0.01
 
-                        dmStr = string.format("OneBit.%03d", threshold100)
-
                         -- Mask out alpha so that source alpha
                         -- can be composited in.
                         local aHex = 0x00ffffff & aColorAse.rgbaPixel
@@ -356,15 +397,49 @@ dlg:button {
                             bHex = temp
                         end
 
+                        local greyPreset = args.greyMethod or defaults.greyMethod
+                        local greyMethod = nil
+                        local greyStr = ""
+                        if greyPreset == "AVERAGE" then
+                            greyStr = "Average"
+                            greyMethod = function(rSrc, gSrc, bSrc)
+                                return (rSrc + gSrc + bSrc) / (3.0 * 255.0)
+                            end
+                        elseif greyPreset == "HSL" then
+                            greyStr = "HSL"
+                            greyMethod = function(rSrc, gSrc, bSrc)
+                                return (math.max(rSrc, gSrc, bSrc)
+                                      + math.min(rSrc, gSrc, bSrc)) / (2.0 * 255.0)
+                            end
+                        elseif greyPreset == "HSV" then
+                            greyStr = "HSV"
+                            greyMethod = function(rSrc, gSrc, bSrc)
+                                return math.max(rSrc, gSrc, bSrc) / 255.0
+                            end
+                        else
+                            greyStr = "Luminance"
+
+                            local stlLut = Utilities.STL_LUT
+                            local ltsLut = Utilities.LTS_LUT
+
+                            greyMethod = function(rSrc, gSrc, bSrc)
+                                local rLin = stlLut[1 + rSrc]
+                                local gLin = stlLut[1 + gSrc]
+                                local bLin = stlLut[1 + bSrc]
+                                local lum = math.tointeger(
+                                      rLin * 0.21264934272065283
+                                    + gLin * 0.7151691357059038
+                                    + bLin * 0.07218152157344333)
+                                return ltsLut[1 + lum] / 255.0
+                            end
+                        end
+
+                        dmStr = string.format("OneBit.%s.%03d", greyStr, threshold100)
+
                         closestFunc = function(rSrc, gSrc, bSrc, aSrc)
-                            local srgb = Clr.new(
-                                rSrc * 0.00392156862745098,
-                                gSrc * 0.00392156862745098,
-                                bSrc * 0.00392156862745098,
-                                1.0)
+                            local fac = greyMethod(rSrc, gSrc, bSrc)
                             local alpha = aSrc << 0x18
-                            local lum = Clr.lumsRgb(srgb)
-                            if lum >= threshold then
+                            if fac >= threshold then
                                 return alpha | bHex
                             end
                             return alpha | aHex
@@ -393,13 +468,13 @@ dlg:button {
                         local octree = Octree.new(bounds, octCapacity, 0)
 
                         -- Find minimum and maximum channel values.
-                        local lMin = 0.0
-                        local aMin = 0.0
-                        local bMin = 0.0
+                        local lMin = 100000
+                        local aMin = 100000
+                        local bMin = 100000
 
-                        local lMax = 0.0
-                        local aMax = 0.0
-                        local bMax = 0.0
+                        local lMax = -100000
+                        local aMax = -100000
+                        local bMax = -100000
 
                         local viableCount = 0
 
@@ -409,7 +484,7 @@ dlg:button {
                         local ptToHexDict = {}
                         for i = 1, palHexesLen, 1 do
                             local hexSrgb = hexesSrgb[i]
-                            if hexSrgb & 0xff000000 ~= 0 then
+                            if ((hexSrgb >> 0x18) & 0xff) > 0 then
                                 local clr = Clr.fromHex(hexSrgb)
                                 local lab = Clr.sRgbaToLab(clr)
                                 local point = Vec3.new(lab.a, lab.b, lab.l)
@@ -429,6 +504,10 @@ dlg:button {
                             end
                         end
 
+                        -- for k,v in pairs(ptToHexDict) do
+                        --     print(string.format("%d %08X", k, v))
+                        -- end
+
                         if viableCount < 3 then
                             app.alert {
                                 title = "Warning",
@@ -446,10 +525,11 @@ dlg:button {
                         local aDiff = aMax - aMin
                         local bDiff = bMax - bMin
 
-                        -- Add a fudge factor to ensure an outlier color
-                        -- won't be clipped off at limit.
-                        local queryRad = 50.0 + math.sqrt(
-                            lDiff * lDiff + aDiff * aDiff + bDiff * bDiff)
+                        -- Square-root for this regularly seems too
+                        -- small, leading to transparent patches.
+                        local queryRad =  lDiff * lDiff
+                            + aDiff * aDiff
+                            + bDiff * bDiff
                         local resultLimit = viableCount
 
                         closestFunc = function(rSrc, gSrc, bSrc, aSrc)
@@ -471,9 +551,9 @@ dlg:button {
                             if #nearestPts > 0 then
                                 local nearestHash = Vec3.hashCode(nearestPts[1].point)
                                 local nearestHex = ptToHexDict[nearestHash]
-                                if nearestHex then
-                                    local alpha = aSrc << 0x18
-                                    trgHex = alpha | nearestHex & 0x00ffffff
+                                if nearestHex ~= nil then
+                                    trgHex = (aSrc << 0x18)
+                                        | (nearestHex & 0x00ffffff)
                                 end
                             end
 
@@ -528,17 +608,20 @@ dlg:button {
                     end
 
                     AseUtilities.changePixelFormat(oldColorMode)
+                    app.refresh()
 
                     if printElapsed then
                         endTime = os.time()
                         elapsed = os.difftime(endTime, startTime)
-                        local msg = string.format(
-                            "Start: %d\nEnd: %d\nElapsed: %d",
-                            startTime, endTime, elapsed)
-                        print(msg)
+                        app.alert {
+                            title = "Diagnostic",
+                            text = {
+                                string.format("Start: %d", startTime),
+                                string.format("End: %d", endTime),
+                                string.format("Elapsed: %d", elapsed)
+                            }
+                        }
                     end
-
-                    app.refresh()
                 else
                     app.alert("The cel has no image.")
                 end

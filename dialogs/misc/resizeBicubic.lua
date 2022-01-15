@@ -354,10 +354,16 @@ dlg:button {
                     if printElapsed then
                         endTime = os.time()
                         elapsed = os.difftime(endTime, startTime)
-                        local msg = string.format(
-                            "Source: %d x %d\nTarget: %d x %d\nStart: %d\nEnd: %d\nElapsed: %d",
-                            sw, sh, dw, dh, startTime, endTime, elapsed)
-                        print(msg)
+                        app.alert {
+                            title = "Diagnostic",
+                            text = {
+                                string.format("Source: %d x %d", sw, sh),
+                                string.format("Target: %d x %d", dw, dh),
+                                string.format("Start: %d", startTime),
+                                string.format("End: %d", endTime),
+                                string.format("Elapsed: %d", elapsed)
+                            }
+                        }
                     end
                 else
                     app.alert("The cel has no image.")

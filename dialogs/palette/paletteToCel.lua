@@ -372,17 +372,20 @@ dlg:button {
         end)
 
         AseUtilities.changePixelFormat(oldMode)
+        app.refresh()
 
         if printElapsed then
             endTime = os.time()
             elapsed = os.difftime(endTime, startTime)
-            local msg = string.format(
-                "Start: %d\nEnd: %d\nElapsed: %d",
-                startTime, endTime, elapsed)
-            print(msg)
+            app.alert {
+                title = "Diagnostic",
+                text = {
+                    string.format("Start: %d", startTime),
+                    string.format("End: %d", endTime),
+                    string.format("Elapsed: %d", elapsed)
+                }
+            }
         end
-
-        app.refresh()
     end
 }
 
