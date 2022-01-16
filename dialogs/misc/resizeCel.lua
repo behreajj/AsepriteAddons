@@ -1,6 +1,8 @@
 local unitOptions = { "PERCENT", "PIXEL" }
+local resizeMethods = { "BICUBIC", "NEAREST" }
 
 local defaults = {
+    resizeMethod = "BICUBIC",
     pxWidth = 64,
     pxHeight = 64,
     prcWidth = 100,
@@ -8,12 +10,19 @@ local defaults = {
     units = "PERCENT",
     clipImage = true,
     copyToLayer = true,
-    preserveAspect = true,
+    preserveAspect = false,
     printElapsed = false,
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Resize Cel Bicubic" }
+local dlg = Dialog { title = "Resize Cel" }
+
+dlg:combobox {
+    id = "resizeMethod",
+    label = "Type:",
+    option = defaults.resizeMethod,
+    options = resizeMethods
+}
 
 dlg:number {
     id = "pxWidth",
@@ -76,7 +85,7 @@ dlg:combobox {
 
 dlg:check {
     id = "clipImage",
-    label = "Clip Source To Visible:",
+    label = "Limit Sample:",
     selected = defaults.clipImage
 }
 
@@ -112,8 +121,6 @@ dlg:button {
             if srcCel then
                 local srcImg = srcCel.image
                 if srcImg ~= nil then
-
-                    -- TODO: Generalize to resizeCel, add nearest neighbor?
 
                     -- Adapted from
                     -- https://stackoverflow.com/questions/
@@ -176,8 +183,8 @@ dlg:button {
                         hPrc = max(1, hPrc)
 
                         if preserveAspect then
-                            -- local pcComp = (wPrc + hPrc) * 0.5
-                            local pcComp = min(wPrc, hPrc)
+                            local pcComp = (wPrc + hPrc) * 0.5
+                            -- local pcComp = min(wPrc, hPrc)
                             wPrc = pcComp
                             hPrc = pcComp
                         end
@@ -194,8 +201,8 @@ dlg:button {
                         if preserveAspect then
                             local wRatio = dw / sw
                             local hRatio = dh / sh
-                            -- local pxComp = (wRatio + hRatio) * 0.5
-                            local pxComp = min(wRatio, hRatio)
+                            local pxComp = (wRatio + hRatio) * 0.5
+                            -- local pxComp = min(wRatio, hRatio)
                             dw = pxComp * sw
                             dh = pxComp * sh
                         end
@@ -205,7 +212,13 @@ dlg:button {
                     end
 
                     -- Return early if no resize is needed.
-                    if dw == sw and dh == sh then return end
+                    if dw == sw and dh == sh then
+                        app.alert{
+                            title = "Warning",
+                            text = "New size matches the original."
+                        }
+                        return
+                    end
 
                     local oldMode = sprite.colorMode
                     app.command.ChangePixelFormat { format = "rgb" }
@@ -219,102 +232,115 @@ dlg:button {
                         srcidx = srcidx + 1
                     end
 
-                    local kernelSize = 4
-                    local chnlCount = 4
-                    local kernel = { 0, 0, 0, 0 }
-
-                    -- Adjust resize by a fudge factor.
                     local tx = sw / dw
                     local ty = sh / dh
-
-                    -- local newPxlLen = dw * dh
                     local clrs = {}
-                    local len2 = kernelSize * chnlCount
-                    local len3 = dw * len2
-                    local len4 = dh * len3
-
-                    local swn1 = sw - 1
-                    local shn1 = sh - 1
-
-                    for k = 0, len4, 1 do
-                        local g = k // len3 -- px row index
-                        local m = k - g * len3 -- temp
-                        local h = m // len2 -- px col index
-                        local n = m - h * len2 -- temp
-                        local i = n // kernelSize -- krn row index
-                        local j = n % kernelSize -- krn col index
-
-                        -- Row.
-                        local y = trunc(ty * g)
-                        local dy = ty * g - y
-                        local dysq = dy * dy
-
-                        -- Column.
-                        local x = trunc(tx * h)
-                        local dx = tx * h - x
-                        local dxsq = dx * dx
-
-                        -- Clamp kernel to image bounds.
-                        local z = max(0, min(shn1, y - 1 + j))
-                        local x0 = max(0, min(swn1, x))
-                        local x1 = max(0, min(swn1, x - 1))
-                        local x2 = max(0, min(swn1, x + 1))
-                        local x3 = max(0, min(swn1, x + 2))
-
-                        local zw = z * sw
-                        local i8 = i * 8
-
-                        local a0 = srcpx[1 + zw + x0] >> i8 & 0xff
-                        local d0 = srcpx[1 + zw + x1] >> i8 & 0xff
-                        local d2 = srcpx[1 + zw + x2] >> i8 & 0xff
-                        local d3 = srcpx[1 + zw + x3] >> i8 & 0xff
-
-                        d0 = d0 - a0
-                        d2 = d2 - a0
-                        d3 = d3 - a0
-
-                        local d36 = d3 / 6.0
-                        local a1 = -d0 / 3.0 + d2 - d36
-                        local a2 = 0.5 * (d0 + d2)
-                        local a3 = -d0 / 6.0 - 0.5 * d2 + d36
-
-                        kernel[1 + j] = max(0, min(255,
-                            a0 + trunc(a1 * dx
-                                        + a2 * dxsq
-                                        + a3 * (dx * dxsq))))
-
-                        a0 = kernel[2]
-                        d0 = kernel[1] - a0
-                        d2 = kernel[3] - a0
-                        d3 = kernel[4] - a0
-
-                        d36 = d3 / 6.0
-                        a1 = -d0 / 3.0 + d2 - d36
-                        a2 = 0.5 * (d0 + d2)
-                        a3 = -d0 / 6.0 - 0.5 * d2 + d36
-
-                        clrs[1 + (k // kernelSize)] = max(0, min(255,
-                            a0 + trunc(a1 * dy
-                                        + a2 * dysq
-                                        + a3 * (dy * dysq))))
-                    end
 
                     -- Set target image pixels.
                     local trgImg = Image(dw, dh)
                     local trgpxitr = trgImg:pixels()
-                    local h = 0
-                    for elm in trgpxitr do
-                        local hex = clrs[h + 1]
-                                  | clrs[h + 2] << 0x08
-                                  | clrs[h + 3] << 0x10
-                                  | clrs[h + 4] << 0x18
-                        elm(hex)
-                        h = h + 4
+
+                    local resizeMethod = args.resizeMethod or defaults.resizeMethod
+                    if resizeMethod == "BICUBIC" then
+                        local chnlCount = 4
+
+                        local kernelSize = 4
+                        local kernel = { 0, 0, 0, 0 }
+
+                        local len2 = kernelSize * chnlCount
+                        local len3 = dw * len2
+                        local len4 = dh * len3
+
+                        local swn1 = sw - 1
+                        local shn1 = sh - 1
+
+                        for k = 0, len4, 1 do
+                            local g = k // len3 -- px row index
+                            local m = k - g * len3 -- temp
+                            local h = m // len2 -- px col index
+                            local n = m - h * len2 -- temp
+                            local i = n // kernelSize -- krn row index
+                            local j = n % kernelSize -- krn col index
+
+                            -- Row.
+                            local y = trunc(ty * g)
+                            local dy = ty * g - y
+                            local dysq = dy * dy
+
+                            -- Column.
+                            local x = trunc(tx * h)
+                            local dx = tx * h - x
+                            local dxsq = dx * dx
+
+                            -- Clamp kernel to image bounds.
+                            local z = max(0, min(shn1, y - 1 + j))
+                            local x0 = max(0, min(swn1, x))
+                            local x1 = max(0, min(swn1, x - 1))
+                            local x2 = max(0, min(swn1, x + 1))
+                            local x3 = max(0, min(swn1, x + 2))
+
+                            local zw = z * sw
+                            local i8 = i * 8
+
+                            local a0 = srcpx[1 + zw + x0] >> i8 & 0xff
+                            local d0 = srcpx[1 + zw + x1] >> i8 & 0xff
+                            local d2 = srcpx[1 + zw + x2] >> i8 & 0xff
+                            local d3 = srcpx[1 + zw + x3] >> i8 & 0xff
+
+                            d0 = d0 - a0
+                            d2 = d2 - a0
+                            d3 = d3 - a0
+
+                            local d36 = d3 / 6.0
+                            local a1 = -d0 / 3.0 + d2 - d36
+                            local a2 = 0.5 * (d0 + d2)
+                            local a3 = -d0 / 6.0 - 0.5 * d2 + d36
+
+                            kernel[1 + j] = max(0, min(255,
+                                a0 + trunc(a1 * dx
+                                            + a2 * dxsq
+                                            + a3 * (dx * dxsq))))
+
+                            a0 = kernel[2]
+                            d0 = kernel[1] - a0
+                            d2 = kernel[3] - a0
+                            d3 = kernel[4] - a0
+
+                            d36 = d3 / 6.0
+                            a1 = -d0 / 3.0 + d2 - d36
+                            a2 = 0.5 * (d0 + d2)
+                            a3 = -d0 / 6.0 - 0.5 * d2 + d36
+
+                            clrs[1 + (k // kernelSize)] = max(0, min(255,
+                                a0 + trunc(a1 * dy
+                                            + a2 * dysq
+                                            + a3 * (dy * dysq))))
+                        end
+
+                        local h = 0
+                        for elm in trgpxitr do
+                            local hex = clrs[h + 1]
+                                      | clrs[h + 2] << 0x08
+                                      | clrs[h + 3] << 0x10
+                                      | clrs[h + 4] << 0x18
+                            elm(hex)
+                            h = h + 4
+                        end
+                    else
+                        local h = 0
+                        for elm in trgpxitr do
+                            local x = h % dw
+                            local y = h // dw
+                            local nx = trunc(x * tx)
+                            local ny = trunc(y * ty)
+                            elm(srcpx[1 + ny * sw + nx])
+                            h = h + 1
+                        end
                     end
 
                     app.transaction(function()
                         local copyToLayer = args.copyToLayer
-                        local cel = nil
+                        local trgCel = nil
                         if copyToLayer then
                             local srcLayer = srcCel.layer
                             local trgLayer = sprite:newLayer()
@@ -322,25 +348,24 @@ dlg:button {
                                 .. "." .. dw .. 'x' .. dh
                             trgLayer.opacity = srcLayer.opacity
                             local frame = app.activeFrame or sprite.frames[1]
-                            local trgCel = sprite:newCel(
+                            local newCel = sprite:newCel(
                                 trgLayer, frame,
                                 trgImg, srcCel.position)
-                            trgCel.opacity = srcCel.opacity
-                            cel = trgCel
+                            newCel.opacity = srcCel.opacity
+                            trgCel = newCel
                         else
                             srcCel.image = trgImg
-                            cel = srcCel
+                            trgCel = srcCel
                         end
 
                         -- Put the cel at center. trunc is out of scope
                         -- maybe due to the transaction.
                         local celPos = srcCel.position
-                        local xCenter = celPos + sw * 0.5
-                        local yCenter = celPos + sh * 0.5
-                        cel.position = Point(
+                        local xCenter = celPos.x + sw * 0.5
+                        local yCenter = celPos.y + sh * 0.5
+                        trgCel.position = Point(
                             xCenter - dw * 0.5,
                             yCenter - dh * 0.5)
-
                     end)
 
                     if oldMode == ColorMode.INDEXED then

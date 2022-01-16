@@ -1,5 +1,3 @@
-local dlg = Dialog { title = "Share Palette" }
-
 local defaults = {
     palType = "ACTIVE",
     uniquesOnly = false,
@@ -8,6 +6,8 @@ local defaults = {
     count = 256,
     pullFocus = false
 }
+
+local dlg = Dialog { title = "Share Palette" }
 
 dlg:combobox {
     id = "palType",
