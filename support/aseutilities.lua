@@ -1433,6 +1433,25 @@ function AseUtilities.initCanvas(
     return sprite
 end
 
+---Evaluates whether a layer is visible in the context
+---of any parent layers, i.e., if a layer's parent is
+---invisible but the layer is visible, the method will
+---return false. Makes no evaluation of the layer's
+---opacity; a layer could still have 0 alpha.
+---@param layer userdata aseprite layer
+---@param sprite userdata aseprite sprite
+---@return boolean
+function AseUtilities.isVisibleHierarchy(layer, sprite)
+    local l = layer
+    while l.__name ~= sprite.__name do
+        if not l.isVisible then
+            return false
+        end
+        l = l.parent
+    end
+    return true
+end
+
 ---Finds an array of cels shared between an Aseprite
 ---Range object and an input array.
 ---@param range userdata aseprite range
@@ -1579,20 +1598,16 @@ end
 ---@param cel userdata source cel
 ---@param sprite userdata parent sprite
 function AseUtilities.trimCelToSprite(cel, sprite)
-    -- TODO: Create a dialog for this function?
+    local celBounds = cel.bounds
+    local spriteBounds = sprite.bounds
+    local clip = celBounds:intersect(spriteBounds)
 
-    app.transaction(function()
-        local celBounds = cel.bounds
-        local spriteBounds = sprite.bounds
-        local clip = celBounds:intersect(spriteBounds)
+    local oldPos = cel.position
+    cel.position = Point(clip.x, clip.y)
 
-        local oldPos = cel.position
-        cel.position = Point(clip.x, clip.y)
-
-        local trimImage = Image(clip.width, clip.height)
-        trimImage:drawImage(cel.image, oldPos - cel.position)
-        cel.image = trimImage
-    end)
+    local trimImage = Image(clip.width, clip.height)
+    trimImage:drawImage(cel.image, oldPos - cel.position)
+    cel.image = trimImage
 end
 
 ---Creates a copy of the image where excess

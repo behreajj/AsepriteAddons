@@ -125,6 +125,7 @@ dlg:button {
             local strgsub = string.gsub
             local concat = table.concat
             local insert = table.insert
+            local isVisibleHierarchy = AseUtilities.isVisibleHierarchy
             local trimAlpha = AseUtilities.trimImageAlpha
 
             -- app.command.ChangePixelFormat { format = "rgb" }
@@ -185,9 +186,8 @@ dlg:button {
                 local cel = cels[i]
                 local layer = cel.layer
 
-                -- For whatever reason, the Lua hierarchical
-                -- function causes problems.
-                local isVis = layer.isVisible
+                -- TODO: Option to bake cel and layer alpha?
+                local isVis = isVisibleHierarchy(layer, activeSprite)
                 local isRef = layer.isReference
                 if isVis and (not isRef) then
                     local srcImage = cel.image
@@ -201,8 +201,6 @@ dlg:button {
                             trgImage = Image(wPaddedSprite, hPaddedSprite, oldMode)
                             trgImage:drawImage(srcImage, padOffset + celPos)
                         else
-                            -- TODO: Promote image dimensions to
-                            -- nearest (greater) power of 2?
                             trgImage, xOrigin, yOrigin = trimAlpha(
                                 srcImage, padding, alphaIndex)
                             local celPos = cel.position
@@ -232,9 +230,12 @@ dlg:button {
                         }
 
                         jsonEntries[j] = {
+                            celData = cel.data,
+                            celOpacity = cel.opacity,
                             fileName = fileNameShort,
-                            cel = cel,
                             layer = layer,
+                            frameDuration = trunc(cel.frame.duration * 1000),
+                            frameNumber = cel.frameNumber,
                             xOrigin = xOrigin * scale,
                             yOrigin = yOrigin * scale,
                             width = trgImage.width,
@@ -246,6 +247,8 @@ dlg:button {
             end
 
             if saveJson then
+
+                -- Regroup each entry by layer.
                 local entriesByLayer = {}
                 local jsonDataLen = #jsonEntries
                 for i = 1, jsonDataLen, 1 do
@@ -267,18 +270,18 @@ dlg:button {
                         local entry = celsArr[i]
 
                         -- Unpack entry.
-                        local cel = entry.cel
                         local fileName = entry.fileName
                         local xOrigin = entry.xOrigin
                         local yOrigin = entry.yOrigin
                         local width = entry.width
                         local height = entry.height
 
-                        -- Unpack cel.
-                        local frameNumber = cel.frameNumber
-                        local duration = trunc(cel.frame.duration * 1000)
-                        local celOpacity = cel.opacity
-                        local celData = cel.data
+                        -- Cel Properties.
+                        local celData = entry.celData
+                        local celOpacity = entry.celOpacity
+                        local frameNumber = entry.frameNumber
+                        local frameDuration = entry.frameDuration
+
                         if celData == nil or #celData < 1 then
                             celData = missingUserData
                         end
@@ -290,7 +293,7 @@ dlg:button {
 
                         celStrArr[i] = strfmt(
                             frameFormat,
-                            frameNumber, fileName, duration,
+                            frameNumber, fileName, frameDuration,
                             xOrigin, yOrigin,
                             width, height,
                             celOpacity, celData)

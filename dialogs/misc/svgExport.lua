@@ -12,10 +12,12 @@ local function layerToSvgStr(
 
     local str = ""
 
-    -- TODO: This works because of precautions
+    -- This works because of precautions
     -- in Aseprite source code, but technically
     -- group layers don't have opacity.
     local lyrAlpha = layer.opacity
+
+    -- TODO: Use hierarchical isVisible?
     if layer.isVisible and lyrAlpha > 0 then
         if layer.isGroup then
             local grpStr = string.format(

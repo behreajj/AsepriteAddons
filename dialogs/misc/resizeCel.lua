@@ -179,6 +179,8 @@ dlg:button {
                         local wPrc = args.prcWidth or defaults.prcWidth
                         local hPrc = args.prcHeight or defaults.prcHeight
 
+                        -- TODO: Consider instead setting 0 or negative
+                        -- values to 100%?
                         wPrc = max(1, wPrc)
                         hPrc = max(1, hPrc)
 
@@ -213,7 +215,7 @@ dlg:button {
 
                     -- Return early if no resize is needed.
                     if dw == sw and dh == sh then
-                        app.alert{
+                        app.alert {
                             title = "Warning",
                             text = "New size matches the original."
                         }
