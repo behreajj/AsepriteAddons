@@ -29,23 +29,6 @@ dlg:combobox {
     options = angles
 }
 
--- dlg:newrow { always = false }
-
--- dlg:slider {
---     id = "xPivot",
---     label = "Pivot:",
---     min = -100,
---     max = 100,
---     value = defaults.xPivot
--- }
-
--- dlg:slider {
---     id = "yPivot",
---     min = -100,
---     max = 100,
---     value = defaults.yPivot
--- }
-
 dlg:newrow { always = false }
 
 dlg:button {
@@ -59,13 +42,6 @@ dlg:button {
             local args = dlg.data
             local angle = args.angle or defaults.angle
             local target = args.target or defaults.target
-            -- local xPivot = args.xPivot or defaults.xPivot
-            -- local yPivot = args.yPivot or defaults.yPivot
-
-            -- local xpSgn = xPivot * 0.01
-            -- local ypSgn = yPivot * 0.01
-            -- local xFac = xpSgn * 0.5 + 0.5
-            -- local yFac = ypSgn * 0.5 + 0.5
 
             -- Determine cels by target preset.
             local cels = {}
@@ -80,19 +56,30 @@ dlg:button {
                 cels = activeSprite.cels
             end
 
+            -- TODO: Rotate group of points around
+            -- a central pivot. You'll need a perpCW
+            -- and perpCCW function. Separate new
+            -- cel position into a separate transaction
+            -- from new image.
+
             -- Determine rotation function.
-            local rotFunc = nil
+            local imgRotFunc = nil
             if angle == "90" then
-                rotFunc = AseUtilities.rotate90
+                imgRotFunc = AseUtilities.rotate90
             elseif angle == "180" then
-                rotFunc = AseUtilities.rotate180
+                imgRotFunc = AseUtilities.rotate180
             elseif angle == "270" then
-                rotFunc = AseUtilities.rotate270
+                imgRotFunc = AseUtilities.rotate270
             else
-                rotFunc = function(a)
+                imgRotFunc = function(a)
                     return Image(a), 0, 0
                 end
             end
+
+            -- local xMin = 100000
+            -- local yMin = 100000
+            -- local xMax = -100000
+            -- local yMax = -100000
 
             local celsLen = #cels
             app.transaction(function()
@@ -105,7 +92,7 @@ dlg:button {
                         local xSrcHalf = wSrc * 0.5
                         local ySrcHalf = hSrc * 0.5
 
-                        local trgImg, xDisp, yDisp = rotFunc(srcImg)
+                        local trgImg, xDisp, yDisp = imgRotFunc(srcImg)
                         local wTrg = trgImg.width
                         local hTrg = trgImg.height
                         local xTrgHalf = wTrg * 0.5
@@ -114,16 +101,6 @@ dlg:button {
                         local celPos = cel.position
                         local xtlSrc = celPos.x
                         local ytlSrc = celPos.y
-
-                        -- local xTrgPivot = (1.0 - xFac) * -xTrgHalf
-                        --                        + xFac  *  xTrgHalf
-                        -- local yTrgPivot = (1.0 - yFac) *  yTrgHalf
-                        --                        + yFac  * -yTrgHalf
-
-                        -- local xSrcPivot = (1.0 - xFac) * -xSrcHalf
-                        --                        + xFac  *  xSrcHalf
-                        -- local ySrcPivot = (1.0 - yFac) *  ySrcHalf
-                        --                        + yFac  * -ySrcHalf
 
                         local xtlTrg = xtlSrc + xSrcHalf - xTrgHalf
                         local ytlTrg = ytlSrc + ySrcHalf - yTrgHalf

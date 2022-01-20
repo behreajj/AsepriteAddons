@@ -64,6 +64,7 @@ dlg:button {
     onclick = function()
         local sprite = app.activeSprite
         if sprite then
+            -- TODO: Try to target multiple cel images?
             local cel = app.activeCel
             if cel then
                 -- Must be changed to RGB color mode before the

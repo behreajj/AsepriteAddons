@@ -1,13 +1,25 @@
 local defaults = {
+    x = 0.0,
+    y = 0.0,
+    z = 1.0,
+    azimuth = 0,
+    inclination = 90,
+    hexCode = "8080FF",
+    rgbLabel = "128, 128, 255",
+    clampz = false, -- clamp z to zero?
     sectors = 0,
     rings = 0,
     size = 512,
-    showWheelSettings = false
+    showWheelSettings = false,
+    minSize = 256,
+    maxSize = 1024,
+    maxSectors = 32,
+    maxRings = 16
 }
 
 local function fromSpherical(az, incl)
-    local a = az * math.pi / 180.0
-    local i = incl * math.pi / 180.0
+    local a = az * 0.017453292519943295
+    local i = incl * 0.017453292519943295
     local cosIncl = math.cos(i)
     return cosIncl * math.cos(a),
         cosIncl * math.sin(a),
@@ -18,10 +30,10 @@ local function toSpherical(x, y, z)
     local sqMag = x * x + y * y + z * z
     if sqMag > 0.0 then
         local azRad = math.atan(y, x)
-        local azDeg = azRad * 180.0 / math.pi
+        local azDeg = azRad * 57.29577951308232
 
         local inclRad = math.acos(z / math.sqrt(sqMag))
-        local inclDeg = inclRad * 180.0 / math.pi
+        local inclDeg = inclRad * 57.29577951308232
         inclDeg = 90.0 - inclDeg
 
         return azDeg, inclDeg
@@ -107,6 +119,7 @@ local function updateWidgetSphere(dialog)
     local args = dialog.data
     local az = args.azimuth
     local incl = args.inclination
+
     local x, y, z = fromSpherical(az, incl)
 
     dialog:modify { id = "x", text = string.format("%.5f", x) }
@@ -117,14 +130,112 @@ local function updateWidgetSphere(dialog)
     updateWidgetClr(dialog, clr)
 end
 
+local function updateFromColor(dialog, clr)
+    local r255 = clr.red
+    local g255 = clr.green
+    local b255 = clr.blue
+
+    if clr.alpha < 1 then
+        r255 = 128
+        g255 = 128
+        b255 = 255
+    end
+
+    local r01 = r255 * 0.00392156862745098
+    local g01 = g255 * 0.00392156862745098
+    local b01 = b255 * 0.00392156862745098
+
+    local x = r01 + r01 - 1.0
+    local y = g01 + g01 - 1.0
+    local z = b01 + b01 - 1.0
+
+    local sqMag = x * x + y * y + z * z
+    if sqMag > 0.0 then
+        local xn = x
+        local yn = y
+        local zn = z
+
+        local magInv = 1.0 / math.sqrt(sqMag)
+        xn = x * magInv
+        yn = y * magInv
+        zn = z * magInv
+
+        dialog:modify { id = "x", text = string.format("%.5f", xn) }
+        dialog:modify { id = "y", text = string.format("%.5f", yn) }
+        dialog:modify { id = "z", text = string.format("%.5f", zn) }
+
+        local a, i = toSpherical(xn, yn, zn)
+        if a < -0.0 then a = a - 0.5 end
+        if a > 0.0 then a = a + 0.5 end
+        if i < -0.0 then i = i - 0.5 end
+        if i > 0.0 then i = i + 0.5 end
+
+        dialog:modify {
+            id = "azimuth",
+            value = math.tointeger(a)
+        }
+
+        dialog:modify {
+            id = "inclination",
+            value = math.tointeger(i)
+        }
+
+        local nr01 = xn * 0.5 + 0.5
+        local ng01 = yn * 0.5 + 0.5
+        local nb01 = zn * 0.5 + 0.5
+
+        local nr255 = math.tointeger(0.5 + 255.0 * nr01)
+        local ng255 = math.tointeger(0.5 + 255.0 * ng01)
+        local nb255 = math.tointeger(0.5 + 255.0 * nb01)
+
+        dialog:modify {
+            id = "normalColor",
+            colors = { Color(nr255, ng255, nb255, 255) }
+        }
+
+        dialog:modify {
+            id = "hexCode",
+            text = string.format("%06X",
+                (nr255 << 0x10 |
+                ng255 << 0x08 |
+                nb255))
+        }
+
+        dialog:modify {
+            id = "rgbLabel",
+            text = string.format("%d, %d, %d",
+                nr255, ng255, nb255)
+        }
+    end
+end
+
 local dlg = Dialog { title = "Normal Color Calc" }
+
+dlg:button {
+    id = "getColorFore",
+    label = "Get:",
+    text = "F&ORE",
+    onclick = function()
+        updateFromColor(dlg, app.fgColor)
+    end
+}
+
+dlg:button {
+    id = "getColorBack",
+    text = "B&ACK",
+    onclick = function()
+        app.command.SwitchColors()
+        updateFromColor(dlg, app.fgColor)
+        app.command.SwitchColors()
+    end
+}
 
 dlg:newrow { always = false }
 
 dlg:number {
     id = "x",
     label = "Vector:",
-    text = string.format("%.5f", 0.0),
+    text = string.format("%.5f", defaults.x),
     decimals = 5,
     onchange = function()
         updateWidgetCart(dlg)
@@ -133,7 +244,7 @@ dlg:number {
 
 dlg:number {
     id = "y",
-    text = string.format("%.5f", 0.0),
+    text = string.format("%.5f", defaults.y),
     decimals = 5,
     onchange = function()
         updateWidgetCart(dlg)
@@ -142,7 +253,7 @@ dlg:number {
 
 dlg:number {
     id = "z",
-    text = string.format("%.5f", 1.0),
+    text = string.format("%.5f", defaults.z),
     decimals = 5,
     onchange = function()
         updateWidgetCart(dlg)
@@ -156,7 +267,7 @@ dlg:slider {
     label = "Azimuth:",
     min = -180,
     max = 180,
-    value = 0,
+    value = defaults.inclination,
     onchange = function()
         updateWidgetSphere(dlg)
     end
@@ -169,18 +280,29 @@ dlg:slider {
     label = "Inclination:",
     min = -90,
     max = 90,
-    value = 90,
+    value = defaults.inclination,
     onchange = function()
         updateWidgetSphere(dlg)
     end
 }
+
+-- dlg:newrow { always = false }
+
+-- dlg:check {
+--     id = "clampz",
+--     label = "Clamp:",
+--     text = "Inclination",
+--     selected = defaults.clampz,
+--     onclick = function()
+--     end
+-- }
 
 dlg:newrow { always = false }
 
 dlg: label {
     id = "hexCode",
     label = "Hex: #",
-    text = "8080FF"
+    text = defaults.hexCode
 }
 
 dlg:newrow { always = false }
@@ -188,7 +310,7 @@ dlg:newrow { always = false }
 dlg: label {
     id = "rgbLabel",
     label = "RGB:",
-    text = "128, 128, 255"
+    text = defaults.rgbLabel
 }
 
 dlg:newrow { always = false }
@@ -203,93 +325,9 @@ dlg:shades {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "getColor",
-    text = "&GET",
-    onclick = function()
-        local clr = app.fgColor
-
-        local r255 = clr.red
-        local g255 = clr.green
-        local b255 = clr.blue
-
-        if clr.alpha < 1 then
-            r255 = 128
-            g255 = 128
-            b255 = 255
-        end
-
-        local r01 = r255 / 255.0
-        local g01 = g255 / 255.0
-        local b01 = b255 / 255.0
-
-        local x = r01 + r01 - 1.0
-        local y = g01 + g01 - 1.0
-        local z = b01 + b01 - 1.0
-
-        local sqmag = x * x + y * y + z * z
-        if sqmag > 0.0 then
-            local xn = x
-            local yn = y
-            local zn = z
-
-            local mag = math.sqrt(sqmag)
-            xn = x / mag
-            yn = y / mag
-            zn = z / mag
-
-            dlg:modify { id = "x", text = string.format("%.5f", xn) }
-            dlg:modify { id = "y", text = string.format("%.5f", yn) }
-            dlg:modify { id = "z", text = string.format("%.5f", zn) }
-
-            local a, i = toSpherical(xn, yn, zn)
-            if a < -0.0 then a = a - 0.5 end
-            if a > 0.0 then a = a + 0.5 end
-            if i < -0.0 then i = i - 0.5 end
-            if i > 0.0 then i = i + 0.5 end
-
-            dlg:modify {
-                id = "azimuth",
-                value = math.tointeger(a)
-            }
-
-            dlg:modify {
-                id = "inclination",
-                value = math.tointeger(i)
-            }
-
-            local nr01 = xn * 0.5 + 0.5
-            local ng01 = yn * 0.5 + 0.5
-            local nb01 = zn * 0.5 + 0.5
-
-            local nr255 = math.tointeger(0.5 + 255.0 * nr01)
-            local ng255 = math.tointeger(0.5 + 255.0 * ng01)
-            local nb255 = math.tointeger(0.5 + 255.0 * nb01)
-
-            dlg:modify {
-                id = "normalColor",
-                colors = { Color(nr255, ng255, nb255, 255) }
-            }
-
-            dlg:modify {
-                id = "hexCode",
-                text = string.format("%06X",
-                    (nr255 << 0x10 |
-                    ng255 << 0x08 |
-                    nb255))
-            }
-
-            dlg:modify {
-                id = "rgbLabel",
-                text = string.format("%d, %d, %d",
-                    nr255, ng255, nb255)
-            }
-        end
-    end
-}
-
-dlg:button {
-    id = "setColor",
-    text = "&SET",
+    id = "setColorFore",
+    label = "Set:",
+    text = "&FORE",
     onclick = function()
         local normalColors = dlg.data.normalColor
         if #normalColors > 0 then
@@ -299,6 +337,24 @@ dlg:button {
                 normalColor.green,
                 normalColor.blue,
                 255)
+        end
+    end
+}
+
+dlg:button {
+    id = "setColorBack",
+    text = "&BACK",
+    onclick = function()
+        local normalColors = dlg.data.normalColor
+        if #normalColors > 0 then
+            local normalColor = normalColors[1]
+            app.command.SwitchColors()
+            app.fgColor = Color(
+                normalColor.red,
+                normalColor.green,
+                normalColor.blue,
+                255)
+            app.command.SwitchColors()
         end
     end
 }
@@ -315,7 +371,19 @@ dlg:check {
         local state = args.showWheelSettings
         dlg:modify { id = "sectors", visible = state }
         dlg:modify { id = "rings", visible = state }
+        dlg:modify { id = "size", visible = state }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "size",
+    label = "Size:",
+    min = defaults.minSize,
+    max = defaults.maxSize,
+    value = defaults.size,
+    visible = defaults.showWheelSettings
 }
 
 dlg:newrow { always = false }
@@ -324,7 +392,7 @@ dlg:slider {
     id = "sectors",
     label = "Sectors:",
     min = 0,
-    max = 32,
+    max = defaults.maxSectors,
     value = defaults.sectors,
     visible = defaults.showWheelSettings
 }
@@ -335,7 +403,7 @@ dlg:slider {
     id = "rings",
     label = "Rings:",
     min = 0,
-    max = 16,
+    max = defaults.maxRings,
     value = defaults.rings,
     visible = defaults.showWheelSettings
 }
@@ -358,40 +426,43 @@ dlg:button {
         local trunc = math.tointeger
         local max = math.max
         local min = math.min
+
+        -- Cache math constants.
         local pi = math.pi
         local tau = pi + pi
-        local half_pi = pi / 2.0
+        local halfPi = pi / 2.0
 
         -- Unpack arguments.
         local args = dlg.data
         local size = args.size or defaults.size
         local sectors = args.sectors or defaults.sectors
         local rings = args.rings or defaults.rings
-        local szInv = 1.0 / (size - 1.0)
 
+        -- Create sprite.
         local sprite = Sprite(size, size)
         sprite.filename = "Normal Map Color Wheel"
         sprite:assignColorSpace(ColorSpace())
         local cel = sprite.cels[1]
 
-        local quantAzims = sectors > 0
-        local quantIncls = rings > 0
-        local quantUse = quantAzims or quantIncls
-
-        local azimAlpha = 0.0
+        -- Discrete sectors (azimuths).
+        local azimAlpha = sectors / tau
         local azimBeta = 0.0
+        local quantAzims = sectors > 0
         if quantAzims then
-            azimAlpha = sectors / tau
             azimBeta = tau / sectors
         end
 
-        local inclAlpha = 0.0
+        -- Discrete rings (inclinations).
+        local inclAlpha = rings / halfPi
         local inclBeta = 0.0
+        local quantIncls = rings > 0
         if quantIncls then
-            inclAlpha = rings / half_pi
-            inclBeta = half_pi / rings
+            inclBeta = halfPi / rings
         end
 
+        -- Create image, prepare for loop.
+        local quantUse = quantAzims or quantIncls
+        local szInv = 1.0 / (size - 1.0)
         local img = Image(size, size)
         local pxitr = img:pixels()
         for elm in pxitr do
@@ -407,7 +478,7 @@ dlg:button {
             local xSgn = xNrm + xNrm - 1.0
 
             -- Find square magnitude.
-            -- Magnitude correlates with saturation.
+            -- Magnitude is correlated with inclination.
             local magSq = xSgn * xSgn + ySgn * ySgn
             if magSq > 0.0 and magSq <= 1.0 then
                 local zSgn = sqrt(1.0 - magSq)
@@ -416,9 +487,11 @@ dlg:button {
                 local yn = ySgn
                 local zn = zSgn
 
+                -- Discrete swatches is more expensive because
+                -- atan2, acos, cos and sin are used.
                 if quantUse then
                     local azim = atan2(ySgn, xSgn)
-                    local incl = half_pi - acos(max(-1.0, min(1.0, zSgn)))
+                    local incl = halfPi - acos(max(-1.0, min(1.0, zSgn)))
 
                     if quantAzims then
                         azim = floor(0.5 + azim * azimAlpha) * azimBeta
@@ -454,17 +527,19 @@ dlg:button {
 
         cel.image = img
 
+        -- Use a palette with 32 swatches, plus the
+        -- center swatch, plus alpha mask.
         local pal = Palette(34)
-        pal:setColor(0, Color(  0,  0,  0,    0))
-        pal:setColor(1, Color(128, 128, 255, 255))
-        pal:setColor(2, Color(255, 128, 128, 255))
-        pal:setColor(3, Color(218, 218, 128, 255))
-        pal:setColor(4, Color(128, 255, 128, 255))
-        pal:setColor(5, Color( 37, 218, 128, 255))
-        pal:setColor(6, Color(  0, 128, 128, 255))
-        pal:setColor(7, Color( 37,  37, 128, 255))
-        pal:setColor(8, Color(128,   0, 128, 255))
-        pal:setColor(9, Color(218,  37, 128, 255))
+        pal:setColor( 0, Color(  0,  0,  0,    0))
+        pal:setColor( 1, Color(128, 128, 255, 255))
+        pal:setColor( 2, Color(255, 128, 128, 255))
+        pal:setColor( 3, Color(218, 218, 128, 255))
+        pal:setColor( 4, Color(128, 255, 128, 255))
+        pal:setColor( 5, Color( 37, 218, 128, 255))
+        pal:setColor( 6, Color(  0, 128, 128, 255))
+        pal:setColor( 7, Color( 37,  37, 128, 255))
+        pal:setColor( 8, Color(128,   0, 128, 255))
+        pal:setColor( 9, Color(218,  37, 128, 255))
         pal:setColor(10, Color(245, 128, 176, 255))
         pal:setColor(11, Color(211, 211, 176, 255))
         pal:setColor(12, Color(128, 245, 176, 255))
