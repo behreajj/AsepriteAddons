@@ -6,18 +6,25 @@ local defaults = {
     inclination = 90,
     hexCode = "8080FF",
     rgbLabel = "128, 128, 255",
-    clampz = false, -- clamp z to zero?
+    showWheelSettings = false,
     sectors = 0,
     rings = 0,
     size = 512,
-    showWheelSettings = false,
     minSize = 256,
     maxSize = 1024,
     maxSectors = 32,
-    maxRings = 16
+    maxRings = 16,
+
+    showGradientSettings = false,
+    gradWidth = 256,
+    gradHeight = 32,
+    swatches = 8,
+    aColor = Color(236, 36, 128, 255),
+    bColor = Color(37, 218, 128, 255)
 }
 
 local function fromSpherical(az, incl)
+    -- TODO: Replace with Vec3 func?
     local a = az * 0.017453292519943295
     local i = incl * 0.017453292519943295
     local cosIncl = math.cos(i)
@@ -42,6 +49,43 @@ local function toSpherical(x, y, z)
     end
 end
 
+local function colorToVec(clr, clampz)
+    local r255 = 127.5
+    local g255 = 127.5
+    local b255 = 255.0
+
+    if clr.alpha > 0 then
+        r255 = clr.red
+        g255 = clr.green
+        b255 = clr.blue
+    end
+
+    if clampz then
+        b255 = math.max(127.5, b255)
+    end
+
+    local r01 = r255 * 0.00392156862745098
+    local g01 = g255 * 0.00392156862745098
+    local b01 = b255 * 0.00392156862745098
+
+    local x = r01 + r01 - 1.0
+    local y = g01 + g01 - 1.0
+    local z = b01 + b01 - 1.0
+
+    -- The square magnitude for the color #808080
+    -- is 0.000046 . Have to account for how 255
+    -- is not divided cleanly by 2.
+    local sqMag = x * x + y * y + z * z
+    if sqMag > 0.000047 then
+        local magInv = 1.0 / math.sqrt(sqMag)
+        return x * magInv,
+            y * magInv,
+            z * magInv
+    else
+        return 0.0, 0.0, 1.0
+    end
+end
+
 local function vecToColor(x, y, z)
     local sqMag = x * x + y * y + z * z
     if sqMag > 0.0 then
@@ -63,6 +107,33 @@ local function vecToColor(x, y, z)
     else
         return Color(128, 128, 255, 255)
     end
+end
+
+local function lerpToHex(
+    ax, ay, az,
+    bx, by, bz,
+    t, omega, omSinInv)
+
+    local aFac = math.sin((1.0 - t) * omega) * omSinInv
+    local bFac = math.sin(t * omega) * omSinInv
+
+    local cx = aFac * ax + bFac * bx
+    local cy = aFac * ay + bFac * by
+    local cz = aFac * az + bFac * bz
+
+    -- Does c need to be normalized or clamped?
+    local r01 = cx * 0.5 + 0.5
+    local g01 = cy * 0.5 + 0.5
+    local b01 = cz * 0.5 + 0.5
+
+    local r255 = math.tointeger(0.5 + 255.0 * r01)
+    local g255 = math.tointeger(0.5 + 255.0 * g01)
+    local b255 = math.tointeger(0.5 + 255.0 * b01)
+
+    return 0xff000000
+        | (b255 << 0x10)
+        | (g255 << 0x08)
+        | r255
 end
 
 local function updateWidgetClr(dialog, clr)
@@ -131,40 +202,13 @@ local function updateWidgetSphere(dialog)
 end
 
 local function updateFromColor(dialog, clr)
-    local r255 = clr.red
-    local g255 = clr.green
-    local b255 = clr.blue
+    local x, y, z = colorToVec(clr, false)
+    if x ~= 0.0 or y ~= 0.0 or z ~= 0.0 then
+        dialog:modify { id = "x", text = string.format("%.5f", x) }
+        dialog:modify { id = "y", text = string.format("%.5f", y) }
+        dialog:modify { id = "z", text = string.format("%.5f", z) }
 
-    if clr.alpha < 1 then
-        r255 = 128
-        g255 = 128
-        b255 = 255
-    end
-
-    local r01 = r255 * 0.00392156862745098
-    local g01 = g255 * 0.00392156862745098
-    local b01 = b255 * 0.00392156862745098
-
-    local x = r01 + r01 - 1.0
-    local y = g01 + g01 - 1.0
-    local z = b01 + b01 - 1.0
-
-    local sqMag = x * x + y * y + z * z
-    if sqMag > 0.0 then
-        local xn = x
-        local yn = y
-        local zn = z
-
-        local magInv = 1.0 / math.sqrt(sqMag)
-        xn = x * magInv
-        yn = y * magInv
-        zn = z * magInv
-
-        dialog:modify { id = "x", text = string.format("%.5f", xn) }
-        dialog:modify { id = "y", text = string.format("%.5f", yn) }
-        dialog:modify { id = "z", text = string.format("%.5f", zn) }
-
-        local a, i = toSpherical(xn, yn, zn)
+        local a, i = toSpherical(x, y, z)
         if a < -0.0 then a = a - 0.5 end
         if a > 0.0 then a = a + 0.5 end
         if i < -0.0 then i = i - 0.5 end
@@ -180,9 +224,9 @@ local function updateFromColor(dialog, clr)
             value = math.tointeger(i)
         }
 
-        local nr01 = xn * 0.5 + 0.5
-        local ng01 = yn * 0.5 + 0.5
-        local nb01 = zn * 0.5 + 0.5
+        local nr01 = x * 0.5 + 0.5
+        local ng01 = y * 0.5 + 0.5
+        local nb01 = z * 0.5 + 0.5
 
         local nr255 = math.tointeger(0.5 + 255.0 * nr01)
         local ng255 = math.tointeger(0.5 + 255.0 * ng01)
@@ -286,17 +330,6 @@ dlg:slider {
     end
 }
 
--- dlg:newrow { always = false }
-
--- dlg:check {
---     id = "clampz",
---     label = "Clamp:",
---     text = "Inclination",
---     selected = defaults.clampz,
---     onclick = function()
---     end
--- }
-
 dlg:newrow { always = false }
 
 dlg: label {
@@ -363,8 +396,8 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "showWheelSettings",
-    label = "Show:",
-    text = "Wheel Settings",
+    label = "Settings:",
+    text = "Wheel",
     selected = defaults.showWheelSettings,
     onclick = function()
         local args = dlg.data
@@ -372,6 +405,19 @@ dlg:check {
         dlg:modify { id = "sectors", visible = state }
         dlg:modify { id = "rings", visible = state }
         dlg:modify { id = "size", visible = state }
+    end
+}
+
+dlg:check {
+    id = "showGradientSettings",
+    text = "Gradient",
+    selected = defaults.showGradientSettings,
+    onclick = function()
+        local args = dlg.data
+        local state = args.showGradientSettings
+        dlg:modify { id = "aColor", visible = state }
+        dlg:modify { id = "bColor", visible = state }
+        dlg:modify { id = "swatches", visible = state }
     end
 }
 
@@ -409,6 +455,123 @@ dlg:slider {
 }
 
 dlg:newrow { always = false }
+
+dlg:color {
+    id = "aColor",
+    label = "Colors:",
+    color = defaults.aColor,
+    visible = defaults.showGradientSettings
+}
+
+dlg:color {
+    id = "bColor",
+    color = defaults.bColor,
+    visible = defaults.showGradientSettings
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "swatches",
+    label = "Swatches:",
+    min = 2,
+    max = 32,
+    value = defaults.swatches,
+    visible = defaults.showGradientSettings
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "gradient",
+    text = "&GRADIENT",
+    focus = false,
+    onclick = function()
+        local args = dlg.data
+        local aColor = args.aColor or defaults.aColor
+        local bColor = args.bColor or defaults.bColor
+        local swatches = args.swatches or defaults.swatches
+        local swatchesInv = 1.0 / (swatches - 1.0)
+
+        local ax, ay, az = colorToVec(aColor, false)
+        local bx, by, bz = colorToVec(bColor, false)
+
+        -- Because the vectors are already normalized
+        -- and known to be non-zero, simplify angle
+        -- between formula.
+        local abDot = ax * bx + ay * by + az * bz
+        abDot = math.max(-1.0, math.min(1.0, abDot))
+        local omega = math.acos(abDot)
+        local omSin = math.sin(omega)
+        local omSinInv = 1.0
+        if omSin ~= 0.0 then
+            omSinInv = 1.0 / omSin
+        end
+
+        -- Create sprite.
+        local gradWidth = defaults.gradWidth
+        local gradHeight = defaults.gradHeight
+        local gradSprite = Sprite(gradWidth, gradHeight)
+        gradSprite.filename = "Normal Gradient"
+
+        -- Create smooth image.
+        local gradImg = Image(gradWidth, gradHeight // 2)
+        local gradImgPxItr = gradImg:pixels()
+        local xToFac = 1.0 / (gradWidth - 1.0)
+
+        for elm in gradImgPxItr do
+            local t = elm.x * xToFac
+            elm(lerpToHex(
+                ax, ay, az,
+                bx, by, bz,
+                t, omega, omSinInv))
+        end
+
+        gradSprite.cels[1].image = gradImg
+        gradSprite.layers[1].name = "Gradient.Smooth"
+
+        -- Create swatches.
+        local segLayer = gradSprite:newLayer()
+        segLayer.name = "Gradient.Swatches"
+        local segImg = Image(gradWidth, gradHeight - gradHeight // 2)
+        local segImgPxItr = segImg:pixels()
+
+        local swatchesDict = {}
+        local palIdx = 0
+        for elm in segImgPxItr do
+            local t = elm.x * xToFac
+            t = math.max(0.0,
+                (math.ceil(t * swatches) - 1.0)
+                * swatchesInv)
+            local hex = lerpToHex(
+                ax, ay, az,
+                bx, by, bz,
+                t, omega, omSinInv)
+            elm(hex)
+
+            if not swatchesDict[hex] then
+                swatchesDict[hex] = palIdx
+                palIdx = palIdx + 1
+            end
+        end
+
+        gradSprite:newCel(
+            segLayer,
+            gradSprite.frames[1],
+            segImg,
+            Point(0, gradHeight // 2))
+
+
+        -- Set palette.
+        local pal = Palette(swatches)
+        for k, v in pairs(swatchesDict) do
+            pal:setColor(v, k)
+        end
+        gradSprite:setPalette(pal)
+
+        app.refresh()
+    end
+}
 
 dlg:button {
     id = "wheel",
@@ -569,6 +732,8 @@ dlg:button {
         app.refresh()
     end
 }
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "cancel",

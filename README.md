@@ -83,6 +83,10 @@ This repo includes
 
   ![New Sprite](screencaps/newSpritePlus.png)
 
+- Normal color picker.
+
+- ![Normal Map](screencaps/normalMap.png)
+
 - Palette Coverage.
 
   ![Palette Coverage](screencaps/paletteCoverage.png)

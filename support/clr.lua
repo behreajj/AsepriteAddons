@@ -320,30 +320,6 @@ function Clr.clamp01(a)
     return Clr.new(cr, cg, cb, ca)
 end
 
----Converts from a direction to a color.
----Normalizes the direction internally.
----For use when creating normal maps.
----@param x number x coordinate
----@param y number y coordinate
----@param z number z coordinate
----@return table
-function Clr.fromDir(x, y, z)
-    local xv = x or 0.0
-    local yv = y or 0.0
-    local zv = z or 0.0
-    local msq = xv * xv + yv * yv + zv * zv
-    if msq > 0.0 then
-        local minv = 1.0 / math.sqrt(msq)
-        return Clr.new(
-            0.5 + 0.5 * (xv * minv),
-            0.5 + 0.5 * (yv * minv),
-            0.5 + 0.5 * (zv * minv),
-            1.0)
-    else
-        return Clr.new(0.5, 0.5, 0.5, 1.0)
-    end
-end
-
 ---Converts from a hexadecimal representation
 ---of a color stored as 0xAABBGGRR.
 ---@param c number hexadecimal color

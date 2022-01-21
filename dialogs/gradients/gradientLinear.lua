@@ -289,6 +289,10 @@ dlg:button {
                 local x = elm.x + xCel
                 local y = elm.y + yCel
                 -- if selection:contains(x, y) then
+
+                -- TODO: This is a little backwards... wouldn't it
+                -- be (x, y) - origin, and then reverse b above to
+                -- be origin - destination ?
                 local cx = xOrPx - x
                 local cy = yOrPx - y
                 local cb = (cx * bx + cy * by) * bbInv
