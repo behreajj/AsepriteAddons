@@ -112,6 +112,9 @@ end
 ---@param b table right operand
 ---@return table
 function Vec3.angleBetween(a, b)
+    --TODO: Test to see if this produces results
+    -- that go out of [-1, 1] and then cause
+    -- problems with acos.
     if Vec3.any(a) and Vec3.any(b) then
         return math.acos(Vec3.dot(a, b) /
             (Vec3.mag(a) * Vec3.mag(b)))

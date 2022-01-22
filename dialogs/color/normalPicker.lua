@@ -6,6 +6,14 @@ local defaults = {
     inclination = 90,
     hexCode = "8080FF",
     rgbLabel = "128, 128, 255",
+
+    showGradientSettings = false,
+    gradWidth = 256,
+    gradHeight = 32,
+    swatches = 8,
+    aColor = Color(238, 64, 128, 255),
+    bColor = Color(128, 255, 128, 255),
+
     showWheelSettings = false,
     sectors = 0,
     rings = 0,
@@ -13,14 +21,7 @@ local defaults = {
     minSize = 256,
     maxSize = 1024,
     maxSectors = 32,
-    maxRings = 16,
-
-    showGradientSettings = false,
-    gradWidth = 256,
-    gradHeight = 32,
-    swatches = 8,
-    aColor = Color(236, 36, 128, 255),
-    bColor = Color(37, 218, 128, 255)
+    maxRings = 16
 }
 
 local function fromSpherical(az, incl)
@@ -311,7 +312,7 @@ dlg:slider {
     label = "Azimuth:",
     min = -180,
     max = 180,
-    value = defaults.inclination,
+    value = defaults.azimuth,
     onchange = function()
         updateWidgetSphere(dlg)
     end
@@ -395,8 +396,21 @@ dlg:button {
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "showWheelSettings",
+    id = "showGradientSettings",
     label = "Settings:",
+    text = "Gradient",
+    selected = defaults.showGradientSettings,
+    onclick = function()
+        local args = dlg.data
+        local state = args.showGradientSettings
+        dlg:modify { id = "aColor", visible = state }
+        dlg:modify { id = "bColor", visible = state }
+        dlg:modify { id = "swatches", visible = state }
+    end
+}
+
+dlg:check {
+    id = "showWheelSettings",
     text = "Wheel",
     selected = defaults.showWheelSettings,
     onclick = function()
@@ -408,17 +422,30 @@ dlg:check {
     end
 }
 
-dlg:check {
-    id = "showGradientSettings",
-    text = "Gradient",
-    selected = defaults.showGradientSettings,
-    onclick = function()
-        local args = dlg.data
-        local state = args.showGradientSettings
-        dlg:modify { id = "aColor", visible = state }
-        dlg:modify { id = "bColor", visible = state }
-        dlg:modify { id = "swatches", visible = state }
-    end
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "aColor",
+    label = "Colors:",
+    color = defaults.aColor,
+    visible = defaults.showGradientSettings
+}
+
+dlg:color {
+    id = "bColor",
+    color = defaults.bColor,
+    visible = defaults.showGradientSettings
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "swatches",
+    label = "Swatches:",
+    min = 2,
+    max = 32,
+    value = defaults.swatches,
+    visible = defaults.showGradientSettings
 }
 
 dlg:newrow { always = false }
@@ -456,32 +483,6 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:color {
-    id = "aColor",
-    label = "Colors:",
-    color = defaults.aColor,
-    visible = defaults.showGradientSettings
-}
-
-dlg:color {
-    id = "bColor",
-    color = defaults.bColor,
-    visible = defaults.showGradientSettings
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "swatches",
-    label = "Swatches:",
-    min = 2,
-    max = 32,
-    value = defaults.swatches,
-    visible = defaults.showGradientSettings
-}
-
-dlg:newrow { always = false }
-
 dlg:button {
     id = "gradient",
     text = "&GRADIENT",
@@ -513,6 +514,7 @@ dlg:button {
         local gradHeight = defaults.gradHeight
         local gradSprite = Sprite(gradWidth, gradHeight)
         gradSprite.filename = "Normal Gradient"
+        gradSprite:assignColorSpace(ColorSpace())
 
         -- Create smooth image.
         local gradImg = Image(gradWidth, gradHeight // 2)
@@ -537,7 +539,8 @@ dlg:button {
         local segImgPxItr = segImg:pixels()
 
         local swatchesDict = {}
-        local palIdx = 0
+        swatchesDict[0x00000000] = 0
+        local palIdx = 1
         for elm in segImgPxItr do
             local t = elm.x * xToFac
             t = math.max(0.0,
@@ -561,9 +564,8 @@ dlg:button {
             segImg,
             Point(0, gradHeight // 2))
 
-
         -- Set palette.
-        local pal = Palette(swatches)
+        local pal = Palette(1 + swatches)
         for k, v in pairs(swatchesDict) do
             pal:setColor(v, k)
         end
@@ -593,7 +595,7 @@ dlg:button {
         -- Cache math constants.
         local pi = math.pi
         local tau = pi + pi
-        local halfPi = pi / 2.0
+        local halfPi = pi * 0.5
 
         -- Unpack arguments.
         local args = dlg.data
@@ -692,6 +694,8 @@ dlg:button {
 
         -- Use a palette with 32 swatches, plus the
         -- center swatch, plus alpha mask.
+        -- Should the palette match the discrete
+        -- wheel swatches?
         local pal = Palette(34)
         pal:setColor( 0, Color(  0,  0,  0,    0))
         pal:setColor( 1, Color(128, 128, 255, 255))

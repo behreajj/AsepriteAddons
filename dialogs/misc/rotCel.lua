@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local angles = { "90", "180", "270" }
+local angles = { "90_CCW", "180", "90_CW" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
@@ -64,11 +64,11 @@ dlg:button {
 
             -- Determine rotation function.
             local imgRotFunc = nil
-            if angle == "90" then
+            if angle == "90_CCW" then
                 imgRotFunc = AseUtilities.rotate90
             elseif angle == "180" then
                 imgRotFunc = AseUtilities.rotate180
-            elseif angle == "270" then
+            elseif angle == "90_CW" then
                 imgRotFunc = AseUtilities.rotate270
             else
                 imgRotFunc = function(a)
