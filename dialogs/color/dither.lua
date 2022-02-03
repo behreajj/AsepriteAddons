@@ -65,13 +65,9 @@ local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
             local k0 = 1 + xp1 + y * srcWidth
             local neighbor0 = pxArray[k0]
 
-            local rn0 = neighbor0 & 0xff
-            local gn0 = neighbor0 >> 0x08 & 0xff
-            local bn0 = neighbor0 >> 0x10 & 0xff
-
-            local rne0 = rn0 + trunc(rErr * fs_7_16)
-            local gne0 = gn0 + trunc(gErr * fs_7_16)
-            local bne0 = bn0 + trunc(bErr * fs_7_16)
+            local rne0 = (neighbor0 & 0xff) + trunc(rErr * fs_7_16)
+            local gne0 = (neighbor0 >> 0x08 & 0xff) + trunc(gErr * fs_7_16)
+            local bne0 = (neighbor0 >> 0x10 & 0xff) + trunc(bErr * fs_7_16)
 
             if rne0 < 0 then rne0 = 0 elseif rne0 > 255 then rne0 = 255 end
             if gne0 < 0 then gne0 = 0 elseif gne0 > 255 then gne0 = 255 end
@@ -87,13 +83,9 @@ local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
                 local k3 = 1 + xp1 + yp1w
                 local neighbor3 = pxArray[k3]
 
-                local rn3 = neighbor3 & 0xff
-                local gn3 = neighbor3 >> 0x08 & 0xff
-                local bn3 = neighbor3 >> 0x10 & 0xff
-
-                local rne3 = rn3 + trunc(rErr * fs_1_16)
-                local gne3 = gn3 + trunc(gErr * fs_1_16)
-                local bne3 = bn3 + trunc(bErr * fs_1_16)
+                local rne3 = (neighbor3 & 0xff) + trunc(rErr * fs_1_16)
+                local gne3 = (neighbor3 >> 0x08 & 0xff) + trunc(gErr * fs_1_16)
+                local bne3 = (neighbor3 >> 0x10 & 0xff) + trunc(bErr * fs_1_16)
 
                 if rne3 < 0 then rne3 = 0 elseif rne3 > 255 then rne3 = 255 end
                 if gne3 < 0 then gne3 = 0 elseif gne3 > 255 then gne3 = 255 end
@@ -111,13 +103,9 @@ local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
             local k2 = 1 + x + yp1w
             local neighbor2 = pxArray[k2]
 
-            local rn2 = neighbor2 & 0xff
-            local gn2 = neighbor2 >> 0x08 & 0xff
-            local bn2 = neighbor2 >> 0x10 & 0xff
-
-            local rne2 = rn2 + trunc(rErr * fs_5_16)
-            local gne2 = gn2 + trunc(gErr * fs_5_16)
-            local bne2 = bn2 + trunc(bErr * fs_5_16)
+            local rne2 = (neighbor2 & 0xff) + trunc(rErr * fs_5_16)
+            local gne2 = (neighbor2 >> 0x08 & 0xff) + trunc(gErr * fs_5_16)
+            local bne2 = (neighbor2 >> 0x10 & 0xff) + trunc(bErr * fs_5_16)
 
             if rne2 < 0 then rne2 = 0 elseif rne2 > 255 then rne2 = 255 end
             if gne2 < 0 then gne2 = 0 elseif gne2 > 255 then gne2 = 255 end
@@ -133,13 +121,9 @@ local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
                 local k1 = x + yp1w
                 local neighbor1 = pxArray[k1]
 
-                local rn1 = neighbor1 & 0xff
-                local gn1 = neighbor1 >> 0x08 & 0xff
-                local bn1 = neighbor1 >> 0x10 & 0xff
-
-                local rne1 = rn1 + trunc(rErr * fs_3_16)
-                local gne1 = gn1 + trunc(gErr * fs_3_16)
-                local bne1 = bn1 + trunc(bErr * fs_3_16)
+                local rne1 = (neighbor1 & 0xff) + trunc(rErr * fs_3_16)
+                local gne1 = (neighbor1 >> 0x08 & 0xff) + trunc(gErr * fs_3_16)
+                local bne1 = (neighbor1 >> 0x10 & 0xff) + trunc(bErr * fs_3_16)
 
                 if rne1 < 0 then rne1 = 0 elseif rne1 > 255 then rne1 = 255 end
                 if gne1 < 0 then gne1 = 0 elseif gne1 > 255 then gne1 = 255 end

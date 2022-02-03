@@ -65,13 +65,9 @@ local function colorToVec(clr, clampz)
         b255 = math.max(127.5, b255)
     end
 
-    local r01 = r255 * 0.00392156862745098
-    local g01 = g255 * 0.00392156862745098
-    local b01 = b255 * 0.00392156862745098
-
-    local x = r01 + r01 - 1.0
-    local y = g01 + g01 - 1.0
-    local z = b01 + b01 - 1.0
+    local x = (r255 + r255 - 255) * 0.00392156862745098
+    local y = (g255 + g255 - 255) * 0.00392156862745098
+    local z = (b255 + b255 - 255) * 0.00392156862745098
 
     -- The square magnitude for the color #808080
     -- is 0.000046 . Have to account for how 255
@@ -90,21 +86,12 @@ end
 local function vecToColor(x, y, z)
     local sqMag = x * x + y * y + z * z
     if sqMag > 0.0 then
-        local mag = math.sqrt(sqMag)
-
-        local xn = x / mag
-        local yn = y / mag
-        local zn = z / mag
-
-        local r01 = xn * 0.5 + 0.5
-        local g01 = yn * 0.5 + 0.5
-        local b01 = zn * 0.5 + 0.5
-
-        local r255 = math.tointeger(0.5 + 255.0 * r01)
-        local g255 = math.tointeger(0.5 + 255.0 * g01)
-        local b255 = math.tointeger(0.5 + 255.0 * b01)
-
-        return Color(r255, g255, b255, 255)
+        local invMag = 127.5 / math.sqrt(sqMag)
+        return Color(
+            math.tointeger(x * invMag + 128.0),
+            math.tointeger(y * invMag + 128.0),
+            math.tointeger(z * invMag + 128.0),
+            255)
     else
         return Color(128, 128, 255, 255)
     end
@@ -118,18 +105,14 @@ local function lerpToHex(
     local aFac = math.sin((1.0 - t) * omega) * omSinInv
     local bFac = math.sin(t * omega) * omSinInv
 
+    -- Does c need to be normalized or clamped?
     local cx = aFac * ax + bFac * bx
     local cy = aFac * ay + bFac * by
     local cz = aFac * az + bFac * bz
 
-    -- Does c need to be normalized or clamped?
-    local r01 = cx * 0.5 + 0.5
-    local g01 = cy * 0.5 + 0.5
-    local b01 = cz * 0.5 + 0.5
-
-    local r255 = math.tointeger(0.5 + 255.0 * r01)
-    local g255 = math.tointeger(0.5 + 255.0 * g01)
-    local b255 = math.tointeger(0.5 + 255.0 * b01)
+    local r255 = math.tointeger(cx * 127.5 + 128.0)
+    local g255 = math.tointeger(cy * 127.5 + 128.0)
+    local b255 = math.tointeger(cz * 127.5 + 128.0)
 
     return 0xff000000
         | (b255 << 0x10)
@@ -154,7 +137,7 @@ local function updateWidgetClr(dialog, clr)
     dialog:modify {
         id = "rgbLabel",
         text = string.format(
-            "%d, %d, %d",
+            "%03d, %03d, %03d",
             clr.red,
             clr.green,
             clr.blue)
@@ -225,31 +208,27 @@ local function updateFromColor(dialog, clr)
             value = math.tointeger(i)
         }
 
-        local nr01 = x * 0.5 + 0.5
-        local ng01 = y * 0.5 + 0.5
-        local nb01 = z * 0.5 + 0.5
-
-        local nr255 = math.tointeger(0.5 + 255.0 * nr01)
-        local ng255 = math.tointeger(0.5 + 255.0 * ng01)
-        local nb255 = math.tointeger(0.5 + 255.0 * nb01)
+        local r255 = math.tointeger(x * 127.5 + 128.0)
+        local g255 = math.tointeger(y * 127.5 + 128.0)
+        local b255 = math.tointeger(z * 127.5 + 128.0)
 
         dialog:modify {
             id = "normalColor",
-            colors = { Color(nr255, ng255, nb255, 255) }
+            colors = { Color(r255, g255, b255, 255) }
         }
 
         dialog:modify {
             id = "hexCode",
             text = string.format("%06X",
-                (nr255 << 0x10 |
-                ng255 << 0x08 |
-                nb255))
+                (r255 << 0x10 |
+                g255 << 0x08 |
+                b255))
         }
 
         dialog:modify {
             id = "rgbLabel",
-            text = string.format("%d, %d, %d",
-                nr255, ng255, nb255)
+            text = string.format("%03d, %03d, %03d",
+                r255, g255, b255)
         }
     end
 end
@@ -632,14 +611,10 @@ dlg:button {
         local pxitr = img:pixels()
         for elm in pxitr do
 
-            -- Find rise.
-            local y = elm.y
-            local yNrm = y * szInv
+            -- Find rise and run.
+            local yNrm = elm.y * szInv
             local ySgn = 1.0 - (yNrm + yNrm)
-
-            -- Find run.
-            local x = elm.x
-            local xNrm = x * szInv
+            local xNrm = elm.x * szInv
             local xSgn = xNrm + xNrm - 1.0
 
             -- Find square magnitude.
@@ -672,19 +647,10 @@ dlg:button {
                     zn = sin(incl)
                 end
 
-                local r01 = xn * 0.5 + 0.5
-                local g01 = yn * 0.5 + 0.5
-                local b01 = zn * 0.5 + 0.5
-
-                local r255 = trunc(r01 * 255.0 + 0.5)
-                local g255 = trunc(g01 * 255.0 + 0.5)
-                local b255 = trunc(b01 * 255.0 + 0.5)
-
-                local hex = 0xff000000
-                    | (b255 << 0x10)
-                    | (g255 << 0x08)
-                    | r255
-                elm(hex)
+                elm(0xff000000
+                    | (trunc(zn * 127.5 + 128.0) << 0x10)
+                    | (trunc(yn * 127.5 + 128.0) << 0x08)
+                    | trunc(xn * 127.5 + 128.0))
             else
                 elm(0xffff8080)
             end

@@ -1,13 +1,14 @@
 dofile("../../support/aseutilities.lua")
 
-local frames = { "CEL", "SPRITE" }
-local origins = { "CENTER", "CORNER" }
-local targets = { "ACTIVE", "ALL", "RANGE" }
+local boundsOptions = { "CEL", "SPRITE" }
+local originOptions = { "CENTER", "CORNER" }
+local targetOptions = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
     target = "ALL",
     bounds = "CEL",
     padding = 2,
+    padColor = Color(0, 0, 0, 0),
     scale = 1,
     saveJson = false,
     origin = "CORNER",
@@ -22,7 +23,7 @@ dlg:combobox {
     id = "target",
     label = "Layers:",
     option = defaults.target,
-    options = targets
+    options = targetOptions
 }
 
 dlg:newrow { always = false }
@@ -31,17 +32,7 @@ dlg:combobox {
     id = "bounds",
     label = "Bounds:",
     option = defaults.bounds,
-    options = frames
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "padding",
-    label = "Padding:",
-    min = 0,
-    max = 32,
-    value = defaults.padding
+    options = boundsOptions
 }
 
 dlg:newrow { always = false }
@@ -52,6 +43,30 @@ dlg:slider {
     min = 1,
     max = 10,
     value = defaults.scale
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "padding",
+    label = "Padding:",
+    min = 0,
+    max = 32,
+    value = defaults.padding,
+    onchange = function()
+        local args = dlg.data
+        local pad = args.padding
+        dlg:modify { id = "padColor", visible = pad > 0 }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "padColor",
+    label = "Color:",
+    color = defaults.padColor,
+    visible = defaults.padding > 0
 }
 
 dlg:newrow { always = false }
@@ -82,7 +97,7 @@ dlg:combobox {
     id = "origin",
     label = "Origin:",
     option = defaults.origin,
-    options = origins,
+    options = originOptions,
     visible = defaults.saveJson
 }
 
@@ -95,11 +110,6 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if activeSprite then
-            -- Image padding is impacted by scaling. To correct this,
-            -- you'd have to  make a separate image padding method in
-            -- AseUtililties. Then trim, then scale, then pad.
-            -- Doesn't seem worth it, though, as there's an argument
-            -- that for a pixel perfect image, scaled pad is desirable.
 
             -- Unpack sprite properties.
             local oldMode = activeSprite.colorMode
@@ -113,6 +123,7 @@ dlg:button {
             local target = args.target or defaults.target
             local bounds = args.bounds or defaults.bounds
             local padding = args.padding or defaults.padding
+            local padColor = args.padColor or defaults.padColor
             local scale = args.scale or defaults.scale
             local filename = args.filename
             local saveJson = args.saveJson
@@ -142,6 +153,8 @@ dlg:button {
             local filePrefix = filePath .. fileTitle
 
             -- Determine cels by target preset.
+            -- TODO: Create a flatten group layers method
+            -- then refactor this to use layers instead of cels.
             local cels = {}
             if target == "ACTIVE" then
                 local activeCel = app.activeCel
@@ -157,10 +170,20 @@ dlg:button {
             local useSpriteBounds = bounds == "SPRITE"
             local useCenter = origin == "CENTER"
             local useResize = scale ~= 1
+            local addPadding = padding > 0
+            local usePadColor = padColor.alpha > 0
             local pad2 = padding + padding
-            local wPaddedSprite = widthSprite + pad2
-            local hPaddedSprite = heightSprite + pad2
             local padOffset = Point(padding, padding)
+
+            local padHex = 0
+            if oldMode == ColorMode.INDEXED then
+                -- Color.index returns a float, not an integer.
+                padHex = math.tointeger(padColor.index)
+            elseif oldMode == ColorMode.GRAY then
+                padHex = padColor.grayPixel
+            else
+                padHex = padColor.rgbaPixel
+            end
 
             local layerFormat = concat({
                 "{\"stackIndex\":%d,",
@@ -198,11 +221,11 @@ dlg:button {
                         local yOrigin = 0
                         if useSpriteBounds then
                             local celPos = cel.position
-                            trgImage = Image(wPaddedSprite, hPaddedSprite, oldMode)
-                            trgImage:drawImage(srcImage, padOffset + celPos)
+                            trgImage = Image(widthSprite, heightSprite, oldMode)
+                            trgImage:drawImage(srcImage, celPos)
                         else
                             trgImage, xOrigin, yOrigin = trimAlpha(
-                                srcImage, padding, alphaIndex)
+                                srcImage, 0, alphaIndex)
                             local celPos = cel.position
                             xOrigin = xOrigin + celPos.x
                             yOrigin = yOrigin + celPos.y
@@ -222,6 +245,47 @@ dlg:button {
                             trgImage:resize(
                                 trgImage.width * scale,
                                 trgImage.height * scale)
+                        end
+
+                        if addPadding then
+                            local trgWidth = trgImage.width
+                            local trgHeight = trgImage.height
+                            local padWidth = trgWidth + pad2
+                            local padHeight = trgHeight + pad2
+
+                            local padded = Image(padWidth, padHeight, oldMode)
+                            padded:drawImage(trgImage, padOffset)
+
+                            if usePadColor then
+                                -- Top edge.
+                                for x = 0, trgWidth + padding - 1, 1 do
+                                    for y = 0, padding - 1, 1 do
+                                        padded:drawPixel(x, y, padHex)
+                                    end
+                                end
+
+                                -- Right edge.
+                                for y = 0, trgHeight + padding - 1, 1 do
+                                    for x = trgWidth + padding, padWidth - 1, 1 do
+                                        padded:drawPixel(x, y, padHex)
+                                    end
+                                end
+
+                                -- Bottom edge.
+                                for x = padding, padWidth - 1, 1 do
+                                    for y = trgHeight + padding, padHeight - 1, 1 do
+                                        padded:drawPixel(x, y, padHex)
+                                    end
+                                end
+
+                                -- Left edge.
+                                for y = padding, padHeight - 1, 1 do
+                                    for x = 0, padding - 1, 1 do
+                                        padded:drawPixel(x, y, padHex)
+                                    end
+                                end
+                            end
+                            trgImage = padded
                         end
 
                         trgImage:saveAs {
