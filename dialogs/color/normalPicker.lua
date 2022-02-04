@@ -491,9 +491,11 @@ dlg:button {
         -- Create sprite.
         local gradWidth = defaults.gradWidth
         local gradHeight = defaults.gradHeight
-        local gradSprite = Sprite(gradWidth, gradHeight)
+        local gradSprite = Sprite(
+            gradWidth,
+            gradHeight,
+            ColorSpace())
         gradSprite.filename = "Normal Gradient"
-        gradSprite:assignColorSpace(ColorSpace())
 
         -- Create smooth image.
         local gradImg = Image(gradWidth, gradHeight // 2)

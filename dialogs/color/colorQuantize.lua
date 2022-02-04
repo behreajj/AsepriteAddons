@@ -1,12 +1,32 @@
+dofile("../../support/aseutilities.lua")
 dofile("../../support/clr.lua")
+
+local targets = { "ACTIVE", "ALL", "RANGE" }
+
+local defaults = {
+    target = "RANGE",
+    levels = 16,
+    copyToLayer = true,
+    pullFocus = false
+}
 
 local dlg = Dialog { title = "Quantize Color" }
 
+dlg:combobox {
+    id = "target",
+    label = "Target:",
+    option = defaults.target,
+    options = targets
+}
+
+dlg:newrow { always = false }
+
 dlg:slider {
+    target = "RANGE",
     id = "levels",
     label = "Levels:",
     min = 2,
-    max = 96,
+    max = 64,
     value = 16
 }
 
@@ -15,7 +35,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "copyToLayer",
     label = "As New Layer:",
-    selected = true
+    selected = defaults.copyToLayer
 }
 
 dlg:newrow { always = false }
@@ -23,32 +43,82 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = false,
+    focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
         local sprite = app.activeSprite
-        if sprite then
-            -- TODO: Update to use defaults table.
-            local srcCel = app.activeCel
-            if srcCel then
-                local srcImg = srcCel.image
-                if srcImg ~= nil then
-                    local srcpxitr = srcImg:pixels()
+        if not sprite then
+            app.alert("There is no active sprite.")
+            return
+        end
+
+        local srcLayer = app.activeLayer
+        if not srcLayer then
+            app.alert("There is no active layer.")
+            return
+        end
+
+        -- Unpack arguments.
+        local args = dlg.data
+        local levels = args.levels or defaults.levels
+        local target = args.target or defaults.target
+        local copyToLayer = args.copyToLayer
+
+        -- Cache methods to local.
+        local fromHex = Clr.fromHex
+        local toHex = Clr.toHexUnchecked
+        local quantize = Clr.quantizeInternal
+
+        -- Find frames from target.
+        local frames = {}
+        if target == "ACTIVE" then
+            local activeFrame = app.activeFrame
+            if activeFrame then
+                frames[1] = activeFrame
+            end
+        elseif target == "RANGE" then
+            local appRange = app.range
+            local rangeFrames = appRange.frames
+            local rangeFramesLen = #rangeFrames
+            for i = 1, rangeFramesLen, 1 do
+                frames[i] = rangeFrames[i]
+            end
+        else
+            local activeFrames = sprite.frames
+            local activeFramesLen = #activeFrames
+            for i = 1, activeFramesLen, 1 do
+                frames[i] = activeFrames[i]
+            end
+        end
+
+        -- Create a new layer if necessary.
+        local trgLayer = nil
+        if copyToLayer then
+            trgLayer = sprite:newLayer()
+            trgLayer.name = string.format(
+                "%s.Quantized.%03d",
+                trgLayer.name,
+                levels)
+            trgLayer.opacity = srcLayer.opacity
+        end
+
+        local framesLen = #frames
+        local delta = 1.0 / levels
+        local oldMode = sprite.colorMode
+        app.command.ChangePixelFormat { format = "rgb" }
+
+        app.transaction(function()
+            for i = 1, framesLen, 1 do
+                local srcFrame = frames[i]
+                local srcCel = srcLayer:cel(srcFrame)
+                if srcCel then
+                    local srcImg = srcCel.image
+                    local srcPxItr = srcImg:pixels()
 
                     -- Gather unique colors in image.
                     local srcDict = {}
-                    for elm in srcpxitr do
+                    for elm in srcPxItr do
                         srcDict[elm()] = true
                     end
-
-                    -- Cache methods to local.
-                    local fromHex = Clr.fromHex
-                    local toHex = Clr.toHexUnchecked
-                    local quantize = Clr.quantizeInternal
-
-                    -- Find levels and 1.0 / levels.
-                    local levels = args.levels
-                    local delta = 1.0 / levels
 
                     -- Quantize colors, place in dictionary.
                     local trgDict = {}
@@ -65,33 +135,20 @@ dlg:button {
                         elm(trgDict[elm()])
                     end
 
-                    local copyToLayer = args.copyToLayer
                     if copyToLayer then
-                        app.transaction(function()
-                            local srcLayer = srcCel.layer
-                            local trgLayer = sprite:newLayer()
-                            trgLayer.name = srcLayer.name .. ".Quantized." .. levels
-                            trgLayer.opacity = srcLayer.opacity
-                            local srcFrame = srcCel.frame or sprite.frames[1]
-                            local trgCel = sprite:newCel(
-                                trgLayer, srcFrame,
-                                trgImg, srcCel.position)
-                            trgCel.opacity = srcCel.opacity
-                        end)
+                        local trgCel = sprite:newCel(
+                                    trgLayer, srcFrame,
+                                    trgImg, srcCel.position)
+                        trgCel.opacity = srcCel.opacity
                     else
                         srcCel.image = trgImg
                     end
-
-                    app.refresh()
-                else
-                    app.alert("The cel has no image.")
                 end
-            else
-                app.alert("There is no active cel.")
             end
-        else
-            app.alert("There is no active sprite.")
-        end
+        end)
+
+        AseUtilities.changePixelFormat(oldMode)
+        app.refresh()
     end
 }
 

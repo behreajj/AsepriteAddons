@@ -300,8 +300,8 @@ dlg:button {
                             layer = layer,
                             frameDuration = trunc(cel.frame.duration * 1000),
                             frameNumber = cel.frameNumber,
-                            xOrigin = xOrigin * scale,
-                            yOrigin = yOrigin * scale,
+                            xOrigin = xOrigin * scale - padding,
+                            yOrigin = yOrigin * scale - padding,
                             width = trgImage.width,
                             height = trgImage.height
                         }
