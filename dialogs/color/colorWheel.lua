@@ -14,8 +14,8 @@ local defaults = {
     outOfGamut = 64,
     hueOverlay = true,
     offsetDeg = 40,
-    ringCount = 1,
-    sectorCount = 1,
+    ringCount = 4,
+    sectorCount = 12,
     hueCenter = "ABSOLUTE",
     plotPalette = true,
     palType = "ACTIVE",
@@ -302,6 +302,7 @@ dlg:button {
                 local yNrm = y * szInv
                 local ySgn = 1.0 - (yNrm + yNrm)
 
+                -- TODO: Quantize option?
                 local clr = labTosRgba(
                     light,
                     xSgn * 110.0,
@@ -571,10 +572,11 @@ dlg:button {
             Utilities.prependMask(hexesProfile)
             sprite:setPalette(
                 AseUtilities.hexArrToAsePalette(hexesProfile))
+        else
+            sprite:setPalette(
+                AseUtilities.hexArrToAsePalette(
+                    AseUtilities.DEFAULT_PAL_ARR))
         end
-
-        -- TODO: Set to some sort of palette, even if none
-        -- is plotted?
 
         app.activeFrame = sprite.frames[
             math.ceil(#sprite.frames / 2)]

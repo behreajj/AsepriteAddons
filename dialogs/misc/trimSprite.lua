@@ -4,6 +4,7 @@ local defaults = {
     expand = false,
     cropCels = true,
     padding = 0,
+    omitHidden = false,
     pullFocus = false
 }
 
@@ -11,7 +12,7 @@ local dlg = Dialog { title = "Trim Sprite" }
 
 dlg:radio {
     id = "cropCels",
-    label = "Crop",
+    label = "Crop:",
     text = "Cels",
     selected = defaults.cropCels,
     onclick = function()
@@ -27,7 +28,7 @@ dlg:newrow { always = false }
 
 dlg:radio {
     id = "expand",
-    label = "Expand",
+    label = "Expand:",
     text = "Sprite",
     selected = defaults.expand,
     onclick = function()
@@ -37,6 +38,15 @@ dlg:radio {
             selected = not args.expand
         }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "omitHidden",
+    label = "Omit Hidden:",
+    text = "Layers",
+    selected = defaults.omitHidden
 }
 
 dlg:newrow { always = false }
@@ -63,6 +73,7 @@ dlg:button {
         -- Cache global functions used in loop.
         local trimAlphaFunc = AseUtilities.trimImageAlpha
         local trimCelFunc = AseUtilities.trimCelToSprite
+        local isVisibleHierarchy = AseUtilities.isVisibleHierarchy
         local min = math.min
         local max = math.max
 
@@ -76,6 +87,7 @@ dlg:button {
         local args = dlg.data
         local expand = args.expand
         local cropCels = args.cropCels
+        local omitHidden = args.omitHidden
         local padding = args.padding or defaults.padding
 
         local xMin = 2147483647
@@ -85,6 +97,23 @@ dlg:button {
 
         local cels = activeSprite.cels
         local celsLen = #cels
+
+        if omitHidden then
+            local filtered = {}
+            local j = 1
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                local layer = cel.layer
+                if isVisibleHierarchy(layer, activeSprite) then
+                    filtered[j] = cel
+                    j = j + 1
+                end
+            end
+
+            cels = filtered
+            celsLen = #filtered
+        end
+
         app.transaction(function()
             for i = 1, celsLen, 1 do
                 local cel = cels[i]

@@ -3,8 +3,53 @@ local defaults = {
     margin = 0,
     marginClr = Color(0, 0, 0, 255),
     border = 0,
-    borderClr = Color(255, 255, 255, 255)
+    borderClr = Color(255, 255, 255, 255),
+    flattenImage = true
 }
+
+local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
+    local strfmt = string.format
+    local append = table.insert
+    local pathStrArr = {}
+    local imgItr = img:pixels()
+    for elm in imgItr do
+        local hex = elm()
+        local a = hex >> 0x18 & 0xff
+        if a > 0 then
+            local x0 = xOff + elm.x
+            local y0 = yOff + elm.y
+
+            local x1mrg = border + (x0 + 1) * margin
+            local y1mrg = border + (y0 + 1) * margin
+
+            local ax = x1mrg + x0 * scale
+            local ay = y1mrg + y0 * scale
+            local bx = ax + scale
+            local by = ay + scale
+
+            local pathStr = strfmt(
+                "\n<path d=\"M %d %d L %d %d L %d %d L %d %d Z\" ",
+                ax, ay, bx, ay, bx, by, ax, by)
+
+            if a < 255 then
+                pathStr = pathStr .. strfmt(
+                    "fill-opacity=\"%.6f\" ",
+                    a * 0.00392156862745098)
+            end
+
+            -- Green does not need to be unpacked from the
+            -- hexadecimal because its order is unchanged.
+            pathStr = pathStr .. strfmt(
+                "fill=\"#%06X\" />",
+                ((hex & 0xff) << 0x10
+                    | (hex & 0xff00)
+                    | (hex >> 0x10 & 0xff)))
+            append(pathStrArr, pathStr)
+        end
+    end
+
+    return table.concat(pathStrArr)
+end
 
 local function layerToSvgStr(
     layer, activeFrame, spriteBounds,
@@ -12,14 +57,14 @@ local function layerToSvgStr(
 
     local str = ""
 
-    -- This works because of precautions
-    -- in Aseprite source code, but technically
-    -- group layers don't have opacity.
-    local lyrAlpha = layer.opacity
+    local lyrAlpha = 255
+    local isGroup = layer.isGroup
+    if not isGroup then
+        lyrAlpha = layer.opacity
+    end
 
-    -- TODO: Use hierarchical isVisible?
     if layer.isVisible and lyrAlpha > 0 then
-        if layer.isGroup then
+        if isGroup then
             local grpStr = string.format(
                 "\n<g id=\"%s\">",
                 layer.name)
@@ -44,19 +89,14 @@ local function layerToSvgStr(
                 local celImg = cel.image
                 if celImg then
 
-                    -- Cache functions used in for loop.
-                    local strfmt = string.format
-                    local append = table.insert
-
                     local celBounds = cel.bounds
                     local xCel = celBounds.x
                     local yCel = celBounds.y
                     local intersect = celBounds:intersect(spriteBounds)
                     intersect.x = intersect.x - xCel
                     intersect.y = intersect.y - yCel
-                    local imgItr = celImg:pixels(intersect)
 
-                    local grpStr = strfmt(
+                    local grpStr = string.format(
                         "\n<g id=\"%s\"",
                         layer.name)
 
@@ -67,51 +107,17 @@ local function layerToSvgStr(
                         or celAlpha < 0xff then
                         local cmpAlpha = (lyrAlpha * 0.00392156862745098)
                             * (celAlpha * 0.00392156862745098)
-                        grpStr = grpStr .. strfmt(
+                        grpStr = grpStr .. string.format(
                             " opacity=\"%.6f\"",
                             cmpAlpha)
                     end
 
                     grpStr = grpStr .. ">"
 
-                    local pathStrArr = {}
-                    for elm in imgItr do
-                        local hex = elm()
-                        local a = hex >> 0x18 & 0xff
-                        if a > 0 then
-                            local x0 = xCel + elm.x
-                            local y0 = yCel + elm.y
+                    grpStr =  grpStr .. imgToSvgStr(
+                        celImg, border, margin, scale,
+                        xCel, yCel)
 
-                            local x1mrg = border + (x0 + 1) * margin
-                            local y1mrg = border + (y0 + 1) * margin
-
-                            local ax = x1mrg + x0 * scale
-                            local ay = y1mrg + y0 * scale
-                            local bx = ax + scale
-                            local by = ay + scale
-
-                            local pathStr = strfmt(
-                                "\n<path d=\"M %d %d L %d %d L %d %d L %d %d Z\" ",
-                                ax, ay, bx, ay, bx, by, ax, by)
-
-                            if a < 255 then
-                                pathStr = pathStr .. strfmt(
-                                    "fill-opacity=\"%.6f\" ",
-                                    a * 0.00392156862745098)
-                            end
-
-                            -- Green does not need to be unpacked from the
-                            -- hexadecimal because its order is unchanged.
-                            pathStr = pathStr .. strfmt(
-                                "fill=\"#%06X\" />",
-                                ((hex & 0xff) << 0x10
-                                    | (hex & 0xff00)
-                                    | (hex >> 0x10 & 0xff)))
-                            append(pathStrArr, pathStr)
-                        end
-                    end
-
-                    grpStr = grpStr .. table.concat(pathStrArr)
                     grpStr = grpStr .. "\n</g>"
                     str = str .. grpStr
                 end
@@ -168,6 +174,14 @@ dlg:color {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "flattenImage",
+    label = "Flatten:",
+    selected = defaults.flattenImage
+}
+
+dlg:newrow { always = false }
+
 dlg:file {
     id = "filepath",
     label = "Path:",
@@ -191,10 +205,11 @@ dlg:button {
             -- Collect inputs.
             local args = dlg.data
             local scale = args.scale or defaults.scale
-            local border = args.border or defaults.border
-            local borderClr = args.borderClr or defaults.borderClr
             local margin = args.margin or defaults.margin
             local marginClr = args.marginClr or defaults.marginClr
+            local border = args.border or defaults.border
+            local borderClr = args.borderClr or defaults.borderClr
+            local flattenImage = args.flattenImage
 
             -- Calculate dimensions.
             local nativeWidth = activeSprite.width
@@ -301,21 +316,27 @@ dlg:button {
             end
 
             local activeFrame = app.activeFrame
-            local spriteBounds = Rectangle(
-                0, 0, nativeWidth, nativeHeight)
-            local spriteLayers = activeSprite.layers
 
-            local layersStrArr = {}
-            local spriteLayersLen = #spriteLayers
-            for i = 1, spriteLayersLen, 1 do
-                layersStrArr[i] = layerToSvgStr(
-                    spriteLayers[i],
-                    activeFrame,
-                    spriteBounds,
-                    border, scale, margin)
+            if flattenImage then
+                local flatImg = Image(nativeWidth, nativeHeight)
+                flatImg:drawSprite(activeSprite, activeFrame)
+                str = str .. imgToSvgStr(flatImg, border, margin, scale, 0, 0)
+            else
+                local spriteBounds = Rectangle(
+                    0, 0, nativeWidth, nativeHeight)
+                local spriteLayers = activeSprite.layers
+                local layersStrArr = {}
+                local spriteLayersLen = #spriteLayers
+                for i = 1, spriteLayersLen, 1 do
+                    layersStrArr[i] = layerToSvgStr(
+                        spriteLayers[i],
+                        activeFrame,
+                        spriteBounds,
+                        border, scale, margin)
+                end
+                str = str .. concat(layersStrArr)
             end
 
-            str = str .. concat(layersStrArr)
             str = str .. "\n</svg>"
 
             local filepath = args.filepath

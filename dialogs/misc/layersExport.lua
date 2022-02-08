@@ -300,8 +300,8 @@ dlg:button {
                             layer = layer,
                             frameDuration = trunc(cel.frame.duration * 1000),
                             frameNumber = cel.frameNumber,
-                            xOrigin = xOrigin * scale - padding,
-                            yOrigin = yOrigin * scale - padding,
+                            xOrigin = xOrigin,
+                            yOrigin = yOrigin,
                             width = trgImage.width,
                             height = trgImage.height
                         }
@@ -350,9 +350,15 @@ dlg:button {
                             celData = missingUserData
                         end
 
+                        xOrigin = xOrigin * scale
+                        yOrigin = yOrigin * scale
+
                         if useCenter then
                             xOrigin = xOrigin + width // 2
                             yOrigin = yOrigin + height // 2
+                        else
+                            xOrigin = xOrigin - padding
+                            yOrigin = yOrigin - padding
                         end
 
                         celStrArr[i] = strfmt(

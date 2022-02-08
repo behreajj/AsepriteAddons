@@ -19,7 +19,7 @@ local defaults = {
     rings = 0,
     size = 512,
     minSize = 256,
-    maxSize = 1024,
+    maxSize = 2048,
     maxSectors = 32,
     maxRings = 16
 }
@@ -629,7 +629,7 @@ dlg:button {
                 local yn = ySgn
                 local zn = zSgn
 
-                -- Discrete swatches is more expensive because
+                -- Discrete swatches are more expensive because
                 -- atan2, acos, cos and sin are used.
                 if quantUse then
                     local azim = atan2(ySgn, xSgn)

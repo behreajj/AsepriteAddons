@@ -1458,6 +1458,7 @@ end
 ---@param cels table cels array
 ---@return table
 function AseUtilities.rangeCelsIntersect(range, cels)
+    -- TODO: Remove from sepRGB, delete method.
     local result = {}
     if range and cels then
         local celsLen = #cels

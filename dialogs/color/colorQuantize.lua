@@ -41,10 +41,15 @@ dlg:check {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        -- TODO: Refer to FastBit rewrite to make a function
+        -- with separate quantization levels for R, G, B, A.
+        -- Levels 1-7 are probably the only meaningful ones
+        -- anyway in terms of visual perception.
+
         local sprite = app.activeSprite
         if not sprite then
             app.alert("There is no active sprite.")
@@ -96,7 +101,7 @@ dlg:button {
             trgLayer = sprite:newLayer()
             trgLayer.name = string.format(
                 "%s.Quantized.%03d",
-                trgLayer.name,
+                srcLayer.name,
                 levels)
             trgLayer.opacity = srcLayer.opacity
         end
