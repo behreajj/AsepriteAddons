@@ -130,9 +130,9 @@ dlg:button {
                         if r < 0 then r = 0 elseif r > 255 then r = 255 end
 
                         local hex = (a << 0x18)
-                                    | (b << 0x10)
-                                    | (g << 0x08)
-                                    | r
+                            | (b << 0x10)
+                            | (g << 0x08)
+                            | r
                         -- print(string.format(
                         --    "%d %d %d %d %08X",
                         --     r, g, b, a, hex))

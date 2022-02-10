@@ -75,6 +75,10 @@ AseUtilities.GLYPH_ALIGN_VERT = {
     "TOP"
 }
 
+-- Number of swatches to generate for
+-- gray color mode sprites.
+AseUtilities.GRAY_COUNT = 32
+
 -- Maximum number of layers a script may
 -- request to create before the user is
 -- prompted to confirm.
@@ -225,13 +229,8 @@ function AseUtilities.asePaletteLoad(
             if palAct then
                 local modeAct = palActSpr.colorMode
                 if modeAct == ColorMode.GRAY then
-                    hexesProfile = {}
-                    for i = 0, 255, 1 do
-                        -- Add opacity or no?
-                        -- hexesProfile[1 + i] = (i << 0x18)
-                        hexesProfile[1 + i] = 0xff000000
-                            | (i << 0x10) | (i << 0x08) | i
-                    end
+                    hexesProfile = AseUtilities.grayHexes(
+                        AseUtilities.GRAY_COUNT)
                 else
                     hexesProfile = AseUtilities.asePaletteToHexArr(
                         palAct, siVal, cntVal)
@@ -1346,6 +1345,27 @@ function AseUtilities.getSelection(sprite)
         return Selection(
             select.bounds:intersect(sprite.bounds))
     end
+end
+
+---Creates a table of gray colors represented as
+---32 bit integers, where the gray is repreated
+---three times.
+---@param count number swatch count
+---@return table
+function AseUtilities.grayHexes(count)
+    local trunc = math.tointeger
+    local valCount = count or 255
+    valCount = math.max(1, valCount)
+    local toFac = 255.0 / (valCount - 1.0)
+    local result = {}
+    for i = 1, valCount, 1 do
+        local g = trunc(0.5 + (i - 1) * toFac)
+        result[i] = 0xff000000
+            | (g << 0x10)
+            | (g << 0x08)
+            | g
+    end
+    return result
 end
 
 ---Creates an Aseprite palette from a table of

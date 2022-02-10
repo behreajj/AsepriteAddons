@@ -117,7 +117,7 @@ dlg:newrow { always = false }
 dlg:combobox {
     id = "colorMode",
     label = "Color Mode:",
-    option = "RGB",
+    option = defaults.colorMode,
     options = colorModes,
     onchange = function()
         local args = dlg.data
@@ -366,40 +366,6 @@ dlg:check {
     visible = defaults.colorMode ~= "GRAY"
 }
 
--- dlg:separator { id = "gridSeparate" }
-
--- dlg:slider {
---     id = "xGrid",
---     label = "Grid Offset:",
---     min = 0,
---     max = 32,
---     value = defaults.xGrid
--- }
-
--- dlg:slider {
---     id = "yGrid",
---     min = 0,
---     max = 32,
---     value = defaults.yGrid
--- }
-
--- dlg:newrow { always = false }
-
--- dlg:slider {
---     id = "wGrid",
---     label = "Grid Size:",
---     min = 0,
---     max = 96,
---     value = defaults.wGrid
--- }
-
--- dlg:slider {
---     id = "hGrid",
---     min = 0,
---     max = 96,
---     value = defaults.hGrid
--- }
-
 dlg:newrow { always = false }
 
 dlg:button {
@@ -494,6 +460,7 @@ dlg:button {
         if prependMask then
             Utilities.prependMask(hexesProfile)
         end
+
         local newPal = AseUtilities.hexArrToAsePalette(hexesProfile)
         newSprite:setPalette(newPal)
 

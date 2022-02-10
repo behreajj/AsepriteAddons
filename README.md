@@ -87,6 +87,10 @@ This repo includes
 
   ![Normal Map](screencaps/normalMap.png)
 
+- Normal from height.
+
+  ![Normal From Height](screencaps/normalFromHeight.png)
+
 - Palette Coverage.
 
   ![Palette Coverage](screencaps/paletteCoverage.png)
@@ -106,10 +110,6 @@ This repo includes
 - A regular convex polygon.
 
   ![Polygon](screencaps/polygon.png)
-
-- A polar grid.
-
-  ![Polar Grid](screencaps/polarGrid.png)
 
 - A radial gradient.
 

@@ -543,9 +543,6 @@ dlg:button {
             local sina = sin(theta)
             for i = 1, gridLen, 1 do
                 local vec = gridPts[i]
-
-                -- TODO: Would this rotation be better if you
-                -- used a quaternion instead?
                 local vr = rotax(vec, cosa, sina, axis)
                 local scrpt = screen(
                     modelview, projection, vr,

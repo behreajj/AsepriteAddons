@@ -180,6 +180,7 @@ dlg:button {
 
                 if openSprite then
                     app.activeSprite = openSprite
+                    local oldColorMode = openSprite.colorMode
                     app.command.ChangePixelFormat { format = "rgb" }
 
                     local removeBkg = args.removeBkg
@@ -208,8 +209,14 @@ dlg:button {
                     end
 
                     if palType == "EMBEDDED" then
-                        hexesProfile = AseUtilities.asePaletteToHexArr(
-                            openSprite.palettes[1], 0, 256)
+                        -- Recent changes to color conversion require this?
+                        if oldColorMode == ColorMode.GRAY then
+                            hexesProfile = AseUtilities.grayHexes(
+                                AseUtilities.GRAY_COUNT)
+                        else
+                            hexesProfile = AseUtilities.asePaletteToHexArr(
+                                openSprite.palettes[1], 0, 256)
+                        end
                     end
 
                     local uniquesOnly = args.uniquesOnly

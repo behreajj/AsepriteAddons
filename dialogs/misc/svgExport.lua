@@ -57,7 +57,7 @@ local function layerToSvgStr(
 
     local str = ""
 
-    local lyrAlpha = 255
+    local lyrAlpha = 0xff
     local isGroup = layer.isGroup
     if not isGroup then
         lyrAlpha = layer.opacity
@@ -87,6 +87,7 @@ local function layerToSvgStr(
             local cel = layer:cel(activeFrame)
             if cel then
                 local celImg = cel.image
+                -- TODO: This if check shouldn't be needed?
                 if celImg then
 
                     local celBounds = cel.bounds
@@ -102,6 +103,8 @@ local function layerToSvgStr(
 
                     -- Layer opacity and cel opacity are compounded
                     -- together to simplify.
+
+                    -- TODO: Move up and omit if cel alpha < 1?
                     local celAlpha = cel.opacity
                     if lyrAlpha < 0xff
                         or celAlpha < 0xff then
@@ -193,7 +196,7 @@ dlg:file {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "&OK",
     focus = false,
     onclick = function()

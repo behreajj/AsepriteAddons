@@ -107,9 +107,6 @@ dlg:button {
                 local target = args.target
                 local direction = args.direction
 
-                -- TODO: Make palette a target option, even though
-                -- in programming its a different operation?
-
                 local cels = {}
                 if target == "ACTIVE" then
                     local activeCel = app.activeCel
