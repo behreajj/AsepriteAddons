@@ -203,16 +203,17 @@ dlg:button {
                     local hex = elm()
                     local alpha = (hex >> 0x18) & 0xff
                     alphaTable[flatIdx] = alpha
+
+                    local lum = 0.0
                     if alpha > 0 then
                         local clr = Clr.fromHex(hex)
                         local lab = Clr.sRgbaToLab(clr)
-                        local lum = lab.l * 0.01
-                        lumTable[flatIdx] = lum
-                        if lum < lMin then lMin = lum end
-                        if lum > lMax then lMax = lum end
-                    else
-                        lumTable[flatIdx] = 0.0
+                        lum = lab.l * 0.01
                     end
+
+                    lumTable[flatIdx] = lum
+                    if lum < lMin then lMin = lum end
+                    if lum > lMax then lMax = lum end
                     flatIdx = flatIdx + 1
                 end
 
@@ -224,9 +225,9 @@ dlg:button {
                     if rangeLum > 0.07 then
                         local invRangeLum = 1.0 / rangeLum
                         local lumLen = #lumTable
-                        for i = 1, lumLen, 1 do
-                            local lum = lumTable[i]
-                            lumTable[i] = (lum - lMin) * invRangeLum
+                        for j = 1, lumLen, 1 do
+                            local lum = lumTable[j]
+                            lumTable[j] = (lum - lMin) * invRangeLum
                         end
                     end
                 end
@@ -254,28 +255,28 @@ dlg:button {
                 local writeIdx = 1
                 local normalImg = Image(activeWidth, activeHeight)
                 local normalItr = normalImg:pixels()
-                
+
                 for elm in normalItr do
                     local alphaCenter = alphaTable[writeIdx]
                     local hex = defHex
-        
+
                     if alphaCenter > 0 then
                         local yc = elm.y
                         local yn1 = wrapper(yc - 1, activeHeight)
                         local yp1 = wrapper(yc + 1, activeHeight)
-        
+
                         local xc = elm.x
                         local xn1 = wrapper(xc - 1, activeWidth)
                         local xp1 = wrapper(xc + 1, activeWidth)
-        
+
                         local yn1Index = xc + yn1 * activeWidth
                         local yp1Index = xc + yp1 * activeWidth
-      
+
                         local ycw = yc * activeWidth
                         local xn1Index = xn1 + ycw
                         local xp1Index = xp1 + ycw
-        
-                        -- Treat pixels with 0 alpha as 0 height.
+
+                        -- Treat transparent pixels as zero height.
                         local grayNorth = 0.0
                         local alphaNorth = alphaTable[1 + yn1Index]
                         if alphaNorth > 0 then
@@ -299,10 +300,10 @@ dlg:button {
                         if alphaSouth > 0 then
                             graySouth = lumTable[1 + yp1Index]
                         end
-        
+
                         local dx = halfScale * (grayWest - grayEast)
                         local dy = halfScale * (graySouth - grayNorth)
-        
+
                         local sqMag = dx * dx + dy * dy + 1.0
                         if sqMag > 1.0 then
                             local nz = 1.0 / sqrt(sqMag)
@@ -317,7 +318,7 @@ dlg:button {
                             hex = 0xffff8080
                         end
                     end
-        
+
                     elm(hex)
                     writeIdx = writeIdx + 1
                 end

@@ -9,8 +9,8 @@ local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
 
 local defaults = {
     filename = "Sprite",
-    width = 256,
-    height = 256,
+    width = 320,
+    height = 180,
     colorMode = "RGB",
     rChannel = 0,
     gChannel = 0,
