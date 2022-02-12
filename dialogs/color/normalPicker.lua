@@ -1,3 +1,5 @@
+dofile("../../support/aseutilities.lua")
+
 local defaults = {
     x = 0.0,
     y = 0.0,
@@ -15,42 +17,30 @@ local defaults = {
     bColor = Color(128, 255, 128, 255),
 
     showWheelSettings = false,
+    size = 512,
     sectors = 0,
     rings = 0,
-    size = 512,
+    xFlip = false,
+    yFlip = false,
+    zFlip = false,
     minSize = 256,
     maxSize = 2048,
     maxSectors = 32,
     maxRings = 16
 }
 
-local function fromSpherical(az, incl)
-    -- TODO: Replace with Vec3 func?
-    local a = az * 0.017453292519943295
-    local i = incl * 0.017453292519943295
-    local cosIncl = math.cos(i)
-    return cosIncl * math.cos(a),
-        cosIncl * math.sin(a),
-        math.sin(i)
-end
+local normalsPal = {
+    0x00000000, 0xffff8080,
+    0xff8080ff, 0xff80dada, 0xff80ff80, 0xff80da25,
+    0xff808000, 0xff802525, 0xff800080, 0xff8025da,
+    0xffb080f5, 0xffb0d3d3, 0xffb0f580, 0xffb0d32c,
+    0xffb0800a, 0xffb02c2c, 0xffb00a80, 0xffb02cd3,
+    0xffda80da, 0xffdabfbf, 0xffdada80, 0xffdabf40,
+    0xffda8025, 0xffda4040, 0xffda2580, 0xffda40bf,
+    0xfff580b0, 0xfff5a2a2, 0xfff5b080, 0xfff5a25d,
+    0xfff5804f, 0xfff55d5d, 0xfff54f80, 0xfff55da2 }
 
-local function toSpherical(x, y, z)
-    local sqMag = x * x + y * y + z * z
-    if sqMag > 0.0 then
-        local azRad = math.atan(y, x)
-        local azDeg = azRad * 57.29577951308232
-
-        local inclRad = math.acos(z / math.sqrt(sqMag))
-        local inclDeg = inclRad * 57.29577951308232
-        inclDeg = 90.0 - inclDeg
-
-        return azDeg, inclDeg
-    else
-        return 0.0, 90.0
-    end
-end
-
-local function colorToVec(clr, clampz)
+local function colorToVec(clr)
     local r255 = 127.5
     local g255 = 127.5
     local b255 = 255.0
@@ -59,10 +49,6 @@ local function colorToVec(clr, clampz)
         r255 = clr.red
         g255 = clr.green
         b255 = clr.blue
-    end
-
-    if clampz then
-        b255 = math.max(127.5, b255)
     end
 
     local x = (r255 + r255 - 255) * 0.00392156862745098
@@ -150,21 +136,15 @@ local function updateWidgetCart(dialog)
     local y = args.y
     local z = args.z
 
-    local a, i = toSpherical(x, y, z)
-    if a < -0.0 then a = a - 0.5 end
-    if a > 0.0 then a = a + 0.5 end
-    if i < -0.0 then i = i - 0.5 end
-    if i > 0.0 then i = i + 0.5 end
+    local sph = Vec3.toSpherical(Vec3.new(x, y, z))
+    local a = sph.azimuth
+    local i = sph.inclination
+    a = Utilities.round(
+        (a % 6.283185307179586) * 57.29577951308232)
+    i = Utilities.round(i * 57.29577951308232)
 
-    dialog:modify {
-        id = "azimuth",
-        value = math.tointeger(a)
-    }
-
-    dialog:modify {
-        id = "inclination",
-        value = math.tointeger(i)
-    }
+    dialog:modify { id = "azimuth", value = a }
+    dialog:modify { id = "inclination", value = i }
 
     local clr = vecToColor(x, y, z)
     updateWidgetClr(dialog, clr)
@@ -175,38 +155,35 @@ local function updateWidgetSphere(dialog)
     local az = args.azimuth
     local incl = args.inclination
 
-    local x, y, z = fromSpherical(az, incl)
+    local v = Vec3.fromSpherical(
+        az * 0.017453292519943295,
+        incl * 0.017453292519943295,
+        1.0)
 
-    dialog:modify { id = "x", text = string.format("%.5f", x) }
-    dialog:modify { id = "y", text = string.format("%.5f", y) }
-    dialog:modify { id = "z", text = string.format("%.5f", z) }
+    dialog:modify { id = "x", text = string.format("%.5f", v.x) }
+    dialog:modify { id = "y", text = string.format("%.5f", v.y) }
+    dialog:modify { id = "z", text = string.format("%.5f", v.z) }
 
-    local clr = vecToColor(x, y, z)
+    local clr = vecToColor(v.x, v.y, v.z)
     updateWidgetClr(dialog, clr)
 end
 
 local function updateFromColor(dialog, clr)
-    local x, y, z = colorToVec(clr, false)
+    local x, y, z = colorToVec(clr)
     if x ~= 0.0 or y ~= 0.0 or z ~= 0.0 then
         dialog:modify { id = "x", text = string.format("%.5f", x) }
         dialog:modify { id = "y", text = string.format("%.5f", y) }
         dialog:modify { id = "z", text = string.format("%.5f", z) }
 
-        local a, i = toSpherical(x, y, z)
-        if a < -0.0 then a = a - 0.5 end
-        if a > 0.0 then a = a + 0.5 end
-        if i < -0.0 then i = i - 0.5 end
-        if i > 0.0 then i = i + 0.5 end
+        local sph = Vec3.toSpherical(Vec3.new(x, y, z))
+        local a = sph.azimuth
+        local i = sph.inclination
+        a = Utilities.round(
+            (a % 6.283185307179586) * 57.29577951308232)
+        i = Utilities.round(i * 57.29577951308232)
 
-        dialog:modify {
-            id = "azimuth",
-            value = math.tointeger(a)
-        }
-
-        dialog:modify {
-            id = "inclination",
-            value = math.tointeger(i)
-        }
+        dialog:modify { id = "azimuth", value = a }
+        dialog:modify { id = "inclination", value = i }
 
         local r255 = math.tointeger(x * 127.5 + 128.0)
         local g255 = math.tointeger(y * 127.5 + 128.0)
@@ -289,8 +266,8 @@ dlg:newrow { always = false }
 dlg:slider {
     id = "azimuth",
     label = "Azimuth:",
-    min = -180,
-    max = 180,
+    min = 0,
+    max = 360,
     value = defaults.azimuth,
     onchange = function()
         updateWidgetSphere(dlg)
@@ -398,6 +375,10 @@ dlg:check {
         dlg:modify { id = "sectors", visible = state }
         dlg:modify { id = "rings", visible = state }
         dlg:modify { id = "size", visible = state }
+
+        dlg:modify { id = "xFlip", visible = state }
+        dlg:modify { id = "yFlip", visible = state }
+        dlg:modify { id = "zFlip", visible = state }
     end
 }
 
@@ -462,6 +443,30 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "xFlip",
+    label = "Flip:",
+    text = "X",
+    selected = defaults.xFlip,
+    visible = defaults.showWheelSettings
+}
+
+dlg:check {
+    id = "yFlip",
+    text = "Y",
+    selected = defaults.yFlip,
+    visible = defaults.showWheelSettings
+}
+
+dlg:check {
+    id = "zFlip",
+    text = "Z",
+    selected = defaults.zFlip,
+    visible = defaults.showWheelSettings
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "gradient",
     text = "&GRADIENT",
@@ -473,8 +478,8 @@ dlg:button {
         local swatches = args.swatches or defaults.swatches
         local swatchesInv = 1.0 / (swatches - 1.0)
 
-        local ax, ay, az = colorToVec(aColor, false)
-        local bx, by, bz = colorToVec(bColor, false)
+        local ax, ay, az = colorToVec(aColor)
+        local bx, by, bz = colorToVec(bColor)
 
         -- Because the vectors are already normalized
         -- and known to be non-zero, simplify angle
@@ -569,9 +574,9 @@ dlg:button {
         local atan2 = math.atan
         local acos = math.acos
         local floor = math.floor
-        local trunc = math.tointeger
         local max = math.max
         local min = math.min
+        local trunc = math.tointeger
 
         -- Cache math constants.
         local pi = math.pi
@@ -583,6 +588,9 @@ dlg:button {
         local size = args.size or defaults.size
         local sectors = args.sectors or defaults.sectors
         local rings = args.rings or defaults.rings
+        local xFlip = args.xFlip
+        local yFlip = args.yFlip
+        local zFlip = args.zFlip
 
         -- Create sprite.
         local sprite = Sprite(size, size)
@@ -597,6 +605,19 @@ dlg:button {
         if quantAzims then
             azimBeta = tau / sectors
         end
+
+        -- For flipping the wheel orientation.
+        local hexDefault = 0xffff8080
+        local zFlipNum = 1
+        local yFlipNum = 1
+        local xFlipNum = 1
+
+        if zFlip then
+            zFlipNum = -1
+            hexDefault = 0xff008080
+        end
+        if yFlip then yFlipNum = -1 end
+        if xFlip then xFlipNum = -1 end
 
         -- Discrete rings (inclinations).
         local inclAlpha = rings / halfPi
@@ -615,15 +636,16 @@ dlg:button {
 
             -- Find rise and run.
             local yNrm = elm.y * szInv
-            local ySgn = 1.0 - (yNrm + yNrm)
+            local ySgn = yFlipNum * (1.0 - (yNrm + yNrm))
             local xNrm = elm.x * szInv
-            local xSgn = xNrm + xNrm - 1.0
+            local xSgn = xFlipNum * (xNrm + xNrm - 1.0)
 
             -- Find square magnitude.
             -- Magnitude is correlated with inclination.
+            -- Epsilon = 2 * ((1 / 255) ^ 2) = 0.000031
             local magSq = xSgn * xSgn + ySgn * ySgn
-            if magSq > 0.0 and magSq <= 1.0 then
-                local zSgn = sqrt(1.0 - magSq)
+            if magSq > 0.000031 and magSq <= 1.0 then
+                local zSgn = zFlipNum * sqrt(1.0 - magSq)
 
                 local xn = xSgn
                 local yn = ySgn
@@ -654,53 +676,13 @@ dlg:button {
                     | (trunc(yn * 127.5 + 128.0) << 0x08)
                     | trunc(xn * 127.5 + 128.0))
             else
-                elm(0xffff8080)
+                elm(hexDefault)
             end
         end
 
         cel.image = img
-
-        -- Use a palette with 32 swatches, plus the
-        -- center swatch, plus alpha mask.
-        -- Should the palette match the discrete
-        -- wheel swatches?
-        local pal = Palette(34)
-        pal:setColor( 0, Color(  0,  0,  0,    0))
-        pal:setColor( 1, Color(128, 128, 255, 255))
-        pal:setColor( 2, Color(255, 128, 128, 255))
-        pal:setColor( 3, Color(218, 218, 128, 255))
-        pal:setColor( 4, Color(128, 255, 128, 255))
-        pal:setColor( 5, Color( 37, 218, 128, 255))
-        pal:setColor( 6, Color(  0, 128, 128, 255))
-        pal:setColor( 7, Color( 37,  37, 128, 255))
-        pal:setColor( 8, Color(128,   0, 128, 255))
-        pal:setColor( 9, Color(218,  37, 128, 255))
-        pal:setColor(10, Color(245, 128, 176, 255))
-        pal:setColor(11, Color(211, 211, 176, 255))
-        pal:setColor(12, Color(128, 245, 176, 255))
-        pal:setColor(13, Color( 44, 211, 176, 255))
-        pal:setColor(14, Color( 10, 128, 176, 255))
-        pal:setColor(15, Color( 44,  44, 176, 255))
-        pal:setColor(16, Color(128,  10, 176, 255))
-        pal:setColor(17, Color(211,  44, 176, 255))
-        pal:setColor(18, Color(218, 128, 218, 255))
-        pal:setColor(19, Color(191, 191, 218, 255))
-        pal:setColor(20, Color(128, 218, 218, 255))
-        pal:setColor(21, Color( 64, 191, 218, 255))
-        pal:setColor(22, Color( 37, 128, 218, 255))
-        pal:setColor(23, Color( 64,  64, 218, 255))
-        pal:setColor(24, Color(128,  37, 218, 255))
-        pal:setColor(25, Color(191,  64, 218, 255))
-        pal:setColor(26, Color(176, 128, 245, 255))
-        pal:setColor(27, Color(162, 162, 245, 255))
-        pal:setColor(28, Color(128, 176, 245, 255))
-        pal:setColor(29, Color( 93, 162, 245, 255))
-        pal:setColor(30, Color( 79, 128, 245, 255))
-        pal:setColor(31, Color( 93,  93, 245, 255))
-        pal:setColor(32, Color(128,  79, 245, 255))
-        pal:setColor(33, Color(162,  93, 245, 255))
-        sprite:setPalette(pal)
-
+        sprite:setPalette(
+            AseUtilities.hexArrToAsePalette(normalsPal))
         app.refresh()
     end
 }

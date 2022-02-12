@@ -9,6 +9,9 @@ local defaults = {
     stretchContrast = false,
     scale = 16,
     edgeType = "CLAMP",
+    xFlip = false,
+    yFlip = false,
+    zFlip = false,
     showFlatMap = false,
     showGrayMap = false,
     preserveAlpha = false,
@@ -48,6 +51,27 @@ dlg:check {
     label = "Normalize:",
     text = "Stretch Contrast",
     selected = defaults.stretchContrast
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "xFlip",
+    label = "Flip:",
+    text = "X",
+    selected = defaults.xFlip
+}
+
+dlg:check {
+    id = "yFlip",
+    text = "Y",
+    selected = defaults.yFlip
+}
+
+dlg:check {
+    id = "zFlip",
+    text = "Z",
+    selected = defaults.zFlip
 }
 
 dlg:newrow { always = false }
@@ -98,6 +122,9 @@ dlg:button {
         local target = args.target or defaults.target
         local scale = args.scale or defaults.scale
         local stretchContrast = args.stretchContrast
+        local xFlip = args.xFlip
+        local yFlip = args.yFlip
+        local zFlip = args.zFlip
         local showFlatMap = args.showFlatMap
         local showGrayMap = args.showGrayMap
         local preserveAlpha = args.preserveAlpha
@@ -149,10 +176,28 @@ dlg:button {
         local spriteWidth = activeSprite.width
         local spriteHeight = activeSprite.height
         local halfScale = scale * 0.5
-        local defHex = 0xffff8080
-        if preserveAlpha then defHex = 0x0 end
         local originPt = Point(0, 0)
         local framesLen = #frames
+
+        -- For flipping normals.
+        local xFlipNum = 1
+        local yFlipNum = 1
+        local zFlipNum = 1
+        local hexDefault = 0x00ff8080
+
+        if xFlip then xFlipNum = -1 end
+        if yFlip then yFlipNum = -1 end
+        if zFlip then
+            zFlipNum = -1
+            hexDefault = 0x00008080
+        end
+
+        local hexBlank = 0xff000000 | hexDefault
+        local alphaPart = 0xff
+        if preserveAlpha then
+            hexBlank = 0x0
+            alphaPart = 0x0
+        end
 
         -- In the event that the image is trimmed.
         local activeWidth = spriteWidth
@@ -258,8 +303,6 @@ dlg:button {
 
                 for elm in normalItr do
                     local alphaCenter = alphaTable[writeIdx]
-                    local hex = defHex
-
                     if alphaCenter > 0 then
                         local yc = elm.y
                         local yn1 = wrapper(yc - 1, activeHeight)
@@ -305,21 +348,27 @@ dlg:button {
                         local dy = halfScale * (graySouth - grayNorth)
 
                         local sqMag = dx * dx + dy * dy + 1.0
+                        local alphaMask = (alphaCenter | alphaPart) << 0x18
                         if sqMag > 1.0 then
                             local nz = 1.0 / sqrt(sqMag)
                             local nx = min(max(dx * nz, -1.0), 1.0)
                             local ny = min(max(dy * nz, -1.0), 1.0)
 
-                            hex = 0xff000000
+                            nx = nx * xFlipNum
+                            ny = ny * yFlipNum
+                            nz = nz * zFlipNum
+
+                            elm(alphaMask
                                 | (trunc(nz * 127.5 + 128.0) << 0x10)
                                 | (trunc(ny * 127.5 + 128.0) << 0x08)
-                                | trunc(nx * 127.5 + 128.0)
+                                | trunc(nx * 127.5 + 128.0))
                         else
-                            hex = 0xffff8080
+                            elm(alphaMask | hexDefault)
                         end
+                    else
+                        elm(hexBlank)
                     end
 
-                    elm(hex)
                     writeIdx = writeIdx + 1
                 end
 

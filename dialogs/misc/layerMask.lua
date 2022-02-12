@@ -141,23 +141,23 @@ dlg:button {
                 local overCel = overLayer:cel(frame)
                 local underCel = underLayer:cel(frame)
                 if overCel and underCel then
-                    local overImg = overCel.image
-                    local overPos = overCel.position
-                    local xTlOver = overPos.x
-                    local yTlOver = overPos.y
+                    local imgOver = overCel.image
+                    local posOver = overCel.position
+                    local xTlOver = posOver.x
+                    local yTlOver = posOver.y
 
-                    local widthOver = overImg.width
-                    local heightOver = overImg.height
+                    local widthOver = imgOver.width
+                    local heightOver = imgOver.height
                     local xBrOver = xTlOver + widthOver
                     local yBrOver = yTlOver + heightOver
 
-                    local underImg = underCel.image
-                    local underPos = underCel.position
-                    local xTlUnder = underPos.x
-                    local yTlUnder = underPos.y
+                    local imgUnder = underCel.image
+                    local posUnder = underCel.position
+                    local xTlUnder = posUnder.x
+                    local yTlUnder = posUnder.y
 
-                    local widthUnder = underImg.width
-                    local heightUnder = underImg.height
+                    local widthUnder = imgUnder.width
+                    local heightUnder = imgUnder.height
                     local xBrUnder = xTlUnder + widthUnder
                     local yBrUnder = yTlUnder + heightUnder
 
@@ -167,10 +167,10 @@ dlg:button {
                         local xTlUnderShift = 0
                         local yTlUnderShift = 0
 
-                        overImg, xTlOverShift, yTlOverShift = trim(
-                            overImg, 0, alphaIndex)
-                        underImg, xTlUnderShift, yTlUnderShift = trim(
-                            underImg, 0, alphaIndex)
+                        imgOver, xTlOverShift, yTlOverShift = trim(
+                            imgOver, 0, alphaIndex)
+                        imgUnder, xTlUnderShift, yTlUnderShift = trim(
+                            imgUnder, 0, alphaIndex)
 
                         xTlOver = xTlOver + xTlOverShift
                         yTlOver = yTlOver + yTlOverShift
@@ -178,13 +178,13 @@ dlg:button {
                         xTlUnder = xTlUnder + xTlUnderShift
                         yTlUnder = yTlUnder + yTlUnderShift
 
-                        widthOver = overImg.width
-                        heightOver = overImg.height
+                        widthOver = imgOver.width
+                        heightOver = imgOver.height
                         xBrOver = xTlOver + widthOver
                         yBrOver = yTlOver + heightOver
 
-                        widthUnder = underImg.width
-                        heightUnder = underImg.height
+                        widthUnder = imgUnder.width
+                        heightUnder = imgUnder.height
                         xBrUnder = xTlUnder + widthUnder
                         yBrUnder = yTlUnder + heightUnder
                     end
@@ -216,21 +216,21 @@ dlg:button {
 
                             local xOver = xSprite - xTlOver
                             local yOver = ySprite - yTlOver
-                            local overHex = overImg:getPixel(xOver, yOver)
-                            local overAlpha = (overHex >> 0x18) & 0xff
-                            overAlpha = (overAlpha * overCompOpacity) // 0xff
+                            local hexOver = imgOver:getPixel(xOver, yOver)
+                            local alphaOver = (hexOver >> 0x18) & 0xff
+                            alphaOver = (alphaOver * overCompOpacity) // 0xff
 
-                            if overAlpha > 0 then
+                            if alphaOver > 0 then
                                 local xUnder = xSprite - xTlUnder
                                 local yUnder = ySprite - yTlUnder
-                                local underHex = underImg:getPixel(xUnder, yUnder)
-                                local underAlpha = (underHex >> 0x18) & 0xff
-                                underAlpha = (underAlpha * underCompOpacity) // 0xff
+                                local hexUnder = imgUnder:getPixel(xUnder, yUnder)
+                                local alphaUnder = (hexUnder >> 0x18) & 0xff
+                                alphaUnder = (alphaUnder * underCompOpacity) // 0xff
 
-                                local compAlpha = (overAlpha * underAlpha) // 0xff
-                                local compHex = (compAlpha << 0x18)
-                                    | (underHex & 0x00ffffff)
-                                elm(compHex)
+                                local alphaComp = (alphaOver * alphaUnder) // 0xff
+                                local hexComp = (alphaComp << 0x18)
+                                    | (hexUnder & 0x00ffffff)
+                                elm(hexComp)
                             end
                         end
 
