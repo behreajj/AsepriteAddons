@@ -295,7 +295,7 @@ dlg:button {
 
                             local aQtz = quantize(a * one255, aLevels, aDelta)
                             local bQtz = quantize(b * one255, bLevels, bDelta)
-                            local gQtz = quantize(g * one255, rLevels, gDelta)
+                            local gQtz = quantize(g * one255, gLevels, gDelta)
                             local rQtz = quantize(r * one255, rLevels, rDelta)
 
                             aQtz = trunc(0.5 + 255.0 * aQtz)
