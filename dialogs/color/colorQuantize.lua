@@ -1,11 +1,21 @@
 dofile("../../support/aseutilities.lua")
-dofile("../../support/clr.lua")
 
 local targets = { "ACTIVE", "ALL", "RANGE" }
+local methods = { "SIGNED", "UNSIGNED" }
+local levelsInputs = { "NON_UNIFORM", "UNIFORM" }
 
 local defaults = {
     target = "RANGE",
-    levels = 16,
+    levelsUni = 15,
+    rLevels = 15,
+    gLevels = 15,
+    bLevels = 15,
+    aLevels = 15,
+    levelsInput = "UNIFORM",
+    minLevels = 2,
+    maxLevels = 64,
+    method = "UNSIGNED",
+    useLinear = false,
     copyToLayer = true,
     pullFocus = false
 }
@@ -21,13 +31,102 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "method",
+    label = "Method:",
+    option = defaults.method,
+    options = methods
+}
+
+dlg:newrow { always = false }
+
 dlg:slider {
-    target = "RANGE",
-    id = "levels",
+    id = "levelsUni",
     label = "Levels:",
-    min = 2,
-    max = 64,
-    value = 16
+    min = defaults.minLevels,
+    max = defaults.maxLevels,
+    value = defaults.levelsUni,
+    visible = defaults.levelsInput == "UNIFORM",
+    onchange = function()
+        local uni = dlg.data.levelsUni
+        dlg:modify { id = "rLevels", value = uni }
+        dlg:modify { id = "gLevels", value = uni }
+        dlg:modify { id = "bLevels", value = uni }
+        dlg:modify { id = "aLevels", value = uni }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "rLevels",
+    -- label = "Levels:",
+    -- text = "R",
+    label = "Red:",
+    min = defaults.minLevels,
+    max = defaults.maxLevels,
+    value = defaults.rLevels,
+    visible = defaults.levelsInput == "NON_UNIFORM"
+}
+
+dlg:slider {
+    id = "gLevels",
+    -- text = "G",
+    label = "Green:",
+    min = defaults.minLevels,
+    max = defaults.maxLevels,
+    value = defaults.gLevels,
+    visible = defaults.levelsInput == "NON_UNIFORM"
+}
+
+dlg:slider {
+    id = "bLevels",
+    -- text = "B",
+    label = "Blue:",
+    min = defaults.minLevels,
+    max = defaults.maxLevels,
+    value = defaults.bLevels,
+    visible = defaults.levelsInput == "NON_UNIFORM"
+}
+
+dlg:slider {
+    id = "aLevels",
+    -- text = "A",
+    label = "Alpha:",
+    min = defaults.minLevels,
+    max = defaults.maxLevels,
+    value = defaults.aLevels,
+    visible = defaults.levelsInput == "NON_UNIFORM"
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "levelsInput",
+    option = defaults.levelsInput,
+    options = levelsInputs,
+    onchange = function()
+        local md = dlg.data.levelsInput
+        local isnu = md == "NON_UNIFORM"
+        dlg:modify { id = "rLevels", visible = isnu }
+        dlg:modify { id = "gLevels", visible = isnu }
+        dlg:modify { id = "bLevels", visible = isnu }
+        dlg:modify { id = "aLevels", visible = isnu }
+
+        dlg:modify {
+            id = "levelsUni",
+            visible = not isnu
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useLinear",
+    label = "Linear:",
+    text = "RGB",
+    selected = defaults.useLinear
 }
 
 dlg:newrow { always = false }
@@ -45,10 +144,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- TODO: Refer to FastBit rewrite to make a function
-        -- with separate quantization levels for R, G, B, A.
-        -- Levels 1-7 are probably the only meaningful ones
-        -- anyway in terms of visual perception.
 
         local sprite = app.activeSprite
         if not sprite then
@@ -64,14 +159,14 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local levels = args.levels or defaults.levels
         local target = args.target or defaults.target
+        local method = args.method or defaults.method
+        local rLevels = args.rLevels or defaults.rLevels
+        local gLevels = args.gLevels or defaults.gLevels
+        local bLevels = args.bLevels or defaults.bLevels
+        local aLevels = args.aLevels or defaults.aLevels
+        local useLinear = args.useLinear
         local copyToLayer = args.copyToLayer
-
-        -- Cache methods to local.
-        local fromHex = Clr.fromHex
-        local toHex = Clr.toHexUnchecked
-        local quantize = Clr.quantizeInternal
 
         -- Find frames from target.
         local frames = {}
@@ -100,17 +195,49 @@ dlg:button {
         if copyToLayer then
             trgLayer = sprite:newLayer()
             trgLayer.name = string.format(
-                "%s.Quantized.%03d",
+                "%s.Quantized.R%02d.G%02d.B%02d.A%02d",
                 srcLayer.name,
-                levels)
+                rLevels, gLevels, bLevels, aLevels)
             trgLayer.opacity = srcLayer.opacity
         end
 
-        local framesLen = #frames
-        local delta = 1.0 / levels
+        -- Cache methods & luts to local.
+        local one255 = 1.0 / 255
+        local stlLut = Utilities.STL_LUT
+        local ltsLut = Utilities.LTS_LUT
+        local trunc = math.tointeger
+        local quantize = nil
+
+        local rDelta = 0.0
+        local gDelta = 0.0
+        local bDelta = 0.0
+        local aDelta = 0.0
+
+        if method == "UNSIGNED" then
+            quantize = Utilities.quantizeUnsignedInternal
+
+            rDelta = 1.0 / (rLevels - 1.0)
+            gDelta = 1.0 / (gLevels - 1.0)
+            bDelta = 1.0 / (bLevels - 1.0)
+            aDelta = 1.0 / (aLevels - 1.0)
+        else
+            quantize = Utilities.quantizeSignedInternal
+
+            rLevels = rLevels - 1
+            gLevels = gLevels - 1
+            bLevels = bLevels - 1
+            aLevels = aLevels - 1
+
+            rDelta = 1.0 / rLevels
+            gDelta = 1.0 / gLevels
+            bDelta = 1.0 / bLevels
+            aDelta = 1.0 / aLevels
+        end
+
         local oldMode = sprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
+        local framesLen = #frames
         app.transaction(function()
             for i = 1, framesLen, 1 do
                 local srcFrame = frames[i]
@@ -127,10 +254,62 @@ dlg:button {
 
                     -- Quantize colors, place in dictionary.
                     local trgDict = {}
-                    for k, _ in pairs(srcDict) do
-                        local srcClr = fromHex(k)
-                        local qtzClr = quantize(srcClr, levels, delta)
-                        trgDict[k] = toHex(qtzClr)
+                    if useLinear then
+                        for k, _ in pairs(srcDict) do
+                            local a = (k >> 0x18) & 0xff
+                            local b = (k >> 0x10) & 0xff
+                            local g = (k >> 0x08) & 0xff
+                            local r = k & 0xff
+
+                            local bLin = stlLut[1 + b]
+                            local gLin = stlLut[1 + g]
+                            local rLin = stlLut[1 + r]
+
+                            local aQtz = quantize(a * one255, aLevels, aDelta)
+                            local bQtz = quantize(bLin * one255, bLevels, bDelta)
+                            local gQtz = quantize(gLin * one255, gLevels, gDelta)
+                            local rQtz = quantize(rLin * one255, rLevels, rDelta)
+
+                            aQtz = trunc(0.5 + 255.0 * aQtz)
+                            bQtz = trunc(0.5 + 255.0 * bQtz)
+                            gQtz = trunc(0.5 + 255.0 * gQtz)
+                            rQtz = trunc(0.5 + 255.0 * rQtz)
+
+                            local bStd = ltsLut[1 + bQtz]
+                            local gStd = ltsLut[1 + gQtz]
+                            local rStd = ltsLut[1 + rQtz]
+
+                            local hex = (aQtz << 0x18)
+                                | (bStd << 0x10)
+                                | (gStd << 0x08)
+                                | rStd
+
+                            trgDict[k] = hex
+                        end
+                    else
+                        for k, _ in pairs(srcDict) do
+                            local a = (k >> 0x18) & 0xff
+                            local b = (k >> 0x10) & 0xff
+                            local g = (k >> 0x08) & 0xff
+                            local r = k & 0xff
+
+                            local aQtz = quantize(a * one255, aLevels, aDelta)
+                            local bQtz = quantize(b * one255, bLevels, bDelta)
+                            local gQtz = quantize(g * one255, rLevels, gDelta)
+                            local rQtz = quantize(r * one255, rLevels, rDelta)
+
+                            aQtz = trunc(0.5 + 255.0 * aQtz)
+                            bQtz = trunc(0.5 + 255.0 * bQtz)
+                            gQtz = trunc(0.5 + 255.0 * gQtz)
+                            rQtz = trunc(0.5 + 255.0 * rQtz)
+
+                            local hex = (aQtz << 0x18)
+                                | (bQtz << 0x10)
+                                | (gQtz << 0x08)
+                                | rQtz
+
+                            trgDict[k] = hex
+                        end
                     end
 
                     -- Clone image, replace color with quantized.

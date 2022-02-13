@@ -1314,35 +1314,45 @@ function Clr.premul(a)
     end
 end
 
----Reduces the granularity of a color's components.
----Performs no color conversion, so sRGB is assumed.
----Uses signed quantization, as the color may be
----out of gamut.
----@param a table color
+---Reduces the granularity of a color's components
+---in sRGB. Uses signed quantization, as the color
+---may be out of gamut.
+---@param c table color
 ---@param levels number levels
 ---@return table
-function Clr.quantize(a, levels)
+function Clr.quantize(c, levels)
     if levels and levels > 0 and levels < 256 then
+        local delta = 1.0 / levels
         return Clr.quantizeInternal(
-            a, levels, 1.0 / levels)
+            c, levels, delta,
+               levels, delta,
+               levels, delta,
+               levels, delta)
     end
-    return Clr.new(a.r, a.g, a.b, a.a)
+    return Clr.new(c.r, c.g, c.b, c.a)
 end
 
----Reduces the granularity of a color's components.
----Internal helper function to color quantization.
+---Reduces the granularity of a color's components
+---in sRGB. Uses signed quantization, as the color
+---may be out of gamut.
+---Internal helper function.
 ---Assumes that levels are within [1, 255] and the
 ---inverse of levels has already been calculated.
----@param a table color
----@param levels number levels
----@param delta number one over levels
+---@param c table color
+---@param rLevels number red levels
+---@param rDelta number red inverse
 ---@return table
-function Clr.quantizeInternal(a, levels, delta)
+function Clr.quantizeInternal(
+    c, rLevels, rDelta,
+       gLevels, gDelta,
+       bLevels, bDelta,
+       aLevels, aDelta)
+
     return Clr.new(
-        delta * math.floor(0.5 + a.r * levels),
-        delta * math.floor(0.5 + a.g * levels),
-        delta * math.floor(0.5 + a.b * levels),
-        delta * math.floor(0.5 + a.a * levels))
+        rDelta * math.floor(0.5 + c.r * rLevels),
+        gDelta * math.floor(0.5 + c.g * gLevels),
+        bDelta * math.floor(0.5 + c.b * bLevels),
+        aDelta * math.floor(0.5 + c.a * aLevels))
 end
 
 ---Creates a random color in CIE LAB space,

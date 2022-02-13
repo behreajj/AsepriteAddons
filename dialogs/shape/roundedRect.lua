@@ -83,7 +83,7 @@ dlg:slider {
     min = -50,
     max = 50,
     value = defaults.crnrUni,
-    visible = true,
+    visible = defaults.cornerInput == "UNIFORM",
     onchange = function()
         local uni = dlg.data.crnrUni
         dlg:modify { id = "tl", value = uni }
@@ -99,7 +99,7 @@ dlg:slider {
     min = -50,
     max = 50,
     value = defaults.tl,
-    visible = false
+    visible = defaults.cornerInput == "NON_UNIFORM"
 }
 
 dlg:slider {
@@ -107,7 +107,7 @@ dlg:slider {
     min = -50,
     max = 50,
     value = defaults.tr,
-    visible = false
+    visible = defaults.cornerInput == "NON_UNIFORM"
 }
 
 dlg:newrow { always = false }
@@ -117,7 +117,7 @@ dlg:slider {
     min = -50,
     max = 50,
     value = defaults.bl,
-    visible = false
+    visible = defaults.cornerInput == "NON_UNIFORM"
 }
 
 dlg:slider {
@@ -125,7 +125,7 @@ dlg:slider {
     min = -50,
     max = 50,
     value = defaults.br,
-    visible = false
+    visible = defaults.cornerInput == "NON_UNIFORM"
 }
 
 dlg:newrow { always = false }

@@ -694,10 +694,24 @@ end
 ---@return number
 function Utilities.quantizeSigned(a, levels)
     if levels ~= 0 then
-        return math.floor(0.5 + a * levels) / levels
+        return Utilities.quantizeSignedInternal(
+            a, levels, 1.0 / levels)
     else
         return a
     end
+end
+
+---Quantizes a signed number according
+---to a number of levels. The quantization
+---is centered about the range.
+---Internal helper function. Assumes that
+---delta has been calculated as 1 / levels.
+---@param a number value
+---@param levels number levels
+---@param delta number inverse levels
+---@return number
+function Utilities.quantizeSignedInternal(a, levels, delta)
+    return math.floor(0.5 + a * levels) * delta
 end
 
 ---Quantizes an unsigned number according
@@ -708,12 +722,26 @@ end
 ---@return number
 function Utilities.quantizeUnsigned(a, levels)
     if levels > 1 then
-        return math.max(0.0,
-            (math.ceil(a * levels) - 1.0)
-            / (levels - 1.0))
+        return Utilities.quantizeUnsignedInternal(
+            a, levels, 1.0 / (levels - 1.0))
     else
         return math.max(0.0, a)
     end
+end
+
+---Quantizes an unsigned number according
+---to a number of levels. The quantization
+---is based on the left edge.
+---Internal helper function. Assumes that
+---delta has been calculated as 1 / (levels - 1).
+---@param a number value
+---@param levels number levels
+---@param delta number inverse levels
+---@return number
+function Utilities.quantizeUnsignedInternal(
+    a, levels, delta)
+    return math.max(0.0,
+        (math.ceil(a * levels) - 1.0) * delta)
 end
 
 ---Reverses a table used as an array.
