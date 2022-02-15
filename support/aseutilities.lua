@@ -1348,14 +1348,14 @@ function AseUtilities.getSelection(sprite)
 end
 
 ---Creates a table of gray colors represented as
----32 bit integers, where the gray is repreated
----three times.
+---32 bit integers, where the gray is repeated
+---three times in red, green and blue channels.
 ---@param count number swatch count
 ---@return table
 function AseUtilities.grayHexes(count)
     local trunc = math.tointeger
     local valCount = count or 255
-    valCount = math.max(1, valCount)
+    valCount = math.max(2, valCount)
     local toFac = 255.0 / (valCount - 1.0)
     local result = {}
     for i = 1, valCount, 1 do

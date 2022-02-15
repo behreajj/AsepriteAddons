@@ -2,20 +2,32 @@ dofile("../../support/aseutilities.lua")
 
 local targets = { "ACTIVE", "ALL", "RANGE" }
 local methods = { "SIGNED", "UNSIGNED" }
+local units = { "BITS", "INTEGERS" }
 local levelsInputs = { "NON_UNIFORM", "UNIFORM" }
 
 local defaults = {
-    target = "RANGE",
-    levelsUni = 15,
-    rLevels = 15,
-    gLevels = 15,
-    bLevels = 15,
-    aLevels = 15,
-    levelsInput = "UNIFORM",
     minLevels = 2,
-    maxLevels = 64,
+    maxLevels = 256,
+    minBits = 1,
+    maxBits = 8,
+
+    target = "RANGE",
+
+    levelsUni = 16,
+    rLevels = 16,
+    gLevels = 16,
+    bLevels = 16,
+    aLevels = 256,
+
+    bitsUni = 4,
+    rBits = 4,
+    gBits = 4,
+    bBits = 4,
+    aBits = 8,
+
+    unit = "BITS",
+    levelsInput = "UNIFORM",
     method = "UNSIGNED",
-    useLinear = false,
     copyToLayer = true,
     pullFocus = false
 }
@@ -46,9 +58,11 @@ dlg:slider {
     min = defaults.minLevels,
     max = defaults.maxLevels,
     value = defaults.levelsUni,
-    visible = defaults.levelsInput == "UNIFORM",
+    visible = defaults.levelsInput == "UNIFORM"
+        and defaults.unit == "INTEGERS",
     onchange = function()
-        local uni = dlg.data.levelsUni
+        local args = dlg.data
+        local uni = args.levelsUni
         dlg:modify { id = "rLevels", value = uni }
         dlg:modify { id = "gLevels", value = uni }
         dlg:modify { id = "bLevels", value = uni }
@@ -67,6 +81,7 @@ dlg:slider {
     max = defaults.maxLevels,
     value = defaults.rLevels,
     visible = defaults.levelsInput == "NON_UNIFORM"
+        and defaults.unit == "INTEGERS"
 }
 
 dlg:slider {
@@ -77,6 +92,7 @@ dlg:slider {
     max = defaults.maxLevels,
     value = defaults.gLevels,
     visible = defaults.levelsInput == "NON_UNIFORM"
+        and defaults.unit == "INTEGERS"
 }
 
 dlg:slider {
@@ -87,6 +103,7 @@ dlg:slider {
     max = defaults.maxLevels,
     value = defaults.bLevels,
     visible = defaults.levelsInput == "NON_UNIFORM"
+        and defaults.unit == "INTEGERS"
 }
 
 dlg:slider {
@@ -97,6 +114,104 @@ dlg:slider {
     max = defaults.maxLevels,
     value = defaults.aLevels,
     visible = defaults.levelsInput == "NON_UNIFORM"
+        and defaults.unit == "INTEGERS"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "bitsUni",
+    label = "Bits:",
+    min = defaults.minBits,
+    max = defaults.maxBits,
+    value = defaults.bitsUni,
+    visible = defaults.levelsInput == "UNIFORM"
+        and defaults.unit == "BITS",
+    onchange = function()
+        local args = dlg.data
+        local bd = args.bitsUni
+        dlg:modify { id = "rBits", value = bd }
+        dlg:modify { id = "gBits", value = bd }
+        dlg:modify { id = "bBits", value = bd }
+        dlg:modify { id = "aBits", value = bd }
+
+        local lv = 2 ^ bd
+        dlg:modify { id = "levelsUni", value = lv }
+        dlg:modify { id = "rLevels", value = lv }
+        dlg:modify { id = "gLevels", value = lv }
+        dlg:modify { id = "bLevels", value = lv }
+        dlg:modify { id = "aLevels", value = lv }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "rBits",
+    -- text = "R",
+    label = "Red:",
+    min = defaults.minBits,
+    max = defaults.maxBits,
+    value = defaults.rBits,
+    visible = defaults.levelsInput == "NON_UNIFORM"
+        and defaults.unit == "BITS",
+    onchange = function()
+        local args = dlg.data
+        local bd = args.rBits
+        local lv = 2 ^ bd
+        dlg:modify { id = "rLevels", value = lv }
+    end
+}
+
+dlg:slider {
+    id = "gBits",
+    -- text = "G",
+    label = "Green:",
+    min = defaults.minBits,
+    max = defaults.maxBits,
+    value = defaults.gBits,
+    visible = defaults.levelsInput == "NON_UNIFORM"
+        and defaults.unit == "BITS",
+        onchange = function()
+            local args = dlg.data
+            local bd = args.gBits
+            local lv = 2 ^ bd
+            dlg:modify { id = "gLevels", value = lv }
+        end
+}
+
+dlg:slider {
+    id = "bBits",
+    -- text = "B",
+    label = "Blue:",
+    min = defaults.minBits,
+    max = defaults.maxBits,
+    value = defaults.bBits,
+    visible = defaults.levelsInput == "NON_UNIFORM"
+        and defaults.unit == "BITS",
+        onchange = function()
+            local args = dlg.data
+            local bd = args.bBits
+            local lv = 2 ^ bd
+            dlg:modify { id = "bLevels", value = lv }
+        end
+}
+
+dlg:slider {
+    id = "aBits",
+    -- text = "A",
+    label = "Alpha:",
+    min = defaults.minBits,
+    max = defaults.maxBits,
+    value = defaults.aBits,
+    visible = defaults.levelsInput == "NON_UNIFORM"
+        and defaults.unit == "BITS",
+        onchange = function()
+            local args = dlg.data
+            local bd = args.aBits
+            local lv = 2 ^ bd
+            dlg:modify { id = "aLevels", value = lv }
+        end
 }
 
 dlg:newrow { always = false }
@@ -106,27 +221,70 @@ dlg:combobox {
     option = defaults.levelsInput,
     options = levelsInputs,
     onchange = function()
-        local md = dlg.data.levelsInput
-        local isnu = md == "NON_UNIFORM"
-        dlg:modify { id = "rLevels", visible = isnu }
-        dlg:modify { id = "gLevels", visible = isnu }
-        dlg:modify { id = "bLevels", visible = isnu }
-        dlg:modify { id = "aLevels", visible = isnu }
+        local args = dlg.data
 
+        local md = args.levelsInput
+        local isnu = md == "NON_UNIFORM"
+
+        local unit = args.unitsInput
+        local isbit = unit == "BITS"
+        local isint = unit == "INTEGERS"
+
+        dlg:modify { id = "rBits", visible = isnu and isbit }
+        dlg:modify { id = "gBits", visible = isnu and isbit }
+        dlg:modify { id = "bBits", visible = isnu and isbit }
+        dlg:modify { id = "aBits", visible = isnu and isbit }
+        dlg:modify {
+            id = "bitsUni",
+            visible = (not isnu) and isbit
+        }
+
+        dlg:modify { id = "rLevels", visible = isnu and isint }
+        dlg:modify { id = "gLevels", visible = isnu and isint }
+        dlg:modify { id = "bLevels", visible = isnu and isint }
+        dlg:modify { id = "aLevels", visible = isnu and isint }
         dlg:modify {
             id = "levelsUni",
-            visible = not isnu
+            visible = (not isnu) and isint
         }
     end
 }
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "useLinear",
-    label = "Linear:",
-    text = "RGB",
-    selected = defaults.useLinear
+dlg:combobox {
+    id = "unitsInput",
+    label = "Units:",
+    option = defaults.unit,
+    options = units,
+    onchange = function()
+        local args = dlg.data
+
+        local md = args.levelsInput
+        local isnu = md == "NON_UNIFORM"
+
+        local unit = args.unitsInput
+        local isbit = unit == "BITS"
+        local isint = unit == "INTEGERS"
+
+        dlg:modify { id = "rBits", visible = isnu and isbit }
+        dlg:modify { id = "gBits", visible = isnu and isbit }
+        dlg:modify { id = "bBits", visible = isnu and isbit }
+        dlg:modify { id = "aBits", visible = isnu and isbit }
+        dlg:modify {
+            id = "bitsUni",
+            visible = (not isnu) and isbit
+        }
+
+        dlg:modify { id = "rLevels", visible = isnu and isint }
+        dlg:modify { id = "gLevels", visible = isnu and isint }
+        dlg:modify { id = "bLevels", visible = isnu and isint }
+        dlg:modify { id = "aLevels", visible = isnu and isint }
+        dlg:modify {
+            id = "levelsUni",
+            visible = (not isnu) and isint
+        }
+    end
 }
 
 dlg:newrow { always = false }
@@ -144,7 +302,7 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-
+        -- Earlly returns.
         local sprite = app.activeSprite
         if not sprite then
             app.alert("There is no active sprite.")
@@ -165,7 +323,6 @@ dlg:button {
         local gLevels = args.gLevels or defaults.gLevels
         local bLevels = args.bLevels or defaults.bLevels
         local aLevels = args.aLevels or defaults.aLevels
-        local useLinear = args.useLinear
         local copyToLayer = args.copyToLayer
 
         -- Find frames from target.
@@ -201,18 +358,15 @@ dlg:button {
             trgLayer.opacity = srcLayer.opacity
         end
 
-        -- Cache methods & luts to local.
         local one255 = 1.0 / 255
-        local stlLut = Utilities.STL_LUT
-        local ltsLut = Utilities.LTS_LUT
         local trunc = math.tointeger
-        local quantize = nil
 
         local rDelta = 0.0
         local gDelta = 0.0
         local bDelta = 0.0
         local aDelta = 0.0
 
+        local quantize = nil
         if method == "UNSIGNED" then
             quantize = Utilities.quantizeUnsignedInternal
 
@@ -254,62 +408,28 @@ dlg:button {
 
                     -- Quantize colors, place in dictionary.
                     local trgDict = {}
-                    if useLinear then
-                        for k, _ in pairs(srcDict) do
-                            local a = (k >> 0x18) & 0xff
-                            local b = (k >> 0x10) & 0xff
-                            local g = (k >> 0x08) & 0xff
-                            local r = k & 0xff
+                    for k, _ in pairs(srcDict) do
+                        local a = (k >> 0x18) & 0xff
+                        local b = (k >> 0x10) & 0xff
+                        local g = (k >> 0x08) & 0xff
+                        local r = k & 0xff
 
-                            local bLin = stlLut[1 + b]
-                            local gLin = stlLut[1 + g]
-                            local rLin = stlLut[1 + r]
+                        local aQtz = quantize(a * one255, aLevels, aDelta)
+                        local bQtz = quantize(b * one255, bLevels, bDelta)
+                        local gQtz = quantize(g * one255, gLevels, gDelta)
+                        local rQtz = quantize(r * one255, rLevels, rDelta)
 
-                            local aQtz = quantize(a * one255, aLevels, aDelta)
-                            local bQtz = quantize(bLin * one255, bLevels, bDelta)
-                            local gQtz = quantize(gLin * one255, gLevels, gDelta)
-                            local rQtz = quantize(rLin * one255, rLevels, rDelta)
+                        aQtz = trunc(0.5 + 255.0 * aQtz)
+                        bQtz = trunc(0.5 + 255.0 * bQtz)
+                        gQtz = trunc(0.5 + 255.0 * gQtz)
+                        rQtz = trunc(0.5 + 255.0 * rQtz)
 
-                            aQtz = trunc(0.5 + 255.0 * aQtz)
-                            bQtz = trunc(0.5 + 255.0 * bQtz)
-                            gQtz = trunc(0.5 + 255.0 * gQtz)
-                            rQtz = trunc(0.5 + 255.0 * rQtz)
+                        local hex = (aQtz << 0x18)
+                            | (bQtz << 0x10)
+                            | (gQtz << 0x08)
+                            | rQtz
 
-                            local bStd = ltsLut[1 + bQtz]
-                            local gStd = ltsLut[1 + gQtz]
-                            local rStd = ltsLut[1 + rQtz]
-
-                            local hex = (aQtz << 0x18)
-                                | (bStd << 0x10)
-                                | (gStd << 0x08)
-                                | rStd
-
-                            trgDict[k] = hex
-                        end
-                    else
-                        for k, _ in pairs(srcDict) do
-                            local a = (k >> 0x18) & 0xff
-                            local b = (k >> 0x10) & 0xff
-                            local g = (k >> 0x08) & 0xff
-                            local r = k & 0xff
-
-                            local aQtz = quantize(a * one255, aLevels, aDelta)
-                            local bQtz = quantize(b * one255, bLevels, bDelta)
-                            local gQtz = quantize(g * one255, gLevels, gDelta)
-                            local rQtz = quantize(r * one255, rLevels, rDelta)
-
-                            aQtz = trunc(0.5 + 255.0 * aQtz)
-                            bQtz = trunc(0.5 + 255.0 * bQtz)
-                            gQtz = trunc(0.5 + 255.0 * gQtz)
-                            rQtz = trunc(0.5 + 255.0 * rQtz)
-
-                            local hex = (aQtz << 0x18)
-                                | (bQtz << 0x10)
-                                | (gQtz << 0x08)
-                                | rQtz
-
-                            trgDict[k] = hex
-                        end
+                        trgDict[k] = hex
                     end
 
                     -- Clone image, replace color with quantized.

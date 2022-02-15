@@ -290,20 +290,26 @@ local function setFromAse(dialog, aseClr)
     updateHexCode(dialog, { clr })
 end
 
-local function setFromSelect(dialog, sprite, cel)
-    if sprite and cel then
+local function setFromSelect(dialog, sprite, frame)
+    if sprite and frame then
         local selection = sprite.selection
         if selection and (not selection.isEmpty) then
-            local celPos = cel.position
-            local xCel = celPos.x
-            local yCel = celPos.y
-
             -- Problem with selections that extend
             -- into negative values.
             selection:intersect(Selection(sprite.bounds))
-            local celImage = cel.image
-            local colorMode = celImage.colorMode
-            local px = celImage:pixels()
+            local selBounds = selection.bounds
+            local xSel = selBounds.x
+            local ySel = selBounds.y
+
+            local colorMode = sprite.colorMode
+
+            local flatImage = Image(
+                selBounds.width,
+                selBounds.height,
+                colorMode)
+            flatImage:drawSprite(
+                sprite, frame, Point(-xSel, -ySel))
+            local px = flatImage:pixels()
 
             local aSum = 0
             local bSum = 0
@@ -313,8 +319,8 @@ local function setFromSelect(dialog, sprite, cel)
 
             if colorMode == ColorMode.GRAY then
                 for elm in px do
-                    local x = xCel + elm.x
-                    local y = yCel + elm.y
+                    local x = elm.x + xSel
+                    local y = elm.y + ySel
                     if selection:contains(x, y) then
                         local hex = elm()
                         local a = hex >> 0x08 & 0xff
@@ -330,8 +336,8 @@ local function setFromSelect(dialog, sprite, cel)
                 end
             elseif colorMode == ColorMode.RGB then
                 for elm in px do
-                    local x = xCel + elm.x
-                    local y = yCel + elm.y
+                    local x = elm.x + xSel
+                    local y = elm.y + ySel
                     if selection:contains(x, y) then
                         local hex = elm()
                         local a = hex >> 0x18 & 0xff
@@ -348,8 +354,8 @@ local function setFromSelect(dialog, sprite, cel)
                 local palette = sprite.palettes[1]
                 local palLen = #palette
                 for elm in px do
-                    local x = xCel + elm.x
-                    local y = yCel + elm.y
+                    local x = elm.x + xSel
+                    local y = elm.y + ySel
                     if selection:contains(x, y) then
                         local idx = elm()
                         if idx > -1 and idx < palLen then
@@ -466,7 +472,7 @@ dlg:button {
     onclick = function()
         setFromSelect(dlg,
             app.activeSprite,
-            app.activeCel)
+            app.activeFrame)
     end
 }
 
