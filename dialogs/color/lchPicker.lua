@@ -311,11 +311,7 @@ local function setFromSelect(dialog, sprite, frame)
                 sprite, frame, Point(-xSel, -ySel))
             local px = flatImage:pixels()
 
-            local aSum = 0
-            local bSum = 0
-            local gSum = 0
-            local rSum = 0
-            local count = 0
+            local hexDict = {}
 
             if colorMode == ColorMode.GRAY then
                 for elm in px do
@@ -323,14 +319,16 @@ local function setFromSelect(dialog, sprite, frame)
                     local y = elm.y + ySel
                     if selection:contains(x, y) then
                         local hex = elm()
-                        local a = hex >> 0x08 & 0xff
+                        local a = (hex >> 0x08) & 0xff
                         if a > 0 then
                             local v = hex & 0xff
-                            rSum = rSum + v
-                            gSum = gSum + v
-                            bSum = bSum + v
-                            aSum = aSum + a
-                            count = count + 1
+                            local hexRgb = a << 0x18 | v << 0x10 | v << 0x08 | v
+                            local query = hexDict[hexRgb]
+                            if query then
+                                hexDict[hexRgb] = query + 1
+                            else
+                                hexDict[hexRgb] = 1
+                            end
                         end
                     end
                 end
@@ -342,11 +340,12 @@ local function setFromSelect(dialog, sprite, frame)
                         local hex = elm()
                         local a = hex >> 0x18 & 0xff
                         if a > 0 then
-                            rSum = rSum + (hex & 0xff)
-                            gSum = gSum + (hex >> 0x08 & 0xff)
-                            bSum = bSum + (hex >> 0x10 & 0xff)
-                            aSum = aSum + a
-                            count = count + 1
+                            local query = hexDict[hex]
+                            if query then
+                                hexDict[hex] = query + 1
+                            else
+                                hexDict[hex] = 1
+                            end
                         end
                     end
                 end
@@ -362,25 +361,43 @@ local function setFromSelect(dialog, sprite, frame)
                             local aseColor = palette:getColor(idx)
                             local a = aseColor.alpha
                             if a > 0 then
-                                rSum = rSum + aseColor.red
-                                gSum = gSum + aseColor.green
-                                bSum = bSum + aseColor.blue
-                                aSum = aSum + a
-                                count = count + 1
+                                local hexRgb = aseColor.rgbaPixel
+                                local query = hexDict[hexRgb]
+                                if query then
+                                    hexDict[hexRgb] = query + 1
+                                else
+                                    hexDict[hexRgb] = 1
+                                end
                             end
                         end
                     end
                 end
             end
 
+            local lSum = 0.0
+            local aSum = 0.0
+            local bSum = 0.0
+            local alphaSum = 0.0
+            local count = 0
+
+            for k, v in pairs(hexDict) do
+                local srgb = Clr.fromHex(k)
+                local lab = Clr.sRgbaToLab(srgb)
+                lSum = lSum + lab.l * v
+                aSum = aSum + lab.a * v
+                bSum = bSum + lab.b * v
+                alphaSum = alphaSum + lab.alpha * v
+                count = count + v
+            end
+
             local clr = nil
             if count > 0 then
-                local countInv = 1.0 / (count * 255.0)
-                clr = Clr.new(
-                    rSum * countInv,
-                    gSum * countInv,
-                    bSum * countInv,
-                    aSum * countInv)
+                local countInv = 1.0 / count
+                local lAvg = lSum * countInv
+                local aAvg = aSum * countInv
+                local bAvg = bSum * countInv
+                local alphaAvg = alphaSum * countInv
+                clr = Clr.labTosRgba(lAvg, aAvg, bAvg, alphaAvg)
             else
                 clr = Clr.new(0.0, 0.0, 0.0, 0.0)
             end
