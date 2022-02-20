@@ -231,15 +231,16 @@ dlg:button {
                             yOrigin = yOrigin + celPos.y
                         end
 
-                        local stackIndex = layer.stackIndex
+                        -- These file names cannot use stack index as a naming
+                        -- convention, because stack indices are relative to
+                        -- a parent, not absolute to the sprite.
                         local frameNumber = cel.frameNumber
-
                         local fileNameShort = strfmt(
                             "%s%03d_%03d",
-                            fileTitle, stackIndex, frameNumber)
+                            fileTitle, i, frameNumber)
                         local fileNameLong = strfmt(
                             "%s%03d_%03d.%s",
-                            filePrefix, stackIndex, frameNumber, fileExt)
+                            filePrefix, i, frameNumber, fileExt)
 
                         if useResize then
                             trgImage:resize(
@@ -391,7 +392,9 @@ dlg:button {
                     "{\"fileDir\":\"%s\",\"fileExt\":\"%s\",\"layers\":[",
                     filePath, fileExt)
                     .. concat(lyrStrArr, ",")
-                    .. "]}"
+                    .. strfmt(
+                        "],\"padding\":%d,\"scale\":%d}",
+                        padding, scale)
 
                 local jsonFilepath = filePrefix
                 if #fileTitle < 1 then

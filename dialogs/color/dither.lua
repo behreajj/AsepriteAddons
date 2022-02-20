@@ -2,7 +2,6 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 dofile("../../support/clr.lua")
 
-
 local modes = { "ONE_BIT", "PALETTE", "QUANTIZE" }
 local greyMethods = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
 

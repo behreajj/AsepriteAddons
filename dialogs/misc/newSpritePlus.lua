@@ -137,7 +137,6 @@ dlg:combobox {
         dlg:modify { id = "bkgIdx", visible = isIndexed }
 
         local palType = args.palType
-        dlg:modify { id = "palSeparate", visible = not isGray }
         dlg:modify { id = "palType", visible = not isGray }
         dlg:modify {
             id = "palFile",
@@ -147,7 +146,7 @@ dlg:combobox {
             id = "palPreset",
             visible = palType == "PRESET" and not isGray
         }
-        dlg:modify { id = "prependMask", visible = not isGray }
+        dlg:modify { id = "grayCount", visible = isGray }
 
         if isRgb then
             updateColorPreviewRgba(dlg)
@@ -320,8 +319,7 @@ dlg:slider {
 }
 
 dlg:separator {
-    id = "palSeparate",
-    visible = defaults.colorMode ~= "GRAY"
+    id = "palSeparate"
 }
 
 dlg:combobox {
@@ -359,11 +357,21 @@ dlg:entry {
 
 dlg:newrow { always = false }
 
+dlg:slider {
+    id = "grayCount",
+    label = "Swatches:",
+    min = 2,
+    max = 256,
+    value = AseUtilities.GRAY_COUNT,
+    visible = defaults.colorMode == "GRAY"
+}
+
+dlg:newrow { always = false }
+
 dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
-    selected = defaults.prependMask,
-    visible = defaults.colorMode ~= "GRAY"
+    selected = defaults.prependMask
 }
 
 dlg:newrow { always = false }
@@ -376,29 +384,42 @@ dlg:button {
 
         local args = dlg.data
         local palType = args.palType or defaults.palType
+        local prependMask = args.prependMask
+
+        local colorModeStr = args.colorMode or defaults.colorMode
+        local useGrayscale = colorModeStr == "GRAY"
+        local useIndexed = colorModeStr == "INDEXED"
+
+        -- Create palette.
         local hexesSrgb = {}
         local hexesProfile = {}
-
-        if palType ~= "DEFAULT" then
+        if useGrayscale then
+            local grayCount = args.grayCount or AseUtilities.GRAY_COUNT
+            hexesProfile = AseUtilities.grayHexes(grayCount)
+            hexesSrgb = hexesProfile
+        elseif palType ~= "DEFAULT" then
             local palFile = args.palFile
             local palPreset = args.palPreset
-
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 palType, palFile, palPreset, 0, 256, true)
         else
-            -- Since a palette will be created immediately after, pbr.
-            -- If this changes, and arrays are modified, then this
-            -- will need to be a copy.
-            hexesProfile = AseUtilities.DEFAULT_PAL_ARR
+            local hexesDefault = AseUtilities.DEFAULT_PAL_ARR
+            local hexDefLen = #hexesDefault
+            for i = 1, hexDefLen, 1 do
+                hexesProfile[i] = hexesDefault[i]
+            end
             hexesSrgb = hexesProfile
         end
 
-        -- Do we need to change color mode? Where?
-        local colorModeStr = args.colorMode or defaults.colorMode
+        if prependMask then
+            Utilities.prependMask(hexesProfile)
+        end
+
+        -- Create background image.
         local colorModeInt = 0
         local createBackground = false
         local hexBkg = 0x0
-        if colorModeStr == "GRAY" then
+        if useGrayscale then
             colorModeInt = ColorMode.GRAY
             local aChannel = args.aChannel or defaults.aChannel
             createBackground = aChannel > 0
@@ -409,7 +430,7 @@ dlg:button {
                     | (grayChannel << 0x08)
                     | grayChannel
             end
-        elseif colorModeStr == "INDEXED" then
+        elseif useIndexed then
             colorModeInt = ColorMode.INDEXED
             local bkgIdx = args.bkgIdx or defaults.bkgIdx
             if bkgIdx < #hexesProfile then
@@ -456,22 +477,19 @@ dlg:button {
         newSprite.filename = filename
         app.activeSprite = newSprite
 
-        local prependMask = args.prependMask
-        if prependMask then
-            Utilities.prependMask(hexesProfile)
+        -- Only assign palette here if not grayscale.
+        if not useGrayscale then
+            newSprite:setPalette(
+                AseUtilities.hexArrToAsePalette(hexesProfile))
         end
-
-        local newPal = AseUtilities.hexArrToAsePalette(hexesProfile)
-        newSprite:setPalette(newPal)
 
         -- Create frames.
         local frameReqs = args.frames or defaults.frames
         local fps = args.fps or defaults.fps
         local duration = 1.0 / math.max(1, fps)
-
         local firstFrame = newSprite.frames[1]
         firstFrame.duration = duration
-        local createdFrames = AseUtilities.createNewFrames(
+        AseUtilities.createNewFrames(
             newSprite,
             frameReqs - 1,
             duration)
@@ -482,7 +500,6 @@ dlg:button {
 
         -- Create background image. Assign to cels.
         if createBackground then
-            -- layer.isContinuous = true
             local bkgImg = Image(
                 spriteWidth, spriteHeight,
                 ColorMode.RGB)
@@ -500,6 +517,7 @@ dlg:button {
             end)
         end
 
+        -- Assign grid.
         local xGrid = args.xGrid or defaults.xGrid
         local yGrid = args.yGrid or defaults.yGrid
         local wGrid = args.wGrid or defaults.wGrid
@@ -507,10 +525,15 @@ dlg:button {
         if wGrid > 1 and hGrid > 1 then
             newSprite.gridBounds = Rectangle(
                 xGrid, yGrid, wGrid, hGrid)
-                -- app.command.ShowGrid()
         end
 
+        -- Convert to grayscale will append palette.
         AseUtilities.changePixelFormat(colorModeInt)
+        if useGrayscale then
+            newSprite:setPalette(
+                AseUtilities.hexArrToAsePalette(hexesProfile))
+        end
+
         app.activeFrame = firstFrame
         app.refresh()
         dlg:close()

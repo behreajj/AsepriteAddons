@@ -745,6 +745,7 @@ function Utilities.quantizeUnsignedInternal(
 end
 
 ---Reverses a table used as an array.
+---Useful for rotating an array of pixels 180 degrees.
 ---Changes the table in place.
 ---@param t table input table
 function Utilities.reverseTable(t)

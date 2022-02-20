@@ -295,8 +295,8 @@ local function setFromSelect(dialog, sprite, frame)
         local selection = sprite.selection
         if selection and (not selection.isEmpty) then
             -- Problem with selections that extend
-            -- into negative values.
-            selection:intersect(Selection(sprite.bounds))
+            -- into negative values?
+            -- selection:intersect(Selection(sprite.bounds))
             local selBounds = selection.bounds
             local xSel = selBounds.x
             local ySel = selBounds.y
@@ -390,25 +390,21 @@ local function setFromSelect(dialog, sprite, frame)
                 count = count + v
             end
 
-            local clr = nil
             if count > 0 then
                 local countInv = 1.0 / count
                 local lAvg = lSum * countInv
                 local aAvg = aSum * countInv
                 local bAvg = bSum * countInv
                 local alphaAvg = alphaSum * countInv
-                clr = Clr.labTosRgba(lAvg, aAvg, bAvg, alphaAvg)
-            else
-                clr = Clr.new(0.0, 0.0, 0.0, 0.0)
+                local lch = Clr.labToLch(lAvg, aAvg, bAvg, alphaAvg)
+                local clr = Clr.labTosRgba(lAvg, aAvg, bAvg, alphaAvg)
+                setLch(dialog, lch, clr)
+                dialog:modify {
+                    id = "clr",
+                    colors = { AseUtilities.clrToAseColor(clr) }
+                }
+                updateHexCode(dialog, { clr })
             end
-
-            local lch = Clr.sRgbaToLch(clr)
-            setLch(dialog, lch, clr)
-            dialog:modify {
-                id = "clr",
-                colors = { AseUtilities.clrToAseColor(clr) }
-            }
-            updateHexCode(dialog, { clr })
         end
     end
 end
