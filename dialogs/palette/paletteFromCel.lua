@@ -109,6 +109,8 @@ dlg:button {
                     end
                 end
 
+                local palette = nil
+                local target = args.target
                 if idx > 0 then
                     local len = idx
                     local clampTo256 = args.clampTo256
@@ -116,7 +118,7 @@ dlg:button {
                         len = math.min(256, len)
                     end
 
-                    local palette = Palette(len)
+                    palette = Palette(len)
                     for hex, i in pairs(dictionary) do
                         local j = i - 1
                         if j < len then
@@ -124,17 +126,21 @@ dlg:button {
                         end
                     end
 
-                    local target = args.target
                     if target == "SAVE" then
                         local filepath = args.filepath
                         palette:saveAs(filepath)
                         app.alert("Palette saved.")
-                    else
+                    elseif oldMode ~= ColorMode.GRAY then
                         sprite:setPalette(palette)
                     end
                 end
 
                 AseUtilities.changePixelFormat(oldMode)
+                if idx > 0
+                    and target ~= "SAVE"
+                    and oldMode == ColorMode.GRAY then
+                    sprite:setPalette(palette)
+                end
                 app.refresh()
             else
                 app.alert("There is no active cel.")
