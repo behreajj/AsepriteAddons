@@ -248,8 +248,8 @@ dlg:button {
                 end
             end
 
-            local w = sprite.width
-            local h = sprite.height
+            local wn1 = sprite.width - 1.0
+            local hn1 = sprite.height - 1.0
 
             local xOrigin = args.xOrigin
             local yOrigin = args.yOrigin
@@ -265,13 +265,13 @@ dlg:button {
             end
 
             -- Divide by 100 to account for percentage.
-            local xOrPx = xOrigin * w * 0.01
-            local yOrPx = yOrigin * h * 0.01
-            local xDsPx = xDest * w * 0.01
-            local yDsPx = yDest * h * 0.01
+            local xOrPx = xOrigin * wn1 * 0.01
+            local yOrPx = yOrigin * hn1 * 0.01
+            local xDsPx = xDest * wn1 * 0.01
+            local yDsPx = yDest * hn1 * 0.01
 
-            local bx = xOrPx - xDsPx
-            local by = yOrPx - yDsPx
+            local bx = xDsPx - xOrPx
+            local by = yDsPx - yOrPx
             local bbInv = 1.0 / math.max(0.000001,
                 bx * bx + by * by)
 
@@ -289,12 +289,8 @@ dlg:button {
                 local x = elm.x + xCel
                 local y = elm.y + yCel
                 -- if selection:contains(x, y) then
-
-                -- TODO: This is a little backwards... wouldn't it
-                -- be (x, y) - origin, and then reverse b above to
-                -- be origin - destination ?
-                local cx = xOrPx - x
-                local cy = yOrPx - y
+                local cx = x - xOrPx
+                local cy = y - yOrPx
                 local cb = (cx * bx + cy * by) * bbInv
 
                 -- Unsigned quantize will already clamp to

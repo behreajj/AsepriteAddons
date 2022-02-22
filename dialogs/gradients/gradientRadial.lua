@@ -358,15 +358,15 @@ dlg:button {
             local xOrigin = 0.01 * args.xOrigin
             local yOrigin = 0.01 * args.yOrigin
 
-            local w = sprite.width
-            local h = sprite.height
+            local wn1 = sprite.width - 1.0
+            local hn1 = sprite.height - 1.0
 
             -- Convert from normalized to pixel size.
-            local xOrigPx = xOrigin * w
-            local yOrigPx = yOrigin * h
+            local xOrigPx = xOrigin * wn1
+            local yOrigPx = yOrigin * hn1
 
             -- Need a scalar to normalize distance to [0.0, 1.0]
-            local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, w, h))
+            local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, wn1, hn1))
 
             local selection = AseUtilities.getSelection(sprite)
             local selBounds = selection.bounds

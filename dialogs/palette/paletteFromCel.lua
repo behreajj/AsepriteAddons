@@ -66,81 +66,123 @@ dlg:button {
         if sprite then
             local cel = app.activeCel
             if cel then
-                -- Must be changed to RGB color mode before the
-                -- cel image is retrieved. Otherwise will throw
-                -- an error about ImageObj.
-                local oldMode = sprite.colorMode
-                app.command.ChangePixelFormat { format = "rgb" }
+                local colorMode = sprite.colorMode
+
+                local args = dlg.data
+                local removeAlpha = args.removeAlpha
+                local target = args.target
+                local clampTo256 = args.clampTo256
+                local prependMask = args.prependMask
 
                 local image = cel.image
                 local itr = image:pixels()
                 local dictionary = {}
-                local idx = 0
+                local idx = 1
 
-                local args = dlg.data
-                local prependMask = args.prependMask
-                if prependMask then
-                    idx = idx + 1
-                    dictionary[0x00000000] = idx
+                local alphaMask = 0
+                if removeAlpha then
+                    if colorMode == ColorMode.GRAY then
+                        alphaMask = 0xff00
+                    else
+                        alphaMask = 0xff000000
+                    end
                 end
 
-                local removeAlpha = args.removeAlpha
-                if removeAlpha then
+                if colorMode == ColorMode.INDEXED then
+                    local srcPal = sprite.palettes[1]
+                    local srcPalLen = #srcPal
                     for elm in itr do
-                        local hex = elm()
-                        if hex ~= 0x00000000 then
-                            local hexNoAlpha = hex | 0xff000000
-                            if not dictionary[hexNoAlpha] then
+                        local srcIndex = elm()
+                        if srcIndex > -1 and srcIndex < srcPalLen then
+                            local aseColor = srcPal:getColor(srcIndex)
+                            if aseColor.alpha > 0 then
+                                local hex = aseColor.rgbaPixel
+                                hex = alphaMask | hex
+                                if not dictionary[hex] then
+                                    dictionary[hex] = idx
+                                    idx = idx + 1
+                                end
+                            end
+                        end
+                    end
+                elseif colorMode == ColorMode.GRAY then
+                    for elm in itr do
+                        local hexGray = elm()
+                        if ((hexGray >> 0x08) & 0xff) > 0 then
+                            hexGray = alphaMask | hexGray
+                            local a = (hexGray >> 0x08) & 0xff
+                            local v = hexGray & 0xff
+                            local hex = a << 0x18 | v << 0x10 | v << 0x08 | v
+                            if not dictionary[hex] then
+                                dictionary[hex] = idx
                                 idx = idx + 1
-                                dictionary[hexNoAlpha] = idx
                             end
                         end
                     end
                 else
                     for elm in itr do
                         local hex = elm()
-                        if not dictionary[hex] then
-                            local alpha = hex & 0xff000000
-                            if alpha ~= 0 then
-                                idx = idx + 1
+                        if ((hex >> 0x18) & 0xff) > 0 then
+                            hex = alphaMask | hex
+                            if not dictionary[hex] then
                                 dictionary[hex] = idx
+                                idx = idx + 1
                             end
                         end
                     end
                 end
 
-                local palette = nil
-                local target = args.target
-                if idx > 0 then
-                    local len = idx
-                    local clampTo256 = args.clampTo256
+                local hexes = {}
+                for k, v in pairs(dictionary) do
+                    hexes[v] = k
+                end
+
+                if prependMask then
+                    local maskIdx = dictionary[0x0]
+                    if maskIdx then
+                        if maskIdx > 1 then
+                            table.remove(hexes, maskIdx)
+                            table.insert(hexes, 1, 0x0)
+                        end
+                    else
+                        table.insert(hexes, 1, 0x0)
+                    end
+                end
+
+                local hexesLen = #hexes
+                if hexesLen > 0 then
+                    local palLen = hexesLen
                     if clampTo256 then
-                        len = math.min(256, len)
+                        palLen = math.min(256, hexesLen)
                     end
 
-                    palette = Palette(len)
-                    for hex, i in pairs(dictionary) do
-                        local j = i - 1
-                        if j < len then
-                            palette:setColor(j, AseUtilities.hexToAseColor(hex))
-                        end
+                    local palette = Palette(palLen)
+                    for i = 1, palLen, 1 do
+                        palette:setColor(i - 1,
+                            AseUtilities.hexToAseColor(hexes[i]))
                     end
 
                     if target == "SAVE" then
                         local filepath = args.filepath
                         palette:saveAs(filepath)
                         app.alert("Palette saved.")
-                    elseif oldMode ~= ColorMode.GRAY then
-                        sprite:setPalette(palette)
+                    else
+                        if colorMode == ColorMode.INDEXED then
+                            -- Not sure how to get around this
+                            -- for indexed...
+                            app.command.ChangePixelFormat { format = "rgb" }
+                            sprite:setPalette(palette)
+                            app.command.ChangePixelFormat { format = "indexed" }
+                        elseif colorMode == ColorMode.GRAY then
+                            sprite:setPalette(palette)
+                        else
+                            sprite:setPalette(palette)
+                        end
+
                     end
                 end
 
-                AseUtilities.changePixelFormat(oldMode)
-                if idx > 0
-                    and target ~= "SAVE"
-                    and oldMode == ColorMode.GRAY then
-                    sprite:setPalette(palette)
-                end
+
                 app.refresh()
             else
                 app.alert("There is no active cel.")

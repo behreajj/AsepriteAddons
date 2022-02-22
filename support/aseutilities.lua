@@ -126,7 +126,7 @@ function AseUtilities.aseColorCopy(aseClr, flag)
             aseClr.alpha)
     elseif flag == "MODULAR" then
         return AseUtilities.hexToAseColor(
-            aseClr.rgbaPixel)
+            AseUtilities.aseColorToHex(aseClr))
     else
         return Color(
             math.max(0, math.min(255, aseClr.red)),
@@ -149,6 +149,19 @@ function AseUtilities.aseColorToClr(aseClr)
         0.00392156862745098 * aseClr.green,
         0.00392156862745098 * aseClr.blue,
         0.00392156862745098 * aseClr.alpha)
+end
+
+---Converts an Aseprite color object to a
+---hexadecimal integer. Uses modular arithmetic,
+---i.e., does not check if red, green, blue
+---and alpha channels are out of range [0, 255].
+---@param clr userdata aseprite color
+---@return number
+function AseUtilities.aseColorToHex(clr)
+    return (clr.alpha << 0x18)
+        | (clr.blue << 0x10)
+        | (clr.green << 0x08)
+        | clr.red
 end
 
 ---Loads a palette based on a string. The string is
@@ -1397,9 +1410,9 @@ function AseUtilities.hexToAseColor(hex)
     -- See https://github.com/aseprite/aseprite/
     -- blob/main/src/app/script/color_class.cpp#L22
     return Color(hex & 0xff,
-                 hex >> 0x08 & 0xff,
-                 hex >> 0x10 & 0xff,
-                 hex >> 0x18 & 0xff)
+                (hex >> 0x08) & 0xff,
+                (hex >> 0x10) & 0xff,
+                (hex >> 0x18) & 0xff)
 end
 
 ---Initializes a sprite and layer.
@@ -1463,7 +1476,9 @@ end
 ---@return boolean
 function AseUtilities.isVisibleHierarchy(layer, sprite)
     local l = layer
-    while l.__name ~= sprite.__name do
+    local sprName = "doc::Sprite"
+    if sprite then sprName = sprite.__name end
+    while l.__name ~= sprName do
         if not l.isVisible then
             return false
         end

@@ -402,7 +402,7 @@ dlg:newrow { always = false }
 dlg:slider {
     id = "swatches",
     label = "Swatches:",
-    min = 2,
+    min = 3,
     max = 32,
     value = defaults.swatches,
     visible = defaults.showGradientSettings
@@ -485,7 +485,12 @@ dlg:button {
         -- and known to be non-zero, simplify angle
         -- between formula.
         local abDot = ax * bx + ay * by + az * bz
-        abDot = math.max(-1.0, math.min(1.0, abDot))
+
+        -- Gray will result if colors are exactly at
+        -- positive or negative one, i.e. vectors
+        -- are parallel.
+        abDot = math.max(-0.999999,
+            math.min(0.999999, abDot))
         local omega = math.acos(abDot)
         local omSin = math.sin(omega)
         local omSinInv = 1.0
@@ -551,11 +556,23 @@ dlg:button {
             Point(0, gradHeight // 2))
 
         -- Set palette.
-        local pal = Palette(1 + swatches)
+        local pal = Palette(palIdx)
         for k, v in pairs(swatchesDict) do
             pal:setColor(v, k)
         end
         gradSprite:setPalette(pal)
+
+        -- If colors were chosen by index, they will be
+        -- blank when new sprite is created, even if
+        -- they were accurate vectors.
+        dlg:modify {
+            id = "aColor",
+            color = vecToColor(ax, ay, az)
+        }
+        dlg:modify {
+            id = "bColor",
+            color = vecToColor(bx, by, bz)
+        }
 
         app.refresh()
     end
@@ -598,14 +615,6 @@ dlg:button {
         sprite:assignColorSpace(ColorSpace())
         local cel = sprite.cels[1]
 
-        -- Discrete sectors (azimuths).
-        local azimAlpha = sectors / tau
-        local azimBeta = 0.0
-        local quantAzims = sectors > 0
-        if quantAzims then
-            azimBeta = tau / sectors
-        end
-
         -- For flipping the wheel orientation.
         local hexDefault = 0xffff8080
         local zFlipNum = 1
@@ -618,6 +627,17 @@ dlg:button {
         end
         if yFlip then yFlipNum = -1 end
         if xFlip then xFlipNum = -1 end
+
+        -- Discrete sectors (azimuths).
+        -- To quantize, values need to be in [0.0, 1.0].
+        -- That's why alpha divides by tau and beta
+        -- multiplies by tau after the floor.
+        local azimAlpha = sectors / tau
+        local azimBeta = 0.0
+        local quantAzims = sectors > 0
+        if quantAzims then
+            azimBeta = tau / sectors
+        end
 
         -- Discrete rings (inclinations).
         local inclAlpha = rings / halfPi
@@ -655,6 +675,7 @@ dlg:button {
                 -- atan2, acos, cos and sin are used.
                 if quantUse then
                     local azim = atan2(ySgn, xSgn)
+                    -- Are max and min necessary?
                     local incl = halfPi - acos(max(-1.0, min(1.0, zSgn)))
 
                     if quantAzims then

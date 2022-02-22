@@ -204,32 +204,36 @@ dlg:button {
         -- These need to be cached prior to the potential
         -- creation of a new sprite, otherwise color chosen
         -- by palette index will be incorrect.
-        local aColorAse = args.aColor
-        local bColorAse = args.bColor
+        local aColorAse = args.aColor or defaults.aColor
+        local bColorAse = args.bColor or defaults.bColor
         local aClr = AseUtilities.aseColorToClr(aColorAse)
         local bClr = AseUtilities.aseColorToClr(bColorAse)
 
-        local clrSpacePreset = args.clrSpacePreset
+        local clrSpacePreset = args.clrSpacePreset or defaults.clrSpacePreset
         local sprite = AseUtilities.initCanvas(
             64, 64, "Gradient.Conic." .. clrSpacePreset)
         if sprite.colorMode == ColorMode.RGB then
+
+            -- Cache methods.
             local atan2 = math.atan
+            local min = math.min
+            local max = math.max
             local toHex = Clr.toHex
             local quantize = Utilities.quantizeUnsigned
 
             local layer = sprite.layers[#sprite.layers]
             local frame = app.activeFrame or sprite.frames[1]
 
-            --Easing mode.
-            local tweenOps = args.tweenOps
-            local rgbPreset = args.easingFuncRGB
-            local huePreset = args.easingFuncHue
+            -- Easing mode.
+            local tweenOps = args.tweenOps or defaults.tweenOps
+            local rgbPreset = args.easingFuncRGB or defaults.easingFuncRGB
+            local huePreset = args.easingFuncHue or defaults.easingFuncHue
 
             local easeFuncFinal = nil
             if tweenOps == "PALETTE" then
 
-                local startIndex = args.startIndex
-                local count = args.count
+                local startIndex = args.startIndex or defaults.startIndex
+                local count = args.count or defaults.count
                 local pal = sprite.palettes[1]
                 local clrArr = AseUtilities.asePaletteToClrArr(
                     pal, startIndex, count)
@@ -253,12 +257,12 @@ dlg:button {
                 end
             end
 
-            local w = sprite.width
-            local h = sprite.height
+            local wn1 = max(1.0, sprite.width - 1.0)
+            local hn1 = max(1.0, sprite.height - 1.0)
 
-            local aspect = w / h
-            local wInv = aspect / w
-            local hInv = 1.0 / h
+            local aspect = wn1 / hn1
+            local wInv = aspect / wn1
+            local hInv = 1.0 / hn1
 
             -- Shift origin from [0, 100] to [0.0, 1.0].
             local xOrigin = 0.01 * args.xOrigin
@@ -270,10 +274,11 @@ dlg:button {
             local xOriginSigned = xOriginNorm + xOriginNorm - 1.0
             local yOriginSigned = 1.0 - (yOriginNorm + yOriginNorm)
 
-            local angRadians = math.rad(args.angle)
+            local angDegrees = args.angle or defaults.angle
+            local angRadians = angDegrees * 0.017453292519943295
             local cw = 1.0
             if args.cw then cw = -1.0 end
-            local levels = args.quantization
+            local levels = args.quantization or defaults.quantization
 
             local selection = AseUtilities.getSelection(sprite)
             local selBounds = selection.bounds
@@ -301,12 +306,13 @@ dlg:button {
                 -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
                 local angleSigned = atan2(yOffset, xOffset) - angRadians
 
-                -- Bring angle into range [-0.5, 0.5]. Divide by 2 * math.pi.
-                local angleNormed = angleSigned * 0.15915494309189535
+                -- Wrap this by 361 degrees, not 360,
+                -- as this will be used as a factor, and needs
+                -- to be [0.0, 1.0], not [0.0, 1.0).
+                local angleWrapped = angleSigned % 6.300638599699529
 
-                -- Bring angle into range [0.0, 1.0] by subtracting floor.
-                -- Alternatively, use angleNormed % 1.0.
-                local fac = angleNormed % 1.0
+                -- Divide by tau to bring into factor.
+                local fac = min(1.0, angleWrapped * 0.15915494309189535)
 
                 fac = quantize(fac, levels)
                 elm(toHex(easeFuncFinal(fac)))

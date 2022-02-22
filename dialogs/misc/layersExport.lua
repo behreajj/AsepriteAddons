@@ -314,7 +314,7 @@ dlg:button {
             if saveJson then
 
                 -- Regroup each entry by layer.
-                -- TODO: This is sstill going to cause a problem
+                -- TODO: This is still going to cause a problem
                 -- because stackIndex doesn't work, but there aren't
                 -- many decent alternatives.
                 local entriesByLayer = {}
