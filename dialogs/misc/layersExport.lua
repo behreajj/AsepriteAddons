@@ -1,48 +1,163 @@
 dofile("../../support/aseutilities.lua")
 
+-- The range object is just not viable for this case,
+-- because it can contain both a parent layer (a group)
+-- and some or none of its children, leading to either
+-- duplicates or an uncertain user intention.
+local layerTargetOptions = { "ACTIVE", "ALL" }
+local frameTargetOptions = { "ACTIVE", "ALL", "RANGE" }
 local boundsOptions = { "CEL", "SPRITE" }
-local originOptions = { "CENTER", "CORNER" }
-local targetOptions = { "ACTIVE", "ALL", "RANGE" }
+local originsOptions = { "CENTER", "CORNER" }
 
 local defaults = {
-    target = "ALL",
+    layerTarget = "ALL",
+    frameTarget = "ALL",
+    frameStart = 1,
+    frameCount = 8,
+    maxFrameCount = 32,
     bounds = "CEL",
     padding = 2,
     padColor = Color(0, 0, 0, 0),
     scale = 1,
+    flatGroups = false,
     saveJson = false,
+    escapeUserData = false,
     origin = "CORNER",
-    pullFocus = false,
-    -- missingUserData = "\"\""
-    missingUserData = "null"
+    pullFocus = false
 }
+
+local function appendChildLayers(layer, array)
+    if layer.isGroup then
+        local childLayers = layer.layers
+        if childLayers then
+            local childLayerCount = #childLayers
+            if childLayerCount > 0 then
+                for i = 1, childLayerCount, 1 do
+                    local childLayer = childLayers[i]
+                    if childLayer then
+                        appendChildLayers(childLayer, array)
+                    end
+                end
+            end
+        end
+    else
+        table.insert(array, layer)
+    end
+
+    return array
+end
+
+local function getReadableLayers(layer, array)
+    -- No point in using a dictionary, as layer equality
+    -- isn't recognized (2 separate layers could have the
+    -- same name, but the same layer could have separate
+    -- object hashes.)
+    if layer.isGroup then
+        local children = layer.layers
+        local childCount = #children
+        for i = 1, childCount, 1 do
+            local child = children[i]
+            getReadableLayers(child, array)
+        end
+        return #array
+    else
+        table.insert(array, layer)
+        return #array
+    end
+end
+
+local function fillPad(img, padding, padHex)
+    local padWidth = img.width
+    local padHeight = img.height
+    local trgWidth = padWidth - padding * 2
+    local trgHeight = padHeight - padding * 2
+
+    -- Top edge.
+    for x = 0, trgWidth + padding - 1, 1 do
+        for y = 0, padding - 1, 1 do
+            img:drawPixel(x, y, padHex)
+        end
+    end
+
+    -- Right edge.
+    for y = 0, trgHeight + padding - 1, 1 do
+        for x = trgWidth + padding, padWidth - 1, 1 do
+            img:drawPixel(x, y, padHex)
+        end
+    end
+
+    -- Bottom edge.
+    for x = padding, padWidth - 1, 1 do
+        for y = trgHeight + padding, padHeight - 1, 1 do
+            img:drawPixel(x, y, padHex)
+        end
+    end
+
+    -- Left edge.
+    for y = padding, padHeight - 1, 1 do
+        for x = 0, padding - 1, 1 do
+            img:drawPixel(x, y, padHex)
+        end
+    end
+
+    return img
+end
+
+local function getStackIndices(layer, sprite, arr)
+    table.insert(arr, 1, layer.stackIndex)
+    local sprName = "doc::Sprite"
+    if sprite then sprName = sprite.__name end
+    if layer.parent.__name == sprName then
+        return arr
+    else
+        return getStackIndices(layer.parent, sprite, arr)
+    end
+end
 
 local dlg = Dialog { title = "Export Layers" }
 
 dlg:combobox {
-    id = "target",
+    id = "layerTarget",
     label = "Layers:",
-    option = defaults.target,
-    options = targetOptions
+    option = defaults.layerTarget,
+    options = layerTargetOptions
 }
 
 dlg:newrow { always = false }
 
 dlg:combobox {
-    id = "bounds",
-    label = "Bounds:",
-    option = defaults.bounds,
-    options = boundsOptions
+    id = "frameTarget",
+    label = "Frames:",
+    option = defaults.frameTarget,
+    options = frameTargetOptions,
+    onchange = function()
+        local state = dlg.data.frameTarget
+        local isRange = state == "RANGE"
+        dlg:modify { id = "frameStart", visible = isRange }
+        dlg:modify { id = "frameCount", visible = isRange }
+    end
 }
 
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "scale",
-    label = "Scale:",
+    id = "frameStart",
+    label = "Start:",
     min = 1,
-    max = 10,
-    value = defaults.scale
+    max = 256,
+    value = defaults.frameStart,
+    visible = defaults.frameTarget == "RANGE"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "frameCount",
+    label = "Count:",
+    min = 1,
+    max = defaults.maxFrameCount,
+    value = defaults.frameCount,
+    visible = defaults.frameTarget == "RANGE"
 }
 
 dlg:newrow { always = false }
@@ -71,11 +186,35 @@ dlg:color {
 
 dlg:newrow { always = false }
 
-dlg:file {
-    id = "filename",
-    label = "File:",
-    filetypes = AseUtilities.FILE_FORMATS,
-    save = true
+dlg:slider {
+    id = "scale",
+    label = "Scale:",
+    min = 1,
+    max = 10,
+    value = defaults.scale
+}
+
+-- dlg:newrow { always = false }
+
+-- dlg:check {
+--     id = "flatGroups",
+--     label = "Flatten Groups:",
+--     selected = defaults.flatGroups,
+--     onclick = function()
+--         local args = dlg.data
+--         local useFlat = args.flatGroups
+--         dlg:modify { id = "bounds", visible = not useFlat}
+--     end
+-- }
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "bounds",
+    label = "Bounds:",
+    option = defaults.bounds,
+    options = boundsOptions,
+    visible = not defaults.flatGroups
 }
 
 dlg:newrow { always = false }
@@ -88,8 +227,18 @@ dlg:check {
         local args = dlg.data
         local enabled = args.saveJson
         dlg:modify { id = "origin", visible = enabled }
+        -- dlg:modify { id = "escapeUserData", visible = enabled }
     end
 }
+
+-- dlg:newrow { always = false }
+
+-- dlg:check {
+--     id = "escapeUserData",
+--     label = "Escape Data:",
+--     selected = defaults.escapeUserData,
+--     visible = defaults.saveJson
+-- }
 
 dlg:newrow { always = false }
 
@@ -97,8 +246,17 @@ dlg:combobox {
     id = "origin",
     label = "Origin:",
     option = defaults.origin,
-    options = originOptions,
+    options = originsOptions,
     visible = defaults.saveJson
+}
+
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "filename",
+    label = "File:",
+    filetypes = AseUtilities.FILE_FORMATS,
+    save = true
 }
 
 dlg:newrow { always = false }
@@ -120,17 +278,22 @@ dlg:button {
 
             -- Unpack arguments.
             local args = dlg.data
-            local target = args.target or defaults.target
+            local layerTarget = args.layerTarget or defaults.layerTarget
+            local frameTarget = args.frameTarget or defaults.frameTarget
+            local frameStart = args.frameStart or defaults.frameStart
+            local frameCount = args.frameCount or defaults.frameCount
             local bounds = args.bounds or defaults.bounds
             local padding = args.padding or defaults.padding
             local padColor = args.padColor or defaults.padColor
             local scale = args.scale or defaults.scale
             local filename = args.filename
+            local flatGroups = args.flatGroups
             local saveJson = args.saveJson
             local origin = args.origin or defaults.origin
-            local missingUserData = defaults.missingUserData
 
             -- Cache methods used in loops.
+            local max = math.max
+            local min = math.min
             local trunc = math.tointeger
             local strfmt = string.format
             local strgsub = string.gsub
@@ -138,8 +301,6 @@ dlg:button {
             local insert = table.insert
             local isVisibleHierarchy = AseUtilities.isVisibleHierarchy
             local trimAlpha = AseUtilities.trimImageAlpha
-
-            -- app.command.ChangePixelFormat { format = "rgb" }
 
             -- Clean file path strings.
             local filePath = app.fs.filePath(filename)
@@ -152,32 +313,68 @@ dlg:button {
             filePath = filePath .. pathSep
             local filePrefix = filePath .. fileTitle
 
-            -- Determine cels by target preset.
-            -- TODO: Create a flatten group layers method
-            -- then refactor this to use layers instead of cels.
-            local cels = {}
-            if target == "ACTIVE" then
-                local activeCel = app.activeCel
-                if activeCel then
-                    cels[1] = activeCel
+            -- Choose layers.
+            local selectLayers = {}
+            if layerTarget == "ACTIVE" then
+                local activeLayer = app.activeLayer
+                if activeLayer then
+                    if flatGroups then
+                        selectLayers[1] = activeLayer
+                    else
+                        getReadableLayers(activeLayer, selectLayers)
+                    end
                 end
-            elseif target == "RANGE" then
-                cels = app.range.cels
             else
-                cels = activeSprite.cels
+                local activeLayers = activeSprite.layers
+                if flatGroups then
+                    for i = 1, #activeLayers, 1 do
+                        selectLayers[i] = activeLayers[i]
+                    end
+                else
+                    for i = 1, #activeLayers, 1 do
+                        getReadableLayers(activeLayers[i], selectLayers)
+                    end
+                end
             end
 
-            local useSpriteBounds = bounds == "SPRITE"
+            -- Choose frames.
+            local selectFrames = {}
+            if frameTarget == "ACTIVE" then
+                local activeFrame = app.activeFrame
+                if activeFrame then
+                    selectFrames[1] = activeFrame
+                end
+            elseif frameTarget == "RANGE" then
+                local allFrames = activeSprite.frames
+                local availFrames = #allFrames
+                local frameStartVal = min(frameStart, availFrames)
+                local frameCountVal = min(frameCount, 1 + availFrames - frameStartVal)
+                for i = 1, frameCountVal, 1 do
+                    selectFrames[i] = allFrames[frameStartVal + i - 1]
+                end
+            else
+                local activeFrames = activeSprite.frames
+                for i = 1, #activeFrames, 1 do
+                    selectFrames[i] = activeFrames[i]
+                end
+            end
+
+            local selectLayerLen = #selectLayers
+            local selectFrameLen = #selectFrames
+
             local useCenter = origin == "CENTER"
             local useResize = scale ~= 1
-            local addPadding = padding > 0
+            local useSpriteBounds = bounds == "SPRITE"
+            local usePadding = padding > 0
             local usePadColor = padColor.alpha > 0
+
             local pad2 = padding + padding
             local padOffset = Point(padding, padding)
 
             local padHex = 0
             if oldMode == ColorMode.INDEXED then
-                -- Color.index returns a float, not an integer.
+                -- In older API versions, Color.index
+                -- returns a float, not an integer.
                 padHex = math.tointeger(padColor.index)
             elseif oldMode == ColorMode.GRAY then
                 padHex = padColor.grayPixel
@@ -185,219 +382,236 @@ dlg:button {
                 padHex = padColor.rgbaPixel
             end
 
-            local layerFormat = concat({
-                "{\"stackIndex\":%d,",
-                "\"name\":\"%s\",",
-                "\"opacity\":%d,",
-                "\"data\":%s,",
-                "\"frames\":["
-            })
-            local frameFormat = concat({
-                "{\"frameNumber\":%d,",
-                "\"fileName\":\"%s\",",
-                "\"duration\":%d,",
-                "\"position\":{\"x\":%d,\"y\":%d},",
-                "\"dimension\":{\"x\":%d,\"y\":%d},",
-                "\"opacity\":%d,",
-                "\"data\":%s}"
-            })
-
-            local celsLen = #cels
             local jsonEntries = {}
-            local j = 1
-            for i = 1, celsLen, 1 do
-                local cel = cels[i]
-                local layer = cel.layer
+            for i = 1, selectLayerLen, 1 do
+                local layer = selectLayers[i]
+                local layerData = layer.data
+                local layerName = layer.name
+                local layerOpacity = layer.opacity
+                local layerStackIndices = getStackIndices(layer, activeSprite, {})
 
-                -- TODO: Option to bake cel and layer alpha?
-                local isVis = isVisibleHierarchy(layer, activeSprite)
-                local isRef = layer.isReference
-                if isVis and (not isRef) then
-                    local srcImage = cel.image
-                    local isEmpty = srcImage:isEmpty()
-                    if not isEmpty then
-                        local trgImage = nil
-                        local xOrigin = 0
-                        local yOrigin = 0
-                        if useSpriteBounds then
+                local jsonLayer = {
+                    layerData = layerData,
+                    layerName = layerName,
+                    layerOpacity = layerOpacity,
+                    layerStackIndices = layerStackIndices,
+                    jsonFrames = {}
+                }
+
+                if flatGroups and layer.isGroup then
+                    -- TODO: Implement if possible.
+                    -- print("Flat Groups!")
+                    -- local childrenFlat = {}
+                    -- appendChildLayers(layer, childrenFlat)
+                    -- local childCount = #childrenFlat
+                    -- for j = 1, childCount, 1 do
+                        -- print(childrenFlat[j].name)
+                    -- end
+                    -- dlg:close()
+                    -- return
+                elseif layer.isReference then
+                    -- Pass.
+                elseif isVisibleHierarchy(layer, activeSprite) then
+                    for j = 1, selectFrameLen, 1 do
+                        local frame = selectFrames[j]
+                        local cel = layer:cel(frame)
+                        if cel then
                             local celPos = cel.position
-                            trgImage = Image(widthSprite, heightSprite, oldMode)
-                            trgImage:drawImage(srcImage, celPos)
-                        else
-                            trgImage, xOrigin, yOrigin = trimAlpha(
-                                srcImage, 0, alphaIndex)
-                            local celPos = cel.position
-                            xOrigin = xOrigin + celPos.x
-                            yOrigin = yOrigin + celPos.y
-                        end
+                            local xSrc = celPos.x
+                            local ySrc = celPos.y
+                            local imgSrc = cel.image
 
-                        -- These file names cannot use stack index as a naming
-                        -- convention, because stack indices are relative to
-                        -- a parent, not absolute to the sprite.
-                        local frameNumber = cel.frameNumber
-                        local fileNameShort = strfmt(
-                            "%s%03d_%03d",
-                            fileTitle, i, frameNumber)
-                        local fileNameLong = strfmt(
-                            "%s%03d_%03d.%s",
-                            filePrefix, i, frameNumber, fileExt)
+                            local xTrg = 0
+                            local yTrg = 0
+                            local imgTrg = nil
 
-                        if useResize then
-                            trgImage:resize(
-                                trgImage.width * scale,
-                                trgImage.height * scale)
-                        end
-
-                        if addPadding then
-                            local trgWidth = trgImage.width
-                            local trgHeight = trgImage.height
-                            local padWidth = trgWidth + pad2
-                            local padHeight = trgHeight + pad2
-
-                            local padded = Image(padWidth, padHeight, oldMode)
-                            padded:drawImage(trgImage, padOffset)
-
-                            if usePadColor then
-                                -- Top edge.
-                                for x = 0, trgWidth + padding - 1, 1 do
-                                    for y = 0, padding - 1, 1 do
-                                        padded:drawPixel(x, y, padHex)
-                                    end
-                                end
-
-                                -- Right edge.
-                                for y = 0, trgHeight + padding - 1, 1 do
-                                    for x = trgWidth + padding, padWidth - 1, 1 do
-                                        padded:drawPixel(x, y, padHex)
-                                    end
-                                end
-
-                                -- Bottom edge.
-                                for x = padding, padWidth - 1, 1 do
-                                    for y = trgHeight + padding, padHeight - 1, 1 do
-                                        padded:drawPixel(x, y, padHex)
-                                    end
-                                end
-
-                                -- Left edge.
-                                for y = padding, padHeight - 1, 1 do
-                                    for x = 0, padding - 1, 1 do
-                                        padded:drawPixel(x, y, padHex)
-                                    end
-                                end
+                            if useSpriteBounds then
+                                imgTrg = Image(widthSprite, heightSprite, oldMode)
+                                imgTrg:drawImage(imgSrc, celPos)
+                            else
+                                local xTrim = 0
+                                local yTrim = 0
+                                imgTrg, xTrim, yTrim = trimAlpha(
+                                    imgSrc, 0, alphaIndex)
+                                xTrg = xSrc + xTrim
+                                yTrg = ySrc + yTrim
                             end
-                            trgImage = padded
+
+                            if useResize then
+                                imgTrg:resize(
+                                    imgTrg.width * scale,
+                                    imgTrg.height * scale)
+                            end
+
+                            if usePadding then
+                                local wTrg = imgTrg.width
+                                local hTrg = imgTrg.height
+                                local wPad = wTrg + pad2
+                                local hPad = hTrg + pad2
+                                local padded = Image(wPad, hPad, oldMode)
+                                padded:drawImage(imgTrg, padOffset)
+                                if usePadColor then
+                                    fillPad(padded, padding, padHex)
+                                end
+                                imgTrg = padded
+                            end
+
+                            local fileNameLong = strfmt(
+                                "%s%03d_%03d.%s",
+                                filePrefix, i - 1, j - 1, fileExt)
+                            imgTrg:saveAs {
+                                filename = fileNameLong,
+                                palette = activePalette }
+
+                            local fileNameShort = strfmt(
+                                "%s%03d_%03d",
+                                fileTitle, i - 1, j - 1)
+
+                            xTrg = xTrg * scale
+                            yTrg = yTrg * scale
+                            if useCenter then
+                                xTrg = xTrg + imgTrg.width // 2
+                                yTrg = yTrg + imgTrg.height // 2
+                            else
+                                xTrg = xTrg - padding
+                                yTrg = yTrg - padding
+                            end
+
+                            local jsonFrame = {
+                                celData = cel.data,
+                                celOpacity = cel.opacity,
+                                fileName = fileNameShort,
+                                frameDuration = frame.duration,
+                                frameNumber = frame.frameNumber,
+                                height = imgTrg.height,
+                                width = imgTrg.width,
+                                xOrigin = xTrg,
+                                yOrigin = yTrg
+                            }
+                            insert(jsonLayer.jsonFrames, jsonFrame)
                         end
-
-                        trgImage:saveAs {
-                            filename = fileNameLong,
-                            palette = activePalette
-                        }
-
-                        jsonEntries[j] = {
-                            celData = cel.data,
-                            celOpacity = cel.opacity,
-                            fileName = fileNameShort,
-                            layer = layer,
-                            frameDuration = trunc(cel.frame.duration * 1000),
-                            frameNumber = cel.frameNumber,
-                            xOrigin = xOrigin,
-                            yOrigin = yOrigin,
-                            width = trgImage.width,
-                            height = trgImage.height
-                        }
-                        j = j + 1
                     end
+                end
+
+                if #jsonLayer.jsonFrames > 0 then
+                    insert(jsonEntries, jsonLayer)
                 end
             end
 
             if saveJson then
-
-                -- Regroup each entry by layer.
-                -- TODO: This is still going to cause a problem
-                -- because stackIndex doesn't work, but there aren't
-                -- many decent alternatives.
-                local entriesByLayer = {}
-                local jsonDataLen = #jsonEntries
-                for i = 1, jsonDataLen, 1 do
-                    local entry = jsonEntries[i]
-                    local layer = entry.layer
-                    local stackIndex = layer.stackIndex
-                    if entriesByLayer[stackIndex] then
-                        insert(entriesByLayer[stackIndex], entry)
-                    else
-                        entriesByLayer[stackIndex] = { entry }
-                    end
+                local escapeUserData = args.escapeUserData
+                local missingUserData = "null"
+                if escapeUserData then
+                    missingUserData = "\"\""
                 end
 
-                local lyrStrArr = {}
-                for stackIndex, celsArr in pairs(entriesByLayer) do
+                local jsonStrFmt = concat({
+                    "{\"fileDir\":\"%s\"",
+                    "\"fileExt\":\"%s\"",
+                    "\"padding\":%d",
+                    "\"scale\":%d",
+                    "\"layers\":[%s]}"
+                }, ",")
+
+                local layerStrFmt = concat({
+                    "{\"data\":%s",
+                    "\"name\":\"%s\"",
+                    "\"opacity\":%d",
+                    "\"stackIndices\":[%s]",
+                    "\"frames\":[%s]}"
+                }, ",")
+
+                local celStrFmt = concat({
+                    "{\"data\":%s",
+                    "\"fileName\":\"%s\"",
+                    "\"opacity\":%d",
+                    "\"position\":{\"x\":%d,\"y\":%d}",
+                    "\"size\":{\"x\":%d,\"y\":%d}}",
+                }, ",")
+
+                local frameStrFmt = concat({
+                    "{\"duration\":%d",
+                    "\"number\":%d",
+                    strfmt("\"cel\":%s}", celStrFmt)
+                }, ",")
+
+                local lenJsonEntries = #jsonEntries
+                local layerStrArr = {}
+                for i = 1, lenJsonEntries, 1 do
+                    local jsonLayer = jsonEntries[i]
+                    local jsonFrames = jsonLayer.jsonFrames
+                    local lenJsonFrames = #jsonFrames
                     local celStrArr = {}
-                    local celsArrLen = #celsArr
-                    for i = 1, celsArrLen, 1 do
-                        local entry = celsArr[i]
+                    for j = 1, lenJsonFrames do
+                        local jsonFrame = jsonFrames[j]
 
-                        -- Unpack entry.
-                        local fileName = entry.fileName
-                        local xOrigin = entry.xOrigin
-                        local yOrigin = entry.yOrigin
-                        local width = entry.width
-                        local height = entry.height
+                        -- Frame information.
+                        local frameDuration = trunc(jsonFrame.frameDuration * 1000)
+                        local frameNumber = jsonFrame.frameNumber - 1
 
-                        -- Cel Properties.
-                        local celData = entry.celData
-                        local celOpacity = entry.celOpacity
-                        local frameNumber = entry.frameNumber
-                        local frameDuration = entry.frameDuration
-
+                        -- Cel Information.
+                        local celData = jsonFrame.celData
                         if celData == nil or #celData < 1 then
                             celData = missingUserData
+                        elseif escapeUserData then
+                            celData = strfmt("\"%s\"", celData)
                         end
+                        local celOpacity = jsonFrame.celOpacity
 
-                        xOrigin = xOrigin * scale
-                        yOrigin = yOrigin * scale
+                        -- Image, file information.
+                        local fileName = jsonFrame.fileName
+                        local width = jsonFrame.width
+                        local height = jsonFrame.height
+                        local xOrigin = jsonFrame.xOrigin
+                        local yOrigin = jsonFrame.yOrigin
 
-                        if useCenter then
-                            xOrigin = xOrigin + width // 2
-                            yOrigin = yOrigin + height // 2
-                        else
-                            xOrigin = xOrigin - padding
-                            yOrigin = yOrigin - padding
-                        end
-
-                        celStrArr[i] = strfmt(
-                            frameFormat,
-                            frameNumber, fileName, frameDuration,
+                        local celStr = strfmt(
+                            frameStrFmt,
+                            frameDuration,
+                            frameNumber,
+                            celData,
+                            fileName,
+                            celOpacity,
                             xOrigin, yOrigin,
-                            width, height,
-                            celOpacity, celData)
+                            width, height)
+                        celStrArr[j] =  celStr
                     end
 
-                    -- Unpack layer.
-                    local layer = celsArr[1].layer
-                    local layerName = layer.name
-                    local layerOpacity = layer.opacity
-                    local layerData = layer.data
+                    -- Layer information.
+                    local layerData = jsonLayer.layerData
                     if layerData == nil or #layerData < 1 then
                         layerData = missingUserData
+                    elseif escapeUserData then
+                        layerData = strfmt("\"%s\"", layerData)
                     end
+                    local layerName = jsonLayer.layerName
+                    local layerOpacity = jsonLayer.layerOpacity
 
-                    local layerPrefix = strfmt(
-                        layerFormat,
-                        stackIndex, layerName,
-                        layerOpacity, layerData)
-                    local layerStr = layerPrefix
-                        .. concat(celStrArr, ",")
-                        .. "]}"
-                    insert(lyrStrArr, layerStr)
+                    -- Use JSON indexing conventions, start at zero.
+                    local layerStackIndices = jsonLayer.layerStackIndices
+                    local stackIdcsLen = #layerStackIndices
+                    for j = 1, stackIdcsLen, 1 do
+                        layerStackIndices[j] = layerStackIndices[j] - 1
+                    end
+                    local stackIdcsStr = concat(layerStackIndices, ",")
+
+                    local layerStr = strfmt(
+                        layerStrFmt,
+                        layerData,
+                        layerName,
+                        layerOpacity,
+                        stackIdcsStr,
+                        concat(celStrArr, ","))
+                    layerStrArr[i] = layerStr
                 end
+
                 local jsonString = strfmt(
-                    "{\"fileDir\":\"%s\",\"fileExt\":\"%s\",\"layers\":[",
-                    filePath, fileExt)
-                    .. concat(lyrStrArr, ",")
-                    .. strfmt(
-                        "],\"padding\":%d,\"scale\":%d}",
-                        padding, scale)
+                    jsonStrFmt,
+                    filePath,
+                    fileExt,
+                    padding,
+                    scale,
+                    concat(layerStrArr, ","))
 
                 local jsonFilepath = filePrefix
                 if #fileTitle < 1 then

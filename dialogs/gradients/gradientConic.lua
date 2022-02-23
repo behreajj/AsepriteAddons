@@ -6,6 +6,7 @@ local defaults = {
     yOrigin = 50,
     angle = 90,
     cw = false,
+    isCyclic = false,
     quantization = 0,
     tweenOps = "PAIR",
     startIndex = 0,
@@ -49,9 +50,16 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "cw",
-    label = "Chirality:",
-    text = "Flip y axis.",
+    label = "Flip Y:",
     selected = defaults.cw
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "isCyclic",
+    label = "Cyclic:",
+    selected = defaults.isCyclic
 }
 
 dlg:newrow { always = false }
@@ -216,10 +224,26 @@ dlg:button {
 
             -- Cache methods.
             local atan2 = math.atan
-            local min = math.min
             local max = math.max
+            local min = math.min
             local toHex = Clr.toHex
-            local quantize = Utilities.quantizeUnsigned
+            local isCyclic = args.isCyclic
+
+            local wrap = 0.0
+            local toFac = 0.0
+            local quantize = nil
+            if isCyclic then
+                quantize = Utilities.quantizeSigned
+                wrap = 6.283185307179586
+                toFac = 0.15915494309189535
+            else
+                quantize = Utilities.quantizeUnsigned
+                -- 361 degrees * 180 degrees / pi radians
+                -- wrap = 6.300638599699529
+                -- toFac = 0.15871407067335824
+                wrap = 6.283185307179586
+                toFac = 0.15915494309189535
+            end
 
             local layer = sprite.layers[#sprite.layers]
             local frame = app.activeFrame or sprite.frames[1]
@@ -306,13 +330,14 @@ dlg:button {
                 -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
                 local angleSigned = atan2(yOffset, xOffset) - angRadians
 
-                -- Wrap this by 361 degrees, not 360,
-                -- as this will be used as a factor, and needs
-                -- to be [0.0, 1.0], not [0.0, 1.0).
-                local angleWrapped = angleSigned % 6.300638599699529
+                -- Depending on whether this is cyclic or not,
+                -- will need to wrap by 360 degrees or 361, so
+                -- factor will be in [0.0, 1.0) vs [0.0, 1.0].
+                local angleWrapped = angleSigned % wrap
 
                 -- Divide by tau to bring into factor.
-                local fac = min(1.0, angleWrapped * 0.15915494309189535)
+                -- local fac = min(1.0, angleWrapped * toFac)
+                local fac = angleWrapped * toFac
 
                 fac = quantize(fac, levels)
                 elm(toHex(easeFuncFinal(fac)))
