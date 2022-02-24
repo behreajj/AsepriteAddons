@@ -125,8 +125,10 @@ dlg:button {
         end
 
         -- Unpack layer opacity.
-        local overLyrOpacity = overLayer.opacity
-        local underLyrOpacity = underLayer.opacity
+        local overLyrOpacity = 0xff
+        local underLyrOpacity = 0xff
+        if overLayer.opacity then overLyrOpacity = overLayer.opacity end
+        if underLayer.opacity then underLyrOpacity = underLayer.opacity end
 
         -- Create new layer.
         local compLayer = activeSprite:newLayer()

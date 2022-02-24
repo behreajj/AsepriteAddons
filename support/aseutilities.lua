@@ -391,10 +391,9 @@ function AseUtilities.bakeLayerOpacity(layer)
         return
     end
 
-    local layerAlpha = layer.opacity
-    if not layer.isVisible then
-        layerAlpha = 0
-    end
+    local layerAlpha = 0xff
+    if layer.opacity then layerAlpha = layer.opacity end
+    if not layer.isVisible then layerAlpha = 0 end
     local cels = layer.cels
     local celsLen = #cels
 

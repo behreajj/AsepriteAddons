@@ -355,7 +355,12 @@ dlg:button {
                 "%s.Quantized.R%02d.G%02d.B%02d.A%02d",
                 srcLayer.name,
                 rLevels, gLevels, bLevels, aLevels)
-            trgLayer.opacity = srcLayer.opacity
+            if srcLayer.opacity then
+                trgLayer.opacity = srcLayer.opacity
+            end
+            if srcLayer.blendMode then
+                trgLayer.blendMode = srcLayer.blendMode
+            end
         end
 
         local one255 = 1.0 / 255

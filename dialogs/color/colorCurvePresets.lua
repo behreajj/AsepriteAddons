@@ -207,7 +207,7 @@ dlg:newrow { always = false }
 dlg:slider {
     id = "quantization",
     label = "Quantize:",
-    min = 0,
+    min = 2,
     max = 32,
     value = defaults.quantization,
     visible = false

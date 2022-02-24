@@ -82,9 +82,18 @@ dlg:button {
                         if copyToLayer then
                             app.transaction(function()
                                 local srcLayer = srcCel.layer
+
+                                -- Copy layer.
                                 local trgLayer = activeSprite:newLayer()
                                 trgLayer.name = srcLayer.name .. ".Adjusted"
-                                trgLayer.opacity = srcLayer.opacity
+                                if srcLayer.opacity then
+                                    trgLayer.opacity = srcLayer.opacity
+                                end
+                                if srcLayer.blendMode then
+                                    trgLayer.blendMode = srcLayer.blendMode
+                                end
+
+                                -- Copy cel.
                                 local srcFrame = srcCel.frame or activeSprite.frames[1]
                                 local trgCel = activeSprite:newCel(
                                     trgLayer, srcFrame,

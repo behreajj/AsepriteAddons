@@ -302,7 +302,12 @@ dlg:button {
             trgLayer = sprite:newLayer()
             trgLayer.name = srcLayer.name
                 .. "." .. clrSpacePreset
-            trgLayer.opacity = srcLayer.opacity
+            if srcLayer.opacity then
+                trgLayer.opacity = srcLayer.opacity
+            end
+            if srcLayer.blendMode then
+                trgLayer.blendMode = srcLayer.blendMode
+            end
         end
 
         local framesLen = #frames

@@ -717,7 +717,7 @@ dlg:button {
                         if celData == nil or #celData < 1 then
                             celData = missingUserData
                         -- elseif type(celData == "string") then
-                            -- TODO: Causes a problem for user data containing quote marks.
+                            -- Causes a problem for user data containing quote marks.
                             -- celData = strfmt("\"%s\"", celData)
                         end
                         local celOpacity = jsonFrame.celOpacity
@@ -747,7 +747,7 @@ dlg:button {
                     if layerData == nil or #layerData < 1 then
                         layerData = missingUserData
                     -- elseif type(layerData == "string") then
-                        -- TODO: Causes a problem for user data containing quote marks.
+                        -- Causes a problem for user data containing quote marks.
                         -- layerData = strfmt("\"%s\"", layerData)
                     end
                     local layerName = jsonLayer.layerName

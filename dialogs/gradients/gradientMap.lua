@@ -274,8 +274,11 @@ dlg:button {
         end
 
         -- Create target layer.
+        -- Do not copy source layer blend mode.s
         local trgLyr = sprite:newLayer()
-        trgLyr.opacity = srcLayer.opacity
+        if srcLayer.opacity then
+            trgLyr.opacity = srcLayer.opacity
+        end
         trgLyr.name = "Gradient.Map." .. clrSpacePreset
         if useNormalize then
             trgLyr.name = trgLyr.name .. ".Contrast"

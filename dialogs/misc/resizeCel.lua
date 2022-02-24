@@ -329,6 +329,7 @@ dlg:button {
                             h = h + 4
                         end
                     else
+                        -- Default to nearest-neighbor.
                         local h = 0
                         for elm in trgpxitr do
                             local x = h % dw
@@ -345,10 +346,20 @@ dlg:button {
                         local trgCel = nil
                         if copyToLayer then
                             local srcLayer = srcCel.layer
+
+                            -- Copy layer.
                             local trgLayer = sprite:newLayer()
-                            trgLayer.name = srcLayer.name
-                                .. "." .. dw .. 'x' .. dh
-                            trgLayer.opacity = srcLayer.opacity
+                            trgLayer.name = string.format(
+                                "%s.%dx%d",
+                                srcLayer.name, dw, dh)
+                            if srcLayer.opacity then
+                                trgLayer.opacity = srcLayer.opacity
+                            end
+                            if srcLayer.blendMode then
+                                trgLayer.blendMode = srcLayer.blendMode
+                            end
+
+                            -- Copy cel.
                             local frame = app.activeFrame or sprite.frames[1]
                             local newCel = sprite:newCel(
                                 trgLayer, frame,

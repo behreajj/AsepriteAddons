@@ -226,9 +226,12 @@ dlg:button {
             end
         end
 
+        -- Do not copy source layer blend mode.
         local trgLayer = activeSprite:newLayer()
         trgLayer.name = srcLayer.name .. ".Onion"
-        trgLayer.opacity = srcLayer.opacity
+        if srcLayer.opacity then
+            trgLayer.opacity = srcLayer.opacity
+        end
 
         local framesLen = #frames
         app.transaction(function()

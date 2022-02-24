@@ -575,11 +575,18 @@ dlg:button {
                     if copyToLayer then
                         app.transaction(function()
                             local srcLayer = srcCel.layer
+
+                            -- Copy layer.
                             local trgLayer = sprite:newLayer()
                             trgLayer.name = string.format(
                                 "%s.Dither.%s.%03d",
                                 srcLayer.name, dmStr, factor100)
-                            trgLayer.opacity = srcLayer.opacity
+                            if srcLayer.opacity then
+                                trgLayer.opacity = srcLayer.opacity
+                            end
+                            -- Do not copy blend mode.
+
+                            -- Copy cel.
                             local frame = app.activeFrame or sprite.frames[1]
                             local trgCel = sprite:newCel(
                                 trgLayer, frame,
