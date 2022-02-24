@@ -21,48 +21,84 @@ local defaults = {
     scale = 1,
     flatGroups = false,
     saveJson = false,
-    escapeUserData = false,
     origin = "CORNER",
     pullFocus = false
 }
 
-local function appendChildLayers(layer, array)
-    if layer.isGroup then
-        local childLayers = layer.layers
-        if childLayers then
-            local childLayerCount = #childLayers
-            if childLayerCount > 0 then
-                for i = 1, childLayerCount, 1 do
-                    local childLayer = childLayers[i]
-                    if childLayer then
-                        appendChildLayers(childLayer, array)
+local function appendVisChildren(layer, array)
+    if layer.isVisible then
+        if layer.isGroup then
+            local childLayers = layer.layers
+            if childLayers then
+                local childLayerCount = #childLayers
+                if childLayerCount > 0 then
+                    for i = 1, childLayerCount, 1 do
+                        local childLayer = childLayers[i]
+                        if childLayer then
+                            appendVisChildren(childLayer, array)
+                        end
                     end
                 end
             end
+        elseif (not layer.isReference) then
+            table.insert(array, layer)
         end
-    else
-        table.insert(array, layer)
     end
 
     return array
 end
 
-local function getReadableLayers(layer, array)
-    -- No point in using a dictionary, as layer equality
-    -- isn't recognized (2 separate layers could have the
-    -- same name, but the same layer could have separate
-    -- object hashes.)
-    if layer.isGroup then
-        local children = layer.layers
-        local childCount = #children
-        for i = 1, childCount, 1 do
-            local child = children[i]
-            getReadableLayers(child, array)
-        end
-        return #array
+local function bakeAlpha(hex, layerOpacity, celOpacity)
+    local la = layerOpacity or 255
+    local ca = celOpacity or 255
+    local ha = (hex >> 0x18) & 0xff
+    local hrgb = hex & 0x00ffffff
+    local abake = (la * ca * ha) // 65025
+    return (abake << 0x18) | hrgb
+end
+
+local function blendModeToStr(bm)
+    -- The blend mode for group layers is nil.
+    if bm == BlendMode.NORMAL then
+        return "NORMAL"
+    elseif bm == BlendMode.MULTIPLY then
+        return "MULTIPLY"
+    elseif bm == BlendMode.SCREEN then
+        return "SCREEN"
+    elseif bm == BlendMode.OVERLAY then
+        return "OVERLAY"
+    elseif bm == BlendMode.DARKEN then
+        return "DARKEN"
+    elseif bm == BlendMode.LIGHTEN then
+        return "LIGHTEN"
+    elseif bm == BlendMode.COLOR_DODGE then
+        return "COLOR_DODGE"
+    elseif bm == BlendMode.COLOR_BURN then
+        return "COLOR_BURN"
+    elseif bm == BlendMode.HARD_LIGHT then
+        return "HARD_LIGHT"
+    elseif bm == BlendMode.SOFT_LIGHT then
+        return "SOFT_LIGHT"
+    elseif bm == BlendMode.DIFFERENCE then
+        return "DIFFERENCE"
+    elseif bm == BlendMode.EXCLUSION then
+        return "EXCLUSION"
+    elseif bm == BlendMode.HSL_HUE then
+        return "HSL_HUE"
+    elseif bm == BlendMode.HSL_SATURATION then
+        return "HSL_SATURATION"
+    elseif bm == BlendMode.HSL_COLOR then
+        return "HSL_COLOR"
+    elseif bm == BlendMode.HSL_LUMINOSITY then
+        return "HSL_LUMINOSITY"
+    elseif bm == BlendMode.ADDITION then
+        return "ADDITION"
+    elseif bm == BlendMode.SUBTRACT then
+        return "SUBTRACT"
+    elseif bm == BlendMode.DIVIDE then
+        return "DIVIDE"
     else
-        table.insert(array, layer)
-        return #array
+        return "NORMAL"
     end
 end
 
@@ -194,18 +230,18 @@ dlg:slider {
     value = defaults.scale
 }
 
--- dlg:newrow { always = false }
+dlg:newrow { always = false }
 
--- dlg:check {
---     id = "flatGroups",
---     label = "Flatten Groups:",
---     selected = defaults.flatGroups,
---     onclick = function()
---         local args = dlg.data
---         local useFlat = args.flatGroups
---         dlg:modify { id = "bounds", visible = not useFlat}
---     end
--- }
+dlg:check {
+    id = "flatGroups",
+    label = "Flatten Groups:",
+    selected = defaults.flatGroups,
+    onclick = function()
+        local args = dlg.data
+        local useFlat = args.flatGroups
+        dlg:modify { id = "useFlatWarning", visible = useFlat }
+    end
+}
 
 dlg:newrow { always = false }
 
@@ -213,8 +249,7 @@ dlg:combobox {
     id = "bounds",
     label = "Bounds:",
     option = defaults.bounds,
-    options = boundsOptions,
-    visible = not defaults.flatGroups
+    options = boundsOptions
 }
 
 dlg:newrow { always = false }
@@ -227,18 +262,9 @@ dlg:check {
         local args = dlg.data
         local enabled = args.saveJson
         dlg:modify { id = "origin", visible = enabled }
-        -- dlg:modify { id = "escapeUserData", visible = enabled }
+        dlg:modify { id = "userDataWarning", visible = enabled }
     end
 }
-
--- dlg:newrow { always = false }
-
--- dlg:check {
---     id = "escapeUserData",
---     label = "Escape Data:",
---     selected = defaults.escapeUserData,
---     visible = defaults.saveJson
--- }
 
 dlg:newrow { always = false }
 
@@ -257,6 +283,24 @@ dlg:file {
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS,
     save = true
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "useFlatWarning",
+    label = "Note:",
+    text = "Blend modes not supported.",
+    visible = defaults.flatGroups
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "userDataWarning",
+    label = "Note:",
+    text = "User data not escaped.",
+    visible = defaults.saveJson
 }
 
 dlg:newrow { always = false }
@@ -292,14 +336,13 @@ dlg:button {
             local origin = args.origin or defaults.origin
 
             -- Cache methods used in loops.
-            local max = math.max
             local min = math.min
             local trunc = math.tointeger
             local strfmt = string.format
             local strgsub = string.gsub
             local concat = table.concat
             local insert = table.insert
-            local isVisibleHierarchy = AseUtilities.isVisibleHierarchy
+            local blend = AseUtilities.blend
             local trimAlpha = AseUtilities.trimImageAlpha
 
             -- Clean file path strings.
@@ -321,7 +364,7 @@ dlg:button {
                     if flatGroups then
                         selectLayers[1] = activeLayer
                     else
-                        getReadableLayers(activeLayer, selectLayers)
+                        appendVisChildren(activeLayer, selectLayers)
                     end
                 end
             else
@@ -332,7 +375,7 @@ dlg:button {
                     end
                 else
                     for i = 1, #activeLayers, 1 do
-                        getReadableLayers(activeLayers[i], selectLayers)
+                        appendVisChildren(activeLayers[i], selectLayers)
                     end
                 end
             end
@@ -385,12 +428,15 @@ dlg:button {
             local jsonEntries = {}
             for i = 1, selectLayerLen, 1 do
                 local layer = selectLayers[i]
+                local layerBlendMode = layer.blendMode
                 local layerData = layer.data
                 local layerName = layer.name
                 local layerOpacity = layer.opacity
-                local layerStackIndices = getStackIndices(layer, activeSprite, {})
+                local layerStackIndices = {}
+                getStackIndices(layer, activeSprite, layerStackIndices)
 
                 local jsonLayer = {
+                    layerBlendMode = layerBlendMode,
                     layerData = layerData,
                     layerName = layerName,
                     layerOpacity = layerOpacity,
@@ -399,19 +445,139 @@ dlg:button {
                 }
 
                 if flatGroups and layer.isGroup then
-                    -- TODO: Implement if possible.
-                    -- print("Flat Groups!")
-                    -- local childrenFlat = {}
-                    -- appendChildLayers(layer, childrenFlat)
-                    -- local childCount = #childrenFlat
-                    -- for j = 1, childCount, 1 do
-                        -- print(childrenFlat[j].name)
-                    -- end
-                    -- dlg:close()
-                    -- return
+                    local childLayers = {}
+                    appendVisChildren(layer, childLayers)
+                    local childLayersCount = #childLayers
+
+                    for j = 1, selectFrameLen, 1 do
+                        local frame = selectFrames[j]
+
+                        local xMin = 2147483647
+                        local yMin = 2147483647
+                        local xMax = -2147483648
+                        local yMax = -2147483648
+                        local childCels = {}
+
+                        for k = 1, childLayersCount, 1 do
+                            local childLayer = childLayers[k]
+                            local childCel = childLayer:cel(frame)
+                            if childCel then
+                                local celBounds = childCel.bounds
+                                local tlx = celBounds.x
+                                local tly = celBounds.y
+                                local brx = tlx + celBounds.width
+                                local bry = tly + celBounds.height
+
+                                if tlx < xMin then xMin = tlx end
+                                if tly < yMin then yMin = tly end
+                                if brx > xMax then xMax = brx end
+                                if bry > yMax then yMax = bry end
+
+                                insert(childCels, childCel)
+                            end
+                        end
+
+                        if xMax > xMin and yMax > yMin then
+                            local compWidth = xMax - xMin
+                            local compHeight = yMax - yMin
+                            local imgComp = Image(compWidth, compHeight)
+
+                            local celCount = #childCels
+                            for k = 1, celCount, 1 do
+                                local cel = childCels[k]
+
+                                local celAlpha = cel.opacity
+                                local layerAlpha = 255
+                                if cel.layer.opacity then
+                                    layerAlpha = cel.layer.opacity
+                                end
+
+                                local celPos = cel.position
+                                local xDiff = celPos.x - xMin
+                                local yDiff = celPos.y - yMin
+
+                                local celImage = cel.image
+                                local pxItr = celImage:pixels()
+                                for elm in pxItr do
+                                    local x = elm.x + xDiff
+                                    local y = elm.y + yDiff
+
+                                    local hexOrigin = imgComp:getPixel(x, y)
+                                    local hexDest = elm()
+                                    local bakedDest = bakeAlpha(hexDest, layerAlpha, celAlpha)
+                                    local blended = blend(hexOrigin, bakedDest)
+                                    imgComp:drawPixel(x, y, blended)
+                                end
+                            end
+
+                            local xTrg = xMin
+                            local yTrg = yMin
+                            local imgTrg = imgComp
+
+                            if useSpriteBounds then
+                                imgTrg = Image(widthSprite, heightSprite, oldMode)
+                                imgTrg:drawImage(imgComp, Point(xMin, yMin))
+                                xTrg = 0
+                                yTrg = 0
+                            end
+
+                            if useResize then
+                                imgTrg:resize(
+                                    imgTrg.width * scale,
+                                    imgTrg.height * scale)
+                            end
+
+                            if usePadding then
+                                local wTrg = imgTrg.width
+                                local hTrg = imgTrg.height
+                                local wPad = wTrg + pad2
+                                local hPad = hTrg + pad2
+                                local padded = Image(wPad, hPad, oldMode)
+                                padded:drawImage(imgTrg, padOffset)
+                                if usePadColor then
+                                    fillPad(padded, padding, padHex)
+                                end
+                                imgTrg = padded
+                            end
+
+                            local fileNameLong = strfmt(
+                                "%s%03d_%03d.%s",
+                                filePrefix, i - 1, j - 1, fileExt)
+                            imgTrg:saveAs {
+                                filename = fileNameLong,
+                                palette = activePalette }
+
+                            local fileNameShort = strfmt(
+                                "%s%03d_%03d",
+                                fileTitle, i - 1, j - 1)
+
+                            xTrg = xTrg * scale
+                            yTrg = yTrg * scale
+                            if useCenter then
+                                xTrg = xTrg + imgTrg.width // 2
+                                yTrg = yTrg + imgTrg.height // 2
+                            else
+                                xTrg = xTrg - padding
+                                yTrg = yTrg - padding
+                            end
+
+                            local jsonFrame = {
+                                celData = nil,
+                                celOpacity = 255,
+                                fileName = fileNameShort,
+                                frameDuration = frame.duration,
+                                frameNumber = frame.frameNumber,
+                                height = imgTrg.height,
+                                width = imgTrg.width,
+                                xOrigin = xTrg,
+                                yOrigin = yTrg
+                            }
+                            insert(jsonLayer.jsonFrames, jsonFrame)
+                        end
+                    end
                 elseif layer.isReference then
                     -- Pass.
-                elseif isVisibleHierarchy(layer, activeSprite) then
+                else
                     for j = 1, selectFrameLen, 1 do
                         local frame = selectFrames[j]
                         local cel = layer:cel(frame)
@@ -499,11 +665,7 @@ dlg:button {
             end
 
             if saveJson then
-                local escapeUserData = args.escapeUserData
                 local missingUserData = "null"
-                if escapeUserData then
-                    missingUserData = "\"\""
-                end
 
                 local jsonStrFmt = concat({
                     "{\"fileDir\":\"%s\"",
@@ -514,7 +676,8 @@ dlg:button {
                 }, ",")
 
                 local layerStrFmt = concat({
-                    "{\"data\":%s",
+                    "{\"blendMode\":\"%s\"",
+                    "\"data\":%s",
                     "\"name\":\"%s\"",
                     "\"opacity\":%d",
                     "\"stackIndices\":[%s]",
@@ -553,8 +716,9 @@ dlg:button {
                         local celData = jsonFrame.celData
                         if celData == nil or #celData < 1 then
                             celData = missingUserData
-                        elseif escapeUserData then
-                            celData = strfmt("\"%s\"", celData)
+                        -- elseif type(celData == "string") then
+                            -- TODO: Causes a problem for user data containing quote marks.
+                            -- celData = strfmt("\"%s\"", celData)
                         end
                         local celOpacity = jsonFrame.celOpacity
 
@@ -578,14 +742,19 @@ dlg:button {
                     end
 
                     -- Layer information.
+                    local layerBlendMode = blendModeToStr(jsonLayer.layerBlendMode)
                     local layerData = jsonLayer.layerData
                     if layerData == nil or #layerData < 1 then
                         layerData = missingUserData
-                    elseif escapeUserData then
-                        layerData = strfmt("\"%s\"", layerData)
+                    -- elseif type(layerData == "string") then
+                        -- TODO: Causes a problem for user data containing quote marks.
+                        -- layerData = strfmt("\"%s\"", layerData)
                     end
                     local layerName = jsonLayer.layerName
-                    local layerOpacity = jsonLayer.layerOpacity
+                    local layerOpacity = 0xff
+                    if jsonLayer.layerOpacity then
+                        layerOpacity = jsonLayer.layerOpacity
+                    end
 
                     -- Use JSON indexing conventions, start at zero.
                     local layerStackIndices = jsonLayer.layerStackIndices
@@ -596,10 +765,11 @@ dlg:button {
                     local stackIdcsStr = concat(layerStackIndices, ",")
 
                     local layerStr = strfmt(
-                        layerStrFmt,
-                        layerData,
-                        layerName,
-                        layerOpacity,
+                        layerStrFmt, -- 1
+                        layerBlendMode, -- 2
+                        layerData, -- 3
+                        layerName, -- 4
+                        layerOpacity, -- 5
                         stackIdcsStr,
                         concat(celStrArr, ","))
                     layerStrArr[i] = layerStr
@@ -624,7 +794,7 @@ dlg:button {
             end
 
             app.refresh()
-            dlg:close()
+            -- dlg:close()
         else
             app.alert("There is no active sprite.")
         end
