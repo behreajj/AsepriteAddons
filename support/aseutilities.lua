@@ -670,6 +670,8 @@ function AseUtilities.createNewCels(
     end
 
     local valPos = position or Point(0, 0)
+
+    -- Shouldn't need to bother with image spec in this case.
     local valImg = image or Image(1, 1)
 
     -- Layers = y = rows
@@ -1551,10 +1553,18 @@ function AseUtilities.rotate90(source)
         i = i + 1
     end
 
-    local w = source.width
-    local h = source.height
-    local target = Image(h, w, source.colorMode)
+    local srcSpec = source.spec
+    local w = srcSpec.width
+    local h = srcSpec.height
     local pxRot = Utilities.rotate90(px, w, h)
+
+    local trgSpec = ImageSpec {
+        width = h,
+        height = w,
+        colorMode = source.colorMode,
+        transparentColor = srcSpec.transparentColor }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target = Image(trgSpec)
 
     local j = 1
     local trgPxItr = target:pixels()
@@ -1584,9 +1594,9 @@ function AseUtilities.rotate180(source)
 
     local w = source.width
     local h = source.height
-    local target = Image(w, h, source.colorMode)
     local pxRot = Utilities.reverseTable(px)
 
+    local target = Image(source.spec)
     local j = 1
     local trgPxItr = target:pixels()
     for elm in trgPxItr do
@@ -1613,10 +1623,18 @@ function AseUtilities.rotate270(source)
         i = i + 1
     end
 
-    local w = source.width
-    local h = source.height
-    local target = Image(h, w, source.colorMode)
+    local srcSpec = source.spec
+    local w = srcSpec.width
+    local h = srcSpec.height
     local pxRot = Utilities.rotate270(px, w, h)
+
+    local trgSpec = ImageSpec {
+        width = h,
+        height = w,
+        colorMode = source.colorMode,
+        transparentColor = srcSpec.transparentColor }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target = Image(trgSpec)
 
     local j = 1
     local trgPxItr = target:pixels()
@@ -1640,8 +1658,16 @@ function AseUtilities.trimCelToSprite(cel, sprite)
     local oldPos = cel.position
     cel.position = Point(clip.x, clip.y)
 
-    local trimImage = Image(clip.width, clip.height)
-    trimImage:drawImage(cel.image, oldPos - cel.position)
+    local celImg = cel.image
+    local celImgSpec = celImg.spec
+    local trimSpec = ImageSpec {
+        width = clip.width,
+        height = clip.height,
+        colorMode = celImgSpec.colorMode,
+        transparentColor = celImgSpec.transparentColor }
+    trimSpec.colorSpace = celImgSpec.colorSpace
+    local trimImage = Image(trimSpec)
+    trimImage:drawImage(celImg, oldPos - cel.position)
     cel.image = trimImage
 end
 
@@ -1765,7 +1791,14 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     local wTrg = 1 + right - left
     local hTrg = 1 + bottom - top
     local pad2 = valPad + valPad
-    local target = Image(wTrg + pad2, hTrg + pad2, colorMode)
+
+    local trgSpec = ImageSpec {
+        colorMode = colorMode,
+        width = wTrg + pad2,
+        height = hTrg + pad2,
+        transparentColor = alphaIndex }
+    trgSpec.colorSpace = image.spec.colorSpace
+    local target = Image(trgSpec)
 
     -- local sampleRect = Rectangle(left, top, wTrg, hTrg)
     -- local srcItr = image:pixels(sampleRect)

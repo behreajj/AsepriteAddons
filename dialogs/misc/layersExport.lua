@@ -351,8 +351,6 @@ dlg:button {
             local colorMode = activeSprite.colorMode
             local colorSpace = activeSprite.colorSpace
             local transparentColor = activeSprite.transparentColor
-            local wSprite = activeSprite.width
-            local hSprite = activeSprite.height
 
             -- Version specific.
             local version = app.version
@@ -687,7 +685,15 @@ dlg:button {
                             local wPad = wTrg + pad2
                             local hPad = hTrg + pad2
 
-                            local imgPad = Image(wPad, hPad, colorMode)
+                            local cmPad = colorMode
+                            if usePadColor then cmPad = ColorMode.RGB end
+                            local specPad = ImageSpec {
+                                colorMode = cmPad,
+                                width = wPad,
+                                height = hPad,
+                                transparentColor = transparentColor }
+                            specPad.colorSpace = colorSpace
+                            local imgPad = Image(specPad)
                             imgPad:drawImage(imgTrg, padOffset)
                             if usePadColor then
                                 fillPad(imgPad, padding, padHex)
@@ -706,6 +712,7 @@ dlg:button {
                         local fileNameLong = strfmt(
                             "%s%03d_%03d.%s",
                             filePrefix, i - 1, j - 1, fileExt)
+
                         imgTrg:saveAs {
                             filename = fileNameLong,
                             palette = activePalette }
@@ -854,7 +861,7 @@ dlg:button {
             end
 
             app.refresh()
-            -- dlg:close()
+            dlg:close()
         else
             app.alert("There is no active sprite.")
         end
