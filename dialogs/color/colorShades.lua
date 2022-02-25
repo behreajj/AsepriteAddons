@@ -1,5 +1,3 @@
-dofile("../../support/clr.lua")
-dofile("../../support/utilities.lua")
 dofile("../../support/aseutilities.lua")
 
 local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
@@ -189,7 +187,7 @@ dlg:button {
         local size = args.size
         local szInv = 1.0 / size
         local sprite = Sprite(size, size)
-        sprite.filename = "LCh Color Wheel"
+        sprite.filename = "LCh Color Shades"
         sprite:assignColorSpace(ColorSpace { sRGB = true })
 
         -- Calculate frame count to normalization.
