@@ -175,6 +175,7 @@ dlg:button {
         -- Held constant in loop to follow.
         local spriteWidth = activeSprite.width
         local spriteHeight = activeSprite.height
+        local spriteSpec = activeSprite.spec
         local halfScale = scale * 0.5
         local originPt = Point(0, 0)
         local framesLen = #frames
@@ -218,15 +219,19 @@ dlg:button {
         end
 
         local normalLayer = activeSprite:newLayer()
-
         normalLayer.name = string.format("Normal.Map.%03d", scale)
+
+        local specNone = ImageSpec {
+            width = activeWidth,
+            height = activeHeight }
+        specNone.colorSpace = ColorSpace()
 
         app.transaction(function()
             for i = 1, framesLen, 1 do
                 local frame = frames[i]
 
                 -- Create flat image.
-                local flatImg = Image(activeWidth, activeHeight)
+                local flatImg = Image(spriteSpec)
                 flatImg:drawSprite(activeSprite, frame)
 
                 -- Show flattened image.
@@ -279,7 +284,7 @@ dlg:button {
 
                 -- Show gray image.
                 if showGrayMap then
-                    local grayImg = Image(activeWidth, activeHeight)
+                    local grayImg = Image(specNone)
                     local grayPxItr = grayImg:pixels()
                     local grayIdx = 1
                     for elm in grayPxItr do
@@ -298,7 +303,7 @@ dlg:button {
                 end
 
                 local writeIdx = 1
-                local normalImg = Image(activeWidth, activeHeight)
+                local normalImg = Image(specNone)
                 local normalItr = normalImg:pixels()
 
                 for elm in normalItr do

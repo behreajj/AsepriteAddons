@@ -349,271 +349,276 @@ dlg:button {
             local srcCel = app.activeCel
             if srcCel then
                 local srcImg = srcCel.image
-                if srcImg ~= nil then
 
-                    local oldColorMode = sprite.colorMode
-                    app.command.ChangePixelFormat { format = "rgb" }
+                local alphaIndex = sprite.transparentColor
+                local colorSpace = sprite.colorSpace
+                local oldColorMode = sprite.colorMode
+                app.command.ChangePixelFormat { format = "rgb" }
 
-                    -- Choose function based on dither mode.
-                    local closestFunc = nil
-                    local ditherMode = args.ditherMode or defaults.ditherMode
-                    local dmStr = ""
-                    if ditherMode == "ONE_BIT" then
+                -- Choose function based on dither mode.
+                local closestFunc = nil
+                local ditherMode = args.ditherMode or defaults.ditherMode
+                local dmStr = ""
+                if ditherMode == "ONE_BIT" then
 
-                        local aColorAse = args.aColor or defaults.aColor
-                        local bColorAse = args.bColor or defaults.bColor
-                        local threshold100 = args.threshold or defaults.threshold
-                        local threshold = threshold100 * 0.01
+                    local aColorAse = args.aColor or defaults.aColor
+                    local bColorAse = args.bColor or defaults.bColor
+                    local threshold100 = args.threshold or defaults.threshold
+                    local threshold = threshold100 * 0.01
 
-                        -- Mask out alpha so that source alpha
-                        -- can be composited in.
-                        local aHex = 0x00ffffff & aColorAse.rgbaPixel
-                        local bHex = 0x00ffffff & bColorAse.rgbaPixel
+                    -- Mask out alpha so that source alpha
+                    -- can be composited in.
+                    local aHex = 0x00ffffff & aColorAse.rgbaPixel
+                    local bHex = 0x00ffffff & bColorAse.rgbaPixel
 
-                        -- Swap colors so that origin (a) is always the
-                        -- darker color.
-                        local aLum = Clr.lumsRgb(Clr.fromHex(aHex))
-                        local bLum = Clr.lumsRgb(Clr.fromHex(bHex))
-                        if aLum > bLum then
-                            local temp = aHex
-                            aHex = bHex
-                            bHex = temp
+                    -- Swap colors so that origin (a) is always the
+                    -- darker color.
+                    local aLum = Clr.lumsRgb(Clr.fromHex(aHex))
+                    local bLum = Clr.lumsRgb(Clr.fromHex(bHex))
+                    if aLum > bLum then
+                        local temp = aHex
+                        aHex = bHex
+                        bHex = temp
+                    end
+
+                    local greyPreset = args.greyMethod or defaults.greyMethod
+                    local greyMethod = nil
+                    local greyStr = ""
+                    if greyPreset == "AVERAGE" then
+                        greyStr = "Average"
+                        greyMethod = function(rSrc, gSrc, bSrc)
+                            return (rSrc + gSrc + bSrc) / (3.0 * 255.0)
                         end
-
-                        local greyPreset = args.greyMethod or defaults.greyMethod
-                        local greyMethod = nil
-                        local greyStr = ""
-                        if greyPreset == "AVERAGE" then
-                            greyStr = "Average"
-                            greyMethod = function(rSrc, gSrc, bSrc)
-                                return (rSrc + gSrc + bSrc) / (3.0 * 255.0)
-                            end
-                        elseif greyPreset == "HSL" then
-                            greyStr = "HSL"
-                            greyMethod = function(rSrc, gSrc, bSrc)
-                                return (math.max(rSrc, gSrc, bSrc)
-                                      + math.min(rSrc, gSrc, bSrc)) / (2.0 * 255.0)
-                            end
-                        elseif greyPreset == "HSV" then
-                            greyStr = "HSV"
-                            greyMethod = function(rSrc, gSrc, bSrc)
-                                return math.max(rSrc, gSrc, bSrc) / 255.0
-                            end
-                        else
-                            greyStr = "Luminance"
-
-                            local stlLut = Utilities.STL_LUT
-                            local ltsLut = Utilities.LTS_LUT
-
-                            greyMethod = function(rSrc, gSrc, bSrc)
-                                local rLin = stlLut[1 + rSrc]
-                                local gLin = stlLut[1 + gSrc]
-                                local bLin = stlLut[1 + bSrc]
-                                local lum = math.tointeger(
-                                      rLin * 0.21264934272065283
-                                    + gLin * 0.7151691357059038
-                                    + bLin * 0.07218152157344333)
-                                return ltsLut[1 + lum] / 255.0
-                            end
+                    elseif greyPreset == "HSL" then
+                        greyStr = "HSL"
+                        greyMethod = function(rSrc, gSrc, bSrc)
+                            return (math.max(rSrc, gSrc, bSrc)
+                                    + math.min(rSrc, gSrc, bSrc)) / (2.0 * 255.0)
                         end
-
-                        dmStr = string.format("OneBit.%s.%03d", greyStr, threshold100)
-
-                        closestFunc = function(rSrc, gSrc, bSrc, aSrc)
-                            local fac = greyMethod(rSrc, gSrc, bSrc)
-                            local alpha = aSrc << 0x18
-                            if fac >= threshold then
-                                return alpha | bHex
-                            end
-                            return alpha | aHex
+                    elseif greyPreset == "HSV" then
+                        greyStr = "HSV"
+                        greyMethod = function(rSrc, gSrc, bSrc)
+                            return math.max(rSrc, gSrc, bSrc) / 255.0
                         end
-
-                    elseif ditherMode == "QUANTIZE" then
-
-                        local levels = args.levels or defaults.levels
-                        dmStr = string.format("Quantize.%03d", levels)
-
-                        closestFunc = function(rSrc, gSrc, bSrc, aSrc)
-                            local srgb = Clr.new(
-                                rSrc * 0.00392156862745098,
-                                gSrc * 0.00392156862745098,
-                                bSrc * 0.00392156862745098,
-                                1.0)
-                            local trgHex = Clr.toHex(Clr.quantize(srgb, levels))
-                            return (aSrc << 0x18) | (0x00ffffff & trgHex)
-                        end
-
                     else
-                        dmStr = "Palette"
+                        greyStr = "Luminance"
 
-                        local octCapacity = args.octCapacity or defaults.octCapacity
-                        local bounds = Bounds3.cieLab()
-                        local octree = Octree.new(bounds, octCapacity, 0)
+                        local stlLut = Utilities.STL_LUT
+                        local ltsLut = Utilities.LTS_LUT
 
-                        -- Find minimum and maximum channel values.
-                        local lMin = 100000
-                        local aMin = 100000
-                        local bMin = 100000
-
-                        local lMax = -100000
-                        local aMax = -100000
-                        local bMax = -100000
-
-                        local viableCount = 0
-
-                        -- Unpack source palette to a dictionary and an octree.
-                        -- Ignore transparent colors in palette.
-                        local palHexesLen = #hexesSrgb
-                        local ptToHexDict = {}
-                        for i = 1, palHexesLen, 1 do
-                            local hexSrgb = hexesSrgb[i]
-                            if ((hexSrgb >> 0x18) & 0xff) > 0 then
-                                local clr = Clr.fromHex(hexSrgb)
-                                local lab = Clr.sRgbaToLab(clr)
-                                local point = Vec3.new(lab.a, lab.b, lab.l)
-
-                                if lab.l < lMin then lMin = lab.l end
-                                if lab.a < aMin then aMin = lab.a end
-                                if lab.b < bMin then bMin = lab.b end
-
-                                if lab.l > lMax then lMax = lab.l end
-                                if lab.a > aMax then aMax = lab.a end
-                                if lab.b > bMax then bMax = lab.b end
-
-                                local hexProfile = hexesProfile[i]
-                                ptToHexDict[Vec3.hashCode(point)] = hexProfile
-                                Octree.insert(octree, point)
-                                viableCount = viableCount + 1
-                            end
+                        greyMethod = function(rSrc, gSrc, bSrc)
+                            local rLin = stlLut[1 + rSrc]
+                            local gLin = stlLut[1 + gSrc]
+                            local bLin = stlLut[1 + bSrc]
+                            local lum = math.tointeger(
+                                    rLin * 0.21264934272065283
+                                + gLin * 0.7151691357059038
+                                + bLin * 0.07218152157344333)
+                            return ltsLut[1 + lum] / 255.0
                         end
+                    end
 
-                        -- for k,v in pairs(ptToHexDict) do
-                        --     print(string.format("%d %08X", k, v))
-                        -- end
+                    dmStr = string.format("OneBit.%s.%03d", greyStr, threshold100)
 
-                        if viableCount < 3 then
-                            app.alert {
-                                title = "Warning",
-                                text = {
-                                    "The palette contains fewer than 3 viable colors.",
-                                    "For better results, use either one bit mode or",
-                                    "a bigger palette."
-                                }
-                            }
-                            return
+                    closestFunc = function(rSrc, gSrc, bSrc, aSrc)
+                        local fac = greyMethod(rSrc, gSrc, bSrc)
+                        local alpha = aSrc << 0x18
+                        if fac >= threshold then
+                            return alpha | bHex
                         end
+                        return alpha | aHex
+                    end
 
-                        -- Find largest needed query radius and result limit.
-                        local lDiff = lMax - lMin
-                        local aDiff = aMax - aMin
-                        local bDiff = bMax - bMin
+                elseif ditherMode == "QUANTIZE" then
 
-                        -- Square-root for this regularly seems too
-                        -- small, leading to transparent patches.
-                        local queryRad =  lDiff * lDiff
-                            + aDiff * aDiff
-                            + bDiff * bDiff
-                        local resultLimit = viableCount
+                    local levels = args.levels or defaults.levels
+                    dmStr = string.format("Quantize.%03d", levels)
 
-                        closestFunc = function(rSrc, gSrc, bSrc, aSrc)
-                            local srgb = Clr.new(
-                                rSrc * 0.00392156862745098,
-                                gSrc * 0.00392156862745098,
-                                bSrc * 0.00392156862745098,
-                                1.0)
-                            local lab = Clr.sRgbaToLab(srgb)
-                            local query = Vec3.new(lab.a, lab.b, lab.l)
+                    closestFunc = function(rSrc, gSrc, bSrc, aSrc)
+                        local srgb = Clr.new(
+                            rSrc * 0.00392156862745098,
+                            gSrc * 0.00392156862745098,
+                            bSrc * 0.00392156862745098,
+                            1.0)
+                        local trgHex = Clr.toHex(Clr.quantize(srgb, levels))
+                        return (aSrc << 0x18) | (0x00ffffff & trgHex)
+                    end
 
-                            local nearestPts = {}
-                            Octree.querySphericalInternal(
-                                octree,
-                                query, queryRad,
-                                nearestPts, resultLimit)
+                else
+                    dmStr = "Palette"
 
-                            local trgHex = 0x0
-                            if #nearestPts > 0 then
-                                local nearestHash = Vec3.hashCode(nearestPts[1].point)
-                                local nearestHex = ptToHexDict[nearestHash]
-                                if nearestHex ~= nil then
-                                    trgHex = (aSrc << 0x18)
-                                        | (nearestHex & 0x00ffffff)
-                                end
-                            end
+                    local octCapacity = args.octCapacity or defaults.octCapacity
+                    local bounds = Bounds3.cieLab()
+                    local octree = Octree.new(bounds, octCapacity, 0)
 
-                            return trgHex
+                    -- Find minimum and maximum channel values.
+                    local lMin = 100000
+                    local aMin = 100000
+                    local bMin = 100000
+
+                    local lMax = -100000
+                    local aMax = -100000
+                    local bMax = -100000
+
+                    local viableCount = 0
+
+                    -- Unpack source palette to a dictionary and an octree.
+                    -- Ignore transparent colors in palette.
+                    local palHexesLen = #hexesSrgb
+                    local ptToHexDict = {}
+                    for i = 1, palHexesLen, 1 do
+                        local hexSrgb = hexesSrgb[i]
+                        if ((hexSrgb >> 0x18) & 0xff) > 0 then
+                            local clr = Clr.fromHex(hexSrgb)
+                            local lab = Clr.sRgbaToLab(clr)
+                            local point = Vec3.new(lab.a, lab.b, lab.l)
+
+                            if lab.l < lMin then lMin = lab.l end
+                            if lab.a < aMin then aMin = lab.a end
+                            if lab.b < bMin then bMin = lab.b end
+
+                            if lab.l > lMax then lMax = lab.l end
+                            if lab.a > aMax then aMax = lab.a end
+                            if lab.b > bMax then bMax = lab.b end
+
+                            local hexProfile = hexesProfile[i]
+                            ptToHexDict[Vec3.hashCode(point)] = hexProfile
+                            Octree.insert(octree, point)
+                            viableCount = viableCount + 1
                         end
-
                     end
 
-                    -- Cache pixels from iterator to an array.
-                    local srcPxItr = srcImg:pixels()
-                    local pxArray = {}
-                    local pxIdx = 1
-                    for elm in srcPxItr do
-                        local hex = elm()
-                        pxArray[pxIdx] = hex
-                        pxIdx = pxIdx + 1
-                    end
+                    -- for k,v in pairs(ptToHexDict) do
+                    --     print(string.format("%d %08X", k, v))
+                    -- end
 
-                    -- Get arguments to pass to dithering method.
-                    local srcWidth = srcImg.width
-                    local srcHeight = srcImg.height
-                    local factor100 = args.factor or defaults.factor
-                    local factor = factor100 * 0.01
-                    fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
-
-                    local trgImg = Image(srcWidth, srcHeight)
-                    local trgPxItr = trgImg:pixels()
-                    local m = 1
-                    for elm in trgPxItr do
-                        elm(pxArray[m])
-                        m = m + 1
-                    end
-
-                    -- Either copy to new layer or reassign image.
-                    local copyToLayer = args.copyToLayer
-                    if copyToLayer then
-                        app.transaction(function()
-                            local srcLayer = srcCel.layer
-
-                            -- Copy layer.
-                            local trgLayer = sprite:newLayer()
-                            trgLayer.name = string.format(
-                                "%s.Dither.%s.%03d",
-                                srcLayer.name, dmStr, factor100)
-                            if srcLayer.opacity then
-                                trgLayer.opacity = srcLayer.opacity
-                            end
-                            -- Do not copy blend mode.
-
-                            -- Copy cel.
-                            local frame = app.activeFrame or sprite.frames[1]
-                            local trgCel = sprite:newCel(
-                                trgLayer, frame,
-                                trgImg, srcCel.position)
-                            trgCel.opacity = srcCel.opacity
-                        end)
-                    else
-                        srcCel.image = trgImg
-                    end
-
-                    AseUtilities.changePixelFormat(oldColorMode)
-                    app.refresh()
-
-                    if printElapsed then
-                        endTime = os.time()
-                        elapsed = os.difftime(endTime, startTime)
+                    if viableCount < 3 then
                         app.alert {
-                            title = "Diagnostic",
+                            title = "Warning",
                             text = {
-                                string.format("Start: %d", startTime),
-                                string.format("End: %d", endTime),
-                                string.format("Elapsed: %d", elapsed)
+                                "The palette contains fewer than 3 viable colors.",
+                                "For better results, use either one bit mode or",
+                                "a bigger palette."
                             }
                         }
+                        return
                     end
+
+                    -- Find largest needed query radius and result limit.
+                    local lDiff = lMax - lMin
+                    local aDiff = aMax - aMin
+                    local bDiff = bMax - bMin
+
+                    -- Square-root for this regularly seems too
+                    -- small, leading to transparent patches.
+                    local queryRad =  lDiff * lDiff
+                        + aDiff * aDiff
+                        + bDiff * bDiff
+                    local resultLimit = viableCount
+
+                    closestFunc = function(rSrc, gSrc, bSrc, aSrc)
+                        local srgb = Clr.new(
+                            rSrc * 0.00392156862745098,
+                            gSrc * 0.00392156862745098,
+                            bSrc * 0.00392156862745098,
+                            1.0)
+                        local lab = Clr.sRgbaToLab(srgb)
+                        local query = Vec3.new(lab.a, lab.b, lab.l)
+
+                        local nearestPts = {}
+                        Octree.querySphericalInternal(
+                            octree,
+                            query, queryRad,
+                            nearestPts, resultLimit)
+
+                        local trgHex = 0x0
+                        if #nearestPts > 0 then
+                            local nearestHash = Vec3.hashCode(nearestPts[1].point)
+                            local nearestHex = ptToHexDict[nearestHash]
+                            if nearestHex ~= nil then
+                                trgHex = (aSrc << 0x18)
+                                    | (nearestHex & 0x00ffffff)
+                            end
+                        end
+
+                        return trgHex
+                    end
+
+                end
+
+                -- Cache pixels from iterator to an array.
+                local srcPxItr = srcImg:pixels()
+                local pxArray = {}
+                local pxIdx = 1
+                for elm in srcPxItr do
+                    local hex = elm()
+                    pxArray[pxIdx] = hex
+                    pxIdx = pxIdx + 1
+                end
+
+                -- Get arguments to pass to dithering method.
+                local srcWidth = srcImg.width
+                local srcHeight = srcImg.height
+                local factor100 = args.factor or defaults.factor
+                local factor = factor100 * 0.01
+                fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
+
+                local trgSpec = ImageSpec {
+                    width = srcWidth,
+                    height = srcHeight,
+                    colorMode = ColorMode.RGB,
+                    transparentColor = alphaIndex
+                }
+                trgSpec.colorSpace = colorSpace
+                local trgImg = Image(trgSpec)
+                local trgPxItr = trgImg:pixels()
+                local m = 1
+                for elm in trgPxItr do
+                    elm(pxArray[m])
+                    m = m + 1
+                end
+
+                -- Either copy to new layer or reassign image.
+                local copyToLayer = args.copyToLayer
+                if copyToLayer then
+                    app.transaction(function()
+                        local srcLayer = srcCel.layer
+
+                        -- Copy layer.
+                        local trgLayer = sprite:newLayer()
+                        trgLayer.name = string.format(
+                            "%s.Dither.%s.%03d",
+                            srcLayer.name, dmStr, factor100)
+                        if srcLayer.opacity then
+                            trgLayer.opacity = srcLayer.opacity
+                        end
+                        -- Do not copy blend mode.
+
+                        -- Copy cel.
+                        local frame = app.activeFrame or sprite.frames[1]
+                        local trgCel = sprite:newCel(
+                            trgLayer, frame,
+                            trgImg, srcCel.position)
+                        trgCel.opacity = srcCel.opacity
+                    end)
                 else
-                    app.alert("The cel has no image.")
+                    srcCel.image = trgImg
+                end
+
+                AseUtilities.changePixelFormat(oldColorMode)
+                app.refresh()
+
+                if printElapsed then
+                    endTime = os.time()
+                    elapsed = os.difftime(endTime, startTime)
+                    app.alert {
+                        title = "Diagnostic",
+                        text = {
+                            string.format("Start: %d", startTime),
+                            string.format("End: %d", endTime),
+                            string.format("Elapsed: %d", elapsed)
+                        }
+                    }
                 end
             else
                 app.alert("There is no active cel.")

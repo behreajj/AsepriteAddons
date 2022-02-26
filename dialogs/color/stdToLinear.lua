@@ -132,7 +132,6 @@ dlg:button {
                         local cel = cels[i]
                         if cel then
                             local srcImg = cel.image
-                            -- if srcImg then
                             local pxitr = srcImg:pixels()
                             for elm in pxitr do
                                 local hex = elm()
@@ -154,7 +153,6 @@ dlg:button {
                                     elm(0x0)
                                 end
                             end
-                            -- end
                         end
                     end
                 end)

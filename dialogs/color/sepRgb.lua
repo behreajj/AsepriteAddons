@@ -208,7 +208,6 @@ dlg:button {
                                 local srcCel = cels[i]
                                 if srcCel then
                                     local srcImg = srcCel.image
-                                    -- if srcImg then
                                     local srcImgWidth = srcImg.width
                                     local srcImgHeight = srcImg.height
                                     local srcFrame = srcCel.frame
@@ -308,7 +307,6 @@ dlg:button {
                                             end
                                         end
                                     end
-                                    -- end
                                 end
                             end
                         end)

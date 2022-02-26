@@ -164,6 +164,10 @@ dlg:button {
             return
         end
 
+        -- Get sprite properties.
+        local colorSpace = activeSprite.colorSpace
+        local alphaIdx = activeSprite.transparentColor
+
         -- Cache global functions used in for loops.
         local abs = math.abs
         local max = math.max
@@ -325,7 +329,14 @@ dlg:button {
                     local trgImgWidth = abs(xMax - xMin)
                     local trgImgHeight = abs(yMax - yMin)
                     local trgPos = Point(xMin, yMin)
-                    local trgImg = Image(trgImgWidth, trgImgHeight)
+
+                    local trgSpec = ImageSpec {
+                        width = trgImgWidth,
+                        height = trgImgHeight,
+                        colorMode = ColorMode.RGB,
+                        transparentColor = alphaIdx }
+                    trgSpec.colorSpace = colorSpace
+                    local trgImg = Image(trgSpec)
 
                     -- Set function for both vs. forward or backward.
                     local lerpFunc = nil

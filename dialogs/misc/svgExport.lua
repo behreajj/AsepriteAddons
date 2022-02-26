@@ -87,43 +87,37 @@ local function layerToSvgStr(
             local cel = layer:cel(activeFrame)
             if cel then
                 local celImg = cel.image
-                -- TODO: This if check shouldn't be needed?
-                if celImg then
+                local celBounds = cel.bounds
+                local xCel = celBounds.x
+                local yCel = celBounds.y
+                local intersect = celBounds:intersect(spriteBounds)
+                intersect.x = intersect.x - xCel
+                intersect.y = intersect.y - yCel
 
-                    local celBounds = cel.bounds
-                    local xCel = celBounds.x
-                    local yCel = celBounds.y
-                    local intersect = celBounds:intersect(spriteBounds)
-                    intersect.x = intersect.x - xCel
-                    intersect.y = intersect.y - yCel
+                local grpStr = string.format(
+                    "\n<g id=\"%s\"",
+                    layer.name)
 
-                    local grpStr = string.format(
-                        "\n<g id=\"%s\"",
-                        layer.name)
-
-                    -- Layer opacity and cel opacity are compounded
-                    -- together to simplify.
-
-                    -- TODO: Move up and omit if cel alpha < 1?
-                    local celAlpha = cel.opacity
-                    if lyrAlpha < 0xff
-                        or celAlpha < 0xff then
-                        local cmpAlpha = (lyrAlpha * 0.00392156862745098)
-                            * (celAlpha * 0.00392156862745098)
-                        grpStr = grpStr .. string.format(
-                            " opacity=\"%.6f\"",
-                            cmpAlpha)
-                    end
-
-                    grpStr = grpStr .. ">"
-
-                    grpStr =  grpStr .. imgToSvgStr(
-                        celImg, border, margin, scale,
-                        xCel, yCel)
-
-                    grpStr = grpStr .. "\n</g>"
-                    str = str .. grpStr
+                -- Layer opacity and cel opacity are compounded
+                -- together to simplify.
+                local celAlpha = cel.opacity
+                if lyrAlpha < 0xff
+                    or celAlpha < 0xff then
+                    local cmpAlpha = (lyrAlpha * 0.00392156862745098)
+                        * (celAlpha * 0.00392156862745098)
+                    grpStr = grpStr .. string.format(
+                        " opacity=\"%.6f\"",
+                        cmpAlpha)
                 end
+
+                grpStr = grpStr .. ">"
+
+                grpStr =  grpStr .. imgToSvgStr(
+                    celImg, border, margin, scale,
+                    xCel, yCel)
+
+                grpStr = grpStr .. "\n</g>"
+                str = str .. grpStr
             end
         end
     end

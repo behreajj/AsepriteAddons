@@ -663,8 +663,10 @@ dlg:button {
 
         -- Create footer to display profile name.
         local footImg = Image(entryWidth, entryHeight, ColorMode.RGB)
-        local footText = string.upper(string.sub(mnfstClrPrf.name, 1, 12))
-        if #footText < 1 then footText = "NONE" end
+        local footText = "NONE"
+        if mnfstClrPrf.name and #mnfstClrPrf.name > 0 then
+            footText = string.upper(string.sub(mnfstClrPrf.name, 1, 12))
+        end
         footText = "PROFILE: " .. footText
         local footChars = strToChars(footText)
         drawCharsHorizShd(

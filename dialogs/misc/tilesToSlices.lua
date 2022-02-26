@@ -246,8 +246,13 @@ dlg:button {
             local rows = max(1, ceil(tileCount / columns))
             local imgWidth = tileWidth * columns
             local imgHeight = tileHeight * rows
-            local img = Image(imgWidth, imgHeight, colorMode)
-            img.spec.transparentColor = alphaIndex
+            local imgSpec = ImageSpec {
+                width = imgWidth,
+                height = imgHeight,
+                colorMode = colorMode,
+                transparentColor = alphaIndex }
+            imgSpec.colorSpace = colorSpace
+            local img = Image(imgSpec)
 
             local rects = {}
             for k = 0, tileCount - 1, 1 do

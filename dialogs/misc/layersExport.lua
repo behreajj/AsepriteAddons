@@ -103,33 +103,27 @@ local function blendModeToStr(bm)
 end
 
 local function tilemapImageToImage(imgSrc, tileSet)
-    local itrSrc = imgSrc:pixels()
-    local tileGrid = tileSet.grid
-    local tileDim = tileGrid.tileSize
+    local tileDim = tileSet.grid.tileSize
     local tileWidth = tileDim.width
     local tileHeight = tileDim.height
-    local wTrg = imgSrc.width * tileWidth
-    local hTrg = imgSrc.height * tileHeight
 
     local specSrc = imgSrc.spec
     local specTrg = ImageSpec {
+        width = specSrc.width * tileWidth,
+        height = specSrc.height * tileHeight,
         colorMode = specSrc.colorMode,
-        width = wTrg,
-        height = hTrg,
         transparentColor = specSrc.transparentColor }
     specTrg.colorSpace = specSrc.colorSpace
     local imgTrg = Image(specTrg)
-    for elmTile in itrSrc do
-        local tileIndex = elmTile()
-        local xGrid = elmTile.x
-        local yGrid = elmTile.y
 
-        local xPixel = xGrid * tileWidth
-        local yPixel = yGrid * tileHeight
-
-        local tileBlit = tileSet:getTile(tileIndex)
-        imgTrg:drawImage(tileBlit, Point(xPixel, yPixel))
+    local itrSrc = imgSrc:pixels()
+    for elm in itrSrc do
+        imgTrg:drawImage(
+            tileSet:getTile(elm()),
+            Point(elm.x * tileWidth,
+                elm.y * tileHeight))
     end
+
     return imgTrg
 end
 
@@ -498,6 +492,9 @@ dlg:button {
                     end
                 end
 
+                -- A layer's stack index is local to its parent,
+                -- not global to the entire sprite, so there needs
+                -- to be a way to represent the hierarchy.
                 local layerStackIndices = {}
                 getStackIndices(layer, activeSprite, layerStackIndices)
 
@@ -558,6 +555,7 @@ dlg:button {
 
                                 local alphaCel = childCel.opacity
                                 local alphaLayer = 255
+                                -- TODO: Is it safe to get rid of the nil check?
                                 if childLayer.opacity then
                                     alphaLayer = childLayer.opacity
                                 end
@@ -586,10 +584,12 @@ dlg:button {
                             local compHeight = yMax - yMin
 
                             -- Create composite image with spec.
+                            -- This has to be RGB color mode because of
+                            -- alpha compositing.
                             local specComp = ImageSpec {
-                                colorMode = colorMode,
                                 width = compWidth,
                                 height = compHeight,
+                                colorMode = ColorMode.RGB,
                                 transparentColor = transparentColor }
                             specComp.colorSpace = colorSpace
                             local imgComp = Image(specComp)

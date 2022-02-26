@@ -102,6 +102,7 @@ dlg:button {
 
         -- Determine how a pixel is judged to be transparent.
         local alphaIndex = activeSprite.transparentColor
+        local colorSpace = activeSprite.colorSpace
 
         local frames = {}
         if target == "ACTIVE" then
@@ -208,7 +209,13 @@ dlg:button {
                         local widthTarget = xBrTarget - xTlTarget
                         local heightTarget = yBrTarget - yTlTarget
 
-                        local trgImage = Image(widthTarget, heightTarget)
+                        local trgSpec = ImageSpec {
+                            width = widthTarget,
+                            height = heightTarget,
+                            colorMode = ColorMode.RGB,
+                            transparentColor = alphaIndex }
+                        trgSpec.colorSpace = colorSpace
+                        local trgImage = Image(trgSpec)
                         local trgPos = Point(xTlTarget, yTlTarget)
 
                         local trgItr = trgImage:pixels()

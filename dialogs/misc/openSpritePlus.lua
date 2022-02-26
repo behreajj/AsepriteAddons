@@ -179,6 +179,15 @@ dlg:button {
                 openSprite = loadSprite(spriteFile)
 
                 if openSprite then
+
+                    -- Tile map layers should not be trimmed, so check
+                    -- if Aseprite is newer than 1.3.
+                    local version = app.version
+                    local checkForTilemaps = false
+                    if version.major >= 1 and version.minor >= 3 then
+                        checkForTilemaps = true
+                    end
+
                     app.activeSprite = openSprite
                     local oldColorMode = openSprite.colorMode
                     app.command.ChangePixelFormat { format = "rgb" }
@@ -245,8 +254,18 @@ dlg:button {
                         app.transaction(function ()
                             for i = 1, celsLen, 1 do
                                 local cel = cels[i]
-                                local srcImg = cel.image
-                                if srcImg then
+
+                                local layer = cel.layer
+                                local layerIsTilemap = false
+                                if checkForTilemaps then
+                                    layerIsTilemap = layer.isTilemap
+                                end
+
+                                if layerIsTilemap then
+                                    -- Tile map layers should only belong to
+                                    -- .aseprite files, and hence not need this.
+                                else
+                                    local srcImg = cel.image
                                     local trgImg, x, y = trimImage(srcImg, 0)
                                     local srcPos = cel.position
                                     cel.position = Point(srcPos.x + x, srcPos.y + y)
@@ -263,7 +282,6 @@ dlg:button {
                     if wGrid > 1 and hGrid > 1 then
                         openSprite.gridBounds = Rectangle(
                             xGrid, yGrid, wGrid, hGrid)
-                            -- app.command.ShowGrid()
                     end
 
                     app.refresh()

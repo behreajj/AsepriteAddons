@@ -501,14 +501,21 @@ dlg:button {
         -- Create sprite.
         local gradWidth = defaults.gradWidth
         local gradHeight = defaults.gradHeight
+
+        local colorSpaceNone = ColorSpace()
         local gradSprite = Sprite(
             gradWidth,
-            gradHeight,
-            ColorSpace())
+            gradHeight)
+        gradSprite:assignColorSpace(colorSpaceNone)
         gradSprite.filename = "Normal Gradient"
 
         -- Create smooth image.
-        local gradImg = Image(gradWidth, gradHeight // 2)
+        local gradSpec = ImageSpec {
+            width = gradWidth,
+            height = gradHeight // 2
+        }
+        gradSpec.colorSpace = colorSpaceNone
+        local gradImg = Image(gradSpec)
         local gradImgPxItr = gradImg:pixels()
         local xToFac = 1.0 / (gradWidth - 1.0)
 
@@ -526,7 +533,12 @@ dlg:button {
         -- Create swatches.
         local segLayer = gradSprite:newLayer()
         segLayer.name = "Gradient.Swatches"
-        local segImg = Image(gradWidth, gradHeight - gradHeight // 2)
+
+        local segSpec = ImageSpec {
+            width = gradWidth,
+            height = gradHeight - gradHeight // 2 }
+        segSpec.colorSpace = colorSpaceNone
+        local segImg = Image(segSpec)
         local segImgPxItr = segImg:pixels()
 
         local swatchesDict = {}
@@ -650,9 +662,13 @@ dlg:button {
         -- Create image, prepare for loop.
         local quantUse = quantAzims or quantIncls
         local szInv = 1.0 / (size - 1.0)
-        local img = Image(size, size)
-        local pxitr = img:pixels()
-        for elm in pxitr do
+
+        local imgSpec = ImageSpec { width = size, height = size }
+        imgSpec.colorSpace = ColorSpace()
+        local img = Image(imgSpec)
+
+        local pxItr = img:pixels()
+        for elm in pxItr do
 
             -- Find rise and run.
             local yNrm = elm.y * szInv

@@ -311,7 +311,11 @@ dlg:button {
         local useShadow = (hexShd & 0xff000000) ~= 0
 
         -- Create background source image to copy.
-        local bkgSrcImg = Image(widthImg, heightImg)
+        local bkgSrcSpec = ImageSpec {
+            width = widthImg,
+            height = heightImg }
+        bkgSrcSpec.colorSpace = sprite.colorSpace
+        local bkgSrcImg = Image(bkgSrcSpec)
         if useBkg then
             local bkgPxItr = bkgSrcImg:pixels()
             for elm in bkgPxItr do elm(hexBkg) end

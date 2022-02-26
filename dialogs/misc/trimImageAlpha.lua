@@ -40,6 +40,14 @@ dlg:button {
             local target = args.target
             local padding = args.padding
 
+            -- Tile map layers should not be trimmed, so check
+            -- if Aseprite is newer than 1.3.
+            local version = app.version
+            local checkForTilemaps = false
+            if version.major >= 1 and version.minor >= 3 then
+                checkForTilemaps = true
+            end
+
             local alphaIndex = activeSprite.transparentColor
 
             local cels = {}
@@ -60,13 +68,22 @@ dlg:button {
                 for i = 1, celsLen, 1 do
                     local cel = cels[i]
                     if cel then
-                        local srcImg = cel.image
-                        -- if srcImg then
-                        local trgImg, x, y = trimImage(srcImg, padding, alphaIndex)
-                        local srcPos = cel.position
-                        cel.position = Point(srcPos.x + x, srcPos.y + y)
-                        cel.image = trgImg
-                        -- end
+                        local layer = cel.layer
+                        local layerIsTilemap = false
+                        if checkForTilemaps then
+                            layerIsTilemap = layer.isTilemap
+                        end
+
+                        if layerIsTilemap then
+                            -- Tile map layers should only belong to
+                            -- .aseprite files, and hence not need this.
+                        else
+                            local srcImg = cel.image
+                            local trgImg, x, y = trimImage(srcImg, padding, alphaIndex)
+                            local srcPos = cel.position
+                            cel.position = Point(srcPos.x + x, srcPos.y + y)
+                            cel.image = trgImg
+                        end
                     end
                 end
             end)
