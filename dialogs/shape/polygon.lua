@@ -22,24 +22,24 @@ dlg:slider {
     id = "sides",
     label = "Sides:",
     min = 3,
-    max = 9,
+    max = 16,
     value = defaults.sides
 }
 
-dlg:newrow { always = false }
+-- dlg:newrow { always = false }
 
-dlg:slider {
-    id = "cornerRound",
-    label = "Corner Round:",
-    min = 0,
-    max = 100,
-    value = defaults.cornerRound,
-    onchange = function()
-        local args = dlg.data
-        local cr = args.cornerRound
-        dlg:modify { id="resolution", visible = cr > 0 }
-    end
-}
+-- dlg:slider {
+--     id = "cornerRound",
+--     label = "Corner Round:",
+--     min = 0,
+--     max = 100,
+--     value = defaults.cornerRound,
+--     onchange = function()
+--         local args = dlg.data
+--         local cr = args.cornerRound
+--         dlg:modify { id="resolution", visible = cr > 0 }
+--     end
+-- }
 
 dlg:newrow { always = false }
 
@@ -150,7 +150,7 @@ dlg:button {
 
         local args = dlg.data
         local sectors = args.sides
-        local cornerRound = args.cornerRound
+        local cornerRound = args.cornerRound or defaults.cornerRound
         local resolution = args.resolution
 
         -- Create transform matrix.

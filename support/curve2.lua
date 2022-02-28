@@ -405,6 +405,9 @@ function Curve2.polygon(sectors, rounding)
     -- 4 knots on a Bezier circle, so multiply
     -- by number of corners instead.
     local t = 0.3333333333333333 - 0.5 * vRound
+
+    -- TODO: Kappa becomes ineffective when the
+    -- number of sides is greater than 8.
     local k = 0.1380711874576984 * vSect
 
     -- There are 2 knots for every corner.
