@@ -22,7 +22,7 @@ dlg:slider {
     id = "sides",
     label = "Sides:",
     min = 3,
-    max = 16,
+    max = 9,
     value = defaults.sides
 }
 
