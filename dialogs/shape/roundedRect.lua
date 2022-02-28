@@ -4,6 +4,7 @@ local cornerInputs = { "NON_UNIFORM", "UNIFORM" }
 
 local defaults = {
     resolution = 32,
+    handles = 0,
     lbx = 5,
     lby = 5,
     ubx = 95,
@@ -19,7 +20,6 @@ local defaults = {
     strokeClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
     useFill = true,
     fillClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
-    handles = 0,
     pullFocus = false
 }
 
@@ -28,10 +28,12 @@ local dlg = Dialog { title = "Rounded Rectangle" }
 dlg:slider {
     id = "resolution",
     label = "Resolution:",
-    min = 1,
+    min = 2,
     max = 64,
     value = defaults.resolution
 }
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "handles",

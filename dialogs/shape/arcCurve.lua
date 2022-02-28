@@ -59,7 +59,7 @@ dlg:newrow { always = false }
 dlg:slider {
     id = "resolution",
     label = "Resolution:",
-    min = 1,
+    min = 2,
     max = 64,
     value = defaults.resolution
 }

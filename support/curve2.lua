@@ -364,6 +364,88 @@ function Curve2.infinity()
     }, "Infinity")
 end
 
+---Creates a polygon with rounded corners.
+---Rounding is a factor expected to be in the
+---range [0.0, 1.0].
+---@param sectors number number of sides
+---@param rounding number corner rounding
+function Curve2.polygon(sectors, rounding)
+    -- Real expected range is in [0, 1/3].
+    -- A range of [0, 0.5] causes problems
+    -- with overlapping knot coordinates
+    -- and straight edge handles.
+    local vRound = 0.16666666666666666
+    if rounding then
+        vRound = math.min(math.max(
+            rounding, 0.000005), 0.999995) / 3.0
+    end
+
+    -- Radius of 0.5 is assumed.
+    local vRad = 0.5
+    local vSect = 3
+    if sectors and sectors > 3 then
+        vSect = sectors
+    end
+
+    -- Create corners.
+    -- It is wasteful to create this array,
+    -- but the alternative would be to calc
+    -- sine and cosine of three angles.
+    local vs = {}
+    local vSectn1 = vSect - 1
+    local toTheta = 6.283185307179586 / vSect
+    for i = 0, vSectn1, 1 do
+        local theta = i * toTheta
+        vs[1 + i] = Vec2.fromPolar(theta, vRad)
+    end
+
+    -- t is factor for straight edge handle easing.
+    -- k is factor for corner handle easing.
+    -- kappa is 4 * (math.sqrt(2) - 1) / 3 for
+    -- 4 knots on a Bezier circle, so multiply
+    -- by number of corners instead.
+    local t = 0.3333333333333333 - 0.5 * vRound
+    local k = 0.1380711874576984 * vSect
+
+    -- There are 2 knots for every corner.
+    local kns = {}
+    for i = 0, vSectn1, 1 do
+        local h = (i - 1) % vSect
+        local j = (i + 1) % vSect
+
+        local vPrev = vs[1 + h]
+        local vCurr = vs[1 + i]
+        local vNext = vs[1 + j]
+
+        -- Knot coordinates before and after corner.
+        local coFore = Vec2.mixNum(vCurr, vPrev, vRound)
+        local coAft = Vec2.mixNum(vCurr, vNext, vRound)
+
+        -- Straight edge handles.
+        local rhFore = Vec2.mixNum(coFore, vPrev, t)
+        local fhAft = Vec2.mixNum(coAft, vNext, t)
+
+        -- Corner handles.
+        local fhFore = Vec2.mixNum(coFore, vCurr, k)
+        local rhAft = Vec2.mixNum(coAft, vCurr, k)
+
+        kns[1 + i + i] = Knot2.new(coFore, fhFore, rhFore)
+        kns[2 + i + i] = Knot2.new(coAft, fhAft, rhAft)
+    end
+
+    local name = "Polygon"
+    if vSect == 3 then name = "Triangle"
+    elseif vSect == 4 then name = "Quadrilateral"
+    elseif vSect == 5 then name = "Pentagon"
+    elseif vSect == 6 then name = "Hexagon"
+    elseif vSect == 7 then name = "Heptagon"
+    elseif vSect == 8 then name = "Octagon"
+    elseif vSect == 9 then name = "Enneagon"
+    end
+
+    return Curve2.new(true, kns, name)
+end
+
 ---Creates a rectangle with rounded corners.
 ---Rounding may be either positive or negative.
 ---@param lbx number lower bound x

@@ -553,16 +553,16 @@ end
 ---@param sectors number sides
 ---@return table
 function Mesh2.polygon(sectors)
-    local vsect = 3
-    if sectors > 3 then vsect = sectors end
+    local vSect = 3
+    if sectors > 3 then vSect = sectors end
     local vrad = 0.5
-    local toTheta = 6.283185307179586 / vsect
+    local toTheta = 6.283185307179586 / vSect
     local vs = {}
     local f = {}
 
     local cos = math.cos
     local sin = math.sin
-    for i = 0, vsect - 1, 1 do
+    for i = 0, vSect - 1, 1 do
         local theta = i * toTheta
         vs[1 + i] = Vec2.new(
             vrad * cos(theta),
@@ -572,13 +572,13 @@ function Mesh2.polygon(sectors)
     local fs = { f }
 
     local name = "Polygon"
-        if vsect == 3 then name = "Triangle"
-    elseif vsect == 4 then name = "Quadrilateral"
-    elseif vsect == 5 then name = "Pentagon"
-    elseif vsect == 6 then name = "Hexagon"
-    elseif vsect == 7 then name = "Heptagon"
-    elseif vsect == 8 then name = "Octagon"
-    elseif vsect == 9 then name = "Enneagon"
+        if vSect == 3 then name = "Triangle"
+    elseif vSect == 4 then name = "Quadrilateral"
+    elseif vSect == 5 then name = "Pentagon"
+    elseif vSect == 6 then name = "Hexagon"
+    elseif vSect == 7 then name = "Heptagon"
+    elseif vSect == 8 then name = "Octagon"
+    elseif vSect == 9 then name = "Enneagon"
     end
 
     return Mesh2.new(fs, vs, name)

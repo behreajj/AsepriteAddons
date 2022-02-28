@@ -70,8 +70,6 @@ dlg:button {
             return
         end
 
-        -- TODO: How to handle tile maps for v1.3?
-
         -- Cache global functions used in loop.
         local trimAlphaFunc = AseUtilities.trimImageAlpha
         local trimCelFunc = AseUtilities.trimCelToSprite

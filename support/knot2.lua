@@ -173,6 +173,27 @@ function Knot2.bezierPoint(a, b, step)
         step)
 end
 
+---Gets the knot's fore handle as a direction.
+---@param knot table knot
+---@return table
+function Knot2.foreDir(knot)
+    return Vec2.normalize(Knot2.foreVec(knot))
+end
+
+---Gets the knot's fore handle magnitude.
+---@param knot table
+---@return number
+function Knot2.foreMag(knot)
+    return Vec2.dist(knot.fh, knot.co)
+end
+
+---Gets the knot's rear handle as a vector.
+---@param knot table knot
+---@return table
+function Knot2.foreVec(knot)
+    return Vec2.sub(knot.fh, knot.co)
+end
+
 ---Forms a knot to be used in arcs and circles
 ---at an origin with a given radius.
 ---For internal use only. Does not validate arguments.
@@ -204,25 +225,38 @@ function Knot2.fromPolarInternal(
     return Knot2.new(co, fh, rh)
 end
 
----Gets the knot's fore handle as a direction.
----@param knot table knot
+---Sets a knot from a line segment. Assumes that
+---the previous knot's coordinate is set to the
+---first anchor point. The previous knot's fore handle,
+---the next knot's rear handle and the next knot's
+---coordinate are set by this function.
+---@param nextAnchor table next anchor point
+---@param prevKnot table previous knot
+---@param nextKnot table next knot
 ---@return table
-function Knot2.foreDir(knot)
-    return Vec2.normalize(Knot2.foreVec(knot))
-end
+function Knot2.fromSegLinear(
+    nextAnchor, prevKnot, nextKnot)
 
----Gets the knot's fore handle magnitude.
----@param knot table
----@return number
-function Knot2.foreMag(knot)
-    return Vec2.dist(knot.fh, knot.co)
-end
+    nextKnot.co = Vec2.new(
+        nextAnchor.x,
+        nextAnchor.y)
 
----Gets the knot's rear handle as a vector.
----@param knot table knot
----@return table
-function Knot2.foreVec(knot)
-    return Vec2.sub(knot.fh, knot.co)
+    local prevCoord = prevKnot.co
+    local nextCoord = nextKnot.co
+
+    prevKnot.fh = Vec2.new(
+          prevCoord.x * 0.6666666666666667
+        + nextCoord.x * 0.3333333333333333,
+          prevCoord.y * 0.6666666666666667
+        + nextCoord.y * 0.3333333333333333)
+
+    nextKnot.rh = Vec2.new(
+          nextCoord.x * 0.6666666666666667
+        + prevCoord.x * 0.3333333333333333,
+          nextCoord.y * 0.6666666666666667
+        + prevCoord.y * 0.3333333333333333)
+
+    return nextKnot
 end
 
 ---Gets the knot's rear handle as a direction.
