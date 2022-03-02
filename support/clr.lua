@@ -73,14 +73,6 @@ function Clr:__lt(b)
     return Clr.toHex(self) < Clr.toHex(b)
 end
 
-function Clr:__shl(b)
-    return Clr.bitShiftLeft(self, Clr.toHex(b))
-end
-
-function Clr:__shr(b)
-    return Clr.bitShiftRight(self, Clr.toHex(b))
-end
-
 function Clr:__tostring()
     return Clr.toJson(self)
 end
@@ -888,7 +880,7 @@ end
 ---Mixes two colors by a step.
 ---Defaults to the fastest algorithm, i.e.,
 ---applies linear interpolation to each channel
----with no transformation.
+---with no color space transformation.
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
@@ -1112,7 +1104,6 @@ end
 ---@param hueFunc function hue function
 ---@return table
 function Clr.mixLch(a, b, t, hueFunc)
-
     local u = t or 0.5
     if u <= 0.0 then
         return Clr.new(a.r, a.g, a.b, a.a)

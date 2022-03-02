@@ -35,7 +35,11 @@ function Complex:__len()
 end
 
 function Complex:__mul(b)
-    return Complex.mul(self, b)
+    if type(b) == "number" then
+        return Complex.scale(self, b)
+    else
+        return Complex.mul(self, b)
+    end
 end
 
 function Complex:__pow(b)
@@ -228,7 +232,11 @@ end
 ---@param b table right operand
 ---@return table
 function Complex.pow(a, b)
-    return Complex.powComplex(a, b)
+    if type(b) == "number" then
+        return Complex.powNum(a, b)
+    else
+        return Complex.powComplex(a, b)
+    end
 end
 
 ---Raises a complex number to the power of another.

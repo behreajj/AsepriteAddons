@@ -6,35 +6,52 @@ dofile("../../support/aseutilities.lua")
 -- opening a sprite with a profile.
 local colorModes = { "RGB", "INDEXED", "GRAY" }
 local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
+local sizeModes = { "ASPECT", "CUSTOM" }
 
 local defaults = {
     filename = "Sprite",
+
+    sizeMode = "CUSTOM",
     width = 320,
     height = 180,
+    aRatio = 16,
+    bRatio = 9,
+    aspectScale = 20,
+
     colorMode = "RGB",
     rChannel = 0,
     gChannel = 0,
     bChannel = 0,
     aChannel = 0,
     grayChannel = 0,
-    linkRgbGray = false,
-    -- Mask MUST be index ZERO.
-    transparencyMask = 0,
     bkgIdx = 0,
+    linkRgbGray = true,
 
     frames = 1,
-    fps = 24,
+    fps = 12,
 
     palType = "DEFAULT",
     prependMask = true,
 
     xGrid = 0,
     yGrid = 0,
-    wGrid = 32,
-    hGrid = 32,
+    wGrid = 20,
+    hGrid = 20,
 
+    -- TODO: Button for copying current sprite's
+    -- dimensions and specs?
     pullFocus = true
 }
+
+local function gcd(a, b)
+    while b ~= 0 do a, b = b, a % b end
+    return a
+end
+
+local function reduceRatio(a, b)
+    local denom = gcd(a, b)
+    return a // denom, b // denom
+end
 
 local function updateColorPreviewRgba(dialog)
     local args = dialog.data
@@ -67,7 +84,7 @@ end
 
 local function updateGrayLinkFromRgb(dialog)
     local args = dialog.data
-    local link = args.linkRgbGray
+    local link = defaults.linkRgbGray
     if link then
         local v = rgbToGray(
             args.rChannel,
@@ -79,13 +96,40 @@ end
 
 local function updateRgbLinkFromGray(dialog)
     local args = dialog.data
-    local link = args.linkRgbGray
+    local link = defaults.linkRgbGray
     if link then
         local v = args.grayChannel
         dialog:modify { id = "bChannel", value = v }
         dialog:modify { id = "gChannel", value = v }
         dialog:modify { id = "rChannel", value = v }
     end
+end
+
+local function updateRatio(dialog)
+    local args = dialog.data
+    local aRatio = args.aRatio
+    local bRatio = args.bRatio
+    aRatio, bRatio = reduceRatio(aRatio, bRatio)
+    dialog:modify { id = "aRatio", value = aRatio }
+    dialog:modify { id = "bRatio", value = bRatio }
+end
+
+local function updateSizeFromAspect(dialog)
+    local args = dialog.data
+    local aRatio = args.aRatio
+    local bRatio = args.bRatio
+    local scale = args.aspectScale
+
+    scale = math.abs(scale)
+    scale = math.tointeger(0.5 + scale)
+    scale = math.max(1, scale)
+
+    aRatio, bRatio = reduceRatio(aRatio, bRatio)
+    local w = aRatio * scale
+    local h = bRatio * scale
+
+    dialog:modify { id = "width", text = string.format("%.0f", w) }
+    dialog:modify { id = "height", text = string.format("%.0f", h) }
 end
 
 local dlg = Dialog { title = "New Sprite +" }
@@ -99,20 +143,86 @@ dlg:entry {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "sizeMode",
+    label = "Size:",
+    option = defaults.sizeMode,
+    options = sizeModes,
+    onchange = function()
+        local args = dlg.data
+        local sizeMode = args.sizeMode
+
+        local isCust = sizeMode == "CUSTOM"
+        dlg:modify { id = "width", visible = isCust }
+        dlg:modify { id = "height", visible = isCust }
+
+        local isTmpl = sizeMode == "ASPECT"
+        dlg:modify { id = "aRatio", visible = isTmpl }
+        dlg:modify { id = "bRatio", visible = isTmpl }
+        dlg:modify { id = "aspectScale", visible = isTmpl }
+
+        updateRatio(dlg)
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:number {
     id = "width",
-    label = "Size:",
     text = string.format("%.0f", defaults.width),
-    decimals = 0
+    decimals = 0,
+    visible = defaults.sizeMode == "CUSTOM"
 }
 
 dlg:number {
     id = "height",
     text = string.format("%.0f", defaults.height),
-    decimals = 0
+    decimals = 0,
+    visible = defaults.sizeMode == "CUSTOM"
 }
 
 dlg:newrow { always = false }
+
+dlg:slider {
+    id = "aRatio",
+    label = "Ratio:",
+    min = 1,
+    max = 16,
+    value = defaults.aRatio,
+    visible = defaults.sizeMode == "ASPECT",
+    onchange = function()
+        updateSizeFromAspect(dlg)
+    end
+}
+
+dlg:slider {
+    id = "bRatio",
+    min = 1,
+    max = 16,
+    value = defaults.bRatio,
+    visible = defaults.sizeMode == "ASPECT",
+    onchange = function()
+        updateSizeFromAspect(dlg)
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "aspectScale",
+    label = "Scale:",
+    text = string.format("%.0f", defaults.aspectScale),
+    decimals = 0,
+    visible = defaults.sizeMode == "ASPECT",
+    onchange = function()
+        updateRatio(dlg)
+        updateSizeFromAspect(dlg)
+    end
+}
+
+dlg:separator {
+    id = "clrSeparate"
+}
 
 dlg:combobox {
     id = "colorMode",
@@ -133,7 +243,6 @@ dlg:combobox {
         dlg:modify { id = "gChannel", visible = minAlpha and isRgb }
         dlg:modify { id = "rChannel", visible = minAlpha and isRgb }
         dlg:modify { id = "grayChannel", visible = minAlpha and isGray }
-        dlg:modify { id = "linkRgbGray", visible = not isIndexed }
         dlg:modify { id = "bkgIdx", visible = isIndexed }
 
         local palType = args.palType
@@ -208,7 +317,6 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "rChannel",
-    -- label = "Red:",
     label = "RGB:",
     min = 0,
     max = 255,
@@ -221,11 +329,8 @@ dlg:slider {
     end
 }
 
--- dlg:newrow { always = false }
-
 dlg:slider {
     id = "gChannel",
-    -- label = "Green:",
     min = 0,
     max = 255,
     value = defaults.gChannel,
@@ -237,11 +342,8 @@ dlg:slider {
     end
 }
 
--- dlg:newrow { always = false }
-
 dlg:slider {
     id = "bChannel",
-    -- label = "Blue:",
     min = 0,
     max = 255,
     value = defaults.bChannel,
@@ -266,24 +368,6 @@ dlg:slider {
     onchange = function()
         updateColorPreviewGray(dlg)
         updateRgbLinkFromGray(dlg)
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
-    id = "linkRgbGray",
-    label = "Link:",
-    text = "RGB and Gray",
-    selected = defaults.linkRgbGray,
-    visible = defaults.colorMode ~= "INDEXED",
-    onclick = function()
-        local args = dlg.data
-        if args.colorMode == "GRAY" then
-            updateRgbLinkFromGray(dlg)
-        elseif args.colorMode == "RGB" then
-            updateGrayLinkFromRgb(dlg)
-        end
     end
 }
 
@@ -377,7 +461,7 @@ dlg:check {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "ok",
+    id = "confirm",
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()

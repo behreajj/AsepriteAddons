@@ -60,7 +60,11 @@ function Quaternion:__len()
 end
 
 function Quaternion:__mul(b)
-    return Quaternion.mul(self, b)
+    if type(b) == "number" then
+        return Quaternion.scale(self, b)
+    else
+        return Quaternion.mul(self, b)
+    end
 end
 
 function Quaternion:__sub(b)

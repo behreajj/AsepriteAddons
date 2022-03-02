@@ -58,7 +58,11 @@ function Vec3:__mod(b)
 end
 
 function Vec3:__mul(b)
-    return Vec3.hadamard(self, b)
+    if type(b) == "number" then
+        return Vec3.scale(self, b)
+    else
+        return Vec3.hadamard(self, b)
+    end
 end
 
 function Vec3:__pow(b)
@@ -769,7 +773,11 @@ end
 ---@param t any step
 ---@return table
 function Vec3.mix(a, b, t)
-    return Vec3.mixVec3(a, b, t)
+    if type(t) == "number" then
+        return Vec3.mixNum(a, b, t)
+    else
+        return Vec3.mixVec2(a, b, t)
+    end
 end
 
 ---Mixes two vectors together by a step.

@@ -53,7 +53,11 @@ function Vec2:__mod(b)
 end
 
 function Vec2:__mul(b)
-    return Vec2.hadamard(self, b)
+    if type(b) == "number" then
+        return Vec2.scale(self, b)
+    else
+        return Vec2.hadamard(self, b)
+    end
 end
 
 function Vec2:__pow(b)
@@ -536,7 +540,11 @@ end
 ---@param t any step
 ---@return table
 function Vec2.mix(a, b, t)
-    return Vec2.mixVec2(a, b, t)
+    if type(t) == "number" then
+        return Vec2.mixNum(a, b, t)
+    else
+        return Vec2.mixVec2(a, b, t)
+    end
 end
 
 ---Mixes two vectors together by a step.

@@ -63,7 +63,11 @@ function Vec4:__mod(b)
 end
 
 function Vec4:__mul(b)
-    return Vec4.hadamard(self, b)
+    if type(b) == "number" then
+        return Vec4.scale(self, b)
+    else
+        return Vec4.hadamard(self, b)
+    end
 end
 
 function Vec4:__pow(b)
@@ -620,7 +624,11 @@ end
 ---@param t any step
 ---@return table
 function Vec4.mix(a, b, t)
-    return Vec4.mixVec4(a, b, t)
+    if type(t) == "number" then
+        return Vec4.mixNum(a, b, t)
+    else
+        return Vec4.mixVec2(a, b, t)
+    end
 end
 
 ---Mixes two vectors together by a step.

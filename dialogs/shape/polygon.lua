@@ -2,7 +2,6 @@ dofile("../../support/aseutilities.lua")
 
 local defaults = {
     sides = 6,
-    cornerRound = 0,
     resolution = 16,
     angle = 90,
     scale = 32,
@@ -24,32 +23,6 @@ dlg:slider {
     min = 3,
     max = 16,
     value = defaults.sides
-}
-
--- dlg:newrow { always = false }
-
--- dlg:slider {
---     id = "cornerRound",
---     label = "Corner Round:",
---     min = 0,
---     max = 100,
---     value = defaults.cornerRound,
---     onchange = function()
---         local args = dlg.data
---         local cr = args.cornerRound
---         dlg:modify { id="resolution", visible = cr > 0 }
---     end
--- }
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "resolution",
-    label = "Resolution:",
-    min = 2,
-    max = 64,
-    value = defaults.resolution,
-    visible = defaults.cornerRound > 0
 }
 
 dlg:newrow { always = false }
@@ -150,8 +123,6 @@ dlg:button {
 
         local args = dlg.data
         local sectors = args.sides
-        local cornerRound = args.cornerRound or defaults.cornerRound
-        local resolution = args.resolution
 
         -- Create transform matrix.
         local t = Mat3.fromTranslation(
@@ -163,14 +134,7 @@ dlg:button {
         local mat = Mat3.mul(Mat3.mul(t, s), r)
 
         -- Initialize canvas.
-        local name = nil
-        if cornerRound > 0 then
-            name = string.format(
-                "Polygon.%03d.%03d.%03d",
-                sectors, cornerRound, resolution)
-        else
-            name = string.format("Polygon.%03d", sectors)
-        end
+        local name = string.format("Polygon.%03d", sectors)
         local sprite = AseUtilities.initCanvas(
             64, 64, name,
             { args.fillClr.rgbaPixel,
@@ -179,34 +143,17 @@ dlg:button {
         local frame = app.activeFrame or sprite.frames[1]
         local cel = sprite:newCel(layer, frame)
 
-        -- Use a curve if there is corner rounding.
-        if cornerRound > 0.0 then
-            local curve = Curve2.polygon(
-                sectors, 0.01 * cornerRound)
-            Utilities.mulMat3Curve2(mat, curve)
-            AseUtilities.drawCurve2(
-                curve,
-                resolution,
-                args.useFill,
-                args.fillClr,
-                args.useStroke,
-                args.strokeClr,
-                Brush(args.strokeWeight),
-                cel,
-                layer)
-        else
-            local mesh = Mesh2.polygon(sectors)
-            Utilities.mulMat3Mesh2(mat, mesh)
-            AseUtilities.drawMesh2(
-                mesh,
-                args.useFill,
-                args.fillClr,
-                args.useStroke,
-                args.strokeClr,
-                Brush(args.strokeWeight),
-                cel,
-                layer)
-        end
+        local mesh = Mesh2.polygon(sectors)
+        Utilities.mulMat3Mesh2(mat, mesh)
+        AseUtilities.drawMesh2(
+            mesh,
+            args.useFill,
+            args.fillClr,
+            args.useStroke,
+            args.strokeClr,
+            Brush(args.strokeWeight),
+            cel,
+            layer)
 
         app.refresh()
     end

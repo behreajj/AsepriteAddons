@@ -190,7 +190,7 @@ end
 
 ---Evaluates a curve at its first knot,
 ---returning a copy of the first knot coord.
----@param curve table the curve
+---@param curve table curve
 ---@return table
 function Curve3.evalFirst(curve)
     local kFirst = curve.knots[1]
@@ -203,7 +203,7 @@ end
 
 ---Evaluates a curve at its last knot,
 ---returning a copy of the last knot coord.
----@param curve table the curve
+---@param curve table curve
 ---@return table
 function Curve3.evalLast(curve)
     local kLast = curve.knots[#curve.knots]
