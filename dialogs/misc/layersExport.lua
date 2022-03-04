@@ -388,14 +388,22 @@ dlg:button {
         local blend = AseUtilities.blend
         local trimAlpha = AseUtilities.trimImageAlpha
 
-        -- Clean file path strings.
+        -- Beware, .webp file extensions do not allow
+        -- indexed color mode and Aseprite doesn't handle
+        -- this limit gracefully. However, because RGB
+        -- is required above anyway, no need to worry.
+        local fileExt = app.fs.fileExtension(filename)
+
         local filePath = app.fs.filePath(filename)
         filePath = strgsub(filePath, "\\", "\\\\")
+
         local pathSep = app.fs.pathSeparator
         pathSep = strgsub(pathSep, "\\", "\\\\")
+
         local fileTitle = app.fs.fileTitle(filename)
-        local fileExt = app.fs.fileExtension(filename)
-        fileTitle = strgsub(fileTitle, "%s+", "")
+        fileTitle = Utilities.validateFilename(fileTitle)
+        -- fileTitle = strgsub(fileTitle, "%s+", "")
+
         filePath = filePath .. pathSep
         local filePrefix = filePath .. fileTitle
 
@@ -784,7 +792,13 @@ dlg:button {
                 if layerData == nil or #layerData < 1 then
                     layerData = missingUserData
                 end
-                local layerName = jsonLayer.layerName
+
+                local layerName = "Layer"
+                if jsonLayer.layerName
+                    and #jsonLayer.layerName > 0 then
+                    layerName = jsonLayer.layerName
+                end
+
                 local layerOpacity = 0xff
                 if jsonLayer.layerOpacity then
                     layerOpacity = jsonLayer.layerOpacity

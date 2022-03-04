@@ -85,7 +85,11 @@ dlg:button {
 
                                 -- Copy layer.
                                 local trgLayer = activeSprite:newLayer()
-                                trgLayer.name = srcLayer.name .. ".Adjusted"
+                                local srcLayerName = "Layer"
+                                if srcLayer.name and #srcLayer.name > 0 then
+                                    srcLayerName = srcLayer.name
+                                end
+                                trgLayer.name = srcLayerName .. ".Adjusted"
                                 if srcLayer.opacity then
                                     trgLayer.opacity = srcLayer.opacity
                                 end

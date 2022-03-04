@@ -920,4 +920,31 @@ function Utilities.uniqueColors(hexes, za)
     return uniques, dict
 end
 
+---Trims left and right ends of a string that
+---holds a file name. Assumes file name does
+---not include file extension or directory.
+---Replaces the characters '\\', '/', ':',
+---'*', '?', '"', '<', '>', '|', '.', '''
+---and '`' with an underscore, '_'.
+---@param filename string
+---@return string
+function Utilities.validateFilename(filename)
+    local fileChars = Utilities.stringToCharTable(filename)
+    Utilities.trimCharsInitial(fileChars)
+    Utilities.trimCharsFinal(fileChars)
+    local len = #fileChars
+    for i = len, 1, -1 do
+        local char = fileChars[i]
+        if char == '\\' or char == '`'
+        or char == '/' or char == ':'
+        or char == '*' or char == '?'
+        or char == '\"' or char == '\''
+        or char == '<' or char == '>'
+        or char == '|' or char == '.' then
+            fileChars[i] = '_'
+        end
+    end
+    return table.concat(fileChars)
+end
+
 return Utilities

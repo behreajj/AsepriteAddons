@@ -300,8 +300,11 @@ dlg:button {
         local trgLayer = nil
         if copyToLayer then
             trgLayer = sprite:newLayer()
-            trgLayer.name = srcLayer.name
-                .. "." .. clrSpacePreset
+            local srcLayerName = "Layer"
+            if srcLayer.name and #srcLayer.name > 0 then
+                srcLayerName = srcLayer.name
+            end
+            trgLayer.name = srcLayerName .. "." .. clrSpacePreset
             if srcLayer.opacity then
                 trgLayer.opacity = srcLayer.opacity
             end
@@ -368,7 +371,7 @@ dlg:button {
                         local trgCel = sprite:newCel(
                                     trgLayer, srcFrame,
                                     trgImg, srcCel.position)
-                                trgCel.opacity = srcCel.opacity
+                        trgCel.opacity = srcCel.opacity
                     else
                         srcCel.image = trgImg
                     end

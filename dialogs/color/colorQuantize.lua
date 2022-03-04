@@ -351,9 +351,13 @@ dlg:button {
         local trgLayer = nil
         if copyToLayer then
             trgLayer = sprite:newLayer()
+            local srcLayerName = "Layer"
+            if srcLayer.name and #srcLayer.name > 0 then
+                srcLayerName = srcLayer.name
+            end
             trgLayer.name = string.format(
                 "%s.Quantized.R%02d.G%02d.B%02d.A%02d",
-                srcLayer.name,
+                srcLayerName,
                 rLevels, gLevels, bLevels, aLevels)
             if srcLayer.opacity then
                 trgLayer.opacity = srcLayer.opacity

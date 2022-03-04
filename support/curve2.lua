@@ -455,6 +455,8 @@ function Curve2.rect(
         Vec2.new(0.0, 0.0),
         Vec2.new(lft, u * btmIns1 + t * topIns1))
 
+    -- Multilpy by kappa.
+    -- 4 * (math.sqrt(2) - 1) / 3
     local vbrk = vbr * 0.5522847498307936
     local vtrk = vtr * 0.5522847498307936
     local vtlk = vtl * 0.5522847498307936

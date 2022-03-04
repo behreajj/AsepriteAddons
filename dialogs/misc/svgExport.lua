@@ -64,10 +64,15 @@ local function layerToSvgStr(
     end
 
     if layer.isVisible and lyrAlpha > 0 then
+        -- Possible for layer name to be empty string.
+        local layerName = "Layer"
+        if layer.name and #layer.name > 0 then
+            layerName = layer.name
+        end
+
         if isGroup then
             local grpStr = string.format(
-                "\n<g id=\"%s\">",
-                layer.name)
+                "\n<g id=\"%s\">", layerName)
 
             local groupLayers = layer.layers
             local groupLayersLen = #groupLayers
@@ -95,8 +100,7 @@ local function layerToSvgStr(
                 intersect.y = intersect.y - yCel
 
                 local grpStr = string.format(
-                    "\n<g id=\"%s\"",
-                    layer.name)
+                    "\n<g id=\"%s\"", layerName)
 
                 -- Layer opacity and cel opacity are compounded
                 -- together to simplify.

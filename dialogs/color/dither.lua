@@ -586,9 +586,13 @@ dlg:button {
 
                         -- Copy layer.
                         local trgLayer = sprite:newLayer()
+                        local srcLayerName = "Layer"
+                        if srcLayer.name and #srcLayer.name > 0 then
+                            srcLayerName = srcLayer.name
+                        end
                         trgLayer.name = string.format(
                             "%s.Dither.%s.%03d",
-                            srcLayer.name, dmStr, factor100)
+                            srcLayerName, dmStr, factor100)
                         if srcLayer.opacity then
                             trgLayer.opacity = srcLayer.opacity
                         end

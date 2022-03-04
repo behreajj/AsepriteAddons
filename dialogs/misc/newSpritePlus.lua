@@ -30,7 +30,7 @@ local defaults = {
     frames = 1,
     fps = 12,
 
-    palType = "DEFAULT",
+    palType = "ACTIVE",
     prependMask = true,
 
     xGrid = 0,
@@ -553,12 +553,18 @@ dlg:button {
         spriteHeight = math.max(1, spriteHeight)
 
         -- Create sprite, set file name, set to active.
-        local filename = args.filename or defaults.filename
-        if #filename < 1 then filename = defaults.filename end
         local newSprite = Sprite(
             spriteWidth, spriteHeight,
             ColorMode.RGB)
+
+        -- File name needs extra validation to remove
+        -- initial spaces. This could be even more thorough,
+        -- to remove characters like '.', '\' and '/'.
+        local filename = args.filename or defaults.filename
+        filename = Utilities.validateFilename(filename)
+        if #filename < 1 then filename = defaults.filename end
         newSprite.filename = filename
+
         app.activeSprite = newSprite
 
         -- Only assign palette here if not grayscale.
