@@ -78,7 +78,7 @@ dlg:newrow { always = false }
 dlg:number {
     id = "scale",
     label = "Scale:",
-    text = string.format("%.1f", defaults.scale),
+    text = string.format("%.3f", defaults.scale),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
@@ -87,13 +87,13 @@ dlg:newrow { always = false }
 dlg:number {
     id = "xOrigin",
     label = "Origin:",
-    text = string.format("%.1f", defaults.xOrigin),
+    text = string.format("%.3f", defaults.xOrigin),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
     id = "yOrigin",
-    text = string.format("%.1f", defaults.yOrigin),
+    text = string.format("%.3f", defaults.yOrigin),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 

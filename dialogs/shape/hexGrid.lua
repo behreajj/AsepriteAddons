@@ -38,13 +38,13 @@ dlg:newrow { always = false }
 dlg:number {
     id = "xOrigin",
     label = "Origin:",
-    text = string.format("%.1f", defaults.xOrigin),
+    text = string.format("%.3f", defaults.xOrigin),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
     id = "yOrigin",
-    text = string.format("%.1f", defaults.yOrigin),
+    text = string.format("%.3f", defaults.yOrigin),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 

@@ -623,19 +623,25 @@ end
 ---Returns a table with the keys l, c, h, a.
 ---The a stands for the alpha. Neither alpha nor
 ---lightness are affected by the transformation.
----The hue is stored in [0.0, 1.0].
+---Lightness is expected to be in [0.0, 100.0].
+---Chroma is expected to be in [0.0, 135.0].
+---Hue is expected to be in [0.0, 1.0].
 ---@param l number lightness
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
 ---@param alpha number alpha channel
+---@param tol number grayscale tolerance
 ---@return table
-function Clr.labToLch(l, a, b, alpha)
+function Clr.labToLch(l, a, b, alpha, tol)
+    -- 0.00004 is the square chroma for #FFFFFF.
+    local vTol = 0.007072
+    if tol then vTol = tol end
+
     local chromasq = a * a + b * b
     local chroma = 0.0
     local hue = 0.0
 
-    -- 0.00004 is the square chroma for #FFFFFF.
-    if chromasq < 0.00005 then
+    if chromasq < (vTol * vTol) then
         local fac = l * 0.01
         if fac < 0.0 then fac = 0.0
         elseif fac > 1.0 then fac = 1.0 end
@@ -730,8 +736,9 @@ end
 ---@param c number chromaticity
 ---@param h number hue in degrees
 ---@param a number alpha channel
+---@param tol number gray tolerance
 ---@return table
-function Clr.lchToLab(l, c, h, a)
+function Clr.lchToLab(l, c, h, a, tol)
     -- Return early cannot be done here because
     -- saturated colors are still possible at light = 0
     -- and light = 100.
@@ -742,8 +749,11 @@ function Clr.lchToLab(l, c, h, a)
         lVal = 100.0
     end
 
+    local vTol = 0.00005
+    if tol then vTol = tol end
+
     local cVal = c or 0.0
-    if cVal < 0.0 then cVal = 0.0 end
+    if cVal < vTol then cVal = 0.0 end
     local hVal = h % 1.0
     local aVal = a or 1.0
     return Clr.lchToLabInternal(lVal, cVal, hVal, aVal)
@@ -774,10 +784,11 @@ end
 ---@param c number chromaticity
 ---@param h number hue in degrees
 ---@param a number alpha channel
+---@param tol number grayscale tolerance
 ---@return table
-function Clr.lchTosRgba(l, c, h, a)
-    local lab = Clr.lchToLab(l, c, h, a)
-    return Clr.labTosRgba(lab.l, lab.a, lab.b, lab.alpha)
+function Clr.lchTosRgba(l, c, h, a, tol)
+    local x = Clr.lchToLab(l, c, h, a, tol)
+    return Clr.labTosRgba(x.l, x.a, x.b, x.alpha)
 end
 
 ---Converts a color from linear RGB to standard RGB (sRGB).
@@ -786,8 +797,7 @@ end
 ---@param a table color
 ---@return table
 function Clr.lRgbaTosRgba(a)
-    local aCl = Clr.clamp01(a)
-    return Clr.lRgbaTosRgbaInternal(aCl)
+    return Clr.lRgbaTosRgbaInternal(Clr.clamp01(a))
 end
 
 ---Converts a color from linear RGB to standard RGB (sRGB).
@@ -969,7 +979,6 @@ end
 ---@param hueFunc function hue function
 ---@return table
 function Clr.mixHslaInternal(a, b, t, hueFunc)
-
     local aHsla = Clr.sRgbaToHslaInternal(a.r, a.g, a.b, a.a)
     local bHsla = Clr.sRgbaToHslaInternal(b.r, b.g, b.b, b.a)
 
@@ -999,7 +1008,6 @@ end
 ---@param hueFunc function hue function
 ---@return table
 function Clr.mixHsva(a, b, t, hueFunc)
-
     local u = t or 0.5
     if u <= 0.0 then
         return Clr.clamp01(a)
@@ -1594,13 +1602,16 @@ end
 
 ---Converts a color from standard RGB to CIE LCH.
 ---The return table uses the keys l, c, h and a.
----The hue is stored as degrees in [0.0, 1.0].
+---Lightness is expected to be in [0.0, 100.0].
+---Chroma is expected to be in [0.0, 135.0].
+---Hue is expected to be in [0.0, 1.0].
 ---The alpha channel is unaffected by the transform.
 ---@param a table color
+---@param tol number gray tolerance
 ---@return table
-function Clr.sRgbaToLch(a)
+function Clr.sRgbaToLch(a, tol)
     local lab = Clr.sRgbaToLab(a)
-    return Clr.labToLch(lab.l, lab.a, lab.b, lab.alpha)
+    return Clr.labToLch(lab.l, lab.a, lab.b, lab.alpha, tol)
 end
 
 ---Converts a color from standard RGB (sRGB) to linear RGB.

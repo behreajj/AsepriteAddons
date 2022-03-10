@@ -1,7 +1,5 @@
-dofile("../../support/mat3.lua")
-dofile("../../support/curve2.lua")
-dofile("../../support/utilities.lua")
 dofile("../../support/aseutilities.lua")
+dofile("../../support/curve3.lua")
 
 local defaults = {
     resolution = 32,
@@ -11,6 +9,9 @@ local defaults = {
     xOrigin = 0.0,
     yOrigin = 0.0,
     angle = 0,
+    axx = 0.0,
+    axy = 0.0,
+    axz = 1.0,
     useStroke = true,
     strokeWeight = 1,
     strokeClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
@@ -81,6 +82,27 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:number {
+    id = "axx",
+    label = "Axis:",
+    text = string.format("%.3f", defaults.axx),
+    decimals = AseUtilities.DISPLAY_DECIMAL
+}
+
+dlg:number {
+    id = "axy",
+    text = string.format("%.3f", defaults.axy),
+    decimals = AseUtilities.DISPLAY_DECIMAL
+}
+
+dlg:number {
+    id = "axz",
+    text = string.format("%.3f", defaults.axz),
+    decimals = AseUtilities.DISPLAY_DECIMAL
+}
+
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useStroke",
     label = "Stroke:",
@@ -140,27 +162,51 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
-        local curve = Curve2.ellipse(
-            args.xRadius,
-            args.yRadius)
+        -- Support for 3D rotation.
+        -- See https://github.com/aseprite/api/issues/17 .
 
-        local t = Mat3.fromTranslation(
-            args.xOrigin,
-            args.yOrigin)
-        local r = Mat3.fromRotZ(math.rad(args.angle))
-        local s = Mat3.fromScale(1.0, -1.0)
+        local args = dlg.data
+        local xr = args.xRadius or defaults.xRadius
+        local yr = args.yRadius or defaults.yRadius
+        local xc = args.xOrigin or defaults.xOrigin
+        local yc = args.yOrigin or defaults.yOrigin
+        local angDeg = args.angle or defaults.angle
+        local axx = args.axx or defaults.axx
+        local axy = args.axy or defaults.axy
+        local axz = args.axz or defaults.axz
+
+        local angRad = math.rad(angDeg)
+        local axis = Vec3.new(axx, axy, axz)
+        if Vec3.any(axis) then
+            axis = Vec3.normalize(axis)
+        else
+            axis = Vec3.forward()
+        end
+
+        local curve = Curve3.ellipse(xr, yr)
+        -- local layerName = string.format(
+        --     "%s.%03d.(%.3f, %.3f, %.3f)",
+        --     curve.name, angDeg, axis.x, axis.y, axis.z)
+        local layerName = curve.name
+
+        local t = Mat4.fromTranslation(xc, yc)
+        local r = Mat4.fromRotInternal(
+            math.cos(angRad), math.sin(angRad),
+            axis.x, axis.y, axis.z)
+        local s = Mat4.fromScale(1.0, -1.0, 1.0)
         local mat = t * s * r
-        Utilities.mulMat3Curve2(mat, curve)
+        Utilities.mulMat4Curve3(mat, curve)
 
         local sprite = AseUtilities.initCanvas(
-            64, 64, curve.name,
+            64, 64, layerName,
             { args.fillClr.rgbaPixel,
               args.strokeClr.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
         local frame = app.activeFrame or sprite.frames[1]
         local cel = sprite:newCel(layer, frame)
 
+        -- Technically, this shouldn't work, but a Curve3
+        -- has the same fields as a Curve2.
         AseUtilities.drawCurve2(
             curve,
             args.resolution,

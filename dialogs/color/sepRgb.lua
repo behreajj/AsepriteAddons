@@ -42,14 +42,14 @@ dlg:separator {
 dlg:number {
     id = "xRed",
     label = "Red:",
-    text = string.format("%.1f", defaults.xRed),
-    decimals = 5
+    text = string.format("%.0f", defaults.xRed),
+    decimals = 0
 }
 
 dlg:number {
     id = "yRed",
-    text = string.format("%.1f", defaults.yRed),
-    decimals = 5
+    text = string.format("%.0f", defaults.yRed),
+    decimals = 0
 }
 
 dlg:newrow { always = false }
@@ -57,14 +57,14 @@ dlg:newrow { always = false }
 dlg:number {
     id = "xGreen",
     label = "Green:",
-    text = string.format("%.1f", defaults.xGreen),
-    decimals = 5
+    text = string.format("%.0f", defaults.xGreen),
+    decimals = 0
 }
 
 dlg:number {
     id = "yGreen",
-    text = string.format("%.1f", defaults.yGreen),
-    decimals = 5
+    text = string.format("%.0f", defaults.yGreen),
+    decimals = 0
 }
 
 dlg:newrow { always = false }
@@ -72,14 +72,14 @@ dlg:newrow { always = false }
 dlg:number {
     id = "xBlue",
     label = "Blue:",
-    text = string.format("%.1f", defaults.xBlue),
-    decimals = 5
+    text = string.format("%.0f", defaults.xBlue),
+    decimals = 0
 }
 
 dlg:number {
     id = "yBlue",
-    text = string.format("%.1f", defaults.yBlue),
-    decimals = 5
+    text = string.format("%.0f", defaults.yBlue),
+    decimals = 0
 }
 
 dlg:separator {

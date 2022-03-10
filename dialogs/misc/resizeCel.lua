@@ -28,7 +28,7 @@ dlg:number {
     id = "pxWidth",
     label = "Width Px:",
     text = string.format("%.0f", defaults.pxWidth),
-    decimals = 5,
+    decimals = 0,
     visible = defaults.units == "PIXEL"
 }
 
@@ -36,23 +36,23 @@ dlg:number {
     id = "pxHeight",
     label = "Height Px:",
     text = string.format("%.0f", defaults.pxHeight),
-    decimals = 5,
+    decimals = 0,
     visible = defaults.units == "PIXEL"
 }
 
 dlg:number {
     id = "prcWidth",
     label = "Width %:",
-    text = string.format("%.0f", defaults.prcWidth),
-    decimals = 5,
+    text = string.format("%.2f", defaults.prcWidth),
+    decimals = 2,
     visible = defaults.units == "PERCENT"
 }
 
 dlg:number {
     id = "prcHeight",
     label = "Height %:",
-    text = string.format("%.0f", defaults.prcHeight),
-    decimals = 5,
+    text = string.format("%.2f", defaults.prcHeight),
+    decimals = 2,
     visible = defaults.units == "PERCENT"
 }
 

@@ -146,6 +146,65 @@ function Curve3:translate(v)
     return self
 end
 
+---Creates a curve to approximate an ellipse.
+---@param xRadius number horizontal radius
+---@param yRadius number vertical radius
+---@param xOrigin number x origin
+---@param yOrigin number y origin
+---@param zOrigin number z origin
+---@return table
+function Curve3.ellipse(
+    xRadius,
+    yRadius,
+    xOrigin,
+    yOrigin,
+    zOrigin)
+
+    -- Supply default arguments.
+    local cz = zOrigin or 0.0
+    local cy = yOrigin or 0.0
+    local cx = xOrigin or 0.0
+    local ry = yRadius or 0.5
+    local rx = xRadius or 0.5
+
+    -- Validate radii.
+    rx = math.max(0.000001, math.abs(rx))
+    ry = math.max(0.000001, math.abs(ry))
+
+    local right = cx + rx
+    local top = cy + ry
+    local left = cx - rx
+    local bottom = cy - ry
+
+    -- kappa := 4 * (math.sqrt(2) - 1) / 3
+    local horizHandle = rx * 0.5522847498307936
+    local vertHandle = ry * 0.5522847498307936
+
+    local xHandlePos = cx + horizHandle
+    local xHandleNeg = cx - horizHandle
+    local yHandlePos = cy + vertHandle
+    local yHandleNeg = cy - vertHandle
+
+    return Curve3.new(true, {
+        Knot3.new(
+            Vec3.new(right, cy, cz),
+            Vec3.new(right, yHandlePos, cz),
+            Vec3.new(right, yHandleNeg, cz)),
+        Knot3.new(
+            Vec3.new(cx, top, cz),
+            Vec3.new(xHandleNeg, top, cz),
+            Vec3.new(xHandlePos, top, cz)),
+        Knot3.new(
+            Vec3.new(left, cy, cz),
+            Vec3.new(left, yHandleNeg, cz),
+            Vec3.new(left, yHandlePos, cz)),
+        Knot3.new(
+            Vec3.new(cx, bottom, cz),
+            Vec3.new(xHandlePos, bottom, cz),
+            Vec3.new(xHandleNeg, bottom, cz))
+    }, "Ellipse")
+end
+
 ---Evaluates a curve by a step in [0.0, 1.0].
 ---Returns a vector representing a point on the curve.
 ---@param curve table curve

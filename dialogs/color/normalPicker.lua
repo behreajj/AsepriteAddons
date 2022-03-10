@@ -160,9 +160,9 @@ local function updateWidgetSphere(dialog)
         incl * 0.017453292519943295,
         1.0)
 
-    dialog:modify { id = "x", text = string.format("%.5f", v.x) }
-    dialog:modify { id = "y", text = string.format("%.5f", v.y) }
-    dialog:modify { id = "z", text = string.format("%.5f", v.z) }
+    dialog:modify { id = "x", text = string.format("%.3f", v.x) }
+    dialog:modify { id = "y", text = string.format("%.3f", v.y) }
+    dialog:modify { id = "z", text = string.format("%.3f", v.z) }
 
     local clr = vecToColor(v.x, v.y, v.z)
     updateWidgetClr(dialog, clr)
@@ -171,9 +171,9 @@ end
 local function updateFromColor(dialog, clr)
     local x, y, z = colorToVec(clr)
     if x ~= 0.0 or y ~= 0.0 or z ~= 0.0 then
-        dialog:modify { id = "x", text = string.format("%.5f", x) }
-        dialog:modify { id = "y", text = string.format("%.5f", y) }
-        dialog:modify { id = "z", text = string.format("%.5f", z) }
+        dialog:modify { id = "x", text = string.format("%.3f", x) }
+        dialog:modify { id = "y", text = string.format("%.3f", y) }
+        dialog:modify { id = "z", text = string.format("%.3f", z) }
 
         local sph = Vec3.toSpherical(Vec3.new(x, y, z))
         local a = sph.azimuth
@@ -236,8 +236,8 @@ dlg:newrow { always = false }
 dlg:number {
     id = "x",
     label = "Vector:",
-    text = string.format("%.5f", defaults.x),
-    decimals = 5,
+    text = string.format("%.3f", defaults.x),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
     onchange = function()
         updateWidgetCart(dlg)
     end
@@ -245,8 +245,8 @@ dlg:number {
 
 dlg:number {
     id = "y",
-    text = string.format("%.5f", defaults.y),
-    decimals = 5,
+    text = string.format("%.3f", defaults.y),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
     onchange = function()
         updateWidgetCart(dlg)
     end
@@ -254,8 +254,8 @@ dlg:number {
 
 dlg:number {
     id = "z",
-    text = string.format("%.5f", defaults.z),
-    decimals = 5,
+    text = string.format("%.3f", defaults.z),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
     onchange = function()
         updateWidgetCart(dlg)
     end

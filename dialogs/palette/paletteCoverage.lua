@@ -1,4 +1,3 @@
-dofile("../../support/mat4.lua")
 dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
@@ -223,20 +222,20 @@ dlg:newrow { always = false }
 dlg:number {
     id = "axx",
     label = "Rot Axis:",
-    text = string.format("%.5f", defaults.axx),
-    decimals = 5
+    text = string.format("%.3f", defaults.axx),
+    decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
     id = "axy",
-    text = string.format("%.5f", defaults.axy),
-    decimals = 5
+    text = string.format("%.3f", defaults.axy),
+    decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
     id = "axz",
-    text = string.format("%.5f", defaults.axz),
-    decimals = 5
+    text = string.format("%.3f", defaults.axz),
+    decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:newrow { always = false }

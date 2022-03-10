@@ -101,70 +101,6 @@ function Curve2:translate(v)
     return self
 end
 
----Evaluates a curve by a step in [0.0, 1.0].
----Returns a vector representing a point on the curve.
----@param curve table curve
----@param step number step
----@return table
-function Curve2.eval(curve, step)
-    local t = step or 0.5
-    local knots = curve.knots
-    local knotLength = #knots
-    local tScaled = 0.0
-    local i = 0
-    local a = nil
-    local b = nil
-
-    if curve.closedLoop then
-
-        tScaled = (t % 1.0) * knotLength
-        i = math.tointeger(tScaled)
-        a = knots[1 + (i % knotLength)]
-        b = knots[1 + ((i + 1) % knotLength)]
-
-    else
-
-        if t <= 0.0 or knotLength == 1 then
-            return Curve2.evalFirst(curve)
-        end
-
-        if t >= 1.0 then
-            return Curve2.evalLast(curve)
-        end
-
-        tScaled = t * (knotLength - 1)
-        i = math.tointeger(tScaled)
-        a = knots[1 + i]
-        b = knots[2 + i]
-
-    end
-
-    -- TODO: Return a tuple (separate by comma),
-    -- with bezierTangent being second value?
-    local tsni = tScaled - i
-    return Knot2.bezierPoint(a, b, tsni)
-end
-
----Evaluates a curve at its first knot,
----returning a copy of the first knot coord.
----@param curve table curve
----@return table
-function Curve2.evalFirst(curve)
-    local kFirst = curve.knots[1]
-    local coFirst = kFirst.co
-    return Vec2.new(coFirst.x, coFirst.y)
-end
-
----Evaluates a curve at its last knot,
----returning a copy of the last knot coord.
----@param curve table curve
----@return table
-function Curve2.evalLast(curve)
-    local kLast = curve.knots[#curve.knots]
-    local coLast = kLast.co
-    return Vec2.new(coLast.x, coLast.y)
-end
-
 ---Creates a curve sector from a start to
 ---to a stop angle. The stroke defines the
 ---thickness. The offset is the relationship
@@ -289,10 +225,10 @@ function Curve2.ellipse(
     yOrigin)
 
     -- Supply default arguments.
-    local ry = yRadius or 0.5
-    local rx = xRadius or 0.5
     local cy = yOrigin or 0.0
     local cx = xOrigin or 0.0
+    local ry = yRadius or 0.5
+    local rx = xRadius or 0.5
 
     -- Validate radii.
     rx = math.max(0.000001, math.abs(rx))
@@ -330,6 +266,70 @@ function Curve2.ellipse(
             Vec2.new(xHandlePos, bottom),
             Vec2.new(xHandleNeg, bottom))
     }, "Ellipse")
+end
+
+---Evaluates a curve by a step in [0.0, 1.0].
+---Returns a vector representing a point on the curve.
+---@param curve table curve
+---@param step number step
+---@return table
+function Curve2.eval(curve, step)
+    local t = step or 0.5
+    local knots = curve.knots
+    local knotLength = #knots
+    local tScaled = 0.0
+    local i = 0
+    local a = nil
+    local b = nil
+
+    if curve.closedLoop then
+
+        tScaled = (t % 1.0) * knotLength
+        i = math.tointeger(tScaled)
+        a = knots[1 + (i % knotLength)]
+        b = knots[1 + ((i + 1) % knotLength)]
+
+    else
+
+        if t <= 0.0 or knotLength == 1 then
+            return Curve2.evalFirst(curve)
+        end
+
+        if t >= 1.0 then
+            return Curve2.evalLast(curve)
+        end
+
+        tScaled = t * (knotLength - 1)
+        i = math.tointeger(tScaled)
+        a = knots[1 + i]
+        b = knots[2 + i]
+
+    end
+
+    -- TODO: Return a tuple (separate by comma),
+    -- with bezierTangent being second value?
+    local tsni = tScaled - i
+    return Knot2.bezierPoint(a, b, tsni)
+end
+
+---Evaluates a curve at its first knot,
+---returning a copy of the first knot coord.
+---@param curve table curve
+---@return table
+function Curve2.evalFirst(curve)
+    local kFirst = curve.knots[1]
+    local coFirst = kFirst.co
+    return Vec2.new(coFirst.x, coFirst.y)
+end
+
+---Evaluates a curve at its last knot,
+---returning a copy of the last knot coord.
+---@param curve table curve
+---@return table
+function Curve2.evalLast(curve)
+    local kLast = curve.knots[#curve.knots]
+    local coLast = kLast.co
+    return Vec2.new(coLast.x, coLast.y)
 end
 
 ---Creats a curve that approximates Bernoulli's

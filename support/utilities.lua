@@ -2,6 +2,7 @@ dofile("./vec2.lua")
 dofile("./vec3.lua")
 dofile("./vec4.lua")
 dofile("./mat3.lua")
+dofile("./mat4.lua")
 dofile("./mesh2.lua")
 dofile("./quaternion.lua")
 dofile("./glyph.lua")
@@ -767,6 +768,7 @@ end
 ---@param h number image height
 ---@return table
 function Utilities.rotate90(source, w, h)
+    -- TODO: Make a flipx and flipy function?
     local len = #source
     local lennh = len - h
     local rotated = {}

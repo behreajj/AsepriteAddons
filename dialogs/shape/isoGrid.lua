@@ -1,6 +1,3 @@
-dofile("../../support/mat3.lua")
-dofile("../../support/mesh2.lua")
-dofile("../../support/utilities.lua")
 dofile("../../support/aseutilities.lua")
 
 local defaults = {
@@ -31,8 +28,8 @@ dlg:newrow { always = false }
 dlg:number {
     id = "scale",
     label = "Scale:",
-    text = string.format("%.1f", defaults.scale),
-    decimals = 5
+    text = string.format("%.3f", defaults.scale),
+    decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:newrow { always = false }
@@ -40,14 +37,14 @@ dlg:newrow { always = false }
 dlg:number {
     id = "xOrigin",
     label = "Origin:",
-    text = string.format("%.1f", defaults.xOrigin),
-    decimals = 5
+    text = string.format("%.3f", defaults.xOrigin),
+    decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
     id = "yOrigin",
-    text = string.format("%.1f", defaults.yOrigin),
-    decimals = 5
+    text = string.format("%.3f", defaults.yOrigin),
+    decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:newrow { always = false }

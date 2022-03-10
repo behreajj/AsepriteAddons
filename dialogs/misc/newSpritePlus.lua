@@ -557,9 +557,8 @@ dlg:button {
             spriteWidth, spriteHeight,
             ColorMode.RGB)
 
-        -- File name needs extra validation to remove
-        -- initial spaces. This could be even more thorough,
-        -- to remove characters like '.', '\' and '/'.
+        -- File name needs extra validation to remove characters
+        -- that could compromise saving a sprite.
         local filename = args.filename or defaults.filename
         filename = Utilities.validateFilename(filename)
         if #filename < 1 then filename = defaults.filename end

@@ -42,6 +42,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        -- TODO: Update this if-else structure to use
+        -- early returns.
         local activeSprite = app.activeSprite
         if activeSprite then
             if activeSprite.colorMode == ColorMode.RGB then
