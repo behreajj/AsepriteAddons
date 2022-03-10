@@ -378,153 +378,207 @@ function Curve2.rect(
     lbx, lby, ubx, uby,
     tl, tr, br, bl)
 
-    -- Validate corners.
+    -- TODO: Update this to reflect Blender rounded
+    -- rect implementation?
+
+    -- Validate edges.
     local lft = math.min(lbx, ubx)
     local rgt = math.max(lbx, ubx)
     local btm = math.min(lby, uby)
     local top = math.max(lby, uby)
 
-    -- Validate corner insetting.
-    local limit = 0.5 * math.min(rgt - lft, top - btm)
-    local vtl = 0.000001
-    if tl then
-        vtl = math.min(limit, math.max(0.000001, math.abs(tl)))
+    -- Protect against zero dimensions on w or h.
+    local w = rgt - lft
+    local h = top - btm
+    local wInval = math.abs(w) < 0.000001
+    local hInval = math.abs(h) < 0.000001
+    if wInval and hInval then
+        local cx = (lft + rgt) * 0.5
+        local cy = (top + btm) * 0.5
+        lft = cx - 0.5
+        rgt = cx + 0.5
+        btm = cy - 0.5
+        top = cy + 0.5
+    elseif wInval then
+        local cx = (lft + rgt) * 0.5
+        local hHalf = h * 0.5
+        lft = cx - hHalf
+        rgt = cx + hHalf
+    elseif hInval then
+        local cy = (top + btm) * 0.5
+        local wHalf = w * 0.5
+        btm = cy - wHalf
+        top = cy + wHalf
     end
 
     -- If only one corner arg is provided, then
     -- set them all to that corner.
-    local vtr = vtl
-    local vbr = vtl
-    local vbl = vtl
-    if tr and br and bl then
-        vtr = math.min(limit, math.max(0.000001, math.abs(tr)))
-        vbr = math.min(limit, math.max(0.000001, math.abs(br)))
-        vbl = math.min(limit, math.max(0.000001, math.abs(bl)))
+    local tlSign = 0.0
+    if tl then tlSign = tl end
+    local blSign = tlSign
+    local brSign = tlSign
+    local trSign = tlSign
+    if bl and br and tl then
+        blSign = bl
+        brSign = br
+        trSign = tr
     end
 
+    -- Absolute corner rounding.
+    local limit = 0.5 * math.min(w, h)
+    local vtl = math.min(limit, math.abs(tlSign))
+    local vbl = math.min(limit, math.abs(blSign))
+    local vbr = math.min(limit, math.abs(brSign))
+    local vtr = math.min(limit, math.abs(trSign))
+
+    -- Multipy by kappa.
+    -- 4 * (math.sqrt(2) - 1) / 3
+    local vtlk = vtl * 0.5522847498307936
+    local vblk = vbl * 0.5522847498307936
+    local vbrk = vbr * 0.5522847498307936
+    local vtrk = vtr * 0.5522847498307936
+
     -- Calculate insets.
-    local btmIns0 = btm + vbr
-    local topIns0 = top - vtr
-    local rgtIns0 = rgt - vtr
     local lftIns0 = lft + vtl
     local topIns1 = top - vtl
     local btmIns1 = btm + vbl
     local lftIns1 = lft + vbl
-    local rgtIns1 = rgt - vbr
+    local rgtIns_1 = rgt - vbr
+    local btmIns0 = btm + vbr
+    local topIns0 = top - vtr
+    local rgtIns0 = rgt - vtr
 
     local t = 0.3333333333333333
     local u = 0.6666666666666667
 
-    -- Bottom edge.
-    local k7 = Knot2.new(
-        Vec2.new(lftIns1, btm),
-        Vec2.new(u * lftIns1 + t * rgtIns1, btm),
-        Vec2.new(0.0, 0.0))
-    local k0 = Knot2.new(
-        Vec2.new(rgtIns1, btm),
-        Vec2.new(0.0, 0.0),
-        Vec2.new(u * rgtIns1 + t * lftIns1, btm))
+    local kns = {}
+    local cursor = 1
 
-    -- Right edge.
-    local k1 = Knot2.new(
-        Vec2.new(rgt, btmIns0),
-        Vec2.new(rgt, u * btmIns0 + t * topIns0),
-        Vec2.new(0.0, 0.0))
-    local k2 = Knot2.new(
-        Vec2.new(rgt, topIns0),
-        Vec2.new(0.0, 0.0),
-        Vec2.new(rgt, u * topIns0 + t * btmIns0))
-
-    -- Top edge.
-    local k3 = Knot2.new(
-        Vec2.new(rgtIns0, top),
-        Vec2.new(u * rgtIns0 + t * lftIns0, top),
-        Vec2.new(0.0, 0.0))
-    local k4 = Knot2.new(
-        Vec2.new(lftIns0, top),
-        Vec2.new(0.0, 0.0),
-        Vec2.new(u * lftIns0 + t * rgtIns0, top))
-
-    -- Left edge.
-    local k5 = Knot2.new(
-        Vec2.new(lft, topIns1),
-        Vec2.new(lft, u * topIns1 + t * btmIns1),
-        Vec2.new(0.0, 0.0))
-    local k6 = Knot2.new(
-        Vec2.new(lft, btmIns1),
-        Vec2.new(0.0, 0.0),
-        Vec2.new(lft, u * btmIns1 + t * topIns1))
-
-    -- Multilpy by kappa.
-    -- 4 * (math.sqrt(2) - 1) / 3
-    local vbrk = vbr * 0.5522847498307936
-    local vtrk = vtr * 0.5522847498307936
-    local vtlk = vtl * 0.5522847498307936
-    local vblk = vbl * 0.5522847498307936
-
-    -- Bottom Right corner.
-    local k0fh = k0.fh
-    local k1rh = k1.rh
-    if br > 0.0 then
-        k0fh.x = rgtIns1 + vbrk
-        k0fh.y = btm
-        k1rh.x = rgt
-        k1rh.y = btmIns0 - vbrk
+    -- Top left corner.
+    if tlSign > 0.0 then
+        kns[cursor] = Knot2.new(
+            Vec2.new(lftIns0, top),
+            Vec2.new(lftIns0 - vtlk, top),
+            Vec2.new(u * lftIns0 + t * rgtIns0, top))
+        cursor = cursor + 1
+        kns[cursor] = Knot2.new(
+            Vec2.new(lft, topIns1),
+            Vec2.new(lft, u * topIns1 + t * btmIns1),
+            Vec2.new(lft, topIns1 + vtlk))
+        cursor = cursor + 1
+    elseif tlSign < 0.0 then
+        kns[cursor] = Knot2.new(
+            Vec2.new(lftIns0, top),
+            Vec2.new(lftIns0, top - vtlk),
+            Vec2.new(u * lftIns0 + t * rgtIns0, top))
+        cursor = cursor + 1
+        kns[cursor] = Knot2.new(
+            Vec2.new(lft, topIns1),
+            Vec2.new(lft, u * topIns1 + t * btmIns1),
+            Vec2.new(lft + vtlk, topIns1))
+        cursor = cursor + 1
     else
-        k0fh.x = rgtIns1
-        k0fh.y = btm + vbrk
-        k1rh.x = rgt - vbrk
-        k1rh.y = btmIns0
+        kns[cursor] = Knot2.new(
+            Vec2.new(lft, top),
+            Vec2.new(lft, u * top + t * btmIns1),
+            Vec2.new(u * lft + t * rgtIns0, top))
+        cursor = cursor + 1
     end
 
-    -- Top Right corner.
-    local k2fh = k2.fh
-    local k3rh = k3.rh
-    if tr > 0.0 then
-        k2fh.x = rgt
-        k2fh.y = topIns0 + vtrk
-         k3rh.x = rgtIns0 + vtrk
-        k3rh.y = top
+    -- Bottom left corner.
+    if blSign > 0.0 then
+        kns[cursor] = Knot2.new(
+            Vec2.new(lft, btmIns1),
+            Vec2.new(lft, btmIns1 - vblk),
+            Vec2.new(lft, u * btmIns1 + t * topIns1))
+        cursor = cursor + 1
+        kns[cursor] = Knot2.new(
+            Vec2.new(lftIns1, btm),
+            Vec2.new(u * lftIns1 + t * rgtIns_1, btm),
+            Vec2.new(lftIns1 - vblk, btm))
+        cursor = cursor + 1
+    elseif blSign < 0.0 then
+        kns[cursor] = Knot2.new(
+            Vec2.new(lft, btmIns1),
+            Vec2.new(lft + vblk, btmIns1),
+            Vec2.new(lft, u * btmIns1 + t * topIns1))
+        cursor = cursor + 1
+        kns[cursor] = Knot2.new(
+            Vec2.new(lftIns1, btm),
+            Vec2.new(u * lftIns1 + t * rgtIns_1, btm),
+            Vec2.new(lftIns1, btm + vblk))
+        cursor = cursor + 1
     else
-        k2fh.x = rgt - vtrk
-        k2fh.y = topIns0
-        k3rh.x = rgtIns0
-        k3rh.y = top - vtrk
+        kns[cursor] = Knot2.new(
+            Vec2.new(lft, btm),
+            Vec2.new(u * lft + t * rgtIns_1, btm),
+            Vec2.new(lft, u * btm + t * topIns1))
+        cursor = cursor + 1
     end
 
-    -- Top Left corner.
-    local k4fh = k4.fh
-    local k5rh = k5.rh
-    if tl > 0.0 then
-        k4fh.x = lftIns0 - vtlk
-        k4fh.y = top
-        k5rh.x = lft
-        k5rh.y = topIns1 + vtlk
+    -- Bottom right corner.
+    if brSign > 0.0 then
+        kns[cursor] = Knot2.new(
+            Vec2.new(rgtIns_1, btm),
+            Vec2.new(rgtIns_1 + vbrk, btm),
+            Vec2.new(u * rgtIns_1 + t * lftIns1, btm))
+        cursor = cursor + 1
+        kns[cursor] = Knot2.new(
+            Vec2.new(rgt, btmIns0),
+            Vec2.new(rgt, u * btmIns0 + t * topIns0),
+            Vec2.new(rgt, btmIns0 - vbrk))
+        cursor = cursor + 1
+    elseif brSign < 0.0 then
+        kns[cursor] = Knot2.new(
+            Vec2.new(rgtIns_1, btm),
+            Vec2.new(rgtIns_1, btm + vbrk),
+            Vec2.new(u * rgtIns_1 + t * lftIns1, btm))
+        cursor = cursor + 1
+        kns[cursor] = Knot2.new(
+            Vec2.new(rgt, btmIns0),
+            Vec2.new(rgt, u * btmIns0 + t * topIns0),
+            Vec2.new(rgt - vbrk, btmIns0))
+        cursor = cursor + 1
     else
-        k4fh.x = lftIns0
-        k4fh.y = top - vtlk
-        k5rh.x = lft + vtlk
-        k5rh.y = topIns1
+        kns[cursor] = Knot2.new(
+            Vec2.new(rgt, btm),
+            Vec2.new(rgt, u * btm + t * topIns0),
+            Vec2.new(u * rgt + t * lftIns1, btm))
+        cursor = cursor + 1
     end
 
-    -- Bottom Left corner.
-    local k6fh = k6.fh
-    local k7rh = k7.rh
-    if bl > 0.0 then
-        k6fh.x = lft
-        k6fh.y = btmIns1 - vblk
-        k7rh.x = lftIns1 - vblk
-        k7rh.y = btm
+    -- Top right corner.
+    if trSign > 0.0 then
+        kns[cursor] = Knot2.new(
+            Vec2.new(rgt, topIns0),
+            Vec2.new(rgt, topIns0 + vtrk),
+            Vec2.new(rgt, u * topIns0 + t * btmIns0))
+        cursor = cursor + 1
+        kns[cursor] = Knot2.new(
+            Vec2.new(rgtIns0, top),
+            Vec2.new(u * rgtIns0 + t * lftIns0, top),
+            Vec2.new(rgtIns0 + vtrk, top))
+        cursor = cursor + 1
+    elseif trSign < 0.0 then
+        kns[cursor] = Knot2.new(
+            Vec2.new(rgt, topIns0),
+            Vec2.new(rgt - vtrk, topIns0),
+            Vec2.new(rgt, u * topIns0 + t * btmIns0))
+        cursor = cursor + 1
+        kns[cursor] = Knot2.new(
+            Vec2.new(rgtIns0, top),
+            Vec2.new(u * rgtIns0 + t * lftIns0, top),
+            Vec2.new(rgtIns0, top - vtrk))
+        cursor = cursor + 1
     else
-        k6fh.x = lft + vblk
-        k6fh.y = btmIns1
-        k7rh.x = lftIns1
-        k7rh.y = btm + vblk
+        kns[cursor] = Knot2.new(
+            Vec2.new(rgt, top),
+            Vec2.new(u * rgt + t * lftIns0, top),
+            Vec2.new(rgt, u * top + t * btmIns0))
+        cursor = cursor + 1
     end
 
-    return Curve2.new(true, {
-        k0, k1, k2, k3, k4, k5, k6, k7
-        }, "Rectangle")
+    return Curve2.new(true, kns, "Rectangle")
 end
 
 ---Returns a JSON string of a curve.
