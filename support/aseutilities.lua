@@ -1340,6 +1340,69 @@ function AseUtilities.drawStringVert(
     end
 end
 
+---Returns a copy of the source image that has
+---been flipped horizontally.
+---Also returns displaced coordinates for the
+---top-left corner.
+---@param source userdata source image
+---@return userdata
+---@return number
+---@return number
+function AseUtilities.flipHorizontal(source)
+    local px = {}
+    local i = 1
+    local srcPxItr = source:pixels()
+    for elm in srcPxItr do
+        px[i] = elm()
+        i = i + 1
+    end
+
+    local srcSpec = source.spec
+    local w = srcSpec.width
+    local pxFlp = Utilities.flipHorizontal(px, w)
+
+    local target = Image(srcSpec)
+    local j = 1
+    local trgPxItr = target:pixels()
+    for elm in trgPxItr do
+        elm(pxFlp[j])
+        j = j + 1
+    end
+    return target, 1 - w, 0
+end
+
+---Returns a copy of the source image that has
+---been flipped vertically.
+---Also returns displaced coordinates for the
+---top-left corner.
+---@param source userdata source image
+---@return userdata
+---@return number
+---@return number
+function AseUtilities.flipVertical(source)
+    local px = {}
+    local i = 1
+    local srcPxItr = source:pixels()
+    for elm in srcPxItr do
+        px[i] = elm()
+        i = i + 1
+    end
+
+    local srcSpec = source.spec
+    local w = srcSpec.width
+    local h = srcSpec.height
+    local pxFlp = Utilities.flipVertical(px, w, h)
+
+    local target = Image(srcSpec)
+    local j = 1
+    local trgPxItr = target:pixels()
+    for elm in trgPxItr do
+        elm(pxFlp[j])
+        j = j + 1
+    end
+    return target, 0, 1 - h
+end
+
 ---Gets a selection copied by value from a sprite.
 ---If the selection is empty, returns the sprite's
 ---bounds instead, i.e., from (0, 0) to (w, h).
@@ -1467,6 +1530,26 @@ function AseUtilities.initCanvas(
     return sprite
 end
 
+---Evaluates whether a layer is editable in the context
+---of any parent layers, i.e., if a layer's parent is
+---locked but the layer is unlocked, the method will
+---return false.
+---@param layer userdata aseprite layer
+---@param sprite userdata aseprite sprite
+---@return boolean
+function AseUtilities.isEditableHierarchy(layer, sprite)
+    local l = layer
+    local sprName = "doc::Sprite"
+    if sprite then sprName = sprite.__name end
+    while l.__name ~= sprName do
+        if not l.isEditable then
+            return false
+        end
+        l = l.parent
+    end
+    return true
+end
+
 ---Evaluates whether a layer is visible in the context
 ---of any parent layers, i.e., if a layer's parent is
 ---invisible but the layer is visible, the method will
@@ -1540,7 +1623,7 @@ end
 ---been rotated 90 degrees counter-clockwise.
 ---Also returns displaced coordinates for the
 ---top-left corner.
----@param source userdata
+---@param source userdata source image
 ---@return userdata
 ---@return number
 ---@return number
@@ -1579,7 +1662,7 @@ end
 ---been rotated 180 degrees.
 ---Also returns displaced coordinates for the
 ---top-left corner.
----@param source userdata
+---@param source userdata source image
 ---@return userdata
 ---@return number
 ---@return number
@@ -1592,25 +1675,26 @@ function AseUtilities.rotate180(source)
         i = i + 1
     end
 
-    local w = source.width
-    local h = source.height
-    local pxRot = Utilities.reverseTable(px)
-
+    -- Table is reversed in-place.
+    Utilities.reverseTable(px)
     local target = Image(source.spec)
     local j = 1
     local trgPxItr = target:pixels()
     for elm in trgPxItr do
-        elm(pxRot[j])
+        elm(px[j])
         j = j + 1
     end
-    return target, 1 - w, 1 - h
+
+    return target,
+        1 - source.width,
+        1 - source.height
 end
 
 ---Returns a copy of the source image that has
 ---been rotated 270 degrees counter-clockwise.
 ---Also returns displaced coordinates for the
 ---top-left corner.
----@param source userdata
+---@param source userdata source image
 ---@return userdata
 ---@return number
 ---@return number

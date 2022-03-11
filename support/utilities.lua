@@ -183,6 +183,37 @@ function Utilities.distAngleUnsigned(a, b, range)
         - halfRange)
 end
 
+---Given a source pixel array, creates a new array with
+---the pixels flipped horizontally.
+---@param source table source pixels
+---@param w number image width
+---@return table
+function Utilities.flipHorizontal(source, w)
+    local len = #source
+    local wn1 = w - 1
+    local flipped = {}
+    for i = 0, len - 1, 1 do
+        flipped[1 + (i // w) * w + wn1 - (i % w)] = source[1 + i]
+    end
+    return flipped
+end
+
+---Given a source pixel array, creates a new array with
+---the pixels flipped vertically.
+---@param source table source pixels
+---@param w number image width
+---@param h number image height
+---@return table
+function Utilities.flipVertical(source, w, h)
+    local len = #source
+    local hn1 = h - 1
+    local flipped = {}
+    for i = 0, len - 1, 1 do
+        flipped[1 + (hn1 - (i // w)) * w + (i % w)] = source[1 + i]
+    end
+    return flipped
+end
+
 ---Converts an array of integers representing color
 ---in hexadecimal to a dictionary. The value in each
 ---entry is the first index where the color was found.
@@ -762,13 +793,13 @@ function Utilities.reverseTable(t)
     return t
 end
 
----Rotates an array of pixels 90 degrees counter-clockwise.
+---Given a source pixel array, creates a new array with
+---the elements rotated 90 degrees counter-clockwise.
 ---@param source table source pixels
 ---@param w number image width
 ---@param h number image height
 ---@return table
 function Utilities.rotate90(source, w, h)
-    -- TODO: Make a flipx and flipy function?
     local len = #source
     local lennh = len - h
     local rotated = {}
@@ -778,7 +809,8 @@ function Utilities.rotate90(source, w, h)
     return rotated
 end
 
----Rotates an array of pixels 270 degrees counter-clockwise.
+---Given a source pixel array, creates a new array with
+---the elements rotated 270 degrees counter-clockwise.
 ---@param source table source pixels
 ---@param w number image width
 ---@param h number image height

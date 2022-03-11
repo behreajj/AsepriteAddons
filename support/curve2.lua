@@ -149,8 +149,7 @@ function Curve2.arcSector(
 
     -- Calculate handle length.
     local arcLength = math.min(
-        edAngVerif - stAngVerif,
-        6.283185307179586)
+        edAngVerif - stAngVerif, 6.283185307179586)
     local arcLen01 = arcLength * 0.15915494309189535
     local knCtVerif = math.ceil(1 + 4 * arcLen01)
     local toStep = 1.0 / (knCtVerif - 1.0)
@@ -219,10 +218,8 @@ end
 ---@param yOrigin number y origin
 ---@return table
 function Curve2.ellipse(
-    xRadius,
-    yRadius,
-    xOrigin,
-    yOrigin)
+    xRadius, yRadius,
+    xOrigin, yOrigin)
 
     -- Supply default arguments.
     local cy = yOrigin or 0.0
@@ -378,9 +375,6 @@ function Curve2.rect(
     lbx, lby, ubx, uby,
     tl, tr, br, bl)
 
-    -- TODO: Update this to reflect Blender rounded
-    -- rect implementation?
-
     -- Validate edges.
     local lft = math.min(lbx, ubx)
     local rgt = math.max(lbx, ubx)
@@ -390,8 +384,8 @@ function Curve2.rect(
     -- Protect against zero dimensions on w or h.
     local w = rgt - lft
     local h = top - btm
-    local wInval = math.abs(w) < 0.000001
-    local hInval = math.abs(h) < 0.000001
+    local wInval = w < 0.000001
+    local hInval = h < 0.000001
     if wInval and hInval then
         local cx = (lft + rgt) * 0.5
         local cy = (top + btm) * 0.5
@@ -404,11 +398,13 @@ function Curve2.rect(
         local hHalf = h * 0.5
         lft = cx - hHalf
         rgt = cx + hHalf
+        w = h
     elseif hInval then
         local cy = (top + btm) * 0.5
         local wHalf = w * 0.5
         btm = cy - wHalf
         top = cy + wHalf
+        h = w
     end
 
     -- If only one corner arg is provided, then
@@ -425,11 +421,12 @@ function Curve2.rect(
     end
 
     -- Absolute corner rounding.
-    local limit = 0.5 * math.min(w, h)
-    local vtl = math.min(limit, math.abs(tlSign))
-    local vbl = math.min(limit, math.abs(blSign))
-    local vbr = math.min(limit, math.abs(brSign))
-    local vtr = math.min(limit, math.abs(trSign))
+    -- Limit is half the short edge.
+    local se = 0.5 * math.min(w, h)
+    local vtl = math.min(se, math.abs(tlSign))
+    local vbl = math.min(se, math.abs(blSign))
+    local vbr = math.min(se, math.abs(brSign))
+    local vtr = math.min(se, math.abs(trSign))
 
     -- Multipy by kappa.
     -- 4 * (math.sqrt(2) - 1) / 3
@@ -438,18 +435,19 @@ function Curve2.rect(
     local vbrk = vbr * 0.5522847498307936
     local vtrk = vtr * 0.5522847498307936
 
+    -- Edge handles are lerped by 1 / 3.
+    local t = 0.3333333333333333
+    local u = 0.6666666666666667
+
     -- Calculate insets.
     local lftIns0 = lft + vtl
     local topIns1 = top - vtl
     local btmIns1 = btm + vbl
     local lftIns1 = lft + vbl
-    local rgtIns_1 = rgt - vbr
+    local rgtIns1 = rgt - vbr
     local btmIns0 = btm + vbr
     local topIns0 = top - vtr
     local rgtIns0 = rgt - vtr
-
-    local t = 0.3333333333333333
-    local u = 0.6666666666666667
 
     local kns = {}
     local cursor = 1
@@ -466,7 +464,7 @@ function Curve2.rect(
             Vec2.new(lft, u * topIns1 + t * btmIns1),
             Vec2.new(lft, topIns1 + vtlk))
         cursor = cursor + 1
-    elseif tlSign < 0.0 then
+    elseif tlSign < -0.0 then
         kns[cursor] = Knot2.new(
             Vec2.new(lftIns0, top),
             Vec2.new(lftIns0, top - vtlk),
@@ -494,10 +492,10 @@ function Curve2.rect(
         cursor = cursor + 1
         kns[cursor] = Knot2.new(
             Vec2.new(lftIns1, btm),
-            Vec2.new(u * lftIns1 + t * rgtIns_1, btm),
+            Vec2.new(u * lftIns1 + t * rgtIns1, btm),
             Vec2.new(lftIns1 - vblk, btm))
         cursor = cursor + 1
-    elseif blSign < 0.0 then
+    elseif blSign < -0.0 then
         kns[cursor] = Knot2.new(
             Vec2.new(lft, btmIns1),
             Vec2.new(lft + vblk, btmIns1),
@@ -505,13 +503,13 @@ function Curve2.rect(
         cursor = cursor + 1
         kns[cursor] = Knot2.new(
             Vec2.new(lftIns1, btm),
-            Vec2.new(u * lftIns1 + t * rgtIns_1, btm),
+            Vec2.new(u * lftIns1 + t * rgtIns1, btm),
             Vec2.new(lftIns1, btm + vblk))
         cursor = cursor + 1
     else
         kns[cursor] = Knot2.new(
             Vec2.new(lft, btm),
-            Vec2.new(u * lft + t * rgtIns_1, btm),
+            Vec2.new(u * lft + t * rgtIns1, btm),
             Vec2.new(lft, u * btm + t * topIns1))
         cursor = cursor + 1
     end
@@ -519,20 +517,20 @@ function Curve2.rect(
     -- Bottom right corner.
     if brSign > 0.0 then
         kns[cursor] = Knot2.new(
-            Vec2.new(rgtIns_1, btm),
-            Vec2.new(rgtIns_1 + vbrk, btm),
-            Vec2.new(u * rgtIns_1 + t * lftIns1, btm))
+            Vec2.new(rgtIns1, btm),
+            Vec2.new(rgtIns1 + vbrk, btm),
+            Vec2.new(u * rgtIns1 + t * lftIns1, btm))
         cursor = cursor + 1
         kns[cursor] = Knot2.new(
             Vec2.new(rgt, btmIns0),
             Vec2.new(rgt, u * btmIns0 + t * topIns0),
             Vec2.new(rgt, btmIns0 - vbrk))
         cursor = cursor + 1
-    elseif brSign < 0.0 then
+    elseif brSign < -0.0 then
         kns[cursor] = Knot2.new(
-            Vec2.new(rgtIns_1, btm),
-            Vec2.new(rgtIns_1, btm + vbrk),
-            Vec2.new(u * rgtIns_1 + t * lftIns1, btm))
+            Vec2.new(rgtIns1, btm),
+            Vec2.new(rgtIns1, btm + vbrk),
+            Vec2.new(u * rgtIns1 + t * lftIns1, btm))
         cursor = cursor + 1
         kns[cursor] = Knot2.new(
             Vec2.new(rgt, btmIns0),
@@ -559,7 +557,7 @@ function Curve2.rect(
             Vec2.new(u * rgtIns0 + t * lftIns0, top),
             Vec2.new(rgtIns0 + vtrk, top))
         cursor = cursor + 1
-    elseif trSign < 0.0 then
+    elseif trSign < -0.0 then
         kns[cursor] = Knot2.new(
             Vec2.new(rgt, topIns0),
             Vec2.new(rgt - vtrk, topIns0),
