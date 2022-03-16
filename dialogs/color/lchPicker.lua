@@ -11,10 +11,8 @@ local harmonies = {
 }
 
 local defaults = {
-    -- TODO: Condense by changing color preview
-    -- to a picker then get rid of set fore
-    -- and set back.
-
+    -- TODO: Possibility for auto color set
+    -- with event listeners?
     base = Color(255, 0, 0, 255),
     shading = {
         Color(165,   0,   0, 255),

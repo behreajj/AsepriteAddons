@@ -37,9 +37,6 @@ local defaults = {
     yGrid = 0,
     wGrid = 20,
     hGrid = 20,
-
-    -- TODO: Button for copying current sprite's
-    -- dimensions and specs?
     pullFocus = true
 }
 

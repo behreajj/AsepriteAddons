@@ -1,4 +1,3 @@
-dofile("./vec2.lua")
 dofile("./knot2.lua")
 
 Curve2 = {}
@@ -61,7 +60,11 @@ end
 ---@param v table scalar
 ---@return table
 function Curve2:scale(v)
-    return self:scaleVec2(v)
+    if type(v) == "number" then
+        return self:scaleNum(v)
+    else
+        return self:scaleVec2(v)
+    end
 end
 
 ---Scales this curve by a number.
@@ -371,6 +374,7 @@ end
 ---@param tr number rounding top right corner
 ---@param br number rounding bottom right corner
 ---@param bl number rounding bottom left corner
+---@return table
 function Curve2.rect(
     lbx, lby, ubx, uby,
     tl, tr, br, bl)

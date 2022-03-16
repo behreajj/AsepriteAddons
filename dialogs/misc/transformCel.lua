@@ -103,12 +103,9 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local xTranslate = args.xTranslate or defaults.xTranslate
-        local yTranslate = args.yTranslate or defaults.yTranslate
-
-        if xTranslate == 0.0 and yTranslate == 0.0 then
-            return
-        end
+        local xtr = args.xTranslate or defaults.xTranslate
+        local ytr = args.yTranslate or defaults.yTranslate
+        if xtr == 0.0 and ytr == 0.0 then return end
 
         local cels = getTargetCels(target, activeSprite)
         local celsLen = #cels
@@ -118,8 +115,40 @@ dlg:button {
                 local cel = cels[i]
                 local oldPos = cel.position
                 cel.position = Point(
-                    oldPos.x + xTranslate,
-                    oldPos.y - yTranslate)
+                    oldPos.x + xtr,
+                    oldPos.y - ytr)
+            end
+        end)
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "wrapButton",
+    text = "&WRAP",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then
+            app.alert("There is no active sprite.")
+            return
+        end
+
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local xtr = args.xTranslate or defaults.xTranslate
+        local ytr = args.yTranslate or defaults.yTranslate
+        if xtr == 0.0 and ytr == 0.0 then return end
+
+        local wrap = AseUtilities.wrap
+        local cels = getTargetCels(target, activeSprite)
+        local celsLen = #cels
+
+        app.transaction(function()
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                cel.image = wrap(cel.image, xtr, ytr)
             end
         end)
 
@@ -166,9 +195,9 @@ dlg:button {
                 local xTrgHalf = wTrg // 2
                 local yTrgHalf = hTrg // 2
 
-                local xtlTrg = xtlSrc + xSrcHalf - xTrgHalf
-                local ytlTrg = ytlSrc + ySrcHalf - yTrgHalf
-                cel.position = Point(xtlTrg, ytlTrg)
+                cel.position = Point(
+                    xtlSrc + xSrcHalf - xTrgHalf,
+                    ytlSrc + ySrcHalf - yTrgHalf)
                 cel.image = trgImg
             end
         end)
@@ -241,9 +270,9 @@ dlg:button {
                 local xTrgHalf = wTrg // 2
                 local yTrgHalf = hTrg // 2
 
-                local xtlTrg = xtlSrc + xSrcHalf - xTrgHalf
-                local ytlTrg = ytlSrc + ySrcHalf - yTrgHalf
-                cel.position = Point(xtlTrg, ytlTrg)
+                cel.position = Point(
+                    xtlSrc + xSrcHalf - xTrgHalf,
+                    ytlSrc + ySrcHalf - yTrgHalf)
                 cel.image = trgImg
             end
         end)

@@ -500,14 +500,6 @@ function AseUtilities.blend(a, b)
     local v = a >> 0x18 & 0xff
     if v < 0x01 then return b end
 
-    local bb = b >> 0x10 & 0xff
-    local bg = b >> 0x08 & 0xff
-    local br = b & 0xff
-
-    local ab = a >> 0x10 & 0xff
-    local ag = a >> 0x08 & 0xff
-    local ar = a & 0xff
-
     -- Experimented with subtracting
     -- from 0x100 instead of 0xff, due to 255//2
     -- not having a whole number middle, but 0xff
@@ -517,8 +509,16 @@ function AseUtilities.blend(a, b)
 
     local uv = (v * u) // 0xff
     local tuv = t + uv
-    if tuv < 0x1 then return 0x0 end
+    if tuv < 0x01 then return 0x0 end
     if tuv > 0xff then tuv = 0xff end
+
+    local ab = a >> 0x10 & 0xff
+    local ag = a >> 0x08 & 0xff
+    local ar = a & 0xff
+
+    local bb = b >> 0x10 & 0xff
+    local bg = b >> 0x08 & 0xff
+    local br = b & 0xff
 
     local cb = (bb * t + ab * uv) // tuv
     local cg = (bg * t + ag * uv) // tuv
@@ -1917,6 +1917,38 @@ function AseUtilities.vec2ToPoint(a)
     end
 
     return Point(cx, cy)
+end
+
+---Translates the pixels of an image by a vector,
+---wrapping the elements that exceed its dimensions back
+---to the beginning.
+---@param source userdata source image
+---@param x number x translation
+---@param y number y translation
+---@return userdata
+function AseUtilities.wrap(source, x, y)
+    local px = {}
+    local i = 1
+    local srcPxItr = source:pixels()
+    for elm in srcPxItr do
+        px[i] = elm()
+        i = i + 1
+    end
+
+    local sourceSpec = source.spec
+    local w = sourceSpec.width
+    local h = sourceSpec.height
+    local wrp = Utilities.wrap(px, x, y, w, h)
+
+    local target = Image(sourceSpec)
+    local j = 1
+    local trgPxItr = target:pixels()
+    for elm in trgPxItr do
+        elm(wrp[j])
+        j = j + 1
+    end
+
+    return target
 end
 
 return AseUtilities

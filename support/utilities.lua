@@ -981,4 +981,23 @@ function Utilities.validateFilename(filename)
     return table.concat(fileChars)
 end
 
+---Translates the elements in a pixel array by a vector,
+---wrapping the elements that exceed its dimensions back
+---to the beginning.
+---@param source table source pixels
+---@param x number x translation
+---@param y number y translation
+---@param w number image width
+---@param h number image height
+function Utilities.wrap(source, x, y, w, h)
+    local len = #source
+    local wrapped = {}
+    for i = 0, len - 1, 1 do
+        local xm = ((i % w) - x) % w
+        local ym = ((i // w) + y) % h
+        wrapped[1 + i] = source[1 + xm + ym * w]
+    end
+    return wrapped
+end
+
 return Utilities

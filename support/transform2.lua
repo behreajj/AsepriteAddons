@@ -35,22 +35,6 @@ function Transform2:__lt(b)
     return self.translation < b.translation
 end
 
----Flips the transform's scale on the
----horizontal axis.
----@return table
-function Transform2:flipX()
-    self.scale.x = -self.scale.x
-    return self
-end
-
----Flips the transform's scale on the
----vertical axis.
----@return table
-function Transform2:flipY()
-    self.scale.y = -self.scale.y
-    return self
-end
-
 ---Orients this transform to look at a point.
 ---If the distance between transform and point is
 ---zero, resets the transform's rotation to zero.

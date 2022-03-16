@@ -302,7 +302,6 @@ dlg:button {
                 local yNrm = y * szInv
                 local ySgn = 1.0 - (yNrm + yNrm)
 
-                -- TODO: Quantize option?
                 local clr = labTosRgba(
                     light,
                     xSgn * 110.0,

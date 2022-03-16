@@ -64,7 +64,7 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- TODO: What about reference and background layers?
+        -- TODO: What about reference & background layers?
 
         local activeSprite = app.activeSprite
         if not activeSprite then

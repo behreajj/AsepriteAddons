@@ -191,9 +191,10 @@ dlg:button {
                         greenLyr.opacity = opacityGreen
                         blueLyr.opacity = opacityBlue
 
-                        local redShift = Point(xRed, yRed)
-                        local greenShift = Point(xGreen, yGreen)
-                        local blueShift = Point(xBlue, yBlue)
+                        -- Treat y axis as (1, 0) points up.
+                        local redShift = Point(xRed, -yRed)
+                        local greenShift = Point(xGreen, -yGreen)
+                        local blueShift = Point(xBlue, -yBlue)
 
                         local rdMsk = 0xff0000ff
                         local grMsk = 0xff00ff00

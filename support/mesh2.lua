@@ -123,7 +123,11 @@ end
 ---@param v table scalar
 ---@return table
 function Mesh2:scale(v)
-    return self:scaleVec2(v)
+    if type(v) == "number" then
+        return self:scaleNum(v)
+    else
+        return self:scaleVec2(v)
+    end
 end
 
 ---Scales all coordinates in this mesh
@@ -626,34 +630,39 @@ end
 ---@param a table mesh
 ---@return string
 function Mesh2.toJson(a)
+    local tconcat = table.concat
+
     local str = "{\"name\":\""
     str = str .. a.name
     str = str .. "\",\"fs\":["
 
     local fs = a.fs
     local fsLen = #fs
+    local fsStrArr = {}
     for i = 1, fsLen, 1 do
         local f = fs[i]
         local fLen = #f
-        str = str .. "["
+        local fStrArr = {}
+        local fStr = "["
         for j = 1, fLen, 1 do
-            str = str .. (f[j] - 1)
-            if j < fLen then str = str .. "," end
+            fStrArr[j] = f[j] - 1
         end
-        str = str .. "]"
-        if i < fsLen then str = str .. "," end
+        fStr = fStr .. tconcat(fStrArr, ",")
+        fStr = fStr .. "]"
+        fsStrArr[i] = fStr
     end
 
+    str = str .. tconcat(fsStrArr, ",")
     str = str .. "],\"vs\":["
 
     local vs = a.vs
     local vsLen = #vs
-    local strArr = {}
+    local vsStrArr = {}
     for i = 1, vsLen, 1 do
-        strArr[i] = Vec2.toJson(vs[i])
+        vsStrArr[i] = Vec2.toJson(vs[i])
     end
 
-    str = str .. table.concat(strArr, ",")
+    str = str .. tconcat(vsStrArr, ",")
     str = str .. "]}"
     return str
 end

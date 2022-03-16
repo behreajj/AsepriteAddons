@@ -106,7 +106,11 @@ end
 ---@param v table scalar
 ---@return table
 function Curve3:scale(v)
-    return self:scaleVec3(v)
+    if type(v) == "number" then
+        return self:scaleNum(v)
+    else
+        return self:scaleVec3(v)
+    end
 end
 
 ---Scales this curve by a number.
@@ -403,8 +407,6 @@ end
 ---@param name string curve name
 ---@return table
 function Curve3.fromPoints(closedLoop, points, name)
-    -- TODO: Create 2D Version.
-
     -- If a closed loop has similar start and
     -- stop points, then skip the last point.
     local len = #points
