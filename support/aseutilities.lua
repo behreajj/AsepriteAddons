@@ -1828,7 +1828,7 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     else
         -- This is possible, esp. in Aseprite v1.3 with
         -- tilemap layers, where colorMode = 4.
-        eval = function(hex) return false end
+        eval = function(hex) return true end
     end
 
     -- Immutable.
