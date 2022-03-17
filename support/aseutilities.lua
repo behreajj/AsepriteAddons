@@ -1729,6 +1729,40 @@ function AseUtilities.rotate270(source)
     return target, 1 - h, 0
 end
 
+---Converts an image from a tile set layer to a regular
+---image. Supported in Aseprite version 1.3 or newer.
+---@param imgSrc userdata source image
+---@param tileSet userdata tile set
+---@param sprClrMode number sprite color mode
+---@return userdata
+function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
+    local tileDim = tileSet.grid.tileSize
+    local tileWidth = tileDim.width
+    local tileHeight = tileDim.height
+
+    -- The source image's color mode is 4 if it is a tile map.
+    -- Assigning 4 to the target image when the sprite color
+    -- mode is 2 (indexed), causes Aseprite to crash.
+    local specSrc = imgSrc.spec
+    local specTrg = ImageSpec {
+        width = specSrc.width * tileWidth,
+        height = specSrc.height * tileHeight,
+        colorMode = sprClrMode,
+        transparentColor = specSrc.transparentColor }
+    specTrg.colorSpace = specSrc.colorSpace
+    local imgTrg = Image(specTrg)
+
+    local itrSrc = imgSrc:pixels()
+    for elm in itrSrc do
+        imgTrg:drawImage(
+            tileSet:getTile(elm()),
+            Point(elm.x * tileWidth,
+                elm.y * tileHeight))
+    end
+
+    return imgTrg
+end
+
 ---Trims a cel's image and position such that it no longer
 ---exceeds the sprite's boundaries. Unlike built-in method,
 ---does not trim the image's alpha.
@@ -1778,19 +1812,23 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     -- perhaps because alphaIndex needs to remain in scope.
     local colorMode = image.colorMode
     local eval = nil
-    if colorMode == ColorMode.INDEXED then
-        local valMask = alphaIndex or 0
-        eval = function(index)
-            return index ~= valMask
+    if colorMode == ColorMode.RGB then
+        eval = function(hex)
+            return hex & 0xff000000 ~= 0
         end
     elseif colorMode == ColorMode.GRAY then
         eval = function(hex)
             return hex & 0xff00 ~= 0
         end
-    else
-        eval = function(hex)
-            return hex & 0xff000000 ~= 0
+    elseif colorMode == ColorMode.INDEXED then
+        local valMask = alphaIndex or 0
+        eval = function(index)
+            return index ~= valMask
         end
+    else
+        -- This is possible, esp. in Aseprite v1.3 with
+        -- tilemap layers, where colorMode = 4.
+        eval = function(hex) return false end
     end
 
     -- Immutable.

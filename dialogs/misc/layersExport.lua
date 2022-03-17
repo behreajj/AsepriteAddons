@@ -102,34 +102,6 @@ local function blendModeToStr(bm)
     end
 end
 
-local function tiledImgToImg(imgSrc, tileSet)
-    -- TODO: This could be moved to AseUtilities, but also it
-    -- doesn't appear to work correctly for indexed color mode.
-    -- Try prototyping in a separate script.
-    local tileDim = tileSet.grid.tileSize
-    local tileWidth = tileDim.width
-    local tileHeight = tileDim.height
-
-    local specSrc = imgSrc.spec
-    local specTrg = ImageSpec {
-        width = specSrc.width * tileWidth,
-        height = specSrc.height * tileHeight,
-        colorMode = specSrc.colorMode,
-        transparentColor = specSrc.transparentColor }
-    specTrg.colorSpace = specSrc.colorSpace
-    local imgTrg = Image(specTrg)
-
-    local itrSrc = imgSrc:pixels()
-    for elm in itrSrc do
-        imgTrg:drawImage(
-            tileSet:getTile(elm()),
-            Point(elm.x * tileWidth,
-                elm.y * tileHeight))
-    end
-
-    return imgTrg
-end
-
 local function fillPad(img, padding, padHex)
     local padWidth = img.width
     local padHeight = img.height
@@ -344,10 +316,13 @@ dlg:button {
             return
         end
 
+        -- Early return for flatten groups and color mode.
         local specSprite = activeSprite.spec
         local colorMode = specSprite.colorMode
-        if colorMode ~= ColorMode.RGB then
-            app.alert("Only RGB color mode is supported.")
+        local args = dlg.data
+        local flatGroups = args.flatGroups
+        if flatGroups and colorMode ~= ColorMode.RGB then
+            app.alert("Only RGB color mode is supported for flatten groups.")
             return
         end
 
@@ -364,7 +339,6 @@ dlg:button {
         end
 
         -- Unpack arguments.
-        local args = dlg.data
         local layerTarget = args.layerTarget or defaults.layerTarget
         local frameTarget = args.frameTarget or defaults.frameTarget
         local frameStart = args.frameStart or defaults.frameStart
@@ -374,7 +348,7 @@ dlg:button {
         local padColor = args.padColor or defaults.padColor
         local scale = args.scale or defaults.scale
         local filename = args.filename
-        local flatGroups = args.flatGroups
+
         local saveJson = args.saveJson
         local origin = args.origin or defaults.origin
 
@@ -386,6 +360,7 @@ dlg:button {
         local concat = table.concat
         local insert = table.insert
         local blend = AseUtilities.blend
+        local tilesToImage = AseUtilities.tilesToImage
         local trimAlpha = AseUtilities.trimImageAlpha
 
         -- Beware, .webp file extensions do not allow
@@ -402,7 +377,6 @@ dlg:button {
 
         local fileTitle = app.fs.fileTitle(filename)
         fileTitle = Utilities.validateFilename(fileTitle)
-        -- fileTitle = strgsub(fileTitle, "%s+", "")
 
         filePath = filePath .. pathSep
         local filePrefix = filePath .. fileTitle
@@ -469,17 +443,20 @@ dlg:button {
 
         -- Determine how to pad the image in
         -- hexadecimal based on sprite color mode.
+        -- It's possible for color mode to be invalid
+        -- or other than those listed in the
+        -- ColorMode enumeration.
         local pad2 = padding + padding
         local padOffset = Point(padding, padding)
         local padHex = 0x00000000
-        if colorMode == ColorMode.INDEXED then
+        if colorMode == ColorMode.RGB then
+            padHex = padColor.rgbaPixel
+        elseif colorMode == ColorMode.GRAY then
+            padHex = padColor.grayPixel
+        elseif colorMode == ColorMode.INDEXED then
             -- In older API versions, Color.index
             -- returns a float, not an integer.
             padHex = math.tointeger(padColor.index)
-        elseif colorMode == ColorMode.GRAY then
-            padHex = padColor.grayPixel
-        else
-            padHex = padColor.rgbaPixel
         end
 
         local jsonEntries = {}
@@ -574,8 +551,10 @@ dlg:button {
 
                             local imgChild = nil
                             if childLayerIsTilemap then
-                                imgChild = tiledImgToImg(
-                                    childCel.image, childTileSet)
+                                imgChild = tilesToImage(
+                                    childCel.image,
+                                    childTileSet,
+                                    colorMode)
                             else
                                 imgChild = childCel.image
                             end
@@ -646,7 +625,8 @@ dlg:button {
                         xTrg = celPos.x
                         yTrg = celPos.y
                         if layerIsTilemap then
-                            imgTrg = tiledImgToImg(cel.image, tileSet)
+                            imgTrg = tilesToImage(
+                                cel.image, tileSet, colorMode)
                         else
                             imgTrg = cel.image
                         end
@@ -679,7 +659,7 @@ dlg:button {
 
                     if usePadding then
                         local specPad = ImageSpec {
-                            colorMode = ColorMode.RGB,
+                            colorMode = colorMode,
                             width = imgTrg.width + pad2,
                             height = imgTrg.height + pad2,
                             transparentColor = alphaIndex }

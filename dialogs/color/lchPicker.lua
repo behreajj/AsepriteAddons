@@ -311,7 +311,26 @@ local function setFromSelect(dialog, sprite, frame)
 
             local hexDict = {}
 
-            if colorMode == ColorMode.GRAY then
+            -- In Aseprite 1.3, it's possible for images in
+            -- tile map layers to have a colorMode of 4.
+            if colorMode == ColorMode.RGB then
+                for elm in px do
+                    local x = elm.x + xSel
+                    local y = elm.y + ySel
+                    if selection:contains(x, y) then
+                        local hex = elm()
+                        local a = hex >> 0x18 & 0xff
+                        if a > 0 then
+                            local query = hexDict[hex]
+                            if query then
+                                hexDict[hex] = query + 1
+                            else
+                                hexDict[hex] = 1
+                            end
+                        end
+                    end
+                end
+            elseif colorMode == ColorMode.GRAY then
                 for elm in px do
                     local x = elm.x + xSel
                     local y = elm.y + ySel
@@ -326,23 +345,6 @@ local function setFromSelect(dialog, sprite, frame)
                                 hexDict[hexRgb] = query + 1
                             else
                                 hexDict[hexRgb] = 1
-                            end
-                        end
-                    end
-                end
-            elseif colorMode == ColorMode.RGB then
-                for elm in px do
-                    local x = elm.x + xSel
-                    local y = elm.y + ySel
-                    if selection:contains(x, y) then
-                        local hex = elm()
-                        local a = hex >> 0x18 & 0xff
-                        if a > 0 then
-                            local query = hexDict[hex]
-                            if query then
-                                hexDict[hex] = query + 1
-                            else
-                                hexDict[hex] = 1
                             end
                         end
                     end

@@ -88,7 +88,20 @@ dlg:button {
                     end
                 end
 
-                if colorMode == ColorMode.INDEXED then
+                -- In Aseprite 1.3, it's possible for images in
+                -- tile map layers to have a colorMode of 4.
+                if colorMode == ColorMode.RGB then
+                    for elm in itr do
+                        local hex = elm()
+                        if ((hex >> 0x18) & 0xff) > 0 then
+                            hex = alphaMask | hex
+                            if not dictionary[hex] then
+                                dictionary[hex] = idx
+                                idx = idx + 1
+                            end
+                        end
+                    end
+                elseif colorMode == ColorMode.INDEXED then
                     local srcPal = sprite.palettes[1]
                     local srcPalLen = #srcPal
                     for elm in itr do
@@ -113,17 +126,6 @@ dlg:button {
                             local a = (hexGray >> 0x08) & 0xff
                             local v = hexGray & 0xff
                             local hex = a << 0x18 | v << 0x10 | v << 0x08 | v
-                            if not dictionary[hex] then
-                                dictionary[hex] = idx
-                                idx = idx + 1
-                            end
-                        end
-                    end
-                else
-                    for elm in itr do
-                        local hex = elm()
-                        if ((hex >> 0x18) & 0xff) > 0 then
-                            hex = alphaMask | hex
                             if not dictionary[hex] then
                                 dictionary[hex] = idx
                                 idx = idx + 1
