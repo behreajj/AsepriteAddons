@@ -153,6 +153,13 @@ dlg:button {
 
         -- Cache methods
         local trunc = math.tointeger
+        local lchTosRgba = Clr.lchTosRgba
+        -- local sRgbaToLab = Clr.sRgbaToLab
+        local sRgbaToLch = Clr.sRgbaToLch
+        local fromHex = Clr.fromHex
+        local rgbIsInGamut = Clr.rgbIsInGamut
+        local toHex = Clr.toHex
+        local quantize = Utilities.quantizeUnsigned
         local drawCircleFill = AseUtilities.drawCircleFill
 
         -- Unpack arguments.
@@ -186,9 +193,13 @@ dlg:button {
         -- Create sprite.
         local size = args.size
         local szInv = 1.0 / size
-        local sprite = Sprite(size, size)
+        local spec = ImageSpec {
+            width = size,
+            height = size,
+            colorMode = ColorMode.RGB }
+        spec.colorSpace = ColorSpace { sRGB = true }
+        local sprite = Sprite(spec)
         sprite.filename = "LCh Color Shades"
-        sprite:assignColorSpace(ColorSpace { sRGB = true })
 
         -- Calculate frame count to normalization.
         local iToStep = 1.0
@@ -207,7 +218,7 @@ dlg:button {
             local iStep = (i - 1.0) * iToStep
             local hue = iStep
 
-            local gamutImg = Image(size, size)
+            local gamutImg = Image(spec)
             local pxItr = gamutImg:pixels()
             for elm in pxItr do
 
@@ -215,20 +226,20 @@ dlg:button {
                 -- [0.0, 1.0], then to CIE LCH.
                 local x = elm.x
                 local xNrm = x * szInv
-                xNrm = Utilities.quantizeUnsigned(xNrm, quantization)
+                xNrm = quantize(xNrm, quantization)
                 local chroma = xNrm * maxChroma
 
                 local y = elm.y
                 local yNrm = y * szInv
-                yNrm = Utilities.quantizeUnsigned(yNrm, quantization)
+                yNrm = quantize(yNrm, quantization)
                 local light = (1.0 - yNrm) * maxLight
 
-                local clr = Clr.lchTosRgba(light, chroma, hue, 1.0)
-                if not Clr.rgbIsInGamut(clr, oogaEps) then
+                local clr = lchTosRgba(light, chroma, hue, 1.0)
+                if not rgbIsInGamut(clr, oogaEps) then
                     clr.a = oogaNorm
                 end
 
-                elm(Clr.toHex(clr))
+                elm(toHex(clr))
             end
 
             gamutImgs[i] = gamutImg
@@ -260,49 +271,101 @@ dlg:button {
         end)
 
         if plotPalette then
-            local plotImage = Image(size, size)
-            local hexesSrgbLen = #hexesSrgb
-            local invMaxChroma = 1.0 / maxChroma
-            local invMaxLight = 1.0 / maxLight
+            -- Unpack arguments.
             local strokeSize = args.strokeSize or defaults.strokeSize
             local fillSize = args.fillSize or defaults.fillSize
-            local strokeColor = 0xffffffff
+
+            -- Find min and max.
+            local xs = {}
+            local ys = {}
+            local strokes = {}
+
+            local xMin = 2147483647
+            local yMin = 2147483647
+            local xMax = -2147483648
+            local yMax = -2147483648
+
+            local invMaxChroma = 1.0 / maxChroma
+            local invMaxLight = 1.0 / maxLight
+
+            local hexesSrgbLen = #hexesSrgb
             for j = 1, hexesSrgbLen, 1 do
                 local hexSrgb = hexesSrgb[j]
+                local xi = 0
+                local yi = size
+                local stroke = 0x0
                 if hexSrgb & 0xff000000 ~= 0 then
-                    local lch = Clr.sRgbaToLch(Clr.fromHex(hexSrgb))
+                    local lch = sRgbaToLch(fromHex(hexSrgb))
 
                     -- To [0.0, 1.0].
                     local xNrm = lch.c * invMaxChroma
                     local yNrm = 1.0 - (lch.l * invMaxLight)
 
                     -- From [0.0, 1.0] to [0, size].
-                    local xPx = xNrm * size
-                    local yPx = yNrm * size
+                    xi = trunc(0.5 + xNrm * size)
+                    yi = trunc(0.5 + yNrm * size)
 
-                    local xi = trunc(0.5 + xPx)
-                    local yi = trunc(0.5 + yPx)
+                    if xi < xMin then xMin = xi end
+                    if xi > xMax then xMax = xi end
+                    if yi < yMin then yMin = yi end
+                    if yi > yMax then yMax = yi end
 
-                    local hexProfile = hexesProfile[j]
-                    drawCircleFill(plotImage, xi, yi, strokeSize, strokeColor)
-                    drawCircleFill(plotImage, xi, yi, fillSize, hexProfile)
+                    if hexSrgb == 0xffffffff then
+                        stroke = 0xff000000
+                    else
+                        stroke = 0xffffffff
+                    end
                 end
+
+                strokes[j] = stroke
+                xs[j] = xi
+                ys[j] = yi
             end
 
-            local plotPalLayer = sprite:newLayer()
-            plotPalLayer.name = "Palette"
+            if xMax > xMin and yMax > yMin then
+                local stroke2 = strokeSize + strokeSize
+                local xOff = 1 + xMin - strokeSize
+                local yOff = 1 + yMin - strokeSize
 
-            AseUtilities.createNewCels(
-                sprite,
-                1, reqFrames,
-                plotPalLayer.stackIndex, 1,
-                plotImage)
+                local plotSpec =  ImageSpec {
+                    width = (xMax - xMin) + stroke2 - 1,
+                    height = (yMax - yMin) + stroke2 - 1,
+                    colorMode = spec.colorMode }
+                plotSpec.colorSpace = spec.colorSpace
+                local plotImage = Image(plotSpec)
+                local plotPos = Point(xOff, yOff)
+
+                for j = 1, hexesSrgbLen, 1 do
+                    local hexSrgb = hexesSrgb[j]
+                    if hexSrgb & 0xff000000 ~= 0 then
+                        local xi = xs[j] - xOff
+                        local yi = ys[j] - yOff
+                        local hexProfile = hexesProfile[j]
+                        local strokeColor = strokes[j]
+                        drawCircleFill(plotImage, xi, yi, strokeSize, strokeColor)
+                        drawCircleFill(plotImage, xi, yi, fillSize, hexProfile)
+                    end
+                end
+
+                local plotPalLayer = sprite:newLayer()
+                plotPalLayer.name = "Palette"
+
+                AseUtilities.createNewCels(
+                    sprite,
+                    1, reqFrames,
+                    plotPalLayer.stackIndex, 1,
+                    plotImage, plotPos)
+            end
 
             -- This needs to be done at the very end because
             -- prependMask modifies hexesProfile.
             Utilities.prependMask(hexesProfile)
             sprite:setPalette(
                 AseUtilities.hexArrToAsePalette(hexesProfile))
+        else
+            sprite:setPalette(
+                AseUtilities.hexArrToAsePalette(
+                    AseUtilities.DEFAULT_PAL_ARR))
         end
 
         app.activeLayer = gamutLayer

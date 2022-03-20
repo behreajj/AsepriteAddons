@@ -7,7 +7,6 @@ local sortPresets = {
     "CHROMA", "HUE",
     "INDEX", "LUMA" }
 local sortOrders = { "ASCENDING", "DESCENDING" }
-local grayHues = { "OMIT", "SHADING", "ZERO" }
 local numBases = { "PROFILE", "SRGB" }
 
 local defaults = {
@@ -226,16 +225,6 @@ dlg:combobox {
 }
 
 dlg:newrow { always = false }
-
--- dlg:combobox {
---     id = "grayHue",
---     label = "Gray Hue:",
---     option = defaults.grayHue,
---     options = grayHues,
---     visible = defaults.lchDisplay == true
--- }
-
--- dlg:newrow { always = false }
 
 dlg:color {
     id = "txtColor",
@@ -809,27 +798,25 @@ dlg:button {
                 end
 
                 local rowImg = nil
-                local rowAseColor = nil
                 if i % 2 ~= 1 then
                     rowImg = row0Tmpl:clone()
-                    rowAseColor = row0Color
                 else
                     rowImg = row1Tmpl:clone()
-                    rowAseColor = row1Color
                 end
 
                 local rowLayer = manifestSprite:newLayer()
                 rowLayer.name = strfmt("%03d.%s",
-                    palIdx,
-                    string.sub(hexWeb, 2))
-                -- rowLayer.color = rowAseColor
+                    palIdx, string.sub(hexWeb, 2))
 
                 if hexSrgb ~= hexProfile then
-                    drawSwatch(rowImg, swatchMask | hexSrgb,
+                    local back = swatchMask | hexSrgb
+                    local fore = swatchMask | hexProfile
+
+                    drawSwatch(rowImg, back,
                         entryPadding + swchOffs, entryPadding + swchOffs,
                         swchSize, swchSize)
 
-                    drawSwatch(rowImg, swatchMask | hexProfile,
+                    drawSwatch(rowImg, fore,
                         entryPadding, entryPadding,
                         swchSize, swchSize)
                 else
@@ -956,7 +943,6 @@ dlg:button {
                         and (i - 1) % hdrRepeatRate == 0) then
                     local hdrRptLayer = manifestSprite:newLayer()
                     hdrRptLayer.name = "Header"
-                    -- hdrRptLayer.color = hdrBkgHex
                     manifestSprite:newCel(
                         hdrRptLayer,
                         frameObj,

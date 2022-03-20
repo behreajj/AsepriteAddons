@@ -105,17 +105,24 @@ dlg:button {
 
         local useOmit = grayHue == "OMIT"
         local useZero = grayHue == "ZERO"
-        -- local grayRed = 0.11110832290062
         local grayZero = 0.0
 
         -- Scale adjustments appropriately.
         local hScl = hAdj / 360.0
         local aScl = aAdj / 255.0
 
-        -- Cache loop methods.
-        -- local abs = math.abs
-
         local srcImg = srcCel.image
+        local version = app.version
+        local layerIsTilemap = false
+        if version.major >= 1 and version.minor >= 3 then
+            local activeLayer = app.activeLayer
+            layerIsTilemap = activeLayer.isTilemap
+            if layerIsTilemap then
+                local tileSet = activeLayer.tileset
+                srcImg = AseUtilities.tilesToImage(srcImg, tileSet, colorMode)
+            end
+        end
+
         local srcpxitr = srcImg:pixels()
         local srcDict = {}
         for elm in srcpxitr do
@@ -125,31 +132,32 @@ dlg:button {
         local trgDict = {}
         for k, _ in pairs(srcDict) do
             local srgb = Clr.fromHex(k)
-            local lch = Clr.sRgbaToLch(srgb)
-
-            -- Instead of using chroma, check if r, g, b
-            -- are equal??
-            local cNew = lch.c
-            local hNew = lch.h
-            if cNew < 1.0 then
-                if useOmit then
-                    cNew = 0.0
-                    hNew = 0.0
-                elseif useZero then
-                    cNew = cNew + cAdj
-                    hNew = grayZero + hScl
+            if srgb.a > 0.0 then
+                local lch = Clr.sRgbaToLch(srgb)
+                local cNew = lch.c
+                local hNew = lch.h
+                if cNew < 1.0 then
+                    if useOmit then
+                        cNew = 0.0
+                        hNew = 0.0
+                    elseif useZero then
+                        cNew = cNew + cAdj
+                        hNew = grayZero + hScl
+                    else
+                        cNew = cNew + cAdj
+                        hNew = hNew + hScl
+                    end
                 else
                     cNew = cNew + cAdj
                     hNew = hNew + hScl
                 end
-            else
-                cNew = cNew + cAdj
-                hNew = hNew + hScl
-            end
 
-            local srgbNew = Clr.lchTosRgba(
-                lch.l + lAdj, cNew, hNew, lch.a + aScl)
-            trgDict[k] = Clr.toHex(srgbNew)
+                local srgbNew = Clr.lchTosRgba(
+                    lch.l + lAdj, cNew, hNew, lch.a + aScl)
+                trgDict[k] = Clr.toHex(srgbNew)
+            else
+                trgDict[k] = 0x0
+            end
         end
 
         local trgImg = srcImg:clone()
@@ -158,14 +166,14 @@ dlg:button {
             elm(trgDict[elm()])
         end
 
-        if copyToLayer then
+        if copyToLayer or layerIsTilemap then
             app.transaction(function()
                 local srcLayer = srcCel.layer
 
                 -- Copy layer.
                 local trgLayer = activeSprite:newLayer()
                 local srcLayerName = "Layer"
-                if srcLayer.name and #srcLayer.name > 0 then
+                if #srcLayer.name > 0 then
                     srcLayerName = srcLayer.name
                 end
                 -- trgLayer.name = srcLayerName .. ".Adjusted"
@@ -178,6 +186,7 @@ dlg:button {
                 if srcLayer.blendMode then
                     trgLayer.blendMode = srcLayer.blendMode
                 end
+                -- trgLayer.parent = srcLayer.parent
 
                 -- Copy cel.
                 local srcFrame = srcCel.frame or activeSprite.frames[1]

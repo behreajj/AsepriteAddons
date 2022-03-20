@@ -301,6 +301,8 @@ local function setFromSelect(dialog, sprite, frame)
 
             local colorMode = sprite.colorMode
 
+            -- This will ignore a reference image,
+            -- meaning you can't sample it for color.
             local flatImage = Image(
                 selBounds.width,
                 selBounds.height,

@@ -301,7 +301,7 @@ dlg:button {
         if copyToLayer then
             trgLayer = sprite:newLayer()
             local srcLayerName = "Layer"
-            if srcLayer.name and #srcLayer.name > 0 then
+            if #srcLayer.name > 0 then
                 srcLayerName = srcLayer.name
             end
             trgLayer.name = srcLayerName .. "." .. clrSpacePreset

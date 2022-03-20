@@ -1,9 +1,6 @@
-dofile("../../support/clr.lua")
-dofile("../../support/utilities.lua")
 dofile("../../support/aseutilities.lua")
 
 local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
-local centers = { "ABSOLUTE", "RELATIVE" }
 
 local defaults = {
     size = 256,
@@ -12,17 +9,15 @@ local defaults = {
     frames = 32,
     fps = 24,
     outOfGamut = 64,
-    hueOverlay = true,
-    offsetDeg = 40,
-    ringCount = 4,
-    sectorCount = 12,
-    hueCenter = "ABSOLUTE",
+    sectorCount = 0,
+    ringCount = 0,
     plotPalette = true,
     palType = "ACTIVE",
     palStart = 0,
     palCount = 256,
     strokeSize = 6,
     fillSize = 5,
+    maxChroma = 135.0,
     pullFocus = false
 }
 
@@ -85,49 +80,22 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "hueOverlay",
-    label = "Overlay:",
-    selected = defaults.hueOverlay,
-    onclick = function()
-        local args = dlg.data
-        local overlay = args.hueOverlay
-        dlg:modify { id = "ringCount", visible = overlay }
-        dlg:modify { id = "sectorCount", visible = overlay }
-        dlg:modify { id = "hueCenter", visible = overlay }
-    end
+dlg:slider {
+    id = "sectorCount",
+    label = "Sectors:",
+    min = 0,
+    max = 32,
+    value = defaults.sectorCount
 }
 
 dlg:newrow { always = false }
 
 dlg:slider {
     id = "ringCount",
-    label = "Rings",
-    min = 1,
-    max = 16,
-    value = defaults.ringCount,
-    visible = defaults.hueOverlay
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "sectorCount",
-    label = "Sectors",
+    label = "Rings:",
     min = 0,
     max = 16,
-    value = defaults.sectorCount,
-    visible = defaults.hueOverlay
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "hueCenter",
-    label = "Center:",
-    option = defaults.hueCenter,
-    options = centers,
-    visible = defaults.hueOverlay
+    value = defaults.ringCount
 }
 
 dlg:newrow { always = false }
@@ -210,24 +178,35 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
 
         -- Cache methods.
-        local cos = math.cos
-        local sin = math.sin
+        local atan2 = math.atan
+        local floor = math.floor
         local sqrt = math.sqrt
         local trunc = math.tointeger
-        local labTosRgba = Clr.labTosRgba
-        local rgbIsInGamut = Clr.rgbIsInGamut
-        local toHex = Clr.toHex
+
         local fromHex = Clr.fromHex
+        local labTosRgba = Clr.labTosRgba
+        local lchTosRgba = Clr.lchTosRgba
+        local rgbIsInGamut = Clr.rgbIsInGamut
         local sRgbaToLab = Clr.sRgbaToLab
+        local toHex = Clr.toHex
+
         local drawCircleFill = AseUtilities.drawCircleFill
+
+        -- Unpack arguments.
+        local args = dlg.data
+        local plotPalette = args.plotPalette
+        local size = args.size or defaults.size
+        local ringCount = args.ringCount or defaults.ringCount
+        local sectorCount = args.sectorCount or defaults.sectorCount
+        local minLight = args.minLight or defaults.minLight
+        local maxLight = args.maxLight or defaults.maxLight
+        local outOfGamut = args.outOfGamut or defaults.outOfGamut
 
         -- Must be done before a new sprite is created.
         local hexesSrgb = {}
         local hexesProfile = {}
-        local plotPalette = args.plotPalette
         if plotPalette then
             local palType = args.palType or defaults.palType
             if palType ~= "DEFAULT" then
@@ -247,27 +226,40 @@ dlg:button {
             end
         end
 
-        -- Create sprite.
-        local size = args.size
-        local xAbsCenter = trunc(0.5 + size * 0.5)
-        local yAbsCenter = trunc(0.5 + size * 0.5)
-        local sprite = Sprite(size, size)
+        -- Quantization calculations.
+        local quantAzims = sectorCount > 0
+        local quantRad = ringCount > 0
+        local maxChroma = defaults.maxChroma
+
+        -- Depending on case, may be hue, radians or degrees.
+        local azimAlpha = sectorCount / 1.0
+        local azimBeta = 0.0
+        if quantAzims then
+            azimBeta = 1.0 / sectorCount
+        end
+
+        local radAlpha = ringCount / maxChroma
+        local radBeta = 0.0
+        if quantRad then
+            radBeta = maxChroma / ringCount
+        end
+
+        -- Create new sprite.
+        local spec = ImageSpec {
+            width = size,
+            height = size,
+            colorMode = ColorMode.RGB }
+        spec.colorSpace = ColorSpace { sRGB = true }
+        local sprite = Sprite(spec)
         sprite.filename = "LCh Color Wheel"
-        sprite:assignColorSpace(ColorSpace { sRGB = true })
 
         -- Create color field images.
         local gamutImgs = {}
-        local xRelCenters = {}
-        local yRelCenters = {}
-        local fixedRads = {}
-        local movingRads = {}
         local szInv = 1.0 / size
         local iToStep = 1.0
         local reqFrames = args.frames or defaults.frames
         if reqFrames > 1 then iToStep = 1.0 / (reqFrames - 1.0) end
-        local minLight = args.minLight or defaults.minLight
-        local maxLight = args.maxLight or defaults.maxLight
-        local outOfGamut = args.outOfGamut or defaults.outOfGamut
+
         local oogamask = outOfGamut << 0x18
         for i = 1, reqFrames, 1 do
 
@@ -276,103 +268,54 @@ dlg:button {
             local iStep = (i - 1.0) * iToStep
             local light = (1.0 - iStep) * minLight + iStep * maxLight
 
-            -- Cache extrema so as to find relative center.
-            local xMin = 2147483647
-            local yMin = 2147483647
-            local xMax = -2147483648
-            local yMax = -2147483648
-            local xSum = 0
-            local ySum = 0
-            local validCount = 0
-            local xsValid = {}
-            local ysValid = {}
-
-            local gamutImg = Image(size, size)
+            local gamutImg = Image(spec)
             local pxItr = gamutImg:pixels()
             for elm in pxItr do
 
                 -- Convert coordinates from [0, size] to
                 -- [0.0, 1.0], then to [-1.0, 1.0], then
                 -- to CIE LAB range [-110.0, 110.0].
-                local x = elm.x
-                local xNrm = x * szInv
+                -- local x = elm.x
+                local xNrm = elm.x * szInv
                 local xSgn = xNrm + xNrm - 1.0
+                local a = xSgn * maxChroma
 
-                local y = elm.y
-                local yNrm = y * szInv
+                -- local y = elm.y
+                local yNrm = elm.y * szInv
                 local ySgn = 1.0 - (yNrm + yNrm)
+                local b = ySgn * maxChroma
 
-                local clr = labTosRgba(
-                    light,
-                    xSgn * 110.0,
-                    ySgn * 110.0,
-                    1.0)
-                local hex = toHex(clr)
+                local clr = nil
+                local csq = a * a + b * b
+                if csq > 0.0 then
+                    local c = sqrt(csq)
+                    local h = atan2(b, a) * 0.15915494309189535
+
+                    if quantAzims then
+                        h = floor(0.5 + h * azimAlpha) * azimBeta
+                    end
+
+                    if quantRad then
+                        -- Use unsigned?
+                        c = floor(0.5 + c * radAlpha) * radBeta
+                    end
+
+                    clr = lchTosRgba(light, c, h, 1.0)
+                else
+                    clr = labTosRgba(light, 0.0, 0.0, 1.0)
+                end
 
                 -- If color is within SRGB gamut, then display
                 -- at full opacity; otherwise display at reduced
                 -- alpha. Find the valid boundary of the gamut.
+                local hex = toHex(clr)
                 if rgbIsInGamut(clr) then
                     elm(hex)
-
-                    if x < xMin then xMin = x end
-                    if x > xMax then xMax = x end
-                    if y < yMin then yMin = y end
-                    if y > yMax then yMax = y end
-
-                    xSum = xSum + x
-                    ySum = ySum + y
-
-                    validCount = validCount + 1
-                    xsValid[validCount] = x
-                    ysValid[validCount] = y
                 else
                     elm(oogamask | (hex & 0x00ffffff))
                 end
             end
 
-            local xRelCenter = xAbsCenter
-            local yRelCenter = yAbsCenter
-            local movingRad = 2
-            local fixedRad = 2
-            if validCount > 0 then
-                local invValCount = 1.0 / validCount
-                xRelCenter = xSum * invValCount
-                yRelCenter = ySum * invValCount
-                local movingBrSq = -2147483648
-                local fixedBrSq = -2147483648
-
-                for j = 1, validCount, 1 do
-                    local xCurr = xsValid[j]
-                    local yCurr = ysValid[j]
-
-                    -- Find difference from point to relative center.
-                    local xDiffRel = xCurr - xRelCenter
-                    local yDiffRel = yCurr - yRelCenter
-                    local distSqRel = xDiffRel * xDiffRel
-                        + yDiffRel * yDiffRel
-                    if distSqRel > movingBrSq then
-                        movingBrSq = distSqRel
-                    end
-
-                    -- Find difference from point to fixed center.
-                    local xDiffAbs = xCurr - xAbsCenter
-                    local yDiffAbs = yCurr - yAbsCenter
-                    local distSqFixed = xDiffAbs * xDiffAbs
-                        + yDiffAbs * yDiffAbs
-                    if distSqFixed > fixedBrSq then
-                        fixedBrSq = distSqFixed
-                    end
-                end
-
-                movingRad = sqrt(movingBrSq)
-                fixedRad = sqrt(fixedBrSq)
-            end
-
-            xRelCenters[i] = xRelCenter
-            yRelCenters[i] = yRelCenter
-            fixedRads[i] = fixedRad
-            movingRads[i] = movingRad
             gamutImgs[i] = gamutImg
         end
 
@@ -401,170 +344,93 @@ dlg:button {
             end
         end)
 
-        local hueOverlay = args.hueOverlay
-        if hueOverlay then
-
-            local hueOverlayLayer = sprite:newLayer()
-            hueOverlayLayer.name = "Overlay"
-
-            -- Create gamut layer cels first, as this needs
-            -- to be done with app.useTool.
-            local overlayCels = {}
-            app.transaction(function()
-                for i = 1, reqFrames, 1 do
-                    overlayCels[i] = sprite:newCel(
-                        hueOverlayLayer,
-                        sprite.frames[i])
-                end
-            end)
-
-            local ringCount = args.ringCount or defaults.ringCount
-            local sectorCount = args.sectorCount or defaults.sectorCount
-            local centerPreset = args.hueCenter or defaults.hueCenter
-            local isRelative = centerPreset == "RELATIVE"
-            local overlayHex = 0xafffffff
-            local offsetDeg = 0.0
-            if not isRelative then
-                offsetDeg = args.offsetDeg or defaults.offsetDeg
-            end
-            local offsetRad = math.rad(offsetDeg)
-
-            local overlayAseClr = AseUtilities.hexToAseColor(overlayHex)
-            local overlayBrush = Brush(1)
-            local reticuleBrush = Brush(3)
-
-            app.transaction( function()
-                for i = 1, reqFrames, 1 do
-                    local xCenter = xAbsCenter
-                    local yCenter = yAbsCenter
-                    local maxRadius = 2
-                    if isRelative then
-                        xCenter = xRelCenters[i]
-                        yCenter = yRelCenters[i]
-                        maxRadius = movingRads[i]
-                    else
-                        maxRadius = fixedRads[i]
-                    end
-
-                    local overCel = overlayCels[i]
-                    local currFrame = sprite.frames[i]
-
-                    if ringCount > 1 then
-                        local jToRadius = maxRadius / ringCount
-                        for j = 1, ringCount, 1 do
-                            local rad = j * jToRadius
-                            app.useTool {
-                                tool = "ellipse",
-                                color = overlayAseClr,
-                                brush = overlayBrush,
-                                points = {
-                                    Point(
-                                        xCenter - rad,
-                                        yCenter + rad),
-                                    Point(
-                                        xCenter + rad,
-                                        yCenter - rad) },
-                                cel = overCel,
-                                frame = currFrame,
-                                layer = hueOverlayLayer
-                            }
-                        end
-                    else
-                        app.useTool {
-                            tool = "ellipse",
-                            color = overlayAseClr,
-                            brush = overlayBrush,
-                            points = {
-                                Point(
-                                    xCenter - maxRadius,
-                                    yCenter + maxRadius),
-                                Point(
-                                    xCenter + maxRadius,
-                                    yCenter - maxRadius) },
-                            cel = overCel,
-                            frame = currFrame,
-                            layer = hueOverlayLayer
-                        }
-                    end
-
-                    local centerPoint = Point(xCenter, yCenter)
-                    if sectorCount > 0 then
-                        local jToTheta = 6.283185307179586 / sectorCount
-                        for j = 0, sectorCount - 1, 1 do
-                            local theta = offsetRad + j * jToTheta
-                            local cosTheta = cos(theta)
-                            local sinTheta = sin(theta)
-
-                            app.useTool {
-                                tool = "line",
-                                color = overlayAseClr,
-                                brush = overlayBrush,
-                                points = {
-                                    centerPoint,
-                                    Point(
-                                        xCenter + maxRadius * cosTheta,
-                                        yCenter - maxRadius * sinTheta) },
-                                cel = overCel,
-                                frame = currFrame,
-                                layer = hueOverlayLayer
-                            }
-                        end
-                    else
-                        app.useTool {
-                            tool = "pencil",
-                            color = overlayAseClr,
-                            brush = reticuleBrush,
-                            points = { centerPoint },
-                            cel = overCel,
-                            frame = currFrame,
-                            layer = hueOverlayLayer
-                        }
-                    end
-                end
-            end)
-        end
-
         if plotPalette then
-            local plotImage = Image(size, size)
-            local hexesSrgbLen = #hexesSrgb
-            local inv110 = 1.0 / 110.0
+
+            -- Unpack arguments.
             local strokeSize = args.strokeSize or defaults.strokeSize
             local fillSize = args.fillSize or defaults.fillSize
-            local strokeColor = 0xffffffff
+
+            -- Find min and max.
+            local xs = {}
+            local ys = {}
+            local strokes = {}
+
+            local xMin = 2147483647
+            local yMin = 2147483647
+            local xMax = -2147483648
+            local yMax = -2147483648
+
+            local invMaxChroma = 0.5 / maxChroma
+            local center = size // 2
+
+            local hexesSrgbLen = #hexesSrgb
             for j = 1, hexesSrgbLen, 1 do
                 local hexSrgb = hexesSrgb[j]
+                local xi = center
+                local yi = center
+                local stroke = 0x0
                 if hexSrgb & 0xff000000 ~= 0 then
                     local lab = sRgbaToLab(fromHex(hexSrgb))
 
-                    -- From [-110.0, 110.0] To [-1.0, 1.0].
-                    local xSgn = lab.a * inv110
-                    local ySgn = lab.b * inv110
-
-                    -- From [-1.0, 1.0] to [0.0, 1.0].
-                    local xNrm = xSgn * 0.5 + 0.5
-                    local yNrm = 0.5 - ySgn * 0.5
+                    -- From [0.0, chroma] to [0.0, 1.0]
+                    local xNrm = lab.a * invMaxChroma + 0.5
+                    local yNrm = 0.5 - lab.b * invMaxChroma
 
                     -- From [0.0, 1.0] to [0, size].
-                    local xPx = xNrm * size
-                    local yPx = yNrm * size
+                    xi = trunc(0.5 + xNrm * size)
+                    yi = trunc(0.5 + yNrm * size)
 
-                    local xi = trunc(0.5 + xPx)
-                    local yi = trunc(0.5 + yPx)
+                    if xi < xMin then xMin = xi end
+                    if xi > xMax then xMax = xi end
+                    if yi < yMin then yMin = yi end
+                    if yi > yMax then yMax = yi end
 
-                    local hexProfile = hexesProfile[j]
-                    drawCircleFill(plotImage, xi, yi, strokeSize, strokeColor)
-                    drawCircleFill(plotImage, xi, yi, fillSize, hexProfile)
+                    if hexSrgb == 0xffffffff then
+                        stroke = 0xff000000
+                    else
+                        stroke = 0xffffffff
+                    end
                 end
+
+                strokes[j] = stroke
+                xs[j] = xi
+                ys[j] = yi
             end
 
-            local plotPalLayer = sprite:newLayer()
-            plotPalLayer.name = "Palette"
+            if xMax > xMin and yMax > yMin then
+                local stroke2 = strokeSize + strokeSize
+                local xOff = 1 + xMin - strokeSize
+                local yOff = 1 + yMin - strokeSize
 
-            AseUtilities.createNewCels(
-                sprite,
-                1, reqFrames,
-                plotPalLayer.stackIndex, 1,
-                plotImage)
+                local plotSpec =  ImageSpec {
+                    width = (xMax - xMin) + stroke2 - 1,
+                    height = (yMax - yMin) + stroke2 - 1,
+                    colorMode = spec.colorMode }
+                plotSpec.colorSpace = spec.colorSpace
+                local plotImage = Image(plotSpec)
+                local plotPos = Point(xOff, yOff)
+
+                for j = 1, hexesSrgbLen, 1 do
+                    local hexSrgb = hexesSrgb[j]
+                    if hexSrgb & 0xff000000 ~= 0 then
+                        local xi = xs[j] - xOff
+                        local yi = ys[j] - yOff
+                        local hexProfile = hexesProfile[j]
+                        local strokeColor = strokes[j]
+                        drawCircleFill(plotImage, xi, yi, strokeSize, strokeColor)
+                        drawCircleFill(plotImage, xi, yi, fillSize, hexProfile)
+                    end
+                end
+
+                local plotPalLayer = sprite:newLayer()
+                plotPalLayer.name = "Palette"
+
+                AseUtilities.createNewCels(
+                    sprite,
+                    1, reqFrames,
+                    plotPalLayer.stackIndex, 1,
+                    plotImage, plotPos)
+            end
 
             -- This needs to be done at the very end because
             -- prependMask modifies hexesProfile.

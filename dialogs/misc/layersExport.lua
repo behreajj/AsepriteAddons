@@ -731,7 +731,7 @@ dlg:button {
                 "\"fileName\":\"%s\"",
                 "\"opacity\":%d",
                 "\"position\":{\"x\":%d,\"y\":%d}",
-                "\"size\":{\"x\":%d,\"y\":%d}}",
+                "\"size\":{\"x\":%d,\"y\":%d}}"
             }, ",")
 
             local frameStrFmt = concat({

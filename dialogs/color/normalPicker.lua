@@ -512,8 +512,7 @@ dlg:button {
         -- Create smooth image.
         local gradSpec = ImageSpec {
             width = gradWidth,
-            height = gradHeight // 2
-        }
+            height = gradHeight // 2 }
         gradSpec.colorSpace = colorSpaceNone
         local gradImg = Image(gradSpec)
         local gradImgPxItr = gradImg:pixels()
