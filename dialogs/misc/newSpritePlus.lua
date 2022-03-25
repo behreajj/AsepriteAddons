@@ -594,9 +594,10 @@ dlg:button {
             local firstCel = layer.cels[1]
             firstCel.image = bkgImg
 
-            -- Doesn't use the AseUtilities method because
-            -- this way is easier to assign the background image.
             app.transaction(function()
+                -- For continuous layer see
+                -- https://community.aseprite.org/t/
+                -- create-new-continuous-layer/13502
                 for i = 0, frameReqs - 2, 1 do
                     newSprite:newCel(layer, i + 2, bkgImg)
                 end

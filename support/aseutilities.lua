@@ -1571,28 +1571,6 @@ function AseUtilities.isVisibleHierarchy(layer, sprite)
     return true
 end
 
----Finds an array of cels shared between an Aseprite
----Range object and an input array.
----@param range userdata aseprite range
----@param cels table cels array
----@return table
-function AseUtilities.rangeCelsIntersect(range, cels)
-    -- TODO: Remove from sepRGB, delete method.
-    local result = {}
-    if range and cels then
-        local celsLen = #cels
-        local j = 1
-        for i = 1, celsLen, 1 do
-            local queryCel = cels[i]
-            if range:contains(queryCel) then
-                result[j] = queryCel
-                j = j + 1
-            end
-        end
-    end
-    return result
-end
-
 ---Rotates a glyph counter-clockwise.
 ---The glyph is to be represented as a binary matrix
 ---with a width and height, where 1 draws a pixel

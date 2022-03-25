@@ -123,210 +123,217 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local activeSprite = app.activeSprite
-        if activeSprite then
-            if activeSprite.colorMode == ColorMode.RGB then
-                local activeLayer = app.activeLayer
-                if activeLayer then
-                    if not activeLayer.isGroup then
-                        local args = dlg.data
-                        local target = args.target or defaults.target
-                        local fillBase = args.fillBase
+        if not activeSprite then
+            app.alert("There is no active sprite.")
+            return
+        end
 
-                        local xRed = args.xRed or defaults.xRed
-                        local yRed = args.yRed or defaults.yRed
+        if activeSprite.colorMode ~= ColorMode.RGB then
+            app.alert("Only RGB color mode is supported.")
+            return
+        end
 
-                        local xGreen = args.xGreen or defaults.xGreen
-                        local yGreen = args.yGreen or defaults.yGreen
+        local activeLayer = app.activeLayer
+        if not activeLayer then
+            app.alert("There is no active layer.")
+            return
+        end
 
-                        local xBlue = args.xBlue or defaults.xBlue
-                        local yBlue = args.yBlue or defaults.yBlue
+        if activeLayer.isGroup then
+            app.alert("Group layers are not supported.")
+            return
+        end
 
-                        local opacityRed = args.opacityRed or defaults.opacityRed
-                        local opacityGreen = args.opacityGreen or defaults.opacityGreen
-                        local opacityBlue = args.opacityBlue or defaults.opacityBlue
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local fillBase = args.fillBase
 
-                        -- TODO: Switch to using frames as in other scripts,
-                        -- then remove rangeCelsIntersect method.
-                        local oldActiveCel = app.activeCel
-                        local cels = {}
-                        if target == "ACTIVE" then
-                            -- local activeCel = app.activeCel
-                            -- if activeCel and activeCel.layer == activeLayer then
-                            if oldActiveCel then
-                                cels[1] = oldActiveCel
-                            end
-                        elseif target == "RANGE" then
-                            cels = AseUtilities.rangeCelsIntersect(
-                                app.range, activeLayer.cels)
-                        else
-                            cels = activeLayer.cels
-                        end
+        local xRed = args.xRed or defaults.xRed
+        local yRed = args.yRed or defaults.yRed
 
-                        local baseLyr = activeSprite:newLayer()
-                        local redLyr = activeSprite:newLayer()
-                        local greenLyr = activeSprite:newLayer()
-                        local blueLyr = activeSprite:newLayer()
+        local xGreen = args.xGreen or defaults.xGreen
+        local yGreen = args.yGreen or defaults.yGreen
 
-                        local activeParent = activeLayer.parent
-                        baseLyr.parent = activeParent
-                        redLyr.parent = activeParent
-                        greenLyr.parent = activeParent
-                        blueLyr.parent = activeParent
+        local xBlue = args.xBlue or defaults.xBlue
+        local yBlue = args.yBlue or defaults.yBlue
 
-                        baseLyr.name = "Base"
-                        redLyr.name = "Red"
-                        greenLyr.name = "Green"
-                        blueLyr.name = "Blue"
+        local opacityRed = args.opacityRed or defaults.opacityRed
+        local opacityGreen = args.opacityGreen or defaults.opacityGreen
+        local opacityBlue = args.opacityBlue or defaults.opacityBlue
 
-                        baseLyr.color = Color(32, 32, 32, 255)
-                        redLyr.color = Color(192, 0, 0, 255)
-                        greenLyr.color = Color(0, 192, 0, 255)
-                        blueLyr.color = Color(0, 0, 192, 255)
-
-                        redLyr.blendMode = BlendMode.ADDITION
-                        greenLyr.blendMode = BlendMode.ADDITION
-                        blueLyr.blendMode = BlendMode.ADDITION
-
-                        redLyr.opacity = opacityRed
-                        greenLyr.opacity = opacityGreen
-                        blueLyr.opacity = opacityBlue
-
-                        -- Treat y axis as (1, 0) points up.
-                        local redShift = Point(xRed, -yRed)
-                        local greenShift = Point(xGreen, -yGreen)
-                        local blueShift = Point(xBlue, -yBlue)
-
-                        local rdMsk = 0xff0000ff
-                        local grMsk = 0xff00ff00
-                        local blMsk = 0xffff0000
-
-                        local max = math.max
-                        local min = math.min
-
-                        local celsLen = #cels
-                        app.transaction(function()
-                            for i = 1, celsLen, 1 do
-                                local srcCel = cels[i]
-                                if srcCel then
-                                    local srcImg = srcCel.image
-                                    local srcImgWidth = srcImg.width
-                                    local srcImgHeight = srcImg.height
-                                    local srcFrame = srcCel.frame
-                                    local srcPos = srcCel.position
-
-                                    local redCel = activeSprite:newCel(
-                                        redLyr, srcFrame, srcImg, srcPos + redShift)
-                                    local greenCel = activeSprite:newCel(
-                                        greenLyr, srcFrame, srcImg, srcPos + greenShift)
-                                    local blueCel = activeSprite:newCel(
-                                        blueLyr, srcFrame, srcImg, srcPos + blueShift)
-
-                                    local srcOpacity = srcCel.opacity
-                                    redCel.opacity = srcOpacity
-                                    greenCel.opacity = srcOpacity
-                                    blueCel.opacity = srcOpacity
-
-                                    local redImg = redCel.image
-                                    local greenImg = greenCel.image
-                                    local blueImg = blueCel.image
-
-                                    local rdItr = redImg:pixels()
-                                    local grItr = greenImg:pixels()
-                                    local blItr = blueImg:pixels()
-
-                                    for elm in rdItr do elm(elm() & rdMsk) end
-                                    for elm in grItr do elm(elm() & grMsk) end
-                                    for elm in blItr do elm(elm() & blMsk) end
-
-                                    local redPos = redCel.position
-                                    local greenPos = greenCel.position
-                                    local bluePos = blueCel.position
-
-                                    local trxRed = redPos.x
-                                    local trxGreen = greenPos.x
-                                    local trxBlue = bluePos.x
-
-                                    local tryRed = redPos.y
-                                    local tryGreen = greenPos.y
-                                    local tryBlue = bluePos.y
-
-                                    local trxBase = min(trxRed, trxGreen, trxBlue)
-                                    local tryBase = min(tryRed, tryGreen, tryBlue)
-                                    local brxBase = max(trxRed, trxGreen, trxBlue) + srcImgWidth
-                                    local bryBase = max(tryRed, tryGreen, tryBlue) + srcImgHeight
-
-                                    local baseWidth = brxBase - trxBase
-                                    local baseHeight = bryBase - tryBase
-
-                                    local baseCel = activeSprite:newCel(baseLyr, srcFrame)
-                                    baseCel.position = Point(trxBase, tryBase)
-                                    baseCel.image = Image(baseWidth, baseHeight)
-
-                                    if fillBase then
-                                        local xRedBase = trxBase - trxRed
-                                        local xGreenBase = trxBase - trxGreen
-                                        local xBlueBase = trxBase - trxBlue
-
-                                        local yRedBase = tryBase - tryRed
-                                        local yGreenBase = tryBase - tryGreen
-                                        local yBlueBase = tryBase - tryBlue
-
-                                        local baseItr = baseCel.image:pixels()
-                                        for elm in baseItr do
-                                            local x = elm.x
-                                            local y = elm.y
-                                            local placeMark = false
-
-                                            -- getPixel returns -1 when coordinates are out of
-                                            -- bounds, which is why this is so convoluted.
-                                            local xbTest = x + xBlueBase
-                                            local ybTest = y + yBlueBase
-                                            if xbTest > -1 and xbTest < srcImgWidth
-                                                and ybTest > -1 and ybTest < srcImgHeight then
-                                                local bHex = blueImg:getPixel(xbTest, ybTest)
-                                                placeMark = placeMark or bHex & 0xff000000 ~= 0
-                                            end
-
-                                            local xgTest = x + xGreenBase
-                                            local ygTest = y + yGreenBase
-                                            if xgTest > -1 and xgTest < srcImgWidth
-                                                and ygTest > -1 and ygTest < srcImgHeight then
-                                                local gHex = greenImg:getPixel(xgTest, ygTest)
-                                                placeMark = placeMark or gHex & 0xff000000 ~= 0
-                                            end
-
-                                            local xrTest = x + xRedBase
-                                            local yrTest = y + yRedBase
-                                            if xrTest > -1 and xrTest < srcImgWidth
-                                                and yrTest > -1 and yrTest < srcImgHeight then
-                                                local rHex = redImg:getPixel(xrTest, yrTest)
-                                                placeMark = placeMark or rHex & 0xff000000 ~= 0
-                                            end
-
-                                            if placeMark then
-                                                elm(0xff000000)
-                                            end
-                                        end
-                                    end
-                                end
-                            end
-                        end)
-
-                        app.activeLayer = activeLayer
-                        app.activeCel = oldActiveCel
-                        app.refresh()
-                    else
-                        app.alert("Group layers are not supported.")
-                    end
-                else
-                    app.alert("There is no active layer.")
-                end
-            else
-                app.alert("Only RGB color mode is supported.")
+        local frames = {}
+        if target == "ACTIVE" then
+            local activeFrame = app.activeFrame
+            if activeFrame then
+                frames[1] = activeFrame
+            end
+        elseif target == "RANGE" then
+            local appRange = app.range
+            local rangeFrames = appRange.frames
+            local rangeFramesLen = #rangeFrames
+            for i = 1, rangeFramesLen, 1 do
+                frames[i] = rangeFrames[i]
             end
         else
-            app.alert("There is no active sprite.")
+            local activeFrames = activeSprite.frames
+            local activeFramesLen = #activeFrames
+            for i = 1, activeFramesLen, 1 do
+                frames[i] = activeFrames[i]
+            end
         end
+
+        local baseLyr = activeSprite:newLayer()
+        local redLyr = activeSprite:newLayer()
+        local greenLyr = activeSprite:newLayer()
+        local blueLyr = activeSprite:newLayer()
+
+        local activeParent = activeLayer.parent
+        baseLyr.parent = activeParent
+        redLyr.parent = activeParent
+        greenLyr.parent = activeParent
+        blueLyr.parent = activeParent
+
+        baseLyr.name = "Base"
+        redLyr.name = "Red"
+        greenLyr.name = "Green"
+        blueLyr.name = "Blue"
+
+        baseLyr.color = Color(32, 32, 32, 255)
+        redLyr.color = Color(192, 0, 0, 255)
+        greenLyr.color = Color(0, 192, 0, 255)
+        blueLyr.color = Color(0, 0, 192, 255)
+
+        redLyr.blendMode = BlendMode.ADDITION
+        greenLyr.blendMode = BlendMode.ADDITION
+        blueLyr.blendMode = BlendMode.ADDITION
+
+        redLyr.opacity = opacityRed
+        greenLyr.opacity = opacityGreen
+        blueLyr.opacity = opacityBlue
+
+        -- Treat y axis as (1, 0) points up.
+        local redShift = Point(xRed, -yRed)
+        local greenShift = Point(xGreen, -yGreen)
+        local blueShift = Point(xBlue, -yBlue)
+
+        local rdMsk = 0xff0000ff
+        local grMsk = 0xff00ff00
+        local blMsk = 0xffff0000
+
+        local max = math.max
+        local min = math.min
+
+        local framesLen = #frames
+        app.transaction(function()
+            for i = 1, framesLen, 1 do
+                local srcFrame = frames[i]
+                local srcCel = activeLayer:cel(srcFrame)
+                if srcCel then
+                    local srcImg = srcCel.image
+                    local srcImgWidth = srcImg.width
+                    local srcImgHeight = srcImg.height
+                    local srcPos = srcCel.position
+
+                    local redCel = activeSprite:newCel(
+                        redLyr, srcFrame, srcImg, srcPos + redShift)
+                    local greenCel = activeSprite:newCel(
+                        greenLyr, srcFrame, srcImg, srcPos + greenShift)
+                    local blueCel = activeSprite:newCel(
+                        blueLyr, srcFrame, srcImg, srcPos + blueShift)
+
+                    local srcOpacity = srcCel.opacity
+                    redCel.opacity = srcOpacity
+                    greenCel.opacity = srcOpacity
+                    blueCel.opacity = srcOpacity
+
+                    local redImg = redCel.image
+                    local greenImg = greenCel.image
+                    local blueImg = blueCel.image
+
+                    local rdItr = redImg:pixels()
+                    local grItr = greenImg:pixels()
+                    local blItr = blueImg:pixels()
+
+                    for elm in rdItr do elm(elm() & rdMsk) end
+                    for elm in grItr do elm(elm() & grMsk) end
+                    for elm in blItr do elm(elm() & blMsk) end
+
+                    local redPos = redCel.position
+                    local greenPos = greenCel.position
+                    local bluePos = blueCel.position
+
+                    local trxRed = redPos.x
+                    local trxGreen = greenPos.x
+                    local trxBlue = bluePos.x
+
+                    local tryRed = redPos.y
+                    local tryGreen = greenPos.y
+                    local tryBlue = bluePos.y
+
+                    local trxBase = min(trxRed, trxGreen, trxBlue)
+                    local tryBase = min(tryRed, tryGreen, tryBlue)
+                    local brxBase = max(trxRed, trxGreen, trxBlue) + srcImgWidth
+                    local bryBase = max(tryRed, tryGreen, tryBlue) + srcImgHeight
+
+                    local baseWidth = brxBase - trxBase
+                    local baseHeight = bryBase - tryBase
+
+                    local baseCel = activeSprite:newCel(baseLyr, srcFrame)
+                    baseCel.position = Point(trxBase, tryBase)
+                    baseCel.image = Image(baseWidth, baseHeight)
+
+                    if fillBase then
+                        local xRedBase = trxBase - trxRed
+                        local xGreenBase = trxBase - trxGreen
+                        local xBlueBase = trxBase - trxBlue
+
+                        local yRedBase = tryBase - tryRed
+                        local yGreenBase = tryBase - tryGreen
+                        local yBlueBase = tryBase - tryBlue
+
+                        local baseItr = baseCel.image:pixels()
+                        for elm in baseItr do
+                            local x = elm.x
+                            local y = elm.y
+                            local placeMark = false
+
+                            -- getPixel returns -1 when coordinates are out of
+                            -- bounds. However, this wraps around to 4294967295
+                            -- or the color white.
+                            local xbTest = x + xBlueBase
+                            local ybTest = y + yBlueBase
+                            if xbTest > -1 and xbTest < srcImgWidth
+                                and ybTest > -1 and ybTest < srcImgHeight then
+                                local bHex = blueImg:getPixel(xbTest, ybTest)
+                                placeMark = placeMark or bHex & 0xff000000 ~= 0
+                            end
+
+                            local xgTest = x + xGreenBase
+                            local ygTest = y + yGreenBase
+                            if xgTest > -1 and xgTest < srcImgWidth
+                                and ygTest > -1 and ygTest < srcImgHeight then
+                                local gHex = greenImg:getPixel(xgTest, ygTest)
+                                placeMark = placeMark or gHex & 0xff000000 ~= 0
+                            end
+
+                            local xrTest = x + xRedBase
+                            local yrTest = y + yRedBase
+                            if xrTest > -1 and xrTest < srcImgWidth
+                                and yrTest > -1 and yrTest < srcImgHeight then
+                                local rHex = redImg:getPixel(xrTest, yrTest)
+                                placeMark = placeMark or rHex & 0xff000000 ~= 0
+                            end
+
+                            if placeMark then
+                                elm(0xff000000)
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+
+        app.refresh()
     end
 }
 

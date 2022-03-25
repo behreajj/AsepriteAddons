@@ -1,6 +1,7 @@
 dofile("./vec2.lua")
 dofile("./vec3.lua")
 dofile("./vec4.lua")
+dofile("./bounds2.lua")
 dofile("./mat3.lua")
 dofile("./mat4.lua")
 dofile("./mesh2.lua")
@@ -166,6 +167,80 @@ Utilities.STL_LUT = {
 function Utilities.new()
     local inst = setmetatable({}, Utilities)
     return inst
+end
+
+---Calculates the axis aligned bounding box
+---(AABB) for a two dimensional curve. Uses
+---only a simplistic formula; does not look
+---for curve extrema.
+---@param c table curve
+---@return table
+function Utilities.calcCurve2Bounds(c)
+    local kns = c.knots
+    local len = #kns
+    local lbx = 2147483647
+    local lby = 2147483647
+    local ubx = -2147483648
+    local uby = -2147483648
+
+    for i = 1, len, 1 do
+        local kn = kns[i]
+
+        local co = kn.co
+        local cox = co.x
+        local coy = co.y
+        if cox < lbx then lbx = cox end
+        if cox > ubx then ubx = cox end
+        if coy < lby then lby = coy end
+        if coy > uby then uby = coy end
+
+        local fh = kn.fh
+        local fhx = fh.x
+        local fhy = fh.y
+        if fhx < lbx then lbx = fhx end
+        if fhx > ubx then ubx = fhx end
+        if fhy < lby then lby = fhy end
+        if fhy > uby then uby = fhy end
+
+        local rh = kn.rh
+        local rhx = rh.x
+        local rhy = rh.y
+        if rhx < lbx then lbx = rhx end
+        if rhx > ubx then ubx = rhx end
+        if rhy < lby then lby = rhy end
+        if rhy > uby then uby = rhy end
+    end
+
+    return Bounds2.newByVal(
+        Vec2.new(lbx, lby),
+        Vec2.new(ubx, uby))
+end
+
+---Calculates the axis aligned bounding box
+---(AABB) for a two dimensional mesh.
+---@param m table mesh
+---@return table
+function Utilities.calcMesh2Bounds(m)
+    local vs = m.vs
+    local len = #vs
+    local lbx = 2147483647
+    local lby = 2147483647
+    local ubx = -2147483648
+    local uby = -2147483648
+
+    for i = 1, len, 1 do
+        local v = vs[i]
+        local x = v.x
+        local y = v.y
+        if x < lbx then lbx = x end
+        if x > ubx then ubx = x end
+        if y < lby then lby = y end
+        if y > uby then uby = y end
+    end
+
+    return Bounds2.newByVal(
+        Vec2.new(lbx, lby),
+        Vec2.new(ubx, uby))
 end
 
 ---Finds the unsigned distance between two angles.

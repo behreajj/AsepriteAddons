@@ -192,3 +192,5 @@ end
 function GradientUtilities.smoother(t)
     return t * t * t * (t * (t * 6.0 - 15.0) + 10.0)
 end
+
+return GradientUtilities

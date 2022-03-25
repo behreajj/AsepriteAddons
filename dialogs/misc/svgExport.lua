@@ -1,9 +1,9 @@
 local defaults = {
     scale = 1,
     margin = 0,
-    marginClr = Color(0, 0, 0, 255),
+    marginClr = Color(255, 255, 255, 255),
     border = 0,
-    borderClr = Color(255, 255, 255, 255),
+    borderClr = Color(0, 0, 0, 255),
     flattenImage = true
 }
 
@@ -146,7 +146,7 @@ dlg:slider {
     label = "Margin:",
     min = 0,
     max = 64,
-    value = defaults.border
+    value = defaults.margin
 }
 
 dlg:newrow { always = false }
