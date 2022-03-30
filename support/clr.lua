@@ -1340,6 +1340,12 @@ end
 ---@param c table color
 ---@param rLevels number red levels
 ---@param rDelta number red inverse
+---@param gLevels number green levels
+---@param gDelta number green inverse
+---@param bLevels number blue levels
+---@param bDelta number blue inverse
+---@param aLevels number alpha levels
+---@param aDelta number alpha inverse
 ---@return table
 function Clr.quantizeInternal(
     c, rLevels, rDelta,

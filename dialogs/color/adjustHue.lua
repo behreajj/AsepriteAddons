@@ -1,18 +1,49 @@
 dofile("../../support/clr.lua")
 
 local grayHues = { "OMIT", "SHADING", "ZERO" }
+local modes = { "LAB", "LCH" }
 
 local defaults = {
+    mode = "LCH",
     lAdj = 0,
     cAdj = 0,
     hAdj = 0,
     aAdj = 0,
+    bAdj = 0,
+    alphaAdj = 0,
     grayHue = "OMIT",
     copyToLayer = true,
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Adjust LCH" }
+local dlg = Dialog { title = "Adjust Hue" }
+
+dlg:combobox {
+    id = "mode",
+    label = "Mode:",
+    option = defaults.mode,
+    options = modes,
+    onchange = function()
+        local args = dlg.data
+        local isLch = args.mode == "LCH"
+        local isLab = args.mode == "LAB"
+        dlg:modify { id = "grayHue", visible = isLch }
+        dlg:modify { id = "cAdj", visible = isLch }
+        dlg:modify { id = "hAdj", visible = isLch }
+        dlg:modify { id = "aAdj", visible = isLab }
+        dlg:modify { id = "bAdj", visible = isLab }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "grayHue",
+    label = "Grays:",
+    option = defaults.grayHue,
+    options = grayHues,
+    visible = defaults.mode == "LCH"
+}
 
 dlg:slider {
     id = "lAdj",
@@ -29,7 +60,8 @@ dlg:slider {
     label = "Chroma:",
     min = -135,
     max = 135,
-    value = defaults.cAdj
+    value = defaults.cAdj,
+    visible = defaults.mode == "LCH"
 }
 
 dlg:newrow { always = false }
@@ -39,26 +71,40 @@ dlg:slider {
     label = "Hue:",
     min = -180,
     max = 180,
-    value = defaults.hAdj
+    value = defaults.hAdj,
+    visible = defaults.mode == "LCH"
 }
 
 dlg:newrow { always = false }
 
 dlg:slider {
     id = "aAdj",
-    label = "Alpha:",
-    min = -255,
-    max = 255,
-    value = defaults.aAdj
+    label = "Green-Red:",
+    min = -220,
+    max = 220,
+    value = defaults.aAdj,
+    visible = defaults.mode == "LAB"
 }
 
 dlg:newrow { always = false }
 
-dlg:combobox {
-    id = "grayHue",
-    label = "Grays:",
-    option = defaults.grayHue,
-    options = grayHues
+dlg:slider {
+    id = "bAdj",
+    label = "Blue-Yellow:",
+    min = -220,
+    max = 220,
+    value = defaults.bAdj,
+    visible = defaults.mode == "LAB"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "alphaAdj",
+    label = "Alpha:",
+    min = -255,
+    max = 255,
+    value = defaults.aAdj
 }
 
 dlg:newrow { always = false }
@@ -76,6 +122,7 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
             app.alert("There is no active sprite.")
@@ -95,22 +142,16 @@ dlg:button {
             return
         end
 
+        -- Unpack arguments.
         local args = dlg.data
+        local mode = args.mode or defaults.mode
         local lAdj = args.lAdj or defaults.lAdj
-        local cAdj = args.cAdj or defaults.cAdj
-        local hAdj = args.hAdj or defaults.hAdj
-        local aAdj = args.aAdj or defaults.aAdj
-        local grayHue = args.grayHue or defaults.grayHue
+        local alphaAdj = args.alphaAdj or defaults.alphaAdj
         local copyToLayer = args.copyToLayer
 
-        local useOmit = grayHue == "OMIT"
-        local useZero = grayHue == "ZERO"
-        local grayZero = 0.0
+        local alphaScl = alphaAdj / 255.0
 
-        -- Scale adjustments appropriately.
-        local hScl = hAdj / 360.0
-        local aScl = aAdj / 255.0
-
+        -- Tile map layers may be present.
         local srcImg = srcCel.image
         local version = app.version
         local layerIsTilemap = false
@@ -123,6 +164,7 @@ dlg:button {
             end
         end
 
+        -- Load image pixels into a dictionary.
         local srcpxitr = srcImg:pixels()
         local srcDict = {}
         for elm in srcpxitr do
@@ -130,33 +172,62 @@ dlg:button {
         end
 
         local trgDict = {}
-        for k, _ in pairs(srcDict) do
-            local srgb = Clr.fromHex(k)
-            if srgb.a > 0.0 then
-                local lch = Clr.sRgbaToLch(srgb)
-                local cNew = lch.c
-                local hNew = lch.h
-                if cNew < 1.0 then
-                    if useOmit then
-                        cNew = 0.0
-                        hNew = 0.0
-                    elseif useZero then
-                        cNew = cNew + cAdj
-                        hNew = grayZero + hScl
+        if mode == "LCH" then
+            local grayHue = args.grayHue or defaults.grayHue
+            local cAdj = args.cAdj or defaults.cAdj
+            local hAdj = args.hAdj or defaults.hAdj
+
+            local hScl = hAdj / 360.0
+            local useOmit = grayHue == "OMIT"
+            local useZero = grayHue == "ZERO"
+            local grayZero = 0.0
+
+            for k, _ in pairs(srcDict) do
+                local srgb = Clr.fromHex(k)
+                if srgb.a > 0.0 then
+                    local lch = Clr.sRgbaToLch(srgb)
+                    local cNew = lch.c
+                    local hNew = lch.h
+                    if cNew < 1.0 then
+                        if useOmit then
+                            cNew = 0.0
+                            hNew = 0.0
+                        elseif useZero then
+                            cNew = cNew + cAdj
+                            hNew = grayZero + hScl
+                        else
+                            cNew = cNew + cAdj
+                            hNew = hNew + hScl
+                        end
                     else
                         cNew = cNew + cAdj
                         hNew = hNew + hScl
                     end
-                else
-                    cNew = cNew + cAdj
-                    hNew = hNew + hScl
-                end
 
-                local srgbNew = Clr.lchTosRgba(
-                    lch.l + lAdj, cNew, hNew, lch.a + aScl)
-                trgDict[k] = Clr.toHex(srgbNew)
-            else
-                trgDict[k] = 0x0
+                    local srgbNew = Clr.lchTosRgba(
+                        lch.l + lAdj, cNew, hNew, lch.a + alphaScl)
+                    trgDict[k] = Clr.toHex(srgbNew)
+                else
+                    trgDict[k] = 0x0
+                end
+            end
+        else
+            local aAdj = args.aAdj or defaults.aAdj
+            local bAdj = args.bAdj or defaults.bAdj
+
+            for k, _ in pairs(srcDict) do
+                local srgb = Clr.fromHex(k)
+                if srgb.a > 0.0 then
+                    local lab = Clr.sRgbaToLab(srgb)
+                    local srgbNew = Clr.labTosRgba(
+                        lab.l + lAdj,
+                        lab.a + aAdj,
+                        lab.b + bAdj,
+                        lab.alpha + alphaScl)
+                    trgDict[k] = Clr.toHex(srgbNew)
+                else
+                    trgDict[k] = 0x0
+                end
             end
         end
 
@@ -176,10 +247,7 @@ dlg:button {
                 if #srcLayer.name > 0 then
                     srcLayerName = srcLayer.name
                 end
-                -- trgLayer.name = srcLayerName .. ".Adjusted"
-                trgLayer.name = string.format(
-                    "%s.L%+04d.C%+04d.H%+04d",
-                    srcLayerName, lAdj, cAdj, hAdj)
+                trgLayer.name = srcLayerName .. ".Adjusted"
                 if srcLayer.opacity then
                     trgLayer.opacity = srcLayer.opacity
                 end

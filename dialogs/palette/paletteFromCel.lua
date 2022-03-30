@@ -184,7 +184,6 @@ dlg:button {
                     end
                 end
 
-
                 app.refresh()
             else
                 app.alert("There is no active cel.")

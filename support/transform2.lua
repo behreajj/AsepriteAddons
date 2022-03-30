@@ -173,7 +173,11 @@ end
 ---@param v table scalar
 ---@return table
 function Transform2:scaleBy(v)
-    return self:scaleByVec2(v)
+    if type(v) == "number" then
+        return self:scaleByNum(v)
+    else
+        return self:scaleByVec2(v)
+    end
 end
 
 ---Scales a transform by a number.

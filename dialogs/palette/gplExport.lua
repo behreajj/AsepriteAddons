@@ -76,8 +76,6 @@ dlg:button {
             app.command.ChangePixelFormat { format = "rgb" }
 
             -- Cache functions.
-            local min = math.min
-            local max = math.max
             local strfmt = string.format
 
             -- Unpack arguments.
@@ -137,18 +135,12 @@ dlg:button {
             local entryStrArr = {}
             for i = 0, palLenn1, 1 do
                 local aseColor = pal:getColor(i)
-
-                -- Not necessary for palette colors?
-                -- local r = max(0, min(255, aseColor.red))
-                -- local g = max(0, min(255, aseColor.green))
-                -- local b = max(0, min(255, aseColor.blue))
                 local r = aseColor.red
                 local g = aseColor.green
                 local b = aseColor.blue
 
                 local entryStr = ''
                 if useAseGpl then
-                    -- local a = max(0, min(255, aseColor.alpha))
                     local a = aseColor.alpha
                     entryStr = strfmt(
                         "%3d %3d %3d %3d 0x%08x",

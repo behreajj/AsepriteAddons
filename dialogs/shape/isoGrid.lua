@@ -10,7 +10,8 @@ local defaults = {
     strokeWeight = 1,
     strokeClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
     useFill = true,
-    fillClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL)
+    fillClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
+    pullFocus = false
 }
 
 local dlg = Dialog { title = "Dimetric Grid" }
@@ -116,7 +117,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = true,
+    focus = defaults.pullFocus,
     onclick = function()
 
     local args = dlg.data

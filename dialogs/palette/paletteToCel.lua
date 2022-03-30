@@ -272,6 +272,8 @@ dlg:button {
             end
         end
 
+        -- TODO: Fudge factor if number of colors is only 2?
+
         -- Find frames from target.
         local frames = {}
         local target = args.target

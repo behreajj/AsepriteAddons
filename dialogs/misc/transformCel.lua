@@ -370,14 +370,14 @@ dlg:number {
     id = "prcWidth",
     label = "Percent:",
     text = string.format("%.2f", defaults.prcWidth),
-    decimals = 2,
+    decimals = 6,
     visible = defaults.units == "PERCENT"
 }
 
 dlg:number {
     id = "prcHeight",
     text = string.format("%.2f", defaults.prcHeight),
-    decimals = 2,
+    decimals = 6,
     visible = defaults.units == "PERCENT"
 }
 
@@ -606,7 +606,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
-    focus = true,
+    focus = false,
     onclick = function()
         dlg:close()
     end

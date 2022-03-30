@@ -258,6 +258,29 @@ function Utilities.distAngleUnsigned(a, b, range)
         - halfRange)
 end
 
+---Filters a table used as an array.
+---Evaluation should be a function that accepts
+---an element from the table and returns a
+---boolean, either true or false. An element
+---is added to the filtered table if the function
+---returns true.
+---@param src table input table
+---@param eval function evaluation
+---@return table
+function Utilities.filterTable(src, eval)
+    local trg = {}
+    local len = #src
+    local j = 1
+    for i = 1, len, 1 do
+        local elm = src[i]
+        if eval(elm) then
+            trg[j] = elm
+            j = j + 1
+        end
+    end
+    return trg
+end
+
 ---Given a source pixel array, creates a new array with
 ---the pixels flipped horizontally.
 ---@param source table source pixels

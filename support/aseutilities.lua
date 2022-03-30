@@ -126,7 +126,7 @@ function AseUtilities.aseColorCopy(aseClr, flag)
             aseClr.alpha)
     elseif flag == "MODULAR" then
         return AseUtilities.hexToAseColor(
-            AseUtilities.aseColorToHex(aseClr))
+            AseUtilities.aseColorToHex(aseClr, ColorMode.RGB))
     else
         return Color(
             math.max(0, math.min(255, aseClr.red)),
@@ -151,17 +151,30 @@ function AseUtilities.aseColorToClr(aseClr)
         0.00392156862745098 * aseClr.alpha)
 end
 
----Converts an Aseprite color object to a
----hexadecimal integer. Uses modular arithmetic,
----i.e., does not check if red, green, blue
----and alpha channels are out of range [0, 255].
+---Converts an Aseprite color object to an
+---integer. The meaning of the integer depends
+---on the color mode. For RGB, uses modular
+---arithmetic, i.e., does not check if red,
+---green, blue and alpha channels are out of
+---range [0, 255]. Returns zero if the color
+---mode is not recognized.
 ---@param clr userdata aseprite color
+---@param clrMode number color mode
 ---@return number
-function AseUtilities.aseColorToHex(clr)
-    return (clr.alpha << 0x18)
-        | (clr.blue << 0x10)
-        | (clr.green << 0x08)
-        | clr.red
+function AseUtilities.aseColorToHex(clr, clrMode)
+    if clrMode == ColorMode.RGB then
+        return (clr.alpha << 0x18)
+            | (clr.blue << 0x10)
+            | (clr.green << 0x08)
+            | clr.red
+    elseif clrMode == ColorMode.GRAY then
+        return clr.grayPixel
+    elseif clrMode == ColorMode.INDEXED then
+        -- In older API versions, Color.index
+        -- returns a float, not an integer.
+        return math.tointeger(clr.index)
+    end
+    return 0
 end
 
 ---Loads a palette based on a string. The string is
@@ -852,6 +865,72 @@ function AseUtilities.createNewLayers(
     end
 
     return layers
+end
+
+---Draws a border around an image's perimeter. Uses the
+---Aseprite image instance method drawPixel. This means
+---that the pixel changes will not be tracked as a
+---transaction.
+---@param img userdata Aseprite image
+---@param border number border depth
+---@param borderHex number hexadecimal color
+function AseUtilities.drawBorder(img, border, borderHex)
+    if border < 1 then return img end
+
+    local wBorder = img.width
+    local hBorder = img.height
+    if border >= math.min(wBorder, hBorder) then
+        local itr = img:pixels()
+        for elm in itr do elm(borderHex) end
+        return img
+    end
+
+    local bord2 = border + border
+    local trgWidth = wBorder - bord2
+    local trgHeight = hBorder - bord2
+
+    -- Top edge.
+    local minorTop = trgWidth + border
+    local lenTop = border * minorTop - 1
+    for i = 0, lenTop, 1 do
+        img:drawPixel(
+            i % minorTop,
+            i // minorTop,
+            borderHex)
+    end
+
+    -- Left edge.
+    local lenLeft = (hBorder - border) * border - 1
+    for i = 0, lenLeft, 1 do
+        img:drawPixel(
+            i % border,
+            border + i // border,
+            borderHex)
+    end
+
+    -- Right edge.
+    local xOffsetRight = trgWidth + border
+    local minorRight = wBorder - xOffsetRight
+    local lenRight = (trgHeight + border) * minorRight - 1
+    for i = 0, lenRight, 1 do
+        img:drawPixel(
+            xOffsetRight + i % minorRight,
+            i // minorRight,
+            borderHex)
+    end
+
+    -- Bottom edge.
+    local yOffsetBottom = trgHeight + border
+    local minorBottom = wBorder - border
+    local lenBottom = (hBorder - yOffsetBottom) * minorBottom - 1
+    for i = 0, lenBottom, 1 do
+        img:drawPixel(
+            border + i % minorBottom,
+            yOffsetBottom + i // minorBottom,
+        borderHex)
+    end
+
+    return img
 end
 
 ---Draws a filled circle. Uses the Aseprite image

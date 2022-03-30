@@ -26,19 +26,18 @@ local defaults = {
 }
 
 local function appendVisChildren(layer, array)
+    -- TODO: Generalize to AseUtilities? If so,
+    -- research how to refactor recursive function
+    -- to while loop.
+    -- Use a separate filter function to decide
+    -- which layers to include or exclude.
     if layer.isVisible then
         if layer.isGroup then
             local childLayers = layer.layers
-            if childLayers then
-                local childLayerCount = #childLayers
-                if childLayerCount > 0 then
-                    for i = 1, childLayerCount, 1 do
-                        local childLayer = childLayers[i]
-                        if childLayer then
-                            appendVisChildren(childLayer, array)
-                        end
-                    end
-                end
+            local childLayerCount = #childLayers
+            for i = 1, childLayerCount, 1 do
+                local childLayer = childLayers[i]
+                appendVisChildren(childLayer, array)
             end
         elseif (not layer.isReference) then
             table.insert(array, layer)
@@ -100,43 +99,6 @@ local function blendModeToStr(bm)
     else
         return "NORMAL"
     end
-end
-
-local function fillPad(img, padding, padHex)
-    local padWidth = img.width
-    local padHeight = img.height
-    local trgWidth = padWidth - padding * 2
-    local trgHeight = padHeight - padding * 2
-
-    -- Top edge.
-    for x = 0, trgWidth + padding - 1, 1 do
-        for y = 0, padding - 1, 1 do
-            img:drawPixel(x, y, padHex)
-        end
-    end
-
-    -- Right edge.
-    for y = 0, trgHeight + padding - 1, 1 do
-        for x = trgWidth + padding, padWidth - 1, 1 do
-            img:drawPixel(x, y, padHex)
-        end
-    end
-
-    -- Bottom edge.
-    for x = padding, padWidth - 1, 1 do
-        for y = trgHeight + padding, padHeight - 1, 1 do
-            img:drawPixel(x, y, padHex)
-        end
-    end
-
-    -- Left edge.
-    for y = padding, padHeight - 1, 1 do
-        for x = 0, padding - 1, 1 do
-            img:drawPixel(x, y, padHex)
-        end
-    end
-
-    return img
 end
 
 local function getStackIndices(layer, sprite, arr)
@@ -360,6 +322,7 @@ dlg:button {
         local concat = table.concat
         local insert = table.insert
         local blend = AseUtilities.blend
+        local drawBorder = AseUtilities.drawBorder
         local tilesToImage = AseUtilities.tilesToImage
         local trimAlpha = AseUtilities.trimImageAlpha
 
@@ -448,16 +411,7 @@ dlg:button {
         -- ColorMode enumeration.
         local pad2 = padding + padding
         local padOffset = Point(padding, padding)
-        local padHex = 0x00000000
-        if colorMode == ColorMode.RGB then
-            padHex = padColor.rgbaPixel
-        elseif colorMode == ColorMode.GRAY then
-            padHex = padColor.grayPixel
-        elseif colorMode == ColorMode.INDEXED then
-            -- In older API versions, Color.index
-            -- returns a float, not an integer.
-            padHex = math.tointeger(padColor.index)
-        end
+        local padHex = AseUtilities.aseColorToHex(padColor, colorMode)
 
         local jsonEntries = {}
         for i = 1, selectLayerLen, 1 do
@@ -517,6 +471,7 @@ dlg:button {
                     fileTitle, i - 1, j - 1)
 
                 if flatGroups and layerIsGroup then
+                    --TODO: Compound flatGroups and layerisGroup boolean?
 
                     local xMin = 2147483647
                     local yMin = 2147483647
@@ -667,7 +622,7 @@ dlg:button {
                         local imgPad = Image(specPad)
                         imgPad:drawImage(imgTrg, padOffset)
                         if usePadColor then
-                            fillPad(imgPad, padding, padHex)
+                            drawBorder(imgPad, padding, padHex)
                         end
                         imgTrg = imgPad
                     end
