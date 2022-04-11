@@ -203,6 +203,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        -- TODO: Fudge factor for palettes of length 2?
+
         local sprite = app.activeSprite
         if not sprite then
             app.alert("There is no active sprite.")
@@ -257,6 +259,7 @@ dlg:button {
 
         -- Create octree.
         local ptToHexDict = {}
+        local exactMatches = {}
         local hexesSrgbLen = #hexesSrgb
         local cvgCapacity = args.cvgCapacity
         local octree = Octree.new(octBounds, cvgCapacity, 0)
@@ -267,12 +270,11 @@ dlg:button {
                 local clr = fromHex(hexSrgb)
                 local pt = clrV3Func(clr)
                 local hexProfile = hexesProfile[i]
+                exactMatches[hexProfile] = true
                 ptToHexDict[v3Hash(pt)] = hexProfile
                 octInsert(octree, pt)
             end
         end
-
-        -- TODO: Fudge factor if number of colors is only 2?
 
         -- Find frames from target.
         local frames = {}
@@ -347,16 +349,21 @@ dlg:button {
                     local lenQueries = #queries
                     for j = 1, lenQueries, 1 do
                         local query = queries[j]
-                        local center = query.point
-                        local near = {}
-                        search(octree, center, cvgRad, near, resultLimit)
+                        local queryHex = query.hex
                         local resultHex = 0
-                        if #near > 0 then
-                            local nearestPt = near[1].point
-                            local ptHash = v3Hash(nearestPt)
-                            resultHex = ptToHexDict[ptHash]
+                        if exactMatches[queryHex] then
+                            resultHex = queryHex
+                        else
+                            local center = query.point
+                            local near = {}
+                            search(octree, center, cvgRad, near, resultLimit)
+                            if #near > 0 then
+                                local nearestPt = near[1].point
+                                local ptHash = v3Hash(nearestPt)
+                                resultHex = ptToHexDict[ptHash]
+                            end
                         end
-                        correspDict[query.hex] = resultHex
+                        correspDict[queryHex] = resultHex
                     end
 
                     -- Apply colors to image.

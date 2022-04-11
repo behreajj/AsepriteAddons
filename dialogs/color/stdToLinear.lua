@@ -101,69 +101,71 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local activeSprite = app.activeSprite
-        if activeSprite then
-            if activeSprite.colorMode == ColorMode.RGB then
-                local args = dlg.data
-                local target = args.target
-                local direction = args.direction
+        if not activeSprite then
+            app.alert("There is no active sprite.")
+            return
+        end
 
-                local cels = {}
-                if target == "ACTIVE" then
-                    local activeCel = app.activeCel
-                    if activeCel then
-                        cels[1] = activeCel
-                    end
-                elseif target == "RANGE" then
-                    cels = app.range.cels
-                else
-                    cels = activeSprite.cels
-                end
+        if activeSprite.colorMode ~= ColorMode.RGB then
+            app.alert("Only RGB color mode is supported.")
+            return
+        end
 
-                local lut = {}
-                if direction == "LINEAR_TO_STANDARD" then
-                    lut = Utilities.LTS_LUT
-                else
-                    lut = Utilities.STL_LUT
-                end
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local direction = args.direction or defaults.target
 
-                local celsLen = #cels
-                app.transaction(function()
-                    for i = 1, celsLen, 1 do
-                        local cel = cels[i]
-                        if cel then
-                            local srcImg = cel.image
-                            local pxitr = srcImg:pixels()
-                            for elm in pxitr do
-                                local hex = elm()
-                                local a = hex >> 0x18 & 0xff
-                                if a > 0 then
-                                    local bOrigin = hex >> 0x10 & 0xff
-                                    local gOrigin = hex >> 0x08 & 0xff
-                                    local rOrigin = hex & 0xff
+        local cels = {}
+        if target == "ACTIVE" then
+            local activeCel = app.activeCel
+            if activeCel then
+                cels[1] = activeCel
+            end
+        elseif target == "RANGE" then
+            cels = app.range.cels
+        else
+            cels = activeSprite.cels
+        end
 
-                                    local bDest = lut[1 + bOrigin]
-                                    local gDest = lut[1 + gOrigin]
-                                    local rDest = lut[1 + rOrigin]
+        local lut = {}
+        if direction == "LINEAR_TO_STANDARD" then
+            lut = Utilities.LTS_LUT
+        else
+            lut = Utilities.STL_LUT
+        end
 
-                                    elm(a << 0x18
-                                        | bDest << 0x10
-                                        | gDest << 0x08
-                                        | rDest)
-                                else
-                                    elm(0x0)
-                                end
-                            end
+        local celsLen = #cels
+        app.transaction(function()
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                if cel then
+                    local srcImg = cel.image
+                    local pxitr = srcImg:pixels()
+                    for elm in pxitr do
+                        local hex = elm()
+                        local a = hex >> 0x18 & 0xff
+                        if a > 0 then
+                            local bOrigin = hex >> 0x10 & 0xff
+                            local gOrigin = hex >> 0x08 & 0xff
+                            local rOrigin = hex & 0xff
+
+                            local bDest = lut[1 + bOrigin]
+                            local gDest = lut[1 + gOrigin]
+                            local rDest = lut[1 + rOrigin]
+
+                            elm(a << 0x18
+                                | bDest << 0x10
+                                | gDest << 0x08
+                                | rDest)
+                        else
+                            elm(0x0)
                         end
                     end
-                end)
-
-                app.refresh()
-            else
-                app.alert("Only RGB color mode is supported.")
+                end
             end
-    else
-        app.alert("There is no active sprite.")
-    end
+        end)
+
+        app.refresh()
 end
 }
 

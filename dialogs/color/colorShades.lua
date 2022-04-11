@@ -154,7 +154,6 @@ dlg:button {
         -- Cache methods
         local trunc = math.tointeger
         local lchTosRgba = Clr.lchTosRgba
-        -- local sRgbaToLab = Clr.sRgbaToLab
         local sRgbaToLch = Clr.sRgbaToLch
         local fromHex = Clr.fromHex
         local rgbIsInGamut = Clr.rgbIsInGamut

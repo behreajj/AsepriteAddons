@@ -11,9 +11,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog {
-    title = "Set Color Profile"
-}
+local dlg = Dialog { title = "Set Color Profile" }
 
 dlg:combobox {
     id = "colorSpaceType",

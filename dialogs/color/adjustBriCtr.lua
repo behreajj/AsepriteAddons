@@ -69,7 +69,20 @@ dlg:button {
         local valBrip50 = brightness + 50.0
         local valCtr = 1.0 + (contrast * 0.01)
 
+        -- Tile map layers may be present.
         local srcImg = srcCel.image
+        local version = app.version
+        local layerIsTilemap = false
+        if version.major >= 1 and version.minor >= 3 then
+            local activeLayer = app.activeLayer
+            layerIsTilemap = activeLayer.isTilemap
+            if layerIsTilemap then
+                local tileSet = activeLayer.tileset
+                srcImg = AseUtilities.tilesToImage(srcImg, tileSet, colorMode)
+            end
+        end
+
+        -- Load image pixels into a dictionary.
         local srcpxitr = srcImg:pixels()
         local srcDict = {}
         for elm in srcpxitr do
@@ -92,7 +105,7 @@ dlg:button {
             elm(trgDict[elm()])
         end
 
-        if copyToLayer then
+        if copyToLayer or layerIsTilemap then
             app.transaction(function()
                 local srcLayer = srcCel.layer
 

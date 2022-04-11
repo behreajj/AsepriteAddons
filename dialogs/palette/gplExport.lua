@@ -72,9 +72,6 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if activeSprite then
-            local oldMode = activeSprite.colorMode
-            app.command.ChangePixelFormat { format = "rgb" }
-
             -- Cache functions.
             local strfmt = string.format
 
@@ -173,9 +170,6 @@ dlg:button {
             else
                 app.alert("Filepath is empty.")
             end
-
-            AseUtilities.changePixelFormat(oldMode)
-            app.refresh()
 
             dlg:close()
         else

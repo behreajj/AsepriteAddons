@@ -47,9 +47,8 @@ local function linear(x, slope, intercept)
 end
 
 local function sineWave(x, freq, phase, amp, basis)
-    local sclBas = basis
     return math.max(0.0, math.min(1.0,
-        0.5 + 0.5 * (sclBas + amp * math.sin(
+        0.5 + 0.5 * (basis + amp * math.sin(
         6.283185307179586 * freq * x + phase))))
 end
 

@@ -55,10 +55,6 @@ This repo includes
 
   ![GPL Export](screencaps/exportgpl.png)
 
-- An animated infinity loop.
-
-  ![Infinity Loop](screencaps/infinityLoop.png)
-
 - A text insertion dialog.
 
   ![Insert Text](screencaps/insertText.png)
@@ -118,5 +114,9 @@ This repo includes
 - A rounded rectangle.
 
   ![Rounded Rectangle](screencaps/roundedRect.png)
+
+- Basic cel transformation.
+
+  ![Cel Transformation](screencaps/transformCel.png)
 
 Appearances may vary as features are added to or removed from underlying scripts.

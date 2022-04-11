@@ -128,8 +128,7 @@ dlg:slider {
     visible = defaults.levelsInput == "UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local args = dlg.data
-        local bd = args.bitsUni
+        local bd = dlg.data.bitsUni
         dlg:modify { id = "rBits", value = bd }
         dlg:modify { id = "gBits", value = bd }
         dlg:modify { id = "bBits", value = bd }
@@ -156,9 +155,7 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local args = dlg.data
-        local bd = args.rBits
-        local lv = 2 ^ bd
+        local lv = 2 ^ dlg.data.rBits
         dlg:modify { id = "rLevels", value = lv }
     end
 }
@@ -173,9 +170,7 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
         onchange = function()
-            local args = dlg.data
-            local bd = args.gBits
-            local lv = 2 ^ bd
+            local lv = 2 ^ dlg.data.gBits
             dlg:modify { id = "gLevels", value = lv }
         end
 }
@@ -190,9 +185,7 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
         onchange = function()
-            local args = dlg.data
-            local bd = args.bBits
-            local lv = 2 ^ bd
+            local lv = 2 ^ dlg.data.bBits
             dlg:modify { id = "bLevels", value = lv }
         end
 }
@@ -207,9 +200,7 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
         onchange = function()
-            local args = dlg.data
-            local bd = args.aBits
-            local lv = 2 ^ bd
+            local lv = 2 ^ dlg.data.aBits
             dlg:modify { id = "aLevels", value = lv }
         end
 }
@@ -302,7 +293,7 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- Earlly returns.
+        -- Early returns.
         local sprite = app.activeSprite
         if not sprite then
             app.alert("There is no active sprite.")

@@ -58,47 +58,26 @@ end
 
 local function blendModeToStr(bm)
     -- The blend mode for group layers is nil.
-    if bm == BlendMode.NORMAL then
-        return "NORMAL"
-    elseif bm == BlendMode.MULTIPLY then
-        return "MULTIPLY"
-    elseif bm == BlendMode.SCREEN then
-        return "SCREEN"
-    elseif bm == BlendMode.OVERLAY then
-        return "OVERLAY"
-    elseif bm == BlendMode.DARKEN then
-        return "DARKEN"
-    elseif bm == BlendMode.LIGHTEN then
-        return "LIGHTEN"
-    elseif bm == BlendMode.COLOR_DODGE then
-        return "COLOR_DODGE"
-    elseif bm == BlendMode.COLOR_BURN then
-        return "COLOR_BURN"
-    elseif bm == BlendMode.HARD_LIGHT then
-        return "HARD_LIGHT"
-    elseif bm == BlendMode.SOFT_LIGHT then
-        return "SOFT_LIGHT"
-    elseif bm == BlendMode.DIFFERENCE then
-        return "DIFFERENCE"
-    elseif bm == BlendMode.EXCLUSION then
-        return "EXCLUSION"
-    elseif bm == BlendMode.HSL_HUE then
-        return "HSL_HUE"
-    elseif bm == BlendMode.HSL_SATURATION then
-        return "HSL_SATURATION"
-    elseif bm == BlendMode.HSL_COLOR then
-        return "HSL_COLOR"
-    elseif bm == BlendMode.HSL_LUMINOSITY then
-        return "HSL_LUMINOSITY"
-    elseif bm == BlendMode.ADDITION then
-        return "ADDITION"
-    elseif bm == BlendMode.SUBTRACT then
-        return "SUBTRACT"
-    elseif bm == BlendMode.DIVIDE then
-        return "DIVIDE"
-    else
-        return "NORMAL"
-    end
+    if bm == BlendMode.NORMAL then return "NORMAL"
+    elseif bm == BlendMode.MULTIPLY then return "MULTIPLY"
+    elseif bm == BlendMode.SCREEN then return "SCREEN"
+    elseif bm == BlendMode.OVERLAY then return "OVERLAY"
+    elseif bm == BlendMode.DARKEN then return "DARKEN"
+    elseif bm == BlendMode.LIGHTEN then return "LIGHTEN"
+    elseif bm == BlendMode.COLOR_DODGE then return "COLOR_DODGE"
+    elseif bm == BlendMode.COLOR_BURN then return "COLOR_BURN"
+    elseif bm == BlendMode.HARD_LIGHT then return "HARD_LIGHT"
+    elseif bm == BlendMode.SOFT_LIGHT then return "SOFT_LIGHT"
+    elseif bm == BlendMode.DIFFERENCE then return "DIFFERENCE"
+    elseif bm == BlendMode.EXCLUSION then return "EXCLUSION"
+    elseif bm == BlendMode.HSL_HUE then return "HSL_HUE"
+    elseif bm == BlendMode.HSL_SATURATION then return "HSL_SATURATION"
+    elseif bm == BlendMode.HSL_COLOR then return "HSL_COLOR"
+    elseif bm == BlendMode.HSL_LUMINOSITY then return "HSL_LUMINOSITY"
+    elseif bm == BlendMode.ADDITION then return "ADDITION"
+    elseif bm == BlendMode.SUBTRACT then return "SUBTRACT"
+    elseif bm == BlendMode.DIVIDE then return "DIVIDE"
+    else return "NORMAL" end
 end
 
 local function getStackIndices(layer, sprite, arr)
@@ -424,9 +403,10 @@ dlg:button {
 
             -- Group layer possibility.
             local layerIsGroup = layer.isGroup
+            local flatAndGroup = flatGroups and layerIsGroup
             local childLayers = nil
             local childLayersCount = 0
-            if flatGroups and layerIsGroup then
+            if flatAndGroup then
                 childLayers = {}
                 appendVisChildren(layer, childLayers)
                 childLayersCount = #childLayers
@@ -470,8 +450,7 @@ dlg:button {
                     "%s%03d_%03d",
                     fileTitle, i - 1, j - 1)
 
-                if flatGroups and layerIsGroup then
-                    --TODO: Compound flatGroups and layerisGroup boolean?
+                if flatAndGroup then
 
                     local xMin = 2147483647
                     local yMin = 2147483647

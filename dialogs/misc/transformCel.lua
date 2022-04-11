@@ -92,14 +92,11 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "translateButton",
-    text = "&TRANSLATE",
+    text = "&MOVE",
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
-        if not activeSprite then
-            app.alert("There is no active sprite.")
-            return
-        end
+        if not activeSprite then return end
 
         local args = dlg.data
         local target = args.target or defaults.target
@@ -130,10 +127,7 @@ dlg:button {
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
-        if not activeSprite then
-            app.alert("There is no active sprite.")
-            return
-        end
+        if not activeSprite then return end
 
         local args = dlg.data
         local target = args.target or defaults.target
@@ -159,16 +153,271 @@ dlg:button {
 dlg:newrow { always = false }
 
 dlg:button {
+    id = "tlAlignButton",
+    label = "Align:",
+    text = "TL",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local cels = getTargetCels(target, activeSprite)
+        local celsLen = #cels
+
+        app.transaction(function()
+            for i = 1, celsLen, 1 do
+                cels[i].position = Point(0, 0)
+            end
+        end)
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "tlAlignButton",
+    text = "&T",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local cels = getTargetCels(target, activeSprite)
+        local celsLen = #cels
+        local xCtrSprite = activeSprite.width * 0.5
+
+        app.transaction(function()
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                local w = cel.image.width
+                cel.position = Point(
+                    math.tointeger(0.5 + xCtrSprite - w * 0.5), 0)
+            end
+        end)
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "trAlignButton",
+    text = "TR",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local cels = getTargetCels(target, activeSprite)
+        local celsLen = #cels
+        local wSprite = activeSprite.width
+
+        app.transaction(function()
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                local w = cel.image.width
+                cel.position = Point(wSprite - w, 0)
+            end
+        end)
+
+        app.refresh()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "lAlignButton",
+    text = "&L",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local cels = getTargetCels(target, activeSprite)
+        local celsLen = #cels
+        local yCtrSprite = activeSprite.height * 0.5
+
+        app.transaction(function()
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                local h = cel.image.height
+                cel.position = Point(0,
+                    math.tointeger(0.5 + yCtrSprite - h * 0.5))
+            end
+        end)
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "cAlignButton",
+    text = "C",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local cels = getTargetCels(target, activeSprite)
+        local celsLen = #cels
+        local xCtrSprite = activeSprite.width * 0.5
+        local yCtrSprite = activeSprite.height * 0.5
+
+        app.transaction(function()
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                local celImg = cel.image
+                local w = celImg.width
+                local h = celImg.height
+                cel.position = Point(
+                    math.tointeger(0.5 + xCtrSprite - w * 0.5),
+                    math.tointeger(0.5 + yCtrSprite - h * 0.5))
+            end
+        end)
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "rAlignButton",
+    text = "&R",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local cels = getTargetCels(target, activeSprite)
+        local celsLen = #cels
+        local wSprite = activeSprite.width
+        local yCtrSprite = activeSprite.height * 0.5
+
+        app.transaction(function()
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                local celImg = cel.image
+                local w = celImg.width
+                local h = celImg.height
+                cel.position = Point(
+                    wSprite - w,
+                    math.tointeger(0.5 + yCtrSprite - h * 0.5))
+            end
+        end)
+
+        app.refresh()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "blAlignButton",
+    text = "BL",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local cels = getTargetCels(target, activeSprite)
+        local celsLen = #cels
+        local hSprite = activeSprite.height
+
+        app.transaction(function()
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                local h = cel.image.height
+                cel.position = Point(0, hSprite - h)
+            end
+        end)
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "bAlignButton",
+    text = "&B",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local cels = getTargetCels(target, activeSprite)
+        local celsLen = #cels
+        local xCtrSprite = activeSprite.width * 0.5
+        local hSprite = activeSprite.height
+
+        app.transaction(function()
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                local celImg = cel.image
+                local w = celImg.width
+                local h = celImg.height
+                cel.position = Point(
+                    math.tointeger(0.5 + xCtrSprite - w * 0.5),
+                    hSprite - h)
+            end
+        end)
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "brAlignButton",
+    text = "BR",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local cels = getTargetCels(target, activeSprite)
+        local celsLen = #cels
+        local wSprite = activeSprite.width
+        local hSprite = activeSprite.height
+
+        app.transaction(function()
+            for i = 1, celsLen, 1 do
+                local cel = cels[i]
+                local celImg = cel.image
+                cel.position = Point(
+                    wSprite - celImg.width,
+                    hSprite - celImg.height)
+            end
+        end)
+
+        app.refresh()
+    end
+}
+
+dlg:separator{ id = "rotateSep" }
+
+dlg:button {
     id = "rotate90Button",
     text = "&90",
     label = "Rotate:",
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
-        if not activeSprite then
-            app.alert("There is no active sprite.")
-            return
-        end
+        if not activeSprite then return end
 
         local args = dlg.data
         local target = args.target or defaults.target
@@ -212,10 +461,7 @@ dlg:button {
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
-        if not activeSprite then
-            app.alert("There is no active sprite.")
-            return
-        end
+        if not activeSprite then return end
 
         local args = dlg.data
         local target = args.target or defaults.target
@@ -240,10 +486,7 @@ dlg:button {
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
-        if not activeSprite then
-            app.alert("There is no active sprite.")
-            return
-        end
+        if not activeSprite then return end
 
         local args = dlg.data
         local target = args.target or defaults.target
@@ -290,10 +533,7 @@ dlg:button {
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
-        if not activeSprite then
-            app.alert("There is no active sprite.")
-            return
-        end
+        if not activeSprite then return end
 
         local args = dlg.data
         local target = args.target or defaults.target
@@ -318,10 +558,7 @@ dlg:button {
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
-        if not activeSprite then
-            app.alert("There is no active sprite.")
-            return
-        end
+        if not activeSprite then return end
 
         local args = dlg.data
         local target = args.target or defaults.target
@@ -340,7 +577,7 @@ dlg:button {
     end
 }
 
-dlg:newrow { always = false }
+dlg:separator{ id = "scaleSep" }
 
 dlg:combobox {
     id = "resizeMethod",
@@ -407,10 +644,7 @@ dlg:button {
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
-        if not activeSprite then
-            app.alert("There is no active sprite.")
-            return
-        end
+        if not activeSprite then return end
 
         local abs = math.abs
         local max = math.max
