@@ -37,8 +37,12 @@ end
 function Quaternion.newByVal(real, imag)
     local inst = setmetatable({}, Quaternion)
     inst.real = real or 1.0
-    inst.imag = Vec3.new(imag.x, imag.y, imag.z)
-        or Vec3.new(0.0, 0.0, 0.0)
+    inst.imag = nil
+    if imag then
+        inst.imag = Vec3.new(imag.x, imag.y, imag.z)
+    else
+        inst.imag = Vec3.new(0.0, 0.0, 0.0)
+    end
     return inst
 end
 

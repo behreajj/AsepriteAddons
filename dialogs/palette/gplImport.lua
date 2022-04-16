@@ -38,7 +38,6 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
-
         local args = dlg.data
         local filepath = args.filepath
         local file, err = io.open(filepath, "r")

@@ -1,11 +1,18 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/gradientutilities.lua")
 
+local coords = { "CARTESIAN", "POLAR" }
+
 local defaults = {
+    coord = "CARTESIAN",
     xOrigin = 0,
     yOrigin = 50,
     xDest = 100,
     yDest = 50,
+    xCenter = 50,
+    yCenter = 50,
+    angle = 0,
+    radius = 100,
     quantization = 0,
     tweenOps = "PAIR",
     startIndex = 0,
@@ -20,19 +27,45 @@ local defaults = {
 
 local dlg = Dialog { title = "Linear Gradient" }
 
+dlg:combobox {
+    id = "coord",
+    label = "Coords:",
+    option = defaults.coord,
+    options = coords,
+    onchange = function()
+        local args = dlg.data
+        local coord = args.coord
+        local isCart = coord == "CARTESIAN"
+        dlg:modify { id = "xOrigin", visible = isCart }
+        dlg:modify { id = "yOrigin", visible = isCart }
+        dlg:modify { id = "xDest", visible = isCart }
+        dlg:modify { id = "yDest", visible = isCart }
+
+        local isPolr = coord == "POLAR"
+        dlg:modify { id = "xCenter", visible = isPolr }
+        dlg:modify { id = "yCenter", visible = isPolr }
+        dlg:modify { id = "angle", visible = isPolr }
+        dlg:modify { id = "radius", visible = isPolr }
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "xOrigin",
     label = "Origin %:",
     min = 0,
     max = 100,
-    value = defaults.xOrigin
+    value = defaults.xOrigin,
+    visible = defaults.coord == "CARTESIAN"
 }
 
 dlg:slider {
     id = "yOrigin",
     min = 0,
     max = 100,
-    value = defaults.yOrigin
+    value = defaults.yOrigin,
+    visible = defaults.coord == "CARTESIAN"
 }
 
 dlg:newrow { always = false }
@@ -42,14 +75,57 @@ dlg:slider {
     label = "Dest %:",
     min = 0,
     max = 100,
-    value = defaults.xDest
+    value = defaults.xDest,
+    visible = defaults.coord == "CARTESIAN"
 }
 
 dlg:slider {
     id = "yDest",
     min = 0,
     max = 100,
-    value = defaults.yDest
+    value = defaults.yDest,
+    visible = defaults.coord == "CARTESIAN"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "xCenter",
+    label = "Center %:",
+    min = 0,
+    max = 100,
+    value = defaults.xCenter,
+    visible = defaults.coord == "POLAR"
+}
+
+dlg:slider {
+    id = "yCenter",
+    min = 0,
+    max = 100,
+    value = defaults.yCenter,
+    visible = defaults.coord == "POLAR"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "angle",
+    label = "Angle:",
+    min = 0,
+    max = 360,
+    value = defaults.angle,
+    visible = defaults.coord == "POLAR"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "radius",
+    label = "Radius:",
+    min = 1,
+    max = 100,
+    value = defaults.radius,
+    visible = defaults.coord == "POLAR"
 }
 
 dlg:newrow { always = false }
@@ -251,24 +327,50 @@ dlg:button {
             local wn1 = sprite.width - 1.0
             local hn1 = sprite.height - 1.0
 
-            local xOrigin = args.xOrigin
-            local yOrigin = args.yOrigin
-            local xDest = args.xDest
-            local yDest = args.yDest
+            -- Divide by 100 to account for percentage.
+            local xOrPx = 0
+            local yOrPx = 0
+            local xDsPx = wn1
+            local yDsPx = 0
 
-            local invalidFlag = xOrigin == xDest and yOrigin == yDest
-            if invalidFlag then
-                xOrigin = defaults.xOrigin
-                yOrigin = defaults.yOrigin
-                xDest = defaults.xDest
-                yDest = defaults.yDest
+            local coord = args.coord or defaults.coord
+            if coord == "POLAR" then
+                local xCenter = args.xCenter or defaults.xCenter
+                local yCenter = args.yCenter or defaults.yCenter
+                local angle = args.angle or defaults.angle
+                local radius = args.radius or defaults.radius
+
+                local xCtPx = xCenter * wn1 * 0.01
+                local yCtPx = yCenter * hn1 * 0.01
+                local r = radius * 0.005 * math.max(wn1, hn1)
+                local a = angle * 0.017453292519943295
+                local rtcos = r * math.cos(a)
+                local rtsin = r * math.sin(a)
+
+                xOrPx = xCtPx - rtcos
+                yOrPx = yCtPx + rtsin
+                xDsPx = xCtPx + rtcos
+                yDsPx = yCtPx - rtsin
+            else
+                local xOrigin = args.xOrigin or defaults.xOrigin
+                local yOrigin = args.yOrigin or defaults.yOrigin
+                local xDest = args.xDest or defaults.xDest
+                local yDest = args.yDest or defaults.yDest
+
+                xOrPx = xOrigin * wn1 * 0.01
+                yOrPx = yOrigin * hn1 * 0.01
+                xDsPx = xDest * wn1 * 0.01
+                yDsPx = yDest * hn1 * 0.01
             end
 
-            -- Divide by 100 to account for percentage.
-            local xOrPx = xOrigin * wn1 * 0.01
-            local yOrPx = yOrigin * hn1 * 0.01
-            local xDsPx = xDest * wn1 * 0.01
-            local yDsPx = yDest * hn1 * 0.01
+            local invalidFlag = (math.abs(xOrPx - xDsPx) < 1)
+                            and (math.abs(yOrPx - yDsPx) < 1)
+            if invalidFlag then
+                xOrPx = 0
+                yOrPx = 0
+                xDsPx = wn1
+                yDsPx = 0
+            end
 
             local bx = xDsPx - xOrPx
             local by = yDsPx - yOrPx

@@ -211,7 +211,7 @@ function Utilities.calcCurve2Bounds(c)
         if rhy > uby then uby = rhy end
     end
 
-    return Bounds2.newByVal(
+    return Bounds2.newByRef(
         Vec2.new(lbx, lby),
         Vec2.new(ubx, uby))
 end
@@ -238,7 +238,7 @@ function Utilities.calcMesh2Bounds(m)
         if y > uby then uby = y end
     end
 
-    return Bounds2.newByVal(
+    return Bounds2.newByRef(
         Vec2.new(lbx, lby),
         Vec2.new(ubx, uby))
 end

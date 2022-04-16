@@ -86,9 +86,10 @@ dlg:button {
         end
 
         -- Cache global functions used in loop.
-        local trim = AseUtilities.trimImageAlpha
         local min = math.min
         local max = math.max
+        local tilesToImage = AseUtilities.tilesToImage
+        local trim = AseUtilities.trimImageAlpha
 
         -- Unpack arguments.
         local args = dlg.data
@@ -103,6 +104,23 @@ dlg:button {
         -- Determine how a pixel is judged to be transparent.
         local alphaIndex = activeSprite.transparentColor
         local colorSpace = activeSprite.colorSpace
+
+        -- Version specific.
+        local overIsTile = false
+        local tileSetOver = nil
+        local underIsTile = false
+        local tileSetUnder = nil
+        local version = app.version
+        if version.major >= 1 and version.minor >= 3 then
+            overIsTile = overLayer.isTilemap
+            if overIsTile then
+                tileSetOver = overLayer.tileset
+            end
+            underIsTile = underLayer.isTilemap
+            if underIsTile then
+                tileSetUnder = underLayer.tileset
+            end
+        end
 
         local frames = {}
         if target == "ACTIVE" then
@@ -145,6 +163,10 @@ dlg:button {
                 local underCel = underLayer:cel(frame)
                 if overCel and underCel then
                     local imgOver = overCel.image
+                    if overIsTile then
+                        imgOver = tilesToImage(
+                            imgOver, tileSetOver, colorMode)
+                    end
                     local posOver = overCel.position
                     local xTlOver = posOver.x
                     local yTlOver = posOver.y
@@ -155,6 +177,10 @@ dlg:button {
                     local yBrOver = yTlOver + heightOver
 
                     local imgUnder = underCel.image
+                    if underIsTile then
+                        imgUnder = tilesToImage(
+                            imgUnder, tileSetUnder, colorMode)
+                    end
                     local posUnder = underCel.position
                     local xTlUnder = posUnder.x
                     local yTlUnder = posUnder.y
