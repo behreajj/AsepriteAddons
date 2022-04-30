@@ -455,7 +455,7 @@ end
 ---@param a table left operand
 ---@return number
 function Vec2.headingUnsigned(a)
-    return math.atan(a.y, a.x) % 6.283185307179586
+    return math.atan(a.y, a.x) % 6.2831853071796
 end
 
 ---Limits a vector's magnitude to a scalar.

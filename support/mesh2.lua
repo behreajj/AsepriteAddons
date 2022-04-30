@@ -274,9 +274,9 @@ function Mesh2.arc(
     sectors,
     useQuads)
 
-    local a = startAngle % 6.283185307179586
-    local b = stopAngle % 6.283185307179586
-    local arcLen = (b - a) % 6.283185307179586
+    local a = startAngle % 6.2831853071796
+    local b = stopAngle % 6.2831853071796
+    local arcLen = (b - a) % 6.2831853071796
     local c = a + arcLen
 
     -- If arc len is less than TAU / 720
@@ -293,7 +293,7 @@ function Mesh2.arc(
 
     local sctVal = math.max(3, sectors)
     local sctCount = math.ceil(1.0 + sctVal *
-        arcLen * 0.15915494309189535)
+        arcLen * 0.1591549430919)
     local sctCount2 = sctCount + sctCount
 
     local radius = 0.5
@@ -560,7 +560,7 @@ function Mesh2.polygon(sectors)
     local vSect = 3
     if sectors > 3 then vSect = sectors end
     local vrad = 0.5
-    local toTheta = 6.283185307179586 / vSect
+    local toTheta = 6.2831853071796 / vSect
     local vs = {}
     local f = {}
 

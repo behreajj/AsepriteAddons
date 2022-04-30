@@ -130,7 +130,7 @@ end
 ---@return table
 function Transform2:rotateTo(ang, step)
     local t = step or 1.0
-    local tau = 6.283185307179586
+    local tau = 6.2831853071796
 
     if t >= 1.0 then
         self.rotation = ang % tau
@@ -164,7 +164,7 @@ end
 ---@param ang number the angle
 ---@return table
 function Transform2:rotateZ(ang)
-    self.rotation = (self.rotation + ang) % 6.283185307179586
+    self.rotation = (self.rotation + ang) % 6.2831853071796
     return self
 end
 

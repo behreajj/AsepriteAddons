@@ -233,16 +233,8 @@ function Bounds2.splitInternal(
     local bMn = b.mn
     local bMx = b.mx
 
-    local tx = xFac
-    if tx < 0.000001 then tx = 0.000001
-    elseif tx > 0.999999 then tx = 0.999999 end
-
-    local ty = yFac
-    if ty < 0.000001 then ty = 0.000001
-    elseif ty > 0.999999 then ty = 0.999999 end
-
-    local x = ( 1.0 - tx ) * bMn.x + tx * bMx.x
-    local y = ( 1.0 - ty ) * bMn.y + ty * bMx.y
+    local x = (1.0 - xFac) * bMn.x + xFac * bMx.x
+    local y = (1.0 - yFac) * bMn.y + yFac * bMx.y
 
     sw.mn = Vec2.new(bMn.x, bMn.y)
     se.mn = Vec2.new(    x, bMn.y)

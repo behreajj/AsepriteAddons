@@ -508,7 +508,7 @@ dlg:button {
             local fov = 0.8660254037844386
             local aspect = width / height
             projection = Mat4.perspective(
-                fov, aspect)
+                fov, aspect, 0.001, 1000.0)
         else
             projection = Mat4.orthographic(
                 -halfWidth, halfWidth,
@@ -519,11 +519,11 @@ dlg:button {
         -- Create camera and modelview matrices.
         local camera = Mat4.cameraIsometric(
             1.0, -1.0, 1.0, "RIGHT")
-        local model = Mat4.fromScale(
-            0.7071 * math.min(width, height))
+        local su = 0.7071 * math.min(width, height)
+        local model = Mat4.fromScale(su, su, su)
         local modelview = model * camera
 
-        local hToTheta = 6.283185307179586 / reqFrames
+        local hToTheta = 6.2831853071796 / reqFrames
         local minSwatchSize = args.minSwatchSize
         local maxSwatchSize = args.maxSwatchSize
         local swatchDiff = maxSwatchSize - minSwatchSize

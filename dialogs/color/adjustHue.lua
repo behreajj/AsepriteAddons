@@ -185,7 +185,7 @@ dlg:button {
             for k, _ in pairs(srcDict) do
                 local srgb = Clr.fromHex(k)
                 if srgb.a > 0.0 then
-                    local lch = Clr.sRgbaToLch(srgb)
+                    local lch = Clr.sRgbaToLch(srgb, 0.007072)
                     local cNew = lch.c
                     local hNew = lch.h
                     if cNew < 1.0 then
@@ -205,7 +205,7 @@ dlg:button {
                     end
 
                     local srgbNew = Clr.lchTosRgba(
-                        lch.l + lAdj, cNew, hNew, lch.a + alphaScl)
+                        lch.l + lAdj, cNew, hNew, lch.a + alphaScl, 0.00005)
                     trgDict[k] = Clr.toHex(srgbNew)
                 else
                     trgDict[k] = 0x0

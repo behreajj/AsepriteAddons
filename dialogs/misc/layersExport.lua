@@ -744,9 +744,15 @@ dlg:button {
                 jsonFilepath = filePath .. pathSep .. "manifest"
             end
             jsonFilepath = jsonFilepath .. ".json"
-            local file = io.open(jsonFilepath, "w")
-            file:write(jsonString)
-            file:close()
+            local file, err = io.open(jsonFilepath, "w")
+            if file then
+                file:write(jsonString)
+                file:close()
+            end
+
+            if err then
+                app.alert("Error saving file: " .. err)
+            end
         end
 
         app.refresh()

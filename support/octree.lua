@@ -27,7 +27,7 @@ Octree.FRONT_SOUTH_WEST = 5
 ---@return table
 function Octree.new(bounds, capacity, level)
     local inst = setmetatable({}, Octree)
-    inst.bounds = bounds or Bounds3.newByRef()
+    inst.bounds = bounds or Bounds3.unitCubeSigned()
     inst.capacity = capacity or 16
     inst.children = {
         nil, nil, nil, nil,
@@ -82,6 +82,56 @@ function Octree.bisectRight(arr, dist)
     return low
 end
 
+---Finds the mean center of each leaf node in
+---an octree. If empty nodes are not omitted
+---then the center of a node's bounds is used.
+---@param o table octree
+---@param omitEmpty boolean omit empty nodes
+---@return table
+function Octree.centers(o, omitEmpty)
+    local vOmit = omitEmpty or false
+
+    local tinsert = table.insert
+    local v3new = Vec3.new
+    local b3center = Bounds3.center
+
+    local leaves = Octree.leaves(o, {})
+    local lenLeaves = #leaves
+    local centers = {}
+
+    for i = 1, lenLeaves, 1 do
+        local leaf = leaves[i]
+        local leafPoints = leaf.points
+        local lenLeafPoints = #leafPoints
+
+        if lenLeafPoints > 1 then
+            local xSum = 0.0
+            local ySum = 0.0
+            local zSum = 0.0
+
+            for j = 1, lenLeafPoints, 1 do
+                local point = leafPoints[j]
+                xSum = xSum + point.x
+                ySum = ySum + point.y
+                zSum = zSum + point.z
+            end
+
+            local lenInv = 1.0 / lenLeafPoints
+            tinsert(centers, v3new(
+                xSum * lenInv,
+                ySum * lenInv,
+                zSum * lenInv))
+        elseif lenLeafPoints > 0 then
+            local point = leafPoints[1]
+            tinsert(centers, v3new(
+                point.x, point.y, point.z))
+        elseif not vOmit then
+            tinsert(centers, b3center(leaf.bounds))
+        end
+    end
+    return centers
+end
+
 ---Inserts a point into the octree node. Returns
 ---true if the point was successfully inserted
 ---into either the node or its children. Returns
@@ -106,7 +156,8 @@ function Octree.insert(o, point)
 
         if isLeaf then
             table.insert(o.points, point)
-            table.sort(o.points)
+            -- TODO: Is sorting needed here?
+            -- table.sort(o.points)
             if #o.points > o.capacity then
                 Octree.split(o)
             end
@@ -157,7 +208,33 @@ function Octree.isLeaf(o)
     return true
 end
 
----Gets the maximum depth of the node and
+---Gets a flat array of octree nodes without children,
+---i.e., leaves. Appends leaves to an array if provided,
+---otherwise creates a new array.
+---@param o table octree node
+---@param leaves table results array
+---@return table
+function Octree.leaves(o, leaves)
+    local lvsVal = leaves or {}
+    local ochl = o.children
+    local isLeaf = true
+
+    for i = 1, 8, 1 do
+        local child = ochl[i]
+        if child then
+            isLeaf = false
+            Octree.leaves(child, lvsVal)
+        end
+    end
+
+    if isLeaf then
+        table.insert(lvsVal, o)
+    end
+
+    return lvsVal
+end
+
+---Gets the maximum level of the node and
 ---its children.
 ---@param o table octree node
 ---@return number
@@ -174,6 +251,36 @@ function Octree.maxLevel(o)
     return mxLvl
 end
 
+---Gets a flat array of points contained by an octree,
+---including those of its children nodes. Appends points
+---to an array if provided, otherwise creates a new array.
+---@param o table octree node
+---@param points table results array
+---@return table
+function Octree.points(o, points)
+    local ptsVal = points or {}
+    local ochl = o.children
+    local isLeaf = true
+
+    for i = 1, 8, 1 do
+        local child = ochl[i]
+        if child then
+            isLeaf = false
+            Octree.points(child, ptsVal)
+        end
+    end
+
+    if isLeaf then
+        local opts = o.points
+        local optsLen = #opts
+        for i = 1, optsLen, 1 do
+            table.insert(ptsVal, opts[i])
+        end
+    end
+
+    return ptsVal
+end
+
 ---Queries the octree with a spherical range, returning
 ---points inside the range.
 ---@param o table octree
@@ -188,7 +295,8 @@ function Octree.querySpherical(o, center, radius, limit)
         found, valLimit)
 
     local result = {}
-    for i = 1, #found, 1 do
+    local foundLen = #found
+    for i = 1, foundLen, 1 do
         result[i] = found[i].point
     end
     return result
@@ -258,7 +366,7 @@ function Octree.split(o)
 
     for i = 1, 8, 1 do
         ochl[i] = Octree.new(
-            Bounds3.newByRef(),
+            Bounds3.unitCubeSigned(),
             ocap, nxtLvl)
     end
 
@@ -278,7 +386,8 @@ function Octree.split(o)
     for i = 1, ptsLen, 1 do
         local pt = pts[i]
         for j = 1, 8, 1 do
-            if Octree.insert(ochl[j], pt) then
+            local child = ochl[j]
+            if Octree.insert(child, pt) then
                 break
             end
         end

@@ -163,9 +163,15 @@ dlg:button {
                 if ext ~= "gpl" then
                     app.alert("Extension is not gpl.")
                 else
-                    local file = io.open(filepath, "w")
-                    file:write(gplStr)
-                    file:close()
+                    local file, err = io.open(filepath, "w")
+                    if file then
+                        file:write(gplStr)
+                        file:close()
+                    end
+
+                    if err then
+                        app.alert("Error saving file: " .. err)
+                    end
                 end
             else
                 app.alert("Filepath is empty.")

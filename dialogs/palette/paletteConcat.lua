@@ -138,10 +138,10 @@ dlg:button {
             local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
 
-            local aHexesProfile, aHexesSrgb = AseUtilities.asePaletteLoad(
+            local aHexesProfile, _ = AseUtilities.asePaletteLoad(
                 args.aPalType, args.aPalFile, args.aPalPreset, 0, 256, true)
 
-            local bHexesProfile, bHexesSrgb = AseUtilities.asePaletteLoad(
+            local bHexesProfile, _ = AseUtilities.asePaletteLoad(
                 args.bPalType, args.bPalFile, args.bPalPreset, 0, 256, true)
 
             local aLen = #aHexesProfile
@@ -158,7 +158,7 @@ dlg:button {
 
             local uniquesOnly = args.uniquesOnly
             if uniquesOnly then
-                local uniques, dict = Utilities.uniqueColors(cHexes, true)
+                local uniques, _ = Utilities.uniqueColors(cHexes, true)
                 cHexes = uniques
             end
 

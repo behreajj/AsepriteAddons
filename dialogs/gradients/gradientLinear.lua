@@ -343,7 +343,7 @@ dlg:button {
                 local xCtPx = xCenter * wn1 * 0.01
                 local yCtPx = yCenter * hn1 * 0.01
                 local r = radius * 0.005 * math.max(wn1, hn1)
-                local a = angle * 0.017453292519943295
+                local a = angle * 0.017453292519943
                 local rtcos = r * math.cos(a)
                 local rtsin = r * math.sin(a)
 
@@ -391,13 +391,13 @@ dlg:button {
                 local x = elm.x + xCel
                 local y = elm.y + yCel
                 -- if selection:contains(x, y) then
-                local cx = x - xOrPx
-                local cy = y - yOrPx
-                local cb = (cx * bx + cy * by) * bbInv
+                local ax = x - xOrPx
+                local ay = y - yOrPx
+                local adotb = (ax * bx + ay * by) * bbInv
 
                 -- Unsigned quantize will already clamp to
                 -- 0.0 lower bound.
-                local fac = quantize(cb, levels)
+                local fac = quantize(adotb, levels)
                 if fac > 1.0 then fac = 1.0 end
 
                 elm(toHex(easeFuncFinal(fac)))

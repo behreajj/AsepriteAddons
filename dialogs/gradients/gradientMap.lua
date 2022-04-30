@@ -314,7 +314,7 @@ dlg:button {
                             local sri = hex & 0xff
 
                             if sbi == sgi and sbi == sri and sri == sgi then
-                                lum = sbi * 0.00392156862745098
+                                lum = sbi * 0.003921568627451
                             else
                                 -- Convert to linear via look up table.
                                 local lbi = stlLut[1 + sbi]
@@ -322,9 +322,9 @@ dlg:button {
                                 local lri = stlLut[1 + sri]
 
                                 local xyz = lRgbToXyz(
-                                    lri * 0.00392156862745098,
-                                    lgi * 0.00392156862745098,
-                                    lbi * 0.00392156862745098,
+                                    lri * 0.003921568627451,
+                                    lgi * 0.003921568627451,
+                                    lbi * 0.003921568627451,
                                     1.0)
                                 local lab = xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
 

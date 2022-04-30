@@ -551,8 +551,7 @@ dlg:button {
 
         -- Create sprite, set file name, set to active.
         local newSprite = Sprite(
-            spriteWidth, spriteHeight,
-            ColorMode.RGB)
+            spriteWidth, spriteHeight, ColorMode.RGB)
 
         -- File name needs extra validation to remove characters
         -- that could compromise saving a sprite.

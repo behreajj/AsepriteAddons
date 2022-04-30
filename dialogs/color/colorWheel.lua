@@ -289,7 +289,7 @@ dlg:button {
                 local csq = a * a + b * b
                 if csq > 0.0 then
                     local c = sqrt(csq)
-                    local h = atan2(b, a) * 0.15915494309189535
+                    local h = atan2(b, a) * 0.1591549430919
 
                     if quantAzims then
                         h = floor(0.5 + h * azimAlpha) * azimBeta

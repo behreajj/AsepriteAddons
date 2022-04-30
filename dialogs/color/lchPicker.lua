@@ -1,3 +1,5 @@
+dofile("../../support/knot3.lua")
+dofile("../../support/curve3.lua")
 dofile("../../support/aseutilities.lua")
 
 local harmonies = {
@@ -15,13 +17,13 @@ local defaults = {
     -- with event listeners?
     base = Color(255, 0, 0, 255),
     shading = {
-        Color(165,   0,   0, 255),
-        Color(192,   0,  16, 255),
-        Color(217,   0,  29, 255),
-        Color(241,  22,  37, 255),
-        Color(255,  79,  42, 255),
-        Color(255, 120,  42, 255),
-        Color(255, 160,  43, 255) },
+        Color(147,   0,  27, 255),
+        Color(183,   0,  29, 255),
+        Color(218,   0,  30, 255),
+        Color(251,  23,  34, 255),
+        Color(255,  93,  42, 255),
+        Color(255, 141,  58, 255),
+        Color(255, 186,  81, 255) },
     hexCode = "FF0000",
     lightness = 53,
     chroma = 104,
@@ -41,26 +43,8 @@ local defaults = {
         Color(157, 82, 255, 255) },
     triads = {
         Color(0, 131, 255, 255),
-        Color(0, 158, 59, 255) },
-
-    shadingCount = 7,
-    shadowLight = 0.1,
-    dayLight = 0.9,
-    hYel = 0.3,
-    minChroma = 4.0,
-    lgtDesatFac = 0.75,
-    shdDesatFac = 0.75,
-    srcLightWeight = 0.3333333333333333,
-    greenHue = 0.37778,
-    minGreenOffset = 0.4,
-    maxGreenOffset = 0.75
+        Color(0, 158, 59, 255) }
 }
-
-local function zigZag(t)
-    local a = t * 0.5
-    local b = a - math.floor(a)
-    return 1.0 - math.abs(b + b - 1.0)
-end
 
 local function assignToFore(aseColor)
     if aseColor.alpha < 1 then
@@ -75,23 +59,23 @@ local function updateHarmonies(dialog, l, c, h, a)
     -- Clamping is taken care of by clToAseColor.
     -- 360 / 3 = 120 degrees; 360 / 12 = 30 degrees.
     -- Split hues are 150 and 210 degrees.
-    local oneThird = 0.3333333333333333
-    local oneTwelve = 0.08333333333333333
-    local splHue0 = 0.4166666666666667
-    local splHue1 = 0.5833333333333334
+    local oneThird =  0.33333333333333
+    local oneTwelve = 0.08333333333333
+    local splHue0 =   0.41666666666667
+    local splHue1 =   0.58333333333333
 
-    local ana0 = Clr.lchTosRgba(l, c, h - oneTwelve, a)
-    local ana1 = Clr.lchTosRgba(l, c, h + oneTwelve, a)
+    local ana0 = Clr.lchTosRgba(l, c, h - oneTwelve, a, 0.5)
+    local ana1 = Clr.lchTosRgba(l, c, h + oneTwelve, a, 0.5)
 
-    local tri0 = Clr.lchTosRgba(l, c, h - oneThird, a)
-    local tri1 = Clr.lchTosRgba(l, c, h + oneThird, a)
+    local tri0 = Clr.lchTosRgba(l, c, h - oneThird, a, 0.5)
+    local tri1 = Clr.lchTosRgba(l, c, h + oneThird, a, 0.5)
 
-    local split0 = Clr.lchTosRgba(l, c, h + splHue0, a)
-    local split1 = Clr.lchTosRgba(l, c, h + splHue1, a)
+    local split0 = Clr.lchTosRgba(l, c, h + splHue0, a, 0.5)
+    local split1 = Clr.lchTosRgba(l, c, h + splHue1, a, 0.5)
 
-    local square0 = Clr.lchTosRgba(l, c, h + 0.25, a)
-    local square1 = Clr.lchTosRgba(l, c, h + 0.5, a)
-    local square2 = Clr.lchTosRgba(l, c, h + 0.75, a)
+    local square0 = Clr.lchTosRgba(l, c, h + 0.25, a, 0.5)
+    local square1 = Clr.lchTosRgba(l, c, h + 0.5, a, 0.5)
+    local square2 = Clr.lchTosRgba(l, c, h + 0.75, a, 0.5)
 
     local tris = {
         AseUtilities.clrToAseColor(tri0),
@@ -124,98 +108,58 @@ local function updateHarmonies(dialog, l, c, h, a)
 end
 
 local function updateShading(dialog, l, c, h, a)
-    -- Cache methods used in for loop.
-    local lerpNear = Utilities.lerpAngleNear
-    local lchToRgb = Clr.lchTosRgba
-    local clrToAse = AseUtilities.clrToAseColor
-    local max = math.max
+    local shadingCount = 7
+    local hueSpreadShd = 0.4
+    local hueSpreadLgt = 0.325
+    local lightSpread = 37.5
+    local chromaSpread = 17.5
+    local hYellow = 0.28570825759858
+    local hViolet = (hYellow + 0.5) % 1.0
+    local minLight = math.max(2.0, l - lightSpread)
+    local maxLight = math.min(98.0, l + lightSpread)
+    local minChromaShd = math.max(0.0, c - chromaSpread * 0.25)
+    local minChromaLgt = math.max(0.0, c - chromaSpread)
 
-    -- Decide on clockwise or counter-clockwise based
-    -- on color's warmth or coolness.
-    -- The LCh hue for yellow is 103 degrees.
-    local hYel = defaults.hYel
-    local hBlu = hYel + 0.5
-    local lerpFunc = nil
-    if h < hYel or h >= hBlu then
-        lerpFunc = Utilities.lerpAngleCcw
-    else
-        lerpFunc = Utilities.lerpAngleCw
-    end
+    local toShdFac = math.abs(50.0 - minLight) * 0.02
+    local toLgtFac = math.abs(50.0 - maxLight) * 0.02
 
-    -- Minimum and maximum light based on place in loop.
-    local shadowLight = defaults.shadowLight
-    local dayLight = defaults.dayLight
-    local lSrc = l * 0.01
+    local shdHue = Utilities.lerpAngleNear(h, hViolet, hueSpreadShd * toShdFac, 1.0)
+    local shdCrm = (1.0 - toShdFac) * c + minChromaShd * toShdFac
+    local lgtHue = Utilities.lerpAngleNear(h, hYellow, hueSpreadLgt * toLgtFac, 1.0)
+    local lgtCrm = (1.0 - toLgtFac) * c + minChromaLgt * toLgtFac
 
-    -- Yellows are very saturated at high light;
-    -- Desaturate them to get a better shade.
-    -- Conversely, blues easily fall out of gamut
-    -- so the shade factor is separate.
-    local lgtDesatFac = defaults.lgtDesatFac
-    local shdDesatFac = defaults.shdDesatFac
-    local minChroma = defaults.minChroma
-    local cVal = max(minChroma, c)
-    local desatChromaLgt = cVal * lgtDesatFac
-    local desatChromaShd = cVal * shdDesatFac
+    local labShd = Clr.lchToLab(minLight, shdCrm, shdHue, 1.0, 0.5)
+    local labKey = Clr.lchToLab(l, c, h, 1.0, 0.5)
+    local labLgt = Clr.lchToLab(maxLight, lgtCrm, lgtHue, 1.0, 0.5)
 
-    -- Amount to mix between base light and loop light.
-    local srcLightWeight = defaults.srcLightWeight
-    local cmpLightWeight = 1.0 - srcLightWeight
+    local pt0 = Vec3.new(labShd.a, labShd.b, labShd.l)
+    local pt1 = Vec3.new(labKey.a, labKey.b, labKey.l)
+    local pt2 = Vec3.new(labLgt.a, labLgt.b, labLgt.l)
 
-    -- The warm-cool dichotomy works poorly for greens.
-    -- For that reason, the closer a hue is to green,
-    -- the more it uses absolute hue shifting.
-    -- Green is approximately at hue 140.
-    local offsetMix = 2.0 * Utilities.distAngleUnsigned(h, defaults.greenHue, 1.0)
-    local offsetScale = (1.0 - offsetMix) * defaults.maxGreenOffset
-                              + offsetMix * defaults.minGreenOffset
-    -- print(string.format(
-    --     "offsetMix: %.6f, offsetScale: %.6f",
-    --     offsetMix, offsetScale))
+    local kn0 = Knot3.new(
+        pt0,
+        Vec3.new(0.0, 0.0, 0.0),
+        Vec3.new(0.0, 0.0, 0.0))
+    local kn1 = Knot3.new(
+        pt2,
+        Vec3.new(0.0, 0.0, 0.0),
+        Vec3.new(0.0, 0.0, 0.0))
+    Knot3.fromSegQuadratic(pt1, pt2, kn0, kn1)
+    kn0:mirrorHandlesForward()
+    kn1:mirrorHandlesBackward()
 
-    -- Absolute hues for shadow and light.
-    -- This could also be combined with the origin hue +/-
-    -- a shift which is then mixed with the absolute hue.
-    local shadowHue = Clr.LCH_HUE_SHADOW
-    local dayHue = Clr.LCH_HUE_LIGHT
+    local curve = Curve3.new(
+        false, { kn0, kn1 }, "Shading")
 
-    local shades = {}
-    local shadingCount = defaults.shadingCount
     local toFac = 1.0 / (shadingCount - 1.0)
+    local aseColors = {}
     for i = 1, shadingCount, 1 do
-        local iFac = (i - 1) * toFac
-        local lItr = (1.0 - iFac) * shadowLight
-                           + iFac * dayLight
-
-        -- Idealized hue from violet shadow to
-        -- off-yellow daylight.
-        local hAbs = lerpFunc(shadowHue, dayHue, lItr, 1.0)
-
-        -- The middle sample should be closest to base color.
-        -- The fac needs to be 0.0. That's why zigzag is
-        -- used to convert to an oscillation.
-        local lMixed = srcLightWeight * lSrc
-                     + cmpLightWeight * lItr
-        local lZig = zigZag(lMixed)
-        local fac = offsetScale * lZig
-        local hMixed = lerpNear(h, hAbs, fac, 1.0)
-
-        -- Desaturate brights and darks.
-        -- Min chroma gives even grays a slight chroma.
-        local chromaTarget = desatChromaLgt
-        if lMixed < 0.5 then chromaTarget = desatChromaShd end
-        local cMixed = (1.0 - lZig) * cVal + lZig * chromaTarget
-        cMixed = max(minChroma, cMixed)
-        -- print(string.format(
-        --     "lZig: %.6f, chroma: %.6f",
-        --     lZig, chroma))
-
-        local clr = lchToRgb(lMixed * 100.0, cMixed, hMixed, a)
-        local aseColor = clrToAse(clr)
-        shades[i] = aseColor
+        local v = Curve3.eval(curve, (i - 1.0) * toFac)
+        aseColors[i] = AseUtilities.clrToAseColor(
+            Clr.labTosRgba(v.z, v.x, v.y, a))
     end
 
-    dialog:modify { id = "shading", colors = shades }
+    dialog:modify { id = "shading", colors = aseColors }
 end
 
 local function updateHexCode(dialog, clrArr)
@@ -421,9 +365,9 @@ local function setFromHexStr(dialog)
             local g255 = hexRgb >> 0x08 & 0xff
             local b255 = hexRgb & 0xff
             local clr = Clr.new(
-                r255 * 0.00392156862745098,
-                g255 * 0.00392156862745098,
-                b255 * 0.00392156862745098, 1.0)
+                r255 * 0.003921568627451,
+                g255 * 0.003921568627451,
+                b255 * 0.003921568627451, 1.0)
             local lch = Clr.sRgbaToLch(clr)
             setLch(dialog, lch, clr)
             dialog:modify {
@@ -439,7 +383,7 @@ local function updateClrs(dialog)
     local l = args.lightness
     local c = args.chroma
     local h = args.hue * 0.002777777777777778
-    local a = args.alpha * 0.00392156862745098
+    local a = args.alpha * 0.003921568627451
     local clr = Clr.lchTosRgba(l, c, h, a)
 
     -- For thoughts on why clipping to gamut is preferred,

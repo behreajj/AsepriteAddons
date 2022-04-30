@@ -1,8 +1,4 @@
-dofile("./clr.lua")
-dofile("./curve2.lua")
-dofile("./mesh2.lua")
 dofile("./utilities.lua")
-dofile("./vec2.lua")
 
 AseUtilities = {}
 AseUtilities.__index = AseUtilities
@@ -145,10 +141,10 @@ end
 ---@return table
 function AseUtilities.aseColorToClr(aseClr)
     return Clr.new(
-        0.00392156862745098 * aseClr.red,
-        0.00392156862745098 * aseClr.green,
-        0.00392156862745098 * aseClr.blue,
-        0.00392156862745098 * aseClr.alpha)
+        0.003921568627451 * aseClr.red,
+        0.003921568627451 * aseClr.green,
+        0.003921568627451 * aseClr.blue,
+        0.003921568627451 * aseClr.alpha)
 end
 
 ---Converts an Aseprite color object to an
@@ -1583,26 +1579,28 @@ function AseUtilities.initCanvas(
     local sprite = app.activeSprite
     local layer = nil
 
-    if sprite == nil then
+    if sprite then
+        layer = sprite:newLayer()
+    else
         local wVal = 32
         local hVal = 32
         if wDefault and wDefault > 0 then wVal = wDefault end
         if hDefault and hDefault > 0 then hVal = hDefault end
 
-        sprite = Sprite(wVal, hVal)
-        app.activeSprite = sprite
-
-        if colorSpace
-            and colorSpace ~= ColorSpace { sRGB = true } then
-            sprite:assignColorSpace(colorSpace)
+        local spec = ImageSpec {
+            width = wVal,
+            height = hVal,
+            colorMode = ColorMode.RGB,
+            transparentColor = 0 }
+        if colorSpace then
+            spec.colorSpace = colorSpace
         end
 
+        sprite = Sprite(spec)
+        app.activeSprite = sprite
         layer = sprite.layers[1]
-
         sprite:setPalette(
             AseUtilities.hexArrToAsePalette(clrsVal))
-    else
-        layer = sprite:newLayer()
     end
 
     layer.name = layerName or "Layer"
@@ -1799,7 +1797,7 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
 
     -- The source image's color mode is 4 if it is a tile map.
     -- Assigning 4 to the target image when the sprite color
-    -- mode is 2 (indexed), causes Aseprite to crash.
+    -- mode is 2 (indexed) causes Aseprite to crash.
     local specSrc = imgSrc.spec
     local specTrg = ImageSpec {
         width = specSrc.width * tileWidth,
@@ -1814,7 +1812,7 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
         imgTrg:drawImage(
             tileSet:getTile(elm()),
             Point(elm.x * tileWidth,
-                elm.y * tileHeight))
+                  elm.y * tileHeight))
     end
 
     return imgTrg
@@ -1997,21 +1995,9 @@ end
 ---@param a table vector
 ---@return userdata
 function AseUtilities.vec2ToPoint(a)
-    local cx = 0
-    if a.x < -0.0 then
-        cx = math.tointeger(a.x - 0.5)
-    elseif a.x > 0.0 then
-        cx = math.tointeger(a.x + 0.5)
-    end
-
-    local cy = 0
-    if a.y < -0.0 then
-        cy = math.tointeger(a.y - 0.5)
-    elseif a.y > 0.0 then
-        cy = math.tointeger(a.y + 0.5)
-    end
-
-    return Point(cx, cy)
+    return Point(
+        Utilities.round(a.x),
+        Utilities.round(a.y))
 end
 
 ---Translates the pixels of an image by a vector,

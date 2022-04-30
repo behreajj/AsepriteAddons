@@ -158,6 +158,7 @@ dlg:button {
     text = "TL",
     focus = false,
     onclick = function()
+        -- TODO: Make these relative to a selection bounds?
         local activeSprite = app.activeSprite
         if not activeSprite then return end
 

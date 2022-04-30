@@ -416,13 +416,13 @@ dlg:button {
                 end
 
                 local clr = Clr.new(
-                    redSrgb255 * 0.00392156862745098,
-                    greenSrgb255 * 0.00392156862745098,
-                    blueSrgb255 * 0.00392156862745098,
+                    redSrgb255 * 0.003921568627451,
+                    greenSrgb255 * 0.003921568627451,
+                    blueSrgb255 * 0.003921568627451,
                     1.0)
                 local lab = sRgbToLab(clr)
                 local lch = labToLch(
-                    lab.l, lab.a, lab.b, 1.0)
+                    lab.l, lab.a, lab.b, 1.0, 0.007072)
 
                 -- Convert values to integers to make them
                 -- easier to sort and to make sorting conform

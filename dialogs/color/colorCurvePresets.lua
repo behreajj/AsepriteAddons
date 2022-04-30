@@ -49,7 +49,7 @@ end
 local function sineWave(x, freq, phase, amp, basis)
     return math.max(0.0, math.min(1.0,
         0.5 + 0.5 * (basis + amp * math.sin(
-        6.283185307179586 * freq * x + phase))))
+        6.2831853071796 * freq * x + phase))))
 end
 
 local dlg = Dialog { title = "Color Curve Presets" }
@@ -278,7 +278,7 @@ dlg:button {
         if preset == "SINE_WAVE" then
             local freq = args.freq or defaults.freq
             local phase = args.phase or defaults.phase
-            phase = 0.017453292519943295 * phase
+            phase = 0.017453292519943 * phase
             local amp = args.sw_amp or defaults.sw_amp
             local basis = args.basis or defaults.basis
 

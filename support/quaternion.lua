@@ -467,8 +467,8 @@ end
 ---Creates a random quaternion.
 ---@return table
 function Quaternion.random()
-    local t0 = math.random() * 6.283185307179586
-    local t1 = math.random() * 6.283185307179586
+    local t0 = math.random() * 6.2831853071796
+    local t1 = math.random() * 6.2831853071796
     local r1 = math.random()
     local x0 = math.sqrt(1.0 - r1)
     local x1 = math.sqrt(r1)
@@ -486,7 +486,7 @@ end
 ---@param radians number angle
 ---@return table
 function Quaternion.rotateX(q, radians)
-    local half = 0.5 * math.fmod(radians, 6.283185307179586)
+    local half = 0.5 * math.fmod(radians, 6.2831853071796)
     return Quaternion.rotateXInternal(
         q, math.cos(half), math.sin(half))
 end
@@ -497,7 +497,7 @@ end
 ---@param radians number angle
 ---@return table
 function Quaternion.rotateY(q, radians)
-    local half = 0.5 * math.fmod(radians, 6.283185307179586)
+    local half = 0.5 * math.fmod(radians, 6.2831853071796)
     return Quaternion.rotateYInternal(
         q, math.cos(half), math.sin(half))
 end
@@ -508,7 +508,7 @@ end
 ---@param radians number angle
 ---@return table
 function Quaternion.rotateZ(q, radians)
-    local half = 0.5 * math.fmod(radians, 6.283185307179586)
+    local half = 0.5 * math.fmod(radians, 6.2831853071796)
     return Quaternion.rotateZInternal(
         q, math.cos(half), math.sin(half))
 end

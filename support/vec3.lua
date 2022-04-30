@@ -168,7 +168,7 @@ end
 ---@param a table left operand
 ---@return number
 function Vec3.azimuthUnsigned(a)
-    return math.atan(a.y, a.x) % 6.283185307179586
+    return math.atan(a.y, a.x) % 6.2831853071796
 end
 
 ---Finds a point on a cubic Bezier curve
@@ -567,7 +567,7 @@ function Vec3.gridSpherical(
         toPrc = 1.0 / (vLayers - 1.0)
     end
     local toIncl = 3.141592653589793 / (vLats + 1.0)
-    local toAzim = 6.283185307179586 / vLons
+    local toAzim = 6.2831853071796 / vLons
 
     local len2 = vLats * vLons
     local len3 = vLayers * len2

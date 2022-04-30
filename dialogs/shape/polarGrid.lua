@@ -181,7 +181,7 @@ dlg:button {
         local yOrigin = args.yOrigin or defaults.yOrigin
 
         local toScale = 1.0 / rings
-        local toTheta = 6.283185307179586 / sectors
+        local toTheta = 6.2831853071796 / sectors
         local halfAngMargin = angMargin * 0.5
         local halfRingMargin = ringMargin * 0.5
         local thickness = scale / rings - halfRingMargin

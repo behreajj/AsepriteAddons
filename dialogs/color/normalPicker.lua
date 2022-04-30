@@ -51,9 +51,9 @@ local function colorToVec(clr)
         b255 = clr.blue
     end
 
-    local x = (r255 + r255 - 255) * 0.00392156862745098
-    local y = (g255 + g255 - 255) * 0.00392156862745098
-    local z = (b255 + b255 - 255) * 0.00392156862745098
+    local x = (r255 + r255 - 255) * 0.003921568627451
+    local y = (g255 + g255 - 255) * 0.003921568627451
+    local z = (b255 + b255 - 255) * 0.003921568627451
 
     -- The square magnitude for the color #808080
     -- is 0.000046 . Have to account for how 255
@@ -140,8 +140,8 @@ local function updateWidgetCart(dialog)
     local a = sph.azimuth
     local i = sph.inclination
     a = Utilities.round(
-        (a % 6.283185307179586) * 57.29577951308232)
-    i = Utilities.round(i * 57.29577951308232)
+        (a % 6.2831853071796) * 57.295779513082)
+    i = Utilities.round(i * 57.295779513082)
 
     dialog:modify { id = "azimuth", value = a }
     dialog:modify { id = "inclination", value = i }
@@ -156,8 +156,8 @@ local function updateWidgetSphere(dialog)
     local incl = args.inclination
 
     local v = Vec3.fromSpherical(
-        az * 0.017453292519943295,
-        incl * 0.017453292519943295,
+        az * 0.017453292519943,
+        incl * 0.017453292519943,
         1.0)
 
     dialog:modify { id = "x", text = string.format("%.3f", v.x) }
@@ -179,8 +179,8 @@ local function updateFromColor(dialog, clr)
         local a = sph.azimuth
         local i = sph.inclination
         a = Utilities.round(
-            (a % 6.283185307179586) * 57.29577951308232)
-        i = Utilities.round(i * 57.29577951308232)
+            (a % 6.2831853071796) * 57.295779513082)
+        i = Utilities.round(i * 57.295779513082)
 
         dialog:modify { id = "azimuth", value = a }
         dialog:modify { id = "inclination", value = i }

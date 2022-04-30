@@ -152,8 +152,8 @@ function Curve2.arcSector(
 
     -- Calculate handle length.
     local arcLength = math.min(
-        edAngVerif - stAngVerif, 6.283185307179586)
-    local arcLen01 = arcLength * 0.15915494309189535
+        edAngVerif - stAngVerif, 6.2831853071796)
+    local arcLen01 = arcLength * 0.1591549430919
     local knCtVerif = math.ceil(1 + 4 * arcLen01)
     local toStep = 1.0 / (knCtVerif - 1.0)
     local invKnCt = toStep * arcLen01
@@ -197,9 +197,9 @@ function Curve2.arcSector(
     local foCo = firstOuter.co
     local liCo = lastInner.co
     firstOuter.rh = Vec2.mixNum(
-        foCo, liCo, 0.3333333333333333)
+        foCo, liCo, 0.33333333333333)
     lastInner.fh = Vec2.mixNum(
-        liCo, foCo, 0.3333333333333333)
+        liCo, foCo, 0.33333333333333)
 
     -- Flatten handles at end of arc.
     local firstInner = kns[knCtVerif + 1]
@@ -207,9 +207,9 @@ function Curve2.arcSector(
     local loCo = lastOuter.co
     local fiCo = firstInner.co
     lastOuter.fh = Vec2.mixNum(
-        loCo, fiCo, 0.3333333333333333)
+        loCo, fiCo, 0.33333333333333)
     firstInner.rh = Vec2.mixNum(
-        fiCo, loCo, 0.3333333333333333)
+        fiCo, loCo, 0.33333333333333)
 
     return Curve2.new(true, kns, "Arc")
 end
@@ -440,8 +440,8 @@ function Curve2.rect(
     local vtrk = vtr * 0.5522847498307936
 
     -- Edge handles are lerped by 1 / 3.
-    local t = 0.3333333333333333
-    local u = 0.6666666666666667
+    local t = 0.33333333333333
+    local u = 0.66666666666667
 
     -- Calculate insets.
     local lftIns0 = lft + vtl

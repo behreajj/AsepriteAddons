@@ -234,15 +234,15 @@ dlg:button {
             local quantize = nil
             if isCyclic then
                 quantize = Utilities.quantizeSigned
-                wrap = 6.283185307179586
-                toFac = 0.15915494309189535
+                wrap = 6.2831853071796
+                toFac = 0.1591549430919
             else
                 quantize = Utilities.quantizeUnsigned
                 -- 361 degrees * 180 degrees / pi radians
                 -- wrap = 6.300638599699529
                 -- toFac = 0.15871407067335824
-                wrap = 6.283185307179586
-                toFac = 0.15915494309189535
+                wrap = 6.2831853071796
+                toFac = 0.1591549430919
             end
 
             local layer = sprite.layers[#sprite.layers]
@@ -299,7 +299,7 @@ dlg:button {
             local yOriginSigned = 1.0 - (yOriginNorm + yOriginNorm)
 
             local angDegrees = args.angle or defaults.angle
-            local angRadians = angDegrees * 0.017453292519943295
+            local angRadians = angDegrees * 0.017453292519943
             local cw = 1.0
             if args.cw then cw = -1.0 end
             local levels = args.quantization or defaults.quantization

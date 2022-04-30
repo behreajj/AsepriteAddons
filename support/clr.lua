@@ -318,10 +318,10 @@ end
 ---@return table
 function Clr.fromHex(c)
     return Clr.new(
-        (c         & 0xff) * 0.00392156862745098,
-        (c >> 0x08 & 0xff) * 0.00392156862745098,
-        (c >> 0x10 & 0xff) * 0.00392156862745098,
-        (c >> 0x18 & 0xff) * 0.00392156862745098)
+        (c         & 0xff) * 0.003921568627451,
+        (c >> 0x08 & 0xff) * 0.003921568627451,
+        (c >> 0x10 & 0xff) * 0.003921568627451,
+        (c >> 0x18 & 0xff) * 0.003921568627451)
 end
 
 ---Converts an array of hexadecimal values to
@@ -363,7 +363,7 @@ function Clr.fromHexWeb(hexstr)
         -- Append opaque alpha.
         return Clr.fromHex(0xff000000 | sn)
     end
-    return Clr.new()
+    return Clr.clearBlack()
 end
 
 ---Creates a one-dimensional table of colors
@@ -394,8 +394,8 @@ function Clr.gridHsl(
     local vLons = longitudes or 32
 
     -- Validate.
-    if aVal < 0.00392156862745098 then
-        aVal = 0.00392156862745098
+    if aVal < 0.003921568627451 then
+        aVal = 0.003921568627451
     elseif aVal > 1.0 then
         aVal = 1.0
     end
@@ -465,8 +465,8 @@ function Clr.gridsRgb(cols, rows, layers, alpha)
     local cVal = cols or 2
 
     -- Validate arguments.
-    if aVal < 0.00392156862745098 then
-        aVal = 0.00392156862745098
+    if aVal < 0.003921568627451 then
+        aVal = 0.003921568627451
     elseif aVal > 1.0 then
         aVal = 1.0
     end
@@ -538,33 +538,33 @@ function Clr.hslaTosRgba(hue, sat, light, alpha)
     local h = hue or 0.0
 
     local r = p
-    local rHue = (h + 0.3333333333333333) % 1.0
-    if rHue < 0.16666666666666667 then
+    local rHue = (h + 0.33333333333333) % 1.0
+    if rHue < 0.16666666666667 then
         r = p + qnp6 * rHue
     elseif rHue < 0.5 then
         r = q
-    elseif rHue < 0.6666666666666667 then
-        r = p + qnp6 * (0.6666666666666667 - rHue)
+    elseif rHue < 0.66666666666667 then
+        r = p + qnp6 * (0.66666666666667 - rHue)
     end
 
     local g = p
     local gHue = h % 1.0
-    if gHue < 0.16666666666666667 then
+    if gHue < 0.16666666666667 then
         g = p + qnp6 * gHue
     elseif gHue < 0.5 then
         g = q
-    elseif gHue < 0.6666666666666667 then
-        g = p + qnp6 * (0.6666666666666667 - gHue)
+    elseif gHue < 0.66666666666667 then
+        g = p + qnp6 * (0.66666666666667 - gHue)
     end
 
     local b = p
-    local bHue = (h - 0.3333333333333333) % 1.0
-    if bHue < 0.16666666666666667 then
+    local bHue = (h - 0.33333333333333) % 1.0
+    if bHue < 0.16666666666667 then
         b = p + qnp6 * bHue
     elseif bHue < 0.5 then
         b = q
-    elseif bHue < 0.6666666666666667 then
-        b = p + qnp6 * (0.6666666666666667 - bHue)
+    elseif bHue < 0.66666666666667 then
+        b = p + qnp6 * (0.66666666666667 - bHue)
     end
 
     return Clr.new(r, g, b, a)
@@ -648,7 +648,7 @@ function Clr.labToLch(l, a, b, alpha, tol)
         hue = (1.0 - fac) * Clr.LCH_HUE_SHADOW
              + fac * (1.0 + Clr.LCH_HUE_LIGHT)
     else
-        hue = math.atan(b, a) * 0.15915494309189535
+        hue = math.atan(b, a) * 0.1591549430919
         chroma = math.sqrt(chromasq)
     end
 
@@ -689,11 +689,11 @@ end
 function Clr.labToXyz(l, a, b, alpha)
     -- D65, CIE 1931 2 degrees
     -- 95.047, 100.0, 108.883
-    -- 16.0 / 116.0 = 0.13793103448275862
-    -- 1.0 / 116.0 = 0.008620689655172414
-    -- 1.0 / 7.787 = 0.12841751101180157
+    -- 16.0 / 116.0 = 0.13793103448276
+    -- 1.0 / 116.0 = 0.0086206896551724
+    -- 1.0 / 7.787 = 0.1284175110118
 
-    local vy = (l + 16.0) * 0.008620689655172414
+    local vy = (l + 16.0) * 0.0086206896551724
     local vx = a * 0.002 + vy
     local vz = vy - b * 0.005
 
@@ -701,21 +701,21 @@ function Clr.labToXyz(l, a, b, alpha)
     if vye3 > 0.008856 then
         vy = vye3
     else
-        vy = (vy - 0.13793103448275862) * 0.12841751101180157
+        vy = (vy - 0.13793103448276) * 0.1284175110118
     end
 
     local vxe3 = vx * vx * vx
     if vxe3 > 0.008856 then
         vx = vxe3
     else
-        vx = (vx - 0.13793103448275862) * 0.12841751101180157
+        vx = (vx - 0.13793103448276) * 0.1284175110118
     end
 
     local vze3 = vz * vz * vz
     if vze3 > 0.008856 then
         vz = vze3
     else
-        vz = (vz - 0.13793103448275862) * 0.12841751101180157
+        vz = (vz - 0.13793103448276) * 0.1284175110118
     end
 
     local aVerif = alpha or 1.0
@@ -768,7 +768,7 @@ end
 ---@param a number alpha channel
 ---@return table
 function Clr.lchToLabInternal(l, c, h, a)
-    local hRad = h * 6.283185307179586
+    local hRad = h * 6.2831853071796
     return {
         l = l,
         a = c * math.cos(hRad),
@@ -806,27 +806,27 @@ end
 ---@param a table color
 ---@return table
 function Clr.lRgbaTosRgbaInternal(a)
-    -- 1.0 / 2.4 = 0.4166666666666667
+    -- 1.0 / 2.4 = 0.41666666666667
 
     local sr = a.r
     if sr <= 0.0031308 then
         sr = sr * 12.92
     else
-        sr = (sr ^ 0.4166666666666667) * 1.055 - 0.055
+        sr = (sr ^ 0.41666666666667) * 1.055 - 0.055
     end
 
     local sg = a.g
     if sg <= 0.0031308 then
         sg = sg * 12.92
     else
-        sg = (sg ^ 0.4166666666666667) * 1.055 - 0.055
+        sg = (sg ^ 0.41666666666667) * 1.055 - 0.055
     end
 
     local sb = a.b
     if sb <= 0.0031308 then
         sb = sb * 12.92
     else
-        sb = (sb ^ 0.4166666666666667) * 1.055 - 0.055
+        sb = (sb ^ 0.41666666666667) * 1.055 - 0.055
     end
 
     return Clr.new(sr, sg, sb, a.a)
@@ -844,17 +844,17 @@ end
 function Clr.lRgbaToXyzInternal(red, green, blue, alpha)
     local aVerif = alpha or 1.0
     return {
-        x = 0.4124108464885388   * red
-          + 0.3575845678529519   * green
-          + 0.18045380393360833  * blue,
+        x = 0.41241084648854  * red
+          + 0.35758456785295  * green
+          + 0.18045380393361  * blue,
 
-        y = 0.21264934272065283  * red
-          + 0.7151691357059038   * green
-          + 0.07218152157344333  * blue,
+        y = 0.21264934272065  * red
+          + 0.7151691357059   * green
+          + 0.072181521573443 * blue,
 
-        z = 0.019331758429150258 * red
-          + 0.11919485595098397  * green
-          + 0.9503900340503373   * blue,
+        z = 0.01933175842915  * red
+          + 0.11919485595098  * green
+          + 0.95039003405034  * blue,
 
         a = aVerif }
 end
@@ -873,9 +873,9 @@ end
 ---@param a table color
 ---@return number
 function Clr.lumlRgb(a)
-    return a.r * 0.21264934272065283
-         + a.g * 0.7151691357059038
-         + a.b * 0.07218152157344333
+    return a.r * 0.21264934272065
+         + a.g * 0.7151691357059
+         + a.b * 0.072181521573443
 end
 
 ---Finds the relative luminance of a sRGB color,
@@ -1170,18 +1170,19 @@ function Clr.mixLchInternal(a, b, t, hueFunc)
             u * aLab.alpha + t * bLab.alpha)
     else
         local aChr = math.sqrt(acsq)
-        local aHue = math.atan(ab, aa) * 0.15915494309189535
+        local aHue = math.atan(ab, aa) * 0.1591549430919
         aHue = aHue % 1.0
 
         local bChr = math.sqrt(bcsq)
-        local bHue = math.atan(bb, ba) * 0.15915494309189535
+        local bHue = math.atan(bb, ba) * 0.1591549430919
         bHue = bHue % 1.0
 
         return Clr.lchTosRgba(
             u * aLab.l + t * bLab.l,
             u * aChr + t * bChr,
             hueFunc(aHue, bHue, t),
-            u * aLab.alpha + t * bLab.alpha)
+            u * aLab.alpha + t * bLab.alpha,
+            0.00005)
     end
 end
 
@@ -1454,21 +1455,21 @@ function Clr.sRgbaToHslaInternal(red, green, blue, alpha)
     local diff = mx - mn
     local light = 0.5 * sum
 
-    if light < 0.00392156862745098 then
+    if light < 0.003921568627451 then
         -- Black (epsilon is 1.0 / 255.0).
         return {
             h = Clr.HSL_HUE_SHADOW,
             s = 0.0,
             l = 0.0,
             a = alpha }
-    elseif light > 0.996078431372549 then
+    elseif light > 0.99607843137255 then
         -- White (epsilon is 245.0 / 255.0).
         return {
             h = Clr.HSL_HUE_LIGHT,
             s = 0.0,
             l = 1.0,
             a = alpha }
-    elseif diff < 0.00392156862745098 then
+    elseif diff < 0.003921568627451 then
         -- Gray.
         local hue = (1.0 - light) * Clr.HSL_HUE_SHADOW
                    + light * (1.0 + Clr.HSL_HUE_LIGHT)
@@ -1481,15 +1482,15 @@ function Clr.sRgbaToHslaInternal(red, green, blue, alpha)
     else
         -- Find hue.
         local hue = 0.0
-        if math.abs(mx - red) <= 0.00392156862745098 then
+        if math.abs(mx - red) <= 0.003921568627451 then
             hue = (green - blue) / diff
             if green < blue then hue = hue + 6.0 end
-        elseif math.abs(mx - green) <= 0.00392156862745098 then
+        elseif math.abs(mx - green) <= 0.003921568627451 then
             hue = 2.0 + (blue - red) / diff
         else
             hue = 4.0 + (red - green) / diff
         end
-        hue = hue * 0.16666666666666667
+        hue = hue * 0.16666666666667
 
         -- Find saturation.
         local sat = 0.0
@@ -1533,7 +1534,7 @@ function Clr.sRgbaToHsvaInternal(red, green, blue, alpha)
     local mx = red
     if gbmx > red then mx = gbmx end
 
-    if mx < 0.00392156862745098 then
+    if mx < 0.003921568627451 then
         -- Black.
         return {
             h = Clr.HSL_HUE_SHADOW,
@@ -1549,9 +1550,9 @@ function Clr.sRgbaToHsvaInternal(red, green, blue, alpha)
 
         -- Find difference between max and min.
         local diff = mx - mn
-        if diff < 0.00392156862745098 then
+        if diff < 0.003921568627451 then
             local light = 0.5 * (mx + mn)
-            if light > 0.996078431372549 then
+            if light > 0.99607843137255 then
                 -- White.
                 return {
                     h = Clr.HSL_HUE_LIGHT,
@@ -1575,15 +1576,15 @@ function Clr.sRgbaToHsvaInternal(red, green, blue, alpha)
         else
             -- Saturated color.
             local hue = 0.0
-            if math.abs(mx - red) <= 0.00392156862745098 then
+            if math.abs(mx - red) <= 0.003921568627451 then
                 hue = (green - blue) / diff
                 if green < blue then hue = hue + 6.0 end
-            elseif math.abs(mx - green) <= 0.00392156862745098 then
+            elseif math.abs(mx - green) <= 0.003921568627451 then
                 hue = 2.0 + (blue - red) / diff
             else
                 hue = 4.0 + (red - green) / diff
             end
-            hue = hue * 0.16666666666666667
+            hue = hue * 0.16666666666667
 
             local sat = diff / mx
 
@@ -1635,28 +1636,28 @@ end
 ---@param a table color
 ---@return table
 function Clr.sRgbaTolRgbaInternal(a)
-    -- 1.0 / 12.92 = 0.07739938080495357
-    -- 1.0 / 1.055 = 0.9478672985781991
+    -- 1.0 / 12.92 = 0.077399380804954
+    -- 1.0 / 1.055 = 0.9478672985782
 
     local lr = a.r
     if lr <= 0.04045 then
-        lr = lr * 0.07739938080495357
+        lr = lr * 0.077399380804954
     else
-        lr = ((lr + 0.055) * 0.9478672985781991) ^ 2.4
+        lr = ((lr + 0.055) * 0.9478672985782) ^ 2.4
     end
 
     local lg = a.g
     if lg <= 0.04045 then
-        lg = lg * 0.07739938080495357
+        lg = lg * 0.077399380804954
     else
-        lg = ((lg + 0.055) * 0.9478672985781991) ^ 2.4
+        lg = ((lg + 0.055) * 0.9478672985782) ^ 2.4
     end
 
     local lb = a.b
     if lb <= 0.04045 then
-        lb = lb * 0.07739938080495357
+        lb = lb * 0.077399380804954
     else
-        lb = ((lb + 0.055) * 0.9478672985781991) ^ 2.4
+        lb = ((lb + 0.055) * 0.9478672985782) ^ 2.4
     end
 
     return Clr.new(lr, lg, lb, a.a)
@@ -1757,29 +1758,29 @@ end
 function Clr.xyzToLab(x, y, z, alpha)
     -- D65, CIE 1931 2 degrees
     -- 95.047, 100.0, 108.883
-    -- 100.0 / 95.047 = 1.0521110608435826
+    -- 100.0 / 95.047 = 1.0521110608436
     -- 100.0 / 108.883 = 0.9184170164304805
-    -- 16.0 / 116.0 = 0.13793103448275862
+    -- 16.0 / 116.0 = 0.13793103448276
 
-    local vx = x * 1.0521110608435826
+    local vx = x * 1.0521110608436
     if vx > 0.008856 then
-        vx = vx ^ 0.3333333333333333
+        vx = vx ^ 0.33333333333333
     else
-        vx = 7.787 * vx + 0.13793103448275862
+        vx = 7.787 * vx + 0.13793103448276
     end
 
     local vy = y
     if vy > 0.008856 then
-        vy = vy ^ 0.3333333333333333
+        vy = vy ^ 0.33333333333333
     else
-        vy = 7.787 * vy + 0.13793103448275862
+        vy = 7.787 * vy + 0.13793103448276
     end
 
     local vz = z * 0.9184170164304805
     if vz > 0.008856 then
-        vz = vz ^ 0.3333333333333333
+        vz = vz ^ 0.33333333333333
     else
-        vz = 7.787 * vz + 0.13793103448275862
+        vz = 7.787 * vz + 0.13793103448276
     end
 
     local aVerif = alpha or 1.0
@@ -1800,17 +1801,17 @@ end
 function Clr.xyzaTolRgba(x, y, z, alpha)
     local aVerif = alpha or 1.0
     return Clr.new(
-          3.240812398895283    * x
-        - 1.5373084456298136   * y
-        - 0.4985865229069666   * z,
+          3.2408123988953   * x
+        - 1.5373084456298   * y
+        - 0.49858652290697  * z,
 
-         -0.9692430170086407   * x
-        + 1.8759663029085742   * y
-        + 0.04155503085668564  * z,
+         -0.96924301700864  * x
+        + 1.8759663029086   * y
+        + 0.041555030856686 * z,
 
-          0.055638398436112804 * x
-        - 0.20400746093241362  * y
-        + 1.0571295702861434   * z,
+          0.055638398436113 * x
+        - 0.20400746093241  * y
+        + 1.0571295702861   * z,
 
         aVerif)
 end

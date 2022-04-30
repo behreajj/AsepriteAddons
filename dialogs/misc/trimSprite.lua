@@ -81,7 +81,6 @@ dlg:button {
 
         -- Unpack sprite attributes.
         local alphaIndex = activeSprite.transparentColor
-        local colorMode = activeSprite.colorMode
         local spriteWidth = activeSprite.width
         local spriteHeight = activeSprite.height
 

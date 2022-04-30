@@ -403,7 +403,7 @@ dlg:button {
             elseif greyPreset == "HSV" then
                 greyStr = "HSV"
                 greyMethod = function(rSrc, gSrc, bSrc)
-                    return math.max(rSrc, gSrc, bSrc) * 0.00392156862745098
+                    return math.max(rSrc, gSrc, bSrc) * 0.003921568627451
                 end
             else
                 greyStr = "Luminance"
@@ -419,7 +419,7 @@ dlg:button {
                             rLin * 0.21264934272065283
                         + gLin * 0.7151691357059038
                         + bLin * 0.07218152157344333)
-                    return ltsLut[1 + lum] * 0.00392156862745098
+                    return ltsLut[1 + lum] * 0.003921568627451
                 end
             end
 
@@ -441,9 +441,9 @@ dlg:button {
 
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
                 local srgb = Clr.new(
-                    rSrc * 0.00392156862745098,
-                    gSrc * 0.00392156862745098,
-                    bSrc * 0.00392156862745098,
+                    rSrc * 0.003921568627451,
+                    gSrc * 0.003921568627451,
+                    bSrc * 0.003921568627451,
                     1.0)
                 local trgHex = Clr.toHex(Clr.quantize(srgb, levels))
                 return (aSrc << 0x18) | (0x00ffffff & trgHex)
@@ -523,9 +523,9 @@ dlg:button {
 
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
                 local srgb = Clr.new(
-                    rSrc * 0.00392156862745098,
-                    gSrc * 0.00392156862745098,
-                    bSrc * 0.00392156862745098,
+                    rSrc * 0.003921568627451,
+                    gSrc * 0.003921568627451,
+                    bSrc * 0.003921568627451,
                     1.0)
                 local lab = Clr.sRgbaToLab(srgb)
                 local query = Vec3.new(lab.a, lab.b, lab.l)

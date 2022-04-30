@@ -209,8 +209,8 @@ dlg:button {
         end
 
         local gamutImgs = {}
-        local oogaNorm = outOfGamut * 0.00392156862745098
-        local oogaEps = 2.0 * 0.00392156862745098
+        local oogaNorm = outOfGamut * 0.003921568627451
+        local oogaEps = 2.0 * 0.003921568627451
         local quantization = args.quantization or defaults.quantization
         for i = 1, reqFrames, 1 do
             -- Convert i to a step, which will be its hue.
@@ -233,7 +233,7 @@ dlg:button {
                 yNrm = quantize(yNrm, quantization)
                 local light = (1.0 - yNrm) * maxLight
 
-                local clr = lchTosRgba(light, chroma, hue, 1.0)
+                local clr = lchTosRgba(light, chroma, hue, 1.0, 0.00005)
                 if not rgbIsInGamut(clr, oogaEps) then
                     clr.a = oogaNorm
                 end
@@ -294,7 +294,7 @@ dlg:button {
                 local yi = size
                 local stroke = 0x0
                 if hexSrgb & 0xff000000 ~= 0 then
-                    local lch = sRgbaToLch(fromHex(hexSrgb))
+                    local lch = sRgbaToLch(fromHex(hexSrgb), 0.007072)
 
                     -- To [0.0, 1.0].
                     local xNrm = lch.c * invMaxChroma

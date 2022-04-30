@@ -308,7 +308,8 @@ function Curve3.fromCatmull(
     if closedLoop then
         if Vec3.approx(
             points[1],
-            points[ptsLen]) then
+            points[ptsLen],
+            0.000001) then
             valPts = {}
             for i = 1, ptsLast, 1 do
                 valPts[i] = points[i]
@@ -327,13 +328,15 @@ function Curve3.fromCatmull(
 
         if not Vec3.approx(
             points[1],
-            points[2]) then
+            points[2],
+            0.000001) then
             table.insert(valPts, 1, points[1])
         end
 
         if not Vec3.approx(
             points[#points],
-            points[#points - 1]) then
+            points[#points - 1],
+            0.000001) then
             table.insert(valPts, points[#points])
         end
 
@@ -412,19 +415,24 @@ function Curve3.fromPoints(closedLoop, points, name)
     local len = #points
     local last = len
     if closedLoop and Vec3.approx(
-            points[1], points[len]) then
+        points[1], points[len], 0.000001) then
         last = len - 1
     end
 
     local kns = {}
     for i = 1, last, 1 do
         local pt = points[i]
-        kns[i] = Knot3.new(Vec3.new(pt.x, pt.y, pt.z))
+        kns[i] = Knot3.new(
+            Vec3.new(pt.x, pt.y, pt.z),
+            Vec3.new(pt.x, pt.y, pt.z),
+            Vec3.new(pt.x, pt.y, pt.z))
     end
 
     local crv = Curve3.new(closedLoop, kns, name)
-    Curve3.smoothHandles(crv)
-    return crv
+
+    -- TODO: Implement straighten handles, call that
+    -- instead of smooth handles when ptsLen < 3.
+    return Curve3.smoothHandles(crv)
 end
 
 ---Adjusts knot handles so as to create
@@ -432,16 +440,16 @@ end
 ---@param target table
 function Curve3.smoothHandles(target)
     local knots = target.knots
-    local knotLength = #knots
-    if knotLength < 3 then return target end
+    local knotCount = #knots
+    if knotCount < 3 then return target end
 
     local carry = Vec3.new(0.0, 0.0, 0.0)
     local first = knots[1]
 
     if target.closedLoop then
-        local prev = knots[knotLength]
+        local prev = knots[knotCount]
         local curr = first
-        for i = 2, knotLength, 1 do
+        for i = 2, knotCount, 1 do
             local next = knots[i]
             Knot3.smoothHandlesInternal(
                 prev, curr, next, carry)
@@ -458,7 +466,7 @@ function Curve3.smoothHandles(target)
             prev, curr, carry)
         Knot3.mirrorHandlesForward(curr)
 
-        for i = 3, knotLength, 1 do
+        for i = 3, knotCount, 1 do
             local next = knots[i]
             Knot3.smoothHandlesInternal(
                 prev, curr, next, carry)

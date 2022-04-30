@@ -250,6 +250,7 @@ end
 ---@param fse table front south east octant
 ---@param fnw table front north west octant
 ---@param fne table front north east octant
+---@return table
 function Bounds3.splitInternal(
     b, xFac, yFac, zFac,
     bsw, bse, bnw, bne,
@@ -258,21 +259,9 @@ function Bounds3.splitInternal(
     local bMn = b.mn
     local bMx = b.mx
 
-    local tx = xFac
-    if tx < 0.000001 then tx = 0.000001
-    elseif tx > 0.999999 then tx = 0.999999 end
-
-    local ty = yFac
-    if ty < 0.000001 then ty = 0.000001
-    elseif ty > 0.999999 then ty = 0.999999 end
-
-    local tz = zFac
-    if tz < 0.000001 then tz = 0.000001
-    elseif tz > 0.999999 then tz = 0.999999 end
-
-    local x = ( 1.0 - tx ) * bMn.x + tx * bMx.x
-    local y = ( 1.0 - ty ) * bMn.y + ty * bMx.y
-    local z = ( 1.0 - tz ) * bMn.z + tz * bMx.z
+    local x = (1.0 - xFac) * bMn.x + xFac * bMx.x
+    local y = (1.0 - yFac) * bMn.y + yFac * bMx.y
+    local z = (1.0 - zFac) * bMn.z + zFac * bMx.z
 
     bsw.mn = Vec3.new(bMn.x, bMn.y, bMn.z)
     bse.mn = Vec3.new(    x, bMn.y, bMn.z)

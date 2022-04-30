@@ -86,7 +86,7 @@ dlg:button {
             app.command.ChangePixelFormat { format = "rgb" }
 
             local args = dlg.data
-            local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
+            local hexesProfile, _ = AseUtilities.asePaletteLoad(
                 args.palType, args.palFile, args.palPreset, 0, 256, true)
 
             local trgHexes = Utilities.shuffle(hexesProfile)

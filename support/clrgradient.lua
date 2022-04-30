@@ -87,6 +87,26 @@ function ClrGradient:compressKeysRight(added)
     return self
 end
 
+---Inserts a color key into the keys array based
+---on the index returned by bisectLeft.
+---@param ck table color key
+---@return table
+function ClrGradient:insortLeft(ck)
+    local i = ClrGradient.bisectLeft(self, ck.step)
+    table.insert(self.keys, i, ck)
+    return self
+end
+
+---Inserts a color key into the keys array based
+---on the index returned by bisectRight.
+---@param ck table color key
+---@return table
+function ClrGradient:insortRight(ck)
+    local i = ClrGradient.bisectRight(self, ck.step)
+    table.insert(self.keys, i, ck)
+    return self
+end
+
 ---Prepends a color to the start of the gradient.
 ---Shifts existing keys right.
 ---@param clr table color
@@ -276,18 +296,18 @@ function ClrGradient.fromColors(arr, cl)
     return ClrGradient.new(keys, cl)
 end
 
----Generates a red-green-blue hue ramp.
+---Creates a red-green-blue ramp.
 ---Contains seven colors and is a loop.
 ---Red is repeated at 0.0 and 1.0.
 ---@return table
 function ClrGradient.rgb()
     return ClrGradient.new({
         ClrKey.newByRef(0.0, Clr.red()),
-        ClrKey.newByRef(0.16666666666666666, Clr.yellow()),
-        ClrKey.newByRef(0.3333333333333333, Clr.green()),
+        ClrKey.newByRef(0.16666666666667, Clr.yellow()),
+        ClrKey.newByRef(0.33333333333333, Clr.green()),
         ClrKey.newByRef(0.5, Clr.cyan()),
-        ClrKey.newByRef(0.6666666666666666, Clr.blue()),
-        ClrKey.newByRef(0.8333333333333334, Clr.magenta()),
+        ClrKey.newByRef(0.66666666666667, Clr.blue()),
+        ClrKey.newByRef(0.83333333333333, Clr.magenta()),
         ClrKey.newByRef(1.0, Clr.red())
     }, true)
 end

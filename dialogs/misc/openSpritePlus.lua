@@ -266,7 +266,7 @@ dlg:button {
                                     -- .aseprite files, and hence not need this.
                                 else
                                     local srcImg = cel.image
-                                    local trgImg, x, y = trimImage(srcImg, 0)
+                                    local trgImg, x, y = trimImage(srcImg, 0, 0)
                                     local srcPos = cel.position
                                     cel.position = Point(srcPos.x + x, srcPos.y + y)
                                     cel.image = trgImg

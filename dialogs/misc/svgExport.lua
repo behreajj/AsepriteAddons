@@ -34,7 +34,7 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
             if a < 255 then
                 pathStr = pathStr .. strfmt(
                     "fill-opacity=\"%.6f\" ",
-                    a * 0.00392156862745098)
+                    a * 0.003921568627451)
             end
 
             -- Green does not need to be unpacked from the
@@ -107,8 +107,8 @@ local function layerToSvgStr(
                 local celAlpha = cel.opacity
                 if lyrAlpha < 0xff
                     or celAlpha < 0xff then
-                    local cmpAlpha = (lyrAlpha * 0.00392156862745098)
-                        * (celAlpha * 0.00392156862745098)
+                    local cmpAlpha = (lyrAlpha * 0.003921568627451)
+                        * (celAlpha * 0.003921568627451)
                     grpStr = grpStr .. string.format(
                         " opacity=\"%.6f\"",
                         cmpAlpha)
@@ -262,7 +262,7 @@ dlg:button {
                 if borderClr.alpha < 255 then
                     str = str .. strfmt(
                         "fill-opacity=\"%.6f\" ",
-                        borderClr.alpha * 0.00392156862745098)
+                        borderClr.alpha * 0.003921568627451)
                 end
 
                 str = str .. strfmt(
@@ -306,7 +306,7 @@ dlg:button {
                 if marginClr.alpha < 255 then
                     str = str .. strfmt(
                         "fill-opacity=\"%.6f\" ",
-                        marginClr.alpha * 0.00392156862745098)
+                        marginClr.alpha * 0.003921568627451)
                 end
 
                 str = str .. strfmt(
@@ -349,9 +349,15 @@ dlg:button {
                 if ext ~= "svg" then
                     app.alert("Extension is not svg.")
                 else
-                    local file = io.open(filepath, "w")
-                    file:write(str)
-                    file:close()
+                    local file, err = io.open(filepath, "w")
+                    if file then
+                        file:write(str)
+                        file:close()
+                    end
+
+                    if err then
+                        app.alert("Error saving file: " .. err)
+                    end
                 end
             else
                 app.alert("Filepath is empty.")
