@@ -456,13 +456,11 @@ function Vec4.gridCartesian(cols, rows, layers, strata, lb, ub)
         local m = k - g * lrcVal
         local h = m // rcVal
         local n = m - h * rcVal
-        local i = n // cVal
-        local j = n % cVal
 
         local gStep = g * gToStep
         local hStep = h * hToStep
-        local iStep = i * iToStep
-        local jStep = j * jToStep
+        local iStep = (n // cVal) * iToStep
+        local jStep = (n % cVal) * jToStep
 
         result[1 + k] = Vec4.new(
             (1.0 - jStep) * lbx + jStep * ubx,

@@ -176,7 +176,7 @@ dlg:newrow { always = false }
 dlg:slider {
     id = "minSat",
     label = "Saturation:",
-    min = 1,
+    min = 0,
     max = 50,
     value = defaults.minSat,
     visible = defaults.geometry == "SPHERE"

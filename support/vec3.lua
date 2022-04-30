@@ -503,12 +503,10 @@ function Vec3.gridCartesian(cols, rows, layers, lb, ub)
     for k = 0, length, 1 do
         local h = k // rcVal
         local m = k - h * rcVal
-        local i = m // cVal
-        local j = m % cVal
 
         local hStep = h * hToStep
-        local iStep = i * iToStep
-        local jStep = j * jToStep
+        local iStep = (m // cVal) * iToStep
+        local jStep = (m % cVal) * jToStep
 
         result[1 + k] = Vec3.new(
             (1.0 - jStep) * lbx + jStep * ubx,

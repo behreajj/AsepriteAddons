@@ -188,11 +188,15 @@ end
 ---@param easing function easing function
 ---@return table
 function ClrGradient.eval(cg, step, easing)
-    local t = step
+    local t = step or 0.5
     if cg.closedLoop then
         t = step % 1.0
-    else
-        t = math.min(math.max(step, 0.0), 1.0)
+    elseif t <= 0.0 then
+        local orig = cg.keys[1].clr
+        return Clr.new(orig.r, orig.g, orig.b, orig.a)
+    elseif t >= 1.0 then
+        local dest = cg.keys[#cg.keys].clr
+        return Clr.new(dest.r, dest.g, dest.b, dest.a)
     end
 
     local prevKey = ClrGradient.findGe(cg, t)
@@ -206,15 +210,15 @@ function ClrGradient.eval(cg, step, easing)
 
     local prevStep = prevKey.step
     local nextStep = nextKey.step
-    if prevStep == nextStep then
-        local prvClr = prevKey.clr
-        return Clr.new(prvClr.r, prvClr.g, prvClr.b, prvClr.a)
+    if prevStep ~= nextStep then
+        local num = t - prevStep
+        local denom = nextStep - prevStep
+        local g = easing or Clr.mixlRgbaInternal
+        return g(prevKey.clr, nextKey.clr, num / denom)
+    else
+        local clr = prevKey.clr
+        return Clr.new(clr.r, clr.g, clr.b, clr.a)
     end
-
-    local num = t - prevStep
-    local denom = nextStep - prevStep
-    local g = easing or Clr.mixlRgbaInternal
-    return g(prevKey.clr, nextKey.clr, num / denom)
 end
 
 ---Evaluates a color gradient over a range of

@@ -394,10 +394,8 @@ function Vec2.gridCartesian(cols, rows, lb, ub)
     local result = {}
 
     for k = 0, length, 1 do
-        local i = k // cVal
-        local j = k % cVal
-        local iStep = i * iToStep
-        local jStep = j * jToStep
+        local iStep = (k // cVal) * iToStep
+        local jStep = (k % cVal) * jToStep
 
         result[1 + k] = Vec2.new(
             (1.0 - jStep) * lbx + jStep * ubx,

@@ -1,3 +1,4 @@
+dofile("../../support/clr.lua")
 dofile("../../support/knot3.lua")
 dofile("../../support/curve3.lua")
 dofile("../../support/aseutilities.lua")
@@ -107,7 +108,7 @@ local function updateHarmonies(dialog, l, c, h, a)
     dialog:modify { id = "square", colors = squares }
 end
 
-local function updateShading(dialog, l, c, h, a)
+local function updateShades(dialog, l, c, h, a)
     local shadingCount = 7
     local hueSpreadShd = 0.4
     local hueSpreadLgt = 0.325
@@ -115,8 +116,8 @@ local function updateShading(dialog, l, c, h, a)
     local chromaSpread = 17.5
     local hYellow = 0.28570825759858
     local hViolet = (hYellow + 0.5) % 1.0
-    local minLight = math.max(2.0, l - lightSpread)
-    local maxLight = math.min(98.0, l + lightSpread)
+    local minLight = math.max(0.0, l - lightSpread)
+    local maxLight = math.min(100.0, l + lightSpread)
     local minChromaShd = math.max(0.0, c - chromaSpread * 0.25)
     local minChromaLgt = math.max(0.0, c - chromaSpread)
 
@@ -136,6 +137,7 @@ local function updateShading(dialog, l, c, h, a)
     local pt1 = Vec3.new(labKey.a, labKey.b, labKey.l)
     local pt2 = Vec3.new(labLgt.a, labLgt.b, labLgt.l)
 
+    -- TODO: Formalize this into Curve3.fromQuadratic
     local kn0 = Knot3.new(
         pt0,
         Vec3.new(0.0, 0.0, 0.0),
@@ -218,7 +220,7 @@ local function setLch(dialog, lch, clr)
 
     updateWarning(dialog, clr)
     updateHarmonies(dialog, lch.l, lch.c, lch.h, lch.a)
-    updateShading(dialog, lch.l, lch.c, lch.h, lch.a)
+    updateShades(dialog, lch.l, lch.c, lch.h, lch.a)
 end
 
 local function setFromAse(dialog, aseClr)
@@ -396,7 +398,7 @@ local function updateClrs(dialog)
     updateWarning(dialog, clr)
     updateHexCode(dialog, { clr })
     updateHarmonies(dialog, l, c, h, a)
-    updateShading(dialog, l, c, h, a)
+    updateShades(dialog, l, c, h, a)
 end
 
 local dlg = Dialog { title = "LCh Color Picker" }

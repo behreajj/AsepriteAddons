@@ -427,17 +427,15 @@ function Clr.gridHsl(
     for k = 0, len3 - 1, 1 do
         local h = k // len2
         local m = k - h * len2
-        local i = m // vLons
-        local j = m % vLons
 
-        local hue = j * toHue
+        local hue = (m % vLons) * toHue
 
         local prc = h * toPrc
         local sat = (1.0 - prc) * vsMin
                           + prc * vsMax
 
         -- Smooth step approximates sine wave.
-        local lgt = (i + 1.0) * toLgt
+        local lgt = ((m // vLons) + 1.0) * toLgt
         lgt = lgt * lgt * (3.0 - (lgt + lgt))
 
         result[1 + k] = Clr.hslaTosRgba(
