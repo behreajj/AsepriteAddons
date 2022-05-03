@@ -150,7 +150,6 @@ dlg:button {
         local args = dlg.data
         local spriteFile = args.spriteFile
         if spriteFile and #spriteFile > 0 then
-
             -- Palettes need to be retrieved before a new sprite
             -- is created in case it auto-sets the app.activeSprite
             -- to the new sprite. Unfortunately, that means this
@@ -176,6 +175,7 @@ dlg:button {
             local openSprite = nil
             local exists = app.fs.isFile(spriteFile)
             if exists then
+                AseUtilities.preserveForeBack()
                 openSprite = loadSprite(spriteFile)
 
                 if openSprite then

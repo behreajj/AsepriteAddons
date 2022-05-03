@@ -429,10 +429,11 @@ function Curve3.fromPoints(closedLoop, points, name)
     end
 
     local crv = Curve3.new(closedLoop, kns, name)
-
-    -- TODO: Implement straighten handles, call that
-    -- instead of smooth handles when ptsLen < 3.
-    return Curve3.smoothHandles(crv)
+    if len < 3 then
+        return Curve3.straightHandles(crv)
+    else
+        return Curve3.smoothHandles(crv)
+    end
 end
 
 ---Adjusts knot handles so as to create
@@ -444,39 +445,76 @@ function Curve3.smoothHandles(target)
     if knotCount < 3 then return target end
 
     local carry = Vec3.new(0.0, 0.0, 0.0)
-    local first = knots[1]
+    local knFirst = knots[1]
 
     if target.closedLoop then
-        local prev = knots[knotCount]
-        local curr = first
+        local knPrev = knots[knotCount]
+        local knCurr = knFirst
         for i = 2, knotCount, 1 do
-            local next = knots[i]
+            local knNext = knots[i]
             Knot3.smoothHandlesInternal(
-                prev, curr, next, carry)
-            prev = curr
-            curr = next
+                knPrev, knCurr, knNext, carry)
+            knPrev = knCurr
+            knCurr = knNext
         end
         Knot3.smoothHandlesInternal(
-            prev, curr, first, carry)
+            knPrev, knCurr, knFirst, carry)
     else
-        local prev = first
-        local curr = knots[2]
+        local knPrev = knFirst
+        local knCurr = knots[2]
 
         Knot3.smoothHandlesFirstInternal(
-            prev, curr, carry)
-        Knot3.mirrorHandlesForward(curr)
+            knPrev, knCurr, carry)
+        Knot3.mirrorHandlesForward(knCurr)
 
         for i = 3, knotCount, 1 do
-            local next = knots[i]
+            local knNext = knots[i]
             Knot3.smoothHandlesInternal(
-                prev, curr, next, carry)
-            prev = curr
-            curr = next
+                knPrev, knCurr, knNext, carry)
+            knPrev = knCurr
+            knCurr = knNext
         end
 
         Knot3.smoothHandlesLastInternal(
-            prev, curr, carry)
-        Knot3.mirrorHandlesBackward(curr)
+            knPrev, knCurr, carry)
+        Knot3.mirrorHandlesBackward(knCurr)
+    end
+
+    return target
+end
+
+---Straightens the fore and rear handles of
+---a curve's knots so they are collinear with
+---its coordinates.
+---@param target table
+function Curve3.straightHandles(target)
+    local knots = target.knots
+    local knotCount = #knots
+    if knotCount < 2 then return target end
+
+    for i = 2, knotCount, 1 do
+        local knPrev = knots[i - 1]
+        local knNext = knots[i]
+        knPrev.fh = Vec3.mixNum(
+            knPrev.co, knNext.co,
+            0.33333333333333)
+        knNext.rh = Vec3.mixNum(
+            knNext.co, knPrev.co,
+            0.33333333333333)
+    end
+
+    local knFirst = knots[1]
+    local knLast = knots[knotCount]
+    if target.closedLoop then
+        knFirst.rh = Vec3.mixNum(
+            knFirst.co, knLast.co,
+            0.33333333333333)
+        knLast.fh = Vec3.mixNum(
+            knLast.co, knFirst.co,
+            0.33333333333333)
+    else
+        Knot3.mirrorHandlesForward(knFirst)
+        Knot3.mirrorHandlesBackward(knLast)
     end
 
     return target

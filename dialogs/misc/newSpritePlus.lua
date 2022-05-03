@@ -550,6 +550,7 @@ dlg:button {
         spriteHeight = math.max(1, spriteHeight)
 
         -- Create sprite, set file name, set to active.
+        AseUtilities.preserveForeBack()
         local newSprite = Sprite(
             spriteWidth, spriteHeight, ColorMode.RGB)
 

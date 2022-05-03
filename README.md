@@ -12,6 +12,7 @@ For more information, see
 
 - [Aseprite Scripting API](https://github.com/aseprite/api)
 - [Aseprite CPP source that receives Lua inputs](https://github.com/aseprite/aseprite/tree/main/src/app/script)
+  - [Beta branch](https://github.com/aseprite/aseprite/tree/beta/src/app/script)
 - [Aseprite General Documentation](https://www.aseprite.org/docs/)
   - [Run Aseprite in Debug Mode](https://www.aseprite.org/docs/debug/)
   - [Aseprite Command Line Interface](https://www.aseprite.org/docs/cli/)

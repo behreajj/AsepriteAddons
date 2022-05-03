@@ -695,8 +695,8 @@ dlg:button {
                 local dw = wPxl
                 local dh = hPxl
                 if usePercent then
-                    dw = trunc(0.5 + sw * wPrc)
-                    dh = trunc(0.5 + sh * hPrc)
+                    dw = max(1, trunc(0.5 + sw * wPrc))
+                    dh = max(1, trunc(0.5 + sh * hPrc))
                 end
 
                 if sw ~= dw or sh ~= dh then

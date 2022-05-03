@@ -17,14 +17,6 @@ local defaults = {
     -- TODO: Possibility for auto color set
     -- with event listeners?
     base = Color(255, 0, 0, 255),
-    shading = {
-        Color(147,   0,  27, 255),
-        Color(183,   0,  29, 255),
-        Color(218,   0,  30, 255),
-        Color(251,  23,  34, 255),
-        Color(255,  93,  42, 255),
-        Color(255, 141,  58, 255),
-        Color(255, 186,  81, 255) },
     hexCode = "FF0000",
     lightness = 53,
     chroma = 104,
@@ -44,14 +36,24 @@ local defaults = {
         Color(157, 82, 255, 255) },
     triads = {
         Color(0, 131, 255, 255),
-        Color(0, 158, 59, 255) }
+        Color(0, 158, 59, 255) },
+
+    shading = {
+            Color(145,   0,  51, 255),
+            Color(193,   0,  42, 255),
+            Color(226,   0,  33, 255),
+            Color(253,  13,  26, 255),
+            Color(255,  78,  28, 255),
+            Color(255, 127,  45, 255),
+            Color(255, 186,  76, 255) },
+    shadeCount = 7
 }
 
 local function assignToFore(aseColor)
     if aseColor.alpha < 1 then
         app.fgColor = Color(0, 0, 0, 0)
     else
-        app.fgColor = AseUtilities.aseColorCopy(aseColor)
+        app.fgColor = AseUtilities.aseColorCopy(aseColor, "")
     end
 end
 
@@ -109,24 +111,29 @@ local function updateHarmonies(dialog, l, c, h, a)
 end
 
 local function updateShades(dialog, l, c, h, a)
-    local shadingCount = 7
-    local hueSpreadShd = 0.4
-    local hueSpreadLgt = 0.325
+    local args = dialog.data
+    local shadeCount = args.shadeCount or defaults.shadeCount
+
+    local hueSpreadShd = 0.667
+    local hueSpreadLgt = 0.333
     local lightSpread = 37.5
-    local chromaSpread = 17.5
+    local chromaSpreadShd = 5.0
+    local chromaSpreadLgt = 15.0
+
     local hYellow = 0.28570825759858
-    local hViolet = (hYellow + 0.5) % 1.0
+    local hViolet = 0.85
     local minLight = math.max(0.0, l - lightSpread)
     local maxLight = math.min(100.0, l + lightSpread)
-    local minChromaShd = math.max(0.0, c - chromaSpread * 0.25)
-    local minChromaLgt = math.max(0.0, c - chromaSpread)
+    local minChromaShd = math.max(0.0, c - chromaSpreadShd)
+    local minChromaLgt = math.max(0.0, c - chromaSpreadLgt)
 
     local toShdFac = math.abs(50.0 - minLight) * 0.02
     local toLgtFac = math.abs(50.0 - maxLight) * 0.02
 
     local shdHue = Utilities.lerpAngleNear(h, hViolet, hueSpreadShd * toShdFac, 1.0)
-    local shdCrm = (1.0 - toShdFac) * c + minChromaShd * toShdFac
     local lgtHue = Utilities.lerpAngleNear(h, hYellow, hueSpreadLgt * toLgtFac, 1.0)
+
+    local shdCrm = (1.0 - toShdFac) * c + minChromaShd * toShdFac
     local lgtCrm = (1.0 - toLgtFac) * c + minChromaLgt * toLgtFac
 
     local labShd = Clr.lchToLab(minLight, shdCrm, shdHue, 1.0, 0.5)
@@ -137,25 +144,19 @@ local function updateShades(dialog, l, c, h, a)
     local pt1 = Vec3.new(labKey.a, labKey.b, labKey.l)
     local pt2 = Vec3.new(labLgt.a, labLgt.b, labLgt.l)
 
-    -- TODO: Formalize this into Curve3.fromQuadratic
     local kn0 = Knot3.new(
-        pt0,
-        Vec3.new(0.0, 0.0, 0.0),
-        Vec3.new(0.0, 0.0, 0.0))
+        pt0, pt1, Vec3.new(0.0, 0.0, 0.0))
     local kn1 = Knot3.new(
-        pt2,
-        Vec3.new(0.0, 0.0, 0.0),
-        Vec3.new(0.0, 0.0, 0.0))
-    Knot3.fromSegQuadratic(pt1, pt2, kn0, kn1)
+        pt2, Vec3.new(0.0, 0.0, 0.0), pt1)
     kn0:mirrorHandlesForward()
     kn1:mirrorHandlesBackward()
 
     local curve = Curve3.new(
         false, { kn0, kn1 }, "Shading")
 
-    local toFac = 1.0 / (shadingCount - 1.0)
+    local toFac = 1.0 / (shadeCount - 1.0)
     local aseColors = {}
-    for i = 1, shadingCount, 1 do
+    for i = 1, shadeCount, 1 do
         local v = Curve3.eval(curve, (i - 1.0) * toFac)
         aseColors[i] = AseUtilities.clrToAseColor(
             Clr.labTosRgba(v.z, v.x, v.y, a))
@@ -229,7 +230,7 @@ local function setFromAse(dialog, aseClr)
     setLch(dialog, lch, clr)
     dialog:modify {
         id = "clr",
-        colors = { AseUtilities.aseColorCopy(aseClr) }
+        colors = { AseUtilities.aseColorCopy(aseClr, "") }
     }
     updateHexCode(dialog, { clr })
 end
@@ -386,7 +387,7 @@ local function updateClrs(dialog)
     local c = args.chroma
     local h = args.hue * 0.002777777777777778
     local a = args.alpha * 0.003921568627451
-    local clr = Clr.lchTosRgba(l, c, h, a)
+    local clr = Clr.lchTosRgba(l, c, h, a, 0.5)
 
     -- For thoughts on why clipping to gamut is preferred,
     -- see https://github.com/LeaVerou/css.land/issues/10
@@ -569,21 +570,63 @@ dlg:combobox {
             dlg:modify { id = "complement", visible = false }
             dlg:modify { id = "triadic", visible = false }
             dlg:modify { id = "analogous", visible = false }
-            dlg:modify { id = "shading", visible = false }
             dlg:modify { id = "split", visible = false }
             dlg:modify { id = "square", visible = false }
+
+            dlg:modify { id = "shading", visible = false }
+            -- dlg:modify { id = "shadeCount", visible = false }
         else
             dlg:modify { id = "complement", visible = md == "COMPLEMENT" }
             dlg:modify { id = "triadic", visible = md == "TRIADIC" }
             dlg:modify { id = "analogous", visible = md == "ANALOGOUS" }
-            dlg:modify { id = "shading", visible = md == "SHADING" }
             dlg:modify { id = "split", visible = md == "SPLIT" }
             dlg:modify { id = "square", visible = md == "SQUARE" }
+
+            local isShading = md == "SHADING"
+            dlg:modify { id = "shading", visible = isShading }
+            -- dlg:modify { id = "shadeCount", visible = isShading }
         end
     end
 }
 
 dlg:newrow { always = false }
+
+dlg:shades {
+    id = "shading",
+    label = "Shading:",
+    mode = "pick",
+    colors = defaults.shading,
+    visible = defaults.harmonyType == "SHADING",
+    onclick = function(ev)
+        local button = ev.button
+        if button == MouseButton.LEFT then
+            setFromAse(dlg, ev.color)
+        elseif button == MouseButton.RIGHT then
+            assignToFore(ev.color)
+        end
+    end
+}
+
+dlg:newrow { always = false }
+
+-- dlg:slider {
+--     id = "shadeCount",
+--     label = "Count:",
+--     min = 3,
+--     max = 15,
+--     value = defaults.shadeCount,
+--     visible = defaults.harmonyType == "SHADING",
+--     onchange = function()
+--         local args = dlg.data
+--         local l = args.lightness
+--         local c = args.chroma
+--         local h = args.hue * 0.002777777777777778
+--         local a = args.alpha * 0.003921568627451
+--         updateShades(dlg, l, c, h, a)
+--     end
+-- }
+
+-- dlg:newrow { always = false }
 
 dlg:shades {
     id = "analogous",
@@ -612,24 +655,6 @@ dlg:shades {
         if ev.button == MouseButton.LEFT then
             setFromAse(dlg, ev.color)
         elseif ev.button == MouseButton.RIGHT then
-            assignToFore(ev.color)
-        end
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:shades {
-    id = "shading",
-    label = "Shading:",
-    mode = "pick",
-    colors = defaults.shading,
-    visible = defaults.harmonyType == "SHADING",
-    onclick = function(ev)
-        local button = ev.button
-        if button == MouseButton.LEFT then
-            setFromAse(dlg, ev.color)
-        elseif button == MouseButton.RIGHT then
             assignToFore(ev.color)
         end
     end

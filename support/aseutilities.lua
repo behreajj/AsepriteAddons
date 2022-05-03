@@ -1648,6 +1648,16 @@ function AseUtilities.isVisibleHierarchy(layer, sprite)
     return true
 end
 
+---Preserves the application fore- and background
+---colors across sprite changes. Copies and
+---reassigns the colors to themselves.
+function AseUtilities.preserveForeBack()
+    app.fgColor = AseUtilities.aseColorCopy(app.fgColor, "")
+    app.command.SwitchColors()
+    app.fgColor = AseUtilities.aseColorCopy(app.fgColor, "")
+    app.command.SwitchColors()
+end
+
 ---Rotates a glyph counter-clockwise.
 ---The glyph is to be represented as a binary matrix
 ---with a width and height, where 1 draws a pixel
@@ -1889,6 +1899,9 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     -- Immutable.
     local width = image.width
     local height = image.height
+    if width < 2 or height < 2 then
+        return image, 0, 0
+    end
     local widthn1 = width - 1
     local heightn1 = height - 1
 
