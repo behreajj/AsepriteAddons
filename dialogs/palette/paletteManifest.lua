@@ -1,4 +1,5 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/clr.lua")
 
 local palTypes = { "ACTIVE", "FILE", "PRESET" }
 local palFormats = { "aseprite", "gpl", "png", "pal", "webp" }

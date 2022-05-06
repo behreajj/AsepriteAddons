@@ -664,8 +664,8 @@ dlg:button {
         -- Validate target dimensions.
         wPrc = max(0.000001, abs(wPrc))
         hPrc = max(0.000001, abs(hPrc))
-        wPxl = trunc(0.5 + max(2, abs(wPxl)))
-        hPxl = trunc(0.5 + max(2, abs(hPxl)))
+        wPxl = trunc(0.5 + max(1, abs(wPxl)))
+        hPxl = trunc(0.5 + max(1, abs(hPxl)))
         wPrc = wPrc * 0.01
         hPrc = hPrc * 0.01
 
@@ -688,9 +688,6 @@ dlg:button {
                 local srcSpec = srcImg.spec
                 local sw = srcSpec.width
                 local sh = srcSpec.height
-                local colorMode = srcSpec.colorMode
-                local alphaIdx = srcSpec.transparentColor
-                local colorSpace = srcSpec.colorSpace
 
                 local dw = wPxl
                 local dh = hPxl
@@ -712,6 +709,9 @@ dlg:button {
                     local ty = sh / dh
                     local clrs = {}
 
+                    local colorMode = srcSpec.colorMode
+                    local alphaIdx = srcSpec.transparentColor
+                    local colorSpace = srcSpec.colorSpace
                     local trgSpec = ImageSpec {
                         height = dh,
                         width = dw,

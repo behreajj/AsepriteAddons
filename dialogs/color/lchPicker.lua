@@ -402,6 +402,9 @@ local function updateClrs(dialog)
     updateShades(dialog, l, c, h, a)
 end
 
+-- This constructor can accept a function for the
+-- parameter "onclose." This function could be used
+-- to disconnect event listeners, such as "fgcolorchange".
 local dlg = Dialog { title = "LCh Color Picker" }
 
 dlg:button {
