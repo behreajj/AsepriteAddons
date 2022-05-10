@@ -133,12 +133,15 @@ end
 ---@param b table right comparisand
 ---@return boolean
 function Clr.bitEqAlpha(a, b)
-    local aa = a.a
+    -- This is used by the == operator, so defaults
+    -- are in case b is a non-color object.
     local ba = b.a
+    if not ba then return false end
+    local aa = a.a
     if aa < 0.0 then aa = 0.0 elseif aa > 1.0 then aa = 1.0 end
     if ba < 0.0 then ba = 0.0 elseif ba > 1.0 then ba = 1.0 end
-    return math.tointeger(aa * 0xff + 0.5)
-        == math.tointeger(ba * 0xff + 0.5)
+    return math.tointeger(0.5 + aa * 0xff)
+        == math.tointeger(0.5 + ba * 0xff)
 end
 
 ---Evaluates whether two colors have equal red,
@@ -149,30 +152,35 @@ end
 ---@param b table right comparisand
 ---@return boolean
 function Clr.bitEqRgb(a, b)
-    local ab = a.b
+    -- This is used by the == operator, so defaults
+    -- are in case b is a non-color object.
     local bb = b.b
+    if not bb then return false end
+    local ab = a.b
     if ab < 0.0 then ab = 0.0 elseif ab > 1.0 then ab = 1.0 end
     if bb < 0.0 then bb = 0.0 elseif bb > 1.0 then bb = 1.0 end
-    if math.tointeger(ab * 0xff + 0.5)
-        ~= math.tointeger(bb * 0xff + 0.5) then
+    if math.tointeger(0.5 + ab * 0xff)
+        ~= math.tointeger(0.5 + bb * 0xff) then
             return false
     end
 
-    local ag = a.g
     local bg = b.g
+    if not bg then return false end
+    local ag = a.g
     if ag < 0.0 then ag = 0.0 elseif ag > 1.0 then ag = 1.0 end
     if bg < 0.0 then bg = 0.0 elseif bg > 1.0 then bg = 1.0 end
-    if math.tointeger(ag * 0xff + 0.5)
-        ~= math.tointeger(bg * 0xff + 0.5) then
+    if math.tointeger(0.5 + ag * 0xff)
+        ~= math.tointeger(0.5 + bg * 0xff) then
             return false
     end
 
-    local ar = a.r
     local br = b.r
+    if not br then return false end
+    local ar = a.r
     if ar < 0.0 then ar = 0.0 elseif ar > 1.0 then ar = 1.0 end
     if br < 0.0 then br = 0.0 elseif br > 1.0 then br = 1.0 end
-    if math.tointeger(ar * 0xff + 0.5)
-        ~= math.tointeger(br * 0xff + 0.5) then
+    if math.tointeger(0.5 + ar * 0xff)
+        ~= math.tointeger(0.5 + br * 0xff) then
             return false
     end
 
@@ -293,19 +301,19 @@ end
 ---@param a table left operand
 ---@return table
 function Clr.clamp01(a)
-    local cr = a.r
+    local cr = a.r or 0.0
     if cr < 0.0 then cr = 0.0
     elseif cr > 1.0 then cr = 1.0 end
 
-    local cg = a.g
+    local cg = a.g or 0.0
     if cg < 0.0 then cg = 0.0
     elseif cg > 1.0 then cg = 1.0 end
 
-    local cb = a.b
+    local cb = a.b or 0.0
     if cb < 0.0 then cb = 0.0
     elseif cb > 1.0 then cb = 1.0 end
 
-    local ca = a.a
+    local ca = a.a or 0.0
     if ca < 0.0 then ca = 0.0
     elseif ca > 1.0 then ca = 1.0 end
 
@@ -859,30 +867,30 @@ end
 
 ---Finds the relative luminance of a color.
 ---Assumes the color is in sRGB.
----@param a table color
+---@param c table color
 ---@return number
-function Clr.luminance(a)
-    return Clr.lumsRgb(a)
+function Clr.luminance(c)
+    return Clr.lumsRgb(c)
 end
 
 ---Finds the relative luminance of a linear color,
 ---https://www.wikiwand.com/en/Relative_luminance,
 ---according to recommendation 709.
----@param a table color
+---@param c table color
 ---@return number
-function Clr.lumlRgb(a)
-    return a.r * 0.21264934272065
-         + a.g * 0.7151691357059
-         + a.b * 0.072181521573443
+function Clr.lumlRgb(c)
+    return c.r * 0.21264934272065
+         + c.g * 0.7151691357059
+         + c.b * 0.072181521573443
 end
 
 ---Finds the relative luminance of a sRGB color,
 ---https://www.wikiwand.com/en/Relative_luminance,
 ---according to recommendation 709.
----@param a table color
+---@param c table color
 ---@return number
-function Clr.lumsRgb(a)
-    return Clr.lumlRgb(Clr.sRgbaTolRgbaInternal(a))
+function Clr.lumsRgb(c)
+    return Clr.lumlRgb(Clr.sRgbaTolRgbaInternal(c))
 end
 
 ---Mixes two colors by a step.
@@ -1288,27 +1296,27 @@ end
 
 ---Evaluates whether the color's alpha channel
 ---is less than or equal to zero.
----@param a table color
+---@param c table color
 ---@return boolean
-function Clr.none(a)
-    return a.a <= 0.0
+function Clr.none(c)
+    return c.a <= 0.0
 end
 
 ---Multiplies a color's red, green and blue
 ---channels by its alpha channel.
----@param a table color
+---@param c table color
 ---@return table
-function Clr.premul(a)
-    if a.a <= 0.0 then
+function Clr.premul(c)
+    if c.a <= 0.0 then
         return Clr.new(0.0, 0.0, 0.0, 0.0)
-    elseif a.a >= 1.0 then
-        return Clr.new(a.r, a.g, a.b, 1.0)
+    elseif c.a >= 1.0 then
+        return Clr.new(c.r, c.g, c.b, 1.0)
     else
         return Clr.new(
-            a.r * a.a,
-            a.g * a.a,
-            a.b * a.a,
-            a.a)
+            c.r * c.a,
+            c.g * c.a,
+            c.b * c.a,
+            c.a)
     end
 end
 
@@ -1399,34 +1407,34 @@ end
 
 ---Returns true if the red, green and blue
 ---channels are within the range [0.0, 1.0].
----@param a table color
+---@param c table color
 ---@param tol number tolerance
 ---@return boolean
-function Clr.rgbIsInGamut(a, tol)
+function Clr.rgbIsInGamut(c, tol)
     local eps = tol or 0.0
-    return (a.r >= -eps and a.r <= (1.0 + eps))
-        and (a.g >= -eps and a.g <= (1.0 + eps))
-        and (a.b >= -eps and a.b <= (1.0 + eps))
+    return (c.r >= -eps and c.r <= (1.0 + eps))
+        and (c.g >= -eps and c.g <= (1.0 + eps))
+        and (c.b >= -eps and c.b <= (1.0 + eps))
 end
 
 ---Returns true if all color channels are
 ---within the range [0.0, 1.0].
----@param a table color
+---@param c table color
 ---@param tol number tolerance
 ---@return boolean
-function Clr.rgbaIsInGamut(a, tol)
-    return Clr.alphaIsInGamut(a, tol)
-        and Clr.rgbIsInGamut(a, tol)
+function Clr.rgbaIsInGamut(c, tol)
+    return Clr.alphaIsInGamut(c, tol)
+        and Clr.rgbIsInGamut(c, tol)
 end
 
 ---Converts a color to hue, saturation and value.
 ---The return table uses the keys h, s, l and a
 ---with values in the range [0.0, 1.0].
----@param a table color
+---@param c table color
 ---@return table
-function Clr.sRgbaToHsla(a)
-    local aCl = Clr.clamp01(a)
-    return Clr.sRgbaToHslaInternal(aCl.r, aCl.g, aCl.b, aCl.a)
+function Clr.sRgbaToHsla(c)
+    local cl = Clr.clamp01(c)
+    return Clr.sRgbaToHslaInternal(cl.r, cl.g, cl.b, cl.a)
 end
 
 ---Converts RGBA channels to hue, saturation and lightness.
@@ -1509,11 +1517,11 @@ end
 ---Converts a color to hue, saturation and value.
 ---The return table uses the keys h, s, v and a
 ---with values in the range [0.0, 1.0].
----@param a table color
+---@param c table color
 ---@return table
-function Clr.sRgbaToHsva(a)
-    local aCl = Clr.clamp01(a)
-    return Clr.sRgbaToHsvaInternal(aCl.r, aCl.g, aCl.b, aCl.a)
+function Clr.sRgbaToHsva(c)
+    local cl = Clr.clamp01(c)
+    return Clr.sRgbaToHsvaInternal(cl.r, cl.g, cl.b, cl.a)
 end
 
 ---Converts RGBA channels to hue, saturation and value.
@@ -1598,10 +1606,10 @@ end
 ---Converts a color from standard RGB to CIE LAB.
 ---The return table uses the keys l, a, b and alpha.
 ---The alpha channel is unaffected by the transform.
----@param a table color
+---@param c table color
 ---@return table
-function Clr.sRgbaToLab(a)
-    local xyz = Clr.sRgbaToXyz(a)
+function Clr.sRgbaToLab(c)
+    local xyz = Clr.sRgbaToXyz(c)
     return Clr.xyzToLab(xyz.x, xyz.y, xyz.z, xyz.a)
 end
 
@@ -1611,63 +1619,63 @@ end
 ---Chroma is expected to be in [0.0, 135.0].
 ---Hue is expected to be in [0.0, 1.0].
 ---The alpha channel is unaffected by the transform.
----@param a table color
+---@param c table color
 ---@param tol number gray tolerance
 ---@return table
-function Clr.sRgbaToLch(a, tol)
-    local lab = Clr.sRgbaToLab(a)
+function Clr.sRgbaToLch(c, tol)
+    local lab = Clr.sRgbaToLab(c)
     return Clr.labToLch(lab.l, lab.a, lab.b, lab.alpha, tol)
 end
 
 ---Converts a color from standard RGB (sRGB) to linear RGB.
 ---Clamps the input color to [0.0, 1.0].
 ---Does not transform the alpha channel.
----@param a table color
+---@param c table color
 ---@return table
-function Clr.sRgbaTolRgba(a)
-    return Clr.sRgbaTolRgbaInternal(Clr.clamp01(a))
+function Clr.sRgbaTolRgba(c)
+    return Clr.sRgbaTolRgbaInternal(Clr.clamp01(c))
 end
 
 ---Converts a color from standard RGB (sRGB) to linear RGB.
 ---Does not transform the alpha channel.
 ---See https://www.wikiwand.com/en/SRGB.
----@param a table color
+---@param c table color
 ---@return table
-function Clr.sRgbaTolRgbaInternal(a)
+function Clr.sRgbaTolRgbaInternal(c)
     -- 1.0 / 12.92 = 0.077399380804954
     -- 1.0 / 1.055 = 0.9478672985782
 
-    local lr = a.r
+    local lr = c.r
     if lr <= 0.04045 then
         lr = lr * 0.077399380804954
     else
         lr = ((lr + 0.055) * 0.9478672985782) ^ 2.4
     end
 
-    local lg = a.g
+    local lg = c.g
     if lg <= 0.04045 then
         lg = lg * 0.077399380804954
     else
         lg = ((lg + 0.055) * 0.9478672985782) ^ 2.4
     end
 
-    local lb = a.b
+    local lb = c.b
     if lb <= 0.04045 then
         lb = lb * 0.077399380804954
     else
         lb = ((lb + 0.055) * 0.9478672985782) ^ 2.4
     end
 
-    return Clr.new(lr, lg, lb, a.a)
+    return Clr.new(lr, lg, lb, c.a)
 end
 
 ---Converts a color from standard RGB to CIE XYZ.
 ---The return table uses the keys x, y, z and a.
 ---The alpha channel is unaffected by the transform.
----@param a table color
+---@param c table color
 ---@return table
-function Clr.sRgbaToXyz(a)
-    local l = Clr.sRgbaTolRgbaInternal(a)
+function Clr.sRgbaToXyz(c)
+    local l = Clr.sRgbaTolRgbaInternal(c)
     return Clr.lRgbaToXyzInternal(l.r, l.g, l.b, l.a)
 end
 
@@ -1685,10 +1693,10 @@ end
 ---@param c table color
 ---@return number
 function Clr.toHexUnchecked(c)
-    return math.tointeger(c.a * 0xff + 0.5) << 0x18
-         | math.tointeger(c.b * 0xff + 0.5) << 0x10
-         | math.tointeger(c.g * 0xff + 0.5) << 0x08
-         | math.tointeger(c.r * 0xff + 0.5)
+    return math.tointeger(0.5 + c.a * 0xff) << 0x18
+         | math.tointeger(0.5 + c.b * 0xff) << 0x10
+         | math.tointeger(0.5 + c.g * 0xff) << 0x08
+         | math.tointeger(0.5 + c.r * 0xff)
 end
 
 ---Converts from a color to a web-friendly hexadecimal
@@ -1708,9 +1716,9 @@ end
 ---@return string
 function Clr.toHexWebUnchecked(c)
     return string.format("%06X",
-        math.tointeger(c.r * 0xff + 0.5) << 0x10
-      | math.tointeger(c.g * 0xff + 0.5) << 0x08
-      | math.tointeger(c.b * 0xff + 0.5))
+        math.tointeger(0.5 + c.r * 0xff) << 0x10
+      | math.tointeger(0.5 + c.g * 0xff) << 0x08
+      | math.tointeger(0.5 + c.b * 0xff))
 end
 
 ---Returns a JSON string of a color.
@@ -1725,20 +1733,20 @@ end
 ---Divides a color's red, green and blue
 ---channels by its alpha channel, reversing
 ---the premultiply operation.
----@param a table color
+---@param c table color
 ---@return table
-function Clr.unpremul(a)
-    if a.a <= 0.0 then
+function Clr.unpremul(c)
+    if c.a <= 0.0 then
         return Clr.new(0.0, 0.0, 0.0, 0.0)
-    elseif a.a >= 1.0 then
-        return Clr.new(a.x, a.y, a.z, 1.0)
+    elseif c.a >= 1.0 then
+        return Clr.new(c.x, c.y, c.z, 1.0)
     else
-        local aInv = 1.0 / a.a
+        local aInv = 1.0 / c.a
         return Clr.new(
-            a.r * aInv,
-            a.g * aInv,
-            a.b * aInv,
-            a.a)
+            c.r * aInv,
+            c.g * aInv,
+            c.b * aInv,
+            c.a)
     end
 end
 

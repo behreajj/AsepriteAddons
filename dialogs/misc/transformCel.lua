@@ -189,14 +189,11 @@ dlg:button {
         local target = args.target or defaults.target
         local cels = getTargetCels(target, activeSprite)
         local celsLen = #cels
-        local xCtrSprite = activeSprite.width * 0.5
 
         app.transaction(function()
             for i = 1, celsLen, 1 do
                 local cel = cels[i]
-                local w = cel.image.width
-                cel.position = Point(
-                    math.tointeger(0.5 + xCtrSprite - w * 0.5), 0)
+                cel.position = Point(cel.position.x, 0)
             end
         end)
 
@@ -244,14 +241,11 @@ dlg:button {
         local target = args.target or defaults.target
         local cels = getTargetCels(target, activeSprite)
         local celsLen = #cels
-        local yCtrSprite = activeSprite.height * 0.5
 
         app.transaction(function()
             for i = 1, celsLen, 1 do
                 local cel = cels[i]
-                local h = cel.image.height
-                cel.position = Point(0,
-                    math.tointeger(0.5 + yCtrSprite - h * 0.5))
+                cel.position = Point(0, cel.position.y)
             end
         end)
 
@@ -261,7 +255,7 @@ dlg:button {
 
 dlg:button {
     id = "cAlignButton",
-    text = "C",
+    text = "C&E",
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
@@ -303,17 +297,13 @@ dlg:button {
         local cels = getTargetCels(target, activeSprite)
         local celsLen = #cels
         local wSprite = activeSprite.width
-        local yCtrSprite = activeSprite.height * 0.5
 
         app.transaction(function()
             for i = 1, celsLen, 1 do
                 local cel = cels[i]
-                local celImg = cel.image
-                local w = celImg.width
-                local h = celImg.height
                 cel.position = Point(
-                    wSprite - w,
-                    math.tointeger(0.5 + yCtrSprite - h * 0.5))
+                    wSprite - cel.image.width,
+                    cel.position.y)
             end
         end)
 
@@ -361,18 +351,14 @@ dlg:button {
         local target = args.target or defaults.target
         local cels = getTargetCels(target, activeSprite)
         local celsLen = #cels
-        local xCtrSprite = activeSprite.width * 0.5
         local hSprite = activeSprite.height
 
         app.transaction(function()
             for i = 1, celsLen, 1 do
                 local cel = cels[i]
-                local celImg = cel.image
-                local w = celImg.width
-                local h = celImg.height
                 cel.position = Point(
-                    math.tointeger(0.5 + xCtrSprite - w * 0.5),
-                    hSprite - h)
+                    cel.position.x,
+                    hSprite - cel.image.height)
             end
         end)
 
