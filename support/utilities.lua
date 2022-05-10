@@ -313,6 +313,17 @@ function Utilities.flipVertical(source, w, h)
     return flipped
 end
 
+---Finds the greatest common denominator
+---between two numbers.
+---Assumes a and b are positive integers.
+---@param a number antecedent term
+---@param b number consequent term
+---@return number
+function Utilities.gcd(a, b)
+    while b ~= 0 do a, b = b, a % b end
+    return a
+end
+
 ---Converts an array of integers representing color
 ---in hexadecimal to a dictionary. The value in each
 ---entry is the first index where the color was found.
@@ -873,6 +884,18 @@ function Utilities.quantizeUnsignedInternal(
     a, levels, delta)
     return math.max(0.0,
         (math.ceil(a * levels) - 1.0) * delta)
+end
+
+---Reduces a ratio of positive integers
+---to their smallest terms through division
+---by their greatest common denominator.
+---@param a number antecedent term
+---@param b number consequent term
+---@return number
+---@return number
+function Utilities.reduceRatio(a, b)
+    local denom = Utilities.gcd(a, b)
+    return a // denom, b // denom
 end
 
 ---Reverses a table used as an array.

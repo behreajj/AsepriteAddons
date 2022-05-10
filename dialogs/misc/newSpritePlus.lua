@@ -39,17 +39,6 @@ local defaults = {
     hGrid = 20,
     pullFocus = true
 }
-
-local function gcd(a, b)
-    while b ~= 0 do a, b = b, a % b end
-    return a
-end
-
-local function reduceRatio(a, b)
-    local denom = gcd(a, b)
-    return a // denom, b // denom
-end
-
 local function updateColorPreviewRgba(dialog)
     local args = dialog.data
     dialog:modify {
@@ -106,7 +95,7 @@ local function updateRatio(dialog)
     local args = dialog.data
     local aRatio = args.aRatio
     local bRatio = args.bRatio
-    aRatio, bRatio = reduceRatio(aRatio, bRatio)
+    aRatio, bRatio = Utilities.reduceRatio(aRatio, bRatio)
     dialog:modify { id = "aRatio", value = aRatio }
     dialog:modify { id = "bRatio", value = bRatio }
 end
@@ -121,7 +110,7 @@ local function updateSizeFromAspect(dialog)
     scale = math.tointeger(0.5 + scale)
     scale = math.max(1, scale)
 
-    aRatio, bRatio = reduceRatio(aRatio, bRatio)
+    aRatio, bRatio = Utilities.reduceRatio(aRatio, bRatio)
     local w = aRatio * scale
     local h = bRatio * scale
 
