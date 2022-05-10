@@ -7,10 +7,12 @@ local versionMinor = version.minor
 local isBetaVersion = versionMajor > 0
     and versionMinor > 2
 
+-- TODO: Consider layer count?
+-- Should some diagnostic data be toggled via a t/f
+-- in defaults, esp. if it is expensive to calculate?
 local defaults = { textLenLimit = 48 }
 
 local sprite = nil
-local spec = nil
 local colorSpace = nil
 local filename = "" -- Make local?
 local ext = ""
@@ -27,8 +29,7 @@ local function updateSprite()
     end
     if not sprite then return false end
     filename = sprite.filename
-    spec = sprite.spec
-    -- pal = sprite.palettes[1]
+    local spec = sprite.spec
     colorSpace = spec.colorSpace
 
     return true
@@ -178,6 +179,7 @@ local function updateExtension()
 end
 
 local function updateColorMode()
+    local spec = sprite.spec
     local colorMode = spec.colorMode
     local colorModeStr = ""
     if colorMode == ColorMode.RGB then
@@ -194,6 +196,7 @@ local function updateColorMode()
 end
 
 local function updateColorSpace()
+    local spec = sprite.spec
     colorSpace = spec.colorSpace
     local csName = ""
     if colorSpace then
@@ -210,6 +213,7 @@ local function updateColorSpace()
 end
 
 local function updatePalCount()
+    local spec = sprite.spec
     local colorMode = spec.colorMode
     local pal = sprite.palettes[1]
     local palCount = #pal
@@ -219,6 +223,7 @@ local function updatePalCount()
 end
 
 local function updateMaskIndex()
+    local spec = sprite.spec
     local colorMode = spec.colorMode
     local maskIdxNum = spec.transparentColor
     local maskIdxStr = string.format("%d", maskIdxNum)
@@ -227,8 +232,11 @@ local function updateMaskIndex()
 end
 
 local function updateMaskColor()
+    local spec = sprite.spec
     local colorMode = spec.colorMode
     local maskIdxNum = spec.transparentColor
+
+    local pal = sprite.palettes[1]
     local maskColorRef = pal:getColor(maskIdxNum)
     local maskColorVal = Color(
         maskColorRef.red,
@@ -240,8 +248,12 @@ local function updateMaskColor()
 end
 
 local function updateMaskWarning()
+    -- TODO: Should this be posted regardless of color mode?
+    local spec = sprite.spec
     local colorMode = spec.colorMode
     local maskIdxNum = spec.transparentColor
+
+    local pal = sprite.palettes[1]
     local maskColorRef = pal:getColor(maskIdxNum)
     local maskIsProblem = maskIdxNum ~= 0
         or maskColorRef.rgbaPixel ~= 0
@@ -250,6 +262,7 @@ local function updateMaskWarning()
 end
 
 local function updateDimensions()
+    local spec = sprite.spec
     local width = spec.width
     local height = spec.height
     local dimStr = string.format("%d x %d", width, height)
@@ -264,6 +277,7 @@ local function updateAspect()
     local pixelWidth = sprPixelRatio.width
     local pixelHeight = sprPixelRatio.height
 
+    local spec = sprite.spec
     local width = spec.width
     local height = spec.height
 
@@ -297,7 +311,7 @@ local function updateFrames()
     local lenFrames = #frames
     local frameStr = string.format("%d", lenFrames)
     dlg:modify { id = "framesLabel", text = frameStr }
-    dlg:modify { id = "framesLabel", visible = lenFrames > 1 and frameStr and #frameStr > 0 }
+    dlg:modify { id = "framesLabel", visible = lenFrames > 1 }
 end
 
 local function updateDuration()
@@ -311,7 +325,7 @@ local function updateDuration()
     local durStr = string.format("%d ms",
         math.tointeger(0.5 + durSum * 1000.0))
     dlg:modify { id = "durationLabel", text = durStr }
-    dlg:modify { id = "durationLabel", visible = lenFrames > 1 and durStr and #durStr > 0 }
+    dlg:modify { id = "durationLabel", visible = lenFrames > 1 }
 end
 
 local function updateTabColor()
@@ -336,6 +350,9 @@ local function updateUserData()
     if isBetaVersion then
         sprUserData = sprite.data
     end
+
+    -- Because this is a text entry widget, not a label, it
+    -- needs to be shown even if the string is of length 0.
     dlg:modify { id = "sprUserData", text = sprUserData }
     dlg:modify { id = "sprUserData", visible = isBetaVersion }
 end
