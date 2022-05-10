@@ -10,7 +10,12 @@ local isBetaVersion = versionMajor > 0
 -- TODO: Consider layer count?
 -- Should some diagnostic data be toggled via a t/f
 -- in defaults, esp. if it is expensive to calculate?
-local defaults = { textLenLimit = 48 }
+local defaults = {
+    maskWarningInvalid = "Mask index is out of bounds.",
+    maskWarningIndexed = "Non-zero mask may cause bugs.",
+    maskWarningRgb = "Non-zero color at index 0.",
+    textLenLimit = 48
+}
 
 local sprite = nil
 local colorSpace = nil
@@ -81,6 +86,12 @@ dlg:label {
     visible = false }
 dlg:newrow { always = false }
 dlg:label {
+    id = "palettesLabel",
+    label = "Palettes:",
+    text = "",
+    visible = false }
+dlg:newrow { always = false }
+dlg:label {
     id = "palCountLabel",
     label = "Palette Length:",
     text = "",
@@ -106,7 +117,7 @@ dlg:newrow { always = false }
 dlg:label {
     id = "maskWarning",
     label = "Warning:",
-    text = "Non-zero mask may cause bugs.",
+    text = "",
     visible = false }
 dlg:newrow { always = false }
 dlg:label {
@@ -212,10 +223,28 @@ local function updateColorSpace()
         and #csName > 0 }
 end
 
+local function updatePalettes()
+    local spec = sprite.spec
+    local colorMode = spec.colorMode
+    local palettes = sprite.palettes
+    local lenPals = #palettes
+    local palCountStr = string.format("%d", lenPals)
+    dlg:modify { id = "palettesLabel", text = palCountStr }
+    dlg:modify { id = "palettesLabel", visible = lenPals > 1 and colorMode == ColorMode.INDEXED }
+end
+
 local function updatePalCount()
     local spec = sprite.spec
     local colorMode = spec.colorMode
-    local pal = sprite.palettes[1]
+
+    -- TODO: When opening multiple sprites together and Aseprite
+    -- concatenates them, then multiple sprite palettes are used.
+    -- Should this show all palette counts?
+    local activeFrameIdx = 1
+    if app.activeFrame then
+        activeFrameIdx = app.activeFrame.frameNumber
+    end
+    local pal = sprite.palettes[activeFrameIdx]
     local palCount = #pal
     local palCountStr = string.format("%d", palCount)
     dlg:modify { id = "palCountLabel", text = palCountStr }
@@ -234,31 +263,67 @@ end
 local function updateMaskColor()
     local spec = sprite.spec
     local colorMode = spec.colorMode
-    local maskIdxNum = spec.transparentColor
 
-    local pal = sprite.palettes[1]
-    local maskColorRef = pal:getColor(maskIdxNum)
-    local maskColorVal = Color(
-        maskColorRef.red,
-        maskColorRef.green,
-        maskColorRef.blue,
-        maskColorRef.alpha)
+    local activeFrameIdx = 1
+    if app.activeFrame then
+        activeFrameIdx = app.activeFrame.frameNumber
+    end
+    local pal = sprite.palettes[activeFrameIdx]
+    local palLen = #pal
+
+    local maskIdxNum = spec.transparentColor
+    local maskIdxIsValid = maskIdxNum > -1 and maskIdxNum < palLen
+    local maskColorVal = Color(0, 0, 0, 0)
+    if maskIdxIsValid then
+        local maskColorRef = pal:getColor(maskIdxNum)
+        maskColorVal = Color(
+            maskColorRef.red,
+            maskColorRef.green,
+            maskColorRef.blue,
+            maskColorRef.alpha)
+    end
     dlg:modify { id = "maskClr", colors = { maskColorVal } }
-    dlg:modify { id = "maskClr", visible = colorMode == ColorMode.INDEXED }
+    dlg:modify { id = "maskClr", visible = maskIdxIsValid and colorMode == ColorMode.INDEXED }
 end
 
 local function updateMaskWarning()
-    -- TODO: Should this be posted regardless of color mode?
     local spec = sprite.spec
     local colorMode = spec.colorMode
-    local maskIdxNum = spec.transparentColor
 
-    local pal = sprite.palettes[1]
-    local maskColorRef = pal:getColor(maskIdxNum)
-    local maskIsProblem = maskIdxNum ~= 0
-        or maskColorRef.rgbaPixel ~= 0
-    dlg:modify { id = "maskWarning", visible = (colorMode == ColorMode.INDEXED)
-        and maskIsProblem }
+    local activeFrameIdx = 1
+    if app.activeFrame then
+        activeFrameIdx = app.activeFrame.frameNumber
+    end
+    local pal = sprite.palettes[activeFrameIdx]
+    local palLen = #pal
+
+    local maskIdxNum = spec.transparentColor
+    local maskIdxIsValid = maskIdxNum > -1 and maskIdxNum < palLen
+
+    local idx0IsNotMask = false
+    if maskIdxIsValid then
+        local maskColorRef = pal:getColor(maskIdxNum)
+        idx0IsNotMask = maskColorRef.rgbaPixel ~= 0
+    end
+    local maskIsNotIdx0 = maskIdxNum ~= 0
+    local maskIsProblem = false
+
+    local maskWarning = ""
+    if colorMode == ColorMode.INDEXED then
+        if maskIdxIsValid then
+            maskWarning = defaults.maskWarningIndexed
+            maskIsProblem = idx0IsNotMask or maskIsNotIdx0
+        else
+            maskWarning = defaults.maskWarningInvalid
+            maskIsProblem = true
+        end
+    else
+        maskWarning = defaults.maskWarningRgb
+        maskIsProblem = idx0IsNotMask
+    end
+
+    dlg:modify { id = "maskWarning", text = maskWarning }
+    dlg:modify { id = "maskWarning", visible = maskIsProblem }
 end
 
 local function updateDimensions()
@@ -381,6 +446,7 @@ local function updateDialogWidgets()
     updateExtension()
     updateColorMode()
     updateColorSpace()
+    updatePalettes()
     updatePalCount()
     updateMaskIndex()
     updateMaskColor()

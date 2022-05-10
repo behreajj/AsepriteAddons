@@ -4,9 +4,9 @@ AseUtilities = {}
 AseUtilities.__index = AseUtilities
 
 setmetatable(AseUtilities, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 -- Maximum number of a cels a script may
 -- request to create before the user is
@@ -210,7 +210,7 @@ function AseUtilities.asePaletteLoad(
                 "A default palette will be used instead."
             }
         }
-     end
+    end
 
     if palType == "FILE" then
         if filePath and #filePath > 0 then
@@ -247,6 +247,10 @@ function AseUtilities.asePaletteLoad(
     elseif palType == "ACTIVE" then
         local palActSpr = app.activeSprite
         if palActSpr then
+            -- TODO: All cases of palettes[1] need to be reconsidered.
+            -- Because if Aseprite offers to concatenate a numbered sequence
+            -- of images (e.g., "001.png", "002.png"), then they may have
+            -- separate palettes.
             local palAct = palActSpr.palettes[1]
             if palAct then
                 local modeAct = palActSpr.colorMode
@@ -452,7 +456,7 @@ function AseUtilities.bakeLayerOpacity(layer)
                             elm(0x0)
                         else
                             elm((cmpAlpha << 0x18)
-                            | (hex & 0x00ffffff))
+                                | (hex & 0x00ffffff))
                         end
                     end
                 end
@@ -487,7 +491,7 @@ function AseUtilities.bakeCelOpacity(cel)
                     elm(0x0)
                 else
                     elm((cmpAlpha << 0x18)
-                    | (hex & 0x00ffffff))
+                        | (hex & 0x00ffffff))
                 end
             end
         end
@@ -923,7 +927,7 @@ function AseUtilities.drawBorder(img, border, borderHex)
         img:drawPixel(
             border + i % minorBottom,
             yOffsetBottom + i // minorBottom,
-        borderHex)
+            borderHex)
     end
 
     return img
@@ -1004,7 +1008,7 @@ function AseUtilities.drawCurve2(
             insert(pts,
                 toPoint(bezier(
                     coPrev, fhPrev,
-                    rhNext,coNext,
+                    rhNext, coNext,
                     j * toPercent)))
         end
 
@@ -1549,9 +1553,9 @@ function AseUtilities.hexToAseColor(hex)
     -- See https://github.com/aseprite/aseprite/
     -- blob/main/src/app/script/color_class.cpp#L22
     return Color(hex & 0xff,
-                (hex >> 0x08) & 0xff,
-                (hex >> 0x10) & 0xff,
-                (hex >> 0x18) & 0xff)
+        (hex >> 0x08) & 0xff,
+        (hex >> 0x10) & 0xff,
+        (hex >> 0x18) & 0xff)
 end
 
 ---Initializes a sprite and layer.
@@ -1822,7 +1826,7 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
         imgTrg:drawImage(
             tileSet:getTile(elm()),
             Point(elm.x * tileWidth,
-                  elm.y * tileHeight))
+                elm.y * tileHeight))
     end
 
     return imgTrg
