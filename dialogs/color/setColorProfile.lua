@@ -83,6 +83,10 @@ dlg:button {
                 newColorSpace = ColorSpace()
             end
 
+            -- app.preferences.color_bar.wheel_model
+            -- is 2 when normal map is activated.
+            -- Normal wheel maps are adversely impacted
+            -- by color models other than None or SRGB.
             local formerColorSpace = activeSprite.colorSpace
             local continuity = args.continuity or defaults.continuity
             if formerColorSpace ~= newColorSpace then
