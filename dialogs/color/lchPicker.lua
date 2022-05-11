@@ -299,7 +299,14 @@ local function setFromSelect(dialog, sprite, frame)
                     end
                 end
             elseif colorMode == ColorMode.INDEXED then
-                local palette = sprite.palettes[1]
+                local palettes = sprite.palettes
+                local lenPalettes = #palettes
+                local actFrIdx = 1
+                if app.activeFrame then
+                    actFrIdx = app.activeFrame.frameNumber
+                    if actFrIdx > lenPalettes then actFrIdx = 1 end
+                end
+                local palette = palettes[actFrIdx]
                 local palLen = #palette
                 for elm in px do
                     local x = elm.x + xSel

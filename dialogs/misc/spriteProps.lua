@@ -243,8 +243,8 @@ local function updatePalCount()
     local lenPalettes = #palettes
     local actFrIdx = 1
     if app.activeFrame then
-        actFrIdx = math.min(math.max(
-            app.activeFrame.frameNumber, 1), lenPalettes)
+        actFrIdx = app.activeFrame.frameNumber
+        if actFrIdx > lenPalettes then actFrIdx = 1 end
     end
     local pal = palettes[actFrIdx]
     local palCount = #pal
@@ -275,8 +275,8 @@ local function updateMaskColor()
     local lenPalettes = #palettes
     local actFrIdx = 1
     if app.activeFrame then
-        actFrIdx = math.min(math.max(
-            app.activeFrame.frameNumber, 1), lenPalettes)
+        actFrIdx = app.activeFrame.frameNumber
+        if actFrIdx > lenPalettes then actFrIdx = 1 end
     end
     local pal = palettes[actFrIdx]
     local palLen = #pal
@@ -305,8 +305,8 @@ local function updateMaskWarning()
     local lenPalettes = #palettes
     local actFrIdx = 1
     if app.activeFrame then
-        actFrIdx = math.min(math.max(
-            app.activeFrame.frameNumber, 1), lenPalettes)
+        actFrIdx = app.activeFrame.frameNumber
+        if actFrIdx > lenPalettes then actFrIdx = 1 end
     end
     local pal = palettes[actFrIdx]
     local palLen = #pal

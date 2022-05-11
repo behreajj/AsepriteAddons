@@ -270,7 +270,8 @@ dlg:button {
         -- Unpack sprite properties.
         local alphaIndex = specSprite.transparentColor
         local colorSpace = specSprite.colorSpace
-        local activePalette = activeSprite.palettes[1]
+        local specPalettes = activeSprite.palettes
+        local lenPalettes = #specPalettes
 
         -- Version specific.
         local version = app.version
@@ -439,6 +440,10 @@ dlg:button {
 
             for j = 1, selectFrameLen, 1 do
                 local frame = selectFrames[j]
+                local frameIdx = frame.frameNumber
+                local palIdx = frameIdx
+                if palIdx > lenPalettes then palIdx = 1 end
+                local activePalette = specPalettes[palIdx]
 
                 local xTrg = 0
                 local yTrg = 0
@@ -626,7 +631,7 @@ dlg:button {
                         celOpacity = celOpacity,
                         fileName = fileNameShort,
                         frameDuration = frame.duration,
-                        frameNumber = frame.frameNumber,
+                        frameNumber = frameIdx,
                         height = imgTrg.height,
                         width = imgTrg.width,
                         xOrigin = xTrg,
