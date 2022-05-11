@@ -136,12 +136,12 @@ dlg:button {
             local palettes = activeSprite.palettes
             local lenPalettes = #palettes
             local selectedPalettes = {}
-            local lenCumulative = 0
+            local lenSum = 0
             if allPalettes then
                 for i = 1, lenPalettes, 1 do
                     local palette = palettes[i]
                     selectedPalettes[i] = palette
-                    lenCumulative = lenCumulative + #palette
+                    lenSum = lenSum + #palette
                 end
             else
                 local actFrIdx = 1
@@ -151,11 +151,11 @@ dlg:button {
                 end
                 local palette = palettes[actFrIdx]
                 selectedPalettes[1] = palette
-                lenCumulative = #palette
+                lenSum = #palette
             end
 
             gplStr = gplStr .. strfmt(
-                "# Colors: %d\n", lenCumulative)
+                "# Colors: %d\n", lenSum)
 
             local entryStrArr = {}
             local lenSelected = #selectedPalettes
@@ -168,7 +168,7 @@ dlg:button {
                     local g = aseColor.green
                     local b = aseColor.blue
 
-                    local entryStr = ''
+                    local entryStr = ""
                     if useAseGpl then
                         local a = aseColor.alpha
                         entryStr = strfmt(

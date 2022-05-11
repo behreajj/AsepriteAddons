@@ -391,14 +391,14 @@ dlg:button {
                 -- 3 * 255 = 765
                 greyStr = "Average"
                 greyMethod = function(rSrc, gSrc, bSrc)
-                    return (rSrc + gSrc + bSrc) * 0.00130718954248366
+                    return (rSrc + gSrc + bSrc) * 0.0013071895424837
                 end
             elseif greyPreset == "HSL" then
                 -- 2 * 255 = 510
                 greyStr = "HSL"
                 greyMethod = function(rSrc, gSrc, bSrc)
                     return (math.max(rSrc, gSrc, bSrc)
-                            + math.min(rSrc, gSrc, bSrc)) * 0.00196078431372549
+                            + math.min(rSrc, gSrc, bSrc)) * 0.0019607843137255
                 end
             elseif greyPreset == "HSV" then
                 greyStr = "HSV"
@@ -416,9 +416,9 @@ dlg:button {
                     local gLin = stlLut[1 + gSrc]
                     local bLin = stlLut[1 + bSrc]
                     local lum = math.tointeger(
-                            rLin * 0.21264934272065283
-                        + gLin * 0.7151691357059038
-                        + bLin * 0.07218152157344333)
+                            rLin * 0.21264934272065
+                        + gLin * 0.7151691357059
+                        + bLin * 0.072181521573443)
                     return ltsLut[1 + lum] * 0.003921568627451
                 end
             end

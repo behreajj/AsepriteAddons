@@ -14,7 +14,9 @@ local defaults = {
     maskWarningInvalid = "Mask index is out of bounds.",
     maskWarningIndexed = "Non-zero mask may cause bugs.",
     maskWarningRgb = "Non-zero color at index 0.",
-    textLenLimit = 48
+    textLenLimit = 48,
+    minPxRatio = 1,
+    maxPxRatio = 8
 }
 
 local sprite = nil
@@ -157,14 +159,28 @@ dlg:entry {
     focus = false,
     visible = false }
 dlg:newrow { always = false }
-dlg:combobox {
-    id = "pxAspectDropdown",
+-- dlg:combobox {
+--     id = "pxAspectDropdown",
+--     label = "Pixel Aspect:",
+--     option = "Square Pixels (1:1)",
+--     options = {
+--         "Square Pixels (1:1)",
+--         "Double-wide Pixels (2:1)",
+--         "Double-high Pixels (1:2)" },
+--     visible = false }
+-- dlg:newrow { always = false }
+dlg:slider {
+    id = "aPxRatio",
     label = "Pixel Aspect:",
-    option = "Square Pixels (1:1)",
-    options = {
-        "Square Pixels (1:1)",
-        "Double-wide Pixels (2:1)",
-        "Double-high Pixels (1:2)" },
+    min = defaults.minPxRatio,
+    max = defaults.maxPxRatio,
+    value = 1,
+    visible = false }
+dlg:slider {
+    id = "bPxRatio",
+    min = defaults.minPxRatio,
+    max = defaults.maxPxRatio,
+    value = 1,
     visible = false }
 dlg:newrow { always = false }
 
@@ -238,7 +254,6 @@ local function updatePalCount()
     local spec = sprite.spec
     local colorMode = spec.colorMode
 
-    -- Should this show all palette counts?
     local palettes = sprite.palettes
     local lenPalettes = #palettes
     local actFrIdx = 1
@@ -248,11 +263,13 @@ local function updatePalCount()
     end
     local pal = palettes[actFrIdx]
     local palCount = #pal
+
     local palCountStr = string.format("%d", palCount)
-    if #palettes > 1 then
+    if lenPalettes > 1 then
         palCountStr = palCountStr
             .. string.format(" (Palette %d)", actFrIdx)
     end
+
     dlg:modify { id = "palCountLabel", text = palCountStr }
     dlg:modify { id = "palCountLabel", visible =
         colorMode == ColorMode.INDEXED }
@@ -440,18 +457,30 @@ local function updatePixelRatio()
     local sprPixelRatio = sprite.pixelRatio
     local pixelWidth = sprPixelRatio.width
     local pixelHeight = sprPixelRatio.height
-    local pxRatioStr = string.format(
-        "%d:%d", pixelWidth, pixelHeight)
-    if pixelWidth == 1 and pixelHeight == 1 then
-        pxRatioStr = "Square Pixels (1:1)"
-    elseif pixelWidth == 2 and pixelHeight == 1 then
-        pxRatioStr = "Double-wide Pixels (2:1)"
-    elseif pixelWidth == 1 and pixelHeight == 2 then
-        pxRatioStr = "Double-high Pixels (1:2)"
-    end
 
-    dlg:modify { id = "pxAspectDropdown", option = pxRatioStr }
-    dlg:modify { id = "pxAspectDropdown", visible = true }
+    -- local pxRatioStr = string.format(
+    --     "%d:%d", pixelWidth, pixelHeight)
+    -- if pixelWidth == 1 and pixelHeight == 1 then
+    --     pxRatioStr = "Square Pixels (1:1)"
+    -- elseif pixelWidth == 2 and pixelHeight == 1 then
+    --     pxRatioStr = "Double-wide Pixels (2:1)"
+    -- elseif pixelWidth == 1 and pixelHeight == 2 then
+    --     pxRatioStr = "Double-high Pixels (1:2)"
+    -- end
+
+    -- dlg:modify { id = "pxAspectDropdown", option = pxRatioStr }
+    -- dlg:modify { id = "pxAspectDropdown", visible = true }
+
+    pixelWidth = math.min(math.max(math.abs(pixelWidth),
+        defaults.minPxRatio), defaults.maxPxRatio)
+    pixelHeight = math.min(math.max(math.abs(pixelHeight),
+        defaults.minPxRatio), defaults.maxPxRatio)
+
+    dlg:modify { id = "aPxRatio", value = pixelWidth }
+    dlg:modify { id = "bPxRatio", value = pixelHeight }
+
+    dlg:modify { id = "aPxRatio", visible = true }
+    dlg:modify { id = "bPxRatio", visible = true }
 end
 
 local function updateDialogWidgets()
@@ -491,8 +520,15 @@ updateDialogWidgets()
 --             local newPal = AseUtilities.hexArrToAsePalette(masked)
 --             sprite:setPalette(newPal)
 --             app.command.ChangePixelFormat { format = "indexed" }
-
---             palette = sprite.palettes[1]
+-- -- This would have to prepend alpha mask to all palettes.
+            -- local palettes = sprite.palettes
+            -- local lenPalettes = #palettes
+            -- local actFrIdx = 1
+            -- if app.activeFrame then
+            --     actFrIdx = app.activeFrame.frameNumber
+            --     if actFrIdx > lenPalettes then actFrIdx = 1 end
+            -- end
+            -- local palette = palettes[actFrIdx]
 --             palCount = #palette
 --             palCountStr = string.format("%d", palCount)
 --             alphaMaskIdxNum = 0
@@ -516,18 +552,25 @@ dlg:button {
     onclick = function()
         if sprite and app.activeSprite == sprite then
             local args = dlg.data
-            local pxAspectStr = args.pxAspectDropdown
+            -- local pxAspectStr = args.pxAspectDropdown
+            local aPxRatio = args.aPxRatio
+            local bPxRatio = args.bPxRatio
+            aPxRatio, bPxRatio = Utilities.reduceRatio(aPxRatio, bPxRatio)
             local sprColor = args.sprTabColor
             local userData = args.sprUserData
 
             app.transaction(function()
-                if pxAspectStr == "Double-wide Pixels (2:1)" then
-                    sprite.pixelRatio = Size(2, 1)
-                elseif pxAspectStr == "Double-high Pixels (1:2)" then
-                    sprite.pixelRatio = Size(1, 2)
-                elseif pxAspectStr == "Square Pixels (1:1)" then
-                    sprite.pixelRatio = Size(1, 1)
-                end
+                -- There is no extra validation for size.
+                -- Size(0, 0) and Size(-1, -1) are both possible.
+                sprite.pixelRatio = Size(aPxRatio, bPxRatio)
+
+                -- if pxAspectStr == "Double-wide Pixels (2:1)" then
+                --     sprite.pixelRatio = Size(2, 1)
+                -- elseif pxAspectStr == "Double-high Pixels (1:2)" then
+                --     sprite.pixelRatio = Size(1, 2)
+                -- elseif pxAspectStr == "Square Pixels (1:1)" then
+                --     sprite.pixelRatio = Size(1, 1)
+                -- end
 
                 if isBetaVersion then
                     sprite.color = sprColor
