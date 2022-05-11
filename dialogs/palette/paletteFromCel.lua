@@ -102,7 +102,15 @@ dlg:button {
                         end
                     end
                 elseif colorMode == ColorMode.INDEXED then
-                    local srcPal = sprite.palettes[1]
+                    local palettes = sprite.palettes
+                    local lenPalettes = #palettes
+                    local actFrIdx = 1
+                    if app.activeFrame then
+                        actFrIdx = math.min(math.max(
+                            app.activeFrame.frameNumber, 1), lenPalettes)
+                    end
+                    local srcPal = palettes[actFrIdx]
+
                     local srcPalLen = #srcPal
                     for elm in itr do
                         local srcIndex = elm()

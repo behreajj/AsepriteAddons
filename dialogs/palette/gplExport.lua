@@ -5,7 +5,8 @@ local defaults = {
     columns = 0,
     attribName = "Anonymous",
     attribUrl = "https://lospec.com/palette-list",
-    useAseGpl = false
+    useAseGpl = false,
+    allPalettes = false
 }
 
 local dlg = Dialog { title = "GPL Export" }
@@ -55,6 +56,14 @@ dlg:check {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "allPalettes",
+    label = "All Palettes:",
+    selected = defaults.allPalettes
+}
+
+dlg:newrow { always = false }
+
 dlg:file {
     id = "filepath",
     label = "Path:",
@@ -82,6 +91,7 @@ dlg:button {
             local attribName = args.attribName or defaults.attribName
             local attribUrl = args.attribUrl or defaults.attribUrl
             local useAseGpl = args.useAseGpl
+            local allPalettes = args.allPalettes
 
             -- Validate arguments.
             -- Palette name will be added no matter what.
@@ -123,35 +133,59 @@ dlg:button {
                 gplStr = gplStr .. "# Profile: None\n"
             end
 
-            local pal = activeSprite.palettes[1]
-            local palLen = #pal
-            gplStr = gplStr .. strfmt(
-                "# Colors: %d\n", palLen)
-
-            local palLenn1 = palLen - 1
-            local entryStrArr = {}
-            for i = 0, palLenn1, 1 do
-                local aseColor = pal:getColor(i)
-                local r = aseColor.red
-                local g = aseColor.green
-                local b = aseColor.blue
-
-                local entryStr = ''
-                if useAseGpl then
-                    local a = aseColor.alpha
-                    entryStr = strfmt(
-                        "%3d %3d %3d %3d 0x%08x",
-                        r, g, b, a,
-                        a << 0x18 | b << 0x10 | g << 0x08 | r)
-                else
-                    entryStr = strfmt(
-                        "%3d %3d %3d %06X",
-                        r, g, b,
-                        r << 0x10 | g << 0x08 | b)
+            local palettes = activeSprite.palettes
+            local lenPalettes = #palettes
+            local selectedPalettes = {}
+            local lenCumulative = 0
+            if allPalettes then
+                for i = 1, lenPalettes, 1 do
+                    local palette = palettes[i]
+                    selectedPalettes[i] = palette
+                    lenCumulative = lenCumulative + #palette
                 end
-
-                entryStrArr[1 + i] = entryStr
+            else
+                local actFrIdx = 1
+                if app.activeFrame then
+                    actFrIdx = math.min(math.max(
+                        app.activeFrame.frameNumber, 1), lenPalettes)
+                end
+                local palette = palettes[actFrIdx]
+                selectedPalettes[1] = palette
+                lenCumulative = #palette
             end
+
+            gplStr = gplStr .. strfmt(
+                "# Colors: %d\n", lenCumulative)
+
+            local entryStrArr = {}
+            local lenSelected = #selectedPalettes
+            for i = 1, lenSelected, 1 do
+                local palette = selectedPalettes[i]
+                local lenPalette = #palette
+                for j = 1, lenPalette, 1 do
+                    local aseColor = palette:getColor(j - 1)
+                    local r = aseColor.red
+                    local g = aseColor.green
+                    local b = aseColor.blue
+
+                    local entryStr = ''
+                    if useAseGpl then
+                        local a = aseColor.alpha
+                        entryStr = strfmt(
+                            "%3d %3d %3d %3d 0x%08x",
+                            r, g, b, a,
+                            a << 0x18 | b << 0x10 | g << 0x08 | r)
+                    else
+                        entryStr = strfmt(
+                            "%3d %3d %3d %06X",
+                            r, g, b,
+                            r << 0x10 | g << 0x08 | b)
+                    end
+
+                    table.insert(entryStrArr, entryStr)
+                end
+            end
+
             gplStr = gplStr .. table.concat(entryStrArr, '\n')
 
             local filepath = args.filepath

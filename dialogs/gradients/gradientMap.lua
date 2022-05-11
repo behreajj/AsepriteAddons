@@ -213,7 +213,16 @@ dlg:button {
 
             local startIndex = args.startIndex
             local count = args.count
-            local pal = sprite.palettes[1]
+
+            local palettes = sprite.palettes
+            local lenPalettes = #palettes
+            local actFrIdx = 1
+            if app.activeFrame then
+                actFrIdx = math.min(math.max(
+                    app.activeFrame.frameNumber, 1), lenPalettes)
+            end
+            local pal = palettes[actFrIdx]
+
             local clrArr = AseUtilities.asePaletteToClrArr(
                 pal, startIndex, count)
 

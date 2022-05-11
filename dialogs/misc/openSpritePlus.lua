@@ -223,6 +223,8 @@ dlg:button {
                             hexesProfile = AseUtilities.grayHexes(
                                 AseUtilities.GRAY_COUNT)
                         else
+                            -- For opening sequences, this is fine to stay
+                            -- as just palettes[1].
                             hexesProfile = AseUtilities.asePaletteToHexArr(
                                 openSprite.palettes[1], 0, 256)
                         end

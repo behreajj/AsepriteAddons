@@ -129,6 +129,9 @@ dlg:button {
             local sprite = openSprites[i]
             local colorMode = sprite.colorMode
             local profile = sprite.colorSpace
+
+            -- TODO: Multiple palettes a condition for
+            -- not sharing palettes?
             if colorMode == ColorMode.RGB
                 and (profile == nil
                     or profile == profileNone

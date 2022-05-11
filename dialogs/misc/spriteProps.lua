@@ -230,25 +230,32 @@ local function updatePalettes()
     local lenPals = #palettes
     local palCountStr = string.format("%d", lenPals)
     dlg:modify { id = "palettesLabel", text = palCountStr }
-    dlg:modify { id = "palettesLabel", visible = lenPals > 1 and colorMode == ColorMode.INDEXED }
+    dlg:modify { id = "palettesLabel", visible =
+        lenPals > 1 and colorMode == ColorMode.INDEXED }
 end
 
 local function updatePalCount()
     local spec = sprite.spec
     local colorMode = spec.colorMode
 
-    -- TODO: When opening multiple sprites together and Aseprite
-    -- concatenates them, then multiple sprite palettes are used.
     -- Should this show all palette counts?
-    local activeFrameIdx = 1
+    local palettes = sprite.palettes
+    local lenPalettes = #palettes
+    local actFrIdx = 1
     if app.activeFrame then
-        activeFrameIdx = app.activeFrame.frameNumber
+        actFrIdx = math.min(math.max(
+            app.activeFrame.frameNumber, 1), lenPalettes)
     end
-    local pal = sprite.palettes[activeFrameIdx]
+    local pal = palettes[actFrIdx]
     local palCount = #pal
     local palCountStr = string.format("%d", palCount)
+    if #palettes > 1 then
+        palCountStr = palCountStr
+            .. string.format(" (Palette %d)", actFrIdx)
+    end
     dlg:modify { id = "palCountLabel", text = palCountStr }
-    dlg:modify { id = "palCountLabel", visible = colorMode == ColorMode.INDEXED }
+    dlg:modify { id = "palCountLabel", visible =
+        colorMode == ColorMode.INDEXED }
 end
 
 local function updateMaskIndex()
@@ -264,11 +271,14 @@ local function updateMaskColor()
     local spec = sprite.spec
     local colorMode = spec.colorMode
 
-    local activeFrameIdx = 1
+    local palettes = sprite.palettes
+    local lenPalettes = #palettes
+    local actFrIdx = 1
     if app.activeFrame then
-        activeFrameIdx = app.activeFrame.frameNumber
+        actFrIdx = math.min(math.max(
+            app.activeFrame.frameNumber, 1), lenPalettes)
     end
-    local pal = sprite.palettes[activeFrameIdx]
+    local pal = palettes[actFrIdx]
     local palLen = #pal
 
     local maskIdxNum = spec.transparentColor
@@ -283,18 +293,22 @@ local function updateMaskColor()
             maskColorRef.alpha)
     end
     dlg:modify { id = "maskClr", colors = { maskColorVal } }
-    dlg:modify { id = "maskClr", visible = maskIdxIsValid and colorMode == ColorMode.INDEXED }
+    dlg:modify { id = "maskClr", visible = maskIdxIsValid
+        and colorMode == ColorMode.INDEXED }
 end
 
 local function updateMaskWarning()
     local spec = sprite.spec
     local colorMode = spec.colorMode
 
-    local activeFrameIdx = 1
+    local palettes = sprite.palettes
+    local lenPalettes = #palettes
+    local actFrIdx = 1
     if app.activeFrame then
-        activeFrameIdx = app.activeFrame.frameNumber
+        actFrIdx = math.min(math.max(
+            app.activeFrame.frameNumber, 1), lenPalettes)
     end
-    local pal = sprite.palettes[activeFrameIdx]
+    local pal = palettes[actFrIdx]
     local palLen = #pal
 
     local maskIdxNum = spec.transparentColor

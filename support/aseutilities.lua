@@ -216,6 +216,8 @@ function AseUtilities.asePaletteLoad(
         if filePath and #filePath > 0 then
             local exists = app.fs.isFile(filePath)
             if exists then
+                -- Loading an .aseprite file with multiple palettes
+                -- will register only the first palette.
                 local palFile = Palette { fromFile = filePath }
                 if palFile then
                     -- Palettes loaded from a file could support an
@@ -247,37 +249,30 @@ function AseUtilities.asePaletteLoad(
     elseif palType == "ACTIVE" then
         local palActSpr = app.activeSprite
         if palActSpr then
-            -- TODO: All cases of palettes[1] need to be reconsidered.
-            -- Because if Aseprite offers to concatenate a numbered sequence
-            -- of images (e.g., "001.png", "002.png"), then they may have
-            -- separate palettes.
-            local palAct = palActSpr.palettes[1]
-            if palAct then
-                local modeAct = palActSpr.colorMode
-                if modeAct == ColorMode.GRAY then
-                    hexesProfile = AseUtilities.grayHexes(
-                        AseUtilities.GRAY_COUNT)
-                else
-                    hexesProfile = AseUtilities.asePaletteToHexArr(
-                        palAct, siVal, cntVal)
-                    local profileAct = palActSpr.colorSpace
-                    if profileAct then
-                        -- Tests a number of color profile components for
-                        -- approximate equality. See
-                        -- https://github.com/aseprite/laf/blob/
-                        -- 11ffdbd9cc6232faaff5eecd8cc628bb5a2c706f/
-                        -- gfx/color_space.cpp#L142
+            local modeAct = palActSpr.colorMode
+            if modeAct == ColorMode.GRAY then
+                hexesProfile = AseUtilities.grayHexes(
+                    AseUtilities.GRAY_COUNT)
+            else
+                hexesProfile = AseUtilities.asePalettesToHexArr(
+                    palActSpr.palettes)
+                local profileAct = palActSpr.colorSpace
+                if profileAct then
+                    -- Tests a number of color profile components for
+                    -- approximate equality. See
+                    -- https://github.com/aseprite/laf/blob/
+                    -- 11ffdbd9cc6232faaff5eecd8cc628bb5a2c706f/
+                    -- gfx/color_space.cpp#L142
 
-                        -- It might be safer not to treat the NONE color
-                        -- space as equivalent to SRGB, as the user could
-                        -- have a display profile which differs radically.
-                        local profileSrgb = ColorSpace { sRGB = true }
-                        if profileAct ~= profileSrgb then
-                            palActSpr:convertColorSpace(profileSrgb)
-                            hexesSrgb = AseUtilities.asePaletteToHexArr(
-                                palAct, siVal, cntVal)
-                            palActSpr:convertColorSpace(profileAct)
-                        end
+                    -- It might be safer not to treat the NONE color
+                    -- space as equivalent to SRGB, as the user could
+                    -- have a display profile which differs radically.
+                    local profileSrgb = ColorSpace { sRGB = true }
+                    if profileAct ~= profileSrgb then
+                        palActSpr:convertColorSpace(profileSrgb)
+                        hexesSrgb = AseUtilities.asePalettesToHexArr(
+                            palActSpr.palettes)
+                        palActSpr:convertColorSpace(profileAct)
                     end
                 end
             end
@@ -355,10 +350,42 @@ function AseUtilities.asePaletteToClrArr(pal, startIndex, count)
     end
 end
 
+---Converts an array of Aseprite palettes to a
+---table of hex color integers.
+---@param palettes table
+---@return table
+function AseUtilities.asePalettesToHexArr(palettes)
+    if palettes then
+        local lenPalettes = #palettes
+        local hexes = {}
+        for i = 1, lenPalettes, 1 do
+            local palette = palettes[i]
+            if palette then
+                local lenPalette = #palette
+                for j = 1, lenPalette, 1 do
+                    local aseColor = palette:getColor(j - 1)
+                    table.insert(hexes, aseColor.rgbaPixel)
+                end
+            end
+        end
+
+        if #hexes == 1 then
+            local amsk = hexes[1] & 0xff000000
+            table.insert(hexes, 1, amsk)
+            hexes[3] = amsk | 0x00ffffff
+        end
+
+        return hexes
+    else
+        return { 0x00000000, 0xffffffff }
+    end
+end
+
 ---Converts an Aseprite palette to a table of
 ---hex color integers. If the palette is nil
 ---returns a default table. Assumes palette
----is in sRGB.
+---is in sRGB. The start index defaults to 0;
+---the count defaults to 256.
 ---@param pal userdata Aseprite palette
 ---@param startIndex number start index
 ---@param count number sample count
