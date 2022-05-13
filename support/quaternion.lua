@@ -405,6 +405,10 @@ end
 
 ---Multiplies two quaternions.
 ---Multiplication is not commutative.
+---The real component is calculated as:
+---a.real b.real - dot(a.imag, b.imag).
+---The imaginary is: cross(a.imag, b.imag) +
+---a.real b.imag + b.real a.imag.
 ---@param a table left operand
 ---@param b table right operand
 ---@return table

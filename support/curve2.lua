@@ -129,7 +129,7 @@ function Curve2.arcSector(
     local offVerif = offset or 0.0
     local strkVerif = stroke or 0.25
     local radVerif = radius or 0.5
-    local edAngVerif = stopAngle or 1.5707963267948966
+    local edAngVerif = stopAngle or 1.5707963267949
     local stAngVerif = startAngle or 0.0
 
     -- Swap start and end angles.
@@ -157,8 +157,8 @@ function Curve2.arcSector(
     local knCtVerif = math.ceil(1 + 4 * arcLen01)
     local toStep = 1.0 / (knCtVerif - 1.0)
     local invKnCt = toStep * arcLen01
-    local tanHalf = 1.3333333333333333
-        * math.tan(1.5707963267948966 * invKnCt)
+    local tanHalf = 1.33333333333333
+        * math.tan(1.5707963267949 * invKnCt)
 
     -- Handles on inner edge travel in opposite
     -- direction, so innerMag is negative.

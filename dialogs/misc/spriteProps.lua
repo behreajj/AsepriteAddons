@@ -159,16 +159,6 @@ dlg:entry {
     focus = false,
     visible = false }
 dlg:newrow { always = false }
--- dlg:combobox {
---     id = "pxAspectDropdown",
---     label = "Pixel Aspect:",
---     option = "Square Pixels (1:1)",
---     options = {
---         "Square Pixels (1:1)",
---         "Double-wide Pixels (2:1)",
---         "Double-high Pixels (1:2)" },
---     visible = false }
--- dlg:newrow { always = false }
 dlg:slider {
     id = "aPxRatio",
     label = "Pixel Aspect:",
@@ -218,8 +208,7 @@ local function updateColorMode()
     end
 
     dlg:modify { id = "clrMdLabel", text = colorModeStr }
-    dlg:modify { id = "clrMdLabel", visible = colorModeStr
-        and #colorModeStr > 0 }
+    dlg:modify { id = "clrMdLabel", visible = #colorModeStr > 0 }
 end
 
 local function updateColorSpace()
@@ -281,7 +270,8 @@ local function updateMaskIndex()
     local maskIdxNum = spec.transparentColor
     local maskIdxStr = string.format("%d", maskIdxNum)
     dlg:modify { id = "maskIdxLabel", text = maskIdxStr }
-    dlg:modify { id = "maskIdxLabel", visible = colorMode == ColorMode.INDEXED }
+    dlg:modify { id = "maskIdxLabel", visible =
+        colorMode == ColorMode.INDEXED }
 end
 
 local function updateMaskColor()
@@ -399,7 +389,7 @@ local function updateAspect()
     end
 
     dlg:modify { id = "aspectLabel", text = aspectStr }
-    dlg:modify { id = "aspectLabel", visible = aspectStr and #aspectStr > 0 }
+    dlg:modify { id = "aspectLabel", visible = #aspectStr > 0 }
 end
 
 local function updateFrames()
@@ -457,19 +447,6 @@ local function updatePixelRatio()
     local sprPixelRatio = sprite.pixelRatio
     local pixelWidth = sprPixelRatio.width
     local pixelHeight = sprPixelRatio.height
-
-    -- local pxRatioStr = string.format(
-    --     "%d:%d", pixelWidth, pixelHeight)
-    -- if pixelWidth == 1 and pixelHeight == 1 then
-    --     pxRatioStr = "Square Pixels (1:1)"
-    -- elseif pixelWidth == 2 and pixelHeight == 1 then
-    --     pxRatioStr = "Double-wide Pixels (2:1)"
-    -- elseif pixelWidth == 1 and pixelHeight == 2 then
-    --     pxRatioStr = "Double-high Pixels (1:2)"
-    -- end
-
-    -- dlg:modify { id = "pxAspectDropdown", option = pxRatioStr }
-    -- dlg:modify { id = "pxAspectDropdown", visible = true }
 
     pixelWidth = math.min(math.max(math.abs(pixelWidth),
         defaults.minPxRatio), defaults.maxPxRatio)
@@ -552,26 +529,19 @@ dlg:button {
     onclick = function()
         if sprite and app.activeSprite == sprite then
             local args = dlg.data
-            -- local pxAspectStr = args.pxAspectDropdown
             local aPxRatio = args.aPxRatio
             local bPxRatio = args.bPxRatio
-            aPxRatio, bPxRatio = Utilities.reduceRatio(aPxRatio, bPxRatio)
             local sprColor = args.sprTabColor
             local userData = args.sprUserData
+
+            -- TODO: Should this be auto-reduced for the user or not?
+            -- Maybe some people want, e.g., 4:2.
+            aPxRatio, bPxRatio = Utilities.reduceRatio(aPxRatio, bPxRatio)
 
             app.transaction(function()
                 -- There is no extra validation for size.
                 -- Size(0, 0) and Size(-1, -1) are both possible.
                 sprite.pixelRatio = Size(aPxRatio, bPxRatio)
-
-                -- if pxAspectStr == "Double-wide Pixels (2:1)" then
-                --     sprite.pixelRatio = Size(2, 1)
-                -- elseif pxAspectStr == "Double-high Pixels (1:2)" then
-                --     sprite.pixelRatio = Size(1, 2)
-                -- elseif pxAspectStr == "Square Pixels (1:1)" then
-                --     sprite.pixelRatio = Size(1, 1)
-                -- end
-
                 if isBetaVersion then
                     sprite.color = sprColor
                     sprite.data = userData

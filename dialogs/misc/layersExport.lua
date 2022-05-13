@@ -12,13 +12,16 @@ local originsOptions = { "CENTER", "CORNER" }
 local defaults = {
     layerTarget = "ALL",
     frameTarget = "ALL",
-    frameStart = 1,
-    frameCount = 8,
-    maxFrameCount = 32,
+    rangeStr = "",
+    strExample = "1,4,5-10",
+    -- frameStart = 1,
+    -- frameCount = 8,
+    -- maxFrameCount = 32,
     bounds = "CEL",
     padding = 2,
     padColor = Color(0, 0, 0, 0),
     scale = 1,
+    prApply = false,
     flatGroups = false,
     saveJson = false,
     origin = "CORNER",
@@ -110,34 +113,58 @@ dlg:combobox {
     onchange = function()
         local state = dlg.data.frameTarget
         local isRange = state == "RANGE"
-        dlg:modify { id = "frameStart", visible = isRange }
-        dlg:modify { id = "frameCount", visible = isRange }
+        dlg:modify { id = "rangeStr", visible = isRange }
+        dlg:modify { id = "strExample", visible = false }
+        -- dlg:modify { id = "frameStart", visible = isRange }
+        -- dlg:modify { id = "frameCount", visible = isRange }
     end
 }
 
 dlg:newrow { always = false }
 
-dlg:slider {
-    id = "frameStart",
-    label = "Start:",
-    min = 1,
-    max = 256,
-    value = defaults.frameStart,
-    visible = defaults.frameTarget == "RANGE"
+dlg:entry {
+    id = "rangeStr",
+    label = "Range:",
+    text = defaults.rangeStr,
+    focus = false,
+    visible = defaults.frameTarget == "RANGE",
+    onchange = function()
+        dlg:modify { id = "strExample", visible = true }
+    end
 }
 
 dlg:newrow { always = false }
 
-dlg:slider {
-    id = "frameCount",
-    label = "Count:",
-    min = 1,
-    max = defaults.maxFrameCount,
-    value = defaults.frameCount,
-    visible = defaults.frameTarget == "RANGE"
+dlg:label {
+    id = "strExample",
+    label = "Example:",
+    text = defaults.strExample,
+    visible = false
 }
 
 dlg:newrow { always = false }
+
+-- dlg:slider {
+--     id = "frameStart",
+--     label = "Start:",
+--     min = 1,
+--     max = 256,
+--     value = defaults.frameStart,
+--     visible = defaults.frameTarget == "RANGE"
+-- }
+
+-- dlg:newrow { always = false }
+
+-- dlg:slider {
+--     id = "frameCount",
+--     label = "Count:",
+--     min = 1,
+--     max = defaults.maxFrameCount,
+--     value = defaults.frameCount,
+--     visible = defaults.frameTarget == "RANGE"
+-- }
+
+-- dlg:newrow { always = false }
 
 dlg:slider {
     id = "padding",
@@ -169,6 +196,15 @@ dlg:slider {
     min = 1,
     max = 10,
     value = defaults.scale
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "prApply",
+    label = "Apply:",
+    text = "Pixel Aspect",
+    selected = defaults.prApply
 }
 
 dlg:newrow { always = false }
@@ -276,19 +312,28 @@ dlg:button {
         -- Version specific.
         local version = app.version
         local checkForTilemaps = false
+        local spriteUserData = ""
         if version.major >= 1 and version.minor >= 3 then
             checkForTilemaps = true
+            local rawUserData = activeSprite.data
+            if rawUserData and #rawUserData > 0 then
+                spriteUserData = string.format(
+                    "\"data\":%s", rawUserData)
+            end
         end
 
         -- Unpack arguments.
         local layerTarget = args.layerTarget or defaults.layerTarget
         local frameTarget = args.frameTarget or defaults.frameTarget
-        local frameStart = args.frameStart or defaults.frameStart
-        local frameCount = args.frameCount or defaults.frameCount
+        local rangeStr = args.rangeStr or defaults.rangeStr
+        -- local frameStart = args.frameStart or defaults.frameStart
+        -- local frameCount = args.frameCount or defaults.frameCount
         local bounds = args.bounds or defaults.bounds
         local padding = args.padding or defaults.padding
         local padColor = args.padColor or defaults.padColor
-        local scale = args.scale or defaults.scale
+        local wScale = args.scale or defaults.scale
+        local hScale = wScale
+        local prApply = args.prApply
         local filename = args.filename
 
         local saveJson = args.saveJson
@@ -362,24 +407,41 @@ dlg:button {
             end
         elseif frameTarget == "RANGE" then
             local allFrames = activeSprite.frames
-            local availFrames = #allFrames
-            local frStartVal = min(frameStart, availFrames)
-            local frCountVal = min(frameCount, 1 + availFrames - frStartVal)
-            for i = 1, frCountVal, 1 do
-                selectFrames[i] = allFrames[frStartVal + i - 1]
+            local lenAllFrames = #allFrames
+            local idxRangeSet = Utilities.parseRangeString(rangeStr, lenAllFrames)
+            local lenIdxRangeSet = #idxRangeSet
+
+            if #rangeStr < 1 or lenIdxRangeSet < 1 then
+                local rangeFrames = app.range.frames
+                local rangeFramesLen = #rangeFrames
+                for i = 1, rangeFramesLen, 1 do
+                    selectFrames[i] = rangeFrames[i]
+                end
+            else
+                for i = 1, lenIdxRangeSet, 1 do
+                    selectFrames[i] = allFrames[idxRangeSet[i]]
+                end
             end
         else
-            local activeFrames = activeSprite.frames
-            for i = 1, #activeFrames, 1 do
-                selectFrames[i] = activeFrames[i]
+            local allFrames = activeSprite.frames
+            for i = 1, #allFrames, 1 do
+                selectFrames[i] = allFrames[i]
             end
+        end
+
+        if prApply then
+            local pxRatio = activeSprite.pixelRatio
+            local pxw = math.max(1, math.abs(pxRatio.width))
+            local pxh = math.max(1, math.abs(pxRatio.height))
+            wScale = wScale * pxw
+            hScale = hScale * pxh
         end
 
         local selectLayerLen = #selectLayers
         local selectFrameLen = #selectFrames
 
         local useCenter = origin == "CENTER"
-        local useResize = scale ~= 1
+        local useResize = wScale ~= 1 or hScale ~= 1
         local useSpriteBounds = bounds == "SPRITE"
         local usePadding = padding > 0
         local usePadColor = padColor.alpha > 0
@@ -592,8 +654,8 @@ dlg:button {
 
                     if useResize then
                         imgTrg:resize(
-                            imgTrg.width * scale,
-                            imgTrg.height * scale)
+                            imgTrg.width * wScale,
+                            imgTrg.height * hScale)
                     end
 
                     if usePadding then
@@ -652,7 +714,8 @@ dlg:button {
                 "{\"fileDir\":\"%s\"",
                 "\"fileExt\":\"%s\"",
                 "\"padding\":%d",
-                "\"scale\":%d",
+                "\"scale\":{\"x\":%d,\"y\":%d}",
+                spriteUserData,
                 "\"layers\":[%s]}"
             }, ",")
 
@@ -741,7 +804,7 @@ dlg:button {
             local jsonString = strfmt(
                 jsonStrFmt,
                 filePath, fileExt,
-                padding, scale,
+                padding, wScale, hScale,
                 concat(layerStrArr, ","))
 
             local jsonFilepath = filePrefix

@@ -28,10 +28,6 @@ This repo includes
 
   ![Arc](screencaps/arc.png)
 
-- A brick maker.
-
-  ![Bricks](screencaps/bricks.png)
-
 - Color curve presets. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
 
   ![Color Curve](screencaps/colorCurve.png)
@@ -79,6 +75,10 @@ This repo includes
 - Custom New Sprite
 
   ![New Sprite](screencaps/newSpritePlus.png)
+
+- Custom Sprite Properties
+
+  ![Sprite Properties](screencaps/spriteProperties.png)
 
 - Normal color picker.
 

@@ -564,7 +564,7 @@ function Vec3.gridSpherical(
     if not oneLayer then
         toPrc = 1.0 / (vLayers - 1.0)
     end
-    local toIncl = 3.141592653589793 / (vLats + 1.0)
+    local toIncl = 3.1415926535898 / (vLats + 1.0)
     local toAzim = 6.2831853071796 / vLons
 
     local len2 = vLats * vLons
@@ -581,7 +581,7 @@ function Vec3.gridSpherical(
         local radius = (1.0 - prc) * vrMin
                              + prc * vrMax
 
-        local incl = 1.5707963267948966 - (i + 1.0) * toIncl
+        local incl = 1.5707963267949 - (i + 1.0) * toIncl
         local rhoCosIncl = radius * cos(incl)
         local rhoSinIncl = radius * sin(incl)
 
@@ -659,7 +659,7 @@ end
 ---@param a table left operand
 ---@return number
 function Vec3.inclinationSigned(a)
-    return 1.5707963267948966 - Vec3.inclinationUnsigned(a)
+    return 1.5707963267949 - Vec3.inclinationUnsigned(a)
 end
 
 ---Finds the vector's unsigned inclination.
@@ -670,7 +670,7 @@ function Vec3.inclinationUnsigned(a)
     if mSq > 0.0 then
         return math.acos(a.z / math.sqrt(mSq))
     else
-        return 1.5707963267948966
+        return 1.5707963267949
     end
 end
 

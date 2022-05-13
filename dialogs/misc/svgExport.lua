@@ -4,6 +4,7 @@ local defaults = {
     marginClr = Color(255, 255, 255, 255),
     border = 0,
     borderClr = Color(0, 0, 0, 255),
+    prApply = false,
     flattenImage = true
 }
 
@@ -176,6 +177,15 @@ dlg:color {
 dlg:newrow { always = false }
 
 dlg:check {
+    id = "prApply",
+    label = "Apply:",
+    text = "Pixel Aspect",
+    selected = defaults.prApply
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
     id = "flattenImage",
     label = "Flatten:",
     selected = defaults.flattenImage
@@ -210,6 +220,7 @@ dlg:button {
             local marginClr = args.marginClr or defaults.marginClr
             local border = args.border or defaults.border
             local borderClr = args.borderClr or defaults.borderClr
+            local prApply = args.prApply
             local flattenImage = args.flattenImage
 
             -- Calculate dimensions.
@@ -225,6 +236,18 @@ dlg:button {
                 + (nativeHeight + 1) * margin
                 + border * 2
 
+            local wAspSclr = 1
+            local hAspSclr = 1
+            local preserveAspectStr = "preserveAspectRatio=\"xMidYMid slice\" "
+            if prApply then
+                local pxRatio = activeSprite.pixelRatio
+                local pxw = math.max(1, math.abs(pxRatio.width))
+                local pxh = math.max(1, math.abs(pxRatio.height))
+                if pxw > pxh then hAspSclr = pxw / pxh end
+                if pxh > pxw then wAspSclr = pxh / pxw end
+                preserveAspectStr = "preserveAspectRatio=\"none\" "
+            end
+
             -- Cache any methods used in for loops.
             local strfmt = string.format
             local concat = table.concat
@@ -235,10 +258,12 @@ dlg:button {
             "xmlns:xlink=\"http://www.w3.org/1999/xlink\" ",
             "shape-rendering=\"crispEdges\" ",
             "stroke=\"none\" ",
+            preserveAspectStr,
             strfmt("width=\"%d\" height=\"%d\" ",
                 totalWidth, totalHeight),
-            strfmt("viewBox=\"0 0 %d %d\">",
-                totalWidth, totalHeight)})
+            strfmt("viewBox=\"0 0 %.4f %.4f\">",
+                wAspSclr * totalWidth,
+                hAspSclr * totalHeight)})
 
             -- Each path element can contain sub-paths set off by Z (close)
             -- and M (move to) commands.

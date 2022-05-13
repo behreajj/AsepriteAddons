@@ -750,6 +750,65 @@ function Utilities.mulQuatVec3(a, b)
         iz * qw + iy * qx - iw * qz - ix * qy)
 end
 
+---Parses a string of positive integers
+---separated by a comma. The integers may
+---either be individual or ranges connected
+---by a hyphen. For example, "1,5,10-15,7".
+---The sprite frame count is to ensure that
+---invalid frames are not included.
+---Returns an ordered set of integers.
+---@param s string range string
+---@param frameCount number number of frames
+---@return table
+function Utilities.parseRangeString(s, frameCount)
+    local strgmatch = string.gmatch
+    local dict = {}
+
+    -- Parse string by comma.
+    for token in strgmatch(s, "([^,]+)") do
+        -- Parse string by hyphen.
+        local arrNums = {}
+        local cursor = 1
+        for subtoken in strgmatch(token, "[^-]+") do
+            local trial = tonumber(subtoken, 10)
+            if trial
+                and trial > 0
+                and trial <= frameCount then
+
+                arrNums[cursor] = trial
+                cursor = cursor + 1
+            end
+        end
+
+        local lenNums = #arrNums
+        if lenNums > 1 then
+            local origin = arrNums[1]
+            local dest = arrNums[lenNums]
+            if dest < origin then
+                local temp = origin
+                origin = dest
+                dest = temp
+            end
+            for i = origin, dest, 1 do
+                dict[i] = true
+            end
+        elseif lenNums > 0 then
+            dict[arrNums[1]] = true
+        end
+    end
+
+    -- Convert dictionary to ordered set.
+    local arr = {}
+    local cursor = 1
+    for k, _ in pairs(dict) do
+        arr[cursor] = k
+        cursor = cursor + 1
+    end
+    table.sort(arr)
+
+    return arr
+end
+
 ---Prepends an alpha mask to a table of
 ---hexadecimal integers representing color.
 ---If the table already includes a mask,
