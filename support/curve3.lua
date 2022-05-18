@@ -452,30 +452,30 @@ function Curve3.smoothHandles(target)
         local knCurr = knFirst
         for i = 2, knotCount, 1 do
             local knNext = knots[i]
-            Knot3.smoothHandlesInternal(
+            carry = Knot3.smoothHandlesInternal(
                 knPrev, knCurr, knNext, carry)
             knPrev = knCurr
             knCurr = knNext
         end
-        Knot3.smoothHandlesInternal(
+        carry = Knot3.smoothHandlesInternal(
             knPrev, knCurr, knFirst, carry)
     else
         local knPrev = knFirst
         local knCurr = knots[2]
 
-        Knot3.smoothHandlesFirstInternal(
+        carry = Knot3.smoothHandlesFirstInternal(
             knPrev, knCurr, carry)
         Knot3.mirrorHandlesForward(knCurr)
 
         for i = 3, knotCount, 1 do
             local knNext = knots[i]
-            Knot3.smoothHandlesInternal(
+            carry = Knot3.smoothHandlesInternal(
                 knPrev, knCurr, knNext, carry)
             knPrev = knCurr
             knCurr = knNext
         end
 
-        Knot3.smoothHandlesLastInternal(
+        carry = Knot3.smoothHandlesLastInternal(
             knPrev, knCurr, carry)
         Knot3.mirrorHandlesBackward(knCurr)
     end

@@ -1,12 +1,13 @@
 dofile("../../support/aseutilities.lua")
 
 local targets = { "ACTIVE", "ALL", "RANGE" }
+local delTargets = { "DELETE_CELS", "DELETE_LAYER", "NONE" }
 
 local defaults = {
     target = "RANGE",
     trimCels = false,
-    delOverLayer = false,
-    delUnderLayer = false,
+    delOver = "NONE",
+    delUnder = "NONE",
     pullFocus = false
 }
 
@@ -30,17 +31,28 @@ dlg:check {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "delOverLayer",
-    label = "Delete:",
+dlg:combobox {
+    id = "delOver",
+    label = "Over:",
     text = "Mask",
-    selected = defaults.delOverLayer
+    option = defaults.delOver,
+    options = delTargets
 }
 
-dlg:check {
-    id = "delUnderLayer",
+dlg:combobox {
+    id = "delUnder",
+    label = "Under:",
     text = "Source",
-    selected = defaults.delUnderLayer
+    option = defaults.delUnder,
+    options = delTargets
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "clarify",
+    label = "Note:",
+    text = "Select the mask layer."
 }
 
 dlg:newrow { always = false }
@@ -95,11 +107,22 @@ dlg:button {
         local args = dlg.data
         local target = args.target or defaults.target
         local trimCels = args.trimCels
-        local delOverLayer = args.delOverLayer
-            and (not overLayer.isReference)
-        local delUnderLayer = args.delUnderLayer
-            and (not underLayer.isBackground)
+        local delOverStr = args.delOver or defaults.delOver
+        local delUnderStr = args.delUnder or defaults.delUnder
+
+        local overIsValidTrg = (not overLayer.isReference)
+        local underIsValidTrg = (not underLayer.isBackground)
             and (not underLayer.isReference)
+
+        local delOverLayer = delOverStr == "DELETE_LAYER"
+            and overIsValidTrg
+        local delUnderLayer = delUnderStr == "DELETE_LAYER"
+            and underIsValidTrg
+
+        local delOverCels = delOverStr == "DELETE_CELS"
+            and overIsValidTrg
+        local delUnderCels = delUnderStr == "DELETE_CELS"
+            and underIsValidTrg
 
         -- Determine how a pixel is judged to be transparent.
         local alphaIndex = activeSprite.transparentColor
@@ -279,10 +302,36 @@ dlg:button {
 
         -- Beware: it's possible to delete all layers
         -- in a sprite with Sprite:deleteLayer.
-        if delOverLayer then activeSprite:deleteLayer(overLayer) end
-        if delUnderLayer then activeSprite:deleteLayer(underLayer) end
-        app.activeLayer = compLayer
+        if delOverLayer then
+            activeSprite:deleteLayer(overLayer)
+        elseif delOverCels then
+            app.transaction(function()
+                for i = 1, framesLen, 1 do
+                    local frame = frames[i]
+                    -- API issues an error if a cel cannot
+                    -- be found, so the layer needs to
+                    -- check that it has a cel first.
+                    if overLayer:cel(frame) then
+                        activeSprite:deleteCel(overLayer, frame)
+                    end
+                end
+            end)
+        end
 
+        if delUnderLayer then
+            activeSprite:deleteLayer(underLayer)
+        elseif delUnderCels then
+            app.transaction(function()
+                for i = 1, framesLen, 1 do
+                    local frame = frames[i]
+                    if underLayer:cel(frame) then
+                        activeSprite:deleteCel(underLayer, frame)
+                    end
+                end
+            end)
+        end
+
+        app.activeLayer = compLayer
         app.refresh()
     end
 }

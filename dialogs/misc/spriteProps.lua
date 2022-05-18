@@ -1,5 +1,14 @@
 dofile("../../support/aseutilities.lua")
 
+-- To fix in Aseprite source code:
+-- Go to src/app/commands/cmd_sprite_properties.cpp
+-- Around line 106:
+-- if (Preferences::instance().general.showFullPath()) {
+--     window.name()->setText(document->filename());
+-- } else {
+--     window.name()->setText(document->name());
+-- }
+
 -- Sprite tab color and user data is unique to v1.3 beta.
 local version = app.version
 local versionMajor = version.major
@@ -534,8 +543,6 @@ dlg:button {
             local sprColor = args.sprTabColor
             local userData = args.sprUserData
 
-            -- TODO: Should this be auto-reduced for the user or not?
-            -- Maybe some people want, e.g., 4:2.
             aPxRatio, bPxRatio = Utilities.reduceRatio(aPxRatio, bPxRatio)
 
             app.transaction(function()

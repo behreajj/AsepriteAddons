@@ -1,3 +1,4 @@
+dofile("../../support/clr.lua")
 dofile("../../support/aseutilities.lua")
 
 local directOps = { "BACKWARD", "BOTH", "FORWARD" }
@@ -298,8 +299,7 @@ dlg:button {
                             local pixelItr = currImg:pixels()
                             for elm in pixelItr do
                                 local hex = elm()
-                                local alphaOnly = hex & 0xff000000
-                                if alphaOnly ~= 0x0 then
+                                if (hex & 0xff000000) ~= 0x0 then
                                     pixels[pixelIdx] = hex
                                 else
                                     pixels[pixelIdx] = 0x0
@@ -344,7 +344,8 @@ dlg:button {
                         lerpFunc = function(a, b, c, d)
                             if sampleCount > 2 then
                                 local t = (abs(c - d) - 1.0) / (0.5 * sampleCount - 1.0)
-                                t = min(max(t, 0.0), 1.0)
+                                if t <= 0.0 then return b end
+                                if t >= 1.0 then return a end
                                 return (1.0 - t) * b + t * a
                             elseif sampleCount > 1 then
                                 return (a + b) * 0.5
@@ -431,6 +432,7 @@ dlg:button {
             end
             app.activeLayer = srcLayer
         end)
+
         app.refresh()
     end
 }

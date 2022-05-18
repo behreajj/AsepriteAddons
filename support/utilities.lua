@@ -754,13 +754,15 @@ end
 ---separated by a comma. The integers may
 ---either be individual or ranges connected
 ---by a hyphen. For example, "1,5,10-15,7".
----The sprite frame count is to ensure that
----invalid frames are not included.
+---Supplying the frame count ensures the range
+---is not out-of-bounds; otherwise it is an
+---arbitrarily large integer.
 ---Returns an ordered set of integers.
 ---@param s string range string
 ---@param frameCount number number of frames
 ---@return table
 function Utilities.parseRangeString(s, frameCount)
+    local fcVerif = frameCount or 2147483647
     local strgmatch = string.gmatch
     local dict = {}
 
@@ -773,7 +775,7 @@ function Utilities.parseRangeString(s, frameCount)
             local trial = tonumber(subtoken, 10)
             if trial
                 and trial > 0
-                and trial <= frameCount then
+                and trial <= fcVerif then
 
                 arrNums[cursor] = trial
                 cursor = cursor + 1

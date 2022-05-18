@@ -380,6 +380,7 @@ end
 ---Smoothes the handles of a knot with
 ---reference to a previous and next knot.
 ---An internal helper function.
+---Returns a new carry vector.
 ---@param prev table previous knot
 ---@param curr table current knot
 ---@param next table next knot
@@ -427,28 +428,30 @@ function Knot3.smoothHandlesInternal(
     if dmSq > 0.0 then
         rescl = 1.0 / (3.0 * math.sqrt(dmSq))
     end
-    carry.x = xDir * rescl
-    carry.y = yDir * rescl
-    carry.z = zDir * rescl
+
+    local xCarry = xDir * rescl
+    local yCarry = yDir * rescl
+    local zCarry = zDir * rescl
 
     local bMag = bmSq * bmInv;
     curr.rh = Vec3.new(
-        coCurr.x + bMag * carry.x,
-        coCurr.y + bMag * carry.y,
-        coCurr.z + bMag * carry.z)
+        coCurr.x + bMag * xCarry,
+        coCurr.y + bMag * yCarry,
+        coCurr.z + bMag * zCarry)
 
     local fMag = fmSq * fmInv
     curr.fh = Vec3.new(
-        coCurr.x - fMag * carry.x,
-        coCurr.y - fMag * carry.y,
-        coCurr.z - fMag * carry.z)
+        coCurr.x - fMag * xCarry,
+        coCurr.y - fMag * yCarry,
+        coCurr.z - fMag * zCarry)
 
-    return curr
+    return Vec3.new(xCarry, yCarry, zCarry)
 end
 
 ---Smooths the fore handle of the first knot
 ---in an open curve.
 ---An internal helper function.
+---Returns a new carry vector.
 ---@param curr table current knot
 ---@param next table next knot
 ---@param carry table temporary vector
@@ -494,22 +497,24 @@ function Knot3.smoothHandlesFirstInternal(
     if dmSq > 0.0 then
         rescl = 1.0 / (3.0 * math.sqrt(dmSq))
     end
-    carry.x = xDir * rescl
-    carry.y = yDir * rescl
-    carry.z = zDir * rescl
+
+    local xCarry = xDir * rescl
+    local yCarry = yDir * rescl
+    local zCarry = zDir * rescl
 
     local fMag = fmSq * fmInv
     curr.fh = Vec3.new(
-        coCurr.x - fMag * carry.x,
-        coCurr.y - fMag * carry.y,
-        coCurr.z - fMag * carry.z)
+        coCurr.x - fMag * xCarry,
+        coCurr.y - fMag * yCarry,
+        coCurr.z - fMag * zCarry)
 
-    return curr
+    return Vec3.new(xCarry, yCarry, zCarry)
 end
 
 ---Smooths the rear handle of the last knot
 ---in an open curve.
 ---An internal helper function.
+---Returns a new carry vector.
 ---@param prev table previous knot
 ---@param curr table current knot
 ---@param carry table temporary vector
@@ -555,17 +560,18 @@ function Knot3.smoothHandlesLastInternal(
     if dmSq > 0.0 then
         rescl = 1.0 / (3.0 * math.sqrt(dmSq))
     end
-    carry.x = xDir * rescl
-    carry.y = yDir * rescl
-    carry.z = zDir * rescl
+
+    local xCarry = xDir * rescl
+    local yCarry = yDir * rescl
+    local zCarry = zDir * rescl
 
     local bMag = bmSq * bmInv
     curr.rh = Vec3.new(
-        coCurr.x + bMag * carry.x,
-        coCurr.y + bMag * carry.y,
-        coCurr.z + bMag * carry.z)
+        coCurr.x + bMag * xCarry,
+        coCurr.y + bMag * yCarry,
+        coCurr.z + bMag * zCarry)
 
-    return curr
+    return Vec3.new(xCarry, yCarry, zCarry)
 end
 
 ---Returns a JSON string of a knot.

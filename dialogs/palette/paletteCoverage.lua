@@ -506,7 +506,7 @@ dlg:button {
         local projection = nil
         local projPreset = args.projection
         if projPreset == "PERSPECTIVE" then
-            local fov = 0.8660254037844386
+            local fov = 0.86602540378444
             local aspect = width / height
             projection = Mat4.perspective(
                 fov, aspect, 0.001, 1000.0)
