@@ -41,7 +41,7 @@ dlg:combobox {
     onchange = function()
         local md = dlg.data.target
         dlg:modify {
-            id = "palette",
+            id = "paletteIndex",
             visible = md == "ACTIVE"
         }
         dlg:modify {

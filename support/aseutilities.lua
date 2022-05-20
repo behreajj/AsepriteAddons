@@ -1817,6 +1817,7 @@ function AseUtilities.setSpritePalette(arr, sprite, paletteIndex)
     local lenPalettes = #palettes
     local lenHexArr = #arr
     local palIdxVerif = paletteIndex or 1
+    -- TODO: Formalize to a Utilities.wrap method?
     palIdxVerif = 1 + (palIdxVerif - 1) % lenPalettes
     -- if lenHexArr > 0
     --     and paletteIndex
