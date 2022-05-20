@@ -982,7 +982,7 @@ end
 ---@param w number image width
 ---@param h number image height
 ---@return table
-function Utilities.rotate90(source, w, h)
+function Utilities.rotatePixels90(source, w, h)
     local len = #source
     local lennh = len - h
     local rotated = {}
@@ -998,7 +998,7 @@ end
 ---@param w number image width
 ---@param h number image height
 ---@return table
-function Utilities.rotate270(source, w, h)
+function Utilities.rotatePixels270(source, w, h)
     local len = #source
     local hn1 = h - 1
     local rotated = {}
@@ -1172,7 +1172,7 @@ end
 ---@param y number y translation
 ---@param w number image width
 ---@param h number image height
-function Utilities.wrap(source, x, y, w, h)
+function Utilities.wrapPixels(source, x, y, w, h)
     local len = #source
     local wrapped = {}
     for i = 0, len - 1, 1 do

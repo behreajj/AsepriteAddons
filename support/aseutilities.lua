@@ -652,11 +652,12 @@ function AseUtilities.createNewCels(
 
     -- Validate layer start index.
     -- Allow for negative indices, which are wrapped.
+    -- Length is one extra because this is an insert.
     local valLyrIdx = layerStartIndex or 1
     if valLyrIdx == 0 then
         valLyrIdx = 1
     else
-        valLyrIdx = 1 + ((valLyrIdx - 1) % (sprLyrCt + 1))
+        valLyrIdx = 1 + (valLyrIdx - 1) % (sprLyrCt + 1)
     end
     -- print("valLyrIdx: " .. valLyrIdx)
 
@@ -665,7 +666,8 @@ function AseUtilities.createNewCels(
     if valFrmIdx == 0 then
         valFrmIdx = 1
     else
-        valFrmIdx = 1 + ((valFrmIdx - 1) % (sprFrmCt + 1))
+        -- TODO: Replace with a Utilities.wrap?
+        valFrmIdx = 1 + (valFrmIdx - 1) % (sprFrmCt + 1)
     end
     -- print("valFrmIdx: " .. valFrmIdx)
 
@@ -1551,25 +1553,6 @@ function AseUtilities.grayHexes(count)
     return result
 end
 
----Creates an Aseprite palette from a table of
----hex color integers. Assumes the hex colors
----are belong to the same color profile as the
----sprite to which the palette will be assigned.
----If the first color in the table is not clear
----black (0x0), then one will be prepended.
----@param arr table hexadecimal array
----@return userdata
-function AseUtilities.hexArrToAsePalette(arr)
-    local arrLen = #arr
-    local palLen = arrLen
-    local pal = Palette(palLen)
-    local hexToAse = AseUtilities.hexToAseColor
-    for i = 1, arrLen, 1 do
-        pal:setColor(i - 1, hexToAse(arr[i]))
-    end
-    return pal
-end
-
 ---Converts a hexadecimal integer to an Aseprite
 ---Color object. Does not use the Color constructor
 ---for this purpose, as the color mode dictates
@@ -1630,8 +1613,7 @@ function AseUtilities.initCanvas(
         sprite = Sprite(spec)
         app.activeSprite = sprite
         layer = sprite.layers[1]
-        sprite:setPalette(
-            AseUtilities.hexArrToAsePalette(clrsVal))
+        AseUtilities.setSpritePalette(clrsVal, sprite, 1)
     end
 
     layer.name = layerName or "Layer"
@@ -1735,7 +1717,7 @@ function AseUtilities.rotate90(source)
     local srcSpec = source.spec
     local w = srcSpec.width
     local h = srcSpec.height
-    local pxRot = Utilities.rotate90(px, w, h)
+    local pxRot = Utilities.rotatePixels90(px, w, h)
 
     local trgSpec = ImageSpec {
         width = h,
@@ -1806,7 +1788,7 @@ function AseUtilities.rotate270(source)
     local srcSpec = source.spec
     local w = srcSpec.width
     local h = srcSpec.height
-    local pxRot = Utilities.rotate270(px, w, h)
+    local pxRot = Utilities.rotatePixels270(px, w, h)
 
     local trgSpec = ImageSpec {
         width = h,
@@ -1823,6 +1805,40 @@ function AseUtilities.rotate270(source)
         j = j + 1
     end
     return target, 1 - h, 0
+end
+
+---Sets a palette in a sprite at a given index to a table
+---of colors represented as hexadecimal integers.
+---@param arr table color array
+---@param sprite userdata sprite
+---@param paletteIndex number index
+function AseUtilities.setSpritePalette(arr, sprite, paletteIndex)
+    -- TODO: Make a palette cleanse function?
+    local palettes = sprite.palettes
+    local lenPalettes = #palettes
+    local lenHexArr = #arr
+    local palIdxVerif = paletteIndex or 1
+    palIdxVerif = 1 + (palIdxVerif - 1) % lenPalettes
+    -- if lenHexArr > 0
+    --     and paletteIndex
+    --     and paletteIndex >= 1
+    --     and paletteIndex <= lenPalettes then
+    local palette = palettes[palIdxVerif]
+    if lenHexArr > 0 then
+        app.transaction(function()
+            palette:resize(lenHexArr)
+            for i = 1, lenHexArr, 1 do
+                local hex = arr[i]
+                local aseColor = AseUtilities.hexToAseColor(hex)
+                palette:setColor(i - 1, aseColor)
+            end
+        end)
+    else
+        app.transaction(function()
+            palette:resize(1)
+            palette:setColor(0, Color(0, 0, 0, 0))
+        end)
+    end
 end
 
 ---Converts an image from a tile set layer to a regular
@@ -2051,7 +2067,7 @@ end
 ---@param x number x translation
 ---@param y number y translation
 ---@return userdata
-function AseUtilities.wrap(source, x, y)
+function AseUtilities.wrapImage(source, x, y)
     local px = {}
     local i = 1
     local srcPxItr = source:pixels()
@@ -2063,7 +2079,7 @@ function AseUtilities.wrap(source, x, y)
     local sourceSpec = source.spec
     local w = sourceSpec.width
     local h = sourceSpec.height
-    local wrp = Utilities.wrap(px, x, y, w, h)
+    local wrp = Utilities.wrapPixels(px, x, y, w, h)
 
     local target = Image(sourceSpec)
     local j = 1

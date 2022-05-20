@@ -308,9 +308,9 @@ dlg:button {
             app.transaction(function()
                 for i = 1, framesLen, 1 do
                     local frame = frames[i]
-                    -- API issues an error if a cel cannot
-                    -- be found, so the layer needs to
-                    -- check that it has a cel first.
+                    -- API reports an error if a cel cannot be
+                    -- found, so the layer needs to check that
+                    -- it has a cel first.
                     if overLayer:cel(frame) then
                         activeSprite:deleteCel(overLayer, frame)
                     end

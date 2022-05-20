@@ -116,8 +116,6 @@ dlg:button {
             Utilities.prependMask(hexesSrgb)
         end
 
-        local pal = AseUtilities.hexArrToAsePalette(hexesSrgb)
-
         local candidates = {}
         -- local rejected = {}
         local profileNone = ColorSpace()
@@ -146,7 +144,7 @@ dlg:button {
         local candLen = #candidates
         for i = 1, candLen, 1 do
             local candidate = candidates[i]
-            candidate:setPalette(pal)
+            AseUtilities.setSpritePalette(hexesSrgb, candidate, 1)
         end
 
         app.refresh()

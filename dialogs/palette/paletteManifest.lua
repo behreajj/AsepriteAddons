@@ -1,5 +1,5 @@
-dofile("../../support/aseutilities.lua")
 dofile("../../support/clr.lua")
+dofile("../../support/aseutilities.lua")
 
 local palTypes = { "ACTIVE", "FILE", "PRESET" }
 local palFormats = { "aseprite", "gpl", "png", "pal", "webp" }
@@ -966,8 +966,8 @@ dlg:button {
         -- Create and set the manifest palette.
         -- Wait to do this until the end, so we have greater
         -- assurance that the manifestSprite is app.active.
-        manifestSprite:setPalette(
-            AseUtilities.hexArrToAsePalette(hexesProfile))
+        AseUtilities.setSpritePalette(hexesProfile,
+            manifestSprite, 1)
         app.refresh()
     end
 }

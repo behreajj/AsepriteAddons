@@ -20,8 +20,7 @@ local function loadSprite(spriteFile)
         local rtLen = math.max(16,
             math.ceil(math.sqrt(math.max(1, colorsLen))))
         sprite = Sprite(rtLen, rtLen)
-        sprite:setPalette(
-            AseUtilities.hexArrToAsePalette(spriteHexes))
+        AseUtilities.setSpritePalette(spriteHexes, sprite, 1)
 
         local layer = sprite.layers[1]
         local cel = layer.cels[1]
@@ -241,8 +240,9 @@ dlg:button {
                     if prependMask then
                         Utilities.prependMask(hexesProfile)
                     end
-                    local newPal = AseUtilities.hexArrToAsePalette(hexesProfile)
-                    openSprite:setPalette(newPal)
+
+                    -- TODO: Should all palettes of the open file be set?
+                    AseUtilities.setSpritePalette(hexesProfile, openSprite, 1)
 
                     local trimCels = args.trimCels
                     if trimCels then

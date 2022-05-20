@@ -14,8 +14,6 @@ local harmonies = {
 }
 
 local defaults = {
-    -- TODO: Possibility for auto color set
-    -- with event listeners?
     base = Color(255, 0, 0, 255),
     hexCode = "FF0000",
     lightness = 53,

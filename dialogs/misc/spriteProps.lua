@@ -187,6 +187,12 @@ local function updatePath()
     if showFullPath then
         path = app.fs.filePath(filename)
     end
+    local lenPath = #path
+    if lenPath >= defaults.textLenLimit then
+        path = "..." .. string.sub(path,
+            lenPath - defaults.textLenLimit, lenPath)
+    end
+
     dlg:modify { id = "pathLabel", text = path }
     dlg:modify { id = "pathLabel", visible = showFullPath
         and path and #path > 0 }
@@ -194,6 +200,11 @@ end
 
 local function updateTitle()
     title = app.fs.fileTitle(filename)
+    if #title >= defaults.textLenLimit then
+        title = string.sub(title, 1,
+            defaults.textLenLimit) .. "..."
+    end
+
     dlg:modify { id = "titleLabel", text = title }
     dlg:modify { id = "titleLabel", visible = title and #title > 0 }
 end
@@ -244,8 +255,10 @@ local function updatePalettes()
     local lenPals = #palettes
     local palCountStr = string.format("%d", lenPals)
     dlg:modify { id = "palettesLabel", text = palCountStr }
-    dlg:modify { id = "palettesLabel", visible =
-        lenPals > 1 and colorMode == ColorMode.INDEXED }
+    dlg:modify {
+        id = "palettesLabel",
+        visible = lenPals > 1 and colorMode == ColorMode.INDEXED
+    }
 end
 
 local function updatePalCount()
@@ -269,8 +282,7 @@ local function updatePalCount()
     end
 
     dlg:modify { id = "palCountLabel", text = palCountStr }
-    dlg:modify { id = "palCountLabel", visible =
-        colorMode == ColorMode.INDEXED }
+    dlg:modify { id = "palCountLabel", visible = colorMode == ColorMode.INDEXED }
 end
 
 local function updateMaskIndex()
@@ -279,8 +291,7 @@ local function updateMaskIndex()
     local maskIdxNum = spec.transparentColor
     local maskIdxStr = string.format("%d", maskIdxNum)
     dlg:modify { id = "maskIdxLabel", text = maskIdxStr }
-    dlg:modify { id = "maskIdxLabel", visible =
-        colorMode == ColorMode.INDEXED }
+    dlg:modify { id = "maskIdxLabel", visible = colorMode == ColorMode.INDEXED }
 end
 
 local function updateMaskColor()
@@ -490,46 +501,6 @@ local function updateDialogWidgets()
 end
 
 updateDialogWidgets()
-
--- TODO: Make this its own dialog? paletteClean?
--- dlg:button {
---     id = "fixAlphaMask",
---     text = "&FIX",
---     focus = false,
---     onclick = function()
---         if sprite and app.activeSprite == sprite then
---             app.command.ChangePixelFormat { format = "rgb" }
---             sprite.transparentColor = 0
---             local hexesProfile = AseUtilities.asePaletteToHexArr(palette, 0, palCount)
---             local uniques, _ = Utilities.uniqueColors(hexesProfile, true)
---             local masked = Utilities.prependMask(uniques)
---             local newPal = AseUtilities.hexArrToAsePalette(masked)
---             sprite:setPalette(newPal)
---             app.command.ChangePixelFormat { format = "indexed" }
--- -- This would have to prepend alpha mask to all palettes.
-            -- local palettes = sprite.palettes
-            -- local lenPalettes = #palettes
-            -- local actFrIdx = 1
-            -- if app.activeFrame then
-            --     actFrIdx = app.activeFrame.frameNumber
-            --     if actFrIdx > lenPalettes then actFrIdx = 1 end
-            -- end
-            -- local palette = palettes[actFrIdx]
---             palCount = #palette
---             palCountStr = string.format("%d", palCount)
---             alphaMaskIdxNum = 0
---             alphaMaskIdxStr = "0"
---             maskClrVal = Color(0, 0, 0, 0)
-
---             dlg:modify { id = "palCountLabel", text = palCountStr }
---             dlg:modify { id = "maskIdx", text = alphaMaskIdxStr }
---             dlg:modify { id = "maskClr", colors = { maskClrVal } }
---             dlg:modify { id = "fixAlphaMask", visible = false }
-
---             app.refresh()
---         end
---     end
--- }
 
 dlg:button {
     id = "confirm",

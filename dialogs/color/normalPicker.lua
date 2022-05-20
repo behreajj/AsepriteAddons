@@ -541,8 +541,8 @@ dlg:button {
         local segImgPxItr = segImg:pixels()
 
         local swatchesDict = {}
-        swatchesDict[0x00000000] = 0
-        local palIdx = 1
+        swatchesDict[0x00000000] = 1
+        local palIdx = 2
         for elm in segImgPxItr do
             local t = elm.x * xToFac
             t = math.max(0.0,
@@ -567,11 +567,11 @@ dlg:button {
             Point(0, gradHeight // 2))
 
         -- Set palette.
-        local pal = Palette(palIdx)
+        local pal = {}
         for k, v in pairs(swatchesDict) do
-            pal:setColor(v, k)
+            pal[v] = k
         end
-        gradSprite:setPalette(pal)
+        AseUtilities.setSpritePalette(pal, gradSprite, 1)
 
         -- If colors were chosen by index, they will be
         -- blank when new sprite is created, even if
@@ -717,8 +717,7 @@ dlg:button {
         end
 
         cel.image = img
-        sprite:setPalette(
-            AseUtilities.hexArrToAsePalette(normalsPal))
+        AseUtilities.setSpritePalette(normalsPal, sprite, 1)
         app.refresh()
     end
 }

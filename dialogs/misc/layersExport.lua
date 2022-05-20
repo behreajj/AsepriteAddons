@@ -37,8 +37,8 @@ local function appendVisChildren(layer, array)
     if layer.isVisible then
         if layer.isGroup then
             local childLayers = layer.layers
-            local childLayerCount = #childLayers
-            for i = 1, childLayerCount, 1 do
+            local lenChildLayers = #childLayers
+            for i = 1, lenChildLayers, 1 do
                 local childLayer = childLayers[i]
                 appendVisChildren(childLayer, array)
             end

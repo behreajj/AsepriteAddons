@@ -135,7 +135,7 @@ dlg:button {
         local ytr = args.yTranslate or defaults.yTranslate
         if xtr == 0.0 and ytr == 0.0 then return end
 
-        local wrap = AseUtilities.wrap
+        local wrap = AseUtilities.wrapImage
         local cels = getTargetCels(target, activeSprite)
         local celsLen = #cels
 

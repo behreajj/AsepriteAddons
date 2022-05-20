@@ -189,10 +189,7 @@ dlg:button {
 
             local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
-
-            activeSprite:setPalette(
-                AseUtilities.hexArrToAsePalette(colors))
-
+            AseUtilities.setSpritePalette(colors,activeSprite, 1)
             AseUtilities.changePixelFormat(oldMode)
             app.refresh()
         end

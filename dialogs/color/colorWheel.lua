@@ -1,3 +1,4 @@
+dofile("../../support/clr.lua")
 dofile("../../support/aseutilities.lua")
 
 local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
@@ -435,12 +436,10 @@ dlg:button {
             -- This needs to be done at the very end because
             -- prependMask modifies hexesProfile.
             Utilities.prependMask(hexesProfile)
-            sprite:setPalette(
-                AseUtilities.hexArrToAsePalette(hexesProfile))
+            AseUtilities.setSpritePalette(hexesProfile, sprite, 1)
         else
-            sprite:setPalette(
-                AseUtilities.hexArrToAsePalette(
-                    AseUtilities.DEFAULT_PAL_ARR))
+            AseUtilities.setSpritePalette(
+                AseUtilities.DEFAULT_PAL_ARR, sprite, 1)
         end
 
         app.activeFrame = sprite.frames[

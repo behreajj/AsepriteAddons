@@ -5,15 +5,16 @@ local defaults = {
     clampTo256 = true,
     prependMask = true,
     target = "ACTIVE",
+    paletteIndex = 1,
     pullFocus = false
 }
 
 local dlg = Dialog { title = "Palette From Cel" }
 
 dlg:check {
-   id = "removeAlpha",
-   label = "Opaque Colors:",
-   selected = defaults.removeAlpha
+    id = "removeAlpha",
+    label = "Opaque Colors:",
+    selected = defaults.removeAlpha
 }
 
 dlg:check {
@@ -40,10 +41,25 @@ dlg:combobox {
     onchange = function()
         local md = dlg.data.target
         dlg:modify {
+            id = "palette",
+            visible = md == "ACTIVE"
+        }
+        dlg:modify {
             id = "filepath",
             visible = md == "SAVE"
         }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "paletteIndex",
+    label = "Palette:",
+    min = 1,
+    max = 96,
+    value = defaults.paletteIndex,
+    visible = defaults.target == "ACTIVE"
 }
 
 dlg:newrow { always = false }
@@ -166,27 +182,33 @@ dlg:button {
                         palLen = math.min(256, hexesLen)
                     end
 
-                    local palette = Palette(palLen)
-                    for i = 1, palLen, 1 do
-                        palette:setColor(i - 1,
-                            AseUtilities.hexToAseColor(hexes[i]))
-                    end
 
                     if target == "SAVE" then
                         local filepath = args.filepath
+                        local palette = Palette(palLen)
+                        for i = 1, palLen, 1 do
+                            palette:setColor(i - 1,
+                                AseUtilities.hexToAseColor(hexes[i]))
+                        end
                         palette:saveAs(filepath)
                         app.alert("Palette saved.")
                     else
+                        -- How to handle out of bounds palette index?
+                        local palIdx = args.paletteIndex or defaults.paletteIndex
+                        if palIdx > #sprite.palettes then
+                            app.alert("Palette index is out of bounds.")
+                            return
+                        end
+
                         if colorMode == ColorMode.INDEXED then
-                            -- Not sure how to get around this
-                            -- for indexed...
+                            -- Not sure how to get around this...
                             app.command.ChangePixelFormat { format = "rgb" }
-                            sprite:setPalette(palette)
+                            AseUtilities.setSpritePalette(hexes, sprite, palIdx)
                             app.command.ChangePixelFormat { format = "indexed" }
                         elseif colorMode == ColorMode.GRAY then
-                            sprite:setPalette(palette)
+                            AseUtilities.setSpritePalette(hexes, sprite, palIdx)
                         else
-                            sprite:setPalette(palette)
+                            AseUtilities.setSpritePalette(hexes, sprite, palIdx)
                         end
 
                     end
