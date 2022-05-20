@@ -1813,7 +1813,6 @@ end
 ---@param sprite userdata sprite
 ---@param paletteIndex number index
 function AseUtilities.setSpritePalette(arr, sprite, paletteIndex)
-    -- TODO: Make a palette cleanse function?
     local palettes = sprite.palettes
     local lenPalettes = #palettes
     local lenHexArr = #arr
