@@ -3,7 +3,6 @@ local stepInto = false
 local activeSprite = app.activeSprite
 if not activeSprite then return end
 
--- TODO: Support moving a range of cels?
 local activeLayer = app.activeLayer
 if activeLayer then
     local stackIndex = activeLayer.stackIndex

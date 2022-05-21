@@ -203,8 +203,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- TODO: Fudge factor for palettes of length 2?
-
         local sprite = app.activeSprite
         if not sprite then
             app.alert("There is no active sprite.")

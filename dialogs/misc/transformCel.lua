@@ -158,7 +158,6 @@ dlg:button {
     text = "TL",
     focus = false,
     onclick = function()
-        -- TODO: Make these relative to a selection bounds?
         local activeSprite = app.activeSprite
         if not activeSprite then return end
 
@@ -411,7 +410,7 @@ dlg:button {
         local cels = getTargetCels(target, activeSprite)
         local celsLen = #cels
 
-        local rot90 =  AseUtilities.rotate90
+        local rot90 =  AseUtilities.rotateImage90
         app.transaction(function()
             for i = 1, celsLen, 1 do
                 local cel = cels[i]
@@ -455,7 +454,7 @@ dlg:button {
         local cels = getTargetCels(target, activeSprite)
         local celsLen = #cels
 
-        local rot =  AseUtilities.rotate180
+        local rot =  AseUtilities.rotateImage180
         app.transaction(function()
             for i = 1, celsLen, 1 do
                 local cel = cels[i]
@@ -480,7 +479,7 @@ dlg:button {
         local cels = getTargetCels(target, activeSprite)
         local celsLen = #cels
 
-        local rot270 =  AseUtilities.rotate270
+        local rot270 =  AseUtilities.rotateImage270
         app.transaction(function()
             for i = 1, celsLen, 1 do
                 local cel = cels[i]
@@ -527,7 +526,7 @@ dlg:button {
         local cels = getTargetCels(target, activeSprite)
         local celsLen = #cels
 
-        local fliph =  AseUtilities.flipHorizontal
+        local fliph =  AseUtilities.flipImageHoriz
         app.transaction(function()
             for i = 1, celsLen, 1 do
                 local cel = cels[i]
@@ -552,7 +551,7 @@ dlg:button {
         local cels = getTargetCels(target, activeSprite)
         local celsLen = #cels
 
-        local flipv =  AseUtilities.flipVertical
+        local flipv =  AseUtilities.flipImageVert
         app.transaction(function()
             for i = 1, celsLen, 1 do
                 local cel = cels[i]

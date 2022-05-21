@@ -3,7 +3,7 @@ dofile("../../support/aseutilities.lua")
 local msgSrcs = { "ENTRY", "FILE" }
 local txtFormats = { "gpl", "pal", "txt" }
 
-local function slice (tbl, start, finish)
+local function slice(tbl, start, finish)
     local pos = 1
     local sl = {}
     local stop = finish
@@ -192,7 +192,13 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
+        -- Only support RGB color mode.
+        if app.activeSprite
+            and app.activeSprite.colorMode ~= ColorMode.RGB then
+            app.alert("Only RGB color mode is supported.")
+            dlg:close()
+            return
+        end
 
         -- Constants, as far as we're concerned.
         local lut = Utilities.GLYPH_LUT
@@ -204,6 +210,7 @@ dlg:button {
         local displayString = AseUtilities.drawStringHoriz
 
         -- Unpack arguments.
+        local args = dlg.data
         local msgSrc = args.msgSrc or defaults.msgSrc
         local msgEntry = args.msgEntry
         local msgFilePath = args.msgFilePath
@@ -294,16 +301,6 @@ dlg:button {
         local widthSprite = sprite.width
         local heightSprite = sprite.height
         local layer = sprite.layers[#sprite.layers]
-
-        -- Only support RGB color mode.
-        if sprite.colorMode ~= ColorMode.RGB then
-            -- TODO: Can this exit be earlier? Maybe check
-            -- app.activeSprite anyway, even though you use
-            -- initCanvas?
-            app.alert("Only RGB color mode is supported.")
-            dlg:close()
-            return
-        end
 
         -- Determine if background and shadow should
         -- be used based on their alpha.

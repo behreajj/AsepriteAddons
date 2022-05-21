@@ -287,7 +287,7 @@ end
 ---@param source table source pixels
 ---@param w number image width
 ---@return table
-function Utilities.flipHorizontal(source, w)
+function Utilities.flipPixelsHoriz(source, w)
     local len = #source
     local wn1 = w - 1
     local flipped = {}
@@ -303,7 +303,7 @@ end
 ---@param w number image width
 ---@param h number image height
 ---@return table
-function Utilities.flipVertical(source, w, h)
+function Utilities.flipPixelsVert(source, w, h)
     local len = #source
     local hn1 = h - 1
     local flipped = {}

@@ -364,7 +364,9 @@ function AseUtilities.asePalettesToHexArr(palettes)
                 local lenPalette = #palette
                 for j = 1, lenPalette, 1 do
                     local aseColor = palette:getColor(j - 1)
-                    table.insert(hexes, aseColor.rgbaPixel)
+                    local hex = AseUtilities.aseColorToHex(
+                        aseColor, ColorMode.RGB)
+                    table.insert(hexes, hex)
                 end
             end
         end
@@ -666,7 +668,6 @@ function AseUtilities.createNewCels(
     if valFrmIdx == 0 then
         valFrmIdx = 1
     else
-        -- TODO: Replace with a Utilities.wrap?
         valFrmIdx = 1 + (valFrmIdx - 1) % (sprFrmCt + 1)
     end
     -- print("valFrmIdx: " .. valFrmIdx)
@@ -1456,7 +1457,7 @@ end
 ---@return userdata
 ---@return number
 ---@return number
-function AseUtilities.flipHorizontal(source)
+function AseUtilities.flipImageHoriz(source)
     local px = {}
     local i = 1
     local srcPxItr = source:pixels()
@@ -1467,7 +1468,7 @@ function AseUtilities.flipHorizontal(source)
 
     local srcSpec = source.spec
     local w = srcSpec.width
-    local pxFlp = Utilities.flipHorizontal(px, w)
+    local pxFlp = Utilities.flipPixelsHoriz(px, w)
 
     local target = Image(srcSpec)
     local j = 1
@@ -1487,7 +1488,7 @@ end
 ---@return userdata
 ---@return number
 ---@return number
-function AseUtilities.flipVertical(source)
+function AseUtilities.flipImageVert(source)
     local px = {}
     local i = 1
     local srcPxItr = source:pixels()
@@ -1499,7 +1500,7 @@ function AseUtilities.flipVertical(source)
     local srcSpec = source.spec
     local w = srcSpec.width
     local h = srcSpec.height
-    local pxFlp = Utilities.flipVertical(px, w, h)
+    local pxFlp = Utilities.flipPixelsVert(px, w, h)
 
     local target = Image(srcSpec)
     local j = 1
@@ -1705,7 +1706,7 @@ end
 ---@return userdata
 ---@return number
 ---@return number
-function AseUtilities.rotate90(source)
+function AseUtilities.rotateImage90(source)
     local px = {}
     local i = 1
     local srcPxItr = source:pixels()
@@ -1744,7 +1745,7 @@ end
 ---@return userdata
 ---@return number
 ---@return number
-function AseUtilities.rotate180(source)
+function AseUtilities.rotateImage180(source)
     local px = {}
     local i = 1
     local srcPxItr = source:pixels()
@@ -1776,7 +1777,7 @@ end
 ---@return userdata
 ---@return number
 ---@return number
-function AseUtilities.rotate270(source)
+function AseUtilities.rotateImage270(source)
     local px = {}
     local i = 1
     local srcPxItr = source:pixels()
@@ -1817,7 +1818,6 @@ function AseUtilities.setSpritePalette(arr, sprite, paletteIndex)
     local lenPalettes = #palettes
     local lenHexArr = #arr
     local palIdxVerif = paletteIndex or 1
-    -- TODO: Formalize to a Utilities.wrap method?
     palIdxVerif = 1 + (palIdxVerif - 1) % lenPalettes
     -- if lenHexArr > 0
     --     and paletteIndex

@@ -37,6 +37,48 @@ local path = ""
 local prefs = nil
 local showFullPath = false
 
+local function bytesToStr(bytes)
+    -- https://stackoverflow.com/questions/15900485/
+    -- correct-way-to-convert-size-in-bytes-to-kb-mb-gb-in-javascript
+    if bytes == 0 then return "0 Bytes" end
+    local sizes = { "Bytes", "kB", "MB", "GB", "TB" }
+    local i = math.floor(math.log(bytes, 1024))
+    return string.format("%0.1f %s", bytes / (1024 ^ i), sizes[1 + i])
+end
+
+local function memoryImage(image)
+    local imageSpec = image.spec
+
+    local bytesPerPixel = 0
+    local colorMode = imageSpec.colorMode
+    if colorMode == ColorMode.RGB then
+        bytesPerPixel = 4
+    elseif colorMode == ColorMode.INDEXED then
+        bytesPerPixel = 1
+    elseif colorMode == ColorMode.GRAY then
+        bytesPerPixel = 2
+    elseif colorMode == 4 then -- Tilemap
+        bytesPerPixel = 4
+    end
+
+    return imageSpec.width
+        * imageSpec.height
+        * bytesPerPixel
+end
+
+-- Hard to see how this has any bearing
+-- on reality. A sprite has a palette, user
+-- data, etc.
+local function memorySprite(spr)
+    local cels = spr.cels
+    local lenCels = #cels
+    local sum = 0
+    for i = 1, lenCels, 1 do
+        sum = sum + memoryImage(cels[i].image)
+    end
+    return sum
+end
+
 local function updateSprite()
     sprite = app.activeSprite
     if not sprite and #app.sprites > 0 then
@@ -155,6 +197,12 @@ dlg:label {
     text = "",
     visible = false }
 dlg:newrow { always = false }
+-- dlg:label {
+--     id = "memoryLabel",
+--     label = "Memory:",
+--     text = "",
+--     visible = false }
+-- dlg:newrow { always = false }
 dlg:color {
     id = "sprTabColor",
     label = "Tab Color:",
@@ -434,6 +482,13 @@ local function updateDuration()
     dlg:modify { id = "durationLabel", visible = lenFrames > 1 }
 end
 
+-- local function updateMemory()
+--     local bytes = memorySprite(sprite)
+--     local memStr = bytesToStr(bytes)
+--     dlg:modify { id = "memoryLabel", text = memStr }
+--     dlg:modify { id = "memoryLabel", visible = true }
+-- end
+
 local function updateTabColor()
     local sprColorVal = nil
     if isBetaVersion then
@@ -495,6 +550,7 @@ local function updateDialogWidgets()
     updateAspect()
     updateFrames()
     updateDuration()
+    -- updateMemory()
     updateTabColor()
     updateUserData()
     updatePixelRatio()

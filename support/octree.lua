@@ -63,7 +63,7 @@ end
 ---@param dist number the point distance
 ---@return table
 function Octree.bisectRight(arr, dist)
-    local low = 1
+    local low = 0
     local high = #arr
 
     -- https://github.com/python/cpython/blob/main/Lib/bisect.py
@@ -72,14 +72,14 @@ function Octree.bisectRight(arr, dist)
     -- is an object without a defined < comparator.
     while low < high do
         local middle = (low + high) // 2
-        if dist < arr[middle].dist then
+        if dist < arr[1 + middle].dist then
             high = middle
         else
             low = middle + 1
         end
     end
 
-    return low
+    return 1 + low
 end
 
 ---Finds the mean center of each leaf node in

@@ -78,149 +78,153 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local sprite = app.activeSprite
-        if sprite then
-            local cel = app.activeCel
-            if cel then
-                local colorMode = sprite.colorMode
-
-                local args = dlg.data
-                local removeAlpha = args.removeAlpha
-                local target = args.target
-                local clampTo256 = args.clampTo256
-                local prependMask = args.prependMask
-
-                local image = cel.image
-                local itr = image:pixels()
-                local dictionary = {}
-                local idx = 1
-
-                local alphaMask = 0
-                if removeAlpha then
-                    if colorMode == ColorMode.GRAY then
-                        alphaMask = 0xff00
-                    else
-                        alphaMask = 0xff000000
-                    end
-                end
-
-                -- In Aseprite 1.3, it's possible for images in
-                -- tile map layers to have a colorMode of 4.
-                if colorMode == ColorMode.RGB then
-                    for elm in itr do
-                        local hex = elm()
-                        if ((hex >> 0x18) & 0xff) > 0 then
-                            hex = alphaMask | hex
-                            if not dictionary[hex] then
-                                dictionary[hex] = idx
-                                idx = idx + 1
-                            end
-                        end
-                    end
-                elseif colorMode == ColorMode.INDEXED then
-                    local palettes = sprite.palettes
-                    local lenPalettes = #palettes
-                    local actFrIdx = 1
-                    if app.activeFrame then
-                        actFrIdx = math.min(math.max(
-                            app.activeFrame.frameNumber, 1), lenPalettes)
-                    end
-                    local srcPal = palettes[actFrIdx]
-
-                    local srcPalLen = #srcPal
-                    for elm in itr do
-                        local srcIndex = elm()
-                        if srcIndex > -1 and srcIndex < srcPalLen then
-                            local aseColor = srcPal:getColor(srcIndex)
-                            if aseColor.alpha > 0 then
-                                local hex = aseColor.rgbaPixel
-                                hex = alphaMask | hex
-                                if not dictionary[hex] then
-                                    dictionary[hex] = idx
-                                    idx = idx + 1
-                                end
-                            end
-                        end
-                    end
-                elseif colorMode == ColorMode.GRAY then
-                    for elm in itr do
-                        local hexGray = elm()
-                        if ((hexGray >> 0x08) & 0xff) > 0 then
-                            hexGray = alphaMask | hexGray
-                            local a = (hexGray >> 0x08) & 0xff
-                            local v = hexGray & 0xff
-                            local hex = a << 0x18 | v << 0x10 | v << 0x08 | v
-                            if not dictionary[hex] then
-                                dictionary[hex] = idx
-                                idx = idx + 1
-                            end
-                        end
-                    end
-                end
-
-                local hexes = {}
-                for k, v in pairs(dictionary) do
-                    hexes[v] = k
-                end
-
-                if prependMask then
-                    local maskIdx = dictionary[0x0]
-                    if maskIdx then
-                        if maskIdx > 1 then
-                            table.remove(hexes, maskIdx)
-                            table.insert(hexes, 1, 0x0)
-                        end
-                    else
-                        table.insert(hexes, 1, 0x0)
-                    end
-                end
-
-                local hexesLen = #hexes
-                if hexesLen > 0 then
-                    local palLen = hexesLen
-                    if clampTo256 then
-                        palLen = math.min(256, hexesLen)
-                    end
-
-
-                    if target == "SAVE" then
-                        local filepath = args.filepath
-                        local palette = Palette(palLen)
-                        for i = 1, palLen, 1 do
-                            palette:setColor(i - 1,
-                                AseUtilities.hexToAseColor(hexes[i]))
-                        end
-                        palette:saveAs(filepath)
-                        app.alert("Palette saved.")
-                    else
-                        -- How to handle out of bounds palette index?
-                        local palIdx = args.paletteIndex or defaults.paletteIndex
-                        if palIdx > #sprite.palettes then
-                            app.alert("Palette index is out of bounds.")
-                            return
-                        end
-
-                        if colorMode == ColorMode.INDEXED then
-                            -- Not sure how to get around this...
-                            app.command.ChangePixelFormat { format = "rgb" }
-                            AseUtilities.setSpritePalette(hexes, sprite, palIdx)
-                            app.command.ChangePixelFormat { format = "indexed" }
-                        elseif colorMode == ColorMode.GRAY then
-                            AseUtilities.setSpritePalette(hexes, sprite, palIdx)
-                        else
-                            AseUtilities.setSpritePalette(hexes, sprite, palIdx)
-                        end
-
-                    end
-                end
-
-                app.refresh()
-            else
-                app.alert("There is no active cel.")
-            end
-        else
+        local activeSprite = app.activeSprite
+        if not activeSprite then
             app.alert("There is no active sprite.")
+            return
         end
+
+        local activeCel = app.activeCel
+        if not activeCel then
+            app.alert("There is no active cel.")
+            return
+        end
+
+        local args = dlg.data
+        local removeAlpha = args.removeAlpha
+        local target = args.target
+        local clampTo256 = args.clampTo256
+        local prependMask = args.prependMask
+
+        local image = activeCel.image
+        local itr = image:pixels()
+        local dictionary = {}
+        local idx = 1
+
+        local alphaMask = 0
+        local colorMode = activeSprite.colorMode
+        if removeAlpha then
+            if colorMode == ColorMode.GRAY then
+                alphaMask = 0xff00
+            else
+                alphaMask = 0xff000000
+            end
+        end
+
+        -- In Aseprite 1.3, it's possible for images in
+        -- tile map layers to have a colorMode of 4.
+        if colorMode == ColorMode.RGB then
+            for elm in itr do
+                local hex = elm()
+                if ((hex >> 0x18) & 0xff) > 0 then
+                    hex = alphaMask | hex
+                    if not dictionary[hex] then
+                        dictionary[hex] = idx
+                        idx = idx + 1
+                    end
+                end
+            end
+        elseif colorMode == ColorMode.INDEXED then
+            local palettes = activeSprite.palettes
+            local lenPalettes = #palettes
+
+            -- TODO: Formalize this into AseUtilities.
+            -- tryGetPaletteFromFrame?
+            local actFrIdx = 1
+            if app.activeFrame then
+                actFrIdx = app.activeFrame.frameNumber
+                if actFrIdx > lenPalettes then actFrIdx = 1 end
+            end
+            local srcPal = palettes[actFrIdx]
+
+            local srcPalLen = #srcPal
+            for elm in itr do
+                local srcIndex = elm()
+                if srcIndex > -1 and srcIndex < srcPalLen then
+                    local aseColor = srcPal:getColor(srcIndex)
+                    if aseColor.alpha > 0 then
+                        local hex = aseColor.rgbaPixel
+                        hex = alphaMask | hex
+                        if not dictionary[hex] then
+                            dictionary[hex] = idx
+                            idx = idx + 1
+                        end
+                    end
+                end
+            end
+        elseif colorMode == ColorMode.GRAY then
+            for elm in itr do
+                local hexGray = elm()
+                if ((hexGray >> 0x08) & 0xff) > 0 then
+                    hexGray = alphaMask | hexGray
+                    local a = (hexGray >> 0x08) & 0xff
+                    local v = hexGray & 0xff
+                    local hex = a << 0x18 | v << 0x10 | v << 0x08 | v
+                    if not dictionary[hex] then
+                        dictionary[hex] = idx
+                        idx = idx + 1
+                    end
+                end
+            end
+        end
+
+        local hexes = {}
+        for k, v in pairs(dictionary) do
+            hexes[v] = k
+        end
+
+        if prependMask then
+            local maskIdx = dictionary[0x0]
+            if maskIdx then
+                if maskIdx > 1 then
+                    table.remove(hexes, maskIdx)
+                    table.insert(hexes, 1, 0x0)
+                end
+            else
+                table.insert(hexes, 1, 0x0)
+            end
+        end
+
+        local hexesLen = #hexes
+        if hexesLen > 0 then
+            local palLen = hexesLen
+            if clampTo256 then
+                palLen = math.min(256, hexesLen)
+            end
+
+
+            if target == "SAVE" then
+                local filepath = args.filepath
+                local palette = Palette(palLen)
+                for i = 1, palLen, 1 do
+                    palette:setColor(i - 1,
+                        AseUtilities.hexToAseColor(hexes[i]))
+                end
+                palette:saveAs(filepath)
+                app.alert("Palette saved.")
+            else
+                -- How to handle out of bounds palette index?
+                local palIdx = args.paletteIndex or defaults.paletteIndex
+                if palIdx > #activeSprite.palettes then
+                    app.alert("Palette index is out of bounds.")
+                    return
+                end
+
+                if colorMode == ColorMode.INDEXED then
+                    -- Not sure how to get around this...
+                    app.command.ChangePixelFormat { format = "rgb" }
+                    AseUtilities.setSpritePalette(hexes, activeSprite, palIdx)
+                    app.command.ChangePixelFormat { format = "indexed" }
+                elseif colorMode == ColorMode.GRAY then
+                    AseUtilities.setSpritePalette(hexes, activeSprite, palIdx)
+                else
+                    AseUtilities.setSpritePalette(hexes, activeSprite, palIdx)
+                end
+
+            end
+        end
+
+        app.refresh()
     end
 }
 
