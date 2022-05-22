@@ -911,10 +911,6 @@ end
 ---@param func function easing function
 ---@return table
 function Clr.mixArr(arr, t, func)
-    -- TODO: This needs to be reconsidered, as
-    -- the t func (linear, smooth, smoother)
-    -- should apply to the whole easing, not
-    -- to pair wise func.
     local u = t or 0.5
     local lenArr = #arr
     if u <= 0.0 or lenArr == 1 then

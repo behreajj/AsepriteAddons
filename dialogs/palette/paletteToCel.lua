@@ -203,8 +203,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local sprite = app.activeSprite
-        if not sprite then
+        local activeSprite = app.activeSprite
+        if not activeSprite then
             app.alert("There is no active sprite.")
             return
         end
@@ -225,7 +225,7 @@ dlg:button {
             startTime = os.time()
         end
 
-        local oldMode = sprite.colorMode
+        local oldMode = activeSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
         -- Cache global methods.
@@ -260,7 +260,7 @@ dlg:button {
         local exactMatches = {}
         local hexesSrgbLen = #hexesSrgb
         local cvgCapacity = args.cvgCapacity
-        local octree = Octree.new(octBounds, cvgCapacity, 0)
+        local octree = Octree.new(octBounds, cvgCapacity, 1)
         for i = 1, hexesSrgbLen, 1 do
             -- Validate that the color is not an alpha mask.
             local hexSrgb = hexesSrgb[i]
@@ -290,7 +290,7 @@ dlg:button {
                 frames[i] = rangeFrames[i]
             end
         else
-            local activeFrames = sprite.frames
+            local activeFrames = activeSprite.frames
             local activeFramesLen = #activeFrames
             for i = 1, activeFramesLen, 1 do
                 frames[i] = activeFrames[i]
@@ -301,7 +301,7 @@ dlg:button {
         local copyToLayer = args.copyToLayer
         local trgLayer = nil
         if copyToLayer then
-            trgLayer = sprite:newLayer()
+            trgLayer = activeSprite:newLayer()
             local srcLayerName = "Layer"
             if #srcLayer.name > 0 then
                 srcLayerName = srcLayer.name
@@ -331,7 +331,7 @@ dlg:button {
                         hexesUnique[elm()] = true
                     end
 
-                    -- Create a dictionary where unique hexes are associated
+                    -- Create a table where unique hexes are associated
                     -- with Vec3 queries to an octree.
                     local queries = {}
                     local queryCount = 1
@@ -375,7 +375,7 @@ dlg:button {
                     end
 
                     if copyToLayer then
-                        local trgCel = sprite:newCel(
+                        local trgCel = activeSprite:newCel(
                                     trgLayer, srcFrame,
                                     trgImg, srcCel.position)
                         trgCel.opacity = srcCel.opacity

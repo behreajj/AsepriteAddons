@@ -454,7 +454,7 @@ dlg:button {
 
             local octCapacity = args.octCapacity or defaults.octCapacity
             local bounds = Bounds3.cieLab()
-            local octree = Octree.new(bounds, octCapacity, 0)
+            local octree = Octree.new(bounds, octCapacity, 1)
 
             -- Find minimum and maximum channel values.
             local lMin = 2147483647

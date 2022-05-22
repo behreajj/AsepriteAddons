@@ -379,7 +379,7 @@ dlg:button {
         -- Create Octree.
         local octCapacity = args.octCapacity
         local bounds = Bounds3.cieLab()
-        local octree = Octree.new(bounds, octCapacity, 0)
+        local octree = Octree.new(bounds, octCapacity, 1)
 
         -- Unpack unique colors to data.
         local uniqueHexesSrgbLen = #uniqueHexesSrgb

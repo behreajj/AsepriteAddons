@@ -32,11 +32,11 @@ function Octree.new(bounds, capacity, level)
     inst.children = {
         nil, nil, nil, nil,
         nil, nil, nil, nil }
-    inst.level = level or 0
+    inst.level = level or 1
     inst.points = {}
 
     if inst.capacity < 1 then inst.capacity = 1 end
-    if inst.level < 0 then inst.level = 0 end
+    if inst.level < 1 then inst.level = 1 end
 
     return inst
 end
@@ -68,7 +68,7 @@ function Octree.bisectRight(arr, dist)
 
     -- https://github.com/python/cpython/blob/main/Lib/bisect.py
     -- http://lua-users.org/wiki/BinarySearch
-    -- TODO: This can't be abstracted out because arr[middle]
+    -- TODO: This can't be abstracted out because arr[1+middle]
     -- is an object without a defined < comparator.
     while low < high do
         local middle = (low + high) // 2
@@ -157,6 +157,8 @@ function Octree.insert(o, point)
         if isLeaf then
             table.insert(o.points, point)
             -- TODO: Is sorting needed here?
+            -- Maybe make a general bisectLeft, right
+            -- for vectors in tables?
             -- table.sort(o.points)
             if #o.points > o.capacity then
                 Octree.split(o)
@@ -400,7 +402,7 @@ end
 ---Returns a JSON string of the octree node.
 ---@param o table octree
 function Octree.toJson(o)
-    local str = string.format("{\"level\":%d", o.level)
+    local str = string.format("{\"level\":%d", o.level - 1)
     str = str .. ",\"bounds\":"
     str = str .. Bounds3.toJson(o.bounds)
     str = str .. ",\"capacity\":"
