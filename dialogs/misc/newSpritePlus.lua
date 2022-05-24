@@ -37,7 +37,9 @@ local defaults = {
     yGrid = 0,
     wGrid = 20,
     hGrid = 20,
-    pullFocus = true
+    pullFocus = true,
+
+    maxSize = 65535
 }
 local function updateColorPreviewRgba(dialog)
     local args = dialog.data
@@ -535,8 +537,13 @@ dlg:button {
         local spriteHeight = args.height or defaults.height
         spriteWidth = math.abs(spriteWidth)
         spriteHeight = math.abs(spriteHeight)
-        spriteWidth = math.max(1, spriteWidth)
-        spriteHeight = math.max(1, spriteHeight)
+
+        -- The maximum size defined in source code is 65535,
+        -- but the canvas size command allows for more.
+        spriteWidth = math.min(math.max(
+            spriteWidth, 1), defaults.maxSize)
+        spriteHeight = math.min(math.max(
+            spriteHeight, 1), defaults.maxSize)
 
         -- Create sprite, set file name, set to active.
         AseUtilities.preserveForeBack()

@@ -11,7 +11,8 @@ setmetatable(ClrGradient, {
 ---Constructs a color gradient.
 ---The first parameter should be a table
 ---of ClrKeys. Sorts the color gradient's
----table of keys.
+---table of keys, but does not check for
+---duplicate keys.
 ---@param keys table color keys
 ---@param cl boolean closedLoop
 ---@return table
@@ -31,7 +32,7 @@ end
 
 ---Constructs a color gradient.
 ---The first parameter should be a table
----of ClrKeys. Does not sort the table.
+---of ClrKeys.
 ---@param keys table color keys
 ---@param cl boolean closedLoop
 ---@return table
@@ -50,8 +51,9 @@ function ClrGradient:__tostring()
     return ClrGradient.toJson(self)
 end
 
----Appends a color to the end of the gradient.
----Shifts existing keys left.
+---Appends a color to the end of this gradient.
+---Colors are copied by value, not passed by
+---reference. Shifts existing keys to the left.
 ---@param clr table color
 ---@return table
 function ClrGradient:append(clr)
@@ -62,7 +64,9 @@ function ClrGradient:append(clr)
 end
 
 ---Appends an array of colors to the end of
----the gradient. Shifts existing keys left.
+---this gradient. Colors are copied by value,
+---not passed by reference. Shifts existing
+---keys to the left.
 ---@param clrs table color array
 ---@return table
 function ClrGradient:appendAll(clrs)
@@ -109,7 +113,8 @@ function ClrGradient:compressKeysRight(added)
 end
 
 ---Inserts a color key into the keys array based
----on the index returned by bisectLeft.
+---on the index returned by bisectLeft. Does not
+---check for duplicates.
 ---@param ck table color key
 ---@return table
 function ClrGradient:insortLeft(ck)
@@ -119,7 +124,8 @@ function ClrGradient:insortLeft(ck)
 end
 
 ---Inserts a color key into the keys array based
----on the index returned by bisectRight.
+---on the index returned by bisectRight. Does not
+---check for duplicates.
 ---@param ck table color key
 ---@return table
 function ClrGradient:insortRight(ck)
@@ -128,8 +134,9 @@ function ClrGradient:insortRight(ck)
     return self
 end
 
----Prepends a color to the start of the gradient.
----Shifts existing keys right.
+---Prepends a color to the start of this gradient.
+---Colors are copied by value, not passed by
+---reference. Shifts existing keys to the right.
 ---@param clr table color
 ---@return table
 function ClrGradient:prepend(clr)
@@ -140,7 +147,9 @@ function ClrGradient:prepend(clr)
 end
 
 ---Prepends an array of colors to the start of
----the gradient. Shifts existing keys right.
+---this gradient. Colors are copied by value,
+---not passed by reference. Shifts existing
+---keys to the right.
 ---@param clrs table color array
 ---@return table
 function ClrGradient:prependAll(clrs)
@@ -154,6 +163,13 @@ function ClrGradient:prependAll(clrs)
             clrs[i])
         table.insert(self.keys, i, key)
     end
+    return self
+end
+
+---Sorts the color keys in this gradient.
+---@return table
+function ClrGradient:sort()
+    table.sort(self.keys)
     return self
 end
 
@@ -215,7 +231,11 @@ function ClrGradient.eval(cg, step, easing)
     local keys = cg.keys
     local lenKeys = #keys
 
-    if cl then
+    if cl and t ~= 1.0 then
+        -- Must account for the case where gradient
+        -- with two colors, not intended to be a
+        -- closed loop reaches 100%, just as when
+        -- a color slider is set to 360.
         t = t % 1.0
     elseif t <= keys[1].step then
         local clr = keys[1].clr
@@ -243,25 +263,18 @@ function ClrGradient.eval(cg, step, easing)
     --     prevStep, nextStep))
 
     if prevStep ~= nextStep then
-
-        -- local function remEuclid(a, b)
-        --     local r = math.fmod(a, b)
-        --     if r < 0.0 then return r + math.abs(b) end
-        --     return r
-        -- end
-
-        -- Use Euclidean remainder here, not
-        -- floor mod or trunc mod. The absolute
+        -- Use Euclidean remainder. The absolute
         -- value of the denominator is needed.
+        -- See Rust rem_euclid def in f64 source.
         local num = t - prevStep
         local denom = math.abs(nextStep - prevStep)
-        local facLocal = num / denom
-        facLocal = (num % denom) / denom
-        -- print(string.format("facLocal: %.6f", facLocal))
-        local g = easing or Clr.mixlRgbaInternal
-        return g(prevKey.clr, nextKey.clr, facLocal)
+        local facLocal = num
+        facLocal = facLocal % denom
+        facLocal = facLocal / denom
+        local f = easing or Clr.mixlRgbaInternal
+        return f(prevKey.clr, nextKey.clr, facLocal)
     else
-        local clr = prevKey.clr
+        local clr = nextKey.clr
         return Clr.new(clr.r, clr.g, clr.b, clr.a)
     end
 end
@@ -281,24 +294,37 @@ function ClrGradient.evalRange(
     cg, count, origin, dest,
     easing)
 
-    local vDest = dest or 1.0
-    local vOrig = origin or 0.0
     local vCount = count or 3
+    vCount = math.max(3, vCount)
+
+    -- In case you want to make vDest default to
+    -- a different percentage based on closed loop.
+    local vDest = 1.0
+    if dest then
+        vDest = dest
+        -- elseif cg.closedLoop then
+        -- vDest = 1.0 + 1.0 / vCount
+    end
+
+    local vOrig = origin or 0.0
 
     local result = {}
     local toFac = 1.0 / (vCount - 1.0)
     for i = 1, vCount, 1 do
         local t = (i - 1) * toFac
         local step = (1.0 - t) * vOrig + t * vDest
+        -- print(string.format("%.6f, %.6f", t, step))
         result[i] = ClrGradient.eval(cg, step, easing)
     end
 
     return result
 end
 
----Creates a color gradient from an array
----of colors. The colors are copied to the
----gradient by value.
+---Creates a color gradient from an array of
+---colors. Colors are copied to the by value.
+---If the gradient is a closed loop and the
+---last color is unequal to the first, the first
+---color is repeated at the end of the gradient.
 ---@param arr table color array
 ---@return table
 function ClrGradient.fromColors(arr, cl)
@@ -306,27 +332,57 @@ function ClrGradient.fromColors(arr, cl)
     if len < 1 then
         return ClrGradient.newInternal({
             ClrKey.newByRef(0.0, Clr.clearBlack()),
-            ClrKey.newByRef(1.0, Clr.white()),
-        }, cl)
+            ClrKey.newByRef(1.0, Clr.white())
+        }, false)
     end
 
     if len < 2 then
-        local c = arr[1]
-        local za = Clr.new(c.r, c.g, c.b, 0.0)
+        local c0 = arr[1]
+        local c1 = nil
+        local c2 = nil
+        if c0 then
+            if type(c0) == "number"
+                and math.type(c0) == "integer" then
+                c2 = Clr.fromHex(c0)
+            else
+                c2 = Clr.new(c0.r, c0.g, c0.b, c0.a)
+            end
+            c1 = Clr.new(c2.r, c2.g, c2.b, 0.0)
+        else
+            c2 = Clr.white()
+            c1 = Clr.clearBlack()
+        end
         return ClrGradient.newInternal({
-            ClrKey.newByRef(0.0, za),
-            ClrKey.newByVal(1.0, c),
-        }, cl)
+            ClrKey.newByRef(0.0, c1),
+            ClrKey.newByRef(1.0, c2)
+        }, false)
     end
 
-    local toStep = 1.0 / (len - 1)
+    local toStep = 1.0
     local keys = {}
+    if cl and arr[1] ~= arr[len] then
+        toStep = 1.0 / len
+        keys[len + 1] = ClrKey.newByVal(1.0, arr[1])
+    else
+        toStep = 1.0 / (len - 1)
+    end
+
     for i = 1, len, 1 do
         keys[i] = ClrKey.newByVal(
             (i - 1) * toStep, arr[i])
     end
-
     return ClrGradient.newInternal(keys, cl)
+end
+
+---Finds the range of the color gradient, typically
+---[0.0, 1.0] or under. Equal to the step of the
+---last color key minus the step of the first.
+---Assumes order of color keys has been sustained.
+---@param cg table color gradient
+---@return number
+function ClrGradient.range(cg)
+    return cg.keys[#cg.keys].step
+        - cg.keys[1].step
 end
 
 ---Creates a red-green-blue ramp.
@@ -345,15 +401,31 @@ function ClrGradient.rgb()
     }, true)
 end
 
----Finds the span of the color gradient, typically
----[0.0, 1.0] or under. Equal to the step of the
----last color key minus the step of the first.
----Assumes order of color keys has been sustained.
----@param cg table color gradient
----@return number
-function ClrGradient.span(cg)
-    return cg.keys[#cg.keys].step
-        - cg.keys[1].step
+---Creates a ramp based on Viridis.
+---Contains 16 colors and is not a loop.
+---@return table
+function ClrGradient.viridis()
+    return ClrGradient.newInternal({
+        ClrKey.newByRef(0.000, Clr.new(0.266667, 0.003922, 0.329412, 1.0)),
+        ClrKey.newByRef(0.067, Clr.new(0.282353, 0.100131, 0.420654, 1.0)),
+        ClrKey.newByRef(0.167, Clr.new(0.276078, 0.184575, 0.487582, 1.0)),
+        ClrKey.newByRef(0.200, Clr.new(0.254902, 0.265882, 0.527843, 1.0)),
+
+        ClrKey.newByRef(0.267, Clr.new(0.221961, 0.340654, 0.549281, 1.0)),
+        ClrKey.newByRef(0.333, Clr.new(0.192157, 0.405229, 0.554248, 1.0)),
+        ClrKey.newByRef(0.400, Clr.new(0.164706, 0.469804, 0.556863, 1.0)),
+        ClrKey.newByRef(0.467, Clr.new(0.139869, 0.534379, 0.553464, 1.0)),
+
+        ClrKey.newByRef(0.533, Clr.new(0.122092, 0.595033, 0.543007, 1.0)),
+        ClrKey.newByRef(0.600, Clr.new(0.139608, 0.658039, 0.516863, 1.0)),
+        ClrKey.newByRef(0.667, Clr.new(0.210458, 0.717647, 0.471895, 1.0)),
+        ClrKey.newByRef(0.733, Clr.new(0.326797, 0.773595, 0.407582, 1.0)),
+
+        ClrKey.newByRef(0.800, Clr.new(0.477647, 0.821961, 0.316863, 1.0)),
+        ClrKey.newByRef(0.867, Clr.new(0.648366, 0.858039, 0.208889, 1.0)),
+        ClrKey.newByRef(0.933, Clr.new(0.825098, 0.884967, 0.114771, 1.0)),
+        ClrKey.newByRef(1.000, Clr.new(0.992157, 0.905882, 0.145098, 1.0))
+    }, false)
 end
 
 ---Returns a JSON sring of a color gradient.

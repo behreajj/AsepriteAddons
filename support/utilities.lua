@@ -410,10 +410,8 @@ end
 ---@param compare function comparator
 ---@return table
 function Utilities.insortLeft(arr, elm, compare)
-    table.insert(
-        arr,
-        Utilities.bisectLeft(arr, elm, compare),
-        elm)
+    local idx = Utilities.bisectLeft(arr, elm, compare)
+    table.insert(arr, idx, elm)
     return arr
 end
 
@@ -425,10 +423,8 @@ end
 ---@param compare function comparator
 ---@return table
 function Utilities.insortRight(arr, elm, compare)
-    table.insert(
-        arr,
-        Utilities.bisectRight(arr, elm, compare),
-        elm)
+    local idx = Utilities.bisectRight(arr, elm, compare)
+    table.insert(arr, idx, elm)
     return arr
 end
 

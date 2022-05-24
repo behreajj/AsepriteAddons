@@ -4,9 +4,9 @@ ClrKey = {}
 ClrKey.__index = ClrKey
 
 setmetatable(ClrKey, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Creates a new color key.
 ---Defaults to passing the color by value.
@@ -21,7 +21,7 @@ end
 ---The color is assigned by reference.
 ---The step is clamped to [0.0, 1.0].
 ---@param step number step
----@param clr table|number color
+---@param clr table color
 ---@return table
 function ClrKey.newByRef(step, clr)
     local inst = setmetatable({}, ClrKey)
@@ -33,11 +33,7 @@ function ClrKey.newByRef(step, clr)
 
     inst.clr = nil
     if clr then
-        if type(clr) == "number" then
-            inst.clr = Clr.fromHex(clr)
-        else
-            inst.clr = clr
-        end
+        inst.clr = clr
     else
         inst.clr = Clr.clearBlack()
     end
@@ -61,7 +57,8 @@ function ClrKey.newByVal(step, clr)
 
     inst.clr = nil
     if clr then
-        if type(clr) == "number" then
+        if type(clr) == "number"
+            and math.type(clr) == "integer" then
             inst.clr = Clr.fromHex(clr)
         else
             inst.clr = Clr.new(clr.r, clr.g, clr.b, clr.a)
