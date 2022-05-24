@@ -258,10 +258,6 @@ function ClrGradient.eval(cg, step, easing)
     local prevStep = prevKey.step
     local nextStep = nextKey.step
 
-    -- print(string.format(
-    --     "prevStep: %.6f, nextStep: %.6f",
-    --     prevStep, nextStep))
-
     if prevStep ~= nextStep then
         -- Use Euclidean remainder. The absolute
         -- value of the denominator is needed.

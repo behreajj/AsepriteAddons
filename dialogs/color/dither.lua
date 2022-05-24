@@ -15,7 +15,9 @@ local defaults = {
     palType = "ACTIVE",
     startIndex = 0,
     count = 256,
-    octCapacity = 16,
+    octCapacityBits = 4,
+    minCapacityBits = 4,
+    maxCapacityBits = 12,
     factor = 100,
     copyToLayer = true,
     printElapsed = false,
@@ -288,11 +290,10 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "octCapacity",
-    label = "Cell Capacity:",
-    min = 3,
-    max = 32,
-    value = defaults.octCapacity,
-    visible = defaults.ditherMode == "PALETTE"
+    label = "Capacity (2^n):",
+    min = defaults.minCapacityBits,
+    max = defaults.maxCapacityBits,
+    value = defaults.octCapacityBits
 }
 
 dlg:newrow { always = false }
@@ -452,7 +453,9 @@ dlg:button {
         else
             dmStr = "Palette"
 
-            local octCapacity = args.octCapacity or defaults.octCapacity
+            local octCapacity = args.octCapacity
+                or defaults.octCapacityBits
+            octCapacity = 2 ^ octCapacity
             local bounds = Bounds3.cieLab()
             local octree = Octree.new(bounds, octCapacity, 1)
 

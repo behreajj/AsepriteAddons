@@ -189,7 +189,7 @@ dlg:button {
         --     curve.name, angDeg, axis.x, axis.y, axis.z)
         local layerName = curve.name
 
-        local t = Mat4.fromTranslation(xc, yc)
+        local t = Mat4.fromTranslation(xc, yc, 0.0)
         local r = Mat4.fromRotInternal(
             math.cos(angRad), math.sin(angRad),
             axis.x, axis.y, axis.z)

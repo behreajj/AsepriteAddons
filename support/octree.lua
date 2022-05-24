@@ -83,20 +83,20 @@ function Octree.bisectRight(arr, dist)
 end
 
 ---Finds the mean center of each leaf node in
----an octree. If empty nodes are not omitted
+---an octree. If empty nodes are included
 ---then the center of a node's bounds is used.
 ---@param o table octree
----@param omitEmpty boolean omit empty nodes
+---@param include boolean include empty nodes
 ---@return table
-function Octree.centers(o, omitEmpty)
-    local vOmit = omitEmpty or false
+function Octree.centers(o, include)
+    local inclVerif = include or false
 
-    local tinsert = table.insert
     local v3new = Vec3.new
     local b3center = Bounds3.center
 
     local leaves = Octree.leaves(o, {})
     local lenLeaves = #leaves
+    local cursor = 1
     local centers = {}
 
     for i = 1, lenLeaves, 1 do
@@ -117,25 +117,28 @@ function Octree.centers(o, omitEmpty)
             end
 
             local lenInv = 1.0 / lenLeafPoints
-            tinsert(centers, v3new(
+            centers[cursor] = v3new(
                 xSum * lenInv,
                 ySum * lenInv,
-                zSum * lenInv))
+                zSum * lenInv)
+            cursor = cursor + 1
         elseif lenLeafPoints > 0 then
             local point = leafPoints[1]
-            tinsert(centers, v3new(
-                point.x, point.y, point.z))
-        elseif not vOmit then
-            tinsert(centers, b3center(leaf.bounds))
+            centers[cursor] = v3new(
+                point.x, point.y, point.z)
+            cursor = cursor + 1
+        elseif inclVerif then
+            centers[cursor] = b3center(leaf.bounds)
+            cursor = cursor + 1
         end
     end
     return centers
 end
 
----Inserts a point into the octree node. Returns
----true if the point was successfully inserted
----into either the node or its children. Returns
----false if the insertion was unsuccessful.
+---Inserts a point into the octree node by reference,
+---not by value. Returns true if the point was
+---successfully inserted into either the node or
+---its children.
 ---@param o table octree node
 ---@param point table point
 ---@return boolean
@@ -155,13 +158,14 @@ function Octree.insert(o, point)
         end
 
         if isLeaf then
-            table.insert(o.points, point)
-            -- Is sorting needed here?
-            -- Even if you wrote a generic Utilities
-            -- insort, you'd still need to make Octree
-            -- depend on Utilities to use it...
-            -- table.sort(o.points)
-            if #o.points > o.capacity then
+            local opts = o.points
+            local cursor = #opts + 1
+            opts[cursor] = point
+            -- Is sorting needed here? Even with a generic
+            -- Utilities insort, you'd still need to make
+            -- Octree depend on Utilities to use it...
+            table.sort(opts)
+            if cursor > o.capacity then
                 Octree.split(o)
             end
             return true
@@ -231,7 +235,7 @@ function Octree.leaves(o, leaves)
     end
 
     if isLeaf then
-        table.insert(lvsVal, o)
+        lvsVal[#lvsVal + 1] = o
     end
 
     return lvsVal
@@ -261,7 +265,7 @@ end
 ---@param points table results array
 ---@return table
 function Octree.points(o, points)
-    local ptsVal = points or {}
+    local trgPts = points or {}
     local ochl = o.children
     local isLeaf = true
 
@@ -269,19 +273,20 @@ function Octree.points(o, points)
         local child = ochl[i]
         if child then
             isLeaf = false
-            Octree.points(child, ptsVal)
+            Octree.points(child, trgPts)
         end
     end
 
     if isLeaf then
-        local opts = o.points
-        local optsLen = #opts
-        for i = 1, optsLen, 1 do
-            table.insert(ptsVal, opts[i])
+        local srcPts = o.points
+        local lenSrcPts = #srcPts
+        local lenTrgPts = #trgPts
+        for i = 1, lenSrcPts, 1 do
+            trgPts[lenTrgPts + i] = srcPts[i]
         end
     end
 
-    return ptsVal
+    return trgPts
 end
 
 ---Queries the octree with a spherical range, returning
@@ -389,8 +394,7 @@ function Octree.split(o)
     for i = 1, ptsLen, 1 do
         local pt = pts[i]
         for j = 1, 8, 1 do
-            local child = ochl[j]
-            if Octree.insert(child, pt) then
+            if Octree.insert(ochl[j], pt) then
                 break
             end
         end

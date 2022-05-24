@@ -17,7 +17,9 @@ local defaults = {
     copyToLayer = true,
     cvgLabRad = 175,
     cvgNormRad = 120,
-    cvgCapacity = 16,
+    octCapacityBits = 4,
+    minCapacityBits = 4,
+    maxCapacityBits = 12,
     printElapsed = false,
     clrSpacePreset = "LINEAR_RGB",
     pullFocus = false
@@ -173,11 +175,12 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "cvgCapacity",
-    label = "Cell Capacity:",
-    min = 3,
-    max = 32,
-    value = defaults.cvgCapacity
+    id = "octCapacity",
+    label = "Capacity (2^n):",
+    min = defaults.minCapacityBits,
+    max = defaults.maxCapacityBits,
+    value = defaults.octCapacityBits,
+    visible = defaults.clampTo256
 }
 
 dlg:newrow { always = false }
@@ -259,8 +262,10 @@ dlg:button {
         local ptToHexDict = {}
         local exactMatches = {}
         local hexesSrgbLen = #hexesSrgb
-        local cvgCapacity = args.cvgCapacity
-        local octree = Octree.new(octBounds, cvgCapacity, 1)
+        local octCapacity = args.octCapacity
+            or defaults.octCapacityBits
+        octCapacity = 2 ^ octCapacity
+        local octree = Octree.new(octBounds, octCapacity, 1)
         for i = 1, hexesSrgbLen, 1 do
             -- Validate that the color is not an alpha mask.
             local hexSrgb = hexesSrgb[i]
@@ -376,8 +381,8 @@ dlg:button {
 
                     if copyToLayer then
                         local trgCel = activeSprite:newCel(
-                                    trgLayer, srcFrame,
-                                    trgImg, srcCel.position)
+                            trgLayer, srcFrame,
+                            trgImg, srcCel.position)
                         trgCel.opacity = srcCel.opacity
                     else
                         srcCel.image = trgImg

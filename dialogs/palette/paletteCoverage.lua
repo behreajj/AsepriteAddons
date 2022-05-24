@@ -13,7 +13,9 @@ local defaults = {
     count = 256,
 
     queryRad = 175,
-    octCapacity = 16,
+    octCapacityBits = 4,
+    minCapacityBits = 4,
+    maxCapacityBits = 12,
 
     projection = "ORTHO",
     geometry = "CUBE",
@@ -100,10 +102,10 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "octCapacity",
-    label = "Cell Capacity:",
-    min = 3,
-    max = 32,
-    value = defaults.octCapacity
+    label = "Capacity (2^n):",
+    min = defaults.minCapacityBits,
+    max = defaults.maxCapacityBits,
+    value = defaults.octCapacityBits
 }
 
 dlg:newrow { always = false }
@@ -378,6 +380,8 @@ dlg:button {
 
         -- Create Octree.
         local octCapacity = args.octCapacity
+            or defaults.octCapacityBits
+        octCapacity = 2 ^ octCapacity
         local bounds = Bounds3.cieLab()
         local octree = Octree.new(bounds, octCapacity, 1)
 

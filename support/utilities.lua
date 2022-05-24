@@ -170,130 +170,6 @@ function Utilities.new()
     return inst
 end
 
----Bisects a table used as an array to find
----the appropriate insertion point for an
----element. Biases towards the left insert
----point. Should be used with sorted arrays.
----@param arr table array
----@param elm any element
----@param compare function comparator
----@return integer
-function Utilities.bisectLeft(arr, elm, compare)
-    local low = 0
-    local high = #arr
-    if high < 1 then return 1 end
-    local f = compare or function(a, b) return a < b end
-    while low < high do
-        local middle = (low + high) // 2
-        local left = arr[1 + middle]
-        if left and f(left, elm) then
-            low = middle + 1
-        else
-            high = middle
-        end
-    end
-    return 1 + low
-end
-
----Bisects a table used as an array to find
----the appropriate insertion point for an
----element. Biases towards the right insert
----point. Should be used with sorted arrays.
----@param arr table array
----@param elm any element
----@param compare function comparator
----@return integer
-function Utilities.bisectRight(arr, elm, compare)
-    local low = 0
-    local high = #arr
-    if high < 1 then return 1 end
-    local f = compare or function(a, b) return a < b end
-    while low < high do
-        local middle = (low + high) // 2
-        local right = arr[1 + middle]
-        if right and f(elm, right) then
-            high = middle
-        else
-            low = middle + 1
-        end
-    end
-    return 1 + low
-end
-
----Calculates the axis aligned bounding box
----(AABB) for a two dimensional curve. Uses
----only a simplistic formula; does not look
----for curve extrema.
----@param c table curve
----@return table
-function Utilities.calcCurve2Bounds(c)
-    local kns = c.knots
-    local len = #kns
-    local lbx = 2147483647
-    local lby = 2147483647
-    local ubx = -2147483648
-    local uby = -2147483648
-
-    for i = 1, len, 1 do
-        local kn = kns[i]
-
-        local co = kn.co
-        local cox = co.x
-        local coy = co.y
-        if cox < lbx then lbx = cox end
-        if cox > ubx then ubx = cox end
-        if coy < lby then lby = coy end
-        if coy > uby then uby = coy end
-
-        local fh = kn.fh
-        local fhx = fh.x
-        local fhy = fh.y
-        if fhx < lbx then lbx = fhx end
-        if fhx > ubx then ubx = fhx end
-        if fhy < lby then lby = fhy end
-        if fhy > uby then uby = fhy end
-
-        local rh = kn.rh
-        local rhx = rh.x
-        local rhy = rh.y
-        if rhx < lbx then lbx = rhx end
-        if rhx > ubx then ubx = rhx end
-        if rhy < lby then lby = rhy end
-        if rhy > uby then uby = rhy end
-    end
-
-    return Bounds2.newByRef(
-        Vec2.new(lbx, lby),
-        Vec2.new(ubx, uby))
-end
-
----Calculates the axis aligned bounding box
----(AABB) for a two dimensional mesh.
----@param m table mesh
----@return table
-function Utilities.calcMesh2Bounds(m)
-    local vs = m.vs
-    local len = #vs
-    local lbx = 2147483647
-    local lby = 2147483647
-    local ubx = -2147483648
-    local uby = -2147483648
-
-    for i = 1, len, 1 do
-        local v = vs[i]
-        local x = v.x
-        local y = v.y
-        if x < lbx then lbx = x end
-        if x > ubx then ubx = x end
-        if y < lby then lby = y end
-        if y > uby then uby = y end
-    end
-
-    return Bounds2.newByRef(
-        Vec2.new(lbx, lby),
-        Vec2.new(ubx, uby))
-end
-
 ---Finds the unsigned distance between two angles.
 ---The range defaults to 360.0 for degrees, but can
 ---be math.pi * 2.0 for radians.
@@ -400,32 +276,6 @@ function Utilities.hexArrToDict(hexes, za)
         end
     end
     return dict
-end
-
----Inserts an element into an array so as to
----maintain sorted order. Biases toward the left
----insertion point.
----@param arr table
----@param elm any
----@param compare function comparator
----@return table
-function Utilities.insortLeft(arr, elm, compare)
-    local idx = Utilities.bisectLeft(arr, elm, compare)
-    table.insert(arr, idx, elm)
-    return arr
-end
-
----Inserts an element into an array so as to
----maintain sorted order. Biases toward the right
----insertion point.
----@param arr table
----@param elm any
----@param compare function comparator
----@return table
-function Utilities.insortRight(arr, elm, compare)
-    local idx = Utilities.bisectRight(arr, elm, compare)
-    table.insert(arr, idx, elm)
-    return arr
 end
 
 ---Forces an overflow wrap to make 64 bit
@@ -619,9 +469,9 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
                     or currChar == '\t' then
                     lastSpace = #currLine
                 elseif currChar == '-'
+                    and prevChar == '-' then
                     -- Handle case where double hyphen is used as
                     -- a substitute for em dash.
-                    and prevChar == '-' then
                     lastSpace = #currLine + 1
                 end
 
