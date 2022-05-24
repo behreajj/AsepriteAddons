@@ -2,9 +2,9 @@ Vec2 = {}
 Vec2.__index = Vec2
 
 setmetatable(Vec2, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Constructs a new vector from two numbers.
 ---@param x number x component
@@ -26,8 +26,7 @@ function Vec2:__div(b)
 end
 
 function Vec2:__eq(b)
-    return self.y == b.y
-       and self.x == b.x
+    return Vec2.equals(self, b)
 end
 
 function Vec2:__idiv(b)
@@ -35,8 +34,8 @@ function Vec2:__idiv(b)
 end
 
 function Vec2:__le(b)
-    return self.y <= b.y
-       and self.x <= b.x
+    return Vec2.equals(self, b)
+        or Vec2.comparator(self, b)
 end
 
 function Vec2:__len()
@@ -44,8 +43,7 @@ function Vec2:__len()
 end
 
 function Vec2:__lt(b)
-    return self.y < b.y
-       and self.x < b.x
+    return Vec2.comparator(self, b)
 end
 
 function Vec2:__mod(b)
@@ -131,7 +129,7 @@ end
 function Vec2.approx(a, b, tol)
     local eps = tol or 0.000001
     return math.abs(b.x - a.x) <= eps
-       and math.abs(b.y - a.y) <= eps
+        and math.abs(b.y - a.y) <= eps
 end
 
 ---Finds a point on a cubic Bezier curve
@@ -156,9 +154,9 @@ function Vec2.bezierPoint(ap0, cp0, cp1, ap1, step)
     local ucb = usq * u
 
     return Vec2.new(
-        ap0.x * ucb   + cp0.x * usq3t +
+        ap0.x * ucb + cp0.x * usq3t +
         cp1.x * tsq3u + ap1.x * tcb,
-        ap0.y * ucb   + cp0.y * usq3t +
+        ap0.y * ucb + cp0.y * usq3t +
         cp1.y * tsq3u + ap1.y * tcb)
 end
 
@@ -169,6 +167,18 @@ function Vec2.ceil(a)
     return Vec2.new(
         math.ceil(a.x),
         math.ceil(a.y))
+end
+
+---A comparator method to sort vectors
+---in a table according to their highest
+---dimension first.
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Vec2.comparator(a, b)
+    if a.y < b.y then return true end
+    if a.y > b.y then return false end
+    return a.x < b.x
 end
 
 ---Copies the sign of the right operand
@@ -252,7 +262,7 @@ end
 ---@return number
 function Vec2.distManhattan(a, b)
     return math.abs(b.x - a.x)
-         + math.abs(b.y - a.y)
+        + math.abs(b.y - a.y)
 end
 
 ---Finds the Minkowski distance between two vectors.
@@ -266,8 +276,8 @@ function Vec2.distMinkowski(a, b, c)
     local d = c or 2.0
     if d ~= 0.0 then
         return (math.abs(b.x - a.x) ^ d
-              + math.abs(b.y - a.y) ^ d)
-              ^ (1.0 / d)
+            + math.abs(b.y - a.y) ^ d)
+            ^ (1.0 / d)
     else
         return 0.0
     end
@@ -302,6 +312,27 @@ end
 ---@return number
 function Vec2.dot(a, b)
     return a.x * b.x + a.y * b.y
+end
+
+---Evaluates whether two vectors are exactly
+---equal. Checks for reference equality prior
+---to value equality.
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Vec2.equals(a, b)
+    return rawequal(a, b)
+        or Vec2.equalsValue(a, b)
+end
+
+---Evaluates whether two vectors are exactly
+---equal by component value.
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Vec2.equalsValue(a, b)
+    return a.y == b.y
+        and a.x == b.x
 end
 
 ---Finds the floor of the vector.
@@ -567,7 +598,7 @@ end
 ---@param t table step
 ---@return table
 function Vec2.mixVec2(a, b, t)
-   return Vec2.new(
+    return Vec2.new(
         (1.0 - t.x) * a.x + t.x * b.x,
         (1.0 - t.y) * a.y + t.y * b.y)
 end

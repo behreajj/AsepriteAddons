@@ -4,9 +4,9 @@ Quaternion = {}
 Quaternion.__index = Quaternion
 
 setmetatable(Quaternion, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Constructs a new quaternion.
 ---Defaults to passing the vector by value.
@@ -55,8 +55,9 @@ function Quaternion:__div(b)
 end
 
 function Quaternion:__eq(b)
-    return self.real == b.real
-       and self.imag == b.imag
+    return rawequal(self, b)
+        or (self.real == b.real
+            and self.imag == b.imag)
 end
 
 function Quaternion:__len()
@@ -125,9 +126,9 @@ function Quaternion.approx(a, b, tol)
     local bi = b.imag
     local eps = tol or 0.000001
     return math.abs(b.real - a.real) <= eps
-       and math.abs(bi.x - ai.x) <= eps
-       and math.abs(bi.y - ai.y) <= eps
-       and math.abs(bi.z - ai.z) <= eps
+        and math.abs(bi.x - ai.x) <= eps
+        and math.abs(bi.y - ai.y) <= eps
+        and math.abs(bi.z - ai.z) <= eps
 end
 
 ---Finds the conjugate of a quaternion.

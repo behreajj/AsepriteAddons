@@ -11,7 +11,7 @@ setmetatable(ClrKey, {
 ---Creates a new color key.
 ---Defaults to passing the color by value.
 ---@param step number step
----@param clr table color
+---@param clr table|number color
 ---@return table
 function ClrKey.new(step, clr)
     return ClrKey.newByVal(step, clr)
@@ -21,15 +21,27 @@ end
 ---The color is assigned by reference.
 ---The step is clamped to [0.0, 1.0].
 ---@param step number step
----@param clr table color
+---@param clr table|number color
 ---@return table
 function ClrKey.newByRef(step, clr)
     local inst = setmetatable({}, ClrKey)
+
     inst.step = 0.0
     if step then
         inst.step = math.min(math.max(step, 0.0), 1.0)
     end
-    inst.clr = clr or Clr.clearBlack()
+
+    inst.clr = nil
+    if clr then
+        if type(clr) == "number" then
+            inst.clr = Clr.fromHex(clr)
+        else
+            inst.clr = clr
+        end
+    else
+        inst.clr = Clr.clearBlack()
+    end
+
     return inst
 end
 
@@ -37,20 +49,27 @@ end
 ---The color is copied by value.
 ---The step is clamped to [0.0, 1.0].
 ---@param step number step
----@param clr table color
+---@param clr table|number color
 ---@return table
 function ClrKey.newByVal(step, clr)
     local inst = setmetatable({}, ClrKey)
+
     inst.step = 0.0
     if step then
         inst.step = math.min(math.max(step, 0.0), 1.0)
     end
+
     inst.clr = nil
     if clr then
-        inst.clr = Clr.new(clr.r, clr.g, clr.b, clr.a)
+        if type(clr) == "number" then
+            inst.clr = Clr.fromHex(clr)
+        else
+            inst.clr = Clr.new(clr.r, clr.g, clr.b, clr.a)
+        end
     else
         inst.clr = Clr.clearBlack()
     end
+
     return inst
 end
 
@@ -68,28 +87,6 @@ end
 
 function ClrKey:__tostring()
     return ClrKey.toJson(self)
-end
-
----Evaluates whether two color keys are,
----within a tolerance, approximately equal.
----@param a table left operand
----@param b table right operand
----@param tol number tolerance
----@return boolean
-function ClrKey.approx(a, b, tol)
-    return ClrKey.approxStep(a, b, tol)
-end
-
----Evaluates whether two color keys are,
----within a tolerance, approximately equal
----according to their steps.
----@param a table left operand
----@param b table right operand
----@param tol number tolerance
----@return boolean
-function ClrKey.approxStep(a, b, tol)
-    local eps = tol or 0.000001
-    return math.abs(b.step - a.step) <= eps
 end
 
 ---Returns a JSON string of a color key.

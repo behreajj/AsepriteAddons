@@ -16,7 +16,7 @@ local versionMinor = version.minor
 local isBetaVersion = versionMajor > 0
     and versionMinor > 2
 
--- TODO: Consider layer count?
+-- TODO: Warn if palette length exceeds 256?
 -- Should some diagnostic data be toggled via a t/f
 -- in defaults, esp. if it is expensive to calculate?
 local defaults = {

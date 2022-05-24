@@ -4,9 +4,9 @@ Octree = {}
 Octree.__index = Octree
 
 setmetatable(Octree, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 Octree.BACK_NORTH_EAST = 4
 Octree.BACK_NORTH_WEST = 3
@@ -156,9 +156,10 @@ function Octree.insert(o, point)
 
         if isLeaf then
             table.insert(o.points, point)
-            -- TODO: Is sorting needed here?
-            -- Maybe make a general bisectLeft, right
-            -- for vectors in tables?
+            -- Is sorting needed here?
+            -- Even if you wrote a generic Utilities
+            -- insort, you'd still need to make Octree
+            -- depend on Utilities to use it...
             -- table.sort(o.points)
             if #o.points > o.capacity then
                 Octree.split(o)
@@ -344,7 +345,7 @@ function Octree.querySphericalInternal(
                     -- generic insortRight.
                     insort(found,
                         { dist = currDist,
-                          point = pt })
+                            point = pt })
                 end
 
                 if #found >= limit then

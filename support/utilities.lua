@@ -13,9 +13,9 @@ Utilities = {}
 Utilities.__index = Utilities
 
 setmetatable(Utilities, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Glyph look up table. Glyphs occupy
 ---an 8 x 8 grid, where 1 represents
@@ -168,6 +168,56 @@ Utilities.STL_LUT = {
 function Utilities.new()
     local inst = setmetatable({}, Utilities)
     return inst
+end
+
+---Bisects a table used as an array to find
+---the appropriate insertion point for an
+---element. Biases towards the left insert
+---point. Should be used with sorted arrays.
+---@param arr table array
+---@param elm any element
+---@param compare function comparator
+---@return integer
+function Utilities.bisectLeft(arr, elm, compare)
+    local low = 0
+    local high = #arr
+    if high < 1 then return 1 end
+    local f = compare or function(a, b) return a < b end
+    while low < high do
+        local middle = (low + high) // 2
+        local left = arr[1 + middle]
+        if left and f(left, elm) then
+            low = middle + 1
+        else
+            high = middle
+        end
+    end
+    return 1 + low
+end
+
+---Bisects a table used as an array to find
+---the appropriate insertion point for an
+---element. Biases towards the right insert
+---point. Should be used with sorted arrays.
+---@param arr table array
+---@param elm any element
+---@param compare function comparator
+---@return integer
+function Utilities.bisectRight(arr, elm, compare)
+    local low = 0
+    local high = #arr
+    if high < 1 then return 1 end
+    local f = compare or function(a, b) return a < b end
+    while low < high do
+        local middle = (low + high) // 2
+        local right = arr[1 + middle]
+        if right and f(elm, right) then
+            high = middle
+        else
+            low = middle + 1
+        end
+    end
+    return 1 + low
 end
 
 ---Calculates the axis aligned bounding box
@@ -335,13 +385,13 @@ end
 function Utilities.hexArrToDict(hexes, za)
     local dict = {}
     local idxKey = 1
-    local len = #hexes
-    for i = 1, len, 1 do
+    local lenHexes = #hexes
+    for i = 1, lenHexes, 1 do
         local hex = hexes[i]
 
         if za then
             local a = (hex >> 0x18) & 0xff
-            if a < 1 then hex = 0x00000000 end
+            if a < 1 then hex = 0x0 end
         end
 
         if not dict[hex] then
@@ -350,6 +400,36 @@ function Utilities.hexArrToDict(hexes, za)
         end
     end
     return dict
+end
+
+---Inserts an element into an array so as to
+---maintain sorted order. Biases toward the left
+---insertion point.
+---@param arr table
+---@param elm any
+---@param compare function comparator
+---@return table
+function Utilities.insortLeft(arr, elm, compare)
+    table.insert(
+        arr,
+        Utilities.bisectLeft(arr, elm, compare),
+        elm)
+    return arr
+end
+
+---Inserts an element into an array so as to
+---maintain sorted order. Biases toward the right
+---insertion point.
+---@param arr table
+---@param elm any
+---@param compare function comparator
+---@return table
+function Utilities.insortRight(arr, elm, compare)
+    table.insert(
+        arr,
+        Utilities.bisectRight(arr, elm, compare),
+        elm)
+    return arr
 end
 
 ---Forces an overflow wrap to make 64 bit
@@ -592,7 +672,7 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
 
         return result
     else
-        return {{''}}
+        return { { '' } }
     end
 end
 
@@ -717,13 +797,13 @@ end
 function Utilities.mulMat4Vec4(a, b)
     return Vec4.new(
         a.m00 * b.x + a.m01 * b.y
-      + a.m02 * b.z + a.m03 * b.w,
+        + a.m02 * b.z + a.m03 * b.w,
         a.m10 * b.x + a.m11 * b.y
-      + a.m12 * b.z + a.m13 * b.w,
+        + a.m12 * b.z + a.m13 * b.w,
         a.m20 * b.x + a.m21 * b.y
-      + a.m22 * b.z + a.m23 * b.w,
+        + a.m22 * b.z + a.m23 * b.w,
         a.m30 * b.x + a.m31 * b.y
-      + a.m32 * b.z + a.m33 * b.w)
+        + a.m32 * b.z + a.m33 * b.w)
 end
 
 ---Multiplies a Quaternion and a Vec3.
@@ -740,9 +820,9 @@ function Utilities.mulQuatVec3(a, b)
     local qz = ai.z
 
     local iw = -qx * b.x - qy * b.y - qz * b.z
-    local ix =  qw * b.x + qy * b.z - qz * b.y
-    local iy =  qw * b.y + qz * b.x - qx * b.z
-    local iz =  qw * b.z + qx * b.y - qy * b.x
+    local ix = qw * b.x + qy * b.z - qz * b.y
+    local iy = qw * b.y + qz * b.x - qx * b.z
+    local iz = qw * b.z + qx * b.y - qy * b.x
 
     return Vec3.new(
         ix * qw + iz * qy - iw * qx - iy * qz,
@@ -821,7 +901,7 @@ end
 ---equal to an alpha mask.
 ---@param hexes table
 ---@return table
-function  Utilities.prependMask(hexes)
+function Utilities.prependMask(hexes)
     if hexes[1] == 0x0 then return hexes end
     local cDict = Utilities.hexArrToDict(hexes, false)
     local maskIdx = cDict[0x0]
@@ -1003,7 +1083,7 @@ function Utilities.rotatePixels270(source, w, h)
     local hn1 = h - 1
     local rotated = {}
     for i = 0, len - 1, 1 do
-        rotated[1 + (i % w ) * h + hn1 - (i // w)] = source[1 + i]
+        rotated[1 + (i % w) * h + hn1 - (i // w)] = source[1 + i]
     end
     return rotated
 end
@@ -1089,9 +1169,9 @@ function Utilities.toScreen(
     -- Convert from normalized coordinates to
     -- screen dimensions. Flip y axis. Retain
     -- z coordinate for purpose of depth sort.
-    x = width  * (0.5 + 0.5 * x)
+    x = width * (0.5 + 0.5 * x)
     y = height * (0.5 - 0.5 * y)
-    z =           0.5 + 0.5 * z
+    z = 0.5 + 0.5 * z
 
     return Vec3.new(x, y, z)
 end
@@ -1153,11 +1233,11 @@ function Utilities.validateFilename(filename)
     for i = len, 1, -1 do
         local char = fileChars[i]
         if char == '\\' or char == '`'
-        or char == '/' or char == ':'
-        or char == '*' or char == '?'
-        or char == '\"' or char == '\''
-        or char == '<' or char == '>'
-        or char == '|' or char == '.' then
+            or char == '/' or char == ':'
+            or char == '*' or char == '?'
+            or char == '\"' or char == '\''
+            or char == '<' or char == '>'
+            or char == '|' or char == '.' then
             fileChars[i] = '_'
         end
     end

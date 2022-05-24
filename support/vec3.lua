@@ -2,9 +2,9 @@ Vec3 = {}
 Vec3.__index = Vec3
 
 setmetatable(Vec3, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Constructs a new vector from three numbers.
 ---@param x number x component
@@ -28,9 +28,7 @@ function Vec3:__div(b)
 end
 
 function Vec3:__eq(b)
-    return self.z == b.z
-       and self.y == b.y
-       and self.x == b.x
+    return Vec3.equals(self, b)
 end
 
 function Vec3:__idiv(b)
@@ -38,9 +36,8 @@ function Vec3:__idiv(b)
 end
 
 function Vec3:__le(b)
-    return self.z <= b.z
-       and self.y <= b.y
-       and self.x <= b.x
+    return Vec3.equals(self, b)
+        or Vec3.comparator(self, b)
 end
 
 function Vec3:__len()
@@ -48,9 +45,7 @@ function Vec3:__len()
 end
 
 function Vec3:__lt(b)
-    return self.z < b.z
-       and self.y < b.y
-       and self.x < b.x
+    return Vec3.comparator(self, b)
 end
 
 function Vec3:__mod(b)
@@ -107,8 +102,8 @@ end
 ---@return boolean
 function Vec3.all(a)
     return a.x ~= 0.0
-       and a.y ~= 0.0
-       and a.z ~= 0.0
+        and a.y ~= 0.0
+        and a.z ~= 0.0
 end
 
 ---Finds the angle between two vectors.
@@ -119,6 +114,8 @@ function Vec3.angleBetween(a, b)
     --TODO: Test to see if this produces results
     -- that go out of [-1, 1] and then cause
     -- problems with acos.
+    -- TODO: Refactor to calc asq, then check if
+    -- it's less than epsilon, then calc bsq.
     if Vec3.any(a) and Vec3.any(b) then
         return math.acos(Vec3.dot(a, b) /
             (Vec3.mag(a) * Vec3.mag(b)))
@@ -145,8 +142,8 @@ end
 function Vec3.approx(a, b, tol)
     local eps = tol or 0.000001
     return math.abs(b.x - a.x) <= eps
-       and math.abs(b.y - a.y) <= eps
-       and math.abs(b.z - a.z) <= eps
+        and math.abs(b.y - a.y) <= eps
+        and math.abs(b.z - a.z) <= eps
 end
 
 ---Finds a vector's azimuth.
@@ -213,6 +210,20 @@ function Vec3.ceil(a)
         math.ceil(a.x),
         math.ceil(a.y),
         math.ceil(a.z))
+end
+
+---A comparator method to sort vectors
+---in a table according to their highest
+---dimension first.
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Vec3.comparator(a, b)
+    if a.z < b.z then return true end
+    if a.z > b.z then return false end
+    if a.y < b.y then return true end
+    if a.y > b.y then return false end
+    return a.x < b.x
 end
 
 ---Copies the sign of the right operand
@@ -308,8 +319,8 @@ end
 ---@return number
 function Vec3.distManhattan(a, b)
     return math.abs(b.x - a.x)
-         + math.abs(b.y - a.y)
-         + math.abs(b.z - a.z)
+        + math.abs(b.y - a.y)
+        + math.abs(b.z - a.z)
 end
 
 ---Finds the Minkowski distance between two vectors.
@@ -323,9 +334,9 @@ function Vec3.distMinkowski(a, b, c)
     local d = c or 2.0
     if d ~= 0.0 then
         return (math.abs(b.x - a.x) ^ d
-              + math.abs(b.y - a.y) ^ d
-              + math.abs(b.z - a.z) ^ d)
-              ^ (1.0 / d)
+            + math.abs(b.y - a.y) ^ d
+            + math.abs(b.z - a.z) ^ d)
+            ^ (1.0 / d)
     else
         return 0.0
     end
@@ -363,8 +374,30 @@ end
 ---@return number
 function Vec3.dot(a, b)
     return a.x * b.x
-         + a.y * b.y
-         + a.z * b.z
+        + a.y * b.y
+        + a.z * b.z
+end
+
+---Evaluates whether two vectors are exactly
+---equal. Checks for reference equality prior
+---to value equality.
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Vec3.equals(a, b)
+    return rawequal(a, b)
+        or Vec3.equalsValue(a, b)
+end
+
+---Evaluates whether two vectors are exactly
+---equal by component value.
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Vec3.equalsValue(a, b)
+    return a.z == b.z
+        and a.y == b.y
+        and a.x == b.x
 end
 
 ---Finds the floor of the vector.
@@ -579,7 +612,7 @@ function Vec3.gridSpherical(
 
         local prc = h * toPrc
         local radius = (1.0 - prc) * vrMin
-                             + prc * vrMax
+            + prc * vrMax
 
         local incl = 1.5707963267949 - (i + 1.0) * toIncl
         local rhoCosIncl = radius * cos(incl)
@@ -600,7 +633,7 @@ function Vec3.gridSpherical(
         for h = 0, vLayers - 1, 1 do
             local prc = h * toPrc
             local radius = (1.0 - prc) * vrMax
-                                 + prc * vrMin
+                + prc * vrMin
             local south = Vec3.new(0.0, 0.0, -radius)
             local north = Vec3.new(0.0, 0.0, radius)
             local idx0 = 1 + len3 + h
@@ -728,7 +761,7 @@ end
 ---@return number
 function Vec3.mag(a)
     return math.sqrt(
-          a.x * a.x
+        a.x * a.x
         + a.y * a.y
         + a.z * a.z)
 end
@@ -738,8 +771,8 @@ end
 ---@return number
 function Vec3.magSq(a)
     return a.x * a.x
-         + a.y * a.y
-         + a.z * a.z
+        + a.y * a.y
+        + a.z * a.z
 end
 
 ---Finds the greater of two vectors.
@@ -802,9 +835,9 @@ end
 ---@return table
 function Vec3.mixVec3(a, b, t)
     return Vec3.new(
-         (1.0 - t.x) * a.x + t.x * b.x,
-         (1.0 - t.y) * a.y + t.y * b.y,
-         (1.0 - t.z) * a.z + t.z * b.z)
+        (1.0 - t.x) * a.x + t.x * b.x,
+        (1.0 - t.y) * a.y + t.y * b.y,
+        (1.0 - t.z) * a.z + t.z * b.z)
 end
 
 ---Finds the remainder of floor division of two vectors.
@@ -833,8 +866,8 @@ end
 ---@return boolean
 function Vec3.none(a)
     return a.x == 0.0
-       and a.y == 0.0
-       and a.z == 0.0
+        and a.y == 0.0
+        and a.z == 0.0
 end
 
 ---Divides a vector by its magnitude, such that it
@@ -873,8 +906,8 @@ function Vec3.projectScalar(a, b)
     local bSq = b.x * b.x + b.y * b.y + b.z * b.z
     if bSq > 0.0 then
         return (a.x * b.x
-              + a.y * b.y
-              + a.z * b.z) / bSq
+            + a.y * b.y
+            + a.z * b.z) / bSq
     else
         return 0.0
     end

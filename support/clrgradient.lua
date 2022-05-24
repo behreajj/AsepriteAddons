@@ -4,17 +4,38 @@ ClrGradient = {}
 ClrGradient.__index = ClrGradient
 
 setmetatable(ClrGradient, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Constructs a color gradient.
 ---The first parameter should be a table
----of ClrKeys.
+---of ClrKeys. Sorts the color gradient's
+---table of keys.
 ---@param keys table color keys
 ---@param cl boolean closedLoop
 ---@return table
 function ClrGradient.new(keys, cl)
+    local inst = setmetatable({}, ClrGradient)
+
+    inst.keys = {}
+    local lenKeys = #keys
+    for i = 1, lenKeys, 1 do
+        inst.keys[i] = keys[i]
+    end
+    table.sort(inst.keys)
+
+    inst.closedLoop = cl or false
+    return inst
+end
+
+---Constructs a color gradient.
+---The first parameter should be a table
+---of ClrKeys. Does not sort the table.
+---@param keys table color keys
+---@param cl boolean closedLoop
+---@return table
+function ClrGradient.newInternal(keys, cl)
     local inst = setmetatable({}, ClrGradient)
     inst.keys = keys or {}
     inst.closedLoop = cl or false
@@ -148,7 +169,7 @@ function ClrGradient.bisectLeft(cg, step)
     local high = #keys
     while low < high do
         local middle = (low + high) // 2
-        if step > keys[1 + middle].step then
+        if keys[1 + middle].step < step then
             low = middle + 1
         else
             high = middle
@@ -189,32 +210,56 @@ end
 ---@return table
 function ClrGradient.eval(cg, step, easing)
     local t = step or 0.5
-    if cg.closedLoop then
-        t = step % 1.0
-    elseif t <= 0.0 then
-        local orig = cg.keys[1].clr
-        return Clr.new(orig.r, orig.g, orig.b, orig.a)
-    elseif t >= 1.0 then
-        local dest = cg.keys[#cg.keys].clr
-        return Clr.new(dest.r, dest.g, dest.b, dest.a)
+
+    local cl = cg.closedLoop
+    local keys = cg.keys
+    local lenKeys = #keys
+
+    if cl then
+        t = t % 1.0
+    elseif t <= keys[1].step then
+        local clr = keys[1].clr
+        return Clr.new(clr.r, clr.g, clr.b, clr.a)
+    elseif t >= keys[lenKeys].step then
+        local clr = keys[lenKeys].clr
+        return Clr.new(clr.r, clr.g, clr.b, clr.a)
     end
 
-    local prevKey = ClrGradient.findGe(cg, t)
-    local nextKey = ClrGradient.findLe(cg, t)
+    local nextIdx = ClrGradient.bisectRight(cg, t)
+    local prevIdx = nextIdx - 1
 
-    if prevKey > nextKey then
-        local temp = prevKey
-        prevKey = nextKey
-        nextKey = temp
+    if cl then
+        prevIdx = 1 + (prevIdx - 1) % lenKeys
+        nextIdx = 1 + (nextIdx - 1) % lenKeys
     end
 
+    local prevKey = keys[prevIdx]
+    local nextKey = keys[nextIdx]
     local prevStep = prevKey.step
     local nextStep = nextKey.step
+
+    -- print(string.format(
+    --     "prevStep: %.6f, nextStep: %.6f",
+    --     prevStep, nextStep))
+
     if prevStep ~= nextStep then
+
+        -- local function remEuclid(a, b)
+        --     local r = math.fmod(a, b)
+        --     if r < 0.0 then return r + math.abs(b) end
+        --     return r
+        -- end
+
+        -- Use Euclidean remainder here, not
+        -- floor mod or trunc mod. The absolute
+        -- value of the denominator is needed.
         local num = t - prevStep
-        local denom = nextStep - prevStep
+        local denom = math.abs(nextStep - prevStep)
+        local facLocal = num / denom
+        facLocal = (num % denom) / denom
+        -- print(string.format("facLocal: %.6f", facLocal))
         local g = easing or Clr.mixlRgbaInternal
-        return g(prevKey.clr, nextKey.clr, num / denom)
+        return g(prevKey.clr, nextKey.clr, facLocal)
     else
         local clr = prevKey.clr
         return Clr.new(clr.r, clr.g, clr.b, clr.a)
@@ -251,22 +296,6 @@ function ClrGradient.evalRange(
     return result
 end
 
----Finds a key less than or equal to the query.
----@param cg table color gradient
----@param step number query step
----@return table
-function ClrGradient.findGe(cg, step)
-    return cg.keys[ClrGradient.bisectLeft(cg, step)]
-end
-
----Finds a key greater than or equal to the query.
----@param cg table color gradient
----@param step number query step
----@return table
-function ClrGradient.findLe(cg, step)
-    return cg.keys[ClrGradient.bisectRight(cg, step) - 1]
-end
-
 ---Creates a color gradient from an array
 ---of colors. The colors are copied to the
 ---gradient by value.
@@ -275,7 +304,7 @@ end
 function ClrGradient.fromColors(arr, cl)
     local len = #arr
     if len < 1 then
-        return ClrGradient.new({
+        return ClrGradient.newInternal({
             ClrKey.newByRef(0.0, Clr.clearBlack()),
             ClrKey.newByRef(1.0, Clr.white()),
         }, cl)
@@ -284,7 +313,7 @@ function ClrGradient.fromColors(arr, cl)
     if len < 2 then
         local c = arr[1]
         local za = Clr.new(c.r, c.g, c.b, 0.0)
-        return ClrGradient.new({
+        return ClrGradient.newInternal({
             ClrKey.newByRef(0.0, za),
             ClrKey.newByVal(1.0, c),
         }, cl)
@@ -297,7 +326,7 @@ function ClrGradient.fromColors(arr, cl)
             (i - 1) * toStep, arr[i])
     end
 
-    return ClrGradient.new(keys, cl)
+    return ClrGradient.newInternal(keys, cl)
 end
 
 ---Creates a red-green-blue ramp.
@@ -305,7 +334,7 @@ end
 ---Red is repeated at 0.0 and 1.0.
 ---@return table
 function ClrGradient.rgb()
-    return ClrGradient.new({
+    return ClrGradient.newInternal({
         ClrKey.newByRef(0.0, Clr.red()),
         ClrKey.newByRef(0.16666666666667, Clr.yellow()),
         ClrKey.newByRef(0.33333333333333, Clr.green()),
@@ -314,6 +343,17 @@ function ClrGradient.rgb()
         ClrKey.newByRef(0.83333333333333, Clr.magenta()),
         ClrKey.newByRef(1.0, Clr.red())
     }, true)
+end
+
+---Finds the span of the color gradient, typically
+---[0.0, 1.0] or under. Equal to the step of the
+---last color key minus the step of the first.
+---Assumes order of color keys has been sustained.
+---@param cg table color gradient
+---@return number
+function ClrGradient.span(cg)
+    return cg.keys[#cg.keys].step
+        - cg.keys[1].step
 end
 
 ---Returns a JSON sring of a color gradient.

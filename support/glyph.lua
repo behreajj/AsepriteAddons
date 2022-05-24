@@ -2,9 +2,9 @@ Glyph = {}
 Glyph.__index = Glyph
 
 setmetatable(Glyph, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Constructs a new glyph from a character,
 ---a number representing an 8x8 matrix that

@@ -26,8 +26,9 @@ function Complex:__div(b)
 end
 
 function Complex:__eq(b)
-    return self.real == b.real
-       and self.imag == b.imag
+    return rawequal(self, b)
+        or (self.real == b.real
+            and self.imag == b.imag)
 end
 
 function Complex:__len()

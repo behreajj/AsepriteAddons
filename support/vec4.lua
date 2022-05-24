@@ -2,9 +2,9 @@ Vec4 = {}
 Vec4.__index = Vec4
 
 setmetatable(Vec4, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Constructs a new vector from four numbers.
 ---@param x number x component
@@ -30,10 +30,7 @@ function Vec4:__div(b)
 end
 
 function Vec4:__eq(b)
-    return self.w == b.w
-       and self.z == b.z
-       and self.y == b.y
-       and self.x == b.x
+    return Vec4.equals(self, b)
 end
 
 function Vec4:__idiv(b)
@@ -41,10 +38,8 @@ function Vec4:__idiv(b)
 end
 
 function Vec4:__le(b)
-    return self.w <= b.w
-       and self.z <= b.z
-       and self.y <= b.y
-       and self.x <= b.x
+    return Vec4.equals(self, b)
+        or Vec4.comparator(self, b)
 end
 
 function Vec4:__len()
@@ -52,10 +47,7 @@ function Vec4:__len()
 end
 
 function Vec4:__lt(b)
-    return self.w < b.w
-       and self.z < b.z
-       and self.y < b.y
-       and self.x < b.x
+    return Vec4.comparator(self, b)
 end
 
 function Vec4:__mod(b)
@@ -114,9 +106,9 @@ end
 ---@return boolean
 function Vec4.all(a)
     return a.x ~= 0.0
-       and a.y ~= 0.0
-       and a.z ~= 0.0
-       and a.w ~= 0.0
+        and a.y ~= 0.0
+        and a.z ~= 0.0
+        and a.w ~= 0.0
 end
 
 ---Evaluates if any vector components are non-zero.
@@ -138,9 +130,9 @@ end
 function Vec4.approx(a, b, tol)
     local eps = tol or 0.000001
     return math.abs(b.x - a.x) <= eps
-       and math.abs(b.y - a.y) <= eps
-       and math.abs(b.z - a.z) <= eps
-       and math.abs(b.w - a.w) <= eps
+        and math.abs(b.y - a.y) <= eps
+        and math.abs(b.z - a.z) <= eps
+        and math.abs(b.w - a.w) <= eps
 end
 
 ---Finds a point on a cubic Bezier curve
@@ -188,6 +180,22 @@ function Vec4.ceil(a)
         math.ceil(a.y),
         math.ceil(a.z),
         math.ceil(a.w))
+end
+
+---A comparator method to sort vectors
+---in a table according to their highest
+---dimension first.
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Vec4.comparator(a, b)
+    if a.w < b.w then return true end
+    if a.w > b.w then return false end
+    if a.z < b.z then return true end
+    if a.z > b.z then return false end
+    if a.y < b.y then return true end
+    if a.y > b.y then return false end
+    return a.x < b.x
 end
 
 ---Copies the sign of the right operand
@@ -270,9 +278,9 @@ function Vec4.distEuclidean(a, b)
     local dz = b.z - a.z
     local dw = b.w - a.w
     return math.sqrt(dx * dx
-                   + dy * dy
-                   + dz * dz
-                   + dw * dw)
+        + dy * dy
+        + dz * dz
+        + dw * dw)
 end
 
 ---Finds the Manhattan distance between two vectors.
@@ -281,9 +289,9 @@ end
 ---@return number
 function Vec4.distManhattan(a, b)
     return math.abs(b.x - a.x)
-         + math.abs(b.y - a.y)
-         + math.abs(b.z - a.z)
-         + math.abs(b.w - a.w)
+        + math.abs(b.y - a.y)
+        + math.abs(b.z - a.z)
+        + math.abs(b.w - a.w)
 end
 
 ---Finds the Minkowski distance between two vectors.
@@ -297,10 +305,10 @@ function Vec4.distMinkowski(a, b, c)
     local d = c or 2.0
     if d ~= 0.0 then
         return (math.abs(b.x - a.x) ^ d
-              + math.abs(b.y - a.y) ^ d
-              + math.abs(b.z - a.z) ^ d
-              + math.abs(b.w - a.w) ^ d)
-              ^ (1.0 / d)
+            + math.abs(b.y - a.y) ^ d
+            + math.abs(b.z - a.z) ^ d
+            + math.abs(b.w - a.w) ^ d)
+            ^ (1.0 / d)
     else
         return 0.0
     end
@@ -317,9 +325,9 @@ function Vec4.distSq(a, b)
     local dz = b.z - a.z
     local dw = b.w - a.w
     return dx * dx
-         + dy * dy
-         + dz * dz
-         + dw * dw
+        + dy * dy
+        + dz * dz
+        + dw * dw
 end
 
 ---Divides the left vector by the right, component-wise.
@@ -344,9 +352,32 @@ end
 ---@return number
 function Vec4.dot(a, b)
     return a.x * b.x
-         + a.y * b.y
-         + a.z * b.z
-         + a.w * b.w
+        + a.y * b.y
+        + a.z * b.z
+        + a.w * b.w
+end
+
+---Evaluates whether two vectors are exactly
+---equal. Checks for reference equality prior
+---to value equality.
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Vec4.equals(a, b)
+    return rawequal(a, b)
+        or Vec4.equalsValue(a, b)
+end
+
+---Evaluates whether two vectors are exactly
+---equal by component value.
+---@param a table left comparisand
+---@param b table right comparisand
+---@return boolean
+function Vec4.equalsValue(a, b)
+    return a.w == b.w
+        and a.z == b.z
+        and a.y == b.y
+        and a.x == b.x
 end
 
 ---Finds the floor of the vector.
@@ -518,9 +549,9 @@ end
 ---@return table
 function Vec4.limit(a, limit)
     local mSq = a.x * a.x
-              + a.y * a.y
-              + a.z * a.z
-              + a.w * a.w
+        + a.y * a.y
+        + a.z * a.z
+        + a.w * a.w
     if mSq > 0.0 and mSq > (limit * limit) then
         local mInv = limit / math.sqrt(mSq)
         return Vec4.new(
@@ -575,7 +606,7 @@ end
 ---@return number
 function Vec4.mag(a)
     return math.sqrt(
-          a.x * a.x
+        a.x * a.x
         + a.y * a.y
         + a.z * a.z
         + a.w * a.w)
@@ -586,9 +617,9 @@ end
 ---@return number
 function Vec4.magSq(a)
     return a.x * a.x
-         + a.y * a.y
-         + a.z * a.z
-         + a.w * a.w
+        + a.y * a.y
+        + a.z * a.z
+        + a.w * a.w
 end
 
 ---Finds the greater of two vectors.
@@ -654,10 +685,10 @@ end
 ---@return table
 function Vec4.mixVec4(a, b, t)
     return Vec4.new(
-         (1.0 - t.x) * a.x + t.x * b.x,
-         (1.0 - t.y) * a.y + t.y * b.y,
-         (1.0 - t.z) * a.z + t.z * b.z,
-         (1.0 - t.w) * a.w + t.w * b.w)
+        (1.0 - t.x) * a.x + t.x * b.x,
+        (1.0 - t.y) * a.y + t.y * b.y,
+        (1.0 - t.z) * a.z + t.z * b.z,
+        (1.0 - t.w) * a.w + t.w * b.w)
 end
 
 ---Finds the remainder of floor division of two vectors.
@@ -688,9 +719,9 @@ end
 ---@return boolean
 function Vec4.none(a)
     return a.x == 0.0
-       and a.y == 0.0
-       and a.z == 0.0
-       and a.w == 0.0
+        and a.y == 0.0
+        and a.z == 0.0
+        and a.w == 0.0
 end
 
 ---Divides a vector by its magnitude, such that it
@@ -699,9 +730,9 @@ end
 ---@return table
 function Vec4.normalize(a)
     local mSq = a.x * a.x
-              + a.y * a.y
-              + a.z * a.z
-              + a.w * a.w
+        + a.y * a.y
+        + a.z * a.z
+        + a.w * a.w
     if mSq > 0.0 then
         local mInv = 1.0 / math.sqrt(mSq)
         return Vec4.new(
@@ -732,14 +763,14 @@ end
 ---@return number
 function Vec4.projectScalar(a, b)
     local bSq = b.x * b.x
-              + b.y * b.y
-              + b.z * b.z
-              + b.w * b.w
+        + b.y * b.y
+        + b.z * b.z
+        + b.w * b.w
     if bSq > 0.0 then
         return (a.x * b.x
-              + a.y * b.y
-              + a.z * b.z
-              + a.w * b.w) / bSq
+            + a.y * b.y
+            + a.z * b.z
+            + a.w * b.w) / bSq
     else
         return 0.0
     end
@@ -850,9 +881,9 @@ end
 ---@return table
 function Vec4.rescale(a, b)
     local mSq = a.x * a.x
-              + a.y * a.y
-              + a.z * a.z
-              + a.w * a.w
+        + a.y * a.y
+        + a.z * a.z
+        + a.w * a.w
     if mSq > 0.0 then
         local bmInv = b / math.sqrt(mSq)
         return Vec4.new(
