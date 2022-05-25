@@ -17,7 +17,7 @@ local defaults = {
     count = 256,
     octCapacityBits = 4,
     minCapacityBits = 4,
-    maxCapacityBits = 12,
+    maxCapacityBits = 16,
     factor = 100,
     copyToLayer = true,
     printElapsed = false,
@@ -399,7 +399,7 @@ dlg:button {
                 greyStr = "HSL"
                 greyMethod = function(rSrc, gSrc, bSrc)
                     return (math.max(rSrc, gSrc, bSrc)
-                            + math.min(rSrc, gSrc, bSrc)) * 0.0019607843137255
+                        + math.min(rSrc, gSrc, bSrc)) * 0.0019607843137255
                 end
             elseif greyPreset == "HSV" then
                 greyStr = "HSV"
@@ -417,7 +417,7 @@ dlg:button {
                     local gLin = stlLut[1 + gSrc]
                     local bLin = stlLut[1 + bSrc]
                     local lum = math.tointeger(
-                            rLin * 0.21264934272065
+                        rLin * 0.21264934272065
                         + gLin * 0.7151691357059
                         + bLin * 0.072181521573443)
                     return ltsLut[1 + lum] * 0.003921568627451
@@ -520,7 +520,7 @@ dlg:button {
 
             -- Square-root for this regularly seems too
             -- small, leading to transparent patches.
-            local queryRad =  lDiff * lDiff
+            local queryRad = lDiff * lDiff
                 + aDiff * aDiff
                 + bDiff * bDiff
             local resultLimit = viableCount

@@ -9,6 +9,22 @@ local colorSpaces = {
     "S_RGB"
 }
 
+local centerPresets = {
+    "MEAN",
+    "MEDIAN"
+}
+
+local function sortByPreset(preset, arr)
+    if preset == "CIE_LAB" then
+        -- table.sort(arr, function(a, b) return a.z < b.z end)
+        table.sort(arr)
+    elseif preset == "CIE_XYZ" then
+        table.sort(arr, function(a, b) return a.y < b.y end)
+    else
+        -- table.sort(arr)
+    end
+end
+
 local function boundsFromPreset(preset)
     if preset == "CIE_LAB" then
         return Bounds3.cieLab()
@@ -86,11 +102,12 @@ local defaults = {
     maxThreshold = 512,
     octCapacityBits = 9,
     minCapacityBits = 4,
-    maxCapacityBits = 12,
+    maxCapacityBits = 16,
     prependMask = true,
     target = "ACTIVE",
     paletteIndex = 1,
     clrSpacePreset = "LINEAR_RGB",
+    centerPreset = "MEAN",
     pullFocus = false
 }
 
@@ -391,11 +408,16 @@ dlg:button {
                 end
             end
 
-            local centers = Octree.centers(octree, false, {})
+            local centers = nil
+            local centerPreset = args.centerPreset
+                or defaults.centerPreset
+            if centerPreset == "MEDIAN" then
+                centers = Octree.centersMedian(octree, false, {})
+            else
+                centers = Octree.centersMean(octree, false, {})
+            end
 
-            -- Centers are sorted by z first, which is the
-            -- same as lightness, so default comparator.
-            table.sort(centers)
+            sortByPreset(clrSpacePreset, centers)
 
             centersLen = #centers
             local centerHexes = {}

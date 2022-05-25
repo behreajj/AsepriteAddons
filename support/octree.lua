@@ -82,16 +82,16 @@ function Octree.bisectRight(arr, dist)
     return 1 + low
 end
 
----Finds the mean center of each leaf node in
----an octree. If empty nodes are included
+---Finds the median center of each leaf node
+---in an octree. If empty nodes are included
 ---then the center of a node's bounds is used.
 ---Appends centers to an array if provided,
 ---otherwise creates a new array.
 ---@param o table octree
 ---@param include boolean include empty nodes
----@param arr table centers array
+---@param arr table array
 ---@return table
-function Octree.centers(o, include, arr)
+function Octree.centersMedian(o, include, arr)
     local arrVerif = arr or {}
     local ochl = o.children
     local isLeaf = true
@@ -100,7 +100,63 @@ function Octree.centers(o, include, arr)
         local child = ochl[i]
         if child then
             isLeaf = false
-            Octree.centers(child, include, arrVerif)
+            Octree.centersMedian(
+                child, include, arrVerif)
+        end
+    end
+
+    if isLeaf then
+        local cursor = #arrVerif + 1
+        local leafPoints = o.points
+        local lenLeafPoints = #leafPoints
+        if lenLeafPoints > 1 then
+            local midIdx = lenLeafPoints // 2
+            if lenLeafPoints % 2 ~= 0 then
+                -- Odd.
+                local pt = leafPoints[midIdx + 1]
+                arrVerif[cursor] = Vec3.new(
+                    pt.x, pt.y, pt.z)
+            else
+                -- Even.
+                local a = leafPoints[midIdx]
+                local b = leafPoints[midIdx + 1]
+                arrVerif[cursor] = Vec3.new(
+                    0.5 * (a.x + b.x),
+                    0.5 * (a.y + b.y),
+                    0.5 * (a.z + b.z))
+            end
+        elseif lenLeafPoints > 0 then
+            local pt = leafPoints[1]
+            arrVerif[cursor] = Vec3.new(
+                pt.x, pt.y, pt.z)
+        elseif include then
+            arrVerif[cursor] = Bounds3.center(o.bounds)
+        end
+    end
+
+    return arrVerif
+end
+
+---Finds the mean center of each leaf node in
+---an octree. If empty nodes are included
+---then the center of a node's bounds is used.
+---Appends centers to an array if provided,
+---otherwise creates a new array.
+---@param o table octree
+---@param include boolean include empty nodes
+---@param arr table array
+---@return table
+function Octree.centersMean(o, include, arr)
+    local arrVerif = arr or {}
+    local ochl = o.children
+    local isLeaf = true
+
+    for i = 1, 8, 1 do
+        local child = ochl[i]
+        if child then
+            isLeaf = false
+            Octree.centersMean(
+                child, include, arrVerif)
         end
     end
 
@@ -114,10 +170,10 @@ function Octree.centers(o, include, arr)
             local zSum = 0.0
 
             for j = 1, lenLeafPoints, 1 do
-                local point = leafPoints[j]
-                xSum = xSum + point.x
-                ySum = ySum + point.y
-                zSum = zSum + point.z
+                local pt = leafPoints[j]
+                xSum = xSum + pt.x
+                ySum = ySum + pt.y
+                zSum = zSum + pt.z
             end
 
             local lenInv = 1.0 / lenLeafPoints
@@ -126,9 +182,9 @@ function Octree.centers(o, include, arr)
                 ySum * lenInv,
                 zSum * lenInv)
         elseif lenLeafPoints > 0 then
-            local point = leafPoints[1]
+            local pt = leafPoints[1]
             arrVerif[cursor] = Vec3.new(
-                point.x, point.y, point.z)
+                pt.x, pt.y, pt.z)
         elseif include then
             arrVerif[cursor] = Bounds3.center(o.bounds)
         end
@@ -146,7 +202,6 @@ end
 ---@return boolean
 function Octree.insert(o, point)
     if Bounds3.containsInclExcl(o.bounds, point) then
-
         local ochl = o.children
         local isLeaf = true
         for i = 1, 8, 1 do
@@ -160,13 +215,12 @@ function Octree.insert(o, point)
         end
 
         if isLeaf then
+            -- Using table.sort here was definitely the
+            -- cause of a lot of slowdown.
             local opts = o.points
             local cursor = #opts + 1
-            opts[cursor] = point
-            -- Is sorting needed here? Even with a generic
-            -- Utilities insort, you'd still need to make
-            -- Octree depend on Utilities to use it...
-            table.sort(opts)
+            Vec3.insortRight(opts, point, Vec3.comparator)
+
             if cursor > o.capacity then
                 Octree.split(o)
             end
@@ -215,32 +269,6 @@ function Octree.isLeaf(o)
         if ochl[i] then return false end
     end
     return true
-end
-
----Gets a flat array of octree nodes without children,
----i.e., leaves. Appends leaves to an array if provided,
----otherwise creates a new array.
----@param o table octree node
----@param leaves table results array
----@return table
-function Octree.leaves(o, leaves)
-    local lvsVal = leaves or {}
-    local ochl = o.children
-    local isLeaf = true
-
-    for i = 1, 8, 1 do
-        local child = ochl[i]
-        if child then
-            isLeaf = false
-            Octree.leaves(child, lvsVal)
-        end
-    end
-
-    if isLeaf then
-        lvsVal[#lvsVal + 1] = o
-    end
-
-    return lvsVal
 end
 
 ---Gets the maximum level of the node and
