@@ -1828,9 +1828,18 @@ function AseUtilities.setSpritePalette(arr, sprite, paletteIndex)
         app.transaction(function()
             palette:resize(lenHexArr)
             for i = 1, lenHexArr, 1 do
+                -- It is not better to pass a hex to setColor.
+                -- Doing so creates the same problems as the Color
+                -- rgbaPixel constructor, where an image's mode
+                -- determines how the integer is interpreted.
+                -- See https://github.com/aseprite/aseprite/
+                -- blob/main/src/app/script/palette_class.cpp#L196 ,
+                -- https://github.com/aseprite/aseprite/blob/
+                -- main/src/app/color_utils.cpp .
                 local hex = arr[i]
                 local aseColor = AseUtilities.hexToAseColor(hex)
                 palette:setColor(i - 1, aseColor)
+                -- palette:setColor(i - 1, arr[i])
             end
         end)
     else

@@ -255,8 +255,8 @@ end
 ---entry is the first index where the color was found.
 ---When true, the flag specifies that all completely
 ---transparent colors are considered equal, not unique.
----@param hexes table
----@param za boolean
+---@param hexes table hexadecimal colors
+---@param za boolean zero alpha
 ---@return table
 function Utilities.hexArrToDict(hexes, za)
     local dict = {}

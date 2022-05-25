@@ -337,7 +337,7 @@ dlg:button {
         local idxDict = 1
         for i = 1, lenHexesProfile, 1 do
             local hexProfile = hexesProfile[i]
-            if ((hexProfile >> 0x18) & 0xff) > 1 then
+            if (hexProfile & 0xff000000) ~= 0x0 then
                 local hexProfNoAlpha = 0xff000000 | hexProfile
                 if not hexDictProfile[hexProfNoAlpha] then
                     hexDictProfile[hexProfNoAlpha] = idxDict

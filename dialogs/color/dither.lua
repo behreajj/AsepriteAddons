@@ -476,7 +476,8 @@ dlg:button {
             local ptToHexDict = {}
             for i = 1, palHexesLen, 1 do
                 local hexSrgb = hexesSrgb[i]
-                if ((hexSrgb >> 0x18) & 0xff) > 0 then
+                -- if ((hexSrgb >> 0x18) & 0xff) > 0 then
+                if (hexSrgb & 0xff000000) ~= 0x0 then
                     local clr = Clr.fromHex(hexSrgb)
                     local lab = Clr.sRgbaToLab(clr)
                     local point = Vec3.new(lab.a, lab.b, lab.l)

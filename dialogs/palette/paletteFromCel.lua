@@ -2,11 +2,86 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 dofile("../../support/clr.lua")
 
+local colorSpaces = {
+    "CIE_LAB",
+    "CIE_XYZ",
+    "LINEAR_RGB",
+    "S_RGB"
+}
+
+local function boundsFromPreset(preset)
+    if preset == "CIE_LAB" then
+        return Bounds3.cieLab()
+    else
+        return Bounds3.unitCubeUnsigned()
+    end
+end
+
+local function clrToVec3sRgb(clr)
+    return Vec3.new(clr.r, clr.g, clr.b)
+end
+
+local function clrToVec3lRgb(clr)
+    local lin = Clr.sRgbaTolRgbaInternal(clr)
+    return Vec3.new(lin.r, lin.g, lin.b)
+end
+
+local function clrToVec3Xyz(clr)
+    local xyz = Clr.sRgbaToXyz(clr)
+    return Vec3.new(xyz.x, xyz.y, xyz.z)
+end
+
+local function clrToVec3Lab(clr)
+    local lab = Clr.sRgbaToLab(clr)
+    return Vec3.new(lab.a, lab.b, lab.l)
+end
+
+local function clrToV3FuncFromPreset(preset)
+    if preset == "CIE_LAB" then
+        return clrToVec3Lab
+    elseif preset == "CIE_XYZ" then
+        return clrToVec3Xyz
+    elseif preset == "LINEAR_RGB" then
+        return clrToVec3lRgb
+    else
+        return clrToVec3sRgb
+    end
+end
+
+local function vec3ToClrLab(v3)
+    return Clr.labTosRgba(v3.z, v3.x, v3.y, 1.0)
+end
+
+local function vec3ToClrXyz(v3)
+    return Clr.xyzaTosRgba(v3.x, v3.y, v3.z, 1.0)
+end
+
+local function vec3ToClrlRgb(v3)
+    local lin = Clr.new(v3.x, v3.y, v3.z, 1.0)
+    return Clr.lRgbaTosRgbaInternal(lin)
+end
+
+local function vec3ToClrsRgb(v3)
+    return Clr.new(v3.x, v3.y, v3.z, 1.0)
+end
+
+local function v3ToClrFuncFromPreset(preset)
+    if preset == "CIE_LAB" then
+        return vec3ToClrLab
+    elseif preset == "CIE_XYZ" then
+        return vec3ToClrXyz
+    elseif preset == "LINEAR_RGB" then
+        return vec3ToClrlRgb
+    else
+        return vec3ToClrsRgb
+    end
+end
+
 local defaults = {
     removeAlpha = true,
     clampTo256 = true,
     printElapsed = false,
-    octThreshold = 256,
+    octThreshold = 255,
     minThreshold = 32,
     maxThreshold = 512,
     octCapacityBits = 9,
@@ -15,6 +90,7 @@ local defaults = {
     prependMask = true,
     target = "ACTIVE",
     paletteIndex = 1,
+    clrSpacePreset = "LINEAR_RGB",
     pullFocus = false
 }
 
@@ -60,7 +136,6 @@ dlg:label {
 dlg:newrow { always = false }
 
 dlg:check {
-    -- TODO: Change this to a customizable upper limit?
     id = "clampTo256",
     label = "Octree:",
     text = "At Threshold",
@@ -71,6 +146,7 @@ dlg:check {
         local removeAlpha = args.removeAlpha
         dlg:modify { id = "octThreshold", visible = state }
         dlg:modify { id = "octCapacity", visible = state }
+        dlg:modify { id = "clrSpacePreset", visible = state }
         dlg:modify { id = "printElapsed", visible = state }
         dlg:modify {
             id = "alphaWarn",
@@ -105,11 +181,24 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:slider {
+    -- TODO: Add a refinement slider
+    -- in [-256, 256] to allow for
+    -- more granular control?
     id = "octCapacity",
     label = "Capacity (2^n):",
     min = defaults.minCapacityBits,
     max = defaults.maxCapacityBits,
     value = defaults.octCapacityBits,
+    visible = defaults.clampTo256
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "clrSpacePreset",
+    label = "Color Space:",
+    option = defaults.clrSpacePreset,
+    options = colorSpaces,
     visible = defaults.clampTo256
 }
 
@@ -279,26 +368,30 @@ dlg:button {
         -- set here for print diagnostic purposes.
         local oldHexesLen = #hexes
         local centersLen = 0
+        local octCapacityBits = args.octCapacity
+            or defaults.octCapacityBits
+        local octCapacity = 2 ^ octCapacityBits
         local hexesLen = oldHexesLen
         if clampTo256 and hexesLen > ocThreshold then
-            local octCapacityBits = args.octCapacity
-                or defaults.octCapacityBits
-            local octCapacity = 2 ^ octCapacityBits
+            local clrSpacePreset = args.clrSpacePreset
+                or defaults.clrSpacePreset
+            local clrV3Func = clrToV3FuncFromPreset(clrSpacePreset)
+            local v3ClrFunc = v3ToClrFuncFromPreset(clrSpacePreset)
+            local bounds = boundsFromPreset(clrSpacePreset)
 
-            local bounds = Bounds3.cieLab()
+            -- This is faster without look up tables.
             local octree = Octree.new(bounds, octCapacity, 1)
 
             for i = 1, hexesLen, 1 do
                 local hex = hexes[i]
                 if ((hex >> 0x18) & 0xff) > 0 then
                     local clr = Clr.fromHex(hex)
-                    local lab = Clr.sRgbaToLab(clr)
-                    local point = Vec3.new(lab.a, lab.b, lab.l)
+                    local point = clrV3Func(clr)
                     Octree.insert(octree, point)
                 end
             end
 
-            local centers = Octree.centers(octree, false)
+            local centers = Octree.centers(octree, false, {})
 
             -- Centers are sorted by z first, which is the
             -- same as lightness, so default comparator.
@@ -307,9 +400,9 @@ dlg:button {
             centersLen = #centers
             local centerHexes = {}
             for i = 1, centersLen, 1 do
+                -- This is faster without look up tables.
                 local center = centers[i]
-                local srgb = Clr.labTosRgba(
-                    center.z, center.x, center.y, 1.0)
+                local srgb = v3ClrFunc(center)
                 centerHexes[i] = Clr.toHex(srgb)
             end
 
@@ -354,12 +447,23 @@ dlg:button {
         if printElapsed then
             endTime = os.time()
             elapsed = os.difftime(endTime, startTime)
+
+            local elapsedStr = ""
+            if elapsed > 60 then
+                elapsedStr = string.format(
+                    "Elapsed: %dm, %ds",
+                    (elapsed % 3600) // 60,
+                    math.floor(elapsed % 60))
+            else
+                elapsedStr = string.format("Elapsed: %d", elapsed)
+            end
             app.alert {
                 title = "Diagnostic",
                 text = {
                     string.format("Start: %d", startTime),
                     string.format("End: %d", endTime),
-                    string.format("Elapsed: %d", elapsed),
+                    elapsedStr,
+                    string.format("Capacity: %d", octCapacity),
                     string.format("Raw Colors: %d", oldHexesLen),
                     string.format("Octree Colors: %d", centersLen),
                 }

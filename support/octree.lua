@@ -85,25 +85,29 @@ end
 ---Finds the mean center of each leaf node in
 ---an octree. If empty nodes are included
 ---then the center of a node's bounds is used.
+---Appends centers to an array if provided,
+---otherwise creates a new array.
 ---@param o table octree
 ---@param include boolean include empty nodes
+---@param arr table centers array
 ---@return table
-function Octree.centers(o, include)
-    local inclVerif = include or false
+function Octree.centers(o, include, arr)
+    local arrVerif = arr or {}
+    local ochl = o.children
+    local isLeaf = true
 
-    local v3new = Vec3.new
-    local b3center = Bounds3.center
+    for i = 1, 8, 1 do
+        local child = ochl[i]
+        if child then
+            isLeaf = false
+            Octree.centers(child, include, arrVerif)
+        end
+    end
 
-    local leaves = Octree.leaves(o, {})
-    local lenLeaves = #leaves
-    local cursor = 1
-    local centers = {}
-
-    for i = 1, lenLeaves, 1 do
-        local leaf = leaves[i]
-        local leafPoints = leaf.points
+    if isLeaf then
+        local cursor = #arrVerif + 1
+        local leafPoints = o.points
         local lenLeafPoints = #leafPoints
-
         if lenLeafPoints > 1 then
             local xSum = 0.0
             local ySum = 0.0
@@ -117,22 +121,20 @@ function Octree.centers(o, include)
             end
 
             local lenInv = 1.0 / lenLeafPoints
-            centers[cursor] = v3new(
+            arrVerif[cursor] = Vec3.new(
                 xSum * lenInv,
                 ySum * lenInv,
                 zSum * lenInv)
-            cursor = cursor + 1
         elseif lenLeafPoints > 0 then
             local point = leafPoints[1]
-            centers[cursor] = v3new(
+            arrVerif[cursor] = Vec3.new(
                 point.x, point.y, point.z)
-            cursor = cursor + 1
-        elseif inclVerif then
-            centers[cursor] = b3center(leaf.bounds)
-            cursor = cursor + 1
+        elseif include then
+            arrVerif[cursor] = Bounds3.center(o.bounds)
         end
     end
-    return centers
+
+    return arrVerif
 end
 
 ---Inserts a point into the octree node by reference,
