@@ -190,8 +190,8 @@ function Curve3.ellipse(
     local bottom = cy - ry
 
     -- kappa := 4 * (math.sqrt(2) - 1) / 3
-    local horizHandle = rx * 0.5522847498307936
-    local vertHandle = ry * 0.5522847498307936
+    local horizHandle = rx * 0.55228474983079
+    local vertHandle = ry * 0.55228474983079
 
     local xHandlePos = cx + horizHandle
     local xHandleNeg = cx - horizHandle
@@ -334,7 +334,10 @@ function Curve3.fromCatmull(
         knotCount = ptsLen
     else
         valPts = {}
-        for i = 1, #points, 1 do
+        local lenPts = #points
+        local i = 0
+        while i < lenPts do
+            i = i + 1
             valPts[i] = points[i]
         end
 
@@ -549,7 +552,9 @@ function Curve3.toJson(c)
     local kns = c.knots
     local knsLen = #kns
     local strArr = {}
-    for i = 1, knsLen, 1 do
+    local i = 0
+    while i < knsLen do
+        i = i + 1
         strArr[i] = Knot3.toJson(kns[i])
     end
 

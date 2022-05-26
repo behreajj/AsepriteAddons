@@ -12,9 +12,11 @@ local defaults = {
     yOrigin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
+    strokeClr = AseUtilities.hexToAseColor(
+        AseUtilities.DEFAULT_STROKE),
     useFill = true,
-    fillClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
+    fillClr = AseUtilities.hexToAseColor(
+        AseUtilities.DEFAULT_FILL),
     pullFocus = false
 }
 
@@ -158,54 +160,55 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        local args = dlg.data
+        local useQuads = args.margin > 0
+        local mesh = Mesh2.arc(
+            math.rad(args.startAngle),
+            math.rad(args.stopAngle),
+            0.01 * args.startWeight,
+            0.01 * args.stopWeight,
+            args.sectors,
+            useQuads)
 
-    local args = dlg.data
-    local useQuads = args.margin > 0
-    local mesh = Mesh2.arc(
-        math.rad(args.startAngle),
-        math.rad(args.stopAngle),
-        0.01 * args.startWeight,
-        0.01 * args.stopWeight,
-        args.sectors,
-        useQuads)
+        local sclval = args.scale
+        if sclval < 2.0 then
+            sclval = 2.0
+        end
 
-    local sclval = args.scale
-    if sclval < 2.0 then
-        sclval = 2.0
-    end
+        local mrgval = args.margin * 0.01
+        if mrgval > 0.0 then
+            mrgval = math.min(mrgval, 0.99)
+            Mesh2.uniformData(mesh, mesh)
+            mesh:scaleFacesIndiv(1.0 - mrgval)
+        end
 
-    local mrgval = args.margin * 0.01
-    if mrgval > 0.0 then
-        mrgval = math.min(mrgval, 0.99)
-        Mesh2.uniformData(mesh, mesh)
-        mesh:scaleFacesIndiv(1.0 - mrgval)
-    end
+        local t = Mat3.fromTranslation(
+            args.xOrigin,
+            args.yOrigin)
+        local s = Mat3.fromScale(sclval, -sclval)
+        local mat = Mat3.mul(t, s)
+        Utilities.mulMat3Mesh2(mat, mesh)
 
-    local t = Mat3.fromTranslation(
-        args.xOrigin,
-        args.yOrigin)
-    local s = Mat3.fromScale(sclval, -sclval)
-    local mat = Mat3.mul(t, s)
-    Utilities.mulMat3Mesh2(mat, mesh)
+        local sprite = AseUtilities.initCanvas(
+            64, 64,
+            mesh.name,
+            { args.fillClr.rgbaPixel,
+                args.strokeClr.rgbaPixel })
+        local layer = sprite.layers[#sprite.layers]
+        local frame = app.activeFrame or sprite.frames[1]
+        local cel = sprite:newCel(layer, frame)
 
-    local sprite = AseUtilities.initCanvas(
-        64, 64,
-        mesh.name,
-        { args.fillClr.rgbaPixel,
-          args.strokeClr.rgbaPixel })
-    local layer = sprite.layers[#sprite.layers]
-    local frame = app.activeFrame or sprite.frames[1]
-    local cel = sprite:newCel(layer, frame)
+        AseUtilities.drawMesh2(
+            mesh,
+            args.useFill,
+            args.fillClr,
+            args.useStroke,
+            args.strokeClr,
+            Brush(args.strokeWeight),
+            cel,
+            layer)
 
-    AseUtilities.drawMesh2(
-        mesh,
-        args.useFill,
-        args.fillClr,
-        args.useStroke,
-        args.strokeClr,
-        Brush(args.strokeWeight),
-        cel,
-        layer)
+        app.refresh()
     end
 }
 

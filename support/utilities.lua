@@ -241,12 +241,12 @@ end
 ---@return table
 function Utilities.hexArrToDict(hexes, za)
     local dict = {}
-    local idxKey = 1
     local lenHexes = #hexes
-    local i = 0
-    while i < lenHexes do
-        i = i + 1
-        local hex = hexes[i]
+    local idxRead = 0
+    local idxValue = 0
+    while idxRead < lenHexes do
+        idxRead = idxRead + 1
+        local hex = hexes[idxRead]
 
         if za then
             local a = (hex >> 0x18) & 0xff
@@ -254,8 +254,8 @@ function Utilities.hexArrToDict(hexes, za)
         end
 
         if not dict[hex] then
-            dict[hex] = idxKey
-            idxKey = idxKey + 1
+            idxValue = idxValue + 1
+            dict[hex] = idxValue
         end
     end
     return dict
@@ -685,15 +685,15 @@ function Utilities.parseRangeString(s, frameCount)
     for token in strgmatch(s, "([^,]+)") do
         -- Parse string by hyphen.
         local arrNums = {}
-        local cursor = 1
+        local cursor = 0
         for subtoken in strgmatch(token, "[^-]+") do
             local trial = tonumber(subtoken, 10)
             if trial
                 and trial > 0
                 and trial <= fcVerif then
 
-                arrNums[cursor] = trial
-                cursor = cursor + 1
+                    cursor = cursor + 1
+                    arrNums[cursor] = trial
             end
         end
 
@@ -716,10 +716,10 @@ function Utilities.parseRangeString(s, frameCount)
 
     -- Convert dictionary to ordered set.
     local arr = {}
-    local cursor = 1
+    local cursor = 0
     for k, _ in pairs(dict) do
-        arr[cursor] = k
         cursor = cursor + 1
+        arr[cursor] = k
     end
     table.sort(arr)
 

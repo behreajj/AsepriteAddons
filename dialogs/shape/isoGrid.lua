@@ -8,9 +8,11 @@ local defaults = {
     margin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
+    strokeClr = AseUtilities.hexToAseColor(
+        AseUtilities.DEFAULT_STROKE),
     useFill = true,
-    fillClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
+    fillClr = AseUtilities.hexToAseColor(
+        AseUtilities.DEFAULT_FILL),
     pullFocus = false
 }
 
@@ -119,47 +121,48 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        local args = dlg.data
 
-    local args = dlg.data
+        local mesh = Mesh2.gridDimetric(args.cells)
 
-    local mesh = Mesh2.gridDimetric(args.cells)
+        -- Convert margin from [0, 100] to [0.0, 1.0].
+        -- Ensure that it is less than 100%.
+        if args.margin > 0 then
+            local mrgval = math.min(
+                0.999999,
+                args.margin * 0.01)
+            Mesh2.uniformData(mesh, mesh)
+            mesh:scaleFacesIndiv(1.0 - mrgval)
+        end
 
-    -- Convert margin from [0, 100] to [0.0, 1.0].
-    -- Ensure that it is less than 100%.
-    if args.margin > 0 then
-        local mrgval = math.min(
-            0.999999,
-            args.margin * 0.01)
-        Mesh2.uniformData(mesh, mesh)
-        mesh:scaleFacesIndiv(1.0 - mrgval)
-    end
+        local t = Mat3.fromTranslation(
+            args.xOrigin,
+            args.yOrigin)
+        local sclval = args.scale
+        if sclval < 2.0 then sclval = 2.0 end
+        local s = Mat3.fromScale(sclval, -sclval)
+        local mat = Mat3.mul(t, s)
+        Utilities.mulMat3Mesh2(mat, mesh)
 
-    local t = Mat3.fromTranslation(
-        args.xOrigin,
-        args.yOrigin)
-    local sclval = args.scale
-    if sclval < 2.0 then sclval = 2.0 end
-    local s = Mat3.fromScale(sclval, -sclval)
-    local mat = Mat3.mul(t, s)
-    Utilities.mulMat3Mesh2(mat, mesh)
+        local sprite = AseUtilities.initCanvas(
+            64, 64, mesh.name,
+            { args.fillClr.rgbaPixel,
+                args.strokeClr.rgbaPixel })
+        local layer = sprite.layers[#sprite.layers]
+        local frame = app.activeFrame or sprite.frames[1]
+        local cel = sprite:newCel(layer, frame)
 
-    local sprite = AseUtilities.initCanvas(
-        64, 64, mesh.name,
-        { args.fillClr.rgbaPixel,
-          args.strokeClr.rgbaPixel })
-    local layer = sprite.layers[#sprite.layers]
-    local frame = app.activeFrame or sprite.frames[1]
-    local cel = sprite:newCel(layer, frame)
+        AseUtilities.drawMesh2(
+            mesh,
+            args.useFill,
+            args.fillClr,
+            args.useStroke,
+            args.strokeClr,
+            Brush(args.strokeWeight),
+            cel,
+            layer)
 
-    AseUtilities.drawMesh2(
-        mesh,
-        args.useFill,
-        args.fillClr,
-        args.useStroke,
-        args.strokeClr,
-        Brush(args.strokeWeight),
-        cel,
-        layer)
+        app.refresh()
     end
 }
 

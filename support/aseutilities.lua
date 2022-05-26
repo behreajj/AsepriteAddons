@@ -125,10 +125,10 @@ function AseUtilities.aseColorCopy(aseClr, flag)
             AseUtilities.aseColorToHex(aseClr, ColorMode.RGB))
     else
         return Color(
-            math.max(0, math.min(255, aseClr.red)),
-            math.max(0, math.min(255, aseClr.green)),
-            math.max(0, math.min(255, aseClr.blue)),
-            math.max(0, math.min(255, aseClr.alpha)))
+            math.min(math.max(aseClr.red, 0), 255),
+            math.min(math.max(aseClr.green, 0), 255),
+            math.min(math.max(aseClr.blue, 0), 255),
+            math.min(math.max(aseClr.alpha, 0), 255))
     end
 end
 
@@ -333,14 +333,17 @@ function AseUtilities.asePaletteToClrArr(pal, startIndex, count)
         local palLen = #pal
 
         local si = startIndex or 0
-        si = math.min(palLen - 1, math.max(0, si))
+        si = math.min(math.max(si, 0), palLen - 1)
         local vc = count or 256
-        vc = math.min(palLen - si, math.max(2, vc))
+        vc = math.min(math.max(vc, 2), palLen - si)
 
         local clrs = {}
+        local i = 0
         local convert = AseUtilities.aseColorToClr
-        for i = 0, vc - 1, 1 do
-            clrs[1 + i] = convert(pal:getColor(si + i))
+        while i < vc do
+            local aseColor = convert(pal:getColor(si + i))
+            i = i + 1
+            clrs[i] = aseColor
         end
 
         -- This is intended for gradient work, so it
@@ -358,45 +361,6 @@ function AseUtilities.asePaletteToClrArr(pal, startIndex, count)
     end
 end
 
----Converts an array of Aseprite palettes to a
----table of hex color integers.
----@param palettes table
----@return table
-function AseUtilities.asePalettesToHexArr(palettes)
-    if palettes then
-        local lenPalettes = #palettes
-        local hexes = {}
-        local i = 0
-        local k = 0
-        while i < lenPalettes do
-            i = i + 1
-            local palette = palettes[i]
-            if palette then
-                local lenPalette = #palette
-                local j = 0
-                while j < lenPalette do
-                    local aseColor = palette:getColor(j)
-                    j = j + 1
-                    local hex = AseUtilities.aseColorToHex(
-                        aseColor, ColorMode.RGB)
-                    k = k + 1
-                    hexes[k] = hex
-                end
-            end
-        end
-
-        if #hexes == 1 then
-            local amsk = hexes[1] & 0xff000000
-            table.insert(hexes, 1, amsk)
-            hexes[3] = amsk | 0x00ffffff
-        end
-
-        return hexes
-    else
-        return { 0x00000000, 0xffffffff }
-    end
-end
-
 ---Converts an Aseprite palette to a table of
 ---hex color integers. If the palette is nil
 ---returns a default table. Assumes palette
@@ -411,17 +375,17 @@ function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
         local palLen = #pal
 
         local si = startIndex or 0
-        si = math.min(palLen - 1, math.max(0, si))
+        si = math.min(math.max(si, 0), palLen - 1)
         local vc = count or 256
-        vc = math.min(palLen - si, math.max(2, vc))
+        vc = math.min(math.max(vc, 2), palLen - si)
 
         local hexes = {}
-        for i = 0, vc - 1, 1 do
-            -- Do you have to worry about overflow due to
-            -- rgb being out of gamut? Doesn't seem so, even
-            -- in cases of color profile transforms...
+        local i = 0
+        local convert = AseUtilities.aseColorToHex
+        while i < vc do
             local aseColor = pal:getColor(si + i)
-            hexes[1 + i] = aseColor.rgbaPixel
+            i = i + 1
+            hexes[i] = convert(aseColor, ColorMode.RGB)
         end
 
         if #hexes == 1 then
@@ -429,6 +393,46 @@ function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
             table.insert(hexes, 1, amsk)
             hexes[3] = amsk | 0x00ffffff
         end
+        return hexes
+    else
+        return { 0x00000000, 0xffffffff }
+    end
+end
+
+---Converts an array of Aseprite palettes to a
+---table of hex color integers.
+---@param palettes table
+---@return table
+function AseUtilities.asePalettesToHexArr(palettes)
+    if palettes then
+        local lenPalettes = #palettes
+        local hexes = {}
+        local i = 0
+        local k = 0
+        local convert = AseUtilities.aseColorToHex
+        while i < lenPalettes do
+            i = i + 1
+            local palette = palettes[i]
+            if palette then
+                local lenPalette = #palette
+                local j = 0
+                while j < lenPalette do
+                    local aseColor = palette:getColor(j)
+                    j = j + 1
+                    local hex = convert(
+                        aseColor, ColorMode.RGB)
+                    k = k + 1
+                    hexes[k] = hex
+                end
+            end
+        end
+
+        if #hexes == 1 then
+            local amsk = hexes[1] & 0xff000000
+            table.insert(hexes, 1, amsk)
+            hexes[3] = amsk | 0x00ffffff
+        end
+
         return hexes
     else
         return { 0x00000000, 0xffffffff }
@@ -888,7 +892,9 @@ function AseUtilities.createNewLayers(
     local oldLayerCount = #sprite.layers
     local layers = {}
     app.transaction(function()
-        for i = 1, valCount, 1 do
+        local i = 0
+        while i < valCount do
+            i = i + 1
             local layer = sprite:newLayer()
             layer.blendMode = valBlendMode
             layer.opacity = valOpac
@@ -902,7 +908,9 @@ function AseUtilities.createNewLayers(
     if useGuiClr then
         local aseColor = AseUtilities.hexToAseColor(guiClr)
         app.transaction(function()
-            for i = 1, valCount, 1 do
+            local i = 0
+            while i < valCount do
+                i = i + 1
                 layers[i].color = aseColor
             end
         end)
@@ -915,7 +923,9 @@ function AseUtilities.createNewLayers(
     -- scope of transaction?
     if useParent then
         app.transaction(function()
-            for i = 1, valCount, 1 do
+            local i = 0
+            while i < valCount do
+                i = i + 1
                 local layer = layers[i]
                 layer.parent = parent
             end
@@ -1000,11 +1010,13 @@ end
 ---@param r number radius
 ---@param hex number hexadecimal color
 function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
+    local blend = AseUtilities.blend
     local rsq = r * r
     local r2 = r * 2
-    local lenn1 = r2 * r2 - 1
-    local blend = AseUtilities.blend
-    for i = 0, lenn1, 1 do
+    local len = r2 * r2
+    local i = -1
+    while i < len do
+        i = i + 1
         local x = (i % r2) - r
         local y = (i // r2) - r
         if (x * x + y * y) < rsq then
@@ -1110,8 +1122,6 @@ function AseUtilities.drawCurve2(
             end
         end)
     end
-
-    app.refresh()
 end
 
 ---Draws a glyph at its native scale to an image.
@@ -1219,7 +1229,9 @@ function AseUtilities.drawHandles2(
     local knsLen = #kns
     local drawKnot = AseUtilities.drawKnot2
     app.transaction(function()
-        for i = 1, knsLen, 1 do
+        local i = 0
+        while i < knsLen do
+            i = i + 1
             drawKnot(
                 kns[i], cel, layer,
                 lnClr, coClr,
@@ -1315,14 +1327,9 @@ end
 ---@param cel userdata cel
 ---@param layer userdata layer
 function AseUtilities.drawMesh2(
-    mesh,
-    useFill,
-    fillClr,
-    useStroke,
-    strokeClr,
-    brsh,
-    cel,
-    layer)
+    mesh, useFill, fillClr,
+    useStroke, strokeClr,
+    brsh, cel, layer)
 
     -- Convert Vec2s to Points.
     -- Round Vec2 for improved accuracy.
@@ -1330,34 +1337,41 @@ function AseUtilities.drawMesh2(
     local vsLen = #vs
     local pts = {}
     local toPt = AseUtilities.vec2ToPoint
-    for i = 1, vsLen, 1 do
-        pts[i] = toPt(vs[i])
+    local idx0 = 0
+    while idx0 < vsLen do
+        idx0 = idx0 + 1
+        pts[idx0] = toPt(vs[idx0])
     end
 
     -- Group points by face.
     local fs = mesh.fs
     local fsLen = #fs
     local ptsGrouped = {}
-    for i = 1, fsLen, 1 do
-        local f = fs[i]
+    local idx1 = 0
+    while idx1 < fsLen do idx1 = idx1 + 1
+        local f = fs[idx1]
         local fLen = #f
         local ptsFace = {}
-        for j = 1, fLen, 1 do
-            ptsFace[j] = pts[f[j]]
+        local idx2 = 0
+        while idx2 < fLen do
+            idx2 = idx2 + 1
+            ptsFace[idx2] = pts[f[idx2]]
         end
-        ptsGrouped[i] = ptsFace
+        ptsGrouped[idx1] = ptsFace
     end
 
     -- Group fills into one transaction.
     local useTool = app.useTool
     if useFill then
         app.transaction(function()
-            for i = 1, fsLen, 1 do
+            local idx3 = 0
+            while idx3 < fsLen do
+                idx3 = idx3 + 1
                 useTool {
                     tool = "contour",
                     color = fillClr,
                     brush = brsh,
-                    points = ptsGrouped[i],
+                    points = ptsGrouped[idx3],
                     cel = cel,
                     layer = layer }
             end
@@ -1368,12 +1382,16 @@ function AseUtilities.drawMesh2(
     -- Draw strokes line by line.
     if useStroke then
         app.transaction(function()
-            for i = 1, fsLen, 1 do
-                local ptGroup = ptsGrouped[i]
+            local idx4 = 0
+            while idx4 < fsLen do
+                idx4 = idx4 + 1
+                local ptGroup = ptsGrouped[idx4]
                 local ptgLen = #ptGroup
                 local ptPrev = ptGroup[ptgLen]
-                for j = 1, ptgLen, 1 do
-                    local ptCurr = ptGroup[j]
+                local idx5 = 0
+                while idx5 < ptgLen do
+                    idx5 = idx5 + 1
+                    local ptCurr = ptGroup[idx5]
                     useTool {
                         tool = "line",
                         color = strokeClr,
@@ -1386,8 +1404,6 @@ function AseUtilities.drawMesh2(
             end
         end)
     end
-
-    app.refresh()
 end
 
 ---Draws an array of characters to an image
@@ -1415,7 +1431,9 @@ function AseUtilities.drawStringHoriz(
     local scale2 = scale + scale
     local drawGlyph = AseUtilities.drawGlyphNearest
     local defGlyph = lut[' ']
-    for i = 1, charLen, 1 do
+    local i = 0
+    while i < charLen do
+        i = i + 1
         local ch = chars[i]
         -- print(ch)
         if ch == '\n' then
@@ -1434,49 +1452,6 @@ function AseUtilities.drawStringHoriz(
     end
 end
 
----Draws an array of characters to an image
----vertically according to the coordinates.
----Operates on pixel by pixel level. Its use
----should not be mixed with app.useTool.
----@param lut table glyph look up table
----@param image userdata image
----@param chars table characters table
----@param hex number hexadecimal color
----@param x number x top left corner
----@param y number y top left corner
----@param gw number glyph width
----@param gh number glyph height
----@param scale number display scale
-function AseUtilities.drawStringVert(
-    lut, image, chars, hex,
-    x, y, gw, gh, scale)
-
-    local writeChar = y
-    local writeLine = x
-    local charLen = #chars
-    local dw = gw * scale
-    local dh = gh * scale
-    local scale2 = scale + scale
-    local rotateCcw = AseUtilities.rotateGlyphCcw
-    local drawGlyph = AseUtilities.drawGlyphNearest
-    local defGlyph = lut[' ']
-    for i = 1, charLen, 1 do
-        local ch = chars[i]
-        if ch == '\n' then
-            writeLine = writeLine + dw + scale2
-            writeChar = y
-        else
-            local glyph = lut[ch] or defGlyph
-            glyph = rotateCcw(glyph, gw, gh)
-            drawGlyph(
-                image, glyph, hex,
-                writeLine, writeChar,
-                gh, gw, dh, dw)
-            writeChar = writeChar - dh
-        end
-    end
-end
-
 ---Returns a copy of the source image that has
 ---been flipped horizontally.
 ---Also returns displaced coordinates for the
@@ -1487,11 +1462,11 @@ end
 ---@return number
 function AseUtilities.flipImageHoriz(source)
     local px = {}
-    local i = 1
+    local i = 0
     local srcPxItr = source:pixels()
     for elm in srcPxItr do
-        px[i] = elm()
         i = i + 1
+        px[i] = elm()
     end
 
     local srcSpec = source.spec
@@ -1499,11 +1474,11 @@ function AseUtilities.flipImageHoriz(source)
     local pxFlp = Utilities.flipPixelsHoriz(px, w)
 
     local target = Image(srcSpec)
-    local j = 1
+    local j = 0
     local trgPxItr = target:pixels()
     for elm in trgPxItr do
-        elm(pxFlp[j])
         j = j + 1
+        elm(pxFlp[j])
     end
     return target, 1 - w, 0
 end
@@ -1518,11 +1493,11 @@ end
 ---@return number
 function AseUtilities.flipImageVert(source)
     local px = {}
-    local i = 1
+    local i = 0
     local srcPxItr = source:pixels()
     for elm in srcPxItr do
-        px[i] = elm()
         i = i + 1
+        px[i] = elm()
     end
 
     local srcSpec = source.spec
@@ -1531,11 +1506,11 @@ function AseUtilities.flipImageVert(source)
     local pxFlp = Utilities.flipPixelsVert(px, w, h)
 
     local target = Image(srcSpec)
-    local j = 1
+    local j = 0
     local trgPxItr = target:pixels()
     for elm in trgPxItr do
-        elm(pxFlp[j])
         j = j + 1
+        elm(pxFlp[j])
     end
     return target, 0, 1 - h
 end
@@ -1572,12 +1547,12 @@ function AseUtilities.grayHexes(count)
     valCount = math.max(2, valCount)
     local toFac = 255.0 / (valCount - 1.0)
     local result = {}
-    for i = 1, valCount, 1 do
-        local g = trunc(0.5 + (i - 1) * toFac)
+    local i = 0
+    while i < valCount do
+        local g = trunc(0.5 + i * toFac)
+        i = i + 1
         result[i] = 0xff000000
-            | (g << 0x10)
-            | (g << 0x08)
-            | g
+            | g << 0x10 | g << 0x08 | g
     end
     return result
 end
@@ -1700,32 +1675,6 @@ function AseUtilities.preserveForeBack()
     app.command.SwitchColors()
 end
 
----Rotates a glyph counter-clockwise.
----The glyph is to be represented as a binary matrix
----with a width and height, where 1 draws a pixel
----and zero does not, packed in to a number
----in row major order.
----@param gl number glyph
----@param w number width
----@param h number height
----@return number
-function AseUtilities.rotateGlyphCcw(gl, w, h)
-    local lenn1 = (w * h) - 1
-    local wn1 = w - 1
-    local vr = 0
-    for i = 0, lenn1, 1 do
-        local shift0 = lenn1 - i
-        local bit = (gl >> shift0) & 1
-
-        local x = i // w
-        local y = wn1 - (i % w)
-        local j = y * h + x
-        local shift1 = lenn1 - j
-        vr = vr | (bit << shift1)
-    end
-    return vr
-end
-
 ---Returns a copy of the source image that has
 ---been rotated 90 degrees counter-clockwise.
 ---Also returns displaced coordinates for the
@@ -1736,11 +1685,11 @@ end
 ---@return number
 function AseUtilities.rotateImage90(source)
     local px = {}
-    local i = 1
+    local i = 0
     local srcPxItr = source:pixels()
     for elm in srcPxItr do
-        px[i] = elm()
         i = i + 1
+        px[i] = elm()
     end
 
     local srcSpec = source.spec
@@ -1756,11 +1705,11 @@ function AseUtilities.rotateImage90(source)
     trgSpec.colorSpace = srcSpec.colorSpace
     local target = Image(trgSpec)
 
-    local j = 1
+    local j = 0
     local trgPxItr = target:pixels()
     for elm in trgPxItr do
-        elm(pxRot[j])
         j = j + 1
+        elm(pxRot[j])
     end
     return target, 0, 1 - w
 end
@@ -1775,21 +1724,21 @@ end
 ---@return number
 function AseUtilities.rotateImage180(source)
     local px = {}
-    local i = 1
+    local i = 0
     local srcPxItr = source:pixels()
     for elm in srcPxItr do
-        px[i] = elm()
         i = i + 1
+        px[i] = elm()
     end
 
     -- Table is reversed in-place.
     Utilities.reverseTable(px)
     local target = Image(source.spec)
-    local j = 1
+    local j = 0
     local trgPxItr = target:pixels()
     for elm in trgPxItr do
-        elm(px[j])
         j = j + 1
+        elm(px[j])
     end
 
     return target,
@@ -1807,11 +1756,11 @@ end
 ---@return number
 function AseUtilities.rotateImage270(source)
     local px = {}
-    local i = 1
+    local i = 0
     local srcPxItr = source:pixels()
     for elm in srcPxItr do
-        px[i] = elm()
         i = i + 1
+        px[i] = elm()
     end
 
     local srcSpec = source.spec
@@ -1827,11 +1776,11 @@ function AseUtilities.rotateImage270(source)
     trgSpec.colorSpace = srcSpec.colorSpace
     local target = Image(trgSpec)
 
-    local j = 1
+    local j = 0
     local trgPxItr = target:pixels()
     for elm in trgPxItr do
-        elm(pxRot[j])
         j = j + 1
+        elm(pxRot[j])
     end
     return target, 1 - h, 0
 end
@@ -1855,7 +1804,9 @@ function AseUtilities.setSpritePalette(arr, sprite, paletteIndex)
     if lenHexArr > 0 then
         app.transaction(function()
             palette:resize(lenHexArr)
-            for i = 1, lenHexArr, 1 do
+            local i = 0
+            while i < lenHexArr do
+                i = i + 1
                 -- It is not better to pass a hex to setColor.
                 -- Doing so creates the same problems as the Color
                 -- rgbaPixel constructor, where an image's mode
@@ -1960,18 +1911,18 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     -- This cannot be extracted to a separate function,
     -- perhaps because alphaIndex needs to remain in scope.
     local colorMode = image.colorMode
-    local eval = nil
+    local isNonZero = nil
     if colorMode == ColorMode.RGB then
-        eval = function(hex)
+        isNonZero = function(hex)
             return hex & 0xff000000 ~= 0
         end
     elseif colorMode == ColorMode.GRAY then
-        eval = function(hex)
+        isNonZero = function(hex)
             return hex & 0xff00 ~= 0
         end
     elseif colorMode == ColorMode.INDEXED then
         local valMask = alphaIndex or 0
-        eval = function(index)
+        isNonZero = function(index)
             return index ~= valMask
         end
     else
@@ -2002,14 +1953,11 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     -- c157511958578e475a3172bd16d55f8ad20ed0b3/
     -- support/aseutilities.lua
 
-    -- TODO: All for loops need to be converted due to
-    -- this: https://www.lua.org/manual/5.3/manual.html#3.3.5
-
     -- Top edge.
     local breakTop = false
     while top < bottom do
         for x = 0, widthn1, 1 do
-            if eval(image:getPixel(x, top)) then
+            if isNonZero(image:getPixel(x, top)) then
                 minRight = x
                 minBottom = top
                 breakTop = true
@@ -2025,7 +1973,7 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     local topp1 = top + 1
     while left < minRight do
         for y = heightn1, topp1, -1 do
-            if eval(image:getPixel(left, y)) then
+            if isNonZero(image:getPixel(left, y)) then
                 minBottom = y
                 breakLeft = true
                 break
@@ -2039,7 +1987,7 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     local breakBottom = false
     while bottom > minBottom do
         for x = widthn1, left, -1 do
-            if eval(image:getPixel(x, bottom)) then
+            if isNonZero(image:getPixel(x, bottom)) then
                 minRight = x
                 breakBottom = true
                 break
@@ -2053,7 +2001,7 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     local breakRight = false
     while right > minRight do
         for y = bottom, top, -1 do
-            if eval(image:getPixel(right, y)) then
+            if isNonZero(image:getPixel(right, y)) then
                 breakRight = true
                 break
             end
@@ -2114,11 +2062,11 @@ end
 ---@return userdata
 function AseUtilities.wrapImage(source, x, y)
     local px = {}
-    local i = 1
+    local i = 0
     local srcPxItr = source:pixels()
     for elm in srcPxItr do
-        px[i] = elm()
         i = i + 1
+        px[i] = elm()
     end
 
     local sourceSpec = source.spec
@@ -2127,11 +2075,11 @@ function AseUtilities.wrapImage(source, x, y)
     local wrp = Utilities.wrapPixels(px, x, y, w, h)
 
     local target = Image(sourceSpec)
-    local j = 1
+    local j = 0
     local trgPxItr = target:pixels()
     for elm in trgPxItr do
-        elm(wrp[j])
         j = j + 1
+        elm(wrp[j])
     end
 
     return target

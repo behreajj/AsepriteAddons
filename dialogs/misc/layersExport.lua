@@ -312,7 +312,7 @@ dlg:button {
         -- Version specific.
         local version = app.version
         local checkForTilemaps = false
-        local spriteUserData = ""
+        local spriteUserData = "\"data\":null"
         if version.major >= 1 and version.minor >= 3 then
             checkForTilemaps = true
             local rawUserData = activeSprite.data

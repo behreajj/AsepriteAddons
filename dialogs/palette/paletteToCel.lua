@@ -64,20 +64,6 @@ local function clrToV3FuncFromPreset(preset)
     end
 end
 
--- These have been replaced by a point hash placed
--- in a dictionary, but just in case, keep them around.
--- local function v3ToClrFuncFromPreset(preset)
---     if preset == "CIE_LAB" then
---         return vec3ToClrLab
---     elseif preset == "CIE_XYZ" then
---         return vec3ToClrXyz
---     elseif preset == "LINEAR_RGB" then
---         return vec3ToClrlRgb
---     else
---         return vec3ToClrsRgb
---     end
--- end
-
 local dlg = Dialog { title = "Palette To Cel" }
 
 dlg:combobox {
@@ -96,12 +82,10 @@ dlg:combobox {
     options = { "ACTIVE", "FILE", "PRESET" },
     onchange = function()
         local state = dlg.data.palType
-
         dlg:modify {
             id = "palFile",
             visible = state == "FILE"
         }
-
         dlg:modify {
             id = "palPreset",
             visible = state == "PRESET"
@@ -137,12 +121,10 @@ dlg:combobox {
     onchange = function()
         local state = dlg.data.clrSpacePreset
         local isLab = state == "CIE_LAB"
-
         dlg:modify {
             id = "cvgLabRad",
             visible = isLab
         }
-
         dlg:modify {
             id = "cvgNormRad",
             visible = not isLab
@@ -246,7 +228,6 @@ dlg:button {
         local clrSpacePreset = args.clrSpacePreset
         local octBounds = boundsFromPreset(clrSpacePreset)
         local clrV3Func = clrToV3FuncFromPreset(clrSpacePreset)
-        -- local v3ClrFunc = v3ToClrFuncFromPreset(clrSpacePreset)
 
         -- Select query radius according to color space.
         -- Limit results to 256.
@@ -266,13 +247,15 @@ dlg:button {
             or defaults.octCapacityBits
         octCapacity = 2 ^ octCapacity
         local octree = Octree.new(octBounds, octCapacity, 1)
-        for i = 1, hexesSrgbLen, 1 do
+        local hexIdx = 0
+        while hexIdx < hexesSrgbLen do
+            hexIdx = hexIdx + 1
+            local hexSrgb = hexesSrgb[hexIdx]
             -- Validate that the color is not an alpha mask.
-            local hexSrgb = hexesSrgb[i]
             if hexSrgb & 0xff000000 ~= 0 then
                 local clr = fromHex(hexSrgb)
                 local pt = clrV3Func(clr)
-                local hexProfile = hexesProfile[i]
+                local hexProfile = hexesProfile[hexIdx]
                 exactMatches[hexProfile] = true
                 ptToHexDict[v3Hash(pt)] = hexProfile
                 octInsert(octree, pt)

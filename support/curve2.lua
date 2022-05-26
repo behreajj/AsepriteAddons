@@ -4,9 +4,9 @@ Curve2 = {}
 Curve2.__index = Curve2
 
 setmetatable(Curve2, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Constructs a piecewise cubic Bezier curve.
 ---The first parameter specifies a closed loop
@@ -248,8 +248,8 @@ function Curve2.ellipse(
     local bottom = cy - ry
 
     -- kappa := 4 * (math.sqrt(2) - 1) / 3
-    local horizHandle = rx * 0.5522847498307936
-    local vertHandle = ry * 0.5522847498307936
+    local horizHandle = rx * 0.55228474983079
+    local vertHandle = ry * 0.55228474983079
 
     local xHandlePos = cx + horizHandle
     local xHandleNeg = cx - horizHandle
@@ -442,10 +442,10 @@ function Curve2.rect(
 
     -- Multipy by kappa.
     -- 4 * (math.sqrt(2) - 1) / 3
-    local vtlk = vtl * 0.5522847498307936
-    local vblk = vbl * 0.5522847498307936
-    local vbrk = vbr * 0.5522847498307936
-    local vtrk = vtr * 0.5522847498307936
+    local vtlk = vtl * 0.55228474983079
+    local vblk = vbl * 0.55228474983079
+    local vbrk = vbr * 0.55228474983079
+    local vtrk = vtr * 0.55228474983079
 
     -- Edge handles are lerped by 1 / 3.
     local t = 0.33333333333333
@@ -608,7 +608,9 @@ function Curve2.toJson(c)
     local kns = c.knots
     local knsLen = #kns
     local strArr = {}
-    for i = 1, knsLen, 1 do
+    local i = 0
+    while i < knsLen do
+        i = i + 1
         strArr[i] = Knot2.toJson(kns[i])
     end
 

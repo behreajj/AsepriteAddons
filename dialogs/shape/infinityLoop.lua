@@ -1,7 +1,4 @@
 dofile("../../support/aseutilities.lua")
--- dofile("../../support/mat3.lua")
--- dofile("../../support/curve2.lua")
--- dofile("../../support/utilities.lua")
 
 local defaults = {
     resolution = 32,
@@ -14,8 +11,10 @@ local defaults = {
     yOrigin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
-    dotClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
+    strokeClr = AseUtilities.hexToAseColor(
+        AseUtilities.DEFAULT_STROKE),
+    dotClr = AseUtilities.hexToAseColor(
+        AseUtilities.DEFAULT_FILL),
     handles = 0
 }
 

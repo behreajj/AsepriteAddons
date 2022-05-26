@@ -262,11 +262,12 @@ dlg:button {
         if reqFrames > 1 then iToStep = 1.0 / (reqFrames - 1.0) end
 
         local oogamask = outOfGamut << 0x18
-        for i = 1, reqFrames, 1 do
+        local idxFrame = 0
+        while idxFrame < reqFrames do
 
-            -- Convert i to a step, then lerp from
-            -- minimum light to maximum light.
-            local iStep = (i - 1.0) * iToStep
+            -- Convert i to a step, then lerp from minimum
+            -- to maximum light.
+            local iStep = idxFrame * iToStep
             local light = (1.0 - iStep) * minLight + iStep * maxLight
 
             local gamutImg = Image(spec)
@@ -301,7 +302,7 @@ dlg:button {
                         c = floor(0.5 + c * radAlpha) * radBeta
                     end
 
-                    clr = lchTosRgba(light, c, h, 1.0)
+                    clr = lchTosRgba(light, c, h, 1.0, 0.00005)
                 else
                     clr = labTosRgba(light, 0.0, 0.0, 1.0)
                 end
@@ -310,14 +311,15 @@ dlg:button {
                 -- at full opacity; otherwise display at reduced
                 -- alpha. Find the valid boundary of the gamut.
                 local hex = toHex(clr)
-                if rgbIsInGamut(clr) then
+                if rgbIsInGamut(clr, 0.0) then
                     elm(hex)
                 else
                     elm(oogamask | (hex & 0x00ffffff))
                 end
             end
 
-            gamutImgs[i] = gamutImg
+            idxFrame = idxFrame + 1
+            gamutImgs[idxFrame] = gamutImg
         end
 
         -- Create frames.
@@ -337,11 +339,13 @@ dlg:button {
 
         -- Create gamut layer cels.
         app.transaction(function()
-            for i = 1, reqFrames, 1 do
+            local idxCel = 0
+            while idxCel < reqFrames do
+                idxCel = idxCel + 1
                 sprite:newCel(
                     gamutLayer,
-                    sprite.frames[i],
-                    gamutImgs[i])
+                    sprite.frames[idxCel],
+                    gamutImgs[idxCel])
             end
         end)
 
@@ -403,7 +407,7 @@ dlg:button {
                 local xOff = 1 + xMin - strokeSize
                 local yOff = 1 + yMin - strokeSize
 
-                local plotSpec =  ImageSpec {
+                local plotSpec = ImageSpec {
                     width = (xMax - xMin) + stroke2 - 1,
                     height = (yMax - yMin) + stroke2 - 1,
                     colorMode = spec.colorMode }
@@ -411,13 +415,13 @@ dlg:button {
                 local plotImage = Image(plotSpec)
                 local plotPos = Point(xOff, yOff)
 
-                for j = 1, hexesSrgbLen, 1 do
-                    local hexSrgb = hexesSrgb[j]
+                for k = 1, hexesSrgbLen, 1 do
+                    local hexSrgb = hexesSrgb[k]
                     if hexSrgb & 0xff000000 ~= 0 then
-                        local xi = xs[j] - xOff
-                        local yi = ys[j] - yOff
-                        local hexProfile = hexesProfile[j]
-                        local strokeColor = strokes[j]
+                        local xi = xs[k] - xOff
+                        local yi = ys[k] - yOff
+                        local hexProfile = hexesProfile[k]
+                        local strokeColor = strokes[k]
                         drawCircleFill(plotImage, xi, yi, strokeSize, strokeColor)
                         drawCircleFill(plotImage, xi, yi, fillSize, hexProfile)
                     end

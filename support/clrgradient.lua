@@ -76,7 +76,9 @@ function ClrGradient:appendAll(clrs)
     self:compressKeysLeft(len)
     local oldLen = #self.keys
     local denom = 1.0 / (oldLen + len - 1.0)
-    for i = 1, len, 1 do
+    local i = 0
+    while i < len do
+        i = i + 1
         local key = ClrKey.newByVal(
             (oldLen + i - 1) * denom,
             clrs[i])
@@ -92,7 +94,9 @@ end
 function ClrGradient:compressKeysLeft(added)
     local len = #self.keys
     local scalar = 1.0 / (len + added - 1.0)
-    for i = 1, len, 1 do
+    local i = 0
+    while i < len do
+        i = i + 1
         local key = self.keys[i]
         key.step = key.step * (i - 1) * scalar
     end
@@ -107,7 +111,9 @@ function ClrGradient:compressKeysRight(added)
     local len = #self.keys
     local scalar = added / (len + added - 1.0)
     local coeff = 1.0 - scalar
-    for i = 1, len, 1 do
+    local i = 0
+    while i < len do
+        i = i + 1
         local key = self.keys[i]
         key.step = scalar + coeff * key.step
     end
@@ -159,7 +165,9 @@ function ClrGradient:prependAll(clrs)
     self:compressKeysRight(len)
     local oldLen = #self.keys
     local denom = 1.0 / (oldLen + len - 1.0)
-    for i = 1, len, 1 do
+    local i = 0
+    while i < len do
+        i = i + 1
         local key = ClrKey.newByVal(
             (i - 1) * denom,
             clrs[i])
@@ -312,7 +320,6 @@ function ClrGradient.evalRange(
     while i < vCount do
         local t = i * toFac
         local step = (1.0 - t) * vOrig + t * vDest
-
         i = i + 1
         result[i] = ClrGradient.eval(cg, step, easing)
     end
@@ -437,7 +444,9 @@ function ClrGradient.toJson(cg)
     local keys = cg.keys
     local keysLen = #keys
     local strArr = {}
-    for i = 1, keysLen, 1 do
+    local i = 0
+    while i < keysLen do
+        i = i + 1
         strArr[i] = ClrKey.toJson(keys[i])
     end
 

@@ -12,9 +12,11 @@ local defaults = {
     yOrigin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
+    strokeClr = AseUtilities.hexToAseColor(
+        AseUtilities.DEFAULT_STROKE),
     useFill = false,
-    fillClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
+    fillClr = AseUtilities.hexToAseColor(
+        AseUtilities.DEFAULT_FILL),
     pullFocus = false
 }
 
@@ -222,6 +224,8 @@ dlg:button {
                     brush, cel, layer)
             end
         end)
+
+        app.refresh()
     end
 }
 

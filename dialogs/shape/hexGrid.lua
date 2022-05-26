@@ -8,9 +8,11 @@ local defaults = {
     margin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
+    strokeClr = AseUtilities.hexToAseColor(
+        AseUtilities.DEFAULT_STROKE),
     useFill = true,
-    fillClr = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
+    fillClr = AseUtilities.hexToAseColor(
+        AseUtilities.DEFAULT_FILL),
     pullFocus = false
 }
 
@@ -146,7 +148,7 @@ dlg:button {
         local sprite = AseUtilities.initCanvas(
             64, 64, mesh.name,
             { args.fillClr.rgbaPixel,
-              args.strokeClr.rgbaPixel })
+                args.strokeClr.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
         local frame = app.activeFrame or sprite.frames[1]
         local cel = sprite:newCel(layer, frame)
@@ -160,6 +162,8 @@ dlg:button {
             Brush(args.strokeWeight),
             cel,
             layer)
+
+        app.refresh()
     end
 }
 

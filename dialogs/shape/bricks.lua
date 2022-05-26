@@ -257,6 +257,8 @@ dlg:button {
                 true, mortarColor,
                 brush, cel, layer)
         end
+
+        app.refresh()
     end
 }
 
