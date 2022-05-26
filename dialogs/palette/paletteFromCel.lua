@@ -9,19 +9,22 @@ local colorSpaces = {
     "S_RGB"
 }
 
-local centerPresets = {
-    "MEAN",
-    "MEDIAN"
-}
-
 local function sortByPreset(preset, arr)
-    if preset == "CIE_LAB" then
-        -- table.sort(arr, function(a, b) return a.z < b.z end)
-        table.sort(arr)
-    elseif preset == "CIE_XYZ" then
+    if preset == "CIE_XYZ" then
+        -- Y corresponds to perceived brightness.
         table.sort(arr, function(a, b) return a.y < b.y end)
+    elseif preset == "LINEAR_RGB"
+        or preset == "S_RGB" then
+        -- Average brightness is good enough.
+        table.sort(arr, function(a, b)
+            return ((a.x + a.y + a.z) / 3.0)
+                < ((b.x + b.y + b.z) / 3.0)
+        end)
     else
-        -- table.sort(arr)
+        -- In CIE LAB, L is assigned to z. Default
+        -- Vec3 comparator prioritizes the last
+        -- component (z).
+        table.sort(arr)
     end
 end
 
@@ -107,7 +110,6 @@ local defaults = {
     target = "ACTIVE",
     paletteIndex = 1,
     clrSpacePreset = "LINEAR_RGB",
-    centerPreset = "MEAN",
     pullFocus = false
 }
 
@@ -396,9 +398,7 @@ dlg:button {
             local v3ClrFunc = v3ToClrFuncFromPreset(clrSpacePreset)
             local bounds = boundsFromPreset(clrSpacePreset)
 
-            -- This is faster without look up tables.
             local octree = Octree.new(bounds, octCapacity, 1)
-
             for i = 1, hexesLen, 1 do
                 local hex = hexes[i]
                 if ((hex >> 0x18) & 0xff) > 0 then
@@ -408,21 +408,12 @@ dlg:button {
                 end
             end
 
-            local centers = nil
-            local centerPreset = args.centerPreset
-                or defaults.centerPreset
-            if centerPreset == "MEDIAN" then
-                centers = Octree.centersMedian(octree, false, {})
-            else
-                centers = Octree.centersMean(octree, false, {})
-            end
-
+            local centers = Octree.centersMean(octree, false, {})
             sortByPreset(clrSpacePreset, centers)
 
             centersLen = #centers
             local centerHexes = {}
             for i = 1, centersLen, 1 do
-                -- This is faster without look up tables.
                 local center = centers[i]
                 local srgb = v3ClrFunc(center)
                 centerHexes[i] = Clr.toHex(srgb)
@@ -469,22 +460,12 @@ dlg:button {
         if printElapsed then
             endTime = os.time()
             elapsed = os.difftime(endTime, startTime)
-
-            local elapsedStr = ""
-            if elapsed > 60 then
-                elapsedStr = string.format(
-                    "Elapsed: %dm, %ds",
-                    (elapsed % 3600) // 60,
-                    math.floor(elapsed % 60))
-            else
-                elapsedStr = string.format("Elapsed: %d", elapsed)
-            end
             app.alert {
                 title = "Diagnostic",
                 text = {
                     string.format("Start: %d", startTime),
                     string.format("End: %d", endTime),
-                    elapsedStr,
+                    string.format("Elapsed: %d", elapsed),
                     string.format("Capacity: %d", octCapacity),
                     string.format("Raw Colors: %d", oldHexesLen),
                     string.format("Octree Colors: %d", centersLen),

@@ -4,9 +4,9 @@ Bounds2 = {}
 Bounds2.__index = Bounds2
 
 setmetatable(Bounds2, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Constructs a new axis aligned bounding box
 ---(AABB) for a 2D area, represented by a
@@ -81,7 +81,7 @@ function Bounds2.all(b)
     local mn = b.mn
     local mx = b.mx
     return math.abs(mx.x - mn.x) > 0.000001
-       and math.abs(mx.y - mn.y) > 0.000001
+        and math.abs(mx.y - mn.y) > 0.000001
 end
 
 ---Returns true if the bounds minimum and
@@ -93,7 +93,7 @@ function Bounds2.any(b)
     local mn = b.mn
     local mx = b.mx
     return math.abs(mx.x - mn.x) > 0.000001
-       or math.abs(mx.y - mn.y) > 0.000001
+        or math.abs(mx.y - mn.y) > 0.000001
 end
 
 ---Finds the center of a bounding box.
@@ -151,7 +151,9 @@ function Bounds2.fromPoints(points)
     local uby = -2147483648
 
     local len = #points
-    for i = 1, len, 1 do
+    local i = 0
+    while i < len do
+        i = i + 1
         local p = points[i]
 
         if p.x < lbx then lbx = p.x end
@@ -237,13 +239,13 @@ function Bounds2.splitInternal(
     local y = (1.0 - yFac) * bMn.y + yFac * bMx.y
 
     sw.mn = Vec2.new(bMn.x, bMn.y)
-    se.mn = Vec2.new(    x, bMn.y)
-    nw.mn = Vec2.new(bMn.x,     y)
-    ne.mn = Vec2.new(    x,     y)
+    se.mn = Vec2.new(x, bMn.y)
+    nw.mn = Vec2.new(bMn.x, y)
+    ne.mn = Vec2.new(x, y)
 
-    sw.mx = Vec2.new(    x,     y)
-    se.mx = Vec2.new(bMx.x,     y)
-    nw.mx = Vec2.new(    x, bMx.y)
+    sw.mx = Vec2.new(x, y)
+    se.mx = Vec2.new(bMx.x, y)
+    nw.mx = Vec2.new(x, bMx.y)
     ne.mx = Vec2.new(bMx.x, bMx.y)
 end
 
@@ -265,7 +267,7 @@ end
 function Bounds2.unitSquareSigned()
     return Bounds2.newByRef(
         Vec2.new(-1.000002, -1.000002),
-        Vec2.new( 1.000002,  1.000002))
+        Vec2.new(1.000002, 1.000002))
 end
 
 ---Returns a bounds containing an unsigned
@@ -275,7 +277,7 @@ end
 function Bounds2.unitSquareUnsigned()
     return Bounds2.newByRef(
         Vec2.new(-0.000002, -0.000002),
-        Vec2.new( 1.000002,  1.000002))
+        Vec2.new(1.000002, 1.000002))
 end
 
 return Bounds2

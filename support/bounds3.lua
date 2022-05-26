@@ -4,9 +4,9 @@ Bounds3 = {}
 Bounds3.__index = Bounds3
 
 setmetatable(Bounds3, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Constructs a new axis aligned bounding box
 ---(AABB) for a 3D volume, represented by a
@@ -81,8 +81,8 @@ function Bounds3.all(b)
     local mn = b.mn
     local mx = b.mx
     return math.abs(mx.x - mn.x) > 0.000001
-       and math.abs(mx.y - mn.y) > 0.000001
-       and math.abs(mx.z - mn.z) > 0.000001
+        and math.abs(mx.y - mn.y) > 0.000001
+        and math.abs(mx.z - mn.z) > 0.000001
 end
 
 ---Returns true if the bounds minimum and
@@ -94,8 +94,8 @@ function Bounds3.any(b)
     local mn = b.mn
     local mx = b.mx
     return math.abs(mx.x - mn.x) > 0.000001
-       or math.abs(mx.y - mn.y) > 0.000001
-       or math.abs(mx.z - mn.z) > 0.000001
+        or math.abs(mx.y - mn.y) > 0.000001
+        or math.abs(mx.z - mn.z) > 0.000001
 end
 
 ---Finds the center of a bounding box.
@@ -156,7 +156,9 @@ function Bounds3.fromPoints(points)
     local ubz = -2147483648
 
     local len = #points
-    for i = 1, len, 1 do
+    local i = 0
+    while i < len do
+        i = i + 1
         local p = points[i]
 
         if p.x < lbx then lbx = p.x end
@@ -264,21 +266,21 @@ function Bounds3.splitInternal(
     local z = (1.0 - zFac) * bMn.z + zFac * bMx.z
 
     bsw.mn = Vec3.new(bMn.x, bMn.y, bMn.z)
-    bse.mn = Vec3.new(    x, bMn.y, bMn.z)
-    bnw.mn = Vec3.new(bMn.x,     y, bMn.z)
-    bne.mn = Vec3.new(    x,     y, bMn.z)
-    fsw.mn = Vec3.new(bMn.x, bMn.y,     z)
-    fse.mn = Vec3.new(    x, bMn.y,     z)
-    fnw.mn = Vec3.new(bMn.x,     y,     z)
-    fne.mn = Vec3.new(    x,     y,     z)
+    bse.mn = Vec3.new(x, bMn.y, bMn.z)
+    bnw.mn = Vec3.new(bMn.x, y, bMn.z)
+    bne.mn = Vec3.new(x, y, bMn.z)
+    fsw.mn = Vec3.new(bMn.x, bMn.y, z)
+    fse.mn = Vec3.new(x, bMn.y, z)
+    fnw.mn = Vec3.new(bMn.x, y, z)
+    fne.mn = Vec3.new(x, y, z)
 
-    bsw.mx = Vec3.new(    x,     y,     z)
-    bse.mx = Vec3.new(bMx.x,     y,     z)
-    bnw.mx = Vec3.new(    x, bMx.y,     z)
-    bne.mx = Vec3.new(bMx.x, bMx.y,     z)
-    fsw.mx = Vec3.new(    x,     y, bMx.z)
-    fse.mx = Vec3.new(bMx.x,     y, bMx.z)
-    fnw.mx = Vec3.new(    x, bMx.y, bMx.z)
+    bsw.mx = Vec3.new(x, y, z)
+    bse.mx = Vec3.new(bMx.x, y, z)
+    bnw.mx = Vec3.new(x, bMx.y, z)
+    bne.mx = Vec3.new(bMx.x, bMx.y, z)
+    fsw.mx = Vec3.new(x, y, bMx.z)
+    fse.mx = Vec3.new(bMx.x, y, bMx.z)
+    fnw.mx = Vec3.new(x, bMx.y, bMx.z)
     fne.mx = Vec3.new(bMx.x, bMx.y, bMx.z)
 end
 
@@ -300,8 +302,8 @@ end
 ---@return table
 function Bounds3.cieLab()
     return Bounds3.newByRef(
-        Vec3.new(-110.0, -110.0,  -1.0),
-        Vec3.new( 110.0,  110.0, 101.0))
+        Vec3.new(-110.0, -110.0, -1.0),
+        Vec3.new(110.0, 110.0, 101.0))
 end
 
 ---Returns a bounds containing a signed
@@ -311,7 +313,7 @@ end
 function Bounds3.unitCubeSigned()
     return Bounds3.newByRef(
         Vec3.new(-1.000002, -1.000002, -1.000002),
-        Vec3.new( 1.000002,  1.000002,  1.000002))
+        Vec3.new(1.000002, 1.000002, 1.000002))
 end
 
 ---Returns a bounds containing an unsigned
@@ -321,7 +323,7 @@ end
 function Bounds3.unitCubeUnsigned()
     return Bounds3.newByRef(
         Vec3.new(-0.000002, -0.000002, -0.000002),
-        Vec3.new( 1.000002,  1.000002,  1.000002))
+        Vec3.new(1.000002, 1.000002, 1.000002))
 end
 
 return Bounds3

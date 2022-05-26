@@ -283,8 +283,10 @@ function AseUtilities.asePaletteLoad(
     if hexesProfile == nil then
         hexesProfile = {}
         local src = AseUtilities.DEFAULT_PAL_ARR
-        local srcLen = #src
-        for i = 1, srcLen, 1 do
+        local lenSrc = #src
+        local i = 0
+        while i < lenSrc do
+            i = i + 1
             hexesProfile[i] = src[i]
         end
     end
@@ -292,7 +294,10 @@ function AseUtilities.asePaletteLoad(
     -- Copy by value as a precaution.
     if hexesSrgb == nil then
         hexesSrgb = {}
-        for i = 1, #hexesProfile, 1 do
+        local lenProf = #hexesProfile
+        local i = 0
+        while i < lenProf do
+            i = i + 1
             hexesSrgb[i] = hexesProfile[i]
         end
     end
@@ -302,8 +307,11 @@ function AseUtilities.asePaletteLoad(
     -- should be of the same length, avoid the safety
     -- of using separate arrays.
     if correctZeroAlpha then
-        for i = 1, #hexesProfile, 1 do
-            if hexesProfile[i] & 0xff000000 == 0 then
+        local lenProf = #hexesProfile
+        local i = 0
+        while i < lenProf do
+            i = i + 1
+            if (hexesProfile[i] & 0xff000000) == 0x0 then
                 hexesProfile[i] = 0x0
                 hexesSrgb[i] = 0x0
             end
@@ -358,15 +366,21 @@ function AseUtilities.asePalettesToHexArr(palettes)
     if palettes then
         local lenPalettes = #palettes
         local hexes = {}
-        for i = 1, lenPalettes, 1 do
+        local i = 0
+        local k = 0
+        while i < lenPalettes do
+            i = i + 1
             local palette = palettes[i]
             if palette then
                 local lenPalette = #palette
-                for j = 1, lenPalette, 1 do
-                    local aseColor = palette:getColor(j - 1)
+                local j = 0
+                while j < lenPalette do
+                    local aseColor = palette:getColor(j)
+                    j = j + 1
                     local hex = AseUtilities.aseColorToHex(
                         aseColor, ColorMode.RGB)
-                    table.insert(hexes, hex)
+                    k = k + 1
+                    hexes[k] = hex
                 end
             end
         end
@@ -437,12 +451,14 @@ function AseUtilities.bakeLayerOpacity(layer)
     if layer.opacity then layerAlpha = layer.opacity end
     if not layer.isVisible then layerAlpha = 0 end
     local cels = layer.cels
-    local celsLen = #cels
+    local lenCels = #cels
 
     if layerAlpha < 0xff then
         if layerAlpha < 0x01 then
             -- Layer is completely transparent.
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < lenCels do
+                i = i + 1
                 local cel = cels[i]
                 local img = cel.image
                 local pxItr = img:pixels()
@@ -451,7 +467,9 @@ function AseUtilities.bakeLayerOpacity(layer)
             end
         else
             -- Layer is semi-transparent.
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < lenCels do
+                i = i + 1
                 local cel = cels[i]
                 local celAlpha = cel.opacity
                 local img = cel.image
@@ -496,7 +514,11 @@ function AseUtilities.bakeLayerOpacity(layer)
     else
         -- Layer is completely opaque.
         local bakeCel = AseUtilities.bakeCelOpacity
-        for i = 1, celsLen, 1 do bakeCel(cels[i]) end
+        local i = 0
+        while i < lenCels do
+            i = i + 1
+            bakeCel(cels[i])
+        end
     end
 end
 
@@ -721,7 +743,8 @@ function AseUtilities.createNewCels(
     -- Frames = x = columns
     local cels = {}
     app.transaction(function()
-        for i = 0, flatCount - 1, 1 do
+        local i = 0
+        while i < flatCount do
             local frameIndex = valFrmIdx + (i % valFrmCt)
             local layerIndex = valLyrIdx + (i // valFrmCt)
             local frameObj = sprFrames[frameIndex]
@@ -731,7 +754,8 @@ function AseUtilities.createNewCels(
             -- print(string.format("Layer Index %d", layerIndex))
 
             -- Frame and layer must objects, not indices.
-            cels[1 + i] = sprite:newCel(
+            i = i + 1
+            cels[i] = sprite:newCel(
                 layerObj, frameObj, valImg, valPos)
 
         end
@@ -741,8 +765,10 @@ function AseUtilities.createNewCels(
     if useGuiClr then
         local aseColor = AseUtilities.hexToAseColor(guiClr)
         app.transaction(function()
-            for i = 1, flatCount, 1 do
-                cels[i].color = aseColor
+            local j = 0
+            while j < flatCount do
+                j = j + 1
+                cels[j].color = aseColor
             end
         end)
     end
@@ -792,7 +818,9 @@ function AseUtilities.createNewFrames(sprite, count, duration)
 
     local frames = {}
     app.transaction(function()
-        for i = 1, valCount, 1 do
+        local i = 0
+        while i < valCount do
+            i = i + 1
             local frame = sprite:newEmptyFrame()
             frame.duration = valDur
             frames[i] = frame
@@ -1949,7 +1977,7 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     else
         -- This is possible, esp. in Aseprite v1.3 with
         -- tilemap layers, where colorMode = 4.
-        eval = function(hex) return true end
+        return image, 0, 0
     end
 
     -- Immutable.
@@ -1973,6 +2001,9 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     -- https://github.com/behreajj/AsepriteAddons/blob/
     -- c157511958578e475a3172bd16d55f8ad20ed0b3/
     -- support/aseutilities.lua
+
+    -- TODO: All for loops need to be converted due to
+    -- this: https://www.lua.org/manual/5.3/manual.html#3.3.5
 
     -- Top edge.
     local breakTop = false
@@ -2031,11 +2062,16 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
         right = right - 1
     end
 
+    local wTrg = right - left
+    local hTrg = bottom - top
+    if wTrg < 1 or hTrg < 1 then
+        return image, 0, 0
+    end
+    wTrg = wTrg + 1
+    hTrg = hTrg + 1
+
     local valPad = padding or 0
     valPad = math.abs(valPad)
-
-    local wTrg = 1 + right - left
-    local hTrg = 1 + bottom - top
     local pad2 = valPad + valPad
 
     local trgSpec = ImageSpec {

@@ -2,9 +2,9 @@ Clr = {}
 Clr.__index = Clr
 
 setmetatable(Clr, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Constructs a new color from red, green
 ---blue and transparency channels.
@@ -83,9 +83,9 @@ end
 ---@return boolean
 function Clr.all(a)
     return a.a > 0.0
-       and a.b > 0.0
-       and a.g > 0.0
-       and a.r > 0.0
+        and a.b > 0.0
+        and a.g > 0.0
+        and a.r > 0.0
 end
 
 ---Returns true if the alpha channel is within
@@ -161,7 +161,7 @@ function Clr.bitEqRgb(a, b)
     if bb < 0.0 then bb = 0.0 elseif bb > 1.0 then bb = 1.0 end
     if math.tointeger(0.5 + ab * 0xff)
         ~= math.tointeger(0.5 + bb * 0xff) then
-            return false
+        return false
     end
 
     local bg = b.g
@@ -171,7 +171,7 @@ function Clr.bitEqRgb(a, b)
     if bg < 0.0 then bg = 0.0 elseif bg > 1.0 then bg = 1.0 end
     if math.tointeger(0.5 + ag * 0xff)
         ~= math.tointeger(0.5 + bg * 0xff) then
-            return false
+        return false
     end
 
     local br = b.r
@@ -181,7 +181,7 @@ function Clr.bitEqRgb(a, b)
     if br < 0.0 then br = 0.0 elseif br > 1.0 then br = 1.0 end
     if math.tointeger(0.5 + ar * 0xff)
         ~= math.tointeger(0.5 + br * 0xff) then
-            return false
+        return false
     end
 
     return true
@@ -326,7 +326,7 @@ end
 ---@return table
 function Clr.fromHex(c)
     return Clr.new(
-        (c         & 0xff) * 0.003921568627451,
+        (c & 0xff) * 0.003921568627451,
         (c >> 0x08 & 0xff) * 0.003921568627451,
         (c >> 0x10 & 0xff) * 0.003921568627451,
         (c >> 0x18 & 0xff) * 0.003921568627451)
@@ -339,7 +339,9 @@ end
 function Clr.fromHexArray(arr)
     local len = #arr
     local result = {}
-    for i = 1, len, 1 do
+    local i = 0
+    while i < len do
+        i = i + 1
         result[i] = Clr.fromHex(arr[i])
     end
     return result
@@ -432,7 +434,8 @@ function Clr.gridHsl(
     local len3 = vLayers * len2
 
     local result = {}
-    for k = 0, len3 - 1, 1 do
+    local k = 0
+    while k < len3 do
         local h = k // len2
         local m = k - h * len2
 
@@ -440,13 +443,14 @@ function Clr.gridHsl(
 
         local prc = h * toPrc
         local sat = (1.0 - prc) * vsMin
-                          + prc * vsMax
+            + prc * vsMax
 
         -- Smooth step approximates sine wave.
         local lgt = ((m // vLons) + 1.0) * toLgt
         lgt = lgt * lgt * (3.0 - (lgt + lgt))
 
-        result[1 + k] = Clr.hslaTosRgba(
+        k = k + 1
+        result[k] = Clr.hslaTosRgba(
             hue, sat, lgt, aVal)
     end
 
@@ -489,16 +493,18 @@ function Clr.gridsRgb(cols, rows, layers, alpha)
     local jToStep = 1.0 / (cVal - 1.0)
 
     local rcVal = rVal * cVal
-    local length = lVal * rcVal - 1
+    local length = lVal * rcVal
     local result = {}
 
-    for k = 0, length, 1 do
+    local k = 0
+    while k < length do
         local h = k // rcVal
         local m = k - h * rcVal
         local i = m // cVal
         local j = m % cVal
 
-        result[1 + k] = Clr.new(
+        k = k + 1
+        result[k] = Clr.new(
             j * jToStep,
             i * iToStep,
             h * hToStep,
@@ -652,7 +658,7 @@ function Clr.labToLch(l, a, b, alpha, tol)
         if fac < 0.0 then fac = 0.0
         elseif fac > 1.0 then fac = 1.0 end
         hue = (1.0 - fac) * Clr.LCH_HUE_SHADOW
-             + fac * (1.0 + Clr.LCH_HUE_LIGHT)
+            + fac * (1.0 + Clr.LCH_HUE_LIGHT)
     else
         hue = math.atan(b, a) * 0.1591549430919
         chroma = math.sqrt(chromasq)
@@ -850,17 +856,17 @@ end
 function Clr.lRgbaToXyzInternal(red, green, blue, alpha)
     local aVerif = alpha or 1.0
     return {
-        x = 0.41241084648854  * red
-          + 0.35758456785295  * green
-          + 0.18045380393361  * blue,
+        x = 0.41241084648854 * red
+            + 0.35758456785295 * green
+            + 0.18045380393361 * blue,
 
-        y = 0.21264934272065  * red
-          + 0.7151691357059   * green
-          + 0.072181521573443 * blue,
+        y = 0.21264934272065 * red
+            + 0.7151691357059 * green
+            + 0.072181521573443 * blue,
 
-        z = 0.01933175842915  * red
-          + 0.11919485595098  * green
-          + 0.95039003405034  * blue,
+        z = 0.01933175842915 * red
+            + 0.11919485595098 * green
+            + 0.95039003405034 * blue,
 
         a = aVerif }
 end
@@ -880,8 +886,8 @@ end
 ---@return number
 function Clr.lumlRgb(c)
     return c.r * 0.21264934272065
-         + c.g * 0.7151691357059
-         + c.b * 0.072181521573443
+        + c.g * 0.7151691357059
+        + c.b * 0.072181521573443
 end
 
 ---Finds the relative luminance of a sRGB color,
@@ -1251,8 +1257,8 @@ end
 function Clr.mixsRgbaInternal(a, b, t)
     return Clr.lRgbaTosRgbaInternal(
         Clr.mixlRgbaInternal(
-        Clr.sRgbaTolRgbaInternal(a),
-        Clr.sRgbaTolRgbaInternal(b), t))
+            Clr.sRgbaTolRgbaInternal(a),
+            Clr.sRgbaTolRgbaInternal(b), t))
 end
 
 ---Mixes two colors in CIE XYZ space by a step,
@@ -1327,9 +1333,9 @@ function Clr.quantize(c, levels)
         local delta = 1.0 / levels
         return Clr.quantizeInternal(
             c, levels, delta,
-               levels, delta,
-               levels, delta,
-               levels, delta)
+            levels, delta,
+            levels, delta,
+            levels, delta)
     end
     return Clr.new(c.r, c.g, c.b, c.a)
 end
@@ -1352,9 +1358,9 @@ end
 ---@return table
 function Clr.quantizeInternal(
     c, rLevels, rDelta,
-       gLevels, gDelta,
-       bLevels, bDelta,
-       aLevels, aDelta)
+    gLevels, gDelta,
+    bLevels, bDelta,
+    aLevels, aDelta)
 
     return Clr.new(
         rDelta * math.floor(0.5 + c.r * rLevels),
@@ -1474,7 +1480,7 @@ function Clr.sRgbaToHslaInternal(red, green, blue, alpha)
     elseif diff < 0.003921568627451 then
         -- Gray.
         local hue = (1.0 - light) * Clr.HSL_HUE_SHADOW
-                   + light * (1.0 + Clr.HSL_HUE_LIGHT)
+            + light * (1.0 + Clr.HSL_HUE_LIGHT)
         if hue ~= 1.0 then hue = hue % 1.0 end
         return {
             h = hue,
@@ -1567,7 +1573,7 @@ function Clr.sRgbaToHsvaInternal(red, green, blue, alpha)
                 -- terms of angle, so one is added to lerp
                 -- in proper angular direction.
                 local hue = (1.0 - light) * Clr.HSL_HUE_SHADOW
-                           + light * (1.0 + Clr.HSL_HUE_LIGHT)
+                    + light * (1.0 + Clr.HSL_HUE_LIGHT)
                 if hue ~= 1.0 then hue = hue % 1.0 end
                 return {
                     h = hue,
@@ -1690,9 +1696,9 @@ end
 ---@return number
 function Clr.toHexUnchecked(c)
     return math.tointeger(0.5 + c.a * 0xff) << 0x18
-         | math.tointeger(0.5 + c.b * 0xff) << 0x10
-         | math.tointeger(0.5 + c.g * 0xff) << 0x08
-         | math.tointeger(0.5 + c.r * 0xff)
+        | math.tointeger(0.5 + c.b * 0xff) << 0x10
+        | math.tointeger(0.5 + c.g * 0xff) << 0x08
+        | math.tointeger(0.5 + c.r * 0xff)
 end
 
 ---Converts from a color to a web-friendly hexadecimal
@@ -1713,8 +1719,8 @@ end
 function Clr.toHexWebUnchecked(c)
     return string.format("%06X",
         math.tointeger(0.5 + c.r * 0xff) << 0x10
-      | math.tointeger(0.5 + c.g * 0xff) << 0x08
-      | math.tointeger(0.5 + c.b * 0xff))
+        | math.tointeger(0.5 + c.g * 0xff) << 0x08
+        | math.tointeger(0.5 + c.b * 0xff))
 end
 
 ---Returns a JSON string of a color.
@@ -1803,17 +1809,17 @@ end
 function Clr.xyzaTolRgba(x, y, z, alpha)
     local aVerif = alpha or 1.0
     return Clr.new(
-          3.2408123988953   * x
-        - 1.5373084456298   * y
-        - 0.49858652290697  * z,
+        3.2408123988953 * x
+        - 1.5373084456298 * y
+        - 0.49858652290697 * z,
 
-         -0.96924301700864  * x
-        + 1.8759663029086   * y
+        -0.96924301700864 * x
+        + 1.8759663029086 * y
         + 0.041555030856686 * z,
 
-          0.055638398436113 * x
-        - 0.20400746093241  * y
-        + 1.0571295702861   * z,
+        0.055638398436113 * x
+        - 0.20400746093241 * y
+        + 1.0571295702861 * z,
 
         aVerif)
 end

@@ -107,7 +107,7 @@ dlg:button {
 
         local uniquesOnly = args.uniquesOnly
         if uniquesOnly then
-            local uniques, dict = Utilities.uniqueColors(
+            local uniques, _ = Utilities.uniqueColors(
                 hexesSrgb, true)
             hexesSrgb = uniques
         end
@@ -128,8 +128,6 @@ dlg:button {
             local colorMode = sprite.colorMode
             local profile = sprite.colorSpace
 
-            -- TODO: Multiple palettes a condition for
-            -- not sharing palettes?
             if colorMode == ColorMode.RGB
                 and (profile == nil
                     or profile == profileNone
@@ -144,7 +142,15 @@ dlg:button {
         local candLen = #candidates
         for i = 1, candLen, 1 do
             local candidate = candidates[i]
-            AseUtilities.setSpritePalette(hexesSrgb, candidate, 1)
+            local lenPals = #candidate.palettes
+            -- This isn't as efficient as it could be
+            -- because the same Aseprite Colors are
+            -- recreated for each target palette when
+            -- they are converted by value anyway.
+            for j = 1, lenPals, 1 do
+                AseUtilities.setSpritePalette(
+                    hexesSrgb, candidate, j)
+            end
         end
 
         app.refresh()

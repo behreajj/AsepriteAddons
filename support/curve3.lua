@@ -4,9 +4,9 @@ Curve3 = {}
 Curve3.__index = Curve3
 
 setmetatable(Curve3, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Constructs a piecewise cubic Bezier curve.
 ---The first parameter specifies a closed loop
@@ -49,7 +49,9 @@ end
 ---@return table
 function Curve3:rotateXInternal(cosa, sina)
     local knsLen = #self.knots
-    for i = 1, knsLen, 1 do
+    local i = 0
+    while i < knsLen do
+        i = i + 1
         self.knots[i]:rotateXInternal(cosa, sina)
     end
     return self
@@ -72,7 +74,9 @@ end
 ---@return table
 function Curve3:rotateYInternal(cosa, sina)
     local knsLen = #self.knots
-    for i = 1, knsLen, 1 do
+    local i = 0
+    while i < knsLen do
+        i = i + 1
         self.knots[i]:rotateYInternal(cosa, sina)
     end
     return self
@@ -95,7 +99,9 @@ end
 ---@return table
 function Curve3:rotateZInternal(cosa, sina)
     local knsLen = #self.knots
-    for i = 1, knsLen, 1 do
+    local i = 0
+    while i < knsLen do
+        i = i + 1
         self.knots[i]:rotateZInternal(cosa, sina)
     end
     return self
@@ -119,7 +125,9 @@ end
 function Curve3:scaleNum(n)
     if n ~= 0.0 then
         local knsLen = #self.knots
-        for i = 1, knsLen, 1 do
+        local i = 0
+        while i < knsLen do
+            i = i + 1
             self.knots[i]:scaleNum(n)
         end
     end
@@ -132,7 +140,9 @@ end
 function Curve3:scaleVec3(v)
     if Vec3.all(v) then
         local knsLen = #self.knots
-        for i = 1, knsLen, 1 do
+        local i = 0
+        while i < knsLen do
+            i = i + 1
             self.knots[i]:scaleVec3(v)
         end
     end
@@ -144,7 +154,9 @@ end
 ---@return table
 function Curve3:translate(v)
     local knsLen = #self.knots
-    for i = 1, knsLen, 1 do
+    local i = 0
+    while i < knsLen do
+        i = i + 1
         self.knots[i]:translate(v)
     end
     return self

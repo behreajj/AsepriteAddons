@@ -477,12 +477,12 @@ function Vec4.gridCartesian(cols, rows, layers, strata, lb, ub)
     local iToStep = 1.0 / (rVal - 1.0)
     local jToStep = 1.0 / (cVal - 1.0)
 
+    local result = {}
     local rcVal = rVal * cVal
     local lrcVal = lVal * rcVal
-    local length = sVal * lrcVal - 1
-    local result = {}
-
-    for k = 0, length, 1 do
+    local length = sVal * lrcVal
+    local k = 0
+    while k < length do
         local g = k // lrcVal
         local m = k - g * lrcVal
         local h = m // rcVal
@@ -493,7 +493,8 @@ function Vec4.gridCartesian(cols, rows, layers, strata, lb, ub)
         local iStep = (n // cVal) * iToStep
         local jStep = (n % cVal) * jToStep
 
-        result[1 + k] = Vec4.new(
+        k = k + 1
+        result[k] = Vec4.new(
             (1.0 - jStep) * lbx + jStep * ubx,
             (1.0 - iStep) * lby + iStep * uby,
             (1.0 - hStep) * lbz + hStep * ubz,

@@ -49,7 +49,9 @@ end
 ---@return table
 function Curve2:rotateZInternal(cosa, sina)
     local knsLen = #self.knots
-    for i = 1, knsLen, 1 do
+    local i = 0
+    while i < knsLen do
+        i = i + 1
         self.knots[i]:rotateZInternal(cosa, sina)
     end
     return self
@@ -73,7 +75,9 @@ end
 function Curve2:scaleNum(n)
     if n ~= 0.0 then
         local knsLen = #self.knots
-        for i = 1, knsLen, 1 do
+        local i = 0
+        while i < knsLen do
+            i = i + 1
             self.knots[i]:scaleNum(n)
         end
     end
@@ -86,7 +90,9 @@ end
 function Curve2:scaleVec2(v)
     if Vec2.all(v) then
         local knsLen = #self.knots
-        for i = 1, knsLen, 1 do
+        local i = 0
+        while i < knsLen do
+            i = i + 1
             self.knots[i]:scaleVec2(v)
         end
     end
@@ -98,7 +104,9 @@ end
 ---@return table
 function Curve2:translate(v)
     local knsLen = #self.knots
-    for i = 1, knsLen, 1 do
+    local i = 0
+    while i < knsLen do
+        i = i + 1
         self.knots[i]:translate(v)
     end
     return self

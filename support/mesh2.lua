@@ -4,9 +4,9 @@ Mesh2 = {}
 Mesh2.__index = Mesh2
 
 setmetatable(Mesh2, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end })
 
 ---Constructs a 2D mesh with a variable
 ---number of vertices per face.
@@ -111,7 +111,9 @@ end
 ---@return table
 function Mesh2:rotateZInternal(cosa, sina)
     local vsLen = #self.vs
-    for i = 1, vsLen, 1 do
+    local i = 0
+    while i < vsLen do
+        i = i + 1
         self.vs[i] = Vec2.rotateZInternal(
             self.vs[i], cosa, sina)
     end
@@ -137,7 +139,9 @@ end
 function Mesh2:scaleNum(n)
     if n ~= 0.0 then
         local vsLen = #self.vs
-        for i = 1, vsLen, 1 do
+        local i = 0
+        while i < vsLen do
+            i = i + 1
             self.vs[i] = Vec2.scale(self.vs[i], n)
         end
     end
@@ -151,7 +155,9 @@ end
 function Mesh2:scaleVec2(v)
     if Vec2.all(v) then
         local vsLen = #self.vs
-        for i = 1, vsLen, 1 do
+        local i = 0
+        while i < vsLen do
+            i = i + 1
             self.vs[i] = Vec2.hadamard(self.vs[i], v)
         end
     end
@@ -200,7 +206,7 @@ function Mesh2:scaleFacesIndiv(scale)
             local v = self.vs[vert]
             self.vs[vert] = Vec2.add(
                 Vec2.hadamard(Vec2.sub(v,
-                center), vscl), center)
+                    center), vscl), center)
         end
     end
 
@@ -249,7 +255,9 @@ end
 ---@return table
 function Mesh2:translate(tr)
     local vsLen = #self.vs
-    for i = 1, vsLen, 1 do
+    local i = 0
+    while i < vsLen do
+        i = i + 1
         self.vs[i] = Vec2.add(self.vs[i], tr)
     end
     return self
@@ -487,7 +495,7 @@ function Mesh2.gridDimetric(cells)
     for i = 1, vsLen, 1 do
         local vSrc = vs[i]
         vs[i] = Vec2.new(
-            0.5  * vSrc.x - 0.5  * vSrc.y,
+            0.5 * vSrc.x - 0.5 * vSrc.y,
             0.25 * vSrc.x + 0.25 * vSrc.y)
     end
 
@@ -542,7 +550,7 @@ function Mesh2.gridHex(rings)
             vs[vIdx + 5] = Vec2.new(right, top)
 
             fs[fIdx] = {
-                vIdx    , vIdx + 1, vIdx + 2,
+                vIdx, vIdx + 1, vIdx + 2,
                 vIdx + 3, vIdx + 4, vIdx + 5 }
 
             fIdx = fIdx + 1
@@ -576,7 +584,7 @@ function Mesh2.polygon(sectors)
     local fs = { f }
 
     local name = "Polygon"
-        if vSect == 3 then name = "Triangle"
+    if vSect == 3 then name = "Triangle"
     elseif vSect == 4 then name = "Quadrilateral"
     elseif vSect == 5 then name = "Pentagon"
     elseif vSect == 6 then name = "Hexagon"

@@ -185,29 +185,6 @@ function Utilities.distAngleUnsigned(a, b, range)
         - halfRange)
 end
 
----Filters a table used as an array.
----Evaluation should be a function that accepts
----an element from the table and returns a
----boolean, either true or false. An element
----is added to the filtered table if the function
----returns true.
----@param src table input table
----@param eval function evaluation
----@return table
-function Utilities.filterTable(src, eval)
-    local trg = {}
-    local len = #src
-    local j = 1
-    for i = 1, len, 1 do
-        local elm = src[i]
-        if eval(elm) then
-            trg[j] = elm
-            j = j + 1
-        end
-    end
-    return trg
-end
-
 ---Given a source pixel array, creates a new array with
 ---the pixels flipped horizontally.
 ---@param source table source pixels
@@ -217,8 +194,10 @@ function Utilities.flipPixelsHoriz(source, w)
     local len = #source
     local wn1 = w - 1
     local flipped = {}
-    for i = 0, len - 1, 1 do
+    local i = 0
+    while i < len do
         flipped[1 + (i // w) * w + wn1 - (i % w)] = source[1 + i]
+        i = i + 1
     end
     return flipped
 end
@@ -233,8 +212,10 @@ function Utilities.flipPixelsVert(source, w, h)
     local len = #source
     local hn1 = h - 1
     local flipped = {}
-    for i = 0, len - 1, 1 do
+    local i = 0
+    while i < len do
         flipped[1 + (hn1 - (i // w)) * w + (i % w)] = source[1 + i]
+        i = i + 1
     end
     return flipped
 end
@@ -262,7 +243,9 @@ function Utilities.hexArrToDict(hexes, za)
     local dict = {}
     local idxKey = 1
     local lenHexes = #hexes
-    for i = 1, lenHexes, 1 do
+    local i = 0
+    while i < lenHexes do
+        i = i + 1
         local hex = hexes[i]
 
         if za then
@@ -530,8 +513,10 @@ end
 function Utilities.mulMat3Curve2(a, b)
     local kns = b.knots
     local knsLen = #kns
-    for i = 1, knsLen, 1 do
+    local i = 0
+    while i < knsLen do
         -- Knot is changed in place.
+        i = i + 1
         Utilities.mulMat3Knot2(a, kns[i])
     end
     return b
@@ -557,7 +542,9 @@ end
 function Utilities.mulMat3Mesh2(a, b)
     local vs = b.vs
     local vsLen = #vs
-    for i = 1, vsLen, 1 do
+    local i = 0
+    while i < vsLen do
+        i = i + 1
         vs[i] = Utilities.mulMat3Point2(a, vs[i])
     end
     return b
@@ -588,8 +575,10 @@ end
 function Utilities.mulMat4Curve3(a, b)
     local kns = b.knots
     local knsLen = #kns
-    for i = 1, knsLen, 1 do
+    local i = 0
+    while i < knsLen do
         -- Knot is changed in place.
+        i = i + 1
         Utilities.mulMat4Knot3(a, kns[i])
     end
     return b
@@ -912,8 +901,10 @@ function Utilities.rotatePixels90(source, w, h)
     local len = #source
     local lennh = len - h
     local rotated = {}
-    for i = 0, len - 1, 1 do
+    local i = 0
+    while i < len do
         rotated[1 + lennh + (i // w) - (i % w) * h] = source[1 + i]
+        i = i + 1
     end
     return rotated
 end
@@ -928,8 +919,10 @@ function Utilities.rotatePixels270(source, w, h)
     local len = #source
     local hn1 = h - 1
     local rotated = {}
-    for i = 0, len - 1, 1 do
+    local i = 0
+    while i < len do
         rotated[1 + (i % w) * h + hn1 - (i // w)] = source[1 + i]
+        i = i + 1
     end
     return rotated
 end
@@ -974,7 +967,10 @@ function Utilities.stringToCharTable(str)
     -- https://stackoverflow.com/a/49222705
     local chars = {}
     local strsub = string.sub
-    for i = 1, #str, 1 do
+    local lenStr = #str
+    local i = 0
+    while i < lenStr do
+        i = i + 1
         chars[i] = strsub(str, i, i)
     end
     return chars
@@ -1076,7 +1072,9 @@ function Utilities.validateFilename(filename)
     Utilities.trimCharsInitial(fileChars)
     Utilities.trimCharsFinal(fileChars)
     local len = #fileChars
-    for i = len, 1, -1 do
+    local i = 0
+    while i < len do
+        i = i + 1
         local char = fileChars[i]
         if char == '\\' or char == '`'
             or char == '/' or char == ':'
@@ -1101,10 +1099,12 @@ end
 function Utilities.wrapPixels(source, x, y, w, h)
     local len = #source
     local wrapped = {}
-    for i = 0, len - 1, 1 do
+    local i = 0
+    while i < len do
         local xm = ((i % w) - x) % w
         local ym = ((i // w) + y) % h
-        wrapped[1 + i] = source[1 + xm + ym * w]
+        i = i + 1
+        wrapped[i] = source[1 + xm + ym * w]
     end
     return wrapped
 end

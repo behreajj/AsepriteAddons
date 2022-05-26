@@ -21,7 +21,9 @@ function ClrGradient.new(keys, cl)
 
     inst.keys = {}
     local lenKeys = #keys
-    for i = 1, lenKeys, 1 do
+    local i = 0
+    while i < lenKeys do
+        i = i + 1
         inst.keys[i] = keys[i]
     end
     table.sort(inst.keys)
@@ -306,10 +308,12 @@ function ClrGradient.evalRange(
 
     local result = {}
     local toFac = 1.0 / (vCount - 1.0)
-    for i = 1, vCount, 1 do
-        local t = (i - 1) * toFac
+    local i = 0
+    while i < vCount do
+        local t = i * toFac
         local step = (1.0 - t) * vOrig + t * vDest
-        -- print(string.format("%.6f, %.6f", t, step))
+
+        i = i + 1
         result[i] = ClrGradient.eval(cg, step, easing)
     end
 

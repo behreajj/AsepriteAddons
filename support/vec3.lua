@@ -554,11 +554,11 @@ function Vec3.gridCartesian(cols, rows, layers, lb, ub)
     local iToStep = 1.0 / (rVal - 1.0)
     local jToStep = 1.0 / (cVal - 1.0)
 
-    local rcVal = rVal * cVal
-    local length = lVal * rcVal - 1
     local result = {}
-
-    for k = 0, length, 1 do
+    local rcVal = rVal * cVal
+    local length = lVal * rcVal
+    local k = 0
+    while k < length do
         local h = k // rcVal
         local m = k - h * rcVal
 
@@ -566,7 +566,8 @@ function Vec3.gridCartesian(cols, rows, layers, lb, ub)
         local iStep = (m // cVal) * iToStep
         local jStep = (m % cVal) * jToStep
 
-        result[1 + k] = Vec3.new(
+        k = k + 1
+        result[k] = Vec3.new(
             (1.0 - jStep) * lbx + jStep * ubx,
             (1.0 - iStep) * lby + iStep * uby,
             (1.0 - hStep) * lbz + hStep * ubz)
@@ -628,8 +629,9 @@ function Vec3.gridSpherical(
     local len2 = vLats * vLons
     local len3 = vLayers * len2
 
+    local k = 0
     local result = {}
-    for k = 0, len3 - 1, 1 do
+    while k < len3 do
         local h = k // len2
         local m = k - h * len2
         local i = m // vLons
@@ -647,7 +649,8 @@ function Vec3.gridSpherical(
         local cosAzim = cos(azim)
         local sinAzim = sin(azim)
 
-        result[1 + k] = Vec3.new(
+        k = k + 1
+        result[k] = Vec3.new(
             rhoCosIncl * cosAzim,
             rhoCosIncl * sinAzim,
             -rhoSinIncl)
@@ -655,6 +658,7 @@ function Vec3.gridSpherical(
 
     -- Append poles at the end of the array.
     if vPoles then
+        -- TODO: Refactor to use while loop.
         for h = 0, vLayers - 1, 1 do
             local prc = h * toPrc
             local radius = (1.0 - prc) * vrMax
