@@ -230,6 +230,80 @@ function Octree.isLeaf(o)
     return true
 end
 
+---Counts the number of leaves held by this octree.
+---@param o table
+---@return number
+function Octree.countLeaves(o)
+    -- Even if this is not used directly by
+    -- any dialog, retain it for diagnostics.
+    local children = o.children
+    local lenChildren = #children
+    local isLeaf = true
+    local sum = 0
+
+    local i = 0
+    while i < lenChildren do
+        i = i + 1
+        local child = children[i]
+        if child then
+            isLeaf = false
+            sum = sum + Octree.countLeaves(child)
+        end
+    end
+
+    if isLeaf then return 1 end
+    return sum
+end
+
+---Counts the number of points held by this octree's
+---leaf nodes.
+---@param o table octree node
+---@return number
+function Octree.countPoints(o)
+    -- Even if this is not used directly by
+    -- any dialog, retain it for diagnostics.
+    local children = o.children
+    local lenChildren = #children
+    local isLeaf = true
+    local sum = 0
+    local i = 0
+    while i < lenChildren do
+        i = i + 1
+        local child = children[i]
+        if child then
+            isLeaf = false
+            sum = sum + Octree.countPoints(child)
+        end
+    end
+
+    if isLeaf then sum = sum + #o.points end
+    return sum
+end
+
+---Finds the maximum level, or depth, of
+---the octree node and its children.
+---@param o table octree node
+---@return number
+function Octree.maxLevel(o)
+    -- Even if this is not used directly by
+    -- any dialog, retain it for diagnostics.
+    local maxLevel = o.level
+    local children = o.children
+    local lenChildren = #children
+    local i = 0
+    while i < lenChildren do
+        i = i + 1
+        local child = children[i]
+        if child then
+            local lvl = Octree.maxLevel(child)
+            if lvl > maxLevel then
+                maxLevel = lvl
+            end
+        end
+    end
+    return maxLevel
+end
+
 ---Queries the octree with a sphere. If a point can be
 ---found within the octree's bounds returns a point and
 ---distance from the query center. If a point cannot be
@@ -314,9 +388,9 @@ end
 ---@param childCapacity number child capacity
 ---@return table
 function Octree.split(o, childCapacity)
-    local nextLevel = o.level + 1
-    local children = o.children
     local chCpVerif = childCapacity or o.capacity
+    local children = o.children
+    local nextLevel = o.level + 1
 
     local i = 0
     while i < 8 do
@@ -369,6 +443,37 @@ function Octree.split(o, childCapacity)
     end
 
     o.points = {}
+    return o
+end
+
+---Splits an octree into children. For cases where
+---a minimum number of children nodes is desired,
+---independent of point insertion. The result will
+---be 8 raised to the power of iterations, e.g.:
+---8, 64, 512, etc.
+---@param o table octree node
+---@param itr number iterations
+---@param childCapacity number child capacity
+---@return table
+function Octree.subdivide(o, itr, childCapacity)
+    if (not itr) or (itr < 1) then return o end
+    local chCpVerif = childCapacity or o.capacity
+
+    local children = o.children
+    local lenChildren = #children
+    local isLeaf = true
+
+    local i = 0
+    while i < lenChildren do
+        i = i + 1
+        local child = children[i]
+        if child then
+            isLeaf = false
+            Octree.subdivide(o, itr - 1, chCpVerif)
+        end
+    end
+
+    if isLeaf then Octree.split(o, chCpVerif) end
     return o
 end
 

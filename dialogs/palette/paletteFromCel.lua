@@ -101,10 +101,10 @@ local defaults = {
     clampTo256 = true,
     printElapsed = false,
     octThreshold = 255,
-    minThreshold = 32,
+    minThreshold = 8,
     maxThreshold = 512,
     octCapacityBits = 9,
-    minCapacityBits = 4,
+    minCapacityBits = 3,
     maxCapacityBits = 15,
     showRefineAt = 7,
     refineCapacity = 0,
@@ -431,7 +431,13 @@ dlg:button {
             local v3ClrFunc = v3ToClrFuncFromPreset(clrSpacePreset)
             local bounds = boundsFromPreset(clrSpacePreset)
 
+            -- Subdivide this once so that there are at least 8
+            -- colors returned in cases where an input palette
+            -- count is just barely over the threshold, e.g.,
+            -- 380 is over 255.
             local octree = Octree.new(bounds, octCapacity, 1)
+            Octree.subdivide(octree, 1, octCapacity)
+
             local i = 0
             while i < lenHexes do
                 i = i + 1
@@ -498,17 +504,22 @@ dlg:button {
         if printElapsed then
             endTime = os.time()
             elapsed = os.difftime(endTime, startTime)
-            app.alert {
-                title = "Diagnostic",
-                text = {
-                    string.format("Start: %d", startTime),
-                    string.format("End: %d", endTime),
-                    string.format("Elapsed: %d", elapsed),
-                    string.format("Capacity: %d", octCapacity),
-                    string.format("Raw Colors: %d", oldLenHexes),
-                    string.format("Octree Colors: %d", lenCenters),
-                }
+
+            local txtArr = {
+                string.format("Start: %d", startTime),
+                string.format("End: %d", endTime),
+                string.format("Elapsed: %d", elapsed),
+                string.format("Raw Colors: %d", oldLenHexes)
             }
+
+            if clampTo256 and lenCenters > 0 then
+                table.insert(txtArr,
+                    string.format("Capacity: %d", octCapacity))
+                table.insert(txtArr,
+                    string.format("Octree Colors: %d", lenCenters))
+            end
+
+            app.alert { title = "Diagnostic", text = txtArr }
         end
 
         app.refresh()
