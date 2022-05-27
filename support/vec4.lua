@@ -651,7 +651,7 @@ end
 ---Defaults to mixing by a vector.
 ---@param a table origin
 ---@param b table destination
----@param t any step
+---@param t table|number step
 ---@return table
 function Vec4.mix(a, b, t)
     if type(t) == "number" then

@@ -105,7 +105,11 @@ local defaults = {
     maxThreshold = 512,
     octCapacityBits = 9,
     minCapacityBits = 4,
-    maxCapacityBits = 16,
+    maxCapacityBits = 15,
+    showRefineAt = 7,
+    refineCapacity = 0,
+    minRefine = -256,
+    maxRefine = 256,
     prependMask = true,
     target = "ACTIVE",
     paletteIndex = 1,
@@ -163,8 +167,10 @@ dlg:check {
         local args = dlg.data
         local state = args.clampTo256
         local removeAlpha = args.removeAlpha
+        local octCap = args.octCapacity
         dlg:modify { id = "octThreshold", visible = state }
         dlg:modify { id = "octCapacity", visible = state }
+        dlg:modify { id = "refineCapacity", visible = state and (octCap > 8) }
         dlg:modify { id = "clrSpacePreset", visible = state }
         dlg:modify { id = "printElapsed", visible = state }
         dlg:modify {
@@ -200,15 +206,37 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:slider {
-    -- TODO: Add a refinement slider
-    -- in [-256, 256] to allow for
-    -- more granular control?
     id = "octCapacity",
     label = "Capacity (2^n):",
     min = defaults.minCapacityBits,
     max = defaults.maxCapacityBits,
     value = defaults.octCapacityBits,
+    visible = defaults.clampTo256,
+    onchange = function()
+        local args = dlg.data
+        local octCap = args.octCapacity
+        dlg:modify {
+            id = "refineCapacity",
+            visible = (octCap >= defaults.showRefineAt)
+        }
+
+        local r = (2 ^ octCap) // 2
+        dlg:modify { id = "refineCapacity", min = -r }
+        dlg:modify { id = "refineCapacity", max = r }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "refineCapacity",
+    label = "Refine:",
+    min = defaults.minRefine,
+    max = defaults.maxRefine,
+    value = defaults.refineCapacity,
     visible = defaults.clampTo256
+        and (defaults.octCapacityBits
+            >= defaults.showRefineAt)
 }
 
 dlg:newrow { always = false }
@@ -385,42 +413,52 @@ dlg:button {
 
         -- The oldHexesLen and centersLen need to be
         -- set here for print diagnostic purposes.
-        local oldHexesLen = #hexes
-        local centersLen = 0
-        local octCapacityBits = args.octCapacity
+        local oldLenHexes = #hexes
+        local lenCenters = 0
+        local octCapBits = args.octCapacity
             or defaults.octCapacityBits
-        local octCapacity = 2 ^ octCapacityBits
-        local hexesLen = oldHexesLen
-        if clampTo256 and hexesLen > ocThreshold then
+        local refineCap = args.refineCapacity or defaults.refineCapacity
+        local octCapacity = refineCap + 2 ^ octCapBits
+        local lenHexes = oldLenHexes
+        if clampTo256 and lenHexes > ocThreshold then
             local clrSpacePreset = args.clrSpacePreset
                 or defaults.clrSpacePreset
+
+            local fromHex = Clr.fromHex
+            local toHex = Clr.toHex
+            local octins = Octree.insert
             local clrV3Func = clrToV3FuncFromPreset(clrSpacePreset)
             local v3ClrFunc = v3ToClrFuncFromPreset(clrSpacePreset)
             local bounds = boundsFromPreset(clrSpacePreset)
 
             local octree = Octree.new(bounds, octCapacity, 1)
-            for i = 1, hexesLen, 1 do
+            local i = 0
+            while i < lenHexes do
+                i = i + 1
                 local hex = hexes[i]
-                if ((hex >> 0x18) & 0xff) > 0 then
-                    local clr = Clr.fromHex(hex)
+                if (hex & 0xff000000) ~= 0 then
+                    local clr = fromHex(hex)
                     local point = clrV3Func(clr)
-                    Octree.insert(octree, point)
+                    octins(octree, point)
                 end
             end
+
+            Octree.cull(octree)
 
             local centers = Octree.centersMean(octree, false, {})
             sortByPreset(clrSpacePreset, centers)
 
-            centersLen = #centers
+            lenCenters = #centers
             local centerHexes = {}
-            for i = 1, centersLen, 1 do
-                local center = centers[i]
-                local srgb = v3ClrFunc(center)
-                centerHexes[i] = Clr.toHex(srgb)
+            local j = 0
+            while j < lenCenters do
+                j = j + 1
+                local srgb = v3ClrFunc(centers[j])
+                centerHexes[j] = toHex(srgb)
             end
 
             hexes = centerHexes
-            hexesLen = #hexes
+            lenHexes = #hexes
         end
 
         if prependMask then
@@ -429,8 +467,8 @@ dlg:button {
 
         if target == "SAVE" then
             local filepath = args.filepath
-            local palette = Palette(hexesLen)
-            for i = 1, hexesLen, 1 do
+            local palette = Palette(lenHexes)
+            for i = 1, lenHexes, 1 do
                 palette:setColor(i - 1,
                     AseUtilities.hexToAseColor(hexes[i]))
             end
@@ -467,8 +505,8 @@ dlg:button {
                     string.format("End: %d", endTime),
                     string.format("Elapsed: %d", elapsed),
                     string.format("Capacity: %d", octCapacity),
-                    string.format("Raw Colors: %d", oldHexesLen),
-                    string.format("Octree Colors: %d", centersLen),
+                    string.format("Raw Colors: %d", oldLenHexes),
+                    string.format("Octree Colors: %d", lenCenters),
                 }
             }
         end

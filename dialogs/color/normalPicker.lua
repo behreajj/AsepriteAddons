@@ -116,8 +116,8 @@ local function updateWidgetClr(dialog, clr)
         text = string.format(
             "%06X",
             (clr.red << 0x10 |
-            clr.green << 0x08 |
-            clr.blue))
+                clr.green << 0x08 |
+                clr.blue))
     }
 
     dialog:modify {
@@ -197,9 +197,7 @@ local function updateFromColor(dialog, clr)
         dialog:modify {
             id = "hexCode",
             text = string.format("%06X",
-                (r255 << 0x10 |
-                g255 << 0x08 |
-                b255))
+                (r255 << 0x10 | g255 << 0x08 | b255))
         }
 
         dialog:modify {
@@ -289,7 +287,7 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg: label {
+dlg:label {
     id = "hexCode",
     label = "Hex: #",
     text = defaults.hexCode
@@ -297,7 +295,7 @@ dlg: label {
 
 dlg:newrow { always = false }
 
-dlg: label {
+dlg:label {
     id = "rgbLabel",
     label = "RGB:",
     text = defaults.rgbLabel
@@ -541,7 +539,7 @@ dlg:button {
         local segImgPxItr = segImg:pixels()
 
         local swatchesDict = {}
-        swatchesDict[0x00000000] = 1
+        swatchesDict[0x0] = 1
         local palIdx = 2
         for elm in segImgPxItr do
             local t = elm.x * xToFac

@@ -373,7 +373,7 @@ dlg:button {
         local stdToLin = Clr.sRgbaTolRgbaInternal
         local rotax = Vec3.rotateInternal
         local v3hsh = Vec3.hashCode
-        local search = Octree.querySphericalInternal
+        local search = Octree.queryInternal
         local screen = Utilities.toScreen
         local drawCirc = AseUtilities.drawCircleFill
         local tablesort = table.sort
@@ -465,15 +465,13 @@ dlg:button {
             local srcLabPt = Vec3.new(
                 srcLab.a, srcLab.b, srcLab.l)
 
-            local results = {}
-            search(octree, srcLabPt, queryRad, results, 256)
-            if #results > 1 then
-                local nearestPt = results[1].point
-                local ptHash = v3hsh(nearestPt)
+            local nearPoint, _ = search(octree, srcLabPt, queryRad)
+            if nearPoint then
+                local ptHash = v3hsh(nearPoint)
                 replaceClrs[i] = swatchAlphaMask
                     | (ptHexDict[ptHash] & 0x00ffffff)
             else
-                replaceClrs[i] = 0x00000000
+                replaceClrs[i] = 0x0
             end
         end
 

@@ -226,7 +226,7 @@ dlg:button {
             -- Calculate dimensions.
             local nativeWidth = activeSprite.width
             local nativeHeight = activeSprite.height
-            local pixelLen = nativeWidth * nativeHeight
+            local lenPixels = nativeWidth * nativeHeight
             local scaledWidth = nativeWidth * scale
             local scaledHeight = nativeHeight * scale
             local totalWidth = scaledWidth
@@ -308,7 +308,7 @@ dlg:button {
 
                 -- Cut out a hole for each pixel (counter-clockwise).
                 local holeStrArr = {}
-                for i = 0, pixelLen - 1, 1 do
+                for i = 0, lenPixels - 1, 1 do
                     local y = i // nativeWidth
                     local x = i % nativeWidth
 

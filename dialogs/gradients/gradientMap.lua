@@ -283,7 +283,7 @@ dlg:button {
         end
 
         -- Create target layer.
-        -- Do not copy source layer blend mode.s
+        -- Do not copy source layer blend mode.
         local trgLyr = sprite:newLayer()
         if srcLayer.opacity then
             trgLyr.opacity = srcLayer.opacity

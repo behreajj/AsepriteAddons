@@ -7,7 +7,10 @@
 local function rangeLayersTable(range)
     local layersObj = range.layers
     local layersTable = {}
-    for i = 1, #layersObj, 1 do
+    local lenLayersObj = #layersObj
+    local i = 0
+    while i < lenLayersObj do
+        i = i + 1
         layersTable[i] = layersObj[i]
     end
     return layersTable
@@ -22,7 +25,10 @@ end
 local function rangeFrameIdcsTable(range)
     local framesObj = range.frames
     local framesTable = {}
-    for i = 1, #framesObj, 1 do
+    local lenFramesObj = #framesObj
+    local i = 0
+    while i < lenFramesObj do
+        i = i + 1
         framesTable[i] = framesObj[i].frameNumber
     end
     return framesTable
@@ -44,8 +50,10 @@ if activeSprite then
         if appRange.type ~= RangeType.EMPTY then
             local layers = rangeLayersTable(appRange)
             local frameIdcs = rangeFrameIdcsTable(appRange)
-
-            for i = 1, #frameIdcs, 1 do
+            local lenFrames = #frameIdcs
+            local i = 0
+            while i < lenFrames do
+                i = i + 1
                 local frameIdx = frameIdcs[i]
                 frameIdcs[i] = 1 + ((shift + frameIdx - 1) % frameLen)
             end

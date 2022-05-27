@@ -14,7 +14,9 @@ local masked = Utilities.prependMask(uniques)
 
 local aseColors = {}
 local lenAseColors = #masked
-for i = 1, lenAseColors, 1 do
+local i = 0
+while i < lenAseColors do
+    i = i + 1
     aseColors[i] = AseUtilities.hexToAseColor(masked[i])
 end
 
@@ -25,12 +27,15 @@ local palettesLen = #palettes
 -- to multiple palettes because they are copied by
 -- value, not passed by reference...?
 app.transaction(function()
-    for i = 1, palettesLen, 1 do
-        local palette = palettes[i]
+    local j = 0
+    while j < palettesLen do j = j + 1
+        local palette = palettes[j]
         palette:resize(lenAseColors)
-        for j = 1, lenAseColors, 1 do
-            local aseColor = aseColors[j]
-            palette:setColor(j - 1, aseColor)
+        local k = 0
+        while k < lenAseColors do
+            k = k + 1
+            local aseColor = aseColors[k]
+            palette:setColor(k - 1, aseColor)
         end
     end
 end)

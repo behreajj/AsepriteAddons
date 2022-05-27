@@ -100,17 +100,23 @@ function Vec2.all(a)
     return a.x ~= 0.0 and a.y ~= 0.0
 end
 
----Finds the angle between two vectors.
+---Finds the angle between two vectors. If either
+---vector has no magnitude, returns zero. Uses the
+---formula acos(dot(a, b) / (mag(a) * mag(b))).
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
 function Vec2.angleBetween(a, b)
-    if Vec2.any(a) and Vec2.any(b) then
-        return math.acos(Vec2.dot(a, b) /
-            (Vec2.mag(a) * Vec2.mag(b)))
-    else
-        return 0.0
+    local aSq = a.x * a.x + a.y * a.y
+    if aSq > 0.0 then
+        local bSq = b.x * b.x + b.y * b.y
+        if bSq > 0.0 then
+            return math.acos(
+                (a.x * b.x + a.y * b.y)
+                / (math.sqrt(aSq) * math.sqrt(bSq)))
+        end
     end
+    return 0.0
 end
 
 ---Evaluates if any vector components are non-zero.
@@ -181,12 +187,10 @@ function Vec2.comparator(a, b)
     return a.x < b.x
 end
 
----Copies the sign of the right operand
----to the magnitude of the left. Both
----operands are assumed to be Vec2s. Where
----the sign of b is zero, the result is zero.
----Equivalent to multiplying the
----absolute value of a and the sign of b.
+---Copies the sign of the right operand to
+---the magnitude of the left. Both operands
+---are assumed to be Vec2s. Where the sign of
+---b is zero, the result is zero.
 ---@param a table magnitude
 ---@param b table sign
 ---@return table
@@ -567,7 +571,7 @@ end
 ---Defaults to mixing by a vector.
 ---@param a table origin
 ---@param b table destination
----@param t any step
+---@param t table|number step
 ---@return table
 function Vec2.mix(a, b, t)
     if type(t) == "number" then

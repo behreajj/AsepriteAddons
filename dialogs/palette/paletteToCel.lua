@@ -217,7 +217,7 @@ dlg:button {
         local fromHex = Clr.fromHex
         local v3Hash = Vec3.hashCode
         local octInsert = Octree.insert
-        local search = Octree.querySphericalInternal
+        local search = Octree.queryInternal
 
         -- Convert source palette colors to points
         -- inserted into octree.
@@ -230,8 +230,6 @@ dlg:button {
         local clrV3Func = clrToV3FuncFromPreset(clrSpacePreset)
 
         -- Select query radius according to color space.
-        -- Limit results to 256.
-        local resultLimit = 256
         local cvgRad = 0.0
         if clrSpacePreset == "CIE_LAB" then
             cvgRad = args.cvgLabRad
@@ -251,8 +249,7 @@ dlg:button {
         while hexIdx < hexesSrgbLen do
             hexIdx = hexIdx + 1
             local hexSrgb = hexesSrgb[hexIdx]
-            -- Validate that the color is not an alpha mask.
-            if hexSrgb & 0xff000000 ~= 0 then
+            if (hexSrgb & 0xff000000) ~= 0 then
                 local clr = fromHex(hexSrgb)
                 local pt = clrV3Func(clr)
                 local hexProfile = hexesProfile[hexIdx]
@@ -261,6 +258,8 @@ dlg:button {
                 octInsert(octree, pt)
             end
         end
+
+        Octree.cull(octree)
 
         -- Find frames from target.
         local frames = {}
@@ -305,7 +304,9 @@ dlg:button {
 
         local framesLen = #frames
         app.transaction(function()
-            for i = 1, framesLen, 1 do
+            local i = 0
+            while i < framesLen do
+                i = i + 1
                 local srcFrame = frames[i]
                 local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
@@ -333,20 +334,20 @@ dlg:button {
                     -- Find nearest color in palette.
                     local correspDict = {}
                     local lenQueries = #queries
-                    for j = 1, lenQueries, 1 do
+                    local j = 0
+                    while j < lenQueries do
+                        j = j + 1
                         local query = queries[j]
                         local queryHex = query.hex
-                        local resultHex = 0
+                        local resultHex = 0x0
                         if exactMatches[queryHex] then
                             resultHex = queryHex
                         else
-                            local center = query.point
-                            local near = {}
-                            search(octree, center, cvgRad, near, resultLimit)
-                            if #near > 0 then
-                                local nearestPt = near[1].point
-                                local ptHash = v3Hash(nearestPt)
-                                resultHex = ptToHexDict[ptHash]
+                            local nearPoint, _ = search(
+                                octree, query.point, cvgRad)
+                            if nearPoint then
+                                local hsh = v3Hash(nearPoint)
+                                resultHex = ptToHexDict[hsh]
                             end
                         end
                         correspDict[queryHex] = resultHex

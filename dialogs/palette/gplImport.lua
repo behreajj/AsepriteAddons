@@ -1,6 +1,10 @@
 dofile("../../support/aseutilities.lua")
 
 local defaults = {
+    -- TODO: Follow paletteFromCel to apply
+    -- the import result to a specific palette.
+    -- TODO: Test with the Aseprite flavor of
+    -- .pal file?
     uniquesOnly = false,
     prependMask = true
 }
@@ -128,10 +132,7 @@ dlg:button {
                         if g < 0 then g = 0 elseif g > 255 then g = 255 end
                         if r < 0 then r = 0 elseif r > 255 then r = 255 end
 
-                        local hex = (a << 0x18)
-                            | (b << 0x10)
-                            | (g << 0x08)
-                            | r
+                        local hex = a << 0x18 | b << 0x10 | g << 0x08 | r
                         -- print(string.format(
                         --    "%d %d %d %d %08X",
                         --     r, g, b, a, hex))
@@ -145,7 +146,7 @@ dlg:button {
 
             local uniquesOnly = args.uniquesOnly
             if uniquesOnly then
-                local uniques, dict = Utilities.uniqueColors(
+                local uniques, _ = Utilities.uniqueColors(
                     colors, true)
                 colors = uniques
             end
@@ -159,7 +160,7 @@ dlg:button {
             -- sprite and place palette swatches in it.
             local activeSprite = app.activeSprite
             if not activeSprite then
-                local colorsLen = #colors
+                local lenColors = #colors
 
                 -- Try to base sprite width on columns
                 -- in GPL file. If not, find square root
@@ -168,21 +169,21 @@ dlg:button {
                 if columns < 1 then
                     spriteWidth = math.max(8,
                     math.ceil(math.sqrt(math.max(
-                        1, colorsLen))))
+                        1, lenColors))))
                 end
                 local spriteHeight = math.max(1,
-                    math.ceil(colorsLen / spriteWidth))
+                    math.ceil(lenColors / spriteWidth))
                 activeSprite = Sprite(spriteWidth, spriteHeight)
                 local layer = activeSprite.layers[1]
                 local cel = layer.cels[1]
                 local image = cel.image
                 local pxItr = image:pixels()
 
-                local index = 1
+                local index = 0
                 for elm in pxItr do
-                    if index <= colorsLen then
-                        elm(colors[index])
+                    if index <= lenColors then
                         index = index + 1
+                        elm(colors[index])
                     end
                 end
             end

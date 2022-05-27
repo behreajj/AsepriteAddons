@@ -713,9 +713,9 @@ dlg:button {
             local jsonStrFmt = concat({
                 "{\"fileDir\":\"%s\"",
                 "\"fileExt\":\"%s\"",
+                spriteUserData,
                 "\"padding\":%d",
                 "\"scale\":{\"x\":%d,\"y\":%d}",
-                spriteUserData,
                 "\"layers\":[%s]}"
             }, ",")
 

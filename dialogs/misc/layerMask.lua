@@ -178,10 +178,12 @@ dlg:button {
             overLayer.name, underLayer.name)
         compLayer.parent = parent
 
-        local framesLen = #frames
+        local lenFrames = #frames
         app.transaction(function()
-            for i = 1, framesLen, 1 do
-                local frame = frames[i]
+            local idxFrame = 0
+            while idxFrame < lenFrames do
+                idxFrame = idxFrame + 1
+                local frame = frames[idxFrame]
                 local overCel = overLayer:cel(frame)
                 local underCel = underLayer:cel(frame)
                 if overCel and underCel then
@@ -306,8 +308,10 @@ dlg:button {
             activeSprite:deleteLayer(overLayer)
         elseif delOverCels then
             app.transaction(function()
-                for i = 1, framesLen, 1 do
-                    local frame = frames[i]
+                local idxFrame = 0
+                while idxFrame < lenFrames do
+                    idxFrame = idxFrame + 1
+                    local frame = frames[idxFrame]
                     -- API reports an error if a cel cannot be
                     -- found, so the layer needs to check that
                     -- it has a cel first.
@@ -322,8 +326,10 @@ dlg:button {
             activeSprite:deleteLayer(underLayer)
         elseif delUnderCels then
             app.transaction(function()
-                for i = 1, framesLen, 1 do
-                    local frame = frames[i]
+                local idxFrame = 0
+                while idxFrame < lenFrames do
+                    idxFrame = idxFrame + 1
+                    local frame = frames[idxFrame]
                     if underLayer:cel(frame) then
                         activeSprite:deleteCel(underLayer, frame)
                     end

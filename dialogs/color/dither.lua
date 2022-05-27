@@ -470,29 +470,40 @@ dlg:button {
 
             local viableCount = 0
 
+            -- Cache methods to local.
+            local fromHex = Clr.fromHex
+            local sRgbaToLab = Clr.sRgbaToLab
+            local v3new = Vec3.new
+            local v3hash = Vec3.hashCode
+            local octins = Octree.insert
+
             -- Unpack source palette to a dictionary and an octree.
             -- Ignore transparent colors in palette.
-            local palHexesLen = #hexesSrgb
+            local lenPalHexes = #hexesSrgb
             local ptToHexDict = {}
-            for i = 1, palHexesLen, 1 do
-                local hexSrgb = hexesSrgb[i]
-                -- if ((hexSrgb >> 0x18) & 0xff) > 0 then
+            local idxPalHex = 0
+            while idxPalHex < lenPalHexes do
+                idxPalHex = idxPalHex + 1
+                local hexSrgb = hexesSrgb[idxPalHex]
                 if (hexSrgb & 0xff000000) ~= 0x0 then
-                    local clr = Clr.fromHex(hexSrgb)
-                    local lab = Clr.sRgbaToLab(clr)
-                    local point = Vec3.new(lab.a, lab.b, lab.l)
+                    local clr = fromHex(hexSrgb)
+                    local lab = sRgbaToLab(clr)
+                    local l = lab.l
+                    local a = lab.a
+                    local b = lab.b
+                    local point = v3new(a, b, l)
 
-                    if lab.l < lMin then lMin = lab.l end
-                    if lab.a < aMin then aMin = lab.a end
-                    if lab.b < bMin then bMin = lab.b end
+                    if l < lMin then lMin = l end
+                    if a < aMin then aMin = a end
+                    if b < bMin then bMin = b end
 
-                    if lab.l > lMax then lMax = lab.l end
-                    if lab.a > aMax then aMax = lab.a end
-                    if lab.b > bMax then bMax = lab.b end
+                    if l > lMax then lMax = l end
+                    if a > aMax then aMax = a end
+                    if b > bMax then bMax = b end
 
-                    local hexProfile = hexesProfile[i]
-                    ptToHexDict[Vec3.hashCode(point)] = hexProfile
-                    Octree.insert(octree, point)
+                    local hexProfile = hexesProfile[idxPalHex]
+                    ptToHexDict[v3hash(point)] = hexProfile
+                    octins(octree, point)
                     viableCount = viableCount + 1
                 end
             end
@@ -523,8 +534,8 @@ dlg:button {
             local queryRad = lDiff * lDiff
                 + aDiff * aDiff
                 + bDiff * bDiff
-            local resultLimit = viableCount
 
+            Octree.cull(octree)
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
                 local srgb = Clr.new(
                     rSrc * 0.003921568627451,
@@ -533,20 +544,16 @@ dlg:button {
                     1.0)
                 local lab = Clr.sRgbaToLab(srgb)
                 local query = Vec3.new(lab.a, lab.b, lab.l)
-
-                local nearestPts = {}
-                Octree.querySphericalInternal(
-                    octree,
-                    query, queryRad,
-                    nearestPts, resultLimit)
+                local nearPoint, _ = Octree.queryInternal(
+                    octree, query, queryRad)
 
                 local trgHex = 0x0
-                if #nearestPts > 0 then
-                    local nearestHash = Vec3.hashCode(nearestPts[1].point)
-                    local nearestHex = ptToHexDict[nearestHash]
-                    if nearestHex ~= nil then
+                if nearPoint then
+                    local nearHash = Vec3.hashCode(nearPoint)
+                    local nearHex = ptToHexDict[nearHash]
+                    if nearHex ~= nil then
                         trgHex = (aSrc << 0x18)
-                            | (nearestHex & 0x00ffffff)
+                            | (nearHex & 0x00ffffff)
                     end
                 end
 
@@ -558,12 +565,11 @@ dlg:button {
         -- Cache pixels from iterator to an array.
         local srcImg = srcCel.image
         local srcPxItr = srcImg:pixels()
-        local pxArray = {}
-        local pxIdx = 1
+        local arrSrcPixels = {}
+        local idxRdPixels = 0
         for elm in srcPxItr do
-            local hex = elm()
-            pxArray[pxIdx] = hex
-            pxIdx = pxIdx + 1
+            idxRdPixels = idxRdPixels + 1
+            arrSrcPixels[idxRdPixels] = elm()
         end
 
         -- Get arguments to pass to dithering method.
@@ -571,7 +577,7 @@ dlg:button {
         local srcHeight = srcImg.height
         local factor100 = args.factor or defaults.factor
         local factor = factor100 * 0.01
-        fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
+        fsDither(arrSrcPixels, srcWidth, srcHeight, factor, closestFunc)
 
         local trgSpec = ImageSpec {
             width = srcWidth,
@@ -582,10 +588,10 @@ dlg:button {
         trgSpec.colorSpace = colorSpace
         local trgImg = Image(trgSpec)
         local trgPxItr = trgImg:pixels()
-        local m = 1
+        local idxWtPixels = 0
         for elm in trgPxItr do
-            elm(pxArray[m])
-            m = m + 1
+            idxWtPixels = idxWtPixels + 1
+            elm(arrSrcPixels[idxWtPixels])
         end
 
         -- Either copy to new layer or reassign image.

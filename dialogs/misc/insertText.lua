@@ -371,13 +371,17 @@ dlg:button {
 
                 if #cels > 0 then
                     local yCaret = 0
-                    local flatIdx = 1
+                    local idxFlat = 1
                     app.transaction(function()
-                        for i = 1, lineCount, 1 do
+                        local i = 0
+                        while i < lineCount do
+                            i = i + 1
                             local charsLine = charTableStill[i]
                             local lineWidth = lineWidths[i]
                             local animImage = nil
-                            for j = 1, lineWidth, 1 do
+                            local j = 0
+                            while j < lineWidth do
+                                j = j + 1
                                 local animSlice = slice(charsLine, 1, j)
                                 local animPosx = 0
                                 if alignLine == "CENTER" then
@@ -397,10 +401,10 @@ dlg:button {
                                     lut, animImage, animSlice, hexFill,
                                     animPosx, yCaret, gw, gh, scale)
 
-                                local animCel = cels[flatIdx]
+                                local animCel = cels[idxFlat]
                                 animCel.image = animImage
 
-                                flatIdx = flatIdx + 1
+                                idxFlat = idxFlat + 1
                             end
 
                             yCaret = yCaret + dh + scale + leading
@@ -418,7 +422,9 @@ dlg:button {
 
             local yCaret = 0
             app.transaction(function()
-                for i = 1, lineCount, 1 do
+                local i = 0
+                while i < lineCount do
+                    i = i + 1
                     local charsLine = charTableStill[i]
                     local lineOffset = lineOffsets[i] * dw
 

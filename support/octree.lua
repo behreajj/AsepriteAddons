@@ -29,9 +29,7 @@ function Octree.new(bounds, capacity, level)
     local inst = setmetatable({}, Octree)
     inst.bounds = bounds or Bounds3.unitCubeSigned()
     inst.capacity = capacity or 16
-    inst.children = {
-        nil, nil, nil, nil,
-        nil, nil, nil, nil }
+    inst.children = {}
     inst.level = level or 1
     inst.points = {}
 
@@ -98,13 +96,14 @@ function Octree.centersMean(o, include, arr)
     -- performance improvements were found.
 
     local arrVerif = arr or {}
-    local ochl = o.children
+    local children = o.children
+    local lenChildren = #children
     local isLeaf = true
 
     local i = 0
-    while i < 8 do
+    while i < lenChildren do
         i = i + 1
-        local child = ochl[i]
+        local child = children[i]
         if child then
             isLeaf = false
             Octree.centersMean(
@@ -147,6 +146,36 @@ function Octree.centersMean(o, include, arr)
     return arrVerif
 end
 
+---Removes empty child nodes from the octree.
+---Returns true if this octree node should be
+---removed, i.e., all its children are nil and
+---its points array is empty.
+---@param o table
+---@return boolean
+function Octree.cull(o)
+    local children = o.children
+    local lenChildren = #children
+    local cullThis = 0
+    local i = lenChildren + 1
+    while i > 1 do
+        i = i - 1
+        local child = children[i]
+        if child then
+            if Octree.cull(child) then
+                -- children[i] = nil
+                table.remove(children, i)
+            else
+                cullThis = cullThis + 1
+            end
+        else
+            cullThis = cullThis + 1
+        end
+    end
+
+    return (cullThis >= lenChildren)
+        and (#o.points < 0)
+end
+
 ---Inserts a point into the octree node by reference,
 ---not by value. Returns true if the point was
 ---successfully inserted into either the node or
@@ -156,12 +185,13 @@ end
 ---@return boolean
 function Octree.insert(o, point)
     if Bounds3.containsInclExcl(o.bounds, point) then
-        local ochl = o.children
+        local children = o.children
+        local lenChildren = #children
         local isLeaf = true
         local i = 0
-        while i < 8 do
+        while i < lenChildren do
             i = i + 1
-            local child = ochl[i]
+            local child = children[i]
             if child then
                 isLeaf = false
                 if Octree.insert(child, point) then
@@ -173,14 +203,13 @@ function Octree.insert(o, point)
         if isLeaf then
             -- Using table.sort here was definitely the
             -- cause of a major performance loss.
-            local opts = o.points
-            Vec3.insortRight(opts, point, Vec3.comparator)
-            if #opts > o.capacity then
+            local points = o.points
+            Vec3.insortRight(points, point, Vec3.comparator)
+            if #points > o.capacity then
                 Octree.split(o, o.capacity)
             end
             return true
         end
-
     end
 
     return false
@@ -190,23 +219,23 @@ end
 ---Returns true if all point insertions succeeded.
 ---Otherwise, returns false.
 ---@param o table octree node
----@param points table points array
+---@param ins table insertions array
 ---@return boolean
-function Octree.insertAll(o, points)
-    local len = #points
+function Octree.insertAll(o, ins)
+    local lenIns = #ins
     local flag = true
     local i = 0
-    while i < len do
+    while i < lenIns do
         i = i + 1
-        flag = flag and Octree.insert(o, points[i])
+        flag = flag and Octree.insert(o, ins[i])
     end
     return flag
 end
 
 ---Internal insertion function to assist with
 ---query arrays.
----@param arr table the array
----@param key table the insertion key
+---@param arr table array
+---@param key table insertion key
 ---@return table
 function Octree.insortRight(arr, key)
     local i = Octree.bisectRight(arr, key.dist)
@@ -220,93 +249,89 @@ end
 ---@param o table octree node
 ---@return boolean
 function Octree.isLeaf(o)
-    local ochl = o.children
+    local children = o.children
+    local lenChildren = #children
     local i = 0
-    while i < 8 do
+    while i < lenChildren do
         i = i + 1
-        if ochl[i] then return false end
+        if children[i] then return false end
     end
     return true
 end
 
----Queries the octree with a spherical range, returning
----points inside the range.
+---Queries the octree with a sphere. If a point can be
+---found within the octree's bounds returns a point and
+---distance from the query center. If a point cannot be
+---found, returns a default point, which may be nil.
 ---@param o table octree
 ---@param center table sphere center
 ---@param radius number sphere radius
----@param limit number size limit on found table
----@return table
-function Octree.querySpherical(o, center, radius, limit)
-    local found = {}
-    local valLimit = limit or 999999
-    Octree.querySphericalInternal(o, center, radius,
-        found, valLimit)
-
-    local result = {}
-    local foundLen = #found
-    local i = 0
-    while i < foundLen do
-        i = i + 1
-        result[i] = found[i].point
+---@param dfPt table|nil
+---@return table|nil
+---@return number
+function Octree.query(o, center, radius, dfPt)
+    local v, d = Octree.queryInternal(o, center, radius)
+    if v then
+        return Vec3.new(v.x, v.y, v.z), d
+    else
+        return dfPt, d
     end
-    return result
 end
 
----Queries the octree with a spherical range, returning
----an array where each entry is a table containing a point
----and a dist. The array should be sorted, but it does not
----check for duplicates.
+---Queries the octree with a sphere. If a point can be
+---found within the octree's bounds returns a point and
+---distance from the query center. If a point cannot be
+---found, returns nil.
 ---@param o table octree
 ---@param center table sphere center
 ---@param radius number sphere radius
----@param found table array containing results
----@param limit number size limit on found table
----@return table
-function Octree.querySphericalInternal(
-    o, center, radius, found, limit)
+---@return table|nil
+---@return number
+function Octree.queryInternal(o, center, radius)
+    local nearPoint = nil
+    local nearDist = 2147483647
 
     if Bounds3.intersectsSphere(o.bounds, center, radius) then
         local children = o.children
+        local lenChildren = #children
         local isLeaf = true
         local i = 0
-        while i < 8 do
+        while i < lenChildren do
             i = i + 1
             local child = children[i]
             if child then
                 isLeaf = false
-                Octree.querySphericalInternal(
-                    child, center, radius, found, limit)
+                local candDist = 2147483647
+                local candPoint = nil
+                candPoint, candDist = Octree.queryInternal(
+                    child, center, radius)
+                if candPoint and (candDist < nearDist) then
+                    nearPoint = candPoint
+                    nearDist = candDist
+                end
             end
         end
 
         if isLeaf then
-            local pts = o.points
-            local ptsLen = #pts
+            local points = o.points
+            local lenPoints = #points
             local rsq = radius * radius
             local distf = Vec3.distSq
-            local insort = Octree.insortRight
-            local j = 0
-            while j < ptsLen do
-                j = j + 1
-                local pt = pts[j]
-                local currDist = distf(center, pt)
-                if currDist < rsq then
-                    -- This needs to define a comparator (<)
-                    -- to work with a generic insortRight.
-                    insort(found,
-                        { dist = currDist,
-                            point = pt })
-                end
 
-                if #found >= limit then
-                    return found
+            local j = 0
+            while j < lenPoints do
+                j = j + 1
+                local point = points[j]
+                local candDist = distf(center, point)
+                if (candDist < rsq) and (candDist < nearDist) then
+                    nearPoint = point
+                    nearDist = candDist
                 end
             end
         end
-
     end
 
-    return found
+    return nearPoint, nearDist
 end
 
 ---Splits the octree node into eight child nodes.
@@ -339,8 +364,8 @@ function Octree.split(o, childCapacity)
         children[Octree.FRONT_NORTH_WEST].bounds,
         children[Octree.FRONT_NORTH_EAST].bounds)
 
-    -- This is faster than looping through 8
-    -- children in reverse, then removing from
+    -- This is faster than looping through
+    -- children in reverse and removing from
     -- the points table in the inner loop.
     local pts = o.points
     local ptsLen = #pts
@@ -394,12 +419,10 @@ function Octree.toJson(o)
     else
         str = str .. ",\"children\":["
         local children = o.children
-        local childStrs = {
-            nil, nil, nil, nil,
-            nil, nil, nil, nil }
-
+        local childStrs = {}
+        local lenChildren = #children
         local j = 0
-        while j < 8 do
+        while j < lenChildren do
             j = j + 1
             local child = children[j]
             if child then

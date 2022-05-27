@@ -106,22 +106,23 @@ function Vec3.all(a)
         and a.z ~= 0.0
 end
 
----Finds the angle between two vectors.
+---Finds the angle between two vectors. If either
+---vector has no magnitude, returns zero. Uses the
+---formula acos(dot(a, b) / (mag(a) * mag(b))).
 ---@param a table left operand
 ---@param b table right operand
 ---@return table
 function Vec3.angleBetween(a, b)
-    --TODO: Test to see if this produces results
-    -- that go out of [-1, 1] and then cause
-    -- problems with acos.
-    -- TODO: Refactor to calc asq, then check if
-    -- it's less than epsilon, then calc bsq.
-    if Vec3.any(a) and Vec3.any(b) then
-        return math.acos(Vec3.dot(a, b) /
-            (Vec3.mag(a) * Vec3.mag(b)))
-    else
-        return 0.0
+    local aSq = a.x * a.x + a.y * a.y + a.z * a.z
+    if aSq > 0.0 then
+        local bSq = b.x * b.x + b.y * b.y + b.z * b.z
+        if bSq > 0.0 then
+            return math.acos(
+                (a.x * b.x + a.y * b.y + a.z * b.z)
+                / (math.sqrt(aSq) * math.sqrt(bSq)))
+        end
     end
+    return 0.0
 end
 
 ---Evaluates if any vector components are non-zero.
@@ -251,12 +252,10 @@ function Vec3.comparator(a, b)
     return a.x < b.x
 end
 
----Copies the sign of the right operand
----to the magnitude of the left. Both
----operands are assumed to be Vec3s. Where
----the sign of b is zero, the result is zero.
----Equivalent to multiplying the
----absolute value of a and the sign of b.
+---Copies the sign of the right operand to
+---the magnitude of the left. Both operands
+---are assumed to be Vec3s. Where the sign of
+---b is zero, the result is zero.
 ---@param a table magnitude
 ---@param b table sign
 ---@return table
@@ -731,9 +730,8 @@ function Vec3.inclinationUnsigned(a)
     local mSq = a.x * a.x + a.y * a.y + a.z * a.z
     if mSq > 0.0 then
         return math.acos(a.z / math.sqrt(mSq))
-    else
-        return 1.5707963267949
     end
+    return 1.5707963267949
 end
 
 ---Inserts a vector into an array so as to
@@ -843,7 +841,7 @@ end
 ---Defaults to mixing by a vector.
 ---@param a table origin
 ---@param b table destination
----@param t any step
+---@param t number|table step
 ---@return table
 function Vec3.mix(a, b, t)
     if type(t) == "number" then
