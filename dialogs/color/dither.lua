@@ -535,7 +535,7 @@ dlg:button {
                 + aDiff * aDiff
                 + bDiff * bDiff
 
-            Octree.cull(octree)
+            -- Octree.cull(octree)
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
                 local srgb = Clr.new(
                     rSrc * 0.003921568627451,
