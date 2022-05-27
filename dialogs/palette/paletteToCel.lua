@@ -259,7 +259,7 @@ dlg:button {
             end
         end
 
-        -- Octree.cull(octree)
+        Octree.cull(octree)
 
         -- Find frames from target.
         local frames = {}

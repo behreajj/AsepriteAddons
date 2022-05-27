@@ -373,6 +373,7 @@ dlg:button {
         local stdToLin = Clr.sRgbaTolRgbaInternal
         local rotax = Vec3.rotateInternal
         local v3hsh = Vec3.hashCode
+        local octins = Octree.insert
         local search = Octree.queryInternal
         local screen = Utilities.toScreen
         local drawCirc = AseUtilities.drawCircleFill
@@ -388,7 +389,9 @@ dlg:button {
         -- Unpack unique colors to data.
         local uniqueHexesSrgbLen = #uniqueHexesSrgb
         local ptHexDict = {}
-        for i = 1, uniqueHexesSrgbLen, 1 do
+        local i = 0
+        while i < uniqueHexesSrgbLen do
+            i = i + 1
             local hexSrgb = uniqueHexesSrgb[i]
 
             -- The LUT shortcut for converting gamma
@@ -401,8 +404,10 @@ dlg:button {
 
             local point = Vec3.new(lab.a, lab.b, lab.l)
             ptHexDict[v3hsh(point)] = uniqueHexesProfile[i]
-            Octree.insert(octree, point)
+            octins(octree, point)
         end
+
+        Octree.cull(octree)
 
         -- Create geometry.
         local gridPts = nil
@@ -459,8 +464,10 @@ dlg:button {
         local replaceClrs = {}
         local gridLen = #gridPts
         local swatchAlphaMask = swatchAlpha << 0x18
-        for i = 1, gridLen, 1 do
-            local srcClr = gridClrs[i]
+        local j = 0
+        while j < gridLen do
+            j = j + 1
+            local srcClr = gridClrs[j]
             local srcLab = rgbaToLab(srcClr)
             local srcLabPt = Vec3.new(
                 srcLab.a, srcLab.b, srcLab.l)
@@ -468,10 +475,10 @@ dlg:button {
             local nearPoint, _ = search(octree, srcLabPt, queryRad)
             if nearPoint then
                 local ptHash = v3hsh(nearPoint)
-                replaceClrs[i] = swatchAlphaMask
+                replaceClrs[j] = swatchAlphaMask
                     | (ptHexDict[ptHash] & 0x00ffffff)
             else
-                replaceClrs[i] = 0x0
+                replaceClrs[j] = 0x0
             end
         end
 
@@ -538,13 +545,17 @@ dlg:button {
             return b.point.z < a.point.z
         end
 
-        for h = 1, reqFrames, 1 do
+        local h = 0
+        while h < reqFrames do
+            h = h + 1
             local frame2d = {}
             local theta = (h - 1) * hToTheta
             local cosa = cos(theta)
             local sina = sin(theta)
-            for i = 1, gridLen, 1 do
-                local vec = gridPts[i]
+            local k = 0
+            while k < gridLen do
+                k = k + 1
+                local vec = gridPts[k]
                 local vr = rotax(vec, cosa, sina, axis)
                 local scrpt = screen(
                     modelview, projection, vr,
@@ -553,9 +564,9 @@ dlg:button {
                 if scrpt.z < zMin then zMin = scrpt.z end
                 if scrpt.z > zMax then zMax = scrpt.z end
 
-                frame2d[i] = {
+                frame2d[k] = {
                     point = scrpt,
-                    color = replaceClrs[i] }
+                    color = replaceClrs[k] }
             end
 
             -- Depth sorting.
@@ -581,14 +592,18 @@ dlg:button {
         local fps = args.fps or defaults.fps
         local duration = 1.0 / math.max(1, fps)
         app.transaction(function()
-            for h = 1, reqFrames, 1 do
-                local frame = coverSprite.frames[h]
+            local m = 0
+            while m < reqFrames do
+                m = m + 1
+                local frame = coverSprite.frames[m]
                 frame.duration = duration
                 local img = bkgImg:clone()
-                local frame2d = pts2d[h]
+                local frame2d = pts2d[m]
 
-                for i = 1, gridLen, 1 do
-                    local packet = frame2d[i]
+                local n = 0
+                while n < gridLen do
+                    n = n + 1
+                    local packet = frame2d[n]
                     local screenPoint = packet.point
 
                     -- Remap z to swatch size based on min and max.

@@ -143,10 +143,10 @@ function Octree.cull(o)
             if Octree.cull(child) then
                 -- children[i] = nil
                 table.remove(children, i)
-            else
                 cullThis = cullThis + 1
             end
         else
+            table.remove(children, i)
             cullThis = cullThis + 1
         end
     end
