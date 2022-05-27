@@ -266,6 +266,7 @@ function Octree.countPoints(o)
     local lenChildren = #children
     local isLeaf = true
     local sum = 0
+
     local i = 0
     while i < lenChildren do
         i = i + 1
@@ -287,9 +288,10 @@ end
 function Octree.maxLevel(o)
     -- Even if this is not used directly by
     -- any dialog, retain it for diagnostics.
-    local maxLevel = o.level
     local children = o.children
     local lenChildren = #children
+    local maxLevel = o.level
+
     local i = 0
     while i < lenChildren do
         i = i + 1
@@ -459,21 +461,29 @@ function Octree.subdivide(o, itr, childCapacity)
     if (not itr) or (itr < 1) then return o end
     local chCpVerif = childCapacity or o.capacity
 
-    local children = o.children
-    local lenChildren = #children
-    local isLeaf = true
-
     local i = 0
-    while i < lenChildren do
+    while i < itr do
         i = i + 1
-        local child = children[i]
-        if child then
-            isLeaf = false
-            Octree.subdivide(o, itr - 1, chCpVerif)
+
+        local isLeaf = true
+        local j = 0
+
+        local children = o.children
+        local lenChildren = #children
+
+        while j < lenChildren do
+            j = j + 1
+
+            local child = children[j]
+            if child then
+                isLeaf = false
+                Octree.subdivide(child, itr - 1, chCpVerif)
+            end
         end
+
+        if isLeaf then Octree.split(o, chCpVerif) end
     end
 
-    if isLeaf then Octree.split(o, chCpVerif) end
     return o
 end
 

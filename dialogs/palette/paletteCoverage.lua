@@ -14,7 +14,7 @@ local defaults = {
 
     queryRad = 175,
     octCapacityBits = 4,
-    minCapacityBits = 3,
+    minCapacityBits = 2,
     maxCapacityBits = 16,
 
     projection = "ORTHO",
