@@ -147,6 +147,11 @@ end
 ---@param points table points
 ---@return table
 function Bounds3.fromPoints(points)
+    local len = #points
+    if len < 1 then
+        return Bounds3.unitCubeSigned()
+    end
+
     local lbx = 2147483647
     local lby = 2147483647
     local lbz = 2147483647
@@ -155,7 +160,6 @@ function Bounds3.fromPoints(points)
     local uby = -2147483648
     local ubz = -2147483648
 
-    local len = #points
     local i = 0
     while i < len do
         i = i + 1

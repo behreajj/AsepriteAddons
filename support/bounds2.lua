@@ -144,13 +144,17 @@ end
 ---@param points table points
 ---@return table
 function Bounds2.fromPoints(points)
+    local len = #points
+    if len < 1 then
+        return Bounds2.unitSquareSigned()
+    end
+
     local lbx = 2147483647
     local lby = 2147483647
 
     local ubx = -2147483648
     local uby = -2147483648
 
-    local len = #points
     local i = 0
     while i < len do
         i = i + 1

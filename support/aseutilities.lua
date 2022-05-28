@@ -222,9 +222,6 @@ function AseUtilities.asePaletteLoad(
                 if palFile then
                     -- Palettes loaded from a file could support an
                     -- embedded color profile, but do not.
-                    -- You could check the extension, and if it is a
-                    -- .png, .aseprite, etc. then load as a sprite,
-                    -- but it'd be difficult to dispose of the sprite.
                     hexesProfile = AseUtilities.asePaletteToHexArr(
                         palFile, siVal, cntVal)
                 end
@@ -364,8 +361,8 @@ end
 ---Converts an Aseprite palette to a table of
 ---hex color integers. If the palette is nil
 ---returns a default table. Assumes palette
----is in sRGB. The start index defaults to 0;
----the count defaults to 256.
+---is in sRGB. The start index defaults to 0.
+---The count defaults to 256.
 ---@param pal userdata Aseprite palette
 ---@param startIndex number start index
 ---@param count number sample count
@@ -1022,6 +1019,8 @@ function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
         if (x * x + y * y) < rsq then
             local xMark = xc + x
             local yMark = yc + y
+            -- TODO: getPixel Double check that this
+            -- doesn't go out of bounds.
             local srcHex = image:getPixel(xMark, yMark)
             local trgHex = blend(srcHex, hex)
             image:drawPixel(xMark, yMark, trgHex)
@@ -1648,7 +1647,7 @@ end
 ---of any parent layers, i.e., if a layer's parent is
 ---invisible but the layer is visible, the method will
 ---return false. Makes no evaluation of the layer's
----opacity; a layer could still have 0 alpha.
+---opacity. A layer could still have 0 alpha.
 ---@param layer userdata aseprite layer
 ---@param sprite userdata aseprite sprite
 ---@return boolean
@@ -1892,8 +1891,8 @@ end
 ---Creates a copy of the image where excess
 ---transparent pixels have been trimmed from
 ---the edges. Padding is expected to be a positive
----number; it defaults to zero. Adapted from the
----Stack Overflow implementation by Oleg Mikhailov:
+---number. It defaults to zero. Adapted from the
+---implementation by Oleg Mikhailov:
 ---https://stackoverflow.com/a/36938923 .
 ---
 ---Returns a tuple containing the cropped image,
@@ -1907,6 +1906,13 @@ end
 ---@return number
 ---@return number
 function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
+
+    -- getPixel returns white when coordinates are out of
+    -- bounds. If extra diagnostics are needed:
+    -- if x < 0 then print("x is < 0 in ... ") end
+    -- if x >= width then print("x is >= width in ... ") end
+    -- if y < 0 then print("y is < 0 in ... ") end
+    -- if y >= height then print( "y is >= height in ... ") end
 
     -- This cannot be extracted to a separate function,
     -- perhaps because alphaIndex needs to remain in scope.
@@ -1931,87 +1937,72 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
         return image, 0, 0
     end
 
-    -- Immutable.
     local width = image.width
     local height = image.height
     if width < 2 or height < 2 then
+        -- What about padding?
         return image, 0, 0
     end
+
     local widthn1 = width - 1
     local heightn1 = height - 1
-
-    -- Mutable.
-    local left = 0
-    local top = 0
-    local right = widthn1
-    local bottom = heightn1
     local minRight = widthn1
     local minBottom = heightn1
 
-    -- 1D for-loop attempt:
-    -- https://github.com/behreajj/AsepriteAddons/blob/
-    -- c157511958578e475a3172bd16d55f8ad20ed0b3/
-    -- support/aseutilities.lua
-
     -- Top edge.
-    local breakTop = false
-    while top < bottom do
-        for x = 0, widthn1, 1 do
+    local top = -1
+    local goTop = true
+    while top < heightn1 and goTop do top = top + 1
+        local x = -1
+        while x < widthn1 and goTop do x = x + 1
             if isNonZero(image:getPixel(x, top)) then
                 minRight = x
                 minBottom = top
-                breakTop = true
-                break
+                goTop = false
             end
         end
-        if breakTop then break end
-        top = top + 1
     end
 
     -- Left edge.
-    local breakLeft = false
-    local topp1 = top + 1
-    while left < minRight do
-        for y = heightn1, topp1, -1 do
-            if isNonZero(image:getPixel(left, y)) then
+    local lft = -1
+    local goLft = true
+    while lft < minRight and goLft do lft = lft + 1
+        local y = height
+        while y > top and goLft do y = y - 1
+            if isNonZero(image:getPixel(lft, y)) then
                 minBottom = y
-                breakLeft = true
-                break
+                goLft = false
             end
         end
-        if breakLeft then break end
-        left = left + 1
     end
 
     -- Bottom edge.
-    local breakBottom = false
-    while bottom > minBottom do
-        for x = widthn1, left, -1 do
-            if isNonZero(image:getPixel(x, bottom)) then
+    local btm = height
+    local goBtm = true
+    while btm > minBottom and goBtm do btm = btm - 1
+        local x = width
+        while x > lft and goBtm do x = x - 1
+            if isNonZero(image:getPixel(x, btm)) then
                 minRight = x
-                breakBottom = true
-                break
+                goBtm = false
             end
         end
-        if breakBottom then break end
-        bottom = bottom - 1
     end
 
     -- Right edge.
-    local breakRight = false
-    while right > minRight do
-        for y = bottom, top, -1 do
-            if isNonZero(image:getPixel(right, y)) then
-                breakRight = true
-                break
+    local rgt = width
+    local goRgt = true
+    while rgt > minRight and goRgt do rgt = rgt - 1
+        local y = btm + 1
+        while y > top and goRgt do y = y - 1
+            if isNonZero(image:getPixel(rgt, y)) then
+                goRgt = false
             end
         end
-        if breakRight then break end
-        right = right - 1
     end
 
-    local wTrg = right - left
-    local hTrg = bottom - top
+    local wTrg = rgt - lft
+    local hTrg = btm - top
     if wTrg < 1 or hTrg < 1 then
         return image, 0, 0
     end
@@ -2040,8 +2031,8 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     -- end
 
     -- This creates a transaction.
-    target:drawImage(image, Point(valPad - left, valPad - top))
-    return target, left - valPad, top - valPad
+    target:drawImage(image, Point(valPad - lft, valPad - top))
+    return target, lft - valPad, top - valPad
 end
 
 ---Converts a Vec2 to an Aseprite Point.
