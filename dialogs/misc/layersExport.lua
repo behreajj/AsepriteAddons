@@ -115,8 +115,6 @@ dlg:combobox {
         local isRange = state == "RANGE"
         dlg:modify { id = "rangeStr", visible = isRange }
         dlg:modify { id = "strExample", visible = false }
-        -- dlg:modify { id = "frameStart", visible = isRange }
-        -- dlg:modify { id = "frameCount", visible = isRange }
     end
 }
 
@@ -143,28 +141,6 @@ dlg:label {
 }
 
 dlg:newrow { always = false }
-
--- dlg:slider {
---     id = "frameStart",
---     label = "Start:",
---     min = 1,
---     max = 256,
---     value = defaults.frameStart,
---     visible = defaults.frameTarget == "RANGE"
--- }
-
--- dlg:newrow { always = false }
-
--- dlg:slider {
---     id = "frameCount",
---     label = "Count:",
---     min = 1,
---     max = defaults.maxFrameCount,
---     value = defaults.frameCount,
---     visible = defaults.frameTarget == "RANGE"
--- }
-
--- dlg:newrow { always = false }
 
 dlg:slider {
     id = "padding",
@@ -306,8 +282,8 @@ dlg:button {
         -- Unpack sprite properties.
         local alphaIndex = specSprite.transparentColor
         local colorSpace = specSprite.colorSpace
-        local specPalettes = activeSprite.palettes
-        local lenPalettes = #specPalettes
+        local spritePalettes = activeSprite.palettes
+        local lenPalettes = #spritePalettes
 
         -- Version specific.
         local version = app.version
@@ -326,8 +302,6 @@ dlg:button {
         local layerTarget = args.layerTarget or defaults.layerTarget
         local frameTarget = args.frameTarget or defaults.frameTarget
         local rangeStr = args.rangeStr or defaults.rangeStr
-        -- local frameStart = args.frameStart or defaults.frameStart
-        -- local frameCount = args.frameCount or defaults.frameCount
         local bounds = args.bounds or defaults.bounds
         local padding = args.padding or defaults.padding
         local padColor = args.padColor or defaults.padColor
@@ -340,7 +314,6 @@ dlg:button {
         local origin = args.origin or defaults.origin
 
         -- Cache methods used in loops.
-        local min = math.min
         local trunc = math.tointeger
         local strfmt = string.format
         local strgsub = string.gsub
@@ -446,11 +419,8 @@ dlg:button {
         local usePadding = padding > 0
         local usePadColor = padColor.alpha > 0
 
-        -- Determine how to pad the image in
-        -- hexadecimal based on sprite color mode.
-        -- It's possible for color mode to be invalid
-        -- or other than those listed in the
-        -- ColorMode enumeration.
+        -- Determine how to pad the image in hexadecimal
+        -- based on sprite color mode.
         local pad2 = padding + padding
         local padOffset = Point(padding, padding)
         local padHex = AseUtilities.aseColorToHex(padColor, colorMode)
@@ -502,10 +472,10 @@ dlg:button {
 
             for j = 1, selectFrameLen, 1 do
                 local frame = selectFrames[j]
-                local frameIdx = frame.frameNumber
-                local palIdx = frameIdx
-                if palIdx > lenPalettes then palIdx = 1 end
-                local activePalette = specPalettes[palIdx]
+                local frameIndex = frame.frameNumber
+                local palIndex = frameIndex
+                if palIndex > lenPalettes then palIndex = 1 end
+                local activePalette = spritePalettes[palIndex]
 
                 local xTrg = 0
                 local yTrg = 0
@@ -693,7 +663,7 @@ dlg:button {
                         celOpacity = celOpacity,
                         fileName = fileNameShort,
                         frameDuration = frame.duration,
-                        frameNumber = frameIdx,
+                        frameNumber = frameIndex,
                         height = imgTrg.height,
                         width = imgTrg.width,
                         xOrigin = xTrg,

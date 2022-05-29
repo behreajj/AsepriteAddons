@@ -21,9 +21,9 @@ Octree.FRONT_NORTH_EAST = 8
 ---points at a given level. The capacity specifies
 ---the number of points the node can hold before it
 ---is split into children.
----@param bounds table
----@param capacity number
----@param level number
+---@param bounds table bounding volume
+---@param capacity number point capacity
+---@param level number level, or depth
 ---@return table
 function Octree.new(bounds, capacity, level)
     local inst = setmetatable({}, Octree)
@@ -141,7 +141,6 @@ function Octree.cull(o)
         local child = children[i]
         if child then
             if Octree.cull(child) then
-                -- children[i] = nil
                 table.remove(children, i)
                 cullThis = cullThis + 1
             end
@@ -155,7 +154,7 @@ function Octree.cull(o)
         and (#o.points < 1)
 end
 
----Inserts a point into the octree node by reference,
+---Inserts a point into the node by reference,
 ---not by value. Returns true if the point was
 ---successfully inserted into either the node or
 ---its children.
@@ -214,24 +213,8 @@ function Octree.insertAll(o, ins)
     return flag
 end
 
----Evaluates whether an octree node has
----any children. Returns true if not.
----Otherwise returns false.
----@param o table octree node
----@return boolean
-function Octree.isLeaf(o)
-    local children = o.children
-    local lenChildren = #children
-    local i = 0
-    while i < lenChildren do
-        i = i + 1
-        if children[i] then return false end
-    end
-    return true
-end
-
----Counts the number of leaves held by this octree.
----@param o table
+---Counts the number of leaves held by this node.
+---@param o table octree
 ---@return number
 function Octree.countLeaves(o)
     -- Even if this is not used directly by
@@ -257,7 +240,7 @@ end
 
 ---Counts the number of points held by this octree's
 ---leaf nodes.
----@param o table octree node
+---@param o table octree
 ---@return number
 function Octree.countPoints(o)
     -- Even if this is not used directly by
@@ -281,8 +264,23 @@ function Octree.countPoints(o)
     return sum
 end
 
+---Evaluates whether a node has any
+---children. Returns true if not.
+---@param o table octree node
+---@return boolean
+function Octree.isLeaf(o)
+    local children = o.children
+    local lenChildren = #children
+    local i = 0
+    while i < lenChildren do
+        i = i + 1
+        if children[i] then return false end
+    end
+    return true
+end
+
 ---Finds the maximum level, or depth, of
----the octree node and its children.
+---the node and its children.
 ---@param o table octree node
 ---@return number
 function Octree.maxLevel(o)
@@ -306,8 +304,8 @@ function Octree.maxLevel(o)
     return maxLevel
 end
 
----Queries the octree with a sphere. If a point can be
----found within the octree's bounds returns a point and
+---Queries the node with a sphere. If a point can be
+---found within the bounds, returns a point and
 ---distance from the query center. If a point cannot be
 ---found, returns a default point, which may be nil.
 ---@param o table octree
@@ -327,8 +325,8 @@ function Octree.query(o, center, radius, dfPt)
     end
 end
 
----Queries the octree with a sphere. If a point can be
----found within the octree's bounds returns a point and
+---Queries the node with a sphere. If a point can be
+---found within the bounds, returns a point and
 ---square distance from the query center. If a point
 ---cannot be found, returns nil.
 ---@param o table octree
@@ -372,7 +370,8 @@ function Octree.queryInternal(o, center, radius)
                 j = j + 1
                 local point = points[j]
                 local candDistSq = distSq(center, point)
-                if (candDistSq < rsq) and (candDistSq < nearDistSq) then
+                if (candDistSq < rsq)
+                    and (candDistSq < nearDistSq) then
                     nearPoint = point
                     nearDistSq = candDistSq
                 end
@@ -386,7 +385,7 @@ end
 ---Splits the octree node into eight child nodes.
 ---If a child capacity is not provided, defaults
 ---to the parent's capacity.
----@param o table octree node
+---@param o table octree
 ---@param childCapacity number child capacity
 ---@return table
 function Octree.split(o, childCapacity)
@@ -397,19 +396,11 @@ function Octree.split(o, childCapacity)
     local i = 0
     while i < 8 do
         i = i + 1
-        -- local child = children[i]
-        -- if child then
         -- TODO: Account for scenario where a child
-        -- has been culled and needs to be recreated
-        -- while other children still exist?
-        -- child.level = nextLevel
-        -- child.capacity = chCpVerif
-        -- child.children = {}
-        -- else
+        -- has been culled and needs to be recreated.
         children[i] = Octree.new(
             Bounds3.unitCubeSigned(),
             chCpVerif, nextLevel)
-        -- end
     end
 
     Bounds3.splitInternal(
@@ -464,16 +455,12 @@ function Octree.subdivide(o, itr, childCapacity)
     local i = 0
     while i < itr do
         i = i + 1
-
-        local isLeaf = true
-        local j = 0
-
         local children = o.children
         local lenChildren = #children
-
+        local isLeaf = true
+        local j = 0
         while j < lenChildren do
             j = j + 1
-
             local child = children[j]
             if child then
                 isLeaf = false
@@ -496,9 +483,8 @@ function Octree.toJson(o)
     str = str .. ",\"capacity\":"
     str = str .. string.format("%d", o.capacity)
 
-    -- Cannot use shortcuts here. Octree node
-    -- should be determined to be a leaf first, before
-    -- any string concatenation is done!!
+    -- Node should be a leaf first, before
+    -- any string concatenation is done.
     local isLeaf = Octree.isLeaf(o)
 
     if isLeaf then

@@ -80,12 +80,6 @@ AseUtilities.GRAY_COUNT = 32
 -- prompted to confirm.
 AseUtilities.LAYER_COUNT_LIMIT = 96
 
----Text orientations.
-AseUtilities.ORIENTATIONS = {
-    "HORIZONTAL",
-    "VERTICAL"
-}
-
 ---Camera projections.
 AseUtilities.PROJECTIONS = {
     "ORTHO",
@@ -304,9 +298,9 @@ function AseUtilities.asePaletteLoad(
     -- should be of the same length, avoid the safety
     -- of using separate arrays.
     if correctZeroAlpha then
-        local lenProf = #hexesProfile
+        local lenHexes = #hexesProfile
         local i = 0
-        while i < lenProf do
+        while i < lenHexes do
             i = i + 1
             if (hexesProfile[i] & 0xff000000) == 0x0 then
                 hexesProfile[i] = 0x0
@@ -327,12 +321,12 @@ end
 ---@return table
 function AseUtilities.asePaletteToClrArr(pal, startIndex, count)
     if pal then
-        local palLen = #pal
+        local lenPal = #pal
 
         local si = startIndex or 0
-        si = math.min(math.max(si, 0), palLen - 1)
+        si = math.min(math.max(si, 0), lenPal - 1)
         local vc = count or 256
-        vc = math.min(math.max(vc, 2), palLen - si)
+        vc = math.min(math.max(vc, 2), lenPal - si)
 
         local clrs = {}
         local i = 0
@@ -1557,9 +1551,9 @@ function AseUtilities.grayHexes(count)
 end
 
 ---Converts a hexadecimal integer to an Aseprite
----Color object. Does not use the Color constructor
----for this purpose, as the color mode dictates
----how the integer is interpreted.
+---Color object. Does not use the Color rgbaPixel
+---constructor for this purpose, as the color mode
+---dictates how the integer is interpreted.
 ---@param hex number hexadecimal color
 ---@return userdata
 function AseUtilities.hexToAseColor(hex)

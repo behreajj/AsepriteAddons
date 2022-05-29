@@ -119,7 +119,7 @@ local function updateShades(dialog, l, c, h, a)
     local chromaSpreadLgt = 15.0
 
     local hYellow = 0.28570825759858
-    local hViolet = 0.85
+    local hViolet = hYellow + 0.5
     local minLight = math.max(0.0, l - lightSpread)
     local maxLight = math.min(100.0, l + lightSpread)
     local minChromaShd = math.max(0.0, c - chromaSpreadShd)

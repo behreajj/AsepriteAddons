@@ -130,7 +130,7 @@ function Bounds3.extent(b)
 end
 
 ---Creates a bounding box from a center
----and the volume's extent. Both the center
+---and an extent. Both the center
 ---and extent should be Vec3s.
 ---@param center table center
 ---@param extent table extent

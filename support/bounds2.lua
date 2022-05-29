@@ -127,7 +127,7 @@ function Bounds2.extent(b)
 end
 
 ---Creates a bounding box from a center
----and the area's extent. Both the center
+---and an extent. Both the center
 ---and extent should be Vec2s.
 ---@param center table center
 ---@param extent table extent
@@ -187,7 +187,7 @@ function Bounds2.intersectsBounds(a, b)
 end
 
 ---Evaluates whether a bounding box intersects
----a circle. The circle is defined as a Vec3 center
+---a circle. The circle is defined as a Vec2 center
 ---and a number radius.
 ---@param a table bounds
 ---@param center table sphere center
