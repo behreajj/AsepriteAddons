@@ -934,8 +934,11 @@ end
 ---@param border number border depth
 ---@param bordHex number hexadecimal color
 function AseUtilities.drawBorder(img, border, bordHex)
+    -- This is no longer used by either layerExport
+    -- or frameExport, but keep it around. The new
+    -- strategy is to clear an image to a border color,
+    -- then blit the inner image over that.
     if border < 1 then return img end
-
     local w = img.width
     local h = img.height
     if border >= math.min(w, h) then

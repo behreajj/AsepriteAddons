@@ -317,7 +317,6 @@ dlg:button {
         local concat = table.concat
         local insert = table.insert
         local blend = AseUtilities.blend
-        local drawBorder = AseUtilities.drawBorder
         local tilesToImage = AseUtilities.tilesToImage
         local trimAlpha = AseUtilities.trimImageAlpha
 
@@ -633,10 +632,10 @@ dlg:button {
                             transparentColor = alphaIndex }
                         specPad.colorSpace = colorSpace
                         local imgPad = Image(specPad)
-                        imgPad:drawImage(imgTrg, padOffset)
                         if usePadColor then
-                            drawBorder(imgPad, padding, padHex)
+                            imgPad:clear(padHex)
                         end
+                        imgPad:drawImage(imgTrg, padOffset)
                         imgTrg = imgPad
                     end
 
