@@ -16,6 +16,8 @@ local function slice(tbl, start, finish)
     return sl
 end
 
+-- TODO: Add Print Elapsed Diagnostic check if
+-- msgSrc == "FILE".
 local defaults = {
     msgSrc = "ENTRY",
     msgEntry = "Lorem ipsum dolor sit amet",

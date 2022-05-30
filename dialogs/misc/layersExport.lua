@@ -14,9 +14,6 @@ local defaults = {
     frameTarget = "ALL",
     rangeStr = "",
     strExample = "1,4,5-10",
-    -- frameStart = 1,
-    -- frameCount = 8,
-    -- maxFrameCount = 32,
     bounds = "CEL",
     padding = 2,
     padColor = Color(0, 0, 0, 0),
@@ -381,7 +378,7 @@ dlg:button {
         elseif frameTarget == "RANGE" then
             local allFrames = activeSprite.frames
             local lenAllFrames = #allFrames
-            local idxRangeSet = Utilities.parseRangeString(rangeStr, lenAllFrames)
+            local idxRangeSet = Utilities.parseRangeStringUnique(rangeStr, lenAllFrames)
             local lenIdxRangeSet = #idxRangeSet
 
             if #rangeStr < 1 or lenIdxRangeSet < 1 then

@@ -536,17 +536,17 @@ dlg:button {
     end
 }
 
-dlg:button {
-    id = "refresh",
-    text = "&REFRESH",
-    focus = false,
-    onclick = function()
-        if updateSprite() then
-            updatePrefsShowPath()
-            updateDialogWidgets()
-        end
-    end
-}
+-- dlg:button {
+--     id = "refresh",
+--     text = "&REFRESH",
+--     focus = false,
+--     onclick = function()
+--         if updateSprite() then
+--             updatePrefsShowPath()
+--             updateDialogWidgets()
+--         end
+--     end
+-- }
 
 dlg:button {
     id = "cancel",
@@ -557,4 +557,7 @@ dlg:button {
     end
 }
 
-dlg:show { wait = false }
+-- Do this to prevent other user inputs from
+-- changing state while this is open.
+dlg:show { wait = true }
+-- dlg:show { wait = false }

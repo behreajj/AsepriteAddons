@@ -239,7 +239,7 @@ dlg:button {
 
         -- Create octree.
         local ptToHexDict = {}
-        local exactMatches = {}
+        -- local exactMatches = {}
         local hexesSrgbLen = #hexesSrgb
         local octCapacity = args.octCapacity
             or defaults.octCapacityBits
@@ -253,7 +253,7 @@ dlg:button {
                 local clr = fromHex(hexSrgb)
                 local pt = clrV3Func(clr)
                 local hexProfile = hexesProfile[hexIdx]
-                exactMatches[hexProfile] = true
+                -- exactMatches[hexProfile] = true
                 ptToHexDict[v3Hash(pt)] = hexProfile
                 octInsert(octree, pt)
             end
@@ -340,16 +340,16 @@ dlg:button {
                         local query = queries[j]
                         local queryHex = query.hex
                         local resultHex = 0x0
-                        if exactMatches[queryHex] then
-                            resultHex = queryHex
-                        else
+                        -- if exactMatches[queryHex] then
+                            -- resultHex = queryHex
+                        -- else
                             local nearPoint, _ = search(
                                 octree, query.point, cvgRad)
                             if nearPoint then
                                 local hsh = v3Hash(nearPoint)
                                 resultHex = ptToHexDict[hsh]
                             end
-                        end
+                        -- end
                         correspDict[queryHex] = resultHex
                     end
 

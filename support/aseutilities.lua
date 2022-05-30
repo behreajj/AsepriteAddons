@@ -296,7 +296,7 @@ function AseUtilities.asePaletteLoad(
     -- Replace colors, e.g., 0x00ff0000 (clear red),
     -- so that all are clear black. Since both arrays
     -- should be of the same length, avoid the safety
-    -- of using separate arrays.
+    -- provided by separate loops.
     if correctZeroAlpha then
         local lenHexes = #hexesProfile
         local i = 0
@@ -932,62 +932,53 @@ end
 ---transaction.
 ---@param img userdata Aseprite image
 ---@param border number border depth
----@param borderHex number hexadecimal color
-function AseUtilities.drawBorder(img, border, borderHex)
+---@param bordHex number hexadecimal color
+function AseUtilities.drawBorder(img, border, bordHex)
     if border < 1 then return img end
 
-    local wBorder = img.width
-    local hBorder = img.height
-    if border >= math.min(wBorder, hBorder) then
+    local w = img.width
+    local h = img.height
+    if border >= math.min(w, h) then
         local itr = img:pixels()
-        for elm in itr do elm(borderHex) end
+        for elm in itr do elm(bordHex) end
         return img
     end
 
-    local bord2 = border + border
-    local trgWidth = wBorder - bord2
-    local trgHeight = hBorder - bord2
-
-    -- Top edge.
-    local minorTop = trgWidth + border
-    local lenTop = border * minorTop - 1
-    for i = 0, lenTop, 1 do
-        img:drawPixel(
-            i % minorTop,
-            i // minorTop,
-            borderHex)
-    end
+    local hnbord = h - border
+    local wnbord = w - border
+    local rect = Rectangle()
 
     -- Left edge.
-    local lenLeft = (hBorder - border) * border - 1
-    for i = 0, lenLeft, 1 do
-        img:drawPixel(
-            i % border,
-            border + i // border,
-            borderHex)
-    end
+    rect.x = 0
+    rect.y = 0
+    rect.width = border
+    rect.height = hnbord
+    local leftItr = img:pixels(rect)
+    for elm in leftItr do elm(bordHex) end
+
+    -- Top edge.
+    rect.x = border
+    rect.y = 0
+    rect.width = wnbord
+    rect.height = border
+    local topItr = img:pixels(rect)
+    for elm in topItr do elm(bordHex) end
 
     -- Right edge.
-    local xOffsetRight = trgWidth + border
-    local minorRight = wBorder - xOffsetRight
-    local lenRight = (trgHeight + border) * minorRight - 1
-    for i = 0, lenRight, 1 do
-        img:drawPixel(
-            xOffsetRight + i % minorRight,
-            i // minorRight,
-            borderHex)
-    end
+    rect.x = wnbord
+    rect.y = border
+    rect.width = border
+    rect.height = hnbord
+    local rightItr = img:pixels(rect)
+    for elm in rightItr do elm(bordHex) end
 
     -- Bottom edge.
-    local yOffsetBottom = trgHeight + border
-    local minorBottom = wBorder - border
-    local lenBottom = (hBorder - yOffsetBottom) * minorBottom - 1
-    for i = 0, lenBottom, 1 do
-        img:drawPixel(
-            border + i % minorBottom,
-            yOffsetBottom + i // minorBottom,
-            borderHex)
-    end
+    rect.x = 0
+    rect.y = hnbord
+    rect.width = wnbord
+    rect.height = border
+    local bottomItr = img:pixels(rect)
+    for elm in bottomItr do elm(bordHex) end
 
     return img
 end
@@ -1138,6 +1129,8 @@ function AseUtilities.drawGlyph(
     local glMat = glyph.matrix
     local glDrop = glyph.drop
     local ypDrop = y + glDrop
+
+    -- TODO: Refactor to use while loop.
     for i = 0, lenn1, 1 do
         local shift = lenn1 - i
         local mark = (glMat >> shift) & 1
@@ -1185,6 +1178,7 @@ function AseUtilities.drawGlyphNearest(
     local glMat = glyph.matrix
     local glDrop = glyph.drop
     local ypDrop = y + glDrop * (dh / gh)
+    -- TODO: Refactor to use while loop.
     for k = 0, lenTrgn1, 1 do
         local xTrg = k % dw
         local yTrg = k // dw
@@ -1656,6 +1650,128 @@ function AseUtilities.isVisibleHierarchy(layer, sprite)
         l = l.parent
     end
     return true
+end
+
+---Parses Aseprite range object to find the
+---frames it contains. Returns an array
+---of frame indices.
+---@param range userdata Aseprite range
+---@return table
+function AseUtilities.parseRange(range)
+    local framesObj = range.frames
+    local framIdcs = {}
+    local lenFramesObj = #framesObj
+    local i = 0
+    while i < lenFramesObj do
+        i = i + 1
+        framIdcs[i] = framesObj[i].frameNumber
+    end
+    -- This doesn't need sorting.
+    return framIdcs
+end
+
+---Parses an Aseprite Tag to an array of
+---frame indices. For example, a tag with
+---a fromFrame of 8 and a toFrame of 10
+---will return { 8, 9, 10 } if the tag has
+---FORWARD animation direction; { 10, 9, 8 }
+---for REVERSE; { 8, 9, 10, 9 }
+---for PING_PONG. Ping-pong is upper-bounds
+---exclusive so that renderers that loop will
+---not draw the boundary frame twice.
+---
+---It is possible for a tag to contain
+---frame indices that are out-of-bounds for
+---the sprite that contains the tag. This
+---function assumes the tag is valid.
+---@param tag userdata Aseprite Tag
+---@return table
+function AseUtilities.parseTag(tag)
+    local origFrameObj = tag.fromFrame
+    local destFrameObj = tag.toFrame
+    local origIdx = origFrameObj.frameNumber
+    local destIdx = destFrameObj.frameNumber
+
+    local arr = {}
+    local idxArr = 0
+
+    local aniDir = tag.aniDir
+    if aniDir == AniDir.PING_PONG then
+        if destIdx ~= origIdx then
+            local j = origIdx - 1
+            while j < destIdx do
+                j = j + 1
+                idxArr = idxArr + 1
+                arr[idxArr] = j
+            end
+            local op1 = origIdx + 1
+            while j > op1 do
+                j = j - 1
+                idxArr = idxArr + 1
+                arr[idxArr] = j
+            end
+        else
+            idxArr = idxArr + 1
+            arr[idxArr] = destIdx
+        end
+    elseif aniDir == AniDir.REVERSE then
+        local j = destIdx + 1
+        while j > origIdx do
+            j = j - 1
+            idxArr = idxArr + 1
+            arr[idxArr] = j
+        end
+    else
+        local j = origIdx - 1
+        while j < destIdx do
+            j = j + 1
+            idxArr = idxArr + 1
+            arr[idxArr] = j
+        end
+    end
+
+    return arr
+end
+
+---Parses an array of Aseprite tags. Returns
+---an array of arrays. It is possible
+---for inner arrays to hold duplicate frame
+---indices,  as the user may intend for the
+---same frame to appear in multiple groups.
+---@param tags table tags array
+---@return table
+function AseUtilities.parseTagsOverlap(tags)
+    local tagsLen = #tags
+    local arrOuter = {}
+    local i = 0
+    while i < tagsLen do
+        i = i + 1
+        arrOuter[i] = AseUtilities.parseTag(tags[i])
+    end
+    return arrOuter
+end
+
+---Parses an array of Aseprite tags. Returns
+---an ordered set of integers.
+---@param tags table tags array
+---@return table
+function AseUtilities.parseTagsUnique(tags)
+    local arr2 = Utilities.parseTagsOverlap(tags)
+    local dict = {}
+    local i = 0
+    local lenArr2 = #arr2
+    while i < lenArr2 do
+        i = i + 1
+        local arr1 = arr2[i]
+        local lenArr1 = #arr1
+        local j = 0
+        while j < lenArr1 do
+            j = j + 1
+            dict[arr1[j]] = true
+        end
+    end
+
+    return Utilities.dictToSortedSet(dict, nil)
 end
 
 ---Preserves the application fore- and background
