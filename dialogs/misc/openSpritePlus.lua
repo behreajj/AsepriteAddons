@@ -174,6 +174,12 @@ dlg:button {
             local openSprite = nil
             local exists = app.fs.isFile(spriteFile)
             if exists then
+
+                -- Do not ask to open animation sequences.
+                --local oldOpSeqPref = app.preferences.open_file.open_sequence
+                --app.preferences.open_file.open_sequence = 2
+
+                -- Shift indexed fore- and back colors to RGB.
                 AseUtilities.preserveForeBack()
                 openSprite = loadSprite(spriteFile)
 
@@ -253,7 +259,7 @@ dlg:button {
                         local celsLen = #cels
                         local trimImage = AseUtilities.trimImageAlpha
 
-                        app.transaction(function ()
+                        app.transaction(function()
                             for i = 1, celsLen, 1 do
                                 local cel = cels[i]
 
@@ -290,6 +296,8 @@ dlg:button {
                 else
                     app.alert("Sprite could not be found.")
                 end
+
+                -- app.preferences.open_file.open_sequence = oldOpSeqPref
             else
                 app.alert("File does not exist at path.")
             end

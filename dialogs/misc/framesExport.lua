@@ -1,22 +1,80 @@
 dofile("../../support/aseutilities.lua")
 
-local function flattenFrameToImage(sprite, frameIdx, alphaIdx)
-    local flat = Image(sprite.spec)
-    flat:drawSprite(sprite, sprite.frames[frameIdx or 1])
-    return AseUtilities.trimImageAlpha(flat, 0, alphaIdx)
+local frameTargetOptions = { "ALL", "RANGE", "TAGS" }
+
+local defaults = {
+    frameTarget = "ALL",
+    rangeStr = "",
+    strExample = "1,4,5-10",
+    padding = 2,
+    padColor = Color(0, 0, 0, 0),
+    scale = 1,
+    prApply = false,
+    usePot = false,
+    useSheet = false,
+    batchSheets = false,
+    border = 2,
+    borderColor = Color(0, 0, 0, 0),
+    saveJson = false,
+    pullFocus = false
+}
+
+local function expandToPot(
+    img, colorMode,
+    alphaMask, colorSpace, nonUniform)
+
+    -- Generalize to AseUtilities?
+
+    local wOrig = img.width
+    local hOrig = img.height
+    local wDest = wOrig
+    local hDest = hOrig
+    if nonUniform then
+        wDest = Utilities.nextPowerOf2(wOrig)
+        hDest = Utilities.nextPowerOf2(hOrig)
+    else
+        local longEdge = math.max(wOrig, hOrig)
+        wDest = Utilities.nextPowerOf2(longEdge)
+        hDest = wDest
+    end
+
+    if wDest == wOrig and hDest == hOrig then
+        return img
+    end
+
+    local potSpec = ImageSpec {
+        width = wDest,
+        height = hDest,
+        colorMode = colorMode,
+        transparentColor = alphaMask }
+    potSpec.colorSpace = colorSpace
+    local potImg = Image(potSpec)
+    potImg:drawImage(img)
+    return potImg
 end
 
-local function indexToPacket(sprite, index, amsk, wMax, hMax)
-    local trimmed, xDelta, yDelta = flattenFrameToImage(
-        sprite, index, amsk)
+local function flattenFrameToImage(sprite, frIdx, alphaIdx)
+    local flat = Image(sprite.spec)
+    local frameObj = sprite.frames[frIdx or 1]
+    local duration = frameObj.duration
+    flat:drawSprite(sprite, frameObj)
+    local trimmed, xd, yd = AseUtilities.trimImageAlpha(
+        flat, 0, alphaIdx)
+    return trimmed, xd, yd, duration
+end
+
+local function indexToPacket(sprite, frIdx, alphaIdx, wMax, hMax)
+    local trimmed, xd, yd, duration = flattenFrameToImage(
+        sprite, frIdx, alphaIdx)
     local wLocal = trimmed.width
     local hLocal = trimmed.height
 
     local packet = {
-        frameIndex = index,
+        number = frIdx,
+        duration = duration,
         image = trimmed,
-        xDelta = xDelta,
-        yDelta = yDelta }
+        x = xd,
+        y = yd }
 
     local wMaxNew = wMax
     local hMaxNew = hMax
@@ -136,88 +194,111 @@ end
 
 local function saveSheet(
     filename,
-    packets, wMax, hMax, spec, compPalette,
-    useBorder, border, useBorderColor, borderColor)
+    packets, wMax, hMax,
+    spec, compPalette,
+    useBrdr, border,
+    useBrdrClr, brdrClr,
+    usePot)
 
-    if wMax < 1 or hMax < 1 or #filename < 1 then
-        return
+    if (wMax < 1) or (hMax < 1)
+        or (#filename < 1) then
+        return false
     end
 
-    -- Composite sheet from all images.
     local lenPackets = #packets
     local columns = math.ceil(math.sqrt(lenPackets))
     local rows = math.max(1, math.ceil(lenPackets / columns))
+    local wComp = wMax * columns
+    local hComp = hMax * rows
 
-    -- Center the image in the cell.
-    local xCellCenter = wMax // 2
-    local yCellCenter = hMax // 2
+    -- if usePot then
+    --     local npot = Utilities.nextPowerOf2(
+    --         math.max(wComp, hComp))
+    --     wComp = npot - border
+    --     hComp = npot - border
+    --     columns = npot // wMax
+    -- end
 
+    -- Unpack source spec.
+    local colorMode = spec.colorMode
+    local alphaMask = spec.transparentColor
+    local colorSpace = spec.colorSpace
+
+    -- Create composite image.
     local compSpec = ImageSpec {
-        width = wMax * columns,
-        height = hMax * rows,
-        colorMode = spec.colorMode,
-        transparentColor = spec.transparentColor }
-    compSpec.colorSpace = spec.colorSpace
-    local comp = Image(compSpec)
-    for k = 1, lenPackets, 1 do
+        width = wComp,
+        height = hComp,
+        colorMode = colorMode,
+        transparentColor = alphaMask }
+    compSpec.colorSpace = colorSpace
+    local compImg = Image(compSpec)
+
+    -- To simplify tracking the original
+    -- image positions and their locations
+    -- in the sprite sheet, keep everything
+    -- to top-left corner.
+    -- Center image horizontally.
+    -- Align to vertical baseline.
+    -- local xCellCenter = wMax // 2
+    -- local yCellCenter = hMax // 2
+
+    local k = 0
+    while k < lenPackets do
+        local i = k // columns
+        local j = k % columns
+        k = k + 1
         local packet = packets[k]
         local image = packet.image
 
-        local i = (k - 1) // columns
-        local j = (k - 1) % columns
         local x = j * wMax
         local y = i * hMax
 
-        local wh = image.width // 2
-        local hh = image.height // 2
-        comp:drawImage(image, Point(
-            x + xCellCenter - wh,
-            y + yCellCenter - hh))
+        -- TODO: For sprite sheets, THESE values
+        -- need to be passed to packets then to JSON.
+        -- local wh = image.width // 2
+        -- local hh = image.height // 2
+        compImg:drawImage(image, Point(x, y))
+        -- x + xCellCenter - wh,
+        -- y + yCellCenter - hh))
+        -- y + hMax - image.height))
     end
 
-    -- Handle border.
-    local border2 = border + border
-    local borderOffset = Point(border, border)
-    local borderHex = AseUtilities.aseColorToHex(
-        borderColor, spec.colorMode)
-
-    if useBorder then
+    -- This might seem less efficient, but clearing
+    -- to a border color before images are drawn leads
+    -- to the border acting more as a background.
+    if useBrdr then
+        local border2 = border + border
+        local borderOffset = Point(border, border)
+        local borderHex = AseUtilities.aseColorToHex(
+            brdrClr, spec.colorMode)
         local borderSpec = ImageSpec {
-            width = comp.width + border2,
-            height = comp.height + border2,
-            colorMode = spec.colorMode,
-            transparentColor = spec.transparentColor }
-        borderSpec.colorSpace = spec.colorSpace
+            width = wComp + border2,
+            height = hComp + border2,
+            colorMode = colorMode,
+            transparentColor = alphaMask }
+        borderSpec.colorSpace = colorSpace
         local bordered = Image(borderSpec)
-        if useBorderColor then
+        if useBrdrClr then
             bordered:clear(borderHex)
         end
-        bordered:drawImage(comp, borderOffset)
-        comp = bordered
+        bordered:drawImage(compImg, borderOffset)
+        compImg = bordered
     end
 
-    comp:saveAs {
+    -- Again, not efficient, but better to do this
+    -- than to mess around with how border interacts
+    -- with power of two.
+    if usePot then
+        compImg = expandToPot(
+            compImg, colorMode, alphaMask,
+            colorSpace, false)
+    end
+
+    compImg:saveAs {
         filename = filename,
         palette = compPalette }
+    return true
 end
-
-local frameTargetOptions = { "ALL", "RANGE", "TAGS" }
-
-local defaults = {
-    frameTarget = "ALL",
-    rangeStr = "",
-    strExample = "1,4,5-10",
-    padding = 2,
-    padColor = Color(0, 0, 0, 0),
-    scale = 1,
-    prApply = false,
-    useSheet = false,
-    batchSheets = false,
-    border = 2,
-    borderColor = Color(0, 0, 0, 0),
-    -- saveJson = false,
-    pullFocus = false
-}
 
 local dlg = Dialog { title = "Export Frames" }
 
@@ -310,6 +391,14 @@ dlg:check {
 dlg:newrow { always = false }
 
 dlg:check {
+    id = "usePot",
+    label = "Power of 2:",
+    selected = defaults.usePot
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
     id = "useSheet",
     label = "Sheet:",
     selected = defaults.useSheet,
@@ -330,11 +419,10 @@ dlg:check {
     end
 }
 
-dlg:newrow { always = false }
-
 dlg:check {
     id = "batchSheets",
-    label = "Batch:",
+    -- label = "Batch:",
+    text = "Batch",
     selected = defaults.batchSheets,
     visible = defaults.useSheet
 }
@@ -368,18 +456,18 @@ dlg:color {
         and defaults.border > 0
 }
 
--- dlg:newrow { always = false }
+dlg:newrow { always = false }
 
--- dlg:check {
---     id = "saveJson",
---     label = "Save JSON:",
---     selected = defaults.saveJson,
---     onclick = function()
---         local args = dlg.data
---         local enabled = args.saveJson
---         dlg:modify { id = "userDataWarning", visible = enabled }
---     end
--- }
+dlg:check {
+    id = "saveJson",
+    label = "Save JSON:",
+    selected = defaults.saveJson,
+    onclick = function()
+        local args = dlg.data
+        local enabled = args.saveJson
+        dlg:modify { id = "userDataWarning", visible = enabled }
+    end
+}
 
 dlg:newrow { always = false }
 
@@ -390,14 +478,14 @@ dlg:file {
     save = true
 }
 
--- dlg:newrow { always = false }
+dlg:newrow { always = false }
 
--- dlg:label {
---     id = "userDataWarning",
---     label = "Note:",
---     text = "User data not escaped.",
---     visible = defaults.saveJson
--- }
+dlg:label {
+    id = "userDataWarning",
+    label = "Note:",
+    text = "User data not escaped.",
+    visible = defaults.saveJson
+}
 
 dlg:newrow { always = false }
 
@@ -415,9 +503,11 @@ dlg:button {
         local spec = activeSprite.spec
         local colorSpace = spec.colorSpace
         local colorMode = spec.colorMode
+        local alphaMask = spec.transparentColor
 
         local args = dlg.data
         local useSheet = args.useSheet
+        local usePot = args.usePot
 
         if useSheet and colorMode ~= ColorMode.RGB then
             app.alert("Only RGB color mode is supported for sprite sheets.")
@@ -442,6 +532,10 @@ dlg:button {
 
         local filename = args.filename
         local fileExt = app.fs.fileExtension(filename)
+        if fileExt == "json" then
+            fileExt = app.preferences.export_file.image_default_extension
+            filename = string.sub(filename, 1, -5) .. fileExt
+        end
 
         local filePath = app.fs.filePath(filename)
         filePath = string.gsub(filePath, "\\", "\\\\")
@@ -471,7 +565,6 @@ dlg:button {
         local wScale = args.scale or defaults.scale
         local hScale = wScale
         local prApply = args.prApply
-
         if prApply then
             local pxRatio = activeSprite.pixelRatio
             local pxw = math.max(1, math.abs(pxRatio.width))
@@ -559,7 +652,7 @@ dlg:button {
                     activeSprite, idcsBatches,
                     padding, wScale, hScale)
             else
-                local idcsSet = Utilities.parseTagsUnique(tags)
+                local idcsSet = AseUtilities.parseTagsUnique(tags)
                 packetsUnbatched, wMaxUnbatch, hMaxUnbatch = idcsArr1ToPacket(
                     activeSprite, idcsSet,
                     wMaxUnbatch, hMaxUnbatch,
@@ -589,9 +682,9 @@ dlg:button {
 
         if useSheet then
             local border = args.border or defaults.border
-            local borderColor = args.borderColor or defaults.borderColor
+            local brdrClr = args.borderColor or defaults.borderColor
             local useBorder = border > 0
-            local useBorderColor = borderColor.alpha > 0
+            local useBrdrClr = brdrClr.alpha > 0
 
             -- Create a palette from all sprite palettes.
             local compHexArr = AseUtilities.asePalettesToHexArr(
@@ -611,32 +704,48 @@ dlg:button {
                     local batchFilename = string.format(
                         "%s%03d.%s",
                         filePrefix, i - 1, fileExt)
+
                     saveSheet(
                         batchFilename,
                         packet.batch, packet.wMax, packet.hMax,
                         spec, compPalette,
-                        useBorder, border, useBorderColor, borderColor)
+                        useBorder, border,
+                        useBrdrClr, brdrClr,
+                        usePot)
+                    packetsBatched[i].filename = string.format(
+                        "%s%03d", fileTitle, i - 1)
                 end
             else
                 saveSheet(
                     filename,
                     packetsUnbatched, wMaxUnbatch, hMaxUnbatch,
                     spec, compPalette,
-                    useBorder, border, useBorderColor, borderColor)
+                    useBorder, border,
+                    useBrdrClr, brdrClr,
+                    usePot)
             end
         else
             for k = 1, #packetsUnbatched, 1 do
+                local fileNameLong = string.format(
+                    "%s%03d.%s",
+                    filePrefix, k - 1, fileExt)
+                packetsUnbatched[k].filename = string.format(
+                    "%s%03d", fileTitle, k - 1)
+
                 local packet = packetsUnbatched[k]
-                local frameIndex = packet.frameIndex
+                local frameIndex = packet.number
                 local image = packet.image
 
                 local palIndex = frameIndex
                 if palIndex > lenPalettes then palIndex = 1 end
                 local activePalette = spritePalettes[palIndex]
 
-                local fileNameLong = string.format(
-                    "%s%03d.%s",
-                    filePrefix, k - 1, fileExt)
+                if usePot then
+                    image = expandToPot(
+                        image, colorMode, alphaMask,
+                        colorSpace, false)
+                end
+
                 image:saveAs {
                     filename = fileNameLong,
                     palette = activePalette }
@@ -645,12 +754,206 @@ dlg:button {
 
         local saveJson = args.saveJson
         if saveJson then
-            -- TODO: Implement.
-            -- Whether or not you select your frames by tags should have
-            -- no bearing on whether or not they're included in the JSON file.
+
+            -- 1.3 beta has userData for sprites and tags.
+            local missingUserData = "null"
+            local spriteUserData = "\"data\":" .. missingUserData
+            local version = app.version
+            local isBeta = version.major >= 1
+                and version.minor >= 3
+            if isBeta then
+                local rawUserData = activeSprite.data
+                if rawUserData and #rawUserData > 0 then
+                    spriteUserData = string.format(
+                        "\"data\":%s", rawUserData)
+                end
+            end
+
+            -- TODO: Compare with layersExport, are image sizes
+            -- before or after scale?
+            local packetsStr = ""
+            local packetsFmt = ""
+            local packetStrFmt = ""
+            local batchFmt = ""
+            local frameIndvFmt = ""
+            if useSheet then
+                -- TODO: Include info on where to find image
+                -- within sheet.
+
+                if batchSheets then
+                    packetsFmt = "\"sheets\":[%s]"
+                else
+                    packetsFmt = "\"sheet\":[%s]"
+                end
+
+                batchFmt = table.concat({
+                    "{\"fileName\":\"%s\"",
+                    "\"frames\":[%s]}"
+                }, ',')
+
+                frameIndvFmt = table.concat({
+                    "{\"duration\":%d",
+                    "\"number\":%d",
+                    "\"position\":{\"x\":%d,\"y\":%d}",
+                    "\"size\":{\"x\":%d,\"y\":%d}}"
+                }, ',')
+
+            else
+                packetsFmt = "\"frames\":[%s]"
+                packetStrFmt = table.concat({
+                    "{\"fileName\":\"%s\"",
+                    "\"duration\":%d",
+                    "\"number\":%d",
+                    "\"position\":{\"x\":%d,\"y\":%d}",
+                    "\"size\":{\"x\":%d,\"y\":%d}}"
+                }, ',')
+
+            end
+
+            local jsonStrFmt = table.concat({
+                "{\"fileDir\":\"%s\"",
+                "\"fileExt\":\"%s\"",
+                spriteUserData,
+                packetsFmt,
+                "\"tags\":[%s]}"
+            }, ',')
+
+            local tagStrFmt = table.concat({
+                "{\"name\":\"%s\"",
+                "\"aniDir\":\"%s\"",
+                "\"data\":%s",
+                "\"fromFrame\":%d",
+                "\"toFrame\":%d}"
+            }, ',')
+
+            local tagsStr = ""
+            if lenTags > 0 then
+                local tagStrArr = {}
+                local i = 0
+                while i < lenTags do
+                    i = i + 1
+                    local tag = tags[i]
+
+                    local aniDir = tag.aniDir
+                    local aniDirStr = "FORWARD"
+                    if aniDir == AniDir.PING_PONG then
+                        aniDirStr = "PING_PONG"
+                    elseif aniDir == AniDir.REVERSE then
+                        aniDirStr = "REVERSE"
+                    end
+
+                    local tagUserData = missingUserData
+                    if isBeta then
+                        local rawUserData = tag.data
+                        if rawUserData and #rawUserData > 0 then
+                            tagUserData = rawUserData
+                        end
+                    end
+
+                    local tagStr = string.format(
+                        tagStrFmt, tag.name, aniDirStr,
+                        tagUserData,
+                        tag.fromFrame.frameNumber - 1,
+                        tag.toFrame.frameNumber - 1)
+                    tagStrArr[i] = tagStr
+                end
+                tagsStr = table.concat(tagStrArr, ',')
+            end
+
+            if useSheet then
+                -- TODO: Include info on where to find image
+                -- within sheet.
+                local packetStrArr = {}
+
+                if batchSheets then
+
+                    for i = 1, #packetsBatched, 1 do
+                        local packet1 = packetsBatched[i]
+                        local batch = packet1.batch
+
+                        local innerStrArr = {}
+                        for j = 1, #batch, 1 do
+                            local packet2 = batch[j]
+                            local image = packet2.image
+                            local innerStr = string.format(
+                                frameIndvFmt,
+                                math.tointeger(packet2.duration * 1000),
+                                packet2.number - 1,
+                                packet2.x, packet2.y,
+                                image.width, image.height)
+                            innerStrArr[j] = innerStr
+                        end
+                        local innerStr = table.concat(innerStrArr, ",")
+
+                        local packetStr = string.format(
+                            batchFmt,
+                            packet1.filename,
+                            innerStr)
+                        packetStrArr[i] = packetStr
+                    end
+
+                else
+
+                    for i = 1, #packetsUnbatched, 1 do
+                        local packet = packetsUnbatched[i]
+                        local image = packet.image
+                        local packetStr = string.format(
+                            frameIndvFmt,
+                            math.tointeger(packet.duration * 1000),
+                            packet.number - 1,
+                            packet.x, packet.y,
+                            image.width, image.height)
+                        packetStrArr[i] = packetStr
+                    end
+
+                end
+
+                packetsStr = table.concat(packetStrArr, ',')
+
+            else
+                -- TODO: Only in this case is xdelta, ydelta
+                -- from image trimming relevant.
+                local packetStrArr = {}
+                for k = 1, #packetsUnbatched, 1 do
+                    local packet = packetsUnbatched[k]
+                    local image = packet.image
+                    local packetStr = string.format(
+                        packetStrFmt,
+                        packet.filename,
+                        math.tointeger(packet.duration * 1000),
+                        packet.number - 1,
+                        packet.x, packet.y,
+                        image.width, image.height)
+                    packetStrArr[k] = packetStr
+                end
+                packetsStr = table.concat(packetStrArr, ',')
+
+            end
+
+            local jsonString = string.format(
+                jsonStrFmt,
+                filePath, fileExt,
+                packetsStr,
+                tagsStr)
+
+            local jsonFilepath = filePrefix
+            if #fileTitle < 1 then
+                jsonFilepath = filePath .. pathSep .. "manifest"
+            end
+            jsonFilepath = jsonFilepath .. ".json"
+            local file, err = io.open(jsonFilepath, "w")
+            if file then
+                file:write(jsonString)
+                file:close()
+            end
+
+            if err then
+                app.alert("Error saving file: " .. err)
+            end
         end
 
-        dlg:close()
+        app.refresh()
+        app.alert { title = "Success", text = "File exported." }
     end
 }
 

@@ -687,6 +687,29 @@ function Utilities.mulQuatVec3(a, b)
         iz * qw + iy * qx - iw * qz - ix * qy)
 end
 
+---Finds the next power of 2 for a signed
+---integer, i.e., multiplies the next power
+---by the integer's sign. Returns zero
+---if input is equal to zero.
+---@param x number input value
+---@return number
+function Utilities.nextPowerOf2(x)
+    if x ~= 0 then
+        local xSgn = 1
+        local xAbs = x
+        if x < 0 then
+            xAbs = -x
+            xSgn = -1
+        end
+        local p = 1
+        while p < xAbs do
+            p = p << 1
+        end
+        return p * xSgn
+    end
+    return 0
+end
+
 ---Parses a string of positive integers
 ---separated by a comma. The integers may
 ---either be individual or ranges connected

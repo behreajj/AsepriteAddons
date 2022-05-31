@@ -10,6 +10,7 @@ local boundsOptions = { "CEL", "SPRITE" }
 local originsOptions = { "CENTER", "CORNER" }
 
 local defaults = {
+    -- Power of 2 option?
     layerTarget = "ALL",
     frameTarget = "ALL",
     rangeStr = "",
@@ -285,7 +286,8 @@ dlg:button {
         -- Version specific.
         local version = app.version
         local checkForTilemaps = false
-        local spriteUserData = "\"data\":null"
+        local missingUserData = "null"
+        local spriteUserData = "\"data\":" .. missingUserData
         if version.major >= 1 and version.minor >= 3 then
             checkForTilemaps = true
             local rawUserData = activeSprite.data
@@ -320,11 +322,15 @@ dlg:button {
         local tilesToImage = AseUtilities.tilesToImage
         local trimAlpha = AseUtilities.trimImageAlpha
 
-        -- Beware, .webp file extensions do not allow
-        -- indexed color mode and Aseprite doesn't handle
-        -- this limit gracefully. However, because RGB
-        -- is required above anyway, no need to worry.
+        -- .webp file extensions do not allow indexed
+        -- color mode and Aseprite doesn't handle this
+        -- limitation gracefully. RGB is required above
+        -- anyway, so no need to worry.
         local fileExt = app.fs.fileExtension(filename)
+        if fileExt == "json" then
+            fileExt = app.preferences.export_file.image_default_extension
+            filename = string.sub(filename, 1, -5) .. fileExt
+        end
 
         local filePath = app.fs.filePath(filename)
         filePath = strgsub(filePath, "\\", "\\\\")
@@ -377,7 +383,8 @@ dlg:button {
         elseif frameTarget == "RANGE" then
             local allFrames = activeSprite.frames
             local lenAllFrames = #allFrames
-            local idxRangeSet = Utilities.parseRangeStringUnique(rangeStr, lenAllFrames)
+            local idxRangeSet = Utilities.parseRangeStringUnique(
+                rangeStr, lenAllFrames)
             local lenIdxRangeSet = #idxRangeSet
 
             if #rangeStr < 1 or lenIdxRangeSet < 1 then
@@ -674,7 +681,6 @@ dlg:button {
         end
 
         if saveJson then
-            local missingUserData = "null"
 
             local jsonStrFmt = concat({
                 "{\"fileDir\":\"%s\"",
@@ -790,7 +796,7 @@ dlg:button {
         end
 
         app.refresh()
-        dlg:close()
+        app.alert { title = "Success", text = "File exported." }
     end
 }
 

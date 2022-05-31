@@ -1,7 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
 local resizeMethods = { "BICUBIC", "NEAREST" }
-local targets = { "ACTIVE", "ALL", "RANGE" }
+local targets = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local unitOptions = { "PERCENT", "PIXEL" }
 
 local defaults = {
@@ -16,7 +16,7 @@ local defaults = {
     units = "PERCENT"
 }
 
-local function getTargetCels(targetPreset, activeSprite)
+local function getTargetCels(activeSprite, targetPreset)
     local targetCels = {}
     local tinsert = table.insert
     local isUnlocked = AseUtilities.isEditableHierarchy
@@ -38,7 +38,8 @@ local function getTargetCels(targetPreset, activeSprite)
         local appRange = app.range
         local rangeCels = appRange.cels
         local rangeCelsLen = #rangeCels
-        for i = 1, rangeCelsLen, 1 do
+        local i = 0
+        while i < rangeCelsLen do i = i + 1
             local rangeCel = rangeCels[i]
             local celLayer = rangeCel.layer
             if isUnlocked(celLayer, activeSprite)
@@ -47,10 +48,54 @@ local function getTargetCels(targetPreset, activeSprite)
                 tinsert(targetCels, rangeCel)
             end
         end
+    elseif targetPreset == "SELECTION" then
+        local sel = activeSprite.selection
+        if (not sel.isEmpty) then
+            local selOrigin = sel.origin
+            local selBounds = sel.bounds
+            local activeSpec = activeSprite.spec
+            local actFrame = app.activeFrame
+
+            -- Create a subset of flattened sprite.
+            local flatSpec = ImageSpec {
+                width = selBounds.width,
+                height = selBounds.height,
+                colorMode = activeSpec.colorMode,
+                transparentColor = activeSpec.transparentColor }
+            flatSpec.colorSpace = activeSpec.colorSpace
+            local flatImage = Image(flatSpec)
+            flatImage:drawSprite(
+                activeSprite,
+                actFrame.frameNumber,
+                -selOrigin)
+
+            -- Remove pixels within selection bounds
+            -- but not within selection itself.
+            local xMin = selBounds.x
+            local yMin = selBounds.y
+            local flatPxItr = flatImage:pixels()
+            for elm in flatPxItr do
+                local x = elm.x + xMin
+                local y = elm.y + yMin
+                if not sel:contains(x, y) then
+                    elm(0x0)
+                end
+            end
+
+            -- Create new layer and new cel. This
+            -- makes three transactions.
+            local adjLayer = activeSprite:newLayer()
+            adjLayer.name = "Transformed"
+            local adjCel = activeSprite:newCel(
+                adjLayer, actFrame,
+                flatImage, selOrigin)
+            tinsert(targetCels, adjCel)
+        end
     else
         local activeCels = activeSprite.cels
         local activeCelsLen = #activeCels
-        for i = 1, activeCelsLen, 1 do
+        local i = 0
+        while i < activeCelsLen do i = i + 1
             local activeCel = activeCels[i]
             local celLayer = activeCel.layer
             if isUnlocked(celLayer, activeSprite)
@@ -64,7 +109,7 @@ local function getTargetCels(targetPreset, activeSprite)
     return targetCels
 end
 
-local dlg = Dialog { title = "Transform Cel" }
+local dlg = Dialog { title = "Transform" }
 
 dlg:combobox {
     id = "target",
@@ -99,16 +144,17 @@ dlg:button {
         if not activeSprite then return end
 
         local args = dlg.data
-        local target = args.target or defaults.target
         local xtr = args.xTranslate or defaults.xTranslate
         local ytr = args.yTranslate or defaults.yTranslate
         if xtr == 0.0 and ytr == 0.0 then return end
 
-        local cels = getTargetCels(target, activeSprite)
+        local target = args.target or defaults.target
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
 
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 local oldPos = cel.position
                 cel.position = Point(
@@ -130,17 +176,18 @@ dlg:button {
         if not activeSprite then return end
 
         local args = dlg.data
-        local target = args.target or defaults.target
         local xtr = args.xTranslate or defaults.xTranslate
         local ytr = args.yTranslate or defaults.yTranslate
         if xtr == 0.0 and ytr == 0.0 then return end
 
-        local wrap = AseUtilities.wrapImage
-        local cels = getTargetCels(target, activeSprite)
+        local target = args.target or defaults.target
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
 
+        local wrap = AseUtilities.wrapImage
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 cel.image = wrap(cel.image, xtr, ytr)
             end
@@ -163,11 +210,12 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
 
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 cels[i].position = Point(0, 0)
             end
         end)
@@ -186,11 +234,12 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
 
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 cel.position = Point(cel.position.x, 0)
             end
@@ -210,12 +259,13 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
         local wSprite = activeSprite.width
 
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 local w = cel.image.width
                 cel.position = Point(wSprite - w, 0)
@@ -238,11 +288,12 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
 
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 cel.position = Point(0, cel.position.y)
             end
@@ -262,13 +313,14 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
         local xCtrSprite = activeSprite.width * 0.5
         local yCtrSprite = activeSprite.height * 0.5
 
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 local celImg = cel.image
                 local w = celImg.width
@@ -293,12 +345,13 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
         local wSprite = activeSprite.width
 
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 cel.position = Point(
                     wSprite - cel.image.width,
@@ -322,12 +375,13 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
         local hSprite = activeSprite.height
 
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 local h = cel.image.height
                 cel.position = Point(0, hSprite - h)
@@ -348,12 +402,13 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
         local hSprite = activeSprite.height
 
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 cel.position = Point(
                     cel.position.x,
@@ -375,13 +430,14 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
         local wSprite = activeSprite.width
         local hSprite = activeSprite.height
 
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 local celImg = cel.image
                 cel.position = Point(
@@ -394,7 +450,7 @@ dlg:button {
     end
 }
 
-dlg:separator{ id = "rotateSep" }
+dlg:separator { id = "rotateSep" }
 
 dlg:button {
     id = "rotate90Button",
@@ -407,12 +463,13 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
 
-        local rot90 =  AseUtilities.rotateImage90
+        local rot90 = AseUtilities.rotateImage90
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 local srcImg = cel.image
                 local wSrc = srcImg.width
@@ -451,12 +508,13 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
 
-        local rot =  AseUtilities.rotateImage180
+        local rot = AseUtilities.rotateImage180
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 cel.image = rot(cel.image)
             end
@@ -476,12 +534,13 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
 
-        local rot270 =  AseUtilities.rotateImage270
+        local rot270 = AseUtilities.rotateImage270
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 local srcImg = cel.image
                 local wSrc = srcImg.width
@@ -523,12 +582,13 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
 
-        local fliph =  AseUtilities.flipImageHoriz
+        local fliph = AseUtilities.flipImageHoriz
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 cel.image = fliph(cel.image)
             end
@@ -548,12 +608,13 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
 
-        local flipv =  AseUtilities.flipImageVert
+        local flipv = AseUtilities.flipImageVert
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 cel.image = flipv(cel.image)
             end
@@ -563,7 +624,7 @@ dlg:button {
     end
 }
 
-dlg:separator{ id = "scaleSep" }
+dlg:separator { id = "scaleSep" }
 
 dlg:combobox {
     id = "resizeMethod",
@@ -658,7 +719,7 @@ dlg:button {
         local useBicubic = resizeMethod == "BICUBIC"
         local usePercent = unitType == "PERCENT"
 
-        local cels = getTargetCels(target, activeSprite)
+        local cels = getTargetCels(activeSprite, target)
         local celsLen = #cels
 
         local oldMode = activeSprite.colorMode
@@ -667,7 +728,8 @@ dlg:button {
         end
 
         app.transaction(function()
-            for o = 1, celsLen, 1 do
+            local o = 0
+            while o < celsLen do o = o + 1
                 local cel = cels[o]
                 local srcImg = cel.image
                 local srcSpec = srcImg.spec
@@ -713,12 +775,13 @@ dlg:button {
 
                         local len2 = kernelSize * chnlCount
                         local len3 = dw * len2
-                        local len4 = dh * len3
+                        local len4 = dh * len3 - 1
 
                         local swn1 = sw - 1
                         local shn1 = sh - 1
 
-                        for k = 0, len4, 1 do
+                        local k = -1
+                        while k < len4 do k = k + 1
                             local g = k // len3 -- px row index
                             local m = k - g * len3 -- temp
                             local h = m // len2 -- px col index
@@ -762,8 +825,8 @@ dlg:button {
 
                             kernel[1 + j] = max(0, min(255,
                                 a0 + trunc(a1 * dx
-                                            + a2 * dxsq
-                                            + a3 * (dx * dxsq))))
+                                    + a2 * dxsq
+                                    + a3 * (dx * dxsq))))
 
                             a0 = kernel[2]
                             d0 = kernel[1] - a0
@@ -777,16 +840,16 @@ dlg:button {
 
                             clrs[1 + (k // kernelSize)] = max(0, min(255,
                                 a0 + trunc(a1 * dy
-                                            + a2 * dysq
-                                            + a3 * (dy * dysq))))
+                                    + a2 * dysq
+                                    + a3 * (dy * dysq))))
                         end
 
                         local idx = 0
                         for elm in trgpxitr do
                             local hex = clrs[idx + 1]
-                                        | clrs[idx + 2] << 0x08
-                                        | clrs[idx + 3] << 0x10
-                                        | clrs[idx + 4] << 0x18
+                                | clrs[idx + 2] << 0x08
+                                | clrs[idx + 3] << 0x10
+                                | clrs[idx + 4] << 0x18
                             elm(hex)
                             idx = idx + 4
                         end

@@ -1759,7 +1759,7 @@ end
 ---@param tags table tags array
 ---@return table
 function AseUtilities.parseTagsUnique(tags)
-    local arr2 = Utilities.parseTagsOverlap(tags)
+    local arr2 = AseUtilities.parseTagsOverlap(tags)
     local dict = {}
     local i = 0
     local lenArr2 = #arr2
