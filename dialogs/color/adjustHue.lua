@@ -125,20 +125,26 @@ dlg:button {
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert("There is no active sprite.")
+            app.alert{
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 
         local srcCel = app.activeCel
         if not srcCel then
-            app.alert("There is no active cel.")
+            app.alert {
+                title = "Error",
+                text = "There is no active cel." }
             return
         end
 
         local specSprite = activeSprite.spec
         local colorMode = specSprite.colorMode
         if colorMode ~= ColorMode.RGB then
-            app.alert("Only RGB color mode is supported.")
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported." }
             return
         end
 

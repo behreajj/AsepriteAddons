@@ -37,13 +37,13 @@ local defaults = {
         Color(0, 158, 59, 255) },
 
     shading = {
-            Color(145,   0,  51, 255),
-            Color(193,   0,  42, 255),
-            Color(226,   0,  33, 255),
-            Color(253,  13,  26, 255),
-            Color(255,  78,  28, 255),
-            Color(255, 127,  45, 255),
-            Color(255, 186,  76, 255) },
+        Color(145, 0, 51, 255),
+        Color(193, 0, 42, 255),
+        Color(226, 0, 33, 255),
+        Color(253, 13, 26, 255),
+        Color(255, 78, 28, 255),
+        Color(255, 127, 45, 255),
+        Color(255, 186, 76, 255) },
     shadeCount = 7
 }
 
@@ -60,10 +60,10 @@ local function updateHarmonies(dialog, l, c, h, a)
     -- Clamping is taken care of by clToAseColor.
     -- 360 / 3 = 120 degrees; 360 / 12 = 30 degrees.
     -- Split hues are 150 and 210 degrees.
-    local oneThird =  0.33333333333333
+    local oneThird = 0.33333333333333
     local oneTwelve = 0.08333333333333
-    local splHue0 =   0.41666666666667
-    local splHue1 =   0.58333333333333
+    local splHue0 = 0.41666666666667
+    local splHue1 = 0.58333333333333
 
     local ana0 = Clr.lchTosRgba(l, c, h - oneTwelve, a, 0.5)
     local ana1 = Clr.lchTosRgba(l, c, h + oneTwelve, a, 0.5)
@@ -234,132 +234,131 @@ local function setFromAse(dialog, aseClr)
 end
 
 local function setFromSelect(dialog, sprite, frame)
-    if sprite and frame then
-        local selection = sprite.selection
-        if selection and (not selection.isEmpty) then
-            -- Problem with selections that extend
-            -- into negative values?
-            -- selection:intersect(Selection(sprite.bounds))
-            local selBounds = selection.bounds
-            local xSel = selBounds.x
-            local ySel = selBounds.y
+    if not sprite then return end
+    if not frame then return end
 
-            local colorMode = sprite.colorMode
+    local selection = sprite.selection
+    if not selection then return end
+    if selection.isEmpty then return end
 
-            -- This will ignore a reference image,
-            -- meaning you can't sample it for color.
-            local flatImage = Image(
-                selBounds.width,
-                selBounds.height,
-                colorMode)
-            flatImage:drawSprite(
-                sprite, frame, Point(-xSel, -ySel))
-            local px = flatImage:pixels()
+    -- Problem with selections that extend
+    -- into negative values?
+    -- selection:intersect(Selection(sprite.bounds))
+    local selBounds = selection.bounds
+    local xSel = selBounds.x
+    local ySel = selBounds.y
 
-            local hexDict = {}
+    local colorMode = sprite.colorMode
 
-            -- In Aseprite 1.3, it's possible for images in
-            -- tile map layers to have a colorMode of 4.
-            if colorMode == ColorMode.RGB then
-                for elm in px do
-                    local x = elm.x + xSel
-                    local y = elm.y + ySel
-                    if selection:contains(x, y) then
-                        local hex = elm()
-                        local a = hex >> 0x18 & 0xff
-                        if a > 0 then
-                            local query = hexDict[hex]
-                            if query then
-                                hexDict[hex] = query + 1
-                            else
-                                hexDict[hex] = 1
-                            end
-                        end
-                    end
+    -- This will ignore a reference image,
+    -- meaning you can't sample it for color.
+    local flatImage = Image(
+        selBounds.width,
+        selBounds.height,
+        colorMode)
+    flatImage:drawSprite(
+        sprite, frame, Point(-xSel, -ySel))
+    local px = flatImage:pixels()
+
+    -- For indexed color mode, the matter is
+    -- complicated by potential multiple palettes.
+    local palettes = sprite.palettes
+    local lenPalettes = #palettes
+    local actFrIdx = 1
+    if app.activeFrame then
+        actFrIdx = app.activeFrame.frameNumber
+        if actFrIdx > lenPalettes then actFrIdx = 1 end
+    end
+    local palette = palettes[actFrIdx]
+
+    local hexDict = {}
+
+    local eval = nil
+    if colorMode == ColorMode.RGB then
+        eval = function(hex, hd)
+            if (hex & 0xff000000) ~= 0 then
+                local query = hd[hex]
+                if query then
+                    hd[hex] = query + 1
+                else
+                    hd[hex] = 1
                 end
-            elseif colorMode == ColorMode.GRAY then
-                for elm in px do
-                    local x = elm.x + xSel
-                    local y = elm.y + ySel
-                    if selection:contains(x, y) then
-                        local hex = elm()
-                        local a = (hex >> 0x08) & 0xff
-                        if a > 0 then
-                            local v = hex & 0xff
-                            local hexRgb = a << 0x18 | v << 0x10 | v << 0x08 | v
-                            local query = hexDict[hexRgb]
-                            if query then
-                                hexDict[hexRgb] = query + 1
-                            else
-                                hexDict[hexRgb] = 1
-                            end
-                        end
-                    end
-                end
-            elseif colorMode == ColorMode.INDEXED then
-                local palettes = sprite.palettes
-                local lenPalettes = #palettes
-                local actFrIdx = 1
-                if app.activeFrame then
-                    actFrIdx = app.activeFrame.frameNumber
-                    if actFrIdx > lenPalettes then actFrIdx = 1 end
-                end
-                local palette = palettes[actFrIdx]
-                local palLen = #palette
-                for elm in px do
-                    local x = elm.x + xSel
-                    local y = elm.y + ySel
-                    if selection:contains(x, y) then
-                        local idx = elm()
-                        if idx > -1 and idx < palLen then
-                            local aseColor = palette:getColor(idx)
-                            local a = aseColor.alpha
-                            if a > 0 then
-                                local hexRgb = aseColor.rgbaPixel
-                                local query = hexDict[hexRgb]
-                                if query then
-                                    hexDict[hexRgb] = query + 1
-                                else
-                                    hexDict[hexRgb] = 1
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-
-            local lSum = 0.0
-            local aSum = 0.0
-            local bSum = 0.0
-            local alphaSum = 0.0
-            local count = 0
-
-            for k, v in pairs(hexDict) do
-                local srgb = Clr.fromHex(k)
-                local lab = Clr.sRgbaToLab(srgb)
-                lSum = lSum + lab.l * v
-                aSum = aSum + lab.a * v
-                bSum = bSum + lab.b * v
-                alphaSum = alphaSum + lab.alpha * v
-                count = count + v
-            end
-
-            if count > 0 then
-                local countInv = 1.0 / count
-                local lAvg = lSum * countInv
-                local aAvg = aSum * countInv
-                local bAvg = bSum * countInv
-                local alphaAvg = alphaSum * countInv
-                local lch = Clr.labToLch(lAvg, aAvg, bAvg, alphaAvg)
-                local clr = Clr.labTosRgba(lAvg, aAvg, bAvg, alphaAvg)
-                setLch(dialog, lch, clr)
-                dialog:modify {
-                    id = "clr",
-                    colors = { AseUtilities.clrToAseColor(clr) }
-                }
-                updateHexCode(dialog, { clr })
             end
         end
+    elseif colorMode == ColorMode.GRAY then
+        eval = function(gray, hd)
+            local a = (gray >> 0x08) & 0xff
+            if a > 0 then
+                local v = gray & 0xff
+                local rgb = a << 0x18 | v << 0x10 | v << 0x08 | v
+                local query = hd[rgb]
+                if query then
+                    hd[rgb] = query + 1
+                else
+                    hd[rgb] = 1
+                end
+            end
+        end
+    elseif colorMode == ColorMode.INDEXED then
+        eval = function(idx, hd, pal)
+            if idx > -1 and idx < #pal then
+                local aseColor = pal:getColor(idx)
+                local a = aseColor.alpha
+                if a > 0 then
+                    local rgb = aseColor.rgbaPixel
+                    local query = hd[rgb]
+                    if query then
+                        hd[rgb] = query + 1
+                    else
+                        hd[rgb] = 1
+                    end
+                end
+            end
+        end
+    else
+        -- Tile maps have a color mode of 4 in
+        -- 1.3 beta.
+        return
+    end
+
+    for elm in px do
+        local x = elm.x + xSel
+        local y = elm.y + ySel
+        if selection:contains(x, y) then
+            eval(elm(), hexDict, palette)
+        end
+    end
+
+    local lSum = 0.0
+    local aSum = 0.0
+    local bSum = 0.0
+    local alphaSum = 0.0
+    local count = 0
+
+    for k, v in pairs(hexDict) do
+        local srgb = Clr.fromHex(k)
+        local lab = Clr.sRgbaToLab(srgb)
+        lSum = lSum + lab.l * v
+        aSum = aSum + lab.a * v
+        bSum = bSum + lab.b * v
+        alphaSum = alphaSum + lab.alpha * v
+        count = count + v
+    end
+
+    if count > 0 then
+        local countInv = 1.0 / count
+        local lAvg = lSum * countInv
+        local aAvg = aSum * countInv
+        local bAvg = bSum * countInv
+        local alphaAvg = alphaSum * countInv
+        local lch = Clr.labToLch(lAvg, aAvg, bAvg, alphaAvg, 0.007072)
+        local clr = Clr.labTosRgba(lAvg, aAvg, bAvg, alphaAvg)
+        setLch(dialog, lch, clr)
+        dialog:modify {
+            id = "clr",
+            colors = { AseUtilities.clrToAseColor(clr) }
+        }
+        updateHexCode(dialog, { clr })
     end
 end
 
@@ -376,7 +375,7 @@ local function setFromHexStr(dialog)
                 r255 * 0.003921568627451,
                 g255 * 0.003921568627451,
                 b255 * 0.003921568627451, 1.0)
-            local lch = Clr.sRgbaToLch(clr)
+            local lch = Clr.sRgbaToLch(clr, 0.007072)
             setLch(dialog, lch, clr)
             dialog:modify {
                 id = "clr",
@@ -418,7 +417,7 @@ dlg:button {
     text = "F&ORE",
     focus = false,
     onclick = function()
-       setFromAse(dlg, app.fgColor)
+        setFromAse(dlg, app.fgColor)
     end
 }
 
@@ -427,9 +426,9 @@ dlg:button {
     text = "B&ACK",
     focus = false,
     onclick = function()
-       app.command.SwitchColors()
-       setFromAse(dlg, app.fgColor)
-       app.command.SwitchColors()
+        app.command.SwitchColors()
+        setFromAse(dlg, app.fgColor)
+        app.command.SwitchColors()
     end
 }
 
@@ -448,7 +447,7 @@ dlg:button {
 
 dlg:newrow { always = false }
 
-dlg: entry {
+dlg:entry {
     id = "hexCode",
     label = "Hex: #",
     text = defaults.hexCode,

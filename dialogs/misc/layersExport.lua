@@ -10,7 +10,7 @@ local boundsOptions = { "CEL", "SPRITE" }
 local originsOptions = { "CENTER", "CORNER" }
 
 local defaults = {
-    -- Power of 2 option?
+    -- TODO: Power of 2 option?
     layerTarget = "ALL",
     frameTarget = "ALL",
     rangeStr = "",
@@ -263,7 +263,9 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert("There is no active sprite.")
+            app.alert{
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 
@@ -333,6 +335,10 @@ dlg:button {
         end
 
         local filePath = app.fs.filePath(filename)
+        if filePath == nil or #filePath < 1 then
+            app.alert { title = "Error", text = "Empty file path." }
+            return
+        end
         filePath = strgsub(filePath, "\\", "\\\\")
 
         local pathSep = app.fs.pathSeparator
@@ -791,7 +797,7 @@ dlg:button {
             end
 
             if err then
-                app.alert("Error saving file: " .. err)
+                app.alert { title = "Error", text = err }
             end
         end
 

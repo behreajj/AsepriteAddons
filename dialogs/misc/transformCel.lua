@@ -728,6 +728,11 @@ dlg:button {
         end
 
         app.transaction(function()
+            -- Declare bicubic constants outside the loop.
+            local kernel = { 0, 0, 0, 0 }
+            local chnlCount = 4
+            local kernelSize = 4
+
             local o = 0
             while o < celsLen do o = o + 1
                 local cel = cels[o]
@@ -769,9 +774,10 @@ dlg:button {
                     local trgpxitr = trgImg:pixels()
 
                     if useBicubic then
-                        local chnlCount = 4
-                        local kernelSize = 4
-                        local kernel = { 0, 0, 0, 0 }
+                        kernel[1] = 0
+                        kernel[2] = 0
+                        kernel[3] = 0
+                        kernel[4] = 0
 
                         local len2 = kernelSize * chnlCount
                         local len3 = dw * len2
@@ -818,10 +824,11 @@ dlg:button {
                             d2 = d2 - a0
                             d3 = d3 - a0
 
-                            local d36 = d3 / 6.0
-                            local a1 = -d0 / 3.0 + d2 - d36
+                            local d36 = 0.66666666666667 * d3
+                            local a1 = -0.33333333333333 * d0 + d2 - d36
                             local a2 = 0.5 * (d0 + d2)
-                            local a3 = -d0 / 6.0 - 0.5 * d2 + d36
+                            local a3 = -0.66666666666667 * d0
+                                - 0.5 * d2 + d36
 
                             kernel[1 + j] = max(0, min(255,
                                 a0 + trunc(a1 * dx
@@ -833,10 +840,11 @@ dlg:button {
                             d2 = kernel[3] - a0
                             d3 = kernel[4] - a0
 
-                            d36 = d3 / 6.0
-                            a1 = -d0 / 3.0 + d2 - d36
+                            d36 = 0.66666666666667 * d3
+                            a1 = -0.33333333333333 * d0 + d2 - d36
                             a2 = 0.5 * (d0 + d2)
-                            a3 = -d0 / 6.0 - 0.5 * d2 + d36
+                            a3 = -0.66666666666667 * d0
+                                - 0.5 * d2 + d36
 
                             clrs[1 + (k // kernelSize)] = max(0, min(255,
                                 a0 + trunc(a1 * dy
@@ -857,10 +865,8 @@ dlg:button {
                         -- Default to nearest-neighbor.
                         local idx = 0
                         for elm in trgpxitr do
-                            local x = idx % dw
-                            local y = idx // dw
-                            local nx = trunc(x * tx)
-                            local ny = trunc(y * ty)
+                            local nx = trunc((idx % dw) * tx)
+                            local ny = trunc((idx // dw) * ty)
                             elm(srcpx[1 + ny * sw + nx])
                             idx = idx + 1
                         end

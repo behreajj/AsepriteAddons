@@ -395,9 +395,11 @@ dlg:button {
             end
 
             app.refresh()
-            dlg:close()
+            app.alert { title = "Success", text = "File exported." }
         else
-            app.alert("There is no active sprite.")
+            app.alert{
+                title = "Error",
+                text = "There is no active sprite." }
         end
     end
 }

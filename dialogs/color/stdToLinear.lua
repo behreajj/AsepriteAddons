@@ -102,12 +102,16 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert("There is no active sprite.")
+            app.alert{
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 
         if activeSprite.colorMode ~= ColorMode.RGB then
-            app.alert("Only RGB color mode is supported.")
+            app.alert{
+                title = "Error",
+                text = "Only RGB color mode is supported." }
             return
         end
 

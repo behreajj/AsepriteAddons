@@ -998,17 +998,15 @@ function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
     local blend = AseUtilities.blend
     local rsq = r * r
     local r2 = r * 2
-    local len = r2 * r2
+    local lenn1 = r2 * r2 - 1
     local i = -1
-    while i < len do
+    while i < lenn1 do
         i = i + 1
         local x = (i % r2) - r
         local y = (i // r2) - r
         if (x * x + y * y) < rsq then
             local xMark = xc + x
             local yMark = yc + y
-            -- TODO: getPixel Double check that this
-            -- doesn't go out of bounds.
             local srcHex = image:getPixel(xMark, yMark)
             local trgHex = blend(srcHex, hex)
             image:drawPixel(xMark, yMark, trgHex)
@@ -1440,6 +1438,49 @@ function AseUtilities.drawStringHoriz(
             writeChar = writeChar + dw
         end
     end
+end
+
+---Blits input image onto another that is the
+---next power of 2 in dimension. The nonUniform
+---flag specifies whether the result can have
+---unequal width and height, e.g., 64x32. Returns
+---the image by reference if it's size is already
+---a power of 2.
+---@param img userdata image
+---@param colorMode number color mode
+---@param alphaMask number alpha mask index
+---@param colorSpace userdata color space
+---@param nonUniform boolean non uniform dimensions
+---@return userdata
+function AseUtilities.expandImageToPow2(
+    img, colorMode, alphaMask,
+    colorSpace, nonUniform)
+    local wOrig = img.width
+    local hOrig = img.height
+    local wDest = wOrig
+    local hDest = hOrig
+    if nonUniform then
+        wDest = Utilities.nextPowerOf2(wOrig)
+        hDest = Utilities.nextPowerOf2(hOrig)
+    else
+        wDest = Utilities.nextPowerOf2(
+            math.max(wOrig, hOrig))
+        hDest = wDest
+    end
+
+    if wDest == wOrig and hDest == hOrig then
+        return img
+    end
+
+    local potSpec = ImageSpec {
+        width = wDest,
+        height = hDest,
+        colorMode = colorMode,
+        transparentColor = alphaMask }
+    potSpec.colorSpace = colorSpace
+    local potImg = Image(potSpec)
+    potImg:drawImage(img)
+    return potImg
 end
 
 ---Returns a copy of the source image that has

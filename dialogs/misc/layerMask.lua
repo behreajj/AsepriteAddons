@@ -64,25 +64,33 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert("There is no active sprite.")
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 
         local colorMode = activeSprite.colorMode
         if colorMode ~= ColorMode.RGB then
-            app.alert("Only RGB color mode is supported.")
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported." }
             return
         end
 
         local overLayer = app.activeLayer
         if not overLayer then
-            app.alert("There is no active layer.")
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 
         local overIndex = overLayer.stackIndex
         if overIndex < 2 then
-            app.alert("There must be a layer beneath the active layer.")
+            app.alert {
+                title = "Error",
+                text = "There must be a layer beneath the active layer." }
             return
         end
 
@@ -93,7 +101,9 @@ dlg:button {
         local underLayer = parent.layers[underIndex]
 
         if overLayer.isGroup or underLayer.isGroup then
-            app.alert("Group layers are not supported.")
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported." }
             return
         end
 

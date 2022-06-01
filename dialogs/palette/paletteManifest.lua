@@ -777,7 +777,7 @@ dlg:button {
         local grIsZero = grayHue == "ZERO"
         local grIsShad = grayHue == "SHADING"
 
-        local swatchMask = 0x00000000
+        local swatchMask = 0x0
         local noAlpha = true
         if noAlpha then swatchMask = 0xff000000 end
 

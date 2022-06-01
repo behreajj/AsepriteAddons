@@ -90,7 +90,9 @@ dlg:button {
 
             app.refresh()
         else
-            app.alert("There is no active sprite.")
+            app.alert{
+                title = "Error",
+                text = "There is no active sprite." }
         end
     end
 }

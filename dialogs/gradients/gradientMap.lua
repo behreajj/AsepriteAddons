@@ -57,33 +57,16 @@ dlg:combobox {
         local isPair = dlg.data.tweenOps == "PAIR"
         local isPalette = dlg.data.tweenOps == "PALETTE"
         local md = dlg.data.clrSpacePreset
-        dlg:modify {
-            id = "aColor",
-            visible = isPair
-        }
-
-        dlg:modify {
-            id = "bColor",
-            visible = isPair
-        }
-
-        dlg:modify {
-            id = "startIndex",
-            visible = isPalette
-        }
-
-        dlg:modify {
-            id = "count",
-            visible = isPalette
-        }
-
+        dlg:modify { id = "aColor", visible = isPair }
+        dlg:modify { id = "bColor", visible = isPair }
+        dlg:modify { id = "startIndex", visible = isPalette }
+        dlg:modify { id = "count", visible = isPalette }
         dlg:modify {
             id = "easingFuncHue",
             visible = md == "CIE_LCH"
                 or md == "HSL"
                 or md == "HSV"
         }
-
         dlg:modify {
             id = "easingFuncRGB",
             visible = md == "S_RGB"
@@ -183,18 +166,24 @@ dlg:button {
     onclick = function()
         local sprite = app.activeSprite
         if not sprite then
-            app.alert("There is no active sprite.")
+            app.alert{
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 
         if sprite.colorMode ~= ColorMode.RGB then
-            app.alert("Only RGB color mode is supported.")
+            app.alert{
+                title = "Error",
+                text = "Only RGB color mode is supported." }
             return
         end
 
         local srcLayer = app.activeLayer
         if not srcLayer then
-            app.alert("There is no active layer.")
+            app.alert{
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 

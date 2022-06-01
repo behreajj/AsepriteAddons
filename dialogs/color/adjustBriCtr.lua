@@ -44,20 +44,26 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert("There is no active sprite.")
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite." }
+            return
+        end
+
+        local srcCel = app.activeCel
+        if not srcCel then
+            app.alert {
+                title = "Error",
+                text = "There is no active cel." }
             return
         end
 
         local activeSpec = activeSprite.spec
         local colorMode = activeSpec.colorMode
         if colorMode ~= ColorMode.RGB then
-            app.alert("Only RGB color mode is supported.")
-            return
-        end
-
-        local srcCel = app.activeCel
-        if (not srcCel) then
-            app.alert("There is no active cel.")
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported." }
             return
         end
 
@@ -94,7 +100,7 @@ dlg:button {
             local srgb = Clr.fromHex(k)
             local lab = Clr.sRgbaToLab(srgb)
             local srgbAdj = Clr.labTosRgba(
-                ( lab.l - 50.0 ) * valCtr + valBrip50,
+                (lab.l - 50.0) * valCtr + valBrip50,
                 lab.a, lab.b, lab.alpha)
             trgDict[k] = Clr.toHex(srgbAdj)
         end

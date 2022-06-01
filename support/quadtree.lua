@@ -52,6 +52,7 @@ function Quadtree:__tostring()
 end
 
 ---Counts the number of leaves held by this node.
+---Returns 1 if the node itself is a leaf.
 ---@param q table quadtreee
 ---@return number
 function Quadtree.countLeaves(q)
@@ -142,8 +143,8 @@ function Quadtree.insert(q, point)
     return false
 end
 
----Evaluates whether a node has any
----children. Returns true if not.
+---Evaluates whether a node has any children.
+---Returns true if not.
 ---@param q table quadtree node
 ---@return boolean
 function Quadtree.isLeaf(q)
@@ -189,7 +190,7 @@ end
 ---@param q table quadtree
 ---@param center table circle center
 ---@param radius number circle radius
----@param dfPt table|nil
+---@param dfPt table|nil default point
 ---@return table|nil
 ---@return number
 function Quadtree.query(q, center, radius, dfPt)

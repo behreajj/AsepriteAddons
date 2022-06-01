@@ -214,6 +214,7 @@ function Octree.insertAll(o, ins)
 end
 
 ---Counts the number of leaves held by this node.
+---Returns 1 if the node itself is a leaf.
 ---@param o table octree
 ---@return number
 function Octree.countLeaves(o)
@@ -264,8 +265,8 @@ function Octree.countPoints(o)
     return sum
 end
 
----Evaluates whether a node has any
----children. Returns true if not.
+---Evaluates whether a node has any children.
+---Returns true if not.
 ---@param o table octree node
 ---@return boolean
 function Octree.isLeaf(o)
@@ -311,7 +312,7 @@ end
 ---@param o table octree
 ---@param center table sphere center
 ---@param radius number sphere radius
----@param dfPt table|nil
+---@param dfPt table|nil default point
 ---@return table|nil
 ---@return number
 function Octree.query(o, center, radius, dfPt)

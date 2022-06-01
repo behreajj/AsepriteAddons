@@ -288,6 +288,8 @@ dlg:button {
         local clrSpacePreset = args.clrSpacePreset
         local sprite = AseUtilities.initCanvas(
             64, 64, "Gradient.Linear." .. clrSpacePreset)
+
+        -- TODO: Refactor to use early return.
         if sprite.colorMode == ColorMode.RGB then
             local layer = sprite.layers[#sprite.layers]
             local frame = app.activeFrame or sprite.frames[1]

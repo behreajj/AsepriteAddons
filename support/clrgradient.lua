@@ -408,33 +408,6 @@ function ClrGradient.rgb()
     }, true)
 end
 
----Creates a ramp based on Viridis.
----Contains 16 colors and is not a loop.
----@return table
-function ClrGradient.viridis()
-    return ClrGradient.newInternal({
-        ClrKey.newByRef(0.000, Clr.new(0.266667, 0.003922, 0.329412, 1.0)),
-        ClrKey.newByRef(0.067, Clr.new(0.282353, 0.100131, 0.420654, 1.0)),
-        ClrKey.newByRef(0.167, Clr.new(0.276078, 0.184575, 0.487582, 1.0)),
-        ClrKey.newByRef(0.200, Clr.new(0.254902, 0.265882, 0.527843, 1.0)),
-
-        ClrKey.newByRef(0.267, Clr.new(0.221961, 0.340654, 0.549281, 1.0)),
-        ClrKey.newByRef(0.333, Clr.new(0.192157, 0.405229, 0.554248, 1.0)),
-        ClrKey.newByRef(0.400, Clr.new(0.164706, 0.469804, 0.556863, 1.0)),
-        ClrKey.newByRef(0.467, Clr.new(0.139869, 0.534379, 0.553464, 1.0)),
-
-        ClrKey.newByRef(0.533, Clr.new(0.122092, 0.595033, 0.543007, 1.0)),
-        ClrKey.newByRef(0.600, Clr.new(0.139608, 0.658039, 0.516863, 1.0)),
-        ClrKey.newByRef(0.667, Clr.new(0.210458, 0.717647, 0.471895, 1.0)),
-        ClrKey.newByRef(0.733, Clr.new(0.326797, 0.773595, 0.407582, 1.0)),
-
-        ClrKey.newByRef(0.800, Clr.new(0.477647, 0.821961, 0.316863, 1.0)),
-        ClrKey.newByRef(0.867, Clr.new(0.648366, 0.858039, 0.208889, 1.0)),
-        ClrKey.newByRef(0.933, Clr.new(0.825098, 0.884967, 0.114771, 1.0)),
-        ClrKey.newByRef(1.000, Clr.new(0.992157, 0.905882, 0.145098, 1.0))
-    }, false)
-end
-
 ---Returns a JSON sring of a color gradient.
 ---@param cg table color gradient
 ---@return string

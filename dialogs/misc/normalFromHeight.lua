@@ -108,12 +108,16 @@ dlg:button {
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert("There is no active sprite.")
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 
         if activeSprite.colorMode ~= ColorMode.RGB then
-            app.alert("The sprite must be in RGB color mode.")
+            app.alert {
+                title = "Error",
+                text = "The sprite must be in RGB color mode." }
             return
         end
 
@@ -139,7 +143,7 @@ dlg:button {
         local edgeType = args.edgeType or defaults.edgeType
         local wrapper = nil
         if edgeType == "CLAMP" then
-            wrapper = function (a, b)
+            wrapper = function(a, b)
                 if a < 0 then return 0 end
                 if a >= b then return b - 1 end
                 return a
@@ -161,13 +165,17 @@ dlg:button {
             local appRange = app.range
             local rangeFrames = appRange.frames
             local rangeFramesLen = #rangeFrames
-            for i = 1, rangeFramesLen, 1 do
+            local i = 0
+            while i < rangeFramesLen do
+                i = i + 1
                 frames[i] = rangeFrames[i]
             end
         else
             local activeFrames = activeSprite.frames
             local activeFramesLen = #activeFrames
-            for i = 1, activeFramesLen, 1 do
+            local i = 0
+            while i < activeFramesLen do
+                i = i + 1
                 frames[i] = activeFrames[i]
             end
         end
@@ -227,7 +235,9 @@ dlg:button {
         specNone.colorSpace = ColorSpace()
 
         app.transaction(function()
-            for i = 1, framesLen, 1 do
+            local i = 0
+            while i < framesLen do
+                i = i + 1
                 local frame = frames[i]
 
                 -- Create flat image.
@@ -243,13 +253,14 @@ dlg:button {
                 -- Prep variables for loop.
                 local lumTable = {}
                 local alphaTable = {}
-                local flatIdx = 1
+                local flatIdx = 0
                 local lMin = 2147483647
                 local lMax = -2147483648
 
                 -- Cache pixels from pixel iterator.
                 local flatPxItr = flatImg:pixels()
                 for elm in flatPxItr do
+                    flatIdx = flatIdx + 1
                     local hex = elm()
                     local alpha = (hex >> 0x18) & 0xff
                     alphaTable[flatIdx] = alpha
@@ -264,7 +275,6 @@ dlg:button {
                     lumTable[flatIdx] = lum
                     if lum < lMin then lMin = lum end
                     if lum > lMax then lMax = lum end
-                    flatIdx = flatIdx + 1
                 end
 
                 -- Stretch contrast.
@@ -275,7 +285,9 @@ dlg:button {
                     if rangeLum > 0.07 then
                         local invRangeLum = 1.0 / rangeLum
                         local lumLen = #lumTable
-                        for j = 1, lumLen, 1 do
+                        local j = 0
+                        while j < lumLen do
+                            j = j + 1
                             local lum = lumTable[j]
                             lumTable[j] = (lum - lMin) * invRangeLum
                         end
@@ -286,8 +298,9 @@ dlg:button {
                 if showGrayMap then
                     local grayImg = Image(specNone)
                     local grayPxItr = grayImg:pixels()
-                    local grayIdx = 1
+                    local grayIdx = 0
                     for elm in grayPxItr do
+                        grayIdx = grayIdx + 1
                         local alpha = alphaTable[grayIdx]
                         local lum = lumTable[grayIdx]
                         if alpha > 0 then
@@ -295,18 +308,18 @@ dlg:button {
                             local hex = alpha << 0x18 | v << 0x10 | v << 0x08 | v
                             elm(hex)
                         end
-                        grayIdx = grayIdx + 1
                     end
 
                     activeSprite:newCel(
                         grayLayer, frame, grayImg, originPt)
                 end
 
-                local writeIdx = 1
+                local writeIdx = 0
                 local normalImg = Image(specNone)
                 local normalItr = normalImg:pixels()
 
                 for elm in normalItr do
+                    writeIdx = writeIdx + 1
                     local alphaCenter = alphaTable[writeIdx]
                     if alphaCenter > 0 then
                         local yc = elm.y
@@ -373,8 +386,6 @@ dlg:button {
                     else
                         elm(hexBlank)
                     end
-
-                    writeIdx = writeIdx + 1
                 end
 
                 activeSprite:newCel(

@@ -19,40 +19,6 @@ local defaults = {
     pullFocus = false
 }
 
-local function expandToPot(
-    img, colorMode,
-    alphaMask, colorSpace, nonUniform)
-
-    -- Generalize to AseUtilities?
-
-    local wOrig = img.width
-    local hOrig = img.height
-    local wDest = wOrig
-    local hDest = hOrig
-    if nonUniform then
-        wDest = Utilities.nextPowerOf2(wOrig)
-        hDest = Utilities.nextPowerOf2(hOrig)
-    else
-        local longEdge = math.max(wOrig, hOrig)
-        wDest = Utilities.nextPowerOf2(longEdge)
-        hDest = wDest
-    end
-
-    if wDest == wOrig and hDest == hOrig then
-        return img
-    end
-
-    local potSpec = ImageSpec {
-        width = wDest,
-        height = hDest,
-        colorMode = colorMode,
-        transparentColor = alphaMask }
-    potSpec.colorSpace = colorSpace
-    local potImg = Image(potSpec)
-    potImg:drawImage(img)
-    return potImg
-end
-
 local function flattenFrameToImage(sprite, frIdx, alphaIdx)
     local flat = Image(sprite.spec)
     local frameObj = sprite.frames[frIdx or 1]
@@ -289,7 +255,7 @@ local function saveSheet(
     -- than to mess around with how border interacts
     -- with power of two.
     if usePot then
-        compImg = expandToPot(
+        compImg = AseUtilities.expandImageToPow2(
             compImg, colorMode, alphaMask,
             colorSpace, false)
     end
@@ -421,7 +387,6 @@ dlg:check {
 
 dlg:check {
     id = "batchSheets",
-    -- label = "Batch:",
     text = "Batch",
     selected = defaults.batchSheets,
     visible = defaults.useSheet
@@ -496,7 +461,9 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert("There is no active sprite.")
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 
@@ -510,7 +477,9 @@ dlg:button {
         local usePot = args.usePot
 
         if useSheet and colorMode ~= ColorMode.RGB then
-            app.alert("Only RGB color mode is supported for sprite sheets.")
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported for sprite sheets." }
             return
         end
 
@@ -538,6 +507,10 @@ dlg:button {
         end
 
         local filePath = app.fs.filePath(filename)
+        if filePath == nil or #filePath < 1 then
+            app.alert { title = "Error", text = "Empty file path." }
+            return
+        end
         filePath = string.gsub(filePath, "\\", "\\\\")
 
         local pathSep = app.fs.pathSeparator
@@ -679,9 +652,10 @@ dlg:button {
 
         local spritePalettes = activeSprite.palettes
         local lenPalettes = #spritePalettes
+        local border = 0
 
         if useSheet then
-            local border = args.border or defaults.border
+            border = args.border or defaults.border
             local brdrClr = args.borderColor or defaults.borderColor
             local useBorder = border > 0
             local useBrdrClr = brdrClr.alpha > 0
@@ -741,7 +715,7 @@ dlg:button {
                 local activePalette = spritePalettes[palIndex]
 
                 if usePot then
-                    image = expandToPot(
+                    image = AseUtilities.expandImageToPow2(
                         image, colorMode, alphaMask,
                         colorSpace, false)
                 end
@@ -769,8 +743,6 @@ dlg:button {
                 end
             end
 
-            -- TODO: Compare with layersExport, are image sizes
-            -- before or after scale?
             local packetsStr = ""
             local packetsFmt = ""
             local packetStrFmt = ""
@@ -781,13 +753,24 @@ dlg:button {
                 -- within sheet.
 
                 if batchSheets then
-                    packetsFmt = "\"sheets\":[%s]"
+                    packetsFmt = string.format(
+                        "\"border\":%d,\"padding\":%d,\"sheets\":",
+                        border, padding) .. "[%s]"
                 else
-                    packetsFmt = "\"sheet\":[%s]"
+                    packetsFmt = string.format(table.concat({
+                        "\"fileName\":\"%s\"",
+                        "\"border\":%d",
+                        "\"padding\":%d",
+                        "\"cell\":{\"x\":%d,\"y\":%d}",
+                        "\"sheet\":" }, ','),
+                        fileTitle,
+                        border, padding,
+                        wMaxUnbatch, hMaxUnbatch) .. "[%s]"
                 end
 
                 batchFmt = table.concat({
                     "{\"fileName\":\"%s\"",
+                    "\"cell\":{\"x\":%d,\"y\":%d}",
                     "\"frames\":[%s]}"
                 }, ',')
 
@@ -799,7 +782,10 @@ dlg:button {
                 }, ',')
 
             else
-                packetsFmt = "\"frames\":[%s]"
+                -- packetsFmt = "\"frames\":[%s]"
+                packetsFmt = string.format(
+                    "\"padding\":%d,\"frames\":", padding) .. "[%s]"
+
                 packetStrFmt = table.concat({
                     "{\"fileName\":\"%s\"",
                     "\"duration\":%d",
@@ -866,13 +852,18 @@ dlg:button {
                 local packetStrArr = {}
 
                 if batchSheets then
-
-                    for i = 1, #packetsBatched, 1 do
+                    local lenPacketsBatched = #packetsBatched
+                    local i = 0
+                    while i < lenPacketsBatched do
+                        i = i + 1
                         local packet1 = packetsBatched[i]
                         local batch = packet1.batch
+                        local lenBatch = #batch
 
                         local innerStrArr = {}
-                        for j = 1, #batch, 1 do
+                        local j = 0
+                        while j < lenBatch do
+                            j = j + 1
                             local packet2 = batch[j]
                             local image = packet2.image
                             local innerStr = string.format(
@@ -888,12 +879,12 @@ dlg:button {
                         local packetStr = string.format(
                             batchFmt,
                             packet1.filename,
+                            packet1.wMax, packet1.hMax,
                             innerStr)
                         packetStrArr[i] = packetStr
                     end
-
+                    packetsStr = table.concat(packetStrArr, ',')
                 else
-
                     for i = 1, #packetsUnbatched, 1 do
                         local packet = packetsUnbatched[i]
                         local image = packet.image
@@ -906,9 +897,8 @@ dlg:button {
                         packetStrArr[i] = packetStr
                     end
 
+                    packetsStr = table.concat(packetStrArr, ',')
                 end
-
-                packetsStr = table.concat(packetStrArr, ',')
 
             else
                 -- TODO: Only in this case is xdelta, ydelta
@@ -948,7 +938,7 @@ dlg:button {
             end
 
             if err then
-                app.alert("Error saving file: " .. err)
+                app.alert { title = "Error", text = err }
             end
         end
 

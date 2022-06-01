@@ -136,7 +136,9 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert("There is no active sprite.")
+            app.alert{
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 
@@ -151,7 +153,9 @@ dlg:button {
 
         local srcLayer = app.activeLayer
         if not srcLayer then
-            app.alert("There is no active layer.")
+            app.alert{
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 
@@ -268,7 +272,7 @@ dlg:button {
                 local yMax = -2147483648
 
                 local packets = {}
-                local packetIdx = 1
+                local packetIdx = 0
                 for j = 1, sampleCount, 1 do
                     local frameIdx = startFrameIdx + (j - 1)
                     -- TODO: Support looping?
@@ -295,19 +299,20 @@ dlg:button {
 
                             -- Store pixels from the image.
                             local pixels = {}
-                            local pixelIdx = 1
+                            local pixelIdx = 0
                             local pixelItr = currImg:pixels()
                             for elm in pixelItr do
+                                pixelIdx = pixelIdx + 1
                                 local hex = elm()
                                 if (hex & 0xff000000) ~= 0x0 then
                                     pixels[pixelIdx] = hex
                                 else
                                     pixels[pixelIdx] = 0x0
                                 end
-                                pixelIdx = pixelIdx + 1
                             end
 
                             -- Group all data into a packet.
+                            packetIdx = packetIdx + 1
                             packets[packetIdx] = {
                                 frameIdx = frameIdx,
                                 tlx = xTopLeft,
@@ -316,7 +321,6 @@ dlg:button {
                                 height = imgHeight,
                                 pixels = pixels
                             }
-                            packetIdx = packetIdx + 1
                         else
                             packetIdx = packetIdx + 1
                         end

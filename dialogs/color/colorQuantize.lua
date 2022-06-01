@@ -296,13 +296,17 @@ dlg:button {
         -- Early returns.
         local sprite = app.activeSprite
         if not sprite then
-            app.alert("There is no active sprite.")
+            app.alert{
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 
         local srcLayer = app.activeLayer
         if not srcLayer then
-            app.alert("There is no active layer.")
+            app.alert{
+                title = "Error",
+                text = "There is no active layer." }
             return
         end
 

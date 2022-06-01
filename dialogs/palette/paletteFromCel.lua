@@ -316,13 +316,17 @@ dlg:button {
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert("There is no active sprite.")
+            app.alert{
+                title = "Error",
+                text = "There is no active sprite." }
             return
         end
 
         local activeCel = app.activeCel
         if not activeCel then
-            app.alert("There is no active cel.")
+            app.alert{
+                title = "Error",
+                text = "There is no active cel." }
             return
         end
 

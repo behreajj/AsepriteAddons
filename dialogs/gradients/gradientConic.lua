@@ -220,6 +220,8 @@ dlg:button {
         local clrSpacePreset = args.clrSpacePreset or defaults.clrSpacePreset
         local sprite = AseUtilities.initCanvas(
             64, 64, "Gradient.Conic." .. clrSpacePreset)
+
+        -- TODO: Refactor to use early return.
         if sprite.colorMode == ColorMode.RGB then
 
             -- Cache methods.

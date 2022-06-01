@@ -289,6 +289,8 @@ dlg:button {
         local clrSpacePreset = args.clrSpacePreset
         local sprite = AseUtilities.initCanvas(
             64, 64, "Gradient.Radial." .. clrSpacePreset)
+
+        -- TODO: Refactor to use early return.
         if sprite.colorMode == ColorMode.RGB then
             local min = math.min
             local max = math.max
