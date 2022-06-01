@@ -85,19 +85,21 @@ dlg:slider {
     value = defaults.charLimit
 }
 
-dlg:newrow { always = false }
+-- For now, this is not worth the
+-- hassle that it creates.
+-- dlg:newrow { always = false }
 
-dlg:check {
-    id = "animate",
-    label = "Animate:",
-    selected = defaults.animate,
-    onclick = function()
-        dlg:modify {
-            id = "fps",
-            visible = dlg.data.animate
-        }
-    end
-}
+-- dlg:check {
+--     id = "animate",
+--     label = "Animate:",
+--     selected = defaults.animate,
+--     onclick = function()
+--         dlg:modify {
+--             id = "fps",
+--             visible = dlg.data.animate
+--         }
+--     end
+-- }
 
 dlg:newrow { always = false }
 
@@ -466,27 +468,27 @@ dlg:button {
             activeCel.position = stillPos
 
             local yCaret = 0
-            -- app.transaction(function()
-            local k = 0
-            while k < lineCount do
-                k = k + 1
-                local charsLine = charTableStill[k]
-                local lineOffset = lineOffsets[k] * dw
+            app.transaction(function()
+                local k = 0
+                while k < lineCount do
+                    k = k + 1
+                    local charsLine = charTableStill[k]
+                    local lineOffset = lineOffsets[k] * dw
 
-                if useShadow then
+                    if useShadow then
+                        displayString(
+                            lut, bkgSrcImg, charsLine, hexShd,
+                            lineOffset, yCaret + scale, gw, gh, scale)
+                    end
                     displayString(
-                        lut, bkgSrcImg, charsLine, hexShd,
-                        lineOffset, yCaret + scale, gw, gh, scale)
+                        lut, bkgSrcImg, charsLine, hexFill,
+                        lineOffset, yCaret, gw, gh, scale)
+
+                    yCaret = yCaret + dh + scale + leading
+
+                    activeCel.image = bkgSrcImg
                 end
-                displayString(
-                    lut, bkgSrcImg, charsLine, hexFill,
-                    lineOffset, yCaret, gw, gh, scale)
-
-                yCaret = yCaret + dh + scale + leading
-
-                activeCel.image = bkgSrcImg
-            end
-            -- end)
+            end)
         end
 
         if printElapsed then
