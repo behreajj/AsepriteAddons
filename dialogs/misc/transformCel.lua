@@ -781,13 +781,13 @@ dlg:button {
 
                         local len2 = kernelSize * chnlCount
                         local len3 = dw * len2
-                        local len4 = dh * len3 - 1
+                        local len4n1 = dh * len3 - 1
 
                         local swn1 = sw - 1
                         local shn1 = sh - 1
 
                         local k = -1
-                        while k < len4 do k = k + 1
+                        while k < len4n1 do k = k + 1
                             local g = k // len3 -- px row index
                             local m = k - g * len3 -- temp
                             local h = m // len2 -- px col index
@@ -812,13 +812,13 @@ dlg:button {
                             local x2 = max(0, min(swn1, x + 1))
                             local x3 = max(0, min(swn1, x + 2))
 
-                            local zw = z * sw
+                            local zwp1 = 1 + z * sw
                             local i8 = i * 8
 
-                            local a0 = srcpx[1 + zw + x0] >> i8 & 0xff
-                            local d0 = srcpx[1 + zw + x1] >> i8 & 0xff
-                            local d2 = srcpx[1 + zw + x2] >> i8 & 0xff
-                            local d3 = srcpx[1 + zw + x3] >> i8 & 0xff
+                            local a0 = srcpx[zwp1 + x0] >> i8 & 0xff
+                            local d0 = srcpx[zwp1 + x1] >> i8 & 0xff
+                            local d2 = srcpx[zwp1 + x2] >> i8 & 0xff
+                            local d3 = srcpx[zwp1 + x3] >> i8 & 0xff
 
                             d0 = d0 - a0
                             d2 = d2 - a0
@@ -852,23 +852,23 @@ dlg:button {
                                     + a3 * (dy * dysq))))
                         end
 
-                        local idx = 0
+                        local idx = -3
                         for elm in trgpxitr do
-                            local hex = clrs[idx + 1]
-                                | clrs[idx + 2] << 0x08
-                                | clrs[idx + 3] << 0x10
-                                | clrs[idx + 4] << 0x18
-                            elm(hex)
                             idx = idx + 4
+                            local hex = clrs[idx]
+                                | clrs[idx + 1] << 0x08
+                                | clrs[idx + 2] << 0x10
+                                | clrs[idx + 3] << 0x18
+                            elm(hex)
                         end
                     else
                         -- Default to nearest-neighbor.
-                        local idx = 0
+                        local idx = -1
                         for elm in trgpxitr do
+                            idx = idx + 1
                             local nx = trunc((idx % dw) * tx)
                             local ny = trunc((idx // dw) * ty)
                             elm(srcpx[1 + ny * sw + nx])
-                            idx = idx + 1
                         end
                     end
 

@@ -4,20 +4,19 @@ local msgSrcs = { "ENTRY", "FILE" }
 local txtFormats = { "gpl", "pal", "txt" }
 
 local function slice(tbl, start, finish)
-    local pos = 1
     local sl = {}
-    local stop = finish
-
-    for i = start, stop, 1 do
-        sl[pos] = tbl[i]
+    local dest = finish or #tbl
+    local orig = (start or 1) - 1
+    local range = dest - orig
+    if range < 1 then return {} end
+    local pos = 0
+    while pos < range do
         pos = pos + 1
+        sl[pos] = tbl[orig + pos]
     end
-
     return sl
 end
 
--- TODO: Add Print Elapsed Diagnostic check if
--- msgSrc == "FILE".
 local defaults = {
     msgSrc = "ENTRY",
     msgEntry = "Lorem ipsum dolor sit amet",
@@ -34,6 +33,7 @@ local defaults = {
     alignChar = "TOP",
     scale = 2,
     leading = 0,
+    printElapsed = false,
     pullFocus = false
 }
 
@@ -46,16 +46,14 @@ dlg:combobox {
     options = msgSrcs,
     onchange = function()
         local state = dlg.data.msgSrc
-
         dlg:modify {
             id = "msgEntry",
             visible = state == "ENTRY"
         }
 
-        dlg:modify {
-            id = "msgFilePath",
-            visible = state == "FILE"
-        }
+        local isf = state == "FILE"
+        dlg:modify { id = "msgFilePath", visible = isf }
+        dlg:modify { id = "printElapsed", visible = isf }
     end
 }
 
@@ -189,15 +187,34 @@ dlg:color {
     color = defaults.bkgColor
 }
 
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "printElapsed",
+    label = "Print Diagnostic:",
+    selected = defaults.printElapsed,
+    visible = defaults.msgSrc == "FILE"
+}
+
 dlg:button {
     id = "confirm",
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        -- Begin measuring elapsed time.
+        local args = dlg.data
+        local printElapsed = args.printElapsed
+        local startTime = 0
+        local endTime = 0
+        local elapsed = 0
+        if printElapsed then startTime = os.time() end
+
         -- Only support RGB color mode.
         if app.activeSprite
             and app.activeSprite.colorMode ~= ColorMode.RGB then
-            app.alert("Only RGB color mode is supported.")
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported." }
             dlg:close()
             return
         end
@@ -209,10 +226,9 @@ dlg:button {
         local mxDrop = 2
 
         -- Cache methods used in for loops to local.
-        local displayString = AseUtilities.drawStringHoriz
+        local displayString = AseUtilities.drawString
 
         -- Unpack arguments.
-        local args = dlg.data
         local msgSrc = args.msgSrc or defaults.msgSrc
         local msgEntry = args.msgEntry
         local msgFilePath = args.msgFilePath
@@ -262,6 +278,9 @@ dlg:button {
                     charTableStill = Utilities.lineWrapStringToChars(
                         msgEntry, charLimit)
                 end
+            else
+                app.alert { title = "Error", text = "Empty file path." }
+                return
             end
         else
             charTableStill = Utilities.lineWrapStringToChars(
@@ -338,18 +357,21 @@ dlg:button {
         if alignLine == "CENTER" then
             stillPos.x = stillPos.x - dispCenter
 
-            for i = 1, lineCount, 1 do
-                lineOffsets[i] = (maxLineWidth - lineWidths[i]) // 2
+            local h = 0
+            while h < lineCount do h = h + 1
+                lineOffsets[h] = (maxLineWidth - lineWidths[h]) // 2
             end
         elseif alignLine == "RIGHT" then
             stillPos.x = stillPos.x - dispWidth
 
-            for i = 1, lineCount, 1 do
-                lineOffsets[i] = maxLineWidth - lineWidths[i]
+            local h = 0
+            while h < lineCount do h = h + 1
+                lineOffsets[h] = maxLineWidth - lineWidths[h]
             end
         else
-            for i = 1, lineCount, 1 do
-                lineOffsets[i] = 0
+            local h = 0
+            while h < lineCount do h = h + 1
+                lineOffsets[h] = 0
             end
         end
 
@@ -360,90 +382,124 @@ dlg:button {
             stillPos.y = stillPos.y - heightImg
         end
 
+        local activeFrameObj = app.activeFrame
+            or sprite.frames[1]
+        local activeFrameIdx = activeFrameObj.frameNumber
         if animate then
-            local frames = AseUtilities.createNewFrames(
-                sprite, totalCharCount, duration)
-            if #frames > 0 then
-                local cels = AseUtilities.createNewCels(
+            local frames = sprite.frames
+            local lenFrames = #frames
+            local reqFrames = activeFrameIdx
+                + totalCharCount - (1 + lenFrames)
+
+            -- Extra error check wrapping needed
+            -- when debugging:
+            -- https://github.com/aseprite/aseprite/issues/3276
+            app.transaction(function()
+                AseUtilities.createFrames(
+                    sprite, reqFrames, duration)
+            end)
+
+            app.transaction(function()
+                AseUtilities.createCels(
                     sprite,
-                    frames[1].frameNumber, #frames,
+                    activeFrameIdx, totalCharCount,
                     layer.stackIndex, 1,
-                    Image(1, 1),
-                    stillPos)
+                    Image(1, 1), stillPos)
+            end)
 
-                if #cels > 0 then
-                    local yCaret = 0
-                    local idxFlat = 1
-                    app.transaction(function()
-                        local i = 0
-                        while i < lineCount do
-                            i = i + 1
-                            local charsLine = charTableStill[i]
-                            local lineWidth = lineWidths[i]
-                            local animImage = nil
-                            local j = 0
-                            while j < lineWidth do
-                                j = j + 1
-                                local animSlice = slice(charsLine, 1, j)
-                                local animPosx = 0
-                                if alignLine == "CENTER" then
-                                    animPosx = animPosx + dispCenter - (j * dw) // 2
-                                elseif alignLine == "RIGHT" then
-                                    animPosx = animPosx + dispWidth - j * dw
-                                end
+            local yCaret = 0
+            local currFrameIdx = activeFrameIdx - 1
 
-                                animImage = bkgSrcImg:clone()
+            -- If a transaction is placed around
+            -- the outer loop, seems like it hogs up
+            -- too much memory. But without any, there
+            -- are too many little transactions. The
+            -- compromise is to wrap the inner loop.
+            local i = 0
+            while i < lineCount do
+                i = i + 1
+                local charsLine = charTableStill[i]
+                local lineWidth = lineWidths[i]
+                local animImage = nil
 
-                                if useShadow then
-                                    displayString(
-                                        lut, animImage, animSlice, hexShd,
-                                        animPosx, yCaret + scale, gw, gh, scale)
-                                end
-                                displayString(
-                                    lut, animImage, animSlice, hexFill,
-                                    animPosx, yCaret, gw, gh, scale)
+                -- Ideally, this would create new images that are
+                -- not connected to any cel, then create the cel
+                -- and assign the image in the sprite method.
+                app.transaction(function()
+                    local j = 0
+                    while j < lineWidth do
+                        currFrameIdx = currFrameIdx + 1
+                        local animCel = layer:cel(currFrameIdx)
+                        if animCel then
+                            animImage = bkgSrcImg:clone()
 
-                                local animCel = cels[idxFlat]
-                                animCel.image = animImage
-
-                                idxFlat = idxFlat + 1
+                            j = j + 1
+                            local animSlice = slice(charsLine, 1, j)
+                            local animPosx = 0
+                            if alignLine == "CENTER" then
+                                animPosx = animPosx + dispCenter - (j * dw) // 2
+                            elseif alignLine == "RIGHT" then
+                                animPosx = animPosx + dispWidth - j * dw
                             end
 
-                            yCaret = yCaret + dh + scale + leading
-                            bkgSrcImg = animImage:clone()
+                            if useShadow then
+                                displayString(
+                                    lut, animImage, animSlice, hexShd,
+                                    animPosx, yCaret + scale, gw, gh, scale)
+                            end
+                            displayString(
+                                lut, animImage, animSlice, hexFill,
+                                animPosx, yCaret, gw, gh, scale)
+
+                            animCel.image = animImage
                         end
-                    end)
-                end
+                    end
+                end)
+
+                yCaret = yCaret + dh + scale + leading
+                bkgSrcImg = animImage:clone()
             end
 
         else
-            local activeFrame = app.activeFrame or sprite.frames[1]
-            local activeCel = layer:cel(activeFrame)
-                or sprite:newCel(layer, activeFrame)
+            local activeCel = layer:cel(activeFrameIdx)
+                or sprite:newCel(layer, activeFrameIdx)
             activeCel.position = stillPos
 
             local yCaret = 0
-            app.transaction(function()
-                local i = 0
-                while i < lineCount do
-                    i = i + 1
-                    local charsLine = charTableStill[i]
-                    local lineOffset = lineOffsets[i] * dw
+            -- app.transaction(function()
+            local k = 0
+            while k < lineCount do
+                k = k + 1
+                local charsLine = charTableStill[k]
+                local lineOffset = lineOffsets[k] * dw
 
-                    if useShadow then
-                        displayString(
-                            lut, bkgSrcImg, charsLine, hexShd,
-                            lineOffset, yCaret + scale, gw, gh, scale)
-                    end
+                if useShadow then
                     displayString(
-                        lut, bkgSrcImg, charsLine, hexFill,
-                        lineOffset, yCaret, gw, gh, scale)
-
-                    yCaret = yCaret + dh + scale + leading
-
-                    activeCel.image = bkgSrcImg
+                        lut, bkgSrcImg, charsLine, hexShd,
+                        lineOffset, yCaret + scale, gw, gh, scale)
                 end
-            end)
+                displayString(
+                    lut, bkgSrcImg, charsLine, hexFill,
+                    lineOffset, yCaret, gw, gh, scale)
+
+                yCaret = yCaret + dh + scale + leading
+
+                activeCel.image = bkgSrcImg
+            end
+            -- end)
+        end
+
+        if printElapsed then
+            endTime = os.time()
+            elapsed = os.difftime(endTime, startTime)
+            local txtArr = {
+                string.format("Start: %d", startTime),
+                string.format("End: %d", endTime),
+                string.format("Elapsed: %d", elapsed),
+                string.format("Lines: %d", lineCount),
+                string.format("Characters: %d", totalCharCount),
+            }
+            app.alert { title = "Diagnostic", text = txtArr }
         end
 
         app.refresh()

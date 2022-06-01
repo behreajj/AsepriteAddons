@@ -14,6 +14,8 @@ local harmonies = {
 }
 
 local defaults = {
+    -- TODO: Set Selection button?
+    -- See transformCel script.
     base = Color(255, 0, 0, 255),
     hexCode = "FF0000",
     lightness = 53,
@@ -154,8 +156,10 @@ local function updateShades(dialog, l, c, h, a)
 
     local toFac = 1.0 / (shadeCount - 1.0)
     local aseColors = {}
-    for i = 1, shadeCount, 1 do
-        local v = Curve3.eval(curve, (i - 1.0) * toFac)
+    local i = 0
+    while i < shadeCount do
+        local v = Curve3.eval(curve, i * toFac)
+        i = i + 1
         aseColors[i] = AseUtilities.clrToAseColor(
             Clr.labTosRgba(v.z, v.x, v.y, a))
     end
@@ -389,7 +393,7 @@ local function updateClrs(dialog)
     local args = dialog.data
     local l = args.lightness
     local c = args.chroma
-    local h = args.hue * 0.002777777777777778
+    local h = args.hue * 0.0027777777777778
     local a = args.alpha * 0.003921568627451
     local clr = Clr.lchTosRgba(l, c, h, a, 0.5)
 
@@ -627,7 +631,7 @@ dlg:newrow { always = false }
 --         local args = dlg.data
 --         local l = args.lightness
 --         local c = args.chroma
---         local h = args.hue * 0.002777777777777778
+--         local h = args.hue * 0.0027777777777778
 --         local a = args.alpha * 0.003921568627451
 --         updateShades(dlg, l, c, h, a)
 --     end

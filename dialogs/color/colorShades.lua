@@ -251,7 +251,9 @@ dlg:button {
         local fps = args.fps or defaults.fps
         local duration = 1.0 / math.max(1, fps)
         sprite.frames[1].duration = duration
-        AseUtilities.createNewFrames(sprite, needed, duration)
+        app.transaction(function()
+            AseUtilities.createFrames(sprite, needed, duration)
+        end)
 
         -- Set first layer to gamut.
         -- These are not wrapped in a transaction because
@@ -327,7 +329,7 @@ dlg:button {
                 local xOff = 1 + xMin - strokeSize
                 local yOff = 1 + yMin - strokeSize
 
-                local plotSpec =  ImageSpec {
+                local plotSpec = ImageSpec {
                     width = (xMax - xMin) + stroke2 - 1,
                     height = (yMax - yMin) + stroke2 - 1,
                     colorMode = spec.colorMode }
@@ -350,11 +352,13 @@ dlg:button {
                 local plotPalLayer = sprite:newLayer()
                 plotPalLayer.name = "Palette"
 
-                AseUtilities.createNewCels(
+                app.transaction(function()
+                AseUtilities.createCels(
                     sprite,
                     1, reqFrames,
                     plotPalLayer.stackIndex, 1,
                     plotImage, plotPos)
+                end)
             end
 
             -- This needs to be done at the very end because

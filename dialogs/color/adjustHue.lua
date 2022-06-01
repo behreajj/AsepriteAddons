@@ -183,7 +183,7 @@ dlg:button {
             local cAdj = args.cAdj or defaults.cAdj
             local hAdj = args.hAdj or defaults.hAdj
 
-            local hScl = hAdj / 360.0
+            local hScl = hAdj * 0.0027777777777778
             local useOmit = grayHue == "OMIT"
             local useZero = grayHue == "ZERO"
             local grayZero = 0.0

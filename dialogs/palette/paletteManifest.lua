@@ -42,10 +42,10 @@ local function drawCharsHorizShd(
     lut, image, chars, fillHex, shadHex,
     x, y, gw, gh, scale)
 
-    AseUtilities.drawStringHoriz(
+    AseUtilities.drawString(
         lut, image, chars, shadHex,
         x, y + 1, gw, gh, scale)
-    AseUtilities.drawStringHoriz(
+    AseUtilities.drawString(
         lut, image, chars, fillHex,
         x, y, gw, gh, scale)
 end

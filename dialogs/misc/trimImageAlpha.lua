@@ -65,8 +65,11 @@ dlg:button {
             local celsLen = #cels
             local trimImage = AseUtilities.trimImageAlpha
             app.transaction(function()
-                for i = 1, celsLen, 1 do
+                local i = 0
+                while i < celsLen do
+                    i = i + 1
                     local cel = cels[i]
+                    -- Is this if cel check necessary?
                     if cel then
                         local layer = cel.layer
                         local layerIsTilemap = false
@@ -90,7 +93,7 @@ dlg:button {
 
             app.refresh()
         else
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
         end

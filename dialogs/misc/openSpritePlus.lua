@@ -27,11 +27,11 @@ local function loadSprite(spriteFile)
         local image = cel.image
         local pxItr = image:pixels()
 
-        local index = 1
+        local index = 0
         for elm in pxItr do
             if index <= colorsLen then
-                elm(spriteHexes[index])
                 index = index + 1
+                elm(spriteHexes[index])
             end
         end
     else

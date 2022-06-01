@@ -27,16 +27,13 @@ local defaults = {
 }
 
 local function appendVisChildren(layer, array)
-    -- TODO: Generalize to AseUtilities? If so,
-    -- research how to refactor recursive function
-    -- to while loop.
-    -- Use a separate filter function to decide
-    -- which layers to include or exclude.
     if layer.isVisible then
         if layer.isGroup then
             local childLayers = layer.layers
             local lenChildLayers = #childLayers
-            for i = 1, lenChildLayers, 1 do
+            local i = 0
+            while i < lenChildLayers do
+                i = i + 1
                 local childLayer = childLayers[i]
                 appendVisChildren(childLayer, array)
             end
@@ -263,7 +260,7 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
             return
@@ -275,7 +272,9 @@ dlg:button {
         local args = dlg.data
         local flatGroups = args.flatGroups
         if flatGroups and colorMode ~= ColorMode.RGB then
-            app.alert("Only RGB color mode is supported for flatten groups.")
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported for flatten groups." }
             return
         end
 
@@ -479,6 +478,7 @@ dlg:button {
                 jsonFrames = {}
             }
 
+            -- TODO: Refactor to while loop.
             for j = 1, selectFrameLen, 1 do
                 local frame = selectFrames[j]
                 local frameIndex = frame.frameNumber
@@ -504,6 +504,7 @@ dlg:button {
                     local yMax = -2147483648
                     local childPackets = {}
 
+                    -- TODO: Refactor to while loop.
                     for k = 1, childLayersCount, 1 do
                         local childLayer = childLayers[k]
 
@@ -563,6 +564,7 @@ dlg:button {
                         specComp.colorSpace = colorSpace
                         local imgComp = Image(specComp)
 
+                        -- TODO: Refactor to while loop.
                         local lenPackets = #childPackets
                         for k = 1, lenPackets, 1 do
                             local packet = childPackets[k]
@@ -576,7 +578,7 @@ dlg:button {
                                 local x = elm.x + xDiff
                                 local y = elm.y + yDiff
 
-                                 -- Assumes hexDest is in RGB color mode.
+                                -- Assumes hexDest is in RGB color mode.
                                 local hexOrigin = imgComp:getPixel(x, y)
                                 local hexDest = elm()
                                 local bakedDest = bakeAlpha(

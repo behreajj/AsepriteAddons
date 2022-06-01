@@ -653,14 +653,19 @@ end
 ---@param position userdata cel position
 ---@param guiClr number hexadecimal color
 ---@return table
-function AseUtilities.createNewCels(
+function AseUtilities.createCels(
     sprite,
     frameStartIndex, frameCount,
     layerStartIndex, layerCount,
     image, position, guiClr)
 
+    -- Do not use app.transactions.
+    -- https://github.com/aseprite/aseprite/issues/3276
+
     if not sprite then
-        app.alert("Sprite could not be found.")
+        app.alert {
+            title = "Error",
+            text = "Sprite could not be found." }
         return {}
     end
 
@@ -737,52 +742,54 @@ function AseUtilities.createNewCels(
     -- Layers = y = rows
     -- Frames = x = columns
     local cels = {}
-    app.transaction(function()
-        local i = 0
-        while i < flatCount do
-            local frameIndex = valFrmIdx + (i % valFrmCt)
-            local layerIndex = valLyrIdx + (i // valFrmCt)
-            local frameObj = sprFrames[frameIndex]
-            local layerObj = sprLayers[layerIndex]
+    local i = 0
+    while i < flatCount do
+        local frameIndex = valFrmIdx + (i % valFrmCt)
+        local layerIndex = valLyrIdx + (i // valFrmCt)
+        local frameObj = sprFrames[frameIndex]
+        local layerObj = sprLayers[layerIndex]
 
-            -- print(string.format("Frame Index %d", frameIndex))
-            -- print(string.format("Layer Index %d", layerIndex))
+        -- print(string.format("Frame Index %d", frameIndex))
+        -- print(string.format("Layer Index %d", layerIndex))
 
-            -- Frame and layer must objects, not indices.
-            i = i + 1
-            cels[i] = sprite:newCel(
-                layerObj, frameObj, valImg, valPos)
+        -- Frame and layer must objects, not indices.
+        i = i + 1
+        cels[i] = sprite:newCel(
+            layerObj, frameObj, valImg, valPos)
 
-        end
-    end)
+    end
 
     local useGuiClr = guiClr and guiClr ~= 0x0
     if useGuiClr then
         local aseColor = AseUtilities.hexToAseColor(guiClr)
-        app.transaction(function()
-            local j = 0
-            while j < flatCount do
-                j = j + 1
-                cels[j].color = aseColor
-            end
-        end)
+        local j = 0
+        while j < flatCount do
+            j = j + 1
+            cels[j].color = aseColor
+        end
     end
 
     return cels
 end
 
 ---Creates new empty frames in a sprite. Prompts user
----to confirm if requested count exceeds a limit. Wraps
----the process in an app.transaction. Returns a table
----of frames. Frame duration is assumed to have been
----divided by 1000.0, and ready to be assigned as is.
+---to confirm if requested count exceeds a limit.
+--- Returns a table of frames. Frame duration is assumed
+---to have been divided by 1000.0, and ready to be
+---assigned as is.
 ---@param sprite userdata sprite
 ---@param count number frames to create
 ---@param duration number frame duration
 ---@return table
-function AseUtilities.createNewFrames(sprite, count, duration)
+function AseUtilities.createFrames(sprite, count, duration)
+
+    -- Do not use app.transactions.
+    -- https://github.com/aseprite/aseprite/issues/3276
+
     if not sprite then
-        app.alert("Sprite could not be found.")
+        app.alert {
+            title = "Error",
+            text = "Sprite could not be found." }
         return {}
     end
 
@@ -812,15 +819,13 @@ function AseUtilities.createNewFrames(sprite, count, duration)
     if valCount < 1 then valCount = 1 end
 
     local frames = {}
-    app.transaction(function()
-        local i = 0
-        while i < valCount do
-            i = i + 1
-            local frame = sprite:newEmptyFrame()
-            frame.duration = valDur
-            frames[i] = frame
-        end
-    end)
+    local i = 0
+    while i < valCount do
+        i = i + 1
+        local frame = sprite:newEmptyFrame()
+        frame.duration = valDur
+        frames[i] = frame
+    end
     return frames
 end
 
@@ -1179,8 +1184,9 @@ function AseUtilities.drawGlyphNearest(
     local glMat = glyph.matrix
     local glDrop = glyph.drop
     local ypDrop = y + glDrop * (dh / gh)
-    -- TODO: Refactor to use while loop.
-    for k = 0, lenTrgn1, 1 do
+    local k = -1
+    while k < lenTrgn1 do
+        k = k + 1
         local xTrg = k % dw
         local yTrg = k // dw
 
@@ -1395,7 +1401,7 @@ function AseUtilities.drawMesh2(
 end
 
 ---Draws an array of characters to an image
----horizontally according to the coordinates.
+---according to the coordinates.
 ---Operates on pixel by pixel level. Its use
 ---should not be mixed with app.useTool.
 ---@param lut table glyph look up table
@@ -1407,7 +1413,7 @@ end
 ---@param gw number glyph width
 ---@param gh number glyph height
 ---@param scale number display scale
-function AseUtilities.drawStringHoriz(
+function AseUtilities.drawString(
     lut, image, chars, hex,
     x, y, gw, gh, scale)
 

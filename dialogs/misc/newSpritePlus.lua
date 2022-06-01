@@ -570,10 +570,13 @@ dlg:button {
         local duration = 1.0 / math.max(1, fps)
         local firstFrame = newSprite.frames[1]
         firstFrame.duration = duration
-        AseUtilities.createNewFrames(
-            newSprite,
-            frameReqs - 1,
-            duration)
+
+        app.transaction(function()
+            AseUtilities.createFrames(
+                newSprite,
+                frameReqs - 1,
+                duration)
+        end)
 
         -- Assign a name to layer, avoid "Background".
         local layer = newSprite.layers[1]
