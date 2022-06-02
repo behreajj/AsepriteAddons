@@ -1,8 +1,9 @@
 dofile("../../support/aseutilities.lua")
 
 local defaults = {
-    -- TODO: Follow paletteFromCel to apply
-    -- the import result to a specific palette.
+    -- TODO: Follow paletteFromCel to apply the
+    -- import result to a specific palette with
+    -- a slider.
     -- TODO: Test with the Aseprite flavor of
     -- .pal file?
     uniquesOnly = false,

@@ -1,7 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
 local msgSrcs = { "ENTRY", "FILE" }
-local txtFormats = { "gpl", "pal", "txt" }
+local txtFormats = { "gpl", "md", "pal", "txt" }
 
 local function slice(tbl, start, finish)
     local sl = {}
@@ -386,15 +386,14 @@ dlg:button {
 
         local activeFrameObj = app.activeFrame
             or sprite.frames[1]
-        local activeFrameIdx = activeFrameObj.frameNumber
+        local actFrIdx = activeFrameObj.frameNumber
         if animate then
             local frames = sprite.frames
             local lenFrames = #frames
-            local reqFrames = activeFrameIdx
+            local reqFrames = actFrIdx
                 + totalCharCount - (1 + lenFrames)
 
-            -- Extra error check wrapping needed
-            -- when debugging:
+            -- Extra error check wrapping when debugging:
             -- https://github.com/aseprite/aseprite/issues/3276
             app.transaction(function()
                 AseUtilities.createFrames(
@@ -404,13 +403,13 @@ dlg:button {
             app.transaction(function()
                 AseUtilities.createCels(
                     sprite,
-                    activeFrameIdx, totalCharCount,
+                    actFrIdx, totalCharCount,
                     layer.stackIndex, 1,
                     Image(1, 1), stillPos)
             end)
 
             local yCaret = 0
-            local currFrameIdx = activeFrameIdx - 1
+            local currFrameIdx = actFrIdx - 1
 
             -- If a transaction is placed around
             -- the outer loop, seems like it hogs up
@@ -463,8 +462,8 @@ dlg:button {
             end
 
         else
-            local activeCel = layer:cel(activeFrameIdx)
-                or sprite:newCel(layer, activeFrameIdx)
+            local activeCel = layer:cel(actFrIdx)
+                or sprite:newCel(layer, actFrIdx)
             activeCel.position = stillPos
 
             local yCaret = 0
@@ -499,7 +498,7 @@ dlg:button {
                 string.format("End: %d", endTime),
                 string.format("Elapsed: %d", elapsed),
                 string.format("Lines: %d", lineCount),
-                string.format("Characters: %d", totalCharCount),
+                string.format("Characters: %d", totalCharCount)
             }
             app.alert { title = "Diagnostic", text = txtArr }
         end

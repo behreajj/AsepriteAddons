@@ -1,4 +1,5 @@
 local prsStrs = {
+    "BEZIER",
     "GAMMA",
     "LINEAR",
     "SINE_WAVE",
@@ -15,6 +16,11 @@ local defaults = {
     useGray = true,
     useIdx = false,
 
+    cp0x = 0.33333333333333,
+    cp0y = 0.0,
+    cp1x = 0.66666666666667,
+    cp1y = 1.0,
+
     phase = -90,
     freq = 0.5,
     sw_amp = 1.0,
@@ -29,6 +35,18 @@ local defaults = {
 
     quantization = 8
 }
+
+local function bezier(cp0x, cp0y, cp1x, cp1y, t)
+    if t <= 0.0 then return 0.0, 0.0 end
+    if t >= 1.0 then return 1.0, 1.0 end
+    local u = 1.0 - t
+    local tsq = t * t
+    local usq3t = u * u * (t + t + t)
+    local tsq3u = tsq * (u + u + u)
+    local tcb = tsq * t
+    return cp0y * usq3t + cp1y * tsq3u + tcb,
+        cp0x * usq3t + cp1x * tsq3u + tcb
+end
 
 local function quantize(x, levels)
     return math.max(0.0, math.min(1.0,
@@ -49,7 +67,7 @@ end
 local function sineWave(x, freq, phase, amp, basis)
     return math.max(0.0, math.min(1.0,
         0.5 + 0.5 * (basis + amp * math.sin(
-        6.2831853071796 * freq * x + phase))))
+            6.2831853071796 * freq * x + phase))))
 end
 
 local dlg = Dialog { title = "Color Curve Presets" }
@@ -72,16 +90,16 @@ dlg:combobox {
     onchange = function()
         local prs = dlg.data.preset
 
-        if prs == "SINE_WAVE" then
-            dlg:modify { id = "phase", visible = true }
-            dlg:modify { id = "freq", visible = true }
-            dlg:modify { id = "sw_amp", visible = true }
-            dlg:modify { id = "basis", visible = true }
+        if prs == "BEZIER" then
+            dlg:modify { id = "cp0x", visible = true }
+            dlg:modify { id = "cp0y", visible = true }
+            dlg:modify { id = "cp1x", visible = true }
+            dlg:modify { id = "cp1y", visible = true }
         else
-            dlg:modify { id = "phase", visible = false }
-            dlg:modify { id = "freq", visible = false }
-            dlg:modify { id = "sw_amp", visible = false }
-            dlg:modify { id = "basis", visible = false }
+            dlg:modify { id = "cp0x", visible = false }
+            dlg:modify { id = "cp0y", visible = false }
+            dlg:modify { id = "cp1x", visible = false }
+            dlg:modify { id = "cp1y", visible = false }
         end
 
         if prs == "GAMMA" then
@@ -107,68 +125,53 @@ dlg:combobox {
         else
             dlg:modify { id = "quantization", visible = false }
         end
+
+        if prs == "SINE_WAVE" then
+            dlg:modify { id = "phase", visible = true }
+            dlg:modify { id = "freq", visible = true }
+            dlg:modify { id = "sw_amp", visible = true }
+            dlg:modify { id = "basis", visible = true }
+        else
+            dlg:modify { id = "phase", visible = false }
+            dlg:modify { id = "freq", visible = false }
+            dlg:modify { id = "sw_amp", visible = false }
+            dlg:modify { id = "basis", visible = false }
+        end
     end
 }
 
 dlg:newrow { always = false }
 
-dlg:slider {
-    id = "phase",
-    label = "Phase:",
-    min = -90,
-    max = 90,
-    value = defaults.phase,
-    visible = true
+dlg:number {
+    id = "cp0x",
+    label = "Control 0:",
+    text = string.format("%.5f", defaults.cp0x),
+    decimals = 5,
+    visible = defaults.preset == "BEZIER"
+}
+
+dlg:number {
+    id = "cp0y",
+    text = string.format("%.5f", defaults.cp0y),
+    decimals = 5,
+    visible = defaults.preset == "BEZIER"
 }
 
 dlg:newrow { always = false }
 
 dlg:number {
-    id = "freq",
-    label = "Frequency:",
-    text = string.format("%.1f", defaults.freq),
+    id = "cp1x",
+    label = "Control 1:",
+    text = string.format("%.5f", defaults.cp1x),
     decimals = 5,
-    visible = true
+    visible = defaults.preset == "BEZIER"
 }
 
-dlg:newrow { always = false }
-
 dlg:number {
-    id = "sw_amp",
-    label = "Amplitude:",
-    text = string.format("%.1f", defaults.sw_amp),
+    id = "cp1y",
+    text = string.format("%.5f", defaults.cp1y),
     decimals = 5,
-    visible = true
-}
-
-dlg:newrow { always = false }
-
-dlg:number {
-    id = "basis",
-    label = "Basis:",
-    text = string.format("%.1f", defaults.basis),
-    decimals = 5,
-    visible = true
-}
-
-dlg:newrow { always = false }
-
-dlg:number {
-    id = "slope",
-    label = "Slope:",
-    text = string.format("%.1f", defaults.slope),
-    decimals = 5,
-    visible = false
-}
-
-dlg:newrow { always = false }
-
-dlg:number {
-    id = "intercept",
-    label = "Intercept:",
-    text = string.format("%.1f", defaults.intercept),
-    decimals = 5,
-    visible = false
+    visible = defaults.preset == "BEZIER"
 }
 
 dlg:newrow { always = false }
@@ -178,7 +181,7 @@ dlg:number {
     label = "Gamma:",
     text = string.format("%.1f", defaults.gamma),
     decimals = 5,
-    visible = false
+    visible = defaults.preset == "GAMMA"
 }
 
 dlg:newrow { always = false }
@@ -188,7 +191,7 @@ dlg:number {
     label = "Amplitude:",
     text = string.format("%.1f", defaults.amplitude),
     decimals = 5,
-    visible = false
+    visible = defaults.preset == "GAMMA"
 }
 
 dlg:newrow { always = false }
@@ -198,7 +201,27 @@ dlg:number {
     label = "Offset:",
     text = string.format("%.1f", defaults.offset),
     decimals = 5,
-    visible = false
+    visible = defaults.preset == "GAMMA"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "slope",
+    label = "Slope:",
+    text = string.format("%.1f", defaults.slope),
+    decimals = 5,
+    visible = defaults.preset == "LINEAR"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "intercept",
+    label = "Intercept:",
+    text = string.format("%.1f", defaults.intercept),
+    decimals = 5,
+    visible = defaults.preset == "LINEAR"
 }
 
 dlg:newrow { always = false }
@@ -209,7 +232,48 @@ dlg:slider {
     min = 2,
     max = 32,
     value = defaults.quantization,
-    visible = false
+    visible = defaults.preset == "QUANTIZE"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "phase",
+    label = "Phase:",
+    min = -90,
+    max = 90,
+    value = defaults.phase,
+    visible = defaults.preset == "SINE_WAVE"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "freq",
+    label = "Frequency:",
+    text = string.format("%.1f", defaults.freq),
+    decimals = 5,
+    visible = defaults.preset == "SINE_WAVE"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "sw_amp",
+    label = "Amplitude:",
+    text = string.format("%.1f", defaults.sw_amp),
+    decimals = 5,
+    visible = defaults.preset == "SINE_WAVE"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "basis",
+    label = "Basis:",
+    text = string.format("%.1f", defaults.basis),
+    decimals = 5,
+    visible = defaults.preset == "SINE_WAVE"
 }
 
 dlg:newrow { always = false }
@@ -275,7 +339,27 @@ dlg:button {
         end
 
         local preset = args.preset
-        if preset == "SINE_WAVE" then
+        if preset == "BEZIER" then
+            local cp0x = args.cp0x or defaults.cp0x
+            local cp0y = args.cp0y or defaults.cp0y
+            local cp1x = args.cp1x or defaults.cp1x
+            local cp1y = args.cp1y or defaults.cp1y
+
+            cp0x = math.min(math.max(cp0x, 0.0), 1.0)
+            cp1x = math.min(math.max(cp1x, 0.0), 1.0)
+
+            func = function(x)
+                return bezier(cp0x, cp0y, cp1x, cp1y, x)
+            end
+        elseif preset == "GAMMA" then
+            local g = 1.0
+            if args.gamma ~= 0.0 then g = args.gamma end
+            local amplitude = args.amplitude or defaults.amplitude
+            local offset = args.offset or defaults.offset
+            func = function(x)
+                return gamma(x, g, amplitude, offset)
+            end
+        elseif preset == "SINE_WAVE" then
             local freq = args.freq or defaults.freq
             local phase = args.phase or defaults.phase
             phase = 0.017453292519943 * phase
@@ -291,26 +375,21 @@ dlg:button {
                     return quantize(x, args.quantization)
                 end
             end
-        elseif preset == "GAMMA" then
-            local g = 1.0
-            if args.gamma ~= 0.0 then g = args.gamma end
-            local amplitude = args.amplitude or defaults.amplitude
-            local offset = args.offset or defaults.offset
-            func = function(x)
-                return gamma(x, g, amplitude, offset)
-            end
         end
 
         local points = {}
         local res = args.resolution
         local tox = 1.0 / (res - 1.0)
 
-        for i = 1, res, 1 do
-            local x = (i - 1) * tox
-            local y = func(x)
+        local i = 0
+        while i < res do
+            local x = i * tox
+            local y, xp = func(x)
+            if xp then x = xp end
             local point = Point(
                 math.tointeger(0.5 + 255.0 * x),
                 math.tointeger(0.5 + 255.0 * y))
+            i = i + 1
             points[i] = point
         end
 

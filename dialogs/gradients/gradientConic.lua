@@ -221,145 +221,146 @@ dlg:button {
         local sprite = AseUtilities.initCanvas(
             64, 64, "Gradient.Conic." .. clrSpacePreset)
 
-        -- TODO: Refactor to use early return.
-        if sprite.colorMode == ColorMode.RGB then
-
-            -- Cache methods.
-            local atan2 = math.atan
-            local max = math.max
-            local min = math.min
-            local toHex = Clr.toHex
-            local isCyclic = args.isCyclic
-
-            local wrap = 0.0
-            local toFac = 0.0
-            local quantize = nil
-            if isCyclic then
-                quantize = Utilities.quantizeSigned
-                wrap = 6.2831853071796
-                toFac = 0.1591549430919
-            else
-                quantize = Utilities.quantizeUnsigned
-                -- 361 degrees * 180 degrees / pi radians
-                -- wrap = 6.300638599699529
-                -- toFac = 0.15871407067335824
-                wrap = 6.2831853071796
-                toFac = 0.1591549430919
-            end
-
-            local layer = sprite.layers[#sprite.layers]
-            local frame = app.activeFrame or sprite.frames[1]
-
-            -- Easing mode.
-            local tweenOps = args.tweenOps or defaults.tweenOps
-            local rgbPreset = args.easingFuncRGB or defaults.easingFuncRGB
-            local huePreset = args.easingFuncHue or defaults.easingFuncHue
-
-            local easeFuncFinal = nil
-            if tweenOps == "PALETTE" then
-
-                local startIndex = args.startIndex or defaults.startIndex
-                local count = args.count or defaults.count
-
-                local palettes = sprite.palettes
-                local lenPalettes = #palettes
-                local actFrIdx = 1
-                if app.activeFrame then
-                    actFrIdx = app.activeFrame.frameNumber
-                    if actFrIdx > lenPalettes then actFrIdx = 1 end
-                end
-                local pal = palettes[actFrIdx]
-
-                local clrArr = AseUtilities.asePaletteToClrArr(
-                    pal, startIndex, count)
-
-                local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                    clrSpacePreset,
-                    rgbPreset,
-                    huePreset)
-
-                easeFuncFinal = function(t)
-                    return Clr.mixArr(clrArr, t, pairFunc)
-                end
-            else
-                local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                    clrSpacePreset,
-                    rgbPreset,
-                    huePreset)
-
-                easeFuncFinal = function(t)
-                    return pairFunc(aClr, bClr, t)
-                end
-            end
-
-            local wn1 = max(1.0, sprite.width - 1.0)
-            local hn1 = max(1.0, sprite.height - 1.0)
-
-            local aspect = wn1 / hn1
-            local wInv = aspect / wn1
-            local hInv = 1.0 / hn1
-
-            -- Shift origin from [0, 100] to [0.0, 1.0].
-            local xOrigin = 0.01 * args.xOrigin
-            local yOrigin = 0.01 * args.yOrigin
-            local xOriginNorm = xOrigin * aspect
-            local yOriginNorm = yOrigin
-
-            -- Bring origin from [0.0, 1.0] to [-1.0, 1.0].
-            local xOriginSigned = xOriginNorm + xOriginNorm - 1.0
-            local yOriginSigned = 1.0 - (yOriginNorm + yOriginNorm)
-
-            local angDegrees = args.angle or defaults.angle
-            local angRadians = angDegrees * 0.017453292519943
-            local cw = 1.0
-            if args.cw then cw = -1.0 end
-            local levels = args.quantization or defaults.quantization
-
-            local selection = AseUtilities.getSelection(sprite)
-            local selBounds = selection.bounds
-            local xCel = selBounds.x
-            local yCel = selBounds.y
-            local image = Image(selBounds.width, selBounds.height)
-            local iterator = image:pixels()
-            for elm in iterator do
-                local x = elm.x + xCel
-                local y = elm.y + yCel
-                -- if selection:contains(x, y) then
-
-                -- Bring coordinates into range [0.0, 1.0].
-                local xNorm = x * wInv
-                local yNorm = y * hInv
-
-                -- Bring coordinates from [0.0, 1.0] to [-1.0, 1.0].
-                local xSigned = xNorm + xNorm - 1.0
-                local ySigned = 1.0 - (yNorm + yNorm)
-
-                -- Subtract the origin.
-                local xOffset = xSigned - xOriginSigned
-                local yOffset = cw * (ySigned - yOriginSigned)
-
-                -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
-                local angleSigned = atan2(yOffset, xOffset) - angRadians
-
-                -- Depending on whether this is cyclic or not,
-                -- will need to wrap by 360 degrees or 361, so
-                -- factor will be in [0.0, 1.0) vs [0.0, 1.0].
-                local angleWrapped = angleSigned % wrap
-
-                -- Divide by tau to bring into factor.
-                -- local fac = min(1.0, angleWrapped * toFac)
-                local fac = angleWrapped * toFac
-
-                fac = quantize(fac, levels)
-                elm(toHex(easeFuncFinal(fac)))
-                -- end
-            end
-
-            sprite:newCel(layer, frame, image, Point(xCel, yCel))
-            app.refresh()
-        else
-            app.alert("Only RGB color mode is supported.")
+        if sprite.colorMode ~= ColorMode.RGB then
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported." }
+            return
         end
+
+        -- Cache methods.
+        local atan2 = math.atan
+        local max = math.max
+        local min = math.min
+        local toHex = Clr.toHex
+        local isCyclic = args.isCyclic
+
+        local wrap = 0.0
+        local toFac = 0.0
+        local quantize = nil
+        if isCyclic then
+            quantize = Utilities.quantizeSigned
+            wrap = 6.2831853071796
+            toFac = 0.1591549430919
+        else
+            quantize = Utilities.quantizeUnsigned
+            -- 361 degrees * 180 degrees / pi radians
+            -- wrap = 6.300638599699529
+            -- toFac = 0.15871407067335824
+            wrap = 6.2831853071796
+            toFac = 0.1591549430919
+        end
+
+        local layer = sprite.layers[#sprite.layers]
+        local frame = app.activeFrame or sprite.frames[1]
+
+        -- Easing mode.
+        local tweenOps = args.tweenOps or defaults.tweenOps
+        local rgbPreset = args.easingFuncRGB or defaults.easingFuncRGB
+        local huePreset = args.easingFuncHue or defaults.easingFuncHue
+
+        local easeFuncFinal = nil
+        if tweenOps == "PALETTE" then
+
+            local startIndex = args.startIndex or defaults.startIndex
+            local count = args.count or defaults.count
+
+            local palettes = sprite.palettes
+            local lenPalettes = #palettes
+            local actFrIdx = 1
+            if app.activeFrame then
+                actFrIdx = app.activeFrame.frameNumber
+                if actFrIdx > lenPalettes then actFrIdx = 1 end
+            end
+            local pal = palettes[actFrIdx]
+
+            local clrArr = AseUtilities.asePaletteToClrArr(
+                pal, startIndex, count)
+
+            local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                clrSpacePreset,
+                rgbPreset,
+                huePreset)
+
+            easeFuncFinal = function(t)
+                return Clr.mixArr(clrArr, t, pairFunc)
+            end
+        else
+            local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                clrSpacePreset,
+                rgbPreset,
+                huePreset)
+
+            easeFuncFinal = function(t)
+                return pairFunc(aClr, bClr, t)
+            end
+        end
+
+        local wn1 = max(1.0, sprite.width - 1.0)
+        local hn1 = max(1.0, sprite.height - 1.0)
+
+        local aspect = wn1 / hn1
+        local wInv = aspect / wn1
+        local hInv = 1.0 / hn1
+
+        -- Shift origin from [0, 100] to [0.0, 1.0].
+        local xOrigin = 0.01 * args.xOrigin
+        local yOrigin = 0.01 * args.yOrigin
+        local xOriginNorm = xOrigin * aspect
+        local yOriginNorm = yOrigin
+
+        -- Bring origin from [0.0, 1.0] to [-1.0, 1.0].
+        local xOriginSigned = xOriginNorm + xOriginNorm - 1.0
+        local yOriginSigned = 1.0 - (yOriginNorm + yOriginNorm)
+
+        local angDegrees = args.angle or defaults.angle
+        local angRadians = angDegrees * 0.017453292519943
+        local cw = 1.0
+        if args.cw then cw = -1.0 end
+        local levels = args.quantization or defaults.quantization
+
+        local selection = AseUtilities.getSelection(sprite)
+        local selBounds = selection.bounds
+        local xCel = selBounds.x
+        local yCel = selBounds.y
+        local image = Image(selBounds.width, selBounds.height)
+        local iterator = image:pixels()
+        for elm in iterator do
+            local x = elm.x + xCel
+            local y = elm.y + yCel
+            -- if selection:contains(x, y) then
+
+            -- Bring coordinates into range [0.0, 1.0].
+            local xNorm = x * wInv
+            local yNorm = y * hInv
+
+            -- Bring coordinates from [0.0, 1.0] to [-1.0, 1.0].
+            local xSigned = xNorm + xNorm - 1.0
+            local ySigned = 1.0 - (yNorm + yNorm)
+
+            -- Subtract the origin.
+            local xOffset = xSigned - xOriginSigned
+            local yOffset = cw * (ySigned - yOriginSigned)
+
+            -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
+            local angleSigned = atan2(yOffset, xOffset) - angRadians
+
+            -- Depending on whether this is cyclic or not,
+            -- will need to wrap by 360 degrees or 361, so
+            -- factor will be in [0.0, 1.0) vs [0.0, 1.0].
+            local angleWrapped = angleSigned % wrap
+
+            -- Divide by tau to bring into factor.
+            -- local fac = min(1.0, angleWrapped * toFac)
+            local fac = angleWrapped * toFac
+
+            fac = quantize(fac, levels)
+            elm(toHex(easeFuncFinal(fac)))
+            -- end
+        end
+
+        sprite:newCel(layer, frame, image, Point(xCel, yCel))
+        app.refresh()
     end
 }
 

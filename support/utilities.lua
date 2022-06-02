@@ -177,15 +177,14 @@ end
 ---@param comparator function
 ---@return table
 function Utilities.dictToSortedSet(dict, comparator)
-    -- TODO: Is there anywhere else this
-    -- can be used?
+    -- TODO: Is there anywhere else this can be used?
     local orderedSet = {}
     local osCursor = 0
     for k, _ in pairs(dict) do
         osCursor = osCursor + 1
         orderedSet[osCursor] = k
     end
-    --sort takes care of nil,default comparator.
+    --sort takes care of nil, default comparator.
     table.sort(orderedSet, comparator)
     return orderedSet
 end

@@ -188,7 +188,7 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-dlg:slider{
+dlg:slider {
     id = "startIndex",
     label = "Start:",
     min = 0,
@@ -199,7 +199,7 @@ dlg:slider{
 
 dlg:newrow { always = false }
 
-dlg:slider{
+dlg:slider {
     id = "count",
     label = "Count:",
     min = 3,
@@ -289,140 +289,144 @@ dlg:button {
         local sprite = AseUtilities.initCanvas(
             64, 64, "Gradient.Linear." .. clrSpacePreset)
 
-        -- TODO: Refactor to use early return.
-        if sprite.colorMode == ColorMode.RGB then
-            local layer = sprite.layers[#sprite.layers]
-            local frame = app.activeFrame or sprite.frames[1]
+        if sprite.colorMode ~= ColorMode.RGB then
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported." }
+            return
+        end
 
-            --Easing mode.
-            local tweenOps = args.tweenOps
-            local rgbPreset = args.easingFuncRGB
-            local huePreset = args.easingFuncHue
+        local layer = sprite.layers[#sprite.layers]
+        local frame = app.activeFrame or sprite.frames[1]
 
-            local easeFuncFinal = nil
-            if tweenOps == "PALETTE" then
-                local startIndex = args.startIndex
-                local count = args.count
+        --Easing mode.
+        local tweenOps = args.tweenOps
+        local rgbPreset = args.easingFuncRGB
+        local huePreset = args.easingFuncHue
 
-                local palettes = sprite.palettes
-                local lenPalettes = #palettes
-                local actFrIdx = 1
-                if app.activeFrame then
-                    actFrIdx = app.activeFrame.frameNumber
-                    if actFrIdx > lenPalettes then actFrIdx = 1 end
-                end
-                local pal = palettes[actFrIdx]
+        local easeFuncFinal = nil
+        if tweenOps == "PALETTE" then
+            local startIndex = args.startIndex
+            local count = args.count
 
-                local clrArr = AseUtilities.asePaletteToClrArr(
-                    pal, startIndex, count)
-
-                local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                    clrSpacePreset,
-                    rgbPreset,
-                    huePreset)
-
-                easeFuncFinal = function(t)
-                    return Clr.mixArr(clrArr, t, pairFunc)
-                end
-            else
-                local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                    clrSpacePreset,
-                    rgbPreset,
-                    huePreset)
-
-                easeFuncFinal = function(t)
-                    return pairFunc(aClr, bClr, t)
-                end
+            local palettes = sprite.palettes
+            local lenPalettes = #palettes
+            local actFrIdx = 1
+            if app.activeFrame then
+                actFrIdx = app.activeFrame.frameNumber
+                if actFrIdx > lenPalettes then actFrIdx = 1 end
             end
+            local pal = palettes[actFrIdx]
 
-            local wn1 = sprite.width - 1.0
-            local hn1 = sprite.height - 1.0
+            local clrArr = AseUtilities.asePaletteToClrArr(
+                pal, startIndex, count)
 
-            -- Divide by 100 to account for percentage.
-            local xOrPx = 0
-            local yOrPx = 0
-            local xDsPx = wn1
-            local yDsPx = 0
+            local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                clrSpacePreset,
+                rgbPreset,
+                huePreset)
 
-            local coord = args.coord or defaults.coord
-            if coord == "POLAR" then
-                local xCenter = args.xCenter or defaults.xCenter
-                local yCenter = args.yCenter or defaults.yCenter
-                local angle = args.angle or defaults.angle
-                local radius = args.radius or defaults.radius
-
-                local xCtPx = xCenter * wn1 * 0.01
-                local yCtPx = yCenter * hn1 * 0.01
-                local r = radius * 0.005 * math.max(wn1, hn1)
-                local a = angle * 0.017453292519943
-                local rtcos = r * math.cos(a)
-                local rtsin = r * math.sin(a)
-
-                xOrPx = xCtPx - rtcos
-                yOrPx = yCtPx + rtsin
-                xDsPx = xCtPx + rtcos
-                yDsPx = yCtPx - rtsin
-            else
-                local xOrigin = args.xOrigin or defaults.xOrigin
-                local yOrigin = args.yOrigin or defaults.yOrigin
-                local xDest = args.xDest or defaults.xDest
-                local yDest = args.yDest or defaults.yDest
-
-                xOrPx = xOrigin * wn1 * 0.01
-                yOrPx = yOrigin * hn1 * 0.01
-                xDsPx = xDest * wn1 * 0.01
-                yDsPx = yDest * hn1 * 0.01
-            end
-
-            local invalidFlag = (math.abs(xOrPx - xDsPx) < 1)
-                            and (math.abs(yOrPx - yDsPx) < 1)
-            if invalidFlag then
-                xOrPx = 0
-                yOrPx = 0
-                xDsPx = wn1
-                yDsPx = 0
-            end
-
-            local bx = xDsPx - xOrPx
-            local by = yDsPx - yOrPx
-            local bbInv = 1.0 / math.max(0.000001,
-                bx * bx + by * by)
-
-            local levels = args.quantization
-            local quantize = Utilities.quantizeUnsigned
-            local toHex = Clr.toHex
-
-            local selection = AseUtilities.getSelection(sprite)
-            local selBounds = selection.bounds
-            local xCel = selBounds.x
-            local yCel = selBounds.y
-            local image = Image(selBounds.width, selBounds.height)
-            local iterator = image:pixels()
-            for elm in iterator do
-                local x = elm.x + xCel
-                local y = elm.y + yCel
-                -- if selection:contains(x, y) then
-                local ax = x - xOrPx
-                local ay = y - yOrPx
-                local adotb = (ax * bx + ay * by) * bbInv
-
-                -- Unsigned quantize will already clamp to
-                -- 0.0 lower bound.
-                local fac = quantize(adotb, levels)
-                if fac > 1.0 then fac = 1.0 end
-
-                elm(toHex(easeFuncFinal(fac)))
-                -- end
-            end
-
-            sprite:newCel(layer, frame, image, Point(xCel, yCel))
-            app.refresh()
-
-            if invalidFlag then
-                app.alert("Origin and destination are the same.")
+            easeFuncFinal = function(t)
+                return Clr.mixArr(clrArr, t, pairFunc)
             end
         else
-            app.alert("Only RGB color mode is supported.")
+            local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
+                clrSpacePreset,
+                rgbPreset,
+                huePreset)
+
+            easeFuncFinal = function(t)
+                return pairFunc(aClr, bClr, t)
+            end
+        end
+
+        local wn1 = sprite.width - 1.0
+        local hn1 = sprite.height - 1.0
+
+        -- Divide by 100 to account for percentage.
+        local xOrPx = 0
+        local yOrPx = 0
+        local xDsPx = wn1
+        local yDsPx = 0
+
+        local coord = args.coord or defaults.coord
+        if coord == "POLAR" then
+            local xCenter = args.xCenter or defaults.xCenter
+            local yCenter = args.yCenter or defaults.yCenter
+            local angle = args.angle or defaults.angle
+            local radius = args.radius or defaults.radius
+
+            local xCtPx = xCenter * wn1 * 0.01
+            local yCtPx = yCenter * hn1 * 0.01
+            local r = radius * 0.005 * math.max(wn1, hn1)
+            local a = angle * 0.017453292519943
+            local rtcos = r * math.cos(a)
+            local rtsin = r * math.sin(a)
+
+            xOrPx = xCtPx - rtcos
+            yOrPx = yCtPx + rtsin
+            xDsPx = xCtPx + rtcos
+            yDsPx = yCtPx - rtsin
+        else
+            local xOrigin = args.xOrigin or defaults.xOrigin
+            local yOrigin = args.yOrigin or defaults.yOrigin
+            local xDest = args.xDest or defaults.xDest
+            local yDest = args.yDest or defaults.yDest
+
+            xOrPx = xOrigin * wn1 * 0.01
+            yOrPx = yOrigin * hn1 * 0.01
+            xDsPx = xDest * wn1 * 0.01
+            yDsPx = yDest * hn1 * 0.01
+        end
+
+        local invalidFlag = (math.abs(xOrPx - xDsPx) < 1)
+            and (math.abs(yOrPx - yDsPx) < 1)
+        if invalidFlag then
+            xOrPx = 0
+            yOrPx = 0
+            xDsPx = wn1
+            yDsPx = 0
+        end
+
+        local bx = xDsPx - xOrPx
+        local by = yDsPx - yOrPx
+        local bbInv = 1.0 / math.max(0.000001,
+            bx * bx + by * by)
+
+        local levels = args.quantization
+        local quantize = Utilities.quantizeUnsigned
+        local toHex = Clr.toHex
+
+        local selection = AseUtilities.getSelection(sprite)
+        local selBounds = selection.bounds
+        local xCel = selBounds.x
+        local yCel = selBounds.y
+        local image = Image(selBounds.width, selBounds.height)
+        local iterator = image:pixels()
+        for elm in iterator do
+            local x = elm.x + xCel
+            local y = elm.y + yCel
+            -- if selection:contains(x, y) then
+            local ax = x - xOrPx
+            local ay = y - yOrPx
+            local adotb = (ax * bx + ay * by) * bbInv
+
+            -- Unsigned quantize will already clamp to
+            -- 0.0 lower bound.
+            local fac = quantize(adotb, levels)
+            if fac > 1.0 then fac = 1.0 end
+
+            elm(toHex(easeFuncFinal(fac)))
+            -- end
+        end
+
+        sprite:newCel(layer, frame, image, Point(xCel, yCel))
+        app.refresh()
+
+        if invalidFlag then
+            app.alert {
+                title = "Warning",
+                text = "Origin and destination are the same." }
         end
     end
 }

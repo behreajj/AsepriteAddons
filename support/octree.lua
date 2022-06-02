@@ -214,7 +214,7 @@ function Octree.insertAll(o, ins)
 end
 
 ---Counts the number of leaves held by this node.
----Returns 1 if the node itself is a leaf.
+---Returns 1 if the node is itself a leaf.
 ---@param o table octree
 ---@return number
 function Octree.countLeaves(o)

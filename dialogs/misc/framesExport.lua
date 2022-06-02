@@ -29,7 +29,9 @@ local function flattenFrameToImage(sprite, frIdx, alphaIdx)
     return trimmed, xd, yd, duration
 end
 
-local function indexToPacket(sprite, frIdx, alphaIdx, wMax, hMax)
+local function indexToPacket(
+    sprite, frIdx, alphaIdx, wMax, hMax,
+    padding, wScale, hScale)
     local trimmed, xd, yd, duration = flattenFrameToImage(
         sprite, frIdx, alphaIdx)
     local wLocal = trimmed.width
@@ -39,8 +41,8 @@ local function indexToPacket(sprite, frIdx, alphaIdx, wMax, hMax)
         number = frIdx,
         duration = duration,
         image = trimmed,
-        x = xd,
-        y = yd }
+        x = xd * wScale - padding,
+        y = yd * hScale - padding }
 
     local wMaxNew = wMax
     local hMaxNew = hMax
@@ -53,8 +55,7 @@ local function indexToPacket(sprite, frIdx, alphaIdx, wMax, hMax)
 end
 
 local function allIndicesToPackets(
-    sprite,
-    padding, wScale, hScale)
+    sprite, padding, wScale, hScale)
 
     local wMax = -2147483648
     local hMax = -2147483648
@@ -64,7 +65,7 @@ local function allIndicesToPackets(
     for i = 1, lenFrameObjs, 1 do
         packets[i], wMax, hMax = indexToPacket(
             sprite, i, alphaIndex,
-            wMax, hMax)
+            wMax, hMax, padding, wScale, hScale)
     end
 
     local pad2 = padding + padding
@@ -88,7 +89,8 @@ local function idcsArr1ToPacket(
         local frameIndex = idcsArr[k]
         packets[k], wMaxNext, hMaxNext = indexToPacket(
             sprite, frameIndex, alphaIndex,
-            wMaxNext, hMaxNext)
+            wMaxNext, hMaxNext,
+            padding, wScale, hScale)
     end
 
     local pad2 = padding + padding
@@ -159,12 +161,9 @@ local function scaleAndPadPacketImages(
 end
 
 local function saveSheet(
-    filename,
-    packets, wMax, hMax,
-    spec, compPalette,
-    useBrdr, border,
-    useBrdrClr, brdrClr,
-    usePot)
+    filename, packets, wMax, hMax,
+    spec, compPalette, useBrdr, border,
+    useBrdrClr, brdrClr, padding, usePot)
 
     if (wMax < 1) or (hMax < 1)
         or (#filename < 1) then
@@ -176,14 +175,6 @@ local function saveSheet(
     local rows = math.max(1, math.ceil(lenPackets / columns))
     local wComp = wMax * columns
     local hComp = hMax * rows
-
-    -- if usePot then
-    --     local npot = Utilities.nextPowerOf2(
-    --         math.max(wComp, hComp))
-    --     wComp = npot - border
-    --     hComp = npot - border
-    --     columns = npot // wMax
-    -- end
 
     -- Unpack source spec.
     local colorMode = spec.colorMode
@@ -199,13 +190,8 @@ local function saveSheet(
     compSpec.colorSpace = colorSpace
     local compImg = Image(compSpec)
 
-    -- To simplify tracking the original
-    -- image positions and their locations
-    -- in the sprite sheet, keep everything
-    -- to top-left corner.
-    -- Center image horizontally.
-    -- Align to vertical baseline.
-    -- local xCellCenter = wMax // 2
+    -- For centering the image.
+    local xCellCenter = wMax // 2
     -- local yCellCenter = hMax // 2
 
     local k = 0
@@ -215,18 +201,20 @@ local function saveSheet(
         k = k + 1
         local packet = packets[k]
         local image = packet.image
+        local wh = image.width // 2
+        -- local hh = image.height // 2
 
         local x = j * wMax
         local y = i * hMax
 
-        -- TODO: For sprite sheets, THESE values
-        -- need to be passed to packets then to JSON.
-        -- local wh = image.width // 2
-        -- local hh = image.height // 2
+        -- x center, y botttom.
+        x = x + xCellCenter - wh
+        y = y + hMax - image.height
+        -- y = y + yCellCenter - hh
+
         compImg:drawImage(image, Point(x, y))
-        -- x + xCellCenter - wh,
-        -- y + yCellCenter - hh))
-        -- y + hMax - image.height))
+        packets[k].xSheet = x + border + padding
+        packets[k].ySheet = y + border + padding
     end
 
     -- This might seem less efficient, but clearing
@@ -685,7 +673,7 @@ dlg:button {
                         spec, compPalette,
                         useBorder, border,
                         useBrdrClr, brdrClr,
-                        usePot)
+                        padding, usePot)
                     packetsBatched[i].filename = string.format(
                         "%s%03d", fileTitle, i - 1)
                 end
@@ -696,7 +684,7 @@ dlg:button {
                     spec, compPalette,
                     useBorder, border,
                     useBrdrClr, brdrClr,
-                    usePot)
+                    padding, usePot)
             end
         else
             for k = 1, #packetsUnbatched, 1 do
@@ -749,9 +737,6 @@ dlg:button {
             local batchFmt = ""
             local frameIndvFmt = ""
             if useSheet then
-                -- TODO: Include info on where to find image
-                -- within sheet.
-
                 if batchSheets then
                     packetsFmt = string.format(
                         "\"border\":%d,\"padding\":%d,\"sheets\":",
@@ -760,8 +745,8 @@ dlg:button {
                     packetsFmt = string.format(table.concat({
                         "\"fileName\":\"%s\"",
                         "\"border\":%d",
+                        "\"cellSize\":{\"x\":%d,\"y\":%d}",
                         "\"padding\":%d",
-                        "\"cell\":{\"x\":%d,\"y\":%d}",
                         "\"sheet\":" }, ','),
                         fileTitle,
                         border, padding,
@@ -770,19 +755,19 @@ dlg:button {
 
                 batchFmt = table.concat({
                     "{\"fileName\":\"%s\"",
-                    "\"cell\":{\"x\":%d,\"y\":%d}",
+                    "\"cellSize\":{\"x\":%d,\"y\":%d}",
                     "\"frames\":[%s]}"
                 }, ',')
 
                 frameIndvFmt = table.concat({
                     "{\"duration\":%d",
                     "\"number\":%d",
-                    "\"position\":{\"x\":%d,\"y\":%d}",
+                    "\"posOrig\":{\"x\":%d,\"y\":%d}",
+                    "\"posSheet\":{\"x\":%d,\"y\":%d}",
                     "\"size\":{\"x\":%d,\"y\":%d}}"
                 }, ',')
 
             else
-                -- packetsFmt = "\"frames\":[%s]"
                 packetsFmt = string.format(
                     "\"padding\":%d,\"frames\":", padding) .. "[%s]"
 
@@ -800,6 +785,7 @@ dlg:button {
                 "{\"fileDir\":\"%s\"",
                 "\"fileExt\":\"%s\"",
                 spriteUserData,
+                "\"scale\":{\"x\":%d,\"y\":%d}",
                 packetsFmt,
                 "\"tags\":[%s]}"
             }, ',')
@@ -847,8 +833,6 @@ dlg:button {
             end
 
             if useSheet then
-                -- TODO: Include info on where to find image
-                -- within sheet.
                 local packetStrArr = {}
 
                 if batchSheets then
@@ -871,6 +855,7 @@ dlg:button {
                                 math.tointeger(packet2.duration * 1000),
                                 packet2.number - 1,
                                 packet2.x, packet2.y,
+                                packet2.xSheet, packet2.ySheet,
                                 image.width, image.height)
                             innerStrArr[j] = innerStr
                         end
@@ -893,6 +878,7 @@ dlg:button {
                             math.tointeger(packet.duration * 1000),
                             packet.number - 1,
                             packet.x, packet.y,
+                            packet.xSheet, packet.ySheet,
                             image.width, image.height)
                         packetStrArr[i] = packetStr
                     end
@@ -901,8 +887,7 @@ dlg:button {
                 end
 
             else
-                -- TODO: Only in this case is xdelta, ydelta
-                -- from image trimming relevant.
+
                 local packetStrArr = {}
                 for k = 1, #packetsUnbatched, 1 do
                     local packet = packetsUnbatched[k]
@@ -923,6 +908,7 @@ dlg:button {
             local jsonString = string.format(
                 jsonStrFmt,
                 filePath, fileExt,
+                wScale, hScale,
                 packetsStr,
                 tagsStr)
 

@@ -52,7 +52,7 @@ function Quadtree:__tostring()
 end
 
 ---Counts the number of leaves held by this node.
----Returns 1 if the node itself is a leaf.
+---Returns 1 if the node is itself a leaf.
 ---@param q table quadtreee
 ---@return number
 function Quadtree.countLeaves(q)

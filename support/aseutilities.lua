@@ -1450,7 +1450,7 @@ end
 ---next power of 2 in dimension. The nonUniform
 ---flag specifies whether the result can have
 ---unequal width and height, e.g., 64x32. Returns
----the image by reference if it's size is already
+---the image by reference if its size is already
 ---a power of 2.
 ---@param img userdata image
 ---@param colorMode number color mode
@@ -1563,11 +1563,10 @@ function AseUtilities.getSelection(sprite)
         return Selection(sprite.bounds)
     else
         -- This precaution must be taken because
-        -- a transform cage can be dragged off
-        -- canvas, causing Aseprite to crash.
-        -- Problem is that the square bounds is not
-        -- necessarily the same as the selection, e.g.,
-        -- if it's created with magic wand or circle.
+        -- a transform cage can be dragged off canvas
+        -- causing Aseprite to crash. The square bounds
+        -- is not the same as the selection, e.g., if
+        -- it's created with magic wand or circle.
         return Selection(
             select.bounds:intersect(sprite.bounds))
     end
@@ -1594,10 +1593,10 @@ function AseUtilities.grayHexes(count)
     return result
 end
 
----Converts a hexadecimal integer to an Aseprite
----Color object. Does not use the Color rgbaPixel
----constructor for this purpose, as the color mode
----dictates how the integer is interpreted.
+---Converts a 32 bit ABGR hexadecimal integer
+---to an Aseprite Color object. Does not use
+---the Color rgbaPixel constructor, as the color
+---mode dictates how the integer is interpreted.
 ---@param hex number hexadecimal color
 ---@return userdata
 function AseUtilities.hexToAseColor(hex)

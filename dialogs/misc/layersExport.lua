@@ -56,26 +56,13 @@ end
 
 local function blendModeToStr(bm)
     -- The blend mode for group layers is nil.
-    if bm == BlendMode.NORMAL then return "NORMAL"
-    elseif bm == BlendMode.MULTIPLY then return "MULTIPLY"
-    elseif bm == BlendMode.SCREEN then return "SCREEN"
-    elseif bm == BlendMode.OVERLAY then return "OVERLAY"
-    elseif bm == BlendMode.DARKEN then return "DARKEN"
-    elseif bm == BlendMode.LIGHTEN then return "LIGHTEN"
-    elseif bm == BlendMode.COLOR_DODGE then return "COLOR_DODGE"
-    elseif bm == BlendMode.COLOR_BURN then return "COLOR_BURN"
-    elseif bm == BlendMode.HARD_LIGHT then return "HARD_LIGHT"
-    elseif bm == BlendMode.SOFT_LIGHT then return "SOFT_LIGHT"
-    elseif bm == BlendMode.DIFFERENCE then return "DIFFERENCE"
-    elseif bm == BlendMode.EXCLUSION then return "EXCLUSION"
-    elseif bm == BlendMode.HSL_HUE then return "HSL_HUE"
-    elseif bm == BlendMode.HSL_SATURATION then return "HSL_SATURATION"
-    elseif bm == BlendMode.HSL_COLOR then return "HSL_COLOR"
-    elseif bm == BlendMode.HSL_LUMINOSITY then return "HSL_LUMINOSITY"
-    elseif bm == BlendMode.ADDITION then return "ADDITION"
-    elseif bm == BlendMode.SUBTRACT then return "SUBTRACT"
-    elseif bm == BlendMode.DIVIDE then return "DIVIDE"
-    else return "NORMAL" end
+    if bm then
+        for k, v in pairs(BlendMode) do
+            if bm == v then return k end
+        end
+    else
+        return "NORMAL"
+    end
 end
 
 local function getStackIndices(layer, sprite, arr)
@@ -564,9 +551,9 @@ dlg:button {
                         specComp.colorSpace = colorSpace
                         local imgComp = Image(specComp)
 
-                        -- TODO: Refactor to while loop.
                         local lenPackets = #childPackets
-                        for k = 1, lenPackets, 1 do
+                        local k = 0
+                        while k < lenPackets do k = k + 1
                             local packet = childPackets[k]
                             local alphaCel = packet.alphaCel
                             local alphaLayer = packet.alphaLayer
@@ -724,12 +711,14 @@ dlg:button {
 
             local lenJsonEntries = #jsonEntries
             local layerStrArr = {}
-            for i = 1, lenJsonEntries, 1 do
+            local i = 0
+            while i < lenJsonEntries do i = i + 1
                 local jsonLayer = jsonEntries[i]
                 local jsonFrames = jsonLayer.jsonFrames
                 local lenJsonFrames = #jsonFrames
                 local celStrArr = {}
-                for j = 1, lenJsonFrames do
+                local j = 0
+                while j < lenJsonFrames do j = j + 1
                     local jsonFrame = jsonFrames[j]
 
                     -- Some data needs validation / transformation.
@@ -769,8 +758,9 @@ dlg:button {
                 -- Use JSON indexing conventions, start at zero.
                 local layerStackIndices = jsonLayer.layerStackIndices
                 local stackIdcsLen = #layerStackIndices
-                for j = 1, stackIdcsLen, 1 do
-                    layerStackIndices[j] = layerStackIndices[j] - 1
+                local m = 0
+                while m < stackIdcsLen do m = m + 1
+                    layerStackIndices[m] = layerStackIndices[m] - 1
                 end
                 local stackIdcsStr = concat(layerStackIndices, ",")
 

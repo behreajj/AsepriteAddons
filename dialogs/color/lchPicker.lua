@@ -14,8 +14,6 @@ local harmonies = {
 }
 
 local defaults = {
-    -- TODO: Set Selection button?
-    -- See transformCel script.
     base = Color(255, 0, 0, 255),
     hexCode = "FF0000",
     lightness = 53,
@@ -228,7 +226,7 @@ end
 
 local function setFromAse(dialog, aseClr)
     local clr = AseUtilities.aseColorToClr(aseClr)
-    local lch = Clr.sRgbaToLch(clr)
+    local lch = Clr.sRgbaToLch(clr, 0.007072)
     setLch(dialog, lch, clr)
     dialog:modify {
         id = "clr",
@@ -252,14 +250,18 @@ local function setFromSelect(dialog, sprite, frame)
     local xSel = selBounds.x
     local ySel = selBounds.y
 
-    local colorMode = sprite.colorMode
+    local sprSpec = sprite.spec
+    local colorMode = sprSpec.colorMode
+    local selSpec = ImageSpec {
+        width = selBounds.width,
+        height = selBounds.height,
+        colorMode = colorMode,
+        transparentColor = sprSpec.transparentColor }
+    selSpec.colorSpace = sprSpec.colorSpace
+    local flatImage = Image(selSpec)
 
     -- This will ignore a reference image,
     -- meaning you can't sample it for color.
-    local flatImage = Image(
-        selBounds.width,
-        selBounds.height,
-        colorMode)
     flatImage:drawSprite(
         sprite, frame, Point(-xSel, -ySel))
     local px = flatImage:pixels()
@@ -275,53 +277,42 @@ local function setFromSelect(dialog, sprite, frame)
     end
     local palette = palettes[actFrIdx]
 
+    -- The key is the color in hex; the value is a
+    -- number of pixels with that color in the
+    -- selection. This tally is for the average.
     local hexDict = {}
-
     local eval = nil
     if colorMode == ColorMode.RGB then
-        eval = function(hex, hd)
-            if (hex & 0xff000000) ~= 0 then
-                local query = hd[hex]
-                if query then
-                    hd[hex] = query + 1
-                else
-                    hd[hex] = 1
-                end
+        eval = function(h, d)
+            if (h & 0xff000000) ~= 0 then
+                local q = d[h]
+                if q then d[h] = q + 1 else d[h] = 1 end
             end
         end
     elseif colorMode == ColorMode.GRAY then
-        eval = function(gray, hd)
+        eval = function(gray, d)
             local a = (gray >> 0x08) & 0xff
             if a > 0 then
                 local v = gray & 0xff
-                local rgb = a << 0x18 | v << 0x10 | v << 0x08 | v
-                local query = hd[rgb]
-                if query then
-                    hd[rgb] = query + 1
-                else
-                    hd[rgb] = 1
-                end
+                local h = a << 0x18 | v << 0x10 | v << 0x08 | v
+                local q = d[h]
+                if q then d[h] = q + 1 else d[h] = 1 end
             end
         end
     elseif colorMode == ColorMode.INDEXED then
-        eval = function(idx, hd, pal)
+        eval = function(idx, d, pal)
             if idx > -1 and idx < #pal then
                 local aseColor = pal:getColor(idx)
                 local a = aseColor.alpha
                 if a > 0 then
-                    local rgb = aseColor.rgbaPixel
-                    local query = hd[rgb]
-                    if query then
-                        hd[rgb] = query + 1
-                    else
-                        hd[rgb] = 1
-                    end
+                    local h = aseColor.rgbaPixel
+                    local q = d[h]
+                    if q then d[h] = q + 1 else d[h] = 1 end
                 end
             end
         end
     else
-        -- Tile maps have a color mode of 4 in
-        -- 1.3 beta.
+        -- Tile maps have a color mode of 4 in 1.3 beta.
         return
     end
 
@@ -349,12 +340,12 @@ local function setFromSelect(dialog, sprite, frame)
         count = count + v
     end
 
-    if count > 0 then
+    if alphaSum > 0 and count > 0 then
         local countInv = 1.0 / count
+        local alphaAvg = alphaSum * countInv
         local lAvg = lSum * countInv
         local aAvg = aSum * countInv
         local bAvg = bSum * countInv
-        local alphaAvg = alphaSum * countInv
         local lch = Clr.labToLch(lAvg, aAvg, bAvg, alphaAvg, 0.007072)
         local clr = Clr.labTosRgba(lAvg, aAvg, bAvg, alphaAvg)
         setLch(dialog, lch, clr)
@@ -364,6 +355,7 @@ local function setFromSelect(dialog, sprite, frame)
         }
         updateHexCode(dialog, { clr })
     end
+    app.refresh()
 end
 
 local function setFromHexStr(dialog)
@@ -436,11 +428,9 @@ dlg:button {
     end
 }
 
-dlg:newrow { always = false }
-
 dlg:button {
     id = "selGet",
-    text = "&SELECTION",
+    text = "&SELECT",
     focus = false,
     onclick = function()
         setFromSelect(dlg,
@@ -557,13 +547,73 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         if #args.clr > 0 then
-            -- Bug where assigning to app.bgColor
-            -- leads to unlocked palette colors
-            -- being assigned instead.
+            -- Bug where assigning to app.bgColor leads
+            -- to unlocked palette colors being assigned.
             app.command.SwitchColors()
             assignToFore(args.clr[1])
             app.command.SwitchColors()
         end
+    end
+}
+
+dlg:button {
+    id = "selSet",
+    text = "S&ELECT",
+    focus = false,
+    onclick = function()
+        --Early returns.
+        local args = dlg.data
+        local clrs = args.clr
+        if #clrs < 1 then return end
+        local clr = clrs[1]
+        if clr.alpha < 1 then return end
+
+        local sprite = app.activeSprite
+        if not sprite then return end
+        local sel = sprite.selection
+        if (not sel) or sel.isEmpty then return end
+
+        local sprSpec = sprite.spec
+        local colorMode = sprSpec.colorMode
+        local hex = AseUtilities.aseColorToHex(clr, colorMode)
+
+        local selBounds = sel.bounds
+        local xSel = selBounds.x
+        local ySel = selBounds.y
+
+        local selSpec = ImageSpec {
+            width = selBounds.width,
+            height = selBounds.height,
+            colorMode = colorMode,
+            transparentColor = sprSpec.transparentColor }
+        selSpec.colorSpace = sprSpec.colorSpace
+        local selImage = Image(selSpec)
+        local px = selImage:pixels()
+
+        for elm in px do
+            local x = elm.x + xSel
+            local y = elm.y + ySel
+            if sel:contains(x, y) then elm(hex) end
+        end
+
+        app.transaction(function()
+            -- This is an extra precaution because creating
+            -- a new layer wipes out a selection.
+            local frameIdcs = AseUtilities.parseRange(app.range)
+            local lenFrames = #frameIdcs
+            local sprFrames = sprite.frames
+            local layer = sprite:newLayer()
+            layer.name = "Selection"
+            local i = 0
+            while i < lenFrames do i = i + 1
+                local frameIdx = frameIdcs[i]
+                local frameObj = sprFrames[frameIdx]
+                sprite:newCel(
+                    layer, frameObj,
+                    selImage, sel.origin)
+            end
+        end)
+        app.refresh()
     end
 }
 

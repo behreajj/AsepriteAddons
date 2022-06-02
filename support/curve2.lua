@@ -314,8 +314,6 @@ function Curve2.eval(curve, step)
 
     end
 
-    -- TODO: Return a tuple (separate by comma),
-    -- with bezierTangent being second value?
     local tsni = tScaled - i
     return Knot2.bezierPoint(a, b, tsni)
 end
