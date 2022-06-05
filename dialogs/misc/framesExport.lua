@@ -3,6 +3,11 @@ dofile("../../support/aseutilities.lua")
 local frameTargetOptions = { "ALL", "RANGE", "TAGS" }
 
 local defaults = {
+    -- TODO: API has an img:isEqual method, and an
+    -- insort method could be created, so could this
+    -- support unique images? Problem: each unique
+    -- image must now store references to multiple
+    -- frame indices & durations and cel positions.
     frameTarget = "ALL",
     rangeStr = "",
     strExample = "1,4,5-10",
@@ -34,8 +39,6 @@ local function indexToPacket(
     padding, wScale, hScale)
     local trimmed, xd, yd, duration = flattenFrameToImage(
         sprite, frIdx, alphaIdx)
-    local wLocal = trimmed.width
-    local hLocal = trimmed.height
 
     local packet = {
         number = frIdx,
@@ -46,12 +49,12 @@ local function indexToPacket(
 
     local wMaxNew = wMax
     local hMaxNew = hMax
+    local wLocal = trimmed.width
+    local hLocal = trimmed.height
     if wLocal > wMax then wMaxNew = wLocal end
     if hLocal > hMax then hMaxNew = hLocal end
 
-    return packet,
-        wMaxNew,
-        hMaxNew
+    return packet, wMaxNew, hMaxNew
 end
 
 local function allIndicesToPackets(
@@ -62,9 +65,10 @@ local function allIndicesToPackets(
     local packets = {}
     local lenFrameObjs = #sprite.frames
     local alphaIndex = sprite.transparentColor
-    for i = 1, lenFrameObjs, 1 do
-        packets[i], wMax, hMax = indexToPacket(
-            sprite, i, alphaIndex,
+    local h = 0
+    while h < lenFrameObjs do h = h + 1
+        packets[h], wMax, hMax = indexToPacket(
+            sprite, h, alphaIndex,
             wMax, hMax, padding, wScale, hScale)
     end
 
@@ -85,9 +89,10 @@ local function idcsArr1ToPacket(
     local hMaxNext = hMaxPrev
     local packets = {}
     local alphaIndex = sprite.transparentColor
-    for k = 1, lenIdcsSet, 1 do
-        local frameIndex = idcsArr[k]
-        packets[k], wMaxNext, hMaxNext = indexToPacket(
+    local i = 0
+    while i < lenIdcsSet do i = i + 1
+        local frameIndex = idcsArr[i]
+        packets[i], wMaxNext, hMaxNext = indexToPacket(
             sprite, frameIndex, alphaIndex,
             wMaxNext, hMaxNext,
             padding, wScale, hScale)
@@ -105,16 +110,17 @@ local function idcsArr2ToPackets(
     padding, wScale, hScale)
     local lenIdcsBatches = #idcsBatches
     local packetsBatched = {}
-    for k = 1, lenIdcsBatches, 1 do
-        local idcsBatch = idcsBatches[k]
+
+    local j = 0
+    while j < lenIdcsBatches do j = j + 1
+        local idcsBatch = idcsBatches[j]
         local wMaxBatch = -2147483648
         local hMaxBatch = -2147483648
         local packetBatch = {}
         packetBatch, wMaxBatch, hMaxBatch = idcsArr1ToPacket(
             sprite, idcsBatch, wMaxBatch, hMaxBatch,
             padding, wScale, hScale)
-
-        packetsBatched[k] = {
+        packetsBatched[j] = {
             wMax = wMaxBatch,
             hMax = hMaxBatch,
             batch = packetBatch }
@@ -131,7 +137,8 @@ local function scaleAndPadPacketImages(
     local pad2 = padding + padding
     local padOffset = Point(padding, padding)
     local lenPackets = #packets
-    for k = 1, lenPackets, 1 do
+    local k = 0
+    while k < lenPackets do k = k + 1
         local packet = packets[k]
         local image = packet.image
 
@@ -196,21 +203,18 @@ local function saveSheet(
 
     local k = 0
     while k < lenPackets do
-        local i = k // columns
-        local j = k % columns
+        local x = (k % columns) * wMax
+        local y = (k // columns) * hMax
+
         k = k + 1
         local packet = packets[k]
         local image = packet.image
+
         local wh = image.width // 2
         -- local hh = image.height // 2
-
-        local x = j * wMax
-        local y = i * hMax
-
-        -- x center, y botttom.
         x = x + xCellCenter - wh
-        y = y + hMax - image.height
         -- y = y + yCellCenter - hh
+        y = y + hMax - image.height
 
         compImg:drawImage(image, Point(x, y))
         packets[k].xSheet = x + border + padding
@@ -721,9 +725,9 @@ dlg:button {
             local missingUserData = "null"
             local spriteUserData = "\"data\":" .. missingUserData
             local version = app.version
-            local isBeta = version.major >= 1
-                and version.minor >= 3
-            if isBeta then
+            local is13 = (version.major >= 1)
+                and (version.minor >= 3)
+            if is13 then
                 local rawUserData = activeSprite.data
                 if rawUserData and #rawUserData > 0 then
                     spriteUserData = string.format(
@@ -739,17 +743,15 @@ dlg:button {
             if useSheet then
                 if batchSheets then
                     packetsFmt = string.format(
-                        "\"border\":%d,\"padding\":%d,\"sheets\":",
-                        border, padding) .. "[%s]"
+                        "\"border\":%d,\"sheets\":",
+                        border) .. "[%s]"
                 else
                     packetsFmt = string.format(table.concat({
                         "\"fileName\":\"%s\"",
                         "\"border\":%d",
                         "\"cellSize\":{\"x\":%d,\"y\":%d}",
-                        "\"padding\":%d",
                         "\"sheet\":" }, ','),
-                        fileTitle,
-                        border, padding,
+                        fileTitle, border,
                         wMaxUnbatch, hMaxUnbatch) .. "[%s]"
                 end
 
@@ -766,10 +768,8 @@ dlg:button {
                     "\"posSheet\":{\"x\":%d,\"y\":%d}",
                     "\"size\":{\"x\":%d,\"y\":%d}}"
                 }, ',')
-
             else
-                packetsFmt = string.format(
-                    "\"padding\":%d,\"frames\":", padding) .. "[%s]"
+                packetsFmt = "\"frames\":[%s]"
 
                 packetStrFmt = table.concat({
                     "{\"fileName\":\"%s\"",
@@ -778,13 +778,13 @@ dlg:button {
                     "\"position\":{\"x\":%d,\"y\":%d}",
                     "\"size\":{\"x\":%d,\"y\":%d}}"
                 }, ',')
-
             end
 
             local jsonStrFmt = table.concat({
                 "{\"fileDir\":\"%s\"",
                 "\"fileExt\":\"%s\"",
                 spriteUserData,
+                "\"padding\":%d",
                 "\"scale\":{\"x\":%d,\"y\":%d}",
                 packetsFmt,
                 "\"tags\":[%s]}"
@@ -815,7 +815,7 @@ dlg:button {
                     end
 
                     local tagUserData = missingUserData
-                    if isBeta then
+                    if is13 then
                         local rawUserData = tag.data
                         if rawUserData and #rawUserData > 0 then
                             tagUserData = rawUserData
@@ -908,9 +908,8 @@ dlg:button {
             local jsonString = string.format(
                 jsonStrFmt,
                 filePath, fileExt,
-                wScale, hScale,
-                packetsStr,
-                tagsStr)
+                padding, wScale, hScale,
+                packetsStr, tagsStr)
 
             local jsonFilepath = filePrefix
             if #fileTitle < 1 then

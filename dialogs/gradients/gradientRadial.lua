@@ -1,4 +1,3 @@
-dofile("../../support/aseutilities.lua")
 dofile("../../support/gradientutilities.lua")
 
 local metrics = {
@@ -15,15 +14,6 @@ local defaults = {
     maxRad = 100,
     distMetric = "EUCLIDEAN",
     minkExp = 2.0,
-    quantization = 0,
-    tweenOps = "PAIR",
-    startIndex = 0,
-    count = 256,
-    aColor = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
-    bColor = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
-    clrSpacePreset = "S_RGB",
-    easingFuncRGB = "LINEAR",
-    easingFuncHue = "NEAR",
     pullFocus = false
 }
 
@@ -74,6 +64,8 @@ local function distFuncFromPreset(distMetric, me)
 end
 
 local dlg = Dialog { title = "Radial Gradient" }
+
+GradientUtilities.dialogWidgets(dlg)
 
 dlg:slider {
     id = "xOrigin",
@@ -134,217 +126,47 @@ dlg:number {
 
 dlg:newrow { always = false }
 
-dlg:slider {
-    id = "quantization",
-    label = "Quantize:",
-    min = 0,
-    max = 32,
-    value = defaults.quantization
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "tweenOps",
-    label = "Tween:",
-    option = defaults.tweenOps,
-    options = GradientUtilities.TWEEN_PRESETS,
-    onchange = function()
-        local isPair = dlg.data.tweenOps == "PAIR"
-        local isPalette = dlg.data.tweenOps == "PALETTE"
-        local md = dlg.data.clrSpacePreset
-        dlg:modify {
-            id = "aColor",
-            visible = isPair
-        }
-
-        dlg:modify {
-            id = "bColor",
-            visible = isPair
-        }
-
-        dlg:modify {
-            id = "startIndex",
-            visible = isPalette
-        }
-
-        dlg:modify {
-            id = "count",
-            visible = isPalette
-        }
-
-        dlg:modify {
-            id = "easingFuncHue",
-            visible = md == "CIE_LCH"
-                or md == "HSL"
-                or md == "HSV"
-        }
-
-        dlg:modify {
-            id = "easingFuncRGB",
-            visible = md == "S_RGB"
-                or md == "LINEAR_RGB"
-        }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "startIndex",
-    label = "Start:",
-    min = 0,
-    max = 255,
-    value = defaults.startIndex,
-    visible = defaults.tweenOps == "PALETTE"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "count",
-    label = "Count:",
-    min = 3,
-    max = 256,
-    value = defaults.count,
-    visible = defaults.tweenOps == "PALETTE"
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "aColor",
-    label = "Colors:",
-    color = defaults.aColor,
-    visible = defaults.tweenOps == "PAIR"
-}
-
-dlg:color {
-    id = "bColor",
-    color = defaults.bColor,
-    visible = defaults.tweenOps == "PAIR"
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "clrSpacePreset",
-    label = "Color Space:",
-    option = defaults.clrSpacePreset,
-    options = GradientUtilities.CLR_SPC_PRESETS,
-    visible = defaults.tweenOps == "PAIR",
-    onchange = function()
-        local md = dlg.data.clrSpacePreset
-        dlg:modify {
-            id = "easingFuncHue",
-            visible = md == "CIE_LCH"
-                or md == "HSL"
-                or md == "HSV"
-        }
-        dlg:modify {
-            id = "easingFuncRGB",
-            visible = md == "S_RGB" or md == "LINEAR_RGB"
-        }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "easingFuncHue",
-    label = "Easing:",
-    option = defaults.easingFuncHue,
-    options = GradientUtilities.HUE_EASING_PRESETS,
-    visible = defaults.clrSpacePreset == "CIE_LCH"
-        or defaults.clrSpacePreset == "HSL"
-        or defaults.clrSpacePreset == "HSV"
-}
-
-dlg:combobox {
-    id = "easingFuncRGB",
-    label = "Easing:",
-    option = defaults.easingFuncRGB,
-    options = GradientUtilities.RGB_EASING_PRESETS,
-    visible = defaults.clrSpacePreset == "S_RGB"
-        or defaults.clrSpacePreset == "LINEAR_RGB"
-}
-
-dlg:newrow { always = false }
-
 dlg:button {
     id = "confirm",
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
+        -- Early returns.
+        local activeSprite = app.activeSprite
+        if not activeSprite then
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite." }
+            return
+        end
 
-        -- These need to be cached prior to the potential
-        -- creation of a new sprite, otherwise color chosen
-        -- by palette index will be incorrect.
-        local aColorAse = args.aColor
-        local bColorAse = args.bColor
-        local aClr = AseUtilities.aseColorToClr(aColorAse)
-        local bClr = AseUtilities.aseColorToClr(bColorAse)
-
-        local clrSpacePreset = args.clrSpacePreset
-        local sprite = AseUtilities.initCanvas(
-            64, 64, "Gradient.Radial." .. clrSpacePreset)
-
-        if sprite.colorMode ~= ColorMode.RGB then
+        local activeSpec = activeSprite.spec
+        local colorMode = activeSpec.colorMode
+        if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
                 text = "Only RGB color mode is supported." }
             return
         end
 
-        local min = math.min
+        -- Cache methods.
         local max = math.max
+        local min = math.min
         local toHex = Clr.toHex
         local quantize = Utilities.quantizeUnsigned
+        local cgeval = ClrGradient.eval
 
-        local layer = sprite.layers[#sprite.layers]
-        local frame = app.activeFrame or sprite.frames[1]
+        -- Unpack arguments.
+        local args = dlg.data
+        local clrSpacePreset = args.clrSpacePreset
+        local aseColors = args.shades
+        local levels = args.quantize
 
-        --Easing mode.
-        local tweenOps = args.tweenOps
-        local rgbPreset = args.easingFuncRGB
-        local huePreset = args.easingFuncHue
-
-        local easeFuncFinal = nil
-        if tweenOps == "PALETTE" then
-            local startIndex = args.startIndex
-            local count = args.count
-
-            local palettes = sprite.palettes
-            local lenPalettes = #palettes
-            local actFrIdx = 1
-            if app.activeFrame then
-                actFrIdx = app.activeFrame.frameNumber
-                if actFrIdx > lenPalettes then actFrIdx = 1 end
-            end
-            local pal = palettes[actFrIdx]
-
-            local clrArr = AseUtilities.asePaletteToClrArr(
-                pal, startIndex, count)
-
-            local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                clrSpacePreset,
-                rgbPreset,
-                huePreset)
-
-            easeFuncFinal = function(t)
-                return Clr.mixArr(clrArr, t, pairFunc)
-            end
-        else
-            local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                clrSpacePreset,
-                rgbPreset,
-                huePreset)
-
-            easeFuncFinal = function(t)
-                return pairFunc(aClr, bClr, t)
-            end
-        end
+        local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
+        local facAdjust = GradientUtilities.easingFuncFromPreset(
+            args.easPreset)
+        local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
+            clrSpacePreset, args.huePreset)
 
         -- Choose distance metric based on preset.
         local distMetric = args.distMetric
@@ -366,49 +188,57 @@ dlg:button {
         local diffRad = maxRad - minRad
         local linDenom = 1.0 / diffRad
 
-        -- local wrapPreset = args.extension
-        -- local wrapFunc = wrapFuncFromPreset(wrapPreset, minRad, maxRad)
-        local levels = args.quantization
-
         -- Shift origin from [0, 100] to [0.0, 1.0].
         local xOrigin = 0.01 * args.xOrigin
         local yOrigin = 0.01 * args.yOrigin
 
-        local wn1 = sprite.width - 1.0
-        local hn1 = sprite.height - 1.0
-
         -- Convert from normalized to pixel size.
+        local wn1 = max(1.0, activeSprite.width - 1.0)
+        local hn1 = max(1.0, activeSprite.height - 1.0)
         local xOrigPx = xOrigin * wn1
         local yOrigPx = yOrigin * hn1
 
         -- Need a scalar to normalize distance to [0.0, 1.0]
         local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, wn1, hn1))
 
-        local selection = AseUtilities.getSelection(sprite)
+        local selection = AseUtilities.getSelection(activeSprite)
         local selBounds = selection.bounds
-        local xCel = selBounds.x
-        local yCel = selBounds.y
-        local image = Image(selBounds.width, selBounds.height)
-        local iterator = image:pixels()
-        for elm in iterator do
-            local x = elm.x + xCel
-            local y = elm.y + yCel
-            -- if selection:contains(x, y) then
+        local xSel = selBounds.x
+        local ySel = selBounds.y
 
-            -- Take care not to clamp fac until after basic
-            -- calculations are done.
+        local grdSpec = ImageSpec {
+            width = selBounds.width,
+            height = selBounds.height,
+            colorMode = activeSpec.colorMode,
+            transparentColor = activeSpec.transparentColor }
+        grdSpec.colorSpace = activeSpec.colorSpace
+
+        local grdImg = Image(grdSpec)
+        local grdItr = grdImg:pixels()
+        for elm in grdItr do
+            local x = elm.x + xSel
+            local y = elm.y + ySel
             local dst = distFunc(x, y, xOrigPx, yOrigPx)
             local fac = dst * normDist
             fac = (fac - minRad) * linDenom
-            -- max could be taken care of by quantize unsigned.
-            fac = max(0.0, min(1.0, fac))
+            fac = min(max(fac, 0.0), 1.0)
+            fac = facAdjust(fac)
             fac = quantize(fac, levels)
-
-            elm(toHex(easeFuncFinal(fac)))
-            -- end
+            local clr = cgeval(gradient, fac, mixFunc)
+            elm(toHex(clr))
         end
 
-        sprite:newCel(layer, frame, image, Point(xCel, yCel))
+        app.transaction(function()
+            local grdLayer = activeSprite:newLayer()
+            grdLayer.name = "Gradient.Radial." .. clrSpacePreset
+            local activeFrame = app.activeFrame
+                or activeSprite.frames[1]
+            activeSprite:newCel(
+                grdLayer,
+                activeFrame,
+                grdImg,
+                selection.origin)
+        end)
         app.refresh()
     end
 }
@@ -416,6 +246,7 @@ dlg:button {
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
+    focus = false,
     onclick = function()
         dlg:close()
     end

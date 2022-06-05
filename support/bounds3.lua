@@ -12,8 +12,8 @@ setmetatable(Bounds3, {
 ---(AABB) for a 3D volume, represented by a
 ---minimum and maximum coordinate.
 ---Defaults to passing vectors by value.
----@param mn table lower bound
----@param mx table upper bound
+---@param mn table|number lower bound
+---@param mx table|number upper bound
 ---@return table
 function Bounds3.new(mn, mx)
     return Bounds3.newByVal(mn, mx)
@@ -37,22 +37,30 @@ end
 ---(AABB) for a 3D volume, represented by a
 ---minimum and maximum coordinate. Vectors
 ---are copied by value.
----@param mn table lower bound
----@param mx table upper bound
+---@param mn table|number lower bound
+---@param mx table|number upper bound
 ---@return table
 function Bounds3.newByVal(mn, mx)
     local inst = setmetatable({}, Bounds3)
 
     inst.mn = nil
     if mn then
-        inst.mn = Vec3.new(mn.x, mn.y, mn.z)
+        if type(mn) == "number" then
+            inst.mn = Vec3.new(mn, mn, mn)
+        else
+            inst.mn = Vec3.new(mn.x, mn.y, mn.z)
+        end
     else
         inst.mn = Vec3.new(-0.5, -0.5, -0.5)
     end
 
     inst.mx = nil
     if mx then
-        inst.mx = Vec3.new(mx.x, mx.y, mx.z)
+        if type(mx) == "number" then
+            inst.mx = Vec3.new(mx, mx, mx)
+        else
+            inst.mx = Vec3.new(mx.x, mx.y, mx.z)
+        end
     else
         inst.mx = Vec3.new(0.5, 0.5, 0.5)
     end

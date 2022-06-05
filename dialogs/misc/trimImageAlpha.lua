@@ -43,10 +43,8 @@ dlg:button {
             -- Tile map layers should not be trimmed, so check
             -- if Aseprite is newer than 1.3.
             local version = app.version
-            local checkForTilemaps = false
-            if version.major >= 1 and version.minor >= 3 then
-                checkForTilemaps = true
-            end
+            local checkForTilemaps = (version.major >= 1)
+                and (version.minor >= 3)
 
             local alphaIndex = activeSprite.transparentColor
 

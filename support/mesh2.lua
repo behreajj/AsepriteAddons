@@ -82,8 +82,7 @@ function Mesh2:insetFace(faceIndex, fac)
             vertCurr,
             vertNext,
             1 + vsOldLen + k,
-            1 + vSubdivIdx
-        }
+            1 + vSubdivIdx }
 
         table.insert(self.fs, fNew)
         table.insert(centerFace, 1 + vSubdivIdx)
@@ -492,7 +491,8 @@ function Mesh2.gridDimetric(cells)
 
     local vs = mesh.vs
     local vsLen = #vs
-    for i = 1, vsLen, 1 do
+    local i = 0
+    while i < vsLen do i = i + 1
         local vSrc = vs[i]
         vs[i] = Vec2.new(
             0.5 * vSrc.x - 0.5 * vSrc.y,
@@ -511,10 +511,10 @@ function Mesh2.gridHex(rings)
     local vRings = 1
     if rings > 1 then vRings = rings end
     local vrad = 0.5
-    local extent = vrad * 1.7320508075688772
+    local extent = vrad * 1.7320508075689
     local halfExt = extent * 0.5
     local rad15 = vrad * 1.5
-    local radrt32 = vrad * 0.8660254037844386
+    local radrt32 = vrad * 0.86602540378444
     local halfRad = vrad * 0.5
 
     local iMax = vRings - 1
@@ -567,19 +567,21 @@ end
 function Mesh2.polygon(sectors)
     local vSect = 3
     if sectors > 3 then vSect = sectors end
-    local vrad = 0.5
+    local vRad = 0.5
     local toTheta = 6.2831853071796 / vSect
     local vs = {}
     local f = {}
 
     local cos = math.cos
     local sin = math.sin
-    for i = 0, vSect - 1, 1 do
+    local i = 0
+    while i < vSect do
         local theta = i * toTheta
-        vs[1 + i] = Vec2.new(
-            vrad * cos(theta),
-            vrad * sin(theta))
-        f[1 + i] = 1 + i
+        i = i + 1
+        vs[i] = Vec2.new(
+            vRad * cos(theta),
+            vRad * sin(theta))
+        f[i] = i
     end
     local fs = { f }
 
@@ -688,23 +690,27 @@ function Mesh2.uniformData(source, target)
     local fsSrc = source.fs
     local vsSrc = source.vs
 
-    local k = 1
+    local i = 0
+    local k = 0
     local fsSrcLen = #fsSrc
-    for i = 1, fsSrcLen, 1 do
+    while i < fsSrcLen do
+        i = i + 1
         local fSrc = fsSrc[i]
         local fSrcLen = #fSrc
         local fTrg = {}
 
-        for j = 1, fSrcLen, 1 do
+        local j = 0
+        while j < fSrcLen do
+            j = j + 1
+            k = k + 1
             local vertSrc = fSrc[j]
             local vSrc = vsSrc[vertSrc]
             local vTrg = Vec2.new(vSrc.x, vSrc.y)
-            table.insert(vsTrg, vTrg)
-            table.insert(fTrg, k)
-            k = k + 1
+            vsTrg[k] = vTrg
+            fTrg[j] = k
         end
 
-        table.insert(fsTrg, fTrg)
+        fsTrg[i] = fTrg
     end
 
     trg.fs = fsTrg

@@ -124,7 +124,7 @@ dlg:color {
     color = defaults.foreTint,
     visible = defaults.useTint
         and (defaults.directions == "FORWARD"
-        or defaults.direcions == "BOTH")
+            or defaults.direcions == "BOTH")
 }
 
 dlg:newrow { always = false }
@@ -136,7 +136,7 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
             return
@@ -153,9 +153,9 @@ dlg:button {
 
         local srcLayer = app.activeLayer
         if not srcLayer then
-            app.alert{
+            app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active layer." }
             return
         end
 
@@ -244,7 +244,8 @@ dlg:button {
 
         local framesLen = #frames
         app.transaction(function()
-            for i = 1, framesLen, 1 do
+            local i = 0
+            while i < framesLen do i = i + 1
                 local srcFrame = frames[i]
                 local srcFrameIdx = srcFrame.frameNumber
 
@@ -273,9 +274,10 @@ dlg:button {
 
                 local packets = {}
                 local packetIdx = 0
-                for j = 1, sampleCount, 1 do
-                    local frameIdx = startFrameIdx + (j - 1)
-                    -- TODO: Support looping?
+                local j = 0
+                while j < sampleCount do
+                    local frameIdx = startFrameIdx + j
+                    j = j + 1
                     if frameIdx >= 1 and frameIdx <= maxFrameCount then
                         local currCel = srcLayer:cel(frameIdx)
                         if currCel then
@@ -370,8 +372,9 @@ dlg:button {
                         end
                     end
 
-                    for j = 1, sampleCount, 1 do
-                        local packet = packets[j]
+                    local h = 0
+                    while h < sampleCount do h = h + 1
+                        local packet = packets[h]
                         if packet then
                             local frameIdxShd = packet.frameIdx
                             local relFrameIdx = srcFrameIdx - frameIdxShd
@@ -396,6 +399,7 @@ dlg:button {
                             local xOffset = packet.tlx - xMin
                             local yOffset = packet.tly - yMin
 
+                            -- TODO: Refactor to while loop, then test.
                             local shadowPixelLen = #shadowPixels
                             for k = 0, shadowPixelLen - 1, 1 do
                                 local shadowHex = shadowPixels[1 + k]

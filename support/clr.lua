@@ -392,9 +392,6 @@ function Clr.gridHsl(
     satMin, satMax,
     alpha)
 
-    local max = math.max
-    local min = math.min
-
     -- Default arguments.
     local aVal = alpha or 1.0
     local vsMax = satMax or 1.0
@@ -413,14 +410,14 @@ function Clr.gridHsl(
     if vLats < 3 then vLats = 3 end
     if vLayers < 1 then vLayers = 1 end
 
-    vsMax = min(1.0, max(0.000001, vsMax))
-    vsMin = min(1.0, max(0.000001, vsMin))
-    vsMax = max(vsMin, vsMax)
+    vsMax = math.min(1.0, math.max(0.000001, vsMax))
+    vsMin = math.min(1.0, math.max(0.000001, vsMin))
+    vsMax = math.max(vsMin, vsMax)
     local oneLayer = vLayers == 1
     if oneLayer then
         vsMin = vsMax
     else
-        vsMin = min(vsMin, vsMax)
+        vsMin = math.min(vsMin, vsMax)
     end
 
     local toPrc = 1.0
@@ -442,8 +439,7 @@ function Clr.gridHsl(
         local hue = (m % vLons) * toHue
 
         local prc = h * toPrc
-        local sat = (1.0 - prc) * vsMin
-            + prc * vsMax
+        local sat = (1.0 - prc) * vsMin + prc * vsMax
 
         -- Smooth step approximates sine wave.
         local lgt = ((m // vLons) + 1.0) * toLgt
@@ -909,31 +905,6 @@ end
 ---@return table
 function Clr.mix(a, b, t)
     return Clr.mixlRgba(a, b, t)
-end
-
----Mixes colors in an array by a step.
----@param arr table array
----@param t number step
----@param func function easing function
----@return table
-function Clr.mixArr(arr, t, func)
-    local u = t or 0.5
-    local lenArr = #arr
-    if u <= 0.0 or lenArr == 1 then
-        local src = arr[1]
-        return Clr.new(src.r, src.g, src.b, src.a)
-    end
-
-    if u >= 1.0 then
-        local src = arr[lenArr]
-        return Clr.new(src.r, src.g, src.b, src.a)
-    end
-
-    local uScaled = u * (lenArr - 1.0)
-    local i = math.tointeger(uScaled)
-    local v = uScaled - i
-    local f = func or Clr.mixlRgbaInternal
-    return f(arr[1 + i], arr[2 + i], v)
 end
 
 ---Mixes two colors in HSLA space by a step.

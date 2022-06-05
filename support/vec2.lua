@@ -517,17 +517,22 @@ function Vec2.headingUnsigned(a)
     return math.atan(a.y, a.x) % 6.2831853071796
 end
 
----Inserts a vector into an array so as to
+---Inserts a vector into a table so as to
 ---maintain sorted order. Biases toward the right
----insertion point.
+---insertion point. Returns true if the unique
+---vector was inserted; false if not.
 ---@param arr table vectors array
 ---@param elm table vector
 ---@param compare function comparator
----@return table
+---@return boolean
 function Vec2.insortRight(arr, elm, compare)
-    local idx = Vec2.bisectRight(arr, elm, compare)
-    table.insert(arr, idx, elm)
-    return arr
+    local i = Vec2.bisectRight(arr, elm, compare)
+    local dupe = arr[i - 1]
+    if dupe and Vec2.equals(dupe, elm) then
+        return false
+    end
+    table.insert(arr, i, elm)
+    return true
 end
 
 ---Limits a vector's magnitude to a scalar.

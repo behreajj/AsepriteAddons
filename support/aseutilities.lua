@@ -201,9 +201,7 @@ function AseUtilities.asePaletteLoad(
             text = {
                 "The palette could not be found.",
                 "Please check letter case (lower or upper).",
-                "A default palette will be used instead."
-            }
-        }
+                "A default palette will be used instead." } }
     end
 
     if palType == "FILE" then
@@ -211,11 +209,10 @@ function AseUtilities.asePaletteLoad(
             local exists = app.fs.isFile(filePath)
             if exists then
                 -- Loading an .aseprite file with multiple palettes
-                -- will register only the first palette.
+                -- will register only the first palette. Also may be
+                -- problems with color profiles being ignored.
                 local palFile = Palette { fromFile = filePath }
                 if palFile then
-                    -- Palettes loaded from a file could support an
-                    -- embedded color profile, but do not.
                     hexesProfile = AseUtilities.asePaletteToHexArr(
                         palFile, siVal, cntVal)
                 end
@@ -276,8 +273,7 @@ function AseUtilities.asePaletteLoad(
         local src = AseUtilities.DEFAULT_PAL_ARR
         local lenSrc = #src
         local i = 0
-        while i < lenSrc do
-            i = i + 1
+        while i < lenSrc do i = i + 1
             hexesProfile[i] = src[i]
         end
     end
@@ -287,8 +283,7 @@ function AseUtilities.asePaletteLoad(
         hexesSrgb = {}
         local lenProf = #hexesProfile
         local i = 0
-        while i < lenProf do
-            i = i + 1
+        while i < lenProf do i = i + 1
             hexesSrgb[i] = hexesProfile[i]
         end
     end
@@ -300,8 +295,7 @@ function AseUtilities.asePaletteLoad(
     if correctZeroAlpha then
         local lenHexes = #hexesProfile
         local i = 0
-        while i < lenHexes do
-            i = i + 1
+        while i < lenHexes do i = i + 1
             if (hexesProfile[i] & 0xff000000) == 0x0 then
                 hexesProfile[i] = 0x0
                 hexesSrgb[i] = 0x0
@@ -310,46 +304,6 @@ function AseUtilities.asePaletteLoad(
     end
 
     return hexesProfile, hexesSrgb
-end
-
----Converts an Aseprite palette to a table
----of Clrs. If the palette is nil returns a
----default table. Assumes palette is in sRGB.
----@param pal userdata Aseprite palette
----@param startIndex number start index
----@param count number sample count
----@return table
-function AseUtilities.asePaletteToClrArr(pal, startIndex, count)
-    if pal then
-        local lenPal = #pal
-
-        local si = startIndex or 0
-        si = math.min(math.max(si, 0), lenPal - 1)
-        local vc = count or 256
-        vc = math.min(math.max(vc, 2), lenPal - si)
-
-        local clrs = {}
-        local i = 0
-        local convert = AseUtilities.aseColorToClr
-        while i < vc do
-            local aseColor = convert(pal:getColor(si + i))
-            i = i + 1
-            clrs[i] = aseColor
-        end
-
-        -- This is intended for gradient work, so it
-        -- returns an array with a length greater than
-        -- one no matter what.
-        if #clrs == 1 then
-            local a = clrs[1].a
-            table.insert(clrs, 1, Clr.new(0.0, 0.0, 0.0, a))
-            clrs[3] = Clr.new(1.0, 1.0, 1.0, a)
-        end
-
-        return clrs
-    else
-        return { Clr.clearBlack(), Clr.white() }
-    end
 end
 
 ---Converts an Aseprite palette to a table of
@@ -438,7 +392,9 @@ end
 ---@param layer userdata layer
 function AseUtilities.bakeLayerOpacity(layer)
     if layer.isGroup then
-        app.alert("Layer opacity is not supported for group layers.")
+        app.alert {
+            title = "Error",
+            text = "Layer opacity is not supported for group layers." }
         return
     end
 
@@ -1136,8 +1092,8 @@ function AseUtilities.drawGlyph(
     local glDrop = glyph.drop
     local ypDrop = y + glDrop
 
-    -- TODO: Refactor to use while loop.
-    for i = 0, lenn1, 1 do
+    local i = 0
+    while i < lenn1 do i = i + 1
         local shift = lenn1 - i
         local mark = (glMat >> shift) & 1
         if mark ~= 0 then
@@ -1552,6 +1508,22 @@ function AseUtilities.flipImageVert(source)
     return target, 0, 1 - h
 end
 
+---For sprites with multiple palettes, tries to get
+---a palette from an Aseprite frame object. Defaults
+---to index 1 if the frame index exceeds the number
+---of palettes.
+---@param frameObj userdata Aseprite frame object
+---@param palettes table table of Aseprite palettes
+---@return userdata
+function AseUtilities.getPalette(frameObj, palettes)
+    -- TODO: Where else can this be used?
+    local idx = 1
+    if frameObj then idx = frameObj.frameNumber end
+    local lenPalettes = #palettes
+    if idx > lenPalettes then idx = 1 end
+    return palettes[idx]
+end
+
 ---Gets a selection copied by value from a sprite.
 ---If the selection is empty, returns the sprite's
 ---bounds instead, i.e., from (0, 0) to (w, h).
@@ -1949,15 +1921,11 @@ end
 ---@param sprite userdata sprite
 ---@param paletteIndex number index
 function AseUtilities.setSpritePalette(arr, sprite, paletteIndex)
+    local palIdxVerif = paletteIndex or 1
     local palettes = sprite.palettes
     local lenPalettes = #palettes
     local lenHexArr = #arr
-    local palIdxVerif = paletteIndex or 1
     palIdxVerif = 1 + (palIdxVerif - 1) % lenPalettes
-    -- if lenHexArr > 0
-    --     and paletteIndex
-    --     and paletteIndex >= 1
-    --     and paletteIndex <= lenPalettes then
     local palette = palettes[palIdxVerif]
     if lenHexArr > 0 then
         app.transaction(function()
@@ -2000,7 +1968,7 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
 
     -- The source image's color mode is 4 if it is a tile map.
     -- Assigning 4 to the target image when the sprite color
-    -- mode is 2 (indexed) causes Aseprite to crash.
+    -- mode is 2 (indexed) crashes Aseprite.
     local specSrc = imgSrc.spec
     local specTrg = ImageSpec {
         width = specSrc.width * tileWidth,

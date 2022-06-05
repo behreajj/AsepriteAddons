@@ -368,9 +368,7 @@ dlg:button {
         elseif colorMode == ColorMode.INDEXED then
             local palettes = activeSprite.palettes
             local lenPalettes = #palettes
-
-            -- TODO: Formalize this into AseUtilities.
-            -- tryGetPaletteFromFrame?
+            -- TODO: Use AseUtilities getPalette?
             local actFrIdx = 1
             if app.activeFrame then
                 actFrIdx = app.activeFrame.frameNumber

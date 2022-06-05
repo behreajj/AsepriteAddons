@@ -8,8 +8,6 @@ local paletteTypes = {
     "PRESET" }
 
 local function loadSprite(spriteFile)
-    -- TODO: Move to AseUtilities?
-
     -- GPL and PAL file formats cannot be loaded as sprites.
     local fileExt = app.fs.fileExtension(spriteFile)
     local sprite = nil
@@ -148,163 +146,155 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         local spriteFile = args.spriteFile
-        if spriteFile and #spriteFile > 0 then
-            -- Palettes need to be retrieved before a new sprite
-            -- is created in case it auto-sets the app.activeSprite
-            -- to the new sprite. Unfortunately, that means this
-            -- is wasted effort if the palette type is "EMBEDDED"
-            -- or there is no new sprite.
-            local palType = args.palType or defaults.palType
-            local hexesSrgb = {}
-            local hexesProfile = {}
-
-            if palType ~= "DEFAULT" then
-                local palFile = args.palFile
-                local palPreset = args.palPreset
-
-                hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                    palType, palFile, palPreset, 0, 256, true)
-            else
-                hexesProfile = AseUtilities.DEFAULT_PAL_ARR
-                hexesSrgb = hexesProfile
-            end
-
-            -- Aseprite will automatically trigger opening an image
-            -- sequence if possible, so no point in creating a custom.
-            local openSprite = nil
-            local exists = app.fs.isFile(spriteFile)
-            if exists then
-
-                -- Do not ask to open animation sequences.
-                --local oldOpSeqPref = app.preferences.open_file.open_sequence
-                --app.preferences.open_file.open_sequence = 2
-
-                -- Shift indexed fore- and back colors to RGB.
-                AseUtilities.preserveForeBack()
-                openSprite = loadSprite(spriteFile)
-
-                if openSprite then
-
-                    -- Tile map layers should not be trimmed, so check
-                    -- if Aseprite is newer than 1.3.
-                    local version = app.version
-                    local checkForTilemaps = false
-                    if version.major >= 1 and version.minor >= 3 then
-                        checkForTilemaps = true
-                    end
-
-                    app.activeSprite = openSprite
-                    local oldColorMode = openSprite.colorMode
-                    app.command.ChangePixelFormat { format = "rgb" }
-
-                    local removeBkg = args.removeBkg
-                    if removeBkg then
-                        local bkgLayer = openSprite.backgroundLayer
-                        if bkgLayer then
-                            app.transaction(function()
-                                app.activeLayer = bkgLayer
-                                app.command.LayerFromBackground()
-                                bkgLayer.name = "Bkg"
-                            end)
-                        end
-                    end
-
-                    -- Aseprite's built-in nearest color in palette method
-                    -- isn't trustworthy. Even if it were, there's no way
-                    -- of telling the user's intent. It could be that
-                    -- index n should be the transparent color for both the
-                    -- old and new palette, no matter how different the colors
-                    -- in appearance. Better to reset to zero.
-                    if openSprite.transparentColor ~= 0 then
-                        app.alert(string.format(
-                            "The sprite alpha mask was reset from %d to 0.",
-                            openSprite.transparentColor))
-                        openSprite.transparentColor = 0
-                    end
-
-                    if palType == "EMBEDDED" then
-                        -- Recent changes to color conversion require this?
-                        if oldColorMode == ColorMode.GRAY then
-                            hexesProfile = AseUtilities.grayHexes(
-                                AseUtilities.GRAY_COUNT)
-                        else
-                            -- For opening sequences, this is fine to stay
-                            -- as just palettes[1].
-                            hexesProfile = AseUtilities.asePaletteToHexArr(
-                                openSprite.palettes[1], 0, 256)
-                        end
-                    end
-
-                    local uniquesOnly = args.uniquesOnly
-                    if uniquesOnly then
-                        local uniques, dict = Utilities.uniqueColors(
-                            hexesProfile, true)
-                        hexesProfile = uniques
-                    end
-
-                    local prependMask = args.prependMask
-                    if prependMask then
-                        Utilities.prependMask(hexesProfile)
-                    end
-
-                    -- TODO: Should all palettes of the open file be set?
-                    AseUtilities.setSpritePalette(hexesProfile, openSprite, 1)
-
-                    local trimCels = args.trimCels
-                    if trimCels then
-                        -- Problem with refactoring this to its own function
-                        -- is that it would need to check for pixel color mode
-                        -- and to create its own transaction.
-                        local cels = openSprite.cels
-                        local celsLen = #cels
-                        local trimImage = AseUtilities.trimImageAlpha
-
-                        app.transaction(function()
-                            for i = 1, celsLen, 1 do
-                                local cel = cels[i]
-
-                                local layer = cel.layer
-                                local layerIsTilemap = false
-                                if checkForTilemaps then
-                                    layerIsTilemap = layer.isTilemap
-                                end
-
-                                if layerIsTilemap then
-                                    -- Tile map layers should only belong to
-                                    -- .aseprite files, and hence not need this.
-                                else
-                                    local srcImg = cel.image
-                                    local trgImg, x, y = trimImage(srcImg, 0, 0)
-                                    local srcPos = cel.position
-                                    cel.position = Point(srcPos.x + x, srcPos.y + y)
-                                    cel.image = trgImg
-                                end
-                            end
-                        end)
-                    end
-
-                    local xGrid = args.xGrid or defaults.xGrid
-                    local yGrid = args.yGrid or defaults.yGrid
-                    local wGrid = args.wGrid or defaults.wGrid
-                    local hGrid = args.hGrid or defaults.hGrid
-                    if wGrid > 1 and hGrid > 1 then
-                        openSprite.gridBounds = Rectangle(
-                            xGrid, yGrid, wGrid, hGrid)
-                    end
-
-                    app.refresh()
-                else
-                    app.alert("Sprite could not be found.")
-                end
-
-                -- app.preferences.open_file.open_sequence = oldOpSeqPref
-            else
-                app.alert("File does not exist at path.")
-            end
-        else
-            app.alert("Invalid file path.")
+        if (not spriteFile)
+            or (#spriteFile < 1)
+            or (not app.fs.isFile(spriteFile)) then
+            app.alert {
+                title = "Error",
+                text = "Invalid file path." }
+            return
         end
 
+        -- Do not ask to open animation sequences?
+        --local oldOpSeqPref = app.preferences.open_file.open_sequence
+        --app.preferences.open_file.open_sequence = 2
+
+        -- Palettes need to be retrieved before a new sprite
+        -- is created in case it auto-sets the app.activeSprite
+        -- to the new sprite. Unfortunately, that means this
+        -- is wasted effort if the palette type is "EMBEDDED"
+        -- or there is no new sprite.
+        local palType = args.palType or defaults.palType
+        local hexesSrgb = {}
+        local hexesProfile = {}
+
+        if palType ~= "DEFAULT" then
+            local palFile = args.palFile
+            local palPreset = args.palPreset
+
+            hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
+                palType, palFile, palPreset, 0, 256, true)
+        else
+            hexesProfile = AseUtilities.DEFAULT_PAL_ARR
+            hexesSrgb = hexesProfile
+        end
+
+        -- Shift indexed fore- and back colors to RGB.
+        AseUtilities.preserveForeBack()
+
+        local openSprite = loadSprite(spriteFile)
+        if not openSprite then
+            app.alert {
+                title = "Error",
+                text = "Sprite could not be found." }
+            return
+        end
+
+        -- Tile map layers should not be trimmed, so check
+        -- if Aseprite is newer than 1.3.
+        local version = app.version
+        local checkForTilemaps = (version.major >= 1)
+            and (version.minor >= 3)
+
+        app.activeSprite = openSprite
+        local oldColorMode = openSprite.colorMode
+        app.command.ChangePixelFormat { format = "rgb" }
+
+        local removeBkg = args.removeBkg
+        if removeBkg then
+            local bkgLayer = openSprite.backgroundLayer
+            if bkgLayer then
+                app.transaction(function()
+                    app.activeLayer = bkgLayer
+                    app.command.LayerFromBackground()
+                    bkgLayer.name = "Bkg"
+                end)
+            end
+        end
+
+        -- Adjustable transparent color causes problems
+        -- with multiple palettes.
+        if openSprite.transparentColor ~= 0 then
+            app.alert { title = "Warning",
+                text = string.format(
+                    "The sprite alpha mask was reset from %d to 0.",
+                    openSprite.transparentColor) }
+            openSprite.transparentColor = 0
+        end
+
+        if palType == "EMBEDDED" then
+            -- Recent changes to color conversion require this?
+            if oldColorMode == ColorMode.GRAY then
+                hexesProfile = AseUtilities.grayHexes(
+                    AseUtilities.GRAY_COUNT)
+            else
+                hexesProfile = AseUtilities.asePalettesToHexArr(
+                    openSprite.palettes)
+            end
+        end
+
+        local uniquesOnly = args.uniquesOnly
+        if uniquesOnly then
+            local uniques, _ = Utilities.uniqueColors(
+                hexesProfile, true)
+            hexesProfile = uniques
+        end
+
+        local prependMask = args.prependMask
+        if prependMask then
+            Utilities.prependMask(hexesProfile)
+        end
+
+        local lenPalettes = #openSprite.palettes
+        local setPalette = AseUtilities.setSpritePalette
+        local i = 0
+        while i < lenPalettes do i = i + 1
+            setPalette(hexesProfile, openSprite, i)
+        end
+
+        local trimCels = args.trimCels
+        if trimCels then
+            -- Problem with refactoring this to its own function
+            -- is that it would need to check for pixel color mode
+            -- and to create its own transaction.
+            local cels = openSprite.cels
+            local celsLen = #cels
+            local trimImage = AseUtilities.trimImageAlpha
+            app.transaction(function()
+                local j = 0
+                while j < celsLen do j = j + 1
+                    local cel = cels[j]
+
+                    local layer = cel.layer
+                    local layerIsTilemap = false
+                    if checkForTilemaps then
+                        layerIsTilemap = layer.isTilemap
+                    end
+
+                    if layerIsTilemap then
+                        -- Tile map layers should only belong to
+                        -- .aseprite files, and hence not need this.
+                    else
+                        local srcImg = cel.image
+                        local trgImg, x, y = trimImage(srcImg, 0, 0)
+                        local srcPos = cel.position
+                        cel.position = Point(srcPos.x + x, srcPos.y + y)
+                        cel.image = trgImg
+                    end
+                end
+            end)
+        end
+
+        -- local xGrid = args.xGrid or defaults.xGrid
+        -- local yGrid = args.yGrid or defaults.yGrid
+        -- local wGrid = args.wGrid or defaults.wGrid
+        -- local hGrid = args.hGrid or defaults.hGrid
+        -- if wGrid > 1 and hGrid > 1 then
+        --     openSprite.gridBounds = Rectangle(
+        --         xGrid, yGrid, wGrid, hGrid)
+        -- end
+
+        app.refresh()
         dlg:close()
     end
 }

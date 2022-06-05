@@ -8,27 +8,22 @@ setmetatable(ClrGradient, {
         return cls.new(...)
     end })
 
----Constructs a color gradient.
----The first parameter should be a table
----of ClrKeys. Sorts the color gradient's
----table of keys, but does not check for
----duplicate keys.
+---Constructs a color gradient. The first
+---parameter should be a table of ClrKeys.
 ---@param keys table color keys
 ---@param cl boolean closedLoop
 ---@return table
 function ClrGradient.new(keys, cl)
     local inst = setmetatable({}, ClrGradient)
-
-    inst.keys = {}
-    local lenKeys = #keys
-    local i = 0
-    while i < lenKeys do
-        i = i + 1
-        inst.keys[i] = keys[i]
-    end
-    table.sort(inst.keys)
-
     inst.closedLoop = cl or false
+    inst.keys = {}
+    if keys then
+        local lenKeys = #keys
+        local i = 0
+        while i < lenKeys do i = i + 1
+            inst:insortRight(keys[i], 0.01)
+        end
+    end
     return inst
 end
 
@@ -121,25 +116,20 @@ function ClrGradient:compressKeysRight(added)
 end
 
 ---Inserts a color key into the keys array based
----on the index returned by bisectLeft. Does not
----check for duplicates.
----@param ck table color key
----@return table
-function ClrGradient:insortLeft(ck)
-    local i = ClrGradient.bisectLeft(self, ck.step)
-    table.insert(self.keys, i, ck)
-    return self
-end
-
----Inserts a color key into the keys array based
 ---on the index returned by bisectRight. Does not
----check for duplicates.
+---check for duplicates. Returns true if the key
+---was successfully inserted.
 ---@param ck table color key
----@return table
-function ClrGradient:insortRight(ck)
+---@return boolean
+function ClrGradient:insortRight(ck, tolerance)
+    local eps = tolerance or 0.01
     local i = ClrGradient.bisectRight(self, ck.step)
+    local dupe = self.keys[i - 1]
+    if dupe and (math.abs(ck.step - dupe.step) <= eps) then
+        return false
+    end
     table.insert(self.keys, i, ck)
-    return self
+    return true
 end
 
 ---Prepends a color to the start of this gradient.
@@ -189,27 +179,6 @@ end
 ---@param cg table color gradient
 ---@param step number step
 ---@return number
-function ClrGradient.bisectLeft(cg, step)
-    local keys = cg.keys
-    local low = 0
-    local high = #keys
-    while low < high do
-        local middle = (low + high) // 2
-        if keys[1 + middle].step < step then
-            low = middle + 1
-        else
-            high = middle
-        end
-    end
-    return 1 + low
-end
-
----Internal helper function to locate the insertion
----point for a step in the gradient so as to keep
----sorted order.
----@param cg table color gradient
----@param step number step
----@return number
 function ClrGradient.bisectRight(cg, step)
     local keys = cg.keys
     local low = 0
@@ -242,17 +211,16 @@ function ClrGradient.eval(cg, step, easing)
     local lenKeys = #keys
 
     if cl and t ~= 1.0 then
-        -- Must account for the case where gradient
-        -- with two colors, not intended to be a
-        -- closed loop reaches 100%, just as when
-        -- a color slider is set to 360.
+        -- Accounts for case where gradient with 2
+        -- colors, not intended to be a closed loop,
+        -- reaches 100%, similar to hue slider at 360.
         t = t % 1.0
     elseif t <= keys[1].step then
-        local clr = keys[1].clr
-        return Clr.new(clr.r, clr.g, clr.b, clr.a)
+        local o = keys[1].clr
+        return Clr.new(o.r, o.g, o.b, o.a)
     elseif t >= keys[lenKeys].step then
-        local clr = keys[lenKeys].clr
-        return Clr.new(clr.r, clr.g, clr.b, clr.a)
+        local d = keys[lenKeys].clr
+        return Clr.new(d.r, d.g, d.b, d.a)
     end
 
     local nextIdx = ClrGradient.bisectRight(cg, t)
@@ -272,16 +240,13 @@ function ClrGradient.eval(cg, step, easing)
         -- Use Euclidean remainder. The absolute
         -- value of the denominator is needed.
         -- See Rust rem_euclid def in f64 source.
-        local num = t - prevStep
         local denom = math.abs(nextStep - prevStep)
-        local facLocal = num
-        facLocal = facLocal % denom
-        facLocal = facLocal / denom
+        local facLocal = ((t - prevStep) % denom) / denom
         local f = easing or Clr.mixlRgbaInternal
         return f(prevKey.clr, nextKey.clr, facLocal)
     else
-        local clr = nextKey.clr
-        return Clr.new(clr.r, clr.g, clr.b, clr.a)
+        local c = nextKey.clr
+        return Clr.new(c.r, c.g, c.b, c.a)
     end
 end
 
@@ -305,13 +270,7 @@ function ClrGradient.evalRange(
 
     -- In case you want to make vDest default to
     -- a different percentage based on closed loop.
-    local vDest = 1.0
-    if dest then
-        vDest = dest
-        -- elseif cg.closedLoop then
-        -- vDest = 1.0 + 1.0 / vCount
-    end
-
+    local vDest = dest or 1.0
     local vOrig = origin or 0.0
 
     local result = {}
@@ -374,9 +333,11 @@ function ClrGradient.fromColors(arr, cl)
         toStep = 1.0 / (len - 1)
     end
 
-    for i = 1, len, 1 do
-        keys[i] = ClrKey.newByVal(
-            (i - 1) * toStep, arr[i])
+    local i = 0
+    while i < len do
+        local step = i * toStep
+        i = i + 1
+        keys[i] = ClrKey.newByVal(step, arr[i])
     end
     return ClrGradient.newInternal(keys, cl)
 end

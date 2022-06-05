@@ -16,7 +16,6 @@ local versionMinor = version.minor
 local isBetaVersion = versionMajor > 0
     and versionMinor > 2
 
--- TODO: Warn if palette length exceeds 256?
 -- Should some diagnostic data be toggled via a t/f
 -- in defaults, esp. if it is expensive to calculate?
 local defaults = {
@@ -281,6 +280,8 @@ local function updatePalCount()
             .. string.format(" (Palette %d)", actFrIdx)
     end
 
+    -- TODO: Should this show regardless of color mode?
+    -- Should this warn if > 256?
     dlg:modify { id = "palCountLabel", text = palCountStr }
     dlg:modify { id = "palCountLabel", visible = colorMode == ColorMode.INDEXED }
 end

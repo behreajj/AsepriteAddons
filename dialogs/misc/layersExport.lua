@@ -421,8 +421,9 @@ dlg:button {
         local padHex = AseUtilities.aseColorToHex(padColor, colorMode)
 
         local jsonEntries = {}
-        for i = 1, selectLayerLen, 1 do
-            local layer = selectLayers[i]
+        local h = 0
+        while h < selectLayerLen do h = h + 1
+            local layer = selectLayers[h]
             local layerBlendMode = layer.blendMode
             local layerData = layer.data
             local layerIsReference = layer.isReference
@@ -465,9 +466,9 @@ dlg:button {
                 jsonFrames = {}
             }
 
-            -- TODO: Refactor to while loop.
-            for j = 1, selectFrameLen, 1 do
-                local frame = selectFrames[j]
+            local i = 0
+            while i < selectFrameLen do i = i + 1
+                local frame = selectFrames[i]
                 local frameIndex = frame.frameNumber
                 local palIndex = frameIndex
                 if palIndex > lenPalettes then palIndex = 1 end
@@ -481,7 +482,7 @@ dlg:button {
                 local celOpacity = 255
                 local fileNameShort = strfmt(
                     "%s%03d_%03d",
-                    fileTitle, i - 1, j - 1)
+                    fileTitle, h - 1, i - 1)
 
                 if flatAndGroup then
 
@@ -491,9 +492,9 @@ dlg:button {
                     local yMax = -2147483648
                     local childPackets = {}
 
-                    -- TODO: Refactor to while loop.
-                    for k = 1, childLayersCount, 1 do
-                        local childLayer = childLayers[k]
+                    local j = 0
+                    while j < childLayersCount do j = j + 1
+                        local childLayer = childLayers[j]
 
                         local childLayerIsTilemap = false
                         local childTileSet = nil
@@ -651,7 +652,7 @@ dlg:button {
 
                     local fileNameLong = strfmt(
                         "%s%03d_%03d.%s",
-                        filePrefix, i - 1, j - 1, fileExt)
+                        filePrefix, h - 1, i - 1, fileExt)
                     imgTrg:saveAs {
                         filename = fileNameLong,
                         palette = activePalette }

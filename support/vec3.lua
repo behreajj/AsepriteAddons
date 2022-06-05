@@ -734,17 +734,22 @@ function Vec3.inclinationUnsigned(a)
     return 1.5707963267949
 end
 
----Inserts a vector into an array so as to
+---Inserts a vector into a table so as to
 ---maintain sorted order. Biases toward the right
----insertion point.
+---insertion point. Returns true if the unique
+---vector was inserted; false if not.
 ---@param arr table vectors array
 ---@param elm table vector
 ---@param compare function comparator
----@return table
+---@return boolean
 function Vec3.insortRight(arr, elm, compare)
-    local idx = Vec3.bisectRight(arr, elm, compare)
-    table.insert(arr, idx, elm)
-    return arr
+    local i = Vec3.bisectRight(arr, elm, compare)
+    local dupe = arr[i - 1]
+    if dupe and Vec3.equals(dupe, elm) then
+        return false
+    end
+    table.insert(arr, i, elm)
+    return true
 end
 
 ---Limits a vector's magnitude to a scalar.

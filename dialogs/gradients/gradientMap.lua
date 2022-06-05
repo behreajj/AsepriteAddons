@@ -1,40 +1,22 @@
-dofile("../../support/aseutilities.lua")
 dofile("../../support/gradientutilities.lua")
 
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
     target = "RANGE",
-    quantization = 0,
     normalize = false,
-    tweenOps = "PAIR",
-    startIndex = 0,
-    count = 256,
-    aColor = Color(0, 0, 0, 255),
-    bColor = Color(255, 255, 255, 255),
-    clrSpacePreset = "S_RGB",
-    easingFuncRGB = "LINEAR",
-    easingFuncHue = "NEAR",
     pullFocus = false
 }
 
 local dlg = Dialog { title = "Gradient Map" }
+
+GradientUtilities.dialogWidgets(dlg)
 
 dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
     options = targets
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "quantization",
-    label = "Quantize:",
-    min = 0,
-    max = 32,
-    value = defaults.quantization
 }
 
 dlg:newrow { always = false }
@@ -48,132 +30,24 @@ dlg:check {
 
 dlg:newrow { always = false }
 
-dlg:combobox {
-    id = "tweenOps",
-    label = "Tween:",
-    option = defaults.tweenOps,
-    options = GradientUtilities.TWEEN_PRESETS,
-    onchange = function()
-        local isPair = dlg.data.tweenOps == "PAIR"
-        local isPalette = dlg.data.tweenOps == "PALETTE"
-        local md = dlg.data.clrSpacePreset
-        dlg:modify { id = "aColor", visible = isPair }
-        dlg:modify { id = "bColor", visible = isPair }
-        dlg:modify { id = "startIndex", visible = isPalette }
-        dlg:modify { id = "count", visible = isPalette }
-        dlg:modify {
-            id = "easingFuncHue",
-            visible = md == "CIE_LCH"
-                or md == "HSL"
-                or md == "HSV"
-        }
-        dlg:modify {
-            id = "easingFuncRGB",
-            visible = md == "S_RGB"
-                or md == "LINEAR_RGB"
-        }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "startIndex",
-    label = "Start:",
-    min = 0,
-    max = 255,
-    value = defaults.startIndex,
-    visible = defaults.tweenOps == "PALETTE"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "count",
-    label = "Count:",
-    min = 3,
-    max = 256,
-    value = defaults.count,
-    visible = defaults.tweenOps == "PALETTE"
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "aColor",
-    label = "Colors:",
-    color = defaults.aColor,
-    visible = defaults.tweenOps == "PAIR"
-}
-
-dlg:color {
-    id = "bColor",
-    color = defaults.bColor,
-    visible = defaults.tweenOps == "PAIR"
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "clrSpacePreset",
-    label = "Color Space:",
-    option = defaults.clrSpacePreset,
-    options = GradientUtilities.CLR_SPC_PRESETS,
-    visible = defaults.tweenOps == "PAIR",
-    onchange = function()
-        local md = dlg.data.clrSpacePreset
-        dlg:modify {
-            id = "easingFuncHue",
-            visible = md == "CIE_LCH"
-                or md == "HSL"
-                or md == "HSV"
-        }
-        dlg:modify {
-            id = "easingFuncRGB",
-            visible = md == "S_RGB"
-                or md == "LINEAR_RGB"
-        }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "easingFuncHue",
-    label = "Easing:",
-    option = defaults.easingFuncHue,
-    options = GradientUtilities.HUE_EASING_PRESETS,
-    visible = defaults.clrSpacePreset == "CIE_LCH"
-        or defaults.clrSpacePreset == "HSL"
-        or defaults.clrSpacePreset == "HSV"
-}
-
-dlg:combobox {
-    id = "easingFuncRGB",
-    label = "Easing:",
-    option = defaults.easingFuncRGB,
-    options = GradientUtilities.RGB_EASING_PRESETS,
-    visible = defaults.clrSpacePreset == "S_RGB"
-        or defaults.clrSpacePreset == "LINEAR_RGB"
-}
-
-dlg:newrow { always = false }
-
 dlg:button {
     id = "confirm",
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local sprite = app.activeSprite
-        if not sprite then
-            app.alert{
+        -- Early returns.
+        local activeSprite = app.activeSprite
+        if not activeSprite then
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
             return
         end
 
-        if sprite.colorMode ~= ColorMode.RGB then
-            app.alert{
+        local activeSpec = activeSprite.spec
+        local colorMode = activeSpec.colorMode
+        if colorMode ~= ColorMode.RGB then
+            app.alert {
                 title = "Error",
                 text = "Only RGB color mode is supported." }
             return
@@ -181,73 +55,35 @@ dlg:button {
 
         local srcLayer = app.activeLayer
         if not srcLayer then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
             return
         end
 
-        -- Unpack arguments.
-        local args = dlg.data
-        local target = args.target or defaults.target
-        local levels = args.quantization or defaults.quantization
-        local useNormalize = args.useNormalize
-        local tweenOps = args.tweenOps or defaults.tweenOps
-        local rgbPreset = args.easingFuncRGB or defaults.easingFuncRGB
-        local huePreset = args.easingFuncHue or defaults.easingFuncHue
-        local clrSpacePreset = args.clrSpacePreset or defaults.clrSpacePreset
-
-        local easeFuncFinal = nil
-        if tweenOps == "PALETTE" then
-
-            local startIndex = args.startIndex
-            local count = args.count
-
-            local palettes = sprite.palettes
-            local lenPalettes = #palettes
-            local actFrIdx = 1
-            if app.activeFrame then
-                actFrIdx = app.activeFrame.frameNumber
-                if actFrIdx > lenPalettes then actFrIdx = 1 end
-            end
-            local pal = palettes[actFrIdx]
-
-            local clrArr = AseUtilities.asePaletteToClrArr(
-                pal, startIndex, count)
-
-            local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                clrSpacePreset,
-                rgbPreset,
-                huePreset)
-
-            easeFuncFinal = function(t)
-                return Clr.mixArr(clrArr, t, pairFunc)
-            end
-        else
-            local aColorAse = args.aColor
-            local bColorAse = args.bColor
-
-            local aClr = AseUtilities.aseColorToClr(aColorAse)
-            local bClr = AseUtilities.aseColorToClr(bColorAse)
-
-            local pairFunc = GradientUtilities.clrSpcFuncFromPreset(
-                clrSpacePreset,
-                rgbPreset,
-                huePreset)
-
-            easeFuncFinal = function(t)
-                return pairFunc(aClr, bClr, t)
-            end
-        end
-
-        -- Cache methods and tables used in loop.
+        -- Cache methods and tables.
         local stlLut = Utilities.STL_LUT
         local lRgbToXyz = Clr.lRgbaToXyzInternal
         local xyzToLab = Clr.xyzToLab
         local abs = math.abs
         local min = math.min
-        local qu = Utilities.quantizeUnsigned
+        local quantize = Utilities.quantizeUnsigned
         local tohex = Clr.toHex
+        local cgeval = ClrGradient.eval
+
+        -- Unpack arguments.
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local useNormalize = args.useNormalize
+        local clrSpacePreset = args.clrSpacePreset
+        local levels = args.quantize
+        local aseColors = args.shades
+
+        local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
+        local facAdjust = GradientUtilities.easingFuncFromPreset(
+            args.easPreset)
+        local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
+            clrSpacePreset, args.huePreset)
 
         -- Find frames from target.
         local frames = {}
@@ -260,20 +96,22 @@ dlg:button {
             local appRange = app.range
             local rangeFrames = appRange.frames
             local rangeFramesLen = #rangeFrames
-            for i = 1, rangeFramesLen, 1 do
+            local i = 0
+            while i < rangeFramesLen do i = i + 1
                 frames[i] = rangeFrames[i]
             end
         else
-            local activeFrames = sprite.frames
+            local activeFrames = activeSprite.frames
             local activeFramesLen = #activeFrames
-            for i = 1, activeFramesLen, 1 do
+            local i = 0
+            while i < activeFramesLen do i = i + 1
                 frames[i] = activeFrames[i]
             end
         end
 
         -- Create target layer.
         -- Do not copy source layer blend mode.
-        local trgLyr = sprite:newLayer()
+        local trgLyr = activeSprite:newLayer()
         if srcLayer.opacity then
             trgLyr.opacity = srcLayer.opacity
         end
@@ -282,9 +120,10 @@ dlg:button {
             trgLyr.name = trgLyr.name .. ".Contrast"
         end
 
-        local framesLen = #frames
         app.transaction(function()
-            for i = 1, framesLen, 1 do
+            local framesLen = #frames
+            local i = 0
+            while i < framesLen do i = i + 1
                 local srcFrame = frames[i]
                 local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
@@ -332,6 +171,7 @@ dlg:button {
                             if lum < minLum then minLum = lum end
                             if lum > maxLum then maxLum = lum end
                         end
+
                         lumDict[hex] = lum
                         srcAlphaDict[hex] = sai
                     end
@@ -353,19 +193,21 @@ dlg:button {
 
                     local trgClrDict = {}
                     for hex, _ in pairs(srcClrDict) do
-                        local lum = lumDict[hex]
-                        lum = qu(lum, levels)
-                        local grayClr = tohex(easeFuncFinal(lum))
+                        local fac = lumDict[hex]
+                        fac = facAdjust(fac)
+                        fac = quantize(fac, levels)
+                        local clrGray = cgeval(gradient, fac, mixFunc)
+                        local hexGray = tohex(clrGray)
 
                         local aSrc = srcAlphaDict[hex]
-                        local aTrg = (grayClr >> 0x18 & 0xff)
+                        local aTrg = (hexGray >> 0x18 & 0xff)
 
                         trgClrDict[hex] = min(aSrc, aTrg) << 0x18
-                            | (0x00ffffff & grayClr)
+                            | (0x00ffffff & hexGray)
                     end
 
                     -- Create cel.
-                    local trgCel = sprite:newCel(trgLyr, srcCel.frame)
+                    local trgCel = activeSprite:newCel(trgLyr, srcCel.frame)
                     trgCel.position = srcCel.position
                     trgCel.image = srcImg:clone()
                     trgCel.opacity = srcCel.opacity
@@ -376,6 +218,7 @@ dlg:button {
                     for trgClr in trgItr do
                         trgClr(trgClrDict[trgClr()])
                     end
+
                 end
             end
         end)
@@ -387,6 +230,7 @@ dlg:button {
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
+    focus = false,
     onclick = function()
         dlg:close()
     end

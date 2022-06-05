@@ -25,19 +25,11 @@ end
 ---@return table
 function ClrKey.newByRef(step, clr)
     local inst = setmetatable({}, ClrKey)
-
     inst.step = 0.0
     if step then
         inst.step = math.min(math.max(step, 0.0), 1.0)
     end
-
-    inst.clr = nil
-    if clr then
-        inst.clr = clr
-    else
-        inst.clr = Clr.clearBlack()
-    end
-
+    inst.clr = clr or Clr.clearBlack()
     return inst
 end
 

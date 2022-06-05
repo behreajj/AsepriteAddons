@@ -12,8 +12,8 @@ setmetatable(Bounds2, {
 ---(AABB) for a 2D area, represented by a
 ---minimum and maximum coordinate.
 ---Defaults to passing vectors by value.
----@param mn table lower bound
----@param mx table upper bound
+---@param mn table|number lower bound
+---@param mx table|number upper bound
 ---@return table
 function Bounds2.new(mn, mx)
     return Bounds2.newByVal(mn, mx)
@@ -37,22 +37,30 @@ end
 ---(AABB) for a 2D area, represented by a
 ---minimum and maximum coordinate. Vectors
 ---are copied by value.
----@param mn table lower bound
----@param mx table upper bound
+---@param mn table|number lower bound
+---@param mx table|number upper bound
 ---@return table
 function Bounds2.newByVal(mn, mx)
     local inst = setmetatable({}, Bounds2)
 
     inst.mn = nil
     if mn then
-        inst.mn = Vec2.new(mn.x, mn.y)
+        if type(mn) == "number" then
+            inst.mn = Vec2.new(mn, mn)
+        else
+            inst.mn = Vec2.new(mn.x, mn.y)
+        end
     else
         inst.mn = Vec2.new(-0.5, -0.5)
     end
 
     inst.mx = nil
     if mx then
-        inst.mx = Vec2.new(mx.x, mx.y)
+        if type(mx) == "number" then
+            inst.mx = Vec2.new(mx, mx)
+        else
+            inst.mx = Vec2.new(mx.x, mx.y)
+        end
     else
         inst.mx = Vec2.new(0.5, 0.5)
     end

@@ -44,7 +44,7 @@ function Octree:__le(b)
 end
 
 function Octree:__len()
-    return #self.points
+    return Octree.countPoints(self)
 end
 
 function Octree:__lt(b)
@@ -80,11 +80,9 @@ function Octree.centersMean(o, include, arr)
     while i < lenChildren do
         i = i + 1
         local child = children[i]
-        if child then
-            isLeaf = false
-            Octree.centersMean(
-                child, include, arrVerif)
-        end
+        isLeaf = false
+        Octree.centersMean(
+            child, include, arrVerif)
     end
 
     if isLeaf then
@@ -135,16 +133,15 @@ function Octree.cull(o)
     local children = o.children
     local lenChildren = #children
     local cullThis = 0
+
+    -- Because of how length operator works this
+    -- should remove from the table instead of
+    -- setting table elements to nil.
     local i = lenChildren + 1
     while i > 1 do
         i = i - 1
         local child = children[i]
-        if child then
-            if Octree.cull(child) then
-                table.remove(children, i)
-                cullThis = cullThis + 1
-            end
-        else
+        if Octree.cull(child) then
             table.remove(children, i)
             cullThis = cullThis + 1
         end
@@ -170,11 +167,9 @@ function Octree.insert(o, point)
         while i < lenChildren do
             i = i + 1
             local child = children[i]
-            if child then
-                isLeaf = false
-                if Octree.insert(child, point) then
-                    return true
-                end
+            isLeaf = false
+            if Octree.insert(child, point) then
+                return true
             end
         end
 
@@ -188,15 +183,15 @@ function Octree.insert(o, point)
             end
             return true
         else
-            -- TODO: What if a child node had
-            -- been culled and needs to be recreated?
+            -- Octree.split(o, o.capacity)
+            -- return Octree.insert(o, point)
         end
     end
 
     return false
 end
 
----Inserts an array of points into an octree node.
+---Inserts an array of points into an node.
 ---Returns true if all point insertions succeeded.
 ---Otherwise, returns false.
 ---@param o table octree node
@@ -229,10 +224,8 @@ function Octree.countLeaves(o)
     while i < lenChildren do
         i = i + 1
         local child = children[i]
-        if child then
-            isLeaf = false
-            sum = sum + Octree.countLeaves(child)
-        end
+        isLeaf = false
+        sum = sum + Octree.countLeaves(child)
     end
 
     if isLeaf then return 1 end
@@ -244,8 +237,6 @@ end
 ---@param o table octree
 ---@return number
 function Octree.countPoints(o)
-    -- Even if this is not used directly by
-    -- any dialog, retain it for diagnostics.
     local children = o.children
     local lenChildren = #children
     local isLeaf = true
@@ -255,10 +246,8 @@ function Octree.countPoints(o)
     while i < lenChildren do
         i = i + 1
         local child = children[i]
-        if child then
-            isLeaf = false
-            sum = sum + Octree.countPoints(child)
-        end
+        isLeaf = false
+        sum = sum + Octree.countPoints(child)
     end
 
     if isLeaf then sum = sum + #o.points end
@@ -295,11 +284,9 @@ function Octree.maxLevel(o)
     while i < lenChildren do
         i = i + 1
         local child = children[i]
-        if child then
-            local lvl = Octree.maxLevel(child)
-            if lvl > maxLevel then
-                maxLevel = lvl
-            end
+        local lvl = Octree.maxLevel(child)
+        if lvl > maxLevel then
+            maxLevel = lvl
         end
     end
     return maxLevel
@@ -347,16 +334,14 @@ function Octree.queryInternal(o, center, radius)
         while i < lenChildren do
             i = i + 1
             local child = children[i]
-            if child then
-                isLeaf = false
-                local candDistSq = 2147483647
-                local candPoint = nil
-                candPoint, candDistSq = Octree.queryInternal(
-                    child, center, radius)
-                if candPoint and (candDistSq < nearDistSq) then
-                    nearPoint = candPoint
-                    nearDistSq = candDistSq
-                end
+            isLeaf = false
+            local candDistSq = 2147483647
+            local candPoint = nil
+            candPoint, candDistSq = Octree.queryInternal(
+                child, center, radius)
+            if candPoint and (candDistSq < nearDistSq) then
+                nearPoint = candPoint
+                nearDistSq = candDistSq
             end
         end
 
@@ -397,8 +382,6 @@ function Octree.split(o, childCapacity)
     local i = 0
     while i < 8 do
         i = i + 1
-        -- TODO: Account for scenario where a child
-        -- has been culled and needs to be recreated.
         children[i] = Octree.new(
             Bounds3.unitCubeSigned(),
             chCpVerif, nextLevel)
@@ -463,10 +446,8 @@ function Octree.subdivide(o, itr, childCapacity)
         while j < lenChildren do
             j = j + 1
             local child = children[j]
-            if child then
-                isLeaf = false
-                Octree.subdivide(child, itr - 1, chCpVerif)
-            end
+            isLeaf = false
+            Octree.subdivide(child, itr - 1, chCpVerif)
         end
 
         if isLeaf then Octree.split(o, chCpVerif) end
@@ -510,11 +491,7 @@ function Octree.toJson(o)
         while j < lenChildren do
             j = j + 1
             local child = children[j]
-            if child then
-                childStrs[j] = Octree.toJson(child)
-            else
-                childStrs[j] = "null"
-            end
+            childStrs[j] = Octree.toJson(child)
         end
         str = str .. table.concat(childStrs, ",")
         str = str .. "]"

@@ -40,7 +40,7 @@ function Quadtree:__le(b)
 end
 
 function Quadtree:__len()
-    return #self.points
+    return Quadtree.countPoints(self)
 end
 
 function Quadtree:__lt(b)
@@ -67,10 +67,8 @@ function Quadtree.countLeaves(q)
     while i < lenChildren do
         i = i + 1
         local child = children[i]
-        if child then
-            isLeaf = false
-            sum = sum + Quadtree.countLeaves(child)
-        end
+        isLeaf = false
+        sum = sum + Quadtree.countLeaves(child)
     end
 
     if isLeaf then return 1 end
@@ -82,8 +80,6 @@ end
 ---@param o table quadtree node
 ---@return number
 function Quadtree.countPoints(o)
-    -- Even if this is not used directly by
-    -- any dialog, retain it for diagnostics.
     local children = o.children
     local lenChildren = #children
     local isLeaf = true
@@ -93,10 +89,8 @@ function Quadtree.countPoints(o)
     while i < lenChildren do
         i = i + 1
         local child = children[i]
-        if child then
-            isLeaf = false
-            sum = sum + Quadtree.countPoints(child)
-        end
+        isLeaf = false
+        sum = sum + Quadtree.countPoints(child)
     end
 
     if isLeaf then sum = sum + #o.points end
@@ -119,11 +113,9 @@ function Quadtree.insert(q, point)
         while i < lenChildren do
             i = i + 1
             local child = children[i]
-            if child then
-                isLeaf = false
-                if Quadtree.insert(child, point) then
-                    return true
-                end
+            isLeaf = false
+            if Quadtree.insert(child, point) then
+                return true
             end
         end
 
@@ -135,12 +127,29 @@ function Quadtree.insert(q, point)
             end
             return true
         else
-            -- TODO: What if a child node had
-            -- been culled and needs to be recreated?
+            -- Quadtree.split(q, q.capacity)
+            -- return Quadtree.insert(q, point)
         end
     end
 
     return false
+end
+
+---Inserts an array of points into a node.
+---Returns true if all point insertions succeeded.
+---Otherwise, returns false.
+---@param o table octree node
+---@param ins table insertions array
+---@return boolean
+function Quadtree.insertAll(o, ins)
+    local lenIns = #ins
+    local flag = true
+    local i = 0
+    while i < lenIns do
+        i = i + 1
+        flag = flag and Quadtree.insert(o, ins[i])
+    end
+    return flag
 end
 
 ---Evaluates whether a node has any children.
@@ -173,11 +182,9 @@ function Quadtree.maxLevel(q)
     while i < lenChildren do
         i = i + 1
         local child = children[i]
-        if child then
-            local lvl = Quadtree.maxLevel(child)
-            if lvl > maxLevel then
-                maxLevel = lvl
-            end
+        local lvl = Quadtree.maxLevel(child)
+        if lvl > maxLevel then
+            maxLevel = lvl
         end
     end
     return maxLevel
@@ -225,16 +232,14 @@ function Quadtree.queryInternal(q, center, radius)
         while i < lenChildren do
             i = i + 1
             local child = children[i]
-            if child then
-                isLeaf = false
-                local candDistSq = 2147483647
-                local candPoint = nil
-                candPoint, candDistSq = Quadtree.queryInternal(
-                    child, center, radius)
-                if candPoint and (candDistSq < nearDistSq) then
-                    nearPoint = candPoint
-                    nearDistSq = candDistSq
-                end
+            isLeaf = false
+            local candDistSq = 2147483647
+            local candPoint = nil
+            candPoint, candDistSq = Quadtree.queryInternal(
+                child, center, radius)
+            if candPoint and (candDistSq < nearDistSq) then
+                nearPoint = candPoint
+                nearDistSq = candDistSq
             end
         end
 
@@ -275,8 +280,6 @@ function Quadtree.split(q, childCapacity)
     local i = 0
     while i < 4 do
         i = i + 1
-        -- TODO: Account for scenario where a child
-        -- has been culled and needs to be recreated.
         children[i] = Quadtree.new(
             Bounds2.unitSquareSigned(),
             chCpVerif, nextLevel)
@@ -349,11 +352,7 @@ function Quadtree.toJson(q)
         while j < lenChildren do
             j = j + 1
             local child = children[j]
-            if child then
-                childStrs[j] = Quadtree.toJson(child)
-            else
-                childStrs[j] = "null"
-            end
+            childStrs[j] = Quadtree.toJson(child)
         end
         str = str .. table.concat(childStrs, ",")
         str = str .. "]"

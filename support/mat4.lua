@@ -654,7 +654,7 @@ end
 ---@param far number far clip plane
 ---@return table
 function Mat4.perspective(fov, aspect, near, far)
-    local fovVal = 0.8660254037844386
+    local fovVal = 0.86602540378444
     if fov and fov ~= 0.0 then fovVal = fov end
 
     local aVal = 1.0
