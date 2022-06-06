@@ -296,7 +296,6 @@ dlg:button {
                                 local hexUnder = imgUnder:getPixel(xUnder, yUnder)
                                 local alphaUnder = (hexUnder >> 0x18) & 0xff
                                 alphaUnder = (alphaUnder * underCompOpacity) // 0xff
-
                                 local alphaComp = (alphaOver * alphaUnder) // 0xff
                                 local hexComp = (alphaComp << 0x18)
                                     | (hexUnder & 0x00ffffff)
@@ -355,6 +354,7 @@ dlg:button {
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
+    focus = false,
     onclick = function()
         dlg:close()
     end

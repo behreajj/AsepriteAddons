@@ -725,6 +725,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
+    focus = false,
     onclick = function()
         dlg:close()
     end

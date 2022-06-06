@@ -456,7 +456,7 @@ dlg:button {
     id = "rotate90Button",
     text = "&90",
     label = "Rotate:",
-    focus = false,
+    focus = true,
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then return end

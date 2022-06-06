@@ -157,14 +157,14 @@ dlg:newrow { always = false }
 
 dlg:number {
     id = "width",
-    text = string.format("%.0f", defaults.width),
+    text = string.format("%.0f", app.preferences.new_file.width),
     decimals = 0,
     visible = defaults.sizeMode == "CUSTOM"
 }
 
 dlg:number {
     id = "height",
-    text = string.format("%.0f", defaults.height),
+    text = string.format("%.0f", app.preferences.new_file.height),
     decimals = 0,
     visible = defaults.sizeMode == "CUSTOM"
 }
@@ -533,10 +533,27 @@ dlg:button {
 
         -- Because entries are typed in, they need to be validated
         -- for negative numbers and minimums.
-        local spriteWidth = args.width or defaults.width
-        local spriteHeight = args.height or defaults.height
-        spriteWidth = math.abs(spriteWidth)
-        spriteHeight = math.abs(spriteHeight)
+        local sizeMode = args.sizeMode or defaults.sizeMode
+        local spriteWidth = defaults.width
+        local spriteHeight = defaults.height
+        if sizeMode == "ASPECT" then
+            local aRatio = args.aRatio or defaults.aRatio
+            local bRatio = args.bRatio or defaults.bRatio
+            local scale = args.aspectScale or defaults.aspectScale
+            scale = math.max(1, math.tointeger(0.5 + math.abs(scale)))
+            aRatio, bRatio = Utilities.reduceRatio(aRatio, bRatio)
+            spriteWidth = aRatio * scale
+            spriteHeight = bRatio * scale
+        else
+            spriteWidth = args.width or defaults.width
+            spriteHeight = args.height or defaults.height
+            spriteWidth = math.abs(spriteWidth)
+            spriteHeight = math.abs(spriteHeight)
+        end
+
+        -- Store new dimensions in preferences.
+        app.preferences.new_file.width = spriteWidth
+        app.preferences.new_file.height = spriteHeight
 
         -- The maximum size defined in source code is 65535,
         -- but the canvas size command allows for more.
@@ -627,6 +644,7 @@ dlg:button {
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
+    focus = false,
     onclick = function()
         dlg:close()
     end

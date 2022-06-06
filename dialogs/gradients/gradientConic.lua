@@ -6,7 +6,7 @@ local defaults = {
     angle = 90,
     cw = false,
     isCyclic = false,
-    pullFocus = false
+    pullFocus = true
 }
 
 local dlg = Dialog { title = "Conic Gradient" }
@@ -64,10 +64,14 @@ dlg:button {
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert {
-                title = "Error",
-                text = "There is no active sprite." }
-            return
+            local newSpec = ImageSpec{
+                width = app.preferences.new_file.width,
+                height = app.preferences.new_file.height,
+                colorMode = ColorMode.RGB,
+                transparentColor = 0 }
+            activeSprite = Sprite(newSpec)
+            AseUtilities.setSpritePalette(
+                AseUtilities.DEFAULT_PAL_ARR, activeSprite, 1)
         end
 
         local activeSpec = activeSprite.spec

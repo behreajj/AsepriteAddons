@@ -1608,8 +1608,8 @@ function AseUtilities.initCanvas(
     if sprite then
         layer = sprite:newLayer()
     else
-        local wVal = 32
-        local hVal = 32
+        local wVal = app.preferences.new_file.width
+        local hVal = app.preferences.new_file.height
         if wDefault and wDefault > 0 then wVal = wDefault end
         if hDefault and hDefault > 0 then hVal = hDefault end
 

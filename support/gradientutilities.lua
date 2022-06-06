@@ -110,6 +110,7 @@ function GradientUtilities.dialogWidgets(dlg)
     dlg:button {
         id = "setButton",
         text = "&SET",
+        focus = false,
         onclick = function()
             local newColors = {}
 
@@ -148,6 +149,7 @@ function GradientUtilities.dialogWidgets(dlg)
     dlg:button {
         id = "appendButton",
         text = "&ADD",
+        focus = false,
         onclick = function()
             local newColors = {}
 
@@ -199,6 +201,7 @@ function GradientUtilities.dialogWidgets(dlg)
     dlg:button {
         id = "flipButton",
         text = "&FLIP",
+        focus = false,
         onclick = function()
             dlg:modify {
                 id = "shades",
@@ -209,6 +212,7 @@ function GradientUtilities.dialogWidgets(dlg)
     dlg:button {
         id = "clearButton",
         text = "C&LEAR",
+        focus = false,
         onclick = function()
             dlg:modify { id = "shades", colors = {} }
         end

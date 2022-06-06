@@ -14,7 +14,7 @@ local defaults = {
     maxRad = 100,
     distMetric = "EUCLIDEAN",
     minkExp = 2.0,
-    pullFocus = false
+    pullFocus = true
 }
 
 local function chebDist(ax, ay, bx, by)
@@ -134,10 +134,14 @@ dlg:button {
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert {
-                title = "Error",
-                text = "There is no active sprite." }
-            return
+            local newSpec = ImageSpec{
+                width = app.preferences.new_file.width,
+                height = app.preferences.new_file.height,
+                colorMode = ColorMode.RGB,
+                transparentColor = 0 }
+            activeSprite = Sprite(newSpec)
+            AseUtilities.setSpritePalette(
+                AseUtilities.DEFAULT_PAL_ARR, activeSprite, 1)
         end
 
         local activeSpec = activeSprite.spec

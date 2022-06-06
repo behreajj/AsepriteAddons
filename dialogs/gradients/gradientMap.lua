@@ -5,7 +5,7 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 local defaults = {
     target = "RANGE",
     normalize = false,
-    pullFocus = false
+    pullFocus = true
 }
 
 local dlg = Dialog { title = "Gradient Map" }
