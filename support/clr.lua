@@ -6,6 +6,22 @@ setmetatable(Clr, {
         return cls.new(...)
     end })
 
+---Arbitrary hue assigned to lighter grays
+---in hue conversion functions.
+Clr.HSL_HUE_LIGHT = 48.0 / 360.0
+
+---Arbitrary hue assigned to darker grays
+---in hue conversion functions.
+Clr.HSL_HUE_SHADOW = 255.0 / 360.0
+
+---Arbitrary hue assigned to lighter grays
+---in LCh conversion functions.
+Clr.LCH_HUE_LIGHT = 99.0 / 360.0
+
+---Arbitrary hue assigned to darker grays
+---in LCh conversion functions.
+Clr.LCH_HUE_SHADOW = 308.0 / 360.0
+
 ---Constructs a new color from red, green
 ---blue and transparency channels.
 ---The expected range is [0.0, 1.0], however,
@@ -24,22 +40,6 @@ function Clr.new(r, g, b, a)
     inst.r = r or 1.0
     return inst
 end
-
----Arbitrary hue assigned to lighter grays
----in hue conversion functions.
-Clr.HSL_HUE_LIGHT = 48.0 / 360.0
-
----Arbitrary hue assigned to darker grays
----in hue conversion functions.
-Clr.HSL_HUE_SHADOW = 255.0 / 360.0
-
----Arbitrary hue assigned to lighter grays
----in LCh conversion functions.
-Clr.LCH_HUE_LIGHT = 99.0 / 360.0
-
----Arbitrary hue assigned to darker grays
----in LCh conversion functions.
-Clr.LCH_HUE_SHADOW = 308.0 / 360.0
 
 function Clr:__band(b)
     return Clr.bitAnd(self, b)
@@ -646,26 +646,22 @@ function Clr.labToLch(l, a, b, alpha, tol)
     if tol then vTol = tol end
 
     local chromasq = a * a + b * b
-    local chroma = 0.0
-    local hue = 0.0
+    local c = 0.0
+    local h = 0.0
 
     if chromasq < (vTol * vTol) then
         local fac = l * 0.01
         if fac < 0.0 then fac = 0.0
         elseif fac > 1.0 then fac = 1.0 end
-        hue = (1.0 - fac) * Clr.LCH_HUE_SHADOW
+        h = (1.0 - fac) * Clr.LCH_HUE_SHADOW
             + fac * (1.0 + Clr.LCH_HUE_LIGHT)
     else
-        hue = math.atan(b, a) * 0.1591549430919
-        chroma = math.sqrt(chromasq)
+        h = math.atan(b, a) * 0.1591549430919
+        c = math.sqrt(chromasq)
     end
 
-    if hue ~= 1.0 then hue = hue % 1.0 end
-    return {
-        l = l,
-        c = chroma,
-        h = hue,
-        a = alpha or 1.0 }
+    if h ~= 1.0 then h = h % 1.0 end
+    return { l = l, c = c, h = h, a = alpha or 1.0 }
 end
 
 ---Converts a color from CIE LAB to standard RGB.
@@ -850,21 +846,20 @@ end
 ---@param alpha number alpha channel
 ---@return table
 function Clr.lRgbaToXyzInternal(red, green, blue, alpha)
-    local aVerif = alpha or 1.0
     return {
-        x = 0.41241084648854 * red
-            + 0.35758456785295 * green
-            + 0.18045380393361 * blue,
+        x = red * 0.41241084648854
+            + green * 0.35758456785295
+            + blue * 0.18045380393361,
 
-        y = 0.21264934272065 * red
-            + 0.7151691357059 * green
-            + 0.072181521573443 * blue,
+        y = red * 0.21264934272065
+            + green * 0.7151691357059
+            + blue * 0.072181521573443,
 
-        z = 0.01933175842915 * red
-            + 0.11919485595098 * green
-            + 0.95039003405034 * blue,
+        z = red * 0.01933175842915
+            + green * 0.11919485595098
+            + blue * 0.95039003405034,
 
-        a = aVerif }
+        a = alpha or 1.0 }
 end
 
 ---Finds the relative luminance of a color.

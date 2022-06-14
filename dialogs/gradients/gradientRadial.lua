@@ -211,8 +211,8 @@ dlg:button {
         local ySel = selBounds.y
 
         local grdSpec = ImageSpec {
-            width = selBounds.width,
-            height = selBounds.height,
+            width = math.max(1, selBounds.width),
+            height = math.max(1, selBounds.height),
             colorMode = activeSpec.colorMode,
             transparentColor = activeSpec.transparentColor }
         grdSpec.colorSpace = activeSpec.colorSpace
@@ -241,7 +241,7 @@ dlg:button {
                 grdLayer,
                 activeFrame,
                 grdImg,
-                selection.origin)
+                Point(xSel, ySel))
         end)
         app.refresh()
     end

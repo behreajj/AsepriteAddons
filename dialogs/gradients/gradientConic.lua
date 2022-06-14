@@ -13,6 +13,14 @@ local dlg = Dialog { title = "Conic Gradient" }
 
 GradientUtilities.dialogWidgets(dlg)
 
+dlg:check {
+    id = "isCyclic",
+    label = "Cyclic:",
+    selected = defaults.isCyclic
+}
+
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "xOrigin",
     label = "Origin %:",
@@ -44,14 +52,6 @@ dlg:check {
     id = "cw",
     label = "Flip Y:",
     selected = defaults.cw
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
-    id = "isCyclic",
-    label = "Cyclic:",
-    selected = defaults.isCyclic
 }
 
 dlg:newrow { always = false }
@@ -139,8 +139,8 @@ dlg:button {
         local ySel = selBounds.y
 
         local grdSpec = ImageSpec {
-            width = selBounds.width,
-            height = selBounds.height,
+            width = math.max(1, selBounds.width),
+            height = math.max(1, selBounds.height),
             colorMode = activeSpec.colorMode,
             transparentColor = activeSpec.transparentColor }
         grdSpec.colorSpace = activeSpec.colorSpace
@@ -188,7 +188,7 @@ dlg:button {
                 grdLayer,
                 activeFrame,
                 grdImg,
-                selection.origin)
+                Point(xSel, ySel))
         end)
         app.refresh()
     end

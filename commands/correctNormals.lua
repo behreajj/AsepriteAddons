@@ -22,13 +22,13 @@ for elm in pxItr do
     if a > 0 then
         local b = (hex >> 0x10) & 0xff
         local g = (hex >> 0x08) & 0xff
-        local r = (hex >> 0x00) & 0xff
+        local r = hex & 0xff
 
         local x = (r + r - 255) * 0.003921568627451
         local y = (g + g - 255) * 0.003921568627451
         local z = (b + b - 255) * 0.003921568627451
 
-        if z < 0.0 then z = 0.0 end
+        -- if z < 0.0 then z = 0.0 end
 
         local sqMag = x * x + y * y + z * z
         if sqMag > 0.000047 then

@@ -11,17 +11,15 @@ setmetatable(ClrGradient, {
 ---Constructs a color gradient. The first
 ---parameter should be a table of ClrKeys.
 ---@param keys table color keys
----@param cl boolean closedLoop
 ---@return table
-function ClrGradient.new(keys, cl)
+function ClrGradient.new(keys)
     local inst = setmetatable({}, ClrGradient)
-    inst.closedLoop = cl or false
     inst.keys = {}
     if keys then
         local lenKeys = #keys
         local i = 0
         while i < lenKeys do i = i + 1
-            inst:insortRight(keys[i], 0.01)
+            inst:insortRight(keys[i], 0.0005)
         end
     end
     return inst
@@ -31,12 +29,10 @@ end
 ---The first parameter should be a table
 ---of ClrKeys.
 ---@param keys table color keys
----@param cl boolean closedLoop
 ---@return table
-function ClrGradient.newInternal(keys, cl)
+function ClrGradient.newInternal(keys)
     local inst = setmetatable({}, ClrGradient)
     inst.keys = keys or {}
-    inst.closedLoop = cl or false
     return inst
 end
 
@@ -67,17 +63,17 @@ end
 ---@param clrs table color array
 ---@return table
 function ClrGradient:appendAll(clrs)
-    local len = #clrs
-    self:compressKeysLeft(len)
+    local appLen = #clrs
+    self:compressKeysLeft(appLen)
     local oldLen = #self.keys
-    local denom = 1.0 / (oldLen + len - 1.0)
+    local denom = 1.0 / (oldLen + appLen - 1.0)
     local i = 0
-    while i < len do
+    while i < appLen do
         i = i + 1
         local key = ClrKey.newByVal(
             (oldLen + i - 1) * denom,
             clrs[i])
-        table.insert(self.keys, key)
+        self.keys[oldLen + i] = key
     end
     return self
 end
@@ -122,7 +118,7 @@ end
 ---@param ck table color key
 ---@return boolean
 function ClrGradient:insortRight(ck, tolerance)
-    local eps = tolerance or 0.01
+    local eps = tolerance or 0.0005
     local i = ClrGradient.bisectRight(self, ck.step)
     local dupe = self.keys[i - 1]
     if dupe and (math.abs(ck.step - dupe.step) <= eps) then
@@ -151,17 +147,25 @@ end
 ---@param clrs table color array
 ---@return table
 function ClrGradient:prependAll(clrs)
-    local len = #clrs
-    self:compressKeysRight(len)
+    local prpLen = #clrs
+    self:compressKeysRight(prpLen)
     local oldLen = #self.keys
-    local denom = 1.0 / (oldLen + len - 1.0)
+
+    -- Shift old keys with reverse loop.
+    local h = oldLen + 1
+    while h > 1 do
+        h = h - 1
+        self.keys[prpLen + h] = self.keys[h]
+    end
+
+    local denom = 1.0 / (oldLen + prpLen - 1.0)
     local i = 0
-    while i < len do
+    while i < prpLen do
         i = i + 1
         local key = ClrKey.newByVal(
             (i - 1) * denom,
             clrs[i])
-        table.insert(self.keys, i, key)
+        self.keys[i] = key
     end
     return self
 end
@@ -205,20 +209,15 @@ end
 ---@return table
 function ClrGradient.eval(cg, step, easing)
     local t = step or 0.5
-
-    local cl = cg.closedLoop
     local keys = cg.keys
-    local lenKeys = #keys
 
-    if cl and t ~= 1.0 then
-        -- Accounts for case where gradient with 2
-        -- colors, not intended to be a closed loop,
-        -- reaches 100%, similar to hue slider at 360.
-        t = t % 1.0
-    elseif t <= keys[1].step then
+    if t <= keys[1].step then
         local o = keys[1].clr
         return Clr.new(o.r, o.g, o.b, o.a)
-    elseif t >= keys[lenKeys].step then
+    end
+
+    local lenKeys = #keys
+    if t >= keys[lenKeys].step then
         local d = keys[lenKeys].clr
         return Clr.new(d.r, d.g, d.b, d.a)
     end
@@ -226,24 +225,15 @@ function ClrGradient.eval(cg, step, easing)
     local nextIdx = ClrGradient.bisectRight(cg, t)
     local prevIdx = nextIdx - 1
 
-    if cl then
-        prevIdx = 1 + (prevIdx - 1) % lenKeys
-        nextIdx = 1 + (nextIdx - 1) % lenKeys
-    end
-
     local prevKey = keys[prevIdx]
     local nextKey = keys[nextIdx]
     local prevStep = prevKey.step
     local nextStep = nextKey.step
 
     if prevStep ~= nextStep then
-        -- Use Euclidean remainder. The absolute
-        -- value of the denominator is needed.
-        -- See Rust rem_euclid def in f64 source.
-        local denom = math.abs(nextStep - prevStep)
-        local facLocal = ((t - prevStep) % denom) / denom
         local f = easing or Clr.mixlRgbaInternal
-        return f(prevKey.clr, nextKey.clr, facLocal)
+        return f(prevKey.clr, nextKey.clr,
+            (t - prevStep) / (nextStep - prevStep))
     else
         local c = nextKey.clr
         return Clr.new(c.r, c.g, c.b, c.a)
@@ -267,11 +257,10 @@ function ClrGradient.evalRange(
 
     local vCount = count or 3
     vCount = math.max(3, vCount)
-
-    -- In case you want to make vDest default to
-    -- a different percentage based on closed loop.
     local vDest = dest or 1.0
+    vDest = math.min(math.max(vDest, 0.0), 1.0)
     local vOrig = origin or 0.0
+    vOrig = math.min(math.max(vOrig, 0.0), 1.0)
 
     local result = {}
     local toFac = 1.0 / (vCount - 1.0)
@@ -293,13 +282,13 @@ end
 ---color is repeated at the end of the gradient.
 ---@param arr table color array
 ---@return table
-function ClrGradient.fromColors(arr, cl)
+function ClrGradient.fromColors(arr)
     local len = #arr
     if len < 1 then
         return ClrGradient.newInternal({
             ClrKey.newByRef(0.0, Clr.clearBlack()),
             ClrKey.newByRef(1.0, Clr.white())
-        }, false)
+        })
     end
 
     if len < 2 then
@@ -321,25 +310,18 @@ function ClrGradient.fromColors(arr, cl)
         return ClrGradient.newInternal({
             ClrKey.newByRef(0.0, c1),
             ClrKey.newByRef(1.0, c2)
-        }, false)
+        })
     end
 
-    local toStep = 1.0
+    local toStep = 1.0 / (len - 1)
     local keys = {}
-    if cl and arr[1] ~= arr[len] then
-        toStep = 1.0 / len
-        keys[len + 1] = ClrKey.newByVal(1.0, arr[1])
-    else
-        toStep = 1.0 / (len - 1)
-    end
-
     local i = 0
     while i < len do
         local step = i * toStep
         i = i + 1
         keys[i] = ClrKey.newByVal(step, arr[i])
     end
-    return ClrGradient.newInternal(keys, cl)
+    return ClrGradient.newInternal(keys)
 end
 
 ---Finds the range of the color gradient, typically
@@ -366,7 +348,7 @@ function ClrGradient.rgb()
         ClrKey.newByRef(0.66666666666667, Clr.blue()),
         ClrKey.newByRef(0.83333333333333, Clr.magenta()),
         ClrKey.newByRef(1.0, Clr.red())
-    }, true)
+    })
 end
 
 ---Returns a JSON sring of a color gradient.
@@ -376,10 +358,10 @@ function ClrGradient.toJson(cg)
     local str = "{\"keys\":["
 
     local keys = cg.keys
-    local keysLen = #keys
+    local lenKeys = #keys
     local strArr = {}
     local i = 0
-    while i < keysLen do
+    while i < lenKeys do
         i = i + 1
         strArr[i] = ClrKey.toJson(keys[i])
     end

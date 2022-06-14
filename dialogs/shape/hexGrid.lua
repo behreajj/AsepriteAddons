@@ -2,7 +2,8 @@ dofile("../../support/aseutilities.lua")
 
 local defaults = {
     rings = 4,
-    scale = 32,
+    xScale = 32,
+    yScale = 32,
     xOrigin = 0,
     yOrigin = 0,
     margin = 0,
@@ -29,9 +30,15 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:number {
-    id = "scale",
-    label = "Cell Size:",
-    text = string.format("%.1f", defaults.scale),
+    id = "xScale",
+    label = "Cell:",
+    text = string.format("%.1f", defaults.xScale),
+    decimals = AseUtilities.DISPLAY_DECIMAL
+}
+
+dlg:number {
+    id = "yScale",
+    text = string.format("%.1f", defaults.yScale),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
@@ -122,46 +129,46 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
+        local rings = args.rings or defaults.rings
+        local xScale = args.xScale or defaults.xScale
+        local yScale = args.yScale or defaults.yScale
+        local xOrig = args.xOrigin or defaults.xOrigin
+        local yOrig = args.yOrigin or defaults.yOrigin
+        local fillClr = args.fillClr or defaults.fillClr
+        local strokeClr = args.strokeClr or defaults.strokeClr
 
-        local mesh = Mesh2.gridHex(args.rings)
+        if xScale < 2.0 then xScale = 2.0 end
+        if yScale < 2.0 then yScale = 2.0 end
+        local fillHex = AseUtilities.aseColorToHex(fillClr, ColorMode.RGB)
+        local strokeHex = AseUtilities.aseColorToHex(strokeClr, ColorMode.RGB)
 
-        local sclval = args.scale
-        if sclval < 2.0 then
-            sclval = 2.0
-        end
+        local mesh = Mesh2.gridHex(rings)
 
-        -- Convert margin from [0, 100] to [0.0, 1.0].
-        -- Ensure that it is less than 100%.
-        local mrgval = args.margin * 0.01
-        if mrgval > 0.0 then
-            mrgval = math.min(mrgval, 0.99)
-            mesh:scaleFacesIndiv(1.0 - mrgval)
-        end
-
-        local t = Mat3.fromTranslation(
-            args.xOrigin,
-            args.yOrigin)
-        local s = Mat3.fromScale(sclval, -sclval)
+        local t = Mat3.fromTranslation(xOrig, yOrig)
+        local s = Mat3.fromScale(xScale, -yScale)
         local mat = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
+        -- Convert margin from [0, 100] to [0.0, 1.0].
+        -- Ensure that it is less than 100%.
+        local margin = args.margin * 0.01
+        if margin > 0.0 then
+            margin = 1.0 - math.min(margin, 0.99)
+            mesh:scaleFacesIndiv(margin)
+        end
+
         local sprite = AseUtilities.initCanvas(
-            64, 64, mesh.name,
-            { args.fillClr.rgbaPixel,
-                args.strokeClr.rgbaPixel })
+            64, 64, mesh.name, { fillHex, strokeHex })
         local layer = sprite.layers[#sprite.layers]
         local frame = app.activeFrame or sprite.frames[1]
         local cel = sprite:newCel(layer, frame)
 
         AseUtilities.drawMesh2(
             mesh,
-            args.useFill,
-            args.fillClr,
-            args.useStroke,
-            args.strokeClr,
+            args.useFill, fillClr,
+            args.useStroke, strokeClr,
             Brush(args.strokeWeight),
-            cel,
-            layer)
+            cel, layer)
 
         app.refresh()
     end

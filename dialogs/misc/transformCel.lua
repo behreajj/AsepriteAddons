@@ -51,15 +51,16 @@ local function getTargetCels(activeSprite, targetPreset)
     elseif targetPreset == "SELECTION" then
         local sel = activeSprite.selection
         if (not sel.isEmpty) then
-            local selOrigin = sel.origin
             local selBounds = sel.bounds
+            local xSel = selBounds.x
+            local ySel = selBounds.y
             local activeSpec = activeSprite.spec
             local actFrame = app.activeFrame
 
             -- Create a subset of flattened sprite.
             local flatSpec = ImageSpec {
-                width = selBounds.width,
-                height = selBounds.height,
+                width = math.max(1, selBounds.width),
+                height = math.max(1, selBounds.height),
                 colorMode = activeSpec.colorMode,
                 transparentColor = activeSpec.transparentColor }
             flatSpec.colorSpace = activeSpec.colorSpace
@@ -67,12 +68,12 @@ local function getTargetCels(activeSprite, targetPreset)
             flatImage:drawSprite(
                 activeSprite,
                 actFrame.frameNumber,
-                -selOrigin)
+                Point(-xSel, -ySel))
 
             -- Remove pixels within selection bounds
             -- but not within selection itself.
-            local xMin = selBounds.x
-            local yMin = selBounds.y
+            local xMin = xSel
+            local yMin = ySel
             local flatPxItr = flatImage:pixels()
             for elm in flatPxItr do
                 local x = elm.x + xMin
@@ -88,7 +89,7 @@ local function getTargetCels(activeSprite, targetPreset)
             adjLayer.name = "Transformed"
             local adjCel = activeSprite:newCel(
                 adjLayer, actFrame,
-                flatImage, selOrigin)
+                flatImage, Point(xSel, ySel))
             tinsert(targetCels, adjCel)
         end
     else

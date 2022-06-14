@@ -239,22 +239,16 @@ local function setFromSelect(dialog, sprite, frame)
     if not sprite then return end
     if not frame then return end
 
-    local selection = sprite.selection
-    if not selection then return end
-    if selection.isEmpty then return end
-
-    -- Problem with selections that extend
-    -- into negative values?
-    -- selection:intersect(Selection(sprite.bounds))
-    local selBounds = selection.bounds
+    local sel = AseUtilities.getSelection(sprite)
+    local selBounds = sel.bounds
     local xSel = selBounds.x
     local ySel = selBounds.y
 
     local sprSpec = sprite.spec
     local colorMode = sprSpec.colorMode
     local selSpec = ImageSpec {
-        width = selBounds.width,
-        height = selBounds.height,
+        width = math.max(1, selBounds.width),
+        height = math.max(1, selBounds.height),
         colorMode = colorMode,
         transparentColor = sprSpec.transparentColor }
     selSpec.colorSpace = sprSpec.colorSpace
@@ -265,17 +259,6 @@ local function setFromSelect(dialog, sprite, frame)
     flatImage:drawSprite(
         sprite, frame, Point(-xSel, -ySel))
     local px = flatImage:pixels()
-
-    -- For indexed color mode, the matter is
-    -- complicated by potential multiple palettes.
-    local palettes = sprite.palettes
-    local lenPalettes = #palettes
-    local actFrIdx = 1
-    if app.activeFrame then
-        actFrIdx = app.activeFrame.frameNumber
-        if actFrIdx > lenPalettes then actFrIdx = 1 end
-    end
-    local palette = palettes[actFrIdx]
 
     -- The key is the color in hex; the value is a
     -- number of pixels with that color in the
@@ -316,10 +299,12 @@ local function setFromSelect(dialog, sprite, frame)
         return
     end
 
+    local palette = AseUtilities.getPalette(
+        app.activeFrame, sprite.palettes)
     for elm in px do
         local x = elm.x + xSel
         local y = elm.y + ySel
-        if selection:contains(x, y) then
+        if sel:contains(x, y) then
             eval(elm(), hexDict, palette)
         end
     end
@@ -567,23 +552,21 @@ dlg:button {
         if #clrs < 1 then return end
         local clr = clrs[1]
         if clr.alpha < 1 then return end
-
         local sprite = app.activeSprite
         if not sprite then return end
-        local sel = sprite.selection
-        if (not sel) or sel.isEmpty then return end
 
         local sprSpec = sprite.spec
         local colorMode = sprSpec.colorMode
         local hex = AseUtilities.aseColorToHex(clr, colorMode)
 
+        local sel = AseUtilities.getSelection(sprite)
         local selBounds = sel.bounds
         local xSel = selBounds.x
         local ySel = selBounds.y
 
         local selSpec = ImageSpec {
-            width = selBounds.width,
-            height = selBounds.height,
+            width = math.max(1, selBounds.width),
+            height = math.max(1, selBounds.height),
             colorMode = colorMode,
             transparentColor = sprSpec.transparentColor }
         selSpec.colorSpace = sprSpec.colorSpace
@@ -598,7 +581,7 @@ dlg:button {
 
         app.transaction(function()
             -- This is an extra precaution because creating
-            -- a new layer wipes out a selection.
+            -- a new layer wipes out a range.
             local frameIdcs = AseUtilities.parseRange(app.range)
             local lenFrames = #frameIdcs
             local sprFrames = sprite.frames
@@ -610,7 +593,7 @@ dlg:button {
                 local frameObj = sprFrames[frameIdx]
                 sprite:newCel(
                     layer, frameObj,
-                    selImage, sel.origin)
+                    selImage, Point(xSel, ySel))
             end
         end)
         app.refresh()

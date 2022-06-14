@@ -123,8 +123,9 @@ dlg:button {
         local openSprites = app.sprites
         local openLen = #openSprites
         local errorFlag = false
-        for i = 1, openLen, 1 do
-            local sprite = openSprites[i]
+        local h = 0
+        while h < openLen do h = h + 1
+            local sprite = openSprites[h]
             local colorMode = sprite.colorMode
             local profile = sprite.colorSpace
 
@@ -140,14 +141,16 @@ dlg:button {
         end
 
         local candLen = #candidates
-        for i = 1, candLen, 1 do
+        local i = 0
+        while i < candLen do i = i + 1
             local candidate = candidates[i]
             local lenPals = #candidate.palettes
             -- This isn't as efficient as it could be
             -- because the same Aseprite Colors are
             -- recreated for each target palette when
             -- they are converted by value anyway.
-            for j = 1, lenPals, 1 do
+            local j = 0
+            while j < lenPals do j = j + 1
                 AseUtilities.setSpritePalette(
                     hexesSrgb, candidate, j)
             end

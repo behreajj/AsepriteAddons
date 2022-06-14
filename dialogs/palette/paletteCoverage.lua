@@ -334,19 +334,20 @@ dlg:button {
         local hexDictSrgb = {}
         local hexDictProfile = {}
         local lenHexesProfile = #hexesProfile
-        local idxDict = 1
-        for i = 1, lenHexesProfile, 1 do
-            local hexProfile = hexesProfile[i]
+        local idxDict = 0
+        local g = 0
+        while g < lenHexesProfile do
+            g = g + 1
+            local hexProfile = hexesProfile[g]
             if (hexProfile & 0xff000000) ~= 0x0 then
-                local hexProfNoAlpha = 0xff000000 | hexProfile
-                if not hexDictProfile[hexProfNoAlpha] then
-                    hexDictProfile[hexProfNoAlpha] = idxDict
-
-                    local hexSrgb = hexesSrgb[i]
-                    local hexSrgbNoAlpha = 0xff000000 | hexSrgb
-                    hexDictSrgb[hexSrgbNoAlpha] = idxDict
-
+                local hexProfOpaque = 0xff000000 | hexProfile
+                if not hexDictProfile[hexProfOpaque] then
                     idxDict = idxDict + 1
+                    hexDictProfile[hexProfOpaque] = idxDict
+
+                    local hexSrgb = hexesSrgb[g]
+                    local hexSrgbOpaque = 0xff000000 | hexSrgb
+                    hexDictSrgb[hexSrgbOpaque] = idxDict
                 end
             end
         end
@@ -547,11 +548,10 @@ dlg:button {
 
         local h = 0
         while h < reqFrames do
-            h = h + 1
-            local frame2d = {}
-            local theta = (h - 1) * hToTheta
+            local theta = h * hToTheta
             local cosa = cos(theta)
             local sina = sin(theta)
+            local frame2d = {}
             local k = 0
             while k < gridLen do
                 k = k + 1
@@ -568,9 +568,9 @@ dlg:button {
                     point = scrpt,
                     color = replaceClrs[k] }
             end
-
             -- Depth sorting.
             tablesort(frame2d, comparator)
+            h = h + 1
             pts2d[h] = frame2d
         end
 

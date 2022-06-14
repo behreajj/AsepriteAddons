@@ -56,7 +56,7 @@ function GradientUtilities.aseColorsToClrGradient(aseColors)
             clrKeys[i] = ClrKey.newByRef(step, c)
         end
     end
-    return ClrGradient.newInternal(clrKeys, false)
+    return ClrGradient.newInternal(clrKeys)
 end
 
 ---Finds the appropriate color easing function based on

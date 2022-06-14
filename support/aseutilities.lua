@@ -1512,13 +1512,13 @@ end
 ---a palette from an Aseprite frame object. Defaults
 ---to index 1 if the frame index exceeds the number
 ---of palettes.
----@param frameObj userdata Aseprite frame object
+---@param frObj userdata Aseprite frame object
 ---@param palettes table table of Aseprite palettes
 ---@return userdata
-function AseUtilities.getPalette(frameObj, palettes)
+function AseUtilities.getPalette(frObj, palettes)
     -- TODO: Where else can this be used?
     local idx = 1
-    if frameObj then idx = frameObj.frameNumber end
+    if frObj then idx = frObj.frameNumber end
     local lenPalettes = #palettes
     if idx > lenPalettes then idx = 1 end
     return palettes[idx]
@@ -1527,20 +1527,35 @@ end
 ---Gets a selection copied by value from a sprite.
 ---If the selection is empty, returns the sprite's
 ---bounds instead, i.e., from (0, 0) to (w, h).
+---If the selection is not entirely contained by
+---the canvas, returns the bounds intersection.
 ---@param sprite userdata sprite
 ---@return table
 function AseUtilities.getSelection(sprite)
-    local select = sprite.selection
-    if (not select) or select.isEmpty then
+    local sel = sprite.selection
+    if (not sel) or sel.isEmpty then
         return Selection(sprite.bounds)
+    end
+
+    local selBounds = sel.bounds
+    local sprBounds = sprite.bounds
+    local tlx = selBounds.x
+    local tly = selBounds.y
+    local brx = tlx + selBounds.width - 1
+    local bry = tly + selBounds.height - 1
+
+    -- A selection can be moved partially
+    -- or entirely outside the canvas bounds,
+    -- leading Aseprite to crash.
+    if (tlx >= 0) and (tly >= 0)
+        and (brx <= sprBounds.width)
+        and (bry <= sprBounds.height) then
+        local sprSel = Selection(sprBounds)
+        sprSel:intersect(sel)
+        return sprSel
     else
-        -- This precaution must be taken because
-        -- a transform cage can be dragged off canvas
-        -- causing Aseprite to crash. The square bounds
-        -- is not the same as the selection, e.g., if
-        -- it's created with magic wand or circle.
         return Selection(
-            select.bounds:intersect(sprite.bounds))
+            sprBounds:intersect(selBounds))
     end
 end
 

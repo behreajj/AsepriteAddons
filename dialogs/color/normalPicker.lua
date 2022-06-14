@@ -664,6 +664,7 @@ dlg:button {
         imgSpec.colorSpace = ColorSpace()
         local img = Image(imgSpec)
 
+        -- TODO: Add rotation functionality?
         local pxItr = img:pixels()
         for elm in pxItr do
 
