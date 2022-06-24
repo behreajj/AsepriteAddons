@@ -1030,7 +1030,7 @@ function Utilities.round(x)
     elseif ix >= 0.0 and fx >= 0.5 then
         return ix + 1
     else
-        return 0
+        return ix
     end
 end
 
