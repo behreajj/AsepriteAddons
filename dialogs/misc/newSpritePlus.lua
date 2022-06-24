@@ -578,7 +578,7 @@ dlg:button {
 
         -- Only assign palette here if not grayscale.
         if not useGrayscale then
-            AseUtilities.setSpritePalette(hexesProfile, newSprite, 1)
+            AseUtilities.setPalette(hexesProfile, newSprite, 1)
         end
 
         -- Create frames.
@@ -632,7 +632,7 @@ dlg:button {
         -- Convert to grayscale will append palette.
         AseUtilities.changePixelFormat(colorModeInt)
         if useGrayscale then
-            AseUtilities.setSpritePalette(hexesProfile, newSprite, 1)
+            AseUtilities.setPalette(hexesProfile, newSprite, 1)
         end
 
         app.activeFrame = firstFrame

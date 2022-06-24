@@ -1707,7 +1707,7 @@ function Clr.unpremul(c)
     if c.a <= 0.0 then
         return Clr.new(0.0, 0.0, 0.0, 0.0)
     elseif c.a >= 1.0 then
-        return Clr.new(c.x, c.y, c.z, 1.0)
+        return Clr.new(c.r, c.g, c.b, 1.0)
     else
         local aInv = 1.0 / c.a
         return Clr.new(

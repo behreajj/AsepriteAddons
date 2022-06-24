@@ -151,7 +151,7 @@ dlg:button {
             -- they are converted by value anyway.
             local j = 0
             while j < lenPals do j = j + 1
-                AseUtilities.setSpritePalette(
+                AseUtilities.setPalette(
                     hexesSrgb, candidate, j)
             end
         end

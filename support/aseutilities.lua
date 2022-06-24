@@ -1595,10 +1595,9 @@ function AseUtilities.hexToAseColor(hex)
         (hex >> 0x18) & 0xff)
 end
 
----Initializes a sprite and layer.
----Sets palette to the colors provided,
----or, if nil, a default set. Colors should
----be hexadecimal integers.
+---Initializes a sprite and layer. Sets palette
+---to the colors provided, or, if nil, a default
+---set. Colors should be hexadecimal integers.
 ---@param wDefault number default width
 ---@param hDefault number default height
 ---@param layerName string layer name
@@ -1640,7 +1639,7 @@ function AseUtilities.initCanvas(
         sprite = Sprite(spec)
         app.activeSprite = sprite
         layer = sprite.layers[1]
-        AseUtilities.setSpritePalette(clrsVal, sprite, 1)
+        AseUtilities.setPalette(clrsVal, sprite, 1)
     end
 
     layer.name = layerName or "Layer"
@@ -1706,20 +1705,18 @@ function AseUtilities.parseRange(range)
     return framIdcs
 end
 
----Parses an Aseprite Tag to an array of
----frame indices. For example, a tag with
----a fromFrame of 8 and a toFrame of 10
----will return { 8, 9, 10 } if the tag has
----FORWARD animation direction; { 10, 9, 8 }
----for REVERSE; { 8, 9, 10, 9 }
----for PING_PONG. Ping-pong is upper-bounds
----exclusive so that renderers that loop will
----not draw the boundary frame twice.
+---Parses an Aseprite Tag to an array of frame
+---indices. For example, a tag with a fromFrame
+---of 8 and a toFrame of 10 will return 8, 9, 10
+---if the tag has FORWARD direction; 10, 9, 8 for
+---REVERSE; 8, 9, 10, 9 for PING_PONG. Ping-pong
+---is upper-bounds exclusive so that other
+---renderers will not draw the boundary twice.
 ---
----It is possible for a tag to contain
----frame indices that are out-of-bounds for
----the sprite that contains the tag. This
----function assumes the tag is valid.
+---It is possible for a tag to contain frame
+---indices that are out-of-bounds for the sprite
+---that contains the tag. This function assumes
+---the tag is valid.
 ---@param tag userdata Aseprite Tag
 ---@return table
 function AseUtilities.parseTag(tag)
@@ -1778,13 +1775,13 @@ end
 ---@return table
 function AseUtilities.parseTagsOverlap(tags)
     local tagsLen = #tags
-    local arrOuter = {}
+    local arr2 = {}
     local i = 0
     while i < tagsLen do
         i = i + 1
-        arrOuter[i] = AseUtilities.parseTag(tags[i])
+        arr2[i] = AseUtilities.parseTag(tags[i])
     end
-    return arrOuter
+    return arr2
 end
 
 ---Parses an array of Aseprite tags. Returns
@@ -1860,9 +1857,8 @@ function AseUtilities.rotateImage90(source)
 end
 
 ---Returns a copy of the source image that has
----been rotated 180 degrees.
----Also returns displaced coordinates for the
----top-left corner.
+---been rotated 180 degrees. Also returns
+---displaced coordinates for the top-left corner.
 ---@param source userdata source image
 ---@return userdata
 ---@return number
@@ -1935,12 +1931,13 @@ end
 ---@param arr table color array
 ---@param sprite userdata sprite
 ---@param paletteIndex number index
-function AseUtilities.setSpritePalette(arr, sprite, paletteIndex)
+function AseUtilities.setPalette(arr, sprite, paletteIndex)
     local palIdxVerif = paletteIndex or 1
     local palettes = sprite.palettes
     local lenPalettes = #palettes
     local lenHexArr = #arr
     palIdxVerif = 1 + (palIdxVerif - 1) % lenPalettes
+    -- if palIdxVerif > lenPalettes then palIdxVerif = 1 end
     local palette = palettes[palIdxVerif]
     if lenHexArr > 0 then
         app.transaction(function()

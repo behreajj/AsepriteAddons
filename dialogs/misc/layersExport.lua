@@ -351,15 +351,18 @@ dlg:button {
             end
         else
             local activeLayers = activeSprite.layers
+            local lenActiveLayers = #activeLayers
             if flatGroups then
-                for i = 1, #activeLayers, 1 do
+                local i = 0
+                while i < lenActiveLayers do i = i + 1
                     local activeLayer = activeLayers[i]
                     if activeLayer.isVisible then
                         insert(selectLayers, activeLayer)
                     end
                 end
             else
-                for i = 1, #activeLayers, 1 do
+                local i = 0
+                while i < lenActiveLayers do i = i + 1
                     appendVisChildren(activeLayers[i], selectLayers)
                 end
             end
@@ -387,7 +390,7 @@ dlg:button {
                 end
             else
                 for i = 1, lenIdxRangeSet, 1 do
-                    selectFrames[i] = allFrames[idxRangeSet[i]]
+                    selectFrames[i] = allFrames[ idxRangeSet[i] ]
                 end
             end
         else

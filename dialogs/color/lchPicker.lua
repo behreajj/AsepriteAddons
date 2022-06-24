@@ -166,9 +166,13 @@ local function updateShades(dialog, l, c, h, a)
 end
 
 local function updateHexCode(dialog, clrArr)
+    -- This handles multiple colors, just in case
+    -- you want to make a fore and back color, or
+    -- a cycling color history.
     local len = #clrArr
     local strArr = {}
-    for i = 1, len, 1 do
+    local i = 0
+    while i < len do i = i + 1
         strArr[i] = Clr.toHexWeb(clrArr[i])
     end
 

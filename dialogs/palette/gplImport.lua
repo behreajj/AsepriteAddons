@@ -1,13 +1,9 @@
 dofile("../../support/aseutilities.lua")
 
 local defaults = {
-    -- TODO: Follow paletteFromCel to apply the
-    -- import result to a specific palette with
-    -- a slider.
-    -- TODO: Test with the Aseprite flavor of
-    -- .pal file?
     uniquesOnly = false,
-    prependMask = true
+    prependMask = true,
+    paletteIndex = 1
 }
 
 local dlg = Dialog { title = "GPL Import" }
@@ -34,6 +30,16 @@ dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
     selected = defaults.prependMask,
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "paletteIndex",
+    label = "Palette:",
+    min = 1,
+    max = 96,
+    value = defaults.paletteIndex
 }
 
 dlg:newrow { always = false }
@@ -110,7 +116,7 @@ dlg:button {
 
                         local tokensLen = #tokens
                         if tokensLen > 2 then
-                            if aseAlphaFound > 0
+                            if (aseAlphaFound > 0 or palHeaderFound > 0)
                                 and tokensLen > 3 then
                                 local aPrs = tonumber(tokens[4], 10)
                                 if aPrs then a = aPrs end
@@ -169,8 +175,8 @@ dlg:button {
                 local spriteWidth = columns
                 if columns < 1 then
                     spriteWidth = math.max(8,
-                    math.ceil(math.sqrt(math.max(
-                        1, lenColors))))
+                        math.ceil(math.sqrt(math.max(
+                            1, lenColors))))
                 end
                 local spriteHeight = math.max(1,
                     math.ceil(lenColors / spriteWidth))
@@ -191,7 +197,8 @@ dlg:button {
 
             local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
-            AseUtilities.setSpritePalette(colors,activeSprite, 1)
+            local palIdx = args.paletteIndex
+            AseUtilities.setPalette(colors, activeSprite, palIdx)
             AseUtilities.changePixelFormat(oldMode)
             app.refresh()
         end

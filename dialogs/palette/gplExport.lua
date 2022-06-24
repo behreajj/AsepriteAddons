@@ -138,18 +138,16 @@ dlg:button {
             local selectedPalettes = {}
             local lenSum = 0
             if allPalettes then
-                for i = 1, lenPalettes, 1 do
-                    local palette = palettes[i]
-                    selectedPalettes[i] = palette
+                local h = 0
+                while h < lenPalettes do
+                    h = h + 1
+                    local palette = palettes[h]
+                    selectedPalettes[h] = palette
                     lenSum = lenSum + #palette
                 end
             else
-                local actFrIdx = 1
-                if app.activeFrame then
-                    actFrIdx = app.activeFrame.frameNumber
-                    if actFrIdx > lenPalettes then actFrIdx = 1 end
-                end
-                local palette = palettes[actFrIdx]
+                local palette = AseUtilities.getPalette(
+                    app.activeFrame, palettes)
                 selectedPalettes[1] = palette
                 lenSum = #palette
             end
@@ -159,11 +157,17 @@ dlg:button {
 
             local entryStrArr = {}
             local lenSelected = #selectedPalettes
-            for i = 1, lenSelected, 1 do
+            local i = 0
+            local k = 0
+            while i < lenSelected do
+                i = i + 1
                 local palette = selectedPalettes[i]
-                local lenPalette = #palette
-                for j = 1, lenPalette, 1 do
-                    local aseColor = palette:getColor(j - 1)
+                local lenPaletten1 = #palette - 1
+
+                local j = -1
+                while j < lenPaletten1 do
+                    j = j + 1
+                    local aseColor = palette:getColor(j)
                     local r = aseColor.red
                     local g = aseColor.green
                     local b = aseColor.blue
@@ -182,7 +186,8 @@ dlg:button {
                             r << 0x10 | g << 0x08 | b)
                     end
 
-                    table.insert(entryStrArr, entryStr)
+                    k = k + 1
+                    entryStrArr[k] = entryStr
                 end
             end
 
@@ -190,9 +195,8 @@ dlg:button {
 
             local filepath = args.filepath
             if filepath and #filepath > 0 then
-                -- app.fs.isFile doesn't apply to files
-                -- that have been typed in by the user,
-                -- but have not yet been created.
+                -- app.fs.isFile doesn't apply to files that have been
+                -- typed in by the user, but haven't been created.
                 local ext = app.fs.fileExtension(filepath)
                 if ext ~= "gpl" then
                     app.alert("Extension is not gpl.")
@@ -208,12 +212,12 @@ dlg:button {
                     end
                 end
             else
-                app.alert("Filepath is empty.")
+                app.alert { title = "Error", text = "Filepath is empty." }
             end
 
             app.alert { title = "Success", text = "File exported." }
         else
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
         end

@@ -169,10 +169,10 @@ dlg:slider {
     value = defaults.gBits,
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
-        onchange = function()
-            local lv = 2 ^ dlg.data.gBits
-            dlg:modify { id = "gLevels", value = lv }
-        end
+    onchange = function()
+        local lv = 2 ^ dlg.data.gBits
+        dlg:modify { id = "gLevels", value = lv }
+    end
 }
 
 dlg:slider {
@@ -184,10 +184,10 @@ dlg:slider {
     value = defaults.bBits,
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
-        onchange = function()
-            local lv = 2 ^ dlg.data.bBits
-            dlg:modify { id = "bLevels", value = lv }
-        end
+    onchange = function()
+        local lv = 2 ^ dlg.data.bBits
+        dlg:modify { id = "bLevels", value = lv }
+    end
 }
 
 dlg:slider {
@@ -199,10 +199,10 @@ dlg:slider {
     value = defaults.aBits,
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
-        onchange = function()
-            local lv = 2 ^ dlg.data.aBits
-            dlg:modify { id = "aLevels", value = lv }
-        end
+    onchange = function()
+        local lv = 2 ^ dlg.data.aBits
+        dlg:modify { id = "aLevels", value = lv }
+    end
 }
 
 dlg:newrow { always = false }
@@ -296,7 +296,7 @@ dlg:button {
         -- Early returns.
         local sprite = app.activeSprite
         if not sprite then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
             return
@@ -304,7 +304,7 @@ dlg:button {
 
         local srcLayer = app.activeLayer
         if not srcLayer then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active layer." }
             return
@@ -331,13 +331,15 @@ dlg:button {
             local appRange = app.range
             local rangeFrames = appRange.frames
             local rangeFramesLen = #rangeFrames
-            for i = 1, rangeFramesLen, 1 do
+            local i = 0
+            while i < rangeFramesLen do i = i + 1
                 frames[i] = rangeFrames[i]
             end
         else
             local activeFrames = sprite.frames
             local activeFramesLen = #activeFrames
-            for i = 1, activeFramesLen, 1 do
+            local i = 0
+            while i < activeFramesLen do i = i + 1
                 frames[i] = activeFrames[i]
             end
         end
@@ -445,8 +447,8 @@ dlg:button {
 
                     if copyToLayer then
                         local trgCel = sprite:newCel(
-                                    trgLayer, srcFrame,
-                                    trgImg, srcCel.position)
+                            trgLayer, srcFrame,
+                            trgImg, srcCel.position)
                         trgCel.opacity = srcCel.opacity
                     else
                         srcCel.image = trgImg

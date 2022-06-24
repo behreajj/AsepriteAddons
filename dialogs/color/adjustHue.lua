@@ -125,12 +125,13 @@ dlg:button {
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
             return
         end
 
+        -- TODO: Allow for active / all / range of frames?
         local srcCel = app.activeCel
         if not srcCel then
             app.alert {

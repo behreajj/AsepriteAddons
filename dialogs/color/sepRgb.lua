@@ -124,14 +124,14 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
             return
         end
 
         if activeSprite.colorMode ~= ColorMode.RGB then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "Only RGB color mode is supported." }
             return
@@ -139,14 +139,14 @@ dlg:button {
 
         local activeLayer = app.activeLayer
         if not activeLayer then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
             return
         end
 
         if activeLayer.isGroup then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "Group layers are not supported." }
             return
@@ -233,7 +233,8 @@ dlg:button {
 
         local framesLen = #frames
         app.transaction(function()
-            for i = 1, framesLen, 1 do
+            local i = 0
+            while i < framesLen do i = i + 1
                 local srcFrame = frames[i]
                 local srcCel = activeLayer:cel(srcFrame)
                 if srcCel then

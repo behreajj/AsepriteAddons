@@ -18,7 +18,7 @@ local function loadSprite(spriteFile)
         local rtLen = math.max(16,
             math.ceil(math.sqrt(math.max(1, colorsLen))))
         sprite = Sprite(rtLen, rtLen)
-        AseUtilities.setSpritePalette(spriteHexes, sprite, 1)
+        AseUtilities.setPalette(spriteHexes, sprite, 1)
 
         local layer = sprite.layers[1]
         local cel = layer.cels[1]
@@ -155,9 +155,10 @@ dlg:button {
             return
         end
 
-        -- Do not ask to open animation sequences?
-        --local oldOpSeqPref = app.preferences.open_file.open_sequence
-        --app.preferences.open_file.open_sequence = 2
+        -- Do not ask to open animation sequences.
+        -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L125
+        local oldOpSeqPref = app.preferences.open_file.open_sequence
+        app.preferences.open_file.open_sequence = 2
 
         -- Palettes need to be retrieved before a new sprite
         -- is created in case it auto-sets the app.activeSprite
@@ -246,7 +247,7 @@ dlg:button {
         end
 
         local lenPalettes = #openSprite.palettes
-        local setPalette = AseUtilities.setSpritePalette
+        local setPalette = AseUtilities.setPalette
         local i = 0
         while i < lenPalettes do i = i + 1
             setPalette(hexesProfile, openSprite, i)
@@ -294,6 +295,7 @@ dlg:button {
         --         xGrid, yGrid, wGrid, hGrid)
         -- end
 
+        app.preferences.open_file.open_sequence = oldOpSeqPref
         app.refresh()
         dlg:close()
     end

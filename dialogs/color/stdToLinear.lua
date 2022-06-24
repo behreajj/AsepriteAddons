@@ -4,8 +4,8 @@ dofile("../../support/aseutilities.lua")
 -- http://www.ericbrasseur.org/gamma.html
 
 local invPowPrev = {
-    Color(  0,   0,   0, 255),
-    Color( 98,  98,  98, 255),
+    Color(0, 0, 0, 255),
+    Color(98, 98, 98, 255),
     Color(136, 136, 136, 255),
     Color(164, 164, 164, 255),
     Color(187, 187, 187, 255),
@@ -16,10 +16,10 @@ local invPowPrev = {
 }
 
 local linearPrev = {
-    Color(  0,   0,   0, 255),
-    Color( 31,  31,  31, 255),
-    Color( 63,  63,  63, 255),
-    Color( 95,  95,  95, 255),
+    Color(0, 0, 0, 255),
+    Color(31, 31, 31, 255),
+    Color(63, 63, 63, 255),
+    Color(95, 95, 95, 255),
     Color(127, 127, 127, 255),
     Color(159, 159, 159, 255),
     Color(191, 191, 191, 255),
@@ -28,12 +28,12 @@ local linearPrev = {
 }
 
 local powerPrev = {
-    Color(  0,   0,   0, 255),
-    Color(  3,   3,   3, 255),
-    Color( 13,  13,  13, 255),
-    Color( 29,  29,  29, 255),
-    Color( 54,  54,  54, 255),
-    Color( 88,  88,  88, 255),
+    Color(0, 0, 0, 255),
+    Color(3, 3, 3, 255),
+    Color(13, 13, 13, 255),
+    Color(29, 29, 29, 255),
+    Color(54, 54, 54, 255),
+    Color(88, 88, 88, 255),
     Color(133, 133, 133, 255),
     Color(188, 188, 188, 255),
     Color(255, 255, 255, 255)
@@ -102,14 +102,14 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
             return
         end
 
         if activeSprite.colorMode ~= ColorMode.RGB then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "Only RGB color mode is supported." }
             return
@@ -140,7 +140,8 @@ dlg:button {
 
         local celsLen = #cels
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 if cel then
                     local srcImg = cel.image
@@ -170,7 +171,7 @@ dlg:button {
         end)
 
         app.refresh()
-end
+    end
 }
 
 dlg:button {

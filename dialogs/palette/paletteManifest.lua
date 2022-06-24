@@ -34,7 +34,7 @@ local defaults = {
     hdrBkgColor = Color(40, 40, 40, 235),
     rowColor0 = Color(24, 24, 24, 235),
     rowColor1 = Color(32, 32, 32, 235),
-    bkgColor =  Color(16, 16, 16, 255),
+    bkgColor = Color(16, 16, 16, 255),
     pullFocus = false
 }
 
@@ -637,7 +637,7 @@ dlg:button {
                 or (palDataLen % 2 == 1
                     and ((palDataLen - 1) % hdrRepeatRate == 0
                         or palDataLen % hdrRepeatRate == 0))
-                then
+            then
                 -- print(string.format("%d %% %d = %d",
                 -- palDataLen, hdrRepeatRate, palDataLen % hdrRepeatRate))
                 extraHeaders = extraHeaders - 1
@@ -654,8 +654,10 @@ dlg:button {
         -- Create footer to display profile name.
         local footImg = Image(entryWidth, entryHeight, ColorMode.RGB)
         local footText = "NONE"
-        if mnfstClrPrf.name and #mnfstClrPrf.name > 0 then
-            footText = string.upper(string.sub(mnfstClrPrf.name, 1, 12))
+        if mnfstClrPrf then
+            if mnfstClrPrf.name and #mnfstClrPrf.name > 0 then
+                footText = string.upper(string.sub(mnfstClrPrf.name, 1, 12))
+            end
         end
         footText = "PROFILE: " .. footText
         local footChars = strToChars(footText)
@@ -940,14 +942,12 @@ dlg:button {
                 -- Otherwise check to see if user wanted repeating headers.
                 -- Never place a header at the bottom.
                 if i == 1 or (hdrUseRepeat
-                        and i < palDataLen
-                        and (i - 1) % hdrRepeatRate == 0) then
+                    and i < palDataLen
+                    and (i - 1) % hdrRepeatRate == 0) then
                     local hdrRptLayer = manifestSprite:newLayer()
                     hdrRptLayer.name = "Header"
                     manifestSprite:newCel(
-                        hdrRptLayer,
-                        frameObj,
-                        hdrImg,
+                        hdrRptLayer, frameObj, hdrImg,
                         Point(spriteMargin, yCaret))
                     yCaret = yCaret - entryHeight
                 end
@@ -966,7 +966,7 @@ dlg:button {
         -- Create and set the manifest palette.
         -- Wait to do this until the end, so we have greater
         -- assurance that the manifestSprite is app.active.
-        AseUtilities.setSpritePalette(hexesProfile,
+        AseUtilities.setPalette(hexesProfile,
             manifestSprite, 1)
         app.refresh()
     end

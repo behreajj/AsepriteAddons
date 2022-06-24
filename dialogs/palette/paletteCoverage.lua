@@ -627,9 +627,9 @@ dlg:button {
 
         -- Create and set the coverage palette.
         -- Wait to do this until the end, so we have greater
-        -- assurance that the coverageSprite is app.active.
-        AseUtilities.setSpritePalette(uniqueHexesProfile,
-            coverSprite, 1)
+        -- assurance that the coverSprite is app.active.
+        AseUtilities.setPalette(
+            uniqueHexesProfile, coverSprite, 1)
         app.refresh()
     end
 }

@@ -44,7 +44,7 @@ function Complex:__mul(b)
 end
 
 function Complex:__pow(b)
-    return Complex.powComplex(self, b)
+    return Complex.pow(self, b)
 end
 
 function Complex:__sub(b)
@@ -218,7 +218,7 @@ function Complex.phase(z)
 end
 
 ---Converts a complex number to polar coordinates.
----Returns a table with 'r' and 'phi'.
+---Returns a table with keys 'r' and 'phi'.
 ---@param z table left operand
 ---@return table
 function Complex.polar(z)

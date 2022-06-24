@@ -702,6 +702,8 @@ dlg:button {
                 local frameIndex = packet.number
                 local image = packet.image
 
+                -- AseUtilities.getPalette not used here because
+                -- the frame object is not available.
                 local palIndex = frameIndex
                 if palIndex > lenPalettes then palIndex = 1 end
                 local activePalette = spritePalettes[palIndex]

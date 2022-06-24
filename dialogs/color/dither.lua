@@ -33,7 +33,17 @@ local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
     local fs_5_16 = 0.3125 * factor
     local fs_7_16 = 0.4375 * factor
 
-    for k = 1, pxLen, 1 do
+    local k = 0 while k < pxLen do
+        -- Calculate conversions from 1D to 2D indices.
+        local x = k % srcWidth
+        local y = k // srcWidth
+        local yp1 = y + 1
+        local xp1 = x + 1
+        local xp1InBounds = xp1 < srcWidth
+        local yp1InBounds = yp1 < srcHeight
+        local yp1w = yp1 * srcWidth
+
+        k = k + 1
         local srcHex = pxArray[k]
         local rSrc = srcHex & 0xff
         local gSrc = srcHex >> 0x08 & 0xff
@@ -44,22 +54,12 @@ local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
         local rTrg = trgHex & 0xff
         local gTrg = trgHex >> 0x08 & 0xff
         local bTrg = trgHex >> 0x10 & 0xff
-
         pxArray[k] = trgHex
 
         -- Find difference between palette color and source color.
         local rErr = rSrc - rTrg
         local gErr = gSrc - gTrg
         local bErr = bSrc - bTrg
-
-        -- Calculate conversions from 1D to 2D indices.
-        local x = (k - 1) % srcWidth
-        local y = (k - 1) // srcWidth
-        local yp1 = y + 1
-        local xp1 = x + 1
-        local xp1InBounds = xp1 < srcWidth
-        local yp1InBounds = yp1 < srcHeight
-        local yp1w = yp1 * srcWidth
 
         -- Find right neighbor.
         if xp1InBounds then
@@ -338,7 +338,7 @@ dlg:button {
 
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
             return
@@ -346,7 +346,7 @@ dlg:button {
 
         local srcCel = app.activeCel
         if not srcCel then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active cel." }
             return
@@ -444,6 +444,7 @@ dlg:button {
             local levels = args.levels or defaults.levels
             dmStr = string.format("Quantize.%03d", levels)
 
+            -- TODO: Support more complex quantization?
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
                 local srgb = Clr.new(
                     rSrc * 0.003921568627451,

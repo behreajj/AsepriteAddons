@@ -1197,21 +1197,21 @@ end
 ---@return table
 function Vec3.round(a)
     local cx = 0.0
-    if a.x < -0.0 then
+    if a.x <= -0.5 then
         cx = math.tointeger(a.x - 0.5)
     elseif a.x > 0.0 then
         cx = math.tointeger(a.x + 0.5)
     end
 
     local cy = 0.0
-    if a.y < -0.0 then
+    if a.y <= -0.5 then
         cy = math.tointeger(a.y - 0.5)
     elseif a.y > 0.0 then
         cy = math.tointeger(a.y + 0.5)
     end
 
     local cz = 0.0
-    if a.z < -0.0 then
+    if a.z <= -0.5 then
         cz = math.tointeger(a.z - 0.5)
     elseif a.z > 0.0 then
         cz = math.tointeger(a.z + 0.5)

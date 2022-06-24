@@ -366,15 +366,8 @@ dlg:button {
                 end
             end
         elseif colorMode == ColorMode.INDEXED then
-            local palettes = activeSprite.palettes
-            local lenPalettes = #palettes
-            -- TODO: Use AseUtilities getPalette?
-            local actFrIdx = 1
-            if app.activeFrame then
-                actFrIdx = app.activeFrame.frameNumber
-                if actFrIdx > lenPalettes then actFrIdx = 1 end
-            end
-            local srcPal = palettes[actFrIdx]
+            local srcPal = AseUtilities.getPalette(
+                app.activeFrame, activeSprite.palettes)
 
             local srcPalLen = #srcPal
             for elm in itr do
@@ -493,12 +486,12 @@ dlg:button {
             if colorMode == ColorMode.INDEXED then
                 -- Not sure how to get around this...
                 app.command.ChangePixelFormat { format = "rgb" }
-                AseUtilities.setSpritePalette(hexes, activeSprite, palIdx)
+                AseUtilities.setPalette(hexes, activeSprite, palIdx)
                 app.command.ChangePixelFormat { format = "indexed" }
             elseif colorMode == ColorMode.GRAY then
-                AseUtilities.setSpritePalette(hexes, activeSprite, palIdx)
+                AseUtilities.setPalette(hexes, activeSprite, palIdx)
             else
-                AseUtilities.setSpritePalette(hexes, activeSprite, palIdx)
+                AseUtilities.setPalette(hexes, activeSprite, palIdx)
             end
 
         end

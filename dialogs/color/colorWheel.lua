@@ -371,7 +371,8 @@ dlg:button {
             local center = size // 2
 
             local hexesSrgbLen = #hexesSrgb
-            for j = 1, hexesSrgbLen, 1 do
+            local j = 0
+            while j < hexesSrgbLen do j = j + 1
                 local hexSrgb = hexesSrgb[j]
                 local xi = center
                 local yi = center
@@ -417,9 +418,10 @@ dlg:button {
                 local plotImage = Image(plotSpec)
                 local plotPos = Point(xOff, yOff)
 
-                for k = 1, hexesSrgbLen, 1 do
+                local k = 0
+                while k < hexesSrgbLen do k = k + 1
                     local hexSrgb = hexesSrgb[k]
-                    if hexSrgb & 0xff000000 ~= 0 then
+                    if (hexSrgb & 0xff000000) ~= 0 then
                         local xi = xs[k] - xOff
                         local yi = ys[k] - yOff
                         local hexProfile = hexesProfile[k]
@@ -444,9 +446,9 @@ dlg:button {
             -- This needs to be done at the very end because
             -- prependMask modifies hexesProfile.
             Utilities.prependMask(hexesProfile)
-            AseUtilities.setSpritePalette(hexesProfile, sprite, 1)
+            AseUtilities.setPalette(hexesProfile, sprite, 1)
         else
-            AseUtilities.setSpritePalette(
+            AseUtilities.setPalette(
                 AseUtilities.DEFAULT_PAL_ARR, sprite, 1)
         end
 

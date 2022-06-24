@@ -50,6 +50,7 @@ dlg:button {
             return
         end
 
+        -- TODO: Allow for active / all / range of frames?
         local srcCel = app.activeCel
         if not srcCel then
             app.alert {

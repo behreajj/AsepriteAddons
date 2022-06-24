@@ -64,13 +64,14 @@ dlg:button {
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
-            local newSpec = ImageSpec{
+            local newSpec = ImageSpec {
                 width = app.preferences.new_file.width,
                 height = app.preferences.new_file.height,
                 colorMode = ColorMode.RGB,
                 transparentColor = 0 }
+            newSpec.colorSpace = ColorSpace { sRGB = true }
             activeSprite = Sprite(newSpec)
-            AseUtilities.setSpritePalette(
+            AseUtilities.setPalette(
                 AseUtilities.DEFAULT_PAL_ARR, activeSprite, 1)
         end
 

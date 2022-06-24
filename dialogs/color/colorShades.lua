@@ -296,7 +296,7 @@ dlg:button {
                 local xi = 0
                 local yi = size
                 local stroke = 0x0
-                if hexSrgb & 0xff000000 ~= 0 then
+                if (hexSrgb & 0xff000000) ~= 0 then
                     local lch = sRgbaToLch(fromHex(hexSrgb), 0.007072)
 
                     -- To [0.0, 1.0].
@@ -339,7 +339,7 @@ dlg:button {
 
                 for j = 1, hexesSrgbLen, 1 do
                     local hexSrgb = hexesSrgb[j]
-                    if hexSrgb & 0xff000000 ~= 0 then
+                    if (hexSrgb & 0xff000000) ~= 0 then
                         local xi = xs[j] - xOff
                         local yi = ys[j] - yOff
                         local hexProfile = hexesProfile[j]
@@ -353,20 +353,20 @@ dlg:button {
                 plotPalLayer.name = "Palette"
 
                 app.transaction(function()
-                AseUtilities.createCels(
-                    sprite,
-                    1, reqFrames,
-                    plotPalLayer.stackIndex, 1,
-                    plotImage, plotPos)
+                    AseUtilities.createCels(
+                        sprite,
+                        1, reqFrames,
+                        plotPalLayer.stackIndex, 1,
+                        plotImage, plotPos)
                 end)
             end
 
             -- This needs to be done at the very end because
             -- prependMask modifies hexesProfile.
             Utilities.prependMask(hexesProfile)
-            AseUtilities.setSpritePalette(hexesProfile, sprite, 1)
+            AseUtilities.setPalette(hexesProfile, sprite, 1)
         else
-            AseUtilities.setSpritePalette(
+            AseUtilities.setPalette(
                 AseUtilities.DEFAULT_PAL_ARR, sprite, 1)
         end
 

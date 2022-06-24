@@ -569,7 +569,7 @@ dlg:button {
         for k, v in pairs(swatchesDict) do
             pal[v] = k
         end
-        AseUtilities.setSpritePalette(pal, gradSprite, 1)
+        AseUtilities.setPalette(pal, gradSprite, 1)
 
         -- If colors were chosen by index, they will be
         -- blank when new sprite is created, even if
@@ -664,7 +664,6 @@ dlg:button {
         imgSpec.colorSpace = ColorSpace()
         local img = Image(imgSpec)
 
-        -- TODO: Add rotation functionality?
         local pxItr = img:pixels()
         for elm in pxItr do
 
@@ -716,7 +715,7 @@ dlg:button {
         end
 
         cel.image = img
-        AseUtilities.setSpritePalette(normalsPal, sprite, 1)
+        AseUtilities.setPalette(normalsPal, sprite, 1)
         app.refresh()
     end
 }

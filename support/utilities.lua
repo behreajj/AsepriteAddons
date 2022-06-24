@@ -184,7 +184,7 @@ function Utilities.dictToSortedSet(dict, comparator)
         osCursor = osCursor + 1
         orderedSet[osCursor] = k
     end
-    --sort takes care of nil, default comparator.
+    --sort handles nil comparator function.
     table.sort(orderedSet, comparator)
     return orderedSet
 end
@@ -1024,7 +1024,9 @@ end
 ---@param x number real number
 ---@return number
 function Utilities.round(x)
-    if x < -0.0 then
+    -- Negative check must be different than in Java or C#.
+    -- With < -0.0, small negative numbers round to -1.
+    if x <= -0.5 then
         return math.tointeger(x - 0.5)
     end
     if x > 0.0 then
