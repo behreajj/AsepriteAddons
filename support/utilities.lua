@@ -1024,15 +1024,14 @@ end
 ---@param x number real number
 ---@return number
 function Utilities.round(x)
-    -- Negative check must be different than in Java or C#.
-    -- With < -0.0, small negative numbers round to -1.
-    if x <= -0.5 then
-        return math.tointeger(x - 0.5)
+    local ix, fx = math.modf(x)
+    if ix <= 0.0 and fx <= -0.5 then
+        return ix - 1
+    elseif ix >= 0.0 and fx >= 0.5 then
+        return ix + 1
+    else
+        return 0
     end
-    if x > 0.0 then
-        return math.tointeger(x + 0.5)
-    end
-    return 0
 end
 
 ---Creates a new table from the source

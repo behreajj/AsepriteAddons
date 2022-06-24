@@ -431,11 +431,11 @@ end
 ---@param a table left operand
 ---@return table
 function Vec4.fract(a)
-    return Vec4.new(
-        a.x - math.tointeger(a.x),
-        a.y - math.tointeger(a.y),
-        a.z - math.tointeger(a.z),
-        a.w - math.tointeger(a.w))
+    local iw, fw = math.modf(a.w)
+    local iz, fz = math.modf(a.z)
+    local iy, fy = math.modf(a.y)
+    local ix, fx = math.modf(a.x)
+    return Vec4.new(fx, fy, fz, fw)
 end
 
 ---Creates a one-dimensional table of vectors
@@ -900,35 +900,23 @@ end
 ---@param a table left operand
 ---@return table
 function Vec4.round(a)
-    local cx = 0.0
-    if a.x <= -0.5 then
-        cx = math.tointeger(a.x - 0.5)
-    elseif a.x > 0.0 then
-        cx = math.tointeger(a.x + 0.5)
-    end
+    local iw, fw = math.modf(a.w)
+    if iw <= 0.0 and fw <= -0.5 then iw = iw - 1
+    elseif iw >= 0.0 and fw >= 0.5 then iw = iw + 1 end
 
-    local cy = 0.0
-    if a.y <= -0.5 then
-        cy = math.tointeger(a.y - 0.5)
-    elseif a.y > 0.0 then
-        cy = math.tointeger(a.y + 0.5)
-    end
+    local iz, fz = math.modf(a.z)
+    if iz <= 0.0 and fz <= -0.5 then iz = iz - 1
+    elseif iz >= 0.0 and fz >= 0.5 then iz = iz + 1 end
 
-    local cz = 0.0
-    if a.z <= -0.5 then
-        cz = math.tointeger(a.z - 0.5)
-    elseif a.z > 0.0 then
-        cz = math.tointeger(a.z + 0.5)
-    end
+    local iy, fy = math.modf(a.y)
+    if iy <= 0.0 and fy <= -0.5 then iy = iy - 1
+    elseif iy >= 0.0 and fy >= 0.5 then iy = iy + 1 end
 
-    local cw = 0.0
-    if a.w <= -0.5 then
-        cw = math.tointeger(a.w - 0.5)
-    elseif a.w > 0.0 then
-        cw = math.tointeger(a.w + 0.5)
-    end
+    local ix, fx = math.modf(a.x)
+    if ix <= 0.0 and fx <= -0.5 then ix = ix - 1
+    elseif ix >= 0.0 and fx >= 0.5 then ix = ix + 1 end
 
-    return Vec4.new(cx, cy, cz, cw)
+    return Vec4.new(ix, iy, iz, iw)
 end
 
 ---Scales a vector, left, by a number, right.
@@ -1057,11 +1045,11 @@ end
 ---@param a table vector
 ---@return table
 function Vec4.trunc(a)
-    return Vec4.new(
-        math.tointeger(a.x),
-        math.tointeger(a.y),
-        math.tointeger(a.z),
-        math.tointeger(a.w))
+    local iw, fw = math.modf(a.w)
+    local iz, fz = math.modf(a.z)
+    local iy, fy = math.modf(a.y)
+    local ix, fx = math.modf(a.x)
+    return Vec4.new(ix, iy, iz, iw)
 end
 
 ---Wraps a vector's components around a range

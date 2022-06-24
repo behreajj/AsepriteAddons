@@ -405,9 +405,9 @@ end
 ---@param a table left operand
 ---@return table
 function Vec2.fract(a)
-    return Vec2.new(
-        a.x - math.tointeger(a.x),
-        a.y - math.tointeger(a.y))
+    local iy, fy = math.modf(a.y)
+    local ix, fx = math.modf(a.x)
+    return Vec2.new(fx, fy)
 end
 
 ---Converts from polar to Cartesian coordinates.
@@ -896,21 +896,15 @@ end
 ---@param a table left operand
 ---@return table
 function Vec2.round(a)
-    local cx = 0.0
-    if a.x <= -0.5 then
-        cx = math.tointeger(a.x - 0.5)
-    elseif a.x > 0.0 then
-        cx = math.tointeger(a.x + 0.5)
-    end
+    local iy, fy = math.modf(a.y)
+    if iy <= 0.0 and fy <= -0.5 then iy = iy - 1
+    elseif iy >= 0.0 and fy >= 0.5 then iy = iy + 1 end
 
-    local cy = 0.0
-    if a.y <= -0.5 then
-        cy = math.tointeger(a.y - 0.5)
-    elseif a.y > 0.0 then
-        cy = math.tointeger(a.y + 0.5)
-    end
+    local ix, fx = math.modf(a.x)
+    if ix <= 0.0 and fx <= -0.5 then ix = ix - 1
+    elseif ix >= 0.0 and fx >= 0.5 then ix = ix + 1 end
 
-    return Vec2.new(cx, cy)
+    return Vec2.new(ix, iy)
 end
 
 ---Scales a vector, left, by a number, right.
@@ -1011,9 +1005,9 @@ end
 ---@param a table vector
 ---@return table
 function Vec2.trunc(a)
-    return Vec2.new(
-        math.tointeger(a.x),
-        math.tointeger(a.y))
+    local iy, fy = math.modf(a.y)
+    local ix, fx = math.modf(a.x)
+    return Vec2.new(ix, iy)
 end
 
 ---Wraps a vector's components around a range
