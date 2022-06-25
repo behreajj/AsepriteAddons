@@ -301,7 +301,7 @@ dlg:button {
         local origin = args.origin or defaults.origin
 
         -- Cache methods used in loops.
-        local trunc = math.tointeger
+        local floor = math.floor
         local strfmt = string.format
         local strgsub = string.gsub
         local concat = table.concat
@@ -726,7 +726,7 @@ dlg:button {
                     local jsonFrame = jsonFrames[j]
 
                     -- Some data needs validation / transformation.
-                    local frameDuration = trunc(jsonFrame.frameDuration * 1000)
+                    local frameDuration = floor(jsonFrame.frameDuration * 1000)
                     local frameNumber = jsonFrame.frameNumber - 1
                     local celData = jsonFrame.celData
                     if celData == nil or #celData < 1 then

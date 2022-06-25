@@ -184,6 +184,7 @@ dlg:button {
         local brush = Brush(args.mortarThick)
 
         if args.variance > 0 then
+            math.randomseed(os.time())
 
             -- Unpack arguments.
             local varyLight = args.varyLight
@@ -192,7 +193,7 @@ dlg:button {
 
             -- Find LCHA.
             local clr = AseUtilities.aseColorToClr(brickColor)
-            local lch = Clr.sRgbaToLch(clr)
+            local lch = Clr.sRgbaToLch(clr, 0.007072)
             local lightBrick = lch.l
             local chromaBrick = lch.c
             local hueBrick = lch.h
@@ -219,8 +220,7 @@ dlg:button {
             local clrToAseColor = AseUtilities.clrToAseColor
 
             app.transaction(function()
-                for i = 1, sepLen, 1 do
-
+                local i = 0 while i < sepLen do i = i + 1
                     local hVary = hueBrick
                     if varyHue then
                         hVary = (hueBrick + varNrm * rng() - vnHalf) % 1.0
@@ -240,7 +240,7 @@ dlg:button {
 
                     -- Don't use { hue, saturation, lightness, alpha }
                     -- Color constructor. There is a bug with the API.
-                    local varyClr = lchTosRgba(lVary, cVary, hVary, alpBrick)
+                    local varyClr = lchTosRgba(lVary, cVary, hVary, alpBrick, 0.00005)
                     local variety = clrToAseColor(varyClr)
 
                     drawMesh2(

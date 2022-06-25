@@ -137,7 +137,7 @@ dlg:button {
         local max = math.max
         local min = math.min
         local sqrt = math.sqrt
-        local trunc = math.tointeger
+        local floor = math.floor
 
         -- Choose edge wrapping method.
         local edgeType = args.edgeType or defaults.edgeType
@@ -304,7 +304,7 @@ dlg:button {
                         local alpha = alphaTable[grayIdx]
                         local lum = lumTable[grayIdx]
                         if alpha > 0 then
-                            local v = trunc(0.5 + lum * 255.0)
+                            local v = floor(0.5 + lum * 255.0)
                             local hex = alpha << 0x18 | v << 0x10 | v << 0x08 | v
                             elm(hex)
                         end
@@ -377,9 +377,9 @@ dlg:button {
                             nz = nz * zFlipNum
 
                             elm(alphaMask
-                                | (trunc(nz * 127.5 + 128.0) << 0x10)
-                                | (trunc(ny * 127.5 + 128.0) << 0x08)
-                                | trunc(nx * 127.5 + 128.0))
+                                | (floor(nz * 127.5 + 128.0) << 0x10)
+                                | (floor(ny * 127.5 + 128.0) << 0x08)
+                                | floor(nx * 127.5 + 128.0))
                         else
                             elm(alphaMask | hexDefault)
                         end

@@ -74,9 +74,9 @@ local function vecToColor(x, y, z)
     if sqMag > 0.0 then
         local invMag = 127.5 / math.sqrt(sqMag)
         return Color(
-            math.tointeger(x * invMag + 128.0),
-            math.tointeger(y * invMag + 128.0),
-            math.tointeger(z * invMag + 128.0),
+            math.floor(x * invMag + 128.0),
+            math.floor(y * invMag + 128.0),
+            math.floor(z * invMag + 128.0),
             255)
     else
         return Color(128, 128, 255, 255)
@@ -96,9 +96,9 @@ local function lerpToHex(
     local cy = aFac * ay + bFac * by
     local cz = aFac * az + bFac * bz
 
-    local r255 = math.tointeger(cx * 127.5 + 128.0)
-    local g255 = math.tointeger(cy * 127.5 + 128.0)
-    local b255 = math.tointeger(cz * 127.5 + 128.0)
+    local r255 = math.floor(cx * 127.5 + 128.0)
+    local g255 = math.floor(cy * 127.5 + 128.0)
+    local b255 = math.floor(cz * 127.5 + 128.0)
 
     return 0xff000000
         | (b255 << 0x10)
@@ -185,9 +185,9 @@ local function updateFromColor(dialog, clr)
         dialog:modify { id = "azimuth", value = a }
         dialog:modify { id = "inclination", value = i }
 
-        local r255 = math.tointeger(x * 127.5 + 128.0)
-        local g255 = math.tointeger(y * 127.5 + 128.0)
-        local b255 = math.tointeger(z * 127.5 + 128.0)
+        local r255 = math.floor(x * 127.5 + 128.0)
+        local g255 = math.floor(y * 127.5 + 128.0)
+        local b255 = math.floor(z * 127.5 + 128.0)
 
         dialog:modify {
             id = "normalColor",
@@ -602,7 +602,6 @@ dlg:button {
         local floor = math.floor
         local max = math.max
         local min = math.min
-        local trunc = math.tointeger
 
         -- Cache math constants.
         local pi = math.pi
@@ -706,9 +705,9 @@ dlg:button {
                 end
 
                 elm(0xff000000
-                    | (trunc(zn * 127.5 + 128.0) << 0x10)
-                    | (trunc(yn * 127.5 + 128.0) << 0x08)
-                    | trunc(xn * 127.5 + 128.0))
+                    | (floor(zn * 127.5 + 128.0) << 0x10)
+                    | (floor(yn * 127.5 + 128.0) << 0x08)
+                    |  floor(xn * 127.5 + 128.0))
             else
                 elm(hexDefault)
             end

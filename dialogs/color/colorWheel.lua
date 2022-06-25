@@ -184,7 +184,6 @@ dlg:button {
         local atan2 = math.atan
         local floor = math.floor
         local sqrt = math.sqrt
-        local trunc = math.tointeger
 
         local fromHex = Clr.fromHex
         local labTosRgba = Clr.labTosRgba
@@ -385,8 +384,8 @@ dlg:button {
                     local yNrm = 0.5 - lab.b * invMaxChroma
 
                     -- From [0.0, 1.0] to [0, size].
-                    xi = trunc(0.5 + xNrm * size)
-                    yi = trunc(0.5 + yNrm * size)
+                    xi = floor(0.5 + xNrm * size)
+                    yi = floor(0.5 + yNrm * size)
 
                     if xi < xMin then xMin = xi end
                     if xi > xMax then xMax = xi end

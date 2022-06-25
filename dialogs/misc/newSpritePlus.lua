@@ -67,7 +67,7 @@ local function rgbToGray(r8, g8, b8)
     -- HSL Lightness
     local mx = math.max(r8, g8, b8)
     local mn = math.min(r8, g8, b8)
-    return math.tointeger(0.5 + 0.5 * (mx + mn))
+    return math.floor(0.5 + 0.5 * (mx + mn))
 end
 
 local function updateGrayLinkFromRgb(dialog)
@@ -109,7 +109,7 @@ local function updateSizeFromAspect(dialog)
     local scale = args.aspectScale
 
     scale = math.abs(scale)
-    scale = math.tointeger(0.5 + scale)
+    scale = math.floor(0.5 + scale)
     scale = math.max(1, scale)
 
     aRatio, bRatio = Utilities.reduceRatio(aRatio, bRatio)
@@ -540,7 +540,7 @@ dlg:button {
             local aRatio = args.aRatio or defaults.aRatio
             local bRatio = args.bRatio or defaults.bRatio
             local scale = args.aspectScale or defaults.aspectScale
-            scale = math.max(1, math.tointeger(0.5 + math.abs(scale)))
+            scale = math.max(1, math.floor(0.5 + math.abs(scale)))
             aRatio, bRatio = Utilities.reduceRatio(aRatio, bRatio)
             spriteWidth = aRatio * scale
             spriteHeight = bRatio * scale

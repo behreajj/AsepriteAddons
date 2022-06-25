@@ -405,8 +405,8 @@ end
 ---@param a table left operand
 ---@return table
 function Vec2.fract(a)
-    local iy, fy = math.modf(a.y)
-    local ix, fx = math.modf(a.x)
+    local _, fy = math.modf(a.y)
+    local _, fx = math.modf(a.x)
     return Vec2.new(fx, fy)
 end
 
@@ -781,6 +781,7 @@ end
 ---@param ub table upper bound
 ---@return table
 function Vec2.randomCartesianInternal(lb, ub)
+    math.randomseed(os.time())
     local rx = math.random()
     local ry = math.random()
 
@@ -839,7 +840,8 @@ end
 ---@param radians number angle
 ---@return table
 function Vec2.rotateX(a, radians)
-    return Vec2.rotateXInternal(a, math.cos(radians))
+    local cr = math.cos(radians)
+    return Vec2.rotateXInternal(a, cr)
 end
 
 ---Rotates a vector by the cosine of an angle.
@@ -857,7 +859,8 @@ end
 ---@param radians number angle
 ---@return table
 function Vec2.rotateY(a, radians)
-    return Vec2.rotateYInternal(a, math.cos(radians))
+    local cr = math.cos(radians)
+    return Vec2.rotateYInternal(a, cr)
 end
 
 ---Rotates a vector by the cosine of an angle.
@@ -1005,8 +1008,8 @@ end
 ---@param a table vector
 ---@return table
 function Vec2.trunc(a)
-    local iy, fy = math.modf(a.y)
-    local ix, fx = math.modf(a.x)
+    local iy, _ = math.modf(a.y)
+    local ix, _ = math.modf(a.x)
     return Vec2.new(ix, iy)
 end
 

@@ -470,9 +470,9 @@ end
 ---@param a table left operand
 ---@return table
 function Vec3.fract(a)
-    local iz, fz = math.modf(a.z)
-    local iy, fy = math.modf(a.y)
-    local ix, fx = math.modf(a.x)
+    local _, fz = math.modf(a.z)
+    local _, fy = math.modf(a.y)
+    local _, fx = math.modf(a.x)
     return Vec3.new(fx, fy, fz)
 end
 
@@ -1001,6 +1001,7 @@ end
 ---@param ub table upper bound
 ---@return table
 function Vec3.randomCartesianInternal(lb, ub)
+    math.randomseed(os.time())
     local rx = math.random()
     local ry = math.random()
     local rz = math.random()
@@ -1331,9 +1332,9 @@ end
 ---@param a table vector
 ---@return table
 function Vec3.trunc(a)
-    local iz, fz = math.modf(a.z)
-    local iy, fy = math.modf(a.y)
-    local ix, fx = math.modf(a.x)
+    local iz, _ = math.modf(a.z)
+    local iy, _ = math.modf(a.y)
+    local ix, _ = math.modf(a.x)
     return Vec3.new(ix, iy, iz)
 end
 

@@ -140,8 +140,8 @@ function Clr.bitEqAlpha(a, b)
     local aa = a.a
     if aa < 0.0 then aa = 0.0 elseif aa > 1.0 then aa = 1.0 end
     if ba < 0.0 then ba = 0.0 elseif ba > 1.0 then ba = 1.0 end
-    return math.tointeger(0.5 + aa * 0xff)
-        == math.tointeger(0.5 + ba * 0xff)
+    return math.floor(aa * 0xff + 0.5)
+        == math.floor(ba * 0xff + 0.5)
 end
 
 ---Evaluates whether two colors have equal red,
@@ -159,8 +159,8 @@ function Clr.bitEqRgb(a, b)
     local ab = a.b
     if ab < 0.0 then ab = 0.0 elseif ab > 1.0 then ab = 1.0 end
     if bb < 0.0 then bb = 0.0 elseif bb > 1.0 then bb = 1.0 end
-    if math.tointeger(0.5 + ab * 0xff)
-        ~= math.tointeger(0.5 + bb * 0xff) then
+    if math.floor(ab * 0xff + 0.5)
+        ~= math.floor(bb * 0xff + 0.5) then
         return false
     end
 
@@ -169,8 +169,8 @@ function Clr.bitEqRgb(a, b)
     local ag = a.g
     if ag < 0.0 then ag = 0.0 elseif ag > 1.0 then ag = 1.0 end
     if bg < 0.0 then bg = 0.0 elseif bg > 1.0 then bg = 1.0 end
-    if math.tointeger(0.5 + ag * 0xff)
-        ~= math.tointeger(0.5 + bg * 0xff) then
+    if math.floor(ag * 0xff + 0.5)
+        ~= math.floor(bg * 0xff + 0.5) then
         return false
     end
 
@@ -179,8 +179,8 @@ function Clr.bitEqRgb(a, b)
     local ar = a.r
     if ar < 0.0 then ar = 0.0 elseif ar > 1.0 then ar = 1.0 end
     if br < 0.0 then br = 0.0 elseif br > 1.0 then br = 1.0 end
-    if math.tointeger(0.5 + ar * 0xff)
-        ~= math.tointeger(0.5 + br * 0xff) then
+    if math.floor(ar * 0xff + 0.5)
+        ~= math.floor(br * 0xff + 0.5) then
         return false
     end
 
@@ -604,7 +604,7 @@ function Clr.hsvaTosRgba(hue, sat, val, alpha)
     local h = hue or 0.0
     h = h % 1.0
     h = 6.0 * h
-    local sector = math.tointeger(h)
+    local sector = math.floor(h)
 
     local tint1 = v * (1.0 - s)
     local tint2 = v * (1.0 - s * (h - sector))
@@ -1329,10 +1329,10 @@ function Clr.quantizeInternal(
     aLevels, aDelta)
 
     return Clr.new(
-        rDelta * math.floor(0.5 + c.r * rLevels),
-        gDelta * math.floor(0.5 + c.g * gLevels),
-        bDelta * math.floor(0.5 + c.b * bLevels),
-        aDelta * math.floor(0.5 + c.a * aLevels))
+        rDelta * math.floor(c.r * rLevels + 0.5),
+        gDelta * math.floor(c.g * gLevels + 0.5),
+        bDelta * math.floor(c.b * bLevels + 0.5),
+        aDelta * math.floor(c.a * aLevels + 0.5))
 end
 
 ---Creates a random color in CIE LAB space,
@@ -1361,6 +1361,7 @@ function Clr.random(
     local alphaMin = trns or 1.0
     local alphaMax = opaque or 1.0
 
+    math.randomseed(os.time())
     local lt = math.random()
     local at = math.random()
     local bt = math.random()
@@ -1661,10 +1662,10 @@ end
 ---@param c table color
 ---@return number
 function Clr.toHexUnchecked(c)
-    return math.tointeger(0.5 + c.a * 0xff) << 0x18
-        | math.tointeger(0.5 + c.b * 0xff) << 0x10
-        | math.tointeger(0.5 + c.g * 0xff) << 0x08
-        | math.tointeger(0.5 + c.r * 0xff)
+    return math.floor(c.a * 0xff + 0.5) << 0x18
+        | math.floor(c.b * 0xff + 0.5) << 0x10
+        | math.floor(c.g * 0xff + 0.5) << 0x08
+        | math.floor(c.r * 0xff + 0.5)
 end
 
 ---Converts from a color to a web-friendly hexadecimal
@@ -1684,9 +1685,9 @@ end
 ---@return string
 function Clr.toHexWebUnchecked(c)
     return string.format("%06X",
-        math.tointeger(0.5 + c.r * 0xff) << 0x10
-        | math.tointeger(0.5 + c.g * 0xff) << 0x08
-        | math.tointeger(0.5 + c.b * 0xff))
+        math.floor(c.r * 0xff + 0.5) << 0x10
+        | math.floor(c.g * 0xff + 0.5) << 0x08
+        | math.floor(c.b * 0xff + 0.5))
 end
 
 ---Returns a JSON string of a color.

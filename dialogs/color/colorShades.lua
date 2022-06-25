@@ -153,7 +153,7 @@ dlg:button {
         local args = dlg.data
 
         -- Cache methods
-        local trunc = math.tointeger
+        local floor = math.floor
         local lchTosRgba = Clr.lchTosRgba
         local sRgbaToLch = Clr.sRgbaToLch
         local fromHex = Clr.fromHex
@@ -304,8 +304,8 @@ dlg:button {
                     local yNrm = 1.0 - (lch.l * invMaxLight)
 
                     -- From [0.0, 1.0] to [0, size].
-                    xi = trunc(0.5 + xNrm * size)
-                    yi = trunc(0.5 + yNrm * size)
+                    xi = floor(0.5 + xNrm * size)
+                    yi = floor(0.5 + yNrm * size)
 
                     if xi < xMin then xMin = xi end
                     if xi > xMax then xMax = xi end

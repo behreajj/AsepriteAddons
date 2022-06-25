@@ -221,7 +221,7 @@ dlg:button {
                 local dtb = args.dotClr.blue
                 for j = dotCount, 1, -1 do
                     local jFac = j / dotCount
-                    local alpha = math.tointeger(0.5 + jFac * 255.0)
+                    local alpha = math.floor(0.5 + jFac * 255.0)
                     local animBrsh = Brush{ size = 3 + j }
                     local animClr = Color(dtr, dtg, dtb, alpha)
                     table.insert(animBrushes, animBrsh)

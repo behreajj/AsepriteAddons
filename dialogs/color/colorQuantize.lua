@@ -365,7 +365,7 @@ dlg:button {
         end
 
         local one255 = 1.0 / 255
-        local trunc = math.tointeger
+        local floor = math.floor
 
         local rDelta = 0.0
         local gDelta = 0.0
@@ -425,10 +425,10 @@ dlg:button {
                         local gQtz = quantize(g * one255, gLevels, gDelta)
                         local rQtz = quantize(r * one255, rLevels, rDelta)
 
-                        aQtz = trunc(0.5 + 255.0 * aQtz)
-                        bQtz = trunc(0.5 + 255.0 * bQtz)
-                        gQtz = trunc(0.5 + 255.0 * gQtz)
-                        rQtz = trunc(0.5 + 255.0 * rQtz)
+                        aQtz = floor(aQtz * 0xff + 0.5)
+                        bQtz = floor(bQtz * 0xff + 0.5)
+                        gQtz = floor(gQtz * 0xff + 0.5)
+                        rQtz = floor(rQtz * 0xff + 0.5)
 
                         local hex = (aQtz << 0x18)
                             | (bQtz << 0x10)

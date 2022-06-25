@@ -431,10 +431,10 @@ end
 ---@param a table left operand
 ---@return table
 function Vec4.fract(a)
-    local iw, fw = math.modf(a.w)
-    local iz, fz = math.modf(a.z)
-    local iy, fy = math.modf(a.y)
-    local ix, fx = math.modf(a.x)
+    local _, fw = math.modf(a.w)
+    local _, fz = math.modf(a.z)
+    local _, fy = math.modf(a.y)
+    local _, fx = math.modf(a.x)
     return Vec4.new(fx, fy, fz, fw)
 end
 
@@ -821,6 +821,7 @@ end
 ---@param ub table upper bound
 ---@return table
 function Vec4.randomCartesianInternal(lb, ub)
+    math.randomseed(os.time())
     local rx = math.random()
     local ry = math.random()
     local rz = math.random()
@@ -1045,10 +1046,10 @@ end
 ---@param a table vector
 ---@return table
 function Vec4.trunc(a)
-    local iw, fw = math.modf(a.w)
-    local iz, fz = math.modf(a.z)
-    local iy, fy = math.modf(a.y)
-    local ix, fx = math.modf(a.x)
+    local iw, _ = math.modf(a.w)
+    local iz, _ = math.modf(a.z)
+    local iy, _ = math.modf(a.y)
+    local ix, _ = math.modf(a.x)
     return Vec4.new(ix, iy, iz, iw)
 end
 

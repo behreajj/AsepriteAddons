@@ -430,7 +430,7 @@ local function updateDuration()
     end
 
     local durStr = string.format("%d ms",
-        math.tointeger(0.5 + durSum * 1000.0))
+        math.floor(0.5 + durSum * 1000.0))
     dlg:modify { id = "durationLabel", text = durStr }
     dlg:modify { id = "durationLabel", visible = lenFrames > 1 }
 end

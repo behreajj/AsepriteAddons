@@ -854,7 +854,7 @@ dlg:button {
                             local image = packet2.image
                             local innerStr = string.format(
                                 frameIndvFmt,
-                                math.tointeger(packet2.duration * 1000),
+                                math.floor(packet2.duration * 1000),
                                 packet2.number - 1,
                                 packet2.x, packet2.y,
                                 packet2.xSheet, packet2.ySheet,
@@ -877,7 +877,7 @@ dlg:button {
                         local image = packet.image
                         local packetStr = string.format(
                             frameIndvFmt,
-                            math.tointeger(packet.duration * 1000),
+                            math.floor(packet.duration * 1000),
                             packet.number - 1,
                             packet.x, packet.y,
                             packet.xSheet, packet.ySheet,
@@ -897,7 +897,7 @@ dlg:button {
                     local packetStr = string.format(
                         packetStrFmt,
                         packet.filename,
-                        math.tointeger(packet.duration * 1000),
+                        math.floor(packet.duration * 1000),
                         packet.number - 1,
                         packet.x, packet.y,
                         image.width, image.height)

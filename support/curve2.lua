@@ -293,7 +293,7 @@ function Curve2.eval(curve, step)
     if curve.closedLoop then
 
         tScaled = (t % 1.0) * knotLength
-        i = math.tointeger(tScaled)
+        i = math.floor(tScaled)
         a = knots[1 + (i % knotLength)]
         b = knots[1 + ((i + 1) % knotLength)]
 
@@ -308,7 +308,7 @@ function Curve2.eval(curve, step)
         end
 
         tScaled = t * (knotLength - 1)
-        i = math.tointeger(tScaled)
+        i = math.floor(tScaled)
         a = knots[1 + i]
         b = knots[2 + i]
 

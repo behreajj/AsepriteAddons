@@ -184,7 +184,7 @@ function Utilities.dictToSortedSet(dict, comparator)
         osCursor = osCursor + 1
         orderedSet[osCursor] = k
     end
-    --sort handles nil comparator function.
+    -- Sort handles nil comparator function.
     table.sort(orderedSet, comparator)
     return orderedSet
 end
@@ -405,7 +405,7 @@ end
 
 ---Breaks a long string into multiple lines according
 ---to a character-per-line limit. The limit should be
----in the range[16, 120]. The delimiter inserted into
+---in the range 16 to 120. The delimiter inserted into
 ---a string is '\n'.
 ---@param srcStr string source string
 ---@param limit number character limit per line
@@ -426,7 +426,7 @@ end
 
 ---Breaks a long string into multiple lines according
 ---to a character-per-line limit. The limit should be
----in the range[16, 120]. Tries to find the last space
+---in the range 16 to 120. Tries to find the last space
 ---to use as a breaking point; breaks by character for
 ---low limits or long words. Returns a table of tables;
 ---each inner table contains characters representing a
@@ -535,8 +535,8 @@ function Utilities.mulMat3Curve2(a, b)
     local kns = b.knots
     local knsLen = #kns
     local i = 0
+    -- Knot is changed in place.
     while i < knsLen do
-        -- Knot is changed in place.
         i = i + 1
         Utilities.mulMat3Knot2(a, kns[i])
     end
@@ -597,8 +597,8 @@ function Utilities.mulMat4Curve3(a, b)
     local kns = b.knots
     local knsLen = #kns
     local i = 0
+    -- Knot is changed in place.
     while i < knsLen do
-        -- Knot is changed in place.
         i = i + 1
         Utilities.mulMat4Knot3(a, kns[i])
     end
@@ -709,19 +709,17 @@ function Utilities.nextPowerOf2(x)
     return 0
 end
 
----Parses a string of positive integers
----separated by a comma. The integers may
----either be individual or ranges connected
----by a hyphen. For example, "1,5,10-15,7".
+---Parses a string of positive integers separated
+---by a comma. The integers may either be individual
+---or ranges connected by a hyphen. For example,
+---"1,5,10-15,7".
 ---
----Supplying the frame count ensures the range
----is not out-of-bounds. Defaults to an
----arbitrarily large number.
+---Supplying the frame count ensures the range is not
+---out of bounds. Defaults to an arbitrary large number.
 ---
----Returns an array of arrays. It is possible
----for inner arrays to hold duplicate frame
----indices,  as the user may intend for the
----same frame to appear in multiple groups.
+---Returns an array of arrays. Inner arrays can hold
+---duplicate frame indices,  as the user may intend for
+---the same frame to appear in multiple groups.
 ---@param s string range string
 ---@param frameCount number number of frames
 ---@return table
@@ -785,14 +783,13 @@ function Utilities.parseRangeStringOverlap(s, frameCount)
     return arrOuter
 end
 
----Parses a string of positive integers
----separated by a comma. The integers may
----either be individual or ranges connected
----by a hyphen. For example, "1,5,10-15,7".
+---Parses a string of positive integers separated
+---by a comma. The integers may either be individual
+---or ranges connected by a hyphen. For example,
+---"1,5,10-15,7".
 ---
----Supplying the frame count ensures the range
----is not out-of-bounds. Defaults to an
----arbitrarily large number.
+---Supplying the frame count ensures the range is not
+---out of bounds. Defaults to an arbitrary large number.
 ---
 ---Returns an ordered set of integers.
 ---@param s string range string
@@ -806,11 +803,16 @@ function Utilities.parseRangeStringUnique(s, frameCount)
     -- Use dummy true, not some idx scheme,
     -- because natural ordering is preferred.
     local dict = {}
-    for i = 1, #arr2, 1 do
+    local lenArr2 = #arr2
+    local i = 0
+    while i < lenArr2 do
+        i = i + 1
         local arr1 = arr2[i]
-        for j = 1, #arr1, 1 do
-            local frame = arr1[j]
-            dict[frame] = true
+        local lenArr1 = #arr1
+        local j = 0
+        while j < lenArr1 do
+            j = j + 1
+            dict[arr1[j]] = true
         end
     end
 
@@ -1024,6 +1026,7 @@ end
 ---@param x number real number
 ---@return number
 function Utilities.round(x)
+    -- math.tointeger(-0.00001) = -1, so modf must be used.
     local ix, fx = math.modf(x)
     if ix <= 0.0 and fx <= -0.5 then
         return ix - 1
@@ -1043,11 +1046,21 @@ function Utilities.shuffle(t)
     math.randomseed(os.time())
     local rng = math.random
     local s = {}
-    for i = 1, #t do s[i] = t[i] end
-    for i = #t, 2, -1 do
+
+    local len = #t
+    local h = 0
+    while h < len do
+        h = h + 1
+        s[h] = t[h]
+    end
+
+    local i = len + 1
+    while i > 2 do
+        i = i - 1
         local j = rng(i)
         s[i], s[j] = s[j], s[i]
     end
+
     return s
 end
 

@@ -327,8 +327,8 @@ dlg:button {
                 local w = celImg.width
                 local h = celImg.height
                 cel.position = Point(
-                    math.tointeger(0.5 + xCtrSprite - w * 0.5),
-                    math.tointeger(0.5 + yCtrSprite - h * 0.5))
+                    math.floor(0.5 + xCtrSprite - w * 0.5),
+                    math.floor(0.5 + yCtrSprite - h * 0.5))
             end
         end)
 
@@ -697,7 +697,7 @@ dlg:button {
         local abs = math.abs
         local max = math.max
         local min = math.min
-        local trunc = math.tointeger
+        local floor = math.floor
 
         local args = dlg.data
         local target = args.target or defaults.target
@@ -711,8 +711,8 @@ dlg:button {
         -- Validate target dimensions.
         wPrc = max(0.000001, abs(wPrc))
         hPrc = max(0.000001, abs(hPrc))
-        wPxl = trunc(0.5 + max(1, abs(wPxl)))
-        hPxl = trunc(0.5 + max(1, abs(hPxl)))
+        wPxl = floor(0.5 + max(1, abs(wPxl)))
+        hPxl = floor(0.5 + max(1, abs(hPxl)))
         wPrc = wPrc * 0.01
         hPrc = hPrc * 0.01
 
@@ -745,8 +745,8 @@ dlg:button {
                 local dw = wPxl
                 local dh = hPxl
                 if usePercent then
-                    dw = max(1, trunc(0.5 + sw * wPrc))
-                    dh = max(1, trunc(0.5 + sh * hPrc))
+                    dw = max(1, floor(0.5 + sw * wPrc))
+                    dh = max(1, floor(0.5 + sh * hPrc))
                 end
 
                 if sw ~= dw or sh ~= dh then
@@ -797,12 +797,12 @@ dlg:button {
                             local j = n % kernelSize -- krn col index
 
                             -- Row.
-                            local y = trunc(ty * g)
+                            local y = floor(ty * g)
                             local dy = ty * g - y
                             local dysq = dy * dy
 
                             -- Column.
-                            local x = trunc(tx * h)
+                            local x = floor(tx * h)
                             local dx = tx * h - x
                             local dxsq = dx * dx
 
@@ -832,7 +832,7 @@ dlg:button {
                                 - 0.5 * d2 + d36
 
                             kernel[1 + j] = max(0, min(255,
-                                a0 + trunc(a1 * dx
+                                a0 + floor(a1 * dx
                                     + a2 * dxsq
                                     + a3 * (dx * dxsq))))
 
@@ -848,7 +848,7 @@ dlg:button {
                                 - 0.5 * d2 + d36
 
                             clrs[1 + (k // kernelSize)] = max(0, min(255,
-                                a0 + trunc(a1 * dy
+                                a0 + floor(a1 * dy
                                     + a2 * dysq
                                     + a3 * (dy * dysq))))
                         end
@@ -867,8 +867,8 @@ dlg:button {
                         local idx = -1
                         for elm in trgpxitr do
                             idx = idx + 1
-                            local nx = trunc((idx % dw) * tx)
-                            local ny = trunc((idx // dw) * ty)
+                            local nx = floor((idx % dw) * tx)
+                            local ny = floor((idx // dw) * ty)
                             elm(srcpx[1 + ny * sw + nx])
                         end
                     end

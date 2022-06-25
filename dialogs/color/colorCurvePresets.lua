@@ -387,8 +387,8 @@ dlg:button {
             local y, xp = func(x)
             if xp then x = xp end
             local point = Point(
-                math.tointeger(0.5 + 255.0 * x),
-                math.tointeger(0.5 + 255.0 * y))
+                math.floor(x * 0xff + 0.5),
+                math.floor(y * 0xff + 0.5))
             i = i + 1
             points[i] = point
         end

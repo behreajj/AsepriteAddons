@@ -366,7 +366,7 @@ dlg:button {
         -- Cache global functions used in for loops.
         local cos = math.cos
         local sin = math.sin
-        local trunc = math.tointeger
+        local floor = math.floor
         local linearToXyz = Clr.lRgbaToXyzInternal
         local xyzToLab = Clr.xyzToLab
         local rgbaToLab = Clr.sRgbaToLab
@@ -612,9 +612,9 @@ dlg:button {
 
                     drawCirc(
                         img,
-                        trunc(0.5 + screenPoint.x),
-                        trunc(0.5 + screenPoint.y),
-                        trunc(0.5 + scl),
+                        floor(0.5 + screenPoint.x),
+                        floor(0.5 + screenPoint.y),
+                        floor(0.5 + scl),
                         packet.color)
                 end
 

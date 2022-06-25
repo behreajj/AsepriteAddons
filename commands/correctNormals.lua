@@ -10,7 +10,6 @@ end
 local spriteWidth = activeSprite.width
 local spriteHeight = activeSprite.height
 local img = Image(spriteWidth, spriteHeight)
-local trunc = math.tointeger
 
 local activeFrame = app.activeFrame
     or activeSprite.frames[1]
@@ -42,9 +41,9 @@ for elm in pxItr do
             z = 0.0
         end
 
-        local rNew = trunc(x * 127.5 + 128.0)
-        local gNew = trunc(y * 127.5 + 128.0)
-        local bNew = trunc(z * 127.5 + 128.0)
+        local rNew = math.floor(x * 127.5 + 128.0)
+        local gNew = math.floor(y * 127.5 + 128.0)
+        local bNew = math.floor(z * 127.5 + 128.0)
 
         elm((a << 0x18)
             | (bNew << 0x10)

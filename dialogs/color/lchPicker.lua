@@ -196,17 +196,17 @@ local function updateWarning(dialog, clr)
 end
 
 local function setLch(dialog, lch, clr)
-    local trunc = math.tointeger
-    local chroma = trunc(0.5 + lch.c)
+    local round = Utilities.round
+    local chroma = round(lch.c)
 
     dialog:modify {
         id = "alpha",
-        value = trunc(0.5 + lch.a * 255.0)
+        value = round(lch.a * 255.0)
     }
 
     dialog:modify {
         id = "lightness",
-        value = trunc(0.5 + lch.l)
+        value = round(lch.l)
     }
 
     dialog:modify {
@@ -219,7 +219,7 @@ local function setLch(dialog, lch, clr)
     if chroma > 0 then
         dialog:modify {
             id = "hue",
-            value = trunc(0.5 + lch.h * 360.0)
+            value = round(lch.h * 360.0)
         }
     end
 

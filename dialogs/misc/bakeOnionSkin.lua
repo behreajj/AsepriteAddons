@@ -177,7 +177,7 @@ dlg:button {
         local abs = math.abs
         local max = math.max
         local min = math.min
-        local trunc = math.tointeger
+        local floor = math.floor
 
         -- Unpack arguments.
         local args = dlg.data
@@ -384,7 +384,7 @@ dlg:button {
                                 fadeAlpha = lerpFunc(
                                     minAlpha, maxAlpha,
                                     frameIdxShd, srcFrameIdx)
-                                fadeAlpha = trunc(0.5 + fadeAlpha)
+                                fadeAlpha = floor(0.5 + fadeAlpha)
                             end
 
                             local tint = neutHex

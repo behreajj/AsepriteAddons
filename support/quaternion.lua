@@ -472,6 +472,7 @@ end
 ---Creates a random quaternion.
 ---@return table
 function Quaternion.random()
+    math.randomseed(os.time())
     local t0 = math.random() * 6.2831853071796
     local t1 = math.random() * 6.2831853071796
     local r1 = math.random()

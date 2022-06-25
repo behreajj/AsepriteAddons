@@ -342,9 +342,9 @@ dlg:button {
         end
 
         -- Convert from percentage to pixel dimensions.
-        xOrigin = math.tointeger(
+        xOrigin = math.floor(
             0.5 + xOrigin * 0.01 * widthSprite)
-        yOrigin = math.tointeger(
+        yOrigin = math.floor(
             0.5 + yOrigin * 0.01 * heightSprite)
 
         -- Find the display width and center of a line.

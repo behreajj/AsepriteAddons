@@ -337,7 +337,6 @@ dlg:button {
         end
 
         -- Cache global functions to locals.
-        local trunc = math.tointeger
         local round = Utilities.round
         local strfmt = string.format
         local sRgbToLab = Clr.sRgbaToLab
@@ -447,11 +446,11 @@ dlg:button {
                     greenProfile255 = greenProfile255,
                     redProfile255 = redProfile255,
 
-                    l = trunc(0.5 + lab.l),
+                    l = round(lab.l),
                     a = round(lab.a),
                     b = round(lab.b),
-                    c = trunc(0.5 + lch.c),
-                    h = trunc(0.5 + lch.h * 360.0)
+                    c = round(lch.c),
+                    h = round(lch.h * 360.0)
                 }
 
                 palData[entryIdx] = palEntry

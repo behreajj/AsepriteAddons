@@ -160,9 +160,7 @@ function AseUtilities.aseColorToHex(clr, clrMode)
     elseif clrMode == ColorMode.GRAY then
         return clr.grayPixel
     elseif clrMode == ColorMode.INDEXED then
-        -- In older API versions, Color.index
-        -- returns a float, not an integer.
-        return math.tointeger(clr.index)
+        return clr.index
     end
     return 0
 end
@@ -585,10 +583,10 @@ function AseUtilities.clrToAseColor(clr)
     if a < 0.0 then a = 0.0 elseif a > 1.0 then a = 1.0 end
 
     return Color(
-        math.tointeger(0.5 + 255.0 * r),
-        math.tointeger(0.5 + 255.0 * g),
-        math.tointeger(0.5 + 255.0 * b),
-        math.tointeger(0.5 + 255.0 * a))
+        math.floor(r * 0xff + 0.5),
+        math.floor(g * 0xff + 0.5),
+        math.floor(b * 0xff + 0.5),
+        math.floor(a * 0xff + 0.5))
 end
 
 ---Creates new cels in a sprite. Prompts users to
@@ -1135,7 +1133,7 @@ function AseUtilities.drawGlyphNearest(
     local lenSrcn1 = gw * gh - 1
     local tx = gw / dw
     local ty = gh / dh
-    local trunc = math.tointeger
+    local floor = math.floor
     local blend = AseUtilities.blend
     local glMat = glyph.matrix
     local glDrop = glyph.drop
@@ -1146,8 +1144,8 @@ function AseUtilities.drawGlyphNearest(
         local xTrg = k % dw
         local yTrg = k // dw
 
-        local xSrc = trunc(xTrg * tx)
-        local ySrc = trunc(yTrg * ty)
+        local xSrc = floor(xTrg * tx)
+        local ySrc = floor(yTrg * ty)
         local idxSrc = ySrc * gw + xSrc
 
         local shift = lenSrcn1 - idxSrc
@@ -1565,14 +1563,14 @@ end
 ---@param count number swatch count
 ---@return table
 function AseUtilities.grayHexes(count)
-    local trunc = math.tointeger
+    local floor = math.floor
     local valCount = count or 255
     valCount = math.max(2, valCount)
     local toFac = 255.0 / (valCount - 1.0)
     local result = {}
     local i = 0
     while i < valCount do
-        local g = trunc(0.5 + i * toFac)
+        local g = floor(0.5 + i * toFac)
         i = i + 1
         result[i] = 0xff000000
             | g << 0x10 | g << 0x08 | g
