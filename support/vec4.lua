@@ -902,20 +902,20 @@ end
 ---@return table
 function Vec4.round(a)
     local iw, fw = math.modf(a.w)
-    if iw <= 0.0 and fw <= -0.5 then iw = iw - 1
-    elseif iw >= 0.0 and fw >= 0.5 then iw = iw + 1 end
+    if iw <= 0 and fw <= -0.5 then iw = iw - 1
+    elseif iw >= 0 and fw >= 0.5 then iw = iw + 1 end
 
     local iz, fz = math.modf(a.z)
-    if iz <= 0.0 and fz <= -0.5 then iz = iz - 1
-    elseif iz >= 0.0 and fz >= 0.5 then iz = iz + 1 end
+    if iz <= 0 and fz <= -0.5 then iz = iz - 1
+    elseif iz >= 0 and fz >= 0.5 then iz = iz + 1 end
 
     local iy, fy = math.modf(a.y)
-    if iy <= 0.0 and fy <= -0.5 then iy = iy - 1
-    elseif iy >= 0.0 and fy >= 0.5 then iy = iy + 1 end
+    if iy <= 0 and fy <= -0.5 then iy = iy - 1
+    elseif iy >= 0 and fy >= 0.5 then iy = iy + 1 end
 
     local ix, fx = math.modf(a.x)
-    if ix <= 0.0 and fx <= -0.5 then ix = ix - 1
-    elseif ix >= 0.0 and fx >= 0.5 then ix = ix + 1 end
+    if ix <= 0 and fx <= -0.5 then ix = ix - 1
+    elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
 
     return Vec4.new(ix, iy, iz, iw)
 end

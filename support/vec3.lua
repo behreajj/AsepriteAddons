@@ -1198,16 +1198,16 @@ end
 ---@return table
 function Vec3.round(a)
     local iz, fz = math.modf(a.z)
-    if iz <= 0.0 and fz <= -0.5 then iz = iz - 1
-    elseif iz >= 0.0 and fz >= 0.5 then iz = iz + 1 end
+    if iz <= 0 and fz <= -0.5 then iz = iz - 1
+    elseif iz >= 0 and fz >= 0.5 then iz = iz + 1 end
 
     local iy, fy = math.modf(a.y)
-    if iy <= 0.0 and fy <= -0.5 then iy = iy - 1
-    elseif iy >= 0.0 and fy >= 0.5 then iy = iy + 1 end
+    if iy <= 0 and fy <= -0.5 then iy = iy - 1
+    elseif iy >= 0 and fy >= 0.5 then iy = iy + 1 end
 
     local ix, fx = math.modf(a.x)
-    if ix <= 0.0 and fx <= -0.5 then ix = ix - 1
-    elseif ix >= 0.0 and fx >= 0.5 then ix = ix + 1 end
+    if ix <= 0 and fx <= -0.5 then ix = ix - 1
+    elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
 
     return Vec3.new(ix, iy, iz)
 end

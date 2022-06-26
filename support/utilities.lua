@@ -1028,9 +1028,9 @@ end
 function Utilities.round(x)
     -- math.tointeger(-0.00001) = -1, so modf must be used.
     local ix, fx = math.modf(x)
-    if ix <= 0.0 and fx <= -0.5 then
+    if ix <= 0 and fx <= -0.5 then
         return ix - 1
-    elseif ix >= 0.0 and fx >= 0.5 then
+    elseif ix >= 0 and fx >= 0.5 then
         return ix + 1
     else
         return ix

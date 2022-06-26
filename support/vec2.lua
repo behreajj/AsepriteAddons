@@ -900,12 +900,12 @@ end
 ---@return table
 function Vec2.round(a)
     local iy, fy = math.modf(a.y)
-    if iy <= 0.0 and fy <= -0.5 then iy = iy - 1
-    elseif iy >= 0.0 and fy >= 0.5 then iy = iy + 1 end
+    if iy <= 0 and fy <= -0.5 then iy = iy - 1
+    elseif iy >= 0 and fy >= 0.5 then iy = iy + 1 end
 
     local ix, fx = math.modf(a.x)
-    if ix <= 0.0 and fx <= -0.5 then ix = ix - 1
-    elseif ix >= 0.0 and fx >= 0.5 then ix = ix + 1 end
+    if ix <= 0 and fx <= -0.5 then ix = ix - 1
+    elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
 
     return Vec2.new(ix, iy)
 end
