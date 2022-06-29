@@ -567,6 +567,7 @@ dlg:button {
 
         end
 
+        -- TODO: Support tile maps?
         -- Cache pixels from iterator to an array.
         local srcImg = srcCel.image
         local srcPxItr = srcImg:pixels()

@@ -200,7 +200,7 @@ dlg:button {
         if not srcLayer then
             app.alert{
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active layer." }
             return
         end
 
@@ -390,7 +390,8 @@ dlg:button {
                 text = {
                     string.format("Start: %d", startTime),
                     string.format("End: %d", endTime),
-                    string.format("Elapsed: %d", elapsed)
+                    string.format("Elapsed: %d", elapsed),
+                    string.format("Colors: %d", hexesSrgbLen),
                 }
             }
         end

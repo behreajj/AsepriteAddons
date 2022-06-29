@@ -167,6 +167,10 @@ dlg:button {
                     "and has either None or SRGB color profile."
                 }
             }
+        else
+            app.alert {
+                title = "Success",
+                text = "Palette shared." }
         end
     end
 }

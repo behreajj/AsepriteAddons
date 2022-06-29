@@ -293,7 +293,7 @@ function Clr.blendInternal(a, b)
             (b.b * t + a.b * uv) * tuvInv,
             tuv)
     else
-        return Clr.new(0.0, 0.0, 0.0, 0.0)
+        return Clr.clearBlack()
     end
 end
 
@@ -1272,11 +1272,15 @@ end
 
 ---Multiplies a color's red, green and blue
 ---channels by its alpha channel.
+---
+---Returns clear black if the alpha is less
+---than or equal to 0.0. Sets the alpha to
+---1.0 it is greater than or equal to 1.0.
 ---@param c table color
 ---@return table
 function Clr.premul(c)
     if c.a <= 0.0 then
-        return Clr.new(0.0, 0.0, 0.0, 0.0)
+        return Clr.clearBlack()
     elseif c.a >= 1.0 then
         return Clr.new(c.r, c.g, c.b, 1.0)
     else
@@ -1702,11 +1706,15 @@ end
 ---Divides a color's red, green and blue
 ---channels by its alpha channel, reversing
 ---the premultiply operation.
+---
+---Returns clear black if the alpha is less
+---than or equal to 0.0. Sets the alpha to
+---1.0 it is greater than or equal to 1.0.
 ---@param c table color
 ---@return table
 function Clr.unpremul(c)
     if c.a <= 0.0 then
-        return Clr.new(0.0, 0.0, 0.0, 0.0)
+        return Clr.clearBlack()
     elseif c.a >= 1.0 then
         return Clr.new(c.r, c.g, c.b, 1.0)
     else

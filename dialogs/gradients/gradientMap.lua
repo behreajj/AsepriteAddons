@@ -57,8 +57,19 @@ dlg:button {
         if not srcLayer then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active layer." }
             return
+        end
+
+        -- Tile map layers may be present in 1.3 beta.
+        local layerIsTilemap = false
+        local tileSet = nil
+        local version = app.version
+        if version.major >= 1 and version.minor >= 3 then
+            layerIsTilemap = srcLayer.isTilemap
+            if layerIsTilemap then
+                tileSet = srcLayer.tileset
+            end
         end
 
         -- Cache methods and tables.
@@ -70,6 +81,7 @@ dlg:button {
         local quantize = Utilities.quantizeUnsigned
         local tohex = Clr.toHex
         local cgeval = ClrGradient.eval
+        local tilesToImage = AseUtilities.tilesToImage
 
         -- Unpack arguments.
         local args = dlg.data
@@ -128,6 +140,9 @@ dlg:button {
                 local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
                     local srcImg = srcCel.image
+                    if layerIsTilemap then
+                        srcImg = tilesToImage(srcImg, tileSet, colorMode)
+                    end
 
                     -- Cache source colors.
                     local srcClrDict = {}

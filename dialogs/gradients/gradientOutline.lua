@@ -166,13 +166,19 @@ dlg:button {
         if matrix == "DIAMOND" then matrix = "CIRCLE" end
         matrix = string.lower(matrix)
         tileMode = string.lower(tileMode)
+
+        -- Inside doesn't work well enough to be supported:
+        -- background color needs to be replaced iteratively;
+        -- even then the result is alternatiing color bands.
         place = string.lower(place)
 
         -- Cache methods.
+        -- clrToAseColor clamps to [0, 1], so blendInternal
+        -- is ok to use.
         local quantize = Utilities.quantizeUnsigned
         local cgeval = ClrGradient.eval
         local toAse = AseUtilities.clrToAseColor
-        local blend = Clr.blend
+        local blend = Clr.blendInternal
         local clrNew = Clr.new
 
         -- For auto alpha fade.
@@ -187,7 +193,11 @@ dlg:button {
         local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, args.huePreset)
 
-        local toFac = 1.0 / (iterations - 1.0)
+        local toFac = 1.0
+        if iterations > 1 then
+            toFac = 1.0 / (iterations - 1.0)
+        end
+
         app.transaction(function()
             local i = 0
             while i < iterations do
@@ -201,10 +211,14 @@ dlg:button {
                     local a = (1.0 - fac) * alphaStart
                         + fac * alphaEnd
                     clr = clrNew(clr.r, clr.g, clr.b, a)
-                    clr = blend(bkgClr, clr)
                 end
 
+                -- This needs to be blended whether or not
+                -- alpha fade is on auto, because colors
+                -- from shades may contain alpha as well.
+                clr = blend(bkgClr, clr)
                 local aseColor = toAse(clr)
+
                 app.command.Outline {
                     ui = false,
                     channels = channels,

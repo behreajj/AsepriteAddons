@@ -76,7 +76,7 @@ dlg:button {
         local valBrip50 = brightness + 50.0
         local valCtr = 1.0 + (contrast * 0.01)
 
-        -- Tile map layers may be present.
+        -- Tile map layers may be present in 1.3 beta.
         local srcImg = srcCel.image
         local version = app.version
         local layerIsTilemap = false

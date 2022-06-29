@@ -82,7 +82,7 @@ dlg:button {
         if not overLayer then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active layer." }
             return
         end
 

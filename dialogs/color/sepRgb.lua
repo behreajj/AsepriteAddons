@@ -130,7 +130,8 @@ dlg:button {
             return
         end
 
-        if activeSprite.colorMode ~= ColorMode.RGB then
+        local colorMode = activeSprite.colorMode
+        if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
                 text = "Only RGB color mode is supported." }
@@ -141,7 +142,7 @@ dlg:button {
         if not activeLayer then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active layer." }
             return
         end
 
@@ -150,6 +151,17 @@ dlg:button {
                 title = "Error",
                 text = "Group layers are not supported." }
             return
+        end
+
+        -- Tile map layers may be present in 1.3 beta.
+        local layerIsTilemap = false
+        local tileSet = nil
+        local version = app.version
+        if version.major >= 1 and version.minor >= 3 then
+            layerIsTilemap = activeLayer.isTilemap
+            if layerIsTilemap then
+                tileSet = activeLayer.tileset
+            end
         end
 
         local args = dlg.data
@@ -230,6 +242,7 @@ dlg:button {
 
         local max = math.max
         local min = math.min
+        local tilesToImage = AseUtilities.tilesToImage
 
         local framesLen = #frames
         app.transaction(function()
@@ -239,6 +252,10 @@ dlg:button {
                 local srcCel = activeLayer:cel(srcFrame)
                 if srcCel then
                     local srcImg = srcCel.image
+                    if layerIsTilemap then
+                        srcImg = tilesToImage(srcImg, tileSet, colorMode)
+                    end
+
                     local srcImgWidth = srcImg.width
                     local srcImgHeight = srcImg.height
                     local srcPos = srcCel.position
