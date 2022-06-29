@@ -186,6 +186,7 @@ dlg:button {
         local iterations = args.iterations or defaults.iterations
 
         -- Create matrices.
+        -- Directions need to be flipped on x and y axes.
         local activeMatrix = {
             args.m00, args.m01, args.m02,
             args.m10, args.m12,
@@ -211,7 +212,7 @@ dlg:button {
         if activeCount < 1 then
             app.alert {
                 title = "Error",
-                text = "Offset matrix is empty." }
+                text = "Neighbor matrix is empty." }
             return
         end
 
@@ -266,8 +267,11 @@ dlg:button {
 
         -- For auto alpha fade.
         -- The clr needs to be blended with the background.
-        local alphaStart = 1.0
-        local alphaEnd = 1.0 / iterations
+        local alphaEnd = 0.0
+        if iterations > 1 then
+            alphaEnd = 1.0 / (iterations - 1.0)
+        end
+        local alphaStart = 1.0 - alphaEnd
         local bkgClr = AseUtilities.aseColorToClr(aseBkgColor)
         local bkgHex = toHex(bkgClr)
         local itr2 = iterations + iterations
