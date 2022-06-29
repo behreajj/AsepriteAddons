@@ -364,7 +364,7 @@ dlg:button {
                                     end
                                 end
 
-                                if tally > 0 and tally < activeCount then
+                                if tally > 0 and tally <= activeCount then
                                     trgImg:drawPixel(xTrg, yTrg, otlHex)
                                 end
                             end
