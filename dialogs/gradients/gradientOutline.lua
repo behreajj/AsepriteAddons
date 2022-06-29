@@ -196,16 +196,16 @@ dlg:button {
             { 1, -1 }, { 0, -1 }, { -1, -1 } }
 
         local activeOffsets = {}
-        local diagStrs = {}
+        -- local diagStrs = {}
         for i = 1, #activeMatrix, 1 do
             if activeMatrix[i] then
                 table.insert(activeOffsets, dirMatrix[i])
-                table.insert(diagStrs,
-                    string.format("(%d, %d)",
-                        dirMatrix[i][1], dirMatrix[i][2]))
+                -- table.insert(diagStrs,
+                --     string.format("(%d, %d)",
+                --         dirMatrix[i][1], dirMatrix[i][2]))
             end
         end
-        print(table.concat(diagStrs, ", "))
+        -- print(table.concat(diagStrs, ", "))
         local activeCount = #activeOffsets
 
         if activeCount < 1 then
