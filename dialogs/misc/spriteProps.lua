@@ -59,9 +59,9 @@ end
 
 updatePrefsShowPath()
 
--- It's an open question as to whether this should
--- show information only or allow the sprite to be
--- changed. Alternative versions of the dialog have
+-- TODO: Include app.version information?
+-- Should this show information only or allow the
+-- sprite to be changed? Alternative versions have
 -- a pixel dimension label only, so pxRatioStr
 -- defaults to the string for that label.
 local dlg = Dialog { title = "Sprite Properties +" }

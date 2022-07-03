@@ -638,7 +638,7 @@ end
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
 ---@param alpha number alpha channel
----@param tol number grayscale tolerance
+---@param tol number|nil grayscale tolerance
 ---@return table
 function Clr.labToLch(l, a, b, alpha, tol)
     -- 0.00004 is the square chroma for #FFFFFF.
@@ -740,7 +740,7 @@ end
 ---@param c number chromaticity
 ---@param h number hue in degrees
 ---@param a number alpha channel
----@param tol number gray tolerance
+---@param tol number|nil gray tolerance
 ---@return table
 function Clr.lchToLab(l, c, h, a, tol)
     -- Return early cannot be done here because
@@ -788,7 +788,7 @@ end
 ---@param c number chromaticity
 ---@param h number hue in degrees
 ---@param a number alpha channel
----@param tol number grayscale tolerance
+---@param tol number|nil grayscale tolerance
 ---@return table
 function Clr.lchTosRgba(l, c, h, a, tol)
     local x = Clr.lchToLab(l, c, h, a, tol)
@@ -1593,7 +1593,7 @@ end
 ---Hue is expected to be in [0.0, 1.0].
 ---The alpha channel is unaffected by the transform.
 ---@param c table color
----@param tol number gray tolerance
+---@param tol number|nil gray tolerance
 ---@return table
 function Clr.sRgbaToLch(c, tol)
     local lab = Clr.sRgbaToLab(c)

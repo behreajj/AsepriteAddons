@@ -422,7 +422,7 @@ dlg:button {
                     1.0)
                 local lab = sRgbToLab(clr)
                 local lch = labToLch(
-                    lab.l, lab.a, lab.b, 1.0, 0.007072)
+                    lab.l, lab.a, lab.b, 1.0)
 
                 -- Convert values to integers to make them
                 -- easier to sort and to make sorting conform

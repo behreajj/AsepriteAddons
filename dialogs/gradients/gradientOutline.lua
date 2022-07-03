@@ -17,7 +17,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Outline Gradient 2" }
+local dlg = Dialog { title = "Outline Gradient" }
 
 GradientUtilities.dialogWidgets(dlg)
 
@@ -149,6 +149,12 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        local printElapsed = false
+        local startTime = 0
+        local endTime = 0
+        local elapsed = 0
+        if printElapsed then startTime = os.time() end
+
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
@@ -291,6 +297,31 @@ dlg:button {
         end
         trgLyr.name = "Gradient.Outline." .. clrSpacePreset
 
+        -- Calculate colors in an outer loop, so
+        -- high frame count pentalty is reduced.
+        local hexesOutline = {}
+        local h = 0
+        while h < iterations do
+            local fac = h * toFac
+            fac = facAdjust(fac)
+            fac = quantize(fac, levels)
+            h = h + 1
+
+            local clr = cgeval(gradient, fac, mixFunc)
+            if alphaFade then
+                local a = (1.0 - fac) * alphaStart
+                    + fac * alphaEnd
+                clr = clrNew(clr.r, clr.g, clr.b, a)
+            end
+
+            -- This needs to be blended whether or not
+            -- alpha fade is on auto, because colors
+            -- from shades may contain alpha as well.
+            clr = blend(bkgClr, clr)
+            local otlHex = toHex(clr)
+            hexesOutline[h] = otlHex
+        end
+
         local framesLen = #frames
         app.transaction(function()
             local g = 0
@@ -306,8 +337,6 @@ dlg:button {
                     local specSrc = srcImg.spec
                     local wTrg = specSrc.width + itr2
                     local hTrg = specSrc.height + itr2
-                    local lenTrg = wTrg * hTrg
-                    local lenTrgn1 = lenTrg - 1
                     local specTrg = {
                         width = wTrg,
                         height = hTrg,
@@ -319,46 +348,27 @@ dlg:button {
                     trgImg:clear(bkgHex)
                     trgImg:drawImage(srcImg, itrPoint)
 
-                    local h = 0
-                    while h < iterations do
+                    h = 0
+                    while h < iterations do h = h + 1
                         -- Read image must be separate from target.
+                        local hexOutline = hexesOutline[h]
                         local readImg = trgImg:clone()
-
-                        local fac = h * toFac
-                        fac = facAdjust(fac)
-                        fac = quantize(fac, levels)
-                        h = h + 1
-
-                        local clr = cgeval(gradient, fac, mixFunc)
-                        if alphaFade then
-                            local a = (1.0 - fac) * alphaStart
-                                + fac * alphaEnd
-                            clr = clrNew(clr.r, clr.g, clr.b, a)
-                        end
-
-                        -- This needs to be blended whether or not
-                        -- alpha fade is on auto, because colors
-                        -- from shades may contain alpha as well.
-                        clr = blend(bkgClr, clr)
-                        local otlHex = toHex(clr)
-
-                        local i = -1
-                        while i < lenTrgn1 do i = i + 1
-                            local xTrg = i % wTrg
-                            local yTrg = i // wTrg
-                            local cTrg = readImg:getPixel(xTrg, yTrg)
-
-                            if cTrg == bkgHex then
-                                -- Loop through matrix, get neighbors,
-                                -- check neighbors against background.
+                        local readPxItr = readImg:pixels()
+                        for elm in readPxItr do
+                            local cRead = elm()
+                            if cRead == bkgHex then
+                                -- Loop through matrix, check neighbors
+                                -- against background.
+                                local xRead = elm.x
+                                local yRead = elm.y
                                 local tally = 0
                                 local j = 0
                                 while j < activeCount do
                                     j = j + 1
                                     local offset = activeOffsets[j]
-                                    local yNbr = yTrg + offset[2]
+                                    local yNbr = yRead + offset[2]
                                     if yNbr >= 0 and yNbr < hTrg then
-                                        local xNbr = xTrg + offset[1]
+                                        local xNbr = xRead + offset[1]
                                         if xNbr >= 0 and xNbr < wTrg then
                                             local cNbr = readImg:getPixel(xNbr, yNbr)
                                             if cNbr ~= bkgHex then
@@ -368,8 +378,8 @@ dlg:button {
                                     end
                                 end
 
-                                if tally > 0 and tally <= activeCount then
-                                    trgImg:drawPixel(xTrg, yTrg, otlHex)
+                                if tally > 0 then
+                                    trgImg:drawPixel(xRead, yRead, hexOutline)
                                 end
                             end
                         end
@@ -382,6 +392,18 @@ dlg:button {
                 end
             end
         end)
+
+        if printElapsed then
+            endTime = os.time()
+            elapsed = os.difftime(endTime, startTime)
+
+            local txtArr = {
+                string.format("Start: %d", startTime),
+                string.format("End: %d", endTime),
+                string.format("Elapsed: %d", elapsed),
+            }
+            app.alert { title = "Diagnostic", text = txtArr }
+        end
 
         app.refresh()
     end

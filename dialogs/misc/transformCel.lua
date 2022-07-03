@@ -16,18 +16,23 @@ local defaults = {
     units = "PERCENT"
 }
 
-local function getTargetCels(activeSprite, targetPreset)
+local function getTargetCels(
+    activeSprite, targetPreset,
+    bkgAllow, refAllow)
+
     local targetCels = {}
     local tinsert = table.insert
     local isUnlocked = AseUtilities.isEditableHierarchy
 
     -- TODO: Do not impact tile map layers!
+    local vBkgAll = bkgAllow or false
+    local vRefAll = refAllow or false
     if targetPreset == "ACTIVE" then
         local activeLayer = app.activeLayer
         if activeLayer then
             if isUnlocked(activeLayer, activeSprite)
-                and (not activeLayer.isBackground)
-                and (not activeLayer.isReference) then
+                and (vBkgAll or not activeLayer.isBackground)
+                and (vRefAll or not activeLayer.isReference) then
                 local activeCel = app.activeCel
                 if activeCel then
                     targetCels[1] = activeCel
@@ -43,7 +48,7 @@ local function getTargetCels(activeSprite, targetPreset)
             local rangeCel = rangeCels[i]
             local celLayer = rangeCel.layer
             if isUnlocked(celLayer, activeSprite)
-                and (not celLayer.isBackground)
+                and (vBkgAll or not celLayer.isBackground)
                 and (not celLayer.isReference) then
                 tinsert(targetCels, rangeCel)
             end
@@ -100,7 +105,7 @@ local function getTargetCels(activeSprite, targetPreset)
             local activeCel = activeCels[i]
             local celLayer = activeCel.layer
             if isUnlocked(celLayer, activeSprite)
-                and (not celLayer.isBackground)
+                and (vBkgAll or not celLayer.isBackground)
                 and (not celLayer.isReference) then
                 tinsert(targetCels, activeCel)
             end
@@ -150,7 +155,7 @@ dlg:button {
         if xtr == 0.0 and ytr == 0.0 then return end
 
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
 
         app.transaction(function()
@@ -182,7 +187,7 @@ dlg:button {
         if xtr == 0.0 and ytr == 0.0 then return end
 
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, true, false)
         local celsLen = #cels
 
         local wrap = AseUtilities.wrapImage
@@ -211,7 +216,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
 
         app.transaction(function()
@@ -235,7 +240,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
 
         app.transaction(function()
@@ -260,7 +265,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
         local wSprite = activeSprite.width
 
@@ -289,7 +294,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
 
         app.transaction(function()
@@ -314,7 +319,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
         local xCtrSprite = activeSprite.width * 0.5
         local yCtrSprite = activeSprite.height * 0.5
@@ -346,7 +351,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
         local wSprite = activeSprite.width
 
@@ -376,7 +381,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
         local hSprite = activeSprite.height
 
@@ -403,7 +408,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
         local hSprite = activeSprite.height
 
@@ -431,7 +436,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
         local wSprite = activeSprite.width
         local hSprite = activeSprite.height
@@ -464,7 +469,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
 
         local rot90 = AseUtilities.rotateImage90
@@ -509,7 +514,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, true, true)
         local celsLen = #cels
 
         local rot = AseUtilities.rotateImage180
@@ -535,7 +540,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
 
         local rot270 = AseUtilities.rotateImage270
@@ -583,7 +588,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, true, true)
         local celsLen = #cels
 
         local fliph = AseUtilities.flipImageHoriz
@@ -609,7 +614,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, true, true)
         local celsLen = #cels
 
         local flipv = AseUtilities.flipImageVert
@@ -719,8 +724,7 @@ dlg:button {
         -- Convert string checks to booleans for loop.
         local useBicubic = resizeMethod == "BICUBIC"
         local usePercent = unitType == "PERCENT"
-
-        local cels = getTargetCels(activeSprite, target)
+        local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
 
         local oldMode = activeSprite.colorMode

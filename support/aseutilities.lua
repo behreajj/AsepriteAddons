@@ -106,7 +106,7 @@ end
 ---The default is saturation arithmetic.
 ---@param aseClr userdata Aseprite color
 ---@param flag string out of bounds interpretation
----@return table
+---@return userdata
 function AseUtilities.aseColorCopy(aseClr, flag)
     if flag == "UNBOUNDED" then
         return Color(
@@ -995,7 +995,6 @@ function AseUtilities.drawCurve2(
 
     local toPoint = AseUtilities.vec2ToPoint
     local bezier = Vec2.bezierPoint
-    local insert = table.insert
 
     local isLoop = curve.closedLoop
     local kns = curve.knots
@@ -1009,21 +1008,26 @@ function AseUtilities.drawCurve2(
         prevKnot = kns[knsLen]
     end
 
-    for i = start, knsLen, 1 do
-        local currKnot = kns[i]
+    local h = start - 1
+    local j = 0
+    while h < knsLen do h = h + 1
+        local currKnot = kns[h]
 
         local coPrev = prevKnot.co
         local fhPrev = prevKnot.fh
         local rhNext = currKnot.rh
         local coNext = currKnot.co
 
-        insert(pts, toPoint(coPrev))
-        for j = 1, vres, 1 do
-            insert(pts,
-                toPoint(bezier(
-                    coPrev, fhPrev,
-                    rhNext, coNext,
-                    j * toPercent)))
+        j = j + 1
+        pts[j] = toPoint(coPrev)
+        local i = 0
+        while i < vres do
+            i = i + 1
+            j = j + 1
+            pts[j] = toPoint(bezier(
+                coPrev, fhPrev,
+                rhNext, coNext,
+                i * toPercent))
         end
 
         prevKnot = currKnot
@@ -1052,8 +1056,10 @@ function AseUtilities.drawCurve2(
                 ptPrev = pts[ptsLen]
             end
 
-            for i = start, ptsLen, 1 do
-                local ptCurr = pts[i]
+            local k = start - 1
+            while k < ptsLen do
+                k = k + 1
+                local ptCurr = pts[k]
                 app.useTool {
                     tool = "line",
                     color = strokeClr,
@@ -1090,7 +1096,7 @@ function AseUtilities.drawGlyph(
     local glDrop = glyph.drop
     local ypDrop = y + glDrop
 
-    local i = 0
+    local i = -1
     while i < lenn1 do i = i + 1
         local shift = lenn1 - i
         local mark = (glMat >> shift) & 1
@@ -1303,7 +1309,7 @@ function AseUtilities.drawMesh2(
         local idx2 = 0
         while idx2 < fLen do
             idx2 = idx2 + 1
-            ptsFace[idx2] = pts[f[idx2]]
+            ptsFace[idx2] = pts[ f[idx2] ]
         end
         ptsGrouped[idx1] = ptsFace
     end
@@ -1798,7 +1804,7 @@ function AseUtilities.parseTagsUnique(tags)
         local j = 0
         while j < lenArr1 do
             j = j + 1
-            dict[arr1[j]] = true
+            dict[ arr1[j] ] = true
         end
     end
 

@@ -335,7 +335,7 @@ local function setFromSelect(dialog, sprite, frame)
         local lAvg = lSum * countInv
         local aAvg = aSum * countInv
         local bAvg = bSum * countInv
-        local lch = Clr.labToLch(lAvg, aAvg, bAvg, alphaAvg, 0.007072)
+        local lch = Clr.labToLch(lAvg, aAvg, bAvg, alphaAvg)
         local clr = Clr.labTosRgba(lAvg, aAvg, bAvg, alphaAvg)
         setLch(dialog, lch, clr)
         dialog:modify {

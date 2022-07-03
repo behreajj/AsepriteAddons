@@ -240,7 +240,7 @@ dlg:button {
 
                     -- Don't use { hue, saturation, lightness, alpha }
                     -- Color constructor. There is a bug with the API.
-                    local varyClr = lchTosRgba(lVary, cVary, hVary, alpBrick, 0.00005)
+                    local varyClr = lchTosRgba(lVary, cVary, hVary, alpBrick)
                     local variety = clrToAseColor(varyClr)
 
                     drawMesh2(

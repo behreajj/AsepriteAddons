@@ -174,7 +174,7 @@ end
 ---If a comparator is not provided, elements
 ---are sorted by their less than (<) operator.
 ---@param dict table
----@param comparator function
+---@param comparator function|nil
 ---@return table
 function Utilities.dictToSortedSet(dict, comparator)
     -- TODO: Is there anywhere else this can be used?

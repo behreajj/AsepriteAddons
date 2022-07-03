@@ -397,6 +397,9 @@ dlg:button {
         local oldMode = sprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
+        -- TODO: Support tile maps? The problem would be the
+        -- assign to src cel option. Instead you might have to
+        -- return early if tile map is detected...
         local framesLen = #frames
         app.transaction(function()
             for i = 1, framesLen, 1 do
@@ -404,10 +407,10 @@ dlg:button {
                 local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
                     local srcImg = srcCel.image
-                    local srcPxItr = srcImg:pixels()
 
                     -- Gather unique colors in image.
                     local srcDict = {}
+                    local srcPxItr = srcImg:pixels()
                     for elm in srcPxItr do
                         srcDict[elm()] = true
                     end

@@ -212,7 +212,7 @@ dlg:button {
                     end
 
                     local srgbNew = Clr.lchTosRgba(
-                        lch.l + lAdj, cNew, hNew, lch.a + alphaScl, 0.00005)
+                        lch.l + lAdj, cNew, hNew, lch.a + alphaScl)
                     trgDict[k] = Clr.toHex(srgbNew)
                 else
                     trgDict[k] = 0x0

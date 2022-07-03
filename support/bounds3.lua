@@ -264,7 +264,6 @@ end
 ---@param fse table front south east octant
 ---@param fnw table front north west octant
 ---@param fne table front north east octant
----@return table
 function Bounds3.splitInternal(
     b, xFac, yFac, zFac,
     bsw, bse, bnw, bne,

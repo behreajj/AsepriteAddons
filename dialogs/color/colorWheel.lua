@@ -301,7 +301,7 @@ dlg:button {
                         c = floor(0.5 + c * radAlpha) * radBeta
                     end
 
-                    clr = lchTosRgba(light, c, h, 1.0, 0.00005)
+                    clr = lchTosRgba(light, c, h, 1.0)
                 else
                     clr = labTosRgba(light, 0.0, 0.0, 1.0)
                 end
