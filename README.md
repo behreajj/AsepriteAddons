@@ -48,10 +48,6 @@ This repo includes
 
   ![Hexagon Grid](screencaps/hexGrid.png)
 
-- A custom GPL exporter.
-
-  ![GPL Export](screencaps/exportgpl.png)
-
 - A text insertion dialog.
 
   ![Insert Text](screencaps/insertText.png)
@@ -88,6 +84,10 @@ This repo includes
 
   ![Normal From Height](screencaps/normalFromHeight.png)
 
+- Outline Gradient.
+
+  ![Outline Gradient](screencaps/outlineGradient.png)
+
 - Palette Coverage.
 
   ![Palette Coverage](screencaps/paletteCoverage.png)
@@ -100,10 +100,6 @@ This repo includes
 
   ![Palette To Cel](screencaps/paletteToCel.png)
 
-- RGB channel separation.
-
-  ![Separate RGB](screencaps/sepRgb.png)
-
 - A regular convex polygon.
 
   ![Polygon](screencaps/polygon.png)
@@ -115,6 +111,10 @@ This repo includes
 - A rounded rectangle.
 
   ![Rounded Rectangle](screencaps/roundedRect.png)
+
+- RGB channel separation.
+
+  ![Separate RGB](screencaps/sepRgb.png)
 
 - Basic cel transformation.
 

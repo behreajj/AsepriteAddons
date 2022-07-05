@@ -123,7 +123,7 @@ Utilities.GLYPH_LUT = {
     ['~'] = Glyph.new('~', 7248543600252813312, 0)
 }
 
----Look up table for linear to standard
+---Look up table of linear to standard
 ---color space conversion.
 Utilities.LTS_LUT = {
     0, 13, 22, 28, 34, 38, 42, 46, 50, 53, 56, 59, 61, 64, 66, 69,
@@ -143,7 +143,7 @@ Utilities.LTS_LUT = {
     241, 241, 242, 242, 243, 243, 244, 244, 245, 245, 246, 246, 246, 247, 247, 248,
     248, 249, 249, 250, 250, 251, 251, 251, 252, 252, 253, 253, 254, 254, 255, 255 }
 
----Look up table for standard to linear
+---Look up table of standard to linear
 ---color space conversion.
 Utilities.STL_LUT = {
     0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -456,8 +456,7 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
         local prevChar = flatChars[flatCharLen]
 
         local i = 0
-        while i < flatCharLen do
-            i = i + 1
+        while i < flatCharLen do i = i + 1
             local currChar = flatChars[i]
             if currChar == '\n' or currChar == '\r' then
                 if #currLine < 1 then currLine = { '' } end
@@ -488,7 +487,8 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
                     -- "supercalifragilisticexpialidocious".
                     local excess = {}
                     if lastSpace > 0 and lastSpace > currLnLen // 2 then
-                        for j = currLnLen, lastSpace, -1 do
+                        local j = currLnLen + 1
+                        while j > lastSpace do j = j - 1
                             insert(excess, 1, remove(currLine, j))
                         end
                     end
@@ -506,9 +506,10 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
                     lastSpace = 0
 
                     -- Consume excess.
-                    for k = 1, #excess, 1 do
-                        insert(currLine, excess[k])
+                    local excLen = #excess
+                    while charTally < excLen do
                         charTally = charTally + 1
+                        insert(currLine, excess[charTally])
                     end
                 end
             end
@@ -1043,7 +1044,6 @@ end
 ---@return table
 function Utilities.shuffle(t)
     -- https://stackoverflow.com/a/68486276
-    math.randomseed(os.time())
     local rng = math.random
     local s = {}
 

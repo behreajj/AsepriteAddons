@@ -567,7 +567,8 @@ dlg:button {
 
         end
 
-        -- TODO: Support tile maps?
+        -- TODO: Support tile maps like in adjustHue.
+        -- Copy to layer or layerIsTilemap.
         -- Cache pixels from iterator to an array.
         local srcImg = srcCel.image
         local srcPxItr = srcImg:pixels()

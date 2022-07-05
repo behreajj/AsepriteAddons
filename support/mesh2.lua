@@ -33,7 +33,7 @@ end
 ---Insets a face by calculating its center then
 ---easing from the face's vertices toward the center
 ---by the factor, in range [0.0, 1.0].
----@param faceIndex number
+---@param faceIndex integer
 ---@param fac number
 ---@return table
 function Mesh2:insetFace(faceIndex, fac)
@@ -121,7 +121,7 @@ end
 
 ---Scales all coordinates in a mesh.
 ---Defaults to scale by a vector.
----@param v table scalar
+---@param v table|number scalar
 ---@return table
 function Mesh2:scale(v)
     if type(v) == "number" then
@@ -133,7 +133,7 @@ end
 
 ---Scales all coordinates in this mesh
 ---by a number
----@param n table uniform scalar
+---@param n number uniform scalar
 ---@return table
 function Mesh2:scaleNum(n)
     if n ~= 0.0 then
@@ -216,7 +216,7 @@ end
 ---center, then connecting its vertices to the center.
 ---Generates a triangle for the number of edges
 ---in the face.
----@param faceIndex number face index
+---@param faceIndex integer face index
 ---@return table
 function Mesh2:subdivFaceFan(faceIndex)
 
@@ -270,7 +270,7 @@ end
 ---@param stopAngle number stop angle
 ---@param startWeight number start weight
 ---@param stopWeight number stop weight
----@param sectors number sectors
+---@param sectors integer sectors
 ---@param useQuads boolean use quads
 ---@return table
 function Mesh2.arc(
@@ -436,8 +436,8 @@ function Mesh2.gridBricks(
 end
 
 ---Creates a grid of rectangles.
----@param cols number columns
----@param rows number rows
+---@param cols integer columns
+---@param rows integer rows
 ---@return table
 function Mesh2.gridCartesian(cols, rows)
 
@@ -465,8 +465,8 @@ function Mesh2.gridCartesian(cols, rows)
 
     -- Set face indices.
     local fs = {}
-    local fLenn1 = (rVal * cVal) - 1
-    for k = 0, fLenn1, 1 do
+    local fLen = rVal * cVal
+    local k = 0 while k < fLen do
         local i = k // cVal
         local j = k % cVal
 
@@ -477,14 +477,15 @@ function Mesh2.gridCartesian(cols, rows)
         local c01 = cOff0 + cVal1 + j
         local c11 = c01 + 1
 
-        fs[1 + k] = { c00, c10, c11, c01 }
+        k = k + 1
+        fs[k] = { c00, c10, c11, c01 }
     end
 
     return Mesh2.new(fs, vs, "Grid.Cartesian")
 end
 
 ---Creates a grid of rhombi.
----@param cells number cells
+---@param cells integer cells
 ---@return table
 function Mesh2.gridDimetric(cells)
     local mesh = Mesh2.gridCartesian(cells, cells)
@@ -601,8 +602,8 @@ end
 ---Separates a mesh into several meshes with one
 ---face per mesh.
 ---@param source table source mesh
----@param from number start index
----@param to number stop index
+---@param from integer start index
+---@param to integer stop index
 ---@return table
 function Mesh2.separateFaces(source, from, to)
     local meshes = {}
@@ -621,12 +622,14 @@ function Mesh2.separateFaces(source, from, to)
         local fSrcLen = #fSrc
         local vsTrg = {}
         local fTrg = {}
-        for j = 1, fSrcLen, 1 do
+        local j = 0
+        while j < fSrcLen do
+            j = j + 1
             local vertSrc = fSrc[j]
             local vSrc = vsSrc[vertSrc]
             local vTrg = Vec2.new(vSrc.x, vSrc.y)
-            table.insert(vsTrg, vTrg)
-            table.insert(fTrg, j)
+            vsTrg[j] = vTrg
+            fTrg[j] = j
         end
 
         local mesh = Mesh2.new({ fTrg }, vsTrg, "Mesh2")
@@ -649,12 +652,14 @@ function Mesh2.toJson(a)
     local fs = a.fs
     local fsLen = #fs
     local fsStrArr = {}
-    for i = 1, fsLen, 1 do
+    local i = 0
+    while i < fsLen do i = i + 1
         local f = fs[i]
         local fLen = #f
         local fStrArr = {}
         local fStr = "["
-        for j = 1, fLen, 1 do
+        local j = 0
+        while j < fLen do j = j + 1
             fStrArr[j] = f[j] - 1
         end
         fStr = fStr .. tconcat(fStrArr, ",")
@@ -668,8 +673,9 @@ function Mesh2.toJson(a)
     local vs = a.vs
     local vsLen = #vs
     local vsStrArr = {}
-    for i = 1, vsLen, 1 do
-        vsStrArr[i] = Vec2.toJson(vs[i])
+    local k = 0
+    while k < vsLen do k = k + 1
+        vsStrArr[k] = Vec2.toJson(vs[k])
     end
 
     str = str .. tconcat(vsStrArr, ",")

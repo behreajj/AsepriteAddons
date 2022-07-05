@@ -190,7 +190,7 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
             return
@@ -198,7 +198,7 @@ dlg:button {
 
         local srcLayer = app.activeLayer
         if not srcLayer then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active layer." }
             return
@@ -345,14 +345,14 @@ dlg:button {
                         local queryHex = query.hex
                         local resultHex = 0x0
                         -- if exactMatches[queryHex] then
-                            -- resultHex = queryHex
+                        -- resultHex = queryHex
                         -- else
-                            local nearPoint, _ = search(
-                                octree, query.point, cvgRad)
-                            if nearPoint then
-                                local hsh = v3Hash(nearPoint)
-                                resultHex = ptToHexDict[hsh]
-                            end
+                        local nearPoint, _ = search(
+                            octree, query.point, cvgRad)
+                        if nearPoint then
+                            local hsh = v3Hash(nearPoint)
+                            resultHex = ptToHexDict[hsh]
+                        end
                         -- end
                         correspDict[queryHex] = resultHex
                     end
@@ -367,6 +367,8 @@ dlg:button {
                             | correspDict[srcHex] & 0x00ffffff)
                     end
 
+                    -- TODO: Support tile maps like in adjustHue.
+                    -- Copy to layer or layerIsTilemap.
                     if copyToLayer then
                         local trgCel = activeSprite:newCel(
                             trgLayer, srcFrame,

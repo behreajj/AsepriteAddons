@@ -125,7 +125,7 @@ end
 ---tolerance, approximately equal.
 ---@param a table left operand
 ---@param b table right operand
----@param tol number tolerance
+---@param tol number|nil tolerance
 ---@return boolean
 function Vec4.approx(a, b, tol)
     local eps = tol or 0.000001
@@ -431,11 +431,11 @@ end
 ---@param a table left operand
 ---@return table
 function Vec4.fract(a)
-    local _, fw = math.modf(a.w)
-    local _, fz = math.modf(a.z)
-    local _, fy = math.modf(a.y)
-    local _, fx = math.modf(a.x)
-    return Vec4.new(fx, fy, fz, fw)
+    return Vec4.new(
+        math.fmod(a.x, 1.0),
+        math.fmod(a.y, 1.0),
+        math.fmod(a.z, 1.0),
+        math.fmod(a.w, 1.0))
 end
 
 ---Creates a one-dimensional table of vectors
@@ -805,8 +805,8 @@ end
 ---Creates a random point in Cartesian space given
 ---a lower and an upper bound. If lower and upper
 ---bounds are not given, defaults to [-1.0, 1.0].
----@param lb table lower bound
----@param ub table upper bound
+---@param lb table|nil lower bound
+---@param ub table|nil upper bound
 ---@return table
 function Vec4.randomCartesian(lb, ub)
     local lval = lb or Vec4.new(-1.0, -1.0, -1.0, -1.0)
@@ -821,7 +821,6 @@ end
 ---@param ub table upper bound
 ---@return table
 function Vec4.randomCartesianInternal(lb, ub)
-    math.randomseed(os.time())
     local rx = math.random()
     local ry = math.random()
     local rz = math.random()

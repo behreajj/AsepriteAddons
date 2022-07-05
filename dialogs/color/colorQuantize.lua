@@ -397,9 +397,8 @@ dlg:button {
         local oldMode = sprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
-        -- TODO: Support tile maps? The problem would be the
-        -- assign to src cel option. Instead you might have to
-        -- return early if tile map is detected...
+        -- TODO: Support tile maps like in adjustHue.
+        -- Copy to layer or layerIsTilemap.
         local framesLen = #frames
         app.transaction(function()
             for i = 1, framesLen, 1 do

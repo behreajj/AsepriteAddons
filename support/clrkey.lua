@@ -11,7 +11,7 @@ setmetatable(ClrKey, {
 ---Creates a new color key.
 ---Defaults to passing the color by value.
 ---@param step number step
----@param clr table|number color
+---@param clr table|integer color
 ---@return table
 function ClrKey.new(step, clr)
     return ClrKey.newByVal(step, clr)
@@ -37,7 +37,7 @@ end
 ---The color is copied by value.
 ---The step is clamped to [0.0, 1.0].
 ---@param step number step
----@param clr table|number color
+---@param clr table|integer color
 ---@return table
 function ClrKey.newByVal(step, clr)
     local inst = setmetatable({}, ClrKey)

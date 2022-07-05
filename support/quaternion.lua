@@ -119,7 +119,7 @@ end
 ---within a tolerance, approximately equal.
 ---@param a table left operand
 ---@param b table right operand
----@param tol number tolerance
+---@param tol number|nil tolerance
 ---@return boolean
 function Quaternion.approx(a, b, tol)
     local ai = a.imag
@@ -472,7 +472,6 @@ end
 ---Creates a random quaternion.
 ---@return table
 function Quaternion.random()
-    math.randomseed(os.time())
     local t0 = math.random() * 6.2831853071796
     local t1 = math.random() * 6.2831853071796
     local r1 = math.random()

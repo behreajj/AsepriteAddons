@@ -91,7 +91,7 @@ end
 ---Returns true if the alpha channel is within
 ---the range [0.0, 1.0].
 ---@param a table color
----@param tol number tolerance
+---@param tol number|nil tolerance
 ---@return boolean
 function Clr.alphaIsInGamut(a, tol)
     local eps = tol or 0.0
@@ -1365,7 +1365,6 @@ function Clr.random(
     local alphaMin = trns or 1.0
     local alphaMax = opaque or 1.0
 
-    math.randomseed(os.time())
     local lt = math.random()
     local at = math.random()
     local bt = math.random()
@@ -1381,7 +1380,7 @@ end
 ---Returns true if the red, green and blue
 ---channels are within the range [0.0, 1.0].
 ---@param c table color
----@param tol number tolerance
+---@param tol number|nil tolerance
 ---@return boolean
 function Clr.rgbIsInGamut(c, tol)
     local eps = tol or 0.0
@@ -1393,7 +1392,7 @@ end
 ---Returns true if all color channels are
 ---within the range [0.0, 1.0].
 ---@param c table color
----@param tol number tolerance
+---@param tol number|nil tolerance
 ---@return boolean
 function Clr.rgbaIsInGamut(c, tol)
     return Clr.alphaIsInGamut(c, tol)

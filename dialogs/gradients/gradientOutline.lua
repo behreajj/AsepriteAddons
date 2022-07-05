@@ -322,76 +322,79 @@ dlg:button {
             hexesOutline[h] = otlHex
         end
 
+        -- Wrapping this while loop in a transaction
+        -- causes problems with undo history.
         local framesLen = #frames
-        app.transaction(function()
-            local g = 0
-            while g < framesLen do g = g + 1
-                local srcFrame = frames[g]
-                local srcCel = srcLayer:cel(srcFrame)
-                if srcCel then
-                    local srcImg = srcCel.image
-                    if layerIsTilemap then
-                        srcImg = tilesToImage(srcImg, tileSet, colorMode)
-                    end
+        local g = 0
+        while g < framesLen do g = g + 1
+            local srcFrame = frames[g]
+            local srcCel = srcLayer:cel(srcFrame)
+            if srcCel then
+                local srcImg = srcCel.image
+                if layerIsTilemap then
+                    srcImg = tilesToImage(srcImg, tileSet, colorMode)
+                end
 
-                    local specSrc = srcImg.spec
-                    local wTrg = specSrc.width + itr2
-                    local hTrg = specSrc.height + itr2
-                    local specTrg = {
-                        width = wTrg,
-                        height = hTrg,
-                        colorMode = specSrc.colorMode,
-                        transparentColor = specSrc.transparentColor
-                    }
-                    specTrg.colorSpace = specSrc.colorSpace
-                    local trgImg = Image(specTrg)
-                    trgImg:clear(bkgHex)
-                    trgImg:drawImage(srcImg, itrPoint)
+                local specSrc = srcImg.spec
+                local wTrg = specSrc.width + itr2
+                local hTrg = specSrc.height + itr2
+                local specTrg = {
+                    width = wTrg,
+                    height = hTrg,
+                    colorMode = specSrc.colorMode,
+                    transparentColor = specSrc.transparentColor
+                }
+                specTrg.colorSpace = specSrc.colorSpace
+                local trgImg = Image(specTrg)
+                trgImg:clear(bkgHex)
+                trgImg:drawImage(srcImg, itrPoint)
 
-                    h = 0
-                    while h < iterations do h = h + 1
-                        -- Read image must be separate from target.
-                        local hexOutline = hexesOutline[h]
-                        local readImg = trgImg:clone()
-                        local readPxItr = readImg:pixels()
-                        for elm in readPxItr do
-                            local cRead = elm()
-                            if cRead == bkgHex then
-                                -- Loop through matrix, check neighbors
-                                -- against background.
-                                local xRead = elm.x
+                h = 0
+                while h < iterations do h = h + 1
+                    -- Read image must be separate from target.
+                    local hexOutline = hexesOutline[h]
+                    local readImg = trgImg:clone()
+                    local readPxItr = readImg:pixels()
+                    for elm in readPxItr do
+                        local cRead = elm()
+                        if cRead == bkgHex then
+                            -- Loop through matrix, check neighbors
+                            -- against background. There's no need to
+                            -- tally up neighbor marks; just draw a
+                            -- pixel, then break the loop.
+                            local j = 0
+                            local continue = true
+                            while j < activeCount and continue do
+                                j = j + 1
+                                local offset = activeOffsets[j]
                                 local yRead = elm.y
-                                local tally = 0
-                                local j = 0
-                                while j < activeCount do
-                                    j = j + 1
-                                    local offset = activeOffsets[j]
-                                    local yNbr = yRead + offset[2]
-                                    if yNbr >= 0 and yNbr < hTrg then
-                                        local xNbr = xRead + offset[1]
-                                        if xNbr >= 0 and xNbr < wTrg then
-                                            local cNbr = readImg:getPixel(xNbr, yNbr)
-                                            if cNbr ~= bkgHex then
-                                                tally = tally + 1
-                                            end
+                                local yNbr = yRead + offset[2]
+                                if yNbr >= 0 and yNbr < hTrg then
+                                    local xRead = elm.x
+                                    local xNbr = xRead + offset[1]
+                                    if xNbr >= 0 and xNbr < wTrg then
+                                        local cNbr = readImg:getPixel(xNbr, yNbr)
+                                        if cNbr ~= bkgHex then
+                                            trgImg:drawPixel(xRead, yRead, hexOutline)
+                                            continue = false
                                         end
                                     end
-                                end
-
-                                if tally > 0 then
-                                    trgImg:drawPixel(xRead, yRead, hexOutline)
                                 end
                             end
                         end
                     end
+                end
 
+                app.transaction(function()
                     local trgCel = activeSprite:newCel(
                         trgLyr, srcFrame, trgImg,
                         srcCel.position - itrPoint)
                     trgCel.opacity = srcCel.opacity
-                end
+                end)
             end
-        end)
+        end
+
+        app.refresh()
 
         if printElapsed then
             endTime = os.time()
@@ -404,8 +407,6 @@ dlg:button {
             }
             app.alert { title = "Diagnostic", text = txtArr }
         end
-
-        app.refresh()
     end
 }
 

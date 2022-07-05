@@ -150,8 +150,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
-
         -- Cache methods
         local floor = math.floor
         local lchTosRgba = Clr.lchTosRgba
@@ -163,6 +161,7 @@ dlg:button {
         local drawCircleFill = AseUtilities.drawCircleFill
 
         -- Unpack arguments.
+        local args = dlg.data
         local maxChroma = args.maxChroma or defaults.maxChroma
         local maxLight = args.maxLight or defaults.maxLight
         local outOfGamut = args.outOfGamut or defaults.outOfGamut
@@ -264,11 +263,13 @@ dlg:button {
 
         -- Create gamut layer cels.
         app.transaction(function()
-            for i = 1, reqFrames, 1 do
+            local idxCel = 0
+            while idxCel < reqFrames do
+                idxCel = idxCel + 1
                 sprite:newCel(
                     gamutLayer,
-                    sprite.frames[i],
-                    gamutImgs[i])
+                    sprite.frames[idxCel],
+                    gamutImgs[idxCel])
             end
         end)
 

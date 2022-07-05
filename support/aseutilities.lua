@@ -310,8 +310,8 @@ end
 ---is in sRGB. The start index defaults to 0.
 ---The count defaults to 256.
 ---@param pal userdata Aseprite palette
----@param startIndex number start index
----@param count number sample count
+---@param startIndex number|nil start index
+---@param count number|nil sample count
 ---@return table
 function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
     if pal then
@@ -1931,10 +1931,11 @@ function AseUtilities.rotateImage270(source)
 end
 
 ---Sets a palette in a sprite at a given index to a table
----of colors represented as hexadecimal integers.
+---of colors represented as hexadecimal integers. The
+---palette index defaults to 1.
 ---@param arr table color array
 ---@param sprite userdata sprite
----@param paletteIndex number index
+---@param paletteIndex number|nil index
 function AseUtilities.setPalette(arr, sprite, paletteIndex)
     local palIdxVerif = paletteIndex or 1
     local palettes = sprite.palettes
@@ -2045,7 +2046,7 @@ end
 ---@param image userdata aseprite image
 ---@param padding number padding
 ---@param alphaIndex number alpha mask index
----@return table
+---@return userdata
 ---@return number
 ---@return number
 function AseUtilities.trimImageAlpha(image, padding, alphaIndex)

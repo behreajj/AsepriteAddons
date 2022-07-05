@@ -109,7 +109,7 @@ end
 
 ---Scales this curve.
 ---Defaults to scale by a vector.
----@param v table scalar
+---@param v table|number scalar
 ---@return table
 function Curve3:scale(v)
     if type(v) == "number" then
@@ -120,7 +120,7 @@ function Curve3:scale(v)
 end
 
 ---Scales this curve by a number.
----@param n table uniform scalar
+---@param n number uniform scalar
 ---@return table
 function Curve3:scaleNum(n)
     if n ~= 0.0 then
@@ -320,8 +320,7 @@ function Curve3.fromCatmull(
     if closedLoop then
         if Vec3.approx(
             points[1],
-            points[ptsLen],
-            0.000001) then
+            points[ptsLen]) then
             valPts = {}
             for i = 1, ptsLast, 1 do
                 valPts[i] = points[i]
@@ -343,15 +342,13 @@ function Curve3.fromCatmull(
 
         if not Vec3.approx(
             points[1],
-            points[2],
-            0.000001) then
+            points[2]) then
             table.insert(valPts, 1, points[1])
         end
 
         if not Vec3.approx(
             points[#points],
-            points[#points - 1],
-            0.000001) then
+            points[#points - 1]) then
             table.insert(valPts, points[#points])
         end
 
@@ -430,12 +427,13 @@ function Curve3.fromPoints(closedLoop, points, name)
     local len = #points
     local last = len
     if closedLoop and Vec3.approx(
-        points[1], points[len], 0.000001) then
+        points[1], points[len]) then
         last = len - 1
     end
 
     local kns = {}
-    for i = 1, last, 1 do
+    local i = 0
+    while i < last do i = i + 1
         local pt = points[i]
         kns[i] = Knot3.new(
             Vec3.new(pt.x, pt.y, pt.z),

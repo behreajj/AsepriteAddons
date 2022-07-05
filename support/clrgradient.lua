@@ -182,7 +182,7 @@ end
 ---sorted order.
 ---@param cg table color gradient
 ---@param step number step
----@return number
+---@return integer
 function ClrGradient.bisectRight(cg, step)
     local keys = cg.keys
     local low = 0

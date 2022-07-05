@@ -166,10 +166,14 @@ end
 
 ---Scales this knot.
 ---Defaults to scale by a Vec3.
----@param v table scalar
+---@param v table|number scalar
 ---@return table
 function Knot3:scale(v)
-    return self:scaleVec3(v)
+    if type(v) == "number" then
+        return self:scaleNum(v)
+    else
+        return self:scaleVec3(v)
+    end
 end
 
 ---Scales this knot by a number.
@@ -183,7 +187,7 @@ function Knot3:scaleNum(n)
 end
 
 ---Scales this knot by a vector.
----@param v number nonuniform scalar
+---@param v table nonuniform scalar
 ---@return table
 function Knot3:scaleVec3(v)
     self.co = Vec3.hadamard(self.co, v)

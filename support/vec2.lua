@@ -105,7 +105,7 @@ end
 ---formula acos(dot(a, b) / (mag(a) * mag(b))).
 ---@param a table left operand
 ---@param b table right operand
----@return table
+---@return number
 function Vec2.angleBetween(a, b)
     local aSq = a.x * a.x + a.y * a.y
     if aSq > 0.0 then
@@ -130,7 +130,7 @@ end
 ---tolerance, approximately equal.
 ---@param a table left operand
 ---@param b table right operand
----@param tol number tolerance
+---@param tol number|nil tolerance
 ---@return boolean
 function Vec2.approx(a, b, tol)
     local eps = tol or 0.000001
@@ -171,8 +171,8 @@ end
 ---a vector. Biases towards the right insert
 ---point. Should be used with sorted arrays.
 ---@param arr table vectors array
----@param elm table vecor
----@param compare function comparator
+---@param elm table vector
+---@param compare function|nil comparator
 ---@return integer
 function Vec2.bisectRight(arr, elm, compare)
     local low = 0
@@ -405,9 +405,9 @@ end
 ---@param a table left operand
 ---@return table
 function Vec2.fract(a)
-    local _, fy = math.modf(a.y)
-    local _, fx = math.modf(a.x)
-    return Vec2.new(fx, fy)
+    return Vec2.new(
+        math.fmod(a.x, 1.0),
+        math.fmod(a.y, 1.0))
 end
 
 ---Converts from polar to Cartesian coordinates.
@@ -765,8 +765,8 @@ end
 ---Creates a random point in Cartesian space given
 ---a lower and an upper bound. If lower and upper
 ---bounds are not given, defaults to [-1.0, 1.0].
----@param lb table lower bound
----@param ub table upper bound
+---@param lb table|nil lower bound
+---@param ub table|nil upper bound
 ---@return table
 function Vec2.randomCartesian(lb, ub)
     local lval = lb or Vec2.new(-1.0, -1.0)
@@ -781,7 +781,6 @@ end
 ---@param ub table upper bound
 ---@return table
 function Vec2.randomCartesianInternal(lb, ub)
-    math.randomseed(os.time())
     local rx = math.random()
     local ry = math.random()
 

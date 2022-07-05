@@ -124,10 +124,14 @@ end
 
 ---Scales this knot.
 ---Defaults to scale by a vector.
----@param v table scalar
+---@param v table|number scalar
 ---@return table
 function Knot2:scale(v)
-    return self:scaleVec2(v)
+    if type(v) == "number" then
+        return self:scaleNum(v)
+    else
+        return self:scaleVec2(v)
+    end
 end
 
 ---Scales this knot by a number.
@@ -141,7 +145,7 @@ function Knot2:scaleNum(n)
 end
 
 ---Scales this knot by a vector.
----@param v number nonuniform scalar
+---@param v table nonuniform scalar
 ---@return table
 function Knot2:scaleVec2(v)
     self.co = Vec2.hadamard(self.co, v)

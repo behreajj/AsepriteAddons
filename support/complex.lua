@@ -90,7 +90,7 @@ end
 ---within a tolerance, approximately equal.
 ---@param a table left operand
 ---@param b table right operand
----@param tol number tolerance
+---@param tol number|nil tolerance
 ---@return boolean
 function Complex.approx(a, b, tol)
     local eps = tol or 0.000001
@@ -230,7 +230,7 @@ end
 ---Raises a left operand to the power of the right.
 ---Defaults to complex-complex exponentiation.
 ---@param a table left operand
----@param b table right operand
+---@param b table|number right operand
 ---@return table
 function Complex.pow(a, b)
     if type(b) == "number" then

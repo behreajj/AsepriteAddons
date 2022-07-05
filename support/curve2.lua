@@ -59,7 +59,7 @@ end
 
 ---Scales this curve.
 ---Defaults to scale by a vector.
----@param v table scalar
+---@param v table|number scalar
 ---@return table
 function Curve2:scale(v)
     if type(v) == "number" then
@@ -70,7 +70,7 @@ function Curve2:scale(v)
 end
 
 ---Scales this curve by a number.
----@param n table uniform scalar
+---@param n number uniform scalar
 ---@return table
 function Curve2:scaleNum(n)
     if n ~= 0.0 then

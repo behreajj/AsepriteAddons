@@ -59,12 +59,16 @@ end
 
 updatePrefsShowPath()
 
--- TODO: Include app.version information?
 -- Should this show information only or allow the
 -- sprite to be changed? Alternative versions have
 -- a pixel dimension label only, so pxRatioStr
 -- defaults to the string for that label.
 local dlg = Dialog { title = "Sprite Properties +" }
+-- dlg:label {
+--     id = "versionLabel",
+--     label = "Version:",
+--     text = tostring(app.version),
+--     visible = true }
 dlg:label {
     id = "pathLabel",
     label = "Path:",

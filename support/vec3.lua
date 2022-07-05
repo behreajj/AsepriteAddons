@@ -111,7 +111,7 @@ end
 ---formula acos(dot(a, b) / (mag(a) * mag(b))).
 ---@param a table left operand
 ---@param b table right operand
----@return table
+---@return number
 function Vec3.angleBetween(a, b)
     local aSq = a.x * a.x + a.y * a.y + a.z * a.z
     if aSq > 0.0 then
@@ -138,7 +138,7 @@ end
 ---tolerance, approximately equal.
 ---@param a table left operand
 ---@param b table right operand
----@param tol number tolerance
+---@param tol number|nil tolerance
 ---@return boolean
 function Vec3.approx(a, b, tol)
     local eps = tol or 0.000001
@@ -208,8 +208,8 @@ end
 ---a vector. Biases towards the right insert
 ---point. Should be used with sorted arrays.
 ---@param arr table vectors array
----@param elm table vecor
----@param compare function comparator
+---@param elm table vector
+---@param compare function|nil comparator
 ---@return integer
 function Vec3.bisectRight(arr, elm, compare)
     local low = 0
@@ -470,10 +470,10 @@ end
 ---@param a table left operand
 ---@return table
 function Vec3.fract(a)
-    local _, fz = math.modf(a.z)
-    local _, fy = math.modf(a.y)
-    local _, fx = math.modf(a.x)
-    return Vec3.new(fx, fy, fz)
+    return Vec3.new(
+        math.fmod(a.x, 1.0),
+        math.fmod(a.y, 1.0),
+        math.fmod(a.z, 1.0))
 end
 
 ---Creates a vector from an azimuth (or yaw),
@@ -985,8 +985,8 @@ end
 ---Creates a random point in Cartesian space given
 ---a lower and an upper bound. If lower and upper
 ---bounds are not given, defaults to [-1.0, 1.0].
----@param lb table lower bound
----@param ub table upper bound
+---@param lb table|nil lower bound
+---@param ub table|nil upper bound
 ---@return table
 function Vec3.randomCartesian(lb, ub)
     local lval = lb or Vec3.new(-1.0, -1.0, -1.0)
@@ -1001,7 +1001,6 @@ end
 ---@param ub table upper bound
 ---@return table
 function Vec3.randomCartesianInternal(lb, ub)
-    math.randomseed(os.time())
     local rx = math.random()
     local ry = math.random()
     local rz = math.random()

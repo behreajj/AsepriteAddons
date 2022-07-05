@@ -179,7 +179,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-
         -- Cache methods.
         local atan2 = math.atan
         local floor = math.floor
