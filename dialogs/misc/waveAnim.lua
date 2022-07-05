@@ -29,6 +29,7 @@ local defaults = {
     timeDecay = 100,
     spaceDecay = 100,
     edgeType = "OMIT",
+    trimCels = true,
     printElapsed = false,
     pullFocus = false
 }
@@ -195,6 +196,15 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:check {
+    id = "trimCels",
+    label = "Trim:",
+    text = "Layer Edges",
+    selected = defaults.trimCels
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
     id = "printElapsed",
     label = "Print Diagnostic:",
     selected = defaults.printElapsed
@@ -240,6 +250,7 @@ dlg:button {
         local pi = math.pi
         local tau = pi + pi
         local round = Utilities.round
+        local trimImage = AseUtilities.trimImageAlpha
 
         -- Unpack arguments.
         local waveType = args.waveType or defaults.waveType
@@ -256,7 +267,6 @@ dlg:button {
 
         local dist = function(x, y)
             return math.sqrt(x * x + y * y)
-            -- return x * x + y * y
         end
 
         local toTimeAngle = timeScalar * tau / reqFrames
@@ -357,8 +367,7 @@ dlg:button {
         AseUtilities.setPalette(hexArr, trgSprite, 1)
 
         -- Create frames.
-        local oldFrameLen = #srcSprite.frames
-        local needed = math.max(0, reqFrames - oldFrameLen)
+        local needed = math.max(0, reqFrames - 1)
         local duration = 1.0 / math.max(1, fps)
         trgSprite.frames[1].duration = duration
         app.transaction(function()
@@ -367,13 +376,20 @@ dlg:button {
 
         -- Create cels.
         -- app.transaction(function()
+        local trimCels = args.trimCels
         local trgFrames = trgSprite.frames
         local trgLayer = trgSprite.layers[1]
         local i = 0
         while i < reqFrames do i = i + 1
             local frame = trgFrames[i]
             local img = trgImages[i]
-            trgSprite:newCel(trgLayer, frame, img)
+            local x = 0
+            local y = 0
+            if trimCels then
+                img, x, y = trimImage(img, 0, alphaMask)
+            end
+            trgSprite:newCel(
+                trgLayer, frame, img, Point(x, y))
         end
         -- end)
 

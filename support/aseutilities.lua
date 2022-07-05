@@ -149,8 +149,8 @@ end
 ---range [0, 255]. Returns zero if the color
 ---mode is not recognized.
 ---@param clr userdata aseprite color
----@param clrMode number color mode
----@return number
+---@param clrMode integer color mode
+---@return integer
 function AseUtilities.aseColorToHex(clr, clrMode)
     if clrMode == ColorMode.RGB then
         return (clr.alpha << 0x18)
@@ -178,8 +178,8 @@ end
 ---@param palType string enumeration
 ---@param filePath string file path
 ---@param presetPath string preset path
----@param startIndex number start index
----@param count number count of colors to sample
+---@param startIndex integer start index
+---@param count integer count of colors to sample
 ---@param correctZeroAlpha boolean alpha correction flag
 ---@return table
 ---@return table
@@ -310,8 +310,8 @@ end
 ---is in sRGB. The start index defaults to 0.
 ---The count defaults to 256.
 ---@param pal userdata Aseprite palette
----@param startIndex number|nil start index
----@param count number|nil sample count
+---@param startIndex integer|nil start index
+---@param count integer|nil sample count
 ---@return table
 function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
     if pal then
@@ -504,9 +504,9 @@ end
 ---to blending. Unpremultiplies the result.
 ---For more information,
 ---see https://www.w3.org/TR/compositing-1/ .
----@param a number backdrop color
----@param b number overlay color
----@return number
+---@param a integer backdrop color
+---@param b integer overlay color
+---@return integer
 function AseUtilities.blend(a, b)
     local t = b >> 0x18 & 0xff
     if t > 0xfe then return b end
@@ -551,7 +551,7 @@ end
 ---accepts an integer constant as an input. The constant
 ---should be included in the ColorMode enum: INDEXED,
 ---GRAY or RGB. Does nothing if the constant is invalid.
----@param format number format constant
+---@param format integer format constant
 function AseUtilities.changePixelFormat(format)
     if format == ColorMode.INDEXED then
         app.command.ChangePixelFormat { format = "indexed" }
@@ -599,13 +599,13 @@ end
 ---as an argument.
 ---Returns a table of layers.
 ---@param sprite userdata
----@param frameStartIndex number frame start index
----@param frameCount number frame count
----@param layerStartIndex number layer start index
----@param layerCount number layer count
+---@param frameStartIndex integer frame start index
+---@param frameCount integer frame count
+---@param layerStartIndex integer layer start index
+---@param layerCount integer layer count
 ---@param image userdata cel image
 ---@param position userdata cel position
----@param guiClr number hexadecimal color
+---@param guiClr integer hexadecimal color
 ---@return table
 function AseUtilities.createCels(
     sprite,
@@ -732,7 +732,7 @@ end
 ---to have been divided by 1000.0, and ready to be
 ---assigned as is.
 ---@param sprite userdata sprite
----@param count number frames to create
+---@param count integer frames to create
 ---@param duration number frame duration
 ---@return table
 function AseUtilities.createFrames(sprite, count, duration)
@@ -789,10 +789,10 @@ end
 -- color, use a hexadecimal integer as an argument.
 ---Returns a table of layers.
 ---@param sprite userdata sprite
----@param count number number of layers to create
----@param blendMode number blend mode
----@param opacity number layer opacity
----@param guiClr number hexadecimal color
+---@param count integer number of layers to create
+---@param blendMode integer blend mode
+---@param opacity integer layer opacity
+---@param guiClr integer hexadecimal color
 ---@param parent userdata parent layer
 ---@return table
 function AseUtilities.createNewLayers(
@@ -885,19 +885,25 @@ function AseUtilities.createNewLayers(
     return layers
 end
 
----Draws a border around an image's perimeter. Uses the
+---Draws a border within an image's perimeter. Uses the
 ---Aseprite image instance method drawPixel. This means
 ---that the pixel changes will not be tracked as a
 ---transaction.
 ---@param img userdata Aseprite image
----@param border number border depth
----@param bordHex number hexadecimal color
+---@param border integer border depth
+---@param bordHex integer hexadecimal color
 function AseUtilities.drawBorder(img, border, bordHex)
     -- This is no longer used by either layerExport
     -- or frameExport, but keep it around. The new
     -- strategy is to clear an image to a border color,
     -- then blit the inner image over that.
     if border < 1 then return img end
+    if bordHex == img.spec.transparentColor then
+        -- This could be misinterpreted if the bordHex
+        -- color is expected to be an ABGR32 rather than
+        -- whatever format is image appropriate.
+        return img
+    end
     local w = img.width
     local h = img.height
     if border >= math.min(w, h) then
@@ -949,10 +955,10 @@ end
 ---instance method drawPixel. This means that the
 ---pixel changes will not be tracked as a transaction.
 ---@param image userdata Aseprite image
----@param xc number center x
----@param yc number center y
----@param r number radius
----@param hex number hexadecimal color
+---@param xc integer center x
+---@param yc integer center y
+---@param r integer radius
+---@param hex integer hexadecimal color
 function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
     local blend = AseUtilities.blend
     local rsq = r * r
@@ -976,7 +982,7 @@ end
 ---Draws a curve in Aseprite with the contour tool.
 ---If a stroke is used, draws the stroke line by line.
 ---@param curve table curve
----@param resolution number curve resolution
+---@param resolution integer curve resolution
 ---@param useFill boolean use fill
 ---@param fillClr userdata fill color
 ---@param useStroke boolean use stroke
@@ -1081,11 +1087,11 @@ end
 ---with app.useTool.
 ---@param image userdata image
 ---@param glyph table glyph
----@param hex number hexadecimal color
----@param x number x top left corner
----@param y number y top left corner
----@param gw number glyph width
----@param gh number glyph height
+---@param hex integer hexadecimal color
+---@param x integer x top left corner
+---@param y integer y top left corner
+---@param gw integer glyph width
+---@param gh integer glyph height
 function AseUtilities.drawGlyph(
     image, glyph, hex,
     x, y, gw, gh)
@@ -1118,13 +1124,13 @@ end
 ---with app.useTool.
 ---@param image userdata image
 ---@param glyph table glyph
----@param hex number hexadecimal color
----@param x number x top left corner
----@param y number y top left corner
----@param gw number glyph width
----@param gh number glyph height
----@param dw number display width
----@param dh number display height
+---@param hex integer hexadecimal color
+---@param x integer x top left corner
+---@param y integer y top left corner
+---@param gw integer glyph width
+---@param gh integer glyph height
+---@param dw integer display width
+---@param dh integer display height
 function AseUtilities.drawGlyphNearest(
     image, glyph, hex,
     x, y, gw, gh, dw, dh)
@@ -1367,12 +1373,12 @@ end
 ---@param lut table glyph look up table
 ---@param image userdata image
 ---@param chars table characters table
----@param hex number hexadecimal color
----@param x number x top left corner
----@param y number y top left corner
----@param gw number glyph width
----@param gh number glyph height
----@param scale number display scale
+---@param hex integer hexadecimal color
+---@param x integer x top left corner
+---@param y integer y top left corner
+---@param gw integer glyph width
+---@param gh integer glyph height
+---@param scale integer display scale
 function AseUtilities.drawString(
     lut, image, chars, hex,
     x, y, gw, gh, scale)
@@ -1413,8 +1419,8 @@ end
 ---the image by reference if its size is already
 ---a power of 2.
 ---@param img userdata image
----@param colorMode number color mode
----@param alphaMask number alpha mask index
+---@param colorMode integer color mode
+---@param alphaMask integer alpha mask index
 ---@param colorSpace userdata color space
 ---@param nonUniform boolean non uniform dimensions
 ---@return userdata
@@ -1455,8 +1461,8 @@ end
 ---top-left corner.
 ---@param source userdata source image
 ---@return userdata
----@return number
----@return number
+---@return integer
+---@return integer
 function AseUtilities.flipImageHoriz(source)
     local px = {}
     local i = 0
@@ -1486,8 +1492,8 @@ end
 ---top-left corner.
 ---@param source userdata source image
 ---@return userdata
----@return number
----@return number
+---@return integer
+---@return integer
 function AseUtilities.flipImageVert(source)
     local px = {}
     local i = 0
@@ -1566,7 +1572,7 @@ end
 ---Creates a table of gray colors represented as
 ---32 bit integers, where the gray is repeated
 ---three times in red, green and blue channels.
----@param count number swatch count
+---@param count integer swatch count
 ---@return table
 function AseUtilities.grayHexes(count)
     local floor = math.floor
@@ -1588,7 +1594,7 @@ end
 ---to an Aseprite Color object. Does not use
 ---the Color rgbaPixel constructor, as the color
 ---mode dictates how the integer is interpreted.
----@param hex number hexadecimal color
+---@param hex integer hexadecimal color
 ---@return userdata
 function AseUtilities.hexToAseColor(hex)
     -- See https://github.com/aseprite/aseprite/
@@ -1602,8 +1608,8 @@ end
 ---Initializes a sprite and layer. Sets palette
 ---to the colors provided, or, if nil, a default
 ---set. Colors should be hexadecimal integers.
----@param wDefault number default width
----@param hDefault number default height
+---@param wDefault integer default width
+---@param hDefault integer default height
 ---@param layerName string layer name
 ---@param colors table array of hexes
 ---@param colorSpace userdata color space
@@ -1827,8 +1833,8 @@ end
 ---top-left corner.
 ---@param source userdata source image
 ---@return userdata
----@return number
----@return number
+---@return integer
+---@return integer
 function AseUtilities.rotateImage90(source)
     local px = {}
     local i = 0
@@ -1865,8 +1871,8 @@ end
 ---displaced coordinates for the top-left corner.
 ---@param source userdata source image
 ---@return userdata
----@return number
----@return number
+---@return integer
+---@return integer
 function AseUtilities.rotateImage180(source)
     local px = {}
     local i = 0
@@ -1897,8 +1903,8 @@ end
 ---top-left corner.
 ---@param source userdata source image
 ---@return userdata
----@return number
----@return number
+---@return integer
+---@return integer
 function AseUtilities.rotateImage270(source)
     local px = {}
     local i = 0
@@ -1935,7 +1941,7 @@ end
 ---palette index defaults to 1.
 ---@param arr table color array
 ---@param sprite userdata sprite
----@param paletteIndex number|nil index
+---@param paletteIndex integer|nil index
 function AseUtilities.setPalette(arr, sprite, paletteIndex)
     local palIdxVerif = paletteIndex or 1
     local palettes = sprite.palettes
@@ -1976,7 +1982,7 @@ end
 ---image. Supported in Aseprite version 1.3 or newer.
 ---@param imgSrc userdata source image
 ---@param tileSet userdata tile set
----@param sprClrMode number sprite color mode
+---@param sprClrMode integer sprite color mode
 ---@return userdata
 function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     local tileDim = tileSet.grid.tileSize
@@ -2044,11 +2050,11 @@ end
 ---should be added to the position of the cel
 ---that contained the source image.
 ---@param image userdata aseprite image
----@param padding number padding
----@param alphaIndex number alpha mask index
+---@param padding integer padding
+---@param alphaIndex integer alpha mask index
 ---@return userdata
----@return number
----@return number
+---@return integer
+---@return integer
 function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
 
     -- getPixel returns white when coordinates are out of
@@ -2192,8 +2198,8 @@ end
 ---wrapping the elements that exceed its dimensions back
 ---to the beginning.
 ---@param source userdata source image
----@param x number x translation
----@param y number y translation
+---@param x integer x translation
+---@param y integer y translation
 ---@return userdata
 function AseUtilities.wrapImage(source, x, y)
     local px = {}

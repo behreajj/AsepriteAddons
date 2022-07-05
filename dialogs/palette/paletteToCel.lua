@@ -368,7 +368,8 @@ dlg:button {
                     end
 
                     -- TODO: Support tile maps like in adjustHue.
-                    -- Copy to layer or layerIsTilemap.
+                    -- Copy to layer should default to false if
+                    -- src is tilemap.
                     if copyToLayer then
                         local trgCel = activeSprite:newCel(
                             trgLayer, srcFrame,

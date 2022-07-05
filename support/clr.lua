@@ -1655,7 +1655,7 @@ end
 ---Channels are packed in 0xAABBGGRR order.
 ---Ensures that color values are valid, in [0.0, 1.0].
 ---@param c table color
----@return number
+---@return integer
 function Clr.toHex(c)
     return Clr.toHexUnchecked(Clr.clamp01(c))
 end
@@ -1663,7 +1663,7 @@ end
 ---Converts from a color to a hexadecimal integer.
 ---Channels are packed in 0xAABBGGRR order.
 ---@param c table color
----@return number
+---@return integer
 function Clr.toHexUnchecked(c)
     return math.floor(c.a * 0xff + 0.5) << 0x18
         | math.floor(c.b * 0xff + 0.5) << 0x10

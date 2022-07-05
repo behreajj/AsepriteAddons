@@ -398,7 +398,8 @@ dlg:button {
         app.command.ChangePixelFormat { format = "rgb" }
 
         -- TODO: Support tile maps like in adjustHue.
-        -- Copy to layer or layerIsTilemap.
+        -- Copy to layer should default to false if
+        -- src is tilemap.
         local framesLen = #frames
         app.transaction(function()
             for i = 1, framesLen, 1 do
