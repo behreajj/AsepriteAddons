@@ -68,7 +68,7 @@ dlg:button {
 
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert{
+            app.alert {
                 title = "Error",
                 text = "There is no active sprite." }
             return
@@ -103,13 +103,14 @@ dlg:button {
 
         if omitHidden then
             local filtered = {}
-            local j = 1
-            for i = 1, celsLen, 1 do
-                local cel = cels[i]
+            local j = 0
+            local h = 0
+            while h < celsLen do h = h + 1
+                local cel = cels[h]
                 local layer = cel.layer
                 if isVisibleHierarchy(layer, activeSprite) then
-                    filtered[j] = cel
                     j = j + 1
+                    filtered[j] = cel
                 end
             end
 
@@ -118,7 +119,8 @@ dlg:button {
         end
 
         app.transaction(function()
-            for i = 1, celsLen, 1 do
+            local i = 0
+            while i < celsLen do i = i + 1
                 local cel = cels[i]
                 local celPos = cel.position
                 local celImg = cel.image

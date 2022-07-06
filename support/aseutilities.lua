@@ -1315,7 +1315,7 @@ function AseUtilities.drawMesh2(
         local idx2 = 0
         while idx2 < fLen do
             idx2 = idx2 + 1
-            ptsFace[idx2] = pts[ f[idx2] ]
+            ptsFace[idx2] = pts[f[idx2]]
         end
         ptsGrouped[idx1] = ptsFace
     end
@@ -1522,13 +1522,19 @@ end
 ---a palette from an Aseprite frame object. Defaults
 ---to index 1 if the frame index exceeds the number
 ---of palettes.
----@param frObj userdata Aseprite frame object
+---@param frObj userdata|integer Aseprite frame object
 ---@param palettes table table of Aseprite palettes
 ---@return userdata
 function AseUtilities.getPalette(frObj, palettes)
     -- TODO: Where else can this be used?
     local idx = 1
-    if frObj then idx = frObj.frameNumber end
+    local typeFrObj = type(frObj)
+    if typeFrObj == "number"
+        and math.type(frObj) == "integer" then
+        idx = frObj
+    elseif typeFrObj == "userdata" then
+        idx = frObj.frameNumber
+    end
     local lenPalettes = #palettes
     if idx > lenPalettes then idx = 1 end
     return palettes[idx]
@@ -1810,7 +1816,7 @@ function AseUtilities.parseTagsUnique(tags)
         local j = 0
         while j < lenArr1 do
             j = j + 1
-            dict[ arr1[j] ] = true
+            dict[arr1[j]] = true
         end
     end
 
@@ -1947,8 +1953,8 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
     local palettes = sprite.palettes
     local lenPalettes = #palettes
     local lenHexArr = #arr
-    palIdxVerif = 1 + (palIdxVerif - 1) % lenPalettes
-    -- if palIdxVerif > lenPalettes then palIdxVerif = 1 end
+    -- This should be consistent behavior with getPalette.
+    if palIdxVerif > lenPalettes then palIdxVerif = 1 end
     local palette = palettes[palIdxVerif]
     if lenHexArr > 0 then
         app.transaction(function()

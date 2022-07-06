@@ -364,14 +364,14 @@ function Mesh2.arc(
 end
 
 ---Creates a grid of bricks.
----The frequency describes interval before an offset.
----The aspect is the ratio of brick width to height.
 ---The offset is how far to displace offset rows.
----@param cols number columns
----@param rows number rows
+---The aspect is the ratio of brick width to height.
+---The frequency describes interval before an offset.
+---@param cols integer columns
+---@param rows integer rows
 ---@param offset number offset
----@param aspect number ratio width / height
----@param freq number frequency
+---@param aspect number aspect ratio
+---@param freq integer frequency
 ---@return table
 function Mesh2.gridBricks(
     cols, rows,
@@ -456,17 +456,22 @@ function Mesh2.gridCartesian(cols, rows)
     local vs = {}
     local iToStep = 1.0 / rVal
     local jToStep = 1.0 / cVal
-    local fLen1n1 = (rVal1 * cVal1) - 1
-    for k = 0, fLen1n1, 1 do
-        vs[1 + k] = Vec2.new(
-            (k % cVal1) * jToStep - 0.5,
-            (k // cVal1) * iToStep - 0.5)
+    local fLen1 = rVal1 * cVal1
+    local h = 0
+    while h < fLen1 do
+        local i = h // cVal1
+        local j = h % cVal1
+        h = h + 1
+        vs[h] = Vec2.new(
+            j * jToStep - 0.5,
+            i * iToStep - 0.5)
     end
 
     -- Set face indices.
     local fs = {}
     local fLen = rVal * cVal
-    local k = 0 while k < fLen do
+    local k = 0
+    while k < fLen do
         local i = k // cVal
         local j = k % cVal
 
@@ -485,7 +490,7 @@ function Mesh2.gridCartesian(cols, rows)
 end
 
 ---Creates a grid of rhombi.
----@param cells integer cells
+---@param cells integer cell count
 ---@return table
 function Mesh2.gridDimetric(cells)
     local mesh = Mesh2.gridCartesian(cells, cells)
@@ -506,7 +511,7 @@ end
 
 ---Creates a grid of hexagons in rings around
 ---a central cell.
----@param rings number
+---@param rings integer number of rings
 ---@return table
 function Mesh2.gridHex(rings)
     local vRings = 1
@@ -523,9 +528,10 @@ function Mesh2.gridHex(rings)
 
     local fs = {}
     local vs = {}
-    local fIdx = 1
-    local vIdx = 1
-    for i = iMin, iMax, 1 do
+    local fIdx = 0
+    local vIdx = -5
+    local i = iMin - 1
+    while i < iMax do i = i + 1
         local jMin = iMin
         local jMax = iMax
 
@@ -534,7 +540,8 @@ function Mesh2.gridHex(rings)
 
         local iExt = i * extent
 
-        for j = jMin, jMax, 1 do
+        local j = jMin - 1
+        while j < jMax do j = j + 1
             local x = iExt + j * halfExt
             local y = j * rad15
 
@@ -543,6 +550,7 @@ function Mesh2.gridHex(rings)
             local top = y + halfRad
             local bottom = y - halfRad
 
+            vIdx = vIdx + 6
             vs[vIdx] = Vec2.new(x, y + vrad)
             vs[vIdx + 1] = Vec2.new(left, top)
             vs[vIdx + 2] = Vec2.new(left, bottom)
@@ -550,12 +558,10 @@ function Mesh2.gridHex(rings)
             vs[vIdx + 4] = Vec2.new(right, bottom)
             vs[vIdx + 5] = Vec2.new(right, top)
 
+            fIdx = fIdx + 1
             fs[fIdx] = {
                 vIdx, vIdx + 1, vIdx + 2,
                 vIdx + 3, vIdx + 4, vIdx + 5 }
-
-            fIdx = fIdx + 1
-            vIdx = vIdx + 6
         end
     end
 
@@ -617,7 +623,9 @@ function Mesh2.separateFaces(source, from, to)
     if from and from > 1 then origin = from end
     if to and to < fsSrcLen then dest = to end
 
-    for i = origin, dest, 1 do
+    local i = origin - 1
+    while i < dest do
+        i = i + 1
         local fSrc = fsSrc[i]
         local fSrcLen = #fSrc
         local vsTrg = {}

@@ -10,6 +10,7 @@ setmetatable(GradientUtilities, {
         return cls.new(...)
     end })
 
+---Color spaces presets.
 GradientUtilities.CLR_SPC_PRESETS = {
     "CIE_LAB",
     "CIE_LCH",
@@ -19,12 +20,15 @@ GradientUtilities.CLR_SPC_PRESETS = {
     "LINEAR_RGB",
     "S_RGB" }
 
+---Hue easing function presets.
 GradientUtilities.HUE_EASING_PRESETS = {
     "CCW",
     "CW",
     "FAR",
     "NEAR" }
 
+---Easing function presets for non-polar
+---color representations.
 GradientUtilities.RGB_EASING_PRESETS = {
     "EASE_IN_CIRC",
     "EASE_OUT_CIRC",
@@ -32,10 +36,23 @@ GradientUtilities.RGB_EASING_PRESETS = {
     "SMOOTH",
     "SMOOTHER" }
 
+---Default color space preset.
 GradientUtilities.DEFAULT_CLR_SPC = "CIE_LCH"
+
+---Default hue easing preset.
 GradientUtilities.DEFAULT_HUE_EASING = "NEAR"
+
+---Default linear easing preset.
 GradientUtilities.DEFAULT_RGB_EASING = "LINEAR"
 
+---Converts an array of Aseprite colors to a
+---ClrGradient. If the number of colors is less
+---than one, returns a gradient with clear black
+---and opaque white. If the number is less than
+---two, returns a gradient with the clear and
+---original color.
+---@param aseColors table
+---@return table
 function GradientUtilities.aseColorsToClrGradient(aseColors)
     local clrKeys = {}
     local lenColors = #aseColors

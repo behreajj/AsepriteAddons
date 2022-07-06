@@ -8,9 +8,17 @@ setmetatable(Quadtree, {
         return cls.new(...)
     end })
 
+
+---South West child index.
 Quadtree.SOUTH_WEST = 1
+
+---South East child index.
 Quadtree.SOUTH_EAST = 2
+
+---North West child index.
 Quadtree.NORTH_WEST = 3
+
+---North East child index.
 Quadtree.NORTH_EAST = 4
 
 ---Creates a new Quadtree node with an empty list of

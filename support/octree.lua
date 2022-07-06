@@ -8,13 +8,28 @@ setmetatable(Octree, {
         return cls.new(...)
     end })
 
+---Back South West child index.
 Octree.BACK_SOUTH_WEST = 1
+
+---Back South East child index.
 Octree.BACK_SOUTH_EAST = 2
+
+---Back North West child index.
 Octree.BACK_NORTH_WEST = 3
+
+---Back North East child index.
 Octree.BACK_NORTH_EAST = 4
+
+---Front South West child index.
 Octree.FRONT_SOUTH_WEST = 5
+
+---Front South East child index.
 Octree.FRONT_SOUTH_EAST = 6
+
+---Front North West child index.
 Octree.FRONT_NORTH_WEST = 7
+
+---Front North East child index.
 Octree.FRONT_NORTH_EAST = 8
 
 ---Creates a new Octree node with an empty list of

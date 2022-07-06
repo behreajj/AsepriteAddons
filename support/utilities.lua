@@ -173,8 +173,8 @@ end
 ---Converts a dictionary to a sorted set.
 ---If a comparator is not provided, elements
 ---are sorted by their less than (<) operator.
----@param dict table
----@param comparator function|nil
+---@param dict table dictionary
+---@param comparator function|nil comparator function
 ---@return table
 function Utilities.dictToSortedSet(dict, comparator)
     -- TODO: Is there anywhere else this can be used?
