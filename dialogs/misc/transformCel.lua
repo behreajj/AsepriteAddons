@@ -21,16 +21,38 @@ local defaults = {
 local function rgbMix(
     rOrig, gOrig, bOrig, aOrig,
     rDest, gDest, bDest, aDest, t)
+
+    if t <= 0.0 then return rOrig, gOrig, bOrig, aOrig end
+    if t >= 1.0 then return rDest, gDest, bDest, aDest end
+
     local u = 1.0 - t
     local aMix = u * aOrig + t * aDest
     if aMix <= 0.0 then return 0.0, 0.0, 0.0, 0.0 end
 
-    local rMix = u * rOrig + t * rDest
-    local gMix = u * gOrig + t * gDest
-    local bMix = u * bOrig + t * bDest
+    local ro = rOrig
+    local go = gOrig
+    local bo = bOrig
+    if aOrig > 0.0 and aOrig < 255.0 then
+        local ao01 = aOrig * 0.003921568627451
+        ro = rOrig * ao01
+        go = gOrig * ao01
+        bo = bOrig * ao01
+    end
 
-    -- Tries to avoid dark haloes, but will cause
-    -- white haloes after multiple rotations.
+    local rd = rDest
+    local gd = gDest
+    local bd = bDest
+    if aDest > 0.0 and aDest < 255.0 then
+        local ad01 = aDest * 0.003921568627451
+        rd = rDest * ad01
+        gd = gDest * ad01
+        bd = bDest * ad01
+    end
+
+    local rMix = u * ro + t * rd
+    local gMix = u * go + t * gd
+    local bMix = u * bo + t * bd
+
     if aMix < 255.0 then
         local aInverse = 255.0 / aMix
         rMix = rMix * aInverse
@@ -53,6 +75,9 @@ local function getTargetCels(
     local vBkgAll = bkgAllow or false
     local vRefAll = refAllow or false
     if targetPreset == "ACTIVE" then
+        -- TODO: If active layer is a background layer,
+        -- should it be turned into a normal layer for
+        -- active case only?
         local activeLayer = app.activeLayer
         if activeLayer then
             if isUnlocked(activeLayer, activeSprite)
@@ -557,15 +582,15 @@ dlg:button {
 
         local args = dlg.data
         local degrees = args.degrees or defaults.degrees
-        if degrees == 0 or degrees == 360 then return end
+        if degrees == 0 then return end
 
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
 
-        if degrees == 90 or degrees == 270 or degrees == -90 then
+        if degrees == 90 or degrees == 270 then
             local rotFunc = AseUtilities.rotateImage90
-            if degrees == 270 or degrees == -90 then
+            if degrees == 270 then
                 rotFunc = AseUtilities.rotateImage270
             end
 
@@ -595,7 +620,7 @@ dlg:button {
                     cel.image = trgImg
                 end
             end)
-        elseif degrees == 180 or degrees == -180 then
+        elseif degrees == 180 then
             local rot180 = AseUtilities.rotateImage180
             app.transaction(function()
                 local i = 0
@@ -619,6 +644,8 @@ dlg:button {
             local round = Utilities.round
             local ceil = math.ceil
             local floor = math.floor
+
+            -- TODO: Handle grayscale better?
 
             -- Unlike scale, whether to use bilinear or nearest
             -- is not specified by user. So color mode is not
@@ -793,8 +820,8 @@ dlg:button {
                     -- ideal to minimize drift.
                     local srcPos = cel.position
                     cel.position = Point(
-                        floor(xTrim + srcPos.x - wDiffHalf),
-                        floor(yTrim + srcPos.y - hDiffHalf))
+                        round(xTrim + srcPos.x - wDiffHalf),
+                        round(yTrim + srcPos.y - hDiffHalf))
                     cel.image = trgImg
                 end
             end)
