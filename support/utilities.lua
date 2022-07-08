@@ -979,6 +979,8 @@ function Utilities.reverseTable(t)
     local i = 1
     while i < n do
         t[i], t[n] = t[n], t[i]
+        -- These should stay as post-increment,
+        -- otherwise a table of len 2 won't flip.
         i = i + 1
         n = n - 1
     end

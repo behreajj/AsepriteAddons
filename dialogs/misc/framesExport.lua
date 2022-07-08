@@ -872,7 +872,9 @@ dlg:button {
                     end
                     packetsStr = table.concat(packetStrArr, ',')
                 else
-                    for i = 1, #packetsUnbatched, 1 do
+                    local lenPacketsUnbatched = #packetsUnbatched
+                    local i = 0
+                    while i < lenPacketsUnbatched do i = i + 1
                         local packet = packetsUnbatched[i]
                         local image = packet.image
                         local packetStr = string.format(
@@ -891,7 +893,9 @@ dlg:button {
             else
 
                 local packetStrArr = {}
-                for k = 1, #packetsUnbatched, 1 do
+                local lenPacketsUnbatched = #packetsUnbatched
+                local k = 0
+                while k < lenPacketsUnbatched do k = k + 1
                     local packet = packetsUnbatched[k]
                     local image = packet.image
                     local packetStr = string.format(

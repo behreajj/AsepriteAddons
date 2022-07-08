@@ -147,7 +147,9 @@ dlg:button {
         local colorMode = activeSprite.colorMode
 
         if colorMode ~= ColorMode.RGB then
-            app.alert("Only RGB color mode is supported.")
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported." }
             return
         end
 
@@ -160,12 +162,16 @@ dlg:button {
         end
 
         if srcLayer.isGroup then
-            app.alert("Group layers are not supported.")
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported." }
             return
         end
 
         if srcLayer.isBackground then
-            app.alert("Background layer cannot be the source.")
+            app.alert {
+                title = "Error",
+                text = "Background layer cannot be the source." }
             return
         end
 
@@ -203,14 +209,15 @@ dlg:button {
         -- are used, mix between back and fore.
         local backHex = backTint.rgbaPixel
         local foreHex = foreTint.rgbaPixel
-        local neutHex = (maxAlpha << 0x18)
-            | (maxAlpha << 0x10)
-            | (maxAlpha << 0x08)
-            | maxAlpha
+        local neutHex = 0x00808080
         if useBoth then
             neutHex = Clr.toHex(Clr.mixLab(
                 Clr.fromHex(backHex),
                 Clr.fromHex(foreHex), 0.5))
+        elseif useFore then
+            neutHex = 0x00808080
+        elseif useBack then
+            neutHex = 0x00808080
         end
 
         -- Fill frames.
@@ -399,22 +406,23 @@ dlg:button {
                             local xOffset = packet.tlx - xMin
                             local yOffset = packet.tly - yMin
 
-                            -- TODO: Refactor to while loop, then test.
-                            local shadowPixelLen = #shadowPixels
-                            for k = 0, shadowPixelLen - 1, 1 do
+                            local shadowPixelLen = #shadowPixels - 1
+                            local k = -1
+                            while k < shadowPixelLen do k = k + 1
                                 local shadowHex = shadowPixels[1 + k]
                                 local shadowAlpha = shadowHex >> 0x18 & 0xff
                                 if shadowAlpha > 0 then
                                     local x = (k % shadowWidth) + xOffset
                                     local y = (k // shadowWidth) + yOffset
-                                    local orig = trgImg:getPixel(x, y)
+
                                     local dest = shadowHex
                                     if useTint then
                                         dest = AseUtilities.blend(shadowHex, tint)
                                     end
                                     local compAlpha = min(shadowAlpha, fadeAlpha)
-                                    dest = (dest & 0x00ffffff) | (compAlpha << 0x18)
+                                    dest = (compAlpha << 0x18) | (dest & 0x00ffffff)
 
+                                    local orig = trgImg:getPixel(x, y)
                                     trgImg:drawPixel(x, y,
                                         AseUtilities.blend(orig, dest))
                                 end

@@ -14,7 +14,8 @@ local defaults = {
 
     -- Interlaced
     interType = "HORIZONTAL",
-    interOffset = 180,
+    interOffOrig = 180,
+    interOffDest = 180,
 
     -- Bilinear
     uDisplaceOrig = 5,
@@ -59,7 +60,8 @@ dlg:combobox {
 
         local isInter = waveType == "INTERLACED"
         dlg:modify { id = "interType", visible = isInter }
-        dlg:modify { id = "interOffset", visible = isInter }
+        dlg:modify { id = "interOffOrig", visible = isInter }
+        dlg:modify { id = "interOffDest", visible = isInter }
 
         local isHoriz = interType == "HORIZONTAL"
         local isVert = interType == "VERTICAL"
@@ -249,11 +251,19 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "interOffset",
+    id = "interOffOrig",
     label = "Offset:",
     min = -180,
     max = 180,
-    value = defaults.interOffset,
+    value = defaults.interOffOrig,
+    visible = defaults.waveType == "INTERLACED"
+}
+
+dlg:slider {
+    id = "interOffDest",
+    min = -180,
+    max = 180,
+    value = defaults.interOffDest,
     visible = defaults.waveType == "INTERLACED"
 }
 
@@ -364,8 +374,10 @@ dlg:button {
         local eval = nil
         if waveType == "INTERLACED" then
             local interType = args.interType or defaults.interType
-            local interOffset = args.interOffset or defaults.interOffset
-            local lacOffRad = 0.017453292519943 * interOffset
+            local interOffOrig = args.interOffOrig or defaults.interOffOrig
+            local interOffDest = args.interOffDest or defaults.interOffDest
+            local lacRadOrig = 0.017453292519943 * interOffOrig
+            local lacRadDest = 0.017453292519943 * interOffDest
             if interType == "VERTICAL" then
                 local yDisplaceOrig = args.yDisplaceOrig or defaults.yDisplaceOrig
                 local yDisplaceDest = args.yDisplaceDest or defaults.yDisplaceDest
@@ -374,7 +386,11 @@ dlg:button {
                 local xToTheta = spaceScalar * tau / srcWidth
                 eval = function(x, y, angle, t)
                     local xTheta = angle + x * xToTheta
-                    if x % 2 ~= 0 then xTheta = xTheta + lacOffRad end
+                    if x % 2 ~= 0 then
+                        local lacOrig = (1.0 - t) * lacRadOrig
+                            + t * lacRadDest
+                        xTheta = xTheta + lacOrig
+                    end
                     local yDispScl = (1.0 - t) * pxyDisplaceOrig
                         + t * pxyDisplaceDest
                     local yOffset = yDispScl * math.cos(xTheta)
@@ -388,7 +404,11 @@ dlg:button {
                 local yToTheta = spaceScalar * tau / srcHeight
                 eval = function(x, y, angle, t)
                     local yTheta = angle + y * yToTheta
-                    if y % 2 ~= 0 then yTheta = yTheta + lacOffRad end
+                    if y % 2 ~= 0 then
+                        local lacOrig = (1.0 - t) * lacRadOrig
+                            + t * lacRadDest
+                        yTheta = yTheta + lacOrig
+                    end
                     local xDispScl = (1.0 - t) * pxxDisplaceOrig
                         + t * pxxDisplaceDest
                     local xOffset = xDispScl * math.sin(yTheta)

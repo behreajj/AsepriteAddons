@@ -9,12 +9,37 @@ local defaults = {
     xTranslate = 0.0,
     yTranslate = 0.0,
     resizeMethod = "NEAREST",
+    degrees = 0,
+    rotBilin = true,
     pxWidth = 64,
     pxHeight = 64,
     prcWidth = 100,
     prcHeight = 100,
     units = "PERCENT"
 }
+
+local function rgbMix(
+    rOrig, gOrig, bOrig, aOrig,
+    rDest, gDest, bDest, aDest, t)
+    local u = 1.0 - t
+    local aMix = u * aOrig + t * aDest
+    if aMix <= 0.0 then return 0.0, 0.0, 0.0, 0.0 end
+
+    local rMix = u * rOrig + t * rDest
+    local gMix = u * gOrig + t * gDest
+    local bMix = u * bOrig + t * bDest
+
+    -- Tries to avoid dark haloes, but will cause
+    -- white haloes after multiple rotations.
+    if aMix < 255.0 then
+        local aInverse = 255.0 / aMix
+        rMix = rMix * aInverse
+        gMix = gMix * aInverse
+        bMix = bMix * aInverse
+    end
+
+    return rMix, gMix, bMix, aMix
+end
 
 local function getTargetCels(
     activeSprite, targetPreset,
@@ -458,118 +483,322 @@ dlg:button {
 
 dlg:separator { id = "rotateSep" }
 
+-- dlg:check {
+--     id = "rotBilin",
+--     label = "Smooth:",
+--     selected = defaults.rotBilin,
+--     visible = false
+-- }
+
+-- dlg:newrow { always = false }
+
+dlg:slider {
+    id = "degrees",
+    label = "Degrees:",
+    min = 0,
+    max = 359,
+    value = defaults.degrees,
+    -- onrelease = function()
+    -- local args = dlg.data
+    -- local deg = args.degrees
+    -- local nonOrtho = deg ~= 0
+    --     and deg ~= 90
+    --     and deg ~= 180
+    --     and deg ~= 270
+    -- dlg:modify { id = "rotBilin", visible = nonOrtho }
+    -- end
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
-    id = "rotate90Button",
-    text = "&90",
-    label = "Rotate:",
+    id = "decr30DegButton",
+    text = "&-30",
+    focus = false,
+    onclick = function()
+        local args = dlg.data
+        local deg = args.degrees or defaults.degrees
+        deg = deg - 30
+        deg = deg % 360
+        dlg:modify { id = "degrees", value = deg }
+        -- local nonOrtho = deg ~= 0
+        --     and deg ~= 90
+        --     and deg ~= 180
+        --     and deg ~= 270
+        -- dlg:modify { id = "rotBilin", visible = nonOrtho }
+    end
+}
+
+dlg:button {
+    id = "incr30DegButton",
+    text = "&+30",
+    focus = false,
+    onclick = function()
+        local args = dlg.data
+        local deg = args.degrees or defaults.degrees
+        deg = deg + 30
+        deg = deg % 360
+        dlg:modify { id = "degrees", value = deg }
+        -- local nonOrtho = deg ~= 0
+        --     and deg ~= 90
+        --     and deg ~= 180
+        --     and deg ~= 270
+        -- dlg:modify { id = "rotBilin", visible = nonOrtho }
+    end
+}
+
+dlg:button {
+    id = "rotateButton",
+    text = "R&OTATE",
     focus = true,
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then return end
 
         local args = dlg.data
+        local degrees = args.degrees or defaults.degrees
+        if degrees == 0 or degrees == 360 then return end
+
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
 
-        local rot90 = AseUtilities.rotateImage90
-        app.transaction(function()
-            local i = 0
-            while i < celsLen do i = i + 1
-                local cel = cels[i]
-                local srcImg = cel.image
-                local wSrc = srcImg.width
-                local hSrc = srcImg.height
-                local xSrcHalf = wSrc // 2
-                local ySrcHalf = hSrc // 2
-
-                local celPos = cel.position
-                local xtlSrc = celPos.x
-                local ytlSrc = celPos.y
-
-                local trgImg, _, _ = rot90(srcImg)
-                local wTrg = trgImg.width
-                local hTrg = trgImg.height
-                local xTrgHalf = wTrg // 2
-                local yTrgHalf = hTrg // 2
-
-                cel.position = Point(
-                    xtlSrc + xSrcHalf - xTrgHalf,
-                    ytlSrc + ySrcHalf - yTrgHalf)
-                cel.image = trgImg
+        if degrees == 90 or degrees == 270 or degrees == -90 then
+            local rotFunc = AseUtilities.rotateImage90
+            if degrees == 270 or degrees == -90 then
+                rotFunc = AseUtilities.rotateImage270
             end
-        end)
 
-        app.refresh()
-    end
-}
+            app.transaction(function()
+                local i = 0
+                while i < celsLen do i = i + 1
+                    local cel = cels[i]
+                    local srcImg = cel.image
+                    local wSrc = srcImg.width
+                    local hSrc = srcImg.height
+                    local xSrcHalf = wSrc // 2
+                    local ySrcHalf = hSrc // 2
 
-dlg:button {
-    id = "rotate180Button",
-    text = "&180",
-    focus = false,
-    onclick = function()
-        local activeSprite = app.activeSprite
-        if not activeSprite then return end
+                    local celPos = cel.position
+                    local xtlSrc = celPos.x
+                    local ytlSrc = celPos.y
 
-        local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, true, true)
-        local celsLen = #cels
+                    local trgImg, _, _ = rotFunc(srcImg)
+                    local wTrg = trgImg.width
+                    local hTrg = trgImg.height
+                    local xTrgHalf = wTrg // 2
+                    local yTrgHalf = hTrg // 2
 
-        local rot = AseUtilities.rotateImage180
-        app.transaction(function()
-            local i = 0
-            while i < celsLen do i = i + 1
-                local cel = cels[i]
-                cel.image = rot(cel.image)
+                    cel.position = Point(
+                        xtlSrc + xSrcHalf - xTrgHalf,
+                        ytlSrc + ySrcHalf - yTrgHalf)
+                    cel.image = trgImg
+                end
+            end)
+        elseif degrees == 180 or degrees == -180 then
+            local rot180 = AseUtilities.rotateImage180
+            app.transaction(function()
+                local i = 0
+                while i < celsLen do i = i + 1
+                    local cel = cels[i]
+                    cel.image = rot180(cel.image)
+                end
+            end)
+        else
+            -- Source:
+            -- http://polymathprogrammer.com/2010/04/05/
+            -- image-rotation-with-bilinear-interpolation-
+            -- and-no-clipping/
+            --
+            -- Altered to not use trig functions within the pixel
+            -- loop. Uses vector rotation formula instead. 90, 180,
+            -- 270 degree angles are addressed prior to this
+            -- condition with pixel array swap.
+
+            local trimAlpha = AseUtilities.trimImageAlpha
+            local round = Utilities.round
+            local ceil = math.ceil
+            local floor = math.floor
+
+            -- Unlike scale, whether to use bilinear or nearest
+            -- is not specified by user. So color mode is not
+            -- changed to adapt, but rather is inferred from mode.
+            local rotBilin = activeSprite.colorMode == ColorMode.RGB
+                and defaults.rotBilin
+
+            local rotFunc = function(xSrc, ySrc, wSrc, hSrc, srcImg)
+                local xr = round(xSrc)
+                local yr = round(ySrc)
+                if yr > -1 and yr < hSrc
+                    and xr > -1 and xr < wSrc then
+                    return srcImg:getPixel(xr, yr)
+                end
+                return 0x0
             end
-        end)
 
-        app.refresh()
-    end
-}
+            if rotBilin then
+                rotFunc = function(xSrc, ySrc, wSrc, hSrc, srcImg)
+                    local yf = floor(ySrc)
+                    local yc = ceil(ySrc)
+                    local xf = floor(xSrc)
+                    local xc = ceil(xSrc)
 
-dlg:button {
-    id = "rotate270Button",
-    text = "&270",
-    focus = false,
-    onclick = function()
-        local activeSprite = app.activeSprite
-        if not activeSprite then return end
+                    local yErr = ySrc - yf
+                    local xErr = xSrc - xf
 
-        local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
-        local celsLen = #cels
+                    local yfInBounds = yf > -1 and yf < hSrc
+                    local ycInBounds = yc > -1 and yc < hSrc
+                    local xfInBounds = xf > -1 and xf < wSrc
+                    local xcInBounds = xc > -1 and xc < wSrc
 
-        local rot270 = AseUtilities.rotateImage270
-        app.transaction(function()
-            local i = 0
-            while i < celsLen do i = i + 1
-                local cel = cels[i]
-                local srcImg = cel.image
-                local wSrc = srcImg.width
-                local hSrc = srcImg.height
-                local xSrcHalf = wSrc // 2
-                local ySrcHalf = hSrc // 2
+                    local c00 = 0x0
+                    local c10 = 0x0
+                    local c11 = 0x0
+                    local c01 = 0x0
 
-                local celPos = cel.position
-                local xtlSrc = celPos.x
-                local ytlSrc = celPos.y
+                    if xfInBounds and yfInBounds then
+                        c00 = srcImg:getPixel(xf, yf)
+                    end
 
-                local trgImg, _, _ = rot270(srcImg)
-                local wTrg = trgImg.width
-                local hTrg = trgImg.height
-                local xTrgHalf = wTrg // 2
-                local yTrgHalf = hTrg // 2
+                    if xcInBounds and yfInBounds then
+                        c10 = srcImg:getPixel(xc, yf)
+                    end
 
-                cel.position = Point(
-                    xtlSrc + xSrcHalf - xTrgHalf,
-                    ytlSrc + ySrcHalf - yTrgHalf)
-                cel.image = trgImg
+                    if xcInBounds and ycInBounds then
+                        c11 = srcImg:getPixel(xc, yc)
+                    end
+
+                    if xfInBounds and ycInBounds then
+                        c01 = srcImg:getPixel(xf, yc)
+                    end
+
+                    local a0 = 0
+                    local b0 = 0
+                    local g0 = 0
+                    local r0 = 0
+
+                    local a00 = c00 >> 0x18 & 0xff
+                    local a10 = c10 >> 0x18 & 0xff
+                    if a00 > 0 or a10 > 0 then
+                        local b00 = c00 >> 0x10 & 0xff
+                        local g00 = c00 >> 0x08 & 0xff
+                        local r00 = c00 & 0xff
+
+                        local b10 = c10 >> 0x10 & 0xff
+                        local g10 = c10 >> 0x08 & 0xff
+                        local r10 = c10 & 0xff
+
+                        r0, g0, b0, a0 = rgbMix(
+                            r00, g00, b00, a00,
+                            r10, g10, b10, a10, xErr)
+                    end
+
+                    local a1 = 0
+                    local b1 = 0
+                    local g1 = 0
+                    local r1 = 0
+
+                    local a01 = c01 >> 0x18 & 0xff
+                    local a11 = c11 >> 0x18 & 0xff
+                    if a01 > 0 or a11 > 0 then
+                        local b01 = c01 >> 0x10 & 0xff
+                        local g01 = c01 >> 0x08 & 0xff
+                        local r01 = c01 & 0xff
+
+                        local b11 = c11 >> 0x10 & 0xff
+                        local g11 = c11 >> 0x08 & 0xff
+                        local r11 = c11 & 0xff
+
+                        r1, g1, b1, a1 = rgbMix(
+                            r01, g01, b01, a01,
+                            r11, g11, b11, a11, xErr)
+                    end
+
+                    if a0 > 0 or a1 > 0 then
+                        local rt, gt, bt, at = rgbMix(
+                            r0, g0, b0, a0,
+                            r1, g1, b1, a1, yErr)
+                        at = floor(0.5 + at)
+                        bt = floor(0.5 + bt)
+                        gt = floor(0.5 + gt)
+                        rt = floor(0.5 + rt)
+
+                        if at < 0 then at = 0 elseif at > 255 then at = 255 end
+                        if bt < 0 then bt = 0 elseif bt > 255 then bt = 255 end
+                        if gt < 0 then gt = 0 elseif gt > 255 then gt = 255 end
+                        if rt < 0 then rt = 0 elseif rt > 255 then rt = 255 end
+
+                        return (at << 0x18) | (bt << 0x10) | (gt << 0x08) | rt
+                    end
+
+                    return 0x0
+                end
             end
-        end)
+
+            app.transaction(function()
+                local radians = (360 - degrees) * 0.017453292519943
+                local cosa = math.cos(radians)
+                local sina = -math.sin(radians)
+                local absCosa = math.abs(cosa)
+                local absSina = math.abs(sina)
+
+                local i = 0
+                while i < celsLen do i = i + 1
+                    local cel = cels[i]
+                    local srcImg = cel.image
+                    local srcSpec = srcImg.spec
+                    local wSrc = srcSpec.width
+                    local hSrc = srcSpec.height
+                    local alphaMask = srcSpec.transparentColor
+
+                    -- Just in case, ceil this instead of floor.
+                    local wTrg = ceil(hSrc * absSina + wSrc * absCosa)
+                    local hTrg = ceil(hSrc * absCosa + wSrc * absSina)
+                    local xSrcCenter = wSrc * 0.5
+                    local ySrcCenter = hSrc * 0.5
+                    local xTrgCenter = wTrg * 0.5
+                    local yTrgCenter = hTrg * 0.5
+                    local wDiffHalf = xTrgCenter - xSrcCenter
+                    local hDiffHalf = yTrgCenter - ySrcCenter
+
+                    local trgSpec = ImageSpec {
+                        width = wTrg,
+                        height = hTrg,
+                        colorMode = srcSpec.colorMode,
+                        transparentColor = alphaMask
+                    }
+                    trgSpec.colorSpace = srcSpec.colorSpace
+                    local trgImg = Image(trgSpec)
+
+                    -- It is very important to iterate through
+                    -- target pixels and read from source pixels.
+                    -- Iterating through source pixels leads to
+                    -- a rotation with gaps in the pixels.
+                    local trgPxItr = trgImg:pixels()
+                    for elm in trgPxItr do
+                        local xSgn = elm.x - xTrgCenter
+                        local ySgn = elm.y - yTrgCenter
+                        local xRot = cosa * xSgn - sina * ySgn
+                        local yRot = cosa * ySgn + sina * xSgn
+                        local xSrc = xSrcCenter + xRot
+                        local ySrc = ySrcCenter + yRot
+                        elm(rotFunc(xSrc, ySrc, wSrc, hSrc, srcImg))
+                    end
+
+                    local xTrim = 0
+                    local yTrim = 0
+                    trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaMask)
+
+                    -- No combo of ceil and floor seem
+                    -- ideal to minimize drift.
+                    local srcPos = cel.position
+                    cel.position = Point(
+                        floor(xTrim + srcPos.x - wDiffHalf),
+                        floor(yTrim + srcPos.y - hDiffHalf))
+                    cel.image = trgImg
+                end
+            end)
+        end
 
         app.refresh()
     end
@@ -877,13 +1106,16 @@ dlg:button {
                         end
                     end
 
-                    cel.image = trgImg
                     local celPos = cel.position
                     local xCenter = celPos.x + sw * 0.5
                     local yCenter = celPos.y + sh * 0.5
+
+                    -- app.transaction(function()
                     cel.position = Point(
                         xCenter - dw * 0.5,
                         yCenter - dh * 0.5)
+                    cel.image = trgImg
+                    -- end)
                 end
             end
         end)

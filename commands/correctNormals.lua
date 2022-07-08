@@ -3,7 +3,9 @@ if not activeSprite then return end
 
 local colorMode = activeSprite.colorMode
 if colorMode ~= ColorMode.RGB then
-    app.alert("Only RGB color mode is supported.")
+    app.alert {
+        title = "Error",
+        text = "Only RGB color mode is supported." }
     return
 end
 
