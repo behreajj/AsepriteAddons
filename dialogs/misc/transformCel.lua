@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local resizeMethods = { "BICUBIC", "NEAREST" }
+local easeMethods = { "BILINEAR", "NEAREST" }
 local targets = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local unitOptions = { "PERCENT", "PIXEL" }
 
@@ -8,9 +8,8 @@ local defaults = {
     target = "ACTIVE",
     xTranslate = 0.0,
     yTranslate = 0.0,
-    resizeMethod = "NEAREST",
+    easeMethod = "NEAREST",
     degrees = 0,
-    rotBilin = true,
     pxWidth = 64,
     pxHeight = 64,
     prcWidth = 100,
@@ -29,10 +28,16 @@ local function rgbMix(
     local aMix = u * aOrig + t * aDest
     if aMix <= 0.0 then return 0.0, 0.0, 0.0, 0.0 end
 
+    -- Origin and destination colors have been
+    -- checked for zero alpha before this function
+    -- is called.
+    --
+    -- Premul and unpremul have to be done
+    -- for both horizontal and vertical mixes.
     local ro = rOrig
     local go = gOrig
     local bo = bOrig
-    if aOrig > 0.0 and aOrig < 255.0 then
+    if aOrig < 255 then
         local ao01 = aOrig * 0.003921568627451
         ro = rOrig * ao01
         go = gOrig * ao01
@@ -42,7 +47,7 @@ local function rgbMix(
     local rd = rDest
     local gd = gDest
     local bd = bDest
-    if aDest > 0.0 and aDest < 255.0 then
+    if aDest < 255 then
         local ad01 = aDest * 0.003921568627451
         rd = rDest * ad01
         gd = gDest * ad01
@@ -63,6 +68,106 @@ local function rgbMix(
     return rMix, gMix, bMix, aMix
 end
 
+local function filterBilin(xSrc, ySrc, wSrc, hSrc, srcImg)
+    local yf = math.floor(ySrc)
+    local yc = math.ceil(ySrc)
+    local xf = math.floor(xSrc)
+    local xc = math.ceil(xSrc)
+
+    local yErr = ySrc - yf
+    local xErr = xSrc - xf
+
+    local yfInBounds = yf > -1 and yf < hSrc
+    local ycInBounds = yc > -1 and yc < hSrc
+    local xfInBounds = xf > -1 and xf < wSrc
+    local xcInBounds = xc > -1 and xc < wSrc
+
+    local c00 = 0x0
+    local c10 = 0x0
+    local c11 = 0x0
+    local c01 = 0x0
+
+    if xfInBounds and yfInBounds then
+        c00 = srcImg:getPixel(xf, yf)
+    end
+
+    if xcInBounds and yfInBounds then
+        c10 = srcImg:getPixel(xc, yf)
+    end
+
+    if xcInBounds and ycInBounds then
+        c11 = srcImg:getPixel(xc, yc)
+    end
+
+    if xfInBounds and ycInBounds then
+        c01 = srcImg:getPixel(xf, yc)
+    end
+
+    local a0 = 0
+    local b0 = 0
+    local g0 = 0
+    local r0 = 0
+
+    -- The trim alpha results are better when
+    -- alpha zero check is done here.
+    local a00 = c00 >> 0x18 & 0xff
+    local a10 = c10 >> 0x18 & 0xff
+    if a00 > 0 or a10 > 0 then
+        local b00 = c00 >> 0x10 & 0xff
+        local g00 = c00 >> 0x08 & 0xff
+        local r00 = c00 & 0xff
+
+        local b10 = c10 >> 0x10 & 0xff
+        local g10 = c10 >> 0x08 & 0xff
+        local r10 = c10 & 0xff
+
+        r0, g0, b0, a0 = rgbMix(
+            r00, g00, b00, a00,
+            r10, g10, b10, a10, xErr)
+    end
+
+    local a1 = 0
+    local b1 = 0
+    local g1 = 0
+    local r1 = 0
+
+    local a01 = c01 >> 0x18 & 0xff
+    local a11 = c11 >> 0x18 & 0xff
+    if a01 > 0 or a11 > 0 then
+        local b01 = c01 >> 0x10 & 0xff
+        local g01 = c01 >> 0x08 & 0xff
+        local r01 = c01 & 0xff
+
+        local b11 = c11 >> 0x10 & 0xff
+        local g11 = c11 >> 0x08 & 0xff
+        local r11 = c11 & 0xff
+
+        r1, g1, b1, a1 = rgbMix(
+            r01, g01, b01, a01,
+            r11, g11, b11, a11, xErr)
+    end
+
+    if a0 > 0.0 or a1 > 0.0 then
+        local rt, gt, bt, at = rgbMix(
+            r0, g0, b0, a0,
+            r1, g1, b1, a1, yErr)
+
+        at = math.floor(0.5 + at)
+        bt = math.floor(0.5 + bt)
+        gt = math.floor(0.5 + gt)
+        rt = math.floor(0.5 + rt)
+
+        -- Is it necessary to check for negative values here?
+        if at > 255 then at = 255 end
+        if bt > 255 then bt = 255 end
+        if gt > 255 then gt = 255 end
+        if rt > 255 then rt = 255 end
+
+        return (at << 0x18) | (bt << 0x10) | (gt << 0x08) | rt
+    end
+    return 0x0
+end
+
 local function getTargetCels(
     activeSprite, targetPreset,
     bkgAllow, refAllow)
@@ -75,14 +180,18 @@ local function getTargetCels(
     local vBkgAll = bkgAllow or false
     local vRefAll = refAllow or false
     if targetPreset == "ACTIVE" then
-        -- TODO: If active layer is a background layer,
-        -- should it be turned into a normal layer for
-        -- active case only?
         local activeLayer = app.activeLayer
         if activeLayer then
             if isUnlocked(activeLayer, activeSprite)
                 and (vBkgAll or not activeLayer.isBackground)
                 and (vRefAll or not activeLayer.isReference) then
+
+                -- Treat background layers differently for active?
+                -- if (not vBkgAll) and activeLayer.isBackground then
+                --     app.command.LayerFromBackground()
+                --     app.command.Refresh()
+                -- end
+
                 local activeCel = app.activeCel
                 if activeCel then
                     targetCels[1] = activeCel
@@ -172,6 +281,15 @@ dlg:combobox {
     label = "Target:",
     option = defaults.target,
     options = targets
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "easeMethod",
+    label = "Easing:",
+    option = defaults.easeMethod,
+    options = easeMethods
 }
 
 dlg:newrow { always = false }
@@ -508,30 +626,12 @@ dlg:button {
 
 dlg:separator { id = "rotateSep" }
 
--- dlg:check {
---     id = "rotBilin",
---     label = "Smooth:",
---     selected = defaults.rotBilin,
---     visible = false
--- }
-
--- dlg:newrow { always = false }
-
 dlg:slider {
     id = "degrees",
     label = "Degrees:",
     min = 0,
     max = 359,
     value = defaults.degrees,
-    -- onrelease = function()
-    -- local args = dlg.data
-    -- local deg = args.degrees
-    -- local nonOrtho = deg ~= 0
-    --     and deg ~= 90
-    --     and deg ~= 180
-    --     and deg ~= 270
-    -- dlg:modify { id = "rotBilin", visible = nonOrtho }
-    -- end
 }
 
 dlg:newrow { always = false }
@@ -546,11 +646,6 @@ dlg:button {
         deg = deg - 30
         deg = deg % 360
         dlg:modify { id = "degrees", value = deg }
-        -- local nonOrtho = deg ~= 0
-        --     and deg ~= 90
-        --     and deg ~= 180
-        --     and deg ~= 270
-        -- dlg:modify { id = "rotBilin", visible = nonOrtho }
     end
 }
 
@@ -564,11 +659,6 @@ dlg:button {
         deg = deg + 30
         deg = deg % 360
         dlg:modify { id = "degrees", value = deg }
-        -- local nonOrtho = deg ~= 0
-        --     and deg ~= 90
-        --     and deg ~= 180
-        --     and deg ~= 270
-        -- dlg:modify { id = "rotBilin", visible = nonOrtho }
     end
 }
 
@@ -577,9 +667,11 @@ dlg:button {
     text = "R&OTATE",
     focus = true,
     onclick = function()
+        -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then return end
 
+        -- Unpack arguments.
         local args = dlg.data
         local degrees = args.degrees or defaults.degrees
         if degrees == 0 then return end
@@ -630,201 +722,107 @@ dlg:button {
                 end
             end)
         else
-            -- Source:
-            -- http://polymathprogrammer.com/2010/04/05/
-            -- image-rotation-with-bilinear-interpolation-
-            -- and-no-clipping/
-            --
-            -- Altered to not use trig functions within the pixel
-            -- loop. Uses vector rotation formula instead. 90, 180,
-            -- 270 degree angles are addressed prior to this
-            -- condition with pixel array swap.
-
+            -- Cache methods.
             local trimAlpha = AseUtilities.trimImageAlpha
             local round = Utilities.round
             local ceil = math.ceil
-            local floor = math.floor
 
-            -- TODO: Handle grayscale better?
-
-            -- Unlike scale, whether to use bilinear or nearest
-            -- is not specified by user. So color mode is not
-            -- changed to adapt, but rather is inferred from mode.
-            local rotBilin = activeSprite.colorMode == ColorMode.RGB
-                and defaults.rotBilin
-
-            local rotFunc = function(xSrc, ySrc, wSrc, hSrc, srcImg)
-                local xr = round(xSrc)
-                local yr = round(ySrc)
-                if yr > -1 and yr < hSrc
-                    and xr > -1 and xr < wSrc then
-                    return srcImg:getPixel(xr, yr)
-                end
-                return 0x0
-            end
-
-            if rotBilin then
+            -- Determine bilinear vs. nearest.
+            local easeMethod = args.easeMethod or defaults.easeMethod
+            local useBilinear = easeMethod == "BILINEAR"
+            local oldMode = activeSprite.colorMode
+            local rotFunc = nil
+            if useBilinear then
+                app.command.ChangePixelFormat { format = "rgb" }
+                rotFunc = filterBilin
+            else
                 rotFunc = function(xSrc, ySrc, wSrc, hSrc, srcImg)
-                    local yf = floor(ySrc)
-                    local yc = ceil(ySrc)
-                    local xf = floor(xSrc)
-                    local xc = ceil(xSrc)
-
-                    local yErr = ySrc - yf
-                    local xErr = xSrc - xf
-
-                    local yfInBounds = yf > -1 and yf < hSrc
-                    local ycInBounds = yc > -1 and yc < hSrc
-                    local xfInBounds = xf > -1 and xf < wSrc
-                    local xcInBounds = xc > -1 and xc < wSrc
-
-                    local c00 = 0x0
-                    local c10 = 0x0
-                    local c11 = 0x0
-                    local c01 = 0x0
-
-                    if xfInBounds and yfInBounds then
-                        c00 = srcImg:getPixel(xf, yf)
+                    local xr = Utilities.round(xSrc)
+                    local yr = Utilities.round(ySrc)
+                    if yr > -1 and yr < hSrc
+                        and xr > -1 and xr < wSrc then
+                        return srcImg:getPixel(xr, yr)
                     end
-
-                    if xcInBounds and yfInBounds then
-                        c10 = srcImg:getPixel(xc, yf)
-                    end
-
-                    if xcInBounds and ycInBounds then
-                        c11 = srcImg:getPixel(xc, yc)
-                    end
-
-                    if xfInBounds and ycInBounds then
-                        c01 = srcImg:getPixel(xf, yc)
-                    end
-
-                    local a0 = 0
-                    local b0 = 0
-                    local g0 = 0
-                    local r0 = 0
-
-                    local a00 = c00 >> 0x18 & 0xff
-                    local a10 = c10 >> 0x18 & 0xff
-                    if a00 > 0 or a10 > 0 then
-                        local b00 = c00 >> 0x10 & 0xff
-                        local g00 = c00 >> 0x08 & 0xff
-                        local r00 = c00 & 0xff
-
-                        local b10 = c10 >> 0x10 & 0xff
-                        local g10 = c10 >> 0x08 & 0xff
-                        local r10 = c10 & 0xff
-
-                        r0, g0, b0, a0 = rgbMix(
-                            r00, g00, b00, a00,
-                            r10, g10, b10, a10, xErr)
-                    end
-
-                    local a1 = 0
-                    local b1 = 0
-                    local g1 = 0
-                    local r1 = 0
-
-                    local a01 = c01 >> 0x18 & 0xff
-                    local a11 = c11 >> 0x18 & 0xff
-                    if a01 > 0 or a11 > 0 then
-                        local b01 = c01 >> 0x10 & 0xff
-                        local g01 = c01 >> 0x08 & 0xff
-                        local r01 = c01 & 0xff
-
-                        local b11 = c11 >> 0x10 & 0xff
-                        local g11 = c11 >> 0x08 & 0xff
-                        local r11 = c11 & 0xff
-
-                        r1, g1, b1, a1 = rgbMix(
-                            r01, g01, b01, a01,
-                            r11, g11, b11, a11, xErr)
-                    end
-
-                    if a0 > 0 or a1 > 0 then
-                        local rt, gt, bt, at = rgbMix(
-                            r0, g0, b0, a0,
-                            r1, g1, b1, a1, yErr)
-                        at = floor(0.5 + at)
-                        bt = floor(0.5 + bt)
-                        gt = floor(0.5 + gt)
-                        rt = floor(0.5 + rt)
-
-                        if at < 0 then at = 0 elseif at > 255 then at = 255 end
-                        if bt < 0 then bt = 0 elseif bt > 255 then bt = 255 end
-                        if gt < 0 then gt = 0 elseif gt > 255 then gt = 255 end
-                        if rt < 0 then rt = 0 elseif rt > 255 then rt = 255 end
-
-                        return (at << 0x18) | (bt << 0x10) | (gt << 0x08) | rt
-                    end
-
                     return 0x0
                 end
             end
 
-            app.transaction(function()
-                local radians = (360 - degrees) * 0.017453292519943
-                local cosa = math.cos(radians)
-                local sina = -math.sin(radians)
-                local absCosa = math.abs(cosa)
-                local absSina = math.abs(sina)
+            -- Unpack angle.
+            local radians = (360 - degrees) * 0.017453292519943
+            local cosa = math.cos(radians)
+            local sina = -math.sin(radians)
+            local absCosa = math.abs(cosa)
+            local absSina = math.abs(sina)
 
+            -- Adapted from:
+            -- http://polymathprogrammer.com/2010/04/05/
+            -- image-rotation-with-bilinear-interpolation-
+            -- and-no-clipping/
+
+            app.transaction(function()
                 local i = 0
                 while i < celsLen do i = i + 1
                     local cel = cels[i]
                     local srcImg = cel.image
-                    local srcSpec = srcImg.spec
-                    local wSrc = srcSpec.width
-                    local hSrc = srcSpec.height
-                    local alphaMask = srcSpec.transparentColor
+                    if not srcImg:isEmpty() then
+                        local srcSpec = srcImg.spec
+                        local wSrc = srcSpec.width
+                        local hSrc = srcSpec.height
+                        local alphaMask = srcSpec.transparentColor
 
-                    -- Just in case, ceil this instead of floor.
-                    local wTrg = ceil(hSrc * absSina + wSrc * absCosa)
-                    local hTrg = ceil(hSrc * absCosa + wSrc * absSina)
-                    local xSrcCenter = wSrc * 0.5
-                    local ySrcCenter = hSrc * 0.5
-                    local xTrgCenter = wTrg * 0.5
-                    local yTrgCenter = hTrg * 0.5
-                    local wDiffHalf = xTrgCenter - xSrcCenter
-                    local hDiffHalf = yTrgCenter - ySrcCenter
+                        -- Just in case, ceil this instead of floor.
+                        local wTrg = ceil(hSrc * absSina + wSrc * absCosa)
+                        local hTrg = ceil(hSrc * absCosa + wSrc * absSina)
+                        local xSrcCenter = wSrc * 0.5
+                        local ySrcCenter = hSrc * 0.5
+                        local xTrgCenter = wTrg * 0.5
+                        local yTrgCenter = hTrg * 0.5
 
-                    local trgSpec = ImageSpec {
-                        width = wTrg,
-                        height = hTrg,
-                        colorMode = srcSpec.colorMode,
-                        transparentColor = alphaMask
-                    }
-                    trgSpec.colorSpace = srcSpec.colorSpace
-                    local trgImg = Image(trgSpec)
+                        -- The goal with this calculation is to try
+                        -- to minimize drift in the cel's position.
+                        local wDiffHalf = round((wTrg - wSrc) * 0.5)
+                        local hDiffHalf = round((hTrg - hSrc) * 0.5)
 
-                    -- It is very important to iterate through
-                    -- target pixels and read from source pixels.
-                    -- Iterating through source pixels leads to
-                    -- a rotation with gaps in the pixels.
-                    local trgPxItr = trgImg:pixels()
-                    for elm in trgPxItr do
-                        local xSgn = elm.x - xTrgCenter
-                        local ySgn = elm.y - yTrgCenter
-                        local xRot = cosa * xSgn - sina * ySgn
-                        local yRot = cosa * ySgn + sina * xSgn
-                        local xSrc = xSrcCenter + xRot
-                        local ySrc = ySrcCenter + yRot
-                        elm(rotFunc(xSrc, ySrc, wSrc, hSrc, srcImg))
+                        local trgSpec = ImageSpec {
+                            width = wTrg,
+                            height = hTrg,
+                            colorMode = srcSpec.colorMode,
+                            transparentColor = alphaMask
+                        }
+                        trgSpec.colorSpace = srcSpec.colorSpace
+                        local trgImg = Image(trgSpec)
+
+                        -- It is important to loop through target
+                        -- pixels and read from source pixels. Looping
+                        -- through source pixels leads to a rotation
+                        -- with gaps between pixels.
+                        local trgPxItr = trgImg:pixels()
+                        for elm in trgPxItr do
+                            local xSgn = elm.x - xTrgCenter
+                            local ySgn = elm.y - yTrgCenter
+                            local xRot = cosa * xSgn - sina * ySgn
+                            local yRot = cosa * ySgn + sina * xSgn
+                            local xSrc = xSrcCenter + xRot
+                            local ySrc = ySrcCenter + yRot
+                            elm(rotFunc(xSrc, ySrc, wSrc, hSrc, srcImg))
+                        end
+
+                        local xTrim = 0
+                        local yTrim = 0
+                        trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaMask)
+
+                        local srcPos = cel.position
+                        cel.position = Point(
+                            xTrim + srcPos.x - wDiffHalf,
+                            yTrim + srcPos.y - hDiffHalf)
+                        cel.image = trgImg
                     end
-
-                    local xTrim = 0
-                    local yTrim = 0
-                    trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaMask)
-
-                    -- No combo of ceil and floor seem
-                    -- ideal to minimize drift.
-                    local srcPos = cel.position
-                    cel.position = Point(
-                        round(xTrim + srcPos.x - wDiffHalf),
-                        round(yTrim + srcPos.y - hDiffHalf))
-                    cel.image = trgImg
                 end
             end)
+
+            if useBilinear then
+                AseUtilities.changePixelFormat(oldMode)
+            end
         end
 
         app.refresh()
@@ -888,26 +886,17 @@ dlg:button {
 
 dlg:separator { id = "scaleSep" }
 
-dlg:combobox {
-    id = "resizeMethod",
-    label = "Type:",
-    option = defaults.resizeMethod,
-    options = resizeMethods
-}
-
-dlg:newrow { always = false }
-
 dlg:number {
     id = "pxWidth",
     label = "Pixels:",
-    text = string.format("%.0f", defaults.pxWidth),
+    text = string.format("%d", app.preferences.new_file.width),
     decimals = 0,
     visible = defaults.units == "PIXEL"
 }
 
 dlg:number {
     id = "pxHeight",
-    text = string.format("%.0f", defaults.pxHeight),
+    text = string.format("%d", app.preferences.new_file.height),
     decimals = 0,
     visible = defaults.units == "PIXEL"
 }
@@ -948,206 +937,166 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:button {
+    id = "scale1_2xButton",
+    text = "&1/2X",
+    focus = false,
+    onclick = function()
+        local args = dlg.data
+
+        local wpx1x = args.pxWidth * 0.5
+        local hpx1x = args.pxHeight * 0.5
+        local wprc1x = args.prcWidth * 0.5
+        local hprc1x = args.prcHeight * 0.5
+
+        if math.abs(wpx1x) < 1 then wpx1x = 1 end
+        if math.abs(hpx1x) < 1 then hpx1x = 1 end
+        if math.abs(wprc1x) < 0.000001 then wprc1x = 100 end
+        if math.abs(hprc1x) < 0.000001 then hprc1x = 100 end
+
+        dlg:modify { id = "pxWidth", text = string.format("%d", wpx1x) }
+        dlg:modify { id = "pxHeight", text = string.format("%d", hpx1x) }
+        dlg:modify { id = "prcWidth", text = string.format("%.2f", wprc1x) }
+        dlg:modify { id = "prcHeight", text = string.format("%.2f", hprc1x) }
+    end
+}
+
+dlg:button {
+    id = "scale2xButton",
+    text = "&2X",
+    focus = false,
+    onclick = function()
+        local args = dlg.data
+
+        local wpx2x = args.pxWidth * 2
+        local hpx2x = args.pxHeight * 2
+        local wprc2x = args.prcWidth * 2
+        local hprc2x = args.prcHeight * 2
+
+        if math.abs(wpx2x) < 1 then wpx2x = 1 end
+        if math.abs(hpx2x) < 1 then hpx2x = 1 end
+        if math.abs(wprc2x) < 0.000001 then wprc2x = 100 end
+        if math.abs(hprc2x) < 0.000001 then hprc2x = 100 end
+
+        dlg:modify { id = "pxWidth", text = string.format("%d", wpx2x) }
+        dlg:modify { id = "pxHeight", text = string.format("%d", hpx2x) }
+        dlg:modify { id = "prcWidth", text = string.format("%.2f", wprc2x) }
+        dlg:modify { id = "prcHeight", text = string.format("%.2f", hprc2x) }
+    end
+}
+
+dlg:button {
     id = "scaleButton",
     text = "&SCALE",
     focus = false,
     onclick = function()
+        -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then return end
 
+        -- Cache methods.
         local abs = math.abs
         local max = math.max
-        local min = math.min
         local floor = math.floor
 
+        -- Unpack arguments.
         local args = dlg.data
         local target = args.target or defaults.target
         local unitType = args.units or defaults.units
-        local resizeMethod = args.resizeMethod or defaults.resizeMethod
+        local easeMethod = args.easeMethod or defaults.easeMethod
         local wPrc = args.prcWidth or defaults.prcWidth
         local hPrc = args.prcHeight or defaults.prcHeight
-        local wPxl = args.pxWidth or defaults.pxWidth
-        local hPxl = args.pxHeight or defaults.pxHeight
+        local wPxl = args.pxWidth or activeSprite.width
+        local hPxl = args.pxHeight or activeSprite.height
 
         -- Validate target dimensions.
+        wPxl = floor(0.5 + abs(wPxl))
+        hPxl = floor(0.5 + abs(hPxl))
         wPrc = max(0.000001, abs(wPrc))
         hPrc = max(0.000001, abs(hPrc))
-        wPxl = floor(0.5 + max(1, abs(wPxl)))
-        hPxl = floor(0.5 + max(1, abs(hPxl)))
         wPrc = wPrc * 0.01
         hPrc = hPrc * 0.01
 
         -- Convert string checks to booleans for loop.
-        local useBicubic = resizeMethod == "BICUBIC"
+        local useBilinear = easeMethod == "BILINEAR"
         local usePercent = unitType == "PERCENT"
+        if (not usePercent) and (wPxl < 1 or hPxl < 1) then return end
         local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
 
         local oldMode = activeSprite.colorMode
-        if useBicubic then
+        if useBilinear then
             app.command.ChangePixelFormat { format = "rgb" }
         end
 
         app.transaction(function()
-            -- Declare bicubic constants outside the loop.
-            local kernel = { 0, 0, 0, 0 }
-            local chnlCount = 4
-            local kernelSize = 4
-
             local o = 0
             while o < celsLen do o = o + 1
                 local cel = cels[o]
                 local srcImg = cel.image
-                local srcSpec = srcImg.spec
-                local sw = srcSpec.width
-                local sh = srcSpec.height
+                if not srcImg:isEmpty() then
+                    local srcSpec = srcImg.spec
+                    local wSrc = srcSpec.width
+                    local hSrc = srcSpec.height
 
-                local dw = wPxl
-                local dh = hPxl
-                if usePercent then
-                    dw = max(1, floor(0.5 + sw * wPrc))
-                    dh = max(1, floor(0.5 + sh * hPrc))
-                end
-
-                if sw ~= dw or sh ~= dh then
-                    local srcpx = {}
-                    local srcpxitr = srcImg:pixels()
-                    local srcidx = 1
-                    for elm in srcpxitr do
-                        srcpx[srcidx] = elm()
-                        srcidx = srcidx + 1
+                    local wTrg = wPxl
+                    local hTrg = hPxl
+                    if usePercent then
+                        wTrg = max(1, floor(0.5 + wSrc * wPrc))
+                        hTrg = max(1, floor(0.5 + hSrc * hPrc))
                     end
 
-                    local tx = sw / dw
-                    local ty = sh / dh
-                    local clrs = {}
-
-                    local colorMode = srcSpec.colorMode
-                    local alphaIdx = srcSpec.transparentColor
-                    local colorSpace = srcSpec.colorSpace
-                    local trgSpec = ImageSpec {
-                        height = dh,
-                        width = dw,
-                        colorMode = colorMode,
-                        transparentColor = alphaIdx }
-                    trgSpec.colorSpace = colorSpace
-                    local trgImg = Image(trgSpec)
-                    local trgpxitr = trgImg:pixels()
-
-                    if useBicubic then
-                        kernel[1] = 0
-                        kernel[2] = 0
-                        kernel[3] = 0
-                        kernel[4] = 0
-
-                        local len2 = kernelSize * chnlCount
-                        local len3 = dw * len2
-                        local len4n1 = dh * len3 - 1
-
-                        local swn1 = sw - 1
-                        local shn1 = sh - 1
-
-                        local k = -1
-                        while k < len4n1 do k = k + 1
-                            local g = k // len3 -- px row index
-                            local m = k - g * len3 -- temp
-                            local h = m // len2 -- px col index
-                            local n = m - h * len2 -- temp
-                            local i = n // kernelSize -- krn row index
-                            local j = n % kernelSize -- krn col index
-
-                            -- Row.
-                            local y = floor(ty * g)
-                            local dy = ty * g - y
-                            local dysq = dy * dy
-
-                            -- Column.
-                            local x = floor(tx * h)
-                            local dx = tx * h - x
-                            local dxsq = dx * dx
-
-                            -- Clamp kernel to image bounds.
-                            local z = max(0, min(shn1, y - 1 + j))
-                            local x0 = max(0, min(swn1, x))
-                            local x1 = max(0, min(swn1, x - 1))
-                            local x2 = max(0, min(swn1, x + 1))
-                            local x3 = max(0, min(swn1, x + 2))
-
-                            local zwp1 = 1 + z * sw
-                            local i8 = i * 8
-
-                            local a0 = srcpx[zwp1 + x0] >> i8 & 0xff
-                            local d0 = srcpx[zwp1 + x1] >> i8 & 0xff
-                            local d2 = srcpx[zwp1 + x2] >> i8 & 0xff
-                            local d3 = srcpx[zwp1 + x3] >> i8 & 0xff
-
-                            d0 = d0 - a0
-                            d2 = d2 - a0
-                            d3 = d3 - a0
-
-                            local d36 = 0.66666666666667 * d3
-                            local a1 = -0.33333333333333 * d0 + d2 - d36
-                            local a2 = 0.5 * (d0 + d2)
-                            local a3 = -0.66666666666667 * d0
-                                - 0.5 * d2 + d36
-
-                            kernel[1 + j] = max(0, min(255,
-                                a0 + floor(a1 * dx
-                                    + a2 * dxsq
-                                    + a3 * (dx * dxsq))))
-
-                            a0 = kernel[2]
-                            d0 = kernel[1] - a0
-                            d2 = kernel[3] - a0
-                            d3 = kernel[4] - a0
-
-                            d36 = 0.66666666666667 * d3
-                            a1 = -0.33333333333333 * d0 + d2 - d36
-                            a2 = 0.5 * (d0 + d2)
-                            a3 = -0.66666666666667 * d0
-                                - 0.5 * d2 + d36
-
-                            clrs[1 + (k // kernelSize)] = max(0, min(255,
-                                a0 + floor(a1 * dy
-                                    + a2 * dysq
-                                    + a3 * (dy * dysq))))
+                    if wSrc ~= wTrg or hSrc ~= hTrg then
+                        local srcpx = {}
+                        local srcpxitr = srcImg:pixels()
+                        local srcidx = 0
+                        for elm in srcpxitr do
+                            srcidx = srcidx + 1
+                            srcpx[srcidx] = elm()
                         end
 
-                        local idx = -3
-                        for elm in trgpxitr do
-                            idx = idx + 4
-                            local hex = clrs[idx]
-                                | clrs[idx + 1] << 0x08
-                                | clrs[idx + 2] << 0x10
-                                | clrs[idx + 3] << 0x18
-                            elm(hex)
+                        local tx = wSrc / wTrg
+                        local ty = hSrc / hTrg
+
+                        local colorMode = srcSpec.colorMode
+                        local alphaIdx = srcSpec.transparentColor
+                        local colorSpace = srcSpec.colorSpace
+                        local trgSpec = ImageSpec {
+                            height = hTrg,
+                            width = wTrg,
+                            colorMode = colorMode,
+                            transparentColor = alphaIdx }
+                        trgSpec.colorSpace = colorSpace
+                        local trgImg = Image(trgSpec)
+                        local trgpxitr = trgImg:pixels()
+
+                        if useBilinear then
+                            for elm in trgpxitr do
+                                local xSrc = elm.x * tx
+                                local ySrc = elm.y * ty
+                                elm(filterBilin(xSrc, ySrc, wSrc, hSrc, srcImg))
+                            end
+                        else
+                            -- Default to nearest-neighbor.
+                            for elm in trgpxitr do
+                                elm(srcpx[1 + floor(elm.y * ty) * wSrc
+                                    + floor(elm.x * tx)])
+                            end
                         end
-                    else
-                        -- Default to nearest-neighbor.
-                        local idx = -1
-                        for elm in trgpxitr do
-                            idx = idx + 1
-                            local nx = floor((idx % dw) * tx)
-                            local ny = floor((idx // dw) * ty)
-                            elm(srcpx[1 + ny * sw + nx])
-                        end
+
+                        local celPos = cel.position
+                        local xCenter = celPos.x + wSrc * 0.5
+                        local yCenter = celPos.y + hSrc * 0.5
+
+                        cel.position = Point(
+                            xCenter - wTrg * 0.5,
+                            yCenter - hTrg * 0.5)
+                        cel.image = trgImg
                     end
-
-                    local celPos = cel.position
-                    local xCenter = celPos.x + sw * 0.5
-                    local yCenter = celPos.y + sh * 0.5
-
-                    -- app.transaction(function()
-                    cel.position = Point(
-                        xCenter - dw * 0.5,
-                        yCenter - dh * 0.5)
-                    cel.image = trgImg
-                    -- end)
                 end
             end
         end)
 
-        if useBicubic then
+        if useBilinear then
             AseUtilities.changePixelFormat(oldMode)
         end
         app.refresh()

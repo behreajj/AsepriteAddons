@@ -43,7 +43,7 @@ local directions = { "LINEAR_TO_STANDARD", "STANDARD_TO_LINEAR" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
-    target = "ALL",
+    target = "ACTIVE",
     direction = "STANDARD_TO_LINEAR",
     pullFocus = false
 }
@@ -119,6 +119,8 @@ dlg:button {
         local target = args.target or defaults.target
         local direction = args.direction or defaults.target
 
+        -- TODO: Redo this to follow pattern in other dialogs,
+        -- where the layer could be locked, or a tile map.
         local cels = {}
         if target == "ACTIVE" then
             local activeCel = app.activeCel

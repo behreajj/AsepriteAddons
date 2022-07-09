@@ -116,8 +116,8 @@ local function updateSizeFromAspect(dialog)
     local w = aRatio * scale
     local h = bRatio * scale
 
-    dialog:modify { id = "width", text = string.format("%.0f", w) }
-    dialog:modify { id = "height", text = string.format("%.0f", h) }
+    dialog:modify { id = "width", text = string.format("%d", w) }
+    dialog:modify { id = "height", text = string.format("%d", h) }
 end
 
 local dlg = Dialog { title = "New Sprite +" }
@@ -157,14 +157,14 @@ dlg:newrow { always = false }
 
 dlg:number {
     id = "width",
-    text = string.format("%.0f", app.preferences.new_file.width),
+    text = string.format("%d", app.preferences.new_file.width),
     decimals = 0,
     visible = defaults.sizeMode == "CUSTOM"
 }
 
 dlg:number {
     id = "height",
-    text = string.format("%.0f", app.preferences.new_file.height),
+    text = string.format("%d", app.preferences.new_file.height),
     decimals = 0,
     visible = defaults.sizeMode == "CUSTOM"
 }
