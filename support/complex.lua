@@ -38,6 +38,8 @@ end
 function Complex:__mul(b)
     if type(b) == "number" then
         return Complex.scale(self, b)
+    elseif type(self) == "number" then
+        return Complex.scale(b, self)
     else
         return Complex.mul(self, b)
     end

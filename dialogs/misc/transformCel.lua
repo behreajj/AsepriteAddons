@@ -5,6 +5,7 @@ local targets = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local unitOptions = { "PERCENT", "PIXEL" }
 
 local defaults = {
+    -- TODO: Add Skew X, Skew Y buttons next to Rotate?
     target = "ACTIVE",
     xTranslate = 0.0,
     yTranslate = 0.0,
@@ -938,7 +939,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "scale1_2xButton",
-    text = "&1/2X",
+    text = "&1/2x",
     focus = false,
     onclick = function()
         local args = dlg.data
@@ -962,7 +963,7 @@ dlg:button {
 
 dlg:button {
     id = "scale2xButton",
-    text = "&2X",
+    text = "&2x",
     focus = false,
     onclick = function()
         local args = dlg.data

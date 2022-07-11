@@ -55,6 +55,8 @@ end
 function Vec3:__mul(b)
     if type(b) == "number" then
         return Vec3.scale(self, b)
+    elseif type(self) == "number" then
+        return Vec3.scale(b, self)
     else
         return Vec3.hadamard(self, b)
     end

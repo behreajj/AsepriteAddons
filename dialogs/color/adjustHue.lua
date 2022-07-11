@@ -1,3 +1,4 @@
+dofile("../../support/aseutilities.lua")
 dofile("../../support/clr.lua")
 
 local grayHues = { "OMIT", "SHADING", "ZERO" }
@@ -131,7 +132,6 @@ dlg:button {
             return
         end
 
-        -- TODO: Allow for active / all / range of frames?
         local srcCel = app.activeCel
         if not srcCel then
             app.alert {
@@ -264,7 +264,8 @@ dlg:button {
                 -- trgLayer.parent = srcLayer.parent
 
                 -- Copy cel.
-                local srcFrame = srcCel.frame or activeSprite.frames[1]
+                local srcFrame = srcCel.frame
+                    or activeSprite.frames[1]
                 local trgCel = activeSprite:newCel(
                     trgLayer, srcFrame,
                     trgImg, srcCel.position)

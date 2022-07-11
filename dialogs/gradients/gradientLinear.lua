@@ -188,7 +188,8 @@ dlg:button {
 
             local xCtPx = xCenter * wn1 * 0.01
             local yCtPx = yCenter * hn1 * 0.01
-            local r = radius * 0.005 * math.max(wn1, hn1)
+            local r = radius * 0.005 * math.sqrt(
+                wn1 * wn1 + hn1 * hn1)
             local a = angle * 0.017453292519943
             local rtcos = r * math.cos(a)
             local rtsin = r * math.sin(a)

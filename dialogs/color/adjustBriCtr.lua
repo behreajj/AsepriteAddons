@@ -1,3 +1,4 @@
+dofile("../../support/aseutilities.lua")
 dofile("../../support/clr.lua")
 
 local defaults = {
@@ -131,7 +132,8 @@ dlg:button {
                 end
 
                 -- Copy cel.
-                local srcFrame = srcCel.frame or activeSprite.frames[1]
+                local srcFrame = srcCel.frame
+                    or activeSprite.frames[1]
                 local trgCel = activeSprite:newCel(
                     trgLayer, srcFrame,
                     trgImg, srcCel.position)

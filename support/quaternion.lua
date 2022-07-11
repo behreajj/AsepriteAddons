@@ -67,6 +67,8 @@ end
 function Quaternion:__mul(b)
     if type(b) == "number" then
         return Quaternion.scale(self, b)
+    elseif type(self) == "number" then
+        return Quaternion.scale(b, self)
     else
         return Quaternion.mul(self, b)
     end

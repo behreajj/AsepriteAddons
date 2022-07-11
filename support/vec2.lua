@@ -53,6 +53,8 @@ end
 function Vec2:__mul(b)
     if type(b) == "number" then
         return Vec2.scale(self, b)
+    elseif type(self) == "number" then
+        return Vec2.scale(b, self)
     else
         return Vec2.hadamard(self, b)
     end

@@ -57,6 +57,8 @@ end
 function Vec4:__mul(b)
     if type(b) == "number" then
         return Vec4.scale(self, b)
+    elseif type(self) == "number" then
+        return Vec4.scale(b, self)
     else
         return Vec4.hadamard(self, b)
     end
