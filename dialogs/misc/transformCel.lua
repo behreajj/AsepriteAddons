@@ -732,7 +732,7 @@ dlg:button {
                         local xSkew = xSgn + tana * ySgn
                         elm(filter(
                             xSrcCenter + xSkew,
-                            xSrcCenter + xSkew,
+                            ySrcCenter + ySgn,
                             wSrc, hSrc, srcImg, alphaMask))
                     end
 
