@@ -10,7 +10,6 @@ local boundsOptions = { "CEL", "SPRITE" }
 local originsOptions = { "CENTER", "CORNER" }
 
 local defaults = {
-    -- TODO: Power of 2 option?
     layerTarget = "ALL",
     frameTarget = "ALL",
     rangeStr = "",
@@ -390,7 +389,7 @@ dlg:button {
                 end
             else
                 for i = 1, lenIdxRangeSet, 1 do
-                    selectFrames[i] = allFrames[ idxRangeSet[i] ]
+                    selectFrames[i] = allFrames[idxRangeSet[i]]
                 end
             end
         else
@@ -681,8 +680,21 @@ dlg:button {
 
         if saveJson then
 
+            local versionStrFmt = concat({
+                "{\"version\":{\"major\":%d",
+                "\"minor\":%d",
+                "\"patch\":%d",
+                "\"prerelease\":\"%s\"",
+                "\"prNo\":%d}",
+            }, ",")
+            local versionStr = strfmt(
+                versionStrFmt,
+                version.major, version.minor, version.patch,
+                version.prereleaseLabel, version.prereleaseNumber)
+
             local jsonStrFmt = concat({
-                "{\"fileDir\":\"%s\"",
+                versionStr,
+                "\"fileDir\":\"%s\"",
                 "\"fileExt\":\"%s\"",
                 spriteUserData,
                 "\"padding\":%d",

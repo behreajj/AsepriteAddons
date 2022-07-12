@@ -216,11 +216,13 @@ dlg:button {
         -- Adjustable transparent color causes problems
         -- with multiple palettes.
         if openSprite.transparentColor ~= 0 then
-            app.alert { title = "Warning",
+            local oldAlphaMask = openSprite.transparentColor
+            openSprite.transparentColor = 0
+            app.alert {
+                title = "Warning",
                 text = string.format(
                     "The sprite alpha mask was reset from %d to 0.",
-                    openSprite.transparentColor) }
-            openSprite.transparentColor = 0
+                    oldAlphaMask) }
         end
 
         if palType == "EMBEDDED" then

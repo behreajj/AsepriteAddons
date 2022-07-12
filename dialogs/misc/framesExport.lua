@@ -3,11 +3,6 @@ dofile("../../support/aseutilities.lua")
 local frameTargetOptions = { "ALL", "RANGE", "TAGS" }
 
 local defaults = {
-    -- TODO: API has an img:isEqual method, and an
-    -- insort method could be created, so could this
-    -- support unique images? Problem: each unique
-    -- image must now store references to multiple
-    -- frame indices & durations and cel positions.
     frameTarget = "ALL",
     rangeStr = "",
     strExample = "1,4,5-10",
@@ -782,8 +777,21 @@ dlg:button {
                 }, ',')
             end
 
+            local versionStrFmt = table.concat({
+                "{\"version\":{\"major\":%d",
+                "\"minor\":%d",
+                "\"patch\":%d",
+                "\"prerelease\":\"%s\"",
+                "\"prNo\":%d}",
+            }, ",")
+            local versionStr = string.format(
+                versionStrFmt,
+                version.major, version.minor, version.patch,
+                version.prereleaseLabel, version.prereleaseNumber)
+
             local jsonStrFmt = table.concat({
-                "{\"fileDir\":\"%s\"",
+                versionStr,
+                "\"fileDir\":\"%s\"",
                 "\"fileExt\":\"%s\"",
                 spriteUserData,
                 "\"padding\":%d",

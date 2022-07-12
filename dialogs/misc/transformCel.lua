@@ -5,7 +5,6 @@ local targets = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local unitOptions = { "PERCENT", "PIXEL" }
 
 local defaults = {
-    -- TODO: Add Skew X, Skew Y buttons next to Rotate?
     target = "ACTIVE",
     xTranslate = 0.0,
     yTranslate = 0.0,
@@ -69,7 +68,23 @@ local function rgbMix(
     return rMix, gMix, bMix, aMix
 end
 
-local function filterBilin(xSrc, ySrc, wSrc, hSrc, srcImg)
+local function filterNear(
+ xSrc, ySrc, wSrc, hSrc,
+ srcImg, alphaMask)
+
+    local xr = Utilities.round(xSrc)
+    local yr = Utilities.round(ySrc)
+    if yr > -1 and yr < hSrc
+        and xr > -1 and xr < wSrc then
+        return srcImg:getPixel(xr, yr)
+    end
+    return alphaMask
+end
+
+local function filterBilin(
+    xSrc, ySrc, wSrc, hSrc,
+    srcImg, alphaMask)
+
     local yf = math.floor(ySrc)
     local yc = math.ceil(ySrc)
     local xf = math.floor(xSrc)
@@ -166,7 +181,7 @@ local function filterBilin(xSrc, ySrc, wSrc, hSrc, srcImg)
 
         return (at << 0x18) | (bt << 0x10) | (gt << 0x08) | rt
     end
-    return 0x0
+    return alphaMask
 end
 
 local function getTargetCels(
@@ -221,13 +236,14 @@ local function getTargetCels(
             local ySel = selBounds.y
             local activeSpec = activeSprite.spec
             local actFrame = app.activeFrame
+            local alphaMask = activeSpec.transparentColor
 
             -- Create a subset of flattened sprite.
             local flatSpec = ImageSpec {
                 width = math.max(1, selBounds.width),
                 height = math.max(1, selBounds.height),
                 colorMode = activeSpec.colorMode,
-                transparentColor = activeSpec.transparentColor }
+                transparentColor = alphaMask }
             flatSpec.colorSpace = activeSpec.colorSpace
             local flatImage = Image(flatSpec)
             flatImage:drawSprite(
@@ -244,7 +260,7 @@ local function getTargetCels(
                 local x = elm.x + xMin
                 local y = elm.y + yMin
                 if not sel:contains(x, y) then
-                    elm(0x0)
+                    elm(alphaMask)
                 end
             end
 
@@ -638,28 +654,208 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "decr30DegButton",
-    text = "&-30",
+    id = "skewxButton",
+    text = "SKEW &X",
     focus = false,
     onclick = function()
+        -- Early returns.
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        -- Unpack arguments.
         local args = dlg.data
-        local deg = args.degrees or defaults.degrees
-        deg = deg - 30
-        deg = deg % 360
-        dlg:modify { id = "degrees", value = deg }
+        local degrees = args.degrees or defaults.degrees
+        if degrees == 0 or degrees == 180
+            or degrees == 90 or degrees == 270 then return end
+
+        -- Determine bilinear vs. nearest.
+        local easeMethod = args.easeMethod or defaults.easeMethod
+        local useBilinear = easeMethod == "BILINEAR"
+        local oldMode = activeSprite.colorMode
+        local filter = nil
+        if useBilinear then
+            app.command.ChangePixelFormat { format = "rgb" }
+            filter = filterBilin
+        else
+            filter = filterNear
+        end
+
+        -- Cache methods.
+        local trimAlpha = AseUtilities.trimImageAlpha
+        local round = Utilities.round
+        local ceil = math.ceil
+
+        local target = args.target or defaults.target
+        local cels = getTargetCels(activeSprite, target, false, false)
+        local celsLen = #cels
+
+        local radians = degrees * 0.017453292519943
+        local tana = math.tan(radians)
+        local absTan = math.abs(tana)
+
+        app.transaction(function()
+            local i = 0
+            while i < celsLen do i = i + 1
+                local cel = cels[i]
+                local srcImg = cel.image
+                if not srcImg:isEmpty() then
+                    local srcSpec = srcImg.spec
+                    local wSrc = srcSpec.width
+                    local hSrc = srcSpec.height
+                    local alphaMask = srcSpec.transparentColor
+
+                    -- Just in case, ceil this instead of floor.
+                    local wTrg = ceil(wSrc + absTan * hSrc)
+                    local hTrg = hSrc
+                    local xSrcCenter = wSrc * 0.5
+                    local ySrcCenter = hSrc * 0.5
+                    local xTrgCenter = wTrg * 0.5
+                    local yTrgCenter = hTrg * 0.5
+
+                    -- The goal with this calculation is to try
+                    -- to minimize drift in the cel's position.
+                    local wDiffHalf = round((wTrg - wSrc) * 0.5)
+                    local hDiffHalf = round((hTrg - hSrc) * 0.5)
+
+                    local trgSpec = ImageSpec {
+                        width = wTrg, height = hTrg,
+                        colorMode = srcSpec.colorMode,
+                        transparentColor = alphaMask
+                    }
+                    trgSpec.colorSpace = srcSpec.colorSpace
+                    local trgImg = Image(trgSpec)
+
+                    local trgPxItr = trgImg:pixels()
+                    for elm in trgPxItr do
+                        local xSgn = elm.x - xTrgCenter
+                        local ySgn = elm.y - yTrgCenter
+                        local xSkew = xSgn + tana * ySgn
+                        elm(filter(
+                            xSrcCenter + xSkew,
+                            xSrcCenter + xSkew,
+                            wSrc, hSrc, srcImg, alphaMask))
+                    end
+
+                    local xTrim = 0
+                    local yTrim = 0
+                    trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaMask)
+
+                    local srcPos = cel.position
+                    cel.position = Point(
+                        xTrim + srcPos.x - wDiffHalf,
+                        yTrim + srcPos.y - hDiffHalf)
+                    cel.image = trgImg
+                end
+            end
+        end)
+
+        if useBilinear then
+            AseUtilities.changePixelFormat(oldMode)
+        end
+        app.refresh()
     end
 }
 
 dlg:button {
-    id = "incr30DegButton",
-    text = "&+30",
+    id = "skewyButton",
+    text = "SKEW &Y",
     focus = false,
     onclick = function()
+        -- Early returns.
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        -- Unpack arguments.
         local args = dlg.data
-        local deg = args.degrees or defaults.degrees
-        deg = deg + 30
-        deg = deg % 360
-        dlg:modify { id = "degrees", value = deg }
+        local degrees = args.degrees or defaults.degrees
+        if degrees == 0 or degrees == 180
+            or degrees == 90 or degrees == 270 then return end
+
+        -- Determine bilinear vs. nearest.
+        local easeMethod = args.easeMethod or defaults.easeMethod
+        local useBilinear = easeMethod == "BILINEAR"
+        local oldMode = activeSprite.colorMode
+        local filter = nil
+        if useBilinear then
+            app.command.ChangePixelFormat { format = "rgb" }
+            filter = filterBilin
+        else
+            filter = filterNear
+        end
+
+        -- Cache methods.
+        local trimAlpha = AseUtilities.trimImageAlpha
+        local round = Utilities.round
+        local ceil = math.ceil
+
+        local target = args.target or defaults.target
+        local cels = getTargetCels(activeSprite, target, false, false)
+        local celsLen = #cels
+
+        local radians = degrees * 0.017453292519943
+        local tana = math.tan(radians)
+        local absTan = math.abs(tana)
+
+        app.transaction(function()
+            local i = 0
+            while i < celsLen do i = i + 1
+                local cel = cels[i]
+                local srcImg = cel.image
+                if not srcImg:isEmpty() then
+                    local srcSpec = srcImg.spec
+                    local wSrc = srcSpec.width
+                    local hSrc = srcSpec.height
+                    local alphaMask = srcSpec.transparentColor
+
+                    -- Just in case, ceil this instead of floor.
+                    local wTrg = wSrc
+                    local hTrg = ceil(hSrc + absTan * wSrc)
+                    local xSrcCenter = wSrc * 0.5
+                    local ySrcCenter = hSrc * 0.5
+                    local xTrgCenter = wTrg * 0.5
+                    local yTrgCenter = hTrg * 0.5
+
+                    -- The goal with this calculation is to try
+                    -- to minimize drift in the cel's position.
+                    local wDiffHalf = round((wTrg - wSrc) * 0.5)
+                    local hDiffHalf = round((hTrg - hSrc) * 0.5)
+
+                    local trgSpec = ImageSpec {
+                        width = wTrg, height = hTrg,
+                        colorMode = srcSpec.colorMode,
+                        transparentColor = alphaMask
+                    }
+                    trgSpec.colorSpace = srcSpec.colorSpace
+                    local trgImg = Image(trgSpec)
+
+                    local trgPxItr = trgImg:pixels()
+                    for elm in trgPxItr do
+                        local xSgn = elm.x - xTrgCenter
+                        local ySgn = elm.y - yTrgCenter
+                        local ySkew = ySgn + tana * xSgn
+                        elm(filter(
+                            xSrcCenter + xSgn,
+                            ySrcCenter + ySkew,
+                            wSrc, hSrc, srcImg, alphaMask))
+                    end
+
+                    local xTrim = 0
+                    local yTrim = 0
+                    trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaMask)
+
+                    local srcPos = cel.position
+                    cel.position = Point(
+                        xTrim + srcPos.x - wDiffHalf,
+                        yTrim + srcPos.y - hDiffHalf)
+                    cel.image = trgImg
+                end
+            end
+        end)
+
+        if useBilinear then
+            AseUtilities.changePixelFormat(oldMode)
+        end
+        app.refresh()
     end
 }
 
@@ -732,20 +928,12 @@ dlg:button {
             local easeMethod = args.easeMethod or defaults.easeMethod
             local useBilinear = easeMethod == "BILINEAR"
             local oldMode = activeSprite.colorMode
-            local rotFunc = nil
+            local filter = nil
             if useBilinear then
                 app.command.ChangePixelFormat { format = "rgb" }
-                rotFunc = filterBilin
+                filter = filterBilin
             else
-                rotFunc = function(xSrc, ySrc, wSrc, hSrc, srcImg)
-                    local xr = Utilities.round(xSrc)
-                    local yr = Utilities.round(ySrc)
-                    if yr > -1 and yr < hSrc
-                        and xr > -1 and xr < wSrc then
-                        return srcImg:getPixel(xr, yr)
-                    end
-                    return 0x0
-                end
+                filter = filterNear
             end
 
             -- Unpack angle.
@@ -805,7 +993,8 @@ dlg:button {
                             local yRot = cosa * ySgn + sina * xSgn
                             local xSrc = xSrcCenter + xRot
                             local ySrc = ySrcCenter + yRot
-                            elm(rotFunc(xSrc, ySrc, wSrc, hSrc, srcImg))
+                            elm(filter(xSrc, ySrc, wSrc, hSrc,
+                                srcImg, alphaMask))
                         end
 
                         local xTrim = 0
@@ -935,56 +1124,6 @@ dlg:combobox {
     end
 }
 
-dlg:newrow { always = false }
-
-dlg:button {
-    id = "scale1_2xButton",
-    text = "&1/2x",
-    focus = false,
-    onclick = function()
-        local args = dlg.data
-
-        local wpx1x = args.pxWidth * 0.5
-        local hpx1x = args.pxHeight * 0.5
-        local wprc1x = args.prcWidth * 0.5
-        local hprc1x = args.prcHeight * 0.5
-
-        if math.abs(wpx1x) < 1 then wpx1x = 1 end
-        if math.abs(hpx1x) < 1 then hpx1x = 1 end
-        if math.abs(wprc1x) < 0.000001 then wprc1x = 100 end
-        if math.abs(hprc1x) < 0.000001 then hprc1x = 100 end
-
-        dlg:modify { id = "pxWidth", text = string.format("%d", wpx1x) }
-        dlg:modify { id = "pxHeight", text = string.format("%d", hpx1x) }
-        dlg:modify { id = "prcWidth", text = string.format("%.2f", wprc1x) }
-        dlg:modify { id = "prcHeight", text = string.format("%.2f", hprc1x) }
-    end
-}
-
-dlg:button {
-    id = "scale2xButton",
-    text = "&2x",
-    focus = false,
-    onclick = function()
-        local args = dlg.data
-
-        local wpx2x = args.pxWidth * 2
-        local hpx2x = args.pxHeight * 2
-        local wprc2x = args.prcWidth * 2
-        local hprc2x = args.prcHeight * 2
-
-        if math.abs(wpx2x) < 1 then wpx2x = 1 end
-        if math.abs(hpx2x) < 1 then hpx2x = 1 end
-        if math.abs(wprc2x) < 0.000001 then wprc2x = 100 end
-        if math.abs(hprc2x) < 0.000001 then hprc2x = 100 end
-
-        dlg:modify { id = "pxWidth", text = string.format("%d", wpx2x) }
-        dlg:modify { id = "pxHeight", text = string.format("%d", hpx2x) }
-        dlg:modify { id = "prcWidth", text = string.format("%.2f", wprc2x) }
-        dlg:modify { id = "prcHeight", text = string.format("%.2f", hprc2x) }
-    end
-}
-
 dlg:button {
     id = "scaleButton",
     text = "&SCALE",
@@ -1047,37 +1186,35 @@ dlg:button {
                     end
 
                     if wSrc ~= wTrg or hSrc ~= hTrg then
-                        local srcpx = {}
-                        local srcpxitr = srcImg:pixels()
-                        local srcidx = 0
-                        for elm in srcpxitr do
-                            srcidx = srcidx + 1
-                            srcpx[srcidx] = elm()
-                        end
-
                         local tx = wSrc / wTrg
                         local ty = hSrc / hTrg
 
                         local colorMode = srcSpec.colorMode
-                        local alphaIdx = srcSpec.transparentColor
+                        local alphaMask = srcSpec.transparentColor
                         local colorSpace = srcSpec.colorSpace
                         local trgSpec = ImageSpec {
                             height = hTrg,
                             width = wTrg,
                             colorMode = colorMode,
-                            transparentColor = alphaIdx }
+                            transparentColor = alphaMask }
                         trgSpec.colorSpace = colorSpace
                         local trgImg = Image(trgSpec)
                         local trgpxitr = trgImg:pixels()
 
                         if useBilinear then
                             for elm in trgpxitr do
-                                local xSrc = elm.x * tx
-                                local ySrc = elm.y * ty
-                                elm(filterBilin(xSrc, ySrc, wSrc, hSrc, srcImg))
+                                elm(filterBilin(
+                                    elm.x * tx, elm.y * ty, wSrc, hSrc,
+                                    srcImg, alphaMask))
                             end
                         else
-                            -- Default to nearest-neighbor.
+                            local srcpx = {}
+                            local srcpxitr = srcImg:pixels()
+                            local srcidx = 0
+                            for elm in srcpxitr do
+                                srcidx = srcidx + 1
+                                srcpx[srcidx] = elm()
+                            end
                             for elm in trgpxitr do
                                 elm(srcpx[1 + floor(elm.y * ty) * wSrc
                                     + floor(elm.x * tx)])
