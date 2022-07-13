@@ -2,7 +2,10 @@ local coords = { "CARTESIAN", "POLAR" }
 local edgeTypes = { "CLAMP", "OMIT", "WRAP" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
+
 local defaults = {
+    -- TODO: Option to hide source layer, see
+    -- layerMask dialog?
     target = "RANGE",
     edgeType = "OMIT",
     easeMethod = "NEAREST",
@@ -16,6 +19,7 @@ local defaults = {
     angle = 0,
     radius = 100,
     useInverse = false,
+    trimCels = false,
     drawDiagnostic = false,
     pullFocus = true
 }
@@ -152,6 +156,15 @@ dlg:check {
 dlg:newrow { always = false }
 
 dlg:check {
+    id = "trimCels",
+    label = "Trim:",
+    text = "Layer Edges",
+    selected = defaults.trimCels
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
     id = "drawDiagnostic",
     label = "Draw:",
     text = "Diagnostic",
@@ -165,6 +178,7 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
             app.alert {
@@ -181,6 +195,7 @@ dlg:button {
             return
         end
 
+        -- Check for tile maps.
         local version = app.version
         local layerIsTilemap = false
         local tileSet = nil
@@ -190,11 +205,13 @@ dlg:button {
             tileSet = activeLayer.tileset
         end
 
+        -- Unpack arguments.
         local args = dlg.data
         local target = args.target or defaults.target
         local edgeType = args.edgeType or defaults.edgeType
         local coord = args.coord or defaults.coord
         local useInverse = args.useInverse
+        local trimCels = args.trimCels
         local drawDiagnostic = args.drawDiagnostic
 
         -- Whether to use greater than or less than to
@@ -270,6 +287,8 @@ dlg:button {
             local yCtPx = yCenter * hn1 * 0.01
             local r = radius * 0.005 * math.sqrt(
                 wn1 * wn1 + hn1 * hn1)
+
+            -- There's no benefit to dimetric angles here.
             local a = angle * 0.017453292519943
             local rtcos = r * math.cos(a)
             local rtsin = r * math.sin(a)
@@ -307,11 +326,18 @@ dlg:button {
         end
         local dInvMagSq = 1.0 / (dx * dx + dy * dy)
 
+        -- Create target layer.
         local mirrLayer = activeSprite:newLayer()
         mirrLayer.opacity = srcLayer.opacity
+
+        -- Used to include origin and destination coordinates.
         mirrLayer.name = string.format(
-            "%s.Mirror.%d,%d.%d,%d",
-            srcLayer.name, xOrPx, yOrPx, xDsPx, yDsPx)
+            "%s.Mirrored",
+            srcLayer.name)
+
+        -- Cache global methods.
+        local floor = math.floor
+        local trimAlpha = AseUtilities.trimImageAlpha
 
         local framesLen = #frames
         app.transaction(function()
@@ -362,8 +388,8 @@ dlg:button {
 
                             -- TODO: Support bilinear vs. nearest sampling?
                             -- If so, would have to change pixel format to RGB.
-                            local ixOpp = math.floor(0.5 + pxOpp)
-                            local iyOpp = math.floor(0.5 + pyOpp)
+                            local ixOpp = floor(0.5 + pxOpp)
+                            local iyOpp = floor(0.5 + pyOpp)
 
                             elm(wrapper(ixOpp, iyOpp,
                                 spriteWidth, spriteHeight,
@@ -371,8 +397,16 @@ dlg:button {
                         end
                     end
 
+                    local xTrim = 0
+                    local yTrim = 0
+                    if trimCels then
+                        mirrImg, xTrim, yTrim = trimAlpha(
+                            mirrImg, 0, alphaMask)
+                    end
+
                     activeSprite:newCel(
-                        mirrLayer, srcFrame, mirrImg)
+                        mirrLayer, srcFrame, mirrImg,
+                        Point(xTrim, yTrim))
                 end
             end
         end)
@@ -380,9 +414,11 @@ dlg:button {
         if drawDiagnostic then
             local origin = Point(xOrPx, yOrPx)
             local dest = Point(xDsPx, yDsPx)
-            local lineColor = Color(255, 255, 255, 255)
-            local originColor = Color(255, 0, 0, 255)
-            local destColor = Color(0, 0, 255, 255)
+
+            -- Same as colors in drawknot2 (handles).
+            local lineColor = Color(175, 175, 175, 255)
+            local originColor = Color(2, 167, 235, 255)
+            local destColor = Color(235, 26, 64, 255)
             local lineBrush = Brush(2)
             local pointBrush = Brush(7)
 

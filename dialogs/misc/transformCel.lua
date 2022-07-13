@@ -689,7 +689,9 @@ dlg:button {
         local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
 
+        local query = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians = degrees * 0.017453292519943
+        if query then radians = query end
         local tana = math.tan(radians)
         local absTan = math.abs(tana)
 
@@ -704,7 +706,6 @@ dlg:button {
                     local hSrc = srcSpec.height
                     local alphaMask = srcSpec.transparentColor
 
-                    -- Just in case, ceil this instead of floor.
                     local wTrg = ceil(wSrc + absTan * hSrc)
                     local hTrg = hSrc
                     local xSrcCenter = wSrc * 0.5
@@ -729,9 +730,8 @@ dlg:button {
                     for elm in trgPxItr do
                         local xSgn = elm.x - xTrgCenter
                         local ySgn = elm.y - yTrgCenter
-                        local xSkew = xSgn + tana * ySgn
                         elm(filter(
-                            xSrcCenter + xSkew,
+                            xSrcCenter + xSgn + tana * ySgn,
                             ySrcCenter + ySgn,
                             wSrc, hSrc, srcImg, alphaMask))
                     end
@@ -792,7 +792,9 @@ dlg:button {
         local cels = getTargetCels(activeSprite, target, false, false)
         local celsLen = #cels
 
+        local query = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians = degrees * 0.017453292519943
+        if query then radians = query end
         local tana = math.tan(radians)
         local absTan = math.abs(tana)
 
@@ -807,7 +809,8 @@ dlg:button {
                     local hSrc = srcSpec.height
                     local alphaMask = srcSpec.transparentColor
 
-                    -- Just in case, ceil this instead of floor.
+                    -- TODO: Research whether these new dimensions
+                    -- can be better calculated for skew x and y.
                     local wTrg = wSrc
                     local hTrg = ceil(hSrc + absTan * wSrc)
                     local xSrcCenter = wSrc * 0.5
@@ -832,10 +835,9 @@ dlg:button {
                     for elm in trgPxItr do
                         local xSgn = elm.x - xTrgCenter
                         local ySgn = elm.y - yTrgCenter
-                        local ySkew = ySgn + tana * xSgn
                         elm(filter(
                             xSrcCenter + xSgn,
-                            ySrcCenter + ySkew,
+                            ySrcCenter + ySgn + tana * xSgn,
                             wSrc, hSrc, srcImg, alphaMask))
                     end
 
@@ -937,7 +939,11 @@ dlg:button {
             end
 
             -- Unpack angle.
-            local radians = (360 - degrees) * 0.017453292519943
+            degrees = 360 - degrees
+            local query = AseUtilities.DIMETRIC_ANGLES[degrees]
+            local radians = degrees * 0.017453292519943
+            if query then radians = query end
+
             local cosa = math.cos(radians)
             local sina = -math.sin(radians)
             local absCosa = math.abs(cosa)
@@ -1019,61 +1025,6 @@ dlg:button {
     end
 }
 
-dlg:newrow { always = false }
-
-dlg:button {
-    id = "fliphButton",
-    text = "&HORIZONTAL",
-    label = "Flip:",
-    focus = false,
-    onclick = function()
-        local activeSprite = app.activeSprite
-        if not activeSprite then return end
-
-        local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, true, true)
-        local celsLen = #cels
-
-        local fliph = AseUtilities.flipImageHoriz
-        app.transaction(function()
-            local i = 0
-            while i < celsLen do i = i + 1
-                local cel = cels[i]
-                cel.image = fliph(cel.image)
-            end
-        end)
-
-        app.refresh()
-    end
-}
-
-dlg:button {
-    id = "flipvButton",
-    text = "&VERTICAL",
-    focus = false,
-    onclick = function()
-        local activeSprite = app.activeSprite
-        if not activeSprite then return end
-
-        local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, true, true)
-        local celsLen = #cels
-
-        local flipv = AseUtilities.flipImageVert
-        app.transaction(function()
-            local i = 0
-            while i < celsLen do i = i + 1
-                local cel = cels[i]
-                cel.image = flipv(cel.image)
-            end
-        end)
-
-        app.refresh()
-    end
-}
-
 dlg:separator { id = "scaleSep" }
 
 dlg:number {
@@ -1121,6 +1072,60 @@ dlg:combobox {
         dlg:modify { id = "pxHeight", visible = ispx }
         dlg:modify { id = "prcWidth", visible = ispc }
         dlg:modify { id = "prcHeight", visible = ispc }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "fliphButton",
+    text = "FLIP &H",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local cels = getTargetCels(activeSprite, target, true, true)
+        local celsLen = #cels
+
+        local fliph = AseUtilities.flipImageHoriz
+        app.transaction(function()
+            local i = 0
+            while i < celsLen do i = i + 1
+                local cel = cels[i]
+                cel.image = fliph(cel.image)
+            end
+        end)
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "flipvButton",
+    text = "FLIP &V",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        local args = dlg.data
+        local target = args.target or defaults.target
+        local cels = getTargetCels(activeSprite, target, true, true)
+        local celsLen = #cels
+
+        local flipv = AseUtilities.flipImageVert
+        app.transaction(function()
+            local i = 0
+            while i < celsLen do i = i + 1
+                local cel = cels[i]
+                cel.image = flipv(cel.image)
+            end
+        end)
+
+        app.refresh()
     end
 }
 
@@ -1208,16 +1213,10 @@ dlg:button {
                                     srcImg, alphaMask))
                             end
                         else
-                            local srcpx = {}
-                            local srcpxitr = srcImg:pixels()
-                            local srcidx = 0
-                            for elm in srcpxitr do
-                                srcidx = srcidx + 1
-                                srcpx[srcidx] = elm()
-                            end
                             for elm in trgpxitr do
-                                elm(srcpx[1 + floor(elm.y * ty) * wSrc
-                                    + floor(elm.x * tx)])
+                                elm(srcImg:getPixel(
+                                    floor(elm.x * tx),
+                                    floor(elm.y * ty)))
                             end
                         end
 

@@ -130,7 +130,9 @@ dlg:button {
         local yOriginSigned = 1.0 - (yOriginNorm + yOriginNorm)
 
         local angDegrees = args.angle or defaults.angle
+        local query = AseUtilities.DIMETRIC_ANGLES[angDegrees]
         local angRadians = angDegrees * 0.017453292519943
+        if query then angRadians = query end
         local cw = 1.0
         if args.cw then cw = -1.0 end
 

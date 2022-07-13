@@ -1,13 +1,13 @@
 dofile("../../support/aseutilities.lua")
 
 local targets = { "ACTIVE", "ALL", "RANGE" }
-local delTargets = { "DELETE_CELS", "DELETE_LAYER", "NONE" }
+local delTargets = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults = {
     target = "RANGE",
     trimCels = false,
-    delOver = "NONE",
-    delUnder = "NONE",
+    delOver = "HIDE",
+    delUnder = "HIDE",
     pullFocus = false
 }
 
@@ -124,11 +124,13 @@ dlg:button {
         local underIsValidTrg = (not underLayer.isBackground)
             and (not underLayer.isReference)
 
+        local hideOverLayer = delOverStr == "HIDE"
         local delOverLayer = delOverStr == "DELETE_LAYER"
             and overIsValidTrg
         local delUnderLayer = delUnderStr == "DELETE_LAYER"
             and underIsValidTrg
 
+        local hideUnderLayer = delOverStr == "HIDE"
         local delOverCels = delOverStr == "DELETE_CELS"
             and overIsValidTrg
         local delUnderCels = delUnderStr == "DELETE_CELS"
@@ -293,6 +295,9 @@ dlg:button {
                             if alphaOver > 0 then
                                 local xUnder = xSprite - xTlUnder
                                 local yUnder = ySprite - yTlUnder
+
+                                -- TODO: Does this need to be premultiplied before blend
+                                -- then unpremultiplied after?
                                 local hexUnder = imgUnder:getPixel(xUnder, yUnder)
                                 local alphaUnder = (hexUnder >> 0x18) & 0xff
                                 alphaUnder = (alphaUnder * underCompOpacity) // 0xff
@@ -311,9 +316,11 @@ dlg:button {
             end
         end)
 
-        -- Beware: it's possible to delete all layers
-        -- in a sprite with Sprite:deleteLayer.
-        if delOverLayer then
+        if hideOverLayer then
+            overLayer.isVisible = false
+        elseif delOverLayer then
+            -- Beware: it's possible to delete all layers
+            -- in a sprite with Sprite:deleteLayer.
             activeSprite:deleteLayer(overLayer)
         elseif delOverCels then
             app.transaction(function()
@@ -331,7 +338,9 @@ dlg:button {
             end)
         end
 
-        if delUnderLayer then
+        if hideUnderLayer then
+            underLayer.isVisible = false
+        elseif delUnderLayer then
             activeSprite:deleteLayer(underLayer)
         elseif delUnderCels then
             app.transaction(function()

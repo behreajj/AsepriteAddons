@@ -190,7 +190,10 @@ dlg:button {
             local yCtPx = yCenter * hn1 * 0.01
             local r = radius * 0.005 * math.sqrt(
                 wn1 * wn1 + hn1 * hn1)
+
+            local query = AseUtilities.DIMETRIC_ANGLES[angle]
             local a = angle * 0.017453292519943
+            if query then a = query end
             local rtcos = r * math.cos(a)
             local rtsin = r * math.sin(a)
 

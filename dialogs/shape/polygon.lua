@@ -129,7 +129,11 @@ dlg:button {
         -- Create transform matrix.
         local t = Mat3.fromTranslation(
             args.xOrigin, args.yOrigin)
-        local r = Mat3.fromRotZ(math.rad(args.angle))
+
+        local a = args.angle * 0.017453292519943
+        local query = AseUtilities.DIMETRIC_ANGLES[args.angle]
+        if query then a = query end
+        local r = Mat3.fromRotZ(a)
         local sclval = args.scale
         if sclval < 2.0 then sclval = 2.0 end
         local s = Mat3.fromScale(sclval, -sclval)
@@ -140,7 +144,7 @@ dlg:button {
         local sprite = AseUtilities.initCanvas(
             64, 64, name,
             { args.fillClr.rgbaPixel,
-            args.strokeClr.rgbaPixel })
+                args.strokeClr.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
         local frame = app.activeFrame or sprite.frames[1]
         local cel = sprite:newCel(layer, frame)
