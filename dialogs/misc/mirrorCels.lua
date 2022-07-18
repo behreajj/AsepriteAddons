@@ -17,7 +17,6 @@ local defaults = {
     xCenter = 50,
     yCenter = 50,
     angle = 0,
-    radius = 100,
     useInverse = false,
     trimCels = false,
     drawDiagnostic = false,
@@ -62,7 +61,6 @@ dlg:combobox {
         dlg:modify { id = "xCenter", visible = isPolr }
         dlg:modify { id = "yCenter", visible = isPolr }
         dlg:modify { id = "angle", visible = isPolr }
-        dlg:modify { id = "radius", visible = isPolr }
     end
 }
 
@@ -131,17 +129,6 @@ dlg:slider {
     min = 0,
     max = 360,
     value = defaults.angle,
-    visible = defaults.coord == "POLAR"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "radius",
-    label = "Radius:",
-    min = 1,
-    max = 100,
-    value = defaults.radius,
     visible = defaults.coord == "POLAR"
 }
 
@@ -281,15 +268,14 @@ dlg:button {
             local xCenter = args.xCenter or defaults.xCenter
             local yCenter = args.yCenter or defaults.yCenter
             local angle = args.angle or defaults.angle
-            local radius = args.radius or defaults.radius
 
             local xCtPx = xCenter * wn1 * 0.01
             local yCtPx = yCenter * hn1 * 0.01
-            local r = radius * 0.005 * math.sqrt(
-                wn1 * wn1 + hn1 * hn1)
 
-            -- There's no benefit to dimetric angles here.
+            local query = AseUtilities.DIMETRIC_ANGLES[angle]
             local a = angle * 0.017453292519943
+            if query then a = query end
+            local r = 0.5 * math.sqrt(wn1 * wn1 + hn1 * hn1)
             local rtcos = r * math.cos(a)
             local rtsin = r * math.sin(a)
 
@@ -386,8 +372,6 @@ dlg:button {
                             local pxOpp = pxProj + pxProj - cx
                             local pyOpp = pyProj + pyProj - cy
 
-                            -- TODO: Support bilinear vs. nearest sampling?
-                            -- If so, would have to change pixel format to RGB.
                             local ixOpp = floor(0.5 + pxOpp)
                             local iyOpp = floor(0.5 + pyOpp)
 

@@ -99,7 +99,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "palFile",
-    filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
+    filetypes = { "gpl", "pal" },
     open = true,
     visible = defaults.palType == "FILE"
 }
@@ -278,8 +278,7 @@ dlg:button {
                         -- Tile map layers should only belong to
                         -- .aseprite files, and hence not need this.
                     else
-                        local srcImg = cel.image
-                        local trgImg, x, y = trimImage(srcImg, 0, 0)
+                        local trgImg, x, y = trimImage(cel.image, 0, 0)
                         local srcPos = cel.position
                         cel.position = Point(srcPos.x + x, srcPos.y + y)
                         cel.image = trgImg
@@ -287,15 +286,6 @@ dlg:button {
                 end
             end)
         end
-
-        -- local xGrid = args.xGrid or defaults.xGrid
-        -- local yGrid = args.yGrid or defaults.yGrid
-        -- local wGrid = args.wGrid or defaults.wGrid
-        -- local hGrid = args.hGrid or defaults.hGrid
-        -- if wGrid > 1 and hGrid > 1 then
-        --     openSprite.gridBounds = Rectangle(
-        --         xGrid, yGrid, wGrid, hGrid)
-        -- end
 
         app.preferences.open_file.open_sequence = oldOpSeqPref
         app.refresh()

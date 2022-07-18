@@ -8,6 +8,38 @@ local defaults = {
     pullFocus = false
 }
 
+-- Also used in layersExport.
+local function appendChildren(
+    layer, array,
+    omitHidden, checkTilemaps)
+
+    if layer.isVisible or (not omitHidden) then
+        if layer.isGroup then
+            local childLayers = layer.layers
+            local lenChildLayers = #childLayers
+            local i = 0
+            while i < lenChildLayers do
+                i = i + 1
+                local childLayer = childLayers[i]
+                appendChildren(childLayer, array,
+                    omitHidden, checkTilemaps)
+            end
+        elseif (not layer.isReference)
+            and (not layer.isBackground) then
+            local isTilemap = false
+            if checkTilemaps then
+                isTilemap = layer.isTilemap
+            end
+
+            if not isTilemap then
+                table.insert(array, layer)
+            end
+        end
+    end
+
+    return array
+end
+
 local dlg = Dialog { title = "Trim Sprite" }
 
 dlg:radio {
@@ -64,8 +96,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- TODO: What about reference & background layers?
-
         local activeSprite = app.activeSprite
         if not activeSprite then
             app.alert {
@@ -77,9 +107,13 @@ dlg:button {
         -- Cache global functions used in loop.
         local trimAlphaFunc = AseUtilities.trimImageAlpha
         local trimCelFunc = AseUtilities.trimCelToSprite
-        local isVisibleHierarchy = AseUtilities.isVisibleHierarchy
         local min = math.min
         local max = math.max
+
+        -- Version
+        local version = app.version
+        local checkTilemaps = version.major >= 1
+            and version.minor >= 3
 
         -- Unpack sprite attributes.
         local alphaIndex = activeSprite.transparentColor
@@ -93,35 +127,44 @@ dlg:button {
         local omitHidden = args.omitHidden
         local padding = args.padding or defaults.padding
 
+        -- Get leaf layers with cel content.
+        local layers = activeSprite.layers
+        local lenLayers = #layers
+        local leaves = {}
+        local g = 0
+        while g < lenLayers do g = g + 1
+            appendChildren(layers[g], leaves,
+                omitHidden, checkTilemaps)
+        end
+
+        -- Find cels at intersection of layers and frames.
+        local frames = activeSprite.frames
+        local lenFrames = #frames
+        local lenLeaves = #leaves
+        local cels = {}
+        local lenCels = 0
+        local h = 0
+        while h < lenLeaves do h = h + 1
+            local leaf = leaves[h]
+            local i = 0
+            while i < lenFrames do i = i + 1
+                local cel = leaf:cel(frames[i])
+                if cel then
+                    lenCels = lenCels + 1
+                    cels[lenCels] = cel
+                end
+            end
+        end
+
         local xMin = 2147483647
         local yMin = 2147483647
         local xMax = -2147483648
         local yMax = -2147483648
 
-        local cels = activeSprite.cels
-        local celsLen = #cels
-
-        if omitHidden then
-            local filtered = {}
-            local j = 0
-            local h = 0
-            while h < celsLen do h = h + 1
-                local cel = cels[h]
-                local layer = cel.layer
-                if isVisibleHierarchy(layer, activeSprite) then
-                    j = j + 1
-                    filtered[j] = cel
-                end
-            end
-
-            cels = filtered
-            celsLen = #filtered
-        end
-
         app.transaction(function()
-            local i = 0
-            while i < celsLen do i = i + 1
-                local cel = cels[i]
+            local j = 0
+            while j < lenCels do j = j + 1
+                local cel = cels[j]
                 local celPos = cel.position
                 local celImg = cel.image
                 local trimmed, xTrm, yTrm = trimAlphaFunc(celImg, 0, alphaIndex)
@@ -155,9 +198,9 @@ dlg:button {
 
             if cropCels then
                 app.transaction(function()
-                    for i = 1, celsLen, 1 do
-                        local cel = cels[i]
-                        trimCelFunc(cel, activeSprite)
+                    local k = 0
+                    while k < lenCels do k = k + 1
+                        trimCelFunc(cels[k], activeSprite)
                     end
                 end)
             end

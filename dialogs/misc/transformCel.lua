@@ -90,9 +90,6 @@ local function filterBilin(
     local xf = math.floor(xSrc)
     local xc = math.ceil(xSrc)
 
-    local yErr = ySrc - yf
-    local xErr = xSrc - xf
-
     local yfInBounds = yf > -1 and yf < hSrc
     local ycInBounds = yc > -1 and yc < hSrc
     local xfInBounds = xf > -1 and xf < wSrc
@@ -126,20 +123,15 @@ local function filterBilin(
 
     -- The trim alpha results are better when
     -- alpha zero check is done here.
+    local xErr = xSrc - xf
     local a00 = c00 >> 0x18 & 0xff
     local a10 = c10 >> 0x18 & 0xff
     if a00 > 0 or a10 > 0 then
-        local b00 = c00 >> 0x10 & 0xff
-        local g00 = c00 >> 0x08 & 0xff
-        local r00 = c00 & 0xff
-
-        local b10 = c10 >> 0x10 & 0xff
-        local g10 = c10 >> 0x08 & 0xff
-        local r10 = c10 & 0xff
-
         r0, g0, b0, a0 = rgbMix(
-            r00, g00, b00, a00,
-            r10, g10, b10, a10, xErr)
+            c00 & 0xff, c00 >> 0x08 & 0xff,
+            c00 >> 0x10 & 0xff, a00,
+            c10 & 0xff, c10 >> 0x08 & 0xff,
+            c10 >> 0x10 & 0xff, a10, xErr)
     end
 
     local a1 = 0
@@ -150,23 +142,17 @@ local function filterBilin(
     local a01 = c01 >> 0x18 & 0xff
     local a11 = c11 >> 0x18 & 0xff
     if a01 > 0 or a11 > 0 then
-        local b01 = c01 >> 0x10 & 0xff
-        local g01 = c01 >> 0x08 & 0xff
-        local r01 = c01 & 0xff
-
-        local b11 = c11 >> 0x10 & 0xff
-        local g11 = c11 >> 0x08 & 0xff
-        local r11 = c11 & 0xff
-
         r1, g1, b1, a1 = rgbMix(
-            r01, g01, b01, a01,
-            r11, g11, b11, a11, xErr)
+            c01 & 0xff, c01 >> 0x08 & 0xff,
+            c01 >> 0x10 & 0xff, a01,
+            c11 & 0xff, c11 >> 0x08 & 0xff,
+            c11 >> 0x10 & 0xff, a11, xErr)
     end
 
     if a0 > 0.0 or a1 > 0.0 then
         local rt, gt, bt, at = rgbMix(
             r0, g0, b0, a0,
-            r1, g1, b1, a1, yErr)
+            r1, g1, b1, a1, ySrc - yf)
 
         at = math.floor(0.5 + at)
         bt = math.floor(0.5 + bt)
@@ -304,7 +290,7 @@ dlg:newrow { always = false }
 
 dlg:combobox {
     id = "easeMethod",
-    label = "Easing:",
+    label = "Pixels:",
     option = defaults.easeMethod,
     options = easeMethods
 }
@@ -314,13 +300,13 @@ dlg:newrow { always = false }
 dlg:number {
     id = "xTranslate",
     label = "Vector:",
-    text = string.format("%.0f", defaults.xTranslate),
+    text = string.format("%d", defaults.xTranslate),
     decimals = 0
 }
 
 dlg:number {
     id = "yTranslate",
-    text = string.format("%.0f", defaults.yTranslate),
+    text = string.format("%d", defaults.yTranslate),
     decimals = 0
 }
 
@@ -707,33 +693,22 @@ dlg:button {
                     local alphaMask = srcSpec.transparentColor
 
                     local wTrg = ceil(wSrc + absTan * hSrc)
-                    local hTrg = hSrc
-                    local xSrcCenter = wSrc * 0.5
-                    local ySrcCenter = hSrc * 0.5
-                    local xTrgCenter = wTrg * 0.5
-                    local yTrgCenter = hTrg * 0.5
-
-                    -- The goal with this calculation is to try
-                    -- to minimize drift in the cel's position.
+                    local yCenter = hSrc * 0.5
+                    local xDiff = (wSrc - wTrg) * 0.5
                     local wDiffHalf = round((wTrg - wSrc) * 0.5)
-                    local hDiffHalf = round((hTrg - hSrc) * 0.5)
 
                     local trgSpec = ImageSpec {
-                        width = wTrg, height = hTrg,
+                        width = wTrg, height = hSrc,
                         colorMode = srcSpec.colorMode,
-                        transparentColor = alphaMask
-                    }
+                        transparentColor = alphaMask }
                     trgSpec.colorSpace = srcSpec.colorSpace
                     local trgImg = Image(trgSpec)
 
                     local trgPxItr = trgImg:pixels()
                     for elm in trgPxItr do
-                        local xSgn = elm.x - xTrgCenter
-                        local ySgn = elm.y - yTrgCenter
                         elm(filter(
-                            xSrcCenter + xSgn + tana * ySgn,
-                            ySrcCenter + ySgn,
-                            wSrc, hSrc, srcImg, alphaMask))
+                            xDiff + elm.x + tana * (elm.y - yCenter),
+                            elm.y, wSrc, hSrc, srcImg, alphaMask))
                     end
 
                     local xTrim = 0
@@ -743,7 +718,7 @@ dlg:button {
                     local srcPos = cel.position
                     cel.position = Point(
                         xTrim + srcPos.x - wDiffHalf,
-                        yTrim + srcPos.y - hDiffHalf)
+                        yTrim + srcPos.y)
                     cel.image = trgImg
                 end
             end
@@ -809,35 +784,22 @@ dlg:button {
                     local hSrc = srcSpec.height
                     local alphaMask = srcSpec.transparentColor
 
-                    -- TODO: Research whether these new dimensions
-                    -- can be better calculated for skew x and y.
-                    local wTrg = wSrc
                     local hTrg = ceil(hSrc + absTan * wSrc)
-                    local xSrcCenter = wSrc * 0.5
-                    local ySrcCenter = hSrc * 0.5
-                    local xTrgCenter = wTrg * 0.5
-                    local yTrgCenter = hTrg * 0.5
-
-                    -- The goal with this calculation is to try
-                    -- to minimize drift in the cel's position.
-                    local wDiffHalf = round((wTrg - wSrc) * 0.5)
+                    local xTrgCenter = wSrc * 0.5
+                    local yDiff = (hSrc - hTrg) * 0.5
                     local hDiffHalf = round((hTrg - hSrc) * 0.5)
 
                     local trgSpec = ImageSpec {
-                        width = wTrg, height = hTrg,
+                        width = wSrc, height = hTrg,
                         colorMode = srcSpec.colorMode,
-                        transparentColor = alphaMask
-                    }
+                        transparentColor = alphaMask }
                     trgSpec.colorSpace = srcSpec.colorSpace
                     local trgImg = Image(trgSpec)
 
                     local trgPxItr = trgImg:pixels()
                     for elm in trgPxItr do
-                        local xSgn = elm.x - xTrgCenter
-                        local ySgn = elm.y - yTrgCenter
-                        elm(filter(
-                            xSrcCenter + xSgn,
-                            ySrcCenter + ySgn + tana * xSgn,
+                        elm(filter(elm.x,
+                            yDiff + elm.y + tana * (elm.x - xTrgCenter),
                             wSrc, hSrc, srcImg, alphaMask))
                     end
 
@@ -847,7 +809,7 @@ dlg:button {
 
                     local srcPos = cel.position
                     cel.position = Point(
-                        xTrim + srcPos.x - wDiffHalf,
+                        xTrim + srcPos.x,
                         yTrim + srcPos.y - hDiffHalf)
                     cel.image = trgImg
                 end

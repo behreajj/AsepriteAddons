@@ -455,10 +455,10 @@ dlg:button {
                 local xTheta = angle + x * xToTheta
                 local yTheta = angle + y * yToTheta
                 local u = 1.0 - t
-                local xDispScl = u * pxxDisplaceOrig + t * pxxDisplaceDest
-                local yDispScl = u * pxyDisplaceOrig + t * pxyDisplaceDest
-                local xOffset = xDispScl * math.sin(yTheta)
-                local yOffset = yDispScl * math.cos(xTheta)
+                local xDsplScl = u * pxxDisplaceOrig + t * pxxDisplaceDest
+                local yDsplScl = u * pxyDisplaceOrig + t * pxyDisplaceDest
+                local xOffset = xDsplScl * math.sin(yTheta)
+                local yOffset = yDsplScl * math.cos(xTheta)
                 return x + xOffset, y + yOffset
             end
         end

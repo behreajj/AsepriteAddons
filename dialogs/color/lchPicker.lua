@@ -112,8 +112,8 @@ local function updateShades(dialog, l, c, h, a)
     local args = dialog.data
     local shadeCount = args.shadeCount or defaults.shadeCount
 
-    local hueSpreadShd = 0.667
-    local hueSpreadLgt = 0.333
+    local hueSpreadShd = 0.66666666666667
+    local hueSpreadLgt = 0.33333333333333
     local lightSpread = 37.5
     local chromaSpreadShd = 5.0
     local chromaSpreadLgt = 15.0

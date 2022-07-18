@@ -310,6 +310,17 @@ dlg:button {
             return
         end
 
+        -- Check version, if 1.3 then check tile map.
+        local version = app.version
+        local isTilemap = false
+        local tileSet = nil
+        if version.major >= 1 and version.minor >= 3 then
+            isTilemap = srcLayer.isTilemap
+            if isTilemap then
+                tileSet = srcLayer.tileset
+            end
+        end
+
         -- Unpack arguments.
         local args = dlg.data
         local target = args.target or defaults.target
@@ -318,7 +329,7 @@ dlg:button {
         local gLevels = args.gLevels or defaults.gLevels
         local bLevels = args.bLevels or defaults.bLevels
         local aLevels = args.aLevels or defaults.aLevels
-        local copyToLayer = args.copyToLayer
+        local copyToLayer = args.copyToLayer or isTilemap
 
         -- Find frames from target.
         local frames = {}
@@ -331,16 +342,16 @@ dlg:button {
             local appRange = app.range
             local rangeFrames = appRange.frames
             local rangeFramesLen = #rangeFrames
-            local i = 0
-            while i < rangeFramesLen do i = i + 1
-                frames[i] = rangeFrames[i]
+            local h = 0
+            while h < rangeFramesLen do h = h + 1
+                frames[h] = rangeFrames[h]
             end
         else
             local activeFrames = sprite.frames
             local activeFramesLen = #activeFrames
-            local i = 0
-            while i < activeFramesLen do i = i + 1
-                frames[i] = activeFrames[i]
+            local h = 0
+            while h < activeFramesLen do h = h + 1
+                frames[h] = activeFrames[h]
             end
         end
 
@@ -366,6 +377,7 @@ dlg:button {
 
         local one255 = 1.0 / 255
         local floor = math.floor
+        local tilesToImage = AseUtilities.tilesToImage
 
         local rDelta = 0.0
         local gDelta = 0.0
@@ -397,16 +409,17 @@ dlg:button {
         local oldMode = sprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
-        -- TODO: Support tile maps like in adjustHue.
-        -- Copy to layer should default to false if
-        -- src is tilemap.
         local framesLen = #frames
         app.transaction(function()
-            for i = 1, framesLen, 1 do
+            local i = 0
+            while i < framesLen do i = i + 1
                 local srcFrame = frames[i]
                 local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
                     local srcImg = srcCel.image
+                    if isTilemap then
+                        srcImg = tilesToImage(srcImg, tileSet, ColorMode.RGB)
+                    end
 
                     -- Gather unique colors in image.
                     local srcDict = {}

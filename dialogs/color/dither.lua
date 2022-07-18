@@ -33,7 +33,8 @@ local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
     local fs_5_16 = 0.3125 * factor
     local fs_7_16 = 0.4375 * factor
 
-    local k = 0 while k < pxLen do
+    local k = 0
+    while k < pxLen do
         -- Calculate conversions from 1D to 2D indices.
         local x = k % srcWidth
         local y = k // srcWidth
@@ -358,7 +359,7 @@ dlg:button {
             args.palType, args.palFile, args.palPreset,
             startIndex, palCount, true)
 
-        local alphaIndex = activeSprite.transparentColor
+        local alphaMask = activeSprite.transparentColor
         local colorSpace = activeSprite.colorSpace
         local oldColorMode = activeSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
@@ -523,9 +524,7 @@ dlg:button {
                     text = {
                         "The palette contains fewer than 3 viable colors.",
                         "For better results, use either one bit mode or",
-                        "a bigger palette."
-                    }
-                }
+                        "a bigger palette." } }
                 return
             end
 
@@ -567,9 +566,6 @@ dlg:button {
 
         end
 
-        -- TODO: Support tile maps like in adjustHue.
-        -- Copy to layer or layerIsTilemap.
-        -- Cache pixels from iterator to an array.
         local srcImg = srcCel.image
         local srcPxItr = srcImg:pixels()
         local arrSrcPixels = {}
@@ -590,8 +586,7 @@ dlg:button {
             width = srcWidth,
             height = srcHeight,
             colorMode = ColorMode.RGB,
-            transparentColor = alphaIndex
-        }
+            transparentColor = alphaMask }
         trgSpec.colorSpace = colorSpace
         local trgImg = Image(trgSpec)
         local trgPxItr = trgImg:pixels()
@@ -605,6 +600,9 @@ dlg:button {
         local copyToLayer = args.copyToLayer
         if copyToLayer then
             app.transaction(function()
+                -- TODO: Support tile maps like in adjustHue.
+                -- Copy to layer or layerIsTilemap.
+                -- Cache pixels from iterator to an array.
                 local srcLayer = srcCel.layer
 
                 -- Copy layer.
@@ -622,7 +620,8 @@ dlg:button {
                 -- Do not copy blend mode.
 
                 -- Copy cel.
-                local frame = app.activeFrame or activeSprite.frames[1]
+                local frame = app.activeFrame
+                    or activeSprite.frames[1]
                 local trgCel = activeSprite:newCel(
                     trgLayer, frame,
                     trgImg, srcCel.position)
