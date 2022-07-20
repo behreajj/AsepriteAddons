@@ -36,7 +36,8 @@ local function appendVisChildren(layer, array)
                 local childLayer = childLayers[i]
                 appendVisChildren(childLayer, array)
             end
-        elseif (not layer.isReference) then
+        -- elseif (not layer.isReference) then
+        else
             table.insert(array, layer)
         end
     end
@@ -428,7 +429,8 @@ dlg:button {
             local layer = selectLayers[h]
             local layerBlendMode = layer.blendMode
             local layerData = layer.data
-            local layerIsReference = layer.isReference
+            -- local layerIsReference = layer.isReference
+            local layerIsReference = false
             local layerName = layer.name
             local layerOpacity = layer.opacity
 

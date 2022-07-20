@@ -910,7 +910,7 @@ end
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
----@param hueFunc function hue function
+---@param hueFunc function|nil hue function
 ---@return table
 function Clr.mixHsla(a, b, t, hueFunc)
     local u = t or 0.5
@@ -979,7 +979,7 @@ end
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
----@param hueFunc function hue function
+---@param hueFunc function|nil hue function
 ---@return table
 function Clr.mixHsva(a, b, t, hueFunc)
     local u = t or 0.5
@@ -1083,7 +1083,7 @@ end
 ---@param a table origin
 ---@param b table destination
 ---@param t number step
----@param hueFunc function hue function
+---@param hueFunc function|nil hue function
 ---@return table
 function Clr.mixLch(a, b, t, hueFunc)
     local u = t or 0.5

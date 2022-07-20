@@ -120,9 +120,10 @@ dlg:button {
         local delOverStr = args.delOver or defaults.delOver
         local delUnderStr = args.delUnder or defaults.delUnder
 
-        local overIsValidTrg = (not overLayer.isReference)
+        -- local overIsValidTrg = (not overLayer.isReference)
+        local overIsValidTrg = true
         local underIsValidTrg = (not underLayer.isBackground)
-            and (not underLayer.isReference)
+            -- and (not underLayer.isReference)
 
         local hideOverLayer = delOverStr == "HIDE"
         local delOverLayer = delOverStr == "DELETE_LAYER"

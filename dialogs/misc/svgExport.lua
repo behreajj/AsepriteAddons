@@ -78,12 +78,14 @@ local function layerToSvgStr(
             local groupLayers = layer.layers
             local groupLayersLen = #groupLayers
             local groupStrArr = {}
-            for i = 1, groupLayersLen, 1 do
-                    groupStrArr[i] = layerToSvgStr(
-                        groupLayers[i],
-                        activeFrame,
-                        spriteBounds,
-                        border, scale, margin)
+            local i = 0
+            while i < groupLayersLen do
+                i = i + 1
+                groupStrArr[i] = layerToSvgStr(
+                    groupLayers[i],
+                    activeFrame,
+                    spriteBounds,
+                    border, scale, margin)
             end
 
             grpStr = grpStr .. table.concat(groupStrArr)
@@ -117,7 +119,7 @@ local function layerToSvgStr(
 
                 grpStr = grpStr .. ">"
 
-                grpStr =  grpStr .. imgToSvgStr(
+                grpStr = grpStr .. imgToSvgStr(
                     celImg, border, margin, scale,
                     xCel, yCel)
 
@@ -209,49 +211,55 @@ dlg:button {
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
-        if activeSprite then
-            local oldColorMode = activeSprite.colorMode
-            app.command.ChangePixelFormat { format = "rgb" }
+        if not activeSprite then
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite." }
+            return
+        end
 
-            -- Collect inputs.
-            local args = dlg.data
-            local scale = args.scale or defaults.scale
-            local margin = args.margin or defaults.margin
-            local marginClr = args.marginClr or defaults.marginClr
-            local border = args.border or defaults.border
-            local borderClr = args.borderClr or defaults.borderClr
-            local prApply = args.prApply
-            local flattenImage = args.flattenImage
+        local oldColorMode = activeSprite.colorMode
+        app.command.ChangePixelFormat { format = "rgb" }
 
-            -- Calculate dimensions.
-            local nativeWidth = activeSprite.width
-            local nativeHeight = activeSprite.height
-            local lenPixels = nativeWidth * nativeHeight
-            local scaledWidth = nativeWidth * scale
-            local scaledHeight = nativeHeight * scale
-            local totalWidth = scaledWidth
-                + (nativeWidth + 1) * margin
-                + border * 2
-            local totalHeight = scaledHeight
-                + (nativeHeight + 1) * margin
-                + border * 2
+        -- Collect inputs.
+        local args = dlg.data
+        local scale = args.scale or defaults.scale
+        local margin = args.margin or defaults.margin
+        local marginClr = args.marginClr or defaults.marginClr
+        local border = args.border or defaults.border
+        local borderClr = args.borderClr or defaults.borderClr
+        local prApply = args.prApply
+        local flattenImage = args.flattenImage
 
-            local wAspSclr = 1
-            local hAspSclr = 1
-            local preserveAspectStr = "preserveAspectRatio=\"xMidYMid slice\" "
-            if prApply then
-                local pxRatio = activeSprite.pixelRatio
-                local pxw = math.max(1, math.abs(pxRatio.width))
-                local pxh = math.max(1, math.abs(pxRatio.height))
-                if pxw > pxh then hAspSclr = pxw / pxh end
-                if pxh > pxw then wAspSclr = pxh / pxw end
-                preserveAspectStr = "preserveAspectRatio=\"none\" "
-            end
+        -- Calculate dimensions.
+        local nativeWidth = activeSprite.width
+        local nativeHeight = activeSprite.height
+        local lenPixels = nativeWidth * nativeHeight
+        local scaledWidth = nativeWidth * scale
+        local scaledHeight = nativeHeight * scale
+        local totalWidth = scaledWidth
+            + (nativeWidth + 1) * margin
+            + border * 2
+        local totalHeight = scaledHeight
+            + (nativeHeight + 1) * margin
+            + border * 2
 
-            -- Cache any methods used in for loops.
-            local strfmt = string.format
-            local concat = table.concat
-            local str = concat({
+        local wAspSclr = 1
+        local hAspSclr = 1
+        local preserveAspectStr = "preserveAspectRatio=\"xMidYMid slice\" "
+        if prApply then
+            local pxRatio = activeSprite.pixelRatio
+            local pxw = math.max(1, math.abs(pxRatio.width))
+            local pxh = math.max(1, math.abs(pxRatio.height))
+            if pxw > pxh then hAspSclr = pxw / pxh end
+            if pxh > pxw then wAspSclr = pxh / pxw end
+            preserveAspectStr = "preserveAspectRatio=\"none\" "
+        end
+
+        -- Cache any methods used in for loops.
+        local strfmt = string.format
+        local concat = table.concat
+        local str = concat({
             "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n",
             "<svg ",
             "xmlns=\"http://www.w3.org/2000/svg\" ",
@@ -263,144 +271,142 @@ dlg:button {
                 totalWidth, totalHeight),
             strfmt("viewBox=\"0 0 %.4f %.4f\">",
                 wAspSclr * totalWidth,
-                hAspSclr * totalHeight)})
+                hAspSclr * totalHeight) })
 
-            -- Each path element can contain sub-paths set off by Z (close)
-            -- and M (move to) commands.
-            local wnBorder = totalWidth - border
-            local hnBorder = totalHeight - border
-            if border > 0 and borderClr.alpha > 0 then
+        -- Each path element can contain sub-paths set off by Z (close)
+        -- and M (move to) commands.
+        local wnBorder = totalWidth - border
+        local hnBorder = totalHeight - border
+        if border > 0 and borderClr.alpha > 0 then
 
-                -- Create outer frame of border (clockwise).
+            -- Create outer frame of border (clockwise).
+            str = str .. strfmt(
+                "\n<path id=\"border\" d=\"M 0 0 L %d 0 L %d %d L 0 %d Z ",
+                totalWidth, totalWidth, totalHeight, totalHeight)
+
+            -- Cut out inner frame of border (counter-clockwise).
+            str = str .. strfmt(
+                "M %d %d L %d %d L %d %d L %d %d Z\" ",
+                border, border,
+                border, hnBorder,
+                wnBorder, hnBorder,
+                wnBorder, border)
+
+            if borderClr.alpha < 255 then
                 str = str .. strfmt(
-                    "\n<path id=\"border\" d=\"M 0 0 L %d 0 L %d %d L 0 %d Z ",
-                    totalWidth, totalWidth, totalHeight, totalHeight)
-
-                -- Cut out inner frame of border (counter-clockwise).
-                str = str .. strfmt(
-                    "M %d %d L %d %d L %d %d L %d %d Z\" ",
-                    border, border,
-                    border, hnBorder,
-                    wnBorder, hnBorder,
-                    wnBorder, border)
-
-                if borderClr.alpha < 255 then
-                    str = str .. strfmt(
-                        "fill-opacity=\"%.6f\" ",
-                        borderClr.alpha * 0.003921568627451)
-                end
-
-                str = str .. strfmt(
-                    "fill=\"#%06X\" />",
-                    borderClr.red << 0x10
-                        | borderClr.green << 0x08
-                        | borderClr.blue)
+                    "fill-opacity=\"%.6f\" ",
+                    borderClr.alpha * 0.003921568627451)
             end
 
-            if margin > 0 and marginClr.alpha > 0 then
-                -- Create outer frame of margins (clockwise).
-                str = str .. strfmt(
-                    "\n<path id=\"margins\" d=\"M %d %d L %d %d L %d %d L %d %d Z",
-                    border, border,
-                    wnBorder, border,
-                    wnBorder, hnBorder,
-                    border, hnBorder)
-
-                -- Cut out a hole for each pixel (counter-clockwise).
-                local holeStrArr = {}
-                for i = 0, lenPixels - 1, 1 do
-                    local y = i // nativeWidth
-                    local x = i % nativeWidth
-
-                    local x1mrg = border + (x + 1) * margin
-                    local y1mrg = border + (y + 1) * margin
-
-                    local ax = x1mrg + x * scale
-                    local ay = y1mrg + y * scale
-                    local bx = ax + scale
-                    local by = ay + scale
-
-                    holeStrArr[1 + i] = strfmt(
-                        " M %d %d L %d %d L %d %d L %d %d Z",
-                        ax, ay, ax, by, bx, by, bx, ay)
-                end
-
-                str = str .. concat(holeStrArr)
-                str = str .. "\" "
-
-                if marginClr.alpha < 255 then
-                    str = str .. strfmt(
-                        "fill-opacity=\"%.6f\" ",
-                        marginClr.alpha * 0.003921568627451)
-                end
-
-                str = str .. strfmt(
-                    "fill=\"#%06X\" />",
-                    marginClr.red << 0x10
-                        | marginClr.green << 0x08
-                        | marginClr.blue)
-            end
-
-            local activeFrame = app.activeFrame
-
-            if flattenImage then
-                local flatImg = Image(nativeWidth, nativeHeight)
-                flatImg:drawSprite(activeSprite, activeFrame)
-                str = str .. imgToSvgStr(flatImg, border, margin, scale, 0, 0)
-            else
-                local spriteBounds = Rectangle(
-                    0, 0, nativeWidth, nativeHeight)
-                local spriteLayers = activeSprite.layers
-                local layersStrArr = {}
-                local spriteLayersLen = #spriteLayers
-                for i = 1, spriteLayersLen, 1 do
-                    layersStrArr[i] = layerToSvgStr(
-                        spriteLayers[i],
-                        activeFrame,
-                        spriteBounds,
-                        border, scale, margin)
-                end
-                str = str .. concat(layersStrArr)
-            end
-
-            str = str .. "\n</svg>"
-
-            local filepath = args.filepath
-            if filepath and #filepath > 0 then
-                -- app.fs.isFile doesn't apply to files
-                -- that have been typed in by the user,
-                -- but have not yet been created.
-                local ext = app.fs.fileExtension(filepath)
-                if ext ~= "svg" then
-                    app.alert("Extension is not svg.")
-                else
-                    local file, err = io.open(filepath, "w")
-                    if file then
-                        file:write(str)
-                        file:close()
-                    end
-
-                    if err then
-                        app.alert("Error saving file: " .. err)
-                    end
-                end
-            else
-                app.alert("Filepath is empty.")
-            end
-
-            if oldColorMode == ColorMode.INDEXED then
-                app.command.ChangePixelFormat { format = "indexed" }
-            elseif oldColorMode == ColorMode.GRAY then
-                app.command.ChangePixelFormat { format = "gray" }
-            end
-
-            app.refresh()
-            app.alert { title = "Success", text = "File exported." }
-        else
-            app.alert{
-                title = "Error",
-                text = "There is no active sprite." }
+            str = str .. strfmt(
+                "fill=\"#%06X\" />",
+                borderClr.red << 0x10
+                | borderClr.green << 0x08
+                | borderClr.blue)
         end
+
+        if margin > 0 and marginClr.alpha > 0 then
+            -- Create outer frame of margins (clockwise).
+            str = str .. strfmt(
+                "\n<path id=\"margins\" d=\"M %d %d L %d %d L %d %d L %d %d Z",
+                border, border,
+                wnBorder, border,
+                wnBorder, hnBorder,
+                border, hnBorder)
+
+            -- Cut out a hole for each pixel (counter-clockwise).
+            local holeStrArr = {}
+            local i = 0
+            while i < lenPixels do
+                local y = i // nativeWidth
+                local x = i % nativeWidth
+
+                local x1mrg = border + (x + 1) * margin
+                local y1mrg = border + (y + 1) * margin
+
+                local ax = x1mrg + x * scale
+                local ay = y1mrg + y * scale
+                local bx = ax + scale
+                local by = ay + scale
+
+                i = i + 1
+                holeStrArr[i] = strfmt(
+                    " M %d %d L %d %d L %d %d L %d %d Z",
+                    ax, ay, ax, by, bx, by, bx, ay)
+            end
+
+            str = str .. concat(holeStrArr)
+            str = str .. "\" "
+
+            if marginClr.alpha < 255 then
+                str = str .. strfmt(
+                    "fill-opacity=\"%.6f\" ",
+                    marginClr.alpha * 0.003921568627451)
+            end
+
+            str = str .. strfmt(
+                "fill=\"#%06X\" />",
+                marginClr.red << 0x10
+                | marginClr.green << 0x08
+                | marginClr.blue)
+        end
+
+        local activeFrame = app.activeFrame
+
+        if flattenImage then
+            local flatImg = Image(nativeWidth, nativeHeight)
+            flatImg:drawSprite(activeSprite, activeFrame)
+            str = str .. imgToSvgStr(flatImg, border, margin, scale, 0, 0)
+        else
+            local spriteBounds = Rectangle(
+                0, 0, nativeWidth, nativeHeight)
+            local spriteLayers = activeSprite.layers
+            local layersStrArr = {}
+            local spriteLayersLen = #spriteLayers
+            local j = 0
+            while j < spriteLayersLen do j = j + 1
+                layersStrArr[j] = layerToSvgStr(
+                    spriteLayers[j],
+                    activeFrame,
+                    spriteBounds,
+                    border, scale, margin)
+            end
+            str = str .. concat(layersStrArr)
+        end
+
+        str = str .. "\n</svg>"
+
+        local filepath = args.filepath
+        if filepath and #filepath > 0 then
+            -- app.fs.isFile doesn't apply to files
+            -- that have been typed in by the user,
+            -- but have not yet been created.
+            local ext = app.fs.fileExtension(filepath)
+            if ext ~= "svg" then
+                app.alert("Extension is not svg.")
+            else
+                local file, err = io.open(filepath, "w")
+                if file then
+                    file:write(str)
+                    file:close()
+                end
+
+                if err then
+                    app.alert("Error saving file: " .. err)
+                end
+            end
+        else
+            app.alert("Filepath is empty.")
+        end
+
+        if oldColorMode == ColorMode.INDEXED then
+            app.command.ChangePixelFormat { format = "indexed" }
+        elseif oldColorMode == ColorMode.GRAY then
+            app.command.ChangePixelFormat { format = "gray" }
+        end
+
+        app.refresh()
+        app.alert { title = "Success", text = "File exported." }
     end
 }
 

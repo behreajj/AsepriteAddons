@@ -24,8 +24,9 @@ local function appendChildren(
                 appendChildren(childLayer, array,
                     omitHidden, checkTilemaps)
             end
-        elseif (not layer.isReference)
-            and (not layer.isBackground) then
+        elseif (not layer.isBackground)
+            -- and (not layer.isReference)
+            then
             local isTilemap = false
             if checkTilemaps then
                 isTilemap = layer.isTilemap

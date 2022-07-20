@@ -180,13 +180,14 @@ local function getTargetCels(
 
     -- TODO: Do not impact tile map layers!
     local vBkgAll = bkgAllow or false
-    local vRefAll = refAllow or false
+    -- local vRefAll = refAllow or false
     if targetPreset == "ACTIVE" then
         local activeLayer = app.activeLayer
         if activeLayer then
             if isUnlocked(activeLayer, activeSprite)
                 and (vBkgAll or not activeLayer.isBackground)
-                and (vRefAll or not activeLayer.isReference) then
+                -- and (vRefAll or not activeLayer.isReference)
+                then
 
                 -- Treat background layers differently for active?
                 -- if (not vBkgAll) and activeLayer.isBackground then
@@ -210,7 +211,8 @@ local function getTargetCels(
             local celLayer = rangeCel.layer
             if isUnlocked(celLayer, activeSprite)
                 and (vBkgAll or not celLayer.isBackground)
-                and (not celLayer.isReference) then
+                -- and (not celLayer.isReference)
+                then
                 tinsert(targetCels, rangeCel)
             end
         end
@@ -268,7 +270,8 @@ local function getTargetCels(
             local celLayer = activeCel.layer
             if isUnlocked(celLayer, activeSprite)
                 and (vBkgAll or not celLayer.isBackground)
-                and (not celLayer.isReference) then
+                -- and (not celLayer.isReference)
+                then
                 tinsert(targetCels, activeCel)
             end
         end
