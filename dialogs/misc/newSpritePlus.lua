@@ -59,7 +59,8 @@ local function updateColorPreviewGray(dialog)
         id = "preview",
         colors = { Color {
             gray = args.grayChannel,
-            alpha = args.aChannel } }
+            alpha = args.aChannel
+        } }
     }
 end
 
@@ -411,7 +412,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "palFile",
-    filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
+    filetypes = { "gpl", "pal" },
     open = true,
     visible = defaults.colorMode ~= "GRAY"
         and defaults.palType == "FILE"

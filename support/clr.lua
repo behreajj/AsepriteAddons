@@ -4,7 +4,8 @@ Clr.__index = Clr
 setmetatable(Clr, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Arbitrary hue assigned to lighter grays
 ---in hue conversion functions.
@@ -387,10 +388,7 @@ end
 ---@param satMax number maximum saturation
 ---@param alpha number transparency
 ---@return table
-function Clr.gridHsl(
-    longitudes, latitudes, layers,
-    satMin, satMax,
-    alpha)
+function Clr.gridHsl(longitudes, latitudes, layers, satMin, satMax, alpha)
 
     -- Default arguments.
     local aVal = alpha or 1.0
@@ -727,7 +725,8 @@ function Clr.labToXyz(l, a, b, alpha)
         x = vx * 0.95047,
         y = vy,
         z = vz * 1.08883,
-        a = aVerif }
+        a = aVerif
+    }
 end
 
 ---Converts a color from CIE LCH to CIE LAB.
@@ -777,7 +776,8 @@ function Clr.lchToLabInternal(l, c, h, a)
         l = l,
         a = c * math.cos(hRad),
         b = c * math.sin(hRad),
-        alpha = a }
+        alpha = a
+    }
 end
 
 ---Converts a color from CIE LCH to standard RGB.
@@ -859,7 +859,8 @@ function Clr.lRgbaToXyzInternal(red, green, blue, alpha)
             + green * 0.11919485595098
             + blue * 0.95039003405034,
 
-        a = alpha or 1.0 }
+        a = alpha or 1.0
+    }
 end
 
 ---Finds the relative luminance of a color.
@@ -1317,26 +1318,22 @@ end
 ---Assumes that levels are within [1, 255] and the
 ---inverse of levels has already been calculated.
 ---@param c table color
----@param rLevels number red levels
----@param rDelta number red inverse
----@param gLevels number green levels
----@param gDelta number green inverse
----@param bLevels number blue levels
----@param bDelta number blue inverse
----@param aLevels number alpha levels
----@param aDelta number alpha inverse
+---@param rLv number red levels
+---@param rDt number red inverse
+---@param gLv number green levels
+---@param gDt number green inverse
+---@param bLv number blue levels
+---@param bDt number blue inverse
+---@param aLv number alpha levels
+---@param aDt number alpha inverse
 ---@return table
-function Clr.quantizeInternal(
-    c, rLevels, rDelta,
-    gLevels, gDelta,
-    bLevels, bDelta,
-    aLevels, aDelta)
+function Clr.quantizeInternal(c, rLv, rDt, gLv, gDt, bLv, bDt, aLv, aDt)
 
     return Clr.new(
-        rDelta * math.floor(c.r * rLevels + 0.5),
-        gDelta * math.floor(c.g * gLevels + 0.5),
-        bDelta * math.floor(c.b * bLevels + 0.5),
-        aDelta * math.floor(c.a * aLevels + 0.5))
+        rDt * math.floor(c.r * rLv + 0.5),
+        gDt * math.floor(c.g * gLv + 0.5),
+        bDt * math.floor(c.b * bLv + 0.5),
+        aDt * math.floor(c.a * aLv + 0.5))
 end
 
 ---Creates a random color in CIE LAB space,
@@ -1350,11 +1347,7 @@ end
 ---@param trns number alpha lower bound
 ---@param opaque number alpha upper bound
 ---@return table
-function Clr.random(
-    dark, light,
-    green, red,
-    blue, yellow,
-    trns, opaque)
+function Clr.random(dark, light, green, red, blue, yellow, trns, opaque)
 
     local lMin = dark or 0.0
     local lMax = light or 100.0
@@ -1439,14 +1432,16 @@ function Clr.sRgbaToHslaInternal(red, green, blue, alpha)
             h = Clr.HSL_HUE_SHADOW,
             s = 0.0,
             l = 0.0,
-            a = alpha }
+            a = alpha
+        }
     elseif light > 0.99607843137255 then
         -- White (epsilon is 245.0 / 255.0).
         return {
             h = Clr.HSL_HUE_LIGHT,
             s = 0.0,
             l = 1.0,
-            a = alpha }
+            a = alpha
+        }
     elseif diff < 0.003921568627451 then
         -- Gray.
         local hue = (1.0 - light) * Clr.HSL_HUE_SHADOW
@@ -1456,7 +1451,8 @@ function Clr.sRgbaToHslaInternal(red, green, blue, alpha)
             h = hue,
             s = 0.0,
             l = light,
-            a = alpha }
+            a = alpha
+        }
     else
         -- Find hue.
         local hue = 0.0
@@ -1482,7 +1478,8 @@ function Clr.sRgbaToHslaInternal(red, green, blue, alpha)
             h = hue,
             s = sat,
             l = light,
-            a = alpha }
+            a = alpha
+        }
     end
 end
 
@@ -1518,7 +1515,8 @@ function Clr.sRgbaToHsvaInternal(red, green, blue, alpha)
             h = Clr.HSL_HUE_SHADOW,
             s = 0.0,
             v = 0.0,
-            a = alpha }
+            a = alpha
+        }
     else
         -- Find minimum color channel.
         local gbmn = blue
@@ -1536,7 +1534,8 @@ function Clr.sRgbaToHsvaInternal(red, green, blue, alpha)
                     h = Clr.HSL_HUE_LIGHT,
                     s = 0.0,
                     v = 1.0,
-                    a = alpha }
+                    a = alpha
+                }
             else
                 -- Gray.
                 -- Day is assumed to be less than shade in
@@ -1549,7 +1548,8 @@ function Clr.sRgbaToHsvaInternal(red, green, blue, alpha)
                     h = hue,
                     s = 0.0,
                     v = mx,
-                    a = alpha }
+                    a = alpha
+                }
             end
         else
             -- Saturated color.
@@ -1570,7 +1570,8 @@ function Clr.sRgbaToHsvaInternal(red, green, blue, alpha)
                 h = hue,
                 s = sat,
                 v = mx,
-                a = alpha }
+                a = alpha
+            }
         end
     end
 end
@@ -1770,7 +1771,8 @@ function Clr.xyzToLab(x, y, z, alpha)
         l = 116.0 * vy - 16.0,
         a = 500.0 * (vx - vy),
         b = 200.0 * (vy - vz),
-        alpha = aVerif }
+        alpha = aVerif
+    }
 end
 
 ---Converts a color from CIE XYZ to linear RGB.

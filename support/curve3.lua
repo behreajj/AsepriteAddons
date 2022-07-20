@@ -163,15 +163,15 @@ function Curve3:translate(v)
 end
 
 ---Creates a curve to approximate an ellipse.
----@param xRadius number horizontal radius
----@param yRadius number vertical radius
----@param xOrigin number x origin
----@param yOrigin number y origin
----@param zOrigin number z origin
+---The radii default to 0.5.
+---The origin defaults to (0.0, 0.0, 0.0).
+---@param xRadius number|nil horizontal radius
+---@param yRadius number|nil vertical radius
+---@param xOrigin number|nil x origin
+---@param yOrigin number|nil y origin
+---@param zOrigin number|nil z origin
 ---@return table
-function Curve3.ellipse(
-    xRadius, yRadius,
-    xOrigin, yOrigin, zOrigin)
+function Curve3.ellipse(xRadius, yRadius, xOrigin, yOrigin, zOrigin)
 
     -- Supply default arguments.
     local cz = zOrigin or 0.0
@@ -294,8 +294,7 @@ end
 ---@param tightness number curve tightness
 ---@param name string curve name
 ---@return table
-function Curve3.fromCatmull(
-    closedLoop, points, tightness, name)
+function Curve3.fromCatmull(closedLoop, points, tightness, name)
 
     local ptsLen = #points
     if ptsLen < 2 then

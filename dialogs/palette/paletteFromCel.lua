@@ -137,12 +137,14 @@ dlg:check {
         local removeAlpha = args.removeAlpha
         dlg:modify {
             id = "alphaWarn",
-            visible = state and (not removeAlpha) }
+            visible = state and (not removeAlpha)
+        }
         dlg:modify {
             id = "alphaWarn",
             text = string.format(
                 "Opaque if over %d.",
-                args.octThreshold) }
+                args.octThreshold)
+        }
     end
 }
 
@@ -175,12 +177,14 @@ dlg:check {
         dlg:modify { id = "printElapsed", visible = state }
         dlg:modify {
             id = "alphaWarn",
-            visible = state and (not removeAlpha) }
+            visible = state and (not removeAlpha)
+        }
         dlg:modify {
             id = "alphaWarn",
             text = string.format(
                 "Opaque if over %d.",
-                args.octThreshold) }
+                args.octThreshold)
+        }
     end
 }
 
@@ -199,7 +203,8 @@ dlg:slider {
             id = "alphaWarn",
             text = string.format(
                 "Opaque if over %d.",
-                args.octThreshold) }
+                args.octThreshold)
+        }
     end
 }
 
@@ -316,17 +321,19 @@ dlg:button {
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert{
+            app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
         local activeCel = app.activeCel
         if not activeCel then
-            app.alert{
+            app.alert {
                 title = "Error",
-                text = "There is no active cel." }
+                text = "There is no active cel."
+            }
             return
         end
 

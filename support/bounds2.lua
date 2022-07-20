@@ -6,7 +6,8 @@ Bounds2.__index = Bounds2
 setmetatable(Bounds2, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Constructs a new axis aligned bounding box
 ---(AABB) for a 2D area, represented by a
@@ -240,10 +241,7 @@ end
 ---@param se table south east quadrant
 ---@param nw table north west quadrant
 ---@param ne table north east quadrant
-function Bounds2.splitInternal(
-    b, xFac, yFac,
-    sw, se, nw, ne)
-
+function Bounds2.splitInternal(b, xFac, yFac, sw, se, nw, ne)
     local bMn = b.mn
     local bMx = b.mx
 

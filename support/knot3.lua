@@ -4,9 +4,10 @@ Knot3 = {}
 Knot3.__index = Knot3
 
 setmetatable(Knot3, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end
+})
 
 ---Constructs a new Bezier knot from a coordinate,
 ---fore handle and rear handle. All are Vec3s passed
@@ -45,8 +46,8 @@ function Knot3:alignHandlesBackward()
     if rMagSq > 0.0 then
         self.fh = Vec3.sub(self.co,
             Vec3.scale(rDir,
-            Vec3.dist(self.fh, self.co)
-            / math.sqrt(rMagSq)))
+                Vec3.dist(self.fh, self.co)
+                / math.sqrt(rMagSq)))
     end
     return self
 end
@@ -60,8 +61,8 @@ function Knot3:alignHandlesForward()
     if fMagSq > 0.0 then
         self.rh = Vec3.sub(self.co,
             Vec3.scale(fDir,
-            Vec3.dist(self.rh, self.co)
-            / math.sqrt(fMagSq)))
+                Vec3.dist(self.rh, self.co)
+                / math.sqrt(fMagSq)))
     end
     return self
 end
@@ -256,10 +257,7 @@ end
 ---@param prevKnot table previous knot
 ---@param nextKnot table next knot
 ---@return table
-function Knot3.fromSegCatmull(
-    prevAnchor, currAnchor, nextAnchor, advAnchor,
-    tightness, prevKnot, nextKnot)
-
+function Knot3.fromSegCatmull(prevAnchor, currAnchor, nextAnchor, advAnchor, tightness, prevKnot, nextKnot)
     if math.abs(tightness - 1.0) <= 0.000001 then
         return Knot3.fromSegLinear(
             nextAnchor, prevKnot, nextKnot)
@@ -292,9 +290,7 @@ end
 ---@param prevKnot table previous knot
 ---@param nextKnot table next knot
 ---@return table
-function Knot3.fromSegLinear(
-    nextAnchor, prevKnot, nextKnot)
-
+function Knot3.fromSegLinear(nextAnchor, prevKnot, nextKnot)
     nextKnot.co = Vec3.new(
         nextAnchor.x,
         nextAnchor.y,
@@ -304,19 +300,19 @@ function Knot3.fromSegLinear(
     local nextCoord = nextKnot.co
 
     prevKnot.fh = Vec3.new(
-          prevCoord.x * 0.66666666666667
+        prevCoord.x * 0.66666666666667
         + nextCoord.x * 0.33333333333333,
-          prevCoord.y * 0.66666666666667
+        prevCoord.y * 0.66666666666667
         + nextCoord.y * 0.33333333333333,
-          prevCoord.z * 0.66666666666667
+        prevCoord.z * 0.66666666666667
         + nextCoord.z * 0.33333333333333)
 
     nextKnot.rh = Vec3.new(
-          nextCoord.x * 0.66666666666667
+        nextCoord.x * 0.66666666666667
         + prevCoord.x * 0.33333333333333,
-          nextCoord.y * 0.66666666666667
+        nextCoord.y * 0.66666666666667
         + prevCoord.y * 0.33333333333333,
-          nextCoord.z * 0.66666666666667
+        nextCoord.z * 0.66666666666667
         + prevCoord.z * 0.33333333333333)
 
     return nextKnot
@@ -334,10 +330,7 @@ end
 ---@param prevKnot table previous knot
 ---@param nextKnot table next knot
 ---@return table
-function Knot3.fromSegQuadratic(
-    control, nextAnchor,
-    prevKnot, nextKnot)
-
+function Knot3.fromSegQuadratic(control, nextAnchor, prevKnot, nextKnot)
     nextKnot.co = Vec3.new(
         nextAnchor.x,
         nextAnchor.y,
@@ -390,9 +383,7 @@ end
 ---@param next table next knot
 ---@param carry table temporary vector
 ---@return table
-function Knot3.smoothHandlesInternal(
-    prev, curr, next, carry)
-
+function Knot3.smoothHandlesInternal(prev, curr, next, carry)
     local coCurr = curr.co
     local coPrev = prev.co
     local coNext = next.co
@@ -406,16 +397,16 @@ function Knot3.smoothHandlesInternal(
     local zFore = coNext.z - coCurr.z
 
     local bmSq = xRear * xRear
-               + yRear * yRear
-               + zRear * zRear
+        + yRear * yRear
+        + zRear * zRear
     local bmInv = 0.0
     if bmSq > 0.0 then
         bmInv = 1.0 / math.sqrt(bmSq)
     end
 
     local fmSq = xFore * xFore
-               + yFore * yFore
-               + zFore * zFore
+        + yFore * yFore
+        + zFore * zFore
     local fmInv = 0.0
     if fmSq > 0.0 then
         fmInv = 1.0 / math.sqrt(fmSq)
@@ -427,8 +418,8 @@ function Knot3.smoothHandlesInternal(
 
     local rescl = 0.0
     local dmSq = xDir * xDir
-               + yDir * yDir
-               + zDir * zDir
+        + yDir * yDir
+        + zDir * zDir
     if dmSq > 0.0 then
         rescl = 1.0 / (3.0 * math.sqrt(dmSq))
     end
@@ -460,9 +451,7 @@ end
 ---@param next table next knot
 ---@param carry table temporary vector
 ---@return table
-function Knot3.smoothHandlesFirstInternal(
-    curr, next, carry)
-
+function Knot3.smoothHandlesFirstInternal(curr, next, carry)
     local coCurr = curr.co
     local coNext = next.co
 
@@ -475,16 +464,16 @@ function Knot3.smoothHandlesFirstInternal(
     local zFore = coNext.z + zRear
 
     local bmSq = xRear * xRear
-               + yRear * yRear
-               + zRear * zRear
+        + yRear * yRear
+        + zRear * zRear
     local bmInv = 0.0
     if bmSq > 0.0 then
         bmInv = 1.0 / math.sqrt(bmSq)
     end
 
     local fmSq = xFore * xFore
-               + yFore * yFore
-               + zFore * zFore
+        + yFore * yFore
+        + zFore * zFore
     local fmInv = 0.0
     if fmSq > 0.0 then
         fmInv = 1.0 / math.sqrt(fmSq)
@@ -496,8 +485,8 @@ function Knot3.smoothHandlesFirstInternal(
 
     local rescl = 0.0
     local dmSq = xDir * xDir
-               + yDir * yDir
-               + zDir * zDir
+        + yDir * yDir
+        + zDir * zDir
     if dmSq > 0.0 then
         rescl = 1.0 / (3.0 * math.sqrt(dmSq))
     end
@@ -523,9 +512,7 @@ end
 ---@param curr table current knot
 ---@param carry table temporary vector
 ---@return table
-function Knot3.smoothHandlesLastInternal(
-    prev, curr, carry)
-
+function Knot3.smoothHandlesLastInternal(prev, curr, carry)
     local coCurr = curr.co
     local coPrev = prev.co
 
@@ -538,16 +525,16 @@ function Knot3.smoothHandlesLastInternal(
     local zRear = coPrev.z + zFore
 
     local bmSq = xRear * xRear
-               + yRear * yRear
-               + zRear * zRear
+        + yRear * yRear
+        + zRear * zRear
     local bmInv = 0.0
     if bmSq > 0.0 then
         bmInv = 1.0 / math.sqrt(bmSq)
     end
 
     local fmSq = xFore * xFore
-               + yFore * yFore
-               + zFore * zFore
+        + yFore * yFore
+        + zFore * zFore
     local fmInv = 0.0
     if fmSq > 0.0 then
         fmInv = 1.0 / math.sqrt(fmSq)
@@ -559,8 +546,8 @@ function Knot3.smoothHandlesLastInternal(
 
     local rescl = 0.0
     local dmSq = xDir * xDir
-               + yDir * yDir
-               + zDir * zDir
+        + yDir * yDir
+        + zDir * zDir
     if dmSq > 0.0 then
         rescl = 1.0 / (3.0 * math.sqrt(dmSq))
     end

@@ -6,7 +6,8 @@ Bounds3.__index = Bounds3
 setmetatable(Bounds3, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Constructs a new axis aligned bounding box
 ---(AABB) for a 3D volume, represented by a
@@ -264,11 +265,7 @@ end
 ---@param fse table front south east octant
 ---@param fnw table front north west octant
 ---@param fne table front north east octant
-function Bounds3.splitInternal(
-    b, xFac, yFac, zFac,
-    bsw, bse, bnw, bne,
-    fsw, fse, fnw, fne)
-
+function Bounds3.splitInternal(b, xFac, yFac, zFac, bsw, bse, bnw, bne, fsw, fse, fnw, fne)
     local bMn = b.mn
     local bMx = b.mx
 

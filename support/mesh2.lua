@@ -273,13 +273,7 @@ end
 ---@param sectors integer sectors
 ---@param useQuads boolean use quads
 ---@return table
-function Mesh2.arc(
-    startAngle,
-    stopAngle,
-    startWeight,
-    stopWeight,
-    sectors,
-    useQuads)
+function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQuads)
 
     local a = startAngle % 6.2831853071796
     local b = stopAngle % 6.2831853071796
@@ -373,9 +367,7 @@ end
 ---@param aspect number aspect ratio
 ---@param freq integer frequency
 ---@return table
-function Mesh2.gridBricks(
-    cols, rows,
-    offset, aspect, freq)
+function Mesh2.gridBricks(cols, rows, offset, aspect, freq)
 
     -- Assume defaults.
     local vcols = 4
@@ -606,10 +598,12 @@ function Mesh2.polygon(sectors)
 end
 
 ---Separates a mesh into several meshes with one
----face per mesh.
+---face per mesh. The default start index is 1.
+---The default stop index is the length of the
+---mesh's faces array.
 ---@param source table source mesh
----@param from integer start index
----@param to integer stop index
+---@param from integer|nil start index
+---@param to integer|nil stop index
 ---@return table
 function Mesh2.separateFaces(source, from, to)
     local meshes = {}

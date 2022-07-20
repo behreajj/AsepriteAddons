@@ -170,7 +170,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -178,7 +179,8 @@ dlg:button {
         if not srcLayer then
             app.alert {
                 title = "Error",
-                text = "There is no active layer." }
+                text = "There is no active layer."
+            }
             return
         end
 
@@ -421,7 +423,8 @@ dlg:button {
                         color = lineColor,
                         layer = diagnosticLayer,
                         frame = srcFrame,
-                        points = { origin, dest } }
+                        points = { origin, dest }
+                    }
 
 
                     app.useTool {
@@ -430,7 +433,8 @@ dlg:button {
                         color = originColor,
                         layer = diagnosticLayer,
                         frame = srcFrame,
-                        points = { origin } }
+                        points = { origin }
+                    }
 
                     app.useTool {
                         tool = "line",
@@ -438,7 +442,8 @@ dlg:button {
                         color = destColor,
                         layer = diagnosticLayer,
                         frame = srcFrame,
-                        points = { dest } }
+                        points = { dest }
+                    }
                 end
             end)
         end
@@ -448,7 +453,8 @@ dlg:button {
         if invalidFlag then
             app.alert {
                 title = "Warning",
-                text = "Origin and destination are the same." }
+                text = "Origin and destination are the same."
+            }
         end
     end
 }

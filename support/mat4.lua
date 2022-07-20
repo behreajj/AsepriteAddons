@@ -2,9 +2,10 @@ Mat4 = {}
 Mat4.__index = Mat4
 
 setmetatable(Mat4, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end
+})
 
 ---Constructs a row major 4x4 matrix from numbers.
 ---@param m00 number row 0, col 0 right x
@@ -24,11 +25,7 @@ setmetatable(Mat4, {
 ---@param m32 number row 3, col 2 up w
 ---@param m33 number row 3, col 3 translation w
 ---@return table
-function Mat4.new(
-    m00, m01, m02, m03,
-    m10, m11, m12, m13,
-    m20, m21, m22, m23,
-    m30, m31, m32, m33)
+function Mat4.new(m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33)
     local inst = setmetatable({}, Mat4)
 
     inst.m00 = m00 or 1.0
@@ -109,13 +106,9 @@ end
 ---@param xRef number reference x
 ---@param yRef number reference y
 ---@param zRef number reference z
----@param handedness string handedness
+---@param handedness string|nil handedness
 ---@return table
-function Mat4.camera(
-    xLoc, yLoc, zLoc,
-    xFocus, yFocus, zFocus,
-    xRef, yRef, zRef,
-    handedness)
+function Mat4.camera(xLoc, yLoc, zLoc, xFocus, yFocus, zFocus, xRef, yRef, zRef, handedness)
 
     -- Optional args for handedness.
     -- Default to right-handed.
@@ -338,29 +331,29 @@ end
 ---@return number
 function Mat4.determinant(a)
     return a.m00 * (a.m11 * a.m22 * a.m33 +
-                    a.m12 * a.m23 * a.m31 +
-                    a.m13 * a.m21 * a.m32 -
-                    a.m13 * a.m22 * a.m31 -
-                    a.m11 * a.m23 * a.m32 -
-                    a.m12 * a.m21 * a.m33) -
-           a.m01 * (a.m10 * a.m22 * a.m33 +
-                    a.m12 * a.m23 * a.m30 +
-                    a.m13 * a.m20 * a.m32 -
-                    a.m13 * a.m22 * a.m30 -
-                    a.m10 * a.m23 * a.m32 -
-                    a.m12 * a.m20 * a.m33) +
-           a.m02 * (a.m10 * a.m21 * a.m33 +
-                    a.m11 * a.m23 * a.m30 +
-                    a.m13 * a.m20 * a.m31 -
-                    a.m13 * a.m21 * a.m30 -
-                    a.m10 * a.m23 * a.m31 -
-                    a.m11 * a.m20 * a.m33) -
-           a.m03 * (a.m10 * a.m21 * a.m32 +
-                    a.m11 * a.m22 * a.m30 +
-                    a.m12 * a.m20 * a.m31 -
-                    a.m12 * a.m21 * a.m30 -
-                    a.m10 * a.m22 * a.m31 -
-                    a.m11 * a.m20 * a.m32)
+            a.m12 * a.m23 * a.m31 +
+            a.m13 * a.m21 * a.m32 -
+            a.m13 * a.m22 * a.m31 -
+            a.m11 * a.m23 * a.m32 -
+            a.m12 * a.m21 * a.m33) -
+        a.m01 * (a.m10 * a.m22 * a.m33 +
+            a.m12 * a.m23 * a.m30 +
+            a.m13 * a.m20 * a.m32 -
+            a.m13 * a.m22 * a.m30 -
+            a.m10 * a.m23 * a.m32 -
+            a.m12 * a.m20 * a.m33) +
+        a.m02 * (a.m10 * a.m21 * a.m33 +
+            a.m11 * a.m23 * a.m30 +
+            a.m13 * a.m20 * a.m31 -
+            a.m13 * a.m21 * a.m30 -
+            a.m10 * a.m23 * a.m31 -
+            a.m11 * a.m20 * a.m33) -
+        a.m03 * (a.m10 * a.m21 * a.m32 +
+            a.m11 * a.m22 * a.m30 +
+            a.m12 * a.m20 * a.m31 -
+            a.m12 * a.m21 * a.m30 -
+            a.m10 * a.m22 * a.m31 -
+            a.m11 * a.m20 * a.m32)
 end
 
 ---Constructs a rotation matrix from an angle in radians
@@ -428,9 +421,7 @@ end
 ---@param ay number axis y
 ---@param az number axis z
 ---@return table
-function Mat4.fromRotInternal(
-    cosa, sina,
-    ax, ay, az)
+function Mat4.fromRotInternal(cosa, sina, ax, ay, az)
 
     local d = 1.0 - cosa
     local x = ax * d
@@ -455,10 +446,10 @@ end
 ---@return table
 function Mat4.fromRotXInternal(cosa, sina)
     return Mat4.new(
-        1.0,  0.0,   0.0, 0.0,
+        1.0, 0.0, 0.0, 0.0,
         0.0, cosa, -sina, 0.0,
-        0.0, sina,  cosa, 0.0,
-        0.0,  0.0,   0.0, 1.0)
+        0.0, sina, cosa, 0.0,
+        0.0, 0.0, 0.0, 1.0)
 end
 
 ---Constructs a rotation matrix from the cosine and sine
@@ -468,10 +459,10 @@ end
 ---@return table
 function Mat4.fromRotYInternal(cosa, sina)
     return Mat4.new(
-         cosa, 0.0, sina, 0.0,
-          0.0, 1.0,  0.0, 0.0,
+        cosa, 0.0, sina, 0.0,
+        0.0, 1.0, 0.0, 0.0,
         -sina, 0.0, cosa, 0.0,
-          0.0, 0.0,  0.0, 1.0)
+        0.0, 0.0, 0.0, 1.0)
 end
 
 ---Constructs a rotation matrix from the cosine and sine
@@ -482,9 +473,9 @@ end
 function Mat4.fromRotZInternal(cosa, sina)
     return Mat4.new(
         cosa, -sina, 0.0, 0.0,
-        sina,  cosa, 0.0, 0.0,
-         0.0,   0.0, 1.0, 0.0,
-         0.0,   0.0, 0.0, 1.0)
+        sina, cosa, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0)
 end
 
 ---Constructs a matrix from a nonuniform scale.
@@ -509,9 +500,9 @@ function Mat4.fromScale(width, depth, height)
     end
 
     return Mat4.new(
-          w, 0.0, 0.0, 0.0,
-        0.0,   d, 0.0, 0.0,
-        0.0, 0.0,   h, 0.0,
+        w, 0.0, 0.0, 0.0,
+        0.0, d, 0.0, 0.0,
+        0.0, 0.0, h, 0.0,
         0.0, 0.0, 0.0, 1.0)
 end
 
@@ -523,9 +514,9 @@ end
 function Mat4.fromTranslation(x, y, z)
     local zv = z or 0.0
     return Mat4.new(
-        1.0, 0.0, 0.0,   x,
-        0.0, 1.0, 0.0,   y,
-        0.0, 0.0, 1.0,  zv,
+        1.0, 0.0, 0.0, x,
+        0.0, 1.0, 0.0, y,
+        0.0, 0.0, 1.0, zv,
         0.0, 0.0, 0.0, 1.0)
 end
 
@@ -548,8 +539,8 @@ function Mat4.inverse(a)
     local b11 = a.m22 * a.m33 - a.m23 * a.m32
 
     local det = b00 * b11 - b01 * b10 +
-                b02 * b09 + b03 * b08 -
-                b04 * b07 + b05 * b06
+        b02 * b09 + b03 * b08 -
+        b04 * b07 + b05 * b06
     if det ~= 0.0 then
         local detInv = 1.0 / det
         return Mat4.new(
@@ -617,10 +608,7 @@ end
 ---@param near number near clip plane
 ---@param far number far clip plane
 ---@return table
-function Mat4.orthographic(
-    left, right,
-    bottom, top,
-    near, far)
+function Mat4.orthographic(left, right, bottom, top, near, far)
 
     local nVal = 0.001
     if near and near ~= 0.0 then nVal = near end

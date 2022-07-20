@@ -8,8 +8,7 @@ if activeLayer then
     local stackIndex = activeLayer.stackIndex
     if activeLayer.isGroup
         and #activeLayer.layers > 0
-        and (stepInto
-                or activeLayer.isExpanded) then
+        and (stepInto or activeLayer.isExpanded) then
         app.activeLayer = activeLayer.layers[#activeLayer.layers]
     elseif stackIndex > 1 then
         -- Needed for group layers with no children.

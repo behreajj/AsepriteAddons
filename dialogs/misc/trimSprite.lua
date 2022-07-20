@@ -24,9 +24,7 @@ local function appendChildren(
                 appendChildren(childLayer, array,
                     omitHidden, checkTilemaps)
             end
-        elseif (not layer.isBackground)
-            -- and (not layer.isReference)
-            then
+        elseif (not layer.isBackground) then
             local isTilemap = false
             if checkTilemaps then
                 isTilemap = layer.isTilemap
@@ -101,7 +99,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 

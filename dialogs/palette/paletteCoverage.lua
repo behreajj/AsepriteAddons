@@ -532,7 +532,7 @@ dlg:button {
             1.0, -1.0, 1.0, "RIGHT")
         local su = 0.7071 * math.min(width, height)
         local model = Mat4.fromScale(su, su, su)
-        local modelview = model * camera
+        local modelview = Mat4.mul(model, camera)
 
         local hToTheta = 6.2831853071796 / reqFrames
         local minSwatchSize = args.minSwatchSize

@@ -128,7 +128,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -136,7 +137,8 @@ dlg:button {
         if not srcCel then
             app.alert {
                 title = "Error",
-                text = "There is no active cel." }
+                text = "There is no active cel."
+            }
             return
         end
 
@@ -145,7 +147,8 @@ dlg:button {
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "Only RGB color mode is supported." }
+                text = "Only RGB color mode is supported."
+            }
             return
         end
 

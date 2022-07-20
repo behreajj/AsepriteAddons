@@ -110,14 +110,16 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
         if activeSprite.colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "The sprite must be in RGB color mode." }
+                text = "The sprite must be in RGB color mode."
+            }
             return
         end
 
@@ -231,7 +233,8 @@ dlg:button {
 
         local specNone = ImageSpec {
             width = activeWidth,
-            height = activeHeight }
+            height = activeHeight
+        }
         specNone.colorSpace = ColorSpace()
 
         app.transaction(function()

@@ -4,7 +4,8 @@ Vec3.__index = Vec3
 setmetatable(Vec3, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Constructs a new vector from three numbers.
 ---@param x number x component
@@ -487,10 +488,7 @@ end
 ---@param inclination number
 ---@param radius number
 ---@return table
-function Vec3.fromSpherical(
-    azimuth,
-    inclination,
-    radius)
+function Vec3.fromSpherical(azimuth, inclination, radius)
 
     local a = azimuth or 0.0
     local i = inclination or 0.0
@@ -510,10 +508,7 @@ end
 ---@param sinIncl number inclination sine
 ---@param radius number radius
 ---@return table
-function Vec3.fromSphericalInternal(
-    cosAzim, sinAzim,
-    cosIncl, sinIncl,
-    radius)
+function Vec3.fromSphericalInternal(cosAzim, sinAzim, cosIncl, sinIncl, radius)
 
     local rhoCosIncl = radius * cosIncl
     return Vec3.new(
@@ -588,10 +583,7 @@ end
 ---@param radiusMin number minimum radius
 ---@param radiusMax number maximum radius
 ---@param includePoles boolean include the poles
-function Vec3.gridSpherical(
-    longitudes, latitudes, layers,
-    radiusMin, radiusMax,
-    includePoles)
+function Vec3.gridSpherical(longitudes, latitudes, layers, radiusMin, radiusMax, includePoles)
 
     -- Cache methods.
     local cos = math.cos
@@ -1124,7 +1116,6 @@ end
 ---@param axis table axis
 ---@return table
 function Vec3.rotateInternal(a, cosa, sina, axis)
-    -- TODO: Doublecheck against Euclidean Spaces.
     local xAxis = axis.x
     local yAxis = axis.y
     local zAxis = axis.z
@@ -1326,7 +1317,8 @@ function Vec3.toSpherical(a)
     return {
         radius = Vec3.mag(a),
         azimuth = Vec3.azimuthSigned(a),
-        inclination = Vec3.inclinationSigned(a) }
+        inclination = Vec3.inclinationSigned(a)
+    }
 end
 
 ---Truncates a vector's components to integers.

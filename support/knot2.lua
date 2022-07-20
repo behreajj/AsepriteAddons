@@ -4,9 +4,10 @@ Knot2 = {}
 Knot2.__index = Knot2
 
 setmetatable(Knot2, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end
+})
 
 ---Constructs a new Bezier knot from a coordinate,
 ---fore handle and rear handle. All are Vec2s passed
@@ -42,8 +43,8 @@ function Knot2:alignHandlesBackward()
     if rMagSq > 0.0 then
         self.fh = Vec2.sub(
             self.co, Vec2.scale(rDir,
-            Vec2.dist(self.fh, self.co)
-            / math.sqrt(rMagSq)))
+                Vec2.dist(self.fh, self.co)
+                / math.sqrt(rMagSq)))
     end
     return self
 end
@@ -57,8 +58,8 @@ function Knot2:alignHandlesForward()
     if fMagSq > 0.0 then
         self.rh = Vec2.sub(
             self.co, Vec2.scale(fDir,
-            Vec2.dist(self.rh, self.co)
-            / math.sqrt(fMagSq)))
+                Vec2.dist(self.rh, self.co)
+                / math.sqrt(fMagSq)))
     end
     return self
 end
@@ -208,11 +209,7 @@ end
 ---@param xCenter number x center
 ---@param yCenter number y center
 ---@return table
-function Knot2.fromPolarInternal(
-    cosa, sina,
-    radius, handleMag,
-    xCenter, yCenter)
-
+function Knot2.fromPolarInternal(cosa, sina, radius, handleMag, xCenter, yCenter)
     local hmsina = sina * handleMag
     local hmcosa = cosa * handleMag
 

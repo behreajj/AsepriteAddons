@@ -6,7 +6,8 @@ ClrGradient.__index = ClrGradient
 setmetatable(ClrGradient, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Constructs a color gradient. The first
 ---parameter should be a table of ClrKeys.
@@ -251,9 +252,7 @@ end
 ---@param dest number destination step
 ---@param easing function easing function
 ---@return table
-function ClrGradient.evalRange(
-    cg, count, origin, dest,
-    easing)
+function ClrGradient.evalRange(cg, count, origin, dest, easing)
 
     local vCount = count or 3
     vCount = math.max(3, vCount)

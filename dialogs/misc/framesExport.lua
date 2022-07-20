@@ -40,7 +40,8 @@ local function indexToPacket(
         duration = duration,
         image = trimmed,
         x = xd * wScale - padding,
-        y = yd * hScale - padding }
+        y = yd * hScale - padding
+    }
 
     local wMaxNew = wMax
     local hMaxNew = hMax
@@ -118,7 +119,8 @@ local function idcsArr2ToPackets(
         packetsBatched[j] = {
             wMax = wMaxBatch,
             hMax = hMaxBatch,
-            batch = packetBatch }
+            batch = packetBatch
+        }
     end
     return packetsBatched
 end
@@ -148,7 +150,8 @@ local function scaleAndPadPacketImages(
                 colorMode = colorMode,
                 width = image.width + pad2,
                 height = image.height + pad2,
-                transparentColor = alphaIndex }
+                transparentColor = alphaIndex
+            }
             padSpec.colorSpace = colorSpace
             local padded = Image(padSpec)
             if usePadColor then
@@ -188,7 +191,8 @@ local function saveSheet(
         width = wComp,
         height = hComp,
         colorMode = colorMode,
-        transparentColor = alphaMask }
+        transparentColor = alphaMask
+    }
     compSpec.colorSpace = colorSpace
     local compImg = Image(compSpec)
 
@@ -228,7 +232,8 @@ local function saveSheet(
             width = wComp + border2,
             height = hComp + border2,
             colorMode = colorMode,
-            transparentColor = alphaMask }
+            transparentColor = alphaMask
+        }
         borderSpec.colorSpace = colorSpace
         local bordered = Image(borderSpec)
         if useBrdrClr then
@@ -249,7 +254,8 @@ local function saveSheet(
 
     compImg:saveAs {
         filename = filename,
-        palette = compPalette }
+        palette = compPalette
+    }
     return true
 end
 
@@ -272,7 +278,8 @@ dlg:combobox {
 
         dlg:modify {
             id = "batchSheets",
-            visible = useSheet and (isRange or isTags) }
+            visible = useSheet and (isRange or isTags)
+        }
     end
 }
 
@@ -364,11 +371,13 @@ dlg:check {
         local isTags = state == "TAGS"
         dlg:modify {
             id = "batchSheets",
-            visible = useSheet and (isRange or isTags) }
+            visible = useSheet and (isRange or isTags)
+        }
         dlg:modify { id = "border", visible = useSheet }
         dlg:modify {
             id = "borderColor",
-            visible = useSheet and border > 0 }
+            visible = useSheet and border > 0
+        }
     end
 }
 
@@ -394,7 +403,8 @@ dlg:slider {
         local border = args.border
         dlg:modify {
             id = "borderColor",
-            visible = border > 0 }
+            visible = border > 0
+        }
     end
 }
 
@@ -450,7 +460,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -466,7 +477,8 @@ dlg:button {
         if useSheet and colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "Only RGB color mode is supported for sprite sheets." }
+                text = "Only RGB color mode is supported for sprite sheets."
+            }
             return
         end
 
@@ -711,7 +723,8 @@ dlg:button {
 
                 image:saveAs {
                     filename = fileNameLong,
-                    palette = activePalette }
+                    palette = activePalette
+                }
             end
         end
 
@@ -747,7 +760,8 @@ dlg:button {
                         "\"fileName\":\"%s\"",
                         "\"border\":%d",
                         "\"cellSize\":{\"x\":%d,\"y\":%d}",
-                        "\"sheet\":" }, ','),
+                        "\"sheet\":"
+                    }, ','),
                         fileTitle, border,
                         wMaxUnbatch, hMaxUnbatch) .. "[%s]"
                 end

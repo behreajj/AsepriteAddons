@@ -15,7 +15,8 @@ Utilities.__index = Utilities
 setmetatable(Utilities, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Glyph look up table. Glyphs occupy
 ---an 8 x 8 grid, where 1 represents
@@ -141,7 +142,8 @@ Utilities.LTS_LUT = {
     225, 226, 226, 227, 227, 228, 228, 229, 229, 230, 230, 231, 231, 232, 232, 233,
     233, 234, 234, 235, 235, 236, 236, 237, 237, 238, 238, 238, 239, 239, 240, 240,
     241, 241, 242, 242, 243, 243, 244, 244, 245, 245, 246, 246, 246, 247, 247, 248,
-    248, 249, 249, 250, 250, 251, 251, 251, 252, 252, 253, 253, 254, 254, 255, 255 }
+    248, 249, 249, 250, 250, 251, 251, 251, 252, 252, 253, 253, 254, 254, 255, 255
+}
 
 ---Look up table of standard to linear
 ---color space conversion.
@@ -161,7 +163,8 @@ Utilities.STL_LUT = {
     134, 136, 138, 139, 141, 142, 144, 146, 147, 149, 151, 152, 154, 156, 157, 159,
     161, 163, 164, 166, 168, 170, 171, 173, 175, 177, 179, 181, 183, 184, 186, 188,
     190, 192, 194, 196, 198, 200, 202, 204, 206, 208, 210, 212, 214, 216, 218, 220,
-    222, 224, 226, 229, 231, 233, 235, 237, 239, 242, 244, 246, 248, 250, 253, 255 }
+    222, 224, 226, 229, 231, 233, 235, 237, 239, 242, 244, 246, 248, 250, 253, 255
+}
 
 ---Houses utility methods not included in Lua.
 ---@return table
@@ -950,8 +953,7 @@ end
 ---@param levels number levels
 ---@param delta number inverse levels
 ---@return number
-function Utilities.quantizeUnsignedInternal(
-    a, levels, delta)
+function Utilities.quantizeUnsignedInternal(a, levels, delta)
     return math.max(0.0,
         (math.ceil(a * levels) - 1.0) * delta)
 end
@@ -1091,9 +1093,7 @@ end
 ---@param width number screen width
 ---@param height number screen height
 ---@return table
-function Utilities.toScreen(
-    modelview, projection,
-    pt3, width, height)
+function Utilities.toScreen(modelview, projection, pt3, width, height)
 
     -- Promote to homogenous coordinate.
     local pt4 = Vec4.new(pt3.x, pt3.y, pt3.z, 1.0)

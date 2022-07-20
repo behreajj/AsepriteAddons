@@ -196,7 +196,7 @@ dlg:button {
             math.cos(angRad), math.sin(angRad),
             axis.x, axis.y, axis.z)
         local s = Mat4.fromScale(1.0, -1.0, 1.0)
-        local mat = t * s * r
+        local mat = Mat4.mul(Mat4.mul(t, s), r)
         Utilities.mulMat4Curve3(mat, curve)
 
         local sprite = AseUtilities.initCanvas(

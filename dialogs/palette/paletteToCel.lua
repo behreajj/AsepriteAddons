@@ -192,7 +192,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -200,7 +201,8 @@ dlg:button {
         if not srcLayer then
             app.alert {
                 title = "Error",
-                text = "There is no active layer." }
+                text = "There is no active layer."
+            }
             return
         end
 

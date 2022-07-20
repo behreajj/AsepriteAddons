@@ -164,10 +164,12 @@ dlg:combobox {
         dlg:modify { id = "palType", visible = isPalette }
         dlg:modify {
             id = "palFile",
-            visible = isPalette and palType == "FILE" }
+            visible = isPalette and palType == "FILE"
+        }
         dlg:modify {
             id = "palPreset",
-            visible = isPalette and palType == "PRESET" }
+            visible = isPalette and palType == "PRESET"
+        }
         dlg:modify { id = "octCapacity", visible = isPalette }
         dlg:modify { id = "octCapacity", visible = isPalette }
         dlg:modify { id = "startIndex", visible = isPalette }
@@ -341,7 +343,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -349,7 +352,8 @@ dlg:button {
         if not srcCel then
             app.alert {
                 title = "Error",
-                text = "There is no active cel." }
+                text = "There is no active cel."
+            }
             return
         end
 
@@ -524,7 +528,9 @@ dlg:button {
                     text = {
                         "The palette contains fewer than 3 viable colors.",
                         "For better results, use either one bit mode or",
-                        "a bigger palette." } }
+                        "a bigger palette."
+                    }
+                }
                 return
             end
 
@@ -586,7 +592,8 @@ dlg:button {
             width = srcWidth,
             height = srcHeight,
             colorMode = ColorMode.RGB,
-            transparentColor = alphaMask }
+            transparentColor = alphaMask
+        }
         trgSpec.colorSpace = colorSpace
         local trgImg = Image(trgSpec)
         local trgPxItr = trgImg:pixels()

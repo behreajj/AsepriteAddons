@@ -6,7 +6,8 @@ Curve2.__index = Curve2
 setmetatable(Curve2, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Constructs a piecewise cubic Bezier curve.
 ---The first parameter specifies a closed loop
@@ -122,15 +123,7 @@ end
 ---@param stroke number stroke thickness
 ---@param offset number stroke offset
 ---@return table
-function Curve2.arcSector(
-    startAngle,
-    stopAngle,
-    radius,
-    stroke,
-    offset,
-    xOrigin,
-    yOrigin)
-
+function Curve2.arcSector(startAngle, stopAngle, radius, stroke, offset, xOrigin, yOrigin)
     -- Supply default arguments.
     local yoVerif = yOrigin or 0.0
     local xoVerif = xOrigin or 0.0
@@ -223,15 +216,14 @@ function Curve2.arcSector(
 end
 
 ---Creates a curve to approximate an ellipse.
----@param xRadius number horizontal radius
----@param yRadius number vertical radius
----@param xOrigin number x origin
----@param yOrigin number y origin
+---The radii default to 0.5.
+---The origin defaults to (0.0, 0.0).
+---@param xRadius number|nil horizontal radius
+---@param yRadius number|nil vertical radius
+---@param xOrigin number|nil x origin
+---@param yOrigin number|nil y origin
 ---@return table
-function Curve2.ellipse(
-    xRadius, yRadius,
-    xOrigin, yOrigin)
-
+function Curve2.ellipse(xRadius, yRadius, xOrigin, yOrigin)
     -- Supply default arguments.
     local cy = yOrigin or 0.0
     local cx = xOrigin or 0.0
@@ -381,10 +373,7 @@ end
 ---@param br number rounding bottom right corner
 ---@param bl number rounding bottom left corner
 ---@return table
-function Curve2.rect(
-    lbx, lby, ubx, uby,
-    tl, tr, br, bl)
-
+function Curve2.rect(lbx, lby, ubx, uby, tl, tr, br, bl)
     -- Validate edges.
     local lft = math.min(lbx, ubx)
     local rgt = math.max(lbx, ubx)

@@ -247,7 +247,8 @@ dlg:button {
         local spec = ImageSpec {
             width = size,
             height = size,
-            colorMode = ColorMode.RGB }
+            colorMode = ColorMode.RGB
+        }
         spec.colorSpace = ColorSpace { sRGB = true }
         local sprite = Sprite(spec)
         sprite.filename = "LCh Color Wheel"
@@ -411,7 +412,8 @@ dlg:button {
                 local plotSpec = ImageSpec {
                     width = (xMax - xMin) + stroke2 - 1,
                     height = (yMax - yMin) + stroke2 - 1,
-                    colorMode = spec.colorMode }
+                    colorMode = spec.colorMode
+                }
                 plotSpec.colorSpace = spec.colorSpace
                 local plotImage = Image(plotSpec)
                 local plotPos = Point(xOff, yOff)

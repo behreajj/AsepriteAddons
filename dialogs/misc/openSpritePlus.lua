@@ -288,6 +288,7 @@ dlg:button {
         end
 
         app.preferences.open_file.open_sequence = oldOpSeqPref
+        app.activeTool = "hand"
         app.refresh()
         dlg:close()
     end

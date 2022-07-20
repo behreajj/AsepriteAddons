@@ -6,7 +6,8 @@ AseUtilities.__index = AseUtilities
 setmetatable(AseUtilities, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 -- Maximum number of a cels a script may
 -- request to create before the user is
@@ -181,7 +182,10 @@ function AseUtilities.aseColorToHex(clr, clrMode)
     elseif clrMode == ColorMode.GRAY then
         return clr.grayPixel
     elseif clrMode == ColorMode.INDEXED then
-        return clr.index
+        -- This issue was fixed. However, maintain
+        -- compatibility with older versions. Other
+        -- problems may cause need for rollback.
+        return math.floor(clr.index)
     end
     return 0
 end
@@ -199,14 +203,12 @@ end
 ---@param palType string enumeration
 ---@param filePath string file path
 ---@param presetPath string preset path
----@param startIndex integer start index
----@param count integer count of colors to sample
----@param correctZeroAlpha boolean alpha correction flag
+---@param startIndex integer|nil start index
+---@param count integer|nil count of colors to sample
+---@param correctZeroAlpha boolean|nil alpha correction flag
 ---@return table
 ---@return table
-function AseUtilities.asePaletteLoad(
-    palType, filePath, presetPath, startIndex, count,
-    correctZeroAlpha)
+function AseUtilities.asePaletteLoad(palType, filePath, presetPath, startIndex, count, correctZeroAlpha)
 
     local cntVal = count or 256
     local siVal = startIndex or 0
@@ -220,7 +222,9 @@ function AseUtilities.asePaletteLoad(
             text = {
                 "The palette could not be found.",
                 "Please check letter case (lower or upper).",
-                "A default palette will be used instead." } }
+                "A default palette will be used instead."
+            }
+        }
     end
 
     if palType == "FILE" then
@@ -413,7 +417,8 @@ function AseUtilities.bakeLayerOpacity(layer)
     if layer.isGroup then
         app.alert {
             title = "Error",
-            text = "Layer opacity is not supported for group layers." }
+            text = "Layer opacity is not supported for group layers."
+        }
         return
     end
 
@@ -628,11 +633,8 @@ end
 ---@param position userdata cel position
 ---@param guiClr integer hexadecimal color
 ---@return table
-function AseUtilities.createCels(
-    sprite,
-    frameStartIndex, frameCount,
-    layerStartIndex, layerCount,
-    image, position, guiClr)
+function AseUtilities.createCels(sprite, frameStartIndex, frameCount, layerStartIndex, layerCount, image, position,
+                                 guiClr)
 
     -- Do not use app.transactions.
     -- https://github.com/aseprite/aseprite/issues/3276
@@ -640,7 +642,8 @@ function AseUtilities.createCels(
     if not sprite then
         app.alert {
             title = "Error",
-            text = "Sprite could not be found." }
+            text = "Sprite could not be found."
+        }
         return {}
     end
 
@@ -700,7 +703,8 @@ function AseUtilities.createCels(
                     "%d beyond the limit of %d.",
                     flatCount - AseUtilities.CEL_COUNT_LIMIT,
                     AseUtilities.CEL_COUNT_LIMIT),
-                "Do you wish to proceed?" },
+                "Do you wish to proceed?"
+            },
             buttons = { "&YES", "&NO" }
         }
 
@@ -764,7 +768,8 @@ function AseUtilities.createFrames(sprite, count, duration)
     if not sprite then
         app.alert {
             title = "Error",
-            text = "Sprite could not be found." }
+            text = "Sprite could not be found."
+        }
         return {}
     end
 
@@ -780,7 +785,8 @@ function AseUtilities.createFrames(sprite, count, duration)
                     "%d beyond the limit of %d.",
                     count - AseUtilities.FRAME_COUNT_LIMIT,
                     AseUtilities.FRAME_COUNT_LIMIT),
-                "Do you wish to proceed?" },
+                "Do you wish to proceed?"
+            },
             buttons = { "&YES", "&NO" }
         }
 
@@ -816,16 +822,9 @@ end
 ---@param guiClr integer hexadecimal color
 ---@param parent userdata parent layer
 ---@return table
-function AseUtilities.createNewLayers(
-    sprite,
-    count,
-    blendMode,
-    opacity,
-    guiClr,
-    parent)
-
+function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr, parent)
     if not sprite then
-        app.alert("Sprite could not be found.")
+        app.alert { title = "Error", text = "Sprite could not be found." }
         return {}
     end
 
@@ -841,7 +840,8 @@ function AseUtilities.createNewLayers(
                     "%d beyond the limit of %d.",
                     count - AseUtilities.LAYER_COUNT_LIMIT,
                     AseUtilities.LAYER_COUNT_LIMIT),
-                "Do you wish to proceed?" },
+                "Do you wish to proceed?"
+            },
             buttons = { "&YES", "&NO" }
         }
 
@@ -1011,11 +1011,7 @@ end
 ---@param brsh userdata brush
 ---@param cel userdata cel
 ---@param layer userdata layer
-function AseUtilities.drawCurve2(
-    curve, resolution,
-    useFill, fillClr,
-    useStroke, strokeClr,
-    brsh, cel, layer)
+function AseUtilities.drawCurve2(curve, resolution, useFill, fillClr, useStroke, strokeClr, brsh, cel, layer)
 
     local vres = 2
     if resolution > 2 then vres = resolution end
@@ -1070,7 +1066,8 @@ function AseUtilities.drawCurve2(
                 points = pts,
                 cel = cel,
                 layer = layer,
-                freehandAlgorithm = 1 }
+                freehandAlgorithm = 1
+            }
         end)
     end
 
@@ -1094,7 +1091,8 @@ function AseUtilities.drawCurve2(
                     points = { ptPrev, ptCurr },
                     cel = cel,
                     layer = layer,
-                    freehandAlgorithm = 1 }
+                    freehandAlgorithm = 1
+                }
                 ptPrev = ptCurr
             end
         end)
@@ -1113,9 +1111,7 @@ end
 ---@param y integer y top left corner
 ---@param gw integer glyph width
 ---@param gh integer glyph height
-function AseUtilities.drawGlyph(
-    image, glyph, hex,
-    x, y, gw, gh)
+function AseUtilities.drawGlyph(image, glyph, hex, x, y, gw, gh)
 
     local lenn1 = gw * gh - 1
     local blend = AseUtilities.blend
@@ -1152,9 +1148,7 @@ end
 ---@param gh integer glyph height
 ---@param dw integer display width
 ---@param dh integer display height
-function AseUtilities.drawGlyphNearest(
-    image, glyph, hex,
-    x, y, gw, gh, dw, dh)
+function AseUtilities.drawGlyphNearest(image, glyph, hex, x, y, gw, gh, dw, dh)
 
     if gw == dw and gh == dh then
         return AseUtilities.drawGlyph(
@@ -1198,13 +1192,11 @@ end
 ---@param curve table curve
 ---@param cel userdata cel
 ---@param layer userdata layer
----@param lnClr userdata line color
----@param coClr userdata coordinate color
----@param fhClr userdata fore handle color
----@param rhClr userdata rear handle color
-function AseUtilities.drawHandles2(
-    curve, cel, layer,
-    lnClr, coClr, fhClr, rhClr)
+---@param lnClr userdata|nil line color
+---@param coClr userdata|nil coordinate color
+---@param fhClr userdata|nil fore handle color
+---@param rhClr userdata|nil rear handle color
+function AseUtilities.drawHandles2(curve, cel, layer, lnClr, coClr, fhClr, rhClr)
 
     local kns = curve.knots
     local knsLen = #kns
@@ -1226,13 +1218,11 @@ end
 ---@param knot table knot
 ---@param cel userdata cel
 ---@param layer userdata layer
----@param lnClr userdata line color
----@param coClr userdata coordinate color
----@param fhClr userdata fore handle color
----@param rhClr userdata rear handle color
-function AseUtilities.drawKnot2(
-    knot, cel, layer,
-    lnClr, coClr, fhClr, rhClr)
+---@param lnClr userdata|nil line color
+---@param coClr userdata|nil coordinate color
+---@param fhClr userdata|nil fore handle color
+---@param rhClr userdata|nil rear handle color
+function AseUtilities.drawKnot2(knot, cel, layer, lnClr, coClr, fhClr, rhClr)
 
     -- Do not supply hexadecimals to color constructor.
     local lnClrVal = lnClr or Color(175, 175, 175, 255)
@@ -1257,7 +1247,8 @@ function AseUtilities.drawKnot2(
             brush = lnBrush,
             points = { rhPt, coPt },
             cel = cel,
-            layer = layer }
+            layer = layer
+        }
 
         -- Line from coordinate to fore handle.
         app.useTool {
@@ -1266,7 +1257,8 @@ function AseUtilities.drawKnot2(
             brush = lnBrush,
             points = { coPt, fhPt },
             cel = cel,
-            layer = layer }
+            layer = layer
+        }
 
         -- Rear handle point.
         app.useTool {
@@ -1275,7 +1267,8 @@ function AseUtilities.drawKnot2(
             brush = rhBrush,
             points = { rhPt },
             cel = cel,
-            layer = layer }
+            layer = layer
+        }
 
         -- Coordinate point.
         app.useTool {
@@ -1284,7 +1277,8 @@ function AseUtilities.drawKnot2(
             brush = coBrush,
             points = { coPt },
             cel = cel,
-            layer = layer }
+            layer = layer
+        }
 
         -- Fore handle point.
         app.useTool {
@@ -1293,7 +1287,8 @@ function AseUtilities.drawKnot2(
             brush = fhBrush,
             points = { fhPt },
             cel = cel,
-            layer = layer }
+            layer = layer
+        }
     end)
 end
 
@@ -1307,10 +1302,7 @@ end
 ---@param brsh userdata brush
 ---@param cel userdata cel
 ---@param layer userdata layer
-function AseUtilities.drawMesh2(
-    mesh, useFill, fillClr,
-    useStroke, strokeClr,
-    brsh, cel, layer)
+function AseUtilities.drawMesh2(mesh, useFill, fillClr, useStroke, strokeClr, brsh, cel, layer)
 
     -- Convert Vec2s to Points.
     -- Round Vec2 for improved accuracy.
@@ -1354,7 +1346,8 @@ function AseUtilities.drawMesh2(
                     brush = brsh,
                     points = ptsGrouped[idx3],
                     cel = cel,
-                    layer = layer }
+                    layer = layer
+                }
             end
         end)
     end
@@ -1379,7 +1372,8 @@ function AseUtilities.drawMesh2(
                         brush = brsh,
                         points = { ptPrev, ptCurr },
                         cel = cel,
-                        layer = layer }
+                        layer = layer
+                    }
                     ptPrev = ptCurr
                 end
             end
@@ -1400,10 +1394,7 @@ end
 ---@param gw integer glyph width
 ---@param gh integer glyph height
 ---@param scale integer display scale
-function AseUtilities.drawString(
-    lut, image, chars, hex,
-    x, y, gw, gh, scale)
-
+function AseUtilities.drawString(lut, image, chars, hex, x, y, gw, gh, scale)
     local writeChar = x
     local writeLine = y
     local charLen = #chars
@@ -1445,9 +1436,7 @@ end
 ---@param colorSpace userdata color space
 ---@param nonUniform boolean non uniform dimensions
 ---@return userdata
-function AseUtilities.expandImageToPow2(
-    img, colorMode, alphaMask,
-    colorSpace, nonUniform)
+function AseUtilities.expandImageToPow2(img, colorMode, alphaMask, colorSpace, nonUniform)
     local wOrig = img.width
     local hOrig = img.height
     local wDest = wOrig
@@ -1469,7 +1458,8 @@ function AseUtilities.expandImageToPow2(
         width = wDest,
         height = hDest,
         colorMode = colorMode,
-        transparentColor = alphaMask }
+        transparentColor = alphaMask
+    }
     potSpec.colorSpace = colorSpace
     local potImg = Image(potSpec)
     potImg:drawImage(img)
@@ -1638,15 +1628,10 @@ end
 ---@param wDefault integer default width
 ---@param hDefault integer default height
 ---@param layerName string layer name
----@param colors table array of hexes
----@param colorSpace userdata color space
+---@param colors table|nil array of hexes
+---@param colorSpace userdata|nil color space
 ---@return table
-function AseUtilities.initCanvas(
-    wDefault,
-    hDefault,
-    layerName,
-    colors,
-    colorSpace)
+function AseUtilities.initCanvas(wDefault, hDefault, layerName, colors, colorSpace)
 
     local clrsVal = AseUtilities.DEFAULT_PAL_ARR
     if colors and #colors > 0 then
@@ -1668,7 +1653,8 @@ function AseUtilities.initCanvas(
             width = wVal,
             height = hVal,
             colorMode = ColorMode.RGB,
-            transparentColor = 0 }
+            transparentColor = 0
+        }
         if colorSpace then
             spec.colorSpace = colorSpace
         end
@@ -1691,6 +1677,7 @@ end
 ---@param sprite userdata aseprite sprite
 ---@return boolean
 function AseUtilities.isEditableHierarchy(layer, sprite)
+    -- Keep this as is for backward compatibility.
     local l = layer
     local sprName = "doc::Sprite"
     if sprite then sprName = sprite.__name end
@@ -1712,6 +1699,7 @@ end
 ---@param sprite userdata aseprite sprite
 ---@return boolean
 function AseUtilities.isVisibleHierarchy(layer, sprite)
+    -- Keep this as is for backward compatibility.
     local l = layer
     local sprName = "doc::Sprite"
     if sprite then sprName = sprite.__name end
@@ -1734,8 +1722,7 @@ function AseUtilities.parseRange(range)
     local framIdcs = {}
     local lenFramesObj = #framesObj
     local i = 0
-    while i < lenFramesObj do
-        i = i + 1
+    while i < lenFramesObj do i = i + 1
         framIdcs[i] = framesObj[i].frameNumber
     end
     -- This doesn't need sorting.
@@ -1814,8 +1801,7 @@ function AseUtilities.parseTagsOverlap(tags)
     local tagsLen = #tags
     local arr2 = {}
     local i = 0
-    while i < tagsLen do
-        i = i + 1
+    while i < tagsLen do i = i + 1
         arr2[i] = AseUtilities.parseTag(tags[i])
     end
     return arr2
@@ -1830,13 +1816,11 @@ function AseUtilities.parseTagsUnique(tags)
     local dict = {}
     local i = 0
     local lenArr2 = #arr2
-    while i < lenArr2 do
-        i = i + 1
+    while i < lenArr2 do i = i + 1
         local arr1 = arr2[i]
         local lenArr1 = #arr1
         local j = 0
-        while j < lenArr1 do
-            j = j + 1
+        while j < lenArr1 do j = j + 1
             dict[arr1[j]] = true
         end
     end
@@ -1880,7 +1864,8 @@ function AseUtilities.rotateImage90(source)
         width = h,
         height = w,
         colorMode = source.colorMode,
-        transparentColor = srcSpec.transparentColor }
+        transparentColor = srcSpec.transparentColor
+    }
     trgSpec.colorSpace = srcSpec.colorSpace
     local target = Image(trgSpec)
 
@@ -1950,7 +1935,8 @@ function AseUtilities.rotateImage270(source)
         width = h,
         height = w,
         colorMode = source.colorMode,
-        transparentColor = srcSpec.transparentColor }
+        transparentColor = srcSpec.transparentColor
+    }
     trgSpec.colorSpace = srcSpec.colorSpace
     local target = Image(trgSpec)
 
@@ -2024,7 +2010,8 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
         width = specSrc.width * tileWidth,
         height = specSrc.height * tileHeight,
         colorMode = sprClrMode,
-        transparentColor = specSrc.transparentColor }
+        transparentColor = specSrc.transparentColor
+    }
     specTrg.colorSpace = specSrc.colorSpace
     local imgTrg = Image(specTrg)
 
@@ -2058,7 +2045,8 @@ function AseUtilities.trimCelToSprite(cel, sprite)
         width = clip.width,
         height = clip.height,
         colorMode = celImgSpec.colorMode,
-        transparentColor = celImgSpec.transparentColor }
+        transparentColor = celImgSpec.transparentColor
+    }
     trimSpec.colorSpace = celImgSpec.colorSpace
     local trimImage = Image(trimSpec)
     trimImage:drawImage(celImg, oldPos - cel.position)
@@ -2187,14 +2175,15 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
     hTrg = hTrg + 1
 
     local valPad = padding or 0
-    valPad = math.abs(valPad)
+    if valPad < 0 then valPad = -valPad end
     local pad2 = valPad + valPad
 
     local trgSpec = ImageSpec {
         colorMode = colorMode,
         width = wTrg + pad2,
         height = hTrg + pad2,
-        transparentColor = alphaIndex }
+        transparentColor = alphaIndex
+    }
     trgSpec.colorSpace = image.spec.colorSpace
     local target = Image(trgSpec)
 

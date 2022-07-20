@@ -219,7 +219,8 @@ dlg:button {
         else
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
         end
     end
 }

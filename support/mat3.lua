@@ -2,9 +2,10 @@ Mat3 = {}
 Mat3.__index = Mat3
 
 setmetatable(Mat3, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end
+})
 
 ---Constructs a row major 3x3 matrix from numbers.
 ---Intended for use as a 2D affine transform.
@@ -18,10 +19,7 @@ setmetatable(Mat3, {
 ---@param m21 number row 2, col 1 forward z
 ---@param m22 number row 2, col 2 translation z
 ---@return table
-function Mat3.new(
-    m00, m01, m02,
-    m10, m11, m12,
-    m20, m21, m22)
+function Mat3.new(m00, m01, m02, m10, m11, m12, m20, m21, m22)
     local inst = setmetatable({}, Mat3)
 
     inst.m00 = m00 or 1.0
@@ -111,8 +109,8 @@ end
 ---@return number
 function Mat3.determinant(a)
     return a.m00 * (a.m22 * a.m11 - a.m12 * a.m21) +
-           a.m01 * (a.m12 * a.m20 - a.m22 * a.m10) +
-           a.m02 * (a.m21 * a.m10 - a.m11 * a.m20)
+        a.m01 * (a.m12 * a.m20 - a.m22 * a.m10) +
+        a.m02 * (a.m21 * a.m10 - a.m11 * a.m20)
 end
 
 ---Constructs a matrix from an angle in radians.
@@ -131,8 +129,8 @@ end
 function Mat3.fromRotZInternal(cosa, sina)
     return Mat3.new(
         cosa, -sina, 0.0,
-        sina,  cosa, 0.0,
-         0.0,   0.0, 1.0)
+        sina, cosa, 0.0,
+        0.0, 0.0, 1.0)
 end
 
 ---Constructs a matrix from a nonuniform scale.
@@ -151,8 +149,8 @@ function Mat3.fromScale(width, depth)
     end
 
     return Mat3.new(
-          w, 0.0, 0.0,
-        0.0,   d, 0.0,
+        w, 0.0, 0.0,
+        0.0, d, 0.0,
         0.0, 0.0, 1.0)
 end
 
@@ -162,8 +160,8 @@ end
 function Mat3.fromShearX(radians)
     return Mat3.new(
         1.0, math.tan(radians), 0.0,
-        0.0,               1.0, 0.0,
-        0.0,               0.0, 1.0)
+        0.0, 1.0, 0.0,
+        0.0, 0.0, 1.0)
 end
 
 ---Creates a skew matrix on the y axis.
@@ -171,9 +169,9 @@ end
 ---@return table
 function Mat3.fromShearY(radians)
     return Mat3.new(
-                      1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
         math.tan(radians), 1.0, 0.0,
-                      0.0, 0.0, 1.0)
+        0.0, 0.0, 1.0)
 end
 
 ---Constructs a matrix from a translation.
@@ -182,8 +180,8 @@ end
 ---@return table
 function Mat3.fromTranslation(x, y)
     return Mat3.new(
-        1.0, 0.0,   x,
-        0.0, 1.0,   y,
+        1.0, 0.0, x,
+        0.0, 1.0, y,
         0.0, 0.0, 1.0)
 end
 
