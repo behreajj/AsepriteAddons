@@ -582,8 +582,7 @@ end
 ---@param layers number layers or radii
 ---@param radiusMin number minimum radius
 ---@param radiusMax number maximum radius
----@param includePoles boolean include the poles
-function Vec3.gridSpherical(longitudes, latitudes, layers, radiusMin, radiusMax, includePoles)
+function Vec3.gridSpherical(longitudes, latitudes, layers, radiusMin, radiusMax)
 
     -- Cache methods.
     local cos = math.cos
@@ -592,7 +591,6 @@ function Vec3.gridSpherical(longitudes, latitudes, layers, radiusMin, radiusMax,
     local min = math.min
 
     -- Assign default arguments.
-    local vPoles = includePoles or false
     local vrMax = radiusMax or 0.5
     local vrMin = radiusMin or 0.5
     local vLayers = layers or 1
@@ -647,22 +645,6 @@ function Vec3.gridSpherical(longitudes, latitudes, layers, radiusMin, radiusMax,
             rhoCosIncl * cosAzim,
             rhoCosIncl * sinAzim,
             -rhoSinIncl)
-    end
-
-    -- Append poles at the end of the array.
-    if vPoles then
-        -- TODO: Refactor to use while loop.
-        for h = 0, vLayers - 1, 1 do
-            local prc = h * toPrc
-            local radius = (1.0 - prc) * vrMax
-                + prc * vrMin
-            local south = Vec3.new(0.0, 0.0, -radius)
-            local north = Vec3.new(0.0, 0.0, radius)
-            local idx0 = 1 + len3 + h
-
-            result[1 + len3 + vLayers + 1 - h] = north
-            result[idx0] = south
-        end
     end
 
     return result

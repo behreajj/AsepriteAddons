@@ -38,7 +38,7 @@ Octree.FRONT_NORTH_EAST = 8
 ---is split into children.
 ---@param bounds table bounding volume
 ---@param capacity number point capacity
----@param level number level, or depth
+---@param level number|nil level, or depth
 ---@return table
 function Octree.new(bounds, capacity, level)
     local inst = setmetatable({}, Octree)
@@ -387,7 +387,7 @@ end
 ---If a child capacity is not provided, defaults
 ---to the parent's capacity.
 ---@param o table octree
----@param childCapacity number child capacity
+---@param childCapacity number|nil child capacity
 ---@return table
 function Octree.split(o, childCapacity)
     local chCpVerif = childCapacity or o.capacity
@@ -445,7 +445,7 @@ end
 ---8, 64, 512, etc.
 ---@param o table octree node
 ---@param itr number iterations
----@param childCapacity number child capacity
+---@param childCapacity number|nil child capacity
 ---@return table
 function Octree.subdivide(o, itr, childCapacity)
     if (not itr) or (itr < 1) then return o end

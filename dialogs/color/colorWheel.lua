@@ -12,6 +12,7 @@ local defaults = {
     outOfGamut = 64,
     sectorCount = 0,
     ringCount = 0,
+    useLightBar = false,
     plotPalette = true,
     palType = "ACTIVE",
     palStart = 0,
@@ -97,6 +98,14 @@ dlg:slider {
     min = 0,
     max = 16,
     value = defaults.ringCount
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useLightBar",
+    label = "Light Bar:",
+    selected = defaults.useLightBar
 }
 
 dlg:newrow { always = false }
@@ -195,13 +204,14 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local plotPalette = args.plotPalette
         local size = args.size or defaults.size
         local ringCount = args.ringCount or defaults.ringCount
         local sectorCount = args.sectorCount or defaults.sectorCount
         local minLight = args.minLight or defaults.minLight
         local maxLight = args.maxLight or defaults.maxLight
         local outOfGamut = args.outOfGamut or defaults.outOfGamut
+        local useLightBar = args.useLightBar
+        local plotPalette = args.plotPalette
 
         -- Must be done before a new sprite is created.
         local hexesSrgb = {}
@@ -256,7 +266,7 @@ dlg:button {
         -- Create color field images.
         local gamutImgs = {}
         local szInv = 1.0 / size
-        local iToStep = 1.0
+        local iToStep = 0.5
         local reqFrames = args.frames or defaults.frames
         if reqFrames > 1 then iToStep = 1.0 / (reqFrames - 1.0) end
 
@@ -350,8 +360,63 @@ dlg:button {
             end
         end)
 
-        if plotPalette then
+        if useLightBar then
+            local lightBarLayer = sprite:newLayer()
+            lightBarLayer.name = "Light"
 
+            local lightBarWidth = math.ceil(size / 24)
+            local lightBarHeight = size
+            if lightBarWidth < 8 then lightBarWidth = 8 end
+            local lightBarSpec = ImageSpec {
+                width = lightBarWidth,
+                height = lightBarHeight,
+                colorMode = ColorMode.RGB
+            }
+            spec.colorSpace = ColorSpace { sRGB = true }
+            local lightBarImage = Image(lightBarSpec)
+            local yToLight = 100.0 / (lightBarHeight - 1.0)
+
+            local lightBarPixels = lightBarImage:pixels()
+            for elm in lightBarPixels do
+                local y = elm.y
+                local light = 100.0 - y * yToLight
+                local clr = labTosRgba(light, 0.0, 0.0, 1.0)
+                local hex = toHex(clr)
+                elm(hex)
+            end
+
+            app.transaction(function()
+                local lightPoint = Point(size - lightBarWidth, 0)
+                local halfHeight = lightBarHeight // 2
+                local xi = lightBarWidth // 2
+                local strokeSize = lightBarWidth // 2
+                local idxCel = 0
+                local iToFac = 0.5
+                if reqFrames > 1 then
+                    iToFac = 1.0 / (reqFrames - 1.0)
+                end
+                local yMin = minLight * lightBarHeight * 0.01
+                local yMax = maxLight * lightBarHeight * 0.01
+                while idxCel < reqFrames do
+                    local fac = idxCel * iToFac
+                    local yf = (1.0 - fac) * yMin + fac * yMax
+                    local yi = size - floor(0.5 + yf)
+                    local lightClone = lightBarImage:clone()
+                    local strokeColor = 0xffffffff
+                    if yi < halfHeight then strokeColor = 0xff000000 end
+                    drawCircleFill(lightClone, xi, yi, strokeSize, strokeColor)
+
+                    idxCel = idxCel + 1
+                    sprite:newCel(
+                        lightBarLayer,
+                        sprite.frames[idxCel],
+                        lightClone,
+                        lightPoint)
+                end
+            end)
+        end
+
+        if plotPalette then
             -- Unpack arguments.
             local strokeSize = args.strokeSize or defaults.strokeSize
             local fillSize = args.fillSize or defaults.fillSize

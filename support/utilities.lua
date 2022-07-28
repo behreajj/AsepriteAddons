@@ -180,7 +180,6 @@ end
 ---@param comparator function|nil comparator function
 ---@return table
 function Utilities.dictToSortedSet(dict, comparator)
-    -- TODO: Is there anywhere else this can be used?
     local orderedSet = {}
     local osCursor = 0
     for k, _ in pairs(dict) do
@@ -968,6 +967,31 @@ end
 function Utilities.reduceRatio(a, b)
     local denom = Utilities.gcd(a, b)
     return a // denom, b // denom
+end
+
+---Resizes a source pixel array to new dimensions with
+---nearest neighbor sampling. Performs no validation on
+---target width or height. Creates a new pixel array.
+---@param source table source pixels
+---@param wSrc integer original width
+---@param hSrc integer original height
+---@param wTrg integer resized width
+---@param hTrg integer resized height
+---@return table
+function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg)
+    local floor = math.floor
+    local tx = wSrc / wTrg
+    local ty = hSrc / hTrg
+    local len = wTrg * hTrg
+    local target = {}
+    local i = 0
+    while i < len do
+        local nx = floor((i % wTrg) * tx)
+        local ny = floor((i // wTrg) * ty)
+        i = i + 1
+        target[i] = source[1 + ny * wSrc + nx]
+    end
+    return target
 end
 
 ---Reverses a table used as an array.

@@ -820,9 +820,8 @@ end
 ---@param blendMode integer blend mode
 ---@param opacity integer layer opacity
 ---@param guiClr integer hexadecimal color
----@param parent userdata parent layer
 ---@return table
-function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr, parent)
+function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr)
     if not sprite then
         app.alert { title = "Error", text = "Sprite could not be found." }
         return {}
@@ -858,7 +857,6 @@ function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr,
     if valCount < 1 then valCount = 1 end
 
     local useGuiClr = guiClr and guiClr ~= 0x0
-    local useParent = parent and parent.isGroup
 
     local oldLayerCount = #sprite.layers
     local layers = {}
@@ -883,22 +881,6 @@ function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr,
             while i < valCount do
                 i = i + 1
                 layers[i].color = aseColor
-            end
-        end)
-    end
-
-    -- TODO: The user interface does not update the parent-
-    -- child relationship when this is used. Is the problem
-    -- that app global has been used when a local should've
-    -- been passed in? or with parent not being within the
-    -- scope of transaction?
-    if useParent then
-        app.transaction(function()
-            local i = 0
-            while i < valCount do
-                i = i + 1
-                local layer = layers[i]
-                layer.parent = parent
             end
         end)
     end
@@ -1537,7 +1519,6 @@ end
 ---@param palettes table table of Aseprite palettes
 ---@return userdata
 function AseUtilities.getPalette(frObj, palettes)
-    -- TODO: Where else can this be used?
     local idx = 1
     local typeFrObj = type(frObj)
     if typeFrObj == "number"
@@ -1627,7 +1608,7 @@ end
 ---set. Colors should be hexadecimal integers.
 ---@param wDefault integer default width
 ---@param hDefault integer default height
----@param layerName string layer name
+---@param layerName string|nil layer name
 ---@param colors table|nil array of hexes
 ---@param colorSpace userdata|nil color space
 ---@return table
@@ -1836,6 +1817,59 @@ function AseUtilities.preserveForeBack()
     app.command.SwitchColors()
     app.fgColor = AseUtilities.aseColorCopy(app.fgColor, "")
     app.command.SwitchColors()
+end
+
+---Returns a copy of the source image that has
+---been resized to the width and height. Uses nearest
+---neighbor sampling. If the width and height are
+---equal to the original, returns the source image.
+---@param source userdata source image
+---@param wTrg integer resized width
+---@param hTrg integer resized height
+---@return userdata
+function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
+    local wVal = wTrg
+    local hVal = hTrg
+    if wVal < 0 then wVal = -wVal end
+    if hVal < 0 then hVal = -hVal end
+    if wVal < 1 then wVal = 1 end
+    if hVal < 1 then hVal = 1 end
+
+    local srcSpec = source.spec
+    local wSrc = srcSpec.width
+    local hSrc = srcSpec.height
+
+    if wTrg == wSrc and hTrg == hSrc then
+        return source
+    end
+
+    local px = {}
+    local i = 0
+    local srcPxItr = source:pixels()
+    for elm in srcPxItr do
+        i = i + 1
+        px[i] = elm()
+    end
+
+    local trgSpec = ImageSpec {
+        width = wTrg,
+        height = hTrg,
+        colorMode = source.colorMode,
+        transparentColor = srcSpec.transparentColor
+    }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target = Image(trgSpec)
+
+    local pxRsz = Utilities.resizePixelsNearest(
+        px, wSrc, hSrc, wTrg, hTrg)
+
+    local j = 0
+    local trgPxItr = target:pixels()
+    for elm in trgPxItr do
+        j = j + 1
+        elm(pxRsz[j])
+    end
+    return target
 end
 
 ---Returns a copy of the source image that has

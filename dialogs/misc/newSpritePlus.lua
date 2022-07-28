@@ -41,6 +41,7 @@ local defaults = {
 
     maxSize = 65535
 }
+
 local function updateColorPreviewRgba(dialog)
     local args = dialog.data
     dialog:modify {
@@ -111,7 +112,7 @@ local function updateSizeFromAspect(dialog)
 
     scale = math.abs(scale)
     scale = math.floor(0.5 + scale)
-    scale = math.max(1, scale)
+    if scale < 1 then scale = 1 end
 
     aRatio, bRatio = Utilities.reduceRatio(aRatio, bRatio)
     local w = aRatio * scale
@@ -454,7 +455,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-
         local args = dlg.data
         local palType = args.palType or defaults.palType
         local prependMask = args.prependMask
@@ -478,7 +478,8 @@ dlg:button {
         else
             local hexesDefault = AseUtilities.DEFAULT_PAL_ARR
             local hexDefLen = #hexesDefault
-            for i = 1, hexDefLen, 1 do
+            local i = 0
+            while i < hexDefLen do i = i + 1
                 hexesProfile[i] = hexesDefault[i]
             end
             hexesSrgb = hexesProfile
@@ -497,7 +498,8 @@ dlg:button {
             local aChannel = args.aChannel or defaults.aChannel
             createBackground = aChannel > 0
             if createBackground then
-                local grayChannel = args.grayChannel or defaults.grayChannel
+                local grayChannel = args.grayChannel
+                    or defaults.grayChannel
                 hexBkg = (aChannel << 0x18)
                     | (grayChannel << 0x10)
                     | (grayChannel << 0x08)
@@ -535,38 +537,46 @@ dlg:button {
         -- Because entries are typed in, they need to be validated
         -- for negative numbers and minimums.
         local sizeMode = args.sizeMode or defaults.sizeMode
-        local spriteWidth = defaults.width
-        local spriteHeight = defaults.height
+        local width = defaults.width
+        local height = defaults.height
         if sizeMode == "ASPECT" then
             local aRatio = args.aRatio or defaults.aRatio
             local bRatio = args.bRatio or defaults.bRatio
-            local scale = args.aspectScale or defaults.aspectScale
-            scale = math.max(1, math.floor(0.5 + math.abs(scale)))
             aRatio, bRatio = Utilities.reduceRatio(aRatio, bRatio)
-            spriteWidth = aRatio * scale
-            spriteHeight = bRatio * scale
-        else
-            spriteWidth = args.width or defaults.width
-            spriteHeight = args.height or defaults.height
-            spriteWidth = math.abs(spriteWidth)
-            spriteHeight = math.abs(spriteHeight)
-        end
 
-        -- Store new dimensions in preferences.
-        app.preferences.new_file.width = spriteWidth
-        app.preferences.new_file.height = spriteHeight
+            local scale = args.aspectScale or defaults.aspectScale
+            scale = math.max(1.0, math.abs(scale))
+
+            width = math.floor(aRatio * scale + 0.5)
+            height = math.floor(bRatio * scale + 0.5)
+        else
+            width = args.width or defaults.width
+            height = args.height or defaults.height
+            if width < 0 then width = -width end
+            if height < 0 then height = -height end
+        end
 
         -- The maximum size defined in source code is 65535,
         -- but the canvas size command allows for more.
-        spriteWidth = math.min(math.max(
-            spriteWidth, 1), defaults.maxSize)
-        spriteHeight = math.min(math.max(
-            spriteHeight, 1), defaults.maxSize)
+        width = math.min(math.max(
+            width, 1), defaults.maxSize)
+        height = math.min(math.max(
+            height, 1), defaults.maxSize)
+
+        -- Store new dimensions in preferences.
+        app.preferences.new_file.width = width
+        app.preferences.new_file.height = height
 
         -- Create sprite, set file name, set to active.
         AseUtilities.preserveForeBack()
-        local newSprite = Sprite(
-            spriteWidth, spriteHeight, ColorMode.RGB)
+        local spec = ImageSpec {
+            width = width,
+            height = height,
+            colorMode = ColorMode.RGB,
+            transparentColor = 0
+        }
+        spec.colorSpace = ColorSpace { sRGB = true }
+        local newSprite = Sprite(spec)
 
         -- File name needs extra validation to remove characters
         -- that could compromise saving a sprite.
@@ -602,20 +612,18 @@ dlg:button {
 
         -- Create background image. Assign to cels.
         if createBackground then
-            local bkgImg = Image(
-                spriteWidth, spriteHeight,
-                ColorMode.RGB)
-            local bkgItr = bkgImg:pixels()
-            for elm in bkgItr do elm(hexBkg) end
-            local firstCel = layer.cels[1]
-            firstCel.image = bkgImg
+            local bkgImg = Image(spec)
+            bkgImg:clear(hexBkg)
+            layer.cels[1].image = bkgImg
 
             app.transaction(function()
                 -- For continuous layer see
                 -- https://community.aseprite.org/t/
                 -- create-new-continuous-layer/13502
-                for i = 0, frameReqs - 2, 1 do
-                    newSprite:newCel(layer, i + 2, bkgImg)
+                local lenFrames = #newSprite.frames
+                local j = 1
+                while j < lenFrames do j = j + 1
+                    newSprite:newCel(layer, j, bkgImg)
                 end
             end)
         end

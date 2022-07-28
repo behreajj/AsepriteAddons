@@ -27,7 +27,7 @@ Quadtree.NORTH_EAST = 4
 ---is split into children.
 ---@param bounds table bounding area
 ---@param capacity number point capacity
----@param level number level, or depth
+---@param level number|nil level, or depth
 ---@return table
 function Quadtree.new(bounds, capacity, level)
     local inst = setmetatable({}, Quadtree)
@@ -278,7 +278,7 @@ end
 ---If a child capacity is not provided, defaults
 ---to the parent's capacity.
 ---@param q table quadtree
----@param childCapacity number child capacity
+---@param childCapacity number|nil child capacity
 ---@return table
 function Quadtree.split(q, childCapacity)
     local chCpVerif = childCapacity or q.capacity

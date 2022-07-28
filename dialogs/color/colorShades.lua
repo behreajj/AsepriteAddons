@@ -11,6 +11,7 @@ local defaults = {
     quantization = 0,
     maxChroma = 135,
     maxLight = 100.0,
+    useHueBar = false,
     plotPalette = true,
     palType = "ACTIVE",
     palStart = 0,
@@ -68,6 +69,14 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.outOfGamut
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useHueBar",
+    label = "Hue Bar:",
+    selected = defaults.useHueBar
 }
 
 dlg:newrow { always = false }
@@ -165,11 +174,12 @@ dlg:button {
         local maxChroma = args.maxChroma or defaults.maxChroma
         local maxLight = args.maxLight or defaults.maxLight
         local outOfGamut = args.outOfGamut or defaults.outOfGamut
+        local useHueBar = args.useHueBar
+        local plotPalette = args.plotPalette
 
         -- Must be done before a new sprite is created.
         local hexesSrgb = {}
         local hexesProfile = {}
-        local plotPalette = args.plotPalette
         if plotPalette then
             local palType = args.palType or defaults.palType
             if palType ~= "DEFAULT" then
@@ -195,15 +205,16 @@ dlg:button {
         local spec = ImageSpec {
             width = size,
             height = size,
-            colorMode = ColorMode.RGB }
+            colorMode = ColorMode.RGB
+        }
         spec.colorSpace = ColorSpace { sRGB = true }
         local sprite = Sprite(spec)
         sprite.filename = "LCh Color Shades"
 
         -- Calculate frame count to normalization.
-        local iToStep = 1.0
+        local iToStep = 0.5
         local reqFrames = args.frames or defaults.frames
-        if reqFrames > 1 then
+        if reqFrames > 0 then
             -- Because hue is periodic, don't subtract 1.
             iToStep = 1.0 / reqFrames
         end
@@ -273,6 +284,56 @@ dlg:button {
             end
         end)
 
+        if useHueBar then
+            local hueBarLayer = sprite:newLayer()
+            hueBarLayer.name = "Hue"
+
+            local hueBarWidth = math.ceil(size / 24)
+            local hueBarHeight = size
+            if hueBarWidth < 8 then hueBarWidth = 8 end
+            local hueBarSpec = ImageSpec {
+                width = hueBarWidth,
+                height = hueBarHeight,
+                colorMode = ColorMode.RGB
+            }
+            spec.colorSpace = ColorSpace { sRGB = true }
+            local hueBarImage = Image(hueBarSpec)
+
+            local yToHue = 1.0 / (hueBarHeight - 1.0)
+            local hueBarPixels = hueBarImage:pixels()
+            for elm in hueBarPixels do
+                local y = elm.y
+                local hue = 1.0 - y * yToHue
+                local clr = lchTosRgba(50.0, 67.5, hue, 1.0)
+                local hex = toHex(clr)
+                elm(hex)
+            end
+
+            app.transaction(function()
+                local huePoint = Point(size - hueBarWidth, 0)
+                local strokeColor = 0xffffffff
+                local xi = hueBarWidth // 2
+                local strokeSize = hueBarWidth // 2
+                local idxCel = 0
+                local iToHue = hueBarHeight * 0.5
+                if reqFrames > 0 then
+                    iToHue = hueBarHeight / reqFrames
+                end
+                while idxCel < reqFrames do
+                    local yi = size - floor(0.5 + idxCel * iToHue)
+                    local hueClone = hueBarImage:clone()
+                    drawCircleFill(hueClone, xi, yi, strokeSize, strokeColor)
+
+                    idxCel = idxCel + 1
+                    sprite:newCel(
+                        hueBarLayer,
+                        sprite.frames[idxCel],
+                        hueClone,
+                        huePoint)
+                end
+            end)
+        end
+
         if plotPalette then
             -- Unpack arguments.
             local strokeSize = args.strokeSize or defaults.strokeSize
@@ -333,7 +394,8 @@ dlg:button {
                 local plotSpec = ImageSpec {
                     width = (xMax - xMin) + stroke2 - 1,
                     height = (yMax - yMin) + stroke2 - 1,
-                    colorMode = spec.colorMode }
+                    colorMode = spec.colorMode
+                }
                 plotSpec.colorSpace = spec.colorSpace
                 local plotImage = Image(plotSpec)
                 local plotPos = Point(xOff, yOff)

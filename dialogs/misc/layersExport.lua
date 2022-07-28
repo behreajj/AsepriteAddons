@@ -36,7 +36,6 @@ local function appendVisChildren(layer, array)
                 local childLayer = childLayers[i]
                 appendVisChildren(childLayer, array)
             end
-        -- elseif (not layer.isReference) then
         else
             table.insert(array, layer)
         end
@@ -249,7 +248,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -261,7 +261,8 @@ dlg:button {
         if flatGroups and colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "Only RGB color mode is supported for flatten groups." }
+                text = "Only RGB color mode is supported for flatten groups."
+            }
             return
         end
 
@@ -540,7 +541,8 @@ dlg:button {
                                 alphaLayer = childLayer.opacity,
                                 image = imgChild,
                                 xCel = tlx,
-                                yCel = tly }
+                                yCel = tly
+                            }
                             insert(childPackets, childPacket)
                         end
                     end
@@ -552,7 +554,8 @@ dlg:button {
                             width = xMax - xMin,
                             height = yMax - yMin,
                             colorMode = ColorMode.RGB,
-                            transparentColor = alphaIndex }
+                            transparentColor = alphaIndex
+                        }
                         specComp.colorSpace = colorSpace
                         local imgComp = Image(specComp)
 
@@ -626,7 +629,7 @@ dlg:button {
                     end
 
                     if useResize then
-                        imgTrg:resize(
+                        imgTrg = AseUtilities.resizeImageNearest(imgTrg,
                             imgTrg.width * wScale,
                             imgTrg.height * hScale)
                     end
@@ -636,7 +639,8 @@ dlg:button {
                             colorMode = colorMode,
                             width = imgTrg.width + pad2,
                             height = imgTrg.height + pad2,
-                            transparentColor = alphaIndex }
+                            transparentColor = alphaIndex
+                        }
                         specPad.colorSpace = colorSpace
                         local imgPad = Image(specPad)
                         if usePadColor then
@@ -659,7 +663,8 @@ dlg:button {
                         filePrefix, h - 1, i - 1, fileExt)
                     imgTrg:saveAs {
                         filename = fileNameLong,
-                        palette = activePalette }
+                        palette = activePalette
+                    }
 
                     local jsonFrame = {
                         celData = celData,
@@ -670,7 +675,8 @@ dlg:button {
                         height = imgTrg.height,
                         width = imgTrg.width,
                         xOrigin = xTrg,
-                        yOrigin = yTrg }
+                        yOrigin = yTrg
+                    }
                     insert(jsonLayer.jsonFrames, jsonFrame)
                 end
             end

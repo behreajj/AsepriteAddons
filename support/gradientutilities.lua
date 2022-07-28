@@ -239,7 +239,7 @@ function GradientUtilities.dialogWidgets(dlg)
 
     dlg:combobox {
         id = "clrSpacePreset",
-        label = "Color Space:",
+        label = "Space:",
         option = GradientUtilities.DEFAULT_CLR_SPC,
         options = GradientUtilities.CLR_SPC_PRESETS,
         onchange = function()

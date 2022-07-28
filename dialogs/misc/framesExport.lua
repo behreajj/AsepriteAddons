@@ -131,6 +131,7 @@ local function scaleAndPadPacketImages(
     usePadding, padding, usePadColor, padHex,
     colorMode, colorSpace, alphaIndex)
 
+    local resize = AseUtilities.resizeImageNearest
     local pad2 = padding + padding
     local padOffset = Point(padding, padding)
     local lenPackets = #packets
@@ -140,7 +141,7 @@ local function scaleAndPadPacketImages(
         local image = packet.image
 
         if useResize then
-            image:resize(
+            image = resize(image,
                 image.width * wScale,
                 image.height * hScale)
         end

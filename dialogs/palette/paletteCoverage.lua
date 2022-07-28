@@ -431,7 +431,7 @@ dlg:button {
 
             gridPts = Vec3.gridSpherical(
                 lons, lats, layersSphere,
-                minSat * 0.5, maxSat * 0.5, false)
+                minSat * 0.5, maxSat * 0.5)
             gridClrs = Clr.gridHsl(
                 lons, lats, layersSphere,
                 minSat, maxSat,

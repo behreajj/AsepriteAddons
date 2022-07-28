@@ -66,7 +66,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -74,7 +75,8 @@ dlg:button {
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "Only RGB color mode is supported." }
+                text = "Only RGB color mode is supported."
+            }
             return
         end
 
@@ -82,7 +84,8 @@ dlg:button {
         if not overLayer then
             app.alert {
                 title = "Error",
-                text = "There is no active layer." }
+                text = "There is no active layer."
+            }
             return
         end
 
@@ -90,7 +93,8 @@ dlg:button {
         if overIndex < 2 then
             app.alert {
                 title = "Error",
-                text = "There must be a layer beneath the active layer." }
+                text = "There must be a layer beneath the active layer."
+            }
             return
         end
 
@@ -103,7 +107,8 @@ dlg:button {
         if overLayer.isGroup or underLayer.isGroup then
             app.alert {
                 title = "Error",
-                text = "Group layers are not supported." }
+                text = "Group layers are not supported."
+            }
             return
         end
 
@@ -123,7 +128,7 @@ dlg:button {
         -- local overIsValidTrg = (not overLayer.isReference)
         local overIsValidTrg = true
         local underIsValidTrg = (not underLayer.isBackground)
-            -- and (not underLayer.isReference)
+        -- and (not underLayer.isReference)
 
         local hideOverLayer = delOverStr == "HIDE"
         local delOverLayer = delOverStr == "DELETE_LAYER"
@@ -277,7 +282,8 @@ dlg:button {
                             width = widthTarget,
                             height = heightTarget,
                             colorMode = ColorMode.RGB,
-                            transparentColor = alphaIndex }
+                            transparentColor = alphaIndex
+                        }
                         trgSpec.colorSpace = colorSpace
                         local trgImage = Image(trgSpec)
                         local trgPos = Point(xTlTarget, yTlTarget)

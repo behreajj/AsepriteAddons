@@ -165,14 +165,16 @@ local function filterBilin(
         if gt > 255 then gt = 255 end
         if rt > 255 then rt = 255 end
 
-        return (at << 0x18) | (bt << 0x10) | (gt << 0x08) | rt
+        return at << 0x18 | bt << 0x10 | gt << 0x08 | rt
     end
     return alphaMask
 end
 
-local function getTargetCels(
-    activeSprite, targetPreset,
-    bkgAllow, refAllow)
+local function getTargetCels(activeSprite, targetPreset, bkgAllow)
+
+    -- Unrelated issues with Aseprite can raise the need
+    -- to roll back to an older version. For that reason,
+    -- layer.isReference is no longer supported.
 
     local targetCels = {}
     local tinsert = table.insert
@@ -180,21 +182,13 @@ local function getTargetCels(
 
     -- TODO: Do not impact tile map layers!
     local vBkgAll = bkgAllow or false
-    -- local vRefAll = refAllow or false
     if targetPreset == "ACTIVE" then
         local activeLayer = app.activeLayer
         if activeLayer then
             if isUnlocked(activeLayer, activeSprite)
-                and (vBkgAll or not activeLayer.isBackground)
-                -- and (vRefAll or not activeLayer.isReference)
-                then
+                and (vBkgAll or not activeLayer.isBackground) then
 
-                -- Treat background layers differently for active?
-                -- if (not vBkgAll) and activeLayer.isBackground then
-                --     app.command.LayerFromBackground()
-                --     app.command.Refresh()
-                -- end
-
+                -- TODO: What if active is group cel? Get leaves?
                 local activeCel = app.activeCel
                 if activeCel then
                     targetCels[1] = activeCel
@@ -210,9 +204,7 @@ local function getTargetCels(
             local rangeCel = rangeCels[i]
             local celLayer = rangeCel.layer
             if isUnlocked(celLayer, activeSprite)
-                and (vBkgAll or not celLayer.isBackground)
-                -- and (not celLayer.isReference)
-                then
+                and (vBkgAll or not celLayer.isBackground) then
                 tinsert(targetCels, rangeCel)
             end
         end
@@ -231,7 +223,8 @@ local function getTargetCels(
                 width = math.max(1, selBounds.width),
                 height = math.max(1, selBounds.height),
                 colorMode = activeSpec.colorMode,
-                transparentColor = alphaMask }
+                transparentColor = alphaMask
+            }
             flatSpec.colorSpace = activeSpec.colorSpace
             local flatImage = Image(flatSpec)
             flatImage:drawSprite(
@@ -269,9 +262,7 @@ local function getTargetCels(
             local activeCel = activeCels[i]
             local celLayer = activeCel.layer
             if isUnlocked(celLayer, activeSprite)
-                and (vBkgAll or not celLayer.isBackground)
-                -- and (not celLayer.isReference)
-                then
+                and (vBkgAll or not celLayer.isBackground) then
                 tinsert(targetCels, activeCel)
             end
         end
@@ -329,7 +320,7 @@ dlg:button {
         if xtr == 0.0 and ytr == 0.0 then return end
 
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
 
         app.transaction(function()
@@ -361,7 +352,7 @@ dlg:button {
         if xtr == 0.0 and ytr == 0.0 then return end
 
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, true, false)
+        local cels = getTargetCels(activeSprite, target, true)
         local celsLen = #cels
 
         local wrap = AseUtilities.wrapImage
@@ -390,7 +381,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
 
         app.transaction(function()
@@ -414,7 +405,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
 
         app.transaction(function()
@@ -439,7 +430,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
         local wSprite = activeSprite.width
 
@@ -468,7 +459,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
 
         app.transaction(function()
@@ -493,7 +484,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
         local xCtrSprite = activeSprite.width * 0.5
         local yCtrSprite = activeSprite.height * 0.5
@@ -525,7 +516,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
         local wSprite = activeSprite.width
 
@@ -555,7 +546,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
         local hSprite = activeSprite.height
 
@@ -582,7 +573,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
         local hSprite = activeSprite.height
 
@@ -610,7 +601,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
         local wSprite = activeSprite.width
         local hSprite = activeSprite.height
@@ -675,7 +666,7 @@ dlg:button {
         local ceil = math.ceil
 
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
 
         local query = AseUtilities.DIMETRIC_ANGLES[degrees]
@@ -703,7 +694,8 @@ dlg:button {
                     local trgSpec = ImageSpec {
                         width = wTrg, height = hSrc,
                         colorMode = srcSpec.colorMode,
-                        transparentColor = alphaMask }
+                        transparentColor = alphaMask
+                    }
                     trgSpec.colorSpace = srcSpec.colorSpace
                     local trgImg = Image(trgSpec)
 
@@ -767,7 +759,7 @@ dlg:button {
         local ceil = math.ceil
 
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
 
         local query = AseUtilities.DIMETRIC_ANGLES[degrees]
@@ -795,7 +787,8 @@ dlg:button {
                     local trgSpec = ImageSpec {
                         width = wSrc, height = hTrg,
                         colorMode = srcSpec.colorMode,
-                        transparentColor = alphaMask }
+                        transparentColor = alphaMask
+                    }
                     trgSpec.colorSpace = srcSpec.colorSpace
                     local trgImg = Image(trgSpec)
 
@@ -841,7 +834,7 @@ dlg:button {
         if degrees == 0 then return end
 
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
 
         if degrees == 90 or degrees == 270 then
@@ -1052,7 +1045,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, true, true)
+        local cels = getTargetCels(activeSprite, target, true)
         local celsLen = #cels
 
         local fliph = AseUtilities.flipImageHoriz
@@ -1078,7 +1071,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, true, true)
+        local cels = getTargetCels(activeSprite, target, true)
         local celsLen = #cels
 
         local flipv = AseUtilities.flipImageVert
@@ -1130,7 +1123,7 @@ dlg:button {
         local useBilinear = easeMethod == "BILINEAR"
         local usePercent = unitType == "PERCENT"
         if (not usePercent) and (wPxl < 1 or hPxl < 1) then return end
-        local cels = getTargetCels(activeSprite, target, false, false)
+        local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
 
         local oldMode = activeSprite.colorMode
@@ -1166,7 +1159,8 @@ dlg:button {
                             height = hTrg,
                             width = wTrg,
                             colorMode = colorMode,
-                            transparentColor = alphaMask }
+                            transparentColor = alphaMask
+                        }
                         trgSpec.colorSpace = colorSpace
                         local trgImg = Image(trgSpec)
                         local trgpxitr = trgImg:pixels()

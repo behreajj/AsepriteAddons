@@ -448,8 +448,6 @@ dlg:button {
 
             local levels = args.levels or defaults.levels
             dmStr = string.format("Quantize.%03d", levels)
-
-            -- TODO: Support more complex quantization?
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
                 local srgb = Clr.new(
                     rSrc * 0.003921568627451,
@@ -612,7 +610,7 @@ dlg:button {
                 -- Cache pixels from iterator to an array.
                 local srcLayer = srcCel.layer
 
-                -- Copy layer.
+                -- Copy layer. Don't copy blend mode.
                 local trgLayer = activeSprite:newLayer()
                 local srcLayerName = "Layer"
                 if #srcLayer.name > 0 then
@@ -624,7 +622,6 @@ dlg:button {
                 if srcLayer.opacity then
                     trgLayer.opacity = srcLayer.opacity
                 end
-                -- Do not copy blend mode.
 
                 -- Copy cel.
                 local frame = app.activeFrame

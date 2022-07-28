@@ -193,6 +193,9 @@ dlg:button {
                         elm(colors[index])
                     end
                 end
+
+                app.command.FitScreen()
+                app.activeTool = "hand"
             end
 
             local oldMode = activeSprite.colorMode

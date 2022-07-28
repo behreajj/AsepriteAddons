@@ -316,7 +316,6 @@ dlg:button {
                 local srcFrame = frames[i]
                 local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
-                    -- TODO: Support tile map layers?
                     local srcImg = srcCel.image
 
                     -- Get unique hexadecimal values from image.
