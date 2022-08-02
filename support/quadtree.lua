@@ -26,8 +26,8 @@ Quadtree.NORTH_EAST = 4
 ---the number of points the node can hold before it
 ---is split into children.
 ---@param bounds table bounding area
----@param capacity number point capacity
----@param level number|nil level, or depth
+---@param capacity integer point capacity
+---@param level integer|nil level, or depth
 ---@return table
 function Quadtree.new(bounds, capacity, level)
     local inst = setmetatable({}, Quadtree)
@@ -62,7 +62,7 @@ end
 ---Counts the number of leaves held by this node.
 ---Returns 1 if the node is itself a leaf.
 ---@param q table quadtreee
----@return number
+---@return integer
 function Quadtree.countLeaves(q)
     -- Even if this is not used directly by
     -- any dialog, retain it for diagnostics.
@@ -86,7 +86,7 @@ end
 ---Counts the number of points held by this quadtree's
 ---leaf nodes.
 ---@param o table quadtree node
----@return number
+---@return integer
 function Quadtree.countPoints(o)
     local children = o.children
     local lenChildren = #children
@@ -178,7 +178,7 @@ end
 ---Finds the maximum level, or depth, of
 ---the node and its children.
 ---@param q table quadtree node
----@return number
+---@return integer
 function Quadtree.maxLevel(q)
     -- Even if this is not used directly by
     -- any dialog, retain it for diagnostics.
@@ -278,7 +278,7 @@ end
 ---If a child capacity is not provided, defaults
 ---to the parent's capacity.
 ---@param q table quadtree
----@param childCapacity number|nil child capacity
+---@param childCapacity integer|nil child capacity
 ---@return table
 function Quadtree.split(q, childCapacity)
     local chCpVerif = childCapacity or q.capacity

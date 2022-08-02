@@ -9,7 +9,7 @@ local defaults = {
     xTranslate = 0.0,
     yTranslate = 0.0,
     easeMethod = "NEAREST",
-    degrees = 0,
+    degrees = 90,
     pxWidth = 64,
     pxHeight = 64,
     prcWidth = 100,
@@ -209,51 +209,49 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
             end
         end
     elseif targetPreset == "SELECTION" then
-        local sel = activeSprite.selection
-        if (not sel.isEmpty) then
-            local selBounds = sel.bounds
-            local xSel = selBounds.x
-            local ySel = selBounds.y
-            local activeSpec = activeSprite.spec
-            local actFrame = app.activeFrame
-            local alphaMask = activeSpec.transparentColor
+        local sel = AseUtilities.getSelection(activeSprite)
+        local selBounds = sel.bounds
+        local xSel = selBounds.x
+        local ySel = selBounds.y
+        local activeSpec = activeSprite.spec
+        local actFrame = app.activeFrame
+        local alphaMask = activeSpec.transparentColor
 
-            -- Create a subset of flattened sprite.
-            local flatSpec = ImageSpec {
-                width = math.max(1, selBounds.width),
-                height = math.max(1, selBounds.height),
-                colorMode = activeSpec.colorMode,
-                transparentColor = alphaMask
-            }
-            flatSpec.colorSpace = activeSpec.colorSpace
-            local flatImage = Image(flatSpec)
-            flatImage:drawSprite(
-                activeSprite,
-                actFrame.frameNumber,
-                Point(-xSel, -ySel))
+        -- Create a subset of flattened sprite.
+        local flatSpec = ImageSpec {
+            width = math.max(1, selBounds.width),
+            height = math.max(1, selBounds.height),
+            colorMode = activeSpec.colorMode,
+            transparentColor = alphaMask
+        }
+        flatSpec.colorSpace = activeSpec.colorSpace
+        local flatImage = Image(flatSpec)
+        flatImage:drawSprite(
+            activeSprite,
+            actFrame.frameNumber,
+            Point(-xSel, -ySel))
 
-            -- Remove pixels within selection bounds
-            -- but not within selection itself.
-            local xMin = xSel
-            local yMin = ySel
-            local flatPxItr = flatImage:pixels()
-            for elm in flatPxItr do
-                local x = elm.x + xMin
-                local y = elm.y + yMin
-                if not sel:contains(x, y) then
-                    elm(alphaMask)
-                end
+        -- Remove pixels within selection bounds
+        -- but not within selection itself.
+        local xMin = xSel
+        local yMin = ySel
+        local flatPxItr = flatImage:pixels()
+        for elm in flatPxItr do
+            local x = elm.x + xMin
+            local y = elm.y + yMin
+            if not sel:contains(x, y) then
+                elm(alphaMask)
             end
-
-            -- Create new layer and new cel. This
-            -- makes three transactions.
-            local adjLayer = activeSprite:newLayer()
-            adjLayer.name = "Transformed"
-            local adjCel = activeSprite:newCel(
-                adjLayer, actFrame,
-                flatImage, Point(xSel, ySel))
-            tinsert(targetCels, adjCel)
         end
+
+        -- Create new layer and new cel. This
+        -- makes three transactions.
+        local adjLayer = activeSprite:newLayer()
+        adjLayer.name = "Transformed"
+        local adjCel = activeSprite:newCel(
+            adjLayer, actFrame,
+            flatImage, Point(xSel, ySel))
+        tinsert(targetCels, adjCel)
     else
         local activeCels = activeSprite.cels
         local activeCelsLen = #activeCels

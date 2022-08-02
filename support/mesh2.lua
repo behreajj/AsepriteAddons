@@ -6,13 +6,14 @@ Mesh2.__index = Mesh2
 setmetatable(Mesh2, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Constructs a 2D mesh with a variable
 ---number of vertices per face.
 ---@param fs table faces
 ---@param vs table coordinates
----@param name string name
+---@param name string|nil name
 ---@return table
 function Mesh2.new(fs, vs, name)
     local inst = setmetatable({}, Mesh2)
@@ -32,9 +33,10 @@ end
 
 ---Insets a face by calculating its center then
 ---easing from the face's vertices toward the center
----by the factor, in range [0.0, 1.0].
----@param faceIndex integer
----@param fac number
+---by the factor, in range [0.0, 1.0]. The factor
+---defaults to 0.5.
+---@param faceIndex integer face index
+---@param fac number|nil inset factor
 ---@return table
 function Mesh2:insetFace(faceIndex, fac)
     local t = fac or 0.5
@@ -82,7 +84,8 @@ function Mesh2:insetFace(faceIndex, fac)
             vertCurr,
             vertNext,
             1 + vsOldLen + k,
-            1 + vSubdivIdx }
+            1 + vSubdivIdx
+        }
 
         table.insert(self.fs, fNew)
         table.insert(centerFace, 1 + vSubdivIdx)
@@ -274,7 +277,6 @@ end
 ---@param useQuads boolean use quads
 ---@return table
 function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQuads)
-
     local a = startAngle % 6.2831853071796
     local b = stopAngle % 6.2831853071796
     local arcLen = (b - a) % 6.2831853071796
@@ -339,7 +341,8 @@ function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQ
                 1 + i,
                 3 + i,
                 4 + i,
-                2 + i }
+                2 + i
+            }
         end
 
     else
@@ -553,7 +556,8 @@ function Mesh2.gridHex(rings)
             fIdx = fIdx + 1
             fs[fIdx] = {
                 vIdx, vIdx + 1, vIdx + 2,
-                vIdx + 3, vIdx + 4, vIdx + 5 }
+                vIdx + 3, vIdx + 4, vIdx + 5
+            }
         end
     end
 

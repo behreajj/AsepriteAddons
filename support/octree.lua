@@ -6,7 +6,8 @@ Octree.__index = Octree
 setmetatable(Octree, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Back South West child index.
 Octree.BACK_SOUTH_WEST = 1
@@ -37,8 +38,8 @@ Octree.FRONT_NORTH_EAST = 8
 ---the number of points the node can hold before it
 ---is split into children.
 ---@param bounds table bounding volume
----@param capacity number point capacity
----@param level number|nil level, or depth
+---@param capacity integer point capacity
+---@param level integer|nil level, or depth
 ---@return table
 function Octree.new(bounds, capacity, level)
     local inst = setmetatable({}, Octree)
@@ -226,7 +227,7 @@ end
 ---Counts the number of leaves held by this node.
 ---Returns 1 if the node is itself a leaf.
 ---@param o table octree
----@return number
+---@return integer
 function Octree.countLeaves(o)
     -- Even if this is not used directly by
     -- any dialog, retain it for diagnostics.
@@ -250,7 +251,7 @@ end
 ---Counts the number of points held by this octree's
 ---leaf nodes.
 ---@param o table octree
----@return number
+---@return integer
 function Octree.countPoints(o)
     local children = o.children
     local lenChildren = #children
@@ -287,7 +288,7 @@ end
 ---Finds the maximum level, or depth, of
 ---the node and its children.
 ---@param o table octree node
----@return number
+---@return integer
 function Octree.maxLevel(o)
     -- Even if this is not used directly by
     -- any dialog, retain it for diagnostics.
@@ -387,7 +388,7 @@ end
 ---If a child capacity is not provided, defaults
 ---to the parent's capacity.
 ---@param o table octree
----@param childCapacity number|nil child capacity
+---@param childCapacity integer|nil child capacity
 ---@return table
 function Octree.split(o, childCapacity)
     local chCpVerif = childCapacity or o.capacity
@@ -444,8 +445,8 @@ end
 ---be 8 raised to the power of iterations, e.g.:
 ---8, 64, 512, etc.
 ---@param o table octree node
----@param itr number iterations
----@param childCapacity number|nil child capacity
+---@param itr integer iterations
+---@param childCapacity integer|nil child capacity
 ---@return table
 function Octree.subdivide(o, itr, childCapacity)
     if (not itr) or (itr < 1) then return o end

@@ -693,8 +693,8 @@ end
 ---integer, i.e., multiplies the next power
 ---by the integer's sign. Returns zero
 ---if input is equal to zero.
----@param x number input value
----@return number
+---@param x integer input value
+---@return integer
 function Utilities.nextPowerOf2(x)
     if x ~= 0 then
         local xSgn = 1

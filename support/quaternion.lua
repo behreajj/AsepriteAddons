@@ -134,7 +134,7 @@ function Quaternion.approx(a, b, tol)
 end
 
 ---Finds the conjugate of a quaternion.
----@param a table left operand
+---@param a table quaternion
 ---@return table
 function Quaternion.conj(a)
     local ai = a.imag
@@ -384,7 +384,7 @@ function Quaternion.log(a)
 end
 
 ---Finds a quaternion's magnitude, or length.
----@param a table left operand
+---@param a table quaternion
 ---@return number
 function Quaternion.mag(a)
     local ai = a.imag
@@ -396,7 +396,7 @@ function Quaternion.mag(a)
 end
 
 ---Finds a quaternion's magnitude squared.
----@param a table left operand
+---@param a table quaternion
 ---@return number
 function Quaternion.magSq(a)
     local ai = a.imag

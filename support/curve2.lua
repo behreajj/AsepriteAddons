@@ -15,7 +15,7 @@ setmetatable(Curve2, {
 ---a table of Knot2s.
 ---@param cl boolean closed loop
 ---@param knots table knots
----@param name string name
+---@param name string|nil name
 ---@return table
 function Curve2.new(cl, knots, name)
     local inst = setmetatable({}, Curve2)
@@ -121,7 +121,9 @@ end
 ---@param stopAngle number stop angle
 ---@param radius number radius
 ---@param stroke number stroke thickness
----@param offset number stroke offset
+---@param offset number|nil stroke offset
+---@param xOrigin number|nil origin x
+---@param yOrigin number|nil origin y
 ---@return table
 function Curve2.arcSector(startAngle, stopAngle, radius, stroke, offset, xOrigin, yOrigin)
     -- Supply default arguments.

@@ -2,9 +2,10 @@ Complex = {}
 Complex.__index = Complex
 
 setmetatable(Complex, {
-    __call = function (cls, ...)
+    __call = function(cls, ...)
         return cls.new(...)
-    end})
+    end
+})
 
 ---Constructs a new complex number.
 ---@param real number real
@@ -67,7 +68,7 @@ end
 function Complex.abs(z)
     return math.sqrt(
         z.real * z.real
-      + z.imag * z.imag)
+        + z.imag * z.imag)
 end
 
 ---Finds a complex number's absolute squared.
@@ -75,7 +76,7 @@ end
 ---@return number
 function Complex.absSq(z)
     return z.real * z.real
-         + z.imag * z.imag
+        + z.imag * z.imag
 end
 
 ---Finds the sum of complex numbers.
@@ -97,7 +98,7 @@ end
 function Complex.approx(a, b, tol)
     local eps = tol or 0.000001
     return math.abs(b.real - a.real) <= eps
-       and math.abs(b.imag - a.imag) <= eps
+        and math.abs(b.imag - a.imag) <= eps
 end
 
 ---Finds the conjugate of a complex number.
@@ -150,7 +151,7 @@ function Complex.inverse(z)
     if absSq ~= 0.0 then
         local invAbsSq = 1.0 / absSq
         return Complex.new(
-             zr * invAbsSq,
+            zr * invAbsSq,
             -zi * invAbsSq)
     else
         return Complex.new(0.0, 0.0)
@@ -226,7 +227,8 @@ end
 function Complex.polar(z)
     return {
         r = Complex.phase(z),
-        phi = Complex.abs(z) }
+        phi = Complex.abs(z)
+    }
 end
 
 ---Raises a left operand to the power of the right.

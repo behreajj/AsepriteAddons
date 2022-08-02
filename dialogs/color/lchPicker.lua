@@ -23,18 +23,22 @@ local defaults = {
     harmonyType = "NONE",
     analogies = {
         Color(255, 0, 102, 255),
-        Color(203, 99, 0, 255) },
+        Color(203, 99, 0, 255)
+    },
     complement = { Color(0, 162, 243, 255) },
     splits = {
         Color(0, 161, 156, 255),
-        Color(0, 154, 255, 255) },
+        Color(0, 154, 255, 255)
+    },
     squares = {
         Color(0, 151, 0, 255),
         Color(0, 162, 243, 255),
-        Color(157, 82, 255, 255) },
+        Color(157, 82, 255, 255)
+    },
     triads = {
         Color(0, 131, 255, 255),
-        Color(0, 158, 59, 255) },
+        Color(0, 158, 59, 255)
+    },
 
     shading = {
         Color(145, 0, 51, 255),
@@ -43,7 +47,8 @@ local defaults = {
         Color(253, 13, 26, 255),
         Color(255, 78, 28, 255),
         Color(255, 127, 45, 255),
-        Color(255, 186, 76, 255) },
+        Color(255, 186, 76, 255)
+    },
     shadeCount = 7
 }
 
@@ -245,6 +250,7 @@ local function setFromSelect(dialog, sprite, frame)
 
     local sel = AseUtilities.getSelection(sprite)
     local selBounds = sel.bounds
+
     local xSel = selBounds.x
     local ySel = selBounds.y
 
@@ -254,7 +260,8 @@ local function setFromSelect(dialog, sprite, frame)
         width = math.max(1, selBounds.width),
         height = math.max(1, selBounds.height),
         colorMode = colorMode,
-        transparentColor = sprSpec.transparentColor }
+        transparentColor = sprSpec.transparentColor
+    }
     selSpec.colorSpace = sprSpec.colorSpace
     local flatImage = Image(selSpec)
 
@@ -402,7 +409,9 @@ dlg:button {
     text = "F&ORE",
     focus = false,
     onclick = function()
-        setFromAse(dlg, app.fgColor)
+        if app.activeSprite then
+            setFromAse(dlg, app.fgColor)
+        end
     end
 }
 
@@ -411,9 +420,11 @@ dlg:button {
     text = "B&ACK",
     focus = false,
     onclick = function()
-        app.command.SwitchColors()
-        setFromAse(dlg, app.fgColor)
-        app.command.SwitchColors()
+        if app.activeSprite then
+            app.command.SwitchColors()
+            setFromAse(dlg, app.fgColor)
+            app.command.SwitchColors()
+        end
     end
 }
 
@@ -522,7 +533,7 @@ dlg:button {
     visible = true,
     onclick = function()
         local args = dlg.data
-        if #args.clr > 0 then
+        if app.activeSprite and #args.clr > 0 then
             assignToFore(args.clr[1])
         end
     end
@@ -535,9 +546,9 @@ dlg:button {
     visible = true,
     onclick = function()
         local args = dlg.data
-        if #args.clr > 0 then
+        if app.activeSprite and #args.clr > 0 then
             -- Bug where assigning to app.bgColor leads
-            -- to unlocked palette colors being assigned.
+            -- to unlocked palette colors changing.
             app.command.SwitchColors()
             assignToFore(args.clr[1])
             app.command.SwitchColors()
@@ -572,7 +583,8 @@ dlg:button {
             width = math.max(1, selBounds.width),
             height = math.max(1, selBounds.height),
             colorMode = colorMode,
-            transparentColor = sprSpec.transparentColor }
+            transparentColor = sprSpec.transparentColor
+        }
         selSpec.colorSpace = sprSpec.colorSpace
         local selImage = Image(selSpec)
         local px = selImage:pixels()

@@ -4,7 +4,8 @@ Glyph.__index = Glyph
 setmetatable(Glyph, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Constructs a new glyph from a character,
 ---a number representing an 8x8 matrix that
@@ -12,9 +13,9 @@ setmetatable(Glyph, {
 ---and a number to drop the glyph down by
 ---a number of steps (for glyphs with
 ---descenders, such as 'g', 'p', 'q').
----@param character string
----@param matrix number
----@param drop number
+---@param character string character
+---@param matrix integer visual matrix
+---@param drop integer|nil drop amount
 ---@return table
 function Glyph.new(character, matrix, drop)
     local inst = setmetatable({}, Glyph)

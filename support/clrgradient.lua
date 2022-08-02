@@ -203,10 +203,11 @@ end
 ---an easing function. Returns a color.
 ---The easing function is expected to accept
 ---an origin color, a destination color,
----and a number as a step.
+---and a number as a step. If nil, it defaults
+---to a mix in linear sRGB.
 ---@param cg table color gradient
 ---@param step number step
----@param easing function easing function
+---@param easing function|nil easing function
 ---@return table
 function ClrGradient.eval(cg, step, easing)
     local t = step or 0.5
@@ -247,15 +248,15 @@ end
 ---an origin color, a destination color,
 ---and a number as a step.
 ---@param cg table color gradient
----@param count number color count
----@param origin number origin step
----@param dest number destination step
----@param easing function easing function
+---@param count integer color count
+---@param origin number|nil origin step
+---@param dest number|nil destination step
+---@param easing function|nil easing function
 ---@return table
 function ClrGradient.evalRange(cg, count, origin, dest, easing)
 
     local vCount = count or 3
-    vCount = math.max(3, vCount)
+    if vCount < 3 then vCount = 3 end
     local vDest = dest or 1.0
     vDest = math.min(math.max(vDest, 0.0), 1.0)
     local vOrig = origin or 0.0

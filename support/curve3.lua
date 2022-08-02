@@ -14,7 +14,7 @@ setmetatable(Curve3, {
 ---a table of Knot3s.
 ---@param cl boolean closed loop
 ---@param knots table knots
----@param name string name
+---@param name string|nil name
 ---@return table
 function Curve3.new(cl, knots, name)
     local inst = setmetatable({}, Curve3)
@@ -291,8 +291,8 @@ end
 ---There must be at least 4 points in the array.
 ---@param closedLoop boolean closed loop flag
 ---@param points table array of points
----@param tightness number curve tightness
----@param name string curve name
+---@param tightness number|nil curve tightness
+---@param name string|nil curve name
 ---@return table
 function Curve3.fromCatmull(closedLoop, points, tightness, name)
 
@@ -418,7 +418,7 @@ end
 ---Smoothes the fore and rear handles of knots.
 ---@param closedLoop boolean closed loop
 ---@param points table points array
----@param name string curve name
+---@param name string|nil curve name
 ---@return table
 function Curve3.fromPoints(closedLoop, points, name)
     -- If a closed loop has similar start and

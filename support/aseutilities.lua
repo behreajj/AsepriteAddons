@@ -1533,38 +1533,24 @@ function AseUtilities.getPalette(frObj, palettes)
 end
 
 ---Gets a selection copied by value from a sprite.
----If the selection is empty, returns the sprite's
----bounds instead, i.e., from (0, 0) to (w, h).
----If the selection is not entirely contained by
----the canvas, returns the bounds intersection.
+---Calls InvertMask command twice. If selection is
+---empty, returns sprite bounds as selection.
 ---@param sprite userdata sprite
 ---@return table
 function AseUtilities.getSelection(sprite)
+    -- If a selection is moved, but the drag and
+    -- drop pixels checkmark is not pressed, then
+    -- a crash will result. MoveMask doesn't work
+    -- because move quantity has a minimum of 1.
+    app.transaction(function()
+        app.command.InvertMask()
+        app.command.InvertMask()
+    end)
     local sel = sprite.selection
     if (not sel) or sel.isEmpty then
         return Selection(sprite.bounds)
     end
-
-    local selBounds = sel.bounds
-    local sprBounds = sprite.bounds
-    local tlx = selBounds.x
-    local tly = selBounds.y
-    local brx = tlx + selBounds.width - 1
-    local bry = tly + selBounds.height - 1
-
-    -- A selection can be moved partially
-    -- or entirely outside the canvas bounds,
-    -- leading Aseprite to crash.
-    if (tlx >= 0) and (tly >= 0)
-        and (brx <= sprBounds.width)
-        and (bry <= sprBounds.height) then
-        local sprSel = Selection(sprBounds)
-        sprSel:intersect(sel)
-        return sprSel
-    else
-        return Selection(
-            sprBounds:intersect(selBounds))
-    end
+    return sel
 end
 
 ---Creates a table of gray colors represented as
@@ -1575,12 +1561,12 @@ end
 function AseUtilities.grayHexes(count)
     local floor = math.floor
     local valCount = count or 255
-    valCount = math.max(2, valCount)
-    local toFac = 255.0 / (valCount - 1.0)
+    if valCount < 2 then valCount = 2 end
+    local toGray = 255.0 / (valCount - 1.0)
     local result = {}
     local i = 0
     while i < valCount do
-        local g = floor(0.5 + i * toFac)
+        local g = floor(i * toGray + 0.5)
         i = i + 1
         result[i] = 0xff000000
             | g << 0x10 | g << 0x08 | g
@@ -1813,10 +1799,12 @@ end
 ---colors across sprite changes. Copies and
 ---reassigns the colors to themselves.
 function AseUtilities.preserveForeBack()
-    app.fgColor = AseUtilities.aseColorCopy(app.fgColor, "")
-    app.command.SwitchColors()
-    app.fgColor = AseUtilities.aseColorCopy(app.fgColor, "")
-    app.command.SwitchColors()
+    if app.activeSprite then
+        app.fgColor = AseUtilities.aseColorCopy(app.fgColor, "")
+        app.command.SwitchColors()
+        app.fgColor = AseUtilities.aseColorCopy(app.fgColor, "")
+        app.command.SwitchColors()
+    end
 end
 
 ---Returns a copy of the source image that has

@@ -38,7 +38,8 @@ local normalsPal = {
     0xffda80da, 0xffdabfbf, 0xffdada80, 0xffdabf40,
     0xffda8025, 0xffda4040, 0xffda2580, 0xffda40bf,
     0xfff580b0, 0xfff5a2a2, 0xfff5b080, 0xfff5a25d,
-    0xfff5804f, 0xfff55d5d, 0xfff54f80, 0xfff55da2 }
+    0xfff5804f, 0xfff55d5d, 0xfff54f80, 0xfff55da2
+}
 
 local function colorToVec(clr)
     local r255 = 127.5
@@ -109,7 +110,8 @@ end
 local function updateWidgetClr(dialog, clr)
     dialog:modify {
         id = "normalColor",
-        colors = { clr } }
+        colors = { clr }
+    }
 
     dialog:modify {
         id = "hexCode",
@@ -215,7 +217,9 @@ dlg:button {
     label = "Get:",
     text = "F&ORE",
     onclick = function()
-        updateFromColor(dlg, app.fgColor)
+        if app.activeSprite then
+            updateFromColor(dlg, app.fgColor)
+        end
     end
 }
 
@@ -223,9 +227,13 @@ dlg:button {
     id = "getColorBack",
     text = "B&ACK",
     onclick = function()
-        app.command.SwitchColors()
-        updateFromColor(dlg, app.fgColor)
-        app.command.SwitchColors()
+        if app.activeSprite then
+            -- Bug where assigning to app.bgColor leads
+            -- to unlocked palette colors changing.
+            app.command.SwitchColors()
+            updateFromColor(dlg, app.fgColor)
+            app.command.SwitchColors()
+        end
     end
 }
 
@@ -318,7 +326,7 @@ dlg:button {
     text = "&FORE",
     onclick = function()
         local normalColors = dlg.data.normalColor
-        if #normalColors > 0 then
+        if app.activeSprite and #normalColors > 0 then
             local normalColor = normalColors[1]
             app.fgColor = Color(
                 normalColor.red,
@@ -334,7 +342,7 @@ dlg:button {
     text = "&BACK",
     onclick = function()
         local normalColors = dlg.data.normalColor
-        if #normalColors > 0 then
+        if app.activeSprite and #normalColors > 0 then
             local normalColor = normalColors[1]
             app.command.SwitchColors()
             app.fgColor = Color(
@@ -510,7 +518,8 @@ dlg:button {
         -- Create smooth image.
         local gradSpec = ImageSpec {
             width = gradWidth,
-            height = gradHeight // 2 }
+            height = gradHeight // 2
+        }
         gradSpec.colorSpace = colorSpaceNone
         local gradImg = Image(gradSpec)
         local gradImgPxItr = gradImg:pixels()
@@ -533,7 +542,8 @@ dlg:button {
 
         local segSpec = ImageSpec {
             width = gradWidth,
-            height = gradHeight - gradHeight // 2 }
+            height = gradHeight - gradHeight // 2
+        }
         segSpec.colorSpace = colorSpaceNone
         local segImg = Image(segSpec)
         local segImgPxItr = segImg:pixels()
@@ -707,7 +717,7 @@ dlg:button {
                 elm(0xff000000
                     | (floor(zn * 127.5 + 128.0) << 0x10)
                     | (floor(yn * 127.5 + 128.0) << 0x08)
-                    |  floor(xn * 127.5 + 128.0))
+                    | floor(xn * 127.5 + 128.0))
             else
                 elm(hexDefault)
             end
