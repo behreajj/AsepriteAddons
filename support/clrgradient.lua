@@ -283,6 +283,7 @@ end
 ---@param arr table color array
 ---@return table
 function ClrGradient.fromColors(arr)
+    -- TODO: Create separate fromColorsInternal?
     local len = #arr
     if len < 1 then
         return ClrGradient.newInternal({

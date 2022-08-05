@@ -8,7 +8,8 @@ GradientUtilities.__index = GradientUtilities
 setmetatable(GradientUtilities, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Color spaces presets.
 GradientUtilities.CLR_SPC_PRESETS = {
@@ -18,14 +19,16 @@ GradientUtilities.CLR_SPC_PRESETS = {
     "HSL",
     "HSV",
     "LINEAR_RGB",
-    "S_RGB" }
+    "S_RGB"
+}
 
 ---Hue easing function presets.
 GradientUtilities.HUE_EASING_PRESETS = {
     "CCW",
     "CW",
     "FAR",
-    "NEAR" }
+    "NEAR"
+}
 
 ---Easing function presets for non-polar
 ---color representations.
@@ -34,7 +37,8 @@ GradientUtilities.RGB_EASING_PRESETS = {
     "EASE_OUT_CIRC",
     "LINEAR",
     "SMOOTH",
-    "SMOOTHER" }
+    "SMOOTHER"
+}
 
 ---Default color space preset.
 GradientUtilities.DEFAULT_CLR_SPC = "CIE_LCH"
@@ -47,22 +51,24 @@ GradientUtilities.DEFAULT_RGB_EASING = "LINEAR"
 
 ---Converts an array of Aseprite colors to a
 ---ClrGradient. If the number of colors is less
----than one, returns a gradient with clear black
----and opaque white. If the number is less than
----two, returns a gradient with the clear and
----original color.
----@param aseColors table
+---than one, returns a gradient with black and
+---white. If the number is less than two, returns
+---with the original color and its opaque variant.
+---@param aseColors table array of Aseprite colors
 ---@return table
 function GradientUtilities.aseColorsToClrGradient(aseColors)
+    -- Different from ClrGradient.fromColors due to
+    -- Gradient Outline. Avoid zero alpha colors because
+    -- iterations are lost if background is zero.
     local clrKeys = {}
     local lenColors = #aseColors
     if lenColors < 1 then
-        clrKeys[1] = ClrKey.newByRef(0.0, Clr.clearBlack())
+        clrKeys[1] = ClrKey.newByRef(0.0, Clr.black())
         clrKeys[2] = ClrKey.newByRef(1.0, Clr.white())
     elseif lenColors < 2 then
         local c = AseUtilities.aseColorToClr(aseColors[1])
-        clrKeys[1] = ClrKey.newByRef(0.0, Clr.new(c.r, c.g, c.b, 0.0))
-        clrKeys[2] = ClrKey.newByRef(1.0, c)
+        clrKeys[1] = ClrKey.newByRef(0.0, c)
+        clrKeys[2] = ClrKey.newByRef(1.0, Clr.new(c.r, c.g, c.b, 1.0))
     else
         local toStep = 1.0 / (lenColors - 1)
         local i = 0
@@ -119,7 +125,8 @@ function GradientUtilities.dialogWidgets(dlg)
         mode = "sort",
         colors = {
             AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
-            AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL) }
+            AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL)
+        }
     }
 
     dlg:newrow { always = false }
@@ -222,7 +229,8 @@ function GradientUtilities.dialogWidgets(dlg)
         onclick = function()
             dlg:modify {
                 id = "shades",
-                colors = Utilities.reverseTable(dlg.data.shades) }
+                colors = Utilities.reverseTable(dlg.data.shades)
+            }
         end
     }
 
@@ -248,13 +256,15 @@ function GradientUtilities.dialogWidgets(dlg)
                 id = "huePreset",
                 visible = md == "CIE_LCH"
                     or md == "HSL"
-                    or md == "HSV" }
+                    or md == "HSV"
+            }
             dlg:modify {
                 id = "easPreset",
                 visible = md == "S_RGB"
                     or md == "LINEAR_RGB"
                     or md == "CIE_LAB"
-                    or md == "CIE_XYZ" }
+                    or md == "CIE_XYZ"
+            }
         end
     }
 

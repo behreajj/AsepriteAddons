@@ -188,7 +188,7 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
             if isUnlocked(activeLayer, activeSprite)
                 and (vBkgAll or not activeLayer.isBackground) then
 
-                -- TODO: What if active is group cel? Get leaves?
+                -- TODO: What if active is group layer, get leaves?
                 local activeCel = app.activeCel
                 if activeCel then
                     targetCels[1] = activeCel
@@ -394,7 +394,7 @@ dlg:button {
 }
 
 dlg:button {
-    id = "tlAlignButton",
+    id = "tAlignButton",
     text = "&T",
     focus = false,
     onclick = function()
@@ -405,12 +405,20 @@ dlg:button {
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
+        local xCtrSprite = activeSprite.width * 0.5
 
         app.transaction(function()
             local i = 0
             while i < celsLen do i = i + 1
                 local cel = cels[i]
-                cel.position = Point(cel.position.x, 0)
+                local posOld = cel.position
+                local xNew = posOld.x
+                local yNew = 0
+                if posOld.y == yNew then
+                    local w = cel.image.width
+                    xNew = math.floor(0.5 + xCtrSprite - w * 0.5)
+                end
+                cel.position = Point(xNew, yNew)
             end
         end)
 
@@ -459,12 +467,20 @@ dlg:button {
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
+        local yCtrSprite = activeSprite.height * 0.5
 
         app.transaction(function()
             local i = 0
             while i < celsLen do i = i + 1
                 local cel = cels[i]
-                cel.position = Point(0, cel.position.y)
+                local posOld = cel.position
+                local xNew = 0
+                local yNew = posOld.y
+                if posOld.x == xNew then
+                    local h = cel.image.height
+                    yNew = math.floor(0.5 + yCtrSprite - h * 0.5)
+                end
+                cel.position = Point(xNew, yNew)
             end
         end)
 
@@ -517,14 +533,21 @@ dlg:button {
         local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
         local wSprite = activeSprite.width
+        local yCtrSprite = activeSprite.height * 0.5
 
         app.transaction(function()
             local i = 0
             while i < celsLen do i = i + 1
                 local cel = cels[i]
-                cel.position = Point(
-                    wSprite - cel.image.width,
-                    cel.position.y)
+                local celImg = cel.image
+                local posOld = cel.position
+                local xNew = wSprite - celImg.width
+                local yNew = posOld.y
+                if posOld.x == xNew then
+                    local h = cel.image.height
+                    yNew = math.floor(0.5 + yCtrSprite - h * 0.5)
+                end
+                cel.position = Point(xNew, yNew)
             end
         end)
 
@@ -573,15 +596,22 @@ dlg:button {
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
+        local xCtrSprite = activeSprite.width * 0.5
         local hSprite = activeSprite.height
 
         app.transaction(function()
             local i = 0
             while i < celsLen do i = i + 1
                 local cel = cels[i]
-                cel.position = Point(
-                    cel.position.x,
-                    hSprite - cel.image.height)
+                local celImg = cel.image
+                local posOld = cel.position
+                local xNew = posOld.x
+                local yNew = hSprite - celImg.height
+                if posOld.y == yNew then
+                    local w = celImg.width
+                    xNew = math.floor(0.5 + xCtrSprite - w * 0.5)
+                end
+                cel.position = Point(xNew, yNew)
             end
         end)
 
@@ -643,7 +673,7 @@ dlg:button {
         -- Unpack arguments.
         local args = dlg.data
         local degrees = args.degrees or defaults.degrees
-        if degrees == 0 or degrees == 180
+        if degrees == 0 or degrees == 180 or degrees == 360
             or degrees == 90 or degrees == 270 then return end
 
         -- Determine bilinear vs. nearest.
@@ -736,7 +766,7 @@ dlg:button {
         -- Unpack arguments.
         local args = dlg.data
         local degrees = args.degrees or defaults.degrees
-        if degrees == 0 or degrees == 180
+        if degrees == 0 or degrees == 180 or degrees == 360
             or degrees == 90 or degrees == 270 then return end
 
         -- Determine bilinear vs. nearest.
@@ -829,7 +859,7 @@ dlg:button {
         -- Unpack arguments.
         local args = dlg.data
         local degrees = args.degrees or defaults.degrees
-        if degrees == 0 then return end
+        if degrees == 0 or degrees == 360 then return end
 
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
@@ -900,6 +930,9 @@ dlg:button {
             local radians = degrees * 0.017453292519943
             if query then radians = query end
 
+            -- Avoid trigonmetric functions in while loop below.
+            -- Cache sine and cosine here, then use formula for
+            -- vector rotation.
             local cosa = math.cos(radians)
             local sina = -math.sin(radians)
             local absCosa = math.abs(cosa)
@@ -929,8 +962,7 @@ dlg:button {
                         local xTrgCenter = wTrg * 0.5
                         local yTrgCenter = hTrg * 0.5
 
-                        -- The goal with this calculation is to try
-                        -- to minimize drift in the cel's position.
+                        -- Try to minimize drift in the cel's position.
                         local wDiffHalf = round((wTrg - wSrc) * 0.5)
                         local hDiffHalf = round((hTrg - hSrc) * 0.5)
 
@@ -943,10 +975,9 @@ dlg:button {
                         trgSpec.colorSpace = srcSpec.colorSpace
                         local trgImg = Image(trgSpec)
 
-                        -- It is important to loop through target
-                        -- pixels and read from source pixels. Looping
-                        -- through source pixels leads to a rotation
-                        -- with gaps between pixels.
+                        -- Loop through target pixels and read from
+                        -- source pixels. Looping through source pixels
+                        -- results in gaps between pixels.
                         local trgPxItr = trgImg:pixels()
                         for elm in trgPxItr do
                             local xSgn = elm.x - xTrgCenter

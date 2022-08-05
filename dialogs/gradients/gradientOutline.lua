@@ -160,7 +160,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -169,7 +170,8 @@ dlg:button {
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "Only RGB color mode is supported." }
+                text = "Only RGB color mode is supported."
+            }
             return
         end
 
@@ -177,7 +179,8 @@ dlg:button {
         if not srcLayer then
             app.alert {
                 title = "Error",
-                text = "There is no active layer." }
+                text = "There is no active layer."
+            }
             return
         end
 
@@ -196,29 +199,27 @@ dlg:button {
         local activeMatrix = {
             args.m00, args.m01, args.m02,
             args.m10, args.m12,
-            args.m20, args.m21, args.m22 }
+            args.m20, args.m21, args.m22
+        }
         local dirMatrix = {
             { 1, 1 }, { 0, 1 }, { -1, 1 },
             { 1, 0 }, { -1, 0 },
-            { 1, -1 }, { 0, -1 }, { -1, -1 } }
+            { 1, -1 }, { 0, -1 }, { -1, -1 }
+        }
 
         local activeOffsets = {}
-        -- local diagStrs = {}
         for i = 1, #activeMatrix, 1 do
             if activeMatrix[i] then
                 table.insert(activeOffsets, dirMatrix[i])
-                -- table.insert(diagStrs,
-                --     string.format("(%d, %d)",
-                --         dirMatrix[i][1], dirMatrix[i][2]))
             end
         end
-        -- print(table.concat(diagStrs, ", "))
         local activeCount = #activeOffsets
 
         if activeCount < 1 then
             app.alert {
                 title = "Error",
-                text = "Neighbor matrix is empty." }
+                text = "Neighbor matrix is empty."
+            }
             return
         end
 
@@ -233,7 +234,33 @@ dlg:button {
             end
         end
 
-        local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
+        -- Cache methods.
+        local quantize = Utilities.quantizeUnsigned
+        local cgeval = ClrGradient.eval
+        local toHex = Clr.toHex
+        local blend = Clr.blendInternal
+        local clrNew = Clr.new
+        local tilesToImage = AseUtilities.tilesToImage
+
+        local bkgClr = AseUtilities.aseColorToClr(aseBkgColor)
+        local bkgHex = toHex(bkgClr)
+
+        -- Problem where an iteration is lost when a gradient
+        -- evaluate returns the background color. This could
+        -- still happen as a result of mix, but minimize the
+        -- chances by filtering out background inputs.
+        local filtered = {}
+        local lenAseColors = #aseColors
+        local k = 0
+        while k < lenAseColors do k = k + 1
+            local aseColor = aseColors[k]
+            if aseColor.alpha > 0
+                and aseColor.rgbaPixel ~= bkgHex then
+                table.insert(filtered, aseColor)
+            end
+        end
+
+        local gradient = GradientUtilities.aseColorsToClrGradient(filtered)
         local facAdjust = GradientUtilities.easingFuncFromPreset(
             args.easPreset)
         local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
@@ -263,14 +290,6 @@ dlg:button {
             end
         end
 
-        -- Cache methods.
-        local quantize = Utilities.quantizeUnsigned
-        local cgeval = ClrGradient.eval
-        local toHex = Clr.toHex
-        local blend = Clr.blendInternal
-        local clrNew = Clr.new
-        local tilesToImage = AseUtilities.tilesToImage
-
         -- For auto alpha fade.
         -- The clr needs to be blended with the background.
         local alphaEnd = 0.0
@@ -278,8 +297,6 @@ dlg:button {
             alphaEnd = 1.0 / (iterations - 1.0)
         end
         local alphaStart = 1.0 - alphaEnd
-        local bkgClr = AseUtilities.aseColorToClr(aseBkgColor)
-        local bkgHex = toHex(bkgClr)
         local itr2 = iterations + iterations
         local itrPoint = Point(iterations, iterations)
 
@@ -346,7 +363,6 @@ dlg:button {
                 }
                 specTrg.colorSpace = specSrc.colorSpace
                 local trgImg = Image(specTrg)
-                trgImg:clear(bkgHex)
                 trgImg:drawImage(srcImg, itrPoint)
 
                 h = 0
@@ -357,7 +373,7 @@ dlg:button {
                     local readPxItr = readImg:pixels()
                     for elm in readPxItr do
                         local cRead = elm()
-                        if cRead == bkgHex then
+                        if cRead == bkgHex or cRead == 0x0 then
                             -- Loop through matrix, check neighbors
                             -- against background. There's no need to
                             -- tally up neighbor marks; just draw a
@@ -374,7 +390,7 @@ dlg:button {
                                     local xNbr = xRead + offset[1]
                                     if xNbr >= 0 and xNbr < wTrg then
                                         local cNbr = readImg:getPixel(xNbr, yNbr)
-                                        if cNbr ~= bkgHex then
+                                        if cNbr ~= bkgHex and cNbr ~= 0x0 then
                                             trgImg:drawPixel(xRead, yRead, hexOutline)
                                             continue = false
                                         end

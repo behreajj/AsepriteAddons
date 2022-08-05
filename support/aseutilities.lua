@@ -209,7 +209,6 @@ end
 ---@return table
 ---@return table
 function AseUtilities.asePaletteLoad(palType, filePath, presetPath, startIndex, count, correctZeroAlpha)
-
     local cntVal = count or 256
     local siVal = startIndex or 0
 
@@ -633,9 +632,7 @@ end
 ---@param position userdata cel position
 ---@param guiClr integer hexadecimal color
 ---@return table
-function AseUtilities.createCels(sprite, frameStartIndex, frameCount, layerStartIndex, layerCount, image, position,
-                                 guiClr)
-
+function AseUtilities.createCels(sprite, frameStartIndex, frameCount, layerStartIndex, layerCount, image, position, guiClr)
     -- Do not use app.transactions.
     -- https://github.com/aseprite/aseprite/issues/3276
 
@@ -761,7 +758,6 @@ end
 ---@param duration number frame duration
 ---@return table
 function AseUtilities.createFrames(sprite, count, duration)
-
     -- Do not use app.transactions.
     -- https://github.com/aseprite/aseprite/issues/3276
 
@@ -1532,9 +1528,9 @@ function AseUtilities.getPalette(frObj, palettes)
     return palettes[idx]
 end
 
----Gets a selection copied by value from a sprite.
----Calls InvertMask command twice. If selection is
----empty, returns sprite bounds as selection.
+---Gets a selection from a sprite. Calls InvertMask
+---command twice. If selection is empty, returns
+---sprite bounds as selection.
 ---@param sprite userdata sprite
 ---@return table
 function AseUtilities.getSelection(sprite)
@@ -1548,6 +1544,9 @@ function AseUtilities.getSelection(sprite)
     end)
     local sel = sprite.selection
     if (not sel) or sel.isEmpty then
+        -- TODO: Should this be a getOrDefault
+        -- so that gradients and transformCel
+        -- can beheave differently?
         return Selection(sprite.bounds)
     end
     return sel
@@ -1758,10 +1757,9 @@ function AseUtilities.parseTag(tag)
 end
 
 ---Parses an array of Aseprite tags. Returns
----an array of arrays. It is possible
----for inner arrays to hold duplicate frame
----indices,  as the user may intend for the
----same frame to appear in multiple groups.
+---an array of arrays. Inner arrays may hold
+---duplicate frame indices, as the same frame
+---could appear in multiple groups.
 ---@param tags table tags array
 ---@return table
 function AseUtilities.parseTagsOverlap(tags)
@@ -1797,7 +1795,8 @@ end
 
 ---Preserves the application fore- and background
 ---colors across sprite changes. Copies and
----reassigns the colors to themselves.
+---reassigns the colors to themselves. Does nothing
+---if there is no active sprite.
 function AseUtilities.preserveForeBack()
     if app.activeSprite then
         app.fgColor = AseUtilities.aseColorCopy(app.fgColor, "")
