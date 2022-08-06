@@ -520,9 +520,9 @@ end
 ---Creates a one-dimensional table of vectors
 ---arranged in a Cartesian grid from the lower
 ---to the upper bound. Both bounds are vectors.
----@param cols number columns
----@param rows number rows
----@param layers number layers
+---@param cols integer columns
+---@param rows integer rows
+---@param layers integer layers
 ---@param lb table lower bound
 ---@param ub table upper bound
 ---@return table
@@ -577,9 +577,9 @@ end
 ---is ordered by layers, latitudes, then
 ---longitudes. If poles are included, they are
 ---appended at the end of the table.
----@param longitudes number longitudes or azimuths
----@param latitudes number latitudes or inclinations
----@param layers number layers or radii
+---@param longitudes integer longitudes or azimuths
+---@param latitudes integer latitudes or inclinations
+---@param layers integer layers or radii
 ---@param radiusMin number minimum radius
 ---@param radiusMax number maximum radius
 function Vec3.gridSpherical(longitudes, latitudes, layers, radiusMin, radiusMax)

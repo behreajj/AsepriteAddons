@@ -6,6 +6,7 @@ local defaults = {
     target = "RANGE",
     iterations = 16,
     alphaFade = false,
+    reverseFade = false,
     m00 = false,
     m01 = true,
     m02 = false,
@@ -52,7 +53,25 @@ dlg:check {
     id = "alphaFade",
     label = "Alpha:",
     text = "Auto Fade",
-    selected = defaults.alphaFade
+    selected = defaults.alphaFade,
+    onclick = function()
+        local args = dlg.data
+        dlg:modify {
+            id = "reverseFade",
+            visible = args.alphaFade
+        }
+        dlg:modify {
+            id = "reverseFade",
+            selected = defaults.reverseFade
+        }
+    end
+}
+
+dlg:check {
+    id = "reverseFade",
+    text = "Reverse",
+    selected = defaults.reverseFade,
+    visible = defaults.alphaFade
 }
 
 dlg:newrow { always = false }
@@ -188,6 +207,7 @@ dlg:button {
         local args = dlg.data
         local target = args.target or defaults.target
         local alphaFade = args.alphaFade
+        local reverseFade = args.reverseFade
         local clrSpacePreset = args.clrSpacePreset
         local aseColors = args.shades
         local levels = args.quantize
@@ -292,11 +312,19 @@ dlg:button {
 
         -- For auto alpha fade.
         -- The clr needs to be blended with the background.
-        local alphaEnd = 0.0
+        local alphaEnd = 1.0
+        local alphaStart = 1.0
         if iterations > 1 then
-            alphaEnd = 1.0 / (iterations - 1.0)
+            alphaEnd = 1.0 / (iterations + 1.0)
+            alphaStart = 1.0 - alphaEnd
         end
-        local alphaStart = 1.0 - alphaEnd
+
+        if reverseFade then
+            local swap = alphaEnd
+            alphaEnd = alphaStart
+            alphaStart = swap
+        end
+
         local itr2 = iterations + iterations
         local itrPoint = Point(iterations, iterations)
 

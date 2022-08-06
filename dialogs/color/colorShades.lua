@@ -420,7 +420,7 @@ dlg:button {
                         sprite,
                         1, reqFrames,
                         plotPalLayer.stackIndex, 1,
-                        plotImage, plotPos)
+                        plotImage, plotPos, 0x0)
                 end)
             end
 

@@ -629,8 +629,8 @@ end
 ---@param layerStartIndex integer layer start index
 ---@param layerCount integer layer count
 ---@param image userdata cel image
----@param position userdata cel position
----@param guiClr integer hexadecimal color
+---@param position userdata|nil cel position
+---@param guiClr integer|nil hexadecimal color
 ---@return table
 function AseUtilities.createCels(sprite, frameStartIndex, frameCount, layerStartIndex, layerCount, image, position, guiClr)
     -- Do not use app.transactions.
@@ -735,8 +735,7 @@ function AseUtilities.createCels(sprite, frameStartIndex, frameCount, layerStart
 
     end
 
-    local useGuiClr = guiClr and guiClr ~= 0x0
-    if useGuiClr then
+    if guiClr and guiClr ~= 0x0 then
         local aseColor = AseUtilities.hexToAseColor(guiClr)
         local j = 0
         while j < flatCount do
@@ -813,9 +812,9 @@ end
 ---Returns a table of layers.
 ---@param sprite userdata sprite
 ---@param count integer number of layers to create
----@param blendMode integer blend mode
----@param opacity integer layer opacity
----@param guiClr integer hexadecimal color
+---@param blendMode integer|nil blend mode
+---@param opacity integer|nil layer opacity
+---@param guiClr integer|nil hexadecimal color
 ---@return table
 function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr)
     if not sprite then
@@ -852,8 +851,6 @@ function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr)
     local valCount = count or 1
     if valCount < 1 then valCount = 1 end
 
-    local useGuiClr = guiClr and guiClr ~= 0x0
-
     local oldLayerCount = #sprite.layers
     local layers = {}
     app.transaction(function()
@@ -870,7 +867,7 @@ function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr)
         end
     end)
 
-    if useGuiClr then
+    if guiClr and guiClr ~= 0x0 then
         local aseColor = AseUtilities.hexToAseColor(guiClr)
         app.transaction(function()
             local i = 0
@@ -1281,7 +1278,6 @@ end
 ---@param cel userdata cel
 ---@param layer userdata layer
 function AseUtilities.drawMesh2(mesh, useFill, fillClr, useStroke, strokeClr, brsh, cel, layer)
-
     -- Convert Vec2s to Points.
     -- Round Vec2 for improved accuracy.
     local vs = mesh.vs
@@ -1596,7 +1592,7 @@ end
 ---@param layerName string|nil layer name
 ---@param colors table|nil array of hexes
 ---@param colorSpace userdata|nil color space
----@return table
+---@return userdata
 function AseUtilities.initCanvas(wDefault, hDefault, layerName, colors, colorSpace)
 
     local clrsVal = AseUtilities.DEFAULT_PAL_ARR

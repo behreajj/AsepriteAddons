@@ -4,8 +4,8 @@ local coords = { "CARTESIAN", "POLAR" }
 
 local defaults = {
     coord = "CARTESIAN",
-    xOrigin = 0,
-    yOrigin = 50,
+    xOrig = 0,
+    yOrig = 50,
     xDest = 100,
     yDest = 50,
     xCenter = 50,
@@ -28,8 +28,8 @@ dlg:combobox {
         local args = dlg.data
         local coord = args.coord
         local isCart = coord == "CARTESIAN"
-        dlg:modify { id = "xOrigin", visible = isCart }
-        dlg:modify { id = "yOrigin", visible = isCart }
+        dlg:modify { id = "xOrig", visible = isCart }
+        dlg:modify { id = "yOrig", visible = isCart }
         dlg:modify { id = "xDest", visible = isCart }
         dlg:modify { id = "yDest", visible = isCart }
 
@@ -44,19 +44,19 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "xOrigin",
+    id = "xOrig",
     label = "Origin %:",
     min = 0,
     max = 100,
-    value = defaults.xOrigin,
+    value = defaults.xOrig,
     visible = defaults.coord == "CARTESIAN"
 }
 
 dlg:slider {
-    id = "yOrigin",
+    id = "yOrig",
     min = 0,
     max = 100,
-    value = defaults.yOrigin,
+    value = defaults.yOrig,
     visible = defaults.coord == "CARTESIAN"
 }
 
@@ -134,7 +134,8 @@ dlg:button {
                 width = app.preferences.new_file.width,
                 height = app.preferences.new_file.height,
                 colorMode = ColorMode.RGB,
-                transparentColor = 0 }
+                transparentColor = 0
+            }
             newSpec.colorSpace = ColorSpace { sRGB = true }
             activeSprite = Sprite(newSpec)
             AseUtilities.setPalette(
@@ -146,7 +147,8 @@ dlg:button {
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "Only RGB color mode is supported." }
+                text = "Only RGB color mode is supported."
+            }
             return
         end
 
@@ -202,15 +204,15 @@ dlg:button {
             xDsPx = xCtPx + rtcos
             yDsPx = yCtPx - rtsin
         else
-            local xOrigin = args.xOrigin or defaults.xOrigin
-            local yOrigin = args.yOrigin or defaults.yOrigin
+            local xOrig = args.xOrig or defaults.xOrig
+            local yOrig = args.yOrig or defaults.yOrig
             local xDest = args.xDest or defaults.xDest
             local yDest = args.yDest or defaults.yDest
 
-            xOrPx = xOrigin * wn1 * 0.01
-            yOrPx = yOrigin * hn1 * 0.01
-            xDsPx = xDest * wn1 * 0.01
-            yDsPx = yDest * hn1 * 0.01
+            xOrPx = wn1 * xOrig * 0.01
+            yOrPx = hn1 * yOrig * 0.01
+            xDsPx = wn1 * xDest * 0.01
+            yDsPx = hn1 * yDest * 0.01
         end
 
         local bx = xDsPx - xOrPx
@@ -236,7 +238,8 @@ dlg:button {
             width = math.max(1, selBounds.width),
             height = math.max(1, selBounds.height),
             colorMode = activeSpec.colorMode,
-            transparentColor = activeSpec.transparentColor }
+            transparentColor = activeSpec.transparentColor
+        }
         grdSpec.colorSpace = activeSpec.colorSpace
 
         local grdImg = Image(grdSpec)
@@ -268,7 +271,8 @@ dlg:button {
         if invalidFlag then
             app.alert {
                 title = "Warning",
-                text = "Origin and destination are the same." }
+                text = "Origin and destination are the same."
+            }
         end
     end
 }

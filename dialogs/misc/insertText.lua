@@ -405,7 +405,7 @@ dlg:button {
                     sprite,
                     actFrIdx, totalCharCount,
                     layer.stackIndex, 1,
-                    Image(1, 1), stillPos)
+                    Image(1, 1), stillPos, 0x0)
             end)
 
             local yCaret = 0

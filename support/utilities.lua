@@ -209,7 +209,7 @@ end
 ---Given a source pixel array, creates a new array with
 ---the pixels flipped horizontally.
 ---@param source table source pixels
----@param w number image width
+---@param w integer image width
 ---@return table
 function Utilities.flipPixelsHoriz(source, w)
     local len = #source
@@ -226,8 +226,8 @@ end
 ---Given a source pixel array, creates a new array with
 ---the pixels flipped vertically.
 ---@param source table source pixels
----@param w number image width
----@param h number image height
+---@param w integer image width
+---@param h integer image height
 ---@return table
 function Utilities.flipPixelsVert(source, w, h)
     local len = #source
@@ -242,11 +242,10 @@ function Utilities.flipPixelsVert(source, w, h)
 end
 
 ---Finds the greatest common denominator
----between two numbers.
----Assumes a and b are positive integers.
----@param a number antecedent term
----@param b number consequent term
----@return number
+---between two positive integers.
+---@param a integer antecedent term
+---@param b integer consequent term
+---@return integer
 function Utilities.gcd(a, b)
     while b ~= 0 do a, b = b, a % b end
     return a
@@ -284,8 +283,8 @@ end
 
 ---Forces an overflow wrap to make 64 bit
 ---integers behave like 32 bit integers.
----@param x number the integer
----@return number
+---@param x integer the integer
+---@return integer
 function Utilities.int32Overflow(x)
     -- https://stackoverflow.com/questions/
     -- 300840/force-php-integer-overflow
@@ -410,7 +409,7 @@ end
 ---in the range 16 to 120. The delimiter inserted into
 ---a string is '\n'.
 ---@param srcStr string source string
----@param limit number character limit per line
+---@param limit integer|nil character limit per line
 ---@return string
 function Utilities.lineWrapString(srcStr, limit)
     local chars2d = Utilities.lineWrapStringToChars(
@@ -434,7 +433,7 @@ end
 ---each inner table contains characters representing a
 ---line of text. Tabs are treated as spaces.
 ---@param srcStr string source string
----@param limit number character limit per line
+---@param limit integer|nil character limit per line
 ---@return table
 function Utilities.lineWrapStringToChars(srcStr, limit)
     if srcStr and #srcStr > 0 then
@@ -724,7 +723,7 @@ end
 ---duplicate frame indices,  as the user may intend for
 ---the same frame to appear in multiple groups.
 ---@param s string range string
----@param frameCount number number of frames
+---@param frameCount integer|nil number of frames
 ---@return table
 function Utilities.parseRangeStringOverlap(s, frameCount)
     local fcVerif = frameCount or 2147483647
@@ -796,7 +795,7 @@ end
 ---
 ---Returns an ordered set of integers.
 ---@param s string range string
----@param frameCount number number of frames
+---@param frameCount integer|nil number of frames
 ---@return table
 function Utilities.parseRangeStringUnique(s, frameCount)
     local arr2 = Utilities.parseRangeStringOverlap(
@@ -861,7 +860,7 @@ end
 ---Promotes a Vec2 to a Vec3.
 ---The z component defaults to 0.0.
 ---@param a table vector
----@param z number z component
+---@param z number|nil z component
 ---@return table
 function Utilities.promoteVec2ToVec3(a, z)
     local vz = z or 0.0
@@ -872,8 +871,8 @@ end
 ---The z component defaults to 0.0.
 ---The w component defaults to 0.0.
 ---@param a table vector
----@param z number z component
----@param w number w component
+---@param z number|nil z component
+---@param w number|nil w component
 ---@return table
 function Utilities.promoteVec2ToVec4(a, z, w)
     local vz = z or 0.0
@@ -884,7 +883,7 @@ end
 ---Promotes a Vec3 to a Vec4.
 ---The w component defaults to 0.0.
 ---@param a table vector
----@param w number w component
+---@param w number|nil w component
 ---@return table
 function Utilities.promoteVec3ToVec4(a, w)
     local vw = w or 0.0
@@ -960,10 +959,10 @@ end
 ---Reduces a ratio of positive integers
 ---to their smallest terms through division
 ---by their greatest common denominator.
----@param a number antecedent term
----@param b number consequent term
----@return number
----@return number
+---@param a integer antecedent term
+---@param b integer consequent term
+---@return integer
+---@return integer
 function Utilities.reduceRatio(a, b)
     local denom = Utilities.gcd(a, b)
     return a // denom, b // denom
@@ -1016,8 +1015,8 @@ end
 ---Given a source pixel array, creates a new array with
 ---the elements rotated 90 degrees counter-clockwise.
 ---@param source table source pixels
----@param w number image width
----@param h number image height
+---@param w integer image width
+---@param h integer image height
 ---@return table
 function Utilities.rotatePixels90(source, w, h)
     local len = #source
@@ -1034,8 +1033,8 @@ end
 ---Given a source pixel array, creates a new array with
 ---the elements rotated 270 degrees counter-clockwise.
 ---@param source table source pixels
----@param w number image width
----@param h number image height
+---@param w integer image width
+---@param h integer image height
 ---@return table
 function Utilities.rotatePixels270(source, w, h)
     local len = #source
@@ -1053,7 +1052,7 @@ end
 ---0.5. Returns zero when the number cannot be determined
 ---to be either greater than or less than zero.
 ---@param x number real number
----@return number
+---@return integer
 function Utilities.round(x)
     -- math.tointeger(-0.00001) = -1, so modf must be used.
     local ix, fx = math.modf(x)
@@ -1223,10 +1222,10 @@ end
 ---wrapping the elements that exceed its dimensions back
 ---to the beginning.
 ---@param source table source pixels
----@param x number x translation
----@param y number y translation
----@param w number image width
----@param h number image height
+---@param x integer x translation
+---@param y integer y translation
+---@param w integer image width
+---@param h integer image height
 function Utilities.wrapPixels(source, x, y, w, h)
     local len = #source
     local wrapped = {}

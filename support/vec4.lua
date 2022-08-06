@@ -443,10 +443,10 @@ end
 ---Creates a one-dimensional table of vectors
 ---arranged in a Cartesian grid from the lower
 ---to the upper bound. Both bounds are vectors.
----@param cols number columns
----@param rows number rows
----@param layers number layers
----@param strata number strata
+---@param cols integer columns
+---@param rows integer rows
+---@param layers integer layers
+---@param strata integer strata
 ---@param lb table lower bound
 ---@param ub table upper bound
 ---@return table
