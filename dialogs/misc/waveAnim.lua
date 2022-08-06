@@ -28,9 +28,10 @@ local defaults = {
     yDisplaceOrig = 5,
     xDisplaceDest = 5,
     yDisplaceDest = 5,
+    sustain = 25,
+    tilt = 67,
 
     -- Experimental
-    sustain = 50,
     timeDecay = 100,
     spaceDecay = 100,
 
@@ -56,7 +57,8 @@ dlg:combobox {
         dlg:modify { id = "uDisplaceDest", visible = isRadial }
         dlg:modify { id = "xCenter", visible = isRadial }
         dlg:modify { id = "yCenter", visible = isRadial }
-        -- dlg:modify { id = "sustain", visible = isRadial }
+        dlg:modify { id = "sustain", visible = isRadial }
+        dlg:modify { id = "tilt", visible = isRadial }
 
         local isInter = waveType == "INTERLACED"
         dlg:modify { id = "interType", visible = isInter }
@@ -150,16 +152,27 @@ dlg:slider {
     visible = defaults.waveType == "RADIAL"
 }
 
--- dlg:newrow { always = false }
+dlg:newrow { always = false }
 
--- dlg:slider {
---     id = "sustain",
---     label = "Sustain:",
---     min = 0,
---     max = 100,
---     value = defaults.sustain,
---     visible = defaults.waveType == "RADIAL"
--- }
+dlg:slider {
+    id = "sustain",
+    label = "Sustain %:",
+    min = 0,
+    max = 100,
+    value = defaults.sustain,
+    visible = defaults.waveType == "RADIAL"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "tilt",
+    label = "Tilt %:",
+    min = 0,
+    max = 100,
+    value = defaults.tilt,
+    visible = defaults.waveType == "RADIAL"
+}
 
 dlg:newrow { always = false }
 
@@ -295,7 +308,8 @@ dlg:button {
         if not srcSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -323,6 +337,11 @@ dlg:button {
         -- Constants.
         local pi = math.pi
         local tau = pi + pi
+        local sqrt = math.sqrt
+        local cos = math.cos
+        local sin = math.sin
+        local max = math.max
+        local min = math.min
         local round = Utilities.round
         local trimImage = AseUtilities.trimImageAlpha
 
@@ -339,8 +358,8 @@ dlg:button {
         local srcHeight = srcSpec.height
         local alphaMask = srcSpec.transparentColor
 
-        local dist = function(x, y)
-            return math.sqrt(x * x + y * y)
+        local magSq = function(x, y)
+            return x * x + y * y
         end
 
         local toTimeAngle = timeScalar * tau / reqFrames
@@ -352,9 +371,18 @@ dlg:button {
         local wrapper = nil
         if edgeType == "CLAMP" then
             wrapper = function(x, y)
-                return srcImg:getPixel(
-                    math.min(math.max(x, 0), srcWidth - 1),
-                    math.min(math.max(y, 0), srcHeight - 1))
+                local xc = x
+                local yc = y
+                if xc < 0 then
+                    xc = 0
+                elseif xc > srcWidth - 1 then
+                    xc = srcWidth - 1
+                end
+                if yc < 0 then yc = 0
+                elseif yc > srcHeight - 1 then
+                    yc = srcHeight - 1
+                end
+                return srcImg:getPixel(xc, yc)
             end
         elseif edgeType == "OMIT" then
             wrapper = function(x, y)
@@ -393,7 +421,7 @@ dlg:button {
                     end
                     local yDispScl = (1.0 - t) * pxyDisplaceOrig
                         + t * pxyDisplaceDest
-                    local yOffset = yDispScl * math.cos(xTheta)
+                    local yOffset = yDispScl * cos(xTheta)
                     return x, y + yOffset
                 end
             else
@@ -411,7 +439,7 @@ dlg:button {
                     end
                     local xDispScl = (1.0 - t) * pxxDisplaceOrig
                         + t * pxxDisplaceDest
-                    local xOffset = xDispScl * math.sin(yTheta)
+                    local xOffset = xDispScl * sin(yTheta)
                     return x + xOffset, y
                 end
             end
@@ -420,9 +448,14 @@ dlg:button {
             local yCenter = args.yCenter or defaults.yCenter
             local uDisplaceOrig = args.uDisplaceOrig or defaults.uDisplaceOrig
             local uDisplaceDest = args.uDisplaceDest or defaults.uDisplaceDest
+            local sustain = args.sustain or defaults.sustain
+            local tilt = args.tilt or defaults.tilt
 
-            local maxDist = dist(srcWidth, srcHeight)
+            local maxDist = sqrt(magSq(srcWidth, srcHeight))
             local distToTheta = spaceScalar * tau / maxDist
+            local distToFac = 1.0 / maxDist
+            local sustFac = sustain * 0.01
+            local tiltFac = 1.0 - tilt * 0.01
 
             local pxxCenter = srcWidth * xCenter * 0.01
             local pxyCenter = srcHeight * yCenter * 0.01
@@ -430,12 +463,31 @@ dlg:button {
             local pxuDisplaceDest = maxDist * uDisplaceDest * 0.005
 
             eval = function(x, y, angle, t)
-                local d = dist(x - pxxCenter, y - pxyCenter)
+                local ax = x - pxxCenter
+                local ay = y - pxyCenter
+                local dSq = magSq(ax, ay)
+
+                local nx = 0.0
+                local ny = 0.0
+                local d = 0.0
+                if dSq > 0.0 then
+                    d = sqrt(dSq)
+                    nx = ax / d
+                    ny = ay / d
+                end
+
                 local theta = angle + d * distToTheta
                 local uDispScl = (1.0 - t) * pxuDisplaceOrig
                     + t * pxuDisplaceDest
-                local yOffset = uDispScl * math.sin(theta)
-                return x, y + yOffset
+
+                local fac = min(max(d * distToFac, 0.0), 1.0)
+                local falloff = uDispScl * (1.0 - fac)
+                    + (uDispScl * sustFac) * fac
+
+                local offset = falloff * sin(theta)
+                local xOffset = tiltFac * nx * offset
+                local yOffset = ny * offset
+                return x + xOffset, y + yOffset
             end
         else
             local xDisplaceOrig = args.xDisplaceOrig or defaults.xDisplaceOrig
@@ -457,8 +509,8 @@ dlg:button {
                 local u = 1.0 - t
                 local xDsplScl = u * pxxDisplaceOrig + t * pxxDisplaceDest
                 local yDsplScl = u * pxyDisplaceOrig + t * pxyDisplaceDest
-                local xOffset = xDsplScl * math.sin(yTheta)
-                local yOffset = yDsplScl * math.cos(xTheta)
+                local xOffset = xDsplScl * sin(yTheta)
+                local yOffset = yDsplScl * cos(xTheta)
                 return x + xOffset, y + yOffset
             end
         end
