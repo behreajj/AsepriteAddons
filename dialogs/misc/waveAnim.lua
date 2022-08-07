@@ -29,11 +29,9 @@ local defaults = {
     xDisplaceDest = 5,
     yDisplaceDest = 5,
     sustain = 25,
-    tilt = 67,
-
-    -- Experimental
-    timeDecay = 100,
-    spaceDecay = 100,
+    -- TODO: Should warp be an animated property
+    -- which uses lerpAngleNear?
+    warp = 0,
 
     trimCels = true,
     printElapsed = false,
@@ -58,7 +56,7 @@ dlg:combobox {
         dlg:modify { id = "xCenter", visible = isRadial }
         dlg:modify { id = "yCenter", visible = isRadial }
         dlg:modify { id = "sustain", visible = isRadial }
-        dlg:modify { id = "tilt", visible = isRadial }
+        dlg:modify { id = "warp", visible = isRadial }
 
         local isInter = waveType == "INTERLACED"
         dlg:modify { id = "interType", visible = isInter }
@@ -166,17 +164,6 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "tilt",
-    label = "Tilt %:",
-    min = 0,
-    max = 100,
-    value = defaults.tilt,
-    visible = defaults.waveType == "RADIAL"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
     id = "uDisplaceOrig",
     label = "Displace %:",
     min = 0,
@@ -193,6 +180,16 @@ dlg:slider {
     visible = defaults.waveType == "RADIAL"
 }
 
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "warp",
+    label = "Warp:",
+    min = -180,
+    max = 180,
+    value = defaults.warp,
+    visible = defaults.waveType == "RADIAL"
+}
 
 dlg:newrow { always = false }
 
@@ -449,13 +446,15 @@ dlg:button {
             local uDisplaceOrig = args.uDisplaceOrig or defaults.uDisplaceOrig
             local uDisplaceDest = args.uDisplaceDest or defaults.uDisplaceDest
             local sustain = args.sustain or defaults.sustain
-            local tilt = args.tilt or defaults.tilt
+            local warp = args.warp or defaults.warp
 
             local maxDist = sqrt(magSq(srcWidth, srcHeight))
             local distToTheta = spaceScalar * tau / maxDist
             local distToFac = 1.0 / maxDist
             local sustFac = sustain * 0.01
-            local tiltFac = 1.0 - tilt * 0.01
+            local warpRad = warp * 0.017453292519943
+            local cosWarp = cos(warpRad)
+            local sinWarp = sin(warpRad)
 
             local pxxCenter = srcWidth * xCenter * 0.01
             local pxyCenter = srcHeight * yCenter * 0.01
@@ -467,6 +466,8 @@ dlg:button {
                 local ay = y - pxyCenter
                 local dSq = magSq(ax, ay)
 
+                -- Normalize distance from center to point
+                -- to get displacement direction.
                 local nx = 0.0
                 local ny = 0.0
                 local d = 0.0
@@ -476,18 +477,32 @@ dlg:button {
                     ny = ay / d
                 end
 
-                local theta = angle + d * distToTheta
-                local uDispScl = (1.0 - t) * pxuDisplaceOrig
+                -- Subtract space angle from time angle.
+                -- Use - instead of + to make wave head
+                -- away from the center instead of toward.
+                local theta = angle - d * distToTheta
+
+                -- Diminish displacement scale over time.
+                local uDsplScl = (1.0 - t) * pxuDisplaceOrig
                     + t * pxuDisplaceDest
 
+                -- Dminish displacement scale over space.
+                -- Because center could be outside of canvas,
+                -- this needs to be clamped to [0.0, 1.0].
                 local fac = min(max(d * distToFac, 0.0), 1.0)
-                local falloff = uDispScl * (1.0 - fac)
-                    + (uDispScl * sustFac) * fac
+                local falloff = uDsplScl * (1.0 - fac)
+                    + (uDsplScl * sustFac) * fac
 
+                -- Rescale displacement vector by falloff.
                 local offset = falloff * sin(theta)
-                local xOffset = tiltFac * nx * offset
-                local yOffset = ny * offset
-                return x + xOffset, y + yOffset
+                local xOff = nx * offset
+                local yOff = ny * offset
+
+                -- Rotate displacement vector by warp.
+                local xWarp = cosWarp * xOff - sinWarp * yOff
+                local yWarp = cosWarp * yOff + sinWarp * xOff
+
+                return x + xWarp, y + yWarp
             end
         else
             local xDisplaceOrig = args.xDisplaceOrig or defaults.xDisplaceOrig
@@ -580,6 +595,7 @@ dlg:button {
         -- end)
 
         app.activeFrame = trgSprite.frames[1]
+        app.command.FitScreen()
         app.refresh()
 
         if printElapsed then
