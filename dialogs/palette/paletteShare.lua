@@ -90,10 +90,36 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        local profileNone = ColorSpace()
+        local profileSrgb = ColorSpace { sRGB = true }
+        local profActive = profileSrgb
+
         local args = dlg.data
+        local palType = args.palType or defaults.palType
+
+        local activeSprite = app.activeSprite
+        if activeSprite then
+            profActive = activeSprite.colorSpace
+        else
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite."
+            }
+            return
+        end
+
+        local openSprites = app.sprites
+        local openLen = #openSprites
+        if openLen < 2 then
+            app.alert {
+                title = "Error",
+                text = "There is only one open sprite."
+            }
+            return
+        end
+
         local palFile = args.palFile
         local palPreset = args.palPreset
-        local palType = args.palType or defaults.palType
         local prependMask = args.prependMask
         local startIndex = args.startIndex or defaults.startIndex
         local count = args.count or defaults.count
@@ -116,34 +142,60 @@ dlg:button {
             Utilities.prependMask(hexesSrgb)
         end
 
-        local candidates = {}
-        -- local rejected = {}
-        local profileNone = ColorSpace()
-        local profileSrgb = ColorSpace { sRGB = true }
-        local openSprites = app.sprites
-        local openLen = #openSprites
+        local candidatesApprox = {}
+        local candidatesExact = {}
+        local rejected = {
+            "Not all sprites were included by script.",
+            "Check to see sprite is in RGB color mode",
+            "and has a matching color profile. Excluded:"
+        }
+
+        local candLenApprox = 0
+        local candLenExact = 0
+        local rejLen = #rejected
+
         local errorFlag = false
         local h = 0
         while h < openLen do h = h + 1
             local sprite = openSprites[h]
             local colorMode = sprite.colorMode
             local profile = sprite.colorSpace
+            local filename = app.fs.fileTitle(sprite.filename)
 
-            if colorMode == ColorMode.RGB
-                and (profile == nil
-                    or profile == profileNone
-                    or profile == profileSrgb) then
-                table.insert(candidates, sprite)
+            if colorMode == ColorMode.RGB then
+
+                if profile == profActive then
+
+                    candLenExact = candLenExact + 1
+                    candidatesExact[candLenExact] = sprite
+
+                elseif (profile == nil
+                    or profile == profileSrgb
+                    or profile == profileNone) then
+
+                    candLenApprox = candLenApprox + 1
+                    candidatesApprox[candLenApprox] = sprite
+
+                else
+
+                    errorFlag = true
+                    rejLen = rejLen + 1
+                    rejected[rejLen] = filename
+
+                end
+
             else
                 errorFlag = true
-                -- table.insert(rejected, sprite)
+                rejLen = rejLen + 1
+                rejected[rejLen] = filename
             end
         end
 
-        local candLen = #candidates
         local i = 0
-        while i < candLen do i = i + 1
-            local candidate = candidates[i]
+        while i < candLenApprox do i = i + 1
+            local candidate = candidatesApprox[i]
+            -- print(string.format("approx: %s", candidate.filename))
+
             local lenPals = #candidate.palettes
             -- This isn't as efficient as it could be
             -- because the same Aseprite Colors are
@@ -156,21 +208,31 @@ dlg:button {
             end
         end
 
+        local k = 0
+        while k < candLenExact do k = k + 1
+            local candidate = candidatesExact[k]
+            -- print(string.format("exact: %s", candidate.filename))
+
+            local lenPals = #candidate.palettes
+            local j = 0
+            while j < lenPals do j = j + 1
+                AseUtilities.setPalette(
+                    hexesProfile, candidate, j)
+            end
+        end
+
         app.refresh()
 
         if errorFlag then
             app.alert {
                 title = "Warning",
-                text = {
-                    "Not all sprites were included by script.",
-                    "Check to see sprite is in RGB color mode",
-                    "and has either None or SRGB color profile."
-                }
+                text = rejected
             }
         else
             app.alert {
                 title = "Success",
-                text = "Palette shared." }
+                text = "Palette shared."
+            }
         end
     end
 }

@@ -228,12 +228,14 @@ dlg:button {
         }
 
         local activeOffsets = {}
-        for i = 1, #activeMatrix, 1 do
-            if activeMatrix[i] then
-                table.insert(activeOffsets, dirMatrix[i])
+        local activeCount = 0
+        local m = 0
+        while m < 8 do m = m + 1
+            if activeMatrix[m] then
+                activeCount = activeCount + 1
+                activeOffsets[activeCount] = dirMatrix[m]
             end
         end
-        local activeCount = #activeOffsets
 
         if activeCount < 1 then
             app.alert {
@@ -342,8 +344,8 @@ dlg:button {
         end
         trgLyr.name = "Gradient.Outline." .. clrSpacePreset
 
-        -- Calculate colors in an outer loop, so
-        -- high frame count pentalty is reduced.
+        -- Calculate colors in an outer loop, to
+        -- reduce penalty for high frame count.
         local hexesOutline = {}
         local h = 0
         while h < iterations do

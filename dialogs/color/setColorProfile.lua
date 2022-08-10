@@ -22,7 +22,8 @@ dlg:combobox {
         local state = dlg.data.colorSpaceType
         dlg:modify {
             id = "profilePath",
-            visible = state == "FILE" }
+            visible = state == "FILE"
+        }
     end
 }
 
@@ -56,7 +57,9 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
+            return
         end
 
         local newColorSpace = nil
@@ -74,7 +77,6 @@ dlg:button {
                             "The color profile could not be found."
                         }
                     }
-                    dlg:close()
                     return
                 end
             end
@@ -102,17 +104,23 @@ dlg:button {
                 title = "Warning",
                 text = { "The sprite already uses this color profile.",
                     "Do you wish to proceed anyway?" },
-                buttons = { "&YES", "&CANCEL" } }
+                buttons = { "&YES", "&CANCEL" }
+            }
         end
 
-        if confirm then
+        if confirm and confirm == 1 then
             if continuity == "VISUAL" then
                 activeSprite:convertColorSpace(newColorSpace)
             else
                 activeSprite:assignColorSpace(newColorSpace)
             end
             app.refresh()
-            dlg:close()
+            app.alert {
+                title = "Success",
+                text = "Color profile applied."
+            }
+        else
+            return
         end
     end
 }

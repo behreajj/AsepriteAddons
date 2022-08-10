@@ -632,7 +632,8 @@ end
 ---@param position userdata|nil cel position
 ---@param guiClr integer|nil hexadecimal color
 ---@return table
-function AseUtilities.createCels(sprite, frameStartIndex, frameCount, layerStartIndex, layerCount, image, position, guiClr)
+function AseUtilities.createCels(sprite, frameStartIndex, frameCount, layerStartIndex, layerCount, image, position,
+                                 guiClr)
     -- Do not use app.transactions.
     -- https://github.com/aseprite/aseprite/issues/3276
 
@@ -1459,14 +1460,15 @@ function AseUtilities.flipImageHoriz(source)
 
     local srcSpec = source.spec
     local w = srcSpec.width
-    local pxFlp = Utilities.flipPixelsHoriz(px, w)
+    local h = srcSpec.height
+    Utilities.flipPixelsHoriz(px, w, h)
 
     local target = Image(srcSpec)
     local j = 0
     local trgPxItr = target:pixels()
     for elm in trgPxItr do
         j = j + 1
-        elm(pxFlp[j])
+        elm(px[j])
     end
     return target, 1 - w, 0
 end
@@ -1491,14 +1493,14 @@ function AseUtilities.flipImageVert(source)
     local srcSpec = source.spec
     local w = srcSpec.width
     local h = srcSpec.height
-    local pxFlp = Utilities.flipPixelsVert(px, w, h)
+    Utilities.flipPixelsVert(px, w, h)
 
     local target = Image(srcSpec)
     local j = 0
     local trgPxItr = target:pixels()
     for elm in trgPxItr do
         j = j + 1
-        elm(pxFlp[j])
+        elm(px[j])
     end
     return target, 0, 1 - h
 end

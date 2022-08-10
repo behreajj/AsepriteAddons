@@ -206,39 +206,51 @@ function Utilities.distAngleUnsigned(a, b, range)
         - halfRange)
 end
 
----Given a source pixel array, creates a new array with
----the pixels flipped horizontally.
+---Flips a source pixel array horizontally.
+---Changes the array in-place.
 ---@param source table source pixels
 ---@param w integer image width
+---@param h integer image height
 ---@return table
-function Utilities.flipPixelsHoriz(source, w)
-    local len = #source
+function Utilities.flipPixelsHoriz(source, w, h)
+    local wd2 = w // 2
     local wn1 = w - 1
-    local flipped = {}
-    local i = 0
-    while i < len do
-        flipped[1 + (i // w) * w + wn1 - (i % w)] = source[1 + i]
-        i = i + 1
+    local len = wd2 * h
+    local k = 0
+    while k < len do
+        local x = k % wd2
+        local yw = w * (k // wd2)
+        local idxSrc = 1 + x + yw
+        local idxTrg = 1 + yw + wn1 - x
+        local swap = source[idxSrc]
+        source[idxSrc] = source[idxTrg]
+        source[idxTrg] = swap
+        k = k + 1
     end
-    return flipped
+    return source
 end
 
----Given a source pixel array, creates a new array with
----the pixels flipped vertically.
+---Flips a source pixel array vertically.
+---Changes the array in-place.
 ---@param source table source pixels
 ---@param w integer image width
 ---@param h integer image height
 ---@return table
 function Utilities.flipPixelsVert(source, w, h)
-    local len = #source
+    local hd2 = h // 2
     local hn1 = h - 1
-    local flipped = {}
-    local i = 0
-    while i < len do
-        flipped[1 + (hn1 - (i // w)) * w + (i % w)] = source[1 + i]
-        i = i + 1
+    local len = w * hd2
+    local k = 0
+    while k < len do
+        local idxSrc = 1 + k
+        local idxTrg = 1 + k % w
+            + w * (hn1 - k // w)
+        local swap = source[idxSrc]
+        source[idxSrc] = source[idxTrg]
+        source[idxTrg] = swap
+        k = k + 1
     end
-    return flipped
+    return source
 end
 
 ---Finds the greatest common denominator
