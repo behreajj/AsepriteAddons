@@ -8,8 +8,8 @@ local metrics = {
 }
 
 local defaults = {
-    xOrigin = 50,
-    yOrigin = 50,
+    xOrig = 50,
+    yOrig = 50,
     minRad = 0,
     maxRad = 100,
     distMetric = "EUCLIDEAN",
@@ -68,18 +68,18 @@ local dlg = Dialog { title = "Radial Gradient" }
 GradientUtilities.dialogWidgets(dlg)
 
 dlg:slider {
-    id = "xOrigin",
+    id = "xOrig",
     label = "Origin %:",
     min = 0,
     max = 100,
-    value = defaults.xOrigin
+    value = defaults.xOrig
 }
 
 dlg:slider {
-    id = "yOrigin",
+    id = "yOrig",
     min = 0,
     max = 100,
-    value = defaults.yOrigin
+    value = defaults.yOrig
 }
 
 dlg:newrow { always = false }
@@ -194,14 +194,14 @@ dlg:button {
         local linDenom = 1.0 / diffRad
 
         -- Shift origin from [0, 100] to [0.0, 1.0].
-        local xOrigin = 0.01 * args.xOrigin
-        local yOrigin = 0.01 * args.yOrigin
+        local xOrig = 0.01 * args.xOrig
+        local yOrig = 0.01 * args.yOrig
 
         -- Convert from normalized to pixel size.
         local wn1 = max(1.0, activeSprite.width - 1.0)
         local hn1 = max(1.0, activeSprite.height - 1.0)
-        local xOrigPx = xOrigin * wn1
-        local yOrigPx = yOrigin * hn1
+        local xOrigPx = xOrig * wn1
+        local yOrigPx = yOrig * hn1
 
         -- Need a scalar to normalize distance to [0.0, 1.0]
         local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, wn1, hn1))

@@ -111,6 +111,7 @@ dlg:button {
             return
         end
 
+        AseUtilities.preserveForeBack()
         local openSprites = app.sprites
         local openLen = #openSprites
 

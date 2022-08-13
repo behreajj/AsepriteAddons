@@ -1,3 +1,5 @@
+dofile("../../support/aseutilities.lua")
+
 local coords = { "CARTESIAN", "POLAR" }
 local edgeTypes = { "CLAMP", "OMIT", "WRAP" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
