@@ -6,7 +6,15 @@ if not activeSprite then return end
 local oldColorMode = activeSprite.colorMode
 app.command.ChangePixelFormat { format = "rgb" }
 
-local activeSpec = activeSprite.spec
+local bkgLayer = activeSprite.backgroundLayer
+local bkgUnlocked = true
+if bkgLayer then
+    bkgUnlocked = bkgLayer.isEditable
+    if bkgUnlocked then
+        app.activeLayer = bkgLayer
+        app.command.LayerFromBackground()
+    end
+end
 
 local docPref = app.preferences.document(activeSprite)
 local bgPref = docPref.bg
@@ -24,6 +32,7 @@ local b = AseUtilities.aseColorToHex(bAse, ColorMode.RGB)
 a = 0xff000000 | a
 b = 0xff000000 | b
 
+local activeSpec = activeSprite.spec
 local checker = Image(activeSpec)
 local pxItr = checker:pixels()
 for elm in pxItr do
@@ -37,6 +46,7 @@ for elm in pxItr do
 end
 
 local checkerLayer = activeSprite:newLayer()
+checkerLayer.name = "Checker"
 
 local frames = activeSprite.frames
 local lenFrames = #frames
@@ -48,5 +58,7 @@ while i < lenFrames do i = i + 1
         checker)
 end
 
-app.command.BackgroundFromLayer()
+if bkgUnlocked then
+    app.command.BackgroundFromLayer()
+end
 AseUtilities.changePixelFormat(oldColorMode)

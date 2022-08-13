@@ -1,3 +1,5 @@
+local sources = { "ACTIVE", "FILE", "PRESET" }
+
 local defaults = {
     palType = "ACTIVE",
     uniquesOnly = false,
@@ -13,7 +15,7 @@ dlg:combobox {
     id = "palType",
     label = "Source:",
     option = "ACTIVE",
-    options = { "ACTIVE", "FILE", "PRESET" },
+    options = sources,
     onchange = function()
         local state = dlg.data.palType
 
@@ -93,13 +95,14 @@ dlg:button {
         local profileNone = ColorSpace()
         local profileSrgb = ColorSpace { sRGB = true }
         local profActive = profileSrgb
-
-        local args = dlg.data
-        local palType = args.palType or defaults.palType
+        local cmActive = ColorMode.RGB
 
         local activeSprite = app.activeSprite
         if activeSprite then
             profActive = activeSprite.colorSpace
+            if activeSprite.colorMode ~= ColorMode.INDEXED then
+                cmActive = activeSprite.colorMode
+            end
         else
             app.alert {
                 title = "Error",
@@ -110,14 +113,9 @@ dlg:button {
 
         local openSprites = app.sprites
         local openLen = #openSprites
-        if openLen < 2 then
-            app.alert {
-                title = "Error",
-                text = "There is only one open sprite."
-            }
-            return
-        end
 
+        local args = dlg.data
+        local palType = args.palType or defaults.palType
         local palFile = args.palFile
         local palPreset = args.palPreset
         local prependMask = args.prependMask
@@ -127,6 +125,7 @@ dlg:button {
         local hexesProfile = {}
         local hexesSrgb = {}
 
+        --TODO: Support all open tabs as the source?
         hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
             palType, palFile, palPreset,
             startIndex, count, true)
@@ -145,9 +144,9 @@ dlg:button {
         local candidatesApprox = {}
         local candidatesExact = {}
         local rejected = {
-            "Not all sprites were included by script.",
-            "Check to see sprite is in RGB color mode",
-            "and has a matching color profile. Excluded:"
+            "Not all sprites were included. Check to see",
+            "if the sprite has a matching color mode and",
+            "color profile. Excluded sprites are:"
         }
 
         local candLenApprox = 0
@@ -162,7 +161,7 @@ dlg:button {
             local profile = sprite.colorSpace
             local filename = app.fs.fileTitle(sprite.filename)
 
-            if colorMode == ColorMode.RGB then
+            if colorMode == cmActive then
 
                 if profile == profActive then
 
@@ -194,8 +193,6 @@ dlg:button {
         local i = 0
         while i < candLenApprox do i = i + 1
             local candidate = candidatesApprox[i]
-            -- print(string.format("approx: %s", candidate.filename))
-
             local lenPals = #candidate.palettes
             -- This isn't as efficient as it could be
             -- because the same Aseprite Colors are
@@ -211,8 +208,6 @@ dlg:button {
         local k = 0
         while k < candLenExact do k = k + 1
             local candidate = candidatesExact[k]
-            -- print(string.format("exact: %s", candidate.filename))
-
             local lenPals = #candidate.palettes
             local j = 0
             while j < lenPals do j = j + 1

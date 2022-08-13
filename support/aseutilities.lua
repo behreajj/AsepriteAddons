@@ -624,16 +624,15 @@ end
 ---as an argument.
 ---Returns a table of layers.
 ---@param sprite userdata
----@param frameStartIndex integer frame start index
----@param frameCount integer frame count
----@param layerStartIndex integer layer start index
----@param layerCount integer layer count
+---@param frStrtIdx integer frame start index
+---@param frCount integer frame count
+---@param lyrStrtIdx integer layer start index
+---@param lyrCount integer layer count
 ---@param image userdata cel image
 ---@param position userdata|nil cel position
 ---@param guiClr integer|nil hexadecimal color
 ---@return table
-function AseUtilities.createCels(sprite, frameStartIndex, frameCount, layerStartIndex, layerCount, image, position,
-                                 guiClr)
+function AseUtilities.createCels(sprite, frStrtIdx, frCount, lyrStrtIdx, lyrCount, image, position, guiClr)
     -- Do not use app.transactions.
     -- https://github.com/aseprite/aseprite/issues/3276
 
@@ -653,7 +652,7 @@ function AseUtilities.createCels(sprite, frameStartIndex, frameCount, layerStart
     -- Validate layer start index.
     -- Allow for negative indices, which are wrapped.
     -- Length is one extra because this is an insert.
-    local valLyrIdx = layerStartIndex or 1
+    local valLyrIdx = lyrStrtIdx or 1
     if valLyrIdx == 0 then
         valLyrIdx = 1
     else
@@ -662,7 +661,7 @@ function AseUtilities.createCels(sprite, frameStartIndex, frameCount, layerStart
     -- print("valLyrIdx: " .. valLyrIdx)
 
     -- Validate frame start index.
-    local valFrmIdx = frameStartIndex or 1
+    local valFrmIdx = frStrtIdx or 1
     if valFrmIdx == 0 then
         valFrmIdx = 1
     else
@@ -671,7 +670,7 @@ function AseUtilities.createCels(sprite, frameStartIndex, frameCount, layerStart
     -- print("valFrmIdx: " .. valFrmIdx)
 
     -- Validate count for layers.
-    local valLyrCt = layerCount or sprLyrCt
+    local valLyrCt = lyrCount or sprLyrCt
     if valLyrCt < 1 then
         valLyrCt = 1
     elseif valLyrCt > (1 + sprLyrCt - valLyrIdx) then
@@ -680,7 +679,7 @@ function AseUtilities.createCels(sprite, frameStartIndex, frameCount, layerStart
     -- print("valLyrCt: " .. valLyrCt)
 
     -- Validate count for frames.
-    local valFrmCt = frameCount or sprFrmCt
+    local valFrmCt = frCount or sprFrmCt
     if valFrmCt < 1 then
         valLyrCt = 1
     elseif valFrmCt > (1 + sprFrmCt - valFrmIdx) then
@@ -1544,7 +1543,7 @@ function AseUtilities.getSelection(sprite)
     if (not sel) or sel.isEmpty then
         -- TODO: Should this be a getOrDefault
         -- so that gradients and transformCel
-        -- can beheave differently?
+        -- can behave differently?
         return Selection(sprite.bounds)
     end
     return sel
@@ -1999,7 +1998,6 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
                 local hex = arr[i]
                 local aseColor = AseUtilities.hexToAseColor(hex)
                 palette:setColor(i - 1, aseColor)
-                -- palette:setColor(i - 1, arr[i])
             end
         end)
     else
@@ -2045,6 +2043,49 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     return imgTrg
 end
 
+---Trims a cel's image and position to a selection.
+---An image's pixel is cleared to the default color
+---if it isn't contained by the selection. If the
+---default is nil, uses the cel image's alpha mask.
+---@param cel userdata source cel
+---@param select userdata selection
+---@param hexDefault integer|nil default color
+function AseUtilities.trimCelToSelect(cel, select, hexDefault)
+    local celBounds = cel.bounds
+    local selBounds = select.bounds
+    local clip = celBounds:intersect(selBounds)
+    local xClip = clip.x
+    local yClip = clip.y
+
+    local oldPos = cel.position
+    cel.position = Point(xClip, yClip)
+
+    local celImg = cel.image
+    local celSpec = celImg.spec
+    local alphaMask = celSpec.transparentColor
+    local trimSpec = ImageSpec {
+        width = clip.width,
+        height = clip.height,
+        colorMode = celSpec.colorMode,
+        transparentColor = alphaMask
+    }
+    trimSpec.colorSpace = celSpec.colorSpace
+    local trimImage = Image(trimSpec)
+    trimImage:drawImage(celImg, oldPos - cel.position)
+
+    local valHex = hexDefault or alphaMask
+    local trimItr = trimImage:pixels()
+    for elm in trimItr do
+        if not select:contains(
+            xClip + elm.x,
+            yClip + elm.y) then
+            elm(valHex)
+        end
+    end
+
+    cel.image = trimImage
+end
+
 ---Trims a cel's image and position such that it no longer
 ---exceeds the sprite's boundaries. Unlike built-in method,
 ---does not trim the image's alpha.
@@ -2059,14 +2100,14 @@ function AseUtilities.trimCelToSprite(cel, sprite)
     cel.position = Point(clip.x, clip.y)
 
     local celImg = cel.image
-    local celImgSpec = celImg.spec
+    local celSpec = celImg.spec
     local trimSpec = ImageSpec {
         width = clip.width,
         height = clip.height,
-        colorMode = celImgSpec.colorMode,
-        transparentColor = celImgSpec.transparentColor
+        colorMode = celSpec.colorMode,
+        transparentColor = celSpec.transparentColor
     }
-    trimSpec.colorSpace = celImgSpec.colorSpace
+    trimSpec.colorSpace = celSpec.colorSpace
     local trimImage = Image(trimSpec)
     trimImage:drawImage(celImg, oldPos - cel.position)
     cel.image = trimImage

@@ -4,8 +4,8 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 
 
 local defaults = {
-    -- TODO: Option to hide source layer, see
-    -- layerMask dialog?
+    -- TODO: Option to hide source layer? see
+    -- layerMask dialog
     target = "RANGE",
     edgeType = "OMIT",
     easeMethod = "NEAREST",

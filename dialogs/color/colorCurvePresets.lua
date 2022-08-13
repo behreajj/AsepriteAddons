@@ -7,6 +7,10 @@ local prsStrs = {
 }
 
 local defaults = {
+    -- TODO: Sigmoid function?
+    -- n <-- scalar * (tau * x - pi)
+    -- s(n) <-- 1.0 / (1.0 + exp(-n))
+
     resolution = 16,
     preset = "SINE_WAVE",
     useRed = true,
@@ -48,12 +52,6 @@ local function bezier(cp0x, cp0y, cp1x, cp1y, t)
         cp0x * usq3t + cp1x * tsq3u + tcb
 end
 
-local function quantize(x, levels)
-    return math.max(0.0, math.min(1.0,
-        (math.ceil(x * levels) - 1.0)
-        / (levels - 1.0)))
-end
-
 local function gamma(x, c, amplitude, offset)
     return math.max(0.0, math.min(1.0,
         amplitude * (x ^ c) + offset))
@@ -62,6 +60,12 @@ end
 local function linear(x, slope, intercept)
     return math.max(0.0, math.min(1.0,
         slope * x + intercept))
+end
+
+local function quantize(x, levels)
+    return math.max(0.0, math.min(1.0,
+        (math.ceil(x * levels) - 1.0)
+        / (levels - 1.0)))
 end
 
 local function sineWave(x, freq, phase, amp, basis)

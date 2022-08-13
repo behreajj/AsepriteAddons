@@ -1,6 +1,8 @@
---[[ To download some profiles:
- https://ninedegreesbelow.com/photography/lcms-make-icc-profiles.html
- https://github.com/ellelstone/elles_icc_profiles --]]
+--[[
+To download some profiles:
+https://ninedegreesbelow.com/photography/lcms-make-icc-profiles.html
+https://github.com/ellelstone/elles_icc_profiles
+--]]
 
 local colorSpaceTypes = { "FILE", "NONE", "SRGB" }
 local continuityOps = { "NUMERIC", "VISUAL" }
@@ -119,8 +121,6 @@ dlg:button {
                 title = "Success",
                 text = "Color profile applied."
             }
-        else
-            return
         end
     end
 }

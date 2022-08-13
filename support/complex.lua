@@ -133,11 +133,11 @@ end
 ---@param z table right operand
 ---@return table
 function Complex.exp(z)
-    local rd = math.exp(z.real)
-    local phid = z.imag
+    local r = math.exp(z.real)
+    local phi = z.imag
     return Complex.new(
-        rd * math.cos(phid),
-        rd * math.sin(phid))
+        r * math.cos(phi),
+        r * math.sin(phi))
 end
 
 ---Finds the inverse, or reciprocal, of the
@@ -256,12 +256,12 @@ function Complex.powComplex(a, b)
 
     local logReal = math.log(math.sqrt(ar * ar + ai * ai))
     local logImag = math.atan(ai, ar)
-    local rd = math.exp(br * logReal - bi * logImag)
-    local phid = br * logImag + bi * logReal
+    local r = math.exp(br * logReal - bi * logImag)
+    local phi = br * logImag + bi * logReal
 
     return Complex.new(
-        rd * math.cos(phid),
-        rd * math.sin(phid))
+        r * math.cos(phi),
+        r * math.sin(phi))
 end
 
 ---Raises a complex number to the power of a number.
@@ -272,13 +272,13 @@ function Complex.powNum(a, b)
     local ar = a.real
     local ai = a.imag
 
-    local rd = math.exp(b * math.log(
+    local r = math.exp(b * math.log(
         math.sqrt(ar * ar + ai * ai)))
-    local phid = b * math.atan(ai, ar)
+    local phi = b * math.atan(ai, ar)
 
     return Complex.new(
-        rd * math.cos(phid),
-        rd * math.sin(phid))
+        r * math.cos(phi),
+        r * math.sin(phi))
 end
 
 ---Converts from polar to rectilinear coordinates.

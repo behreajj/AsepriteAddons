@@ -166,7 +166,12 @@ dlg:button {
             -- If no sprite exists, then create a new
             -- sprite and place palette swatches in it.
             local activeSprite = app.activeSprite
-            if not activeSprite then
+            local profileFlag = false
+            if activeSprite then
+                local profile = activeSprite.colorSpace
+                profileFlag = profile ~= ColorSpace { sRGB = true }
+                    and profile ~= ColorSpace()
+            else
                 local lenColors = #colors
 
                 -- Try to base sprite width on columns
@@ -204,6 +209,16 @@ dlg:button {
             AseUtilities.setPalette(colors, activeSprite, palIdx)
             AseUtilities.changePixelFormat(oldMode)
             app.refresh()
+
+            if profileFlag then
+                app.alert {
+                    title = "Warning",
+                    text = {
+                        "Sprite uses a custom color profile.",
+                        "Palette may not appear as intended."
+                    }
+                }
+            end
         end
 
         if err ~= nil then

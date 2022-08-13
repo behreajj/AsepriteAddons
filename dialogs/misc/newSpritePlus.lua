@@ -413,7 +413,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "palFile",
-    filetypes = { "gpl", "pal" },
+    filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
     open = true,
     visible = defaults.colorMode ~= "GRAY"
         and defaults.palType == "FILE"
@@ -558,10 +558,11 @@ dlg:button {
 
         -- The maximum size defined in source code is 65535,
         -- but the canvas size command allows for more.
-        width = math.min(math.max(
-            width, 1), defaults.maxSize)
-        height = math.min(math.max(
-            height, 1), defaults.maxSize)
+        local dfms = defaults.maxSize
+        if width < 1 then width = 1 end
+        if width > dfms then width = dfms end
+        if height < 1 then height = 1 end
+        if height > dfms then height = dfms end
 
         -- Store new dimensions in preferences.
         app.preferences.new_file.width = width
@@ -629,14 +630,14 @@ dlg:button {
         end
 
         -- Assign grid.
-        local xGrid = args.xGrid or defaults.xGrid
-        local yGrid = args.yGrid or defaults.yGrid
-        local wGrid = args.wGrid or defaults.wGrid
-        local hGrid = args.hGrid or defaults.hGrid
-        if wGrid > 1 and hGrid > 1 then
-            newSprite.gridBounds = Rectangle(
-                xGrid, yGrid, wGrid, hGrid)
-        end
+        -- local xGrid = args.xGrid or defaults.xGrid
+        -- local yGrid = args.yGrid or defaults.yGrid
+        -- local wGrid = args.wGrid or defaults.wGrid
+        -- local hGrid = args.hGrid or defaults.hGrid
+        -- if wGrid > 1 and hGrid > 1 then
+        --     newSprite.gridBounds = Rectangle(
+        --         xGrid, yGrid, wGrid, hGrid)
+        -- end
 
         -- Convert to grayscale will append palette.
         AseUtilities.changePixelFormat(colorModeInt)

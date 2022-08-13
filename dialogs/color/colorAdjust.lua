@@ -54,7 +54,7 @@ dlg:slider {
     value = defaults.contrast
 }
 
-dlg:newrow { always = false }
+dlg:separator { id = "adjustSep" }
 
 dlg:combobox {
     id = "mode",
@@ -147,7 +147,7 @@ dlg:slider {
     value = defaults.aAdj
 }
 
-dlg:newrow { always = false }
+dlg:separator { id = "invertSep" }
 
 dlg:check {
     id = "lInvert",
@@ -249,6 +249,7 @@ dlg:button {
         local bInvert = args.bInvert
         local alphaInvert = args.alphaInvert
         local copyToLayer = args.copyToLayer or isTilemap
+            or (alphaInvert and srcLayer.isBackground)
 
         local useNormalize = normalize ~= 0
         local useContrast = contrast ~= 0

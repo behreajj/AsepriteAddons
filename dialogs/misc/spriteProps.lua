@@ -1,13 +1,15 @@
 dofile("../../support/aseutilities.lua")
 
--- To fix in Aseprite source code:
--- Go to src/app/commands/cmd_sprite_properties.cpp
--- Around line 106:
--- if (Preferences::instance().general.showFullPath()) {
---     window.name()->setText(document->filename());
--- } else {
---     window.name()->setText(document->name());
--- }
+--[[
+To fix in Aseprite source code:
+Go to src/app/commands/cmd_sprite_properties.cpp
+Around line 106:
+    if (Preferences::instance().general.showFullPath()) {
+        window.name()->setText(document->filename());
+    } else {
+        window.name()->setText(document->name());
+    }
+--]]
 
 -- Sprite tab color and user data is unique to v1.3 beta.
 local version = app.version
@@ -73,55 +75,64 @@ dlg:label {
     id = "pathLabel",
     label = "Path:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:label {
     id = "titleLabel",
     label = "Title:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:label {
     id = "extLabel",
     label = "Extension:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:label {
     id = "clrMdLabel",
     label = "Color Mode:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:label {
     id = "clrSpaceLabel",
     label = "Color Space:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:label {
     id = "palettesLabel",
     label = "Palettes:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:label {
     id = "palCountLabel",
     label = "Palette Length:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:label {
     id = "maskIdxLabel",
     label = "Mask Index:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:shades {
     id = "maskClr",
     label = "Mask Color:",
     mode = "sort",
-    colors = {} }
+    colors = {}
+}
 dlg:newrow { always = false }
 
 -- There are multiple bugs related to indexed
@@ -132,44 +143,51 @@ dlg:label {
     id = "maskWarning",
     label = "Warning:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:label {
     id = "dimLabel",
     label = "Dimensions:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:label {
     id = "aspectLabel",
     label = "Aspect:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:label {
     id = "framesLabel",
     label = "Frames:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:label {
     id = "durationLabel",
     label = "Duration:",
     text = "",
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:color {
     id = "sprTabColor",
     label = "Tab Color:",
     color = Color(0, 0, 0, 0),
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:entry {
     id = "sprUserData",
     label = "User Data:",
     text = "",
     focus = false,
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 dlg:slider {
     id = "aPxRatio",
@@ -177,13 +195,15 @@ dlg:slider {
     min = defaults.minPxRatio,
     max = defaults.maxPxRatio,
     value = 1,
-    visible = false }
+    visible = false
+}
 dlg:slider {
     id = "bPxRatio",
     min = defaults.minPxRatio,
     max = defaults.maxPxRatio,
     value = 1,
-    visible = false }
+    visible = false
+}
 dlg:newrow { always = false }
 
 local function updatePath()
