@@ -12,8 +12,8 @@ local defaults = {
     edgeType = "OMIT",
     easeMethod = "NEAREST",
     coord = "POLAR",
-    xOrigin = 0,
-    yOrigin = 50,
+    xOrig = 0,
+    yOrig = 50,
     xDest = 100,
     yDest = 50,
     xCenter = 50,
@@ -54,8 +54,8 @@ dlg:combobox {
         local args = dlg.data
         local coord = args.coord
         local isCart = coord == "CARTESIAN"
-        dlg:modify { id = "xOrigin", visible = isCart }
-        dlg:modify { id = "yOrigin", visible = isCart }
+        dlg:modify { id = "xOrig", visible = isCart }
+        dlg:modify { id = "yOrig", visible = isCart }
         dlg:modify { id = "xDest", visible = isCart }
         dlg:modify { id = "yDest", visible = isCart }
 
@@ -69,19 +69,19 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "xOrigin",
+    id = "xOrig",
     label = "Origin %:",
     min = 0,
     max = 100,
-    value = defaults.xOrigin,
+    value = defaults.xOrig,
     visible = defaults.coord == "CARTESIAN"
 }
 
 dlg:slider {
-    id = "yOrigin",
+    id = "yOrig",
     min = 0,
     max = 100,
-    value = defaults.yOrigin,
+    value = defaults.yOrig,
     visible = defaults.coord == "CARTESIAN"
 }
 
@@ -221,14 +221,16 @@ dlg:button {
             local appRange = app.range
             local rangeFrames = appRange.frames
             local rangeFramesLen = #rangeFrames
-            for i = 1, rangeFramesLen, 1 do
-                frames[i] = rangeFrames[i]
+            local h = 0
+            while h < rangeFramesLen do h = h + 1
+                frames[h] = rangeFrames[h]
             end
         else
             local activeFrames = activeSprite.frames
             local activeFramesLen = #activeFrames
-            for i = 1, activeFramesLen, 1 do
-                frames[i] = activeFrames[i]
+            local h = 0
+            while h < activeFramesLen do h = h + 1
+                frames[h] = activeFrames[h]
             end
         end
 
@@ -256,30 +258,33 @@ dlg:button {
         end
 
         local spriteSpec = activeSprite.spec
-        local spriteWidth = spriteSpec.width
-        local spriteHeight = spriteSpec.height
+        local wSprite = spriteSpec.width
+        local hSprite = spriteSpec.height
         local colorMode = spriteSpec.colorMode
         local alphaMask = spriteSpec.transparentColor
 
-        local wn1 = math.max(1.0, spriteWidth - 1.0)
-        local hn1 = math.max(1.0, spriteHeight - 1.0)
         local xOrPx = 0
         local yOrPx = 0
-        local xDsPx = wn1
+        local xDsPx = 0
         local yDsPx = 0
 
         if coord == "POLAR" then
-            local xCenter = args.xCenter or defaults.xCenter
-            local yCenter = args.yCenter or defaults.yCenter
+            local xCntr = args.xCenter or defaults.xCenter
+            local yCntr = args.yCenter or defaults.yCenter
             local angle = args.angle or defaults.angle
 
-            local xCtPx = xCenter * wn1 * 0.01
-            local yCtPx = yCenter * hn1 * 0.01
+            xCntr = xCntr * 0.01
+            yCntr = yCntr * 0.01
+
+            local xCtPx = xCntr * (wSprite + 1) - 0.5
+            local yCtPx = yCntr * (hSprite + 1) - 0.5
 
             local query = AseUtilities.DIMETRIC_ANGLES[angle]
             local a = angle * 0.017453292519943
             if query then a = query end
-            local r = 0.5 * math.sqrt(wn1 * wn1 + hn1 * hn1)
+            local r = 0.5 * math.sqrt(
+                wSprite * wSprite
+                + hSprite * hSprite)
             local rtcos = r * math.cos(a)
             local rtsin = r * math.sin(a)
 
@@ -288,15 +293,22 @@ dlg:button {
             xDsPx = xCtPx + rtcos
             yDsPx = yCtPx - rtsin
         else
-            local xOrigin = args.xOrigin or defaults.xOrigin
-            local yOrigin = args.yOrigin or defaults.yOrigin
+            local xOrig = args.xOrig or defaults.xOrig
+            local yOrig = args.yOrig or defaults.yOrig
             local xDest = args.xDest or defaults.xDest
             local yDest = args.yDest or defaults.yDest
 
-            xOrPx = xOrigin * wn1 * 0.01
-            yOrPx = yOrigin * hn1 * 0.01
-            xDsPx = xDest * wn1 * 0.01
-            yDsPx = yDest * hn1 * 0.01
+            xOrig = xOrig * 0.01
+            yOrig = yOrig * 0.01
+            xDest = xDest * 0.01
+            yDest = yDest * 0.01
+
+            -- Bias required to cope with full reflection
+            -- at edges of image (0, 0), (w, h).
+            xOrPx = xOrig * (wSprite + 1) - 0.5
+            yOrPx = yOrig * (hSprite + 1) - 0.5
+            xDsPx = xDest * (wSprite + 1) - 0.5
+            yDsPx = yDest * (hSprite + 1) - 0.5
         end
 
         -- Find vector between origin and destination.
@@ -307,10 +319,10 @@ dlg:button {
         local invalidFlag = (math.abs(dx) < 1)
             and (math.abs(dy) < 1)
         if invalidFlag then
-            xOrPx = 0
-            yOrPx = 0
-            xDsPx = wn1
-            yDsPx = 0
+            xOrPx = 0.0
+            yOrPx = 0.0
+            xDsPx = wSprite - 1.0
+            yDsPx = hSprite - 1.0
             dx = xDsPx - xOrPx
             dy = yDsPx - yOrPx
         end
@@ -321,9 +333,7 @@ dlg:button {
         mirrLayer.opacity = srcLayer.opacity
 
         -- Used to include origin and destination coordinates.
-        mirrLayer.name = string.format(
-            "%s.Mirrored",
-            srcLayer.name)
+        mirrLayer.name = srcLayer.name .. ".Mirrored"
 
         -- Cache global methods.
         local floor = math.floor
@@ -352,8 +362,8 @@ dlg:button {
                     local flatImg = srcImg
                     if xSrcPos ~= 0
                         or ySrcPos ~= 0
-                        or wSrcImg ~= spriteWidth
-                        or hSrcImg ~= spriteHeight then
+                        or wSrcImg ~= wSprite
+                        or hSrcImg ~= hSprite then
                         flatImg = Image(spriteSpec)
                         flatImg:drawImage(srcImg, srcPos)
                     end
@@ -380,7 +390,7 @@ dlg:button {
                             local iyOpp = floor(0.5 + pyOpp)
 
                             elm(wrapper(ixOpp, iyOpp,
-                                spriteWidth, spriteHeight,
+                                wSprite, hSprite,
                                 flatImg, alphaMask))
                         end
                     end
@@ -427,7 +437,6 @@ dlg:button {
                         frame = srcFrame,
                         points = { origin, dest }
                     }
-
 
                     app.useTool {
                         tool = "pencil",

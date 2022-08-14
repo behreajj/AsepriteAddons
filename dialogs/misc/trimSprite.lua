@@ -146,6 +146,8 @@ dlg:button {
         local cropCel = AseUtilities.trimCelToSprite
         local selectCel = AseUtilities.trimCelToSelect
 
+        local toCull = {}
+        local lenToCull = 0
         local lenLeaves = #leaves
         local frames = activeSprite.frames
         local lenFrames = #frames
@@ -170,6 +172,7 @@ dlg:button {
 
             local i = 0
             while i < lenFrames do i = i + 1
+                local frame = frames[i]
                 local cel = leaf:cel(frames[i])
                 if cel then
                     local celPos = cel.position
@@ -204,6 +207,8 @@ dlg:button {
 
                         cel.position = Point(tlx, tly)
                         cel.image = trimmed
+                        celPos = cel.position
+                        celImg = cel.image
 
                         if useCrop then
                             cropCel(cel, activeSprite)
@@ -214,6 +219,11 @@ dlg:button {
                             brx = tlx + celImg.width - 1
                             bry = tly + celImg.height - 1
                         end
+                    end
+
+                    if celImg:isEmpty() then
+                        lenToCull = lenToCull + 1
+                        toCull[lenToCull] = { layer = leaf, frame = frame }
                     end
 
                     if tlx < xMin then xMin = tlx end
@@ -251,6 +261,15 @@ dlg:button {
                 activeSprite.width + pad2,
                 activeSprite.height + pad2)
         end
+
+        app.transaction(function()
+            local k = 0
+            while k < lenToCull do k = k + 1
+                local packet = toCull[k]
+                activeSprite:deleteCel(
+                    packet.layer, packet.frame)
+            end
+        end)
 
         app.command.FitScreen()
         app.refresh()

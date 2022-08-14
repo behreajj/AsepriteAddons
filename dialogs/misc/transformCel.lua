@@ -655,7 +655,7 @@ dlg:slider {
     id = "degrees",
     label = "Degrees:",
     min = 0,
-    max = 359,
+    max = 360,
     value = defaults.degrees,
 }
 
@@ -1178,15 +1178,16 @@ dlg:button {
                     end
 
                     if wSrc ~= wTrg or hSrc ~= hTrg then
-                        local tx = wSrc / wTrg
-                        local ty = hSrc / hTrg
+                        -- Right-bottom edges were clipped
+                        -- with wSrc / wTrg and hSrc / hTrg .
+                        local tx = (wSrc - 1.0) / (wTrg - 1.0)
+                        local ty = (hSrc - 1.0) / (hTrg - 1.0)
 
                         local colorMode = srcSpec.colorMode
                         local alphaMask = srcSpec.transparentColor
                         local colorSpace = srcSpec.colorSpace
                         local trgSpec = ImageSpec {
-                            height = hTrg,
-                            width = wTrg,
+                            width = wTrg, height = hTrg,
                             colorMode = colorMode,
                             transparentColor = alphaMask
                         }
@@ -1202,9 +1203,9 @@ dlg:button {
                             end
                         else
                             for elm in trgpxitr do
-                                elm(srcImg:getPixel(
-                                    floor(elm.x * tx),
-                                    floor(elm.y * ty)))
+                                elm(filterNear(
+                                    elm.x * tx, elm.y * ty, wSrc, hSrc,
+                                    srcImg, alphaMask))
                             end
                         end
 
