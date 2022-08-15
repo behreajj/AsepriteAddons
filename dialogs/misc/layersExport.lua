@@ -274,11 +274,11 @@ dlg:button {
 
         -- Version specific.
         local version = app.version
-        local checkForTilemaps = false
+        local checkTilemaps = false
         local missingUserData = "null"
         local spriteUserData = "\"data\":" .. missingUserData
         if version.major >= 1 and version.minor >= 3 then
-            checkForTilemaps = true
+            checkTilemaps = true
             local rawUserData = activeSprite.data
             if rawUserData and #rawUserData > 0 then
                 spriteUserData = string.format(
@@ -430,8 +430,6 @@ dlg:button {
             local layer = selectLayers[h]
             local layerBlendMode = layer.blendMode
             local layerData = layer.data
-            -- local layerIsReference = layer.isReference
-            local layerIsReference = false
             local layerName = layer.name
             local layerOpacity = layer.opacity
 
@@ -449,7 +447,7 @@ dlg:button {
             -- Tile map possibility.
             local layerIsTilemap = false
             local tileSet = nil
-            if checkForTilemaps then
+            if checkTilemaps then
                 layerIsTilemap = layer.isTilemap
                 if layerIsTilemap then
                     tileSet = layer.tileset
@@ -503,7 +501,7 @@ dlg:button {
 
                         local childLayerIsTilemap = false
                         local childTileSet = nil
-                        if checkForTilemaps then
+                        if checkTilemaps then
                             childLayerIsTilemap = childLayer.isTilemap
                             if childLayerIsTilemap then
                                 childTileSet = childLayer.tileset
@@ -587,10 +585,6 @@ dlg:button {
                         yTrg = yMin
                         imgTrg = imgComp
                     end
-
-                elseif layerIsReference then
-
-                    -- Pass.
 
                 else
 

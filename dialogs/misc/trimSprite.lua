@@ -170,6 +170,7 @@ dlg:button {
                 end
             end
 
+            -- Problem: linked cels will count multiple times.
             local i = 0
             while i < lenFrames do i = i + 1
                 local frame = frames[i]

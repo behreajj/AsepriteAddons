@@ -35,6 +35,8 @@ local defaults = {
     interType = "HORIZONTAL",
     interOffOrig = 180,
     interOffDest = 180,
+    interSkip = 1,
+    interPick = 1,
 
     printElapsed = false,
     pullFocus = false
@@ -157,6 +159,8 @@ dlg:combobox {
         dlg:modify { id = "interType", visible = isInter }
         dlg:modify { id = "interOffOrig", visible = isInter }
         dlg:modify { id = "interOffDest", visible = isInter }
+        dlg:modify { id = "interSkip", visible = isInter }
+        dlg:modify { id = "interPick", visible = isInter }
 
         local isHoriz = interType == "HORIZONTAL"
         local isVert = interType == "VERTICAL"
@@ -323,6 +327,25 @@ dlg:slider {
     min = -180,
     max = 180,
     value = defaults.interOffDest,
+    visible = defaults.waveType == "INTERLACED"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "interSkip",
+    label = "Skip:",
+    min = 1,
+    max = 8,
+    value = defaults.interSkip,
+    visible = defaults.waveType == "INTERLACED"
+}
+
+dlg:slider {
+    id = "interPick",
+    min = 1,
+    max = 8,
+    value = defaults.interPick,
     visible = defaults.waveType == "INTERLACED"
 }
 
@@ -532,7 +555,7 @@ dlg:button {
                 local u = 1.0 - t
                 local xDsplScl = u * pxxDisplaceOrig + t * pxxDisplaceDest
                 local yDsplScl = u * pxyDisplaceOrig + t * pxyDisplaceDest
-                local xTheta = angle + x * xToTheta
+                local xTheta = angle - x * xToTheta
                 local yTheta = angle + y * yToTheta
                 local xWarp = xDsplScl * sin(yTheta)
                 local yWarp = yDsplScl * cos(xTheta)
@@ -546,6 +569,10 @@ dlg:button {
             local interType = args.interType or defaults.interType
             local interOffOrig = args.interOffOrig or defaults.interOffOrig
             local interOffDest = args.interOffDest or defaults.interOffDest
+            local skip = args.interSkip or defaults.interSkip
+            local pick = args.interPick or defaults.interPick
+
+            local all = pick + skip
             local lacRadOrig = 0.017453292519943 * interOffOrig
             local lacRadDest = 0.017453292519943 * interOffDest
 
@@ -564,7 +591,7 @@ dlg:button {
                 eval = function(x, y, angle, t)
                     local u = 1.0 - t
                     local xTheta = angle + x * xToTheta
-                    if x % 2 ~= 0 then
+                    if (x % all) < pick then
                         local lacOrig = u * lacRadOrig
                             + t * lacRadDest
                         xTheta = xTheta + lacOrig
@@ -590,7 +617,7 @@ dlg:button {
                 eval = function(x, y, angle, t)
                     local u = 1.0 - t
                     local yTheta = angle + y * yToTheta
-                    if y % 2 ~= 0 then
+                    if (y % all) < pick then
                         local lacOrig = u * lacRadOrig
                             + t * lacRadDest
                         yTheta = yTheta + lacOrig

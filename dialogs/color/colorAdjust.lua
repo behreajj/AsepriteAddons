@@ -281,6 +281,7 @@ dlg:button {
         if bInvert then bSign = -1.0 end
 
         -- Find frames from target.
+        -- TODO: This will cause problems with linked cels.
         local frames = {}
         if target == "ACTIVE" then
             local activeFrame = app.activeFrame

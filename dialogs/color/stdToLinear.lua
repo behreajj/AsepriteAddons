@@ -43,7 +43,7 @@ local directions = { "LINEAR_TO_STANDARD", "STANDARD_TO_LINEAR" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
-    target = "ACTIVE",
+    target = "RANGE",
     direction = "STANDARD_TO_LINEAR",
     pullFocus = false
 }
@@ -143,10 +143,7 @@ dlg:button {
             return
         end
 
-        -- TODO: Redo this to follow pattern in other dialogs,
-        -- where the layer could be locked, or a tile map.
-        -- Maybe for tilemaps just check to see if image color
-        -- mode matches sprite color mode...
+        -- Does not handle 1.3 tile maps.
         local cels = {}
         if target == "ACTIVE" then
             local activeCel = app.activeCel
@@ -154,9 +151,31 @@ dlg:button {
                 cels[1] = activeCel
             end
         elseif target == "RANGE" then
-            cels = app.range.cels
+            local images = app.range.images
+            local lenImgs = #images
+            local i = 0
+            while i < lenImgs do i = i + 1
+                cels[i] = images[i].cel
+            end
         else
-            cels = activeSprite.cels
+            local frIdcs = {}
+            local lenFrames = #activeSprite.frames
+            local i = 0
+            while i < lenFrames do i = i + 1
+                frIdcs[i] = i
+            end
+
+            local appRange = app.range
+            appRange.frames = frIdcs
+
+            local images = appRange.images
+            local lenImgs = #images
+            local j = 0
+            while j < lenImgs do j = j + 1
+                cels[j] = images[j].cel
+            end
+
+            appRange:clear()
         end
 
         app.transaction(function()

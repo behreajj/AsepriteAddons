@@ -363,12 +363,13 @@ end
 ---Creates a grid of bricks.
 ---The offset is how far to displace offset rows.
 ---The aspect is the ratio of brick width to height.
----The frequency describes interval before an offset.
+---The frequency describes interval before an offset,
+---2 is the default.
 ---@param cols integer columns
 ---@param rows integer rows
 ---@param offset number offset
 ---@param aspect number aspect ratio
----@param freq integer frequency
+---@param freq integer|nil frequency
 ---@return table
 function Mesh2.gridBricks(cols, rows, offset, aspect, freq)
 

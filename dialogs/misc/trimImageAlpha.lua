@@ -4,7 +4,7 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
     padding = 0,
-    target = "ALL",
+    target = "RANGE",
     pullFocus = false
 }
 
@@ -35,66 +35,89 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local activeSprite = app.activeSprite
-        if activeSprite then
-            local args = dlg.data
-            local target = args.target
-            local padding = args.padding
-
-            -- Tile map layers should not be trimmed, so check
-            -- if Aseprite is newer than 1.3.
-            local version = app.version
-            local checkForTilemaps = (version.major >= 1)
-                and (version.minor >= 3)
-
-            local alphaIndex = activeSprite.transparentColor
-
-            local cels = {}
-            if target == "ACTIVE" then
-                local activeCel = app.activeCel
-                if activeCel then
-                    cels[1] = activeCel
-                end
-            elseif target == "RANGE" then
-                cels = app.range.cels
-            else
-                cels = activeSprite.cels
-            end
-
-            local celsLen = #cels
-            local trimImage = AseUtilities.trimImageAlpha
-            app.transaction(function()
-                local i = 0
-                while i < celsLen do
-                    i = i + 1
-                    local cel = cels[i]
-                    -- Is this if cel check necessary?
-                    if cel then
-                        local layer = cel.layer
-                        local layerIsTilemap = false
-                        if checkForTilemaps then
-                            layerIsTilemap = layer.isTilemap
-                        end
-
-                        if layerIsTilemap then
-                            -- Tile map layers should only belong to
-                            -- .aseprite files, and hence not need this.
-                        else
-                            local srcImg = cel.image
-                            local trgImg, x, y = trimImage(srcImg, padding, alphaIndex)
-                            local srcPos = cel.position
-                            cel.position = Point(srcPos.x + x, srcPos.y + y)
-                            cel.image = trgImg
-                        end
-                    end
-                end
-            end)
-
-            app.refresh()
-        else
+        if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
+            return
         end
+
+        local args = dlg.data
+        local target = args.target
+        local padding = args.padding
+
+        -- Tile map layers should not be trimmed, so check
+        -- if Aseprite is newer than 1.3.
+        local version = app.version
+        local checkTilemaps = (version.major >= 1)
+            and (version.minor >= 3)
+
+        local alphaMask = activeSprite.transparentColor
+
+        local cels = {}
+        if target == "ACTIVE" then
+            local activeCel = app.activeCel
+            if activeCel then
+                cels[1] = activeCel
+            end
+        elseif target == "RANGE" then
+            local images = app.range.images
+            local lenImgs = #images
+            local i = 0
+            while i < lenImgs do i = i + 1
+                cels[i] = images[i].cel
+            end
+        else
+            local frIdcs = {}
+            local lenFrames = #activeSprite.frames
+            local i = 0
+            while i < lenFrames do i = i + 1
+                frIdcs[i] = i
+            end
+
+            local appRange = app.range
+            appRange.frames = frIdcs
+
+            local images = appRange.images
+            local lenImgs = #images
+            local j = 0
+            while j < lenImgs do j = j + 1
+                cels[j] = images[j].cel
+            end
+
+            appRange:clear()
+        end
+
+        local celsLen = #cels
+        local trimImage = AseUtilities.trimImageAlpha
+        app.transaction(function()
+            local i = 0
+            while i < celsLen do
+                i = i + 1
+                -- cel nil check shouldn't be necessary?
+                local cel = cels[i]
+                local layer = cel.layer
+                local layerIsTilemap = false
+                if checkTilemaps then
+                    layerIsTilemap = layer.isTilemap
+                end
+
+                if layerIsTilemap then
+                    -- Tile map layers should only belong to
+                    -- .aseprite files, and hence not need this.
+                    -- elseif layer.isEditable then
+                else
+                    local srcImg = cel.image
+                    local trgImg, x, y = trimImage(srcImg, padding, alphaMask)
+                    local srcPos = cel.position
+                    cel.position = Point(srcPos.x + x, srcPos.y + y)
+                    cel.image = trgImg
+                end
+            end
+        end)
+
+        app.refresh()
     end
 }
 

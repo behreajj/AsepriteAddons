@@ -5,7 +5,7 @@ local targets = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local unitOptions = { "PERCENT", "PIXEL" }
 
 local defaults = {
-    target = "ACTIVE",
+    target = "RANGE",
     xTranslate = 0.0,
     yTranslate = 0.0,
     easeMethod = "NEAREST",
@@ -170,45 +170,112 @@ local function filterBilin(
     return alphaMask
 end
 
+local function appendLeaves(layer, array, bkgAllow, checkTilemaps)
+    if layer.isGroup then
+        local childLayers = layer.layers
+        local lenChildLayers = #childLayers
+        local i = 0
+        while i < lenChildLayers do
+            i = i + 1
+            local childLayer = childLayers[i]
+            appendLeaves(childLayer, array)
+        end
+    elseif (bkgAllow or not layer.isBackground) then
+        local isTilemap = false
+        if checkTilemaps then
+            isTilemap = layer.isTilemap
+        end
+        if not isTilemap then
+            table.insert(array, layer)
+        end
+    end
+end
+
 local function getTargetCels(activeSprite, targetPreset, bkgAllow)
 
     -- Unrelated issues with Aseprite can raise the need
     -- to roll back to an older version. For that reason,
     -- layer.isReference is no longer supported.
 
-    local targetCels = {}
-    local tinsert = table.insert
-    local isUnlocked = AseUtilities.isEditableHierarchy
+    local version = app.version
+    local checkTilemaps = version.major >= 1
+        and version.minor >= 3
 
-    -- TODO: Do not impact tile map layers!
-    local vBkgAll = bkgAllow or false
-    if targetPreset == "ACTIVE" then
-        local activeLayer = app.activeLayer
-        if activeLayer then
-            if isUnlocked(activeLayer, activeSprite)
-                and (vBkgAll or not activeLayer.isBackground) then
+    local lenTrgCels = 0
+    local trgCels = {}
 
-                -- TODO: What if active is group layer, get leaves?
-                local activeCel = app.activeCel
-                if activeCel then
-                    targetCels[1] = activeCel
-                end
+    local vBkgAlw = bkgAllow or false
+    if targetPreset == "ALL" then
+
+        -- Linked cels occur multiple times in the sprite.cels
+        -- https://github.com/aseprite/aseprite/issues/3406
+        -- Can be fixed in CPP by changing function call cels()
+        -- to uniqueCels() at this line in the source:
+        -- https://github.com/aseprite/aseprite/blob/main/
+        -- src/app/script/cels_class.cpp#L90
+        local leaves = {}
+        local layers = activeSprite.layers
+        local lenLayers = #layers
+        local h = 0
+        while h < lenLayers do h = h + 1
+            local layer = layers[h]
+            if layer.isEditable then
+                appendLeaves(layer, leaves,
+                    vBkgAlw, checkTilemaps)
             end
         end
-    elseif targetPreset == "RANGE" then
-        local appRange = app.range
-        local rangeCels = appRange.cels
-        local rangeCelsLen = #rangeCels
+
+        -- Ranges accept frame numbers, not frame objects
+        -- to their frames setter.
+        local frIdcs = {}
+        local lenFrames = #activeSprite.frames
         local i = 0
-        while i < rangeCelsLen do i = i + 1
-            local rangeCel = rangeCels[i]
-            local celLayer = rangeCel.layer
-            if isUnlocked(celLayer, activeSprite)
-                and (vBkgAll or not celLayer.isBackground) then
-                tinsert(targetCels, rangeCel)
+        while i < lenFrames do i = i + 1
+            frIdcs[i] = i
+        end
+
+        -- If you don't care about filtering layers,
+        -- a shortcut: assign all frames only.
+        local appRange = app.range
+        appRange.layers = leaves
+        appRange.frames = frIdcs
+
+        -- Editability has already been determined
+        -- by layers loop above.
+        local imgsRange = appRange.images
+        local lenImgsRange = #imgsRange
+        local j = 0
+        while j < lenImgsRange do j = j + 1
+            lenTrgCels = lenTrgCels + 1
+            trgCels[lenTrgCels] = imgsRange[j].cel
+        end
+
+        appRange:clear()
+
+    elseif targetPreset == "RANGE" then
+
+        -- editableImages acquire unique cels.
+        local appRange = app.range
+        local imgsRange = appRange.editableImages
+        local lenImgsRange = #imgsRange
+        local i = 0
+        while i < lenImgsRange do i = i + 1
+            local image = imgsRange[i]
+            local cel = image.cel
+            local layer = cel.layer
+            local isTilemap = false
+            if checkTilemaps then
+                isTilemap = layer.isTilemap
+            end
+            if (vBkgAlw or not layer.isBackground)
+                and not isTilemap then
+                lenTrgCels = lenTrgCels + 1
+                trgCels[lenTrgCels] = cel
             end
         end
+
     elseif targetPreset == "SELECTION" then
+
         local sel = AseUtilities.getSelection(activeSprite)
         local selBounds = sel.bounds
         local xSel = selBounds.x
@@ -233,12 +300,10 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
 
         -- Remove pixels within selection bounds
         -- but not within selection itself.
-        local xMin = xSel
-        local yMin = ySel
         local flatPxItr = flatImage:pixels()
         for elm in flatPxItr do
-            local x = elm.x + xMin
-            local y = elm.y + yMin
+            local x = elm.x + xSel
+            local y = elm.y + ySel
             if not sel:contains(x, y) then
                 elm(alphaMask)
             end
@@ -251,22 +316,34 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
         local adjCel = activeSprite:newCel(
             adjLayer, actFrame,
             flatImage, Point(xSel, ySel))
-        tinsert(targetCels, adjCel)
+        lenTrgCels = lenTrgCels + 1
+        trgCels[lenTrgCels] = adjCel
+
     else
-        local activeCels = activeSprite.cels
-        local activeCelsLen = #activeCels
-        local i = 0
-        while i < activeCelsLen do i = i + 1
-            local activeCel = activeCels[i]
-            local celLayer = activeCel.layer
-            if isUnlocked(celLayer, activeSprite)
-                and (vBkgAll or not celLayer.isBackground) then
-                tinsert(targetCels, activeCel)
+        -- If active is group, get children.
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame
+        if activeLayer and activeFrame then
+            if AseUtilities.isEditableHierarchy(
+                activeLayer, activeSprite) then
+                local leaves = {}
+                appendLeaves(activeLayer, leaves,
+                    vBkgAlw, checkTilemaps)
+                local lenLeaves = #leaves
+                local i = 0
+                while i < lenLeaves do i = i + 1
+                    local leaf = leaves[i]
+                    local cel = leaf:cel(activeFrame)
+                    if cel then
+                        lenTrgCels = lenTrgCels + 1
+                        trgCels[lenTrgCels] = cel
+                    end
+                end
             end
         end
     end
 
-    return targetCels
+    return trgCels
 end
 
 local dlg = Dialog { title = "Transform" }

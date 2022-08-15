@@ -424,6 +424,8 @@ function AseUtilities.bakeLayerOpacity(layer)
     local layerAlpha = 0xff
     if layer.opacity then layerAlpha = layer.opacity end
     if not layer.isVisible then layerAlpha = 0 end
+
+    -- Will cause a problem for linked cels.
     local cels = layer.cels
     local lenCels = #cels
 
@@ -1529,7 +1531,7 @@ end
 ---command twice. If selection is empty, returns
 ---sprite bounds as selection.
 ---@param sprite userdata sprite
----@return table
+---@return userdata
 function AseUtilities.getSelection(sprite)
     -- If a selection is moved, but the drag and
     -- drop pixels checkmark is not pressed, then

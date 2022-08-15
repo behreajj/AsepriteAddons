@@ -194,7 +194,7 @@ dlg:button {
         -- Tile map layers should not be trimmed, so check
         -- if Aseprite is newer than 1.3.
         local version = app.version
-        local checkForTilemaps = (version.major >= 1)
+        local checkTilemaps = (version.major >= 1)
             and (version.minor >= 3)
 
         app.activeSprite = openSprite
@@ -257,10 +257,26 @@ dlg:button {
 
         local trimCels = args.trimCels
         if trimCels then
-            -- Problem with refactoring this to its own function
-            -- is that it would need to check for pixel color mode
-            -- and to create its own transaction.
-            local cels = openSprite.cels
+            local frIdcs = {}
+            local lenFrames = #openSprite.frames
+            local h = 0
+            while h < lenFrames do h = h + 1
+                frIdcs[h] = h
+            end
+
+            local appRange = app.range
+            appRange.frames = frIdcs
+
+            local images = appRange.images
+            local lenImgs = #images
+            local k = 0
+            local cels = {}
+            while k < lenImgs do k = k + 1
+                cels[k] = images[k].cel
+            end
+
+            appRange:clear()
+
             local celsLen = #cels
             local trimImage = AseUtilities.trimImageAlpha
             app.transaction(function()
@@ -270,7 +286,7 @@ dlg:button {
 
                     local layer = cel.layer
                     local layerIsTilemap = false
-                    if checkForTilemaps then
+                    if checkTilemaps then
                         layerIsTilemap = layer.isTilemap
                     end
 
