@@ -40,7 +40,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -49,7 +50,8 @@ dlg:button {
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "Only RGB color mode is supported." }
+                text = "Only RGB color mode is supported."
+            }
             return
         end
 
@@ -57,7 +59,8 @@ dlg:button {
         if not srcLayer then
             app.alert {
                 title = "Error",
-                text = "There is no active layer." }
+                text = "There is no active layer."
+            }
             return
         end
 
@@ -98,28 +101,7 @@ dlg:button {
             clrSpacePreset, args.huePreset)
 
         -- Find frames from target.
-        local frames = {}
-        if target == "ACTIVE" then
-            local activeFrame = app.activeFrame
-            if activeFrame then
-                frames[1] = activeFrame
-            end
-        elseif target == "RANGE" then
-            local appRange = app.range
-            local rangeFrames = appRange.frames
-            local rangeFramesLen = #rangeFrames
-            local i = 0
-            while i < rangeFramesLen do i = i + 1
-                frames[i] = rangeFrames[i]
-            end
-        else
-            local activeFrames = activeSprite.frames
-            local activeFramesLen = #activeFrames
-            local i = 0
-            while i < activeFramesLen do i = i + 1
-                frames[i] = activeFrames[i]
-            end
-        end
+        local frames = AseUtilities.getFrames(activeSprite, target)
 
         -- Create target layer.
         -- Do not copy source layer blend mode.

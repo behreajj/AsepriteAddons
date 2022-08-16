@@ -3,7 +3,7 @@ dofile("../../support/aseutilities.lua")
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
-    target = "ALL",
+    target = "RANGE",
     fillBase = true,
     xRed = 0.0,
     yRed = 0.0,
@@ -126,7 +126,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -134,22 +135,25 @@ dlg:button {
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "Only RGB color mode is supported." }
+                text = "Only RGB color mode is supported."
+            }
             return
         end
 
-        local activeLayer = app.activeLayer
-        if not activeLayer then
+        local srcLayer = app.activeLayer
+        if not srcLayer then
             app.alert {
                 title = "Error",
-                text = "There is no active layer." }
+                text = "There is no active layer."
+            }
             return
         end
 
-        if activeLayer.isGroup then
+        if srcLayer.isGroup then
             app.alert {
                 title = "Error",
-                text = "Group layers are not supported." }
+                text = "Group layers are not supported."
+            }
             return
         end
 
@@ -158,9 +162,9 @@ dlg:button {
         local tileSet = nil
         local version = app.version
         if version.major >= 1 and version.minor >= 3 then
-            layerIsTilemap = activeLayer.isTilemap
+            layerIsTilemap = srcLayer.isTilemap
             if layerIsTilemap then
-                tileSet = activeLayer.tileset
+                tileSet = srcLayer.tileset
             end
         end
 
@@ -181,33 +185,14 @@ dlg:button {
         local opacityGreen = args.opacityGreen or defaults.opacityGreen
         local opacityBlue = args.opacityBlue or defaults.opacityBlue
 
-        local frames = {}
-        if target == "ACTIVE" then
-            local activeFrame = app.activeFrame
-            if activeFrame then
-                frames[1] = activeFrame
-            end
-        elseif target == "RANGE" then
-            local appRange = app.range
-            local rangeFrames = appRange.frames
-            local rangeFramesLen = #rangeFrames
-            for i = 1, rangeFramesLen, 1 do
-                frames[i] = rangeFrames[i]
-            end
-        else
-            local activeFrames = activeSprite.frames
-            local activeFramesLen = #activeFrames
-            for i = 1, activeFramesLen, 1 do
-                frames[i] = activeFrames[i]
-            end
-        end
+        local frames = AseUtilities.getFrames(activeSprite, target)
 
         local baseLyr = activeSprite:newLayer()
         local redLyr = activeSprite:newLayer()
         local greenLyr = activeSprite:newLayer()
         local blueLyr = activeSprite:newLayer()
 
-        local activeParent = activeLayer.parent
+        local activeParent = srcLayer.parent
         baseLyr.parent = activeParent
         redLyr.parent = activeParent
         greenLyr.parent = activeParent
@@ -249,7 +234,7 @@ dlg:button {
             local i = 0
             while i < framesLen do i = i + 1
                 local srcFrame = frames[i]
-                local srcCel = activeLayer:cel(srcFrame)
+                local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
                     local srcImg = srcCel.image
                     if layerIsTilemap then

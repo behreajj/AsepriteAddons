@@ -1506,6 +1506,51 @@ function AseUtilities.flipImageVert(source)
     return target, 0, 1 - h
 end
 
+---Gets a table of frames from a sprite based on
+---a string constant. "ALL" gets all frames in the
+---sprite. "RANGE" gets the frames in the timeline
+---range. Defaults to "ACTIVE" which returns the
+---active frame. If there's no active frame,
+---returns an empty array. If a range is a layer
+---type, returns all frames in sprite.
+---@param sprite userdata sprite
+---@param target string preset
+---@return table
+function AseUtilities.getFrames(sprite, target)
+    local frames = {}
+    if target == "RANGE" then
+        local range = app.range
+        local rangeType = range.type
+        if rangeType == RangeType.LAYERS then
+            local allFrames = sprite.frames
+            local lenAllFrames = #allFrames
+            local i = 0
+            while i < lenAllFrames do i = i + 1
+                frames[i] = allFrames[i]
+            end
+        else
+            local rangeFrames = range.frames
+            local lenRangeFrames = #rangeFrames
+            for i = 1, lenRangeFrames, 1 do
+                frames[i] = rangeFrames[i]
+            end
+        end
+    elseif target == "ALL" then
+        local allFrames = sprite.frames
+        local lenAllFrames = #allFrames
+        local i = 0
+        while i < lenAllFrames do i = i + 1
+            frames[i] = allFrames[i]
+        end
+    else
+        local activeFrame = app.activeFrame
+        if activeFrame then
+            frames[1] = activeFrame
+        end
+    end
+    return frames
+end
+
 ---For sprites with multiple palettes, tries to get
 ---a palette from an Aseprite frame object. Defaults
 ---to index 1 if the frame index exceeds the number
@@ -1678,8 +1723,11 @@ function AseUtilities.isVisibleHierarchy(layer, sprite)
 end
 
 ---Parses Aseprite range object to find the
----frames it contains. Returns an array
----of frame indices.
+---frames it contains. Returns an array of
+---frame indices.
+---
+---Note that layer type ranges contain only
+---one frame, despite appearance in the GUI.
 ---@param range userdata Aseprite range
 ---@return table
 function AseUtilities.parseRange(range)

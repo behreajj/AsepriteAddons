@@ -289,28 +289,7 @@ dlg:button {
             clrSpacePreset, args.huePreset)
 
         -- Find frames from target.
-        local frames = {}
-        if target == "ACTIVE" then
-            local activeFrame = app.activeFrame
-            if activeFrame then
-                frames[1] = activeFrame
-            end
-        elseif target == "RANGE" then
-            local appRange = app.range
-            local rangeFrames = appRange.frames
-            local rangeFramesLen = #rangeFrames
-            local i = 0
-            while i < rangeFramesLen do i = i + 1
-                frames[i] = rangeFrames[i]
-            end
-        else
-            local activeFrames = activeSprite.frames
-            local activeFramesLen = #activeFrames
-            local i = 0
-            while i < activeFramesLen do i = i + 1
-                frames[i] = activeFrames[i]
-            end
-        end
+        local frames = AseUtilities.getFrames(activeSprite, target)
 
         -- For auto alpha fade.
         -- The clr needs to be blended with the background.

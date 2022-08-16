@@ -121,18 +121,18 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "timeScalar",
-    label = "Frequency:",
-    min = 1,
-    max = 10,
-    value = defaults.timeScalar
-}
-
-dlg:slider {
     id = "spaceScalar",
+    label = "Period:",
     min = 1,
     max = 10,
     value = defaults.spaceScalar
+}
+
+dlg:slider {
+    id = "timeScalar",
+    min = 1,
+    max = 10,
+    value = defaults.timeScalar
 }
 
 dlg:newrow { always = false }
@@ -147,7 +147,10 @@ dlg:combobox {
         local waveType = args.waveType
         local interType = args.interType
 
+        local isInter = waveType == "INTERLACED"
+        local isBilinear = waveType == "BILINEAR"
         local isRadial = waveType == "RADIAL"
+
         dlg:modify { id = "xCenter", visible = isRadial }
         dlg:modify { id = "yCenter", visible = isRadial }
         dlg:modify { id = "uDisplaceOrig", visible = isRadial }
@@ -155,7 +158,6 @@ dlg:combobox {
         dlg:modify { id = "sustain", visible = isRadial }
         dlg:modify { id = "warp", visible = isRadial }
 
-        local isInter = waveType == "INTERLACED"
         dlg:modify { id = "interType", visible = isInter }
         dlg:modify { id = "interOffOrig", visible = isInter }
         dlg:modify { id = "interOffDest", visible = isInter }
@@ -164,7 +166,7 @@ dlg:combobox {
 
         local isHoriz = interType == "HORIZONTAL"
         local isVert = interType == "VERTICAL"
-        local isBilinear = waveType == "BILINEAR"
+
         dlg:modify {
             id = "xDisplaceOrig",
             visible = isBilinear or (isInter and isHoriz)
@@ -189,16 +191,16 @@ dlg:newrow { always = false }
 dlg:slider {
     id = "xCenter",
     label = "Center %:",
-    min = -50,
-    max = 150,
+    min = -100,
+    max = 200,
     value = defaults.xCenter,
     visible = defaults.waveType == "RADIAL"
 }
 
 dlg:slider {
     id = "yCenter",
-    min = -50,
-    max = 150,
+    min = -100,
+    max = 200,
     value = defaults.yCenter,
     visible = defaults.waveType == "RADIAL"
 }
@@ -643,15 +645,15 @@ dlg:button {
             local pxyCenter = hn1 * yCenter * 0.01
 
             local maxDist = 0.0
-            if yCenter < 0 or yCenter > 100
-                or xCenter < 0 or xCenter > 100 then
-                local w2 = srcWidth + srcWidth
-                local h2 = srcHeight + srcHeight
-                maxDist = sqrt(w2 * w2 + h2 * h2)
-            else
-                maxDist = sqrt(srcWidth * srcWidth
-                    + srcHeight * srcHeight)
-            end
+            -- if yCenter < 0 or yCenter > 100
+            --     or xCenter < 0 or xCenter > 100 then
+            --     local w2 = srcWidth + srcWidth
+            --     local h2 = srcHeight + srcHeight
+            --     maxDist = sqrt(w2 * w2 + h2 * h2)
+            -- else
+            maxDist = sqrt(srcWidth * srcWidth
+                + srcHeight * srcHeight)
+            -- end
 
             local pxuDisplaceOrig = maxDist * uDisplaceOrig * 0.005
             local pxuDisplaceDest = maxDist * uDisplaceDest * 0.005
@@ -683,6 +685,12 @@ dlg:button {
                     ny = ay / d
                 end
 
+                -- Dminish displacement scale over space.
+                -- Because center could be outside of canvas,
+                -- this needs to be clamped to [0.0, 1.0].
+                local fac = min(max(d * distToFac, 0.0), 1.0)
+                local falloff = (1.0 - fac) + fac * sustFac
+
                 -- Subtract space angle from time angle.
                 -- Use - instead of + to make wave head
                 -- away from the center instead of toward.
@@ -692,15 +700,8 @@ dlg:button {
                 local uDsplScl = (1.0 - t) * pxuDisplaceOrig
                     + t * pxuDisplaceDest
 
-                -- Dminish displacement scale over space.
-                -- Because center could be outside of canvas,
-                -- this needs to be clamped to [0.0, 1.0].
-                local fac = min(max(d * distToFac, 0.0), 1.0)
-                local falloff = (1.0 - fac) * uDsplScl
-                    + fac * (uDsplScl * sustFac)
-
                 -- Rescale displacement vector by falloff.
-                local offset = falloff * sin(theta)
+                local offset = falloff * uDsplScl * sin(theta)
                 local xOff = nx * offset
                 local yOff = ny * offset
 

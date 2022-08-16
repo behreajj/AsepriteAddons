@@ -21,7 +21,6 @@ local defaults = {
     aInvert = false,
     bInvert = false,
     alphaInvert = false,
-    copyToLayer = true,
     pullFocus = false
 }
 
@@ -178,14 +177,6 @@ dlg:check {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "copyToLayer",
-    label = "As New Layer:",
-    selected = defaults.copyToLayer
-}
-
-dlg:newrow { always = false }
-
 dlg:button {
     id = "adjustButton",
     text = "&OK",
@@ -248,8 +239,6 @@ dlg:button {
         local aInvert = args.aInvert
         local bInvert = args.bInvert
         local alphaInvert = args.alphaInvert
-        local copyToLayer = args.copyToLayer or isTilemap
-            or (alphaInvert and srcLayer.isBackground)
 
         local useNormalize = normalize ~= 0
         local useContrast = contrast ~= 0
@@ -280,48 +269,21 @@ dlg:button {
         if aInvert then aSign = -1.0 end
         if bInvert then bSign = -1.0 end
 
-        -- Find frames from target.
-        -- TODO: This will cause problems with linked cels.
-        local frames = {}
-        if target == "ACTIVE" then
-            local activeFrame = app.activeFrame
-            if activeFrame then
-                frames[1] = activeFrame
-            end
-        elseif target == "RANGE" then
-            local appRange = app.range
-            local rangeFrames = appRange.frames
-            local rangeFramesLen = #rangeFrames
-            local h = 0
-            while h < rangeFramesLen do h = h + 1
-                frames[h] = rangeFrames[h]
-            end
-        else
-            local activeFrames = activeSprite.frames
-            local activeFramesLen = #activeFrames
-            local h = 0
-            while h < activeFramesLen do h = h + 1
-                frames[h] = activeFrames[h]
-            end
-        end
+        local frames = AseUtilities.getFrames(activeSprite, target)
 
-        -- Create a new layer if necessary.
-        local trgLayer = nil
-        if copyToLayer then
-            trgLayer = activeSprite:newLayer()
-            local srcLayerName = "Layer"
-            if #srcLayer.name > 0 then
-                srcLayerName = srcLayer.name
-            end
-            trgLayer.name = string.format(
-                "%s.Adjusted",
-                srcLayerName)
-            if srcLayer.opacity then
-                trgLayer.opacity = srcLayer.opacity
-            end
-            if srcLayer.blendMode then
-                trgLayer.blendMode = srcLayer.blendMode
-            end
+        local trgLayer = activeSprite:newLayer()
+        local srcLayerName = "Layer"
+        if #srcLayer.name > 0 then
+            srcLayerName = srcLayer.name
+        end
+        trgLayer.name = string.format(
+            "%s.Adjusted",
+            srcLayerName)
+        if srcLayer.opacity then
+            trgLayer.opacity = srcLayer.opacity
+        end
+        if srcLayer.blendMode then
+            trgLayer.blendMode = srcLayer.blendMode
         end
 
         local oldMode = activeSprite.colorMode
@@ -489,14 +451,10 @@ dlg:button {
                         end
                     end
 
-                    if copyToLayer then
-                        local trgCel = activeSprite:newCel(
-                            trgLayer, srcFrame,
-                            trgImg, srcCel.position)
-                        trgCel.opacity = srcCel.opacity
-                    else
-                        srcCel.image = trgImg
-                    end
+                    local trgCel = activeSprite:newCel(
+                        trgLayer, srcFrame,
+                        trgImg, srcCel.position)
+                    trgCel.opacity = srcCel.opacity
                 end
             end
         end)

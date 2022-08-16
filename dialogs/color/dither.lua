@@ -605,9 +605,9 @@ dlg:button {
         local copyToLayer = args.copyToLayer
         if copyToLayer then
             app.transaction(function()
-                -- TODO: Support tile maps like in adjustHue.
-                -- Copy to layer or layerIsTilemap.
-                -- Cache pixels from iterator to an array.
+                -- TODO: Standardize to paletteToCel and other
+                -- dialogs, where layer is always copied to new
+                -- and there is a target input...
                 local srcLayer = srcCel.layer
 
                 -- Copy layer. Don't copy blend mode.

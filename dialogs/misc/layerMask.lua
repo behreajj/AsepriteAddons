@@ -161,26 +161,7 @@ dlg:button {
             end
         end
 
-        local frames = {}
-        if target == "ACTIVE" then
-            local activeFrame = app.activeFrame
-            if activeFrame then
-                frames[1] = activeFrame
-            end
-        elseif target == "RANGE" then
-            local appRange = app.range
-            local rangeFrames = appRange.frames
-            local rangeFramesLen = #rangeFrames
-            for i = 1, rangeFramesLen, 1 do
-                frames[i] = rangeFrames[i]
-            end
-        else
-            local activeFrames = activeSprite.frames
-            local activeFramesLen = #activeFrames
-            for i = 1, activeFramesLen, 1 do
-                frames[i] = activeFrames[i]
-            end
-        end
+        local frames = AseUtilities.getFrames(activeSprite, target)
 
         -- Unpack layer opacity.
         local overLyrOpacity = 0xff
@@ -329,10 +310,10 @@ dlg:button {
             activeSprite:deleteLayer(overLayer)
         elseif delOverCels then
             app.transaction(function()
-                local idxFrame = 0
-                while idxFrame < lenFrames do
-                    idxFrame = idxFrame + 1
-                    local frame = frames[idxFrame]
+                local idxDel0 = 0
+                while idxDel0 < lenFrames do
+                    idxDel0 = idxDel0 + 1
+                    local frame = frames[idxDel0]
                     -- API reports an error if a cel cannot be
                     -- found, so the layer needs to check that
                     -- it has a cel first.
@@ -349,10 +330,10 @@ dlg:button {
             activeSprite:deleteLayer(underLayer)
         elseif delUnderCels then
             app.transaction(function()
-                local idxFrame = 0
-                while idxFrame < lenFrames do
-                    idxFrame = idxFrame + 1
-                    local frame = frames[idxFrame]
+                local idxDel1 = 0
+                while idxDel1 < lenFrames do
+                    idxDel1 = idxDel1 + 1
+                    local frame = frames[idxDel1]
                     if underLayer:cel(frame) then
                         activeSprite:deleteCel(underLayer, frame)
                     end

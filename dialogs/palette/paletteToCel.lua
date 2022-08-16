@@ -14,7 +14,6 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 local defaults = {
     target = "RANGE",
     palType = "ACTIVE",
-    copyToLayer = true,
     cvgLabRad = 175,
     cvgNormRad = 120,
     octCapacityBits = 4,
@@ -168,14 +167,6 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "copyToLayer",
-    label = "As New Layer:",
-    selected = defaults.copyToLayer
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
     id = "printElapsed",
     label = "Print Diagnostic:",
     selected = defaults.printElapsed
@@ -188,6 +179,16 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        -- Begin timing the function elapsed.
+        local args = dlg.data
+        local printElapsed = args.printElapsed
+        local startTime = 0
+        local endTime = 0
+        local elapsed = 0
+        if printElapsed then
+            startTime = os.time()
+        end
+
         local activeSprite = app.activeSprite
         if not activeSprite then
             app.alert {
@@ -206,14 +207,15 @@ dlg:button {
             return
         end
 
-        -- Begin timing the function elapsed.
-        local args = dlg.data
-        local printElapsed = args.printElapsed
-        local startTime = 0
-        local endTime = 0
-        local elapsed = 0
-        if printElapsed then
-            startTime = os.time()
+        -- Tile map layers may be present in 1.3 beta.
+        local layerIsTilemap = false
+        local tileSet = nil
+        local version = app.version
+        if version.major >= 1 and version.minor >= 3 then
+            layerIsTilemap = srcLayer.isTilemap
+            if layerIsTilemap then
+                tileSet = srcLayer.tileset
+            end
         end
 
         local oldMode = activeSprite.colorMode
@@ -224,6 +226,7 @@ dlg:button {
         local v3Hash = Vec3.hashCode
         local octInsert = Octree.insert
         local search = Octree.queryInternal
+        local tilesToImage = AseUtilities.tilesToImage
 
         -- Convert source palette colors to points
         -- inserted into octree.
@@ -267,45 +270,21 @@ dlg:button {
 
         Octree.cull(octree)
 
-        -- Find frames from target.
-        local frames = {}
         local target = args.target
-        if target == "ACTIVE" then
-            local activeFrame = app.activeFrame
-            if activeFrame then
-                frames[1] = activeFrame
-            end
-        elseif target == "RANGE" then
-            local appRange = app.range
-            local rangeFrames = appRange.frames
-            local rangeFramesLen = #rangeFrames
-            for i = 1, rangeFramesLen, 1 do
-                frames[i] = rangeFrames[i]
-            end
-        else
-            local activeFrames = activeSprite.frames
-            local activeFramesLen = #activeFrames
-            for i = 1, activeFramesLen, 1 do
-                frames[i] = activeFrames[i]
-            end
-        end
+        local frames = AseUtilities.getFrames(activeSprite, target)
 
         -- Create a new layer if necessary.
-        local copyToLayer = args.copyToLayer
-        local trgLayer = nil
-        if copyToLayer then
-            trgLayer = activeSprite:newLayer()
-            local srcLayerName = "Layer"
-            if #srcLayer.name > 0 then
-                srcLayerName = srcLayer.name
-            end
-            trgLayer.name = srcLayerName .. "." .. clrSpacePreset
-            if srcLayer.opacity then
-                trgLayer.opacity = srcLayer.opacity
-            end
-            if srcLayer.blendMode then
-                trgLayer.blendMode = srcLayer.blendMode
-            end
+        local trgLayer = activeSprite:newLayer()
+        local srcLayerName = "Layer"
+        if #srcLayer.name > 0 then
+            srcLayerName = srcLayer.name
+        end
+        trgLayer.name = srcLayerName .. "." .. clrSpacePreset
+        if srcLayer.opacity then
+            trgLayer.opacity = srcLayer.opacity
+        end
+        if srcLayer.blendMode then
+            trgLayer.blendMode = srcLayer.blendMode
         end
 
         local framesLen = #frames
@@ -317,6 +296,9 @@ dlg:button {
                 local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
                     local srcImg = srcCel.image
+                    if layerIsTilemap then
+                        srcImg = tilesToImage(srcImg, tileSet, ColorMode.RGB)
+                    end
 
                     -- Get unique hexadecimal values from image.
                     -- There's no need to preserve order.
@@ -369,17 +351,10 @@ dlg:button {
                             | correspDict[srcHex] & 0x00ffffff)
                     end
 
-                    -- TODO: Support tile maps like in adjustHue.
-                    -- Copy to layer should default to false if
-                    -- src is tilemap.
-                    if copyToLayer then
-                        local trgCel = activeSprite:newCel(
-                            trgLayer, srcFrame,
-                            trgImg, srcCel.position)
-                        trgCel.opacity = srcCel.opacity
-                    else
-                        srcCel.image = trgImg
-                    end
+                    local trgCel = activeSprite:newCel(
+                        trgLayer, srcFrame,
+                        trgImg, srcCel.position)
+                    trgCel.opacity = srcCel.opacity
                 end
             end
         end)

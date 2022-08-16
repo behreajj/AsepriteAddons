@@ -211,28 +211,7 @@ dlg:button {
         if useInverse then flipSign = -1.0 end
 
         -- Find frames from target.
-        local frames = {}
-        if target == "ACTIVE" then
-            local activeFrame = app.activeFrame
-            if activeFrame then
-                frames[1] = activeFrame
-            end
-        elseif target == "RANGE" then
-            local appRange = app.range
-            local rangeFrames = appRange.frames
-            local rangeFramesLen = #rangeFrames
-            local h = 0
-            while h < rangeFramesLen do h = h + 1
-                frames[h] = rangeFrames[h]
-            end
-        else
-            local activeFrames = activeSprite.frames
-            local activeFramesLen = #activeFrames
-            local h = 0
-            while h < activeFramesLen do h = h + 1
-                frames[h] = activeFrames[h]
-            end
-        end
+        local frames = AseUtilities.getFrames(activeSprite, target)
 
         -- Determine how to wrap pixels.
         local wrapper = nil

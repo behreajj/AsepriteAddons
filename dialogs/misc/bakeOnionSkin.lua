@@ -138,7 +138,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -149,7 +150,8 @@ dlg:button {
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "Only RGB color mode is supported." }
+                text = "Only RGB color mode is supported."
+            }
             return
         end
 
@@ -157,21 +159,24 @@ dlg:button {
         if not srcLayer then
             app.alert {
                 title = "Error",
-                text = "There is no active layer." }
+                text = "There is no active layer."
+            }
             return
         end
 
         if srcLayer.isGroup then
             app.alert {
                 title = "Error",
-                text = "Group layers are not supported." }
+                text = "Group layers are not supported."
+            }
             return
         end
 
         if srcLayer.isBackground then
             app.alert {
                 title = "Error",
-                text = "Background layer cannot be the source." }
+                text = "Background layer cannot be the source."
+            }
             return
         end
 
@@ -221,26 +226,7 @@ dlg:button {
         end
 
         -- Fill frames.
-        local frames = {}
-        if target == "ACTIVE" then
-            local activeFrame = app.activeFrame
-            if activeFrame then
-                frames[1] = activeFrame
-            end
-        elseif target == "RANGE" then
-            local appRange = app.range
-            local rangeFrames = appRange.frames
-            local rangeFramesLen = #rangeFrames
-            for i = 1, rangeFramesLen, 1 do
-                frames[i] = rangeFrames[i]
-            end
-        else
-            local activeFrames = activeSprite.frames
-            local activeFramesLen = #activeFrames
-            for i = 1, activeFramesLen, 1 do
-                frames[i] = activeFrames[i]
-            end
-        end
+        local frames = AseUtilities.getFrames(activeSprite, target)
 
         -- Do not copy source layer blend mode.
         local trgLayer = activeSprite:newLayer()
@@ -347,7 +333,8 @@ dlg:button {
                         width = trgImgWidth,
                         height = trgImgHeight,
                         colorMode = ColorMode.RGB,
-                        transparentColor = alphaIdx }
+                        transparentColor = alphaIdx
+                    }
                     trgSpec.colorSpace = colorSpace
                     local trgImg = Image(trgSpec)
 

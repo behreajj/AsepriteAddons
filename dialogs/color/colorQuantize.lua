@@ -28,7 +28,6 @@ local defaults = {
     unit = "BITS",
     levelsInput = "UNIFORM",
     method = "UNSIGNED",
-    copyToLayer = true,
     pullFocus = false
 }
 
@@ -280,22 +279,14 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "copyToLayer",
-    label = "As New Layer:",
-    selected = defaults.copyToLayer
-}
-
-dlg:newrow { always = false }
-
 dlg:button {
     id = "confirm",
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
         -- Early returns.
-        local sprite = app.activeSprite
-        if not sprite then
+        local activeSprite = app.activeSprite
+        if not activeSprite then
             app.alert {
                 title = "Error",
                 text = "There is no active sprite."
@@ -331,50 +322,26 @@ dlg:button {
         local gLevels = args.gLevels or defaults.gLevels
         local bLevels = args.bLevels or defaults.bLevels
         local aLevels = args.aLevels or defaults.aLevels
-        local copyToLayer = args.copyToLayer or isTilemap
 
-        -- Find frames from target.
-        local frames = {}
-        if target == "ACTIVE" then
-            local activeFrame = app.activeFrame
-            if activeFrame then
-                frames[1] = activeFrame
-            end
-        elseif target == "RANGE" then
-            local appRange = app.range
-            local rangeFrames = appRange.frames
-            local rangeFramesLen = #rangeFrames
-            local h = 0
-            while h < rangeFramesLen do h = h + 1
-                frames[h] = rangeFrames[h]
-            end
-        else
-            local activeFrames = sprite.frames
-            local activeFramesLen = #activeFrames
-            local h = 0
-            while h < activeFramesLen do h = h + 1
-                frames[h] = activeFrames[h]
-            end
-        end
+        -- TODO: This will cause problems with linked cels. A solution
+        -- may be to just always copy to layer.
+        local frames = AseUtilities.getFrames(activeSprite, target)
 
         -- Create a new layer if necessary.
-        local trgLayer = nil
-        if copyToLayer then
-            trgLayer = sprite:newLayer()
-            local srcLayerName = "Layer"
-            if #srcLayer.name > 0 then
-                srcLayerName = srcLayer.name
-            end
-            trgLayer.name = string.format(
-                "%s.Quantized.R%02d.G%02d.B%02d.A%02d",
-                srcLayerName,
-                rLevels, gLevels, bLevels, aLevels)
-            if srcLayer.opacity then
-                trgLayer.opacity = srcLayer.opacity
-            end
-            if srcLayer.blendMode then
-                trgLayer.blendMode = srcLayer.blendMode
-            end
+        local trgLayer = activeSprite:newLayer()
+        local srcLayerName = "Layer"
+        if #srcLayer.name > 0 then
+            srcLayerName = srcLayer.name
+        end
+        trgLayer.name = string.format(
+            "%s.Quantized.R%02d.G%02d.B%02d.A%02d",
+            srcLayerName,
+            rLevels, gLevels, bLevels, aLevels)
+        if srcLayer.opacity then
+            trgLayer.opacity = srcLayer.opacity
+        end
+        if srcLayer.blendMode then
+            trgLayer.blendMode = srcLayer.blendMode
         end
 
         local one255 = 1.0 / 255
@@ -408,7 +375,7 @@ dlg:button {
             aDelta = 1.0 / aLevels
         end
 
-        local oldMode = sprite.colorMode
+        local oldMode = activeSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
         local framesLen = #frames
@@ -463,14 +430,10 @@ dlg:button {
                         elm(trgDict[elm()])
                     end
 
-                    if copyToLayer then
-                        local trgCel = sprite:newCel(
-                            trgLayer, srcFrame,
-                            trgImg, srcCel.position)
-                        trgCel.opacity = srcCel.opacity
-                    else
-                        srcCel.image = trgImg
-                    end
+                    local trgCel = activeSprite:newCel(
+                        trgLayer, srcFrame,
+                        trgImg, srcCel.position)
+                    trgCel.opacity = srcCel.opacity
                 end
             end
         end)
@@ -479,7 +442,6 @@ dlg:button {
         app.refresh()
     end
 }
-
 
 dlg:button {
     id = "cancel",
