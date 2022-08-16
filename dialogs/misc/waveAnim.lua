@@ -30,6 +30,8 @@ local defaults = {
     yDisplaceOrig = 5,
     xDisplaceDest = 5,
     yDisplaceDest = 5,
+    xSustain = 100,
+    ySustain = 100,
 
     -- Interlaced
     interType = "HORIZONTAL",
@@ -151,12 +153,15 @@ dlg:combobox {
         local isBilinear = waveType == "BILINEAR"
         local isRadial = waveType == "RADIAL"
 
-        dlg:modify { id = "xCenter", visible = isRadial }
-        dlg:modify { id = "yCenter", visible = isRadial }
+        dlg:modify { id = "xCenter", visible = isRadial or isBilinear }
+        dlg:modify { id = "yCenter", visible = isRadial or isBilinear }
         dlg:modify { id = "uDisplaceOrig", visible = isRadial }
         dlg:modify { id = "uDisplaceDest", visible = isRadial }
         dlg:modify { id = "sustain", visible = isRadial }
         dlg:modify { id = "warp", visible = isRadial }
+
+        dlg:modify { id = "xSustain", visible = isBilinear }
+        dlg:modify { id = "ySustain", visible = isBilinear }
 
         dlg:modify { id = "interType", visible = isInter }
         dlg:modify { id = "interOffOrig", visible = isInter }
@@ -195,6 +200,7 @@ dlg:slider {
     max = 200,
     value = defaults.xCenter,
     visible = defaults.waveType == "RADIAL"
+        or defaults.waveType == "BILINEAR"
 }
 
 dlg:slider {
@@ -203,6 +209,7 @@ dlg:slider {
     max = 200,
     value = defaults.yCenter,
     visible = defaults.waveType == "RADIAL"
+        or defaults.waveType == "BILINEAR"
 }
 
 dlg:newrow { always = false }
@@ -293,6 +300,17 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:slider {
+    id = "xSustain",
+    label = "Sustain X %:",
+    min = 0,
+    max = 100,
+    value = defaults.xSustain,
+    visible = defaults.waveType == "BILINEAR"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
     id = "yDisplaceOrig",
     label = "Displace Y %:",
     min = 0,
@@ -314,6 +332,15 @@ dlg:slider {
 }
 
 dlg:newrow { always = false }
+
+dlg:slider {
+    id = "ySustain",
+    label = "Sustain Y %:",
+    min = 0,
+    max = 100,
+    value = defaults.ySustain,
+    visible = defaults.waveType == "BILINEAR"
+}
 
 dlg:slider {
     id = "interOffOrig",
@@ -404,18 +431,7 @@ dlg:button {
         local lenSrcFrames = #srcFrames
         local isActive = target == "ACTIVE"
 
-        -- Find the selected frames.
-        local selFrames = {}
-        if isActive then
-            selFrames[1] = app.activeFrame
-                or srcSprite.frames[1]
-        elseif target == "RANGE" then
-            -- Looks like this is will contain
-            -- at least one frame...
-            selFrames = app.range.frames
-        else
-            selFrames = srcSprite.frames
-        end
+        local selFrames = AseUtilities.getFrames(srcSprite, target)
 
         local timeOffsetDeg = defaults.timeOffset
         local timeOffset = timeOffsetDeg * 0.017453292519943
@@ -539,6 +555,26 @@ dlg:button {
         local eval = nil
         if waveType == "BILINEAR" then
 
+            local xCenter = args.xCenter or defaults.xCenter
+            local yCenter = args.yCenter or defaults.yCenter
+            local pxxCenter = xCenter * 0.01 * srcWidth
+            local pxyCenter = yCenter * 0.01 * srcHeight
+
+            local maxChebyshev = 0.0
+            if xCenter < 0 or yCenter < 0
+                or xCenter > 100 or yCenter > 100 then
+                maxChebyshev = math.max(wn1 * 2, hn1 * 2)
+            else
+                maxChebyshev = math.max(wn1, hn1)
+            end
+            local toFac = 0.0
+            if maxChebyshev ~= 0.0 then toFac = 1.0 / maxChebyshev end
+
+            local xBaseSustain = args.xSustain or defaults.xSustain
+            local yBaseSustain = args.ySustain or defaults.ySustain
+            xBaseSustain = xBaseSustain * 0.01
+            yBaseSustain = yBaseSustain * 0.01
+
             -- This was tested to make sure it tiles correctly.
             local xDisplaceOrig = args.xDisplaceOrig or defaults.xDisplaceOrig
             local xDisplaceDest = args.xDisplaceDest or defaults.xDisplaceDest
@@ -554,13 +590,21 @@ dlg:button {
             local yToTheta = spaceScalar * 6.2831853071796 / srcHeight
 
             eval = function(x, y, angle, t)
+                local chebyshev = math.max(
+                    math.abs(x - pxxCenter),
+                    math.abs(pxyCenter - y))
+                local fac = chebyshev * toFac
+                fac = math.min(math.max(fac, 0.0), 1.0)
+                local xSst = (1.0 - fac) + fac * xBaseSustain
+                local ySst = (1.0 - fac) + fac * yBaseSustain
+
                 local u = 1.0 - t
                 local xDsplScl = u * pxxDisplaceOrig + t * pxxDisplaceDest
                 local yDsplScl = u * pxyDisplaceOrig + t * pxyDisplaceDest
                 local xTheta = angle - x * xToTheta
                 local yTheta = angle + y * yToTheta
-                local xWarp = xDsplScl * sin(yTheta)
-                local yWarp = yDsplScl * cos(xTheta)
+                local xWarp = xDsplScl * xSst * sin(yTheta)
+                local yWarp = yDsplScl * ySst * cos(xTheta)
                 return x + xWarp, y + yWarp
             end
 
@@ -645,22 +689,22 @@ dlg:button {
             local pxyCenter = hn1 * yCenter * 0.01
 
             local maxDist = 0.0
-            -- if yCenter < 0 or yCenter > 100
-            --     or xCenter < 0 or xCenter > 100 then
-            --     local w2 = srcWidth + srcWidth
-            --     local h2 = srcHeight + srcHeight
-            --     maxDist = sqrt(w2 * w2 + h2 * h2)
-            -- else
+            if yCenter < 0 or yCenter > 100
+                or xCenter < 0 or xCenter > 100 then
+                local w2 = srcWidth + srcWidth
+                local h2 = srcHeight + srcHeight
+                maxDist = sqrt(w2 * w2 + h2 * h2)
+            else
             maxDist = sqrt(srcWidth * srcWidth
                 + srcHeight * srcHeight)
-            -- end
+            end
 
             local pxuDisplaceOrig = maxDist * uDisplaceOrig * 0.005
             local pxuDisplaceDest = maxDist * uDisplaceDest * 0.005
 
             local distToTheta = spaceScalar * 6.2831853071796 / maxDist
             local distToFac = 1.0 / maxDist
-            local sustFac = sustain * 0.01
+            local sustFac = 1.4142135623731 * sustain * 0.01
             local warpRad = warp * 0.017453292519943
             local cosWarp = cos(warpRad)
             local sinWarp = sin(warpRad)
