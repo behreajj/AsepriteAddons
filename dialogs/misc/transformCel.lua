@@ -408,6 +408,7 @@ dlg:button {
             local yGrScl = grid.height
             local xtrnz = xtr ~= 0.0
             local ytrnz = ytr ~= 0.0
+            local round = Utilities.round
             app.transaction(function()
                 local i = 0
                 while i < celsLen do i = i + 1
@@ -416,11 +417,11 @@ dlg:button {
                     local xn = oldPos.x
                     local yn = oldPos.y
                     if xtrnz then
-                        local xGrid = (xn - xGrOff) // xGrScl
+                        local xGrid = round((xn - xGrOff) / xGrScl)
                         xn = xGrOff + (xGrid + xtr) * xGrScl
                     end
                     if ytrnz then
-                        local yGrid = (yn - yGrOff) // yGrScl
+                        local yGrid = round((yn - yGrOff) / yGrScl)
                         yn = yGrOff + (yGrid - ytr) * yGrScl
                     end
                     cel.position = Point(xn, yn)
