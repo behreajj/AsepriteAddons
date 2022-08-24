@@ -364,7 +364,7 @@ dlg:combobox {
     options = easeMethods
 }
 
-dlg:newrow { always = false }
+dlg:separator { id = "translateSep" }
 
 dlg:number {
     id = "xTranslate",
@@ -406,16 +406,24 @@ dlg:button {
             local yGrOff = grid.y
             local xGrScl = grid.width
             local yGrScl = grid.height
+            local xtrnz = xtr ~= 0.0
+            local ytrnz = ytr ~= 0.0
             app.transaction(function()
                 local i = 0
                 while i < celsLen do i = i + 1
                     local cel = cels[i]
                     local oldPos = cel.position
-                    local xGrid = (oldPos.x - xGrOff) // xGrScl
-                    local yGrid = (oldPos.y - yGrOff) // yGrScl
-                    cel.position = Point(
-                        xGrOff + (xGrid + xtr) * xGrScl,
-                        yGrOff + (yGrid - ytr) * yGrScl)
+                    local xn = oldPos.x
+                    local yn = oldPos.y
+                    if xtrnz then
+                        local xGrid = (xn - xGrOff) // xGrScl
+                        xn = xGrOff + (xGrid + xtr) * xGrScl
+                    end
+                    if ytrnz then
+                        local yGrid = (yn - yGrOff) // yGrScl
+                        yn = yGrOff + (yGrid - ytr) * yGrScl
+                    end
+                    cel.position = Point(xn, yn)
                 end
             end)
         else
