@@ -17,159 +17,6 @@ local defaults = {
     units = "PERCENT"
 }
 
-local function rgbMix(
-    rOrig, gOrig, bOrig, aOrig,
-    rDest, gDest, bDest, aDest, t)
-
-    if t <= 0.0 then return rOrig, gOrig, bOrig, aOrig end
-    if t >= 1.0 then return rDest, gDest, bDest, aDest end
-
-    local u = 1.0 - t
-    local aMix = u * aOrig + t * aDest
-    if aMix <= 0.0 then return 0.0, 0.0, 0.0, 0.0 end
-
-    -- Origin and destination colors have been
-    -- checked for zero alpha before this function
-    -- is called.
-    --
-    -- Premul and unpremul have to be done
-    -- for both horizontal and vertical mixes.
-    local ro = rOrig
-    local go = gOrig
-    local bo = bOrig
-    if aOrig < 255 then
-        local ao01 = aOrig * 0.003921568627451
-        ro = rOrig * ao01
-        go = gOrig * ao01
-        bo = bOrig * ao01
-    end
-
-    local rd = rDest
-    local gd = gDest
-    local bd = bDest
-    if aDest < 255 then
-        local ad01 = aDest * 0.003921568627451
-        rd = rDest * ad01
-        gd = gDest * ad01
-        bd = bDest * ad01
-    end
-
-    local rMix = u * ro + t * rd
-    local gMix = u * go + t * gd
-    local bMix = u * bo + t * bd
-
-    if aMix < 255.0 then
-        local aInverse = 255.0 / aMix
-        rMix = rMix * aInverse
-        gMix = gMix * aInverse
-        bMix = bMix * aInverse
-    end
-
-    return rMix, gMix, bMix, aMix
-end
-
-local function filterNear(
- xSrc, ySrc, wSrc, hSrc,
- srcImg, alphaMask)
-
-    local xr = Utilities.round(xSrc)
-    local yr = Utilities.round(ySrc)
-    if yr > -1 and yr < hSrc
-        and xr > -1 and xr < wSrc then
-        return srcImg:getPixel(xr, yr)
-    end
-    return alphaMask
-end
-
-local function filterBilin(
-    xSrc, ySrc, wSrc, hSrc,
-    srcImg, alphaMask)
-
-    local yf = math.floor(ySrc)
-    local yc = math.ceil(ySrc)
-    local xf = math.floor(xSrc)
-    local xc = math.ceil(xSrc)
-
-    local yfInBounds = yf > -1 and yf < hSrc
-    local ycInBounds = yc > -1 and yc < hSrc
-    local xfInBounds = xf > -1 and xf < wSrc
-    local xcInBounds = xc > -1 and xc < wSrc
-
-    local c00 = 0x0
-    local c10 = 0x0
-    local c11 = 0x0
-    local c01 = 0x0
-
-    if xfInBounds and yfInBounds then
-        c00 = srcImg:getPixel(xf, yf)
-    end
-
-    if xcInBounds and yfInBounds then
-        c10 = srcImg:getPixel(xc, yf)
-    end
-
-    if xcInBounds and ycInBounds then
-        c11 = srcImg:getPixel(xc, yc)
-    end
-
-    if xfInBounds and ycInBounds then
-        c01 = srcImg:getPixel(xf, yc)
-    end
-
-    local a0 = 0
-    local b0 = 0
-    local g0 = 0
-    local r0 = 0
-
-    -- The trim alpha results are better when
-    -- alpha zero check is done here.
-    local xErr = xSrc - xf
-    local a00 = c00 >> 0x18 & 0xff
-    local a10 = c10 >> 0x18 & 0xff
-    if a00 > 0 or a10 > 0 then
-        r0, g0, b0, a0 = rgbMix(
-            c00 & 0xff, c00 >> 0x08 & 0xff,
-            c00 >> 0x10 & 0xff, a00,
-            c10 & 0xff, c10 >> 0x08 & 0xff,
-            c10 >> 0x10 & 0xff, a10, xErr)
-    end
-
-    local a1 = 0
-    local b1 = 0
-    local g1 = 0
-    local r1 = 0
-
-    local a01 = c01 >> 0x18 & 0xff
-    local a11 = c11 >> 0x18 & 0xff
-    if a01 > 0 or a11 > 0 then
-        r1, g1, b1, a1 = rgbMix(
-            c01 & 0xff, c01 >> 0x08 & 0xff,
-            c01 >> 0x10 & 0xff, a01,
-            c11 & 0xff, c11 >> 0x08 & 0xff,
-            c11 >> 0x10 & 0xff, a11, xErr)
-    end
-
-    if a0 > 0.0 or a1 > 0.0 then
-        local rt, gt, bt, at = rgbMix(
-            r0, g0, b0, a0,
-            r1, g1, b1, a1, ySrc - yf)
-
-        at = math.floor(0.5 + at)
-        bt = math.floor(0.5 + bt)
-        gt = math.floor(0.5 + gt)
-        rt = math.floor(0.5 + rt)
-
-        -- Is it necessary to check for negative values here?
-        if at > 255 then at = 255 end
-        if bt > 255 then bt = 255 end
-        if gt > 255 then gt = 255 end
-        if rt > 255 then rt = 255 end
-
-        return at << 0x18 | bt << 0x10 | gt << 0x08 | rt
-    end
-    return alphaMask
-end
-
 local function appendLeaves(layer, array, bkgAllow, checkTilemaps)
     if layer.isGroup then
         local childLayers = layer.layers
@@ -209,7 +56,7 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
 
         -- Linked cels occur multiple times in the sprite.cels
         -- https://github.com/aseprite/aseprite/issues/3406
-        -- Can be fixed in CPP by changing function call cels()
+        -- Can be fixed by changing function call cels()
         -- to uniqueCels() at this line in the source:
         -- https://github.com/aseprite/aseprite/blob/main/
         -- src/app/script/cels_class.cpp#L90
@@ -235,7 +82,7 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
         end
 
         -- If you don't care about filtering layers,
-        -- a shortcut: assign all frames only.
+        -- a shortcut: assign only to appRange.frames.
         local appRange = app.range
         appRange.layers = leaves
         appRange.frames = frIdcs
@@ -346,6 +193,159 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
     return trgCels
 end
 
+local function rgbMix(
+    rOrig, gOrig, bOrig, aOrig,
+    rDest, gDest, bDest, aDest, t)
+
+    if t <= 0.0 then return rOrig, gOrig, bOrig, aOrig end
+    if t >= 1.0 then return rDest, gDest, bDest, aDest end
+
+    local u = 1.0 - t
+    local aMix = u * aOrig + t * aDest
+    if aMix <= 0.0 then return 0.0, 0.0, 0.0, 0.0 end
+
+    -- Origin and destination colors have been
+    -- checked for zero alpha before this function
+    -- is called.
+    --
+    -- Premul and unpremul have to be done
+    -- for both horizontal and vertical mixes.
+    local ro = rOrig
+    local go = gOrig
+    local bo = bOrig
+    if aOrig < 255 then
+        local ao01 = aOrig * 0.003921568627451
+        ro = rOrig * ao01
+        go = gOrig * ao01
+        bo = bOrig * ao01
+    end
+
+    local rd = rDest
+    local gd = gDest
+    local bd = bDest
+    if aDest < 255 then
+        local ad01 = aDest * 0.003921568627451
+        rd = rDest * ad01
+        gd = gDest * ad01
+        bd = bDest * ad01
+    end
+
+    local rMix = u * ro + t * rd
+    local gMix = u * go + t * gd
+    local bMix = u * bo + t * bd
+
+    if aMix < 255.0 then
+        local aInverse = 255.0 / aMix
+        rMix = rMix * aInverse
+        gMix = gMix * aInverse
+        bMix = bMix * aInverse
+    end
+
+    return rMix, gMix, bMix, aMix
+end
+
+local function filterNear(
+    xSrc, ySrc, wSrc, hSrc,
+    srcImg, alphaMask)
+
+    local xr = Utilities.round(xSrc)
+    local yr = Utilities.round(ySrc)
+    if yr > -1 and yr < hSrc
+        and xr > -1 and xr < wSrc then
+        return srcImg:getPixel(xr, yr)
+    end
+    return alphaMask
+end
+
+local function filterBilin(
+    xSrc, ySrc, wSrc, hSrc,
+    srcImg, alphaMask)
+
+    local yf = math.floor(ySrc)
+    local yc = math.ceil(ySrc)
+    local xf = math.floor(xSrc)
+    local xc = math.ceil(xSrc)
+
+    local yfInBounds = yf > -1 and yf < hSrc
+    local ycInBounds = yc > -1 and yc < hSrc
+    local xfInBounds = xf > -1 and xf < wSrc
+    local xcInBounds = xc > -1 and xc < wSrc
+
+    local c00 = 0x0
+    local c10 = 0x0
+    local c11 = 0x0
+    local c01 = 0x0
+
+    if xfInBounds and yfInBounds then
+        c00 = srcImg:getPixel(xf, yf)
+    end
+
+    if xcInBounds and yfInBounds then
+        c10 = srcImg:getPixel(xc, yf)
+    end
+
+    if xcInBounds and ycInBounds then
+        c11 = srcImg:getPixel(xc, yc)
+    end
+
+    if xfInBounds and ycInBounds then
+        c01 = srcImg:getPixel(xf, yc)
+    end
+
+    local a0 = 0
+    local b0 = 0
+    local g0 = 0
+    local r0 = 0
+
+    -- The trim alpha results are better when
+    -- alpha zero check is done here.
+    local xErr = xSrc - xf
+    local a00 = c00 >> 0x18 & 0xff
+    local a10 = c10 >> 0x18 & 0xff
+    if a00 > 0 or a10 > 0 then
+        r0, g0, b0, a0 = rgbMix(
+            c00 & 0xff, c00 >> 0x08 & 0xff,
+            c00 >> 0x10 & 0xff, a00,
+            c10 & 0xff, c10 >> 0x08 & 0xff,
+            c10 >> 0x10 & 0xff, a10, xErr)
+    end
+
+    local a1 = 0
+    local b1 = 0
+    local g1 = 0
+    local r1 = 0
+
+    local a01 = c01 >> 0x18 & 0xff
+    local a11 = c11 >> 0x18 & 0xff
+    if a01 > 0 or a11 > 0 then
+        r1, g1, b1, a1 = rgbMix(
+            c01 & 0xff, c01 >> 0x08 & 0xff,
+            c01 >> 0x10 & 0xff, a01,
+            c11 & 0xff, c11 >> 0x08 & 0xff,
+            c11 >> 0x10 & 0xff, a11, xErr)
+    end
+
+    if a0 > 0.0 or a1 > 0.0 then
+        local rt, gt, bt, at = rgbMix(
+            r0, g0, b0, a0,
+            r1, g1, b1, a1, ySrc - yf)
+
+        at = math.floor(0.5 + at)
+        bt = math.floor(0.5 + bt)
+        gt = math.floor(0.5 + gt)
+        rt = math.floor(0.5 + rt)
+
+        -- Is it necessary to check for negative values here?
+        if at > 255 then at = 255 end
+        if bt > 255 then bt = 255 end
+        if gt > 255 then gt = 255 end
+        if rt > 255 then rt = 255 end
+
+        return at << 0x18 | bt << 0x10 | gt << 0x08 | rt
+    end
+    return alphaMask
+end
+
 local dlg = Dialog { title = "Transform" }
 
 dlg:combobox {
@@ -359,7 +359,7 @@ dlg:newrow { always = false }
 
 dlg:combobox {
     id = "easeMethod",
-    label = "Pixels:",
+    label = "Sample:",
     option = defaults.easeMethod,
     options = easeMethods
 }
@@ -398,16 +398,38 @@ dlg:button {
         local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
 
-        app.transaction(function()
-            local i = 0
-            while i < celsLen do i = i + 1
-                local cel = cels[i]
-                local oldPos = cel.position
-                cel.position = Point(
-                    oldPos.x + xtr,
-                    oldPos.y - ytr)
-            end
-        end)
+        local docPrefs = app.preferences.document(activeSprite)
+        local snap = docPrefs.grid.snap
+        if snap then
+            local grid = activeSprite.gridBounds
+            local xGrOff = grid.x
+            local yGrOff = grid.y
+            local xGrScl = grid.width
+            local yGrScl = grid.height
+            app.transaction(function()
+                local i = 0
+                while i < celsLen do i = i + 1
+                    local cel = cels[i]
+                    local oldPos = cel.position
+                    local xGrid = (oldPos.x - xGrOff) // xGrScl
+                    local yGrid = (oldPos.y - yGrOff) // yGrScl
+                    cel.position = Point(
+                        xGrOff + (xGrid + xtr) * xGrScl,
+                        yGrOff + (yGrid - ytr) * yGrScl)
+                end
+            end)
+        else
+            app.transaction(function()
+                local i = 0
+                while i < celsLen do i = i + 1
+                    local cel = cels[i]
+                    local oldPos = cel.position
+                    cel.position = Point(
+                        oldPos.x + xtr,
+                        oldPos.y - ytr)
+                end
+            end)
+        end
 
         app.refresh()
     end
@@ -446,32 +468,8 @@ dlg:button {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "tlAlignButton",
-    label = "Align:",
-    text = "TL",
-    focus = false,
-    onclick = function()
-        local activeSprite = app.activeSprite
-        if not activeSprite then return end
-
-        local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
-
-        app.transaction(function()
-            local i = 0
-            while i < celsLen do i = i + 1
-                cels[i].position = Point(0, 0)
-            end
-        end)
-
-        app.refresh()
-    end
-}
-
-dlg:button {
     id = "tAlignButton",
+    label = "Align:",
     text = "&T",
     focus = false,
     onclick = function()
@@ -502,35 +500,6 @@ dlg:button {
         app.refresh()
     end
 }
-
-dlg:button {
-    id = "trAlignButton",
-    text = "TR",
-    focus = false,
-    onclick = function()
-        local activeSprite = app.activeSprite
-        if not activeSprite then return end
-
-        local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
-        local wSprite = activeSprite.width
-
-        app.transaction(function()
-            local i = 0
-            while i < celsLen do i = i + 1
-                local cel = cels[i]
-                local w = cel.image.width
-                cel.position = Point(wSprite - w, 0)
-            end
-        end)
-
-        app.refresh()
-    end
-}
-
-dlg:newrow { always = false }
 
 dlg:button {
     id = "lAlignButton",
@@ -566,8 +535,8 @@ dlg:button {
 }
 
 dlg:button {
-    id = "cAlignButton",
-    text = "C&E",
+    id = "bAlignButton",
+    text = "&B",
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
@@ -578,18 +547,21 @@ dlg:button {
         local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
         local xCtrSprite = activeSprite.width * 0.5
-        local yCtrSprite = activeSprite.height * 0.5
+        local hSprite = activeSprite.height
 
         app.transaction(function()
             local i = 0
             while i < celsLen do i = i + 1
                 local cel = cels[i]
                 local celImg = cel.image
-                local w = celImg.width
-                local h = celImg.height
-                cel.position = Point(
-                    math.floor(0.5 + xCtrSprite - w * 0.5),
-                    math.floor(0.5 + yCtrSprite - h * 0.5))
+                local posOld = cel.position
+                local xNew = posOld.x
+                local yNew = hSprite - celImg.height
+                if posOld.y == yNew then
+                    local w = celImg.width
+                    xNew = math.floor(0.5 + xCtrSprite - w * 0.5)
+                end
+                cel.position = Point(xNew, yNew)
             end
         end)
 
@@ -635,8 +607,8 @@ dlg:button {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "blAlignButton",
-    text = "BL",
+    id = "cAlignButton",
+    text = "C&ENTER",
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
@@ -646,70 +618,9 @@ dlg:button {
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
         local celsLen = #cels
-        local hSprite = activeSprite.height
-
-        app.transaction(function()
-            local i = 0
-            while i < celsLen do i = i + 1
-                local cel = cels[i]
-                local h = cel.image.height
-                cel.position = Point(0, hSprite - h)
-            end
-        end)
-
-        app.refresh()
-    end
-}
-
-dlg:button {
-    id = "bAlignButton",
-    text = "&B",
-    focus = false,
-    onclick = function()
-        local activeSprite = app.activeSprite
-        if not activeSprite then return end
-
-        local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
-        local xCtrSprite = activeSprite.width * 0.5
-        local hSprite = activeSprite.height
-
-        app.transaction(function()
-            local i = 0
-            while i < celsLen do i = i + 1
-                local cel = cels[i]
-                local celImg = cel.image
-                local posOld = cel.position
-                local xNew = posOld.x
-                local yNew = hSprite - celImg.height
-                if posOld.y == yNew then
-                    local w = celImg.width
-                    xNew = math.floor(0.5 + xCtrSprite - w * 0.5)
-                end
-                cel.position = Point(xNew, yNew)
-            end
-        end)
-
-        app.refresh()
-    end
-}
-
-dlg:button {
-    id = "brAlignButton",
-    text = "BR",
-    focus = false,
-    onclick = function()
-        local activeSprite = app.activeSprite
-        if not activeSprite then return end
-
-        local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
-        local wSprite = activeSprite.width
-        local hSprite = activeSprite.height
+        local xc = activeSprite.width * 0.5
+        local yc = activeSprite.height * 0.5
+        local floor = math.floor
 
         app.transaction(function()
             local i = 0
@@ -717,8 +628,8 @@ dlg:button {
                 local cel = cels[i]
                 local celImg = cel.image
                 cel.position = Point(
-                    wSprite - celImg.width,
-                    hSprite - celImg.height)
+                    floor(0.5 + xc - celImg.width * 0.5),
+                    floor(0.5 + yc - celImg.height * 0.5))
             end
         end)
 
@@ -757,12 +668,10 @@ dlg:button {
         local easeMethod = args.easeMethod or defaults.easeMethod
         local useBilinear = easeMethod == "BILINEAR"
         local oldMode = activeSprite.colorMode
-        local filter = nil
+        local filter = filterNear
         if useBilinear then
             app.command.ChangePixelFormat { format = "rgb" }
             filter = filterBilin
-        else
-            filter = filterNear
         end
 
         -- Cache methods.
@@ -850,12 +759,10 @@ dlg:button {
         local easeMethod = args.easeMethod or defaults.easeMethod
         local useBilinear = easeMethod == "BILINEAR"
         local oldMode = activeSprite.colorMode
-        local filter = nil
+        local filter = filterNear
         if useBilinear then
             app.command.ChangePixelFormat { format = "rgb" }
             filter = filterBilin
-        else
-            filter = filterNear
         end
 
         -- Cache methods.
@@ -1220,10 +1127,8 @@ dlg:button {
         -- Validate target dimensions.
         wPxl = floor(0.5 + abs(wPxl))
         hPxl = floor(0.5 + abs(hPxl))
-        wPrc = max(0.000001, abs(wPrc))
-        hPrc = max(0.000001, abs(hPrc))
-        wPrc = wPrc * 0.01
-        hPrc = hPrc * 0.01
+        wPrc = 0.01 * max(0.000001, abs(wPrc))
+        hPrc = 0.01 * max(0.000001, abs(hPrc))
 
         -- Convert string checks to booleans for loop.
         local useBilinear = easeMethod == "BILINEAR"
@@ -1233,8 +1138,10 @@ dlg:button {
         local celsLen = #cels
 
         local oldMode = activeSprite.colorMode
+        local filter = filterNear
         if useBilinear then
             app.command.ChangePixelFormat { format = "rgb" }
+            filter = filterBilin
         end
 
         app.transaction(function()
@@ -1272,18 +1179,10 @@ dlg:button {
                         local trgImg = Image(trgSpec)
                         local trgpxitr = trgImg:pixels()
 
-                        if useBilinear then
-                            for elm in trgpxitr do
-                                elm(filterBilin(
-                                    elm.x * tx, elm.y * ty, wSrc, hSrc,
-                                    srcImg, alphaMask))
-                            end
-                        else
-                            for elm in trgpxitr do
-                                elm(filterNear(
-                                    elm.x * tx, elm.y * ty, wSrc, hSrc,
-                                    srcImg, alphaMask))
-                            end
+                        for elm in trgpxitr do
+                            elm(filter(
+                                elm.x * tx, elm.y * ty, wSrc, hSrc,
+                                srcImg, alphaMask))
                         end
 
                         local celPos = cel.position

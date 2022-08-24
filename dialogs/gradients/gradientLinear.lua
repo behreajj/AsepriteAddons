@@ -133,8 +133,7 @@ dlg:button {
             local newSpec = ImageSpec {
                 width = app.preferences.new_file.width,
                 height = app.preferences.new_file.height,
-                colorMode = ColorMode.RGB,
-                transparentColor = 0
+                colorMode = ColorMode.RGB
             }
             newSpec.colorSpace = ColorSpace { sRGB = true }
             activeSprite = Sprite(newSpec)

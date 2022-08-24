@@ -323,8 +323,6 @@ dlg:button {
         local bLevels = args.bLevels or defaults.bLevels
         local aLevels = args.aLevels or defaults.aLevels
 
-        -- TODO: This will cause problems with linked cels. A solution
-        -- may be to just always copy to layer.
         local frames = AseUtilities.getFrames(activeSprite, target)
 
         -- Create a new layer if necessary.
@@ -415,12 +413,10 @@ dlg:button {
                         gQtz = floor(gQtz * 0xff + 0.5)
                         rQtz = floor(rQtz * 0xff + 0.5)
 
-                        local hex = (aQtz << 0x18)
+                        trgDict[k] = (aQtz << 0x18)
                             | (bQtz << 0x10)
                             | (gQtz << 0x08)
                             | rQtz
-
-                        trgDict[k] = hex
                     end
 
                     -- Clone image, replace color with quantized.

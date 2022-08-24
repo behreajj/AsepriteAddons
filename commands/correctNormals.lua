@@ -59,6 +59,4 @@ end
 
 activeSprite:newCel(
     activeSprite:newLayer(),
-    activeFrame,
-    img,
-    Point(0, 0))
+    activeFrame, img)

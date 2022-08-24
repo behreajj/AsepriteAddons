@@ -8,7 +8,7 @@ local waveTypes = { "BILINEAR", "INTERLACED", "RADIAL" }
 local defaults = {
     target = "ACTIVE",
     frameCount = 8,
-    fps = 12,
+    fps = 24,
 
     edgeType = "OMIT",
     waveType = "RADIAL",
@@ -30,7 +30,7 @@ local defaults = {
     yDisplaceOrig = 5,
     xDisplaceDest = 5,
     yDisplaceDest = 5,
-    xSustain = 100,
+    -- xSustain = 100,
     ySustain = 100,
 
     -- Interlaced
@@ -160,7 +160,7 @@ dlg:combobox {
         dlg:modify { id = "sustain", visible = isRadial }
         dlg:modify { id = "warp", visible = isRadial }
 
-        dlg:modify { id = "xSustain", visible = isBilinear }
+        -- dlg:modify { id = "xSustain", visible = isBilinear }
         dlg:modify { id = "ySustain", visible = isBilinear }
 
         dlg:modify { id = "interType", visible = isInter }
@@ -297,16 +297,16 @@ dlg:slider {
             and defaults.interType == "HORIZONTAL")
 }
 
-dlg:newrow { always = false }
+-- dlg:newrow { always = false }
 
-dlg:slider {
-    id = "xSustain",
-    label = "Sustain X %:",
-    min = 0,
-    max = 100,
-    value = defaults.xSustain,
-    visible = defaults.waveType == "BILINEAR"
-}
+-- dlg:slider {
+--     id = "xSustain",
+--     label = "Sustain X %:",
+--     min = 0,
+--     max = 100,
+--     value = defaults.xSustain,
+--     visible = defaults.waveType == "BILINEAR"
+-- }
 
 dlg:newrow { always = false }
 
@@ -335,7 +335,8 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "ySustain",
-    label = "Sustain Y %:",
+    -- label = "Sustain Y %:",
+    label = "Sustain %:",
     min = 0,
     max = 100,
     value = defaults.ySustain,
@@ -527,6 +528,7 @@ dlg:button {
 
         -- Cache methods.
         local round = Utilities.round
+        local abs = math.abs
         local cos = math.cos
         local sin = math.sin
         local max = math.max
@@ -561,19 +563,22 @@ dlg:button {
             local pxyCenter = yCenter * 0.01 * srcHeight
 
             local maxChebyshev = 0.0
-            if xCenter < 0 or yCenter < 0
-                or xCenter > 100 or yCenter > 100 then
-                maxChebyshev = math.max(wn1 * 2, hn1 * 2)
+            if xCenter <= 0 or yCenter <= 0
+                or xCenter >= 100 or yCenter >= 100 then
+                maxChebyshev = max(wn1 * 2, hn1 * 2)
             else
-                maxChebyshev = math.max(wn1, hn1)
+                maxChebyshev = max(wn1, hn1)
             end
             local toFac = 0.0
-            if maxChebyshev ~= 0.0 then toFac = 1.0 / maxChebyshev end
+            if maxChebyshev ~= 0.0 then toFac = 2.0 / maxChebyshev end
 
-            local xBaseSustain = args.xSustain or defaults.xSustain
+            -- Simplify UI by having only one sustain input slider,
+            -- even though sustain per axis is possible.
+            -- local xBaseSustain = args.xSustain or defaults.xSustain
             local yBaseSustain = args.ySustain or defaults.ySustain
-            xBaseSustain = xBaseSustain * 0.01
+            local xBaseSustain = yBaseSustain
             yBaseSustain = yBaseSustain * 0.01
+            xBaseSustain = xBaseSustain * 0.01
 
             -- This was tested to make sure it tiles correctly.
             local xDisplaceOrig = args.xDisplaceOrig or defaults.xDisplaceOrig
@@ -590,17 +595,17 @@ dlg:button {
             local yToTheta = spaceScalar * 6.2831853071796 / srcHeight
 
             eval = function(x, y, angle, t)
-                local chebyshev = math.max(
-                    math.abs(x - pxxCenter),
-                    math.abs(pxyCenter - y))
-                local fac = chebyshev * toFac
-                fac = math.min(math.max(fac, 0.0), 1.0)
+                local dx = x - pxxCenter
+                local dy = pxyCenter - y
+                local fac = toFac * max(abs(dx), abs(dy))
+                fac = min(max(fac, 0.0), 1.0)
                 local xSst = (1.0 - fac) + fac * xBaseSustain
                 local ySst = (1.0 - fac) + fac * yBaseSustain
 
                 local u = 1.0 - t
                 local xDsplScl = u * pxxDisplaceOrig + t * pxxDisplaceDest
                 local yDsplScl = u * pxyDisplaceOrig + t * pxyDisplaceDest
+
                 local xTheta = angle - x * xToTheta
                 local yTheta = angle + y * yToTheta
                 local xWarp = xDsplScl * xSst * sin(yTheta)
@@ -618,6 +623,9 @@ dlg:button {
             local skip = args.interSkip or defaults.interSkip
             local pick = args.interPick or defaults.interPick
 
+            -- Pattern is sum of both on/off: e.g., 001110011100,
+            -- pick 2 skip 3, is 5 total. Modulo all to repeat
+            -- pattern, then check if lt pick.
             local all = pick + skip
             local lacRadOrig = 0.017453292519943 * interOffOrig
             local lacRadDest = 0.017453292519943 * interOffDest
@@ -637,7 +645,7 @@ dlg:button {
                 eval = function(x, y, angle, t)
                     local u = 1.0 - t
                     local xTheta = angle + x * xToTheta
-                    if (x % all) < pick then
+                    if x % all < pick then
                         local lacOrig = u * lacRadOrig
                             + t * lacRadDest
                         xTheta = xTheta + lacOrig
@@ -663,7 +671,7 @@ dlg:button {
                 eval = function(x, y, angle, t)
                     local u = 1.0 - t
                     local yTheta = angle + y * yToTheta
-                    if (y % all) < pick then
+                    if y % all < pick then
                         local lacOrig = u * lacRadOrig
                             + t * lacRadDest
                         yTheta = yTheta + lacOrig
@@ -685,33 +693,42 @@ dlg:button {
             local sustain = args.sustain or defaults.sustain
             local warp = args.warp or defaults.warp
 
-            local pxxCenter = wn1 * xCenter * 0.01
-            local pxyCenter = hn1 * yCenter * 0.01
-
+            -- Working on what would be most intuitive.
             local maxDist = 0.0
-            if yCenter < 0 or yCenter > 100
-                or xCenter < 0 or xCenter > 100 then
-                local w2 = srcWidth + srcWidth
-                local h2 = srcHeight + srcHeight
-                maxDist = sqrt(w2 * w2 + h2 * h2)
+            local distToFac = 0.0
+            local shortEdge = min(srcWidth, srcHeight)
+            if yCenter <= -50 or yCenter >= 150
+                or xCenter <= -50 or xCenter >= 150 then
+                local se3 = shortEdge * 3
+                maxDist = sqrt(se3 * se3 + se3 * se3)
+                if maxDist ~= 0.0 then
+                    distToFac = 2.8284 / maxDist
+                end
+            elseif yCenter <= 0 or yCenter >= 100
+                or xCenter <= 0 or xCenter >= 100 then
+                local se2 = shortEdge * 2
+                maxDist = sqrt(se2 * se2 + se2 * se2)
+                if maxDist ~= 0.0 then
+                    distToFac = 2.8284 / maxDist
+                end
             else
-            maxDist = sqrt(srcWidth * srcWidth
-                + srcHeight * srcHeight)
+                maxDist = sqrt(shortEdge * shortEdge
+                    + shortEdge * shortEdge)
+                if maxDist ~= 0.0 then
+                    distToFac = 2.0 / maxDist
+                end
             end
 
+            local pxxCenter = wn1 * xCenter * 0.01
+            local pxyCenter = hn1 * yCenter * 0.01
             local pxuDisplaceOrig = maxDist * uDisplaceOrig * 0.005
             local pxuDisplaceDest = maxDist * uDisplaceDest * 0.005
 
             local distToTheta = spaceScalar * 6.2831853071796 / maxDist
-            local distToFac = 1.0 / maxDist
-            local sustFac = 1.4142135623731 * sustain * 0.01
+            local sustFac = sustain * 0.01
             local warpRad = warp * 0.017453292519943
             local cosWarp = cos(warpRad)
             local sinWarp = sin(warpRad)
-
-            -- TODO: Option for absolute warp instead of based
-            -- on pixel vector, i.e., so all pixels default to
-            -- upward displacement?
 
             eval = function(x, y, angle, t)
                 local ax = x - pxxCenter
@@ -723,7 +740,7 @@ dlg:button {
                 local nx = 0.0
                 local ny = 0.0
                 local d = 0.0
-                if dSq > 0.0 then
+                if dSq > 1.414 then
                     d = sqrt(dSq)
                     nx = ax / d
                     ny = ay / d

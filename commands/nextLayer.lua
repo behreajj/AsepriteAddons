@@ -6,11 +6,10 @@ if not activeSprite then return end
 local activeLayer = app.activeLayer
 if activeLayer then
     local activeParent = activeLayer.parent
-    local activeStackIndex = activeLayer.stackIndex
+    local index = activeLayer.stackIndex
     local parentLayers = activeParent.layers
-    if activeStackIndex < #parentLayers then
-        local nextStackIndex = activeStackIndex + 1
-        local nextLayer = parentLayers[nextStackIndex]
+    if index < #parentLayers then
+        local nextLayer = parentLayers[index + 1]
         while nextLayer.isGroup
             and #nextLayer.layers > 0
             and (stepInto or nextLayer.isExpanded) do

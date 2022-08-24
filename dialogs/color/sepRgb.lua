@@ -186,24 +186,28 @@ dlg:button {
         local opacityBlue = args.opacityBlue or defaults.opacityBlue
 
         local frames = AseUtilities.getFrames(activeSprite, target)
+        local activeParent = srcLayer.parent
 
-        local baseLyr = activeSprite:newLayer()
+        local baseLyr = nil
+        if fillBase then
+            baseLyr = activeSprite:newLayer()
+            baseLyr.parent = activeParent
+            baseLyr.name = "Base"
+            baseLyr.color = Color(32, 32, 32, 255)
+        end
+
         local redLyr = activeSprite:newLayer()
         local greenLyr = activeSprite:newLayer()
         local blueLyr = activeSprite:newLayer()
 
-        local activeParent = srcLayer.parent
-        baseLyr.parent = activeParent
         redLyr.parent = activeParent
         greenLyr.parent = activeParent
         blueLyr.parent = activeParent
 
-        baseLyr.name = "Base"
         redLyr.name = "Red"
         greenLyr.name = "Green"
         blueLyr.name = "Blue"
 
-        baseLyr.color = Color(32, 32, 32, 255)
         redLyr.color = Color(192, 0, 0, 255)
         greenLyr.color = Color(0, 192, 0, 255)
         blueLyr.color = Color(0, 0, 192, 255)
@@ -269,31 +273,30 @@ dlg:button {
                     for elm in grItr do elm(elm() & grMsk) end
                     for elm in blItr do elm(elm() & blMsk) end
 
-                    local redPos = redCel.position
-                    local greenPos = greenCel.position
-                    local bluePos = blueCel.position
-
-                    local trxRed = redPos.x
-                    local trxGreen = greenPos.x
-                    local trxBlue = bluePos.x
-
-                    local tryRed = redPos.y
-                    local tryGreen = greenPos.y
-                    local tryBlue = bluePos.y
-
-                    local trxBase = min(trxRed, trxGreen, trxBlue)
-                    local tryBase = min(tryRed, tryGreen, tryBlue)
-                    local brxBase = max(trxRed, trxGreen, trxBlue) + srcImgWidth
-                    local bryBase = max(tryRed, tryGreen, tryBlue) + srcImgHeight
-
-                    local baseWidth = brxBase - trxBase
-                    local baseHeight = bryBase - tryBase
-
-                    local baseCel = activeSprite:newCel(baseLyr, srcFrame)
-                    baseCel.position = Point(trxBase, tryBase)
-                    baseCel.image = Image(baseWidth, baseHeight)
-
                     if fillBase then
+                        local redPos = redCel.position
+                        local greenPos = greenCel.position
+                        local bluePos = blueCel.position
+
+                        local trxRed = redPos.x
+                        local trxGreen = greenPos.x
+                        local trxBlue = bluePos.x
+
+                        local tryRed = redPos.y
+                        local tryGreen = greenPos.y
+                        local tryBlue = bluePos.y
+
+                        local trxBase = min(trxRed, trxGreen, trxBlue)
+                        local tryBase = min(tryRed, tryGreen, tryBlue)
+                        local brxBase = max(trxRed, trxGreen, trxBlue) + srcImgWidth
+                        local bryBase = max(tryRed, tryGreen, tryBlue) + srcImgHeight
+
+                        local baseWidth = brxBase - trxBase
+                        local baseHeight = bryBase - tryBase
+                        local baseCel = activeSprite:newCel(baseLyr, srcFrame)
+                        baseCel.position = Point(trxBase, tryBase)
+                        baseCel.image = Image(baseWidth, baseHeight)
+
                         local xRedBase = trxBase - trxRed
                         local xGreenBase = trxBase - trxGreen
                         local xBlueBase = trxBase - trxBlue

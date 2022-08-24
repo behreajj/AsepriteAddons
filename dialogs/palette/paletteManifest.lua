@@ -648,14 +648,14 @@ dlg:button {
         local bkgColor = args.bkgColor or defaults.bkgColor
         local bkgHex = bkgColor.rgbaPixel
         local bkgImg = Image(spriteWidth, spriteHeight, ColorMode.RGB)
-        for elm in bkgImg:pixels() do elm(bkgHex) end
+        bkgImg:clear(bkgHex)
 
         -- Create footer to display profile name.
         local footImg = Image(entryWidth, entryHeight, ColorMode.RGB)
         local footText = "NONE"
         if mnfstClrPrf then
             if mnfstClrPrf.name and #mnfstClrPrf.name > 0 then
-                footText = string.upper(string.sub(mnfstClrPrf.name, 1, 12))
+                footText = string.upper(string.sub(mnfstClrPrf.name, 1, 14))
             end
         end
         footText = "PROFILE: " .. footText
@@ -670,7 +670,7 @@ dlg:button {
         -- Create title image.
         local mnfstTitle = args.title or defaults.title
         if #mnfstTitle < 1 then mnfstTitle = defaults.title end
-        local mnfstTitleDisp = string.sub(mnfstTitle, 1, 12)
+        local mnfstTitleDisp = string.sub(mnfstTitle, 1, 14)
         mnfstTitleDisp = string.upper(mnfstTitleDisp)
         local titleImg = Image(entryWidth, entryHeight, ColorMode.RGB)
         local titleChars = strToChars(mnfstTitleDisp)
@@ -683,14 +683,14 @@ dlg:button {
 
         -- Create templates for alternating rows.
         local row0Tmpl = Image(entryWidth, entryHeight, ColorMode.RGB)
-        for elm in row0Tmpl:pixels() do elm(row0Hex) end
+        row0Tmpl:clear(row0Hex)
 
         local row1Tmpl = Image(entryWidth, entryHeight, ColorMode.RGB)
-        for elm in row1Tmpl:pixels() do elm(row1Hex) end
+        row1Tmpl:clear(row1Hex)
 
         -- Create header image.
         local hdrImg = Image(entryWidth, entryHeight, ColorMode.RGB)
-        for elm in hdrImg:pixels() do elm(hdrBkgHex) end
+        hdrImg:clear(hdrBkgHex)
 
         local xCrtHdr = swchSizeTotal + entryPadding
 
@@ -754,7 +754,6 @@ dlg:button {
         -- Create background layer and cel.
         local bkgLayer = manifestSprite.layers[1]
         bkgLayer.name = "Bkg"
-        -- bkgLayer.color = bkgColor
         manifestSprite:newCel(
             bkgLayer, frameObj, bkgImg)
 

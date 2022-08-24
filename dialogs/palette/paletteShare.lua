@@ -125,8 +125,6 @@ dlg:button {
 
         local hexesProfile = {}
         local hexesSrgb = {}
-
-        --TODO: Support all open tabs as the source?
         hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
             palType, palFile, palPreset,
             startIndex, count, true)
@@ -163,27 +161,19 @@ dlg:button {
             local filename = app.fs.fileTitle(sprite.filename)
 
             if colorMode == cmActive then
-
                 if profile == profActive then
-
                     candLenExact = candLenExact + 1
                     candidatesExact[candLenExact] = sprite
-
                 elseif (profile == nil
                     or profile == profileSrgb
                     or profile == profileNone) then
-
                     candLenApprox = candLenApprox + 1
                     candidatesApprox[candLenApprox] = sprite
-
                 else
-
                     errorFlag = true
                     rejLen = rejLen + 1
                     rejected[rejLen] = filename
-
                 end
-
             else
                 errorFlag = true
                 rejLen = rejLen + 1

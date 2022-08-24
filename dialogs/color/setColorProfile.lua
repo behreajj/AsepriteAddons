@@ -75,9 +75,7 @@ dlg:button {
                 else
                     app.alert {
                         title = "File Not Found",
-                        text = {
-                            "The color profile could not be found."
-                        }
+                        text = "The color profile could not be found."
                     }
                     return
                 end

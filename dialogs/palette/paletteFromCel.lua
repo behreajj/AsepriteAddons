@@ -9,6 +9,27 @@ local colorSpaces = {
     "S_RGB"
 }
 
+local defaults = {
+    removeAlpha = true,
+    clampTo256 = true,
+    printElapsed = false,
+    octThreshold = 255,
+    minThreshold = 8,
+    maxThreshold = 512,
+    octCapacityBits = 9,
+    minCapacityBits = 2,
+    maxCapacityBits = 15,
+    showRefineAt = 2,
+    refineCapacity = 0,
+    minRefine = -256,
+    maxRefine = 256,
+    prependMask = true,
+    target = "ACTIVE",
+    paletteIndex = 1,
+    clrSpacePreset = "LINEAR_RGB",
+    pullFocus = false
+}
+
 local function sortByPreset(preset, arr)
     if preset == "CIE_XYZ" then
         -- Y corresponds to perceived brightness.
@@ -95,27 +116,6 @@ local function v3ToClrFuncFromPreset(preset)
         return vec3ToClrsRgb
     end
 end
-
-local defaults = {
-    removeAlpha = true,
-    clampTo256 = true,
-    printElapsed = false,
-    octThreshold = 255,
-    minThreshold = 8,
-    maxThreshold = 512,
-    octCapacityBits = 9,
-    minCapacityBits = 2,
-    maxCapacityBits = 15,
-    showRefineAt = 2,
-    refineCapacity = 0,
-    minRefine = -256,
-    maxRefine = 256,
-    prependMask = true,
-    target = "ACTIVE",
-    paletteIndex = 1,
-    clrSpacePreset = "LINEAR_RGB",
-    pullFocus = false
-}
 
 local dlg = Dialog { title = "Palette From Cel" }
 
@@ -373,6 +373,9 @@ dlg:button {
                 end
             end
         elseif colorMode == ColorMode.INDEXED then
+            -- TODO: Would it be more efficient to convert
+            -- palette to hex array first, then 1+index in
+            -- pixels loop?
             local srcPal = AseUtilities.getPalette(
                 app.activeFrame, activeSprite.palettes)
 
@@ -476,17 +479,21 @@ dlg:button {
         if target == "SAVE" then
             local filepath = args.filepath
             local palette = Palette(lenHexes)
-            for i = 1, lenHexes, 1 do
-                palette:setColor(i - 1,
-                    AseUtilities.hexToAseColor(hexes[i]))
+            local k = 0
+            while k < lenHexes do k = k + 1
+                palette:setColor(k - 1,
+                    AseUtilities.hexToAseColor(hexes[k]))
             end
             palette:saveAs(filepath)
-            app.alert("Palette saved.")
+            app.alert { title = "Success", text = "Palette saved." }
         else
             -- How to handle out of bounds palette index?
             local palIdx = args.paletteIndex or defaults.paletteIndex
             if palIdx > #activeSprite.palettes then
-                app.alert("Palette index is out of bounds.")
+                app.alert {
+                    title = "Error",
+                    text = "Palette index is out of bounds."
+                }
                 return
             end
 
@@ -495,8 +502,6 @@ dlg:button {
                 app.command.ChangePixelFormat { format = "rgb" }
                 AseUtilities.setPalette(hexes, activeSprite, palIdx)
                 app.command.ChangePixelFormat { format = "indexed" }
-            elseif colorMode == ColorMode.GRAY then
-                AseUtilities.setPalette(hexes, activeSprite, palIdx)
             else
                 AseUtilities.setPalette(hexes, activeSprite, palIdx)
             end

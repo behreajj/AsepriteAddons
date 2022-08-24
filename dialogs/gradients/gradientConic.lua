@@ -67,8 +67,8 @@ dlg:button {
             local newSpec = ImageSpec {
                 width = app.preferences.new_file.width,
                 height = app.preferences.new_file.height,
-                colorMode = ColorMode.RGB,
-                transparentColor = 0 }
+                colorMode = ColorMode.RGB
+            }
             newSpec.colorSpace = ColorSpace { sRGB = true }
             activeSprite = Sprite(newSpec)
             AseUtilities.setPalette(
@@ -80,7 +80,8 @@ dlg:button {
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "Only RGB color mode is supported." }
+                text = "Only RGB color mode is supported."
+            }
             return
         end
 
@@ -145,7 +146,8 @@ dlg:button {
             width = math.max(1, selBounds.width),
             height = math.max(1, selBounds.height),
             colorMode = activeSpec.colorMode,
-            transparentColor = activeSpec.transparentColor }
+            transparentColor = activeSpec.transparentColor
+        }
         grdSpec.colorSpace = activeSpec.colorSpace
 
         local grdImg = Image(grdSpec)

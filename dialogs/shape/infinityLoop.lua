@@ -169,7 +169,7 @@ dlg:button {
         local sprite = AseUtilities.initCanvas(
             64, 64, curve.name,
             { args.strokeClr.rgbaPixel,
-              args.dotClr.rgbaPixel })
+                args.dotClr.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
         local actframe = app.activeFrame or sprite.frames[1]
 
@@ -222,7 +222,7 @@ dlg:button {
                 for j = dotCount, 1, -1 do
                     local jFac = j / dotCount
                     local alpha = math.floor(0.5 + jFac * 255.0)
-                    local animBrsh = Brush{ size = 3 + j }
+                    local animBrsh = Brush { size = 3 + j }
                     local animClr = Color(dtr, dtg, dtb, alpha)
                     table.insert(animBrushes, animBrsh)
                     table.insert(animColors, animClr)
@@ -246,7 +246,8 @@ dlg:button {
                             brush = animBrushes[j],
                             points = { plpt },
                             cel = animCel,
-                            layer = animLyr }
+                            layer = animLyr
+                        }
                     end
                 end
 
