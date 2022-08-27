@@ -23,7 +23,7 @@ local defaults = {
     xFlip = false,
     yFlip = false,
     zFlip = false,
-    minSize = 256,
+    minSize = 64,
     maxSize = 2048,
     maxSectors = 32,
     maxRings = 16
@@ -593,6 +593,7 @@ dlg:button {
             color = vecToColor(bx, by, bz)
         }
 
+        app.command.FitScreen()
         app.refresh()
     end
 }
@@ -725,6 +726,7 @@ dlg:button {
 
         cel.image = img
         AseUtilities.setPalette(normalsPal, sprite, 1)
+        app.command.FitScreen()
         app.refresh()
     end
 }

@@ -639,7 +639,7 @@ end
 ---@param tol number|nil grayscale tolerance
 ---@return table
 function Clr.labToLch(l, a, b, alpha, tol)
-    -- 0.00004 is the square chroma for #FFFFFF.
+    -- 0.00004 is the square chroma for white.
     local vTol = 0.007072
     if tol then vTol = tol end
 

@@ -292,10 +292,10 @@ local function filterBilin(
         c01 = srcImg:getPixel(xf, yc)
     end
 
-    local a0 = 0
-    local b0 = 0
-    local g0 = 0
-    local r0 = 0
+    local a0 = 0.0
+    local b0 = 0.0
+    local g0 = 0.0
+    local r0 = 0.0
 
     -- The trim alpha results are better when
     -- alpha zero check is done here.
@@ -310,10 +310,10 @@ local function filterBilin(
             c10 >> 0x10 & 0xff, a10, xErr)
     end
 
-    local a1 = 0
-    local b1 = 0
-    local g1 = 0
-    local r1 = 0
+    local a1 = 0.0
+    local b1 = 0.0
+    local g1 = 0.0
+    local r1 = 0.0
 
     local a01 = c01 >> 0x18 & 0xff
     local a11 = c11 >> 0x18 & 0xff

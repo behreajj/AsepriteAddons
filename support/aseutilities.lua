@@ -1531,7 +1531,8 @@ function AseUtilities.getFrames(sprite, target)
         else
             local rangeFrames = range.frames
             local lenRangeFrames = #rangeFrames
-            for i = 1, lenRangeFrames, 1 do
+            local i = 0
+            while i < lenRangeFrames do i = i + 1
                 frames[i] = rangeFrames[i]
             end
         end

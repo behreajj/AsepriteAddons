@@ -363,22 +363,23 @@ end
 ---Creates a grid of bricks.
 ---The offset is how far to displace offset rows.
 ---The aspect is the ratio of brick width to height.
----The frequency describes interval before an offset,
----2 is the default.
+---Skip describes the row count to skip offseting.
+---Pick describes the row count to offset.
 ---@param cols integer columns
 ---@param rows integer rows
 ---@param offset number offset
 ---@param aspect number aspect ratio
----@param freq integer|nil frequency
+---@param skip integer|nil rows to skip
+---@param pick integer|nil rows to pick
 ---@return table
-function Mesh2.gridBricks(cols, rows, offset, aspect, freq)
-
+function Mesh2.gridBricks(cols, rows, offset, aspect, skip, pick)
     -- Assume defaults.
     local vcols = 4
     local vrows = 4
     local voff = 0.5
     local vasp = 2.0
-    local vfrq = 2
+    local vskip = 1
+    local vpick = 1
 
     -- Validate inputs.
     if cols and cols > 2 then vcols = cols end
@@ -387,7 +388,10 @@ function Mesh2.gridBricks(cols, rows, offset, aspect, freq)
         voff = math.max(-1.0, math.min(1.0, offset))
     end
     if aspect and aspect ~= 0.0 then vasp = aspect end
-    if freq and freq > 2 then vfrq = freq end
+    if skip and skip > 0 then vskip = skip end
+    if pick and pick > 0 then vpick = pick end
+
+    local all = vpick + vskip
 
     local halfOff = voff * 0.5
     local invAspect = 1.0 / vasp
@@ -410,7 +414,7 @@ function Mesh2.gridBricks(cols, rows, offset, aspect, freq)
 
         local x0 = 0.0
         local x1 = 0.0
-        local useOffset = i % vfrq == 0
+        local useOffset = i % all < vpick
         if useOffset then
             x0 = (j - halfOff) * jToStep - 0.5
             x1 = (j + 1 - halfOff) * jToStep - 0.5

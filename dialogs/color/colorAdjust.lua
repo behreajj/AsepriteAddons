@@ -256,13 +256,18 @@ dlg:button {
                 or hAdj ~= 0
                 or alphaAdjNonZero)
 
+        -- Alpha invert is grouped with LAB invert, so
+        -- the expectation is that it occurs after
+        -- adjustment. Logically, though, alpha invert
+        -- comes before.
+        local alAdj01 = alphaAdj * 0.003921568627451
+        if alphaInvert then alAdj01 = -alAdj01 end
         local normFac = normalize * 0.01
         local normGtZero = normFac > 0.0
         local normLtZero = normFac < 0.0
-        local absNormFac = math.abs(normFac)
+        local absNormFac = abs(normFac)
         local complNormFac = 1.0 - absNormFac
         local contrastFac = 1.0 + contrast * 0.01
-        local alpha01 = alphaAdj * 0.003921568627451
         local hue01 = hAdj * 0.0027777777777778
         local aSign = 1.0
         local bSign = 1.0
@@ -277,8 +282,7 @@ dlg:button {
             srcLayerName = srcLayer.name
         end
         trgLayer.name = string.format(
-            "%s.Adjusted",
-            srcLayerName)
+            "%s.Adjusted", srcLayerName)
         if srcLayer.opacity then
             trgLayer.opacity = srcLayer.opacity
         end
@@ -288,6 +292,7 @@ dlg:button {
 
         local oldMode = activeSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
+        local activeSpec = activeSprite.spec
 
         local framesLen = #frames
         app.transaction(function()
@@ -302,16 +307,20 @@ dlg:button {
                     end
 
                     -- Find unique colors in image.
+                    -- A cel image may contain only opaque pixels, but
+                    -- occupy a small part of the canvas. Ensure that
+                    -- there is always a zero key for alpha invert.
                     local srcpxitr = srcImg:pixels()
                     local srcDict = {}
                     for elm in srcpxitr do
-                        local hex = elm()
-                        if (hex & 0xff000000) ~= 0 then
-                            srcDict[hex] = true
-                        end
+                        local h = elm()
+                        if (h & 0xff000000) == 0 then h = 0 end
+                        srcDict[h] = true
                     end
+                    srcDict[0] = true
 
                     -- Convert unique colors to CIE LAB.
+                    -- Normalization should ignore transparent pixels.
                     local labDict = {}
                     local minLum = 100.0
                     local maxLum = 0.0
@@ -322,11 +331,13 @@ dlg:button {
                         local lab = sRgbaToLab(srgb)
                         labDict[key] = lab
 
-                        local lum = lab.l
-                        if lum < minLum then minLum = lum end
-                        if lum > maxLum then maxLum = lum end
-                        sumLum = sumLum + lum
-                        countLum = countLum + 1
+                        if key ~= 0 then
+                            local lum = lab.l
+                            if lum < minLum then minLum = lum end
+                            if lum > maxLum then maxLum = lum end
+                            sumLum = sumLum + lum
+                            countLum = countLum + 1
+                        end
                     end
 
                     if useNormalize then
@@ -340,12 +351,14 @@ dlg:button {
                             for key, value in pairs(labDict) do
                                 local lOld = value.l
                                 local lNew = lOld
-                                if normGtZero then
-                                    lNew = complNormFac * lOld
-                                        + tDenom * lOld - lumMintDenom
-                                elseif normLtZero then
-                                    lNew = complNormFac * lOld
-                                        + absNormFac * avgLum
+                                if key ~= 0 then
+                                    if normGtZero then
+                                        lNew = complNormFac * lOld
+                                            + tDenom * lOld - lumMintDenom
+                                    elseif normLtZero then
+                                        lNew = complNormFac * lOld
+                                            + absNormFac * avgLum
+                                    end
                                 end
                                 normDict[key] = {
                                     l = lNew,
@@ -356,6 +369,19 @@ dlg:button {
                             end
                             labDict = normDict
                         end
+                    end
+
+                    if alphaInvert then
+                        local aInvDict = {}
+                        for key, value in pairs(labDict) do
+                            aInvDict[key] = {
+                                l = value.l,
+                                a = value.a,
+                                b = value.b,
+                                alpha = 1.0 - value.alpha
+                            }
+                        end
+                        labDict = aInvDict
                     end
 
                     if useContrast then
@@ -374,17 +400,17 @@ dlg:button {
                     if useLabAdj then
                         local labAdjDict = {}
                         for key, value in pairs(labDict) do
+                            local al = value.alpha
+                            if al > 0.0 then al = al + alAdj01 end
                             labAdjDict[key] = {
                                 l = value.l + lAdj,
                                 a = value.a + aAdj,
                                 b = value.b + bAdj,
-                                alpha = value.alpha + alpha01
+                                alpha = al
                             }
                         end
                         labDict = labAdjDict
-                    end
-
-                    if useLchAdj then
+                    elseif useLchAdj then
                         local lchAdjDict = {}
                         for key, value in pairs(labDict) do
                             local lch = labToLch(
@@ -392,11 +418,12 @@ dlg:button {
                                 value.a,
                                 value.b,
                                 value.alpha)
+                            local al = lch.a
+                            if al > 0.0 then al = al + alAdj01 end
                             lchAdjDict[key] = lchToLab(
                                 lch.l + lAdj,
                                 lch.c + cAdj,
-                                lch.h + hue01,
-                                lch.a + alpha01)
+                                lch.h + hue01, al)
                         end
                         labDict = lchAdjDict
                     end
@@ -416,19 +443,6 @@ dlg:button {
                         labDict = labInvDict
                     end
 
-                    if alphaInvert then
-                        local aInvDict = {}
-                        for key, value in pairs(labDict) do
-                            aInvDict[key] = {
-                                l = value.l,
-                                a = value.a,
-                                b = value.b,
-                                alpha = 1.0 - value.alpha
-                            }
-                        end
-                        labDict = aInvDict
-                    end
-
                     -- Convert CIE LAB to sRGBA hexadecimal.
                     local trgDict = {}
                     for key, value in pairs(labDict) do
@@ -437,23 +451,27 @@ dlg:button {
                             value.alpha))
                     end
 
-                    -- Create image.
-                    local trgImg = srcImg:clone()
+                    local srcPos = srcCel.position
+                    local trgPos = srcPos
+                    local trgImg = nil
+                    if alphaInvert then
+                        trgImg = Image(activeSpec)
+                        trgImg:drawImage(srcImg, srcPos)
+                        trgPos = Point(0, 0)
+                    else
+                        trgImg = srcImg:clone()
+                    end
+
                     local trgpxitr = trgImg:pixels()
                     for elm in trgpxitr do
-                        local hex = elm()
-                        if (hex & 0xff000000) ~= 0 then
-                            elm(trgDict[hex])
-                        elseif alphaInvert then
-                            elm(0xff000000 | hex)
-                        else
-                            elm(0x0)
-                        end
+                        local h = elm()
+                        if (h & 0xff000000) == 0 then h = 0x0 end
+                        elm(trgDict[h])
                     end
 
                     local trgCel = activeSprite:newCel(
                         trgLayer, srcFrame,
-                        trgImg, srcCel.position)
+                        trgImg, trgPos)
                     trgCel.opacity = srcCel.opacity
                 end
             end

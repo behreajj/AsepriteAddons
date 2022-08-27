@@ -6,7 +6,8 @@ local defaults = {
     rows = 8,
     offset = 50,
     aspect = 2.0,
-    frequency = 2,
+    skip = 1,
+    pick = 1,
     scale = 32,
     xOrigin = 0,
     yOrigin = 0,
@@ -59,11 +60,18 @@ dlg:number {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "frequency",
-    label = "Frequency:",
-    min = 2,
+    id = "skip",
+    label = "Skip:",
+    min = 1,
     max = 8,
-    value = defaults.frequency
+    value = defaults.skip
+}
+
+dlg:slider {
+    id = "pick",
+    min = 1,
+    max = 8,
+    value = defaults.pick,
 }
 
 dlg:newrow { always = false }
@@ -159,7 +167,8 @@ dlg:button {
             args.rows,
             0.01 * args.offset,
             args.aspect,
-            args.frequency)
+            args.skip,
+            args.pick)
 
         local t = Mat3.fromTranslation(
             args.xOrigin,
