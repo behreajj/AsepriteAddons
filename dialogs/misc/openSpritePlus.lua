@@ -5,7 +5,8 @@ local paletteTypes = {
     "DEFAULT",
     "EMBEDDED",
     "FILE",
-    "PRESET" }
+    "PRESET"
+}
 
 local function loadSprite(spriteFile)
     -- GPL and PAL file formats cannot be loaded as sprites.
@@ -151,7 +152,8 @@ dlg:button {
             or (not app.fs.isFile(spriteFile)) then
             app.alert {
                 title = "Error",
-                text = "Invalid file path." }
+                text = "Invalid file path."
+            }
             return
         end
 
@@ -187,7 +189,8 @@ dlg:button {
         if not openSprite then
             app.alert {
                 title = "Error",
-                text = "Sprite could not be found." }
+                text = "Sprite could not be found."
+            }
             return
         end
 
@@ -222,7 +225,8 @@ dlg:button {
                 title = "Warning",
                 text = string.format(
                     "The sprite alpha mask was reset from %d to 0.",
-                    oldAlphaMask) }
+                    oldAlphaMask)
+            }
         end
 
         if palType == "EMBEDDED" then

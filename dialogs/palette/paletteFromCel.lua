@@ -328,13 +328,41 @@ dlg:button {
             return
         end
 
-        local activeCel = app.activeCel
-        if not activeCel then
+        local srcLayer = app.activeLayer
+        if not srcLayer then
+            app.alert {
+                title = "Error",
+                text = "There is no active layer."
+            }
+            return
+        end
+
+        if srcLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
+            }
+            return
+        end
+
+        local srcCel = app.activeCel
+        if not srcCel then
             app.alert {
                 title = "Error",
                 text = "There is no active cel."
             }
             return
+        end
+
+        -- Tile map layers may be present in 1.3 beta.
+        local layerIsTilemap = false
+        local tileSet = nil
+        local version = app.version
+        if version.major >= 1 and version.minor >= 3 then
+            layerIsTilemap = srcLayer.isTilemap
+            if layerIsTilemap then
+                tileSet = srcLayer.tileset
+            end
         end
 
         -- Unpack arguments.
@@ -344,13 +372,14 @@ dlg:button {
         local clampTo256 = args.clampTo256
         local prependMask = args.prependMask
 
-        local image = activeCel.image
-        local itr = image:pixels()
-        local dictionary = {}
-        local idx = 1
+        local srcImg = srcCel.image
+        local colorMode = activeSprite.colorMode
+        if layerIsTilemap then
+            srcImg = AseUtilities.tilesToImage(
+                srcImg, tileSet, colorMode)
+        end
 
         local alphaMask = 0
-        local colorMode = activeSprite.colorMode
         if removeAlpha then
             if colorMode == ColorMode.GRAY then
                 alphaMask = 0xff00
@@ -359,23 +388,22 @@ dlg:button {
             end
         end
 
-        -- In Aseprite 1.3, it's possible for images in
-        -- tile map layers to have a colorMode of 4.
+        local itr = srcImg:pixels()
+        local dictionary = {}
+        local idx = 0
+
         if colorMode == ColorMode.RGB then
             for elm in itr do
                 local hex = elm()
                 if ((hex >> 0x18) & 0xff) > 0 then
                     hex = alphaMask | hex
                     if not dictionary[hex] then
-                        dictionary[hex] = idx
                         idx = idx + 1
+                        dictionary[hex] = idx
                     end
                 end
             end
         elseif colorMode == ColorMode.INDEXED then
-            -- TODO: Would it be more efficient to convert
-            -- palette to hex array first, then 1+index in
-            -- pixels loop?
             local srcPal = AseUtilities.getPalette(
                 app.activeFrame, activeSprite.palettes)
 
@@ -388,8 +416,8 @@ dlg:button {
                         local hex = aseColor.rgbaPixel
                         hex = alphaMask | hex
                         if not dictionary[hex] then
-                            dictionary[hex] = idx
                             idx = idx + 1
+                            dictionary[hex] = idx
                         end
                     end
                 end
@@ -403,8 +431,8 @@ dlg:button {
                     local v = hexGray & 0xff
                     local hex = a << 0x18 | v << 0x10 | v << 0x08 | v
                     if not dictionary[hex] then
-                        dictionary[hex] = idx
                         idx = idx + 1
+                        dictionary[hex] = idx
                     end
                 end
             end
@@ -436,22 +464,19 @@ dlg:button {
             local v3ClrFunc = v3ToClrFuncFromPreset(clrSpacePreset)
             local bounds = boundsFromPreset(clrSpacePreset)
 
-            -- Subdivide this once so that there are at least 8
-            -- colors returned in cases where an input palette
-            -- count is just barely over the threshold, e.g.,
-            -- 380 is over 255.
+            -- Subdivide once so that there are at least 8 colors
+            -- returned in cases where an input palette count
+            -- is barely over threshold, e.g., 380 over 255.
             local octree = Octree.new(bounds, octCapacity, 1)
             Octree.subdivide(octree, 1, octCapacity)
 
+            -- This shouldn't need to check for transparent
+            -- colors, as they would've been filtered above.
             local i = 0
             while i < lenHexes do
                 i = i + 1
-                local hex = hexes[i]
-                if (hex & 0xff000000) ~= 0 then
-                    local clr = fromHex(hex)
-                    local point = clrV3Func(clr)
-                    octins(octree, point)
-                end
+                local clr = fromHex(hexes[i])
+                octins(octree, clrV3Func(clr))
             end
 
             Octree.cull(octree)
@@ -498,7 +523,6 @@ dlg:button {
             end
 
             if colorMode == ColorMode.INDEXED then
-                -- Not sure how to get around this...
                 app.command.ChangePixelFormat { format = "rgb" }
                 AseUtilities.setPalette(hexes, activeSprite, palIdx)
                 app.command.ChangePixelFormat { format = "indexed" }

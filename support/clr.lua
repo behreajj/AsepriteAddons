@@ -80,31 +80,28 @@ end
 
 ---Evaluates whether all color channels are
 ---greater than zero.
----@param a table color
+---@param c table color
 ---@return boolean
-function Clr.all(a)
-    return a.a > 0.0
-        and a.b > 0.0
-        and a.g > 0.0
-        and a.r > 0.0
+function Clr.all(c)
+    return c.a > 0.0 and c.b > 0.0 and c.g > 0.0 and c.r > 0.0
 end
 
 ---Returns true if the alpha channel is within
 ---the range [0.0, 1.0].
----@param a table color
+---@param c table color
 ---@param tol number|nil tolerance
 ---@return boolean
-function Clr.alphaIsInGamut(a, tol)
+function Clr.alphaIsInGamut(c, tol)
     local eps = tol or 0.0
-    return a.a >= -eps and a.a <= (1.0 + eps)
+    return c.a >= -eps and c.a <= (1.0 + eps)
 end
 
 ---Evaluates whether the color's alpha channel
 ---is greater than zero.
----@param a table color
+---@param c table color
 ---@return boolean
-function Clr.any(a)
-    return a.a > 0.0
+function Clr.any(c)
+    return c.a > 0.0
 end
 
 ---Finds the bitwise and (&) for two colors.
@@ -189,10 +186,10 @@ function Clr.bitEqRgb(a, b)
 end
 
 ---Finds the bitwise not (~) for a color.
----@param a table left operand
+---@param c table color
 ---@return table
-function Clr.bitNot(a)
-    return Clr.fromHex(~Clr.toHex(a))
+function Clr.bitNot(c)
+    return Clr.fromHex(~Clr.toHex(c))
 end
 
 ---Finds the bitwise inclusive or (|) for two colors.
@@ -205,11 +202,11 @@ end
 
 ---Rotates a color left by a number of places.
 ---Use 8, 16, 24 for complete channel rotations.
----@param a table left operand
----@param places number shift
+---@param c table color
+---@param places integer shift
 ---@return table
-function Clr.bitRotateLeft(a, places)
-    local x = Clr.toHex(a)
+function Clr.bitRotateLeft(c, places)
+    local x = Clr.toHex(c)
     return Clr.fromHex(
         (x << places) |
         (x >> (-places & 0x1f)))
@@ -217,11 +214,11 @@ end
 
 ---Rotates a color right by a number of places.
 ---Use 8, 16, 24 for complete channel rotations.
----@param a table left operand
----@param places number shift
+---@param c table color
+---@param places integer shift
 ---@return table
-function Clr.bitRotateRight(a, places)
-    local x = Clr.toHex(a)
+function Clr.bitRotateRight(c, places)
+    local x = Clr.toHex(c)
     return Clr.fromHex(
         (x >> places) |
         (x << (-places & 0x1f)))
@@ -229,20 +226,20 @@ end
 
 ---Shifts a color left (<<) by a number of places.
 ---Use 8, 16, 24 for complete channel shifts.
----@param a table left operand
----@param places number shift
+---@param c table color
+---@param places integer shift
 ---@return table
-function Clr.bitShiftLeft(a, places)
-    return Clr.fromHex(Clr.toHex(a) << places)
+function Clr.bitShiftLeft(c, places)
+    return Clr.fromHex(Clr.toHex(c) << places)
 end
 
 ---Shifts a color right (>>) by a number of places.
 ---Use 8, 16, 24 for complete channel shifts.
----@param a table left operand
----@param places number shift
+---@param c table color
+---@param places integer shift
 ---@return table
-function Clr.bitShiftRight(a, places)
-    return Clr.fromHex(Clr.toHex(a) >> places)
+function Clr.bitShiftRight(c, places)
+    return Clr.fromHex(Clr.toHex(c) >> places)
 end
 
 ---Finds the bitwise exclusive or (~) for two colors.
@@ -299,22 +296,22 @@ function Clr.blendInternal(a, b)
 end
 
 ---Clamps a color to [0.0, 1.0].
----@param a table left operand
+---@param c table color
 ---@return table
-function Clr.clamp01(a)
-    local cr = a.r or 0.0
+function Clr.clamp01(c)
+    local cr = c.r or 0.0
     if cr < 0.0 then cr = 0.0
     elseif cr > 1.0 then cr = 1.0 end
 
-    local cg = a.g or 0.0
+    local cg = c.g or 0.0
     if cg < 0.0 then cg = 0.0
     elseif cg > 1.0 then cg = 1.0 end
 
-    local cb = a.b or 0.0
+    local cb = c.b or 0.0
     if cb < 0.0 then cb = 0.0
     elseif cb > 1.0 then cb = 1.0 end
 
-    local ca = a.a or 0.0
+    local ca = c.a or 0.0
     if ca < 0.0 then ca = 0.0
     elseif ca > 1.0 then ca = 1.0 end
 
@@ -323,7 +320,7 @@ end
 
 ---Converts from a hexadecimal representation
 ---of a color stored as 0xAABBGGRR.
----@param c number hexadecimal color
+---@param c integer hexadecimal color
 ---@return table
 function Clr.fromHex(c)
     return Clr.new(
@@ -381,9 +378,9 @@ end
 ---arranged as a UV Sphere where HSL is mapped
 ---to inclination, hue is mapped to azimuth and
 ---saturation is mapped to radius.
----@param longitudes number longitudes or hues
----@param latitudes number latitudes or lumas
----@param layers number layers or saturations
+---@param longitudes integer longitudes or hues
+---@param latitudes integer latitudes or lumas
+---@param layers integer layers or saturations
 ---@param satMin number minimum saturation
 ---@param satMax number maximum saturation
 ---@param alpha number transparency
@@ -455,9 +452,9 @@ end
 ---arranged in a Cartesian grid from (0.0, 0.0, 0.0)
 ---to (1.0, 1.0, 1.0), representing the standard
 ---RGB color space.
----@param cols number columns
----@param rows number rows
----@param layers number layers
+---@param cols integer columns
+---@param rows integer rows
+---@param layers integer layers
 ---@param alpha number transparency
 ---@return table
 function Clr.gridsRgb(cols, rows, layers, alpha)
@@ -737,7 +734,7 @@ end
 ---transformation.
 ---@param l number lightness
 ---@param c number chromaticity
----@param h number hue in degrees
+---@param h number hue
 ---@param a number alpha channel
 ---@param tol number|nil gray tolerance
 ---@return table
@@ -767,7 +764,7 @@ end
 ---out-of-bounds.
 ---@param l number lightness
 ---@param c number chromaticity
----@param h number hue in degrees
+---@param h number hue
 ---@param a number alpha channel
 ---@return table
 function Clr.lchToLabInternal(l, c, h, a)
@@ -786,7 +783,7 @@ end
 ---Hue is expected to be in [0.0, 1.0].
 ---@param l number lightness
 ---@param c number chromaticity
----@param h number hue in degrees
+---@param h number hue
 ---@param a number alpha channel
 ---@param tol number|nil grayscale tolerance
 ---@return table
@@ -915,12 +912,8 @@ end
 ---@return table
 function Clr.mixHsla(a, b, t, hueFunc)
     local u = t or 0.5
-    if u <= 0.0 then
-        return Clr.clamp01(a)
-    end
-    if u >= 1.0 then
-        return Clr.clamp01(b)
-    end
+    if u <= 0.0 then return Clr.clamp01(a) end
+    if u >= 1.0 then return Clr.clamp01(b) end
 
     local f = hueFunc or function(o, d, x)
         local diff = d - o
@@ -984,12 +977,8 @@ end
 ---@return table
 function Clr.mixHsva(a, b, t, hueFunc)
     local u = t or 0.5
-    if u <= 0.0 then
-        return Clr.clamp01(a)
-    end
-    if u >= 1.0 then
-        return Clr.clamp01(b)
-    end
+    if u <= 0.0 then return Clr.clamp01(a) end
+    if u >= 1.0 then return Clr.clamp01(b) end
 
     local f = hueFunc or function(o, d, x)
         local diff = d - o
@@ -1297,7 +1286,7 @@ end
 ---in sRGB. Uses signed quantization, as the color
 ---may be out of gamut.
 ---@param c table color
----@param levels number levels
+---@param levels integer levels
 ---@return table
 function Clr.quantize(c, levels)
     if levels and levels > 0 and levels < 256 then
@@ -1348,7 +1337,6 @@ end
 ---@param opaque number alpha upper bound
 ---@return table
 function Clr.random(dark, light, green, red, blue, yellow, trns, opaque)
-
     local lMin = dark or 0.0
     local lMax = light or 100.0
     local aMin = green or -110.0

@@ -207,6 +207,14 @@ dlg:button {
             return
         end
 
+        if srcLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
+            }
+            return
+        end
+
         -- Tile map layers may be present in 1.3 beta.
         local layerIsTilemap = false
         local tileSet = nil
@@ -273,19 +281,16 @@ dlg:button {
         local target = args.target
         local frames = AseUtilities.getFrames(activeSprite, target)
 
-        -- Create a new layer if necessary.
+        -- Create a new layer, srcLayer should not be a group,
+        -- and thus have an opacity and blend mode.
         local trgLayer = activeSprite:newLayer()
         local srcLayerName = "Layer"
         if #srcLayer.name > 0 then
             srcLayerName = srcLayer.name
         end
         trgLayer.name = srcLayerName .. "." .. clrSpacePreset
-        if srcLayer.opacity then
-            trgLayer.opacity = srcLayer.opacity
-        end
-        if srcLayer.blendMode then
-            trgLayer.blendMode = srcLayer.blendMode
-        end
+        trgLayer.opacity = srcLayer.opacity
+        trgLayer.blendMode = srcLayer.blendMode
 
         local framesLen = #frames
         app.transaction(function()

@@ -15,8 +15,7 @@ local masked = Utilities.prependMask(uniques)
 local aseColors = {}
 local lenAseColors = #masked
 local i = 0
-while i < lenAseColors do
-    i = i + 1
+while i < lenAseColors do i = i + 1
     aseColors[i] = AseUtilities.hexToAseColor(masked[i])
 end
 
@@ -32,8 +31,7 @@ app.transaction(function()
         local palette = palettes[j]
         palette:resize(lenAseColors)
         local k = 0
-        while k < lenAseColors do
-            k = k + 1
+        while k < lenAseColors do k = k + 1
             local aseColor = aseColors[k]
             palette:setColor(k - 1, aseColor)
         end

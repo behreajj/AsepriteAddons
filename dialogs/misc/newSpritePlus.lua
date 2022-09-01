@@ -629,16 +629,6 @@ dlg:button {
             end)
         end
 
-        -- Assign grid.
-        -- local xGrid = args.xGrid or defaults.xGrid
-        -- local yGrid = args.yGrid or defaults.yGrid
-        -- local wGrid = args.wGrid or defaults.wGrid
-        -- local hGrid = args.hGrid or defaults.hGrid
-        -- if wGrid > 1 and hGrid > 1 then
-        --     newSprite.gridBounds = Rectangle(
-        --         xGrid, yGrid, wGrid, hGrid)
-        -- end
-
         -- Convert to grayscale will append palette.
         AseUtilities.changePixelFormat(colorModeInt)
         if useGrayscale then

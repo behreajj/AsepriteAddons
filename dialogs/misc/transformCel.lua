@@ -55,7 +55,6 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
     if targetPreset == "ALL" then
 
         -- Linked cels occur multiple times in the sprite.cels
-        -- https://github.com/aseprite/aseprite/issues/3406
         -- Can be fixed by changing function call cels()
         -- to uniqueCels() at this line in the source:
         -- https://github.com/aseprite/aseprite/blob/main/
@@ -390,9 +389,9 @@ dlg:button {
         if not activeSprite then return end
 
         local args = dlg.data
-        local xtr = args.xTranslate or defaults.xTranslate
-        local ytr = args.yTranslate or defaults.yTranslate
-        if xtr == 0.0 and ytr == 0.0 then return end
+        local dx = args.xTranslate or defaults.xTranslate
+        local dy = args.yTranslate or defaults.yTranslate
+        if dx == 0.0 and dy == 0.0 then return end
 
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
@@ -406,23 +405,23 @@ dlg:button {
             local yGrOff = grid.y
             local xGrScl = grid.width
             local yGrScl = grid.height
-            local xtrnz = xtr ~= 0.0
-            local ytrnz = ytr ~= 0.0
+            local dxnz = dx ~= 0.0
+            local dynz = dy ~= 0.0
             local round = Utilities.round
             app.transaction(function()
                 local i = 0
                 while i < celsLen do i = i + 1
                     local cel = cels[i]
-                    local oldPos = cel.position
-                    local xn = oldPos.x
-                    local yn = oldPos.y
-                    if xtrnz then
+                    local op = cel.position
+                    local xn = op.x
+                    local yn = op.y
+                    if dxnz then
                         local xGrid = round((xn - xGrOff) / xGrScl)
-                        xn = xGrOff + (xGrid + xtr) * xGrScl
+                        xn = xGrOff + (xGrid + dx) * xGrScl
                     end
-                    if ytrnz then
+                    if dynz then
                         local yGrid = round((yn - yGrOff) / yGrScl)
-                        yn = yGrOff + (yGrid - ytr) * yGrScl
+                        yn = yGrOff + (yGrid - dy) * yGrScl
                     end
                     cel.position = Point(xn, yn)
                 end
@@ -432,10 +431,8 @@ dlg:button {
                 local i = 0
                 while i < celsLen do i = i + 1
                     local cel = cels[i]
-                    local oldPos = cel.position
-                    cel.position = Point(
-                        oldPos.x + xtr,
-                        oldPos.y - ytr)
+                    local op = cel.position
+                    cel.position = Point(op.x + dx, op.y - dy)
                 end
             end)
         end
@@ -453,22 +450,79 @@ dlg:button {
         if not activeSprite then return end
 
         local args = dlg.data
-        local xtr = args.xTranslate or defaults.xTranslate
-        local ytr = args.yTranslate or defaults.yTranslate
-        if xtr == 0.0 and ytr == 0.0 then return end
+        local dx = args.xTranslate or defaults.xTranslate
+        local dy = args.yTranslate or defaults.yTranslate
+        if dx == 0.0 and dy == 0.0 then return end
 
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, true)
         local celsLen = #cels
 
+        local trimAlpha = AseUtilities.trimImageAlpha
         local wrap = AseUtilities.wrapImage
-        app.transaction(function()
-            local i = 0
-            while i < celsLen do i = i + 1
-                local cel = cels[i]
-                cel.image = wrap(cel.image, xtr, ytr)
-            end
-        end)
+        local spriteSpec = activeSprite.spec
+        local alphaMask = spriteSpec.transparentColor
+
+        local docPrefs = app.preferences.document(activeSprite)
+        local tiledMode = docPrefs.tiled.mode
+        if tiledMode == 3 then
+            -- Tiling on both axes.
+            app.transaction(function()
+                local i = 0
+                while i < celsLen do i = i + 1
+                    local cel = cels[i]
+                    local blit = Image(spriteSpec)
+                    blit:drawImage(cel.image, cel.position)
+                    local imgTrg = wrap(blit, dx, dy)
+                    local xTrg = 0
+                    local yTrg = 0
+                    imgTrg, xTrg, yTrg = trimAlpha(imgTrg, 0, alphaMask)
+                    cel.image = imgTrg
+                    cel.position = Point(xTrg, yTrg)
+                end
+            end)
+        elseif tiledMode == 2 then
+            -- Vertical tiling.
+            app.transaction(function()
+                local i = 0
+                while i < celsLen do i = i + 1
+                    local cel = cels[i]
+                    local blit = Image(spriteSpec)
+                    blit:drawImage(cel.image, cel.position)
+                    local imgTrg = wrap(blit, 0, dy)
+                    local xTrg = 0
+                    local yTrg = 0
+                    imgTrg, xTrg, yTrg = trimAlpha(imgTrg, 0, alphaMask)
+                    cel.image = imgTrg
+                    cel.position = Point(xTrg + dx, yTrg)
+                end
+            end)
+        elseif tiledMode == 1 then
+            -- Horizontal tiling.
+            app.transaction(function()
+                local i = 0
+                while i < celsLen do i = i + 1
+                    local cel = cels[i]
+                    local blit = Image(spriteSpec)
+                    blit:drawImage(cel.image, cel.position)
+                    local imgTrg = wrap(blit, dx, 0)
+                    local xTrg = 0
+                    local yTrg = 0
+                    imgTrg, xTrg, yTrg = trimAlpha(imgTrg, 0, alphaMask)
+                    cel.image = imgTrg
+                    cel.position = Point(xTrg, yTrg - dy)
+                end
+            end)
+        else
+            --No tiling.
+            app.transaction(function()
+                local i = 0
+                while i < celsLen do i = i + 1
+                    local cel = cels[i]
+                    cel.image = wrap(cel.image, dx, dy)
+                end
+            end)
+        end
 
         app.refresh()
     end
@@ -495,10 +549,10 @@ dlg:button {
             local i = 0
             while i < celsLen do i = i + 1
                 local cel = cels[i]
-                local posOld = cel.position
-                local xNew = posOld.x
+                local op = cel.position
+                local xNew = op.x
                 local yNew = 0
-                if posOld.y == yNew then
+                if op.y == yNew then
                     local w = cel.image.width
                     xNew = math.floor(0.5 + xCtrSprite - w * 0.5)
                 end
@@ -528,10 +582,10 @@ dlg:button {
             local i = 0
             while i < celsLen do i = i + 1
                 local cel = cels[i]
-                local posOld = cel.position
+                local op = cel.position
                 local xNew = 0
-                local yNew = posOld.y
-                if posOld.x == xNew then
+                local yNew = op.y
+                if op.x == xNew then
                     local h = cel.image.height
                     yNew = math.floor(0.5 + yCtrSprite - h * 0.5)
                 end
@@ -563,10 +617,10 @@ dlg:button {
             while i < celsLen do i = i + 1
                 local cel = cels[i]
                 local celImg = cel.image
-                local posOld = cel.position
-                local xNew = posOld.x
+                local op = cel.position
+                local xNew = op.x
                 local yNew = hSprite - celImg.height
-                if posOld.y == yNew then
+                if op.y == yNew then
                     local w = celImg.width
                     xNew = math.floor(0.5 + xCtrSprite - w * 0.5)
                 end
@@ -598,10 +652,10 @@ dlg:button {
             while i < celsLen do i = i + 1
                 local cel = cels[i]
                 local celImg = cel.image
-                local posOld = cel.position
+                local op = cel.position
                 local xNew = wSprite - celImg.width
-                local yNew = posOld.y
-                if posOld.x == xNew then
+                local yNew = op.y
+                if op.x == xNew then
                     local h = cel.image.height
                     yNew = math.floor(0.5 + yCtrSprite - h * 0.5)
                 end

@@ -1238,15 +1238,16 @@ end
 ---@param y integer y translation
 ---@param w integer image width
 ---@param h integer image height
+---@return table
 function Utilities.wrapPixels(source, x, y, w, h)
     local len = #source
     local wrapped = {}
     local i = 0
     while i < len do
-        local xm = ((i % w) - x) % w
-        local ym = ((i // w) + y) % h
+        local xSrc = ((i % w) - x) % w
+        local ySrc = ((i // w) + y) % h
         i = i + 1
-        wrapped[i] = source[1 + xm + ym * w]
+        wrapped[i] = source[1 + xSrc + ySrc * w]
     end
     return wrapped
 end

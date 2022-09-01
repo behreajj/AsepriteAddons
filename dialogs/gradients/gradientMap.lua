@@ -147,7 +147,7 @@ dlg:button {
                             local sgi = hex >> 0x08 & 0xff
                             local sri = hex & 0xff
 
-                            if sbi == sgi and sbi == sri and sri == sgi then
+                            if sbi == sgi and sbi == sri then
                                 lum = sbi * 0.003921568627451
                             else
                                 -- Convert to linear via look up table.

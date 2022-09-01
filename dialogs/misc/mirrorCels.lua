@@ -427,7 +427,7 @@ dlg:button {
                     }
 
                     app.useTool {
-                        tool = "line",
+                        tool = "pencil",
                         brush = pointBrush,
                         color = destColor,
                         layer = diagnosticLayer,

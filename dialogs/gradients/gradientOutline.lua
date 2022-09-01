@@ -377,19 +377,20 @@ dlg:button {
                 h = 0
                 while h < iterations do h = h + 1
                     -- Read image must be separate from target.
-                    local hexOutline = hexesOutline[h]
+                    local hexOut = hexesOutline[h]
                     local readImg = trgImg:clone()
                     local readPxItr = readImg:pixels()
                     for elm in readPxItr do
                         local cRead = elm()
-                        if cRead == bkgHex or cRead == 0x0 then
+                        if (cRead & 0xff000000) == 0x0
+                            or cRead == bkgHex then
                             -- Loop through matrix, check neighbors
                             -- against background. There's no need to
                             -- tally up neighbor marks; just draw a
                             -- pixel, then break the loop.
                             local j = 0
                             local continue = true
-                            while j < activeCount and continue do
+                            while continue and j < activeCount do
                                 j = j + 1
                                 local offset = activeOffsets[j]
                                 local yRead = elm.y
@@ -399,8 +400,9 @@ dlg:button {
                                     local xNbr = xRead + offset[1]
                                     if xNbr >= 0 and xNbr < wTrg then
                                         local cNbr = readImg:getPixel(xNbr, yNbr)
-                                        if cNbr ~= bkgHex and cNbr ~= 0x0 then
-                                            trgImg:drawPixel(xRead, yRead, hexOutline)
+                                        if (cNbr & 0xff000000) ~= 0x0
+                                            and cNbr ~= bkgHex then
+                                            trgImg:drawPixel(xRead, yRead, hexOut)
                                             continue = false
                                         end
                                     end
@@ -424,7 +426,6 @@ dlg:button {
         if printElapsed then
             endTime = os.time()
             elapsed = os.difftime(endTime, startTime)
-
             local txtArr = {
                 string.format("Start: %d", startTime),
                 string.format("End: %d", endTime),

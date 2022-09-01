@@ -171,8 +171,7 @@ local function saveSheet(
     spec, compPalette, useBrdr, border,
     useBrdrClr, brdrClr, padding, usePot)
 
-    if (wMax < 1) or (hMax < 1)
-        or (#filename < 1) then
+    if (wMax < 1) or (hMax < 1) or (#filename < 1) then
         return false
     end
 

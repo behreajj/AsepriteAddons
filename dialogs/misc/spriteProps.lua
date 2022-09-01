@@ -1,7 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
 --[[
-To fix in Aseprite source code:
+To fix filepath display in Aseprite source:
 Go to src/app/commands/cmd_sprite_properties.cpp
 Around line 106:
     if (Preferences::instance().general.showFullPath()) {
@@ -304,8 +304,6 @@ local function updatePalCount()
             .. string.format(" (Palette %d)", actFrIdx)
     end
 
-    -- TODO: Should this show regardless of color mode?
-    -- Should this warn if > 256?
     dlg:modify { id = "palCountLabel", text = palCountStr }
     dlg:modify { id = "palCountLabel", visible = colorMode == ColorMode.INDEXED }
 end

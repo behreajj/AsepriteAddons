@@ -14,8 +14,6 @@ local defaults = {
     useTint = true,
     foreTint = Color(0, 0, 255, 128),
     backTint = Color(255, 0, 0, 128),
-    -- foreTint = Color(185, 146, 57, 128),
-    -- backTint = Color(47, 0, 128, 128),
     pullFocus = false
 }
 

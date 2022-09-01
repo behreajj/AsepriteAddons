@@ -314,10 +314,10 @@ dlg:button {
                     local srcDict = {}
                     for elm in srcpxitr do
                         local h = elm()
-                        if (h & 0xff000000) == 0 then h = 0 end
+                        if (h & 0xff000000) == 0 then h = 0x0 end
                         srcDict[h] = true
                     end
-                    srcDict[0] = true
+                    srcDict[0x0] = true
 
                     -- Convert unique colors to CIE LAB.
                     -- Normalization should ignore transparent pixels.

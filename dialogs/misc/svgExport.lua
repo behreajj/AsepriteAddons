@@ -10,8 +10,8 @@ local defaults = {
 
 local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
     local strfmt = string.format
-    local append = table.insert
     local pathStrArr = {}
+    local lenArr = 0
     local imgItr = img:pixels()
     for elm in imgItr do
         local hex = elm()
@@ -32,7 +32,7 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
                 "\n<path d=\"M %d %d L %d %d L %d %d L %d %d Z\" ",
                 ax, ay, bx, ay, bx, by, ax, by)
 
-            if a < 255 then
+            if a < 0xff then
                 pathStr = pathStr .. strfmt(
                     "fill-opacity=\"%.6f\" ",
                     a * 0.003921568627451)
@@ -45,7 +45,8 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
                 ((hex & 0xff) << 0x10
                     | (hex & 0xff00)
                     | (hex >> 0x10 & 0xff)))
-            append(pathStrArr, pathStr)
+            lenArr = lenArr + 1
+            pathStrArr[lenArr] = pathStr
         end
     end
 
@@ -108,8 +109,7 @@ local function layerToSvgStr(
                 -- Layer opacity and cel opacity are compounded
                 -- together to simplify.
                 local celAlpha = cel.opacity
-                if lyrAlpha < 0xff
-                    or celAlpha < 0xff then
+                if lyrAlpha < 0xff or celAlpha < 0xff then
                     local cmpAlpha = (lyrAlpha * 0.003921568627451)
                         * (celAlpha * 0.003921568627451)
                     grpStr = grpStr .. string.format(
@@ -146,17 +146,22 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "margin",
-    label = "Margin:",
+    label = "Px Grid:",
     min = 0,
     max = 64,
-    value = defaults.margin
+    value = defaults.margin,
+    onchange = function()
+        local gtz = dlg.data.margin > 0
+        dlg:modify { id = "marginClr", visible = gtz }
+    end
 }
 
 dlg:newrow { always = false }
 
 dlg:color {
     id = "marginClr",
-    color = defaults.marginClr
+    color = defaults.marginClr,
+    visible = defaults.margin > 0
 }
 
 dlg:newrow { always = false }
@@ -166,14 +171,19 @@ dlg:slider {
     label = "Border:",
     min = 0,
     max = 64,
-    value = defaults.border
+    value = defaults.border,
+    onchange = function()
+        local gtz = dlg.data.border > 0
+        dlg:modify { id = "borderClr", visible = gtz }
+    end
 }
 
 dlg:newrow { always = false }
 
 dlg:color {
     id = "borderClr",
-    color = defaults.borderClr
+    color = defaults.borderClr,
+    visible = defaults.border > 0
 }
 
 dlg:newrow { always = false }
@@ -214,7 +224,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -271,7 +282,8 @@ dlg:button {
                 totalWidth, totalHeight),
             strfmt("viewBox=\"0 0 %.4f %.4f\">",
                 wAspSclr * totalWidth,
-                hAspSclr * totalHeight) })
+                hAspSclr * totalHeight)
+        })
 
         -- Each path element can contain sub-paths set off by Z (close)
         -- and M (move to) commands.
@@ -298,6 +310,8 @@ dlg:button {
                     borderClr.alpha * 0.003921568627451)
             end
 
+            -- Provide option for CIELAB?
+            -- fill="#CD853F cielab(62.253188, 23.950124, 48.410653)"
             str = str .. strfmt(
                 "fill=\"#%06X\" />",
                 borderClr.red << 0x10
@@ -383,7 +397,7 @@ dlg:button {
             -- but have not yet been created.
             local ext = app.fs.fileExtension(filepath)
             if ext ~= "svg" then
-                app.alert("Extension is not svg.")
+                app.alert { title = "Error", text = "Extension is not svg." }
             else
                 local file, err = io.open(filepath, "w")
                 if file then
@@ -396,7 +410,7 @@ dlg:button {
                 end
             end
         else
-            app.alert("Filepath is empty.")
+            app.alert { title = "Error", text = "Filepath is empty." }
         end
 
         if oldColorMode == ColorMode.INDEXED then
