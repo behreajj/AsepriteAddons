@@ -1,5 +1,11 @@
 dofile("./bounds3.lua")
 
+---@class Octree
+---@field bounds Bounds3 bounding area
+---@field capacity integer point capacity
+---@field children table child nodes
+---@field level integer level, or depth
+---@field points table points array
 Octree = {}
 Octree.__index = Octree
 
@@ -37,10 +43,10 @@ Octree.FRONT_NORTH_EAST = 8
 ---points at a given level. The capacity specifies
 ---the number of points the node can hold before it
 ---is split into children.
----@param bounds table bounding volume
+---@param bounds Bounds3 bounding volume
 ---@param capacity integer point capacity
 ---@param level integer|nil level, or depth
----@return table
+---@return Octree
 function Octree.new(bounds, capacity, level)
     local inst = setmetatable({}, Octree)
     inst.bounds = bounds or Bounds3.unitCubeSigned()
@@ -76,32 +82,24 @@ end
 ---then the center of a node's bounds is used.
 ---Appends centers to an array if provided,
 ---otherwise creates a new array.
----@param o table octree
+---@param o Octree octree
 ---@param include boolean include empty nodes
----@param arr table array
+---@param arr table|nil array
 ---@return table
 function Octree.centersMean(o, include, arr)
-    -- centersMedian would also be possible,
-    -- if we assume that a child's points remain
-    -- sorted, and could also be cheaper.
-    -- It was tried and removed after other
-    -- performance improvements were found.
-
     local arrVerif = arr or {}
     local children = o.children
     local lenChildren = #children
-    local isLeaf = true
 
     local i = 0
     while i < lenChildren do
         i = i + 1
         local child = children[i]
-        isLeaf = false
         Octree.centersMean(
             child, include, arrVerif)
     end
 
-    if isLeaf then
+    if lenChildren < 1 then
         local cursor = #arrVerif + 1
         local leafPoints = o.points
         local lenLeafPoints = #leafPoints
@@ -136,6 +134,46 @@ function Octree.centersMean(o, include, arr)
     return arrVerif
 end
 
+---Counts the number of leaves held by this node.
+---Returns 1 if the node is itself a leaf.
+---@param o Octree octree
+---@return integer
+function Octree.countLeaves(o)
+    -- Even if this is not used directly by
+    -- any dialog, retain it for diagnostics.
+    local children = o.children
+    local lenChildren = #children
+    if lenChildren < 1 then return 1 end
+
+    local sum = 0
+    local i = 0
+    while i < lenChildren do
+        i = i + 1
+        local child = children[i]
+        sum = sum + Octree.countLeaves(child)
+    end
+    return sum
+end
+
+---Counts the number of points held by this octree's
+---leaf nodes.
+---@param o Octree octree
+---@return integer
+function Octree.countPoints(o)
+    local children = o.children
+    local lenChildren = #children
+    if lenChildren < 1 then return #o.points end
+
+    local sum = 0
+    local i = 0
+    while i < lenChildren do
+        i = i + 1
+        local child = children[i]
+        sum = sum + Octree.countPoints(child)
+    end
+    return sum
+end
+
 ---Removes empty child nodes from the octree.
 ---Returns true if this octree node should be
 ---removed, i.e., all its children are nil and
@@ -143,7 +181,7 @@ end
 ---
 ---This should only be called after all points
 ---have been inserted into the tree.
----@param o table
+---@param o Octree octree
 ---@return boolean
 function Octree.cull(o)
     local children = o.children
@@ -171,25 +209,23 @@ end
 ---not by value. Returns true if the point was
 ---successfully inserted into either the node or
 ---its children.
----@param o table octree node
----@param point table point
+---@param o Octree octree
+---@param point Vec3 point
 ---@return boolean
 function Octree.insert(o, point)
     if Bounds3.containsInclExcl(o.bounds, point) then
         local children = o.children
         local lenChildren = #children
-        local isLeaf = true
         local i = 0
         while i < lenChildren do
             i = i + 1
             local child = children[i]
-            isLeaf = false
             if Octree.insert(child, point) then
                 return true
             end
         end
 
-        if isLeaf then
+        if lenChildren < 1 then
             -- Using table.sort here was definitely the
             -- cause of a major performance loss.
             local points = o.points
@@ -210,7 +246,7 @@ end
 ---Inserts an array of points into an node.
 ---Returns true if all point insertions succeeded.
 ---Otherwise, returns false.
----@param o table octree node
+---@param o Octree octree
 ---@param ins table insertions array
 ---@return boolean
 function Octree.insertAll(o, ins)
@@ -224,70 +260,17 @@ function Octree.insertAll(o, ins)
     return flag
 end
 
----Counts the number of leaves held by this node.
----Returns 1 if the node is itself a leaf.
----@param o table octree
----@return integer
-function Octree.countLeaves(o)
-    -- Even if this is not used directly by
-    -- any dialog, retain it for diagnostics.
-    local children = o.children
-    local lenChildren = #children
-    local isLeaf = true
-    local sum = 0
-
-    local i = 0
-    while i < lenChildren do
-        i = i + 1
-        local child = children[i]
-        isLeaf = false
-        sum = sum + Octree.countLeaves(child)
-    end
-
-    if isLeaf then return 1 end
-    return sum
-end
-
----Counts the number of points held by this octree's
----leaf nodes.
----@param o table octree
----@return integer
-function Octree.countPoints(o)
-    local children = o.children
-    local lenChildren = #children
-    local isLeaf = true
-    local sum = 0
-
-    local i = 0
-    while i < lenChildren do
-        i = i + 1
-        local child = children[i]
-        isLeaf = false
-        sum = sum + Octree.countPoints(child)
-    end
-
-    if isLeaf then sum = sum + #o.points end
-    return sum
-end
-
 ---Evaluates whether a node has any children.
 ---Returns true if not.
----@param o table octree node
+---@param o Octree octree
 ---@return boolean
 function Octree.isLeaf(o)
-    local children = o.children
-    local lenChildren = #children
-    local i = 0
-    while i < lenChildren do
-        i = i + 1
-        if children[i] then return false end
-    end
-    return true
+    return #o.children < 1
 end
 
 ---Finds the maximum level, or depth, of
 ---the node and its children.
----@param o table octree node
+---@param o Octree octree
 ---@return integer
 function Octree.maxLevel(o)
     -- Even if this is not used directly by
@@ -305,6 +288,7 @@ function Octree.maxLevel(o)
             maxLevel = lvl
         end
     end
+
     return maxLevel
 end
 
@@ -312,11 +296,11 @@ end
 ---found within the bounds, returns a point and
 ---distance from the query center. If a point cannot be
 ---found, returns a default point, which may be nil.
----@param o table octree
----@param center table sphere center
+---@param o Octree octree
+---@param center Vec3 sphere center
 ---@param radius number sphere radius
----@param dfPt table|nil default point
----@return table|nil
+---@param dfPt Vec3|nil default point
+---@return Vec3|nil
 ---@return number
 function Octree.query(o, center, radius, dfPt)
     local radVerif = radius or 46340
@@ -333,10 +317,10 @@ end
 ---found within the bounds, returns a point and
 ---square distance from the query center. If a point
 ---cannot be found, returns nil.
----@param o table octree
----@param center table sphere center
+---@param o Octree octree
+---@param center Vec3 sphere center
 ---@param radius number sphere radius
----@return table|nil
+---@return Vec3|nil
 ---@return number
 function Octree.queryInternal(o, center, radius)
     local nearPoint = nil
@@ -345,12 +329,10 @@ function Octree.queryInternal(o, center, radius)
     if Bounds3.intersectsSphere(o.bounds, center, radius) then
         local children = o.children
         local lenChildren = #children
-        local isLeaf = true
         local i = 0
         while i < lenChildren do
             i = i + 1
             local child = children[i]
-            isLeaf = false
             local candDistSq = 2147483647
             local candPoint = nil
             candPoint, candDistSq = Octree.queryInternal(
@@ -361,7 +343,7 @@ function Octree.queryInternal(o, center, radius)
             end
         end
 
-        if isLeaf then
+        if lenChildren < 1 then
             local points = o.points
             local lenPoints = #points
             local rsq = radius * radius
@@ -387,9 +369,9 @@ end
 ---Splits the octree node into eight child nodes.
 ---If a child capacity is not provided, defaults
 ---to the parent's capacity.
----@param o table octree
+---@param o Octree octree
 ---@param childCapacity integer|nil child capacity
----@return table
+---@return Octree
 function Octree.split(o, childCapacity)
     local chCpVerif = childCapacity or o.capacity
     local children = o.children
@@ -444,10 +426,10 @@ end
 ---independent of point insertion. The result will
 ---be 8 raised to the power of iterations, e.g.:
 ---8, 64, 512, etc.
----@param o table octree node
+---@param o Octree octree
 ---@param itr integer iterations
 ---@param childCapacity integer|nil child capacity
----@return table
+---@return Octree
 function Octree.subdivide(o, itr, childCapacity)
     if (not itr) or (itr < 1) then return o end
     local chCpVerif = childCapacity or o.capacity
@@ -457,23 +439,24 @@ function Octree.subdivide(o, itr, childCapacity)
         i = i + 1
         local children = o.children
         local lenChildren = #children
-        local isLeaf = true
         local j = 0
         while j < lenChildren do
             j = j + 1
             local child = children[j]
-            isLeaf = false
             Octree.subdivide(child, itr - 1, chCpVerif)
         end
 
-        if isLeaf then Octree.split(o, chCpVerif) end
+        if lenChildren < 1 then
+            Octree.split(o, chCpVerif)
+        end
     end
 
     return o
 end
 
 ---Returns a JSON string of the octree node.
----@param o table octree
+---@param o Octree octree
+---@return string
 function Octree.toJson(o)
     local str = string.format("{\"level\":%d", o.level - 1)
     str = str .. ",\"bounds\":"
@@ -481,11 +464,7 @@ function Octree.toJson(o)
     str = str .. ",\"capacity\":"
     str = str .. string.format("%d", o.capacity)
 
-    -- Node should be a leaf first, before
-    -- any string concatenation is done.
-    local isLeaf = Octree.isLeaf(o)
-
-    if isLeaf then
+    if Octree.isLeaf(o) then
         str = str .. ",\"points\":["
         local pts = o.points
         local ptsLen = #pts

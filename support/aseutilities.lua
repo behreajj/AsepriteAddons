@@ -154,7 +154,7 @@ end
 ---to exceed the expected ranges, [0, 255] and
 ---[0.0, 1.0], respectively.
 ---@param aseClr userdata Aseprite color
----@return table
+---@return Clr
 function AseUtilities.aseColorToClr(aseClr)
     return Clr.new(
         0.003921568627451 * aseClr.red,
@@ -596,7 +596,7 @@ end
 ---(255, 0, 0, 0) or (0, 255, 0, 0), which may be
 ---visually indistinguishable from - and confused
 ---with - an alpha mask, (0, 0, 0, 0).
----@param clr table clr
+---@param clr Clr clr
 ---@return userdata
 function AseUtilities.clrToAseColor(clr)
     local r = clr.r
@@ -979,7 +979,7 @@ end
 
 ---Draws a curve in Aseprite with the contour tool.
 ---If a stroke is used, draws the stroke line by line.
----@param curve table curve
+---@param curve Curve2 curve
 ---@param resolution integer curve resolution
 ---@param useFill boolean use fill
 ---@param fillClr userdata fill color
@@ -1082,7 +1082,7 @@ end
 ---Operates on pixels. This should not be used
 ---with app.useTool.
 ---@param image userdata image
----@param glyph table glyph
+---@param glyph Glyph glyph
 ---@param hex integer hexadecimal color
 ---@param x integer x top left corner
 ---@param y integer y top left corner
@@ -1117,7 +1117,7 @@ end
 ---Operates on pixels. This should not be used
 ---with app.useTool.
 ---@param image userdata image
----@param glyph table glyph
+---@param glyph Glyph glyph
 ---@param hex integer hexadecimal color
 ---@param x integer x top left corner
 ---@param y integer y top left corner
@@ -1166,7 +1166,7 @@ end
 
 ---Draws the knot handles of a curve.
 ---Color arguments are optional.
----@param curve table curve
+---@param curve Curve2 curve
 ---@param cel userdata cel
 ---@param layer userdata layer
 ---@param lnClr userdata|nil line color
@@ -1192,7 +1192,7 @@ end
 
 ---Draws a knot for diagnostic purposes.
 ---Color arguments are optional.
----@param knot table knot
+---@param knot Knot2 knot
 ---@param cel userdata cel
 ---@param layer userdata layer
 ---@param lnClr userdata|nil line color
@@ -1271,7 +1271,7 @@ end
 
 ---Draws a mesh in Aseprite with the contour tool.
 ---If a stroke is used, draws the stroke line by line.
----@param mesh table mesh
+---@param mesh Mesh2 mesh
 ---@param useFill boolean use fill
 ---@param fillClr userdata fill color
 ---@param useStroke boolean use stroke
@@ -2313,7 +2313,7 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
 end
 
 ---Converts a Vec2 to an Aseprite Point.
----@param a table vector
+---@param a Vec2 vector
 ---@return userdata
 function AseUtilities.vec2ToPoint(a)
     return Point(

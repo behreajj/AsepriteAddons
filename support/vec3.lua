@@ -1,3 +1,7 @@
+---@class Vec3
+---@field x number x component
+---@field y number y component
+---@field z number z component
 Vec3 = {}
 Vec3.__index = Vec3
 
@@ -11,7 +15,7 @@ setmetatable(Vec3, {
 ---@param x number x component
 ---@param y number y component
 ---@param z number z component
----@return table
+---@return Vec3
 function Vec3.new(x, y, z)
     local inst = setmetatable({}, Vec3)
     inst.x = x or 0.0
@@ -80,19 +84,19 @@ function Vec3:__unm()
 end
 
 ---Finds a vector's absolute value, component-wise.
----@param a table vector
----@return table
-function Vec3.abs(a)
+---@param v Vec3 vector
+---@return Vec3
+function Vec3.abs(v)
     return Vec3.new(
-        math.abs(a.x),
-        math.abs(a.y),
-        math.abs(a.z))
+        math.abs(v.x),
+        math.abs(v.y),
+        math.abs(v.z))
 end
 
 ---Finds the sum of two vectors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.add(a, b)
     return Vec3.new(
         a.x + b.x,
@@ -101,19 +105,19 @@ function Vec3.add(a, b)
 end
 
 ---Evaluates if all vector components are non-zero.
----@param a table left operand
+---@param v Vec3 vector
 ---@return boolean
-function Vec3.all(a)
-    return a.x ~= 0.0
-        and a.y ~= 0.0
-        and a.z ~= 0.0
+function Vec3.all(v)
+    return v.x ~= 0.0
+        and v.y ~= 0.0
+        and v.z ~= 0.0
 end
 
 ---Finds the angle between two vectors. If either
 ---vector has no magnitude, returns zero. Uses the
 ---formula acos(dot(a, b) / (mag(a) * mag(b))).
----@param a table left operand
----@param b table right operand
+---@param a Vec3 left operand
+---@param b Vec3 right operand
 ---@return number
 function Vec3.angleBetween(a, b)
     local aSq = a.x * a.x + a.y * a.y + a.z * a.z
@@ -129,18 +133,18 @@ function Vec3.angleBetween(a, b)
 end
 
 ---Evaluates if any vector components are non-zero.
----@param a table left operand
+---@param v Vec3 vector
 ---@return boolean
-function Vec3.any(a)
-    return a.x ~= 0.0
-        or a.y ~= 0.0
-        or a.z ~= 0.0
+function Vec3.any(v)
+    return v.x ~= 0.0
+        or v.y ~= 0.0
+        or v.z ~= 0.0
 end
 
 ---Evaluates whether two vectors are, within a
 ---tolerance, approximately equal.
----@param a table left operand
----@param b table right operand
+---@param a Vec3 left operand
+---@param b Vec3 right operand
 ---@param tol number|nil tolerance
 ---@return boolean
 function Vec3.approx(a, b, tol)
@@ -152,34 +156,34 @@ end
 
 ---Finds a vector's azimuth.
 ---Defaults to the signed azimuth.
----@param a table left operand
+---@param v Vec3 vector
 ---@return number
-function Vec3.azimuth(a)
-    return Vec3.azimuthSigned(a)
+function Vec3.azimuth(v)
+    return Vec3.azimuthSigned(v)
 end
 
 ---Finds a vector's signed azimuth, in [-pi, pi].
----@param a table left operand
+---@param v Vec3 vector
 ---@return number
-function Vec3.azimuthSigned(a)
-    return math.atan(a.y, a.x)
+function Vec3.azimuthSigned(v)
+    return math.atan(v.y, v.x)
 end
 
 ---Finds a vector's unsigned azimuth, in [0.0, tau].
----@param a table left operand
+---@param v Vec3 vector
 ---@return number
-function Vec3.azimuthUnsigned(a)
-    return math.atan(a.y, a.x) % 6.2831853071796
+function Vec3.azimuthUnsigned(v)
+    return math.atan(v.y, v.x) % 6.2831853071796
 end
 
 ---Finds a point on a cubic Bezier curve
 ---according to a step in [0.0, 1.0] .
----@param ap0 table anchor point 0
----@param cp0 table control point 0
----@param cp1 table control point 1
----@param ap1 table anchor point 1
+---@param ap0 Vec3 anchor point 0
+---@param cp0 Vec3 control point 0
+---@param cp1 Vec3 control point 1
+---@param ap1 Vec3 anchor point 1
 ---@param step number step
----@return table
+---@return Vec3
 function Vec3.bezierPoint(ap0, cp0, cp1, ap1, step)
     local t = step or 0.5
     if t <= 0.0 then
@@ -211,7 +215,7 @@ end
 ---a vector. Biases towards the right insert
 ---point. Should be used with sorted arrays.
 ---@param arr table vectors array
----@param elm table vector
+---@param elm Vec3 vector
 ---@param compare function|nil comparator
 ---@return integer
 function Vec3.bisectRight(arr, elm, compare)
@@ -232,20 +236,20 @@ function Vec3.bisectRight(arr, elm, compare)
 end
 
 ---Finds the ceiling of the vector.
----@param a table left operand
----@return table
-function Vec3.ceil(a)
+---@param v Vec3 vector
+---@return Vec3
+function Vec3.ceil(v)
     return Vec3.new(
-        math.ceil(a.x),
-        math.ceil(a.y),
-        math.ceil(a.z))
+        math.ceil(v.x),
+        math.ceil(v.y),
+        math.ceil(v.z))
 end
 
 ---A comparator method to sort vectors
 ---in a table according to their highest
 ---dimension first.
----@param a table left comparisand
----@param b table right comparisand
+---@param a Vec3 left comparisand
+---@param b Vec3 right comparisand
 ---@return boolean
 function Vec3.comparator(a, b)
     if a.z < b.z then return true end
@@ -259,9 +263,9 @@ end
 ---the magnitude of the left. Both operands
 ---are assumed to be Vec3s. Where the sign of
 ---b is zero, the result is zero.
----@param a table magnitude
----@param b table sign
----@return table
+---@param a Vec3 magnitude
+---@param b Vec3 sign
+---@return Vec3
 function Vec3.copySign(a, b)
     local cx = 0.0
     local axAbs = math.abs(a.x)
@@ -285,9 +289,9 @@ function Vec3.copySign(a, b)
 end
 
 ---Finds the cross product of two vectors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.cross(a, b)
     return Vec3.new(
         a.y * b.z - a.z * b.y,
@@ -296,9 +300,9 @@ function Vec3.cross(a, b)
 end
 
 ---Finds the absolute difference between two vectors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.diff(a, b)
     return Vec3.new(
         math.abs(a.x - b.x),
@@ -308,8 +312,8 @@ end
 
 ---Finds the distance between two vectors.
 ---Defaults to Euclidean distance.
----@param a table left operand
----@param b table right operand
+---@param a Vec3 left operand
+---@param b Vec3 right operand
 ---@return number
 function Vec3.dist(a, b)
     return Vec3.distEuclidean(a, b)
@@ -317,8 +321,8 @@ end
 
 ---Finds the Chebyshev distance between two vectors.
 ---Forms a cube when plotted.
----@param a table left operand
----@param b table right operand
+---@param a Vec3 left operand
+---@param b Vec3 right operand
 ---@return number
 function Vec3.distChebyshev(a, b)
     return math.max(
@@ -329,8 +333,8 @@ end
 
 ---Finds the Euclidean distance between two vectors.
 ---Forms a sphere when plotted.
----@param a table left operand
----@param b table right operand
+---@param a Vec3 left operand
+---@param b Vec3 right operand
 ---@return number
 function Vec3.distEuclidean(a, b)
     local dx = b.x - a.x
@@ -341,8 +345,8 @@ end
 
 ---Finds the Manhattan distance between two vectors.
 ---Forms an octahedron when plotted.
----@param a table left operand
----@param b table right operand
+---@param a Vec3 left operand
+---@param b Vec3 right operand
 ---@return number
 function Vec3.distManhattan(a, b)
     return math.abs(b.x - a.x)
@@ -353,8 +357,8 @@ end
 ---Finds the Minkowski distance between two vectors.
 ---When the exponent is 1, returns Manhattan distance.
 ---When the exponent is 2, returns Euclidean distance.
----@param a table left operand
----@param b table right operand
+---@param a Vec3 left operand
+---@param b Vec3 right operand
 ---@param c number exponent
 ---@return number
 function Vec3.distMinkowski(a, b, c)
@@ -371,8 +375,8 @@ end
 
 ---Finds the squared Euclidean distance between
 ---two vectors.
----@param a table left operand
----@param b table right operand
+---@param a Vec3 left operand
+---@param b Vec3 right operand
 ---@return number
 function Vec3.distSq(a, b)
     local dx = b.x - a.x
@@ -382,9 +386,9 @@ function Vec3.distSq(a, b)
 end
 
 ---Divides the left vector by the right, component-wise.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.div(a, b)
     local cx = 0.0
     local cy = 0.0
@@ -396,8 +400,8 @@ function Vec3.div(a, b)
 end
 
 ---Finds the dot product between two vectors.
----@param a table left operand
----@param b table right operand
+---@param a Vec3 left operand
+---@param b Vec3 right operand
 ---@return number
 function Vec3.dot(a, b)
     return a.x * b.x
@@ -408,8 +412,8 @@ end
 ---Evaluates whether two vectors are exactly
 ---equal. Checks for reference equality prior
 ---to value equality.
----@param a table left comparisand
----@param b table right comparisand
+---@param a Vec3 left comparisand
+---@param b Vec3 right comparisand
 ---@return boolean
 function Vec3.equals(a, b)
     return rawequal(a, b)
@@ -418,8 +422,8 @@ end
 
 ---Evaluates whether two vectors are exactly
 ---equal by component value.
----@param a table left comparisand
----@param b table right comparisand
+---@param a Vec3 left comparisand
+---@param b Vec3 right comparisand
 ---@return boolean
 function Vec3.equalsValue(a, b)
     return a.z == b.z
@@ -428,19 +432,19 @@ function Vec3.equalsValue(a, b)
 end
 
 ---Finds the floor of the vector.
----@param a table left operand
----@return table
-function Vec3.floor(a)
+---@param v Vec3 vector
+---@return Vec3
+function Vec3.floor(v)
     return Vec3.new(
-        math.floor(a.x),
-        math.floor(a.y),
-        math.floor(a.z))
+        math.floor(v.x),
+        math.floor(v.y),
+        math.floor(v.z))
 end
 
 ---Finds the floor division of two vectors.
----@param a table left operand
----@param b table left operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.floorDiv(a, b)
     local cx = 0.0
     local cy = 0.0
@@ -454,9 +458,9 @@ end
 ---Finds the remainder of the division of the left
 ---operand by the right that rounds the quotient
 ---towards zero.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.fmod(a, b)
     local cx = a.x
     local cy = a.y
@@ -470,13 +474,13 @@ end
 ---Finds the fractional portion of of a vector.
 ---Subtracts the truncation of each component
 ---from itself, not the floor, unlike in GLSL.
----@param a table left operand
----@return table
-function Vec3.fract(a)
+---@param v Vec3 vector
+---@return Vec3
+function Vec3.fract(v)
     return Vec3.new(
-        math.fmod(a.x, 1.0),
-        math.fmod(a.y, 1.0),
-        math.fmod(a.z, 1.0))
+        math.fmod(v.x, 1.0),
+        math.fmod(v.y, 1.0),
+        math.fmod(v.z, 1.0))
 end
 
 ---Creates a vector from an azimuth (or yaw),
@@ -487,7 +491,7 @@ end
 ---@param azimuth number
 ---@param inclination number
 ---@param radius number
----@return table
+---@return Vec3
 function Vec3.fromSpherical(azimuth, inclination, radius)
 
     local a = azimuth or 0.0
@@ -507,7 +511,7 @@ end
 ---@param cosIncl number inclination cosine
 ---@param sinIncl number inclination sine
 ---@param radius number radius
----@return table
+---@return Vec3
 function Vec3.fromSphericalInternal(cosAzim, sinAzim, cosIncl, sinIncl, radius)
 
     local rhoCosIncl = radius * cosIncl
@@ -523,8 +527,8 @@ end
 ---@param cols integer columns
 ---@param rows integer rows
 ---@param layers integer layers
----@param lb table lower bound
----@param ub table upper bound
+---@param lb Vec3 lower bound
+---@param ub Vec3 upper bound
 ---@return table
 function Vec3.gridCartesian(cols, rows, layers, lb, ub)
     local ubVal = ub or Vec3.new(1.0, 1.0, 1.0)
@@ -582,6 +586,7 @@ end
 ---@param layers integer layers or radii
 ---@param radiusMin number minimum radius
 ---@param radiusMax number maximum radius
+---@return table
 function Vec3.gridSpherical(longitudes, latitudes, layers, radiusMin, radiusMax)
 
     -- Cache methods.
@@ -651,9 +656,9 @@ function Vec3.gridSpherical(longitudes, latitudes, layers, radiusMin, radiusMax)
 end
 
 ---Multiplies two vectors component-wise.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.hadamard(a, b)
     return Vec3.new(
         a.x * b.x,
@@ -662,15 +667,15 @@ function Vec3.hadamard(a, b)
 end
 
 ---Finds a signed integer hash code for a vector.
----@param a table vector
+---@param v Vec3 vector
 ---@return integer
-function Vec3.hashCode(a)
+function Vec3.hashCode(v)
     local xBits = string.unpack("i4",
-        string.pack("f", a.x))
+        string.pack("f", v.x))
     local yBits = string.unpack("i4",
-        string.pack("f", a.y))
+        string.pack("f", v.y))
     local zBits = string.unpack("i4",
-        string.pack("f", a.z))
+        string.pack("f", v.z))
 
     local hsh = ((84696351 ~ xBits)
         * 16777619 ~ yBits)
@@ -686,26 +691,26 @@ end
 
 ---Finds the vector's inclination.
 ---Defaults to signed inclination.
----@param a table left operand
+---@param v Vec3 vector
 ---@return number
-function Vec3.inclination(a)
-    return Vec3.inclinationSigned(a)
+function Vec3.inclination(v)
+    return Vec3.inclinationSigned(v)
 end
 
 ---Finds the vector's signed inclination.
----@param a table left operand
+---@param v Vec3 vector
 ---@return number
-function Vec3.inclinationSigned(a)
-    return 1.5707963267949 - Vec3.inclinationUnsigned(a)
+function Vec3.inclinationSigned(v)
+    return 1.5707963267949 - Vec3.inclinationUnsigned(v)
 end
 
 ---Finds the vector's unsigned inclination.
----@param a table left operand
+---@param v Vec3 vector
 ---@return number
-function Vec3.inclinationUnsigned(a)
-    local mSq = a.x * a.x + a.y * a.y + a.z * a.z
+function Vec3.inclinationUnsigned(v)
+    local mSq = v.x * v.x + v.y * v.y + v.z * v.z
     if mSq > 0.0 then
-        return math.acos(a.z / math.sqrt(mSq))
+        return math.acos(v.z / math.sqrt(mSq))
     end
     return 1.5707963267949
 end
@@ -715,7 +720,7 @@ end
 ---insertion point. Returns true if the unique
 ---vector was inserted; false if not.
 ---@param arr table vectors array
----@param elm table vector
+---@param elm Vec3 vector
 ---@param compare function comparator
 ---@return boolean
 function Vec3.insortRight(arr, elm, compare)
@@ -731,27 +736,27 @@ end
 ---Limits a vector's magnitude to a scalar.
 ---Returns a copy of the vector if it is beneath
 ---the limit.
----@param a table the vector
----@param limit number the limit number
----@return table
-function Vec3.limit(a, limit)
-    local mSq = a.x * a.x + a.y * a.y + a.z * a.z
+---@param v Vec3 vector
+---@param limit number limit number
+---@return Vec3
+function Vec3.limit(v, limit)
+    local mSq = v.x * v.x + v.y * v.y + v.z * v.z
     if mSq > 0.0 and mSq > (limit * limit) then
         local mInv = limit / math.sqrt(mSq)
         return Vec3.new(
-            a.x * mInv,
-            a.y * mInv,
-            a.z * mInv)
+            v.x * mInv,
+            v.y * mInv,
+            v.z * mInv)
     end
-    return Vec3.new(a.x, a.y, a.z)
+    return Vec3.new(v.x, v.y, v.z)
 end
 
 ---Finds the linear step between a left and
 ---right edge given a factor.
----@param edge0 table left edge
----@param edge1 table right edge
----@param x table factor
----@return table
+---@param edge0 Vec3 left edge
+---@param edge1 Vec3 right edge
+---@param x Vec3 factor
+---@return Vec3
 function Vec3.linearstep(edge0, edge1, x)
     local cx = 0.0
     local xDenom = edge1.x - edge0.x
@@ -778,28 +783,28 @@ function Vec3.linearstep(edge0, edge1, x)
 end
 
 ---Finds a vector's magnitude, or length.
----@param a table left operand
+---@param v Vec3 vector
 ---@return number
-function Vec3.mag(a)
+function Vec3.mag(v)
     return math.sqrt(
-        a.x * a.x
-        + a.y * a.y
-        + a.z * a.z)
+        v.x * v.x
+        + v.y * v.y
+        + v.z * v.z)
 end
 
 ---Finds a vector's magnitude squared.
----@param a table left operand
+---@param v Vec3 vector
 ---@return number
-function Vec3.magSq(a)
-    return a.x * a.x
-        + a.y * a.y
-        + a.z * a.z
+function Vec3.magSq(v)
+    return v.x * v.x
+        + v.y * v.y
+        + v.z * v.z
 end
 
 ---Finds the greater of two vectors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.max(a, b)
     return Vec3.new(
         math.max(a.x, b.x),
@@ -808,9 +813,9 @@ function Vec3.max(a, b)
 end
 
 ---Finds the lesser of two vectors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.min(a, b)
     return Vec3.new(
         math.min(a.x, b.x),
@@ -820,24 +825,24 @@ end
 
 ---Mixes two vectors together by a step.
 ---Defaults to mixing by a vector.
----@param a table origin
----@param b table destination
----@param t number|table step
----@return table
+---@param a Vec3 origin
+---@param b Vec3 destination
+---@param t Vec3|number step
+---@return Vec3
 function Vec3.mix(a, b, t)
     if type(t) == "number" then
         return Vec3.mixNum(a, b, t)
     else
-        return Vec3.mixVec2(a, b, t)
+        return Vec3.mixVec3(a, b, t)
     end
 end
 
 ---Mixes two vectors together by a step.
 ---The step is a number.
----@param a table origin
----@param b table destination
+---@param a Vec3 origin
+---@param b Vec3 destination
 ---@param t number step
----@return table
+---@return Vec3
 function Vec3.mixNum(a, b, t)
     local v = t or 0.5
     local u = 1.0 - v
@@ -850,10 +855,10 @@ end
 ---Mixes two vectors together by a step.
 ---The step is a vector. Use in conjunction
 ---with step, linearstep and smoothstep.
----@param a table origin
----@param b table destination
----@param t table step
----@return table
+---@param a Vec3 origin
+---@param b Vec3 destination
+---@param t Vec3 step
+---@return Vec3
 function Vec3.mixVec3(a, b, t)
     return Vec3.new(
         (1.0 - t.x) * a.x + t.x * b.x,
@@ -862,9 +867,9 @@ function Vec3.mixVec3(a, b, t)
 end
 
 ---Finds the remainder of floor division of two vectors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.mod(a, b)
     local cx = a.x
     local cy = a.y
@@ -876,41 +881,41 @@ function Vec3.mod(a, b)
 end
 
 ---Negates a vector.
----@param a table vector
----@return table
-function Vec3.negate(a)
-    return Vec3.new(-a.x, -a.y, -a.z)
+---@param v Vec3 vector
+---@return Vec3
+function Vec3.negate(v)
+    return Vec3.new(-v.x, -v.y, -v.z)
 end
 
 ---Evaluates if all vector components are zero.
----@param a table
+---@param v Vec3 vector
 ---@return boolean
-function Vec3.none(a)
-    return a.x == 0.0
-        and a.y == 0.0
-        and a.z == 0.0
+function Vec3.none(v)
+    return v.x == 0.0
+        and v.y == 0.0
+        and v.z == 0.0
 end
 
 ---Divides a vector by its magnitude, such that it
 ---lies on the unit circle.
----@param a table vector
----@return table
-function Vec3.normalize(a)
-    local mSq = a.x * a.x + a.y * a.y + a.z * a.z
+---@param v Vec3 vector
+---@return Vec3
+function Vec3.normalize(v)
+    local mSq = v.x * v.x + v.y * v.y + v.z * v.z
     if mSq > 0.0 then
         local mInv = 1.0 / math.sqrt(mSq)
         return Vec3.new(
-            a.x * mInv,
-            a.y * mInv,
-            a.z * mInv)
+            v.x * mInv,
+            v.y * mInv,
+            v.z * mInv)
     end
     return Vec3.new(0.0, 0.0, 0.0)
 end
 
 ---Raises a vector to the power of another.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.pow(a, b)
     return Vec3.new(
         a.x ^ b.x,
@@ -920,8 +925,8 @@ end
 
 ---Finds the scalar projection of the left
 ---operand onto the right.
----@param a table left operand
----@param b table right operand
+---@param a Vec3 left operand
+---@param b Vec3 right operand
 ---@return number
 function Vec3.projectScalar(a, b)
     local bSq = b.x * b.x + b.y * b.y + b.z * b.z
@@ -936,34 +941,34 @@ end
 
 ---Finds the vector projection of the left
 ---operand onto the right.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.projectVector(a, b)
     return Vec3.scale(b, Vec3.projectScalar(a, b))
 end
 
 ---Reduces the granularity of a vector's components.
----@param a table vector
+---@param v Vec3 vector
 ---@param levels integer levels
----@return table
-function Vec3.quantize(a, levels)
+---@return Vec3
+function Vec3.quantize(v, levels)
     if levels and levels > 1 then
         local delta = 1.0 / levels
         return Vec3.new(
-            delta * math.floor(0.5 + a.x * levels),
-            delta * math.floor(0.5 + a.y * levels),
-            delta * math.floor(0.5 + a.z * levels))
+            delta * math.floor(0.5 + v.x * levels),
+            delta * math.floor(0.5 + v.y * levels),
+            delta * math.floor(0.5 + v.z * levels))
     end
-    return Vec3.new(a.x, a.y, a.z)
+    return Vec3.new(v.x, v.y, v.z)
 end
 
 ---Creates a random point in Cartesian space given
 ---a lower and an upper bound. If lower and upper
 ---bounds are not given, defaults to [-1.0, 1.0].
----@param lb table|nil lower bound
----@param ub table|nil upper bound
----@return table
+---@param lb Vec3|nil lower bound
+---@param ub Vec3|nil upper bound
+---@return Vec3
 function Vec3.randomCartesian(lb, ub)
     local lval = lb or Vec3.new(-1.0, -1.0, -1.0)
     local uval = ub or Vec3.new(1.0, 1.0, 1.0)
@@ -973,9 +978,9 @@ end
 ---Creates a random point in Cartesian space given
 ---a lower and an upper bound. Does not validate
 ---upper or lower bounds.
----@param lb table lower bound
----@param ub table upper bound
----@return table
+---@param lb Vec3 lower bound
+---@param ub Vec3 upper bound
+---@return Vec3
 function Vec3.randomCartesianInternal(lb, ub)
     local rx = math.random()
     local ry = math.random()
@@ -990,12 +995,12 @@ end
 ---Remaps a vector from an origin range to
 ---a destination range. For invalid origin
 ---ranges, the component remains unchanged.
----@param v table vector
----@param lbOrigin table origin lower bound
----@param ubOrigin table origin upper bound
----@param lbDest table destination lower bound
----@param ubDest table destination upper bound
----@return table
+---@param v Vec3 vector
+---@param lbOrigin Vec3 origin lower bound
+---@param ubOrigin Vec3 origin upper bound
+---@param lbDest Vec3 destination lower bound
+---@param ubDest Vec3 destination upper bound
+---@return Vec3
 function Vec3.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
     local mx = v.x
     local my = v.y
@@ -1024,9 +1029,9 @@ function Vec3.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
 end
 
 ---Rescales a vector to the target magnitude.
----@param a table vector
+---@param a Vec3 vector
 ---@param b number magnitude
----@return table
+---@return Vec3
 function Vec3.rescale(a, b)
     local mSq = a.x * a.x + a.y * a.y + a.z * a.z
     if mSq > 0.0 then
@@ -1042,10 +1047,10 @@ end
 ---Rotates a vector around an axis by an angle
 ---in radians. Validates the axis to see if it is
 ---of unit length. Defaults to rotateZ.
----@param a table vector
+---@param a Vec3 vector
 ---@param radians number angle
----@param axis table
----@return table
+---@param axis Vec3
+---@return Vec3
 function Vec3.rotate(a, radians, axis)
     if axis and Vec3.any(axis) then
         return Vec3.rotateInternal(a,
@@ -1058,9 +1063,9 @@ end
 
 ---Rotates a vector around the x axis by an angle
 ---in radians.
----@param a table vector
+---@param a Vec3 vector
 ---@param radians number angle
----@return table
+---@return Vec3
 function Vec3.rotateX(a, radians)
     return Vec3.rotateXInternal(a,
         math.cos(radians),
@@ -1069,9 +1074,9 @@ end
 
 ---Rotates a vector around the y axis by an angle
 ---in radians.
----@param a table vector
+---@param a Vec3 vector
 ---@param radians number angle
----@return table
+---@return Vec3
 function Vec3.rotateY(a, radians)
     return Vec3.rotateYInternal(a,
         math.cos(radians),
@@ -1080,9 +1085,9 @@ end
 
 ---Rotates a vector around the z axis by an angle
 ---in radians.
----@param a table vector
+---@param a Vec3 vector
 ---@param radians number angle
----@return table
+---@return Vec3
 function Vec3.rotateZ(a, radians)
     return Vec3.rotateZInternal(a,
         math.cos(radians),
@@ -1092,11 +1097,11 @@ end
 ---Rotates a vector around an axis by an angle
 ---in radians. The axis is assumed to be of unit
 ---length.
----@param a table vector
+---@param a Vec3 vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@param axis table axis
----@return table
+---@param axis Vec3 axis
+---@return Vec3
 function Vec3.rotateInternal(a, cosa, sina, axis)
     local xAxis = axis.x
     local yAxis = axis.y
@@ -1128,10 +1133,10 @@ end
 ---Rotates a vector around the x axis by the cosine
 ---and sine of an angle. Used when rotating many
 ---vectors by the same angle.
----@param a table vector
+---@param a Vec3 vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Vec3
 function Vec3.rotateXInternal(a, cosa, sina)
     return Vec3.new(
         a.x,
@@ -1142,10 +1147,10 @@ end
 ---Rotates a vector around the y axis by the cosine
 ---and sine of an angle. Used when rotating many
 ---vectors by the same angle.
----@param a table vector
+---@param a Vec3 vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Vec3
 function Vec3.rotateYInternal(a, cosa, sina)
     return Vec3.new(
         cosa * a.x + sina * a.z,
@@ -1156,10 +1161,10 @@ end
 ---Rotates a vector around the z axis by the cosine
 ---and sine of an angle. Used when rotating many
 ---vectors by the same angle.
----@param a table vector
+---@param a Vec3 vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Vec3
 function Vec3.rotateZInternal(a, cosa, sina)
     return Vec3.new(
         cosa * a.x - sina * a.y,
@@ -1168,18 +1173,18 @@ function Vec3.rotateZInternal(a, cosa, sina)
 end
 
 ---Rounds the vector by sign and fraction.
----@param a table left operand
----@return table
-function Vec3.round(a)
-    local iz, fz = math.modf(a.z)
+---@param v Vec3 vector
+---@return Vec3
+function Vec3.round(v)
+    local iz, fz = math.modf(v.z)
     if iz <= 0 and fz <= -0.5 then iz = iz - 1
     elseif iz >= 0 and fz >= 0.5 then iz = iz + 1 end
 
-    local iy, fy = math.modf(a.y)
+    local iy, fy = math.modf(v.y)
     if iy <= 0 and fy <= -0.5 then iy = iy - 1
     elseif iy >= 0 and fy >= 0.5 then iy = iy + 1 end
 
-    local ix, fx = math.modf(a.x)
+    local ix, fx = math.modf(v.x)
     if ix <= 0 and fx <= -0.5 then ix = ix - 1
     elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
 
@@ -1187,9 +1192,9 @@ function Vec3.round(a)
 end
 
 ---Scales a vector, left, by a number, right.
----@param a table left operand
+---@param a Vec3 left operand
 ---@param b number right operand
----@return table
+---@return Vec3
 function Vec3.scale(a, b)
     return Vec3.new(
         a.x * b,
@@ -1198,22 +1203,22 @@ function Vec3.scale(a, b)
 end
 
 ---Finds the sign of a vector by component.
----@param a table left operand
----@return table
-function Vec3.sign(a)
+---@param v Vec3 left operand
+---@return Vec3
+function Vec3.sign(v)
     local cx = 0.0
-    if a.x < -0.0 then cx = -1.0
-    elseif a.x > 0.0 then cx = 1.0
+    if v.x < -0.0 then cx = -1.0
+    elseif v.x > 0.0 then cx = 1.0
     end
 
     local cy = 0.0
-    if a.y < -0.0 then cy = -1.0
-    elseif a.y > 0.0 then cy = 1.0
+    if v.y < -0.0 then cy = -1.0
+    elseif v.y > 0.0 then cy = 1.0
     end
 
     local cz = 0.0
-    if a.z < -0.0 then cz = -1.0
-    elseif a.z > 0.0 then cz = 1.0
+    if v.z < -0.0 then cz = -1.0
+    elseif v.z > 0.0 then cz = 1.0
     end
 
     return Vec3.new(cx, cy, cz)
@@ -1221,10 +1226,10 @@ end
 
 ---Finds the smooth step between a left and
 ---right edge given a factor.
----@param edge0 table left edge
----@param edge1 table right edge
----@param x table factor
----@return table
+---@param edge0 Vec3 left edge
+---@param edge1 Vec3 right edge
+---@param x Vec3 factor
+---@return Vec3
 function Vec3.smoothstep(edge0, edge1, x)
     local cx = 0.0
     local xDenom = edge1.x - edge0.x
@@ -1254,9 +1259,9 @@ function Vec3.smoothstep(edge0, edge1, x)
 end
 
 ---Finds the step between an edge and factor.
----@param edge table the edge
----@param x table the factor
----@return table
+---@param edge Vec3 edge
+---@param x Vec3 factor
+---@return Vec3
 function Vec3.step(edge, x)
     local cx = 1.0
     if x.x < edge.x then cx = 0.0 end
@@ -1271,9 +1276,9 @@ function Vec3.step(edge, x)
 end
 
 ---Subtracts the right vector from the left.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec3 left operand
+---@param b Vec3 right operand
+---@return Vec3
 function Vec3.sub(a, b)
     return Vec3.new(
         a.x - b.x,
@@ -1282,7 +1287,7 @@ function Vec3.sub(a, b)
 end
 
 ---Returns a JSON string of a vector.
----@param v table vector
+---@param v Vec3 vector
 ---@return string
 function Vec3.toJson(v)
     return string.format(
@@ -1293,50 +1298,50 @@ end
 ---Converts a vector to spherical coordinates.
 ---Returns a table with 'radius', 'azimuth' and
 ---'inclination'.
----@param a table vector
+---@param v Vec3 vector
 ---@return table
-function Vec3.toSpherical(a)
+function Vec3.toSpherical(v)
     return {
-        radius = Vec3.mag(a),
-        azimuth = Vec3.azimuthSigned(a),
-        inclination = Vec3.inclinationSigned(a)
+        radius = Vec3.mag(v),
+        azimuth = Vec3.azimuthSigned(v),
+        inclination = Vec3.inclinationSigned(v)
     }
 end
 
 ---Truncates a vector's components to integers.
----@param a table vector
----@return table
-function Vec3.trunc(a)
-    local iz, _ = math.modf(a.z)
-    local iy, _ = math.modf(a.y)
-    local ix, _ = math.modf(a.x)
+---@param v Vec3 vector
+---@return Vec3
+function Vec3.trunc(v)
+    local iz, _ = math.modf(v.z)
+    local iy, _ = math.modf(v.y)
+    local ix, _ = math.modf(v.x)
     return Vec3.new(ix, iy, iz)
 end
 
 ---Wraps a vector's components around a range
 ---defined by a lower and upper bound. If the
 ---range is invalid, the component is unchanged.
----@param a table vector
----@param lb table lower bound
----@param ub table upper bound
----@return table
-function Vec3.wrap(a, lb, ub)
-    local cx = a.x
+---@param v Vec3 vector
+---@param lb Vec3 lower bound
+---@param ub Vec3 upper bound
+---@return Vec3
+function Vec3.wrap(v, lb, ub)
+    local cx = v.x
     local rx = ub.x - lb.x
     if rx ~= 0.0 then
-        cx = a.x - rx * ((a.x - lb.x) // rx)
+        cx = v.x - rx * ((v.x - lb.x) // rx)
     end
 
-    local cy = a.y
+    local cy = v.y
     local ry = ub.y - lb.y
     if ry ~= 0.0 then
-        cy = a.y - ry * ((a.y - lb.y) // ry)
+        cy = v.y - ry * ((v.y - lb.y) // ry)
     end
 
-    local cz = a.z
+    local cz = v.z
     local rz = ub.z - lb.z
     if rz ~= 0.0 then
-        cz = a.z - rz * ((a.z - lb.z) // rz)
+        cz = v.z - rz * ((v.z - lb.z) // rz)
     end
 
     return Vec3.new(cx, cy, cz)
@@ -1344,49 +1349,49 @@ end
 
 ---Creates a right facing vector,
 ---(1.0, 0.0, 0.0).
----@return table
+---@return Vec3
 function Vec3.right()
     return Vec3.new(1.0, 0.0, 0.0)
 end
 
 ---Creates a forward facing vector,
 ---(0.0, 1.0, 0.0).
----@return table
+---@return Vec3
 function Vec3.forward()
     return Vec3.new(0.0, 1.0, 0.0)
 end
 
 ---Creates an up facing vector,
 ---(0.0, 0.0, 1.0).
----@return table
+---@return Vec3
 function Vec3.up()
     return Vec3.new(0.0, 0.0, 1.0)
 end
 
 ---Creates a left facing vector,
 ---(-1.0, 0.0, 0.0).
----@return table
+---@return Vec3
 function Vec3.left()
     return Vec3.new(-1.0, 0.0, 0.0)
 end
 
 ---Creates a back facing vector,
 ---(0.0, -1.0, 0.0).
----@return table
+---@return Vec3
 function Vec3.back()
     return Vec3.new(0.0, -1.0, 0.0)
 end
 
 ---Creates a down facing vector,
 ---(0.0, 0.0, -1.0).
----@return table
+---@return Vec3
 function Vec3.down()
     return Vec3.new(0.0, 0.0, -1.0)
 end
 
 ---Creates a vector with all components
 ---set to 1.0.
----@return table
+---@return Vec3
 function Vec3.one()
     return Vec3.new(1.0, 1.0, 1.0)
 end

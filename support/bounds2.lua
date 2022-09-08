@@ -1,5 +1,8 @@
 dofile("./vec2.lua")
 
+---@class Bounds2
+---@field mn Vec2 lower bound
+---@field mx Vec2 upper bound
 Bounds2 = {}
 Bounds2.__index = Bounds2
 
@@ -13,9 +16,9 @@ setmetatable(Bounds2, {
 ---(AABB) for a 2D area, represented by a
 ---minimum and maximum coordinate.
 ---Defaults to passing vectors by value.
----@param mn table|number lower bound
----@param mx table|number upper bound
----@return table
+---@param mn Vec2|number lower bound
+---@param mx Vec2|number upper bound
+---@return Bounds2
 function Bounds2.new(mn, mx)
     return Bounds2.newByVal(mn, mx)
 end
@@ -24,9 +27,9 @@ end
 ---(AABB) for a 2D area, represented by a
 ---minimum and maximum coordinate. Vectors
 ---are assigned by reference.
----@param mn table lower bound
----@param mx table upper bound
----@return table
+---@param mn Vec2 lower bound
+---@param mx Vec2 upper bound
+---@return Bounds2
 function Bounds2.newByRef(mn, mx)
     local inst = setmetatable({}, Bounds2)
     inst.mn = mn or Vec2.new(-0.5, -0.5)
@@ -38,9 +41,9 @@ end
 ---(AABB) for a 2D area, represented by a
 ---minimum and maximum coordinate. Vectors
 ---are copied by value.
----@param mn table|number lower bound
----@param mx table|number upper bound
----@return table
+---@param mn Vec2|number lower bound
+---@param mx Vec2|number upper bound
+---@return Bounds2
 function Bounds2.newByVal(mn, mx)
     local inst = setmetatable({}, Bounds2)
 
@@ -84,7 +87,7 @@ end
 ---Returns true if the bounds minimum and
 ---maximum corner are unequal in all three
 ---dimensions; i.e., the bounds is valid.
----@param b table bounds
+---@param b Bounds2 bounds
 ---@return boolean
 function Bounds2.all(b)
     local mn = b.mn
@@ -96,7 +99,7 @@ end
 ---Returns true if the bounds minimum and
 ---maximum corner are unequal in at least
 ---one dimension.
----@param b table bounds
+---@param b Bounds2 bounds
 ---@return boolean
 function Bounds2.any(b)
     local mn = b.mn
@@ -107,8 +110,8 @@ end
 
 ---Finds the center of a bounding box.
 ---Returns a Vec2.
----@param b table bounds
----@return table
+---@param b Bounds2 bounds
+---@return Vec2
 function Bounds2.center(b)
     return Vec2.mixNum(b.mn, b.mx, 0.5)
 end
@@ -116,8 +119,8 @@ end
 ---Evaluates whether a point is within the
 ---bounds, lower bounds inclusive, upper
 ---bounds exclusive.
----@param b table bounds
----@param pt table point
+---@param b Bounds2 bounds
+---@param pt Vec2 point
 ---@return boolean
 function Bounds2.containsInclExcl(b, pt)
     local mn = b.mn
@@ -129,18 +132,17 @@ end
 ---Finds the extent of the bounds.
 ---Returns a Vec2 representing a
 ---non uniform scale.
----@param b table bounds
----@return table
+---@param b Bounds2 bounds
+---@return Vec2
 function Bounds2.extent(b)
     return Vec2.diff(b.mx, b.mn)
 end
 
 ---Creates a bounding box from a center
----and an extent. Both the center
----and extent should be Vec2s.
----@param center table center
----@param extent table extent
----@return table
+---and an extent.
+---@param center Vec2 center
+---@param extent Vec2 extent
+---@return Bounds2
 function Bounds2.fromCenterExtent(center, extent)
     local halfExtent = Vec2.scale(extent, 0.5)
     return Bounds2.newByRef(
@@ -151,7 +153,7 @@ end
 ---Creates a bounding box that encompasses
 ---a table of Vec2s.
 ---@param points table points
----@return table
+---@return Bounds2
 function Bounds2.fromPoints(points)
     local len = #points
     if len < 1 then
@@ -185,8 +187,8 @@ function Bounds2.fromPoints(points)
 end
 
 ---Evaluates whether two bounding volumes intersect.
----@param a table left comparisand
----@param b table right comparisand
+---@param a Bounds2 left comparisand
+---@param b Bounds2 right comparisand
 ---@return boolean
 function Bounds2.intersectsBounds(a, b)
     return a.mx.y > b.mn.y
@@ -198,8 +200,8 @@ end
 ---Evaluates whether a bounding box intersects
 ---a circle. The circle is defined as a Vec2 center
 ---and a number radius.
----@param a table bounds
----@param center table sphere center
+---@param a Bounds2 bounds
+---@param center Vec2 sphere center
 ---@param radius number sphere radius
 ---@return boolean
 function Bounds2.intersectsCircle(a, center, radius)
@@ -223,7 +225,7 @@ end
 ---Returns true if the bounds minimum and
 ---maximum corner are approximately equal,
 ---i.e., the bounds has no area.
----@param b table bounds
+---@param b Bounds2 bounds
 ---@return boolean
 function Bounds2.none(b)
     return Vec2.approx(b.mn, b.mx, 0.000001);
@@ -234,13 +236,13 @@ end
 ---[0.0, 1.0]. The factor on the x axis
 ---governs the vertical split. On the y axis,
 ---the horizontal split.
----@param b table bounds
+---@param b Bounds2 bounds
 ---@param xFac number vertical factor
 ---@param yFac number horizontal factor
----@param sw table south west quadrant
----@param se table south east quadrant
----@param nw table north west quadrant
----@param ne table north east quadrant
+---@param sw Bounds2 south west quadrant
+---@param se Bounds2 south east quadrant
+---@param nw Bounds2 north west quadrant
+---@param ne Bounds2 north east quadrant
 function Bounds2.splitInternal(b, xFac, yFac, sw, se, nw, ne)
     local bMn = b.mn
     local bMx = b.mx
@@ -260,7 +262,7 @@ function Bounds2.splitInternal(b, xFac, yFac, sw, se, nw, ne)
 end
 
 ---Returns a JSON string of the bounds.
----@param b table bounds
+---@param b Bounds2 bounds
 ---@return string
 function Bounds2.toJson(b)
     return "{\"mn\":"
@@ -273,7 +275,7 @@ end
 ---Returns a bounds containing a signed
 ---unit square in Cartesian coordinates, from
 ---[-1.0, 1.0].
----@return table
+---@return Bounds2
 function Bounds2.unitSquareSigned()
     return Bounds2.newByRef(
         Vec2.new(-1.000002, -1.000002),
@@ -283,7 +285,7 @@ end
 ---Returns a bounds containing an unsigned
 ---unit square in Cartesian coordinates, from
 ---[0.0, 1.0].
----@return table
+---@return Bounds2
 function Bounds2.unitSquareUnsigned()
     return Bounds2.newByRef(
         Vec2.new(-0.000002, -0.000002),

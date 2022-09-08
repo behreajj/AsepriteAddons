@@ -178,6 +178,8 @@ dlg:button {
             appRange:clear()
         end
 
+        -- Image must be cloned and reassigned to create a
+        -- transaction that can be undone.
         app.transaction(function()
             local lenCels = #cels
             if colorMode == ColorMode.GRAY then
@@ -185,8 +187,8 @@ dlg:button {
                 while i < lenCels do i = i + 1
                     local cel = cels[i]
                     if cel then
-                        local srcImg = cel.image
-                        local pxItr = srcImg:pixels()
+                        local trgImg = cel.image:clone()
+                        local pxItr = trgImg:pixels()
                         for elm in pxItr do
                             local h = elm()
                             local a = h >> 0x08 & 0xff
@@ -196,6 +198,7 @@ dlg:button {
                                 elm(0x0)
                             end
                         end
+                        cel.image = trgImg
                     end
                 end
             else
@@ -203,8 +206,8 @@ dlg:button {
                 while i < lenCels do i = i + 1
                     local cel = cels[i]
                     if cel then
-                        local srcImg = cel.image
-                        local pxItr = srcImg:pixels()
+                        local trgImg = cel.image:clone()
+                        local pxItr = trgImg:pixels()
                         for elm in pxItr do
                             local h = elm()
                             local a = h >> 0x18 & 0xff
@@ -217,6 +220,7 @@ dlg:button {
                                 elm(0x0)
                             end
                         end
+                        cel.image = trgImg
                     end
                 end
             end

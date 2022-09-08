@@ -143,7 +143,6 @@ dlg:button {
                         tinsert(colors, hex)
                     end
                 end
-                -- print(line)
                 lineCount = lineCount + 1
             end
             file:close()

@@ -174,10 +174,8 @@ dlg:button {
 
         local xRed = args.xRed or defaults.xRed
         local yRed = args.yRed or defaults.yRed
-
         local xGreen = args.xGreen or defaults.xGreen
         local yGreen = args.yGreen or defaults.yGreen
-
         local xBlue = args.xBlue or defaults.xBlue
         local yBlue = args.yBlue or defaults.yBlue
 

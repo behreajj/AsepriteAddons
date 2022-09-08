@@ -1,3 +1,6 @@
+---@class Complex
+---@field imag number imaginary
+---@field real number real
 Complex = {}
 Complex.__index = Complex
 
@@ -10,7 +13,7 @@ setmetatable(Complex, {
 ---Constructs a new complex number.
 ---@param real number real
 ---@param imag number imaginary
----@return table
+---@return Complex
 function Complex.new(real, imag)
     local inst = setmetatable({}, Complex)
     inst.real = real or 0.0
@@ -63,7 +66,7 @@ function Complex:__unm()
 end
 
 ---Finds a complex number's absolute.
----@param z table complex number
+---@param z Complex complex number
 ---@return number
 function Complex.abs(z)
     return math.sqrt(
@@ -72,7 +75,7 @@ function Complex.abs(z)
 end
 
 ---Finds a complex number's absolute squared.
----@param z table complex number
+---@param z Complex complex number
 ---@return number
 function Complex.absSq(z)
     return z.real * z.real
@@ -80,9 +83,9 @@ function Complex.absSq(z)
 end
 
 ---Finds the sum of complex numbers.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Complex left operand
+---@param b Complex right operand
+---@return Complex
 function Complex.add(a, b)
     return Complex.new(
         a.real + b.real,
@@ -91,8 +94,8 @@ end
 
 ---Evaluates whether two complex numbers are,
 ---within a tolerance, approximately equal.
----@param a table left operand
----@param b table right operand
+---@param a Complex left operand
+---@param b Complex right operand
 ---@param tol number|nil tolerance
 ---@return boolean
 function Complex.approx(a, b, tol)
@@ -102,16 +105,16 @@ function Complex.approx(a, b, tol)
 end
 
 ---Finds the conjugate of a complex number.
----@param z table left operand
----@return table
+---@param z Complex complex number
+---@return Complex
 function Complex.conj(z)
     return Complex.new(z.real, -z.imag)
 end
 
 ---Divides one complex number by another.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Complex left operand
+---@param b Complex right operand
+---@return Complex
 function Complex.div(a, b)
     local br = b.real
     local bi = b.imag
@@ -130,8 +133,8 @@ end
 
 ---Finds Euler's number, e, raised to a
 ---complex number
----@param z table right operand
----@return table
+---@param z Complex complex number
+---@return Complex
 function Complex.exp(z)
     local r = math.exp(z.real)
     local phi = z.imag
@@ -142,8 +145,8 @@ end
 
 ---Finds the inverse, or reciprocal, of the
 ---complex number.
----@param z table left operand
----@return table
+---@param z Complex complex number
+---@return Complex
 function Complex.inverse(z)
     local zr = z.real
     local zi = z.imag
@@ -159,8 +162,8 @@ function Complex.inverse(z)
 end
 
 ---Finds the complex logarithm.
----@param z table left operand
----@return table
+---@param z Complex complex number
+---@return Complex
 function Complex.log(z)
     local zr = z.real
     local zi = z.imag
@@ -171,12 +174,12 @@ end
 
 ---Finds the mobius transformation for z. See
 ---https://www.wikiwand.com/en/M%C3%B6bius_transformation
----@param a table constant
----@param b table constant
----@param c table constant
----@param d table constant
----@param z table variable
----@return table
+---@param a Complex constant
+---@param b Complex constant
+---@param c Complex constant
+---@param d Complex constant
+---@param z Complex variable
+---@return Complex
 function Complex.mobius(a, b, c, d, z)
     local czdr = c.real * z.real - c.imag * z.imag + d.real
     local czdi = c.real * z.imag + c.imag * z.real + d.imag
@@ -197,9 +200,9 @@ end
 
 ---Multiplies two complex numbers.
 ---Multiplication is not commutative.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Complex left operand
+---@param b Complex right operand
+---@return Complex
 function Complex.mul(a, b)
     return Complex.new(
         a.real * b.real - a.imag * b.imag,
@@ -207,14 +210,14 @@ function Complex.mul(a, b)
 end
 
 ---Negates a complex number
----@param a table left operand
----@return table
+---@param a Complex left operand
+---@return Complex
 function Complex.negate(a)
     return Complex.new(-a.real, -a.imag)
 end
 
 ---Finds the phase of a complex number.
----@param z table left operand
+---@param z Complex complex number
 ---@return number
 function Complex.phase(z)
     return math.atan(z.imag, z.real)
@@ -222,7 +225,7 @@ end
 
 ---Converts a complex number to polar coordinates.
 ---Returns a table with keys 'r' and 'phi'.
----@param z table left operand
+---@param z Complex complex number
 ---@return table
 function Complex.polar(z)
     return {
@@ -233,9 +236,9 @@ end
 
 ---Raises a left operand to the power of the right.
 ---Defaults to complex-complex exponentiation.
----@param a table left operand
----@param b table|number right operand
----@return table
+---@param a Complex left operand
+---@param b Complex|number right operand
+---@return Complex
 function Complex.pow(a, b)
     if type(b) == "number" then
         return Complex.powNum(a, b)
@@ -245,9 +248,9 @@ function Complex.pow(a, b)
 end
 
 ---Raises a complex number to the power of another.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Complex left operand
+---@param b Complex right operand
+---@return Complex
 function Complex.powComplex(a, b)
     local ar = a.real
     local ai = a.imag
@@ -265,9 +268,9 @@ function Complex.powComplex(a, b)
 end
 
 ---Raises a complex number to the power of a number.
----@param a table left operand
+---@param a Complex left operand
 ---@param b number right operand
----@return table
+---@return Complex
 function Complex.powNum(a, b)
     local ar = a.real
     local ai = a.imag
@@ -284,7 +287,7 @@ end
 ---Converts from polar to rectilinear coordinates.
 ---@param r number radius
 ---@param phi number angle in radians
----@return table
+---@return Complex
 function Complex.rect(r, phi)
     return Complex.new(
         r * math.cos(phi),
@@ -293,18 +296,18 @@ end
 
 ---Scales a complex number, left, by a number,
 ---right.
----@param a table left operand
+---@param a Complex left operand
 ---@param b number right operand
----@return table
+---@return Complex
 function Complex.scale(a, b)
     return Complex.new(a.real * b, a.imag * b)
 end
 
 ---Subtracts the right complex number
 ---from the left.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Complex left operand
+---@param b Complex right operand
+---@return Complex
 function Complex.sub(a, b)
     return Complex.new(
         a.real - b.real,
@@ -313,7 +316,7 @@ end
 
 ---Returns a JSON string of a complex
 ---number.
----@param z table complex number
+---@param z Complex complex number
 ---@return string
 function Complex.toJson(z)
     return string.format(

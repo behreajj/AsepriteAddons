@@ -1,3 +1,20 @@
+---@class Mat4
+---@field m00 number row 0, col 0 right x
+---@field m01 number row 0, col 1 forward x
+---@field m02 number row 0, col 2 up x
+---@field m03 number row 0, col 3 translation x
+---@field m10 number row 1, col 0 right y
+---@field m11 number row 1, col 1 forward y
+---@field m12 number row 1, col 2 up y
+---@field m13 number row 1, col 3 translation y
+---@field m20 number row 2, col 0 right z
+---@field m21 number row 2, col 1 forward z
+---@field m22 number row 2, col 2 up z
+---@field m23 number row 2, col 3 translation z
+---@field m30 number row 3, col 0 right w
+---@field m31 number row 3, col 1 forward w
+---@field m32 number row 3, col 2 up w
+---@field m33 number row 3, col 3 translation w
 Mat4 = {}
 Mat4.__index = Mat4
 
@@ -24,7 +41,7 @@ setmetatable(Mat4, {
 ---@param m31 number row 3, col 1 forward w
 ---@param m32 number row 3, col 2 up w
 ---@param m33 number row 3, col 3 translation w
----@return table
+---@return Mat4
 function Mat4.new(m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33)
     local inst = setmetatable({}, Mat4)
 
@@ -80,9 +97,9 @@ function Mat4:__unm()
 end
 
 ---Finds the sum of two matrices.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Mat4 left operand
+---@param b Mat4 right operand
+---@return Mat4
 function Mat4.add(a, b)
     return Mat4.new(
         a.m00 + b.m00, a.m01 + b.m01, a.m02 + b.m02, a.m03 + b.m03,
@@ -107,7 +124,7 @@ end
 ---@param yRef number reference y
 ---@param zRef number reference z
 ---@param handedness string|nil handedness
----@return table
+---@return Mat4
 function Mat4.camera(xLoc, yLoc, zLoc, xFocus, yFocus, zFocus, xRef, yRef, zRef, handedness)
 
     -- Optional args for handedness.
@@ -233,7 +250,7 @@ end
 ---@param yLoc number location y
 ---@param zLoc number location z
 ---@param handedness string handedness
----@return table
+---@return Mat4
 function Mat4.cameraIsometric(xLoc, yLoc, zLoc, handedness)
     local hVal = "RIGHT"
     local xVal = 0.0
@@ -280,7 +297,7 @@ end
 ---@param yLoc number location y
 ---@param zLoc number location z
 ---@param handedness string handedness
----@return table
+---@return Mat4
 function Mat4.cameraDimetric(xLoc, yLoc, zLoc, handedness)
     local hVal = "RIGHT"
     local xVal = 0.0
@@ -319,41 +336,41 @@ function Mat4.cameraDimetric(xLoc, yLoc, zLoc, handedness)
 end
 
 ---Multiplies the left operand and the inverse of the right.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Mat4 left operand
+---@param b Mat4 right operand
+---@return Mat4
 function Mat4.div(a, b)
     return Mat4.mul(a, Mat4.inverse(b))
 end
 
 ---Finds the matrix determinant.
----@param a table matrix
+---@param m Mat4 matrix
 ---@return number
-function Mat4.determinant(a)
-    return a.m00 * (a.m11 * a.m22 * a.m33 +
-            a.m12 * a.m23 * a.m31 +
-            a.m13 * a.m21 * a.m32 -
-            a.m13 * a.m22 * a.m31 -
-            a.m11 * a.m23 * a.m32 -
-            a.m12 * a.m21 * a.m33) -
-        a.m01 * (a.m10 * a.m22 * a.m33 +
-            a.m12 * a.m23 * a.m30 +
-            a.m13 * a.m20 * a.m32 -
-            a.m13 * a.m22 * a.m30 -
-            a.m10 * a.m23 * a.m32 -
-            a.m12 * a.m20 * a.m33) +
-        a.m02 * (a.m10 * a.m21 * a.m33 +
-            a.m11 * a.m23 * a.m30 +
-            a.m13 * a.m20 * a.m31 -
-            a.m13 * a.m21 * a.m30 -
-            a.m10 * a.m23 * a.m31 -
-            a.m11 * a.m20 * a.m33) -
-        a.m03 * (a.m10 * a.m21 * a.m32 +
-            a.m11 * a.m22 * a.m30 +
-            a.m12 * a.m20 * a.m31 -
-            a.m12 * a.m21 * a.m30 -
-            a.m10 * a.m22 * a.m31 -
-            a.m11 * a.m20 * a.m32)
+function Mat4.determinant(m)
+    return m.m00 * (m.m11 * m.m22 * m.m33 +
+            m.m12 * m.m23 * m.m31 +
+            m.m13 * m.m21 * m.m32 -
+            m.m13 * m.m22 * m.m31 -
+            m.m11 * m.m23 * m.m32 -
+            m.m12 * m.m21 * m.m33) -
+        m.m01 * (m.m10 * m.m22 * m.m33 +
+            m.m12 * m.m23 * m.m30 +
+            m.m13 * m.m20 * m.m32 -
+            m.m13 * m.m22 * m.m30 -
+            m.m10 * m.m23 * m.m32 -
+            m.m12 * m.m20 * m.m33) +
+        m.m02 * (m.m10 * m.m21 * m.m33 +
+            m.m11 * m.m23 * m.m30 +
+            m.m13 * m.m20 * m.m31 -
+            m.m13 * m.m21 * m.m30 -
+            m.m10 * m.m23 * m.m31 -
+            m.m11 * m.m20 * m.m33) -
+        m.m03 * (m.m10 * m.m21 * m.m32 +
+            m.m11 * m.m22 * m.m30 +
+            m.m12 * m.m20 * m.m31 -
+            m.m12 * m.m21 * m.m30 -
+            m.m10 * m.m22 * m.m31 -
+            m.m11 * m.m20 * m.m32)
 end
 
 ---Constructs a rotation matrix from an angle in radians
@@ -364,7 +381,7 @@ end
 ---@param ax number axis x
 ---@param ay number axis y
 ---@param az number axis z
----@return table
+---@return Mat4
 function Mat4.fromRotation(radians, ax, ay, az)
     local xv = ax or 0.0
     local yv = ay or 0.0
@@ -384,7 +401,7 @@ end
 ---Constructs a rotation matrix from an angle in radians
 ---around the x axis.
 ---@param radians number angle
----@return table
+---@return Mat4
 function Mat4.fromRotX(radians)
     return Mat4.fromRotXInternal(
         math.cos(radians),
@@ -394,7 +411,7 @@ end
 ---Constructs a rotation matrix from an angle in radians
 ---around the y axis.
 ---@param radians number angle
----@return table
+---@return Mat4
 function Mat4.fromRotY(radians)
     return Mat4.fromRotYInternal(
         math.cos(radians),
@@ -404,7 +421,7 @@ end
 ---Constructs a rotation matrix from an angle in radians
 ---around the z axis.
 ---@param radians number angle
----@return table
+---@return Mat4
 function Mat4.fromRotZ(radians)
     return Mat4.fromRotZInternal(
         math.cos(radians),
@@ -420,7 +437,7 @@ end
 ---@param ax number axis x
 ---@param ay number axis y
 ---@param az number axis z
----@return table
+---@return Mat4
 function Mat4.fromRotInternal(cosa, sina, ax, ay, az)
 
     local d = 1.0 - cosa
@@ -443,7 +460,7 @@ end
 ---of an angle around the x axis.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Mat4
 function Mat4.fromRotXInternal(cosa, sina)
     return Mat4.new(
         1.0, 0.0, 0.0, 0.0,
@@ -456,7 +473,7 @@ end
 ---of an angle around the y axis.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Mat4
 function Mat4.fromRotYInternal(cosa, sina)
     return Mat4.new(
         cosa, 0.0, sina, 0.0,
@@ -469,7 +486,7 @@ end
 ---of an angle around the z axis.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Mat4
 function Mat4.fromRotZInternal(cosa, sina)
     return Mat4.new(
         cosa, -sina, 0.0, 0.0,
@@ -482,7 +499,7 @@ end
 ---@param width number width
 ---@param depth number depth
 ---@param height number height
----@return table
+---@return Mat4
 function Mat4.fromScale(width, depth, height)
     local w = 1.0
     if width and width ~= 0.0 then
@@ -510,7 +527,7 @@ end
 ---@param x number translation x
 ---@param y number translation y
 ---@param z number translation z
----@return table
+---@return Mat4
 function Mat4.fromTranslation(x, y, z)
     local zv = z or 0.0
     return Mat4.new(
@@ -522,8 +539,8 @@ end
 
 ---Finds the matrix inverse.
 ---Returns the identity if not possible.
----@param a table matrix
----@return table
+---@param a Mat4 matrix
+---@return Mat4
 function Mat4.inverse(a)
     local b00 = a.m00 * a.m11 - a.m01 * a.m10
     local b01 = a.m00 * a.m12 - a.m02 * a.m10
@@ -566,9 +583,9 @@ function Mat4.inverse(a)
 end
 
 ---Finds the product of two matrices.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Mat4 left operand
+---@param b Mat4 right operand
+---@return Mat4
 function Mat4.mul(a, b)
     return Mat4.new(
         a.m00 * b.m00 + a.m01 * b.m10 + a.m02 * b.m20 + a.m03 * b.m30,
@@ -590,14 +607,14 @@ function Mat4.mul(a, b)
 end
 
 ---Negates a matrix.
----@param a table matrix
----@return table
-function Mat4.negate(a)
+---@param m Mat4 matrix
+---@return Mat4
+function Mat4.negate(m)
     return Mat4.new(
-        -a.m00, -a.m01, -a.m02, -a.m03,
-        -a.m10, -a.m11, -a.m12, -a.m13,
-        -a.m20, -a.m21, -a.m22, -a.m23,
-        -a.m30, -a.m31, -a.m32, -a.m33)
+        -m.m00, -m.m01, -m.m02, -m.m03,
+        -m.m10, -m.m11, -m.m12, -m.m13,
+        -m.m20, -m.m21, -m.m22, -m.m23,
+        -m.m30, -m.m31, -m.m32, -m.m33)
 end
 
 ---Creates an orthographic projection matrix.
@@ -607,7 +624,7 @@ end
 ---@param top number top edge
 ---@param near number near clip plane
 ---@param far number far clip plane
----@return table
+---@return Mat4
 function Mat4.orthographic(left, right, bottom, top, near, far)
 
     local nVal = 0.001
@@ -640,7 +657,7 @@ end
 ---@param aspect number aspect ratio
 ---@param near number near clip plane
 ---@param far number far clip plane
----@return table
+---@return Mat4
 function Mat4.perspective(fov, aspect, near, far)
     local fovVal = 0.86602540378444
     if fov and fov ~= 0.0 then fovVal = fov end
@@ -669,9 +686,9 @@ function Mat4.perspective(fov, aspect, near, far)
 end
 
 ---Subtracts the right matrix from the left.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Mat4 left operand
+---@param b Mat4 right operand
+---@return Mat4
 function Mat4.sub(a, b)
     return Mat4.new(
         a.m00 - b.m00, a.m01 - b.m01, a.m02 - b.m02, a.m03 - b.m03,
@@ -681,7 +698,7 @@ function Mat4.sub(a, b)
 end
 
 ---Returns a JSON string of a matrix.
----@param a table matrix
+---@param a Mat4 matrix
 ---@return string
 function Mat4.toJson(a)
     local m0 = string.format(
@@ -703,7 +720,7 @@ end
 ---of a matrix, where each row is separated
 ---by a line break, '\n', and each column
 ---is separated by three spaces.
----@param a table matrix
+---@param a Mat4 matrix
 ---@return string
 function Mat4.toStringCol(a)
     local m0 = string.format(
@@ -722,18 +739,18 @@ function Mat4.toStringCol(a)
 end
 
 ---Transposes a matrix's columns and rows.
----@param a table matrix
----@return table
-function Mat4.transpose(a)
+---@param m Mat4 matrix
+---@return Mat4
+function Mat4.transpose(m)
     return Mat4.new(
-        a.m00, a.m10, a.m20, a.m30,
-        a.m01, a.m11, a.m21, a.m31,
-        a.m02, a.m12, a.m22, a.m32,
-        a.m03, a.m13, a.m23, a.m33)
+        m.m00, m.m10, m.m20, m.m30,
+        m.m01, m.m11, m.m21, m.m31,
+        m.m02, m.m12, m.m22, m.m32,
+        m.m03, m.m13, m.m23, m.m33)
 end
 
 ---Creates the identity matrix.
----@return table
+---@return Mat4
 function Mat4.identity()
     return Mat4.new(
         1.0, 0.0, 0.0, 0.0,

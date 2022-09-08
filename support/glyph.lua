@@ -1,3 +1,7 @@
+---@class Glyph
+---@field character string character
+---@field drop integer drop amount
+---@field matrix integer visual matrix
 Glyph = {}
 Glyph.__index = Glyph
 
@@ -16,7 +20,7 @@ setmetatable(Glyph, {
 ---@param character string character
 ---@param matrix integer visual matrix
 ---@param drop integer|nil drop amount
----@return table
+---@return Glyph
 function Glyph.new(character, matrix, drop)
     local inst = setmetatable({}, Glyph)
     inst.character = character or ' '
@@ -44,7 +48,7 @@ function Glyph:__tostring()
 end
 
 ---Returns a JSON string of a glyph.
----@param g table glyph
+---@param g Glyph glyph
 ---@return string
 function Glyph.toJson(g)
     return string.format(

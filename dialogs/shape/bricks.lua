@@ -12,8 +12,8 @@ local defaults = {
     xOrigin = 0,
     yOrigin = 0,
     mortarThick = 1,
-    mortarClr = Color(231, 231, 231, 255),
-    brickClr = Color(203, 65, 84, 255),
+    mortarClr = 0xffe7e7e7,
+    brickClr = 0xff5441cb,
     variance = 10,
     varyHue = false,
     varyChroma = true,
@@ -113,7 +113,7 @@ dlg:newrow { always = false }
 dlg:color {
     id = "mortarClr",
     label = "Mortar Color:",
-    color = defaults.mortarClr
+    color = AseUtilities.hexToAseColor(defaults.mortarClr)
 }
 
 dlg:newrow { always = false }
@@ -121,7 +121,7 @@ dlg:newrow { always = false }
 dlg:color{
     id = "brickClr",
     label = "Brick Color:",
-    color = defaults.brickClr
+    color = AseUtilities.hexToAseColor(defaults.brickClr)
 }
 
 dlg:newrow { always = false }
@@ -179,8 +179,8 @@ dlg:button {
         local mat = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
-        local brickColor = args.brickClr or defaults.brickClr
-        local mortarColor = args.mortarClr or defaults.mortarClr
+        local brickColor = args.brickClr
+        local mortarColor = args.mortarClr
 
         local sprite = AseUtilities.initCanvas(
             64, 64, mesh.name,

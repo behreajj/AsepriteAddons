@@ -1,5 +1,8 @@
 dofile("./vec3.lua")
 
+---@class Quaternion
+---@field imag Vec3 imaginary
+---@field real number real
 Quaternion = {}
 Quaternion.__index = Quaternion
 
@@ -11,8 +14,8 @@ setmetatable(Quaternion, {
 ---Constructs a new quaternion.
 ---Defaults to passing the vector by value.
 ---@param real number real
----@param imag table imaginary
----@return table
+---@param imag Vec3 imaginary
+---@return Quaternion
 function Quaternion.new(real, imag)
     return Quaternion.newByVal(real, imag)
 end
@@ -20,8 +23,8 @@ end
 ---Constructs a new quaternion.
 ---The imaginary vector is assigned by reference.
 ---@param real number real
----@param imag table imaginary
----@return table
+---@param imag Vec3 imaginary
+---@return Quaternion
 function Quaternion.newByRef(real, imag)
     local inst = setmetatable({}, Quaternion)
     inst.real = real or 1.0
@@ -32,8 +35,8 @@ end
 ---Constructs a new quaternion.
 ---The imaginary vector is copied by value.
 ---@param real number real
----@param imag table imaginary
----@return table
+---@param imag Vec3 imaginary
+---@return Quaternion
 function Quaternion.newByVal(real, imag)
     local inst = setmetatable({}, Quaternion)
     inst.real = real or 1.0
@@ -87,9 +90,9 @@ function Quaternion:__unm()
 end
 
 ---Finds the sum of two quaternions.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Quaternion left operand
+---@param b Quaternion right operand
+---@return Quaternion
 function Quaternion.add(a, b)
     local ai = a.imag
     local bi = b.imag
@@ -103,24 +106,24 @@ end
 
 ---Evaluates if all quaternion components are
 ---non-zero.
----@param a table quaternion
+---@param q Quaternion quaternion
 ---@return boolean
-function Quaternion.all(a)
-    return a.real ~= 0.0 and Vec3.all(a.imag)
+function Quaternion.all(q)
+    return q.real ~= 0.0 and Vec3.all(q.imag)
 end
 
 ---Evaluates if any quaternion components are
 ---non-zero.
----@param a table quaternion
+---@param q Quaternion quaternion
 ---@return boolean
-function Quaternion.any(a)
-    return a.real ~= 0.0 or Vec3.any(a.imag)
+function Quaternion.any(q)
+    return q.real ~= 0.0 or Vec3.any(q.imag)
 end
 
 ---Evaluates whether two quaternions are,
 ---within a tolerance, approximately equal.
----@param a table left operand
----@param b table right operand
+---@param a Quaternion left operand
+---@param b Quaternion right operand
 ---@param tol number|nil tolerance
 ---@return boolean
 function Quaternion.approx(a, b, tol)
@@ -134,21 +137,21 @@ function Quaternion.approx(a, b, tol)
 end
 
 ---Finds the conjugate of a quaternion.
----@param a table quaternion
----@return table
-function Quaternion.conj(a)
-    local ai = a.imag
+---@param q Quaternion quaternion
+---@return Quaternion
+function Quaternion.conj(q)
+    local ai = q.imag
     return Quaternion.newByRef(
-        a.real,
+        q.real,
         Vec3.new(-ai.x, -ai.y, -ai.z))
 end
 
 ---Divides the left quaternion by the right.
 ---If the right operand is zero, returns the
 ---identity.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Quaternion left operand
+---@param b Quaternion right operand
+---@return Quaternion
 function Quaternion.div(a, b)
     local bi = b.imag
     local bw = b.real
@@ -179,8 +182,8 @@ function Quaternion.div(a, b)
 end
 
 ---Finds the dot product between two quaternions.
----@param a table left operand
----@param b table right operand
+---@param a Quaternion left operand
+---@param b Quaternion right operand
 ---@return number
 function Quaternion.dot(a, b)
     local ai = a.imag
@@ -194,17 +197,17 @@ end
 ---Finds the exponent of a quaternion. Returns
 ---the identity when the quaternion's imaginary
 ---vector has zero magnitude.
----@param a table quaternion
----@return table
-function Quaternion.exp(a)
-    local ai = a.imag
+---@param q Quaternion quaternion
+---@return Quaternion
+function Quaternion.exp(q)
+    local ai = q.imag
     local x = ai.x
     local y = ai.y
     local z = ai.z
 
     local mgImSq = x * x + y * y + z * z
     if mgImSq > 0.000001 then
-        local wExp = math.exp(a.real)
+        local wExp = math.exp(q.real)
         local mgIm = math.sqrt(mgImSq)
         local scalar = wExp * math.sin(mgIm) / mgIm
         return Quaternion.newByRef(
@@ -220,10 +223,10 @@ end
 
 ---Creates a quaternion from three axes. Normalizes the
 ---inputs.
----@param right table right axis
----@param forward table forward axis
----@param up table up axis
----@return table
+---@param right Vec3 right axis
+---@param forward Vec3 forward axis
+---@param up Vec3 up axis
+---@return Quaternion
 function Quaternion.fromAxes(right, forward, up)
     return Quaternion.fromAxesInternal(
         Vec3.normalize(right),
@@ -233,10 +236,10 @@ end
 
 ---Creates a quaternion from three axes. Does not normalize
 ---the inputs or check for their validity.
----@param right table right axis
----@param forward table forward axis
----@param up table up axis
----@return table
+---@param right Vec3 right axis
+---@param forward Vec3 forward axis
+---@param up Vec3 up axis
+---@return Quaternion
 function Quaternion.fromAxesInternal(right, forward, up)
     local cx = 1.0 + right.x - forward.y - up.z
     if cx > 0.0 then
@@ -289,9 +292,9 @@ end
 
 ---Creates a rotation from an origin direction to
 ---a destination direction. Normalizes the directions.
----@param a table origin direction
----@param b table destination direction
----@return table
+---@param a Vec3 origin direction
+---@param b Vec3 destination direction
+---@return Quaternion
 function Quaternion.fromTo(a, b)
     local anx = a.x
     local any = a.y
@@ -334,18 +337,18 @@ end
 ---Finds the inverse of a quaternion.
 ---If the operand is zero, returns the
 ---identity.
----@param a table left operand
----@return table
-function Quaternion.inverse(a)
-    local ai = a.imag
-    local mSq = a.real * a.real
+---@param q Quaternion quaternion
+---@return Quaternion
+function Quaternion.inverse(q)
+    local ai = q.imag
+    local mSq = q.real * q.real
         + ai.x * ai.x
         + ai.y * ai.y
         + ai.z * ai.z
     if mSq ~= 0.0 then
         local mSqInv = 1.0 / mSq
         return Quaternion.newByRef(
-            a.real * mSqInv,
+            q.real * mSqInv,
             Vec3.new(
                 -ai.x * mSqInv,
                 -ai.y * mSqInv,
@@ -356,11 +359,11 @@ function Quaternion.inverse(a)
 end
 
 ---Finds the natural logarithm of a quaternion.
----@param a table quaternion
----@return table
-function Quaternion.log(a)
-    local ai = a.imag
-    local aw = a.real
+---@param q Quaternion quaternion
+---@return Quaternion
+function Quaternion.log(q)
+    local ai = q.imag
+    local aw = q.real
     local ax = ai.x
     local ay = ai.y
     local az = ai.z
@@ -384,23 +387,23 @@ function Quaternion.log(a)
 end
 
 ---Finds a quaternion's magnitude, or length.
----@param a table quaternion
+---@param q Quaternion quaternion
 ---@return number
-function Quaternion.mag(a)
-    local ai = a.imag
+function Quaternion.mag(q)
+    local ai = q.imag
     return math.sqrt(
-        a.real * a.real
+        q.real * q.real
         + ai.x * ai.x
         + ai.y * ai.y
         + ai.z * ai.z)
 end
 
 ---Finds a quaternion's magnitude squared.
----@param a table quaternion
+---@param q Quaternion quaternion
 ---@return number
-function Quaternion.magSq(a)
-    local ai = a.imag
-    return a.real * a.real
+function Quaternion.magSq(q)
+    local ai = q.imag
+    return q.real * q.real
         + ai.x * ai.x
         + ai.y * ai.y
         + ai.z * ai.z
@@ -412,9 +415,9 @@ end
 ---a.real b.real - dot(a.imag, b.imag).
 ---The imaginary is: cross(a.imag, b.imag) +
 ---a.real b.imag + b.real a.imag.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Quaternion left operand
+---@param b Quaternion right operand
+---@return Quaternion
 function Quaternion.mul(a, b)
     local ai = a.imag
     local bi = b.imag
@@ -430,8 +433,8 @@ function Quaternion.mul(a, b)
 end
 
 ---Negates a quaternion
----@param a table quaternion
----@return table
+---@param a Quaternion quaternion
+---@return Quaternion
 function Quaternion.negate(a)
     local ai = a.imag
     return Quaternion.newByRef(
@@ -440,28 +443,28 @@ function Quaternion.negate(a)
 end
 
 ---Evaluates if all quaternion components are zero.
----@param a table quaternion
+---@param q Quaternion quaternion
 ---@return boolean
-function Quaternion.none(a)
-    return a.real == 0.0 and Vec3.none(a.imag)
+function Quaternion.none(q)
+    return q.real == 0.0 and Vec3.none(q.imag)
 end
 
 ---Divides a quaternion by its magnitude so
 ---that it is a versor on the unit hypersphere.
 ---Returns the identity if the quaternion is
 ---zero.
----@param a table quaternion
----@return table
-function Quaternion.normalize(a)
-    local ai = a.imag
-    local mSq = a.real * a.real
+---@param q Quaternion quaternion
+---@return Quaternion
+function Quaternion.normalize(q)
+    local ai = q.imag
+    local mSq = q.real * q.real
         + ai.x * ai.x
         + ai.y * ai.y
         + ai.z * ai.z
     if mSq ~= 0.0 then
         local mInv = 1.0 / math.sqrt(mSq)
         return Quaternion.newByRef(
-            a.real * mInv,
+            q.real * mInv,
             Vec3.new(
                 ai.x * mInv,
                 ai.y * mInv,
@@ -472,7 +475,7 @@ function Quaternion.normalize(a)
 end
 
 ---Creates a random quaternion.
----@return table
+---@return Quaternion
 function Quaternion.random()
     local t0 = math.random() * 6.2831853071796
     local t1 = math.random() * 6.2831853071796
@@ -489,9 +492,9 @@ end
 
 ---Rotates a quaternion around the x axis by an angle
 ---in radians.
----@param q table quaternion
+---@param q Quaternion quaternion
 ---@param radians number angle
----@return table
+---@return Quaternion
 function Quaternion.rotateX(q, radians)
     local half = 0.5 * math.fmod(radians, 6.2831853071796)
     return Quaternion.rotateXInternal(
@@ -500,9 +503,9 @@ end
 
 ---Rotates a quaternion around the y axis by an angle
 ---in radians.
----@param q table quaternion
+---@param q Quaternion quaternion
 ---@param radians number angle
----@return table
+---@return Quaternion
 function Quaternion.rotateY(q, radians)
     local half = 0.5 * math.fmod(radians, 6.2831853071796)
     return Quaternion.rotateYInternal(
@@ -511,9 +514,9 @@ end
 
 ---Rotates a quaternion around the z axis by an angle
 ---in radians.
----@param q table quaternion
+---@param q Quaternion quaternion
 ---@param radians number angle
----@return table
+---@return Quaternion
 function Quaternion.rotateZ(q, radians)
     local half = 0.5 * math.fmod(radians, 6.2831853071796)
     return Quaternion.rotateZInternal(
@@ -523,10 +526,10 @@ end
 ---Rotates a quaternion around the x axis.
 ---Internal helper that takes cosine and sine of
 ---half the angle.
----@param q table quaternion
+---@param q Quaternion quaternion
 ---@param cosah number cosine of half angle
 ---@param sinah number sine of half angle
----@return table
+---@return Quaternion
 function Quaternion.rotateXInternal(q, cosah, sinah)
     local i = q.imag
     return Quaternion.newByRef(
@@ -540,10 +543,10 @@ end
 ---Rotates a quaternion around the y axis.
 ---Internal helper that takes cosine and sine of
 ---half the angle.
----@param q table quaternion
+---@param q Quaternion quaternion
 ---@param cosah number cosine of half angle
 ---@param sinah number sine of half angle
----@return table
+---@return Quaternion
 function Quaternion.rotateYInternal(q, cosah, sinah)
     local i = q.imag
     return Quaternion.newByRef(
@@ -557,10 +560,10 @@ end
 ---Rotates a quaternion around the z axis.
 ---Internal helper that takes cosine and sine of
 ---half the angle.
----@param q table quaternion
+---@param q Quaternion quaternion
 ---@param cosah number cosine of half angle
 ---@param sinah number sine of half angle
----@return table
+---@return Quaternion
 function Quaternion.rotateZInternal(q, cosah, sinah)
     local i = q.imag
     return Quaternion.newByRef(
@@ -573,9 +576,9 @@ end
 
 ---Scales a quaternion, left, by a number, right.
 ---Returns the identity if the scalar is zero.
----@param a table left operand
+---@param a Quaternion left operand
 ---@param b number right operand
----@return table
+---@return Quaternion
 function Quaternion.scale(a, b)
     if b ~= 0.0 then
         local ai = a.imag
@@ -592,10 +595,10 @@ end
 
 ---Spherical linear interpolation from an origin
 ---to a destination by a number step.
----@param a table origin
----@param b table destination
+---@param a Quaternion origin
+---@param b Quaternion destination
 ---@param t number step
----@return table
+---@return Quaternion
 function Quaternion.slerp(a, b, t)
     if t <= 0.0 then return Quaternion.normalize(a) end
     if t >= 1.0 then return Quaternion.normalize(b) end
@@ -607,10 +610,10 @@ end
 ---check if the step is greater than one or less
 ---than zero. Inverts dot product to find minimum
 ---torque.
----@param a table origin
----@param b table destination
+---@param a Quaternion origin
+---@param b Quaternion destination
 ---@param t number step
----@return table
+---@return Quaternion
 function Quaternion.slerpUnclamped(a, b, t)
     local ai = a.imag
     local aw = a.real
@@ -663,9 +666,9 @@ function Quaternion.slerpUnclamped(a, b, t)
 end
 
 ---Subtracts the right quaternion from the left.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Quaternion left operand
+---@param b Quaternion right operand
+---@return Quaternion
 function Quaternion.sub(a, b)
     local ai = a.imag
     local bi = b.imag
@@ -678,7 +681,7 @@ function Quaternion.sub(a, b)
 end
 
 ---Returns a JSON string of a quaternion.
----@param q table quaternion
+---@param q Quaternion quaternion
 ---@return string
 function Quaternion.toJson(q)
     return string.format(
@@ -689,7 +692,7 @@ end
 
 ---Returns the identity quaternion,
 ---(1.0, 0.0, 0.0, 0.0).
----@return table
+---@return Quaternion
 function Quaternion.identity()
     return Quaternion.newByRef(
         1.0, Vec3.new(0.0, 0.0, 0.0))

@@ -540,11 +540,11 @@ function Utilities.lineWrapStringToChars(srcStr, limit)
     end
 end
 
----Multiplies a matrix with a 2D curve.
+---Multiplies a Mat3 with a Curve2.
 ---Changes the curve in place.
----@param a table matrix
----@param b table curve
----@return table
+---@param a Mat3 matrix
+---@param b Curve2 curve
+---@return Curve2
 function Utilities.mulMat3Curve2(a, b)
     local kns = b.knots
     local knsLen = #kns
@@ -557,11 +557,11 @@ function Utilities.mulMat3Curve2(a, b)
     return b
 end
 
----Multiplies a matrix with a 2D knot.
+---Multiplies a Mat3 with a Knot2.
 ---Changes the knot in place.
----@param a table matrix
----@param b table knot
----@return table
+---@param a Mat3 matrix
+---@param b Knot2 knot
+---@return Knot2
 function Utilities.mulMat3Knot2(a, b)
     b.co = Utilities.mulMat3Point2(a, b.co)
     b.fh = Utilities.mulMat3Point2(a, b.fh)
@@ -569,11 +569,11 @@ function Utilities.mulMat3Knot2(a, b)
     return b
 end
 
----Multiplies a matrix with a 2D mesh.
+---Multiplies a Mat3 with a Mesh2.
 ---Changes the mesh in place.
----@param a table matrix
----@param b table mesh
----@return table
+---@param a Mat3 matrix
+---@param b Mesh2 mesh
+---@return Mesh2
 function Utilities.mulMat3Mesh2(a, b)
     local vs = b.vs
     local vsLen = #vs
@@ -587,9 +587,9 @@ end
 
 ---Multiplies a Mat3 with a Vec2.
 ---The vector is treated as a point.
----@param a table matrix
----@param b table vector
----@return table
+---@param a Mat3 matrix
+---@param b Vec2 vector
+---@return Vec2
 function Utilities.mulMat3Point2(a, b)
     local w = a.m20 * b.x + a.m21 * b.y + a.m22
     if w ~= 0.0 then
@@ -602,11 +602,11 @@ function Utilities.mulMat3Point2(a, b)
     end
 end
 
----Multiplies a matrix with a 3D curve.
+---Multiplies a Mat4 with a Curve3.
 ---Changes the curve in place.
----@param a table matrix
----@param b table curve
----@return table
+---@param a Mat4 matrix
+---@param b Curve3 curve
+---@return Curve3
 function Utilities.mulMat4Curve3(a, b)
     local kns = b.knots
     local knsLen = #kns
@@ -619,11 +619,11 @@ function Utilities.mulMat4Curve3(a, b)
     return b
 end
 
----Multiplies a matrix with a 3D knot.
+---Multiplies a Mat4 with a Knot3.
 ---Changes the knot in place.
----@param a table matrix
----@param b table knot
----@return table
+---@param a Mat4 matrix
+---@param b Knot3 knot
+---@return Knot3
 function Utilities.mulMat4Knot3(a, b)
     b.co = Utilities.mulMat4Point3(a, b.co)
     b.fh = Utilities.mulMat4Point3(a, b.fh)
@@ -633,9 +633,9 @@ end
 
 ---Multiplies a Mat4 with a Vec3.
 ---The vector is treated as a point.
----@param a table matrix
----@param b table vector
----@return table
+---@param a Mat4 matrix
+---@param b Vec3 vector
+---@return Vec3
 function Utilities.mulMat4Point3(a, b)
     local w = a.m30 * b.x + a.m31 * b.y + a.m33
     if w ~= 0.0 then
@@ -650,9 +650,9 @@ function Utilities.mulMat4Point3(a, b)
 end
 
 ---Multiplies a Mat3 with a Vec3.
----@param a table matrix
----@param b table vector
----@return table
+---@param a Mat3 matrix
+---@param b Vec3 vector
+---@return Vec3
 function Utilities.mulMat3Vec3(a, b)
     return Vec3.new(
         a.m00 * b.x + a.m01 * b.y + a.m02 * b.z,
@@ -661,9 +661,9 @@ function Utilities.mulMat3Vec3(a, b)
 end
 
 ---Multiplies a Mat4 with a Vec4.
----@param a table matrix
----@param b table vector
----@return table
+---@param a Mat4 matrix
+---@param b Vec4 vector
+---@return Vec4
 function Utilities.mulMat4Vec4(a, b)
     return Vec4.new(
         a.m00 * b.x + a.m01 * b.y
@@ -679,9 +679,9 @@ end
 ---Multiplies a Quaternion and a Vec3.
 ---The Vec3 is treated as a point, not as
 ---a pure quaternion.
----@param a table quaternion
----@param b table vector
----@return table
+---@param a Quaternion quaternion
+---@param b Vec3 vector
+---@return Vec3
 function Utilities.mulQuatVec3(a, b)
     local ai = a.imag
     local qw = a.real
@@ -860,8 +860,8 @@ end
 
 ---Promotes a Knot2 to a Knot3.
 ---All z components default to 0.0
----@param a table knot
----@return table
+---@param a Knot2 knot
+---@return Knot3
 function Utilities.promoteKnot2ToKnot3(a)
     return Knot3.new(
         Utilities.promoteVec2ToVec3(a.co, 0.0),
@@ -871,9 +871,9 @@ end
 
 ---Promotes a Vec2 to a Vec3.
 ---The z component defaults to 0.0.
----@param a table vector
+---@param a Vec2 vector
 ---@param z number|nil z component
----@return table
+---@return Vec3
 function Utilities.promoteVec2ToVec3(a, z)
     local vz = z or 0.0
     return Vec3.new(a.x, a.y, vz)
@@ -882,10 +882,10 @@ end
 ---Promotes a Vec2 to a Vec4.
 ---The z component defaults to 0.0.
 ---The w component defaults to 0.0.
----@param a table vector
+---@param a Vec2 vector
 ---@param z number|nil z component
 ---@param w number|nil w component
----@return table
+---@return Vec4
 function Utilities.promoteVec2ToVec4(a, z, w)
     local vz = z or 0.0
     local vw = w or 0.0
@@ -894,9 +894,9 @@ end
 
 ---Promotes a Vec3 to a Vec4.
 ---The w component defaults to 0.0.
----@param a table vector
+---@param a Vec3 vector
 ---@param w number|nil w component
----@return table
+---@return Vec4
 function Utilities.promoteVec3ToVec4(a, w)
     local vw = w or 0.0
     return Vec4.new(a.x, a.y, a.z, vw)
@@ -1122,12 +1122,12 @@ end
 
 ---Finds a point on the screen given a modelview,
 ---projection and 3D point.
----@param modelview table modelview
----@param projection table projection
----@param pt3 table point
+---@param modelview Mat4 modelview
+---@param projection Mat4 projection
+---@param pt3 Vec3 point
 ---@param width number screen width
 ---@param height number screen height
----@return table
+---@return Vec3
 function Utilities.toScreen(modelview, projection, pt3, width, height)
 
     -- Promote to homogenous coordinate.

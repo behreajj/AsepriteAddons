@@ -1,5 +1,7 @@
 dofile("./clrkey.lua")
 
+---@class ClrGradient
+---@field keys table color keys
 ClrGradient = {}
 ClrGradient.__index = ClrGradient
 
@@ -12,7 +14,7 @@ setmetatable(ClrGradient, {
 ---Constructs a color gradient. The first
 ---parameter should be a table of ClrKeys.
 ---@param keys table color keys
----@return table
+---@return ClrGradient
 function ClrGradient.new(keys)
     local inst = setmetatable({}, ClrGradient)
     inst.keys = {}
@@ -30,7 +32,7 @@ end
 ---The first parameter should be a table
 ---of ClrKeys.
 ---@param keys table color keys
----@return table
+---@return ClrGradient
 function ClrGradient.newInternal(keys)
     local inst = setmetatable({}, ClrGradient)
     inst.keys = keys or {}
@@ -48,8 +50,8 @@ end
 ---Appends a color to the end of this gradient.
 ---Colors are copied by value, not passed by
 ---reference. Shifts existing keys to the left.
----@param clr table color
----@return table
+---@param clr Clr color
+---@return ClrGradient
 function ClrGradient:append(clr)
     self:compressKeysLeft(1)
     table.insert(self.keys,
@@ -62,7 +64,7 @@ end
 ---not passed by reference. Shifts existing
 ---keys to the left.
 ---@param clrs table color array
----@return table
+---@return ClrGradient
 function ClrGradient:appendAll(clrs)
     local appLen = #clrs
     self:compressKeysLeft(appLen)
@@ -82,7 +84,7 @@ end
 ---Shifts existing keys to the left when a new
 ---color is appended the gradient without a key.
 ---@param added number count to add
----@return table
+---@return ClrGradient
 function ClrGradient:compressKeysLeft(added)
     local len = #self.keys
     local scalar = 1.0 / (len + added - 1.0)
@@ -98,7 +100,7 @@ end
 ---Shifts existing keys to the right when a new
 ---color is prepended the gradient without a key.
 ---@param added number count to add
----@return table
+---@return ClrGradient
 function ClrGradient:compressKeysRight(added)
     local len = #self.keys
     local scalar = added / (len + added - 1.0)
@@ -116,10 +118,11 @@ end
 ---on the index returned by bisectRight. Does not
 ---check for duplicates. Returns true if the key
 ---was successfully inserted.
----@param ck table color key
+---@param ck ClrKey color key
+---@param tol number|nil tolerance
 ---@return boolean
-function ClrGradient:insortRight(ck, tolerance)
-    local eps = tolerance or 0.0005
+function ClrGradient:insortRight(ck, tol)
+    local eps = tol or 0.0005
     local i = ClrGradient.bisectRight(self, ck.step)
     local dupe = self.keys[i - 1]
     if dupe and (math.abs(ck.step - dupe.step) <= eps) then
@@ -132,8 +135,8 @@ end
 ---Prepends a color to the start of this gradient.
 ---Colors are copied by value, not passed by
 ---reference. Shifts existing keys to the right.
----@param clr table color
----@return table
+---@param clr Clr color
+---@return ClrGradient
 function ClrGradient:prepend(clr)
     self:compressKeysRight(1)
     table.insert(self.keys, 0,
@@ -146,7 +149,7 @@ end
 ---not passed by reference. Shifts existing
 ---keys to the right.
 ---@param clrs table color array
----@return table
+---@return ClrGradient
 function ClrGradient:prependAll(clrs)
     local prpLen = #clrs
     self:compressKeysRight(prpLen)
@@ -172,7 +175,7 @@ function ClrGradient:prependAll(clrs)
 end
 
 ---Sorts the color keys in this gradient.
----@return table
+---@return ClrGradient
 function ClrGradient:sort()
     table.sort(self.keys)
     return self
@@ -181,7 +184,7 @@ end
 ---Internal helper function to locate the insertion
 ---point for a step in the gradient so as to keep
 ---sorted order.
----@param cg table color gradient
+---@param cg ClrGradient color gradient
 ---@param step number step
 ---@return integer
 function ClrGradient.bisectRight(cg, step)
@@ -205,10 +208,10 @@ end
 ---an origin color, a destination color,
 ---and a number as a step. If nil, it defaults
 ---to a mix in linear sRGB.
----@param cg table color gradient
+---@param cg ClrGradient color gradient
 ---@param step number step
 ---@param easing function|nil easing function
----@return table
+---@return Clr
 function ClrGradient.eval(cg, step, easing)
     local t = step or 0.5
     local keys = cg.keys
@@ -247,7 +250,7 @@ end
 ---The easing function is expected to accept
 ---an origin color, a destination color,
 ---and a number as a step.
----@param cg table color gradient
+---@param cg ClrGradient color gradient
 ---@param count integer color count
 ---@param origin number|nil origin step
 ---@param dest number|nil destination step
@@ -281,7 +284,7 @@ end
 ---last color is unequal to the first, the first
 ---color is repeated at the end of the gradient.
 ---@param arr table color array
----@return table
+---@return ClrGradient
 function ClrGradient.fromColors(arr)
     -- TODO: Create separate fromColorsInternal?
     local len = #arr
@@ -329,7 +332,7 @@ end
 ---[0.0, 1.0] or under. Equal to the step of the
 ---last color key minus the step of the first.
 ---Assumes order of color keys has been sustained.
----@param cg table color gradient
+---@param cg ClrGradient color gradient
 ---@return number
 function ClrGradient.range(cg)
     return cg.keys[#cg.keys].step
@@ -339,7 +342,7 @@ end
 ---Creates a red-green-blue ramp.
 ---Contains seven colors and is a loop.
 ---Red is repeated at 0.0 and 1.0.
----@return table
+---@return ClrGradient
 function ClrGradient.rgb()
     return ClrGradient.newInternal({
         ClrKey.newByRef(0.0, Clr.red()),
@@ -353,7 +356,7 @@ function ClrGradient.rgb()
 end
 
 ---Returns a JSON sring of a color gradient.
----@param cg table color gradient
+---@param cg ClrGradient color gradient
 ---@return string
 function ClrGradient.toJson(cg)
     local str = "{\"keys\":["

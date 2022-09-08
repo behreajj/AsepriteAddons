@@ -1,5 +1,9 @@
 dofile("./knot2.lua")
 
+---@class Curve2
+---@field closedLoop boolean closed loop
+---@field knots table knots
+---@field name string name
 Curve2 = {}
 Curve2.__index = Curve2
 
@@ -16,7 +20,7 @@ setmetatable(Curve2, {
 ---@param cl boolean closed loop
 ---@param knots table knots
 ---@param name string|nil name
----@return table
+---@return Curve2
 function Curve2.new(cl, knots, name)
     local inst = setmetatable({}, Curve2)
     inst.closedLoop = cl or false
@@ -36,7 +40,7 @@ end
 ---Rotates this curve around the z axis by
 ---an angle in radians.
 ---@param radians number angle
----@return table
+---@return Curve2
 function Curve2:rotateZ(radians)
     return self:rotateZInternal(
         math.cos(radians),
@@ -47,7 +51,7 @@ end
 ---the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Curve2
 function Curve2:rotateZInternal(cosa, sina)
     local knsLen = #self.knots
     local i = 0
@@ -60,8 +64,8 @@ end
 
 ---Scales this curve.
 ---Defaults to scale by a vector.
----@param v table|number scalar
----@return table
+---@param v Vec2|number scalar
+---@return Curve2
 function Curve2:scale(v)
     if type(v) == "number" then
         return self:scaleNum(v)
@@ -72,7 +76,7 @@ end
 
 ---Scales this curve by a number.
 ---@param n number uniform scalar
----@return table
+---@return Curve2
 function Curve2:scaleNum(n)
     if n ~= 0.0 then
         local knsLen = #self.knots
@@ -86,8 +90,8 @@ function Curve2:scaleNum(n)
 end
 
 ---Scales this curve by a vector.
----@param v table nonuniform scalar
----@return table
+---@param v Vec2 nonuniform scalar
+---@return Curve2
 function Curve2:scaleVec2(v)
     if Vec2.all(v) then
         local knsLen = #self.knots
@@ -101,8 +105,8 @@ function Curve2:scaleVec2(v)
 end
 
 ---Translates this curve by a vector.
----@param v table vector
----@return table
+---@param v Vec2 vector
+---@return Curve2
 function Curve2:translate(v)
     local knsLen = #self.knots
     local i = 0
@@ -124,7 +128,7 @@ end
 ---@param offset number|nil stroke offset
 ---@param xOrigin number|nil origin x
 ---@param yOrigin number|nil origin y
----@return table
+---@return Curve2
 function Curve2.arcSector(startAngle, stopAngle, radius, stroke, offset, xOrigin, yOrigin)
     -- Supply default arguments.
     local yoVerif = yOrigin or 0.0
@@ -224,7 +228,7 @@ end
 ---@param yRadius number|nil vertical radius
 ---@param xOrigin number|nil x origin
 ---@param yOrigin number|nil y origin
----@return table
+---@return Curve2
 function Curve2.ellipse(xRadius, yRadius, xOrigin, yOrigin)
     -- Supply default arguments.
     local cy = yOrigin or 0.0
@@ -272,9 +276,9 @@ end
 
 ---Evaluates a curve by a step in [0.0, 1.0].
 ---Returns a vector representing a point on the curve.
----@param curve table curve
+---@param curve Curve2 curve
 ---@param step number step
----@return table
+---@return Vec2
 function Curve2.eval(curve, step)
     local t = step or 0.5
     local knots = curve.knots
@@ -314,8 +318,8 @@ end
 
 ---Evaluates a curve at its first knot,
 ---returning a copy of the first knot coord.
----@param curve table curve
----@return table
+---@param curve Curve2 curve
+---@return Vec2
 function Curve2.evalFirst(curve)
     local kFirst = curve.knots[1]
     local coFirst = kFirst.co
@@ -324,8 +328,8 @@ end
 
 ---Evaluates a curve at its last knot,
 ---returning a copy of the last knot coord.
----@param curve table curve
----@return table
+---@param curve Curve2 curve
+---@return Vec2
 function Curve2.evalLast(curve)
     local kLast = curve.knots[#curve.knots]
     local coLast = kLast.co
@@ -334,7 +338,7 @@ end
 
 ---Creats a curve that approximates Bernoulli's
 ---lemniscate, i.e., an infinity loop.
----@return table
+---@return Curve2
 function Curve2.infinity()
     return Curve2.new(true, {
         Knot2.new(
@@ -374,7 +378,7 @@ end
 ---@param tr number rounding top right corner
 ---@param br number rounding bottom right corner
 ---@param bl number rounding bottom left corner
----@return table
+---@return Curve2
 function Curve2.rect(lbx, lby, ubx, uby, tl, tr, br, bl)
     -- Validate edges.
     local lft = math.min(lbx, ubx)
@@ -581,7 +585,7 @@ function Curve2.rect(lbx, lby, ubx, uby, tl, tr, br, bl)
 end
 
 ---Returns a JSON string of a curve.
----@param c table curve
+---@param c Curve2 curve
 ---@return string
 function Curve2.toJson(c)
     local str = "{\"name\":\""

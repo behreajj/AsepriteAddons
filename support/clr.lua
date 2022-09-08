@@ -1,3 +1,8 @@
+---@class Clr
+---@field r number red channel
+---@field g number green channel
+---@field b number blue channel
+---@field a number transparency
 Clr = {}
 Clr.__index = Clr
 
@@ -32,7 +37,7 @@ Clr.LCH_HUE_SHADOW = 308.0 / 360.0
 ---@param g number green channel
 ---@param b number blue channel
 ---@param a number transparency
----@return table
+---@return Clr
 function Clr.new(r, g, b, a)
     local inst = setmetatable({}, Clr)
     inst.a = a or 1.0
@@ -80,7 +85,7 @@ end
 
 ---Evaluates whether all color channels are
 ---greater than zero.
----@param c table color
+---@param c Clr color
 ---@return boolean
 function Clr.all(c)
     return c.a > 0.0 and c.b > 0.0 and c.g > 0.0 and c.r > 0.0
@@ -88,7 +93,7 @@ end
 
 ---Returns true if the alpha channel is within
 ---the range [0.0, 1.0].
----@param c table color
+---@param c Clr color
 ---@param tol number|nil tolerance
 ---@return boolean
 function Clr.alphaIsInGamut(c, tol)
@@ -98,16 +103,16 @@ end
 
 ---Evaluates whether the color's alpha channel
 ---is greater than zero.
----@param c table color
+---@param c Clr color
 ---@return boolean
 function Clr.any(c)
     return c.a > 0.0
 end
 
 ---Finds the bitwise and (&) for two colors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Clr left operand
+---@param b Clr right operand
+---@return Clr
 function Clr.bitAnd(a, b)
     return Clr.fromHex(Clr.toHex(a) & Clr.toHex(b))
 end
@@ -116,8 +121,8 @@ end
 ---green, blue and alpha channels when considered
 ---as 32 bit integers where overflow is clamped
 ---to [0, 255].
----@param a table left comparisand
----@param b table right comparisand
+---@param a Clr left comparisand
+---@param b Clr right comparisand
 ---@return boolean
 function Clr.bitEq(a, b)
     return Clr.bitEqAlpha(a, b)
@@ -127,8 +132,8 @@ end
 ---Evaluates whether two colors have equal alpha
 ---when considered as a byte where overflow is
 ---clamped to [0, 255].
----@param a table left comparisand
----@param b table right comparisand
+---@param a Clr left comparisand
+---@param b Clr right comparisand
 ---@return boolean
 function Clr.bitEqAlpha(a, b)
     -- This is used by the == operator, so defaults
@@ -146,8 +151,8 @@ end
 ---green and blue channels when considered as
 ---24 bit integers where overflow is clamped
 ---to [0, 255].
----@param a table left comparisand
----@param b table right comparisand
+---@param a Clr left comparisand
+---@param b Clr right comparisand
 ---@return boolean
 function Clr.bitEqRgb(a, b)
     -- This is used by the == operator, so defaults
@@ -186,25 +191,25 @@ function Clr.bitEqRgb(a, b)
 end
 
 ---Finds the bitwise not (~) for a color.
----@param c table color
----@return table
+---@param c Clr color
+---@return Clr
 function Clr.bitNot(c)
     return Clr.fromHex(~Clr.toHex(c))
 end
 
 ---Finds the bitwise inclusive or (|) for two colors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Clr left operand
+---@param b Clr right operand
+---@return Clr
 function Clr.bitOr(a, b)
     return Clr.fromHex(Clr.toHex(a) | Clr.toHex(b))
 end
 
 ---Rotates a color left by a number of places.
 ---Use 8, 16, 24 for complete channel rotations.
----@param c table color
+---@param c Clr color
 ---@param places integer shift
----@return table
+---@return Clr
 function Clr.bitRotateLeft(c, places)
     local x = Clr.toHex(c)
     return Clr.fromHex(
@@ -214,9 +219,9 @@ end
 
 ---Rotates a color right by a number of places.
 ---Use 8, 16, 24 for complete channel rotations.
----@param c table color
+---@param c Clr color
 ---@param places integer shift
----@return table
+---@return Clr
 function Clr.bitRotateRight(c, places)
     local x = Clr.toHex(c)
     return Clr.fromHex(
@@ -226,26 +231,26 @@ end
 
 ---Shifts a color left (<<) by a number of places.
 ---Use 8, 16, 24 for complete channel shifts.
----@param c table color
+---@param c Clr color
 ---@param places integer shift
----@return table
+---@return Clr
 function Clr.bitShiftLeft(c, places)
     return Clr.fromHex(Clr.toHex(c) << places)
 end
 
 ---Shifts a color right (>>) by a number of places.
 ---Use 8, 16, 24 for complete channel shifts.
----@param c table color
+---@param c Clr color
 ---@param places integer shift
----@return table
+---@return Clr
 function Clr.bitShiftRight(c, places)
     return Clr.fromHex(Clr.toHex(c) >> places)
 end
 
 ---Finds the bitwise exclusive or (~) for two colors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Clr left operand
+---@param b Clr right operand
+---@return Clr
 function Clr.bitXor(a, b)
     return Clr.fromHex(Clr.toHex(a) ~ Clr.toHex(b))
 end
@@ -253,9 +258,9 @@ end
 ---Blends two colors together by their alpha.
 ---Premultiplies each color by its alpha prior
 ---to blending. Unpremultiplies the result.
----@param a table source color
----@param b table destination color
----@return table
+---@param a Clr source
+---@param b Clr destination
+---@return Clr
 function Clr.blend(a, b)
     return Clr.blendInternal(
         Clr.clamp01(a),
@@ -268,9 +273,9 @@ end
 ---Does not check to see if color channels
 ---are in gamut. For more information,
 ---see https://www.w3.org/TR/compositing-1/ .
----@param a table source color
----@param b table destination color
----@return table
+---@param a Clr source
+---@param b Clr destination
+---@return Clr
 function Clr.blendInternal(a, b)
     local t = b.a
     local u = 1.0 - t
@@ -296,8 +301,8 @@ function Clr.blendInternal(a, b)
 end
 
 ---Clamps a color to [0.0, 1.0].
----@param c table color
----@return table
+---@param c Clr color
+---@return Clr
 function Clr.clamp01(c)
     local cr = c.r or 0.0
     if cr < 0.0 then cr = 0.0
@@ -321,7 +326,7 @@ end
 ---Converts from a hexadecimal representation
 ---of a color stored as 0xAABBGGRR.
 ---@param c integer hexadecimal color
----@return table
+---@return Clr
 function Clr.fromHex(c)
     return Clr.new(
         (c & 0xff) * 0.003921568627451,
@@ -348,7 +353,7 @@ end
 ---Converts from a web-friendly hexadecimal
 ---string, such as #AABBCC, to a color.
 ---@param hexstr string web string
----@return table
+---@return Clr
 function Clr.fromHexWeb(hexstr)
     local s = hexstr
 
@@ -510,7 +515,7 @@ end
 ---@param sat number saturation
 ---@param light number lightness
 ---@param alpha number transparency
----@return table
+---@return Clr
 function Clr.hslaTosRgba(hue, sat, light, alpha)
     local a = alpha or 1.0
 
@@ -578,7 +583,7 @@ end
 ---@param sat number saturation
 ---@param val number value
 ---@param alpha number transparency
----@return table
+---@return Clr
 function Clr.hsvaTosRgba(hue, sat, val, alpha)
     local a = alpha or 1.0
 
@@ -668,7 +673,7 @@ end
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
 ---@param alpha number alpha channel
----@return table
+---@return Clr
 function Clr.labTosRgba(l, a, b, alpha)
     local xyz = Clr.labToXyz(l, a, b, alpha)
     return Clr.xyzaTosRgba(xyz.x, xyz.y, xyz.z, xyz.a)
@@ -786,7 +791,7 @@ end
 ---@param h number hue
 ---@param a number alpha channel
 ---@param tol number|nil grayscale tolerance
----@return table
+---@return Clr
 function Clr.lchTosRgba(l, c, h, a, tol)
     local x = Clr.lchToLab(l, c, h, a, tol)
     return Clr.labTosRgba(x.l, x.a, x.b, x.alpha)
@@ -795,42 +800,42 @@ end
 ---Converts a color from linear RGB to standard RGB (sRGB).
 ---Clamps the input color to [0.0, 1.0].
 ---Does not transform the alpha channel.
----@param a table color
----@return table
-function Clr.lRgbaTosRgba(a)
-    return Clr.lRgbaTosRgbaInternal(Clr.clamp01(a))
+---@param c table linear color
+---@return Clr
+function Clr.lRgbaTosRgba(c)
+    return Clr.lRgbaTosRgbaInternal(Clr.clamp01(c))
 end
 
 ---Converts a color from linear RGB to standard RGB (sRGB).
 ---Does not transform the alpha channel.
 ---See https://www.wikiwand.com/en/SRGB.
----@param a table color
----@return table
-function Clr.lRgbaTosRgbaInternal(a)
+---@param c Clr linear color
+---@return Clr
+function Clr.lRgbaTosRgbaInternal(c)
     -- 1.0 / 2.4 = 0.41666666666667
 
-    local sr = a.r
+    local sr = c.r
     if sr <= 0.0031308 then
         sr = sr * 12.92
     else
         sr = (sr ^ 0.41666666666667) * 1.055 - 0.055
     end
 
-    local sg = a.g
+    local sg = c.g
     if sg <= 0.0031308 then
         sg = sg * 12.92
     else
         sg = (sg ^ 0.41666666666667) * 1.055 - 0.055
     end
 
-    local sb = a.b
+    local sb = c.b
     if sb <= 0.0031308 then
         sb = sb * 12.92
     else
         sb = (sb ^ 0.41666666666667) * 1.055 - 0.055
     end
 
-    return Clr.new(sr, sg, sb, a.a)
+    return Clr.new(sr, sg, sb, c.a)
 end
 
 ---Converts a color from linear RGBA to CIE XYZ.
@@ -862,7 +867,7 @@ end
 
 ---Finds the relative luminance of a color.
 ---Assumes the color is in sRGB.
----@param c table color
+---@param c Clr color
 ---@return number
 function Clr.luminance(c)
     return Clr.lumsRgb(c)
@@ -871,7 +876,7 @@ end
 ---Finds the relative luminance of a linear color,
 ---https://www.wikiwand.com/en/Relative_luminance,
 ---according to recommendation 709.
----@param c table color
+---@param c Clr color
 ---@return number
 function Clr.lumlRgb(c)
     return c.r * 0.21264934272065
@@ -882,7 +887,7 @@ end
 ---Finds the relative luminance of a sRGB color,
 ---https://www.wikiwand.com/en/Relative_luminance,
 ---according to recommendation 709.
----@param c table color
+---@param c Clr color
 ---@return number
 function Clr.lumsRgb(c)
     return Clr.lumlRgb(Clr.sRgbaTolRgbaInternal(c))
@@ -892,10 +897,10 @@ end
 ---Defaults to the fastest algorithm, i.e.,
 ---applies linear interpolation to each channel
 ---with no color space transformation.
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
----@return table
+---@return Clr
 function Clr.mix(a, b, t)
     return Clr.mixlRgba(a, b, t)
 end
@@ -905,11 +910,11 @@ end
 ---destination and factor, all numbers.
 ---The step is clamped to [0.0, 1.0].
 ---The hue function defaults to near.
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
 ---@param hueFunc function|nil hue function
----@return table
+---@return Clr
 function Clr.mixHsla(a, b, t, hueFunc)
     local u = t or 0.5
     if u <= 0.0 then return Clr.clamp01(a) end
@@ -941,11 +946,11 @@ end
 ---If one color's saturation is near zero and
 ---the other's is not, the former will adopt
 ---the hue of the latter.
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
 ---@param hueFunc function hue function
----@return table
+---@return Clr
 function Clr.mixHslaInternal(a, b, t, hueFunc)
     local aHsla = Clr.sRgbaToHslaInternal(a.r, a.g, a.b, a.a)
     local bHsla = Clr.sRgbaToHslaInternal(b.r, b.g, b.b, b.a)
@@ -970,11 +975,11 @@ end
 ---destination and factor, all numbers.
 ---The step is clamped to [0.0, 1.0].
 ---The hue function defaults to near.
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
 ---@param hueFunc function|nil hue function
----@return table
+---@return Clr
 function Clr.mixHsva(a, b, t, hueFunc)
     local u = t or 0.5
     if u <= 0.0 then return Clr.clamp01(a) end
@@ -1006,11 +1011,11 @@ end
 ---If one color's saturation is near zero and
 ---the other's is not, the former will adopt
 ---the hue of the latter.
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
 ---@param hueFunc function hue function
----@return table
+---@return Clr
 function Clr.mixHsvaInternal(a, b, t, hueFunc)
     local aHsva = Clr.sRgbaToHsvaInternal(a.r, a.g, a.b, a.a)
     local bHsva = Clr.sRgbaToHsvaInternal(b.r, b.g, b.b, b.a)
@@ -1033,10 +1038,10 @@ end
 ---Mixes two colors in CIE LAB space by a step,
 ---then converts the result to a sRGB color.
 ---Clamps the step to [0.0, 1.0].
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
----@return table
+---@return Clr
 function Clr.mixLab(a, b, t)
     local u = t or 0.5
     if u <= 0.0 then
@@ -1050,10 +1055,10 @@ end
 
 ---Mixes two colors in CIE LAB space by a step,
 ---then converts the result to a sRGB color.
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
----@return table
+---@return Clr
 function Clr.mixLabInternal(a, b, t)
     local u = 1.0 - t
     local aLab = Clr.sRgbaToLab(a)
@@ -1070,11 +1075,11 @@ end
 ---destination and factor, all numbers.
 ---The step is clamped to [0.0, 1.0].
 ---The hue function defaults to near.
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
 ---@param hueFunc function|nil hue function
----@return table
+---@return Clr
 function Clr.mixLch(a, b, t, hueFunc)
     local u = t or 0.5
     if u <= 0.0 then
@@ -1109,11 +1114,11 @@ end
 ---If one color's chroma is near zero and the
 ---other's is not, the former will adopt the
 ---hue of the latter.
----@param a table origin
----@param b table color
+---@param a Clr origin
+---@param b Clr color
 ---@param t number step
 ---@param hueFunc function hue function
----@return table
+---@return Clr
 function Clr.mixLchInternal(a, b, t, hueFunc)
     local aLab = Clr.sRgbaToLab(a)
     local aa = aLab.a
@@ -1153,10 +1158,10 @@ end
 ---Mixes two colors in RGBA space by a step.
 ---Assumes that the colors are in linear space.
 ---Clamps the step to [0.0, 1.0].
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
----@return table
+---@return Clr
 function Clr.mixlRgba(a, b, t)
     local u = t or 0.5
     if u <= 0.0 then
@@ -1170,10 +1175,10 @@ end
 
 ---Mixes two colors in RGBA space by a step.
 ---Assumes that the colors are in linear space.
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
----@return table
+---@return Clr
 function Clr.mixlRgbaInternal(a, b, t)
     local u = 1.0 - t
     return Clr.new(
@@ -1187,10 +1192,10 @@ end
 ---Converts the colors from standard to linear,
 ---interpolates, then converts from linear
 ---to standard. Clamps the step to [0.0, 1.0].
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
----@return table
+---@return Clr
 function Clr.mixsRgba(a, b, t)
     local u = t or 0.5
     if u <= 0.0 then
@@ -1206,10 +1211,10 @@ end
 ---Converts the colors from standard to linear,
 ---interpolates, then converts from linear
 ---to standard.
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
----@return table
+---@return Clr
 function Clr.mixsRgbaInternal(a, b, t)
     return Clr.lRgbaTosRgbaInternal(
         Clr.mixlRgbaInternal(
@@ -1220,10 +1225,10 @@ end
 ---Mixes two colors in CIE XYZ space by a step,
 ---then converts the result to a sRGB color.
 ---Clamps the step to [0.0, 1.0].
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
----@return table
+---@return Clr
 function Clr.mixXyz(a, b, t)
     local u = t or 0.5
     if u <= 0.0 then
@@ -1237,10 +1242,10 @@ end
 
 ---Mixes two colors in CIE XYZ space by a step,
 ---then converts the result to a sRGB color.
----@param a table origin
----@param b table destination
+---@param a Clr origin
+---@param b Clr destination
 ---@param t number step
----@return table
+---@return Clr
 function Clr.mixXyzInternal(a, b, t)
     local u = 1.0 - t
     local aXyz = Clr.sRgbaToXyz(a)
@@ -1254,7 +1259,7 @@ end
 
 ---Evaluates whether the color's alpha channel
 ---is less than or equal to zero.
----@param c table color
+---@param c Clr color
 ---@return boolean
 function Clr.none(c)
     return c.a <= 0.0
@@ -1266,8 +1271,8 @@ end
 ---Returns clear black if the alpha is less
 ---than or equal to 0.0. Sets the alpha to
 ---1.0 it is greater than or equal to 1.0.
----@param c table color
----@return table
+---@param c Clr color
+---@return Clr
 function Clr.premul(c)
     if c.a <= 0.0 then
         return Clr.clearBlack()
@@ -1285,9 +1290,9 @@ end
 ---Reduces the granularity of a color's components
 ---in sRGB. Uses signed quantization, as the color
 ---may be out of gamut.
----@param c table color
+---@param c Clr color
 ---@param levels integer levels
----@return table
+---@return Clr
 function Clr.quantize(c, levels)
     if levels and levels > 0 and levels < 256 then
         local delta = 1.0 / levels
@@ -1306,7 +1311,7 @@ end
 ---Internal helper function.
 ---Assumes that levels are within [1, 255] and the
 ---inverse of levels has already been calculated.
----@param c table color
+---@param c Clr color
 ---@param rLv number red levels
 ---@param rDt number red inverse
 ---@param gLv number green levels
@@ -1315,9 +1320,8 @@ end
 ---@param bDt number blue inverse
 ---@param aLv number alpha levels
 ---@param aDt number alpha inverse
----@return table
+---@return Clr
 function Clr.quantizeInternal(c, rLv, rDt, gLv, gDt, bLv, bDt, aLv, aDt)
-
     return Clr.new(
         rDt * math.floor(c.r * rLv + 0.5),
         gDt * math.floor(c.g * gLv + 0.5),
@@ -1327,15 +1331,15 @@ end
 
 ---Creates a random color in CIE LAB space,
 ---converts it to sRGB, then clips to gamut.
----@param dark number light lower bound
----@param light number light upper bound
----@param green number a lower bound
----@param red number a upper bound
----@param blue number b lower bound
----@param yellow number b upper bound
----@param trns number alpha lower bound
----@param opaque number alpha upper bound
----@return table
+---@param dark number|nil light lower bound
+---@param light number|nil light upper bound
+---@param green number|nil a lower bound
+---@param red number|nil a upper bound
+---@param blue number|nil b lower bound
+---@param yellow number|nil b upper bound
+---@param trns number|nil alpha lower bound
+---@param opaque number|nil alpha upper bound
+---@return Clr
 function Clr.random(dark, light, green, red, blue, yellow, trns, opaque)
     local lMin = dark or 0.0
     local lMax = light or 100.0
@@ -1360,7 +1364,7 @@ end
 
 ---Returns true if the red, green and blue
 ---channels are within the range [0.0, 1.0].
----@param c table color
+---@param c Clr color
 ---@param tol number|nil tolerance
 ---@return boolean
 function Clr.rgbIsInGamut(c, tol)
@@ -1372,7 +1376,7 @@ end
 
 ---Returns true if all color channels are
 ---within the range [0.0, 1.0].
----@param c table color
+---@param c Clr color
 ---@param tol number|nil tolerance
 ---@return boolean
 function Clr.rgbaIsInGamut(c, tol)
@@ -1383,7 +1387,7 @@ end
 ---Converts a color to hue, saturation and value.
 ---The return table uses the keys h, s, l and a
 ---with values in the range [0.0, 1.0].
----@param c table color
+---@param c Clr color
 ---@return table
 function Clr.sRgbaToHsla(c)
     local cl = Clr.clamp01(c)
@@ -1474,7 +1478,7 @@ end
 ---Converts a color to hue, saturation and value.
 ---The return table uses the keys h, s, v and a
 ---with values in the range [0.0, 1.0].
----@param c table color
+---@param c Clr color
 ---@return table
 function Clr.sRgbaToHsva(c)
     local cl = Clr.clamp01(c)
@@ -1567,7 +1571,7 @@ end
 ---Converts a color from standard RGB to CIE LAB.
 ---The return table uses the keys l, a, b and alpha.
 ---The alpha channel is unaffected by the transform.
----@param c table color
+---@param c Clr color
 ---@return table
 function Clr.sRgbaToLab(c)
     local xyz = Clr.sRgbaToXyz(c)
@@ -1580,7 +1584,7 @@ end
 ---Chroma is expected to be in [0.0, 135.0].
 ---Hue is expected to be in [0.0, 1.0].
 ---The alpha channel is unaffected by the transform.
----@param c table color
+---@param c Clr color
 ---@param tol number|nil gray tolerance
 ---@return table
 function Clr.sRgbaToLch(c, tol)
@@ -1591,8 +1595,8 @@ end
 ---Converts a color from standard RGB (sRGB) to linear RGB.
 ---Clamps the input color to [0.0, 1.0].
 ---Does not transform the alpha channel.
----@param c table color
----@return table
+---@param c Clr color
+---@return Clr
 function Clr.sRgbaTolRgba(c)
     return Clr.sRgbaTolRgbaInternal(Clr.clamp01(c))
 end
@@ -1600,8 +1604,8 @@ end
 ---Converts a color from standard RGB (sRGB) to linear RGB.
 ---Does not transform the alpha channel.
 ---See https://www.wikiwand.com/en/SRGB.
----@param c table color
----@return table
+---@param c Clr color
+---@return Clr
 function Clr.sRgbaTolRgbaInternal(c)
     -- 1.0 / 12.92 = 0.077399380804954
     -- 1.0 / 1.055 = 0.9478672985782
@@ -1633,7 +1637,7 @@ end
 ---Converts a color from standard RGB to CIE XYZ.
 ---The return table uses the keys x, y, z and a.
 ---The alpha channel is unaffected by the transform.
----@param c table color
+---@param c Clr color
 ---@return table
 function Clr.sRgbaToXyz(c)
     local l = Clr.sRgbaTolRgbaInternal(c)
@@ -1643,7 +1647,7 @@ end
 ---Converts from a color to a hexadecimal integer.
 ---Channels are packed in 0xAABBGGRR order.
 ---Ensures that color values are valid, in [0.0, 1.0].
----@param c table color
+---@param c Clr color
 ---@return integer
 function Clr.toHex(c)
     return Clr.toHexUnchecked(Clr.clamp01(c))
@@ -1651,7 +1655,7 @@ end
 
 ---Converts from a color to a hexadecimal integer.
 ---Channels are packed in 0xAABBGGRR order.
----@param c table color
+---@param c Clr color
 ---@return integer
 function Clr.toHexUnchecked(c)
     return math.floor(c.a * 0xff + 0.5) << 0x18
@@ -1664,7 +1668,7 @@ end
 ---string. Channels are packed in RRGGBB order. Does
 ---not prepend a hashtag ('#').
 ---Ensures that color values are valid, in [0.0, 1.0].
----@param c table color
+---@param c Clr color
 ---@return string
 function Clr.toHexWeb(c)
     return Clr.toHexWebUnchecked(Clr.clamp01(c))
@@ -1673,7 +1677,7 @@ end
 ---Converts from a color to a web-friendly hexadecimal
 ---string. Channels are packed in RRGGBB order. Does
 ---not prepend a hashtag ('#').
----@param c table color
+---@param c Clr color
 ---@return string
 function Clr.toHexWebUnchecked(c)
     return string.format("%06X",
@@ -1683,7 +1687,7 @@ function Clr.toHexWebUnchecked(c)
 end
 
 ---Returns a JSON string of a color.
----@param c table color
+---@param c Clr color
 ---@return string
 function Clr.toJson(c)
     return string.format(
@@ -1698,8 +1702,8 @@ end
 ---Returns clear black if the alpha is less
 ---than or equal to 0.0. Sets the alpha to
 ---1.0 it is greater than or equal to 1.0.
----@param c table color
----@return table
+---@param c Clr color
+---@return Clr
 function Clr.unpremul(c)
     if c.a <= 0.0 then
         return Clr.clearBlack()
@@ -1769,7 +1773,7 @@ end
 ---@param y number y channel
 ---@param z number z channel
 ---@param alpha number alpha channel
----@return table
+---@return Clr
 function Clr.xyzaTolRgba(x, y, z, alpha)
     local aVerif = alpha or 1.0
     return Clr.new(
@@ -1794,68 +1798,68 @@ end
 ---@param y number y channel
 ---@param z number z channel
 ---@param alpha number alpha channel
----@return table
+---@return Clr
 function Clr.xyzaTosRgba(x, y, z, alpha)
     return Clr.lRgbaTosRgbaInternal(
         Clr.xyzaTolRgba(x, y, z, alpha))
 end
 
 ---Creates a red color.
----@return table
+---@return Clr
 function Clr.red()
     return Clr.new(1.0, 0.0, 0.0, 1.0)
 end
 
 ---Creates a green color.
----@return table
+---@return Clr
 function Clr.green()
     return Clr.new(0.0, 1.0, 0.0, 1.0)
 end
 
 ---Creates a blue color.
----@return table
+---@return Clr
 function Clr.blue()
     return Clr.new(0.0, 0.0, 1.0, 1.0)
 end
 
 ---Creates a cyan color.
----@return table
+---@return Clr
 function Clr.cyan()
     return Clr.new(0.0, 1.0, 1.0, 1.0)
 end
 
 ---Creates a magenta color.
----@return table
+---@return Clr
 function Clr.magenta()
     return Clr.new(1.0, 0.0, 1.0, 1.0)
 end
 
 ---Creates a yellow color.
----@return table
+---@return Clr
 function Clr.yellow()
     return Clr.new(1.0, 1.0, 0.0, 1.0)
 end
 
 ---Creates a black color.
----@return table
+---@return Clr
 function Clr.black()
     return Clr.new(0.0, 0.0, 0.0, 1.0)
 end
 
 ---Creates a white color.
----@return table
+---@return Clr
 function Clr.white()
     return Clr.new(1.0, 1.0, 1.0, 1.0)
 end
 
 ---Creates a transparent black color.
----@return table
+---@return Clr
 function Clr.clearBlack()
     return Clr.new(0.0, 0.0, 0.0, 0.0)
 end
 
 ---Creates a transparent white color.
----@return table
+---@return Clr
 function Clr.clearWhite()
     return Clr.new(1.0, 1.0, 1.0, 0.0)
 end

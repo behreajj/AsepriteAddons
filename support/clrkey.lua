@@ -1,5 +1,8 @@
 dofile("./clr.lua")
 
+---@class ClrKey
+---@field clr Clr color
+---@field step number step
 ClrKey = {}
 ClrKey.__index = ClrKey
 
@@ -11,8 +14,8 @@ setmetatable(ClrKey, {
 ---Creates a new color key.
 ---Defaults to passing the color by value.
 ---@param step number step
----@param clr table|integer color
----@return table
+---@param clr Clr|integer color
+---@return ClrKey
 function ClrKey.new(step, clr)
     return ClrKey.newByVal(step, clr)
 end
@@ -21,8 +24,8 @@ end
 ---The color is assigned by reference.
 ---The step is clamped to [0.0, 1.0].
 ---@param step number step
----@param clr table color
----@return table
+---@param clr Clr color
+---@return ClrKey
 function ClrKey.newByRef(step, clr)
     local inst = setmetatable({}, ClrKey)
     inst.step = 0.0
@@ -37,8 +40,8 @@ end
 ---The color is copied by value.
 ---The step is clamped to [0.0, 1.0].
 ---@param step number step
----@param clr table|integer color
----@return table
+---@param clr Clr|integer color
+---@return ClrKey
 function ClrKey.newByVal(step, clr)
     local inst = setmetatable({}, ClrKey)
 
@@ -79,7 +82,7 @@ function ClrKey:__tostring()
 end
 
 ---Returns a JSON string of a color key.
----@param ck table color key
+---@param ck ClrKey color key
 ---@return string
 function ClrKey.toJson(ck)
     return string.format(

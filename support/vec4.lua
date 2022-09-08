@@ -1,3 +1,8 @@
+---@class Vec4
+---@field x number x component
+---@field y number y component
+---@field z number z component
+---@field w number w component
 Vec4 = {}
 Vec4.__index = Vec4
 
@@ -11,7 +16,7 @@ setmetatable(Vec4, {
 ---@param y number y component
 ---@param z number z component
 ---@param w number w component
----@return table
+---@return Vec4
 function Vec4.new(x, y, z, w)
     local inst = setmetatable({}, Vec4)
     inst.x = x or 0.0
@@ -81,20 +86,20 @@ function Vec4:__unm()
 end
 
 ---Finds a vector's absolute value, component-wise.
----@param a table vector
----@return table
-function Vec4.abs(a)
+---@param v Vec4 vector
+---@return Vec4
+function Vec4.abs(v)
     return Vec4.new(
-        math.abs(a.x),
-        math.abs(a.y),
-        math.abs(a.z),
-        math.abs(a.w))
+        math.abs(v.x),
+        math.abs(v.y),
+        math.abs(v.z),
+        math.abs(v.w))
 end
 
 ---Finds the sum of two vectors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec4 left operand
+---@param b Vec4 right operand
+---@return Vec4
 function Vec4.add(a, b)
     return Vec4.new(
         a.x + b.x,
@@ -104,29 +109,29 @@ function Vec4.add(a, b)
 end
 
 ---Evaluates if all vector components are non-zero.
----@param a table left operand
+---@param v Vec4 vector
 ---@return boolean
-function Vec4.all(a)
-    return a.x ~= 0.0
-        and a.y ~= 0.0
-        and a.z ~= 0.0
-        and a.w ~= 0.0
+function Vec4.all(v)
+    return v.x ~= 0.0
+        and v.y ~= 0.0
+        and v.z ~= 0.0
+        and v.w ~= 0.0
 end
 
 ---Evaluates if any vector components are non-zero.
----@param a table left operand
+---@param v Vec4 vector
 ---@return boolean
-function Vec4.any(a)
-    return a.x ~= 0.0
-        or a.y ~= 0.0
-        or a.z ~= 0.0
-        or a.w ~= 0.0
+function Vec4.any(v)
+    return v.x ~= 0.0
+        or v.y ~= 0.0
+        or v.z ~= 0.0
+        or v.w ~= 0.0
 end
 
 ---Evaluates whether two vectors are, within a
 ---tolerance, approximately equal.
----@param a table left operand
----@param b table right operand
+---@param a Vec4 left operand
+---@param b Vec4 right operand
 ---@param tol number|nil tolerance
 ---@return boolean
 function Vec4.approx(a, b, tol)
@@ -139,12 +144,12 @@ end
 
 ---Finds a point on a cubic Bezier curve
 ---according to a step in [0.0, 1.0] .
----@param ap0 table anchor point 0
----@param cp0 table control point 0
----@param cp1 table control point 1
----@param ap1 table anchor point 1
+---@param ap0 Vec4 anchor point 0
+---@param cp0 Vec4 control point 0
+---@param cp1 Vec4 control point 1
+---@param ap1 Vec4 anchor point 1
 ---@param step number step
----@return table
+---@return Vec4
 function Vec4.bezierPoint(ap0, cp0, cp1, ap1, step)
     local t = step or 0.5
     if t <= 0.0 then
@@ -174,21 +179,21 @@ function Vec4.bezierPoint(ap0, cp0, cp1, ap1, step)
 end
 
 ---Finds the ceiling of the vector.
----@param a table left operand
----@return table
-function Vec4.ceil(a)
+---@param v Vec4 vector
+---@return Vec4
+function Vec4.ceil(v)
     return Vec4.new(
-        math.ceil(a.x),
-        math.ceil(a.y),
-        math.ceil(a.z),
-        math.ceil(a.w))
+        math.ceil(v.x),
+        math.ceil(v.y),
+        math.ceil(v.z),
+        math.ceil(v.w))
 end
 
 ---A comparator method to sort vectors
 ---in a table according to their highest
 ---dimension first.
----@param a table left comparisand
----@param b table right comparisand
+---@param a Vec4 left comparisand
+---@param b Vec4 right comparisand
 ---@return boolean
 function Vec4.comparator(a, b)
     if a.w < b.w then return true end
@@ -206,9 +211,9 @@ end
 ---the sign of b is zero, the result is zero.
 ---Equivalent to multiplying the
 ---absolute value of a and the sign of b.
----@param a table magnitude
----@param b table sign
----@return table
+---@param a Vec4 magnitude
+---@param b Vec4 sign
+---@return Vec4
 function Vec4.copySign(a, b)
     local cx = 0.0
     local axAbs = math.abs(a.x)
@@ -238,9 +243,9 @@ function Vec4.copySign(a, b)
 end
 
 ---Finds the absolute difference between two vectors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec4 left operand
+---@param b Vec4 right operand
+---@return Vec4
 function Vec4.diff(a, b)
     return Vec4.new(
         math.abs(a.x - b.x),
@@ -251,16 +256,16 @@ end
 
 ---Finds the distance between two vectors.
 ---Defaults to Euclidean distance.
----@param a table left operand
----@param b table right operand
+---@param a Vec4 left operand
+---@param b Vec4 right operand
 ---@return number
 function Vec4.dist(a, b)
     return Vec4.distEuclidean(a, b)
 end
 
 ---Finds the Chebyshev distance between two vectors.
----@param a table left operand
----@param b table right operand
+---@param a Vec4 left operand
+---@param b Vec4 right operand
 ---@return number
 function Vec4.distChebyshev(a, b)
     return math.max(
@@ -271,8 +276,8 @@ function Vec4.distChebyshev(a, b)
 end
 
 ---Finds the Euclidean distance between two vectors.
----@param a table left operand
----@param b table right operand
+---@param a Vec4 left operand
+---@param b Vec4 right operand
 ---@return number
 function Vec4.distEuclidean(a, b)
     local dx = b.x - a.x
@@ -286,8 +291,8 @@ function Vec4.distEuclidean(a, b)
 end
 
 ---Finds the Manhattan distance between two vectors.
----@param a table left operand
----@param b table right operand
+---@param a Vec4 left operand
+---@param b Vec4 right operand
 ---@return number
 function Vec4.distManhattan(a, b)
     return math.abs(b.x - a.x)
@@ -299,8 +304,8 @@ end
 ---Finds the Minkowski distance between two vectors.
 ---When the exponent is 1, returns Manhattan distance.
 ---When the exponent is 2, returns Euclidean distance.
----@param a table left operand
----@param b table right operand
+---@param a Vec4 left operand
+---@param b Vec4 right operand
 ---@param c number exponent
 ---@return number
 function Vec4.distMinkowski(a, b, c)
@@ -318,8 +323,8 @@ end
 
 ---Finds the squared Euclidean distance between
 ---two vectors.
----@param a table left operand
----@param b table right operand
+---@param a Vec4 left operand
+---@param b Vec4 right operand
 ---@return number
 function Vec4.distSq(a, b)
     local dx = b.x - a.x
@@ -333,9 +338,9 @@ function Vec4.distSq(a, b)
 end
 
 ---Divides the left vector by the right, component-wise.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec4 left operand
+---@param b Vec4 right operand
+---@return Vec4
 function Vec4.div(a, b)
     local cx = 0.0
     local cy = 0.0
@@ -349,8 +354,8 @@ function Vec4.div(a, b)
 end
 
 ---Finds the dot product between two vectors.
----@param a table left operand
----@param b table right operand
+---@param a Vec4 left operand
+---@param b Vec4 right operand
 ---@return number
 function Vec4.dot(a, b)
     return a.x * b.x
@@ -362,8 +367,8 @@ end
 ---Evaluates whether two vectors are exactly
 ---equal. Checks for reference equality prior
 ---to value equality.
----@param a table left comparisand
----@param b table right comparisand
+---@param a Vec4 left comparisand
+---@param b Vec4 right comparisand
 ---@return boolean
 function Vec4.equals(a, b)
     return rawequal(a, b)
@@ -372,8 +377,8 @@ end
 
 ---Evaluates whether two vectors are exactly
 ---equal by component value.
----@param a table left comparisand
----@param b table right comparisand
+---@param a Vec4 left comparisand
+---@param b Vec4 right comparisand
 ---@return boolean
 function Vec4.equalsValue(a, b)
     return a.w == b.w
@@ -383,20 +388,20 @@ function Vec4.equalsValue(a, b)
 end
 
 ---Finds the floor of the vector.
----@param a table left operand
----@return table
-function Vec4.floor(a)
+---@param v Vec4 vector
+---@return Vec4
+function Vec4.floor(v)
     return Vec4.new(
-        math.floor(a.x),
-        math.floor(a.y),
-        math.floor(a.z),
-        math.floor(a.w))
+        math.floor(v.x),
+        math.floor(v.y),
+        math.floor(v.z),
+        math.floor(v.w))
 end
 
 ---Finds the floor division of two vectors.
----@param a table left operand
----@param b table left operand
----@return table
+---@param a Vec4 left operand
+---@param b Vec4 right operand
+---@return Vec4
 function Vec4.floorDiv(a, b)
     local cx = 0.0
     local cy = 0.0
@@ -412,9 +417,9 @@ end
 ---Finds the remainder of the division of the left
 ---operand by the right that rounds the quotient
 ---towards zero.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec4 left operand
+---@param b Vec4 right operand
+---@return Vec4
 function Vec4.fmod(a, b)
     local cx = a.x
     local cy = a.y
@@ -430,14 +435,14 @@ end
 ---Finds the fractional portion of of a vector.
 ---Subtracts the truncation of each component
 ---from itself, not the floor, unlike in GLSL.
----@param a table left operand
----@return table
-function Vec4.fract(a)
+---@param v Vec4 vector
+---@return Vec4
+function Vec4.fract(v)
     return Vec4.new(
-        math.fmod(a.x, 1.0),
-        math.fmod(a.y, 1.0),
-        math.fmod(a.z, 1.0),
-        math.fmod(a.w, 1.0))
+        math.fmod(v.x, 1.0),
+        math.fmod(v.y, 1.0),
+        math.fmod(v.z, 1.0),
+        math.fmod(v.w, 1.0))
 end
 
 ---Creates a one-dimensional table of vectors
@@ -447,8 +452,8 @@ end
 ---@param rows integer rows
 ---@param layers integer layers
 ---@param strata integer strata
----@param lb table lower bound
----@param ub table upper bound
+---@param lb Vec4 lower bound
+---@param ub Vec4 upper bound
 ---@return table
 function Vec4.gridCartesian(cols, rows, layers, strata, lb, ub)
     local ubVal = ub or Vec4.new(1.0, 1.0, 1.0, 1.0)
@@ -507,9 +512,9 @@ function Vec4.gridCartesian(cols, rows, layers, strata, lb, ub)
 end
 
 ---Multiplies two vectors component-wise.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec4 left operand
+---@param b Vec4 right operand
+---@return Vec4
 function Vec4.hadamard(a, b)
     return Vec4.new(
         a.x * b.x,
@@ -519,17 +524,17 @@ function Vec4.hadamard(a, b)
 end
 
 ---Finds a signed integer hash code for a vector.
----@param a table vector
+---@param v Vec4 vector
 ---@return integer
-function Vec4.hashCode(a)
+function Vec4.hashCode(v)
     local xBits = string.unpack("i4",
-        string.pack("f", a.x))
+        string.pack("f", v.x))
     local yBits = string.unpack("i4",
-        string.pack("f", a.y))
+        string.pack("f", v.y))
     local zBits = string.unpack("i4",
-        string.pack("f", a.z))
+        string.pack("f", v.z))
     local wBits = string.unpack("i4",
-        string.pack("f", a.w))
+        string.pack("f", v.w))
 
     local hsh = (((84696351 ~ xBits)
         * 16777619 ~ yBits)
@@ -547,31 +552,31 @@ end
 ---Limits a vector's magnitude to a scalar.
 ---Returns a copy of the vector if it is beneath
 ---the limit.
----@param a table the vector
----@param limit number the limit number
----@return table
-function Vec4.limit(a, limit)
-    local mSq = a.x * a.x
-        + a.y * a.y
-        + a.z * a.z
-        + a.w * a.w
+---@param v Vec4 vector
+---@param limit number limit number
+---@return Vec4
+function Vec4.limit(v, limit)
+    local mSq = v.x * v.x
+        + v.y * v.y
+        + v.z * v.z
+        + v.w * v.w
     if mSq > 0.0 and mSq > (limit * limit) then
         local mInv = limit / math.sqrt(mSq)
         return Vec4.new(
-            a.x * mInv,
-            a.y * mInv,
-            a.z * mInv,
-            a.w * mInv)
+            v.x * mInv,
+            v.y * mInv,
+            v.z * mInv,
+            v.w * mInv)
     end
-    return Vec4.new(a.x, a.y, a.z, a.w)
+    return Vec4.new(v.x, v.y, v.z, v.w)
 end
 
 ---Finds the linear step between a left and
 ---right edge given a factor.
----@param edge0 table left edge
----@param edge1 table right edge
----@param x table factor
----@return table
+---@param edge0 Vec4 left edge
+---@param edge1 Vec4 right edge
+---@param x Vec4 factor
+---@return Vec4
 function Vec4.linearstep(edge0, edge1, x)
     local cx = 0.0
     local xDenom = edge1.x - edge0.x
@@ -605,30 +610,30 @@ function Vec4.linearstep(edge0, edge1, x)
 end
 
 ---Finds a vector's magnitude, or length.
----@param a table left operand
+---@param v Vec4 vector
 ---@return number
-function Vec4.mag(a)
+function Vec4.mag(v)
     return math.sqrt(
-        a.x * a.x
-        + a.y * a.y
-        + a.z * a.z
-        + a.w * a.w)
+        v.x * v.x
+        + v.y * v.y
+        + v.z * v.z
+        + v.w * v.w)
 end
 
 ---Finds a vector's magnitude squared.
----@param a table left operand
+---@param v Vec4 vector
 ---@return number
-function Vec4.magSq(a)
-    return a.x * a.x
-        + a.y * a.y
-        + a.z * a.z
-        + a.w * a.w
+function Vec4.magSq(v)
+    return v.x * v.x
+        + v.y * v.y
+        + v.z * v.z
+        + v.w * v.w
 end
 
 ---Finds the greater of two vectors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec4 left operand
+---@param b Vec4 right operand
+---@return Vec4
 function Vec4.max(a, b)
     return Vec4.new(
         math.max(a.x, b.x),
@@ -638,9 +643,9 @@ function Vec4.max(a, b)
 end
 
 ---Finds the lesser of two vectors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec4 left operand
+---@param b Vec4 right operand
+---@return Vec4
 function Vec4.min(a, b)
     return Vec4.new(
         math.min(a.x, b.x),
@@ -651,24 +656,24 @@ end
 
 ---Mixes two vectors together by a step.
 ---Defaults to mixing by a vector.
----@param a table origin
----@param b table destination
----@param t table|number step
----@return table
+---@param a Vec4 origin
+---@param b Vec4 destination
+---@param t Vec4|number step
+---@return Vec4
 function Vec4.mix(a, b, t)
     if type(t) == "number" then
         return Vec4.mixNum(a, b, t)
     else
-        return Vec4.mixVec2(a, b, t)
+        return Vec4.mixVec4(a, b, t)
     end
 end
 
 ---Mixes two vectors together by a step.
 ---The step is a number.
----@param a table origin
----@param b table destination
+---@param a Vec4 origin
+---@param b Vec4 destination
 ---@param t number step
----@return table
+---@return Vec4
 function Vec4.mixNum(a, b, t)
     local v = t or 0.5
     local u = 1.0 - v
@@ -682,10 +687,10 @@ end
 ---Mixes two vectors together by a step.
 ---The step is a vector. Use in conjunction
 ---with step, linearstep and smoothstep.
----@param a table origin
----@param b table destination
----@param t table step
----@return table
+---@param a Vec4 origin
+---@param b Vec4 destination
+---@param t Vec4 step
+---@return Vec4
 function Vec4.mixVec4(a, b, t)
     return Vec4.new(
         (1.0 - t.x) * a.x + t.x * b.x,
@@ -695,9 +700,9 @@ function Vec4.mixVec4(a, b, t)
 end
 
 ---Finds the remainder of floor division of two vectors.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec4 left operand
+---@param b Vec4 right operand
+---@return Vec4
 function Vec4.mod(a, b)
     local cx = a.x
     local cy = a.y
@@ -711,46 +716,46 @@ function Vec4.mod(a, b)
 end
 
 ---Negates a vector.
----@param a table vector
----@return table
-function Vec4.negate(a)
-    return Vec4.new(-a.x, -a.y, -a.z, -a.w)
+---@param v Vec4 vector
+---@return Vec4
+function Vec4.negate(v)
+    return Vec4.new(-v.x, -v.y, -v.z, -v.w)
 end
 
 ---Evaluates if all vector components are zero.
----@param a table
+---@param v Vec4 vector
 ---@return boolean
-function Vec4.none(a)
-    return a.x == 0.0
-        and a.y == 0.0
-        and a.z == 0.0
-        and a.w == 0.0
+function Vec4.none(v)
+    return v.x == 0.0
+        and v.y == 0.0
+        and v.z == 0.0
+        and v.w == 0.0
 end
 
 ---Divides a vector by its magnitude, such that it
 ---lies on the unit circle.
----@param a table vector
----@return table
-function Vec4.normalize(a)
-    local mSq = a.x * a.x
-        + a.y * a.y
-        + a.z * a.z
-        + a.w * a.w
+---@param v Vec4 vector
+---@return Vec4
+function Vec4.normalize(v)
+    local mSq = v.x * v.x
+        + v.y * v.y
+        + v.z * v.z
+        + v.w * v.w
     if mSq > 0.0 then
         local mInv = 1.0 / math.sqrt(mSq)
         return Vec4.new(
-            a.x * mInv,
-            a.y * mInv,
-            a.z * mInv,
-            a.w * mInv)
+            v.x * mInv,
+            v.y * mInv,
+            v.z * mInv,
+            v.w * mInv)
     end
     return Vec4.new(0.0, 0.0, 0.0, 0.0)
 end
 
 ---Raises a vector to the power of another.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec4 left operand
+---@param b Vec4 right operand
+---@return Vec4
 function Vec4.pow(a, b)
     return Vec4.new(
         a.x ^ b.x,
@@ -761,8 +766,8 @@ end
 
 ---Finds the scalar projection of the left
 ---operand onto the right.
----@param a table left operand
----@param b table right operand
+---@param a Vec4 left operand
+---@param b Vec4 right operand
 ---@return number
 function Vec4.projectScalar(a, b)
     local bSq = b.x * b.x
@@ -781,35 +786,35 @@ end
 
 ---Finds the vector projection of the left
 ---operand onto the right.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec4 left operand
+---@param b Vec4 right operand
+---@return Vec4
 function Vec4.projectVector(a, b)
     return Vec4.scale(b, Vec4.projectScalar(a, b))
 end
 
 ---Reduces the granularity of a vector's components.
----@param a table vector
+---@param v Vec4 vector
 ---@param levels integer levels
----@return table
-function Vec4.quantize(a, levels)
+---@return Vec4
+function Vec4.quantize(v, levels)
     if levels and levels > 1 then
         local delta = 1.0 / levels
         return Vec4.new(
-            delta * math.floor(0.5 + a.x * levels),
-            delta * math.floor(0.5 + a.y * levels),
-            delta * math.floor(0.5 + a.z * levels),
-            delta * math.floor(0.5 + a.w * levels))
+            delta * math.floor(0.5 + v.x * levels),
+            delta * math.floor(0.5 + v.y * levels),
+            delta * math.floor(0.5 + v.z * levels),
+            delta * math.floor(0.5 + v.w * levels))
     end
-    return Vec4.new(a.x, a.y, a.z, a.w)
+    return Vec4.new(v.x, v.y, v.z, v.w)
 end
 
 ---Creates a random point in Cartesian space given
 ---a lower and an upper bound. If lower and upper
 ---bounds are not given, defaults to [-1.0, 1.0].
----@param lb table|nil lower bound
----@param ub table|nil upper bound
----@return table
+---@param lb Vec4|nil lower bound
+---@param ub Vec4|nil upper bound
+---@return Vec4
 function Vec4.randomCartesian(lb, ub)
     local lval = lb or Vec4.new(-1.0, -1.0, -1.0, -1.0)
     local uval = ub or Vec4.new(1.0, 1.0, 1.0, 1.0)
@@ -819,9 +824,9 @@ end
 ---Creates a random point in Cartesian space given
 ---a lower and an upper bound. Does not validate
 ---upper or lower bounds.
----@param lb table lower bound
----@param ub table upper bound
----@return table
+---@param lb Vec4 lower bound
+---@param ub Vec4 upper bound
+---@return Vec4
 function Vec4.randomCartesianInternal(lb, ub)
     local rx = math.random()
     local ry = math.random()
@@ -838,12 +843,12 @@ end
 ---Remaps a vector from an origin range to
 ---a destination range. For invalid origin
 ---ranges, the component remains unchanged.
----@param v table vector
----@param lbOrigin table origin lower bound
----@param ubOrigin table origin upper bound
----@param lbDest table destination lower bound
----@param ubDest table destination upper bound
----@return table
+---@param v Vec4 vector
+---@param lbOrigin Vec4 origin lower bound
+---@param ubOrigin Vec4 origin upper bound
+---@param lbDest Vec4 destination lower bound
+---@param ubDest Vec4 destination upper bound
+---@return Vec4
 function Vec4.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
     local mx = v.x
     local my = v.y
@@ -879,9 +884,9 @@ function Vec4.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
 end
 
 ---Rescales a vector to the target magnitude.
----@param a table vector
+---@param a Vec4 vector
 ---@param b number magnitude
----@return table
+---@return Vec4
 function Vec4.rescale(a, b)
     local mSq = a.x * a.x
         + a.y * a.y
@@ -899,22 +904,22 @@ function Vec4.rescale(a, b)
 end
 
 ---Rounds the vector by sign and fraction.
----@param a table left operand
----@return table
-function Vec4.round(a)
-    local iw, fw = math.modf(a.w)
+---@param v Vec4 left operand
+---@return Vec4
+function Vec4.round(v)
+    local iw, fw = math.modf(v.w)
     if iw <= 0 and fw <= -0.5 then iw = iw - 1
     elseif iw >= 0 and fw >= 0.5 then iw = iw + 1 end
 
-    local iz, fz = math.modf(a.z)
+    local iz, fz = math.modf(v.z)
     if iz <= 0 and fz <= -0.5 then iz = iz - 1
     elseif iz >= 0 and fz >= 0.5 then iz = iz + 1 end
 
-    local iy, fy = math.modf(a.y)
+    local iy, fy = math.modf(v.y)
     if iy <= 0 and fy <= -0.5 then iy = iy - 1
     elseif iy >= 0 and fy >= 0.5 then iy = iy + 1 end
 
-    local ix, fx = math.modf(a.x)
+    local ix, fx = math.modf(v.x)
     if ix <= 0 and fx <= -0.5 then ix = ix - 1
     elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
 
@@ -922,9 +927,9 @@ function Vec4.round(a)
 end
 
 ---Scales a vector, left, by a number, right.
----@param a table left operand
+---@param a Vec4 left operand
 ---@param b number right operand
----@return table
+---@return Vec4
 function Vec4.scale(a, b)
     return Vec4.new(
         a.x * b,
@@ -934,27 +939,27 @@ function Vec4.scale(a, b)
 end
 
 ---Finds the sign of a vector by component.
----@param a table left operand
----@return table
-function Vec4.sign(a)
+---@param v Vec4 vector
+---@return Vec4
+function Vec4.sign(v)
     local cx = 0.0
-    if a.x < -0.0 then cx = -1.0
-    elseif a.x > 0.0 then cx = 1.0
+    if v.x < -0.0 then cx = -1.0
+    elseif v.x > 0.0 then cx = 1.0
     end
 
     local cy = 0.0
-    if a.y < -0.0 then cy = -1.0
-    elseif a.y > 0.0 then cy = 1.0
+    if v.y < -0.0 then cy = -1.0
+    elseif v.y > 0.0 then cy = 1.0
     end
 
     local cz = 0.0
-    if a.z < -0.0 then cz = -1.0
-    elseif a.z > 0.0 then cz = 1.0
+    if v.z < -0.0 then cz = -1.0
+    elseif v.z > 0.0 then cz = 1.0
     end
 
     local cw = 0.0
-    if a.w < -0.0 then cw = -1.0
-    elseif a.w > 0.0 then cw = 1.0
+    if v.w < -0.0 then cw = -1.0
+    elseif v.w > 0.0 then cw = 1.0
     end
 
     return Vec4.new(cx, cy, cz, cw)
@@ -962,10 +967,10 @@ end
 
 ---Finds the smooth step between a left and
 ---right edge given a factor.
----@param edge0 table left edge
----@param edge1 table right edge
----@param x table factor
----@return table
+---@param edge0 Vec4 left edge
+---@param edge1 Vec4 right edge
+---@param x Vec4 factor
+---@return Vec4
 function Vec4.smoothstep(edge0, edge1, x)
     local cx = 0.0
     local xDenom = edge1.x - edge0.x
@@ -1003,9 +1008,9 @@ function Vec4.smoothstep(edge0, edge1, x)
 end
 
 ---Finds the step between an edge and factor.
----@param edge table the edge
----@param x table the factor
----@return table
+---@param edge Vec4 edge
+---@param x Vec4 factor
+---@return Vec4
 function Vec4.step(edge, x)
     local cx = 1.0
     if x.x < edge.x then cx = 0.0 end
@@ -1023,9 +1028,9 @@ function Vec4.step(edge, x)
 end
 
 ---Subtracts the right vector from the left.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Vec4 left operand
+---@param b Vec4 right operand
+---@return Vec4
 function Vec4.sub(a, b)
     return Vec4.new(
         a.x - b.x,
@@ -1035,7 +1040,7 @@ function Vec4.sub(a, b)
 end
 
 ---Returns a JSON string of a vector.
----@param v table vector
+---@param v Vec4 vector
 ---@return string
 function Vec4.toJson(v)
     return string.format(
@@ -1044,46 +1049,46 @@ function Vec4.toJson(v)
 end
 
 ---Truncates a vector's components to integers.
----@param a table vector
----@return table
-function Vec4.trunc(a)
-    local iw, _ = math.modf(a.w)
-    local iz, _ = math.modf(a.z)
-    local iy, _ = math.modf(a.y)
-    local ix, _ = math.modf(a.x)
+---@param v Vec4 vector
+---@return Vec4
+function Vec4.trunc(v)
+    local iw, _ = math.modf(v.w)
+    local iz, _ = math.modf(v.z)
+    local iy, _ = math.modf(v.y)
+    local ix, _ = math.modf(v.x)
     return Vec4.new(ix, iy, iz, iw)
 end
 
 ---Wraps a vector's components around a range
 ---defined by a lower and upper bound. If the
 ---range is invalid, the component is unchanged.
----@param a table vector
----@param lb table lower bound
----@param ub table upper bound
----@return table
-function Vec4.wrap(a, lb, ub)
-    local cx = a.x
+---@param v Vec4 vector
+---@param lb Vec4 lower bound
+---@param ub Vec4 upper bound
+---@return Vec4
+function Vec4.wrap(v, lb, ub)
+    local cx = v.x
     local rx = ub.x - lb.x
     if rx ~= 0.0 then
-        cx = a.x - rx * ((a.x - lb.x) // rx)
+        cx = v.x - rx * ((v.x - lb.x) // rx)
     end
 
-    local cy = a.y
+    local cy = v.y
     local ry = ub.y - lb.y
     if ry ~= 0.0 then
-        cy = a.y - ry * ((a.y - lb.y) // ry)
+        cy = v.y - ry * ((v.y - lb.y) // ry)
     end
 
-    local cz = a.z
+    local cz = v.z
     local rz = ub.z - lb.z
     if rz ~= 0.0 then
-        cz = a.z - rz * ((a.z - lb.z) // rz)
+        cz = v.z - rz * ((v.z - lb.z) // rz)
     end
 
-    local cw = a.w
+    local cw = v.w
     local rw = ub.w - lb.w
     if rw ~= 0.0 then
-        cw = a.w - rw * ((a.w - lb.w) // rw)
+        cw = v.w - rw * ((v.w - lb.w) // rw)
     end
 
     return Vec4.new(cx, cy, cz, cw)
@@ -1091,49 +1096,49 @@ end
 
 ---Creates a right facing vector,
 ---(1.0, 0.0, 0.0, 0.0).
----@return table
+---@return Vec4
 function Vec4.right()
     return Vec4.new(1.0, 0.0, 0.0, 0.0)
 end
 
 ---Creates a forward facing vector,
 ---(0.0, 1.0, 0.0, 0.0).
----@return table
+---@return Vec4
 function Vec4.forward()
     return Vec4.new(0.0, 1.0, 0.0, 0.0)
 end
 
 ---Creates an up facing vector,
 ---(0.0, 0.0, 1.0, 0.0).
----@return table
+---@return Vec4
 function Vec4.up()
     return Vec4.new(0.0, 0.0, 1.0, 0.0)
 end
 
 ---Creates a left facing vector,
 ---(-1.0, 0.0, 0.0, 0.0).
----@return table
+---@return Vec4
 function Vec4.left()
     return Vec4.new(-1.0, 0.0, 0.0, 0.0)
 end
 
 ---Creates a back facing vector,
 ---(0.0, -1.0, 0.0, 0.0).
----@return table
+---@return Vec4
 function Vec4.back()
     return Vec4.new(0.0, -1.0, 0.0, 0.0)
 end
 
 ---Creates a down facing vector,
 ---(0.0, 0.0, -1.0, 0.0).
----@return table
+---@return Vec4
 function Vec4.down()
     return Vec4.new(0.0, 0.0, -1.0, 0.0)
 end
 
 ---Creates a vector with all components
 ---set to 1.0.
----@return table
+---@return Vec4
 function Vec4.one()
     return Vec4.new(1.0, 1.0, 1.0, 1.0)
 end

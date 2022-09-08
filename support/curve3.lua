@@ -1,5 +1,9 @@
 dofile("./knot3.lua")
 
+---@class Curve3
+---@field closedLoop boolean closed loop
+---@field knots table knots
+---@field name string name
 Curve3 = {}
 Curve3.__index = Curve3
 
@@ -15,7 +19,7 @@ setmetatable(Curve3, {
 ---@param cl boolean closed loop
 ---@param knots table knots
 ---@param name string|nil name
----@return table
+---@return Curve3
 function Curve3.new(cl, knots, name)
     local inst = setmetatable({}, Curve3)
     inst.closedLoop = cl or false
@@ -35,7 +39,7 @@ end
 ---Rotates this curve around the x axis by
 ---an angle in radians.
 ---@param radians number angle
----@return table
+---@return Curve3
 function Curve3:rotateX(radians)
     return self:rotateXInternal(
         math.cos(radians),
@@ -46,7 +50,7 @@ end
 ---the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Curve3
 function Curve3:rotateXInternal(cosa, sina)
     local knsLen = #self.knots
     local i = 0
@@ -60,7 +64,7 @@ end
 ---Rotates this curve around the y axis by
 ---an angle in radians.
 ---@param radians number angle
----@return table
+---@return Curve3
 function Curve3:rotateY(radians)
     return self:rotateYInternal(
         math.cos(radians),
@@ -71,7 +75,7 @@ end
 ---the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Curve3
 function Curve3:rotateYInternal(cosa, sina)
     local knsLen = #self.knots
     local i = 0
@@ -85,7 +89,7 @@ end
 ---Rotates this curve around the z axis by
 ---an angle in radians.
 ---@param radians number angle
----@return table
+---@return Curve3
 function Curve3:rotateZ(radians)
     return self:rotateZInternal(
         math.cos(radians),
@@ -96,7 +100,7 @@ end
 ---the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Curve3
 function Curve3:rotateZInternal(cosa, sina)
     local knsLen = #self.knots
     local i = 0
@@ -109,8 +113,8 @@ end
 
 ---Scales this curve.
 ---Defaults to scale by a vector.
----@param v table|number scalar
----@return table
+---@param v Vec3|number scalar
+---@return Curve3
 function Curve3:scale(v)
     if type(v) == "number" then
         return self:scaleNum(v)
@@ -121,7 +125,7 @@ end
 
 ---Scales this curve by a number.
 ---@param n number uniform scalar
----@return table
+---@return Curve3
 function Curve3:scaleNum(n)
     if n ~= 0.0 then
         local knsLen = #self.knots
@@ -135,8 +139,8 @@ function Curve3:scaleNum(n)
 end
 
 ---Scales this curve by a vector.
----@param v table nonuniform scalar
----@return table
+---@param v Vec3 nonuniform scalar
+---@return Curve3
 function Curve3:scaleVec3(v)
     if Vec3.all(v) then
         local knsLen = #self.knots
@@ -150,8 +154,8 @@ function Curve3:scaleVec3(v)
 end
 
 ---Translates this curve by a vector.
----@param v table vector
----@return table
+---@param v Vec3 vector
+---@return Curve3
 function Curve3:translate(v)
     local knsLen = #self.knots
     local i = 0
@@ -170,7 +174,7 @@ end
 ---@param xOrigin number|nil x origin
 ---@param yOrigin number|nil y origin
 ---@param zOrigin number|nil z origin
----@return table
+---@return Curve3
 function Curve3.ellipse(xRadius, yRadius, xOrigin, yOrigin, zOrigin)
 
     -- Supply default arguments.
@@ -220,9 +224,9 @@ end
 
 ---Evaluates a curve by a step in [0.0, 1.0].
 ---Returns a vector representing a point on the curve.
----@param curve table curve
+---@param curve Curve3 curve
 ---@param step number step
----@return table
+---@return Vec3
 function Curve3.eval(curve, step)
     local t = step or 0.5
     local knots = curve.knots
@@ -262,8 +266,8 @@ end
 
 ---Evaluates a curve at its first knot,
 ---returning a copy of the first knot coord.
----@param curve table curve
----@return table
+---@param curve Curve3 curve
+---@return Vec3
 function Curve3.evalFirst(curve)
     local kFirst = curve.knots[1]
     local coFirst = kFirst.co
@@ -275,8 +279,8 @@ end
 
 ---Evaluates a curve at its last knot,
 ---returning a copy of the last knot coord.
----@param curve table curve
----@return table
+---@param curve Curve3 curve
+---@return Vec3
 function Curve3.evalLast(curve)
     local kLast = curve.knots[#curve.knots]
     local coLast = kLast.co
@@ -293,7 +297,7 @@ end
 ---@param points table array of points
 ---@param tightness number|nil curve tightness
 ---@param name string|nil curve name
----@return table
+---@return Curve3
 function Curve3.fromCatmull(closedLoop, points, tightness, name)
 
     local ptsLen = #points
@@ -419,7 +423,7 @@ end
 ---@param closedLoop boolean closed loop
 ---@param points table points array
 ---@param name string|nil curve name
----@return table
+---@return Curve3
 function Curve3.fromPoints(closedLoop, points, name)
     -- If a closed loop has similar start and
     -- stop points, then skip the last point.
@@ -450,7 +454,7 @@ end
 
 ---Adjusts knot handles so as to create
 ---a smooth, continuous curve.
----@param target table
+---@param target Curve3
 function Curve3.smoothHandles(target)
     local knots = target.knots
     local knotCount = #knots
@@ -498,7 +502,7 @@ end
 ---Straightens the fore and rear handles of
 ---a curve's knots so they are collinear with
 ---its coordinates.
----@param target table
+---@param target Curve3
 function Curve3.straightHandles(target)
     local knots = target.knots
     local knotCount = #knots
@@ -533,7 +537,7 @@ function Curve3.straightHandles(target)
 end
 
 ---Returns a JSON string of a curve.
----@param c table curve
+---@param c Curve3 curve
 ---@return string
 function Curve3.toJson(c)
     local str = "{\"name\":\""

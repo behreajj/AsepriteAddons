@@ -1,5 +1,9 @@
 dofile("./vec2.lua")
 
+---@class Mesh2
+---@field fs table faces
+---@field name string name
+---@field vs table coordinates
 Mesh2 = {}
 Mesh2.__index = Mesh2
 
@@ -14,7 +18,7 @@ setmetatable(Mesh2, {
 ---@param fs table faces
 ---@param vs table coordinates
 ---@param name string|nil name
----@return table
+---@return Mesh2
 function Mesh2.new(fs, vs, name)
     local inst = setmetatable({}, Mesh2)
     inst.fs = fs or {}
@@ -37,7 +41,7 @@ end
 ---defaults to 0.5.
 ---@param faceIndex integer face index
 ---@param fac number|nil inset factor
----@return table
+---@return Mesh2
 function Mesh2:insetFace(faceIndex, fac)
     local t = fac or 0.5
 
@@ -99,7 +103,7 @@ end
 ---Rotates all coordinates in a mesh by
 ---an angle in radians.
 ---@param radians number angle
----@return table
+---@return Mesh2
 function Mesh2:rotateZ(radians)
     return self:rotateZInternal(
         math.cos(radians),
@@ -110,7 +114,7 @@ end
 ---the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Mesh2
 function Mesh2:rotateZInternal(cosa, sina)
     local vsLen = #self.vs
     local i = 0
@@ -124,8 +128,8 @@ end
 
 ---Scales all coordinates in a mesh.
 ---Defaults to scale by a vector.
----@param v table|number scalar
----@return table
+---@param v Vec2|number scalar
+---@return Mesh2
 function Mesh2:scale(v)
     if type(v) == "number" then
         return self:scaleNum(v)
@@ -137,7 +141,7 @@ end
 ---Scales all coordinates in this mesh
 ---by a number
 ---@param n number uniform scalar
----@return table
+---@return Mesh2
 function Mesh2:scaleNum(n)
     if n ~= 0.0 then
         local vsLen = #self.vs
@@ -152,8 +156,8 @@ end
 
 ---Scales all coordinates in this mesh
 ---by a vector.
----@param v table nonuniform scalar
----@return table
+---@param v Vec2 nonuniform scalar
+---@return Mesh2
 function Mesh2:scaleVec2(v)
     if Vec2.all(v) then
         local vsLen = #self.vs
@@ -170,7 +174,7 @@ end
 ---based on its median center. Meshes should
 ---call uniformData first for best results.
 ---@param scale number scale
----@return table
+---@return Mesh2
 function Mesh2:scaleFacesIndiv(scale)
 
     -- Validate that scale is non-zero.
@@ -220,7 +224,7 @@ end
 ---Generates a triangle for the number of edges
 ---in the face.
 ---@param faceIndex integer face index
----@return table
+---@return Mesh2
 function Mesh2:subdivFaceFan(faceIndex)
 
     local facesLen = #self.fs
@@ -253,8 +257,8 @@ end
 
 ---Translates all coordinates in a mesh
 ---by a vector.
----@param tr table translation
----@return table
+---@param tr Vec2 translation
+---@return Mesh2
 function Mesh2:translate(tr)
     local vsLen = #self.vs
     local i = 0
@@ -275,7 +279,7 @@ end
 ---@param stopWeight number stop weight
 ---@param sectors integer sectors
 ---@param useQuads boolean use quads
----@return table
+---@return Mesh2
 function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQuads)
     local a = startAngle % 6.2831853071796
     local b = stopAngle % 6.2831853071796
@@ -371,7 +375,7 @@ end
 ---@param aspect number aspect ratio
 ---@param skip integer|nil rows to skip
 ---@param pick integer|nil rows to pick
----@return table
+---@return Mesh2
 function Mesh2.gridBricks(cols, rows, offset, aspect, skip, pick)
     -- Assume defaults.
     local vcols = 4
@@ -438,7 +442,7 @@ end
 ---Creates a grid of rectangles.
 ---@param cols integer columns
 ---@param rows integer rows
----@return table
+---@return Mesh2
 function Mesh2.gridCartesian(cols, rows)
 
     -- Validate inputs.
@@ -491,7 +495,7 @@ end
 
 ---Creates a grid of rhombi.
 ---@param cells integer cell count
----@return table
+---@return Mesh2
 function Mesh2.gridDimetric(cells)
     local mesh = Mesh2.gridCartesian(cells, cells)
 
@@ -512,7 +516,7 @@ end
 ---Creates a grid of hexagons in rings around
 ---a central cell.
 ---@param rings integer number of rings
----@return table
+---@return Mesh2
 function Mesh2.gridHex(rings)
     local vRings = 1
     if rings > 1 then vRings = rings end
@@ -570,8 +574,8 @@ function Mesh2.gridHex(rings)
 end
 
 ---Creates a regular convex polygon
----@param sectors number sides
----@return table
+---@param sectors integer sides
+---@return Mesh2
 function Mesh2.polygon(sectors)
     local vSect = 3
     if sectors > 3 then vSect = sectors end
@@ -610,7 +614,7 @@ end
 ---face per mesh. The default start index is 1.
 ---The default stop index is the length of the
 ---mesh's faces array.
----@param source table source mesh
+---@param source Mesh2 source mesh
 ---@param from integer|nil start index
 ---@param to integer|nil stop index
 ---@return table
@@ -650,8 +654,68 @@ function Mesh2.separateFaces(source, from, to)
     return meshes
 end
 
+---Creates a regular polygon where a count of
+---vertices are picked to be inset after a count
+---are skipped. The inset is expected to be a
+---factor in [0.0, 1.0] that is multiplied by
+---the polygon radius. The default is to pick
+---1, skip 1, and inset by 0.5.
+---@param sectors integer sides
+---@param skip integer|nil vertices to skip
+---@param pick integer|nil vertices to inset
+---@param inset number|nil percent inset
+---@return Mesh2
+function Mesh2.star(sectors, skip, pick, inset)
+    -- Early return for invalid skip or pick.
+    local vSkip = 1
+    local vPick = 1
+    if skip then vSkip = skip end
+    if pick then vPick = pick end
+    if vSkip < 1 or vPick < 1 then
+        return Mesh2.polygon(sectors)
+    end
+
+    -- Validate other arguments.
+    local vRad = 0.5
+    local vIns = 0.25
+    local vSect = 3
+    if inset then
+        vIns = vRad - vRad * math.min(math.max(
+            inset, 0.000002), 0.999998)
+    end
+    if sectors > 3 then vSect = sectors end
+
+    local all = vPick + vSkip
+    local seg = all * vSect
+    local toTheta = 6.2831853071796 / seg
+
+    local vs = {}
+    local f = {}
+
+    -- TODO: Angle offset so that the middle
+    -- of an edge lines up with the x axis.
+    local cos = math.cos
+    local sin = math.sin
+    local i = 0
+    while i < seg do
+        local theta = i * toTheta
+        local r = vIns
+        if (i % all) < vPick then
+            r = vRad
+        end
+        i = i + 1
+        vs[i] = Vec2.new(
+            r * cos(theta),
+            r * sin(theta))
+        f[i] = i
+    end
+    local fs = { f }
+
+    return Mesh2.new(fs, vs, "Star")
+end
+
 ---Returns a JSON string for a mesh.
----@param a table mesh
+---@param a Mesh2 mesh
 ---@return string
 function Mesh2.toJson(a)
     local tconcat = table.concat
@@ -696,9 +760,9 @@ end
 
 ---Restructures the mesh so that each face index
 ---refers to unique data.
----@param source table source mesh
----@param target table target mesh
----@return table
+---@param source Mesh2 source mesh
+---@param target Mesh2 target mesh
+---@return Mesh2
 function Mesh2.uniformData(source, target)
     local trg = target or source
     local fsTrg = {}

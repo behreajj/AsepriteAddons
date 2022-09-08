@@ -217,10 +217,6 @@ dlg:button {
             neutHex = Clr.toHex(Clr.mixLab(
                 Clr.fromHex(backHex),
                 Clr.fromHex(foreHex), 0.5))
-        elseif useFore then
-            neutHex = 0x00808080
-        elseif useBack then
-            neutHex = 0x00808080
         end
 
         -- Fill frames.
@@ -428,9 +424,12 @@ dlg:button {
             trgLayer.stackIndex = oldSrcIdx
 
             local layers = srcParent.layers
-            for i = oldSrcIdx + 1, #layers, 1 do
+            local lenLayers = #layers
+            local i = oldSrcIdx
+            while i < lenLayers do i = i + 1
                 layers[i].stackIndex = i
             end
+
             app.activeLayer = srcLayer
         end)
 

@@ -1,5 +1,9 @@
 dofile("./vec3.lua")
 
+---@class Knot3
+---@field fh Vec3 fore handle
+---@field co Vec3 coordinate
+---@field rh Vec3 rear handle
 Knot3 = {}
 Knot3.__index = Knot3
 
@@ -15,7 +19,7 @@ setmetatable(Knot3, {
 ---@param co table coordinate
 ---@param fh table fore handle
 ---@param rh table rear handle
----@return table
+---@return Knot3
 function Knot3.new(co, fh, rh)
     local inst = setmetatable({}, Knot3)
     inst.co = co or Vec3.new(0.0, 0.0, 0.0)
@@ -32,14 +36,14 @@ function Knot3:__tostring()
 end
 
 ---Aligns the knot's handles.
----@return table
+---@return Knot3
 function Knot3:alignHandles()
     return self:alignHandlesForward()
 end
 
 ---Aligns the knot's fore handle to its
 ---rear handle while preserving magnitude.
----@return table
+---@return Knot3
 function Knot3:alignHandlesBackward()
     local rDir = Vec3.sub(self.rh, self.co)
     local rMagSq = Vec3.magSq(rDir)
@@ -54,7 +58,7 @@ end
 
 ---Aligns the knot's rear handle to its
 ---fore handle while preserving magnitude.
----@return table
+---@return Knot3
 function Knot3:alignHandlesForward()
     local fDir = Vec3.sub(self.fh, self.co)
     local fMagSq = Vec3.magSq(fDir)
@@ -68,14 +72,14 @@ function Knot3:alignHandlesForward()
 end
 
 ---Mirrors the knot's handles.
----@return table
+---@return Knot3
 function Knot3:mirrorHandles()
     return self:mirrorHandlesForward()
 end
 
 ---Sets the fore handle to mirror
 ---the rear handle.
----@return table
+---@return Knot3
 function Knot3:mirrorHandlesBackward()
     self.fh = Vec3.sub(self.co, Vec3.sub(self.rh, self.co))
     return self
@@ -83,7 +87,7 @@ end
 
 ---Sets the rear handle to mirror
 ---the fore handle.
----@return table
+---@return Knot3
 function Knot3:mirrorHandlesForward()
     self.rh = Vec3.sub(self.co, Vec3.sub(self.fh, self.co))
     return self
@@ -91,7 +95,7 @@ end
 
 ---Reverses the knots direction by swapping
 ---its fore and rear handles.
----@return table
+---@return Knot3
 function Knot3:reverse()
     local temp = self.fh
     self.fh = self.rh
@@ -102,7 +106,7 @@ end
 ---Rotates this knot around the x axis by
 ---an angle in radians.
 ---@param radians number angle
----@return table
+---@return Knot3
 function Knot3:rotateX(radians)
     return self:rotateXInternal(
         math.cos(radians),
@@ -113,7 +117,7 @@ end
 ---the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Knot3
 function Knot3:rotateXInternal(cosa, sina)
     self.co = Vec3.rotateXInternal(self.co, cosa, sina)
     self.fh = Vec3.rotateXInternal(self.fh, cosa, sina)
@@ -124,7 +128,7 @@ end
 ---Rotates this knot around the y axis by
 ---an angle in radians.
 ---@param radians number angle
----@return table
+---@return Knot3
 function Knot3:rotateY(radians)
     return self:rotateYInternal(
         math.cos(radians),
@@ -135,7 +139,7 @@ end
 ---the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Knot3
 function Knot3:rotateYInternal(cosa, sina)
     self.co = Vec3.rotateYInternal(self.co, cosa, sina)
     self.fh = Vec3.rotateYInternal(self.fh, cosa, sina)
@@ -146,7 +150,7 @@ end
 ---Rotates this knot around the z axis by
 ---an angle in radians.
 ---@param radians number angle
----@return table
+---@return Knot3
 function Knot3:rotateZ(radians)
     return self:rotateZInternal(
         math.cos(radians),
@@ -157,7 +161,7 @@ end
 ---the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Knot3
 function Knot3:rotateZInternal(cosa, sina)
     self.co = Vec3.rotateZInternal(self.co, cosa, sina)
     self.fh = Vec3.rotateZInternal(self.fh, cosa, sina)
@@ -167,8 +171,8 @@ end
 
 ---Scales this knot.
 ---Defaults to scale by a Vec3.
----@param v table|number scalar
----@return table
+---@param v Vec3|number scalar
+---@return Knot3
 function Knot3:scale(v)
     if type(v) == "number" then
         return self:scaleNum(v)
@@ -179,7 +183,7 @@ end
 
 ---Scales this knot by a number.
 ---@param n number uniform scalar
----@return table
+---@return Knot3
 function Knot3:scaleNum(n)
     self.co = Vec3.scale(self.co, n)
     self.fh = Vec3.scale(self.fh, n)
@@ -188,8 +192,8 @@ function Knot3:scaleNum(n)
 end
 
 ---Scales this knot by a vector.
----@param v table nonuniform scalar
----@return table
+---@param v Vec3 nonuniform scalar
+---@return Knot3
 function Knot3:scaleVec3(v)
     self.co = Vec3.hadamard(self.co, v)
     self.fh = Vec3.hadamard(self.fh, v)
@@ -198,8 +202,8 @@ function Knot3:scaleVec3(v)
 end
 
 ---Translates this knot by a Vec3.
----@param v table vector
----@return table
+---@param v Vec3 vector
+---@return Knot3
 function Knot3:translate(v)
     self.co = Vec3.add(self.co, v)
     self.fh = Vec3.add(self.fh, v)
@@ -209,10 +213,10 @@ end
 
 ---Evaluates a point between two knots
 ---given an origin, destination and step.
----@param a table origin knot
----@param b table destination knot
+---@param a Knot3 origin knot
+---@param b Knot3 destination knot
 ---@param step number step
----@return table
+---@return Vec3
 function Knot3.bezierPoint(a, b, step)
     return Vec3.bezierPoint(
         a.co, a.fh,
@@ -221,22 +225,22 @@ function Knot3.bezierPoint(a, b, step)
 end
 
 ---Gets the knot's fore handle as a direction.
----@param knot table knot
----@return table
+---@param knot Knot3 knot
+---@return Vec3
 function Knot3.foreDir(knot)
     return Vec3.normalize(Knot3.foreVec(knot))
 end
 
 ---Gets the knot's fore handle magnitude.
----@param knot table
+---@param knot Knot3
 ---@return number
 function Knot3.foreMag(knot)
     return Vec3.dist(knot.fh, knot.co)
 end
 
 ---Gets the knot's rear handle as a vector.
----@param knot table knot
----@return table
+---@param knot Knot3 knot
+---@return Vec3
 function Knot3.foreVec(knot)
     return Vec3.sub(knot.fh, knot.co)
 end
@@ -249,14 +253,14 @@ end
 ---The previous knot's fore handle,
 ---the next knot's rear handle and the next knot's
 ---coordinate are set by this function.
----@param prevAnchor table previous anchor point
----@param currAnchor table current anchor point
----@param nextAnchor table next anchor point
----@param advAnchor table advance anchor point
+---@param prevAnchor Vec3 previous anchor point
+---@param currAnchor Vec3 current anchor point
+---@param nextAnchor Vec3 next anchor point
+---@param advAnchor Vec3 advance anchor point
 ---@param tightness number curve tightness
----@param prevKnot table previous knot
----@param nextKnot table next knot
----@return table
+---@param prevKnot Knot3 previous knot
+---@param nextKnot Knot3 next knot
+---@return Knot3
 function Knot3.fromSegCatmull(prevAnchor, currAnchor, nextAnchor, advAnchor, tightness, prevKnot, nextKnot)
     if math.abs(tightness - 1.0) <= 0.000001 then
         return Knot3.fromSegLinear(
@@ -286,10 +290,10 @@ end
 ---The previous knot's fore handle,
 ---the next knot's rear handle and the next knot's
 ---coordinate are set by this function.
----@param nextAnchor table next anchor point
----@param prevKnot table previous knot
----@param nextKnot table next knot
----@return table
+---@param nextAnchor Vec3 next anchor point
+---@param prevKnot Knot3 previous knot
+---@param nextKnot Knot3 next knot
+---@return Knot3
 function Knot3.fromSegLinear(nextAnchor, prevKnot, nextKnot)
     nextKnot.co = Vec3.new(
         nextAnchor.x,
@@ -325,11 +329,11 @@ end
 ---The previous knot's fore handle, the next knot's rear
 ---handle and the next knot's coordinate are set by
 ---this function.
----@param control table control point
----@param nextAnchor table next anchor point
----@param prevKnot table previous knot
----@param nextKnot table next knot
----@return table
+---@param control Vec3 control point
+---@param nextAnchor Vec3 next anchor point
+---@param prevKnot Knot3 previous knot
+---@param nextKnot Knot3 next knot
+---@return Knot3
 function Knot3.fromSegQuadratic(control, nextAnchor, prevKnot, nextKnot)
     nextKnot.co = Vec3.new(
         nextAnchor.x,
@@ -354,22 +358,22 @@ function Knot3.fromSegQuadratic(control, nextAnchor, prevKnot, nextKnot)
 end
 
 ---Gets the knot's rear handle as a direction.
----@param knot table knot
----@return table
+---@param knot Knot3 knot
+---@return Vec3
 function Knot3.rearDir(knot)
     return Vec3.normalize(Knot3.rearVec(knot))
 end
 
 ---Gets the knot's rear handle magnitude.
----@param knot table
+---@param knot Knot3
 ---@return number
 function Knot3.rearMag(knot)
     return Vec3.dist(knot.rh, knot.co)
 end
 
 ---Gets the knot's rear handle as a vector.
----@param knot table knot
----@return table
+---@param knot Knot3 knot
+---@return Vec3
 function Knot3.rearVec(knot)
     return Vec3.sub(knot.rh, knot.co)
 end
@@ -378,11 +382,11 @@ end
 ---reference to a previous and next knot.
 ---An internal helper function.
 ---Returns a new carry vector.
----@param prev table previous knot
----@param curr table current knot
----@param next table next knot
----@param carry table temporary vector
----@return table
+---@param prev Knot3 previous knot
+---@param curr Knot3 current knot
+---@param next Knot3 next knot
+---@param carry Vec3 temporary vector
+---@return Vec3
 function Knot3.smoothHandlesInternal(prev, curr, next, carry)
     local coCurr = curr.co
     local coPrev = prev.co
@@ -447,10 +451,10 @@ end
 ---in an open curve.
 ---An internal helper function.
 ---Returns a new carry vector.
----@param curr table current knot
----@param next table next knot
----@param carry table temporary vector
----@return table
+---@param curr Knot3 current knot
+---@param next Knot3 next knot
+---@param carry Vec3 temporary vector
+---@return Vec3
 function Knot3.smoothHandlesFirstInternal(curr, next, carry)
     local coCurr = curr.co
     local coNext = next.co
@@ -508,10 +512,10 @@ end
 ---in an open curve.
 ---An internal helper function.
 ---Returns a new carry vector.
----@param prev table previous knot
----@param curr table current knot
----@param carry table temporary vector
----@return table
+---@param prev Knot3 previous knot
+---@param curr Knot3 current knot
+---@param carry Vec3 temporary vector
+---@return Vec3
 function Knot3.smoothHandlesLastInternal(prev, curr, carry)
     local coCurr = curr.co
     local coPrev = prev.co
@@ -566,7 +570,7 @@ function Knot3.smoothHandlesLastInternal(prev, curr, carry)
 end
 
 ---Returns a JSON string of a knot.
----@param knot table knot
+---@param knot Knot3 knot
 ---@return string
 function Knot3.toJson(knot)
     return string.format(

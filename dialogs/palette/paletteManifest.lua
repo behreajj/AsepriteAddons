@@ -28,13 +28,13 @@ local defaults = {
     numBasis = "PROFILE",
     grayHue = "OMIT",
     hdrRepeatRate = 16,
-    txtColor = Color(255, 245, 215, 255),
-    shdColor = Color(0, 0, 0, 235),
-    hdrTxtColor = Color(215, 183, 121, 255),
-    hdrBkgColor = Color(40, 40, 40, 235),
-    rowColor0 = Color(24, 24, 24, 235),
-    rowColor1 = Color(32, 32, 32, 235),
-    bkgColor = Color(16, 16, 16, 255),
+    txtColor = 0xffd7f5ff,
+    shdColor = 0xeb000000,
+    hdrTxtColor = 0xff79b7d7,
+    hdrBkgColor = 0xeb282828,
+    rowColor0 = 0xeb181818,
+    rowColor1 = 0xeb202020,
+    bkgColor = 0xeb101010,
     pullFocus = false
 }
 
@@ -230,7 +230,7 @@ dlg:newrow { always = false }
 dlg:color {
     id = "txtColor",
     label = "Text:",
-    color = defaults.txtColor
+    color = AseUtilities.hexToAseColor(defaults.txtColor)
 }
 
 -- dlg:newrow { always = false }
@@ -238,7 +238,7 @@ dlg:color {
 dlg:color {
     id = "shdColor",
     -- label = "Shadow:",
-    color = defaults.shdColor
+    color = AseUtilities.hexToAseColor(defaults.shdColor)
 }
 
 dlg:newrow { always = false }
@@ -247,7 +247,7 @@ dlg:color {
     id = "hdrTxtColor",
     -- label = "Header Text:",
     label = "Header:",
-    color = defaults.hdrTxtColor
+    color = AseUtilities.hexToAseColor(defaults.hdrTxtColor)
 }
 
 -- dlg:newrow { always = false }
@@ -255,7 +255,7 @@ dlg:color {
 dlg:color {
     id = "hdrBkgColor",
     -- label = "Header Bkg:",
-    color = defaults.hdrBkgColor
+    color = AseUtilities.hexToAseColor(defaults.hdrBkgColor)
 }
 
 dlg:newrow { always = false }
@@ -273,12 +273,12 @@ dlg:newrow { always = false }
 dlg:color {
     id = "rowColor0",
     label = "Row:",
-    color = defaults.rowColor0
+    color = AseUtilities.hexToAseColor(defaults.rowColor0)
 }
 
 dlg:color {
     id = "rowColor1",
-    color = defaults.rowColor1
+    color = AseUtilities.hexToAseColor(defaults.rowColor1)
 }
 
 dlg:newrow { always = false }
@@ -286,7 +286,7 @@ dlg:newrow { always = false }
 dlg:color {
     id = "bkgColor",
     label = "Background:",
-    color = defaults.bkgColor
+    color = AseUtilities.hexToAseColor(defaults.bkgColor)
 }
 
 dlg:newrow { always = false }
@@ -604,12 +604,13 @@ dlg:button {
         end
 
         -- Unpack text and text shadow colors.
-        local txtColor = args.txtColor or defaults.txtColor
-        local shdColor = args.shdColor or defaults.shdColor
-        local hdrTxtColor = args.hdrTxtColor or defaults.hdrTxtColor
-        local hdrBkgColor = args.hdrBkgColor or defaults.hdrBkgColor
-        local row0Color = args.rowColor0 or defaults.rowColor0
-        local row1Color = args.rowColor1 or defaults.rowColor1
+        local txtColor = args.txtColor
+        local shdColor = args.shdColor
+        local hdrTxtColor = args.hdrTxtColor
+        local hdrBkgColor = args.hdrBkgColor
+        local row0Color = args.rowColor0
+        local row1Color = args.rowColor1
+        local bkgColor = args.bkgColor
 
         -- Convert to hexadecimal.
         local txtHex = txtColor.rgbaPixel
@@ -618,6 +619,7 @@ dlg:button {
         local hdrBkgHex = hdrBkgColor.rgbaPixel
         local row0Hex = row0Color.rgbaPixel
         local row1Hex = row1Color.rgbaPixel
+        local bkgHex = bkgColor.rgbaPixel
 
         -- Recalaculate sprite width and height.
         spriteWidth = colCount * entryWidth + spriteMargin * 2
@@ -645,8 +647,7 @@ dlg:button {
         end
 
         -- Create background image.
-        local bkgColor = args.bkgColor or defaults.bkgColor
-        local bkgHex = bkgColor.rgbaPixel
+
         local bkgImg = Image(spriteWidth, spriteHeight, ColorMode.RGB)
         bkgImg:clear(bkgHex)
 

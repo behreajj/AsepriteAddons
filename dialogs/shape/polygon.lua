@@ -2,6 +2,9 @@ dofile("../../support/aseutilities.lua")
 
 local defaults = {
     sides = 6,
+    skip = 0,
+    pick = 0,
+    inset = 50,
     resolution = 16,
     angle = 90,
     scale = 32,
@@ -17,7 +20,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Convex Polygon" }
+local dlg = Dialog { title = "Polygon" }
 
 dlg:slider {
     id = "sides",
@@ -28,6 +31,47 @@ dlg:slider {
 }
 
 dlg:newrow { always = false }
+
+dlg:slider {
+    id = "skip",
+    label = "Skip:",
+    min = 0,
+    max = 10,
+    value = defaults.skip,
+    onchange = function()
+        local args = dlg.data
+        dlg:modify {
+            id = "inset",
+            visible = args.skip > 0 and args.pick > 0
+        }
+    end
+}
+
+dlg:slider {
+    id = "pick",
+    min = 0,
+    max = 10,
+    value = defaults.pick,
+    onchange = function()
+        local args = dlg.data
+        dlg:modify {
+            id = "inset",
+            visible = args.skip > 0 and args.pick > 0
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "inset",
+    label = "Inset:",
+    min = 0,
+    max = 100,
+    value = defaults.inset,
+    visible = defaults.skip > 0
+        and defaults.pick > 0
+}
 
 dlg:slider {
     id = "angle",
@@ -124,7 +168,10 @@ dlg:button {
     onclick = function()
 
         local args = dlg.data
-        local sectors = args.sides
+        local sectors = args.sides or defaults.sides
+        local skip = args.skip or defaults.skip
+        local pick = args.pick or defaults.pick
+        local inset = args.inset or defaults.inset
 
         -- Create transform matrix.
         local t = Mat3.fromTranslation(
@@ -149,7 +196,7 @@ dlg:button {
         local frame = app.activeFrame or sprite.frames[1]
         local cel = sprite:newCel(layer, frame)
 
-        local mesh = Mesh2.polygon(sectors)
+        local mesh = Mesh2.star(sectors, skip, pick, inset * 0.01)
         Utilities.mulMat3Mesh2(mat, mesh)
         AseUtilities.drawMesh2(
             mesh,

@@ -1,9 +1,9 @@
 local defaults = {
     scale = 1,
     margin = 0,
-    marginClr = Color(255, 255, 255, 255),
+    marginClr = 0xffffffff,
     border = 0,
-    borderClr = Color(0, 0, 0, 255),
+    borderClr = 0xff000000,
     prApply = false,
     flattenImage = true
 }

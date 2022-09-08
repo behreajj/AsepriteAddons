@@ -1,13 +1,19 @@
 dofile("./bounds2.lua")
 
+---@class Quadtree
+---@field bounds Bounds2 bounding area
+---@field capacity integer point capacity
+---@field children table child nodes
+---@field level integer level, or depth
+---@field points table points array
 Quadtree = {}
 Quadtree.__index = Quadtree
 
 setmetatable(Quadtree, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
-
+    end
+})
 
 ---South West child index.
 Quadtree.SOUTH_WEST = 1
@@ -25,10 +31,10 @@ Quadtree.NORTH_EAST = 4
 ---points at a given level. The capacity specifies
 ---the number of points the node can hold before it
 ---is split into children.
----@param bounds table bounding area
+---@param bounds Bounds2 bounding area
 ---@param capacity integer point capacity
 ---@param level integer|nil level, or depth
----@return table
+---@return Quadtree
 function Quadtree.new(bounds, capacity, level)
     local inst = setmetatable({}, Quadtree)
     inst.bounds = bounds or Bounds2.unitSquareSigned()
@@ -61,47 +67,41 @@ end
 
 ---Counts the number of leaves held by this node.
 ---Returns 1 if the node is itself a leaf.
----@param q table quadtreee
+---@param q Quadtree quadtree
 ---@return integer
 function Quadtree.countLeaves(q)
     -- Even if this is not used directly by
     -- any dialog, retain it for diagnostics.
     local children = q.children
     local lenChildren = #children
-    local isLeaf = true
-    local sum = 0
+    if lenChildren < 1 then return 1 end
 
+    local sum = 0
     local i = 0
     while i < lenChildren do
         i = i + 1
         local child = children[i]
-        isLeaf = false
         sum = sum + Quadtree.countLeaves(child)
     end
-
-    if isLeaf then return 1 end
     return sum
 end
 
 ---Counts the number of points held by this quadtree's
 ---leaf nodes.
----@param o table quadtree node
+---@param q Quadtree quadtree
 ---@return integer
-function Quadtree.countPoints(o)
-    local children = o.children
+function Quadtree.countPoints(q)
+    local children = q.children
     local lenChildren = #children
-    local isLeaf = true
-    local sum = 0
+    if lenChildren < 1 then return #q.points end
 
+    local sum = 0
     local i = 0
     while i < lenChildren do
         i = i + 1
         local child = children[i]
-        isLeaf = false
         sum = sum + Quadtree.countPoints(child)
     end
-
-    if isLeaf then sum = sum + #o.points end
     return sum
 end
 
@@ -109,25 +109,23 @@ end
 ---not by value. Returns true if the point was
 ---successfully inserted into either the node or
 ---its children.
----@param q table octree node
----@param point table point
+---@param q Quadtree quadtree
+---@param point Vec2 point
 ---@return boolean
 function Quadtree.insert(q, point)
     if Bounds2.containsInclExcl(q.bounds, point) then
         local children = q.children
         local lenChildren = #children
-        local isLeaf = true
         local i = 0
         while i < lenChildren do
             i = i + 1
             local child = children[i]
-            isLeaf = false
             if Quadtree.insert(child, point) then
                 return true
             end
         end
 
-        if isLeaf then
+        if lenChildren < 1 then
             local points = q.points
             Vec2.insortRight(points, point, Vec2.comparator)
             if #points > q.capacity then
@@ -146,38 +144,31 @@ end
 ---Inserts an array of points into a node.
 ---Returns true if all point insertions succeeded.
 ---Otherwise, returns false.
----@param o table octree node
+---@param q Quadtree quadtree
 ---@param ins table insertions array
 ---@return boolean
-function Quadtree.insertAll(o, ins)
+function Quadtree.insertAll(q, ins)
     local lenIns = #ins
     local flag = true
     local i = 0
     while i < lenIns do
         i = i + 1
-        flag = flag and Quadtree.insert(o, ins[i])
+        flag = flag and Quadtree.insert(q, ins[i])
     end
     return flag
 end
 
 ---Evaluates whether a node has any children.
 ---Returns true if not.
----@param q table quadtree node
+---@param q Quadtree quadtree
 ---@return boolean
 function Quadtree.isLeaf(q)
-    local children = q.children
-    local lenChildren = #children
-    local i = 0
-    while i < lenChildren do
-        i = i + 1
-        if children[i] then return false end
-    end
-    return true
+    return #q.children < 1
 end
 
 ---Finds the maximum level, or depth, of
 ---the node and its children.
----@param q table quadtree node
+---@param q Quadtree quadtree
 ---@return integer
 function Quadtree.maxLevel(q)
     -- Even if this is not used directly by
@@ -195,6 +186,7 @@ function Quadtree.maxLevel(q)
             maxLevel = lvl
         end
     end
+
     return maxLevel
 end
 
@@ -202,11 +194,11 @@ end
 ---found within the bounds, returns a point and
 ---distance from the query center. If a point cannot be
 ---found, returns a default point, which may be nil.
----@param q table quadtree
----@param center table circle center
+---@param q Quadtree quadtree
+---@param center Vec2 circle center
 ---@param radius number circle radius
----@param dfPt table|nil default point
----@return table|nil
+---@param dfPt Vec2|nil default point
+---@return Vec2|nil
 ---@return number
 function Quadtree.query(q, center, radius, dfPt)
     local radVerif = radius or 46340
@@ -223,10 +215,10 @@ end
 ---found within the bounds, returns a point and
 ---square distance from the query center. If a point
 ---cannot be found, returns nil.
----@param q table quadtree
----@param center table circle center
+---@param q Quadtree quadtree
+---@param center Vec2 circle center
 ---@param radius number circle radius
----@return table|nil
+---@return Vec2|nil
 ---@return number
 function Quadtree.queryInternal(q, center, radius)
     local nearPoint = nil
@@ -235,12 +227,10 @@ function Quadtree.queryInternal(q, center, radius)
     if Bounds2.intersectsCircle(q.bounds, center, radius) then
         local children = q.children
         local lenChildren = #children
-        local isLeaf = true
         local i = 0
         while i < lenChildren do
             i = i + 1
             local child = children[i]
-            isLeaf = false
             local candDistSq = 2147483647
             local candPoint = nil
             candPoint, candDistSq = Quadtree.queryInternal(
@@ -251,7 +241,7 @@ function Quadtree.queryInternal(q, center, radius)
             end
         end
 
-        if isLeaf then
+        if lenChildren < 1 then
             local points = q.points
             local lenPoints = #points
             local rsq = radius * radius
@@ -277,9 +267,9 @@ end
 ---Splits the quadtree node into four child nodes.
 ---If a child capacity is not provided, defaults
 ---to the parent's capacity.
----@param q table quadtree
+---@param q Quadtree quadtree
 ---@param childCapacity integer|nil child capacity
----@return table
+---@return Quadtree
 function Quadtree.split(q, childCapacity)
     local chCpVerif = childCapacity or q.capacity
     local children = q.children
@@ -326,7 +316,8 @@ function Quadtree.split(q, childCapacity)
 end
 
 ---Returns a JSON string of the quadtree node.
----@param q table quadtree
+---@param q Quadtree quadtree
+---@return string
 function Quadtree.toJson(q)
     local str = string.format("{\"level\":%d", q.level - 1)
     str = str .. ",\"bounds\":"
@@ -334,11 +325,7 @@ function Quadtree.toJson(q)
     str = str .. ",\"capacity\":"
     str = str .. string.format("%d", q.capacity)
 
-    -- Node should be a leaf first, before
-    -- any string concatenation is done.
-    local isLeaf = Quadtree.isLeaf(q)
-
-    if isLeaf then
+    if Quadtree.isLeaf(q) then
         str = str .. ",\"points\":["
         local pts = q.points
         local ptsLen = #pts

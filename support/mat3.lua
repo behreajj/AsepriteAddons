@@ -1,3 +1,13 @@
+---@class Mat3
+---@field m00 number row 0, col 0 right x
+---@field m01 number row 0, col 1 forward x
+---@field m02 number row 0, col 2 translation x
+---@field m10 number row 1, col 0 right y
+---@field m11 number row 1, col 1 forward y
+---@field m12 number row 1, col 2 translation y
+---@field m20 number row 2, col 0 right z
+---@field m21 number row 2, col 1 forward z
+---@field m22 number row 2, col 2 translation z
 Mat3 = {}
 Mat3.__index = Mat3
 
@@ -18,7 +28,7 @@ setmetatable(Mat3, {
 ---@param m20 number row 2, col 0 right z
 ---@param m21 number row 2, col 1 forward z
 ---@param m22 number row 2, col 2 translation z
----@return table
+---@return Mat3
 function Mat3.new(m00, m01, m02, m10, m11, m12, m20, m21, m22)
     local inst = setmetatable({}, Mat3)
 
@@ -66,9 +76,9 @@ function Mat3:__unm()
 end
 
 ---Finds the sum of two matrices.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Mat3 left operand
+---@param b Mat3 right operand
+---@return Mat3
 function Mat3.add(a, b)
     return Mat3.new(
         a.m00 + b.m00, a.m01 + b.m01, a.m02 + b.m02,
@@ -78,8 +88,8 @@ end
 
 ---Evaluates whether two matrices are, within a
 ---tolerance, approximately equal.
----@param a table left operand
----@param b table right operand
+---@param a Mat3 left operand
+---@param b Mat3 right operand
 ---@param tol number|nil tolerance
 ---@return boolean
 function Mat3.approx(a, b, tol)
@@ -97,25 +107,25 @@ function Mat3.approx(a, b, tol)
 end
 
 ---Multiplies the left operand and the inverse of the right.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Mat3 left operand
+---@param b Mat3 right operand
+---@return Mat3
 function Mat3.div(a, b)
     return Mat3.mul(a, Mat3.inverse(b))
 end
 
 ---Finds the matrix determinant.
----@param a table matrix
+---@param m Mat3 matrix
 ---@return number
-function Mat3.determinant(a)
-    return a.m00 * (a.m22 * a.m11 - a.m12 * a.m21) +
-        a.m01 * (a.m12 * a.m20 - a.m22 * a.m10) +
-        a.m02 * (a.m21 * a.m10 - a.m11 * a.m20)
+function Mat3.determinant(m)
+    return m.m00 * (m.m22 * m.m11 - m.m12 * m.m21) +
+        m.m01 * (m.m12 * m.m20 - m.m22 * m.m10) +
+        m.m02 * (m.m21 * m.m10 - m.m11 * m.m20)
 end
 
 ---Constructs a matrix from an angle in radians.
 ---@param radians number angle
----@return table
+---@return Mat3
 function Mat3.fromRotZ(radians)
     return Mat3.fromRotZInternal(
         math.cos(radians),
@@ -125,7 +135,7 @@ end
 ---Constructs a matrix from the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
----@return table
+---@return Mat3
 function Mat3.fromRotZInternal(cosa, sina)
     return Mat3.new(
         cosa, -sina, 0.0,
@@ -136,7 +146,7 @@ end
 ---Constructs a matrix from a nonuniform scale.
 ---@param width number width
 ---@param depth number depth
----@return table
+---@return Mat3
 function Mat3.fromScale(width, depth)
     local w = 1.0
     if width and width ~= 0.0 then
@@ -156,7 +166,7 @@ end
 
 ---Creates a skew matrix on the x axis.
 ---@param radians number angle
----@return table
+---@return Mat3
 function Mat3.fromShearX(radians)
     return Mat3.new(
         1.0, math.tan(radians), 0.0,
@@ -166,7 +176,7 @@ end
 
 ---Creates a skew matrix on the y axis.
 ---@param radians number angle
----@return table
+---@return Mat3
 function Mat3.fromShearY(radians)
     return Mat3.new(
         1.0, 0.0, 0.0,
@@ -177,7 +187,7 @@ end
 ---Constructs a matrix from a translation.
 ---@param x number translation x
 ---@param y number translation y
----@return table
+---@return Mat3
 function Mat3.fromTranslation(x, y)
     return Mat3.new(
         1.0, 0.0, x,
@@ -187,8 +197,8 @@ end
 
 ---Finds the matrix inverse.
 ---Returns the identity if not possible.
----@param a table matrix
----@return table
+---@param a Mat3 matrix
+---@return Mat3
 function Mat3.inverse(a)
     local b01 = a.m22 * a.m11 - a.m12 * a.m21
     local b11 = a.m12 * a.m20 - a.m22 * a.m10
@@ -212,9 +222,9 @@ function Mat3.inverse(a)
 end
 
 ---Finds the product of two matrices.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Mat3 left operand
+---@param b Mat3 right operand
+---@return Mat3
 function Mat3.mul(a, b)
     return Mat3.new(
         a.m00 * b.m00 + a.m01 * b.m10 + a.m02 * b.m20,
@@ -229,19 +239,19 @@ function Mat3.mul(a, b)
 end
 
 ---Negates a matrix.
----@param a table matrix
----@return table
-function Mat3.negate(a)
+---@param m Mat3 matrix
+---@return Mat3
+function Mat3.negate(m)
     return Mat3.new(
-        -a.m00, -a.m01, -a.m02,
-        -a.m10, -a.m11, -a.m12,
-        -a.m20, -a.m21, -a.m22)
+        -m.m00, -m.m01, -m.m02,
+        -m.m10, -m.m11, -m.m12,
+        -m.m20, -m.m21, -m.m22)
 end
 
 ---Subtracts the right matrix from the left.
----@param a table left operand
----@param b table right operand
----@return table
+---@param a Mat3 left operand
+---@param b Mat3 right operand
+---@return Mat3
 function Mat3.sub(a, b)
     return Mat3.new(
         a.m00 - b.m00, a.m01 - b.m01, a.m02 - b.m02,
@@ -250,7 +260,7 @@ function Mat3.sub(a, b)
 end
 
 ---Returns a JSON string of a matrix.
----@param a table matrix
+---@param a Mat3 matrix
 ---@return string
 function Mat3.toJson(a)
     local m0 = string.format(
@@ -269,7 +279,7 @@ end
 ---of a matrix, where each row is separated
 ---by a line break, '\n', and each column
 ---is separated by three spaces.
----@param a table matrix
+---@param a Mat3 matrix
 ---@return string
 function Mat3.toStringCol(a)
     local m0 = string.format(
@@ -285,17 +295,17 @@ function Mat3.toStringCol(a)
 end
 
 ---Transposes a matrix's columns and rows.
----@param a table matrix
----@return table
-function Mat3.transpose(a)
+---@param m Mat3 matrix
+---@return Mat3
+function Mat3.transpose(m)
     return Mat3.new(
-        a.m00, a.m10, a.m20,
-        a.m01, a.m11, a.m21,
-        a.m02, a.m12, a.m22)
+        m.m00, m.m10, m.m20,
+        m.m01, m.m11, m.m21,
+        m.m02, m.m12, m.m22)
 end
 
 ---Creates the identity matrix.
----@return table
+---@return Mat3
 function Mat3.identity()
     return Mat3.new(
         1.0, 0.0, 0.0,
