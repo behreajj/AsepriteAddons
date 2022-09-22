@@ -220,6 +220,7 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
+        -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
             app.alert {
@@ -229,11 +230,23 @@ dlg:button {
             return
         end
 
+        local args = dlg.data
+        local filepath = args.filepath
+        if (not filepath) or (#filepath < 1) then
+            app.alert { title = "Error", text = "Filepath is empty." }
+            return
+        end
+
+        local ext = app.fs.fileExtension(filepath)
+        if ext ~= "svg" then
+            app.alert { title = "Error", text = "Extension is not svg." }
+            return
+        end
+
         local oldColorMode = activeSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
-        -- Collect inputs.
-        local args = dlg.data
+        -- Unpack arguments.
         local scale = args.scale or defaults.scale
         local margin = args.margin or defaults.margin
         local marginClr = args.marginClr or defaults.marginClr
@@ -310,8 +323,6 @@ dlg:button {
                     borderClr.alpha * 0.003921568627451)
             end
 
-            -- Provide option for CIELAB?
-            -- fill="#CD853F cielab(62.253188, 23.950124, 48.410653)"
             str = str .. strfmt(
                 "fill=\"#%06X\" />",
                 borderClr.red << 0x10
@@ -390,27 +401,10 @@ dlg:button {
 
         str = str .. "\n</svg>"
 
-        local filepath = args.filepath
-        if filepath and #filepath > 0 then
-            -- app.fs.isFile doesn't apply to files
-            -- that have been typed in by the user,
-            -- but have not yet been created.
-            local ext = app.fs.fileExtension(filepath)
-            if ext ~= "svg" then
-                app.alert { title = "Error", text = "Extension is not svg." }
-            else
-                local file, err = io.open(filepath, "w")
-                if file then
-                    file:write(str)
-                    file:close()
-                end
-
-                if err then
-                    app.alert("Error saving file: " .. err)
-                end
-            end
-        else
-            app.alert { title = "Error", text = "Filepath is empty." }
+        local file, err = io.open(filepath, "w")
+        if file then
+            file:write(str)
+            file:close()
         end
 
         if oldColorMode == ColorMode.INDEXED then
@@ -418,8 +412,13 @@ dlg:button {
         elseif oldColorMode == ColorMode.GRAY then
             app.command.ChangePixelFormat { format = "gray" }
         end
-
         app.refresh()
+
+        if err then
+            app.alert { title = "Error", text = err }
+            return
+        end
+
         app.alert { title = "Success", text = "File exported." }
     end
 }

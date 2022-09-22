@@ -157,10 +157,10 @@ dlg:button {
         while h < openLen do h = h + 1
             local sprite = openSprites[h]
             local colorMode = sprite.colorMode
-            local profile = sprite.colorSpace
             local filename = app.fs.fileTitle(sprite.filename)
 
             if colorMode == cmActive then
+                local profile = sprite.colorSpace
                 if profile == profActive then
                     candLenExact = candLenExact + 1
                     candidatesExact[candLenExact] = sprite

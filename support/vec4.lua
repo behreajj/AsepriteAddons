@@ -9,7 +9,8 @@ Vec4.__index = Vec4
 setmetatable(Vec4, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Constructs a new vector from four numbers.
 ---@param x number x component
@@ -316,9 +317,8 @@ function Vec4.distMinkowski(a, b, c)
             + math.abs(b.z - a.z) ^ d
             + math.abs(b.w - a.w) ^ d)
             ^ (1.0 / d)
-    else
-        return 0.0
     end
+    return 0.0
 end
 
 ---Finds the squared Euclidean distance between
@@ -663,9 +663,8 @@ end
 function Vec4.mix(a, b, t)
     if type(t) == "number" then
         return Vec4.mixNum(a, b, t)
-    else
-        return Vec4.mixVec4(a, b, t)
     end
+    return Vec4.mixVec4(a, b, t)
 end
 
 ---Mixes two vectors together by a step.
@@ -907,21 +906,21 @@ end
 ---@param v Vec4 left operand
 ---@return Vec4
 function Vec4.round(v)
-    local iw, fw = math.modf(v.w)
-    if iw <= 0 and fw <= -0.5 then iw = iw - 1
-    elseif iw >= 0 and fw >= 0.5 then iw = iw + 1 end
-
-    local iz, fz = math.modf(v.z)
-    if iz <= 0 and fz <= -0.5 then iz = iz - 1
-    elseif iz >= 0 and fz >= 0.5 then iz = iz + 1 end
+    local ix, fx = math.modf(v.x)
+    if ix <= 0 and fx <= -0.5 then ix = ix - 1
+    elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
 
     local iy, fy = math.modf(v.y)
     if iy <= 0 and fy <= -0.5 then iy = iy - 1
     elseif iy >= 0 and fy >= 0.5 then iy = iy + 1 end
 
-    local ix, fx = math.modf(v.x)
-    if ix <= 0 and fx <= -0.5 then ix = ix - 1
-    elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
+    local iz, fz = math.modf(v.z)
+    if iz <= 0 and fz <= -0.5 then iz = iz - 1
+    elseif iz >= 0 and fz >= 0.5 then iz = iz + 1 end
+
+    local iw, fw = math.modf(v.w)
+    if iw <= 0 and fw <= -0.5 then iw = iw - 1
+    elseif iw >= 0 and fw >= 0.5 then iw = iw + 1 end
 
     return Vec4.new(ix, iy, iz, iw)
 end
@@ -1052,10 +1051,10 @@ end
 ---@param v Vec4 vector
 ---@return Vec4
 function Vec4.trunc(v)
-    local iw, _ = math.modf(v.w)
-    local iz, _ = math.modf(v.z)
-    local iy, _ = math.modf(v.y)
     local ix, _ = math.modf(v.x)
+    local iy, _ = math.modf(v.y)
+    local iz, _ = math.modf(v.z)
+    local iw, _ = math.modf(v.w)
     return Vec4.new(ix, iy, iz, iw)
 end
 

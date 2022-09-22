@@ -203,6 +203,14 @@ dlg:button {
             return
         end
 
+        if srcLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
+            }
+            return
+        end
+
         -- Unpack arguments.
         local args = dlg.data
         local target = args.target or defaults.target
@@ -318,9 +326,8 @@ dlg:button {
         -- Create target layer.
         -- Do not copy source layer blend mode.
         local trgLyr = activeSprite:newLayer()
-        if srcLayer.opacity then
-            trgLyr.opacity = srcLayer.opacity
-        end
+        trgLyr.parent = srcLayer.parent
+        trgLyr.opacity = srcLayer.opacity
         trgLyr.name = "Gradient.Outline." .. clrSpacePreset
 
         -- Calculate colors in an outer loop, to

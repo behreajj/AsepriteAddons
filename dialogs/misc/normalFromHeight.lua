@@ -1,4 +1,3 @@
-dofile("../../support/clr.lua")
 dofile("../../support/aseutilities.lua")
 
 local targets = { "ACTIVE", "ALL", "RANGE" }

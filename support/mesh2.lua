@@ -173,7 +173,7 @@ end
 ---Scales each face of a mesh individually,
 ---based on its median center. Meshes should
 ---call uniformData first for best results.
----@param scale number scale
+---@param scale Vec2|number scale
 ---@return Mesh2
 function Mesh2:scaleFacesIndiv(scale)
 
@@ -189,13 +189,17 @@ function Mesh2:scaleFacesIndiv(scale)
     end
 
     local fsLen = #self.fs
-    for i = 1, fsLen, 1 do
+    local i = 0
+    while i < fsLen do
+        i = i + 1
         local f = self.fs[i]
         local fLen = #f
 
         -- Find center.
         local center = Vec2.new(0.0, 0.0)
-        for j = 1, fLen, 1 do
+        local j = 0
+        while j < fLen do
+            j = j + 1
             local vert = f[j]
             local v = self.vs[vert]
             center = Vec2.add(center, v)
@@ -207,12 +211,14 @@ function Mesh2:scaleFacesIndiv(scale)
 
         -- Treat center as a pivot:
         -- Subtract center, scale, add center.
-        for j = 1, fLen, 1 do
-            local vert = f[j]
+        local k = 0
+        while k < fLen do
+            k = k + 1
+            local vert = f[k]
             local v = self.vs[vert]
             self.vs[vert] = Vec2.add(
-                Vec2.hadamard(Vec2.sub(v,
-                    center), vscl), center)
+                Vec2.hadamard(Vec2.sub(
+                    v, center), vscl), center)
         end
     end
 
@@ -278,7 +284,7 @@ end
 ---@param startWeight number start weight
 ---@param stopWeight number stop weight
 ---@param sectors integer sectors
----@param useQuads boolean use quads
+---@param useQuads boolean|nil use quads
 ---@return Mesh2
 function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQuads)
     local a = startAngle % 6.2831853071796
@@ -418,8 +424,7 @@ function Mesh2.gridBricks(cols, rows, offset, aspect, skip, pick)
 
         local x0 = 0.0
         local x1 = 0.0
-        local useOffset = i % all < vpick
-        if useOffset then
+        if i % all < vpick then
             x0 = (j - halfOff) * jToStep - 0.5
             x1 = (j + 1 - halfOff) * jToStep - 0.5
         else

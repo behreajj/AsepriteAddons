@@ -249,7 +249,7 @@ end
 ---@param xLoc number location x
 ---@param yLoc number location y
 ---@param zLoc number location z
----@param handedness string handedness
+---@param handedness string|nil handedness
 ---@return Mat4
 function Mat4.cameraIsometric(xLoc, yLoc, zLoc, handedness)
     local hVal = "RIGHT"
@@ -296,7 +296,7 @@ end
 ---@param xLoc number location x
 ---@param yLoc number location y
 ---@param zLoc number location z
----@param handedness string handedness
+---@param handedness string|nil handedness
 ---@return Mat4
 function Mat4.cameraDimetric(xLoc, yLoc, zLoc, handedness)
     local hVal = "RIGHT"
@@ -439,7 +439,6 @@ end
 ---@param az number axis z
 ---@return Mat4
 function Mat4.fromRotInternal(cosa, sina, ax, ay, az)
-
     local d = 1.0 - cosa
     local x = ax * d
     local y = ay * d

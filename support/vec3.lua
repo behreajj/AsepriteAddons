@@ -368,9 +368,8 @@ function Vec3.distMinkowski(a, b, c)
             + math.abs(b.y - a.y) ^ d
             + math.abs(b.z - a.z) ^ d)
             ^ (1.0 / d)
-    else
-        return 0.0
     end
+    return 0.0
 end
 
 ---Finds the squared Euclidean distance between
@@ -490,14 +489,12 @@ end
 ---coordinate system.
 ---@param azimuth number
 ---@param inclination number
----@param radius number
+---@param radius number|nil
 ---@return Vec3
 function Vec3.fromSpherical(azimuth, inclination, radius)
-
     local a = azimuth or 0.0
     local i = inclination or 0.0
     local r = radius or 1.0
-
     return Vec3.fromSphericalInternal(
         math.cos(a), math.sin(a),
         math.cos(i), math.sin(i), r)
@@ -513,7 +510,6 @@ end
 ---@param radius number radius
 ---@return Vec3
 function Vec3.fromSphericalInternal(cosAzim, sinAzim, cosIncl, sinIncl, radius)
-
     local rhoCosIncl = radius * cosIncl
     return Vec3.new(
         rhoCosIncl * cosAzim,
@@ -832,9 +828,8 @@ end
 function Vec3.mix(a, b, t)
     if type(t) == "number" then
         return Vec3.mixNum(a, b, t)
-    else
-        return Vec3.mixVec3(a, b, t)
     end
+    return Vec3.mixVec3(a, b, t)
 end
 
 ---Mixes two vectors together by a step.
@@ -934,9 +929,8 @@ function Vec3.projectScalar(a, b)
         return (a.x * b.x
             + a.y * b.y
             + a.z * b.z) / bSq
-    else
-        return 0.0
     end
+    return 0.0
 end
 
 ---Finds the vector projection of the left
@@ -1049,16 +1043,15 @@ end
 ---of unit length. Defaults to rotateZ.
 ---@param a Vec3 vector
 ---@param radians number angle
----@param axis Vec3
+---@param axis Vec3 rotation axis
 ---@return Vec3
 function Vec3.rotate(a, radians, axis)
     if axis and Vec3.any(axis) then
         return Vec3.rotateInternal(a,
             math.cos(radians), math.sin(radians),
             Vec3.normalize(axis))
-    else
-        return Vec3.rotateZ(a, radians)
     end
+    return Vec3.rotateZ(a, radians)
 end
 
 ---Rotates a vector around the x axis by an angle
@@ -1176,17 +1169,17 @@ end
 ---@param v Vec3 vector
 ---@return Vec3
 function Vec3.round(v)
-    local iz, fz = math.modf(v.z)
-    if iz <= 0 and fz <= -0.5 then iz = iz - 1
-    elseif iz >= 0 and fz >= 0.5 then iz = iz + 1 end
+    local ix, fx = math.modf(v.x)
+    if ix <= 0 and fx <= -0.5 then ix = ix - 1
+    elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
 
     local iy, fy = math.modf(v.y)
     if iy <= 0 and fy <= -0.5 then iy = iy - 1
     elseif iy >= 0 and fy >= 0.5 then iy = iy + 1 end
 
-    local ix, fx = math.modf(v.x)
-    if ix <= 0 and fx <= -0.5 then ix = ix - 1
-    elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
+    local iz, fz = math.modf(v.z)
+    if iz <= 0 and fz <= -0.5 then iz = iz - 1
+    elseif iz >= 0 and fz >= 0.5 then iz = iz + 1 end
 
     return Vec3.new(ix, iy, iz)
 end
@@ -1312,9 +1305,9 @@ end
 ---@param v Vec3 vector
 ---@return Vec3
 function Vec3.trunc(v)
-    local iz, _ = math.modf(v.z)
-    local iy, _ = math.modf(v.y)
     local ix, _ = math.modf(v.x)
+    local iy, _ = math.modf(v.y)
+    local iz, _ = math.modf(v.z)
     return Vec3.new(ix, iy, iz)
 end
 

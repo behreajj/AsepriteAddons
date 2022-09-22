@@ -1182,6 +1182,8 @@ dlg:button {
         local target = args.target or defaults.target
         local unitType = args.units or defaults.units
         local easeMethod = args.easeMethod or defaults.easeMethod
+
+        -- TODO: Return early if both percentages are 100?
         local wPrc = args.prcWidth or defaults.prcWidth
         local hPrc = args.prcHeight or defaults.prcHeight
         local wPxl = args.pxWidth or activeSprite.width

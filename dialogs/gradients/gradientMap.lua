@@ -64,6 +64,14 @@ dlg:button {
             return
         end
 
+        if srcLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
+            }
+            return
+        end
+
         -- Tile map layers may be present in 1.3 beta.
         local layerIsTilemap = false
         local tileSet = nil
@@ -105,13 +113,12 @@ dlg:button {
 
         -- Create target layer.
         -- Do not copy source layer blend mode.
-        local trgLyr = activeSprite:newLayer()
-        if srcLayer.opacity then
-            trgLyr.opacity = srcLayer.opacity
-        end
-        trgLyr.name = "Gradient.Map." .. clrSpacePreset
+        local trgLayer = activeSprite:newLayer()
+        trgLayer.parent = srcLayer.parent
+        trgLayer.opacity = srcLayer.opacity
+        trgLayer.name = "Gradient.Map." .. clrSpacePreset
         if useNormalize then
-            trgLyr.name = trgLyr.name .. ".Contrast"
+            trgLayer.name = trgLayer.name .. ".Contrast"
         end
 
         app.transaction(function()
@@ -204,7 +211,7 @@ dlg:button {
                     end
 
                     -- Create cel.
-                    local trgCel = activeSprite:newCel(trgLyr, srcCel.frame)
+                    local trgCel = activeSprite:newCel(trgLayer, srcCel.frame)
                     trgCel.position = srcCel.position
                     trgCel.image = srcImg:clone()
                     trgCel.opacity = srcCel.opacity

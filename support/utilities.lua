@@ -303,9 +303,8 @@ function Utilities.int32Overflow(x)
     local y = x & 0xffffffff
     if y & 0x80000000 then
         return -((~y & 0xffffffff) + 1)
-    else
-        return y
     end
+    return y
 end
 
 ---Unclamped linear interpolation from an origin angle
@@ -644,9 +643,8 @@ function Utilities.mulMat4Point3(a, b)
             (a.m00 * b.x + a.m01 * b.y + a.m03) * wInv,
             (a.m10 * b.x + a.m11 * b.y + a.m13) * wInv,
             (a.m20 * b.x + a.m21 * b.y + a.m23) * wInv)
-    else
-        return Vec3.new(0.0, 0.0, 0.0)
     end
+    return Vec3.new(0.0, 0.0, 0.0)
 end
 
 ---Multiplies a Mat3 with a Vec3.
@@ -921,9 +919,8 @@ function Utilities.quantizeSigned(a, levels)
     if levels ~= 0 then
         return Utilities.quantizeSignedInternal(
             a, levels, 1.0 / levels)
-    else
-        return a
     end
+    return a
 end
 
 ---Quantizes a signed number according
@@ -949,9 +946,8 @@ function Utilities.quantizeUnsigned(a, levels)
     if levels > 1 then
         return Utilities.quantizeUnsignedInternal(
             a, levels, 1.0 / (levels - 1.0))
-    else
-        return math.max(0.0, a)
     end
+    return math.max(0.0, a)
 end
 
 ---Quantizes an unsigned number according
@@ -1072,9 +1068,8 @@ function Utilities.round(x)
         return ix - 1
     elseif ix >= 0 and fx >= 0.5 then
         return ix + 1
-    else
-        return ix
     end
+    return ix
 end
 
 ---Creates a new table from the source
@@ -1153,8 +1148,8 @@ function Utilities.toScreen(modelview, projection, pt3, width, height)
     -- Convert from normalized coordinates to
     -- screen dimensions. Flip y axis. Retain
     -- z coordinate for purpose of depth sort.
-    x = width * (0.5 + 0.5 * x)
-    y = height * (0.5 - 0.5 * y)
+    x = (width - 1) * (0.5 + 0.5 * x)
+    y = (height - 1) * (0.5 - 0.5 * y)
     z = 0.5 + 0.5 * z
 
     return Vec3.new(x, y, z)

@@ -7,7 +7,8 @@ Vec2.__index = Vec2
 setmetatable(Vec2, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Constructs a new vector from two numbers.
 ---@param x number x component
@@ -312,9 +313,8 @@ function Vec2.distMinkowski(a, b, c)
         return (math.abs(b.x - a.x) ^ d
             + math.abs(b.y - a.y) ^ d)
             ^ (1.0 / d)
-    else
-        return 0.0
     end
+    return 0.0
 end
 
 ---Finds the squared Euclidean distance between
@@ -419,7 +419,7 @@ end
 ---The heading, or azimuth, is in radians.
 ---The radius defaults to 1.0.
 ---@param heading number heading
----@param radius number radius
+---@param radius number|nil radius
 ---@return Vec2
 function Vec2.fromPolar(heading, radius)
     local r = radius or 1.0
@@ -624,9 +624,8 @@ end
 function Vec2.mix(a, b, t)
     if type(t) == "number" then
         return Vec2.mixNum(a, b, t)
-    else
-        return Vec2.mixVec2(a, b, t)
     end
+    return Vec2.mixVec2(a, b, t)
 end
 
 ---Mixes two vectors together by a step.
@@ -739,9 +738,8 @@ function Vec2.projectScalar(a, b)
     local bSq = b.x * b.x + b.y * b.y
     if bSq > 0.0 then
         return (a.x * b.x + a.y * b.y) / bSq
-    else
-        return 0.0
     end
+    return 0.0
 end
 
 ---Finds the vector projection of the left
@@ -903,13 +901,13 @@ end
 ---@param v Vec2 vector
 ---@return Vec2
 function Vec2.round(v)
-    local iy, fy = math.modf(v.y)
-    if iy <= 0 and fy <= -0.5 then iy = iy - 1
-    elseif iy >= 0 and fy >= 0.5 then iy = iy + 1 end
-
     local ix, fx = math.modf(v.x)
     if ix <= 0 and fx <= -0.5 then ix = ix - 1
     elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
+
+    local iy, fy = math.modf(v.y)
+    if iy <= 0 and fy <= -0.5 then iy = iy - 1
+    elseif iy >= 0 and fy >= 0.5 then iy = iy + 1 end
 
     return Vec2.new(ix, iy)
 end
@@ -1005,15 +1003,16 @@ end
 function Vec2.toPolar(v)
     return {
         radius = Vec2.mag(v),
-        heading = Vec2.headingSigned(v) }
+        heading = Vec2.headingSigned(v)
+    }
 end
 
 ---Truncates a vector's components to integers.
 ---@param v Vec2 vector
 ---@return Vec2
 function Vec2.trunc(v)
-    local iy, _ = math.modf(v.y)
     local ix, _ = math.modf(v.x)
+    local iy, _ = math.modf(v.y)
     return Vec2.new(ix, iy)
 end
 

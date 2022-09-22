@@ -1,6 +1,5 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
-dofile("../../support/clr.lua")
 
 local colorSpaces = {
     "CIE_LAB",

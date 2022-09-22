@@ -1,4 +1,3 @@
-dofile("../../support/clr.lua")
 dofile("../../support/knot3.lua")
 dofile("../../support/curve3.lua")
 dofile("../../support/aseutilities.lua")

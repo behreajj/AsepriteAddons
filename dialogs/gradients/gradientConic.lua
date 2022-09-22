@@ -171,9 +171,7 @@ dlg:button {
             -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
             local angleSigned = atan2(yOffset, xOffset) - angRadians
 
-            -- Depending on whether this is cyclic or not,
-            -- will need to wrap by 360 degrees or 361, so
-            -- factor will be in [0.0, 1.0) vs [0.0, 1.0].
+            -- Wrap by 360 degrees or 361, so factor is in [0.0, 1.0].
             local angleWrapped = angleSigned % wrap
 
             -- Divide by tau to bring into factor.

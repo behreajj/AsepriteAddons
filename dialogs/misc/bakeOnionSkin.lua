@@ -1,4 +1,3 @@
-dofile("../../support/clr.lua")
 dofile("../../support/aseutilities.lua")
 
 local directOps = { "BACKWARD", "BOTH", "FORWARD" }
@@ -223,11 +222,11 @@ dlg:button {
         local frames = AseUtilities.getFrames(activeSprite, target)
 
         -- Do not copy source layer blend mode.
+        -- Target layer parent is set later,
+        -- to ensure that onion is beneath source.
         local trgLayer = activeSprite:newLayer()
         trgLayer.name = srcLayer.name .. ".Onion"
-        if srcLayer.opacity then
-            trgLayer.opacity = srcLayer.opacity
-        end
+        trgLayer.opacity = srcLayer.opacity
 
         local framesLen = #frames
         app.transaction(function()

@@ -163,7 +163,7 @@ dlg:button {
         local sclval = args.scale
         if sclval < 2.0 then sclval = 2.0 end
         local s = Mat3.fromScale(sclval, -sclval)
-        local mat = t * s * r
+        local mat = Mat3.mul(Mat3.mul(t, s), r)
         Utilities.mulMat3Curve2(mat, curve)
 
         local sprite = AseUtilities.initCanvas(

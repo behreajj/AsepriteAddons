@@ -303,6 +303,14 @@ dlg:button {
             return
         end
 
+        if srcLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
+            }
+            return
+        end
+
         -- Check version, if 1.3 then check tile map.
         local version = app.version
         local isTilemap = false
@@ -335,9 +343,9 @@ dlg:button {
             "%s.Quantized.R%02d.G%02d.B%02d.A%02d",
             srcLayerName,
             rLevels, gLevels, bLevels, aLevels)
-        if srcLayer.opacity then
-            trgLayer.opacity = srcLayer.opacity
-        end
+
+        trgLayer.parent = srcLayer.parent
+        trgLayer.opacity = srcLayer.opacity
         if srcLayer.blendMode then
             trgLayer.blendMode = srcLayer.blendMode
         end

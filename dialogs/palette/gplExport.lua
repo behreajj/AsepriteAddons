@@ -79,6 +79,7 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
+        -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
             app.alert {
@@ -88,11 +89,20 @@ dlg:button {
             return
         end
 
-        -- Cache functions.
-        local strfmt = string.format
+        local args = dlg.data
+        local filepath = args.filepath
+        if (not filepath) or (#filepath < 1) then
+            app.alert { title = "Error", text = "Filepath is empty." }
+            return
+        end
+
+        local ext = app.fs.fileExtension(filepath)
+        if ext ~= "gpl" then
+            app.alert { title = "Error", text = "Extension is not gpl." }
+            return
+        end
 
         -- Unpack arguments.
-        local args = dlg.data
         local palName = args.palName or defaults.palName
         local columns = args.columns or defaults.columns
         local attribName = args.attribName or defaults.attribName
@@ -109,6 +119,7 @@ dlg:button {
         attribName = attribName:sub(1, 64)
         attribUrl = attribUrl:sub(1, 96)
 
+        local strfmt = string.format
         local gplStr = strfmt(
             "GIMP Palette\nName: %s\nColumns: %d\n",
             palName, columns)
@@ -200,26 +211,15 @@ dlg:button {
 
         gplStr = gplStr .. table.concat(entryStrArr, '\n')
 
-        local filepath = args.filepath
-        if filepath and #filepath > 0 then
-            -- app.fs.isFile doesn't apply to files that have been
-            -- typed in by the user, but haven't been created.
-            local ext = app.fs.fileExtension(filepath)
-            if ext ~= "gpl" then
-                app.alert("Extension is not gpl.")
-            else
-                local file, err = io.open(filepath, "w")
-                if file then
-                    file:write(gplStr)
-                    file:close()
-                end
+        local file, err = io.open(filepath, "w")
+        if file then
+            file:write(gplStr)
+            file:close()
+        end
 
-                if err then
-                    app.alert("Error saving file: " .. err)
-                end
-            end
-        else
-            app.alert { title = "Error", text = "Filepath is empty." }
+        if err then
+            app.alert { title = "Error", text = err }
+            return
         end
 
         app.alert { title = "Success", text = "File exported." }

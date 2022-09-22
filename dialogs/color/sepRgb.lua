@@ -3,6 +3,7 @@ dofile("../../support/aseutilities.lua")
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
+    -- TODO: Option to hide / delete source layer?
     target = "RANGE",
     fillBase = true,
     xRed = 0.0,
@@ -184,39 +185,44 @@ dlg:button {
         local opacityBlue = args.opacityBlue or defaults.opacityBlue
 
         local frames = AseUtilities.getFrames(activeSprite, target)
-        local activeParent = srcLayer.parent
 
         local baseLyr = nil
         if fillBase then
             baseLyr = activeSprite:newLayer()
-            baseLyr.parent = activeParent
-            baseLyr.name = "Base"
-            baseLyr.color = Color(32, 32, 32, 255)
         end
 
         local redLyr = activeSprite:newLayer()
         local greenLyr = activeSprite:newLayer()
         local blueLyr = activeSprite:newLayer()
+        local sepGroup = activeSprite:newGroup()
 
-        redLyr.parent = activeParent
-        greenLyr.parent = activeParent
-        blueLyr.parent = activeParent
+        if fillBase then
+            baseLyr.parent = sepGroup
+            baseLyr.name = "Base"
+            baseLyr.color = Color(32, 32, 32, 255)
+        end
 
+        redLyr.parent = sepGroup
         redLyr.name = "Red"
-        greenLyr.name = "Green"
-        blueLyr.name = "Blue"
-
         redLyr.color = Color(192, 0, 0, 255)
-        greenLyr.color = Color(0, 192, 0, 255)
-        blueLyr.color = Color(0, 0, 192, 255)
-
         redLyr.blendMode = BlendMode.ADDITION
-        greenLyr.blendMode = BlendMode.ADDITION
-        blueLyr.blendMode = BlendMode.ADDITION
-
         redLyr.opacity = opacityRed
+
+        greenLyr.parent = sepGroup
+        greenLyr.name = "Green"
+        greenLyr.color = Color(0, 192, 0, 255)
+        greenLyr.blendMode = BlendMode.ADDITION
         greenLyr.opacity = opacityGreen
+
+        blueLyr.parent = sepGroup
+        blueLyr.name = "Blue"
+        blueLyr.color = Color(0, 0, 192, 255)
+        blueLyr.blendMode = BlendMode.ADDITION
         blueLyr.opacity = opacityBlue
+
+        sepGroup.name = srcLayer.name .. ".Separated"
+        sepGroup.parent = srcLayer.parent
+        sepGroup.isCollapsed = true
 
         -- Treat y axis as (1, 0) points up.
         local redShift = Point(xRed, -yRed)
@@ -310,7 +316,7 @@ dlg:button {
                             local placeMark = false
 
                             -- getPixel returns -1 when coordinates are out of
-                            -- bounds. However, this wraps around to 4294967295
+                            -- bounds. This wraps around to 4294967295
                             -- or the color white.
                             local xbTest = x + xBlueBase
                             local ybTest = y + yBlueBase
@@ -346,6 +352,7 @@ dlg:button {
         end)
 
         app.refresh()
+        app.command.Refresh()
     end
 }
 

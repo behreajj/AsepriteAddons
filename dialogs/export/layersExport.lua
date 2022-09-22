@@ -800,6 +800,7 @@ dlg:button {
                 jsonFilepath = filePath .. pathSep .. "manifest"
             end
             jsonFilepath = jsonFilepath .. ".json"
+
             local file, err = io.open(jsonFilepath, "w")
             if file then
                 file:write(jsonString)
@@ -807,7 +808,9 @@ dlg:button {
             end
 
             if err then
+                app.refresh()
                 app.alert { title = "Error", text = err }
+                return
             end
         end
 

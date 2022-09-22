@@ -1,5 +1,4 @@
 dofile("../../support/aseutilities.lua")
-dofile("../../support/clr.lua")
 
 local targets = { "ACTIVE", "ALL", "RANGE" }
 -- local grayHues = { "OMIT", "SHADING", "ZERO" }
@@ -201,6 +200,14 @@ dlg:button {
             return
         end
 
+        if srcLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
+            }
+            return
+        end
+
         -- Check version, if 1.3 then check tile map.
         local version = app.version
         local isTilemap = false
@@ -283,12 +290,9 @@ dlg:button {
         end
         trgLayer.name = string.format(
             "%s.Adjusted", srcLayerName)
-        if srcLayer.opacity then
-            trgLayer.opacity = srcLayer.opacity
-        end
-        if srcLayer.blendMode then
-            trgLayer.blendMode = srcLayer.blendMode
-        end
+        trgLayer.parent = srcLayer.parent
+        trgLayer.opacity = srcLayer.opacity
+        trgLayer.blendMode = srcLayer.blendMode
 
         local oldMode = activeSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }

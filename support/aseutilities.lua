@@ -1,4 +1,5 @@
 dofile("./utilities.lua")
+dofile("./clr.lua")
 
 AseUtilities = {}
 AseUtilities.__index = AseUtilities
@@ -192,14 +193,17 @@ end
 
 ---Loads a palette based on a string. The string is
 ---expected to be either "FILE", "PRESET" or "ACTIVE".
+---The correctZeroAlpha flag replaces zero alpha colors
+---with clear black, regardless of RGB channel values.
+---
 ---Returns a tuple of tables. The first table is an
 ---array of hexadecimals according to the sprite color
 ---profile. The second is a copy of the first converted
----to SRGB. If a palette is loaded from a filepath or a
+---to sRGB.
+---
+---If a palette is loaded from a filepath or a
 ---preset the two tables should match, as Aseprite does
----not support color management for palettes. The
----correctZeroAlpha flag replaces zero alpha colors
----with 0x00000000, regardless of other channel data.
+---not support color management for palettes.
 ---@param palType string enumeration
 ---@param filePath string file path
 ---@param presetPath string preset path
@@ -1281,7 +1285,6 @@ end
 ---@param layer userdata layer
 function AseUtilities.drawMesh2(mesh, useFill, fillClr, useStroke, strokeClr, brsh, cel, layer)
     -- Convert Vec2s to Points.
-    -- Round Vec2 for improved accuracy.
     local vs = mesh.vs
     local vsLen = #vs
     local pts = {}
@@ -1297,7 +1300,8 @@ function AseUtilities.drawMesh2(mesh, useFill, fillClr, useStroke, strokeClr, br
     local fsLen = #fs
     local ptsGrouped = {}
     local idx1 = 0
-    while idx1 < fsLen do idx1 = idx1 + 1
+    while idx1 < fsLen do
+        idx1 = idx1 + 1
         local f = fs[idx1]
         local fLen = #f
         local ptsFace = {}
@@ -1643,7 +1647,6 @@ end
 ---@param colorSpace userdata|nil color space
 ---@return userdata
 function AseUtilities.initCanvas(wDefault, hDefault, layerName, colors, colorSpace)
-
     local clrsVal = AseUtilities.DEFAULT_PAL_ARR
     if colors and #colors > 0 then
         clrsVal = colors
@@ -2313,12 +2316,12 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
 end
 
 ---Converts a Vec2 to an Aseprite Point.
----@param a Vec2 vector
+---@param v Vec2 vector
 ---@return userdata
-function AseUtilities.vec2ToPoint(a)
+function AseUtilities.vec2ToPoint(v)
     return Point(
-        Utilities.round(a.x),
-        Utilities.round(a.y))
+        Utilities.round(v.x),
+        Utilities.round(v.y))
 end
 
 ---Translates the pixels of an image by a vector,

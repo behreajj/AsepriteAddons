@@ -943,6 +943,7 @@ dlg:button {
             if #fileTitle < 1 then
                 jsonFilepath = filePath .. pathSep .. "manifest"
             end
+
             jsonFilepath = jsonFilepath .. ".json"
             local file, err = io.open(jsonFilepath, "w")
             if file then
@@ -951,7 +952,9 @@ dlg:button {
             end
 
             if err then
+                app.refresh()
                 app.alert { title = "Error", text = err }
+                return
             end
         end
 

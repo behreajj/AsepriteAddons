@@ -9,7 +9,8 @@ Quaternion.__index = Quaternion
 setmetatable(Quaternion, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Constructs a new quaternion.
 ---Defaults to passing the vector by value.
@@ -140,10 +141,8 @@ end
 ---@param q Quaternion quaternion
 ---@return Quaternion
 function Quaternion.conj(q)
-    local ai = q.imag
     return Quaternion.newByRef(
-        q.real,
-        Vec3.new(-ai.x, -ai.y, -ai.z))
+        q.real, Vec3.negate(q.imag))
 end
 
 ---Divides the left quaternion by the right.
@@ -160,7 +159,7 @@ function Quaternion.div(a, b)
     local bz = bi.z
 
     local bmSq = bw * bw + bx * bx + by * by + bz * bz
-    if bmSq ~= 0.0 then
+    if bmSq > 0.0 then
         local bmSqInv = 1.0 / bmSq
         local bwInv = bw * bmSqInv
         local bxInv = -bx * bmSqInv
@@ -176,9 +175,8 @@ function Quaternion.div(a, b)
                 ai.x * bwInv + aw * bxInv + ai.y * bzInv - ai.z * byInv,
                 ai.y * bwInv + aw * byInv + ai.z * bxInv - ai.x * bzInv,
                 ai.z * bwInv + aw * bzInv + ai.x * byInv - ai.y * bxInv))
-    else
-        return Quaternion.identity()
     end
+    return Quaternion.identity()
 end
 
 ---Finds the dot product between two quaternions.
@@ -186,12 +184,7 @@ end
 ---@param b Quaternion right operand
 ---@return number
 function Quaternion.dot(a, b)
-    local ai = a.imag
-    local bi = b.imag
-    return a.real * b.real
-        + ai.x * bi.x
-        + ai.y * bi.y
-        + ai.z * bi.z
+    return a.real * b.real + Vec3.dot(a.imag, b.imag)
 end
 
 ---Finds the exponent of a quaternion. Returns
@@ -206,7 +199,7 @@ function Quaternion.exp(q)
     local z = ai.z
 
     local mgImSq = x * x + y * y + z * z
-    if mgImSq > 0.000001 then
+    if mgImSq > 0.0 then
         local wExp = math.exp(q.real)
         local mgIm = math.sqrt(mgImSq)
         local scalar = wExp * math.sin(mgIm) / mgIm
@@ -216,9 +209,8 @@ function Quaternion.exp(q)
                 x * scalar,
                 y * scalar,
                 z * scalar))
-    else
-        return Quaternion.identity()
     end
+    return Quaternion.identity()
 end
 
 ---Creates a quaternion from three axes. Normalizes the
@@ -300,7 +292,7 @@ function Quaternion.fromTo(a, b)
     local any = a.y
     local anz = a.z
     local amSq = anx * anx + any * any + anz * anz
-    if amSq <= 0.0 then
+    if amSq < 0.000001 then
         return Quaternion.identity()
     end
 
@@ -308,7 +300,7 @@ function Quaternion.fromTo(a, b)
     local bny = b.y
     local bnz = b.z
     local bmSq = bnx * bnx + bny * bny + bnz * bnz
-    if bmSq <= 0.0 then
+    if bmSq < 0.000001 then
         return Quaternion.identity()
     end
 
@@ -340,22 +332,21 @@ end
 ---@param q Quaternion quaternion
 ---@return Quaternion
 function Quaternion.inverse(q)
-    local ai = q.imag
+    local qi = q.imag
     local mSq = q.real * q.real
-        + ai.x * ai.x
-        + ai.y * ai.y
-        + ai.z * ai.z
-    if mSq ~= 0.0 then
+        + qi.x * qi.x
+        + qi.y * qi.y
+        + qi.z * qi.z
+    if mSq > 0.0 then
         local mSqInv = 1.0 / mSq
         return Quaternion.newByRef(
             q.real * mSqInv,
             Vec3.new(
-                -ai.x * mSqInv,
-                -ai.y * mSqInv,
-                -ai.z * mSqInv))
-    else
-        return Quaternion.identity()
+                -qi.x * mSqInv,
+                -qi.y * mSqInv,
+                -qi.z * mSqInv))
     end
+    return Quaternion.identity()
 end
 
 ---Finds the natural logarithm of a quaternion.
@@ -373,7 +364,7 @@ function Quaternion.log(q)
     local cz = 0.0
 
     local mgImSq = ax * ax + ay * ay + az * az
-    if mgImSq > 0.000001 then
+    if mgImSq > 0.0 then
         local mgIm = math.sqrt(mgImSq)
         local t = math.atan(mgIm, aw) / mgIm
         cx = ax * t
@@ -390,23 +381,14 @@ end
 ---@param q Quaternion quaternion
 ---@return number
 function Quaternion.mag(q)
-    local ai = q.imag
-    return math.sqrt(
-        q.real * q.real
-        + ai.x * ai.x
-        + ai.y * ai.y
-        + ai.z * ai.z)
+    return math.sqrt(Quaternion.magSq(q))
 end
 
 ---Finds a quaternion's magnitude squared.
 ---@param q Quaternion quaternion
 ---@return number
 function Quaternion.magSq(q)
-    local ai = q.imag
-    return q.real * q.real
-        + ai.x * ai.x
-        + ai.y * ai.y
-        + ai.z * ai.z
+    return q.real * q.real + Vec3.magSq(q.imag)
 end
 
 ---Multiplies two quaternions.
@@ -433,13 +415,10 @@ function Quaternion.mul(a, b)
 end
 
 ---Negates a quaternion
----@param a Quaternion quaternion
+---@param q Quaternion quaternion
 ---@return Quaternion
-function Quaternion.negate(a)
-    local ai = a.imag
-    return Quaternion.newByRef(
-        -a.real,
-        Vec3.new(-ai.x, -ai.y, -ai.z))
+function Quaternion.negate(q)
+    return Quaternion.newByRef(-q.real, Vec3.negate(q.imag))
 end
 
 ---Evaluates if all quaternion components are zero.
@@ -461,7 +440,7 @@ function Quaternion.normalize(q)
         + ai.x * ai.x
         + ai.y * ai.y
         + ai.z * ai.z
-    if mSq ~= 0.0 then
+    if mSq > 0.0 then
         local mInv = 1.0 / math.sqrt(mSq)
         return Quaternion.newByRef(
             q.real * mInv,
@@ -469,9 +448,8 @@ function Quaternion.normalize(q)
                 ai.x * mInv,
                 ai.y * mInv,
                 ai.z * mInv))
-    else
-        return Quaternion.identity()
     end
+    return Quaternion.identity()
 end
 
 ---Creates a random quaternion.
@@ -588,9 +566,8 @@ function Quaternion.scale(a, b)
                 ai.x * b,
                 ai.y * b,
                 ai.z * b))
-    else
-        return Quaternion.identity()
     end
+    return Quaternion.identity()
 end
 
 ---Spherical linear interpolation from an origin

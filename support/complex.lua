@@ -210,10 +210,10 @@ function Complex.mul(a, b)
 end
 
 ---Negates a complex number
----@param a Complex left operand
+---@param z Complex complex number
 ---@return Complex
-function Complex.negate(a)
-    return Complex.new(-a.real, -a.imag)
+function Complex.negate(z)
+    return Complex.new(-z.real, -z.imag)
 end
 
 ---Finds the phase of a complex number.
