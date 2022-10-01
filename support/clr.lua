@@ -1047,7 +1047,160 @@ end
 ---@param t number step
 ---@return Clr
 function Clr.mix(o, d, t)
+    -- TODO: mixNormalMap to incorporate into gradients?
     return Clr.mixlRgb(o, d, t)
+end
+
+---Mixes two colors in CIE LAB space by a step,
+---then converts the result to a sRGB color.
+---Clamps the step to [0.0, 1.0].
+---@param o Clr origin
+---@param d Clr destination
+---@param t number step
+---@return Clr
+function Clr.mixCieLab(o, d, t)
+    local u = t or 0.5
+    if u <= 0.0 then
+        return Clr.new(o.r, o.g, o.b, o.a)
+    end
+    if u >= 1.0 then
+        return Clr.new(d.r, d.g, d.b, d.a)
+    end
+    return Clr.mixCieLabInternal(o, d, u)
+end
+
+---Mixes two colors in CIE LAB by a step,
+---then converts the result to a sRGB color.
+---@param o Clr origin
+---@param d Clr destination
+---@param t number step
+---@return Clr
+function Clr.mixCieLabInternal(o, d, t)
+    local u = 1.0 - t
+    local oLab = Clr.sRgbToCieLab(o)
+    local dLab = Clr.sRgbToCieLab(d)
+    return Clr.cieLabTosRgb(
+        u * oLab.l + t * dLab.l,
+        u * oLab.a + t * dLab.a,
+        u * oLab.b + t * dLab.b,
+        u * oLab.alpha + t * dLab.alpha)
+end
+
+---Mixes two colors in CIE LCH by a step.
+---The hue function should accept an origin,
+---destination and factor, all numbers.
+---The step is clamped to [0.0, 1.0].
+---The hue function defaults to near.
+---@param o Clr origin
+---@param d Clr destination
+---@param t number step
+---@param hueFunc function|nil hue function
+---@return Clr
+function Clr.mixCieLch(o, d, t, hueFunc)
+    local u = t or 0.5
+    if u <= 0.0 then
+        return Clr.new(o.r, o.g, o.b, o.a)
+    end
+    if u >= 1.0 then
+        return Clr.new(d.r, d.g, d.b, d.a)
+    end
+
+    local f = hueFunc or function(oh, dh, x)
+        local diff = dh - oh
+        if diff ~= 0.0 then
+            local y = 1.0 - x
+            if oh < dh and diff > 0.5 then
+                return (y * (oh + 1.0) + x * dh) % 1.0
+            elseif oh > dh and diff < -0.5 then
+                return (y * oh + x * (dh + 1.0)) % 1.0
+            else
+                return y * oh + x * dh
+            end
+        else
+            return oh
+        end
+    end
+
+    return Clr.mixCieLchInternal(o, d, u, f)
+end
+
+---Mixes two colors in LCH space by a step.
+---The hue function should accept an origin,
+---destination and factor, all numbers.
+---@param o Clr origin
+---@param d Clr color
+---@param t number step
+---@param hueFunc function hue function
+---@return Clr
+function Clr.mixCieLchInternal(o, d, t, hueFunc)
+    local oLab = Clr.sRgbToCieLab(o)
+    local oa = oLab.a
+    local ob = oLab.b
+    local ocsq = oa * oa + ob * ob
+
+    local dLab = Clr.sRgbToCieLab(d)
+    local da = dLab.a
+    local db = dLab.b
+    local dcsq = da * da + db * db
+
+    local u = 1.0 - t
+    if ocsq < 0.00005 or dcsq < 0.00005 then
+        return Clr.cieLabTosRgb(
+            u * oLab.l + t * dLab.l,
+            u * oa + t * da,
+            u * ob + t * db,
+            u * oLab.alpha + t * dLab.alpha)
+    else
+        local oChr = math.sqrt(ocsq)
+        local oHue = math.atan(ob, oa) * 0.1591549430919
+        oHue = oHue % 1.0
+
+        local dChr = math.sqrt(dcsq)
+        local dHue = math.atan(db, da) * 0.1591549430919
+        dHue = dHue % 1.0
+
+        return Clr.cieLchTosRgb(
+            u * oLab.l + t * dLab.l,
+            u * oChr + t * dChr,
+            hueFunc(oHue, dHue, t),
+            u * oLab.alpha + t * dLab.alpha,
+            0.00005)
+    end
+end
+
+---Mixes two colors in CIE XYZ space by a step,
+---then converts the result to a sRGB color.
+---Clamps the step to [0.0, 1.0].
+---@param o Clr origin
+---@param d Clr destination
+---@param t number step
+---@return Clr
+function Clr.mixCieXyz(o, d, t)
+    local u = t or 0.5
+    if u <= 0.0 then
+        return Clr.new(o.r, o.g, o.b, o.a)
+    end
+    if u >= 1.0 then
+        return Clr.new(d.r, d.g, d.b, d.a)
+    end
+    return Clr.mixCieXyzInternal(o, d, u)
+end
+
+---Mixes two colors in CIE XYZ space by a step,
+---then converts the result to a sRGB color.
+---@param o Clr origin
+---@param d Clr destination
+---@param t number step
+---@return Clr
+function Clr.mixCieXyzInternal(o, d, t)
+    local u = 1.0 - t
+    local oXyz = Clr.sRgbToCieXyz(o)
+    local dXyz = Clr.sRgbToCieXyz(d)
+    return Clr.cieXyzTosRgb(
+        u * oXyz.x + t * dXyz.x,
+        u * oXyz.y + t * dXyz.y,
+        u * oXyz.z + t * dXyz.z,
+        u * oXyz.a + t * dXyz.a)
 end
 
 ---Mixes two colors in HSLA space by a step.
@@ -1205,81 +1358,6 @@ function Clr.mixlRgbaInternal(o, d, t)
         u * o.g + t * d.g,
         u * o.b + t * d.b,
         u * o.a + t * d.a)
-end
-
----Mixes two colors that represent normals
----used in dynamic lighting. Uses spherical
----linear interpolation, geometric formula. See
----https://en.wikipedia.org/wiki/Slerp .
----Colors should be in standard RGB.
----@param o Clr origin
----@param d Clr destination
----@param t number step
----@return Clr
-function Clr.mixNormal(o, d, t)
-    local ox = o.r + o.r - 1.0
-    local oy = o.g + o.g - 1.0
-    local oz = o.b + o.b - 1.0
-    local oa = o.a
-    local omsq = ox * ox + oy * oy + oz * oz
-    if omsq > 0.0 then
-        local ominv = 1.0 / math.sqrt(omsq)
-        ox = ox * ominv
-        oy = oy * ominv
-        oz = oz * ominv
-    end
-
-    if t <= 0.0 then
-        return Clr.new(
-            ox * 0.5 + 0.5,
-            oy * 0.5 + 0.5,
-            oz * 0.5 + 0.5,
-            oa)
-    end
-
-    local dx = d.r + d.r - 1.0
-    local dy = d.g + d.g - 1.0
-    local dz = d.b + d.b - 1.0
-    local da = d.a
-    local dmsq = dx * dx + dy * dy + dz * dz
-    if dmsq > 0.0 then
-        local dminv = 1.0 / math.sqrt(omsq)
-        dx = dx * dminv
-        dy = dy * dminv
-        dz = dz * dminv
-    end
-
-    if t >= 1.0 then
-        return Clr.new(
-            dx * 0.5 + 0.5,
-            dy * 0.5 + 0.5,
-            dz * 0.5 + 0.5,
-            da)
-    end
-
-    local u = 1.0 - t
-    local ca = u * oa + t * da
-
-    local odDot = math.min(math.max(
-        ox * dx + oy * dy + oz * dz,
-        -0.999999), 0.999999)
-    local omega = math.acos(odDot)
-    local omSin = math.sin(omega)
-    local omSinInv = 1.0
-    if omSin ~= 1.0 then omSinInv = 1.0 / omSin end
-
-    local oFac = math.sin(u * omega) * omSinInv
-    local dFac = math.sin(t * omega) * omSinInv
-
-    local cx = oFac * ox + dFac * dx
-    local cy = oFac * oy + dFac * dy
-    local cz = oFac * oz + dFac * dz
-
-    return Clr.new(
-        cx * 0.5 + 0.5,
-        cy * 0.5 + 0.5,
-        cz * 0.5 + 0.5,
-        ca)
 end
 
 ---Mixes two colors in RGBA space by a step.
