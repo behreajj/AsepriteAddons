@@ -338,8 +338,8 @@ dlg:button {
         -- Cache global functions to locals.
         local round = Utilities.round
         local strfmt = string.format
-        local sRgbToLab = Clr.sRgbaToLab
-        local labToLch = Clr.labToLch
+        local sRgbToLab = Clr.sRgbToCieLab
+        local labToLch = Clr.cieLabToCieLch
         local strToChars = Utilities.stringToCharTable
 
         -- Do not take the length of hexesSrgb

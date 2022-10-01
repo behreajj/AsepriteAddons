@@ -24,7 +24,7 @@ local defaults = {
         Color(255, 0, 102, 255),
         Color(203, 99, 0, 255)
     },
-    complement = { Color(0, 162, 243, 255) },
+    complement = { Color(0, 143, 224, 255) },
     splits = {
         Color(0, 161, 156, 255),
         Color(0, 154, 255, 255)
@@ -69,28 +69,27 @@ local function updateHarmonies(dialog, l, c, h, a)
     local splHue0 = 0.41666666666667
     local splHue1 = 0.58333333333333
 
-    local ana0 = Clr.lchTosRgba(l, c, h - oneTwelve, a, 0.5)
-    local ana1 = Clr.lchTosRgba(l, c, h + oneTwelve, a, 0.5)
+    local ana0 = Clr.cieLchTosRgb(l, c, h - oneTwelve, a, 0.5)
+    local ana1 = Clr.cieLchTosRgb(l, c, h + oneTwelve, a, 0.5)
 
-    local tri0 = Clr.lchTosRgba(l, c, h - oneThird, a, 0.5)
-    local tri1 = Clr.lchTosRgba(l, c, h + oneThird, a, 0.5)
+    local cmp0 = Clr.cieLchTosRgb(100.0 - l, c, h + 0.5, a, 0.5)
 
-    local split0 = Clr.lchTosRgba(l, c, h + splHue0, a, 0.5)
-    local split1 = Clr.lchTosRgba(l, c, h + splHue1, a, 0.5)
+    local tri0 = Clr.cieLchTosRgb(l, c, h - oneThird, a, 0.5)
+    local tri1 = Clr.cieLchTosRgb(l, c, h + oneThird, a, 0.5)
 
-    local square0 = Clr.lchTosRgba(l, c, h + 0.25, a, 0.5)
-    local square1 = Clr.lchTosRgba(l, c, h + 0.5, a, 0.5)
-    local square2 = Clr.lchTosRgba(l, c, h + 0.75, a, 0.5)
+    local split0 = Clr.cieLchTosRgb(l, c, h + splHue0, a, 0.5)
+    local split1 = Clr.cieLchTosRgb(l, c, h + splHue1, a, 0.5)
 
-    local tris = {
-        AseUtilities.clrToAseColor(tri0),
-        AseUtilities.clrToAseColor(tri1)
-    }
+    local square0 = Clr.cieLchTosRgb(l, c, h + 0.25, a, 0.5)
+    local square1 = Clr.cieLchTosRgb(l, c, h + 0.5, a, 0.5)
+    local square2 = Clr.cieLchTosRgb(l, c, h + 0.75, a, 0.5)
 
     local analogues = {
         AseUtilities.clrToAseColor(ana0),
         AseUtilities.clrToAseColor(ana1)
     }
+
+    local compl = { AseUtilities.clrToAseColor(cmp0) }
 
     local splits = {
         AseUtilities.clrToAseColor(split0),
@@ -103,7 +102,10 @@ local function updateHarmonies(dialog, l, c, h, a)
         AseUtilities.clrToAseColor(square2)
     }
 
-    local compl = { squares[2] }
+    local tris = {
+        AseUtilities.clrToAseColor(tri0),
+        AseUtilities.clrToAseColor(tri1)
+    }
 
     dialog:modify { id = "complement", colors = compl }
     dialog:modify { id = "triadic", colors = tris }
@@ -138,9 +140,9 @@ local function updateShades(dialog, l, c, h, a)
     local shdCrm = (1.0 - toShdFac) * c + minChromaShd * toShdFac
     local lgtCrm = (1.0 - toLgtFac) * c + minChromaLgt * toLgtFac
 
-    local labShd = Clr.lchToLab(minLight, shdCrm, shdHue, 1.0, 0.5)
-    local labKey = Clr.lchToLab(l, c, h, 1.0, 0.5)
-    local labLgt = Clr.lchToLab(maxLight, lgtCrm, lgtHue, 1.0, 0.5)
+    local labShd = Clr.cieLchToCieLab(minLight, shdCrm, shdHue, 1.0, 0.5)
+    local labKey = Clr.cieLchToCieLab(l, c, h, 1.0, 0.5)
+    local labLgt = Clr.cieLchToCieLab(maxLight, lgtCrm, lgtHue, 1.0, 0.5)
 
     local pt0 = Vec3.new(labShd.a, labShd.b, labShd.l)
     local pt1 = Vec3.new(labKey.a, labKey.b, labKey.l)
@@ -163,7 +165,7 @@ local function updateShades(dialog, l, c, h, a)
         local v = Curve3.eval(curve, i * toFac)
         i = i + 1
         aseColors[i] = AseUtilities.clrToAseColor(
-            Clr.labTosRgba(v.z, v.x, v.y, a))
+            Clr.cieLabTosRgb(v.z, v.x, v.y, a))
     end
 
     dialog:modify { id = "shading", colors = aseColors }
@@ -234,7 +236,7 @@ end
 
 local function setFromAse(dialog, aseClr)
     local clr = AseUtilities.aseColorToClr(aseClr)
-    local lch = Clr.sRgbaToLch(clr, 0.007072)
+    local lch = Clr.sRgbToCieLch(clr, 0.007072)
     setLch(dialog, lch, clr)
     dialog:modify {
         id = "clr",
@@ -327,7 +329,7 @@ local function setFromSelect(dialog, sprite, frame)
 
     for k, v in pairs(hexDict) do
         local srgb = Clr.fromHex(k)
-        local lab = Clr.sRgbaToLab(srgb)
+        local lab = Clr.sRgbToCieLab(srgb)
         lSum = lSum + lab.l * v
         aSum = aSum + lab.a * v
         bSum = bSum + lab.b * v
@@ -341,8 +343,8 @@ local function setFromSelect(dialog, sprite, frame)
         local lAvg = lSum * countInv
         local aAvg = aSum * countInv
         local bAvg = bSum * countInv
-        local lch = Clr.labToLch(lAvg, aAvg, bAvg, alphaAvg)
-        local clr = Clr.labTosRgba(lAvg, aAvg, bAvg, alphaAvg)
+        local lch = Clr.cieLabToCieLch(lAvg, aAvg, bAvg, alphaAvg)
+        local clr = Clr.cieLabTosRgb(lAvg, aAvg, bAvg, alphaAvg)
         setLch(dialog, lch, clr)
         dialog:modify {
             id = "clr",
@@ -366,7 +368,7 @@ local function setFromHexStr(dialog)
                 r255 * 0.003921568627451,
                 g255 * 0.003921568627451,
                 b255 * 0.003921568627451, 1.0)
-            local lch = Clr.sRgbaToLch(clr, 0.007072)
+            local lch = Clr.sRgbToCieLch(clr, 0.007072)
             setLch(dialog, lch, clr)
             dialog:modify {
                 id = "clr",
@@ -382,7 +384,7 @@ local function updateClrs(dialog)
     local c = args.chroma
     local h = args.hue * 0.0027777777777778
     local a = args.alpha * 0.003921568627451
-    local clr = Clr.lchTosRgba(l, c, h, a, 0.5)
+    local clr = Clr.cieLchTosRgb(l, c, h, a, 0.5)
 
     -- For thoughts on why clipping to gamut is preferred,
     -- see https://github.com/LeaVerou/css.land/issues/10

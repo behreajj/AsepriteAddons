@@ -223,11 +223,12 @@ dlg:button {
         local abs = math.abs
         local tilesToImage = AseUtilities.tilesToImage
         local fromHex = Clr.fromHex
-        local sRgbaToLab = Clr.sRgbaToLab
-        local labTosRgba = Clr.labTosRgba
         local toHex = Clr.toHex
-        local labToLch = Clr.labToLch
-        local lchToLab = Clr.lchToLab
+
+        local sRgbaToLab = Clr.sRgbToSrLab2
+        local labTosRgba = Clr.srLab2TosRgb
+        local labToLch = Clr.srLab2ToSrLch
+        local lchToLab = Clr.srLchToSrLab2
 
         -- Unpack arguments.
         local args = dlg.data

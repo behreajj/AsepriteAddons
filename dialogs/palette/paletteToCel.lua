@@ -5,7 +5,8 @@ local colorSpaces = {
     "CIE_LAB",
     "CIE_XYZ",
     "LINEAR_RGB",
-    "S_RGB"
+    "S_RGB",
+    "SR_LAB_2"
 }
 
 local targets = { "ACTIVE", "ALL", "RANGE" }
@@ -24,39 +25,47 @@ local defaults = {
 }
 
 local function boundsFromPreset(preset)
-    if preset == "CIE_LAB" then
-        return Bounds3.cieLab()
+    if preset == "CIE_LAB"
+        or preset == "SR_LAB_2" then
+        return Bounds3.lab()
     else
         return Bounds3.unitCubeUnsigned()
     end
+end
+
+local function clrToVec3CieLab(clr)
+    local lab = Clr.sRgbToCieLab(clr)
+    return Vec3.new(lab.a, lab.b, lab.l)
+end
+
+local function clrToVec3CieXyz(clr)
+    local xyz = Clr.sRgbToCieXyz(clr)
+    return Vec3.new(xyz.x, xyz.y, xyz.z)
+end
+
+local function clrToVec3lRgb(clr)
+    local lin = Clr.sRgbTolRgbInternal(clr)
+    return Vec3.new(lin.r, lin.g, lin.b)
 end
 
 local function clrToVec3sRgb(clr)
     return Vec3.new(clr.r, clr.g, clr.b)
 end
 
-local function clrToVec3lRgb(clr)
-    local lin = Clr.sRgbaTolRgbaInternal(clr)
-    return Vec3.new(lin.r, lin.g, lin.b)
-end
-
-local function clrToVec3Xyz(clr)
-    local xyz = Clr.sRgbaToXyz(clr)
-    return Vec3.new(xyz.x, xyz.y, xyz.z)
-end
-
-local function clrToVec3Lab(clr)
-    local lab = Clr.sRgbaToLab(clr)
+local function clrToVec3SrLab2(clr)
+    local lab = Clr.sRgbToSrLab2(clr)
     return Vec3.new(lab.a, lab.b, lab.l)
 end
 
 local function clrToV3FuncFromPreset(preset)
     if preset == "CIE_LAB" then
-        return clrToVec3Lab
+        return clrToVec3CieLab
     elseif preset == "CIE_XYZ" then
-        return clrToVec3Xyz
+        return clrToVec3CieXyz
     elseif preset == "LINEAR_RGB" then
         return clrToVec3lRgb
+    elseif preset == "SR_LAB_2" then
+        return clrToVec3SrLab2
     else
         return clrToVec3sRgb
     end
@@ -79,14 +88,14 @@ dlg:combobox {
     option = defaults.palType,
     options = { "ACTIVE", "FILE", "PRESET" },
     onchange = function()
-        local state = dlg.data.palType
+        local palType = dlg.data.palType
         dlg:modify {
             id = "palFile",
-            visible = state == "FILE"
+            visible = palType == "FILE"
         }
         dlg:modify {
             id = "palPreset",
-            visible = state == "PRESET"
+            visible = palType == "PRESET"
         }
     end
 }
@@ -117,8 +126,9 @@ dlg:combobox {
     option = defaults.clrSpacePreset,
     options = colorSpaces,
     onchange = function()
-        local state = dlg.data.clrSpacePreset
-        local isLab = state == "CIE_LAB"
+        local preset = dlg.data.clrSpacePreset
+        local isLab = preset == "CIE_LAB"
+            or preset == "SR_LAB_2"
         dlg:modify {
             id = "cvgLabRad",
             visible = isLab
@@ -139,6 +149,7 @@ dlg:slider {
     max = 242,
     value = defaults.cvgLabRad,
     visible = defaults.clrSpacePreset == "CIE_LAB"
+        or defaults.clrSpacePreset == "SR_LAB_2"
 }
 
 dlg:newrow { always = false }
@@ -150,6 +161,7 @@ dlg:slider {
     max = 174,
     value = defaults.cvgNormRad,
     visible = defaults.clrSpacePreset ~= "CIE_LAB"
+        and defaults.clrSpacePreset ~= "SR_LAB_2"
 }
 
 dlg:newrow { always = false }
@@ -247,7 +259,8 @@ dlg:button {
 
         -- Select query radius according to color space.
         local cvgRad = 0.0
-        if clrSpacePreset == "CIE_LAB" then
+        if clrSpacePreset == "CIE_LAB"
+            or clrSpacePreset == "SR_LAB_2" then
             cvgRad = args.cvgLabRad
         else
             cvgRad = args.cvgNormRad * 0.01

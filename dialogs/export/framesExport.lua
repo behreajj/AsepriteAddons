@@ -894,6 +894,9 @@ dlg:button {
                     end
                     packetsStr = table.concat(packetStrArr, ',')
                 else
+                    -- TODO: Image size includes padding in its size and in
+                    -- its posSheet, e.g. 256x256 becomes 260x260.
+
                     local lenPacketsUnbatched = #packetsUnbatched
                     local i = 0
                     while i < lenPacketsUnbatched do i = i + 1

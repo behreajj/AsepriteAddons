@@ -201,7 +201,7 @@ dlg:button {
 
             -- Find LCHA.
             local clr = AseUtilities.aseColorToClr(brickColor)
-            local lch = Clr.sRgbaToLch(clr, 0.007072)
+            local lch = Clr.sRgbToCieLch(clr, 0.007072)
             local lightBrick = lch.l
             local chromaBrick = lch.c
             local hueBrick = lch.h
@@ -224,7 +224,7 @@ dlg:button {
             local max = math.max
             local min = math.min
             local drawMesh2 = AseUtilities.drawMesh2
-            local lchTosRgba = Clr.lchTosRgba
+            local lchTosRgba = Clr.cieLchTosRgb
             local clrToAseColor = AseUtilities.clrToAseColor
 
             app.transaction(function()

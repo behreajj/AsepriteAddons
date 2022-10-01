@@ -20,8 +20,8 @@ img:drawSprite(activeSprite, activeFrame)
 local pxItr = img:pixels()
 for elm in pxItr do
     local hex = elm()
-    local a = (hex >> 0x18) & 0xff
-    if a > 0 then
+    local aMask = hex & 0xff000000
+    if aMask ~= 0 then
         local b = (hex >> 0x10) & 0xff
         local g = (hex >> 0x08) & 0xff
         local r = hex & 0xff
@@ -34,24 +34,14 @@ for elm in pxItr do
 
         local sqMag = x * x + y * y + z * z
         if sqMag > 0.000047 then
-            local magInv = 1.0 / math.sqrt(sqMag)
-            x = x * magInv
-            y = y * magInv
-            z = z * magInv
+            local invMag = 127.5 / math.sqrt(sqMag)
+            elm(aMask
+                | (math.floor(z * invMag + 128.0) << 0x10)
+                | (math.floor(y * invMag + 128.0) << 0x08)
+                | math.floor(x * invMag + 128.0))
         else
-            x = 0.0
-            y = 0.0
-            z = 0.0
+            elm(0xff808080)
         end
-
-        local rNew = math.floor(x * 127.5 + 128.0)
-        local gNew = math.floor(y * 127.5 + 128.0)
-        local bNew = math.floor(z * 127.5 + 128.0)
-
-        elm((a << 0x18)
-            | (bNew << 0x10)
-            | (gNew << 0x08)
-            | rNew)
     else
         elm(0x0)
     end

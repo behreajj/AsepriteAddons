@@ -213,7 +213,7 @@ dlg:button {
         local foreHex = foreTint.rgbaPixel
         local neutHex = 0x00808080
         if useBoth then
-            neutHex = Clr.toHex(Clr.mixLab(
+            neutHex = Clr.toHex(Clr.mixCieLab(
                 Clr.fromHex(backHex),
                 Clr.fromHex(foreHex), 0.5))
         end

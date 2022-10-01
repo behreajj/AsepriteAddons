@@ -306,14 +306,14 @@ function Bounds3.toJson(b)
 end
 
 ---Returns a bounds with the dimensions
----of the CIE LAB color space. Intended
----for use with an octree containing
+---of the CIE LAB or SR Lab 2 color spaces.
+---Intended for use with an octree containing
 ---points of color.
 ---@return Bounds3
-function Bounds3.cieLab()
+function Bounds3.lab()
     return Bounds3.newByRef(
-        Vec3.new(-110.0, -110.0, -1.0),
-        Vec3.new(110.0, 110.0, 101.0))
+        Vec3.new(-111.0, -111.0, -1.0),
+        Vec3.new(111.0, 111.0, 101.0))
 end
 
 ---Returns a bounds containing a signed

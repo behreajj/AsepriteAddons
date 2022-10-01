@@ -8,7 +8,10 @@ local defaults = {
     fps = 24,
     outOfGamut = 64,
     quantization = 0,
-    maxChroma = 135,
+    -- CIE LCH max chroma is higher than
+    -- that of SR LCH.
+    -- maxChroma = 135.0,
+    maxChroma = 120.0,
     maxLight = 100.0,
     useHueBar = false,
     plotPalette = true,
@@ -160,13 +163,13 @@ dlg:button {
     onclick = function()
         -- Cache methods
         local floor = math.floor
-        local lchTosRgba = Clr.lchTosRgba
-        local sRgbaToLch = Clr.sRgbaToLch
         local fromHex = Clr.fromHex
         local rgbIsInGamut = Clr.rgbIsInGamut
         local toHex = Clr.toHex
         local quantize = Utilities.quantizeUnsigned
         local drawCircleFill = AseUtilities.drawCircleFill
+        local lchTosRgba = Clr.srLchTosRgb
+        local sRgbaToLch = Clr.sRgbToSrLch
 
         -- Unpack arguments.
         local args = dlg.data
@@ -232,7 +235,7 @@ dlg:button {
             for elm in pxItr do
 
                 -- Convert coordinates from [0, size] to
-                -- [0.0, 1.0], then to CIE LCH.
+                -- [0.0, 1.0], then to LCH.
                 local x = elm.x
                 local xNrm = x * szInv
                 xNrm = quantize(xNrm, quantization)

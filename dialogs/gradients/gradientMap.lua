@@ -83,10 +83,11 @@ dlg:button {
             end
         end
 
+        -- QUERY: Necessary to switch to SR LAB 2?
         -- Cache methods and tables.
         local stlLut = Utilities.STL_LUT
-        local lRgbToXyz = Clr.lRgbaToXyzInternal
-        local xyzToLab = Clr.xyzToLab
+        local lRgbToXyz = Clr.lRgbToCieXyzInternal
+        local xyzToLab = Clr.cieXyzToLab
         local abs = math.abs
         local min = math.min
         local quantize = Utilities.quantizeUnsigned

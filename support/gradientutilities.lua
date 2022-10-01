@@ -19,7 +19,9 @@ GradientUtilities.CLR_SPC_PRESETS = {
     "HSL",
     "HSV",
     "LINEAR_RGB",
-    "S_RGB"
+    "S_RGB",
+    "SR_LAB_2",
+    "SR_LCH"
 }
 
 ---Hue easing function presets.
@@ -41,7 +43,7 @@ GradientUtilities.RGB_EASING_PRESETS = {
 }
 
 ---Default color space preset.
-GradientUtilities.DEFAULT_CLR_SPC = "CIE_LCH"
+GradientUtilities.DEFAULT_CLR_SPC = "SR_LCH"
 
 ---Default hue easing preset.
 GradientUtilities.DEFAULT_HUE_EASING = "NEAR"
@@ -91,24 +93,31 @@ function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
     if clrSpcPreset == "CIE_LCH" then
         local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
         return function(a, b, t)
-            return Clr.mixLchInternal(a, b, t, hef)
+            return Clr.mixCieLchInternal(a, b, t, hef)
         end
     elseif clrSpcPreset == "HSL" then
         local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
         return function(a, b, t)
-            return Clr.mixHslaInternal(a, b, t, hef)
+            return Clr.mixHslInternal(a, b, t, hef)
         end
     elseif clrSpcPreset == "HSV" then
         local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
         return function(a, b, t)
-            return Clr.mixHsvaInternal(a, b, t, hef)
+            return Clr.mixHsvInternal(a, b, t, hef)
         end
     elseif clrSpcPreset == "CIE_LAB" then
-        return Clr.mixLabInternal
+        return Clr.mixCieLabInternal
     elseif clrSpcPreset == "CIE_XYZ" then
-        return Clr.mixXyzInternal
+        return Clr.mixCieXyzInternal
     elseif clrSpcPreset == "LINEAR_RGB" then
-        return Clr.mixsRgbaInternal
+        return Clr.mixsRgbInternal
+    elseif clrSpcPreset == "SR_LAB_2" then
+        return Clr.mixSrLab2Internal
+    elseif clrSpcPreset == "SR_LCH" then
+        local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
+        return function(a, b, t)
+            return Clr.mixSrLchInternal(a, b, t, hef)
+        end
     else
         return Clr.mixlRgbaInternal
     end
@@ -257,6 +266,7 @@ function GradientUtilities.dialogWidgets(dlg)
                 visible = md == "CIE_LCH"
                     or md == "HSL"
                     or md == "HSV"
+                    or md == "SR_LCH"
             }
             dlg:modify {
                 id = "easPreset",
@@ -264,6 +274,7 @@ function GradientUtilities.dialogWidgets(dlg)
                     or md == "LINEAR_RGB"
                     or md == "CIE_LAB"
                     or md == "CIE_XYZ"
+                    or md == "SR_LAB_2"
             }
         end
     }

@@ -18,7 +18,10 @@ local defaults = {
     palCount = 256,
     strokeSize = 6,
     fillSize = 5,
-    maxChroma = 135.0,
+    -- CIE LCH max chroma is higher than
+    -- that of SR LCH.
+    -- maxChroma = 135.0,
+    maxChroma = 120.0,
     pullFocus = false
 }
 
@@ -193,11 +196,11 @@ dlg:button {
         local sqrt = math.sqrt
 
         local fromHex = Clr.fromHex
-        local labTosRgba = Clr.labTosRgba
-        local lchTosRgba = Clr.lchTosRgba
         local rgbIsInGamut = Clr.rgbIsInGamut
-        local sRgbaToLab = Clr.sRgbaToLab
         local toHex = Clr.toHex
+        local sRgbaToLab = Clr.sRgbToSrLab2
+        local labTosRgba = Clr.srLab2TosRgb
+        local lchTosRgba = Clr.srLchTosRgb
 
         local drawCircleFill = AseUtilities.drawCircleFill
 
@@ -284,13 +287,11 @@ dlg:button {
 
                 -- Convert coordinates from [0, size] to
                 -- [0.0, 1.0], then to [-1.0, 1.0], then
-                -- to CIE LAB range [-110.0, 110.0].
-                -- local x = elm.x
+                -- to LAB range [-111.0, 111.0].
                 local xNrm = elm.x * szInv
                 local xSgn = xNrm + xNrm - 1.0
                 local a = xSgn * maxChroma
 
-                -- local y = elm.y
                 local yNrm = elm.y * szInv
                 local ySgn = 1.0 - (yNrm + yNrm)
                 local b = ySgn * maxChroma

@@ -463,7 +463,7 @@ dlg:button {
             local octCapacity = args.octCapacity
                 or defaults.octCapacityBits
             octCapacity = 2 ^ octCapacity
-            local bounds = Bounds3.cieLab()
+            local bounds = Bounds3.lab()
             local octree = Octree.new(bounds, octCapacity, 1)
 
             -- Find minimum and maximum channel values.
@@ -479,7 +479,7 @@ dlg:button {
 
             -- Cache methods to local.
             local fromHex = Clr.fromHex
-            local sRgbaToLab = Clr.sRgbaToLab
+            local sRgbaToLab = Clr.sRgbToSrLab2
             local v3new = Vec3.new
             local v3hash = Vec3.hashCode
             local octins = Octree.insert
@@ -549,7 +549,7 @@ dlg:button {
                     gSrc * 0.003921568627451,
                     bSrc * 0.003921568627451,
                     1.0)
-                local lab = Clr.sRgbaToLab(srgb)
+                local lab = Clr.sRgbToSrLab2(srgb)
                 local query = Vec3.new(lab.a, lab.b, lab.l)
                 local nearPoint, _ = Octree.queryInternal(
                     octree, query, queryRad)

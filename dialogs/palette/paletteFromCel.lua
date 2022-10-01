@@ -5,7 +5,8 @@ local colorSpaces = {
     "CIE_LAB",
     "CIE_XYZ",
     "LINEAR_RGB",
-    "S_RGB"
+    "S_RGB",
+    "SR_LAB_2"
 }
 
 local defaults = {
@@ -49,68 +50,82 @@ local function sortByPreset(preset, arr)
 end
 
 local function boundsFromPreset(preset)
-    if preset == "CIE_LAB" then
-        return Bounds3.cieLab()
+    if preset == "CIE_LAB"
+        or preset == "SR_LAB_2" then
+        return Bounds3.lab()
     else
         return Bounds3.unitCubeUnsigned()
     end
+end
+
+local function clrToVec3CieLab(clr)
+    local lab = Clr.sRgbToCieLab(clr)
+    return Vec3.new(lab.a, lab.b, lab.l)
+end
+
+local function clrToVec3CieXyz(clr)
+    local xyz = Clr.sRgbToCieXyz(clr)
+    return Vec3.new(xyz.x, xyz.y, xyz.z)
+end
+
+local function clrToVec3lRgb(clr)
+    local lin = Clr.sRgbTolRgbInternal(clr)
+    return Vec3.new(lin.r, lin.g, lin.b)
 end
 
 local function clrToVec3sRgb(clr)
     return Vec3.new(clr.r, clr.g, clr.b)
 end
 
-local function clrToVec3lRgb(clr)
-    local lin = Clr.sRgbaTolRgbaInternal(clr)
-    return Vec3.new(lin.r, lin.g, lin.b)
-end
-
-local function clrToVec3Xyz(clr)
-    local xyz = Clr.sRgbaToXyz(clr)
-    return Vec3.new(xyz.x, xyz.y, xyz.z)
-end
-
-local function clrToVec3Lab(clr)
-    local lab = Clr.sRgbaToLab(clr)
+local function clrToVec3SrLab2(clr)
+    local lab = Clr.sRgbToSrLab2(clr)
     return Vec3.new(lab.a, lab.b, lab.l)
 end
 
 local function clrToV3FuncFromPreset(preset)
     if preset == "CIE_LAB" then
-        return clrToVec3Lab
+        return clrToVec3CieLab
     elseif preset == "CIE_XYZ" then
-        return clrToVec3Xyz
+        return clrToVec3CieXyz
     elseif preset == "LINEAR_RGB" then
         return clrToVec3lRgb
+    elseif preset == "SR_LAB_2" then
+        return clrToVec3SrLab2
     else
         return clrToVec3sRgb
     end
 end
 
-local function vec3ToClrLab(v3)
-    return Clr.labTosRgba(v3.z, v3.x, v3.y, 1.0)
+local function vec3ToClrCieLab(v3)
+    return Clr.cieLabTosRgb(v3.z, v3.x, v3.y, 1.0)
 end
 
-local function vec3ToClrXyz(v3)
-    return Clr.xyzaTosRgba(v3.x, v3.y, v3.z, 1.0)
+local function vec3ToClrCieXyz(v3)
+    return Clr.cieXyzTosRgb(v3.x, v3.y, v3.z, 1.0)
 end
 
 local function vec3ToClrlRgb(v3)
     local lin = Clr.new(v3.x, v3.y, v3.z, 1.0)
-    return Clr.lRgbaTosRgbaInternal(lin)
+    return Clr.lRgbTosRgbInternal(lin)
 end
 
 local function vec3ToClrsRgb(v3)
     return Clr.new(v3.x, v3.y, v3.z, 1.0)
 end
 
+local function vec3ToClrSrLab2(v3)
+    return Clr.srLab2TosRgb(v3.z, v3.x, v3.y, 1.0)
+end
+
 local function v3ToClrFuncFromPreset(preset)
     if preset == "CIE_LAB" then
-        return vec3ToClrLab
+        return vec3ToClrCieLab
     elseif preset == "CIE_XYZ" then
-        return vec3ToClrXyz
+        return vec3ToClrCieXyz
     elseif preset == "LINEAR_RGB" then
         return vec3ToClrlRgb
+    elseif preset == "SR_LAB_2" then
+        return vec3ToClrSrLab2
     else
         return vec3ToClrsRgb
     end
@@ -166,17 +181,17 @@ dlg:check {
     selected = defaults.clampTo256,
     onclick = function()
         local args = dlg.data
-        local state = args.clampTo256
+        local clamp = args.clampTo256
         local removeAlpha = args.removeAlpha
         local octCap = args.octCapacity
-        dlg:modify { id = "octThreshold", visible = state }
-        dlg:modify { id = "octCapacity", visible = state }
-        dlg:modify { id = "refineCapacity", visible = state and (octCap > 8) }
-        dlg:modify { id = "clrSpacePreset", visible = state }
-        dlg:modify { id = "printElapsed", visible = state }
+        dlg:modify { id = "octThreshold", visible = clamp }
+        dlg:modify { id = "octCapacity", visible = clamp }
+        dlg:modify { id = "refineCapacity", visible = clamp and (octCap > 8) }
+        dlg:modify { id = "clrSpacePreset", visible = clamp }
+        dlg:modify { id = "printElapsed", visible = clamp }
         dlg:modify {
             id = "alphaWarn",
-            visible = state and (not removeAlpha)
+            visible = clamp and (not removeAlpha)
         }
         dlg:modify {
             id = "alphaWarn",

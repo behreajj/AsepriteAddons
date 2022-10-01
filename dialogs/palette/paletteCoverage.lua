@@ -302,7 +302,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        app.refresh()
         local args = dlg.data
 
         -- Get palette.
@@ -366,11 +365,8 @@ dlg:button {
         local cos = math.cos
         local sin = math.sin
         local floor = math.floor
-        local linearToXyz = Clr.lRgbaToXyzInternal
-        local xyzToLab = Clr.xyzToLab
-        local rgbaToLab = Clr.sRgbaToLab
+        local sRgbToSrLab2 = Clr.sRgbToSrLab2
         local fromHex = Clr.fromHex
-        local stdToLin = Clr.sRgbaTolRgbaInternal
         local rotax = Vec3.rotateInternal
         local v3hsh = Vec3.hashCode
         local octins = Octree.insert
@@ -383,7 +379,7 @@ dlg:button {
         local octCapacity = args.octCapacity
             or defaults.octCapacityBits
         octCapacity = 2 ^ octCapacity
-        local bounds = Bounds3.cieLab()
+        local bounds = Bounds3.lab()
         local octree = Octree.new(bounds, octCapacity, 1)
 
         -- Unpack unique colors to data.
@@ -393,15 +389,8 @@ dlg:button {
         while i < uniqueHexesSrgbLen do
             i = i + 1
             local hexSrgb = uniqueHexesSrgb[i]
-
-            -- The LUT shortcut for converting gamma
-            -- to linear sRGB is not used because here
-            -- accuracy is preferred over speed.
             local srgb = fromHex(hexSrgb)
-            local lrgb = stdToLin(srgb)
-            local xyz = linearToXyz(lrgb.r, lrgb.g, lrgb.b, 1.0)
-            local lab = xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
-
+            local lab = sRgbToSrLab2(srgb)
             local point = Vec3.new(lab.a, lab.b, lab.l)
             ptHexDict[v3hsh(point)] = uniqueHexesProfile[i]
             octins(octree, point)
@@ -417,7 +406,6 @@ dlg:button {
         local swatchAlpha01 = swatchAlpha / 255.0
         local geometry = args.geometry or defaults.geometry
         if geometry == "SPHERE" then
-
             local lons = args.lons or defaults.lons
             local lats = args.lats or (lons // 2)
             local layersSphere = args.layersSphere
@@ -468,7 +456,7 @@ dlg:button {
         while j < gridLen do
             j = j + 1
             local srcClr = gridClrs[j]
-            local srcLab = rgbaToLab(srcClr)
+            local srcLab = sRgbToSrLab2(srcClr)
             local srcLabPt = Vec3.new(
                 srcLab.a, srcLab.b, srcLab.l)
 
