@@ -13,12 +13,10 @@ setmetatable(GradientUtilities, {
 
 ---Color spaces presets.
 GradientUtilities.CLR_SPC_PRESETS = {
-    "CIE_LAB",
-    "CIE_LCH",
-    "CIE_XYZ",
     "HSL",
     "HSV",
     "LINEAR_RGB",
+    "NORMAL_MAP",
     "S_RGB",
     "SR_LAB_2",
     "SR_LCH"
@@ -90,12 +88,7 @@ end
 ---@param huePreset string hue preset
 ---@return function
 function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
-    if clrSpcPreset == "CIE_LCH" then
-        local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
-        return function(a, b, t)
-            return Clr.mixCieLchInternal(a, b, t, hef)
-        end
-    elseif clrSpcPreset == "HSL" then
+    if clrSpcPreset == "HSL" then
         local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
         return function(a, b, t)
             return Clr.mixHslInternal(a, b, t, hef)
@@ -105,12 +98,10 @@ function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
         return function(a, b, t)
             return Clr.mixHsvInternal(a, b, t, hef)
         end
-    elseif clrSpcPreset == "CIE_LAB" then
-        return Clr.mixCieLabInternal
-    elseif clrSpcPreset == "CIE_XYZ" then
-        return Clr.mixCieXyzInternal
     elseif clrSpcPreset == "LINEAR_RGB" then
         return Clr.mixsRgbInternal
+    elseif clrSpcPreset == "NORMAL_MAP" then
+        return Clr.mixNormal
     elseif clrSpcPreset == "SR_LAB_2" then
         return Clr.mixSrLab2Internal
     elseif clrSpcPreset == "SR_LCH" then
@@ -263,17 +254,15 @@ function GradientUtilities.dialogWidgets(dlg)
             local md = dlg.data.clrSpacePreset
             dlg:modify {
                 id = "huePreset",
-                visible = md == "CIE_LCH"
-                    or md == "HSL"
+                visible = md == "HSL"
                     or md == "HSV"
                     or md == "SR_LCH"
             }
             dlg:modify {
                 id = "easPreset",
-                visible = md == "S_RGB"
-                    or md == "LINEAR_RGB"
-                    or md == "CIE_LAB"
-                    or md == "CIE_XYZ"
+                visible = md == "LINEAR_RGB"
+                    or md == "NORMAL_MAP"
+                    or md == "S_RGB"
                     or md == "SR_LAB_2"
             }
         end
