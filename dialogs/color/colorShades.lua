@@ -225,9 +225,10 @@ dlg:button {
         local oogaNorm = outOfGamut * 0.003921568627451
         local oogaEps = 2.0 * 0.003921568627451
         local quantization = args.quantization or defaults.quantization
-        for i = 1, reqFrames, 1 do
+        local idxFrame = 0
+        while idxFrame < reqFrames do
             -- Convert i to a step, which will be its hue.
-            local iStep = (i - 1.0) * iToStep
+            local iStep = idxFrame * iToStep
             local hue = iStep
 
             local gamutImg = Image(spec)
@@ -236,13 +237,11 @@ dlg:button {
 
                 -- Convert coordinates from [0, size] to
                 -- [0.0, 1.0], then to LCH.
-                local x = elm.x
-                local xNrm = x * szInv
+                local xNrm = elm.x * szInv
                 xNrm = quantize(xNrm, quantization)
                 local chroma = xNrm * maxChroma
 
-                local y = elm.y
-                local yNrm = y * szInv
+                local yNrm = elm.y * szInv
                 yNrm = quantize(yNrm, quantization)
                 local light = (1.0 - yNrm) * maxLight
 
@@ -254,7 +253,8 @@ dlg:button {
                 elm(toHex(clr))
             end
 
-            gamutImgs[i] = gamutImg
+            idxFrame = idxFrame + 1
+            gamutImgs[idxFrame] = gamutImg
         end
 
         -- Create frames.
@@ -303,12 +303,10 @@ dlg:button {
 
             local yToHue = 1.0 / (hueBarHeight - 1.0)
             local hueBarPixels = hueBarImage:pixels()
+            local halfChroma = maxChroma * 0.5
             for elm in hueBarPixels do
-                local y = elm.y
-                local hue = 1.0 - y * yToHue
-                local clr = lchTosRgba(50.0, 67.5, hue, 1.0)
-                local hex = toHex(clr)
-                elm(hex)
+                local hue = 1.0 - elm.y * yToHue
+                elm(toHex(lchTosRgba(50.0, halfChroma, hue, 1.0)))
             end
 
             app.transaction(function()
@@ -355,7 +353,8 @@ dlg:button {
             local invMaxLight = 1.0 / maxLight
 
             local hexesSrgbLen = #hexesSrgb
-            for j = 1, hexesSrgbLen, 1 do
+            local j = 0
+            while j < hexesSrgbLen do j = j + 1
                 local hexSrgb = hexesSrgb[j]
                 local xi = 0
                 local yi = size
@@ -363,7 +362,7 @@ dlg:button {
                 if (hexSrgb & 0xff000000) ~= 0 then
                     local lch = sRgbaToLch(fromHex(hexSrgb))
 
-                    -- To [0.0, 1.0].
+                    -- Convert chroma to [0.0, 1.0].
                     local xNrm = lch.c * invMaxChroma
                     local yNrm = 1.0 - (lch.l * invMaxLight)
 
@@ -402,13 +401,14 @@ dlg:button {
                 local plotImage = Image(plotSpec)
                 local plotPos = Point(xOff, yOff)
 
-                for j = 1, hexesSrgbLen, 1 do
-                    local hexSrgb = hexesSrgb[j]
+                local k = 0
+                while k < hexesSrgbLen do k = k + 1
+                    local hexSrgb = hexesSrgb[k]
                     if (hexSrgb & 0xff000000) ~= 0 then
-                        local xi = xs[j] - xOff
-                        local yi = ys[j] - yOff
-                        local hexProfile = hexesProfile[j]
-                        local strokeColor = strokes[j]
+                        local xi = xs[k] - xOff
+                        local yi = ys[k] - yOff
+                        local hexProfile = hexesProfile[k]
+                        local strokeColor = strokes[k]
                         drawCircleFill(plotImage, xi, yi, strokeSize, strokeColor)
                         drawCircleFill(plotImage, xi, yi, fillSize, hexProfile)
                     end

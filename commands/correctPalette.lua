@@ -20,14 +20,14 @@ while i < lenAseColors do i = i + 1
 end
 
 local palettes = activeSprite.palettes
-local palettesLen = #palettes
+local lenPalettes = #palettes
 
 -- It seems safe to assign the same Aseprite color
 -- to multiple palettes because they are copied by
 -- value, not passed by reference...?
 app.transaction(function()
     local j = 0
-    while j < palettesLen do j = j + 1
+    while j < lenPalettes do j = j + 1
         local palette = palettes[j]
         palette:resize(lenAseColors)
         local k = 0

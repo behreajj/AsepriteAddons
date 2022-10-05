@@ -2,8 +2,8 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
 local colorSpaces = {
-    "CIE_LAB",
-    "CIE_XYZ",
+    -- "CIE_LAB",
+    -- "CIE_XYZ",
     "LINEAR_RGB",
     "S_RGB",
     "SR_LAB_2"

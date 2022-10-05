@@ -275,7 +275,6 @@ dlg:button {
         local oogamask = outOfGamut << 0x18
         local idxFrame = 0
         while idxFrame < reqFrames do
-
             -- Convert i to a step, then lerp from minimum
             -- to maximum light.
             local iStep = idxFrame * iToStep
@@ -378,11 +377,8 @@ dlg:button {
 
             local lightBarPixels = lightBarImage:pixels()
             for elm in lightBarPixels do
-                local y = elm.y
-                local light = 100.0 - y * yToLight
-                local clr = labTosRgba(light, 0.0, 0.0, 1.0)
-                local hex = toHex(clr)
-                elm(hex)
+                local light = 100.0 - elm.y * yToLight
+                elm(toHex(labTosRgba(light, 0.0, 0.0, 1.0)))
             end
 
             app.transaction(function()
