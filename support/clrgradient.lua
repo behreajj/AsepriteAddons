@@ -215,34 +215,26 @@ end
 function ClrGradient.eval(cg, step, easing)
     local t = step or 0.5
     local keys = cg.keys
-
-    if t <= keys[1].step then
-        local o = keys[1].clr
-        return Clr.new(o.r, o.g, o.b, o.a)
-    end
-
     local lenKeys = #keys
-    if t >= keys[lenKeys].step then
-        local d = keys[lenKeys].clr
-        return Clr.new(d.r, d.g, d.b, d.a)
-    end
+
+    local firstKey = keys[1]
+    local lastKey = keys[lenKeys]
+    t = math.min(math.max(t,
+        firstKey.step), lastKey.step)
 
     local nextIdx = ClrGradient.bisectRight(cg, t)
     local prevIdx = nextIdx - 1
 
-    local prevKey = keys[prevIdx]
-    local nextKey = keys[nextIdx]
+    local prevKey = keys[prevIdx] or firstKey
+    local nextKey = keys[nextIdx] or lastKey
     local prevStep = prevKey.step
     local nextStep = nextKey.step
 
-    if prevStep ~= nextStep then
-        local f = easing or Clr.mixlRgbaInternal
-        return f(prevKey.clr, nextKey.clr,
-            (t - prevStep) / (nextStep - prevStep))
-    else
-        local c = nextKey.clr
-        return Clr.new(c.r, c.g, c.b, c.a)
-    end
+    local f = easing or Clr.mixlRgbaInternal
+    local denom = nextStep - prevStep
+    if denom ~= 0.0 then denom = 1.0 / denom end
+    return f(prevKey.clr, nextKey.clr,
+        (t - prevStep) * denom)
 end
 
 ---Evaluates a color gradient over a range of

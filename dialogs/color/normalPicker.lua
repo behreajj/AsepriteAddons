@@ -9,13 +9,6 @@ local defaults = {
     hexCode = "8080FF",
     rgbLabel = "128, 128, 255",
 
-    showGradientSettings = false,
-    gradWidth = 256,
-    gradHeight = 32,
-    swatches = 8,
-    aColor = Color(238, 64, 128, 255),
-    bColor = Color(128, 255, 128, 255),
-
     showWheelSettings = false,
     size = 512,
     sectors = 0,
@@ -82,29 +75,6 @@ local function vecToColor(x, y, z)
     else
         return Color(128, 128, 255, 255)
     end
-end
-
-local function lerpToHex(
-    ax, ay, az,
-    bx, by, bz,
-    t, omega, omSinInv)
-
-    local aFac = math.sin((1.0 - t) * omega) * omSinInv
-    local bFac = math.sin(t * omega) * omSinInv
-
-    -- Does c need to be normalized or clamped?
-    local cx = aFac * ax + bFac * bx
-    local cy = aFac * ay + bFac * by
-    local cz = aFac * az + bFac * bz
-
-    local r255 = math.floor(cx * 127.5 + 128.0)
-    local g255 = math.floor(cy * 127.5 + 128.0)
-    local b255 = math.floor(cz * 127.5 + 128.0)
-
-    return 0xff000000
-        | (b255 << 0x10)
-        | (g255 << 0x08)
-        | r255
 end
 
 local function updateWidgetClr(dialog, clr)
@@ -358,21 +328,8 @@ dlg:button {
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "showGradientSettings",
-    label = "Settings:",
-    text = "Gradient",
-    selected = defaults.showGradientSettings,
-    onclick = function()
-        local args = dlg.data
-        local state = args.showGradientSettings
-        dlg:modify { id = "aColor", visible = state }
-        dlg:modify { id = "bColor", visible = state }
-        dlg:modify { id = "swatches", visible = state }
-    end
-}
-
-dlg:check {
     id = "showWheelSettings",
+    label = "Settings:",
     text = "Wheel",
     selected = defaults.showWheelSettings,
     onclick = function()
@@ -386,32 +343,6 @@ dlg:check {
         dlg:modify { id = "yFlip", visible = state }
         dlg:modify { id = "zFlip", visible = state }
     end
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "aColor",
-    label = "Colors:",
-    color = defaults.aColor,
-    visible = defaults.showGradientSettings
-}
-
-dlg:color {
-    id = "bColor",
-    color = defaults.bColor,
-    visible = defaults.showGradientSettings
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "swatches",
-    label = "Swatches:",
-    min = 3,
-    max = 32,
-    value = defaults.swatches,
-    visible = defaults.showGradientSettings
 }
 
 dlg:newrow { always = false }
@@ -472,131 +403,6 @@ dlg:check {
 }
 
 dlg:newrow { always = false }
-
-dlg:button {
-    id = "gradient",
-    text = "&GRADIENT",
-    focus = false,
-    onclick = function()
-        local args = dlg.data
-        local aColor = args.aColor or defaults.aColor
-        local bColor = args.bColor or defaults.bColor
-        local swatches = args.swatches or defaults.swatches
-        local swatchesInv = 1.0 / (swatches - 1.0)
-
-        local ax, ay, az = colorToVec(aColor)
-        local bx, by, bz = colorToVec(bColor)
-
-        -- Because the vectors are already normalized
-        -- and known to be non-zero, simplify angle
-        -- between formula.
-        local abDot = ax * bx + ay * by + az * bz
-
-        -- Gray will result if colors are exactly at
-        -- positive or negative one, i.e. vectors
-        -- are parallel.
-        abDot = math.max(-0.999999,
-            math.min(0.999999, abDot))
-        local omega = math.acos(abDot)
-        local omSin = math.sin(omega)
-        local omSinInv = 1.0
-        if omSin ~= 0.0 then
-            omSinInv = 1.0 / omSin
-        end
-
-        -- Create sprite.
-        local gradWidth = defaults.gradWidth
-        local gradHeight = defaults.gradHeight
-
-        local colorSpaceNone = ColorSpace()
-        local gradSprite = Sprite(
-            gradWidth,
-            gradHeight)
-        gradSprite:assignColorSpace(colorSpaceNone)
-        gradSprite.filename = "Normal Gradient"
-
-        -- Create smooth image.
-        local gradSpec = ImageSpec {
-            width = gradWidth,
-            height = gradHeight // 2
-        }
-        gradSpec.colorSpace = colorSpaceNone
-        local gradImg = Image(gradSpec)
-        local gradImgPxItr = gradImg:pixels()
-        local xToFac = 1.0 / (gradWidth - 1.0)
-
-        for elm in gradImgPxItr do
-            local t = elm.x * xToFac
-            elm(lerpToHex(
-                ax, ay, az,
-                bx, by, bz,
-                t, omega, omSinInv))
-        end
-
-        gradSprite.cels[1].image = gradImg
-        gradSprite.layers[1].name = "Gradient.Smooth"
-
-        -- Create swatches.
-        local segLayer = gradSprite:newLayer()
-        segLayer.name = "Gradient.Swatches"
-
-        local segSpec = ImageSpec {
-            width = gradWidth,
-            height = gradHeight - gradHeight // 2
-        }
-        segSpec.colorSpace = colorSpaceNone
-        local segImg = Image(segSpec)
-        local segImgPxItr = segImg:pixels()
-
-        local swatchesDict = {}
-        swatchesDict[0x0] = 1
-        local palIdx = 2
-        for elm in segImgPxItr do
-            local t = elm.x * xToFac
-            t = math.max(0.0,
-                (math.ceil(t * swatches) - 1.0)
-                * swatchesInv)
-            local hex = lerpToHex(
-                ax, ay, az,
-                bx, by, bz,
-                t, omega, omSinInv)
-            elm(hex)
-
-            if not swatchesDict[hex] then
-                swatchesDict[hex] = palIdx
-                palIdx = palIdx + 1
-            end
-        end
-
-        gradSprite:newCel(
-            segLayer,
-            gradSprite.frames[1],
-            segImg,
-            Point(0, gradHeight // 2))
-
-        -- Set palette.
-        local pal = {}
-        for k, v in pairs(swatchesDict) do
-            pal[v] = k
-        end
-        AseUtilities.setPalette(pal, gradSprite, 1)
-
-        -- If colors were chosen by index, they will be
-        -- blank when new sprite is created, even if
-        -- they were accurate vectors.
-        dlg:modify {
-            id = "aColor",
-            color = vecToColor(ax, ay, az)
-        }
-        dlg:modify {
-            id = "bColor",
-            color = vecToColor(bx, by, bz)
-        }
-
-        app.command.FitScreen()
-        app.refresh()
-    end
-}
 
 dlg:button {
     id = "wheel",
@@ -731,7 +537,7 @@ dlg:button {
     end
 }
 
-dlg:newrow { always = false }
+-- dlg:newrow { always = false }
 
 dlg:button {
     id = "cancel",

@@ -1223,18 +1223,18 @@ function Clr.mixNormal(o, d, t)
     local oa = o.a
     local omsq = ox * ox + oy * oy + oz * oz
     if omsq > 0.0 then
-        local ominv = 1.0 / math.sqrt(omsq)
-        ox = ox * ominv
-        oy = oy * ominv
-        oz = oz * ominv
+        local omInv = 1.0 / math.sqrt(omsq)
+        ox = ox * omInv
+        oy = oy * omInv
+        oz = oz * omInv
     end
 
-    if t <= 0.0 then
+    local u = t or 0.5
+    if u <= 0.0 then
         return Clr.new(
             ox * 0.5 + 0.5,
             oy * 0.5 + 0.5,
-            oz * 0.5 + 0.5,
-            oa)
+            oz * 0.5 + 0.5, oa)
     end
 
     local dx = d.r + d.r - 1.0
@@ -1243,22 +1243,18 @@ function Clr.mixNormal(o, d, t)
     local da = d.a
     local dmsq = dx * dx + dy * dy + dz * dz
     if dmsq > 0.0 then
-        local dminv = 1.0 / math.sqrt(omsq)
-        dx = dx * dminv
-        dy = dy * dminv
-        dz = dz * dminv
+        local dmInv = 1.0 / math.sqrt(omsq)
+        dx = dx * dmInv
+        dy = dy * dmInv
+        dz = dz * dmInv
     end
 
-    if t >= 1.0 then
+    if u >= 1.0 then
         return Clr.new(
             dx * 0.5 + 0.5,
             dy * 0.5 + 0.5,
-            dz * 0.5 + 0.5,
-            da)
+            dz * 0.5 + 0.5, da)
     end
-
-    local u = 1.0 - t
-    local ca = u * oa + t * da
 
     local odDot = math.min(math.max(
         ox * dx + oy * dy + oz * dz,
@@ -1267,27 +1263,23 @@ function Clr.mixNormal(o, d, t)
     local omSin = math.sin(omega)
     local omSinInv = 1.0
     if omSin ~= 0.0 then omSinInv = 1.0 / omSin end
-
-    local oFac = math.sin(u * omega) * omSinInv
-    local dFac = math.sin(t * omega) * omSinInv
+    local v = 1.0 - u
+    local oFac = math.sin(v * omega) * omSinInv
+    local dFac = math.sin(u * omega) * omSinInv
 
     local cx = oFac * ox + dFac * dx
     local cy = oFac * oy + dFac * dy
     local cz = oFac * oz + dFac * dz
-
+    local ca = v * oa + u * da
     local cmsq = cx * cx + cy * cy + cz * cz
     if cmsq > 0.0 then
-        local cminv = 1.0 / math.sqrt(cmsq)
-        cx = cx * cminv
-        cy = cy * cminv
-        cz = cz * cminv
+        local cmInv = 0.5 / math.sqrt(cmsq)
+        return Clr.new(
+            cx * cmInv + 0.5,
+            cy * cmInv + 0.5,
+            cz * cmInv + 0.5, ca)
     end
-
-    return Clr.new(
-        cx * 0.5 + 0.5,
-        cy * 0.5 + 0.5,
-        cz * 0.5 + 0.5,
-        ca)
+    return Clr.new(0.5, 0.5, 0.5, ca)
 end
 
 ---Mixes two colors in RGBA space by a step.

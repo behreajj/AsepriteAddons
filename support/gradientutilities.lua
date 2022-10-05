@@ -16,7 +16,7 @@ GradientUtilities.CLR_SPC_PRESETS = {
     "HSL",
     "HSV",
     "LINEAR_RGB",
-    -- "NORMAL_MAP",
+    "NORMAL_MAP",
     "S_RGB",
     "SR_LAB_2",
     "SR_LCH"
