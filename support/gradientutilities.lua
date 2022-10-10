@@ -124,10 +124,7 @@ function GradientUtilities.dialogWidgets(dlg)
         id = "shades",
         label = "Colors:",
         mode = "sort",
-        colors = {
-            AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
-            AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL)
-        }
+        colors = {}
     }
 
     dlg:newrow { always = false }
