@@ -87,20 +87,19 @@ end
 ---@param arr table|nil array
 ---@return table
 function Octree.centersMean(o, include, arr)
-    local arrVerif = arr or {}
+    local arrVrf = arr or {}
     local children = o.children
     local lenChildren = #children
 
     local i = 0
     while i < lenChildren do
         i = i + 1
-        local child = children[i]
         Octree.centersMean(
-            child, include, arrVerif)
+            children[i], include, arrVrf)
     end
 
     if lenChildren < 1 then
-        local cursor = #arrVerif + 1
+        local cursor = #arrVrf + 1
         local leafPoints = o.points
         local lenLeafPoints = #leafPoints
         if lenLeafPoints > 1 then
@@ -118,20 +117,20 @@ function Octree.centersMean(o, include, arr)
             end
 
             local lenInv = 1.0 / lenLeafPoints
-            arrVerif[cursor] = Vec3.new(
+            arrVrf[cursor] = Vec3.new(
                 xSum * lenInv,
                 ySum * lenInv,
                 zSum * lenInv)
         elseif lenLeafPoints > 0 then
             local pt = leafPoints[1]
-            arrVerif[cursor] = Vec3.new(
+            arrVrf[cursor] = Vec3.new(
                 pt.x, pt.y, pt.z)
         elseif include then
-            arrVerif[cursor] = Bounds3.center(o.bounds)
+            arrVrf[cursor] = Bounds3.center(o.bounds)
         end
     end
 
-    return arrVerif
+    return arrVrf
 end
 
 ---Counts the number of leaves held by this node.
@@ -294,7 +293,7 @@ end
 
 ---Queries the node with a sphere. If a point can be
 ---found within the bounds, returns a point and
----distance from the query center. If a point cannot be
+---distance from the query center. If it can't be
 ---found, returns a default point, which may be nil.
 ---@param o Octree octree
 ---@param center Vec3 sphere center
@@ -303,8 +302,9 @@ end
 ---@return Vec3|nil
 ---@return number
 function Octree.query(o, center, radius, dfPt)
-    local radVerif = radius or 46340
-    local v, dsq = Octree.queryInternal(o, center, radVerif)
+    local rVrf = radius or 46340
+    local v, dsq = Octree.queryInternal(
+        o, center, rVrf * rVrf)
     local d = math.sqrt(dsq)
     if v then
         return Vec3.new(v.x, v.y, v.z), d
@@ -314,19 +314,19 @@ function Octree.query(o, center, radius, dfPt)
 end
 
 ---Queries the node with a sphere. If a point can be
----found within the bounds, returns a point and
+---found within the bounds, returns it with the
 ---square distance from the query center. If a point
 ---cannot be found, returns nil.
 ---@param o Octree octree
 ---@param center Vec3 sphere center
----@param radius number sphere radius
+---@param rsq number sphere radius, squared
 ---@return Vec3|nil
 ---@return number
-function Octree.queryInternal(o, center, radius)
+function Octree.queryInternal(o, center, rsq)
     local nearPoint = nil
     local nearDistSq = 2147483647
-
-    if Bounds3.intersectsSphere(o.bounds, center, radius) then
+    if Bounds3.intersectsSphereInternal(
+        o.bounds, center, rsq) then
         local children = o.children
         local lenChildren = #children
         local i = 0
@@ -336,7 +336,7 @@ function Octree.queryInternal(o, center, radius)
             local candDistSq = 2147483647
             local candPoint = nil
             candPoint, candDistSq = Octree.queryInternal(
-                child, center, radius)
+                child, center, rsq)
             if candPoint and (candDistSq < nearDistSq) then
                 nearPoint = candPoint
                 nearDistSq = candDistSq
@@ -346,7 +346,6 @@ function Octree.queryInternal(o, center, radius)
         if lenChildren < 1 then
             local points = o.points
             local lenPoints = #points
-            local rsq = radius * radius
             local distSq = Vec3.distSq
 
             local j = 0

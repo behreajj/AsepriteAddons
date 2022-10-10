@@ -13,20 +13,20 @@ setmetatable(Clr, {
 })
 
 ---Arbitrary hue assigned to lighter grays
----in hue conversion functions.
-Clr.HSL_HUE_LIGHT = 48.0 / 360.0
-
----Arbitrary hue assigned to darker grays
----in hue conversion functions.
-Clr.HSL_HUE_SHADOW = 255.0 / 360.0
-
----Arbitrary hue assigned to lighter grays
 ---in CIE LCH conversion functions.
 Clr.CIE_LCH_HUE_LIGHT = 99.0 / 360.0
 
 ---Arbitrary hue assigned to darker grays
 ---in CIE LCH conversion functions.
 Clr.CIE_LCH_HUE_SHADOW = 308.0 / 360.0
+
+---Arbitrary hue assigned to lighter grays
+---in hue conversion functions.
+Clr.HSL_HUE_LIGHT = 48.0 / 360.0
+
+---Arbitrary hue assigned to darker grays
+---in hue conversion functions.
+Clr.HSL_HUE_SHADOW = 255.0 / 360.0
 
 ---Arbitrary hue assigned to lighter grays
 ---in SR LCH conversion functions.

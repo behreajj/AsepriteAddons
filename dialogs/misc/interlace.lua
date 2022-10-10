@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local dirTypes = { "AND", "HORIZONTAL", "VERTICAL", "XOR" }
+local dirTypes = { "AND", "DIAGONAL", "HORIZONTAL", "RANDOM", "VERTICAL", "XOR" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
 local delTargets = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
@@ -214,13 +214,13 @@ dlg:button {
                 return (x % a < p) and (y % a < p)
             end
         elseif dirType == "DIAGONAL" then
+            -- TODO: Distinguish between (x - y) and (x + y)?
             eval = function(x, y, p, a)
-                -- return (x * p) % a == (y * p) % a
-                -- return (x // p) % a == (y // p) % a
-                -- return (x // p) % (a * p) == (y // p) % (a * p)
-                -- return (x + y) % p < a
-                -- return (x + y) % p < (a - p)
-                -- return ((x + y) // a) % p > 0
+                return (x + y) % a < p
+            end
+        elseif dirType == "RANDOM" then
+            eval = function(x, y, p, a)
+                return math.random(0, a) < p
             end
         elseif dirType == "VERTICAL" then
             eval = function(x, y, p, a)
@@ -228,9 +228,8 @@ dlg:button {
             end
         elseif dirType == "XOR" then
             eval = function(x, y, p, a)
-                local c = x % a < p
-                local d = y % a < p
-                return (c or d) and (not (c and d))
+                -- For booleans, xor == neq.
+                return (x % a < p) ~= (y % a < p)
             end
         else
             -- Default to "HORIZONTAL".

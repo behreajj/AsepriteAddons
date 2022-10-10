@@ -52,6 +52,10 @@ This repo includes
 
   ![Insert Text](screencaps/insertText.png)
 
+- Interlaced layers. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
+
+  ![Interlaced](screencaps/interlaced.png)
+
 - A pixel art isometric (dimetric) grid.
 
   ![Dimetric Grid](screencaps/isoGrid.png)
@@ -71,10 +75,6 @@ This repo includes
 - Custom New Sprite
 
   ![New Sprite](screencaps/newSpritePlus.png)
-
-- Custom Sprite Properties
-
-  ![Sprite Properties](screencaps/spriteProperties.png)
 
 - Normal color picker.
 

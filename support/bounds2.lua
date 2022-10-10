@@ -198,13 +198,25 @@ function Bounds2.intersectsBounds(a, b)
 end
 
 ---Evaluates whether a bounding box intersects
----a circle. The circle is defined as a Vec2 center
----and a number radius.
+---a circle.
 ---@param a Bounds2 bounds
----@param center Vec2 sphere center
----@param radius number sphere radius
+---@param center Vec2 circle center
+---@param radius number circle radius
 ---@return boolean
 function Bounds2.intersectsCircle(a, center, radius)
+    return Bounds2.intersectsCircleInternal(
+        a, center, radius * radius)
+end
+
+---Evaluates whether a bounding box intersects
+---a circle. Internal helper function for quadtrees,
+---as it assumes that the squared-radius has already
+---been calculated.
+---@param a Bounds2 bounds
+---@param center Vec2 circle center
+---@param rsq number circle radius, squared
+---@return boolean
+function Bounds2.intersectsCircleInternal(a, center, rsq)
     local xd = 0.0
     if center.x < a.mn.x then
         xd = center.x - a.mn.x
@@ -219,7 +231,7 @@ function Bounds2.intersectsCircle(a, center, radius)
         yd = center.y - a.mx.y
     end
 
-    return (xd * xd + yd * yd) < (radius * radius)
+    return (xd * xd + yd * yd) < rsq
 end
 
 ---Returns true if the bounds minimum and

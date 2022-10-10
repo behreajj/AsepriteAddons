@@ -16,14 +16,14 @@ For example, 1.2.40 or 1.3-beta21.
 **Sprite color mode**
 For example, RGB, indexed or grayscale.
 
-**Describe the bug**
-A clear and concise description the bug.
+**Current behavior**
+A clear and concise description of current behavior.
 
 **To Reproduce**
 Steps to reproduce the behavior.
 
 **Expected behavior**
-A clear and concise description of what you expected to happen.
+A clear and concise description of expected behavior.
 
 **Screenshots**
 Add screenshots to illustrate the bug.

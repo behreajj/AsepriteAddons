@@ -356,6 +356,8 @@ dlg:button {
                         local ey = cy - yOrPx
                         local cross = ex * dy - ey * dx
                         if flipSign * cross < 0.0 then
+                            -- TODO: Option to include this half
+                            -- of mirror? make elm(0) the default...
                             elm(flatImg:getPixel(cx, cy))
                         else
                             local t = (ex * dx + ey * dy) * dInvMagSq

@@ -299,7 +299,6 @@ end
 ---@param name string|nil curve name
 ---@return Curve3
 function Curve3.fromCatmull(closedLoop, points, tightness, name)
-
     local ptsLen = #points
     if ptsLen < 2 then
         return Curve3.new(false, {}, name)

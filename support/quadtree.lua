@@ -192,7 +192,7 @@ end
 
 ---Queries the node with a circle. If a point can be
 ---found within the bounds, returns a point and
----distance from the query center. If a point cannot be
+---distance from the query center. If it can't be
 ---found, returns a default point, which may be nil.
 ---@param q Quadtree quadtree
 ---@param center Vec2 circle center
@@ -201,8 +201,9 @@ end
 ---@return Vec2|nil
 ---@return number
 function Quadtree.query(q, center, radius, dfPt)
-    local radVerif = radius or 46340
-    local v, dsq = Quadtree.queryInternal(q, center, radVerif)
+    local rVrf = radius or 46340
+    local v, dsq = Quadtree.queryInternal(
+        q, center, rVrf * rVrf)
     local d = math.sqrt(dsq)
     if v then
         return Vec2.new(v.x, v.y), d
@@ -211,20 +212,20 @@ function Quadtree.query(q, center, radius, dfPt)
     end
 end
 
----Queries the node with a sphere. If a point can be
----found within the bounds, returns a point and
+---Queries the node with a circle. If a point can be
+---found within the bounds, returns it with the
 ---square distance from the query center. If a point
 ---cannot be found, returns nil.
 ---@param q Quadtree quadtree
 ---@param center Vec2 circle center
----@param radius number circle radius
+---@param rsq number circle radius, squared
 ---@return Vec2|nil
 ---@return number
-function Quadtree.queryInternal(q, center, radius)
+function Quadtree.queryInternal(q, center, rsq)
     local nearPoint = nil
     local nearDistSq = 2147483647
-
-    if Bounds2.intersectsCircle(q.bounds, center, radius) then
+    if Bounds2.intersectsCircleInternal(
+        q.bounds, center, rsq) then
         local children = q.children
         local lenChildren = #children
         local i = 0
@@ -234,7 +235,7 @@ function Quadtree.queryInternal(q, center, radius)
             local candDistSq = 2147483647
             local candPoint = nil
             candPoint, candDistSq = Quadtree.queryInternal(
-                child, center, radius)
+                child, center, rsq)
             if candPoint and (candDistSq < nearDistSq) then
                 nearPoint = candPoint
                 nearDistSq = candDistSq
@@ -244,7 +245,6 @@ function Quadtree.queryInternal(q, center, radius)
         if lenChildren < 1 then
             local points = q.points
             local lenPoints = #points
-            local rsq = radius * radius
             local distSq = Vec2.distSq
 
             local j = 0

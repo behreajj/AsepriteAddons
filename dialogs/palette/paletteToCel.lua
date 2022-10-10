@@ -265,6 +265,7 @@ dlg:button {
         else
             cvgRad = args.cvgNormRad * 0.01
         end
+        local rsq = cvgRad * cvgRad
 
         -- Create octree.
         local ptToHexDict = {}
@@ -349,7 +350,7 @@ dlg:button {
                         -- resultHex = queryHex
                         -- else
                         local nearPoint, _ = search(
-                            octree, query.point, cvgRad)
+                            octree, query.point, rsq)
                         if nearPoint then
                             local hsh = v3Hash(nearPoint)
                             resultHex = ptToHexDict[hsh]

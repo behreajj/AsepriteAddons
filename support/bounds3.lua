@@ -209,13 +209,25 @@ function Bounds3.intersectsBounds(a, b)
 end
 
 ---Evaluates whether a bounding box intersects
----a sphere. The sphere is defined as a Vec3 center
----and a number radius.
+---a sphere.
 ---@param a Bounds3 bounds
 ---@param center Vec3 sphere center
 ---@param radius number sphere radius
 ---@return boolean
 function Bounds3.intersectsSphere(a, center, radius)
+    return Bounds3.intersectsSphereInternal(
+        a, center, radius * radius)
+end
+
+---Evaluates whether a bounding box intersects
+---a sphere. Internal helper function for octrees,
+---as it assumes that the squared-radius has already
+---been calculated.
+---@param a Bounds3 bounds
+---@param center Vec3 sphere center
+---@param rsq number sphere radius, squared
+---@return boolean
+function Bounds3.intersectsSphereInternal(a, center, rsq)
     local xd = 0.0
     if center.x < a.mn.x then
         xd = center.x - a.mn.x
@@ -237,7 +249,7 @@ function Bounds3.intersectsSphere(a, center, radius)
         zd = center.z - a.mx.z
     end
 
-    return (xd * xd + yd * yd + zd * zd) < (radius * radius)
+    return (xd * xd + yd * yd + zd * zd) < rsq
 end
 
 ---Returns true if the bounds minimum and

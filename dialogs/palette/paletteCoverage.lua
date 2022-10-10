@@ -449,6 +449,7 @@ dlg:button {
 
         -- Create replacement colors.
         local queryRad = args.queryRad or defaults.queryRad
+        local rsq = queryRad * queryRad
         local replaceClrs = {}
         local gridLen = #gridPts
         local swatchAlphaMask = swatchAlpha << 0x18
@@ -460,7 +461,7 @@ dlg:button {
             local srcLabPt = Vec3.new(
                 srcLab.a, srcLab.b, srcLab.l)
 
-            local nearPoint, _ = search(octree, srcLabPt, queryRad)
+            local nearPoint, _ = search(octree, srcLabPt, rsq)
             if nearPoint then
                 local ptHash = v3hsh(nearPoint)
                 replaceClrs[j] = swatchAlphaMask

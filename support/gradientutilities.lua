@@ -1,6 +1,7 @@
 dofile("./aseutilities.lua")
 dofile("./clrkey.lua")
 dofile("./clrgradient.lua")
+dofile("./curve3.lua")
 
 GradientUtilities = {}
 GradientUtilities.__index = GradientUtilities
@@ -132,54 +133,15 @@ function GradientUtilities.dialogWidgets(dlg)
     dlg:newrow { always = false }
 
     dlg:button {
-        id = "setButton",
-        text = "&SET",
-        focus = false,
-        onclick = function()
-            local newColors = {}
-
-            local activeSprite = app.activeSprite
-            if activeSprite then
-                local range = app.range
-                local rangeColors = range.colors
-                local lenRangeColors = #rangeColors
-                if lenRangeColors > 0 then
-                    local pal = AseUtilities.getPalette(
-                        app.activeFrame, activeSprite.palettes)
-                    local i = 0
-                    while i < lenRangeColors do
-                        i = i + 1
-                        local idx = rangeColors[i]
-                        local clr = pal:getColor(idx)
-                        newColors[i] = clr
-                    end
-                else
-                    app.command.SwitchColors()
-                    local bgClr = app.fgColor
-                    newColors[1] = AseUtilities.aseColorCopy(
-                        bgClr, "UNBOUNDED")
-                    app.command.SwitchColors()
-
-                    local fgClr = app.fgColor
-                    newColors[2] = AseUtilities.aseColorCopy(
-                        fgClr, "UNBOUNDED")
-                end
-            end
-
-            dlg:modify { id = "shades", colors = newColors }
-        end
-    }
-
-    dlg:button {
         id = "appendButton",
         text = "&ADD",
         focus = false,
         onclick = function()
-            local newColors = {}
-
             local args = dlg.data
             local oldColors = args.shades
             local lenOldColors = #oldColors
+
+            local newColors = {}
             local h = 0
             while h < lenOldColors do
                 h = h + 1
@@ -231,6 +193,61 @@ function GradientUtilities.dialogWidgets(dlg)
                 id = "shades",
                 colors = Utilities.reverseTable(dlg.data.shades)
             }
+        end
+    }
+
+    dlg:button {
+        id = "splineButton",
+        text = "&SMOOTH",
+        focus = false,
+        onclick = function()
+            local args = dlg.data
+            local oldColors = args.shades
+            local lenOldColors = #oldColors
+            if lenOldColors < 2 then return end
+            if lenOldColors > 64 then return end
+
+            local h = 0
+            local points = {}
+            local alphas = {}
+            while h < lenOldColors do
+                h = h + 1
+                local clr = AseUtilities.aseColorToClr(oldColors[h])
+                local lab = Clr.sRgbToSrLab2(clr)
+                points[h] = Vec3.new(lab.a, lab.b, lab.l)
+                alphas[h] = clr.a
+            end
+
+            local curve = Curve3.fromCatmull(false, points, 0.0)
+
+            local sampleCount = math.min(math.max(
+                lenOldColors * 2 - 1, 3), 64)
+            local newColors = {}
+            local i = 0
+            local iToFac = 1.0 / (sampleCount - 1.0)
+            local locn1 = lenOldColors - 1
+            while i < sampleCount do
+                local iFac = i * iToFac
+                local alpha = 1.0
+                if iFac <= 0.0 then
+                    alpha = alphas[1]
+                elseif iFac >= 1.0 then
+                    alpha = alphas[lenOldColors]
+                else
+                    local aScaled = iFac * locn1
+                    local aFloor = math.floor(aScaled)
+                    local aFrac = aScaled - aFloor;
+                    alpha = (1.0 - aFrac) * alphas[1 + aFloor]
+                        + aFrac * alphas[2 + aFloor]
+                end
+                local point = Curve3.eval(curve, iFac)
+                i = i + 1
+                newColors[i] = AseUtilities.clrToAseColor(
+                    Clr.srLab2TosRgb(
+                        point.z, point.x, point.y, alpha))
+            end
+
+            dlg:modify { id = "shades", colors = newColors }
         end
     }
 

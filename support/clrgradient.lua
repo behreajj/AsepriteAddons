@@ -213,15 +213,14 @@ end
 ---@param easing function|nil easing function
 ---@return Clr
 function ClrGradient.eval(cg, step, easing)
-    local t = step or 0.5
     local keys = cg.keys
     local lenKeys = #keys
-
     local firstKey = keys[1]
     local lastKey = keys[lenKeys]
+
+    local t = step or 0.5
     t = math.min(math.max(t,
         firstKey.step), lastKey.step)
-
     local nextIdx = ClrGradient.bisectRight(cg, t)
     local prevIdx = nextIdx - 1
 
@@ -278,7 +277,7 @@ end
 ---@param arr table color array
 ---@return ClrGradient
 function ClrGradient.fromColors(arr)
-    -- TODO: Create separate fromColorsInternal?
+    -- QUERY: Create separate fromColorsInternal?
     local len = #arr
     if len < 1 then
         return ClrGradient.newInternal({
