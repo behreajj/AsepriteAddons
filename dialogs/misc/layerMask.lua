@@ -1,7 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
 local targets = { "ACTIVE", "ALL", "RANGE" }
-local delTargets = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
+local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults = {
     target = "RANGE",
@@ -36,7 +36,7 @@ dlg:combobox {
     label = "Over:",
     text = "Mask",
     option = defaults.delOver,
-    options = delTargets
+    options = delOptions
 }
 
 dlg:combobox {
@@ -44,7 +44,7 @@ dlg:combobox {
     label = "Under:",
     text = "Source",
     option = defaults.delUnder,
-    options = delTargets
+    options = delOptions
 }
 
 dlg:newrow { always = false }
@@ -149,8 +149,7 @@ dlg:button {
         local tileSetOver = nil
         local underIsTile = false
         local tileSetUnder = nil
-        local version = app.version
-        if version.major >= 1 and version.minor >= 3 then
+        if AseUtilities.tilesSupport() then
             overIsTile = overLayer.isTilemap
             if overIsTile then
                 tileSetOver = overLayer.tileset

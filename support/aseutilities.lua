@@ -1038,9 +1038,10 @@ function AseUtilities.drawCurve2(curve, resolution, useFill, fillClr, useStroke,
     end
 
     -- Draw fill.
+    local useTool = app.useTool
     if isLoop and useFill then
         app.transaction(function()
-            app.useTool {
+            useTool {
                 tool = "contour",
                 color = fillClr,
                 brush = brsh,
@@ -1065,7 +1066,7 @@ function AseUtilities.drawCurve2(curve, resolution, useFill, fillClr, useStroke,
             while k < ptsLen do
                 k = k + 1
                 local ptCurr = pts[k]
-                app.useTool {
+                useTool {
                     tool = "line",
                     color = strokeClr,
                     brush = brsh,
@@ -1146,11 +1147,11 @@ function AseUtilities.drawGlyphNearest(image, glyph, hex, x, y, gw, gh, dw, dh)
     local glMat = glyph.matrix
     local glDrop = glyph.drop
     local ypDrop = y + glDrop * (dh / gh)
-    local k = -1
-    while k < lenTrgn1 do
-        k = k + 1
-        local xTrg = k % dw
-        local yTrg = k // dw
+    local i = -1
+    while i < lenTrgn1 do
+        i = i + 1
+        local xTrg = i % dw
+        local yTrg = i // dw
 
         local xSrc = floor(xTrg * tx)
         local ySrc = floor(yTrg * ty)
@@ -1688,7 +1689,7 @@ end
 ---locked but the layer is unlocked, the method will
 ---return false.
 ---@param layer userdata aseprite layer
----@param sprite userdata aseprite sprite
+---@param sprite userdata|nil aseprite sprite
 ---@return boolean
 function AseUtilities.isEditableHierarchy(layer, sprite)
     -- Keep this as is for backward compatibility.
@@ -1697,28 +1698,6 @@ function AseUtilities.isEditableHierarchy(layer, sprite)
     if sprite then sprName = sprite.__name end
     while l.__name ~= sprName do
         if not l.isEditable then
-            return false
-        end
-        l = l.parent
-    end
-    return true
-end
-
----Evaluates whether a layer is visible in the context
----of any parent layers, i.e., if a layer's parent is
----invisible but the layer is visible, the method will
----return false. Makes no evaluation of the layer's
----opacity. A layer could still have 0 alpha.
----@param layer userdata aseprite layer
----@param sprite userdata aseprite sprite
----@return boolean
-function AseUtilities.isVisibleHierarchy(layer, sprite)
-    -- Keep this as is for backward compatibility.
-    local l = layer
-    local sprName = "doc::Sprite"
-    if sprite then sprName = sprite.__name end
-    while l.__name ~= sprName do
-        if not l.isVisible then
             return false
         end
         l = l.parent
@@ -2062,6 +2041,14 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
     end
 end
 
+---Evaluates whether or not the version of Aseprite in
+---use supports tile map layers.
+---@return boolean
+function AseUtilities.tilesSupport()
+    local ver = app.version
+    return ver.minor >= 3 and ver.major >= 1
+end
+
 ---Converts an image from a tile set layer to a regular
 ---image. Supported in Aseprite version 1.3 or newer.
 ---@param imgSrc userdata source image
@@ -2127,13 +2114,13 @@ function AseUtilities.trimCelToSelect(cel, select, hexDefault)
     local trimImage = Image(trimSpec)
     trimImage:drawImage(celImg, oldPos - cel.position)
 
-    local valHex = hexDefault or alphaMask
+    local hexVrf = hexDefault or alphaMask
     local trimItr = trimImage:pixels()
     for elm in trimItr do
         if not select:contains(
             xClip + elm.x,
             yClip + elm.y) then
-            elm(valHex)
+            elm(hexVrf)
         end
     end
 

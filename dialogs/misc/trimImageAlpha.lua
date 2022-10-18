@@ -47,12 +47,8 @@ dlg:button {
         local target = args.target
         local padding = args.padding
 
-        -- Tile map layers should not be trimmed, so check
-        -- if Aseprite is newer than 1.3.
-        local version = app.version
-        local checkTilemaps = (version.major >= 1)
-            and (version.minor >= 3)
-
+        -- Tile map layers should not be trimmed.
+        local checkTilemaps = AseUtilities.tilesSupport()
         local alphaMask = activeSprite.transparentColor
 
         local cels = {}

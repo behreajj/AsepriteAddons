@@ -1,10 +1,11 @@
 dofile("../../support/aseutilities.lua")
 
 local targets = { "ACTIVE", "ALL", "RANGE" }
+local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults = {
-    -- TODO: Option to hide / delete source layer?
     target = "RANGE",
+    delSrc = "NONE",
     fillBase = true,
     xRed = 0.0,
     yRed = 0.0,
@@ -28,6 +29,13 @@ dlg:combobox {
 }
 
 dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "delSrc",
+    label = "Source:",
+    option = defaults.delSrc,
+    options = delOptions
+}
 
 dlg:check {
     id = "fillBase",
@@ -158,11 +166,10 @@ dlg:button {
             return
         end
 
-        -- Tile map layers may be present in 1.3 beta.
+        -- Check for tile map support.
         local layerIsTilemap = false
         local tileSet = nil
-        local version = app.version
-        if version.major >= 1 and version.minor >= 3 then
+        if AseUtilities.tilesSupport() then
             layerIsTilemap = srcLayer.isTilemap
             if layerIsTilemap then
                 tileSet = srcLayer.tileset
@@ -171,6 +178,7 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target or defaults.target
+        local delSrcStr = args.delSrc or defaults.delSrc
         local fillBase = args.fillBase
 
         local xRed = args.xRed or defaults.xRed
@@ -237,10 +245,10 @@ dlg:button {
         local min = math.min
         local tilesToImage = AseUtilities.tilesToImage
 
-        local framesLen = #frames
+        local lenFrames = #frames
         app.transaction(function()
             local i = 0
-            while i < framesLen do i = i + 1
+            while i < lenFrames do i = i + 1
                 local srcFrame = frames[i]
                 local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
@@ -322,24 +330,24 @@ dlg:button {
                             local ybTest = y + yBlueBase
                             if xbTest > -1 and xbTest < srcImgWidth
                                 and ybTest > -1 and ybTest < srcImgHeight then
-                                local bHex = blueImg:getPixel(xbTest, ybTest)
-                                placeMark = placeMark or bHex & 0xff000000 ~= 0
+                                placeMark = placeMark or 0xff000000 &
+                                    blueImg:getPixel(xbTest, ybTest) ~= 0
                             end
 
                             local xgTest = x + xGreenBase
                             local ygTest = y + yGreenBase
                             if xgTest > -1 and xgTest < srcImgWidth
                                 and ygTest > -1 and ygTest < srcImgHeight then
-                                local gHex = greenImg:getPixel(xgTest, ygTest)
-                                placeMark = placeMark or gHex & 0xff000000 ~= 0
+                                placeMark = placeMark or 0xff000000 &
+                                    greenImg:getPixel(xgTest, ygTest) ~= 0
                             end
 
                             local xrTest = x + xRedBase
                             local yrTest = y + yRedBase
                             if xrTest > -1 and xrTest < srcImgWidth
                                 and yrTest > -1 and yrTest < srcImgHeight then
-                                local rHex = redImg:getPixel(xrTest, yrTest)
-                                placeMark = placeMark or rHex & 0xff000000 ~= 0
+                                placeMark = placeMark or 0xff000000 &
+                                    redImg:getPixel(xrTest, yrTest) ~= 0
                             end
 
                             if placeMark then
@@ -350,6 +358,25 @@ dlg:button {
                 end
             end
         end)
+
+        if delSrcStr == "HIDE" then
+            srcLayer.isVisible = false
+        elseif (not srcLayer.isBackground) then
+            if delSrcStr == "DELETE_LAYER" then
+                activeSprite:deleteLayer(srcLayer)
+            elseif delSrcStr == "DELETE_CELS" then
+                app.transaction(function()
+                    local idxDel = 0
+                    while idxDel < lenFrames do
+                        idxDel = idxDel + 1
+                        local frame = frames[idxDel]
+                        if srcLayer:cel(frame) then
+                            activeSprite:deleteCel(srcLayer, frame)
+                        end
+                    end
+                end)
+            end
+        end
 
         app.refresh()
         app.command.Refresh()

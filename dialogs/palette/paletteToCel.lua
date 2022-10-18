@@ -226,11 +226,10 @@ dlg:button {
             return
         end
 
-        -- Tile map layers may be present in 1.3 beta.
+        -- Check for tile map support.
         local layerIsTilemap = false
         local tileSet = nil
-        local version = app.version
-        if version.major >= 1 and version.minor >= 3 then
+        if AseUtilities.tilesSupport() then
             layerIsTilemap = srcLayer.isTilemap
             if layerIsTilemap then
                 tileSet = srcLayer.tileset

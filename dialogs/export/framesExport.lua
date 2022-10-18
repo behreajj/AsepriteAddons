@@ -15,8 +15,7 @@ local defaults = {
     batchSheets = false,
     border = 2,
     borderColor = Color(0, 0, 0, 0),
-    saveJson = false,
-    pullFocus = false
+    saveJson = false
 }
 
 local function flattenFrameToImage(sprite, frIdx, alphaIdx)
@@ -437,7 +436,8 @@ dlg:file {
     id = "filename",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS,
-    save = true
+    save = true,
+    focus = true
 }
 
 dlg:newrow { always = false }
@@ -454,7 +454,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
@@ -735,9 +735,9 @@ dlg:button {
             local missingUserData = "null"
             local spriteUserData = "\"data\":" .. missingUserData
             local version = app.version
-            local is13 = (version.major >= 1)
+            local is1_3 = (version.major >= 1)
                 and (version.minor >= 3)
-            if is13 then
+            if is1_3 then
                 local rawUserData = activeSprite.data
                 if rawUserData and #rawUserData > 0 then
                     spriteUserData = string.format(
@@ -839,7 +839,7 @@ dlg:button {
                     end
 
                     local tagUserData = missingUserData
-                    if is13 then
+                    if is1_3 then
                         local rawUserData = tag.data
                         if rawUserData and #rawUserData > 0 then
                             tagUserData = rawUserData

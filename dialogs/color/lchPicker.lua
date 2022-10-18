@@ -21,22 +21,22 @@ local defaults = {
     alpha = 255,
     harmonyType = "NONE",
     analogies = {
-        Color(255, 0, 102, 255),
-        Color(203, 99, 0, 255)
+        Color(255, 0, 100, 255),
+        Color(199, 96, 0, 255)
     },
     complement = { Color(0, 143, 224, 255) },
     splits = {
-        Color(0, 161, 156, 255),
-        Color(0, 154, 255, 255)
+        Color(0, 146, 142, 255),
+        Color(0, 140, 255, 255)
     },
     squares = {
-        Color(0, 151, 0, 255),
-        Color(0, 162, 243, 255),
-        Color(157, 82, 255, 255)
+        Color(0, 142, 0, 255),
+        Color(0, 143, 224, 255),
+        Color(148, 73, 255, 255)
     },
     triads = {
-        Color(0, 131, 255, 255),
-        Color(0, 158, 59, 255)
+        Color(0, 121, 255, 255),
+        Color(0, 149, 49, 255)
     },
 
     shading = {
@@ -64,32 +64,42 @@ local function updateHarmonies(dialog, l, c, h, a)
     -- Clamping is taken care of by clToAseColor.
     -- 360 / 3 = 120 degrees; 360 / 12 = 30 degrees.
     -- Split hues are 150 and 210 degrees.
-    local oneThird = 0.33333333333333
-    local oneTwelve = 0.08333333333333
-    local splHue0 = 0.41666666666667
-    local splHue1 = 0.58333333333333
+    local hue030 = 0.08333333333333
+    local hue120 = 0.33333333333333
+    local hue150 = 0.41666666666667
+    local hue210 = 0.58333333333333
 
-    local ana0 = Clr.cieLchTosRgb(l, c, h - oneTwelve, a, 0.5)
-    local ana1 = Clr.cieLchTosRgb(l, c, h + oneTwelve, a, 0.5)
+    -- RYB wheel color theory based on the idea that
+    -- 180 degrees from key color is also opposite light,
+    -- e.g., dark violet is opposite bright yellow.
+    -- (060.0 / 180.0) * l + (120.0 / 180.0) * (100.0 - l)
+    -- (150.0 / 180.0) * l + (030.0 / 180.0) * (100.0 - l)
+    -- (030.0 / 180.0) * l + (150.0 / 180.0) * (100.0 - l)
+    local lOpp = 100.0 - l
+    local lTri = (200.0 - l) / 3.0
+    local lAna = (l + l + 50.0) / 3.0
+    local lSpl = (250.0 - (l + l)) / 3.0
+    local lSqr = 50.0
 
-    local cmp0 = Clr.cieLchTosRgb(100.0 - l, c, h + 0.5, a, 0.5)
+    local ana0 = Clr.cieLchTosRgb(lAna, c, h - hue030, a, 0.5)
+    local ana1 = Clr.cieLchTosRgb(lAna, c, h + hue030, a, 0.5)
 
-    local tri0 = Clr.cieLchTosRgb(l, c, h - oneThird, a, 0.5)
-    local tri1 = Clr.cieLchTosRgb(l, c, h + oneThird, a, 0.5)
+    local tri0 = Clr.cieLchTosRgb(lTri, c, h - hue120, a, 0.5)
+    local tri1 = Clr.cieLchTosRgb(lTri, c, h + hue120, a, 0.5)
 
-    local split0 = Clr.cieLchTosRgb(l, c, h + splHue0, a, 0.5)
-    local split1 = Clr.cieLchTosRgb(l, c, h + splHue1, a, 0.5)
+    local split0 = Clr.cieLchTosRgb(lSpl, c, h + hue150, a, 0.5)
+    local split1 = Clr.cieLchTosRgb(lSpl, c, h + hue210, a, 0.5)
 
-    local square0 = Clr.cieLchTosRgb(l, c, h + 0.25, a, 0.5)
-    local square1 = Clr.cieLchTosRgb(l, c, h + 0.5, a, 0.5)
-    local square2 = Clr.cieLchTosRgb(l, c, h + 0.75, a, 0.5)
+    local square0 = Clr.cieLchTosRgb(lSqr, c, h + 0.25, a, 0.5)
+    local square1 = Clr.cieLchTosRgb(lOpp, c, h + 0.5, a, 0.5)
+    local square2 = Clr.cieLchTosRgb(lSqr, c, h + 0.75, a, 0.5)
 
     local analogues = {
         AseUtilities.clrToAseColor(ana0),
         AseUtilities.clrToAseColor(ana1)
     }
 
-    local compl = { AseUtilities.clrToAseColor(cmp0) }
+    local compl = { AseUtilities.clrToAseColor(square1) }
 
     local splits = {
         AseUtilities.clrToAseColor(split0),
@@ -385,7 +395,6 @@ local function updateClrs(dialog)
     local h = args.hue * 0.0027777777777778
     local a = args.alpha * 0.003921568627451
     local clr = Clr.cieLchTosRgb(l, c, h, a, 0.5)
-
     -- For thoughts on why clipping to gamut is preferred,
     -- see https://github.com/LeaVerou/css.land/issues/10
     dialog:modify {

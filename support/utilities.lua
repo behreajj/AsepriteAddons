@@ -647,17 +647,6 @@ function Utilities.mulMat4Point3(a, b)
     return Vec3.new(0.0, 0.0, 0.0)
 end
 
----Multiplies a Mat3 with a Vec3.
----@param a Mat3 matrix
----@param b Vec3 vector
----@return Vec3
-function Utilities.mulMat3Vec3(a, b)
-    return Vec3.new(
-        a.m00 * b.x + a.m01 * b.y + a.m02 * b.z,
-        a.m10 * b.x + a.m11 * b.y + a.m12 * b.z,
-        a.m20 * b.x + a.m21 * b.y + a.m22 * b.z)
-end
-
 ---Multiplies a Mat4 with a Vec4.
 ---@param a Mat4 matrix
 ---@param b Vec4 vector
@@ -875,19 +864,6 @@ end
 function Utilities.promoteVec2ToVec3(a, z)
     local vz = z or 0.0
     return Vec3.new(a.x, a.y, vz)
-end
-
----Promotes a Vec2 to a Vec4.
----The z component defaults to 0.0.
----The w component defaults to 0.0.
----@param a Vec2 vector
----@param z number|nil z component
----@param w number|nil w component
----@return Vec4
-function Utilities.promoteVec2ToVec4(a, z, w)
-    local vz = z or 0.0
-    local vw = w or 0.0
-    return Vec4.new(a.x, a.y, vz, vw)
 end
 
 ---Promotes a Vec3 to a Vec4.

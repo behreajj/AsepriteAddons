@@ -15,7 +15,7 @@ Around line 106:
 local version = app.version
 local versionMajor = version.major
 local versionMinor = version.minor
-local isBetaVersion = versionMajor > 0
+local is1_3 = versionMajor > 0
     and versionMinor > 2
 
 -- Should some diagnostic data be toggled via a t/f
@@ -459,7 +459,7 @@ end
 
 local function updateTabColor()
     local sprColorVal = nil
-    if isBetaVersion then
+    if is1_3 then
         local sprColorRef = sprite.color
         sprColorVal = Color(
             sprColorRef.red,
@@ -471,19 +471,19 @@ local function updateTabColor()
     end
 
     dlg:modify { id = "sprTabColor", color = sprColorVal }
-    dlg:modify { id = "sprTabColor", visible = isBetaVersion }
+    dlg:modify { id = "sprTabColor", visible = is1_3 }
 end
 
 local function updateUserData()
     local sprUserData = ""
-    if isBetaVersion then
+    if is1_3 then
         sprUserData = sprite.data
     end
 
     -- Because this is a text entry widget, not a label, it
     -- needs to be shown even if the string is of length 0.
     dlg:modify { id = "sprUserData", text = sprUserData }
-    dlg:modify { id = "sprUserData", visible = isBetaVersion }
+    dlg:modify { id = "sprUserData", visible = is1_3 }
 end
 
 local function updatePixelRatio()
@@ -543,7 +543,7 @@ dlg:button {
                 -- There is no extra validation for size.
                 -- Size(0, 0) and Size(-1, -1) are both possible.
                 sprite.pixelRatio = Size(aPxRatio, bPxRatio)
-                if isBetaVersion then
+                if is1_3 then
                     sprite.color = sprColor
                     sprite.data = userData
                 end

@@ -1,5 +1,8 @@
+dofile("../../support/aseutilities.lua")
+
 local defaults = {
     scale = 1,
+    bkgClr = 0x00000000,
     margin = 0,
     marginClr = 0xffffffff,
     border = 0,
@@ -28,6 +31,12 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
             local bx = ax + scale
             local by = ay + scale
 
+            -- https://github.com/aseprite/aseprite/issues/3561
+            -- SVGs displayed in Mozilla Firefox and Inkscape have
+            -- thin gaps between squares at zoom levels, e.g.,
+            -- 133%, 240%. Subtracting an epsilon from the left edge
+            -- and adding an epsilon interferes with margin, causes
+            -- other zooming artifacts, problems.
             local pathStr = strfmt(
                 "\n<path d=\"M %d %d L %d %d L %d %d L %d %d Z\" ",
                 ax, ay, bx, ay, bx, by, ax, by)
@@ -55,7 +64,7 @@ end
 
 local function layerToSvgStr(
     layer, activeFrame, spriteBounds,
-    border, scale, margin)
+    border, scale, margin, checkTilemaps)
 
     local str = ""
 
@@ -84,9 +93,9 @@ local function layerToSvgStr(
                 i = i + 1
                 groupStrArr[i] = layerToSvgStr(
                     groupLayers[i],
-                    activeFrame,
-                    spriteBounds,
-                    border, scale, margin)
+                    activeFrame, spriteBounds,
+                    border, scale, margin,
+                    checkTilemaps)
             end
 
             grpStr = grpStr .. table.concat(groupStrArr)
@@ -96,6 +105,11 @@ local function layerToSvgStr(
             local cel = layer:cel(activeFrame)
             if cel then
                 local celImg = cel.image
+                if checkTilemaps then
+                    celImg = AseUtilities.tilesToImage(
+                        celImg, layer.tileset, ColorMode.RGB)
+                end
+
                 local celBounds = cel.bounds
                 local xCel = celBounds.x
                 local yCel = celBounds.y
@@ -140,6 +154,15 @@ dlg:slider {
     min = 1,
     max = 64,
     value = defaults.border
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "bkgClr",
+    label = "Background:",
+    color = defaults.bkgClr,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -208,9 +231,9 @@ dlg:newrow { always = false }
 dlg:file {
     id = "filepath",
     label = "Path:",
-    focus = true,
     filetypes = { "svg" },
-    save = true
+    save = true,
+    focus = true
 }
 
 dlg:newrow { always = false }
@@ -248,12 +271,14 @@ dlg:button {
 
         -- Unpack arguments.
         local scale = args.scale or defaults.scale
+        -- local bkgClr = args.bkgClr or defaults.bkgClr
         local margin = args.margin or defaults.margin
         local marginClr = args.marginClr or defaults.marginClr
         local border = args.border or defaults.border
         local borderClr = args.borderClr or defaults.borderClr
         local prApply = args.prApply
         local flattenImage = args.flattenImage
+        local checkTilemaps = AseUtilities.tilesSupport()
 
         -- Calculate dimensions.
         local nativeWidth = activeSprite.width
@@ -297,6 +322,23 @@ dlg:button {
                 wAspSclr * totalWidth,
                 hAspSclr * totalHeight)
         })
+
+        -- if bkgClr.alpha > 0 then
+        --     str = str .. strfmt(
+        --         "\n<path id=\"background\" d=\"M 0 0 L %d 0 L %d %d L 0 %d Z\" ",
+        --         totalWidth, totalWidth, totalHeight, totalHeight)
+        --     if bkgClr.alpha < 255 then
+        --         str = str .. strfmt(
+        --             "fill-opacity=\"%.6f\" ",
+        --             bkgClr.alpha * 0.003921568627451)
+        --     end
+
+        --     str = str .. strfmt(
+        --         "fill=\"#%06X\" />",
+        --         bkgClr.red << 0x10
+        --         | bkgClr.green << 0x08
+        --         | bkgClr.blue)
+        -- end
 
         -- Each path element can contain sub-paths set off by Z (close)
         -- and M (move to) commands.
@@ -392,9 +434,9 @@ dlg:button {
             while j < spriteLayersLen do j = j + 1
                 layersStrArr[j] = layerToSvgStr(
                     spriteLayers[j],
-                    activeFrame,
-                    spriteBounds,
-                    border, scale, margin)
+                    activeFrame, spriteBounds,
+                    border, scale, margin,
+                    checkTilemaps)
             end
             str = str .. concat(layersStrArr)
         end
@@ -407,11 +449,7 @@ dlg:button {
             file:close()
         end
 
-        if oldColorMode == ColorMode.INDEXED then
-            app.command.ChangePixelFormat { format = "indexed" }
-        elseif oldColorMode == ColorMode.GRAY then
-            app.command.ChangePixelFormat { format = "gray" }
-        end
+        AseUtilities.changePixelFormat(oldColorMode)
         app.refresh()
 
         if err then

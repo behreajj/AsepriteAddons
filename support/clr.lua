@@ -91,14 +91,6 @@ function Clr:__tostring()
     return Clr.toJson(self)
 end
 
----Evaluates whether all color channels are
----greater than zero.
----@param c Clr color
----@return boolean
-function Clr.all(c)
-    return c.a > 0.0 and c.b > 0.0 and c.g > 0.0 and c.r > 0.0
-end
-
 ---Returns true if the alpha channel is within
 ---the range [0.0, 1.0].
 ---@param c Clr color
@@ -107,14 +99,6 @@ end
 function Clr.alphaIsInGamut(c, tol)
     local eps = tol or 0.0
     return c.a >= -eps and c.a <= (1.0 + eps)
-end
-
----Evaluates whether the color's alpha channel
----is greater than zero.
----@param c Clr color
----@return boolean
-function Clr.any(c)
-    return c.a > 0.0
 end
 
 ---Finds the bitwise and (&) for two colors.
@@ -211,48 +195,6 @@ end
 ---@return Clr
 function Clr.bitOr(a, b)
     return Clr.fromHex(Clr.toHex(a) | Clr.toHex(b))
-end
-
----Rotates a color left by a number of places.
----Use 8, 16, 24 for complete channel rotations.
----@param c Clr color
----@param places integer shift
----@return Clr
-function Clr.bitRotateLeft(c, places)
-    local x = Clr.toHex(c)
-    return Clr.fromHex(
-        (x << places) |
-        (x >> (-places & 0x1f)))
-end
-
----Rotates a color right by a number of places.
----Use 8, 16, 24 for complete channel rotations.
----@param c Clr color
----@param places integer shift
----@return Clr
-function Clr.bitRotateRight(c, places)
-    local x = Clr.toHex(c)
-    return Clr.fromHex(
-        (x >> places) |
-        (x << (-places & 0x1f)))
-end
-
----Shifts a color left (<<) by a number of places.
----Use 8, 16, 24 for complete channel shifts.
----@param c Clr color
----@param places integer shift
----@return Clr
-function Clr.bitShiftLeft(c, places)
-    return Clr.fromHex(Clr.toHex(c) << places)
-end
-
----Shifts a color right (>>) by a number of places.
----Use 8, 16, 24 for complete channel shifts.
----@param c Clr color
----@param places integer shift
----@return Clr
-function Clr.bitShiftRight(c, places)
-    return Clr.fromHex(Clr.toHex(c) >> places)
 end
 
 ---Finds the bitwise exclusive or (~) for two colors.
@@ -1433,14 +1375,6 @@ function Clr.mixSrLchInternal(o, d, t, hueFunc)
     end
 end
 
----Evaluates whether the color's alpha channel
----is less than or equal to zero.
----@param c Clr color
----@return boolean
-function Clr.none(c)
-    return c.a <= 0.0
-end
-
 ---Multiplies a color's red, green and blue
 ---channels by its alpha channel.
 ---
@@ -1503,39 +1437,6 @@ function Clr.quantizeInternal(c, rLv, rDt, gLv, gDt, bLv, bDt, aLv, aDt)
         gDt * math.floor(c.g * gLv + 0.5),
         bDt * math.floor(c.b * bLv + 0.5),
         aDt * math.floor(c.a * aLv + 0.5))
-end
-
----Creates a random color in LAB space,
----converts it to sRGB, then clips to gamut.
----@param dark number|nil light lower bound
----@param light number|nil light upper bound
----@param green number|nil a lower bound
----@param red number|nil a upper bound
----@param blue number|nil b lower bound
----@param yellow number|nil b upper bound
----@param trns number|nil alpha lower bound
----@param opaque number|nil alpha upper bound
----@return Clr
-function Clr.random(dark, light, green, red, blue, yellow, trns, opaque)
-    local lMin = dark or 0.0
-    local lMax = light or 100.0
-    local aMin = green or -110.0
-    local aMax = red or 110.0
-    local bMin = blue or -110.0
-    local bMax = yellow or 110.0
-    local alphaMin = trns or 1.0
-    local alphaMax = opaque or 1.0
-
-    local lt = math.random()
-    local at = math.random()
-    local bt = math.random()
-    local pt = math.random()
-
-    return Clr.clamp01(Clr.srLab2TosRgb(
-        (1.0 - lt) * lMin + lt * lMax,
-        (1.0 - at) * aMin + at * aMax,
-        (1.0 - bt) * bMin + bt * bMax,
-        (1.0 - pt) * alphaMin + pt * alphaMax))
 end
 
 ---Returns true if the red, green and blue

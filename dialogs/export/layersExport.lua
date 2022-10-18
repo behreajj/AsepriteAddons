@@ -21,8 +21,7 @@ local defaults = {
     prApply = false,
     flatGroups = false,
     saveJson = false,
-    origin = "CORNER",
-    pullFocus = false
+    origin = "CORNER"
 }
 
 local function appendVisChildren(layer, array)
@@ -216,7 +215,8 @@ dlg:file {
     id = "filename",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS,
-    save = true
+    save = true,
+    focus = true
 }
 
 dlg:newrow { always = false }
@@ -242,7 +242,6 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
@@ -273,12 +272,10 @@ dlg:button {
         local lenPalettes = #spritePalettes
 
         -- Version specific.
-        local version = app.version
-        local checkTilemaps = false
+        local checkTilemaps = AseUtilities.tilesSupport()
         local missingUserData = "null"
         local spriteUserData = "\"data\":" .. missingUserData
-        if version.major >= 1 and version.minor >= 3 then
-            checkTilemaps = true
+        if checkTilemaps then
             local rawUserData = activeSprite.data
             if rawUserData and #rawUserData > 0 then
                 spriteUserData = string.format(
@@ -689,6 +686,8 @@ dlg:button {
                 "\"prerelease\":\"%s\"",
                 "\"prNo\":%d}",
             }, ",")
+
+            local version = app.version
             local versionStr = strfmt(
                 versionStrFmt,
                 version.major, version.minor, version.patch,

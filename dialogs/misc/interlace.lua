@@ -1,8 +1,8 @@
 dofile("../../support/aseutilities.lua")
 
-local dirTypes = { "AND", "DIAGONAL", "HORIZONTAL", "RANDOM", "VERTICAL", "XOR" }
+local dirTypes = { "AND", "DIAGONAL", "HORIZONTAL", "RANDOM", "SQUARE", "VERTICAL", "XOR" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
-local delTargets = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
+local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults = {
     target = "RANGE",
@@ -34,7 +34,7 @@ dlg:combobox {
     id = "delLyr",
     label = "Source:",
     option = defaults.delLyr,
-    options = delTargets
+    options = delOptions
 }
 
 dlg:newrow { always = false }
@@ -155,11 +155,9 @@ dlg:button {
             return
         end
 
-        -- Check version, if 1.3 then check tile map.
-        local version = app.version
         local isTilemap = false
         local tileSet = nil
-        if version.major >= 1 and version.minor >= 3 then
+        if AseUtilities.tilesSupport() then
             isTilemap = activeLayer.isTilemap
             if isTilemap then
                 tileSet = activeLayer.tileset
@@ -214,13 +212,19 @@ dlg:button {
                 return (x % a < p) and (y % a < p)
             end
         elseif dirType == "DIAGONAL" then
-            -- TODO: Distinguish between (x - y) and (x + y)?
+            -- Distinguish between (x - y) and (x + y)?
             eval = function(x, y, p, a)
-                return (x + y) % a < p
+                return (x - y) % a < p
             end
         elseif dirType == "RANDOM" then
             eval = function(x, y, p, a)
                 return math.random(0, a) < p
+            end
+        elseif dirType == "SQUARE" then
+            eval = function(x, y, p, a)
+                return math.max(
+                    math.abs(x - activeSprite.width // 2),
+                    math.abs(y - activeSprite.height // 2)) % a < p
             end
         elseif dirType == "VERTICAL" then
             eval = function(x, y, p, a)
@@ -298,10 +302,10 @@ dlg:button {
                 activeSprite:deleteLayer(activeLayer)
             elseif delLyr == "DELETE_CELS" then
                 app.transaction(function()
-                    local idxDel0 = 0
-                    while idxDel0 < lenFrames do
-                        idxDel0 = idxDel0 + 1
-                        local frame = frames[idxDel0]
+                    local idxDel = 0
+                    while idxDel < lenFrames do
+                        idxDel = idxDel + 1
+                        local frame = frames[idxDel]
                         -- API reports an error if a cel cannot be
                         -- found, so the layer needs to check that
                         -- it has a cel first.

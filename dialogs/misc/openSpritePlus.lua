@@ -66,7 +66,7 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "removeBkg",
-    label = "Transfer Bkg:",
+    label = "Convert Bkg:",
     selected = defaults.removeBkg
 }
 
@@ -194,12 +194,6 @@ dlg:button {
             return
         end
 
-        -- Tile map layers should not be trimmed, so check
-        -- if Aseprite is newer than 1.3.
-        local version = app.version
-        local checkTilemaps = (version.major >= 1)
-            and (version.minor >= 3)
-
         app.activeSprite = openSprite
         local oldColorMode = openSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
@@ -281,11 +275,14 @@ dlg:button {
 
             appRange:clear()
 
-            local celsLen = #cels
+            -- Tile map layers should not be trimmed.
+            local lenCels = #cels
             local trimImage = AseUtilities.trimImageAlpha
+            local checkTilemaps = AseUtilities.tilesSupport()
+
             app.transaction(function()
                 local j = 0
-                while j < celsLen do j = j + 1
+                while j < lenCels do j = j + 1
                     local cel = cels[j]
 
                     local layer = cel.layer

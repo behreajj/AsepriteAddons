@@ -44,10 +44,7 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
     -- to roll back to an older version. For that reason,
     -- layer.isReference is no longer supported.
 
-    local version = app.version
-    local checkTilemaps = version.major >= 1
-        and version.minor >= 3
-
+    local checkTilemaps = AseUtilities.tilesSupport()
     local lenTrgCels = 0
     local trgCels = {}
 

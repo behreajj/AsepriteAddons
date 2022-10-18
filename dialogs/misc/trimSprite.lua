@@ -79,11 +79,6 @@ dlg:button {
             return
         end
 
-        -- Version
-        local version = app.version
-        local checkTilemaps = version.major >= 1
-            and version.minor >= 3
-
         -- Unpack sprite spec.
         local spec = activeSprite.spec
         local wSprite = spec.width
@@ -140,6 +135,7 @@ dlg:button {
         -- Do this regardless of cropType, as selection
         -- bug may impact result either way.
         local sel = AseUtilities.getSelection(activeSprite)
+        local checkTilemaps = AseUtilities.tilesSupport()
 
         -- Cache methods used in loop.
         local trimAlpha = AseUtilities.trimImageAlpha

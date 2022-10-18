@@ -208,11 +208,10 @@ dlg:button {
             return
         end
 
-        -- Check version, if 1.3 then check tile map.
-        local version = app.version
+        -- Check for tile map support.
         local isTilemap = false
         local tileSet = nil
-        if version.major >= 1 and version.minor >= 3 then
+        if AseUtilities.tilesSupport() then
             isTilemap = srcLayer.isTilemap
             if isTilemap then
                 tileSet = srcLayer.tileset

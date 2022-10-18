@@ -5,7 +5,8 @@ local palFormats = { "aseprite", "gpl", "png", "pal", "webp" }
 local sortPresets = {
     "A", "ALPHA", "B",
     "CHROMA", "HUE",
-    "INDEX", "LUMA" }
+    "INDEX", "LUMA"
+}
 local sortOrders = { "ASCENDING", "DESCENDING" }
 local numBases = { "PROFILE", "SRGB" }
 
@@ -51,7 +52,8 @@ end
 
 local function drawSwatch(image, hex, x, y, w, h)
     local lenn1 = (w * h) - 1
-    for i = 0, lenn1, 1 do
+    local i = -1
+    while i < lenn1 do i = i + 1
         image:drawPixel(
             x + (i % w),
             y + (i // w),

@@ -14,6 +14,9 @@ local spriteWidth = activeSprite.width
 local spriteHeight = activeSprite.height
 local img = Image(spriteWidth, spriteHeight)
 
+local sqrt = math.sqrt
+local floor = math.floor
+
 local activeFrame = app.activeFrame
     or activeSprite.frames[1]
 img:drawSprite(activeSprite, activeFrame)
@@ -34,11 +37,11 @@ for elm in pxItr do
 
         local sqMag = x * x + y * y + z * z
         if sqMag > 0.000047 then
-            local invMag = 127.5 / math.sqrt(sqMag)
+            local invMag = 127.5 / sqrt(sqMag)
             elm(aMask
-                | (math.floor(z * invMag + 128.0) << 0x10)
-                | (math.floor(y * invMag + 128.0) << 0x08)
-                | math.floor(x * invMag + 128.0))
+                | (floor(z * invMag + 128.0) << 0x10)
+                | (floor(y * invMag + 128.0) << 0x08)
+                | floor(x * invMag + 128.0))
         else
             elm(0xff808080)
         end

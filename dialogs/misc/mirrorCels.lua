@@ -187,10 +187,9 @@ dlg:button {
         end
 
         -- Check for tile maps.
-        local version = app.version
         local layerIsTilemap = false
         local tileSet = nil
-        if version.major >= 1 and version.minor >= 3 then
+        if AseUtilities.tilesSupport() then
             local activeLayer = app.activeLayer
             layerIsTilemap = activeLayer.isTilemap
             tileSet = activeLayer.tileset
