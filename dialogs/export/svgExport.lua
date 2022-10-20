@@ -12,16 +12,55 @@ local defaults = {
 }
 
 local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
+    -- https://github.com/aseprite/aseprite/issues/3561
+    -- SVGs displayed in Firefox and Inkscape have thin gaps
+    -- between squares at fractional zoom levels, e.g., 133%.
+    -- Subtracting an epsilon from the left edge and adding to
+    -- the right edge interferes with margin, can cause other
+    -- zooming artifacts. Creating a path for each color
+    -- then using subpaths for each square diminishes issue.
     local strfmt = string.format
-    local pathStrArr = {}
-    local lenArr = 0
+    local tconcat = table.concat
+
+    local imgWidth = img.width
     local imgItr = img:pixels()
+    local pixelDict = {}
     for elm in imgItr do
         local hex = elm()
+        if hex & 0xff000000 ~= 0 then
+            local idx = elm.x + elm.y * imgWidth
+            local idcs = pixelDict[hex]
+            if idcs then
+                pixelDict[hex][#idcs + 1] = idx
+            else
+                pixelDict[hex] = { idx }
+            end
+        end
+    end
+
+    local pathsArr = {}
+    for hex, idcs in pairs(pixelDict) do
         local a = hex >> 0x18 & 0xff
-        if a > 0 then
-            local x0 = xOff + elm.x
-            local y0 = yOff + elm.y
+        local pathStr = strfmt("\n<path ")
+        if a < 0xff then
+            pathStr = pathStr .. strfmt(
+                "fill-opacity=\"%.6f\" ",
+                a * 0.003921568627451)
+        end
+        pathStr = pathStr .. strfmt(
+            "fill=\"#%06X\" d=\"",
+            ((hex & 0xff) << 0x10
+                | (hex & 0xff00)
+                | (hex >> 0x10 & 0xff)))
+
+        local subPathsArr = {}
+        local lenIdcs = #idcs
+        local i = 0
+        while i < lenIdcs do
+            i = i + 1
+            local idx = idcs[i]
+            local x0 = xOff + (idx % imgWidth)
+            local y0 = yOff + (idx // imgWidth)
 
             local x1mrg = border + (x0 + 1) * margin
             local y1mrg = border + (y0 + 1) * margin
@@ -31,35 +70,18 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
             local bx = ax + scale
             local by = ay + scale
 
-            -- https://github.com/aseprite/aseprite/issues/3561
-            -- SVGs displayed in Mozilla Firefox and Inkscape have
-            -- thin gaps between squares at zoom levels, e.g.,
-            -- 133%, 240%. Subtracting an epsilon from the left edge
-            -- and adding an epsilon interferes with margin, causes
-            -- other zooming artifacts, problems.
-            local pathStr = strfmt(
-                "\n<path d=\"M %d %d L %d %d L %d %d L %d %d Z\" ",
+            local subPathStr = strfmt(
+                "M %d %d L %d %d L %d %d L %d %d Z",
                 ax, ay, bx, ay, bx, by, ax, by)
-
-            if a < 0xff then
-                pathStr = pathStr .. strfmt(
-                    "fill-opacity=\"%.6f\" ",
-                    a * 0.003921568627451)
-            end
-
-            -- Green does not need to be unpacked from the
-            -- hexadecimal because its order is unchanged.
-            pathStr = pathStr .. strfmt(
-                "fill=\"#%06X\" />",
-                ((hex & 0xff) << 0x10
-                    | (hex & 0xff00)
-                    | (hex >> 0x10 & 0xff)))
-            lenArr = lenArr + 1
-            pathStrArr[lenArr] = pathStr
+            subPathsArr[#subPathsArr + 1] = subPathStr
         end
+
+        pathStr = pathStr
+            .. (tconcat(subPathsArr, ' ') .. "\" />")
+        pathsArr[#pathsArr + 1] = pathStr
     end
 
-    return table.concat(pathStrArr)
+    return tconcat(pathsArr)
 end
 
 local function layerToSvgStr(
@@ -98,8 +120,7 @@ local function layerToSvgStr(
                     checkTilemaps)
             end
 
-            grpStr = grpStr .. table.concat(groupStrArr)
-            grpStr = grpStr .. "\n</g>"
+            grpStr = grpStr .. (table.concat(groupStrArr) .. "\n</g>")
             str = str .. grpStr
         else
             local cel = layer:cel(activeFrame)

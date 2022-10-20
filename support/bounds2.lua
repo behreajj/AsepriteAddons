@@ -138,18 +138,6 @@ function Bounds2.extent(b)
     return Vec2.diff(b.mx, b.mn)
 end
 
----Creates a bounding box from a center
----and an extent.
----@param center Vec2 center
----@param extent Vec2 extent
----@return Bounds2
-function Bounds2.fromCenterExtent(center, extent)
-    local halfExtent = Vec2.scale(extent, 0.5)
-    return Bounds2.newByRef(
-        Vec2.sub(center, halfExtent),
-        Vec2.add(center, halfExtent))
-end
-
 ---Creates a bounding box that encompasses
 ---a table of Vec2s.
 ---@param points table points
@@ -184,17 +172,6 @@ function Bounds2.fromPoints(points)
         Vec2.new(
             ubx + 0.000002,
             uby + 0.000002))
-end
-
----Evaluates whether two bounding volumes intersect.
----@param a Bounds2 left comparisand
----@param b Bounds2 right comparisand
----@return boolean
-function Bounds2.intersectsBounds(a, b)
-    return a.mx.y > b.mn.y
-        or a.mn.y < b.mx.y
-        or a.mx.x > b.mn.x
-        or a.mn.x < b.mx.x
 end
 
 ---Evaluates whether a bounding box intersects

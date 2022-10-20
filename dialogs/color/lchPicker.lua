@@ -26,13 +26,13 @@ local defaults = {
     },
     complement = { Color(0, 143, 224, 255) },
     splits = {
-        Color(0, 146, 142, 255),
-        Color(0, 140, 255, 255)
+        Color(0, 140, 255, 255),
+        Color(0, 146, 142, 255)
     },
     squares = {
-        Color(0, 142, 0, 255),
+        Color(148, 73, 255, 255),
         Color(0, 143, 224, 255),
-        Color(148, 73, 255, 255)
+        Color(0, 142, 0, 255)
     },
     triads = {
         Color(0, 121, 255, 255),
@@ -87,12 +87,12 @@ local function updateHarmonies(dialog, l, c, h, a)
     local tri0 = Clr.cieLchTosRgb(lTri, c, h - hue120, a, 0.5)
     local tri1 = Clr.cieLchTosRgb(lTri, c, h + hue120, a, 0.5)
 
-    local split0 = Clr.cieLchTosRgb(lSpl, c, h + hue150, a, 0.5)
-    local split1 = Clr.cieLchTosRgb(lSpl, c, h + hue210, a, 0.5)
+    local split0 = Clr.cieLchTosRgb(lSpl, c, h + hue210, a, 0.5)
+    local split1 = Clr.cieLchTosRgb(lSpl, c, h + hue150, a, 0.5)
 
-    local square0 = Clr.cieLchTosRgb(lSqr, c, h + 0.25, a, 0.5)
+    local square0 = Clr.cieLchTosRgb(lSqr, c, h + 0.75, a, 0.5)
     local square1 = Clr.cieLchTosRgb(lOpp, c, h + 0.5, a, 0.5)
-    local square2 = Clr.cieLchTosRgb(lSqr, c, h + 0.75, a, 0.5)
+    local square2 = Clr.cieLchTosRgb(lSqr, c, h + 0.25, a, 0.5)
 
     local analogues = {
         AseUtilities.clrToAseColor(ana0),
