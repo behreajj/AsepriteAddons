@@ -454,22 +454,6 @@ function Vec3.floorDiv(a, b)
     return Vec3.new(cx, cy, cz)
 end
 
----Finds the remainder of the division of the left
----operand by the right that rounds the quotient
----towards zero.
----@param a Vec3 left operand
----@param b Vec3 right operand
----@return Vec3
-function Vec3.fmod(a, b)
-    local cx = a.x
-    local cy = a.y
-    local cz = a.z
-    if b.x ~= 0.0 then cx = math.fmod(a.x, b.x) end
-    if b.y ~= 0.0 then cy = math.fmod(a.y, b.y) end
-    if b.z ~= 0.0 then cz = math.fmod(a.z, b.z) end
-    return Vec3.new(cx, cy, cz)
-end
-
 ---Finds the fractional portion of of a vector.
 ---Subtracts the truncation of each component
 ---from itself, not the floor, unlike in GLSL.
@@ -727,24 +711,6 @@ function Vec3.insortRight(arr, elm, compare)
     end
     table.insert(arr, i, elm)
     return true
-end
-
----Limits a vector's magnitude to a scalar.
----Returns a copy of the vector if it is beneath
----the limit.
----@param v Vec3 vector
----@param limit number limit number
----@return Vec3
-function Vec3.limit(v, limit)
-    local mSq = v.x * v.x + v.y * v.y + v.z * v.z
-    if mSq > 0.0 and mSq > (limit * limit) then
-        local mInv = limit / math.sqrt(mSq)
-        return Vec3.new(
-            v.x * mInv,
-            v.y * mInv,
-            v.z * mInv)
-    end
-    return Vec3.new(v.x, v.y, v.z)
 end
 
 ---Finds the linear step between a left and

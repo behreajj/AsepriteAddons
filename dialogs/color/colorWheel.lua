@@ -123,8 +123,8 @@ dlg:check {
         dlg:modify { id = "palType", visible = usePlot }
         dlg:modify { id = "palFile", visible = usePlot and palType == "FILE" }
         dlg:modify { id = "palPreset", visible = usePlot and palType == "PRESET" }
-        dlg:modify { id = "palStart", visible = usePlot }
-        dlg:modify { id = "palCount", visible = usePlot }
+        -- dlg:modify { id = "palStart", visible = usePlot }
+        -- dlg:modify { id = "palCount", visible = usePlot }
     end
 }
 
@@ -170,7 +170,8 @@ dlg:slider {
     label = "Start:",
     min = 0,
     max = 255,
-    value = defaults.palStart
+    value = defaults.palStart,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -180,7 +181,8 @@ dlg:slider {
     label = "Count:",
     min = 1,
     max = 256,
-    value = defaults.palCount
+    value = defaults.palCount,
+    visible = false
 }
 
 dlg:newrow { always = false }

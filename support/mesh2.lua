@@ -61,41 +61,43 @@ function Mesh2:insetFace(faceIndex, fac)
     local vsOldLen = #self.vs
     local centerFace = {}
 
+    -- Find center.
     local vCenter = Vec2.new(0.0, 0.0)
-    for j = 1, faceLen, 1 do
-        local vertCurr = face[j]
+    local h = 0
+    while h < faceLen do h = h + 1
+        local vertCurr = face[h]
         vCenter = Vec2.add(vCenter, self.vs[vertCurr])
     end
-
     if faceLen > 0 then
         vCenter = Vec2.scale(vCenter, 1.0 / faceLen)
     end
 
     local u = 1.0 - t
-    for j = 0, faceLen - 1, 1 do
-        local k = (j + 1) % faceLen
-        local vertCurr = face[1 + j]
-        local vertNext = face[1 + k]
+    local j = 0
+    while j < faceLen do j = j + 1
+        local k = 1 + j % faceLen
+        local vertCurr = face[j]
+        local vertNext = face[k]
 
         local vCurr = self.vs[vertCurr]
         local vNew = Vec2.new(
             u * vCurr.x + t * vCenter.x,
             u * vCurr.y + t * vCenter.y)
-        table.insert(self.vs, vNew)
+        self.vs[vsOldLen + j] = vNew
 
         local vSubdivIdx = vsOldLen + j
         local fNew = {
             vertCurr,
             vertNext,
-            1 + vsOldLen + k,
-            1 + vSubdivIdx
+            vsOldLen + k,
+            vSubdivIdx
         }
 
-        table.insert(self.fs, fNew)
-        table.insert(centerFace, 1 + vSubdivIdx)
+        self.fs[facesLen + j] = fNew
+        centerFace[j] = 1 + vSubdivIdx
     end
 
-    table.insert(self.fs, centerFace)
+    self.fs[#self.fs + 1] = centerFace
     table.remove(self.fs, i)
     return self
 end
@@ -249,7 +251,7 @@ function Mesh2:subdivFaceFan(faceIndex)
         vCenter = Vec2.add(vCenter, self.vs[vertCurr])
 
         local fNew = { vCenterIdx, vertCurr, vertNext }
-        table.insert(self.fs, fNew)
+        self.fs[#self.fs + 1] = fNew
     end
 
     if faceLen > 0 then
@@ -257,7 +259,7 @@ function Mesh2:subdivFaceFan(faceIndex)
     end
 
     table.remove(self.fs, i)
-    table.insert(self.vs, vCenter)
+    self.vs[#self.vs + 1] = vCenter
     return self
 end
 
@@ -363,7 +365,7 @@ function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQ
             f[1 + i] = 1 + j
             f[1 + sctCount + i] = 1 + (sctCount2 - 1) - j
         end
-        table.insert(fs, f)
+        fs[#fs + 1] = f
 
     end
 
@@ -653,7 +655,7 @@ function Mesh2.separateFaces(source, from, to)
         end
 
         local mesh = Mesh2.new({ fTrg }, vsTrg, "Mesh2")
-        table.insert(meshes, mesh)
+        meshes[#meshes + 1] = mesh
     end
 
     return meshes
@@ -719,7 +721,7 @@ function Mesh2.star(sectors, skip, pick, inset)
     return Mesh2.new(fs, vs, "Star")
 end
 
----Returns a JSON string for a mesh.
+---Returns a JSON string of a mesh.
 ---@param a Mesh2 mesh
 ---@return string
 function Mesh2.toJson(a)

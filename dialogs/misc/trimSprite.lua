@@ -24,7 +24,7 @@ local function appendLeaves(layer, array, includeLocked, includeHidden)
                 appendLeaves(childLayer, array)
             end
         else
-            table.insert(array, layer)
+            array[#array + 1] = layer
         end
     end
 end

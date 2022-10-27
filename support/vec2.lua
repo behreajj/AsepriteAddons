@@ -390,20 +390,6 @@ function Vec2.floorDiv(a, b)
     return Vec2.new(cx, cy)
 end
 
----Finds the remainder of the division of the left
----operand by the right that rounds the quotient
----towards zero.
----@param a Vec2 left operand
----@param b Vec2 right operand
----@return Vec2
-function Vec2.fmod(a, b)
-    local cx = a.x
-    local cy = a.y
-    if b.x ~= 0.0 then cx = math.fmod(a.x, b.x) end
-    if b.y ~= 0.0 then cy = math.fmod(a.y, b.y) end
-    return Vec2.new(cx, cy)
-end
-
 ---Finds the fractional portion of of a vector.
 ---Subtracts the truncation of each component
 ---from itself, not the floor, unlike in GLSL.
@@ -538,23 +524,6 @@ function Vec2.insortRight(arr, elm, compare)
     end
     table.insert(arr, i, elm)
     return true
-end
-
----Limits a vector's magnitude to a scalar.
----Returns a copy of the vector if it is beneath
----the limit.
----@param v Vec2 vector
----@param limit number limit number
----@return Vec2
-function Vec2.limit(v, limit)
-    local mSq = v.x * v.x + v.y * v.y
-    if mSq > 0.0 and mSq > (limit * limit) then
-        local mInv = limit / math.sqrt(mSq)
-        return Vec2.new(
-            v.x * mInv,
-            v.y * mInv)
-    end
-    return Vec2.new(v.x, v.y)
 end
 
 ---Finds the linear step between a left and

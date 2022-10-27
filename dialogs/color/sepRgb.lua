@@ -37,6 +37,8 @@ dlg:combobox {
     options = delOptions
 }
 
+dlg:newrow { always = false }
+
 dlg:check {
     id = "fillBase",
     label = "Fill Base:",

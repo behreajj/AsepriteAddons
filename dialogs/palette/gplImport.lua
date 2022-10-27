@@ -58,7 +58,6 @@ dlg:button {
         local strsub = string.sub
         local strgmatch = string.gmatch
         local strmatch = string.match
-        local tinsert = table.insert
 
         -- Implicitly tries to support JASC-PAL.
         local gplHeaderFound = 0
@@ -68,6 +67,7 @@ dlg:button {
         local jascPalClrCountFound = 0
         local aseAlphaFound = 0
         local columns = 0
+        local lenColors = 0
         local comments = {}
         local colors = {}
 
@@ -96,7 +96,7 @@ dlg:button {
                 elseif lc == "channels: rgba" then
                     aseAlphaFound = lineCount
                 elseif strsub(lc, 1, 1) == '#' then
-                    tinsert(comments, strsub(line, 1))
+                    comments[#comments + 1] = strsub(line, 1)
                 elseif #lc > 0 then
 
                     if palHeaderFound > 0
@@ -110,14 +110,15 @@ dlg:button {
                         local r = 0
 
                         local tokens = {}
+                        local lenTokens = 0
                         for token in strgmatch(line, "%S+") do
-                            tinsert(tokens, token)
+                            lenTokens = lenTokens + 1
+                            tokens[lenTokens] = token
                         end
 
-                        local tokensLen = #tokens
-                        if tokensLen > 2 then
+                        if lenTokens > 2 then
                             if (aseAlphaFound > 0 or palHeaderFound > 0)
-                                and tokensLen > 3 then
+                                and lenTokens > 3 then
                                 local aPrs = tonumber(tokens[4], 10)
                                 if aPrs then a = aPrs end
                             end
@@ -140,7 +141,8 @@ dlg:button {
                         if r < 0 then r = 0 elseif r > 255 then r = 255 end
 
                         local hex = a << 0x18 | b << 0x10 | g << 0x08 | r
-                        tinsert(colors, hex)
+                        lenColors = lenColors + 1
+                        colors[lenColors] = hex
                     end
                 end
                 lineCount = lineCount + 1
@@ -168,7 +170,6 @@ dlg:button {
                 profileFlag = profile ~= ColorSpace { sRGB = true }
                     and profile ~= ColorSpace()
             else
-                local lenColors = #colors
 
                 -- Try to base sprite width on columns
                 -- in GPL file. If not, find square root

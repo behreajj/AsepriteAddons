@@ -11,6 +11,36 @@ local defaults = {
     flattenImage = true
 }
 
+local function blendModeToStr(bm)
+    -- The blend mode for group layers is nil.
+    if bm then
+        local bmStr = "normal"
+        for k, v in pairs(BlendMode) do
+            if bm == v then
+                bmStr = k
+                break
+            end
+        end
+        bmStr = string.gsub(string.lower(bmStr), "_", "-")
+
+        -- Not supported by CSS. Default to normal.
+        if bmStr == "addition"
+            or bmStr == "subtract"
+            or bmStr == "divide" then
+            return "normal"
+        end
+
+        -- No HSL prefix in CSS.
+        if string.sub(bmStr, 1, 3) == "hsl" then
+            bmStr = string.sub(bmStr, 5)
+        end
+
+        return bmStr
+    else
+        return "normal"
+    end
+end
+
 local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
     -- https://github.com/aseprite/aseprite/issues/3561
     -- SVGs displayed in Firefox and Inkscape have thin gaps
@@ -41,7 +71,11 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
     local pathsArr = {}
     for hex, idcs in pairs(pixelDict) do
         local a = hex >> 0x18 & 0xff
-        local pathStr = strfmt("\n<path ")
+
+        local pathStr = strfmt(
+            "\n<path id=\"%08x\" ", hex)
+
+        -- TODO: Put fill last, after d for consistency?
         if a < 0xff then
             pathStr = pathStr .. strfmt(
                 "fill-opacity=\"%.6f\" ",
@@ -100,7 +134,7 @@ local function layerToSvgStr(
         -- Possible for layer name to be empty string.
         local layerName = "Layer"
         if layer.name and #layer.name > 0 then
-            layerName = layer.name
+            layerName = Utilities.validateFilename(layer.name)
         end
 
         if isGroup then
@@ -138,11 +172,14 @@ local function layerToSvgStr(
                 intersect.x = intersect.x - xCel
                 intersect.y = intersect.y - yCel
 
+                -- feBlend seems more backward compatible, but inline
+                -- CSS style results in shorter code.
+                local bmStr = blendModeToStr(layer.blendMode)
                 local grpStr = string.format(
-                    "\n<g id=\"%s\"", layerName)
+                    "\n<g id=\"%s\" style=\"mix-blend-mode: %s;\"",
+                    layerName, bmStr)
 
-                -- Layer opacity and cel opacity are compounded
-                -- together to simplify.
+                -- Layer opacity and cel opacity are compounded.
                 local celAlpha = cel.opacity
                 if lyrAlpha < 0xff or celAlpha < 0xff then
                     local cmpAlpha = (lyrAlpha * 0.003921568627451)

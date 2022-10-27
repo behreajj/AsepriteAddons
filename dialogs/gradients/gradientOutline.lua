@@ -285,7 +285,7 @@ dlg:button {
             local aseColor = aseColors[k]
             if aseColor.alpha > 0
                 and aseColor.rgbaPixel ~= bkgHex then
-                table.insert(filtered, aseColor)
+                filtered[#filtered + 1] = aseColor
             end
         end
 

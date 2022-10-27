@@ -3,12 +3,13 @@ dofile("../../support/aseutilities.lua")
 local coords = { "CARTESIAN", "POLAR" }
 local edgeTypes = { "CLAMP", "OMIT", "WRAP" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
-
+local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults = {
     -- TODO: Option to hide source layer? see
     -- layerMask dialog
     target = "RANGE",
+    delSrc = "NONE",
     edgeType = "OMIT",
     easeMethod = "NEAREST",
     coord = "POLAR",
@@ -32,6 +33,15 @@ dlg:combobox {
     label = "Target:",
     option = defaults.target,
     options = targets
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "delSrc",
+    label = "Source:",
+    option = defaults.delSrc,
+    options = delOptions
 }
 
 dlg:newrow { always = false }
@@ -186,6 +196,14 @@ dlg:button {
             return
         end
 
+        if srcLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
+            }
+            return
+        end
+
         -- Check for tile maps.
         local layerIsTilemap = false
         local tileSet = nil
@@ -198,6 +216,7 @@ dlg:button {
         -- Unpack arguments.
         local args = dlg.data
         local target = args.target or defaults.target
+        local delSrcStr = args.delSrc or defaults.delSrc
         local edgeType = args.edgeType or defaults.edgeType
         local coord = args.coord or defaults.coord
         local useInverse = args.useInverse
@@ -306,22 +325,36 @@ dlg:button {
         end
         local dInvMagSq = 1.0 / (dx * dx + dy * dy)
 
-        -- Create target layer.
-        local mirrLayer = activeSprite:newLayer()
-        mirrLayer.opacity = srcLayer.opacity
+        -- Right side of line is mirrored, left side
+        -- copies original pixels.
+        local rgtLyr = activeSprite:newLayer()
+        local lftLyr = activeSprite:newLayer()
+        local dgnLyr = nil
+        if drawDiagnostic then
+            dgnLyr = activeSprite:newLayer()
+        end
+        local mrrGrp = activeSprite:newGroup()
 
-        -- Used to include origin and destination coordinates.
-        mirrLayer.name = srcLayer.name .. ".Mirrored"
+        lftLyr.parent = mrrGrp
+        lftLyr.opacity = srcLayer.opacity
+        lftLyr.name = "Left"
+
+        rgtLyr.parent = mrrGrp
+        rgtLyr.opacity = srcLayer.opacity
+        rgtLyr.name = "Right"
+
+        mrrGrp.parent = srcLayer.parent
+        mrrGrp.name = srcLayer.name .. ".Mirrored"
 
         -- Cache global methods.
         local floor = math.floor
         local trimAlpha = AseUtilities.trimImageAlpha
+        local tilesToImage = AseUtilities.tilesToImage
 
-        local framesLen = #frames
+        local lenFrames = #frames
         app.transaction(function()
             local i = 0
-            while i < framesLen do
-                i = i + 1
+            while i < lenFrames do i = i + 1
                 local srcFrame = frames[i]
                 local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
@@ -331,7 +364,7 @@ dlg:button {
                     local ySrcPos = srcPos.y
 
                     if layerIsTilemap then
-                        srcImg = AseUtilities.tilesToImage(
+                        srcImg = tilesToImage(
                             srcImg, tileSet, colorMode)
                     end
 
@@ -346,18 +379,22 @@ dlg:button {
                         flatImg:drawImage(srcImg, srcPos)
                     end
 
-                    local mirrImg = Image(spriteSpec)
-                    local mirrPxItr = mirrImg:pixels()
-                    for elm in mirrPxItr do
+                    local rgtImg = Image(spriteSpec)
+                    local lftImg = Image(spriteSpec)
+                    if alphaMask ~= 0 then
+                        rgtImg:clear(alphaMask)
+                        lftImg:clear(alphaMask)
+                    end
+
+                    local flatItr = flatImg:pixels()
+                    for elm in flatItr do
                         local cx = elm.x
                         local cy = elm.y
                         local ex = cx - xOrPx
                         local ey = cy - yOrPx
                         local cross = ex * dy - ey * dx
                         if flipSign * cross < 0.0 then
-                            -- TODO: Option to include this half
-                            -- of mirror? make elm(0) the default...
-                            elm(flatImg:getPixel(cx, cy))
+                            lftImg:drawPixel(cx, cy, elm())
                         else
                             local t = (ex * dx + ey * dy) * dInvMagSq
                             local u = 1.0 - t
@@ -369,22 +406,29 @@ dlg:button {
                             local ixOpp = floor(0.5 + pxOpp)
                             local iyOpp = floor(0.5 + pyOpp)
 
-                            elm(wrapper(ixOpp, iyOpp,
-                                wSprite, hSprite,
+                            rgtImg:drawPixel(cx, cy, wrapper(
+                                ixOpp, iyOpp, wSprite, hSprite,
                                 flatImg, alphaMask))
                         end
                     end
 
-                    local xTrim = 0
-                    local yTrim = 0
+                    local xTrimLft = 0
+                    local yTrimLft = 0
+                    local xTrimRgt = 0
+                    local yTrimRgt = 0
                     if trimCels then
-                        mirrImg, xTrim, yTrim = trimAlpha(
-                            mirrImg, 0, alphaMask)
+                        lftImg, xTrimLft, yTrimLft = trimAlpha(
+                            lftImg, 0, alphaMask)
+                        rgtImg, xTrimRgt, yTrimRgt = trimAlpha(
+                            rgtImg, 0, alphaMask)
                     end
 
                     activeSprite:newCel(
-                        mirrLayer, srcFrame, mirrImg,
-                        Point(xTrim, yTrim))
+                        lftLyr, srcFrame, lftImg,
+                        Point(xTrimLft, yTrimLft))
+                    activeSprite:newCel(
+                        rgtLyr, srcFrame, rgtImg,
+                        Point(xTrimRgt, yTrimRgt))
                 end
             end
         end)
@@ -401,42 +445,62 @@ dlg:button {
             local pointBrush = Brush(7)
 
             app.transaction(function()
-                local diagnosticLayer = activeSprite:newLayer()
-                diagnosticLayer.name = "Mirror.Diagnostic"
-                diagnosticLayer.opacity = 128
+                dgnLyr.parent = mrrGrp
+                dgnLyr.opacity = 128
+                dgnLyr.name = "Diagnostic"
 
+                local useTool = app.useTool
                 local i = 0
-                while i < framesLen do
+                while i < lenFrames do
                     i = i + 1
                     local srcFrame = frames[i]
-                    app.useTool {
+                    useTool {
                         tool = "line",
                         brush = lineBrush,
                         color = lineColor,
-                        layer = diagnosticLayer,
+                        layer = dgnLyr,
                         frame = srcFrame,
                         points = { origin, dest }
                     }
 
-                    app.useTool {
+                    useTool {
                         tool = "pencil",
                         brush = pointBrush,
                         color = originColor,
-                        layer = diagnosticLayer,
+                        layer = dgnLyr,
                         frame = srcFrame,
                         points = { origin }
                     }
 
-                    app.useTool {
+                    useTool {
                         tool = "pencil",
                         brush = pointBrush,
                         color = destColor,
-                        layer = diagnosticLayer,
+                        layer = dgnLyr,
                         frame = srcFrame,
                         points = { dest }
                     }
                 end
             end)
+        end
+
+        if delSrcStr == "HIDE" then
+            srcLayer.isVisible = false
+        elseif (not srcLayer.isBackground) then
+            if delSrcStr == "DELETE_LAYER" then
+                activeSprite:deleteLayer(srcLayer)
+            elseif delSrcStr == "DELETE_CELS" then
+                app.transaction(function()
+                    local idxDel = 0
+                    while idxDel < lenFrames do
+                        idxDel = idxDel + 1
+                        local frame = frames[idxDel]
+                        if srcLayer:cel(frame) then
+                            activeSprite:deleteCel(srcLayer, frame)
+                        end
+                    end
+                end)
+            end
         end
 
         app.refresh()

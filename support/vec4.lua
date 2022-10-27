@@ -414,24 +414,6 @@ function Vec4.floorDiv(a, b)
     return Vec4.new(cx, cy, cz, cw)
 end
 
----Finds the remainder of the division of the left
----operand by the right that rounds the quotient
----towards zero.
----@param a Vec4 left operand
----@param b Vec4 right operand
----@return Vec4
-function Vec4.fmod(a, b)
-    local cx = a.x
-    local cy = a.y
-    local cz = a.z
-    local cw = a.w
-    if b.x ~= 0.0 then cx = math.fmod(a.x, b.x) end
-    if b.y ~= 0.0 then cy = math.fmod(a.y, b.y) end
-    if b.z ~= 0.0 then cz = math.fmod(a.z, b.z) end
-    if b.w ~= 0.0 then cw = math.fmod(a.w, b.w) end
-    return Vec4.new(cx, cy, cz, cw)
-end
-
 ---Finds the fractional portion of of a vector.
 ---Subtracts the truncation of each component
 ---from itself, not the floor, unlike in GLSL.
@@ -547,28 +529,6 @@ function Vec4.hashCode(v)
     else
         return hshInt
     end
-end
-
----Limits a vector's magnitude to a scalar.
----Returns a copy of the vector if it is beneath
----the limit.
----@param v Vec4 vector
----@param limit number limit number
----@return Vec4
-function Vec4.limit(v, limit)
-    local mSq = v.x * v.x
-        + v.y * v.y
-        + v.z * v.z
-        + v.w * v.w
-    if mSq > 0.0 and mSq > (limit * limit) then
-        local mInv = limit / math.sqrt(mSq)
-        return Vec4.new(
-            v.x * mInv,
-            v.y * mInv,
-            v.z * mInv,
-            v.w * mInv)
-    end
-    return Vec4.new(v.x, v.y, v.z, v.w)
 end
 
 ---Finds the linear step between a left and

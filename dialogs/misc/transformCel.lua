@@ -33,7 +33,7 @@ local function appendLeaves(layer, array, bkgAllow, checkTilemaps)
             isTilemap = layer.isTilemap
         end
         if not isTilemap then
-            table.insert(array, layer)
+            array[#array + 1] = layer
         end
     end
 end
