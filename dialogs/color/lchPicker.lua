@@ -21,22 +21,22 @@ local defaults = {
     alpha = 255,
     harmonyType = "NONE",
     analogies = {
-        Color(255, 0, 100, 255),
-        Color(199, 96, 0, 255)
+        Color(0, 0, 0, 0),
+        Color(0, 0, 0, 0)
     },
-    complement = { Color(0, 143, 224, 255) },
+    complement = { Color(0, 0, 0, 0) },
     splits = {
-        Color(0, 140, 255, 255),
-        Color(0, 146, 142, 255)
+        Color(0, 0, 0, 0),
+        Color(0, 0, 0, 0)
     },
     squares = {
-        Color(148, 73, 255, 255),
-        Color(0, 143, 224, 255),
-        Color(0, 142, 0, 255)
+        Color(0, 0, 0, 0),
+        Color(0, 0, 0, 0),
+        Color(0, 0, 0, 0)
     },
     triads = {
-        Color(0, 121, 255, 255),
-        Color(0, 149, 49, 255)
+        Color(0, 0, 0, 0),
+        Color(0, 0, 0, 0)
     },
 
     shading = {
@@ -60,6 +60,10 @@ local function assignToFore(aseColor)
 end
 
 local function updateHarmonies(dialog, l, c, h, a)
+    local inGamut = Clr.rgbIsInGamut
+    local clrToAse = AseUtilities.clrToAseColor
+    local lchToRgb = Clr.cieLchTosRgb
+
     -- Hue wrapping is taken care of by lchTosRgba.
     -- Clamping is taken care of by clToAseColor.
     -- 360 / 3 = 120 degrees; 360 / 12 = 30 degrees.
@@ -75,53 +79,61 @@ local function updateHarmonies(dialog, l, c, h, a)
     -- (060.0 / 180.0) * l + (120.0 / 180.0) * (100.0 - l)
     -- (150.0 / 180.0) * l + (030.0 / 180.0) * (100.0 - l)
     -- (030.0 / 180.0) * l + (150.0 / 180.0) * (100.0 - l)
-    local lOpp = 100.0 - l
-    local lTri = (200.0 - l) / 3.0
     local lAna = (l + l + 50.0) / 3.0
+    local lCpl = 100.0 - l
     local lSpl = (250.0 - (l + l)) / 3.0
     local lSqr = 50.0
+    local lTri = (200.0 - l) / 3.0
 
-    local ana0 = Clr.cieLchTosRgb(lAna, c, h - hue030, a, 0.5)
-    local ana1 = Clr.cieLchTosRgb(lAna, c, h + hue030, a, 0.5)
+    local ana1 = lchToRgb(lAna, c, h - hue030, a, 0.5)
+    local ana2 = lchToRgb(lAna, c, h + hue030, a, 0.5)
 
-    local tri0 = Clr.cieLchTosRgb(lTri, c, h - hue120, a, 0.5)
-    local tri1 = Clr.cieLchTosRgb(lTri, c, h + hue120, a, 0.5)
+    local split1 = lchToRgb(lSpl, c, h + hue210, a, 0.5)
+    local split2 = lchToRgb(lSpl, c, h + hue150, a, 0.5)
 
-    local split0 = Clr.cieLchTosRgb(lSpl, c, h + hue210, a, 0.5)
-    local split1 = Clr.cieLchTosRgb(lSpl, c, h + hue150, a, 0.5)
+    local square1 = lchToRgb(lSqr, c, h + 0.75, a, 0.5)
+    local square2 = lchToRgb(lCpl, c, h + 0.5, a, 0.5)
+    local square3 = lchToRgb(lSqr, c, h + 0.25, a, 0.5)
 
-    local square0 = Clr.cieLchTosRgb(lSqr, c, h + 0.75, a, 0.5)
-    local square1 = Clr.cieLchTosRgb(lOpp, c, h + 0.5, a, 0.5)
-    local square2 = Clr.cieLchTosRgb(lSqr, c, h + 0.25, a, 0.5)
+    local tri1 = lchToRgb(lTri, c, h - hue120, a, 0.5)
+    local tri2 = lchToRgb(lTri, c, h + hue120, a, 0.5)
 
-    local analogues = {
-        AseUtilities.clrToAseColor(ana0),
-        AseUtilities.clrToAseColor(ana1)
-    }
+    local compl = {}
+    local tris = {}
+    local analogues = {}
+    local splits = {}
+    local squares = {}
 
-    local compl = { AseUtilities.clrToAseColor(square1) }
+    if inGamut(ana1) then analogues[1] = clrToAse(ana1)
+    else analogues[1] = Color(0, 0, 0, 0) end
+    if inGamut(ana2) then analogues[2] = clrToAse(ana2)
+    else analogues[2] = Color(0, 0, 0, 0) end
 
-    local splits = {
-        AseUtilities.clrToAseColor(split0),
-        AseUtilities.clrToAseColor(split1)
-    }
+    if inGamut(square2) then compl[1] = clrToAse(square2)
+    else compl[1] = Color(0, 0, 0, 0) end
 
-    local squares = {
-        AseUtilities.clrToAseColor(square0),
-        AseUtilities.clrToAseColor(square1),
-        AseUtilities.clrToAseColor(square2)
-    }
+    if inGamut(split1) then splits[1] = clrToAse(split1)
+    else splits[1] = Color(0, 0, 0, 0) end
+    if inGamut(split2) then splits[2] = clrToAse(split2)
+    else splits[2] = Color(0, 0, 0, 0) end
 
-    local tris = {
-        AseUtilities.clrToAseColor(tri0),
-        AseUtilities.clrToAseColor(tri1)
-    }
+    if inGamut(square1) then squares[1] = clrToAse(square1)
+    else squares[1] = Color(0, 0, 0, 0) end
+    if inGamut(square2) then squares[2] = clrToAse(square2)
+    else squares[2] = Color(0, 0, 0, 0) end
+    if inGamut(square3) then squares[3] = clrToAse(square3)
+    else squares[3] = Color(0, 0, 0, 0) end
 
-    dialog:modify { id = "complement", colors = compl }
-    dialog:modify { id = "triadic", colors = tris }
+    if inGamut(tri1) then tris[1] = clrToAse(tri1)
+    else tris[1] = Color(0, 0, 0, 0) end
+    if inGamut(tri2) then tris[2] = clrToAse(tri2)
+    else tris[2] = Color(0, 0, 0, 0) end
+
     dialog:modify { id = "analogous", colors = analogues }
+    dialog:modify { id = "complement", colors = compl }
     dialog:modify { id = "split", colors = splits }
     dialog:modify { id = "square", colors = squares }
+    dialog:modify { id = "triadic", colors = tris }
 end
 
 local function updateShades(dialog, l, c, h, a)

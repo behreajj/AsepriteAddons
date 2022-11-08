@@ -1,7 +1,7 @@
 dofile("./clrkey.lua")
 
 ---@class ClrGradient
----@field keys table color keys
+---@field protected keys ClrKey[] color keys
 ClrGradient = {}
 ClrGradient.__index = ClrGradient
 
@@ -13,7 +13,7 @@ setmetatable(ClrGradient, {
 
 ---Constructs a color gradient. The first
 ---parameter should be a table of ClrKeys.
----@param keys table color keys
+---@param keys ClrKey[] color keys
 ---@return ClrGradient
 function ClrGradient.new(keys)
     local inst = setmetatable({}, ClrGradient)
@@ -31,7 +31,7 @@ end
 ---Constructs a color gradient.
 ---The first parameter should be a table
 ---of ClrKeys.
----@param keys table color keys
+---@param keys ClrKey[] color keys
 ---@return ClrGradient
 function ClrGradient.newInternal(keys)
     local inst = setmetatable({}, ClrGradient)
@@ -125,7 +125,7 @@ end
 ---If the gradient is a closed loop and the
 ---last color is unequal to the first, the first
 ---color is repeated at the end of the gradient.
----@param arr table color array
+---@param arr Clr[] color array
 ---@return ClrGradient
 function ClrGradient.fromColors(arr)
     -- QUERY: Create separate fromColorsInternal?

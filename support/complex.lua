@@ -1,6 +1,6 @@
 ---@class Complex
----@field imag number imaginary
----@field real number real
+---@field public imag number imaginary
+---@field public real number real
 Complex = {}
 Complex.__index = Complex
 

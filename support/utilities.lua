@@ -208,10 +208,10 @@ end
 
 ---Flips a source pixel array horizontally.
 ---Changes the array in-place.
----@param source table source pixels
+---@param source integer[] source pixels
 ---@param w integer image width
 ---@param h integer image height
----@return table
+---@return integer[]
 function Utilities.flipPixelsHoriz(source, w, h)
     local wd2 = w // 2
     local wn1 = w - 1
@@ -232,10 +232,10 @@ end
 
 ---Flips a source pixel array vertically.
 ---Changes the array in-place.
----@param source table source pixels
+---@param source integer[] source pixels
 ---@param w integer image width
 ---@param h integer image height
----@return table
+---@return integer[]
 function Utilities.flipPixelsVert(source, w, h)
     local hd2 = h // 2
     local hn1 = h - 1
@@ -268,9 +268,9 @@ end
 ---entry is the first index where the color was found.
 ---When true, the flag specifies that all completely
 ---transparent colors are considered equal, not unique.
----@param hexes table hexadecimal colors
+---@param hexes integer[] hexadecimal colors
 ---@param za boolean zero alpha
----@return table
+---@return table<integer, integer>
 function Utilities.hexArrToDict(hexes, za)
     local dict = {}
     local lenHexes = #hexes
@@ -795,7 +795,7 @@ end
 ---Returns an ordered set of integers.
 ---@param s string range string
 ---@param frameCount integer|nil number of frames
----@return table
+---@return integer[]
 function Utilities.parseRangeStringUnique(s, frameCount)
     local arr2 = Utilities.parseRangeStringOverlap(
         s, frameCount)
@@ -828,8 +828,8 @@ end
 ---it is removed and placed at the start.
 ---Colors with zero alpha are not considered
 ---equal to an alpha mask.
----@param hexes table
----@return table
+---@param hexes integer[] colors
+---@return integer[]
 function Utilities.prependMask(hexes)
     if hexes[1] == 0x0 then return hexes end
     local cDict = Utilities.hexArrToDict(hexes, false)
@@ -955,12 +955,12 @@ end
 ---Resizes a source pixel array to new dimensions with
 ---nearest neighbor sampling. Performs no validation on
 ---target width or height. Creates a new pixel array.
----@param source table source pixels
+---@param source integer[] source pixels
 ---@param wSrc integer original width
 ---@param hSrc integer original height
 ---@param wTrg integer resized width
 ---@param hTrg integer resized height
----@return table
+---@return integer[]
 function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg)
     local floor = math.floor
     local tx = wSrc / wTrg
@@ -998,10 +998,10 @@ end
 
 ---Given a source pixel array, creates a new array with
 ---the elements rotated 90 degrees counter-clockwise.
----@param source table source pixels
+---@param source integer[] source pixels
 ---@param w integer image width
 ---@param h integer image height
----@return table
+---@return integer[]
 function Utilities.rotatePixels90(source, w, h)
     local len = #source
     local lennh = len - h
@@ -1016,10 +1016,10 @@ end
 
 ---Given a source pixel array, creates a new array with
 ---the elements rotated 270 degrees counter-clockwise.
----@param source table source pixels
+---@param source integer[] source pixels
 ---@param w integer image width
 ---@param h integer image height
----@return table
+---@return integer[]
 function Utilities.rotatePixels270(source, w, h)
     local len = #source
     local hn1 = h - 1
@@ -1076,7 +1076,7 @@ end
 
 ---Converts a string to a table of characters.
 ---@param str string the string
----@return table
+---@return string[]
 function Utilities.stringToCharTable(str)
     -- For more on different methods, see
     -- https://stackoverflow.com/a/49222705
@@ -1134,8 +1134,8 @@ end
 ---Removes white spaces from the end,
 ---or right edge, of a table of characters.
 ---Mutates the table in place.
----@param chars table
----@return table
+---@param chars string[] characters
+---@return string[]
 function Utilities.trimCharsFinal(chars)
     local tr = table.remove
     while chars[#chars] == ' ' do tr(chars) end
@@ -1145,8 +1145,8 @@ end
 ---Removes white spaces from the start,
 ---or left edge, of a table of characters.
 ---Mutates the table in place.
----@param chars table
----@return table
+---@param chars string[] characters
+---@return string[]
 function Utilities.trimCharsInitial(chars)
     local tr = table.remove
     while chars[1] == ' ' do tr(chars, 1) end
@@ -1159,10 +1159,10 @@ end
 ---completely transparent colors are considered
 ---equal, not unique. The dictionary used to
 ---create the set is the second returned value.
----@param hexes table color array
+---@param hexes integer[] color array
 ---@param za boolean all masks equal
----@return table
----@return table
+---@return integer[]
+---@return table<integer, integer>
 function Utilities.uniqueColors(hexes, za)
     local dict = Utilities.hexArrToDict(hexes, za)
     local uniques = {}
@@ -1204,12 +1204,12 @@ end
 ---Translates the elements in a pixel array by a vector,
 ---wrapping the elements that exceed its dimensions back
 ---to the beginning.
----@param source table source pixels
+---@param source integer[] source pixels
 ---@param x integer x translation
 ---@param y integer y translation
 ---@param w integer image width
 ---@param h integer image height
----@return table
+---@return integer[]
 function Utilities.wrapPixels(source, x, y, w, h)
     local len = #source
     local wrapped = {}

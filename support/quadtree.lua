@@ -1,11 +1,11 @@
 dofile("./bounds2.lua")
 
 ---@class Quadtree
----@field bounds Bounds2 bounding area
----@field capacity integer point capacity
----@field children table child nodes
----@field level integer level, or depth
----@field points table points array
+---@field protected bounds Bounds2 bounding area
+---@field protected capacity integer point capacity
+---@field protected children table child nodes
+---@field protected level integer level, or depth
+---@field protected points table points array
 Quadtree = {}
 Quadtree.__index = Quadtree
 
@@ -145,7 +145,7 @@ end
 ---Returns true if all point insertions succeeded.
 ---Otherwise, returns false.
 ---@param q Quadtree quadtree
----@param ins table insertions array
+---@param ins Vec2[] insertions array
 ---@return boolean
 function Quadtree.insertAll(q, ins)
     local lenIns = #ins

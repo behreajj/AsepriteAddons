@@ -1,9 +1,9 @@
 dofile("./vec3.lua")
 
 ---@class Knot3
----@field fh Vec3 fore handle
----@field co Vec3 coordinate
----@field rh Vec3 rear handle
+---@field public fh Vec3 fore handle
+---@field public co Vec3 coordinate
+---@field public rh Vec3 rear handle
 Knot3 = {}
 Knot3.__index = Knot3
 

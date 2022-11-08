@@ -1,7 +1,7 @@
 ---@class Glyph
----@field character string character
----@field drop integer drop amount
----@field matrix integer visual matrix
+---@field public character string character
+---@field public drop integer drop amount
+---@field public matrix integer visual matrix
 Glyph = {}
 Glyph.__index = Glyph
 

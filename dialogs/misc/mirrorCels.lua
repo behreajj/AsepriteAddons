@@ -6,8 +6,6 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults = {
-    -- TODO: Option to hide source layer? see
-    -- layerMask dialog
     target = "RANGE",
     delSrc = "NONE",
     edgeType = "OMIT",

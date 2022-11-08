@@ -1,11 +1,11 @@
 dofile("./bounds3.lua")
 
 ---@class Octree
----@field bounds Bounds3 bounding area
----@field capacity integer point capacity
----@field children table child nodes
----@field level integer level, or depth
----@field points table points array
+---@field protected bounds Bounds3 bounding area
+---@field protected capacity integer point capacity
+---@field protected children table child nodes
+---@field protected level integer level, or depth
+---@field protected points table points array
 Octree = {}
 Octree.__index = Octree
 
@@ -84,8 +84,8 @@ end
 ---otherwise creates a new array.
 ---@param o Octree octree
 ---@param include boolean include empty nodes
----@param arr table|nil array
----@return table
+---@param arr Vec3[]|nil array
+---@return Vec3[]
 function Octree.centersMean(o, include, arr)
     local arrVrf = arr or {}
     local children = o.children
@@ -246,7 +246,7 @@ end
 ---Returns true if all point insertions succeeded.
 ---Otherwise, returns false.
 ---@param o Octree octree
----@param ins table insertions array
+---@param ins Vec3[] insertions array
 ---@return boolean
 function Octree.insertAll(o, ins)
     local lenIns = #ins

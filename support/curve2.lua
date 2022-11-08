@@ -1,9 +1,9 @@
 dofile("./knot2.lua")
 
 ---@class Curve2
----@field closedLoop boolean closed loop
----@field knots table knots
----@field name string name
+---@field public closedLoop boolean closed loop
+---@field public knots table knots
+---@field public name string name
 Curve2 = {}
 Curve2.__index = Curve2
 
@@ -18,7 +18,7 @@ setmetatable(Curve2, {
 ---if true. The second parameter should be
 ---a table of Knot2s.
 ---@param cl boolean closed loop
----@param knots table knots
+---@param knots Knot2[] knots
 ---@param name string|nil name
 ---@return Curve2
 function Curve2.new(cl, knots, name)

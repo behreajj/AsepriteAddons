@@ -819,7 +819,8 @@ dlg:button {
                 "\"aniDir\":\"%s\"",
                 "\"data\":%s",
                 "\"fromFrame\":%d",
-                "\"toFrame\":%d}"
+                "\"toFrame\":%d",
+                "\"repeats\":%d}"
             }, ',')
 
             local tagsStr = ""
@@ -832,14 +833,19 @@ dlg:button {
 
                     local aniDir = tag.aniDir
                     local aniDirStr = "FORWARD"
-                    if aniDir == AniDir.PING_PONG then
-                        aniDirStr = "PING_PONG"
-                    elseif aniDir == AniDir.REVERSE then
+                    if aniDir == AniDir.REVERSE then
                         aniDirStr = "REVERSE"
+                    elseif aniDir == AniDir.PING_PONG then
+                        aniDirStr = "PING_PONG"
+                    elseif aniDir == 3 then
+                        aniDirStr = "PING_PONG_REVERSE"
                     end
 
+                    local repeats = 0
                     local tagUserData = missingUserData
                     if is1_3 then
+                        -- TODO: This causes problems for 1.3beta21.
+                        -- repeats = tag.repeats
                         local rawUserData = tag.data
                         if rawUserData and #rawUserData > 0 then
                             tagUserData = rawUserData
@@ -850,7 +856,8 @@ dlg:button {
                         tagStrFmt, tag.name, aniDirStr,
                         tagUserData,
                         tag.fromFrame.frameNumber - 1,
-                        tag.toFrame.frameNumber - 1)
+                        tag.toFrame.frameNumber - 1,
+                        repeats)
                     tagStrArr[i] = tagStr
                 end
                 tagsStr = table.concat(tagStrArr, ',')

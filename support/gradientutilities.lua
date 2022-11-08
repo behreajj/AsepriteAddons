@@ -55,8 +55,8 @@ GradientUtilities.DEFAULT_RGB_EASING = "LINEAR"
 ---than one, returns a gradient with black and
 ---white. If the number is less than two, returns
 ---with the original color and its opaque variant.
----@param aseColors table array of Aseprite colors
----@return table
+---@param aseColors userdata[] array of Aseprite colors
+---@return ClrGradient
 function GradientUtilities.aseColorsToClrGradient(aseColors)
     -- Different from ClrGradient.fromColors due to
     -- Gradient Outline. Avoid zero alpha colors because
@@ -91,13 +91,13 @@ end
 function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
     if clrSpcPreset == "HSL" then
         local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
-        return function(a, b, t)
-            return Clr.mixHslInternal(a, b, t, hef)
+        return function(o, d, t)
+            return Clr.mixHslInternal(o, d, t, hef)
         end
     elseif clrSpcPreset == "HSV" then
         local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
-        return function(a, b, t)
-            return Clr.mixHsvInternal(a, b, t, hef)
+        return function(o, d, t)
+            return Clr.mixHsvInternal(o, d, t, hef)
         end
     elseif clrSpcPreset == "LINEAR_RGB" then
         return Clr.mixsRgbInternal
@@ -107,8 +107,8 @@ function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
         return Clr.mixSrLab2Internal
     elseif clrSpcPreset == "SR_LCH" then
         local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
-        return function(a, b, t)
-            return Clr.mixSrLchInternal(a, b, t, hef)
+        return function(o, d, t)
+            return Clr.mixSrLchInternal(o, d, t, hef)
         end
     else
         return Clr.mixlRgbaInternal
@@ -367,45 +367,45 @@ end
 ---Interpolates a hue from an origin to a destination
 ---by a factor in [0.0, 1.0] in the counter-clockwise
 ---direction.
----@param a number origin
----@param b number destination
+---@param o number origin
+---@param d number destination
 ---@param t number factor
 ---@return number
-function GradientUtilities.lerpHueCcw(a, b, t)
-    return Utilities.lerpAngleCcw(a, b, t, 1.0)
+function GradientUtilities.lerpHueCcw(o, d, t)
+    return Utilities.lerpAngleCcw(o, d, t, 1.0)
 end
 
 ---Interpolates a hue from an origin to a destination
 ---by a factor in [0.0, 1.0] in the clockwise
 ---direction.
----@param a number origin
----@param b number destination
+---@param o number origin
+---@param d number destination
 ---@param t number factor
 ---@return number
-function GradientUtilities.lerpHueCw(a, b, t)
-    return Utilities.lerpAngleCw(a, b, t, 1.0)
+function GradientUtilities.lerpHueCw(o, d, t)
+    return Utilities.lerpAngleCw(o, d, t, 1.0)
 end
 
 ---Interpolates a hue from an origin to a destination
 ---by a factor in [0.0, 1.0] in the far
 ---direction.
----@param a number origin
----@param b number destination
+---@param o number origin
+---@param d number destination
 ---@param t number factor
 ---@return number
-function GradientUtilities.lerpHueFar(a, b, t)
-    return Utilities.lerpAngleFar(a, b, t, 1.0)
+function GradientUtilities.lerpHueFar(o, d, t)
+    return Utilities.lerpAngleFar(o, d, t, 1.0)
 end
 
 ---Interpolates a hue from an origin to a destination
 ---by a factor in [0.0, 1.0] in the near
 ---direction.
----@param a number origin
----@param b number destination
+---@param o number origin
+---@param d number destination
 ---@param t number factor
 ---@return number
-function GradientUtilities.lerpHueNear(a, b, t)
-    return Utilities.lerpAngleNear(a, b, t, 1.0)
+function GradientUtilities.lerpHueNear(o, d, t)
+    return Utilities.lerpAngleNear(o, d, t, 1.0)
 end
 
 ---Returns a linear step factor.

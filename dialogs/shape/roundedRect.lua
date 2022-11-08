@@ -218,7 +218,7 @@ dlg:button {
         local sprite = AseUtilities.initCanvas(
             64, 64, "Rectangle",
             { args.fillClr.rgbaPixel,
-              args.strokeClr.rgbaPixel })
+                args.strokeClr.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
         local frame = app.activeFrame or sprite.frames[1]
         local cel = sprite:newCel(layer, frame)

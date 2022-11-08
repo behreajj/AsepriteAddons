@@ -1,8 +1,8 @@
 dofile("./vec3.lua")
 
 ---@class Quaternion
----@field imag Vec3 imaginary
----@field real number real
+---@field public imag Vec3 imaginary
+---@field public real number real
 Quaternion = {}
 Quaternion.__index = Quaternion
 

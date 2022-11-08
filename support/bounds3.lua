@@ -1,8 +1,8 @@
 dofile("./vec3.lua")
 
 ---@class Bounds3
----@field mn Vec3 lower bound
----@field mx Vec3 upper bound
+---@field public mn Vec3 lower bound
+---@field public mx Vec3 upper bound
 Bounds3 = {}
 Bounds3.__index = Bounds3
 
@@ -143,7 +143,7 @@ end
 
 ---Creates a bounding box that encompasses
 ---a table of Vec3s.
----@param points table points
+---@param points Vec3[] points
 ---@return Bounds3
 function Bounds3.fromPoints(points)
     local len = #points

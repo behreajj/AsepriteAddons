@@ -1,8 +1,8 @@
 dofile("./clr.lua")
 
 ---@class ClrKey
----@field clr Clr color
----@field step number step
+---@field public clr Clr color
+---@field public step number step
 ClrKey = {}
 ClrKey.__index = ClrKey
 

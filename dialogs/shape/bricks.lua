@@ -117,7 +117,7 @@ dlg:color {
 
 dlg:newrow { always = false }
 
-dlg:color{
+dlg:color {
     id = "brickClr",
     label = "Brick Color:",
     color = AseUtilities.hexToAseColor(defaults.brickClr)
@@ -184,7 +184,7 @@ dlg:button {
         local sprite = AseUtilities.initCanvas(
             64, 64, mesh.name,
             { brickColor.rgbaPixel,
-              mortarColor.rgbaPixel })
+                mortarColor.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
 
         local frame = app.activeFrame or sprite.frames[1]
@@ -228,7 +228,8 @@ dlg:button {
             local clrToAseColor = AseUtilities.clrToAseColor
 
             app.transaction(function()
-                local i = 0 while i < sepLen do i = i + 1
+                local i = 0
+                while i < sepLen do i = i + 1
                     local hVary = hueBrick
                     if varyHue then
                         hVary = (hueBrick + varNrm * rng() - vnHalf) % 1.0

@@ -1,7 +1,7 @@
 ---@class Vec3
----@field x number x component
----@field y number y component
----@field z number z component
+---@field public x number x component
+---@field public y number y component
+---@field public z number z component
 Vec3 = {}
 Vec3.__index = Vec3
 
@@ -214,7 +214,7 @@ end
 ---the appropriate insertion point for
 ---a vector. Biases towards the right insert
 ---point. Should be used with sorted arrays.
----@param arr table vectors array
+---@param arr Vec3[] vectors array
 ---@param elm Vec3 vector
 ---@param compare function|nil comparator
 ---@return integer
@@ -509,7 +509,7 @@ end
 ---@param layers integer layers
 ---@param lb Vec3 lower bound
 ---@param ub Vec3 upper bound
----@return table
+---@return Vec3[]
 function Vec3.gridCartesian(cols, rows, layers, lb, ub)
     local ubVal = ub or Vec3.new(1.0, 1.0, 1.0)
     local lbVal = lb or Vec3.new(-1.0, -1.0, -1.0)
@@ -566,7 +566,7 @@ end
 ---@param layers integer layers or radii
 ---@param radiusMin number minimum radius
 ---@param radiusMax number maximum radius
----@return table
+---@return Vec3[]
 function Vec3.gridSpherical(longitudes, latitudes, layers, radiusMin, radiusMax)
 
     -- Cache methods.
@@ -699,7 +699,7 @@ end
 ---maintain sorted order. Biases toward the right
 ---insertion point. Returns true if the unique
 ---vector was inserted; false if not.
----@param arr table vectors array
+---@param arr Vec3[] vectors array
 ---@param elm Vec3 vector
 ---@param compare function comparator
 ---@return boolean

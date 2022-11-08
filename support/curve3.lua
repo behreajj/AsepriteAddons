@@ -1,9 +1,9 @@
 dofile("./knot3.lua")
 
 ---@class Curve3
----@field closedLoop boolean closed loop
----@field knots table knots
----@field name string name
+---@field public closedLoop boolean closed loop
+---@field public knots table knots
+---@field public name string name
 Curve3 = {}
 Curve3.__index = Curve3
 
@@ -17,7 +17,7 @@ setmetatable(Curve3, {
 ---if true. The second parameter should be
 ---a table of Knot3s.
 ---@param cl boolean closed loop
----@param knots table knots
+---@param knots Knot3[] knots
 ---@param name string|nil name
 ---@return Curve3
 function Curve3.new(cl, knots, name)
@@ -294,7 +294,7 @@ end
 ---to a Bezier curve. The default tightness is 0.0.
 ---There must be at least 4 points in the array.
 ---@param closedLoop boolean closed loop flag
----@param points table array of points
+---@param points Vec3[] array of points
 ---@param tightness number|nil curve tightness
 ---@param name string|nil curve name
 ---@return Curve3
@@ -420,7 +420,7 @@ end
 ---Creates a curve from a series of points.
 ---Smoothes the fore and rear handles of knots.
 ---@param closedLoop boolean closed loop
----@param points table points array
+---@param points Vec3[] points array
 ---@param name string|nil curve name
 ---@return Curve3
 function Curve3.fromPoints(closedLoop, points, name)

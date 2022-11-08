@@ -7,7 +7,7 @@ local prsStrs = {
 }
 
 local defaults = {
-    -- TODO: Sigmoid function?
+    -- Sigmoid function?
     -- n <-- scalar * (tau * x - pi)
     -- s(n) <-- 1.0 / (1.0 + exp(-n))
 

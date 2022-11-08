@@ -1,8 +1,8 @@
 dofile("./vec2.lua")
 
 ---@class Bounds2
----@field mn Vec2 lower bound
----@field mx Vec2 upper bound
+---@field public mn Vec2 lower bound
+---@field public mx Vec2 upper bound
 Bounds2 = {}
 Bounds2.__index = Bounds2
 
@@ -140,7 +140,7 @@ end
 
 ---Creates a bounding box that encompasses
 ---a table of Vec2s.
----@param points table points
+---@param points Vec2[] points
 ---@return Bounds2
 function Bounds2.fromPoints(points)
     local len = #points

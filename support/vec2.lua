@@ -1,6 +1,6 @@
 ---@class Vec2
----@field x number x component
----@field y number y component
+---@field public x number x component
+---@field public y number y component
 Vec2 = {}
 Vec2.__index = Vec2
 
@@ -176,7 +176,7 @@ end
 ---the appropriate insertion point for
 ---a vector. Biases towards the right insert
 ---point. Should be used with sorted arrays.
----@param arr table vectors array
+---@param arr Vec2[] vectors array
 ---@param elm Vec2 vector
 ---@param compare function|nil comparator
 ---@return integer
@@ -421,7 +421,7 @@ end
 ---@param rows integer rows
 ---@param lb Vec2 lower bound
 ---@param ub Vec2 upper bound
----@return table
+---@return Vec2[]
 function Vec2.gridCartesian(cols, rows, lb, ub)
     local ubVal = ub or Vec2.new(1.0, 1.0)
     local lbVal = lb or Vec2.new(-1.0, -1.0)
@@ -512,7 +512,7 @@ end
 ---maintain sorted order. Biases toward the right
 ---insertion point. Returns true if the unique
 ---vector was inserted; false if not.
----@param arr table vectors array
+---@param arr Vec2[] vectors array
 ---@param elm Vec2 vector
 ---@param compare function comparator
 ---@return boolean

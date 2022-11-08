@@ -210,8 +210,8 @@ end
 ---@param startIndex integer|nil start index
 ---@param count integer|nil count of colors to sample
 ---@param correctZeroAlpha boolean|nil alpha correction flag
----@return table
----@return table
+---@return integer[]
+---@return integer[]
 function AseUtilities.asePaletteLoad(palType, filePath, presetPath, startIndex, count, correctZeroAlpha)
     local cntVal = count or 256
     local siVal = startIndex or 0
@@ -314,10 +314,9 @@ function AseUtilities.asePaletteLoad(palType, filePath, presetPath, startIndex, 
         end
     end
 
-    -- Replace colors, e.g., 0x00ff0000 (clear red),
-    -- so that all are clear black. Since both arrays
-    -- should be of the same length, avoid the safety
-    -- provided by separate loops.
+    -- Replace colors, e.g., 0x00ff0000, so that all
+    -- are clear black. Since both arrays should have
+    -- the same length, avoid safety of separate loops.
     if correctZeroAlpha then
         local lenHexes = #hexesProfile
         local i = 0
@@ -372,8 +371,8 @@ end
 
 ---Converts an array of Aseprite palettes to a
 ---table of hex color integers.
----@param palettes table
----@return table
+---@param palettes userdata[] Aseprite palettes
+---@return integer[]
 function AseUtilities.asePalettesToHexArr(palettes)
     if palettes then
         local lenPalettes = #palettes
@@ -637,7 +636,7 @@ end
 ---@param image userdata cel image
 ---@param position userdata|nil cel position
 ---@param guiClr integer|nil hexadecimal color
----@return table
+---@return userdata[]
 function AseUtilities.createCels(sprite, frStrtIdx, frCount, lyrStrtIdx, lyrCount, image, position, guiClr)
     -- Do not use app.transactions.
     -- https://github.com/aseprite/aseprite/issues/3276
@@ -761,7 +760,7 @@ end
 ---@param sprite userdata sprite
 ---@param count integer frames to create
 ---@param duration number frame duration
----@return table
+---@return userdata[]
 function AseUtilities.createFrames(sprite, count, duration)
     -- Do not use app.transactions.
     -- https://github.com/aseprite/aseprite/issues/3276
@@ -821,7 +820,7 @@ end
 ---@param blendMode integer|nil blend mode
 ---@param opacity integer|nil layer opacity
 ---@param guiClr integer|nil hexadecimal color
----@return table
+---@return userdata[]
 function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr)
     if not sprite then
         app.alert { title = "Error", text = "Sprite could not be found." }
@@ -1562,7 +1561,7 @@ end
 ---to index 1 if the frame index exceeds the number
 ---of palettes.
 ---@param frObj userdata|integer Aseprite frame object
----@param palettes table table of Aseprite palettes
+---@param palettes userdata[] Aseprite palettes
 ---@return userdata
 function AseUtilities.getPalette(frObj, palettes)
     local idx = 1
@@ -1606,7 +1605,7 @@ end
 ---32 bit integers, where the gray is repeated
 ---three times in red, green and blue channels.
 ---@param count integer swatch count
----@return table
+---@return integer[]
 function AseUtilities.grayHexes(count)
     local floor = math.floor
     local valCount = count or 255
@@ -1644,7 +1643,7 @@ end
 ---@param wDefault integer default width
 ---@param hDefault integer default height
 ---@param layerName string|nil layer name
----@param colors table|nil array of hexes
+---@param colors integer[]|nil array of hexes
 ---@param colorSpace userdata|nil color space
 ---@return userdata
 function AseUtilities.initCanvas(wDefault, hDefault, layerName, colors, colorSpace)
@@ -1729,55 +1728,60 @@ end
 ---indices. For example, a tag with a fromFrame
 ---of 8 and a toFrame of 10 will return 8, 9, 10
 ---if the tag has FORWARD direction; 10, 9, 8 for
----REVERSE; 8, 9, 10, 9 for PING_PONG. Ping-pong
----is upper-bounds exclusive so that other
----renderers will not draw the boundary twice.
+---REVERSE. Ping-pong and its reverse excludes
+---one boundary so that other renderers don't draw
+---it twice. Doesn't interpret a tag's repeat count.
 ---
----It is possible for a tag to contain frame
----indices that are out-of-bounds for the sprite
----that contains the tag. This function assumes
----the tag is valid.
+---A tag may contain frame indices that are out of
+---bounds for the sprite that contains the tag.
+---This function assumes the tag is valid.
 ---@param tag userdata Aseprite Tag
----@return table
+---@return integer[]
 function AseUtilities.parseTag(tag)
+    -- As of v1.3, tags have a new direction, ping pong
+    -- reverse, as well as a finite loop count, where
+    -- infinite loops are zero.
+
     local origFrameObj = tag.fromFrame
     local destFrameObj = tag.toFrame
     local origIdx = origFrameObj.frameNumber
     local destIdx = destFrameObj.frameNumber
+    if origIdx == destIdx then return { destIdx } end
 
     local arr = {}
     local idxArr = 0
-
     local aniDir = tag.aniDir
-    if aniDir == AniDir.PING_PONG then
-        if destIdx ~= origIdx then
-            local j = origIdx - 1
-            while j < destIdx do
-                j = j + 1
-                idxArr = idxArr + 1
-                arr[idxArr] = j
-            end
-            local op1 = origIdx + 1
-            while j > op1 do
-                j = j - 1
-                idxArr = idxArr + 1
-                arr[idxArr] = j
-            end
-        else
-            idxArr = idxArr + 1
-            arr[idxArr] = destIdx
-        end
-    elseif aniDir == AniDir.REVERSE then
+    if aniDir == AniDir.REVERSE then
         local j = destIdx + 1
-        while j > origIdx do
-            j = j - 1
+        while j > origIdx do j = j - 1
+            idxArr = idxArr + 1
+            arr[idxArr] = j
+        end
+    elseif aniDir == AniDir.PING_PONG then
+        local j = origIdx - 1
+        while j < destIdx do j = j + 1
+            idxArr = idxArr + 1
+            arr[idxArr] = j
+        end
+        local op1 = origIdx + 1
+        while j > op1 do j = j - 1
+            idxArr = idxArr + 1
+            arr[idxArr] = j
+        end
+    elseif aniDir == 3 then
+        local j = destIdx + 1
+        while j > origIdx do j = j - 1
+            idxArr = idxArr + 1
+            arr[idxArr] = j
+        end
+        local dn1 = destIdx - 1
+        while j < dn1 do j = j + 1
             idxArr = idxArr + 1
             arr[idxArr] = j
         end
     else
         local j = origIdx - 1
-        while j < destIdx do
-            j = j + 1
+        while j < destIdx do j = j + 1
             idxArr = idxArr + 1
             arr[idxArr] = j
         end
@@ -1790,7 +1794,7 @@ end
 ---an array of arrays. Inner arrays may hold
 ---duplicate frame indices, as the same frame
 ---could appear in multiple groups.
----@param tags table tags array
+---@param tags userdata[] tags array
 ---@return table
 function AseUtilities.parseTagsOverlap(tags)
     local tagsLen = #tags
@@ -1804,8 +1808,8 @@ end
 
 ---Parses an array of Aseprite tags. Returns
 ---an ordered set of integers.
----@param tags table tags array
----@return table
+---@param tags userdata[] tags array
+---@return integer[]
 function AseUtilities.parseTagsUnique(tags)
     local arr2 = AseUtilities.parseTagsOverlap(tags)
     local dict = {}
@@ -2003,7 +2007,7 @@ end
 ---Sets a palette in a sprite at a given index to a table
 ---of colors represented as hexadecimal integers. The
 ---palette index defaults to 1.
----@param arr table color array
+---@param arr integer[] color array
 ---@param sprite userdata sprite
 ---@param paletteIndex integer|nil index
 function AseUtilities.setPalette(arr, sprite, paletteIndex)

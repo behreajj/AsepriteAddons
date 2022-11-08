@@ -34,7 +34,7 @@ local defaults = {
     hdrBkgColor = 0xeb282828,
     rowColor0 = 0xeb181818,
     rowColor1 = 0xeb202020,
-    bkgColor = 0xeb101010,
+    bkgColor = 0xff101010,
     pullFocus = false
 }
 
@@ -117,7 +117,8 @@ dlg:slider {
     label = "Start:",
     min = 0,
     max = 255,
-    value = defaults.startIndex
+    value = defaults.startIndex,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -127,7 +128,8 @@ dlg:slider {
     label = "Count:",
     min = 1,
     max = defaults.maxCount,
-    value = defaults.count
+    value = defaults.count,
+    visible = false
 }
 
 dlg:newrow { always = false }

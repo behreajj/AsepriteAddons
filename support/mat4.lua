@@ -1,20 +1,20 @@
 ---@class Mat4
----@field m00 number row 0, col 0 right x
----@field m01 number row 0, col 1 forward x
----@field m02 number row 0, col 2 up x
----@field m03 number row 0, col 3 translation x
----@field m10 number row 1, col 0 right y
----@field m11 number row 1, col 1 forward y
----@field m12 number row 1, col 2 up y
----@field m13 number row 1, col 3 translation y
----@field m20 number row 2, col 0 right z
----@field m21 number row 2, col 1 forward z
----@field m22 number row 2, col 2 up z
----@field m23 number row 2, col 3 translation z
----@field m30 number row 3, col 0 right w
----@field m31 number row 3, col 1 forward w
----@field m32 number row 3, col 2 up w
----@field m33 number row 3, col 3 translation w
+---@field public m00 number row 0, col 0 right x
+---@field public m01 number row 0, col 1 forward x
+---@field public m02 number row 0, col 2 up x
+---@field public m03 number row 0, col 3 translation x
+---@field public m10 number row 1, col 0 right y
+---@field public m11 number row 1, col 1 forward y
+---@field public m12 number row 1, col 2 up y
+---@field public m13 number row 1, col 3 translation y
+---@field public m20 number row 2, col 0 right z
+---@field public m21 number row 2, col 1 forward z
+---@field public m22 number row 2, col 2 up z
+---@field public m23 number row 2, col 3 translation z
+---@field public m30 number row 3, col 0 right w
+---@field public m31 number row 3, col 1 forward w
+---@field public m32 number row 3, col 2 up w
+---@field public m33 number row 3, col 3 translation w
 Mat4 = {}
 Mat4.__index = Mat4
 

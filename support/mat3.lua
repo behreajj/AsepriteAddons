@@ -1,13 +1,13 @@
 ---@class Mat3
----@field m00 number row 0, col 0 right x
----@field m01 number row 0, col 1 forward x
----@field m02 number row 0, col 2 translation x
----@field m10 number row 1, col 0 right y
----@field m11 number row 1, col 1 forward y
----@field m12 number row 1, col 2 translation y
----@field m20 number row 2, col 0 right z
----@field m21 number row 2, col 1 forward z
----@field m22 number row 2, col 2 translation z
+---@field public m00 number row 0, col 0 right x
+---@field public m01 number row 0, col 1 forward x
+---@field public m02 number row 0, col 2 translation x
+---@field public m10 number row 1, col 0 right y
+---@field public m11 number row 1, col 1 forward y
+---@field public m12 number row 1, col 2 translation y
+---@field public m20 number row 2, col 0 right z
+---@field public m21 number row 2, col 1 forward z
+---@field public m22 number row 2, col 2 translation z
 Mat3 = {}
 Mat3.__index = Mat3
 

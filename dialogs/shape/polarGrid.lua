@@ -168,15 +168,15 @@ dlg:button {
         local sprite = AseUtilities.initCanvas(
             64, 64, "Grid.Polar",
             { args.fillClr.rgbaPixel,
-              args.strokeClr.rgbaPixel })
+                args.strokeClr.rgbaPixel })
         local layer = sprite.layers[#sprite.layers]
         local frame = app.activeFrame or sprite.frames[1]
         local cel = sprite:newCel(layer, frame)
 
         local sectors = args.sectors
         local rings = args.rings
-        local angOffset = math.rad(args.angOffset)
-        local angMargin = math.rad(args.angMargin)
+        local angOffset = args.angOffset * 0.017453292519943
+        local angMargin = args.angMargin * 0.017453292519943
         local ringMargin = args.ringMargin or defaults.ringMargin
         local scale = args.scale or defaults.scale
         local xOrigin = args.xOrigin or defaults.xOrigin
@@ -187,7 +187,6 @@ dlg:button {
         local halfAngMargin = angMargin * 0.5
         local halfRingMargin = ringMargin * 0.5
         local thickness = scale / rings - halfRingMargin
-        local len2n1 = rings * sectors - 1
 
         local brush = Brush(args.strokeWeight)
         local strokeClr = args.strokeClr
@@ -196,10 +195,13 @@ dlg:button {
         local useFill = args.useFill
         local resolution = args.resolution
 
-        app.transaction(function ()
-            for k = 0, len2n1, 1 do
+        app.transaction(function()
+            local k = 0
+            local len2 = rings * sectors
+            while k < len2 do
                 local i = k // sectors
                 local j = k % sectors
+                k = k + 1
                 local iStep = (i + 1) * toScale
                 local offset = i * angOffset
                 local radius = iStep * scale - halfRingMargin

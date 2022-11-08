@@ -262,6 +262,7 @@ dlg:button {
                 frIdcs[h] = h
             end
 
+            -- Get unique cels only using a range.
             local appRange = app.range
             appRange.frames = frIdcs
 
@@ -275,20 +276,18 @@ dlg:button {
 
             appRange:clear()
 
-            -- Tile map layers should not be trimmed.
-            local lenCels = #cels
             local trimImage = AseUtilities.trimImageAlpha
             local checkTilemaps = AseUtilities.tilesSupport()
 
             app.transaction(function()
                 local j = 0
+                local lenCels = #cels
                 while j < lenCels do j = j + 1
                     local cel = cels[j]
 
-                    local layer = cel.layer
                     local layerIsTilemap = false
                     if checkTilemaps then
-                        layerIsTilemap = layer.isTilemap
+                        layerIsTilemap = cel.layer.isTilemap
                     end
 
                     if layerIsTilemap then

@@ -1,8 +1,8 @@
 ---@class Clr
----@field r number red channel
----@field g number green channel
----@field b number blue channel
----@field a number transparency
+---@field public r number red channel
+---@field public g number green channel
+---@field public b number blue channel
+---@field public a number transparency
 Clr = {}
 Clr.__index = Clr
 
@@ -543,8 +543,8 @@ end
 
 ---Converts an array of hexadecimal values to
 ---an array of colors.
----@param arr table hexadecimal array
----@return table
+---@param arr integer[] hexadecimal array
+---@return Clr[]
 function Clr.fromHexArray(arr)
     local len = #arr
     local result = {}
@@ -595,7 +595,7 @@ end
 ---@param satMin number minimum saturation
 ---@param satMax number maximum saturation
 ---@param alpha number transparency
----@return table
+---@return Clr[]
 function Clr.gridHsl(longitudes, latitudes, layers, satMin, satMax, alpha)
     -- Default arguments.
     local aVrf = alpha or 1.0
@@ -666,7 +666,7 @@ end
 ---@param rows integer rows
 ---@param layers integer layers
 ---@param alpha number transparency
----@return table
+---@return Clr[]
 function Clr.gridsRgb(cols, rows, layers, alpha)
     -- Default arguments.
     local aVrf = alpha or 1.0

@@ -2,7 +2,6 @@ dofile("../../support/aseutilities.lua")
 
 local defaults = {
     scale = 1,
-    bkgClr = 0x00000000,
     margin = 0,
     marginClr = 0xffffffff,
     border = 0,
@@ -74,8 +73,6 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
 
         local pathStr = strfmt(
             "\n<path id=\"%08x\" ", hex)
-
-        -- TODO: Put fill last, after d for consistency?
         if a < 0xff then
             pathStr = pathStr .. strfmt(
                 "fill-opacity=\"%.6f\" ",
@@ -104,10 +101,9 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
             local bx = ax + scale
             local by = ay + scale
 
-            local subPathStr = strfmt(
+            subPathsArr[i] = strfmt(
                 "M %d %d L %d %d L %d %d L %d %d Z",
                 ax, ay, bx, ay, bx, by, ax, by)
-            subPathsArr[#subPathsArr + 1] = subPathStr
         end
 
         pathStr = pathStr
@@ -216,15 +212,6 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:color {
-    id = "bkgClr",
-    label = "Background:",
-    color = defaults.bkgClr,
-    visible = false
-}
-
-dlg:newrow { always = false }
-
 dlg:slider {
     id = "margin",
     label = "Px Grid:",
@@ -329,7 +316,6 @@ dlg:button {
 
         -- Unpack arguments.
         local scale = args.scale or defaults.scale
-        -- local bkgClr = args.bkgClr or defaults.bkgClr
         local margin = args.margin or defaults.margin
         local marginClr = args.marginClr or defaults.marginClr
         local border = args.border or defaults.border
@@ -380,23 +366,6 @@ dlg:button {
                 wAspSclr * totalWidth,
                 hAspSclr * totalHeight)
         })
-
-        -- if bkgClr.alpha > 0 then
-        --     str = str .. strfmt(
-        --         "\n<path id=\"background\" d=\"M 0 0 L %d 0 L %d %d L 0 %d Z\" ",
-        --         totalWidth, totalWidth, totalHeight, totalHeight)
-        --     if bkgClr.alpha < 255 then
-        --         str = str .. strfmt(
-        --             "fill-opacity=\"%.6f\" ",
-        --             bkgClr.alpha * 0.003921568627451)
-        --     end
-
-        --     str = str .. strfmt(
-        --         "fill=\"#%06X\" />",
-        --         bkgClr.red << 0x10
-        --         | bkgClr.green << 0x08
-        --         | bkgClr.blue)
-        -- end
 
         -- Each path element can contain sub-paths set off by Z (close)
         -- and M (move to) commands.

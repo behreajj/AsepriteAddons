@@ -1,9 +1,9 @@
 dofile("./vec2.lua")
 
 ---@class Mesh2
----@field fs table faces
----@field name string name
----@field vs table coordinates
+---@field public fs table faces
+---@field public name string name
+---@field public vs table coordinates
 Mesh2 = {}
 Mesh2.__index = Mesh2
 
@@ -16,7 +16,7 @@ setmetatable(Mesh2, {
 ---Constructs a 2D mesh with a variable
 ---number of vertices per face.
 ---@param fs table faces
----@param vs table coordinates
+---@param vs Vec2[] coordinates
 ---@param name string|nil name
 ---@return Mesh2
 function Mesh2.new(fs, vs, name)
@@ -624,7 +624,7 @@ end
 ---@param source Mesh2 source mesh
 ---@param from integer|nil start index
 ---@param to integer|nil stop index
----@return table
+---@return Mesh2[]
 function Mesh2.separateFaces(source, from, to)
     local meshes = {}
     local fsSrc = source.fs

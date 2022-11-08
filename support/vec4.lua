@@ -1,8 +1,8 @@
 ---@class Vec4
----@field x number x component
----@field y number y component
----@field z number z component
----@field w number w component
+---@field public x number x component
+---@field public y number y component
+---@field public z number z component
+---@field public w number w component
 Vec4 = {}
 Vec4.__index = Vec4
 
@@ -436,7 +436,7 @@ end
 ---@param strata integer strata
 ---@param lb Vec4 lower bound
 ---@param ub Vec4 upper bound
----@return table
+---@return Vec4[]
 function Vec4.gridCartesian(cols, rows, layers, strata, lb, ub)
     local ubVal = ub or Vec4.new(1.0, 1.0, 1.0, 1.0)
     local lbVal = lb or Vec4.new(-1.0, -1.0, -1.0, -1.0)
