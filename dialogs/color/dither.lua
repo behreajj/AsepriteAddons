@@ -553,7 +553,7 @@ dlg:button {
                 local lab = Clr.sRgbToSrLab2(srgb)
                 local query = Vec3.new(lab.a, lab.b, lab.l)
                 local nearPoint, _ = Octree.queryInternal(
-                    octree, query, rsq)
+                    octree, query, rsq, Vec3.distSq)
 
                 local trgHex = 0x0
                 if nearPoint then

@@ -16,7 +16,7 @@ local defaults = {
     base = Color(255, 0, 0, 255),
     hexCode = "FF0000",
     lightness = 53,
-    chroma = 104,
+    chroma = 105,
     hue = 40,
     alpha = 255,
     harmonyType = "NONE",
@@ -40,13 +40,13 @@ local defaults = {
     },
 
     shading = {
-        Color(145, 0, 51, 255),
-        Color(193, 0, 42, 255),
-        Color(226, 0, 33, 255),
-        Color(253, 13, 26, 255),
-        Color(255, 78, 28, 255),
-        Color(255, 127, 45, 255),
-        Color(255, 186, 76, 255)
+        Color(0, 0, 0, 0),
+        Color(0, 0, 0, 0),
+        Color(0, 0, 0, 0),
+        Color(253, 16, 31, 255),
+        Color(255, 79, 30, 255),
+        Color(0, 0, 0, 0),
+        Color(0, 0, 0, 0)
     },
     shadeCount = 7
 }
@@ -104,29 +104,29 @@ local function updateHarmonies(dialog, l, c, h, a)
     local splits = {}
     local squares = {}
 
-    if inGamut(ana1) then analogues[1] = clrToAse(ana1)
+    if inGamut(ana1, 0.115) then analogues[1] = clrToAse(ana1)
     else analogues[1] = Color(0, 0, 0, 0) end
-    if inGamut(ana2) then analogues[2] = clrToAse(ana2)
+    if inGamut(ana2, 0.115) then analogues[2] = clrToAse(ana2)
     else analogues[2] = Color(0, 0, 0, 0) end
 
-    if inGamut(square2) then compl[1] = clrToAse(square2)
+    if inGamut(square2, 0.115) then compl[1] = clrToAse(square2)
     else compl[1] = Color(0, 0, 0, 0) end
 
-    if inGamut(split1) then splits[1] = clrToAse(split1)
+    if inGamut(split1, 0.115) then splits[1] = clrToAse(split1)
     else splits[1] = Color(0, 0, 0, 0) end
-    if inGamut(split2) then splits[2] = clrToAse(split2)
+    if inGamut(split2, 0.115) then splits[2] = clrToAse(split2)
     else splits[2] = Color(0, 0, 0, 0) end
 
-    if inGamut(square1) then squares[1] = clrToAse(square1)
+    if inGamut(square1, 0.115) then squares[1] = clrToAse(square1)
     else squares[1] = Color(0, 0, 0, 0) end
-    if inGamut(square2) then squares[2] = clrToAse(square2)
+    if inGamut(square2, 0.115) then squares[2] = clrToAse(square2)
     else squares[2] = Color(0, 0, 0, 0) end
-    if inGamut(square3) then squares[3] = clrToAse(square3)
+    if inGamut(square3, 0.115) then squares[3] = clrToAse(square3)
     else squares[3] = Color(0, 0, 0, 0) end
 
-    if inGamut(tri1) then tris[1] = clrToAse(tri1)
+    if inGamut(tri1, 0.115) then tris[1] = clrToAse(tri1)
     else tris[1] = Color(0, 0, 0, 0) end
-    if inGamut(tri2) then tris[2] = clrToAse(tri2)
+    if inGamut(tri2, 0.115) then tris[2] = clrToAse(tri2)
     else tris[2] = Color(0, 0, 0, 0) end
 
     dialog:modify { id = "analogous", colors = analogues }
@@ -185,9 +185,13 @@ local function updateShades(dialog, l, c, h, a)
     local i = 0
     while i < shadeCount do
         local v = Curve3.eval(curve, i * toFac)
+        local srgb = Clr.cieLabTosRgb(v.z, v.x, v.y, a)
         i = i + 1
-        aseColors[i] = AseUtilities.clrToAseColor(
-            Clr.cieLabTosRgb(v.z, v.x, v.y, a))
+        if Clr.rgbIsInGamut(srgb, 0.115) then
+            aseColors[i] = AseUtilities.clrToAseColor(srgb)
+        else
+            aseColors[i] = Color(0, 0, 0, 0)
+        end
     end
 
     dialog:modify { id = "shading", colors = aseColors }

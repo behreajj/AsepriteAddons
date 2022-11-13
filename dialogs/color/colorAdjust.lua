@@ -1,13 +1,11 @@
 dofile("../../support/aseutilities.lua")
 
 local targets = { "ACTIVE", "ALL", "RANGE" }
--- local grayHues = { "OMIT", "SHADING", "ZERO" }
 local modes = { "LAB", "LCH" }
 
 local defaults = {
     target = "RANGE",
     mode = "LCH",
-    -- grayHue = "OMIT",
     lAdj = 0,
     cAdj = 0,
     hAdj = 0,
@@ -63,23 +61,12 @@ dlg:combobox {
         local args = dlg.data
         local isLch = args.mode == "LCH"
         local isLab = args.mode == "LAB"
-        -- dlg:modify { id = "grayHue", visible = isLch }
         dlg:modify { id = "cAdj", visible = isLch }
         dlg:modify { id = "hAdj", visible = isLch }
         dlg:modify { id = "aAdj", visible = isLab }
         dlg:modify { id = "bAdj", visible = isLab }
     end
 }
-
--- dlg:newrow { always = false }
-
--- dlg:combobox {
---     id = "grayHue",
---     label = "Grays:",
---     option = defaults.grayHue,
---     options = grayHues,
---     visible = defaults.mode == "LCH"
--- }
 
 dlg:newrow { always = false }
 
@@ -233,7 +220,6 @@ dlg:button {
         local args = dlg.data
         local target = args.target or defaults.target
         local mode = args.mode or defaults.mode
-        -- local grayHue = args.grayHue or defaults.grayHue
         local lAdj = args.lAdj or defaults.lAdj
         local cAdj = args.cAdj or defaults.cAdj
         local hAdj = args.hAdj or defaults.hAdj

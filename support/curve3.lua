@@ -2,7 +2,7 @@ dofile("./knot3.lua")
 
 ---@class Curve3
 ---@field public closedLoop boolean closed loop
----@field public knots table knots
+---@field public knots Knot3[] knots
 ---@field public name string name
 Curve3 = {}
 Curve3.__index = Curve3

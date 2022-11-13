@@ -476,6 +476,8 @@ dlg:button {
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 palType, palFile, palPreset, 0, 256, true)
         else
+            -- User defined default palette can be loaded with
+            -- app.command.LoadPalette { preset = "default" } .
             local hexesDefault = AseUtilities.DEFAULT_PAL_ARR
             local hexDefLen = #hexesDefault
             local i = 0

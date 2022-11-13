@@ -3,9 +3,9 @@ dofile("./bounds3.lua")
 ---@class Octree
 ---@field protected bounds Bounds3 bounding area
 ---@field protected capacity integer point capacity
----@field protected children table child nodes
+---@field protected children Octree[] child nodes
 ---@field protected level integer level, or depth
----@field protected points table points array
+---@field protected points Vec3[] points array
 Octree = {}
 Octree.__index = Octree
 
@@ -304,7 +304,7 @@ end
 function Octree.query(o, center, radius, dfPt)
     local rVrf = radius or 46340
     local v, dsq = Octree.queryInternal(
-        o, center, rVrf * rVrf)
+        o, center, rVrf * rVrf, Vec3.new)
     local d = math.sqrt(dsq)
     if v then
         return Vec3.new(v.x, v.y, v.z), d
@@ -320,9 +320,10 @@ end
 ---@param o Octree octree
 ---@param center Vec3 sphere center
 ---@param rsq number sphere radius, squared
+---@param distSq function distance function
 ---@return Vec3|nil
 ---@return number
-function Octree.queryInternal(o, center, rsq)
+function Octree.queryInternal(o, center, rsq, distSq)
     local nearPoint = nil
     local nearDistSq = 2147483647
     if Bounds3.intersectsSphereInternal(
@@ -336,7 +337,7 @@ function Octree.queryInternal(o, center, rsq)
             local candDistSq = 2147483647
             local candPoint = nil
             candPoint, candDistSq = Octree.queryInternal(
-                child, center, rsq)
+                child, center, rsq, distSq)
             if candPoint and (candDistSq < nearDistSq) then
                 nearPoint = candPoint
                 nearDistSq = candDistSq
@@ -346,7 +347,6 @@ function Octree.queryInternal(o, center, rsq)
         if lenChildren < 1 then
             local points = o.points
             local lenPoints = #points
-            local distSq = Vec3.distSq
 
             local j = 0
             while j < lenPoints do

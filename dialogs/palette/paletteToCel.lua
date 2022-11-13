@@ -243,13 +243,15 @@ dlg:button {
         local fromHex = Clr.fromHex
         local v3Hash = Vec3.hashCode
         local octInsert = Octree.insert
+        local distSq = Vec3.distSq
         local search = Octree.queryInternal
         local tilesToImage = AseUtilities.tilesToImage
 
         -- Convert source palette colors to points
         -- inserted into octree.
         local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-            args.palType, args.palFile, args.palPreset)
+            args.palType, args.palFile, args.palPreset,
+            0, 256, true)
 
         -- Select which conversion functions to use.
         local clrSpacePreset = args.clrSpacePreset
@@ -349,7 +351,7 @@ dlg:button {
                         -- resultHex = queryHex
                         -- else
                         local nearPoint, _ = search(
-                            octree, query.point, rsq)
+                            octree, query.point, rsq, distSq)
                         if nearPoint then
                             local hsh = v3Hash(nearPoint)
                             resultHex = ptToHexDict[hsh]

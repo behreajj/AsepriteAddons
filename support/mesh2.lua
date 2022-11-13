@@ -3,7 +3,7 @@ dofile("./vec2.lua")
 ---@class Mesh2
 ---@field public fs table faces
 ---@field public name string name
----@field public vs table coordinates
+---@field public vs Vec2[] coordinates
 Mesh2 = {}
 Mesh2.__index = Mesh2
 

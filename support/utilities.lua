@@ -1,12 +1,10 @@
 dofile("./vec2.lua")
 dofile("./vec3.lua")
 dofile("./vec4.lua")
-dofile("./bounds2.lua")
 dofile("./curve2.lua")
 dofile("./mat3.lua")
 dofile("./mat4.lua")
 dofile("./mesh2.lua")
-dofile("./quaternion.lua")
 dofile("./glyph.lua")
 
 Utilities = {}
@@ -661,30 +659,6 @@ function Utilities.mulMat4Vec4(a, b)
         + a.m22 * b.z + a.m23 * b.w,
         a.m30 * b.x + a.m31 * b.y
         + a.m32 * b.z + a.m33 * b.w)
-end
-
----Multiplies a Quaternion and a Vec3.
----The Vec3 is treated as a point, not as
----a pure quaternion.
----@param a Quaternion quaternion
----@param b Vec3 vector
----@return Vec3
-function Utilities.mulQuatVec3(a, b)
-    local ai = a.imag
-    local qw = a.real
-    local qx = ai.x
-    local qy = ai.y
-    local qz = ai.z
-
-    local iw = -qx * b.x - qy * b.y - qz * b.z
-    local ix = qw * b.x + qy * b.z - qz * b.y
-    local iy = qw * b.y + qz * b.x - qx * b.z
-    local iz = qw * b.z + qx * b.y - qy * b.x
-
-    return Vec3.new(
-        ix * qw + iz * qy - iw * qx - iy * qz,
-        iy * qw + ix * qz - iw * qy - iz * qx,
-        iz * qw + iy * qx - iw * qz - ix * qy)
 end
 
 ---Finds the next power of 2 for a signed

@@ -371,6 +371,7 @@ dlg:button {
         local v3hsh = Vec3.hashCode
         local octins = Octree.insert
         local search = Octree.queryInternal
+        local distSq = Vec3.distSq
         local screen = Utilities.toScreen
         local drawCirc = AseUtilities.drawCircleFill
         local tablesort = table.sort
@@ -461,7 +462,7 @@ dlg:button {
             local srcLabPt = Vec3.new(
                 srcLab.a, srcLab.b, srcLab.l)
 
-            local nearPoint, _ = search(octree, srcLabPt, rsq)
+            local nearPoint, _ = search(octree, srcLabPt, rsq, distSq)
             if nearPoint then
                 local ptHash = v3hsh(nearPoint)
                 replaceClrs[j] = swatchAlphaMask
