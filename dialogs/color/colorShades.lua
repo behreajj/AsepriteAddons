@@ -85,7 +85,8 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "plotPalette",
-    label = "Plot Palette:",
+    label = "Plot:",
+    text = "Palette",
     selected = defaults.plotPalette,
     onclick = function()
         local args = dlg.data

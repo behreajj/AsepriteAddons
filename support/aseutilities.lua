@@ -537,7 +537,7 @@ end
 ---@param a integer backdrop color
 ---@param b integer overlay color
 ---@return integer
-function AseUtilities.blend(a, b)
+function AseUtilities.blendHexes(a, b)
     local t = b >> 0x18 & 0xff
     if t > 0xfe then return b end
     local v = a >> 0x18 & 0xff
@@ -961,7 +961,7 @@ end
 ---@param r integer radius
 ---@param hex integer hexadecimal color
 function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
-    local blend = AseUtilities.blend
+    local blend = AseUtilities.blendHexes
     local rsq = r * r
     local r2 = r * 2
     local lenn1 = r2 * r2 - 1
@@ -1095,7 +1095,7 @@ end
 function AseUtilities.drawGlyph(image, glyph, hex, x, y, gw, gh)
 
     local lenn1 = gw * gh - 1
-    local blend = AseUtilities.blend
+    local blend = AseUtilities.blendHexes
     local glMat = glyph.matrix
     local glDrop = glyph.drop
     local ypDrop = y + glDrop
@@ -1142,7 +1142,7 @@ function AseUtilities.drawGlyphNearest(image, glyph, hex, x, y, gw, gh, dw, dh)
     local tx = gw / dw
     local ty = gh / dh
     local floor = math.floor
-    local blend = AseUtilities.blend
+    local blend = AseUtilities.blendHexes
     local glMat = glyph.matrix
     local glDrop = glyph.drop
     local ypDrop = y + glDrop * (dh / gh)

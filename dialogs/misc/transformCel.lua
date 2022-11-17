@@ -392,7 +392,7 @@ dlg:button {
 
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
+        local lenCels = #cels
 
         local docPrefs = app.preferences.document(activeSprite)
         local snap = docPrefs.grid.snap
@@ -407,7 +407,7 @@ dlg:button {
             local round = Utilities.round
             app.transaction(function()
                 local i = 0
-                while i < celsLen do i = i + 1
+                while i < lenCels do i = i + 1
                     local cel = cels[i]
                     local op = cel.position
                     local xn = op.x
@@ -426,7 +426,7 @@ dlg:button {
         else
             app.transaction(function()
                 local i = 0
-                while i < celsLen do i = i + 1
+                while i < lenCels do i = i + 1
                     local cel = cels[i]
                     local op = cel.position
                     cel.position = Point(op.x + dx, op.y - dy)
@@ -453,7 +453,7 @@ dlg:button {
 
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, true)
-        local celsLen = #cels
+        local lenCels = #cels
 
         local trimAlpha = AseUtilities.trimImageAlpha
         local wrap = AseUtilities.wrapImage
@@ -466,7 +466,7 @@ dlg:button {
             -- Tiling on both axes.
             app.transaction(function()
                 local i = 0
-                while i < celsLen do i = i + 1
+                while i < lenCels do i = i + 1
                     local cel = cels[i]
                     local blit = Image(spriteSpec)
                     blit:drawImage(cel.image, cel.position)
@@ -482,7 +482,7 @@ dlg:button {
             -- Vertical tiling.
             app.transaction(function()
                 local i = 0
-                while i < celsLen do i = i + 1
+                while i < lenCels do i = i + 1
                     local cel = cels[i]
                     local blit = Image(spriteSpec)
                     blit:drawImage(cel.image, cel.position)
@@ -498,7 +498,7 @@ dlg:button {
             -- Horizontal tiling.
             app.transaction(function()
                 local i = 0
-                while i < celsLen do i = i + 1
+                while i < lenCels do i = i + 1
                     local cel = cels[i]
                     local blit = Image(spriteSpec)
                     blit:drawImage(cel.image, cel.position)
@@ -514,7 +514,7 @@ dlg:button {
             --No tiling.
             app.transaction(function()
                 local i = 0
-                while i < celsLen do i = i + 1
+                while i < lenCels do i = i + 1
                     local cel = cels[i]
                     cel.image = wrap(cel.image, dx, dy)
                 end
@@ -539,12 +539,12 @@ dlg:button {
         local args = dlg.data
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
+        local lenCels = #cels
         local xCtrSprite = activeSprite.width * 0.5
 
         app.transaction(function()
             local i = 0
-            while i < celsLen do i = i + 1
+            while i < lenCels do i = i + 1
                 local cel = cels[i]
                 local op = cel.position
                 local xNew = op.x
@@ -572,12 +572,12 @@ dlg:button {
         local args = dlg.data
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
+        local lenCels = #cels
         local yCtrSprite = activeSprite.height * 0.5
 
         app.transaction(function()
             local i = 0
-            while i < celsLen do i = i + 1
+            while i < lenCels do i = i + 1
                 local cel = cels[i]
                 local op = cel.position
                 local xNew = 0
@@ -605,13 +605,13 @@ dlg:button {
         local args = dlg.data
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
+        local lenCels = #cels
         local xCtrSprite = activeSprite.width * 0.5
         local hSprite = activeSprite.height
 
         app.transaction(function()
             local i = 0
-            while i < celsLen do i = i + 1
+            while i < lenCels do i = i + 1
                 local cel = cels[i]
                 local celImg = cel.image
                 local op = cel.position
@@ -640,13 +640,13 @@ dlg:button {
         local args = dlg.data
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
+        local lenCels = #cels
         local wSprite = activeSprite.width
         local yCtrSprite = activeSprite.height * 0.5
 
         app.transaction(function()
             local i = 0
-            while i < celsLen do i = i + 1
+            while i < lenCels do i = i + 1
                 local cel = cels[i]
                 local celImg = cel.image
                 local op = cel.position
@@ -668,7 +668,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "cAlignButton",
-    text = "C&ENTER",
+    text = "CE&NTER",
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
@@ -677,14 +677,14 @@ dlg:button {
         local args = dlg.data
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
+        local lenCels = #cels
         local xc = activeSprite.width * 0.5
         local yc = activeSprite.height * 0.5
         local floor = math.floor
 
         app.transaction(function()
             local i = 0
-            while i < celsLen do i = i + 1
+            while i < lenCels do i = i + 1
                 local cel = cels[i]
                 local celImg = cel.image
                 cel.position = Point(
@@ -741,7 +741,7 @@ dlg:button {
 
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
+        local lenCels = #cels
 
         local query = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians = degrees * 0.017453292519943
@@ -751,7 +751,7 @@ dlg:button {
 
         app.transaction(function()
             local i = 0
-            while i < celsLen do i = i + 1
+            while i < lenCels do i = i + 1
                 local cel = cels[i]
                 local srcImg = cel.image
                 if not srcImg:isEmpty() then
@@ -832,7 +832,7 @@ dlg:button {
 
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
+        local lenCels = #cels
 
         local query = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians = degrees * 0.017453292519943
@@ -842,7 +842,7 @@ dlg:button {
 
         app.transaction(function()
             local i = 0
-            while i < celsLen do i = i + 1
+            while i < lenCels do i = i + 1
                 local cel = cels[i]
                 local srcImg = cel.image
                 if not srcImg:isEmpty() then
@@ -907,7 +907,7 @@ dlg:button {
 
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
+        local lenCels = #cels
 
         if degrees == 90 or degrees == 270 then
             local rotFunc = AseUtilities.rotateImage90
@@ -917,7 +917,7 @@ dlg:button {
 
             app.transaction(function()
                 local i = 0
-                while i < celsLen do i = i + 1
+                while i < lenCels do i = i + 1
                     local cel = cels[i]
                     local srcImg = cel.image
                     local wSrc = srcImg.width
@@ -945,7 +945,7 @@ dlg:button {
             local rot180 = AseUtilities.rotateImage180
             app.transaction(function()
                 local i = 0
-                while i < celsLen do i = i + 1
+                while i < lenCels do i = i + 1
                     local cel = cels[i]
                     cel.image = rot180(cel.image)
                 end
@@ -989,7 +989,7 @@ dlg:button {
 
             app.transaction(function()
                 local i = 0
-                while i < celsLen do i = i + 1
+                while i < lenCels do i = i + 1
                     local cel = cels[i]
                     local srcImg = cel.image
                     if not srcImg:isEmpty() then
@@ -1119,12 +1119,12 @@ dlg:button {
         local args = dlg.data
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, true)
-        local celsLen = #cels
+        local lenCels = #cels
 
         local fliph = AseUtilities.flipImageHoriz
         app.transaction(function()
             local i = 0
-            while i < celsLen do i = i + 1
+            while i < lenCels do i = i + 1
                 local cel = cels[i]
                 cel.image = fliph(cel.image)
             end
@@ -1145,12 +1145,12 @@ dlg:button {
         local args = dlg.data
         local target = args.target or defaults.target
         local cels = getTargetCels(activeSprite, target, true)
-        local celsLen = #cels
+        local lenCels = #cels
 
         local flipv = AseUtilities.flipImageVert
         app.transaction(function()
             local i = 0
-            while i < celsLen do i = i + 1
+            while i < lenCels do i = i + 1
                 local cel = cels[i]
                 cel.image = flipv(cel.image)
             end
@@ -1162,7 +1162,7 @@ dlg:button {
 
 dlg:button {
     id = "scaleButton",
-    text = "&SCALE",
+    text = "SCAL&E",
     focus = false,
     onclick = function()
         -- Early returns.
@@ -1180,27 +1180,32 @@ dlg:button {
         local unitType = args.units or defaults.units
         local easeMethod = args.easeMethod or defaults.easeMethod
 
-        -- TODO: Return early if both percentages are 100?
+        local usePercent = unitType == "PERCENT"
         local wPrc = args.prcWidth or defaults.prcWidth
         local hPrc = args.prcHeight or defaults.prcHeight
         local wPxl = args.pxWidth or activeSprite.width
         local hPxl = args.pxHeight or activeSprite.height
 
-        -- Validate target dimensions.
         wPxl = floor(0.5 + abs(wPxl))
         hPxl = floor(0.5 + abs(hPxl))
-        wPrc = 0.01 * max(0.000001, abs(wPrc))
-        hPrc = 0.01 * max(0.000001, abs(hPrc))
+        wPrc = 0.01 * abs(wPrc)
+        hPrc = 0.01 * abs(hPrc)
 
-        -- Convert string checks to booleans for loop.
-        local useBilinear = easeMethod == "BILINEAR"
-        local usePercent = unitType == "PERCENT"
-        if (not usePercent) and (wPxl < 1 or hPxl < 1) then return end
+        if usePercent then
+            if (wPrc < 0.000001 or hPrc < 0.000001)
+                or (wPrc == 1.0 and hPrc == 1.0) then
+                return
+            end
+        elseif wPxl < 1 or hPxl < 1 then
+            return
+        end
+
         local cels = getTargetCels(activeSprite, target, false)
-        local celsLen = #cels
+        local lenCels = #cels
 
         local oldMode = activeSprite.colorMode
         local filter = filterNear
+        local useBilinear = easeMethod == "BILINEAR"
         if useBilinear then
             app.command.ChangePixelFormat { format = "rgb" }
             filter = filterBilin
@@ -1208,7 +1213,7 @@ dlg:button {
 
         app.transaction(function()
             local o = 0
-            while o < celsLen do o = o + 1
+            while o < lenCels do o = o + 1
                 local cel = cels[o]
                 local srcImg = cel.image
                 if not srcImg:isEmpty() then
@@ -1225,7 +1230,7 @@ dlg:button {
 
                     if wSrc ~= wTrg or hSrc ~= hTrg then
                         -- Right-bottom edges were clipped
-                        -- with wSrc / wTrg and hSrc / hTrg .
+                        -- using wSrc / wTrg and hSrc / hTrg .
                         local tx = (wSrc - 1.0) / (wTrg - 1.0)
                         local ty = (hSrc - 1.0) / (hTrg - 1.0)
 
