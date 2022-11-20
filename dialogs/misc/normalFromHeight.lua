@@ -124,7 +124,7 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local target = args.target or defaults.target
+        local target = args.target or defaults.target --[[@as string]]
         local scale = args.scale or defaults.scale
         local stretchContrast = args.stretchContrast
         local xFlip = args.xFlip

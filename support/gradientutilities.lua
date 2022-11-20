@@ -55,7 +55,7 @@ GradientUtilities.DEFAULT_RGB_EASING = "LINEAR"
 ---than one, returns a gradient with black and
 ---white. If the number is less than two, returns
 ---with the original color and its opaque variant.
----@param aseColors userdata[] array of Aseprite colors
+---@param aseColors Color[] array of aseprite colors
 ---@return ClrGradient
 function GradientUtilities.aseColorsToClrGradient(aseColors)
     -- Different from ClrGradient.fromColors due to
@@ -118,7 +118,7 @@ end
 ---Generates the dialog widgets shared across
 ---gradient dialogs. Places a new row at the
 ---end of the widgets.
----@param dlg userdata dialog
+---@param dlg Dialog dialog
 function GradientUtilities.dialogWidgets(dlg)
     dlg:shades {
         id = "shades",

@@ -515,7 +515,7 @@ dlg:button {
         end
 
         if target == "SAVE" then
-            local filepath = args.filepath
+            local filepath = args.filepath --[[@as string]]
             local palette = Palette(lenHexes)
             local k = 0
             while k < lenHexes do k = k + 1
@@ -526,7 +526,8 @@ dlg:button {
             app.alert { title = "Success", text = "Palette saved." }
         else
             -- How to handle out of bounds palette index?
-            local palIdx = args.paletteIndex or defaults.paletteIndex
+            local palIdx = args.paletteIndex
+                or defaults.paletteIndex --[[@as integer]]
             if palIdx > #activeSprite.palettes then
                 app.alert {
                     title = "Error",

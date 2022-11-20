@@ -168,14 +168,14 @@ dlg:button {
         -- See https://github.com/aseprite/api/issues/17 .
 
         local args = dlg.data
-        local xr = args.xRadius or defaults.xRadius
-        local yr = args.yRadius or defaults.yRadius
-        local xc = args.xOrigin or defaults.xOrigin
-        local yc = args.yOrigin or defaults.yOrigin
-        local angDeg = args.angle or defaults.angle
-        local axx = args.axx or defaults.axx
-        local axy = args.axy or defaults.axy
-        local axz = args.axz or defaults.axz
+        local xr = args.xRadius or defaults.xRadius --[[@as number]]
+        local yr = args.yRadius or defaults.yRadius --[[@as number]]
+        local xc = args.xOrigin or defaults.xOrigin --[[@as number]]
+        local yc = args.yOrigin or defaults.yOrigin --[[@as number]]
+        local angDeg = args.angle or defaults.angle --[[@as integer]]
+        local axx = args.axx or defaults.axx --[[@as number]]
+        local axy = args.axy or defaults.axy --[[@as number]]
+        local axz = args.axz or defaults.axz --[[@as number]]
 
         local angRad = math.rad(angDeg)
         local axis = Vec3.new(axx, axy, axz)

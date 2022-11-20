@@ -72,7 +72,8 @@ dlg:slider {
     label = "Start:",
     min = 0,
     max = 255,
-    value = defaults.startIndex
+    value = defaults.startIndex,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -82,7 +83,8 @@ dlg:slider {
     label = "Count:",
     min = 1,
     max = 256,
-    value = defaults.count
+    value = defaults.count,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -116,12 +118,14 @@ dlg:button {
         local openLen = #openSprites
 
         local args = dlg.data
-        local palType = args.palType or defaults.palType
-        local palFile = args.palFile
-        local palPreset = args.palPreset
+        local palType = args.palType or defaults.palType --[[@as string]]
+        local palFile = args.palFile --[[@as string]]
+        local palPreset = args.palPreset --[[@as string]]
         local prependMask = args.prependMask
-        local startIndex = args.startIndex or defaults.startIndex
-        local count = args.count or defaults.count
+        local startIndex = args.startIndex
+            or defaults.startIndex --[[@as integer]]
+        local count = args.count
+            or defaults.count --[[@as integer]]
 
         local hexesProfile = {}
         local hexesSrgb = {}

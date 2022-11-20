@@ -129,13 +129,13 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        local rings = args.rings or defaults.rings
-        local xScale = args.xScale or defaults.xScale
-        local yScale = args.yScale or defaults.yScale
-        local xOrig = args.xOrigin or defaults.xOrigin
-        local yOrig = args.yOrigin or defaults.yOrigin
-        local fillClr = args.fillClr or defaults.fillClr
-        local strokeClr = args.strokeClr or defaults.strokeClr
+        local rings = args.rings or defaults.rings --[[@as integer]]
+        local xScale = args.xScale or defaults.xScale --[[@as number]]
+        local yScale = args.yScale or defaults.yScale --[[@as number]]
+        local xOrig = args.xOrigin or defaults.xOrigin --[[@as number]]
+        local yOrig = args.yOrigin or defaults.yOrigin --[[@as number]]
+        local fillClr = args.fillClr or defaults.fillClr --[[@as Color]]
+        local strokeClr = args.strokeClr or defaults.strokeClr --[[@as Color]]
 
         if xScale < 2.0 then xScale = 2.0 end
         if yScale < 2.0 then yScale = 2.0 end

@@ -50,7 +50,7 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local filepath = args.filepath
+        local filepath = args.filepath --[[@as string]]
         local file, err = io.open(filepath, "r")
 
         -- Cache functions to local when used in loop.
@@ -203,6 +203,7 @@ dlg:button {
             local oldMode = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
             local palIdx = args.paletteIndex
+                or defaults.paletteIndex --[[@as integer]]
             AseUtilities.setPalette(colors, activeSprite, palIdx)
             AseUtilities.changePixelFormat(oldMode)
             app.refresh()

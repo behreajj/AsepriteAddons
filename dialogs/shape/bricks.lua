@@ -172,14 +172,14 @@ dlg:button {
         local t = Mat3.fromTranslation(
             args.xOrigin,
             args.yOrigin)
-        local sclval = args.scale
+        local sclval = args.scale or defaults.scale --[[@as number]]
         if sclval < 2.0 then sclval = 2.0 end
         local s = Mat3.fromScale(sclval, -sclval)
         local mat = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
-        local brickColor = args.brickClr
-        local mortarColor = args.mortarClr
+        local brickColor = args.brickClr --[[@as Color]]
+        local mortarColor = args.mortarClr --[[@as Color]]
 
         local sprite = AseUtilities.initCanvas(
             64, 64, mesh.name,

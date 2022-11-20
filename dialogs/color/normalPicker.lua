@@ -43,13 +43,13 @@ local function vecToColor(x, y, z)
     local sqMag = x * x + y * y + z * z
     if sqMag > 0.0 then
         local invMag = 127.5 / math.sqrt(sqMag)
-        return Color(
-            math.floor(x * invMag + 128.0),
-            math.floor(y * invMag + 128.0),
-            math.floor(z * invMag + 128.0),
-            255)
+        return Color {
+            r = math.floor(x * invMag + 128.0),
+            g = math.floor(y * invMag + 128.0),
+            b = math.floor(z * invMag + 128.0)
+        }
     else
-        return Color(128, 128, 255, 255)
+        return Color { r = 128, g = 128, b = 255 }
     end
 end
 
@@ -133,25 +133,25 @@ local function updateFromColor(dialog, clr)
         dialog:modify { id = "azimuth", value = a }
         dialog:modify { id = "inclination", value = i }
 
-        local r255 = math.floor(x * 127.5 + 128.0)
-        local g255 = math.floor(y * 127.5 + 128.0)
-        local b255 = math.floor(z * 127.5 + 128.0)
+        local r = math.floor(x * 127.5 + 128.0)
+        local g = math.floor(y * 127.5 + 128.0)
+        local b = math.floor(z * 127.5 + 128.0)
 
         dialog:modify {
             id = "normalColor",
-            colors = { Color(r255, g255, b255, 255) }
+            colors = { Color { r = r, g = g, b = b } }
         }
 
         dialog:modify {
             id = "hexCode",
             text = string.format("%06X",
-                (r255 << 0x10 | g255 << 0x08 | b255))
+                (r << 0x10 | g << 0x08 | b))
         }
 
         dialog:modify {
             id = "rgbLabel",
             text = string.format("%03d, %03d, %03d",
-                r255, g255, b255)
+                r, g, b)
         }
     end
 end
@@ -261,7 +261,7 @@ dlg:shades {
     id = "normalColor",
     label = "Color:",
     mode = "sort",
-    colors = { Color(128, 128, 255, 255) }
+    colors = { Color { r = 128, g = 128, b = 255 } }
 }
 
 dlg:newrow { always = false }
@@ -273,12 +273,12 @@ dlg:button {
     onclick = function()
         local normalColors = dlg.data.normalColor
         if app.activeSprite and #normalColors > 0 then
-            local normalColor = normalColors[1]
-            app.fgColor = Color(
-                normalColor.red,
-                normalColor.green,
-                normalColor.blue,
-                255)
+            local n = normalColors[1]
+            app.fgColor = Color {
+                r = n.red,
+                g = n.green,
+                b = n.blue
+            }
         end
     end
 }
@@ -289,13 +289,13 @@ dlg:button {
     onclick = function()
         local normalColors = dlg.data.normalColor
         if app.activeSprite and #normalColors > 0 then
-            local normalColor = normalColors[1]
+            local n = normalColors[1]
             app.command.SwitchColors()
-            app.fgColor = Color(
-                normalColor.red,
-                normalColor.green,
-                normalColor.blue,
-                255)
+            app.fgColor = Color {
+                r = n.red,
+                g = n.green,
+                b = n.blue
+            }
             app.command.SwitchColors()
         end
     end

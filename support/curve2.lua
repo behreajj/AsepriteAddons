@@ -4,6 +4,7 @@ dofile("./knot2.lua")
 ---@field public closedLoop boolean closed loop
 ---@field public knots Knot2[] knots
 ---@field public name string name
+---@operator len(): integer
 Curve2 = {}
 Curve2.__index = Curve2
 
@@ -19,7 +20,7 @@ setmetatable(Curve2, {
 ---a table of Knot2s.
 ---@param cl boolean closed loop
 ---@param knots Knot2[] knots
----@param name string|nil name
+---@param name string? name
 ---@return Curve2
 function Curve2.new(cl, knots, name)
     local inst = setmetatable({}, Curve2)
@@ -125,9 +126,9 @@ end
 ---@param stopAngle number stop angle
 ---@param radius number radius
 ---@param stroke number stroke thickness
----@param offset number|nil stroke offset
----@param xOrigin number|nil origin x
----@param yOrigin number|nil origin y
+---@param offset number? stroke offset
+---@param xOrigin number? origin x
+---@param yOrigin number? origin y
 ---@return Curve2
 function Curve2.arcSector(startAngle, stopAngle, radius, stroke, offset, xOrigin, yOrigin)
     -- Supply default arguments.
@@ -224,10 +225,10 @@ end
 ---Creates a curve to approximate an ellipse.
 ---The radii default to 0.5.
 ---The origin defaults to (0.0, 0.0).
----@param xRadius number|nil horizontal radius
----@param yRadius number|nil vertical radius
----@param xOrigin number|nil x origin
----@param yOrigin number|nil y origin
+---@param xRadius number? horizontal radius
+---@param yRadius number? vertical radius
+---@param xOrigin number? x origin
+---@param yOrigin number? y origin
 ---@return Curve2
 function Curve2.ellipse(xRadius, yRadius, xOrigin, yOrigin)
     -- Supply default arguments.

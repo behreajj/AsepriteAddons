@@ -16,7 +16,7 @@ local defaults = {
     strExample = "1,4,5-10",
     bounds = "CEL",
     padding = 2,
-    padColor = Color(0, 0, 0, 0),
+    padColor = Color { r = 0, g = 0, b = 0, a = 0 },
     scale = 1,
     prApply = false,
     flatGroups = false,
@@ -286,14 +286,14 @@ dlg:button {
         -- Unpack arguments.
         local layerTarget = args.layerTarget or defaults.layerTarget
         local frameTarget = args.frameTarget or defaults.frameTarget
-        local rangeStr = args.rangeStr or defaults.rangeStr
+        local rangeStr = args.rangeStr or defaults.rangeStr --[[@as string]]
         local bounds = args.bounds or defaults.bounds
-        local padding = args.padding or defaults.padding
-        local padColor = args.padColor or defaults.padColor
+        local padding = args.padding or defaults.padding --[[@as integer]]
+        local padColor = args.padColor or defaults.padColor --[[@as Color]]
         local wScale = args.scale or defaults.scale
         local hScale = wScale
         local prApply = args.prApply
-        local filename = args.filename
+        local filename = args.filename --[[@as string]]
 
         local saveJson = args.saveJson
         local origin = args.origin or defaults.origin

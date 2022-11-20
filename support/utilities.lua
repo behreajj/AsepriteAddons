@@ -175,7 +175,7 @@ end
 ---If a comparator is not provided, elements
 ---are sorted by their less than (<) operator.
 ---@param dict table dictionary
----@param comparator function|nil comparator function
+---@param comparator function? comparator function
 ---@return table
 function Utilities.dictToSortedSet(dict, comparator)
     local orderedSet = {}
@@ -418,7 +418,7 @@ end
 ---in the range 16 to 120. The delimiter inserted into
 ---a string is '\n'.
 ---@param srcStr string source string
----@param limit integer|nil character limit per line
+---@param limit integer? character limit per line
 ---@return string
 function Utilities.lineWrapString(srcStr, limit)
     local chars2d = Utilities.lineWrapStringToChars(
@@ -442,7 +442,7 @@ end
 ---each inner table contains characters representing a
 ---line of text. Tabs are treated as spaces.
 ---@param srcStr string source string
----@param limit integer|nil character limit per line
+---@param limit integer? character limit per line
 ---@return table
 function Utilities.lineWrapStringToChars(srcStr, limit)
     if srcStr and #srcStr > 0 then
@@ -696,7 +696,7 @@ end
 ---duplicate frame indices,  as the user may intend for
 ---the same frame to appear in multiple groups.
 ---@param s string range string
----@param frameCount integer|nil number of frames
+---@param frameCount integer? number of frames
 ---@return table
 function Utilities.parseRangeStringOverlap(s, frameCount)
     local fcVerif = frameCount or 2147483647
@@ -768,7 +768,7 @@ end
 ---
 ---Returns an ordered set of integers.
 ---@param s string range string
----@param frameCount integer|nil number of frames
+---@param frameCount integer? number of frames
 ---@return integer[]
 function Utilities.parseRangeStringUnique(s, frameCount)
     local arr2 = Utilities.parseRangeStringOverlap(
@@ -833,7 +833,7 @@ end
 ---Promotes a Vec2 to a Vec3.
 ---The z component defaults to 0.0.
 ---@param a Vec2 vector
----@param z number|nil z component
+---@param z number? z component
 ---@return Vec3
 function Utilities.promoteVec2ToVec3(a, z)
     local vz = z or 0.0
@@ -843,7 +843,7 @@ end
 ---Promotes a Vec3 to a Vec4.
 ---The w component defaults to 0.0.
 ---@param a Vec3 vector
----@param w number|nil w component
+---@param w number? w component
 ---@return Vec4
 function Utilities.promoteVec3ToVec4(a, w)
     local vw = w or 0.0

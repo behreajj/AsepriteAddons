@@ -7,14 +7,14 @@ local defaults = {
     rangeStr = "",
     strExample = "1,4,5-10",
     padding = 2,
-    padColor = Color(0, 0, 0, 0),
+    padColor = Color { r = 0, g = 0, b = 0, a = 0 },
     scale = 1,
     prApply = false,
     usePot = false,
     useSheet = false,
     batchSheets = false,
     border = 2,
-    borderColor = Color(0, 0, 0, 0),
+    borderColor = Color { r = 0, g = 0, b = 0, a = 0 },
     saveJson = false
 }
 
@@ -498,7 +498,7 @@ dlg:button {
             targetIsTags = false
         end
 
-        local filename = args.filename
+        local filename = args.filename --[[@as string]]
         local fileExt = app.fs.fileExtension(filename)
         if fileExt == "json" then
             fileExt = app.preferences.export_file.image_default_extension
@@ -528,7 +528,7 @@ dlg:button {
         -- Determine how to pad the image in hexadecimal
         -- based on sprite color mode.
         local padding = args.padding or defaults.padding
-        local padColor = args.padColor or defaults.padColor
+        local padColor = args.padColor or defaults.padColor --[[@as Color]]
         local usePadding = padding > 0
         local usePadColor = padColor.alpha > 0
         local padHex = AseUtilities.aseColorToHex(padColor, colorMode)
@@ -560,7 +560,7 @@ dlg:button {
         elseif targetIsRange then
 
             -- Check range string first.
-            local rangeStr = args.rangeStr or defaults.rangeStr
+            local rangeStr = args.rangeStr or defaults.rangeStr --[[@as string]]
             local nonEmptyStr = #rangeStr > 0
             if nonEmptyStr then
                 if batchSheets then
@@ -654,7 +654,7 @@ dlg:button {
         local border = 0
 
         if useSheet then
-            border = args.border or defaults.border
+            border = args.border or defaults.border --[[@as integer]]
             local brdrClr = args.borderColor or defaults.borderColor
             local useBorder = border > 0
             local useBrdrClr = brdrClr.alpha > 0

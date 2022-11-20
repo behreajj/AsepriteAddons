@@ -447,8 +447,10 @@ dlg:button {
         if not activeSprite then return end
 
         local args = dlg.data
-        local dx = args.xTranslate or defaults.xTranslate
-        local dy = args.yTranslate or defaults.yTranslate
+        local dx = args.xTranslate
+            or defaults.xTranslate --[[@as integer]]
+        local dy = args.yTranslate
+            or defaults.yTranslate --[[@as integer]]
         if dx == 0.0 and dy == 0.0 then return end
 
         local target = args.target or defaults.target
@@ -1181,10 +1183,14 @@ dlg:button {
         local easeMethod = args.easeMethod or defaults.easeMethod
 
         local usePercent = unitType == "PERCENT"
-        local wPrc = args.prcWidth or defaults.prcWidth
-        local hPrc = args.prcHeight or defaults.prcHeight
-        local wPxl = args.pxWidth or activeSprite.width
-        local hPxl = args.pxHeight or activeSprite.height
+        local wPrc = args.prcWidth
+            or defaults.prcWidth --[[@as number]]
+        local hPrc = args.prcHeight
+            or defaults.prcHeight --[[@as number]]
+        local wPxl = args.pxWidth
+            or activeSprite.width --[[@as integer]]
+        local hPxl = args.pxHeight
+            or activeSprite.height --[[@as integer]]
 
         wPxl = floor(0.5 + abs(wPxl))
         hPxl = floor(0.5 + abs(hPxl))

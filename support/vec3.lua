@@ -2,6 +2,15 @@
 ---@field public x number x component
 ---@field public y number y component
 ---@field public z number z component
+---@operator add(Vec3): Vec3
+---@operator div(Vec3): Vec3
+---@operator idiv(Vec3): Vec3
+---@operator len(): integer
+---@operator mod(Vec3): Vec3
+---@operator mul(Vec3|number): Vec3
+---@operator pow(Vec3): Vec3
+---@operator sub(Vec3): Vec3
+---@operator unm(): Vec3
 Vec3 = {}
 Vec3.__index = Vec3
 
@@ -12,9 +21,9 @@ setmetatable(Vec3, {
 })
 
 ---Constructs a new vector from three numbers.
----@param x number x component
----@param y number y component
----@param z number z component
+---@param x number? x component
+---@param y number? y component
+---@param z number? z component
 ---@return Vec3
 function Vec3.new(x, y, z)
     local inst = setmetatable({}, Vec3)
@@ -145,7 +154,7 @@ end
 ---tolerance, approximately equal.
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
----@param tol number|nil tolerance
+---@param tol number? tolerance
 ---@return boolean
 function Vec3.approx(a, b, tol)
     local eps = tol or 0.000001
@@ -216,7 +225,7 @@ end
 ---point. Should be used with sorted arrays.
 ---@param arr Vec3[] vectors array
 ---@param elm Vec3 vector
----@param compare function|nil comparator
+---@param compare function? comparator
 ---@return integer
 function Vec3.bisectRight(arr, elm, compare)
     local low = 0
@@ -471,9 +480,9 @@ end
 ---inclination to be a signed value between -pi / 2
 ---and pi / 2. The poles are upright in a Z-Up
 ---coordinate system.
----@param azimuth number
----@param inclination number
----@param radius number|nil
+---@param azimuth number azimuth, yaw, theta
+---@param inclination number inclination, pitch, phi
+---@param radius number? radius, rho
 ---@return Vec3
 function Vec3.fromSpherical(azimuth, inclination, radius)
     local a = azimuth or 0.0
@@ -926,8 +935,8 @@ end
 ---Creates a random point in Cartesian space given
 ---a lower and an upper bound. If lower and upper
 ---bounds are not given, defaults to [-1.0, 1.0].
----@param lb Vec3|nil lower bound
----@param ub Vec3|nil upper bound
+---@param lb Vec3? lower bound
+---@param ub Vec3? upper bound
 ---@return Vec3
 function Vec3.randomCartesian(lb, ub)
     local lval = lb or Vec3.new(-1.0, -1.0, -1.0)

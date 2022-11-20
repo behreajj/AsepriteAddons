@@ -168,10 +168,10 @@ dlg:button {
     onclick = function()
 
         local args = dlg.data
-        local sectors = args.sides or defaults.sides
-        local skip = args.skip or defaults.skip
-        local pick = args.pick or defaults.pick
-        local inset = args.inset or defaults.inset
+        local sectors = args.sides or defaults.sides --[[@as integer]]
+        local skip = args.skip or defaults.skip --[[@as integer]]
+        local pick = args.pick or defaults.pick --[[@as integer]]
+        local inset = args.inset or defaults.inset --[[@as integer]]
 
         -- Create transform matrix.
         local t = Mat3.fromTranslation(

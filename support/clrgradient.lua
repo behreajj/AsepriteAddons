@@ -52,7 +52,7 @@ end
 ---check for duplicates. Returns true if the key
 ---was successfully inserted.
 ---@param ck ClrKey color key
----@param tol number|nil tolerance
+---@param tol number? tolerance
 ---@return boolean
 function ClrGradient:insortRight(ck, tol)
     local eps = tol or 0.0005
@@ -94,7 +94,7 @@ end
 ---to a mix in linear sRGB.
 ---@param cg ClrGradient color gradient
 ---@param step number step
----@param easing function|nil easing function
+---@param easing function? easing function
 ---@return Clr
 function ClrGradient.eval(cg, step, easing)
     local keys = cg.keys

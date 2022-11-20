@@ -1,6 +1,15 @@
 ---@class Vec2
 ---@field public x number x component
 ---@field public y number y component
+---@operator add(Vec2): Vec2
+---@operator div(Vec2): Vec2
+---@operator idiv(Vec2): Vec2
+---@operator len(): integer
+---@operator mod(Vec2): Vec2
+---@operator mul(Vec2|number): Vec2
+---@operator pow(Vec2): Vec2
+---@operator sub(Vec2): Vec2
+---@operator unm(): Vec2
 Vec2 = {}
 Vec2.__index = Vec2
 
@@ -11,8 +20,8 @@ setmetatable(Vec2, {
 })
 
 ---Constructs a new vector from two numbers.
----@param x number x component
----@param y number y component
+---@param x number? x component
+---@param y number? y component
 ---@return Vec2
 function Vec2.new(x, y)
     local inst = setmetatable({}, Vec2)
@@ -136,7 +145,7 @@ end
 ---tolerance, approximately equal.
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
----@param tol number|nil tolerance
+---@param tol number? tolerance
 ---@return boolean
 function Vec2.approx(a, b, tol)
     local eps = tol or 0.000001
@@ -178,7 +187,7 @@ end
 ---point. Should be used with sorted arrays.
 ---@param arr Vec2[] vectors array
 ---@param elm Vec2 vector
----@param compare function|nil comparator
+---@param compare function? comparator
 ---@return integer
 function Vec2.bisectRight(arr, elm, compare)
     local low = 0
@@ -404,8 +413,8 @@ end
 ---Converts from polar to Cartesian coordinates.
 ---The heading, or azimuth, is in radians.
 ---The radius defaults to 1.0.
----@param heading number heading
----@param radius number|nil radius
+---@param heading number heading, theta
+---@param radius number? radius, rho
 ---@return Vec2
 function Vec2.fromPolar(heading, radius)
     local r = radius or 1.0
@@ -737,8 +746,8 @@ end
 ---Creates a random point in Cartesian space given
 ---a lower and an upper bound. If lower and upper
 ---bounds are not given, defaults to [-1.0, 1.0].
----@param lb Vec2|nil lower bound
----@param ub Vec2|nil upper bound
+---@param lb Vec2? lower bound
+---@param ub Vec2? upper bound
 ---@return Vec2
 function Vec2.randomCartesian(lb, ub)
     local lval = lb or Vec2.new(-1.0, -1.0)

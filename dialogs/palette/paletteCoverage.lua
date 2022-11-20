@@ -41,7 +41,7 @@ local defaults = {
     minSwatchSize = 2,
     maxSwatchSize = 10,
     swatchAlpha = 217,
-    bkgColor = Color(32, 32, 32, 255),
+    bkgColor = Color { r = 32, g = 32, b = 32 },
     frames = 16,
     fps = 24,
     pullFocus = false
@@ -307,7 +307,7 @@ dlg:button {
         -- Get palette.
         local startIndex = defaults.startIndex
         local count = defaults.count
-        local palType = args.palType
+        local palType = args.palType or defaults.palType --[[@as string]]
         local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
             palType, args.palFile, args.palPreset,
             startIndex, count)
@@ -407,10 +407,10 @@ dlg:button {
         local swatchAlpha01 = swatchAlpha / 255.0
         local geometry = args.geometry or defaults.geometry
         if geometry == "SPHERE" then
-            local lons = args.lons or defaults.lons
-            local lats = args.lats or (lons // 2)
+            local lons = args.lons or defaults.lons --[[@as integer]]
+            local lats = args.lats or (lons // 2) --[[@as integer]]
             local layersSphere = args.layersSphere
-                or defaults.layersSphere
+                or defaults.layersSphere --[[@as integer]]
             local minSat = args.minSat or defaults.minSat
             local maxSat = args.maxSat or defaults.maxSat
 
@@ -425,18 +425,18 @@ dlg:button {
                 minSat, maxSat,
                 swatchAlpha01)
         else
-            local cols = args.cols or defaults.cols
-            local rows = args.rows or defaults.rows
+            local cols = args.cols or defaults.cols --[[@as integer]]
+            local rows = args.rows or defaults.rows --[[@as integer]]
             local layersCube = args.layersCube
-                or defaults.layersCube
+                or defaults.layersCube --[[@as integer]]
 
-            local lbx = args.lbx or defaults.lbx
-            local lby = args.lby or defaults.lby
-            local lbz = args.lbz or defaults.lbz
+            local lbx = args.lbx or defaults.lbx --[[@as number]]
+            local lby = args.lby or defaults.lby --[[@as number]]
+            local lbz = args.lbz or defaults.lbz --[[@as number]]
 
-            local ubx = args.ubx or defaults.ubx
-            local uby = args.uby or defaults.uby
-            local ubz = args.ubz or defaults.ubz
+            local ubx = args.ubx or defaults.ubx --[[@as number]]
+            local uby = args.uby or defaults.uby --[[@as number]]
+            local ubz = args.ubz or defaults.ubz --[[@as number]]
 
             gridPts = Vec3.gridCartesian(
                 cols, rows, layersCube,
@@ -473,9 +473,9 @@ dlg:button {
         end
 
         -- Create geometry rotation axis.
-        local axx = args.axx or defaults.axx
-        local axy = args.axy or defaults.axy
-        local axz = args.axz or defaults.axz
+        local axx = args.axx or defaults.axx --[[@as number]]
+        local axy = args.axy or defaults.axy --[[@as number]]
+        local axz = args.axz or defaults.axz --[[@as number]]
         local axis = Vec3.new(axx, axy, axz)
         if Vec3.any(axis) then
             axis = Vec3.normalize(axis)

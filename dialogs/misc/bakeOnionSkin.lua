@@ -11,8 +11,8 @@ local defaults = {
     minAlpha = 64,
     maxAlpha = 128,
     useTint = true,
-    foreTint = Color(0, 0, 255, 128),
-    backTint = Color(255, 0, 0, 128),
+    foreTint = Color { r = 0, g = 0, b = 255, a = 128 },
+    backTint = Color { r = 255, g = 0, b = 0, a = 128 } ,
     pullFocus = false
 }
 
@@ -189,7 +189,7 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local target = args.target
+        local target = args.target --[[@as string]]
         local iterations = args.iterations or defaults.iterations
         local directions = args.directions or defaults.directions
         local minAlpha = args.minAlpha or defaults.minAlpha

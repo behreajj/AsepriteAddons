@@ -46,11 +46,12 @@ local function updateColorPreviewRgba(dialog)
     local args = dialog.data
     dialog:modify {
         id = "preview",
-        colors = { Color(
-            args.rChannel,
-            args.gChannel,
-            args.bChannel,
-            args.aChannel) }
+        colors = { Color {
+            r = args.rChannel,
+            g = args.gChannel,
+            b = args.bChannel,
+            a = args.aChannel
+        } }
     }
 end
 
@@ -261,11 +262,12 @@ dlg:shades {
     id = "preview",
     label = "Background:",
     mode = "pick",
-    colors = { Color(
-        defaults.rChannel,
-        defaults.gChannel,
-        defaults.bChannel,
-        defaults.aChannel) },
+    colors = { Color {
+        r = defaults.rChannel,
+        g = defaults.gChannel,
+        b = defaults.bChannel,
+        a = defaults.aChannel
+    } },
     visible = defaults.colorMode ~= "INDEXED"
 }
 
@@ -456,7 +458,7 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        local palType = args.palType or defaults.palType
+        local palType = args.palType or defaults.palType --[[@as string]]
         local prependMask = args.prependMask
 
         local colorModeStr = args.colorMode or defaults.colorMode
@@ -467,12 +469,13 @@ dlg:button {
         local hexesSrgb = {}
         local hexesProfile = {}
         if useGrayscale then
-            local grayCount = args.grayCount or AseUtilities.GRAY_COUNT
+            local grayCount = args.grayCount
+                or AseUtilities.GRAY_COUNT --[[@as integer]]
             hexesProfile = AseUtilities.grayHexes(grayCount)
             hexesSrgb = hexesProfile
         elseif palType ~= "DEFAULT" then
-            local palFile = args.palFile
-            local palPreset = args.palPreset
+            local palFile = args.palFile --[[@as string]]
+            local palPreset = args.palPreset --[[@as string]]
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 palType, palFile, palPreset, 0, 256, true)
         else
@@ -492,7 +495,7 @@ dlg:button {
         end
 
         -- Create background image.
-        local colorModeInt = 0
+        local colorModeInt = ColorMode.RGB
         local createBackground = false
         local hexBkg = 0x0
         if useGrayscale then
@@ -522,7 +525,6 @@ dlg:button {
             end
         else
             -- Default to RGB
-            colorModeInt = ColorMode.RGB
             local aChannel = args.aChannel or defaults.aChannel
             createBackground = aChannel > 0
             if createBackground then
@@ -542,18 +544,21 @@ dlg:button {
         local width = defaults.width
         local height = defaults.height
         if sizeMode == "ASPECT" then
-            local aRatio = args.aRatio or defaults.aRatio
-            local bRatio = args.bRatio or defaults.bRatio
+            local aRatio = args.aRatio
+                or defaults.aRatio --[[@as integer]]
+            local bRatio = args.bRatio
+                or defaults.bRatio --[[@as integer]]
             aRatio, bRatio = Utilities.reduceRatio(aRatio, bRatio)
 
-            local scale = args.aspectScale or defaults.aspectScale
+            local scale = args.aspectScale
+                or defaults.aspectScale --[[@as number]]
             scale = math.max(1.0, math.abs(scale))
 
             width = math.floor(aRatio * scale + 0.5)
             height = math.floor(bRatio * scale + 0.5)
         else
-            width = args.width or defaults.width
-            height = args.height or defaults.height
+            width = args.width or defaults.width --[[@as integer]]
+            height = args.height or defaults.height --[[@as integer]]
             if width < 0 then width = -width end
             if height < 0 then height = -height end
         end
@@ -583,7 +588,8 @@ dlg:button {
 
         -- File name needs extra validation to remove characters
         -- that could compromise saving a sprite.
-        local filename = args.filename or defaults.filename
+        local filename = args.filename
+            or defaults.filename --[[@as string]]
         filename = Utilities.validateFilename(filename)
         if #filename < 1 then filename = defaults.filename end
         newSprite.filename = filename
@@ -597,7 +603,7 @@ dlg:button {
 
         -- Create frames.
         local frameReqs = args.frames or defaults.frames
-        local fps = args.fps or defaults.fps
+        local fps = args.fps or defaults.fps --[[@as integer]]
         local duration = 1.0 / math.max(1, fps)
         local firstFrame = newSprite.frames[1]
         firstFrame.duration = duration

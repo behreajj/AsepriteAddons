@@ -436,9 +436,9 @@ dlg:button {
             local dest = Point(xDsPx, yDsPx)
 
             -- Same as colors in drawknot2 (handles).
-            local lineColor = Color(175, 175, 175, 255)
-            local originColor = Color(2, 167, 235, 255)
-            local destColor = Color(235, 26, 64, 255)
+            local lineColor = Color { r = 175, g = 175, b = 175 }
+            local originColor = Color { r = 2, g = 167, b = 235 }
+            local destColor = Color { r = 235, g = 26, b = 64 }
             local lineBrush = Brush(2)
             local pointBrush = Brush(7)
 

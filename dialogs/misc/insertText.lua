@@ -23,9 +23,9 @@ local defaults = {
     charLimit = 72,
     animate = false,
     fps = 24,
-    fillClr = Color(255, 255, 255, 255),
-    shdColor = Color(0, 0, 0, 204),
-    bkgColor = Color(0, 0, 0, 0),
+    fillClr = Color { r = 255, g = 255, b = 255 },
+    shdColor = Color { r = 0, g = 0, b = 0, a = 204 },
+    bkgColor = Color { r = 0, g = 0, b = 0, a = 0 },
     xOrigin = 0,
     yOrigin = 0,
     useShadow = true,
@@ -62,7 +62,7 @@ dlg:newrow { always = false }
 dlg:entry {
     id = "msgEntry",
     text = defaults.msgEntry,
-    focus = "false",
+    focus = false,
     visible = defaults.msgSrc == "ENTRY"
 }
 
@@ -232,14 +232,14 @@ dlg:button {
 
         -- Unpack arguments.
         local msgSrc = args.msgSrc or defaults.msgSrc
-        local msgEntry = args.msgEntry
-        local msgFilePath = args.msgFilePath
-        local charLimit = args.charLimit or defaults.charLimit
+        local msgEntry = args.msgEntry --[[@as string]]
+        local msgFilePath = args.msgFilePath --[[@as string]]
+        local charLimit = args.charLimit or defaults.charLimit --[[@as integer]]
         local animate = args.animate
-        local fps = args.fps or defaults.fps
+        local fps = args.fps or defaults.fps --[[@as integer]]
         local xOrigin = args.xOrigin or defaults.xOrigin
-        local yOrigin = args.yOrigin or defaults.xOrigin
-        local scale = args.scale or defaults.scale
+        local yOrigin = args.yOrigin or defaults.yOrigin
+        local scale = args.scale or defaults.scale --[[@as integer]]
         local leading = args.leading or defaults.leading
         local alignLine = args.alignHoriz or defaults.alignLine
         local alignChar = args.alignVert or defaults.alignChar

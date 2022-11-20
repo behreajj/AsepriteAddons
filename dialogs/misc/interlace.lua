@@ -166,19 +166,19 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local target = args.target or defaults.target
+        local target = args.target or defaults.target --[[@as string]]
         local dirType = args.dirType or defaults.dirType
         local delLyr = args.delLyr or defaults.delLyr
 
         local skip = args.skip or defaults.skip
-        local xSkip = args.xSkip or defaults.xSkip
-        local ySkip = args.ySkip or defaults.ySkip
-        local aSkip = args.aSkip or defaults.aSkip
+        local xSkip = args.xSkip or defaults.xSkip --[[@as integer]]
+        local ySkip = args.ySkip or defaults.ySkip --[[@as integer]]
+        local aSkip = args.aSkip or defaults.aSkip --[[@as integer]]
 
         local pick = args.pick or defaults.pick
-        local xPick = args.xPick or defaults.xPick
-        local yPick = args.yPick or defaults.yPick
-        local aPick = args.aPick or defaults.aPick
+        local xPick = args.xPick or defaults.xPick --[[@as integer]]
+        local yPick = args.yPick or defaults.yPick --[[@as integer]]
+        local aPick = args.aPick or defaults.aPick --[[@as integer]]
 
         local frames = AseUtilities.getFrames(activeSprite, target)
 

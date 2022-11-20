@@ -146,7 +146,7 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local spriteFile = args.spriteFile
+        local spriteFile = args.spriteFile --[[@as string]]
         if (not spriteFile)
             or (#spriteFile < 1)
             or (not app.fs.isFile(spriteFile)) then
@@ -167,13 +167,13 @@ dlg:button {
         -- to the new sprite. Unfortunately, that means this
         -- is wasted effort if the palette type is "EMBEDDED"
         -- or there is no new sprite.
-        local palType = args.palType or defaults.palType
+        local palType = args.palType or defaults.palType --[[@as string]]
         local hexesSrgb = {}
         local hexesProfile = {}
 
         if palType ~= "DEFAULT" then
-            local palFile = args.palFile
-            local palPreset = args.palPreset
+            local palFile = args.palFile --[[@as string]]
+            local palPreset = args.palPreset--[[@as string]]
 
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 palType, palFile, palPreset, 0, 256, true)

@@ -21,39 +21,39 @@ local defaults = {
     alpha = 255,
     harmonyType = "NONE",
     analogies = {
-        Color(0, 0, 0, 0),
-        Color(0, 0, 0, 0)
+        Color { r = 0, g = 0, b = 0, a = 0 },
+        Color { r = 0, g = 0, b = 0, a = 0 }
     },
-    complement = { Color(0, 0, 0, 0) },
+    complement = { Color { r = 0, g = 0, b = 0, a = 0 } },
     splits = {
-        Color(0, 0, 0, 0),
-        Color(0, 0, 0, 0)
+        Color { r = 0, g = 0, b = 0, a = 0 },
+        Color { r = 0, g = 0, b = 0, a = 0 }
     },
     squares = {
-        Color(0, 0, 0, 0),
-        Color(0, 0, 0, 0),
-        Color(0, 0, 0, 0)
+        Color { r = 0, g = 0, b = 0, a = 0 },
+        Color { r = 0, g = 0, b = 0, a = 0 },
+        Color { r = 0, g = 0, b = 0, a = 0 }
     },
     triads = {
-        Color(0, 0, 0, 0),
-        Color(0, 0, 0, 0)
+        Color { r = 0, g = 0, b = 0, a = 0 },
+        Color { r = 0, g = 0, b = 0, a = 0 }
     },
 
     shading = {
-        Color(0, 0, 0, 0),
-        Color(0, 0, 0, 0),
-        Color(0, 0, 0, 0),
-        Color(253, 16, 31, 255),
-        Color(255, 79, 30, 255),
-        Color(0, 0, 0, 0),
-        Color(0, 0, 0, 0)
+        Color { r = 0, g = 0, b = 0, a = 0 },
+        Color { r = 0, g = 0, b = 0, a = 0 },
+        Color { r = 0, g = 0, b = 0, a = 0 },
+        Color { r = 253, g = 16, b = 31 },
+        Color { r = 255, g = 79, b = 30 },
+        Color { r = 0, g = 0, b = 0, a = 0 },
+        Color { r = 0, g = 0, b = 0, a = 0 }
     },
     shadeCount = 7
 }
 
 local function assignToFore(aseColor)
     if aseColor.alpha < 1 then
-        app.fgColor = Color(0, 0, 0, 0)
+        app.fgColor = Color { r = 0, g = 0, b = 0, a = 0 }
     else
         app.fgColor = AseUtilities.aseColorCopy(aseColor, "")
     end
@@ -105,29 +105,29 @@ local function updateHarmonies(dialog, l, c, h, a)
     local squares = {}
 
     if inGamut(ana1, 0.115) then analogues[1] = clrToAse(ana1)
-    else analogues[1] = Color(0, 0, 0, 0) end
+    else analogues[1] = Color { r = 0, g = 0, b = 0, a = 0 } end
     if inGamut(ana2, 0.115) then analogues[2] = clrToAse(ana2)
-    else analogues[2] = Color(0, 0, 0, 0) end
+    else analogues[2] = Color { r = 0, g = 0, b = 0, a = 0 } end
 
     if inGamut(square2, 0.115) then compl[1] = clrToAse(square2)
-    else compl[1] = Color(0, 0, 0, 0) end
+    else compl[1] = Color { r = 0, g = 0, b = 0, a = 0 } end
 
     if inGamut(split1, 0.115) then splits[1] = clrToAse(split1)
-    else splits[1] = Color(0, 0, 0, 0) end
+    else splits[1] = Color { r = 0, g = 0, b = 0, a = 0 } end
     if inGamut(split2, 0.115) then splits[2] = clrToAse(split2)
-    else splits[2] = Color(0, 0, 0, 0) end
+    else splits[2] = Color { r = 0, g = 0, b = 0, a = 0 } end
 
     if inGamut(square1, 0.115) then squares[1] = clrToAse(square1)
-    else squares[1] = Color(0, 0, 0, 0) end
+    else squares[1] = Color { r = 0, g = 0, b = 0, a = 0 } end
     if inGamut(square2, 0.115) then squares[2] = clrToAse(square2)
-    else squares[2] = Color(0, 0, 0, 0) end
+    else squares[2] = Color { r = 0, g = 0, b = 0, a = 0 } end
     if inGamut(square3, 0.115) then squares[3] = clrToAse(square3)
-    else squares[3] = Color(0, 0, 0, 0) end
+    else squares[3] = Color { r = 0, g = 0, b = 0, a = 0 } end
 
     if inGamut(tri1, 0.115) then tris[1] = clrToAse(tri1)
-    else tris[1] = Color(0, 0, 0, 0) end
+    else tris[1] = Color { r = 0, g = 0, b = 0, a = 0 } end
     if inGamut(tri2, 0.115) then tris[2] = clrToAse(tri2)
-    else tris[2] = Color(0, 0, 0, 0) end
+    else tris[2] = Color { r = 0, g = 0, b = 0, a = 0 } end
 
     dialog:modify { id = "analogous", colors = analogues }
     dialog:modify { id = "complement", colors = compl }
@@ -190,7 +190,7 @@ local function updateShades(dialog, l, c, h, a)
         if Clr.rgbIsInGamut(srgb, 0.115) then
             aseColors[i] = AseUtilities.clrToAseColor(srgb)
         else
-            aseColors[i] = Color(0, 0, 0, 0)
+            aseColors[i] = Color { r = 0, g = 0, b = 0, a = 0 }
         end
     end
 
@@ -387,18 +387,18 @@ local function setFromHexStr(dialog)
     if #hexStr > 5 then
         local hexRgb = tonumber(hexStr, 16)
         if hexRgb then
-            local r255 = hexRgb >> 0x10 & 0xff
-            local g255 = hexRgb >> 0x08 & 0xff
-            local b255 = hexRgb & 0xff
+            local r = hexRgb >> 0x10 & 0xff
+            local g = hexRgb >> 0x08 & 0xff
+            local b = hexRgb & 0xff
             local clr = Clr.new(
-                r255 * 0.003921568627451,
-                g255 * 0.003921568627451,
-                b255 * 0.003921568627451, 1.0)
+                r * 0.003921568627451,
+                g * 0.003921568627451,
+                b * 0.003921568627451, 1.0)
             local lch = Clr.sRgbToCieLch(clr, 0.007072)
             setLch(dialog, lch, clr)
             dialog:modify {
                 id = "clr",
-                colors = { Color(r255, g255, b255, 255) }
+                colors = { Color { r = r, g = g, b = b, a = 255 } }
             }
         end
     end

@@ -356,8 +356,10 @@ dlg:button {
             return
         end
 
-        local startIndex = args.startIndex or defaults.startIndex
-        local palCount = args.count or defaults.count
+        local startIndex = args.startIndex
+            or defaults.startIndex --[[@as integer]]
+        local palCount = args.count
+            or defaults.count --[[@as integer]]
         local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
             args.palType, args.palFile, args.palPreset,
             startIndex, palCount, true)
@@ -445,7 +447,8 @@ dlg:button {
 
         elseif ditherMode == "QUANTIZE" then
 
-            local levels = args.levels or defaults.levels
+            local levels = args.levels
+                or defaults.levels --[[@as integer]]
             dmStr = string.format("Quantize.%03d", levels)
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
                 local srgb = Clr.new(

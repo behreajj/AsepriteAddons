@@ -45,7 +45,9 @@ dlg:button {
 
         local args = dlg.data
         local target = args.target
+            or defaults.target --[[@as string]]
         local padding = args.padding
+            or defaults.padding --[[@as integer]]
 
         -- Tile map layers should not be trimmed.
         local checkTilemaps = AseUtilities.tilesSupport()

@@ -3,6 +3,11 @@
 ---@field public g number green channel
 ---@field public b number blue channel
 ---@field public a number transparency
+---@operator band(Clr): Clr
+---@operator bnot(): Clr
+---@operator bor(Clr): Clr
+---@operator bxor(Clr): Clr
+---@operator len(): integer
 Clr = {}
 Clr.__index = Clr
 
@@ -94,7 +99,7 @@ end
 ---Returns true if the alpha channel is within
 ---the range [0.0, 1.0].
 ---@param c Clr color
----@param tol number|nil tolerance
+---@param tol number? tolerance
 ---@return boolean
 function Clr.alphaIsInGamut(c, tol)
     local eps = tol or 0.0
@@ -261,7 +266,7 @@ end
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
 ---@param alpha number transparency
----@param tol number|nil grayscale tolerance
+---@param tol number? grayscale tolerance
 ---@return table
 function Clr.cieLabToCieLch(l, a, b, alpha, tol)
     -- 0.00004 is the square chroma for white.
@@ -365,7 +370,7 @@ end
 ---@param c number chromaticity
 ---@param h number hue
 ---@param a number transparency
----@param tol number|nil gray tolerance
+---@param tol number? gray tolerance
 ---@return table
 function Clr.cieLchToCieLab(l, c, h, a, tol)
     -- Return early cannot be done here because
@@ -414,7 +419,7 @@ end
 ---@param c number chromaticity
 ---@param h number hue
 ---@param a number transparency
----@param tol number|nil grayscale tolerance
+---@param tol number? grayscale tolerance
 ---@return Clr
 function Clr.cieLchTosRgb(l, c, h, a, tol)
     local lch = Clr.cieLchToCieLab(l, c, h, a, tol)
@@ -1000,7 +1005,7 @@ end
 ---@param o Clr origin
 ---@param d Clr destination
 ---@param t number step
----@param hueFunc function|nil hue function
+---@param hueFunc function? hue function
 ---@return Clr
 function Clr.mixHsl(o, d, t, hueFunc)
     local u = t or 0.5
@@ -1062,7 +1067,7 @@ end
 ---@param o Clr origin
 ---@param d Clr destination
 ---@param t number step
----@param hueFunc function|nil hue function
+---@param hueFunc function? hue function
 ---@return Clr
 function Clr.mixHsv(o, d, t, hueFunc)
     local u = t or 0.5
@@ -1301,7 +1306,7 @@ end
 ---@param o Clr origin
 ---@param d Clr destination
 ---@param t number step
----@param hueFunc function|nil hue function
+---@param hueFunc function? hue function
 ---@return Clr
 function Clr.mixSrLch(o, d, t, hueFunc)
     local u = t or 0.5
@@ -1442,7 +1447,7 @@ end
 ---Returns true if the red, green and blue
 ---channels are within the range [0.0, 1.0].
 ---@param c Clr color
----@param tol number|nil tolerance
+---@param tol number? tolerance
 ---@return boolean
 function Clr.rgbIsInGamut(c, tol)
     local eps = tol or 0.0
@@ -1454,7 +1459,7 @@ end
 ---Returns true if all color channels are
 ---within the range [0.0, 1.0].
 ---@param c Clr color
----@param tol number|nil tolerance
+---@param tol number? tolerance
 ---@return boolean
 function Clr.rgbaIsInGamut(c, tol)
     return Clr.alphaIsInGamut(c, tol)
@@ -1475,7 +1480,7 @@ end
 ---The return table uses the keys l, c, h and a.
 ---The alpha channel is unaffected by the transform.
 ---@param c Clr color
----@param tol number|nil gray tolerance
+---@param tol number? gray tolerance
 ---@return table
 function Clr.sRgbToCieLch(c, tol)
     local lab = Clr.sRgbToCieLab(c)
@@ -1739,7 +1744,7 @@ end
 ---The return table uses the keys l, c, h and a.
 ---The alpha channel is unaffected by the transform.
 ---@param c Clr color
----@param tol number|nil gray tolerance
+---@param tol number? gray tolerance
 ---@return table
 function Clr.sRgbToSrLch(c, tol)
     local lab = Clr.sRgbToSrLab2(c)
@@ -1813,7 +1818,7 @@ end
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
 ---@param alpha number transparency
----@param tol number|nil gray tolerance
+---@param tol number? gray tolerance
 ---@return table
 function Clr.srLab2ToSrLch(l, a, b, alpha, tol)
     -- 0.00004 is the square chroma for white.
@@ -1848,7 +1853,7 @@ end
 ---@param c number chromaticity
 ---@param h number hue
 ---@param a number transparency
----@param tol number|nil gray tolerance
+---@param tol number? gray tolerance
 ---@return Clr
 function Clr.srLchTosRgb(l, c, h, a, tol)
     local lab = Clr.srLchToSrLab2(l, c, h, a, tol)
@@ -1863,7 +1868,7 @@ end
 ---@param c number chromaticity
 ---@param h number hue
 ---@param a number transparency
----@param tol number|nil gray tolerance
+---@param tol number? gray tolerance
 ---@return table
 function Clr.srLchToSrLab2(l, c, h, a, tol)
     -- Return early cannot be done here because

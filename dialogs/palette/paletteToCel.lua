@@ -292,7 +292,7 @@ dlg:button {
 
         Octree.cull(octree)
 
-        local target = args.target
+        local target = args.target or defaults.target --[[@as string]]
         local frames = AseUtilities.getFrames(activeSprite, target)
 
         -- Create a new layer, srcLayer should not be a group,

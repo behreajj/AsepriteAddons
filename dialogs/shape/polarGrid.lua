@@ -179,8 +179,8 @@ dlg:button {
         local angMargin = args.angMargin * 0.017453292519943
         local ringMargin = args.ringMargin or defaults.ringMargin
         local scale = args.scale or defaults.scale
-        local xOrigin = args.xOrigin or defaults.xOrigin
-        local yOrigin = args.yOrigin or defaults.yOrigin
+        local xOrigin = args.xOrigin or defaults.xOrigin --[[@as number]]
+        local yOrigin = args.yOrigin or defaults.yOrigin --[[@as number]]
 
         local toScale = 1.0 / rings
         local toTheta = 6.2831853071796 / sectors
@@ -189,11 +189,12 @@ dlg:button {
         local thickness = scale / rings - halfRingMargin
 
         local brush = Brush(args.strokeWeight)
-        local strokeClr = args.strokeClr
-        local useStroke = args.useStroke
-        local fillClr = args.fillClr
-        local useFill = args.useFill
+        local strokeClr = args.strokeClr or defaults.strokeClr --[[@as Color]]
+        local useStroke = args.useStroke --[[@as boolean]]
+        local fillClr = args.fillClr or defaults.fillClr --[[@as Color]]
+        local useFill = args.useFill --[[@as boolean]]
         local resolution = args.resolution
+            or defaults.resolution --[[@as integer]]
 
         app.transaction(function()
             local k = 0

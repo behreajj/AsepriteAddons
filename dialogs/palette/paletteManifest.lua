@@ -11,6 +11,7 @@ local sortOrders = { "ASCENDING", "DESCENDING" }
 local numBases = { "PROFILE", "SRGB" }
 
 local defaults = {
+    -- TODO: Support Normal map azim, incl, vector?
     maxCount = 512,
     count = 512,
     title = "Manifest",
@@ -310,7 +311,8 @@ dlg:button {
         -- Determine how important it is to specify the transparency mask.
         local useMaskIdx = false
         local srcMaskIdx = 0
-        local palType = args.palType or defaults.palType
+        local palType = args.palType
+            or defaults.palType --[[@as string]]
         if palType == "ACTIVE" then
             local idxActSpr = app.activeSprite
             if idxActSpr then
@@ -320,8 +322,10 @@ dlg:button {
             end
         end
 
-        local startIndex = args.startIndex or defaults.startIndex
-        local palCount = args.count or defaults.count
+        local startIndex = args.startIndex
+            or defaults.startIndex --[[@as integer]]
+        local palCount = args.count
+            or defaults.count --[[@as integer]]
         local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
             palType, args.palFile, args.palPreset,
             startIndex, palCount, false)
@@ -672,7 +676,7 @@ dlg:button {
             gw, gh, txtDispScl)
 
         -- Create title image.
-        local mnfstTitle = args.title or defaults.title
+        local mnfstTitle = args.title or defaults.title --[[@as string]]
         if #mnfstTitle < 1 then mnfstTitle = defaults.title end
         local mnfstTitleDisp = string.sub(mnfstTitle, 1, 14)
         mnfstTitleDisp = string.upper(mnfstTitleDisp)

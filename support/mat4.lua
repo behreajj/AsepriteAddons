@@ -15,6 +15,12 @@
 ---@field public m31 number row 3, col 1 forward w
 ---@field public m32 number row 3, col 2 up w
 ---@field public m33 number row 3, col 3 translation w
+---@operator add(Mat4): Mat4
+---@operator div(Mat4): Mat4
+---@operator len(): integer
+---@operator mul(Mat4): Mat4
+---@operator sub(Mat4): Mat4
+---@operator unm(): Mat4
 Mat4 = {}
 Mat4.__index = Mat4
 
@@ -123,7 +129,7 @@ end
 ---@param xRef number reference x
 ---@param yRef number reference y
 ---@param zRef number reference z
----@param handedness string|nil handedness
+---@param handedness string? handedness
 ---@return Mat4
 function Mat4.camera(xLoc, yLoc, zLoc, xFocus, yFocus, zFocus, xRef, yRef, zRef, handedness)
 
@@ -249,7 +255,7 @@ end
 ---@param xLoc number location x
 ---@param yLoc number location y
 ---@param zLoc number location z
----@param handedness string|nil handedness
+---@param handedness string? handedness
 ---@return Mat4
 function Mat4.cameraIsometric(xLoc, yLoc, zLoc, handedness)
     local hVal = "RIGHT"
@@ -296,7 +302,7 @@ end
 ---@param xLoc number location x
 ---@param yLoc number location y
 ---@param zLoc number location z
----@param handedness string|nil handedness
+---@param handedness string? handedness
 ---@return Mat4
 function Mat4.cameraDimetric(xLoc, yLoc, zLoc, handedness)
     local hVal = "RIGHT"

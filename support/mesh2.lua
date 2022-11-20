@@ -4,6 +4,7 @@ dofile("./vec2.lua")
 ---@field public fs table faces
 ---@field public name string name
 ---@field public vs Vec2[] coordinates
+---@operator len(): integer
 Mesh2 = {}
 Mesh2.__index = Mesh2
 
@@ -17,7 +18,7 @@ setmetatable(Mesh2, {
 ---number of vertices per face.
 ---@param fs table faces
 ---@param vs Vec2[] coordinates
----@param name string|nil name
+---@param name string? name
 ---@return Mesh2
 function Mesh2.new(fs, vs, name)
     local inst = setmetatable({}, Mesh2)
@@ -40,7 +41,7 @@ end
 ---by the factor, in range [0.0, 1.0]. The factor
 ---defaults to 0.5.
 ---@param faceIndex integer face index
----@param fac number|nil inset factor
+---@param fac number? inset factor
 ---@return Mesh2
 function Mesh2:insetFace(faceIndex, fac)
     local t = fac or 0.5
@@ -286,7 +287,7 @@ end
 ---@param startWeight number start weight
 ---@param stopWeight number stop weight
 ---@param sectors integer sectors
----@param useQuads boolean|nil use quads
+---@param useQuads boolean? use quads
 ---@return Mesh2
 function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQuads)
     local a = startAngle % 6.2831853071796
@@ -379,10 +380,10 @@ end
 ---Pick describes the row count to offset.
 ---@param cols integer columns
 ---@param rows integer rows
----@param offset number offset
----@param aspect number aspect ratio
----@param skip integer|nil rows to skip
----@param pick integer|nil rows to pick
+---@param offset number? offset
+---@param aspect number? aspect ratio
+---@param skip integer? rows to skip
+---@param pick integer? rows to pick
 ---@return Mesh2
 function Mesh2.gridBricks(cols, rows, offset, aspect, skip, pick)
     -- Assume defaults.
@@ -622,8 +623,8 @@ end
 ---The default stop index is the length of the
 ---mesh's faces array.
 ---@param source Mesh2 source mesh
----@param from integer|nil start index
----@param to integer|nil stop index
+---@param from integer? start index
+---@param to integer? stop index
 ---@return Mesh2[]
 function Mesh2.separateFaces(source, from, to)
     local meshes = {}
@@ -668,9 +669,9 @@ end
 ---the polygon radius. The default is to pick
 ---1, skip 1, and inset by 0.5.
 ---@param sectors integer sides
----@param skip integer|nil vertices to skip
----@param pick integer|nil vertices to inset
----@param inset number|nil percent inset
+---@param skip integer? vertices to skip
+---@param pick integer? vertices to inset
+---@param inset number? percent inset
 ---@return Mesh2
 function Mesh2.star(sectors, skip, pick, inset)
     -- Early return for invalid skip or pick.

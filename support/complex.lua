@@ -1,6 +1,13 @@
 ---@class Complex
 ---@field public imag number imaginary
 ---@field public real number real
+---@operator add(Complex): Complex
+---@operator div(Complex): Complex
+---@operator len(): integer
+---@operator mul(Complex|number): Complex
+---@operator pow(Complex|number): Complex
+---@operator sub(Complex): Complex
+---@operator unm(): Complex
 Complex = {}
 Complex.__index = Complex
 
@@ -96,7 +103,7 @@ end
 ---within a tolerance, approximately equal.
 ---@param a Complex left operand
 ---@param b Complex right operand
----@param tol number|nil tolerance
+---@param tol number? tolerance
 ---@return boolean
 function Complex.approx(a, b, tol)
     local eps = tol or 0.000001

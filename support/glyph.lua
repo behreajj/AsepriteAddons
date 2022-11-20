@@ -19,7 +19,7 @@ setmetatable(Glyph, {
 ---descenders, such as 'g', 'p', 'q').
 ---@param character string character
 ---@param matrix integer visual matrix
----@param drop integer|nil drop amount
+---@param drop integer? drop amount
 ---@return Glyph
 function Glyph.new(character, matrix, drop)
     local inst = setmetatable({}, Glyph)

@@ -8,6 +8,12 @@
 ---@field public m20 number row 2, col 0 right z
 ---@field public m21 number row 2, col 1 forward z
 ---@field public m22 number row 2, col 2 translation z
+---@operator add(Mat3): Mat3
+---@operator div(Mat3): Mat3
+---@operator len(): integer
+---@operator mul(Mat3): Mat3
+---@operator sub(Mat3): Mat3
+---@operator unm(): Mat3
 Mat3 = {}
 Mat3.__index = Mat3
 
@@ -90,7 +96,7 @@ end
 ---tolerance, approximately equal.
 ---@param a Mat3 left operand
 ---@param b Mat3 right operand
----@param tol number|nil tolerance
+---@param tol number? tolerance
 ---@return boolean
 function Mat3.approx(a, b, tol)
     local eps = tol or 0.000001

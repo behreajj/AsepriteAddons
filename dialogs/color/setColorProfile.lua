@@ -72,7 +72,7 @@ dlg:button {
         local newColorSpace = nil
         local csType = args.colorSpaceType or defaults.colorSpaceType
         if csType == "FILE" then
-            local profilePath = args.profilePath
+            local profilePath = args.profilePath --[[@as string]]
             if profilePath and #profilePath > 0 then
                 local exists = app.fs.isFile(profilePath)
                 if exists then

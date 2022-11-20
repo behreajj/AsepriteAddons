@@ -186,12 +186,15 @@ dlg:button {
         local hexesSrgb = {}
         local hexesProfile = {}
         if plotPalette then
-            local palType = args.palType or defaults.palType
+            local palType = args.palType
+                or defaults.palType --[[@as string]]
             if palType ~= "DEFAULT" then
-                local palFile = args.palFile
-                local palPreset = args.palPreset
-                local palStart = args.palStart or defaults.palStart
-                local palCount = args.palCount or defaults.palCount
+                local palFile = args.palFile --[[@as string]]
+                local palPreset = args.palPreset --[[@as string]]
+                local palStart = args.palStart
+                    or defaults.palStart --[[@as integer]]
+                local palCount = args.palCount
+                    or defaults.palCount --[[@as integer]]
 
                 hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                     palType, palFile, palPreset, palStart, palCount, true)
@@ -205,7 +208,7 @@ dlg:button {
         end
 
         -- Create sprite.
-        local size = args.size
+        local size = args.size or defaults.size --[[@as integer]]
         local szInv = 1.0 / size
         local spec = ImageSpec {
             width = size,
@@ -218,7 +221,8 @@ dlg:button {
 
         -- Calculate frame count to normalization.
         local iToStep = 0.5
-        local reqFrames = args.frames or defaults.frames
+        local reqFrames = args.frames
+            or defaults.frames --[[@as integer]]
         if reqFrames > 0 then
             -- Because hue is periodic, don't subtract 1.
             iToStep = 1.0 / reqFrames
@@ -227,7 +231,8 @@ dlg:button {
         local gamutImgs = {}
         local oogaNorm = outOfGamut * 0.003921568627451
         local oogaEps = 2.0 * 0.003921568627451
-        local quantization = args.quantization or defaults.quantization
+        local quantization = args.quantization
+            or defaults.quantization --[[@as integer]]
         local idxFrame = 0
         while idxFrame < reqFrames do
             -- Convert i to a step, which will be its hue.
@@ -263,7 +268,7 @@ dlg:button {
         -- Create frames.
         local oldFrameLen = #sprite.frames
         local needed = math.max(0, reqFrames - oldFrameLen)
-        local fps = args.fps or defaults.fps
+        local fps = args.fps or defaults.fps --[[@as integer]]
         local duration = 1.0 / math.max(1, fps)
         sprite.frames[1].duration = duration
         app.transaction(function()
@@ -339,8 +344,10 @@ dlg:button {
 
         if plotPalette then
             -- Unpack arguments.
-            local strokeSize = args.strokeSize or defaults.strokeSize
-            local fillSize = args.fillSize or defaults.fillSize
+            local strokeSize = args.strokeSize
+                or defaults.strokeSize --[[@as integer]]
+            local fillSize = args.fillSize
+                or defaults.fillSize --[[@as integer]]
 
             -- Find min and max.
             local xs = {}

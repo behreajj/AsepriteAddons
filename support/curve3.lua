@@ -4,6 +4,7 @@ dofile("./knot3.lua")
 ---@field public closedLoop boolean closed loop
 ---@field public knots Knot3[] knots
 ---@field public name string name
+---@operator len(): integer
 Curve3 = {}
 Curve3.__index = Curve3
 
@@ -18,7 +19,7 @@ setmetatable(Curve3, {
 ---a table of Knot3s.
 ---@param cl boolean closed loop
 ---@param knots Knot3[] knots
----@param name string|nil name
+---@param name string? name
 ---@return Curve3
 function Curve3.new(cl, knots, name)
     local inst = setmetatable({}, Curve3)
@@ -169,11 +170,11 @@ end
 ---Creates a curve to approximate an ellipse.
 ---The radii default to 0.5.
 ---The origin defaults to (0.0, 0.0, 0.0).
----@param xRadius number|nil horizontal radius
----@param yRadius number|nil vertical radius
----@param xOrigin number|nil x origin
----@param yOrigin number|nil y origin
----@param zOrigin number|nil z origin
+---@param xRadius number? horizontal radius
+---@param yRadius number? vertical radius
+---@param xOrigin number? x origin
+---@param yOrigin number? y origin
+---@param zOrigin number? z origin
 ---@return Curve3
 function Curve3.ellipse(xRadius, yRadius, xOrigin, yOrigin, zOrigin)
 
@@ -295,8 +296,8 @@ end
 ---There must be at least 4 points in the array.
 ---@param closedLoop boolean closed loop flag
 ---@param points Vec3[] array of points
----@param tightness number|nil curve tightness
----@param name string|nil curve name
+---@param tightness number? curve tightness
+---@param name string? curve name
 ---@return Curve3
 function Curve3.fromCatmull(closedLoop, points, tightness, name)
     local ptsLen = #points
@@ -421,7 +422,7 @@ end
 ---Smoothes the fore and rear handles of knots.
 ---@param closedLoop boolean closed loop
 ---@param points Vec3[] points array
----@param name string|nil curve name
+---@param name string? curve name
 ---@return Curve3
 function Curve3.fromPoints(closedLoop, points, name)
     -- If a closed loop has similar start and

@@ -218,7 +218,7 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local target = args.target or defaults.target
+        local target = args.target or defaults.target --[[@as string]]
         local mode = args.mode or defaults.mode
         local lAdj = args.lAdj or defaults.lAdj
         local cAdj = args.cAdj or defaults.cAdj

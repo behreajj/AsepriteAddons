@@ -427,7 +427,7 @@ dlg:button {
         local hexArr = AseUtilities.asePalettesToHexArr(
             srcSprite.palettes)
 
-        local target = args.target or defaults.target
+        local target = args.target or defaults.target --[[@as string]]
         local srcFrames = srcSprite.frames
         local lenSrcFrames = #srcFrames
         local isActive = target == "ACTIVE"

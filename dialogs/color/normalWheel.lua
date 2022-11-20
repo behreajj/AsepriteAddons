@@ -6,6 +6,7 @@ local defaults = {
     size = 512,
     sectors = 0,
     rings = 0,
+    uniformRings = false,
     xFlip = false,
     yFlip = false,
     zFlip = false,
@@ -24,14 +25,14 @@ local defaults = {
 
 local normalsPal = {
     0x00000000, 0xffff8080,
-    0xff8080ff, 0xff80dada, 0xff80ff80, 0xff80da25,
-    0xff808000, 0xff802525, 0xff800080, 0xff8025da,
-    0xffb080f5, 0xffb0d3d3, 0xffb0f580, 0xffb0d32c,
-    0xffb0800a, 0xffb02c2c, 0xffb00a80, 0xffb02cd3,
-    0xffda80da, 0xffdabfbf, 0xffdada80, 0xffdabf40,
-    0xffda8025, 0xffda4040, 0xffda2580, 0xffda40bf,
-    0xfff580b0, 0xfff5a2a2, 0xfff5b080, 0xfff5a25d,
-    0xfff5804f, 0xfff55d5d, 0xfff54f80, 0xfff55da2
+    0xff8080ff, 0xff80dada, 0xff80ff80, 0xff80da25, -- 1
+    0xff808000, 0xff802525, 0xff800080, 0xff8025da, -- 2
+    0xffb080f5, 0xffb0d3d3, 0xffb0f580, 0xffb0d32c, -- 3
+    0xffb0800a, 0xffb02c2c, 0xffb00a80, 0xffb02cd3, -- 4
+    0xffda80da, 0xffdabfbf, 0xffdada80, 0xffdabf40, -- 5
+    0xffda8025, 0xffda4040, 0xffda2580, 0xffda40bf, -- 6
+    0xfff580b0, 0xfff5a2a2, 0xfff5b080, 0xfff5a25d, -- 7
+    0xfff5804f, 0xfff55d5d, 0xfff54f80, 0xfff55da2 --  8
 }
 
 local dlg = Dialog { title = "Normal Wheel" }
@@ -61,7 +62,22 @@ dlg:slider {
     label = "Rings:",
     min = 0,
     max = defaults.maxRings,
-    value = defaults.rings
+    value = defaults.rings,
+    onchange = function()
+        local args = dlg.data
+        local state = args.rings > 0
+        dlg:modify { id = "uniformRings", visible = state }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "uniformRings",
+    label = "Swatches:",
+    text = "Uniform",
+    selected = defaults.uniformRings,
+    visible = defaults.rings > 0
 }
 
 dlg:newrow { always = false }
@@ -97,10 +113,13 @@ dlg:check {
         local usePlot = args.plotPalette
         local palType = args.palType
 
-        dlg:modify { id = "correctPalette", visible = usePlot and palType ~= "DEFAULT" }
+        dlg:modify { id = "correctPalette", visible = usePlot
+            and palType ~= "DEFAULT" }
         dlg:modify { id = "palType", visible = usePlot }
-        dlg:modify { id = "palFile", visible = usePlot and palType == "FILE" }
-        dlg:modify { id = "palPreset", visible = usePlot and palType == "PRESET" }
+        dlg:modify { id = "palFile", visible = usePlot
+            and palType == "FILE" }
+        dlg:modify { id = "palPreset", visible = usePlot
+            and palType == "PRESET" }
         -- dlg:modify { id = "palStart", visible = usePlot }
         -- dlg:modify { id = "palCount", visible = usePlot }
     end
@@ -182,12 +201,14 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Cache methods.
-        local cos = math.cos
-        local sin = math.sin
-        local sqrt = math.sqrt
         local atan2 = math.atan
         local acos = math.acos
+        local ceil = math.ceil
+        local cos = math.cos
         local floor = math.floor
+        local max = math.max
+        local sin = math.sin
+        local sqrt = math.sqrt
 
         -- Cache math constants.
         local pi = math.pi
@@ -196,11 +217,12 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local size = args.size or defaults.size
+        local size = args.size or defaults.size --[[@as integer]]
         local sectors = args.sectors or defaults.sectors
         local rings = args.rings or defaults.rings
         local plotPalette = args.plotPalette
         local correctPalette = args.correctPalette
+        local uniformRings = args.uniformRings
         local xFlip = args.xFlip
         local yFlip = args.yFlip
         local zFlip = args.zFlip
@@ -209,12 +231,12 @@ dlg:button {
         local hexesSrgb = {}
         local hexesProfile = {}
         if plotPalette then
-            local palType = args.palType or defaults.palType
+            local palType = args.palType or defaults.palType --[[@as string]]
             if palType ~= "DEFAULT" then
-                local palFile = args.palFile
-                local palPreset = args.palPreset
-                local palStart = args.palStart or defaults.palStart
-                local palCount = args.palCount or defaults.palCount
+                local palFile = args.palFile --[[@as string]]
+                local palPreset = args.palPreset --[[@as string]]
+                local palStart = args.palStart or defaults.palStart --[[@as integer]]
+                local palCount = args.palCount or defaults.palCount --[[@as integer]]
 
                 hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                     palType, palFile, palPreset, palStart, palCount, true)
@@ -249,19 +271,26 @@ dlg:button {
         -- To quantize, values need to be in [0.0, 1.0].
         -- That's why alpha divides by tau and beta
         -- multiplies by tau after the floor.
-        local azimAlpha = sectors / tau
-        local azimBeta = 0.0
+        local sectorsDivTau = sectors / tau
+        local tauDivSectors = 0.0
         local quantAzims = sectors > 0
         if quantAzims then
-            azimBeta = tau / sectors
+            tauDivSectors = tau / sectors
         end
 
         -- Discrete rings (inclinations).
-        local inclAlpha = rings / halfPi
-        local inclBeta = 0.0
+        local rings2DivPi = rings / halfPi
+        local piDivRings2 = 0.0
         local quantIncls = rings > 0
         if quantIncls then
-            inclBeta = halfPi / rings
+            piDivRings2 = halfPi / rings
+        end
+
+        -- Discrete rings (distance).
+        local ringsp1 = rings + 1.0
+        local oneDivRings = 0.0
+        if quantIncls then
+            oneDivRings = 1.0 / rings
         end
 
         -- Create image, prepare for loop.
@@ -295,15 +324,29 @@ dlg:button {
                 -- Discrete swatches are more expensive because
                 -- atan2, acos, cos and sin are used.
                 if quantUse then
-                    local azim = atan2(ySgn, xSgn)
-                    local incl = halfPi - acos(zSgn)
-
+                    local azimSmooth = atan2(ySgn, xSgn)
+                    local azim = azimSmooth
                     if quantAzims then
-                        azim = floor(0.5 + azim * azimAlpha) * azimBeta
+                        azim = floor(0.5 + azimSmooth * sectorsDivTau)
+                            * tauDivSectors
                     end
 
+                    local incl = halfPi
                     if quantIncls then
-                        incl = floor(0.5 + incl * inclAlpha) * inclBeta
+                        if uniformRings then
+                            local geom = sqrt(magSq)
+                            -- To make a polygon rather than a circle:
+                            -- geom = geom * cos(azim - azimSmooth)
+                            local fac = max(0.0, (ceil(geom * ringsp1) - 1.0)
+                                * oneDivRings)
+                            incl = zFlipNum * (halfPi - fac * halfPi)
+                        else
+                            incl = floor(0.5 + (halfPi - acos(zSgn))
+                                * rings2DivPi) * piDivRings2
+                        end
+
+                    else
+                        incl = halfPi - acos(zSgn);
                     end
 
                     local cosIncl = cos(incl)
@@ -312,9 +355,14 @@ dlg:button {
                     zn = sin(incl)
                 end
 
+                -- Discontinuity in the return from atan2 can
+                -- lead to y being slightly off from pi, and
+                -- so 0x7f and 0x80 variants appear.
+                local green = floor(yn * 127.5 + 128.0)
+                if green == 0x7f then green = 0x80 end
                 elm(0xff000000
                     | (floor(zn * 127.5 + 128.0) << 0x10)
-                    | (floor(yn * 127.5 + 128.0) << 0x08)
+                    | (green << 0x08)
                     | floor(xn * 127.5 + 128.0))
             else
                 elm(hexDefault)
@@ -326,8 +374,10 @@ dlg:button {
 
         if plotPalette then
             -- Unpack arguments.
-            local strokeSize = args.strokeSize or defaults.strokeSize
-            local fillSize = args.fillSize or defaults.fillSize
+            local strokeSize = args.strokeSize
+                or defaults.strokeSize --[[@as integer]]
+            local fillSize = args.fillSize
+                or defaults.fillSize --[[@as integer]]
 
             local hexesPlot = hexesSrgb
             if correctPalette then
@@ -396,13 +446,10 @@ dlg:button {
                     local yn2d = y * invMag2d
                     local xu = 0.5
                     local yu = 0.5
-                    if sqMag2d > 1.0 then
+                    if sqMag2d >= 1.0 then
                         -- Would it be more accurate to normalize
                         -- the color again by 3d mag? This approach
                         -- is better suited to a color picker.
-                        xu = xn2d * 0.5 + 0.5
-                        yu = yn2d * 0.5 + 0.5
-                    elseif sqMag2d == 1.0 then
                         xu = xn2d * 0.5 + 0.5
                         yu = yn2d * 0.5 + 0.5
                     else

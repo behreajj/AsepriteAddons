@@ -344,9 +344,9 @@ dlg:button {
 
         local preset = args.preset
         if preset == "BEZIER" then
-            local cp0x = args.cp0x or defaults.cp0x
+            local cp0x = args.cp0x or defaults.cp0x --[[@as number]]
             local cp0y = args.cp0y or defaults.cp0y
-            local cp1x = args.cp1x or defaults.cp1x
+            local cp1x = args.cp1x or defaults.cp1x --[[@as number]]
             local cp1y = args.cp1y or defaults.cp1y
 
             cp0x = math.min(math.max(cp0x, 0.0), 1.0)

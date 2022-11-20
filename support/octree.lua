@@ -6,6 +6,7 @@ dofile("./bounds3.lua")
 ---@field protected children Octree[] child nodes
 ---@field protected level integer level, or depth
 ---@field protected points Vec3[] points array
+---@operator len(): integer
 Octree = {}
 Octree.__index = Octree
 
@@ -45,7 +46,7 @@ Octree.FRONT_NORTH_EAST = 8
 ---is split into children.
 ---@param bounds Bounds3 bounding volume
 ---@param capacity integer point capacity
----@param level integer|nil level, or depth
+---@param level integer? level, or depth
 ---@return Octree
 function Octree.new(bounds, capacity, level)
     local inst = setmetatable({}, Octree)
@@ -84,7 +85,7 @@ end
 ---otherwise creates a new array.
 ---@param o Octree octree
 ---@param include boolean include empty nodes
----@param arr Vec3[]|nil array
+---@param arr Vec3[]? array
 ---@return Vec3[]
 function Octree.centersMean(o, include, arr)
     local arrVrf = arr or {}
@@ -369,7 +370,7 @@ end
 ---If a child capacity is not provided, defaults
 ---to the parent's capacity.
 ---@param o Octree octree
----@param childCapacity integer|nil child capacity
+---@param childCapacity integer? child capacity
 ---@return Octree
 function Octree.split(o, childCapacity)
     local chCpVerif = childCapacity or o.capacity
@@ -427,7 +428,7 @@ end
 ---8, 64, 512, etc.
 ---@param o Octree octree
 ---@param itr integer iterations
----@param childCapacity integer|nil child capacity
+---@param childCapacity integer? child capacity
 ---@return Octree
 function Octree.subdivide(o, itr, childCapacity)
     if (not itr) or (itr < 1) then return o end

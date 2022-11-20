@@ -179,20 +179,23 @@ dlg:button {
         end
 
         local args = dlg.data
-        local target = args.target or defaults.target
+        local target = args.target or defaults.target --[[@as string]]
         local delSrcStr = args.delSrc or defaults.delSrc
         local fillBase = args.fillBase
 
-        local xRed = args.xRed or defaults.xRed
-        local yRed = args.yRed or defaults.yRed
-        local xGreen = args.xGreen or defaults.xGreen
-        local yGreen = args.yGreen or defaults.yGreen
-        local xBlue = args.xBlue or defaults.xBlue
-        local yBlue = args.yBlue or defaults.yBlue
+        local xRed = args.xRed or defaults.xRed --[[@as integer]]
+        local yRed = args.yRed or defaults.yRed --[[@as integer]]
+        local xGreen = args.xGreen or defaults.xGreen --[[@as integer]]
+        local yGreen = args.yGreen or defaults.yGreen --[[@as integer]]
+        local xBlue = args.xBlue or defaults.xBlue --[[@as integer]]
+        local yBlue = args.yBlue or defaults.yBlue --[[@as integer]]
 
-        local opacityRed = args.opacityRed or defaults.opacityRed
-        local opacityGreen = args.opacityGreen or defaults.opacityGreen
-        local opacityBlue = args.opacityBlue or defaults.opacityBlue
+        local opacityRed = args.opacityRed
+            or defaults.opacityRed --[[@as integer]]
+        local opacityGreen = args.opacityGreen
+            or defaults.opacityGreen --[[@as integer]]
+        local opacityBlue = args.opacityBlue
+            or defaults.opacityBlue --[[@as integer]]
 
         local frames = AseUtilities.getFrames(activeSprite, target)
 
@@ -209,24 +212,24 @@ dlg:button {
         if fillBase then
             baseLyr.parent = sepGroup
             baseLyr.name = "Base"
-            baseLyr.color = Color(32, 32, 32, 255)
+            baseLyr.color = Color { r = 32, g = 32, b = 32 }
         end
 
         redLyr.parent = sepGroup
         redLyr.name = "Red"
-        redLyr.color = Color(192, 0, 0, 255)
+        redLyr.color = Color { r = 192, g = 0, b = 0 }
         redLyr.blendMode = BlendMode.ADDITION
         redLyr.opacity = opacityRed
 
         greenLyr.parent = sepGroup
         greenLyr.name = "Green"
-        greenLyr.color = Color(0, 192, 0, 255)
+        greenLyr.color = Color { r = 0, g = 192, b = 0 }
         greenLyr.blendMode = BlendMode.ADDITION
         greenLyr.opacity = opacityGreen
 
         blueLyr.parent = sepGroup
         blueLyr.name = "Blue"
-        blueLyr.color = Color(0, 0, 192, 255)
+        blueLyr.color = Color { r = 0, g = 0, b = 192 }
         blueLyr.blendMode = BlendMode.ADDITION
         blueLyr.opacity = opacityBlue
 

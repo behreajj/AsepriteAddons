@@ -3,6 +3,15 @@
 ---@field public y number y component
 ---@field public z number z component
 ---@field public w number w component
+---@operator add(Vec4): Vec4
+---@operator div(Vec4): Vec4
+---@operator idiv(Vec4): Vec4
+---@operator len(): integer
+---@operator mod(Vec4): Vec4
+---@operator mul(Vec4|number): Vec4
+---@operator pow(Vec4): Vec4
+---@operator sub(Vec4): Vec4
+---@operator unm(): Vec4
 Vec4 = {}
 Vec4.__index = Vec4
 
@@ -13,10 +22,10 @@ setmetatable(Vec4, {
 })
 
 ---Constructs a new vector from four numbers.
----@param x number x component
----@param y number y component
----@param z number z component
----@param w number w component
+---@param x number? x component
+---@param y number? y component
+---@param z number? z component
+---@param w number? w component
 ---@return Vec4
 function Vec4.new(x, y, z, w)
     local inst = setmetatable({}, Vec4)
@@ -133,7 +142,7 @@ end
 ---tolerance, approximately equal.
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
----@param tol number|nil tolerance
+---@param tol number? tolerance
 ---@return boolean
 function Vec4.approx(a, b, tol)
     local eps = tol or 0.000001
@@ -771,8 +780,8 @@ end
 ---Creates a random point in Cartesian space given
 ---a lower and an upper bound. If lower and upper
 ---bounds are not given, defaults to [-1.0, 1.0].
----@param lb Vec4|nil lower bound
----@param ub Vec4|nil upper bound
+---@param lb Vec4? lower bound
+---@param ub Vec4? upper bound
 ---@return Vec4
 function Vec4.randomCartesian(lb, ub)
     local lval = lb or Vec4.new(-1.0, -1.0, -1.0, -1.0)

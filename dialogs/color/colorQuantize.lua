@@ -323,12 +323,12 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local target = args.target or defaults.target
+        local target = args.target or defaults.target --[[@as string]]
         local method = args.method or defaults.method
-        local rLevels = args.rLevels or defaults.rLevels
-        local gLevels = args.gLevels or defaults.gLevels
-        local bLevels = args.bLevels or defaults.bLevels
-        local aLevels = args.aLevels or defaults.aLevels
+        local rLevels = args.rLevels or defaults.rLevels --[[@as integer]]
+        local gLevels = args.gLevels or defaults.gLevels --[[@as integer]]
+        local bLevels = args.bLevels or defaults.bLevels --[[@as integer]]
+        local aLevels = args.aLevels or defaults.aLevels --[[@as integer]]
 
         local frames = AseUtilities.getFrames(activeSprite, target)
 

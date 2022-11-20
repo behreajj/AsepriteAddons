@@ -96,11 +96,11 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local target = args.target or defaults.target
+        local target = args.target or defaults.target --[[@as string]]
         local useNormalize = args.useNormalize
-        local clrSpacePreset = args.clrSpacePreset
-        local levels = args.quantize
-        local aseColors = args.shades
+        local clrSpacePreset = args.clrSpacePreset --[[@as string]]
+        local levels = args.quantize  --[[@as integer]]
+        local aseColors = args.shades --[[@as Color[] ]]
 
         local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
         local facAdjust = GradientUtilities.easingFuncFromPreset(

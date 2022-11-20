@@ -44,7 +44,7 @@ dlg:newrow { always = false }
 dlg:color {
     id = "bkgColor",
     label = "Background:",
-    color = Color(0, 0, 0, 0)
+    color = Color { r = 0, g = 0, b = 0, a = 0 }
 }
 
 dlg:newrow { always = false }
@@ -213,14 +213,15 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local target = args.target or defaults.target
+        local target = args.target or defaults.target --[[@as string]]
         local alphaFade = args.alphaFade
         local reverseFade = args.reverseFade
-        local clrSpacePreset = args.clrSpacePreset
+        local clrSpacePreset = args.clrSpacePreset --[[@as string]]
         local aseColors = args.shades
-        local levels = args.quantize
-        local aseBkgColor = args.bkgColor
-        local iterations = args.iterations or defaults.iterations
+        local levels = args.quantize --[[@as integer]]
+        local aseBkgColor = args.bkgColor --[[@as Color]]
+        local iterations = args.iterations
+            or defaults.iterations --[[@as integer]]
 
         -- Create matrices.
         -- Directions need to be flipped on x and y axes.

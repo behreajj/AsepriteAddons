@@ -177,7 +177,7 @@ dlg:newrow { always = false }
 dlg:color {
     id = "sprTabColor",
     label = "Tab Color:",
-    color = Color(0, 0, 0, 0),
+    color = Color { r = 0, g = 0, b = 0, a = 0 },
     visible = false
 }
 dlg:newrow { always = false }
@@ -333,14 +333,10 @@ local function updateMaskColor()
 
     local maskIdxNum = spec.transparentColor
     local maskIdxIsValid = maskIdxNum > -1 and maskIdxNum < palLen
-    local maskColorVal = Color(0, 0, 0, 0)
+    local maskColorVal = Color { r = 0, g = 0, b = 0, a = 0 }
     if maskIdxIsValid then
         local maskColorRef = pal:getColor(maskIdxNum)
-        maskColorVal = Color(
-            maskColorRef.red,
-            maskColorRef.green,
-            maskColorRef.blue,
-            maskColorRef.alpha)
+        maskColorVal = AseUtilities.aseColorCopy(maskColorRef, "UNBOUNDED")
     end
     dlg:modify { id = "maskClr", colors = { maskColorVal } }
     dlg:modify { id = "maskClr", visible = maskIdxIsValid
@@ -460,14 +456,11 @@ end
 local function updateTabColor()
     local sprColorVal = nil
     if is1_3 then
-        local sprColorRef = sprite.color
-        sprColorVal = Color(
-            sprColorRef.red,
-            sprColorRef.green,
-            sprColorRef.blue,
-            sprColorRef.alpha)
+        local sprColorRef = sprite.color --[[@as Color]]
+        sprColorVal = AseUtilities.aseColorCopy(
+            sprColorRef, "UNBOUNDED")
     else
-        sprColorVal = Color(0, 0, 0, 0)
+        sprColorVal = Color { r = 0, g = 0, b = 0, a = 0 }
     end
 
     dlg:modify { id = "sprTabColor", color = sprColorVal }

@@ -223,7 +223,7 @@ dlg:button {
                     local jFac = j / dotCount
                     local alpha = math.floor(0.5 + jFac * 255.0)
                     local animBrsh = Brush { size = 3 + j }
-                    local animClr = Color(dtr, dtg, dtb, alpha)
+                    local animClr = Color { r = dtr, g = dtg, b = dtb, a = alpha }
                     table.insert(animBrushes, animBrsh)
                     table.insert(animColors, animClr)
                 end

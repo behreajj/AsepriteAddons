@@ -127,25 +127,27 @@ end
 ---arithmetic. For more info, See
 ---https://www.wikiwand.com/en/Modular_arithmetic .
 ---The default is saturation arithmetic.
----@param aseClr userdata Aseprite color
+---@param aseClr Color aseprite color
 ---@param flag string out of bounds interpretation
----@return userdata
+---@return Color
 function AseUtilities.aseColorCopy(aseClr, flag)
     if flag == "UNBOUNDED" then
-        return Color(
-            aseClr.red,
-            aseClr.green,
-            aseClr.blue,
-            aseClr.alpha)
+        return Color {
+            r = aseClr.red,
+            g = aseClr.green,
+            b = aseClr.blue,
+            a = aseClr.alpha
+        }
     elseif flag == "MODULAR" then
         return AseUtilities.hexToAseColor(
             AseUtilities.aseColorToHex(aseClr, ColorMode.RGB))
     else
-        return Color(
-            math.min(math.max(aseClr.red, 0), 255),
-            math.min(math.max(aseClr.green, 0), 255),
-            math.min(math.max(aseClr.blue, 0), 255),
-            math.min(math.max(aseClr.alpha, 0), 255))
+        return Color {
+            r = math.min(math.max(aseClr.red, 0), 255),
+            g = math.min(math.max(aseClr.green, 0), 255),
+            b = math.min(math.max(aseClr.blue, 0), 255),
+            a = math.min(math.max(aseClr.alpha, 0), 255)
+        }
     end
 end
 
@@ -154,7 +156,7 @@ end
 ---Both Aseprite Color and Clr allow arguments
 ---to exceed the expected ranges, [0, 255] and
 ---[0.0, 1.0], respectively.
----@param aseClr userdata Aseprite color
+---@param aseClr Color aseprite color
 ---@return Clr
 function AseUtilities.aseColorToClr(aseClr)
     return Clr.new(
@@ -171,8 +173,8 @@ end
 ---green, blue and alpha channels are out of
 ---range [0, 255]. Returns zero if the color
 ---mode is not recognized.
----@param clr userdata aseprite color
----@param clrMode integer color mode
+---@param clr Color aseprite color
+---@param clrMode ColorMode|integer color mode
 ---@return integer
 function AseUtilities.aseColorToHex(clr, clrMode)
     if clrMode == ColorMode.RGB then
@@ -207,9 +209,9 @@ end
 ---@param palType string enumeration
 ---@param filePath string file path
 ---@param presetPath string preset path
----@param startIndex integer|nil start index
----@param count integer|nil count of colors to sample
----@param correctZeroAlpha boolean|nil alpha correction flag
+---@param startIndex integer? start index
+---@param count integer? count of colors to sample
+---@param correctZeroAlpha boolean? alpha correction flag
 ---@return integer[]
 ---@return integer[]
 function AseUtilities.asePaletteLoad(palType, filePath, presetPath, startIndex, count, correctZeroAlpha)
@@ -336,9 +338,9 @@ end
 ---returns a default table. Assumes palette
 ---is in sRGB. The start index defaults to 0.
 ---The count defaults to 256.
----@param pal userdata Aseprite palette
----@param startIndex integer|nil start index
----@param count integer|nil sample count
+---@param pal Palette aseprite palette
+---@param startIndex integer? start index
+---@param count integer? sample count
 ---@return table
 function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
     if pal then
@@ -371,7 +373,7 @@ end
 
 ---Converts an array of Aseprite palettes to a
 ---table of hex color integers.
----@param palettes userdata[] Aseprite palettes
+---@param palettes Palette[] Aseprite palettes
 ---@return integer[]
 function AseUtilities.asePalettesToHexArr(palettes)
     if palettes then
@@ -414,7 +416,7 @@ end
 ---Does not support group layers. Resets layer and
 ---cel opacities to 255. Layers that are not visible
 ---are treated like layers with zero opacity.
----@param layer userdata layer
+---@param layer Layer layer
 function AseUtilities.bakeLayerOpacity(layer)
     if layer.isGroup then
         app.alert {
@@ -504,7 +506,7 @@ end
 ---Bakes a cel's opacity into the colors in the cel's
 ---image. Resets the cel's opacity to 255. Does not
 ---refer to layer visibility or opacity.
----@param cel userdata cel
+---@param cel Cel cel
 function AseUtilities.bakeCelOpacity(cel)
     local celAlpha = cel.opacity
     if celAlpha < 0xff then
@@ -581,7 +583,7 @@ end
 ---accepts an integer constant as an input. The constant
 ---should be included in the ColorMode enum: INDEXED,
 ---GRAY or RGB. Does nothing if the constant is invalid.
----@param format integer format constant
+---@param format ColorMode|integer format constant
 function AseUtilities.changePixelFormat(format)
     if format == ColorMode.INDEXED then
         app.command.ChangePixelFormat { format = "indexed" }
@@ -600,7 +602,7 @@ end
 ---visually indistinguishable from - and confused
 ---with - an alpha mask, (0, 0, 0, 0).
 ---@param clr Clr clr
----@return userdata
+---@return Color
 function AseUtilities.clrToAseColor(clr)
     local r = clr.r
     local g = clr.g
@@ -612,11 +614,12 @@ function AseUtilities.clrToAseColor(clr)
     if b < 0.0 then b = 0.0 elseif b > 1.0 then b = 1.0 end
     if a < 0.0 then a = 0.0 elseif a > 1.0 then a = 1.0 end
 
-    return Color(
-        math.floor(r * 0xff + 0.5),
-        math.floor(g * 0xff + 0.5),
-        math.floor(b * 0xff + 0.5),
-        math.floor(a * 0xff + 0.5))
+    return Color {
+        r = math.floor(r * 0xff + 0.5),
+        g = math.floor(g * 0xff + 0.5),
+        b = math.floor(b * 0xff + 0.5),
+        a = math.floor(a * 0xff + 0.5)
+    }
 end
 
 ---Creates new cels in a sprite. Prompts users to
@@ -628,15 +631,15 @@ end
 ---To assign a GUI color, use a hexadecimal integer
 ---as an argument.
 ---Returns a table of layers.
----@param sprite userdata
+---@param sprite Sprite
 ---@param frStrtIdx integer frame start index
 ---@param frCount integer frame count
 ---@param lyrStrtIdx integer layer start index
 ---@param lyrCount integer layer count
----@param image userdata cel image
----@param position userdata|nil cel position
----@param guiClr integer|nil hexadecimal color
----@return userdata[]
+---@param image Image cel image
+---@param position Point? cel position
+---@param guiClr integer? hexadecimal color
+---@return Cel[]
 function AseUtilities.createCels(sprite, frStrtIdx, frCount, lyrStrtIdx, lyrCount, image, position, guiClr)
     -- Do not use app.transactions.
     -- https://github.com/aseprite/aseprite/issues/3276
@@ -757,10 +760,10 @@ end
 --- Returns a table of frames. Frame duration is assumed
 ---to have been divided by 1000.0, and ready to be
 ---assigned as is.
----@param sprite userdata sprite
+---@param sprite Sprite sprite
 ---@param count integer frames to create
 ---@param duration number frame duration
----@return userdata[]
+---@return Frame[]
 function AseUtilities.createFrames(sprite, count, duration)
     -- Do not use app.transactions.
     -- https://github.com/aseprite/aseprite/issues/3276
@@ -815,12 +818,12 @@ end
 ---the process in an app.transaction. To assign a GUI
 -- color, use a hexadecimal integer as an argument.
 ---Returns a table of layers.
----@param sprite userdata sprite
+---@param sprite Sprite sprite
 ---@param count integer number of layers to create
----@param blendMode integer|nil blend mode
----@param opacity integer|nil layer opacity
----@param guiClr integer|nil hexadecimal color
----@return userdata[]
+---@param blendMode BlendMode? blend mode
+---@param opacity integer? layer opacity
+---@param guiClr integer? hexadecimal color
+---@return Layer[]
 function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr)
     if not sprite then
         app.alert { title = "Error", text = "Sprite could not be found." }
@@ -890,7 +893,7 @@ end
 ---Aseprite image instance method drawPixel. This means
 ---that the pixel changes will not be tracked as a
 ---transaction.
----@param img userdata Aseprite image
+---@param img Image Aseprite image
 ---@param border integer border depth
 ---@param bordHex integer hexadecimal color
 function AseUtilities.drawBorder(img, border, bordHex)
@@ -955,7 +958,7 @@ end
 ---Draws a filled circle. Uses the Aseprite image
 ---instance method drawPixel. This means that the
 ---pixel changes will not be tracked as a transaction.
----@param image userdata Aseprite image
+---@param image Image Aseprite image
 ---@param xc integer center x
 ---@param yc integer center y
 ---@param r integer radius
@@ -985,12 +988,12 @@ end
 ---@param curve Curve2 curve
 ---@param resolution integer curve resolution
 ---@param useFill boolean use fill
----@param fillClr userdata fill color
+---@param fillClr Color fill color
 ---@param useStroke boolean use stroke
----@param strokeClr userdata stroke color
----@param brsh userdata brush
----@param cel userdata cel
----@param layer userdata layer
+---@param strokeClr Color stroke color
+---@param brsh Brush brush
+---@param cel Cel cel
+---@param layer Layer layer
 function AseUtilities.drawCurve2(curve, resolution, useFill, fillClr, useStroke, strokeClr, brsh, cel, layer)
 
     local vres = 2
@@ -1085,7 +1088,7 @@ end
 ---with AABBGGR order.
 ---Operates on pixels. This should not be used
 ---with app.useTool.
----@param image userdata image
+---@param image Image image
 ---@param glyph Glyph glyph
 ---@param hex integer hexadecimal color
 ---@param x integer x top left corner
@@ -1120,7 +1123,7 @@ end
 ---with AABBGGR order.
 ---Operates on pixels. This should not be used
 ---with app.useTool.
----@param image userdata image
+---@param image Image image
 ---@param glyph Glyph glyph
 ---@param hex integer hexadecimal color
 ---@param x integer x top left corner
@@ -1171,12 +1174,12 @@ end
 ---Draws the knot handles of a curve.
 ---Color arguments are optional.
 ---@param curve Curve2 curve
----@param cel userdata cel
----@param layer userdata layer
----@param lnClr userdata|nil line color
----@param coClr userdata|nil coordinate color
----@param fhClr userdata|nil fore handle color
----@param rhClr userdata|nil rear handle color
+---@param cel Cel cel
+---@param layer Layer layer
+---@param lnClr Color? line color
+---@param coClr Color? coordinate color
+---@param fhClr Color? fore handle color
+---@param rhClr Color? rear handle color
 function AseUtilities.drawHandles2(curve, cel, layer, lnClr, coClr, fhClr, rhClr)
 
     local kns = curve.knots
@@ -1197,19 +1200,19 @@ end
 ---Draws a knot for diagnostic purposes.
 ---Color arguments are optional.
 ---@param knot Knot2 knot
----@param cel userdata cel
----@param layer userdata layer
----@param lnClr userdata|nil line color
----@param coClr userdata|nil coordinate color
----@param fhClr userdata|nil fore handle color
----@param rhClr userdata|nil rear handle color
+---@param cel Cel cel
+---@param layer Layer layer
+---@param lnClr Color? line color
+---@param coClr Color? coordinate color
+---@param fhClr Color? fore handle color
+---@param rhClr Color? rear handle color
 function AseUtilities.drawKnot2(knot, cel, layer, lnClr, coClr, fhClr, rhClr)
 
     -- Do not supply hexadecimals to color constructor.
-    local lnClrVal = lnClr or Color(175, 175, 175, 255)
-    local rhClrVal = rhClr or Color(2, 167, 235, 255)
-    local coClrVal = coClr or Color(235, 225, 40, 255)
-    local fhClrVal = fhClr or Color(235, 26, 64, 255)
+    local lnClrVal = lnClr or Color { r = 175, g = 175, b = 175 }
+    local rhClrVal = rhClr or Color { r = 2, g = 167, b = 235 }
+    local coClrVal = coClr or Color { r = 235, g = 225, b = 40 }
+    local fhClrVal = fhClr or Color { r = 235, g = 26, b = 64 }
 
     local lnBrush = Brush { size = 1 }
     local rhBrush = Brush { size = 4 }
@@ -1277,12 +1280,12 @@ end
 ---If a stroke is used, draws the stroke line by line.
 ---@param mesh Mesh2 mesh
 ---@param useFill boolean use fill
----@param fillClr userdata fill color
+---@param fillClr Color fill color
 ---@param useStroke boolean use stroke
----@param strokeClr userdata stroke color
----@param brsh userdata brush
----@param cel userdata cel
----@param layer userdata layer
+---@param strokeClr Color stroke color
+---@param brsh Brush brush
+---@param cel Cel cel
+---@param layer Layer layer
 function AseUtilities.drawMesh2(mesh, useFill, fillClr, useStroke, strokeClr, brsh, cel, layer)
     -- Convert Vec2s to Points.
     local vs = mesh.vs
@@ -1366,8 +1369,8 @@ end
 ---Operates on pixel by pixel level. Its use
 ---should not be mixed with app.useTool.
 ---@param lut table glyph look up table
----@param image userdata image
----@param chars table characters table
+---@param image Image image
+---@param chars string[] characters table
 ---@param hex integer hexadecimal color
 ---@param x integer x top left corner
 ---@param y integer y top left corner
@@ -1410,12 +1413,12 @@ end
 ---unequal width and height, e.g., 64x32. Returns
 ---the image by reference if its size is already
 ---a power of 2.
----@param img userdata image
----@param colorMode integer color mode
+---@param img Image image
+---@param colorMode ColorMode color mode
 ---@param alphaMask integer alpha mask index
----@param colorSpace userdata color space
+---@param colorSpace ColorSpace color space
 ---@param nonUniform boolean non uniform dimensions
----@return userdata
+---@return Image
 function AseUtilities.expandImageToPow2(img, colorMode, alphaMask, colorSpace, nonUniform)
     local wOrig = img.width
     local hOrig = img.height
@@ -1450,8 +1453,8 @@ end
 ---been flipped horizontally.
 ---Also returns displaced coordinates for the
 ---top-left corner.
----@param source userdata source image
----@return userdata
+---@param source Image source image
+---@return Image
 ---@return integer
 ---@return integer
 function AseUtilities.flipImageHoriz(source)
@@ -1482,8 +1485,8 @@ end
 ---been flipped vertically.
 ---Also returns displaced coordinates for the
 ---top-left corner.
----@param source userdata source image
----@return userdata
+---@param source Image source image
+---@return Image
 ---@return integer
 ---@return integer
 function AseUtilities.flipImageVert(source)
@@ -1517,7 +1520,7 @@ end
 ---active frame. If there's no active frame,
 ---returns an empty array. If a range is a layer
 ---type, returns all frames in sprite.
----@param sprite userdata sprite
+---@param sprite Sprite sprite
 ---@param target string preset
 ---@return table
 function AseUtilities.getFrames(sprite, target)
@@ -1560,17 +1563,17 @@ end
 ---a palette from an Aseprite frame object. Defaults
 ---to index 1 if the frame index exceeds the number
 ---of palettes.
----@param frObj userdata|integer Aseprite frame object
----@param palettes userdata[] Aseprite palettes
----@return userdata
-function AseUtilities.getPalette(frObj, palettes)
+---@param frame Frame|integer frame
+---@param palettes Palette[] palettes
+---@return Palette
+function AseUtilities.getPalette(frame, palettes)
     local idx = 1
-    local typeFrObj = type(frObj)
+    local typeFrObj = type(frame)
     if typeFrObj == "number"
-        and math.type(frObj) == "integer" then
-        idx = frObj
+        and math.type(frame) == "integer" then
+        idx = frame
     elseif typeFrObj == "userdata" then
-        idx = frObj.frameNumber
+        idx = frame.frameNumber
     end
     local lenPalettes = #palettes
     if idx > lenPalettes then idx = 1 end
@@ -1580,8 +1583,8 @@ end
 ---Gets a selection from a sprite. Calls InvertMask
 ---command twice. If selection is empty, returns
 ---sprite bounds as selection.
----@param sprite userdata sprite
----@return userdata
+---@param sprite Sprite sprite
+---@return Selection
 function AseUtilities.getSelection(sprite)
     -- If a selection is moved, but the drag and
     -- drop pixels checkmark is not pressed, then
@@ -1627,14 +1630,16 @@ end
 ---the Color rgbaPixel constructor, as the color
 ---mode dictates how the integer is interpreted.
 ---@param hex integer hexadecimal color
----@return userdata
+---@return Color
 function AseUtilities.hexToAseColor(hex)
     -- See https://github.com/aseprite/aseprite/
     -- blob/main/src/app/script/color_class.cpp#L22
-    return Color(hex & 0xff,
-        (hex >> 0x08) & 0xff,
-        (hex >> 0x10) & 0xff,
-        (hex >> 0x18) & 0xff)
+    return Color {
+        r = hex & 0xff,
+        g = (hex >> 0x08) & 0xff,
+        b = (hex >> 0x10) & 0xff,
+        a = (hex >> 0x18) & 0xff
+    }
 end
 
 ---Initializes a sprite and layer. Sets palette
@@ -1642,10 +1647,10 @@ end
 ---set. Colors should be hexadecimal integers.
 ---@param wDefault integer default width
 ---@param hDefault integer default height
----@param layerName string|nil layer name
----@param colors integer[]|nil array of hexes
----@param colorSpace userdata|nil color space
----@return userdata
+---@param layerName string? layer name
+---@param colors integer[]? array of hexes
+---@param colorSpace ColorSpace? color space
+---@return Sprite
 function AseUtilities.initCanvas(wDefault, hDefault, layerName, colors, colorSpace)
     local clrsVal = AseUtilities.DEFAULT_PAL_ARR
     if colors and #colors > 0 then
@@ -1687,12 +1692,12 @@ end
 ---of any parent layers, i.e., if a layer's parent is
 ---locked but the layer is unlocked, the method will
 ---return false.
----@param layer userdata aseprite layer
----@param sprite userdata|nil aseprite sprite
+---@param layer Layer|userdata layer
+---@param sprite Sprite|userdata? sprite
 ---@return boolean
 function AseUtilities.isEditableHierarchy(layer, sprite)
     -- Keep this as is for backward compatibility.
-    local l = layer
+    local l = layer --[[@as Layer|Sprite|userdata]]
     local sprName = "doc::Sprite"
     if sprite then sprName = sprite.__name end
     while l.__name ~= sprName do
@@ -1710,7 +1715,7 @@ end
 ---
 ---Note that layer type ranges contain only
 ---one frame, despite appearance in the GUI.
----@param range userdata Aseprite range
+---@param range Range aseprite range
 ---@return table
 function AseUtilities.parseRange(range)
     local framesObj = range.frames
@@ -1735,7 +1740,7 @@ end
 ---A tag may contain frame indices that are out of
 ---bounds for the sprite that contains the tag.
 ---This function assumes the tag is valid.
----@param tag userdata Aseprite Tag
+---@param tag Tag Aseprite Tag
 ---@return integer[]
 function AseUtilities.parseTag(tag)
     -- As of v1.3, tags have a new direction, ping pong
@@ -1794,7 +1799,7 @@ end
 ---an array of arrays. Inner arrays may hold
 ---duplicate frame indices, as the same frame
 ---could appear in multiple groups.
----@param tags userdata[] tags array
+---@param tags Tag[] tags array
 ---@return table
 function AseUtilities.parseTagsOverlap(tags)
     local tagsLen = #tags
@@ -1808,7 +1813,7 @@ end
 
 ---Parses an array of Aseprite tags. Returns
 ---an ordered set of integers.
----@param tags userdata[] tags array
+---@param tags Tag[] tags array
 ---@return integer[]
 function AseUtilities.parseTagsUnique(tags)
     local arr2 = AseUtilities.parseTagsOverlap(tags)
@@ -1844,10 +1849,10 @@ end
 ---been resized to the width and height. Uses nearest
 ---neighbor sampling. If the width and height are
 ---equal to the original, returns the source image.
----@param source userdata source image
+---@param source Image source image
 ---@param wTrg integer resized width
 ---@param hTrg integer resized height
----@return userdata
+---@return Image
 function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
     local wVal = wTrg
     local hVal = hTrg
@@ -1897,8 +1902,8 @@ end
 ---been rotated 90 degrees counter-clockwise.
 ---Also returns displaced coordinates for the
 ---top-left corner.
----@param source userdata source image
----@return userdata
+---@param source Image source image
+---@return Image
 ---@return integer
 ---@return integer
 function AseUtilities.rotateImage90(source)
@@ -1936,8 +1941,8 @@ end
 ---Returns a copy of the source image that has
 ---been rotated 180 degrees. Also returns
 ---displaced coordinates for the top-left corner.
----@param source userdata source image
----@return userdata
+---@param source Image source image
+---@return Image
 ---@return integer
 ---@return integer
 function AseUtilities.rotateImage180(source)
@@ -1968,8 +1973,8 @@ end
 ---been rotated 270 degrees counter-clockwise.
 ---Also returns displaced coordinates for the
 ---top-left corner.
----@param source userdata source image
----@return userdata
+---@param source Image source image
+---@return Image
 ---@return integer
 ---@return integer
 function AseUtilities.rotateImage270(source)
@@ -2008,8 +2013,8 @@ end
 ---of colors represented as hexadecimal integers. The
 ---palette index defaults to 1.
 ---@param arr integer[] color array
----@param sprite userdata sprite
----@param paletteIndex integer|nil index
+---@param sprite Sprite sprite
+---@param paletteIndex integer? index
 function AseUtilities.setPalette(arr, sprite, paletteIndex)
     local palIdxVerif = paletteIndex or 1
     local palettes = sprite.palettes
@@ -2038,9 +2043,10 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
             end
         end)
     else
+        local clearBlack = Color { r = 0, g = 0, b = 0, a = 0 }
         app.transaction(function()
             palette:resize(1)
-            palette:setColor(0, Color(0, 0, 0, 0))
+            palette:setColor(0, clearBlack)
         end)
     end
 end
@@ -2055,10 +2061,10 @@ end
 
 ---Converts an image from a tile set layer to a regular
 ---image. Supported in Aseprite version 1.3 or newer.
----@param imgSrc userdata source image
+---@param imgSrc Image source image
 ---@param tileSet userdata tile set
----@param sprClrMode integer sprite color mode
----@return userdata
+---@param sprClrMode ColorMode sprite color mode
+---@return Image
 function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     local tileDim = tileSet.grid.tileSize
     local tileWidth = tileDim.width
@@ -2092,9 +2098,9 @@ end
 ---An image's pixel is cleared to the default color
 ---if it isn't contained by the selection. If the
 ---default is nil, uses the cel image's alpha mask.
----@param cel userdata source cel
----@param select userdata selection
----@param hexDefault integer|nil default color
+---@param cel Cel source cel
+---@param select Selection selection
+---@param hexDefault integer? default color
 function AseUtilities.trimCelToSelect(cel, select, hexDefault)
     local celBounds = cel.bounds
     local selBounds = select.bounds
@@ -2134,8 +2140,8 @@ end
 ---Trims a cel's image and position such that it no longer
 ---exceeds the sprite's boundaries. Unlike built-in method,
 ---does not trim the image's alpha.
----@param cel userdata source cel
----@param sprite userdata parent sprite
+---@param cel Cel source cel
+---@param sprite Sprite parent sprite
 function AseUtilities.trimCelToSprite(cel, sprite)
     local celBounds = cel.bounds
     local spriteBounds = sprite.bounds
@@ -2169,10 +2175,10 @@ end
 ---the top left x and top left y. The top left
 ---should be added to the position of the cel
 ---that contained the source image.
----@param image userdata aseprite image
+---@param image Image aseprite image
 ---@param padding integer padding
 ---@param alphaIndex integer alpha mask index
----@return userdata
+---@return Image
 ---@return integer
 ---@return integer
 function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
@@ -2308,7 +2314,7 @@ end
 
 ---Converts a Vec2 to an Aseprite Point.
 ---@param v Vec2 vector
----@return userdata
+---@return Point
 function AseUtilities.vec2ToPoint(v)
     return Point(
         Utilities.round(v.x),
@@ -2318,10 +2324,10 @@ end
 ---Translates the pixels of an image by a vector,
 ---wrapping the elements that exceed its dimensions back
 ---to the beginning.
----@param source userdata source image
+---@param source Image source image
 ---@param x integer x translation
 ---@param y integer y translation
----@return userdata
+---@return Image
 function AseUtilities.wrapImage(source, x, y)
     local px = {}
     local i = 0

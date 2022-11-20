@@ -138,7 +138,7 @@ dlg:button {
         local t = Mat3.fromTranslation(
             args.xOrigin,
             args.yOrigin)
-        local sclval = args.scale
+        local sclval = args.scale or defaults.scale --[[@as number]]
         if sclval < 2.0 then sclval = 2.0 end
         local s = Mat3.fromScale(sclval, -sclval)
         local mat = Mat3.mul(t, s)

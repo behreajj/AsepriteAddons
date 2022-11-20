@@ -4,39 +4,39 @@ dofile("../../support/aseutilities.lua")
 -- http://www.ericbrasseur.org/gamma.html
 
 local invPowPrev = {
-    Color(0, 0, 0, 255),
-    Color(98, 98, 98, 255),
-    Color(136, 136, 136, 255),
-    Color(164, 164, 164, 255),
-    Color(187, 187, 187, 255),
-    Color(207, 207, 207, 255),
-    Color(224, 224, 224, 255),
-    Color(240, 240, 240, 255),
-    Color(255, 255, 255, 255)
+    Color { r = 0, g = 0, b = 0 },
+    Color { r = 98, g = 98, b = 98 },
+    Color { r = 136, g = 136, b = 136 },
+    Color { r = 164, g = 164, b = 164 },
+    Color { r = 187, g = 187, b = 187 },
+    Color { r = 207, g = 207, b = 207 },
+    Color { r = 224, g = 224, b = 224 },
+    Color { r = 240, g = 240, b = 240 },
+    Color { r = 255, g = 255, b = 255 }
 }
 
 local linearPrev = {
-    Color(0, 0, 0, 255),
-    Color(31, 31, 31, 255),
-    Color(63, 63, 63, 255),
-    Color(95, 95, 95, 255),
-    Color(127, 127, 127, 255),
-    Color(159, 159, 159, 255),
-    Color(191, 191, 191, 255),
-    Color(223, 223, 223, 255),
-    Color(255, 255, 255, 255)
+    Color { r = 0, g = 0, b = 0 },
+    Color { r = 31, g = 31, b = 31 },
+    Color { r = 63, g = 63, b = 63 },
+    Color { r = 95, g = 95, b = 95 },
+    Color { r = 127, g = 127, b = 127 },
+    Color { r = 159, g = 159, b = 159 },
+    Color { r = 191, g = 191, b = 191 },
+    Color { r = 223, g = 223, b = 223 },
+    Color { r = 255, g = 255, b = 255 }
 }
 
 local powerPrev = {
-    Color(0, 0, 0, 255),
-    Color(3, 3, 3, 255),
-    Color(13, 13, 13, 255),
-    Color(29, 29, 29, 255),
-    Color(54, 54, 54, 255),
-    Color(88, 88, 88, 255),
-    Color(133, 133, 133, 255),
-    Color(188, 188, 188, 255),
-    Color(255, 255, 255, 255)
+    Color { r = 0, g = 0, b = 0 },
+    Color { r = 3, g = 3, b = 3 },
+    Color { r = 13, g = 13, b = 13 },
+    Color { r = 29, g = 29, b = 29 },
+    Color { r = 54, g = 54, b = 54 },
+    Color { r = 88, g = 88, b = 88 },
+    Color { r = 133, g = 133, b = 133 },
+    Color { r = 188, g = 188, b = 188 },
+    Color { r = 255, g = 255, b = 255 }
 }
 
 local directions = { "LINEAR_TO_STANDARD", "STANDARD_TO_LINEAR" }
@@ -104,7 +104,8 @@ dlg:button {
         if not activeSprite then
             app.alert {
                 title = "Error",
-                text = "There is no active sprite." }
+                text = "There is no active sprite."
+            }
             return
         end
 
@@ -131,11 +132,12 @@ dlg:button {
                     local j = -1
                     while j < lenPaletten1 do j = j + 1
                         local origin = palette:getColor(j)
-                        palette:setColor(j, Color(
-                            lut[1 + origin.red],
-                            lut[1 + origin.green],
-                            lut[1 + origin.blue],
-                            origin.alpha))
+                        palette:setColor(j, Color {
+                            r = lut[1 + origin.red],
+                            g = lut[1 + origin.green],
+                            b = lut[1 + origin.blue],
+                            a = origin.alpha
+                        })
                     end
                 end
             end)

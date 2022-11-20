@@ -299,7 +299,7 @@ dlg:button {
         end
 
         local args = dlg.data
-        local filepath = args.filepath
+        local filepath = args.filepath --[[@as string]]
         if (not filepath) or (#filepath < 1) then
             app.alert { title = "Error", text = "Filepath is empty." }
             return
