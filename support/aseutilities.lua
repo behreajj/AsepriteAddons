@@ -1601,13 +1601,13 @@ function AseUtilities.getSelection(sprite)
     if (not srcSel) or srcSel.isEmpty then
         local activeCel = app.activeCel
         if activeCel then
-            -- Cel bounds could be out-of-bounds, so
-            -- this also needs to intersect with the
-            -- sprite canvas. This ignores that the cel
-            -- image could be empty.
+            -- Cel bounds could be out-of-bounds, so this
+            -- also needs to intersect with the sprite
+            -- canvas. This ignores possibility that
+            -- the cel image could be empty.
             local trgSel = Selection(activeCel.bounds)
             trgSel:intersect(sprite.bounds)
-            return trgSel
+            if not trgSel.isEmpty then return trgSel end
         end
 
         return Selection(sprite.bounds)

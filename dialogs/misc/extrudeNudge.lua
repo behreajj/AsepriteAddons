@@ -74,17 +74,13 @@ local function blendImages(a, b, xOff, yOff, xCel, yCel, selection)
 
         local ax = xpx + tlx
         local ay = ypx + tly
-
-        local xSample = xpx + xCel - xOff
-        local ySample = ypx + yCel + yOff
-
-        -- if (selection:contains(xSample, ySample)) then
         if ay > -1 and ay < ah
             and ax > -1 and ax < aw then
             aHex = a:getPixel(ax, ay)
         end
-        -- end
 
+        local xSample = xpx + xCel + tlx
+        local ySample = ypx + yCel + tly
         if (selection:contains(xSample, ySample)) then
             local bx = ax - xOff
             local by = ay + yOff
@@ -122,6 +118,17 @@ local function extrude(dx, dy)
 
     app.transaction(function()
         local sel = AseUtilities.getSelection(activeSprite)
+        local selOrigin = sel.origin
+        local xSel = selOrigin.x
+        local ySel = selOrigin.y
+
+        local selShifted = Selection()
+        selShifted:add(sel)
+        selShifted.origin = Point(xSel + dx, ySel - dy)
+
+        -- Try sample selection as a union
+        -- of both its previous and next area.
+        sel:add(selShifted)
 
         -- Assign the new image and move the cel.
         local trgImage, tlx, tly = blendImages(
@@ -131,12 +138,6 @@ local function extrude(dx, dy)
         activeCel.position = Point(xCel + tlx, yCel + tly)
 
         -- Move the selection to match the cel.
-        local selShifted = Selection()
-        selShifted:add(sel)
-        local selOrigin = sel.origin
-        local xSel = selOrigin.x
-        local ySel = selOrigin.y
-        selShifted.origin = Point(xSel + dx, ySel - dy)
         activeSprite.selection = selShifted
     end)
 
@@ -376,8 +377,19 @@ dlg:button {
             elseif selMode == 2 then
                 activeSel:subtract(trgSel)
             else
+                -- Additive selection can be confusing when no prior
+                -- selection was made and getSelection returns the cel
+                -- bounds, which is cruder than trgSel. However, there
+                -- could be a square selection contained by, but
+                -- differently shaped than trgSel.
+                -- if activeSel.bounds:contains(trgSel.bounds) then
+                --     activeSel = trgSel
+                -- else
+                --     activeSel:add(trgSel)
+                -- end
                 activeSel:add(trgSel)
             end
+
             activeSprite.selection = activeSel
         else
             activeSprite.selection = trgSel

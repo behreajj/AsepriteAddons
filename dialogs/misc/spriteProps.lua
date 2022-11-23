@@ -3,7 +3,7 @@ dofile("../../support/aseutilities.lua")
 --[[
 To fix filepath display in Aseprite source:
 Go to src/app/commands/cmd_sprite_properties.cpp
-Around line 106:
+Around line 141:
     if (Preferences::instance().general.showFullPath()) {
         window.name()->setText(document->filename());
     } else {

@@ -4,6 +4,11 @@ local directOps = { "BACKWARD", "BOTH", "FORWARD" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
+    -- Also known as ghost trail or Echo in After Effects.
+
+    -- TODO: At first frame, when no more previous
+    -- frame are available, repeat first frame with
+    -- an offset? Same with look forward.
     target = "RANGE",
     iterations = 3,
     maxIterations = 32,
@@ -140,10 +145,16 @@ dlg:button {
             return
         end
 
-        -- Unpack properties from sprite.
         local maxFrameCount = #activeSprite.frames
-        local colorMode = activeSprite.colorMode
+        if maxFrameCount < 2 then
+            app.alert {
+                title = "Error",
+                text = "The sprite contains only one frame."
+            }
+            return
+        end
 
+        local colorMode = activeSprite.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
