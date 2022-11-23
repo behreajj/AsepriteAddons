@@ -107,6 +107,7 @@ local function extrude(dx, dy)
             title = "Error",
             text = "Only RGB color mode is supported."
         }
+        return
     end
 
     local srcPos = activeCel.position
