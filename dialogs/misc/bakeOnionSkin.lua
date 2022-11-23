@@ -193,7 +193,7 @@ dlg:button {
         local iterations = args.iterations or defaults.iterations
         local directions = args.directions or defaults.directions
         local minAlpha = args.minAlpha or defaults.minAlpha
-        local maxAlpha = args.maxAlpha or defaults.maxAlpha
+        local maxAlpha = args.maxAlpha or defaults.maxAlpha --[[@as integer]]
         local useTint = args.useTint
         local backTint = args.backTint or defaults.backTint
         local foreTint = args.foreTint or defaults.foreTint

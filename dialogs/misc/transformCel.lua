@@ -669,8 +669,10 @@ dlg:button {
 dlg:newrow { always = false }
 
 dlg:button {
+    -- Alt+N is used to add new frames, so it shouldn't
+    -- be assigned to a dialog button.
     id = "cAlignButton",
-    text = "CE&NTER",
+    text = "C&ENTER",
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
@@ -1164,7 +1166,7 @@ dlg:button {
 
 dlg:button {
     id = "scaleButton",
-    text = "SCAL&E",
+    text = "&SCALE",
     focus = false,
     onclick = function()
         -- Early returns.

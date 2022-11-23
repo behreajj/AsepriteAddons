@@ -250,10 +250,10 @@ dlg:button {
         end
 
         -- Create sprite.
-        local sprite = Sprite(size, size)
+        local spec = ImageSpec { width = size, height = size}
+        spec.colorSpace = ColorSpace()
+        local sprite = Sprite(spec)
         sprite.filename = "Normal Map Color Wheel"
-        -- TODO: Replace this with an ImageSpec
-        sprite:assignColorSpace(ColorSpace())
         local wheelCel = sprite.cels[1]
 
         -- For flipping the wheel orientation.

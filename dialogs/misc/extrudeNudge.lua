@@ -74,20 +74,26 @@ local function blendImages(a, b, xOff, yOff, xCel, yCel, selection)
 
         local ax = xpx + tlx
         local ay = ypx + tly
+
+        local xSample = xpx + xCel - xOff
+        local ySample = ypx + yCel + yOff
+
+        -- if (selection:contains(xSample, ySample)) then
         if ay > -1 and ay < ah
             and ax > -1 and ax < aw then
             aHex = a:getPixel(ax, ay)
         end
+        -- end
 
-        if (selection:contains(xpx + xCel, ypx + yCel)) then
+        if (selection:contains(xSample, ySample)) then
             local bx = ax - xOff
             local by = ay + yOff
             if by > -1 and by < bh
                 and bx > -1 and bx < bw then
                 bHex = b:getPixel(bx, by)
             end
-
         end
+
         elm(blendHexes(aHex, bHex))
 
     end
@@ -122,7 +128,7 @@ local function extrude(dx, dy)
             srcImage, srcImage, dx, dy,
             xCel, yCel, sel)
         activeCel.image = trgImage
-        activeCel.position = srcPos + Point(tlx, tly)
+        activeCel.position = Point(xCel + tlx, yCel + tly)
 
         -- Move the selection to match the cel.
         local selShifted = Selection()
@@ -137,29 +143,13 @@ local function extrude(dx, dy)
     app.refresh()
 end
 
--- local function extrudeMask(dx, dy)
---     local activeSprite = app.activeSprite
---     if not activeSprite then return end
-
---     app.transaction(function()
---         local sel0 = AseUtilities.getSelection(activeSprite)
---         local orig0 = sel0.origin
---         local sel1 = Selection()
---         sel1:add(sel0)
---         sel1.origin = Point(orig0.x + dx, orig0.y - dy)
---         sel1:add(sel0)
---         sel1:intersect(activeSprite.bounds)
---         activeSprite.selection = sel1
---     end)
--- end
-
 local function nudgeCel(dx, dy)
     local activeSprite = app.activeSprite
     if not activeSprite then return end
     local activeCel = app.activeCel
     if not activeCel then return end
     local srcPos = activeCel.position
-    activeCel.position = srcPos + Point(dx, -dy)
+    activeCel.position = Point(srcPos.x + dx, srcPos.y - dy)
     app.refresh()
 end
 
@@ -307,73 +297,6 @@ dlg:button {
 dlg:newrow { always = false }
 
 dlg:separator { id = "maskSep", text = "Mask" }
-
--- dlg:button {
---     id = "tMask",
---     label = "Extrude:",
---     text = "&T",
---     focus = false,
---     visible = false,
---     onclick = function()
---         local args = dlg.data
---         local shift = args.shiftOption
---         local amount = args.amount
---         local tr = shiftFromStr(shift)
---         extrudeMask(
---             tr.up[1] * amount,
---             tr.up[2] * amount)
---     end
--- }
-
--- dlg:button {
---     id = "fMask",
---     text = "&F",
---     focus = false,
---     visible = false,
---     onclick = function()
---         local args = dlg.data
---         local shift = args.shiftOption
---         local amount = args.amount
---         local tr = shiftFromStr(shift)
---         extrudeMask(
---             tr.left[1] * amount,
---             tr.left[2] * amount)
---     end
--- }
-
--- dlg:button {
---     id = "gMask",
---     text = "&G",
---     focus = false,
---     visible = false,
---     onclick = function()
---         local args = dlg.data
---         local shift = args.shiftOption
---         local amount = args.amount
---         local tr = shiftFromStr(shift)
---         extrudeMask(
---             tr.down[1] * amount,
---             tr.down[2] * amount)
---     end
--- }
-
--- dlg:button {
---     id = "hMask",
---     text = "&H",
---     focus = false,
---     visible = false,
---     onclick = function()
---         local args = dlg.data
---         local shift = args.shiftOption
---         local amount = args.amount
---         local tr = shiftFromStr(shift)
---         extrudeMask(
---             tr.right[1] * amount,
---             tr.right[2] * amount)
---     end
--- }
-
--- dlg:newrow { always = false }
 
 dlg:combobox {
     id = "brushOption",

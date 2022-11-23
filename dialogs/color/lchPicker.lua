@@ -586,7 +586,6 @@ dlg:button {
     text = "S&ELECT",
     focus = false,
     onclick = function()
-        --Early returns.
         local args = dlg.data
         local clrs = args.clr
         if #clrs < 1 then return end

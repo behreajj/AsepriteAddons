@@ -266,6 +266,7 @@ dlg:button {
                     local srcImgHeight = srcImg.height
                     local srcPos = srcCel.position
 
+                    -- TODO: Don't rely on Aseprite defined operators.
                     local redCel = activeSprite:newCel(
                         redLyr, srcFrame, srcImg, srcPos + redShift)
                     local greenCel = activeSprite:newCel(

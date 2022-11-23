@@ -213,7 +213,7 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local target = args.target or defaults.target
+        local target = args.target or defaults.target --[[@as string]]
         local delSrcStr = args.delSrc or defaults.delSrc
         local edgeType = args.edgeType or defaults.edgeType
         local coord = args.coord or defaults.coord
@@ -392,7 +392,8 @@ dlg:button {
                         local ey = cy - yOrPx
                         local cross = ex * dy - ey * dx
                         if flipSign * cross < 0.0 then
-                            lftImg:drawPixel(cx, cy, elm())
+                            local hex = elm()
+                            lftImg:drawPixel(cx, cy, hex)
                         else
                             local t = (ex * dx + ey * dy) * dInvMagSq
                             local u = 1.0 - t
