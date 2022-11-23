@@ -357,7 +357,9 @@ dlg:button {
             end
         elseif preset == "GAMMA" then
             local g = 1.0
-            if args.gamma ~= 0.0 then g = args.gamma end
+            if args.gamma ~= 0.0 then
+                g = args.gamma --[[@as number]]
+            end
             local amplitude = args.amplitude or defaults.amplitude
             local offset = args.offset or defaults.offset
             func = function(x)

@@ -208,14 +208,9 @@ dlg:button {
         -- Need a scalar to normalize distance to [0.0, 1.0]
         local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, wn1, hn1))
 
-        local selection = AseUtilities.getSelection(activeSprite)
-        local selBounds = selection.bounds
-        local xSel = selBounds.x
-        local ySel = selBounds.y
-
         local grdSpec = ImageSpec {
-            width = math.max(1, selBounds.width),
-            height = math.max(1, selBounds.height),
+            width = math.max(1, activeSprite.width),
+            height = math.max(1, activeSprite.height),
             colorMode = activeSpec.colorMode,
             transparentColor = activeSpec.transparentColor
         }
@@ -224,8 +219,8 @@ dlg:button {
         local grdImg = Image(grdSpec)
         local grdItr = grdImg:pixels()
         for elm in grdItr do
-            local x = elm.x + xSel
-            local y = elm.y + ySel
+            local x = elm.x
+            local y = elm.y
             local dst = distFunc(x, y, xOrigPx, yOrigPx)
             local fac = dst * normDist
             fac = (fac - minRad) * linDenom
@@ -242,10 +237,7 @@ dlg:button {
             local activeFrame = app.activeFrame
                 or activeSprite.frames[1]
             activeSprite:newCel(
-                grdLayer,
-                activeFrame,
-                grdImg,
-                Point(xSel, ySel))
+                grdLayer, activeFrame, grdImg)
         end)
         app.refresh()
     end

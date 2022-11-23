@@ -228,14 +228,9 @@ dlg:button {
         end
         local bbInv = 1.0 / (bx * bx + by * by)
 
-        local selection = AseUtilities.getSelection(activeSprite)
-        local selBounds = selection.bounds
-        local xSel = selBounds.x - xOrPx
-        local ySel = selBounds.y - yOrPx
-
         local grdSpec = ImageSpec {
-            width = math.max(1, selBounds.width),
-            height = math.max(1, selBounds.height),
+            width = math.max(1, activeSprite.width),
+            height = math.max(1, activeSprite.height),
             colorMode = activeSpec.colorMode,
             transparentColor = activeSpec.transparentColor
         }
@@ -244,8 +239,8 @@ dlg:button {
         local grdImg = Image(grdSpec)
         local grdItr = grdImg:pixels()
         for elm in grdItr do
-            local ax = elm.x + xSel
-            local ay = elm.y + ySel
+            local ax = elm.x
+            local ay = elm.y
             local adotb = (ax * bx + ay * by) * bbInv
             local fac = min(max(adotb, 0.0), 1.0)
             fac = facAdjust(fac)
@@ -260,10 +255,7 @@ dlg:button {
             local activeFrame = app.activeFrame
                 or activeSprite.frames[1]
             activeSprite:newCel(
-                grdLayer,
-                activeFrame,
-                grdImg,
-                Point(selBounds.x, selBounds.y))
+                grdLayer, activeFrame, grdImg)
         end)
         app.refresh()
 

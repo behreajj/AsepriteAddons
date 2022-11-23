@@ -276,7 +276,7 @@ dlg:button {
         local missingUserData = "null"
         local spriteUserData = "\"data\":" .. missingUserData
         if checkTilemaps then
-            local rawUserData = activeSprite.data
+            local rawUserData = activeSprite.data --[[@as string]]
             if rawUserData and #rawUserData > 0 then
                 spriteUserData = string.format(
                     "\"data\":%s", rawUserData)

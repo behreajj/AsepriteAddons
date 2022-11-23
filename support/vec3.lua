@@ -1267,7 +1267,7 @@ end
 ---Returns a table with 'radius', 'azimuth' and
 ---'inclination'.
 ---@param v Vec3 vector
----@return table
+---@return { radius: number, azimuth: number, inclination: number }
 function Vec3.toSpherical(v)
     return {
         radius = Vec3.mag(v),

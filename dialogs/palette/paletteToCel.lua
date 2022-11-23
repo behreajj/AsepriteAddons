@@ -262,7 +262,7 @@ dlg:button {
         local cvgRad = 0.0
         if clrSpacePreset == "CIE_LAB"
             or clrSpacePreset == "SR_LAB_2" then
-            cvgRad = args.cvgLabRad
+            cvgRad = args.cvgLabRad --[[@as number]]
         else
             cvgRad = args.cvgNormRad * 0.01
         end

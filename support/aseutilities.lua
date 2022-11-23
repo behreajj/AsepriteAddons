@@ -1581,8 +1581,10 @@ function AseUtilities.getPalette(frame, palettes)
 end
 
 ---Gets a selection from a sprite. Calls InvertMask
----command twice. If selection is empty, returns
----sprite bounds as selection.
+---command twice. Returns a copy of the selection,
+---not a reference. If the selection is empty, then
+---trys to return the cel bounds; if that is empty,
+---then returns the sprite bounds.
 ---@param sprite Sprite sprite
 ---@return Selection
 function AseUtilities.getSelection(sprite)
@@ -1594,14 +1596,26 @@ function AseUtilities.getSelection(sprite)
         app.command.InvertMask()
         app.command.InvertMask()
     end)
-    local sel = sprite.selection
-    if (not sel) or sel.isEmpty then
-        -- TODO: Should this be a getOrDefault
-        -- so that gradients and transformCel
-        -- can behave differently?
+
+    local srcSel = sprite.selection
+    if (not srcSel) or srcSel.isEmpty then
+        local activeCel = app.activeCel
+        if activeCel then
+            -- Cel bounds could be out-of-bounds, so
+            -- this also needs to intersect with the
+            -- sprite canvas. This ignores that the cel
+            -- image could be empty.
+            local trgSel = Selection(activeCel.bounds)
+            trgSel:intersect(sprite.bounds)
+            return trgSel
+        end
+
         return Selection(sprite.bounds)
     end
-    return sel
+
+    local trgSel = Selection()
+    trgSel:add(srcSel)
+    return trgSel
 end
 
 ---Creates a table of gray colors represented as

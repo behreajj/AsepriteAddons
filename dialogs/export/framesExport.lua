@@ -738,7 +738,7 @@ dlg:button {
             local is1_3 = (version.major >= 1)
                 and (version.minor >= 3)
             if is1_3 then
-                local rawUserData = activeSprite.data
+                local rawUserData = activeSprite.data --[[@as string]]
                 if rawUserData and #rawUserData > 0 then
                     spriteUserData = string.format(
                         "\"data\":%s", rawUserData)
@@ -846,7 +846,7 @@ dlg:button {
                     if is1_3 then
                         -- TODO: This causes problems for 1.3beta21.
                         -- repeats = tag.repeats
-                        local rawUserData = tag.data
+                        local rawUserData = tag.data --[[@as string]]
                         if rawUserData and #rawUserData > 0 then
                             tagUserData = rawUserData
                         end

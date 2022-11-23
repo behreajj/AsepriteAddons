@@ -267,7 +267,7 @@ end
 ---@param b number b, blue to yellow
 ---@param alpha number transparency
 ---@param tol number? grayscale tolerance
----@return table
+---@return { l: number, c: number, h: number, a: number }
 function Clr.cieLabToCieLch(l, a, b, alpha, tol)
     -- 0.00004 is the square chroma for white.
     local vTol = 0.007072
@@ -318,7 +318,7 @@ end
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
 ---@param alpha number transparency
----@return table
+---@return { x: number, y: number, z: number, a: number }
 function Clr.cieLabToCieXyz(l, a, b, alpha)
     -- D65, CIE 1931 2 degrees
     -- 95.047, 100.0, 108.883
@@ -371,7 +371,7 @@ end
 ---@param h number hue
 ---@param a number transparency
 ---@param tol number? gray tolerance
----@return table
+---@return { l: number, a: number, b: number, alpha: number }
 function Clr.cieLchToCieLab(l, c, h, a, tol)
     -- Return early cannot be done here because
     -- saturated colors are still possible at
@@ -400,7 +400,7 @@ end
 ---@param c number chromaticity
 ---@param h number hue
 ---@param a number transparency
----@return table
+---@return { l: number, a: number, b: number, alpha: number }
 function Clr.cieLchToCieLabInternal(l, c, h, a)
     local hRad = h * 6.2831853071796
     return {
@@ -436,7 +436,7 @@ end
 ---@param y number y channel
 ---@param z number z channel
 ---@param alpha number transparency
----@return table
+---@return { l: number, a: number, b: number, alpha: number }
 function Clr.cieXyzToLab(x, y, z, alpha)
     -- D65, CIE 1931 2 degrees
     -- 95.047, 100.0, 108.883
@@ -840,7 +840,7 @@ end
 ---The return table uses the keys l, a, b and alpha.
 ---Clamps the input color to [0.0, 1.0].
 ---@param c Clr linear color
----@return table
+---@return { l: number, a: number, b: number, alpha: number }
 function Clr.lRgbToSrLab2(c)
     return Clr.lRgbToSrLab2Internal(Clr.clamp01(c))
 end
@@ -850,7 +850,7 @@ end
 ---The return table uses the keys l, a, b and alpha.
 ---The alpha channel is unaffected by the transform.
 ---@param c Clr linear color
----@return table
+---@return { l: number, a: number, b: number, alpha: number }
 function Clr.lRgbToSrLab2Internal(c)
     local r = c.r
     local g = c.g
@@ -937,7 +937,7 @@ end
 ---@param green number green channel
 ---@param blue number blue channel
 ---@param alpha number transparency
----@return table
+---@return { x: number, y: number, z: number, a: number }
 function Clr.lRgbToCieXyzInternal(red, green, blue, alpha)
     local aVrf = alpha or 1.0
     return {
@@ -1470,7 +1470,7 @@ end
 ---The return table uses the keys l, a, b and alpha.
 ---The alpha channel is unaffected by the transform.
 ---@param c Clr color
----@return table
+---@return { l: number, a: number, b: number, alpha: number }
 function Clr.sRgbToCieLab(c)
     local xyz = Clr.sRgbToCieXyz(c)
     return Clr.cieXyzToLab(xyz.x, xyz.y, xyz.z, xyz.a)
@@ -1481,7 +1481,7 @@ end
 ---The alpha channel is unaffected by the transform.
 ---@param c Clr color
 ---@param tol number? gray tolerance
----@return table
+---@return { l: number, c: number, h: number, a: number }
 function Clr.sRgbToCieLch(c, tol)
     local lab = Clr.sRgbToCieLab(c)
     return Clr.cieLabToCieLch(lab.l, lab.a, lab.b, lab.alpha, tol)
@@ -1491,7 +1491,7 @@ end
 ---The return table uses the keys x, y, z and a.
 ---The alpha channel is unaffected by the transform.
 ---@param c Clr color
----@return table
+---@return { x: number, y: number, z: number, a: number }
 function Clr.sRgbToCieXyz(c)
     local l = Clr.sRgbTolRgbInternal(c)
     return Clr.lRgbToCieXyzInternal(l.r, l.g, l.b, l.a)
@@ -1501,7 +1501,7 @@ end
 ---The return table uses the keys h, s, l and a
 ---with values in the range [0.0, 1.0].
 ---@param c Clr color
----@return table
+---@return { h: number, s: number, l: number, a: number }
 function Clr.sRgbToHsl(c)
     local cl = Clr.clamp01(c)
     return Clr.sRgbToHslInternal(cl.r, cl.g, cl.b, cl.a)
@@ -1515,7 +1515,7 @@ end
 ---@param green number green channel
 ---@param blue number blue channel
 ---@param alpha number transparency
----@return table
+---@return { h: number, s: number, l: number, a: number }
 function Clr.sRgbToHslInternal(red, green, blue, alpha)
     local gbmx = blue
     if green > blue then gbmx = green end
@@ -1592,7 +1592,7 @@ end
 ---The return table uses the keys h, s, v and a
 ---with values in the range [0.0, 1.0].
 ---@param c Clr color
----@return table
+---@return { h: number, s: number, v: number, a: number }
 function Clr.sRgbToHsv(c)
     local cl = Clr.clamp01(c)
     return Clr.sRgbToHsvInternal(cl.r, cl.g, cl.b, cl.a)
@@ -1606,7 +1606,7 @@ end
 ---@param green number green channel
 ---@param blue number blue channel
 ---@param alpha number transparency
----@return table
+---@return { h: number, s: number, v: number, a: number }
 function Clr.sRgbToHsvInternal(red, green, blue, alpha)
     -- Find maximum color channel.
     local gbmx = blue
@@ -1727,7 +1727,7 @@ end
 ---The return table uses the keys l, a, b and alpha.
 ---Clamps the input color to [0.0, 1.0].
 ---@param c Clr linear color
----@return table
+---@return { l: number, a: number, b: number, alpha: number }
 function Clr.sRgbToSrLab2(c)
     return Clr.sRgbToSrLab2Internal(Clr.clamp01(c))
 end
@@ -1745,7 +1745,7 @@ end
 ---The alpha channel is unaffected by the transform.
 ---@param c Clr color
 ---@param tol number? gray tolerance
----@return table
+---@return { l: number, c: number, h: number, a: number }
 function Clr.sRgbToSrLch(c, tol)
     local lab = Clr.sRgbToSrLab2(c)
     return Clr.srLab2ToSrLch(lab.l, lab.a, lab.b, lab.alpha, tol)
@@ -1819,7 +1819,7 @@ end
 ---@param b number b, blue to yellow
 ---@param alpha number transparency
 ---@param tol number? gray tolerance
----@return table
+---@return { l: number, c: number, h: number, a: number }
 function Clr.srLab2ToSrLch(l, a, b, alpha, tol)
     -- 0.00004 is the square chroma for white.
     local vTol = 0.007072
@@ -1869,7 +1869,7 @@ end
 ---@param h number hue
 ---@param a number transparency
 ---@param tol number? gray tolerance
----@return table
+---@return { l: number, a: number, b: number, alpha: number }
 function Clr.srLchToSrLab2(l, c, h, a, tol)
     -- Return early cannot be done here because
     -- saturated colors are still possible at
@@ -1899,7 +1899,7 @@ end
 ---@param c number chromaticity
 ---@param h number hue
 ---@param a number transparency
----@return table
+---@return { l: number, a: number, b: number, alpha: number }
 function Clr.srLchToSrLab2Internal(l, c, h, a)
     local hRad = h * 6.2831853071796
     return {

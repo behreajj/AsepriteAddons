@@ -578,7 +578,7 @@ dlg:button {
         local bkgHex = args.bkgColor.rgbaPixel
         for elm in bkgImg:pixels() do elm(bkgHex) end
 
-        local fps = args.fps or defaults.fps
+        local fps = args.fps or defaults.fps --[[@as integer]]
         local duration = 1.0 / math.max(1, fps)
         app.transaction(function()
             local m = 0

@@ -977,7 +977,7 @@ end
 ---Converts a vector to polar coordinates.
 ---Returns a table with 'radius' and 'heading'.
 ---@param v Vec2 vector
----@return table
+---@return { radius: number, heading: number }
 function Vec2.toPolar(v)
     return {
         radius = Vec2.mag(v),

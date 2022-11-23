@@ -233,7 +233,7 @@ end
 ---Converts a complex number to polar coordinates.
 ---Returns a table with keys 'r' and 'phi'.
 ---@param z Complex complex number
----@return table
+---@return { r: number, phi: number }
 function Complex.polar(z)
     return {
         r = Complex.phase(z),

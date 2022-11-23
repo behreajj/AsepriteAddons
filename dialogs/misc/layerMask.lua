@@ -120,7 +120,7 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local target = args.target or defaults.target
+        local target = args.target or defaults.target --[[@as string]]
         local trimCels = args.trimCels
         local delOverStr = args.delOver or defaults.delOver
         local delUnderStr = args.delUnder or defaults.delUnder

@@ -470,7 +470,7 @@ end
 local function updateUserData()
     local sprUserData = ""
     if is1_3 then
-        sprUserData = sprite.data
+        sprUserData = sprite.data --[[@as string]]
     end
 
     -- Because this is a text entry widget, not a label, it
@@ -525,8 +525,8 @@ dlg:button {
     onclick = function()
         if sprite and app.activeSprite == sprite then
             local args = dlg.data
-            local aPxRatio = args.aPxRatio
-            local bPxRatio = args.bPxRatio
+            local aPxRatio = args.aPxRatio --[[@as integer]]
+            local bPxRatio = args.bPxRatio --[[@as integer]]
             local sprColor = args.sprTabColor
             local userData = args.sprUserData
 

@@ -1,6 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
 local defaults = {
+    -- TODO: Get and Set from Select?
     x = 0.0,
     y = 0.0,
     z = 1.0,
@@ -31,9 +32,13 @@ local function colorToVec(clr)
     local sqMag = x * x + y * y + z * z
     if sqMag > 0.000047 then
         local magInv = 1.0 / math.sqrt(sqMag)
-        return x * magInv,
-            y * magInv,
-            z * magInv
+        local xn = x * magInv
+        local yn = y * magInv
+        local zn = z * magInv
+        if math.abs(xn) < 0.0039216 then xn = 0.0 end
+        if math.abs(yn) < 0.0039216 then yn = 0.0 end
+        if math.abs(zn) < 0.0039216 then zn = 0.0 end
+        return xn, yn, zn
     else
         return 0.0, 0.0, 1.0
     end
@@ -43,11 +48,10 @@ local function vecToColor(x, y, z)
     local sqMag = x * x + y * y + z * z
     if sqMag > 0.0 then
         local invMag = 127.5 / math.sqrt(sqMag)
-        return Color {
-            r = math.floor(x * invMag + 128.0),
-            g = math.floor(y * invMag + 128.0),
-            b = math.floor(z * invMag + 128.0)
-        }
+        local r = math.floor(x * invMag + 128.0)
+        local g = math.floor(y * invMag + 128.0)
+        local b = math.floor(z * invMag + 128.0)
+        return Color { r = r, g = g, b = b }
     else
         return Color { r = 128, g = 128, b = 255 }
     end
@@ -85,28 +89,43 @@ local function updateWidgetCart(dialog)
     local z = args.z
 
     local sph = Vec3.toSpherical(Vec3.new(x, y, z))
-    local a = sph.azimuth
     local i = sph.inclination
-    a = Utilities.round(
-        (a % 6.2831853071796) * 57.295779513082)
     i = Utilities.round(i * 57.295779513082)
-
-    dialog:modify { id = "azimuth", value = a }
     dialog:modify { id = "inclination", value = i }
+
+    -- Azimuth is undefined at sphere poles.
+    if i < 90 and i > -90 then
+        local a = sph.azimuth
+        a = Utilities.round(
+            (a % 6.2831853071796) * 57.295779513082)
+        dialog:modify { id = "azimuth", value = a }
+    end
 
     local clr = vecToColor(x, y, z)
     updateWidgetClr(dialog, clr)
 end
 
 local function updateWidgetSphere(dialog)
+    -- Modulo by 360 because color result
+    -- can err by 1 bit, i.e., 0x7f vs. 0x80.
     local args = dialog.data
-    local az = args.azimuth
+    local az = args.azimuth % 360
     local incl = args.inclination
 
-    local v = Vec3.fromSpherical(
-        az * 0.017453292519943,
-        incl * 0.017453292519943,
-        1.0)
+    -- Handle other off-by-one edge cases.
+    local v = nil
+    if incl >= 90 then
+        v = Vec3.up()
+    elseif incl <= -90 then
+        v = Vec3.down()
+    else
+        v = Vec3.fromSpherical(
+            az * 0.017453292519943,
+            incl * 0.017453292519943,
+            1.0)
+        if math.abs(v.x) < 0.0039216 then v.x = 0.0 end
+        if math.abs(v.y) < 0.0039216 then v.y = 0.0 end
+    end
 
     dialog:modify { id = "x", text = string.format("%.3f", v.x) }
     dialog:modify { id = "y", text = string.format("%.3f", v.y) }
@@ -124,14 +143,17 @@ local function updateFromColor(dialog, clr)
         dialog:modify { id = "z", text = string.format("%.3f", z) }
 
         local sph = Vec3.toSpherical(Vec3.new(x, y, z))
-        local a = sph.azimuth
         local i = sph.inclination
-        a = Utilities.round(
-            (a % 6.2831853071796) * 57.295779513082)
         i = Utilities.round(i * 57.295779513082)
-
-        dialog:modify { id = "azimuth", value = a }
         dialog:modify { id = "inclination", value = i }
+
+        -- Azimuth is undefined at sphere poles.
+        if i < 90 and i > -90 then
+            local a = sph.azimuth
+            a = Utilities.round(
+                (a % 6.2831853071796) * 57.295779513082)
+            dialog:modify { id = "azimuth", value = a }
+        end
 
         local r = math.floor(x * 127.5 + 128.0)
         local g = math.floor(y * 127.5 + 128.0)

@@ -11,7 +11,7 @@ local defaults = {
     yFlip = false,
     zFlip = false,
     plotPalette = true,
-    palType = "ACTIVE",
+    palType = "DEFAULT",
     palStart = 0,
     palCount = 256,
     correctPalette = true,
@@ -201,6 +201,7 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Cache methods.
+        local abs = math.abs
         local atan2 = math.atan
         local acos = math.acos
         local ceil = math.ceil
@@ -251,6 +252,7 @@ dlg:button {
         -- Create sprite.
         local sprite = Sprite(size, size)
         sprite.filename = "Normal Map Color Wheel"
+        -- TODO: Replace this with an ImageSpec
         sprite:assignColorSpace(ColorSpace())
         local wheelCel = sprite.cels[1]
 
@@ -304,18 +306,19 @@ dlg:button {
         local pxItr = wheelImg:pixels()
         for elm in pxItr do
 
-            -- Find rise and run.
-            local yNrm = elm.y * szInv
-            local ySgn = yFlipNum * (1.0 - (yNrm + yNrm))
-            local xNrm = elm.x * szInv
-            local xSgn = xFlipNum * (xNrm + xNrm - 1.0)
+            -- Find rise and run as [0.0, 1.0], convert to
+            -- [-1.0, 1.0] and flip as requested.
+            local y01 = elm.y * szInv
+            local ySgn = yFlipNum * (1.0 - (y01 + y01))
+            local x01 = elm.x * szInv
+            local xSgn = xFlipNum * (x01 + x01 - 1.0)
 
             -- Find square magnitude.
             -- Magnitude is correlated with inclination.
             -- Epsilon = 2 * ((1 / 255) ^ 2) = 0.000031
-            local magSq = xSgn * xSgn + ySgn * ySgn
-            if magSq > 0.000031 and magSq <= 1.0 then
-                local zSgn = zFlipNum * sqrt(1.0 - magSq)
+            local sqMag2d = xSgn * xSgn + ySgn * ySgn
+            if sqMag2d > 0.000031 and sqMag2d <= 1.0 then
+                local zSgn = zFlipNum * sqrt(1.0 - sqMag2d)
 
                 local xn = xSgn
                 local yn = ySgn
@@ -334,8 +337,10 @@ dlg:button {
                     local incl = halfPi
                     if quantIncls then
                         if uniformRings then
-                            local geom = sqrt(magSq)
-                            -- To make a polygon rather than a circle:
+                            -- To make a polygon rather than a circle,
+                            -- multiply by the difference between the
+                            -- discrete and smooth angle supplied to cos.
+                            local geom = sqrt(sqMag2d)
                             -- geom = geom * cos(azim - azimSmooth)
                             local fac = max(0.0, (ceil(geom * ringsp1) - 1.0)
                                 * oneDivRings)
@@ -344,26 +349,28 @@ dlg:button {
                             incl = floor(0.5 + (halfPi - acos(zSgn))
                                 * rings2DivPi) * piDivRings2
                         end
-
                     else
                         incl = halfPi - acos(zSgn);
                     end
 
+                    -- Convert spherical to Cartesian coordinates.
                     local cosIncl = cos(incl)
                     xn = cosIncl * cos(azim)
                     yn = cosIncl * sin(azim)
                     zn = sin(incl)
+
+                    -- Discontinuity in the return from atan2 can
+                    -- lead to x, y being slightly off from pi, and
+                    -- so 0x7f and 0x80 variants appear.
+                    if abs(xn) < 0.0039216 then xn = 0.0 end
+                    if abs(yn) < 0.0039216 then yn = 0.0 end
+                    if abs(zn) < 0.0039216 then zn = 0.0 end
                 end
 
-                -- Discontinuity in the return from atan2 can
-                -- lead to y being slightly off from pi, and
-                -- so 0x7f and 0x80 variants appear.
-                local green = floor(yn * 127.5 + 128.0)
-                if green == 0x7f then green = 0x80 end
-                elm(0xff000000
-                    | (floor(zn * 127.5 + 128.0) << 0x10)
-                    | (green << 0x08)
-                    | floor(xn * 127.5 + 128.0))
+                local r = floor(xn * 127.5 + 128.0)
+                local g = floor(yn * 127.5 + 128.0)
+                local b = floor(zn * 127.5 + 128.0)
+                elm(0xff000000 | (b << 0x10) | (g << 0x08) | r)
             else
                 elm(hexDefault)
             end
@@ -397,13 +404,13 @@ dlg:button {
                         local z = (b + b - 255) * 0.003921568627451
 
                         local hexPlot = 0xff808080
-                        local sqMag = x * x + y * y + z * z
-                        if sqMag > 0.000047 then
-                            local invMag = 127.5 / sqrt(sqMag)
+                        local sqMag3d = x * x + y * y + z * z
+                        if sqMag3d > 0.000047 then
+                            local invMag3d = 127.5 / sqrt(sqMag3d)
                             hexPlot = 0xff000000
-                                | (floor(z * invMag + 128.0) << 0x10)
-                                | (floor(y * invMag + 128.0) << 0x08)
-                                | floor(x * invMag + 128.0)
+                                | (floor(z * invMag3d + 128.0) << 0x10)
+                                | (floor(y * invMag3d + 128.0) << 0x08)
+                                | floor(x * invMag3d + 128.0)
                         end
 
                         k = k + 1
@@ -441,26 +448,28 @@ dlg:button {
 
                 local sqMag2d = x * x + y * y
                 if sqMag2d > 0.000031 then
-                    local invMag2d = 1.0 / sqrt(sqMag2d)
-                    local xn2d = x * invMag2d
-                    local yn2d = y * invMag2d
                     local xu = 0.5
                     local yu = 0.5
                     if sqMag2d >= 1.0 then
-                        -- Would it be more accurate to normalize
-                        -- the color again by 3d mag? This approach
-                        -- is better suited to a color picker.
+                        -- Normalize by 2D magnitude.
+                        local invMag2d = 1.0 / sqrt(sqMag2d)
+                        local xn2d = x * invMag2d
+                        local yn2d = y * invMag2d
+
                         xu = xn2d * 0.5 + 0.5
                         yu = yn2d * 0.5 + 0.5
                     else
+                        -- Normalize by 3D magnitude.
+                        -- Simpler than using the trig identity
+                        -- cos(asin(z)) = sqrt(1.0 - z * z) .
                         local b255 = (hexPlot >> 0x10) & 0xff
                         local z = (b255 + b255 - 255) * zFlipScale
-                        local zn3d = z / sqrt(sqMag2d + z * z)
 
-                        -- cos(asin(z)) == sqrt(1 - z * z)
-                        local dist = sqrt(1.0 - zn3d * zn3d)
-                        local xn3d = xn2d * dist
-                        local yn3d = yn2d * dist
+                        -- By excluding zn3d, this projects a point
+                        -- on a sphere onto a point on a circle.
+                        local invMag3d = 1.0 / sqrt(sqMag2d + z * z)
+                        local xn3d = x * invMag3d
+                        local yn3d = y * invMag3d
 
                         xu = xn3d * 0.5 + 0.5
                         yu = yn3d * 0.5 + 0.5

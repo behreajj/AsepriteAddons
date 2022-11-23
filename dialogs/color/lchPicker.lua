@@ -13,7 +13,7 @@ local harmonies = {
 }
 
 local defaults = {
-    base = Color(255, 0, 0, 255),
+    base = Color { r = 255, g = 0, b = 0 },
     hexCode = "FF0000",
     lightness = 53,
     chroma = 105,
@@ -277,7 +277,6 @@ local function setFromSelect(dialog, sprite, frame)
 
     local sel = AseUtilities.getSelection(sprite)
     local selBounds = sel.bounds
-
     local xSel = selBounds.x
     local ySel = selBounds.y
 

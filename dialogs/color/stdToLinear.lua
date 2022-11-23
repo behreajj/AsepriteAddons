@@ -1,8 +1,5 @@
 dofile("../../support/aseutilities.lua")
 
--- https://blog.johnnovak.net/2016/09/21/what-every-coder-should-know-about-gamma/
--- http://www.ericbrasseur.org/gamma.html
-
 local invPowPrev = {
     Color { r = 0, g = 0, b = 0 },
     Color { r = 98, g = 98, b = 98 },
