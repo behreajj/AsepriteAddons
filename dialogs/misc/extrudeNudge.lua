@@ -6,7 +6,8 @@ local brushOptions = { "CIRCLE", "SQUARE" }
 local defaults = {
     amount = 1,
     shiftOption = "CARDINAL",
-    brushOption = "CIRCLE"
+    brushOption = "CIRCLE",
+    trimCels = true
 }
 
 local shifts = {
@@ -39,65 +40,7 @@ local function shiftFromStr(str)
     return shifts.ortho
 end
 
-local function blendImages(a, b, xOff, yOff, xCel, yCel, selection)
-    local aSpec = a.spec
-    local tSpec = ImageSpec {
-        width = aSpec.width + math.abs(xOff),
-        height = aSpec.height + math.abs(yOff),
-        colorMode = aSpec.colorMode,
-        transparentColor = aSpec.transparentColor
-    }
-    tSpec.colorSpace = aSpec.colorSpace
-    local target = Image(tSpec)
-
-    -- getPixel must be bounds checked; otherwise it
-    -- returns white when pixel coordinates are out of bounds.
-    local aw = a.width
-    local ah = a.height
-    local bw = b.width
-    local bh = b.height
-
-    -- Top left corner, i.e., cel position, must be adjusted
-    -- if the shift number is negative.
-    local tlx = 0
-    local tly = 0
-    if xOff < 0 then tlx = xOff end
-    if yOff > 0 then tly = -yOff end
-
-    local blendHexes = AseUtilities.blendHexes
-    local pixels = target:pixels()
-    for elm in pixels do
-        local xpx = elm.x
-        local ypx = elm.y
-        local aHex = 0x0
-        local bHex = 0x0
-
-        local ax = xpx + tlx
-        local ay = ypx + tly
-        if ay > -1 and ay < ah
-            and ax > -1 and ax < aw then
-            aHex = a:getPixel(ax, ay)
-        end
-
-        local xSample = xpx + xCel + tlx
-        local ySample = ypx + yCel + tly
-        if (selection:contains(xSample, ySample)) then
-            local bx = ax - xOff
-            local by = ay + yOff
-            if by > -1 and by < bh
-                and bx > -1 and bx < bw then
-                bHex = b:getPixel(bx, by)
-            end
-        end
-
-        elm(blendHexes(aHex, bHex))
-
-    end
-
-    return target, tlx, tly
-end
-
-local function extrude(dx, dy)
+local function extrude(dx, dy, trim)
     local activeSprite = app.activeSprite
     if not activeSprite then return end
     local activeCel = app.activeCel
@@ -112,33 +55,36 @@ local function extrude(dx, dy)
         return
     end
 
-    local srcPos = activeCel.position
-    local xCel = srcPos.x
-    local yCel = srcPos.y
-
     app.transaction(function()
-        local sel = AseUtilities.getSelection(activeSprite)
-        local selOrigin = sel.origin
-        local xSel = selOrigin.x
-        local ySel = selOrigin.y
+        local celBounds = activeCel.bounds
+        local xCel = celBounds.x
+        local yCel = celBounds.y
 
-        local selShifted = Selection()
-        selShifted:add(sel)
-        selShifted.origin = Point(xSel + dx, ySel - dy)
+        if trim then
+            local trimmed, tmx, tmy = AseUtilities.trimImageAlpha(
+                srcImage, 0, 0)
+            srcImage = trimmed
+            xCel = xCel + tmx
+            yCel = yCel + tmy
+        end
 
-        -- Try sample selection as a union
-        -- of both its previous and next area.
-        sel:add(selShifted)
+        local selCurr = AseUtilities.getSelection(activeSprite)
+        local selOrigin = selCurr.origin
 
-        -- Assign the new image and move the cel.
-        local trgImage, tlx, tly = blendImages(
-            srcImage, srcImage, dx, dy,
-            xCel, yCel, sel)
+        local selNext = Selection()
+        selNext:add(selCurr)
+        selNext.origin = Point(
+            selOrigin.x + dx,
+            selOrigin.y - dy)
+
+        local trgImage, tlx, tly = AseUtilities.blendImages(
+            srcImage, srcImage,
+            xCel, yCel, xCel + dx, yCel - dy,
+            selNext, true)
+
         activeCel.image = trgImage
-        activeCel.position = Point(xCel + tlx, yCel + tly)
-
-        -- Move the selection to match the cel.
-        activeSprite.selection = selShifted
+        activeCel.position = Point(tlx, tly)
+        activeSprite.selection = selNext
     end)
 
     app.refresh()
@@ -171,6 +117,17 @@ dlg:slider {
     value = defaults.amount
 }
 
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "trimCels",
+    label = "Trim:",
+    text = "Layer Edges",
+    selected = defaults.trimCels
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "wExtrude",
     label = "Extrude:",
@@ -178,12 +135,12 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local shift = args.shiftOption
         local amount = args.amount
+        local trim = args.trimCels
+        local shift = args.shiftOption
         local tr = shiftFromStr(shift)
-        extrude(
-            tr.up[1] * amount,
-            tr.up[2] * amount)
+        extrude(tr.up[1] * amount,
+            tr.up[2] * amount, trim)
     end
 }
 
@@ -193,12 +150,12 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local shift = args.shiftOption
         local amount = args.amount
-        local tr = shiftFromStr(shift)
-        extrude(
-            tr.left[1] * amount,
-            tr.left[2] * amount)
+        local trim = args.trimCels
+        local shift = args.shiftOption
+        local dir = shiftFromStr(shift)
+        extrude(dir.left[1] * amount,
+            dir.left[2] * amount, trim)
     end
 }
 
@@ -208,12 +165,12 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local shift = args.shiftOption
         local amount = args.amount
-        local tr = shiftFromStr(shift)
-        extrude(
-            tr.down[1] * amount,
-            tr.down[2] * amount)
+        local trim = args.trimCels
+        local shift = args.shiftOption
+        local dir = shiftFromStr(shift)
+        extrude(dir.down[1] * amount,
+            dir.down[2] * amount, trim)
     end
 }
 
@@ -223,12 +180,12 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local shift = args.shiftOption
         local amount = args.amount
-        local tr = shiftFromStr(shift)
-        extrude(
-            tr.right[1] * amount,
-            tr.right[2] * amount)
+        local trim = args.trimCels
+        local shift = args.shiftOption
+        local dir = shiftFromStr(shift)
+        extrude(dir.right[1] * amount,
+            dir.right[2] * amount, trim)
     end
 }
 
@@ -294,8 +251,6 @@ dlg:button {
             tr.right[2] * amount)
     end
 }
-
-dlg:newrow { always = false }
 
 dlg:separator { id = "maskSep", text = "Mask" }
 
@@ -378,15 +333,10 @@ dlg:button {
                 activeSel:subtract(trgSel)
             else
                 -- Additive selection can be confusing when no prior
-                -- selection was made and getSelection returns the cel
+                -- selection is made and getSelection returns the cel
                 -- bounds, which is cruder than trgSel. However, there
                 -- could be a square selection contained by, but
                 -- differently shaped than trgSel.
-                -- if activeSel.bounds:contains(trgSel.bounds) then
-                --     activeSel = trgSel
-                -- else
-                --     activeSel:add(trgSel)
-                -- end
                 activeSel:add(trgSel)
             end
 

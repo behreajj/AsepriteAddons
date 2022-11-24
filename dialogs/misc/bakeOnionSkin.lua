@@ -408,14 +408,14 @@ dlg:button {
 
                                     local dest = shadowHex
                                     if useTint then
-                                        dest = AseUtilities.blendHexes(shadowHex, tint)
+                                        dest = AseUtilities.blendRgba(shadowHex, tint)
                                     end
                                     local compAlpha = min(shadowAlpha, fadeAlpha)
                                     dest = (compAlpha << 0x18) | (dest & 0x00ffffff)
 
                                     local orig = trgImg:getPixel(x, y)
                                     trgImg:drawPixel(x, y,
-                                        AseUtilities.blendHexes(orig, dest))
+                                        AseUtilities.blendRgba(orig, dest))
                                 end
                             end
                         end

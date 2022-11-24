@@ -304,7 +304,7 @@ dlg:button {
         local strgsub = string.gsub
         local concat = table.concat
         local insert = table.insert
-        local blend = AseUtilities.blendHexes
+        local blend = AseUtilities.blendRgba
         local tilesToImage = AseUtilities.tilesToImage
         local trimAlpha = AseUtilities.trimImageAlpha
 

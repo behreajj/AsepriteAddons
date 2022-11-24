@@ -531,7 +531,7 @@ function AseUtilities.bakeCelOpacity(cel)
     end
 end
 
----Blends together two hexadecimal colors.
+---Blends two 32-bit RGBA colors.
 ---Premultiplies each color by its alpha prior
 ---to blending. Unpremultiplies the result.
 ---For more information,
@@ -539,7 +539,7 @@ end
 ---@param a integer backdrop color
 ---@param b integer overlay color
 ---@return integer
-function AseUtilities.blendHexes(a, b)
+function AseUtilities.blendRgba(a, b)
     local t = b >> 0x18 & 0xff
     if t > 0xfe then return b end
     local v = a >> 0x18 & 0xff
@@ -577,6 +577,154 @@ function AseUtilities.blendHexes(a, b)
         | cb << 0x10
         | cg << 0x08
         | cr
+end
+
+---Blends a backdrop and overlay image, creating a union
+---image from the two sources. The union then intersects
+---with a selection. If a selection is empty, or is not
+---provided, a new selection is created from the union.
+---If the cumulative flag is true, the backdrop image is
+---sampled regardless of its inclusion in the selection.
+---Returns the blended image and its top left corner x, y.
+---Does not support tile maps or images with mismatched
+---color modes.
+---@param aImage Image backdrop image
+---@param bImage Image overlay image
+---@param axCel integer? backdrop cel top left corner x
+---@param ayCel integer? backdrop cel top left corner y
+---@param bxCel integer? overlay cel top left corner x
+---@param byCel integer? overlay cel top left corner y
+---@param mask Selection? selection
+---@param cumulative boolean? backdrop ignore mask
+---@returns Image
+---@returns integer
+---@returns integer
+function AseUtilities.blendImages(
+    aImage, bImage, axCel, ayCel, bxCel, byCel,
+    mask, cumulative)
+
+    local cmVrf = cumulative or false
+    local bycVrf = byCel or 0
+    local bxcVrf = bxCel or 0
+    local aycVrf = ayCel or 0
+    local axcVrf = axCel or 0
+
+    local aSpec = aImage.spec
+    local aw = aSpec.width
+    local ah = aSpec.height
+    local acm = aSpec.colorMode
+    local aMask = aSpec.transparentColor
+
+    local bSpec = bImage.spec
+    local bw = bSpec.width
+    local bh = bSpec.height
+    local bcm = bSpec.colorMode
+    local bMask = bSpec.transparentColor
+
+    -- Find union of image bounds a and b.
+    local axMax = axcVrf + aw - 1
+    local ayMax = aycVrf + ah - 1
+    local xMin = math.min(axcVrf, bxcVrf)
+    local yMin = math.min(aycVrf, bycVrf)
+    local xMax = math.max(axMax, bxcVrf + bw - 1)
+    local yMax = math.max(ayMax, bycVrf + bh - 1)
+
+    local wTarget = 1 + xMax - xMin
+    local hTarget = 1 + yMax - yMin
+
+    local selVrf = mask
+    if selVrf and (not selVrf.isEmpty) then
+        local selBounds = selVrf.bounds
+        local xSel = selBounds.x
+        local ySel = selBounds.y
+
+        -- Find intersection of composite and selection.
+        xMin = math.max(xMin, xSel)
+        yMin = math.max(yMin, ySel)
+        xMax = math.min(xMax, xSel + selBounds.width - 1)
+        yMax = math.min(yMax, ySel + selBounds.height - 1)
+
+        if cmVrf then
+            -- If the image is cumulative, then the
+            -- union with the original backdrop.
+            xMin = math.min(xMin, axcVrf)
+            yMin = math.min(yMin, aycVrf)
+            xMax = math.max(xMax, axMax)
+            yMax = math.max(yMax, ayMax)
+        end
+
+        -- Update target image dimensions.
+        wTarget = 1 + xMax - xMin
+        hTarget = 1 + yMax - yMin
+    else
+        selVrf = Selection(Rectangle(
+            xMin, yMin, wTarget, hTarget))
+    end
+
+    local tMask = 0
+    if aMask == bMask then tMask = aMask end
+    local tcm = acm
+
+    local tSpec = ImageSpec {
+        width = wTarget,
+        height = hTarget,
+        colorMode = tcm,
+        transparentColor = tMask
+    }
+    tSpec.colorSpace = aSpec.colorSpace
+    local target = Image(tSpec)
+
+    if (acm ~= bcm) or acm == 4 then
+        return target, 0, 0
+    end
+
+    -- Offset needed when reading from source images
+    -- into target image.
+    local axDiff = axcVrf - xMin
+    local ayDiff = aycVrf - yMin
+    local bxDiff = bxcVrf - xMin
+    local byDiff = bycVrf - yMin
+
+    -- TODO: Handle indexed color mode?
+    -- function AseUtilities.blendIndices(a, b, am, bm)
+    --     if b ~= bm then return b end
+    --     if a ~= am then return a end
+    --     return 0
+    -- end
+    local blendHexes = AseUtilities.blendRgba
+    local pixels = target:pixels()
+    for elm in pixels do
+        local xPixel = elm.x
+        local yPixel = elm.y
+
+        local xSmpl = xPixel + xMin
+        local ySmpl = yPixel + yMin
+        local isContained = selVrf:contains(xSmpl, ySmpl)
+
+        local aHex = 0x0
+        if cmVrf or isContained then
+            local ax = xPixel - axDiff
+            local ay = yPixel - ayDiff
+            if ay > -1 and ay < ah
+                and ax > -1 and ax < aw then
+                aHex = aImage:getPixel(ax, ay)
+            end
+        end
+
+        local bHex = 0x0
+        if isContained then
+            local bx = xPixel - bxDiff
+            local by = yPixel - byDiff
+            if by > -1 and by < bh
+                and bx > -1 and bx < bw then
+                bHex = bImage:getPixel(bx, by)
+            end
+        end
+
+        elm(blendHexes(aHex, bHex))
+    end
+
+    return target, xMin, yMin
 end
 
 ---Wrapper for app.command.ChangePixelFormat which
@@ -822,7 +970,7 @@ end
 ---@param count integer number of layers to create
 ---@param blendMode BlendMode? blend mode
 ---@param opacity integer? layer opacity
----@param guiClr integer? hexadecimal color
+---@param guiClr integer? rgba color
 ---@return Layer[]
 function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr)
     if not sprite then
@@ -895,7 +1043,7 @@ end
 ---transaction.
 ---@param img Image Aseprite image
 ---@param border integer border depth
----@param bordHex integer hexadecimal color
+---@param bordHex integer rgba color
 function AseUtilities.drawBorder(img, border, bordHex)
     -- This is no longer used by either layerExport
     -- or frameExport, but keep it around. The new
@@ -962,9 +1110,9 @@ end
 ---@param xc integer center x
 ---@param yc integer center y
 ---@param r integer radius
----@param hex integer hexadecimal color
+---@param hex integer rgba integer
 function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
-    local blend = AseUtilities.blendHexes
+    local blend = AseUtilities.blendRgba
     local rsq = r * r
     local r2 = r * 2
     local lenn1 = r2 * r2 - 1
@@ -1084,13 +1232,12 @@ function AseUtilities.drawCurve2(curve, resolution, useFill, fillClr, useStroke,
 end
 
 ---Draws a glyph at its native scale to an image.
----The color is to be represented in hexadecimal
----with AABBGGR order.
+---The color is to be represented as an rgba integer.
 ---Operates on pixels. This should not be used
 ---with app.useTool.
 ---@param image Image image
 ---@param glyph Glyph glyph
----@param hex integer hexadecimal color
+---@param hex integer rgba integer
 ---@param x integer x top left corner
 ---@param y integer y top left corner
 ---@param gw integer glyph width
@@ -1098,7 +1245,7 @@ end
 function AseUtilities.drawGlyph(image, glyph, hex, x, y, gw, gh)
 
     local lenn1 = gw * gh - 1
-    local blend = AseUtilities.blendHexes
+    local blend = AseUtilities.blendRgba
     local glMat = glyph.matrix
     local glDrop = glyph.drop
     local ypDrop = y + glDrop
@@ -1119,13 +1266,12 @@ end
 
 ---Draws a glyph to an image at a pixel scale.
 ---Resizes the glyph according to nearest neighbor.
----The color is to be represented in hexadecimal
----with AABBGGR order.
+---The color is to be represented as an rgba integer.
 ---Operates on pixels. This should not be used
 ---with app.useTool.
 ---@param image Image image
 ---@param glyph Glyph glyph
----@param hex integer hexadecimal color
+---@param hex integer rgba integer
 ---@param x integer x top left corner
 ---@param y integer y top left corner
 ---@param gw integer glyph width
@@ -1145,7 +1291,7 @@ function AseUtilities.drawGlyphNearest(image, glyph, hex, x, y, gw, gh, dw, dh)
     local tx = gw / dw
     local ty = gh / dh
     local floor = math.floor
-    local blend = AseUtilities.blendHexes
+    local blend = AseUtilities.blendRgba
     local glMat = glyph.matrix
     local glDrop = glyph.drop
     local ypDrop = y + glDrop * (dh / gh)
@@ -1207,8 +1353,6 @@ end
 ---@param fhClr Color? fore handle color
 ---@param rhClr Color? rear handle color
 function AseUtilities.drawKnot2(knot, cel, layer, lnClr, coClr, fhClr, rhClr)
-
-    -- Do not supply hexadecimals to color constructor.
     local lnClrVal = lnClr or Color { r = 175, g = 175, b = 175 }
     local rhClrVal = rhClr or Color { r = 2, g = 167, b = 235 }
     local coClrVal = coClr or Color { r = 235, g = 225, b = 40 }
@@ -1371,7 +1515,7 @@ end
 ---@param lut table glyph look up table
 ---@param image Image image
 ---@param chars string[] characters table
----@param hex integer hexadecimal color
+---@param hex integer rgba integer
 ---@param x integer x top left corner
 ---@param y integer y top left corner
 ---@param gw integer glyph width
