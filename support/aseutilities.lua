@@ -1568,9 +1568,6 @@ function AseUtilities.getFrames(sprite, target)
         local range = app.range
         local rangeType = range.type
 
-        -- TODO: Range type and range.frames are not
-        -- returning correct info. Range type will return
-        -- zero, range frames and cels will mismatch...
         if rangeType == RangeType.LAYERS then
             local allFrames = sprite.frames
             local lenAllFrames = #allFrames

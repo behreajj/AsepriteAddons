@@ -94,6 +94,9 @@ dlg:button {
         local labToRgb = Clr.srLab2TosRgb
         local toHex = Clr.toHex
 
+        local frames = AseUtilities.getFrames(activeSprite, target)
+        local lenFrames = #frames
+
         -- Create a new layer, srcLayer should not be a group,
         -- and thus have an opacity and blend mode.
         local trgLayer = activeSprite:newLayer()
@@ -119,8 +122,6 @@ dlg:button {
         local krnLen = wKrn * wKrn
         local denom = 1.0 / krnLen
 
-        local frames = AseUtilities.getFrames(activeSprite, target)
-        local lenFrames = #frames
         app.transaction(function()
             local i = 0
             while i < lenFrames do
