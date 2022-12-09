@@ -1,14 +1,20 @@
 dofile("../../support/aseutilities.lua")
 
+-- local blurTypes = { "BOX", "DIRECTED" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
+local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults = {
+    -- Support other kinds of blur?
+    blurType = "BOX",
     target = "ACTIVE",
+    delSrc = "NONE",
     kernelStep = 1,
+    angle = 0,
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Box Blur" }
+local dlg = Dialog { title = "Blur" }
 
 dlg:combobox {
     id = "target",
@@ -19,6 +25,31 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "delSrc",
+    label = "Source:",
+    option = defaults.delSrc,
+    options = delOptions
+}
+
+dlg:newrow { always = false }
+
+-- dlg:combobox {
+--     id = "blurType",
+--     label = "Type:",
+--     option = defaults.blurType,
+--     options = blurTypes,
+--     onchange = function()
+--         local state = dlg.data.blurType
+--         dlg:modify {
+--             id = "angle",
+--             visible = state == "DIRECTED"
+--         }
+--     end
+-- }
+
+-- dlg:newrow { always = false }
+
 dlg:slider {
     id = "kernelStep",
     label = "Step:",
@@ -28,6 +59,17 @@ dlg:slider {
 }
 
 dlg:newrow { always = false }
+
+-- dlg:slider {
+--     id = "angle",
+--     label = "Angle:",
+--     min = 0,
+--     max = 360,
+--     value = defaults.angle,
+--     visible = defaults.blurType == "DIRECTED"
+-- }
+
+-- dlg:newrow { always = false }
 
 dlg:button {
     id = "confirm",
@@ -84,8 +126,12 @@ dlg:button {
         local args = dlg.data
         local target = args.target
             or defaults.target --[[@as string]]
+        -- local blurType = args.blurType
+        --     or defaults.blurType --[[@as string]]
         local krnStep = args.kernelStep
             or defaults.kernelStep --[[@as integer]]
+        local delSrcStr = args.delSrc
+            or defaults.delSrc --[[@as string]]
 
         -- Cache global methods.
         local tilesToImage = AseUtilities.tilesToImage
@@ -105,6 +151,7 @@ dlg:button {
             srcLayerName = srcLayer.name
         end
         trgLayer.name = srcLayerName .. ".Blurred"
+        trgLayer.parent = srcLayer.parent
         trgLayer.opacity = srcLayer.opacity
         trgLayer.blendMode = srcLayer.blendMode
 
@@ -116,8 +163,6 @@ dlg:button {
 
         -- Find width and flat length of kernel.
         -- All cells of kernel are weighted equally.
-        -- If this changes, you'd need the denominator
-        -- to be replaced by a table of weights.
         local wKrn = 1 + krnStep * 2
         local krnLen = wKrn * wKrn
         local denom = 1.0 / krnLen
@@ -137,12 +182,10 @@ dlg:button {
                     local pxArr = {}
                     local lenPxArr = 0
                     local srcPixels = srcImg:pixels()
-                    for pixel in srcPixels do
-                        local hex = pixel()
-
+                    for srcPixel in srcPixels do
+                        local hex = srcPixel()
                         lenPxArr = lenPxArr + 1
                         pxArr[lenPxArr] = hex
-
                         if not labDict[hex] then
                             labDict[hex] = rgbToLab(fromHex(hex))
                         end
@@ -155,11 +198,11 @@ dlg:button {
                     local trgImg = Image(srcSpec)
                     local trgPixels = trgImg:pixels()
 
-                    for pixel in trgPixels do
+                    for trgPixel in trgPixels do
                         -- When the kernel is out of bounds, sample
                         -- the central color, but do not tally alpha.
-                        local xPx = pixel.x
-                        local yPx = pixel.y
+                        local xPx = trgPixel.x
+                        local yPx = trgPixel.y
                         local hexSrc = pxArr[1 + xPx + yPx * wImg]
 
                         -- Subtract step to center the kernel
@@ -195,8 +238,11 @@ dlg:button {
                         end
 
                         local srgb = labToRgb(
-                            lSum * denom, aSum * denom, bSum * denom, tSum * denom)
-                        pixel(toHex(srgb))
+                            lSum * denom,
+                            aSum * denom,
+                            bSum * denom,
+                            tSum * denom)
+                        trgPixel(toHex(srgb))
                     end
 
                     local trgCel = activeSprite:newCel(
@@ -207,7 +253,27 @@ dlg:button {
             end
         end)
 
+        if delSrcStr == "HIDE" then
+            srcLayer.isVisible = false
+        elseif (not srcLayer.isBackground) then
+            if delSrcStr == "DELETE_LAYER" then
+                activeSprite:deleteLayer(srcLayer)
+            elseif delSrcStr == "DELETE_CELS" then
+                app.transaction(function()
+                    local idxDel = 0
+                    while idxDel < lenFrames do
+                        idxDel = idxDel + 1
+                        local frame = frames[idxDel]
+                        if srcLayer:cel(frame) then
+                            activeSprite:deleteCel(srcLayer, frame)
+                        end
+                    end
+                end)
+            end
+        end
+
         app.refresh()
+        app.command.Refresh()
     end
 }
 
