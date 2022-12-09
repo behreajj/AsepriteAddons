@@ -104,6 +104,11 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
             subPathsArr[i] = strfmt(
                 "M %d %d L %d %d L %d %d L %d %d Z",
                 ax, ay, bx, ay, bx, by, ax, by)
+
+            -- More compressed version:
+            -- subPathsArr[i] = strfmt(
+            --     "M%d %dh%dv%dh%dv%dZ",
+            --     ax, ay, scale, scale, -scale, -scale)
         end
 
         pathStr = pathStr

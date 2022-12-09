@@ -1565,9 +1565,11 @@ end
 function AseUtilities.getFrames(sprite, target)
     local frames = {}
     if target == "RANGE" then
+        -- Call this method before new layers, cels
+        -- or frames are created, otherwise the user's
+        -- range data will be lost.
         local range = app.range
         local rangeType = range.type
-
         if rangeType == RangeType.LAYERS then
             local allFrames = sprite.frames
             local lenAllFrames = #allFrames

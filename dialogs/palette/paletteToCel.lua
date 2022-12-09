@@ -301,6 +301,7 @@ dlg:button {
             srcLayerName = srcLayer.name
         end
         trgLayer.name = srcLayerName .. "." .. clrSpacePreset
+        trgLayer.parent = srcLayer.parent
         trgLayer.opacity = srcLayer.opacity
         trgLayer.blendMode = srcLayer.blendMode
 
