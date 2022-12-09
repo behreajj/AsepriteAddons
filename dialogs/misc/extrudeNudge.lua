@@ -47,10 +47,19 @@ local function extrude(dx, dy, trim)
     if not activeCel then return end
 
     local srcImage = activeCel.image
-    if srcImage.colorMode ~= ColorMode.RGB then
+    local srccm = srcImage.colorMode
+    if srccm == 4 then
         app.alert {
             title = "Error",
-            text = "Only RGB color mode is supported."
+            text = "Tile maps are not supported."
+        }
+        return
+    end
+
+    if srcImage.colorMode == ColorMode.GRAY then
+        app.alert {
+            title = "Error",
+            text = "Grayscale is not supported."
         }
         return
     end
@@ -77,7 +86,7 @@ local function extrude(dx, dy, trim)
             selOrigin.x + dx,
             selOrigin.y - dy)
 
-        local trgImage, tlx, tly = AseUtilities.blendImages(
+        local trgImage, tlx, tly = AseUtilities.blendImage(
             srcImage, srcImage,
             xCel, yCel, xCel + dx, yCel - dy,
             selNext, true)

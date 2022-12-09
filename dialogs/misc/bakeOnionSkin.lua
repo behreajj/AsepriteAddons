@@ -9,7 +9,7 @@ local defaults = {
     -- TODO: At first frame, when no more previous
     -- frame are available, repeat first frame with
     -- an offset? Same with look forward.
-    target = "RANGE",
+    target = "ACTIVE",
     iterations = 3,
     maxIterations = 32,
     directions = "BACKWARD",

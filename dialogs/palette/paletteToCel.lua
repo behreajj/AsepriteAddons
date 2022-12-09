@@ -2,8 +2,6 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
 local colorSpaces = {
-    -- "CIE_LAB",
-    -- "CIE_XYZ",
     "LINEAR_RGB",
     "S_RGB",
     "SR_LAB_2"
@@ -12,7 +10,7 @@ local colorSpaces = {
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
-    target = "RANGE",
+    target = "ACTIVE",
     palType = "ACTIVE",
     cvgLabRad = 175,
     cvgNormRad = 120,
@@ -306,10 +304,10 @@ dlg:button {
         trgLayer.opacity = srcLayer.opacity
         trgLayer.blendMode = srcLayer.blendMode
 
-        local framesLen = #frames
+        local lenFrames = #frames
         app.transaction(function()
             local i = 0
-            while i < framesLen do
+            while i < lenFrames do
                 i = i + 1
                 local srcFrame = frames[i]
                 local srcCel = srcLayer:cel(srcFrame)

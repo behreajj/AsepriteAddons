@@ -124,7 +124,7 @@ end
 ---is "UNBOUNDED", then the raw values are used.
 ---If the flag is "MODULAR," this will copy by
 ---hexadecimal value, and hence use modular
----arithmetic. For more info, See
+---arithmetic. For more info, see
 ---https://www.wikiwand.com/en/Modular_arithmetic .
 ---The default is saturation arithmetic.
 ---@param aseClr Color aseprite color
@@ -373,7 +373,7 @@ end
 
 ---Converts an array of Aseprite palettes to a
 ---table of hex color integers.
----@param palettes Palette[] Aseprite palettes
+---@param palettes Palette[] aseprite palettes
 ---@return integer[]
 function AseUtilities.asePalettesToHexArr(palettes)
     if palettes then
@@ -411,124 +411,167 @@ function AseUtilities.asePalettesToHexArr(palettes)
     end
 end
 
----Bakes a layer's opacity into the images of each
----cel held by the layer. Also bakes cel opacities.
----Does not support group layers. Resets layer and
----cel opacities to 255. Layers that are not visible
----are treated like layers with zero opacity.
----@param layer Layer layer
-function AseUtilities.bakeLayerOpacity(layer)
-    if layer.isGroup then
-        app.alert {
-            title = "Error",
-            text = "Layer opacity is not supported for group layers."
-        }
-        return
-    end
+---Blends a backdrop and overlay image, creating a union
+---image from the two sources. The union then intersects
+---with a selection. If a selection is empty, or is not
+---provided, a new selection is created from the union.
+---If the cumulative flag is true, the backdrop image is
+---sampled regardless of its inclusion in the selection.
+---Returns the blended image and its top left corner x, y.
+---Does not support tile maps or images with mismatched
+---color modes.
+---@param aImage Image backdrop image
+---@param bImage Image overlay image
+---@param axCel integer? backdrop cel top left corner x
+---@param ayCel integer? backdrop cel top left corner y
+---@param bxCel integer? overlay cel top left corner x
+---@param byCel integer? overlay cel top left corner y
+---@param mask Selection? selection
+---@param cumulative boolean? backdrop ignore mask
+---@returns Image
+---@returns integer
+---@returns integer
+function AseUtilities.blendImage(
+    aImage, bImage, axCel, ayCel, bxCel, byCel,
+    mask, cumulative)
 
-    local layerAlpha = 0xff
-    if layer.opacity then layerAlpha = layer.opacity end
-    if not layer.isVisible then layerAlpha = 0 end
+    local cmVrf = cumulative or false
+    local bycVrf = byCel or 0
+    local bxcVrf = bxCel or 0
+    local aycVrf = ayCel or 0
+    local axcVrf = axCel or 0
 
-    -- Will cause a problem for linked cels.
-    local cels = layer.cels
-    local lenCels = #cels
+    local aSpec = aImage.spec
+    local aw = aSpec.width
+    local ah = aSpec.height
+    local acm = aSpec.colorMode
+    local aMask = aSpec.transparentColor
 
-    if layerAlpha < 0xff then
-        if layerAlpha < 0x01 then
-            -- Layer is completely transparent.
-            local i = 0
-            while i < lenCels do
-                i = i + 1
-                local cel = cels[i]
-                local img = cel.image
-                local pxItr = img:pixels()
-                for elm in pxItr do elm(0x0) end
-                cel.opacity = 0xff
-            end
-        else
-            -- Layer is semi-transparent.
-            local i = 0
-            while i < lenCels do
-                i = i + 1
-                local cel = cels[i]
-                local celAlpha = cel.opacity
-                local img = cel.image
-                local pxItr = img:pixels()
-                if celAlpha < 0xff then
-                    if celAlpha < 0x01 then
-                        -- Cel is completely transparent.
-                        for elm in pxItr do elm(0x0) end
-                    else
-                        -- Cel and layer are both semi-transparent.
-                        local layerCelAlpha = (layerAlpha * celAlpha) // 0xff
-                        for elm in pxItr do
-                            local hex = elm()
-                            local srcAlpha = hex >> 0x18 & 0xff
-                            local cmpAlpha = (layerCelAlpha * srcAlpha) // 0xff
-                            if cmpAlpha < 1 then
-                                elm(0x0)
-                            else
-                                elm((cmpAlpha << 0x18)
-                                    | (hex & 0x00ffffff))
-                            end
-                        end
-                    end
-                else
-                    -- Cel is opaque, but layer is semi-transparent.
-                    for elm in pxItr do
-                        local hex = elm()
-                        local srcAlpha = hex >> 0x18 & 0xff
-                        local cmpAlpha = (layerAlpha * srcAlpha) // 0xff
-                        if cmpAlpha < 0x01 then
-                            elm(0x0)
-                        else
-                            elm((cmpAlpha << 0x18)
-                                | (hex & 0x00ffffff))
-                        end
-                    end
-                end
-                cel.opacity = 0xff
-            end
+    local bSpec = bImage.spec
+    local bw = bSpec.width
+    local bh = bSpec.height
+    local bcm = bSpec.colorMode
+    local bMask = bSpec.transparentColor
+
+    -- Find union of image bounds a and b.
+    local axMax = axcVrf + aw - 1
+    local ayMax = aycVrf + ah - 1
+    local xMin = math.min(axcVrf, bxcVrf)
+    local yMin = math.min(aycVrf, bycVrf)
+    local xMax = math.max(axMax, bxcVrf + bw - 1)
+    local yMax = math.max(ayMax, bycVrf + bh - 1)
+
+    local wTarget = 1 + xMax - xMin
+    local hTarget = 1 + yMax - yMin
+
+    local selVrf = mask
+    if selVrf and (not selVrf.isEmpty) then
+        local selBounds = selVrf.bounds
+        local xSel = selBounds.x
+        local ySel = selBounds.y
+
+        -- Find intersection of composite and selection.
+        xMin = math.max(xMin, xSel)
+        yMin = math.max(yMin, ySel)
+        xMax = math.min(xMax, xSel + selBounds.width - 1)
+        yMax = math.min(yMax, ySel + selBounds.height - 1)
+
+        if cmVrf then
+            -- If cumulative, then union with backdrop.
+            xMin = math.min(xMin, axcVrf)
+            yMin = math.min(yMin, aycVrf)
+            xMax = math.max(xMax, axMax)
+            yMax = math.max(yMax, ayMax)
         end
-        layer.opacity = 0xff
+
+        -- Update target image dimensions.
+        wTarget = 1 + xMax - xMin
+        hTarget = 1 + yMax - yMin
     else
-        -- Layer is completely opaque.
-        local bakeCel = AseUtilities.bakeCelOpacity
-        local i = 0
-        while i < lenCels do
-            i = i + 1
-            bakeCel(cels[i])
-        end
+        selVrf = Selection(Rectangle(
+            xMin, yMin, wTarget, hTarget))
     end
+
+    local tMask = 0
+    if aMask == bMask then tMask = aMask end
+    local modeTarget = acm
+
+    local tSpec = ImageSpec {
+        width = wTarget,
+        height = hTarget,
+        colorMode = modeTarget,
+        transparentColor = tMask
+    }
+    tSpec.colorSpace = aSpec.colorSpace
+    local target = Image(tSpec)
+
+    -- Avoid tile map images and mismatched image modes.
+    if (acm ~= bcm) or acm == 4 then
+        return target, 0, 0
+    end
+
+    -- Offset needed when reading from source images
+    -- into target image.
+    local axDiff = axcVrf - xMin
+    local ayDiff = aycVrf - yMin
+    local bxDiff = bxcVrf - xMin
+    local byDiff = bycVrf - yMin
+
+    -- TODO: Support grayscale?
+    local blendFunc = nil
+    if modeTarget == ColorMode.INDEXED then
+        blendFunc = AseUtilities.blendIndices
+    else
+        blendFunc = AseUtilities.blendRgba
+    end
+
+    local pixels = target:pixels()
+    for elm in pixels do
+        local xPixel = elm.x
+        local yPixel = elm.y
+
+        local xSmpl = xPixel + xMin
+        local ySmpl = yPixel + yMin
+        local isContained = selVrf:contains(xSmpl, ySmpl)
+
+        local aHex = 0x0
+        if cmVrf or isContained then
+            local ax = xPixel - axDiff
+            local ay = yPixel - ayDiff
+            if ay > -1 and ay < ah
+                and ax > -1 and ax < aw then
+                aHex = aImage:getPixel(ax, ay)
+            end
+        end
+
+        local bHex = 0x0
+        if isContained then
+            local bx = xPixel - bxDiff
+            local by = yPixel - byDiff
+            if by > -1 and by < bh
+                and bx > -1 and bx < bw then
+                bHex = bImage:getPixel(bx, by)
+            end
+        end
+
+        elm(blendFunc(aHex, bHex, tMask))
+    end
+
+    return target, xMin, yMin
 end
 
----Bakes a cel's opacity into the colors in the cel's
----image. Resets the cel's opacity to 255. Does not
----refer to layer visibility or opacity.
----@param cel Cel cel
-function AseUtilities.bakeCelOpacity(cel)
-    local celAlpha = cel.opacity
-    if celAlpha < 0xff then
-        local img = cel.image
-        local pxItr = img:pixels()
-        if celAlpha < 0x01 then
-            for elm in pxItr do elm(0x0) end
-        else
-            for elm in pxItr do
-                local hex = elm()
-                local srcAlpha = hex >> 0x18 & 0xff
-                local cmpAlpha = (celAlpha * srcAlpha) // 0xff
-                if cmpAlpha < 0x01 then
-                    elm(0x0)
-                else
-                    elm((cmpAlpha << 0x18)
-                        | (hex & 0x00ffffff))
-                end
-            end
-        end
-        cel.opacity = 0xff
-    end
+---Blends two indexed image colors. Prioritizes
+---the overlay color, so long as it does not
+---equal the mask index. Assumes backdrop and
+---overlay use the same mask index.
+---@param a integer backdrop color
+---@param b integer overlay color
+---@param mask integer mask index
+---@return integer
+function AseUtilities.blendIndices(a, b, mask)
+    if b ~= mask then return b end
+    if a ~= mask then return a end
+    return mask
 end
 
 ---Blends two 32-bit RGBA colors.
@@ -577,154 +620,6 @@ function AseUtilities.blendRgba(a, b)
         | cb << 0x10
         | cg << 0x08
         | cr
-end
-
----Blends a backdrop and overlay image, creating a union
----image from the two sources. The union then intersects
----with a selection. If a selection is empty, or is not
----provided, a new selection is created from the union.
----If the cumulative flag is true, the backdrop image is
----sampled regardless of its inclusion in the selection.
----Returns the blended image and its top left corner x, y.
----Does not support tile maps or images with mismatched
----color modes.
----@param aImage Image backdrop image
----@param bImage Image overlay image
----@param axCel integer? backdrop cel top left corner x
----@param ayCel integer? backdrop cel top left corner y
----@param bxCel integer? overlay cel top left corner x
----@param byCel integer? overlay cel top left corner y
----@param mask Selection? selection
----@param cumulative boolean? backdrop ignore mask
----@returns Image
----@returns integer
----@returns integer
-function AseUtilities.blendImages(
-    aImage, bImage, axCel, ayCel, bxCel, byCel,
-    mask, cumulative)
-
-    local cmVrf = cumulative or false
-    local bycVrf = byCel or 0
-    local bxcVrf = bxCel or 0
-    local aycVrf = ayCel or 0
-    local axcVrf = axCel or 0
-
-    local aSpec = aImage.spec
-    local aw = aSpec.width
-    local ah = aSpec.height
-    local acm = aSpec.colorMode
-    local aMask = aSpec.transparentColor
-
-    local bSpec = bImage.spec
-    local bw = bSpec.width
-    local bh = bSpec.height
-    local bcm = bSpec.colorMode
-    local bMask = bSpec.transparentColor
-
-    -- Find union of image bounds a and b.
-    local axMax = axcVrf + aw - 1
-    local ayMax = aycVrf + ah - 1
-    local xMin = math.min(axcVrf, bxcVrf)
-    local yMin = math.min(aycVrf, bycVrf)
-    local xMax = math.max(axMax, bxcVrf + bw - 1)
-    local yMax = math.max(ayMax, bycVrf + bh - 1)
-
-    local wTarget = 1 + xMax - xMin
-    local hTarget = 1 + yMax - yMin
-
-    local selVrf = mask
-    if selVrf and (not selVrf.isEmpty) then
-        local selBounds = selVrf.bounds
-        local xSel = selBounds.x
-        local ySel = selBounds.y
-
-        -- Find intersection of composite and selection.
-        xMin = math.max(xMin, xSel)
-        yMin = math.max(yMin, ySel)
-        xMax = math.min(xMax, xSel + selBounds.width - 1)
-        yMax = math.min(yMax, ySel + selBounds.height - 1)
-
-        if cmVrf then
-            -- If the image is cumulative, then the
-            -- union with the original backdrop.
-            xMin = math.min(xMin, axcVrf)
-            yMin = math.min(yMin, aycVrf)
-            xMax = math.max(xMax, axMax)
-            yMax = math.max(yMax, ayMax)
-        end
-
-        -- Update target image dimensions.
-        wTarget = 1 + xMax - xMin
-        hTarget = 1 + yMax - yMin
-    else
-        selVrf = Selection(Rectangle(
-            xMin, yMin, wTarget, hTarget))
-    end
-
-    local tMask = 0
-    if aMask == bMask then tMask = aMask end
-    local tcm = acm
-
-    local tSpec = ImageSpec {
-        width = wTarget,
-        height = hTarget,
-        colorMode = tcm,
-        transparentColor = tMask
-    }
-    tSpec.colorSpace = aSpec.colorSpace
-    local target = Image(tSpec)
-
-    if (acm ~= bcm) or acm == 4 then
-        return target, 0, 0
-    end
-
-    -- Offset needed when reading from source images
-    -- into target image.
-    local axDiff = axcVrf - xMin
-    local ayDiff = aycVrf - yMin
-    local bxDiff = bxcVrf - xMin
-    local byDiff = bycVrf - yMin
-
-    -- TODO: Handle indexed color mode?
-    -- function AseUtilities.blendIndices(a, b, am, bm)
-    --     if b ~= bm then return b end
-    --     if a ~= am then return a end
-    --     return 0
-    -- end
-    local blendHexes = AseUtilities.blendRgba
-    local pixels = target:pixels()
-    for elm in pixels do
-        local xPixel = elm.x
-        local yPixel = elm.y
-
-        local xSmpl = xPixel + xMin
-        local ySmpl = yPixel + yMin
-        local isContained = selVrf:contains(xSmpl, ySmpl)
-
-        local aHex = 0x0
-        if cmVrf or isContained then
-            local ax = xPixel - axDiff
-            local ay = yPixel - ayDiff
-            if ay > -1 and ay < ah
-                and ax > -1 and ax < aw then
-                aHex = aImage:getPixel(ax, ay)
-            end
-        end
-
-        local bHex = 0x0
-        if isContained then
-            local bx = xPixel - bxDiff
-            local by = yPixel - byDiff
-            if by > -1 and by < bh
-                and bx > -1 and bx < bw then
-                bHex = bImage:getPixel(bx, by)
-            end
-        end
-
-        elm(blendHexes(aHex, bHex))
-    end
-
-    return target, xMin, yMin
 end
 
 ---Wrapper for app.command.ChangePixelFormat which
@@ -1672,6 +1567,10 @@ function AseUtilities.getFrames(sprite, target)
     if target == "RANGE" then
         local range = app.range
         local rangeType = range.type
+
+        -- TODO: Range type and range.frames are not
+        -- returning correct info. Range type will return
+        -- zero, range frames and cels will mismatch...
         if rangeType == RangeType.LAYERS then
             local allFrames = sprite.frames
             local lenAllFrames = #allFrames

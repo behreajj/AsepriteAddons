@@ -4,7 +4,7 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 local edges = { "CLAMP", "WRAP" }
 
 local defaults = {
-    target = "RANGE",
+    target = "ACTIVE",
     stretchContrast = false,
     scale = 16,
     edgeType = "CLAMP",

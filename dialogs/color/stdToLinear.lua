@@ -40,7 +40,7 @@ local directions = { "LINEAR_TO_STANDARD", "STANDARD_TO_LINEAR" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
-    target = "RANGE",
+    target = "ACTIVE",
     direction = "STANDARD_TO_LINEAR",
     pullFocus = false
 }

@@ -171,8 +171,8 @@ dlg:combobox {
         }
         dlg:modify { id = "octCapacity", visible = isPalette }
         dlg:modify { id = "octCapacity", visible = isPalette }
-        dlg:modify { id = "startIndex", visible = isPalette }
-        dlg:modify { id = "count", visible = isPalette }
+        -- dlg:modify { id = "startIndex", visible = isPalette }
+        -- dlg:modify { id = "count", visible = isPalette }
     end
 }
 
@@ -274,7 +274,8 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.startIndex,
-    visible = defaults.ditherMode == "PALETTE"
+    -- visible = defaults.ditherMode == "PALETTE"
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -285,7 +286,8 @@ dlg:slider {
     min = 1,
     max = 256,
     value = defaults.count,
-    visible = defaults.ditherMode == "PALETTE"
+    -- visible = defaults.ditherMode == "PALETTE"
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -375,15 +377,17 @@ dlg:button {
         local dmStr = ""
         if ditherMode == "ONE_BIT" then
 
-            local aColorAse = args.aColor or defaults.aColor
-            local bColorAse = args.bColor or defaults.bColor
+            local aColorAse = args.aColor or defaults.aColor --[[@as Color]]
+            local bColorAse = args.bColor or defaults.bColor --[[@as Color]]
             local threshold100 = args.threshold or defaults.threshold
             local threshold = threshold100 * 0.01
 
             -- Mask out alpha so that source alpha
             -- can be composited in.
-            local aHex = 0x00ffffff & aColorAse.rgbaPixel
-            local bHex = 0x00ffffff & bColorAse.rgbaPixel
+            local aHex = 0x00ffffff & AseUtilities.aseColorToHex(
+                aColorAse, ColorMode.RGB)
+            local bHex = 0x00ffffff & AseUtilities.aseColorToHex(
+                bColorAse, ColorMode.RGB)
 
             -- Swap colors so that origin (a) is always the
             -- darker color.

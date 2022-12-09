@@ -4,7 +4,7 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 local modes = { "LAB", "LCH" }
 
 local defaults = {
-    target = "RANGE",
+    target = "ACTIVE",
     mode = "LCH",
     lAdj = 0,
     cAdj = 0,

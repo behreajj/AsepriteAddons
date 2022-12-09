@@ -20,7 +20,8 @@ local defaults = {
     minSize = 64,
     maxSize = 2048,
     maxSectors = 32,
-    maxRings = 16
+    maxRings = 16,
+    pullFocus = true
 }
 
 local normalsPal = {
@@ -31,8 +32,8 @@ local normalsPal = {
     0xffb0800a, 0xffb02c2c, 0xffb00a80, 0xffb02cd3, -- 4
     0xffda80da, 0xffdabfbf, 0xffdada80, 0xffdabf40, -- 5
     0xffda8025, 0xffda4040, 0xffda2580, 0xffda40bf, -- 6
-    0xfff580b0, 0xfff5a2a2, 0xfff5b080, 0xfff5a25d, -- 7
-    0xfff5804f, 0xfff55d5d, 0xfff54f80, 0xfff55da2 --  8
+    0xfff680af, 0xfff6a1a1, 0xfff6af80, 0xfff6a15e, -- 7
+    0xfff68050, 0xfff65e5e, 0xfff65080, 0xfff65ea1 --  8
 }
 
 local dlg = Dialog { title = "Normal Wheel" }
@@ -131,7 +132,8 @@ dlg:check {
     id = "correctPalette",
     label = "Normalize:",
     selected = defaults.correctPalette,
-    visible = defaults.plotPalette,
+    visible = defaults.plotPalette
+        and defaults.palType ~= "DEFAULT",
 }
 
 dlg:newrow { always = false }

@@ -20,7 +20,7 @@ local defaults = {
     palCount = 256,
     strokeSize = 6,
     fillSize = 5,
-    pullFocus = false
+    pullFocus = true
 }
 
 local dlg = Dialog { title = "Lch Color Shades" }

@@ -11,7 +11,7 @@ local defaults = {
     minBits = 1,
     maxBits = 8,
 
-    target = "RANGE",
+    target = "ACTIVE",
 
     levelsUni = 16,
     rLevels = 16,

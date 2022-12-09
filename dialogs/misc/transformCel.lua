@@ -5,7 +5,7 @@ local targets = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local unitOptions = { "PERCENT", "PIXEL" }
 
 local defaults = {
-    target = "RANGE",
+    target = "ACTIVE",
     xTranslate = 0.0,
     yTranslate = 0.0,
     easeMethod = "NEAREST",

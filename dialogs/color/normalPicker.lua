@@ -334,4 +334,5 @@ dlg:button {
     end
 }
 
+updateFromColor(dlg, app.preferences.color_bar.fg_color)
 dlg:show { wait = false }

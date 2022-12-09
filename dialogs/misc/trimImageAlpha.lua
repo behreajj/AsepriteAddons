@@ -4,7 +4,7 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
     padding = 0,
-    target = "RANGE",
+    target = "ACTIVE",
     pullFocus = false
 }
 

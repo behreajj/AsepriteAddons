@@ -5,7 +5,7 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults = {
-    target = "RANGE",
+    target = "ACTIVE",
     delLyr = "HIDE",
     dirType = "HORIZONTAL",
     skip = 1,

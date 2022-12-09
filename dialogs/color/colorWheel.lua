@@ -22,7 +22,7 @@ local defaults = {
     -- that of SR LCH.
     -- maxChroma = 135.0,
     maxChroma = 120.0,
-    pullFocus = false
+    pullFocus = true
 }
 
 local dlg = Dialog { title = "Lch Color Wheel" }

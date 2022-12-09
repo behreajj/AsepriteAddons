@@ -3,7 +3,7 @@ dofile("../../support/gradientutilities.lua")
 local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
-    target = "RANGE",
+    target = "ACTIVE",
     iterations = 16,
     alphaFade = false,
     reverseFade = false,
