@@ -80,7 +80,7 @@ dlg:button {
             return
         end
 
-        local overLayer = app.activeLayer
+        local overLayer = app.activeLayer --[[@as Layer]]
         if not overLayer then
             app.alert {
                 title = "Error",
@@ -266,10 +266,10 @@ dlg:button {
                         local trgImage = Image(trgSpec)
                         local trgPos = Point(xTlTarget, yTlTarget)
 
-                        local trgItr = trgImage:pixels()
-                        for elm in trgItr do
-                            local xSprite = elm.x + xTlTarget
-                            local ySprite = elm.y + yTlTarget
+                        local trgPxItr = trgImage:pixels()
+                        for pixel in trgPxItr do
+                            local xSprite = pixel.x + xTlTarget
+                            local ySprite = pixel.y + yTlTarget
 
                             local xOver = xSprite - xTlOver
                             local yOver = ySprite - yTlOver
@@ -289,7 +289,7 @@ dlg:button {
                                 local alphaComp = (alphaOver * alphaUnder) // 0xff
                                 local hexComp = (alphaComp << 0x18)
                                     | (hexUnder & 0x00ffffff)
-                                elm(hexComp)
+                                pixel(hexComp)
                             end
                         end
 

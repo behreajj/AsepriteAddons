@@ -387,8 +387,8 @@ dlg:button {
                     local hexOut = hexesOutline[h]
                     local readImg = trgImg:clone()
                     local readPxItr = readImg:pixels()
-                    for elm in readPxItr do
-                        local cRead = elm()
+                    for pixel in readPxItr do
+                        local cRead = pixel()
                         if (cRead & 0xff000000) == 0x0
                             or cRead == bkgHex then
                             -- Loop through matrix, check neighbors
@@ -400,10 +400,10 @@ dlg:button {
                             while continue and j < activeCount do
                                 j = j + 1
                                 local offset = activeOffsets[j]
-                                local yRead = elm.y
+                                local yRead = pixel.y
                                 local yNbr = yRead + offset[2]
                                 if yNbr >= 0 and yNbr < hTrg then
-                                    local xRead = elm.x
+                                    local xRead = pixel.x
                                     local xNbr = xRead + offset[1]
                                     if xNbr >= 0 and xNbr < wTrg then
                                         local cNbr = readImg:getPixel(xNbr, yNbr)

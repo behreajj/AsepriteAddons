@@ -217,10 +217,10 @@ dlg:button {
         grdSpec.colorSpace = activeSpec.colorSpace
 
         local grdImg = Image(grdSpec)
-        local grdItr = grdImg:pixels()
-        for elm in grdItr do
-            local x = elm.x
-            local y = elm.y
+        local pxItr = grdImg:pixels()
+        for pixel in pxItr do
+            local x = pixel.x
+            local y = pixel.y
             local dst = distFunc(x, y, xOrigPx, yOrigPx)
             local fac = dst * normDist
             fac = (fac - minRad) * linDenom
@@ -228,7 +228,7 @@ dlg:button {
             fac = facAdjust(fac)
             fac = quantize(fac, levels)
             local clr = cgeval(gradient, fac, mixFunc)
-            elm(toHex(clr))
+            pixel(toHex(clr))
         end
 
         app.transaction(function()

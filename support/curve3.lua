@@ -177,7 +177,6 @@ end
 ---@param zOrigin number? z origin
 ---@return Curve3
 function Curve3.ellipse(xRadius, yRadius, xOrigin, yOrigin, zOrigin)
-
     -- Supply default arguments.
     local cz = zOrigin or 0.0
     local cy = yOrigin or 0.0

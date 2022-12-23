@@ -241,15 +241,15 @@ dlg:button {
 
             local gamutImg = Image(spec)
             local pxItr = gamutImg:pixels()
-            for elm in pxItr do
+            for pixel in pxItr do
 
                 -- Convert coordinates from [0, size] to
                 -- [0.0, 1.0], then to LCH.
-                local xNrm = elm.x * szInv
+                local xNrm = pixel.x * szInv
                 xNrm = quantize(xNrm, quantization)
                 local chroma = xNrm * maxChroma
 
-                local yNrm = elm.y * szInv
+                local yNrm = pixel.y * szInv
                 yNrm = quantize(yNrm, quantization)
                 local light = (1.0 - yNrm) * maxLight
 
@@ -258,7 +258,7 @@ dlg:button {
                     clr.a = oogaNorm
                 end
 
-                elm(toHex(clr))
+                pixel(toHex(clr))
             end
 
             idxFrame = idxFrame + 1
@@ -312,9 +312,9 @@ dlg:button {
             local yToHue = 1.0 / (hueBarHeight - 1.0)
             local hueBarPixels = hueBarImage:pixels()
             local halfChroma = maxChroma * 0.5
-            for elm in hueBarPixels do
-                local hue = 1.0 - elm.y * yToHue
-                elm(toHex(lchTosRgba(50.0, halfChroma, hue, 1.0)))
+            for pixel in hueBarPixels do
+                local hue = 1.0 - pixel.y * yToHue
+                pixel(toHex(lchTosRgba(50.0, halfChroma, hue, 1.0)))
             end
 
             app.transaction(function()

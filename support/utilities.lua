@@ -1074,7 +1074,6 @@ end
 ---@param height number screen height
 ---@return Vec3
 function Utilities.toScreen(modelview, projection, pt3, width, height)
-
     -- Promote to homogenous coordinate.
     local pt4 = Vec4.new(pt3.x, pt3.y, pt3.z, 1.0)
     local mvpt4 = Utilities.mulMat4Vec4(modelview, pt4)

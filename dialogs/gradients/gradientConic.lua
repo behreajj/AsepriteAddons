@@ -147,9 +147,9 @@ dlg:button {
 
         local grdImg = Image(grdSpec)
         local grdItr = grdImg:pixels()
-        for elm in grdItr do
-            local x = elm.x
-            local y = elm.y
+        for pixel in grdItr do
+            local x = pixel.x
+            local y = pixel.y
 
             -- Bring coordinates into range [0.0, 1.0].
             local xNorm = x * wInv
@@ -174,7 +174,7 @@ dlg:button {
             fac = facAdjust(fac)
             fac = quantize(fac, levels)
             local clr = cgeval(gradient, fac, mixFunc)
-            elm(toHex(clr))
+            pixel(toHex(clr))
         end
 
         app.transaction(function()

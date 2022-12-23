@@ -238,9 +238,9 @@ dlg:button {
 
                 -- Cache pixels from pixel iterator.
                 local flatPxItr = flatImg:pixels()
-                for elm in flatPxItr do
+                for pixel in flatPxItr do
                     flatIdx = flatIdx + 1
-                    local hex = elm()
+                    local hex = pixel()
                     local alpha = (hex >> 0x18) & 0xff
                     alphaTable[flatIdx] = alpha
 
@@ -273,19 +273,24 @@ dlg:button {
                     end
                 end
 
+                -- TODO: Make a threshold filter, where the lum reverts
+                -- to black if it is beneath. This could be a way to
+                -- reduce the noise in the resulting normal map.
+                -- Alternatively, apply a despeckle / median filter.
+
                 -- Show gray image.
                 if showGrayMap then
                     local grayImg = Image(specNone)
                     local grayPxItr = grayImg:pixels()
                     local grayIdx = 0
-                    for elm in grayPxItr do
+                    for pixel in grayPxItr do
                         grayIdx = grayIdx + 1
                         local alpha = alphaTable[grayIdx]
                         local lum = lumTable[grayIdx]
                         if alpha > 0 then
                             local v = floor(0.5 + lum * 255.0)
                             local hex = alpha << 0x18 | v << 0x10 | v << 0x08 | v
-                            elm(hex)
+                            pixel(hex)
                         end
                     end
 
@@ -295,17 +300,17 @@ dlg:button {
 
                 local writeIdx = 0
                 local normalImg = Image(specNone)
-                local normalItr = normalImg:pixels()
+                local normPxItr = normalImg:pixels()
 
-                for elm in normalItr do
+                for pixel in normPxItr do
                     writeIdx = writeIdx + 1
                     local alphaCenter = alphaTable[writeIdx]
                     if alphaCenter > 0 then
-                        local yc = elm.y
+                        local yc = pixel.y
                         local yn1 = wrapper(yc - 1, activeHeight)
                         local yp1 = wrapper(yc + 1, activeHeight)
 
-                        local xc = elm.x
+                        local xc = pixel.x
                         local xn1 = wrapper(xc - 1, activeWidth)
                         local xp1 = wrapper(xc + 1, activeWidth)
 
@@ -355,15 +360,15 @@ dlg:button {
                             ny = ny * yFlipNum
                             nz = nz * zFlipNum
 
-                            elm(alphaMask
+                            pixel(alphaMask
                                 | (floor(nz * 127.5 + 128.0) << 0x10)
                                 | (floor(ny * 127.5 + 128.0) << 0x08)
                                 | floor(nx * 127.5 + 128.0))
                         else
-                            elm(alphaMask | hexDefault)
+                            pixel(alphaMask | hexDefault)
                         end
                     else
-                        elm(hexBlank)
+                        pixel(hexBlank)
                     end
                 end
 

@@ -289,16 +289,16 @@ dlg:button {
 
             local gamutImg = Image(spec)
             local pxItr = gamutImg:pixels()
-            for elm in pxItr do
+            for pixel in pxItr do
 
                 -- Convert coordinates from [0, size] to
                 -- [0.0, 1.0], then to [-1.0, 1.0], then
                 -- to LAB range [-111.0, 111.0].
-                local xNrm = elm.x * szInv
+                local xNrm = pixel.x * szInv
                 local xSgn = xNrm + xNrm - 1.0
                 local a = xSgn * maxChroma
 
-                local yNrm = elm.y * szInv
+                local yNrm = pixel.y * szInv
                 local ySgn = 1.0 - (yNrm + yNrm)
                 local b = ySgn * maxChroma
 
@@ -327,9 +327,9 @@ dlg:button {
                 -- alpha. Find the valid boundary of the gamut.
                 local hex = toHex(clr)
                 if rgbIsInGamut(clr, 0.0) then
-                    elm(hex)
+                    pixel(hex)
                 else
-                    elm(oogamask | (hex & 0x00ffffff))
+                    pixel(oogamask | (hex & 0x00ffffff))
                 end
             end
 
@@ -383,9 +383,9 @@ dlg:button {
             local yToLight = 100.0 / (lightBarHeight - 1.0)
 
             local lightBarPixels = lightBarImage:pixels()
-            for elm in lightBarPixels do
-                local light = 100.0 - elm.y * yToLight
-                elm(toHex(labTosRgba(light, 0.0, 0.0, 1.0)))
+            for pixel in lightBarPixels do
+                local light = 100.0 - pixel.y * yToLight
+                pixel(toHex(labTosRgba(light, 0.0, 0.0, 1.0)))
             end
 
             app.transaction(function()

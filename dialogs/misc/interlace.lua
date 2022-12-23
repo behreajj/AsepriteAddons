@@ -271,13 +271,13 @@ dlg:button {
                     imgPick:clear(alphaMask)
                     imgSkip:clear(alphaMask)
 
-                    local itrSrc = imgSrc:pixels()
-                    for elm in itrSrc do
-                        local x = elm.x
-                        local y = elm.y
+                    local pxItr = imgSrc:pixels()
+                    for pixel in pxItr do
+                        local x = pixel.x
+                        local y = pixel.y
                         local xSmpl = xPos + x
                         local ySmpl = yPos + y
-                        local hex = elm()
+                        local hex = pixel()
                         if eval(xSmpl, ySmpl, pick, all) then
                             imgPick:drawPixel(x, y, hex)
                         else

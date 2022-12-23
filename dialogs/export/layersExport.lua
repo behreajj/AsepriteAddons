@@ -564,13 +564,13 @@ dlg:button {
                             local yDiff = packet.yCel - yMin
                             local pxItr = packet.image:pixels()
 
-                            for elm in pxItr do
-                                local x = elm.x + xDiff
-                                local y = elm.y + yDiff
+                            for pixel in pxItr do
+                                local x = pixel.x + xDiff
+                                local y = pixel.y + yDiff
 
                                 -- Assumes hexDest is in RGB color mode.
                                 local hexOrigin = imgComp:getPixel(x, y)
-                                local hexDest = elm()
+                                local hexDest = pixel()
                                 local bakedDest = bakeAlpha(
                                     hexDest, alphaLayer, alphaCel)
                                 local blended = blend(hexOrigin, bakedDest)

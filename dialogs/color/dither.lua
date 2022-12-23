@@ -581,9 +581,9 @@ dlg:button {
         local srcPxItr = srcImg:pixels()
         local arrSrcPixels = {}
         local idxRdPixels = 0
-        for elm in srcPxItr do
+        for pixel in srcPxItr do
             idxRdPixels = idxRdPixels + 1
-            arrSrcPixels[idxRdPixels] = elm()
+            arrSrcPixels[idxRdPixels] = pixel()
         end
 
         -- Get arguments to pass to dithering method.
@@ -603,9 +603,9 @@ dlg:button {
         local trgImg = Image(trgSpec)
         local trgPxItr = trgImg:pixels()
         local idxWtPixels = 0
-        for elm in trgPxItr do
+        for pixel in trgPxItr do
             idxWtPixels = idxWtPixels + 1
-            elm(arrSrcPixels[idxWtPixels])
+            pixel(arrSrcPixels[idxWtPixels])
         end
 
         -- Either copy to new layer or reassign image.

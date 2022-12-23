@@ -306,13 +306,13 @@ dlg:button {
         local wheelImg = Image(imgSpec)
 
         local pxItr = wheelImg:pixels()
-        for elm in pxItr do
+        for pixel in pxItr do
 
             -- Find rise and run as [0.0, 1.0], convert to
             -- [-1.0, 1.0] and flip as requested.
-            local y01 = elm.y * szInv
+            local y01 = pixel.y * szInv
             local ySgn = yFlipNum * (1.0 - (y01 + y01))
-            local x01 = elm.x * szInv
+            local x01 = pixel.x * szInv
             local xSgn = xFlipNum * (x01 + x01 - 1.0)
 
             -- Find square magnitude.
@@ -372,9 +372,9 @@ dlg:button {
                 local r = floor(xn * 127.5 + 128.0)
                 local g = floor(yn * 127.5 + 128.0)
                 local b = floor(zn * 127.5 + 128.0)
-                elm(0xff000000 | (b << 0x10) | (g << 0x08) | r)
+                pixel(0xff000000 | (b << 0x10) | (g << 0x08) | r)
             else
-                elm(hexDefault)
+                pixel(hexDefault)
             end
         end
 

@@ -132,7 +132,6 @@ end
 ---@param handedness string? handedness
 ---@return Mat4
 function Mat4.camera(xLoc, yLoc, zLoc, xFocus, yFocus, zFocus, xRef, yRef, zRef, handedness)
-
     -- Optional args for handedness.
     -- Default to right-handed.
     local hval = "RIGHT"

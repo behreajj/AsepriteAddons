@@ -176,7 +176,7 @@ end
 
 ---Removes empty child nodes from the octree.
 ---Returns true if this octree node should be
----removed, i.e., all its children are nil and
+---removed, i.e., it has no children and
 ---its points array is empty.
 ---
 ---This should only be called after all points

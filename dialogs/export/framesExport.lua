@@ -634,7 +634,9 @@ dlg:button {
         end
 
         if batchSheets then
-            for i = 1, #packetsBatched, 1 do
+            local lenPacketsBatched = #packetsBatched
+            local i = 0
+            while i < lenPacketsBatched do i = i + 1
                 scaleAndPadPacketImages(
                     packetsBatched[i].batch,
                     useResize, wScale, hScale,

@@ -611,22 +611,22 @@ dlg:button {
         end
 
         -- Unpack text and text shadow colors.
-        local txtColor = args.txtColor
-        local shdColor = args.shdColor
-        local hdrTxtColor = args.hdrTxtColor
-        local hdrBkgColor = args.hdrBkgColor
-        local row0Color = args.rowColor0
-        local row1Color = args.rowColor1
-        local bkgColor = args.bkgColor
+        local txtColor = args.txtColor --[[@as Color]]
+        local shdColor = args.shdColor --[[@as Color]]
+        local hdrTxtColor = args.hdrTxtColor --[[@as Color]]
+        local hdrBkgColor = args.hdrBkgColor --[[@as Color]]
+        local row0Color = args.rowColor0 --[[@as Color]]
+        local row1Color = args.rowColor1 --[[@as Color]]
+        local bkgColor = args.bkgColor --[[@as Color]]
 
         -- Convert to hexadecimal.
-        local txtHex = txtColor.rgbaPixel
-        local shdHex = shdColor.rgbaPixel
-        local hdrTxtHex = hdrTxtColor.rgbaPixel
-        local hdrBkgHex = hdrBkgColor.rgbaPixel
-        local row0Hex = row0Color.rgbaPixel
-        local row1Hex = row1Color.rgbaPixel
-        local bkgHex = bkgColor.rgbaPixel
+        local txtHex = AseUtilities.aseColorToHex(txtColor, ColorMode.RGB)
+        local shdHex = AseUtilities.aseColorToHex(shdColor, ColorMode.RGB)
+        local hdrTxtHex = AseUtilities.aseColorToHex(hdrTxtColor, ColorMode.RGB)
+        local hdrBkgHex = AseUtilities.aseColorToHex(hdrBkgColor, ColorMode.RGB)
+        local row0Hex = AseUtilities.aseColorToHex(row0Color, ColorMode.RGB)
+        local row1Hex = AseUtilities.aseColorToHex(row1Color, ColorMode.RGB)
+        local bkgHex = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
 
         -- Recalaculate sprite width and height.
         spriteWidth = colCount * entryWidth + spriteMargin * 2

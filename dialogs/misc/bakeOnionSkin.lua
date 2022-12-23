@@ -5,10 +5,6 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
     -- Also known as ghost trail or Echo in After Effects.
-
-    -- TODO: At first frame, when no more previous
-    -- frame are available, repeat first frame with
-    -- an offset? Same with look forward.
     target = "ACTIVE",
     iterations = 3,
     maxIterations = 32,
@@ -17,7 +13,7 @@ local defaults = {
     maxAlpha = 128,
     useTint = true,
     foreTint = Color { r = 0, g = 0, b = 255, a = 128 },
-    backTint = Color { r = 255, g = 0, b = 0, a = 128 } ,
+    backTint = Color { r = 255, g = 0, b = 0, a = 128 },
     pullFocus = false
 }
 
@@ -197,6 +193,7 @@ dlg:button {
         local max = math.max
         local min = math.min
         local floor = math.floor
+        local blend = AseUtilities.blendRgba
 
         -- Unpack arguments.
         local args = dlg.data
@@ -206,8 +203,8 @@ dlg:button {
         local minAlpha = args.minAlpha or defaults.minAlpha
         local maxAlpha = args.maxAlpha or defaults.maxAlpha --[[@as integer]]
         local useTint = args.useTint
-        local backTint = args.backTint or defaults.backTint
-        local foreTint = args.foreTint or defaults.foreTint
+        local backTint = args.backTint or defaults.backTint --[[@as Color]]
+        local foreTint = args.foreTint or defaults.foreTint --[[@as Color]]
 
         -- Find directions.
         local useBoth = directions == "BOTH"
@@ -220,8 +217,8 @@ dlg:button {
         -- Neutral hex is when onion skin lands
         -- on current frame. When "BOTH" directions
         -- are used, mix between back and fore.
-        local backHex = backTint.rgbaPixel
-        local foreHex = foreTint.rgbaPixel
+        local backHex = AseUtilities.aseColorToHex(backTint, ColorMode.RGB)
+        local foreHex = AseUtilities.aseColorToHex(foreTint, ColorMode.RGB)
         local neutHex = 0x00808080
         if useBoth then
             neutHex = Clr.toHex(Clr.mixSrLab2(
@@ -299,10 +296,10 @@ dlg:button {
                             -- Store pixels from the image.
                             local pixels = {}
                             local pixelIdx = 0
-                            local pixelItr = currImg:pixels()
-                            for elm in pixelItr do
+                            local pxItr = currImg:pixels()
+                            for pixel in pxItr do
                                 pixelIdx = pixelIdx + 1
-                                local hex = elm()
+                                local hex = pixel()
                                 if (hex & 0xff000000) ~= 0x0 then
                                     pixels[pixelIdx] = hex
                                 else
@@ -397,9 +394,9 @@ dlg:button {
                             local xOffset = packet.tlx - xMin
                             local yOffset = packet.tly - yMin
 
-                            local shadowPixelLen = #shadowPixels - 1
+                            local lenShadowPixels = #shadowPixels - 1
                             local k = -1
-                            while k < shadowPixelLen do k = k + 1
+                            while k < lenShadowPixels do k = k + 1
                                 local shadowHex = shadowPixels[1 + k]
                                 local shadowAlpha = shadowHex >> 0x18 & 0xff
                                 if shadowAlpha > 0 then
@@ -408,14 +405,13 @@ dlg:button {
 
                                     local dest = shadowHex
                                     if useTint then
-                                        dest = AseUtilities.blendRgba(shadowHex, tint)
+                                        dest = blend(shadowHex, tint)
                                     end
                                     local compAlpha = min(shadowAlpha, fadeAlpha)
                                     dest = (compAlpha << 0x18) | (dest & 0x00ffffff)
 
                                     local orig = trgImg:getPixel(x, y)
-                                    trgImg:drawPixel(x, y,
-                                        AseUtilities.blendRgba(orig, dest))
+                                    trgImg:drawPixel(x, y, blend(orig, dest))
                                 end
                             end
                         end
@@ -434,12 +430,13 @@ dlg:button {
             trgLayer.stackIndex = oldSrcIdx
 
             local layers = srcParent.layers
-            local lenLayers = #layers
-            local i = oldSrcIdx
-            while i < lenLayers do i = i + 1
-                layers[i].stackIndex = i
+            if layers ~= nil then
+                local lenLayers = #layers
+                local i = oldSrcIdx
+                while i < lenLayers do i = i + 1
+                    layers[i].stackIndex = i
+                end
             end
-
             app.activeLayer = srcLayer
         end)
 

@@ -577,7 +577,6 @@ end
 ---@param radiusMax number maximum radius
 ---@return Vec3[]
 function Vec3.gridSpherical(longitudes, latitudes, layers, radiusMin, radiusMax)
-
     -- Cache methods.
     local cos = math.cos
     local sin = math.sin

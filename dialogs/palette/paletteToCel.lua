@@ -322,8 +322,8 @@ dlg:button {
                     -- There's no need to preserve order.
                     local srcPxItr = srcImg:pixels()
                     local hexesUnique = {}
-                    for elm in srcPxItr do
-                        hexesUnique[elm()] = true
+                    for pixel in srcPxItr do
+                        hexesUnique[pixel()] = true
                     end
 
                     -- Create a table where unique hexes are associated
@@ -362,10 +362,10 @@ dlg:button {
                     -- Apply colors to image.
                     -- Use source color alpha.
                     local trgImg = srcImg:clone()
-                    local trgpxitr = trgImg:pixels()
-                    for elm in trgpxitr do
-                        local srcHex = elm()
-                        elm(srcHex & 0xff000000
+                    local trgPxItr = trgImg:pixels()
+                    for pixel in trgPxItr do
+                        local srcHex = pixel()
+                        pixel(srcHex & 0xff000000
                             | correspDict[srcHex] & 0x00ffffff)
                     end
 

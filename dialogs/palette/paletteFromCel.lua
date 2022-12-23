@@ -2,8 +2,6 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
 local colorSpaces = {
-    -- "CIE_LAB",
-    -- "CIE_XYZ",
     "LINEAR_RGB",
     "S_RGB",
     "SR_LAB_2"
@@ -401,13 +399,13 @@ dlg:button {
             end
         end
 
-        local itr = srcImg:pixels()
+        local pxItr = srcImg:pixels()
         local dictionary = {}
         local idx = 0
 
         if colorMode == ColorMode.RGB then
-            for elm in itr do
-                local hex = elm()
+            for pixel in pxItr do
+                local hex = pixel()
                 if ((hex >> 0x18) & 0xff) > 0 then
                     hex = alphaMask | hex
                     if not dictionary[hex] then
@@ -419,14 +417,14 @@ dlg:button {
         elseif colorMode == ColorMode.INDEXED then
             local srcPal = AseUtilities.getPalette(
                 app.activeFrame, activeSprite.palettes)
-
+            local aseToHex = AseUtilities.aseColorToHex
             local srcPalLen = #srcPal
-            for elm in itr do
-                local srcIndex = elm()
+            for pixel in pxItr do
+                local srcIndex = pixel()
                 if srcIndex > -1 and srcIndex < srcPalLen then
                     local aseColor = srcPal:getColor(srcIndex)
                     if aseColor.alpha > 0 then
-                        local hex = aseColor.rgbaPixel
+                        local hex = aseToHex(aseColor, ColorMode.RGB)
                         hex = alphaMask | hex
                         if not dictionary[hex] then
                             idx = idx + 1
@@ -436,8 +434,8 @@ dlg:button {
                 end
             end
         elseif colorMode == ColorMode.GRAY then
-            for elm in itr do
-                local hexGray = elm()
+            for pixel in pxItr do
+                local hexGray = pixel()
                 if ((hexGray >> 0x08) & 0xff) > 0 then
                     hexGray = alphaMask | hexGray
                     local a = (hexGray >> 0x08) & 0xff

@@ -21,8 +21,8 @@ local activeFrame = app.activeFrame
     or activeSprite.frames[1]
 img:drawSprite(activeSprite, activeFrame)
 local pxItr = img:pixels()
-for elm in pxItr do
-    local hex = elm()
+for pixel in pxItr do
+    local hex = pixel()
     local aMask = hex & 0xff000000
     if aMask ~= 0 then
         local b = (hex >> 0x10) & 0xff
@@ -38,15 +38,15 @@ for elm in pxItr do
         local sqMag = x * x + y * y + z * z
         if sqMag > 0.000047 then
             local invMag = 127.5 / sqrt(sqMag)
-            elm(aMask
+            pixel(aMask
                 | (floor(z * invMag + 128.0) << 0x10)
                 | (floor(y * invMag + 128.0) << 0x08)
                 | floor(x * invMag + 128.0))
         else
-            elm(0xff808080)
+            pixel(0xff808080)
         end
     else
-        elm(0x0)
+        pixel(0x0)
     end
 end
 

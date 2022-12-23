@@ -52,12 +52,12 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
     local tconcat = table.concat
 
     local imgWidth = img.width
-    local imgItr = img:pixels()
+    local pxItr = img:pixels()
     local pixelDict = {}
-    for elm in imgItr do
-        local hex = elm()
+    for pixel in pxItr do
+        local hex = pixel()
         if hex & 0xff000000 ~= 0 then
-            local idx = elm.x + elm.y * imgWidth
+            local idx = pixel.x + pixel.y * imgWidth
             local idcs = pixelDict[hex]
             if idcs then
                 pixelDict[hex][#idcs + 1] = idx

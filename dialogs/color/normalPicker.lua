@@ -1,7 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
 local defaults = {
-    -- TODO: Get and Set from Select?
     x = 0.0,
     y = 0.0,
     z = 1.0,

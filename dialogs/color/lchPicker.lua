@@ -295,7 +295,7 @@ local function setFromSelect(dialog, sprite, frame)
     -- meaning you can't sample it for color.
     flatImage:drawSprite(
         sprite, frame, Point(-xSel, -ySel))
-    local px = flatImage:pixels()
+    local pxItr = flatImage:pixels()
 
     -- The key is the color in hex; the value is a
     -- number of pixels with that color in the
@@ -339,11 +339,11 @@ local function setFromSelect(dialog, sprite, frame)
 
     local palette = AseUtilities.getPalette(
         app.activeFrame, sprite.palettes)
-    for elm in px do
-        local x = elm.x + xSel
-        local y = elm.y + ySel
+    for pixel in pxItr do
+        local x = pixel.x + xSel
+        local y = pixel.y + ySel
         if sel:contains(x, y) then
-            eval(elm(), hexDict, palette)
+            eval(pixel(), hexDict, palette)
         end
     end
 
@@ -612,12 +612,12 @@ dlg:button {
         }
         selSpec.colorSpace = sprSpec.colorSpace
         local selImage = Image(selSpec)
-        local px = selImage:pixels()
+        local pxItr = selImage:pixels()
 
-        for elm in px do
-            local x = elm.x + xSel
-            local y = elm.y + ySel
-            if sel:contains(x, y) then elm(hex) end
+        for pixel in pxItr do
+            local x = pixel.x + xSel
+            local y = pixel.y + ySel
+            if sel:contains(x, y) then pixel(hex) end
         end
 
         app.transaction(function()

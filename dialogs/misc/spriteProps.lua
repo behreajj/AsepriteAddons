@@ -25,6 +25,10 @@ local defaults = {
     maskWarningIndexed = "Non-zero mask may cause bugs.",
     maskWarningRgb = "Non-zero color at index 0.",
     textLenLimit = 48,
+
+    -- TODO: Reports of custom pixel aspect ratio
+    -- crashing Aseprite.
+    -- https://steamcommunity.com/app/431730/discussions/2/6126615404777201709/
     minPxRatio = 1,
     maxPxRatio = 8
 }
@@ -363,7 +367,8 @@ local function updateMaskWarning()
     local idx0IsNotMask = false
     if maskIdxIsValid then
         local maskColorRef = pal:getColor(maskIdxNum)
-        idx0IsNotMask = maskColorRef.rgbaPixel ~= 0
+        idx0IsNotMask = AseUtilities.aseColorToHex(
+            maskColorRef, ColorMode.RGB) ~= 0
     end
     local maskIsNotIdx0 = maskIdxNum ~= 0
     local maskIsProblem = false

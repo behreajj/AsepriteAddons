@@ -95,7 +95,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = app.activeLayer
+        local srcLayer = app.activeLayer --[[@as Layer]]
         if not srcLayer then
             app.alert {
                 title = "Error",

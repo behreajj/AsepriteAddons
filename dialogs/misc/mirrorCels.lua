@@ -185,7 +185,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = app.activeLayer
+        local srcLayer = app.activeLayer --[[@as Layer]]
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -384,15 +384,15 @@ dlg:button {
                         lftImg:clear(alphaMask)
                     end
 
-                    local flatItr = flatImg:pixels()
-                    for elm in flatItr do
-                        local cx = elm.x
-                        local cy = elm.y
+                    local pxItr = flatImg:pixels()
+                    for pixel in pxItr do
+                        local cx = pixel.x
+                        local cy = pixel.y
                         local ex = cx - xOrPx
                         local ey = cy - yOrPx
                         local cross = ex * dy - ey * dx
                         if flipSign * cross < 0.0 then
-                            local hex = elm()
+                            local hex = pixel()
                             lftImg:drawPixel(cx, cy, hex)
                         else
                             local t = (ex * dx + ey * dy) * dInvMagSq

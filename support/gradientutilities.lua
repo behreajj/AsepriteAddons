@@ -186,9 +186,10 @@ function GradientUtilities.dialogWidgets(dlg)
         text = "&FLIP",
         focus = false,
         onclick = function()
+            local s = dlg.data.shades --[[@as table]]
             dlg:modify {
                 id = "shades",
-                colors = Utilities.reverseTable(dlg.data.shades)
+                colors = Utilities.reverseTable(s)
             }
         end
     }

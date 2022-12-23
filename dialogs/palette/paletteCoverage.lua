@@ -575,8 +575,9 @@ dlg:button {
 
         -- Create background image once, then clone.
         local bkgImg = Image(width, height)
-        local bkgHex = args.bkgColor.rgbaPixel
-        for elm in bkgImg:pixels() do elm(bkgHex) end
+        local bkgColor = args.bkgColor or defaults.bkgColor --[[@as Color]]
+        local bkgHex = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
+        bkgImg:clear(bkgHex)
 
         local fps = args.fps or defaults.fps --[[@as integer]]
         local duration = 1.0 / math.max(1, fps)

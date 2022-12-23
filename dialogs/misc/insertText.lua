@@ -243,9 +243,9 @@ dlg:button {
         local leading = args.leading or defaults.leading
         local alignLine = args.alignHoriz or defaults.alignLine
         local alignChar = args.alignVert or defaults.alignChar
-        local aseFill = args.fillClr or defaults.fillClr
-        local aseShd = args.shdColor or defaults.shdColor
-        local aseBkg = args.bkgColor or defaults.bkgColor
+        local aseFill = args.fillClr or defaults.fillClr --[[@as Color]]
+        local aseShd = args.shdColor or defaults.shdColor --[[@as Color]]
+        local aseBkg = args.bkgColor or defaults.bkgColor --[[@as Color]]
 
         -- Reinterpret and validate.
         local duration = 1.0 / math.max(1, fps)
@@ -254,9 +254,9 @@ dlg:button {
         end
 
         -- Cache Aseprite colors to hexadecimals.
-        local hexBkg = aseBkg.rgbaPixel
-        local hexShd = aseShd.rgbaPixel
-        local hexFill = aseFill.rgbaPixel
+        local hexBkg = AseUtilities.aseColorToHex(aseBkg, ColorMode.RGB)
+        local hexShd = AseUtilities.aseColorToHex(aseShd, ColorMode.RGB)
+        local hexFill = AseUtilities.aseColorToHex(aseFill, ColorMode.RGB)
 
         local charTableStill = {}
 
@@ -337,8 +337,7 @@ dlg:button {
         bkgSrcSpec.colorSpace = sprite.colorSpace
         local bkgSrcImg = Image(bkgSrcSpec)
         if useBkg then
-            local bkgPxItr = bkgSrcImg:pixels()
-            for elm in bkgPxItr do elm(hexBkg) end
+            bkgSrcImg:clear(hexBkg)
         end
 
         -- Convert from percentage to pixel dimensions.

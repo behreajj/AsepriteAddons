@@ -189,10 +189,10 @@ dlg:button {
                 local pxItr = image:pixels()
 
                 local index = 0
-                for elm in pxItr do
+                for pixel in pxItr do
                     if index <= lenColors then
                         index = index + 1
-                        elm(colors[index])
+                        pixel(colors[index])
                     end
                 end
 

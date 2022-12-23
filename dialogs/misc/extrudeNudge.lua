@@ -321,12 +321,13 @@ dlg:button {
             local xCel = celPos.x
             local yCel = celPos.y
 
-            local pixels = celImage:pixels()
-            for pixel in pixels do
+            local pxItr = celImage:pixels()
+            local pxRect = Rectangle(0, 0, 1, 1)
+            for pixel in pxItr do
                 if pixel() & 0xff000000 == 0 then
-                    trgSel:subtract(
-                        Rectangle(pixel.x + xCel,
-                            pixel.y + yCel, 1, 1))
+                    pxRect.x = pixel.x + xCel
+                    pxRect.y = pixel.y + yCel
+                    trgSel:subtract(pxRect)
                 end
             end
         end

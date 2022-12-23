@@ -300,10 +300,10 @@ dlg:button {
                     -- A cel image may contain only opaque pixels, but
                     -- occupy a small part of the canvas. Ensure that
                     -- there is always a zero key for alpha invert.
-                    local srcpxitr = srcImg:pixels()
+                    local srcPxItr = srcImg:pixels()
                     local srcDict = {}
-                    for elm in srcpxitr do
-                        local h = elm()
+                    for pixel in srcPxItr do
+                        local h = pixel()
                         if (h & 0xff000000) == 0 then h = 0x0 end
                         srcDict[h] = true
                     end
@@ -333,10 +333,16 @@ dlg:button {
                     if useNormalize then
                         local rangeLum = abs(maxLum - minLum)
                         if rangeLum > 0.07 then
+                            -- When factor is less than zero, the average lum
+                            -- can be multiplied by the factor prior to the loop.
                             local avgLum = 50.0
                             if countLum > 0 then avgLum = sumLum / countLum end
+                            avgLum = absNormFac * avgLum
+
+                            -- When factor is greater than zero.
                             local tDenom = absNormFac * (100.0 / rangeLum)
                             local lumMintDenom = minLum * tDenom
+
                             local normDict = {}
                             for key, value in pairs(labDict) do
                                 local lOld = value.l
@@ -346,10 +352,10 @@ dlg:button {
                                         lNew = complNormFac * lOld
                                             + tDenom * lOld - lumMintDenom
                                     elseif normLtZero then
-                                        lNew = complNormFac * lOld
-                                            + absNormFac * avgLum
+                                        lNew = complNormFac * lOld + avgLum
                                     end
                                 end
+
                                 normDict[key] = {
                                     l = lNew,
                                     a = value.a,
@@ -452,11 +458,11 @@ dlg:button {
                         trgImg = srcImg:clone()
                     end
 
-                    local trgpxitr = trgImg:pixels()
-                    for elm in trgpxitr do
-                        local h = elm()
+                    local trgPxItr = trgImg:pixels()
+                    for pixel in trgPxItr do
+                        local h = pixel()
                         if (h & 0xff000000) == 0 then h = 0x0 end
-                        elm(trgDict[h])
+                        pixel(trgDict[h])
                     end
 
                     local trgCel = activeSprite:newCel(

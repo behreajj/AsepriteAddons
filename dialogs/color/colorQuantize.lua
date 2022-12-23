@@ -398,8 +398,8 @@ dlg:button {
                     -- Gather unique colors in image.
                     local srcDict = {}
                     local srcPxItr = srcImg:pixels()
-                    for elm in srcPxItr do
-                        srcDict[elm()] = true
+                    for pixel in srcPxItr do
+                        srcDict[pixel()] = true
                     end
 
                     -- Quantize colors, place in dictionary.
@@ -428,9 +428,9 @@ dlg:button {
 
                     -- Clone image, replace color with quantized.
                     local trgImg = srcImg:clone()
-                    local trgpxitr = trgImg:pixels()
-                    for elm in trgpxitr do
-                        elm(trgDict[elm()])
+                    local trgPxItr = trgImg:pixels()
+                    for pixel in trgPxItr do
+                        pixel(trgDict[pixel()])
                     end
 
                     local trgCel = activeSprite:newCel(

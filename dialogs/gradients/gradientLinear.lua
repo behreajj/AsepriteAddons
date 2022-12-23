@@ -226,7 +226,9 @@ dlg:button {
             bx = xDsPx - xOrPx
             by = yDsPx - yOrPx
         end
-        local bbInv = 1.0 / (bx * bx + by * by)
+        local bbDot = bx * bx + by * by
+        local bbInv = 0.0
+        if bbDot ~= 0.0 then bbInv = 1.0 / bbDot end
 
         local grdSpec = ImageSpec {
             width = math.max(1, activeSprite.width),
@@ -238,15 +240,15 @@ dlg:button {
 
         local grdImg = Image(grdSpec)
         local grdItr = grdImg:pixels()
-        for elm in grdItr do
-            local ax = elm.x
-            local ay = elm.y
+        for pixel in grdItr do
+            local ax = pixel.x - xOrPx
+            local ay = pixel.y - yOrPx
             local adotb = (ax * bx + ay * by) * bbInv
             local fac = min(max(adotb, 0.0), 1.0)
             fac = facAdjust(fac)
             fac = quantize(fac, levels)
             local clr = cgeval(gradient, fac, mixFunc)
-            elm(toHex(clr))
+            pixel(toHex(clr))
         end
 
         app.transaction(function()

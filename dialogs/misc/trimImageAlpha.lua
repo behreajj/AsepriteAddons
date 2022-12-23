@@ -87,13 +87,12 @@ dlg:button {
             appRange:clear()
         end
 
-        local celsLen = #cels
+        local lenCels = #cels
         local trimImage = AseUtilities.trimImageAlpha
         app.transaction(function()
             local i = 0
-            while i < celsLen do
+            while i < lenCels do
                 i = i + 1
-                -- cel nil check shouldn't be necessary?
                 local cel = cels[i]
                 local layer = cel.layer
                 local layerIsTilemap = false
@@ -106,8 +105,8 @@ dlg:button {
                     -- .aseprite files, and hence not need this.
                     -- elseif layer.isEditable then
                 else
-                    local srcImg = cel.image
-                    local trgImg, x, y = trimImage(srcImg, padding, alphaMask)
+                    local trgImg, x, y = trimImage(
+                        cel.image, padding, alphaMask)
                     local srcPos = cel.position
                     cel.position = Point(srcPos.x + x, srcPos.y + y)
                     cel.image = trgImg

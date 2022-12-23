@@ -787,13 +787,13 @@ dlg:button {
             local srcImg = packet.image
 
             local trgImg = Image(srcSpec)
-            local trgItr = trgImg:pixels()
+            local pxItr = trgImg:pixels()
 
-            for elm in trgItr do
-                local xp, yp = eval(elm.x, elm.y, theta, fac)
+            for pixel in pxItr do
+                local xp, yp = eval(pixel.x, pixel.y, theta, fac)
                 xp = round(xp)
                 yp = round(yp)
-                elm(wrapper(xp, yp, srcImg))
+                pixel(wrapper(xp, yp, srcImg))
             end
 
             trgImages[h] = trgImg

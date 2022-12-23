@@ -144,11 +144,11 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
         -- Remove pixels within selection bounds
         -- but not within selection itself.
         local flatPxItr = flatImage:pixels()
-        for elm in flatPxItr do
-            local x = elm.x + xSel
-            local y = elm.y + ySel
+        for pixel in flatPxItr do
+            local x = pixel.x + xSel
+            local y = pixel.y + ySel
             if not sel:contains(x, y) then
-                elm(alphaMask)
+                pixel(alphaMask)
             end
         end
 
@@ -164,7 +164,7 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
 
     else
         -- If active is group, get children.
-        local activeLayer = app.activeLayer
+        local activeLayer = app.activeLayer --[[@as Layer]]
         local activeFrame = app.activeFrame
         if activeLayer and activeFrame then
             if AseUtilities.isEditableHierarchy(
@@ -778,10 +778,10 @@ dlg:button {
                     local trgImg = Image(trgSpec)
 
                     local trgPxItr = trgImg:pixels()
-                    for elm in trgPxItr do
-                        elm(filter(
-                            xDiff + elm.x + tana * (elm.y - yCenter),
-                            elm.y, wSrc, hSrc, srcImg, alphaMask))
+                    for pixel in trgPxItr do
+                        pixel(filter(
+                            xDiff + pixel.x + tana * (pixel.y - yCenter),
+                            pixel.y, wSrc, hSrc, srcImg, alphaMask))
                     end
 
                     local xTrim = 0
@@ -869,9 +869,9 @@ dlg:button {
                     local trgImg = Image(trgSpec)
 
                     local trgPxItr = trgImg:pixels()
-                    for elm in trgPxItr do
-                        elm(filter(elm.x,
-                            yDiff + elm.y + tana * (elm.x - xTrgCenter),
+                    for pixel in trgPxItr do
+                        pixel(filter(pixel.x,
+                            yDiff + pixel.y + tana * (pixel.x - xTrgCenter),
                             wSrc, hSrc, srcImg, alphaMask))
                     end
 
@@ -1027,14 +1027,14 @@ dlg:button {
                         -- source pixels. Looping through source pixels
                         -- results in gaps between pixels.
                         local trgPxItr = trgImg:pixels()
-                        for elm in trgPxItr do
-                            local xSgn = elm.x - xTrgCenter
-                            local ySgn = elm.y - yTrgCenter
+                        for pixel in trgPxItr do
+                            local xSgn = pixel.x - xTrgCenter
+                            local ySgn = pixel.y - yTrgCenter
                             local xRot = cosa * xSgn - sina * ySgn
                             local yRot = cosa * ySgn + sina * xSgn
                             local xSrc = xSrcCenter + xRot
                             local ySrc = ySrcCenter + yRot
-                            elm(filter(xSrc, ySrc, wSrc, hSrc,
+                            pixel(filter(xSrc, ySrc, wSrc, hSrc,
                                 srcImg, alphaMask))
                         end
 
@@ -1252,11 +1252,11 @@ dlg:button {
                         }
                         trgSpec.colorSpace = colorSpace
                         local trgImg = Image(trgSpec)
-                        local trgpxitr = trgImg:pixels()
+                        local trgPxItr = trgImg:pixels()
 
-                        for elm in trgpxitr do
-                            elm(filter(
-                                elm.x * tx, elm.y * ty, wSrc, hSrc,
+                        for pixel in trgPxItr do
+                            pixel(filter(
+                                pixel.x * tx, pixel.y * ty, wSrc, hSrc,
                                 srcImg, alphaMask))
                         end
 

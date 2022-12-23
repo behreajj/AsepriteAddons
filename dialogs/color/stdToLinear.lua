@@ -188,13 +188,13 @@ dlg:button {
                     if cel then
                         local trgImg = cel.image:clone()
                         local pxItr = trgImg:pixels()
-                        for elm in pxItr do
-                            local h = elm()
+                        for pixel in pxItr do
+                            local h = pixel()
                             local a = h >> 0x08 & 0xff
                             if a > 0 then
-                                elm(a << 0x08 | lut[1 + (h & 0xff)])
+                                pixel(a << 0x08 | lut[1 + (h & 0xff)])
                             else
-                                elm(0x0)
+                                pixel(0x0)
                             end
                         end
                         cel.image = trgImg
@@ -207,16 +207,16 @@ dlg:button {
                     if cel then
                         local trgImg = cel.image:clone()
                         local pxItr = trgImg:pixels()
-                        for elm in pxItr do
-                            local h = elm()
+                        for pixel in pxItr do
+                            local h = pixel()
                             local a = h >> 0x18 & 0xff
                             if a > 0 then
-                                elm(a << 0x18
+                                pixel(a << 0x18
                                     | lut[1 + (h >> 0x10 & 0xff)] << 0x10
                                     | lut[1 + (h >> 0x08 & 0xff)] << 0x08
                                     | lut[1 + (h & 0xff)])
                             else
-                                elm(0x0)
+                                pixel(0x0)
                             end
                         end
                         cel.image = trgImg

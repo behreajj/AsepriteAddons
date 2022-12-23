@@ -35,14 +35,14 @@ b = 0xff000000 | b
 local activeSpec = activeSprite.spec
 local checker = Image(activeSpec)
 local pxItr = checker:pixels()
-for elm in pxItr do
+for pixel in pxItr do
     local hex = b
-    local x = elm.x
-    local y = elm.y
+    local x = pixel.x
+    local y = pixel.y
     if (((x // wGrid) + (y // hGrid)) % 2) ~= 1 then
         hex = a
     end
-    elm(hex)
+    pixel(hex)
 end
 
 local checkerLayer = activeSprite:newLayer()

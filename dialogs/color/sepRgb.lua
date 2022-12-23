@@ -151,7 +151,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = app.activeLayer
+        local srcLayer = app.activeLayer --[[@as Layer]]
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -287,9 +287,9 @@ dlg:button {
                     local grItr = greenImg:pixels()
                     local blItr = blueImg:pixels()
 
-                    for elm in rdItr do elm(elm() & rdMsk) end
-                    for elm in grItr do elm(elm() & grMsk) end
-                    for elm in blItr do elm(elm() & blMsk) end
+                    for pixel in rdItr do pixel(pixel() & rdMsk) end
+                    for pixel in grItr do pixel(pixel() & grMsk) end
+                    for pixel in blItr do pixel(pixel() & blMsk) end
 
                     if fillBase then
                         local redPos = redCel.position
@@ -324,9 +324,9 @@ dlg:button {
                         local yBlueBase = tryBase - tryBlue
 
                         local baseItr = baseCel.image:pixels()
-                        for elm in baseItr do
-                            local x = elm.x
-                            local y = elm.y
+                        for pixel in baseItr do
+                            local x = pixel.x
+                            local y = pixel.y
                             local placeMark = false
 
                             -- getPixel returns -1 when coordinates are out of
@@ -357,7 +357,7 @@ dlg:button {
                             end
 
                             if placeMark then
-                                elm(0xff000000)
+                                pixel(0xff000000)
                             end
                         end
                     end

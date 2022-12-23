@@ -525,10 +525,10 @@ function AseUtilities.blendImage(
         blendFunc = AseUtilities.blendRgba
     end
 
-    local pixels = target:pixels()
-    for elm in pixels do
-        local xPixel = elm.x
-        local yPixel = elm.y
+    local pxItr = target:pixels()
+    for pixel in pxItr do
+        local xPixel = pixel.x
+        local yPixel = pixel.y
 
         local xSmpl = xPixel + xMin
         local ySmpl = yPixel + yMin
@@ -554,7 +554,7 @@ function AseUtilities.blendImage(
             end
         end
 
-        elm(blendFunc(aHex, bHex, tMask))
+        pixel(blendFunc(aHex, bHex, tMask))
     end
 
     return target, xMin, yMin
@@ -954,8 +954,8 @@ function AseUtilities.drawBorder(img, border, bordHex)
     local w = img.width
     local h = img.height
     if border >= math.min(w, h) then
-        local itr = img:pixels()
-        for elm in itr do elm(bordHex) end
+        local pxItr = img:pixels()
+        for pixel in pxItr do pixel(bordHex) end
         return img
     end
 
@@ -969,7 +969,7 @@ function AseUtilities.drawBorder(img, border, bordHex)
     rect.width = border
     rect.height = hnbord
     local leftItr = img:pixels(rect)
-    for elm in leftItr do elm(bordHex) end
+    for pixel in leftItr do pixel(bordHex) end
 
     -- Top edge.
     rect.x = border
@@ -977,7 +977,7 @@ function AseUtilities.drawBorder(img, border, bordHex)
     rect.width = wnbord
     rect.height = border
     local topItr = img:pixels(rect)
-    for elm in topItr do elm(bordHex) end
+    for pixel in topItr do pixel(bordHex) end
 
     -- Right edge.
     rect.x = wnbord
@@ -985,7 +985,7 @@ function AseUtilities.drawBorder(img, border, bordHex)
     rect.width = border
     rect.height = hnbord
     local rightItr = img:pixels(rect)
-    for elm in rightItr do elm(bordHex) end
+    for pixel in rightItr do pixel(bordHex) end
 
     -- Bottom edge.
     rect.x = 0
@@ -993,7 +993,7 @@ function AseUtilities.drawBorder(img, border, bordHex)
     rect.width = wnbord
     rect.height = border
     local bottomItr = img:pixels(rect)
-    for elm in bottomItr do elm(bordHex) end
+    for pixel in bottomItr do pixel(bordHex) end
 
     return img
 end
@@ -1500,9 +1500,9 @@ function AseUtilities.flipImageHoriz(source)
     local px = {}
     local i = 0
     local srcPxItr = source:pixels()
-    for elm in srcPxItr do
+    for pixel in srcPxItr do
         i = i + 1
-        px[i] = elm()
+        px[i] = pixel()
     end
 
     local srcSpec = source.spec
@@ -1513,9 +1513,9 @@ function AseUtilities.flipImageHoriz(source)
     local target = Image(srcSpec)
     local j = 0
     local trgPxItr = target:pixels()
-    for elm in trgPxItr do
+    for pixel in trgPxItr do
         j = j + 1
-        elm(px[j])
+        pixel(px[j])
     end
     return target, 1 - w, 0
 end
@@ -1532,9 +1532,9 @@ function AseUtilities.flipImageVert(source)
     local px = {}
     local i = 0
     local srcPxItr = source:pixels()
-    for elm in srcPxItr do
+    for pixel in srcPxItr do
         i = i + 1
-        px[i] = elm()
+        px[i] = pixel()
     end
 
     local srcSpec = source.spec
@@ -1545,9 +1545,9 @@ function AseUtilities.flipImageVert(source)
     local target = Image(srcSpec)
     local j = 0
     local trgPxItr = target:pixels()
-    for elm in trgPxItr do
+    for pixel in trgPxItr do
         j = j + 1
-        elm(px[j])
+        pixel(px[j])
     end
     return target, 0, 1 - h
 end
@@ -1928,9 +1928,9 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
     local px = {}
     local i = 0
     local srcPxItr = source:pixels()
-    for elm in srcPxItr do
+    for pixel in srcPxItr do
         i = i + 1
-        px[i] = elm()
+        px[i] = pixel()
     end
 
     local trgSpec = ImageSpec {
@@ -1947,9 +1947,9 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
 
     local j = 0
     local trgPxItr = target:pixels()
-    for elm in trgPxItr do
+    for pixel in trgPxItr do
         j = j + 1
-        elm(pxRsz[j])
+        pixel(pxRsz[j])
     end
     return target
 end
@@ -1966,9 +1966,9 @@ function AseUtilities.rotateImage90(source)
     local px = {}
     local i = 0
     local srcPxItr = source:pixels()
-    for elm in srcPxItr do
+    for pixel in srcPxItr do
         i = i + 1
-        px[i] = elm()
+        px[i] = pixel()
     end
 
     local srcSpec = source.spec
@@ -1987,9 +1987,9 @@ function AseUtilities.rotateImage90(source)
 
     local j = 0
     local trgPxItr = target:pixels()
-    for elm in trgPxItr do
+    for pixel in trgPxItr do
         j = j + 1
-        elm(pxRot[j])
+        pixel(pxRot[j])
     end
     return target, 0, 1 - w
 end
@@ -2005,9 +2005,9 @@ function AseUtilities.rotateImage180(source)
     local px = {}
     local i = 0
     local srcPxItr = source:pixels()
-    for elm in srcPxItr do
+    for pixel in srcPxItr do
         i = i + 1
-        px[i] = elm()
+        px[i] = pixel()
     end
 
     -- Table is reversed in-place.
@@ -2015,9 +2015,9 @@ function AseUtilities.rotateImage180(source)
     local target = Image(source.spec)
     local j = 0
     local trgPxItr = target:pixels()
-    for elm in trgPxItr do
+    for pixel in trgPxItr do
         j = j + 1
-        elm(px[j])
+        pixel(px[j])
     end
 
     return target,
@@ -2037,9 +2037,9 @@ function AseUtilities.rotateImage270(source)
     local px = {}
     local i = 0
     local srcPxItr = source:pixels()
-    for elm in srcPxItr do
+    for pixel in srcPxItr do
         i = i + 1
-        px[i] = elm()
+        px[i] = pixel()
     end
 
     local srcSpec = source.spec
@@ -2058,9 +2058,9 @@ function AseUtilities.rotateImage270(source)
 
     local j = 0
     local trgPxItr = target:pixels()
-    for elm in trgPxItr do
+    for pixel in trgPxItr do
         j = j + 1
-        elm(pxRot[j])
+        pixel(pxRot[j])
     end
     return target, 1 - h, 0
 end
@@ -2107,6 +2107,28 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
     end
 end
 
+---Copies a source image specification to a target, except
+---for width and height. This facilitates an image being
+---copied with modifications to size. If width and height
+---are undefined, the source spec's dimensions are used.
+---@param source ImageSpec source image spec
+---@param width integer target width
+---@param height integer target height
+---@return ImageSpec
+function AseUtilities.specCopy(source, width, height)
+    -- TODO: Search for places where this can be used.
+    local wVrf = width or source.width
+    local hVrf = height or source.height
+    local target = ImageSpec{
+        width = wVrf,
+        height = hVrf,
+        colorMode = source.colorMode,
+        transparentColor = source.transparentColor
+    }
+    target.colorSpace = source.colorSpace
+    return target
+end
+
 ---Evaluates whether or not the version of Aseprite in
 ---use supports tile map layers.
 ---@return boolean
@@ -2139,12 +2161,12 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     specTrg.colorSpace = specSrc.colorSpace
     local imgTrg = Image(specTrg)
 
-    local itrSrc = imgSrc:pixels()
-    for elm in itrSrc do
+    local pxItr = imgSrc:pixels()
+    for pixel in pxItr do
         imgTrg:drawImage(
-            tileSet:getTile(elm()),
-            Point(elm.x * tileWidth,
-                elm.y * tileHeight))
+            tileSet:getTile(pixel()),
+            Point(pixel.x * tileWidth,
+                pixel.y * tileHeight))
     end
 
     return imgTrg
@@ -2181,12 +2203,12 @@ function AseUtilities.trimCelToSelect(cel, select, hexDefault)
     trimImage:drawImage(celImg, oldPos - cel.position)
 
     local hexVrf = hexDefault or alphaMask
-    local trimItr = trimImage:pixels()
-    for elm in trimItr do
+    local pxItr = trimImage:pixels()
+    for pixel in pxItr do
         if not select:contains(
-            xClip + elm.x,
-            yClip + elm.y) then
-            elm(hexVrf)
+            xClip + pixel.x,
+            yClip + pixel.y) then
+            pixel(hexVrf)
         end
     end
 
@@ -2271,13 +2293,8 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
 
     local width = image.width
     local height = image.height
-    if width < 2 or height < 2 then
-        -- What about padding?
-        return image, 0, 0
-    end
-
-    local widthn1 = width - 1
-    local heightn1 = height - 1
+    local widthn1 = math.max(0, width - 1)
+    local heightn1 = math.max(0, height - 1)
     local minRight = widthn1
     local minBottom = heightn1
 
@@ -2333,13 +2350,11 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
         end
     end
 
-    local wTrg = rgt - lft
-    local hTrg = btm - top
+    local wTrg = 1 + rgt - lft
+    local hTrg = 1 + btm - top
     if wTrg < 1 or hTrg < 1 then
         return image, 0, 0
     end
-    wTrg = wTrg + 1
-    hTrg = hTrg + 1
 
     local valPad = padding or 0
     if valPad < 0 then valPad = -valPad end
@@ -2356,11 +2371,11 @@ function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
 
     -- local sampleRect = Rectangle(left, top, wTrg, hTrg)
     -- local srcItr = image:pixels(sampleRect)
-    -- for elm in srcItr do
+    -- for pixel in srcItr do
     --     target:drawPixel(
-    --         valPad + elm.x - left,
-    --         valPad + elm.y - top,
-    --         elm())
+    --         valPad + pixel.x - left,
+    --         valPad + pixel.y - top,
+    --         pixel())
     -- end
 
     -- This creates a transaction.
@@ -2388,9 +2403,9 @@ function AseUtilities.wrapImage(source, x, y)
     local px = {}
     local i = 0
     local srcPxItr = source:pixels()
-    for elm in srcPxItr do
+    for pixel in srcPxItr do
         i = i + 1
-        px[i] = elm()
+        px[i] = pixel()
     end
 
     local sourceSpec = source.spec
@@ -2401,9 +2416,9 @@ function AseUtilities.wrapImage(source, x, y)
     local target = Image(sourceSpec)
     local j = 0
     local trgPxItr = target:pixels()
-    for elm in trgPxItr do
+    for pixel in trgPxItr do
         j = j + 1
-        elm(wrp[j])
+        pixel(wrp[j])
     end
 
     return target
