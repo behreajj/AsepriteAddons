@@ -618,7 +618,7 @@ dlg:button {
         elseif waveType == "INTERLACED" then
 
             -- wn1 and hn1 work better for sprites with even width, height
-            -- when converting to theta.s
+            -- when converting to theta.
             local interType = args.interType or defaults.interType
             local interOffOrig = args.interOffOrig or defaults.interOffOrig
             local interOffDest = args.interOffDest or defaults.interOffDest

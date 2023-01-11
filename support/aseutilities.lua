@@ -1963,18 +1963,16 @@ end
 ---@return integer
 ---@return integer
 function AseUtilities.rotateImage90(source)
-    local px = {}
-    local i = 0
-    local srcPxItr = source:pixels()
-    for pixel in srcPxItr do
-        i = i + 1
-        px[i] = pixel()
-    end
-
     local srcSpec = source.spec
     local w = srcSpec.width
     local h = srcSpec.height
-    local pxRot = Utilities.rotatePixels90(px, w, h)
+
+    local lennh = w * h - h
+    local pxRot = {}
+    local srcPxItr = source:pixels()
+    for pixel in srcPxItr do
+        pxRot[1 + lennh + pixel.y - pixel.x * h] = pixel()
+    end
 
     local trgSpec = ImageSpec {
         width = h,
@@ -2034,18 +2032,16 @@ end
 ---@return integer
 ---@return integer
 function AseUtilities.rotateImage270(source)
-    local px = {}
-    local i = 0
-    local srcPxItr = source:pixels()
-    for pixel in srcPxItr do
-        i = i + 1
-        px[i] = pixel()
-    end
-
     local srcSpec = source.spec
     local w = srcSpec.width
     local h = srcSpec.height
-    local pxRot = Utilities.rotatePixels270(px, w, h)
+
+    local hn1 = h - 1
+    local pxRot = {}
+    local srcPxItr = source:pixels()
+    for pixel in srcPxItr do
+        pxRot[1 + pixel.x * h + hn1 - pixel.y] = pixel()
+    end
 
     local trgSpec = ImageSpec {
         width = h,
@@ -2105,28 +2101,6 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
             palette:setColor(0, clearBlack)
         end)
     end
-end
-
----Copies a source image specification to a target, except
----for width and height. This facilitates an image being
----copied with modifications to size. If width and height
----are undefined, the source spec's dimensions are used.
----@param source ImageSpec source image spec
----@param width integer target width
----@param height integer target height
----@return ImageSpec
-function AseUtilities.specCopy(source, width, height)
-    -- TODO: Search for places where this can be used.
-    local wVrf = width or source.width
-    local hVrf = height or source.height
-    local target = ImageSpec{
-        width = wVrf,
-        height = hVrf,
-        colorMode = source.colorMode,
-        transparentColor = source.transparentColor
-    }
-    target.colorSpace = source.colorSpace
-    return target
 end
 
 ---Evaluates whether or not the version of Aseprite in

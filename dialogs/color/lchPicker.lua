@@ -325,7 +325,6 @@ local function setFromSelect(dialog, sprite, frame)
                 local aseColor = pal:getColor(idx)
                 local a = aseColor.alpha
                 if a > 0 then
-                    -- TODO: Replace all instances of .rgbaPixel with AseUtilities.
                     local h = aseColor.rgbaPixel
                     local q = d[h]
                     if q then d[h] = q + 1 else d[h] = 1 end

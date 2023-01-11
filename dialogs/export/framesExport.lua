@@ -147,9 +147,9 @@ local function scaleAndPadPacketImages(
 
         if usePadding then
             local padSpec = ImageSpec {
-                colorMode = colorMode,
                 width = image.width + pad2,
                 height = image.height + pad2,
+                colorMode = colorMode,
                 transparentColor = alphaIndex
             }
             padSpec.colorSpace = colorSpace

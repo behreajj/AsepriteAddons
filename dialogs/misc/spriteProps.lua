@@ -26,8 +26,7 @@ local defaults = {
     maskWarningRgb = "Non-zero color at index 0.",
     textLenLimit = 48,
 
-    -- TODO: Reports of custom pixel aspect ratio
-    -- crashing Aseprite.
+    -- TODO: Crash report for custom pixel aspect ratio?
     -- https://steamcommunity.com/app/431730/discussions/2/6126615404777201709/
     minPxRatio = 1,
     maxPxRatio = 8
@@ -322,6 +321,8 @@ local function updateMaskIndex()
 end
 
 local function updateMaskColor()
+    -- TODO: This should not only have a color swatch, but display its
+    -- RGBA values, so as to cover (255, 0, 0, 255) vs. (0, 255, 0, 255).
     local spec = sprite.spec
     local colorMode = spec.colorMode
 

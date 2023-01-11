@@ -124,7 +124,7 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
         local xSel = selBounds.x
         local ySel = selBounds.y
         local activeSpec = activeSprite.spec
-        local actFrame = app.activeFrame
+        local activeFrame = app.activeFrame
         local alphaMask = activeSpec.transparentColor
 
         -- Create a subset of flattened sprite.
@@ -138,7 +138,7 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
         local flatImage = Image(flatSpec)
         flatImage:drawSprite(
             activeSprite,
-            actFrame.frameNumber,
+            activeFrame.frameNumber,
             Point(-xSel, -ySel))
 
         -- Remove pixels within selection bounds
@@ -157,7 +157,7 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
         local adjLayer = activeSprite:newLayer()
         adjLayer.name = "Transformed"
         local adjCel = activeSprite:newCel(
-            adjLayer, actFrame,
+            adjLayer, activeFrame,
             flatImage, Point(xSel, ySel))
         lenTrgCels = lenTrgCels + 1
         trgCels[lenTrgCels] = adjCel
@@ -175,8 +175,7 @@ local function getTargetCels(activeSprite, targetPreset, bkgAllow)
                 local lenLeaves = #leaves
                 local i = 0
                 while i < lenLeaves do i = i + 1
-                    local leaf = leaves[i]
-                    local cel = leaf:cel(activeFrame)
+                    local cel = leaves[i]:cel(activeFrame)
                     if cel then
                         lenTrgCels = lenTrgCels + 1
                         trgCels[lenTrgCels] = cel
@@ -331,7 +330,6 @@ local function filterBilin(
         gt = math.floor(0.5 + gt)
         rt = math.floor(0.5 + rt)
 
-        -- Is it necessary to check for negative values here?
         if at > 255 then at = 255 end
         if bt > 255 then bt = 255 end
         if gt > 255 then gt = 255 end
