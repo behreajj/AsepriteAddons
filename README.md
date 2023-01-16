@@ -2,11 +2,17 @@
 
 This repository developed out of the Medium article, ["How To Script Aseprite Tools in Lua"](https://behreajj.medium.com/how-to-script-aseprite-tools-in-lua-8f849b08733).
 
-To install, click on the green `Code` button above. For those unfamiliar with Git, select `Download ZIP`, then unzip the file after it has finished downloading. In Aseprite, go to `File > Scripts > Open Scripts Folder`. Copy `commands`, `dialog` and `support` folders from the unzipped download into the folder that Aseprite has opened. Return to Aseprite, go to `File > Scripts > Rescan Scripts Folder`.
+## Installation
+
+To install, click on the green `Code` button above. Select `Download ZIP` from the pop-up menu. Unzip the file after it has finished downloading. In Aseprite, go to `File > Scripts > Open Scripts Folder`. Copy `commands`, `dialog` and `support` folders from the unzipped download into the folder that Aseprite has opened. Return to Aseprite, go to `File > Scripts > Rescan Scripts Folder`.
+
+There is a [known issue](https://community.aseprite.org/t/script-folder-path-cannot-open-no-such-file-or-directory/16818/) when Aseprite's script folder is on a file path that includes characters such as 'é' (e acute) or 'ö' (o umlaut). `dofile` will not interpret relative paths correctly.
+
+## Usage
 
 To use, go to `File > Scripts` and choose from entries in the `dialogs` or `commands` folder.
 
-Scripts can be assigned shortcuts under `Edit > Keyboard Shortcuts`. Dialog buttons can be used from the keyboard by holding down the `Alt` key and pressing the underlined letter of the button's label. For example, `Alt+C` will close dialogs, per the 'C' in "CANCEL".
+Scripts can be assigned shortcuts in `Edit > Keyboard Shortcuts`. Dialog buttons can be called by holding down the `Alt` key and pressing the underlined letter of the button's label. For example, `Alt+C` will close dialogs, per the 'C' in "CANCEL".
 
 ## References
 
@@ -108,10 +114,6 @@ This repo includes
 - A radial gradient.
 
   ![Radial Gradient](screencaps/radialGradient.png)
-
-- A rounded rectangle.
-
-  ![Rounded Rectangle](screencaps/roundedRect.png)
 
 - RGB channel separation.
 
