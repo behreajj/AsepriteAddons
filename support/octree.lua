@@ -79,15 +79,12 @@ function Octree:__tostring()
 end
 
 ---Finds the mean center of each leaf node in
----an octree. If empty nodes are included
----then the center of a node's bounds is used.
----Appends centers to an array if provided,
----otherwise creates a new array.
+---an octree. Appends centers to an array
+---if provided, otherwise creates a new array.
 ---@param o Octree octree
----@param include boolean include empty nodes
 ---@param arr Vec3[]? array
 ---@return Vec3[]
-function Octree.centersMean(o, include, arr)
+function Octree.centersMean(o, arr)
     local arrVrf = arr or {}
     local children = o.children
     local lenChildren = #children
@@ -96,7 +93,7 @@ function Octree.centersMean(o, include, arr)
     while i < lenChildren do
         i = i + 1
         Octree.centersMean(
-            children[i], include, arrVrf)
+            children[i], arrVrf)
     end
 
     if lenChildren < 1 then
@@ -126,8 +123,6 @@ function Octree.centersMean(o, include, arr)
             local pt = leafPoints[1]
             arrVrf[cursor] = Vec3.new(
                 pt.x, pt.y, pt.z)
-        elseif include then
-            arrVrf[cursor] = Bounds3.center(o.bounds)
         end
     end
 
@@ -234,7 +229,7 @@ function Octree.insert(o, point)
                 Octree.split(o, o.capacity)
             end
             return true
-        else
+        -- else
             -- Octree.split(o, o.capacity)
             -- return Octree.insert(o, point)
         end

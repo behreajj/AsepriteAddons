@@ -492,7 +492,7 @@ dlg:button {
 
             Octree.cull(octree)
 
-            local centers = Octree.centersMean(octree, false, {})
+            local centers = Octree.centersMean(octree, {})
             sortByPreset(clrSpacePreset, centers)
 
             lenCenters = #centers

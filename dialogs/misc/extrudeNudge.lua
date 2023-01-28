@@ -70,9 +70,9 @@ local function extrude(dx, dy, trim)
         local yCel = celBounds.y
 
         if trim then
-            local trimmed, tmx, tmy = AseUtilities.trimImageAlpha(
+            local trm, tmx, tmy = AseUtilities.trimImageAlpha(
                 srcImage, 0, 0)
-            srcImage = trimmed
+            srcImage = trm
             xCel = xCel + tmx
             yCel = yCel + tmy
         end
@@ -316,15 +316,34 @@ dlg:button {
         local trgSel = Selection()
         trgSel:add(celBounds)
 
-        if celImage.colorMode == ColorMode.RGB then
-            local celPos = activeCel.position
-            local xCel = celPos.x
-            local yCel = celPos.y
+        local celSpec = celImage.spec
+        local colorMode = celSpec.colorMode
+        local celPos = activeCel.position
+        local xCel = celPos.x
+        local yCel = celPos.y
+        local pxRect = Rectangle(0, 0, 1, 1)
+        local pxItr = celImage:pixels()
 
-            local pxItr = celImage:pixels()
-            local pxRect = Rectangle(0, 0, 1, 1)
+        if colorMode == ColorMode.RGB then
             for pixel in pxItr do
                 if pixel() & 0xff000000 == 0 then
+                    pxRect.x = pixel.x + xCel
+                    pxRect.y = pixel.y + yCel
+                    trgSel:subtract(pxRect)
+                end
+            end
+        elseif colorMode == ColorMode.INDEXED then
+            local alphaIndex = celSpec.transparentColor
+            for pixel in pxItr do
+                if pixel() == alphaIndex then
+                    pxRect.x = pixel.x + xCel
+                    pxRect.y = pixel.y + yCel
+                    trgSel:subtract(pxRect)
+                end
+            end
+        elseif colorMode == ColorMode.GRAY then
+            for pixel in pxItr do
+                if pixel() & 0xff00 == 0 then
                     pxRect.x = pixel.x + xCel
                     pxRect.y = pixel.y + yCel
                     trgSel:subtract(pxRect)

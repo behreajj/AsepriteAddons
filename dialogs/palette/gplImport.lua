@@ -72,6 +72,8 @@ dlg:button {
         local colors = {}
 
         if file ~= nil then
+            AseUtilities.preserveForeBack()
+
             local lineCount = 1
             local linesItr = file:lines()
 

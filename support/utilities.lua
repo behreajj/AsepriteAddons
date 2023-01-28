@@ -976,7 +976,7 @@ end
 ---@param x number real number
 ---@return integer
 function Utilities.round(x)
-    -- math.tointeger(-0.00001) = -1, so modf must be used.
+    -- math.tointeger(-0.000001) = -1, so modf must be used.
     local ix, fx = math.modf(x)
     if ix <= 0 and fx <= -0.5 then
         return ix - 1

@@ -51,6 +51,43 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "levelsInput",
+    label = "Channels:",
+    option = defaults.levelsInput,
+    options = levelsInputs,
+    onchange = function()
+        local args = dlg.data
+
+        local md = args.levelsInput
+        local isnu = md == "NON_UNIFORM"
+
+        local unit = args.unitsInput
+        local isbit = unit == "BITS"
+        local isint = unit == "INTEGERS"
+
+        dlg:modify { id = "rBits", visible = isnu and isbit }
+        dlg:modify { id = "gBits", visible = isnu and isbit }
+        dlg:modify { id = "bBits", visible = isnu and isbit }
+        dlg:modify { id = "aBits", visible = isnu and isbit }
+        dlg:modify {
+            id = "bitsUni",
+            visible = (not isnu) and isbit
+        }
+
+        dlg:modify { id = "rLevels", visible = isnu and isint }
+        dlg:modify { id = "gLevels", visible = isnu and isint }
+        dlg:modify { id = "bLevels", visible = isnu and isint }
+        dlg:modify { id = "aLevels", visible = isnu and isint }
+        dlg:modify {
+            id = "levelsUni",
+            visible = (not isnu) and isint
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "levelsUni",
     label = "Levels:",
@@ -207,42 +244,6 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:combobox {
-    id = "levelsInput",
-    option = defaults.levelsInput,
-    options = levelsInputs,
-    onchange = function()
-        local args = dlg.data
-
-        local md = args.levelsInput
-        local isnu = md == "NON_UNIFORM"
-
-        local unit = args.unitsInput
-        local isbit = unit == "BITS"
-        local isint = unit == "INTEGERS"
-
-        dlg:modify { id = "rBits", visible = isnu and isbit }
-        dlg:modify { id = "gBits", visible = isnu and isbit }
-        dlg:modify { id = "bBits", visible = isnu and isbit }
-        dlg:modify { id = "aBits", visible = isnu and isbit }
-        dlg:modify {
-            id = "bitsUni",
-            visible = (not isnu) and isbit
-        }
-
-        dlg:modify { id = "rLevels", visible = isnu and isint }
-        dlg:modify { id = "gLevels", visible = isnu and isint }
-        dlg:modify { id = "bLevels", visible = isnu and isint }
-        dlg:modify { id = "aLevels", visible = isnu and isint }
-        dlg:modify {
-            id = "levelsUni",
-            visible = (not isnu) and isint
-        }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
     id = "unitsInput",
     label = "Units:",
     option = defaults.unit,
@@ -294,6 +295,15 @@ dlg:button {
             return
         end
 
+        local colorMode = activeSprite.colorMode
+        if colorMode ~= ColorMode.RGB then
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported."
+            }
+            return
+        end
+
         local srcLayer = app.activeLayer
         if not srcLayer then
             app.alert {
@@ -324,7 +334,7 @@ dlg:button {
         -- Unpack arguments.
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
-        local method = args.method or defaults.method
+        local method = args.method or defaults.method --[[@as string]]
         local rLevels = args.rLevels or defaults.rLevels --[[@as integer]]
         local gLevels = args.gLevels or defaults.gLevels --[[@as integer]]
         local bLevels = args.bLevels or defaults.bLevels --[[@as integer]]
@@ -380,13 +390,10 @@ dlg:button {
             aDelta = 1.0 / aLevels
         end
 
-        local oldMode = activeSprite.colorMode
-        app.command.ChangePixelFormat { format = "rgb" }
-
-        local framesLen = #frames
         app.transaction(function()
             local i = 0
-            while i < framesLen do i = i + 1
+            local lenFrames = #frames
+            while i < lenFrames do i = i + 1
                 local srcFrame = frames[i]
                 local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
@@ -441,7 +448,6 @@ dlg:button {
             end
         end)
 
-        AseUtilities.changePixelFormat(oldMode)
         app.refresh()
     end
 }

@@ -300,7 +300,8 @@ dlg:button {
         if #srcLayer.name > 0 then
             srcLayerName = srcLayer.name
         end
-        trgLayer.name = srcLayerName .. "." .. clrSpacePreset
+        trgLayer.name = string.format("%s.%s.%03d",
+            srcLayerName, clrSpacePreset, hexesSrgbLen)
         trgLayer.parent = srcLayer.parent
         trgLayer.opacity = srcLayer.opacity
         trgLayer.blendMode = srcLayer.blendMode
@@ -356,7 +357,7 @@ dlg:button {
                             resultHex = ptToHexDict[hsh]
                         end
                         -- end
-                        correspDict[queryHex] = resultHex
+                        correspDict[queryHex] = resultHex & 0x00ffffff
                     end
 
                     -- Apply colors to image.
@@ -365,8 +366,7 @@ dlg:button {
                     local trgPxItr = trgImg:pixels()
                     for pixel in trgPxItr do
                         local srcHex = pixel()
-                        pixel(srcHex & 0xff000000
-                            | correspDict[srcHex] & 0x00ffffff)
+                        pixel(srcHex & 0xff000000 | correspDict[srcHex])
                     end
 
                     local trgCel = activeSprite:newCel(
