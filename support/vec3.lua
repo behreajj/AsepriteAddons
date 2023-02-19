@@ -328,18 +328,6 @@ function Vec3.dist(a, b)
     return Vec3.distEuclidean(a, b)
 end
 
----Finds the Chebyshev distance between two vectors.
----Forms a cube when plotted.
----@param a Vec3 left operand
----@param b Vec3 right operand
----@return number
-function Vec3.distChebyshev(a, b)
-    return math.max(
-        math.abs(b.x - a.x),
-        math.abs(b.y - a.y),
-        math.abs(b.z - a.z))
-end
-
 ---Finds the Euclidean distance between two vectors.
 ---Forms a sphere when plotted.
 ---@param a Vec3 left operand
@@ -350,35 +338,6 @@ function Vec3.distEuclidean(a, b)
     local dy = b.y - a.y
     local dz = b.z - a.z
     return math.sqrt(dx * dx + dy * dy + dz * dz)
-end
-
----Finds the Manhattan distance between two vectors.
----Forms an octahedron when plotted.
----@param a Vec3 left operand
----@param b Vec3 right operand
----@return number
-function Vec3.distManhattan(a, b)
-    return math.abs(b.x - a.x)
-        + math.abs(b.y - a.y)
-        + math.abs(b.z - a.z)
-end
-
----Finds the Minkowski distance between two vectors.
----When the exponent is 1, returns Manhattan distance.
----When the exponent is 2, returns Euclidean distance.
----@param a Vec3 left operand
----@param b Vec3 right operand
----@param c number exponent
----@return number
-function Vec3.distMinkowski(a, b, c)
-    local d = c or 2.0
-    if d ~= 0.0 then
-        return (math.abs(b.x - a.x) ^ d
-            + math.abs(b.y - a.y) ^ d
-            + math.abs(b.z - a.z) ^ d)
-            ^ (1.0 / d)
-    end
-    return 0.0
 end
 
 ---Finds the squared Euclidean distance between

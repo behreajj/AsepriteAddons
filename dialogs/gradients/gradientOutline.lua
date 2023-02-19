@@ -214,10 +214,10 @@ dlg:button {
         -- Unpack arguments.
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
-        local alphaFade = args.alphaFade
-        local reverseFade = args.reverseFade
+        local alphaFade = args.alphaFade --[[@as boolean]]
+        local reverseFade = args.reverseFade --[[@as boolean]]
         local clrSpacePreset = args.clrSpacePreset --[[@as string]]
-        local aseColors = args.shades
+        local aseColors = args.shades --[[@as Color[] ]]
         local levels = args.quantize --[[@as integer]]
         local aseBkgColor = args.bkgColor --[[@as Color]]
         local iterations = args.iterations
@@ -225,17 +225,27 @@ dlg:button {
 
         -- Create matrices.
         -- Directions need to be flipped on x and y axes.
+
+        ---@type boolean[]
         local activeMatrix = {
-            args.m00, args.m01, args.m02,
-            args.m10, args.m12,
-            args.m20, args.m21, args.m22
+            args.m00 --[[@as boolean]],
+            args.m01 --[[@as boolean]],
+            args.m02 --[[@as boolean]],
+            args.m10 --[[@as boolean]],
+            args.m12 --[[@as boolean]],
+            args.m20 --[[@as boolean]],
+            args.m21 --[[@as boolean]],
+            args.m22 --[[@as boolean]]
         }
+
+        ---@type integer[][]
         local dirMatrix = {
             { 1, 1 }, { 0, 1 }, { -1, 1 },
             { 1, 0 }, { -1, 0 },
             { 1, -1 }, { 0, -1 }, { -1, -1 }
         }
 
+        ---@type integer[][]
         local activeOffsets = {}
         local activeCount = 0
         local m = 0
@@ -357,9 +367,9 @@ dlg:button {
 
         -- Wrapping this while loop in a transaction
         -- causes problems with undo history.
-        local framesLen = #frames
+        local lenFrames = #frames
         local g = 0
-        while g < framesLen do g = g + 1
+        while g < lenFrames do g = g + 1
             local srcFrame = frames[g]
             local srcCel = srcLayer:cel(srcFrame)
             if srcCel then
@@ -395,15 +405,16 @@ dlg:button {
                             -- against background. There's no need to
                             -- tally up neighbor marks; just draw a
                             -- pixel, then break the loop.
+                            local xRead = pixel.x
+                            local yRead = pixel.y
+
                             local j = 0
                             local continue = true
                             while continue and j < activeCount do
                                 j = j + 1
                                 local offset = activeOffsets[j]
-                                local yRead = pixel.y
                                 local yNbr = yRead + offset[2]
                                 if yNbr >= 0 and yNbr < hTrg then
-                                    local xRead = pixel.x
                                     local xNbr = xRead + offset[1]
                                     if xNbr >= 0 and xNbr < wTrg then
                                         local cNbr = readImg:getPixel(xNbr, yNbr)

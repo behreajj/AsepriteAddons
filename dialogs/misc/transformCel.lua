@@ -239,7 +239,7 @@ local function rgbMix(
     return rMix, gMix, bMix, aMix
 end
 
-local function filterNear(
+local function sampleNear(
     xSrc, ySrc, wSrc, hSrc,
     srcImg, alphaMask)
 
@@ -252,14 +252,14 @@ local function filterNear(
     return alphaMask
 end
 
-local function filterBilin(
+local function sampleBilinear(
     xSrc, ySrc, wSrc, hSrc,
     srcImg, alphaMask)
 
-    local yf = math.floor(ySrc)
-    local yc = math.ceil(ySrc)
     local xf = math.floor(xSrc)
-    local xc = math.ceil(xSrc)
+    local yf = math.floor(ySrc)
+    local xc = xf + 1
+    local yc = yf + 1
 
     local yfInBounds = yf > -1 and yf < hSrc
     local ycInBounds = yc > -1 and yc < hSrc
@@ -271,19 +271,19 @@ local function filterBilin(
     local c11 = 0x0
     local c01 = 0x0
 
-    if xfInBounds and yfInBounds then
+    if yfInBounds and xfInBounds then
         c00 = srcImg:getPixel(xf, yf)
     end
 
-    if xcInBounds and yfInBounds then
+    if yfInBounds and xcInBounds then
         c10 = srcImg:getPixel(xc, yf)
     end
 
-    if xcInBounds and ycInBounds then
+    if ycInBounds and xcInBounds then
         c11 = srcImg:getPixel(xc, yc)
     end
 
-    if xfInBounds and ycInBounds then
+    if ycInBounds and xfInBounds then
         c01 = srcImg:getPixel(xf, yc)
     end
 
@@ -730,10 +730,10 @@ dlg:button {
         local easeMethod = args.easeMethod or defaults.easeMethod
         local useBilinear = easeMethod == "BILINEAR"
         local oldMode = activeSprite.colorMode
-        local filter = filterNear
+        local sample = sampleNear
         if useBilinear then
             app.command.ChangePixelFormat { format = "rgb" }
-            filter = filterBilin
+            sample = sampleBilinear
         end
 
         -- Cache methods.
@@ -777,7 +777,7 @@ dlg:button {
 
                     local trgPxItr = trgImg:pixels()
                     for pixel in trgPxItr do
-                        pixel(filter(
+                        pixel(sample(
                             xDiff + pixel.x + tana * (pixel.y - yCenter),
                             pixel.y, wSrc, hSrc, srcImg, alphaMask))
                     end
@@ -821,10 +821,10 @@ dlg:button {
         local easeMethod = args.easeMethod or defaults.easeMethod
         local useBilinear = easeMethod == "BILINEAR"
         local oldMode = activeSprite.colorMode
-        local filter = filterNear
+        local sample = sampleNear
         if useBilinear then
             app.command.ChangePixelFormat { format = "rgb" }
-            filter = filterBilin
+            sample = sampleBilinear
         end
 
         -- Cache methods.
@@ -868,7 +868,7 @@ dlg:button {
 
                     local trgPxItr = trgImg:pixels()
                     for pixel in trgPxItr do
-                        pixel(filter(pixel.x,
+                        pixel(sample(pixel.x,
                             yDiff + pixel.y + tana * (pixel.x - xTrgCenter),
                             wSrc, hSrc, srcImg, alphaMask))
                     end
@@ -962,12 +962,12 @@ dlg:button {
             local easeMethod = args.easeMethod or defaults.easeMethod
             local useBilinear = easeMethod == "BILINEAR"
             local oldMode = activeSprite.colorMode
-            local filter = nil
+            local sample = nil
             if useBilinear then
                 app.command.ChangePixelFormat { format = "rgb" }
-                filter = filterBilin
+                sample = sampleBilinear
             else
-                filter = filterNear
+                sample = sampleNear
             end
 
             -- Unpack angle.
@@ -1032,7 +1032,7 @@ dlg:button {
                             local yRot = cosa * ySgn + sina * xSgn
                             local xSrc = xSrcCenter + xRot
                             local ySrc = ySrcCenter + yRot
-                            pixel(filter(xSrc, ySrc, wSrc, hSrc,
+                            pixel(sample(xSrc, ySrc, wSrc, hSrc,
                                 srcImg, alphaMask))
                         end
 
@@ -1210,11 +1210,11 @@ dlg:button {
         local lenCels = #cels
 
         local oldMode = activeSprite.colorMode
-        local filter = filterNear
+        local sample = sampleNear
         local useBilinear = easeMethod == "BILINEAR"
         if useBilinear then
             app.command.ChangePixelFormat { format = "rgb" }
-            filter = filterBilin
+            sample = sampleBilinear
         end
 
         app.transaction(function()
@@ -1253,7 +1253,7 @@ dlg:button {
                         local trgPxItr = trgImg:pixels()
 
                         for pixel in trgPxItr do
-                            pixel(filter(
+                            pixel(sample(
                                 pixel.x * tx, pixel.y * ty, wSrc, hSrc,
                                 srcImg, alphaMask))
                         end

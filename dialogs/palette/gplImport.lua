@@ -51,6 +51,17 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         local filepath = args.filepath --[[@as string]]
+        local fileExt = app.fs.fileExtension(filepath)
+        if fileExt ~= "gpl" and fileExt ~= "pal" then
+            app.alert {
+                title = "Error",
+                text = {
+                    "File format is not gpl."
+                }
+            }
+            return
+        end
+
         local file, err = io.open(filepath, "r")
 
         -- Cache functions to local when used in loop.

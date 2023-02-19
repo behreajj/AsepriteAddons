@@ -1029,6 +1029,50 @@ function Utilities.stringToCharTable(str)
     return chars
 end
 
+---Approximates a real number with a ratio of integers.
+---Cycles determines the maximum iterations to search.
+---Precision determines an early exit from the search.
+---Returns a tuple with the antecedent and consequent.
+---@param num number real number
+---@param itrs integer? iterations
+---@param precision number? precision
+---@return integer
+---@return integer
+function Utilities.toRatio(num, itrs, precision)
+    local sgnNum = 0
+    if num == 0.0 then return 0, 0 end
+    if num > 0.0 then sgnNum = 1 end
+    if num < -0.0 then sgnNum = -1 end
+
+    local cVerif = itrs or 10
+    local pVerif = precision or 5e-4
+    cVerif = math.max(1, math.abs(cVerif))
+    pVerif = math.max(1e-10, math.abs(pVerif))
+
+    local absNum = math.abs(num)
+    local integer, fraction = math.modf(absNum)
+
+    local a0 = integer
+    local a1 = 1
+    local b0 = 1
+    local b1 = 0
+
+    local counter = 0
+    while fraction > pVerif and counter < cVerif do
+        local newNum = 1.0 / fraction
+        integer, fraction = math.modf(newNum)
+        local t0 = a0
+        a0 = integer * a0 + b0
+        b0 = t0
+        local t1 = a1
+        a1 = integer * a1 + b1
+        b1 = t1
+        counter = counter + 1
+    end
+
+    return sgnNum * a0, a1
+end
+
 ---Finds a point on the screen given a modelview,
 ---projection and 3D point.
 ---@param modelview Mat4 modelview

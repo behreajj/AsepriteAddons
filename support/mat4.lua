@@ -412,36 +412,6 @@ function Mat4.fromRotation(radians, ax, ay, az)
     end
 end
 
----Constructs a rotation matrix from an angle in radians
----around the x axis.
----@param radians number angle
----@return Mat4
-function Mat4.fromRotX(radians)
-    return Mat4.fromRotXInternal(
-        math.cos(radians),
-        math.sin(radians))
-end
-
----Constructs a rotation matrix from an angle in radians
----around the y axis.
----@param radians number angle
----@return Mat4
-function Mat4.fromRotY(radians)
-    return Mat4.fromRotYInternal(
-        math.cos(radians),
-        math.sin(radians))
-end
-
----Constructs a rotation matrix from an angle in radians
----around the z axis.
----@param radians number angle
----@return Mat4
-function Mat4.fromRotZ(radians)
-    return Mat4.fromRotZInternal(
-        math.cos(radians),
-        math.sin(radians))
-end
-
 ---Constructs a rotation matrix from the cosine and sine
 ---of an angle around an arbitrary axis.
 ---Does not check if axis is well-formed.
@@ -466,45 +436,6 @@ function Mat4.fromRotInternal(cosa, sina, ax, ay, az)
         cosa + x * ax, axay - sina * az, axaz + sina * ay, 0.0,
         axay + sina * az, cosa + y * ay, ayaz - sina * ax, 0.0,
         axaz - sina * ay, ayaz + sina * ax, cosa + z * az, 0.0,
-        0.0, 0.0, 0.0, 1.0)
-end
-
----Constructs a rotation matrix from the cosine and sine
----of an angle around the x axis.
----@param cosa number cosine of the angle
----@param sina number sine of the angle
----@return Mat4
-function Mat4.fromRotXInternal(cosa, sina)
-    return Mat4.new(
-        1.0, 0.0, 0.0, 0.0,
-        0.0, cosa, -sina, 0.0,
-        0.0, sina, cosa, 0.0,
-        0.0, 0.0, 0.0, 1.0)
-end
-
----Constructs a rotation matrix from the cosine and sine
----of an angle around the y axis.
----@param cosa number cosine of the angle
----@param sina number sine of the angle
----@return Mat4
-function Mat4.fromRotYInternal(cosa, sina)
-    return Mat4.new(
-        cosa, 0.0, sina, 0.0,
-        0.0, 1.0, 0.0, 0.0,
-        -sina, 0.0, cosa, 0.0,
-        0.0, 0.0, 0.0, 1.0)
-end
-
----Constructs a rotation matrix from the cosine and sine
----of an angle around the z axis.
----@param cosa number cosine of the angle
----@param sina number sine of the angle
----@return Mat4
-function Mat4.fromRotZInternal(cosa, sina)
-    return Mat4.new(
-        cosa, -sina, 0.0, 0.0,
-        sina, cosa, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0)
 end
 
@@ -749,17 +680,6 @@ function Mat4.toStringCol(a)
         "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
         a.m30, a.m31, a.m32, a.m33)
     return m0 .. m1 .. m2 .. m3
-end
-
----Transposes a matrix's columns and rows.
----@param m Mat4 matrix
----@return Mat4
-function Mat4.transpose(m)
-    return Mat4.new(
-        m.m00, m.m10, m.m20, m.m30,
-        m.m01, m.m11, m.m21, m.m31,
-        m.m02, m.m12, m.m22, m.m32,
-        m.m03, m.m13, m.m23, m.m33)
 end
 
 ---Creates the identity matrix.

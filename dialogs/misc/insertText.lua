@@ -62,7 +62,7 @@ dlg:newrow { always = false }
 dlg:entry {
     id = "msgEntry",
     text = defaults.msgEntry,
-    focus = false,
+    focus = true,
     visible = defaults.msgSrc == "ENTRY"
 }
 

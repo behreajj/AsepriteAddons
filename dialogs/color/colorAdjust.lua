@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE" }
+local targets = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local modes = { "LAB", "LCH" }
 
 local defaults = {
@@ -178,21 +178,76 @@ dlg:button {
             return
         end
 
+        -- Unpack arguments.
+        -- Get the range as soon as possible, before any changes
+        -- cause it to be removed or updated.
+        local args = dlg.data
+        local target = args.target or defaults.target --[[@as string]]
+        local isSelect = target == "SELECTION"
+        local frames = AseUtilities.getFrames(activeSprite, target)
+        local lenFrames = #frames
+
         local srcLayer = app.activeLayer
-        if not srcLayer then
-            app.alert {
-                title = "Error",
-                text = "There is no active layer."
-            }
-            return
+        if not isSelect then
+            if not srcLayer then
+                app.alert {
+                    title = "Error",
+                    text = "There is no active layer."
+                }
+                return
+            end
+
+            if srcLayer.isGroup then
+                app.alert {
+                    title = "Error",
+                    text = "Group layers are not supported."
+                }
+                return
+            end
         end
 
-        if srcLayer.isGroup then
-            app.alert {
-                title = "Error",
-                text = "Group layers are not supported."
+        local oldMode = activeSprite.colorMode
+        app.command.ChangePixelFormat { format = "rgb" }
+        local activeSpec = activeSprite.spec
+
+        if isSelect then
+            local sel = AseUtilities.getSelection(activeSprite)
+            local selBounds = sel.bounds
+            local xSel = selBounds.x
+            local ySel = selBounds.y
+
+            local alphaIndex = activeSpec.transparentColor
+            local selSpec = ImageSpec {
+                width = math.max(1, selBounds.width),
+                height = math.max(1, selBounds.height),
+                colorMode = ColorMode.RGB,
+                transparentColor = alphaIndex
             }
-            return
+            selSpec.colorSpace = activeSpec.colorSpace
+
+            -- Blit flatened sprite to image.
+            local selFrame = app.activeFrame
+                or activeSprite.frames[1]
+            local selImage = Image(selSpec)
+            selImage:drawSprite(
+                activeSprite, selFrame, Point(-xSel, -ySel))
+
+            -- Set pixels not in selection to alpha.
+            local pxItr = selImage:pixels()
+            for pixel in pxItr do
+                local x = pixel.x + xSel
+                local y = pixel.y + ySel
+                if not sel:contains(x, y) then
+                    pixel(alphaIndex)
+                end
+            end
+
+            -- Create new layer and cel.
+            srcLayer = activeSprite:newLayer()
+            srcLayer.name = "Selection"
+            activeSprite:newCel(
+                srcLayer, selFrame,
+                selImage, Point(xSel, ySel))
         end
 
         -- Check for tile map support.
@@ -205,20 +260,6 @@ dlg:button {
             end
         end
 
-        -- Cache methods used in loops.
-        local abs = math.abs
-        local tilesToImage = AseUtilities.tilesToImage
-        local fromHex = Clr.fromHex
-        local toHex = Clr.toHex
-
-        local sRgbaToLab = Clr.sRgbToSrLab2
-        local labTosRgba = Clr.srLab2TosRgb
-        local labToLch = Clr.srLab2ToSrLch
-        local lchToLab = Clr.srLchToSrLab2
-
-        -- Unpack arguments.
-        local args = dlg.data
-        local target = args.target or defaults.target --[[@as string]]
         local mode = args.mode or defaults.mode
         local lAdj = args.lAdj or defaults.lAdj
         local cAdj = args.cAdj or defaults.cAdj
@@ -258,7 +299,7 @@ dlg:button {
         local normFac = normalize * 0.01
         local normGtZero = normFac > 0.0
         local normLtZero = normFac < 0.0
-        local absNormFac = abs(normFac)
+        local absNormFac = math.abs(normFac)
         local complNormFac = 1.0 - absNormFac
         local contrastFac = 1.0 + contrast * 0.01
         local hue01 = hAdj * 0.0027777777777778
@@ -266,8 +307,6 @@ dlg:button {
         local bSign = 1.0
         if aInvert then aSign = -1.0 end
         if bInvert then bSign = -1.0 end
-
-        local frames = AseUtilities.getFrames(activeSprite, target)
 
         local trgLayer = activeSprite:newLayer()
         local srcLayerName = "Layer"
@@ -280,14 +319,20 @@ dlg:button {
         trgLayer.opacity = srcLayer.opacity
         trgLayer.blendMode = srcLayer.blendMode
 
-        local oldMode = activeSprite.colorMode
-        app.command.ChangePixelFormat { format = "rgb" }
-        local activeSpec = activeSprite.spec
+        -- Cache methods used in loops.
+        local abs = math.abs
+        local tilesToImage = AseUtilities.tilesToImage
+        local fromHex = Clr.fromHex
+        local toHex = Clr.toHex
 
-        local framesLen = #frames
+        local sRgbaToLab = Clr.sRgbToSrLab2
+        local labTosRgba = Clr.srLab2TosRgb
+        local labToLch = Clr.srLab2ToSrLch
+        local lchToLab = Clr.srLchToSrLab2
+
         app.transaction(function()
             local i = 0
-            while i < framesLen do i = i + 1
+            while i < lenFrames do i = i + 1
                 local srcFrame = frames[i]
                 local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
@@ -472,6 +517,10 @@ dlg:button {
                 end
             end
         end)
+
+        if isSelect then
+            activeSprite:deleteLayer(srcLayer)
+        end
 
         AseUtilities.changePixelFormat(oldMode)
         app.refresh()

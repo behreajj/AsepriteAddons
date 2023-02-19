@@ -277,17 +277,6 @@ function Vec2.dist(a, b)
     return Vec2.distEuclidean(a, b)
 end
 
----Finds the Chebyshev distance between two vectors.
----Forms a square when plotted.
----@param a Vec2 left operand
----@param b Vec2 right operand
----@return number
-function Vec2.distChebyshev(a, b)
-    return math.max(
-        math.abs(b.x - a.x),
-        math.abs(b.y - a.y))
-end
-
 ---Finds the Euclidean distance between two vectors.
 ---Forms a circle when plotted.
 ---@param a Vec2 left operand
@@ -297,33 +286,6 @@ function Vec2.distEuclidean(a, b)
     local dx = b.x - a.x
     local dy = b.y - a.y
     return math.sqrt(dx * dx + dy * dy)
-end
-
----Finds the Manhattan distance between two vectors.
----Forms a diamond when plotted.
----@param a Vec2 left operand
----@param b Vec2 right operand
----@return number
-function Vec2.distManhattan(a, b)
-    return math.abs(b.x - a.x)
-        + math.abs(b.y - a.y)
-end
-
----Finds the Minkowski distance between two vectors.
----When the exponent is 1, returns Manhattan distance.
----When the exponent is 2, returns Euclidean distance.
----@param a Vec2 left operand
----@param b Vec2 right operand
----@param c number exponent
----@return number
-function Vec2.distMinkowski(a, b, c)
-    local d = c or 2.0
-    if d ~= 0.0 then
-        return (math.abs(b.x - a.x) ^ d
-            + math.abs(b.y - a.y) ^ d)
-            ^ (1.0 / d)
-    end
-    return 0.0
 end
 
 ---Finds the squared Euclidean distance between

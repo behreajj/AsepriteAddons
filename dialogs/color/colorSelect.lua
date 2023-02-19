@@ -417,7 +417,6 @@ dlg:button {
         end
 
         local image = activeCel.image
-        local wImage = image.width
         local pxItr = image:pixels()
 
         local trgSel = Selection()
@@ -444,25 +443,6 @@ dlg:button {
                 return
             end
 
-            -- Place unique colors in a dictionary.
-            -- The key is an object that includes the Lab
-            -- representation and an array of coordinates
-            -- that use the colors.
-            local uniques = {}
-            for pixel in pxItr do
-                local idx = pixel.x + pixel.y * wImage
-                local hex = pixel()
-                local entry = uniques[hex]
-                if entry then
-                    entry.coords[#entry.coords + 1] = idx
-                else
-                    uniques[hex] = {
-                        lab = sRgbaToLab(fromHex(hex)),
-                        coords = { idx }
-                    }
-                end
-            end
-
             -- Alpha is listed in [0, 255] but compared in [0.0, 1.0].
             -- Chroma is compared in magnitude squared.
             -- Hue is listed in [0, 360] but compared in [0, tau].
@@ -474,52 +454,57 @@ dlg:button {
             local minhrd = minh * 0.017453292519943
             local maxhrd = maxh * 0.017453292519943
 
-            for _, unique in pairs(uniques) do
-                local lab = unique.lab
+            local visited = {}
+            local filtered = {}
+            for pixel in pxItr do
+                local hex = pixel()
+                local include = false
 
-                local t = lab.alpha
-                local l = lab.l
-                local a = lab.a
-                local b = lab.b
+                if visited[hex] then
+                    include = filtered[hex]
+                else
+                    local lab = sRgbaToLab(fromHex(hex))
+                    local l = lab.l
+                    local a = lab.a
+                    local b = lab.b
+                    local t = lab.alpha
 
-                local include = t >= mint01 and t <= maxt01
-                if useLight and (l < minLight or l > maxLight) then
-                    include = false
-                end
-                if usea and (a < mina or a > maxa) then
-                    include = false
-                end
-                if useb and (b < minb or b > maxb) then
-                    include = false
-                end
+                    include = t >= mint01 and t <= maxt01
+                    if useLight and (l < minLight or l > maxLight) then
+                        include = false
+                    end
+                    if usea and (a < mina or a > maxa) then
+                        include = false
+                    end
+                    if useb and (b < minb or b > maxb) then
+                        include = false
+                    end
 
-                if usePolar then
-                    local csq = a * a + b * b
-                    if useh then
-                        if csq > 0.00005 then
-                            local h = atan2(b, a) % 6.2831853071796
-                            if h < minhrd or h > maxhrd then
+                    if usePolar then
+                        local csq = a * a + b * b
+                        if useh then
+                            if csq > 0.00005 then
+                                local h = atan2(b, a) % 6.2831853071796
+                                if h < minhrd or h > maxhrd then
+                                    include = false
+                                end
+                            else
                                 include = false
                             end
-                        else
+                        end
+                        if usec and (csq < mincsq or csq > maxcsq) then
                             include = false
                         end
                     end
-                    if usec and (csq < mincsq or csq > maxcsq) then
-                        include = false
-                    end
+
+                    visited[hex] = true
+                    filtered[hex] = include
                 end
 
                 if include then
-                    local coords = unique.coords
-                    local lenCoords = #coords
-                    local j = 0
-                    while j < lenCoords do j = j + 1
-                        local coord = coords[j]
-                        pxRect.x = xCel + coord % wImage
-                        pxRect.y = yCel + coord // wImage
-                        trgSel:add(pxRect)
-                    end
+                    pxRect.x = xCel + pixel.x
+                    pxRect.y = yCel + pixel.y
+                    trgSel:add(pxRect)
                 end
             end
         end

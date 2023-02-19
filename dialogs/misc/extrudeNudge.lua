@@ -310,49 +310,10 @@ dlg:button {
         local activeCel = app.activeCel
         if not activeCel then return end
 
+        local trgSel = AseUtilities.selectCel(
+            activeCel, activeSprite.bounds)
+
         local selMode = app.preferences.selection.mode
-        local celImage = activeCel.image
-        local celBounds = activeCel.bounds
-        local trgSel = Selection()
-        trgSel:add(celBounds)
-
-        local celSpec = celImage.spec
-        local colorMode = celSpec.colorMode
-        local celPos = activeCel.position
-        local xCel = celPos.x
-        local yCel = celPos.y
-        local pxRect = Rectangle(0, 0, 1, 1)
-        local pxItr = celImage:pixels()
-
-        if colorMode == ColorMode.RGB then
-            for pixel in pxItr do
-                if pixel() & 0xff000000 == 0 then
-                    pxRect.x = pixel.x + xCel
-                    pxRect.y = pixel.y + yCel
-                    trgSel:subtract(pxRect)
-                end
-            end
-        elseif colorMode == ColorMode.INDEXED then
-            local alphaIndex = celSpec.transparentColor
-            for pixel in pxItr do
-                if pixel() == alphaIndex then
-                    pxRect.x = pixel.x + xCel
-                    pxRect.y = pixel.y + yCel
-                    trgSel:subtract(pxRect)
-                end
-            end
-        elseif colorMode == ColorMode.GRAY then
-            for pixel in pxItr do
-                if pixel() & 0xff00 == 0 then
-                    pxRect.x = pixel.x + xCel
-                    pxRect.y = pixel.y + yCel
-                    trgSel:subtract(pxRect)
-                end
-            end
-        end
-
-        trgSel:intersect(activeSprite.bounds)
-
         if selMode ~= 0 then
             local activeSel = AseUtilities.getSelection(activeSprite)
 

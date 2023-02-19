@@ -235,7 +235,7 @@ end
 ---@param knot Knot3
 ---@return number
 function Knot3.foreMag(knot)
-    return Vec3.dist(knot.fh, knot.co)
+    return Vec3.distEuclidean(knot.fh, knot.co)
 end
 
 ---Gets the knot's rear handle as a vector.
@@ -368,7 +368,7 @@ end
 ---@param knot Knot3
 ---@return number
 function Knot3.rearMag(knot)
-    return Vec3.dist(knot.rh, knot.co)
+    return Vec3.distEuclidean(knot.rh, knot.co)
 end
 
 ---Gets the knot's rear handle as a vector.

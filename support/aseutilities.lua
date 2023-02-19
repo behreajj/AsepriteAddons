@@ -2061,6 +2061,61 @@ function AseUtilities.rotateImage270(source)
     return target, 1 - h, 0
 end
 
+---Selects the non-zero pixels of a cel's image.
+---Intersects the selection with the sprite bounds
+---if provided. For cases where cel may be partially
+---outside the canvas edges. For tile map layers,
+---selects the cel's bounds.
+---@param cel Cel cel
+---@param spriteBounds Rectangle? sprite bounds
+---@return Selection
+function AseUtilities.selectCel(cel, spriteBounds)
+    local celBounds = cel.bounds
+    local xCel = celBounds.x
+    local yCel = celBounds.y
+
+    local celImage = cel.image
+    local pxItr = celImage:pixels()
+    local celSpec = celImage.spec
+    local colorMode = celSpec.colorMode
+
+    local pxRect = Rectangle(0, 0, 1, 1)
+    local select = Selection(celBounds)
+
+    if colorMode == ColorMode.RGB then
+        for pixel in pxItr do
+            if pixel() & 0xff000000 == 0 then
+                pxRect.x = pixel.x + xCel
+                pxRect.y = pixel.y + yCel
+                select:subtract(pxRect)
+            end
+        end
+    elseif colorMode == ColorMode.INDEXED then
+        local alphaIndex = celSpec.transparentColor
+        for pixel in pxItr do
+            if pixel() == alphaIndex then
+                pxRect.x = pixel.x + xCel
+                pxRect.y = pixel.y + yCel
+                select:subtract(pxRect)
+            end
+        end
+    elseif colorMode == ColorMode.GRAY then
+        for pixel in pxItr do
+            if pixel() & 0xff00 == 0 then
+                pxRect.x = pixel.x + xCel
+                pxRect.y = pixel.y + yCel
+                select:subtract(pxRect)
+            end
+        end
+    end
+
+    if spriteBounds then
+        select:intersect(spriteBounds)
+    end
+
+    return select
+end
+
 ---Sets a palette in a sprite at a given index to a table
 ---of colors represented as hexadecimal integers. The
 ---palette index defaults to 1.
@@ -2135,10 +2190,48 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     specTrg.colorSpace = specSrc.colorSpace
     local imgTrg = Image(specTrg)
 
+    -- Separate a tile's index from the meta-data.
+    -- Built-in methods are app.pixelColor.tileF and tileI.
+    -- Older versions of the beta might not have these methods.
+    -- Use polyfill. The underlying logic is here:
+    -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
+    local tileIndexMask = 0x1fffffff
+    local tileIndexShift = 0x0
+    -- local tileMetaMask  = 0xe0000000
+    -- local maskFlipX = 0x20000000
+    -- local maskFlipY = 0x40000000
+    -- local maskRot90cw = 0x80000000
+    -- local maskRot180 = maskFlipX | maskFlipY
+    -- local maskRot90ccw = maskRot180 | maskRot90cw
+
     local pxItr = imgSrc:pixels()
     for pixel in pxItr do
+        local tlData = pixel()
+        local i = (tlData & tileIndexMask) >> tileIndexShift
+        local tileImage = tileSet:getTile(i)
+
+        -- TODO: Wait until this is useful to implement.
+        -- local meta = tlData & tileMetaMask
+        -- if meta == maskRot90ccw then
+        --     tileImage = AseUtilities.rotateImage90(tileImage)
+        -- elseif meta == maskRot180 then
+        --     tileImage = AseUtilities.rotateImage180(tileImage)
+        -- elseif meta == maskRot90cw then
+        --     tileImage = AseUtilities.rotateImage270(tileImage)
+        -- elseif meta == maskFlipY then
+        --     tileImage = AseUtilities.flipImageVert(tileImage)
+        -- elseif meta == maskFlipX then
+        --     tileImage = AseUtilities.flipImageHoriz(tileImage)
+        -- elseif meta == 0xc0000000 then
+        --     tileImage = AseUtilities.flipImageVert(tileImage)
+        --     tileImage = AseUtilities.rotateImage90(tileImage)
+        -- elseif meta == 0xa0000000 then
+        --     tileImage = AseUtilities.flipImageHoriz(tileImage)
+        --     tileImage = AseUtilities.rotateImage90(tileImage)
+        -- end
+
         imgTrg:drawImage(
-            tileSet:getTile(pixel()),
+            tileImage,
             Point(pixel.x * tileWidth,
                 pixel.y * tileHeight))
     end
