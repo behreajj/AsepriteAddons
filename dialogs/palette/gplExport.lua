@@ -103,12 +103,12 @@ dlg:button {
         end
 
         -- Unpack arguments.
-        local palName = args.palName or defaults.palName
-        local columns = args.columns or defaults.columns
-        local attribName = args.attribName or defaults.attribName
-        local attribUrl = args.attribUrl or defaults.attribUrl
-        local useAseGpl = args.useAseGpl
-        local allPalettes = args.allPalettes
+        local palName = args.palName or defaults.palName --[[@as string]]
+        local columns = args.columns or defaults.columns --[[@as integer]]
+        local attribName = args.attribName or defaults.attribName --[[@as string]]
+        local attribUrl = args.attribUrl or defaults.attribUrl --[[@as string]]
+        local useAseGpl = args.useAseGpl --[[@as boolean]]
+        local allPalettes = args.allPalettes --[[@as boolean]]
 
         -- Validate arguments.
         -- Palette name will be added no matter what.

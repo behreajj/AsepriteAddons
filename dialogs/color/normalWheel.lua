@@ -221,14 +221,14 @@ dlg:button {
         -- Unpack arguments.
         local args = dlg.data
         local size = args.size or defaults.size --[[@as integer]]
-        local sectors = args.sectors or defaults.sectors
-        local rings = args.rings or defaults.rings
-        local plotPalette = args.plotPalette
-        local correctPalette = args.correctPalette
-        local uniformRings = args.uniformRings
-        local xFlip = args.xFlip
-        local yFlip = args.yFlip
-        local zFlip = args.zFlip
+        local sectors = args.sectors or defaults.sectors --[[@as integer]]
+        local rings = args.rings or defaults.rings --[[@as integer]]
+        local plotPalette = args.plotPalette --[[@as boolean]]
+        local correctPalette = args.correctPalette --[[@as boolean]]
+        local uniformRings = args.uniformRings --[[@as boolean]]
+        local xFlip = args.xFlip --[[@as boolean]]
+        local yFlip = args.yFlip --[[@as boolean]]
+        local zFlip = args.zFlip --[[@as boolean]]
 
         -- Must be done before a new sprite is created.
         local hexesSrgb = {}

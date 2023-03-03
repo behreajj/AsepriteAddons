@@ -67,8 +67,8 @@ local function updateWidgetClr(dialog, clr)
         text = string.format(
             "%06X",
             (clr.red << 0x10 |
-                clr.green << 0x08 |
-                clr.blue))
+            clr.green << 0x08 |
+            clr.blue))
     }
 
     dialog:modify {
@@ -105,11 +105,8 @@ local function updateWidgetCart(dialog)
 end
 
 local function updateWidgetSphere(dialog)
-    -- Modulo by 360 because color result
-    -- can err by 1 bit, i.e., 0x7f vs. 0x80.
     local args = dialog.data
-    local az = args.azimuth % 360
-    local incl = args.inclination
+    local incl = args.inclination --[[@as integer]]
 
     -- Handle other off-by-one edge cases.
     local v = nil
@@ -118,6 +115,11 @@ local function updateWidgetSphere(dialog)
     elseif incl <= -90 then
         v = Vec3.down()
     else
+        -- Modulo by 360 because color result
+        -- can err by 1 bit, i.e., 0x7f vs. 0x80.
+        local az = args.azimuth --[[@as integer]]
+        az = az % 360
+
         v = Vec3.fromSpherical(
             az * 0.017453292519943,
             incl * 0.017453292519943,

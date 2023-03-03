@@ -95,8 +95,6 @@ dlg:check {
         dlg:modify { id = "palType", visible = usePlot }
         dlg:modify { id = "palFile", visible = usePlot and palType == "FILE" }
         dlg:modify { id = "palPreset", visible = usePlot and palType == "PRESET" }
-        -- dlg:modify { id = "palStart", visible = usePlot }
-        -- dlg:modify { id = "palCount", visible = usePlot }
     end
 }
 

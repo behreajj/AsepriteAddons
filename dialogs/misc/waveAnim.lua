@@ -590,9 +590,6 @@ dlg:button {
             local pxyDisplaceOrig = srcHeight * yDisplaceOrig * 0.005
             local pxyDisplaceDest = srcHeight * yDisplaceDest * 0.005
 
-            -- TODO: To remove interlaced as an option from wave,
-            -- you'd have to add an angle offset slider so that separate
-            -- leaves can be made and later combined manually.
             local xToTheta = spaceScalar * 6.2831853071796 / srcWidth
             local yToTheta = spaceScalar * 6.2831853071796 / srcHeight
 

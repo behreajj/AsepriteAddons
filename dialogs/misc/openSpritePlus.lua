@@ -15,9 +15,9 @@ local function loadSprite(spriteFile)
     if fileExt == "gpl" or fileExt == "pal" then
         local spriteHexes, _ = AseUtilities.asePaletteLoad(
             "FILE", spriteFile, "", 0, 256, true)
-        local colorsLen = #spriteHexes
+        local lenColors = #spriteHexes
         local rtLen = math.max(16,
-            math.ceil(math.sqrt(math.max(1, colorsLen))))
+            math.ceil(math.sqrt(math.max(1, lenColors))))
         sprite = Sprite(rtLen, rtLen)
         AseUtilities.setPalette(spriteHexes, sprite, 1)
 
@@ -28,7 +28,7 @@ local function loadSprite(spriteFile)
 
         local index = 0
         for pixel in pxItr do
-            if index <= colorsLen then
+            if index <= lenColors then
                 index = index + 1
                 pixel(spriteHexes[index])
             end
@@ -173,7 +173,7 @@ dlg:button {
 
         if palType ~= "DEFAULT" then
             local palFile = args.palFile --[[@as string]]
-            local palPreset = args.palPreset--[[@as string]]
+            local palPreset = args.palPreset --[[@as string]]
 
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 palType, palFile, palPreset, 0, 256, true)

@@ -273,11 +273,6 @@ dlg:button {
                     end
                 end
 
-                -- TODO: Make a threshold filter, where the lum reverts
-                -- to black if it is beneath. This could be a way to
-                -- reduce the noise in the resulting normal map.
-                -- Alternatively, apply a despeckle / median filter.
-
                 -- Show gray image.
                 if showGrayMap then
                     local grayImg = Image(specNone)

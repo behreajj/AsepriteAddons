@@ -612,9 +612,6 @@ dlg:button {
         local copyToLayer = args.copyToLayer
         if copyToLayer then
             app.transaction(function()
-                -- TODO: Standardize to paletteToCel and other
-                -- dialogs, where layer is always copied to new
-                -- and there is a target input...
                 local srcLayer = srcCel.layer
 
                 -- Copy layer. Don't copy blend mode.

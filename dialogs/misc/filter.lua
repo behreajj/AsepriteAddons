@@ -239,8 +239,8 @@ dlg:button {
                                 local ySample = ytl + (j // wKrn)
 
                                 local labSample = labClear
-                                if ySample > -1 and ySample < hImg
-                                    and xSample > -1 and xSample < wImg then
+                                if ySample >= 0 and ySample < hImg
+                                    and xSample >= 0 and xSample < wImg then
                                     local iSample = xSample + ySample * wImg
                                     labSample = labDict[pxArr[1 + iSample]]
                                 elseif useTiled then
@@ -316,8 +316,8 @@ dlg:button {
                                     local ySample = ytlQuad + yQuad
 
                                     local labSample = labClear
-                                    if ((ySample > -1) and (ySample < hImg)
-                                        and (xSample > -1) and (xSample < wImg)) then
+                                    if ySample >= 0 and ySample < hImg
+                                        and xSample >= 0 and xSample < wImg then
                                         local iSample = xSample + ySample * wImg
                                         labSample = labDict[pxArr[1 + iSample]]
                                     elseif useTiled then

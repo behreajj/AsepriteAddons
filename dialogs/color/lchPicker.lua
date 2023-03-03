@@ -405,8 +405,8 @@ end
 
 local function updateClrs(dialog)
     local args = dialog.data
-    local l = args.lightness
-    local c = args.chroma
+    local l = args.lightness --[[@as integer]]
+    local c = args.chroma --[[@as integer]]
     local h = args.hue * 0.0027777777777778
     local a = args.alpha * 0.003921568627451
     local clr = Clr.cieLchTosRgb(l, c, h, a, 0.5)

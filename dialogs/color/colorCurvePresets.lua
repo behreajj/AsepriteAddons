@@ -336,8 +336,8 @@ dlg:button {
         if args.useGray then channels = channels | FilterChannels.GRAY end
         if args.useIndex then channels = channels | FilterChannels.INDEX end
 
-        local slope = args.slope or defaults.slope
-        local intercept = args.intercept or defaults.intercept
+        local slope = args.slope or defaults.slope --[[@as number]]
+        local intercept = args.intercept or defaults.intercept --[[@as number]]
         local func = function(x)
             return linear(x, slope, intercept)
         end
@@ -345,9 +345,9 @@ dlg:button {
         local preset = args.preset
         if preset == "BEZIER" then
             local cp0x = args.cp0x or defaults.cp0x --[[@as number]]
-            local cp0y = args.cp0y or defaults.cp0y
+            local cp0y = args.cp0y or defaults.cp0y --[[@as number]]
             local cp1x = args.cp1x or defaults.cp1x --[[@as number]]
-            local cp1y = args.cp1y or defaults.cp1y
+            local cp1y = args.cp1y or defaults.cp1y --[[@as number]]
 
             cp0x = math.min(math.max(cp0x, 0.0), 1.0)
             cp1x = math.min(math.max(cp1x, 0.0), 1.0)
@@ -360,17 +360,17 @@ dlg:button {
             if args.gamma ~= 0.0 then
                 g = args.gamma --[[@as number]]
             end
-            local amplitude = args.amplitude or defaults.amplitude
-            local offset = args.offset or defaults.offset
+            local amplitude = args.amplitude or defaults.amplitude --[[@as number]]
+            local offset = args.offset or defaults.offset --[[@as number]]
             func = function(x)
                 return gamma(x, g, amplitude, offset)
             end
         elseif preset == "SINE_WAVE" then
-            local freq = args.freq or defaults.freq
-            local phase = args.phase or defaults.phase
+            local freq = args.freq or defaults.freq --[[@as number]]
+            local phase = args.phase or defaults.phase --[[@as integer]]
             phase = 0.017453292519943 * phase
-            local amp = args.sw_amp or defaults.sw_amp
-            local basis = args.basis or defaults.basis
+            local amp = args.sw_amp or defaults.sw_amp --[[@as number]]
+            local basis = args.basis or defaults.basis --[[@as number]]
 
             func = function(x)
                 return sineWave(x, freq, phase, amp, basis)
@@ -384,7 +384,7 @@ dlg:button {
         end
 
         local points = {}
-        local res = args.resolution
+        local res = args.resolution or defaults.resolution --[[@as integer]]
         local tox = 1.0 / (res - 1.0)
 
         local i = 0

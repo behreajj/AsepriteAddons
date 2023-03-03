@@ -124,8 +124,6 @@ dlg:check {
         dlg:modify { id = "palType", visible = usePlot }
         dlg:modify { id = "palFile", visible = usePlot and palType == "FILE" }
         dlg:modify { id = "palPreset", visible = usePlot and palType == "PRESET" }
-        -- dlg:modify { id = "palStart", visible = usePlot }
-        -- dlg:modify { id = "palCount", visible = usePlot }
     end
 }
 
@@ -210,13 +208,13 @@ dlg:button {
         -- Unpack arguments.
         local args = dlg.data
         local size = args.size or defaults.size --[[@as integer]]
-        local ringCount = args.ringCount or defaults.ringCount
-        local sectorCount = args.sectorCount or defaults.sectorCount
-        local minLight = args.minLight or defaults.minLight
-        local maxLight = args.maxLight or defaults.maxLight
-        local outOfGamut = args.outOfGamut or defaults.outOfGamut
-        local useLightBar = args.useLightBar
-        local plotPalette = args.plotPalette
+        local ringCount = args.ringCount or defaults.ringCount --[[@as integer]]
+        local sectorCount = args.sectorCount or defaults.sectorCount --[[@as integer]]
+        local minLight = args.minLight or defaults.minLight --[[@as integer]]
+        local maxLight = args.maxLight or defaults.maxLight --[[@as integer]]
+        local outOfGamut = args.outOfGamut or defaults.outOfGamut --[[@as integer]]
+        local useLightBar = args.useLightBar --[[@as boolean]]
+        local plotPalette = args.plotPalette --[[@as boolean]]
 
         -- Must be done before a new sprite is created.
         local hexesSrgb = {}

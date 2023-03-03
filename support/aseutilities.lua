@@ -2079,15 +2079,16 @@ function AseUtilities.selectCel(cel, spriteBounds)
     local celSpec = celImage.spec
     local colorMode = celSpec.colorMode
 
+    -- Beware naming, 'select' is a method built-in to Lua.
+    local mask = Selection(celBounds)
     local pxRect = Rectangle(0, 0, 1, 1)
-    local select = Selection(celBounds)
 
     if colorMode == ColorMode.RGB then
         for pixel in pxItr do
             if pixel() & 0xff000000 == 0 then
                 pxRect.x = pixel.x + xCel
                 pxRect.y = pixel.y + yCel
-                select:subtract(pxRect)
+                mask:subtract(pxRect)
             end
         end
     elseif colorMode == ColorMode.INDEXED then
@@ -2096,7 +2097,7 @@ function AseUtilities.selectCel(cel, spriteBounds)
             if pixel() == alphaIndex then
                 pxRect.x = pixel.x + xCel
                 pxRect.y = pixel.y + yCel
-                select:subtract(pxRect)
+                mask:subtract(pxRect)
             end
         end
     elseif colorMode == ColorMode.GRAY then
@@ -2104,16 +2105,16 @@ function AseUtilities.selectCel(cel, spriteBounds)
             if pixel() & 0xff00 == 0 then
                 pxRect.x = pixel.x + xCel
                 pxRect.y = pixel.y + yCel
-                select:subtract(pxRect)
+                mask:subtract(pxRect)
             end
         end
     end
 
     if spriteBounds then
-        select:intersect(spriteBounds)
+        mask:intersect(spriteBounds)
     end
 
-    return select
+    return mask
 end
 
 ---Sets a palette in a sprite at a given index to a table
@@ -2244,11 +2245,12 @@ end
 ---if it isn't contained by the selection. If the
 ---default is nil, uses the cel image's alpha mask.
 ---@param cel Cel source cel
----@param select Selection selection
+---@param mask Selection selection
 ---@param hexDefault integer? default color
-function AseUtilities.trimCelToSelect(cel, select, hexDefault)
+function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
+    -- Beware naming, 'select' is a method built-in to Lua.
+    local selBounds = mask.bounds
     local celBounds = cel.bounds
-    local selBounds = select.bounds
     local clip = celBounds:intersect(selBounds)
     local xClip = clip.x
     local yClip = clip.y
@@ -2272,7 +2274,7 @@ function AseUtilities.trimCelToSelect(cel, select, hexDefault)
     local hexVrf = hexDefault or alphaMask
     local pxItr = trimImage:pixels()
     for pixel in pxItr do
-        if not select:contains(
+        if not mask:contains(
             xClip + pixel.x,
             yClip + pixel.y) then
             pixel(hexVrf)

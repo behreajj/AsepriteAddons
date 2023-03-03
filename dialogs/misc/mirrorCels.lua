@@ -214,12 +214,12 @@ dlg:button {
         -- Unpack arguments.
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
-        local delSrcStr = args.delSrc or defaults.delSrc
-        local edgeType = args.edgeType or defaults.edgeType
-        local coord = args.coord or defaults.coord
-        local useInverse = args.useInverse
-        local trimCels = args.trimCels
-        local drawDiagnostic = args.drawDiagnostic
+        local delSrcStr = args.delSrc or defaults.delSrc --[[@as string]]
+        local edgeType = args.edgeType or defaults.edgeType --[[@as string]]
+        local coord = args.coord or defaults.coord --[[@as string]]
+        local useInverse = args.useInverse --[[@as boolean]]
+        local trimCels = args.trimCels --[[@as boolean]]
+        local drawDiagnostic = args.drawDiagnostic --[[@as boolean]]
 
         -- Whether to use greater than or less than to
         -- determine which side of the line to mirror.
@@ -264,9 +264,9 @@ dlg:button {
         local yDsPx = 0
 
         if coord == "POLAR" then
-            local xCntr = args.xCenter or defaults.xCenter
-            local yCntr = args.yCenter or defaults.yCenter
-            local angle = args.angle or defaults.angle
+            local xCntr = args.xCenter or defaults.xCenter --[[@as integer]]
+            local yCntr = args.yCenter or defaults.yCenter --[[@as integer]]
+            local angle = args.angle or defaults.angle --[[@as integer]]
 
             xCntr = xCntr * 0.01
             yCntr = yCntr * 0.01
@@ -288,10 +288,10 @@ dlg:button {
             xDsPx = xCtPx + rtcos
             yDsPx = yCtPx - rtsin
         else
-            local xOrig = args.xOrig or defaults.xOrig
-            local yOrig = args.yOrig or defaults.yOrig
-            local xDest = args.xDest or defaults.xDest
-            local yDest = args.yDest or defaults.yDest
+            local xOrig = args.xOrig or defaults.xOrig --[[@as integer]]
+            local yOrig = args.yOrig or defaults.yOrig --[[@as integer]]
+            local xDest = args.xDest or defaults.xDest --[[@as integer]]
+            local yDest = args.yDest or defaults.yDest --[[@as integer]]
 
             xOrig = xOrig * 0.01
             yOrig = yOrig * 0.01

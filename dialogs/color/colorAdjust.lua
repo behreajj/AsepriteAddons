@@ -178,7 +178,6 @@ dlg:button {
             return
         end
 
-        -- Unpack arguments.
         -- Get the range as soon as possible, before any changes
         -- cause it to be removed or updated.
         local args = dlg.data
@@ -260,20 +259,23 @@ dlg:button {
             end
         end
 
-        local mode = args.mode or defaults.mode
-        local lAdj = args.lAdj or defaults.lAdj
-        local cAdj = args.cAdj or defaults.cAdj
-        local hAdj = args.hAdj or defaults.hAdj
-        local aAdj = args.aAdj or defaults.aAdj
-        local bAdj = args.bAdj or defaults.bAdj
-        local alphaAdj = args.alphaAdj or defaults.alphaAdj
-        local contrast = args.contrast or defaults.contrast
-        local normalize = args.normalize or defaults.normalize
-        local lInvert = args.lInvert
-        local aInvert = args.aInvert
-        local bInvert = args.bInvert
-        local alphaInvert = args.alphaInvert
+        -- Unpack arguments.
+        local mode = args.mode or defaults.mode --[[@as string]]
+        local lAdj = args.lAdj or defaults.lAdj --[[@as integer]]
+        local cAdj = args.cAdj or defaults.cAdj --[[@as integer]]
+        local hAdj = args.hAdj or defaults.hAdj --[[@as integer]]
+        local aAdj = args.aAdj or defaults.aAdj --[[@as integer]]
+        local bAdj = args.bAdj or defaults.bAdj --[[@as integer]]
+        local alphaAdj = args.alphaAdj or defaults.alphaAdj --[[@as integer]]
+        local contrast = args.contrast or defaults.contrast --[[@as integer]]
+        local normalize = args.normalize or defaults.normalize --[[@as integer]]
+        local lInvert = args.lInvert --[[@as boolean]]
+        local aInvert = args.aInvert --[[@as boolean]]
+        local bInvert = args.bInvert --[[@as boolean]]
+        local alphaInvert = args.alphaInvert --[[@as boolean]]
 
+		-- Cache booleans for whether or not adjustments
+		-- will be made in loop.
         local useNormalize = normalize ~= 0
         local useContrast = contrast ~= 0
         local useLabInvert = bInvert or aInvert or lInvert
@@ -324,7 +326,6 @@ dlg:button {
         local tilesToImage = AseUtilities.tilesToImage
         local fromHex = Clr.fromHex
         local toHex = Clr.toHex
-
         local sRgbaToLab = Clr.sRgbToSrLab2
         local labTosRgba = Clr.srLab2TosRgb
         local labToLch = Clr.srLab2ToSrLch
