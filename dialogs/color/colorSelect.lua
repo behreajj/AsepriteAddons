@@ -429,8 +429,8 @@ dlg:button {
         if exactSearch then
             for pixel in pxItr do
                 if pixel() == refHex then
-                    pxRect.x = pixel.x
-                    pxRect.y = pixel.y
+                    pxRect.x = xCel + pixel.x
+                    pxRect.y = yCel + pixel.y
                     trgSel:add(pxRect)
                 end
             end
