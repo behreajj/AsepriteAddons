@@ -3,6 +3,20 @@ local stepInto = false
 local activeSprite = app.activeSprite
 if not activeSprite then return end
 
+-- Preserve range if frames are selected.
+local range = app.range
+local isFramesType = range.type == RangeType.FRAMES
+local rangeFrIdcs = {}
+if isFramesType then
+    local rangeFrames = range.frames --[[@as Frame[] ]]
+    local lenRangeFrames = #rangeFrames
+    local i = 0
+    while i < lenRangeFrames do
+        i = i + 1
+        rangeFrIdcs[i] = rangeFrames[i].frameNumber
+    end
+end
+
 local activeLayer = app.activeLayer
 if activeLayer then
     local activeParent = activeLayer.parent
@@ -23,4 +37,8 @@ if activeLayer then
     end
 else
     app.activeLayer = activeSprite.layers[#activeSprite.layers]
+end
+
+if isFramesType then
+    app.range.frames = rangeFrIdcs
 end
