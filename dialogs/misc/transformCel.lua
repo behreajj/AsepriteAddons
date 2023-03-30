@@ -25,7 +25,8 @@ local function appendLeaves(layer, array, bkgAllow, checkTilemaps)
         while i < lenChildLayers do
             i = i + 1
             local childLayer = childLayers[i]
-            appendLeaves(childLayer, array)
+            appendLeaves(childLayer, array,
+                bkgAllow, checkTilemaps)
         end
     elseif (bkgAllow or not layer.isBackground) then
         local isTilemap = false

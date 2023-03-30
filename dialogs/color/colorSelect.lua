@@ -258,15 +258,14 @@ dlg:button {
             return
         end
 
-        -- TODO: Improve support for tilemaps?
         if AseUtilities.tilesSupport() then
             if activeLayer.isTilemap then
                 app.alert {
                     title = "Error",
                     text = "Tile maps are not supported."
                 }
+                return
             end
-            return
         end
 
         if activeLayer.isGroup then
