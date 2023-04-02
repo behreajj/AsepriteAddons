@@ -748,7 +748,7 @@ function Utilities.parseRangeStringOverlap(s, frameCount)
 
         elseif lenEdges > 0 then
             idxInner = idxInner + 1
-            arrInner[idxInner] = 1
+            arrInner[idxInner] = edges[1]
         end
 
         idxOuter = idxOuter + 1

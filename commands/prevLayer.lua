@@ -4,9 +4,10 @@ local activeSprite = app.activeSprite
 if not activeSprite then return end
 
 -- Preserve range if frames are selected.
+---@type integer[]
+local rangeFrIdcs = {}
 local range = app.range
 local isFramesType = range.type == RangeType.FRAMES
-local rangeFrIdcs = {}
 if isFramesType then
     local rangeFrames = range.frames --[[@as Frame[] ]]
     local lenRangeFrames = #rangeFrames
@@ -35,7 +36,10 @@ if activeLayer then
             stackIndex = activeLayer.stackIndex
             activeLayer = activeLayer.parent
         end
-        app.activeLayer = activeLayer.layers[stackIndex - 1]
+
+        if stackIndex > 1 then
+            app.activeLayer = activeLayer.layers[stackIndex - 1]
+        end
     end
 else
     app.activeLayer = activeSprite.layers[1]
