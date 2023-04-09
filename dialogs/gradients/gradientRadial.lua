@@ -66,7 +66,7 @@ end
 
 local dlg = Dialog { title = "Radial Gradient" }
 
-GradientUtilities.dialogWidgets(dlg)
+GradientUtilities.dialogWidgets(dlg, true)
 
 dlg:slider {
     id = "xOrig",
@@ -161,19 +161,26 @@ dlg:button {
         local min = math.min
         local toHex = Clr.toHex
         local quantize = Utilities.quantizeUnsigned
-        local cgeval = ClrGradient.eval
 
         -- Unpack arguments.
         local args = dlg.data
+        local stylePreset = args.stylePreset --[[@as string]]
         local clrSpacePreset = args.clrSpacePreset --[[@as string]]
+        local easPreset = args.easPreset --[[@as string]]
+        local huePreset = args.huePreset --[[@as string]]
         local aseColors = args.shades --[[@as Color[] ]]
         local levels = args.quantize --[[@as integer]]
+        local mnr100 = args.minRad --[[@as integer]]
+        local mxr100 = args.maxRad --[[@as integer]]
+        local bayerIndex = args.bayerIndex --[[@as integer]]
+        local ditherPath = args.ditherPath --[[@as string]]
 
         local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
-        local facAdjust = GradientUtilities.easingFuncFromPreset(
-            args.easPreset)
+        local facAdjust = GradientUtilities.easingFuncFromPreset(easPreset)
         local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
-            clrSpacePreset, args.huePreset)
+            clrSpacePreset, huePreset)
+        local cgeval = GradientUtilities.evalFromStylePreset(
+            stylePreset, bayerIndex, ditherPath)
 
         -- Choose distance metric based on preset.
         local distMetric = args.distMetric
@@ -181,10 +188,8 @@ dlg:button {
         local distFunc = distFuncFromPreset(distMetric, minkExp)
 
         -- Validate minimum and maximum radii.
-        local minRad = 0.01 * min(
-            args.minRad, args.maxRad)
-        local maxRad = 0.01 * max(
-            args.minRad, args.maxRad)
+        local minRad = 0.01 * min(mnr100, mxr100)
+        local maxRad = 0.01 * max(mnr100, mxr100)
 
         -- If radii are approximately equal, offset.
         if math.abs(maxRad - minRad) <= 0.000001 then
@@ -227,15 +232,15 @@ dlg:button {
             fac = min(max(fac, 0.0), 1.0)
             fac = facAdjust(fac)
             fac = quantize(fac, levels)
-            local clr = cgeval(gradient, fac, mixFunc)
+            local clr = cgeval(gradient, fac, mixFunc, x, y)
             pixel(toHex(clr))
         end
 
-        app.transaction(function()
+        app.transaction("Radial Gradient", function()
             local grdLayer = activeSprite:newLayer()
             grdLayer.name = "Gradient.Radial." .. clrSpacePreset
             local activeFrame = app.activeFrame
-                or activeSprite.frames[1]
+                or activeSprite.frames[1] --[[@as Frame]]
             activeSprite:newCel(
                 grdLayer, activeFrame, grdImg)
         end)

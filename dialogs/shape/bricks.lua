@@ -1,4 +1,4 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../support/shapeutilities.lua")
 
 local defaults = {
     cols = 8,
@@ -8,8 +8,6 @@ local defaults = {
     skip = 1,
     pick = 1,
     scale = 32,
-    xOrigin = 0,
-    yOrigin = 0,
     mortarThick = 1,
     mortarClr = 0xffe7e7e7,
     brickClr = 0xff5441cb,
@@ -85,15 +83,17 @@ dlg:number {
 dlg:newrow { always = false }
 
 dlg:number {
-    id = "xOrigin",
+    id = "xOrig",
     label = "Origin:",
-    text = string.format("%.3f", defaults.xOrigin),
+    text = string.format("%.3f",
+        app.preferences.new_file.width * 0.5),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
-    id = "yOrigin",
-    text = string.format("%.3f", defaults.yOrigin),
+    id = "yOrig",
+    text = string.format("%.3f",
+        app.preferences.new_file.height * 0.5),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
@@ -161,43 +161,48 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        local mesh = Mesh2.gridBricks(
-            args.cols,
-            args.rows,
-            0.01 * args.offset,
-            args.aspect,
-            args.skip,
-            args.pick)
+        local cols = args.cols or defaults.cols --[[@as integer]]
+        local rows = args.rows or defaults.rows --[[@as integer]]
+        local off100 = args.offset or defaults.offset --[[@as integer]]
+        local aspect = args.aspect or defaults.aspect --[[@as number]]
+        local skip = args.skip or defaults.skip --[[@as integer]]
+        local pick = args.pick or defaults.pick --[[@as integer]]
+        local scale = args.scale or defaults.scale --[[@as number]]
+        local mortarThick = args.mortarThick or defaults.mortarThick --[[@as integer]]
+        local xOrig = args.xOrig --[[@as number]]
+        local yOrig = args.yOrig --[[@as number]]
+        local brickColor = args.brickClr --[[@as Color]]
+        local mortarColor = args.mortarClr --[[@as Color]]
+        local vari100 = args.variance or defaults.variance --[[@as integer]]
 
-        local t = Mat3.fromTranslation(
-            args.xOrigin,
-            args.yOrigin)
-        local sclval = args.scale or defaults.scale --[[@as number]]
-        if sclval < 2.0 then sclval = 2.0 end
+        local offset = off100 * 0.01
+        local sclval = math.max(2.0, scale)
+        local brickHex = AseUtilities.aseColorToHex(brickColor, ColorMode.RGB)
+        local mortarHex = AseUtilities.aseColorToHex(mortarColor, ColorMode.RGB)
+
+        local mesh = Mesh2.gridBricks(
+            cols, rows, offset, aspect, skip, pick)
+
+        local t = Mat3.fromTranslation(xOrig, yOrig)
         local s = Mat3.fromScale(sclval, -sclval)
         local mat = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
-        local brickColor = args.brickClr --[[@as Color]]
-        local mortarColor = args.mortarClr --[[@as Color]]
-
         local sprite = AseUtilities.initCanvas(
-            64, 64, mesh.name,
-            { brickColor.rgbaPixel,
-                mortarColor.rgbaPixel })
+            mesh.name, { brickHex, mortarHex })
         local layer = sprite.layers[#sprite.layers]
 
-        local frame = app.activeFrame or sprite.frames[1]
+        local frame = app.activeFrame or sprite.frames[1] --[[@as Frame]]
         local cel = sprite:newCel(layer, frame)
-        local brush = Brush(args.mortarThick)
+        local brush = Brush(mortarThick)
 
-        if args.variance > 0 then
+        if vari100 > 0 then
             math.randomseed(os.time())
 
             -- Unpack arguments.
-            local varyLight = args.varyLight
-            local varyChroma = args.varyChroma
-            local varyHue = args.varyHue
+            local varyLight = args.varyLight --[[@as boolean]]
+            local varyChroma = args.varyChroma --[[@as boolean]]
+            local varyHue = args.varyHue --[[@as boolean]]
 
             -- Find LCHA.
             local clr = AseUtilities.aseColorToClr(brickColor)
@@ -208,7 +213,7 @@ dlg:button {
             local alpBrick = lch.a
 
             -- Calculate offsets.
-            local varNrm = args.variance * 0.01
+            local varNrm = vari100 * 0.01
             local vnHalf = varNrm * 0.5
             local varLgt = varNrm * 100.0
             local vlHalf = varLgt * 0.5
@@ -223,13 +228,14 @@ dlg:button {
             local rng = math.random
             local max = math.max
             local min = math.min
-            local drawMesh2 = AseUtilities.drawMesh2
+            local drawMesh2 = ShapeUtilities.drawMesh2
             local lchTosRgba = Clr.cieLchTosRgb
             local clrToAseColor = AseUtilities.clrToAseColor
 
-            app.transaction(function()
+            app.transaction("Bricks", function()
                 local i = 0
-                while i < sepLen do i = i + 1
+                while i < sepLen do
+                    i = i + 1
                     local hVary = hueBrick
                     if varyHue then
                         hVary = (hueBrick + varNrm * rng() - vnHalf) % 1.0
@@ -260,7 +266,7 @@ dlg:button {
                 end
             end)
         else
-            AseUtilities.drawMesh2(
+            ShapeUtilities.drawMesh2(
                 mesh,
                 true, brickColor,
                 true, mortarColor,

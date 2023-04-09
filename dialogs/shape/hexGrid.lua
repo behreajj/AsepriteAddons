@@ -1,19 +1,13 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../support/shapeutilities.lua")
 
 local defaults = {
     rings = 4,
     xScale = 32,
     yScale = 32,
-    xOrigin = 0,
-    yOrigin = 0,
     margin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = AseUtilities.hexToAseColor(
-        AseUtilities.DEFAULT_STROKE),
     useFill = true,
-    fillClr = AseUtilities.hexToAseColor(
-        AseUtilities.DEFAULT_FILL),
     pullFocus = false
 }
 
@@ -45,15 +39,17 @@ dlg:number {
 dlg:newrow { always = false }
 
 dlg:number {
-    id = "xOrigin",
+    id = "xOrig",
     label = "Origin:",
-    text = string.format("%.3f", defaults.xOrigin),
+    text = string.format("%.3f",
+        app.preferences.new_file.width * 0.5),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
-    id = "yOrigin",
-    text = string.format("%.3f", defaults.yOrigin),
+    id = "yOrig",
+    text = string.format("%.3f",
+        app.preferences.new_file.height * 0.5),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
@@ -96,7 +92,7 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    color = defaults.strokeClr,
+    color = app.preferences.color_bar.bg_color,
     visible = defaults.useStroke
 }
 
@@ -117,7 +113,7 @@ dlg:check {
 
 dlg:color {
     id = "fillClr",
-    color = defaults.fillClr,
+    color = app.preferences.color_bar.fg_color,
     visible = defaults.useFill
 }
 
@@ -132,15 +128,22 @@ dlg:button {
         local rings = args.rings or defaults.rings --[[@as integer]]
         local xScale = args.xScale or defaults.xScale --[[@as number]]
         local yScale = args.yScale or defaults.yScale --[[@as number]]
-        local xOrig = args.xOrigin or defaults.xOrigin --[[@as number]]
-        local yOrig = args.yOrigin or defaults.yOrigin --[[@as number]]
-        local fillClr = args.fillClr or defaults.fillClr --[[@as Color]]
-        local strokeClr = args.strokeClr or defaults.strokeClr --[[@as Color]]
+        local xOrig = args.xOrig --[[@as number]]
+        local yOrig = args.yOrig --[[@as number]]
+
+        local useStroke = args.useStroke --[[@as boolean]]
+        local strokeWeight = args.strokeWeight
+            or defaults.strokeWeight --[[@as integer]]
+        local strokeColor = args.strokeClr --[[@as Color]]
+        local useFill = args.useFill --[[@as boolean]]
+        local fillColor = args.fillClr --[[@as Color]]
 
         if xScale < 2.0 then xScale = 2.0 end
         if yScale < 2.0 then yScale = 2.0 end
-        local fillHex = AseUtilities.aseColorToHex(fillClr, ColorMode.RGB)
-        local strokeHex = AseUtilities.aseColorToHex(strokeClr, ColorMode.RGB)
+        local fillHex = AseUtilities.aseColorToHex(
+            fillColor, ColorMode.RGB)
+        local strokeHex = AseUtilities.aseColorToHex(
+            strokeColor, ColorMode.RGB)
 
         local mesh = Mesh2.gridHex(rings)
 
@@ -158,16 +161,16 @@ dlg:button {
         end
 
         local sprite = AseUtilities.initCanvas(
-            64, 64, mesh.name, { fillHex, strokeHex })
+            mesh.name, { fillHex, strokeHex })
         local layer = sprite.layers[#sprite.layers]
-        local frame = app.activeFrame or sprite.frames[1]
+        local frame = app.activeFrame
+            or sprite.frames[1] --[[@as Frame]]
         local cel = sprite:newCel(layer, frame)
 
-        AseUtilities.drawMesh2(
-            mesh,
-            args.useFill, fillClr,
-            args.useStroke, strokeClr,
-            Brush(args.strokeWeight),
+        ShapeUtilities.drawMesh2(
+            mesh, useFill, fillColor,
+            useStroke, strokeColor,
+            Brush(strokeWeight),
             cel, layer)
 
         app.refresh()

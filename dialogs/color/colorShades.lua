@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
+local paletteTypes = { "ACTIVE", "DEFAULT", "FILE" }
 
 local defaults = {
     size = 256,
@@ -94,7 +94,6 @@ dlg:check {
         local palType = args.palType
         dlg:modify { id = "palType", visible = usePlot }
         dlg:modify { id = "palFile", visible = usePlot and palType == "FILE" }
-        dlg:modify { id = "palPreset", visible = usePlot and palType == "PRESET" }
     end
 }
 
@@ -109,7 +108,6 @@ dlg:combobox {
     onchange = function()
         local state = dlg.data.palType
         dlg:modify { id = "palFile", visible = state == "FILE" }
-        dlg:modify { id = "palPreset", visible = state == "PRESET" }
     end
 }
 
@@ -121,16 +119,6 @@ dlg:file {
     open = true,
     visible = defaults.plotPalette
         and defaults.palType == "FILE"
-}
-
-dlg:newrow { always = false }
-
-dlg:entry {
-    id = "palPreset",
-    text = "",
-    focus = false,
-    visible = defaults.plotPalette
-        and defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -188,14 +176,13 @@ dlg:button {
                 or defaults.palType --[[@as string]]
             if palType ~= "DEFAULT" then
                 local palFile = args.palFile --[[@as string]]
-                local palPreset = args.palPreset --[[@as string]]
                 local palStart = args.palStart
                     or defaults.palStart --[[@as integer]]
                 local palCount = args.palCount
                     or defaults.palCount --[[@as integer]]
 
                 hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                    palType, palFile, palPreset, palStart, palCount, true)
+                    palType, palFile, palStart, palCount, true)
             else
                 -- Since a palette will be created immediately after, pbr.
                 -- If this changes, and arrays are modified, then this
@@ -226,6 +213,7 @@ dlg:button {
             iToStep = 1.0 / reqFrames
         end
 
+        ---@type Image[]
         local gamutImgs = {}
         local oogaNorm = outOfGamut * 0.003921568627451
         local oogaEps = 2.0 * 0.003921568627451
@@ -240,7 +228,6 @@ dlg:button {
             local gamutImg = Image(spec)
             local pxItr = gamutImg:pixels()
             for pixel in pxItr do
-
                 -- Convert coordinates from [0, size] to
                 -- [0.0, 1.0], then to LCH.
                 local xNrm = pixel.x * szInv
@@ -269,7 +256,7 @@ dlg:button {
         local fps = args.fps or defaults.fps --[[@as integer]]
         local duration = 1.0 / math.max(1, fps)
         sprite.frames[1].duration = duration
-        app.transaction(function()
+        app.transaction("New Frames", function()
             AseUtilities.createFrames(sprite, needed, duration)
         end)
 
@@ -281,7 +268,7 @@ dlg:button {
         gamutLayer.name = "Gamut"
 
         -- Create gamut layer cels.
-        app.transaction(function()
+        app.transaction("New Cels", function()
             local idxCel = 0
             while idxCel < reqFrames do
                 idxCel = idxCel + 1
@@ -315,7 +302,7 @@ dlg:button {
                 pixel(toHex(lchTosRgba(50.0, halfChroma, hue, 1.0)))
             end
 
-            app.transaction(function()
+            app.transaction("Hue Bar", function()
                 local huePoint = Point(size - hueBarWidth, 0)
                 local strokeColor = 0xffffffff
                 local xi = hueBarWidth // 2
@@ -347,11 +334,14 @@ dlg:button {
             local fillSize = args.fillSize
                 or defaults.fillSize --[[@as integer]]
 
-            -- Find min and max.
-            local xs = {}
-            local ys = {}
+            ---@type integer[]
             local strokes = {}
+            ---@type integer[]
+            local xs = {}
+            ---@type integer[]
+            local ys = {}
 
+            -- Find min and max.
             local xMin = 2147483647
             local yMin = 2147483647
             local xMax = -2147483648
@@ -360,9 +350,10 @@ dlg:button {
             local invMaxChroma = 1.0 / maxChroma
             local invMaxLight = 1.0 / maxLight
 
-            local hexesSrgbLen = #hexesSrgb
+            local lenHexesSrgb = #hexesSrgb
             local j = 0
-            while j < hexesSrgbLen do j = j + 1
+            while j < lenHexesSrgb do
+                j = j + 1
                 local hexSrgb = hexesSrgb[j]
                 local xi = 0
                 local yi = size
@@ -410,7 +401,8 @@ dlg:button {
                 local plotPos = Point(xOff, yOff)
 
                 local k = 0
-                while k < hexesSrgbLen do k = k + 1
+                while k < lenHexesSrgb do
+                    k = k + 1
                     local hexSrgb = hexesSrgb[k]
                     if (hexSrgb & 0xff000000) ~= 0 then
                         local xi = xs[k] - xOff
@@ -425,7 +417,7 @@ dlg:button {
                 local plotPalLayer = sprite:newLayer()
                 plotPalLayer.name = "Palette"
 
-                app.transaction(function()
+                app.transaction("Plot Palette", function()
                     AseUtilities.createCels(
                         sprite,
                         1, reqFrames,

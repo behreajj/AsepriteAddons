@@ -1,24 +1,17 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
-local geometries = {
-    "CUBE",
-    "SPHERE"
-}
+local palTypes = { "ACTIVE", "FILE" }
 
 local defaults = {
     palType = "ACTIVE",
     startIndex = 0,
     count = 256,
-
     queryRad = 175,
     octCapacityBits = 4,
     minCapacityBits = 2,
     maxCapacityBits = 16,
-
     projection = "ORTHO",
-    geometry = "CUBE",
-
     cols = 8,
     rows = 8,
     layersCube = 8,
@@ -28,13 +21,11 @@ local defaults = {
     ubx = 0.35355338,
     uby = 0.35355338,
     ubz = 0.35355338,
-
     lons = 24,
     lats = 12,
     layersSphere = 3,
     minSat = 33,
     maxSat = 100,
-
     axx = 0.0,
     axy = 0.0,
     axz = 1.0,
@@ -53,18 +44,12 @@ dlg:combobox {
     id = "palType",
     label = "Palette:",
     option = defaults.palType,
-    options = { "ACTIVE", "FILE", "PRESET" },
+    options = palTypes,
     onchange = function()
         local state = dlg.data.palType
-
         dlg:modify {
             id = "palFile",
             visible = state == "FILE"
-        }
-
-        dlg:modify {
-            id = "palPreset",
-            visible = state == "PRESET"
         }
     end
 }
@@ -76,15 +61,6 @@ dlg:file {
     filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
     open = true,
     visible = defaults.palType == "FILE"
-}
-
-dlg:newrow { always = false }
-
-dlg:entry {
-    id = "palPreset",
-    text = "",
-    focus = false,
-    visible = defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -118,105 +94,26 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-dlg:combobox {
-    id = "geometry",
-    label = "Geometry:",
-    option = defaults.geometry,
-    options = geometries,
-    onchange = function()
-        local md = dlg.data.geometry
-        local isCube = md == "CUBE"
-        local isSphere = md == "SPHERE"
-
-        dlg:modify { id = "cols", visible = isCube }
-        dlg:modify { id = "rows", visible = isCube }
-        dlg:modify { id = "layersCube", visible = isCube }
-
-        dlg:modify { id = "lons", visible = isSphere }
-        dlg:modify { id = "lats", visible = isSphere }
-        dlg:modify { id = "layersSphere", visible = isSphere }
-        dlg:modify { id = "minSat", visible = isSphere }
-        dlg:modify { id = "maxSat", visible = isSphere }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "lons",
-    label = "Longitudes:",
-    min = 3,
-    max = 96,
-    value = defaults.lons,
-    visible = defaults.geometry == "SPHERE"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "lats",
-    label = "Latitudes:",
-    min = 3,
-    max = 48,
-    value = defaults.lats,
-    visible = defaults.geometry == "SPHERE"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "layersSphere",
-    label = "Layers:",
-    min = 1,
-    max = 12,
-    value = defaults.layersSphere,
-    visible = defaults.geometry == "SPHERE"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "minSat",
-    label = "Saturation:",
-    min = 0,
-    max = 50,
-    value = defaults.minSat,
-    visible = defaults.geometry == "SPHERE"
-}
-
-dlg:slider {
-    id = "maxSat",
-    min = 51,
-    max = 100,
-    value = defaults.maxSat,
-    visible = defaults.geometry == "SPHERE"
-}
-
-dlg:newrow { always = false }
-
 dlg:slider {
     id = "cols",
     label = "Resolution:",
     min = 3,
     max = 32,
-    value = defaults.cols,
-    visible = defaults.geometry == "CUBE"
+    value = defaults.cols
 }
 
 dlg:slider {
     id = "rows",
     min = 3,
     max = 32,
-    value = defaults.rows,
-    visible = defaults.geometry == "CUBE"
+    value = defaults.rows
 }
 
 dlg:slider {
     id = "layersCube",
     min = 3,
     max = 32,
-    value = defaults.layersCube,
-    visible = defaults.geometry == "CUBE"
+    value = defaults.layersCube
 }
 
 dlg:newrow { always = false }
@@ -308,9 +205,9 @@ dlg:button {
         local startIndex = defaults.startIndex
         local count = defaults.count
         local palType = args.palType or defaults.palType --[[@as string]]
+        local palFile = args.palFile --[[@as string]]
         local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-            palType, args.palFile, args.palPreset,
-            startIndex, count)
+            palType, palFile, startIndex, count)
 
         -- Create cover profile.
         -- This should be done BEFORE the coverage sprite is
@@ -405,48 +302,27 @@ dlg:button {
 
         local swatchAlpha = args.swatchAlpha or defaults.swatchAlpha
         local swatchAlpha01 = swatchAlpha / 255.0
-        local geometry = args.geometry or defaults.geometry
-        if geometry == "SPHERE" then
-            local lons = args.lons or defaults.lons --[[@as integer]]
-            local lats = args.lats or (lons // 2) --[[@as integer]]
-            local layersSphere = args.layersSphere
-                or defaults.layersSphere --[[@as integer]]
-            local minSat = args.minSat or defaults.minSat
-            local maxSat = args.maxSat or defaults.maxSat
+        local cols = args.cols or defaults.cols --[[@as integer]]
+        local rows = args.rows or defaults.rows --[[@as integer]]
+        local layersCube = args.layersCube
+            or defaults.layersCube --[[@as integer]]
 
-            minSat = minSat * 0.01
-            maxSat = maxSat * 0.01
+        local lbx = args.lbx or defaults.lbx --[[@as number]]
+        local lby = args.lby or defaults.lby --[[@as number]]
+        local lbz = args.lbz or defaults.lbz --[[@as number]]
 
-            gridPts = Vec3.gridSpherical(
-                lons, lats, layersSphere,
-                minSat * 0.5, maxSat * 0.5)
-            gridClrs = Clr.gridHsl(
-                lons, lats, layersSphere,
-                minSat, maxSat,
-                swatchAlpha01)
-        else
-            local cols = args.cols or defaults.cols --[[@as integer]]
-            local rows = args.rows or defaults.rows --[[@as integer]]
-            local layersCube = args.layersCube
-                or defaults.layersCube --[[@as integer]]
+        local ubx = args.ubx or defaults.ubx --[[@as number]]
+        local uby = args.uby or defaults.uby --[[@as number]]
+        local ubz = args.ubz or defaults.ubz --[[@as number]]
 
-            local lbx = args.lbx or defaults.lbx --[[@as number]]
-            local lby = args.lby or defaults.lby --[[@as number]]
-            local lbz = args.lbz or defaults.lbz --[[@as number]]
+        gridPts = Vec3.gridCartesian(
+            cols, rows, layersCube,
+            Vec3.new(lbx, lby, lbz),
+            Vec3.new(ubx, uby, ubz))
 
-            local ubx = args.ubx or defaults.ubx --[[@as number]]
-            local uby = args.uby or defaults.uby --[[@as number]]
-            local ubz = args.ubz or defaults.ubz --[[@as number]]
-
-            gridPts = Vec3.gridCartesian(
-                cols, rows, layersCube,
-                Vec3.new(lbx, lby, lbz),
-                Vec3.new(ubx, uby, ubz))
-
-            gridClrs = Clr.gridsRgb(
-                cols, rows, layersCube,
-                swatchAlpha01)
-        end
+        gridClrs = Clr.gridsRgb(
+            cols, rows, layersCube,
+            swatchAlpha01)
 
         -- Create replacement colors.
         local queryRad = args.queryRad or defaults.queryRad
@@ -490,7 +366,7 @@ dlg:button {
         local oldFrameLen = #coverSprite.frames
         local reqFrames = args.frames
         local needed = math.max(0, reqFrames - oldFrameLen)
-        app.transaction(function()
+        app.transaction("New Frames", function()
             for _ = 1, needed, 1 do
                 coverSprite:newEmptyFrame()
             end
@@ -555,7 +431,8 @@ dlg:button {
 
                 frame2d[k] = {
                     point = scrpt,
-                    color = replaceClrs[k] }
+                    color = replaceClrs[k]
+                }
             end
             -- Depth sorting.
             tablesort(frame2d, comparator)
@@ -566,8 +443,7 @@ dlg:button {
         -- Create layer.
         local layer = coverSprite.layers[#coverSprite.layers]
         layer.name = string.format(
-            "Palette.Coverage.%s.%s",
-            geometry, projPreset)
+            "Palette.Coverage.%s", projPreset)
 
         local zDiff = zMin - zMax
         local zDenom = 1.0
@@ -575,13 +451,13 @@ dlg:button {
 
         -- Create background image once, then clone.
         local bkgImg = Image(width, height)
-        local bkgColor = args.bkgColor or defaults.bkgColor --[[@as Color]]
+        local bkgColor = args.bkgColor --[[@as Color]]
         local bkgHex = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
         bkgImg:clear(bkgHex)
 
         local fps = args.fps or defaults.fps --[[@as integer]]
         local duration = 1.0 / math.max(1, fps)
-        app.transaction(function()
+        app.transaction("Palette Coverage", function()
             local m = 0
             while m < reqFrames do
                 m = m + 1

@@ -17,182 +17,9 @@ local defaults = {
     units = "PERCENT"
 }
 
-local function appendLeaves(layer, array, bkgAllow, checkTilemaps)
-    if layer.isGroup then
-        local childLayers = layer.layers
-        local lenChildLayers = #childLayers
-        local i = 0
-        while i < lenChildLayers do
-            i = i + 1
-            local childLayer = childLayers[i]
-            appendLeaves(childLayer, array,
-                bkgAllow, checkTilemaps)
-        end
-    elseif (bkgAllow or not layer.isBackground) then
-        local isTilemap = false
-        if checkTilemaps then
-            isTilemap = layer.isTilemap
-        end
-        if not isTilemap then
-            array[#array + 1] = layer
-        end
-    end
-end
-
-local function getTargetCels(activeSprite, targetPreset, bkgAllow)
-
-    -- Unrelated issues with Aseprite can raise the need
-    -- to roll back to an older version. For that reason,
-    -- layer.isReference is no longer supported.
-
-    local checkTilemaps = AseUtilities.tilesSupport()
-    local lenTrgCels = 0
-    local trgCels = {}
-
-    local vBkgAlw = bkgAllow or false
-    if targetPreset == "ALL" then
-
-        -- Linked cels occur multiple times in the sprite.cels
-        -- Can be fixed by changing function call cels()
-        -- to uniqueCels() at this line in the source:
-        -- https://github.com/aseprite/aseprite/blob/main/
-        -- src/app/script/cels_class.cpp#L90
-        local leaves = {}
-        local layers = activeSprite.layers
-        local lenLayers = #layers
-        local h = 0
-        while h < lenLayers do h = h + 1
-            local layer = layers[h]
-            if layer.isEditable then
-                appendLeaves(layer, leaves,
-                    vBkgAlw, checkTilemaps)
-            end
-        end
-
-        -- Ranges accept frame numbers, not frame objects
-        -- to their frames setter.
-        local frIdcs = {}
-        local lenFrames = #activeSprite.frames
-        local i = 0
-        while i < lenFrames do i = i + 1
-            frIdcs[i] = i
-        end
-
-        -- If you don't care about filtering layers,
-        -- a shortcut: assign only to appRange.frames.
-        local appRange = app.range
-        appRange.layers = leaves
-        appRange.frames = frIdcs
-
-        -- Editability has already been determined
-        -- by layers loop above.
-        local imgsRange = appRange.images
-        local lenImgsRange = #imgsRange
-        local j = 0
-        while j < lenImgsRange do j = j + 1
-            lenTrgCels = lenTrgCels + 1
-            trgCels[lenTrgCels] = imgsRange[j].cel
-        end
-
-        appRange:clear()
-
-    elseif targetPreset == "RANGE" then
-
-        -- editableImages acquire unique cels.
-        local appRange = app.range
-        local imgsRange = appRange.editableImages
-        local lenImgsRange = #imgsRange
-        local i = 0
-        while i < lenImgsRange do i = i + 1
-            local image = imgsRange[i]
-            local cel = image.cel
-            local layer = cel.layer
-            local isTilemap = false
-            if checkTilemaps then
-                isTilemap = layer.isTilemap
-            end
-            if (vBkgAlw or not layer.isBackground)
-                and not isTilemap then
-                lenTrgCels = lenTrgCels + 1
-                trgCels[lenTrgCels] = cel
-            end
-        end
-
-    elseif targetPreset == "SELECTION" then
-
-        local sel = AseUtilities.getSelection(activeSprite)
-        local selBounds = sel.bounds
-        local xSel = selBounds.x
-        local ySel = selBounds.y
-        local activeSpec = activeSprite.spec
-        local activeFrame = app.activeFrame
-        local alphaMask = activeSpec.transparentColor
-
-        -- Create a subset of flattened sprite.
-        local flatSpec = ImageSpec {
-            width = math.max(1, selBounds.width),
-            height = math.max(1, selBounds.height),
-            colorMode = activeSpec.colorMode,
-            transparentColor = alphaMask
-        }
-        flatSpec.colorSpace = activeSpec.colorSpace
-        local flatImage = Image(flatSpec)
-        flatImage:drawSprite(
-            activeSprite,
-            activeFrame.frameNumber,
-            Point(-xSel, -ySel))
-
-        -- Remove pixels within selection bounds
-        -- but not within selection itself.
-        local flatPxItr = flatImage:pixels()
-        for pixel in flatPxItr do
-            local x = pixel.x + xSel
-            local y = pixel.y + ySel
-            if not sel:contains(x, y) then
-                pixel(alphaMask)
-            end
-        end
-
-        -- Create new layer and new cel. This
-        -- makes three transactions.
-        local adjLayer = activeSprite:newLayer()
-        adjLayer.name = "Transformed"
-        local adjCel = activeSprite:newCel(
-            adjLayer, activeFrame,
-            flatImage, Point(xSel, ySel))
-        lenTrgCels = lenTrgCels + 1
-        trgCels[lenTrgCels] = adjCel
-
-    else
-        -- If active is group, get children.
-        local activeLayer = app.activeLayer --[[@as Layer]]
-        local activeFrame = app.activeFrame
-        if activeLayer and activeFrame then
-            if AseUtilities.isEditableHierarchy(
-                activeLayer, activeSprite) then
-                local leaves = {}
-                appendLeaves(activeLayer, leaves,
-                    vBkgAlw, checkTilemaps)
-                local lenLeaves = #leaves
-                local i = 0
-                while i < lenLeaves do i = i + 1
-                    local cel = leaves[i]:cel(activeFrame)
-                    if cel then
-                        lenTrgCels = lenTrgCels + 1
-                        trgCels[lenTrgCels] = cel
-                    end
-                end
-            end
-        end
-    end
-
-    return trgCels
-end
-
 local function rgbMix(
     rOrig, gOrig, bOrig, aOrig,
     rDest, gDest, bDest, aDest, t)
-
     if t <= 0.0 then return rOrig, gOrig, bOrig, aOrig end
     if t >= 1.0 then return rDest, gDest, bDest, aDest end
 
@@ -243,7 +70,6 @@ end
 local function sampleNear(
     xSrc, ySrc, wSrc, hSrc,
     srcImg, alphaMask)
-
     local xr = Utilities.round(xSrc)
     local yr = Utilities.round(ySrc)
     if yr > -1 and yr < hSrc
@@ -256,7 +82,6 @@ end
 local function sampleBilinear(
     xSrc, ySrc, wSrc, hSrc,
     srcImg, alphaMask)
-
     local xf = math.floor(xSrc)
     local yf = math.floor(ySrc)
     local xc = xf + 1
@@ -383,14 +208,18 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         local args = dlg.data
         local dx = args.xTranslate or defaults.xTranslate
         local dy = args.yTranslate or defaults.yTranslate
         if dx == 0.0 and dy == 0.0 then return end
 
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
+        local target = args.target or defaults.target --[[@as string]]
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, false)
         local lenCels = #cels
 
         local docPrefs = app.preferences.document(activeSprite)
@@ -404,9 +233,10 @@ dlg:button {
             local dxnz = dx ~= 0.0
             local dynz = dy ~= 0.0
             local round = Utilities.round
-            app.transaction(function()
+            app.transaction("Move Cels Snap", function()
                 local i = 0
-                while i < lenCels do i = i + 1
+                while i < lenCels do
+                    i = i + 1
                     local cel = cels[i]
                     local op = cel.position
                     local xn = op.x
@@ -423,9 +253,10 @@ dlg:button {
                 end
             end)
         else
-            app.transaction(function()
+            app.transaction("Move Cels", function()
                 local i = 0
-                while i < lenCels do i = i + 1
+                while i < lenCels do
+                    i = i + 1
                     local cel = cels[i]
                     local op = cel.position
                     cel.position = Point(op.x + dx, op.y - dy)
@@ -444,6 +275,8 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         local args = dlg.data
         local dx = args.xTranslate
@@ -452,8 +285,10 @@ dlg:button {
             or defaults.yTranslate --[[@as integer]]
         if dx == 0.0 and dy == 0.0 then return end
 
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, true)
+        local target = args.target or defaults.target --[[@as string]]
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, true)
         local lenCels = #cels
 
         local trimAlpha = AseUtilities.trimImageAlpha
@@ -465,9 +300,10 @@ dlg:button {
         local tiledMode = docPrefs.tiled.mode
         if tiledMode == 3 then
             -- Tiling on both axes.
-            app.transaction(function()
+            app.transaction("Wrap Cels", function()
                 local i = 0
-                while i < lenCels do i = i + 1
+                while i < lenCels do
+                    i = i + 1
                     local cel = cels[i]
                     local blit = Image(spriteSpec)
                     blit:drawImage(cel.image, cel.position)
@@ -481,9 +317,10 @@ dlg:button {
             end)
         elseif tiledMode == 2 then
             -- Vertical tiling.
-            app.transaction(function()
+            app.transaction("Wrap V", function()
                 local i = 0
-                while i < lenCels do i = i + 1
+                while i < lenCels do
+                    i = i + 1
                     local cel = cels[i]
                     local blit = Image(spriteSpec)
                     blit:drawImage(cel.image, cel.position)
@@ -497,9 +334,10 @@ dlg:button {
             end)
         elseif tiledMode == 1 then
             -- Horizontal tiling.
-            app.transaction(function()
+            app.transaction("Wrap H", function()
                 local i = 0
-                while i < lenCels do i = i + 1
+                while i < lenCels do
+                    i = i + 1
                     local cel = cels[i]
                     local blit = Image(spriteSpec)
                     blit:drawImage(cel.image, cel.position)
@@ -513,9 +351,10 @@ dlg:button {
             end)
         else
             --No tiling.
-            app.transaction(function()
+            app.transaction("Wrap Cels", function()
                 local i = 0
-                while i < lenCels do i = i + 1
+                while i < lenCels do
+                    i = i + 1
                     local cel = cels[i]
                     cel.image = wrap(cel.image, dx, dy)
                 end
@@ -536,16 +375,21 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
+        local target = args.target or defaults.target --[[@as string]]
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, false)
         local lenCels = #cels
         local xCtrSprite = activeSprite.width * 0.5
 
-        app.transaction(function()
+        app.transaction("Align Top", function()
             local i = 0
-            while i < lenCels do i = i + 1
+            while i < lenCels do
+                i = i + 1
                 local cel = cels[i]
                 local op = cel.position
                 local xNew = op.x
@@ -569,16 +413,21 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
+        local target = args.target or defaults.target --[[@as string]]
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, false)
         local lenCels = #cels
         local yCtrSprite = activeSprite.height * 0.5
 
-        app.transaction(function()
+        app.transaction("Align Left", function()
             local i = 0
-            while i < lenCels do i = i + 1
+            while i < lenCels do
+                i = i + 1
                 local cel = cels[i]
                 local op = cel.position
                 local xNew = 0
@@ -602,17 +451,22 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
+        local target = args.target or defaults.target --[[@as string]]
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, false)
         local lenCels = #cels
         local xCtrSprite = activeSprite.width * 0.5
         local hSprite = activeSprite.height
 
-        app.transaction(function()
+        app.transaction("Align Bottom", function()
             local i = 0
-            while i < lenCels do i = i + 1
+            while i < lenCels do
+                i = i + 1
                 local cel = cels[i]
                 local celImg = cel.image
                 local op = cel.position
@@ -637,17 +491,22 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
+        local target = args.target or defaults.target --[[@as string]]
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, false)
         local lenCels = #cels
         local wSprite = activeSprite.width
         local yCtrSprite = activeSprite.height * 0.5
 
-        app.transaction(function()
+        app.transaction("Align Right", function()
             local i = 0
-            while i < lenCels do i = i + 1
+            while i < lenCels do
+                i = i + 1
                 local cel = cels[i]
                 local celImg = cel.image
                 local op = cel.position
@@ -676,18 +535,23 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
+        local target = args.target or defaults.target --[[@as string]]
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, false)
         local lenCels = #cels
         local xc = activeSprite.width * 0.5
         local yc = activeSprite.height * 0.5
         local floor = math.floor
 
-        app.transaction(function()
+        app.transaction("Center", function()
             local i = 0
-            while i < lenCels do i = i + 1
+            while i < lenCels do
+                i = i + 1
                 local cel = cels[i]
                 local celImg = cel.image
                 cel.position = Point(
@@ -720,12 +584,16 @@ dlg:button {
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         -- Unpack arguments.
         local args = dlg.data
         local degrees = args.degrees or defaults.degrees
         if degrees == 0 or degrees == 180 or degrees == 360
-            or degrees == 90 or degrees == 270 then return end
+            or degrees == 90 or degrees == 270 then
+            return
+        end
 
         -- Determine bilinear vs. nearest.
         local easeMethod = args.easeMethod or defaults.easeMethod
@@ -742,8 +610,10 @@ dlg:button {
         local round = Utilities.round
         local ceil = math.ceil
 
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
+        local target = args.target or defaults.target --[[@as string]]
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, false)
         local lenCels = #cels
 
         local query = AseUtilities.DIMETRIC_ANGLES[degrees]
@@ -752,9 +622,10 @@ dlg:button {
         local tana = math.tan(radians)
         local absTan = math.abs(tana)
 
-        app.transaction(function()
+        app.transaction("Skew X", function()
             local i = 0
-            while i < lenCels do i = i + 1
+            while i < lenCels do
+                i = i + 1
                 local cel = cels[i]
                 local srcImg = cel.image
                 if not srcImg:isEmpty() then
@@ -811,12 +682,16 @@ dlg:button {
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         -- Unpack arguments.
         local args = dlg.data
         local degrees = args.degrees or defaults.degrees
         if degrees == 0 or degrees == 180 or degrees == 360
-            or degrees == 90 or degrees == 270 then return end
+            or degrees == 90 or degrees == 270 then
+            return
+        end
 
         -- Determine bilinear vs. nearest.
         local easeMethod = args.easeMethod or defaults.easeMethod
@@ -833,8 +708,10 @@ dlg:button {
         local round = Utilities.round
         local ceil = math.ceil
 
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
+        local target = args.target or defaults.target --[[@as string]]
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, false)
         local lenCels = #cels
 
         local query = AseUtilities.DIMETRIC_ANGLES[degrees]
@@ -843,9 +720,10 @@ dlg:button {
         local tana = math.tan(radians)
         local absTan = math.abs(tana)
 
-        app.transaction(function()
+        app.transaction("Skew Y", function()
             local i = 0
-            while i < lenCels do i = i + 1
+            while i < lenCels do
+                i = i + 1
                 local cel = cels[i]
                 local srcImg = cel.image
                 if not srcImg:isEmpty() then
@@ -902,14 +780,18 @@ dlg:button {
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         -- Unpack arguments.
         local args = dlg.data
         local degrees = args.degrees or defaults.degrees
         if degrees == 0 or degrees == 360 then return end
 
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, false)
+        local target = args.target or defaults.target --[[@as string]]
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, false)
         local lenCels = #cels
 
         if degrees == 90 or degrees == 270 then
@@ -918,37 +800,33 @@ dlg:button {
                 rotFunc = AseUtilities.rotateImage270
             end
 
-            app.transaction(function()
+            app.transaction("Rotate Cels", function()
                 local i = 0
-                while i < lenCels do i = i + 1
+                while i < lenCels do
+                    i = i + 1
                     local cel = cels[i]
-                    local srcImg = cel.image
-                    local wSrc = srcImg.width
-                    local hSrc = srcImg.height
-                    local xSrcHalf = wSrc // 2
-                    local ySrcHalf = hSrc // 2
 
-                    local celPos = cel.position
-                    local xtlSrc = celPos.x
-                    local ytlSrc = celPos.y
+                    local srcImg = cel.image
+                    local xSrcHalf = srcImg.width // 2
+                    local ySrcHalf = srcImg.height // 2
 
                     local trgImg, _, _ = rotFunc(srcImg)
-                    local wTrg = trgImg.width
-                    local hTrg = trgImg.height
-                    local xTrgHalf = wTrg // 2
-                    local yTrgHalf = hTrg // 2
-
-                    cel.position = Point(
-                        xtlSrc + xSrcHalf - xTrgHalf,
-                        ytlSrc + ySrcHalf - yTrgHalf)
                     cel.image = trgImg
+
+                    -- The target image width and height
+                    -- are the source image height and width.
+                    local celPos = cel.position
+                    cel.position = Point(
+                        celPos.x + xSrcHalf - ySrcHalf,
+                        celPos.y + ySrcHalf - xSrcHalf)
                 end
             end)
         elseif degrees == 180 then
             local rot180 = AseUtilities.rotateImage180
-            app.transaction(function()
+            app.transaction("Rotate Cels", function()
                 local i = 0
-                while i < lenCels do i = i + 1
+                while i < lenCels do
+                    i = i + 1
                     local cel = cels[i]
                     cel.image = rot180(cel.image)
                 end
@@ -990,9 +868,10 @@ dlg:button {
             -- image-rotation-with-bilinear-interpolation-
             -- and-no-clipping/
 
-            app.transaction(function()
+            app.transaction("Rotate Cels", function()
                 local i = 0
-                while i < lenCels do i = i + 1
+                while i < lenCels do
+                    i = i + 1
                     local cel = cels[i]
                     local srcImg = cel.image
                     if not srcImg:isEmpty() then
@@ -1118,16 +997,21 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, true)
+        local target = args.target or defaults.target --[[@as string]]
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, true)
         local lenCels = #cels
 
         local fliph = AseUtilities.flipImageHoriz
-        app.transaction(function()
+        app.transaction("Flip H", function()
             local i = 0
-            while i < lenCels do i = i + 1
+            while i < lenCels do
+                i = i + 1
                 local cel = cels[i]
                 cel.image = fliph(cel.image)
             end
@@ -1144,16 +1028,21 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         local args = dlg.data
-        local target = args.target or defaults.target
-        local cels = getTargetCels(activeSprite, target, true)
+        local target = args.target or defaults.target --[[@as string]]
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, true)
         local lenCels = #cels
 
         local flipv = AseUtilities.flipImageVert
-        app.transaction(function()
+        app.transaction("Flip V", function()
             local i = 0
-            while i < lenCels do i = i + 1
+            while i < lenCels do
+                i = i + 1
                 local cel = cels[i]
                 cel.image = flipv(cel.image)
             end
@@ -1171,6 +1060,8 @@ dlg:button {
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then return end
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         -- Cache methods.
         local abs = math.abs
@@ -1179,7 +1070,7 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local target = args.target or defaults.target
+        local target = args.target or defaults.target --[[@as string]]
         local unitType = args.units or defaults.units
         local easeMethod = args.easeMethod or defaults.easeMethod
 
@@ -1207,7 +1098,9 @@ dlg:button {
             return
         end
 
-        local cels = getTargetCels(activeSprite, target, false)
+        local cels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            false, false, false, false)
         local lenCels = #cels
 
         local oldMode = activeSprite.colorMode
@@ -1218,9 +1111,10 @@ dlg:button {
             sample = sampleBilinear
         end
 
-        app.transaction(function()
+        app.transaction("Scale Cels", function()
             local o = 0
-            while o < lenCels do o = o + 1
+            while o < lenCels do
+                o = o + 1
                 local cel = cels[o]
                 local srcImg = cel.image
                 if not srcImg:isEmpty() then

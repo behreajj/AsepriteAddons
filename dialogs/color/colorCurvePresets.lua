@@ -1,3 +1,5 @@
+dofile("../../support/canvasutilities.lua")
+
 local prsStrs = {
     "BEZIER",
     "GAMMA",
@@ -6,39 +8,52 @@ local prsStrs = {
     "QUANTIZE"
 }
 
+local spaceStrs = {
+    "S_RGB",
+    "LINEAR_RGB"
+}
+
+local celsTargets = {
+    "SELECTED",
+    "ALL"
+}
+
 local defaults = {
     -- Sigmoid function?
     -- n <-- scalar * (tau * x - pi)
     -- s(n) <-- 1.0 / (1.0 + exp(-n))
 
     resolution = 16,
+    spaceStr = "S_RGB",
     preset = "SINE_WAVE",
-    useRed = true,
-    useGreen = true,
-    useBlue = true,
     useAlpha = false,
-    useGray = true,
-    useIdx = false,
-
-    cp0x = 0.33333333333333,
+    celsTarget = "ALL",
+    usePreview = true,
+    cp0x = 0.42,
     cp0y = 0.0,
-    cp1x = 0.66666666666667,
+    cp1x = 0.58,
     cp1y = 1.0,
-
     phase = -90,
     freq = 0.5,
     sw_amp = 1.0,
     basis = 0.0,
-
     slope = 1.0,
     intercept = 0.0,
-
     gamma = 2.2,
     amplitude = 1.0,
     offset = 0.0,
-
     quantization = 8
 }
+
+local function stdToLin(x)
+    if x <= 0.04045 then return x * 0.077399380804954 end
+    return ((x + 0.055) * 0.9478672985782) ^ 2.4
+end
+
+local function linToStd(x)
+    if x <= 0.0031308 then return x * 12.92 end
+    return (x ^ 0.41666666666667) * 1.055 - 0.055
+end
 
 local function bezier(cp0x, cp0y, cp1x, cp1y, t)
     if t <= 0.0 then return 0.0, 0.0 end
@@ -76,12 +91,30 @@ end
 
 local dlg = Dialog { title = "Color Curve Presets" }
 
+dlg:check {
+    id = "usePreview",
+    label = "Preview:",
+    focus = true,
+    selected = defaults.usePreview
+}
+
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "resolution",
     label = "Resolution:",
     min = 2,
     max = 64,
     value = defaults.resolution
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "spaceStr",
+    label = "Space:",
+    options = spaceStrs,
+    option = defaults.spaceStr
 }
 
 dlg:newrow { always = false }
@@ -94,16 +127,23 @@ dlg:combobox {
     onchange = function()
         local prs = dlg.data.preset
 
+        -- This would be a problem if you wanted the control
+        -- point inputs for the compound widget to remain
+        -- invisible.
         if prs == "BEZIER" then
+            dlg:modify { id = "graphBezier", visible = true }
             dlg:modify { id = "cp0x", visible = true }
             dlg:modify { id = "cp0y", visible = true }
             dlg:modify { id = "cp1x", visible = true }
             dlg:modify { id = "cp1y", visible = true }
+            dlg:modify { id = "easeFuncs", visible = true }
         else
+            dlg:modify { id = "graphBezier", visible = false }
             dlg:modify { id = "cp0x", visible = false }
             dlg:modify { id = "cp0y", visible = false }
             dlg:modify { id = "cp1x", visible = false }
             dlg:modify { id = "cp1y", visible = false }
+            dlg:modify { id = "easeFuncs", visible = false }
         end
 
         if prs == "GAMMA" then
@@ -146,39 +186,13 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-dlg:number {
-    id = "cp0x",
-    label = "Control 0:",
-    text = string.format("%.5f", defaults.cp0x),
-    decimals = 5,
-    visible = defaults.preset == "BEZIER"
-}
-
-dlg:number {
-    id = "cp0y",
-    text = string.format("%.5f", defaults.cp0y),
-    decimals = 5,
-    visible = defaults.preset == "BEZIER"
-}
-
-dlg:newrow { always = false }
-
-dlg:number {
-    id = "cp1x",
-    label = "Control 1:",
-    text = string.format("%.5f", defaults.cp1x),
-    decimals = 5,
-    visible = defaults.preset == "BEZIER"
-}
-
-dlg:number {
-    id = "cp1y",
-    text = string.format("%.5f", defaults.cp1y),
-    decimals = 5,
-    visible = defaults.preset == "BEZIER"
-}
-
-dlg:newrow { always = false }
+CanvasUtilities.graphBezier(
+    dlg, "graphBezier", "Bezier:", 128, 128,
+    defaults.preset == "BEZIER", true, true, 5,
+    defaults.cp0x, defaults.cp0y,
+    defaults.cp1x, defaults.cp1y,
+    app.theme.color.text,
+    Color { r = 128, g = 128, b = 128 })
 
 dlg:number {
     id = "gamma",
@@ -282,41 +296,50 @@ dlg:number {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "celsTarget",
+    label = "Target:",
+    options = celsTargets,
+    option = defaults.celsTarget
+}
+
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useRed",
     label = "Channels:",
-    text = "R",
-    selected = defaults.useRed
+    text = "&R",
+    selected = app.preferences.new_file.color_mode == ColorMode.RGB
 }
 
 dlg:check {
     id = "useGreen",
-    text = "G",
-    selected = defaults.useGreen
+    text = "&G",
+    selected = app.preferences.new_file.color_mode == ColorMode.RGB
 }
 
 dlg:check {
     id = "useBlue",
-    text = "B",
-    selected = defaults.useBlue
+    text = "&B",
+    selected = app.preferences.new_file.color_mode == ColorMode.RGB
 }
 
 dlg:check {
     id = "useAlpha",
-    text = "A",
+    text = "&A",
     selected = defaults.useAlpha
 }
 
 dlg:check {
     id = "useGray",
-    text = "V",
-    selected = defaults.useGray
+    text = "&K",
+    selected = app.preferences.new_file.color_mode == ColorMode.GRAY
 }
 
 dlg:check {
     id = "useIdx",
-    text = "I",
-    selected = defaults.useIdx
+    text = "&I",
+    selected = app.preferences.new_file.color_mode == ColorMode.INDEXED
 }
 
 dlg:newrow { always = false }
@@ -383,27 +406,63 @@ dlg:button {
             end
         end
 
+        ---@type Point[]
         local points = {}
         local res = args.resolution or defaults.resolution --[[@as integer]]
-        local tox = 1.0 / (res - 1.0)
-
-        local i = 0
-        while i < res do
-            local x = i * tox
-            local y, xp = func(x)
-            if xp then x = xp end
-            local point = Point(
-                math.floor(x * 0xff + 0.5),
-                math.floor(y * 0xff + 0.5))
-            i = i + 1
-            points[i] = point
+        local tox = 1.0
+        if res > 1 then
+            tox = 1.0 / (res - 1.0)
         end
 
+        local spaceStr = args.spaceStr or defaults.spaceStr --[[@as string]]
+        if spaceStr == "LINEAR_RGB" then
+            local i = 0
+            while i < res do
+                local xStd = i * tox
+                local yLin, xLin = func(stdToLin(xStd))
+                local yStd = linToStd(yLin)
+                if xLin then
+                    xStd = linToStd(xLin)
+                end
+                i = i + 1
+                points[i] = Point(
+                    math.floor(xStd * 0xff + 0.5),
+                    math.floor(yStd * 0xff + 0.5))
+            end
+        else
+            local i = 0
+            while i < res do
+                local x = i * tox
+                local y, xp = func(x)
+                if xp then x = xp end
+                i = i + 1
+                points[i] = Point(
+                    math.floor(x * 0xff + 0.5),
+                    math.floor(y * 0xff + 0.5))
+            end
+        end
+
+        -- The toggle for selected vs. all is held in preferences
+        -- as an integer or enumeration constant. Selected is the
+        -- default as element zero. See
+        -- https://github.com/aseprite/aseprite/blob/main/src/app/commands/filters/cels_target.h
+        local target = args.celsTarget or defaults.celsTarget --[[@as string]]
+        local usePreview = args.usePreview --[[@as boolean]]
+        local targetEnum = 0
+        if target == "ALL" then
+            targetEnum = 1
+        end
+        local oldCelsTarget = app.preferences.filters.cels_target
+        app.preferences.filters.cels_target = targetEnum
+
         app.command.ColorCurve {
-            ui = true,
+            ui = usePreview,
             channels = channels,
             curve = points
         }
+
+        app.preferences.filters.cels_target = oldCelsTarget
+        app.refresh()
     end
 }
 

@@ -79,7 +79,9 @@ dlg:button {
         local aseAlphaFound = 0
         local columns = 0
         local lenColors = 0
+        ---@type string[]
         local comments = {}
+        ---@type integer[]
         local colors = {}
 
         if file ~= nil then
@@ -122,6 +124,7 @@ dlg:button {
                         local g = 0
                         local r = 0
 
+                        ---@type string[]
                         local tokens = {}
                         local lenTokens = 0
                         for token in strgmatch(line, "%S+") do

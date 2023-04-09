@@ -11,7 +11,8 @@ Curve3.__index = Curve3
 setmetatable(Curve3, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Constructs a piecewise cubic Bezier curve.
 ---The first parameter specifies a closed loop
@@ -237,14 +238,11 @@ function Curve3.eval(curve, step)
     local b = nil
 
     if curve.closedLoop then
-
         tScaled = (t % 1.0) * knotLength
         i = math.floor(tScaled)
         a = knots[1 + (i % knotLength)]
         b = knots[1 + ((i + 1) % knotLength)]
-
     else
-
         if t <= 0.0 or knotLength == 1 then
             return Curve3.evalFirst(curve)
         end
@@ -257,7 +255,6 @@ function Curve3.eval(curve, step)
         i = math.floor(tScaled)
         a = knots[1 + i]
         b = knots[2 + i]
-
     end
 
     local tsni = tScaled - i
@@ -321,8 +318,8 @@ function Curve3.fromCatmull(closedLoop, points, tightness, name)
     local valPts = points
     if closedLoop then
         if Vec3.approx(
-            points[1],
-            points[ptsLen]) then
+                points[1],
+                points[ptsLen]) then
             valPts = {}
             for i = 1, ptsLast, 1 do
                 valPts[i] = points[i]
@@ -343,14 +340,14 @@ function Curve3.fromCatmull(closedLoop, points, tightness, name)
         end
 
         if not Vec3.approx(
-            points[1],
-            points[2]) then
+                points[1],
+                points[2]) then
             table.insert(valPts, 1, points[1])
         end
 
         if not Vec3.approx(
-            points[#points],
-            points[#points - 1]) then
+                points[#points],
+                points[#points - 1]) then
             table.insert(valPts, points[#points])
         end
 
@@ -429,13 +426,14 @@ function Curve3.fromPoints(closedLoop, points, name)
     local len = #points
     local last = len
     if closedLoop and Vec3.approx(
-        points[1], points[len]) then
+            points[1], points[len]) then
         last = len - 1
     end
 
     local kns = {}
     local i = 0
-    while i < last do i = i + 1
+    while i < last do
+        i = i + 1
         local pt = points[i]
         kns[i] = Knot3.new(
             Vec3.new(pt.x, pt.y, pt.z),

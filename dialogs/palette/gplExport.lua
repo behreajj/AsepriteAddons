@@ -151,9 +151,10 @@ dlg:button {
             gplStr = gplStr .. "# Profile: None\n"
         end
 
+        ---@type Palette[]
+        local selectedPalettes = {}
         local palettes = activeSprite.palettes
         local lenPalettes = #palettes
-        local selectedPalettes = {}
         local lenSum = 0
         if allPalettes then
             local h = 0
@@ -173,6 +174,7 @@ dlg:button {
         gplStr = gplStr .. strfmt(
             "# Colors: %d\n", lenSum)
 
+        ---@type string[]
         local entryStrArr = {}
         local lenSelected = #selectedPalettes
         local i = 0

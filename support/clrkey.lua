@@ -9,7 +9,8 @@ ClrKey.__index = ClrKey
 setmetatable(ClrKey, {
     __call = function(cls, ...)
         return cls.new(...)
-    end })
+    end
+})
 
 ---Creates a new color key.
 ---Defaults to passing the color by value.

@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
+local palTypes = { "ACTIVE", "DEFAULT", "FILE" }
 
 local defaults = {
     size = 512,
@@ -12,8 +12,6 @@ local defaults = {
     zFlip = false,
     plotPalette = true,
     palType = "DEFAULT",
-    palStart = 0,
-    palCount = 256,
     correctPalette = true,
     strokeSize = 6,
     fillSize = 5,
@@ -33,7 +31,7 @@ local normalsPal = {
     0xffda80da, 0xffdabfbf, 0xffdada80, 0xffdabf40, -- 5
     0xffda8025, 0xffda4040, 0xffda2580, 0xffda40bf, -- 6
     0xfff680af, 0xfff6a1a1, 0xfff6af80, 0xfff6a15e, -- 7
-    0xfff68050, 0xfff65e5e, 0xfff65080, 0xfff65ea1 --  8
+    0xfff68050, 0xfff65e5e, 0xfff65080, 0xfff65ea1  --  8
 }
 
 local dlg = Dialog { title = "Normal Wheel" }
@@ -76,7 +74,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "uniformRings",
     label = "Swatches:",
-    text = "Uniform",
+    text = "&Uniform",
     selected = defaults.uniformRings,
     visible = defaults.rings > 0
 }
@@ -86,19 +84,19 @@ dlg:newrow { always = false }
 dlg:check {
     id = "xFlip",
     label = "Flip:",
-    text = "X",
+    text = "&X",
     selected = defaults.xFlip
 }
 
 dlg:check {
     id = "yFlip",
-    text = "Y",
+    text = "&Y",
     selected = defaults.yFlip
 }
 
 dlg:check {
     id = "zFlip",
-    text = "Z",
+    text = "&Z",
     selected = defaults.zFlip
 }
 
@@ -107,7 +105,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "plotPalette",
     label = "Plot:",
-    text = "Palette",
+    text = "&Palette",
     selected = defaults.plotPalette,
     onclick = function()
         local args = dlg.data
@@ -119,10 +117,6 @@ dlg:check {
         dlg:modify { id = "palType", visible = usePlot }
         dlg:modify { id = "palFile", visible = usePlot
             and palType == "FILE" }
-        dlg:modify { id = "palPreset", visible = usePlot
-            and palType == "PRESET" }
-        -- dlg:modify { id = "palStart", visible = usePlot }
-        -- dlg:modify { id = "palCount", visible = usePlot }
     end
 }
 
@@ -142,14 +136,12 @@ dlg:combobox {
     id = "palType",
     label = "Palette:",
     option = defaults.palType,
-    options = paletteTypes,
+    options = palTypes,
     visible = defaults.plotPalette,
     onchange = function()
         local state = dlg.data.palType
         dlg:modify { id = "palFile", visible = state == "FILE" }
-        dlg:modify { id = "palPreset", visible = state == "PRESET" }
         dlg:modify { id = "correctPalette", visible = state ~= "DEFAULT" }
-
     end
 }
 
@@ -161,38 +153,6 @@ dlg:file {
     open = true,
     visible = defaults.plotPalette
         and defaults.palType == "FILE"
-}
-
-dlg:newrow { always = false }
-
-dlg:entry {
-    id = "palPreset",
-    text = "",
-    focus = false,
-    visible = defaults.plotPalette
-        and defaults.palType == "PRESET"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "palStart",
-    label = "Start:",
-    min = 0,
-    max = 255,
-    value = defaults.palStart,
-    visible = false
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "palCount",
-    label = "Count:",
-    min = 1,
-    max = 256,
-    value = defaults.palCount,
-    visible = false
 }
 
 dlg:newrow { always = false }
@@ -237,12 +197,8 @@ dlg:button {
             local palType = args.palType or defaults.palType --[[@as string]]
             if palType ~= "DEFAULT" then
                 local palFile = args.palFile --[[@as string]]
-                local palPreset = args.palPreset --[[@as string]]
-                local palStart = args.palStart or defaults.palStart --[[@as integer]]
-                local palCount = args.palCount or defaults.palCount --[[@as integer]]
-
                 hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                    palType, palFile, palPreset, palStart, palCount, true)
+                    palType, palFile, 0, 256, true)
             else
                 -- Different from other color wheels.
                 hexesProfile = normalsPal
@@ -252,7 +208,7 @@ dlg:button {
         end
 
         -- Create sprite.
-        local spec = ImageSpec { width = size, height = size}
+        local spec = ImageSpec { width = size, height = size }
         spec.colorSpace = ColorSpace()
         local sprite = Sprite(spec)
         sprite.filename = "Normal Map Color Wheel"
@@ -307,7 +263,6 @@ dlg:button {
 
         local pxItr = wheelImg:pixels()
         for pixel in pxItr do
-
             -- Find rise and run as [0.0, 1.0], convert to
             -- [-1.0, 1.0] and flip as requested.
             local y01 = pixel.y * szInv
@@ -349,7 +304,7 @@ dlg:button {
                             incl = zFlipNum * (halfPi - fac * halfPi)
                         else
                             incl = floor(0.5 + (halfPi - acos(zSgn))
-                                * rings2DivPi) * piDivRings2
+                                    * rings2DivPi) * piDivRings2
                         end
                     else
                         incl = halfPi - acos(zSgn);
@@ -390,11 +345,13 @@ dlg:button {
 
             local hexesPlot = hexesSrgb
             if correctPalette then
+                ---@type integer[]
                 hexesPlot = {}
                 local lenHexesSrgb = #hexesSrgb
                 local h = 0
                 local k = 0
-                while h < lenHexesSrgb do h = h + 1
+                while h < lenHexesSrgb do
+                    h = h + 1
                     local hexSrgb = hexesSrgb[h]
                     if (hexSrgb & 0xff000000) ~= 0 then
                         local b = (hexSrgb >> 0x10) & 0xff
@@ -421,11 +378,13 @@ dlg:button {
                 end
             end
 
-            -- Find min and max.
+            ---@type integer[]
             local xs = {}
+            ---@type integer[]
             local ys = {}
             local lenHexesPlot = #hexesPlot
 
+            -- Find min and max.
             local xMin = 2147483647
             local yMin = 2147483647
             local xMax = -2147483648
@@ -437,7 +396,8 @@ dlg:button {
             local zFlipScale = zFlipNum * 0.003921568627451
 
             local i = 0
-            while i < lenHexesPlot do i = i + 1
+            while i < lenHexesPlot do
+                i = i + 1
                 local hexPlot = hexesPlot[i]
                 local xi = center
                 local yi = center
@@ -504,7 +464,8 @@ dlg:button {
                 local plotPos = Point(xOff, yOff)
 
                 local j = 0
-                while j < lenHexesPlot do j = j + 1
+                while j < lenHexesPlot do
+                    j = j + 1
                     local hexPlot = hexesPlot[j]
                     if (hexPlot & 0xff000000) ~= 0 then
                         local xi = xs[j] - xOff

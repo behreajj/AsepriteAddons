@@ -1,18 +1,11 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../support/shapeutilities.lua")
 
 local defaults = {
     cells = 8,
-    scale = 32,
-    xOrigin = 0,
-    yOrigin = 0,
     margin = 0,
     useStroke = true,
     strokeWeight = 1,
-    strokeClr = AseUtilities.hexToAseColor(
-        AseUtilities.DEFAULT_STROKE),
     useFill = true,
-    fillClr = AseUtilities.hexToAseColor(
-        AseUtilities.DEFAULT_FILL),
     pullFocus = false
 }
 
@@ -31,22 +24,26 @@ dlg:newrow { always = false }
 dlg:number {
     id = "scale",
     label = "Scale:",
-    text = string.format("%.3f", defaults.scale),
+    text = string.format("%.3f", 2 * math.min(
+        app.preferences.new_file.width,
+        app.preferences.new_file.height)),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:newrow { always = false }
 
 dlg:number {
-    id = "xOrigin",
+    id = "xOrig",
     label = "Origin:",
-    text = string.format("%.3f", defaults.xOrigin),
+    text = string.format("%.3f",
+        app.preferences.new_file.width * 0.5),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
-    id = "yOrigin",
-    text = string.format("%.3f", defaults.yOrigin),
+    id = "yOrig",
+    text = string.format("%.3f",
+        app.preferences.new_file.height * 0.5),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
@@ -89,7 +86,7 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    color = defaults.strokeClr,
+    color = app.preferences.color_bar.bg_color,
     visible = defaults.useStroke
 }
 
@@ -110,7 +107,7 @@ dlg:check {
 
 dlg:color {
     id = "fillClr",
-    color = defaults.fillClr,
+    color = app.preferences.color_bar.fg_color,
     visible = defaults.useFill
 }
 
@@ -122,45 +119,55 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
+        local cells = args.cells or defaults.cells --[[@as integer]]
+        local margin100 = args.margin or defaults.margin --[[@as integer]]
 
-        local mesh = Mesh2.gridDimetric(args.cells)
+        local scale = args.scale or defaults.scale --[[@as number]]
+        local xOrig = args.xOrig --[[@as number]]
+        local yOrig = args.yOrig --[[@as number]]
+
+        local useStroke = args.useStroke --[[@as boolean]]
+        local strokeWeight = args.strokeWeight or defaults.strokeWeight --[[@as integer]]
+        local strokeColor = args.strokeClr --[[@as Color]]
+        local useFill = args.useFill --[[@as boolean]]
+        local fillColor = args.fillClr --[[@as Color]]
+
+        local mesh = Mesh2.gridDimetric(cells)
 
         -- Convert margin from [0, 100] to [0.0, 1.0].
         -- Ensure that it is less than 100%.
-        if args.margin > 0 then
-            local mrgval = math.min(
+        if margin100 > 0 then
+            local marginVerif = math.min(
                 0.999999,
-                args.margin * 0.01)
+                margin100 * 0.01)
             Mesh2.uniformData(mesh, mesh)
-            mesh:scaleFacesIndiv(1.0 - mrgval)
+            mesh:scaleFacesIndiv(1.0 - marginVerif)
         end
+        local scaleVerif = math.max(2.0, scale)
 
-        local t = Mat3.fromTranslation(
-            args.xOrigin,
-            args.yOrigin)
-        local sclval = args.scale or defaults.scale --[[@as number]]
-        if sclval < 2.0 then sclval = 2.0 end
-        local s = Mat3.fromScale(sclval, -sclval)
+        -- Create transformation matrix.
+        local t = Mat3.fromTranslation(xOrig, yOrig)
+        local s = Mat3.fromScale(scaleVerif, -scaleVerif)
         local mat = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
+        -- Initialize canvas.
+        local fillHex = AseUtilities.aseColorToHex(
+            fillColor, ColorMode.RGB)
+        local strokeHex = AseUtilities.aseColorToHex(
+            strokeColor, ColorMode.RGB)
         local sprite = AseUtilities.initCanvas(
-            64, 64, mesh.name,
-            { args.fillClr.rgbaPixel,
-                args.strokeClr.rgbaPixel })
+            mesh.name, { fillHex, strokeHex })
         local layer = sprite.layers[#sprite.layers]
-        local frame = app.activeFrame or sprite.frames[1]
+        local frame = app.activeFrame
+            or sprite.frames[1] --[[@as Frame]]
         local cel = sprite:newCel(layer, frame)
 
-        AseUtilities.drawMesh2(
-            mesh,
-            args.useFill,
-            args.fillClr,
-            args.useStroke,
-            args.strokeClr,
-            Brush(args.strokeWeight),
-            cel,
-            layer)
+        ShapeUtilities.drawMesh2(
+            mesh, useFill, fillColor,
+            useStroke, strokeColor,
+            Brush(strokeWeight),
+            cel, layer)
 
         app.refresh()
     end

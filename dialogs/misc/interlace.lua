@@ -138,8 +138,8 @@ dlg:button {
             return
         end
 
-        local activeLayer = app.activeLayer
-        if not activeLayer then
+        local srcLayer = app.activeLayer
+        if not srcLayer then
             app.alert {
                 title = "Error",
                 text = "There is no active layer."
@@ -147,7 +147,7 @@ dlg:button {
             return
         end
 
-        if activeLayer.isGroup then
+        if srcLayer.isGroup then
             app.alert {
                 title = "Error",
                 text = "Group layers are not supported."
@@ -155,13 +155,19 @@ dlg:button {
             return
         end
 
-        local isTilemap = false
+        if srcLayer.isReference then
+            app.alert {
+                title = "Error",
+                text = "Reference layers are not supported."
+            }
+            return
+        end
+
+        -- Check for tile maps.
+        local isTilemap = srcLayer.isTilemap
         local tileSet = nil
-        if AseUtilities.tilesSupport() then
-            isTilemap = activeLayer.isTilemap
-            if isTilemap then
-                tileSet = activeLayer.tileset
-            end
+        if isTilemap then
+            tileSet = srcLayer.tileset
         end
 
         -- Unpack arguments.
@@ -180,30 +186,37 @@ dlg:button {
         local yPick = args.yPick or defaults.yPick --[[@as integer]]
         local aPick = args.aPick or defaults.aPick --[[@as integer]]
 
-        local frames = AseUtilities.getFrames(activeSprite, target)
+        local frames = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
 
-        local activeBlendMode = activeLayer.blendMode
-        local activeParent = activeLayer.parent
+        local srcBlendMode = srcLayer.blendMode
+        local srcParent = srcLayer.parent
 
-        local skipLayer = activeSprite:newLayer()
-        local pickLayer = activeSprite:newLayer()
-        local targetGroup = activeSprite:newGroup()
+        local skipLayer = nil
+        local pickLayer = nil
+        local targetGroup = nil
 
-        skipLayer.name = "Skip"
-        skipLayer.parent = targetGroup
-        skipLayer.blendMode = activeBlendMode
-        skipLayer.opacity = aSkip
+        app.transaction("New Layers", function()
+            skipLayer = activeSprite:newLayer()
+            pickLayer = activeSprite:newLayer()
+            targetGroup = activeSprite:newGroup()
 
-        pickLayer.name = "Pick"
-        pickLayer.parent = targetGroup
-        pickLayer.blendMode = activeBlendMode
-        pickLayer.opacity = aPick
+            skipLayer.parent = targetGroup
+            skipLayer.blendMode = srcBlendMode
+            skipLayer.opacity = aSkip
+            skipLayer.name = "Skip"
 
-        targetGroup.name = string.format(
-            "%s.Interlaced.%s",
-            activeLayer.name, dirType)
-        targetGroup.parent = activeParent
-        targetGroup.isCollapsed = true
+            pickLayer.parent = targetGroup
+            pickLayer.blendMode = srcBlendMode
+            pickLayer.opacity = aPick
+            pickLayer.name = "Pick"
+
+            targetGroup.parent = srcParent
+            targetGroup.isCollapsed = true
+            targetGroup.name = string.format(
+                "%s.Interlaced.%s",
+                srcLayer.name, dirType)
+        end)
 
         local all = pick + skip
         local eval = nil
@@ -223,8 +236,8 @@ dlg:button {
         elseif dirType == "SQUARE" then
             eval = function(x, y, p, a)
                 return math.max(
-                    math.abs(x - activeSprite.width // 2),
-                    math.abs(y - activeSprite.height // 2)) % a < p
+                        math.abs(x - activeSprite.width // 2),
+                        math.abs(y - activeSprite.height // 2)) % a < p
             end
         elseif dirType == "VERTICAL" then
             eval = function(x, y, p, a)
@@ -248,77 +261,80 @@ dlg:button {
         local offPick = Point(xPick, yPick)
 
         local lenFrames = #frames
-        app.transaction(function()
-            local idxFrame = 0
-            while idxFrame < lenFrames do
-                idxFrame = idxFrame + 1
-                local frame = frames[idxFrame]
-                local cel = activeLayer:cel(frame)
-                if cel then
-                    local imgSrc = cel.image
-                    if isTilemap then
-                        imgSrc = tilesToImage(imgSrc, tileSet, colorMode)
-                    end
-                    local posSrc = cel.position
-                    local xPos = posSrc.x
-                    local yPos = posSrc.y
-
-                    local specSrc = imgSrc.spec
-                    local imgPick = Image(specSrc)
-                    local imgSkip = Image(specSrc)
-
-                    local alphaMask = specSrc.transparentColor
-                    imgPick:clear(alphaMask)
-                    imgSkip:clear(alphaMask)
-
-                    local pxItr = imgSrc:pixels()
-                    for pixel in pxItr do
-                        local x = pixel.x
-                        local y = pixel.y
-                        local xSmpl = xPos + x
-                        local ySmpl = yPos + y
-                        local hex = pixel()
-                        if eval(xSmpl, ySmpl, pick, all) then
-                            imgPick:drawPixel(x, y, hex)
-                        else
-                            imgSkip:drawPixel(x, y, hex)
-                        end
-                    end
-
-                    activeSprite:newCel(
-                        pickLayer, frame, imgPick,
-                        posSrc + offPick)
-                    activeSprite:newCel(
-                        skipLayer, frame, imgSkip,
-                        posSrc + offSkip)
+        local idxFrame = 0
+        while idxFrame < lenFrames do
+            idxFrame = idxFrame + 1
+            local srcFrame = frames[idxFrame]
+            local srcCel = srcLayer:cel(srcFrame)
+            if srcCel then
+                local imgSrc = srcCel.image
+                if isTilemap then
+                    imgSrc = tilesToImage(imgSrc, tileSet, colorMode)
                 end
+                local posSrc = srcCel.position
+                local xPos = posSrc.x
+                local yPos = posSrc.y
+
+                local specSrc = imgSrc.spec
+                local imgPick = Image(specSrc)
+                local imgSkip = Image(specSrc)
+
+                local alphaMask = specSrc.transparentColor
+                imgPick:clear(alphaMask)
+                imgSkip:clear(alphaMask)
+
+                local pxItr = imgSrc:pixels()
+                for pixel in pxItr do
+                    local x = pixel.x
+                    local y = pixel.y
+                    local xSmpl = xPos + x
+                    local ySmpl = yPos + y
+                    local hex = pixel()
+                    if eval(xSmpl, ySmpl, pick, all) then
+                        imgPick:drawPixel(x, y, hex)
+                    else
+                        imgSkip:drawPixel(x, y, hex)
+                    end
+                end
+
+                app.transaction(
+                    string.format("Interlace %d", srcFrame),
+                    function()
+                        local pickCel = activeSprite:newCel(
+                            pickLayer, srcFrame, imgPick,
+                            posSrc + offPick)
+                        local skipCel = activeSprite:newCel(
+                            skipLayer, srcFrame, imgSkip,
+                            posSrc + offSkip)
+
+                        local srcOpacity = srcCel.opacity
+                        pickCel.opacity = srcOpacity
+                        skipCel.opacity = srcOpacity
+                    end)
             end
-        end)
+        end
 
         if delLyr == "HIDE" then
-            activeLayer.isVisible = false
-        elseif (not activeLayer.isBackground) then
+            srcLayer.isVisible = false
+        elseif (not srcLayer.isBackground) then
             if delLyr == "DELETE_LAYER" then
-                activeSprite:deleteLayer(activeLayer)
+                activeSprite:deleteLayer(srcLayer)
             elseif delLyr == "DELETE_CELS" then
-                app.transaction(function()
-                    local idxDel = 0
-                    while idxDel < lenFrames do
-                        idxDel = idxDel + 1
+                app.transaction("Delete Cels", function()
+                    local idxDel = lenFrames + 1
+                    while idxDel > 1 do
+                        idxDel = idxDel - 1
                         local frame = frames[idxDel]
-                        -- API reports an error if a cel cannot be
-                        -- found, so the layer needs to check that
-                        -- it has a cel first.
-                        if activeLayer:cel(frame) then
-                            activeSprite:deleteCel(activeLayer, frame)
-                        end
+                        local cel = srcLayer:cel(frame)
+                        if cel then activeSprite:deleteCel(cel) end
                     end
                 end)
             end
         end
 
+        -- Active layer assignment triggers a timeline update.
+        app.activeLayer = targetGroup
         app.refresh()
-        app.command.Refresh()
     end
 }
 

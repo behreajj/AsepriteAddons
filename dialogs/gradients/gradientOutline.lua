@@ -20,7 +20,7 @@ local defaults = {
 
 local dlg = Dialog { title = "Outline Gradient" }
 
-GradientUtilities.dialogWidgets(dlg)
+GradientUtilities.dialogWidgets(dlg, false)
 
 dlg:combobox {
     id = "target",
@@ -211,12 +211,22 @@ dlg:button {
             return
         end
 
+        if srcLayer.isReference then
+            app.alert {
+                title = "Error",
+                text = "Reference layers are not supported."
+            }
+            return
+        end
+
         -- Unpack arguments.
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
         local alphaFade = args.alphaFade --[[@as boolean]]
         local reverseFade = args.reverseFade --[[@as boolean]]
         local clrSpacePreset = args.clrSpacePreset --[[@as string]]
+        local easPreset = args.easPreset --[[@as string]]
+        local huePreset = args.huePreset --[[@as string]]
         local aseColors = args.shades --[[@as Color[] ]]
         local levels = args.quantize --[[@as integer]]
         local aseBkgColor = args.bkgColor --[[@as Color]]
@@ -249,7 +259,8 @@ dlg:button {
         local activeOffsets = {}
         local activeCount = 0
         local m = 0
-        while m < 8 do m = m + 1
+        while m < 8 do
+            m = m + 1
             if activeMatrix[m] then
                 activeCount = activeCount + 1
                 activeOffsets[activeCount] = dirMatrix[m]
@@ -265,13 +276,10 @@ dlg:button {
         end
 
         -- Check for tile maps.
-        local layerIsTilemap = false
+        local isTilemap = srcLayer.isTilemap
         local tileSet = nil
-        if AseUtilities.tilesSupport() then
-            layerIsTilemap = srcLayer.isTilemap
-            if layerIsTilemap then
-                tileSet = srcLayer.tileset
-            end
+        if isTilemap then
+            tileSet = srcLayer.tileset
         end
 
         -- Cache methods.
@@ -289,10 +297,12 @@ dlg:button {
         -- evaluate returns the background color. This could
         -- still happen as a result of mix, but minimize the
         -- chances by filtering out background inputs.
+        ---@type Color[]
         local filtered = {}
         local lenAseColors = #aseColors
         local k = 0
-        while k < lenAseColors do k = k + 1
+        while k < lenAseColors do
+            k = k + 1
             local aseColor = aseColors[k]
             if aseColor.alpha > 0
                 and aseColor.rgbaPixel ~= bkgHex then
@@ -301,13 +311,13 @@ dlg:button {
         end
 
         local gradient = GradientUtilities.aseColorsToClrGradient(filtered)
-        local facAdjust = GradientUtilities.easingFuncFromPreset(
-            args.easPreset)
+        local facAdjust = GradientUtilities.easingFuncFromPreset(easPreset)
         local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
-            clrSpacePreset, args.huePreset)
+            clrSpacePreset, huePreset)
 
         -- Find frames from target.
-        local frames = AseUtilities.getFrames(activeSprite, target)
+        local frames = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
 
         -- For auto alpha fade.
         -- The clr needs to be blended with the background.
@@ -335,13 +345,17 @@ dlg:button {
 
         -- Create target layer.
         -- Do not copy source layer blend mode.
-        local trgLyr = activeSprite:newLayer()
-        trgLyr.parent = srcLayer.parent
-        trgLyr.opacity = srcLayer.opacity
-        trgLyr.name = "Gradient.Outline." .. clrSpacePreset
+        local trgLayer = nil
+        app.transaction("New Layer", function()
+            trgLayer = activeSprite:newLayer()
+            trgLayer.parent = srcLayer.parent
+            trgLayer.opacity = srcLayer.opacity
+            trgLayer.name = "Gradient.Outline." .. clrSpacePreset
+        end)
 
         -- Calculate colors in an outer loop, to
         -- reduce penalty for high frame count.
+        ---@type integer[]
         local hexesOutline = {}
         local h = 0
         while h < iterations do
@@ -369,12 +383,13 @@ dlg:button {
         -- causes problems with undo history.
         local lenFrames = #frames
         local g = 0
-        while g < lenFrames do g = g + 1
+        while g < lenFrames do
+            g = g + 1
             local srcFrame = frames[g]
             local srcCel = srcLayer:cel(srcFrame)
             if srcCel then
                 local srcImg = srcCel.image
-                if layerIsTilemap then
+                if isTilemap then
                     srcImg = tilesToImage(srcImg, tileSet, colorMode)
                 end
 
@@ -392,7 +407,8 @@ dlg:button {
                 trgImg:drawImage(srcImg, itrPoint)
 
                 h = 0
-                while h < iterations do h = h + 1
+                while h < iterations do
+                    h = h + 1
                     -- Read image must be separate from target.
                     local hexOut = hexesOutline[h]
                     local readImg = trgImg:clone()
@@ -430,12 +446,14 @@ dlg:button {
                     end
                 end
 
-                app.transaction(function()
-                    local trgCel = activeSprite:newCel(
-                        trgLyr, srcFrame, trgImg,
-                        srcCel.position - itrPoint)
-                    trgCel.opacity = srcCel.opacity
-                end)
+                app.transaction(
+                    string.format("Gradient Outline %d", srcFrame),
+                    function()
+                        local trgCel = activeSprite:newCel(
+                            trgLayer, srcFrame, trgImg,
+                            srcCel.position - itrPoint)
+                        trgCel.opacity = srcCel.opacity
+                    end)
             end
         end
 

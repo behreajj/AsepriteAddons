@@ -14,8 +14,6 @@ setmetatable(GradientUtilities, {
 
 ---Color spaces presets.
 GradientUtilities.CLR_SPC_PRESETS = {
-    "HSL",
-    "HSV",
     "LINEAR_RGB",
     "NORMAL_MAP",
     "S_RGB",
@@ -34,11 +32,18 @@ GradientUtilities.HUE_EASING_PRESETS = {
 ---Easing function presets for non-polar
 ---color representations.
 GradientUtilities.RGB_EASING_PRESETS = {
-    "EASE_IN_CIRC",
-    "EASE_OUT_CIRC",
+    "CIRCLE_IN",
+    "CIRCLE_OUT",
     "LINEAR",
     "SMOOTH",
     "SMOOTHER"
+}
+
+---Style presets.
+GradientUtilities.STYLE_PRESETS = {
+    "DITHER_BAYER",
+    "DITHER_CUSTOM",
+    "MIXED"
 }
 
 ---Default color space preset.
@@ -49,6 +54,40 @@ GradientUtilities.DEFAULT_HUE_EASING = "NEAR"
 
 ---Default linear easing preset.
 GradientUtilities.DEFAULT_RGB_EASING = "LINEAR"
+
+---Default style preset.
+GradientUtilities.DEFAULT_STYLE = "MIXED"
+
+---Bayer dithering matrices, in 2^1, 2^2, 2^3
+---or 2x2, 4x4, 8x8. For matrix generators, see
+---https://codegolf.stackexchange.com/q/259633
+---and https://www.shadertoy.com/view/XtV3RG .
+---More than 2^4 is overkill for 8-bit color.
+---The maximum element is calculated as
+---rows * columns - 1 or with math.max(
+---table.unpack(matrix)), e.g. 2^(i + 1) - 1 is 15.
+GradientUtilities.BAYER_MATRICES = {
+    { 0, 2, 3, 1 },
+    {
+        0, 8, 2, 10,
+        12, 4, 14, 6,
+        3, 11, 1, 9,
+        15, 7, 13, 5
+    },
+    {
+        0, 32, 8, 40, 2, 34, 10, 42,
+        48, 16, 56, 24, 50, 18, 58, 26,
+        12, 44, 4, 36, 14, 46, 6, 38,
+        60, 28, 52, 20, 62, 30, 54, 22,
+        3, 35, 11, 43, 1, 33, 9, 41,
+        51, 19, 59, 27, 49, 17, 57, 25,
+        15, 47, 7, 39, 13, 45, 5, 37,
+        63, 31, 55, 23, 61, 29, 53, 21
+    }
+}
+
+--- Maximum width or height for a custom dither image.
+GradientUtilities.DITHER_MAX_SIZE = 64
 
 ---Converts an array of Aseprite colors to a
 ---ClrGradient. If the number of colors is less
@@ -89,17 +128,7 @@ end
 ---@param huePreset string hue preset
 ---@return function
 function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
-    if clrSpcPreset == "HSL" then
-        local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
-        return function(o, d, t)
-            return Clr.mixHslInternal(o, d, t, hef)
-        end
-    elseif clrSpcPreset == "HSV" then
-        local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
-        return function(o, d, t)
-            return Clr.mixHsvInternal(o, d, t, hef)
-        end
-    elseif clrSpcPreset == "LINEAR_RGB" then
+    if clrSpcPreset == "LINEAR_RGB" then
         return Clr.mixsRgbInternal
     elseif clrSpcPreset == "NORMAL_MAP" then
         return Clr.mixNormal
@@ -117,9 +146,12 @@ end
 
 ---Generates the dialog widgets shared across
 ---gradient dialogs. Places a new row at the
----end of the widgets.
+---end of the widgets. The show style flag specifies
+---whether to show the style combo box for gradients
+---which allow dithered vs. mixed color.
 ---@param dlg Dialog dialog
-function GradientUtilities.dialogWidgets(dlg)
+---@param showStyle boolean? show style combo box
+function GradientUtilities.dialogWidgets(dlg, showStyle)
     dlg:shades {
         id = "shades",
         label = "Colors:",
@@ -147,35 +179,53 @@ function GradientUtilities.dialogWidgets(dlg)
 
             local activeSprite = app.activeSprite
             if activeSprite then
-                local range = app.range
-                local rangeColors = range.colors
+                local tlHidden = not app.preferences.general.visible_timeline
+                if tlHidden then
+                    app.command.Timeline { open = true }
+                end
+
+                -- Range colors do not seem to have the same issue as range
+                -- layers and frames? They appear to be cleared automatically
+                -- on sprite tab change.
+                local appRange = app.range
+                local validRange = false
+                -- if appRange.sprite == activeSprite then
+                local rangeColors = appRange.colors
                 local lenRangeColors = #rangeColors
                 if lenRangeColors > 0 then
+                    validRange = true
                     local pal = AseUtilities.getPalette(
                         app.activeFrame, activeSprite.palettes)
                     local i = 0
-                    while i < lenRangeColors do i = i + 1
+                    while i < lenRangeColors do
+                        i = i + 1
                         local idx = rangeColors[i]
                         local clr = pal:getColor(idx)
                         newColors[lenOldColors + i] = clr
                     end
-                else
+                end
+                -- end
+
+                if tlHidden then
+                    app.command.Timeline { close = true }
+                end
+
+                if not validRange then
                     -- If there are no colors in the shades,
                     -- then add both the back- and fore-colors.
                     if lenOldColors < 1 then
                         app.command.SwitchColors()
                         local bgClr = app.fgColor
-                        table.insert(newColors, AseUtilities.aseColorCopy(
-                            bgClr, "UNBOUNDED"))
+                        newColors[#newColors + 1] = AseUtilities.aseColorCopy(
+                            bgClr, "UNBOUNDED")
                         app.command.SwitchColors()
                     end
 
                     local fgClr = app.fgColor
-                    table.insert(newColors, AseUtilities.aseColorCopy(
-                        fgClr, "UNBOUNDED"))
-
+                    newColors[#newColors + 1] = AseUtilities.aseColorCopy(
+                        fgClr, "UNBOUNDED")
                 end
-            end
+            end --End of activeSprite check
 
             dlg:modify { id = "shades", colors = newColors }
         end
@@ -261,24 +311,71 @@ function GradientUtilities.dialogWidgets(dlg)
     dlg:newrow { always = false }
 
     dlg:combobox {
+        id = "stylePreset",
+        label = "Style:",
+        option = GradientUtilities.DEFAULT_STYLE,
+        options = GradientUtilities.STYLE_PRESETS,
+        visible = showStyle,
+        onchange = function()
+            local args = dlg.data
+
+            local style = args.stylePreset --[[@as string]]
+            local isMixed = style == "MIXED"
+            local isBayer = style == "DITHER_BAYER"
+            local isCustom = style == "DITHER_CUSTOM"
+
+            local csp = args.clrSpacePreset --[[@as string]]
+            local isPolar = csp == "SR_LCH"
+
+            dlg:modify {
+                id = "clrSpacePreset",
+                visible = isMixed
+            }
+            dlg:modify {
+                id = "huePreset",
+                visible = isMixed and isPolar
+            }
+            dlg:modify {
+                id = "easPreset",
+                visible = isMixed and (not isPolar)
+            }
+            dlg:modify {
+                id = "quantize",
+                visible = isMixed
+            }
+            dlg:modify {
+                id = "bayerIndex",
+                visible = isBayer
+            }
+            dlg:modify {
+                id = "ditherPath",
+                visible = isCustom
+            }
+        end
+    }
+
+    dlg:newrow { always = false }
+
+    dlg:combobox {
         id = "clrSpacePreset",
         label = "Space:",
         option = GradientUtilities.DEFAULT_CLR_SPC,
         options = GradientUtilities.CLR_SPC_PRESETS,
+        visible = (not showStyle) or
+            GradientUtilities.DEFAULT_STYLE == "MIXED",
         onchange = function()
-            local md = dlg.data.clrSpacePreset
+            local args = dlg.data
+            local style = args.stylePreset --[[@as string]]
+            local csp = args.clrSpacePreset --[[@as string]]
+            local isPolar = csp == "SR_LCH"
+            local isMixed = style == "MIXED"
             dlg:modify {
                 id = "huePreset",
-                visible = md == "HSL"
-                    or md == "HSV"
-                    or md == "SR_LCH"
+                visible = isMixed and isPolar
             }
             dlg:modify {
                 id = "easPreset",
-                visible = md == "LINEAR_RGB"
-                    or md == "NORMAL_MAP"
-                    or md == "S_RGB"
-                    or md == "SR_LAB_2"
+                visible = isMixed and (not isPolar)
             }
         end
     }
@@ -290,7 +387,9 @@ function GradientUtilities.dialogWidgets(dlg)
         label = "Easing:",
         option = GradientUtilities.DEFAULT_HUE_EASING,
         options = GradientUtilities.HUE_EASING_PRESETS,
-        visible = true
+        visible = ((not showStyle)
+            or GradientUtilities.DEFAULT_STYLE == "MIXED")
+            and GradientUtilities.DEFAULT_CLR_SPC == "SR_LCH"
     }
 
     dlg:newrow { always = false }
@@ -300,7 +399,9 @@ function GradientUtilities.dialogWidgets(dlg)
         label = "Easing:",
         option = GradientUtilities.DEFAULT_RGB_EASING,
         options = GradientUtilities.RGB_EASING_PRESETS,
-        visible = false
+        visible = ((not showStyle)
+            or GradientUtilities.DEFAULT_STYLE == "MIXED")
+            and GradientUtilities.DEFAULT_CLR_SPC ~= "SR_LCH"
     }
 
     dlg:newrow { always = false }
@@ -310,7 +411,33 @@ function GradientUtilities.dialogWidgets(dlg)
         label = "Quantize:",
         min = 0,
         max = 32,
-        value = 0
+        value = 0,
+        visible = (not showStyle) or
+            GradientUtilities.DEFAULT_STYLE == "MIXED"
+    }
+
+    dlg:newrow { always = false }
+
+    dlg:slider {
+        id = "bayerIndex",
+        label = "Bayer (2^n):",
+        min = 1,
+        max = 3,
+        value = 2,
+        visible = showStyle
+            and GradientUtilities.DEFAULT_STYLE == "DITHER_BAYER"
+    }
+
+    dlg:newrow { always = false }
+
+    dlg:file {
+        id = "ditherPath",
+        label = "File:",
+        filetypes = AseUtilities.FILE_FORMATS,
+        open = true,
+        focus = false,
+        visible = showStyle
+            and GradientUtilities.DEFAULT_STYLE == "DITHER_CUSTOM"
     }
 
     dlg:newrow { always = false }
@@ -319,14 +446,14 @@ end
 ---Returns a factor that eases in by a circular arc.
 ---@param t number factor
 ---@return number
-function GradientUtilities.easeInCirc(t)
+function GradientUtilities.circleIn(t)
     return 1.0 - math.sqrt(1.0 - t * t)
 end
 
 ---Returns a factor that eases out by a circular arc.
 ---@param t number factor
 ---@return number
-function GradientUtilities.easeOutCirc(t)
+function GradientUtilities.circleOut(t)
     local u = t - 1.0
     return math.sqrt(1.0 - u * u)
 end
@@ -336,10 +463,10 @@ end
 ---@param preset string rgb preset
 ---@return function
 function GradientUtilities.easingFuncFromPreset(preset)
-    if preset == "EASE_IN_CIRC" then
-        return GradientUtilities.easeInCirc
-    elseif preset == "EASE_OUT_CIRC" then
-        return GradientUtilities.easeOutCirc
+    if preset == "CIRCLE_IN" then
+        return GradientUtilities.circleIn
+    elseif preset == "CIRCLE_OUT" then
+        return GradientUtilities.circleOut
     elseif preset == "SMOOTH" then
         return GradientUtilities.smooth
     elseif preset == "SMOOTHER" then
@@ -347,6 +474,157 @@ function GradientUtilities.easingFuncFromPreset(preset)
     else
         return GradientUtilities.linear
     end
+end
+
+---Finds the appropriate color gradient easing function
+---based on whether the gradient should mix colors or
+---choose based on a dithering matrix.
+---@param stylePreset string style preset
+---@param bayerIndex integer? Bayer exponent, 2^1
+---@param ditherPath string? dither image path
+---@return function
+function GradientUtilities.evalFromStylePreset(
+    stylePreset, bayerIndex, ditherPath)
+    if stylePreset == "DITHER_BAYER" then
+        local matrix = GradientUtilities.BAYER_MATRICES[bayerIndex]
+        local bayerSize = 2 ^ bayerIndex
+        local maxElm = bayerSize * bayerSize - 1
+        local minElm = 0
+
+        return function(cg, step, easing, x, y)
+            return ClrGradient.dither(
+                cg, step, matrix,
+                x, y, bayerSize, bayerSize,
+                maxElm, minElm)
+        end
+    elseif stylePreset == "DITHER_CUSTOM" then
+        local matrix = GradientUtilities.BAYER_MATRICES[2]
+        local cols = 4
+        local rows = 4
+        local mxElm = cols * rows - 1
+        local mnElm = 0
+
+        if ditherPath and #ditherPath > 0
+            and app.fs.isFile(ditherPath) then
+            local image = Image { fromFile = ditherPath }
+            if image then
+                local palette = nil
+                if image.colorMode == ColorMode.INDEXED then
+                    palette = Palette { fromFile = ditherPath }
+                end
+
+                -- Palette is nil checked by imageToMatrix.
+                matrix, cols, rows, mxElm, mnElm = GradientUtilities.imageToMatrix(
+                    image, palette)
+            end -- End image exists check.
+        end     -- End file path validity check.
+
+        return function(cg, step, easing, x, y)
+            return ClrGradient.dither(
+                cg, step, matrix,
+                x, y, cols, rows,
+                mxElm, mnElm)
+        end
+    else
+        -- Default to mix.
+        return function(cg, step, easing, x, y)
+            return ClrGradient.eval(cg, step, easing)
+        end
+    end
+end
+
+---Converts an Aseprite image to a dithering matrix. Returns
+---the matrix along with its width (columns), height (rows)
+---maximum and minimum element. Indexed images depend on
+---a palette argument. If nil, then the image's indices will
+---be used instead of their color referents. Images of greater
+---than 64 x 64 size will not be considered, and a default
+---will be returned.
+---@param image Image image
+---@param palette Palette? palette
+---@return number[] matrix
+---@return integer columns
+---@return integer rows
+---@return number mxElm
+---@return number mnElm
+function GradientUtilities.imageToMatrix(image, palette)
+    -- Intended for use with:
+    -- https://bitbucket.org/jjhaggar/aseprite-dithering-matrices,
+
+    local spec = image.spec
+    local width = spec.width
+    local height = spec.height
+    local maxElm = -2147483648
+    local minElm = 2147483647
+
+    if width > GradientUtilities.DITHER_MAX_SIZE
+        or height > GradientUtilities.DITHER_MAX_SIZE
+        or (width < 2 and height < 2) then
+        return GradientUtilities.BAYER_MATRICES[2],
+            4, 4, 4 * 4 - 1, 0
+    end
+
+    local colorMode = spec.colorMode
+    local pxItr = image:pixels()
+    local matrix = {}
+
+    local lenMat = 0
+    if colorMode == ColorMode.RGB then
+        local fromHex = Clr.fromHex
+        local floor = math.floor
+        local sRgbToLab = Clr.sRgbToSrLab2
+
+        for pixel in pxItr do
+            local hex = pixel()
+            local c = fromHex(hex)
+            local lab = sRgbToLab(c)
+            local v = floor(lab.l * 25.5 + 0.5)
+            if v > maxElm then maxElm = v end
+            if v < minElm then minElm = v end
+            lenMat = lenMat + 1
+            matrix[lenMat] = v
+        end
+    elseif colorMode == ColorMode.GRAY then
+        for pixel in pxItr do
+            local hex = pixel()
+            local v = hex & 0xff
+            if v > maxElm then maxElm = v end
+            if v < minElm then minElm = v end
+            lenMat = lenMat + 1
+            matrix[lenMat] = v
+        end
+    elseif colorMode == ColorMode.INDEXED then
+        if palette then
+            local floor = math.floor
+            local sRgbToLab = Clr.sRgbToSrLab2
+            local aseColorToClr = AseUtilities.aseColorToClr
+
+            for pixel in pxItr do
+                local j = pixel()
+                local aseColor = palette:getColor(j)
+                local c = aseColorToClr(aseColor)
+                local lab = sRgbToLab(c)
+                local v = floor(lab.l * 25.5 + 0.5)
+                if v > maxElm then maxElm = v end
+                if v < minElm then minElm = v end
+                lenMat = lenMat + 1
+                matrix[lenMat] = v
+            end
+        else
+            for pixel in pxItr do
+                local j = pixel()
+                if j > maxElm then maxElm = j end
+                if j < minElm then minElm = j end
+                lenMat = lenMat + 1
+                matrix[lenMat] = j
+            end
+        end
+    else
+        return GradientUtilities.BAYER_MATRICES[2],
+            4, 4, 4 * 4 - 1, 0
+    end
+
+    return matrix, width, height, maxElm, minElm
 end
 
 ---Finds the appropriate easing function in HSL or HSV

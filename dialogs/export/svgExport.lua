@@ -53,6 +53,7 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
 
     local imgWidth = img.width
     local pxItr = img:pixels()
+    ---@type table<integer, integer[]>
     local pixelDict = {}
     for pixel in pxItr do
         local hex = pixel()
@@ -67,6 +68,7 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
         end
     end
 
+    ---@type string[]
     local pathsArr = {}
     for hex, idcs in pairs(pixelDict) do
         local a = hex >> 0x18 & 0xff
@@ -81,9 +83,10 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
         pathStr = pathStr .. strfmt(
             "fill=\"#%06X\" d=\"",
             ((hex & 0xff) << 0x10
-                | (hex & 0xff00)
-                | (hex >> 0x10 & 0xff)))
+            | (hex & 0xff00)
+            | (hex >> 0x10 & 0xff)))
 
+        ---@type string[]
         local subPathsArr = {}
         local lenIdcs = #idcs
         local i = 0
@@ -122,7 +125,6 @@ end
 local function layerToSvgStr(
     layer, activeFrame, spriteBounds,
     border, scale, margin, checkTilemaps)
-
     local str = ""
 
     local lyrAlpha = 0xff
@@ -143,10 +145,11 @@ local function layerToSvgStr(
                 "\n<g id=\"%s\">", layerName)
 
             local groupLayers = layer.layers
-            local groupLayersLen = #groupLayers
+            local lenGroupLayers = #groupLayers
+            ---@type string[]
             local groupStrArr = {}
             local i = 0
-            while i < groupLayersLen do
+            while i < lenGroupLayers do
                 i = i + 1
                 groupStrArr[i] = layerToSvgStr(
                     groupLayers[i],
@@ -320,14 +323,13 @@ dlg:button {
         app.command.ChangePixelFormat { format = "rgb" }
 
         -- Unpack arguments.
-        local scale = args.scale or defaults.scale
-        local margin = args.margin or defaults.margin
-        local marginClr = args.marginClr or defaults.marginClr
-        local border = args.border or defaults.border
-        local borderClr = args.borderClr or defaults.borderClr
-        local prApply = args.prApply
-        local flattenImage = args.flattenImage
-        local checkTilemaps = AseUtilities.tilesSupport()
+        local scale = args.scale or defaults.scale --[[@as integer]]
+        local margin = args.margin or defaults.margin --[[@as integer]]
+        local marginClr = args.marginClr --[[@as Color]]
+        local border = args.border or defaults.border --[[@as integer]]
+        local borderClr = args.borderClr --[[@as Color]]
+        local prApply = args.prApply --[[@as boolean]]
+        local flattenImage = args.flattenImage --[[@as boolean]]
 
         -- Calculate dimensions.
         local nativeWidth = activeSprite.width
@@ -377,7 +379,6 @@ dlg:button {
         local wnBorder = totalWidth - border
         local hnBorder = totalHeight - border
         if border > 0 and borderClr.alpha > 0 then
-
             -- Create outer frame of border (clockwise).
             str = str .. strfmt(
                 "\n<path id=\"border\" d=\"M 0 0 L %d 0 L %d %d L 0 %d Z ",
@@ -414,6 +415,7 @@ dlg:button {
                 border, hnBorder)
 
             -- Cut out a hole for each pixel (counter-clockwise).
+            ---@type string[]
             local holeStrArr = {}
             local i = 0
             while i < lenPixels do
@@ -450,7 +452,7 @@ dlg:button {
                 | marginClr.blue)
         end
 
-        local activeFrame = app.activeFrame
+        local activeFrame = app.activeFrame --[[@as Frame]]
 
         if flattenImage then
             local flatImg = Image(nativeWidth, nativeHeight)
@@ -460,15 +462,17 @@ dlg:button {
             local spriteBounds = Rectangle(
                 0, 0, nativeWidth, nativeHeight)
             local spriteLayers = activeSprite.layers
+            ---@type string[]
             local layersStrArr = {}
-            local spriteLayersLen = #spriteLayers
+            local lenSpriteLayers = #spriteLayers
             local j = 0
-            while j < spriteLayersLen do j = j + 1
+            while j < lenSpriteLayers do
+                j = j + 1
                 layersStrArr[j] = layerToSvgStr(
                     spriteLayers[j],
                     activeFrame, spriteBounds,
                     border, scale, margin,
-                    checkTilemaps)
+                    true)
             end
             str = str .. concat(layersStrArr)
         end

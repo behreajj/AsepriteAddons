@@ -26,14 +26,6 @@ Clr.CIE_LCH_HUE_LIGHT = 99.0 / 360.0
 Clr.CIE_LCH_HUE_SHADOW = 308.0 / 360.0
 
 ---Arbitrary hue assigned to lighter grays
----in hue conversion functions.
-Clr.HSL_HUE_LIGHT = 48.0 / 360.0
-
----Arbitrary hue assigned to darker grays
----in hue conversion functions.
-Clr.HSL_HUE_SHADOW = 255.0 / 360.0
-
----Arbitrary hue assigned to lighter grays
 ---in SR LCH conversion functions.
 Clr.SR_LCH_HUE_LIGHT = 0.306391
 
@@ -279,8 +271,11 @@ function Clr.cieLabToCieLch(l, a, b, alpha, tol)
 
     if chromasq < (vTol * vTol) then
         local fac = l * 0.01
-        if fac < 0.0 then fac = 0.0
-        elseif fac > 1.0 then fac = 1.0 end
+        if fac < 0.0 then
+            fac = 0.0
+        elseif fac > 1.0 then
+            fac = 1.0
+        end
         h = (1.0 - fac) * Clr.CIE_LCH_HUE_SHADOW
             + fac * (1.0 + Clr.CIE_LCH_HUE_LIGHT)
     else
@@ -377,11 +372,7 @@ function Clr.cieLchToCieLab(l, c, h, a, tol)
     -- saturated colors are still possible at
     -- light = 0 and light = 100.
     local lVrf = l or 0.0
-    if lVrf < 0.0 then
-        lVrf = 0.0
-    elseif lVrf > 100.0 then
-        lVrf = 100.0
-    end
+    lVrf = math.min(math.max(lVrf, 0.0), 100.0)
 
     local vTol = 0.00005
     if tol then vTol = tol end
@@ -516,22 +507,14 @@ end
 ---@return Clr
 function Clr.clamp01(c)
     local cr = c.r or 0.0
-    if cr < 0.0 then cr = 0.0
-    elseif cr > 1.0 then cr = 1.0 end
-
     local cg = c.g or 0.0
-    if cg < 0.0 then cg = 0.0
-    elseif cg > 1.0 then cg = 1.0 end
-
     local cb = c.b or 0.0
-    if cb < 0.0 then cb = 0.0
-    elseif cb > 1.0 then cb = 1.0 end
-
     local ca = c.a or 0.0
-    if ca < 0.0 then ca = 0.0
-    elseif ca > 1.0 then ca = 1.0 end
-
-    return Clr.new(cr, cg, cb, ca)
+    return Clr.new(
+        math.min(math.max(cr, 0.0), 1.0),
+        math.min(math.max(cg, 0.0), 1.0),
+        math.min(math.max(cb, 0.0), 1.0),
+        math.min(math.max(ca, 0.0), 1.0))
 end
 
 ---Converts from a hexadecimal representation
@@ -584,83 +567,13 @@ function Clr.fromHexWeb(hexstr)
     -- tonumber may return fail.
     local sn = tonumber(s, 16)
     if sn then
-        -- Append opaque alpha.
-        return Clr.fromHex(0xff000000 | sn)
+        return Clr.new(
+            (sn >> 0x10 & 0xff) * 0.003921568627451,
+            (sn >> 0x08 & 0xff) * 0.003921568627451,
+            (sn & 0xff) * 0.003921568627451,
+            1.0)
     end
     return Clr.clearBlack()
-end
-
----Creates a one-dimensional table of colors
----arranged as a UV Sphere where HSL is mapped
----to inclination, hue is mapped to azimuth and
----saturation is mapped to radius.
----@param longitudes integer longitudes or hues
----@param latitudes integer latitudes or lumas
----@param layers integer layers or saturations
----@param satMin number minimum saturation
----@param satMax number maximum saturation
----@param alpha number transparency
----@return Clr[]
-function Clr.gridHsl(longitudes, latitudes, layers, satMin, satMax, alpha)
-    -- Default arguments.
-    local aVrf = alpha or 1.0
-    local vsMax = satMax or 1.0
-    local vsMin = satMin or 0.1
-    local vLayers = layers or 1
-    local vLats = latitudes or 16
-    local vLons = longitudes or 32
-
-    -- Validate.
-    if aVrf < 0.003921568627451 then
-        aVrf = 0.003921568627451
-    elseif aVrf > 1.0 then
-        aVrf = 1.0
-    end
-    if vLons < 3 then vLons = 3 end
-    if vLats < 3 then vLats = 3 end
-    if vLayers < 1 then vLayers = 1 end
-
-    vsMax = math.min(1.0, math.max(0.000001, vsMax))
-    vsMin = math.min(1.0, math.max(0.000001, vsMin))
-    vsMax = math.max(vsMin, vsMax)
-    local oneLayer = vLayers == 1
-    if oneLayer then
-        vsMin = vsMax
-    else
-        vsMin = math.min(vsMin, vsMax)
-    end
-
-    local toPrc = 1.0
-    if not oneLayer then
-        toPrc = 1.0 / (vLayers - 1.0)
-    end
-    local toLgt = 1.0 / (vLats + 1.0)
-    local toHue = 1.0 / vLons
-
-    local len2 = vLats * vLons
-    local len3 = vLayers * len2
-
-    local result = {}
-    local k = 0
-    while k < len3 do
-        local h = k // len2
-        local m = k - h * len2
-
-        local hue = (m % vLons) * toHue
-
-        local prc = h * toPrc
-        local sat = (1.0 - prc) * vsMin + prc * vsMax
-
-        -- Smooth step approximates sine wave.
-        local lgt = ((m // vLons) + 1.0) * toLgt
-        lgt = lgt * lgt * (3.0 - (lgt + lgt))
-
-        k = k + 1
-        result[k] = Clr.hslTosRgb(
-            hue, sat, lgt, aVrf)
-    end
-
-    return result
 end
 
 ---Creates a one-dimensional table of colors
@@ -680,18 +593,10 @@ function Clr.gridsRgb(cols, rows, layers, alpha)
     local cVrf = cols or 2
 
     -- Validate arguments.
-    if aVrf < 0.003921568627451 then
-        aVrf = 0.003921568627451
-    elseif aVrf > 1.0 then
-        aVrf = 1.0
-    end
-
-    if lVrf < 2 then lVrf = 2
-    elseif lVrf > 256 then lVrf = 256 end
-    if rVrf < 2 then rVrf = 2
-    elseif rVrf > 256 then rVrf = 256 end
-    if cVrf < 2 then cVrf = 2
-    elseif cVrf > 256 then cVrf = 256 end
+    aVrf = math.min(math.max(aVrf, 0.003921568627451), 1.0)
+    lVrf = math.min(math.max(lVrf, 2), 256)
+    rVrf = math.min(math.max(lVrf, 2), 256)
+    cVrf = math.min(math.max(lVrf, 2), 256)
 
     local hToStep = 1.0 / (lVrf - 1.0)
     local iToStep = 1.0 / (rVrf - 1.0)
@@ -717,123 +622,6 @@ function Clr.gridsRgb(cols, rows, layers, alpha)
     end
 
     return result
-end
-
----Converts hue, saturation and lightness to a color.
----@param hue number hue
----@param sat number saturation
----@param light number lightness
----@param alpha number transparency
----@return Clr
-function Clr.hslTosRgb(hue, sat, light, alpha)
-    local aVrf = alpha or 1.0
-
-    local l = light or 1.0
-    if l <= 0.0 then
-        return Clr.new(0.0, 0.0, 0.0, aVrf)
-    elseif l >= 1.0 then
-        return Clr.new(1.0, 1.0, 1.0, aVrf)
-    end
-
-    local s = sat or 1.0
-    if s <= 0.0 then
-        return Clr.new(l, l, l, aVrf)
-    elseif s >= 1.0 then
-        s = 1.0
-    end
-
-    local q = 0.0
-    if l < 0.5 then
-        q = l * (1.0 + s)
-    else
-        q = l + s - l * s
-    end
-
-    local p = l + l - q
-    local qnp6 = (q - p) * 6.0
-
-    local h = hue or 0.0
-
-    local r = p
-    local rHue = (h + 0.33333333333333) % 1.0
-    if rHue < 0.16666666666667 then
-        r = p + qnp6 * rHue
-    elseif rHue < 0.5 then
-        r = q
-    elseif rHue < 0.66666666666667 then
-        r = p + qnp6 * (0.66666666666667 - rHue)
-    end
-
-    local g = p
-    local gHue = h % 1.0
-    if gHue < 0.16666666666667 then
-        g = p + qnp6 * gHue
-    elseif gHue < 0.5 then
-        g = q
-    elseif gHue < 0.66666666666667 then
-        g = p + qnp6 * (0.66666666666667 - gHue)
-    end
-
-    local b = p
-    local bHue = (h - 0.33333333333333) % 1.0
-    if bHue < 0.16666666666667 then
-        b = p + qnp6 * bHue
-    elseif bHue < 0.5 then
-        b = q
-    elseif bHue < 0.66666666666667 then
-        b = p + qnp6 * (0.66666666666667 - bHue)
-    end
-
-    return Clr.new(r, g, b, aVrf)
-end
-
----Converts hue, saturation and value to a color.
----@param hue number hue
----@param sat number saturation
----@param val number value
----@param alpha number transparency
----@return Clr
-function Clr.hsvTosRgb(hue, sat, val, alpha)
-    local aVrf = alpha or 1.0
-
-    local v = val or 1.0
-    if v <= 0.0 then
-        return Clr.new(0.0, 0.0, 0.0, aVrf)
-    elseif v >= 1.0 then
-        v = 1.0
-    end
-
-    local s = sat or 1.0
-    if s <= 0.0 then
-        return Clr.new(v, v, v, aVrf)
-    elseif s >= 1.0 then
-        s = 1.0
-    end
-
-    local h = hue or 0.0
-    h = h % 1.0
-    h = 6.0 * h
-    local sector = math.floor(h)
-
-    local tint1 = v * (1.0 - s)
-    local tint2 = v * (1.0 - s * (h - sector))
-    local tint3 = v * (1.0 - s * (1.0 + sector - h))
-
-    if sector == 0 then
-        return Clr.new(v, tint3, tint1, aVrf)
-    elseif sector == 1 then
-        return Clr.new(tint2, v, tint1, aVrf)
-    elseif sector == 2 then
-        return Clr.new(tint1, v, tint3, aVrf)
-    elseif sector == 3 then
-        return Clr.new(tint1, tint2, v, aVrf)
-    elseif sector == 4 then
-        return Clr.new(tint3, tint1, v, aVrf)
-    elseif sector == 5 then
-        return Clr.new(v, tint1, tint2, aVrf)
-    else
-        return Clr.new(1.0, 1.0, 1.0, aVrf)
-    end
 end
 
 ---Converts a color from linear RGB to SR Lab 2.
@@ -944,15 +732,12 @@ function Clr.lRgbToCieXyzInternal(red, green, blue, alpha)
         x = red * 0.41241084648854
             + green * 0.35758456785295
             + blue * 0.18045380393361,
-
         y = red * 0.21264934272065
             + green * 0.7151691357059
             + blue * 0.072181521573443,
-
         z = red * 0.01933175842915
             + green * 0.11919485595098
             + blue * 0.95039003405034,
-
         a = aVrf
     }
 end
@@ -995,130 +780,6 @@ end
 ---@return Clr
 function Clr.mix(o, d, t)
     return Clr.mixlRgb(o, d, t)
-end
-
----Mixes two colors in HSLA space by a step.
----The hue function should accept an origin,
----destination and factor, all numbers.
----The step is clamped to [0.0, 1.0].
----The hue function defaults to near.
----@param o Clr origin
----@param d Clr destination
----@param t number step
----@param hueFunc function? hue function
----@return Clr
-function Clr.mixHsl(o, d, t, hueFunc)
-    local u = t or 0.5
-    if u <= 0.0 then return Clr.clamp01(o) end
-    if u >= 1.0 then return Clr.clamp01(d) end
-
-    local f = hueFunc or function(oh, dh, x)
-        local diff = dh - oh
-        if diff ~= 0.0 then
-            local y = 1.0 - x
-            if oh < dh and diff > 0.5 then
-                return (y * (oh + 1.0) + x * dh) % 1.0
-            elseif oh > dh and diff < -0.5 then
-                return (y * oh + x * (dh + 1.0)) % 1.0
-            else
-                return y * oh + x * dh
-            end
-        else
-            return oh
-        end
-    end
-
-    return Clr.mixHslInternal(
-        Clr.clamp01(o), Clr.clamp01(d), u, f)
-end
-
----Mixes two colors in HSLA space by a step.
----The hue function should accept an origin,
----destination and factor, all numbers.
----@param o Clr origin
----@param d Clr destination
----@param t number step
----@param hueFunc function hue function
----@return Clr
-function Clr.mixHslInternal(o, d, t, hueFunc)
-    local oHsla = Clr.sRgbToHslInternal(o.r, o.g, o.b, o.a)
-    local dHsla = Clr.sRgbToHslInternal(d.r, d.g, d.b, d.a)
-
-    local oSat = oHsla.s
-    local dSat = dHsla.s
-
-    if oSat <= 0.000001 or dSat <= 0.000001 then
-        return Clr.mixlRgbaInternal(o, d, t)
-    end
-
-    local u = 1.0 - t
-    return Clr.hslTosRgb(
-        hueFunc(oHsla.h, dHsla.h, t),
-        u * oSat + t * dSat,
-        u * oHsla.l + t * dHsla.l,
-        u * oHsla.a + t * dHsla.a)
-end
-
----Mixes two colors in HSVA space by a step.
----The hue function should accept an origin,
----destination and factor, all numbers.
----The step is clamped to [0.0, 1.0].
----The hue function defaults to near.
----@param o Clr origin
----@param d Clr destination
----@param t number step
----@param hueFunc function? hue function
----@return Clr
-function Clr.mixHsv(o, d, t, hueFunc)
-    local u = t or 0.5
-    if u <= 0.0 then return Clr.clamp01(o) end
-    if u >= 1.0 then return Clr.clamp01(d) end
-
-    local f = hueFunc or function(oh, dh, x)
-        local diff = dh - oh
-        if diff ~= 0.0 then
-            local y = 1.0 - x
-            if oh < dh and diff > 0.5 then
-                return (y * (oh + 1.0) + x * dh) % 1.0
-            elseif oh > dh and diff < -0.5 then
-                return (y * oh + x * (dh + 1.0)) % 1.0
-            else
-                return y * oh + x * dh
-            end
-        else
-            return oh
-        end
-    end
-
-    return Clr.mixHsvInternal(
-        Clr.clamp01(o), Clr.clamp01(d), u, f)
-end
-
----Mixes two colors in HSVA space by a step.
----The hue function should accept an origin,
----destination and factor, all numbers.
----@param o Clr origin
----@param d Clr destination
----@param t number step
----@param hueFunc function hue function
----@return Clr
-function Clr.mixHsvInternal(o, d, t, hueFunc)
-    local oHsva = Clr.sRgbToHsvInternal(o.r, o.g, o.b, o.a)
-    local dHsva = Clr.sRgbToHsvInternal(d.r, d.g, d.b, d.a)
-
-    local oSat = oHsva.s
-    local dSat = dHsva.s
-
-    if oSat <= 0.000001 or dSat <= 0.000001 then
-        return Clr.mixlRgbaInternal(o, d, t)
-    end
-
-    local u = 1.0 - t
-    return Clr.hsvTosRgb(
-        hueFunc(oHsva.h, dHsva.h, t),
-        u * oSat + t * dSat,
-        u * oHsva.v + t * dHsva.v,
-        u * oHsva.a + t * dHsva.a)
 end
 
 ---Mixes two colors in RGBA space by a step.
@@ -1497,190 +1158,6 @@ function Clr.sRgbToCieXyz(c)
     return Clr.lRgbToCieXyzInternal(l.r, l.g, l.b, l.a)
 end
 
----Converts a color to hue, saturation and value.
----The return table uses the keys h, s, l and a
----with values in the range [0.0, 1.0].
----@param c Clr color
----@return { h: number, s: number, l: number, a: number }
-function Clr.sRgbToHsl(c)
-    local cl = Clr.clamp01(c)
-    return Clr.sRgbToHslInternal(cl.r, cl.g, cl.b, cl.a)
-end
-
----Converts RGBA channels to hue, saturation and lightness.
----Assumes each channel is in the range [0.0, 1.0].
----The return table uses the keys h, s, l and a.
----Return values are also in the range [0.0, 1.0].
----@param red number red channel
----@param green number green channel
----@param blue number blue channel
----@param alpha number transparency
----@return { h: number, s: number, l: number, a: number }
-function Clr.sRgbToHslInternal(red, green, blue, alpha)
-    local gbmx = blue
-    if green > blue then gbmx = green end
-    local gbmn = blue
-    if green < blue then gbmn = green end
-
-    local mx = red
-    if gbmx > red then mx = gbmx end
-    local mn = red
-    if gbmn < red then mn = gbmn end
-
-    local sum = mx + mn
-    local diff = mx - mn
-    local light = 0.5 * sum
-
-    if light < 0.003921568627451 then
-        -- Black (epsilon is 1.0 / 255.0).
-        return {
-            h = Clr.HSL_HUE_SHADOW,
-            s = 0.0,
-            l = 0.0,
-            a = alpha
-        }
-    elseif light > 0.99607843137255 then
-        -- White (epsilon is 245.0 / 255.0).
-        return {
-            h = Clr.HSL_HUE_LIGHT,
-            s = 0.0,
-            l = 1.0,
-            a = alpha
-        }
-    elseif diff < 0.003921568627451 then
-        -- Gray.
-        local hue = (1.0 - light) * Clr.HSL_HUE_SHADOW
-            + light * (1.0 + Clr.HSL_HUE_LIGHT)
-        if hue ~= 1.0 then hue = hue % 1.0 end
-        return {
-            h = hue,
-            s = 0.0,
-            l = light,
-            a = alpha
-        }
-    else
-        -- Find hue.
-        local hue = 0.0
-        if math.abs(mx - red) <= 0.003921568627451 then
-            hue = (green - blue) / diff
-            if green < blue then hue = hue + 6.0 end
-        elseif math.abs(mx - green) <= 0.003921568627451 then
-            hue = 2.0 + (blue - red) / diff
-        else
-            hue = 4.0 + (red - green) / diff
-        end
-        hue = hue * 0.16666666666667
-
-        -- Find saturation.
-        local sat = 0.0
-        if light > 0.5 then
-            sat = diff / (2.0 - sum)
-        else
-            sat = diff / sum
-        end
-
-        return {
-            h = hue,
-            s = sat,
-            l = light,
-            a = alpha
-        }
-    end
-end
-
----Converts a color to hue, saturation and value.
----The return table uses the keys h, s, v and a
----with values in the range [0.0, 1.0].
----@param c Clr color
----@return { h: number, s: number, v: number, a: number }
-function Clr.sRgbToHsv(c)
-    local cl = Clr.clamp01(c)
-    return Clr.sRgbToHsvInternal(cl.r, cl.g, cl.b, cl.a)
-end
-
----Converts RGBA channels to hue, saturation and value.
----Assumes each channel is in the range [0.0, 1.0].
----The return table uses the keys h, s, v and a.
----Return values are also in the range [0.0, 1.0].
----@param red number red channel
----@param green number green channel
----@param blue number blue channel
----@param alpha number transparency
----@return { h: number, s: number, v: number, a: number }
-function Clr.sRgbToHsvInternal(red, green, blue, alpha)
-    -- Find maximum color channel.
-    local gbmx = blue
-    if green > blue then gbmx = green end
-    local mx = red
-    if gbmx > red then mx = gbmx end
-
-    if mx < 0.003921568627451 then
-        -- Black.
-        return {
-            h = Clr.HSL_HUE_SHADOW,
-            s = 0.0,
-            v = 0.0,
-            a = alpha
-        }
-    else
-        -- Find minimum color channel.
-        local gbmn = blue
-        if green < blue then gbmn = green end
-        local mn = red
-        if gbmn < red then mn = gbmn end
-
-        -- Find difference between max and min.
-        local diff = mx - mn
-        if diff < 0.003921568627451 then
-            local light = 0.5 * (mx + mn)
-            if light > 0.99607843137255 then
-                -- White.
-                return {
-                    h = Clr.HSL_HUE_LIGHT,
-                    s = 0.0,
-                    v = 1.0,
-                    a = alpha
-                }
-            else
-                -- Gray.
-                -- Day is assumed to be less than shade in
-                -- terms of angle, so one is added to lerp
-                -- in proper angular direction.
-                local hue = (1.0 - light) * Clr.HSL_HUE_SHADOW
-                    + light * (1.0 + Clr.HSL_HUE_LIGHT)
-                if hue ~= 1.0 then hue = hue % 1.0 end
-                return {
-                    h = hue,
-                    s = 0.0,
-                    v = mx,
-                    a = alpha
-                }
-            end
-        else
-            -- Saturated color.
-            local hue = 0.0
-            if math.abs(mx - red) <= 0.003921568627451 then
-                hue = (green - blue) / diff
-                if green < blue then hue = hue + 6.0 end
-            elseif math.abs(mx - green) <= 0.003921568627451 then
-                hue = 2.0 + (blue - red) / diff
-            else
-                hue = 4.0 + (red - green) / diff
-            end
-            hue = hue * 0.16666666666667
-
-            local sat = diff / mx
-
-            return {
-                h = hue,
-                s = sat,
-                v = mx,
-                a = alpha
-            }
-        end
-    end
-end
-
 ---Converts a color from standard RGB (sRGB) to linear RGB.
 ---Clamps the input color to [0.0, 1.0].
 ---Does not transform the alpha channel.
@@ -1831,8 +1308,11 @@ function Clr.srLab2ToSrLch(l, a, b, alpha, tol)
 
     if chromasq < (vTol * vTol) then
         local fac = l * 0.01
-        if fac < 0.0 then fac = 0.0
-        elseif fac > 1.0 then fac = 1.0 end
+        if fac < 0.0 then
+            fac = 0.0
+        elseif fac > 1.0 then
+            fac = 1.0
+        end
         h = (1.0 - fac) * Clr.SR_LCH_HUE_SHADOW
             + fac * (1.0 + Clr.SR_LCH_HUE_LIGHT)
     else
@@ -1875,11 +1355,7 @@ function Clr.srLchToSrLab2(l, c, h, a, tol)
     -- saturated colors are still possible at
     -- light = 0 and light = 100.
     local lVrf = l or 0.0
-    if lVrf < 0.0 then
-        lVrf = 0.0
-    elseif lVrf > 100.0 then
-        lVrf = 100.0
-    end
+    lVrf = math.min(math.max(lVrf, 0.0), 100.0)
 
     local vTol = 0.00005
     if tol then vTol = tol end

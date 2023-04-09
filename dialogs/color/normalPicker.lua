@@ -1,13 +1,24 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/canvasutilities.lua")
+
+local screenScale = app.preferences.general.screen_scale
 
 local defaults = {
+    -- Should this keep hexadecimal and RGB labels?
+    -- Get and set select?
+    barWidth = 240 / screenScale,
+    barHeight = 16 / screenScale,
+    reticleSize = 3 / screenScale,
+    textShadow = 0xffe7e7e7,
+    textColor = 0xff181818,
     x = 0.0,
     y = 0.0,
-    z = 1.0,
-    azimuth = 0,
-    inclination = 90,
-    hexCode = "8080FF",
-    rgbLabel = "128, 128, 255",
+    z = 1.0
+}
+
+local active = {
+    azimuth = 0.0,
+    inclination = 1.5707963267949,
 }
 
 local function colorToVec(clr)
@@ -43,42 +54,16 @@ local function colorToVec(clr)
     end
 end
 
-local function vecToColor(x, y, z)
+local function vecToHex(x, y, z)
     local sqMag = x * x + y * y + z * z
     if sqMag > 0.0 then
         local invMag = 127.5 / math.sqrt(sqMag)
-        local r = math.floor(x * invMag + 128.0)
-        local g = math.floor(y * invMag + 128.0)
-        local b = math.floor(z * invMag + 128.0)
-        return Color { r = r, g = g, b = b }
-    else
-        return Color { r = 128, g = 128, b = 255 }
+        return 0xff000000
+            | math.floor(z * invMag + 128.0) << 0x10
+            | math.floor(y * invMag + 128.0) << 0x08
+            | math.floor(x * invMag + 128.0)
     end
-end
-
-local function updateWidgetClr(dialog, clr)
-    dialog:modify {
-        id = "normalColor",
-        colors = { clr }
-    }
-
-    dialog:modify {
-        id = "hexCode",
-        text = string.format(
-            "%06X",
-            (clr.red << 0x10 |
-            clr.green << 0x08 |
-            clr.blue))
-    }
-
-    dialog:modify {
-        id = "rgbLabel",
-        text = string.format(
-            "%03d, %03d, %03d",
-            clr.red,
-            clr.green,
-            clr.blue)
-    }
+    return 0xff808080
 end
 
 local function updateWidgetCart(dialog)
@@ -87,53 +72,17 @@ local function updateWidgetCart(dialog)
     local y = args.y
     local z = args.z
 
-    local sph = Vec3.toSpherical(Vec3.new(x, y, z))
-    local i = sph.inclination
-    i = Utilities.round(i * 57.295779513082)
-    dialog:modify { id = "inclination", value = i }
+    local azSigned = math.atan(y, x)
+    active.azimuth = azSigned % 6.2831853071796
 
-    -- Azimuth is undefined at sphere poles.
-    if i < 90 and i > -90 then
-        local a = sph.azimuth
-        a = Utilities.round(
-            (a % 6.2831853071796) * 57.295779513082)
-        dialog:modify { id = "azimuth", value = a }
+    local sqMag = x * x + y * y + z * z
+    local inUnsigned = 1.5707963267949
+    if sqMag > 0.0 then
+        inUnsigned = math.acos(z / math.sqrt(sqMag))
     end
+    active.inclination = 1.5707963267949 - inUnsigned
 
-    local clr = vecToColor(x, y, z)
-    updateWidgetClr(dialog, clr)
-end
-
-local function updateWidgetSphere(dialog)
-    local args = dialog.data
-    local incl = args.inclination --[[@as integer]]
-
-    -- Handle other off-by-one edge cases.
-    local v = nil
-    if incl >= 90 then
-        v = Vec3.up()
-    elseif incl <= -90 then
-        v = Vec3.down()
-    else
-        -- Modulo by 360 because color result
-        -- can err by 1 bit, i.e., 0x7f vs. 0x80.
-        local az = args.azimuth --[[@as integer]]
-        az = az % 360
-
-        v = Vec3.fromSpherical(
-            az * 0.017453292519943,
-            incl * 0.017453292519943,
-            1.0)
-        if math.abs(v.x) < 0.0039216 then v.x = 0.0 end
-        if math.abs(v.y) < 0.0039216 then v.y = 0.0 end
-    end
-
-    dialog:modify { id = "x", text = string.format("%.3f", v.x) }
-    dialog:modify { id = "y", text = string.format("%.3f", v.y) }
-    dialog:modify { id = "z", text = string.format("%.3f", v.z) }
-
-    local clr = vecToColor(v.x, v.y, v.z)
-    updateWidgetClr(dialog, clr)
+    dialog:repaint()
 end
 
 local function updateFromColor(dialog, clr)
@@ -145,46 +94,99 @@ local function updateFromColor(dialog, clr)
 
         local sph = Vec3.toSpherical(Vec3.new(x, y, z))
         local i = sph.inclination
-        i = Utilities.round(i * 57.295779513082)
-        dialog:modify { id = "inclination", value = i }
+        active.inclination = i
 
         -- Azimuth is undefined at sphere poles.
-        if i < 90 and i > -90 then
-            local a = sph.azimuth
-            a = Utilities.round(
-                (a % 6.2831853071796) * 57.295779513082)
-            dialog:modify { id = "azimuth", value = a }
+        if i < 1.5707963267949 and i > -1.5707963267949 then
+            active.azimuth = sph.azimuth % 6.2831853071796
         end
 
-        local r = math.floor(x * 127.5 + 128.0)
-        local g = math.floor(y * 127.5 + 128.0)
-        local b = math.floor(z * 127.5 + 128.0)
+        dialog:repaint()
+    end
+end
 
-        dialog:modify {
-            id = "normalColor",
-            colors = { Color { r = r, g = g, b = b } }
-        }
-
-        dialog:modify {
-            id = "hexCode",
-            text = string.format("%06X",
-                (r << 0x10 | g << 0x08 | b))
-        }
-
-        dialog:modify {
-            id = "rgbLabel",
-            text = string.format("%03d, %03d, %03d",
-                r, g, b)
+local function assignFore()
+    if app.activeSprite then
+        local v = Vec3.fromSpherical(active.azimuth, active.inclination, 1.0)
+        if math.abs(v.x) < 0.0039216 then v.x = 0.0 end
+        if math.abs(v.y) < 0.0039216 then v.y = 0.0 end
+        if math.abs(v.z) < 0.0039216 then v.z = 0.0 end
+        app.fgColor = Color {
+            r = math.floor(v.x * 127.5 + 128.0),
+            g = math.floor(v.y * 127.5 + 128.0),
+            b = math.floor(v.z * 127.5 + 128.0),
+            a = 255
         }
     end
 end
 
-local dlg = Dialog { title = "Normal Color Calc" }
+local function assignBack()
+    -- Bug where assigning to app.bgColor leads
+    -- to unlocked palette colors changing.
+    app.command.SwitchColors()
+    assignFore()
+    app.command.SwitchColors()
+end
+
+local dlg = Dialog { title = "Normal Picker" }
+
+local function setAzimMouseListen(event)
+    if event.button ~= MouseButton.NONE then
+        local bw = defaults.barWidth
+        local mxtau = 6.2831853071796 * event.x / (bw - 1.0)
+        if event.ctrlKey then
+            active.azimuth = 0.0
+        elseif event.shiftKey then
+            local incr = 0.0159154943092
+            if math.abs(mxtau - active.azimuth) > incr then
+                if mxtau < active.azimuth then incr = -incr end
+                active.azimuth = (active.azimuth + incr) % 6.2831853071796
+            end
+        else
+            active.azimuth = mxtau % 6.2831853071796
+        end
+        dlg:repaint()
+
+        local v = Vec3.fromSpherical(active.azimuth, active.inclination, 1.0)
+        dlg:modify { id = "x", text = string.format("%.3f", v.x) }
+        dlg:modify { id = "y", text = string.format("%.3f", v.y) }
+        dlg:modify { id = "z", text = string.format("%.3f", v.z) }
+    end
+end
+
+local function setInclMouseListen(event)
+    if event.button ~= MouseButton.NONE then
+        local bw = defaults.barWidth
+        local halfPi = 1.5707963267949
+        local mxIncl = math.pi * event.x / (bw - 1.0) - halfPi
+        if event.ctrlKey then
+            active.inclination = 0.0
+        elseif event.shiftKey then
+            local incr = 0.0159154943092
+            if math.abs(mxIncl - active.inclination) > incr then
+                if mxIncl < active.inclination then incr = -incr end
+                active.inclination = math.min(math.max(
+                    active.inclination + incr,
+                    -halfPi), halfPi)
+            end
+        else
+            active.inclination = math.min(math.max(
+                mxIncl, -halfPi), halfPi)
+        end
+        dlg:repaint()
+
+        local v = Vec3.fromSpherical(active.azimuth, active.inclination, 1.0)
+        dlg:modify { id = "x", text = string.format("%.3f", v.x) }
+        dlg:modify { id = "y", text = string.format("%.3f", v.y) }
+        dlg:modify { id = "z", text = string.format("%.3f", v.z) }
+    end
+end
 
 dlg:button {
-    id = "getColorFore",
+    id = "fgGet",
     label = "Get:",
     text = "F&ORE",
+    focus = false,
     onclick = function()
         if app.activeSprite then
             updateFromColor(dlg, app.fgColor)
@@ -193,8 +195,9 @@ dlg:button {
 }
 
 dlg:button {
-    id = "getColorBack",
+    id = "bgGet",
     text = "B&ACK",
+    focus = false,
     onclick = function()
         if app.activeSprite then
             -- Bug where assigning to app.bgColor leads
@@ -238,90 +241,191 @@ dlg:number {
 
 dlg:newrow { always = false }
 
-dlg:slider {
-    id = "azimuth",
-    label = "Azimuth:",
-    min = 0,
-    max = 360,
-    value = defaults.azimuth,
-    onchange = function()
-        updateWidgetSphere(dlg)
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "inclination",
-    label = "Inclination:",
-    min = -90,
-    max = 90,
-    value = defaults.inclination,
-    onchange = function()
-        updateWidgetSphere(dlg)
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:label {
-    id = "hexCode",
-    label = "Hex: #",
-    text = defaults.hexCode
-}
-
-dlg:newrow { always = false }
-
-dlg:label {
-    id = "rgbLabel",
-    label = "RGB:",
-    text = defaults.rgbLabel
-}
-
-dlg:newrow { always = false }
-
-dlg:shades {
-    id = "normalColor",
+dlg:canvas {
+    id = "previewCanvas",
     label = "Color:",
-    mode = "sort",
-    colors = { Color { r = 128, g = 128, b = 255 } }
+    width = defaults.barWidth,
+    height = defaults.barheight,
+    focus = true,
+    onpaint = function(event)
+        -- Unpack defaults.
+        local barWidth = defaults.barWidth
+        local barHeight = defaults.barHeight
+        local textColor = defaults.textColor
+        local textShadow = defaults.textShadow
+
+        -- Unpack active.
+        local azimuth = active.azimuth
+        local inclination = active.inclination
+        local cosIncl = math.cos(inclination)
+        local srgbHex = vecToHex(
+            cosIncl * math.cos(azimuth),
+            cosIncl * math.sin(azimuth),
+            math.sin(inclination))
+
+        -- Fill image with color.
+        local ctx = event.context
+        local bkgImg = Image(barWidth, barHeight)
+        bkgImg:clear(srgbHex)
+        ctx:drawImage(bkgImg, Point(0, 0))
+
+        -- Create display string.
+        local strDisplay = string.format(
+            "A:%03d I:%03d",
+            Utilities.round(math.deg(azimuth)),
+            Utilities.round(math.deg(inclination)))
+        local strMeasure = ctx:measureText(strDisplay)
+
+        -- Find average brightness, flip text color
+        -- if too bright.
+        local r = (srgbHex & 0xff) * 0.003921568627451
+        local g = (srgbHex >> 0x08 & 0xff) * 0.003921568627451
+        local b = (srgbHex >> 0x10 & 0xff) * 0.003921568627451
+        local avgBri = (r + g + b) / 3.0
+        if avgBri < 0.5 then
+            textShadow, textColor = textColor, textShadow
+        end
+
+        local wBarCenter = barWidth * 0.5
+        local wStrHalf = strMeasure.width * 0.5
+        local xTextCenter = wBarCenter - wStrHalf
+
+        -- Use Aseprite color as an intermediary so as
+        -- to support all color modes.
+        ctx.color = AseUtilities.hexToAseColor(textShadow)
+        ctx:fillText(strDisplay, xTextCenter + 1, 2)
+        ctx.color = AseUtilities.hexToAseColor(textColor)
+        ctx:fillText(strDisplay, xTextCenter, 1)
+    end,
+    onmouseup = function(event)
+        local button = event.button
+        local leftPressed = button == MouseButton.LEFT
+        local rightPressed = button == MouseButton.RIGHT
+        local ctrlKey = event.ctrlKey
+
+        if leftPressed and (not ctrlKey) then
+            assignFore()
+        end
+
+        if rightPressed or (leftPressed and ctrlKey) then
+            assignBack()
+        end
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:canvas {
+    id = "azimuthCanvas",
+    label = "Azimuth:",
+    width = defaults.barWidth,
+    height = defaults.barheight,
+    onpaint = function(event)
+        -- Unpack defaults.
+        local barWidth = defaults.barWidth
+        local barHeight = defaults.barHeight
+        local reticleSize = defaults.reticleSize
+
+        -- Cache methods.
+        local cos = math.cos
+        local sin = math.sin
+
+        -- Unpack active.
+        local azimuth = active.azimuth
+        local inclination = active.inclination
+        local cosIncl = cos(inclination)
+        local sinIncl = sin(inclination)
+
+        local xToAzimuth = 6.2831853071796 / (barWidth - 1.0)
+        local img = Image(barWidth, 1, ColorMode.RGB)
+        local pxItr = img:pixels()
+        for pixel in pxItr do
+            local az = pixel.x * xToAzimuth
+            pixel(vecToHex(
+                cosIncl * cos(az),
+                cosIncl * sin(az),
+                sinIncl))
+        end
+        img:resize(barWidth, barHeight)
+
+        local ctx = event.context
+        ctx:drawImage(img, Point(0, 0))
+
+        local az01 = 0.1591549430919 * azimuth
+        local fill = Color { r = 255, g = 255, b = 255 }
+        CanvasUtilities.drawSliderReticle(ctx,
+            az01, barWidth, barHeight,
+            fill, reticleSize)
+    end,
+    onmousedown = setAzimMouseListen,
+    onmousemove = setAzimMouseListen
+}
+
+dlg:canvas {
+    id = "inclCanvas",
+    label = "Incline:",
+    width = defaults.barWidth,
+    height = defaults.barheight,
+    onpaint = function(event)
+        -- Unpack defaults.
+        local barWidth = defaults.barWidth
+        local barHeight = defaults.barHeight
+        local reticleSize = defaults.reticleSize
+
+        -- Cache methods.
+        local cos = math.cos
+        local sin = math.sin
+
+        -- Unpack active.
+        local azimuth = active.azimuth
+        local inclination = active.inclination
+        local cosAzim = cos(azimuth)
+        local sinAzim = sin(azimuth)
+
+        local halfPi = 1.5707963267949
+        local xToIncl = math.pi / (barWidth - 1.0)
+        local img = Image(barWidth, 1, ColorMode.RGB)
+        local pxItr = img:pixels()
+        for pixel in pxItr do
+            local incl = pixel.x * xToIncl - halfPi
+            local cosIncl = cos(incl)
+            pixel(vecToHex(
+                cosIncl * cosAzim,
+                cosIncl * sinAzim,
+                sin(incl)))
+        end
+        img:resize(barWidth, barHeight)
+
+        local ctx = event.context
+        ctx:drawImage(img, Point(0, 0))
+
+        local in01 = 0.5 + inclination / 3.1415926535898
+        local fill = Color { r = 255, g = 255, b = 255 }
+        CanvasUtilities.drawSliderReticle(ctx,
+            in01, barWidth, barHeight,
+            fill, reticleSize)
+    end,
+    onmousedown = setInclMouseListen,
+    onmousemove = setInclMouseListen
 }
 
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "setColorFore",
+    id = "fgSet",
     label = "Set:",
     text = "&FORE",
-    onclick = function()
-        local normalColors = dlg.data.normalColor
-        if app.activeSprite and #normalColors > 0 then
-            local n = normalColors[1]
-            app.fgColor = Color {
-                r = n.red,
-                g = n.green,
-                b = n.blue
-            }
-        end
-    end
+    focus = false,
+    visible = true,
+    onclick = assignFore
 }
 
 dlg:button {
-    id = "setColorBack",
+    id = "bgSet",
     text = "&BACK",
-    onclick = function()
-        local normalColors = dlg.data.normalColor
-        if app.activeSprite and #normalColors > 0 then
-            local n = normalColors[1]
-            app.command.SwitchColors()
-            app.fgColor = Color {
-                r = n.red,
-                g = n.green,
-                b = n.blue
-            }
-            app.command.SwitchColors()
-        end
-    end
+    focus = false,
+    visible = true,
+    onclick = assignBack
 }
 
 dlg:newrow { always = false }

@@ -5,6 +5,8 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 local defaults = {
     padding = 0,
     target = "ACTIVE",
+    includeLocked = false,
+    includeHidden = true,
     pullFocus = false
 }
 
@@ -15,6 +17,21 @@ dlg:combobox {
     label = "Target:",
     option = defaults.target,
     options = targets
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "includeLocked",
+    label = "Include:",
+    text = "&Locked",
+    selected = defaults.includeLocked
+}
+
+dlg:check {
+    id = "includeHidden",
+    text = "&Hidden",
+    selected = defaults.includeHidden
 }
 
 dlg:newrow { always = false }
@@ -48,69 +65,29 @@ dlg:button {
             or defaults.target --[[@as string]]
         local padding = args.padding
             or defaults.padding --[[@as integer]]
+        local includeLocked = args.includeLocked --[[@as boolean]]
+        local includeHidden = args.includeHidden --[[@as boolean]]
 
-        -- Tile map layers should not be trimmed.
-        local checkTilemaps = AseUtilities.tilesSupport()
+        local activeLayer = app.activeLayer
+        local activeFrame = app.activeFrame --[[@as Frame]]
+        local trgCels = AseUtilities.filterCels(
+            activeSprite, activeLayer, activeFrame, target,
+            includeLocked, includeHidden, false, false)
+
+        local lenTrgCels = #trgCels
+        local trimImage = AseUtilities.trimImageAlpha
         local alphaMask = activeSprite.transparentColor
 
-        local cels = {}
-        if target == "ACTIVE" then
-            local activeCel = app.activeCel
-            if activeCel then
-                cels[1] = activeCel
-            end
-        elseif target == "RANGE" then
-            local images = app.range.images
-            local lenImgs = #images
+        app.transaction("Trim Images", function()
             local i = 0
-            while i < lenImgs do i = i + 1
-                cels[i] = images[i].cel
-            end
-        else
-            local frIdcs = {}
-            local lenFrames = #activeSprite.frames
-            local i = 0
-            while i < lenFrames do i = i + 1
-                frIdcs[i] = i
-            end
-
-            local appRange = app.range
-            appRange.frames = frIdcs
-
-            local images = appRange.images
-            local lenImgs = #images
-            local j = 0
-            while j < lenImgs do j = j + 1
-                cels[j] = images[j].cel
-            end
-
-            appRange:clear()
-        end
-
-        local lenCels = #cels
-        local trimImage = AseUtilities.trimImageAlpha
-        app.transaction(function()
-            local i = 0
-            while i < lenCels do
+            while i < lenTrgCels do
                 i = i + 1
-                local cel = cels[i]
-                local layer = cel.layer
-                local layerIsTilemap = false
-                if checkTilemaps then
-                    layerIsTilemap = layer.isTilemap
-                end
-
-                if layerIsTilemap then
-                    -- Tile map layers should only belong to
-                    -- .aseprite files, and hence not need this.
-                    -- elseif layer.isEditable then
-                else
-                    local trgImg, x, y = trimImage(
-                        cel.image, padding, alphaMask)
-                    local srcPos = cel.position
-                    cel.position = Point(srcPos.x + x, srcPos.y + y)
-                    cel.image = trgImg
-                end
+                local cel = trgCels[i]
+                local trgImg, x, y = trimImage(
+                    cel.image, padding, alphaMask)
+                local srcPos = cel.position
+                cel.position = Point(srcPos.x + x, srcPos.y + y)
+                cel.image = trgImg
             end
         end)
 

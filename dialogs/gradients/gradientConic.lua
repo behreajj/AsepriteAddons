@@ -1,18 +1,22 @@
 dofile("../../support/gradientutilities.lua")
 
 local defaults = {
-    xOrigin = 50,
-    yOrigin = 50,
+    -- Cannot use line graph widget because
+    -- change in aspect ratio would distort angle.
+    xOrig = 50,
+    yOrig = 50,
     angle = 90,
     cw = false,
     isCyclic = false,
     pullFocus = true
 }
 
-local dlg = Dialog { title = "Conic Gradient" }
+local dlg = Dialog { title = "Sweep Gradient" }
 
-GradientUtilities.dialogWidgets(dlg)
+GradientUtilities.dialogWidgets(dlg, true)
 
+-- This is not updated when quantize changes
+-- because that slider comes from GradientUtilities.
 dlg:check {
     id = "isCyclic",
     label = "Cyclic:",
@@ -22,18 +26,18 @@ dlg:check {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "xOrigin",
+    id = "xOrig",
     label = "Origin %:",
     min = 0,
     max = 100,
-    value = defaults.xOrigin
+    value = defaults.xOrig
 }
 
 dlg:slider {
-    id = "yOrigin",
+    id = "yOrig",
     min = 0,
     max = 100,
-    value = defaults.yOrigin
+    value = defaults.yOrig
 }
 
 dlg:newrow { always = false }
@@ -89,20 +93,29 @@ dlg:button {
         local atan2 = math.atan
         local max = math.max
         local toHex = Clr.toHex
-        local cgeval = ClrGradient.eval
 
         -- Unpack arguments.
         local args = dlg.data
+        local stylePreset = args.stylePreset --[[@as string]]
         local clrSpacePreset = args.clrSpacePreset --[[@as string]]
+        local easPreset = args.easPreset --[[@as string]]
+        local huePreset = args.huePreset --[[@as string]]
         local aseColors = args.shades --[[@as Color[] ]]
         local levels = args.quantize --[[@as integer]]
-        local isCyclic = args.isCyclic
+        local bayerIndex = args.bayerIndex --[[@as integer]]
+        local ditherPath = args.ditherPath --[[@as string]]
+        local isCyclic = args.isCyclic --[[@as boolean]]
+        local xOrig = args.xOrig --[[@as integer]]
+        local yOrig = args.yOrig --[[@as integer]]
+        local angDegrees = args.angle --[[@as integer]]
 
         local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
         local facAdjust = GradientUtilities.easingFuncFromPreset(
-            args.easPreset)
+            easPreset)
         local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
-            clrSpacePreset, args.huePreset)
+            clrSpacePreset, huePreset)
+        local cgeval = GradientUtilities.evalFromStylePreset(
+            stylePreset, bayerIndex, ditherPath)
 
         local wrap = 6.2831853071796
         local toFac = 0.1591549430919
@@ -121,16 +134,13 @@ dlg:button {
         local hInv = 1.0 / hn1
 
         -- Shift origin from [0, 100] to [0.0, 1.0].
-        local xOrigin = 0.01 * args.xOrigin
-        local yOrigin = 0.01 * args.yOrigin
-        local xOriginNorm = xOrigin * aspect
-        local yOriginNorm = yOrigin
+        local xOrigNorm = xOrig * 0.01 * aspect
+        local yOrigNorm = yOrig * 0.01
 
         -- Bring origin from [0.0, 1.0] to [-1.0, 1.0].
-        local xOriginSigned = xOriginNorm + xOriginNorm - 1.0
-        local yOriginSigned = 1.0 - (yOriginNorm + yOriginNorm)
+        local xOrigSigned = xOrigNorm + xOrigNorm - 1.0
+        local yOrigSigned = 1.0 - (yOrigNorm + yOrigNorm)
 
-        local angDegrees = args.angle or defaults.angle
         local query = AseUtilities.DIMETRIC_ANGLES[angDegrees]
         local angRadians = angDegrees * 0.017453292519943
         if query then angRadians = query end
@@ -160,8 +170,8 @@ dlg:button {
             local ySigned = 1.0 - (yNorm + yNorm)
 
             -- Subtract the origin.
-            local xOffset = xSigned - xOriginSigned
-            local yOffset = cw * (ySigned - yOriginSigned)
+            local xOffset = xSigned - xOrigSigned
+            local yOffset = cw * (ySigned - yOrigSigned)
 
             -- Find the signed angle in [-math.pi, math.pi], subtract the angle.
             local angleSigned = atan2(yOffset, xOffset) - angRadians
@@ -173,15 +183,15 @@ dlg:button {
             local fac = angleWrapped * toFac
             fac = facAdjust(fac)
             fac = quantize(fac, levels)
-            local clr = cgeval(gradient, fac, mixFunc)
+            local clr = cgeval(gradient, fac, mixFunc, x, y)
             pixel(toHex(clr))
         end
 
-        app.transaction(function()
+        app.transaction("Sweep Gradient", function()
             local grdLayer = activeSprite:newLayer()
-            grdLayer.name = "Gradient.Conic." .. clrSpacePreset
+            grdLayer.name = "Gradient.Sweep." .. clrSpacePreset
             local activeFrame = app.activeFrame
-                or activeSprite.frames[1]
+                or activeSprite.frames[1] --[[@as Frame]]
             activeSprite:newCel(
                 grdLayer, activeFrame, grdImg)
         end)

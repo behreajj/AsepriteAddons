@@ -10,13 +10,8 @@ Around line 141:
         window.name()->setText(document->name());
     }
 --]]
-
 -- Sprite tab color and user data is unique to v1.3 beta.
 local version = app.version
-local versionMajor = version.major
-local versionMinor = version.minor
-local is1_3 = versionMajor > 0
-    and versionMinor > 2
 
 -- Should some diagnostic data be toggled via a t/f
 -- in defaults, esp. if it is expensive to calculate?
@@ -24,9 +19,8 @@ local defaults = {
     maskWarningInvalid = "Mask index is out of bounds.",
     maskWarningIndexed = "Non-zero mask may cause bugs.",
     maskWarningRgb = "Non-zero color at index 0.",
-    textLenLimit = 48,
-
-    -- TODO: Crash report for custom pixel aspect ratio?
+    textLenLimit = 32,
+    -- Crash report for custom pixel aspect ratio?
     -- https://steamcommunity.com/app/431730/discussions/2/6126615404777201709/
     minPxRatio = 1,
     maxPxRatio = 8
@@ -68,7 +62,10 @@ updatePrefsShowPath()
 -- sprite to be changed? Alternative versions have
 -- a pixel dimension label only, so pxRatioStr
 -- defaults to the string for that label.
-local dlg = Dialog { title = "Sprite Properties +" }
+local dlg = Dialog {
+    title = string.format(
+        "Properties (v %s)", tostring(version))
+}
 -- dlg:label {
 --     id = "versionLabel",
 --     label = "Version:",
@@ -228,7 +225,7 @@ local function updateTitle()
     title = app.fs.fileTitle(filename)
     if #title >= defaults.textLenLimit then
         title = string.sub(title, 1,
-            defaults.textLenLimit) .. "..."
+                defaults.textLenLimit) .. "..."
     end
 
     dlg:modify { id = "titleLabel", text = title }
@@ -265,7 +262,7 @@ local function updateColorSpace()
         csName = colorSpace.name
         if csName and #csName >= defaults.textLenLimit then
             csName = string.sub(csName, 1,
-                defaults.textLenLimit) .. "..."
+                    defaults.textLenLimit) .. "..."
         end
     end
 
@@ -369,7 +366,7 @@ local function updateMaskWarning()
     if maskIdxIsValid then
         local maskColorRef = pal:getColor(maskIdxNum)
         idx0IsNotMask = AseUtilities.aseColorToHex(
-            maskColorRef, ColorMode.RGB) ~= 0
+                maskColorRef, ColorMode.RGB) ~= 0
     end
     local maskIsNotIdx0 = maskIdxNum ~= 0
     local maskIsProblem = false
@@ -460,29 +457,22 @@ local function updateDuration()
 end
 
 local function updateTabColor()
-    local sprColorVal = nil
-    if is1_3 then
-        local sprColorRef = sprite.color --[[@as Color]]
-        sprColorVal = AseUtilities.aseColorCopy(
-            sprColorRef, "UNBOUNDED")
-    else
-        sprColorVal = Color { r = 0, g = 0, b = 0, a = 0 }
-    end
+    local sprColorRef = sprite.color --[[@as Color]]
+    local sprColorVal = AseUtilities.aseColorCopy(
+        sprColorRef, "UNBOUNDED")
 
     dlg:modify { id = "sprTabColor", color = sprColorVal }
-    dlg:modify { id = "sprTabColor", visible = is1_3 }
+    dlg:modify { id = "sprTabColor", visible = true }
 end
 
 local function updateUserData()
     local sprUserData = ""
-    if is1_3 then
-        sprUserData = sprite.data --[[@as string]]
-    end
+    sprUserData = sprite.data --[[@as string]]
 
     -- Because this is a text entry widget, not a label, it
     -- needs to be shown even if the string is of length 0.
     dlg:modify { id = "sprUserData", text = sprUserData }
-    dlg:modify { id = "sprUserData", visible = is1_3 }
+    dlg:modify { id = "sprUserData", visible = true }
 end
 
 local function updatePixelRatio()
@@ -538,14 +528,12 @@ dlg:button {
 
             aPxRatio, bPxRatio = Utilities.reduceRatio(aPxRatio, bPxRatio)
 
-            app.transaction(function()
+            app.transaction("Set Sprite Props", function()
                 -- There is no extra validation for size.
                 -- Size(0, 0) and Size(-1, -1) are both possible.
                 sprite.pixelRatio = Size(aPxRatio, bPxRatio)
-                if is1_3 then
-                    sprite.color = sprColor
-                    sprite.data = userData
-                end
+                sprite.color = sprColor
+                sprite.data = userData
             end)
 
             -- This is needed to update the sprite tab color.

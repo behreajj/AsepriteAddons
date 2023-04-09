@@ -4,30 +4,11 @@ local cropTypes = { "CROP", "EXPAND", "SELECTION" }
 
 local defaults = {
     cropType = "CROP",
-    includeHidden = true,
     includeLocked = false,
+    includeHidden = true,
     padding = 0,
     pullFocus = false
 }
-
-local function appendLeaves(layer, array, includeLocked, includeHidden)
-    if (includeHidden or layer.isVisible)
-        and (includeLocked or layer.isEditable)
-        and (not layer.isBackground) then
-        if layer.isGroup then
-            local childLayers = layer.layers
-            local lenChildLayers = #childLayers
-            local i = 0
-            while i < lenChildLayers do
-                i = i + 1
-                local childLayer = childLayers[i]
-                appendLeaves(childLayer, array)
-            end
-        else
-            array[#array + 1] = layer
-        end
-    end
-end
 
 local dlg = Dialog { title = "Trim Sprite" }
 
@@ -43,13 +24,13 @@ dlg:newrow { always = false }
 dlg:check {
     id = "includeLocked",
     label = "Include:",
-    text = "Locked",
+    text = "&Locked",
     selected = defaults.includeLocked
 }
 
 dlg:check {
     id = "includeHidden",
-    text = "Hidden",
+    text = "&Hidden",
     selected = defaults.includeHidden
 }
 
@@ -87,10 +68,10 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local cropType = args.cropType or defaults.cropType
-        local includeHidden = args.includeHidden
-        local includeLocked = args.includeLocked
-        local padding = args.padding or defaults.padding
+        local cropType = args.cropType or defaults.cropType --[[@as string]]
+        local includeLocked = args.includeLocked --[[@as boolean]]
+        local includeHidden = args.includeHidden --[[@as boolean]]
+        local padding = args.padding or defaults.padding --[[@as integer]]
 
         local useCrop = cropType == "CROP"
         local useExpand = cropType == "EXPAND"
@@ -119,56 +100,47 @@ dlg:button {
             end
         end
 
-        -- Get leaf layers, which could contain
-        -- a cel. The cel could have either tile
-        -- map data or a regular image.
-        local topLayers = activeSprite.layers
-        local lenTopLayers = #topLayers
-        local leaves = {}
-        local g = 0
-        while g < lenTopLayers do g = g + 1
-            appendLeaves(topLayers[g], leaves,
-                includeLocked, includeHidden)
-        end
+        local leaves = AseUtilities.getLayerHierarchy(
+            activeSprite,
+            includeLocked, includeHidden, true, false)
 
         -- Get selection.
         -- Do this regardless of cropType, as selection
         -- bug may impact result either way.
         local sel = AseUtilities.getSelection(activeSprite)
-        local checkTilemaps = AseUtilities.tilesSupport()
 
         -- Cache methods used in loop.
         local trimAlpha = AseUtilities.trimImageAlpha
         local cropCel = AseUtilities.trimCelToSprite
         local selectCel = AseUtilities.trimCelToSelect
 
+        ---@type table[]
         local toCull = {}
         local lenToCull = 0
         local lenLeaves = #leaves
         local frames = activeSprite.frames
         local lenFrames = #frames
         local h = 0
-        while h < lenLeaves do h = h + 1
+        while h < lenLeaves do
+            h = h + 1
             local leaf = leaves[h]
 
             -- Tile maps measure in tiles, not pixels.
-            local isTilemap = false
             local wTile = 0
             local hTile = 0
-            if checkTilemaps then
-                isTilemap = leaf.isTilemap
-                if isTilemap then
-                    local tileSet = leaf.tileset
-                    local tileGrid = tileSet.grid
-                    local tileDim = tileGrid.tileSize
-                    wTile = tileDim.width
-                    hTile = tileDim.height
-                end
+            local isTilemap = leaf.isTilemap
+            if isTilemap then
+                local tileSet = leaf.tileset
+                local tileGrid = tileSet.grid
+                local tileDim = tileGrid.tileSize --[[@as Size]]
+                wTile = tileDim.width
+                hTile = tileDim.height
             end
 
             -- Problem: linked cels will count multiple times.
             local i = 0
-            while i < lenFrames do i = i + 1
+            while i < lenFrames do
+                i = i + 1
                 local frame = frames[i]
                 local cel = leaf:cel(frames[i])
                 if cel then
@@ -259,9 +231,10 @@ dlg:button {
                 activeSprite.height + pad2)
         end
 
-        app.transaction(function()
-            local k = 0
-            while k < lenToCull do k = k + 1
+        app.transaction("Delete Cels", function()
+            local k = lenToCull + 1
+            while k > 1 do
+                k = k - 1
                 local packet = toCull[k]
                 activeSprite:deleteCel(
                     packet.layer, packet.frame)

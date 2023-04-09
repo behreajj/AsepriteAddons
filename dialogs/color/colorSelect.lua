@@ -2,11 +2,11 @@ dofile("../../support/aseutilities.lua")
 
 local uiModes = { "COLOR", "CRITERIA" }
 local selModes = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
+local sampleModes = { "ACTIVE", "COMPOSITE" }
 
 local defaults = {
-    target = "ACTIVE",
     uiMode = "COLOR",
-    selMode = "REPLACE",
+    sampleMode = "ACTIVE",
     tolerance = 0,
     useLight = true,
     minLight = 33,
@@ -20,16 +20,70 @@ local defaults = {
     useAlpha = false,
     minAlpha = 1,
     maxAlpha = 255,
-    pullFocus = false
+    pullFocus = true
 }
+
+local function eval(
+    lab, mint01, maxt01,
+    useLight, minLight, maxLight,
+    usea, mina, maxa,
+    useb, minb, maxb,
+    usePolar,
+    usec, mincsq, maxcsq,
+    useh, minhrd, maxhrd)
+    local l = lab.l
+    local a = lab.a
+    local b = lab.b
+    local t = lab.alpha
+
+    local include = t >= mint01 and t <= maxt01
+    if useLight and (l < minLight or l > maxLight) then
+        include = false
+    end
+    if usea and (a < mina or a > maxa) then
+        include = false
+    end
+    if useb and (b < minb or b > maxb) then
+        include = false
+    end
+
+    if usePolar then
+        local csq = a * a + b * b
+        if useh then
+            if csq > 0.00005 then
+                local h = math.atan(b, a) % 6.2831853071796
+                if h < minhrd or h > maxhrd then
+                    include = false
+                end
+            else
+                include = false
+            end
+        end
+        if usec and (csq < mincsq or csq > maxcsq) then
+            include = false
+        end
+    end
+
+    return include
+end
 
 local dlg = Dialog { title = "Select Color" }
 
 dlg:combobox {
     id = "selMode",
     label = "Select:",
-    option = defaults.selMode,
+    -- option = selModes[1 + app.preferences.selection.mode],
+    option = "REPLACE",
     options = selModes
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "sampleMode",
+    label = "Include:",
+    option = defaults.sampleMode,
+    options = sampleModes
 }
 
 dlg:newrow { always = false }
@@ -77,7 +131,8 @@ dlg:newrow { always = false }
 dlg:color {
     id = "refColor",
     label = "Color:",
-    color = app.preferences.color_bar.fg_color,
+    -- color = app.preferences.color_bar.fg_color,
+    color = Color { r = 0, g = 0, b = 0, a = 0 },
     visible = defaults.uiMode == "COLOR"
 }
 
@@ -87,7 +142,7 @@ dlg:slider {
     id = "tolerance",
     label = "Tolerance:",
     min = 0,
-    max = 100,
+    max = 255,
     value = defaults.tolerance,
     visible = defaults.uiMode == "COLOR"
 }
@@ -258,25 +313,15 @@ dlg:button {
             return
         end
 
-        if AseUtilities.tilesSupport() then
-            if activeLayer.isTilemap then
-                app.alert {
-                    title = "Error",
-                    text = "Tile maps are not supported."
-                }
-                return
-            end
-        end
-
-        if activeLayer.isGroup then
+        if activeLayer.isReference then
             app.alert {
                 title = "Error",
-                text = "Group layers are not supported."
+                text = "Reference layers are not supported."
             }
             return
         end
 
-        local activeFrame = app.activeFrame
+        local activeFrame = app.activeFrame --[[@as Frame]]
         if not activeFrame then
             app.alert {
                 title = "Error",
@@ -285,18 +330,11 @@ dlg:button {
             return
         end
 
-        local activeCel = activeLayer:cel(activeFrame)
-        if not activeCel then
-            app.alert {
-                title = "Error",
-                text = "There is no active cel."
-            }
-            return
-        end
-
         local args = dlg.data
-        local uiMode = args.uiMode or defaults.uiMode --[[@as string]]
         local selMode = args.selMode or defaults.selMode --[[@as string]]
+        local sampleMode = args.sampleMode or defaults.sampleMode --[[@as string]]
+        local uiMode = args.uiMode or defaults.uiMode --[[@as string]]
+        local refColor = args.refColor --[[@as Color]]
 
         local useLight = false
         local usea = false
@@ -319,30 +357,28 @@ dlg:button {
         local maxh = 360.0
         local maxAlpha = 255.0
 
-        local colorMode = activeSprite.colorMode
-        local exactSearch = false
-        local refHex = 0x0
-
         -- Cache global methods.
-        local atan2 = math.atan
         local fromHex = Clr.fromHex
         local sRgbaToLab = Clr.sRgbToSrLab2
+        local aseColorToClr = AseUtilities.aseColorToClr
+        local aseColorToHex = AseUtilities.aseColorToHex
+
+        local colorMode = activeSprite.colorMode
+        local exactSearch = false
+
+        local refClr = aseColorToClr(refColor)
+        local refLab = sRgbaToLab(refClr)
+        local refInt = aseColorToHex(refColor, colorMode)
 
         if uiMode == "COLOR" then
-            local refColor = args.refColor --[[@as Color]]
             local tolerance = args.tolerance --[[@as integer]]
-
             exactSearch = tolerance == 0
-            if exactSearch then
-                refHex = AseUtilities.aseColorToHex(refColor, colorMode)
-            else
+
+            if not exactSearch then
                 useLight = true
                 usea = true
                 useb = true
                 useAlpha = true
-
-                local refClr = AseUtilities.aseColorToClr(refColor)
-                local refLab = sRgbaToLab(refClr)
 
                 local tol100 = math.max(0.000001,
                     tolerance * 0.5)
@@ -415,33 +451,57 @@ dlg:button {
             end
         end
 
-        local image = activeCel.image
-        local pxItr = image:pixels()
+        local image = nil
+        local xtl = 0
+        local ytl = 0
+        if sampleMode == "COMPOSITE" then
+            image = Image(activeSprite.spec)
+            image:drawSprite(activeSprite, activeFrame)
+        elseif activeLayer.isGroup then
+            local spriteSpec = activeSprite.spec
+            local flat, rect = AseUtilities.flattenGroup(
+                activeLayer, activeFrame, colorMode,
+                spriteSpec.colorSpace, spriteSpec.transparentColor,
+                true, true, true, true)
 
-        local trgSel = Selection()
-        local pxRect = Rectangle(0, 0, 1, 1)
-
-        local celBounds = activeCel.bounds
-        local xCel = celBounds.x
-        local yCel = celBounds.y
-
-        if exactSearch then
-            for pixel in pxItr do
-                if pixel() == refHex then
-                    pxRect.x = xCel + pixel.x
-                    pxRect.y = yCel + pixel.y
-                    trgSel:add(pxRect)
-                end
-            end
+            image = flat
+            xtl = rect.x
+            ytl = rect.y
         else
-            if colorMode ~= ColorMode.RGB then
+            -- TODO: Backport no active cel return relocation to
+            -- main branch.
+            local activeCel = activeLayer:cel(activeFrame)
+            if not activeCel then
                 app.alert {
                     title = "Error",
-                    text = "Only RGB color mode is supported."
+                    text = "There is no active cel."
                 }
                 return
             end
 
+            image = activeCel.image
+            if activeLayer.isTilemap then
+                image = AseUtilities.tilesToImage(
+                    image, activeLayer.tileset, colorMode)
+            end
+            local celPos = activeCel.position
+            xtl = celPos.x
+            ytl = celPos.y
+        end
+
+        local pxItr = image:pixels()
+        local trgSel = Selection()
+        local pxRect = Rectangle(0, 0, 1, 1)
+
+        if exactSearch then
+            for pixel in pxItr do
+                if pixel() == refInt then
+                    pxRect.x = xtl + pixel.x
+                    pxRect.y = ytl + pixel.y
+                    trgSel:add(pxRect)
+                end
+            end
+        else
             -- Alpha is listed in [0, 255] but compared in [0.0, 1.0].
             -- Chroma is compared in magnitude squared.
             -- Hue is listed in [0, 360] but compared in [0, tau].
@@ -453,57 +513,80 @@ dlg:button {
             local minhrd = minh * 0.017453292519943
             local maxhrd = maxh * 0.017453292519943
 
-            local visited = {}
-            local filtered = {}
-            for pixel in pxItr do
-                local hex = pixel()
-                local include = false
+            -- When a color mode convert to to RGB is attempted,
+            -- there's either a crash or nothing is selected. etc.
+            if colorMode == ColorMode.INDEXED then
+                local palette = AseUtilities.getPalette(
+                    activeFrame, activeSprite.palettes)
+                local lenPalette = #palette
+                ---@type boolean[]
+                local includes = {}
+                local j = 0
+                while j < lenPalette do
+                    local aseColor = palette:getColor(j)
+                    local clr = aseColorToClr(aseColor)
+                    local lab = sRgbaToLab(clr)
 
-                if visited[hex] then
-                    include = filtered[hex]
-                else
-                    local lab = sRgbaToLab(fromHex(hex))
-                    local l = lab.l
-                    local a = lab.a
-                    local b = lab.b
-                    local t = lab.alpha
-
-                    include = t >= mint01 and t <= maxt01
-                    if useLight and (l < minLight or l > maxLight) then
-                        include = false
-                    end
-                    if usea and (a < mina or a > maxa) then
-                        include = false
-                    end
-                    if useb and (b < minb or b > maxb) then
-                        include = false
-                    end
-
-                    if usePolar then
-                        local csq = a * a + b * b
-                        if useh then
-                            if csq > 0.00005 then
-                                local h = atan2(b, a) % 6.2831853071796
-                                if h < minhrd or h > maxhrd then
-                                    include = false
-                                end
-                            else
-                                include = false
-                            end
-                        end
-                        if usec and (csq < mincsq or csq > maxcsq) then
-                            include = false
-                        end
-                    end
-
-                    visited[hex] = true
-                    filtered[hex] = include
+                    j = j + 1
+                    includes[j] = eval(
+                        lab, mint01, maxt01,
+                        useLight, minLight, maxLight,
+                        usea, mina, maxa,
+                        useb, minb, maxb,
+                        usePolar,
+                        usec, mincsq, maxcsq,
+                        useh, minhrd, maxhrd)
                 end
 
-                if include then
-                    pxRect.x = xCel + pixel.x
-                    pxRect.y = yCel + pixel.y
-                    trgSel:add(pxRect)
+                for pixel in pxItr do
+                    local idx = pixel()
+                    if includes[1 + idx] then
+                        pxRect.x = xtl + pixel.x
+                        pxRect.y = ytl + pixel.y
+                        trgSel:add(pxRect)
+                    end
+                end
+            else
+                local parseHex = nil
+                if colorMode == ColorMode.GRAY then
+                    parseHex = function(x)
+                        local a = (x >> 0x08) & 0xff
+                        local v = x & 0xff
+                        return a << 0x18 | v << 0x10 | v << 0x08 | v
+                    end
+                else
+                    -- Default to RGB
+                    parseHex = function(x) return x end
+                end
+
+                ---@type table<integer, boolean>
+                local visited = {}
+                ---@type table<integer, boolean>
+                local filtered = {}
+                for pixel in pxItr do
+                    local hex = parseHex(pixel())
+                    local include = false
+                    if visited[hex] then
+                        include = filtered[hex]
+                    else
+                        local lab = sRgbaToLab(fromHex(hex))
+                        include = eval(
+                            lab, mint01, maxt01,
+                            useLight, minLight, maxLight,
+                            usea, mina, maxa,
+                            useb, minb, maxb,
+                            usePolar,
+                            usec, mincsq, maxcsq,
+                            useh, minhrd, maxhrd)
+                        visited[hex] = true
+                        filtered[hex] = include
+                    end
+
+                    if include then
+                        pxRect.x = xtl + pixel.x
+                        pxRect.y = ytl + pixel.y
+                        trgSel:add(pxRect)
+                    end
                 end
             end
         end

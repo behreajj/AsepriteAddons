@@ -12,10 +12,12 @@ local hexesProfile = AseUtilities.asePalettesToHexArr(activeSprite.palettes)
 local uniques, _ = Utilities.uniqueColors(hexesProfile, true)
 local masked = Utilities.prependMask(uniques)
 
+---@type Color[]
 local aseColors = {}
 local lenAseColors = #masked
 local i = 0
-while i < lenAseColors do i = i + 1
+while i < lenAseColors do
+    i = i + 1
     aseColors[i] = AseUtilities.hexToAseColor(masked[i])
 end
 
@@ -25,13 +27,15 @@ local lenPalettes = #palettes
 -- It seems safe to assign the same Aseprite color
 -- to multiple palettes because they are copied by
 -- value, not passed by reference...?
-app.transaction(function()
+app.transaction("Correct Palette", function()
     local j = 0
-    while j < lenPalettes do j = j + 1
+    while j < lenPalettes do
+        j = j + 1
         local palette = palettes[j]
         palette:resize(lenAseColors)
         local k = 0
-        while k < lenAseColors do k = k + 1
+        while k < lenAseColors do
+            k = k + 1
             local aseColor = aseColors[k]
             palette:setColor(k - 1, aseColor)
         end

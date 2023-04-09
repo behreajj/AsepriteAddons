@@ -1,24 +1,17 @@
-dofile("../../support/aseutilities.lua")
-dofile("../../support/curve3.lua")
+dofile("../../support/shapeutilities.lua")
 
 local defaults = {
     resolution = 32,
     handles = 0,
     xRadius = 32.0,
     yRadius = 24.0,
-    xOrigin = 0.0,
-    yOrigin = 0.0,
     angle = 0,
     axx = 0.0,
     axy = 0.0,
     axz = 1.0,
-    useStroke = true,
+    useStroke = false,
     strokeWeight = 1,
-    strokeClr = AseUtilities.hexToAseColor(
-        AseUtilities.DEFAULT_STROKE),
     useFill = true,
-    fillClr = AseUtilities.hexToAseColor(
-        AseUtilities.DEFAULT_FILL),
     pullFocus = false
 }
 
@@ -47,28 +40,30 @@ dlg:newrow { always = false }
 dlg:number {
     id = "xRadius",
     label = "Radius:",
-    text = string.format("%.1f", defaults.xRadius),
+    text = string.format("%.3f", defaults.xRadius),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
     id = "yRadius",
-    text = string.format("%.1f", defaults.yRadius),
+    text = string.format("%.3f", defaults.yRadius),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:newrow { always = false }
 
 dlg:number {
-    id = "xOrigin",
+    id = "xOrig",
     label = "Origin:",
-    text = string.format("%.1f", defaults.xOrigin),
+    text = string.format("%.3f",
+        app.preferences.new_file.width * 0.5),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
-    id = "yOrigin",
-    text = string.format("%.1f", defaults.yOrigin),
+    id = "yOrig",
+    text = string.format("%.3f",
+        app.preferences.new_file.height * 0.5),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
@@ -132,7 +127,7 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    color = defaults.strokeClr,
+    color = app.preferences.color_bar.bg_color,
     visible = defaults.useStroke
 }
 
@@ -153,7 +148,7 @@ dlg:check {
 
 dlg:color {
     id = "fillClr",
-    color = defaults.fillClr,
+    color = app.preferences.color_bar.fg_color,
     visible = defaults.useFill
 }
 
@@ -168,14 +163,23 @@ dlg:button {
         -- See https://github.com/aseprite/api/issues/17 .
 
         local args = dlg.data
+        local resolution = args.resolution or defaults.resolution --[[@as integer]]
+        local handles = args.handles or defaults.handles --[[@as integer]]
         local xr = args.xRadius or defaults.xRadius --[[@as number]]
         local yr = args.yRadius or defaults.yRadius --[[@as number]]
-        local xc = args.xOrigin or defaults.xOrigin --[[@as number]]
-        local yc = args.yOrigin or defaults.yOrigin --[[@as number]]
+        local xc = args.xOrig --[[@as number]]
+        local yc = args.yOrig --[[@as number]]
         local angDeg = args.angle or defaults.angle --[[@as integer]]
         local axx = args.axx or defaults.axx --[[@as number]]
         local axy = args.axy or defaults.axy --[[@as number]]
         local axz = args.axz or defaults.axz --[[@as number]]
+
+        local useStroke = args.useStroke --[[@as boolean]]
+        local strokeWeight = args.strokeWeight
+            or defaults.strokeWeight --[[@as integer]]
+        local strokeColor = args.strokeClr --[[@as Color]]
+        local useFill = args.useFill --[[@as boolean]]
+        local fillColor = args.fillClr --[[@as Color]]
 
         local angRad = math.rad(angDeg)
         local axis = Vec3.new(axx, axy, axz)
@@ -199,32 +203,32 @@ dlg:button {
         local mat = Mat4.mul(Mat4.mul(t, s), r)
         Utilities.mulMat4Curve3(mat, curve)
 
+        local fillHex = AseUtilities.aseColorToHex(
+            fillColor, ColorMode.RGB)
+        local strokeHex = AseUtilities.aseColorToHex(
+            strokeColor, ColorMode.RGB)
         local sprite = AseUtilities.initCanvas(
-            64, 64, layerName,
-            { args.fillClr.rgbaPixel,
-                args.strokeClr.rgbaPixel })
+            layerName, { fillHex, strokeHex })
         local layer = sprite.layers[#sprite.layers]
-        local frame = app.activeFrame or sprite.frames[1]
+        local frame = app.activeFrame
+            or sprite.frames[1] --[[@as Frame]]
         local cel = sprite:newCel(layer, frame)
 
         -- Technically, this shouldn't work, but a Curve3
         -- has the same fields as a Curve2.
-        AseUtilities.drawCurve2(
+        ShapeUtilities.drawCurve2(
             curve,
-            args.resolution,
-            args.useFill,
-            args.fillClr,
-            args.useStroke,
-            args.strokeClr,
-            Brush(args.strokeWeight),
-            cel,
-            layer)
+            resolution,
+            useFill, fillColor,
+            useStroke, strokeColor,
+            Brush(strokeWeight),
+            cel, layer)
 
-        if args.handles > 0 then
+        if handles > 0 then
             local hlLyr = sprite:newLayer()
             hlLyr.name = curve.name .. ".Handles"
-            hlLyr.opacity = args.handles
-            AseUtilities.drawHandles2(
+            hlLyr.opacity = handles
+            ShapeUtilities.drawHandles2(
                 curve,
                 sprite:newCel(hlLyr, frame),
                 hlLyr)

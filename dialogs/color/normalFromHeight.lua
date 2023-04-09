@@ -48,7 +48,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "stretchContrast",
     label = "Normalize:",
-    text = "Stretch Contrast",
+    text = "&Stretch Contrast",
     selected = defaults.stretchContrast
 }
 
@@ -57,19 +57,19 @@ dlg:newrow { always = false }
 dlg:check {
     id = "xFlip",
     label = "Flip:",
-    text = "X",
+    text = "&X",
     selected = defaults.xFlip
 }
 
 dlg:check {
     id = "yFlip",
-    text = "Y",
+    text = "&Y",
     selected = defaults.yFlip
 }
 
 dlg:check {
     id = "zFlip",
-    text = "Z",
+    text = "&Z",
     selected = defaults.zFlip
 }
 
@@ -78,13 +78,13 @@ dlg:newrow { always = false }
 dlg:check {
     id = "showFlatMap",
     label = "Show:",
-    text = "Flat",
+    text = "&Flat",
     selected = defaults.showFlatMap
 }
 
 dlg:check {
     id = "showGrayMap",
-    text = "Height",
+    text = "&Height",
     selected = defaults.showGrayMap
 }
 
@@ -103,7 +103,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-
         -- Early returns.
         local activeSprite = app.activeSprite
         if not activeSprite then
@@ -125,14 +124,14 @@ dlg:button {
         -- Unpack arguments.
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
-        local scale = args.scale or defaults.scale
-        local stretchContrast = args.stretchContrast
-        local xFlip = args.xFlip
-        local yFlip = args.yFlip
-        local zFlip = args.zFlip
-        local showFlatMap = args.showFlatMap
-        local showGrayMap = args.showGrayMap
-        local preserveAlpha = args.preserveAlpha
+        local scale = args.scale or defaults.scale --[[@as integer]]
+        local stretchContrast = args.stretchContrast --[[@as boolean]]
+        local xFlip = args.xFlip --[[@as boolean]]
+        local yFlip = args.yFlip --[[@as boolean]]
+        local zFlip = args.zFlip --[[@as boolean]]
+        local showFlatMap = args.showFlatMap --[[@as boolean]]
+        local showGrayMap = args.showGrayMap --[[@as boolean]]
+        local preserveAlpha = args.preserveAlpha --[[@as boolean]]
 
         -- Cache global methods to locals.
         local max = math.max
@@ -141,7 +140,7 @@ dlg:button {
         local floor = math.floor
 
         -- Choose edge wrapping method.
-        local edgeType = args.edgeType or defaults.edgeType
+        local edgeType = args.edgeType or defaults.edgeType --[[@as string]]
         local wrapper = nil
         if edgeType == "CLAMP" then
             wrapper = function(a, b)
@@ -156,7 +155,8 @@ dlg:button {
         end
 
         -- Choose frames based on input.
-        local frames = AseUtilities.getFrames(activeSprite, target)
+        local frames = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
 
         -- Held constant in loop to follow.
         local spriteWidth = activeSprite.width
@@ -164,7 +164,7 @@ dlg:button {
         local spriteSpec = activeSprite.spec
         local halfScale = scale * 0.5
         local originPt = Point(0, 0)
-        local framesLen = #frames
+        local lenFrames = #frames
 
         -- For flipping normals.
         local xFlipNum = 1
@@ -193,19 +193,24 @@ dlg:button {
         -- Create necessary layers.
         local flatLayer = nil
         local grayLayer = nil
+        local normalLayer = nil
 
-        if showFlatMap then
-            flatLayer = activeSprite:newLayer()
-            flatLayer.name = "Flattened"
-        end
+        -- TODO: Package this under a group layer if
+        -- either showFlatMap or showGrayMap are true?
+        app.transaction("New Layers", function()
+            if showFlatMap then
+                flatLayer = activeSprite:newLayer()
+                flatLayer.name = "Flattened"
+            end
 
-        if showGrayMap then
-            grayLayer = activeSprite:newLayer()
-            grayLayer.name = "Height.Map"
-        end
+            if showGrayMap then
+                grayLayer = activeSprite:newLayer()
+                grayLayer.name = "Height.Map"
+            end
 
-        local normalLayer = activeSprite:newLayer()
-        normalLayer.name = string.format("Normal.Map.%03d", scale)
+            normalLayer = activeSprite:newLayer()
+            normalLayer.name = string.format("Normal.Map.%03d", scale)
+        end)
 
         local specNone = ImageSpec {
             width = activeWidth,
@@ -213,9 +218,9 @@ dlg:button {
         }
         specNone.colorSpace = ColorSpace()
 
-        app.transaction(function()
+        app.transaction("Normal From Height", function()
             local i = 0
-            while i < framesLen do
+            while i < lenFrames do
                 i = i + 1
                 local frame = frames[i]
 
@@ -230,7 +235,9 @@ dlg:button {
                 end
 
                 -- Prep variables for loop.
+                ---@type number[]
                 local lumTable = {}
+                ---@type integer[]
                 local alphaTable = {}
                 local flatIdx = 0
                 local lMin = 2147483647

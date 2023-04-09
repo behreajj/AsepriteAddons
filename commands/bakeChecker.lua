@@ -45,20 +45,23 @@ for pixel in pxItr do
     pixel(hex)
 end
 
-local checkerLayer = activeSprite:newLayer()
-checkerLayer.name = "Checker"
+app.transaction("Bake Checker", function()
+    local checkerLayer = activeSprite:newLayer()
+    checkerLayer.name = "Checker"
 
-local frames = activeSprite.frames
-local lenFrames = #frames
-local i = 0
-while i < lenFrames do i = i + 1
-    activeSprite:newCel(
-        checkerLayer,
-        frames[i],
-        checker)
-end
+    local frames = activeSprite.frames
+    local lenFrames = #frames
+    local i = 0
+    while i < lenFrames do
+        i = i + 1
+        activeSprite:newCel(
+            checkerLayer,
+            frames[i],
+            checker)
+    end
 
-if bkgUnlocked then
-    app.command.BackgroundFromLayer()
-end
-AseUtilities.changePixelFormat(oldColorMode)
+    if bkgUnlocked then
+        app.command.BackgroundFromLayer()
+    end
+    AseUtilities.changePixelFormat(oldColorMode)
+end)

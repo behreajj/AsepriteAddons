@@ -182,7 +182,6 @@ function Mat4.camera(xLoc, yLoc, zLoc, xFocus, yFocus, zFocus, xRef, yRef, zRef,
     local jz = 0.0
 
     if hval == "LEFT" then
-
         -- Cross k with ref to get i.
         ix = ky * zrv - kz * yrv
         iy = kz * xrv - kx * zrv
@@ -210,9 +209,7 @@ function Mat4.camera(xLoc, yLoc, zLoc, xFocus, yFocus, zFocus, xRef, yRef, zRef,
             jy = jy * jmInv
             jz = jz * jmInv
         end
-
     else
-
         -- Cross ref with k to get i.
         ix = yrv * kz - zrv * ky
         iy = zrv * kx - xrv * kz
@@ -240,7 +237,6 @@ function Mat4.camera(xLoc, yLoc, zLoc, xFocus, yFocus, zFocus, xRef, yRef, zRef,
             jy = jy * jmInv
             jz = jz * jmInv
         end
-
     end
 
     return Mat4.new(
@@ -291,7 +287,6 @@ function Mat4.cameraIsometric(xLoc, yLoc, zLoc, handedness)
             -xVal * 0.5773503 + yVal * 0.5773503 - zVal * 0.5773503,
             0.0, 0.0, 0.0, 1.0)
     end
-
 end
 
 ---Creates a dimetric camera at a location.
@@ -319,12 +314,12 @@ function Mat4.cameraDimetric(xLoc, yLoc, zLoc, handedness)
         zVal = zLoc or 1.0
     end
 
-	-- cos(45) = 0.70710678118655
-	-- cos(26.565) = 0.89442719099992
+    -- cos(45) = 0.70710678118655
+    -- cos(26.565) = 0.89442719099992
     -- sin(26.565) = 0.44721359549996
-	-- 60 - 26.565 = 33.435
-	-- cos(33.435) = 0.8345119301207
-	-- sin(33.435) = 0.5509898714915
+    -- 60 - 26.565 = 33.435
+    -- cos(33.435) = 0.8345119301207
+    -- sin(33.435) = 0.5509898714915
     -- Remaining nos. are product of cos(45)
     -- and cos/sin of the dimetric number.
 
@@ -362,29 +357,29 @@ end
 ---@return number
 function Mat4.determinant(m)
     return m.m00 * (m.m11 * m.m22 * m.m33 +
-            m.m12 * m.m23 * m.m31 +
-            m.m13 * m.m21 * m.m32 -
-            m.m13 * m.m22 * m.m31 -
-            m.m11 * m.m23 * m.m32 -
-            m.m12 * m.m21 * m.m33) -
+        m.m12 * m.m23 * m.m31 +
+        m.m13 * m.m21 * m.m32 -
+        m.m13 * m.m22 * m.m31 -
+        m.m11 * m.m23 * m.m32 -
+        m.m12 * m.m21 * m.m33) -
         m.m01 * (m.m10 * m.m22 * m.m33 +
-            m.m12 * m.m23 * m.m30 +
-            m.m13 * m.m20 * m.m32 -
-            m.m13 * m.m22 * m.m30 -
-            m.m10 * m.m23 * m.m32 -
-            m.m12 * m.m20 * m.m33) +
+        m.m12 * m.m23 * m.m30 +
+        m.m13 * m.m20 * m.m32 -
+        m.m13 * m.m22 * m.m30 -
+        m.m10 * m.m23 * m.m32 -
+        m.m12 * m.m20 * m.m33) +
         m.m02 * (m.m10 * m.m21 * m.m33 +
-            m.m11 * m.m23 * m.m30 +
-            m.m13 * m.m20 * m.m31 -
-            m.m13 * m.m21 * m.m30 -
-            m.m10 * m.m23 * m.m31 -
-            m.m11 * m.m20 * m.m33) -
+        m.m11 * m.m23 * m.m30 +
+        m.m13 * m.m20 * m.m31 -
+        m.m13 * m.m21 * m.m30 -
+        m.m10 * m.m23 * m.m31 -
+        m.m11 * m.m20 * m.m33) -
         m.m03 * (m.m10 * m.m21 * m.m32 +
-            m.m11 * m.m22 * m.m30 +
-            m.m12 * m.m20 * m.m31 -
-            m.m12 * m.m21 * m.m30 -
-            m.m10 * m.m22 * m.m31 -
-            m.m11 * m.m20 * m.m32)
+        m.m11 * m.m22 * m.m30 +
+        m.m12 * m.m20 * m.m31 -
+        m.m12 * m.m21 * m.m30 -
+        m.m10 * m.m22 * m.m31 -
+        m.m11 * m.m20 * m.m32)
 end
 
 ---Constructs a rotation matrix from an angle in radians
@@ -570,7 +565,6 @@ end
 ---@param far number far clip plane
 ---@return Mat4
 function Mat4.orthographic(left, right, bottom, top, near, far)
-
     local nVal = 0.001
     if near and near ~= 0.0 then nVal = near end
 

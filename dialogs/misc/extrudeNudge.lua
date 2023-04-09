@@ -1,7 +1,8 @@
 dofile("../../support/aseutilities.lua")
 
-local shiftOptions = { "CARDINAL", "DIAGONAL", "DIMETRIC" }
 local brushOptions = { "CIRCLE", "SQUARE" }
+local shiftOptions = { "CARDINAL", "DIAGONAL", "DIMETRIC" }
+local selModes = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults = {
     amount = 1,
@@ -56,15 +57,7 @@ local function extrude(dx, dy, trim)
         return
     end
 
-    if srcImage.colorMode == ColorMode.GRAY then
-        app.alert {
-            title = "Error",
-            text = "Grayscale is not supported."
-        }
-        return
-    end
-
-    app.transaction(function()
+    app.transaction("Extrude", function()
         local celBounds = activeCel.bounds
         local xCel = celBounds.x
         local yCel = celBounds.y
@@ -131,7 +124,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "trimCels",
     label = "Trim:",
-    text = "Layer Edges",
+    text = "Layer Ed&ges",
     selected = defaults.trimCels
 }
 
@@ -264,6 +257,16 @@ dlg:button {
 dlg:separator { id = "maskSep", text = "Mask" }
 
 dlg:combobox {
+    id = "selMode",
+    label = "Select:",
+    -- option = selModes[1 + app.preferences.selection.mode],
+    option = "REPLACE",
+    options = selModes
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
     id = "brushOption",
     label = "Brush:",
     option = defaults.brushOption,
@@ -277,9 +280,11 @@ dlg:button {
     text = "E&XPAND",
     focus = false,
     onclick = function()
+        local args = dlg.data
+        local brushOption = args.brushOption --[[@as string]]
         app.command.ModifySelection {
             modifier = "expand",
-            brush = dlg.data.brushOption:lower(),
+            brush = string.lower(brushOption),
             quantity = dlg.data.amount
         }
     end
@@ -290,9 +295,11 @@ dlg:button {
     text = "C&ONTRACT",
     focus = false,
     onclick = function()
+        local args = dlg.data
+        local brushOption = args.brushOption --[[@as string]]
         app.command.ModifySelection {
             modifier = "contract",
-            brush = dlg.data.brushOption:lower(),
+            brush = string.lower(brushOption),
             quantity = dlg.data.amount
         }
     end
@@ -313,13 +320,15 @@ dlg:button {
         local trgSel = AseUtilities.selectCel(
             activeCel, activeSprite.bounds)
 
-        local selMode = app.preferences.selection.mode
-        if selMode ~= 0 then
+        local args = dlg.data
+        local selMode = args.selMode
+            or defaults.selMode --[[@as string]]
+        if selMode ~= "REPLACE" then
             local activeSel = AseUtilities.getSelection(activeSprite)
 
-            if selMode == 3 then
+            if selMode == "INTERSECT" then
                 activeSel:intersect(trgSel)
-            elseif selMode == 2 then
+            elseif selMode == "SUBTRACT" then
                 activeSel:subtract(trgSel)
             else
                 -- Additive selection can be confusing when no prior
@@ -345,9 +354,11 @@ dlg:button {
     text = "&BORDER",
     focus = false,
     onclick = function()
+        local args = dlg.data
+        local brushOption = args.brushOption --[[@as string]]
         app.command.ModifySelection {
             modifier = "border",
-            brush = dlg.data.brushOption:lower(),
+            brush = string.lower(brushOption),
             quantity = dlg.data.amount
         }
     end

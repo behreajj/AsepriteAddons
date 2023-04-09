@@ -357,23 +357,19 @@ dlg:button {
             return
         end
 
-        local srcCel = app.activeCel
-        if not srcCel then
+        if srcLayer.isReference then
             app.alert {
                 title = "Error",
-                text = "There is no active cel."
+                text = "Reference layers are not supported."
             }
             return
         end
 
-        -- Check for tile map support.
-        local layerIsTilemap = false
+        -- Check for tile maps.
+        local isTilemap = srcLayer.isTilemap
         local tileSet = nil
-        if AseUtilities.tilesSupport() then
-            layerIsTilemap = srcLayer.isTilemap
-            if layerIsTilemap then
-                tileSet = srcLayer.tileset
-            end
+        if isTilemap then
+            tileSet = srcLayer.tileset
         end
 
         -- Unpack arguments.
@@ -383,9 +379,18 @@ dlg:button {
         local clampTo256 = args.clampTo256
         local prependMask = args.prependMask
 
+        -- TODO: Support flattening group layer images?
+        local srcCel = app.activeCel
+        if not srcCel then
+            app.alert {
+                title = "Error",
+                text = "There is no active cel."
+            }
+            return
+        end
         local srcImg = srcCel.image
         local colorMode = activeSprite.colorMode
-        if layerIsTilemap then
+        if isTilemap then
             srcImg = AseUtilities.tilesToImage(
                 srcImg, tileSet, colorMode)
         end
@@ -400,6 +405,7 @@ dlg:button {
         end
 
         local pxItr = srcImg:pixels()
+        ---@type table<integer, integer>
         local dictionary = {}
         local idx = 0
 
@@ -418,13 +424,14 @@ dlg:button {
             local srcPal = AseUtilities.getPalette(
                 app.activeFrame, activeSprite.palettes)
             local aseToHex = AseUtilities.aseColorToHex
+            local rgbColorMode = ColorMode.RGB
             local srcPalLen = #srcPal
             for pixel in pxItr do
                 local srcIndex = pixel()
                 if srcIndex > -1 and srcIndex < srcPalLen then
                     local aseColor = srcPal:getColor(srcIndex)
                     if aseColor.alpha > 0 then
-                        local hex = aseToHex(aseColor, ColorMode.RGB)
+                        local hex = aseToHex(aseColor, rgbColorMode)
                         hex = alphaMask | hex
                         if not dictionary[hex] then
                             idx = idx + 1
@@ -517,6 +524,7 @@ dlg:button {
             local palette = Palette(lenHexes)
             local k = 0
             while k < lenHexes do k = k + 1
+                -- This does not create transactions.
                 palette:setColor(k - 1,
                     AseUtilities.hexToAseColor(hexes[k]))
             end

@@ -3,11 +3,15 @@ local stepInto = false
 local activeSprite = app.activeSprite
 if not activeSprite then return end
 
--- Preserve range if frames are selected.
+-- Preserve range if frames are selected. However, the
+-- range could be from another sprite.
+---@type integer[]
+local rangeFrIdcs = {}
 local range = app.range
 local isFramesType = range.type == RangeType.FRAMES
-local rangeFrIdcs = {}
-if isFramesType then
+local sameSprite = activeSprite == range.sprite
+local isValid = isFramesType and sameSprite
+if isValid then
     local rangeFrames = range.frames --[[@as Frame[] ]]
     local lenRangeFrames = #rangeFrames
     local i = 0
@@ -39,6 +43,6 @@ else
     app.activeLayer = activeSprite.layers[#activeSprite.layers]
 end
 
-if isFramesType then
+if isValid then
     app.range.frames = rangeFrIdcs
 end

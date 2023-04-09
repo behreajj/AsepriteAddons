@@ -25,7 +25,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "trimCels",
     label = "Trim:",
-    text = "Layer Edges",
+    text = "Layer Ed&ges",
     selected = defaults.trimCels
 }
 
@@ -112,6 +112,14 @@ dlg:button {
             return
         end
 
+        if overLayer.isReference or underLayer.isReference then
+            app.alert {
+                title = "Error",
+                text = "Reference layers are not supported."
+            }
+            return
+        end
+
         -- Cache global functions used in loop.
         local min = math.min
         local max = math.max
@@ -144,23 +152,19 @@ dlg:button {
         local alphaIndex = activeSprite.transparentColor
         local colorSpace = activeSprite.colorSpace
 
-        -- Version specific.
-        local overIsTile = false
+        local overIsTile = overLayer.isTilemap
         local tileSetOver = nil
-        local underIsTile = false
+        local underIsTile = underLayer.isTilemap
         local tileSetUnder = nil
-        if AseUtilities.tilesSupport() then
-            overIsTile = overLayer.isTilemap
-            if overIsTile then
-                tileSetOver = overLayer.tileset
-            end
-            underIsTile = underLayer.isTilemap
-            if underIsTile then
-                tileSetUnder = underLayer.tileset
-            end
+        if overIsTile then
+            tileSetOver = overLayer.tileset
+        end
+        if underIsTile then
+            tileSetUnder = underLayer.tileset
         end
 
-        local frames = AseUtilities.getFrames(activeSprite, target)
+        local frames = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
 
         -- Unpack layer opacity.
         local overLyrOpacity = 0xff
@@ -169,13 +173,19 @@ dlg:button {
         if underLayer.opacity then underLyrOpacity = underLayer.opacity end
 
         -- Create new layer.
-        local compLayer = activeSprite:newLayer()
-        compLayer.name = string.format("Comp.%s.%s",
-            overLayer.name, underLayer.name)
-        compLayer.parent = parent
+        -- Layer and cel opacity are baked in loop below.
+        local compLayer = nil
+        app.transaction("New Layer", function()
+            compLayer = activeSprite:newLayer()
+            compLayer.name = string.format("Comp.%s.%s",
+                overLayer.name, underLayer.name)
+            compLayer.parent = parent
+            compLayer.blendMode = underLayer.blendMode
+        end)
 
         local lenFrames = #frames
-        app.transaction(function()
+        local rgbColorMode = ColorMode.RGB
+        app.transaction("Layer Mask", function()
             local idxFrame = 0
             while idxFrame < lenFrames do
                 idxFrame = idxFrame + 1
@@ -247,7 +257,6 @@ dlg:button {
 
                     -- Intersection may be empty (invalid).
                     if xBrTarget > xTlTarget and yBrTarget > yTlTarget then
-
                         local overCelOpacity = overCel.opacity
                         local underCelOpacity = underCel.opacity
                         local overCompOpacity = (overLyrOpacity * overCelOpacity) // 0xff
@@ -259,7 +268,7 @@ dlg:button {
                         local trgSpec = ImageSpec {
                             width = widthTarget,
                             height = heightTarget,
-                            colorMode = ColorMode.RGB,
+                            colorMode = rgbColorMode,
                             transparentColor = alphaIndex
                         }
                         trgSpec.colorSpace = colorSpace
@@ -293,6 +302,8 @@ dlg:button {
                             end
                         end
 
+                        -- Do NOT assign source cel opacity,
+                        -- as that is baked into the mask.
                         activeSprite:newCel(
                             compLayer, frame,
                             trgImage, trgPos)
@@ -308,17 +319,16 @@ dlg:button {
             -- in a sprite with Sprite:deleteLayer.
             activeSprite:deleteLayer(overLayer)
         elseif delOverCels then
-            app.transaction(function()
-                local idxDel0 = 0
-                while idxDel0 < lenFrames do
-                    idxDel0 = idxDel0 + 1
+            app.transaction("Delete Cels", function()
+                local idxDel0 = lenFrames + 1
+                while idxDel0 > 1 do
+                    idxDel0 = idxDel0 - 1
                     local frame = frames[idxDel0]
                     -- API reports an error if a cel cannot be
                     -- found, so the layer needs to check that
                     -- it has a cel first.
-                    if overLayer:cel(frame) then
-                        activeSprite:deleteCel(overLayer, frame)
-                    end
+                    local overCel = overLayer:cel(frame)
+                    if overCel then activeSprite:deleteCel(overCel) end
                 end
             end)
         end
@@ -328,14 +338,13 @@ dlg:button {
         elseif delUnderLayer then
             activeSprite:deleteLayer(underLayer)
         elseif delUnderCels then
-            app.transaction(function()
-                local idxDel1 = 0
-                while idxDel1 < lenFrames do
-                    idxDel1 = idxDel1 + 1
+            app.transaction("Delete Cels", function()
+                local idxDel1 = lenFrames + 1
+                while idxDel1 > 1 do
+                    idxDel1 = idxDel1 - 1
                     local frame = frames[idxDel1]
-                    if underLayer:cel(frame) then
-                        activeSprite:deleteCel(underLayer, frame)
-                    end
+                    local underCel = underLayer:cel(frame)
+                    if underCel then activeSprite:deleteCel(underCel) end
                 end
             end)
         end

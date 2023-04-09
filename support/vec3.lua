@@ -278,20 +278,26 @@ end
 function Vec3.copySign(a, b)
     local cx = 0.0
     local axAbs = math.abs(a.x)
-    if b.x < -0.0 then cx = -axAbs
-    elseif b.x > 0.0 then cx = axAbs
+    if b.x < -0.0 then
+        cx = -axAbs
+    elseif b.x > 0.0 then
+        cx = axAbs
     end
 
     local cy = 0.0
     local ayAbs = math.abs(a.y)
-    if b.y < -0.0 then cy = -ayAbs
-    elseif b.y > 0.0 then cy = ayAbs
+    if b.y < -0.0 then
+        cy = -ayAbs
+    elseif b.y > 0.0 then
+        cy = ayAbs
     end
 
     local cz = 0.0
     local azAbs = math.abs(a.z)
-    if b.z < -0.0 then cz = -azAbs
-    elseif b.z > 0.0 then cz = azAbs
+    if b.z < -0.0 then
+        cz = -azAbs
+    elseif b.z > 0.0 then
+        cz = azAbs
     end
 
     return Vec3.new(cx, cy, cz)
@@ -502,6 +508,7 @@ function Vec3.gridCartesian(cols, rows, layers, lb, ub)
     local iToStep = 1.0 / (rVal - 1.0)
     local jToStep = 1.0 / (cVal - 1.0)
 
+    ---@type Vec3[]
     local result = {}
     local rcVal = rVal * cVal
     local length = lVal * rcVal
@@ -519,84 +526,6 @@ function Vec3.gridCartesian(cols, rows, layers, lb, ub)
             (1.0 - jStep) * lbx + jStep * ubx,
             (1.0 - iStep) * lby + iStep * uby,
             (1.0 - hStep) * lbz + hStep * ubz)
-    end
-
-    return result
-end
-
----Creates a one-dimensional table of vectors
----arranged in a spherical grid. The table
----is ordered by layers, latitudes, then
----longitudes. If poles are included, they are
----appended at the end of the table.
----@param longitudes integer longitudes or azimuths
----@param latitudes integer latitudes or inclinations
----@param layers integer layers or radii
----@param radiusMin number minimum radius
----@param radiusMax number maximum radius
----@return Vec3[]
-function Vec3.gridSpherical(longitudes, latitudes, layers, radiusMin, radiusMax)
-    -- Cache methods.
-    local cos = math.cos
-    local sin = math.sin
-    local max = math.max
-    local min = math.min
-
-    -- Assign default arguments.
-    local vrMax = radiusMax or 0.5
-    local vrMin = radiusMin or 0.5
-    local vLayers = layers or 1
-    local vLats = latitudes or 16
-    local vLons = longitudes or 32
-
-    -- Validate.
-    if vLons < 3 then vLons = 3 end
-    if vLats < 3 then vLats = 3 end
-    if vLayers < 1 then vLayers = 1 end
-
-    vrMax = max(0.000001, vrMin, vrMax)
-    local oneLayer = vLayers == 1
-    if oneLayer then
-        vrMin = vrMax
-    else
-        vrMin = max(0.000001, min(vrMin, vrMax))
-    end
-
-    local toPrc = 1.0
-    if not oneLayer then
-        toPrc = 1.0 / (vLayers - 1.0)
-    end
-    local toIncl = 3.1415926535898 / (vLats + 1.0)
-    local toAzim = 6.2831853071796 / vLons
-
-    local len2 = vLats * vLons
-    local len3 = vLayers * len2
-
-    local k = 0
-    local result = {}
-    while k < len3 do
-        local h = k // len2
-        local m = k - h * len2
-        local i = m // vLons
-        local j = m % vLons
-
-        local prc = h * toPrc
-        local radius = (1.0 - prc) * vrMin
-            + prc * vrMax
-
-        local incl = 1.5707963267949 - (i + 1.0) * toIncl
-        local rhoCosIncl = radius * cos(incl)
-        local rhoSinIncl = radius * sin(incl)
-
-        local azim = j * toAzim
-        local cosAzim = cos(azim)
-        local sinAzim = sin(azim)
-
-        k = k + 1
-        result[k] = Vec3.new(
-            rhoCosIncl * cosAzim,
-            rhoCosIncl * sinAzim,
-            -rhoSinIncl)
     end
 
     return result
@@ -1103,16 +1032,25 @@ end
 ---@return Vec3
 function Vec3.round(v)
     local ix, fx = math.modf(v.x)
-    if ix <= 0 and fx <= -0.5 then ix = ix - 1
-    elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
+    if ix <= 0 and fx <= -0.5 then
+        ix = ix - 1
+    elseif ix >= 0 and fx >= 0.5 then
+        ix = ix + 1
+    end
 
     local iy, fy = math.modf(v.y)
-    if iy <= 0 and fy <= -0.5 then iy = iy - 1
-    elseif iy >= 0 and fy >= 0.5 then iy = iy + 1 end
+    if iy <= 0 and fy <= -0.5 then
+        iy = iy - 1
+    elseif iy >= 0 and fy >= 0.5 then
+        iy = iy + 1
+    end
 
     local iz, fz = math.modf(v.z)
-    if iz <= 0 and fz <= -0.5 then iz = iz - 1
-    elseif iz >= 0 and fz >= 0.5 then iz = iz + 1 end
+    if iz <= 0 and fz <= -0.5 then
+        iz = iz - 1
+    elseif iz >= 0 and fz >= 0.5 then
+        iz = iz + 1
+    end
 
     return Vec3.new(ix, iy, iz)
 end
@@ -1133,18 +1071,24 @@ end
 ---@return Vec3
 function Vec3.sign(v)
     local cx = 0.0
-    if v.x < -0.0 then cx = -1.0
-    elseif v.x > 0.0 then cx = 1.0
+    if v.x < -0.0 then
+        cx = -1.0
+    elseif v.x > 0.0 then
+        cx = 1.0
     end
 
     local cy = 0.0
-    if v.y < -0.0 then cy = -1.0
-    elseif v.y > 0.0 then cy = 1.0
+    if v.y < -0.0 then
+        cy = -1.0
+    elseif v.y > 0.0 then
+        cy = 1.0
     end
 
     local cz = 0.0
-    if v.z < -0.0 then cz = -1.0
-    elseif v.z > 0.0 then cz = 1.0
+    if v.z < -0.0 then
+        cz = -1.0
+    elseif v.z > 0.0 then
+        cz = 1.0
     end
 
     return Vec3.new(cx, cy, cz)
@@ -1234,14 +1178,14 @@ function Vec3.toSpherical(v)
     }
 end
 
----Truncates a vector's components to integers.
+---Truncates a vector's components.
 ---@param v Vec3 vector
 ---@return Vec3
 function Vec3.trunc(v)
-    local ix, _ = math.modf(v.x)
-    local iy, _ = math.modf(v.y)
-    local iz, _ = math.modf(v.z)
-    return Vec3.new(ix, iy, iz)
+    return Vec3.new(
+        v.x - math.fmod(v.x, 1.0),
+        v.y - math.fmod(v.y, 1.0),
+        v.z - math.fmod(v.z, 1.0))
 end
 
 ---Wraps a vector's components around a range

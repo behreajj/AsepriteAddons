@@ -1,6 +1,6 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../support/textutilities.lua")
 
-local palTypes = { "ACTIVE", "FILE", "PRESET" }
+local palTypes = { "ACTIVE", "FILE" }
 local palFormats = { "aseprite", "gpl", "png", "pal", "webp" }
 local sortPresets = {
     "A", "ALPHA", "B",
@@ -8,7 +8,7 @@ local sortPresets = {
     "INDEX", "LUMA"
 }
 local sortOrders = { "ASCENDING", "DESCENDING" }
-local numBases = { "PROFILE", "SRGB" }
+local numBases = { "PROFILE", "S_RGB" }
 
 local defaults = {
     -- TODO: Support Normal map azim, incl, vector?
@@ -24,8 +24,8 @@ local defaults = {
     hexDisplay = true,
     alphaDisplay = false,
     rgbDisplay = false,
-    labDisplay = false,
-    lchDisplay = true,
+    labDisplay = true,
+    lchDisplay = false,
     numBasis = "PROFILE",
     grayHue = "OMIT",
     hdrRepeatRate = 16,
@@ -43,10 +43,10 @@ local function drawCharsHorizShd(
     lut, image, chars, fillHex, shadHex,
     x, y, gw, gh, scale)
 
-    AseUtilities.drawString(
+    TextUtilities.drawString(
         lut, image, chars, shadHex,
         x, y + 1, gw, gh, scale)
-    AseUtilities.drawString(
+    TextUtilities.drawString(
         lut, image, chars, fillHex,
         x, y, gw, gh, scale)
 end
@@ -80,15 +80,9 @@ dlg:combobox {
     options = palTypes,
     onchange = function()
         local state = dlg.data.palType
-
         dlg:modify {
             id = "palFile",
             visible = state == "FILE"
-        }
-
-        dlg:modify {
-            id = "palPreset",
-            visible = state == "PRESET"
         }
     end
 }
@@ -100,15 +94,6 @@ dlg:file {
     filetypes = palFormats,
     open = true,
     visible = defaults.palType == "FILE"
-}
-
-dlg:newrow { always = false }
-
-dlg:entry {
-    id = "palPreset",
-    text = "",
-    focus = false,
-    visible = defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -138,7 +123,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "uniquesOnly",
     label = "Filter:",
-    text = "Uniques Only",
+    text = "Uniques",
     selected = defaults.uniquesOnly
 }
 
@@ -162,13 +147,13 @@ dlg:newrow { always = false }
 dlg:check {
     id = "idxDisplay",
     label = "Display:",
-    text = "Index",
+    text = "&Index",
     selected = defaults.idxDisplay
 }
 
 dlg:check {
     id = "hexDisplay",
-    text = "Hex",
+    text = "He&x",
     selected = defaults.hexDisplay,
     onclick = function()
         dlg:modify {
@@ -181,7 +166,7 @@ dlg:check {
 
 dlg:check {
     id = "alphaDisplay",
-    text = "Alpha",
+    text = "Al&pha",
     selected = defaults.alphaDisplay
 }
 
@@ -189,7 +174,7 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "rgbDisplay",
-    text = "RGB",
+    text = "&RGB",
     selected = defaults.rgbDisplay,
     onclick = function()
         dlg:modify {
@@ -202,13 +187,13 @@ dlg:check {
 
 dlg:check {
     id = "labDisplay",
-    text = "LAB",
+    text = "&LAB",
     selected = defaults.labDisplay
 }
 
 dlg:check {
     id = "lchDisplay",
-    text = "LCH",
+    text = "LC&H",
     selected = defaults.lchDisplay,
     onclick = function()
         -- dlg:modify {
@@ -326,9 +311,9 @@ dlg:button {
             or defaults.startIndex --[[@as integer]]
         local palCount = args.count
             or defaults.count --[[@as integer]]
+        local palFile = args.palFile --[[@as string]]
         local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-            palType, args.palFile, args.palPreset,
-            startIndex, palCount, false)
+            palType, palFile, startIndex, palCount, false)
 
         -- Set manifest profile.
         -- This should be done BEFORE the manifest sprite is
@@ -550,14 +535,14 @@ dlg:button {
         end
 
         -- Pal data length will not equal srcHex length.
-        local palDataLen = #palData
+        local lenPalData = #palData
         local spriteHeight = 768
         local spriteWidth = 512
 
         -- Declare constants.
-        local gw = 8
-        local gh = 8
-        local lut = Utilities.GLYPH_LUT
+        local lut = TextUtilities.GLYPH_LUT
+        local gw = TextUtilities.GLYPH_WIDTH
+        local gh = TextUtilities.GLYPH_HEIGHT
         local txtDispScl = 1
         local dw = txtDispScl * gw
         local dh = txtDispScl * gh
@@ -606,7 +591,7 @@ dlg:button {
         -- Validate how often to repeat the header.
         local hdrRepeatRate = args.hdrRepeatRate or defaults.hdrRepeatRate
         local hdrUseRepeat = true
-        if hdrRepeatRate >= (palDataLen - 1) or hdrRepeatRate < 4 then
+        if hdrRepeatRate >= (lenPalData - 1) or hdrRepeatRate < 4 then
             hdrUseRepeat = false
         end
 
@@ -630,21 +615,21 @@ dlg:button {
 
         -- Recalaculate sprite width and height.
         spriteWidth = colCount * entryWidth + spriteMargin * 2
-        spriteHeight = entryHeight * (palDataLen + 3)
+        spriteHeight = entryHeight * (lenPalData + 3)
             + spriteMargin * 2
 
         -- Add extra height to image for repeated headers.
         if hdrUseRepeat then
-            local extraHeaders = palDataLen // hdrRepeatRate
+            local extraHeaders = lenPalData // hdrRepeatRate
 
             -- If the palette data length is even and it is cleanly
             -- divisible by the repeat rate, subtract one.
             -- If the palette data length is odd and either it or one
             -- less is cleanly divisible by the repeat rate, subtract one.
-            if (palDataLen % 2 == 0 and palDataLen % hdrRepeatRate == 0)
-                or (palDataLen % 2 == 1
-                    and ((palDataLen - 1) % hdrRepeatRate == 0
-                        or palDataLen % hdrRepeatRate == 0))
+            if (lenPalData % 2 == 0 and lenPalData % hdrRepeatRate == 0)
+                or (lenPalData % 2 == 1
+                    and ((lenPalData - 1) % hdrRepeatRate == 0
+                        or lenPalData % hdrRepeatRate == 0))
             then
                 -- print(string.format("%d %% %d = %d",
                 -- palDataLen, hdrRepeatRate, palDataLen % hdrRepeatRate))
@@ -779,7 +764,7 @@ dlg:button {
         -- Proceed in reverse order, from bottom to top, so
         -- layers in stack read from top to bottom.
         local numBasis = args.numBasis or defaults.numBasis
-        local nbIsSrgb = numBasis == "SRGB"
+        local nbIsSrgb = numBasis == "S_RGB"
 
         local grayHue = args.grayHue or defaults.grayHue
         local grIsZero = grayHue == "ZERO"
@@ -789,8 +774,8 @@ dlg:button {
         local noAlpha = true
         if noAlpha then swatchMask = 0xff000000 end
 
-        app.transaction(function()
-            for i = palDataLen, 1, -1 do
+        app.transaction("Manifest", function()
+            for i = lenPalData, 1, -1 do
                 local palEntry = palData[i]
                 local palIdx = palEntry.palIdx
                 local hexSrgb = palEntry.hexSrgb
@@ -948,7 +933,7 @@ dlg:button {
                 -- Otherwise check to see if user wanted repeating headers.
                 -- Never place a header at the bottom.
                 if i == 1 or (hdrUseRepeat
-                    and i < palDataLen
+                    and i < lenPalData
                     and (i - 1) % hdrRepeatRate == 0) then
                     local hdrRptLayer = manifestSprite:newLayer()
                     hdrRptLayer.name = "Header"

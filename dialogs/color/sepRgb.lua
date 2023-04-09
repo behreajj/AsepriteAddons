@@ -168,20 +168,17 @@ dlg:button {
             return
         end
 
-        -- Check for tile map support.
-        local layerIsTilemap = false
+        -- Check for tile maps.
+        local isTilemap = srcLayer.isTilemap
         local tileSet = nil
-        if AseUtilities.tilesSupport() then
-            layerIsTilemap = srcLayer.isTilemap
-            if layerIsTilemap then
-                tileSet = srcLayer.tileset
-            end
+        if isTilemap then
+            tileSet = srcLayer.tileset
         end
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
-        local delSrcStr = args.delSrc or defaults.delSrc
-        local fillBase = args.fillBase
+        local delSrcStr = args.delSrc or defaults.delSrc --[[@as string]]
+        local fillBase = args.fillBase --[[@as boolean]]
 
         local xRed = args.xRed or defaults.xRed --[[@as integer]]
         local yRed = args.yRed or defaults.yRed --[[@as integer]]
@@ -197,50 +194,63 @@ dlg:button {
         local opacityBlue = args.opacityBlue
             or defaults.opacityBlue --[[@as integer]]
 
-        local frames = AseUtilities.getFrames(activeSprite, target)
+        local frames = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
 
+        local sepGroup = nil
         local baseLyr = nil
-        if fillBase then
-            baseLyr = activeSprite:newLayer()
-        end
-
-        local redLyr = activeSprite:newLayer()
-        local greenLyr = activeSprite:newLayer()
-        local blueLyr = activeSprite:newLayer()
-        local sepGroup = activeSprite:newGroup()
+        local redLyr = nil
+        local greenLyr = nil
+        local blueLyr = nil
 
         if fillBase then
-            baseLyr.parent = sepGroup
-            baseLyr.name = "Base"
-            baseLyr.color = Color { r = 32, g = 32, b = 32 }
+            app.transaction("Base Layer", function()
+                baseLyr = activeSprite:newLayer()
+                baseLyr.name = "Base"
+                baseLyr.color = Color { r = 32, g = 32, b = 32 }
+            end)
         end
 
-        redLyr.parent = sepGroup
-        redLyr.name = "Red"
-        redLyr.color = Color { r = 192, g = 0, b = 0 }
-        redLyr.blendMode = BlendMode.ADDITION
-        redLyr.opacity = opacityRed
+        app.transaction("Red Layer", function()
+            redLyr = activeSprite:newLayer()
+            redLyr.name = "Red"
+            redLyr.color = Color { r = 192, g = 0, b = 0 }
+            redLyr.blendMode = BlendMode.ADDITION
+            redLyr.opacity = opacityRed
+        end)
 
-        greenLyr.parent = sepGroup
-        greenLyr.name = "Green"
-        greenLyr.color = Color { r = 0, g = 192, b = 0 }
-        greenLyr.blendMode = BlendMode.ADDITION
-        greenLyr.opacity = opacityGreen
+        app.transaction("Green Layer", function()
+            greenLyr = activeSprite:newLayer()
+            greenLyr.name = "Green"
+            greenLyr.color = Color { r = 0, g = 192, b = 0 }
+            greenLyr.blendMode = BlendMode.ADDITION
+            greenLyr.opacity = opacityGreen
+        end)
 
-        blueLyr.parent = sepGroup
-        blueLyr.name = "Blue"
-        blueLyr.color = Color { r = 0, g = 0, b = 192 }
-        blueLyr.blendMode = BlendMode.ADDITION
-        blueLyr.opacity = opacityBlue
+        app.transaction("Blue Layer", function()
+            blueLyr = activeSprite:newLayer()
+            blueLyr.name = "Blue"
+            blueLyr.color = Color { r = 0, g = 0, b = 192 }
+            blueLyr.blendMode = BlendMode.ADDITION
+            blueLyr.opacity = opacityBlue
+        end)
 
-        sepGroup.name = srcLayer.name .. ".Separated"
-        sepGroup.parent = srcLayer.parent
-        sepGroup.isCollapsed = true
+        app.transaction("New Group", function()
+            -- Avoid setting the stackIndex as much as possible.
+            sepGroup = activeSprite:newGroup()
 
-        -- Treat y axis as (1, 0) points up.
-        local redShift = Point(xRed, -yRed)
-        local greenShift = Point(xGreen, -yGreen)
-        local blueShift = Point(xBlue, -yBlue)
+            if fillBase then
+                baseLyr.parent = sepGroup
+            end
+            redLyr.parent = sepGroup
+            greenLyr.parent = sepGroup
+            blueLyr.parent = sepGroup
+
+            local srcParent = srcLayer.parent
+            sepGroup.parent = srcParent
+            sepGroup.isCollapsed = true
+            sepGroup.name = srcLayer.name .. ".Separated"
+        end)
 
         local rdMsk = 0xff0000ff
         local grMsk = 0xff00ff00
@@ -251,28 +261,35 @@ dlg:button {
         local tilesToImage = AseUtilities.tilesToImage
 
         local lenFrames = #frames
-        app.transaction(function()
+        app.transaction("Separate RGB", function()
             local i = 0
-            while i < lenFrames do i = i + 1
+            while i < lenFrames do
+                i = i + 1
                 local srcFrame = frames[i]
                 local srcCel = srcLayer:cel(srcFrame)
                 if srcCel then
                     local srcImg = srcCel.image
-                    if layerIsTilemap then
+                    if isTilemap then
                         srcImg = tilesToImage(srcImg, tileSet, colorMode)
                     end
 
                     local srcImgWidth = srcImg.width
                     local srcImgHeight = srcImg.height
                     local srcPos = srcCel.position
+                    local xSrc = srcPos.x
+                    local ySrc = srcPos.y
 
-                    -- TODO: Don't rely on Aseprite defined operators.
+                    -- Treat y axis as (1, 0) points up.
+                    local redPos = Point(xSrc + xRed, ySrc - yRed)
+                    local greenPos = Point(xSrc + xGreen, ySrc - yGreen)
+                    local bluePos = Point(xSrc + xBlue, ySrc - yBlue)
+
                     local redCel = activeSprite:newCel(
-                        redLyr, srcFrame, srcImg, srcPos + redShift)
+                        redLyr, srcFrame, srcImg, redPos)
                     local greenCel = activeSprite:newCel(
-                        greenLyr, srcFrame, srcImg, srcPos + greenShift)
+                        greenLyr, srcFrame, srcImg, greenPos)
                     local blueCel = activeSprite:newCel(
-                        blueLyr, srcFrame, srcImg, srcPos + blueShift)
+                        blueLyr, srcFrame, srcImg, bluePos)
 
                     local srcOpacity = srcCel.opacity
                     redCel.opacity = srcOpacity
@@ -292,10 +309,6 @@ dlg:button {
                     for pixel in blItr do pixel(pixel() & blMsk) end
 
                     if fillBase then
-                        local redPos = redCel.position
-                        local greenPos = greenCel.position
-                        local bluePos = blueCel.position
-
                         local trxRed = redPos.x
                         local trxGreen = greenPos.x
                         local trxBlue = bluePos.x
@@ -304,6 +317,8 @@ dlg:button {
                         local tryGreen = greenPos.y
                         local tryBlue = bluePos.y
 
+                        -- Technically, bottom right should subtract 1, but since
+                        -- this will be added again to find wxh for base, it's omitted.
                         local trxBase = min(trxRed, trxGreen, trxBlue)
                         local tryBase = min(tryRed, tryGreen, tryBlue)
                         local brxBase = max(trxRed, trxGreen, trxBlue) + srcImgWidth
@@ -371,21 +386,21 @@ dlg:button {
             if delSrcStr == "DELETE_LAYER" then
                 activeSprite:deleteLayer(srcLayer)
             elseif delSrcStr == "DELETE_CELS" then
-                app.transaction(function()
-                    local idxDel = 0
-                    while idxDel < lenFrames do
-                        idxDel = idxDel + 1
+                app.transaction("Delete Cels", function()
+                    local idxDel = lenFrames + 1
+                    while idxDel > 1 do
+                        idxDel = idxDel - 1
                         local frame = frames[idxDel]
-                        if srcLayer:cel(frame) then
-                            activeSprite:deleteCel(srcLayer, frame)
-                        end
+                        local cel = srcLayer:cel(frame)
+                        if cel then activeSprite:deleteCel(cel) end
                     end
                 end)
             end
         end
 
+        -- Active layer assignment triggers a timeline update.
+        app.activeLayer = sepGroup
         app.refresh()
-        app.command.Refresh()
     end
 }
 

@@ -237,14 +237,18 @@ end
 function Vec2.copySign(a, b)
     local cx = 0.0
     local axAbs = math.abs(a.x)
-    if b.x < -0.0 then cx = -axAbs
-    elseif b.x > 0.0 then cx = axAbs
+    if b.x < -0.0 then
+        cx = -axAbs
+    elseif b.x > 0.0 then
+        cx = axAbs
     end
 
     local cy = 0.0
     local ayAbs = math.abs(a.y)
-    if b.y < -0.0 then cy = -ayAbs
-    elseif b.y > 0.0 then cy = ayAbs
+    if b.y < -0.0 then
+        cy = -ayAbs
+    elseif b.y > 0.0 then
+        cy = ayAbs
     end
 
     return Vec2.new(cx, cy)
@@ -799,12 +803,18 @@ end
 ---@return Vec2
 function Vec2.round(v)
     local ix, fx = math.modf(v.x)
-    if ix <= 0 and fx <= -0.5 then ix = ix - 1
-    elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
+    if ix <= 0 and fx <= -0.5 then
+        ix = ix - 1
+    elseif ix >= 0 and fx >= 0.5 then
+        ix = ix + 1
+    end
 
     local iy, fy = math.modf(v.y)
-    if iy <= 0 and fy <= -0.5 then iy = iy - 1
-    elseif iy >= 0 and fy >= 0.5 then iy = iy + 1 end
+    if iy <= 0 and fy <= -0.5 then
+        iy = iy - 1
+    elseif iy >= 0 and fy >= 0.5 then
+        iy = iy + 1
+    end
 
     return Vec2.new(ix, iy)
 end
@@ -822,13 +832,17 @@ end
 ---@return Vec2
 function Vec2.sign(v)
     local cx = 0.0
-    if v.x < -0.0 then cx = -1.0
-    elseif v.x > 0.0 then cx = 1.0
+    if v.x < -0.0 then
+        cx = -1.0
+    elseif v.x > 0.0 then
+        cx = 1.0
     end
 
     local cy = 0.0
-    if v.y < -0.0 then cy = -1.0
-    elseif v.y > 0.0 then cy = 1.0
+    if v.y < -0.0 then
+        cy = -1.0
+    elseif v.y > 0.0 then
+        cy = 1.0
     end
 
     return Vec2.new(cx, cy)
@@ -904,13 +918,13 @@ function Vec2.toPolar(v)
     }
 end
 
----Truncates a vector's components to integers.
+---Truncates a vector's components.
 ---@param v Vec2 vector
 ---@return Vec2
 function Vec2.trunc(v)
-    local ix, _ = math.modf(v.x)
-    local iy, _ = math.modf(v.y)
-    return Vec2.new(ix, iy)
+    return Vec2.new(
+        v.x - math.fmod(v.x, 1.0),
+        v.y - math.fmod(v.y, 1.0))
 end
 
 ---Wraps a vector's components around a range

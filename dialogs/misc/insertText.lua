@@ -1,4 +1,4 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../support/textutilities.lua")
 
 local msgSrcs = { "ENTRY", "FILE" }
 local txtFormats = { "gpl", "md", "pal", "txt" }
@@ -155,13 +155,13 @@ dlg:combobox {
     id = "alignHoriz",
     label = "Pivot:",
     option = defaults.alignLine,
-    options = AseUtilities.GLYPH_ALIGN_HORIZ
+    options = TextUtilities.GLYPH_ALIGN_HORIZ
 }
 
 dlg:combobox {
     id = "alignVert",
     option = defaults.alignChar,
-    options = AseUtilities.GLYPH_ALIGN_VERT
+    options = TextUtilities.GLYPH_ALIGN_VERT
 }
 
 dlg:newrow { always = false }
@@ -222,13 +222,13 @@ dlg:button {
         end
 
         -- Constants, as far as we're concerned.
-        local lut = Utilities.GLYPH_LUT
-        local gw = 8
-        local gh = 8
+        local lut = TextUtilities.GLYPH_LUT
+        local gw = TextUtilities.GLYPH_WIDTH
+        local gh = TextUtilities.GLYPH_HEIGHT
         local mxDrop = 2
 
         -- Cache methods used in for loops to local.
-        local displayString = AseUtilities.drawString
+        local displayString = TextUtilities.drawString
 
         -- Unpack arguments.
         local msgSrc = args.msgSrc or defaults.msgSrc
@@ -237,15 +237,15 @@ dlg:button {
         local charLimit = args.charLimit or defaults.charLimit --[[@as integer]]
         local animate = args.animate
         local fps = args.fps or defaults.fps --[[@as integer]]
-        local xOrigin = args.xOrigin or defaults.xOrigin
-        local yOrigin = args.yOrigin or defaults.yOrigin
+        local xOrigin = args.xOrigin or defaults.xOrigin --[[@as integer]]
+        local yOrigin = args.yOrigin or defaults.yOrigin --[[@as integer]]
         local scale = args.scale or defaults.scale --[[@as integer]]
-        local leading = args.leading or defaults.leading
-        local alignLine = args.alignHoriz or defaults.alignLine
-        local alignChar = args.alignVert or defaults.alignChar
-        local aseFill = args.fillClr or defaults.fillClr --[[@as Color]]
-        local aseShd = args.shdColor or defaults.shdColor --[[@as Color]]
-        local aseBkg = args.bkgColor or defaults.bkgColor --[[@as Color]]
+        local leading = args.leading or defaults.leading --[[@as integer]]
+        local alignLine = args.alignHoriz or defaults.alignLine --[[@as string]]
+        local alignChar = args.alignVert or defaults.alignChar --[[@as string]]
+        local aseFill = args.fillClr --[[@as Color]]
+        local aseShd = args.shdColor --[[@as Color]]
+        local aseBkg = args.bkgColor --[[@as Color]]
 
         -- Reinterpret and validate.
         local duration = 1.0 / math.max(1, fps)
@@ -266,7 +266,7 @@ dlg:button {
                 local flatStr = nil
                 if file ~= nil then
                     flatStr = file:read("*all")
-                    charTableStill = Utilities.lineWrapStringToChars(
+                    charTableStill = TextUtilities.lineWrapStringToChars(
                         flatStr, charLimit)
                     file:close()
                 end
@@ -277,7 +277,7 @@ dlg:button {
 
                 if err or flatStr == nil or #flatStr < 1 then
                     app.alert("There was a problem finding the file contents.")
-                    charTableStill = Utilities.lineWrapStringToChars(
+                    charTableStill = TextUtilities.lineWrapStringToChars(
                         msgEntry, charLimit)
                 end
             else
@@ -285,7 +285,7 @@ dlg:button {
                 return
             end
         else
-            charTableStill = Utilities.lineWrapStringToChars(
+            charTableStill = TextUtilities.lineWrapStringToChars(
                 msgEntry, charLimit)
         end
 
@@ -313,14 +313,15 @@ dlg:button {
         -- Calculate dimensions of new image.
         local widthImg = dw * maxLineWidth
         local heightImg = dh * lineCount
-            + scale * (lineCount - 1) -- drop shadow
+            + scale * (lineCount - 1)   -- drop shadow
             + leading * (lineCount - 1) -- leading
-            + (scale + 1) * mxDrop -- for descenders
+            + (scale + 1) * mxDrop      -- for descenders
 
         -- Acquire or create sprite.
         -- Acquire top layer.
         local sprite = AseUtilities.initCanvas(
-            widthImg, heightImg, "Text")
+            "Text", { hexBkg, hexFill, hexShd },
+            widthImg, heightImg)
         local widthSprite = sprite.width
         local heightSprite = sprite.height
         local layer = sprite.layers[#sprite.layers]
@@ -359,19 +360,22 @@ dlg:button {
             stillPos.x = stillPos.x - dispCenter
 
             local h = 0
-            while h < lineCount do h = h + 1
+            while h < lineCount do
+                h = h + 1
                 lineOffsets[h] = (maxLineWidth - lineWidths[h]) // 2
             end
         elseif alignLine == "RIGHT" then
             stillPos.x = stillPos.x - dispWidth
 
             local h = 0
-            while h < lineCount do h = h + 1
+            while h < lineCount do
+                h = h + 1
                 lineOffsets[h] = maxLineWidth - lineWidths[h]
             end
         else
             local h = 0
-            while h < lineCount do h = h + 1
+            while h < lineCount do
+                h = h + 1
                 lineOffsets[h] = 0
             end
         end
@@ -384,7 +388,7 @@ dlg:button {
         end
 
         local activeFrameObj = app.activeFrame
-            or sprite.frames[1]
+            or sprite.frames[1] --[[@as Frame]]
         local actFrIdx = activeFrameObj.frameNumber
         if animate then
             local frames = sprite.frames
@@ -394,12 +398,12 @@ dlg:button {
 
             -- Extra error check wrapping when debugging:
             -- https://github.com/aseprite/aseprite/issues/3276
-            app.transaction(function()
+            app.transaction("New Frames", function()
                 AseUtilities.createFrames(
                     sprite, reqFrames, duration)
             end)
 
-            app.transaction(function()
+            app.transaction("New Cels", function()
                 AseUtilities.createCels(
                     sprite,
                     actFrIdx, totalCharCount,
@@ -425,7 +429,7 @@ dlg:button {
                 -- Ideally, this would create new images that are
                 -- not connected to any cel, then create the cel
                 -- and assign the image in the sprite method.
-                app.transaction(function()
+                app.transaction("Insert Text", function()
                     local j = 0
                     while j < lineWidth do
                         currFrameIdx = currFrameIdx + 1
@@ -459,14 +463,13 @@ dlg:button {
                 yCaret = yCaret + dh + scale + leading
                 bkgSrcImg = animImage:clone()
             end
-
         else
             local activeCel = layer:cel(actFrIdx)
                 or sprite:newCel(layer, actFrIdx)
             activeCel.position = stillPos
 
             local yCaret = 0
-            app.transaction(function()
+            app.transaction("Insert Text", function()
                 local k = 0
                 while k < lineCount do
                     k = k + 1

@@ -1,7 +1,7 @@
 dofile("./vec2.lua")
 
 ---@class Mesh2
----@field public fs table faces
+---@field public fs integer[][] faces
 ---@field public name string name
 ---@field public vs Vec2[] coordinates
 ---@operator len(): integer
@@ -16,7 +16,7 @@ setmetatable(Mesh2, {
 
 ---Constructs a 2D mesh with a variable
 ---number of vertices per face.
----@param fs table faces
+---@param fs integer[][] faces
 ---@param vs Vec2[] coordinates
 ---@param name string? name
 ---@return Mesh2
@@ -65,7 +65,8 @@ function Mesh2:insetFace(faceIndex, fac)
     -- Find center.
     local vCenter = Vec2.new(0.0, 0.0)
     local h = 0
-    while h < faceLen do h = h + 1
+    while h < faceLen do
+        h = h + 1
         local vertCurr = face[h]
         vCenter = Vec2.add(vCenter, self.vs[vertCurr])
     end
@@ -75,7 +76,8 @@ function Mesh2:insetFace(faceIndex, fac)
 
     local u = 1.0 - t
     local j = 0
-    while j < faceLen do j = j + 1
+    while j < faceLen do
+        j = j + 1
         local k = 1 + j % faceLen
         local vertCurr = face[j]
         local vertNext = face[k]
@@ -179,16 +181,20 @@ end
 ---@param scale Vec2|number scale
 ---@return Mesh2
 function Mesh2:scaleFacesIndiv(scale)
-
     -- Validate that scale is non-zero.
     local vscl = nil
     if type(scale) == "number" then
         if scale ~= 0.0 then
             vscl = Vec2.new(scale, scale)
-        else vscl = Vec2.new(1.0, 1.0) end
+        else
+            vscl = Vec2.new(1.0, 1.0)
+        end
     else
-        if Vec2.all(scale) then vscl = scale
-        else vscl = Vec2.new(1.0, 1.0) end
+        if Vec2.all(scale) then
+            vscl = scale
+        else
+            vscl = Vec2.new(1.0, 1.0)
+        end
     end
 
     local fsLen = #self.fs
@@ -235,7 +241,6 @@ end
 ---@param faceIndex integer face index
 ---@return Mesh2
 function Mesh2:subdivFaceFan(faceIndex)
-
     local facesLen = #self.fs
     local i = 1 + (faceIndex - 1) % facesLen
     local face = self.fs[i]
@@ -347,7 +352,6 @@ function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQ
     end
 
     if useQuads then
-
         for k = 0, sctCount - 2, 1 do
             local i = k + k
             fs[1 + k] = {
@@ -357,9 +361,7 @@ function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQ
                 2 + i
             }
         end
-
     else
-
         local f = {}
         for i = 0, sctCount - 1, 1 do
             local j = i + i
@@ -367,7 +369,6 @@ function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQ
             f[1 + sctCount + i] = 1 + (sctCount2 - 1) - j
         end
         fs[#fs + 1] = f
-
     end
 
     return Mesh2.new(fs, vs, "Arc")
@@ -452,7 +453,6 @@ end
 ---@param rows integer rows
 ---@return Mesh2
 function Mesh2.gridCartesian(cols, rows)
-
     -- Validate inputs.
     local cVal = cols or 2
     if cVal < 2 then cVal = 2 end
@@ -510,7 +510,8 @@ function Mesh2.gridDimetric(cells)
     local vs = mesh.vs
     local vsLen = #vs
     local i = 0
-    while i < vsLen do i = i + 1
+    while i < vsLen do
+        i = i + 1
         local vSrc = vs[i]
         vs[i] = Vec2.new(
             0.5 * vSrc.x - 0.5 * vSrc.y,
@@ -543,7 +544,8 @@ function Mesh2.gridHex(rings)
     local fIdx = 0
     local vIdx = -5
     local i = iMin - 1
-    while i < iMax do i = i + 1
+    while i < iMax do
+        i = i + 1
         local jMin = iMin
         local jMax = iMax
 
@@ -553,7 +555,8 @@ function Mesh2.gridHex(rings)
         local iExt = i * extent
 
         local j = jMin - 1
-        while j < jMax do j = j + 1
+        while j < jMax do
+            j = j + 1
             local x = iExt + j * halfExt
             local y = j * rad15
 
@@ -606,13 +609,20 @@ function Mesh2.polygon(sectors)
     local fs = { f }
 
     local name = "Polygon"
-    if vSect == 3 then name = "Triangle"
-    elseif vSect == 4 then name = "Quadrilateral"
-    elseif vSect == 5 then name = "Pentagon"
-    elseif vSect == 6 then name = "Hexagon"
-    elseif vSect == 7 then name = "Heptagon"
-    elseif vSect == 8 then name = "Octagon"
-    elseif vSect == 9 then name = "Enneagon"
+    if vSect == 3 then
+        name = "Triangle"
+    elseif vSect == 4 then
+        name = "Quadrilateral"
+    elseif vSect == 5 then
+        name = "Pentagon"
+    elseif vSect == 6 then
+        name = "Hexagon"
+    elseif vSect == 7 then
+        name = "Heptagon"
+    elseif vSect == 8 then
+        name = "Octagon"
+    elseif vSect == 9 then
+        name = "Enneagon"
     end
 
     return Mesh2.new(fs, vs, name)
@@ -736,13 +746,15 @@ function Mesh2.toJson(a)
     local fsLen = #fs
     local fsStrArr = {}
     local i = 0
-    while i < fsLen do i = i + 1
+    while i < fsLen do
+        i = i + 1
         local f = fs[i]
         local fLen = #f
         local fStrArr = {}
         local fStr = "["
         local j = 0
-        while j < fLen do j = j + 1
+        while j < fLen do
+            j = j + 1
             fStrArr[j] = f[j] - 1
         end
         fStr = fStr .. tconcat(fStrArr, ",")
@@ -757,7 +769,8 @@ function Mesh2.toJson(a)
     local vsLen = #vs
     local vsStrArr = {}
     local k = 0
-    while k < vsLen do k = k + 1
+    while k < vsLen do
+        k = k + 1
         vsStrArr[k] = Vec2.toJson(vs[k])
     end
 

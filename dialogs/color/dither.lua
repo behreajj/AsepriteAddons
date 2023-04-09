@@ -1,26 +1,24 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
-local modes = { "ONE_BIT", "PALETTE", "QUANTIZE" }
+local targets = { "ACTIVE", "ALL", "RANGE" }
+local ditherModes = { "ONE_BIT", "PALETTE", "QUANTIZE" }
 local greyMethods = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
+local palTypes = { "ACTIVE", "FILE" }
 
 local defaults = {
+    target = "ACTIVE",
     ditherMode = "PALETTE",
     levels = 16,
-    aColor = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_STROKE),
-    bColor = AseUtilities.hexToAseColor(AseUtilities.DEFAULT_FILL),
     greyMethod = "LUMINANCE",
     threshold = 50,
+    pullFocus = false,
     palType = "ACTIVE",
-    startIndex = 0,
-    count = 256,
     octCapacityBits = 4,
     minCapacityBits = 2,
     maxCapacityBits = 16,
     factor = 100,
-    copyToLayer = true,
     printElapsed = false,
-    pullFocus = false
 }
 
 local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
@@ -139,20 +137,29 @@ local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
     end
 end
 
-local dlg = Dialog { title = "Floyd-Steinberg Dither" }
+local dlg = Dialog { title = "Dither" }
+
+dlg:combobox {
+    id = "target",
+    label = "Target:",
+    option = defaults.target,
+    options = targets
+}
+
+dlg:newrow { always = false }
 
 dlg:combobox {
     id = "ditherMode",
     label = "Mode:",
     option = defaults.ditherMode,
-    options = modes,
+    options = ditherModes,
     onchange = function()
         local args = dlg.data
-        local isQuant = args.ditherMode == "QUANTIZE"
+        local isQnt = args.ditherMode == "QUANTIZE"
         local isOne = args.ditherMode == "ONE_BIT"
-        local isPalette = args.ditherMode == "PALETTE"
+        local isPal = args.ditherMode == "PALETTE"
 
-        dlg:modify { id = "levels", visible = isQuant }
+        dlg:modify { id = "levels", visible = isQnt }
 
         dlg:modify { id = "aColor", visible = isOne }
         dlg:modify { id = "bColor", visible = isOne }
@@ -160,19 +167,12 @@ dlg:combobox {
         dlg:modify { id = "threshold", visible = isOne }
 
         local palType = dlg.data.palType
-        dlg:modify { id = "palType", visible = isPalette }
+        dlg:modify { id = "palType", visible = isPal }
         dlg:modify {
             id = "palFile",
-            visible = isPalette and palType == "FILE"
+            visible = isPal and palType == "FILE"
         }
-        dlg:modify {
-            id = "palPreset",
-            visible = isPalette and palType == "PRESET"
-        }
-        dlg:modify { id = "octCapacity", visible = isPalette }
-        dlg:modify { id = "octCapacity", visible = isPalette }
-        -- dlg:modify { id = "startIndex", visible = isPalette }
-        -- dlg:modify { id = "count", visible = isPalette }
+        dlg:modify { id = "octCapacity", visible = isPal }
     end
 }
 
@@ -181,13 +181,13 @@ dlg:newrow { always = false }
 dlg:color {
     id = "aColor",
     label = "Colors:",
-    color = defaults.aColor,
+    color = app.preferences.color_bar.fg_color,
     visible = defaults.ditherMode == "ONE_BIT"
 }
 
 dlg:color {
     id = "bColor",
-    color = defaults.bColor,
+    color = app.preferences.color_bar.bg_color,
     visible = defaults.ditherMode == "ONE_BIT"
 }
 
@@ -229,18 +229,12 @@ dlg:combobox {
     id = "palType",
     label = "Palette:",
     option = defaults.palType,
-    options = { "ACTIVE", "FILE", "PRESET" },
+    options = palTypes,
     onchange = function()
         local state = dlg.data.palType
-
         dlg:modify {
             id = "palFile",
             visible = state == "FILE"
-        }
-
-        dlg:modify {
-            id = "palPreset",
-            visible = state == "PRESET"
         }
     end,
     visible = defaults.ditherMode == "PALETTE"
@@ -254,40 +248,6 @@ dlg:file {
     open = true,
     visible = defaults.ditherMode == "PALETTE"
         and defaults.palType == "FILE"
-}
-
-dlg:newrow { always = false }
-
-dlg:entry {
-    id = "palPreset",
-    text = "",
-    focus = false,
-    visible = defaults.ditherMode == "PALETTE"
-        and defaults.palType == "PRESET"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "startIndex",
-    label = "Start:",
-    min = 0,
-    max = 255,
-    value = defaults.startIndex,
-    -- visible = defaults.ditherMode == "PALETTE"
-    visible = false
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "count",
-    label = "Count:",
-    min = 1,
-    max = 256,
-    value = defaults.count,
-    -- visible = defaults.ditherMode == "PALETTE"
-    visible = false
 }
 
 dlg:newrow { always = false }
@@ -313,14 +273,6 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "copyToLayer",
-    label = "As New Layer:",
-    selected = defaults.copyToLayer
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
     id = "printElapsed",
     label = "Print Diagnostic:",
     selected = defaults.printElapsed
@@ -333,12 +285,15 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        -- Begin timing the function elapsed.
         local args = dlg.data
         local printElapsed = args.printElapsed
         local startTime = 0
         local endTime = 0
         local elapsed = 0
-        if printElapsed then startTime = os.time() end
+        if printElapsed then
+            startTime = os.time()
+        end
 
         local activeSprite = app.activeSprite
         if not activeSprite then
@@ -349,83 +304,97 @@ dlg:button {
             return
         end
 
-        local srcCel = app.activeCel
-        if not srcCel then
+        local srcLayer = app.activeLayer
+        if not srcLayer then
             app.alert {
                 title = "Error",
-                text = "There is no active cel."
+                text = "There is no active layer."
             }
             return
         end
 
-        local startIndex = args.startIndex
-            or defaults.startIndex --[[@as integer]]
-        local palCount = args.count
-            or defaults.count --[[@as integer]]
-        local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-            args.palType, args.palFile, args.palPreset,
-            startIndex, palCount, true)
+        if srcLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
+            }
+            return
+        end
 
-        local alphaMask = activeSprite.transparentColor
-        local colorSpace = activeSprite.colorSpace
-        local oldColorMode = activeSprite.colorMode
+        if srcLayer.isReference then
+            app.alert {
+                title = "Error",
+                text = "Reference layers are not supported."
+            }
+            return
+        end
+
+        -- Check for tile maps.
+        local isTilemap = srcLayer.isTilemap
+        local tileSet = nil
+        if isTilemap then
+            tileSet = srcLayer.tileset
+        end
+
+        local oldMode = activeSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
+
+        local target = args.target or defaults.target --[[@as string]]
+        local ditherMode = args.ditherMode
+            or defaults.ditherMode --[[@as string]]
+        local factor100 = args.factor or defaults.factor --[[@as integer]]
+
+        local factor = factor100 * 0.01
+        local frames = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
 
         -- Choose function based on dither mode.
         local closestFunc = nil
-        local ditherMode = args.ditherMode or defaults.ditherMode
         local dmStr = ""
         if ditherMode == "ONE_BIT" then
+            local aColorAse = args.aColor --[[@as Color]]
+            local bColorAse = args.bColor --[[@as Color]]
+            local thresh100 = args.threshold
+                or defaults.threshold --[[@as integer]]
+            local greyPreset = args.greyMethod
+                or defaults.greyMethod --[[@as string]]
 
-            local aColorAse = args.aColor or defaults.aColor --[[@as Color]]
-            local bColorAse = args.bColor or defaults.bColor --[[@as Color]]
-            local threshold100 = args.threshold or defaults.threshold
-            local threshold = threshold100 * 0.01
-
-            -- Mask out alpha so that source alpha
-            -- can be composited in.
+            -- Mask out alpha, source alpha will be used.
             local aHex = 0x00ffffff & AseUtilities.aseColorToHex(
                 aColorAse, ColorMode.RGB)
             local bHex = 0x00ffffff & AseUtilities.aseColorToHex(
                 bColorAse, ColorMode.RGB)
+            local threshold = thresh100 * 0.01
 
             -- Swap colors so that origin (a) is always the
             -- darker color.
             local aLum = Clr.lumsRgb(Clr.fromHex(aHex))
             local bLum = Clr.lumsRgb(Clr.fromHex(bHex))
-            if aLum > bLum then
-                local temp = aHex
-                aHex = bHex
-                bHex = temp
-            end
+            if aLum > bLum then aLum, bLum = bLum, aLum end
 
-            local greyPreset = args.greyMethod or defaults.greyMethod
             local greyMethod = nil
             local greyStr = ""
             if greyPreset == "AVERAGE" then
                 -- 3 * 255 = 765
-                greyStr = "Average"
                 greyMethod = function(rSrc, gSrc, bSrc)
                     return (rSrc + gSrc + bSrc) * 0.0013071895424837
                 end
+                greyStr = "Average"
             elseif greyPreset == "HSL" then
                 -- 2 * 255 = 510
-                greyStr = "HSL"
                 greyMethod = function(rSrc, gSrc, bSrc)
                     return (math.max(rSrc, gSrc, bSrc)
                         + math.min(rSrc, gSrc, bSrc)) * 0.0019607843137255
                 end
+                greyStr = "HSL"
             elseif greyPreset == "HSV" then
-                greyStr = "HSV"
                 greyMethod = function(rSrc, gSrc, bSrc)
                     return math.max(rSrc, gSrc, bSrc) * 0.003921568627451
                 end
+                greyStr = "HSV"
             else
-                greyStr = "Luminance"
-
                 local stlLut = Utilities.STL_LUT
                 local ltsLut = Utilities.LTS_LUT
-
                 greyMethod = function(rSrc, gSrc, bSrc)
                     local rLin = stlLut[1 + rSrc]
                     local gLin = stlLut[1 + gSrc]
@@ -436,9 +405,8 @@ dlg:button {
                         + bLin * 0.072181521573443)
                     return ltsLut[1 + lum] * 0.003921568627451
                 end
+                greyStr = "Luminance"
             end
-
-            dmStr = string.format("OneBit.%s.%03d", greyStr, threshold100)
 
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
                 local fac = greyMethod(rSrc, gSrc, bSrc)
@@ -449,11 +417,11 @@ dlg:button {
                 return alpha | aHex
             end
 
+            dmStr = string.format("OneBit.%s.%03d", greyStr, thresh100)
         elseif ditherMode == "QUANTIZE" then
-
             local levels = args.levels
                 or defaults.levels --[[@as integer]]
-            dmStr = string.format("Quantize.%03d", levels)
+
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
                 local srgb = Clr.new(
                     rSrc * 0.003921568627451,
@@ -464,11 +432,16 @@ dlg:button {
                 return (aSrc << 0x18) | (0x00ffffff & trgHex)
             end
 
+            dmStr = string.format("Quantize.%03d", levels)
         else
-            dmStr = "Palette"
-
+            local palType = args.palType or defaults.palType --[[@as string]]
+            local palFile = args.palFile --[[@as string]]
             local octCapacity = args.octCapacity
-                or defaults.octCapacityBits
+                or defaults.octCapacityBits --[[@as integer]]
+
+            local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
+                palType, palFile, 0, 256, true)
+
             octCapacity = 2 ^ octCapacity
             local bounds = Bounds3.lab()
             local octree = Octree.new(bounds, octCapacity, 1)
@@ -482,8 +455,6 @@ dlg:button {
             local aMax = -2147483648
             local bMax = -2147483648
 
-            local viableCount = 0
-
             -- Cache methods to local.
             local fromHex = Clr.fromHex
             local sRgbaToLab = Clr.sRgbToSrLab2
@@ -494,7 +465,9 @@ dlg:button {
             -- Unpack source palette to a dictionary and an octree.
             -- Ignore transparent colors in palette.
             local lenPalHexes = #hexesSrgb
+            ---@type table<integer, integer>
             local ptToHexDict = {}
+            local viableCount = 0
             local idxPalHex = 0
             while idxPalHex < lenPalHexes do
                 idxPalHex = idxPalHex + 1
@@ -521,10 +494,6 @@ dlg:button {
                     viableCount = viableCount + 1
                 end
             end
-
-            -- for k,v in pairs(ptToHexDict) do
-            --     print(string.format("%d %08X", k, v))
-            -- end
 
             if viableCount < 3 then
                 app.alert {
@@ -575,71 +544,77 @@ dlg:button {
                 return trgHex
             end
 
+            dmStr = "Palette"
         end
 
-        local srcImg = srcCel.image
-        local srcPxItr = srcImg:pixels()
-        local arrSrcPixels = {}
-        local idxRdPixels = 0
-        for pixel in srcPxItr do
-            idxRdPixels = idxRdPixels + 1
-            arrSrcPixels[idxRdPixels] = pixel()
-        end
+        -- Create target layer.
+        -- Do not copy source layer blend mode.
+        local trgLayer = nil
+        app.transaction("New Layer", function()
+            trgLayer = activeSprite:newLayer()
+            local srcLayerName = "Layer"
+            if #srcLayer.name > 0 then
+                srcLayerName = srcLayer.name
+            end
+            trgLayer.name = string.format(
+                "%s.Dither.%s.%03d",
+                srcLayerName, dmStr, factor100)
+            trgLayer.parent = srcLayer.parent
+            trgLayer.opacity = srcLayer.opacity
+            trgLayer.blendMode = srcLayer.blendMode
+        end)
 
-        -- Get arguments to pass to dithering method.
-        local srcWidth = srcImg.width
-        local srcHeight = srcImg.height
-        local factor100 = args.factor or defaults.factor
-        local factor = factor100 * 0.01
-        fsDither(arrSrcPixels, srcWidth, srcHeight, factor, closestFunc)
+        -- Cache global methods.
+        local tilesToImage = AseUtilities.tilesToImage
 
-        local trgSpec = ImageSpec {
-            width = srcWidth,
-            height = srcHeight,
-            colorMode = ColorMode.RGB,
-            transparentColor = alphaMask
-        }
-        trgSpec.colorSpace = colorSpace
-        local trgImg = Image(trgSpec)
-        local trgPxItr = trgImg:pixels()
-        local idxWtPixels = 0
-        for pixel in trgPxItr do
-            idxWtPixels = idxWtPixels + 1
-            pixel(arrSrcPixels[idxWtPixels])
-        end
-
-        -- Either copy to new layer or reassign image.
-        local copyToLayer = args.copyToLayer
-        if copyToLayer then
-            app.transaction(function()
-                local srcLayer = srcCel.layer
-
-                -- Copy layer. Don't copy blend mode.
-                local trgLayer = activeSprite:newLayer()
-                local srcLayerName = "Layer"
-                if #srcLayer.name > 0 then
-                    srcLayerName = srcLayer.name
-                end
-                trgLayer.name = string.format(
-                    "%s.Dither.%s.%03d",
-                    srcLayerName, dmStr, factor100)
-                if srcLayer.opacity then
-                    trgLayer.opacity = srcLayer.opacity
+        local lenFrames = #frames
+        local i = 0
+        local rgbColorMode = ColorMode.RGB
+        while i < lenFrames do
+            i = i + 1
+            local srcFrame = frames[i]
+            local srcCel = srcLayer:cel(srcFrame)
+            if srcCel then
+                local srcImg = srcCel.image
+                if isTilemap then
+                    srcImg = tilesToImage(srcImg, tileSet, rgbColorMode)
                 end
 
-                -- Copy cel.
-                local frame = app.activeFrame
-                    or activeSprite.frames[1]
-                local trgCel = activeSprite:newCel(
-                    trgLayer, frame,
-                    trgImg, srcCel.position)
-                trgCel.opacity = srcCel.opacity
-            end)
-        else
-            srcCel.image = trgImg
+                local srcSpec = srcImg.spec
+                local srcWidth = srcSpec.width
+                local srcHeight = srcSpec.height
+
+                local srcPxItr = srcImg:pixels()
+                ---@type integer[]
+                local arrSrcPixels = {}
+                local idxRdPixels = 0
+                for pixel in srcPxItr do
+                    idxRdPixels = idxRdPixels + 1
+                    arrSrcPixels[idxRdPixels] = pixel()
+                end
+
+                fsDither(arrSrcPixels, srcWidth, srcHeight, factor, closestFunc)
+
+                local trgImg = Image(srcSpec)
+                local trgPxItr = trgImg:pixels()
+                local idxWtPixels = 0
+                for pixel in trgPxItr do
+                    idxWtPixels = idxWtPixels + 1
+                    pixel(arrSrcPixels[idxWtPixels])
+                end
+
+                app.transaction(
+                    string.format("Dither %d", srcFrame),
+                    function()
+                        local trgCel = activeSprite:newCel(
+                            trgLayer, srcFrame,
+                            trgImg, srcCel.position)
+                        trgCel.opacity = srcCel.opacity
+                    end)
+            end
         end
 
-        AseUtilities.changePixelFormat(oldColorMode)
+        AseUtilities.changePixelFormat(oldMode)
         app.refresh()
 
         if printElapsed then

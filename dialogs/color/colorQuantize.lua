@@ -10,21 +10,17 @@ local defaults = {
     maxLevels = 256,
     minBits = 1,
     maxBits = 8,
-
     target = "ACTIVE",
-
     levelsUni = 16,
     rLevels = 16,
     gLevels = 16,
     bLevels = 16,
     aLevels = 256,
-
     bitsUni = 4,
     rBits = 4,
     gBits = 4,
     bBits = 4,
     aBits = 8,
-
     unit = "BITS",
     levelsInput = "UNIFORM",
     method = "UNSIGNED",
@@ -110,8 +106,6 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "rLevels",
-    -- label = "Levels:",
-    -- text = "R",
     label = "Red:",
     min = defaults.minLevels,
     max = defaults.maxLevels,
@@ -122,7 +116,6 @@ dlg:slider {
 
 dlg:slider {
     id = "gLevels",
-    -- text = "G",
     label = "Green:",
     min = defaults.minLevels,
     max = defaults.maxLevels,
@@ -133,7 +126,6 @@ dlg:slider {
 
 dlg:slider {
     id = "bLevels",
-    -- text = "B",
     label = "Blue:",
     min = defaults.minLevels,
     max = defaults.maxLevels,
@@ -144,7 +136,6 @@ dlg:slider {
 
 dlg:slider {
     id = "aLevels",
-    -- text = "A",
     label = "Alpha:",
     min = defaults.minLevels,
     max = defaults.maxLevels,
@@ -183,7 +174,6 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "rBits",
-    -- text = "R",
     label = "Red:",
     min = defaults.minBits,
     max = defaults.maxBits,
@@ -198,7 +188,6 @@ dlg:slider {
 
 dlg:slider {
     id = "gBits",
-    -- text = "G",
     label = "Green:",
     min = defaults.minBits,
     max = defaults.maxBits,
@@ -213,7 +202,6 @@ dlg:slider {
 
 dlg:slider {
     id = "bBits",
-    -- text = "B",
     label = "Blue:",
     min = defaults.minBits,
     max = defaults.maxBits,
@@ -228,7 +216,6 @@ dlg:slider {
 
 dlg:slider {
     id = "aBits",
-    -- text = "A",
     label = "Alpha:",
     min = defaults.minBits,
     max = defaults.maxBits,
@@ -322,13 +309,10 @@ dlg:button {
         end
 
         -- Check for tile map support.
-        local isTilemap = false
+        local isTilemap = srcLayer.isTilemap
         local tileSet = nil
-        if AseUtilities.tilesSupport() then
-            isTilemap = srcLayer.isTilemap
-            if isTilemap then
-                tileSet = srcLayer.tileset
-            end
+        if isTilemap then
+            tileSet = srcLayer.tileset
         end
 
         -- Unpack arguments.
@@ -340,26 +324,27 @@ dlg:button {
         local bLevels = args.bLevels or defaults.bLevels --[[@as integer]]
         local aLevels = args.aLevels or defaults.aLevels --[[@as integer]]
 
-        local frames = AseUtilities.getFrames(activeSprite, target)
+        local frames = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
 
-        -- Create a new layer if necessary.
-        local trgLayer = activeSprite:newLayer()
-        local srcLayerName = "Layer"
-        if #srcLayer.name > 0 then
-            srcLayerName = srcLayer.name
-        end
-        trgLayer.name = string.format(
-            "%s.Quantized.R%02d.G%02d.B%02d.A%02d",
-            srcLayerName,
-            rLevels, gLevels, bLevels, aLevels)
-
-        trgLayer.parent = srcLayer.parent
-        trgLayer.opacity = srcLayer.opacity
-        if srcLayer.blendMode then
+        local trgLayer = nil
+        app.transaction("New Layer", function()
+            trgLayer = activeSprite:newLayer()
+            local srcLayerName = "Layer"
+            if #srcLayer.name > 0 then
+                srcLayerName = srcLayer.name
+            end
+            trgLayer.name = string.format(
+                "%s.Quantized.R%02d.G%02d.B%02d.A%02d",
+                srcLayerName,
+                rLevels, gLevels, bLevels, aLevels)
+            trgLayer.parent = srcLayer.parent
+            trgLayer.opacity = srcLayer.opacity
             trgLayer.blendMode = srcLayer.blendMode
-        end
+        end)
 
-        local one255 = 1.0 / 255
+        local one255 = 0.003921568627451
+        local rgbColorMode = ColorMode.RGB
         local floor = math.floor
         local tilesToImage = AseUtilities.tilesToImage
 
@@ -390,63 +375,68 @@ dlg:button {
             aDelta = 1.0 / aLevels
         end
 
-        app.transaction(function()
-            local i = 0
-            local lenFrames = #frames
-            while i < lenFrames do i = i + 1
-                local srcFrame = frames[i]
-                local srcCel = srcLayer:cel(srcFrame)
-                if srcCel then
-                    local srcImg = srcCel.image
-                    if isTilemap then
-                        srcImg = tilesToImage(srcImg, tileSet, ColorMode.RGB)
-                    end
-
-                    -- Gather unique colors in image.
-                    local srcDict = {}
-                    local srcPxItr = srcImg:pixels()
-                    for pixel in srcPxItr do
-                        srcDict[pixel()] = true
-                    end
-
-                    -- Quantize colors, place in dictionary.
-                    local trgDict = {}
-                    for k, _ in pairs(srcDict) do
-                        local a = (k >> 0x18) & 0xff
-                        local b = (k >> 0x10) & 0xff
-                        local g = (k >> 0x08) & 0xff
-                        local r = k & 0xff
-
-                        local aQtz = quantize(a * one255, aLevels, aDelta)
-                        local bQtz = quantize(b * one255, bLevels, bDelta)
-                        local gQtz = quantize(g * one255, gLevels, gDelta)
-                        local rQtz = quantize(r * one255, rLevels, rDelta)
-
-                        aQtz = floor(aQtz * 0xff + 0.5)
-                        bQtz = floor(bQtz * 0xff + 0.5)
-                        gQtz = floor(gQtz * 0xff + 0.5)
-                        rQtz = floor(rQtz * 0xff + 0.5)
-
-                        trgDict[k] = (aQtz << 0x18)
-                            | (bQtz << 0x10)
-                            | (gQtz << 0x08)
-                            | rQtz
-                    end
-
-                    -- Clone image, replace color with quantized.
-                    local trgImg = srcImg:clone()
-                    local trgPxItr = trgImg:pixels()
-                    for pixel in trgPxItr do
-                        pixel(trgDict[pixel()])
-                    end
-
-                    local trgCel = activeSprite:newCel(
-                        trgLayer, srcFrame,
-                        trgImg, srcCel.position)
-                    trgCel.opacity = srcCel.opacity
+        local i = 0
+        local lenFrames = #frames
+        while i < lenFrames do
+            i = i + 1
+            local srcFrame = frames[i]
+            local srcCel = srcLayer:cel(srcFrame)
+            if srcCel then
+                local srcImg = srcCel.image
+                if isTilemap then
+                    srcImg = tilesToImage(srcImg, tileSet, rgbColorMode)
                 end
+
+                -- Gather unique colors in image.
+                ---@type table<integer, boolean>
+                local srcDict = {}
+                local srcPxItr = srcImg:pixels()
+                for pixel in srcPxItr do
+                    srcDict[pixel()] = true
+                end
+
+                -- Quantize colors, place in dictionary.
+                ---@type table<integer, integer>
+                local trgDict = {}
+                for k, _ in pairs(srcDict) do
+                    local a = (k >> 0x18) & 0xff
+                    local b = (k >> 0x10) & 0xff
+                    local g = (k >> 0x08) & 0xff
+                    local r = k & 0xff
+
+                    local aQtz = quantize(a * one255, aLevels, aDelta)
+                    local bQtz = quantize(b * one255, bLevels, bDelta)
+                    local gQtz = quantize(g * one255, gLevels, gDelta)
+                    local rQtz = quantize(r * one255, rLevels, rDelta)
+
+                    aQtz = floor(aQtz * 0xff + 0.5)
+                    bQtz = floor(bQtz * 0xff + 0.5)
+                    gQtz = floor(gQtz * 0xff + 0.5)
+                    rQtz = floor(rQtz * 0xff + 0.5)
+
+                    trgDict[k] = (aQtz << 0x18)
+                        | (bQtz << 0x10)
+                        | (gQtz << 0x08)
+                        | rQtz
+                end
+
+                -- Clone image, replace color with quantized.
+                local trgImg = srcImg:clone()
+                local trgPxItr = trgImg:pixels()
+                for pixel in trgPxItr do
+                    pixel(trgDict[pixel()])
+                end
+
+                app.transaction(
+                    string.format("Color Quantize %d", srcFrame),
+                    function()
+                        local trgCel = activeSprite:newCel(
+                            trgLayer, srcFrame,
+                            trgImg, srcCel.position)
+                        trgCel.opacity = srcCel.opacity
+                    end)
             end
-        end)
+        end
 
         app.refresh()
     end

@@ -4,8 +4,7 @@ local paletteTypes = {
     "ACTIVE",
     "DEFAULT",
     "EMBEDDED",
-    "FILE",
-    "PRESET"
+    "FILE"
 }
 
 local function loadSprite(spriteFile)
@@ -14,7 +13,7 @@ local function loadSprite(spriteFile)
     local sprite = nil
     if fileExt == "gpl" or fileExt == "pal" then
         local spriteHexes, _ = AseUtilities.asePaletteLoad(
-            "FILE", spriteFile, "", 0, 256, true)
+            "FILE", spriteFile, 0, 256, true)
         local lenColors = #spriteHexes
         local rtLen = math.max(16,
             math.ceil(math.sqrt(math.max(1, lenColors))))
@@ -75,7 +74,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "trimCels",
     label = "Trim:",
-    text = "Layer Edges",
+    text = "Layer Ed&ges",
     selected = defaults.trimCels
 }
 
@@ -92,7 +91,6 @@ dlg:combobox {
     onchange = function()
         local state = dlg.data.palType
         dlg:modify { id = "palFile", visible = state == "FILE" }
-        dlg:modify { id = "palPreset", visible = state == "PRESET" }
     end
 }
 
@@ -112,14 +110,6 @@ dlg:check {
     label = "Uniques Only:",
     focus = false,
     selected = defaults.uniquesOnly
-}
-
-dlg:newrow { always = false }
-
-dlg:entry {
-    id = "palPreset",
-    focus = false,
-    visible = defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -173,10 +163,8 @@ dlg:button {
 
         if palType ~= "DEFAULT" then
             local palFile = args.palFile --[[@as string]]
-            local palPreset = args.palPreset --[[@as string]]
-
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                palType, palFile, palPreset, 0, 256, true)
+                palType, palFile, 0, 256, true)
         else
             hexesProfile = AseUtilities.DEFAULT_PAL_ARR
             hexesSrgb = hexesProfile
@@ -202,7 +190,7 @@ dlg:button {
         if removeBkg then
             local bkgLayer = openSprite.backgroundLayer
             if bkgLayer then
-                app.transaction(function()
+                app.transaction("Layer From Bkg", function()
                     app.activeLayer = bkgLayer
                     app.command.LayerFromBackground()
                     bkgLayer.name = "Bkg"
@@ -249,62 +237,34 @@ dlg:button {
         local lenPalettes = #openSprite.palettes
         local setPalette = AseUtilities.setPalette
         local i = 0
-        while i < lenPalettes do i = i + 1
+        while i < lenPalettes do
+            i = i + 1
             setPalette(hexesProfile, openSprite, i)
         end
 
         local trimCels = args.trimCels
         if trimCels then
-            local frIdcs = {}
-            local lenFrames = #openSprite.frames
-            local h = 0
-            while h < lenFrames do h = h + 1
-                frIdcs[h] = h
-            end
-
-            -- Get unique cels only using a range.
-            local appRange = app.range
-            appRange.frames = frIdcs
-
-            local images = appRange.images
-            local lenImgs = #images
-            local k = 0
-            local cels = {}
-            while k < lenImgs do k = k + 1
-                cels[k] = images[k].cel
-            end
-
-            appRange:clear()
-
-            local trimImage = AseUtilities.trimImageAlpha
-            local checkTilemaps = AseUtilities.tilesSupport()
-
-            app.transaction(function()
+            local cels = AseUtilities.filterCels(
+                openSprite, nil, nil, "ALL",
+                true, true, false, false)
+            app.transaction("Trim Cels", function()
                 local j = 0
                 local lenCels = #cels
-                while j < lenCels do j = j + 1
+                local trimImage = AseUtilities.trimImageAlpha
+                while j < lenCels do
+                    j = j + 1
                     local cel = cels[j]
-
-                    local layerIsTilemap = false
-                    if checkTilemaps then
-                        layerIsTilemap = cel.layer.isTilemap
-                    end
-
-                    if layerIsTilemap then
-                        -- Tile map layers should only belong to
-                        -- .aseprite files, and hence not need this.
-                    else
-                        local trgImg, x, y = trimImage(cel.image, 0, 0)
-                        local srcPos = cel.position
-                        cel.position = Point(srcPos.x + x, srcPos.y + y)
-                        cel.image = trgImg
-                    end
+                    local trgImg, x, y = trimImage(cel.image, 0, 0)
+                    local srcPos = cel.position
+                    cel.position = Point(srcPos.x + x, srcPos.y + y)
+                    cel.image = trgImg
                 end
             end)
         end
 
         app.preferences.open_file.open_sequence = oldOpSeqPref
         app.activeTool = "hand"
+        app.command.FitScreen()
         app.refresh()
         dlg:close()
     end

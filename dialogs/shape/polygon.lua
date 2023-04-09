@@ -1,4 +1,4 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../support/shapeutilities.lua")
 
 local defaults = {
     sides = 6,
@@ -8,15 +8,9 @@ local defaults = {
     resolution = 16,
     angle = 90,
     scale = 32,
-    xOrigin = 0,
-    yOrigin = 0,
-    useStroke = true,
+    useStroke = false,
     strokeWeight = 1,
-    strokeClr = AseUtilities.hexToAseColor(
-        AseUtilities.DEFAULT_STROKE),
     useFill = true,
-    fillClr = AseUtilities.hexToAseColor(
-        AseUtilities.DEFAULT_FILL),
     pullFocus = false
 }
 
@@ -93,15 +87,17 @@ dlg:number {
 dlg:newrow { always = false }
 
 dlg:number {
-    id = "xOrigin",
+    id = "xOrig",
     label = "Origin:",
-    text = string.format("%.3f", defaults.xOrigin),
+    text = string.format("%.3f",
+        app.preferences.new_file.width * 0.5),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
-    id = "yOrigin",
-    text = string.format("%.3f", defaults.yOrigin),
+    id = "yOrig",
+    text = string.format("%.3f",
+        app.preferences.new_file.height * 0.5),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
@@ -134,7 +130,7 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    color = defaults.strokeClr,
+    color = app.preferences.color_bar.bg_color,
     visible = defaults.useStroke
 }
 
@@ -155,7 +151,7 @@ dlg:check {
 
 dlg:color {
     id = "fillClr",
-    color = defaults.fillClr,
+    color = app.preferences.color_bar.fg_color,
     visible = defaults.useFill
 }
 
@@ -166,47 +162,57 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-
         local args = dlg.data
         local sectors = args.sides or defaults.sides --[[@as integer]]
         local skip = args.skip or defaults.skip --[[@as integer]]
         local pick = args.pick or defaults.pick --[[@as integer]]
         local inset = args.inset or defaults.inset --[[@as integer]]
 
+        local scale = args.scale or defaults.scale --[[@as number]]
+        local xOrig = args.xOrig --[[@as number]]
+        local yOrig = args.yOrig --[[@as number]]
+
+        local useStroke = args.useStroke --[[@as boolean]]
+        local strokeWeight = args.strokeWeight or defaults.strokeWeight --[[@as integer]]
+        local strokeColor = args.strokeClr --[[@as Color]]
+        local useFill = args.useFill --[[@as boolean]]
+        local fillColor = args.fillClr --[[@as Color]]
+
         -- Create transform matrix.
-        local t = Mat3.fromTranslation(
-            args.xOrigin, args.yOrigin)
+        local t = Mat3.fromTranslation(xOrig, yOrig)
 
         local a = args.angle * 0.017453292519943
         local query = AseUtilities.DIMETRIC_ANGLES[args.angle]
         if query then a = query end
         local r = Mat3.fromRotZ(a)
-        local sclval = args.scale
-        if sclval < 2.0 then sclval = 2.0 end
-        local s = Mat3.fromScale(sclval, -sclval)
+
+        local sclVerif = scale
+        if sclVerif < 2.0 then sclVerif = 2.0 end
+        local s = Mat3.fromScale(sclVerif, -sclVerif)
+
         local mat = Mat3.mul(Mat3.mul(t, s), r)
 
         -- Initialize canvas.
+        local fillHex = AseUtilities.aseColorToHex(
+            fillColor, ColorMode.RGB)
+        local strokeHex = AseUtilities.aseColorToHex(
+            strokeColor, ColorMode.RGB)
         local name = string.format("Polygon.%03d", sectors)
         local sprite = AseUtilities.initCanvas(
-            64, 64, name,
-            { args.fillClr.rgbaPixel,
-                args.strokeClr.rgbaPixel })
+            name, { fillHex, strokeHex })
         local layer = sprite.layers[#sprite.layers]
-        local frame = app.activeFrame or sprite.frames[1]
+        local frame = app.activeFrame
+            or sprite.frames[1] --[[@as Frame]]
         local cel = sprite:newCel(layer, frame)
 
-        local mesh = Mesh2.star(sectors, skip, pick, inset * 0.01)
+        local mesh = Mesh2.star(
+            sectors, skip, pick, inset * 0.01)
         Utilities.mulMat3Mesh2(mat, mesh)
-        AseUtilities.drawMesh2(
-            mesh,
-            args.useFill,
-            args.fillClr,
-            args.useStroke,
-            args.strokeClr,
-            Brush(args.strokeWeight),
-            cel,
-            layer)
+        ShapeUtilities.drawMesh2(
+            mesh, useFill, fillColor,
+            useStroke, strokeColor,
+            Brush(strokeWeight),
+            cel, layer)
 
         app.refresh()
     end

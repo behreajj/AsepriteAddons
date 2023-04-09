@@ -15,9 +15,6 @@ setmetatable(AseUtilities, {
 -- prompted to confirm.
 AseUtilities.CEL_COUNT_LIMIT = 256
 
----Default fill color.
-AseUtilities.DEFAULT_FILL = 0xffd7f5ff
-
 ---Default palette used when no other
 ---is available. Simulates a RYB
 ---color wheel with black and white.
@@ -36,31 +33,44 @@ AseUtilities.DEFAULT_PAL_ARR = {
     0xffa65911, -- Blue
     0xff922a3c, -- Blue-purple
     0xff850c69, -- Purple
-    0xff5500aa -- Red-purple
+    0xff5500aa  -- Red-purple
 }
-
----Default stroke color.
-AseUtilities.DEFAULT_STROKE = 0xff202020
 
 ---Angles in degrees which are remapped to
 ---permutations of atan(1,2) and atan(1,3).
 AseUtilities.DIMETRIC_ANGLES = {
-    [18] = 0.32175055439664, [19] = 0.32175055439664,
-    [26] = 0.46364760900081, [27] = 0.46364760900081,
-    [63] = 1.1071487177940904, [64] = 1.1071487177940904,
-    [71] = 1.2490457723983, [72] = 1.2490457723983,
-    [108] = 1.8925468811915, [109] = 1.8925468811915,
-    [116] = 2.0344439357957, [117] = 2.0344439357957,
-    [153] = 2.677945044589, [154] = 2.677945044589,
-    [161] = 2.8198420991932, [162] = 2.8198420991932,
-    [198] = 3.4633432079864, [199] = 3.4633432079864,
-    [206] = 3.6052402625906, [207] = 3.6052402625906,
-    [243] = 4.2487413713839, [244] = 4.2487413713839,
-    [251] = 4.390638425988, [252] = 4.390638425988,
-    [288] = 5.0341395347813, [289] = 5.0341395347813,
-    [296] = 5.1760365893855, [297] = 5.1760365893855,
-    [333] = 5.8195376981788, [334] = 5.8195376981788,
-    [341] = 5.9614347527829, [342] = 5.9614347527829
+    [18] = 0.32175055439664,
+    [19] = 0.32175055439664,
+    [26] = 0.46364760900081,
+    [27] = 0.46364760900081,
+    [63] = 1.1071487177940904,
+    [64] = 1.1071487177940904,
+    [71] = 1.2490457723983,
+    [72] = 1.2490457723983,
+    [108] = 1.8925468811915,
+    [109] = 1.8925468811915,
+    [116] = 2.0344439357957,
+    [117] = 2.0344439357957,
+    [153] = 2.677945044589,
+    [154] = 2.677945044589,
+    [161] = 2.8198420991932,
+    [162] = 2.8198420991932,
+    [198] = 3.4633432079864,
+    [199] = 3.4633432079864,
+    [206] = 3.6052402625906,
+    [207] = 3.6052402625906,
+    [243] = 4.2487413713839,
+    [244] = 4.2487413713839,
+    [251] = 4.390638425988,
+    [252] = 4.390638425988,
+    [288] = 5.0341395347813,
+    [289] = 5.0341395347813,
+    [296] = 5.1760365893855,
+    [297] = 5.1760365893855,
+    [333] = 5.8195376981788,
+    [334] = 5.8195376981788,
+    [341] = 5.9614347527829,
+    [342] = 5.9614347527829
 }
 
 ---Number of decimals to display when
@@ -79,20 +89,6 @@ AseUtilities.FILE_FORMATS = {
 -- request to create before the user is
 -- prompted to confirm.
 AseUtilities.FRAME_COUNT_LIMIT = 256
-
----Text horizontal alignment.
-AseUtilities.GLYPH_ALIGN_HORIZ = {
-    "CENTER",
-    "LEFT",
-    "RIGHT"
-}
-
----Text vertical alignment.
-AseUtilities.GLYPH_ALIGN_VERT = {
-    "BOTTOM",
-    "CENTER",
-    "TOP"
-}
 
 -- Number of swatches to generate for
 -- gray color mode sprites.
@@ -117,6 +113,46 @@ function AseUtilities.new()
     return inst
 end
 
+---Appends the child layers of a layer if it is a group
+---to an array. If the layer is not a group, then whther
+---it's appended depends on the arguments provided.
+---@param layer Layer parent layer
+---@param array Layer[] leaves array
+---@param includeLocked? boolean include locked layers
+---@param includeHidden? boolean include hidden layers
+---@param includeTiles? boolean include tile maps
+---@param includeBkg? boolean include backgrounds
+---@return Layer[]
+function AseUtilities.appendLeaves(
+    layer, array,
+    includeLocked, includeHidden,
+    includeTiles, includeBkg)
+    -- First check properties which are passed on by parents
+    -- to their children.
+    if (includeLocked or layer.isEditable)
+        and (includeHidden or layer.isVisible) then
+        if layer.isGroup then
+            local append = AseUtilities.appendLeaves
+            local childLayers = layer.layers --[[@as Layer]]
+            local lenChildLayers = #childLayers
+            local i = 0
+            while i < lenChildLayers do
+                i = i + 1
+                append(childLayers[i], array,
+                    includeLocked, includeHidden,
+                    includeTiles, includeBkg)
+            end
+        elseif (not layer.isReference)
+            and (includeTiles or (not layer.isTilemap))
+            and (includeBkg or (not layer.isBackground)) then
+            -- Leaf order should be what's ideal for composition,
+            -- with ascending stack indices.
+            table.insert(array, layer)
+        end
+    end
+    return array
+end
+
 ---Copies an Aseprite Color object by sRGB
 ---channel values. This is to prevent accidental
 ---pass by reference. The Color constructor does
@@ -127,26 +163,26 @@ end
 ---arithmetic. For more info, see
 ---https://www.wikiwand.com/en/Modular_arithmetic .
 ---The default is saturation arithmetic.
----@param aseClr Color aseprite color
+---@param aseColor Color aseprite color
 ---@param flag string out of bounds interpretation
 ---@return Color
-function AseUtilities.aseColorCopy(aseClr, flag)
+function AseUtilities.aseColorCopy(aseColor, flag)
     if flag == "UNBOUNDED" then
         return Color {
-            r = aseClr.red,
-            g = aseClr.green,
-            b = aseClr.blue,
-            a = aseClr.alpha
+            r = aseColor.red,
+            g = aseColor.green,
+            b = aseColor.blue,
+            a = aseColor.alpha
         }
     elseif flag == "MODULAR" then
         return AseUtilities.hexToAseColor(
-            AseUtilities.aseColorToHex(aseClr, ColorMode.RGB))
+            AseUtilities.aseColorToHex(aseColor, ColorMode.RGB))
     else
         return Color {
-            r = math.min(math.max(aseClr.red, 0), 255),
-            g = math.min(math.max(aseClr.green, 0), 255),
-            b = math.min(math.max(aseClr.blue, 0), 255),
-            a = math.min(math.max(aseClr.alpha, 0), 255)
+            r = math.min(math.max(aseColor.red, 0), 255),
+            g = math.min(math.max(aseColor.green, 0), 255),
+            b = math.min(math.max(aseColor.blue, 0), 255),
+            a = math.min(math.max(aseColor.alpha, 0), 255)
         }
     end
 end
@@ -156,22 +192,23 @@ end
 ---Both Aseprite Color and Clr allow arguments
 ---to exceed the expected ranges, [0, 255] and
 ---[0.0, 1.0], respectively.
----@param aseClr Color aseprite color
+---@param aseColor Color aseprite color
 ---@return Clr
-function AseUtilities.aseColorToClr(aseClr)
+function AseUtilities.aseColorToClr(aseColor)
     return Clr.new(
-        0.003921568627451 * aseClr.red,
-        0.003921568627451 * aseClr.green,
-        0.003921568627451 * aseClr.blue,
-        0.003921568627451 * aseClr.alpha)
+        0.003921568627451 * aseColor.red,
+        0.003921568627451 * aseColor.green,
+        0.003921568627451 * aseColor.blue,
+        0.003921568627451 * aseColor.alpha)
 end
 
 ---Converts an Aseprite color object to an
 ---integer. The meaning of the integer depends
----on the color mode. For RGB, uses modular
----arithmetic, i.e., does not check if red,
----green, blue and alpha channels are out of
----range [0, 255]. Returns zero if the color
+---on the color mode: the RGB integer is 32
+---bits; GRAY, 16; INDEXED, 8. For RGB mode,
+---uses modular arithmetic, i.e., does not check
+---if red, green, blue and alpha channels are out
+---of range [0, 255]. Returns zero if the color
 ---mode is not recognized.
 ---@param clr Color aseprite color
 ---@param clrMode ColorMode|integer color mode
@@ -185,10 +222,7 @@ function AseUtilities.aseColorToHex(clr, clrMode)
     elseif clrMode == ColorMode.GRAY then
         return clr.grayPixel
     elseif clrMode == ColorMode.INDEXED then
-        -- This issue was fixed. However, maintain
-        -- compatibility with older versions. Other
-        -- problems may cause need for rollback.
-        return math.floor(clr.index)
+        return clr.index
     end
     return 0
 end
@@ -208,29 +242,19 @@ end
 ---not support color management for palettes.
 ---@param palType string enumeration
 ---@param filePath string file path
----@param presetPath string preset path
 ---@param startIndex integer? start index
 ---@param count integer? count of colors to sample
 ---@param correctZeroAlpha boolean? alpha correction flag
 ---@return integer[]
 ---@return integer[]
-function AseUtilities.asePaletteLoad(palType, filePath, presetPath, startIndex, count, correctZeroAlpha)
+function AseUtilities.asePaletteLoad(
+    palType, filePath,
+    startIndex, count, correctZeroAlpha)
     local cntVal = count or 256
     local siVal = startIndex or 0
 
     local hexesProfile = nil
     local hexesSrgb = nil
-
-    local errorHandler = function(err)
-        app.alert {
-            title = "File Not Found",
-            text = {
-                "The palette could not be found.",
-                "Please check letter case (lower or upper).",
-                "A default palette will be used instead."
-            }
-        }
-    end
 
     if palType == "FILE" then
         if filePath and #filePath > 0 then
@@ -243,22 +267,6 @@ function AseUtilities.asePaletteLoad(palType, filePath, presetPath, startIndex, 
                 if palFile then
                     hexesProfile = AseUtilities.asePaletteToHexArr(
                         palFile, siVal, cntVal)
-                end
-            end
-        end
-    elseif palType == "PRESET" then
-        if presetPath and #presetPath > 0 then
-            -- Given how unreliable xpcall has proven with Sprites and
-            -- ColorProfiles, maybe don't use it.
-            -- app.fs.isFile doesn't work here.
-            local success = xpcall(
-                function(y) Palette { fromResource = y } end,
-                errorHandler, presetPath)
-            if success then
-                local palPreset = Palette { fromResource = presetPath }
-                if palPreset then
-                    hexesProfile = AseUtilities.asePaletteToHexArr(
-                        palPreset, siVal, cntVal)
                 end
             end
         end
@@ -301,7 +309,8 @@ function AseUtilities.asePaletteLoad(palType, filePath, presetPath, startIndex, 
         local src = AseUtilities.DEFAULT_PAL_ARR
         local lenSrc = #src
         local i = 0
-        while i < lenSrc do i = i + 1
+        while i < lenSrc do
+            i = i + 1
             hexesProfile[i] = src[i]
         end
     end
@@ -311,7 +320,8 @@ function AseUtilities.asePaletteLoad(palType, filePath, presetPath, startIndex, 
         hexesSrgb = {}
         local lenProf = #hexesProfile
         local i = 0
-        while i < lenProf do i = i + 1
+        while i < lenProf do
+            i = i + 1
             hexesSrgb[i] = hexesProfile[i]
         end
     end
@@ -322,7 +332,8 @@ function AseUtilities.asePaletteLoad(palType, filePath, presetPath, startIndex, 
     if correctZeroAlpha then
         local lenHexes = #hexesProfile
         local i = 0
-        while i < lenHexes do i = i + 1
+        while i < lenHexes do
+            i = i + 1
             if (hexesProfile[i] & 0xff000000) == 0x0 then
                 hexesProfile[i] = 0x0
                 hexesSrgb[i] = 0x0
@@ -341,23 +352,25 @@ end
 ---@param pal Palette aseprite palette
 ---@param startIndex integer? start index
 ---@param count integer? sample count
----@return table
+---@return integer[]
 function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
     if pal then
-        local palLen = #pal
+        local lenPal = #pal
 
         local si = startIndex or 0
-        si = math.min(math.max(si, 0), palLen - 1)
+        si = math.min(math.max(si, 0), lenPal - 1)
         local vc = count or 256
-        vc = math.min(math.max(vc, 2), palLen - si)
+        vc = math.min(math.max(vc, 2), lenPal - si)
 
+        ---@type integer[]
         local hexes = {}
         local i = 0
         local convert = AseUtilities.aseColorToHex
+        local rgbColorMode = ColorMode.RGB
         while i < vc do
             local aseColor = pal:getColor(si + i)
             i = i + 1
-            hexes[i] = convert(aseColor, ColorMode.RGB)
+            hexes[i] = convert(aseColor, rgbColorMode)
         end
 
         if #hexes == 1 then
@@ -377,11 +390,13 @@ end
 ---@return integer[]
 function AseUtilities.asePalettesToHexArr(palettes)
     if palettes then
-        local lenPalettes = #palettes
+        ---@type integer[]
         local hexes = {}
+        local lenPalettes = #palettes
         local i = 0
         local k = 0
         local convert = AseUtilities.aseColorToHex
+        local rgbColorMode = ColorMode.RGB
         while i < lenPalettes do
             i = i + 1
             local palette = palettes[i]
@@ -392,7 +407,7 @@ function AseUtilities.asePalettesToHexArr(palettes)
                     local aseColor = palette:getColor(j)
                     j = j + 1
                     local hex = convert(
-                        aseColor, ColorMode.RGB)
+                        aseColor, rgbColorMode)
                     k = k + 1
                     hexes[k] = hex
                 end
@@ -417,49 +432,54 @@ end
 ---provided, a new selection is created from the union.
 ---If the cumulative flag is true, the backdrop image is
 ---sampled regardless of its inclusion in the selection.
----Returns the blended image and its top left corner x, y.
----Does not support tile maps or images with mismatched
----color modes.
----@param aImage Image backdrop image
----@param bImage Image overlay image
----@param axCel integer? backdrop cel top left corner x
----@param ayCel integer? backdrop cel top left corner y
----@param bxCel integer? overlay cel top left corner x
----@param byCel integer? overlay cel top left corner y
+---Returns a new, blended image and its top left corner
+---x, y. Does not support tile maps or images with
+---mismatched color modes.
+---@param under Image under image
+---@param over Image overlay image
+---@param uxCel integer? under cel top left corner x
+---@param uyCel integer? under cel top left corner y
+---@param oxCel integer? overlay cel top left corner x
+---@param oyCel integer? overlay cel top left corner y
 ---@param mask Selection? selection
----@param cumulative boolean? backdrop ignore mask
+---@param cumulative boolean? under ignore mask
 ---@returns Image
 ---@returns integer
 ---@returns integer
 function AseUtilities.blendImage(
-    aImage, bImage, axCel, ayCel, bxCel, byCel,
+    under, over, uxCel, uyCel, oxCel, oyCel,
     mask, cumulative)
+    -- Because this method uses a mask and offers a
+    -- cumulative option, it cannot be replaced by
+    -- drawImage in 1.3rc-2, which supports blend modes.
+    -- This can also be used as a polyfill for indexed
+    -- color mode.
 
     local cmVrf = cumulative or false
-    local bycVrf = byCel or 0
-    local bxcVrf = bxCel or 0
-    local aycVrf = ayCel or 0
-    local axcVrf = axCel or 0
+    local oycVrf = oyCel or 0
+    local oxcVrf = oxCel or 0
+    local uycVrf = uyCel or 0
+    local uxcVrf = uxCel or 0
 
-    local aSpec = aImage.spec
-    local aw = aSpec.width
-    local ah = aSpec.height
-    local acm = aSpec.colorMode
-    local aMask = aSpec.transparentColor
+    local uSpec = under.spec
+    local uw = uSpec.width
+    local uh = uSpec.height
+    local ucm = uSpec.colorMode
+    local uMask = uSpec.transparentColor
 
-    local bSpec = bImage.spec
-    local bw = bSpec.width
-    local bh = bSpec.height
-    local bcm = bSpec.colorMode
-    local bMask = bSpec.transparentColor
+    local oSpec = over.spec
+    local ow = oSpec.width
+    local oh = oSpec.height
+    local ocm = oSpec.colorMode
+    local oMask = oSpec.transparentColor
 
     -- Find union of image bounds a and b.
-    local axMax = axcVrf + aw - 1
-    local ayMax = aycVrf + ah - 1
-    local xMin = math.min(axcVrf, bxcVrf)
-    local yMin = math.min(aycVrf, bycVrf)
-    local xMax = math.max(axMax, bxcVrf + bw - 1)
-    local yMax = math.max(ayMax, bycVrf + bh - 1)
+    local uxMax = uxcVrf + uw - 1
+    local uyMax = uycVrf + uh - 1
+    local xMin = math.min(uxcVrf, oxcVrf)
+    local yMin = math.min(uycVrf, oycVrf)
+    local xMax = math.max(uxMax, oxcVrf + ow - 1)
+    local yMax = math.max(uyMax, oycVrf + oh - 1)
 
     local wTarget = 1 + xMax - xMin
     local hTarget = 1 + yMax - yMin
@@ -478,10 +498,10 @@ function AseUtilities.blendImage(
 
         if cmVrf then
             -- If cumulative, then union with backdrop.
-            xMin = math.min(xMin, axcVrf)
-            yMin = math.min(yMin, aycVrf)
-            xMax = math.max(xMax, axMax)
-            yMax = math.max(yMax, ayMax)
+            xMin = math.min(xMin, uxcVrf)
+            yMin = math.min(yMin, uycVrf)
+            xMax = math.max(xMax, uxMax)
+            yMax = math.max(yMax, uyMax)
         end
 
         -- Update target image dimensions.
@@ -493,8 +513,8 @@ function AseUtilities.blendImage(
     end
 
     local tMask = 0
-    if aMask == bMask then tMask = aMask end
-    local modeTarget = acm
+    if uMask == oMask then tMask = uMask end
+    local modeTarget = ucm
 
     local tSpec = ImageSpec {
         width = wTarget,
@@ -502,25 +522,26 @@ function AseUtilities.blendImage(
         colorMode = modeTarget,
         transparentColor = tMask
     }
-    tSpec.colorSpace = aSpec.colorSpace
+    tSpec.colorSpace = uSpec.colorSpace
     local target = Image(tSpec)
 
     -- Avoid tile map images and mismatched image modes.
-    if (acm ~= bcm) or acm == 4 then
+    if (ucm ~= ocm) or ucm == 4 then
         return target, 0, 0
     end
 
     -- Offset needed when reading from source images
     -- into target image.
-    local axDiff = axcVrf - xMin
-    local ayDiff = aycVrf - yMin
-    local bxDiff = bxcVrf - xMin
-    local byDiff = bycVrf - yMin
+    local uxDiff = uxcVrf - xMin
+    local uyDiff = uycVrf - yMin
+    local oxDiff = oxcVrf - xMin
+    local oyDiff = oycVrf - yMin
 
-    -- TODO: Support grayscale?
     local blendFunc = nil
     if modeTarget == ColorMode.INDEXED then
         blendFunc = AseUtilities.blendIndices
+    elseif modeTarget == ColorMode.GRAY then
+        blendFunc = AseUtilities.blendGray
     else
         blendFunc = AseUtilities.blendRgba
     end
@@ -534,30 +555,57 @@ function AseUtilities.blendImage(
         local ySmpl = yPixel + yMin
         local isContained = selVrf:contains(xSmpl, ySmpl)
 
-        local aHex = 0x0
+        local uHex = 0x0
         if cmVrf or isContained then
-            local ax = xPixel - axDiff
-            local ay = yPixel - ayDiff
-            if ay > -1 and ay < ah
-                and ax > -1 and ax < aw then
-                aHex = aImage:getPixel(ax, ay)
+            local ux = xPixel - uxDiff
+            local uy = yPixel - uyDiff
+            if uy > -1 and uy < uh
+                and ux > -1 and ux < uw then
+                uHex = under:getPixel(ux, uy)
             end
         end
 
-        local bHex = 0x0
+        local oHex = 0x0
         if isContained then
-            local bx = xPixel - bxDiff
-            local by = yPixel - byDiff
-            if by > -1 and by < bh
-                and bx > -1 and bx < bw then
-                bHex = bImage:getPixel(bx, by)
+            local ox = xPixel - oxDiff
+            local oy = yPixel - oyDiff
+            if oy > -1 and oy < oh
+                and ox > -1 and ox < ow then
+                oHex = over:getPixel(ox, oy)
             end
         end
 
-        pixel(blendFunc(aHex, bHex, tMask))
+        pixel(blendFunc(uHex, oHex, tMask))
     end
 
     return target, xMin, yMin
+end
+
+---Blends two 16-bit gray colors.
+---Premultiplies each color by its alpha prior
+---to blending. Unpremultiplies the result.
+---@param a integer backdrop color
+---@param b integer overlay color
+---@return integer
+function AseUtilities.blendGray(a, b)
+    local t = b >> 0x08 & 0xff
+    if t > 0xfe then return b end
+    local v = a >> 0x08 & 0xff
+    if v < 0x01 then return b end
+
+    local u = 0xff - t
+    if t > 0x7f then t = t + 1 end
+
+    local uv = (v * u) // 0xff
+    local tuv = t + uv
+    if tuv < 0x01 then return 0x0 end
+    if tuv > 0xff then tuv = 0xff end
+
+    local ag = a & 0xff
+    local bg = b & 0xff
+    local cg = (bg * t + ag * uv) // tuv
+    if cg > 0xff then cg = 0xff end
+    return tuv << 0x08 | cg
 end
 
 ---Blends two indexed image colors. Prioritizes
@@ -683,7 +731,9 @@ end
 ---@param position Point? cel position
 ---@param guiClr integer? hexadecimal color
 ---@return Cel[]
-function AseUtilities.createCels(sprite, frStrtIdx, frCount, lyrStrtIdx, lyrCount, image, position, guiClr)
+function AseUtilities.createCels(
+    sprite, frStrtIdx, frCount, lyrStrtIdx,
+    lyrCount, image, position, guiClr)
     -- Do not use app.transactions.
     -- https://github.com/aseprite/aseprite/issues/3276
 
@@ -761,13 +811,13 @@ function AseUtilities.createCels(sprite, frStrtIdx, frCount, lyrStrtIdx, lyrCoun
         end
     end
 
-    local valPos = position or Point(0, 0)
-
     -- Shouldn't need to bother with image spec in this case.
     local valImg = image or Image(1, 1)
+    local valPos = position or Point(0, 0)
 
     -- Layers = y = rows
     -- Frames = x = columns
+    ---@type Cel[]
     local cels = {}
     local i = 0
     while i < flatCount do
@@ -783,7 +833,6 @@ function AseUtilities.createCels(sprite, frStrtIdx, frCount, lyrStrtIdx, lyrCoun
         i = i + 1
         cels[i] = sprite:newCel(
             layerObj, frameObj, valImg, valPos)
-
     end
 
     if guiClr and guiClr ~= 0x0 then
@@ -845,6 +894,7 @@ function AseUtilities.createFrames(sprite, count, duration)
     local valCount = count or 1
     if valCount < 1 then valCount = 1 end
 
+    ---@type Frame[]
     local frames = {}
     local i = 0
     while i < valCount do
@@ -867,9 +917,13 @@ end
 ---@param opacity integer? layer opacity
 ---@param guiClr integer? rgba color
 ---@return Layer[]
-function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr)
+function AseUtilities.createNewLayers(
+    sprite, count, blendMode, opacity, guiClr)
     if not sprite then
-        app.alert { title = "Error", text = "Sprite could not be found." }
+        app.alert {
+            title = "Error",
+            text = "Sprite could not be found."
+        }
         return {}
     end
 
@@ -902,9 +956,10 @@ function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr)
     local valCount = count or 1
     if valCount < 1 then valCount = 1 end
 
-    local oldLayerCount = #sprite.layers
+    ---@type Layer[]
     local layers = {}
-    app.transaction(function()
+    local oldLayerCount = #sprite.layers
+    app.transaction("New Layers", function()
         local i = 0
         while i < valCount do
             i = i + 1
@@ -920,7 +975,7 @@ function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr)
 
     if guiClr and guiClr ~= 0x0 then
         local aseColor = AseUtilities.hexToAseColor(guiClr)
-        app.transaction(function()
+        app.transaction("Layer Colors", function()
             local i = 0
             while i < valCount do
                 i = i + 1
@@ -930,72 +985,6 @@ function AseUtilities.createNewLayers(sprite, count, blendMode, opacity, guiClr)
     end
 
     return layers
-end
-
----Draws a border within an image's perimeter. Uses the
----Aseprite image instance method drawPixel. This means
----that the pixel changes will not be tracked as a
----transaction.
----@param img Image Aseprite image
----@param border integer border depth
----@param bordHex integer rgba color
-function AseUtilities.drawBorder(img, border, bordHex)
-    -- This is no longer used by either layerExport
-    -- or frameExport, but keep it around. The new
-    -- strategy is to clear an image to a border color,
-    -- then blit the inner image over that.
-    if border < 1 then return img end
-    if bordHex == img.spec.transparentColor then
-        -- This could be misinterpreted if the bordHex
-        -- color is expected to be an ABGR32 rather than
-        -- whatever format is image appropriate.
-        return img
-    end
-    local w = img.width
-    local h = img.height
-    if border >= math.min(w, h) then
-        local pxItr = img:pixels()
-        for pixel in pxItr do pixel(bordHex) end
-        return img
-    end
-
-    local hnbord = h - border
-    local wnbord = w - border
-    local rect = Rectangle()
-
-    -- Left edge.
-    rect.x = 0
-    rect.y = 0
-    rect.width = border
-    rect.height = hnbord
-    local leftItr = img:pixels(rect)
-    for pixel in leftItr do pixel(bordHex) end
-
-    -- Top edge.
-    rect.x = border
-    rect.y = 0
-    rect.width = wnbord
-    rect.height = border
-    local topItr = img:pixels(rect)
-    for pixel in topItr do pixel(bordHex) end
-
-    -- Right edge.
-    rect.x = wnbord
-    rect.y = border
-    rect.width = border
-    rect.height = hnbord
-    local rightItr = img:pixels(rect)
-    for pixel in rightItr do pixel(bordHex) end
-
-    -- Bottom edge.
-    rect.x = 0
-    rect.y = hnbord
-    rect.width = wnbord
-    rect.height = border
-    local bottomItr = img:pixels(rect)
-    for pixel in bottomItr do pixel(bordHex) end
-
-    return img
 end
 
 ---Draws a filled circle. Uses the Aseprite image
@@ -1026,426 +1015,6 @@ function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
     end
 end
 
----Draws a curve in Aseprite with the contour tool.
----If a stroke is used, draws the stroke line by line.
----@param curve Curve2 curve
----@param resolution integer curve resolution
----@param useFill boolean use fill
----@param fillClr Color fill color
----@param useStroke boolean use stroke
----@param strokeClr Color stroke color
----@param brsh Brush brush
----@param cel Cel cel
----@param layer Layer layer
-function AseUtilities.drawCurve2(curve, resolution, useFill, fillClr, useStroke, strokeClr, brsh, cel, layer)
-
-    local vres = 2
-    if resolution > 2 then vres = resolution end
-
-    local toPoint = AseUtilities.vec2ToPoint
-    local bezier = Vec2.bezierPoint
-
-    local isLoop = curve.closedLoop
-    local kns = curve.knots
-    local knsLen = #kns
-    local toPercent = 1.0 / vres
-    local pts = {}
-    local start = 2
-    local prevKnot = kns[1]
-    if isLoop then
-        start = 1
-        prevKnot = kns[knsLen]
-    end
-
-    local h = start - 1
-    local j = 0
-    while h < knsLen do h = h + 1
-        local currKnot = kns[h]
-
-        local coPrev = prevKnot.co
-        local fhPrev = prevKnot.fh
-        local rhNext = currKnot.rh
-        local coNext = currKnot.co
-
-        j = j + 1
-        pts[j] = toPoint(coPrev)
-        local i = 0
-        while i < vres do
-            i = i + 1
-            j = j + 1
-            pts[j] = toPoint(bezier(
-                coPrev, fhPrev,
-                rhNext, coNext,
-                i * toPercent))
-        end
-
-        prevKnot = currKnot
-    end
-
-    -- Draw fill.
-    local useTool = app.useTool
-    if isLoop and useFill then
-        app.transaction(function()
-            useTool {
-                tool = "contour",
-                color = fillClr,
-                brush = brsh,
-                points = pts,
-                cel = cel,
-                layer = layer,
-                freehandAlgorithm = 1
-            }
-        end)
-    end
-
-    -- Draw stroke.
-    if useStroke then
-        app.transaction(function()
-            local ptPrev = pts[1]
-            local ptsLen = #pts
-            if isLoop then
-                ptPrev = pts[ptsLen]
-            end
-
-            local k = start - 1
-            while k < ptsLen do
-                k = k + 1
-                local ptCurr = pts[k]
-                useTool {
-                    tool = "line",
-                    color = strokeClr,
-                    brush = brsh,
-                    points = { ptPrev, ptCurr },
-                    cel = cel,
-                    layer = layer,
-                    freehandAlgorithm = 1
-                }
-                ptPrev = ptCurr
-            end
-        end)
-    end
-end
-
----Draws a glyph at its native scale to an image.
----The color is to be represented as an rgba integer.
----Operates on pixels. This should not be used
----with app.useTool.
----@param image Image image
----@param glyph Glyph glyph
----@param hex integer rgba integer
----@param x integer x top left corner
----@param y integer y top left corner
----@param gw integer glyph width
----@param gh integer glyph height
-function AseUtilities.drawGlyph(image, glyph, hex, x, y, gw, gh)
-
-    local lenn1 = gw * gh - 1
-    local blend = AseUtilities.blendRgba
-    local glMat = glyph.matrix
-    local glDrop = glyph.drop
-    local ypDrop = y + glDrop
-
-    local i = -1
-    while i < lenn1 do i = i + 1
-        local shift = lenn1 - i
-        local mark = (glMat >> shift) & 1
-        if mark ~= 0 then
-            local xMark = x + (i % gw)
-            local yMark = ypDrop + (i // gw)
-            local srcHex = image:getPixel(xMark, yMark)
-            local trgHex = blend(srcHex, hex)
-            image:drawPixel(xMark, yMark, trgHex)
-        end
-    end
-end
-
----Draws a glyph to an image at a pixel scale.
----Resizes the glyph according to nearest neighbor.
----The color is to be represented as an rgba integer.
----Operates on pixels. This should not be used
----with app.useTool.
----@param image Image image
----@param glyph Glyph glyph
----@param hex integer rgba integer
----@param x integer x top left corner
----@param y integer y top left corner
----@param gw integer glyph width
----@param gh integer glyph height
----@param dw integer display width
----@param dh integer display height
-function AseUtilities.drawGlyphNearest(image, glyph, hex, x, y, gw, gh, dw, dh)
-
-    if gw == dw and gh == dh then
-        return AseUtilities.drawGlyph(
-            image, glyph, hex,
-            x, y, gw, gh)
-    end
-
-    local lenTrgn1 = dw * dh - 1
-    local lenSrcn1 = gw * gh - 1
-    local tx = gw / dw
-    local ty = gh / dh
-    local floor = math.floor
-    local blend = AseUtilities.blendRgba
-    local glMat = glyph.matrix
-    local glDrop = glyph.drop
-    local ypDrop = y + glDrop * (dh / gh)
-    local i = -1
-    while i < lenTrgn1 do
-        i = i + 1
-        local xTrg = i % dw
-        local yTrg = i // dw
-
-        local xSrc = floor(xTrg * tx)
-        local ySrc = floor(yTrg * ty)
-        local idxSrc = ySrc * gw + xSrc
-
-        local shift = lenSrcn1 - idxSrc
-        local mark = (glMat >> shift) & 1
-        if mark ~= 0 then
-            local xMark = x + xTrg
-            local yMark = ypDrop + yTrg
-            local srcHex = image:getPixel(xMark, yMark)
-            local trgHex = blend(srcHex, hex)
-            image:drawPixel(xMark, yMark, trgHex)
-        end
-    end
-end
-
----Draws the knot handles of a curve.
----Color arguments are optional.
----@param curve Curve2 curve
----@param cel Cel cel
----@param layer Layer layer
----@param lnClr Color? line color
----@param coClr Color? coordinate color
----@param fhClr Color? fore handle color
----@param rhClr Color? rear handle color
-function AseUtilities.drawHandles2(curve, cel, layer, lnClr, coClr, fhClr, rhClr)
-
-    local kns = curve.knots
-    local knsLen = #kns
-    local drawKnot = AseUtilities.drawKnot2
-    app.transaction(function()
-        local i = 0
-        while i < knsLen do
-            i = i + 1
-            drawKnot(
-                kns[i], cel, layer,
-                lnClr, coClr,
-                fhClr, rhClr)
-        end
-    end)
-end
-
----Draws a knot for diagnostic purposes.
----Color arguments are optional.
----@param knot Knot2 knot
----@param cel Cel cel
----@param layer Layer layer
----@param lnClr Color? line color
----@param coClr Color? coordinate color
----@param fhClr Color? fore handle color
----@param rhClr Color? rear handle color
-function AseUtilities.drawKnot2(knot, cel, layer, lnClr, coClr, fhClr, rhClr)
-    local lnClrVal = lnClr or Color { r = 175, g = 175, b = 175 }
-    local rhClrVal = rhClr or Color { r = 2, g = 167, b = 235 }
-    local coClrVal = coClr or Color { r = 235, g = 225, b = 40 }
-    local fhClrVal = fhClr or Color { r = 235, g = 26, b = 64 }
-
-    local lnBrush = Brush { size = 1 }
-    local rhBrush = Brush { size = 4 }
-    local coBrush = Brush { size = 6 }
-    local fhBrush = Brush { size = 5 }
-
-    local coPt = AseUtilities.vec2ToPoint(knot.co)
-    local fhPt = AseUtilities.vec2ToPoint(knot.fh)
-    local rhPt = AseUtilities.vec2ToPoint(knot.rh)
-
-    app.transaction(function()
-        -- Line from rear handle to coordinate.
-        app.useTool {
-            tool = "line",
-            color = lnClrVal,
-            brush = lnBrush,
-            points = { rhPt, coPt },
-            cel = cel,
-            layer = layer
-        }
-
-        -- Line from coordinate to fore handle.
-        app.useTool {
-            tool = "line",
-            color = lnClrVal,
-            brush = lnBrush,
-            points = { coPt, fhPt },
-            cel = cel,
-            layer = layer
-        }
-
-        -- Rear handle point.
-        app.useTool {
-            tool = "pencil",
-            color = rhClrVal,
-            brush = rhBrush,
-            points = { rhPt },
-            cel = cel,
-            layer = layer
-        }
-
-        -- Coordinate point.
-        app.useTool {
-            tool = "pencil",
-            color = coClrVal,
-            brush = coBrush,
-            points = { coPt },
-            cel = cel,
-            layer = layer
-        }
-
-        -- Fore handle point.
-        app.useTool {
-            tool = "pencil",
-            color = fhClrVal,
-            brush = fhBrush,
-            points = { fhPt },
-            cel = cel,
-            layer = layer
-        }
-    end)
-end
-
----Draws a mesh in Aseprite with the contour tool.
----If a stroke is used, draws the stroke line by line.
----@param mesh Mesh2 mesh
----@param useFill boolean use fill
----@param fillClr Color fill color
----@param useStroke boolean use stroke
----@param strokeClr Color stroke color
----@param brsh Brush brush
----@param cel Cel cel
----@param layer Layer layer
-function AseUtilities.drawMesh2(mesh, useFill, fillClr, useStroke, strokeClr, brsh, cel, layer)
-    -- Convert Vec2s to Points.
-    local vs = mesh.vs
-    local vsLen = #vs
-    local pts = {}
-    local toPt = AseUtilities.vec2ToPoint
-    local idx0 = 0
-    while idx0 < vsLen do
-        idx0 = idx0 + 1
-        pts[idx0] = toPt(vs[idx0])
-    end
-
-    -- Group points by face.
-    local fs = mesh.fs
-    local fsLen = #fs
-    local ptsGrouped = {}
-    local idx1 = 0
-    while idx1 < fsLen do
-        idx1 = idx1 + 1
-        local f = fs[idx1]
-        local fLen = #f
-        local ptsFace = {}
-        local idx2 = 0
-        while idx2 < fLen do
-            idx2 = idx2 + 1
-            ptsFace[idx2] = pts[f[idx2]]
-        end
-        ptsGrouped[idx1] = ptsFace
-    end
-
-    -- Group fills into one transaction.
-    local useTool = app.useTool
-    if useFill then
-        app.transaction(function()
-            local idx3 = 0
-            while idx3 < fsLen do
-                idx3 = idx3 + 1
-                useTool {
-                    tool = "contour",
-                    color = fillClr,
-                    brush = brsh,
-                    points = ptsGrouped[idx3],
-                    cel = cel,
-                    layer = layer
-                }
-            end
-        end)
-    end
-
-    -- Group strokes into one transaction.
-    -- Draw strokes line by line.
-    if useStroke then
-        app.transaction(function()
-            local idx4 = 0
-            while idx4 < fsLen do
-                idx4 = idx4 + 1
-                local ptGroup = ptsGrouped[idx4]
-                local ptgLen = #ptGroup
-                local ptPrev = ptGroup[ptgLen]
-                local idx5 = 0
-                while idx5 < ptgLen do
-                    idx5 = idx5 + 1
-                    local ptCurr = ptGroup[idx5]
-                    useTool {
-                        tool = "line",
-                        color = strokeClr,
-                        brush = brsh,
-                        points = { ptPrev, ptCurr },
-                        cel = cel,
-                        layer = layer
-                    }
-                    ptPrev = ptCurr
-                end
-            end
-        end)
-    end
-end
-
----Draws an array of characters to an image
----according to the coordinates.
----Operates on pixel by pixel level. Its use
----should not be mixed with app.useTool.
----@param lut table glyph look up table
----@param image Image image
----@param chars string[] characters table
----@param hex integer rgba integer
----@param x integer x top left corner
----@param y integer y top left corner
----@param gw integer glyph width
----@param gh integer glyph height
----@param scale integer display scale
-function AseUtilities.drawString(lut, image, chars, hex, x, y, gw, gh, scale)
-    local writeChar = x
-    local writeLine = y
-    local charLen = #chars
-    local dw = gw * scale
-    local dh = gh * scale
-    local scale2 = scale + scale
-    local drawGlyph = AseUtilities.drawGlyphNearest
-    local defGlyph = lut[' ']
-    local i = 0
-    while i < charLen do
-        i = i + 1
-        local ch = chars[i]
-        -- print(ch)
-        if ch == '\n' then
-            writeLine = writeLine + dh + scale2
-            writeChar = x
-        else
-            local glyph = lut[ch] or defGlyph
-            -- print(glyph)
-
-            drawGlyph(
-                image, glyph, hex,
-                writeChar, writeLine,
-                gw, gh, dw, dh)
-            writeChar = writeChar + dw
-        end
-    end
-end
-
 ---Blits input image onto another that is the
 ---next power of 2 in dimension. The nonUniform
 ---flag specifies whether the result can have
@@ -1458,7 +1027,8 @@ end
 ---@param colorSpace ColorSpace color space
 ---@param nonUniform boolean non uniform dimensions
 ---@return Image
-function AseUtilities.expandImageToPow2(img, colorMode, alphaMask, colorSpace, nonUniform)
+function AseUtilities.expandImageToPow2(
+    img, colorMode, alphaMask, colorSpace, nonUniform)
     local wOrig = img.width
     local hOrig = img.height
     local wDest = wOrig
@@ -1488,6 +1058,353 @@ function AseUtilities.expandImageToPow2(img, colorMode, alphaMask, colorSpace, n
     return potImg
 end
 
+---Finds a filtered array of cels to be edited in-place
+---according to the provided criteria. The target is a
+---string constant that could be "ALL", "ACTIVE", "RANGE"
+---or "SELECTION". When the target is "ACTIVE", this
+---includes the children of the active layer if it's a group.
+---
+---Visibility and editability are only considered locally;
+---it's assumed that if the user selects a child layer whose
+---parent is locked or hidden, they intended to do so.
+---
+---The selection option will create a new layer and cel.
+---The all and active options will clear the range.
+---This method should be called after any range accesses.
+---@param sprite Sprite active sprite
+---@param layer Layer|nil active layer
+---@param frame Frame|nil active frame
+---@param target string target preset
+---@param includeLocked? boolean include locked layers
+---@param includeHidden? boolean include hidden layers
+---@param includeTiles? boolean include tile maps
+---@param includeBkg? boolean include backgrounds
+---@return Cel[]
+function AseUtilities.filterCels(
+    sprite, layer, frame, target,
+    includeLocked,
+    includeHidden,
+    includeTiles,
+    includeBkg)
+    ---@type Cel[]
+    local trgCels = {}
+    local lenTrgCels = 0
+
+    -- When the timeline is hidden, the range
+    -- cannot be accessed properly.
+    local tlHidden = not app.preferences.general.visible_timeline
+    if tlHidden then
+        app.command.Timeline { open = true }
+    end
+
+    -- Ideally, this would restore the user's range from
+    -- prior to the function call, but cel-type ranges
+    -- can't be preserved anyway, and the performance cost
+    -- may outweigh the convenience.
+    if target == "ALL" then
+        local leaves = AseUtilities.getLayerHierarchy(
+            sprite,
+            includeLocked,
+            includeHidden,
+            includeTiles,
+            includeBkg)
+
+        if #leaves > 0 then
+            -- Possibility that the active sprite and the sprite
+            -- referred to by the range are mismatched!
+            local appRange = app.range
+            if appRange.sprite ~= sprite then
+                appRange:clear()
+            end
+
+            -- Ranges accept frame numbers, not frame objects
+            -- to their frames setter.
+            ---@type integer[]
+            local frIdcs = {}
+            local lenFrames = #sprite.frames
+            local i = 0
+            while i < lenFrames do
+                i = i + 1
+                frIdcs[i] = i
+            end
+
+            appRange.layers = leaves
+            appRange.frames = frIdcs
+
+            -- Editability has already been determined
+            -- by layers loop above.
+            local imgsRange = appRange.images
+            local lenImgsRange = #imgsRange
+            local j = 0
+            while j < lenImgsRange do
+                j = j + 1
+                lenTrgCels = lenTrgCels + 1
+                trgCels[lenTrgCels] = imgsRange[j].cel
+            end
+
+            appRange:clear()
+        end
+    elseif target == "RANGE" then
+        local appRange = app.range
+        if appRange.sprite == sprite then
+            local imgsRange = appRange.images
+            local lenImgsRange = #imgsRange
+            local i = 0
+            while i < lenImgsRange do
+                i = i + 1
+                local image = imgsRange[i]
+                local cel = image.cel
+                local celLayer = cel.layer
+
+                if (not celLayer.isReference)
+                    and (includeHidden or celLayer.isVisible)
+                    and (includeLocked or celLayer.isEditable)
+                    and (includeTiles or (not celLayer.isTilemap))
+                    and (includeBkg or (not celLayer.isBackground)) then
+                    lenTrgCels = lenTrgCels + 1
+                    trgCels[lenTrgCels] = cel
+                end
+            end
+        end
+    elseif target == "SELECTION" then
+        if frame then
+            local sel = AseUtilities.getSelection(sprite)
+            local selBounds = sel.bounds
+            local xSel = selBounds.x
+            local ySel = selBounds.y
+            local activeSpec = sprite.spec
+            local alphaMask = activeSpec.transparentColor
+
+            -- Create a subset of flattened sprite.
+            local flatSpec = ImageSpec {
+                width = math.max(1, selBounds.width),
+                height = math.max(1, selBounds.height),
+                colorMode = activeSpec.colorMode,
+                transparentColor = alphaMask
+            }
+            flatSpec.colorSpace = activeSpec.colorSpace
+
+            local flatImage = Image(flatSpec)
+            flatImage:drawSprite(
+                sprite, frame, Point(-xSel, -ySel))
+
+            -- Remove pixels within selection bounds
+            -- but not within selection itself.
+            local flatPxItr = flatImage:pixels()
+            for pixel in flatPxItr do
+                local x = pixel.x + xSel
+                local y = pixel.y + ySel
+                if not sel:contains(x, y) then
+                    pixel(alphaMask)
+                end
+            end
+
+            local adjCel = nil
+            app.transaction("Cel From Mask", function()
+                local adjLayer = sprite:newLayer()
+                adjLayer.name = "Mask.Layer"
+                adjCel = sprite:newCel(
+                    adjLayer, frame,
+                    flatImage, Point(xSel, ySel))
+            end)
+
+            lenTrgCels = lenTrgCels + 1
+            trgCels[lenTrgCels] = adjCel
+        end
+    else
+        -- Default to "ACTIVE"
+        if layer and frame then
+            ---@type Layer[]
+            local leaves = {}
+            AseUtilities.appendLeaves(
+                layer, leaves,
+                includeLocked,
+                includeHidden,
+                includeTiles,
+                includeBkg)
+
+            if #leaves > 0 then
+                local appRange = app.range
+                if appRange.sprite ~= sprite then
+                    appRange:clear()
+                end
+
+                appRange.layers = leaves
+                appRange.frames = { frame.frameNumber }
+
+                -- Editability has already been determined
+                -- by layers loop above.
+                local imgsRange = appRange.images
+                local lenImgsRange = #imgsRange
+                local j = 0
+                while j < lenImgsRange do
+                    j = j + 1
+                    lenTrgCels = lenTrgCels + 1
+                    trgCels[lenTrgCels] = imgsRange[j].cel
+                end
+
+                appRange:clear()
+            end
+        end
+    end
+
+    if tlHidden then
+        app.command.Timeline { close = true }
+    end
+
+    return trgCels
+end
+
+---Flattens a group layer to a composite image, including
+---layers according to the provided criteria. Assumes that
+---the layer has already been confirmed to be a group.
+---If no composite could be made, returns a 1x1 image and
+---a rectangle situated in the top left corner.
+---@param group Layer group layer
+---@param frame Frame|integer frame
+---@param sprClrMode ColorMode|integer sprite color mode
+---@param colorSpace ColorSpace color space
+---@param alphaIndex? integer alpha mask index
+---@param includeLocked? boolean include locked layers
+---@param includeHidden? boolean include hidden layers
+---@param includeTiles? boolean include tile maps
+---@param includeBkg? boolean include backgrounds
+---@return Image
+---@return Rectangle
+function AseUtilities.flattenGroup(
+    group, frame, sprClrMode,
+    colorSpace, alphaIndex,
+    includeLocked, includeHidden,
+    includeTiles, includeBkg)
+    local aiVerif = 0
+    if alphaIndex then aiVerif = alphaIndex end
+
+    local leaves = AseUtilities.appendLeaves(
+        group, {},
+        includeLocked, includeHidden,
+        includeTiles, includeBkg)
+    local lenLeaves = #leaves
+
+    local packets = {}
+    local lenPackets = 0
+
+    local isIndexed = sprClrMode == ColorMode.INDEXED
+    local tilesToImage = AseUtilities.tilesToImage
+    local blendImage = AseUtilities.blendImage
+    local xTlGroup = 2147483647
+    local yTlGroup = 2147483647
+    local xBrGroup = -2147483648
+    local yBrGroup = -2147483648
+
+    local image = nil
+    local bounds = nil
+
+    local i = 0
+    while i < lenLeaves do
+        i = i + 1
+        local leafLayer = leaves[i]
+        local leafCel = leafLayer:cel(frame)
+        if leafCel then
+            local leafImage = leafCel.image
+            if leafLayer.isTilemap then
+                local tileSet = leafLayer.tileset
+                leafImage = tilesToImage(
+                    leafImage, tileSet, sprClrMode)
+            end
+
+            -- An Image:isEmpty check could be used here, but
+            -- it was avoided to not incur performance cost.
+            -- Calculate manually. Do not use cel bounds.
+            local leafPos = leafCel.position
+            local xTlCel = leafPos.x
+            local yTlCel = leafPos.y
+            local xBrCel = xTlCel + leafImage.width - 1
+            local yBrCel = yTlCel + leafImage.height - 1
+
+            if xTlCel < xTlGroup then xTlGroup = xTlCel end
+            if yTlCel < yTlGroup then yTlGroup = yTlCel end
+            if xBrCel > xBrGroup then xBrGroup = xBrCel end
+            if yBrCel > yBrGroup then yBrGroup = yBrCel end
+
+            lenPackets = lenPackets + 1
+            packets[lenPackets] = {
+                blendMode    = leafLayer.blendMode,
+                image        = leafImage,
+                opacityCel   = leafCel.opacity,
+                opacityLayer = leafLayer.opacity,
+                xtl          = xTlCel,
+                ytl          = yTlCel
+            }
+        end
+    end
+
+    local wGroup = 1 + xBrGroup - xTlGroup
+    local hGroup = 1 + yBrGroup - yTlGroup
+    if wGroup > 0 and hGroup > 0 then
+        bounds = Rectangle {
+            x = xTlGroup,
+            y = yTlGroup,
+            width = wGroup,
+            height = hGroup
+        }
+
+        local compSpec = ImageSpec {
+            width = wGroup,
+            height = hGroup,
+            colorMode = sprClrMode,
+            transparentColor = aiVerif
+        }
+        compSpec.colorSpace = colorSpace
+        image = Image(compSpec)
+
+        local floor = math.floor
+
+        local j = 0
+        while j < lenPackets do
+            j = j + 1
+            local packet = packets[j]
+            local leafBlendMode = packet.blendMode --[[@as BlendMode]]
+            local leafImage = packet.image --[[@as Image]]
+            local leafCelOpacity = packet.opacityCel --[[@as integer]]
+            local leafLayerOpacity = packet.opacityLayer --[[@as integer]]
+            local xTlLeaf = packet.xtl --[[@as integer]]
+            local yTlLeaf = packet.ytl --[[@as integer]]
+
+            local celOpac01 = leafCelOpacity * 0.003921568627451
+            local layerOpac01 = leafLayerOpacity * 0.003921568627451
+            local leafOpac01 = celOpac01 * layerOpac01
+            local leafOpacity = floor(leafOpac01 * 255.0 + 0.5)
+
+            local compPos = Point(
+                xTlLeaf - xTlGroup,
+                yTlLeaf - yTlGroup)
+
+            if isIndexed then
+                image = blendImage(image, leafImage,
+                    0, 0, compPos.x, compPos.y)
+            else
+                image:drawImage(
+                    leafImage, compPos,
+                    leafOpacity, leafBlendMode)
+            end
+        end
+    end
+
+    if (not image) or (not bounds) then
+        bounds = Rectangle(0, 0, 1, 1)
+        local invalSpec = ImageSpec {
+            width = 1,
+            height = 1,
+            colorMode = sprClrMode,
+            transparentColor = aiVerif
+        }
+        invalSpec.colorSpace = colorSpace
+        image = Image(invalSpec)
+    end
+
+    return image, bounds
+end
+
 ---Returns a copy of the source image that has
 ---been flipped horizontally.
 ---Also returns displaced coordinates for the
@@ -1497,6 +1414,7 @@ end
 ---@return integer
 ---@return integer
 function AseUtilities.flipImageHoriz(source)
+    ---@type integer[]
     local px = {}
     local i = 0
     local srcPxItr = source:pixels()
@@ -1529,6 +1447,7 @@ end
 ---@return integer
 ---@return integer
 function AseUtilities.flipImageVert(source)
+    ---@type integer[]
     local px = {}
     local i = 0
     local srcPxItr = source:pixels()
@@ -1552,53 +1471,140 @@ function AseUtilities.flipImageVert(source)
     return target, 0, 1 - h
 end
 
----Gets a table of frames from a sprite based on
----a string constant. "ALL" gets all frames in the
----sprite. "RANGE" gets the frames in the timeline
----range. Defaults to "ACTIVE" which returns the
----active frame. If there's no active frame,
----returns an empty array. If a range is a layer
----type, returns all frames in sprite.
+---Gets an array of arrays of frame indices from a
+---sprite according to a string constant.
+---"ALL" gets all frames in the sprite.
+---"RANGE" gets the frames in the timeline range.
+---"MANUAL" attempts to parse string of integers
+---defined by commas and hyphens.
+---"TAGS" gets the frames from an array of tags.
+---"ACTIVE", the default, returns the active frame.
+---If there's no active frame, returns an empty array.
+---
+---For tags and ranges, duplicates will be included
+---when the batched flag is true; otherwise a unique
+---set is returned.
+---
+---For ranges, call this method before new layers,
+---frames or cels are created. Otherwise the range
+---will be lost. Checks timeline visibility before
+---accessing range.
+---
+---If a range is a layer type, returns all frames
+---in the sprite.
 ---@param sprite Sprite sprite
 ---@param target string preset
----@return table
-function AseUtilities.getFrames(sprite, target)
-    local frames = {}
-    if target == "RANGE" then
-        -- Call this method before new layers, cels
-        -- or frames are created, otherwise the user's
-        -- range data will be lost.
-        local range = app.range
-        local rangeType = range.type
-        if rangeType == RangeType.LAYERS then
-            local allFrames = sprite.frames
-            local lenAllFrames = #allFrames
-            local i = 0
-            while i < lenAllFrames do i = i + 1
-                frames[i] = allFrames[i]
-            end
-        else
-            local rangeFrames = range.frames
-            local lenRangeFrames = #rangeFrames
-            local i = 0
-            while i < lenRangeFrames do i = i + 1
-                frames[i] = rangeFrames[i]
-            end
-        end
-    elseif target == "ALL" then
+---@param batch boolean? batch
+---@param mnStr string? manual
+---@param tags Tag[]? tags
+---@return integer[][]
+function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
+    if target == "ALL" then
         local allFrames = sprite.frames
         local lenAllFrames = #allFrames
-        local i = 0
-        while i < lenAllFrames do i = i + 1
-            frames[i] = allFrames[i]
+        local j = 0
+        ---@type integer[]
+        local frIdcsAll = {}
+        while j < lenAllFrames do
+            j = j + 1
+            frIdcsAll[j] = allFrames[j].frameNumber
         end
+        return { frIdcsAll }
+    elseif target == "MANUAL" then
+        -- print("Get frames called with manual tag")
+        if mnStr then
+            local lenFrames = #sprite.frames
+            if batch then
+                -- print("Batching")
+                return Utilities.parseRangeStringOverlap(
+                    mnStr, lenFrames)
+            else
+                -- print("No batching")
+                return { Utilities.parseRangeStringUnique(
+                    mnStr, lenFrames) }
+            end
+        else
+            return { {} }
+        end
+    elseif target == "TAGS" then
+        if tags then
+            if batch then
+                return AseUtilities.parseTagsOverlap(tags)
+            else
+                return { AseUtilities.parseTagsUnique(tags) }
+            end
+        else
+            return { {} }
+        end
+    elseif target == "RANGE" then
+        local tlHidden = not app.preferences.general.visible_timeline
+        if tlHidden then
+            app.command.Timeline { open = true }
+        end
+
+        ---@type integer[]
+        local frIdcsRange = {}
+        local appRange = app.range
+        if appRange.sprite == sprite then
+            local rangeType = appRange.type
+            if rangeType == RangeType.LAYERS then
+                local allFrames = sprite.frames
+                local lenAllFrames = #allFrames
+                local i = 0
+                while i < lenAllFrames do
+                    i = i + 1
+                    frIdcsRange[i] = allFrames[i].frameNumber
+                end
+            else
+                frIdcsRange = AseUtilities.parseRange(appRange)
+            end
+        end
+
+        if tlHidden then
+            app.command.Timeline { close = true }
+        end
+
+        return { frIdcsRange }
     else
-        local activeFrame = app.activeFrame
+        -- Default to "ACTIVE".
+        local activeFrame = app.activeFrame --[[@as Frame]]
         if activeFrame then
-            frames[1] = activeFrame
+            return { { activeFrame.frameNumber } }
+        else
+            return { {} }
         end
     end
-    return frames
+end
+
+---Appends a sprite's layer hierarchy to an array.
+---If no array is provided, one is created.
+---Whether layers are appended depends on the
+---arguments provided.
+---@param sprite Sprite sprite
+---@param includeLocked? boolean include locked layers
+---@param includeHidden? boolean include hidden layers
+---@param includeTiles? boolean include tile maps
+---@param includeBkg? boolean include backgrounds
+---@return Layer[]
+function AseUtilities.getLayerHierarchy(
+    sprite,
+    includeLocked, includeHidden,
+    includeTiles, includeBkg)
+    local append = AseUtilities.appendLeaves
+    local array = {}
+    local layers = sprite.layers
+    local lenLayers = #layers
+    local i = 0
+    while i < lenLayers do
+        i = i + 1
+        append(
+            layers[i], array,
+            includeLocked,
+            includeHidden,
+            includeTiles,
+            includeBkg)
+    end
+    return array
 end
 
 ---For sprites with multiple palettes, tries to get
@@ -1622,6 +1628,57 @@ function AseUtilities.getPalette(frame, palettes)
     return palettes[idx]
 end
 
+---Appends layers contained in a range according to
+---the provided filters.
+---
+---Call this method before new layers, frames or cels
+---are created. Otherwise the range will be lost.
+---Checks timeline visibility before accessing range.
+---@param range Range range
+---@param includeLocked? boolean include locked layers
+---@param includeHidden? boolean include hidden layers
+---@param includeTiles? boolean include tile maps
+---@param includeBkg? boolean include backgrounds
+---@return Layer[]
+function AseUtilities.getRangeLayers(
+    range,
+    includeLocked, includeHidden,
+    includeTiles, includeBkg)
+    ---@type Layer[]
+    local arr = {}
+
+    -- When the timeline is hidden, the range
+    -- cannot be accessed properly.
+    local tlHidden = not app.preferences.general.visible_timeline
+    if tlHidden then
+        app.command.Timeline { open = true }
+    end
+
+    local rangeLayers = range.layers
+    local lenRangeLayers = #rangeLayers
+    local i = 0
+    local lenArr = 0
+    while i < lenRangeLayers do
+        i = i + 1
+        local layer = rangeLayers[i]
+        if (not layer.isGroup)
+            and (not layer.isReference)
+            and (includeHidden or layer.isVisible)
+            and (includeLocked or layer.isEditable)
+            and (includeTiles or (not layer.isTilemap))
+            and (includeBkg or (not layer.isBackground)) then
+            lenArr = lenArr + 1
+            arr[lenArr] = layer
+        end
+    end
+
+    if tlHidden then
+        app.command.Timeline { close = true }
+    end
+
+    return arr
+end
+
 ---Gets a selection from a sprite. Calls InvertMask
 ---command twice. Returns a copy of the selection,
 ---not a reference. If the selection is empty, then
@@ -1634,7 +1691,7 @@ function AseUtilities.getSelection(sprite)
     -- drop pixels checkmark is not pressed, then
     -- a crash will result. MoveMask doesn't work
     -- because move quantity has a minimum of 1.
-    app.transaction(function()
+    app.transaction("Commit Mask", function()
         app.command.InvertMask()
         app.command.InvertMask()
     end)
@@ -1660,6 +1717,99 @@ function AseUtilities.getSelection(sprite)
     return trgSel
 end
 
+---Gets tiles from a tile map that are entirely
+---contained by a selection. Returns a dictionary
+---where the tile map index serves as the key
+---and the Tile object is the value.
+---
+---Assumes that tile map and tile set have been
+---vetted to confirm their association.
+---@param tileMap Image tile map, an image
+---@param tileSet Tileset tile set
+---@param selection Selection selection
+---@param xtlCel integer? cel top left corner x
+---@param ytlCel integer? cel top left corner y
+---@return table<integer, Tile>
+function AseUtilities.getSelectedTiles(
+    tileMap, tileSet, selection, xtlCel, ytlCel)
+    -- Validate optional arguments.
+    local vytlCel = ytlCel or 0
+    local vxtlCel = xtlCel or 0
+
+    -- Results.
+    ---@type table<integer, Tile>
+    local tiles = {}
+    if tileMap.colorMode ~= 4 then return tiles end
+
+    -- Unpack tile set.
+    local tileGrid = tileSet.grid --[[@as Grid]]
+    local tileDim = tileGrid.tileSize --[[@as Size]]
+    local wTile = tileDim.width
+    local hTile = tileDim.height
+    local flatLenTile = wTile * hTile
+
+    -- Cache methods used in loop.
+    local pxTilei = app.pixelColor.tileI
+
+    ---@type table<integer, boolean>
+    local visitedTiles = {}
+    local mapItr = tileMap:pixels()
+    for mapEntry in mapItr do
+        local index = pxTilei(mapEntry())
+        if index ~= 0 and (not visitedTiles[index]) then
+            visitedTiles[index] = true
+
+            local xMap = mapEntry.x
+            local yMap = mapEntry.y
+            local xtlTile = vxtlCel + xMap * wTile
+            local ytlTile = vytlCel + yMap * hTile
+
+            local contained = true
+            local i = 0
+            while i < flatLenTile do
+                local xLocal = i % wTile
+                local yLocal = i // wTile
+                i = i + 1
+                local xPixel = xtlTile + xLocal
+                local yPixel = ytlTile + yLocal
+                contained = contained
+                    and selection:contains(
+                        Point(xPixel, yPixel))
+            end
+
+            if contained then
+                -- print(string.format(
+                --     "[%d, %d]: [%d, %d]: %d",
+                --     xMap, yMap, xtlTile, ytlTile, index))
+                tiles[index] = tileSet:tile(index)
+            end
+        end
+    end
+
+    return tiles
+end
+
+---Gets the unique tiles from a tile map.
+---Assumes that tile map and tile set have been
+---vetted to confirm their association.
+---@param tileMap Image tile map, an image
+---@param tileSet Tileset tile set
+---@return table<integer, Tile>
+function AseUtilities.getUniqueTiles(tileMap, tileSet)
+    ---@type table<integer, Tile>
+    local tiles = {}
+    if tileMap.colorMode ~= 4 then return tiles end
+    local pxTilei = app.pixelColor.tileI
+    local mapItr = tileMap:pixels()
+    for mapEntry in mapItr do
+        local index = pxTilei(mapEntry())
+        if index ~= 0 and (not tiles[index]) then
+            tiles[index] = tileSet:tile(index)
+        end
+    end
+    return tiles
+end
+
 ---Creates a table of gray colors represented as
 ---32 bit integers, where the gray is repeated
 ---three times in red, green and blue channels.
@@ -1670,6 +1820,8 @@ function AseUtilities.grayHexes(count)
     local valCount = count or 255
     if valCount < 2 then valCount = 2 end
     local toGray = 255.0 / (valCount - 1.0)
+
+    ---@type integer[]
     local result = {}
     local i = 0
     while i < valCount do
@@ -1701,13 +1853,14 @@ end
 ---Initializes a sprite and layer. Sets palette
 ---to the colors provided, or, if nil, a default
 ---set. Colors should be hexadecimal integers.
----@param wDefault integer default width
----@param hDefault integer default height
 ---@param layerName string? layer name
 ---@param colors integer[]? array of hexes
+---@param wDefault integer? default width
+---@param hDefault integer? default height
 ---@param colorSpace ColorSpace? color space
 ---@return Sprite
-function AseUtilities.initCanvas(wDefault, hDefault, layerName, colors, colorSpace)
+function AseUtilities.initCanvas(
+    layerName, colors, wDefault, hDefault, colorSpace)
     local clrsVal = AseUtilities.DEFAULT_PAL_ARR
     if colors and #colors > 0 then
         clrsVal = colors
@@ -1744,45 +1897,55 @@ function AseUtilities.initCanvas(wDefault, hDefault, layerName, colors, colorSpa
     return sprite
 end
 
----Evaluates whether a layer is editable in the context
----of any parent layers, i.e., if a layer's parent is
----locked but the layer is unlocked, the method will
----return false.
----@param layer Layer|userdata layer
----@param sprite Sprite|userdata? sprite
----@return boolean
-function AseUtilities.isEditableHierarchy(layer, sprite)
-    -- Keep this as is for backward compatibility.
-    local l = layer --[[@as Layer|Sprite|userdata]]
-    local sprName = "doc::Sprite"
-    if sprite then sprName = sprite.__name end
-    while l.__name ~= sprName do
-        if not l.isEditable then
-            return false
-        end
-        l = l.parent
-    end
-    return true
+---Adds padding around the edges of an image.
+---Does not check if image is a tile map.
+---If the padding is less than one, returns the
+---source image.
+---@param image Image source image
+---@param padding integer padding
+---@return Image
+function AseUtilities.padImage(image, padding)
+    if padding < 1 then return image end
+
+    local pad2 = padding + padding
+    local imageSpec = image.spec
+    local padSpec = ImageSpec {
+        colorMode = imageSpec.colorMode,
+        width = imageSpec.width + pad2,
+        height = imageSpec.height + pad2,
+        transparentColor = imageSpec.transparentColor
+    }
+    padSpec.colorSpace = imageSpec.colorSpace
+    local padded = Image(padSpec)
+    padded:drawImage(image, Point(padding, padding))
+    return padded
 end
 
----Parses Aseprite range object to find the
----frames it contains. Returns an array of
----frame indices.
+---Parses Aseprite range object to find the frames
+---it contains. Returns an array of frame indices.
 ---
----Note that layer type ranges contain only
----one frame, despite appearance in the GUI.
+---Performs no validation on the range. The timeline
+---should be visible and the range's sprite should be
+---the same as the active sprite for this to work.
+---
+---Note, layer type ranges contain only one frame,
+---despite appearance in the GUI.
 ---@param range Range aseprite range
----@return table
+---@return integer[]
 function AseUtilities.parseRange(range)
-    local framesObj = range.frames
-    local framIdcs = {}
-    local lenFramesObj = #framesObj
+    --TODO: Change this name to getRangeFrames?
+
+    ---@type integer[]
+    local frIdcs = {}
+    local frObjs = range.frames --[[@as Frame[] ]]
+    local lenFrObjs = #frObjs
     local i = 0
-    while i < lenFramesObj do i = i + 1
-        framIdcs[i] = framesObj[i].frameNumber
+    while i < lenFrObjs do
+        i = i + 1
+        frIdcs[i] = frObjs[i].frameNumber
     end
     -- This doesn't need sorting.
-    return framIdcs
+    return frIdcs
 end
 
 ---Parses an Aseprite Tag to an array of frame
@@ -1799,6 +1962,8 @@ end
 ---@param tag Tag Aseprite Tag
 ---@return integer[]
 function AseUtilities.parseTag(tag)
+    --TODO: Change this name to getTagFrames?
+
     -- As of v1.3, tags have a new direction, ping pong
     -- reverse, as well as a finite loop count, where
     -- infinite loops are zero.
@@ -1809,40 +1974,47 @@ function AseUtilities.parseTag(tag)
     local destIdx = destFrameObj.frameNumber
     if origIdx == destIdx then return { destIdx } end
 
+    ---@type integer[]
     local arr = {}
     local idxArr = 0
     local aniDir = tag.aniDir
     if aniDir == AniDir.REVERSE then
         local j = destIdx + 1
-        while j > origIdx do j = j - 1
+        while j > origIdx do
+            j = j - 1
             idxArr = idxArr + 1
             arr[idxArr] = j
         end
     elseif aniDir == AniDir.PING_PONG then
         local j = origIdx - 1
-        while j < destIdx do j = j + 1
+        while j < destIdx do
+            j = j + 1
             idxArr = idxArr + 1
             arr[idxArr] = j
         end
         local op1 = origIdx + 1
-        while j > op1 do j = j - 1
+        while j > op1 do
+            j = j - 1
             idxArr = idxArr + 1
             arr[idxArr] = j
         end
     elseif aniDir == 3 then
         local j = destIdx + 1
-        while j > origIdx do j = j - 1
+        while j > origIdx do
+            j = j - 1
             idxArr = idxArr + 1
             arr[idxArr] = j
         end
         local dn1 = destIdx - 1
-        while j < dn1 do j = j + 1
+        while j < dn1 do
+            j = j + 1
             idxArr = idxArr + 1
             arr[idxArr] = j
         end
     else
         local j = origIdx - 1
-        while j < destIdx do j = j + 1
+        while j < destIdx do
+            j = j + 1
             idxArr = idxArr + 1
             arr[idxArr] = j
         end
@@ -1856,13 +2028,15 @@ end
 ---duplicate frame indices, as the same frame
 ---could appear in multiple groups.
 ---@param tags Tag[] tags array
----@return table
+---@return integer[][]
 function AseUtilities.parseTagsOverlap(tags)
     local tagsLen = #tags
     local arr2 = {}
     local i = 0
-    while i < tagsLen do i = i + 1
-        arr2[i] = AseUtilities.parseTag(tags[i])
+    local parseTag = AseUtilities.parseTag
+    while i < tagsLen do
+        i = i + 1
+        arr2[i] = parseTag(tags[i])
     end
     return arr2
 end
@@ -1872,20 +2046,22 @@ end
 ---@param tags Tag[] tags array
 ---@return integer[]
 function AseUtilities.parseTagsUnique(tags)
-    local arr2 = AseUtilities.parseTagsOverlap(tags)
+    ---@type table<integer, boolean>
     local dict = {}
+    local arr2 = AseUtilities.parseTagsOverlap(tags)
     local i = 0
     local lenArr2 = #arr2
-    while i < lenArr2 do i = i + 1
+    while i < lenArr2 do
+        i = i + 1
         local arr1 = arr2[i]
         local lenArr1 = #arr1
         local j = 0
-        while j < lenArr1 do j = j + 1
+        while j < lenArr1 do
+            j = j + 1
             dict[arr1[j]] = true
         end
     end
-
-    return Utilities.dictToSortedSet(dict, nil)
+    return Utilities.dictToSortedSet(dict)
 end
 
 ---Preserves the application fore- and background
@@ -1910,6 +2086,10 @@ end
 ---@param hTrg integer resized height
 ---@return Image
 function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
+    local srcSpec = source.spec
+    local wSrc = srcSpec.width
+    local hSrc = srcSpec.height
+
     local wVal = wTrg
     local hVal = hTrg
     if wVal < 0 then wVal = -wVal end
@@ -1917,14 +2097,11 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
     if wVal < 1 then wVal = 1 end
     if hVal < 1 then hVal = 1 end
 
-    local srcSpec = source.spec
-    local wSrc = srcSpec.width
-    local hSrc = srcSpec.height
-
     if wTrg == wSrc and hTrg == hSrc then
         return source
     end
 
+    ---@type integer[]
     local px = {}
     local i = 0
     local srcPxItr = source:pixels()
@@ -1967,8 +2144,9 @@ function AseUtilities.rotateImage90(source)
     local w = srcSpec.width
     local h = srcSpec.height
 
-    local lennh = w * h - h
+    ---@type integer[]
     local pxRot = {}
+    local lennh = w * h - h
     local srcPxItr = source:pixels()
     for pixel in srcPxItr do
         pxRot[1 + lennh + pixel.y - pixel.x * h] = pixel()
@@ -2000,6 +2178,7 @@ end
 ---@return integer
 ---@return integer
 function AseUtilities.rotateImage180(source)
+    ---@type integer[]
     local px = {}
     local i = 0
     local srcPxItr = source:pixels()
@@ -2036,8 +2215,9 @@ function AseUtilities.rotateImage270(source)
     local w = srcSpec.width
     local h = srcSpec.height
 
-    local hn1 = h - 1
+    ---@type integer[]
     local pxRot = {}
+    local hn1 = h - 1
     local srcPxItr = source:pixels()
     for pixel in srcPxItr do
         pxRot[1 + pixel.x * h + hn1 - pixel.y] = pixel()
@@ -2132,12 +2312,12 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
     if palIdxVerif > lenPalettes then palIdxVerif = 1 end
     local palette = palettes[palIdxVerif]
     if lenHexArr > 0 then
-        app.transaction(function()
+        app.transaction("Set Palette", function()
             palette:resize(lenHexArr)
             local i = 0
             while i < lenHexArr do
                 i = i + 1
-                -- It is not better to pass a hex to setColor.
+                -- It's not better to pass a hex to setColor.
                 -- Doing so creates the same problems as the Color
                 -- rgbaPixel constructor, where an image's mode
                 -- determines how the integer is interpreted.
@@ -2152,29 +2332,22 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
         end)
     else
         local clearBlack = Color { r = 0, g = 0, b = 0, a = 0 }
-        app.transaction(function()
+        app.transaction("Set Palette", function()
             palette:resize(1)
             palette:setColor(0, clearBlack)
         end)
     end
 end
 
----Evaluates whether or not the version of Aseprite in
----use supports tile map layers.
----@return boolean
-function AseUtilities.tilesSupport()
-    local ver = app.version
-    return ver.minor >= 3 and ver.major >= 1
-end
-
 ---Converts an image from a tile set layer to a regular
 ---image. Supported in Aseprite version 1.3 or newer.
 ---@param imgSrc Image source image
----@param tileSet userdata tile set
----@param sprClrMode ColorMode sprite color mode
+---@param tileSet Tileset tile set
+---@param sprClrMode ColorMode|integer sprite color mode
 ---@return Image
 function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
-    local tileDim = tileSet.grid.tileSize
+    local tileGrid = tileSet.grid --[[@as Grid]]
+    local tileDim = tileGrid.tileSize --[[@as Size]]
     local tileWidth = tileDim.width
     local tileHeight = tileDim.height
 
@@ -2196,19 +2369,21 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     -- Older versions of the beta might not have these methods.
     -- Use polyfill. The underlying logic is here:
     -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
-    local tileIndexMask = 0x1fffffff
-    local tileIndexShift = 0x0
+    -- local tileIndexMask = 0x1fffffff
+    -- local tileIndexShift = 0x0
     -- local tileMetaMask  = 0xe0000000
     -- local maskFlipX = 0x20000000
     -- local maskFlipY = 0x40000000
     -- local maskRot90cw = 0x80000000
     -- local maskRot180 = maskFlipX | maskFlipY
     -- local maskRot90ccw = maskRot180 | maskRot90cw
+    local pxTilei = app.pixelColor.tileI
 
     local pxItr = imgSrc:pixels()
     for pixel in pxItr do
         local tlData = pixel()
-        local i = (tlData & tileIndexMask) >> tileIndexShift
+        -- local i = (tlData & tileIndexMask) >> tileIndexShift
+        local i = pxTilei(tlData)
         local tileImage = tileSet:getTile(i)
 
         -- TODO: Wait until this is useful to implement.
@@ -2269,14 +2444,18 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
     }
     trimSpec.colorSpace = celSpec.colorSpace
     local trimImage = Image(trimSpec)
-    trimImage:drawImage(celImg, oldPos - cel.position)
+    local celPos = cel.position
+    trimImage:drawImage(
+        celImg, Point(
+            oldPos.x - celPos.x,
+            oldPos.y - celPos.y))
 
     local hexVrf = hexDefault or alphaMask
     local pxItr = trimImage:pixels()
     for pixel in pxItr do
         if not mask:contains(
-            xClip + pixel.x,
-            yClip + pixel.y) then
+                xClip + pixel.x,
+                yClip + pixel.y) then
             pixel(hexVrf)
         end
     end
@@ -2307,16 +2486,21 @@ function AseUtilities.trimCelToSprite(cel, sprite)
     }
     trimSpec.colorSpace = celSpec.colorSpace
     local trimImage = Image(trimSpec)
-    trimImage:drawImage(celImg, oldPos - cel.position)
+    local celPos = cel.position
+    trimImage:drawImage(
+        celImg, Point(
+            oldPos.x - celPos.x,
+            oldPos.y - celPos.y))
     cel.image = trimImage
 end
 
 ---Creates a copy of the image where excess
 ---transparent pixels have been trimmed from
 ---the edges. Padding is expected to be a positive
----number. It defaults to zero. Adapted from the
----implementation by Oleg Mikhailov:
----https://stackoverflow.com/a/36938923 .
+---number. It defaults to zero.
+---
+---Default width and height can be given in the
+---event that the image is completey transparent.
 ---
 ---Returns a tuple containing the cropped image,
 ---the top left x and top left y. The top left
@@ -2325,131 +2509,51 @@ end
 ---@param image Image aseprite image
 ---@param padding integer padding
 ---@param alphaIndex integer alpha mask index
+---@param wDefault integer? width default
+---@param hDefault integer? height default
 ---@return Image
 ---@return integer
 ---@return integer
-function AseUtilities.trimImageAlpha(image, padding, alphaIndex)
+function AseUtilities.trimImageAlpha(
+    image, padding, alphaIndex,
+    wDefault, hDefault)
+    local padVrf = padding or 0
+    padVrf = math.abs(padVrf)
+    local pad2 = padVrf + padVrf
 
-    -- getPixel returns white when coordinates are out of
-    -- bounds. If extra diagnostics are needed:
-    -- if x < 0 then print("x is < 0 in ... ") end
-    -- if x >= width then print("x is >= width in ... ") end
-    -- if y < 0 then print("y is < 0 in ... ") end
-    -- if y >= height then print( "y is >= height in ... ") end
+    -- Available as of version 1.3-rc1.
+    -- If the image contains no nonzero pixels,
+    -- returns a rectangle of zero size.
+    local rect = image:shrinkBounds(alphaIndex)
+    local rectIsValid = rect.width > 0
+        and rect.height > 0
 
-    -- This cannot be extracted to a separate function,
-    -- perhaps because alphaIndex needs to remain in scope.
-    local colorMode = image.colorMode
-    local isNonZero = nil
-    if colorMode == ColorMode.RGB then
-        isNonZero = function(hex)
-            return hex & 0xff000000 ~= 0
-        end
-    elseif colorMode == ColorMode.GRAY then
-        isNonZero = function(hex)
-            return hex & 0xff00 ~= 0
-        end
-    elseif colorMode == ColorMode.INDEXED then
-        local valMask = alphaIndex or 0
-        isNonZero = function(index)
-            return index ~= valMask
-        end
-    else
-        -- This is possible, esp. in Aseprite v1.3 with
-        -- tilemap layers, where colorMode = 4.
-        return image, 0, 0
+    local lft = 0
+    local top = 0
+    local wTrg = wDefault or image.width
+    local hTrg = hDefault or image.height
+    if rectIsValid then
+        lft = rect.x
+        top = rect.y
+        wTrg = rect.width
+        hTrg = rect.height
     end
 
-    local width = image.width
-    local height = image.height
-    local widthn1 = math.max(0, width - 1)
-    local heightn1 = math.max(0, height - 1)
-    local minRight = widthn1
-    local minBottom = heightn1
-
-    -- Top edge.
-    local top = -1
-    local goTop = true
-    while top < heightn1 and goTop do top = top + 1
-        local x = -1
-        while x < widthn1 and goTop do x = x + 1
-            if isNonZero(image:getPixel(x, top)) then
-                minRight = x
-                minBottom = top
-                goTop = false
-            end
-        end
-    end
-
-    -- Left edge.
-    local lft = -1
-    local goLft = true
-    while lft < minRight and goLft do lft = lft + 1
-        local y = height
-        while y > top and goLft do y = y - 1
-            if isNonZero(image:getPixel(lft, y)) then
-                minBottom = y
-                goLft = false
-            end
-        end
-    end
-
-    -- Bottom edge.
-    local btm = height
-    local goBtm = true
-    while btm > minBottom and goBtm do btm = btm - 1
-        local x = width
-        while x > lft and goBtm do x = x - 1
-            if isNonZero(image:getPixel(x, btm)) then
-                minRight = x
-                goBtm = false
-            end
-        end
-    end
-
-    -- Right edge.
-    local rgt = width
-    local goRgt = true
-    while rgt > minRight and goRgt do rgt = rgt - 1
-        local y = btm + 1
-        while y > top and goRgt do y = y - 1
-            if isNonZero(image:getPixel(rgt, y)) then
-                goRgt = false
-            end
-        end
-    end
-
-    local wTrg = 1 + rgt - lft
-    local hTrg = 1 + btm - top
-    if wTrg < 1 or hTrg < 1 then
-        return image, 0, 0
-    end
-
-    local valPad = padding or 0
-    if valPad < 0 then valPad = -valPad end
-    local pad2 = valPad + valPad
-
+    local srcSpec = image.spec
     local trgSpec = ImageSpec {
-        colorMode = colorMode,
+        colorMode = srcSpec.colorMode,
         width = wTrg + pad2,
         height = hTrg + pad2,
         transparentColor = alphaIndex
     }
-    trgSpec.colorSpace = image.spec.colorSpace
+    trgSpec.colorSpace = srcSpec.colorSpace
     local target = Image(trgSpec)
 
-    -- local sampleRect = Rectangle(left, top, wTrg, hTrg)
-    -- local srcItr = image:pixels(sampleRect)
-    -- for pixel in srcItr do
-    --     target:drawPixel(
-    --         valPad + pixel.x - left,
-    --         valPad + pixel.y - top,
-    --         pixel())
-    -- end
-
-    -- This creates a transaction.
-    target:drawImage(image, Point(valPad - lft, valPad - top))
-    return target, lft - valPad, top - valPad
+    if rectIsValid then
+        target:drawImage(image,
+            Point(padVrf - lft, padVrf - top))
+    end
+    return target, lft - padVrf, top - padVrf
 end
 
 ---Converts a Vec2 to an Aseprite Point.
@@ -2469,6 +2573,7 @@ end
 ---@param y integer y translation
 ---@return Image
 function AseUtilities.wrapImage(source, x, y)
+    ---@type integer[]
     local px = {}
     local i = 0
     local srcPxItr = source:pixels()

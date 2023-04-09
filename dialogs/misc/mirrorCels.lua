@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/canvasutilities.lua")
 
-local coords = { "CARTESIAN", "POLAR" }
 local edgeTypes = { "CLAMP", "OMIT", "WRAP" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
 local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
@@ -10,17 +10,8 @@ local defaults = {
     delSrc = "NONE",
     edgeType = "OMIT",
     easeMethod = "NEAREST",
-    coord = "POLAR",
-    xOrig = 0,
-    yOrig = 50,
-    xDest = 100,
-    yDest = 50,
-    xCenter = 50,
-    yCenter = 50,
-    angle = 0,
     useInverse = false,
     trimCels = false,
-    drawDiagnostic = false,
     pullFocus = true
 }
 
@@ -51,99 +42,14 @@ dlg:combobox {
     options = edgeTypes
 }
 
-dlg:newrow { always = false }
+CanvasUtilities.graphLine(
+    dlg, "graphCart", "Graph:", 128, 128, true, true,
+    7, 0, -100, 0, 100,
+    app.theme.color.text,
+    Color { r = 128, g = 128, b = 128 })
 
-dlg:combobox {
-    id = "coord",
-    label = "Coords:",
-    option = defaults.coord,
-    options = coords,
-    onchange = function()
-        local args = dlg.data
-        local coord = args.coord
-        local isCart = coord == "CARTESIAN"
-        dlg:modify { id = "xOrig", visible = isCart }
-        dlg:modify { id = "yOrig", visible = isCart }
-        dlg:modify { id = "xDest", visible = isCart }
-        dlg:modify { id = "yDest", visible = isCart }
-
-        local isPolr = coord == "POLAR"
-        dlg:modify { id = "xCenter", visible = isPolr }
-        dlg:modify { id = "yCenter", visible = isPolr }
-        dlg:modify { id = "angle", visible = isPolr }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "xOrig",
-    label = "Origin %:",
-    min = 0,
-    max = 100,
-    value = defaults.xOrig,
-    visible = defaults.coord == "CARTESIAN"
-}
-
-dlg:slider {
-    id = "yOrig",
-    min = 0,
-    max = 100,
-    value = defaults.yOrig,
-    visible = defaults.coord == "CARTESIAN"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "xDest",
-    label = "Dest %:",
-    min = 0,
-    max = 100,
-    value = defaults.xDest,
-    visible = defaults.coord == "CARTESIAN"
-}
-
-dlg:slider {
-    id = "yDest",
-    min = 0,
-    max = 100,
-    value = defaults.yDest,
-    visible = defaults.coord == "CARTESIAN"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "xCenter",
-    label = "Center %:",
-    min = 0,
-    max = 100,
-    value = defaults.xCenter,
-    visible = defaults.coord == "POLAR"
-}
-
-dlg:slider {
-    id = "yCenter",
-    min = 0,
-    max = 100,
-    value = defaults.yCenter,
-    visible = defaults.coord == "POLAR"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "angle",
-    label = "Angle:",
-    min = 0,
-    max = 360,
-    value = defaults.angle,
-    visible = defaults.coord == "POLAR"
-}
-
-dlg:newrow { always = false }
-
+-- TODO: Change naming scheme so that this can be assigned
+-- an alt+ hotkey via ampersand?
 dlg:check {
     id = "useInverse",
     label = "Invert:",
@@ -155,17 +61,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "trimCels",
     label = "Trim:",
-    text = "Layer Edges",
+    text = "Layer Ed&ges",
     selected = defaults.trimCels
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
-    id = "drawDiagnostic",
-    label = "Draw:",
-    text = "Diagnostic",
-    selected = defaults.drawDiagnostic
 }
 
 dlg:newrow { always = false }
@@ -202,13 +99,19 @@ dlg:button {
             return
         end
 
+        if srcLayer.isReference then
+            app.alert {
+                title = "Error",
+                text = "Reference layers are not supported."
+            }
+            return
+        end
+
         -- Check for tile maps.
-        local layerIsTilemap = false
+        local isTilemap = srcLayer.isTilemap
         local tileSet = nil
-        if AseUtilities.tilesSupport() then
-            local activeLayer = app.activeLayer
-            layerIsTilemap = activeLayer.isTilemap
-            tileSet = activeLayer.tileset
+        if isTilemap then
+            tileSet = srcLayer.tileset
         end
 
         -- Unpack arguments.
@@ -216,10 +119,8 @@ dlg:button {
         local target = args.target or defaults.target --[[@as string]]
         local delSrcStr = args.delSrc or defaults.delSrc --[[@as string]]
         local edgeType = args.edgeType or defaults.edgeType --[[@as string]]
-        local coord = args.coord or defaults.coord --[[@as string]]
         local useInverse = args.useInverse --[[@as boolean]]
         local trimCels = args.trimCels --[[@as boolean]]
-        local drawDiagnostic = args.drawDiagnostic --[[@as boolean]]
 
         -- Whether to use greater than or less than to
         -- determine which side of the line to mirror.
@@ -227,7 +128,8 @@ dlg:button {
         if useInverse then flipSign = -1.0 end
 
         -- Find frames from target.
-        local frames = AseUtilities.getFrames(activeSprite, target)
+        local frames = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
 
         -- Determine how to wrap pixels.
         local wrapper = nil
@@ -258,53 +160,24 @@ dlg:button {
         local colorMode = spriteSpec.colorMode
         local alphaMask = spriteSpec.transparentColor
 
-        local xOrPx = 0
-        local yOrPx = 0
-        local xDsPx = 0
-        local yDsPx = 0
+        -- Calculate origin and destination.
+        -- Divide by 100 to account for percentage.
+        local xOrig = args.xOrig --[[@as integer]]
+        local yOrig = args.yOrig --[[@as integer]]
+        local xDest = args.xDest --[[@as integer]]
+        local yDest = args.yDest --[[@as integer]]
 
-        if coord == "POLAR" then
-            local xCntr = args.xCenter or defaults.xCenter --[[@as integer]]
-            local yCntr = args.yCenter or defaults.yCenter --[[@as integer]]
-            local angle = args.angle or defaults.angle --[[@as integer]]
+        xOrig = xOrig * 0.005 + 0.5
+        xDest = xDest * 0.005 + 0.5
+        yOrig = 0.5 - yOrig * 0.005
+        yDest = 0.5 - yDest * 0.005
 
-            xCntr = xCntr * 0.01
-            yCntr = yCntr * 0.01
-
-            local xCtPx = xCntr * (wSprite + 1) - 0.5
-            local yCtPx = yCntr * (hSprite + 1) - 0.5
-
-            local query = AseUtilities.DIMETRIC_ANGLES[angle]
-            local a = angle * 0.017453292519943
-            if query then a = query end
-            local r = 0.5 * math.sqrt(
-                wSprite * wSprite
-                + hSprite * hSprite)
-            local rtcos = r * math.cos(a)
-            local rtsin = r * math.sin(a)
-
-            xOrPx = xCtPx - rtcos
-            yOrPx = yCtPx + rtsin
-            xDsPx = xCtPx + rtcos
-            yDsPx = yCtPx - rtsin
-        else
-            local xOrig = args.xOrig or defaults.xOrig --[[@as integer]]
-            local yOrig = args.yOrig or defaults.yOrig --[[@as integer]]
-            local xDest = args.xDest or defaults.xDest --[[@as integer]]
-            local yDest = args.yDest or defaults.yDest --[[@as integer]]
-
-            xOrig = xOrig * 0.01
-            yOrig = yOrig * 0.01
-            xDest = xDest * 0.01
-            yDest = yDest * 0.01
-
-            -- Bias required to cope with full reflection
-            -- at edges of image (0, 0), (w, h).
-            xOrPx = xOrig * (wSprite + 1) - 0.5
-            yOrPx = yOrig * (hSprite + 1) - 0.5
-            xDsPx = xDest * (wSprite + 1) - 0.5
-            yDsPx = yDest * (hSprite + 1) - 0.5
-        end
+        -- Bias required to cope with full reflection
+        -- at edges of image (0, 0), (w, h).
+        local xOrPx = xOrig * (wSprite + 1) - 0.5
+        local yOrPx = yOrig * (hSprite + 1) - 0.5
+        local xDsPx = xDest * (wSprite + 1) - 0.5
+        local yDsPx = yDest * (hSprite + 1) - 0.5
 
         -- Find vector between origin and destination.
         -- If the points are too close together, handle
@@ -325,24 +198,27 @@ dlg:button {
 
         -- Right side of line is mirrored, left side
         -- copies original pixels.
-        local rgtLyr = activeSprite:newLayer()
-        local lftLyr = activeSprite:newLayer()
-        local dgnLyr = nil
-        if drawDiagnostic then
-            dgnLyr = activeSprite:newLayer()
-        end
-        local mrrGrp = activeSprite:newGroup()
+        local rgtLayer = nil
+        local lftLayer = nil
+        local mrrGroup = nil
 
-        lftLyr.parent = mrrGrp
-        lftLyr.opacity = srcLayer.opacity
-        lftLyr.name = "Left"
+        app.transaction("New Layers", function()
+            rgtLayer = activeSprite:newLayer()
+            lftLayer = activeSprite:newLayer()
+            mrrGroup = activeSprite:newGroup()
 
-        rgtLyr.parent = mrrGrp
-        rgtLyr.opacity = srcLayer.opacity
-        rgtLyr.name = "Right"
+            lftLayer.parent = mrrGroup
+            lftLayer.opacity = srcLayer.opacity
+            lftLayer.name = "Left"
 
-        mrrGrp.parent = srcLayer.parent
-        mrrGrp.name = srcLayer.name .. ".Mirrored"
+            rgtLayer.parent = mrrGroup
+            rgtLayer.opacity = srcLayer.opacity
+            rgtLayer.name = "Right"
+
+            mrrGroup.parent = srcLayer.parent
+            mrrGroup.isCollapsed = true
+            mrrGroup.name = srcLayer.name .. ".Mirrored"
+        end)
 
         -- Cache global methods.
         local floor = math.floor
@@ -350,137 +226,93 @@ dlg:button {
         local tilesToImage = AseUtilities.tilesToImage
 
         local lenFrames = #frames
-        app.transaction(function()
-            local i = 0
-            while i < lenFrames do i = i + 1
-                local srcFrame = frames[i]
-                local srcCel = srcLayer:cel(srcFrame)
-                if srcCel then
-                    local srcImg = srcCel.image
-                    local srcPos = srcCel.position
-                    local xSrcPos = srcPos.x
-                    local ySrcPos = srcPos.y
+        local i = 0
+        while i < lenFrames do
+            i = i + 1
+            local srcFrame = frames[i]
+            local srcCel = srcLayer:cel(srcFrame)
+            if srcCel then
+                local srcImg = srcCel.image
+                local srcPos = srcCel.position
+                local xSrcPos = srcPos.x
+                local ySrcPos = srcPos.y
 
-                    if layerIsTilemap then
-                        srcImg = tilesToImage(
-                            srcImg, tileSet, colorMode)
-                    end
-
-                    local wSrcImg = srcImg.width
-                    local hSrcImg = srcImg.height
-                    local flatImg = srcImg
-                    if xSrcPos ~= 0
-                        or ySrcPos ~= 0
-                        or wSrcImg ~= wSprite
-                        or hSrcImg ~= hSprite then
-                        flatImg = Image(spriteSpec)
-                        flatImg:drawImage(srcImg, srcPos)
-                    end
-
-                    local rgtImg = Image(spriteSpec)
-                    local lftImg = Image(spriteSpec)
-                    if alphaMask ~= 0 then
-                        rgtImg:clear(alphaMask)
-                        lftImg:clear(alphaMask)
-                    end
-
-                    local pxItr = flatImg:pixels()
-                    for pixel in pxItr do
-                        local cx = pixel.x
-                        local cy = pixel.y
-                        local ex = cx - xOrPx
-                        local ey = cy - yOrPx
-                        local cross = ex * dy - ey * dx
-                        if flipSign * cross < 0.0 then
-                            local hex = pixel()
-                            lftImg:drawPixel(cx, cy, hex)
-                        else
-                            local t = (ex * dx + ey * dy) * dInvMagSq
-                            local u = 1.0 - t
-                            local pxProj = u * xOrPx + t * xDsPx
-                            local pyProj = u * yOrPx + t * yDsPx
-                            local pxOpp = pxProj + pxProj - cx
-                            local pyOpp = pyProj + pyProj - cy
-
-                            local ixOpp = floor(0.5 + pxOpp)
-                            local iyOpp = floor(0.5 + pyOpp)
-
-                            rgtImg:drawPixel(cx, cy, wrapper(
-                                ixOpp, iyOpp, wSprite, hSprite,
-                                flatImg, alphaMask))
-                        end
-                    end
-
-                    local xTrimLft = 0
-                    local yTrimLft = 0
-                    local xTrimRgt = 0
-                    local yTrimRgt = 0
-                    if trimCels then
-                        lftImg, xTrimLft, yTrimLft = trimAlpha(
-                            lftImg, 0, alphaMask)
-                        rgtImg, xTrimRgt, yTrimRgt = trimAlpha(
-                            rgtImg, 0, alphaMask)
-                    end
-
-                    activeSprite:newCel(
-                        lftLyr, srcFrame, lftImg,
-                        Point(xTrimLft, yTrimLft))
-                    activeSprite:newCel(
-                        rgtLyr, srcFrame, rgtImg,
-                        Point(xTrimRgt, yTrimRgt))
+                if isTilemap then
+                    srcImg = tilesToImage(
+                        srcImg, tileSet, colorMode)
                 end
+
+                local wSrcImg = srcImg.width
+                local hSrcImg = srcImg.height
+                local flatImg = srcImg
+                if xSrcPos ~= 0
+                    or ySrcPos ~= 0
+                    or wSrcImg ~= wSprite
+                    or hSrcImg ~= hSprite then
+                    flatImg = Image(spriteSpec)
+                    flatImg:drawImage(srcImg, srcPos)
+                end
+
+                local rgtImg = Image(spriteSpec)
+                local lftImg = Image(spriteSpec)
+                if alphaMask ~= 0 then
+                    rgtImg:clear(alphaMask)
+                    lftImg:clear(alphaMask)
+                end
+
+                local pxItr = flatImg:pixels()
+                for pixel in pxItr do
+                    local cx = pixel.x
+                    local cy = pixel.y
+                    local ex = cx - xOrPx
+                    local ey = cy - yOrPx
+                    local cross = ex * dy - ey * dx
+                    if flipSign * cross < 0.0 then
+                        local hex = pixel()
+                        lftImg:drawPixel(cx, cy, hex)
+                    else
+                        local t = (ex * dx + ey * dy) * dInvMagSq
+                        local u = 1.0 - t
+                        local pxProj = u * xOrPx + t * xDsPx
+                        local pyProj = u * yOrPx + t * yDsPx
+                        local pxOpp = pxProj + pxProj - cx
+                        local pyOpp = pyProj + pyProj - cy
+
+                        local ixOpp = floor(0.5 + pxOpp)
+                        local iyOpp = floor(0.5 + pyOpp)
+
+                        rgtImg:drawPixel(cx, cy, wrapper(
+                            ixOpp, iyOpp, wSprite, hSprite,
+                            flatImg, alphaMask))
+                    end
+                end
+
+                local xTrimLft = 0
+                local yTrimLft = 0
+                local xTrimRgt = 0
+                local yTrimRgt = 0
+                if trimCels then
+                    lftImg, xTrimLft, yTrimLft = trimAlpha(
+                        lftImg, 0, alphaMask)
+                    rgtImg, xTrimRgt, yTrimRgt = trimAlpha(
+                        rgtImg, 0, alphaMask)
+                end
+
+                app.transaction(
+                    string.format("Mirror %d", srcFrame),
+                    function()
+                        local lftCel = activeSprite:newCel(
+                            lftLayer, srcFrame, lftImg,
+                            Point(xTrimLft, yTrimLft))
+                        local rgtCel = activeSprite:newCel(
+                            rgtLayer, srcFrame, rgtImg,
+                            Point(xTrimRgt, yTrimRgt))
+
+                        local srcOpacity = srcCel.opacity
+                        lftCel.opacity = srcOpacity
+                        rgtCel.opacity = srcOpacity
+                    end)
             end
-        end)
-
-        if drawDiagnostic then
-            local origin = Point(xOrPx, yOrPx)
-            local dest = Point(xDsPx, yDsPx)
-
-            -- Same as colors in drawknot2 (handles).
-            local lineColor = Color { r = 175, g = 175, b = 175 }
-            local originColor = Color { r = 2, g = 167, b = 235 }
-            local destColor = Color { r = 235, g = 26, b = 64 }
-            local lineBrush = Brush(2)
-            local pointBrush = Brush(7)
-
-            app.transaction(function()
-                dgnLyr.parent = mrrGrp
-                dgnLyr.opacity = 128
-                dgnLyr.name = "Diagnostic"
-
-                local useTool = app.useTool
-                local i = 0
-                while i < lenFrames do
-                    i = i + 1
-                    local srcFrame = frames[i]
-                    useTool {
-                        tool = "line",
-                        brush = lineBrush,
-                        color = lineColor,
-                        layer = dgnLyr,
-                        frame = srcFrame,
-                        points = { origin, dest }
-                    }
-
-                    useTool {
-                        tool = "pencil",
-                        brush = pointBrush,
-                        color = originColor,
-                        layer = dgnLyr,
-                        frame = srcFrame,
-                        points = { origin }
-                    }
-
-                    useTool {
-                        tool = "pencil",
-                        brush = pointBrush,
-                        color = destColor,
-                        layer = dgnLyr,
-                        frame = srcFrame,
-                        points = { dest }
-                    }
-                end
-            end)
         end
 
         if delSrcStr == "HIDE" then
@@ -489,19 +321,20 @@ dlg:button {
             if delSrcStr == "DELETE_LAYER" then
                 activeSprite:deleteLayer(srcLayer)
             elseif delSrcStr == "DELETE_CELS" then
-                app.transaction(function()
-                    local idxDel = 0
-                    while idxDel < lenFrames do
-                        idxDel = idxDel + 1
+                app.transaction("Delete Cels", function()
+                    local idxDel = lenFrames + 1
+                    while idxDel > 1 do
+                        idxDel = idxDel - 1
                         local frame = frames[idxDel]
-                        if srcLayer:cel(frame) then
-                            activeSprite:deleteCel(srcLayer, frame)
-                        end
+                        local cel = srcLayer:cel(frame)
+                        if cel then activeSprite:deleteCel(cel) end
                     end
                 end)
             end
         end
 
+        -- Active layer assignment triggers a timeline update.
+        app.activeLayer = mrrGroup
         app.refresh()
 
         if invalidFlag then

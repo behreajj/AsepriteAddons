@@ -191,26 +191,34 @@ end
 function Vec4.copySign(a, b)
     local cx = 0.0
     local axAbs = math.abs(a.x)
-    if b.x < -0.0 then cx = -axAbs
-    elseif b.x > 0.0 then cx = axAbs
+    if b.x < -0.0 then
+        cx = -axAbs
+    elseif b.x > 0.0 then
+        cx = axAbs
     end
 
     local cy = 0.0
     local ayAbs = math.abs(a.y)
-    if b.y < -0.0 then cy = -ayAbs
-    elseif b.y > 0.0 then cy = ayAbs
+    if b.y < -0.0 then
+        cy = -ayAbs
+    elseif b.y > 0.0 then
+        cy = ayAbs
     end
 
     local cz = 0.0
     local azAbs = math.abs(a.z)
-    if b.z < -0.0 then cz = -azAbs
-    elseif b.z > 0.0 then cz = azAbs
+    if b.z < -0.0 then
+        cz = -azAbs
+    elseif b.z > 0.0 then
+        cz = azAbs
     end
 
     local cw = 0.0
     local awAbs = math.abs(a.w)
-    if b.w < -0.0 then cw = -awAbs
-    elseif b.w > 0.0 then cw = awAbs
+    if b.w < -0.0 then
+        cw = -awAbs
+    elseif b.w > 0.0 then
+        cw = awAbs
     end
 
     return Vec4.new(cx, cy, cz, cw)
@@ -663,20 +671,32 @@ end
 ---@return Vec4
 function Vec4.round(v)
     local ix, fx = math.modf(v.x)
-    if ix <= 0 and fx <= -0.5 then ix = ix - 1
-    elseif ix >= 0 and fx >= 0.5 then ix = ix + 1 end
+    if ix <= 0 and fx <= -0.5 then
+        ix = ix - 1
+    elseif ix >= 0 and fx >= 0.5 then
+        ix = ix + 1
+    end
 
     local iy, fy = math.modf(v.y)
-    if iy <= 0 and fy <= -0.5 then iy = iy - 1
-    elseif iy >= 0 and fy >= 0.5 then iy = iy + 1 end
+    if iy <= 0 and fy <= -0.5 then
+        iy = iy - 1
+    elseif iy >= 0 and fy >= 0.5 then
+        iy = iy + 1
+    end
 
     local iz, fz = math.modf(v.z)
-    if iz <= 0 and fz <= -0.5 then iz = iz - 1
-    elseif iz >= 0 and fz >= 0.5 then iz = iz + 1 end
+    if iz <= 0 and fz <= -0.5 then
+        iz = iz - 1
+    elseif iz >= 0 and fz >= 0.5 then
+        iz = iz + 1
+    end
 
     local iw, fw = math.modf(v.w)
-    if iw <= 0 and fw <= -0.5 then iw = iw - 1
-    elseif iw >= 0 and fw >= 0.5 then iw = iw + 1 end
+    if iw <= 0 and fw <= -0.5 then
+        iw = iw - 1
+    elseif iw >= 0 and fw >= 0.5 then
+        iw = iw + 1
+    end
 
     return Vec4.new(ix, iy, iz, iw)
 end
@@ -698,23 +718,31 @@ end
 ---@return Vec4
 function Vec4.sign(v)
     local cx = 0.0
-    if v.x < -0.0 then cx = -1.0
-    elseif v.x > 0.0 then cx = 1.0
+    if v.x < -0.0 then
+        cx = -1.0
+    elseif v.x > 0.0 then
+        cx = 1.0
     end
 
     local cy = 0.0
-    if v.y < -0.0 then cy = -1.0
-    elseif v.y > 0.0 then cy = 1.0
+    if v.y < -0.0 then
+        cy = -1.0
+    elseif v.y > 0.0 then
+        cy = 1.0
     end
 
     local cz = 0.0
-    if v.z < -0.0 then cz = -1.0
-    elseif v.z > 0.0 then cz = 1.0
+    if v.z < -0.0 then
+        cz = -1.0
+    elseif v.z > 0.0 then
+        cz = 1.0
     end
 
     local cw = 0.0
-    if v.w < -0.0 then cw = -1.0
-    elseif v.w > 0.0 then cw = 1.0
+    if v.w < -0.0 then
+        cw = -1.0
+    elseif v.w > 0.0 then
+        cw = 1.0
     end
 
     return Vec4.new(cx, cy, cz, cw)
@@ -803,15 +831,15 @@ function Vec4.toJson(v)
         v.x, v.y, v.z, v.w)
 end
 
----Truncates a vector's components to integers.
+---Truncates a vector's components.
 ---@param v Vec4 vector
 ---@return Vec4
 function Vec4.trunc(v)
-    local ix, _ = math.modf(v.x)
-    local iy, _ = math.modf(v.y)
-    local iz, _ = math.modf(v.z)
-    local iw, _ = math.modf(v.w)
-    return Vec4.new(ix, iy, iz, iw)
+    return Vec4.new(
+        v.x - math.fmod(v.x, 1.0),
+        v.y - math.fmod(v.y, 1.0),
+        v.z - math.fmod(v.z, 1.0),
+        v.w - math.fmod(v.w, 1.0))
 end
 
 ---Wraps a vector's components around a range

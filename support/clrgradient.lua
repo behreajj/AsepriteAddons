@@ -21,7 +21,8 @@ function ClrGradient.new(keys)
     if keys then
         local lenKeys = #keys
         local i = 0
-        while i < lenKeys do i = i + 1
+        while i < lenKeys do
+            i = i + 1
             inst:insortRight(keys[i], 0.0005)
         end
     end
@@ -86,6 +87,50 @@ function ClrGradient.bisectRight(cg, step)
     return 1 + low
 end
 
+---Evaluates a color gradient by a step according
+---to a dithering matrix. The maximum and minimum
+---elements of the matrix should be found in advance.
+---The x and y coordinates are relative to the image.
+---Returns a color. See
+---https://www.wikiwand.com/en/Ordered_dithering/
+---@param cg ClrGradient color gradient
+---@param step number step
+---@param matrix number[] matrix
+---@param x integer x coordinate
+---@param y integer y coordinate
+---@param cols integer matrix columns
+---@param rows integer matrix rows
+---@param maxElm number max element
+---@param minElm number min element
+---@return Clr
+function ClrGradient.dither(
+    cg, step, matrix,
+    x, y, cols, rows,
+    maxElm, minElm)
+    local prevKey, nextKey, t = ClrGradient.findKeys(
+        cg, step)
+
+    local prevStep = prevKey.step
+    local nextStep = nextKey.step
+    local denom = nextStep - prevStep
+    if denom ~= 0.0 then denom = 1.0 / denom end
+    local tScaled = (t - prevStep) * denom
+
+    local matIdx = 1 + (x % cols) + (y % rows) * cols
+    local query = matrix[matIdx]
+
+    -- In a Bayer matrix, the maximum element is
+    -- (rows * columns) - 1, e.g., 63 for 8 * 8.
+    -- The minimum is 0. To get both origin and
+    -- destination color into the gradient, 1
+    -- needs to be added to minimum on the query
+    -- side and 2 needs to be added on the left.
+    if minElm + tScaled * (maxElm - minElm) < query then
+        return prevKey.clr
+    end
+    return nextKey.clr
+end
+
 ---Evaluates a color gradient by a step with
 ---an easing function. Returns a color.
 ---The easing function is expected to accept
@@ -97,6 +142,27 @@ end
 ---@param easing function? easing function
 ---@return Clr
 function ClrGradient.eval(cg, step, easing)
+    local prevKey, nextKey, t = ClrGradient.findKeys(
+        cg, step)
+    local prevStep = prevKey.step
+    local nextStep = nextKey.step
+    local f = easing or Clr.mixlRgbaInternal
+    local denom = nextStep - prevStep
+    if denom ~= 0.0 then denom = 1.0 / denom end
+    return f(prevKey.clr, nextKey.clr,
+        (t - prevStep) * denom)
+end
+
+---Internal helper to find the previous and
+---next key to ease between at the local level.
+---Returns the previous key, the next key,
+---and the validated step.
+---@param cg ClrGradient color gradient
+---@param step number? step
+---@return ClrKey
+---@return ClrKey
+---@return number
+function ClrGradient.findKeys(cg, step)
     local keys = cg.keys
     local lenKeys = #keys
     local firstKey = keys[1]
@@ -110,14 +176,8 @@ function ClrGradient.eval(cg, step, easing)
 
     local prevKey = keys[prevIdx] or firstKey
     local nextKey = keys[nextIdx] or lastKey
-    local prevStep = prevKey.step
-    local nextStep = nextKey.step
 
-    local f = easing or Clr.mixlRgbaInternal
-    local denom = nextStep - prevStep
-    if denom ~= 0.0 then denom = 1.0 / denom end
-    return f(prevKey.clr, nextKey.clr,
-        (t - prevStep) * denom)
+    return prevKey, nextKey, t
 end
 
 ---Creates a color gradient from an array of

@@ -3,11 +3,15 @@
 local activeSprite = app.activeSprite
 if not activeSprite then return end
 
--- Preserve range layers are selected.
+-- Preserve range if frames are selected. However, the
+-- range could be from another sprite.
+---@type Layer[]
+local newRangeLayers = {}
 local range = app.range
 local isLayersType = range.type == RangeType.LAYERS
-local newRangeLayers = {}
-if isLayersType then
+local sameSprite = activeSprite == range.sprite
+local isValid = isLayersType and sameSprite
+if isValid then
     local oldRangeLayers = range.layers
     local lenRangeLayers = #oldRangeLayers
     local i = 0
@@ -32,6 +36,6 @@ else
     app.activeFrame = activeSprite.frames[1]
 end
 
-if isLayersType then
+if isValid then
     app.range.layers = newRangeLayers
 end

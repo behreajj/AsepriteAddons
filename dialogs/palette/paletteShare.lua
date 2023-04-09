@@ -1,4 +1,4 @@
-local sources = { "ACTIVE", "FILE", "PRESET" }
+local palTypes = { "ACTIVE", "FILE" }
 
 local defaults = {
     palType = "ACTIVE",
@@ -15,18 +15,12 @@ dlg:combobox {
     id = "palType",
     label = "Source:",
     option = "ACTIVE",
-    options = sources,
+    options = palTypes,
     onchange = function()
         local state = dlg.data.palType
-
         dlg:modify {
             id = "palFile",
             visible = state == "FILE"
-        }
-
-        dlg:modify {
-            id = "palPreset",
-            visible = state == "PRESET"
         }
     end
 }
@@ -37,15 +31,6 @@ dlg:file {
     id = "palFile",
     filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
     open = true,
-    visible = false
-}
-
-dlg:newrow { always = false }
-
-dlg:entry {
-    id = "palPreset",
-    text = "",
-    focus = false,
     visible = false
 }
 
@@ -120,7 +105,6 @@ dlg:button {
         local args = dlg.data
         local palType = args.palType or defaults.palType --[[@as string]]
         local palFile = args.palFile --[[@as string]]
-        local palPreset = args.palPreset --[[@as string]]
         local prependMask = args.prependMask
         local startIndex = args.startIndex
             or defaults.startIndex --[[@as integer]]
@@ -130,8 +114,7 @@ dlg:button {
         local hexesProfile = {}
         local hexesSrgb = {}
         hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-            palType, palFile, palPreset,
-            startIndex, count, true)
+            palType, palFile, startIndex, count, true)
 
         local uniquesOnly = args.uniquesOnly
         if uniquesOnly then

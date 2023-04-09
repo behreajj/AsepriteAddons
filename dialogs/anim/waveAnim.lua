@@ -9,14 +9,11 @@ local defaults = {
     target = "ACTIVE",
     frameCount = 8,
     fps = 24,
-
     edgeType = "OMIT",
     waveType = "RADIAL",
-
     timeOffset = -90,
     timeScalar = 1,
     spaceScalar = 3,
-
     -- Radial
     xCenter = 50,
     yCenter = 50,
@@ -24,7 +21,6 @@ local defaults = {
     uDisplaceDest = 5,
     sustain = 25,
     warp = 0,
-
     -- Bilinear
     xDisplaceOrig = 5,
     yDisplaceOrig = 5,
@@ -32,14 +28,12 @@ local defaults = {
     yDisplaceDest = 5,
     -- xSustain = 100,
     ySustain = 100,
-
     -- Interlaced
     interType = "HORIZONTAL",
     interOffOrig = 180,
     interOffDest = 180,
     interSkip = 1,
     interPick = 1,
-
     printElapsed = false,
     pullFocus = false
 }
@@ -284,7 +278,7 @@ dlg:slider {
     value = defaults.xDisplaceOrig,
     visible = defaults.waveType == "BILINEAR"
         or (defaults.waveType == "INTERLACED"
-            and defaults.interType == "HORIZONTAL")
+        and defaults.interType == "HORIZONTAL")
 }
 
 dlg:slider {
@@ -294,7 +288,7 @@ dlg:slider {
     value = defaults.xDisplaceDest,
     visible = defaults.waveType == "BILINEAR"
         or (defaults.waveType == "INTERLACED"
-            and defaults.interType == "HORIZONTAL")
+        and defaults.interType == "HORIZONTAL")
 }
 
 -- dlg:newrow { always = false }
@@ -318,7 +312,7 @@ dlg:slider {
     value = defaults.yDisplaceOrig,
     visible = defaults.waveType == "BILINEAR"
         or (defaults.waveType == "INTERLACED"
-            and defaults.interType == "VERTICAL")
+        and defaults.interType == "VERTICAL")
 }
 
 dlg:slider {
@@ -328,7 +322,7 @@ dlg:slider {
     value = defaults.yDisplaceDest,
     visible = defaults.waveType == "BILINEAR"
         or (defaults.waveType == "INTERLACED"
-            and defaults.interType == "VERTICAL")
+        and defaults.interType == "VERTICAL")
 }
 
 dlg:newrow { always = false }
@@ -432,22 +426,24 @@ dlg:button {
         local lenSrcFrames = #srcFrames
         local isActive = target == "ACTIVE"
 
-        local selFrames = AseUtilities.getFrames(srcSprite, target)
+        local selFrames = Utilities.flatArr2(
+            AseUtilities.getFrames(srcSprite, target))
 
         local timeOffsetDeg = defaults.timeOffset
         local timeOffset = timeOffsetDeg * 0.017453292519943
-        local timeScalar = args.timeScalar or defaults.timeScalar
+        local timeScalar = args.timeScalar
+            or defaults.timeScalar --[[@as integer]]
 
         -- Flatten sprite to images, associate with a factor
         -- and an angle theta.
         local packets = {}
         if isActive then
-            local frameCount = args.frameCount or defaults.frameCount
-            local fps = args.fps or defaults.fps
+            local frameCount = args.frameCount
+                or defaults.frameCount --[[@as integer]]
+            local fps = args.fps or defaults.fps --[[@as integer]]
 
-            local selFrame = selFrames[1]
             local selImg = Image(srcSpec)
-            selImg:drawSprite(srcSprite, selFrame)
+            selImg:drawSprite(srcSprite, selFrames[1])
 
             local frameToFac = 0.0
             if frameCount > 1 then
@@ -481,10 +477,12 @@ dlg:button {
             -- If there's no room for that, check to see if
             -- range is contiguous (1,2,3,4) or not (1,5,3,10).
 
+            ---@type number[]
             local timeStamps = {}
-            local totalDuration = 0
+            local totalDuration = 0.0
             local i = 0
-            while i < lenSrcFrames do i = i + 1
+            while i < lenSrcFrames do
+                i = i + 1
                 local srcFrame = srcFrames[i]
                 local duration = srcFrame.duration
                 timeStamps[i] = totalDuration
@@ -504,15 +502,16 @@ dlg:button {
 
             local lenSelFrames = #selFrames
             local j = 0
-            while j < lenSelFrames do j = j + 1
-                local selFrame = selFrames[j]
-                local selDuration = selFrame.duration
-                local selFrameNo = selFrame.frameNumber
+            while j < lenSelFrames do
+                j = j + 1
+                local selFrameIdx = selFrames[j]
+                local selFrameObj = srcFrames[selFrameIdx]
+                local selDuration = selFrameObj.duration
 
                 local selImg = Image(srcSpec)
-                selImg:drawSprite(srcSprite, selFrame)
+                selImg:drawSprite(srcSprite, selFrameIdx)
 
-                local selTime = timeStamps[selFrameNo]
+                local selTime = timeStamps[selFrameIdx]
                 local fac = selTime * timeToFac
                 local theta = timeOffset + selTime * timeToTheta
 
@@ -556,8 +555,8 @@ dlg:button {
         -- Determine which wave function the user wants.
         local eval = nil
         if waveType == "BILINEAR" then
-            local xCenter = args.xCenter or defaults.xCenter
-            local yCenter = args.yCenter or defaults.yCenter
+            local xCenter = args.xCenter or defaults.xCenter --[[@as integer]]
+            local yCenter = args.yCenter or defaults.yCenter --[[@as integer]]
             local pxxCenter = xCenter * 0.01 * srcWidth
             local pxyCenter = yCenter * 0.01 * srcHeight
 
@@ -580,10 +579,10 @@ dlg:button {
             xBaseSustain = xBaseSustain * 0.01
 
             -- This was tested to make sure it tiles correctly.
-            local xDisplaceOrig = args.xDisplaceOrig or defaults.xDisplaceOrig
-            local xDisplaceDest = args.xDisplaceDest or defaults.xDisplaceDest
-            local yDisplaceOrig = args.yDisplaceOrig or defaults.yDisplaceOrig
-            local yDisplaceDest = args.yDisplaceDest or defaults.yDisplaceDest
+            local xDisplaceOrig = args.xDisplaceOrig or defaults.xDisplaceOrig --[[@as integer]]
+            local xDisplaceDest = args.xDisplaceDest or defaults.xDisplaceDest --[[@as integer]]
+            local yDisplaceOrig = args.yDisplaceOrig or defaults.yDisplaceOrig --[[@as integer]]
+            local yDisplaceDest = args.yDisplaceDest or defaults.yDisplaceDest --[[@as integer]]
 
             local pxxDisplaceOrig = srcWidth * xDisplaceOrig * 0.005
             local pxxDisplaceDest = srcWidth * xDisplaceDest * 0.005
@@ -611,16 +610,14 @@ dlg:button {
                 local yWarp = yDsplScl * ySst * cos(xTheta)
                 return x + xWarp, y + yWarp
             end
-
         elseif waveType == "INTERLACED" then
-
             -- wn1 and hn1 work better for sprites with even width, height
             -- when converting to theta.
-            local interType = args.interType or defaults.interType
-            local interOffOrig = args.interOffOrig or defaults.interOffOrig
-            local interOffDest = args.interOffDest or defaults.interOffDest
-            local skip = args.interSkip or defaults.interSkip
-            local pick = args.interPick or defaults.interPick
+            local interType = args.interType or defaults.interType --[[@as string]]
+            local interOffOrig = args.interOffOrig or defaults.interOffOrig --[[@as integer]]
+            local interOffDest = args.interOffDest or defaults.interOffDest --[[@as integer]]
+            local skip = args.interSkip or defaults.interSkip --[[@as integer]]
+            local pick = args.interPick or defaults.interPick --[[@as integer]]
 
             -- Pattern is sum of both on/off: e.g., 001110011100,
             -- pick 2 skip 3, is 5 total. Modulo all to repeat
@@ -630,9 +627,8 @@ dlg:button {
             local lacRadDest = 0.017453292519943 * interOffDest
 
             if interType == "VERTICAL" then
-
-                local yDisplaceOrig = args.yDisplaceOrig or defaults.yDisplaceOrig
-                local yDisplaceDest = args.yDisplaceDest or defaults.yDisplaceDest
+                local yDisplaceOrig = args.yDisplaceOrig or defaults.yDisplaceOrig --[[@as integer]]
+                local yDisplaceDest = args.yDisplaceDest or defaults.yDisplaceDest --[[@as integer]]
                 local pxyDisplaceOrig = srcWidth * yDisplaceOrig * 0.005
                 local pxyDisplaceDest = srcWidth * yDisplaceDest * 0.005
 
@@ -653,12 +649,10 @@ dlg:button {
                         + t * pxyDisplaceDest
                     return x, y + yDsplScl * cos(xTheta)
                 end
-
             else
-
                 -- Default to horizontal.
-                local xDisplaceOrig = args.xDisplaceOrig or defaults.xDisplaceOrig
-                local xDisplaceDest = args.xDisplaceDest or defaults.xDisplaceDest
+                local xDisplaceOrig = args.xDisplaceOrig or defaults.xDisplaceOrig --[[@as integer]]
+                local xDisplaceDest = args.xDisplaceDest or defaults.xDisplaceDest --[[@as integer]]
                 local pxxDisplaceOrig = srcHeight * xDisplaceOrig * 0.005
                 local pxxDisplaceDest = srcHeight * xDisplaceDest * 0.005
 
@@ -679,18 +673,15 @@ dlg:button {
                         + t * pxxDisplaceDest
                     return x + xDsplScl * sin(yTheta), y
                 end
-
             end
-
         else
-
             -- Default to radial wave.
-            local xCenter = args.xCenter or defaults.xCenter
-            local yCenter = args.yCenter or defaults.yCenter
-            local uDisplaceOrig = args.uDisplaceOrig or defaults.uDisplaceOrig
-            local uDisplaceDest = args.uDisplaceDest or defaults.uDisplaceDest
-            local sustain = args.sustain or defaults.sustain
-            local warp = args.warp or defaults.warp
+            local xCenter = args.xCenter or defaults.xCenter --[[@as integer]]
+            local yCenter = args.yCenter or defaults.yCenter --[[@as integer]]
+            local uDisplaceOrig = args.uDisplaceOrig or defaults.uDisplaceOrig --[[@as integer]]
+            local uDisplaceDest = args.uDisplaceDest or defaults.uDisplaceDest --[[@as integer]]
+            local sustain = args.sustain or defaults.sustain --[[@as integer]]
+            local warp = args.warp or defaults.warp --[[@as integer]]
 
             -- Working on what would be most intuitive.
             local maxDist = 0.0
@@ -774,10 +765,12 @@ dlg:button {
         end
 
         -- Create wave images from packet data.
+        ---@type Image[]
         local trgImages = {}
         local lenPackets = #packets
         local h = 0
-        while h < lenPackets do h = h + 1
+        while h < lenPackets do
+            h = h + 1
             local packet = packets[h]
             local fac = packet.fac
             local theta = packet.theta
@@ -802,10 +795,11 @@ dlg:button {
         AseUtilities.setPalette(hexArr, trgSprite, 1)
 
         -- Create frames.
-        app.transaction(function()
+        app.transaction("New Frames", function()
             trgSprite.frames[1].duration = packets[1].duration
             local i = 1
-            while i < lenPackets do i = i + 1
+            while i < lenPackets do
+                i = i + 1
                 local frame = trgSprite:newEmptyFrame()
                 frame.duration = packets[i].duration
             end
@@ -822,16 +816,20 @@ dlg:button {
         local trgFrames = trgSprite.frames
         local alphaMask = srcSpec.transparentColor
         local j = 0
-        while j < lenPackets do j = j + 1
-            local frame = trgFrames[j]
+        while j < lenPackets do
+            j = j + 1
+            local trgFrame = trgFrames[j]
             local img = trgImages[j]
             local x = 0
             local y = 0
             if trimCels then
                 img, x, y = trimImage(img, 0, alphaMask)
             end
-            trgSprite:newCel(
-                trgLayer, frame, img, Point(x, y))
+            app.transaction(string.format(
+                "Wave %d", trgFrame.frameNumber), function()
+                trgSprite:newCel(
+                    trgLayer, trgFrame, img, Point(x, y))
+            end)
         end
 
         app.activeFrame = trgFrames[1]

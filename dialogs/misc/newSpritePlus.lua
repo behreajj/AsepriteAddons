@@ -1,100 +1,37 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/canvasutilities.lua")
+
+local screenScale = app.preferences.general.screen_scale
 
 -- New Sprite Plus doesn't support Color Space conversion
 -- because setting color space via script interferes with
 -- Aseprite's routine to ask the user what to do when
 -- opening a sprite with a profile.
 local colorModes = { "RGB", "INDEXED", "GRAY" }
-local paletteTypes = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
+local palTypes = { "ACTIVE", "DEFAULT", "FILE" }
 local sizeModes = { "ASPECT", "CUSTOM" }
 
 local defaults = {
     filename = "Sprite",
-
     sizeMode = "CUSTOM",
     width = 320,
     height = 180,
     aRatio = 16,
     bRatio = 9,
     aspectScale = 20,
-
     colorMode = "RGB",
-    rChannel = 0,
-    gChannel = 0,
-    bChannel = 0,
-    aChannel = 0,
-    grayChannel = 0,
     bkgIdx = 0,
-    linkRgbGray = true,
-
     frames = 1,
     fps = 12,
-
     palType = "ACTIVE",
     prependMask = true,
-
     xGrid = 0,
     yGrid = 0,
     wGrid = 20,
     hGrid = 20,
     pullFocus = true,
-
     maxSize = 65535
 }
-
-local function updateColorPreviewRgba(dialog)
-    local args = dialog.data
-    dialog:modify {
-        id = "preview",
-        colors = { Color {
-            r = args.rChannel,
-            g = args.gChannel,
-            b = args.bChannel,
-            a = args.aChannel
-        } }
-    }
-end
-
-local function updateColorPreviewGray(dialog)
-    local args = dialog.data
-    dialog:modify {
-        id = "preview",
-        colors = { Color {
-            gray = args.grayChannel,
-            alpha = args.aChannel
-        } }
-    }
-end
-
-local function rgbToGray(r8, g8, b8)
-    -- HSL Lightness
-    local mx = math.max(r8, g8, b8)
-    local mn = math.min(r8, g8, b8)
-    return math.floor(0.5 + 0.5 * (mx + mn))
-end
-
-local function updateGrayLinkFromRgb(dialog)
-    local args = dialog.data
-    local link = defaults.linkRgbGray
-    if link then
-        local v = rgbToGray(
-            args.rChannel,
-            args.gChannel,
-            args.bChannel)
-        dialog:modify { id = "grayChannel", value = v }
-    end
-end
-
-local function updateRgbLinkFromGray(dialog)
-    local args = dialog.data
-    local link = defaults.linkRgbGray
-    if link then
-        local v = args.grayChannel
-        dialog:modify { id = "bChannel", value = v }
-        dialog:modify { id = "gChannel", value = v }
-        dialog:modify { id = "rChannel", value = v }
-    end
-end
 
 local function updateRatio(dialog)
     local args = dialog.data
@@ -160,14 +97,16 @@ dlg:newrow { always = false }
 
 dlg:number {
     id = "width",
-    text = string.format("%d", app.preferences.new_file.width),
+    text = string.format("%d",
+        app.preferences.new_file.width),
     decimals = 0,
     visible = defaults.sizeMode == "CUSTOM"
 }
 
 dlg:number {
     id = "height",
-    text = string.format("%d", app.preferences.new_file.height),
+    text = string.format("%d",
+        app.preferences.new_file.height),
     decimals = 0,
     visible = defaults.sizeMode == "CUSTOM"
 }
@@ -226,14 +165,8 @@ dlg:combobox {
         local isIndexed = state == "INDEXED"
         local isGray = state == "GRAY"
         local isRgb = state == "RGB"
-        local minAlpha = args.aChannel > 0
 
-        dlg:modify { id = "preview", visible = not isIndexed }
-        dlg:modify { id = "aChannel", visible = not isIndexed }
-        dlg:modify { id = "bChannel", visible = minAlpha and isRgb }
-        dlg:modify { id = "gChannel", visible = minAlpha and isRgb }
-        dlg:modify { id = "rChannel", visible = minAlpha and isRgb }
-        dlg:modify { id = "grayChannel", visible = minAlpha and isGray }
+        dlg:modify { id = "bkgSpectrum", visible = isGray or isRgb }
         dlg:modify { id = "bkgIdx", visible = isIndexed }
 
         local palType = args.palType
@@ -242,128 +175,15 @@ dlg:combobox {
             id = "palFile",
             visible = palType == "FILE" and not isGray
         }
-        dlg:modify {
-            id = "palPreset",
-            visible = palType == "PRESET" and not isGray
-        }
         dlg:modify { id = "grayCount", visible = isGray }
-
-        if isRgb then
-            updateColorPreviewRgba(dlg)
-        elseif isGray then
-            updateColorPreviewGray(dlg)
-        end
     end
 }
 
-dlg:newrow { always = false }
-
-dlg:shades {
-    id = "preview",
-    label = "Background:",
-    mode = "pick",
-    colors = { Color {
-        r = defaults.rChannel,
-        g = defaults.gChannel,
-        b = defaults.bChannel,
-        a = defaults.aChannel
-    } },
-    visible = defaults.colorMode ~= "INDEXED"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "aChannel",
-    label = "Alpha:",
-    min = 0,
-    max = 255,
-    value = defaults.aChannel,
-    visible = defaults.colorMode ~= "INDEXED",
-    onchange = function()
-        local args = dlg.data
-        local cm = args.colorMode
-        local isRgb = cm == "RGB"
-        local isGray = cm == "GRAY"
-        if isRgb then
-            updateColorPreviewRgba(dlg)
-        elseif isGray then
-            updateColorPreviewGray(dlg)
-        end
-
-        if args.aChannel < 1 then
-            dlg:modify { id = "bChannel", visible = false }
-            dlg:modify { id = "gChannel", visible = false }
-            dlg:modify { id = "rChannel", visible = false }
-            dlg:modify { id = "grayChannel", visible = false }
-        else
-            dlg:modify { id = "bChannel", visible = isRgb }
-            dlg:modify { id = "gChannel", visible = isRgb }
-            dlg:modify { id = "rChannel", visible = isRgb }
-            dlg:modify { id = "grayChannel", visible = isGray }
-        end
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "rChannel",
-    label = "RGB:",
-    min = 0,
-    max = 255,
-    value = defaults.rChannel,
-    visible = defaults.colorMode == "RGB"
-        and defaults.aChannel > 0,
-    onchange = function()
-        updateColorPreviewRgba(dlg)
-        updateGrayLinkFromRgb(dlg)
-    end
-}
-
-dlg:slider {
-    id = "gChannel",
-    min = 0,
-    max = 255,
-    value = defaults.gChannel,
-    visible = defaults.colorMode == "RGB"
-        and defaults.aChannel > 0,
-    onchange = function()
-        updateColorPreviewRgba(dlg)
-        updateGrayLinkFromRgb(dlg)
-    end
-}
-
-dlg:slider {
-    id = "bChannel",
-    min = 0,
-    max = 255,
-    value = defaults.bChannel,
-    visible = defaults.colorMode == "RGB"
-        and defaults.aChannel > 0,
-    onchange = function()
-        updateColorPreviewRgba(dlg)
-        updateGrayLinkFromRgb(dlg)
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "grayChannel",
-    label = "Value:",
-    min = 0,
-    max = 255,
-    value = defaults.grayChannel,
-    visible = defaults.colorMode == "GRAY"
-        and defaults.aChannel > 0,
-    onchange = function()
-        updateColorPreviewGray(dlg)
-        updateRgbLinkFromGray(dlg)
-    end
-}
-
-dlg:newrow { always = false }
+CanvasUtilities.spectrum(
+    dlg, "bkgSpectrum", "Background:",
+    180 / screenScale, 56 / screenScale,
+    defaults.colorMode == "RGB",
+    0.0, 1.0, 0.5, 0)
 
 dlg:slider {
     id = "bkgIdx",
@@ -402,12 +222,11 @@ dlg:combobox {
     id = "palType",
     label = "Palette:",
     option = defaults.palType,
-    options = paletteTypes,
+    options = palTypes,
     visible = defaults.colorMode ~= "GRAY",
     onchange = function()
         local state = dlg.data.palType
         dlg:modify { id = "palFile", visible = state == "FILE" }
-        dlg:modify { id = "palPreset", visible = state == "PRESET" }
     end
 }
 
@@ -419,16 +238,6 @@ dlg:file {
     open = true,
     visible = defaults.colorMode ~= "GRAY"
         and defaults.palType == "FILE"
-}
-
-dlg:newrow { always = false }
-
-dlg:entry {
-    id = "palPreset",
-    text = "",
-    focus = false,
-    visible = defaults.colorMode ~= "GRAY"
-        and defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -447,7 +256,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
-    selected = defaults.prependMask
+    selected = defaults.prependMask,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -475,16 +285,16 @@ dlg:button {
             hexesSrgb = hexesProfile
         elseif palType ~= "DEFAULT" then
             local palFile = args.palFile --[[@as string]]
-            local palPreset = args.palPreset --[[@as string]]
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                palType, palFile, palPreset, 0, 256, true)
+                palType, palFile, 0, 256, true)
         else
             -- User defined default palette can be loaded with
             -- app.command.LoadPalette { preset = "default" } .
             local hexesDefault = AseUtilities.DEFAULT_PAL_ARR
             local hexDefLen = #hexesDefault
             local i = 0
-            while i < hexDefLen do i = i + 1
+            while i < hexDefLen do
+                i = i + 1
                 hexesProfile[i] = hexesDefault[i]
             end
             hexesSrgb = hexesProfile
@@ -498,19 +308,7 @@ dlg:button {
         local colorModeInt = ColorMode.RGB
         local createBackground = false
         local hexBkg = 0x0
-        if useGrayscale then
-            colorModeInt = ColorMode.GRAY
-            local aChannel = args.aChannel or defaults.aChannel
-            createBackground = aChannel > 0
-            if createBackground then
-                local grayChannel = args.grayChannel
-                    or defaults.grayChannel
-                hexBkg = (aChannel << 0x18)
-                    | (grayChannel << 0x10)
-                    | (grayChannel << 0x08)
-                    | grayChannel
-            end
-        elseif useIndexed then
+        if useIndexed then
             colorModeInt = ColorMode.INDEXED
             local bkgIdx = args.bkgIdx or defaults.bkgIdx
             if bkgIdx < #hexesProfile then
@@ -524,17 +322,26 @@ dlg:button {
                 }
             end
         else
-            -- Default to RGB
-            local aChannel = args.aChannel or defaults.aChannel
-            createBackground = aChannel > 0
+            if useGrayscale then
+                colorModeInt = ColorMode.GRAY
+            else
+                colorModeInt = ColorMode.RGB
+            end
+
+            local specAlpha = args.spectrumAlpha --[[@as number]]
+            createBackground = specAlpha > 0
             if createBackground then
-                local bChannel = args.bChannel or defaults.bChannel
-                local gChannel = args.gChannel or defaults.gChannel
-                local rChannel = args.rChannel or defaults.rChannel
-                hexBkg = (aChannel << 0x18)
-                    | (bChannel << 0x10)
-                    | (gChannel << 0x08)
-                    | rChannel
+                local specHue = args.spectrumHue --[[@as number]]
+                local specSat = args.spectrumSat --[[@as number]]
+                local specLight = args.spectrumLight --[[@as number]]
+                local aseColor = Color {
+                    hue = specHue,
+                    saturation = specSat,
+                    lightness = specLight,
+                    alpha = specAlpha
+                }
+                hexBkg = AseUtilities.aseColorToHex(
+                    aseColor, ColorMode.RGB)
             end
         end
 
@@ -574,6 +381,7 @@ dlg:button {
         -- Store new dimensions in preferences.
         app.preferences.new_file.width = width
         app.preferences.new_file.height = height
+        app.preferences.new_file.color_mode = colorModeInt
 
         -- Create sprite, set file name, set to active.
         AseUtilities.preserveForeBack()
@@ -602,36 +410,40 @@ dlg:button {
         end
 
         -- Create frames.
-        local frameReqs = args.frames or defaults.frames
+        local frameReqs = args.frames or defaults.frames --[[@as integer]]
         local fps = args.fps or defaults.fps --[[@as integer]]
         local duration = 1.0 / math.max(1, fps)
         local firstFrame = newSprite.frames[1]
-        firstFrame.duration = duration
 
-        app.transaction(function()
+        app.transaction("New Frames", function()
+            firstFrame.duration = duration
             AseUtilities.createFrames(
                 newSprite,
                 frameReqs - 1,
                 duration)
         end)
 
-        -- Assign a name to layer, avoid "Background".
-        local layer = newSprite.layers[1]
-        layer.name = "Bkg"
-
         -- Create background image. Assign to cels.
         if createBackground then
-            local bkgImg = Image(spec)
-            bkgImg:clear(hexBkg)
-            layer.cels[1].image = bkgImg
+            app.transaction("Background", function()
+                -- For continuous layer, see:
+                -- https://community.aseprite.org/t/create-new-continuous-layer/13502
+                -- Beware of timeline visibility:
+                -- https://github.com/aseprite/aseprite/issues/3722
+                -- Not used here because each new cel link creates
+                -- a separate transaction.
 
-            app.transaction(function()
-                -- For continuous layer see
-                -- https://community.aseprite.org/t/
-                -- create-new-continuous-layer/13502
-                local lenFrames = #newSprite.frames
+                -- Assign a name to layer, avoid "Background".
+                local layer = newSprite.layers[1]
+                layer.name = "Bkg"
+
+                local bkgImg = Image(spec)
+                bkgImg:clear(hexBkg)
+                layer.cels[1].image = bkgImg
+
                 local j = 1
-                while j < lenFrames do j = j + 1
+                while j < frameReqs do
+                    j = j + 1
                     newSprite:newCel(layer, j, bkgImg)
                 end
             end)
@@ -644,6 +456,7 @@ dlg:button {
         end
 
         app.activeFrame = firstFrame
+        app.command.FitScreen()
         app.refresh()
         dlg:close()
     end

@@ -2,10 +2,10 @@ dofile("./vec2.lua")
 dofile("./vec3.lua")
 dofile("./vec4.lua")
 dofile("./curve2.lua")
+dofile("./curve3.lua")
 dofile("./mat3.lua")
 dofile("./mat4.lua")
 dofile("./mesh2.lua")
-dofile("./glyph.lua")
 
 Utilities = {}
 Utilities.__index = Utilities
@@ -15,112 +15,6 @@ setmetatable(Utilities, {
         return cls.new(...)
     end
 })
-
----Glyph look up table. Glyphs occupy
----an 8 x 8 grid, where 1 represents
----a mark and 0 represents empty.
-Utilities.GLYPH_LUT = {
-    [' '] = Glyph.new(' ', 0, 0),
-    ['!'] = Glyph.new('!', 1736164113350932496, 0),
-    ['"'] = Glyph.new('"', 2893606741050654720, 0),
-    ['#'] = Glyph.new('#', 11395512391958528, 0),
-    ['$'] = Glyph.new('$', 1169898204994762768, 0),
-    ['%'] = Glyph.new('%', 8981488584378098978, 0),
-    ['&'] = Glyph.new('&', 4053310240682034232, 0),
-    ['\''] = Glyph.new('\'', 1731642852816977920, 0),
-    ['('] = Glyph.new('(', 2323928052423213088, 0),
-    [')'] = Glyph.new(')', 288795533752009220, 0),
-    ['*'] = Glyph.new('*', 4596200532606976, 0),
-    ['+'] = Glyph.new('+', 4521724658843648, 0),
-    [','] = Glyph.new(',', 1574920, 0),
-    ['-'] = Glyph.new('-', 532575944704, 0),
-    ['.'] = Glyph.new('.', 1579008, 0),
-    ['/'] = Glyph.new('/', 289365106780807200, 0),
-
-    ['0'] = Glyph.new('0', 1739555093715621888, 0),
-    ['1'] = Glyph.new('1', 583224982331988992, 0),
-    ['2'] = Glyph.new('2', 4324586061027097600, 0),
-    ['3'] = Glyph.new('3', 4036355804662872064, 0),
-    ['4'] = Glyph.new('4', 2604246324710999040, 0),
-    ['5'] = Glyph.new('5', 4332498283667929088, 0),
-    ['6'] = Glyph.new('6', 1738424881661614080, 0),
-    ['7'] = Glyph.new('7', 4324585974724038656, 0),
-    ['8'] = Glyph.new('8', 1739555042176014336, 0),
-    ['9'] = Glyph.new('9', 1739555058816915456, 0),
-    [':'] = Glyph.new(':', 26491359860736, 0),
-    [';'] = Glyph.new(';', 26491359860744, 0),
-    ['<'] = Glyph.new('<', 580999811718711296, 0),
-    ['='] = Glyph.new('=', 136341522219008, 0),
-    ['>'] = Glyph.new('>', 1155177711124615168, 0),
-    ['?'] = Glyph.new('?', 4054440365960200208, 0),
-
-    ['@'] = Glyph.new('@', 4342201927465582652, 0),
-    ['A'] = Glyph.new('A', 1164255564608586752, 0),
-    ['B'] = Glyph.new('B', 8666126866299779072, 0),
-    ['C'] = Glyph.new('C', 4341540685485194240, 0),
-    ['D'] = Glyph.new('D', 8666126642961479680, 0),
-    ['E'] = Glyph.new('E', 4332498266959657984, 0),
-    ['F'] = Glyph.new('F', 4332498266959650816, 0),
-    ['G'] = Glyph.new('G', 4053310360940460032, 0),
-    ['H'] = Glyph.new('H', 4919131993507382272, 0),
-    ['I'] = Glyph.new('I', 4039746526926354432, 0),
-    ['J'] = Glyph.new('J', 4325716272676876288, 0),
-    ['K'] = Glyph.new('K', 4920270967496262656, 0),
-    ['L'] = Glyph.new('L', 2314885530818460672, 0),
-    ['M'] = Glyph.new('M', -9023337257158671872, 0),
-    ['N'] = Glyph.new('N', 4783476233180692992, 0),
-    ['O'] = Glyph.new('O', 4342105843085491200, 0),
-
-    ['P'] = Glyph.new('P', 8666126866232393728, 0),
-    ['Q'] = Glyph.new('Q', 4342105843086015496, 0),
-    ['R'] = Glyph.new('R', 8666126866501354496, 0),
-    ['S'] = Glyph.new('S', 4341540650114906112, 0),
-    ['T'] = Glyph.new('T', 8939662921505443840, 0),
-    ['U'] = Glyph.new('U', 4919131752989211648, 0),
-    ['V'] = Glyph.new('V', 4919131752987365376, 0),
-    ['W'] = Glyph.new('W', -7885078839348148224, 0),
-    ['X'] = Glyph.new('X', 4919100742855574528, 0),
-    ['Y'] = Glyph.new('Y', 4919131631854292992, 0),
-    ['Z'] = Glyph.new('Z', 9097838629918768640, 0),
-    ['['] = Glyph.new('[', 8088535575457448048, 0),
-    ['\\'] = Glyph.new('\\', 2314867869508699140, 0),
-    [']'] = Glyph.new(']', 1009371474131288590, 0),
-    ['^'] = Glyph.new('^', 1164255270465961984, 0),
-    ['_'] = Glyph.new('_', 126, 0),
-
-    ['`'] = Glyph.new('`', 2314867869373956096, 0),
-    ['a'] = Glyph.new('a', 26405931072512, 0),
-    ['b'] = Glyph.new('b', 2314885633965045760, 0),
-    ['c'] = Glyph.new('c', 26543437125632, 0),
-    ['d'] = Glyph.new('d', 289360794970496000, 0),
-    ['e'] = Glyph.new('e', 26543839517696, 0),
-    ['f'] = Glyph.new('f', 869212561056206848, 0),
-    ['g'] = Glyph.new('g', 1883670230183986232, 2),
-    ['h'] = Glyph.new('h', 2314885633965040640, 0),
-    ['i'] = Glyph.new('i', 4503806055299072, 0),
-    ['j'] = Glyph.new('j', 576469582890936336, 1),
-    ['k'] = Glyph.new('k', 2314885565447153664, 0),
-    ['l'] = Glyph.new('l', 1157442765409224704, 0),
-    ['m'] = Glyph.new('m', 57493678606848, 0),
-    ['n'] = Glyph.new('n', 61727876326400, 0),
-    ['o'] = Glyph.new('o', 26543504234496, 0),
-
-    ['p'] = Glyph.new('p', 1739555179547598848, 2),
-    ['q'] = Glyph.new('q', 1883670229782905404, 2),
-    ['r'] = Glyph.new('r', 26543436865536, 0),
-    ['s'] = Glyph.new('s', 26526120949760, 0),
-    ['t'] = Glyph.new('t', 4569639314000896, 0),
-    ['u'] = Glyph.new('u', 39737643768832, 0),
-    ['v'] = Glyph.new('v', 48550984028160, 0),
-    ['w'] = Glyph.new('w', 161158224168960, 0),
-    ['x'] = Glyph.new('x', 44152534870016, 0),
-    ['y'] = Glyph.new('y', 10172836669032464, 1),
-    ['z'] = Glyph.new('z', 30941079675960, 0),
-    ['{'] = Glyph.new('{', 1738424915953983512, 0),
-    ['|'] = Glyph.new('|', 1157442765409226768, 0),
-    ['}'] = Glyph.new('}', 6922050254083723360, 0),
-    ['~'] = Glyph.new('~', 7248543600252813312, 0)
-}
 
 ---Look up table of linear to standard
 ---color space conversion.
@@ -174,10 +68,12 @@ end
 ---Converts a dictionary to a sorted set.
 ---If a comparator is not provided, elements
 ---are sorted by their less than (<) operator.
----@param dict table dictionary
----@param comparator function? comparator function
----@return table
-function Utilities.dictToSortedSet(dict, comparator)
+---@generic K key
+---@generic V value
+---@param dict table<K, V> dictionary
+---@param comp? fun(a: K, b: K): boolean
+---@return K[]
+function Utilities.dictToSortedSet(dict, comp)
     local orderedSet = {}
     local osCursor = 0
     for k, _ in pairs(dict) do
@@ -185,23 +81,29 @@ function Utilities.dictToSortedSet(dict, comparator)
         orderedSet[osCursor] = k
     end
     -- Sort handles nil comparator function.
-    table.sort(orderedSet, comparator)
+    table.sort(orderedSet, comp)
     return orderedSet
 end
 
----Finds the unsigned distance between two angles.
----The range defaults to 360.0 for degrees, but can
----be math.pi * 2.0 for radians.
----@param a number left operand
----@param b number right operand
----@param range number range
----@return number
-function Utilities.distAngleUnsigned(a, b, range)
-    local valRange = range or 360.0
-    local halfRange = valRange * 0.5
-    return halfRange - math.abs(math.abs(
-        (b % valRange) - (a % valRange))
-        - halfRange)
+---Flattens an array of arrays to a 1D array.
+---@generic T element
+---@param arr2 T[][] array of arrays
+---@return T[]
+function Utilities.flatArr2(arr2)
+    local flat = {}
+    local lenOuter = #arr2
+    local i = 0
+    while i < lenOuter do
+        i = i + 1
+        local arr1 = arr2[i]
+        local lenInner = #arr1
+        local j = 0
+        while j < lenInner do
+            j = j + 1
+            flat[#flat + 1] = arr1[j]
+        end
+    end
+    return flat
 end
 
 ---Flips a source pixel array horizontally.
@@ -270,6 +172,7 @@ end
 ---@param za boolean zero alpha
 ---@return table<integer, integer>
 function Utilities.hexArrToDict(hexes, za)
+    ---@type table<integer, integer>
     local dict = {}
     local lenHexes = #hexes
     local idxRead = 0
@@ -413,136 +316,13 @@ function Utilities.lerpAngleNear(origin, dest, t, range)
     end
 end
 
----Breaks a long string into multiple lines according
----to a character-per-line limit. The limit should be
----in the range 16 to 120. The delimiter inserted into
----a string is '\n'.
----@param srcStr string source string
----@param limit integer? character limit per line
----@return string
-function Utilities.lineWrapString(srcStr, limit)
-    local chars2d = Utilities.lineWrapStringToChars(
-        srcStr, limit)
-    local len2d = #chars2d
-    local i = 0
-    local strArrs = {}
-    local concat = table.concat
-    while i < len2d do
-        i = i + 1
-        strArrs[i] = concat(chars2d[i])
-    end
-    return concat(strArrs, '\n')
-end
-
----Breaks a long string into multiple lines according
----to a character-per-line limit. The limit should be
----in the range 16 to 120. Tries to find the last space
----to use as a breaking point; breaks by character for
----low limits or long words. Returns a table of tables;
----each inner table contains characters representing a
----line of text. Tabs are treated as spaces.
----@param srcStr string source string
----@param limit integer? character limit per line
----@return table
-function Utilities.lineWrapStringToChars(srcStr, limit)
-    if srcStr and #srcStr > 0 then
-
-        local insert = table.insert
-        local remove = table.remove
-        local trimLeft = Utilities.trimCharsInitial
-        local trimRight = Utilities.trimCharsFinal
-
-        local valLimit = limit or 80
-        if valLimit < 16 then valLimit = 16 end
-        if valLimit > 120 then valLimit = 120 end
-
-        local charTally = 0
-        local result = {}
-        local currLine = {}
-        local lastSpace = 0
-
-        local flatChars = Utilities.stringToCharTable(srcStr)
-        local flatCharLen = #flatChars
-        local prevChar = flatChars[flatCharLen]
-
-        local i = 0
-        while i < flatCharLen do i = i + 1
-            local currChar = flatChars[i]
-            if currChar == '\n' or currChar == '\r' then
-                if #currLine < 1 then currLine = { '' } end
-                insert(result, currLine)
-                currLine = {}
-                charTally = 0
-                lastSpace = 0
-            else
-                insert(currLine, currChar)
-                local currLnLen = #currLine
-
-                if currChar == ' '
-                    or currChar == '\t' then
-                    lastSpace = #currLine
-                elseif currChar == '-'
-                    and prevChar == '-' then
-                    -- Handle case where double hyphen is used as
-                    -- a substitute for em dash.
-                    lastSpace = #currLine + 1
-                end
-
-                if charTally < valLimit then
-                    charTally = charTally + 1
-                else
-                    -- Trace back to last space.
-                    -- The greater than half the char length condition
-                    -- is to handle problematic words like
-                    -- "supercalifragilisticexpialidocious".
-                    local excess = {}
-                    if lastSpace > 0 and lastSpace > currLnLen // 2 then
-                        local j = currLnLen + 1
-                        while j > lastSpace do j = j - 1
-                            insert(excess, 1, remove(currLine, j))
-                        end
-                    end
-
-                    trimLeft(excess)
-
-                    trimRight(currLine)
-                    trimLeft(currLine)
-
-                    -- Append current line, create new one.
-                    if #currLine < 1 then currLine = { '' } end
-                    insert(result, currLine)
-                    currLine = {}
-                    charTally = 0
-                    lastSpace = 0
-
-                    -- Consume excess.
-                    local excLen = #excess
-                    while charTally < excLen do
-                        charTally = charTally + 1
-                        insert(currLine, excess[charTally])
-                    end
-                end
-            end
-            prevChar = currChar
-        end
-
-        -- Consume remaining lines.
-        if #currLine > 0 then
-            insert(result, currLine)
-        end
-
-        return result
-    else
-        return { { '' } }
-    end
-end
-
 ---Multiplies a Mat3 with a Curve2.
 ---Changes the curve in place.
 ---@param a Mat3 matrix
 ---@param b Curve2 curve
 ---@return Curve2
 function Utilities.mulMat3Curve2(a, b)
+    -- TODO: Remove? This is not used anywhere.
     local kns = b.knots
     local knsLen = #kns
     local i = 0
@@ -697,58 +477,77 @@ end
 ---the same frame to appear in multiple groups.
 ---@param s string range string
 ---@param frameCount integer? number of frames
----@return table
+---@return integer[][]
 function Utilities.parseRangeStringOverlap(s, frameCount)
     local fcVerif = frameCount or 2147483647
     local strgmatch = string.gmatch
 
     -- Parse string by comma.
+    ---@type integer[][]
     local arrOuter = {}
     local idxOuter = 0
     for token in strgmatch(s, "([^,]+)") do
         -- Parse string by hyphen.
+        ---@type integer[]
         local edges = {}
         local idxEdges = 0
         for subtoken in strgmatch(token, "[^-]+") do
             local trial = tonumber(subtoken, 10)
-            if trial
-                and trial > 0
-                and trial <= fcVerif then
-
+            if trial then
+                -- print(string.format("trial: %d", trial))
                 idxEdges = idxEdges + 1
                 edges[idxEdges] = trial
             end
         end
 
+        ---@type integer[]
         local arrInner = {}
         local idxInner = 0
         local lenEdges = #edges
         if lenEdges > 1 then
+            -- print("lenEdges > 1")
             local origIdx = edges[1]
             local destIdx = edges[lenEdges]
 
+            -- Edges of a range should be clamped to valid.
+            origIdx = math.min(math.max(origIdx, 1), fcVerif)
+            destIdx = math.min(math.max(destIdx, 1), fcVerif)
+
             if destIdx < origIdx then
+                -- print("destIdx < origIdx")
                 local j = origIdx + 1
                 while j > destIdx do
                     j = j - 1
                     idxInner = idxInner + 1
                     arrInner[idxInner] = j
+                    -- print(j)
                 end
             elseif destIdx > origIdx then
+                -- print("destIdx > origIdx")
                 local j = origIdx - 1
                 while j < destIdx do
                     j = j + 1
                     idxInner = idxInner + 1
                     arrInner[idxInner] = j
+                    -- print(j)
                 end
             else
                 idxInner = idxInner + 1
                 arrInner[idxInner] = destIdx
+                -- print("destIdx == origIdx")
+                -- print(destIdx)
             end
-
         elseif lenEdges > 0 then
-            idxInner = idxInner + 1
-            arrInner[idxInner] = edges[1]
+            -- Filter out unique numbers if invalid,
+            -- don't bother to clamp them.
+            local trial = edges[1]
+            if trial >= 1
+                and trial <= fcVerif then
+                idxInner = idxInner + 1
+                arrInner[idxInner] = edges[1]
+                -- print("lenEdges > 0")
+                -- print(edges[1])
+            end
         end
 
         idxOuter = idxOuter + 1
@@ -777,6 +576,7 @@ function Utilities.parseRangeStringUnique(s, frameCount)
     -- Convert 2D array to a dictionary.
     -- Use dummy true, not some idx scheme,
     -- because natural ordering is preferred.
+    ---@type table<integer, boolean>
     local dict = {}
     local lenArr2 = #arr2
     local i = 0
@@ -819,17 +619,6 @@ function Utilities.prependMask(hexes)
     return hexes
 end
 
----Promotes a Knot2 to a Knot3.
----All z components default to 0.0
----@param a Knot2 knot
----@return Knot3
-function Utilities.promoteKnot2ToKnot3(a)
-    return Knot3.new(
-        Utilities.promoteVec2ToVec3(a.co, 0.0),
-        Utilities.promoteVec2ToVec3(a.fh, 0.0),
-        Utilities.promoteVec2ToVec3(a.rh, 0.0))
-end
-
 ---Promotes a Vec2 to a Vec3.
 ---The z component defaults to 0.0.
 ---@param a Vec2 vector
@@ -838,25 +627,6 @@ end
 function Utilities.promoteVec2ToVec3(a, z)
     local vz = z or 0.0
     return Vec3.new(a.x, a.y, vz)
-end
-
----Promotes a Vec3 to a Vec4.
----The w component defaults to 0.0.
----@param a Vec3 vector
----@param w number? w component
----@return Vec4
-function Utilities.promoteVec3ToVec4(a, w)
-    local vw = w or 0.0
-    return Vec4.new(a.x, a.y, a.z, vw)
-end
-
----Quantizes a number.
----Defaults to signed quantization.
----@param a number value
----@param levels number levels
----@return number
-function Utilities.quantize(a, levels)
-    return Utilities.quantizeSigned(a, levels)
 end
 
 ---Quantizes a signed number according
@@ -940,6 +710,7 @@ function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg)
     local tx = wSrc / wTrg
     local ty = hSrc / hTrg
     local len = wTrg * hTrg
+    ---@type integer[]
     local target = {}
     local i = 0
     while i < len do
@@ -954,7 +725,9 @@ end
 ---Reverses a table used as an array.
 ---Useful for rotating an array of pixels 180 degrees.
 ---Changes the table in place.
----@param t table input table
+---@generic T element
+---@param t T[] input table
+---@return T[]
 function Utilities.reverseTable(t)
     -- https://programming-idioms.org/
     -- idiom/19/reverse-a-list/1314/lua
@@ -988,8 +761,9 @@ end
 
 ---Creates a new table from the source
 ---and shuffles it.
----@param t table input table
----@return table
+---@generic T element
+---@param t T[] input table
+---@return T[]
 function Utilities.shuffle(t)
     -- https://stackoverflow.com/a/68486276
     local rng = math.random
@@ -1013,7 +787,7 @@ function Utilities.shuffle(t)
 end
 
 ---Converts a string to a table of characters.
----@param str string the string
+---@param str string string
 ---@return string[]
 function Utilities.stringToCharTable(str)
     -- For more on different methods, see
@@ -1146,6 +920,7 @@ end
 ---@return table<integer, integer>
 function Utilities.uniqueColors(hexes, za)
     local dict = Utilities.hexArrToDict(hexes, za)
+    ---@type integer[]
     local uniques = {}
     for k, v in pairs(dict) do
         uniques[v] = k
@@ -1159,7 +934,7 @@ end
 ---Replaces the characters '\\', '/', ':',
 ---'*', '?', '"', '<', '>', '|', '.', '''
 ---and '`' with an underscore, '_'.
----@param filename string
+---@param filename string file name
 ---@return string
 function Utilities.validateFilename(filename)
     local fileChars = Utilities.stringToCharTable(filename)

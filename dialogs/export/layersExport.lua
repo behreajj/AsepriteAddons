@@ -1,78 +1,30 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/jsonutilities.lua")
 
--- The range object is just not viable for this case,
--- because it can contain both a parent layer (a group)
--- and some or none of its children, leading to either
--- duplicates or an uncertain user intention.
-local layerTargetOptions = { "ACTIVE", "ALL" }
-local frameTargetOptions = { "ACTIVE", "ALL", "RANGE" }
-local boundsOptions = { "CEL", "SPRITE" }
-local originsOptions = { "CENTER", "CORNER" }
+local frameTargetOptions = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
+local layerTargetOptions = { "ACTIVE", "ALL", "RANGE" }
+local cropTypes = { "CROPPED", "SPRITE" }
 
 local defaults = {
     layerTarget = "ALL",
-    frameTarget = "ALL",
+    includeLocked = true,
+    includeHidden = false,
+    includeTiles = false,
+    includeBkg = true,
+    bakeOpacity = true,
+    flatGroups = true,
+    frameTarget = "ACTIVE",
     rangeStr = "",
-    strExample = "1,4,5-10",
-    bounds = "CEL",
+    strExample = "4,6-9,13",
+    cropType = "CROPPED",
     padding = 2,
-    padColor = Color { r = 0, g = 0, b = 0, a = 0 },
     scale = 1,
-    prApply = false,
-    flatGroups = false,
+    usePixelAspect = true,
+    toPow2 = false,
+    potUniform = false,
     saveJson = false,
-    origin = "CORNER"
+    boundsFormat = "TOP_LEFT"
 }
-
-local function appendVisChildren(layer, array)
-    if layer.isVisible then
-        if layer.isGroup then
-            local childLayers = layer.layers
-            local lenChildLayers = #childLayers
-            local i = 0
-            while i < lenChildLayers do
-                i = i + 1
-                local childLayer = childLayers[i]
-                appendVisChildren(childLayer, array)
-            end
-        else
-            table.insert(array, layer)
-        end
-    end
-
-    return array
-end
-
-local function bakeAlpha(hex, layerOpacity, celOpacity)
-    local la = layerOpacity or 255
-    local ca = celOpacity or 255
-    local ha = (hex >> 0x18) & 0xff
-    local hrgb = hex & 0x00ffffff
-    local abake = (la * ca * ha) // 65025
-    return (abake << 0x18) | hrgb
-end
-
-local function blendModeToStr(bm)
-    -- The blend mode for group layers is nil.
-    if bm then
-        for k, v in pairs(BlendMode) do
-            if bm == v then return k end
-        end
-    else
-        return "NORMAL"
-    end
-end
-
-local function getStackIndices(layer, sprite, arr)
-    table.insert(arr, 1, layer.stackIndex)
-    local sprName = "doc::Sprite"
-    if sprite then sprName = sprite.__name end
-    if layer.parent.__name == sprName then
-        return arr
-    else
-        return getStackIndices(layer.parent, sprite, arr)
-    end
-end
 
 local dlg = Dialog { title = "Export Layers" }
 
@@ -80,7 +32,42 @@ dlg:combobox {
     id = "layerTarget",
     label = "Layers:",
     option = defaults.layerTarget,
-    options = layerTargetOptions
+    options = layerTargetOptions,
+    onchange = function()
+        local args = dlg.data
+        local state = args.layerTarget
+        local isNotRange = state ~= "RANGE"
+        dlg:modify { id = "flatGroups", visible = isNotRange }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "includeLocked",
+    label = "Include:",
+    text = "&Locked",
+    selected = defaults.includeLocked
+}
+
+dlg:check {
+    id = "includeHidden",
+    text = "&Hidden",
+    selected = defaults.includeHidden
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "includeTiles",
+    text = "&Tiles",
+    selected = defaults.includeTiles
+}
+
+dlg:check {
+    id = "includeBkg",
+    text = "&Background",
+    selected = defaults.includeBkg
 }
 
 dlg:newrow { always = false }
@@ -91,9 +78,10 @@ dlg:combobox {
     option = defaults.frameTarget,
     options = frameTargetOptions,
     onchange = function()
-        local state = dlg.data.frameTarget
-        local isRange = state == "RANGE"
-        dlg:modify { id = "rangeStr", visible = isRange }
+        local args = dlg.data
+        local state = args.frameTarget
+        local isManual = state == "MANUAL"
+        dlg:modify { id = "rangeStr", visible = isManual }
         dlg:modify { id = "strExample", visible = false }
     end
 }
@@ -102,10 +90,10 @@ dlg:newrow { always = false }
 
 dlg:entry {
     id = "rangeStr",
-    label = "Range:",
+    label = "Entry:",
     text = defaults.rangeStr,
     focus = false,
-    visible = defaults.frameTarget == "RANGE",
+    visible = defaults.frameTarget == "MANUAL",
     onchange = function()
         dlg:modify { id = "strExample", visible = true }
     end
@@ -122,26 +110,11 @@ dlg:label {
 
 dlg:newrow { always = false }
 
-dlg:slider {
-    id = "padding",
-    label = "Padding:",
-    min = 0,
-    max = 32,
-    value = defaults.padding,
-    onchange = function()
-        local args = dlg.data
-        local pad = args.padding
-        dlg:modify { id = "padColor", visible = pad > 0 }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "padColor",
-    label = "Color:",
-    color = defaults.padColor,
-    visible = defaults.padding > 0
+dlg:combobox {
+    id = "cropType",
+    label = "Trim:",
+    option = defaults.cropType,
+    options = cropTypes
 }
 
 dlg:newrow { always = false }
@@ -156,57 +129,62 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "prApply",
-    label = "Apply:",
-    text = "Pixel Aspect",
-    selected = defaults.prApply
+dlg:slider {
+    id = "padding",
+    label = "Padding:",
+    min = 0,
+    max = 32,
+    value = defaults.padding
 }
 
 dlg:newrow { always = false }
+
+dlg:check {
+    id = "bakeOpacity",
+    label = "Bake:",
+    text = "Op&acity",
+    selected = defaults.bakeOpacity,
+    visible = true
+}
 
 dlg:check {
     id = "flatGroups",
-    label = "Flatten Groups:",
+    label = "Flatten:",
+    text = "&Groups",
     selected = defaults.flatGroups,
-    onclick = function()
-        local args = dlg.data
-        local useFlat = args.flatGroups
-        dlg:modify { id = "useFlatWarning", visible = useFlat }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "bounds",
-    label = "Bounds:",
-    option = defaults.bounds,
-    options = boundsOptions
+    visible = defaults.layerTarget ~= "RANGE"
 }
 
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "saveJson",
-    label = "Save JSON:",
-    selected = defaults.saveJson,
-    onclick = function()
-        local args = dlg.data
-        local enabled = args.saveJson
-        dlg:modify { id = "origin", visible = enabled }
-        dlg:modify { id = "userDataWarning", visible = enabled }
-    end
+    id = "usePixelAspect",
+    label = "Apply:",
+    text = "Pi&xel Aspect",
+    selected = defaults.usePixelAspect,
+    visible = true
 }
 
 dlg:newrow { always = false }
 
-dlg:combobox {
-    id = "origin",
-    label = "Origin:",
-    option = defaults.origin,
-    options = originsOptions,
-    visible = defaults.saveJson
+dlg:check {
+    id = "toPow2",
+    label = "Nearest:",
+    text = "&Power of 2",
+    selected = defaults.toPow2,
+    visible = true,
+    onclick = function()
+        local args = dlg.data
+        local state = args.toPow2
+        dlg:modify { id = "potUniform", visible = state }
+    end
+}
+
+dlg:check {
+    id = "potUniform",
+    text = "&Uniform",
+    selected = defaults.potUniform,
+    visible = defaults.toPow2
 }
 
 dlg:newrow { always = false }
@@ -221,11 +199,27 @@ dlg:file {
 
 dlg:newrow { always = false }
 
-dlg:label {
-    id = "useFlatWarning",
-    label = "Note:",
-    text = "Blend modes not supported.",
-    visible = defaults.flatGroups
+dlg:check {
+    id = "saveJson",
+    label = "Save:",
+    text = "&JSON",
+    selected = defaults.saveJson,
+    onclick = function()
+        local args = dlg.data
+        local enabled = args.saveJson
+        dlg:modify { id = "boundsFormat", visible = enabled }
+        dlg:modify { id = "userDataWarning", visible = enabled }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "boundsFormat",
+    label = "Format:",
+    option = defaults.boundsFormat,
+    options = JsonUtilities.RECT_OPTIONS,
+    visible = defaults.saveJson
 }
 
 dlg:newrow { always = false }
@@ -252,66 +246,43 @@ dlg:button {
             return
         end
 
-        -- Early return for flatten groups and color mode.
-        local specSprite = activeSprite.spec
-        local colorMode = specSprite.colorMode
-        local args = dlg.data
-        local flatGroups = args.flatGroups
-        if flatGroups and colorMode ~= ColorMode.RGB then
-            app.alert {
-                title = "Error",
-                text = "Only RGB color mode is supported for flatten groups."
-            }
-            return
-        end
-
-        -- Unpack sprite properties.
-        local alphaIndex = specSprite.transparentColor
-        local colorSpace = specSprite.colorSpace
+        -- Unpack sprite spec.
+        local spriteSpec = activeSprite.spec
+        local spriteColorMode = spriteSpec.colorMode
+        local spriteColorSpace = spriteSpec.colorSpace
+        local spriteAlphaIndex = spriteSpec.transparentColor
         local spritePalettes = activeSprite.palettes
-        local lenPalettes = #spritePalettes
-
-        -- Version specific.
-        local checkTilemaps = AseUtilities.tilesSupport()
-        local missingUserData = "null"
-        local spriteUserData = "\"data\":" .. missingUserData
-        if checkTilemaps then
-            local rawUserData = activeSprite.data --[[@as string]]
-            if rawUserData and #rawUserData > 0 then
-                spriteUserData = string.format(
-                    "\"data\":%s", rawUserData)
-            end
-        end
+        local spriteWidth = spriteSpec.width
+        local spriteHeight = spriteSpec.height
 
         -- Unpack arguments.
-        local layerTarget = args.layerTarget or defaults.layerTarget
-        local frameTarget = args.frameTarget or defaults.frameTarget
-        local rangeStr = args.rangeStr or defaults.rangeStr --[[@as string]]
-        local bounds = args.bounds or defaults.bounds
-        local padding = args.padding or defaults.padding --[[@as integer]]
-        local padColor = args.padColor or defaults.padColor --[[@as Color]]
-        local wScale = args.scale or defaults.scale
-        local hScale = wScale
-        local prApply = args.prApply
+        local args = dlg.data
         local filename = args.filename --[[@as string]]
+        local layerTarget = args.layerTarget
+            or defaults.layerTarget --[[@as string]]
+        local includeLocked = args.includeLocked --[[@as boolean]]
+        local includeHidden = args.includeHidden --[[@as boolean]]
+        local includeTiles = args.includeTiles --[[@as boolean]]
+        local includeBkg = args.includeBkg --[[@as boolean]]
+        local bakeOpacity = args.bakeOpacity --[[@as boolean]]
+        local flatGroups = args.flatGroups --[[@as boolean]]
+        local frameTarget = args.frameTarget
+            or defaults.frameTarget --[[@as string]]
+        local rangeStr = args.rangeStr
+            or defaults.rangeStr --[[@as string]]
+        local cropType = args.cropType
+            or defaults.cropType --[[@as string]]
+        local scale = args.scale or defaults.scale --[[@as integer]]
+        local padding = args.padding
+            or defaults.padding --[[@as integer]]
+        local usePixelAspect = args.usePixelAspect --[[@as boolean]]
+        local toPow2 = args.toPow2 --[[@as boolean]]
+        local potUniform = args.potUniform --[[@as boolean]]
+        local saveJson = args.saveJson --[[@as boolean]]
+        local boundsFormat = args.boundsFormat
+            or defaults.boundsFormat --[[@as string]]
 
-        local saveJson = args.saveJson
-        local origin = args.origin or defaults.origin
-
-        -- Cache methods used in loops.
-        local floor = math.floor
-        local strfmt = string.format
-        local strgsub = string.gsub
-        local concat = table.concat
-        local insert = table.insert
-        local blend = AseUtilities.blendRgba
-        local tilesToImage = AseUtilities.tilesToImage
-        local trimAlpha = AseUtilities.trimImageAlpha
-
-        -- .webp file extensions do not allow indexed
-        -- color mode and Aseprite doesn't handle this
-        -- limitation gracefully. RGB is required above
-        -- anyway, so no need to worry.
+        -- Validate file name.
         local fileExt = app.fs.fileExtension(filename)
         if fileExt == "json" then
             fileExt = app.preferences.export_file.image_default_extension
@@ -323,10 +294,23 @@ dlg:button {
             app.alert { title = "Error", text = "Empty file path." }
             return
         end
-        filePath = strgsub(filePath, "\\", "\\\\")
+        filePath = string.gsub(filePath, "\\", "\\\\")
+
+        -- .webp file extensions do not allow indexed
+        -- color mode and Aseprite doesn't handle this
+        -- limitation gracefully.
+        if spriteColorMode == ColorMode.INDEXED then
+            if fileExt == "webp" then
+                app.alert {
+                    title = "Error",
+                    text = "webp format does not support indexed color."
+                }
+                return
+            end
+        end
 
         local pathSep = app.fs.pathSeparator
-        pathSep = strgsub(pathSep, "\\", "\\\\")
+        pathSep = string.gsub(pathSep, "\\", "\\\\")
 
         local fileTitle = app.fs.fileTitle(filename)
         fileTitle = Utilities.validateFilename(fileTitle)
@@ -334,465 +318,371 @@ dlg:button {
         filePath = filePath .. pathSep
         local filePrefix = filePath .. fileTitle
 
-        -- Choose layers.
-        local selectLayers = {}
-        if layerTarget == "ACTIVE" then
-            local activeLayer = app.activeLayer
-            if activeLayer then
-                if flatGroups then
-                    -- Assume that user wants active layer even
-                    -- if it is not visible.
-                    selectLayers[1] = activeLayer
-                else
-                    appendVisChildren(activeLayer, selectLayers)
-                end
-            end
-        else
-            local activeLayers = activeSprite.layers
-            local lenActiveLayers = #activeLayers
-            if flatGroups then
-                local i = 0
-                while i < lenActiveLayers do i = i + 1
-                    local activeLayer = activeLayers[i]
-                    if activeLayer.isVisible then
-                        insert(selectLayers, activeLayer)
-                    end
-                end
-            else
-                local i = 0
-                while i < lenActiveLayers do i = i + 1
-                    appendVisChildren(activeLayers[i], selectLayers)
-                end
-            end
-        end
-
-        -- Choose frames.
-        local selectFrames = {}
-        if frameTarget == "ACTIVE" then
-            local activeFrame = app.activeFrame
-            if activeFrame then
-                selectFrames[1] = activeFrame
-            end
-        elseif frameTarget == "RANGE" then
-            local allFrames = activeSprite.frames
-            local lenAllFrames = #allFrames
-            local idxRangeSet = Utilities.parseRangeStringUnique(
-                rangeStr, lenAllFrames)
-            local lenIdxRangeSet = #idxRangeSet
-
-            if #rangeStr < 1 or lenIdxRangeSet < 1 then
-                local rangeFrames = app.range.frames
-                local rangeFramesLen = #rangeFrames
-                for i = 1, rangeFramesLen, 1 do
-                    selectFrames[i] = rangeFrames[i]
-                end
-            else
-                for i = 1, lenIdxRangeSet, 1 do
-                    selectFrames[i] = allFrames[idxRangeSet[i]]
-                end
-            end
-        else
-            local allFrames = activeSprite.frames
-            for i = 1, #allFrames, 1 do
-                selectFrames[i] = allFrames[i]
-            end
-        end
-
-        if prApply then
+        -- Process scale
+        local wScale = scale
+        local hScale = scale
+        if usePixelAspect then
             local pxRatio = activeSprite.pixelRatio
             local pxw = math.max(1, math.abs(pxRatio.width))
             local pxh = math.max(1, math.abs(pxRatio.height))
             wScale = wScale * pxw
             hScale = hScale * pxh
         end
-
-        local selectLayerLen = #selectLayers
-        local selectFrameLen = #selectFrames
-
-        local useCenter = origin == "CENTER"
         local useResize = wScale ~= 1 or hScale ~= 1
-        local useSpriteBounds = bounds == "SPRITE"
+
+        -- Process commonly used equivalences.
+        local cropToSprite = cropType == "SPRITE"
+        local normalBlendMode = BlendMode.NORMAL
+        local zeroPoint = Point(0, 0)
+        local nonUniformDim = not potUniform
         local usePadding = padding > 0
-        local usePadColor = padColor.alpha > 0
 
-        -- Determine how to pad the image in hexadecimal
-        -- based on sprite color mode.
-        local pad2 = padding + padding
-        local padOffset = Point(padding, padding)
-        local padHex = AseUtilities.aseColorToHex(padColor, colorMode)
+        -- Cache methods used in loops.
+        local floor = math.floor
+        local strfmt = string.format
+        local appendLeaves = AseUtilities.appendLeaves
+        local getPalette = AseUtilities.getPalette
+        local expandPow2 = AseUtilities.expandImageToPow2
+        local nameVerify = Utilities.validateFilename
+        local padImage = AseUtilities.padImage
+        local resize = AseUtilities.resizeImageNearest
+        local trimAlpha = AseUtilities.trimImageAlpha
 
-        local jsonEntries = {}
-        local h = 0
-        while h < selectLayerLen do h = h + 1
-            local layer = selectLayers[h]
-            local layerBlendMode = layer.blendMode
-            local layerData = layer.data
-            local layerName = layer.name
-            local layerOpacity = layer.opacity
+        local chosenFrames = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, frameTarget,
+                true, rangeStr))
+        local lenChosenFrames = #chosenFrames
+        local spriteFrameObjs = activeSprite.frames
 
-            -- Group layer possibility.
-            local layerIsGroup = layer.isGroup
-            local flatAndGroup = flatGroups and layerIsGroup
-            local childLayers = nil
-            local childLayersCount = 0
-            if flatAndGroup then
-                childLayers = {}
-                appendVisChildren(layer, childLayers)
-                childLayersCount = #childLayers
+        ---@type Layer[]
+        local topLayers = {}
+        if layerTarget == "ALL" then
+            -- print("ALL layers chosen")
+            topLayers = activeSprite.layers
+        elseif layerTarget == "RANGE" then
+            -- print("RANGE layers chosen")
+            local tlHidden = not app.preferences.general.visible_timeline
+            if tlHidden then
+                app.command.Timeline { open = true }
             end
 
-            -- Tile map possibility.
-            local layerIsTilemap = false
-            local tileSet = nil
-            if checkTilemaps then
-                layerIsTilemap = layer.isTilemap
-                if layerIsTilemap then
-                    tileSet = layer.tileset
+            local appRange = app.range
+            if appRange.sprite == activeSprite then
+                local rangeLayers = appRange.layers
+                local lenRangeLayers = #rangeLayers
+                local i = 0
+                while i < lenRangeLayers do
+                    i = i + 1
+                    local rangeLayer = rangeLayers[i]
+                    if not rangeLayer.isGroup then
+                        topLayers[#topLayers + 1] = rangeLayer
+                    end
                 end
             end
 
-            -- A layer's stack index is local to its parent,
-            -- not global to the entire sprite, so there needs
-            -- to be a way to represent the hierarchy.
-            local layerStackIndices = {}
-            getStackIndices(layer, activeSprite, layerStackIndices)
+            if tlHidden then
+                app.command.Timeline { close = true }
+            end
+        else
+            -- print("ACTIVE layers chosen")
+            local activeLayer = app.activeLayer
+            if activeLayer then
+                topLayers = { activeLayer }
+            end
+        end
+        local lenTopLayers = #topLayers
 
-            local jsonLayer = {
-                layerBlendMode = layerBlendMode,
-                layerData = layerData,
-                layerName = layerName,
-                layerOpacity = layerOpacity,
-                layerStackIndices = layerStackIndices,
-                jsonFrames = {}
-            }
-
-            local i = 0
-            while i < selectFrameLen do i = i + 1
-                local frame = selectFrames[i]
-                local frameIndex = frame.frameNumber
-                local palIndex = frameIndex
-                if palIndex > lenPalettes then palIndex = 1 end
-                local activePalette = spritePalettes[palIndex]
-
-                local xTrg = 0
-                local yTrg = 0
-                local imgTrg = nil
-
-                local celData = nil
-                local celOpacity = 255
-                local fileNameShort = strfmt(
-                    "%s%03d_%03d",
-                    fileTitle, h - 1, i - 1)
-
-                if flatAndGroup then
-
-                    local xMin = 2147483647
-                    local yMin = 2147483647
-                    local xMax = -2147483648
-                    local yMax = -2147483648
-                    local childPackets = {}
-
-                    local j = 0
-                    while j < childLayersCount do j = j + 1
-                        local childLayer = childLayers[j]
-
-                        local childLayerIsTilemap = false
-                        local childTileSet = nil
-                        if checkTilemaps then
-                            childLayerIsTilemap = childLayer.isTilemap
-                            if childLayerIsTilemap then
-                                childTileSet = childLayer.tileset
-                            end
-                        end
-
-                        local childCel = childLayer:cel(frame)
-                        if childCel then
-                            local celBounds = childCel.bounds
-                            local tlx = celBounds.x
-                            local tly = celBounds.y
-                            local brx = tlx + celBounds.width
-                            local bry = tly + celBounds.height
-
-                            if tlx < xMin then xMin = tlx end
-                            if tly < yMin then yMin = tly end
-                            if brx > xMax then xMax = brx end
-                            if bry > yMax then yMax = bry end
-
-                            local imgChild = nil
-                            if childLayerIsTilemap then
-                                imgChild = tilesToImage(
-                                    childCel.image,
-                                    childTileSet,
-                                    colorMode)
-                            else
-                                imgChild = childCel.image
-                            end
-
-                            -- Layer opacity does not need validation here
-                            -- because the layer is known to already contain
-                            -- a cel and therefore to not be a group.
-                            local childPacket = {
-                                alphaCel = childCel.opacity,
-                                alphaLayer = childLayer.opacity,
-                                image = imgChild,
-                                xCel = tlx,
-                                yCel = tly
-                            }
-                            insert(childPackets, childPacket)
-                        end
-                    end
-
-                    if xMax > xMin and yMax > yMin then
-                        -- Create composite image. Has to be RGB
-                        -- due to alpha blending.
-                        local specComp = ImageSpec {
-                            width = xMax - xMin,
-                            height = yMax - yMin,
-                            colorMode = ColorMode.RGB,
-                            transparentColor = alphaIndex
-                        }
-                        specComp.colorSpace = colorSpace
-                        local imgComp = Image(specComp)
-
-                        local lenPackets = #childPackets
-                        local k = 0
-                        while k < lenPackets do k = k + 1
-                            local packet = childPackets[k]
-                            local alphaCel = packet.alphaCel
-                            local alphaLayer = packet.alphaLayer
-                            local xDiff = packet.xCel - xMin
-                            local yDiff = packet.yCel - yMin
-                            local pxItr = packet.image:pixels()
-
-                            for pixel in pxItr do
-                                local x = pixel.x + xDiff
-                                local y = pixel.y + yDiff
-
-                                -- Assumes hexDest is in RGB color mode.
-                                local hexOrigin = imgComp:getPixel(x, y)
-                                local hexDest = pixel()
-                                local bakedDest = bakeAlpha(
-                                    hexDest, alphaLayer, alphaCel)
-                                local blended = blend(hexOrigin, bakedDest)
-                                imgComp:drawPixel(x, y, blended)
-                            end
-                        end
-
-                        xTrg = xMin
-                        yTrg = yMin
-                        imgTrg = imgComp
-                    end
-
+        -- Because the layers loop is the inner loop below,
+        -- avoid processing this information for each frame.
+        local g = 0
+        local lenChosenLayers = 0
+        ---@type Layer[]
+        local chosenLayers = {}
+        ---@type string[]
+        local verifLayerNames = {}
+        while g < lenTopLayers do
+            g = g + 1
+            local topLayer = topLayers[g]
+            if topLayer.isGroup then
+                if flatGroups then
+                    lenChosenLayers = lenChosenLayers + 1
+                    chosenLayers[lenChosenLayers] = topLayer
+                    verifLayerNames[lenChosenLayers] = nameVerify(topLayer.name)
                 else
+                    local leaves = appendLeaves(
+                        topLayer, {},
+                        includeLocked, includeHidden,
+                        includeTiles, includeBkg)
+                    local lenLeaves = #leaves
 
-                    local cel = layer:cel(frame)
-                    if cel then
-                        celData = cel.data
-                        celOpacity = cel.opacity
-                        local celPos = cel.position
-                        xTrg = celPos.x
-                        yTrg = celPos.y
-                        if layerIsTilemap then
-                            imgTrg = tilesToImage(
-                                cel.image, tileSet, colorMode)
-                        else
-                            imgTrg = cel.image
-                        end
+                    local h = 0
+                    while h < lenLeaves do
+                        h = h + 1
+                        local leaf = leaves[h]
+                        -- print(string.format("leaf:%s", leaf.name))
+                        lenChosenLayers = lenChosenLayers + 1
+                        chosenLayers[lenChosenLayers] = leaf
+                        verifLayerNames[lenChosenLayers] = nameVerify(leaf.name)
                     end
-
                 end
-
-                if imgTrg then
-                    if useSpriteBounds then
-                        local imgSprite = Image(specSprite)
-                        imgSprite:drawImage(imgTrg, Point(xTrg, yTrg))
-
-                        xTrg = 0
-                        yTrg = 0
-                        imgTrg = imgSprite
-                    else
-                        local imgTrim, xTrim, yTrim = trimAlpha(
-                            imgTrg, 0, alphaIndex)
-
-                        xTrg = xTrg + xTrim
-                        yTrg = yTrg + yTrim
-                        imgTrg = imgTrim
-                    end
-
-                    if useResize then
-                        imgTrg = AseUtilities.resizeImageNearest(imgTrg,
-                            imgTrg.width * wScale,
-                            imgTrg.height * hScale)
-                    end
-
-                    if usePadding then
-                        local specPad = ImageSpec {
-                            colorMode = colorMode,
-                            width = imgTrg.width + pad2,
-                            height = imgTrg.height + pad2,
-                            transparentColor = alphaIndex
-                        }
-                        specPad.colorSpace = colorSpace
-                        local imgPad = Image(specPad)
-                        if usePadColor then
-                            imgPad:clear(padHex)
-                        end
-                        imgPad:drawImage(imgTrg, padOffset)
-                        imgTrg = imgPad
-                    end
-
-                    if useCenter then
-                        xTrg = xTrg + (imgTrg.width - pad2) // 2
-                        yTrg = yTrg + (imgTrg.height - pad2) // 2
-                    else
-                        xTrg = xTrg - padding
-                        yTrg = yTrg - padding
-                    end
-
-                    local fileNameLong = strfmt(
-                        "%s%03d_%03d.%s",
-                        filePrefix, h - 1, i - 1, fileExt)
-                    imgTrg:saveAs {
-                        filename = fileNameLong,
-                        palette = activePalette
-                    }
-
-                    local jsonFrame = {
-                        celData = celData,
-                        celOpacity = celOpacity,
-                        fileName = fileNameShort,
-                        frameDuration = frame.duration,
-                        frameNumber = frameIndex,
-                        height = imgTrg.height,
-                        width = imgTrg.width,
-                        xOrigin = xTrg,
-                        yOrigin = yTrg
-                    }
-                    insert(jsonLayer.jsonFrames, jsonFrame)
-                end
-            end
-
-            if #jsonLayer.jsonFrames > 0 then
-                insert(jsonEntries, jsonLayer)
+            elseif (not topLayer.isReference)
+                and (includeLocked or topLayer.isEditable)
+                and (includeHidden or topLayer.isVisible)
+                and (includeTiles or (not topLayer.isTilemap))
+                and (includeBkg or (not topLayer.isBackground)) then
+                lenChosenLayers = lenChosenLayers + 1
+                chosenLayers[lenChosenLayers] = topLayer
+                verifLayerNames[lenChosenLayers] = nameVerify(topLayer.name)
             end
         end
 
-        if saveJson then
+        local i = 0
+        ---@type table<integer, table>
+        local layerPackets = {}
+        ---@type table[]
+        local framePackets = {}
+        ---@type table[]
+        local celPackets = {}
+        while i < lenChosenFrames do
+            i = i + 1
+            local frIdx = chosenFrames[i]
 
-            local versionStrFmt = concat({
-                "{\"version\":{\"major\":%d",
-                "\"minor\":%d",
-                "\"patch\":%d",
-                "\"prerelease\":\"%s\"",
-                "\"prNo\":%d}",
-            }, ",")
+            -- For JSON writing:
+            local frObj = spriteFrameObjs[frIdx]
+            local framePacket = {
+                frameNumber = frIdx,
+                duration = frObj.duration
+            }
+            framePackets[i] = framePacket
 
-            local version = app.version
-            local versionStr = strfmt(
-                versionStrFmt,
-                version.major, version.minor, version.patch,
-                version.prereleaseLabel, version.prereleaseNumber)
+            -- For saving the image in Indexed color mode.
+            local activePalette = getPalette(frIdx, spritePalettes)
 
-            local jsonStrFmt = concat({
-                versionStr,
-                "\"fileDir\":\"%s\"",
-                "\"fileExt\":\"%s\"",
-                spriteUserData,
-                "\"padding\":%d",
-                "\"scale\":{\"x\":%d,\"y\":%d}",
-                "\"layers\":[%s]}"
-            }, ",")
+            local j = 0
+            while j < lenChosenLayers do
+                j = j + 1
+                local chosenLayer = chosenLayers[j]
 
-            local layerStrFmt = concat({
-                "{\"blendMode\":\"%s\"",
-                "\"data\":%s",
-                "\"name\":\"%s\"",
-                "\"opacity\":%d",
-                "\"stackIndices\":[%s]",
-                "\"frames\":[%s]}"
-            }, ",")
+                -- Reset on inner loop to avoid repeating images.
+                local image = nil
+                local bounds = nil
 
-            local celStrFmt = concat({
-                "{\"data\":%s",
-                "\"fileName\":\"%s\"",
-                "\"opacity\":%d",
-                "\"position\":{\"x\":%d,\"y\":%d}",
-                "\"size\":{\"x\":%d,\"y\":%d}}"
-            }, ",")
+                -- For JSON packets.
+                local celData = nil
+                local celOpacity = 255
+                local layerOpacity = 255
+                local layerBlendMode = normalBlendMode
 
-            local frameStrFmt = concat({
-                "{\"duration\":%d",
-                "\"number\":%d",
-                strfmt("\"cel\":%s}", celStrFmt)
-            }, ",")
+                if chosenLayer.isGroup then
+                    -- print("Layer is a group")
+                    image, bounds = AseUtilities.flattenGroup(
+                        chosenLayer, frIdx,
+                        spriteColorMode,
+                        spriteColorSpace,
+                        spriteAlphaIndex,
+                        includeLocked,
+                        includeHidden,
+                        includeTiles,
+                        includeBkg)
+                else
+                    layerOpacity = chosenLayer.opacity
+                    layerBlendMode = chosenLayer.blendMode
 
-            local lenJsonEntries = #jsonEntries
-            local layerStrArr = {}
-            local i = 0
-            while i < lenJsonEntries do i = i + 1
-                local jsonLayer = jsonEntries[i]
-                local jsonFrames = jsonLayer.jsonFrames
-                local lenJsonFrames = #jsonFrames
-                local celStrArr = {}
-                local j = 0
-                while j < lenJsonFrames do j = j + 1
-                    local jsonFrame = jsonFrames[j]
+                    local cel = chosenLayer:cel(frIdx)
+                    if cel then
+                        -- print("Cel was found.")
+                        celData = cel.data
+                        celOpacity = cel.opacity
 
-                    -- Some data needs validation / transformation.
-                    local frameDuration = floor(jsonFrame.frameDuration * 1000)
-                    local frameNumber = jsonFrame.frameNumber - 1
-                    local celData = jsonFrame.celData
-                    if celData == nil or #celData < 1 then
-                        celData = missingUserData
+                        image = cel.image
+                        if chosenLayer.isTilemap then
+                            local tileSet = chosenLayer.tileset
+                            image = AseUtilities.tilesToImage(
+                                image, tileSet, spriteColorMode)
+                        end
+
+                        if bakeOpacity then
+                            -- print("Baking opacity.")
+                            local celOpac01 = celOpacity * 0.003921568627451
+                            local layerOpac01 = layerOpacity * 0.003921568627451
+                            local compOpac01 = celOpac01 * layerOpac01
+                            local compOpacity = floor(compOpac01 * 255.0 + 0.5)
+
+                            local bakedImage = Image(image.spec)
+                            bakedImage:drawImage(
+                                image, zeroPoint,
+                                compOpacity, normalBlendMode)
+
+                            image = bakedImage
+
+                            -- After finished baking, then reset
+                            layerOpacity = 255
+                            celOpacity = 255
+                        end
+
+                        -- Calculate manually. Don't use cel bounds.
+                        local celPos = cel.position
+                        bounds = Rectangle(
+                            celPos.x, celPos.y,
+                            image.width, image.height)
+                    end
+                end
+
+                if image and bounds then
+                    if cropToSprite then
+                        local imgSprite = Image(spriteSpec)
+                        imgSprite:drawImage(image, Point(bounds.x, bounds.y))
+
+                        image = imgSprite
+                        bounds.x = 0
+                        bounds.y = 0
+                        bounds.width = spriteWidth
+                        bounds.height = spriteHeight
+                    else
+                        local imgTrim, xTrim, yTrim = trimAlpha(
+                            image, 0, spriteAlphaIndex, 8, 8)
+
+                        image = imgTrim
+                        bounds.x = bounds.x + xTrim
+                        bounds.y = bounds.y + yTrim
+                        bounds.width = imgTrim.width
+                        bounds.height = imgTrim.height
                     end
 
-                    celStrArr[j] = strfmt(
-                        frameStrFmt, frameDuration,
-                        frameNumber, celData,
-                        jsonFrame.fileName, jsonFrame.celOpacity,
-                        jsonFrame.xOrigin, jsonFrame.yOrigin,
-                        jsonFrame.width, jsonFrame.height)
-                end
+                    -- There's no point in continuing further
+                    -- if the image is empty.
+                    if not image:isEmpty() then
+                        -- print("Image is not clear")
+                        if useResize then
+                            local imgResized = resize(image,
+                                image.width * wScale,
+                                image.height * hScale)
+                            image = imgResized
+                        end
 
-                -- Layer information.
-                local layerBlendMode = blendModeToStr(jsonLayer.layerBlendMode)
-                local layerData = jsonLayer.layerData
-                if layerData == nil or #layerData < 1 then
-                    layerData = missingUserData
-                end
+                        if usePadding then
+                            local imgPadded = padImage(image, padding)
+                            image = imgPadded
+                        end
 
-                local layerName = "Layer"
-                if jsonLayer.layerName
-                    and #jsonLayer.layerName > 0 then
-                    layerName = jsonLayer.layerName
-                end
+                        if toPow2 then
+                            local imgPow2 = expandPow2(
+                                image,
+                                spriteColorMode,
+                                spriteAlphaIndex,
+                                spriteColorSpace,
+                                nonUniformDim)
 
-                local layerOpacity = 0xff
-                if jsonLayer.layerOpacity then
-                    layerOpacity = jsonLayer.layerOpacity
-                end
+                            -- Bounds are not updated here because
+                            -- user may want to extract image from pot.
+                            image = imgPow2
+                        end
 
-                -- Use JSON indexing conventions, start at zero.
-                local layerStackIndices = jsonLayer.layerStackIndices
-                local stackIdcsLen = #layerStackIndices
-                local m = 0
-                while m < stackIdcsLen do m = m + 1
-                    layerStackIndices[m] = layerStackIndices[m] - 1
-                end
-                local stackIdcsStr = concat(layerStackIndices, ",")
+                        local layerName = verifLayerNames[j]
+                        local fileNameShort = strfmt(
+                            "%s_%s_%03d",
+                            fileTitle, layerName, frIdx - 1)
+                        local fileNameLong = strfmt(
+                            "%s%s.%s",
+                            filePath, fileNameShort, fileExt)
 
-                layerStrArr[i] = strfmt(
-                    layerStrFmt, layerBlendMode,
-                    layerData, layerName,
-                    layerOpacity, stackIdcsStr,
-                    concat(celStrArr, ","))
+                        -- print(string.format("fileNameLong: %s", fileNameLong))
+
+                        image:saveAs {
+                            filename = fileNameLong,
+                            palette = activePalette
+                        }
+
+                        if saveJson then
+                            local layerId = chosenLayer.id
+                            if not layerPackets[layerId] then
+                                ---@type userdata|Sprite|Layer
+                                local parent = chosenLayer.parent
+                                local parentId = -1
+                                if parent.__name ~= "doc::Sprite" then
+                                    parentId = parent.id
+                                end
+
+                                local layerPacket = {
+                                    blendMode = layerBlendMode,
+                                    data = chosenLayer.data,
+                                    id = layerId,
+                                    name = layerName,
+                                    opacity = layerOpacity,
+                                    parent = parentId,
+                                    stackIndex = chosenLayer.stackIndex,
+                                }
+                                layerPackets[layerId] = layerPacket
+                            end
+
+                            local celPacket = {
+                                fileName = fileNameShort,
+                                bounds = bounds,
+                                data = celData,
+                                frameNumber = frIdx,
+                                layer = layerId,
+                                opacity = celOpacity
+                            }
+                            celPackets[#celPackets + 1] = celPacket
+                        end -- End of saveJson check
+                    end     -- End of image empty check.
+                end         -- End of image/bounds nil check.
+            end             -- End loop through chosen layers.
+        end                 -- End loop through chosen frames.
+
+        if saveJson then
+            -- Cache Json methods.
+            local celToJson = JsonUtilities.celToJson
+            local frameToJson = JsonUtilities.frameToJson
+            local layerToJson = JsonUtilities.layerToJson
+
+            local k = 0
+            ---@type string[]
+            local celStrs = {}
+            local lenCelPackets = #celPackets
+            while k < lenCelPackets do
+                k = k + 1
+                local cel = celPackets[k]
+                celStrs[k] = celToJson(
+                    cel, cel.fileName, boundsFormat)
             end
 
-            local jsonString = strfmt(
-                jsonStrFmt,
+            local m = 0
+            ---@type string[]
+            local frameStrs = {}
+            while m < lenChosenFrames do
+                m = m + 1
+                frameStrs[m] = frameToJson(framePackets[m])
+            end
+
+            ---@type string[]
+            local layerStrs = {}
+            for _, layer in pairs(layerPackets) do
+                layerStrs[#layerStrs + 1] = layerToJson(layer)
+            end
+
+            local jsonFormat = table.concat({
+                "{\"fileDir\":\"%s\"",
+                "\"fileExt\":\"%s\"",
+                "\"padding\":%d",
+                "\"scale\":%d",
+                "\"cels\":[%s]",
+                "\"frames\":[%s]",
+                "\"layers\":[%s]",
+                "\"sprite\":%s",
+                "\"version\":%s}",
+            }, ",")
+            local jsonString = string.format(
+                jsonFormat,
                 filePath, fileExt,
-                padding, wScale, hScale,
-                concat(layerStrArr, ","))
+                padding, scale,
+                table.concat(celStrs, ","),
+                table.concat(frameStrs, ","),
+                table.concat(layerStrs, ","),
+                JsonUtilities.spriteToJson(activeSprite),
+                JsonUtilities.versionToJson()
+            )
 
             local jsonFilepath = filePrefix
             if #fileTitle < 1 then
@@ -813,8 +703,10 @@ dlg:button {
             end
         end
 
-        app.refresh()
-        app.alert { title = "Success", text = "File exported." }
+        app.alert {
+            title = "Success",
+            text = "File(s) exported."
+        }
     end
 }
 

@@ -8,7 +8,6 @@ https://stackoverflow.com/questions/40017741/
 mathematical-conversion-srgb-and-adobergb
 https://www.w3.org/TR/css-color-4/#color-conversion-code
 --]]
-
 local colorSpaceTypes = { "FILE", "NONE", "SRGB" }
 local continuityOps = { "NUMERIC", "VISUAL" }
 

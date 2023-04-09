@@ -1,6 +1,7 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
+local palTypes = { "ACTIVE", "FILE" }
 local colorSpaces = {
     "LINEAR_RGB",
     "S_RGB",
@@ -84,16 +85,12 @@ dlg:combobox {
     id = "palType",
     label = "Palette:",
     option = defaults.palType,
-    options = { "ACTIVE", "FILE", "PRESET" },
+    options = palTypes,
     onchange = function()
         local palType = dlg.data.palType
         dlg:modify {
             id = "palFile",
             visible = palType == "FILE"
-        }
-        dlg:modify {
-            id = "palPreset",
-            visible = palType == "PRESET"
         }
     end
 }
@@ -105,15 +102,6 @@ dlg:file {
     filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
     open = true,
     visible = defaults.palType == "FILE"
-}
-
-dlg:newrow { always = false }
-
-dlg:entry {
-    id = "palPreset",
-    text = "",
-    focus = false,
-    visible = defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -224,14 +212,19 @@ dlg:button {
             return
         end
 
-        -- Check for tile map support.
-        local layerIsTilemap = false
+        if srcLayer.isReference then
+            app.alert {
+                title = "Error",
+                text = "Reference layers are not supported."
+            }
+            return
+        end
+
+        -- Check for tile maps.
+        local isTilemap = srcLayer.isTilemap
         local tileSet = nil
-        if AseUtilities.tilesSupport() then
-            layerIsTilemap = srcLayer.isTilemap
-            if layerIsTilemap then
-                tileSet = srcLayer.tileset
-            end
+        if isTilemap then
+            tileSet = srcLayer.tileset
         end
 
         local oldMode = activeSprite.colorMode
@@ -247,9 +240,10 @@ dlg:button {
 
         -- Convert source palette colors to points
         -- inserted into octree.
+        local palType = args.palType or defaults.palType --[[@as string]]
+        local palFile = args.palFile --[[@as string]]
         local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-            args.palType, args.palFile, args.palPreset,
-            0, 256, true)
+            palType, palFile, 0, 256, true)
 
         -- Select which conversion functions to use.
         local clrSpacePreset = args.clrSpacePreset
@@ -262,7 +256,8 @@ dlg:button {
             or clrSpacePreset == "SR_LAB_2" then
             cvgRad = args.cvgLabRad --[[@as number]]
         else
-            cvgRad = args.cvgNormRad * 0.01
+            cvgRad = args.cvgNormRad --[[@as number]]
+            cvgRad =cvgRad * 0.01
         end
         local rsq = cvgRad * cvgRad
 
@@ -291,91 +286,99 @@ dlg:button {
         Octree.cull(octree)
 
         local target = args.target or defaults.target --[[@as string]]
-        local frames = AseUtilities.getFrames(activeSprite, target)
+        local frames = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
 
         -- Create a new layer, srcLayer should not be a group,
         -- and thus have an opacity and blend mode.
-        local trgLayer = activeSprite:newLayer()
-        local srcLayerName = "Layer"
-        if #srcLayer.name > 0 then
-            srcLayerName = srcLayer.name
-        end
-        trgLayer.name = string.format("%s.%s.%03d",
-            srcLayerName, clrSpacePreset, hexesSrgbLen)
-        trgLayer.parent = srcLayer.parent
-        trgLayer.opacity = srcLayer.opacity
-        trgLayer.blendMode = srcLayer.blendMode
 
-        local lenFrames = #frames
-        app.transaction(function()
-            local i = 0
-            while i < lenFrames do
-                i = i + 1
-                local srcFrame = frames[i]
-                local srcCel = srcLayer:cel(srcFrame)
-                if srcCel then
-                    local srcImg = srcCel.image
-                    if layerIsTilemap then
-                        srcImg = tilesToImage(srcImg, tileSet, ColorMode.RGB)
-                    end
-
-                    -- Get unique hexadecimal values from image.
-                    -- There's no need to preserve order.
-                    local srcPxItr = srcImg:pixels()
-                    local hexesUnique = {}
-                    for pixel in srcPxItr do
-                        hexesUnique[pixel()] = true
-                    end
-
-                    -- Create a table where unique hexes are associated
-                    -- with Vec3 queries to an octree.
-                    local queries = {}
-                    local queryCount = 1
-                    for k, _ in pairs(hexesUnique) do
-                        local clr = fromHex(k)
-                        local pt = clrV3Func(clr)
-                        queries[queryCount] = { hex = k, point = pt }
-                        queryCount = queryCount + 1
-                    end
-
-                    -- Find nearest color in palette.
-                    local correspDict = {}
-                    local lenQueries = #queries
-                    local j = 0
-                    while j < lenQueries do
-                        j = j + 1
-                        local query = queries[j]
-                        local queryHex = query.hex
-                        local resultHex = 0x0
-                        -- if exactMatches[queryHex] then
-                        -- resultHex = queryHex
-                        -- else
-                        local nearPoint, _ = search(
-                            octree, query.point, rsq, distSq)
-                        if nearPoint then
-                            local hsh = v3Hash(nearPoint)
-                            resultHex = ptToHexDict[hsh]
-                        end
-                        -- end
-                        correspDict[queryHex] = resultHex & 0x00ffffff
-                    end
-
-                    -- Apply colors to image.
-                    -- Use source color alpha.
-                    local trgImg = srcImg:clone()
-                    local trgPxItr = trgImg:pixels()
-                    for pixel in trgPxItr do
-                        local srcHex = pixel()
-                        pixel(srcHex & 0xff000000 | correspDict[srcHex])
-                    end
-
-                    local trgCel = activeSprite:newCel(
-                        trgLayer, srcFrame,
-                        trgImg, srcCel.position)
-                    trgCel.opacity = srcCel.opacity
-                end
+        local trgLayer = nil
+        app.transaction("New Layer", function()
+            trgLayer = activeSprite:newLayer()
+            local srcLayerName = "Layer"
+            if #srcLayer.name > 0 then
+                srcLayerName = srcLayer.name
             end
+            trgLayer.name = string.format("%s.%s.%03d",
+                srcLayerName, clrSpacePreset, hexesSrgbLen)
+            trgLayer.parent = srcLayer.parent
+            trgLayer.opacity = srcLayer.opacity
+            trgLayer.blendMode = srcLayer.blendMode
         end)
+
+        local rgbColorMode = ColorMode.RGB
+        local lenFrames = #frames
+        local i = 0
+        while i < lenFrames do
+            i = i + 1
+            local srcFrame = frames[i]
+            local srcCel = srcLayer:cel(srcFrame)
+            if srcCel then
+                local srcImg = srcCel.image
+                if isTilemap then
+                    srcImg = tilesToImage(srcImg, tileSet, rgbColorMode)
+                end
+
+                -- Get unique hexadecimal values from image.
+                -- There's no need to preserve order.
+                local srcPxItr = srcImg:pixels()
+                local hexesUnique = {}
+                for pixel in srcPxItr do
+                    hexesUnique[pixel()] = true
+                end
+
+                -- Create a table where unique hexes are associated
+                -- with Vec3 queries to an octree.
+                local queries = {}
+                local queryCount = 1
+                for k, _ in pairs(hexesUnique) do
+                    local clr = fromHex(k)
+                    local pt = clrV3Func(clr)
+                    queries[queryCount] = { hex = k, point = pt }
+                    queryCount = queryCount + 1
+                end
+
+                -- Find nearest color in palette.
+                local correspDict = {}
+                local lenQueries = #queries
+                local j = 0
+                while j < lenQueries do
+                    j = j + 1
+                    local query = queries[j]
+                    local queryHex = query.hex
+                    local resultHex = 0x0
+                    -- if exactMatches[queryHex] then
+                    -- resultHex = queryHex
+                    -- else
+                    local nearPoint, _ = search(
+                        octree, query.point, rsq, distSq)
+                    if nearPoint then
+                        local hsh = v3Hash(nearPoint)
+                        resultHex = ptToHexDict[hsh]
+                    end
+                    -- end
+                    correspDict[queryHex] = resultHex & 0x00ffffff
+                end
+
+                -- Apply colors to image.
+                -- Use source color alpha.
+                local trgImg = srcImg:clone()
+                local trgPxItr = trgImg:pixels()
+                for pixel in trgPxItr do
+                    local srcHex = pixel()
+                    pixel(srcHex & 0xff000000 | correspDict[srcHex])
+                end
+
+                app.transaction(
+                    string.format("PaletteToCel %d", srcFrame),
+                    function()
+                        local trgCel = activeSprite:newCel(
+                            trgLayer, srcFrame,
+                            trgImg, srcCel.position)
+                        trgCel.opacity = srcCel.opacity
+                    end)
+            end
+        end
 
         AseUtilities.changePixelFormat(oldMode)
         app.refresh()

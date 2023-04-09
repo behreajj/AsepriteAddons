@@ -229,7 +229,7 @@ function Octree.insert(o, point)
                 Octree.split(o, o.capacity)
             end
             return true
-        -- else
+            -- else
             -- Octree.split(o, o.capacity)
             -- return Octree.insert(o, point)
         end
@@ -323,7 +323,7 @@ function Octree.queryInternal(o, center, rsq, distSq)
     local nearPoint = nil
     local nearDistSq = 2147483647
     if Bounds3.intersectsSphereInternal(
-        o.bounds, center, rsq) then
+            o.bounds, center, rsq) then
         local children = o.children
         local lenChildren = #children
         local i = 0

@@ -18,7 +18,7 @@ local sqrt = math.sqrt
 local floor = math.floor
 
 local activeFrame = app.activeFrame
-    or activeSprite.frames[1]
+    or activeSprite.frames[1] --[[@as Frame]]
 img:drawSprite(activeSprite, activeFrame)
 local pxItr = img:pixels()
 for pixel in pxItr do
@@ -50,6 +50,8 @@ for pixel in pxItr do
     end
 end
 
-activeSprite:newCel(
-    activeSprite:newLayer(),
-    activeFrame, img)
+app.transaction("Correct Normals", function()
+    local layer = activeSprite:newLayer()
+    layer.name = "Corrected.Normals"
+    activeSprite:newCel(layer, activeFrame, img)
+end)
