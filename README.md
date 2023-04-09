@@ -4,6 +4,8 @@ This repository developed out of the Medium article, ["How To Script Aseprite To
 
 ## Installation
 
+As of 9 April 2023, Aseprite version 1.3 is the minimum version needed to run these scripts. This version is currently in [beta](https://aseprite.org/beta). Check the link for details on how to switch.
+
 To install, click on the green `Code` button above. Select `Download ZIP` from the pop-up menu. Unzip the file after it has finished downloading. In Aseprite, go to `File > Scripts > Open Scripts Folder`. Copy `commands`, `dialog` and `support` folders from the unzipped download into the folder that Aseprite has opened. Return to Aseprite, go to `File > Scripts > Rescan Scripts Folder`.
 
 There is a [known issue](https://community.aseprite.org/t/script-folder-path-cannot-open-no-such-file-or-directory/16818/) when Aseprite's script folder is on a file path that includes characters such as 'é' (e acute) or 'ö' (o umlaut). `dofile` will not interpret relative paths correctly.
