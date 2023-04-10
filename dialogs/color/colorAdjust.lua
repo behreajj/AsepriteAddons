@@ -7,6 +7,12 @@ local targets = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local modes = { "LAB", "LCH" }
 
 local defaults = {
+    -- Note: standardization is not the same as normalization.
+    -- For standardization, a range's average must be found,
+    -- then its standard deviation must be found:
+    -- sqrt ( sum( ( arr[i] - mean ) ^ 2 / len ) )
+    -- Then each element must be recalculated:
+    -- elm[i]' = (elm[i] - mean) / std .
     target = "ACTIVE",
     mode = "LCH",
     contrast = 0,

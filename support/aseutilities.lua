@@ -1088,14 +1088,6 @@ function AseUtilities.filterCels(
     includeBkg)
     ---@type Cel[]
     local trgCels = {}
-    local lenTrgCels = 0
-
-    -- When the timeline is hidden, the range
-    -- cannot be accessed properly.
-    local tlHidden = not app.preferences.general.visible_timeline
-    if tlHidden then
-        app.command.Timeline { open = true }
-    end
 
     -- Ideally, this would restore the user's range from
     -- prior to the function call, but cel-type ranges
@@ -1108,42 +1100,10 @@ function AseUtilities.filterCels(
             includeHidden,
             includeTiles,
             includeBkg)
-
-        if #leaves > 0 then
-            -- Possibility that the active sprite and the sprite
-            -- referred to by the range are mismatched!
-            local appRange = app.range
-            if appRange.sprite ~= sprite then
-                appRange:clear()
-            end
-
-            -- Ranges accept frame numbers, not frame objects
-            -- to their frames setter.
-            ---@type integer[]
-            local frIdcs = {}
-            local lenFrames = #sprite.frames
-            local i = 0
-            while i < lenFrames do
-                i = i + 1
-                frIdcs[i] = i
-            end
-
-            appRange.layers = leaves
-            appRange.frames = frIdcs
-
-            -- Editability has already been determined
-            -- by layers loop above.
-            local imgsRange = appRange.images
-            local lenImgsRange = #imgsRange
-            local j = 0
-            while j < lenImgsRange do
-                j = j + 1
-                lenTrgCels = lenTrgCels + 1
-                trgCels[lenTrgCels] = imgsRange[j].cel
-            end
-
-            appRange:clear()
-        end
+        local frIdcs = AseUtilities.frameObjsToIdcs(
+            sprite.frames)
+        AseUtilities.getUniqueCelsFromLeaves(
+            sprite, leaves, frIdcs, trgCels)
     elseif target == "RANGE" then
         local appRange = app.range
         if appRange.sprite == sprite then
@@ -1161,11 +1121,10 @@ function AseUtilities.filterCels(
                     and (includeLocked or celLayer.isEditable)
                     and (includeTiles or (not celLayer.isTilemap))
                     and (includeBkg or (not celLayer.isBackground)) then
-                    lenTrgCels = lenTrgCels + 1
-                    trgCels[lenTrgCels] = cel
-                end
-            end
-        end
+                    trgCels[#trgCels + 1] = cel
+                end -- End reference layer check.
+            end     -- End range images loop.
+        end         -- End valid range sprite check.
     elseif target == "SELECTION" then
         if frame then
             local sel = AseUtilities.getSelection(sprite)
@@ -1208,8 +1167,7 @@ function AseUtilities.filterCels(
                     flatImage, Point(xSel, ySel))
             end)
 
-            lenTrgCels = lenTrgCels + 1
-            trgCels[lenTrgCels] = adjCel
+            trgCels[#trgCels + 1] = adjCel
         end
     else
         -- Default to "ACTIVE"
@@ -1222,34 +1180,10 @@ function AseUtilities.filterCels(
                 includeHidden,
                 includeTiles,
                 includeBkg)
-
-            if #leaves > 0 then
-                local appRange = app.range
-                if appRange.sprite ~= sprite then
-                    appRange:clear()
-                end
-
-                appRange.layers = leaves
-                appRange.frames = { frame.frameNumber }
-
-                -- Editability has already been determined
-                -- by layers loop above.
-                local imgsRange = appRange.images
-                local lenImgsRange = #imgsRange
-                local j = 0
-                while j < lenImgsRange do
-                    j = j + 1
-                    lenTrgCels = lenTrgCels + 1
-                    trgCels[lenTrgCels] = imgsRange[j].cel
-                end
-
-                appRange:clear()
-            end
+            local frIdcs = { frame.frameNumber }
+            AseUtilities.getUniqueCelsFromLeaves(
+                sprite, leaves, frIdcs, trgCels)
         end
-    end
-
-    if tlHidden then
-        app.command.Timeline { close = true }
     end
 
     return trgCels
@@ -1471,6 +1405,24 @@ function AseUtilities.flipImageVert(source)
     return target, 0, 1 - h
 end
 
+---Converts an array of frame objects to an array of
+---frame numbers. Used primarily to set a range's frames.
+---@param frObjs Frame[]
+---@return integer[]
+function AseUtilities.frameObjsToIdcs(frObjs)
+    -- Next and previous layer could use this function
+    -- but it's not worth it putting a dofile at the top.
+    ---@type integer[]
+    local frIdcs = {}
+    local lenFrames = #frObjs
+    local i = 0
+    while i < lenFrames do
+        i = i + 1
+        frIdcs[i] = frObjs[i].frameNumber
+    end
+    return frIdcs
+end
+
 ---Gets an array of arrays of frame indices from a
 ---sprite according to a string constant.
 ---"ALL" gets all frames in the sprite.
@@ -1500,16 +1452,7 @@ end
 ---@return integer[][]
 function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
     if target == "ALL" then
-        local allFrames = sprite.frames
-        local lenAllFrames = #allFrames
-        local j = 0
-        ---@type integer[]
-        local frIdcsAll = {}
-        while j < lenAllFrames do
-            j = j + 1
-            frIdcsAll[j] = allFrames[j].frameNumber
-        end
-        return { frIdcsAll }
+        return { AseUtilities.frameObjsToIdcs(sprite.frames) }
     elseif target == "MANUAL" then
         -- print("Get frames called with manual tag")
         if mnStr then
@@ -1548,15 +1491,9 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
         if appRange.sprite == sprite then
             local rangeType = appRange.type
             if rangeType == RangeType.LAYERS then
-                local allFrames = sprite.frames
-                local lenAllFrames = #allFrames
-                local i = 0
-                while i < lenAllFrames do
-                    i = i + 1
-                    frIdcsRange[i] = allFrames[i].frameNumber
-                end
+                frIdcsRange = AseUtilities.frameObjsToIdcs(sprite.frames)
             else
-                frIdcsRange = AseUtilities.parseRange(appRange)
+                frIdcsRange = AseUtilities.frameObjsToIdcs(appRange.frames)
             end
         end
 
@@ -1746,7 +1683,8 @@ function AseUtilities.getSelectedTiles(
     local tileDim = tileGrid.tileSize --[[@as Size]]
     local wTile = tileDim.width
     local hTile = tileDim.height
-    local flatLenTile = wTile * hTile
+    local flatDimTile = wTile * hTile
+    local lenTileSet = #tileSet
 
     -- Cache methods used in loop.
     local pxTilei = app.pixelColor.tileI
@@ -1756,7 +1694,8 @@ function AseUtilities.getSelectedTiles(
     local mapItr = tileMap:pixels()
     for mapEntry in mapItr do
         local index = pxTilei(mapEntry())
-        if index ~= 0 and (not visitedTiles[index]) then
+        if index > 0 and index < lenTileSet
+            and (not visitedTiles[index]) then
             visitedTiles[index] = true
 
             local xMap = mapEntry.x
@@ -1766,7 +1705,7 @@ function AseUtilities.getSelectedTiles(
 
             local contained = true
             local i = 0
-            while i < flatLenTile do
+            while i < flatDimTile do
                 local xLocal = i % wTile
                 local yLocal = i // wTile
                 i = i + 1
@@ -1789,6 +1728,57 @@ function AseUtilities.getSelectedTiles(
     return tiles
 end
 
+---Get unique cels from layers that have already been
+---verified as leaves and filtered. If the output
+---target array is not supplied, a new one is created.
+---This sets and then clears the range. It also reopens
+---the timeline if it is hidden.
+---@param sprite Sprite sprite
+---@param leaves Layer[] leaf layers
+---@param frIdcs integer[] frame indices
+---@param trgCels Cel[]? target array
+---@return Cel[]
+function AseUtilities.getUniqueCelsFromLeaves(
+    sprite, leaves, frIdcs, trgCels)
+    local verifTrgCels = trgCels or {}
+    if #leaves > 0 then
+        -- When the timeline is hidden, the range
+        -- cannot be accessed properly.
+        local tlHidden = not app.preferences.general.visible_timeline
+        if tlHidden then
+            app.command.Timeline { open = true }
+        end
+
+        -- The active sprite and the sprite referred
+        -- to by the range could be unequal.
+        local appRange = app.range
+        if appRange.sprite ~= sprite then
+            appRange:clear()
+        end
+
+        appRange.layers = leaves
+        appRange.frames = frIdcs
+
+        -- Editability has already been determined
+        -- by layers loop above.
+        local imgsRange = appRange.images
+        local lenImgsRange = #imgsRange
+        local j = 0
+        while j < lenImgsRange do
+            j = j + 1
+            verifTrgCels[#verifTrgCels + 1] = imgsRange[j].cel
+        end
+
+        appRange:clear()
+
+        if tlHidden then
+            app.command.Timeline { close = true }
+        end
+    end
+
+    return verifTrgCels
+end
+
 ---Gets the unique tiles from a tile map.
 ---Assumes that tile map and tile set have been
 ---vetted to confirm their association.
@@ -1799,11 +1789,13 @@ function AseUtilities.getUniqueTiles(tileMap, tileSet)
     ---@type table<integer, Tile>
     local tiles = {}
     if tileMap.colorMode ~= 4 then return tiles end
+    local lenTileSet = #tileSet
     local pxTilei = app.pixelColor.tileI
     local mapItr = tileMap:pixels()
     for mapEntry in mapItr do
         local index = pxTilei(mapEntry())
-        if index ~= 0 and (not tiles[index]) then
+        if index > 0 and index < lenTileSet
+            and (not tiles[index]) then
             tiles[index] = tileSet:tile(index)
         end
     end
@@ -1919,33 +1911,6 @@ function AseUtilities.padImage(image, padding)
     local padded = Image(padSpec)
     padded:drawImage(image, Point(padding, padding))
     return padded
-end
-
----Parses Aseprite range object to find the frames
----it contains. Returns an array of frame indices.
----
----Performs no validation on the range. The timeline
----should be visible and the range's sprite should be
----the same as the active sprite for this to work.
----
----Note, layer type ranges contain only one frame,
----despite appearance in the GUI.
----@param range Range aseprite range
----@return integer[]
-function AseUtilities.parseRange(range)
-    --TODO: Change this name to getRangeFrames?
-
-    ---@type integer[]
-    local frIdcs = {}
-    local frObjs = range.frames --[[@as Frame[] ]]
-    local lenFrObjs = #frObjs
-    local i = 0
-    while i < lenFrObjs do
-        i = i + 1
-        frIdcs[i] = frObjs[i].frameNumber
-    end
-    -- This doesn't need sorting.
-    return frIdcs
 end
 
 ---Parses an Aseprite Tag to an array of frame
@@ -2350,6 +2315,7 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     local tileDim = tileGrid.tileSize --[[@as Size]]
     local tileWidth = tileDim.width
     local tileHeight = tileDim.height
+    local lenTileSet = #tileSet
 
     -- The source image's color mode is 4 if it is a tile map.
     -- Assigning 4 to the target image when the sprite color
@@ -2384,32 +2350,34 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
         local tlData = pixel()
         -- local i = (tlData & tileIndexMask) >> tileIndexShift
         local i = pxTilei(tlData)
-        local tileImage = tileSet:getTile(i)
 
-        -- TODO: Wait until this is useful to implement.
-        -- local meta = tlData & tileMetaMask
-        -- if meta == maskRot90ccw then
-        --     tileImage = AseUtilities.rotateImage90(tileImage)
-        -- elseif meta == maskRot180 then
-        --     tileImage = AseUtilities.rotateImage180(tileImage)
-        -- elseif meta == maskRot90cw then
-        --     tileImage = AseUtilities.rotateImage270(tileImage)
-        -- elseif meta == maskFlipY then
-        --     tileImage = AseUtilities.flipImageVert(tileImage)
-        -- elseif meta == maskFlipX then
-        --     tileImage = AseUtilities.flipImageHoriz(tileImage)
-        -- elseif meta == 0xc0000000 then
-        --     tileImage = AseUtilities.flipImageVert(tileImage)
-        --     tileImage = AseUtilities.rotateImage90(tileImage)
-        -- elseif meta == 0xa0000000 then
-        --     tileImage = AseUtilities.flipImageHoriz(tileImage)
-        --     tileImage = AseUtilities.rotateImage90(tileImage)
-        -- end
+        if i > 0 and i < lenTileSet then
+            local tileImage = tileSet:getTile(i)
+            -- TODO: Wait until this is useful to implement.
+            -- local meta = tlData & tileMetaMask
+            -- if meta == maskRot90ccw then
+            --     tileImage = AseUtilities.rotateImage90(tileImage)
+            -- elseif meta == maskRot180 then
+            --     tileImage = AseUtilities.rotateImage180(tileImage)
+            -- elseif meta == maskRot90cw then
+            --     tileImage = AseUtilities.rotateImage270(tileImage)
+            -- elseif meta == maskFlipY then
+            --     tileImage = AseUtilities.flipImageVert(tileImage)
+            -- elseif meta == maskFlipX then
+            --     tileImage = AseUtilities.flipImageHoriz(tileImage)
+            -- elseif meta == 0xc0000000 then
+            --     tileImage = AseUtilities.flipImageVert(tileImage)
+            --     tileImage = AseUtilities.rotateImage90(tileImage)
+            -- elseif meta == 0xa0000000 then
+            --     tileImage = AseUtilities.flipImageHoriz(tileImage)
+            --     tileImage = AseUtilities.rotateImage90(tileImage)
+            -- end
 
-        imgTrg:drawImage(
-            tileImage,
-            Point(pixel.x * tileWidth,
-                pixel.y * tileHeight))
+            imgTrg:drawImage(
+                tileImage,
+                Point(pixel.x * tileWidth,
+                    pixel.y * tileHeight))
+        end
     end
 
     return imgTrg

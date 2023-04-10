@@ -508,14 +508,8 @@ function GradientUtilities.evalFromStylePreset(
             and app.fs.isFile(ditherPath) then
             local image = Image { fromFile = ditherPath }
             if image then
-                local palette = nil
-                if image.colorMode == ColorMode.INDEXED then
-                    palette = Palette { fromFile = ditherPath }
-                end
-
-                -- Palette is nil checked by imageToMatrix.
                 matrix, cols, rows, mxElm, mnElm = GradientUtilities.imageToMatrix(
-                    image, palette)
+                    image)
             end -- End image exists check.
         end     -- End file path validity check.
 
@@ -541,13 +535,12 @@ end
 ---than 64 x 64 size will not be considered, and a default
 ---will be returned.
 ---@param image Image image
----@param palette Palette? palette
 ---@return number[] matrix
 ---@return integer columns
 ---@return integer rows
 ---@return number mxElm
 ---@return number mnElm
-function GradientUtilities.imageToMatrix(image, palette)
+function GradientUtilities.imageToMatrix(image)
     -- Intended for use with:
     -- https://bitbucket.org/jjhaggar/aseprite-dithering-matrices,
 
@@ -594,30 +587,15 @@ function GradientUtilities.imageToMatrix(image, palette)
             matrix[lenMat] = v
         end
     elseif colorMode == ColorMode.INDEXED then
-        if palette then
-            local floor = math.floor
-            local sRgbToLab = Clr.sRgbToSrLab2
-            local aseColorToClr = AseUtilities.aseColorToClr
-
-            for pixel in pxItr do
-                local j = pixel()
-                local aseColor = palette:getColor(j)
-                local c = aseColorToClr(aseColor)
-                local lab = sRgbToLab(c)
-                local v = floor(lab.l * 25.5 + 0.5)
-                if v > maxElm then maxElm = v end
-                if v < minElm then minElm = v end
-                lenMat = lenMat + 1
-                matrix[lenMat] = v
-            end
-        else
-            for pixel in pxItr do
-                local j = pixel()
-                if j > maxElm then maxElm = j end
-                if j < minElm then minElm = j end
-                lenMat = lenMat + 1
-                matrix[lenMat] = j
-            end
+        -- Apparently this is how indexed dithers are
+        -- supposed to work.
+        -- https://github.com/aseprite/aseprite/issues/2573#issuecomment-736074731
+        for pixel in pxItr do
+            local j = pixel()
+            if j > maxElm then maxElm = j end
+            if j < minElm then minElm = j end
+            lenMat = lenMat + 1
+            matrix[lenMat] = j
         end
     else
         return GradientUtilities.BAYER_MATRICES[2],

@@ -739,7 +739,7 @@ dlg:button {
             local frameIdcs = { app.activeFrame.frameNumber }
             local appRange = app.range
             if appRange.sprite == sprite then
-                frameIdcs = AseUtilities.parseRange(appRange)
+                frameIdcs = AseUtilities.frameObjsToIdcs(appRange.frames)
             end
 
             if tlHidden then

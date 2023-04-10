@@ -96,8 +96,8 @@ dlg:button {
             return
         end
 
-        local ext = app.fs.fileExtension(filepath)
-        if ext ~= "gpl" then
+        local fileExt = app.fs.fileExtension(filepath)
+        if string.lower(fileExt) ~= "gpl" then
             app.alert { title = "Error", text = "Extension is not gpl." }
             return
         end

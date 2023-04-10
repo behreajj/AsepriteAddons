@@ -507,7 +507,7 @@ dlg:button {
 
         -- Validate file name.
         local fileExt = app.fs.fileExtension(filename)
-        if fileExt == "json" then
+        if string.lower(fileExt) == "json" then
             fileExt = app.preferences.export_file.image_default_extension
             filename = string.sub(filename, 1, -5) .. fileExt
         end
@@ -523,10 +523,10 @@ dlg:button {
         -- color mode and Aseprite doesn't handle this
         -- limitation gracefully.
         if spriteColorMode == ColorMode.INDEXED then
-            if fileExt == "webp" then
+            if string.lower(fileExt) == "webp" then
                 app.alert {
                     title = "Error",
-                    text = "webp format does not support indexed color."
+                    text = "Indexed color not supported for webp."
                 }
                 return
             end
@@ -539,6 +539,14 @@ dlg:button {
                         "sprites with multiple palettes."
                     }
                 }
+            end
+        elseif spriteColorMode == ColorMode.GRAY then
+            if string.lower(fileExt) == "bmp" then
+                app.alert {
+                    title = "Error",
+                    text = "Grayscale not supported for bmp."
+                }
+                return
             end
         end
 

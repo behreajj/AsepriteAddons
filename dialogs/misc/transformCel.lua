@@ -6,8 +6,8 @@ local unitOptions = { "PERCENT", "PIXEL" }
 
 local defaults = {
     target = "ACTIVE",
-    xTranslate = 0.0,
-    yTranslate = 0.0,
+    xTranslate = 0,
+    yTranslate = 0,
     easeMethod = "NEAREST",
     degrees = 90,
     pxWidth = 64,

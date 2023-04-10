@@ -183,7 +183,7 @@ CanvasUtilities.spectrum(
     dlg, "bkgSpectrum", "Background:",
     180 / screenScale, 56 / screenScale,
     defaults.colorMode == "RGB",
-    0.0, 1.0, 0.5, 0)
+    49.0, 1.0, 0.92, 0)
 
 dlg:slider {
     id = "bkgIdx",
