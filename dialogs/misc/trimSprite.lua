@@ -137,6 +137,7 @@ dlg:button {
                 hTile = tileDim.height
             end
 
+            -- TODO: Replace this with getUniqueCelsFromLeaves?
             -- Problem: linked cels will count multiple times.
             local i = 0
             while i < lenFrames do

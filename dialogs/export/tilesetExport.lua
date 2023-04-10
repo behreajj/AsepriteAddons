@@ -14,7 +14,7 @@ local defaults = {
     -- cutter tool. Consider adding margin, changing
     -- padding inbetween frames if needed.
     target = "ALL",
-    padding = 2,
+    padding = 0,
     scale = 1,
     usePixelAspect = true,
     toPow2 = false,

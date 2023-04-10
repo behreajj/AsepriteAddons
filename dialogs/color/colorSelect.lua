@@ -468,8 +468,6 @@ dlg:button {
             xtl = rect.x
             ytl = rect.y
         else
-            -- TODO: Backport no active cel return relocation to
-            -- main branch.
             local activeCel = activeLayer:cel(activeFrame)
             if not activeCel then
                 app.alert {

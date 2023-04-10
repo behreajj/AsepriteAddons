@@ -420,7 +420,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
     dlg:slider {
         id = "bayerIndex",
-        label = "Bayer (2^n):",
+        label = "Size (2^n):",
         min = 1,
         max = 3,
         value = 2,

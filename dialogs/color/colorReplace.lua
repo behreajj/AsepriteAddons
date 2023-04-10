@@ -1,10 +1,15 @@
 dofile("../../support/aseutilities.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
+local targets = {
+    "ACTIVE",
+    "ALL",
+    "RANGE",
+    "SELECTION",
+    "TILE_SET",
+    "TILE_SETS"
+}
 
 local defaults = {
-    -- TODO: Backport to alpha scale and
-    -- expand iamge to main branch?
     target = "ACTIVE",
     includeLocked = false,
     includeHidden = false,
@@ -22,7 +27,7 @@ local function distSqInclAlpha(a, b, alphaScale)
     return dt * dt + dl * dl + da * da + db * db
 end
 
-local function expandImageToCanvas(cel, sprite)
+local function expandCelToCanvas(cel, sprite)
     local celPos = cel.position
     local xSrc = celPos.x
     local ySrc = celPos.y
@@ -79,7 +84,14 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    onchange = function()
+        local args = dlg.data
+        local target = args.target
+        local isTileSets = target ~= "TILE_SETS"
+            and target ~= "TILE_SET"
+        dlg:modify { id = "tolerance", visible = isTileSets }
+    end
 }
 
 dlg:newrow { always = false }
@@ -102,7 +114,6 @@ dlg:newrow { always = false }
 dlg:color {
     id = "fromColor",
     label = "From:",
-    -- color = app.preferences.color_bar.fg_color
     color = Color { r = 255, g = 255, b = 255, a = 255 }
 }
 
@@ -111,7 +122,6 @@ dlg:newrow { always = false }
 dlg:color {
     id = "toColor",
     label = "To:",
-    -- color = app.preferences.color_bar.bg_color
     color = Color { r = 0, g = 0, b = 0, a = 0 }
 }
 
@@ -122,7 +132,9 @@ dlg:slider {
     label = "Tolerance:",
     min = 0,
     max = 255,
-    value = defaults.tolerance
+    value = defaults.tolerance,
+    visible = defaults.target ~= "TILE_SET"
+        and defaults.target ~= "TILE_SETS"
 }
 
 dlg:newrow { always = false }
@@ -156,103 +168,148 @@ dlg:button {
         local activeSpec = activeSprite.spec
         local colorMode = activeSpec.colorMode
 
-        local trgCels = AseUtilities.filterCels(
-            activeSprite, activeLayer, activeFrame, target,
-            includeLocked, includeHidden, includeTiles, includeBkg)
-        local lenTrgCels = #trgCels
+        local replaceTileSet = target == "TILE_SET"
+        local replaceAllTiles = target == "TILE_SETS"
+        if replaceTileSet or replaceAllTiles then
+            local tileSets = {}
 
-        app.transaction("Replace Color", function()
-            if exactSearch then
-                local frInt = AseUtilities.aseColorToHex(
-                    frColor, colorMode)
-                local toInt = AseUtilities.aseColorToHex(
-                    toColor, colorMode)
-                if frInt == toInt then return end
-                local useExpand = frInt == activeSpec.transparentColor
+            if replaceTileSet
+                and activeLayer.isTilemap
+                and (includeLocked or activeLayer.isEditable)
+                and (includeHidden or activeLayer.isVisible) then
+                tileSets[1] = activeLayer.tileset
+            end
 
+            if replaceAllTiles then
+                tileSets = activeSprite.tilesets
+            end
+
+            local frInt = AseUtilities.aseColorToHex(
+                frColor, colorMode)
+            local toInt = AseUtilities.aseColorToHex(
+                toColor, colorMode)
+            if frInt == toInt then return end
+
+            local lenTileSets = #tileSets
+            local h = 0
+            while h < lenTileSets do
+                h = h + 1
+                local tileSet = tileSets[h]
+                local lenTileSet = #tileSet
                 local i = 0
-                while i < lenTrgCels do
-                    i = i + 1
-                    local cel = trgCels[i]
-                    local trgImg = nil
-                    if useExpand then
-                        local exp, xtl, ytl = expandImageToCanvas(
-                            cel, activeSprite)
-                        trgImg = exp
-                        cel.position = Point(xtl, ytl)
-                    else
-                        trgImg = cel.image:clone()
+                app.transaction("Replace Color", function()
+                    while i < lenTileSet - 1 do
+                        i = i + 1
+                        local tile = tileSet:tile(i)
+                        local srcImg = tile.image
+                        local trgImg = srcImg:clone()
+                        local pxItr = trgImg:pixels()
+                        for pixel in pxItr do
+                            if pixel() == frInt then pixel(toInt) end
+                        end
+                        tile.image = trgImg
                     end
+                end)
+            end
+        else
+            local trgCels = AseUtilities.filterCels(
+                activeSprite, activeLayer, activeFrame, target,
+                includeLocked, includeHidden, includeTiles, includeBkg)
+            local lenTrgCels = #trgCels
 
-                    local pxItr = trgImg:pixels()
-                    for pixel in pxItr do
-                        if pixel() == frInt then pixel(toInt) end
+            app.transaction("Replace Color", function()
+                if exactSearch then
+                    local frInt = AseUtilities.aseColorToHex(
+                        frColor, colorMode)
+                    local toInt = AseUtilities.aseColorToHex(
+                        toColor, colorMode)
+                    if frInt == toInt then return end
+                    local useExpand = frInt == activeSpec.transparentColor
+
+                    local i = 0
+                    while i < lenTrgCels do
+                        i = i + 1
+                        local cel = trgCels[i]
+                        local trgImg = nil
+                        if useExpand then
+                            local exp, xtl, ytl = expandCelToCanvas(
+                                cel, activeSprite)
+                            trgImg = exp
+                            cel.position = Point(xtl, ytl)
+                        else
+                            trgImg = cel.image:clone()
+                        end
+
+                        local pxItr = trgImg:pixels()
+                        for pixel in pxItr do
+                            if pixel() == frInt then pixel(toInt) end
+                        end
+                        cel.image = trgImg
                     end
-                    cel.image = trgImg
-                end
-            else
-                app.command.ChangePixelFormat { format = "rgb" }
+                else
+                    app.command.ChangePixelFormat { format = "rgb" }
 
-                local frInt = AseUtilities.aseColorToHex(
-                    frColor, ColorMode.RGB)
-                local toInt = AseUtilities.aseColorToHex(
-                    toColor, ColorMode.RGB)
+                    local frInt = AseUtilities.aseColorToHex(
+                        frColor, ColorMode.RGB)
+                    local toInt = AseUtilities.aseColorToHex(
+                        toColor, ColorMode.RGB)
 
-                local fromHex = Clr.fromHex
-                local sRgbaToLab = Clr.sRgbToSrLab2
-                local distSq = distSqInclAlpha
+                    local fromHex = Clr.fromHex
+                    local sRgbaToLab = Clr.sRgbToSrLab2
+                    local distSq = distSqInclAlpha
 
-                local tScl = 100.0
-                local tolsq = tolerance * tolerance
-                local frLab = sRgbaToLab(fromHex(frInt))
+                    local tScl = 100.0
+                    local tolsq = tolerance * tolerance
+                    local frLab = sRgbaToLab(fromHex(frInt))
 
-                local zeroLab = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
-                local useExpand = distSq(frLab, zeroLab, tScl) <= tolsq
+                    local zeroLab = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+                    local useExpand = distSq(frLab, zeroLab, tScl) <= tolsq
 
-                ---@type table<integer, integer>
-                local dict = {}
+                    ---@type table<integer, integer>
+                    local dict = {}
 
-                local i = 0
-                while i < lenTrgCels do
-                    i = i + 1
-                    local cel = trgCels[i]
+                    local i = 0
+                    while i < lenTrgCels do
+                        i = i + 1
+                        local cel = trgCels[i]
 
-                    local srcImg = cel.image
-                    local srcPxItr = srcImg:pixels()
-                    for srcPixel in srcPxItr do
-                        local srcHex = srcPixel()
-                        if not dict[srcHex] then
-                            local srcClr = fromHex(srcHex)
-                            local srcLab = sRgbaToLab(srcClr)
-                            if distSq(srcLab, frLab, tScl) <= tolsq then
-                                dict[srcHex] = toInt
-                            else
-                                dict[srcHex] = srcHex
+                        local srcImg = cel.image
+                        local srcPxItr = srcImg:pixels()
+                        for srcPixel in srcPxItr do
+                            local srcHex = srcPixel()
+                            if not dict[srcHex] then
+                                local srcClr = fromHex(srcHex)
+                                local srcLab = sRgbaToLab(srcClr)
+                                if distSq(srcLab, frLab, tScl) <= tolsq then
+                                    dict[srcHex] = toInt
+                                else
+                                    dict[srcHex] = srcHex
+                                end
                             end
                         end
+
+                        local trgImg = nil
+                        if useExpand then
+                            local exp, xtl, ytl = expandCelToCanvas(
+                                cel, activeSprite)
+                            trgImg = exp
+                            cel.position = Point(xtl, ytl)
+                        else
+                            trgImg = srcImg:clone()
+                        end
+
+                        local trgPxItr = trgImg:pixels()
+                        for trgPixel in trgPxItr do
+                            trgPixel(dict[trgPixel()])
+                        end
+
+                        cel.image = trgImg
                     end
 
-                    local trgImg = nil
-                    if useExpand then
-                        local exp, xtl, ytl = expandImageToCanvas(
-                            cel, activeSprite)
-                        trgImg = exp
-                        cel.position = Point(xtl, ytl)
-                    else
-                        trgImg = srcImg:clone()
-                    end
-
-                    local trgPxItr = trgImg:pixels()
-                    for trgPixel in trgPxItr do
-                        trgPixel(dict[trgPixel()])
-                    end
-
-                    cel.image = trgImg
+                    AseUtilities.changePixelFormat(colorMode)
                 end
-
-                AseUtilities.changePixelFormat(colorMode)
-            end
-        end)
+            end)
+        end
 
         -- swapColors(dlg)
         app.refresh()

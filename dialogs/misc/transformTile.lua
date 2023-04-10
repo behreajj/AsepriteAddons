@@ -3,7 +3,6 @@ dofile("../../support/aseutilities.lua")
 local targets = { "TILES", "TILE_MAP" }
 
 local defaults = {
-    -- TODO: Replace Color
     target = "TILES",
     inPlace = true
 }
@@ -176,7 +175,7 @@ local function transformCel(dialog, preset)
             end
         end
 
-        app.transaction("Update Map Indices", function()
+        app.transaction("Update Map", function()
             activeCel.image = trgMap
         end)
     end
@@ -338,7 +337,7 @@ dlg:button {
         -- new (sorted) indices so that other tile maps can
         -- easily be updated.
         ---@type integer[]
-        local invertedTsIdcs = {}
+        local oldToNew = {}
 
         local i = 0
         while i < lenTileSet do
@@ -351,7 +350,7 @@ dlg:button {
                 image = tile.image:clone()
             }
             sortedTsPackets[i] = packet
-            invertedTsIdcs[1 + sortedTsIdcs[i]] = i
+            oldToNew[1 + sortedTsIdcs[i]] = i
         end
 
         -- Reassign sorted images to tile set tiles.
@@ -386,7 +385,107 @@ dlg:button {
                 local oldTsIdx = pxTilei(rawData)
                 local flags = pxTilef(rawData)
                 if oldTsIdx > 0 and oldTsIdx < lenTileSet then
-                    local newTsIdx = invertedTsIdcs[1 + oldTsIdx] - 1
+                    local newTsIdx = oldToNew[1 + oldTsIdx] - 1
+                    mapEntry(pxTileCompose(newTsIdx, flags))
+                else
+                    mapEntry(pxTileCompose(0, flags))
+                end
+            end
+
+            local frIdx = uniqueCel.frameNumber
+            app.transaction(string.format(
+                "Update Map %d", frIdx), function()
+                uniqueCel.image = reordered
+            end)
+        end
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "cullButton",
+    text = "CUL&L",
+    focus = false,
+    onclick = function()
+        local activeSprite = app.activeSprite
+        if not activeSprite then return end
+
+        local activeLayer = app.activeLayer
+        if not activeLayer.isVisible then return end
+        if not activeLayer.isEditable then return end
+        if not activeLayer.isTilemap then return end
+        local tileSet = activeLayer.tileset
+        local lenTileSet = #tileSet
+
+        -- Cache methods used in a for loop.
+        local pxTilei = app.pixelColor.tileI
+        local pxTilef = app.pixelColor.tileF
+        local pxTileCompose = app.pixelColor.tile
+
+        local frIdcs = AseUtilities.frameObjsToIdcs(
+            activeSprite.frames)
+        local uniqueCels = AseUtilities.getUniqueCelsFromLeaves(
+            activeSprite, { activeLayer }, frIdcs, {})
+
+        ---@type table<integer, boolean>
+        local visited = {}
+        visited[0] = true
+
+        local lenUniques = #uniqueCels
+        local h = 0
+        while h < lenUniques do
+            h = h + 1
+            local srcCel = uniqueCels[h]
+            local srcMap = srcCel.image
+            local srcItr = srcMap:pixels()
+            for mapEntry in srcItr do
+                local srcTsIdx = pxTilei(mapEntry())
+                if srcTsIdx > 0 and srcTsIdx < lenTileSet
+                    and (not visited[srcTsIdx]) then
+                    visited[srcTsIdx] = true
+                end
+            end
+        end
+
+        local oldToNew = {}
+        oldToNew[0] = 0
+        local lenOldToNew = 0
+        local toCull = {}
+        local i = 0
+        while i < lenTileSet do
+            if visited[i] then
+                oldToNew[i] = lenOldToNew
+                lenOldToNew = lenOldToNew + 1
+            else
+                oldToNew[i] = 0
+                toCull[#toCull + 1] = tileSet:tile(i)
+            end
+            i = i + 1
+        end
+
+        app.transaction("Cull Tile Set", function()
+            local lenMarked = #toCull
+            local j = lenMarked + 1
+            while j > 1 do
+                j = j - 1
+                activeSprite:deleteTile(toCull[j])
+            end
+        end)
+
+        local k = 0
+        while k < lenUniques do
+            k = k + 1
+            local uniqueCel = uniqueCels[k]
+            local uniqueMap = uniqueCel.image
+            local reordered = uniqueMap:clone()
+            local reoItr = reordered:pixels()
+            for mapEntry in reoItr do
+                local rawData = mapEntry()
+                local oldTsIdx = pxTilei(rawData)
+                local flags = pxTilef(rawData)
+                if oldTsIdx > 0 and oldTsIdx < lenTileSet then
+                    local newTsIdx = oldToNew[oldTsIdx]
                     mapEntry(pxTileCompose(newTsIdx, flags))
                 else
                     mapEntry(pxTileCompose(0, flags))

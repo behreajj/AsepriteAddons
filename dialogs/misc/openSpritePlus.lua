@@ -7,13 +7,14 @@ local paletteTypes = {
     "FILE"
 }
 
-local function loadSprite(spriteFile)
+local function loadSprite(filePath)
     -- GPL and PAL file formats cannot be loaded as sprites.
-    local fileExt = app.fs.fileExtension(spriteFile)
+    local fileExt = app.fs.fileExtension(filePath)
     local sprite = nil
-    if fileExt == "gpl" or fileExt == "pal" then
+    if string.lower(fileExt) == "gpl"
+        or string.lower(fileExt) == "pal" then
         local spriteHexes, _ = AseUtilities.asePaletteLoad(
-            "FILE", spriteFile, 0, 256, true)
+            "FILE", filePath, 0, 256, true)
         local lenColors = #spriteHexes
         local rtLen = math.max(16,
             math.ceil(math.sqrt(math.max(1, lenColors))))
@@ -33,7 +34,7 @@ local function loadSprite(spriteFile)
             end
         end
     else
-        sprite = Sprite { fromFile = spriteFile }
+        sprite = Sprite { fromFile = filePath }
     end
 
     return sprite
