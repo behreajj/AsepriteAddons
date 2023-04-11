@@ -63,31 +63,36 @@ GradientUtilities.DEFAULT_STYLE = "MIXED"
 ---https://codegolf.stackexchange.com/q/259633
 ---and https://www.shadertoy.com/view/XtV3RG .
 ---More than 2^4 is overkill for 8-bit color.
----The maximum element is calculated as
----rows * columns - 1 or with math.max(
----table.unpack(matrix)), e.g. 2^(i + 1) - 1 is 15.
+---The largest element is rows * columns - 1.
+---These are normalized in a non-standard way
+---for the sake of consistency with custom
+---dither matrices: the maximum element, not the
+---matrix size, serves as the divisor.
 GradientUtilities.BAYER_MATRICES = {
-    { 0, 2, 3, 1 },
     {
-        0, 8, 2, 10,
-        12, 4, 14, 6,
-        3, 11, 1, 9,
-        15, 7, 13, 5
+        0.000000, 0.666667,
+        1.000000, 0.333333
     },
     {
-        0, 32, 8, 40, 2, 34, 10, 42,
-        48, 16, 56, 24, 50, 18, 58, 26,
-        12, 44, 4, 36, 14, 46, 6, 38,
-        60, 28, 52, 20, 62, 30, 54, 22,
-        3, 35, 11, 43, 1, 33, 9, 41,
-        51, 19, 59, 27, 49, 17, 57, 25,
-        15, 47, 7, 39, 13, 45, 5, 37,
-        63, 31, 55, 23, 61, 29, 53, 21
+        0.000000, 0.533333, 0.133333, 0.666667,
+        0.800000, 0.266667, 0.933333, 0.400000,
+        0.200000, 0.733333, 0.066667, 0.600000,
+        1.000000, 0.466667, 0.866667, 0.333333
+    },
+    {
+        0.000000, 0.507937, 0.126984, 0.634921, 0.031746, 0.539683, 0.158730, 0.666667,
+        0.761905, 0.253968, 0.888889, 0.380952, 0.793651, 0.285714, 0.920635, 0.412698,
+        0.190476, 0.698413, 0.063492, 0.571429, 0.222222, 0.730159, 0.095238, 0.603175,
+        0.952381, 0.444444, 0.825397, 0.317460, 0.984127, 0.476190, 0.857143, 0.349206,
+        0.047619, 0.555556, 0.174603, 0.682540, 0.015873, 0.523810, 0.142857, 0.650794,
+        0.809524, 0.301587, 0.936508, 0.428571, 0.777778, 0.269841, 0.904762, 0.396825,
+        0.238095, 0.746032, 0.111111, 0.619048, 0.206349, 0.714286, 0.079365, 0.587302,
+        1.000000, 0.492063, 0.873016, 0.365079, 0.968254, 0.460317, 0.841270, 0.333333
     }
 }
 
 --- Maximum width or height for a custom dither image.
-GradientUtilities.DITHER_MAX_SIZE = 64
+GradientUtilities.DITHER_MAX_SIZE = 32
 
 ---Converts an array of Aseprite colors to a
 ---ClrGradient. If the number of colors is less
@@ -488,36 +493,29 @@ function GradientUtilities.evalFromStylePreset(
     if stylePreset == "DITHER_BAYER" then
         local matrix = GradientUtilities.BAYER_MATRICES[bayerIndex]
         local bayerSize = 2 ^ bayerIndex
-        local maxElm = bayerSize * bayerSize - 1
-        local minElm = 0
 
         return function(cg, step, easing, x, y)
             return ClrGradient.dither(
                 cg, step, matrix,
-                x, y, bayerSize, bayerSize,
-                maxElm, minElm)
+                x, y, bayerSize, bayerSize)
         end
     elseif stylePreset == "DITHER_CUSTOM" then
         local matrix = GradientUtilities.BAYER_MATRICES[2]
-        local cols = 4
-        local rows = 4
-        local mxElm = cols * rows - 1
-        local mnElm = 0
+        local c = 4
+        local r = 4
 
         if ditherPath and #ditherPath > 0
             and app.fs.isFile(ditherPath) then
             local image = Image { fromFile = ditherPath }
             if image then
-                matrix, cols, rows, mxElm, mnElm = GradientUtilities.imageToMatrix(
-                    image)
+                matrix, c, r = GradientUtilities.imageToMatrix(image)
             end -- End image exists check.
         end     -- End file path validity check.
 
         return function(cg, step, easing, x, y)
             return ClrGradient.dither(
                 cg, step, matrix,
-                x, y, cols, rows,
-                mxElm, mnElm)
+                x, y, c, r)
         end
     else
         -- Default to mix.
@@ -531,15 +529,13 @@ end
 ---the matrix along with its width (columns), height (rows)
 ---maximum and minimum element. Indexed images depend on
 ---a palette argument. If nil, then the image's indices will
----be used instead of their color referents. Images of greater
----than 64 x 64 size will not be considered, and a default
+---be used instead of their color referents. Images greater
+---than the size limit will not be considered, and a default
 ---will be returned.
 ---@param image Image image
 ---@return number[] matrix
 ---@return integer columns
 ---@return integer rows
----@return number mxElm
----@return number mnElm
 function GradientUtilities.imageToMatrix(image)
     -- Intended for use with:
     -- https://bitbucket.org/jjhaggar/aseprite-dithering-matrices,
@@ -547,14 +543,15 @@ function GradientUtilities.imageToMatrix(image)
     local spec = image.spec
     local width = spec.width
     local height = spec.height
-    local maxElm = -2147483648
-    local minElm = 2147483647
+    local mxElm = -2147483648
+    local mnElm = 2147483647
+    -- local uniques = {}
+    -- local lenUniques = 0
 
     if width > GradientUtilities.DITHER_MAX_SIZE
         or height > GradientUtilities.DITHER_MAX_SIZE
         or (width < 2 and height < 2) then
-        return GradientUtilities.BAYER_MATRICES[2],
-            4, 4, 4 * 4 - 1, 0
+        return GradientUtilities.BAYER_MATRICES[2], 4, 4
     end
 
     local colorMode = spec.colorMode
@@ -572,8 +569,12 @@ function GradientUtilities.imageToMatrix(image)
             local c = fromHex(hex)
             local lab = sRgbToLab(c)
             local v = floor(lab.l * 25.5 + 0.5)
-            if v > maxElm then maxElm = v end
-            if v < minElm then minElm = v end
+            if v > mxElm then mxElm = v end
+            if v < mnElm then mnElm = v end
+            -- if not uniques[v] then
+            --     lenUniques = lenUniques + 1
+            --     uniques[v] = true
+            -- end
             lenMat = lenMat + 1
             matrix[lenMat] = v
         end
@@ -581,8 +582,12 @@ function GradientUtilities.imageToMatrix(image)
         for pixel in pxItr do
             local hex = pixel()
             local v = hex & 0xff
-            if v > maxElm then maxElm = v end
-            if v < minElm then minElm = v end
+            if v > mxElm then mxElm = v end
+            if v < mnElm then mnElm = v end
+            -- if not uniques[v] then
+            --     lenUniques = lenUniques + 1
+            --     uniques[v] = true
+            -- end
             lenMat = lenMat + 1
             matrix[lenMat] = v
         end
@@ -591,18 +596,32 @@ function GradientUtilities.imageToMatrix(image)
         -- supposed to work.
         -- https://github.com/aseprite/aseprite/issues/2573#issuecomment-736074731
         for pixel in pxItr do
-            local j = pixel()
-            if j > maxElm then maxElm = j end
-            if j < minElm then minElm = j end
+            local i = pixel()
+            if i > mxElm then mxElm = i end
+            if i < mnElm then mnElm = i end
+            -- if not uniques[i] then
+            --     lenUniques = lenUniques + 1
+            --     uniques[i] = true
+            -- end
             lenMat = lenMat + 1
-            matrix[lenMat] = j
+            matrix[lenMat] = i
         end
     else
-        return GradientUtilities.BAYER_MATRICES[2],
-            4, 4, 4 * 4 - 1, 0
+        return GradientUtilities.BAYER_MATRICES[2], 4, 4
     end
 
-    return matrix, width, height, maxElm, minElm
+    -- Normalize range.
+    local range = math.abs(mxElm - mnElm)
+    if range ~= 0 then
+        local denom = 1.0 / range
+        local j = 0
+        while j < lenMat do
+            j = j + 1
+            matrix[j] = (matrix[j] - mnElm) * denom
+        end
+    end
+
+    return matrix, width, height
 end
 
 ---Finds the appropriate easing function in HSL or HSV

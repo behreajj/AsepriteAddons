@@ -217,17 +217,16 @@ dlg:button {
                 else
                     for trgPixel in trgPixelItr do
                         local srcHex = trgPixel()
-                        local x = trgPixel.x
-                        local y = trgPixel.y
                         local fac = lumDict[srcHex]
                         fac = facAdjust(fac)
                         local trgClr = cgeval(
-                            gradient, fac, mixFunc, x, y)
+                            gradient, fac, mixFunc,
+                            trgPixel.x, trgPixel.y)
 
                         local trgHex = toHex(trgClr)
-                        local trgAlpha = trgHex >> 0x18 & 0xff
-                        local srcAlpha = srcHex >> 0x18 & 0xff
-                        local minAlpha = min(srcAlpha, trgAlpha)
+                        local minAlpha = min(
+                            srcHex >> 0x18 & 0xff,
+                            trgHex >> 0x18 & 0xff)
                         trgPixel((minAlpha << 0x18)
                             | (trgHex & 0x00ffffff))
                     end

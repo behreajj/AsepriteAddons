@@ -88,10 +88,9 @@ function ClrGradient.bisectRight(cg, step)
 end
 
 ---Evaluates a color gradient by a step according
----to a dithering matrix. The maximum and minimum
----elements of the matrix should be found in advance.
----The x and y coordinates are relative to the image.
----See
+---to a dithering matrix. The matrix should be
+---normalized in advance. The x and y coordinates
+---are relative to the image. See
 ---https://www.wikiwand.com/en/Ordered_dithering/
 ---
 ---Unlike eval, returns a reference to a color in
@@ -103,13 +102,10 @@ end
 ---@param y integer y coordinate
 ---@param cols integer matrix columns
 ---@param rows integer matrix rows
----@param maxElm number max element
----@param minElm number min element
 ---@return Clr
 function ClrGradient.dither(
     cg, step, matrix,
-    x, y, cols, rows,
-    maxElm, minElm)
+    x, y, cols, rows)
     local keys = cg.keys
     local lenKeys = #keys
     local firstKey = keys[1]
@@ -138,16 +134,13 @@ function ClrGradient.dither(
         tScaled = (step - prevStep) / range
     end
 
+    -- For an integer Bayer matrix, the maximum element
+    -- is (rows * columns) - 1, e.g., 63 for 8 * 8.
+    -- To get extra left and right edges in the gradient,
+    -- 1 needs to be added to the matrix element, right,
+    -- and 2 needs to be added to the scaled step, left.
     local matIdx = 1 + (x % cols) + (y % rows) * cols
-    local query = matrix[matIdx]
-
-    -- In a Bayer matrix, the maximum element is
-    -- (rows * columns) - 1, e.g., 63 for 8 * 8.
-    -- The minimum is 0. To get both origin and
-    -- destination color into the gradient, 1
-    -- needs to be added to minimum on the query
-    -- side and 2 needs to be added on the left.
-    if minElm + tScaled * (maxElm - minElm) < query then
+    if tScaled < matrix[matIdx] then
         return prevKey.clr
     end
     return nextKey.clr

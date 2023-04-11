@@ -268,17 +268,24 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         local args = dlg.data
-        local palType = args.palType or defaults.palType --[[@as string]]
+        local scale = args.aspectScale
+            or defaults.aspectScale --[[@as number]]
+        local palType = args.palType
+            or defaults.palType --[[@as string]]
         local prependMask = args.prependMask
+        local sizeMode = args.sizeMode
+            or defaults.sizeMode --[[@as string]]
 
-        local colorModeStr = args.colorMode or defaults.colorMode
-        local useGrayscale = colorModeStr == "GRAY"
+        local colorModeStr = args.colorMode
+            or defaults.colorMode --[[@as string]]
+        local useGray = colorModeStr == "GRAY"
         local useIndexed = colorModeStr == "INDEXED"
+        local useAspect = sizeMode == "ASPECT"
 
         -- Create palette.
         local hexesSrgb = {}
         local hexesProfile = {}
-        if useGrayscale then
+        if useGray then
             local grayCount = args.grayCount
                 or AseUtilities.GRAY_COUNT --[[@as integer]]
             hexesProfile = AseUtilities.grayHexes(grayCount)
@@ -322,7 +329,7 @@ dlg:button {
                 }
             end
         else
-            if useGrayscale then
+            if useGray then
                 colorModeInt = ColorMode.GRAY
             else
                 colorModeInt = ColorMode.RGB
@@ -347,19 +354,15 @@ dlg:button {
 
         -- Because entries are typed in, they need to be validated
         -- for negative numbers and minimums.
-        local sizeMode = args.sizeMode or defaults.sizeMode
         local width = defaults.width
         local height = defaults.height
-        if sizeMode == "ASPECT" then
+        scale = math.max(1.0, math.abs(scale))
+        if useAspect then
             local aRatio = args.aRatio
                 or defaults.aRatio --[[@as integer]]
             local bRatio = args.bRatio
                 or defaults.bRatio --[[@as integer]]
             aRatio, bRatio = Utilities.reduceRatio(aRatio, bRatio)
-
-            local scale = args.aspectScale
-                or defaults.aspectScale --[[@as number]]
-            scale = math.max(1.0, math.abs(scale))
 
             width = math.floor(aRatio * scale + 0.5)
             height = math.floor(bRatio * scale + 0.5)
@@ -405,13 +408,15 @@ dlg:button {
         app.activeSprite = newSprite
 
         -- Only assign palette here if not grayscale.
-        if not useGrayscale then
+        if not useGray then
             AseUtilities.setPalette(hexesProfile, newSprite, 1)
         end
 
         -- Create frames.
-        local frameReqs = args.frames or defaults.frames --[[@as integer]]
-        local fps = args.fps or defaults.fps --[[@as integer]]
+        local frameReqs = args.frames
+            or defaults.frames --[[@as integer]]
+        local fps = args.fps
+            or defaults.fps --[[@as integer]]
         local duration = 1.0 / math.max(1, fps)
         local firstFrame = newSprite.frames[1]
 
@@ -451,7 +456,7 @@ dlg:button {
 
         -- Convert to grayscale will append palette.
         AseUtilities.changePixelFormat(colorModeInt)
-        if useGrayscale then
+        if useGray then
             AseUtilities.setPalette(hexesProfile, newSprite, 1)
         end
 

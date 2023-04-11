@@ -405,7 +405,7 @@ dlg:button {
 
 dlg:button {
     id = "cullButton",
-    text = "CUL&L",
+    text = "C&ULL",
     focus = false,
     onclick = function()
         local activeSprite = app.activeSprite
