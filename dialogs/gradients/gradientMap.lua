@@ -102,6 +102,10 @@ dlg:button {
         local bayerIndex = args.bayerIndex --[[@as integer]]
         local ditherPath = args.ditherPath --[[@as string]]
 
+        -- Find frames from target.
+        local frames = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
+
         local useMixed = stylePreset == "MIXED"
         local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
         local facAdjust = GradientUtilities.easingFuncFromPreset(easPreset)
@@ -117,10 +121,6 @@ dlg:button {
         if isTilemap then
             tileSet = srcLayer.tileset
         end
-
-        -- Find frames from target.
-        local frames = Utilities.flatArr2(
-            AseUtilities.getFrames(activeSprite, target))
 
         -- Create target layer.
         -- Do not copy source layer blend mode.
