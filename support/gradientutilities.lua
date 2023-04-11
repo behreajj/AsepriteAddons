@@ -66,28 +66,27 @@ GradientUtilities.DEFAULT_STYLE = "MIXED"
 ---The largest element is rows * columns - 1.
 ---These are normalized in a non-standard way
 ---for the sake of consistency with custom
----dither matrices: the maximum element, not the
----matrix size, serves as the divisor.
+---dither matrices.
 GradientUtilities.BAYER_MATRICES = {
     {
-        0.000000, 0.666667,
-        1.000000, 0.333333
+        0.2, 0.6,
+        0.8, 0.4
     },
     {
-        0.000000, 0.533333, 0.133333, 0.666667,
-        0.800000, 0.266667, 0.933333, 0.400000,
-        0.200000, 0.733333, 0.066667, 0.600000,
-        1.000000, 0.466667, 0.866667, 0.333333
+        0.05882353, 0.52940776, 0.17646959, 0.64705382,
+        0.76469988, 0.29411565, 0.88234594, 0.41176171,
+        0.23528512, 0.70588435, 0.11763906, 0.58823829,
+        0.94117647, 0.47059224, 0.82353041, 0.35293118
     },
     {
-        0.000000, 0.507937, 0.126984, 0.634921, 0.031746, 0.539683, 0.158730, 0.666667,
-        0.761905, 0.253968, 0.888889, 0.380952, 0.793651, 0.285714, 0.920635, 0.412698,
-        0.190476, 0.698413, 0.063492, 0.571429, 0.222222, 0.730159, 0.095238, 0.603175,
-        0.952381, 0.444444, 0.825397, 0.317460, 0.984127, 0.476190, 0.857143, 0.349206,
-        0.047619, 0.555556, 0.174603, 0.682540, 0.015873, 0.523810, 0.142857, 0.650794,
-        0.809524, 0.301587, 0.936508, 0.428571, 0.777778, 0.269841, 0.904762, 0.396825,
-        0.238095, 0.746032, 0.111111, 0.619048, 0.206349, 0.714286, 0.079365, 0.587302,
-        1.000000, 0.492063, 0.873016, 0.365079, 0.968254, 0.460317, 0.841270, 0.333333
+        0.01538462, 0.50768631, 0.13842854, 0.63079323, 0.04612985, 0.53843154, 0.16923677, 0.66153846,
+        0.75383715, 0.26153546, 0.87694408, 0.38457938, 0.78464539, 0.29228069, 0.90768931, 0.41538762,
+        0.19998200, 0.69228369, 0.07687508, 0.56923977, 0.23072723, 0.72309192, 0.10768331, 0.59998500,
+        0.93849754, 0.44613285, 0.81539062, 0.32308892, 0.96924277, 0.47694108, 0.84613585, 0.35383415,
+        0.06150246, 0.55386715, 0.18460938, 0.67691108, 0.03075723, 0.52305892, 0.15380115, 0.64616585,
+        0.80001800, 0.30765331, 0.92306192, 0.43076023, 0.76920977, 0.27690808, 0.89231669, 0.40001500,
+        0.24616285, 0.73846454, 0.12305592, 0.61535761, 0.21535461, 0.70771931, 0.09231069, 0.58461238,
+        0.98461538, 0.49231369, 0.86157146, 0.36920677, 0.95387015, 0.46150546, 0.83076323, 0.33846154
     }
 }
 
@@ -545,8 +544,8 @@ function GradientUtilities.imageToMatrix(image)
     local height = spec.height
     local mxElm = -2147483648
     local mnElm = 2147483647
-    -- local uniques = {}
-    -- local lenUniques = 0
+    local uniques = {}
+    local lenUniques = 0
 
     if width > GradientUtilities.DITHER_MAX_SIZE
         or height > GradientUtilities.DITHER_MAX_SIZE
@@ -571,10 +570,10 @@ function GradientUtilities.imageToMatrix(image)
             local v = floor(lab.l * 25.5 + 0.5)
             if v > mxElm then mxElm = v end
             if v < mnElm then mnElm = v end
-            -- if not uniques[v] then
-            --     lenUniques = lenUniques + 1
-            --     uniques[v] = true
-            -- end
+            if not uniques[v] then
+                lenUniques = lenUniques + 1
+                uniques[v] = true
+            end
             lenMat = lenMat + 1
             matrix[lenMat] = v
         end
@@ -584,10 +583,10 @@ function GradientUtilities.imageToMatrix(image)
             local v = hex & 0xff
             if v > mxElm then mxElm = v end
             if v < mnElm then mnElm = v end
-            -- if not uniques[v] then
-            --     lenUniques = lenUniques + 1
-            --     uniques[v] = true
-            -- end
+            if not uniques[v] then
+                lenUniques = lenUniques + 1
+                uniques[v] = true
+            end
             lenMat = lenMat + 1
             matrix[lenMat] = v
         end
@@ -599,10 +598,10 @@ function GradientUtilities.imageToMatrix(image)
             local i = pixel()
             if i > mxElm then mxElm = i end
             if i < mnElm then mnElm = i end
-            -- if not uniques[i] then
-            --     lenUniques = lenUniques + 1
-            --     uniques[i] = true
-            -- end
+            if not uniques[i] then
+                lenUniques = lenUniques + 1
+                uniques[i] = true
+            end
             lenMat = lenMat + 1
             matrix[lenMat] = i
         end
@@ -613,11 +612,14 @@ function GradientUtilities.imageToMatrix(image)
     -- Normalize range.
     local range = math.abs(mxElm - mnElm)
     if range ~= 0 then
+        local orig = 1.0 / (lenUniques + 1)
+        local dest = 1.0 - orig
         local denom = 1.0 / range
         local j = 0
         while j < lenMat do
             j = j + 1
-            matrix[j] = (matrix[j] - mnElm) * denom
+            local t = (matrix[j] - mnElm) * denom
+            matrix[j] = (1.0 - t) * orig + t * dest
         end
     end
 
