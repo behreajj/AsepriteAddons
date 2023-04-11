@@ -10,7 +10,7 @@ local defaults = {
 
 local dlg = Dialog { title = "Gradient Map" }
 
-GradientUtilities.dialogWidgets(dlg, false)
+GradientUtilities.dialogWidgets(dlg, true)
 
 dlg:combobox {
     id = "target",
@@ -80,39 +80,43 @@ dlg:button {
             return
         end
 
+        -- Cache methods.
+        local abs = math.abs
+        local min = math.min
+        local fromHex = Clr.fromHex
+        local toHex = Clr.toHex
+        local sRgbToLab = Clr.sRgbToSrLab2
+        local quantize = Utilities.quantizeUnsigned
+        local tilesToImage = AseUtilities.tilesToImage
+
+        -- Unpack arguments.
+        local args = dlg.data
+        local stylePreset = args.stylePreset --[[@as string]]
+        local target = args.target or defaults.target --[[@as string]]
+        local useNormalize = args.useNormalize --[[@as boolean]]
+        local clrSpacePreset = args.clrSpacePreset --[[@as string]]
+        local easPreset = args.easPreset --[[@as string]]
+        local huePreset = args.huePreset --[[@as string]]
+        local aseColors = args.shades --[[@as Color[] ]]
+        local levels = args.quantize --[[@as integer]]
+        local bayerIndex = args.bayerIndex --[[@as integer]]
+        local ditherPath = args.ditherPath --[[@as string]]
+
+        local useMixed = stylePreset == "MIXED"
+        local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
+        local facAdjust = GradientUtilities.easingFuncFromPreset(easPreset)
+        local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
+            clrSpacePreset, huePreset)
+
+        local cgeval = GradientUtilities.evalFromStylePreset(
+            stylePreset, bayerIndex, ditherPath)
+
         -- Check for tile maps.
         local isTilemap = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
             tileSet = srcLayer.tileset
         end
-
-        -- QUERY: Necessary to switch to SR LAB 2?
-        -- Cache methods and tables.
-        local stlLut = Utilities.STL_LUT
-        local lRgbToXyz = Clr.lRgbToCieXyzInternal
-        local xyzToLab = Clr.cieXyzToLab
-        local abs = math.abs
-        local min = math.min
-        local quantize = Utilities.quantizeUnsigned
-        local tohex = Clr.toHex
-        local cgeval = ClrGradient.eval
-        local tilesToImage = AseUtilities.tilesToImage
-
-        -- Unpack arguments.
-        local args = dlg.data
-        local target = args.target or defaults.target --[[@as string]]
-        local useNormalize = args.useNormalize --[[@as boolean]]
-        local clrSpacePreset = args.clrSpacePreset --[[@as string]]
-        local easPreset = args.easPreset --[[@as string]]
-        local huePreset = args.huePreset --[[@as string]]
-        local levels = args.quantize --[[@as integer]]
-        local aseColors = args.shades --[[@as Color[] ]]
-
-        local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
-        local facAdjust = GradientUtilities.easingFuncFromPreset(easPreset)
-        local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
-            clrSpacePreset, huePreset)
 
         -- Find frames from target.
         local frames = Utilities.flatArr2(
@@ -125,7 +129,11 @@ dlg:button {
             trgLayer = activeSprite:newLayer()
             trgLayer.parent = srcLayer.parent
             trgLayer.opacity = srcLayer.opacity
-            trgLayer.name = "Gradient.Map." .. clrSpacePreset
+            trgLayer.name = "Gradient.Map"
+            if useMixed then
+                trgLayer.name = trgLayer.name
+                    .. "." .. clrSpacePreset
+            end
             if useNormalize then
                 trgLayer.name = trgLayer.name .. ".Contrast"
             end
@@ -143,55 +151,28 @@ dlg:button {
                     srcImg = tilesToImage(srcImg, tileSet, colorMode)
                 end
 
-                -- TODO: Is it possible to make a dithered version of this?
-                -- Cache source colors.
                 ---@type table<integer, boolean>
-                local srcClrDict = {}
+                local srcHexDict = {}
                 local srcItr = srcImg:pixels()
-                for srcClr in srcItr do
-                    srcClrDict[srcClr()] = true
+                for srcHex in srcItr do
+                    srcHexDict[srcHex()] = true
                 end
 
-                ---@type table<integer, integer>
-                local srcAlphaDict = {}
                 ---@type table<integer, number>
                 local lumDict = {}
                 local minLum = 1.0
                 local maxLum = 0.0
-
-                -- Cache luminosities and source alphas in dictionaries.
-                for hex, _ in pairs(srcClrDict) do
-                    local sai = hex >> 0x18 & 0xff
-                    local lum = 0.0
-                    if sai > 0 then
-                        local sbi = hex >> 0x10 & 0xff
-                        local sgi = hex >> 0x08 & 0xff
-                        local sri = hex & 0xff
-
-                        if sbi == sgi and sbi == sri then
-                            lum = sbi * 0.003921568627451
-                        else
-                            -- Convert to linear via look up table.
-                            local lbi = stlLut[1 + sbi]
-                            local lgi = stlLut[1 + sgi]
-                            local lri = stlLut[1 + sri]
-
-                            local xyz = lRgbToXyz(
-                                lri * 0.003921568627451,
-                                lgi * 0.003921568627451,
-                                lbi * 0.003921568627451,
-                                1.0)
-                            local lab = xyzToLab(xyz.x, xyz.y, xyz.z, 1.0)
-
-                            lum = lab.l * 0.01
-                        end
-
+                for srcHex, _ in pairs(srcHexDict) do
+                    if (srcHex & 0xff000000) ~= 0 then
+                        local srgb = fromHex(srcHex)
+                        local lab = sRgbToLab(srgb)
+                        local lum = lab.l * 0.01
                         if lum < minLum then minLum = lum end
                         if lum > maxLum then maxLum = lum end
+                        lumDict[srcHex] = lum
+                    else
+                        lumDict[srcHex] = 0.0
                     end
-
-                    lumDict[hex] = lum
-                    srcAlphaDict[hex] = sai
                 end
 
                 -- Normalize range if requested.
@@ -209,27 +190,48 @@ dlg:button {
                     end
                 end
 
-                ---@type table<integer, integer>
-                local trgClrDict = {}
-                for hex, _ in pairs(srcClrDict) do
-                    local fac = lumDict[hex]
-                    fac = facAdjust(fac)
-                    fac = quantize(fac, levels)
-                    local clrGray = cgeval(gradient, fac, mixFunc)
-                    local hexGray = tohex(clrGray)
-
-                    local aSrc = srcAlphaDict[hex]
-                    local aTrg = (hexGray >> 0x18 & 0xff)
-
-                    trgClrDict[hex] = min(aSrc, aTrg) << 0x18
-                        | (0x00ffffff & hexGray)
-                end
-
                 local trgImg = srcImg:clone()
                 local trgPixelItr = trgImg:pixels()
-                for trgPixel in trgPixelItr do
-                    trgPixel(trgClrDict[trgPixel()])
-                end
+
+                if useMixed then
+                    ---@type table<integer, integer>
+                    local trgHexDict = {}
+                    for srcHex, _ in pairs(srcHexDict) do
+                        local fac = lumDict[srcHex]
+                        fac = facAdjust(fac)
+                        fac = quantize(fac, levels)
+                        local trgClr = cgeval(
+                            gradient, fac, mixFunc)
+
+                        local trgHex = toHex(trgClr)
+                        local minAlpha = min(
+                            srcHex >> 0x18 & 0xff,
+                            trgHex >> 0x18 & 0xff)
+                        trgHexDict[srcHex] = (minAlpha << 0x18)
+                            | (trgHex & 0x00ffffff)
+                    end
+
+                    for trgPixel in trgPixelItr do
+                        trgPixel(trgHexDict[trgPixel()])
+                    end
+                else
+                    for trgPixel in trgPixelItr do
+                        local srcHex = trgPixel()
+                        local x = trgPixel.x
+                        local y = trgPixel.y
+                        local fac = lumDict[srcHex]
+                        fac = facAdjust(fac)
+                        local trgClr = cgeval(
+                            gradient, fac, mixFunc, x, y)
+
+                        local trgHex = toHex(trgClr)
+                        local trgAlpha = trgHex >> 0x18 & 0xff
+                        local srcAlpha = srcHex >> 0x18 & 0xff
+                        local minAlpha = min(srcAlpha, trgAlpha)
+                        trgPixel((minAlpha << 0x18)
+                            | (trgHex & 0x00ffffff))
+                    end
+                end -- End mix type.
 
                 app.transaction(
                     string.format("Gradient Map %d", srcFrame),
@@ -238,12 +240,13 @@ dlg:button {
                             trgLayer, srcFrame, trgImg, srcCel.position)
                         trgCel.opacity = srcCel.opacity
                     end)
-            end
-        end
+            end -- End cel exists check.
+        end     -- End frames loop.
 
         app.refresh()
     end
 }
+
 
 dlg:button {
     id = "cancel",

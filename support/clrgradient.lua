@@ -91,8 +91,11 @@ end
 ---to a dithering matrix. The maximum and minimum
 ---elements of the matrix should be found in advance.
 ---The x and y coordinates are relative to the image.
----Returns a color. See
+---See
 ---https://www.wikiwand.com/en/Ordered_dithering/
+---
+---Unlike eval, returns a reference to a color in
+---the gradient, not a new color.
 ---@param cg ClrGradient color gradient
 ---@param step number step
 ---@param matrix number[] matrix
@@ -107,14 +110,33 @@ function ClrGradient.dither(
     cg, step, matrix,
     x, y, cols, rows,
     maxElm, minElm)
-    local prevKey, nextKey, t = ClrGradient.findKeys(
-        cg, step)
+    local keys = cg.keys
+    local lenKeys = #keys
+    local firstKey = keys[1]
+    local lastKey = keys[lenKeys]
+
+    -- Unlike eval, dither doesn't have to worry
+    -- about normal map mixing, so use early return.
+    if step <= firstKey.step or lenKeys < 2 then
+        return firstKey.clr
+    end
+    if step >= lastKey.step then
+        return lastKey.clr
+    end
+
+    local nextIdx = ClrGradient.bisectRight(cg, step)
+    local prevIdx = nextIdx - 1
+
+    local prevKey = keys[prevIdx] or firstKey
+    local nextKey = keys[nextIdx] or lastKey
 
     local prevStep = prevKey.step
     local nextStep = nextKey.step
-    local denom = nextStep - prevStep
-    if denom ~= 0.0 then denom = 1.0 / denom end
-    local tScaled = (t - prevStep) * denom
+    local range = nextStep - prevStep
+    local tScaled = 0.0
+    if range ~= 0.0 then
+        tScaled = (step - prevStep) / range
+    end
 
     local matIdx = 1 + (x % cols) + (y % rows) * cols
     local query = matrix[matIdx]
@@ -138,7 +160,7 @@ end
 ---and a number as a step. If nil, it defaults
 ---to a mix in linear sRGB.
 ---@param cg ClrGradient color gradient
----@param step number step
+---@param step number? step
 ---@param easing function? easing function
 ---@return Clr
 function ClrGradient.eval(cg, step, easing)

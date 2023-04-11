@@ -109,6 +109,7 @@ dlg:button {
         local yOrig = args.yOrig --[[@as integer]]
         local angDegrees = args.angle --[[@as integer]]
 
+        if stylePreset ~= "MIXED" then levels = 0 end
         local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
         local facAdjust = GradientUtilities.easingFuncFromPreset(
             easPreset)
@@ -189,7 +190,11 @@ dlg:button {
 
         app.transaction("Sweep Gradient", function()
             local grdLayer = activeSprite:newLayer()
-            grdLayer.name = "Gradient.Sweep." .. clrSpacePreset
+            grdLayer.name = "Gradient.Sweep"
+            if stylePreset == "MIXED" then
+                grdLayer.name = grdLayer.name
+                    .. "." .. clrSpacePreset
+            end
             local activeFrame = app.activeFrame
                 or activeSprite.frames[1] --[[@as Frame]]
             activeSprite:newCel(

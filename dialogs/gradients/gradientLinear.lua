@@ -61,6 +61,7 @@ dlg:button {
         local bayerIndex = args.bayerIndex --[[@as integer]]
         local ditherPath = args.ditherPath --[[@as string]]
 
+        if stylePreset ~= "MIXED" then levels = 0 end
         local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
         local facAdjust = GradientUtilities.easingFuncFromPreset(easPreset)
         local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
@@ -124,7 +125,11 @@ dlg:button {
 
         app.transaction("Linear Gradient", function()
             local grdLayer = activeSprite:newLayer()
-            grdLayer.name = "Gradient.Linear." .. clrSpacePreset
+            grdLayer.name = "Gradient.Linear"
+            if stylePreset == "MIXED" then
+                grdLayer.name = grdLayer.name
+                    .. "." .. clrSpacePreset
+            end
             local activeFrame = app.activeFrame
                 or activeSprite.frames[1] --[[@as Frame]]
             activeSprite:newCel(
