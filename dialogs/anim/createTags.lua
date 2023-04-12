@@ -331,9 +331,12 @@ dlg:button {
             end
         end
 
+        -- Tags could propagate their color to cels, but
+        -- because a linked cel can extend beyond the tag
+        -- that contains its frame, this wouldn't work.
+        local allTags = activeSprite.tags
+        local lenAllTags = #allTags
         if recolorAll then
-            local allTags = activeSprite.tags
-            local lenAllTags = #allTags
             local toFacAll = 0.0
             if lenAllTags > 1 then
                 toFacAll = 1.0 / (lenAllTags - 1.0)

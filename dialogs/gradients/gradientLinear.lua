@@ -1,6 +1,8 @@
 dofile("../../support/gradientutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
+local screenScale = app.preferences.general.screen_scale
+
 local defaults = {
     pullFocus = true
 }
@@ -10,7 +12,8 @@ local dlg = Dialog { title = "Linear Gradient" }
 GradientUtilities.dialogWidgets(dlg, true)
 
 CanvasUtilities.graphLine(
-    dlg, "graphCart", "Graph:", 128, 128,
+    dlg, "graphCart", "Graph:",
+    128 // screenScale, 128 // screenScale,
     true, true, 7, -100, 0, 100, 0,
     app.theme.color.text,
     Color { r = 128, g = 128, b = 128 })
@@ -61,13 +64,10 @@ dlg:button {
         local bayerIndex = args.bayerIndex --[[@as integer]]
         local ditherPath = args.ditherPath --[[@as string]]
 
-        if stylePreset ~= "MIXED" then levels = 0 end
         local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
         local facAdjust = GradientUtilities.easingFuncFromPreset(easPreset)
         local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
-        local cgeval = GradientUtilities.evalFromStylePreset(
-            stylePreset, bayerIndex, ditherPath)
 
         local wn1 = max(1.0, activeSprite.width - 1.0)
         local hn1 = max(1.0, activeSprite.height - 1.0)
@@ -110,17 +110,41 @@ dlg:button {
 
         local grdImg = Image(grdSpec)
         local grdItr = grdImg:pixels()
-        for pixel in grdItr do
-            local x = pixel.x
-            local y = pixel.y
+
+        local linearEval = function(x, y)
             local ax = x - xOrPx
             local ay = y - yOrPx
             local adotb = (ax * bx + ay * by) * bbInv
-            local fac = min(max(adotb, 0.0), 1.0)
-            fac = facAdjust(fac)
-            fac = quantize(fac, levels)
-            local clr = cgeval(gradient, fac, mixFunc, x, y)
-            pixel(toHex(clr))
+            return min(max(adotb, 0.0), 1.0)
+        end
+
+        if stylePreset == "MIXED" then
+            local facDict = {}
+            local cgmix = ClrGradient.eval
+            for pixel in grdItr do
+                local fac = linearEval(pixel.x, pixel.y)
+                fac = facAdjust(fac)
+                fac = quantize(fac, levels)
+
+                if facDict[fac] then
+                    pixel(facDict[fac])
+                else
+                    local clr = cgmix(gradient, fac, mixFunc)
+                    local hex = toHex(clr)
+                    pixel(hex)
+                    facDict[fac] = hex
+                end
+            end
+        else
+            local dither = GradientUtilities.ditherFromPreset(
+                stylePreset, bayerIndex, ditherPath)
+            for pixel in grdItr do
+                local x = pixel.x
+                local y = pixel.y
+                local fac = linearEval(x, y)
+                local clr = dither(gradient, fac, x, y)
+                pixel(toHex(clr))
+            end
         end
 
         app.transaction("Linear Gradient", function()

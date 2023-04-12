@@ -1,5 +1,7 @@
 dofile("../../support/canvasutilities.lua")
 
+local screenScale = app.preferences.general.screen_scale
+
 local prsStrs = {
     "BEZIER",
     "GAMMA",
@@ -187,7 +189,8 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 CanvasUtilities.graphBezier(
-    dlg, "graphBezier", "Bezier:", 128, 128,
+    dlg, "graphBezier", "Bezier:",
+    128 // screenScale, 128 // screenScale,
     defaults.preset == "BEZIER", true, true, 5,
     defaults.cp0x, defaults.cp0y,
     defaults.cp1x, defaults.cp1y,

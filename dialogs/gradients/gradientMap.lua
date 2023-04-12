@@ -111,9 +111,9 @@ dlg:button {
         local facAdjust = GradientUtilities.easingFuncFromPreset(easPreset)
         local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
-
-        local cgeval = GradientUtilities.evalFromStylePreset(
+        local dither = GradientUtilities.ditherFromPreset(
             stylePreset, bayerIndex, ditherPath)
+        local cgmix = ClrGradient.eval
 
         -- Check for tile maps.
         local isTilemap = srcLayer.isTilemap
@@ -200,7 +200,7 @@ dlg:button {
                         local fac = lumDict[srcHex]
                         fac = facAdjust(fac)
                         fac = quantize(fac, levels)
-                        local trgClr = cgeval(
+                        local trgClr = cgmix(
                             gradient, fac, mixFunc)
 
                         local trgHex = toHex(trgClr)
@@ -219,8 +219,8 @@ dlg:button {
                         local srcHex = trgPixel()
                         local fac = lumDict[srcHex]
                         fac = facAdjust(fac)
-                        local trgClr = cgeval(
-                            gradient, fac, mixFunc,
+                        local trgClr = dither(
+                            gradient, fac,
                             trgPixel.x, trgPixel.y)
 
                         local trgHex = toHex(trgClr)

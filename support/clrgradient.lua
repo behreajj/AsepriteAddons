@@ -106,44 +106,21 @@ end
 function ClrGradient.dither(
     cg, step, matrix,
     x, y, cols, rows)
-    local keys = cg.keys
-    local lenKeys = #keys
-    local firstKey = keys[1]
-    local lastKey = keys[lenKeys]
-
-    -- Unlike eval, dither doesn't have to worry
-    -- about normal map mixing, so use early return.
-    if step <= firstKey.step or lenKeys < 2 then
-        return firstKey.clr
-    end
-    if step >= lastKey.step then
-        return lastKey.clr
-    end
-
-    local nextIdx = ClrGradient.bisectRight(cg, step)
-    local prevIdx = nextIdx - 1
-
-    local prevKey = keys[prevIdx] or firstKey
-    local nextKey = keys[nextIdx] or lastKey
+    local prevKey, nextKey, t = ClrGradient.findKeys(
+        cg, step)
 
     local prevStep = prevKey.step
     local nextStep = nextKey.step
     local range = nextStep - prevStep
     local tScaled = 0.0
     if range ~= 0.0 then
-        tScaled = (step - prevStep) / range
+        tScaled = (t - prevStep) / range
+        local matIdx = 1 + (x % cols) + (y % rows) * cols
+        if tScaled >= matrix[matIdx] then
+            return nextKey.clr
+        end
     end
-
-    -- For an integer Bayer matrix, the maximum element
-    -- is (rows * columns) - 1, e.g., 63 for 8 * 8.
-    -- To get extra left and right edges in the gradient,
-    -- 1 needs to be added to the matrix element, right,
-    -- and 2 needs to be added to the scaled step, left.
-    local matIdx = 1 + (x % cols) + (y % rows) * cols
-    if tScaled < matrix[matIdx] then
-        return prevKey.clr
-    end
-    return nextKey.clr
+    return prevKey.clr
 end
 
 ---Evaluates a color gradient by a step with
@@ -154,7 +131,7 @@ end
 ---to a mix in linear sRGB.
 ---@param cg ClrGradient color gradient
 ---@param step number? step
----@param easing function? easing function
+---@param easing? fun(o: Clr, d: Clr, t: number): Clr easing function
 ---@return Clr
 function ClrGradient.eval(cg, step, easing)
     local prevKey, nextKey, t = ClrGradient.findKeys(

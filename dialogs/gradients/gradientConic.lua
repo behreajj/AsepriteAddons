@@ -109,14 +109,11 @@ dlg:button {
         local yOrig = args.yOrig --[[@as integer]]
         local angDegrees = args.angle --[[@as integer]]
 
-        if stylePreset ~= "MIXED" then levels = 0 end
         local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
         local facAdjust = GradientUtilities.easingFuncFromPreset(
             easPreset)
         local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
-        local cgeval = GradientUtilities.evalFromStylePreset(
-            stylePreset, bayerIndex, ditherPath)
 
         local wrap = 6.2831853071796
         local toFac = 0.1591549430919
@@ -158,10 +155,8 @@ dlg:button {
 
         local grdImg = Image(grdSpec)
         local grdItr = grdImg:pixels()
-        for pixel in grdItr do
-            local x = pixel.x
-            local y = pixel.y
 
+        local sweepEval = function(x, y)
             -- Bring coordinates into range [0.0, 1.0].
             local xNorm = x * wInv
             local yNorm = y * hInv
@@ -181,11 +176,37 @@ dlg:button {
             local angleWrapped = angleSigned % wrap
 
             -- Divide by tau to bring into factor.
-            local fac = angleWrapped * toFac
-            fac = facAdjust(fac)
-            fac = quantize(fac, levels)
-            local clr = cgeval(gradient, fac, mixFunc, x, y)
-            pixel(toHex(clr))
+            return angleWrapped * toFac
+        end
+
+        if stylePreset == "MIXED" then
+            local facDict = {}
+            local cgmix = ClrGradient.eval
+
+            for pixel in grdItr do
+                local fac = sweepEval(pixel.x, pixel.y)
+                fac = facAdjust(fac)
+                fac = quantize(fac, levels)
+
+                if facDict[fac] then
+                    pixel(facDict[fac])
+                else
+                    local clr = cgmix(gradient, fac, mixFunc)
+                    local hex = toHex(clr)
+                    pixel(hex)
+                    facDict[fac] = hex
+                end
+            end
+        else
+            local dither = GradientUtilities.ditherFromPreset(
+                stylePreset, bayerIndex, ditherPath)
+            for pixel in grdItr do
+                local x = pixel.x
+                local y = pixel.y
+                local fac = sweepEval(x, y)
+                local clr = dither(gradient, fac, x, y)
+                pixel(toHex(clr))
+            end
         end
 
         app.transaction("Sweep Gradient", function()

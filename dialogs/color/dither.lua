@@ -393,6 +393,7 @@ dlg:button {
                 end
                 greyStr = "HSV"
             else
+                -- TODO: Phase out use of look up tables?
                 local stlLut = Utilities.STL_LUT
                 local ltsLut = Utilities.LTS_LUT
                 greyMethod = function(rSrc, gSrc, bSrc)

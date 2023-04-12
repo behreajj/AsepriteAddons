@@ -300,7 +300,7 @@ end
 function Octree.query(o, center, radius, dfPt)
     local rVrf = radius or 46340
     local v, dsq = Octree.queryInternal(
-        o, center, rVrf * rVrf, Vec3.new)
+        o, center, rVrf * rVrf, Vec3.distSq)
     local d = math.sqrt(dsq)
     if v then
         return Vec3.new(v.x, v.y, v.z), d
@@ -316,7 +316,7 @@ end
 ---@param o Octree octree
 ---@param center Vec3 sphere center
 ---@param rsq number sphere radius, squared
----@param distSq function distance function
+---@param distSq fun(a: Vec3, b: Vec3): number sq distance function
 ---@return Vec3|nil
 ---@return number
 function Octree.queryInternal(o, center, rsq, distSq)

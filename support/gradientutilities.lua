@@ -73,20 +73,20 @@ GradientUtilities.BAYER_MATRICES = {
         0.8, 0.4
     },
     {
-        0.05882353, 0.52940776, 0.17646959, 0.64705382,
-        0.76469988, 0.29411565, 0.88234594, 0.41176171,
-        0.23528512, 0.70588435, 0.11763906, 0.58823829,
-        0.94117647, 0.47059224, 0.82353041, 0.35293118
+        0.058824, 0.529408, 0.176470, 0.647054,
+        0.764700, 0.294116, 0.882346, 0.411762,
+        0.235285, 0.705884, 0.117639, 0.588238,
+        0.941176, 0.470592, 0.823530, 0.352931
     },
     {
-        0.01538462, 0.50768631, 0.13842854, 0.63079323, 0.04612985, 0.53843154, 0.16923677, 0.66153846,
-        0.75383715, 0.26153546, 0.87694408, 0.38457938, 0.78464539, 0.29228069, 0.90768931, 0.41538762,
-        0.19998200, 0.69228369, 0.07687508, 0.56923977, 0.23072723, 0.72309192, 0.10768331, 0.59998500,
-        0.93849754, 0.44613285, 0.81539062, 0.32308892, 0.96924277, 0.47694108, 0.84613585, 0.35383415,
-        0.06150246, 0.55386715, 0.18460938, 0.67691108, 0.03075723, 0.52305892, 0.15380115, 0.64616585,
-        0.80001800, 0.30765331, 0.92306192, 0.43076023, 0.76920977, 0.27690808, 0.89231669, 0.40001500,
-        0.24616285, 0.73846454, 0.12305592, 0.61535761, 0.21535461, 0.70771931, 0.09231069, 0.58461238,
-        0.98461538, 0.49231369, 0.86157146, 0.36920677, 0.95387015, 0.46150546, 0.83076323, 0.33846154
+        0.015385, 0.507686, 0.138429, 0.630793, 0.046130, 0.538432, 0.169237, 0.661538,
+        0.753837, 0.261535, 0.876944, 0.384579, 0.784645, 0.292281, 0.907689, 0.415388,
+        0.199982, 0.692284, 0.076875, 0.569240, 0.230727, 0.723092, 0.107683, 0.599985,
+        0.938498, 0.446133, 0.815391, 0.323089, 0.969243, 0.476941, 0.846136, 0.353834,
+        0.061502, 0.553867, 0.184609, 0.676911, 0.030757, 0.523059, 0.153801, 0.646166,
+        0.800018, 0.307653, 0.923062, 0.430760, 0.769210, 0.276908, 0.892317, 0.400015,
+        0.246163, 0.738465, 0.123056, 0.615358, 0.215355, 0.707719, 0.092311, 0.584612,
+        0.984615, 0.492314, 0.861571, 0.369207, 0.953870, 0.461505, 0.830763, 0.338462
     }
 }
 
@@ -130,7 +130,7 @@ end
 ---the color space preset and hue preset.
 ---@param clrSpcPreset string color space preset
 ---@param huePreset string hue preset
----@return function
+---@return fun(o: Clr, d: Clr, t: number): Clr
 function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
     if clrSpcPreset == "LINEAR_RGB" then
         return Clr.mixsRgbInternal
@@ -465,7 +465,7 @@ end
 ---Finds the appropriate easing function in RGB
 ---given a preset.
 ---@param preset string rgb preset
----@return function
+---@return fun(t: number): number
 function GradientUtilities.easingFuncFromPreset(preset)
     if preset == "CIRCLE_IN" then
         return GradientUtilities.circleIn
@@ -480,20 +480,23 @@ function GradientUtilities.easingFuncFromPreset(preset)
     end
 end
 
----Finds the appropriate color gradient easing function
----based on whether the gradient should mix colors or
----choose based on a dithering matrix.
+---Finds the appropriate color gradient dither from
+---a string preset. "DITHER_CUSTOM" will return a
+---custom matrix loaded from an image file path.
+---"DITHER_BAYER" returns a Bayer matrix.
+---Defaults to a smooth mix.
 ---@param stylePreset string style preset
 ---@param bayerIndex integer? Bayer exponent, 2^1
 ---@param ditherPath string? dither image path
----@return function
-function GradientUtilities.evalFromStylePreset(
+---@return fun(cg: ClrGradient, step: number, x: integer, y: integer): Clr
+function GradientUtilities.ditherFromPreset(
     stylePreset, bayerIndex, ditherPath)
     if stylePreset == "DITHER_BAYER" then
+        local biVrf = bayerIndex or 2
         local matrix = GradientUtilities.BAYER_MATRICES[bayerIndex]
-        local bayerSize = 2 ^ bayerIndex
+        local bayerSize = 2 ^ biVrf
 
-        return function(cg, step, easing, x, y)
+        return function(cg, step, x, y)
             return ClrGradient.dither(
                 cg, step, matrix,
                 x, y, bayerSize, bayerSize)
@@ -511,15 +514,15 @@ function GradientUtilities.evalFromStylePreset(
             end -- End image exists check.
         end     -- End file path validity check.
 
-        return function(cg, step, easing, x, y)
+        return function(cg, step, x, y)
             return ClrGradient.dither(
                 cg, step, matrix,
                 x, y, c, r)
         end
     else
         -- Default to mix.
-        return function(cg, step, easing, x, y)
-            return ClrGradient.eval(cg, step, easing)
+        return function(cg, step, x, y)
+            return ClrGradient.eval(cg, step)
         end
     end
 end
@@ -542,10 +545,6 @@ function GradientUtilities.imageToMatrix(image)
     local spec = image.spec
     local width = spec.width
     local height = spec.height
-    local mxElm = -2147483648
-    local mnElm = 2147483647
-    local uniques = {}
-    local lenUniques = 0
 
     if width > GradientUtilities.DITHER_MAX_SIZE
         or height > GradientUtilities.DITHER_MAX_SIZE
@@ -556,8 +555,12 @@ function GradientUtilities.imageToMatrix(image)
     local colorMode = spec.colorMode
     local pxItr = image:pixels()
     local matrix = {}
-
     local lenMat = 0
+    local mxElm = -2147483648
+    local mnElm = 2147483647
+    local uniques = {}
+    local lenUniques = 0
+
     if colorMode == ColorMode.RGB then
         local fromHex = Clr.fromHex
         local floor = math.floor
@@ -568,11 +571,11 @@ function GradientUtilities.imageToMatrix(image)
             local c = fromHex(hex)
             local lab = sRgbToLab(c)
             local v = floor(lab.l * 25.5 + 0.5)
-            if v > mxElm then mxElm = v end
-            if v < mnElm then mnElm = v end
             if not uniques[v] then
                 lenUniques = lenUniques + 1
                 uniques[v] = true
+                if v > mxElm then mxElm = v end
+                if v < mnElm then mnElm = v end
             end
             lenMat = lenMat + 1
             matrix[lenMat] = v
@@ -581,11 +584,11 @@ function GradientUtilities.imageToMatrix(image)
         for pixel in pxItr do
             local hex = pixel()
             local v = hex & 0xff
-            if v > mxElm then mxElm = v end
-            if v < mnElm then mnElm = v end
             if not uniques[v] then
                 lenUniques = lenUniques + 1
                 uniques[v] = true
+                if v > mxElm then mxElm = v end
+                if v < mnElm then mnElm = v end
             end
             lenMat = lenMat + 1
             matrix[lenMat] = v
@@ -596,11 +599,11 @@ function GradientUtilities.imageToMatrix(image)
         -- https://github.com/aseprite/aseprite/issues/2573#issuecomment-736074731
         for pixel in pxItr do
             local i = pixel()
-            if i > mxElm then mxElm = i end
-            if i < mnElm then mnElm = i end
             if not uniques[i] then
                 lenUniques = lenUniques + 1
                 uniques[i] = true
+                if i > mxElm then mxElm = i end
+                if i < mnElm then mnElm = i end
             end
             lenMat = lenMat + 1
             matrix[lenMat] = i
@@ -611,10 +614,13 @@ function GradientUtilities.imageToMatrix(image)
 
     -- Normalize range.
     local range = math.abs(mxElm - mnElm)
-    if range ~= 0 then
+    if range > 0 then
+        -- Squishing the edges doesn't always lead
+        -- to great results, as there is now banding
+        -- in the middle depending on no. of colors.
+        local denom = 1.0 / range
         local orig = 1.0 / (lenUniques + 1)
         local dest = 1.0 - orig
-        local denom = 1.0 / range
         local j = 0
         while j < lenMat do
             j = j + 1
@@ -629,7 +635,7 @@ end
 ---Finds the appropriate easing function in HSL or HSV
 ---given a preset.
 ---@param preset string hue preset
----@return function
+---@return fun(o: number, d: number, t: number): number
 function GradientUtilities.hueEasingFuncFromPreset(preset)
     if preset == "CCW" then
         return GradientUtilities.lerpHueCcw

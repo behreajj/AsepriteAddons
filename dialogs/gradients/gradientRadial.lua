@@ -175,13 +175,10 @@ dlg:button {
         local bayerIndex = args.bayerIndex --[[@as integer]]
         local ditherPath = args.ditherPath --[[@as string]]
 
-        if stylePreset ~= "MIXED" then levels = 0 end
         local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
         local facAdjust = GradientUtilities.easingFuncFromPreset(easPreset)
         local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
-        local cgeval = GradientUtilities.evalFromStylePreset(
-            stylePreset, bayerIndex, ditherPath)
 
         -- Choose distance metric based on preset.
         local distMetric = args.distMetric
@@ -223,18 +220,42 @@ dlg:button {
         grdSpec.colorSpace = activeSpec.colorSpace
 
         local grdImg = Image(grdSpec)
-        local pxItr = grdImg:pixels()
-        for pixel in pxItr do
-            local x = pixel.x
-            local y = pixel.y
+        local grdItr = grdImg:pixels()
+
+        local function radialEval(x, y)
             local dst = distFunc(x, y, xOrigPx, yOrigPx)
             local fac = dst * normDist
             fac = (fac - minRad) * linDenom
-            fac = min(max(fac, 0.0), 1.0)
-            fac = facAdjust(fac)
-            fac = quantize(fac, levels)
-            local clr = cgeval(gradient, fac, mixFunc, x, y)
-            pixel(toHex(clr))
+            return min(max(fac, 0.0), 1.0)
+        end
+
+        if stylePreset == "MIXED" then
+            local facDict = {}
+            local cgmix = ClrGradient.eval
+            for pixel in grdItr do
+                local fac = radialEval(pixel.x, pixel.y)
+                fac = facAdjust(fac)
+                fac = quantize(fac, levels)
+
+                if facDict[fac] then
+                    pixel(facDict[fac])
+                else
+                    local clr = cgmix(gradient, fac, mixFunc)
+                    local hex = toHex(clr)
+                    pixel(hex)
+                    facDict[fac] = hex
+                end
+            end
+        else
+            local dither = GradientUtilities.ditherFromPreset(
+                stylePreset, bayerIndex, ditherPath)
+            for pixel in grdItr do
+                local x = pixel.x
+                local y = pixel.y
+                local fac = radialEval(x, y)
+                local clr = dither(gradient, fac, x, y)
+                pixel(toHex(clr))
+            end
         end
 
         app.transaction("Radial Gradient", function()

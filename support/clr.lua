@@ -967,7 +967,7 @@ end
 ---@param o Clr origin
 ---@param d Clr destination
 ---@param t number step
----@param hueFunc function? hue function
+---@param hueFunc? fun(o: number, d: number, t: number): number hue function
 ---@return Clr
 function Clr.mixSrLch(o, d, t, hueFunc)
     local u = t or 0.5
@@ -1003,7 +1003,7 @@ end
 ---@param o Clr origin
 ---@param d Clr color
 ---@param t number step
----@param hueFunc function hue function
+---@param hueFunc fun(o: number, d: number, t: number): number hue function
 ---@return Clr
 function Clr.mixSrLchInternal(o, d, t, hueFunc)
     local oLab = Clr.sRgbToSrLab2(o)

@@ -2331,12 +2331,8 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     local imgTrg = Image(specTrg)
 
     -- Separate a tile's index from the meta-data.
-    -- Built-in methods are app.pixelColor.tileF and tileI.
-    -- Older versions of the beta might not have these methods.
-    -- Use polyfill. The underlying logic is here:
+    -- The underlying logic is here:
     -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
-    -- local tileIndexMask = 0x1fffffff
-    -- local tileIndexShift = 0x0
     -- local tileMetaMask  = 0xe0000000
     -- local maskFlipX = 0x20000000
     -- local maskFlipY = 0x40000000
@@ -2348,7 +2344,6 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     local pxItr = imgSrc:pixels()
     for pixel in pxItr do
         local tlData = pixel()
-        -- local i = (tlData & tileIndexMask) >> tileIndexShift
         local i = pxTilei(tlData)
 
         if i > 0 and i < lenTileSet then

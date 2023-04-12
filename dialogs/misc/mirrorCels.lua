@@ -1,6 +1,8 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
+local screenScale = app.preferences.general.screen_scale
+
 local edgeTypes = { "CLAMP", "OMIT", "WRAP" }
 local targets = { "ACTIVE", "ALL", "RANGE" }
 local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
@@ -43,7 +45,9 @@ dlg:combobox {
 }
 
 CanvasUtilities.graphLine(
-    dlg, "graphCart", "Graph:", 128, 128, true, true,
+    dlg, "graphCart", "Graph:",
+    128 // screenScale, 128 // screenScale,
+    true, true,
     7, 0, -100, 0, 100,
     app.theme.color.text,
     Color { r = 128, g = 128, b = 128 })
