@@ -88,9 +88,12 @@ dlg:combobox {
     onchange = function()
         local args = dlg.data
         local target = args.target
-        local isTileSets = target ~= "TILE_SETS"
-            and target ~= "TILE_SET"
-        dlg:modify { id = "tolerance", visible = isTileSets }
+        local notTileset = target ~= "TILE_SET"
+        local notTileSets = target ~= "TILE_SETS"
+        local notSel = target ~= "SELECTION"
+        dlg:modify { id = "includeLocked", visible = notSel and notTileSets }
+        dlg:modify { id = "includeHidden", visible = notSel and notTileSets }
+        dlg:modify { id = "tolerance", visible = notTileSets and notTileset }
     end
 }
 
@@ -100,13 +103,17 @@ dlg:check {
     id = "includeLocked",
     label = "Include:",
     text = "&Locked",
-    selected = defaults.includeLocked
+    selected = defaults.includeLocked,
+    visible = defaults.target ~= "TILE_SETS"
+        and defaults.target ~= "SELECTION"
 }
 
 dlg:check {
     id = "includeHidden",
     text = "&Hidden",
-    selected = defaults.includeHidden
+    selected = defaults.includeHidden,
+    visible = defaults.target ~= "TILE_SETS"
+        and defaults.target ~= "SELECTION"
 }
 
 dlg:newrow { always = false }

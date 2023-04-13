@@ -631,8 +631,9 @@ dlg:button {
                 packets1[j] = packet
 
                 -- Update the maximum width and height.
-                local w = packet.cel.bounds.width
-                local h = packet.cel.bounds.height
+                local celBounds = packet.cel.bounds
+                local w = celBounds.width
+                local h = celBounds.height
                 if w > wMaxLocal then wMaxLocal = w end
                 if h > hMaxLocal then hMaxLocal = h end
             end

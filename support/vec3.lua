@@ -884,22 +884,6 @@ function Vec3.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
     return Vec3.new(mx, my, mz)
 end
 
----Rescales a vector to the target magnitude.
----@param a Vec3 vector
----@param b number magnitude
----@return Vec3
-function Vec3.rescale(a, b)
-    local mSq = a.x * a.x + a.y * a.y + a.z * a.z
-    if mSq > 0.0 then
-        local bmInv = b / math.sqrt(mSq)
-        return Vec3.new(
-            a.x * bmInv,
-            a.y * bmInv,
-            a.z * bmInv)
-    end
-    return Vec3.new(0.0, 0.0, 0.0)
-end
-
 ---Rotates a vector around an axis by an angle
 ---in radians. Validates the axis to see if it is
 ---of unit length. Defaults to rotateZ.

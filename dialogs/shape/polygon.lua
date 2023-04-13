@@ -211,7 +211,7 @@ dlg:button {
         ShapeUtilities.drawMesh2(
             mesh, useFill, fillColor,
             useStroke, strokeColor,
-            Brush(strokeWeight),
+            Brush { size = strokeWeight },
             cel, layer)
 
         app.refresh()

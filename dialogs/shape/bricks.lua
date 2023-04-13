@@ -194,7 +194,7 @@ dlg:button {
 
         local frame = app.activeFrame or sprite.frames[1] --[[@as Frame]]
         local cel = sprite:newCel(layer, frame)
-        local brush = Brush(mortarThick)
+        local brush = Brush { size = mortarThick }
 
         if vari100 > 0 then
             math.randomseed(os.time())

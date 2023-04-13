@@ -194,20 +194,6 @@ function Utilities.hexArrToDict(hexes, za)
     return dict
 end
 
----Forces an overflow wrap to make 64 bit
----integers behave like 32 bit integers.
----@param x integer the integer
----@return integer
-function Utilities.int32Overflow(x)
-    -- https://stackoverflow.com/questions/
-    -- 300840/force-php-integer-overflow
-    local y = x & 0xffffffff
-    if y & 0x80000000 then
-        return -((~y & 0xffffffff) + 1)
-    end
-    return y
-end
-
 ---Unclamped linear interpolation from an origin angle
 ---to a destination by a factor, t, in [0.0, 1.0].
 ---The range defaults to 360.0 for degrees, but can be
@@ -322,7 +308,6 @@ end
 ---@param b Curve2 curve
 ---@return Curve2
 function Utilities.mulMat3Curve2(a, b)
-    -- TODO: Remove? This is not used anywhere.
     local kns = b.knots
     local knsLen = #kns
     local i = 0

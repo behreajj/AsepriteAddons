@@ -223,14 +223,14 @@ dlg:button {
             end
         end
 
-        local uniquesOnly = args.uniquesOnly
+        local uniquesOnly = args.uniquesOnly --[[@as boolean]]
         if uniquesOnly then
             local uniques, _ = Utilities.uniqueColors(
                 hexesProfile, true)
             hexesProfile = uniques
         end
 
-        local prependMask = args.prependMask
+        local prependMask = args.prependMask --[[@as boolean]]
         if prependMask then
             Utilities.prependMask(hexesProfile)
         end

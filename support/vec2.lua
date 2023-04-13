@@ -410,6 +410,8 @@ function Vec2.hashCode(v)
     local hsh = (84696351 ~ xBits) * 16777619 ~ yBits
 
     -- QUERY: Use another string pack/unpack instead?
+    -- https://stackoverflow.com/questions/
+    -- 300840/force-php-integer-overflow
     local hshInt = hsh & 0xffffffff
     if hshInt & 0x80000000 then
         return -((~hshInt & 0xffffffff) + 1)
@@ -720,21 +722,6 @@ function Vec2.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
     end
 
     return Vec2.new(mx, my)
-end
-
----Rescales a vector to the target magnitude.
----@param a Vec2 vector
----@param b number magnitude
----@return Vec2
-function Vec2.rescale(a, b)
-    local mSq = a.x * a.x + a.y * a.y
-    if mSq > 0.0 then
-        local bmInv = b / math.sqrt(mSq)
-        return Vec2.new(
-            a.x * bmInv,
-            a.y * bmInv)
-    end
-    return Vec2.new(0.0, 0.0)
 end
 
 ---Rotates a vector by an angle in radians

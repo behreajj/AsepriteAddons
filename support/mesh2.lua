@@ -49,7 +49,6 @@ function Mesh2:insetFace(faceIndex, fac)
     if t <= 0.0 then
         return self
     end
-
     if t >= 1.0 then
         return self:subdivFaceFan(faceIndex)
     end
@@ -110,6 +109,7 @@ end
 ---@param radians number angle
 ---@return Mesh2
 function Mesh2:rotateZ(radians)
+    -- Used by arc early return.
     return self:rotateZInternal(
         math.cos(radians),
         math.sin(radians))
@@ -127,50 +127,6 @@ function Mesh2:rotateZInternal(cosa, sina)
         i = i + 1
         self.vs[i] = Vec2.rotateZInternal(
             self.vs[i], cosa, sina)
-    end
-    return self
-end
-
----Scales all coordinates in a mesh.
----Defaults to scale by a vector.
----@param v Vec2|number scalar
----@return Mesh2
-function Mesh2:scale(v)
-    if type(v) == "number" then
-        return self:scaleNum(v)
-    else
-        return self:scaleVec2(v)
-    end
-end
-
----Scales all coordinates in this mesh
----by a number
----@param n number uniform scalar
----@return Mesh2
-function Mesh2:scaleNum(n)
-    if n ~= 0.0 then
-        local vsLen = #self.vs
-        local i = 0
-        while i < vsLen do
-            i = i + 1
-            self.vs[i] = Vec2.scale(self.vs[i], n)
-        end
-    end
-    return self
-end
-
----Scales all coordinates in this mesh
----by a vector.
----@param v Vec2 nonuniform scalar
----@return Mesh2
-function Mesh2:scaleVec2(v)
-    if Vec2.all(v) then
-        local vsLen = #self.vs
-        local i = 0
-        while i < vsLen do
-            i = i + 1
-            self.vs[i] = Vec2.hadamard(self.vs[i], v)
-        end
     end
     return self
 end
@@ -269,20 +225,6 @@ function Mesh2:subdivFaceFan(faceIndex)
     return self
 end
 
----Translates all coordinates in a mesh
----by a vector.
----@param tr Vec2 translation
----@return Mesh2
-function Mesh2:translate(tr)
-    local vsLen = #self.vs
-    local i = 0
-    while i < vsLen do
-        i = i + 1
-        self.vs[i] = Vec2.add(self.vs[i], tr)
-    end
-    return self
-end
-
 ---Creates an arc. Start and stop weights
 ---specify the inset of an oculus.
 ---Sectors specifies the number of sides
@@ -354,12 +296,7 @@ function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQ
     if useQuads then
         for k = 0, sctCount - 2, 1 do
             local i = k + k
-            fs[1 + k] = {
-                1 + i,
-                3 + i,
-                4 + i,
-                2 + i
-            }
+            fs[1 + k] = { 1 + i, 3 + i, 4 + i, 2 + i }
         end
     else
         local f = {}
@@ -417,7 +354,10 @@ function Mesh2.gridBricks(cols, rows, offset, aspect, skip, pick)
     local vs = {}
 
     local len2n1 = vcols * vrows - 1
-    for k = 0, len2n1, 1 do
+    local k = -1
+    while k < len2n1 do
+        k = k + 1
+
         local i = k // vcols
         local j = k % vcols
 

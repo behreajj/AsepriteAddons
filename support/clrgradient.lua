@@ -222,6 +222,35 @@ function ClrGradient.fromColors(arr)
     return ClrGradient.newInternal(keys)
 end
 
+---Evaluates a color gradient by a step according
+---to interleaved gradient noise (IGN), developed by
+---Jorge Jimenez.
+---
+---Unlike eval, returns a reference to a color in
+---the gradient, not a new color.
+---@param cg ClrGradient color gradient
+---@param step number step
+---@param x integer x coordinate
+---@param y integer y coordinate
+---@return Clr
+function ClrGradient.noise(cg, step, x, y)
+    local prevKey, nextKey, t = ClrGradient.findKeys(
+        cg, step)
+    local prevStep = prevKey.step
+    local nextStep = nextKey.step
+    local range = nextStep - prevStep
+    local tScaled = 0.0
+    if range ~= 0.0 then
+        tScaled = (t - prevStep) / range
+        local ign = (52.9829189 *
+            (0.06711056 * x + 0.00583715 * y) % 1.0) % 1.0
+        if tScaled >= ign then
+            return nextKey.clr
+        end
+    end
+    return prevKey.clr
+end
+
 ---Returns a JSON sring of a color gradient.
 ---@param cg ClrGradient color gradient
 ---@return string

@@ -646,26 +646,6 @@ function Vec4.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
     return Vec4.new(mx, my, mz, mw)
 end
 
----Rescales a vector to the target magnitude.
----@param a Vec4 vector
----@param b number magnitude
----@return Vec4
-function Vec4.rescale(a, b)
-    local mSq = a.x * a.x
-        + a.y * a.y
-        + a.z * a.z
-        + a.w * a.w
-    if mSq > 0.0 then
-        local bmInv = b / math.sqrt(mSq)
-        return Vec4.new(
-            a.x * bmInv,
-            a.y * bmInv,
-            a.z * bmInv,
-            a.w * bmInv)
-    end
-    return Vec4.new(0.0, 0.0, 0.0, 0.0)
-end
-
 ---Rounds the vector by sign and fraction.
 ---@param v Vec4 left operand
 ---@return Vec4

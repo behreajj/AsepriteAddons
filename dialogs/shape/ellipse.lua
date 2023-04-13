@@ -221,7 +221,7 @@ dlg:button {
             resolution,
             useFill, fillColor,
             useStroke, strokeColor,
-            Brush(strokeWeight),
+            Brush { size = strokeWeight },
             cel, layer)
 
         if handles > 0 then

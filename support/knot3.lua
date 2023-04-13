@@ -261,7 +261,9 @@ end
 ---@param prevKnot Knot3 previous knot
 ---@param nextKnot Knot3 next knot
 ---@return Knot3
-function Knot3.fromSegCatmull(prevAnchor, currAnchor, nextAnchor, advAnchor, tightness, prevKnot, nextKnot)
+function Knot3.fromSegCatmull(
+    prevAnchor, currAnchor, nextAnchor, advAnchor,
+    tightness, prevKnot, nextKnot)
     if math.abs(tightness - 1.0) <= 0.000001 then
         return Knot3.fromSegLinear(
             nextAnchor, prevKnot, nextKnot)
@@ -334,7 +336,8 @@ end
 ---@param prevKnot Knot3 previous knot
 ---@param nextKnot Knot3 next knot
 ---@return Knot3
-function Knot3.fromSegQuadratic(control, nextAnchor, prevKnot, nextKnot)
+function Knot3.fromSegQuadratic(
+    control, nextAnchor, prevKnot, nextKnot)
     nextKnot.co = Vec3.new(
         nextAnchor.x,
         nextAnchor.y,

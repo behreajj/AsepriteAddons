@@ -178,35 +178,6 @@ function JsonUtilities.frameToJson(frame)
         math.floor(frame.duration * 1000))
 end
 
----Gets an array of integers which represents the indices
----of a sprite and its parent layers. If the array has one
----element, then the layer's parent is the sprite.
----This is a recursive function.
----@param layer Layer|Sprite|userdata layer
----@param arr integer[] target array
----@param sprite Sprite|userdata? sprite
----@return integer[]
-function JsonUtilities.getStackIndices(layer, arr, sprite)
-    -- Ideally, stack indices would be absolute for
-    -- ease of reconstructing from the JSON file.
-    -- Group 2       (6)
-    -- |- Layer 4    (5)
-    -- |- Group 1    (4)
-    -- |- |- Layer 3 (3)
-    -- |- |- Layer 2 (2)
-    -- Layer 1       (1)
-    -- local arrVrf=arr or {}
-    table.insert(arr, 1, layer.stackIndex)
-    local sprName = "doc::Sprite"
-    if sprite then sprName = sprite.__name end
-    if layer.parent.__name == sprName then
-        return arr
-    else
-        return JsonUtilities.getStackIndices(
-            layer.parent, arr, sprite)
-    end
-end
-
 ---Formats a layer, or table containing similar properties.
 ---Instead of a parent and stackIndex, the string contains
 ---an array of stack indices of the layer and of its parents.

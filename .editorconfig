@@ -7,3 +7,6 @@ indent_size = 4
 indent_style = space
 insert_final_newline = false
 trim_trailing_whitespace = true
+align_continuous_assign_statement = false
+align_if_branch = false
+align_call_args = false

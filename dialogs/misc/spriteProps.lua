@@ -66,11 +66,6 @@ local dlg = Dialog {
     title = string.format(
         "Properties (v %s)", tostring(version))
 }
--- dlg:label {
---     id = "versionLabel",
---     label = "Version:",
---     text = tostring(app.version),
---     visible = true }
 dlg:label {
     id = "pathLabel",
     label = "Path:",

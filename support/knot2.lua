@@ -213,7 +213,8 @@ end
 ---@param xCenter number x center
 ---@param yCenter number y center
 ---@return Knot2
-function Knot2.fromPolarInternal(cosa, sina, radius, handleMag, xCenter, yCenter)
+function Knot2.fromPolarInternal(
+    cosa, sina, radius, handleMag, xCenter, yCenter)
     local hmsina = sina * handleMag
     local hmcosa = cosa * handleMag
 

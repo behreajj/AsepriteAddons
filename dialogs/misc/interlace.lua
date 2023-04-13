@@ -231,7 +231,7 @@ dlg:button {
             end
         elseif dirType == "RANDOM" then
             eval = function(x, y, p, a)
-                return math.random(0, a) < p
+                return math.random(0, a - 1) < p
             end
         elseif dirType == "SQUARE" then
             eval = function(x, y, p, a)
@@ -244,8 +244,8 @@ dlg:button {
                 return x % a < p
             end
         elseif dirType == "XOR" then
+            -- For booleans, xor == neq.
             eval = function(x, y, p, a)
-                -- For booleans, xor == neq.
                 return (x % a < p) ~= (y % a < p)
             end
         else
