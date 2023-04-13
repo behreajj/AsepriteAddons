@@ -242,8 +242,11 @@ function ClrGradient.noise(cg, step, x, y)
     local tScaled = 0.0
     if range ~= 0.0 then
         tScaled = (t - prevStep) / range
-        local ign = (52.9829189 *
-            (0.06711056 * x + 0.00583715 * y) % 1.0) % 1.0
+        -- Radial gradients had noticeable artifacts
+        -- when mod (floor) was used instead of
+        -- fmod (trunc).
+        local ign = math.fmod(52.9829189 * math.fmod(
+            0.06711056 * x + 0.00583715 * y, 1.0), 1.0)
         if tScaled >= ign then
             return nextKey.clr
         end
