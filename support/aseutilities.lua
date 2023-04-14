@@ -1262,12 +1262,12 @@ function AseUtilities.flattenGroup(
 
             lenPackets = lenPackets + 1
             packets[lenPackets] = {
-                blendMode    = leafLayer.blendMode,
-                image        = leafImage,
-                opacityCel   = leafCel.opacity,
+                blendMode = leafLayer.blendMode,
+                image = leafImage,
+                opacityCel = leafCel.opacity,
                 opacityLayer = leafLayer.opacity,
-                xtl          = xTlCel,
-                ytl          = yTlCel
+                xtl = xTlCel,
+                ytl = yTlCel
             }
         end
     end

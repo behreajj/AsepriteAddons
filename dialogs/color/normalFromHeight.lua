@@ -195,8 +195,6 @@ dlg:button {
         local grayLayer = nil
         local normalLayer = nil
 
-        -- TODO: Package this under a group layer if
-        -- either showFlatMap or showGrayMap are true?
         app.transaction("New Layers", function()
             if showFlatMap then
                 flatLayer = activeSprite:newLayer()

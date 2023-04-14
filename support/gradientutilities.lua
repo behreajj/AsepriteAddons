@@ -43,8 +43,8 @@ GradientUtilities.RGB_EASING_PRESETS = {
 GradientUtilities.STYLE_PRESETS = {
     "DITHER_BAYER",
     "DITHER_CUSTOM",
-    "MIXED",
-    "NOISE"
+    "DITHER_NOISE",
+    "MIXED"
 }
 
 ---Default color space preset.
@@ -70,24 +70,24 @@ GradientUtilities.DEFAULT_STYLE = "MIXED"
 ---dither matrices.
 GradientUtilities.BAYER_MATRICES = {
     {
-        0.2, 0.6,
-        0.8, 0.4
+        0.133333, 0.622222,
+        0.866667, 0.377778
     },
     {
-        0.058824, 0.529412, 0.176471, 0.647059,
-        0.764706, 0.294118, 0.882353, 0.411765,
-        0.235294, 0.705882, 0.117647, 0.588235,
-        0.941176, 0.470588, 0.823529, 0.352941
+        0.039216, 0.530719, 0.162092, 0.653595,
+        0.776471, 0.284967, 0.899346, 0.407843,
+        0.223529, 0.715033, 0.100654, 0.592157,
+        0.960784, 0.469281, 0.837908, 0.346405,
     },
     {
-        0.015385, 0.507692, 0.138462, 0.630769, 0.046154, 0.538462, 0.169231, 0.661538,
-        0.753846, 0.261538, 0.876923, 0.384615, 0.784615, 0.292308, 0.907692, 0.415385,
-        0.200000, 0.692308, 0.076923, 0.569231, 0.230769, 0.723077, 0.107692, 0.600000,
-        0.938462, 0.446154, 0.815385, 0.323077, 0.969231, 0.476923, 0.846154, 0.353846,
-        0.061538, 0.553846, 0.184615, 0.676923, 0.030769, 0.523077, 0.153846, 0.646154,
-        0.800000, 0.307692, 0.923077, 0.430769, 0.769231, 0.276923, 0.892308, 0.400000,
-        0.246154, 0.738462, 0.123077, 0.615385, 0.215385, 0.707692, 0.092308, 0.584615,
-        0.984615, 0.492308, 0.861538, 0.369231, 0.953846, 0.461538, 0.830769, 0.338462
+        0.010256, 0.507774, 0.134636, 0.632153, 0.041351, 0.538869, 0.165731, 0.663248,
+        0.756532, 0.259015, 0.880912, 0.383394, 0.787627, 0.290110, 0.912007, 0.414489,
+        0.196825, 0.694343, 0.072446, 0.569963, 0.227920, 0.725438, 0.103541, 0.601058,
+        0.943101, 0.445584, 0.818722, 0.321205, 0.974196, 0.476679, 0.849817, 0.352300,
+        0.056899, 0.554416, 0.181278, 0.678795, 0.025804, 0.523321, 0.150183, 0.647700,
+        0.803175, 0.305657, 0.927554, 0.430037, 0.772080, 0.274562, 0.896459, 0.398942,
+        0.243468, 0.740985, 0.119088, 0.616606, 0.212373, 0.709890, 0.087993, 0.585511,
+        0.989744, 0.492226, 0.865364, 0.367847, 0.958649, 0.461131, 0.834269, 0.336752,
     }
 }
 
@@ -560,6 +560,10 @@ function GradientUtilities.imageToMatrix(image)
     local lenUniques = 0
 
     if colorMode == ColorMode.RGB then
+        -- Problem with this approach is that no one
+        -- will agree on RGB to gray conversion and
+        -- that an image with more than 256 unique
+        -- elements, such as a 2^5 Bayer, loses nuance.
         local fromHex = Clr.fromHex
         local floor = math.floor
         local sRgbToLab = Clr.sRgbToSrLab2
@@ -613,12 +617,12 @@ function GradientUtilities.imageToMatrix(image)
     -- Normalize range.
     local range = math.abs(mxElm - mnElm)
     if range > 0 then
-        -- Squishing the edges doesn't always lead
-        -- to great results, as there is now banding
-        -- in the middle depending on no. of colors.
-        local denom = 1.0 / range
-        local orig = 1.0 / (lenUniques + 1)
+        -- Scale numerator in half to squish some
+        -- edges without fattening middle bands.
+        local orig = 0.66666666666667 / (lenUniques + 1)
         local dest = 1.0 - orig
+        local denom = 1.0 / range
+
         local j = 0
         while j < lenMat do
             j = j + 1

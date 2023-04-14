@@ -149,6 +149,8 @@ local function transformCel(dialog, preset)
             activeCel.image = trgMap
         end)
     else
+        -- In theory, app.range.tiles could also be used,
+        -- but atm it doesn't seem to work.
         local selection = AseUtilities.getSelection(activeSprite)
         containedTiles = AseUtilities.getSelectedTiles(
             activeCel.image, tileSet, selection,

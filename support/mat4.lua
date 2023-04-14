@@ -48,7 +48,11 @@ setmetatable(Mat4, {
 ---@param m32 number row 3, col 2 up w
 ---@param m33 number row 3, col 3 translation w
 ---@return Mat4
-function Mat4.new(m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33)
+function Mat4.new(
+    m00, m01, m02, m03,
+    m10, m11, m12, m13,
+    m20, m21, m22, m23,
+    m30, m31, m32, m33)
     local inst = setmetatable({}, Mat4)
 
     inst.m00 = m00 or 1.0
@@ -131,7 +135,11 @@ end
 ---@param zRef number reference z
 ---@param handedness string? handedness
 ---@return Mat4
-function Mat4.camera(xLoc, yLoc, zLoc, xFocus, yFocus, zFocus, xRef, yRef, zRef, handedness)
+function Mat4.camera(
+    xLoc, yLoc, zLoc,
+    xFocus, yFocus, zFocus,
+    xRef, yRef, zRef,
+    handedness)
     -- Optional args for handedness.
     -- Default to right-handed.
     local hval = "RIGHT"

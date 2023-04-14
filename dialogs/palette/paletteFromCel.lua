@@ -253,7 +253,7 @@ dlg:slider {
     value = defaults.refineCapacity,
     visible = defaults.clampTo256
         and (defaults.octCapacityBits
-            >= defaults.showRefineAt)
+        >= defaults.showRefineAt)
 }
 
 dlg:newrow { always = false }
@@ -340,19 +340,20 @@ dlg:button {
             return
         end
 
+        local srcFrame = app.activeFrame
+        if not srcFrame then
+            app.alert {
+                title = "Error",
+                text = "There is no active frame."
+            }
+            return
+        end
+
         local srcLayer = app.activeLayer
         if not srcLayer then
             app.alert {
                 title = "Error",
                 text = "There is no active layer."
-            }
-            return
-        end
-
-        if srcLayer.isGroup then
-            app.alert {
-                title = "Error",
-                text = "Group layers are not supported."
             }
             return
         end
@@ -365,51 +366,62 @@ dlg:button {
             return
         end
 
-        -- Check for tile maps.
-        local isTilemap = srcLayer.isTilemap
-        local tileSet = nil
-        if isTilemap then
-            tileSet = srcLayer.tileset
-        end
-
         -- Unpack arguments.
-        local removeAlpha = args.removeAlpha
         local target = args.target
-        local ocThreshold = args.octThreshold or defaults.octThreshold
-        local clampTo256 = args.clampTo256
-        local prependMask = args.prependMask
+            or defaults.target --[[@as string]]
+        local ocThreshold = args.octThreshold
+            or defaults.octThreshold --[[@as integer]]
+        local clampTo256 = args.clampTo256 --[[@as boolean]]
+        local prependMask = args.prependMask --[[@as boolean]]
+        local removeAlpha = args.removeAlpha --[[@as boolean]]
+        local octCapBits = args.octCapacity
+            or defaults.octCapacityBits --[[@as integer]]
+        local refineCap = args.refineCapacity
+            or defaults.refineCapacity --[[@as integer]]
 
-        -- TODO: Support flattening group layer images?
-        local srcCel = app.activeCel
-        if not srcCel then
-            app.alert {
-                title = "Error",
-                text = "There is no active cel."
-            }
-            return
-        end
-        local srcImg = srcCel.image
-        local colorMode = activeSprite.colorMode
-        if isTilemap then
-            srcImg = AseUtilities.tilesToImage(
-                srcImg, tileSet, colorMode)
+        local srcImg = nil
+        local spriteSpec = activeSprite.spec
+        local spriteColorMode = spriteSpec.colorMode
+        if srcLayer.isGroup then
+            local groupRect = nil
+            srcImg, groupRect = AseUtilities.flattenGroup(
+                srcLayer, srcFrame,
+                spriteColorMode,
+                spriteSpec.colorSpace,
+                spriteSpec.transparentColor,
+                true, true, true, true)
+        else
+            local srcCel = srcLayer:cel(srcFrame)
+            if not srcCel then
+                app.alert {
+                    title = "Error",
+                    text = "There is no active cel."
+                }
+                return
+            end
+            srcImg = srcCel.image
+            if srcLayer.isTilemap then
+                srcImg = AseUtilities.tilesToImage(
+                    srcImg, srcLayer.tileset, spriteColorMode)
+            end
         end
 
+        -- Determine alpha mask according to color mode.
         local alphaMask = 0
         if removeAlpha then
-            if colorMode == ColorMode.GRAY then
+            if spriteColorMode == ColorMode.GRAY then
                 alphaMask = 0xff00
             else
                 alphaMask = 0xff000000
             end
         end
 
-        local pxItr = srcImg:pixels()
         ---@type table<integer, integer>
         local dictionary = {}
         local idx = 0
+        local pxItr = srcImg:pixels()
 
-        if colorMode == ColorMode.RGB then
+        if spriteColorMode == ColorMode.RGB then
             for pixel in pxItr do
                 local hex = pixel()
                 if ((hex >> 0x18) & 0xff) > 0 then
@@ -420,9 +432,9 @@ dlg:button {
                     end
                 end
             end
-        elseif colorMode == ColorMode.INDEXED then
+        elseif spriteColorMode == ColorMode.INDEXED then
             local srcPal = AseUtilities.getPalette(
-                app.activeFrame, activeSprite.palettes)
+                srcFrame, activeSprite.palettes)
             local aseToHex = AseUtilities.aseColorToHex
             local rgbColorMode = ColorMode.RGB
             local srcPalLen = #srcPal
@@ -440,7 +452,7 @@ dlg:button {
                     end
                 end
             end
-        elseif colorMode == ColorMode.GRAY then
+        elseif spriteColorMode == ColorMode.GRAY then
             for pixel in pxItr do
                 local hexGray = pixel()
                 if ((hexGray >> 0x08) & 0xff) > 0 then
@@ -466,14 +478,11 @@ dlg:button {
         -- set here for print diagnostic purposes.
         local oldLenHexes = #hexes
         local lenCenters = 0
-        local octCapBits = args.octCapacity
-            or defaults.octCapacityBits
-        local refineCap = args.refineCapacity or defaults.refineCapacity
         local octCapacity = refineCap + 2 ^ octCapBits
         local lenHexes = oldLenHexes
         if clampTo256 and lenHexes > ocThreshold then
             local clrSpacePreset = args.clrSpacePreset
-                or defaults.clrSpacePreset
+                or defaults.clrSpacePreset --[[@as string]]
 
             local fromHex = Clr.fromHex
             local toHex = Clr.toHex
@@ -523,7 +532,8 @@ dlg:button {
             local filepath = args.filepath --[[@as string]]
             local palette = Palette(lenHexes)
             local k = 0
-            while k < lenHexes do k = k + 1
+            while k < lenHexes do
+                k = k + 1
                 -- This does not create transactions.
                 palette:setColor(k - 1,
                     AseUtilities.hexToAseColor(hexes[k]))
@@ -542,14 +552,13 @@ dlg:button {
                 return
             end
 
-            if colorMode == ColorMode.INDEXED then
+            if spriteColorMode == ColorMode.INDEXED then
                 app.command.ChangePixelFormat { format = "rgb" }
                 AseUtilities.setPalette(hexes, activeSprite, palIdx)
                 app.command.ChangePixelFormat { format = "indexed" }
             else
                 AseUtilities.setPalette(hexes, activeSprite, palIdx)
             end
-
         end
 
         if printElapsed then

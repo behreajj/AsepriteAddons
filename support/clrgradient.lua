@@ -106,21 +106,21 @@ end
 function ClrGradient.dither(
     cg, step, matrix,
     x, y, cols, rows)
-    local prevKey, nextKey, t = ClrGradient.findKeys(
+    local prKey, nxKey, t = ClrGradient.findKeys(
         cg, step)
 
-    local prevStep = prevKey.step
-    local nextStep = nextKey.step
-    local range = nextStep - prevStep
+    local prStep = prKey.step
+    local nxStep = nxKey.step
+    local range = nxStep - prStep
     local tScaled = 0.0
     if range ~= 0.0 then
-        tScaled = (t - prevStep) / range
+        tScaled = (t - prStep) / range
         local matIdx = 1 + (x % cols) + (y % rows) * cols
         if tScaled >= matrix[matIdx] then
-            return nextKey.clr
+            return nxKey.clr
         end
     end
-    return prevKey.clr
+    return prKey.clr
 end
 
 ---Evaluates a color gradient by a step with
@@ -134,15 +134,15 @@ end
 ---@param easing? fun(o: Clr, d: Clr, t: number): Clr easing function
 ---@return Clr
 function ClrGradient.eval(cg, step, easing)
-    local prevKey, nextKey, t = ClrGradient.findKeys(
+    local prKey, nxKey, t = ClrGradient.findKeys(
         cg, step)
-    local prevStep = prevKey.step
-    local nextStep = nextKey.step
+    local prStep = prKey.step
+    local nxStep = nxKey.step
     local f = easing or Clr.mixlRgbaInternal
-    local denom = nextStep - prevStep
+    local denom = nxStep - prStep
     if denom ~= 0.0 then denom = 1.0 / denom end
-    return f(prevKey.clr, nextKey.clr,
-        (t - prevStep) * denom)
+    return f(prKey.clr, nxKey.clr,
+        (t - prStep) * denom)
 end
 
 ---Internal helper to find the previous and
@@ -223,7 +223,7 @@ function ClrGradient.fromColors(arr)
 end
 
 ---Evaluates a color gradient by a step according
----to interleaved gradient noise (IGN), developed by
+---to interleaved gradient noise, IGN, developed by
 ---Jorge Jimenez.
 ---
 ---Unlike eval, returns a reference to a color in
@@ -234,27 +234,32 @@ end
 ---@param y integer y coordinate
 ---@return Clr
 function ClrGradient.noise(cg, step, x, y)
-    local prevKey, nextKey, t = ClrGradient.findKeys(
+    local prKey, nxKey, t = ClrGradient.findKeys(
         cg, step)
-    local prevStep = prevKey.step
-    local nextStep = nextKey.step
-    local range = nextStep - prevStep
+    local prStep = prKey.step
+    local nxStep = nxKey.step
+    local range = nxStep - prStep
     local tScaled = 0.0
+
+    -- Radial gradients had noticeable artifacts when
+    -- mod (floor) was used instead of fmod (trunc).
+    -- Time can be included with x + 5.588238 * (frame % 64)
+    -- and the same for y. See
+    -- https://blog.demofox.org/2022/01/01/interleaved-
+    -- gradient-noise-a-different-kind-of-low-
+    -- discrepancy-sequence/
     if range ~= 0.0 then
-        tScaled = (t - prevStep) / range
-        -- Radial gradients had noticeable artifacts
-        -- when mod (floor) was used instead of
-        -- fmod (trunc).
+        tScaled = (t - prStep) / range
         local ign = math.fmod(52.9829189 * math.fmod(
             0.06711056 * x + 0.00583715 * y, 1.0), 1.0)
         if tScaled >= ign then
-            return nextKey.clr
+            return nxKey.clr
         end
     end
-    return prevKey.clr
+    return prKey.clr
 end
 
----Returns a JSON sring of a color gradient.
+---Returns a JSON string of a color gradient.
 ---@param cg ClrGradient color gradient
 ---@return string
 function ClrGradient.toJson(cg)

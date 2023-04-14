@@ -161,7 +161,7 @@ dlg:button {
             return
         end
 
-        local srcFrame = app.activeFrame
+        local srcFrame = app.activeFrame --[[@as Frame]]
         if not srcFrame then
             app.alert {
                 title = "Error",

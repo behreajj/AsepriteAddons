@@ -141,7 +141,8 @@ dlg:button {
 
         local errorFlag = false
         local h = 0
-        while h < openLen do h = h + 1
+        while h < openLen do
+            h = h + 1
             local sprite = openSprites[h]
             local colorMode = sprite.colorMode
             local filename = app.fs.fileTitle(sprite.filename)
@@ -169,7 +170,8 @@ dlg:button {
         end
 
         local i = 0
-        while i < candLenApprox do i = i + 1
+        while i < candLenApprox do
+            i = i + 1
             local candidate = candidatesApprox[i]
             local lenPals = #candidate.palettes
             -- This isn't as efficient as it could be
@@ -177,18 +179,21 @@ dlg:button {
             -- recreated for each target palette when
             -- they are converted by value anyway.
             local j = 0
-            while j < lenPals do j = j + 1
+            while j < lenPals do
+                j = j + 1
                 AseUtilities.setPalette(
                     hexesSrgb, candidate, j)
             end
         end
 
         local k = 0
-        while k < candLenExact do k = k + 1
+        while k < candLenExact do
+            k = k + 1
             local candidate = candidatesExact[k]
             local lenPals = #candidate.palettes
             local j = 0
-            while j < lenPals do j = j + 1
+            while j < lenPals do
+                j = j + 1
                 AseUtilities.setPalette(
                     hexesProfile, candidate, j)
             end

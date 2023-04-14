@@ -35,7 +35,10 @@ setmetatable(Mat3, {
 ---@param m21 number row 2, col 1 forward z
 ---@param m22 number row 2, col 2 translation z
 ---@return Mat3
-function Mat3.new(m00, m01, m02, m10, m11, m12, m20, m21, m22)
+function Mat3.new(
+    m00, m01, m02,
+    m10, m11, m12,
+    m20, m21, m22)
     local inst = setmetatable({}, Mat3)
 
     inst.m00 = m00 or 1.0
