@@ -168,12 +168,14 @@ dlg:button {
         local pick = args.pick or defaults.pick --[[@as integer]]
         local inset = args.inset or defaults.inset --[[@as integer]]
 
+        local degrees = args.angle or defaults.angle --[[@as integer]]
         local scale = args.scale or defaults.scale --[[@as number]]
         local xOrig = args.xOrig --[[@as number]]
         local yOrig = args.yOrig --[[@as number]]
 
         local useStroke = args.useStroke --[[@as boolean]]
-        local strokeWeight = args.strokeWeight or defaults.strokeWeight --[[@as integer]]
+        local strokeWeight = args.strokeWeight
+            or defaults.strokeWeight --[[@as integer]]
         local strokeColor = args.strokeClr --[[@as Color]]
         local useFill = args.useFill --[[@as boolean]]
         local fillColor = args.fillClr --[[@as Color]]
@@ -181,8 +183,8 @@ dlg:button {
         -- Create transform matrix.
         local t = Mat3.fromTranslation(xOrig, yOrig)
 
-        local a = args.angle * 0.017453292519943
-        local query = AseUtilities.DIMETRIC_ANGLES[args.angle]
+        local a = degrees * 0.017453292519943
+        local query = AseUtilities.DIMETRIC_ANGLES[degrees]
         if query then a = query end
         local r = Mat3.fromRotZ(a)
 

@@ -1705,7 +1705,7 @@ function AseUtilities.getSelectedTiles(
 
             local contained = true
             local i = 0
-            while i < flatDimTile do
+            while i < flatDimTile and contained do
                 local xLocal = i % wTile
                 local yLocal = i // wTile
                 i = i + 1
@@ -1740,7 +1740,7 @@ end
 ---@return Cel[]
 function AseUtilities.getUniqueCelsFromLeaves(
     sprite, leaves, frIdcs, trgCels)
-    local verifTrgCels = trgCels or {}
+    local vTrgCels = trgCels or {}
     if #leaves > 0 then
         -- When the timeline is hidden, the range
         -- cannot be accessed properly.
@@ -1766,7 +1766,7 @@ function AseUtilities.getUniqueCelsFromLeaves(
         local j = 0
         while j < lenImgsRange do
             j = j + 1
-            verifTrgCels[#verifTrgCels + 1] = imgsRange[j].cel
+            vTrgCels[#vTrgCels + 1] = imgsRange[j].cel
         end
 
         appRange:clear()
@@ -1776,7 +1776,7 @@ function AseUtilities.getUniqueCelsFromLeaves(
         end
     end
 
-    return verifTrgCels
+    return vTrgCels
 end
 
 ---Gets the unique tiles from a tile map.
@@ -2393,36 +2393,42 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
     local xClip = clip.x
     local yClip = clip.y
 
+    -- Avoid transactions if possible.
     local oldPos = cel.position
-    cel.position = Point(xClip, yClip)
+    if oldPos.x ~= xClip
+        or oldPos.y ~= yClip then
+        cel.position = Point(xClip, yClip)
+    end
 
     local celImg = cel.image
     local celSpec = celImg.spec
     local alphaMask = celSpec.transparentColor
     local trimSpec = ImageSpec {
-        width = clip.width,
-        height = clip.height,
+        width = math.max(1, clip.width),
+        height = math.max(1, clip.height),
         colorMode = celSpec.colorMode,
         transparentColor = alphaMask
     }
     trimSpec.colorSpace = celSpec.colorSpace
-    local trimImage = Image(trimSpec)
-    local celPos = cel.position
-    trimImage:drawImage(
-        celImg, Point(
-            oldPos.x - celPos.x,
-            oldPos.y - celPos.y))
 
-    local hexVrf = hexDefault or alphaMask
-    local pxItr = trimImage:pixels()
-    for pixel in pxItr do
-        if not mask:contains(
-                xClip + pixel.x,
-                yClip + pixel.y) then
-            pixel(hexVrf)
+    local trimImage = Image(trimSpec)
+    if clip.width > 0 and clip.height > 0 then
+        local celPos = cel.position
+        trimImage:drawImage(
+            celImg, Point(
+                oldPos.x - celPos.x,
+                oldPos.y - celPos.y))
+
+        local hexVrf = hexDefault or alphaMask
+        local pxItr = trimImage:pixels()
+        for pixel in pxItr do
+            if not mask:contains(
+                    xClip + pixel.x,
+                    yClip + pixel.y) then
+                pixel(hexVrf)
+            end
         end
     end
-
     cel.image = trimImage
 end
 
@@ -2436,24 +2442,32 @@ function AseUtilities.trimCelToSprite(cel, sprite)
     local spriteBounds = sprite.bounds
     local clip = celBounds:intersect(spriteBounds)
 
+    -- Avoid transactions if possible.
     local oldPos = cel.position
-    cel.position = Point(clip.x, clip.y)
+    if oldPos.x ~= clip.x
+        or oldPos.y ~= clip.y then
+        cel.position = Point(clip.x, clip.y)
+    end
 
     local celImg = cel.image
     local celSpec = celImg.spec
+
     local trimSpec = ImageSpec {
-        width = clip.width,
-        height = clip.height,
+        width = math.max(1, clip.width),
+        height = math.max(1, clip.height),
         colorMode = celSpec.colorMode,
         transparentColor = celSpec.transparentColor
     }
     trimSpec.colorSpace = celSpec.colorSpace
     local trimImage = Image(trimSpec)
-    local celPos = cel.position
-    trimImage:drawImage(
-        celImg, Point(
-            oldPos.x - celPos.x,
-            oldPos.y - celPos.y))
+
+    if clip.width > 0 and clip.height > 0 then
+        local celPos = cel.position
+        trimImage:drawImage(
+            celImg, Point(
+                oldPos.x - celPos.x,
+                oldPos.y - celPos.y))
+    end
     cel.image = trimImage
 end
 

@@ -209,11 +209,10 @@ function Utilities.lerpAngleCcw(origin, dest, t, range)
     local o = origin % valRange
     local d = dest % valRange
     local diff = d - o
-    local u = 1.0 - t
+    if diff == 0.0 then return o end
 
-    if diff == 0.0 then
-        return o
-    elseif o > d then
+    local u = 1.0 - t
+    if o > d then
         return (u * o + t * (d + valRange)) % valRange
     else
         return u * o + t * d
@@ -235,11 +234,10 @@ function Utilities.lerpAngleCw(origin, dest, t, range)
     local o = origin % valRange
     local d = dest % valRange
     local diff = d - o
-    local u = 1.0 - t
+    if diff == 0.0 then return d end
 
-    if diff == 0.0 then
-        return d
-    elseif o < d then
+    local u = 1.0 - t
+    if o < d then
         return (u * (o + valRange) + t * d) % valRange
     else
         return u * o + t * d
@@ -285,15 +283,14 @@ end
 ---@return number
 function Utilities.lerpAngleNear(origin, dest, t, range)
     local valRange = range or 360.0
-    local halfRange = valRange * 0.5
     local o = origin % valRange
     local d = dest % valRange
     local diff = d - o
-    local u = 1.0 - t
+    if diff == 0.0 then return o end
 
-    if diff == 0.0 then
-        return o
-    elseif o < d and diff > halfRange then
+    local u = 1.0 - t
+    local halfRange = valRange * 0.5
+    if o < d and diff > halfRange then
         return (u * (o + valRange) + t * d) % valRange
     elseif o > d and diff < -halfRange then
         return (u * o + t * (d + valRange)) % valRange

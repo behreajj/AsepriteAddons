@@ -7,7 +7,7 @@ local defaults = {
     includeLocked = false,
     includeHidden = true,
     padding = 0,
-    pullFocus = false
+    trimFrames = false
 }
 
 local dlg = Dialog { title = "Trim Sprite" }
@@ -25,12 +25,14 @@ dlg:check {
     id = "includeLocked",
     label = "Include:",
     text = "&Locked",
+    focus = false,
     selected = defaults.includeLocked
 }
 
 dlg:check {
     id = "includeHidden",
     text = "&Hidden",
+    focus = false,
     selected = defaults.includeHidden
 }
 
@@ -46,10 +48,18 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "trimFrames",
+    label = "Cull: ",
+    text = "&Frames",
+    focus = false,
+    selected = defaults.trimFrames
+}
+
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
@@ -68,10 +78,13 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local cropType = args.cropType or defaults.cropType --[[@as string]]
+        local cropType = args.cropType
+            or defaults.cropType --[[@as string]]
         local includeLocked = args.includeLocked --[[@as boolean]]
         local includeHidden = args.includeHidden --[[@as boolean]]
-        local padding = args.padding or defaults.padding --[[@as integer]]
+        local padding = args.padding
+            or defaults.padding --[[@as integer]]
+        local trimFrames = args.trimFrames --[[@as boolean]]
 
         local useCrop = cropType == "CROP"
         local useExpand = cropType == "EXPAND"
@@ -88,8 +101,7 @@ dlg:button {
         -- mode may contain transparency.
         local bkgLayer = activeSprite.backgroundLayer
         if bkgLayer then
-            local bkgUnlocked = bkgLayer.isEditable
-            if bkgUnlocked then
+            if includeLocked or bkgLayer.isEditable then
                 app.activeLayer = bkgLayer
                 app.command.LayerFromBackground()
             else
@@ -100,112 +112,116 @@ dlg:button {
             end
         end
 
+        local sel = nil
+        if useSel then
+            sel = AseUtilities.getSelection(activeSprite)
+        end
+
         local leaves = AseUtilities.getLayerHierarchy(
             activeSprite,
             includeLocked, includeHidden, true, false)
-
-        -- Get selection.
-        -- Do this regardless of cropType, as selection
-        -- bug may impact result either way.
-        local sel = AseUtilities.getSelection(activeSprite)
+        local lenLeaves = #leaves
+        local frIdcs = AseUtilities.frameObjsToIdcs(activeSprite.frames)
+        local cels = AseUtilities.getUniqueCelsFromLeaves(
+            activeSprite, leaves, frIdcs, {})
+        local lenCels = #cels
 
         -- Cache methods used in loop.
         local trimAlpha = AseUtilities.trimImageAlpha
         local cropCel = AseUtilities.trimCelToSprite
         local selectCel = AseUtilities.trimCelToSelect
+        local strfmt = string.format
+        local transact = app.transaction
 
-        ---@type table[]
+        ---@type Cel[]
         local toCull = {}
         local lenToCull = 0
-        local lenLeaves = #leaves
-        local frames = activeSprite.frames
-        local lenFrames = #frames
-        local h = 0
-        while h < lenLeaves do
-            h = h + 1
-            local leaf = leaves[h]
+        local i = 0
+        while i < lenCels do
+            i = i + 1
 
-            -- Tile maps measure in tiles, not pixels.
-            local wTile = 0
-            local hTile = 0
-            local isTilemap = leaf.isTilemap
-            if isTilemap then
-                local tileSet = leaf.tileset
-                local tileGrid = tileSet.grid
+            local cel = cels[i]
+            local celPos = cel.position
+            local celImg = cel.image
+            local layer = cel.layer
+            local layerName = layer.name
+            local frIdx = cel.frameNumber
+
+            local tlx = celPos.x
+            local tly = celPos.y
+            local brx = tlx + celImg.width - 1
+            local bry = tly + celImg.height - 1
+
+            if layer.isTilemap then
+                local tileSet = layer.tileset
+                local tileGrid = tileSet.grid --[[@as Grid]]
                 local tileDim = tileGrid.tileSize --[[@as Size]]
-                wTile = tileDim.width
-                hTile = tileDim.height
-            end
-
-            -- TODO: Replace this with getUniqueCelsFromLeaves?
-            -- Problem: linked cels will count multiple times.
-            local i = 0
-            while i < lenFrames do
-                i = i + 1
-                local frame = frames[i]
-                local cel = leaf:cel(frames[i])
-                if cel then
-                    local celPos = cel.position
-                    local celImg = cel.image
-
-                    local tlx = celPos.x
-                    local tly = celPos.y
-                    local brx = tlx + celImg.width - 1
-                    local bry = tly + celImg.height - 1
-
-                    if isTilemap then
-                        brx = tlx + celImg.width * wTile - 1
-                        bry = tly + celImg.height * hTile - 1
-                    elseif useSel then
+                local wTile = tileDim.width
+                local hTile = tileDim.height
+                brx = tlx + celImg.width * wTile - 1
+                bry = tly + celImg.height * hTile - 1
+            elseif useSel then
+                transact(
+                    strfmt("Crop %s %d", layerName, frIdx),
+                    function()
                         selectCel(cel, sel)
-                        celPos = cel.position
-                        tlx = celPos.x
-                        tly = celPos.y
-                        celImg = cel.image
-                        brx = tlx + celImg.width - 1
-                        bry = tly + celImg.height - 1
-                    else
-                        local xTrm = 0
-                        local yTrm = 0
-                        local trimmed = nil
-                        trimmed, xTrm, yTrm = trimAlpha(celImg, 0, alphaMask)
+                    end)
+                celPos = cel.position
+                tlx = celPos.x
+                tly = celPos.y
+                celImg = cel.image
+                brx = tlx + celImg.width - 1
+                bry = tly + celImg.height - 1
+            else
+                local xTrm = 0
+                local yTrm = 0
+                local trimmed = nil
+                trimmed, xTrm, yTrm = trimAlpha(celImg, 0, alphaMask)
 
-                        tlx = tlx + xTrm
-                        tly = tly + yTrm
-                        brx = tlx + trimmed.width - 1
-                        bry = tly + trimmed.height - 1
+                tlx = tlx + xTrm
+                tly = tly + yTrm
+                brx = tlx + trimmed.width - 1
+                bry = tly + trimmed.height - 1
 
+                transact(
+                    strfmt("Trim %s %d", layerName, frIdx),
+                    function()
                         cel.position = Point(tlx, tly)
                         cel.image = trimmed
-                        celPos = cel.position
-                        celImg = cel.image
+                    end)
+                celPos = cel.position
+                celImg = cel.image
 
-                        if useCrop then
+                if useCrop then
+                    transact(
+                        strfmt("Crop %s %d", layerName, frIdx),
+                        function()
                             cropCel(cel, activeSprite)
-                            celPos = cel.position
-                            tlx = celPos.x
-                            tly = celPos.y
-                            celImg = cel.image
-                            brx = tlx + celImg.width - 1
-                            bry = tly + celImg.height - 1
-                        end
-                    end
-
-                    if celImg:isEmpty() then
-                        lenToCull = lenToCull + 1
-                        toCull[lenToCull] = { layer = leaf, frame = frame }
-                    end
-
-                    if tlx < xMin then xMin = tlx end
-                    if tly < yMin then yMin = tly end
-                    if brx > xMax then xMax = brx end
-                    if bry > yMax then yMax = bry end
+                        end)
+                    celPos = cel.position
+                    tlx = celPos.x
+                    tly = celPos.y
+                    celImg = cel.image
+                    brx = tlx + celImg.width - 1
+                    bry = tly + celImg.height - 1
                 end
             end
+
+            if celImg:isEmpty() then
+                lenToCull = lenToCull + 1
+                toCull[lenToCull] = cel
+            end
+
+            if tlx < xMin then xMin = tlx end
+            if tly < yMin then yMin = tly end
+            if brx > xMax then xMax = brx end
+            if bry > yMax then yMax = bry end
         end
 
         if useSel then
-            activeSprite:crop(sel.bounds)
+            transact("Crop Canvas To Mask", function()
+                activeSprite:crop(sel.bounds)
+            end)
         elseif xMax > xMin and yMax > yMin then
             if not useExpand then
                 if xMin < 0 then xMin = 0 end
@@ -218,29 +234,76 @@ dlg:button {
                 end
             end
 
-            activeSprite:crop(
-                xMin, yMin,
-                1 + xMax - xMin,
-                1 + yMax - yMin)
+            transact("Crop Canvas", function()
+                activeSprite:crop(
+                    xMin, yMin,
+                    1 + xMax - xMin,
+                    1 + yMax - yMin)
+            end)
         end
 
         if padding > 0 then
             local pad2 = padding + padding
-            activeSprite:crop(
-                -padding, -padding,
-                activeSprite.width + pad2,
-                activeSprite.height + pad2)
+            transact("Pad Canvas", function()
+                activeSprite:crop(
+                    -padding, -padding,
+                    activeSprite.width + pad2,
+                    activeSprite.height + pad2)
+            end)
         end
 
-        app.transaction("Delete Cels", function()
-            local k = lenToCull + 1
-            while k > 1 do
-                k = k - 1
-                local packet = toCull[k]
-                activeSprite:deleteCel(
-                    packet.layer, packet.frame)
-            end
-        end)
+        -- Trim cels cannot be optional due to
+        -- invalid cel boundaries.
+        if lenToCull > 0 then
+            transact("Delete Cels", function()
+                local j = lenToCull + 1
+                while j > 1 do
+                    j = j - 1
+                    local cel = toCull[j]
+                    activeSprite:deleteCel(cel)
+                end
+            end)
+        end
+
+        if trimFrames and #frIdcs > 1 then
+            app.transaction("Cull Frames Reverse",
+                function()
+                    local frameEmptyRight = true
+                    local m = 1 + #activeSprite.frames
+                    while m > 2 and frameEmptyRight do
+                        m = m - 1
+                        local k = 0
+                        while k < lenLeaves and frameEmptyRight do
+                            k = k + 1
+                            local leaf = leaves[k]
+                            if leaf:cel(m) then
+                                frameEmptyRight = false
+                            end
+                        end
+                        if frameEmptyRight then
+                            activeSprite:deleteFrame(m)
+                        end
+                    end
+                end)
+
+            app.transaction("Cull Frames Forward",
+                function()
+                    local frameEmptyLeft = true
+                    while frameEmptyLeft and #activeSprite.frames > 1 do
+                        local k = 0
+                        while k < lenLeaves and frameEmptyLeft do
+                            k = k + 1
+                            local leaf = leaves[k]
+                            if leaf:cel(1) then
+                                frameEmptyLeft = false
+                            end
+                        end
+                        if frameEmptyLeft then
+                            activeSprite:deleteFrame(1)
+                        end
+                    end
+                end)
+        end
 
         app.command.FitScreen()
         app.refresh()
