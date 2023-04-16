@@ -454,8 +454,10 @@ dlg:button {
                 tsNameVerif = strfmt("%03d", i - 1)
             end
 
-            local wTileTrg = wTileSrc * wScale + pad2
-            local hTileTrg = hTileSrc * hScale + pad2
+            local wTileScale = wTileSrc * wScale
+            local hTileScale = hTileSrc * hScale
+            local wTileTrg = wTileScale + pad2
+            local hTileTrg = hTileScale + pad2
 
             -- Same procedure as saving batched sheets in
             -- framesExport.
@@ -466,8 +468,6 @@ dlg:button {
             local hSheet = hTileTrg * rows
 
             if toPow2 then
-                -- TODO: Is there a way to use space more
-                -- efficiently here?
                 if nonUniformDim then
                     wSheet = nextPow2(wSheet)
                     hSheet = nextPow2(hSheet)
@@ -475,6 +475,9 @@ dlg:button {
                     wSheet = nextPow2(max(wSheet, hSheet))
                     hSheet = wSheet
                 end
+
+                columns = max(1, wSheet // wTileTrg)
+                rows = max(1, hSheet // hTileTrg)
             end
 
             -- Create composite image.
@@ -506,7 +509,8 @@ dlg:button {
                 local tileImage = tile.image --[[@as Image]]
                 local tileScaled = tileImage
                 if useResize then
-                    tileScaled = resize(tileImage, wScale, hScale)
+                    tileScaled = resize(tileImage,
+                        wTileScale, hTileScale)
                 end
                 local tilePadded = tileScaled
                 if usePadding then

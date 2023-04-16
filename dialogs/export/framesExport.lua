@@ -99,7 +99,6 @@ end
 ---@param compPalette Palette palette for all images
 ---@param toPow2 boolean promote to nearest pot
 ---@param nonUniformDim boolean non uniform npot
----@param padding integer padding offset
 ---@return table[]
 ---@return integer
 ---@return integer
@@ -109,18 +108,14 @@ local function saveSheet(
     filename, packets1,
     wMax, hMax,
     spriteSpec, compPalette,
-    toPow2, nonUniformDim,
-    padding)
+    toPow2, nonUniformDim)
     local lenPackets1 = #packets1
     local columns = math.ceil(math.sqrt(lenPackets1))
     local rows = math.max(1, math.ceil(lenPackets1 / columns))
-    local pad2 = padding + padding
     local wSheet = wMax * columns
     local hSheet = hMax * rows
 
     if toPow2 then
-        -- TODO: Is there a way to use space more
-        -- efficiently here?
         if nonUniformDim then
             wSheet = Utilities.nextPowerOf2(wSheet)
             hSheet = Utilities.nextPowerOf2(hSheet)
@@ -129,6 +124,9 @@ local function saveSheet(
                 math.max(wSheet, hSheet))
             hSheet = wSheet
         end
+
+        columns = math.max(1, wSheet // wMax)
+        rows = math.max(1, hSheet // hMax)
     end
 
     -- Unpack source spec.
@@ -712,8 +710,7 @@ dlg:button {
                         batchFileLong, packets1,
                         wCell, hCell,
                         spriteSpec, sheetPalette,
-                        toPow2, nonUniformDim,
-                        padding)
+                        toPow2, nonUniformDim)
                     sheetPackets[j] = {
                         fileName = batchFileShort,
                         sections = sections,
@@ -740,8 +737,7 @@ dlg:button {
                     filename, packets1,
                     wCell, hCell,
                     spriteSpec, sheetPalette,
-                    toPow2, nonUniformDim,
-                    padding)
+                    toPow2, nonUniformDim)
                 sheetPackets[1] = {
                     fileName = fileTitle,
                     sections = cellsPackets,

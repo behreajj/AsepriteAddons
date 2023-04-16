@@ -10,12 +10,9 @@ Around line 141:
         window.name()->setText(document->name());
     }
 --]]
--- Sprite tab color and user data is unique to v1.3 beta.
-local version = app.version
-
--- Should some diagnostic data be toggled via a t/f
--- in defaults, esp. if it is expensive to calculate?
 local defaults = {
+    -- Should some diagnostic data be toggled via a t/f
+    -- in defaults, esp. if it is expensive to calculate?
     maskWarningInvalid = "Mask index is out of bounds.",
     maskWarningIndexed = "Non-zero mask may cause bugs.",
     maskWarningRgb = "Non-zero color at index 0.",
@@ -64,7 +61,8 @@ updatePrefsShowPath()
 -- defaults to the string for that label.
 local dlg = Dialog {
     title = string.format(
-        "Properties (v %s)", tostring(version))
+        "Properties (v %s)",
+        tostring(app.version))
 }
 dlg:label {
     id = "pathLabel",
@@ -441,7 +439,9 @@ local function updateDuration()
     local frames = sprite.frames
     local lenFrames = #frames
     local durSum = 0
-    for i = 1, lenFrames, 1 do
+    local i = 0
+    while i < lenFrames do
+        i = i + 1
         durSum = durSum + frames[i].duration
     end
 
@@ -518,8 +518,8 @@ dlg:button {
             local args = dlg.data
             local aPxRatio = args.aPxRatio --[[@as integer]]
             local bPxRatio = args.bPxRatio --[[@as integer]]
-            local sprColor = args.sprTabColor
-            local userData = args.sprUserData
+            local sprColor = args.sprTabColor --[[@as Color]]
+            local userData = args.sprUserData --[[@as string]]
 
             aPxRatio, bPxRatio = Utilities.reduceRatio(aPxRatio, bPxRatio)
 
@@ -536,7 +536,10 @@ dlg:button {
             app.command.Refresh()
             dlg:close()
         else
-            app.alert("Sprite is no longer active.")
+            app.alert {
+                title = "Error",
+                text = "Sprite is no longer active."
+            }
         end
     end
 }
