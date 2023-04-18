@@ -436,6 +436,9 @@ dlg:button {
 
         -- Flatten sprite to images, associate with a factor
         -- and an angle theta.
+
+        -- TODO: Destructure this to an array of
+        -- durations, images, factors, thetas?
         local packets = {}
         if isActive then
             local frameCount = args.frameCount
@@ -534,6 +537,8 @@ dlg:button {
         local min = math.min
         local sqrt = math.sqrt
         local trimImage = AseUtilities.trimImageAlpha
+        local strfmt = string.format
+        local transact = app.transaction
 
         -- Determine how to wrap out of bounds pixels.
         local edgeType = args.edgeType or defaults.edgeType
@@ -808,7 +813,7 @@ dlg:button {
         -- Rename layer.
         local trgLayer = trgSprite.layers[1]
         trgLayer.name = string.format(
-            "Wave.%s.%s",
+            "%s.%s",
             waveType, edgeType)
 
         -- Create cels.
@@ -825,7 +830,7 @@ dlg:button {
             if trimCels then
                 img, x, y = trimImage(img, 0, alphaMask)
             end
-            app.transaction(string.format(
+            transact(strfmt(
                 "Wave %d", trgFrame.frameNumber), function()
                 trgSprite:newCel(
                     trgLayer, trgFrame, img, Point(x, y))

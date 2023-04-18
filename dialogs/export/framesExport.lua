@@ -17,7 +17,7 @@ local defaults = {
     rangeStr = "",
     strExample = "4,6-9,13",
     cropType = "CROPPED",
-    padding = 2,
+    padding = 0,
     scale = 1,
     useBatches = false,
     useSheet = false,
@@ -88,9 +88,7 @@ local function makeBatchFileName(fileTitle, packets1)
 end
 
 ---Saves a sheet according to a one dimensional packet.
----Returns a tuple containing an array of rectangle
----packets with image positions on the sheet, the sheet
----width and the sheet height, the columns and rows.
+---Returns a table with image positions on a sheet.
 ---@param filename string file name
 ---@param packets1 table[] packets 1D array
 ---@param wMax integer maximum image width
@@ -99,11 +97,7 @@ end
 ---@param compPalette Palette palette for all images
 ---@param toPow2 boolean promote to nearest pot
 ---@param nonUniformDim boolean non uniform npot
----@return table[]
----@return integer
----@return integer
----@return integer
----@return integer
+---@return table
 local function saveSheet(
     filename, packets1,
     wMax, hMax,
@@ -188,12 +182,16 @@ local function saveSheet(
         palette = compPalette
     }
 
-    -- TODO: At this point, you may as well return
-    -- a sheet packet object, as that is what you
-    -- are constructing on the other side of the method.
-    return sectionPackets,
-        wSheet, hSheet,
-        columns, rows
+    return {
+        fileName = "",
+        sections = sectionPackets,
+        width = wSheet,
+        height = hSheet,
+        wCell = wMax,
+        hCell = hMax,
+        columns = columns,
+        rows = rows
+    }
 end
 
 ---Generates a packet of data for each frame index.
@@ -274,11 +272,10 @@ local function genPacket(
         opacity = 255
     }
 
-    local packet = {
+    return {
         cel = celPacket,
         frame = framePacket
     }
-    return packet
 end
 
 local dlg = Dialog { title = "Export Frames" }
@@ -552,6 +549,9 @@ dlg:button {
         pathSep = string.gsub(pathSep, "\\", "\\\\")
 
         local fileTitle = app.fs.fileTitle(filename)
+        if #fileTitle < 1 then
+            fileTitle = app.fs.fileTitle(activeSprite.filename)
+        end
         fileTitle = Utilities.validateFilename(fileTitle)
 
         filePath = filePath .. pathSep
@@ -706,21 +706,13 @@ dlg:button {
                     local hMaxLocal = hMaxesLocal[j]
                     local wCell = wMaxLocal * wScale + pad2
                     local hCell = hMaxLocal * hScale + pad2
-                    local sections, wSheet, hSheet, columns, rows = saveSheet(
+                    local sheetPacket = saveSheet(
                         batchFileLong, packets1,
                         wCell, hCell,
                         spriteSpec, sheetPalette,
                         toPow2, nonUniformDim)
-                    sheetPackets[j] = {
-                        fileName = batchFileShort,
-                        sections = sections,
-                        width = wSheet,
-                        height = hSheet,
-                        wCell = wCell,
-                        hCell = hCell,
-                        columns = columns,
-                        rows = rows
-                    }
+                    sheetPacket.fileName = batchFileShort
+                    sheetPackets[j] = sheetPacket
                 end
             else
                 -- This is not a viable option for now, unless batched
@@ -733,21 +725,13 @@ dlg:button {
             if useSheet then
                 local wCell = wMaxGlobal * wScale + pad2
                 local hCell = hMaxGlobal * hScale + pad2
-                local cellsPackets, wSheet, hSheet, columns, rows = saveSheet(
+                local sheetPacket = saveSheet(
                     filename, packets1,
                     wCell, hCell,
                     spriteSpec, sheetPalette,
                     toPow2, nonUniformDim)
-                sheetPackets[1] = {
-                    fileName = fileTitle,
-                    sections = cellsPackets,
-                    width = wSheet,
-                    height = hSheet,
-                    wCell = wCell,
-                    hCell = hCell,
-                    columns = columns,
-                    rows = rows
-                }
+                sheetPacket.fileName = fileTitle
+                sheetPackets[1] = sheetPacket
             else
                 local k = 0
                 while k < lenInner do
@@ -823,6 +807,7 @@ dlg:button {
                 tagStrs[k] = tagToJson(tag, fileName)
             end
 
+            ---@type string[]
             local sheetStrArr = {}
             if useSheet then
                 local lenSheetPackets = #sheetPackets

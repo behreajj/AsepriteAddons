@@ -331,9 +331,11 @@ dlg:button {
         -- Cache global functions to locals.
         local round = Utilities.round
         local strfmt = string.format
+        local strsub = string.sub
         local sRgbToLab = Clr.sRgbToCieLab
         local labToLch = Clr.cieLabToCieLch
         local strToChars = Utilities.stringToCharTable
+        local hexToAse = AseUtilities.hexToAseColor
 
         -- Do not take the length of hexesSrgb
         -- after this point, as it will potentially
@@ -775,6 +777,7 @@ dlg:button {
         if noAlpha then swatchMask = 0xff000000 end
 
         app.transaction("Manifest", function()
+            -- TODO: Replace for loop.
             for i = lenPalData, 1, -1 do
                 local palEntry = palData[i]
                 local palIdx = palEntry.palIdx
@@ -800,7 +803,7 @@ dlg:button {
 
                 local rowLayer = manifestSprite:newLayer()
                 rowLayer.name = strfmt("%03d.%s",
-                    palIdx, string.sub(hexWeb, 2))
+                    palIdx, strsub(hexWeb, 2))
 
                 if hexSrgb ~= hexProfile then
                     local back = swatchMask | hexSrgb
@@ -926,7 +929,7 @@ dlg:button {
                 local rowCel = manifestSprite:newCel(
                     rowLayer, frameObj, rowImg,
                     Point(spriteMargin, yCaret))
-                rowCel.color = Color(hexCel)
+                rowCel.color = hexToAse(hexCel)
                 yCaret = yCaret - entryHeight
 
                 -- Always place at least one header at the top.

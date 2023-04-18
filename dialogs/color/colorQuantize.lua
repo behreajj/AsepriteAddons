@@ -347,6 +347,8 @@ dlg:button {
         local rgbColorMode = ColorMode.RGB
         local floor = math.floor
         local tilesToImage = AseUtilities.tilesToImage
+        local transact = app.transaction
+        local strfmt = string.format
 
         local rDelta = 0.0
         local gDelta = 0.0
@@ -427,8 +429,8 @@ dlg:button {
                     pixel(trgDict[pixel()])
                 end
 
-                app.transaction(
-                    string.format("Color Quantize %d", srcFrame),
+                transact(
+                    strfmt("Color Quantize %d", srcFrame),
                     function()
                         local trgCel = activeSprite:newCel(
                             trgLayer, srcFrame,

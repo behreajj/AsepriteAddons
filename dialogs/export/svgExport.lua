@@ -3,9 +3,7 @@ dofile("../../support/aseutilities.lua")
 local defaults = {
     scale = 1,
     margin = 0,
-    marginClr = 0xffffffff,
     border = 0,
-    borderClr = 0xff000000,
     prApply = false,
     flattenImage = true
 }
@@ -236,7 +234,7 @@ dlg:newrow { always = false }
 
 dlg:color {
     id = "marginClr",
-    color = defaults.marginClr,
+    color = Color { r = 255, g = 255, b = 255 },
     visible = defaults.margin > 0
 }
 
@@ -258,7 +256,7 @@ dlg:newrow { always = false }
 
 dlg:color {
     id = "borderClr",
-    color = defaults.borderClr,
+    color = Color { r = 0, g = 0, b = 0 },
     visible = defaults.border > 0
 }
 

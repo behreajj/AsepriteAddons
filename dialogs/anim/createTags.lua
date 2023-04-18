@@ -302,6 +302,7 @@ dlg:button {
         local hueFunc = GradientUtilities.lerpHueCcw
         local mixer = Clr.mixSrLch
         local clrToAse = AseUtilities.clrToAseColor
+        local transact = app.transaction
 
         local i = 0
         while i < lenOuter do
@@ -315,7 +316,7 @@ dlg:button {
                 local start    = min(idxFirst, idxLast)
                 local stop     = max(idxFirst, idxLast)
 
-                app.transaction("New Tag", function()
+                transact("New Tag", function()
                     local tag   = activeSprite:newTag(start, stop)
                     tag.name    = strfmt(nameFormat, start, stop)
                     tag.aniDir  = aniDirEnum

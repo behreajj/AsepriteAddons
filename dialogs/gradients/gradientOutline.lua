@@ -289,6 +289,8 @@ dlg:button {
         local blend = Clr.blendInternal
         local clrNew = Clr.new
         local tilesToImage = AseUtilities.tilesToImage
+        local strfmt = string.format
+        local transact = app.transaction
 
         local bkgClr = AseUtilities.aseColorToClr(aseBkgColor)
         local bkgHex = toHex(bkgClr)
@@ -438,16 +440,16 @@ dlg:button {
                                             and cNbr ~= bkgHex then
                                             trgImg:drawPixel(xRead, yRead, hexOut)
                                             continue = false
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
+                                        end -- Neighbor not transparent check
+                                    end     -- x in bounds check
+                                end         -- y in bounds check
+                            end             -- Neighbors kernel
+                        end                 -- Center transparent check
+                    end                     -- Pixel loop
+                end                         -- Iterations loop
 
-                app.transaction(
-                    string.format("Gradient Outline %d", srcFrame),
+                transact(
+                    strfmt("Gradient Outline %d", srcFrame),
                     function()
                         local trgCel = activeSprite:newCel(
                             trgLayer, srcFrame, trgImg,

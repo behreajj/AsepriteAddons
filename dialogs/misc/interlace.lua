@@ -256,6 +256,9 @@ dlg:button {
         end
 
         local tilesToImage = AseUtilities.tilesToImage
+        local strfmt = string.format
+        local transact = app.transaction
+
         local colorMode = activeSprite.colorMode
         local offSkip = Point(xSkip, ySkip)
         local offPick = Point(xPick, yPick)
@@ -297,8 +300,8 @@ dlg:button {
                     end
                 end
 
-                app.transaction(
-                    string.format("Interlace %d", srcFrame),
+                transact(
+                    strfmt("Interlace %d", srcFrame),
                     function()
                         local pickCel = activeSprite:newCel(
                             pickLayer, srcFrame, imgPick,

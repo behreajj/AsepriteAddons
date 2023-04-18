@@ -205,6 +205,8 @@ dlg:button {
         local min = math.min
         local floor = math.floor
         local blend = AseUtilities.blendRgba
+        local strfmt = string.format
+        local transact = app.transaction
 
         -- Unpack arguments.
         local args = dlg.data
@@ -437,8 +439,8 @@ dlg:button {
 
                 -- Important to break this into separate transactions
                 -- in case there is a bug that is causing an Aseprite crash.
-                app.transaction(
-                    string.format("Bake Onion %d", srcFrame),
+                transact(
+                    strfmt("Bake Onion %d", srcFrame),
                     function()
                         activeSprite:newCel(
                             trgLayer, srcFrame,

@@ -26,30 +26,15 @@ local defaults = {
     boundsFormat = "TOP_LEFT"
 }
 
-local tileFormat = table.concat({
-    "{\"id\":%d",
-    "\"data\":%s}"
-}, ",")
-
 local sectionFormat = table.concat({
     "{\"id\":%s",
-    -- "\"rect\":%s",
-    -- "\"tile\":%s}"
     "\"rect\":%s}",
-}, ",")
-
-local tileSetFormat = table.concat({
-    "{\"baseIndex\":%d",
-    "\"data\":%s",
-    "\"name\":\"%s\"}"
 }, ",")
 
 local sheetFormat = table.concat({
     "{\"fileName\":\"%s\"",
     "\"size\":%s",
     "\"sizeGrid\":%s",
-    -- "\"sections\":[%s]",
-    -- "\"tileSet\":%s}"
     "\"tiles\":[%s]}",
 }, ",")
 
@@ -60,36 +45,12 @@ local mapFormat = table.concat({
     "\"layer\":%d}",
 }, ",")
 
-local function tileToJson(tile)
-    local tDataVrf = "null"
-    local tData = tile.data
-    if tData and #tData > 0 then
-        tDataVrf = tData
-    end
-    return string.format(tileFormat, tile.id, tDataVrf)
-end
-
 local function sectionToJson(section, boundsFormat)
     return string.format(sectionFormat,
         JsonUtilities.pointToJson(
             section.column, section.row),
         JsonUtilities.rectToJson(
-            section.rect, boundsFormat)
-    -- , tileToJson(section.tile)
-    )
-end
-
-local function tileSetToJson(tileSet)
-    local tsDataVrf = "null"
-    local tsData = tileSet.data
-    if tsData and #tsData > 0 then
-        tsDataVrf = tsData
-    end
-    return string.format(
-        tileSetFormat,
-        tileSet.baseIndex,
-        tsDataVrf,
-        tileSet.name)
+            section.rect, boundsFormat))
 end
 
 local function mapToJson(map)
@@ -121,9 +82,7 @@ local function sheetToJson(sheet, boundsFormat)
         JsonUtilities.pointToJson(
             sheet.columns,
             sheet.rows),
-        table.concat(sectionsStrs, ",")
-    -- , tileSetToJson(sheet.tileSet)
-    )
+        table.concat(sectionsStrs, ","))
 end
 
 local dlg = Dialog { title = "Export Tilesets" }
@@ -373,6 +332,9 @@ dlg:button {
         pathSep = string.gsub(pathSep, "\\", "\\\\")
 
         local fileTitle = app.fs.fileTitle(filename)
+        if #fileTitle < 1 then
+            fileTitle = app.fs.fileTitle(activeSprite.filename)
+        end
         fileTitle = Utilities.validateFilename(fileTitle)
 
         filePath = filePath .. pathSep
@@ -440,10 +402,10 @@ dlg:button {
         while i < lenTileSets do
             i = i + 1
             local tileSet = tileSets[i]
-            local tileSetName = tileSet.name --[[@as string]]
+            local tileSetName = tileSet.name
 
             local tileGrid = tileSet.grid
-            local tileDim = tileGrid.tileSize --[[@as Size]]
+            local tileDim = tileGrid.tileSize
             local wTileSrc = tileDim.width
             local hTileSrc = tileDim.height
 
@@ -529,11 +491,7 @@ dlg:button {
                         y = yTrg,
                         width = wTileTrg,
                         height = hTileTrg
-                    },
-                    -- tile = {
-                    --     id = tile.index,
-                    --     data = tile.data
-                    -- }
+                    }
                 }
                 sectionPackets[k] = sectionPacket
             end
@@ -556,12 +514,7 @@ dlg:button {
                 height = hSheet,
                 columns = columns,
                 rows = rows,
-                sections = sectionPackets,
-                -- tileSet = {
-                --     baseIndex = tileSet.baseIndex,
-                --     data = tileSet.data,
-                --     name = tileSetName
-                -- }
+                sections = sectionPackets
             }
             sheetPackets[i] = sheetPacket
         end
@@ -607,11 +560,13 @@ dlg:button {
                     if tmLayer.isTilemap then
                         local tileSet = tmLayer.tileset
                         local tileGrid = tileSet.grid
-                        local tileDim = tileGrid.tileSize --[[@as Size]]
+                        local tileDim = tileGrid.tileSize
                         local wTile = tileDim.width
                         local hTile = tileDim.height
+                        local lenTileSet = #tileSet
 
                         local layerId = tmLayer.id
+                        ---@type userdata|Sprite|Layer
                         local parent = tmLayer.parent
                         local parentId = -1
                         if parent.__name ~= "doc::Sprite" then
@@ -655,6 +610,9 @@ dlg:button {
                                 for pixel in tmPxItr do
                                     local tlData = pixel()
                                     local tlIndex = pxTilei(tlData)
+                                    if tlIndex >= lenTileSet then
+                                        tlIndex = 0
+                                    end
                                     tmIndicesArr[#tmIndicesArr + 1] = tlIndex
                                 end
 

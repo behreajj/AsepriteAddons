@@ -567,6 +567,8 @@ dlg:button {
 
         -- Cache global methods.
         local tilesToImage = AseUtilities.tilesToImage
+        local transact = app.transaction
+        local strfmt = string.format
 
         local lenFrames = #frames
         local i = 0
@@ -604,8 +606,8 @@ dlg:button {
                     pixel(arrSrcPixels[idxWtPixels])
                 end
 
-                app.transaction(
-                    string.format("Dither %d", srcFrame),
+                transact(
+                    strfmt("Dither %d", srcFrame),
                     function()
                         local trgCel = activeSprite:newCel(
                             trgLayer, srcFrame,

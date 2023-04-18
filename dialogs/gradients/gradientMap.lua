@@ -88,6 +88,8 @@ dlg:button {
         local sRgbToLab = Clr.sRgbToSrLab2
         local quantize = Utilities.quantizeUnsigned
         local tilesToImage = AseUtilities.tilesToImage
+        local strfmt = string.format
+        local transact = app.transaction
 
         -- Unpack arguments.
         local args = dlg.data
@@ -232,8 +234,8 @@ dlg:button {
                     end
                 end -- End mix type.
 
-                app.transaction(
-                    string.format("Gradient Map %d", srcFrame),
+                transact(
+                    strfmt("Gradient Map %d", srcFrame),
                     function()
                         local trgCel = activeSprite:newCel(
                             trgLayer, srcFrame, trgImg, srcCel.position)

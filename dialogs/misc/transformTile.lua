@@ -347,8 +347,6 @@ dlg:button {
             local tsIdx = sortedTsIdcs[i]
             local tile = tileSet:tile(tsIdx)
             local packet = {
-                -- color = tile.color,
-                -- data = tile.data,
                 image = tile.image:clone()
             }
             sortedTsPackets[i] = packet

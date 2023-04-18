@@ -17,7 +17,7 @@ local defaults = {
     rangeStr = "",
     strExample = "4,6-9,13",
     cropType = "CROPPED",
-    padding = 2,
+    padding = 0,
     scale = 1,
     usePixelAspect = true,
     toPow2 = false,
@@ -321,6 +321,9 @@ dlg:button {
         pathSep = string.gsub(pathSep, "\\", "\\\\")
 
         local fileTitle = app.fs.fileTitle(filename)
+        if #fileTitle < 1 then
+            fileTitle = app.fs.fileTitle(activeSprite.filename)
+        end
         fileTitle = Utilities.validateFilename(fileTitle)
 
         filePath = filePath .. pathSep

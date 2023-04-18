@@ -237,6 +237,8 @@ dlg:button {
         local distSq = Vec3.distSq
         local search = Octree.queryInternal
         local tilesToImage = AseUtilities.tilesToImage
+        local strfmt = string.format
+        local transact = app.transaction
 
         -- Convert source palette colors to points
         -- inserted into octree.
@@ -369,8 +371,8 @@ dlg:button {
                     pixel(srcHex & 0xff000000 | correspDict[srcHex])
                 end
 
-                app.transaction(
-                    string.format("PaletteToCel %d", srcFrame),
+                transact(
+                    strfmt("PaletteToCel %d", srcFrame),
                     function()
                         local trgCel = activeSprite:newCel(
                             trgLayer, srcFrame,

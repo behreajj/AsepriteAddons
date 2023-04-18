@@ -228,6 +228,8 @@ dlg:button {
         local floor = math.floor
         local trimAlpha = AseUtilities.trimImageAlpha
         local tilesToImage = AseUtilities.tilesToImage
+        local strfmt = string.format
+        local transact = app.transaction
 
         local lenFrames = #frames
         local i = 0
@@ -302,8 +304,8 @@ dlg:button {
                         rgtImg, 0, alphaMask)
                 end
 
-                app.transaction(
-                    string.format("Mirror %d", srcFrame),
+                transact(
+                    strfmt("Mirror %d", srcFrame),
                     function()
                         local lftCel = activeSprite:newCel(
                             lftLayer, srcFrame, lftImg,

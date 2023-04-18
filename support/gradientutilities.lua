@@ -70,29 +70,29 @@ GradientUtilities.DEFAULT_STYLE = "MIXED"
 ---dither matrices.
 GradientUtilities.BAYER_MATRICES = {
     {
-        0.133333, 0.622222,
-        0.866667, 0.377778
+        0.125, 0.625,
+        0.875, 0.375
     },
     {
-        0.039216, 0.530719, 0.162092, 0.653595,
-        0.776471, 0.284967, 0.899346, 0.407843,
-        0.223529, 0.715033, 0.100654, 0.592157,
-        0.960784, 0.469281, 0.837908, 0.346405
+        0.03125, 0.53125, 0.15625, 0.65625,
+        0.78125, 0.28125, 0.90625, 0.40625,
+        0.21875, 0.71875, 0.09375, 0.59375,
+        0.96875, 0.46875, 0.84375, 0.34375
     },
     {
-        0.010256, 0.507774, 0.134636, 0.632153, 0.041351, 0.538869, 0.165731, 0.663248,
-        0.756532, 0.259015, 0.880912, 0.383394, 0.787627, 0.290110, 0.912007, 0.414489,
-        0.196825, 0.694343, 0.072446, 0.569963, 0.227920, 0.725438, 0.103541, 0.601058,
-        0.943101, 0.445584, 0.818722, 0.321205, 0.974196, 0.476679, 0.849817, 0.352300,
-        0.056899, 0.554416, 0.181278, 0.678795, 0.025804, 0.523321, 0.150183, 0.647700,
-        0.803175, 0.305657, 0.927554, 0.430037, 0.772080, 0.274562, 0.896459, 0.398942,
-        0.243468, 0.740985, 0.119088, 0.616606, 0.212373, 0.709890, 0.087993, 0.585511,
-        0.989744, 0.492226, 0.865364, 0.367847, 0.958649, 0.461131, 0.834269, 0.336752
+        0.007813, 0.507813, 0.132813, 0.632813, 0.039063, 0.539063, 0.164063, 0.664063,
+        0.757813, 0.257813, 0.882813, 0.382813, 0.789063, 0.289063, 0.914063, 0.414063,
+        0.195313, 0.695313, 0.070313, 0.570313, 0.226563, 0.726563, 0.101563, 0.601563,
+        0.945313, 0.445313, 0.820313, 0.320313, 0.976563, 0.476563, 0.851563, 0.351563,
+        0.054688, 0.554688, 0.179688, 0.679688, 0.023438, 0.523438, 0.148438, 0.648438,
+        0.804688, 0.304688, 0.929688, 0.429688, 0.773438, 0.273438, 0.898438, 0.398438,
+        0.242188, 0.742188, 0.117188, 0.617188, 0.210938, 0.710938, 0.085938, 0.585938,
+        0.992188, 0.492188, 0.867188, 0.367188, 0.960938, 0.460938, 0.835938, 0.335938
     }
 }
 
 --- Maximum width or height for a custom dither image.
-GradientUtilities.DITHER_MAX_SIZE = 32
+GradientUtilities.DITHER_MAX_SIZE = 64
 
 ---Converts an array of Aseprite colors to a
 ---ClrGradient. If the number of colors is less
@@ -554,51 +554,36 @@ function GradientUtilities.imageToMatrix(image)
     local pxItr = image:pixels()
     local matrix = {}
     local lenMat = 0
-    local mxElm = -2147483648
-    local mnElm = 2147483647
-    local uniques = {}
-    local lenUniques = 0
 
     if colorMode == ColorMode.RGB then
         -- Problem with this approach is that no one
-        -- will agree on RGB to gray conversion and
-        -- that an image with more than 256 unique
-        -- elements, such as a 2^5 Bayer, loses nuance.
+        -- will agree on RGB to gray conversion.
         local fromHex = Clr.fromHex
-        local floor = math.floor
         local sRgbToLab = Clr.sRgbToSrLab2
 
         for pixel in pxItr do
             local hex = pixel()
-            local c = fromHex(hex)
-            local lab = sRgbToLab(c)
-            local v = floor(lab.l * 25.5 + 0.5)
-            if not uniques[v] then
-                lenUniques = lenUniques + 1
-                uniques[v] = true
-                if v > mxElm then mxElm = v end
-                if v < mnElm then mnElm = v end
-            end
+            local srgb = fromHex(hex)
+            local lab = sRgbToLab(srgb)
+            local v = lab.l * 0.01
             lenMat = lenMat + 1
             matrix[lenMat] = v
         end
     elseif colorMode == ColorMode.GRAY then
         for pixel in pxItr do
             local hex = pixel()
-            local v = hex & 0xff
-            if not uniques[v] then
-                lenUniques = lenUniques + 1
-                uniques[v] = true
-                if v > mxElm then mxElm = v end
-                if v < mnElm then mnElm = v end
-            end
+            local v = (hex & 0xff) * 0.003921568627451
             lenMat = lenMat + 1
             matrix[lenMat] = v
         end
     elseif colorMode == ColorMode.INDEXED then
-        -- Apparently this is how indexed dithers are
-        -- supposed to work.
-        -- https://github.com/aseprite/aseprite/issues/2573#issuecomment-736074731
+        -- https://github.com/aseprite/aseprite/
+        -- issues/2573#issuecomment-736074731
+        local mxElm = -2147483648
+        local mnElm = 2147483647
+        local uniques = {}
+        local lenUniques = 0
+
         for pixel in pxItr do
             local i = pixel()
             if not uniques[i] then
@@ -610,25 +595,21 @@ function GradientUtilities.imageToMatrix(image)
             lenMat = lenMat + 1
             matrix[lenMat] = i
         end
+
+        -- Normalize. Include half edges.
+        mnElm = mnElm - 0.5
+        mxElm = mxElm + 0.5
+        local range = math.abs(mxElm - mnElm)
+        if range > 0.0 then
+            local denom = 1.0 / range
+            local j = 0
+            while j < lenMat do
+                j = j + 1
+                matrix[j] = (matrix[j] - mnElm) * denom
+            end
+        end
     else
         return GradientUtilities.BAYER_MATRICES[2], 4, 4
-    end
-
-    -- Normalize range.
-    local range = math.abs(mxElm - mnElm)
-    if range > 0 then
-        -- Scale numerator in half to squish some
-        -- edges without fattening middle bands.
-        local orig = 0.66666666666667 / (lenUniques + 1)
-        local dest = 1.0 - orig
-        local denom = 1.0 / range
-
-        local j = 0
-        while j < lenMat do
-            j = j + 1
-            local t = (matrix[j] - mnElm) * denom
-            matrix[j] = (1.0 - t) * orig + t * dest
-        end
     end
 
     return matrix, width, height

@@ -135,6 +135,8 @@ dlg:button {
         local sqrt = math.sqrt
         local tilesToImage = AseUtilities.tilesToImage
         local toHex = Clr.toHex
+        local strfmt = string.format
+        local transact = app.transaction
 
         local frames = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
@@ -415,8 +417,8 @@ dlg:button {
                     end
                 end
 
-                app.transaction(
-                    string.format("Filter %d", srcFrame),
+                transact(
+                    strfmt("Filter %d", srcFrame),
                     function()
                         local trgCel = activeSprite:newCel(
                             trgLayer, srcFrame,

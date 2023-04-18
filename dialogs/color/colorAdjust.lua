@@ -758,6 +758,8 @@ dlg:button {
         local labToLch = Clr.srLab2ToSrLch
         local lchToLab = Clr.srLchToSrLab2
         local rgbColorMode = ColorMode.RGB
+        local transact = app.transaction
+        local strfmt = string.format
 
         local i = 0
         while i < lenFrames do
@@ -941,8 +943,8 @@ dlg:button {
                     pixel(trgDict[h])
                 end
 
-                app.transaction(
-                    string.format("Color Adjust %d", srcFrame),
+                transact(
+                    strfmt("Color Adjust %d", srcFrame),
                     function()
                         local trgCel = activeSprite:newCel(
                             trgLayer, srcFrame,

@@ -202,6 +202,8 @@ dlg:button {
         local rng = math.random
         local floor = math.floor
         local tSort = table.sort
+        local strfmt = string.format
+        local transact = app.transaction
 
         -- Blit sprite to image, then trim image.
         local srcImg = Image(srcSpriteSpec)
@@ -605,10 +607,9 @@ dlg:button {
             end
         end)
 
-        -- Create cels.
         local trgLayer = trgSprite.layers[1]
         trgLayer.name = string.format(
-            "Pixel Sort.%s.%s",
+            "%s.%s",
             maskCriterion, sortCriterion)
 
         local j = 0
@@ -618,7 +619,7 @@ dlg:button {
             local trgFrame = trgFrames[j]
             local frameImage = frameImages[j]
 
-            app.transaction(string.format(
+            transact(strfmt(
                     "Pixel Sort %d", trgFrame.frameNumber),
                 function()
                     trgSprite:newCel(
