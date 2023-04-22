@@ -553,16 +553,9 @@ function Vec3.hashCode(v)
     local zBits = string.unpack("i4",
         string.pack("f", v.z))
 
-    local hsh = ((84696351 ~ xBits)
+    return ((84696351 ~ xBits)
         * 16777619 ~ yBits)
         * 16777619 ~ zBits
-
-    local hshInt = hsh & 0xffffffff
-    if hshInt & 0x80000000 then
-        return -((~hshInt & 0xffffffff) + 1)
-    else
-        return hshInt
-    end
 end
 
 ---Finds the vector's inclination.

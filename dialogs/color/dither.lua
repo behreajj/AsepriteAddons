@@ -518,7 +518,13 @@ dlg:button {
             local queryRad = lDiff * lDiff
                 + aDiff * aDiff
                 + bDiff * bDiff
-            local rsq = queryRad * queryRad
+
+            local distFunc = function(a, b)
+                local da = b.x - a.x
+                local db = b.y - a.y
+                return math.sqrt(da * da + db * db)
+                    + math.abs(b.z - a.z)
+            end
 
             Octree.cull(octree)
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
@@ -530,7 +536,7 @@ dlg:button {
                 local lab = Clr.sRgbToSrLab2(srgb)
                 local query = Vec3.new(lab.a, lab.b, lab.l)
                 local nearPoint, _ = Octree.queryInternal(
-                    octree, query, rsq, Vec3.distSq)
+                    octree, query, queryRad, distFunc)
 
                 local trgHex = 0x0
                 if nearPoint then

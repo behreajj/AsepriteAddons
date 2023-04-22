@@ -351,17 +351,10 @@ function Vec4.hashCode(v)
     local wBits = string.unpack("i4",
         string.pack("f", v.w))
 
-    local hsh = (((84696351 ~ xBits)
+    return (((84696351 ~ xBits)
         * 16777619 ~ yBits)
         * 16777619 ~ zBits)
         * 16777619 ~ wBits
-
-    local hshInt = hsh & 0xffffffff
-    if hshInt & 0x80000000 then
-        return -((~hshInt & 0xffffffff) + 1)
-    else
-        return hshInt
-    end
 end
 
 ---Finds the linear step between a left and

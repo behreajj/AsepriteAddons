@@ -558,6 +558,8 @@ function GradientUtilities.imageToMatrix(image)
     if colorMode == ColorMode.RGB then
         -- Problem with this approach is that no one
         -- will agree on RGB to gray conversion.
+        -- To unpack colors to floats, you could try, e.g.,
+        -- string.unpack("f", string.pack("i", 0x40490FDB))
         local fromHex = Clr.fromHex
         local sRgbToLab = Clr.sRgbToSrLab2
 

@@ -262,13 +262,18 @@ dlg:button {
         local cos = math.cos
         local sin = math.sin
         local floor = math.floor
-        local sRgbToSrLab2 = Clr.sRgbToSrLab2
+        local sRgbToLab = Clr.sRgbToSrLab2
         local fromHex = Clr.fromHex
         local rotax = Vec3.rotateInternal
-        local v3hsh = Vec3.hashCode
+        local v3hash = Vec3.hashCode
         local octins = Octree.insert
         local search = Octree.queryInternal
-        local distSq = Vec3.distSq
+        local distFunc = function(a, b)
+            local da = b.x - a.x
+            local db = b.y - a.y
+            return math.sqrt(da * da + db * db)
+                + math.abs(b.z - a.z)
+        end
         local screen = Utilities.toScreen
         local drawCirc = AseUtilities.drawCircleFill
         local tablesort = table.sort
@@ -288,9 +293,9 @@ dlg:button {
             i = i + 1
             local hexSrgb = uniqueHexesSrgb[i]
             local srgb = fromHex(hexSrgb)
-            local lab = sRgbToSrLab2(srgb)
+            local lab = sRgbToLab(srgb)
             local point = Vec3.new(lab.a, lab.b, lab.l)
-            ptHexDict[v3hsh(point)] = uniqueHexesProfile[i]
+            ptHexDict[v3hash(point)] = uniqueHexesProfile[i]
             octins(octree, point)
         end
 
@@ -325,8 +330,8 @@ dlg:button {
             swatchAlpha01)
 
         -- Create replacement colors.
-        local queryRad = args.queryRad or defaults.queryRad
-        local rsq = queryRad * queryRad
+        local queryRad = args.queryRad
+            or defaults.queryRad --[[@as number]]
         local replaceClrs = {}
         local gridLen = #gridPts
         local swatchAlphaMask = swatchAlpha << 0x18
@@ -334,13 +339,13 @@ dlg:button {
         while j < gridLen do
             j = j + 1
             local srcClr = gridClrs[j]
-            local srcLab = sRgbToSrLab2(srcClr)
+            local srcLab = sRgbToLab(srcClr)
             local srcLabPt = Vec3.new(
                 srcLab.a, srcLab.b, srcLab.l)
 
-            local nearPoint, _ = search(octree, srcLabPt, rsq, distSq)
+            local nearPoint, _ = search(octree, srcLabPt, queryRad, distFunc)
             if nearPoint then
-                local ptHash = v3hsh(nearPoint)
+                local ptHash = v3hash(nearPoint)
                 replaceClrs[j] = swatchAlphaMask
                     | (ptHexDict[ptHash] & 0x00ffffff)
             else

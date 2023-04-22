@@ -9,11 +9,8 @@ local defaults = {
     -- to necessitate including them in JSON,
     -- esp. when they raise issues of how to
     -- format and organize.
-
-    -- TODO: Test padding against Unity sprite sheet
-    -- cutter tool. Consider adding margin, changing
-    -- padding inbetween frames if needed.
     target = "ALL",
+    border = 0,
     padding = 0,
     scale = 1,
     usePixelAspect = true,
@@ -102,6 +99,16 @@ dlg:combobox {
         dlg:modify { id = "includeHidden", visible = saveJson
             and includeMaps and allTarget }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "border",
+    label = "Border:",
+    min = 0,
+    max = 32,
+    value = defaults.border
 }
 
 dlg:newrow { always = false }
@@ -262,12 +269,14 @@ dlg:button {
         local filename = args.filename --[[@as string]]
         local target = args.target
             or defaults.target --[[@as string]]
+        local margin = args.border
+            or defaults.border --[[@as integer]]
         local padding = args.padding
             or defaults.padding --[[@as integer]]
         local scale = args.scale
             or defaults.scale --[[@as integer]]
         local usePixelAspect = args.usePixelAspect --[[@as boolean]]
-        local toPow2 = args.toPow2 --[[@as boolean]]
+        local usePow2 = args.toPow2 --[[@as boolean]]
         local potUniform = args.potUniform --[[@as boolean]]
         local saveJson = args.saveJson --[[@as boolean]]
         local includeMaps = args.includeMaps --[[@as boolean]]
@@ -351,8 +360,7 @@ dlg:button {
             hScale = hScale * pxh
         end
         local useResize = wScale ~= 1 or hScale ~= 1
-        local pad2 = padding + padding
-        local usePadding = padding > 0
+        local margin2 = margin + margin
         local nonUniformDim = not potUniform
 
         local sheetPalette = AseUtilities.getPalette(
@@ -387,7 +395,6 @@ dlg:button {
 
         -- Cache methods used in loops.
         local resize = AseUtilities.resizeImageNearest
-        local pad = AseUtilities.padImage
         local nextPow2 = Utilities.nextPowerOf2
         local ceil = math.ceil
         local max = math.max
@@ -416,20 +423,20 @@ dlg:button {
                 tsNameVerif = strfmt("%03d", i - 1)
             end
 
-            local wTileScale = wTileSrc * wScale
-            local hTileScale = hTileSrc * hScale
-            local wTileTrg = wTileScale + pad2
-            local hTileTrg = hTileScale + pad2
+            local wTileTrg = wTileSrc * wScale
+            local hTileTrg = hTileSrc * hScale
 
             -- Same procedure as saving batched sheets in
             -- framesExport.
             local lenTileSet = #tileSet
-            local columns = ceil(sqrt(lenTileSet))
+            local columns = max(1, ceil(sqrt(lenTileSet)))
             local rows = max(1, ceil(lenTileSet / columns))
-            local wSheet = wTileTrg * columns
-            local hSheet = hTileTrg * rows
+            local wSheet = margin2 + wTileTrg * columns
+                + padding * (columns - 1)
+            local hSheet = margin2 + hTileTrg * rows
+                + padding * (rows - 1)
 
-            if toPow2 then
+            if usePow2 then
                 if nonUniformDim then
                     wSheet = nextPow2(wSheet)
                     hSheet = nextPow2(hSheet)
@@ -438,8 +445,10 @@ dlg:button {
                     hSheet = wSheet
                 end
 
-                columns = max(1, wSheet // wTileTrg)
-                rows = max(1, hSheet // hTileTrg)
+                -- This needs to account for large
+                -- margins and padding.
+                -- columns = max(1, wSheet // wTileTrg)
+                -- rows = max(1, hSheet // hTileTrg)
             end
 
             -- Create composite image.
@@ -462,9 +471,7 @@ dlg:button {
             while k < lenTileSet do
                 local row = k // columns
                 local column = k % columns
-
                 local tile = tileSet:tile(k)
-                k = k + 1
 
                 -- Is the index different from j
                 -- because of the tile set base index?
@@ -472,18 +479,17 @@ dlg:button {
                 local tileScaled = tileImage
                 if useResize then
                     tileScaled = resize(tileImage,
-                        wTileScale, hTileScale)
-                end
-                local tilePadded = tileScaled
-                if usePadding then
-                    tilePadded = pad(tileScaled, padding)
+                        wTileTrg, hTileTrg)
                 end
 
-                local xTrg = column * wTileTrg
-                local yTrg = row * hTileTrg
-                sheetImage:drawImage(tilePadded, Point(xTrg, yTrg))
+                local xOff = margin + column * padding
+                local yOff = margin + row * padding
+                local xTrg = xOff + column * wTileTrg
+                local yTrg = yOff + row * hTileTrg
+                sheetImage:drawImage(tileScaled, Point(xTrg, yTrg))
 
-                local sectionPacket = {
+                k = k + 1
+                sectionPackets[k] = {
                     column = column,
                     row = row,
                     rect = {
@@ -493,7 +499,6 @@ dlg:button {
                         height = hTileTrg
                     }
                 }
-                sectionPackets[k] = sectionPacket
             end
 
             local fileNameShort = strfmt(
@@ -705,6 +710,7 @@ dlg:button {
             local jsonFormat = table.concat({
                 "{\"fileDir\":\"%s\"",
                 "\"fileExt\":\"%s\"",
+                "\"border\":%d",
                 "\"padding\":%d",
                 "\"scale\":%d",
                 "\"tileSets\":[%s]",
@@ -718,7 +724,7 @@ dlg:button {
             local jsonString = string.format(
                 jsonFormat,
                 filePath, fileExt,
-                padding, scale,
+                margin, padding, scale,
                 table.concat(tsStrs, ","),
                 table.concat(tmStrs, ","),
                 table.concat(celStrs, ","),

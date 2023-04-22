@@ -299,9 +299,8 @@ end
 ---@return number
 function Octree.query(o, center, radius, dfPt)
     local rVrf = radius or 46340
-    local v, dsq = Octree.queryInternal(
-        o, center, rVrf * rVrf, Vec3.distSq)
-    local d = math.sqrt(dsq)
+    local v, d = Octree.queryInternal(
+        o, center, rVrf, Vec3.distEuclidean)
     if v then
         return Vec3.new(v.x, v.y, v.z), d
     else
@@ -315,28 +314,28 @@ end
 ---cannot be found, returns nil.
 ---@param o Octree octree
 ---@param center Vec3 sphere center
----@param rsq number sphere radius, squared
----@param distSq fun(a: Vec3, b: Vec3): number sq distance function
+---@param rad number sphere radius
+---@param df fun(a: Vec3, b: Vec3): number distance function
 ---@return Vec3|nil
 ---@return number
-function Octree.queryInternal(o, center, rsq, distSq)
+function Octree.queryInternal(o, center, rad, df)
     local nearPoint = nil
-    local nearDistSq = 2147483647
-    if Bounds3.intersectsSphereInternal(
-            o.bounds, center, rsq) then
+    local nearDist = 2147483647
+    if Bounds3.intersectsSphere(
+            o.bounds, center, rad) then
         local children = o.children
         local lenChildren = #children
         local i = 0
         while i < lenChildren do
             i = i + 1
             local child = children[i]
-            local candDistSq = 2147483647
+            local candDist = 2147483647
             local candPoint = nil
-            candPoint, candDistSq = Octree.queryInternal(
-                child, center, rsq, distSq)
-            if candPoint and (candDistSq < nearDistSq) then
+            candPoint, candDist = Octree.queryInternal(
+                child, center, rad, df)
+            if candPoint and (candDist < nearDist) then
                 nearPoint = candPoint
-                nearDistSq = candDistSq
+                nearDist = candDist
             end
         end
 
@@ -348,17 +347,17 @@ function Octree.queryInternal(o, center, rsq, distSq)
             while j < lenPoints do
                 j = j + 1
                 local point = points[j]
-                local candDistSq = distSq(center, point)
-                if (candDistSq < rsq)
-                    and (candDistSq < nearDistSq) then
+                local candDist = df(center, point)
+                if (candDist < rad)
+                    and (candDist < nearDist) then
                     nearPoint = point
-                    nearDistSq = candDistSq
+                    nearDist = candDist
                 end
             end
         end
     end
 
-    return nearPoint, nearDistSq
+    return nearPoint, nearDist
 end
 
 ---Splits the octree node into eight child nodes.

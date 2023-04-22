@@ -234,7 +234,6 @@ dlg:button {
         local fromHex = Clr.fromHex
         local v3Hash = Vec3.hashCode
         local octInsert = Octree.insert
-        local distSq = Vec3.distSq
         local search = Octree.queryInternal
         local tilesToImage = AseUtilities.tilesToImage
         local strfmt = string.format
@@ -254,14 +253,23 @@ dlg:button {
 
         -- Select query radius according to color space.
         local cvgRad = 0.0
+        local distFunc = Vec3.distEuclidean
         if clrSpacePreset == "CIE_LAB"
             or clrSpacePreset == "SR_LAB_2" then
             cvgRad = args.cvgLabRad --[[@as number]]
+
+            -- See https://www.wikiwand.com/en/
+            -- Color_difference#/Other_geometric_constructions
+            distFunc = function(a, b)
+                local da = b.x - a.x
+                local db = b.y - a.y
+                return math.sqrt(da * da + db * db)
+                    + math.abs(b.z - a.z)
+            end
         else
             cvgRad = args.cvgNormRad --[[@as number]]
-            cvgRad =cvgRad * 0.01
+            cvgRad = cvgRad * 0.01
         end
-        local rsq = cvgRad * cvgRad
 
         -- Create octree.
         local ptToHexDict = {}
@@ -353,7 +361,7 @@ dlg:button {
                     -- resultHex = queryHex
                     -- else
                     local nearPoint, _ = search(
-                        octree, query.point, rsq, distSq)
+                        octree, query.point, cvgRad, distFunc)
                     if nearPoint then
                         local hsh = v3Hash(nearPoint)
                         resultHex = ptToHexDict[hsh]

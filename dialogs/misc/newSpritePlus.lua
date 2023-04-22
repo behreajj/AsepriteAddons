@@ -80,14 +80,14 @@ dlg:combobox {
         local args = dlg.data
         local sizeMode = args.sizeMode
 
-        local isCust = sizeMode == "CUSTOM"
-        dlg:modify { id = "width", visible = isCust }
-        dlg:modify { id = "height", visible = isCust }
+        local isCst = sizeMode == "CUSTOM"
+        dlg:modify { id = "width", visible = isCst }
+        dlg:modify { id = "height", visible = isCst }
 
-        local isTmpl = sizeMode == "ASPECT"
-        dlg:modify { id = "aRatio", visible = isTmpl }
-        dlg:modify { id = "bRatio", visible = isTmpl }
-        dlg:modify { id = "aspectScale", visible = isTmpl }
+        local isAsp = sizeMode == "ASPECT"
+        dlg:modify { id = "aRatio", visible = isAsp }
+        dlg:modify { id = "bRatio", visible = isAsp }
+        dlg:modify { id = "aspectScale", visible = isAsp }
 
         updateRatio(dlg)
     end
@@ -317,7 +317,7 @@ dlg:button {
         local hexBkg = 0x0
         if useIndexed then
             colorModeInt = ColorMode.INDEXED
-            local bkgIdx = args.bkgIdx or defaults.bkgIdx
+            local bkgIdx = args.bkgIdx or defaults.bkgIdx --[[@as integer]]
             if bkgIdx < #hexesProfile then
                 hexBkg = hexesProfile[1 + bkgIdx]
                 local aChannel = (hexBkg >> 0x18) & 0xff

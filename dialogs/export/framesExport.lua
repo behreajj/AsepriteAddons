@@ -9,14 +9,11 @@ local defaults = {
     -- into subfolders? If this is not implemented,
     -- then the batches option should only be available
     -- if useSheet is true.
-
-    -- TODO: Test padding against Unity sprite sheet
-    -- cutter tool. Consider adding margin, changing
-    -- padding inbetween frames if needed.
     frameTarget = "ALL",
     rangeStr = "",
     strExample = "4,6-9,13",
     cropType = "CROPPED",
+    border = 0,
     padding = 0,
     scale = 1,
     useBatches = false,
@@ -95,21 +92,29 @@ end
 ---@param hMax integer maximum image height
 ---@param spriteSpec ImageSpec sprite spec
 ---@param compPalette Palette palette for all images
----@param toPow2 boolean promote to nearest pot
+---@param margin integer margin amount
+---@param padding integer padding amount
+---@param usePow2 boolean promote to nearest pot
 ---@param nonUniformDim boolean non uniform npot
 ---@return table
 local function saveSheet(
     filename, packets1,
     wMax, hMax,
     spriteSpec, compPalette,
-    toPow2, nonUniformDim)
+    margin, padding,
+    usePow2, nonUniformDim)
     local lenPackets1 = #packets1
-    local columns = math.ceil(math.sqrt(lenPackets1))
-    local rows = math.max(1, math.ceil(lenPackets1 / columns))
-    local wSheet = wMax * columns
-    local hSheet = hMax * rows
+    local columns = math.max(1,
+        math.ceil(math.sqrt(lenPackets1)))
+    local rows = math.max(1,
+        math.ceil(lenPackets1 / columns))
+    local margin2 = margin + margin
+    local wSheet = margin2 + wMax * columns
+        + padding * (columns - 1)
+    local hSheet = margin2 + hMax * rows
+        + padding * (rows - 1)
 
-    if toPow2 then
+    if usePow2 then
         if nonUniformDim then
             wSheet = Utilities.nextPowerOf2(wSheet)
             hSheet = Utilities.nextPowerOf2(hSheet)
@@ -119,8 +124,10 @@ local function saveSheet(
             hSheet = wSheet
         end
 
-        columns = math.max(1, wSheet // wMax)
-        rows = math.max(1, hSheet // hMax)
+        -- This needs to account for large
+        -- margins and padding.
+        -- columns = math.max(1, wSheet // wMax)
+        -- rows = math.max(1, hSheet // hMax)
     end
 
     -- Unpack source spec.
@@ -149,8 +156,11 @@ local function saveSheet(
     while k < lenPackets1 do
         local row = k // columns
         local column = k % columns
-        local x = column * wMax
-        local y = row * hMax
+        local x = margin + column * wMax
+        local y = margin + row * hMax
+
+        x = x + column * padding
+        y = y + row * padding
 
         k = k + 1
         local packet = packets1[k]
@@ -203,14 +213,12 @@ end
 ---@param hScale integer height scalar
 ---@param useCrop boolean use crop
 ---@param useResize boolean use resize
----@param padding integer padding
 ---@return table
 local function genPacket(
     frIdx,
     activeSprite, spriteFrameObjs,
     spriteSpec, wScale, hScale,
-    useCrop, useResize,
-    padding)
+    useCrop, useResize)
     local flat = Image(spriteSpec)
     flat:drawSprite(activeSprite, frIdx)
 
@@ -243,10 +251,6 @@ local function genPacket(
             flat, wr, hr)
 
         flat = resized
-    end
-
-    if padding > 0 then
-        flat = AseUtilities.padImage(flat, padding)
     end
 
     local frObj = spriteFrameObjs[frIdx]
@@ -333,6 +337,17 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:slider {
+    id = "border",
+    label = "Border:",
+    min = 0,
+    max = 32,
+    value = defaults.border,
+    visible = defaults.useSheet
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
     id = "padding",
     label = "Padding:",
     min = 0,
@@ -367,6 +382,7 @@ dlg:check {
         local state = useSheet
             and (isTags or isManual)
         dlg:modify { id = "useBatches", visible = state }
+        dlg:modify { id = "border", visible = useSheet }
     end
 }
 
@@ -487,6 +503,8 @@ dlg:button {
             or defaults.rangeStr --[[@as string]]
         local cropType = args.cropType
             or defaults.cropType --[[@as string]]
+        local margin = args.border
+            or defaults.border --[[@as integer]]
         local padding = args.padding
             or defaults.padding --[[@as integer]]
         local scale = args.scale
@@ -494,7 +512,7 @@ dlg:button {
         local useSheet = args.useSheet --[[@as boolean]]
         local useBatches = args.useBatches --[[@as boolean]]
         local usePixelAspect = args.usePixelAspect --[[@as boolean]]
-        local toPow2 = args.toPow2 --[[@as boolean]]
+        local usePow2 = args.toPow2 --[[@as boolean]]
         local potUniform = args.potUniform --[[@as boolean]]
         local saveJson = args.saveJson --[[@as boolean]]
         local boundsFormat = args.boundsFormat
@@ -568,7 +586,6 @@ dlg:button {
             hScale = hScale * pxh
         end
         local useResize = wScale ~= 1 or hScale ~= 1
-        local pad2 = padding + padding
 
         -- Process other variables.
         local useCrop = cropType == "CROPPED"
@@ -577,6 +594,8 @@ dlg:button {
             and useSheet
             and (frameTarget == "TAGS"
             or frameTarget == "MANUAL")
+        local usePadding = padding > 0
+        if not useSheet then margin = 0 end
 
         -- Cache methods used in loops.
         local strfmt = string.format
@@ -622,8 +641,7 @@ dlg:button {
                         frIdx, activeSprite,
                         spriteFrameObjs, spriteSpec,
                         wScale, hScale,
-                        useCrop, useResize,
-                        padding)
+                        useCrop, useResize)
                     packetsUnique[frIdx] = packet
                 end
                 packets1[j] = packet
@@ -704,13 +722,14 @@ dlg:button {
 
                     local wMaxLocal = wMaxesLocal[j]
                     local hMaxLocal = hMaxesLocal[j]
-                    local wCell = wMaxLocal * wScale + pad2
-                    local hCell = hMaxLocal * hScale + pad2
+                    local wCell = wMaxLocal * wScale
+                    local hCell = hMaxLocal * hScale
                     local sheetPacket = saveSheet(
                         batchFileLong, packets1,
                         wCell, hCell,
                         spriteSpec, sheetPalette,
-                        toPow2, nonUniformDim)
+                        margin, padding,
+                        usePow2, nonUniformDim)
                     sheetPacket.fileName = batchFileShort
                     sheetPackets[j] = sheetPacket
                 end
@@ -719,25 +738,36 @@ dlg:button {
                 -- individual images in subfolders were implemented.
             end
         else
+            local expandPot = AseUtilities.expandImageToPow2
+            local padImage = AseUtilities.padImage
+
             ---@type table[]
             local packets1 = packets2[1]
             local lenInner = #packets1
             if useSheet then
-                local wCell = wMaxGlobal * wScale + pad2
-                local hCell = hMaxGlobal * hScale + pad2
+                local wCell = wMaxGlobal * wScale
+                local hCell = hMaxGlobal * hScale
                 local sheetPacket = saveSheet(
                     filename, packets1,
                     wCell, hCell,
                     spriteSpec, sheetPalette,
-                    toPow2, nonUniformDim)
+                    margin, padding,
+                    usePow2, nonUniformDim)
                 sheetPacket.fileName = fileTitle
                 sheetPackets[1] = sheetPacket
             else
                 local k = 0
                 while k < lenInner do
                     k = k + 1
-                    if toPow2 then
-                        local imgPow2 = AseUtilities.expandImageToPow2(
+
+                    if usePadding then
+                        local imgPadded = padImage(
+                            packets1[k].cel.image, padding)
+                        packets1[k].cel.image = imgPadded
+                    end
+
+                    if usePow2 then
+                        local imgPow2 = expandPot(
                             packets1[k].cel.image,
                             spriteColorMode,
                             spriteAlphaIndex,
@@ -823,6 +853,7 @@ dlg:button {
             local jsonFormat = table.concat({
                 "{\"fileDir\":\"%s\"",
                 "\"fileExt\":\"%s\"",
+                "\"border\":%d",
                 "\"padding\":%d",
                 "\"scale\":%d",
                 "\"sheets\":[%s]",
@@ -836,7 +867,7 @@ dlg:button {
             local jsonString = string.format(
                 jsonFormat,
                 filePath, fileExt,
-                padding, scale,
+                margin, padding, scale,
                 table.concat(sheetStrArr, ","),
                 table.concat(celStrs, ","),
                 table.concat(frameStrs, ","),

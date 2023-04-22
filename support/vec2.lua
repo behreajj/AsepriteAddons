@@ -403,21 +403,15 @@ end
 ---@param v Vec2 vector
 ---@return integer
 function Vec2.hashCode(v)
+    -- https://stackoverflow.com/questions/
+    -- 300840/force-php-integer-overflow
+    -- https://readafterwrite.wordpress.com/
+    -- 2017/03/23/floating-point-keys-in-lua/
     local xBits = string.unpack("i4",
         string.pack("f", v.x))
     local yBits = string.unpack("i4",
         string.pack("f", v.y))
-    local hsh = (84696351 ~ xBits) * 16777619 ~ yBits
-
-    -- QUERY: Use another string pack/unpack instead?
-    -- https://stackoverflow.com/questions/
-    -- 300840/force-php-integer-overflow
-    local hshInt = hsh & 0xffffffff
-    if hshInt & 0x80000000 then
-        return -((~hshInt & 0xffffffff) + 1)
-    else
-        return hshInt
-    end
+    return (84696351 ~ xBits) * 16777619 ~ yBits
 end
 
 ---Finds a vector's heading.

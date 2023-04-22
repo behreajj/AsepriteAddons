@@ -276,6 +276,10 @@ dlg:button {
                 h = h + 1
                 frIdcs2[h] = { idxOrig, idxDest }
             end
+
+            if lenFrames % spanCount > 0 then
+                frIdcs2[h + 1] = { frIdcs2[h][2] + 1, lenFrames }
+            end
         else
             frIdcs2 = AseUtilities.getFrames(
                 activeSprite, "MANUAL",
@@ -311,15 +315,15 @@ dlg:button {
             local lenInner = #frIdcs1
             if lenInner > 0 then
                 local idxFirst = frIdcs1[1]
-                local idxLast  = frIdcs1[lenInner]
+                local idxLast = frIdcs1[lenInner]
 
-                local start    = min(idxFirst, idxLast)
-                local stop     = max(idxFirst, idxLast)
+                local start = min(idxFirst, idxLast)
+                local stop = max(idxFirst, idxLast)
 
                 transact("New Tag", function()
-                    local tag   = activeSprite:newTag(start, stop)
-                    tag.name    = strfmt(nameFormat, start, stop)
-                    tag.aniDir  = aniDirEnum
+                    local tag = activeSprite:newTag(start, stop)
+                    tag.name = strfmt(nameFormat, start, stop)
+                    tag.aniDir = aniDirEnum
                     tag.repeats = repeats
 
                     if recolorNew then
