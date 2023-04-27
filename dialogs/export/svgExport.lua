@@ -125,7 +125,7 @@ end
 
 local function layerToSvgStr(
     layer, activeFrame, spriteBounds,
-    border, scale, margin, isTilemap)
+    border, scale, margin)
     local str = ""
 
     local lyrAlpha = 0xff
@@ -155,8 +155,7 @@ local function layerToSvgStr(
                 groupStrArr[i] = layerToSvgStr(
                     groupLayers[i],
                     activeFrame, spriteBounds,
-                    border, scale, margin,
-                    isTilemap)
+                    border, scale, margin)
             end
 
             grpStr = grpStr .. (table.concat(groupStrArr) .. "\n</g>")
@@ -165,7 +164,7 @@ local function layerToSvgStr(
             local cel = layer:cel(activeFrame)
             if cel then
                 local celImg = cel.image
-                if isTilemap then
+                if layer.isTilemap then
                     celImg = AseUtilities.tilesToImage(
                         celImg, layer.tileset, ColorMode.RGB)
                 end
@@ -470,13 +469,11 @@ dlg:button {
             while j < lenSpriteLayers do
                 j = j + 1
                 local spriteLayer = spriteLayers[j]
-                local isTilemap = spriteLayer.isTilemap
 
                 layersStrArr[j] = layerToSvgStr(
                     spriteLayer,
                     activeFrame, spriteBounds,
-                    border, scale, margin,
-                    isTilemap)
+                    border, scale, margin)
             end
             str = str .. concat(layersStrArr)
         end
