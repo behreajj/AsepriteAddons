@@ -11,6 +11,16 @@ local defaults = {
 local function blendModeToStr(bm)
     -- The blend mode for group layers is nil.
     if bm then
+        -- As of v1.3, blend mode normal reports as
+        -- SRC-OVER. CSS does not support addition,
+        -- subtract or divide.
+        if bm == BlendMode.NORMAL
+            or bm == BlendMode.ADDITION
+            or bm == BlendMode.SUBTRACT
+            or bm == BlendMode.DIVIDE then
+            return "normal"
+        end
+
         local bmStr = "normal"
         for k, v in pairs(BlendMode) do
             if bm == v then
@@ -19,13 +29,6 @@ local function blendModeToStr(bm)
             end
         end
         bmStr = string.gsub(string.lower(bmStr), "_", "-")
-
-        -- Not supported by CSS. Default to normal.
-        if bmStr == "addition"
-            or bmStr == "subtract"
-            or bmStr == "divide" then
-            return "normal"
-        end
 
         -- No HSL prefix in CSS.
         if string.sub(bmStr, 1, 3) == "hsl" then
@@ -122,7 +125,7 @@ end
 
 local function layerToSvgStr(
     layer, activeFrame, spriteBounds,
-    border, scale, margin, checkTilemaps)
+    border, scale, margin, isTilemap)
     local str = ""
 
     local lyrAlpha = 0xff
@@ -153,7 +156,7 @@ local function layerToSvgStr(
                     groupLayers[i],
                     activeFrame, spriteBounds,
                     border, scale, margin,
-                    checkTilemaps)
+                    isTilemap)
             end
 
             grpStr = grpStr .. (table.concat(groupStrArr) .. "\n</g>")
@@ -162,7 +165,7 @@ local function layerToSvgStr(
             local cel = layer:cel(activeFrame)
             if cel then
                 local celImg = cel.image
-                if checkTilemaps then
+                if isTilemap then
                     celImg = AseUtilities.tilesToImage(
                         celImg, layer.tileset, ColorMode.RGB)
                 end
@@ -312,7 +315,7 @@ dlg:button {
         end
 
         local ext = app.fs.fileExtension(filepath)
-        if ext ~= "svg" then
+        if string.lower(ext) ~= "svg" then
             app.alert { title = "Error", text = "Extension is not svg." }
             return
         end
@@ -466,11 +469,14 @@ dlg:button {
             local j = 0
             while j < lenSpriteLayers do
                 j = j + 1
+                local spriteLayer = spriteLayers[j]
+                local isTilemap = spriteLayer.isTilemap
+
                 layersStrArr[j] = layerToSvgStr(
-                    spriteLayers[j],
+                    spriteLayer,
                     activeFrame, spriteBounds,
                     border, scale, margin,
-                    true)
+                    isTilemap)
             end
             str = str .. concat(layersStrArr)
         end

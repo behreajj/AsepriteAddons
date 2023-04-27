@@ -181,31 +181,6 @@ function Vec2.bezierPoint(ap0, cp0, cp1, ap1, step)
         cp1.y * tsq3u + ap1.y * tcb)
 end
 
----Bisects an array of vectors to find
----the appropriate insertion point for
----a vector. Biases towards the right insert
----point. Should be used with sorted arrays.
----@param arr Vec2[] vectors array
----@param elm Vec2 vector
----@param compare function? comparator
----@return integer
-function Vec2.bisectRight(arr, elm, compare)
-    local low = 0
-    local high = #arr
-    if high < 1 then return 1 end
-    local f = compare or Vec2.comparator
-    while low < high do
-        local middle = (low + high) // 2
-        local right = arr[1 + middle]
-        if right and f(elm, right) then
-            high = middle
-        else
-            low = middle + 1
-        end
-    end
-    return 1 + low
-end
-
 ---Finds the ceiling of the vector.
 ---@param v Vec2 vector
 ---@return Vec2
@@ -399,7 +374,7 @@ function Vec2.hadamard(a, b)
         a.y * b.y)
 end
 
----Finds a signed integer hash code for a vector.
+---Finds an integer hash code for a vector.
 ---@param v Vec2 vector
 ---@return integer
 function Vec2.hashCode(v)
@@ -434,24 +409,6 @@ end
 ---@return number
 function Vec2.headingUnsigned(v)
     return math.atan(v.y, v.x) % 6.2831853071796
-end
-
----Inserts a vector into a table so as to
----maintain sorted order. Biases toward the right
----insertion point. Returns true if the unique
----vector was inserted; false if not.
----@param arr Vec2[] vectors array
----@param elm Vec2 vector
----@param compare function comparator
----@return boolean
-function Vec2.insortRight(arr, elm, compare)
-    local i = Vec2.bisectRight(arr, elm, compare)
-    local dupe = arr[i - 1]
-    if dupe and Vec2.equals(dupe, elm) then
-        return false
-    end
-    table.insert(arr, i, elm)
-    return true
 end
 
 ---Finds the linear step between a left and

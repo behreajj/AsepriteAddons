@@ -212,8 +212,8 @@ dlg:button {
         local normDist = 2.0 / (maxRad * distFunc(0.0, 0.0, wn1, hn1))
 
         local grdSpec = ImageSpec {
-            width = math.max(1, activeSprite.width),
-            height = math.max(1, activeSprite.height),
+            width = max(1, activeSprite.width),
+            height = max(1, activeSprite.height),
             colorMode = activeSpec.colorMode,
             transparentColor = activeSpec.transparentColor
         }

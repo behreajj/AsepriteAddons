@@ -4,7 +4,7 @@ local targets = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults = {
     target = "ACTIVE",
-    iterations = 16,
+    iterations = 1,
     alphaFade = false,
     reverseFade = false,
     m00 = false,
@@ -15,7 +15,7 @@ local defaults = {
     m20 = false,
     m21 = true,
     m22 = false,
-    pullFocus = false
+    pullFocus = true
 }
 
 local dlg = Dialog { title = "Outline Gradient" }

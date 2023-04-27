@@ -382,9 +382,10 @@ dlg:button {
         if height > dfms then height = dfms end
 
         -- Store new dimensions in preferences.
-        app.preferences.new_file.width = width
-        app.preferences.new_file.height = height
-        app.preferences.new_file.color_mode = colorModeInt
+        local filePrefs = app.preferences.new_file
+        filePrefs.width = width
+        filePrefs.height = height
+        filePrefs.color_mode = colorModeInt
 
         -- Create sprite, set file name, set to active.
         AseUtilities.preserveForeBack()
@@ -407,7 +408,7 @@ dlg:button {
 
         app.activeSprite = newSprite
 
-        -- Only assign palette here if not grayscale.
+        -- Only assign palette here if not gray.
         if not useGray then
             AseUtilities.setPalette(hexesProfile, newSprite, 1)
         end
@@ -454,7 +455,7 @@ dlg:button {
             end)
         end
 
-        -- Convert to grayscale will append palette.
+        -- Convert to gray will append palette.
         AseUtilities.changePixelFormat(colorModeInt)
         if useGray then
             AseUtilities.setPalette(hexesProfile, newSprite, 1)

@@ -225,7 +225,7 @@ end
 ---point. Should be used with sorted arrays.
 ---@param arr Vec3[] vectors array
 ---@param elm Vec3 vector
----@param compare function? comparator
+---@param compare? fun(a: Vec3, b: Vec3): boolean comparator
 ---@return integer
 function Vec3.bisectRight(arr, elm, compare)
     local low = 0
@@ -542,7 +542,7 @@ function Vec3.hadamard(a, b)
         a.z * b.z)
 end
 
----Finds a signed integer hash code for a vector.
+---Finds an integer hash code for a vector.
 ---@param v Vec3 vector
 ---@return integer
 function Vec3.hashCode(v)
@@ -590,7 +590,7 @@ end
 ---vector was inserted; false if not.
 ---@param arr Vec3[] vectors array
 ---@param elm Vec3 vector
----@param compare function comparator
+---@param compare? fun(a: Vec3, b: Vec3): boolean comparator
 ---@return boolean
 function Vec3.insortRight(arr, elm, compare)
     local i = Vec3.bisectRight(arr, elm, compare)

@@ -338,7 +338,7 @@ function Vec4.hadamard(a, b)
         a.w * b.w)
 end
 
----Finds a signed integer hash code for a vector.
+---Finds an integer hash code for a vector.
 ---@param v Vec4 vector
 ---@return integer
 function Vec4.hashCode(v)

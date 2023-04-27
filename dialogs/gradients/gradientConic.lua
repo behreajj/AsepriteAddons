@@ -146,8 +146,8 @@ dlg:button {
         if args.cw then cw = -1.0 end
 
         local grdSpec = ImageSpec {
-            width = math.max(1, activeSprite.width),
-            height = math.max(1, activeSprite.height),
+            width = max(1, activeSprite.width),
+            height = max(1, activeSprite.height),
             colorMode = activeSpec.colorMode,
             transparentColor = activeSpec.transparentColor
         }
