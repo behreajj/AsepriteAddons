@@ -7,7 +7,6 @@ local defaults = {
     aspect = 2.0,
     skip = 1,
     pick = 1,
-    scale = 32,
     mortarThick = 1,
     mortarClr = 0xffe7e7e7,
     brickClr = 0xff5441cb,
@@ -76,7 +75,9 @@ dlg:newrow { always = false }
 dlg:number {
     id = "scale",
     label = "Scale:",
-    text = string.format("%.3f", defaults.scale),
+    text = string.format("%.3f", 2 * math.min(
+        app.preferences.new_file.width,
+        app.preferences.new_file.height)),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
@@ -160,6 +161,24 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        local sprite = app.activeSprite
+        if not sprite then
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite."
+            }
+            return
+        end
+
+        local frame = app.activeFrame --[[@as Frame]]
+        if not frame then
+            app.alert {
+                title = "Error",
+                text = "There is no active frame."
+            }
+            return
+        end
+
         local args = dlg.data
         local cols = args.cols or defaults.cols --[[@as integer]]
         local rows = args.rows or defaults.rows --[[@as integer]]
@@ -167,7 +186,7 @@ dlg:button {
         local aspect = args.aspect or defaults.aspect --[[@as number]]
         local skip = args.skip or defaults.skip --[[@as integer]]
         local pick = args.pick or defaults.pick --[[@as integer]]
-        local scale = args.scale or defaults.scale --[[@as number]]
+        local scale = args.scale --[[@as number]]
         local mortarThick = args.mortarThick or defaults.mortarThick --[[@as integer]]
         local xOrig = args.xOrig --[[@as number]]
         local yOrig = args.yOrig --[[@as number]]
@@ -177,8 +196,6 @@ dlg:button {
 
         local offset = off100 * 0.01
         local sclval = math.max(2.0, scale)
-        local brickHex = AseUtilities.aseColorToHex(brickColor, ColorMode.RGB)
-        local mortarHex = AseUtilities.aseColorToHex(mortarColor, ColorMode.RGB)
 
         local mesh = Mesh2.gridBricks(
             cols, rows, offset, aspect, skip, pick)
@@ -188,12 +205,12 @@ dlg:button {
         local mat = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
-        local sprite = AseUtilities.initCanvas(
-            mesh.name, { brickHex, mortarHex })
-        local layer = sprite.layers[#sprite.layers]
+        local layer = nil
+        app.transaction("New Layer", function()
+            layer = sprite:newLayer()
+            layer.name = mesh.name
+        end)
 
-        local frame = app.activeFrame or sprite.frames[1] --[[@as Frame]]
-        local cel = sprite:newCel(layer, frame)
         local brush = Brush { size = mortarThick }
 
         if vari100 > 0 then
@@ -262,7 +279,7 @@ dlg:button {
                         separated[i],
                         true, variety,
                         true, mortarColor,
-                        brush, cel, layer)
+                        brush, frame, layer)
                 end
             end)
         else
@@ -270,7 +287,7 @@ dlg:button {
                 mesh,
                 true, brickColor,
                 true, mortarColor,
-                brush, cel, layer)
+                brush, frame, layer)
         end
 
         app.refresh()

@@ -1568,21 +1568,30 @@ end
 ---Appends layers contained in a range according to
 ---the provided filters.
 ---
+---Checks timeline visibility before accessing range.
+---If the sprite referenced by the range does not
+---match the provided sprite, then returns empty table.
+---
 ---Call this method before new layers, frames or cels
 ---are created. Otherwise the range will be lost.
----Checks timeline visibility before accessing range.
 ---@param range Range range
+---@param sprite Sprite sprite
 ---@param includeLocked? boolean include locked layers
 ---@param includeHidden? boolean include hidden layers
 ---@param includeTiles? boolean include tile maps
 ---@param includeBkg? boolean include backgrounds
 ---@return Layer[]
 function AseUtilities.getRangeLayers(
-    range,
+    range, sprite,
     includeLocked, includeHidden,
     includeTiles, includeBkg)
+    -- TODO: This isn't used anywhere?
+
     ---@type Layer[]
     local arr = {}
+    if range.sprite ~= sprite then
+        return arr
+    end
 
     -- When the timeline is hidden, the range
     -- cannot be accessed properly.
@@ -1679,8 +1688,8 @@ function AseUtilities.getSelectedTiles(
     if tileMap.colorMode ~= 4 then return tiles end
 
     -- Unpack tile set.
-    local tileGrid = tileSet.grid --[[@as Grid]]
-    local tileDim = tileGrid.tileSize --[[@as Size]]
+    local tileGrid = tileSet.grid
+    local tileDim = tileGrid.tileSize
     local wTile = tileDim.width
     local hTile = tileDim.height
     local flatDimTile = wTile * hTile
@@ -1708,12 +1717,12 @@ function AseUtilities.getSelectedTiles(
             while i < flatDimTile and contained do
                 local xLocal = i % wTile
                 local yLocal = i // wTile
-                i = i + 1
                 local xPixel = xtlTile + xLocal
                 local yPixel = ytlTile + yLocal
                 contained = contained
                     and selection:contains(
                         Point(xPixel, yPixel))
+                i = i + 1
             end
 
             if contained then
@@ -1842,53 +1851,6 @@ function AseUtilities.hexToAseColor(hex)
     }
 end
 
----Initializes a sprite and layer. Sets palette
----to the colors provided, or, if nil, a default
----set. Colors should be hexadecimal integers.
----@param layerName string? layer name
----@param colors integer[]? array of hexes
----@param wDefault integer? default width
----@param hDefault integer? default height
----@param colorSpace ColorSpace? color space
----@return Sprite
-function AseUtilities.initCanvas(
-    layerName, colors, wDefault, hDefault, colorSpace)
-    local clrsVal = AseUtilities.DEFAULT_PAL_ARR
-    if colors and #colors > 0 then
-        clrsVal = colors
-    end
-
-    local sprite = app.activeSprite
-    local layer = nil
-
-    if sprite then
-        layer = sprite:newLayer()
-    else
-        local wVal = app.preferences.new_file.width
-        local hVal = app.preferences.new_file.height
-        if wDefault and wDefault > 0 then wVal = wDefault end
-        if hDefault and hDefault > 0 then hVal = hDefault end
-
-        local spec = ImageSpec {
-            width = wVal,
-            height = hVal,
-            colorMode = ColorMode.RGB,
-            transparentColor = 0
-        }
-        if colorSpace then
-            spec.colorSpace = colorSpace
-        end
-
-        sprite = Sprite(spec)
-        app.activeSprite = sprite
-        layer = sprite.layers[1]
-        AseUtilities.setPalette(clrsVal, sprite, 1)
-    end
-
-    layer.name = layerName or "Layer"
-    return sprite
-end
-
 ---Adds padding around the edges of an image.
 ---Does not check if image is a tile map.
 ---If the padding is less than one, returns the
@@ -1927,12 +1889,6 @@ end
 ---@param tag Tag Aseprite Tag
 ---@return integer[]
 function AseUtilities.parseTag(tag)
-    --TODO: Change this name to getTagFrames?
-
-    -- As of v1.3, tags have a new direction, ping pong
-    -- reverse, as well as a finite loop count, where
-    -- infinite loops are zero.
-
     local origFrameObj = tag.fromFrame
     local destFrameObj = tag.toFrame
     local origIdx = origFrameObj.frameNumber
@@ -1963,7 +1919,7 @@ function AseUtilities.parseTag(tag)
             idxArr = idxArr + 1
             arr[idxArr] = j
         end
-    elseif aniDir == 3 then
+    elseif aniDir == AniDir.PING_PONG_REVERSE then
         local j = destIdx + 1
         while j > origIdx do
             j = j - 1
@@ -2311,8 +2267,8 @@ end
 ---@param sprClrMode ColorMode|integer sprite color mode
 ---@return Image
 function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
-    local tileGrid = tileSet.grid --[[@as Grid]]
-    local tileDim = tileGrid.tileSize --[[@as Size]]
+    local tileGrid = tileSet.grid
+    local tileDim = tileGrid.tileSize
     local tileWidth = tileDim.width
     local tileHeight = tileDim.height
     local lenTileSet = #tileSet
@@ -2347,7 +2303,8 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
         local i = pxTilei(tlData)
 
         if i > 0 and i < lenTileSet then
-            local tileImage = tileSet:getTile(i)
+            local tile = tileSet:tile(i)
+            local tileImage = tile.image
             -- TODO: Wait until this is useful to implement.
             -- local meta = tlData & tileMetaMask
             -- if meta == maskRot90ccw then

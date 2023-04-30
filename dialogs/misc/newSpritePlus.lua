@@ -295,8 +295,6 @@ dlg:button {
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 palType, palFile, 0, 256, true)
         else
-            -- User defined default palette can be loaded with
-            -- app.command.LoadPalette { preset = "default" } .
             local hexesDefault = AseUtilities.DEFAULT_PAL_ARR
             local hexDefLen = #hexesDefault
             local i = 0
@@ -345,7 +343,7 @@ dlg:button {
                     hue = specHue,
                     saturation = specSat,
                     lightness = specLight,
-                    alpha = specAlpha
+                    alpha = math.floor(specAlpha)
                 }
                 hexBkg = AseUtilities.aseColorToHex(
                     aseColor, ColorMode.RGB)

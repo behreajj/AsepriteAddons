@@ -233,6 +233,7 @@ dlg:canvas {
     label = "L:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     onpaint = function(event)
         local barWidth = defaults.barWidth
         local barHeight = defaults.barHeight
@@ -255,7 +256,7 @@ dlg:canvas {
         img:resize(barWidth, barHeight)
 
         local ctx = event.context
-        ctx:drawImage(img, Point(0, 0))
+        ctx:drawImage(img, 0, 0)
 
         local lAdj = active.lAdj
         local l01 = lAdj * 0.005 + 0.5
@@ -287,6 +288,7 @@ dlg:canvas {
     label = "C:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     visible = defaults.mode == "LCH",
     onpaint = function(event)
         local barWidth = defaults.barWidth
@@ -312,7 +314,7 @@ dlg:canvas {
         local c01 = (active.cAdj - clb) / (cub - clb)
         local black = Color { r = 0, g = 0, b = 0 }
         local white = Color { r = 255, g = 255, b = 255 }
-        ctx:drawImage(img, Point(0, 0))
+        ctx:drawImage(img, 0, 0)
         CanvasUtilities.drawSliderReticle(
             ctx, c01, barWidth, barHeight,
             white, reticleSize)
@@ -335,6 +337,7 @@ dlg:canvas {
     label = "H:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     visible = defaults.mode == "LCH",
     onpaint = function(event)
         local barWidth = defaults.barWidth
@@ -359,7 +362,7 @@ dlg:canvas {
         local ctx = event.context
         local black = Color { r = 0, g = 0, b = 0 }
         local white = Color { r = 255, g = 255, b = 255 }
-        ctx:drawImage(img, Point(0, 0))
+        ctx:drawImage(img, 0, 0)
         CanvasUtilities.drawSliderReticle(
             ctx, active.hAdj, barWidth, barHeight,
             white, reticleSize)
@@ -382,6 +385,7 @@ dlg:canvas {
     label = "A:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     visible = defaults.mode == "LAB",
     onpaint = function(event)
         local barWidth = defaults.barWidth
@@ -409,7 +413,7 @@ dlg:canvas {
         local a01 = (active.aAdj - alb) / (aub - alb)
         local black = Color { r = 0, g = 0, b = 0 }
         local white = Color { r = 255, g = 255, b = 255 }
-        ctx:drawImage(img, Point(0, 0))
+        ctx:drawImage(img, 0, 0)
         CanvasUtilities.drawSliderReticle(
             ctx, a01, barWidth, barHeight,
             white, reticleSize)
@@ -432,6 +436,7 @@ dlg:canvas {
     label = "B:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     visible = defaults.mode == "LAB",
     onpaint = function(event)
         local barWidth = defaults.barWidth
@@ -459,7 +464,7 @@ dlg:canvas {
         local b01 = (active.bAdj - blb) / (bub - blb)
         local black = Color { r = 0, g = 0, b = 0 }
         local white = Color { r = 255, g = 255, b = 255 }
-        ctx:drawImage(img, Point(0, 0))
+        ctx:drawImage(img, 0, 0)
         CanvasUtilities.drawSliderReticle(
             ctx, b01, barWidth, barHeight,
             white, reticleSize)
@@ -482,6 +487,7 @@ dlg:canvas {
     label = "Alpha:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     onpaint = function(event)
         local barWidth = defaults.barWidth
         local barHeight = defaults.barHeight
@@ -530,7 +536,7 @@ dlg:canvas {
         img:resize(barWidth, barHeight)
 
         local ctx = event.context
-        ctx:drawImage(img, Point(0, 0))
+        ctx:drawImage(img, 0, 0)
 
         local reticleClr = white
         local a01 = active.alphaAdj * 0.5 + 0.5

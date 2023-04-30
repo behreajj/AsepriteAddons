@@ -162,6 +162,24 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        local sprite = app.activeSprite
+        if not sprite then
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite."
+            }
+            return
+        end
+
+        local frame = app.activeFrame --[[@as Frame]]
+        if not frame then
+            app.alert {
+                title = "Error",
+                text = "There is no active frame."
+            }
+            return
+        end
+
         local args = dlg.data
         local sectors = args.sides or defaults.sides --[[@as integer]]
         local skip = args.skip or defaults.skip --[[@as integer]]
@@ -194,27 +212,21 @@ dlg:button {
 
         local mat = Mat3.mul(Mat3.mul(t, s), r)
 
-        -- Initialize canvas.
-        local fillHex = AseUtilities.aseColorToHex(
-            fillColor, ColorMode.RGB)
-        local strokeHex = AseUtilities.aseColorToHex(
-            strokeColor, ColorMode.RGB)
-        local name = string.format("Polygon.%03d", sectors)
-        local sprite = AseUtilities.initCanvas(
-            name, { fillHex, strokeHex })
-        local layer = sprite.layers[#sprite.layers]
-        local frame = app.activeFrame
-            or sprite.frames[1] --[[@as Frame]]
-        local cel = sprite:newCel(layer, frame)
-
         local mesh = Mesh2.star(
             sectors, skip, pick, inset * 0.01)
         Utilities.mulMat3Mesh2(mat, mesh)
+
+        local layer = nil
+        app.transaction("New Layer", function()
+            layer = sprite:newLayer()
+            layer.name = mesh.name
+        end)
+
         ShapeUtilities.drawMesh2(
             mesh, useFill, fillColor,
             useStroke, strokeColor,
             Brush { size = strokeWeight },
-            cel, layer)
+            frame, layer)
 
         app.refresh()
     end

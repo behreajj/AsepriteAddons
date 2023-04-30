@@ -393,13 +393,13 @@ dlg:button {
             end
         elseif preset == "SINE_WAVE" then
             local freq = args.freq or defaults.freq --[[@as number]]
-            local phase = args.phase or defaults.phase --[[@as integer]]
-            phase = 0.017453292519943 * phase
+            local phaseDeg = args.phase or defaults.phase --[[@as integer]]
             local amp = args.sw_amp or defaults.sw_amp --[[@as number]]
             local basis = args.basis or defaults.basis --[[@as number]]
 
+            local phaseRad = 0.017453292519943 * phaseDeg
             func = function(x)
-                return sineWave(x, freq, phase, amp, basis)
+                return sineWave(x, freq, phaseRad, amp, basis)
             end
         elseif preset == "QUANTIZE" then
             if args.quantization > 1 then

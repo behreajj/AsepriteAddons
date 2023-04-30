@@ -393,7 +393,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         option = GradientUtilities.DEFAULT_HUE_EASING,
         options = GradientUtilities.HUE_EASING_PRESETS,
         visible = ((not showStyle)
-            or GradientUtilities.DEFAULT_STYLE == "MIXED")
+                or GradientUtilities.DEFAULT_STYLE == "MIXED")
             and GradientUtilities.DEFAULT_CLR_SPC == "SR_LCH"
     }
 
@@ -405,7 +405,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         option = GradientUtilities.DEFAULT_RGB_EASING,
         options = GradientUtilities.RGB_EASING_PRESETS,
         visible = ((not showStyle)
-            or GradientUtilities.DEFAULT_STYLE == "MIXED")
+                or GradientUtilities.DEFAULT_STYLE == "MIXED")
             and GradientUtilities.DEFAULT_CLR_SPC ~= "SR_LCH"
     }
 
@@ -495,7 +495,7 @@ function GradientUtilities.ditherFromPreset(
     if stylePreset == "DITHER_BAYER" then
         local biVrf = bayerIndex or 2
         local matrix = GradientUtilities.BAYER_MATRICES[bayerIndex]
-        local bayerSize = 2 ^ biVrf
+        local bayerSize = 1 << biVrf
 
         return function(cg, step, x, y)
             return ClrGradient.dither(

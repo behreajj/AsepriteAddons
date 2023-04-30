@@ -212,8 +212,9 @@ dlg:button {
         local activeFrame = app.activeFrame --[[@as Frame]]
 
         local args = dlg.data
-        local dx = args.xTranslate or defaults.xTranslate
-        local dy = args.yTranslate or defaults.yTranslate
+        -- These are number fields, but their decimal places are zero.
+        local dx = args.xTranslate or defaults.xTranslate --[[@as integer]]
+        local dy = args.yTranslate or defaults.yTranslate --[[@as integer]]
         if dx == 0.0 and dy == 0.0 then return end
 
         local target = args.target or defaults.target --[[@as string]]
@@ -1158,8 +1159,8 @@ dlg:button {
                         local yCenter = celPos.y + hSrc * 0.5
 
                         cel.position = Point(
-                            xCenter - wTrg * 0.5,
-                            yCenter - hTrg * 0.5)
+                            floor(xCenter - wTrg * 0.5),
+                            floor(yCenter - hTrg * 0.5))
                         cel.image = trgImg
                     end
                 end

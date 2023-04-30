@@ -246,6 +246,7 @@ dlg:canvas {
     label = "Color:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     focus = true,
     onpaint = function(event)
         -- Unpack defaults.
@@ -267,7 +268,7 @@ dlg:canvas {
         local ctx = event.context
         local bkgImg = Image(barWidth, barHeight)
         bkgImg:clear(srgbHex)
-        ctx:drawImage(bkgImg, Point(0, 0))
+        ctx:drawImage(bkgImg, 0 ,0)
 
         -- Create display string.
         local strDisplay = string.format(
@@ -320,6 +321,7 @@ dlg:canvas {
     label = "Azimuth:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     onpaint = function(event)
         -- Unpack defaults.
         local barWidth = defaults.barWidth
@@ -349,7 +351,7 @@ dlg:canvas {
         img:resize(barWidth, barHeight)
 
         local ctx = event.context
-        ctx:drawImage(img, Point(0, 0))
+        ctx:drawImage(img, 0, 0)
 
         local az01 = 0.1591549430919 * azimuth
         local fill = Color { r = 255, g = 255, b = 255 }
@@ -366,6 +368,7 @@ dlg:canvas {
     label = "Incline:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     onpaint = function(event)
         -- Unpack defaults.
         local barWidth = defaults.barWidth
@@ -397,7 +400,7 @@ dlg:canvas {
         img:resize(barWidth, barHeight)
 
         local ctx = event.context
-        ctx:drawImage(img, Point(0, 0))
+        ctx:drawImage(img, 0, 0)
 
         local in01 = 0.5 + inclination / 3.1415926535898
         local fill = Color { r = 255, g = 255, b = 255 }

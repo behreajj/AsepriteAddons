@@ -365,6 +365,7 @@ dlg:canvas {
     label = "Color:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     focus = true,
     onpaint = function(event)
         -- Unpack defaults.
@@ -390,7 +391,7 @@ dlg:canvas {
         local ctx = event.context
         local bkgImg = Image(barWidth, barHeight)
         bkgImg:clear(srgbHex)
-        ctx:drawImage(bkgImg, Point(0, 0))
+        ctx:drawImage(bkgImg, 0, 0)
 
         -- Create display string.
         local strDisplay = string.format(
@@ -440,6 +441,7 @@ dlg:canvas {
     label = "L:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     onpaint = function(event)
         -- Unpack theme.
         local bkgColor = app.theme.color.window_face
@@ -477,7 +479,7 @@ dlg:canvas {
         img:resize(barWidth, barHeight)
 
         local ctx = event.context
-        ctx:drawImage(img, Point(0, 0))
+        ctx:drawImage(img, 0, 0)
 
         local fill = Color { r = 0, g = 0, b = 0 }
         if l < 54.0 then
@@ -498,6 +500,7 @@ dlg:canvas {
     label = "C:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     onpaint = function(event)
         -- Unpack theme.
         local bkgColor = app.theme.color.window_face
@@ -536,7 +539,7 @@ dlg:canvas {
         img:resize(barWidth, barHeight)
 
         local ctx = event.context
-        ctx:drawImage(img, Point(0, 0))
+        ctx:drawImage(img, 0, 0)
 
         local fill = Color { r = 0, g = 0, b = 0 }
         if l < 54.0 then
@@ -557,6 +560,7 @@ dlg:canvas {
     label = "H:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     onpaint = function(event)
         -- Unpack theme.
         local bkgColor = app.theme.color.window_face
@@ -594,7 +598,7 @@ dlg:canvas {
         img:resize(barWidth, barHeight)
 
         local ctx = event.context
-        ctx:drawImage(img, Point(0, 0))
+        ctx:drawImage(img, 0, 0)
 
         local fill = Color { r = 0, g = 0, b = 0 }
         if l < 54.0 then
@@ -615,6 +619,7 @@ dlg:canvas {
     label = "Alpha:",
     width = defaults.barWidth,
     height = defaults.barheight,
+    autoScaling = false,
     onpaint = function(event)
         local barWidth = defaults.barWidth
         local barHeight = defaults.barHeight
@@ -653,7 +658,7 @@ dlg:canvas {
         img:resize(barWidth, barHeight)
 
         local ctx = event.context
-        ctx:drawImage(img, Point(0, 0))
+        ctx:drawImage(img, 0, 0)
 
         local fill = Color { r = 0, g = 0, b = 0 }
         if l < 54.0 then
@@ -772,6 +777,7 @@ dlg:canvas {
     label = "Swatch:",
     width = defaults.barWidth,
     height = defaults.barHeight,
+    autoScaling = false,
     onpaint = function(event)
         -- Unpack defaults.
         local barWidth = defaults.barWidth

@@ -31,7 +31,6 @@ JsonUtilities.LAYER_FORMAT = table.concat({
     "\"name\":\"%s\"",
     "\"opacity\":%d",
     "\"parent\":%d",
-    -- "\"stackIndices\":[%s]}",
     "\"stackIndex\":%d}",
 }, ",")
 
@@ -214,13 +213,12 @@ function JsonUtilities.layerToJson(layer)
         layer.name,
         layer.opacity,
         parentVerif,
-        -- table.concat(hier, ","),
         layer.stackIndex)
 end
 
 ---Formats a point as a JSON string.
----@param x integer x coordinate
----@param y integer y coordinate
+---@param x number x coordinate
+---@param y number y coordinate
 ---@return string
 function JsonUtilities.pointToJson(x, y)
     if math.type(x) == "float"

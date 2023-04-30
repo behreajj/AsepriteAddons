@@ -161,7 +161,7 @@ dlg:slider {
         dlg:modify { id = "bBits", value = bd }
         dlg:modify { id = "aBits", value = bd }
 
-        local lv = 2 ^ bd
+        local lv = 1 << bd
         dlg:modify { id = "levelsUni", value = lv }
         dlg:modify { id = "rLevels", value = lv }
         dlg:modify { id = "gLevels", value = lv }
@@ -181,7 +181,7 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local lv = 2 ^ dlg.data.rBits
+        local lv = 1 << dlg.data.rBits
         dlg:modify { id = "rLevels", value = lv }
     end
 }
@@ -195,7 +195,7 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local lv = 2 ^ dlg.data.gBits
+        local lv = 1 << dlg.data.gBits
         dlg:modify { id = "gLevels", value = lv }
     end
 }
@@ -209,7 +209,7 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local lv = 2 ^ dlg.data.bBits
+        local lv = 1 << dlg.data.bBits
         dlg:modify { id = "bLevels", value = lv }
     end
 }
@@ -223,7 +223,7 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local lv = 2 ^ dlg.data.aBits
+        local lv = 1 << dlg.data.aBits
         dlg:modify { id = "aLevels", value = lv }
     end
 }

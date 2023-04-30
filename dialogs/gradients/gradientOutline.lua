@@ -172,7 +172,7 @@ dlg:button {
         local startTime = 0
         local endTime = 0
         local elapsed = 0
-        if printElapsed then startTime = os.time() end
+        if printElapsed then startTime = os.clock() end
 
         -- Early returns.
         local activeSprite = app.activeSprite
@@ -462,12 +462,12 @@ dlg:button {
         app.refresh()
 
         if printElapsed then
-            endTime = os.time()
-            elapsed = os.difftime(endTime, startTime)
+            endTime = os.clock()
+            elapsed = endTime - startTime
             local txtArr = {
-                string.format("Start: %d", startTime),
-                string.format("End: %d", endTime),
-                string.format("Elapsed: %d", elapsed),
+                string.format("Start: %.2f", startTime),
+                string.format("End: %.2f", endTime),
+                string.format("Elapsed: %.6f", elapsed),
             }
             app.alert { title = "Diagnostic", text = txtArr }
         end

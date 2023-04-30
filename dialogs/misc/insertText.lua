@@ -193,7 +193,8 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "printElapsed",
-    label = "Print Diagnostic:",
+    label = "Print:",
+    text = "Diagnostic",
     selected = defaults.printElapsed,
     visible = defaults.msgSrc == "FILE"
 }
@@ -209,7 +210,7 @@ dlg:button {
         local startTime = 0
         local endTime = 0
         local elapsed = 0
-        if printElapsed then startTime = os.time() end
+        if printElapsed then startTime = os.clock() end
 
         -- Only support RGB color mode.
         if app.activeSprite
@@ -317,14 +318,32 @@ dlg:button {
             + leading * (lineCount - 1) -- leading
             + (scale + 1) * mxDrop      -- for descenders
 
-        -- Acquire or create sprite.
-        -- Acquire top layer.
-        local sprite = AseUtilities.initCanvas(
-            "Text", { hexBkg, hexFill, hexShd },
-            widthImg, heightImg)
+        local layer = nil
+        local sprite = app.activeSprite
+        if not sprite then
+            -- When wrapped in a transaction, either new
+            -- sprite creation or app.command.LoadPalette
+            -- { preset = "default" } causes a crash.
+            sprite = Sprite(widthImg, heightImg)
+            app.transaction("Set Palette", function()
+                local pal = sprite.palettes[1]
+                pal:resize(3)
+                pal:setColor(0, hexBkg)
+                pal:setColor(1, hexShd)
+                pal:setColor(2, hexFill)
+            end)
+
+            layer = sprite.layers[1]
+            layer.name = "Text"
+        else
+            app.transaction("New Layer", function()
+                layer = sprite:newLayer()
+                layer.name = "Text"
+            end)
+        end
+
         local widthSprite = sprite.width
         local heightSprite = sprite.height
-        local layer = sprite.layers[#sprite.layers]
 
         -- Determine if background and shadow should
         -- be used based on their alpha.
@@ -493,12 +512,12 @@ dlg:button {
         end
 
         if printElapsed then
-            endTime = os.time()
-            elapsed = os.difftime(endTime, startTime)
+            endTime = os.clock()
+            elapsed = endTime - startTime
             local txtArr = {
-                string.format("Start: %d", startTime),
-                string.format("End: %d", endTime),
-                string.format("Elapsed: %d", elapsed),
+                string.format("Start: %.2f", startTime),
+                string.format("End: %.2f", endTime),
+                string.format("Elapsed: %.6f", elapsed),
                 string.format("Lines: %d", lineCount),
                 string.format("Characters: %d", totalCharCount)
             }

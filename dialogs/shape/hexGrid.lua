@@ -4,6 +4,7 @@ local defaults = {
     rings = 4,
     xScale = 32,
     yScale = 32,
+    useDimetric = false,
     margin = 0,
     useStroke = true,
     strokeWeight = 1,
@@ -26,14 +27,21 @@ dlg:newrow { always = false }
 dlg:number {
     id = "xScale",
     label = "Cell:",
-    text = string.format("%.1f", defaults.xScale),
+    text = string.format("%.3f", defaults.xScale),
     decimals = AseUtilities.DISPLAY_DECIMAL
 }
 
 dlg:number {
     id = "yScale",
-    text = string.format("%.1f", defaults.yScale),
+    text = string.format("%.3f", defaults.yScale),
     decimals = AseUtilities.DISPLAY_DECIMAL
+}
+
+dlg:check {
+    id = "useDimetric",
+    label = "Dimetric:",
+    text = "&Scale",
+    selected = defaults.useDimetric
 }
 
 dlg:newrow { always = false }
@@ -124,10 +132,29 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        local sprite = app.activeSprite
+        if not sprite then
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite."
+            }
+            return
+        end
+
+        local frame = app.activeFrame --[[@as Frame]]
+        if not frame then
+            app.alert {
+                title = "Error",
+                text = "There is no active frame."
+            }
+            return
+        end
+
         local args = dlg.data
         local rings = args.rings or defaults.rings --[[@as integer]]
         local xScale = args.xScale or defaults.xScale --[[@as number]]
         local yScale = args.yScale or defaults.yScale --[[@as number]]
+        local useDimetric = args.useDimetric --[[@as boolean]]
         local xOrig = args.xOrig --[[@as number]]
         local yOrig = args.yOrig --[[@as number]]
 
@@ -140,6 +167,11 @@ dlg:button {
 
         if xScale < 2.0 then xScale = 2.0 end
         if yScale < 2.0 then yScale = 2.0 end
+        if useDimetric then
+            -- sqrt(3) / 2 = 0.8660254
+            xScale = xScale * 1.1547005383793
+        end
+
         local fillHex = AseUtilities.aseColorToHex(
             fillColor, ColorMode.RGB)
         local strokeHex = AseUtilities.aseColorToHex(
@@ -160,18 +192,17 @@ dlg:button {
             mesh:scaleFacesIndiv(margin)
         end
 
-        local sprite = AseUtilities.initCanvas(
-            mesh.name, { fillHex, strokeHex })
-        local layer = sprite.layers[#sprite.layers]
-        local frame = app.activeFrame
-            or sprite.frames[1] --[[@as Frame]]
-        local cel = sprite:newCel(layer, frame)
+        local layer = nil
+        app.transaction("New Layer", function()
+            layer = sprite:newLayer()
+            layer.name = mesh.name
+        end)
 
         ShapeUtilities.drawMesh2(
             mesh, useFill, fillColor,
             useStroke, strokeColor,
             Brush { size = strokeWeight },
-            cel, layer)
+            frame, layer)
 
         app.refresh()
     end

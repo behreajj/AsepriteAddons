@@ -196,7 +196,7 @@ function TextUtilities.drawGlyphNearest(
     local blend = AseUtilities.blendRgba
     local glMat = glyph.matrix
     local glDrop = glyph.drop
-    local ypDrop = y + glDrop * (dh / gh)
+    local ypDrop = floor(y + glDrop * (dh / gh))
     local i = -1
     while i < lenTrgn1 do
         i = i + 1

@@ -278,7 +278,7 @@ dlg:slider {
     value = defaults.xDisplaceOrig,
     visible = defaults.waveType == "BILINEAR"
         or (defaults.waveType == "INTERLACED"
-        and defaults.interType == "HORIZONTAL")
+            and defaults.interType == "HORIZONTAL")
 }
 
 dlg:slider {
@@ -288,7 +288,7 @@ dlg:slider {
     value = defaults.xDisplaceDest,
     visible = defaults.waveType == "BILINEAR"
         or (defaults.waveType == "INTERLACED"
-        and defaults.interType == "HORIZONTAL")
+            and defaults.interType == "HORIZONTAL")
 }
 
 -- dlg:newrow { always = false }
@@ -312,7 +312,7 @@ dlg:slider {
     value = defaults.yDisplaceOrig,
     visible = defaults.waveType == "BILINEAR"
         or (defaults.waveType == "INTERLACED"
-        and defaults.interType == "VERTICAL")
+            and defaults.interType == "VERTICAL")
 }
 
 dlg:slider {
@@ -322,7 +322,7 @@ dlg:slider {
     value = defaults.yDisplaceDest,
     visible = defaults.waveType == "BILINEAR"
         or (defaults.waveType == "INTERLACED"
-        and defaults.interType == "VERTICAL")
+            and defaults.interType == "VERTICAL")
 }
 
 dlg:newrow { always = false }
@@ -377,7 +377,8 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "printElapsed",
-    label = "Print Diagnostic:",
+    label = "Print:",
+    text = "Diagnostic",
     selected = defaults.printElapsed
 }
 
@@ -394,7 +395,7 @@ dlg:button {
         local startTime = 0
         local endTime = 0
         local elapsed = 0
-        if printElapsed then startTime = os.time() end
+        if printElapsed then startTime = os.clock() end
 
         -- Early returns.
         local srcSprite = app.activeSprite
@@ -843,13 +844,13 @@ dlg:button {
 
         -- Report elapsed time.
         if printElapsed then
-            endTime = os.time()
-            elapsed = os.difftime(endTime, startTime)
+            endTime = os.clock()
+            elapsed = endTime - startTime
 
             local txtArr = {
-                string.format("Start: %d", startTime),
-                string.format("End: %d", endTime),
-                string.format("Elapsed: %d", elapsed),
+                string.format("Start: %.2f", startTime),
+                string.format("End: %.2f", endTime),
+                string.format("Elapsed: %.6f", elapsed),
             }
             app.alert { title = "Diagnostic", text = txtArr }
         end

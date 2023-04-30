@@ -274,7 +274,8 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "printElapsed",
-    label = "Print Diagnostic:",
+    label = "Print:",
+    text = "Diagnostic",
     selected = defaults.printElapsed
 }
 
@@ -292,7 +293,7 @@ dlg:button {
         local endTime = 0
         local elapsed = 0
         if printElapsed then
-            startTime = os.time()
+            startTime = os.clock()
         end
 
         local activeSprite = app.activeSprite
@@ -443,7 +444,7 @@ dlg:button {
             local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 palType, palFile, 0, 256, true)
 
-            octCapacity = 2 ^ octCapacity
+            octCapacity = 1 << octCapacity
             local bounds = Bounds3.lab()
             local octree = Octree.new(bounds, octCapacity, 1)
 
@@ -627,14 +628,14 @@ dlg:button {
         app.refresh()
 
         if printElapsed then
-            endTime = os.time()
-            elapsed = os.difftime(endTime, startTime)
+            endTime = os.clock()
+            elapsed = endTime - startTime
             app.alert {
                 title = "Diagnostic",
                 text = {
-                    string.format("Start: %d", startTime),
-                    string.format("End: %d", endTime),
-                    string.format("Elapsed: %d", elapsed)
+                    string.format("Start: %.2f", startTime),
+                    string.format("End: %.2f", endTime),
+                    string.format("Elapsed: %.6f", elapsed)
                 }
             }
         end

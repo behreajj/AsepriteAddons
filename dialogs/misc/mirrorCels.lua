@@ -166,10 +166,10 @@ dlg:button {
 
         -- Calculate origin and destination.
         -- Divide by 100 to account for percentage.
-        local xOrig = args.xOrig --[[@as integer]]
-        local yOrig = args.yOrig --[[@as integer]]
-        local xDest = args.xDest --[[@as integer]]
-        local yDest = args.yDest --[[@as integer]]
+        local xOrig = args.xOrig --[[@as number]]
+        local yOrig = args.yOrig --[[@as number]]
+        local xDest = args.xDest --[[@as number]]
+        local yDest = args.yDest --[[@as number]]
 
         xOrig = xOrig * 0.005 + 0.5
         xDest = xDest * 0.005 + 0.5

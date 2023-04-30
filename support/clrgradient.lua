@@ -196,7 +196,7 @@ function ClrGradient.fromColors(arr)
         if c0 then
             if type(c0) == "number"
                 and math.type(c0) == "integer" then
-                c2 = Clr.fromHex(c0)
+                c2 = Clr.fromHex(c0 --[[@as integer]])
             else
                 c2 = Clr.new(c0.r, c0.g, c0.b, c0.a)
             end

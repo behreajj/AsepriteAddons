@@ -177,7 +177,7 @@ function CanvasUtilities.graphBezier(
     local onMouseFunc = function(event)
         -- TODO: How to handle canvas resize.
         if event.button ~= MouseButton.NONE then
-            -- Unpack mouse even tcoordinates.
+            -- Unpack mouse event coordinates.
             local xMouse = event.x
             local yMouse = event.y
 
@@ -244,6 +244,7 @@ function CanvasUtilities.graphBezier(
         width = wVrf,
         height = hVrf,
         visible = isVisVrf,
+        autoScaling = false,
         onpaint = function(event)
             local context = event.context
 
@@ -469,6 +470,7 @@ function CanvasUtilities.graphLine(
         width = wVrf,
         height = hVrf,
         visible = isVisVrf,
+        autoScaling = false,
         onpaint = function(event)
             local context = event.context
 
@@ -781,6 +783,7 @@ function CanvasUtilities.spectrum(
         width = wVrf,
         height = hVrf,
         visible = isVisVrf,
+        autoScaling = false,
         onpaint = function(event)
             local context = event.context
 
@@ -814,7 +817,7 @@ function CanvasUtilities.spectrum(
                     pixel(0xff000000 | v << 0x10 | v << 0x08 | v)
                 end
             end
-            context:drawImage(image, Point(0, 0))
+            context:drawImage(image, 0, 0)
 
             local black = Color { r = 0, g = 0, b = 0, a = 255 }
             local white = Color { r = 255, g = 255, b = 255, a = 255 }
@@ -828,14 +831,14 @@ function CanvasUtilities.spectrum(
             end
             context:strokeRect(
                 Rectangle(
-                    hActive / xToHue - retHalfSize,
-                    (1.0 - lActive) / yToLgt - retHalfSize,
+                    math.floor(hActive / xToHue - retHalfSize),
+                    math.floor((1.0 - lActive) / yToLgt - retHalfSize),
                     reticleSize, reticleSize))
 
             context:strokeRect(
                 Rectangle(
-                    sActive / xToSat - retHalfSize,
-                    spectrumHeight + satBarHeight * 0.5 - retHalfSize,
+                    math.floor(sActive / xToSat - retHalfSize),
+                    math.floor(spectrumHeight + satBarHeight * 0.5 - retHalfSize),
                     reticleSize, reticleSize))
 
             if aActive > 127.5 then
@@ -845,20 +848,20 @@ function CanvasUtilities.spectrum(
             end
             context:strokeRect(
                 Rectangle(
-                    aActive / xToVal - retHalfSize,
-                    satBarThresh + alphaBarHeight * 0.5 - retHalfSize,
+                    math.floor(aActive / xToVal - retHalfSize),
+                    math.floor(satBarThresh + alphaBarHeight * 0.5 - retHalfSize),
                     reticleSize, reticleSize))
         end,
-        onmousedown = function(ev)
-            onMouseFunc(ev)
+        onmousedown = function(event)
+            onMouseFunc(event)
         end,
         onmousemove = function(event)
             if event.button ~= MouseButton.NONE then
                 onMouseFunc(event)
             end
         end,
-        onmouseup = function(ev)
-            onMouseFunc(ev)
+        onmouseup = function(event)
+            onMouseFunc(event)
             inSpectrum = false
             inSatBar = false
             inAlphaBar = false

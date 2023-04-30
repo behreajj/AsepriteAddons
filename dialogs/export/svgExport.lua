@@ -8,6 +8,9 @@ local defaults = {
     flattenImage = true
 }
 
+---
+---@param bm BlendMode|integer blend mode
+---@return string
 local function blendModeToStr(bm)
     -- The blend mode for group layers is nil.
     if bm then
@@ -41,6 +44,14 @@ local function blendModeToStr(bm)
     end
 end
 
+---
+---@param img Image image
+---@param border integer border size
+---@param margin integer margin size
+---@param scale integer scale
+---@param xOff integer x offset
+---@param yOff integer y offset
+---@return string
 local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
     -- https://github.com/aseprite/aseprite/issues/3561
     -- SVGs displayed in Firefox and Inkscape have thin gaps
@@ -84,8 +95,8 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
         pathStr = pathStr .. strfmt(
             "fill=\"#%06X\" d=\"",
             ((hex & 0xff) << 0x10
-            | (hex & 0xff00)
-            | (hex >> 0x10 & 0xff)))
+                | (hex & 0xff00)
+                | (hex >> 0x10 & 0xff)))
 
         ---@type string[]
         local subPathsArr = {}
@@ -123,8 +134,16 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
     return tconcat(pathsArr)
 end
 
+---
+---@param layer Layer layer
+---@param frame Frame frame
+---@param spriteBounds Rectangle sprite bounds
+---@param border integer border size
+---@param scale integer scale
+---@param margin integer margin size
+---@return string
 local function layerToSvgStr(
-    layer, activeFrame, spriteBounds,
+    layer, frame, spriteBounds,
     border, scale, margin)
     local str = ""
 
@@ -145,7 +164,7 @@ local function layerToSvgStr(
             local grpStr = string.format(
                 "\n<g id=\"%s\">", layerName)
 
-            local groupLayers = layer.layers
+            local groupLayers = layer.layers --[[@as Layer[] ]]
             local lenGroupLayers = #groupLayers
             ---@type string[]
             local groupStrArr = {}
@@ -154,14 +173,14 @@ local function layerToSvgStr(
                 i = i + 1
                 groupStrArr[i] = layerToSvgStr(
                     groupLayers[i],
-                    activeFrame, spriteBounds,
+                    frame, spriteBounds,
                     border, scale, margin)
             end
 
             grpStr = grpStr .. (table.concat(groupStrArr) .. "\n</g>")
             str = str .. grpStr
         else
-            local cel = layer:cel(activeFrame)
+            local cel = layer:cel(frame)
             if cel then
                 local celImg = cel.image
                 if layer.isTilemap then

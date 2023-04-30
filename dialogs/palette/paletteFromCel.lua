@@ -237,7 +237,7 @@ dlg:slider {
             visible = (octCap >= defaults.showRefineAt)
         }
 
-        local r = (2 ^ octCap) // 2
+        local r = (1 << octCap) // 2
         dlg:modify { id = "refineCapacity", min = -r }
         dlg:modify { id = "refineCapacity", max = r }
     end
@@ -253,7 +253,7 @@ dlg:slider {
     value = defaults.refineCapacity,
     visible = defaults.clampTo256
         and (defaults.octCapacityBits
-        >= defaults.showRefineAt)
+            >= defaults.showRefineAt)
 }
 
 dlg:newrow { always = false }
@@ -270,7 +270,8 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "printElapsed",
-    label = "Print Diagnostic:",
+    label = "Print:",
+    text = "Diagnostic",
     selected = defaults.printElapsed,
     visible = defaults.clampTo256
 }
@@ -328,7 +329,7 @@ dlg:button {
         local startTime = 0
         local endTime = 0
         local elapsed = 0
-        if printElapsed then startTime = os.time() end
+        if printElapsed then startTime = os.clock() end
 
         -- Early returns.
         local activeSprite = app.activeSprite
@@ -478,7 +479,7 @@ dlg:button {
         -- set here for print diagnostic purposes.
         local oldLenHexes = #hexes
         local lenCenters = 0
-        local octCapacity = refineCap + 2 ^ octCapBits
+        local octCapacity = refineCap + (1 << octCapBits)
         local lenHexes = oldLenHexes
         if clampTo256 and lenHexes > ocThreshold then
             local clrSpacePreset = args.clrSpacePreset
@@ -562,13 +563,13 @@ dlg:button {
         end
 
         if printElapsed then
-            endTime = os.time()
-            elapsed = os.difftime(endTime, startTime)
+            endTime = os.clock()
+            elapsed = endTime - startTime
 
             local txtArr = {
-                string.format("Start: %d", startTime),
-                string.format("End: %d", endTime),
-                string.format("Elapsed: %d", elapsed),
+                string.format("Start: %.2f", startTime),
+                string.format("End: %.2f", endTime),
+                string.format("Elapsed: %.6f", elapsed),
                 string.format("Raw Colors: %d", oldLenHexes)
             }
 

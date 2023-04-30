@@ -18,13 +18,13 @@ setmetatable(ShapeUtilities, {
 ---@param useStroke boolean use stroke
 ---@param strokeClr Color stroke color
 ---@param brsh Brush brush
----@param cel Cel cel
+---@param frame Frame frame
 ---@param layer Layer layer
 function ShapeUtilities.drawCurve2(
     curve, resolution,
     useFill, fillClr,
     useStroke, strokeClr,
-    brsh, cel, layer)
+    brsh, frame, layer)
     local vres = 2
     if resolution > 2 then vres = resolution end
 
@@ -79,7 +79,7 @@ function ShapeUtilities.drawCurve2(
                 color = fillClr,
                 brush = brsh,
                 points = pts,
-                cel = cel,
+                frame = frame,
                 layer = layer,
                 freehandAlgorithm = 1
             }
@@ -104,7 +104,7 @@ function ShapeUtilities.drawCurve2(
                     color = strokeClr,
                     brush = brsh,
                     points = { ptPrev, ptCurr },
-                    cel = cel,
+                    frame = frame,
                     layer = layer,
                     freehandAlgorithm = 1
                 }
@@ -117,14 +117,14 @@ end
 ---Draws the knot handles of a curve.
 ---Color arguments are optional.
 ---@param curve Curve2 curve
----@param cel Cel cel
+---@param frame Frame frame
 ---@param layer Layer layer
 ---@param lnClr Color? line color
 ---@param coClr Color? coordinate color
 ---@param fhClr Color? fore handle color
 ---@param rhClr Color? rear handle color
 function ShapeUtilities.drawHandles2(
-    curve, cel, layer,
+    curve, frame, layer,
     lnClr, coClr, fhClr, rhClr)
     local kns = curve.knots
     local knsLen = #kns
@@ -134,7 +134,7 @@ function ShapeUtilities.drawHandles2(
         while i < knsLen do
             i = i + 1
             drawKnot(
-                kns[i], cel, layer,
+                kns[i], frame, layer,
                 lnClr, coClr,
                 fhClr, rhClr)
         end
@@ -144,14 +144,14 @@ end
 ---Draws a knot for diagnostic purposes.
 ---Color arguments are optional.
 ---@param knot Knot2 knot
----@param cel Cel cel
+---@param frame Frame frame
 ---@param layer Layer layer
 ---@param lnClr Color? line color
 ---@param coClr Color? coordinate color
 ---@param fhClr Color? fore handle color
 ---@param rhClr Color? rear handle color
 function ShapeUtilities.drawKnot2(
-    knot, cel, layer,
+    knot, frame, layer,
     lnClr, coClr, fhClr, rhClr)
     local lnClrVal = lnClr or Color { r = 175, g = 175, b = 175 }
     local rhClrVal = rhClr or Color { r = 2, g = 167, b = 235 }
@@ -174,7 +174,7 @@ function ShapeUtilities.drawKnot2(
             color = lnClrVal,
             brush = lnBrush,
             points = { rhPt, coPt },
-            cel = cel,
+            frame = frame,
             layer = layer
         }
 
@@ -184,7 +184,7 @@ function ShapeUtilities.drawKnot2(
             color = lnClrVal,
             brush = lnBrush,
             points = { coPt, fhPt },
-            cel = cel,
+            frame = frame,
             layer = layer
         }
 
@@ -194,7 +194,7 @@ function ShapeUtilities.drawKnot2(
             color = rhClrVal,
             brush = rhBrush,
             points = { rhPt },
-            cel = cel,
+            frame = frame,
             layer = layer
         }
 
@@ -204,7 +204,7 @@ function ShapeUtilities.drawKnot2(
             color = coClrVal,
             brush = coBrush,
             points = { coPt },
-            cel = cel,
+            frame = frame,
             layer = layer
         }
 
@@ -214,7 +214,7 @@ function ShapeUtilities.drawKnot2(
             color = fhClrVal,
             brush = fhBrush,
             points = { fhPt },
-            cel = cel,
+            frame = frame,
             layer = layer
         }
     end)
@@ -228,13 +228,13 @@ end
 ---@param useStroke boolean use stroke
 ---@param strokeClr Color stroke color
 ---@param brsh Brush brush
----@param cel Cel cel
+---@param frame Frame frame
 ---@param layer Layer layer
 function ShapeUtilities.drawMesh2(
     mesh,
     useFill, fillClr,
     useStroke, strokeClr,
-    brsh, cel, layer)
+    brsh, frame, layer)
     -- Convert Vec2s to Points.
     ---@type Point[]
     local pts = {}
@@ -279,7 +279,7 @@ function ShapeUtilities.drawMesh2(
                     color = fillClr,
                     brush = brsh,
                     points = ptsGrouped[idx3],
-                    cel = cel,
+                    frame = frame,
                     layer = layer
                 }
             end
@@ -305,7 +305,7 @@ function ShapeUtilities.drawMesh2(
                         color = strokeClr,
                         brush = brsh,
                         points = { ptPrev, ptCurr },
-                        cel = cel,
+                        frame = frame,
                         layer = layer
                     }
                     ptPrev = ptCurr

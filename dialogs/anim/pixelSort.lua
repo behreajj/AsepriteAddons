@@ -271,8 +271,8 @@ dlg:button {
             end
 
             -- Default to masking by lightness.
-            local lbThresh = lbThresh100
-            local ubThresh = ubThresh100
+            local lbThresh = lbThresh100 --[[@as number]]
+            local ubThresh = ubThresh100 --[[@as number]]
             local maskFunc = function(lch, lb, ub)
                 return lch.l >= lb and lch.l <= ub
             end

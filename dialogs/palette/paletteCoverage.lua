@@ -281,7 +281,7 @@ dlg:button {
         -- Create Octree.
         local octCapacity = args.octCapacity
             or defaults.octCapacityBits
-        octCapacity = 2 ^ octCapacity
+        octCapacity = 1 << octCapacity
         local bounds = Bounds3.lab()
         local octree = Octree.new(bounds, octCapacity, 1)
 

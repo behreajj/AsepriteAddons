@@ -118,16 +118,37 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
-        local cells = args.cells or defaults.cells --[[@as integer]]
-        local margin100 = args.margin or defaults.margin --[[@as integer]]
+        local sprite = app.activeSprite
+        if not sprite then
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite."
+            }
+            return
+        end
 
-        local scale = args.scale or defaults.scale --[[@as number]]
+        local frame = app.activeFrame --[[@as Frame]]
+        if not frame then
+            app.alert {
+                title = "Error",
+                text = "There is no active frame."
+            }
+            return
+        end
+
+        local args = dlg.data
+        local cells = args.cells
+            or defaults.cells --[[@as integer]]
+        local margin100 = args.margin
+            or defaults.margin --[[@as integer]]
+
+        local scale = args.scale --[[@as number]]
         local xOrig = args.xOrig --[[@as number]]
         local yOrig = args.yOrig --[[@as number]]
 
         local useStroke = args.useStroke --[[@as boolean]]
-        local strokeWeight = args.strokeWeight or defaults.strokeWeight --[[@as integer]]
+        local strokeWeight = args.strokeWeight
+            or defaults.strokeWeight --[[@as integer]]
         local strokeColor = args.strokeClr --[[@as Color]]
         local useFill = args.useFill --[[@as boolean]]
         local fillColor = args.fillClr --[[@as Color]]
@@ -151,23 +172,17 @@ dlg:button {
         local mat = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
-        -- Initialize canvas.
-        local fillHex = AseUtilities.aseColorToHex(
-            fillColor, ColorMode.RGB)
-        local strokeHex = AseUtilities.aseColorToHex(
-            strokeColor, ColorMode.RGB)
-        local sprite = AseUtilities.initCanvas(
-            mesh.name, { fillHex, strokeHex })
-        local layer = sprite.layers[#sprite.layers]
-        local frame = app.activeFrame
-            or sprite.frames[1] --[[@as Frame]]
-        local cel = sprite:newCel(layer, frame)
+        local layer = nil
+        app.transaction("New Layer", function()
+            layer = sprite:newLayer()
+            layer.name = mesh.name
+        end)
 
         ShapeUtilities.drawMesh2(
             mesh, useFill, fillColor,
             useStroke, strokeColor,
             Brush { size = strokeWeight },
-            cel, layer)
+            frame, layer)
 
         app.refresh()
     end

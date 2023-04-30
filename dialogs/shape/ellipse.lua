@@ -162,6 +162,24 @@ dlg:button {
         -- Support for 3D rotation.
         -- See https://github.com/aseprite/api/issues/17 .
 
+        local sprite = app.activeSprite
+        if not sprite then
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite."
+            }
+            return
+        end
+
+        local frame = app.activeFrame --[[@as Frame]]
+        if not frame then
+            app.alert {
+                title = "Error",
+                text = "There is no active frame."
+            }
+            return
+        end
+
         local args = dlg.data
         local resolution = args.resolution or defaults.resolution --[[@as integer]]
         local handles = args.handles or defaults.handles --[[@as integer]]
@@ -190,10 +208,6 @@ dlg:button {
         end
 
         local curve = Curve3.ellipse(xr, yr)
-        -- local layerName = string.format(
-        --     "%s.%03d.(%.3f, %.3f, %.3f)",
-        --     curve.name, angDeg, axis.x, axis.y, axis.z)
-        local layerName = curve.name
 
         local t = Mat4.fromTranslation(xc, yc, 0.0)
         local r = Mat4.fromRotInternal(
@@ -203,35 +217,32 @@ dlg:button {
         local mat = Mat4.mul(Mat4.mul(t, s), r)
         Utilities.mulMat4Curve3(mat, curve)
 
-        local fillHex = AseUtilities.aseColorToHex(
-            fillColor, ColorMode.RGB)
-        local strokeHex = AseUtilities.aseColorToHex(
-            strokeColor, ColorMode.RGB)
-        local sprite = AseUtilities.initCanvas(
-            layerName, { fillHex, strokeHex })
-        local layer = sprite.layers[#sprite.layers]
-        local frame = app.activeFrame
-            or sprite.frames[1] --[[@as Frame]]
-        local cel = sprite:newCel(layer, frame)
+        local layer = nil
+        app.transaction("New Layer", function()
+            layer = sprite:newLayer()
+            layer.name = curve.name
+        end)
 
         -- Technically, this shouldn't work, but a Curve3
         -- has the same fields as a Curve2.
         ShapeUtilities.drawCurve2(
-            curve,
+            curve --[[@as Curve2]],
             resolution,
             useFill, fillColor,
             useStroke, strokeColor,
             Brush { size = strokeWeight },
-            cel, layer)
+            frame, layer)
 
         if handles > 0 then
-            local hlLyr = sprite:newLayer()
-            hlLyr.name = curve.name .. ".Handles"
-            hlLyr.opacity = handles
+            local handlesLayer = nil
+            app.transaction("Handles Layer", function()
+                handlesLayer = sprite:newLayer()
+                handlesLayer.name = curve.name .. ".Handles"
+                handlesLayer.opacity = handles
+            end)
             ShapeUtilities.drawHandles2(
-                curve,
-                sprite:newCel(hlLyr, frame),
-                hlLyr)
+                curve --[[@as Curve2]],
+                frame, handlesLayer)
         end
 
         app.refresh()
