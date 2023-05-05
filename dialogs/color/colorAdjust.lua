@@ -616,7 +616,8 @@ dlg:button {
             AseUtilities.getFrames(activeSprite, target))
         local lenFrames = #frames
 
-        local srcLayer = app.activeLayer
+        -- If isSelect is true, then a new layer will be created.
+        local srcLayer = app.activeLayer --[[@as Layer]]
         if not isSelect then
             if not srcLayer then
                 app.alert {
@@ -685,7 +686,7 @@ dlg:button {
         local isTilemap = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
-            tileSet = srcLayer.tileset
+            tileSet = srcLayer.tileset --[[@as Tileset]]
         end
 
         -- Unpack arguments.

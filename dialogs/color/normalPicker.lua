@@ -21,15 +21,19 @@ local active = {
     inclination = 1.5707963267949,
 }
 
-local function colorToVec(clr)
+---@param color Color
+---@return number
+---@return number
+---@return number
+local function colorToVec(color)
     local r255 = 127.5
     local g255 = 127.5
     local b255 = 255.0
 
-    if clr.alpha > 0 then
-        r255 = clr.red
-        g255 = clr.green
-        b255 = clr.blue
+    if color.alpha > 0 then
+        r255 = color.red
+        g255 = color.green
+        b255 = color.blue
     end
 
     local x = (r255 + r255 - 255) * 0.003921568627451
@@ -54,6 +58,11 @@ local function colorToVec(clr)
     end
 end
 
+---
+---@param x number
+---@param y number
+---@param z number
+---@return integer
 local function vecToHex(x, y, z)
     local sqMag = x * x + y * y + z * z
     if sqMag > 0.0 then
@@ -130,6 +139,8 @@ end
 
 local dlg = Dialog { title = "Normal Picker" }
 
+---
+---@param event MouseEvent
 local function setAzimMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth
@@ -154,6 +165,8 @@ local function setAzimMouseListen(event)
     end
 end
 
+---
+---@param event MouseEvent
 local function setInclMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth

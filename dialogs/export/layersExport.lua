@@ -6,6 +6,7 @@ local layerTargetOptions = { "ACTIVE", "ALL", "RANGE" }
 local cropTypes = { "CROPPED", "SPRITE" }
 
 local defaults = {
+    -- TODO: Make command line friendly version?
     layerTarget = "ALL",
     includeLocked = true,
     includeHidden = false,
@@ -508,7 +509,7 @@ dlg:button {
 
                         image = cel.image
                         if chosenLayer.isTilemap then
-                            local tileSet = chosenLayer.tileset
+                            local tileSet = chosenLayer.tileset --[[@as Tileset]]
                             image = AseUtilities.tilesToImage(
                                 image, tileSet, spriteColorMode)
                         end

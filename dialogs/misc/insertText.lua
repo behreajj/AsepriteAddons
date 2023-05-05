@@ -206,7 +206,7 @@ dlg:button {
     onclick = function()
         -- Begin measuring elapsed time.
         local args = dlg.data
-        local printElapsed = args.printElapsed
+        local printElapsed = args.printElapsed --[[@as boolean]]
         local startTime = 0
         local endTime = 0
         local elapsed = 0
@@ -407,7 +407,7 @@ dlg:button {
         end
 
         local activeFrameObj = app.activeFrame
-            or sprite.frames[1] --[[@as Frame]]
+            or sprite.frames[1]
         local actFrIdx = activeFrameObj.frameNumber
         if animate then
             local frames = sprite.frames

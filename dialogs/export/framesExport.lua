@@ -124,10 +124,14 @@ local function saveSheet(
             hSheet = wSheet
         end
 
-        -- This needs to account for large
-        -- margins and padding.
-        -- columns = math.max(1, wSheet // wMax)
-        -- rows = math.max(1, hSheet // hMax)
+        -- There's one less padding per denominator,
+        -- so experiment adding one padding to numerator.
+        columns = math.max(1,
+            (wSheet + padding - margin2)
+            // (wMax + padding))
+        rows = math.max(1,
+            (hSheet + padding - margin2)
+            // (hMax + padding))
     end
 
     -- Unpack source spec.
@@ -291,10 +295,10 @@ dlg:combobox {
     options = frameTargetOptions,
     onchange = function()
         local args = dlg.data
-        local state = args.frameTarget
+        local state = args.frameTarget --[[@as string]]
         local isManual = state == "MANUAL"
         local isTags = state == "TAGS"
-        local useSheet = args.useSheet
+        local useSheet = args.useSheet --[[@as boolean]]
         local validBatching = useSheet and (isTags or isManual)
         dlg:modify { id = "rangeStr", visible = isManual }
         dlg:modify { id = "strExample", visible = false }
@@ -375,7 +379,7 @@ dlg:check {
     visible = true,
     onclick = function()
         local args = dlg.data
-        local frameTarget = args.frameTarget
+        local frameTarget = args.frameTarget --[[@as string]]
         local isManual = frameTarget == "MANUAL"
         local isTags = frameTarget == "TAGS"
         local useSheet = args.useSheet
@@ -393,7 +397,7 @@ dlg:check {
     selected = defaults.useBatches,
     visible = defaults.useSheet
         and (defaults.frameTarget == "TAGS"
-        or defaults.frameTarget == "MANUAL")
+            or defaults.frameTarget == "MANUAL")
 }
 
 dlg:newrow { always = false }
@@ -593,7 +597,7 @@ dlg:button {
         useBatches = useBatches
             and useSheet
             and (frameTarget == "TAGS"
-            or frameTarget == "MANUAL")
+                or frameTarget == "MANUAL")
         local usePadding = padding > 0
         if not useSheet then margin = 0 end
 
@@ -627,6 +631,7 @@ dlg:button {
             i = i + 1
             local frIdcs1 = frIdcs2[i]
             local lenInner = #frIdcs1
+            ---@type table[]
             local packets1 = {}
             local wMaxLocal = -2147483648
             local hMaxLocal = -2147483648

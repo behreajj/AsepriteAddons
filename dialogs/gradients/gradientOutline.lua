@@ -227,7 +227,7 @@ dlg:button {
         local clrSpacePreset = args.clrSpacePreset --[[@as string]]
         local easPreset = args.easPreset --[[@as string]]
         local huePreset = args.huePreset --[[@as string]]
-        local aseColors = args.shades --[[@as Color[] ]]
+        local aseColors = args.shades --[=[@as Color[]]=]
         local levels = args.quantize --[[@as integer]]
         local aseBkgColor = args.bkgColor --[[@as Color]]
         local iterations = args.iterations
@@ -279,7 +279,7 @@ dlg:button {
         local isTilemap = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
-            tileSet = srcLayer.tileset
+            tileSet = srcLayer.tileset --[[@as Tileset]]
         end
 
         -- Cache methods.

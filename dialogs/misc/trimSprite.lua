@@ -145,7 +145,6 @@ dlg:button {
             local celImg = cel.image
             local layer = cel.layer
             local layerName = layer.name
-            local frIdx = cel.frameNumber
 
             local tlx = celPos.x
             local tly = celPos.y
@@ -153,16 +152,16 @@ dlg:button {
             local bry = tly + celImg.height - 1
 
             if layer.isTilemap then
-                local tileSet = layer.tileset
-                local tileGrid = tileSet.grid --[[@as Grid]]
-                local tileDim = tileGrid.tileSize --[[@as Size]]
+                local tileSet = layer.tileset --[[@as Tileset]]
+                local tileGrid = tileSet.grid
+                local tileDim = tileGrid.tileSize
                 local wTile = tileDim.width
                 local hTile = tileDim.height
                 brx = tlx + celImg.width * wTile - 1
                 bry = tly + celImg.height * hTile - 1
             elseif useSel then
                 transact(
-                    strfmt("Crop %s %d", layerName, frIdx),
+                    strfmt("Crop %s", layerName),
                     function()
                         selectCel(cel, sel)
                     end)
@@ -184,7 +183,7 @@ dlg:button {
                 bry = tly + trimmed.height - 1
 
                 transact(
-                    strfmt("Trim %s %d", layerName, frIdx),
+                    strfmt("Trim %s", layerName),
                     function()
                         cel.position = Point(tlx, tly)
                         cel.image = trimmed
@@ -194,7 +193,7 @@ dlg:button {
 
                 if useCrop then
                     transact(
-                        strfmt("Crop %s %d", layerName, frIdx),
+                        strfmt("Crop %s", layerName),
                         function()
                             cropCel(cel, activeSprite)
                         end)

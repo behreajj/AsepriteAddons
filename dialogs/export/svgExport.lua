@@ -24,6 +24,11 @@ local function blendModeToStr(bm)
             return "normal"
         end
 
+        if bm == BlendMode.HSL_HUE then return "hue" end
+        if bm == BlendMode.HSL_SATURATION then return "saturation" end
+        if bm == BlendMode.HSL_COLOR then return "color" end
+        if bm == BlendMode.HSL_LUMINOSITY then return "luminosity" end
+
         local bmStr = "normal"
         for k, v in pairs(BlendMode) do
             if bm == v then
@@ -32,12 +37,6 @@ local function blendModeToStr(bm)
             end
         end
         bmStr = string.gsub(string.lower(bmStr), "_", "-")
-
-        -- No HSL prefix in CSS.
-        if string.sub(bmStr, 1, 3) == "hsl" then
-            bmStr = string.sub(bmStr, 5)
-        end
-
         return bmStr
     else
         return "normal"
@@ -136,7 +135,7 @@ end
 
 ---
 ---@param layer Layer layer
----@param frame Frame frame
+---@param frame Frame|integer frame
 ---@param spriteBounds Rectangle sprite bounds
 ---@param border integer border size
 ---@param scale integer scale
@@ -164,7 +163,7 @@ local function layerToSvgStr(
             local grpStr = string.format(
                 "\n<g id=\"%s\">", layerName)
 
-            local groupLayers = layer.layers --[[@as Layer[] ]]
+            local groupLayers = layer.layers --[=[@as Layer[]]=]
             local lenGroupLayers = #groupLayers
             ---@type string[]
             local groupStrArr = {}

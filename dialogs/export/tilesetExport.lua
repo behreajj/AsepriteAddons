@@ -445,10 +445,14 @@ dlg:button {
                     hSheet = wSheet
                 end
 
-                -- This needs to account for large
-                -- margins and padding.
-                -- columns = max(1, wSheet // wTileTrg)
-                -- rows = max(1, hSheet // hTileTrg)
+                -- There's one less padding per denominator,
+                -- so experiment adding one padding to numerator.
+                columns = math.max(1,
+                    (wSheet + padding - margin2)
+                    // (wTileTrg + padding))
+                rows = math.max(1,
+                    (hSheet + padding - margin2)
+                    // (hTileTrg + padding))
             end
 
             -- Create composite image.
@@ -543,11 +547,12 @@ dlg:button {
                 local tmFrames = Utilities.flatArr2(
                     AseUtilities.getFrames(activeSprite, target))
 
+                ---@type Layer[]
                 local tmLayers = {}
                 if target == "ACTIVE" then
                     -- This has already been validated to be
                     -- non-nil and a tile map at start of function.
-                    tmLayers = { app.activeLayer }
+                    tmLayers = { app.activeLayer --[[@as Layer]] }
                 else
                     tmLayers = AseUtilities.getLayerHierarchy(
                         activeSprite,
@@ -563,7 +568,7 @@ dlg:button {
                     j = j + 1
                     local tmLayer = tmLayers[j]
                     if tmLayer.isTilemap then
-                        local tileSet = tmLayer.tileset
+                        local tileSet = tmLayer.tileset --[[@as Tileset]]
                         local tileGrid = tileSet.grid
                         local tileDim = tileGrid.tileSize
                         local wTile = tileDim.width

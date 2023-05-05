@@ -151,12 +151,17 @@ dlg:button {
         end
 
         local args = dlg.data
-        local rings = args.rings or defaults.rings --[[@as integer]]
-        local xScale = args.xScale or defaults.xScale --[[@as number]]
-        local yScale = args.yScale or defaults.yScale --[[@as number]]
+        local rings = args.rings
+            or defaults.rings --[[@as integer]]
+        local xScale = args.xScale
+            or defaults.xScale --[[@as number]]
+        local yScale = args.yScale
+            or defaults.yScale --[[@as number]]
         local useDimetric = args.useDimetric --[[@as boolean]]
         local xOrig = args.xOrig --[[@as number]]
         local yOrig = args.yOrig --[[@as number]]
+        local margin100 = args.margin
+            or defaults.margin --[[@as integer]]
 
         local useStroke = args.useStroke --[[@as boolean]]
         local strokeWeight = args.strokeWeight
@@ -172,11 +177,6 @@ dlg:button {
             xScale = xScale * 1.1547005383793
         end
 
-        local fillHex = AseUtilities.aseColorToHex(
-            fillColor, ColorMode.RGB)
-        local strokeHex = AseUtilities.aseColorToHex(
-            strokeColor, ColorMode.RGB)
-
         local mesh = Mesh2.gridHex(rings)
 
         local t = Mat3.fromTranslation(xOrig, yOrig)
@@ -186,7 +186,7 @@ dlg:button {
 
         -- Convert margin from [0, 100] to [0.0, 1.0].
         -- Ensure that it is less than 100%.
-        local margin = args.margin * 0.01
+        local margin = margin100 * 0.01
         if margin > 0.0 then
             margin = 1.0 - math.min(margin, 0.99)
             mesh:scaleFacesIndiv(margin)

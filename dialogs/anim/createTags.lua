@@ -186,7 +186,7 @@ dlg:button {
         local aniDirStr = args.aniDir
             or defaults.aniDir --[[@as string]]
         local repeats = args.repeats
-            or defaults.repeats --[[@as number]]
+            or defaults.repeats --[[@as integer]]
         local deleteExisting = args.deleteExisting --[[@as boolean]]
 
         local validNameFormat = #nameFormat > 0
@@ -218,17 +218,15 @@ dlg:button {
         local fromClr = AseUtilities.aseColorToClr(fromColor)
         local toClr = AseUtilities.aseColorToClr(toColor)
 
-        ---@type integer|AniDir
         local aniDirEnum = AniDir.FOWARD
         if aniDirStr == "REVERSE" then
             aniDirEnum = AniDir.REVERSE
         elseif aniDirStr == "PING_PONG" then
             aniDirEnum = AniDir.PING_PONG
         elseif aniDirStr == "PING_PONG_REVERSE" then
-            aniDirEnum = 3
+            aniDirEnum = AniDir.PING_PONG_REVERSE
         end
 
-        -- How to prevent duplicate tags from being created?
         -- Way to set play subtags and repetitions
         -- vs Play all, play once?
         -- print(app.preferences.editor.play_once)

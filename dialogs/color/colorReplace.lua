@@ -158,7 +158,9 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        if not activeLayer then return end
+        local activeFrame = app.activeFrame
+        if not activeFrame then return end
 
         local args = dlg.data
         local target = args.target

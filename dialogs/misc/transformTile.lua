@@ -59,14 +59,15 @@ local function transformCel(dialog, preset)
     local activeSprite = app.activeSprite
     if not activeSprite then return end
 
-    local activeFrame = app.activeFrame --[[@as Frame]]
+    local activeFrame = app.activeFrame
     if not activeFrame then return end
 
     local activeLayer = app.activeLayer
+    if not activeLayer then return end
     if not activeLayer.isVisible then return end
     if not activeLayer.isEditable then return end
     if not activeLayer.isTilemap then return end
-    local tileSet = activeLayer.tileset
+    local tileSet = activeLayer.tileset --[[@as Tileset]]
 
     local activeCel = activeLayer:cel(activeFrame)
     if not activeCel then return end
@@ -265,14 +266,15 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
 
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
         if not activeFrame then return end
 
         local activeLayer = app.activeLayer
+        if not activeLayer then return end
         if not activeLayer.isVisible then return end
         if not activeLayer.isEditable then return end
         if not activeLayer.isTilemap then return end
-        local tileSet = activeLayer.tileset
+        local tileSet = activeLayer.tileset --[[@as Tileset]]
         local lenTileSet = #tileSet
 
         local activeCel = activeLayer:cel(activeFrame)
@@ -295,10 +297,11 @@ dlg:button {
         local srcWidth = srcMap.width
         local srcItr = srcMap:pixels()
         for mapEntry in srcItr do
-            local flatIdx = mapEntry.x + mapEntry.y * srcWidth
-            local srcTsIdx = pxTilei(mapEntry())
+            local mapif = mapEntry() --[[@as integer]]
+            local srcTsIdx = pxTilei(mapif)
             if srcTsIdx > 0 and srcTsIdx < lenTileSet
                 and (not visited[srcTsIdx]) then
+                local flatIdx = mapEntry.x + mapEntry.y * srcWidth
                 visited[srcTsIdx] = flatIdx
             end
         end
@@ -381,9 +384,9 @@ dlg:button {
             local reordered = uniqueMap:clone()
             local reoItr = reordered:pixels()
             for mapEntry in reoItr do
-                local rawData = mapEntry()
-                local oldTsIdx = pxTilei(rawData)
-                local flags = pxTilef(rawData)
+                local mapif = mapEntry() --[[@as integer]]
+                local oldTsIdx = pxTilei(mapif)
+                local flags = pxTilef(mapif)
                 if oldTsIdx > 0 and oldTsIdx < lenTileSet then
                     local newTsIdx = oldToNew[1 + oldTsIdx] - 1
                     mapEntry(pxTileCompose(newTsIdx, flags))
@@ -392,9 +395,7 @@ dlg:button {
                 end
             end
 
-            local frIdx = uniqueCel.frameNumber
-            app.transaction(string.format(
-                "Update Map %d", frIdx), function()
+            app.transaction("Update Map", function()
                 uniqueCel.image = reordered
             end)
         end
@@ -412,10 +413,11 @@ dlg:button {
         if not activeSprite then return end
 
         local activeLayer = app.activeLayer
+        if not activeLayer then return end
         if not activeLayer.isVisible then return end
         if not activeLayer.isEditable then return end
         if not activeLayer.isTilemap then return end
-        local tileSet = activeLayer.tileset
+        local tileSet = activeLayer.tileset --[[@as Tileset]]
         local lenTileSet = #tileSet
 
         -- Cache methods used in a for loop.
@@ -440,7 +442,8 @@ dlg:button {
             local srcMap = srcCel.image
             local srcItr = srcMap:pixels()
             for mapEntry in srcItr do
-                local srcTsIdx = pxTilei(mapEntry())
+                local mapif = mapEntry() --[[@as integer]]
+                local srcTsIdx = pxTilei(mapif)
                 if srcTsIdx > 0 and srcTsIdx < lenTileSet
                     and (not visited[srcTsIdx]) then
                     visited[srcTsIdx] = true
@@ -492,9 +495,7 @@ dlg:button {
                 end
             end
 
-            local frIdx = uniqueCel.frameNumber
-            app.transaction(string.format(
-                "Update Map %d", frIdx), function()
+            app.transaction("Update Map", function()
                 uniqueCel.image = reordered
             end)
         end

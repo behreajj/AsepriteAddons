@@ -1073,7 +1073,7 @@ end
 ---This method should be called after any range accesses.
 ---@param sprite Sprite active sprite
 ---@param layer Layer|nil active layer
----@param frame Frame|nil active frame
+---@param frame Frame|integer|nil active frame
 ---@param target string target preset
 ---@param includeLocked? boolean include locked layers
 ---@param includeHidden? boolean include hidden layers
@@ -1180,7 +1180,16 @@ function AseUtilities.filterCels(
                 includeHidden,
                 includeTiles,
                 includeBkg)
-            local frIdcs = { frame.frameNumber }
+
+            ---@type integer[]
+            local frIdcs = {}
+            if type(frame) == "number"
+                and math.type(frame) == "integer" then
+                frIdcs[1] = frame
+            else
+                frIdcs[1] = frame.frameNumber
+            end
+
             AseUtilities.getUniqueCelsFromLeaves(
                 sprite, leaves, frIdcs, trgCels)
         end
@@ -1241,7 +1250,7 @@ function AseUtilities.flattenGroup(
         if leafCel then
             local leafImage = leafCel.image
             if leafLayer.isTilemap then
-                local tileSet = leafLayer.tileset
+                local tileSet = leafLayer.tileset --[[@as Tileset]]
                 leafImage = tilesToImage(
                     leafImage, tileSet, sprClrMode)
             end
@@ -1565,66 +1574,6 @@ function AseUtilities.getPalette(frame, palettes)
     return palettes[idx]
 end
 
----Appends layers contained in a range according to
----the provided filters.
----
----Checks timeline visibility before accessing range.
----If the sprite referenced by the range does not
----match the provided sprite, then returns empty table.
----
----Call this method before new layers, frames or cels
----are created. Otherwise the range will be lost.
----@param range Range range
----@param sprite Sprite sprite
----@param includeLocked? boolean include locked layers
----@param includeHidden? boolean include hidden layers
----@param includeTiles? boolean include tile maps
----@param includeBkg? boolean include backgrounds
----@return Layer[]
-function AseUtilities.getRangeLayers(
-    range, sprite,
-    includeLocked, includeHidden,
-    includeTiles, includeBkg)
-    -- TODO: This isn't used anywhere?
-
-    ---@type Layer[]
-    local arr = {}
-    if range.sprite ~= sprite then
-        return arr
-    end
-
-    -- When the timeline is hidden, the range
-    -- cannot be accessed properly.
-    local tlHidden = not app.preferences.general.visible_timeline
-    if tlHidden then
-        app.command.Timeline { open = true }
-    end
-
-    local rangeLayers = range.layers
-    local lenRangeLayers = #rangeLayers
-    local i = 0
-    local lenArr = 0
-    while i < lenRangeLayers do
-        i = i + 1
-        local layer = rangeLayers[i]
-        if (not layer.isGroup)
-            and (not layer.isReference)
-            and (includeHidden or layer.isVisible)
-            and (includeLocked or layer.isEditable)
-            and (includeTiles or (not layer.isTilemap))
-            and (includeBkg or (not layer.isBackground)) then
-            lenArr = lenArr + 1
-            arr[lenArr] = layer
-        end
-    end
-
-    if tlHidden then
-        app.command.Timeline { close = true }
-    end
-
-    return arr
-end
-
 ---Gets a selection from a sprite. Calls InvertMask
 ---command twice. Returns a copy of the selection,
 ---not a reference. If the selection is empty, then
@@ -1702,7 +1651,8 @@ function AseUtilities.getSelectedTiles(
     local visitedTiles = {}
     local mapItr = tileMap:pixels()
     for mapEntry in mapItr do
-        local index = pxTilei(mapEntry())
+        local mapif = mapEntry() --[[@as integer]]
+        local index = pxTilei(mapif)
         if index > 0 and index < lenTileSet
             and (not visitedTiles[index]) then
             visitedTiles[index] = true
@@ -1749,6 +1699,7 @@ end
 ---@return Cel[]
 function AseUtilities.getUniqueCelsFromLeaves(
     sprite, leaves, frIdcs, trgCels)
+
     local vTrgCels = trgCels or {}
     if #leaves > 0 then
         -- When the timeline is hidden, the range
@@ -1797,12 +1748,15 @@ end
 function AseUtilities.getUniqueTiles(tileMap, tileSet)
     ---@type table<integer, Tile>
     local tiles = {}
-    if tileMap.colorMode ~= 4 then return tiles end
+    if tileMap.colorMode ~= ColorMode.TILEMAP then
+        return tiles
+    end
     local lenTileSet = #tileSet
     local pxTilei = app.pixelColor.tileI
     local mapItr = tileMap:pixels()
     for mapEntry in mapItr do
-        local index = pxTilei(mapEntry())
+        local mapif = mapEntry() --[[@as integer]]
+        local index = pxTilei(mapif)
         if index > 0 and index < lenTileSet
             and (not tiles[index]) then
             tiles[index] = tileSet:tile(index)
@@ -1885,14 +1839,18 @@ end
 ---
 ---A tag may contain frame indices that are out of
 ---bounds for the sprite that contains the tag.
----This function assumes the tag is valid.
+---Returns an empty array if so.
 ---@param tag Tag Aseprite Tag
 ---@return integer[]
 function AseUtilities.parseTag(tag)
-    local origFrameObj = tag.fromFrame
-    local destFrameObj = tag.toFrame
-    local origIdx = origFrameObj.frameNumber
-    local destIdx = destFrameObj.frameNumber
+    local destFrObj = tag.toFrame
+    if not destFrObj then return {} end
+
+    local origFrObj = tag.fromFrame
+    if not origFrObj then return {} end
+
+    local origIdx = origFrObj.frameNumber
+    local destIdx = destFrObj.frameNumber
     if origIdx == destIdx then return { destIdx } end
 
     ---@type integer[]
@@ -1933,6 +1891,7 @@ function AseUtilities.parseTag(tag)
             arr[idxArr] = j
         end
     else
+        -- Default to AniDir.FOWARD
         local j = origIdx - 1
         while j < destIdx do
             j = j + 1
@@ -2261,7 +2220,7 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
 end
 
 ---Converts an image from a tile set layer to a regular
----image. Supported in Aseprite version 1.3 or newer.
+---image.
 ---@param imgSrc Image source image
 ---@param tileSet Tileset tile set
 ---@param sprClrMode ColorMode|integer sprite color mode
@@ -2297,10 +2256,10 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     -- local maskRot90ccw = maskRot180 | maskRot90cw
     local pxTilei = app.pixelColor.tileI
 
-    local pxItr = imgSrc:pixels()
-    for pixel in pxItr do
-        local tlData = pixel()
-        local i = pxTilei(tlData)
+    local mapItr = imgSrc:pixels()
+    for mapEntry in mapItr do
+        local mapif = mapEntry() --[[@as integer]]
+        local i = pxTilei(mapif)
 
         if i > 0 and i < lenTileSet then
             local tile = tileSet:tile(i)
@@ -2327,8 +2286,8 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
 
             imgTrg:drawImage(
                 tileImage,
-                Point(pixel.x * tileWidth,
-                    pixel.y * tileHeight))
+                Point(mapEntry.x * tileWidth,
+                    mapEntry.y * tileHeight))
         end
     end
 

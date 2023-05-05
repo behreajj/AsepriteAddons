@@ -157,10 +157,10 @@ dlg:button {
         local underIsTile = underLayer.isTilemap
         local tileSetUnder = nil
         if overIsTile then
-            tileSetOver = overLayer.tileset
+            tileSetOver = overLayer.tileset --[[@as Tileset]]
         end
         if underIsTile then
-            tileSetUnder = underLayer.tileset
+            tileSetUnder = underLayer.tileset --[[@as Tileset]]
         end
 
         local frames = Utilities.flatArr2(

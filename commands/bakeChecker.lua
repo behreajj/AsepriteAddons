@@ -32,6 +32,7 @@ local b = AseUtilities.aseColorToHex(bAse, ColorMode.RGB)
 a = 0xff000000 | a
 b = 0xff000000 | b
 
+-- TODO: Make this its own function in AseUtilities.
 local activeSpec = activeSprite.spec
 local checker = Image(activeSpec)
 local pxItr = checker:pixels()

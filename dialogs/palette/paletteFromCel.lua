@@ -325,7 +325,7 @@ dlg:button {
     onclick = function()
         -- Begin measuring elapsed time.
         local args = dlg.data
-        local printElapsed = args.printElapsed
+        local printElapsed = args.printElapsed --[[@as boolean]]
         local startTime = 0
         local endTime = 0
         local elapsed = 0

@@ -21,7 +21,7 @@ if isValid then
     end
 end
 
-local activeFrame = app.activeFrame --[[@as Frame]]
+local activeFrame = app.activeFrame
 if activeFrame then
     -- Modulo arithmetic is easier to understand when index starts at 0.
     local frameNo = activeFrame.frameNumber - 1

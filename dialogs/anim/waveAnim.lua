@@ -39,21 +39,9 @@ local defaults = {
 }
 
 local function wrapClamp(x, y, img)
-    local xc = x
-    local yc = y
-    local wn1 = img.width - 1
-    local hn1 = img.height - 1
-    if xc < 0 then
-        xc = 0
-    elseif xc > wn1 then
-        xc = wn1
-    end
-    if yc < 0 then
-        yc = 0
-    elseif yc > hn1 then
-        yc = hn1
-    end
-    return img:getPixel(xc, yc)
+    return img:getPixel(
+        math.min(math.max(x, 0), img.width - 1),
+        math.min(math.max(y, 0), img.height - 1))
 end
 
 local function wrapOmit(x, y, img)
@@ -77,7 +65,8 @@ dlg:combobox {
     options = targets,
     onchange = function()
         local args = dlg.data
-        local isActive = args.target == "ACTIVE"
+        local target = args.target --[[@as string]]
+        local isActive = target == "ACTIVE"
         dlg:modify { id = "frameCount", visible = isActive }
         dlg:modify { id = "fps", visible = isActive }
     end
@@ -140,8 +129,8 @@ dlg:combobox {
     options = waveTypes,
     onchange = function()
         local args = dlg.data
-        local waveType = args.waveType
-        local interType = args.interType
+        local waveType = args.waveType --[[@as string]]
+        local interType = args.interType --[[@as string]]
 
         local isInter = waveType == "INTERLACED"
         local isBilinear = waveType == "BILINEAR"
@@ -257,7 +246,7 @@ dlg:combobox {
     visible = defaults.waveType == "INTERLACED",
     onchange = function()
         local args = dlg.data
-        local interType = args.interType
+        local interType = args.interType --[[@as string]]
 
         local isHoriz = interType == "HORIZONTAL"
         local isVert = interType == "VERTICAL"
@@ -391,7 +380,7 @@ dlg:button {
     onclick = function()
         -- Begin timing the function elapsed.
         local args = dlg.data
-        local printElapsed = args.printElapsed
+        local printElapsed = args.printElapsed --[[@as boolean]]
         local startTime = 0
         local endTime = 0
         local elapsed = 0
@@ -440,6 +429,7 @@ dlg:button {
 
         -- TODO: Destructure this to an array of
         -- durations, images, factors, thetas?
+        ---@type {duration: number, image: Image, fac: number, theta: number}[]
         local packets = {}
         if isActive then
             local frameCount = args.frameCount
@@ -585,10 +575,14 @@ dlg:button {
             xBaseSustain = xBaseSustain * 0.01
 
             -- This was tested to make sure it tiles correctly.
-            local xDisplaceOrig = args.xDisplaceOrig or defaults.xDisplaceOrig --[[@as integer]]
-            local xDisplaceDest = args.xDisplaceDest or defaults.xDisplaceDest --[[@as integer]]
-            local yDisplaceOrig = args.yDisplaceOrig or defaults.yDisplaceOrig --[[@as integer]]
-            local yDisplaceDest = args.yDisplaceDest or defaults.yDisplaceDest --[[@as integer]]
+            local xDisplaceOrig = args.xDisplaceOrig
+                or defaults.xDisplaceOrig --[[@as integer]]
+            local xDisplaceDest = args.xDisplaceDest
+                or defaults.xDisplaceDest --[[@as integer]]
+            local yDisplaceOrig = args.yDisplaceOrig
+                or defaults.yDisplaceOrig --[[@as integer]]
+            local yDisplaceDest = args.yDisplaceDest
+                or defaults.yDisplaceDest --[[@as integer]]
 
             local pxxDisplaceOrig = srcWidth * xDisplaceOrig * 0.005
             local pxxDisplaceDest = srcWidth * xDisplaceDest * 0.005
@@ -682,12 +676,18 @@ dlg:button {
             end
         else
             -- Default to radial wave.
-            local xCenter = args.xCenter or defaults.xCenter --[[@as integer]]
-            local yCenter = args.yCenter or defaults.yCenter --[[@as integer]]
-            local uDisplaceOrig = args.uDisplaceOrig or defaults.uDisplaceOrig --[[@as integer]]
-            local uDisplaceDest = args.uDisplaceDest or defaults.uDisplaceDest --[[@as integer]]
-            local sustain = args.sustain or defaults.sustain --[[@as integer]]
-            local warp = args.warp or defaults.warp --[[@as integer]]
+            local xCenter = args.xCenter
+                or defaults.xCenter --[[@as integer]]
+            local yCenter = args.yCenter
+                or defaults.yCenter --[[@as integer]]
+            local uDisplaceOrig = args.uDisplaceOrig
+                or defaults.uDisplaceOrig --[[@as integer]]
+            local uDisplaceDest = args.uDisplaceDest
+                or defaults.uDisplaceDest --[[@as integer]]
+            local sustain = args.sustain
+                or defaults.sustain --[[@as integer]]
+            local warp = args.warp
+                or defaults.warp --[[@as integer]]
 
             -- Working on what would be most intuitive.
             local maxDist = 0.0
@@ -831,11 +831,11 @@ dlg:button {
             if trimCels then
                 img, x, y = trimImage(img, 0, alphaMask)
             end
-            transact(strfmt(
-                "Wave %d", trgFrame.frameNumber), function()
-                trgSprite:newCel(
-                    trgLayer, trgFrame, img, Point(x, y))
-            end)
+            transact(strfmt("Wave %d", trgFrame.frameNumber),
+                function()
+                    trgSprite:newCel(
+                        trgLayer, trgFrame, img, Point(x, y))
+                end)
         end
 
         app.activeFrame = trgFrames[1]

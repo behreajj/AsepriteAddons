@@ -209,7 +209,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         local args = dlg.data
         -- These are number fields, but their decimal places are zero.
@@ -277,7 +277,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         local args = dlg.data
         local dx = args.xTranslate
@@ -377,7 +377,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -415,7 +415,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -453,7 +453,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -493,7 +493,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -537,7 +537,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -586,7 +586,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         -- Unpack arguments.
         local args = dlg.data
@@ -684,7 +684,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         -- Unpack arguments.
         local args = dlg.data
@@ -782,7 +782,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         -- Unpack arguments.
         local args = dlg.data
@@ -999,7 +999,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -1030,7 +1030,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -1062,7 +1062,7 @@ dlg:button {
         local activeSprite = app.activeSprite
         if not activeSprite then return end
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
 
         -- Cache methods.
         local abs = math.abs

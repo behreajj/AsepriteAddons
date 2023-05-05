@@ -172,7 +172,7 @@ dlg:button {
         local isTilemap = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
-            tileSet = srcLayer.tileset
+            tileSet = srcLayer.tileset --[[@as Tileset]]
         end
 
         local args = dlg.data

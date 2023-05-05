@@ -288,7 +288,7 @@ dlg:button {
     onclick = function()
         -- Begin timing the function elapsed.
         local args = dlg.data
-        local printElapsed = args.printElapsed
+        local printElapsed = args.printElapsed --[[@as boolean]]
         local startTime = 0
         local endTime = 0
         local elapsed = 0
@@ -334,7 +334,7 @@ dlg:button {
         local isTilemap = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
-            tileSet = srcLayer.tileset
+            tileSet = srcLayer.tileset --[[@as Tileset]]
         end
 
         local oldMode = activeSprite.colorMode

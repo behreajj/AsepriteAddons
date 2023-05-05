@@ -100,7 +100,7 @@ dlg:button {
         local clrSpacePreset = args.clrSpacePreset --[[@as string]]
         local easPreset = args.easPreset --[[@as string]]
         local huePreset = args.huePreset --[[@as string]]
-        local aseColors = args.shades --[[@as Color[] ]]
+        local aseColors = args.shades --[=[@as Color[]]=]
         local levels = args.quantize --[[@as integer]]
         local bayerIndex = args.bayerIndex --[[@as integer]]
         local ditherPath = args.ditherPath --[[@as string]]

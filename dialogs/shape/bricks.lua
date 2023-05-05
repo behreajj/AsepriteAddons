@@ -214,6 +214,7 @@ dlg:button {
         local brush = Brush { size = mortarThick }
 
         if vari100 > 0 then
+            -- time returns an integer, clock returns a number.
             math.randomseed(os.time())
 
             -- Unpack arguments.

@@ -37,7 +37,7 @@ end
 
 local function minkDist(ax, ay, bx, by, c, d)
     return (math.abs(bx - ax) ^ c
-        + math.abs(by - ay) ^ c)
+            + math.abs(by - ay) ^ c)
         ^ d
 end
 
@@ -168,7 +168,7 @@ dlg:button {
         local clrSpacePreset = args.clrSpacePreset --[[@as string]]
         local easPreset = args.easPreset --[[@as string]]
         local huePreset = args.huePreset --[[@as string]]
-        local aseColors = args.shades --[[@as Color[] ]]
+        local aseColors = args.shades --[=[@as Color[]]=]
         local levels = args.quantize --[[@as integer]]
         local mnr100 = args.minRad --[[@as integer]]
         local mxr100 = args.maxRad --[[@as integer]]

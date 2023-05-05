@@ -69,7 +69,7 @@ dlg:button {
         local includeHidden = args.includeHidden --[[@as boolean]]
 
         local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.activeFrame
         local trgCels = AseUtilities.filterCels(
             activeSprite, activeLayer, activeFrame, target,
             includeLocked, includeHidden, false, false)

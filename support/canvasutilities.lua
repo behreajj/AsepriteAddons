@@ -174,6 +174,7 @@ function CanvasUtilities.graphBezier(
     local wVrf = width or 128
     local idVrf = id or "graphBezier"
 
+    ---@param event MouseEvent
     local onMouseFunc = function(event)
         -- TODO: How to handle canvas resize.
         if event.button ~= MouseButton.NONE then
@@ -587,7 +588,6 @@ function CanvasUtilities.graphLine(
                 local yi = Utilities.round(ydSigned * 100.0)
                 dialog:modify { id = "xDest", value = xi }
                 dialog:modify { id = "yDest", value = yi }
-
                 dialog:repaint()
             end
         end,
@@ -722,6 +722,7 @@ function CanvasUtilities.spectrum(
     local inSatBar = false
     local inAlphaBar = false
 
+    ---@param event MouseEvent
     local onMouseFunc = function(event)
         local xMouse = event.x
         local yMouse = event.y

@@ -202,6 +202,7 @@ end
 
 local dlg = Dialog { title = "LCH Color Picker" }
 
+---@param event MouseEvent
 local function setAlphaMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth
@@ -222,6 +223,7 @@ local function setAlphaMouseListen(event)
     end
 end
 
+---@param event MouseEvent
 local function setLightMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth
@@ -243,6 +245,7 @@ local function setLightMouseListen(event)
     end
 end
 
+---@param event MouseEvent
 local function setChromaMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth
@@ -281,6 +284,7 @@ local function setChromaMouseListen(event)
     end
 end
 
+---@param event MouseEvent
 local function setHueMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth

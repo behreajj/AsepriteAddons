@@ -49,7 +49,7 @@ local function extrude(dx, dy, trim)
 
     local srcImage = activeCel.image
     local srccm = srcImage.colorMode
-    if srccm == 4 then
+    if srccm == ColorMode.TILEMAP then
         app.alert {
             title = "Error",
             text = "Tile maps are not supported."
@@ -282,10 +282,11 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         local brushOption = args.brushOption --[[@as string]]
+        local amount = args.amount --[[@as integer]]
         app.command.ModifySelection {
             modifier = "expand",
             brush = string.lower(brushOption),
-            quantity = dlg.data.amount
+            quantity = amount
         }
     end
 }
@@ -297,10 +298,11 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         local brushOption = args.brushOption --[[@as string]]
+        local amount = args.amount --[[@as integer]]
         app.command.ModifySelection {
             modifier = "contract",
             brush = string.lower(brushOption),
-            quantity = dlg.data.amount
+            quantity = amount
         }
     end
 }
@@ -344,7 +346,6 @@ dlg:button {
             activeSprite.selection = trgSel
         end
 
-        app.command.Refresh()
         app.refresh()
     end
 }
@@ -356,10 +357,11 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         local brushOption = args.brushOption --[[@as string]]
+        local amount = args.amount --[[@as integer]]
         app.command.ModifySelection {
             modifier = "border",
             brush = string.lower(brushOption),
-            quantity = dlg.data.amount
+            quantity = amount
         }
     end
 }
