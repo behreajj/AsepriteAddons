@@ -163,7 +163,8 @@ dlg:button {
     id = "confirm",
     text = "&OK",
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",

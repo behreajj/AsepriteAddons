@@ -271,7 +271,7 @@ function AseUtilities.asePaletteLoad(
             end
         end
     elseif palType == "ACTIVE" then
-        local palActSpr = app.activeSprite
+        local palActSpr = app.site.sprite
         if palActSpr then
             local modeAct = palActSpr.colorMode
             if modeAct == ColorMode.GRAY then
@@ -1513,7 +1513,7 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
         return { frIdcsRange }
     else
         -- Default to "ACTIVE".
-        local activeFrame = app.activeFrame --[[@as Frame]]
+        local activeFrame = app.site.frame
         if activeFrame then
             return { { activeFrame.frameNumber } }
         else
@@ -1593,7 +1593,7 @@ function AseUtilities.getSelection(sprite)
 
     local srcSel = sprite.selection
     if (not srcSel) or srcSel.isEmpty then
-        local activeCel = app.activeCel
+        local activeCel = app.site.cel
         if activeCel then
             -- Cel bounds could be out-of-bounds, so this
             -- also needs to intersect with the sprite
@@ -1699,7 +1699,6 @@ end
 ---@return Cel[]
 function AseUtilities.getUniqueCelsFromLeaves(
     sprite, leaves, frIdcs, trgCels)
-
     local vTrgCels = trgCels or {}
     if #leaves > 0 then
         -- When the timeline is hidden, the range

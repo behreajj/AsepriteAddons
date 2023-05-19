@@ -206,10 +206,11 @@ dlg:button {
     text = "&MOVE",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         local args = dlg.data
         -- These are number fields, but their decimal places are zero.
@@ -274,10 +275,11 @@ dlg:button {
     text = "&WRAP",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         local args = dlg.data
         local dx = args.xTranslate
@@ -374,10 +376,11 @@ dlg:button {
     text = "&T",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -412,10 +415,11 @@ dlg:button {
     text = "&L",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -450,10 +454,11 @@ dlg:button {
     text = "&B",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -490,10 +495,11 @@ dlg:button {
     text = "&R",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -534,10 +540,11 @@ dlg:button {
     text = "C&ENTER",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -583,10 +590,11 @@ dlg:button {
     focus = false,
     onclick = function()
         -- Early returns.
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         -- Unpack arguments.
         local args = dlg.data
@@ -681,10 +689,11 @@ dlg:button {
     focus = false,
     onclick = function()
         -- Early returns.
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         -- Unpack arguments.
         local args = dlg.data
@@ -779,10 +788,11 @@ dlg:button {
     focus = true,
     onclick = function()
         -- Early returns.
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         -- Unpack arguments.
         local args = dlg.data
@@ -996,10 +1006,11 @@ dlg:button {
     text = "FLIP &H",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -1010,6 +1021,7 @@ dlg:button {
 
         local fliph = AseUtilities.flipImageHoriz
         app.transaction("Flip H", function()
+            -- TODO: Replace with built-in flip, as of api v24.
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -1027,10 +1039,11 @@ dlg:button {
     text = "FLIP &V",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
@@ -1041,6 +1054,7 @@ dlg:button {
 
         local flipv = AseUtilities.flipImageVert
         app.transaction("Flip V", function()
+            -- TODO: Replace with built-in flip, as of api v24.
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -1059,10 +1073,11 @@ dlg:button {
     focus = false,
     onclick = function()
         -- Early returns.
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
+        local activeLayer = site.layer
+        local activeFrame = site.frame
 
         -- Cache methods.
         local abs = math.abs

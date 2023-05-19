@@ -11,7 +11,7 @@ assignees: ''
 For example, Windows 10.
 
 **Aseprite version**
-For example, 1.2.40 or 1.3-beta21.
+The minimum supported version is 1.3-rc2.
 
 **Sprite color mode**
 For example, RGB, indexed or grayscale.

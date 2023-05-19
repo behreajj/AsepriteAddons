@@ -299,7 +299,7 @@ dlg:button {
         local palType = args.palType
             or defaults.palType --[[@as string]]
         if palType == "ACTIVE" then
-            local idxActSpr = app.activeSprite
+            local idxActSpr = app.site.sprite
             if idxActSpr then
                 local idxActSprClrMd = idxActSpr.colorMode
                 useMaskIdx = idxActSprClrMd == ColorMode.INDEXED
@@ -319,8 +319,8 @@ dlg:button {
         -- This should be done BEFORE the manifest sprite is
         -- created, while the reference sprite is active.
         local mnfstClrPrf = nil
-        if palType == "ACTIVE" and app.activeSprite then
-            mnfstClrPrf = app.activeSprite.colorSpace
+        if palType == "ACTIVE" and app.site.sprite then
+            mnfstClrPrf = app.site.sprite.colorSpace
             if mnfstClrPrf == nil then
                 mnfstClrPrf = ColorSpace()
             end

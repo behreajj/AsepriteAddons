@@ -295,7 +295,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -304,7 +305,7 @@ dlg:button {
             return
         end
 
-        local activeLayer = app.activeLayer
+        local activeLayer = site.layer
         if not activeLayer then
             app.alert {
                 title = "Error",
@@ -321,7 +322,7 @@ dlg:button {
             return
         end
 
-        local activeFrame = app.activeFrame
+        local activeFrame = site.frame
         if not activeFrame then
             app.alert {
                 title = "Error",

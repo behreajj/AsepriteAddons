@@ -118,7 +118,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
-    selected = defaults.prependMask,
+    selected = defaults.prependMask
 }
 
 dlg:separator { id = "noteSeparate" }

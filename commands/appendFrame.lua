@@ -1,10 +1,11 @@
 -- Creates a new empty frame after the empty frame,
 -- but returns to the active frame.
 
-local activeSprite = app.activeSprite
+local site = app.site
+local activeSprite = site.sprite
 if not activeSprite then return end
 
-local oldActiveFrObj = app.activeFrame
+local oldActiveFrObj = site.frame
 if oldActiveFrObj then
     local oldActiveFrIdx = oldActiveFrObj.frameNumber
     activeSprite:newEmptyFrame(oldActiveFrIdx + 1)

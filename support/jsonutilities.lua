@@ -67,7 +67,8 @@ JsonUtilities.TAG_FORMAT = table.concat({
 
 ---Format string for app version.
 JsonUtilities.VERSION_FORMAT = table.concat({
-    "{\"major\":%d",
+    "{\"api\":%d",
+    "\"major\":%d",
     "\"minor\":%d",
     "\"patch\":%d",
     "\"prerelease\":\"%s\"",
@@ -153,6 +154,7 @@ function JsonUtilities.celToJson(cel, fileName, originFormat)
         layerVerif = layer
     end
 
+    -- TODO: Add cel.zIndex property, as of api v23.
     return string.format(
         JsonUtilities.CEL_FORMAT,
         fileName,
@@ -328,6 +330,7 @@ function JsonUtilities.versionToJson()
     local v = app.version
     return string.format(
         JsonUtilities.VERSION_FORMAT,
+        app.apiVersion,
         v.major, v.minor, v.patch,
         v.prereleaseLabel,
         v.prereleaseNumber)

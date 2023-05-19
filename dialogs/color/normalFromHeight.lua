@@ -104,7 +104,7 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Early returns.
-        local activeSprite = app.activeSprite
+        local activeSprite = app.site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",

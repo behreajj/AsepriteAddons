@@ -51,11 +51,30 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
                 text = "There is no active sprite."
+            }
+            return
+        end
+
+        local activeLayer = site.layer
+        if not activeLayer then
+            app.alert {
+                title = "Error",
+                text = "There is no active layer."
+            }
+            return
+        end
+
+        local activeFrame = site.frame
+        if not activeFrame then
+            app.alert {
+                title = "Error",
+                text = "There is no active frame."
             }
             return
         end
@@ -68,8 +87,6 @@ dlg:button {
         local includeLocked = args.includeLocked --[[@as boolean]]
         local includeHidden = args.includeHidden --[[@as boolean]]
 
-        local activeLayer = app.activeLayer
-        local activeFrame = app.activeFrame
         local trgCels = AseUtilities.filterCels(
             activeSprite, activeLayer, activeFrame, target,
             includeLocked, includeHidden, false, false)

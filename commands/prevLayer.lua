@@ -1,6 +1,7 @@
 local stepInto = false
 
-local activeSprite = app.activeSprite
+local site = app.site
+local activeSprite = site.sprite
 if not activeSprite then return end
 
 -- Preserve range if frames are selected. However, the
@@ -21,7 +22,7 @@ if isValid then
     end
 end
 
-local activeLayer = app.activeLayer
+local activeLayer = site.layer
 if activeLayer then
     local stackIndex = activeLayer.stackIndex
     if activeLayer.isGroup
@@ -37,7 +38,7 @@ if activeLayer then
         while activeLayer.__name ~= "doc::Sprite"
             and stackIndex < 2 do
             stackIndex = activeLayer.stackIndex
-            activeLayer = activeLayer.parent
+            activeLayer = activeLayer.parent --[[@as Layer]]
         end
 
         -- Bottom-most layer in the stack is a group and has one child.

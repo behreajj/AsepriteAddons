@@ -84,7 +84,7 @@ dlg:button {
         local profActive = profileSrgb
         local cmActive = ColorMode.RGB
 
-        local activeSprite = app.activeSprite
+        local activeSprite = app.site.sprite
         if activeSprite then
             profActive = activeSprite.colorSpace
             if activeSprite.colorMode ~= ColorMode.INDEXED then

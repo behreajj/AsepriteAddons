@@ -1,6 +1,6 @@
 dofile("../support/aseutilities.lua")
 
-local activeSprite = app.activeSprite
+local activeSprite = app.site.sprite
 if not activeSprite then return end
 
 local oldColorMode = activeSprite.colorMode

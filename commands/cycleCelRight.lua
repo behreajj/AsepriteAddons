@@ -1,12 +1,13 @@
 dofile("../support/aseutilities.lua")
 
-local activeSprite = app.activeSprite
+local site = app.site
+local activeSprite = site.sprite
 if not activeSprite then return end
 
-local activeLayer = app.activeLayer
+local activeLayer = site.layer
 if not activeLayer then return end
 
-local origFrObj = app.activeFrame
+local origFrObj = site.frame
 if not origFrObj then return end
 
 local shift = 1

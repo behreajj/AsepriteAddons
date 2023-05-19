@@ -24,7 +24,8 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Early returns.
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then
             local newSpec = ImageSpec {
                 width = app.preferences.new_file.width,
@@ -154,7 +155,7 @@ dlg:button {
                 grdLayer.name = grdLayer.name
                     .. "." .. clrSpacePreset
             end
-            local activeFrame = app.activeFrame
+            local activeFrame = site.frame
                 or activeSprite.frames[1] --[[@as Frame]]
             activeSprite:newCel(
                 grdLayer, activeFrame, grdImg)
@@ -175,10 +176,11 @@ dlg:button {
     text = "&PALETTE",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
 
-        local activeFrame = app.activeFrame
+        local activeFrame = site.frame
             or activeSprite.frames[1] --[[@as Frame]]
         local trgPalette = AseUtilities.getPalette(
             activeFrame, activeSprite.palettes)

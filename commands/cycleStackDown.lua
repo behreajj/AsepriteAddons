@@ -1,6 +1,7 @@
-local sprite = app.activeSprite
+local site = app.site
+local sprite = site.sprite
 if not sprite then return end
-local layer = app.activeLayer
+local layer = site.layer
 if not layer then return end
 
 local shift = -1

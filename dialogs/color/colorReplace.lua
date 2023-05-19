@@ -151,17 +151,16 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- See: https://github.com/aseprite/aseprite/issues/2563
-        -- TODO: Make this consistent with colorSelect?
-        -- Maybe have different distance metrics?
-
-        local activeSprite = app.activeSprite
+        -- Early returns.
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeLayer = app.activeLayer
+        local activeLayer = site.layer
         if not activeLayer then return end
-        local activeFrame = app.activeFrame
+        local activeFrame = site.frame
         if not activeFrame then return end
 
+        -- Unpack arguments.
         local args = dlg.data
         local target = args.target
             or defaults.target --[[@as string]]
@@ -171,6 +170,7 @@ dlg:button {
             or defaults.tolerance --[[@as integer]]
         local includeLocked = args.includeLocked --[[@as boolean]]
         local includeHidden = args.includeHidden --[[@as boolean]]
+
         local includeTiles = false
         local includeBkg = toColor.alpha >= 255
         local exactSearch = tolerance <= 0

@@ -213,8 +213,8 @@ dlg:button {
         -- This should be done BEFORE the coverage sprite is
         -- created, while the reference sprite is active.
         local cvrClrPrf = nil
-        if palType == "ACTIVE" and app.activeSprite then
-            cvrClrPrf = app.activeSprite.colorSpace
+        if palType == "ACTIVE" and app.site.sprite then
+            cvrClrPrf = app.site.sprite.colorSpace
             if cvrClrPrf == nil then
                 cvrClrPrf = ColorSpace()
             end

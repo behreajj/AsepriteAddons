@@ -6,7 +6,6 @@ local layerTargetOptions = { "ACTIVE", "ALL", "RANGE" }
 local cropTypes = { "CROPPED", "SPRITE" }
 
 local defaults = {
-    -- TODO: Make command line friendly version?
     layerTarget = "ALL",
     includeLocked = true,
     includeHidden = false,
@@ -36,7 +35,7 @@ dlg:combobox {
     options = layerTargetOptions,
     onchange = function()
         local args = dlg.data
-        local state = args.layerTarget
+        local state = args.layerTarget --[[@as string]]
         local isNotRange = state ~= "RANGE"
         dlg:modify { id = "flatGroups", visible = isNotRange }
     end
@@ -80,7 +79,7 @@ dlg:combobox {
     options = frameTargetOptions,
     onchange = function()
         local args = dlg.data
-        local state = args.frameTarget
+        local state = args.frameTarget --[[@as string]]
         local isManual = state == "MANUAL"
         dlg:modify { id = "rangeStr", visible = isManual }
         dlg:modify { id = "strExample", visible = false }
@@ -176,7 +175,7 @@ dlg:check {
     visible = true,
     onclick = function()
         local args = dlg.data
-        local state = args.toPow2
+        local state = args.toPow2 --[[@as boolean]]
         dlg:modify { id = "potUniform", visible = state }
     end
 }
@@ -207,7 +206,7 @@ dlg:check {
     selected = defaults.saveJson,
     onclick = function()
         local args = dlg.data
-        local enabled = args.saveJson
+        local enabled = args.saveJson --[[@as boolean]]
         dlg:modify { id = "boundsFormat", visible = enabled }
         dlg:modify { id = "userDataWarning", visible = enabled }
     end
@@ -238,7 +237,8 @@ dlg:button {
     id = "confirm",
     text = "&OK",
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -398,7 +398,7 @@ dlg:button {
             end
         else
             -- print("ACTIVE layers chosen")
-            local activeLayer = app.activeLayer
+            local activeLayer = site.layer
             if activeLayer then
                 topLayers = { activeLayer }
             end
@@ -628,6 +628,7 @@ dlg:button {
                                 layerPackets[layerId] = layerPacket
                             end
 
+                            -- TODO: Add cel.zIndex property, as of api v23.
                             local celPacket = {
                                 fileName = fileNameShort,
                                 bounds = bounds,

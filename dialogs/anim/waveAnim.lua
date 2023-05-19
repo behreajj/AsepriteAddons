@@ -387,7 +387,7 @@ dlg:button {
         if printElapsed then startTime = os.clock() end
 
         -- Early returns.
-        local srcSprite = app.activeSprite
+        local srcSprite = app.site.sprite
         if not srcSprite then
             app.alert {
                 title = "Error",
@@ -532,7 +532,8 @@ dlg:button {
         local transact = app.transaction
 
         -- Determine how to wrap out of bounds pixels.
-        local edgeType = args.edgeType or defaults.edgeType
+        local edgeType = args.edgeType
+            or defaults.edgeType --[[@as string]]
         local wrapper = wrapMod
         if edgeType == "CLAMP" then
             wrapper = wrapClamp
@@ -540,8 +541,10 @@ dlg:button {
             wrapper = wrapOmit
         end
 
-        local spaceScalar = args.spaceScalar or defaults.spaceScalar
-        local waveType = args.waveType or defaults.waveType
+        local spaceScalar = args.spaceScalar
+            or defaults.spaceScalar --[[@as integer]]
+        local waveType = args.waveType
+            or defaults.waveType --[[@as string]]
 
         local srcWidth = srcSpec.width
         local srcHeight = srcSpec.height
@@ -551,8 +554,10 @@ dlg:button {
         -- Determine which wave function the user wants.
         local eval = nil
         if waveType == "BILINEAR" then
-            local xCenter = args.xCenter or defaults.xCenter --[[@as integer]]
-            local yCenter = args.yCenter or defaults.yCenter --[[@as integer]]
+            local xCenter = args.xCenter
+                or defaults.xCenter --[[@as integer]]
+            local yCenter = args.yCenter
+                or defaults.yCenter --[[@as integer]]
             local pxxCenter = xCenter * 0.01 * srcWidth
             local pxyCenter = yCenter * 0.01 * srcHeight
 
@@ -613,11 +618,16 @@ dlg:button {
         elseif waveType == "INTERLACED" then
             -- wn1 and hn1 work better for sprites with even width, height
             -- when converting to theta.
-            local interType = args.interType or defaults.interType --[[@as string]]
-            local interOffOrig = args.interOffOrig or defaults.interOffOrig --[[@as integer]]
-            local interOffDest = args.interOffDest or defaults.interOffDest --[[@as integer]]
-            local skip = args.interSkip or defaults.interSkip --[[@as integer]]
-            local pick = args.interPick or defaults.interPick --[[@as integer]]
+            local interType = args.interType
+                or defaults.interType --[[@as string]]
+            local interOffOrig = args.interOffOrig
+                or defaults.interOffOrig --[[@as integer]]
+            local interOffDest = args.interOffDest
+                or defaults.interOffDest --[[@as integer]]
+            local skip = args.interSkip
+                or defaults.interSkip --[[@as integer]]
+            local pick = args.interPick
+                or defaults.interPick --[[@as integer]]
 
             -- Pattern is sum of both on/off: e.g., 001110011100,
             -- pick 2 skip 3, is 5 total. Modulo all to repeat
@@ -627,8 +637,10 @@ dlg:button {
             local lacRadDest = 0.017453292519943 * interOffDest
 
             if interType == "VERTICAL" then
-                local yDisplaceOrig = args.yDisplaceOrig or defaults.yDisplaceOrig --[[@as integer]]
-                local yDisplaceDest = args.yDisplaceDest or defaults.yDisplaceDest --[[@as integer]]
+                local yDisplaceOrig = args.yDisplaceOrig
+                    or defaults.yDisplaceOrig --[[@as integer]]
+                local yDisplaceDest = args.yDisplaceDest
+                    or defaults.yDisplaceDest --[[@as integer]]
                 local pxyDisplaceOrig = srcWidth * yDisplaceOrig * 0.005
                 local pxyDisplaceDest = srcWidth * yDisplaceDest * 0.005
 
@@ -651,8 +663,10 @@ dlg:button {
                 end
             else
                 -- Default to horizontal.
-                local xDisplaceOrig = args.xDisplaceOrig or defaults.xDisplaceOrig --[[@as integer]]
-                local xDisplaceDest = args.xDisplaceDest or defaults.xDisplaceDest --[[@as integer]]
+                local xDisplaceOrig = args.xDisplaceOrig
+                    or defaults.xDisplaceOrig --[[@as integer]]
+                local xDisplaceDest = args.xDisplaceDest
+                    or defaults.xDisplaceDest --[[@as integer]]
                 local pxxDisplaceOrig = srcHeight * xDisplaceOrig * 0.005
                 local pxxDisplaceDest = srcHeight * xDisplaceDest * 0.005
 

@@ -151,7 +151,7 @@ dlg:check {
     visible = true,
     onclick = function()
         local args = dlg.data
-        local state = args.toPow2
+        local state = args.toPow2 --[[@as boolean]]
         dlg:modify { id = "potUniform", visible = state }
     end
 }
@@ -255,7 +255,8 @@ dlg:button {
     id = "confirm",
     text = "&OK",
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -368,7 +369,7 @@ dlg:button {
 
         local tileSets = {}
         if target == "ACTIVE" then
-            local activeLayer = app.activeLayer
+            local activeLayer = site.layer
             if not activeLayer then
                 app.alert {
                     title = "Error",
@@ -645,6 +646,7 @@ dlg:button {
                                     height = hTileMap * hTile
                                 }
 
+                                -- TODO: Add cel.zIndex property, as of api v23.
                                 local celPacket = {
                                     fileName = "",
                                     bounds = tmBounds,

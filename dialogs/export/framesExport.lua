@@ -270,6 +270,9 @@ local function genPacket(
         height = hImage
     }
 
+    -- TODO: Cel zIndex doesn't matter in this instance, as
+    -- all frames are flattened anyway, but for consistency
+    -- you might want to set it to zero.
     local celPacket = {
         bounds = boundsPacket,
         data = nil,
@@ -382,7 +385,7 @@ dlg:check {
         local frameTarget = args.frameTarget --[[@as string]]
         local isManual = frameTarget == "MANUAL"
         local isTags = frameTarget == "TAGS"
-        local useSheet = args.useSheet
+        local useSheet = args.useSheet --[[@as boolean]]
         local state = useSheet
             and (isTags or isManual)
         dlg:modify { id = "useBatches", visible = state }
@@ -420,7 +423,7 @@ dlg:check {
     visible = true,
     onclick = function()
         local args = dlg.data
-        local state = args.toPow2
+        local state = args.toPow2 --[[@as boolean]]
         dlg:modify { id = "potUniform", visible = state }
     end
 }
@@ -451,7 +454,7 @@ dlg:check {
     selected = defaults.saveJson,
     onclick = function()
         local args = dlg.data
-        local enabled = args.saveJson
+        local enabled = args.saveJson --[[@as boolean]]
         dlg:modify { id = "boundsFormat", visible = enabled }
         dlg:modify { id = "userDataWarning", visible = enabled }
     end
@@ -482,7 +485,7 @@ dlg:button {
     id = "confirm",
     text = "&OK",
     onclick = function()
-        local activeSprite = app.activeSprite
+        local activeSprite = app.site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",

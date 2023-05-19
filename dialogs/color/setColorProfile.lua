@@ -58,8 +58,7 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
-        local activeSprite = app.activeSprite
+        local activeSprite = app.site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -68,13 +67,16 @@ dlg:button {
             return
         end
 
+        local args = dlg.data
+        local csType = args.colorSpaceType
+            or defaults.colorSpaceType --[[@as string]]
+
         local newColorSpace = nil
-        local csType = args.colorSpaceType or defaults.colorSpaceType
         if csType == "FILE" then
             local profilePath = args.profilePath --[[@as string]]
             if profilePath and #profilePath > 0 then
-                local exists = app.fs.isFile(profilePath)
-                if exists then
+                local isFile = app.fs.isFile(profilePath)
+                if isFile then
                     newColorSpace = ColorSpace { fromFile = profilePath }
                 else
                     app.alert {

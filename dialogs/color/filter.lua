@@ -66,7 +66,8 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Early returns.
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -84,7 +85,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = app.activeLayer --[[@as Layer]]
+        local srcLayer = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",

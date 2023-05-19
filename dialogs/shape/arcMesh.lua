@@ -151,7 +151,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local sprite = app.activeSprite
+        local site = app.site
+        local sprite = site.sprite
         if not sprite then
             app.alert {
                 title = "Error",
@@ -160,7 +161,7 @@ dlg:button {
             return
         end
 
-        local frame = app.activeFrame --[[@as Frame]]
+        local frame = site.frame
         if not frame then
             app.alert {
                 title = "Error",

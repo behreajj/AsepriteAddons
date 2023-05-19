@@ -1,6 +1,7 @@
 dofile("../support/aseutilities.lua")
 
-local activeSprite = app.activeSprite
+local site = app.site
+local activeSprite = site.sprite
 if not activeSprite then return end
 
 local tlHidden = not app.preferences.general.visible_timeline
@@ -14,7 +15,7 @@ if appRange.sprite == activeSprite then
     local sprBounds = activeSprite.bounds
 
     if appRange.isEmpty then
-        local activeCel = app.activeCel
+        local activeCel = site.cel
         if activeCel then
             activeSprite.selection = selectCel(activeCel, sprBounds)
         end

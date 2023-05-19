@@ -1,6 +1,7 @@
 -- Numpad 4 keybind doesn't work when a selection is active.
 
-local activeSprite = app.activeSprite
+local site = app.site
+local activeSprite = site.sprite
 if not activeSprite then return end
 
 -- Preserve range if frames are selected. However, the
@@ -21,7 +22,7 @@ if isValid then
     end
 end
 
-local activeFrame = app.activeFrame
+local activeFrame = site.frame
 if activeFrame then
     -- Modulo arithmetic is easier to understand when index starts at 0.
     local frameNo = activeFrame.frameNumber - 1

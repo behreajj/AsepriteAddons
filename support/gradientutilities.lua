@@ -68,6 +68,7 @@ GradientUtilities.DEFAULT_STYLE = "MIXED"
 ---These are normalized in a non-standard way
 ---for the sake of consistency with custom
 ---dither matrices.
+---@type number[][]
 GradientUtilities.BAYER_MATRICES = {
     {
         0.125, 0.625,
@@ -105,6 +106,8 @@ function GradientUtilities.aseColorsToClrGradient(aseColors)
     -- Different from ClrGradient.fromColors due to
     -- Gradient Outline. Avoid zero alpha colors because
     -- iterations are lost if background is zero.
+
+    ---@type ClrKey[]
     local clrKeys = {}
     local lenColors = #aseColors
     if lenColors < 1 then
@@ -172,9 +175,10 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         focus = false,
         onclick = function()
             local args = dlg.data
-            local oldColors = args.shades
+            local oldColors = args.shades --[=[@as Color[]]=]
             local lenOldColors = #oldColors
 
+            ---@type Color[]
             local newColors = {}
             local h = 0
             while h < lenOldColors do
@@ -182,7 +186,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                 newColors[h] = oldColors[h]
             end
 
-            local activeSprite = app.activeSprite
+            local activeSprite = app.site.sprite
             if activeSprite then
                 local tlHidden = not app.preferences.general.visible_timeline
                 if tlHidden then
@@ -229,8 +233,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                     local fgClr = app.fgColor
                     newColors[#newColors + 1] = AseUtilities.aseColorCopy(
                         fgClr, "UNBOUNDED")
-                end
-            end --End of activeSprite check
+                end -- End of invalid range check
+            end     -- End of activeSprite check
 
             dlg:modify { id = "shades", colors = newColors }
         end
@@ -241,7 +245,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         text = "&FLIP",
         focus = false,
         onclick = function()
-            local s = dlg.data.shades --[[@as table]]
+            local args = dlg.data
+            local s = args.shades --[=[@as Color[]]=]
             dlg:modify {
                 id = "shades",
                 colors = Utilities.reverseTable(s)
@@ -255,18 +260,28 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         focus = false,
         onclick = function()
             local args = dlg.data
-            local oldColors = args.shades
+            local oldColors = args.shades --[=[@as Color[]]=]
             local lenOldColors = #oldColors
             if lenOldColors < 2 then return end
             if lenOldColors > 64 then return end
 
+            -- Cache methods used in loop.
+            local floor = math.floor
+            local eval = Curve3.eval
+            local aseToClr = AseUtilities.aseColorToClr
+            local clrToAse = AseUtilities.clrToAseColor
+            local labTosRgb = Clr.srLab2TosRgb
+            local sRgbToLab = Clr.sRgbToSrLab2
+
             local h = 0
+            ---@type Vec3[]
             local points = {}
+            ---@type number[]
             local alphas = {}
             while h < lenOldColors do
                 h = h + 1
-                local clr = AseUtilities.aseColorToClr(oldColors[h])
-                local lab = Clr.sRgbToSrLab2(clr)
+                local clr = aseToClr(oldColors[h])
+                local lab = sRgbToLab(clr)
                 points[h] = Vec3.new(lab.a, lab.b, lab.l)
                 alphas[h] = clr.a
             end
@@ -275,6 +290,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
             local sampleCount = math.min(math.max(
                 lenOldColors * 2 - 1, 3), 64)
+            ---@type Color[]
             local newColors = {}
             local i = 0
             local iToFac = 1.0 / (sampleCount - 1.0)
@@ -288,15 +304,14 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                     alpha = alphas[lenOldColors]
                 else
                     local aScaled = iFac * locn1
-                    local aFloor = math.floor(aScaled)
+                    local aFloor = floor(aScaled)
                     local aFrac = aScaled - aFloor;
                     alpha = (1.0 - aFrac) * alphas[1 + aFloor]
                         + aFrac * alphas[2 + aFloor]
                 end
-                local point = Curve3.eval(curve, iFac)
+                local point = eval(curve, iFac)
                 i = i + 1
-                newColors[i] = AseUtilities.clrToAseColor(
-                    Clr.srLab2TosRgb(
+                newColors[i] = clrToAse(labTosRgb(
                         point.z, point.x, point.y, alpha))
             end
 
@@ -494,7 +509,7 @@ function GradientUtilities.ditherFromPreset(
     stylePreset, bayerIndex, ditherPath)
     if stylePreset == "DITHER_BAYER" then
         local biVrf = bayerIndex or 2
-        local matrix = GradientUtilities.BAYER_MATRICES[bayerIndex]
+        local matrix = GradientUtilities.BAYER_MATRICES[biVrf]
         local bayerSize = 1 << biVrf
 
         return function(cg, step, x, y)
@@ -552,6 +567,7 @@ function GradientUtilities.imageToMatrix(image)
 
     local colorMode = spec.colorMode
     local pxItr = image:pixels()
+    ---@type number[]
     local matrix = {}
     local lenMat = 0
 
@@ -583,17 +599,11 @@ function GradientUtilities.imageToMatrix(image)
         -- issues/2573#issuecomment-736074731
         local mxElm = -2147483648
         local mnElm = 2147483647
-        local uniques = {}
-        local lenUniques = 0
 
         for pixel in pxItr do
             local i = pixel()
-            if not uniques[i] then
-                lenUniques = lenUniques + 1
-                uniques[i] = true
-                if i > mxElm then mxElm = i end
-                if i < mnElm then mnElm = i end
-            end
+            if i > mxElm then mxElm = i end
+            if i < mnElm then mnElm = i end
             lenMat = lenMat + 1
             matrix[lenMat] = i
         end

@@ -42,9 +42,10 @@ local function shiftFromStr(str)
 end
 
 local function extrude(dx, dy, trim)
-    local activeSprite = app.activeSprite
+    local site = app.site
+    local activeSprite = site.sprite
     if not activeSprite then return end
-    local activeCel = app.activeCel
+    local activeCel = site.cel
     if not activeCel then return end
 
     local srcImage = activeCel.image
@@ -93,9 +94,10 @@ local function extrude(dx, dy, trim)
 end
 
 local function nudgeCel(dx, dy)
-    local activeSprite = app.activeSprite
+    local site = app.site
+    local activeSprite = site.sprite
     if not activeSprite then return end
-    local activeCel = app.activeCel
+    local activeCel = site.cel
     if not activeCel then return end
     local srcPos = activeCel.position
     activeCel.position = Point(srcPos.x + dx, srcPos.y - dy)
@@ -314,9 +316,10 @@ dlg:button {
     text = "C&EL",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
-        local activeCel = app.activeCel
+        local activeCel = site.cel
         if not activeCel then return end
 
         local trgSel = AseUtilities.selectCel(

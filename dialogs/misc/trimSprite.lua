@@ -61,7 +61,7 @@ dlg:button {
     text = "&OK",
     focus = true,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local activeSprite = app.site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",

@@ -42,6 +42,35 @@ dlg:slider {
     value = defaults.paletteIndex
 }
 
+dlg:separator { id = "uiSep" }
+
+dlg:slider {
+    id = "swatchSize",
+    label = "Swatch: ",
+    min = 4,
+    max = 32,
+    value = app.preferences.color_bar.box_size,
+    onchange= function()
+        local args = dlg.data
+        local size = args.swatchSize --[[@as integer]]
+        app.command.SetPaletteEntrySize { size = size }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useSeparator",
+    label = "Display: ",
+    text = "Separator",
+    value = app.preferences.color_bar.entries_separator,
+    onclick = function()
+        local args = dlg.data
+        local useSep = args.useSeparator --[[@as boolean]]
+        app.preferences.color_bar.entries_separator = useSep
+    end
+}
+
 dlg:newrow { always = false }
 
 dlg:button {
@@ -179,7 +208,7 @@ dlg:button {
 
             -- If no sprite exists, then create a new
             -- sprite and place palette swatches in it.
-            local activeSprite = app.activeSprite
+            local activeSprite = app.site.sprite
             local profileFlag = false
             if activeSprite then
                 local profile = activeSprite.colorSpace
@@ -236,7 +265,7 @@ dlg:button {
         end
 
         if err ~= nil then
-            app.alert("Error opening file: " .. err)
+            app.alert { title = "Error", text = err }
         end
     end
 }

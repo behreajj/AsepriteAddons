@@ -598,7 +598,8 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Early returns.
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -617,7 +618,7 @@ dlg:button {
         local lenFrames = #frames
 
         -- If isSelect is true, then a new layer will be created.
-        local srcLayer = app.activeLayer --[[@as Layer]]
+        local srcLayer = site.layer --[[@as Layer]]
         if not isSelect then
             if not srcLayer then
                 app.alert {
@@ -656,7 +657,7 @@ dlg:button {
             selSpec.colorSpace = activeSpec.colorSpace
 
             -- Blit flattened sprite to image.
-            local selFrame = app.activeFrame
+            local selFrame = site.frame
                 or activeSprite.frames[1] --[[@as Frame]]
             local selImage = Image(selSpec)
             selImage:drawSprite(

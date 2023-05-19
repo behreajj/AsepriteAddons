@@ -701,7 +701,7 @@ dlg:button {
     focus = false,
     onclick = function()
         if active.a <= 0.0 then return end
-        local sprite = app.activeSprite
+        local sprite = app.site.sprite
         if not sprite then return end
 
         local sprSpec = sprite.spec

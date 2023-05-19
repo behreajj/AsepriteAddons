@@ -6,15 +6,15 @@ This repository developed out of the Medium article, ["How To Script Aseprite To
 
 To install, click on the green `Code` button above. Select `Download ZIP` from the pop-up menu. Unzip the file after it has finished downloading. In Aseprite, go to `File > Scripts > Open Scripts Folder`. Copy `commands`, `dialog` and `support` folders from the unzipped download into the folder that Aseprite has opened. Return to Aseprite, go to `File > Scripts > Rescan Scripts Folder`.
 
-There is a [known issue](https://community.aseprite.org/t/script-folder-path-cannot-open-no-such-file-or-directory/16818/) when Aseprite's script folder is on a file path that includes characters such as 'é' (e acute) or 'ö' (o umlaut). `dofile` will not interpret relative paths correctly.
+There is a [known issue](https://community.aseprite.org/t/script-folder-path-cannot-open-no-such-file-or-directory/16818/) when Aseprite's script folder is on a file path that includes characters such as 'é' (e acute) or 'ö' (o umlaut).
 
 ## Usage
+
+As of 9 April 2023, Aseprite version 1.3-rc2 is the minimum version needed to run these scripts. It is currently in [beta](https://aseprite.org/beta).
 
 To use, go to `File > Scripts` and choose from entries in the `dialogs` or `commands` folder.
 
 Scripts can be assigned shortcuts in `Edit > Keyboard Shortcuts`. Dialog buttons can be called by holding down the `Alt` key and pressing the underlined letter of the button's label. For example, `Alt+C` will close dialogs, per the 'C' in "CANCEL".
-
-As of 9 April 2023, Aseprite version 1.3-rc2 is the minimum version needed to run these scripts. It is currently in [beta](https://aseprite.org/beta). This is largely due to the canvas feature.
 
 In dialogs that use custom sliders -- such as the LCH picker, color adjustment and normal picker -- holding down `Ctrl` and clicking will return the slider to a default value, holding down `Shift` and moving the mouse will increment the slider value.
 
@@ -22,7 +22,7 @@ In dialogs that use custom sliders -- such as the LCH picker, color adjustment a
 
 For more resources, see
 
-- [Aseprite Type Definitions](https://github.com/Tsukina-7mochi/aseprite-type-definition)
+- [Aseprite Type Definitions](https://github.com/behreajj/aseprite-type-definition)
 - [Aseprite CPP source that receives Lua inputs](https://github.com/aseprite/aseprite/tree/main/src/app/script)
 - [Aseprite Scripting API](https://github.com/aseprite/api)
 - [Lua Documentation](http://www.lua.org/docs.html)

@@ -245,7 +245,9 @@ dlg:slider {
     max = 64,
     value = defaults.margin,
     onchange = function()
-        local gtz = dlg.data.margin > 0
+        local args = dlg.data
+        local margin = args.margin --[[@as integer]]
+        local gtz = margin > 0
         dlg:modify { id = "marginClr", visible = gtz }
     end
 }
@@ -267,7 +269,9 @@ dlg:slider {
     max = 64,
     value = defaults.border,
     onchange = function()
-        local gtz = dlg.data.border > 0
+        local args = dlg.data
+        local border = args.border --[[@as integer]]
+        local gtz = border > 0
         dlg:modify { id = "borderClr", visible = gtz }
     end
 }
@@ -315,11 +319,21 @@ dlg:button {
     focus = false,
     onclick = function()
         -- Early returns.
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
                 text = "There is no active sprite."
+            }
+            return
+        end
+
+        local activeFrame = site.frame
+        if not activeFrame then
+            app.alert {
+                title = "Error",
+                text = "There is no active frame."
             }
             return
         end
@@ -469,8 +483,6 @@ dlg:button {
                 | marginClr.green << 0x08
                 | marginClr.blue)
         end
-
-        local activeFrame = app.activeFrame --[[@as Frame]]
 
         if flattenImage then
             local flatImg = Image(nativeWidth, nativeHeight)

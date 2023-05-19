@@ -708,8 +708,8 @@ function CanvasUtilities.spectrum(
     wVrf = math.max(8, wVrf)
     hVrf = math.max(8, hVrf)
 
-    local spectrumHeight = math.floor(0.5 + height * (40.0 / 56.0))
-    local satBarHeight = math.floor(0.5 + height * (8.0 / 56.0))
+    local spectrumHeight = math.floor(0.5 + hVrf * (40.0 / 56.0))
+    local satBarHeight = math.floor(0.5 + hVrf * (8.0 / 56.0))
     local alphaBarHeight = satBarHeight
     local satBarThresh = spectrumHeight + satBarHeight
 
@@ -794,6 +794,7 @@ function CanvasUtilities.spectrum(
             local lActive = args.spectrumLight --[[@as number]]
             local aActive = args.spectrumAlpha --[[@as number]]
 
+            local floor = math.floor
             local image = Image(wVrf, hVrf)
             local pxItr = image:pixels()
             for pixel in pxItr do
@@ -814,7 +815,7 @@ function CanvasUtilities.spectrum(
                             alpha = 255 }
                         .rgbaPixel)
                 else
-                    local v = math.floor(x * xToVal + 0.5)
+                    local v = floor(x * xToVal + 0.5)
                     pixel(0xff000000 | v << 0x10 | v << 0x08 | v)
                 end
             end

@@ -459,6 +459,10 @@ dlg:button {
             AseUtilities.setPalette(hexesProfile, newSprite, 1)
         end
 
+        -- Could help to change ink to simple, but the UI doesn't
+        -- update properly, even with app.command.Refresh().
+        -- local toolPrefs = app.preferences.tool(app.activeTool)
+        -- if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
         app.activeFrame = firstFrame
         app.command.FitScreen()
         app.refresh()

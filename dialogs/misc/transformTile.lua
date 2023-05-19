@@ -56,13 +56,14 @@ local function transformTiles(
 end
 
 local function transformCel(dialog, preset)
-    local activeSprite = app.activeSprite
+    local site = app.site
+    local activeSprite = site.sprite
     if not activeSprite then return end
 
-    local activeFrame = app.activeFrame
+    local activeFrame = site.frame
     if not activeFrame then return end
 
-    local activeLayer = app.activeLayer
+    local activeLayer = site.layer
     if not activeLayer then return end
     if not activeLayer.isVisible then return end
     if not activeLayer.isEditable then return end
@@ -263,13 +264,14 @@ dlg:button {
     text = "&SORT",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
 
-        local activeFrame = app.activeFrame
+        local activeFrame = site.frame
         if not activeFrame then return end
 
-        local activeLayer = app.activeLayer
+        local activeLayer = site.layer
         if not activeLayer then return end
         if not activeLayer.isVisible then return end
         if not activeLayer.isEditable then return end
@@ -409,10 +411,11 @@ dlg:button {
     text = "C&ULL",
     focus = false,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then return end
 
-        local activeLayer = app.activeLayer
+        local activeLayer = site.layer
         if not activeLayer then return end
         if not activeLayer.isVisible then return end
         if not activeLayer.isEditable then return end

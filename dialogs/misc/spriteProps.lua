@@ -33,7 +33,7 @@ local prefs = nil
 local showFullPath = false
 
 local function updateSprite()
-    sprite = app.activeSprite
+    sprite = app.site.sprite
     if not sprite and #app.sprites > 0 then
         sprite = app.sprites[#app.sprites]
         app.activeSprite = sprite
@@ -284,8 +284,9 @@ local function updatePalCount()
     local palettes = sprite.palettes
     local lenPalettes = #palettes
     local actFrIdx = 1
-    if app.activeFrame then
-        actFrIdx = app.activeFrame.frameNumber
+    local actFrObj = app.site.frame
+    if actFrObj then
+        actFrIdx = actFrObj.frameNumber
         if actFrIdx > lenPalettes then actFrIdx = 1 end
     end
     local pal = palettes[actFrIdx]
@@ -319,8 +320,9 @@ local function updateMaskColor()
     local palettes = sprite.palettes
     local lenPalettes = #palettes
     local actFrIdx = 1
-    if app.activeFrame then
-        actFrIdx = app.activeFrame.frameNumber
+    local actFrObj = app.site.frame
+    if actFrObj then
+        actFrIdx = actFrObj.frameNumber
         if actFrIdx > lenPalettes then actFrIdx = 1 end
     end
     local pal = palettes[actFrIdx]
@@ -345,8 +347,9 @@ local function updateMaskWarning()
     local palettes = sprite.palettes
     local lenPalettes = #palettes
     local actFrIdx = 1
-    if app.activeFrame then
-        actFrIdx = app.activeFrame.frameNumber
+    local actFrObj = app.site.frame
+    if actFrObj then
+        actFrIdx = actFrObj.frameNumber
         if actFrIdx > lenPalettes then actFrIdx = 1 end
     end
     local pal = palettes[actFrIdx]

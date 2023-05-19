@@ -319,7 +319,8 @@ dlg:button {
             + (scale + 1) * mxDrop      -- for descenders
 
         local layer = nil
-        local sprite = app.activeSprite
+        local site = app.site
+        local sprite = site.sprite
         if not sprite then
             -- When wrapped in a transaction, either new
             -- sprite creation or app.command.LoadPalette
@@ -406,7 +407,7 @@ dlg:button {
             stillPos.y = stillPos.y - heightImg
         end
 
-        local activeFrameObj = app.activeFrame
+        local activeFrameObj = site.frame
             or sprite.frames[1]
         local actFrIdx = activeFrameObj.frameNumber
         if animate then

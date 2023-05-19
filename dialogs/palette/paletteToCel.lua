@@ -187,7 +187,8 @@ dlg:button {
             startTime = os.clock()
         end
 
-        local activeSprite = app.activeSprite
+        local site = app.site
+        local activeSprite = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -196,7 +197,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = app.activeLayer
+        local srcLayer = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",
