@@ -14,7 +14,8 @@ JsonUtilities.CEL_FORMAT = table.concat({
     "\"data\":%s",
     "\"frame\":%d",
     "\"layer\":%d",
-    "\"opacity\":%d}"
+    "\"opacity\":%d",
+    "\"zIndex\":%d}"
 }, ",")
 
 ---Format string for frames.
@@ -154,7 +155,6 @@ function JsonUtilities.celToJson(cel, fileName, originFormat)
         layerVerif = layer
     end
 
-    -- TODO: Add cel.zIndex property, as of api v23.
     return string.format(
         JsonUtilities.CEL_FORMAT,
         fileName,
@@ -162,7 +162,8 @@ function JsonUtilities.celToJson(cel, fileName, originFormat)
         celDataVrf,
         cel.frameNumber - 1,
         layerVerif,
-        cel.opacity)
+        cel.opacity,
+        cel.zIndex)
 end
 
 ---Formats a frame, or table containing the same
@@ -206,7 +207,6 @@ function JsonUtilities.layerToJson(layer)
     -- If you try this again, consider supplying this as an
     -- extra arg to the method, and calculating it in layers
     -- export instead.
-    -- local hier = JsonUtilities.getStackIndices(layer, {})
     return string.format(
         JsonUtilities.LAYER_FORMAT,
         layer.id,

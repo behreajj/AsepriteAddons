@@ -22,7 +22,7 @@ if isValid then
     end
 end
 
-local activeLayer = site.layer
+local activeLayer = site.layer--[[@as userdata]]
 if activeLayer then
     local stackIndex = activeLayer.stackIndex
     if activeLayer.isGroup
@@ -38,7 +38,7 @@ if activeLayer then
         while activeLayer.__name ~= "doc::Sprite"
             and stackIndex < 2 do
             stackIndex = activeLayer.stackIndex
-            activeLayer = activeLayer.parent --[[@as Layer]]
+            activeLayer = activeLayer.parent
         end
 
         -- Bottom-most layer in the stack is a group and has one child.

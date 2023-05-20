@@ -55,10 +55,11 @@ dlg:combobox {
     onchange = function()
         local args = dlg.data
 
-        local md = args.levelsInput
+        local md = args.levelsInput --[[@as string]]
+        local isu = md == "UNIFORM"
         local isnu = md == "NON_UNIFORM"
 
-        local unit = args.unitsInput
+        local unit = args.unitsInput --[[@as string]]
         local isbit = unit == "BITS"
         local isint = unit == "INTEGERS"
 
@@ -68,7 +69,7 @@ dlg:combobox {
         dlg:modify { id = "aBits", visible = isnu and isbit }
         dlg:modify {
             id = "bitsUni",
-            visible = (not isnu) and isbit
+            visible = isu and isbit
         }
 
         dlg:modify { id = "rLevels", visible = isnu and isint }
@@ -77,7 +78,7 @@ dlg:combobox {
         dlg:modify { id = "aLevels", visible = isnu and isint }
         dlg:modify {
             id = "levelsUni",
-            visible = (not isnu) and isint
+            visible = isu and isint
         }
     end
 }
@@ -94,7 +95,7 @@ dlg:slider {
         and defaults.unit == "INTEGERS",
     onchange = function()
         local args = dlg.data
-        local uni = args.levelsUni
+        local uni = args.levelsUni --[[@as integer]]
         dlg:modify { id = "rLevels", value = uni }
         dlg:modify { id = "gLevels", value = uni }
         dlg:modify { id = "bLevels", value = uni }
@@ -155,7 +156,8 @@ dlg:slider {
     visible = defaults.levelsInput == "UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local bd = dlg.data.bitsUni
+        local args = dlg.data
+        local bd = args.bitsUni --[[@as integer]]
         dlg:modify { id = "rBits", value = bd }
         dlg:modify { id = "gBits", value = bd }
         dlg:modify { id = "bBits", value = bd }
@@ -181,7 +183,9 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local lv = 1 << dlg.data.rBits
+        local args = dlg.data
+        local rBits = args.rBits --[[@as integer]]
+        local lv = 1 << rBits
         dlg:modify { id = "rLevels", value = lv }
     end
 }
@@ -195,7 +199,9 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local lv = 1 << dlg.data.gBits
+        local args = dlg.data
+        local gBits = args.gBits --[[@as integer]]
+        local lv = 1 << gBits
         dlg:modify { id = "gLevels", value = lv }
     end
 }
@@ -209,7 +215,9 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local lv = 1 << dlg.data.bBits
+        local args = dlg.data
+        local bBits = args.bBits --[[@as integer]]
+        local lv = 1 << bBits
         dlg:modify { id = "bLevels", value = lv }
     end
 }
@@ -223,7 +231,9 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local lv = 1 << dlg.data.aBits
+        local args = dlg.data
+        local aBits = args.aBits --[[@as integer]]
+        local lv = 1 << aBits
         dlg:modify { id = "aLevels", value = lv }
     end
 }
@@ -238,10 +248,11 @@ dlg:combobox {
     onchange = function()
         local args = dlg.data
 
-        local md = args.levelsInput
+        local md = args.levelsInput --[[@as string]]
         local isnu = md == "NON_UNIFORM"
+        local isu = md == "UNIFORM"
 
-        local unit = args.unitsInput
+        local unit = args.unitsInput --[[@as string]]
         local isbit = unit == "BITS"
         local isint = unit == "INTEGERS"
 
@@ -251,7 +262,7 @@ dlg:combobox {
         dlg:modify { id = "aBits", visible = isnu and isbit }
         dlg:modify {
             id = "bitsUni",
-            visible = (not isnu) and isbit
+            visible = isu and isbit
         }
 
         dlg:modify { id = "rLevels", visible = isnu and isint }
@@ -260,7 +271,7 @@ dlg:combobox {
         dlg:modify { id = "aLevels", visible = isnu and isint }
         dlg:modify {
             id = "levelsUni",
-            visible = (not isnu) and isint
+            visible = isu and isint
         }
     end
 }
@@ -358,12 +369,12 @@ dlg:button {
 
         local quantize = nil
         if method == "UNSIGNED" then
-            quantize = Utilities.quantizeUnsignedInternal
+            quantize = Utilities.quantizeUnsigned
 
-            rDelta = 1.0 / (rLevels - 1.0)
-            gDelta = 1.0 / (gLevels - 1.0)
-            bDelta = 1.0 / (bLevels - 1.0)
-            aDelta = 1.0 / (aLevels - 1.0)
+            if rLevels < 255 then rDelta = 1.0 / (rLevels - 1.0) end
+            if gLevels < 255 then gDelta = 1.0 / (gLevels - 1.0) end
+            if bLevels < 255 then bDelta = 1.0 / (bLevels - 1.0) end
+            if aLevels < 255 then aDelta = 1.0 / (aLevels - 1.0) end
         else
             quantize = Utilities.quantizeSignedInternal
 

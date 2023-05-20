@@ -270,9 +270,6 @@ local function genPacket(
         height = hImage
     }
 
-    -- TODO: Cel zIndex doesn't matter in this instance, as
-    -- all frames are flattened anyway, but for consistency
-    -- you might want to set it to zero.
     local celPacket = {
         bounds = boundsPacket,
         data = nil,
@@ -280,7 +277,8 @@ local function genPacket(
         frameNumber = frIdx,
         image = flat,
         layer = -1,
-        opacity = 255
+        opacity = 255,
+        zIndex = 0
     }
 
     return {
@@ -395,7 +393,6 @@ dlg:check {
 
 dlg:check {
     id = "useBatches",
-    -- label = "Use:",
     text = "&Batch",
     selected = defaults.useBatches,
     visible = defaults.useSheet

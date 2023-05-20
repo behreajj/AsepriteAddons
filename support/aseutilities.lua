@@ -1228,6 +1228,7 @@ function AseUtilities.flattenGroup(
         includeTiles, includeBkg)
     local lenLeaves = #leaves
 
+    local useZIndex = app.apiVersion >= 23
     local packets = {}
     local lenPackets = 0
 
@@ -1269,17 +1270,30 @@ function AseUtilities.flattenGroup(
             if xBrCel > xBrGroup then xBrGroup = xBrCel end
             if yBrCel > yBrGroup then yBrGroup = yBrCel end
 
+            local zIndex = 0
+            if useZIndex then zIndex = leafCel.zIndex end
+            local order = (i - 1) + zIndex
+
             lenPackets = lenPackets + 1
             packets[lenPackets] = {
                 blendMode = leafLayer.blendMode,
                 image = leafImage,
                 opacityCel = leafCel.opacity,
                 opacityLayer = leafLayer.opacity,
+                order = order,
                 xtl = xTlCel,
-                ytl = yTlCel
+                ytl = yTlCel,
+                zIndex = zIndex
             }
         end
     end
+
+    --https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md#note5
+    table.sort(packets, function(a, b)
+        return (a.order < b.order)
+            or ((a.order == b.order)
+                and (a.zIndex < b.zIndex))
+    end)
 
     local wGroup = 1 + xBrGroup - xTlGroup
     local hGroup = 1 + yBrGroup - yTlGroup

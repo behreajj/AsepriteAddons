@@ -348,6 +348,7 @@ dlg:button {
         local zeroPoint = Point(0, 0)
         local nonUniformDim = not potUniform
         local usePadding = padding > 0
+        local useZIndex = app.apiVersion >= 23
 
         -- Cache methods used in loops.
         local floor = math.floor
@@ -483,6 +484,7 @@ dlg:button {
                 -- For JSON packets.
                 local celData = nil
                 local celOpacity = 255
+                local zIndex = 0
                 local layerOpacity = 255
                 local layerBlendMode = normalBlendMode
 
@@ -506,6 +508,7 @@ dlg:button {
                         -- print("Cel was found.")
                         celData = cel.data
                         celOpacity = cel.opacity
+                        if useZIndex then zIndex = cel.zIndex end
 
                         image = cel.image
                         if chosenLayer.isTilemap then
@@ -628,14 +631,14 @@ dlg:button {
                                 layerPackets[layerId] = layerPacket
                             end
 
-                            -- TODO: Add cel.zIndex property, as of api v23.
                             local celPacket = {
                                 fileName = fileNameShort,
                                 bounds = bounds,
                                 data = celData,
                                 frameNumber = frIdx,
                                 layer = layerId,
-                                opacity = celOpacity
+                                opacity = celOpacity,
+                                zIndex = zIndex
                             }
                             celPackets[#celPackets + 1] = celPacket
                         end -- End of saveJson check
