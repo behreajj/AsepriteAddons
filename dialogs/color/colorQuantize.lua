@@ -355,40 +355,60 @@ dlg:button {
             trgLayer.blendMode = srcLayer.blendMode
         end)
 
-        local one255 = 0.003921568627451
         local rgbColorMode = ColorMode.RGB
         local floor = math.floor
         local tilesToImage = AseUtilities.tilesToImage
         local transact = app.transaction
         local strfmt = string.format
 
-        local rDelta = 0.0
-        local gDelta = 0.0
-        local bDelta = 0.0
         local aDelta = 0.0
+        local bDelta = 0.0
+        local gDelta = 0.0
+        local rDelta = 0.0
 
-        local quantize = nil
+        local aqFunc = nil
+        local bqFunc = nil
+        local gqFunc = nil
+        local rqFunc = nil
+
         if method == "UNSIGNED" then
-            quantize = Utilities.quantizeUnsignedInternal
+            -- print("UNSIGNED")
 
-            -- TODO: Still a problem with max level alpha here.
-            rDelta = 1.0 / (rLevels - 1.0)
-            gDelta = 1.0 / (gLevels - 1.0)
-            bDelta = 1.0 / (bLevels - 1.0)
+            aqFunc = Utilities.quantizeUnsignedInternal
+            bqFunc = Utilities.quantizeUnsignedInternal
+            gqFunc = Utilities.quantizeUnsignedInternal
+            rqFunc = Utilities.quantizeUnsignedInternal
+
             aDelta = 1.0 / (aLevels - 1.0)
+            bDelta = 1.0 / (bLevels - 1.0)
+            gDelta = 1.0 / (gLevels - 1.0)
+            rDelta = 1.0 / (rLevels - 1.0)
         else
-            quantize = Utilities.quantizeSignedInternal
+            -- print("SIGNED")
 
-            rLevels = rLevels - 1
-            gLevels = gLevels - 1
-            bLevels = bLevels - 1
+            aqFunc = Utilities.quantizeSignedInternal
+            bqFunc = Utilities.quantizeSignedInternal
+            gqFunc = Utilities.quantizeSignedInternal
+            rqFunc = Utilities.quantizeSignedInternal
+
             aLevels = aLevels - 1
+            bLevels = bLevels - 1
+            gLevels = gLevels - 1
+            rLevels = rLevels - 1
 
-            rDelta = 1.0 / rLevels
-            gDelta = 1.0 / gLevels
-            bDelta = 1.0 / bLevels
             aDelta = 1.0 / aLevels
+            bDelta = 1.0 / bLevels
+            gDelta = 1.0 / gLevels
+            rDelta = 1.0 / rLevels
         end
+
+        -- print(string.format(
+        --     "aLevels: %d, bLevels: %d, gLevels: %d, rLevels: %d",
+        --     aLevels, bLevels, gLevels, rLevels))
+
+        -- print(string.format(
+        --     "aDelta: %.3f, bDelta: %.3f, gDelta: %.3f, rDelta: %.3f",
+        --     aDelta, bDelta, gDelta, rDelta))
 
         local i = 0
         local lenFrames = #frames
@@ -419,20 +439,23 @@ dlg:button {
                     local g = (k >> 0x08) & 0xff
                     local r = k & 0xff
 
-                    local aQtz = quantize(a * one255, aLevels, aDelta)
-                    local bQtz = quantize(b * one255, bLevels, bDelta)
-                    local gQtz = quantize(g * one255, gLevels, gDelta)
-                    local rQtz = quantize(r * one255, rLevels, rDelta)
+                    -- Do not cache the division in a variable
+                    -- as 1.0 / 255.0. Its leads to precision errors
+                    -- which impact alpha during unsigned quantize.
+                    local aQtz = aqFunc(a / 255.0, aLevels, aDelta)
+                    local bQtz = bqFunc(b / 255.0, bLevels, bDelta)
+                    local gQtz = gqFunc(g / 255.0, gLevels, gDelta)
+                    local rQtz = rqFunc(r / 255.0, rLevels, rDelta)
 
-                    aQtz = floor(aQtz * 0xff + 0.5)
-                    bQtz = floor(bQtz * 0xff + 0.5)
-                    gQtz = floor(gQtz * 0xff + 0.5)
-                    rQtz = floor(rQtz * 0xff + 0.5)
+                    local a255 = floor(aQtz * 255.0 + 0.5)
+                    local b255 = floor(bQtz * 255.0 + 0.5)
+                    local g255 = floor(gQtz * 255.0 + 0.5)
+                    local r255 = floor(rQtz * 255.0 + 0.5)
 
-                    trgDict[k] = (aQtz << 0x18)
-                        | (bQtz << 0x10)
-                        | (gQtz << 0x08)
-                        | rQtz
+                    trgDict[k] = (a255 << 0x18)
+                        | (b255 << 0x10)
+                        | (g255 << 0x08)
+                        |  r255
                 end
 
                 -- Clone image, replace color with quantized.
