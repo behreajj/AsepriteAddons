@@ -369,12 +369,13 @@ dlg:button {
 
         local quantize = nil
         if method == "UNSIGNED" then
-            quantize = Utilities.quantizeUnsigned
+            quantize = Utilities.quantizeUnsignedInternal
 
-            if rLevels < 255 then rDelta = 1.0 / (rLevels - 1.0) end
-            if gLevels < 255 then gDelta = 1.0 / (gLevels - 1.0) end
-            if bLevels < 255 then bDelta = 1.0 / (bLevels - 1.0) end
-            if aLevels < 255 then aDelta = 1.0 / (aLevels - 1.0) end
+            -- TODO: Still a problem with max level alpha here.
+            rDelta = 1.0 / (rLevels - 1.0)
+            gDelta = 1.0 / (gLevels - 1.0)
+            bDelta = 1.0 / (bLevels - 1.0)
+            aDelta = 1.0 / (aLevels - 1.0)
         else
             quantize = Utilities.quantizeSignedInternal
 
