@@ -424,18 +424,28 @@ dlg:button {
         elseif ditherMode == "QUANTIZE" then
             local levels = args.levels
                 or defaults.levels --[[@as integer]]
+            local delta = 1.0 / (levels - 1.0)
+            local quantize = Utilities.quantizeUnsignedInternal
+            local floor = math.floor
 
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
-                local srgb = Clr.new(
-                    rSrc * 0.003921568627451,
-                    gSrc * 0.003921568627451,
-                    bSrc * 0.003921568627451,
-                    1.0)
-                local trgHex = Clr.toHex(Clr.quantize(srgb, levels))
-                return (aSrc << 0x18) | (0x00ffffff & trgHex)
+                local aQtz = quantize(aSrc / 255.0, levels, delta)
+                local bQtz = quantize(bSrc / 255.0, levels, delta)
+                local gQtz = quantize(gSrc / 255.0, levels, delta)
+                local rQtz = quantize(rSrc / 255.0, levels, delta)
+
+                local a255 = floor(aQtz * 255.0 + 0.5)
+                local b255 = floor(bQtz * 255.0 + 0.5)
+                local g255 = floor(gQtz * 255.0 + 0.5)
+                local r255 = floor(rQtz * 255.0 + 0.5)
+
+                return (a255 << 0x18)
+                    | (b255 << 0x10)
+                    | (g255 << 0x08)
+                    |  r255
             end
 
-            dmStr = string.format("Quantize.%03d", levels)
+            dmStr = string.format("Quantize.%02d", levels)
         else
             local palType = args.palType or defaults.palType --[[@as string]]
             local palFile = args.palFile --[[@as string]]
