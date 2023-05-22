@@ -132,8 +132,8 @@ function Clr.bitEqAlpha(a, b)
     local aa = a.a
     if aa < 0.0 then aa = 0.0 elseif aa > 1.0 then aa = 1.0 end
     if ba < 0.0 then ba = 0.0 elseif ba > 1.0 then ba = 1.0 end
-    return math.floor(aa * 0xff + 0.5)
-        == math.floor(ba * 0xff + 0.5)
+    return math.floor(aa * 255.0 + 0.5)
+        == math.floor(ba * 255.0 + 0.5)
 end
 
 ---Evaluates whether two colors have equal red,
@@ -151,8 +151,8 @@ function Clr.bitEqRgb(a, b)
     local ab = a.b
     if ab < 0.0 then ab = 0.0 elseif ab > 1.0 then ab = 1.0 end
     if bb < 0.0 then bb = 0.0 elseif bb > 1.0 then bb = 1.0 end
-    if math.floor(ab * 0xff + 0.5)
-        ~= math.floor(bb * 0xff + 0.5) then
+    if math.floor(ab * 255.0 + 0.5)
+        ~= math.floor(bb * 255.0 + 0.5) then
         return false
     end
 
@@ -161,8 +161,8 @@ function Clr.bitEqRgb(a, b)
     local ag = a.g
     if ag < 0.0 then ag = 0.0 elseif ag > 1.0 then ag = 1.0 end
     if bg < 0.0 then bg = 0.0 elseif bg > 1.0 then bg = 1.0 end
-    if math.floor(ag * 0xff + 0.5)
-        ~= math.floor(bg * 0xff + 0.5) then
+    if math.floor(ag * 255.0 + 0.5)
+        ~= math.floor(bg * 255.0 + 0.5) then
         return false
     end
 
@@ -171,8 +171,8 @@ function Clr.bitEqRgb(a, b)
     local ar = a.r
     if ar < 0.0 then ar = 0.0 elseif ar > 1.0 then ar = 1.0 end
     if br < 0.0 then br = 0.0 elseif br > 1.0 then br = 1.0 end
-    if math.floor(ar * 0xff + 0.5)
-        ~= math.floor(br * 0xff + 0.5) then
+    if math.floor(ar * 255.0 + 0.5)
+        ~= math.floor(br * 255.0 + 0.5) then
         return false
     end
 
@@ -523,10 +523,10 @@ end
 ---@return Clr
 function Clr.fromHex(c)
     return Clr.new(
-        (c & 0xff) * 0.003921568627451,
-        (c >> 0x08 & 0xff) * 0.003921568627451,
-        (c >> 0x10 & 0xff) * 0.003921568627451,
-        (c >> 0x18 & 0xff) * 0.003921568627451)
+        (c & 0xff) / 255.0,
+        (c >> 0x08 & 0xff) / 255.0,
+        (c >> 0x10 & 0xff) / 255.0,
+        (c >> 0x18 & 0xff) / 255.0)
 end
 
 ---Converts an array of hexadecimal values to
@@ -568,9 +568,9 @@ function Clr.fromHexWeb(hexstr)
     local sn = tonumber(s, 16)
     if sn then
         return Clr.new(
-            (sn >> 0x10 & 0xff) * 0.003921568627451,
-            (sn >> 0x08 & 0xff) * 0.003921568627451,
-            (sn & 0xff) * 0.003921568627451,
+            (sn >> 0x10 & 0xff) / 255.0,
+            (sn >> 0x08 & 0xff) / 255.0,
+            (sn & 0xff) / 255.0,
             1.0)
     end
     return Clr.clearBlack()
@@ -1063,48 +1063,6 @@ function Clr.premul(c)
     end
 end
 
----Reduces the granularity of a color's components
----in sRGB. Uses signed quantization, as the color
----may be out of gamut.
----@param c Clr color
----@param levels integer levels
----@return Clr
-function Clr.quantize(c, levels)
-    if levels and levels > 0 and levels < 256 then
-        local delta = 1.0 / levels
-        return Clr.quantizeInternal(
-            c, levels, delta,
-            levels, delta,
-            levels, delta,
-            levels, delta)
-    end
-    return Clr.new(c.r, c.g, c.b, c.a)
-end
-
----Reduces the granularity of a color's components
----in sRGB. Uses signed quantization, as the color
----may be out of gamut.
----Internal helper function.
----Assumes that levels are within [1, 255] and the
----inverse of levels has already been calculated.
----@param c Clr color
----@param rLv number red levels
----@param rDt number red inverse
----@param gLv number green levels
----@param gDt number green inverse
----@param bLv number blue levels
----@param bDt number blue inverse
----@param aLv number alpha levels
----@param aDt number alpha inverse
----@return Clr
-function Clr.quantizeInternal(c, rLv, rDt, gLv, gDt, bLv, bDt, aLv, aDt)
-    return Clr.new(
-        rDt * math.floor(c.r * rLv + 0.5),
-        gDt * math.floor(c.g * gLv + 0.5),
-        bDt * math.floor(c.b * bLv + 0.5),
-        aDt * math.floor(c.a * aLv + 0.5))
-end
-
 ---Returns true if the red, green and blue
 ---channels are within the range [0.0, 1.0].
 ---@param c Clr color
@@ -1400,10 +1358,10 @@ end
 ---@param c Clr color
 ---@return integer
 function Clr.toHexUnchecked(c)
-    return math.floor(c.a * 0xff + 0.5) << 0x18
-        | math.floor(c.b * 0xff + 0.5) << 0x10
-        | math.floor(c.g * 0xff + 0.5) << 0x08
-        | math.floor(c.r * 0xff + 0.5)
+    return math.floor(c.a * 255.0 + 0.5) << 0x18
+        | math.floor(c.b * 255.0 + 0.5) << 0x10
+        | math.floor(c.g * 255.0 + 0.5) << 0x08
+        | math.floor(c.r * 255.0 + 0.5)
 end
 
 ---Converts from a color to a web-friendly hexadecimal
@@ -1423,9 +1381,9 @@ end
 ---@return string
 function Clr.toHexWebUnchecked(c)
     return string.format("%06X",
-        math.floor(c.r * 0xff + 0.5) << 0x10
-        | math.floor(c.g * 0xff + 0.5) << 0x08
-        | math.floor(c.b * 0xff + 0.5))
+        math.floor(c.r * 255.0 + 0.5) << 0x10
+        | math.floor(c.g * 255.0 + 0.5) << 0x08
+        | math.floor(c.b * 255.0 + 0.5))
 end
 
 ---Returns a JSON string of a color.

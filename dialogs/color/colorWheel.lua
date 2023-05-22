@@ -337,7 +337,13 @@ dlg:button {
         -- gamut layer needs to be available beyond the
         -- transaction scope.
         local gamutLayer = sprite.layers[1]
-        gamutLayer.name = "Gamut"
+        if quantAzims or quantRad then
+            gamutLayer.name = string.format(
+                "Gamut.Sectors%d.Rings%d",
+                sectorCount, ringCount)
+        else
+            gamutLayer.name = "Gamut"
+        end
 
         -- Create gamut layer cels.
         app.transaction("New Cels", function()

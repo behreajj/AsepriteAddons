@@ -265,7 +265,13 @@ dlg:button {
         -- gamut layer needs to be available beyond the
         -- transaction scope.
         local gamutLayer = sprite.layers[1]
-        gamutLayer.name = "Gamut"
+        if quantization > 0 then
+            gamutLayer.name = string.format(
+                "Gamut.Quantize%d",
+                quantization)
+        else
+            gamutLayer.name = "Gamut"
+        end
 
         -- Create gamut layer cels.
         app.transaction("New Cels", function()

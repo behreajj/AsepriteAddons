@@ -1,14 +1,15 @@
-dofile("../../support/aseutilities.lua")
-
 local defaults = {
-    scale = 1,
-    margin = 0,
+    flattenImage = true,
+    includeLocked = true,
+    includeHidden = false,
+    includeTiles = true,
+    includeBkg = true,
     border = 0,
-    prApply = false,
-    flattenImage = true
+    padding = 0,
+    scale = 1,
+    usePixelAspect = true,
 }
 
----
 ---@param bm BlendMode|integer blend mode
 ---@return string
 local function blendModeToStr(bm)
@@ -43,15 +44,20 @@ local function blendModeToStr(bm)
     end
 end
 
----
 ---@param img Image image
 ---@param border integer border size
----@param margin integer margin size
----@param scale integer scale
+---@param padding integer margin size
+---@param wScale integer scale width
+---@param hScale integer scale height
 ---@param xOff integer x offset
 ---@param yOff integer y offset
+---@param palette Palette palette
 ---@return string
-local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
+local function imgToSvgStr(
+    img, border, padding,
+    wScale, hScale,
+    xOff, yOff,
+    palette)
     -- https://github.com/aseprite/aseprite/issues/3561
     -- SVGs displayed in Firefox and Inkscape have thin gaps
     -- between squares at fractional zoom levels, e.g., 133%.
@@ -62,19 +68,63 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
     local strfmt = string.format
     local tconcat = table.concat
 
-    local imgWidth = img.width
-    local pxItr = img:pixels()
+    local imgSpec = img.spec
+    local imgWidth = imgSpec.width
+    local colorMode = imgSpec.colorMode
+
     ---@type table<integer, integer[]>
     local pixelDict = {}
-    for pixel in pxItr do
-        local hex = pixel()
-        if hex & 0xff000000 ~= 0 then
-            local idx = pixel.x + pixel.y * imgWidth
-            local idcs = pixelDict[hex]
-            if idcs then
-                pixelDict[hex][#idcs + 1] = idx
-            else
-                pixelDict[hex] = { idx }
+    local pxItr = img:pixels()
+
+    if colorMode == ColorMode.INDEXED then
+        local aseColorToHex = AseUtilities.aseColorToHex
+        local alphaIdx = imgSpec.transparentColor
+        local rgbColorMode = ColorMode.RGB
+        for pixel in pxItr do
+            local clrIdx = pixel()
+            if clrIdx ~= alphaIdx then
+                local idx = pixel.x + pixel.y * imgWidth
+
+                local aseColor = palette:getColor(clrIdx)
+                local hex = aseColorToHex(aseColor, rgbColorMode)
+
+                local idcs = pixelDict[hex]
+                if idcs then
+                    idcs[#idcs + 1] = idx
+                else
+                    pixelDict[hex] = { idx }
+                end
+            end
+        end
+    elseif colorMode == ColorMode.GRAY then
+        for pixel in pxItr do
+            local gray = pixel()
+            if gray & 0xff00 ~= 0 then
+                local idx = pixel.x + pixel.y * imgWidth
+
+                local a = (gray >> 0x08) & 0xff
+                local v = gray & 0xff
+                local hex = a << 0x18 | v << 0x10 | v << 0x08 | v
+
+                local idcs = pixelDict[hex]
+                if idcs then
+                    idcs[#idcs + 1] = idx
+                else
+                    pixelDict[hex] = { idx }
+                end
+            end
+        end
+    elseif colorMode == ColorMode.RGB then
+        for pixel in pxItr do
+            local hex = pixel()
+            if hex & 0xff000000 ~= 0 then
+                local idx = pixel.x + pixel.y * imgWidth
+                local idcs = pixelDict[hex]
+                if idcs then
+                    idcs[#idcs + 1] = idx
+                else
+                    pixelDict[hex] = { idx }
+                end
             end
         end
     end
@@ -82,21 +132,6 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
     ---@type string[]
     local pathsArr = {}
     for hex, idcs in pairs(pixelDict) do
-        local a = hex >> 0x18 & 0xff
-
-        local pathStr = strfmt(
-            "\n<path id=\"%08x\" ", hex)
-        if a < 0xff then
-            pathStr = pathStr .. strfmt(
-                "fill-opacity=\"%.6f\" ",
-                a * 0.003921568627451)
-        end
-        pathStr = pathStr .. strfmt(
-            "fill=\"#%06X\" d=\"",
-            ((hex & 0xff) << 0x10
-                | (hex & 0xff00)
-                | (hex >> 0x10 & 0xff)))
-
         ---@type string[]
         local subPathsArr = {}
         local lenIdcs = #idcs
@@ -107,13 +142,13 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
             local x0 = xOff + (idx % imgWidth)
             local y0 = yOff + (idx // imgWidth)
 
-            local x1mrg = border + (x0 + 1) * margin
-            local y1mrg = border + (y0 + 1) * margin
+            local x1mrg = border + (x0 + 1) * padding
+            local y1mrg = border + (y0 + 1) * padding
 
-            local ax = x1mrg + x0 * scale
-            local ay = y1mrg + y0 * scale
-            local bx = ax + scale
-            local by = ay + scale
+            local ax = x1mrg + x0 * wScale
+            local ay = y1mrg + y0 * hScale
+            local bx = ax + wScale
+            local by = ay + hScale
 
             subPathsArr[i] = strfmt(
                 "M %d %d L %d %d L %d %d L %d %d Z",
@@ -122,71 +157,136 @@ local function imgToSvgStr(img, border, margin, scale, xOff, yOff)
             -- More compressed version:
             -- subPathsArr[i] = strfmt(
             --     "M%d %dh%dv%dh%dv%dZ",
-            --     ax, ay, scale, scale, -scale, -scale)
+            --     ax, ay, wScale, hScale, -wScale, -hScale)
         end
 
-        pathStr = pathStr
-            .. (tconcat(subPathsArr, ' ') .. "\" />")
-        pathsArr[#pathsArr + 1] = pathStr
+        local lenSubPaths = #subPathsArr
+        if lenSubPaths > 0 then
+            local webHex = (hex & 0xff) << 0x10
+                | (hex & 0xff00)
+                | (hex >> 0x10 & 0xff)
+            local alphaStr = ""
+            local a = hex >> 0x18 & 0xff
+            if a < 0xff then
+                alphaStr = strfmt(
+                    " fill-opacity=\"%.6f\"",
+                    a * 0.003921568627451)
+            end
+            local pathStr = strfmt(
+                "<path id=\"%08x\" fill=\"#%06X\"%s d=\"%s\" />",
+                hex, webHex, alphaStr,
+                tconcat(subPathsArr, " "))
+            pathsArr[#pathsArr + 1] = pathStr
+        end
     end
 
-    return tconcat(pathsArr)
+    return tconcat(pathsArr, "\n")
 end
 
----
----@param layer Layer layer
----@param frame Frame|integer frame
----@param spriteBounds Rectangle sprite bounds
----@param border integer border size
----@param scale integer scale
----@param margin integer margin size
----@return string
+---@param layer Layer
+---@param frame Frame|integer
+---@param border integer
+---@param padding integer
+---@param wScale integer
+---@param hScale integer
+---@param spriteBounds Rectangle
+---@param includeLocked boolean
+---@param includeHidden boolean
+---@param includeTiles boolean
+---@param includeBkg boolean
+---@param colorMode ColorMode
+---@param palette Palette
+---@param layersStrArr string[]
 local function layerToSvgStr(
-    layer, frame, spriteBounds,
-    border, scale, margin)
-    local str = ""
-
-    local lyrAlpha = 0xff
+    layer, frame,
+    border, padding, wScale, hScale,
+    spriteBounds,
+    includeLocked,
+    includeHidden,
+    includeTiles,
+    includeBkg,
+    colorMode,
+    palette,
+    layersStrArr)
+    local isEditable = layer.isEditable
+    local isVisible = layer.isVisible
     local isGroup = layer.isGroup
-    if not isGroup then
-        lyrAlpha = layer.opacity
-    end
+    local isRef = layer.isReference
+    local isBkg = layer.isBackground
+    local isTilemap = layer.isTilemap
 
-    if layer.isVisible and lyrAlpha > 0 then
+    if (includeLocked or isEditable)
+        and (includeHidden or isVisible) then
         -- Possible for layer name to be empty string.
-        local layerName = "Layer"
+        local layerName = "layer"
         if layer.name and #layer.name > 0 then
-            layerName = Utilities.validateFilename(layer.name)
+            layerName = string.lower(
+                Utilities.validateFilename(layer.name))
+        end
+        local visStr = ""
+        if not isVisible then
+            visStr = " visibility=\"hidden\""
         end
 
         if isGroup then
-            local grpStr = string.format(
-                "\n<g id=\"%s\">", layerName)
+            local childStrs = {}
+            local children = layer.layers --[=[@as Layer[]]=]
+            local lenChildren = #children
 
-            local groupLayers = layer.layers --[=[@as Layer[]]=]
-            local lenGroupLayers = #groupLayers
-            ---@type string[]
-            local groupStrArr = {}
-            local i = 0
-            while i < lenGroupLayers do
-                i = i + 1
-                groupStrArr[i] = layerToSvgStr(
-                    groupLayers[i],
-                    frame, spriteBounds,
-                    border, scale, margin)
+            if lenChildren > 0 then
+                local i = 0
+                while i < lenChildren do
+                    i = i + 1
+                    local child = children[i]
+                    layerToSvgStr(
+                        child, frame,
+                        border, padding, wScale, hScale,
+                        spriteBounds,
+                        includeLocked,
+                        includeHidden,
+                        includeTiles,
+                        includeBkg,
+                        colorMode,
+                        palette,
+                        childStrs)
+                end
+
+                local grpStr = string.format(
+                    "<g id=\"%s\"%s>\n%s\n</g>",
+                    layerName, visStr, table.concat(childStrs, "\n"))
+                layersStrArr[#layersStrArr + 1] = grpStr
             end
-
-            grpStr = grpStr .. (table.concat(groupStrArr) .. "\n</g>")
-            str = str .. grpStr
-        else
+        elseif (not isRef)
+            and (includeTiles or (not isTilemap))
+            and (includeBkg or (not isBkg)) then
             local cel = layer:cel(frame)
             if cel then
+                -- A definition could be created for tile sets,
+                -- then accssed with use xlink:href, but due to
+                -- out-of-bounds cels (below), it's easier to convert.
                 local celImg = cel.image
                 if layer.isTilemap then
                     celImg = AseUtilities.tilesToImage(
-                        celImg, layer.tileset, ColorMode.RGB)
+                        celImg, layer.tileset, colorMode)
                 end
 
+                -- Layer opacity and cel opacity are compounded.
+                local celAlpha = cel.opacity
+                local lyrAlpha = layer.opacity
+                local alphaStr = ""
+                if lyrAlpha < 0xff or celAlpha < 0xff then
+                    local cmpAlpha = (lyrAlpha * 0.003921568627451)
+                        * (celAlpha * 0.003921568627451)
+                    alphaStr = string.format(
+                        " opacity=\"%.6f\"",
+                        cmpAlpha)
+                end
+
+                -- feBlend seems more backward compatible, but inline
+                -- CSS style results in shorter code.
+                local bmStr = blendModeToStr(layer.blendMode)
+
+                -- Clip off cels that are beyond sprite canvas.
                 local celBounds = cel.bounds
                 local xCel = celBounds.x
                 local yCel = celBounds.y
@@ -194,70 +294,87 @@ local function layerToSvgStr(
                 intersect.x = intersect.x - xCel
                 intersect.y = intersect.y - yCel
 
-                -- feBlend seems more backward compatible, but inline
-                -- CSS style results in shorter code.
-                local bmStr = blendModeToStr(layer.blendMode)
+                local imgStr = imgToSvgStr(
+                    celImg, border, padding,
+                    wScale, hScale, xCel, yCel,
+                    palette)
+
                 local grpStr = string.format(
-                    "\n<g id=\"%s\" style=\"mix-blend-mode: %s;\"",
-                    layerName, bmStr)
-
-                -- Layer opacity and cel opacity are compounded.
-                local celAlpha = cel.opacity
-                if lyrAlpha < 0xff or celAlpha < 0xff then
-                    local cmpAlpha = (lyrAlpha * 0.003921568627451)
-                        * (celAlpha * 0.003921568627451)
-                    grpStr = grpStr .. string.format(
-                        " opacity=\"%.6f\"",
-                        cmpAlpha)
-                end
-
-                grpStr = grpStr .. ">"
-
-                grpStr = grpStr .. imgToSvgStr(
-                    celImg, border, margin, scale,
-                    xCel, yCel)
-
-                grpStr = grpStr .. "\n</g>"
-                str = str .. grpStr
-            end
-        end
-    end
-
-    return str
+                    "<g id=\"%s\"%s style=\"mix-blend-mode: %s;\"%s>\n%s\n</g>",
+                    layerName, visStr, bmStr, alphaStr, imgStr)
+                layersStrArr[#layersStrArr + 1] = grpStr
+            end -- End cel exists check.
+        end     -- End isGroup branch.
+    end         -- End isVisible and isEditable.
 end
 
 local dlg = Dialog { title = "SVG Export" }
+
+dlg:check {
+    id = "flattenImage",
+    label = "Flatten:",
+    selected = defaults.flattenImage,
+    onclick = function()
+        local args = dlg.data
+        local show = not args.flattenImage
+        dlg:modify { id = "includeLocked", visible = show }
+        dlg:modify { id = "includeHidden", visible = show }
+        dlg:modify { id = "includeTiles", visible = show }
+        dlg:modify { id = "includeBkg", visible = show }
+        dlg:modify { id = "zIndexWarning", visible = show }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "includeLocked",
+    label = "Include:",
+    text = "&Locked",
+    selected = defaults.includeLocked,
+    visible = not defaults.flattenImage
+}
+
+dlg:check {
+    id = "includeHidden",
+    text = "&Hidden",
+    selected = defaults.includeHidden,
+    visible = not defaults.flattenImage
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "includeTiles",
+    text = "&Tiles",
+    selected = defaults.includeTiles,
+    visible = not defaults.flattenImage
+}
+
+dlg:check {
+    id = "includeBkg",
+    text = "&Background",
+    selected = defaults.includeBkg,
+    visible = not defaults.flattenImage
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "zIndexWarning",
+    label = "Note:",
+    text = "Z Indices not supported.",
+    visible = not defaults.flattenImage
+}
+
+dlg:newrow { always = false }
 
 dlg:slider {
     id = "scale",
     label = "Scale:",
     min = 1,
-    max = 64,
-    value = defaults.border
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "margin",
-    label = "Px Grid:",
-    min = 0,
-    max = 64,
-    value = defaults.margin,
-    onchange = function()
-        local args = dlg.data
-        local margin = args.margin --[[@as integer]]
-        local gtz = margin > 0
-        dlg:modify { id = "marginClr", visible = gtz }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "marginClr",
-    color = Color { r = 255, g = 255, b = 255 },
-    visible = defaults.margin > 0
+    max = 32,
+    value = defaults.scale
 }
 
 dlg:newrow { always = false }
@@ -286,19 +403,36 @@ dlg:color {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "prApply",
-    label = "Apply:",
-    text = "Pixel Aspect",
-    selected = defaults.prApply
+dlg:slider {
+    id = "padding",
+    label = "Px Grid:",
+    min = 0,
+    max = 64,
+    value = defaults.padding,
+    onchange = function()
+        local args = dlg.data
+        local padding = args.padding --[[@as integer]]
+        local gtz = padding > 0
+        dlg:modify { id = "paddingClr", visible = gtz }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "paddingClr",
+    color = Color { r = 255, g = 255, b = 255 },
+    visible = defaults.padding > 0
 }
 
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "flattenImage",
-    label = "Flatten:",
-    selected = defaults.flattenImage
+    id = "usePixelAspect",
+    label = "Apply:",
+    text = "Pi&xel Aspect",
+    selected = defaults.usePixelAspect,
+    visible = true
 }
 
 dlg:newrow { always = false }
@@ -338,6 +472,7 @@ dlg:button {
             return
         end
 
+        -- Unpack file path.
         local args = dlg.data
         local filepath = args.filepath --[[@as string]]
         if (not filepath) or (#filepath < 1) then
@@ -351,173 +486,185 @@ dlg:button {
             return
         end
 
-        local oldColorMode = activeSprite.colorMode
-        app.command.ChangePixelFormat { format = "rgb" }
-
         -- Unpack arguments.
-        local scale = args.scale or defaults.scale --[[@as integer]]
-        local margin = args.margin or defaults.margin --[[@as integer]]
-        local marginClr = args.marginClr --[[@as Color]]
-        local border = args.border or defaults.border --[[@as integer]]
-        local borderClr = args.borderClr --[[@as Color]]
-        local prApply = args.prApply --[[@as boolean]]
         local flattenImage = args.flattenImage --[[@as boolean]]
+        local includeLocked = args.includeLocked --[[@as boolean]]
+        local includeHidden = args.includeHidden --[[@as boolean]]
+        local includeTiles = args.includeTiles --[[@as boolean]]
+        local includeBkg = args.includeBkg --[[@as boolean]]
+        local border = args.border
+            or defaults.border --[[@as integer]]
+        local borderClr = args.borderClr --[[@as Color]]
+        local padding = args.padding
+            or defaults.padding --[[@as integer]]
+        local paddingClr = args.paddingClr --[[@as Color]]
+        local scale = args.scale or defaults.scale --[[@as integer]]
+        local usePixelAspect = args.usePixelAspect --[[@as boolean]]
 
-        -- Calculate dimensions.
-        local nativeWidth = activeSprite.width
-        local nativeHeight = activeSprite.height
-        local lenPixels = nativeWidth * nativeHeight
-        local scaledWidth = nativeWidth * scale
-        local scaledHeight = nativeHeight * scale
-        local totalWidth = scaledWidth
-            + (nativeWidth + 1) * margin
-            + border * 2
-        local totalHeight = scaledHeight
-            + (nativeHeight + 1) * margin
-            + border * 2
-
-        local wAspSclr = 1
-        local hAspSclr = 1
-        local preserveAspectStr = "preserveAspectRatio=\"xMidYMid slice\" "
-        if prApply then
+        -- Process scale
+        local wScale = scale
+        local hScale = scale
+        if usePixelAspect then
             local pxRatio = activeSprite.pixelRatio
             local pxw = math.max(1, math.abs(pxRatio.width))
             local pxh = math.max(1, math.abs(pxRatio.height))
-            if pxw > pxh then hAspSclr = pxw / pxh end
-            if pxh > pxw then wAspSclr = pxh / pxw end
-            preserveAspectStr = "preserveAspectRatio=\"none\" "
+            wScale = wScale * pxw
+            hScale = hScale * pxh
         end
 
-        -- Cache any methods used in for loops.
-        local strfmt = string.format
-        local concat = table.concat
-        local str = concat({
+        local activeSpec = activeSprite.spec
+        local colorMode = activeSpec.colorMode
+        local wNative = activeSpec.width
+        local hNative = activeSpec.height
+
+        local wClip = wScale * wNative
+            + padding * (wNative + 1)
+        local hClip = hScale * hNative
+            + padding * (hNative + 1)
+
+        local wTotal = wClip + border + border
+        local hTotal = hClip + border + border
+
+        local palette = AseUtilities.getPalette(
+            activeFrame, activeSprite.palettes)
+
+        ---@type string[]
+        local layersStrArr = {}
+        if flattenImage then
+            local flatImg = Image(activeSpec)
+            flatImg:drawSprite(activeSprite, activeFrame)
+            layersStrArr[1] = imgToSvgStr(
+                flatImg, border, padding,
+                wScale, hScale, 0, 0,
+                palette)
+        else
+            local spriteBounds = activeSprite.bounds
+            local spriteLayers = activeSprite.layers
+            local lenSpriteLayers = #spriteLayers
+
+            local j = 0
+            while j < lenSpriteLayers do
+                j = j + 1
+                local layer = spriteLayers[j]
+                layerToSvgStr(
+                    layer, activeFrame,
+                    border, padding, wScale, hScale,
+                    spriteBounds,
+                    includeLocked,
+                    includeHidden,
+                    includeTiles,
+                    includeBkg,
+                    colorMode,
+                    palette,
+                    layersStrArr)
+            end
+        end
+
+        local wnBorder = wTotal - border
+        local hnBorder = hTotal - border
+
+        local padStr = ""
+        local aPadding = paddingClr.alpha
+        if padding > 0 and aPadding > 0 then
+            local webHex = paddingClr.red << 0x10
+                | paddingClr.green << 0x08
+                | paddingClr.blue
+
+            local alphaStr = ""
+            if aPadding < 0xff then
+                alphaStr = string.format(
+                    " fill-opacity=\"%.6f\"",
+                    aPadding * 0.003921568627451)
+            end
+
+            -- Cut out a hole for each pixel (counter-clockwise).
+            ---@type string[]
+            local holeStrArr = {}
+            local lenPixels = wNative * hNative
+            local strfmt = string.format
+            local i = 0
+            while i < lenPixels do
+                local y = i // wNative
+                local x = i % wNative
+
+                local x1mrg = border + (x + 1) * padding
+                local y1mrg = border + (y + 1) * padding
+
+                local ax = x1mrg + x * wScale
+                local ay = y1mrg + y * hScale
+                local bx = ax + wScale
+                local by = ay + hScale
+
+                i = i + 1
+                holeStrArr[i] = strfmt(
+                    "M %d %d L %d %d L %d %d L %d %d Z",
+                    ax, ay, ax, by, bx, by, bx, ay)
+            end
+
+            padStr = string.format(
+                "\n<path id=\"grid\" fill=\"#%06X\"%s "
+                .. "d=\"M %d %d L %d %d L %d %d L %d %d Z %s\" />",
+                webHex, alphaStr,
+                border, border,
+                wnBorder, border,
+                wnBorder, hnBorder,
+                border, hnBorder,
+                table.concat(holeStrArr, " ")
+            )
+        end
+
+        local borderStr = ""
+        local aBorder = borderClr.alpha
+        if border > 0 and aBorder > 0 then
+            local webHex = borderClr.red << 0x10
+                | borderClr.green << 0x08
+                | borderClr.blue
+
+            local alphaStr = ""
+            if aBorder < 0xff then
+                alphaStr = string.format(
+                    " fill-opacity=\"%.6f\"",
+                    aBorder * 0.003921568627451)
+            end
+
+            borderStr = string.format(
+                "\n<path id=\"border\" fill=\"#%06X\"%s "
+                .. "d=\"M 0 0 L %d 0 L %d %d L 0 %d Z"
+                .. "M %d %d L %d %d L %d %d L %d %d Z\" />",
+                webHex, alphaStr,
+                wTotal, wTotal,
+                hTotal, hTotal,
+                border, border,
+                border, hnBorder,
+                wnBorder, hnBorder,
+                wnBorder, border)
+        end
+
+        local svgStr = table.concat({
             "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n",
             "<svg ",
             "xmlns=\"http://www.w3.org/2000/svg\" ",
             "xmlns:xlink=\"http://www.w3.org/1999/xlink\" ",
             "shape-rendering=\"crispEdges\" ",
             "stroke=\"none\" ",
-            preserveAspectStr,
-            strfmt("width=\"%d\" height=\"%d\" ",
-                totalWidth, totalHeight),
-            strfmt("viewBox=\"0 0 %.4f %.4f\">",
-                wAspSclr * totalWidth,
-                hAspSclr * totalHeight)
+            "preserveAspectRatio=\"xMidYMid slice\" ",
+            string.format(
+                "width=\"%d\" height=\"%d\" ",
+                wTotal, hTotal),
+            string.format(
+                "viewBox=\"0 0 %d %d\">\n",
+                wTotal, hTotal),
+            table.concat(layersStrArr, "\n"),
+            padStr,
+            borderStr,
+            "\n</svg>"
         })
-
-        -- Each path element can contain sub-paths set off by Z (close)
-        -- and M (move to) commands.
-        local wnBorder = totalWidth - border
-        local hnBorder = totalHeight - border
-        if border > 0 and borderClr.alpha > 0 then
-            -- Create outer frame of border (clockwise).
-            str = str .. strfmt(
-                "\n<path id=\"border\" d=\"M 0 0 L %d 0 L %d %d L 0 %d Z ",
-                totalWidth, totalWidth, totalHeight, totalHeight)
-
-            -- Cut out inner frame of border (counter-clockwise).
-            str = str .. strfmt(
-                "M %d %d L %d %d L %d %d L %d %d Z\" ",
-                border, border,
-                border, hnBorder,
-                wnBorder, hnBorder,
-                wnBorder, border)
-
-            if borderClr.alpha < 255 then
-                str = str .. strfmt(
-                    "fill-opacity=\"%.6f\" ",
-                    borderClr.alpha * 0.003921568627451)
-            end
-
-            str = str .. strfmt(
-                "fill=\"#%06X\" />",
-                borderClr.red << 0x10
-                | borderClr.green << 0x08
-                | borderClr.blue)
-        end
-
-        if margin > 0 and marginClr.alpha > 0 then
-            -- Create outer frame of margins (clockwise).
-            str = str .. strfmt(
-                "\n<path id=\"margins\" d=\"M %d %d L %d %d L %d %d L %d %d Z",
-                border, border,
-                wnBorder, border,
-                wnBorder, hnBorder,
-                border, hnBorder)
-
-            -- Cut out a hole for each pixel (counter-clockwise).
-            ---@type string[]
-            local holeStrArr = {}
-            local i = 0
-            while i < lenPixels do
-                local y = i // nativeWidth
-                local x = i % nativeWidth
-
-                local x1mrg = border + (x + 1) * margin
-                local y1mrg = border + (y + 1) * margin
-
-                local ax = x1mrg + x * scale
-                local ay = y1mrg + y * scale
-                local bx = ax + scale
-                local by = ay + scale
-
-                i = i + 1
-                holeStrArr[i] = strfmt(
-                    " M %d %d L %d %d L %d %d L %d %d Z",
-                    ax, ay, ax, by, bx, by, bx, ay)
-            end
-
-            str = str .. concat(holeStrArr)
-            str = str .. "\" "
-
-            if marginClr.alpha < 255 then
-                str = str .. strfmt(
-                    "fill-opacity=\"%.6f\" ",
-                    marginClr.alpha * 0.003921568627451)
-            end
-
-            str = str .. strfmt(
-                "fill=\"#%06X\" />",
-                marginClr.red << 0x10
-                | marginClr.green << 0x08
-                | marginClr.blue)
-        end
-
-        if flattenImage then
-            local flatImg = Image(nativeWidth, nativeHeight)
-            flatImg:drawSprite(activeSprite, activeFrame)
-            str = str .. imgToSvgStr(flatImg, border, margin, scale, 0, 0)
-        else
-            local spriteBounds = Rectangle(
-                0, 0, nativeWidth, nativeHeight)
-            local spriteLayers = activeSprite.layers
-            ---@type string[]
-            local layersStrArr = {}
-            local lenSpriteLayers = #spriteLayers
-            local j = 0
-            while j < lenSpriteLayers do
-                j = j + 1
-                local spriteLayer = spriteLayers[j]
-
-                layersStrArr[j] = layerToSvgStr(
-                    spriteLayer,
-                    activeFrame, spriteBounds,
-                    border, scale, margin)
-            end
-            str = str .. concat(layersStrArr)
-        end
-
-        str = str .. "\n</svg>"
 
         local file, err = io.open(filepath, "w")
         if file then
-            file:write(str)
+            file:write(svgStr)
             file:close()
         end
-
-        AseUtilities.changePixelFormat(oldColorMode)
-        app.refresh()
 
         if err then
             app.alert { title = "Error", text = err }
