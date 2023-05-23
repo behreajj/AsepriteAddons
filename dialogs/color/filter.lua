@@ -53,7 +53,7 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "usedTiled",
+    id = "useTiled",
     label = "Tiled:",
     selected = defaults.useTiled
 }
@@ -154,7 +154,7 @@ dlg:button {
         -- Create SRLAB2 dictionary outside of while loop
         -- to minimize re-calculation of SR LAB2 colors for
         -- similar images across multiple frames.
-        ---@type table<integer, table>
+        ---@type table<integer, {l: number, a: number, b: number, alpha: number}>
         local labDict = {}
         labDict[0] = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
 
@@ -164,7 +164,9 @@ dlg:button {
         local wQuadn1 = quadSize - 1
         local quadLen = quadSize * quadSize
         local kToAverage = 1.0 / quadLen
+        ---@type {l: number, a: number, b: number, alpha: number}[][]
         local quadrants = { {}, {}, {}, {} }
+        ---@type {l: number, a: number, b: number, alpha: number}[]
         local averages = {
             { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 },
             { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 },
@@ -252,13 +254,13 @@ dlg:button {
                             local ySample = ytl + (j // wKrn)
 
                             local labSample = labClear
-                            if ySample >= 0 and ySample < hImg
-                                and xSample >= 0 and xSample < wImg then
-                                local iSample = xSample + ySample * wImg
-                                labSample = labDict[pxArr[1 + iSample]]
-                            elseif useTiled then
+                            if useTiled then
                                 local iSample = (xSample % wImg)
                                     + (ySample % hImg) * wImg
+                                labSample = labDict[pxArr[1 + iSample]]
+                            elseif ySample >= 0 and ySample < hImg
+                                and xSample >= 0 and xSample < wImg then
+                                local iSample = xSample + ySample * wImg
                                 labSample = labDict[pxArr[1 + iSample]]
                             end
 
@@ -278,6 +280,7 @@ dlg:button {
                         trgPixel(toHex(srgb))
                     end
                 else
+                    -- Kuwahara filter.
                     for trgPixel in trgPixels do
                         local xSrc = trgPixel.x
                         local ySrc = trgPixel.y
@@ -327,13 +330,13 @@ dlg:button {
                                 local ySample = ytlQuad + yQuad
 
                                 local labSample = labClear
-                                if ySample >= 0 and ySample < hImg
-                                    and xSample >= 0 and xSample < wImg then
-                                    local iSample = xSample + ySample * wImg
-                                    labSample = labDict[pxArr[1 + iSample]]
-                                elseif useTiled then
+                                if useTiled then
                                     local iSample = (xSample % wImg)
                                         + (ySample % hImg) * wImg
+                                    labSample = labDict[pxArr[1 + iSample]]
+                                elseif ySample >= 0 and ySample < hImg
+                                    and xSample >= 0 and xSample < wImg then
+                                    local iSample = xSample + ySample * wImg
                                     labSample = labDict[pxArr[1 + iSample]]
                                 end
 

@@ -201,12 +201,9 @@ local function layerToSvgStr(
     layer, frame,
     border, padding, wScale, hScale,
     spriteBounds,
-    includeLocked,
-    includeHidden,
-    includeTiles,
-    includeBkg,
-    colorMode,
-    palette,
+    includeLocked, includeHidden,
+    includeTiles, includeBkg,
+    colorMode, palette,
     layersStrArr)
     local isEditable = layer.isEditable
     local isVisible = layer.isVisible
@@ -270,39 +267,41 @@ local function layerToSvgStr(
                         celImg, layer.tileset, colorMode)
                 end
 
-                -- Layer opacity and cel opacity are compounded.
-                local celAlpha = cel.opacity
-                local lyrAlpha = layer.opacity
-                local alphaStr = ""
-                if lyrAlpha < 0xff or celAlpha < 0xff then
-                    local cmpAlpha = (lyrAlpha * 0.003921568627451)
-                        * (celAlpha * 0.003921568627451)
-                    alphaStr = string.format(
-                        " opacity=\"%.6f\"",
-                        cmpAlpha)
+                if not celImg:isEmpty() then
+                    -- Layer opacity and cel opacity are compounded.
+                    local celAlpha = cel.opacity
+                    local lyrAlpha = layer.opacity
+                    local alphaStr = ""
+                    if lyrAlpha < 0xff or celAlpha < 0xff then
+                        local cmpAlpha = (lyrAlpha * 0.003921568627451)
+                            * (celAlpha * 0.003921568627451)
+                        alphaStr = string.format(
+                            " opacity=\"%.6f\"",
+                            cmpAlpha)
+                    end
+
+                    -- feBlend seems more backward compatible, but inline
+                    -- CSS style results in shorter code.
+                    local bmStr = blendModeToStr(layer.blendMode)
+
+                    -- Clip off cels that are beyond sprite canvas.
+                    local celBounds = cel.bounds
+                    local xCel = celBounds.x
+                    local yCel = celBounds.y
+                    local intersect = celBounds:intersect(spriteBounds)
+                    intersect.x = intersect.x - xCel
+                    intersect.y = intersect.y - yCel
+
+                    local imgStr = imgToSvgStr(
+                        celImg, border, padding,
+                        wScale, hScale, xCel, yCel,
+                        palette)
+
+                    local grpStr = string.format(
+                        "<g id=\"%s\"%s style=\"mix-blend-mode: %s;\"%s>\n%s\n</g>",
+                        layerName, visStr, bmStr, alphaStr, imgStr)
+                    layersStrArr[#layersStrArr + 1] = grpStr
                 end
-
-                -- feBlend seems more backward compatible, but inline
-                -- CSS style results in shorter code.
-                local bmStr = blendModeToStr(layer.blendMode)
-
-                -- Clip off cels that are beyond sprite canvas.
-                local celBounds = cel.bounds
-                local xCel = celBounds.x
-                local yCel = celBounds.y
-                local intersect = celBounds:intersect(spriteBounds)
-                intersect.x = intersect.x - xCel
-                intersect.y = intersect.y - yCel
-
-                local imgStr = imgToSvgStr(
-                    celImg, border, padding,
-                    wScale, hScale, xCel, yCel,
-                    palette)
-
-                local grpStr = string.format(
-                    "<g id=\"%s\"%s style=\"mix-blend-mode: %s;\"%s>\n%s\n</g>",
-                    layerName, visStr, bmStr, alphaStr, imgStr)
-                layersStrArr[#layersStrArr + 1] = grpStr
             end -- End cel exists check.
         end     -- End isGroup branch.
     end         -- End isVisible and isEditable.

@@ -635,6 +635,14 @@ dlg:button {
                 }
                 return
             end
+
+            if srcLayer.isReference then
+                app.alert {
+                    title = "Error",
+                    text = "Reference layers are not supported."
+                }
+                return
+            end
         end
 
         local oldMode = activeSprite.colorMode
