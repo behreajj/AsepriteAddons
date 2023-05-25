@@ -115,25 +115,6 @@ function Vec2.all(v)
     return v.x ~= 0.0 and v.y ~= 0.0
 end
 
----Finds the angle between two vectors. If either
----vector has no magnitude, returns zero. Uses the
----formula acos(dot(a, b) / (mag(a) * mag(b))).
----@param a Vec2 left operand
----@param b Vec2 right operand
----@return number
-function Vec2.angleBetween(a, b)
-    local aSq = a.x * a.x + a.y * a.y
-    if aSq > 0.0 then
-        local bSq = b.x * b.x + b.y * b.y
-        if bSq > 0.0 then
-            return math.acos(
-                (a.x * b.x + a.y * b.y)
-                / (math.sqrt(aSq) * math.sqrt(bSq)))
-        end
-    end
-    return 0.0
-end
-
 ---Evaluates if any vector components are non-zero.
 ---@param v Vec2 vector
 ---@return boolean
@@ -227,24 +208,6 @@ function Vec2.copySign(a, b)
     end
 
     return Vec2.new(cx, cy)
-end
-
----Finds the cross product of two vectors, z component.
----@param a Vec2 left operand
----@param b Vec2 right operand
----@return number
-function Vec2.cross(a, b)
-    return a.x * b.y - a.y * b.x
-end
-
----Finds the absolute difference between two vectors.
----@param a Vec2 left operand
----@param b Vec2 right operand
----@return Vec2
-function Vec2.diff(a, b)
-    return Vec2.new(
-        math.abs(a.x - b.x),
-        math.abs(a.y - b.y))
 end
 
 ---Finds the distance between two vectors.
@@ -644,35 +607,6 @@ function Vec2.randomCartesianInternal(lb, ub)
     return Vec2.new(
         (1.0 - rx) * lb.x + rx * ub.x,
         (1.0 - ry) * lb.y + ry * ub.y)
-end
-
----Remaps a vector from an origin range to
----a destination range. For invalid origin
----ranges, the component remains unchanged.
----@param v Vec2 vector
----@param lbOrigin Vec2 origin lower bound
----@param ubOrigin Vec2 origin upper bound
----@param lbDest Vec2 destination lower bound
----@param ubDest Vec2 destination upper bound
----@return Vec2
-function Vec2.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
-    local mx = v.x
-    local my = v.y
-
-    local xDenom = ubOrigin.x - lbOrigin.x
-    local yDenom = ubOrigin.y - lbOrigin.y
-
-    if xDenom ~= 0.0 then
-        mx = lbDest.x + (ubDest.x - lbDest.x)
-            * ((mx - lbOrigin.x) / xDenom)
-    end
-
-    if yDenom ~= 0.0 then
-        my = lbDest.y + (ubDest.y - lbDest.y)
-            * ((my - lbOrigin.y) / yDenom)
-    end
-
-    return Vec2.new(mx, my)
 end
 
 ---Rotates a vector by an angle in radians

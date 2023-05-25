@@ -182,27 +182,6 @@ function Knot2.bezierPoint(a, b, step)
         step)
 end
 
----Gets the knot's fore handle as a direction.
----@param knot Knot2 knot
----@return Vec2
-function Knot2.foreDir(knot)
-    return Vec2.normalize(Knot2.foreVec(knot))
-end
-
----Gets the knot's fore handle magnitude.
----@param knot Knot2
----@return number
-function Knot2.foreMag(knot)
-    return Vec2.distEuclidean(knot.fh, knot.co)
-end
-
----Gets the knot's rear handle as a vector.
----@param knot Knot2 knot
----@return Vec2
-function Knot2.foreVec(knot)
-    return Vec2.sub(knot.fh, knot.co)
-end
-
 ---Forms a knot to be used in arcs and circles
 ---at an origin with a given radius.
 ---For internal use only. Does not validate arguments.
@@ -229,27 +208,6 @@ function Knot2.fromPolarInternal(
         co.y - hmcosa)
 
     return Knot2.new(co, fh, rh)
-end
-
----Gets the knot's rear handle as a direction.
----@param knot Knot2 knot
----@return Vec2
-function Knot2.rearDir(knot)
-    return Vec2.normalize(Knot2.rearVec(knot))
-end
-
----Gets the knot's rear handle magnitude.
----@param knot Knot2
----@return number
-function Knot2.rearMag(knot)
-    return Vec2.distEuclidean(knot.rh, knot.co)
-end
-
----Gets the knot's rear handle as a vector.
----@param knot Knot2 knot
----@return Vec2
-function Knot2.rearVec(knot)
-    return Vec2.sub(knot.rh, knot.co)
 end
 
 ---Returns a JSON string of a knot.

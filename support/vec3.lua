@@ -122,25 +122,6 @@ function Vec3.all(v)
         and v.z ~= 0.0
 end
 
----Finds the angle between two vectors. If either
----vector has no magnitude, returns zero. Uses the
----formula acos(dot(a, b) / (mag(a) * mag(b))).
----@param a Vec3 left operand
----@param b Vec3 right operand
----@return number
-function Vec3.angleBetween(a, b)
-    local aSq = a.x * a.x + a.y * a.y + a.z * a.z
-    if aSq > 0.0 then
-        local bSq = b.x * b.x + b.y * b.y + b.z * b.z
-        if bSq > 0.0 then
-            return math.acos(
-                (a.x * b.x + a.y * b.y + a.z * b.z)
-                / (math.sqrt(aSq) * math.sqrt(bSq)))
-        end
-    end
-    return 0.0
-end
-
 ---Evaluates if any vector components are non-zero.
 ---@param v Vec3 vector
 ---@return boolean
@@ -312,17 +293,6 @@ function Vec3.cross(a, b)
         a.y * b.z - a.z * b.y,
         a.z * b.x - a.x * b.z,
         a.x * b.y - a.y * b.x)
-end
-
----Finds the absolute difference between two vectors.
----@param a Vec3 left operand
----@param b Vec3 right operand
----@return Vec3
-function Vec3.diff(a, b)
-    return Vec3.new(
-        math.abs(a.x - b.x),
-        math.abs(a.y - b.y),
-        math.abs(a.z - b.z))
 end
 
 ---Finds the distance between two vectors.
@@ -839,42 +809,6 @@ function Vec3.randomCartesianInternal(lb, ub)
         (1.0 - rx) * lb.x + rx * ub.x,
         (1.0 - ry) * lb.y + ry * ub.y,
         (1.0 - rz) * lb.z + rz * ub.z)
-end
-
----Remaps a vector from an origin range to
----a destination range. For invalid origin
----ranges, the component remains unchanged.
----@param v Vec3 vector
----@param lbOrigin Vec3 origin lower bound
----@param ubOrigin Vec3 origin upper bound
----@param lbDest Vec3 destination lower bound
----@param ubDest Vec3 destination upper bound
----@return Vec3
-function Vec3.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
-    local mx = v.x
-    local my = v.y
-    local mz = v.z
-
-    local xDenom = ubOrigin.x - lbOrigin.x
-    local yDenom = ubOrigin.y - lbOrigin.y
-    local zDenom = ubOrigin.z - lbOrigin.z
-
-    if xDenom ~= 0.0 then
-        mx = lbDest.x + (ubDest.x - lbDest.x)
-            * ((mx - lbOrigin.x) / xDenom)
-    end
-
-    if yDenom ~= 0.0 then
-        my = lbDest.y + (ubDest.y - lbDest.y)
-            * ((my - lbOrigin.y) / yDenom)
-    end
-
-    if zDenom ~= 0.0 then
-        mz = lbDest.z + (ubDest.z - lbDest.z)
-            * ((mz - lbOrigin.z) / zDenom)
-    end
-
-    return Vec3.new(mx, my, mz)
 end
 
 ---Rotates a vector around an axis by an angle

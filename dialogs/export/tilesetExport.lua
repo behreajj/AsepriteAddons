@@ -311,10 +311,13 @@ dlg:button {
         -- color mode and Aseprite doesn't handle this
         -- limitation gracefully.
         if spriteColorMode == ColorMode.INDEXED then
-            if string.lower(fileExt) == "webp" then
+            local lcFileExt = string.lower(fileExt)
+            if lcFileExt == "webp"
+                or lcFileExt == "jpg"
+                or lcFileExt == "jpeg" then
                 app.alert {
                     title = "Error",
-                    text = "Indexed color not supported for webp."
+                    text = "Indexed color not supported for jpeg, jpg or webp."
                 }
                 return
             end

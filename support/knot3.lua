@@ -224,27 +224,6 @@ function Knot3.bezierPoint(a, b, step)
         step)
 end
 
----Gets the knot's fore handle as a direction.
----@param knot Knot3 knot
----@return Vec3
-function Knot3.foreDir(knot)
-    return Vec3.normalize(Knot3.foreVec(knot))
-end
-
----Gets the knot's fore handle magnitude.
----@param knot Knot3
----@return number
-function Knot3.foreMag(knot)
-    return Vec3.distEuclidean(knot.fh, knot.co)
-end
-
----Gets the knot's rear handle as a vector.
----@param knot Knot3 knot
----@return Vec3
-function Knot3.foreVec(knot)
-    return Vec3.sub(knot.fh, knot.co)
-end
-
 ---Sets two knots from a segment of a Catmull-Rom
 ---curve. The default curve tightness is 0.0. Assumes
 ---that the previous knot's coordinate is set to a
@@ -322,63 +301,6 @@ function Knot3.fromSegLinear(nextAnchor, prevKnot, nextKnot)
         + prevCoord.z * 0.33333333333333)
 
     return nextKnot
-end
-
----Sets two knots from a segment of a quadratic curve.
----Assumes that the previous knot's coordinate is set to
----the first anchor point.
----
----The previous knot's fore handle, the next knot's rear
----handle and the next knot's coordinate are set by
----this function.
----@param control Vec3 control point
----@param nextAnchor Vec3 next anchor point
----@param prevKnot Knot3 previous knot
----@param nextKnot Knot3 next knot
----@return Knot3
-function Knot3.fromSegQuadratic(
-    control, nextAnchor, prevKnot, nextKnot)
-    nextKnot.co = Vec3.new(
-        nextAnchor.x,
-        nextAnchor.y,
-        nextAnchor.z)
-
-    local xMid = control.x * 0.66666666666667
-    local yMid = control.y * 0.66666666666667
-    local zMid = control.z * 0.66666666666667
-
-    local prevCo = prevKnot.co
-    prevKnot.fh = Vec3.new(
-        xMid + prevCo.x * 0.33333333333333,
-        yMid + prevCo.y * 0.33333333333333,
-        zMid + prevCo.z * 0.33333333333333)
-    nextKnot.rh = Vec3.new(
-        xMid + nextAnchor.x * 0.33333333333333,
-        yMid + nextAnchor.y * 0.33333333333333,
-        zMid + nextAnchor.z * 0.33333333333333)
-
-    return nextKnot
-end
-
----Gets the knot's rear handle as a direction.
----@param knot Knot3 knot
----@return Vec3
-function Knot3.rearDir(knot)
-    return Vec3.normalize(Knot3.rearVec(knot))
-end
-
----Gets the knot's rear handle magnitude.
----@param knot Knot3
----@return number
-function Knot3.rearMag(knot)
-    return Vec3.distEuclidean(knot.rh, knot.co)
-end
-
----Gets the knot's rear handle as a vector.
----@param knot Knot3 knot
----@return Vec3
-function Knot3.rearVec(knot)
-    return Vec3.sub(knot.rh, knot.co)
 end
 
 ---Smoothes the handles of a knot with

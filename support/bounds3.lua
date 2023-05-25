@@ -84,32 +84,6 @@ function Bounds3:__tostring()
     return Bounds3.toJson(self)
 end
 
----Returns true if the bounds minimum and
----maximum corner are unequal in all three
----dimensions; i.e., the bounds is valid.
----@param b Bounds3 bounds
----@return boolean
-function Bounds3.all(b)
-    local mn = b.mn
-    local mx = b.mx
-    return math.abs(mx.x - mn.x) > 0.000001
-        and math.abs(mx.y - mn.y) > 0.000001
-        and math.abs(mx.z - mn.z) > 0.000001
-end
-
----Returns true if the bounds minimum and
----maximum corner are unequal in at least
----one dimension.
----@param b Bounds3 bounds
----@return boolean
-function Bounds3.any(b)
-    local mn = b.mn
-    local mx = b.mx
-    return math.abs(mx.x - mn.x) > 0.000001
-        or math.abs(mx.y - mn.y) > 0.000001
-        or math.abs(mx.z - mn.z) > 0.000001
-end
-
 ---Finds the center of a bounding box.
 ---Returns a Vec3.
 ---@param b Bounds3 bounds
@@ -130,15 +104,6 @@ function Bounds3.containsInclExcl(b, pt)
     return (pt.x >= mn.x and pt.x < mx.x)
         and (pt.y >= mn.y and pt.y < mx.y)
         and (pt.z >= mn.z and pt.z < mx.z)
-end
-
----Finds the extent of the bounds.
----Returns a Vec3 representing a
----non uniform scale.
----@param b Bounds3 bounds
----@return Vec3
-function Bounds3.extent(b)
-    return Vec3.diff(b.mx, b.mn)
 end
 
 ---Evaluates whether a bounding box intersects
@@ -183,15 +148,6 @@ function Bounds3.intersectsSphereInternal(a, center, rsq)
     end
 
     return (xd * xd + yd * yd + zd * zd) < rsq
-end
-
----Returns true if the bounds minimum and
----maximum corner are approximately equal,
----i.e., the bounds has no volume.
----@param b Bounds3 bounds
----@return boolean
-function Bounds3.none(b)
-    return Vec3.approx(b.mn, b.mx, 0.000001);
 end
 
 ---Splits a bounding box into octants

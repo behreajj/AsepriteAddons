@@ -224,18 +224,6 @@ function Vec4.copySign(a, b)
     return Vec4.new(cx, cy, cz, cw)
 end
 
----Finds the absolute difference between two vectors.
----@param a Vec4 left operand
----@param b Vec4 right operand
----@return Vec4
-function Vec4.diff(a, b)
-    return Vec4.new(
-        math.abs(a.x - b.x),
-        math.abs(a.y - b.y),
-        math.abs(a.z - b.z),
-        math.abs(a.w - b.w))
-end
-
 ---Divides the left vector by the right, component-wise.
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
@@ -594,49 +582,6 @@ function Vec4.randomCartesianInternal(lb, ub)
         (1.0 - ry) * lb.y + ry * ub.y,
         (1.0 - rz) * lb.z + rz * ub.z,
         (1.0 - rw) * lb.w + rw * ub.w)
-end
-
----Remaps a vector from an origin range to
----a destination range. For invalid origin
----ranges, the component remains unchanged.
----@param v Vec4 vector
----@param lbOrigin Vec4 origin lower bound
----@param ubOrigin Vec4 origin upper bound
----@param lbDest Vec4 destination lower bound
----@param ubDest Vec4 destination upper bound
----@return Vec4
-function Vec4.remap(v, lbOrigin, ubOrigin, lbDest, ubDest)
-    local mx = v.x
-    local my = v.y
-    local mz = v.z
-    local mw = v.w
-
-    local xDenom = ubOrigin.x - lbOrigin.x
-    local yDenom = ubOrigin.y - lbOrigin.y
-    local zDenom = ubOrigin.z - lbOrigin.z
-    local wDenom = ubOrigin.w - lbOrigin.w
-
-    if xDenom ~= 0.0 then
-        mx = lbDest.x + (ubDest.x - lbDest.x)
-            * ((mx - lbOrigin.x) / xDenom)
-    end
-
-    if yDenom ~= 0.0 then
-        my = lbDest.y + (ubDest.y - lbDest.y)
-            * ((my - lbOrigin.y) / yDenom)
-    end
-
-    if zDenom ~= 0.0 then
-        mz = lbDest.z + (ubDest.z - lbDest.z)
-            * ((mz - lbOrigin.z) / zDenom)
-    end
-
-    if wDenom ~= 0.0 then
-        mw = lbDest.w + (ubDest.w - lbDest.w)
-            * ((mw - lbOrigin.w) / wDenom)
-    end
-
-    return Vec4.new(mx, my, mz, mw)
 end
 
 ---Rounds the vector by sign and fraction.

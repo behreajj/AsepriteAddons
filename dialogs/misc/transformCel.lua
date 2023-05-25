@@ -1019,14 +1019,15 @@ dlg:button {
             false, false, false, true)
         local lenCels = #cels
 
-        local fliph = AseUtilities.flipImageHoriz
+        local fliph = FlipType.HORIZONTAL
         app.transaction("Flip H", function()
-            -- TODO: Replace with built-in flip, as of api v24.
             local i = 0
             while i < lenCels do
                 i = i + 1
                 local cel = cels[i]
-                cel.image = fliph(cel.image)
+                local flipped = cel.image:clone()
+                flipped:flip(fliph)
+                cel.image = flipped
             end
         end)
 
@@ -1052,14 +1053,15 @@ dlg:button {
             false, false, false, true)
         local lenCels = #cels
 
-        local flipv = AseUtilities.flipImageVert
+        local flipv = FlipType.VERTICAL
         app.transaction("Flip V", function()
-            -- TODO: Replace with built-in flip, as of api v24.
             local i = 0
             while i < lenCels do
                 i = i + 1
                 local cel = cels[i]
-                cel.image = flipv(cel.image)
+                local flipped = cel.image:clone()
+                flipped:flip(flipv)
+                cel.image = flipped
             end
         end)
 

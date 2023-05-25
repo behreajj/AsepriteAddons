@@ -3,6 +3,9 @@ dofile("../../support/aseutilities.lua")
 local targets = { "TILES", "TILE_MAP" }
 
 local defaults = {
+    -- Built-in Image:flip method has not
+    -- been adopted here due to issues with
+    -- undo history.
     target = "TILES",
     inPlace = true
 }

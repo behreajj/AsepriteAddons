@@ -204,9 +204,6 @@ function JsonUtilities.layerToJson(layer)
         parentVerif = parent
     end
 
-    -- If you try this again, consider supplying this as an
-    -- extra arg to the method, and calculating it in layers
-    -- export instead.
     return string.format(
         JsonUtilities.LAYER_FORMAT,
         layer.id,

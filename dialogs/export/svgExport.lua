@@ -259,8 +259,9 @@ local function layerToSvgStr(
             local cel = layer:cel(frame)
             if cel then
                 -- A definition could be created for tile sets,
-                -- then accssed with use xlink:href, but due to
-                -- out-of-bounds cels (below), it's easier to convert.
+                -- then accssed with use xlink:href, but best to
+                -- keep things simple for compatibility with Inkscape,
+                -- Processing, Blender, etc.
                 local celImg = cel.image
                 if layer.isTilemap then
                     celImg = AseUtilities.tilesToImage(

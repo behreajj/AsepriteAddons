@@ -513,7 +513,7 @@ dlg:button {
             local maxhrd = maxh * 0.017453292519943
 
             -- When a color mode convert to to RGB is attempted,
-            -- there's either a crash or nothing is selected. etc.
+            -- there's either a crash or nothing is selected.
             if colorMode == ColorMode.INDEXED then
                 local palette = AseUtilities.getPalette(
                     activeFrame, activeSprite.palettes)

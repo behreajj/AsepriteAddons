@@ -322,16 +322,17 @@ dlg:button {
         local site = app.site
         local sprite = site.sprite
         if not sprite then
-            -- When wrapped in a transaction, either new
-            -- sprite creation or app.command.LoadPalette
-            -- { preset = "default" } causes a crash.
             sprite = Sprite(widthImg, heightImg)
             app.transaction("Set Palette", function()
-                local pal = sprite.palettes[1]
-                pal:resize(3)
-                pal:setColor(0, hexBkg)
-                pal:setColor(1, hexShd)
-                pal:setColor(2, hexFill)
+                if app.defaultPalette then
+                    sprite:setPalette(app.defaultPalette)
+                else
+                    local pal = sprite.palettes[1]
+                    pal:resize(3)
+                    pal:setColor(0, hexBkg)
+                    pal:setColor(1, hexShd)
+                    pal:setColor(2, hexFill)
+                end
             end)
 
             layer = sprite.layers[1]

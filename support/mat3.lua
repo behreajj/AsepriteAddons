@@ -95,26 +95,6 @@ function Mat3.add(a, b)
         a.m20 + b.m20, a.m21 + b.m21, a.m22 + b.m22)
 end
 
----Evaluates whether two matrices are, within a
----tolerance, approximately equal.
----@param a Mat3 left operand
----@param b Mat3 right operand
----@param tol number? tolerance
----@return boolean
-function Mat3.approx(a, b, tol)
-    local eps = tol or 0.000001
-    local abs = math.abs
-    return abs(b.m00 - a.m00) <= eps
-        and abs(b.m01 - a.m01) <= eps
-        and abs(b.m02 - a.m02) <= eps
-        and abs(b.m10 - a.m10) <= eps
-        and abs(b.m11 - a.m11) <= eps
-        and abs(b.m12 - a.m12) <= eps
-        and abs(b.m20 - a.m20) <= eps
-        and abs(b.m21 - a.m21) <= eps
-        and abs(b.m22 - a.m22) <= eps
-end
-
 ---Multiplies the left operand and the inverse of the right.
 ---@param a Mat3 left operand
 ---@param b Mat3 right operand
