@@ -265,54 +265,73 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             if lenOldColors < 2 then return end
             if lenOldColors > 64 then return end
 
-            -- Cache methods used in loop.
-            local floor = math.floor
-            local eval = Curve3.eval
-            local aseToClr = AseUtilities.aseColorToClr
-            local clrToAse = AseUtilities.clrToAseColor
-            local labTosRgb = Clr.srLab2TosRgb
-            local sRgbToLab = Clr.sRgbToSrLab2
-
-            local h = 0
-            ---@type Vec3[]
-            local points = {}
-            ---@type number[]
-            local alphas = {}
-            while h < lenOldColors do
-                h = h + 1
-                local clr = aseToClr(oldColors[h])
-                local lab = sRgbToLab(clr)
-                points[h] = Vec3.new(lab.a, lab.b, lab.l)
-                alphas[h] = clr.a
-            end
-
-            local curve = Curve3.fromCatmull(false, points, 0.0)
-
-            local sampleCount = math.min(math.max(
-                lenOldColors * 2 - 1, 3), 64)
             ---@type Color[]
             local newColors = {}
-            local i = 0
-            local iToFac = 1.0 / (sampleCount - 1.0)
-            local locn1 = lenOldColors - 1
-            while i < sampleCount do
-                local iFac = i * iToFac
-                local alpha = 1.0
-                if iFac <= 0.0 then
-                    alpha = alphas[1]
-                elseif iFac >= 1.0 then
-                    alpha = alphas[lenOldColors]
-                else
-                    local aScaled = iFac * locn1
-                    local aFloor = floor(aScaled)
-                    local aFrac = aScaled - aFloor;
-                    alpha = (1.0 - aFrac) * alphas[1 + aFloor]
-                        + aFrac * alphas[2 + aFloor]
+
+            -- Use LCH for two colors, otherwise use curve.
+            if lenOldColors < 3 then
+                local huePreset = args.huePreset --[[@as string]]
+                local mixer = GradientUtilities.hueEasingFuncFromPreset(huePreset)
+                local leftEdge = oldColors[1]
+                local rightEdge = oldColors[2]
+
+                newColors[1] = AseUtilities.aseColorCopy(
+                    leftEdge, "UNBOUNDED")
+                newColors[2] = AseUtilities.clrToAseColor(
+                    Clr.mixSrLchInternal(
+                        AseUtilities.aseColorToClr(leftEdge),
+                        AseUtilities.aseColorToClr(rightEdge),
+                        0.5, mixer))
+                newColors[3] = AseUtilities.aseColorCopy(
+                    rightEdge, "UNBOUNDED")
+            else
+                -- Cache methods used in loop.
+                local floor = math.floor
+                local eval = Curve3.eval
+                local aseToClr = AseUtilities.aseColorToClr
+                local clrToAse = AseUtilities.clrToAseColor
+                local labTosRgb = Clr.srLab2TosRgb
+                local sRgbToLab = Clr.sRgbToSrLab2
+
+                local h = 0
+                ---@type Vec3[]
+                local points = {}
+                ---@type number[]
+                local alphas = {}
+                while h < lenOldColors do
+                    h = h + 1
+                    local clr = aseToClr(oldColors[h])
+                    local lab = sRgbToLab(clr)
+                    points[h] = Vec3.new(lab.a, lab.b, lab.l)
+                    alphas[h] = clr.a
                 end
-                local point = eval(curve, iFac)
-                i = i + 1
-                newColors[i] = clrToAse(labTosRgb(
+
+                local curve = Curve3.fromCatmull(false, points, 0.0)
+
+                local sampleCount = math.min(math.max(
+                    lenOldColors * 2 - 1, 3), 64)
+                local i = 0
+                local iToFac = 1.0 / (sampleCount - 1.0)
+                local locn1 = lenOldColors - 1
+                while i < sampleCount do
+                    local iFac = i * iToFac
+                    local alpha = 1.0
+                    if iFac <= 0.0 then
+                        alpha = alphas[1]
+                    elseif iFac >= 1.0 then
+                        alpha = alphas[lenOldColors]
+                    else
+                        local aScaled = iFac * locn1
+                        local aFloor = floor(aScaled)
+                        local aFrac = aScaled - aFloor;
+                        alpha = (1.0 - aFrac) * alphas[1 + aFloor]
+                            + aFrac * alphas[2 + aFloor]
+                    end
+                    local point = eval(curve, iFac)
+                    i = i + 1
+                    newColors[i] = clrToAse(labTosRgb(
                         point.z, point.x, point.y, alpha))
+                end
             end
 
             dlg:modify { id = "shades", colors = newColors }

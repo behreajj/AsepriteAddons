@@ -249,22 +249,22 @@ end
 ---@return integer[]
 function AseUtilities.asePaletteLoad(
     palType, filePath,
-    startIndex, count, correctZeroAlpha)
-    local cntVal = count or 256
-    local siVal = startIndex or 0
-
+    startIndex, count,
+    correctZeroAlpha)
     local hexesProfile = nil
     local hexesSrgb = nil
 
     if palType == "FILE" then
         if filePath and #filePath > 0 then
-            local exists = app.fs.isFile(filePath)
-            if exists then
+            local isFile = app.fs.isFile(filePath)
+            if isFile then
                 -- Loading an .aseprite file with multiple palettes
                 -- will register only the first palette. Also may be
                 -- problems with color profiles being ignored.
                 local palFile = Palette { fromFile = filePath }
                 if palFile then
+                    local cntVal = count or 256
+                    local siVal = startIndex or 0
                     hexesProfile = AseUtilities.asePaletteToHexArr(
                         palFile, siVal, cntVal)
                 end
@@ -275,8 +275,9 @@ function AseUtilities.asePaletteLoad(
         if palActSpr then
             local modeAct = palActSpr.colorMode
             if modeAct == ColorMode.GRAY then
-                hexesProfile = AseUtilities.grayHexes(
-                    AseUtilities.GRAY_COUNT)
+                local grCntVal = AseUtilities.GRAY_COUNT
+                if count then grCntVal = math.min(count, 256) end
+                hexesProfile = AseUtilities.grayHexes(grCntVal)
             else
                 hexesProfile = AseUtilities.asePalettesToHexArr(
                     palActSpr.palettes)

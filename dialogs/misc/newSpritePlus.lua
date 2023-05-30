@@ -183,7 +183,7 @@ CanvasUtilities.spectrum(
     dlg, "bkgSpectrum", "Background:",
     180 / screenScale, 56 / screenScale,
     defaults.colorMode == "RGB",
-    49.0, 1.0, 0.92, 0)
+    97.0, 18.0, 0.275, 0.0)
 
 dlg:slider {
     id = "bkgIdx",
@@ -257,7 +257,7 @@ dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
     selected = defaults.prependMask,
-    visible = false
+    visible = true
 }
 
 dlg:newrow { always = false }
@@ -272,12 +272,12 @@ dlg:button {
             or defaults.aspectScale --[[@as number]]
         local palType = args.palType
             or defaults.palType --[[@as string]]
-        local prependMask = args.prependMask
+        local prependMask = args.prependMask --[[@as boolean]]
         local sizeMode = args.sizeMode
             or defaults.sizeMode --[[@as string]]
-
         local colorModeStr = args.colorMode
             or defaults.colorMode --[[@as string]]
+
         local useGray = colorModeStr == "GRAY"
         local useIndexed = colorModeStr == "INDEXED"
         local useAspect = sizeMode == "ASPECT"
@@ -325,6 +325,9 @@ dlg:button {
             colorModeInt = ColorMode.INDEXED
             local bkgIdx = args.bkgIdx or defaults.bkgIdx --[[@as integer]]
             if bkgIdx < #hexesProfile then
+                -- Problem with offset caused by prepending an alpha
+                -- mask to start of palette. At the least, make the
+                -- check widget visible.
                 hexBkg = hexesProfile[1 + bkgIdx]
                 local aChannel = (hexBkg >> 0x18) & 0xff
                 createBackground = aChannel > 0
@@ -342,19 +345,16 @@ dlg:button {
             end
 
             local specAlpha = args.spectrumAlpha --[[@as number]]
-            createBackground = specAlpha > 0
+            createBackground = specAlpha > 0.0
             if createBackground then
-                local specHue = args.spectrumHue --[[@as number]]
-                local specSat = args.spectrumSat --[[@as number]]
                 local specLight = args.spectrumLight --[[@as number]]
-                local aseColor = Color {
-                    hue = specHue,
-                    saturation = specSat,
-                    lightness = specLight,
-                    alpha = math.floor(specAlpha)
-                }
-                hexBkg = AseUtilities.aseColorToHex(
-                    aseColor, ColorMode.RGB)
+                local specChroma = args.spectrumChroma --[[@as number]]
+                local specHue = args.spectrumHue --[[@as number]]
+
+                hexBkg = Clr.toHex(
+                    Clr.srLchTosRgb(
+                        specLight, specChroma, specHue,
+                        specAlpha))
             end
         end
 

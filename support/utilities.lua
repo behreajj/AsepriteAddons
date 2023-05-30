@@ -153,6 +153,28 @@ function Utilities.flipPixelsVert(source, w, h)
     return source
 end
 
+---Generates a random number with normal distribution.
+---Based on the Box-Muller transform as described here:
+---https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
+---@param sigma number? scalar
+---@param mu number? offset
+---@return number
+function Utilities.gaussian(sigma, mu)
+    local m = mu or 0.0
+    local s = sigma or 1.0
+
+    local u1 = 0.0
+    repeat
+        u1 = math.random()
+    until (u1 > 0.000001)
+    local u2 = math.random()
+
+    local r = s * math.sqrt(-2.0 * math.log(u1))
+    local x = r * math.cos(6.2831853071796 * u2) + m
+    -- local y = r * math.sin(6.2831853071796 * u2) + m
+    return x
+end
+
 ---Finds the greatest common denominator
 ---between two positive integers.
 ---@param a integer antecedent term

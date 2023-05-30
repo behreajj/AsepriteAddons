@@ -3,7 +3,7 @@ dofile("../../support/aseutilities.lua")
 local targets = { "ACTIVE", "ALL", "RANGE" }
 local edgeTypes = { "CLAMP", "OMIT", "WRAP" }
 local interTypes = { "HORIZONTAL", "VERTICAL" }
-local waveTypes = { "BILINEAR", "INTERLACED", "RADIAL" }
+local waveTypes = { "BILINEAR", "GERSTNER", "INTERLACED", "RADIAL" }
 
 local defaults = {
     target = "ACTIVE",
@@ -34,8 +34,15 @@ local defaults = {
     interOffDest = 180,
     interSkip = 1,
     interPick = 1,
-    printElapsed = false,
-    pullFocus = false
+    -- Gerstner
+    gerstItrs = 3,
+    gerstWaveLen = 0.25,
+    gerstSteep = 0.375,
+    gerstSpeed = 1.0,
+    gerstAngle = 90,
+    gravity = 9.81,
+
+    printElapsed = false
 }
 
 local function wrapClamp(x, y, img)
@@ -105,23 +112,6 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-dlg:slider {
-    id = "spaceScalar",
-    label = "Period:",
-    min = 1,
-    max = 10,
-    value = defaults.spaceScalar
-}
-
-dlg:slider {
-    id = "timeScalar",
-    min = 1,
-    max = 10,
-    value = defaults.timeScalar
-}
-
-dlg:newrow { always = false }
-
 dlg:combobox {
     id = "waveType",
     label = "Type:",
@@ -135,6 +125,10 @@ dlg:combobox {
         local isInter = waveType == "INTERLACED"
         local isBilinear = waveType == "BILINEAR"
         local isRadial = waveType == "RADIAL"
+        local isGerst = waveType == "GERSTNER"
+
+        dlg:modify { id = "spaceScalar", visible = not isGerst }
+        dlg:modify { id = "timeScalar", visible = not isGerst }
 
         dlg:modify { id = "xCenter", visible = isRadial or isBilinear }
         dlg:modify { id = "yCenter", visible = isRadial or isBilinear }
@@ -151,6 +145,12 @@ dlg:combobox {
         dlg:modify { id = "interOffDest", visible = isInter }
         dlg:modify { id = "interSkip", visible = isInter }
         dlg:modify { id = "interPick", visible = isInter }
+
+        dlg:modify { id = "gerstItrs", visible = isGerst }
+        dlg:modify { id = "gerstWaveLen", visible = isGerst }
+        dlg:modify { id = "gerstSteep", visible = isGerst }
+        dlg:modify { id = "gerstSpeed", visible = isGerst }
+        dlg:modify { id = "gerstAngle", visible = isGerst }
 
         local isHoriz = interType == "HORIZONTAL"
         local isVert = interType == "VERTICAL"
@@ -172,6 +172,25 @@ dlg:combobox {
             visible = isBilinear or (isInter and isVert)
         }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "spaceScalar",
+    label = "Period:",
+    min = 1,
+    max = 10,
+    value = defaults.spaceScalar,
+    visible = defaults.waveType ~= "GERSTNER"
+}
+
+dlg:slider {
+    id = "timeScalar",
+    min = 1,
+    max = 10,
+    value = defaults.timeScalar,
+    visible = defaults.waveType ~= "GERSTNER"
 }
 
 dlg:newrow { always = false }
@@ -364,6 +383,58 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:slider {
+    id = "gerstItrs",
+    label = "Count:",
+    min = 1,
+    max = 5,
+    value = defaults.gerstItrs,
+    visible = defaults.waveType == "GERSTNER"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "gerstWaveLen",
+    label = "Wave Length:",
+    text = string.format("%.3f", defaults.gerstWaveLen),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
+    visible = defaults.waveType == "GERSTNER"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "gerstSteep",
+    label = "Steepness:",
+    text = string.format("%.3f", defaults.gerstSteep),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
+    visible = defaults.waveType == "GERSTNER"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "gerstSpeed",
+    label = "Speed:",
+    text = string.format("%.3f", defaults.gerstSpeed),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
+    visible = defaults.waveType == "GERSTNER"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "gerstAngle",
+    label = "Angle:",
+    min = 0,
+    max = 360,
+    value = defaults.gerstAngle,
+    visible = defaults.waveType == "GERSTNER"
+}
+
+dlg:newrow { always = false }
+
 dlg:check {
     id = "printElapsed",
     label = "Print:",
@@ -376,7 +447,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         -- Begin timing the function elapsed.
         local args = dlg.data
@@ -551,8 +622,10 @@ dlg:button {
         local wn1 = srcWidth - 1
         local hn1 = srcHeight - 1
 
-        -- Determine which wave function the user wants.
+        ---@type fun(x: integer, y: integer, angle: number, t: number): number, number
         local eval = nil
+
+        -- Determine which wave function the user wants.
         if waveType == "BILINEAR" then
             local xCenter = args.xCenter
                 or defaults.xCenter --[[@as integer]]
@@ -614,6 +687,111 @@ dlg:button {
                 local xWarp = xDsplScl * xSst * sin(yTheta)
                 local yWarp = yDsplScl * ySst * cos(xTheta)
                 return x + xWarp, y + yWarp
+            end
+        elseif waveType == "GERSTNER" then
+            -- See:
+            -- https://catlikecoding.com/unity/tutorials/flow/waves/
+            -- https://en.wikipedia.org/wiki/Trochoidal_wave
+            -- https://www.shadertoy.com/view/7djGRR
+
+            local gerstItrs = args.gerstItrs
+                or defaults.gerstItrs --[[@as integer]]
+            local gerstWaveLen = args.gerstWaveLen
+                or defaults.gerstWaveLen --[[@as number]]
+            local gerstSteep = args.gerstSteep
+                or defaults.gerstSteep --[[@as number]]
+            local gerstSpeed = args.gerstSpeed
+                or defaults.gerstSpeed --[[@as number]]
+            local gerstAngle = args.gerstAngle
+                or defaults.gerstAngle --[[@as integer]]
+            local gravity = defaults.gravity
+
+            ---@type Vec2[]
+            local directions = {}
+            ---@type number[]
+            local ks = {}
+            ---@type number[]
+            local cs = {}
+            ---@type number[]
+            local as = {}
+
+            -- Parameters per iteration. The first iteration
+            -- is handled by the user, the rest are random.
+            directions[1] = Vec2.fromPolar(
+                0.017453292519943 * gerstAngle, 1.0)
+            ks[1] = 6.2831853071796
+            if gerstWaveLen ~= 0.0 then
+                ks[1] = 6.2831853071796 / gerstWaveLen
+            end
+            cs[1] = math.sqrt(gravity / ks[1])
+            as[1] = gerstSteep / ks[1]
+
+            -- Scale randomness by user input.
+            local minSteep = gerstSteep * 0.667
+            local maxSteep = gerstSteep * 1.5
+            local minWaveLen = gerstWaveLen * 0.5
+            local maxWaveLen = gerstWaveLen * 2.0
+
+            local h = 1
+            while h < gerstItrs do
+                h = h + 1
+
+                local x = Utilities.gaussian()
+                local y = Utilities.gaussian()
+                local sqMag = x * x + y * y
+                local xn = 0.0
+                local yn = 1.0
+                if sqMag ~= 0.0 then
+                    local invMag = 1.0 / sqrt(sqMag)
+                    xn = x * invMag
+                    yn = y * invMag
+                end
+                directions[h] = Vec2.new(xn, yn)
+
+                local waveLenFac = math.random()
+                local waveLen = (1.0 - waveLenFac) * minWaveLen
+                    + waveLenFac * maxWaveLen
+
+                local k = 6.2831853071796 / waveLen
+                ks[h] = k
+
+                local c = sqrt(gravity / k)
+                cs[h] = c
+
+                local steepFac = math.random()
+                local steepness = (1.0 - steepFac) * minSteep
+                    + steepFac * maxSteep
+
+                local a = steepness / k
+                as[h] = a
+            end
+
+            local aspect = wn1 / hn1
+            local wInv = aspect / wn1
+            local hInv = 1.0 / hn1
+            local wn1Aspect = wn1 / aspect
+
+            eval = function(x, y, angle, t)
+                local tSpeed = t * gerstSpeed
+                local xSgn = x * wInv * 2.0 - 1.0
+                local ySgn = y * hInv * 2.0 - 1.0
+                local xSum = xSgn
+                local ySum = ySgn
+                local i = 0
+                while i < gerstItrs do
+                    i = i + 1
+                    local k = ks[i]
+                    local c = cs[i]
+                    local a = as[i]
+                    local d = directions[i]
+                    local dotcod = d.x * xSgn + d.y * ySgn
+                    local f = k * (dotcod - c * tSpeed)
+                    local acosf = a * cos(f)
+                    xSum = xSum + d.x * acosf
+                    ySum = ySum - d.y * acosf
+                end
+                return (xSum * 0.5 + 0.5) * wn1Aspect,
+                    (ySum * 0.5 + 0.5) * hn1
             end
         elseif waveType == "INTERLACED" then
             -- wn1 and hn1 work better for sprites with even width, height

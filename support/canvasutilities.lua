@@ -1,3 +1,5 @@
+dofile("./clr.lua")
+
 CanvasUtilities = {}
 CanvasUtilities.__index = CanvasUtilities
 
@@ -679,7 +681,7 @@ end
 ---Generates the dialog widgets used by an HSL
 ---spectrum. This includes a canvas and 4 numbers.
 ---The ids for these numbers are "spectrumHue",
----"spectrumSat", "spectrumLight" and
+---"spectrumChroma", "spectrumLight" and
 ---"spectrumAlpha".
 ---@param dialog Dialog dialog
 ---@param id string canvas id
@@ -687,18 +689,19 @@ end
 ---@param width integer canvas weight
 ---@param height integer canvas height
 ---@param isVisible boolean? is visible
----@param hDef number? hue default
----@param sDef number? saturation default
 ---@param lDef number? lightness default
+---@param cDef number? chroma default
+---@param hDef number? hue default
 ---@param aDef number? alpha default
 ---@return Dialog
 function CanvasUtilities.spectrum(
     dialog, id, label, width, height,
-    isVisible, hDef, sDef, lDef, aDef)
-    local aDefVrf = aDef or 255
-    local lDefVrf = lDef or 0.5
-    local sDefVrf = sDef or 1.0
+    isVisible, lDef, cDef, hDef, aDef)
+    local aDefVrf = aDef or 1.0
     local hDefVrf = hDef or 0.0
+    local cDefVrf = cDef or 67.5
+    local lDefVrf = lDef or 50.0
+
     local isVisVrf = false
     if isVisible then isVisVrf = true end
     local hVrf = height or 128
@@ -709,17 +712,18 @@ function CanvasUtilities.spectrum(
     hVrf = math.max(8, hVrf)
 
     local spectrumHeight = math.floor(0.5 + hVrf * (40.0 / 56.0))
-    local satBarHeight = math.floor(0.5 + hVrf * (8.0 / 56.0))
-    local alphaBarHeight = satBarHeight
-    local satBarThresh = spectrumHeight + satBarHeight
+    local chrBarHeight = math.floor(0.5 + hVrf * (8.0 / 56.0))
+    local alphaBarHeight = chrBarHeight
+    local chrBarThresh = spectrumHeight + chrBarHeight
 
-    local xToHue = 360.0 / wVrf
-    local xToSat = 1.0 / (wVrf - 1.0)
-    local xToVal = 255.0 / (wVrf - 1.0)
-    local yToLgt = 1.0 / (spectrumHeight - 1.0)
+    local xToAlph01 = 1.0 / (wVrf - 1.0)
+    local xToAlpha255 = 255.0 / (wVrf - 1.0)
+    local yToLgt = 100.0 / (spectrumHeight - 1.0)
+    local xToChr = 135.0 / (wVrf - 1.0)
+    local xToHue = 1.0 / wVrf
 
     local inSpectrum = false
-    local inSatBar = false
+    local inChrBar = false
     local inAlphaBar = false
 
     ---@param event MouseEvent
@@ -728,14 +732,14 @@ function CanvasUtilities.spectrum(
         local yMouse = event.y
 
         if inSpectrum or
-            (not (inSatBar or inAlphaBar)
-            and yMouse > 0
-            and yMouse < spectrumHeight) then
+            (not (inChrBar or inAlphaBar)
+                and yMouse > 0
+                and yMouse < spectrumHeight) then
             inSpectrum = true
 
-            local hMouse = (xMouse * xToHue) % 360.0
+            local hMouse = (xMouse * xToHue) % 1.0
             local lMouse = math.min(math.max(
-                1.0 - yMouse * yToLgt, 0.0), 1.0)
+                100.0 - yMouse * yToLgt, 0.0), 100.0)
             dialog:modify {
                 id = "spectrumHue",
                 text = string.format("%.5f", hMouse)
@@ -746,32 +750,31 @@ function CanvasUtilities.spectrum(
             }
         end
 
-        if inSatBar or
+        if inChrBar or
             (not (inSpectrum or inAlphaBar)
-            and yMouse >= spectrumHeight
-            and yMouse < satBarThresh) then
-            inSatBar = true
+                and yMouse >= spectrumHeight
+                and yMouse < chrBarThresh) then
+            inChrBar = true
 
             local sMouse = math.min(math.max(
-                xMouse * xToSat, 0.0), 1.0)
+                xMouse * xToChr, 0.0), 135.0)
             dialog:modify {
-                id = "spectrumSat",
+                id = "spectrumChroma",
                 text = string.format("%.5f", sMouse)
             }
         end
 
         if inAlphaBar or
-            (not (inSpectrum or inSatBar)
-            and yMouse >= satBarThresh
-            and yMouse < hVrf) then
+            (not (inSpectrum or inChrBar)
+                and yMouse >= chrBarThresh
+                and yMouse < hVrf) then
             inAlphaBar = true
 
             local alphaf = math.min(math.max(
-                xMouse * xToVal, 0.0), 255.0)
-            local alphai = math.floor(alphaf + 0.5)
+                xMouse * xToAlph01, 0.0), 1.0)
             dialog:modify {
                 id = "spectrumAlpha",
-                text = string.format("%d", alphai)
+                text = string.format("%.5f", alphaf)
             }
         end
 
@@ -789,33 +792,31 @@ function CanvasUtilities.spectrum(
             local context = event.context
 
             local args = dialog.data
-            local hActive = args.spectrumHue --[[@as number]]
-            local sActive = args.spectrumSat --[[@as number]]
             local lActive = args.spectrumLight --[[@as number]]
+            local cActive = args.spectrumChroma --[[@as number]]
+            local hActive = args.spectrumHue --[[@as number]]
             local aActive = args.spectrumAlpha --[[@as number]]
 
             local floor = math.floor
+            local lchTosRgb = Clr.srLchTosRgb
+            local toHex = Clr.toHex
+
             local image = Image(wVrf, hVrf)
             local pxItr = image:pixels()
             for pixel in pxItr do
                 local x = pixel.x
                 local y = pixel.y
                 if y < spectrumHeight then
-                    pixel(Color {
-                            hue = x * xToHue,
-                            saturation = sActive,
-                            lightness = 1.0 - y * yToLgt,
-                            alpha = 255 }
-                        .rgbaPixel)
-                elseif y < satBarThresh then
-                    pixel(Color {
-                            hue = hActive,
-                            saturation = x * xToSat,
-                            lightness = lActive,
-                            alpha = 255 }
-                        .rgbaPixel)
+                    local l = 100.0 - y * yToLgt
+                    local h = x * xToHue
+                    local clr = lchTosRgb(l, cActive, h, 1.0)
+                    pixel(toHex(clr))
+                elseif y < chrBarThresh then
+                    local c = x * xToChr
+                    local clr = lchTosRgb(lActive, c, hActive, 1.0)
+                    pixel(toHex(clr))
                 else
-                    local v = floor(x * xToVal + 0.5)
+                    local v = floor(x * xToAlpha255 + 0.5)
                     pixel(0xff000000 | v << 0x10 | v << 0x08 | v)
                 end
             end
@@ -834,24 +835,24 @@ function CanvasUtilities.spectrum(
             context:strokeRect(
                 Rectangle(
                     math.floor(hActive / xToHue - retHalfSize),
-                    math.floor((1.0 - lActive) / yToLgt - retHalfSize),
+                    math.floor((100.0 - lActive) / yToLgt - retHalfSize),
                     reticleSize, reticleSize))
 
             context:strokeRect(
                 Rectangle(
-                    math.floor(sActive / xToSat - retHalfSize),
-                    math.floor(spectrumHeight + satBarHeight * 0.5 - retHalfSize),
+                    math.floor(cActive / xToChr - retHalfSize),
+                    math.floor(spectrumHeight + chrBarHeight * 0.5 - retHalfSize),
                     reticleSize, reticleSize))
 
-            if aActive > 127.5 then
+            if aActive > 0.5 then
                 context.color = black
             else
                 context.color = white
             end
             context:strokeRect(
                 Rectangle(
-                    math.floor(aActive / xToVal - retHalfSize),
-                    math.floor(satBarThresh + alphaBarHeight * 0.5 - retHalfSize),
+                    math.floor(aActive / xToAlph01 - retHalfSize),
+                    math.floor(chrBarThresh + alphaBarHeight * 0.5 - retHalfSize),
                     reticleSize, reticleSize))
         end,
         onmousedown = function(event)
@@ -865,7 +866,7 @@ function CanvasUtilities.spectrum(
         onmouseup = function(event)
             onMouseFunc(event)
             inSpectrum = false
-            inSatBar = false
+            inChrBar = false
             inAlphaBar = false
         end
     }
@@ -874,24 +875,6 @@ function CanvasUtilities.spectrum(
     -- on the overall id to avoid contamination
     -- in case you have multiple widgets in one
     -- dialog.
-    dialog:number {
-        id = "spectrumHue",
-        label = "Hue:",
-        text = string.format("%.5f", hDefVrf),
-        decimals = 5,
-        focus = false,
-        visible = false
-    }
-
-    dialog:number {
-        id = "spectrumSat",
-        label = "Saturation:",
-        text = string.format("%.5f", sDefVrf),
-        decimals = 5,
-        focus = false,
-        visible = false
-    }
-
     dialog:number {
         id = "spectrumLight",
         label = "Lightness:",
@@ -902,10 +885,28 @@ function CanvasUtilities.spectrum(
     }
 
     dialog:number {
+        id = "spectrumChroma",
+        label = "Saturation:",
+        text = string.format("%.5f", cDefVrf),
+        decimals = 5,
+        focus = false,
+        visible = false
+    }
+
+    dialog:number {
+        id = "spectrumHue",
+        label = "Hue:",
+        text = string.format("%.5f", hDefVrf),
+        decimals = 5,
+        focus = false,
+        visible = false
+    }
+
+    dialog:number {
         id = "spectrumAlpha",
         label = "Alpha:",
-        text = string.format("%d", aDefVrf),
-        decimals = 0,
+        text = string.format("%.5f", aDefVrf),
+        decimals = 5,
         focus = false,
         visible = false
     }
