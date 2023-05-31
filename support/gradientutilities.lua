@@ -188,17 +188,12 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
             local activeSprite = app.site.sprite
             if activeSprite then
-                local tlHidden = not app.preferences.general.visible_timeline
-                if tlHidden then
-                    app.command.Timeline { open = true }
-                end
-
-                -- Range colors do not seem to have the same issue as range
+                -- Range colors do not seem to have the same issues as range
                 -- layers and frames? They appear to be cleared automatically
-                -- on sprite tab change.
+                -- on sprite tab change and are not impacted by timeline
+                -- visibility.
                 local appRange = app.range
                 local validRange = false
-                -- if appRange.sprite == activeSprite then
                 local rangeColors = appRange.colors
                 local lenRangeColors = #rangeColors
                 if lenRangeColors > 0 then
@@ -212,11 +207,6 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                         local clr = pal:getColor(idx)
                         newColors[lenOldColors + i] = clr
                     end
-                end
-                -- end
-
-                if tlHidden then
-                    app.command.Timeline { close = true }
                 end
 
                 if not validRange then

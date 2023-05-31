@@ -375,10 +375,8 @@ dlg:button {
                 end
             end)
 
-        local frIdcs = AseUtilities.frameObjsToIdcs(
-            activeSprite.frames)
         local uniqueCels = AseUtilities.getUniqueCelsFromLeaves(
-            activeSprite, { activeLayer }, frIdcs, {})
+            { activeLayer }, activeSprite.frames)
 
         local lenUniques = #uniqueCels
         local k = 0
@@ -431,10 +429,8 @@ dlg:button {
         local pxTilef = app.pixelColor.tileF
         local pxTileCompose = app.pixelColor.tile
 
-        local frIdcs = AseUtilities.frameObjsToIdcs(
-            activeSprite.frames)
         local uniqueCels = AseUtilities.getUniqueCelsFromLeaves(
-            activeSprite, { activeLayer }, frIdcs, {})
+            { activeLayer }, activeSprite.frames)
 
         ---@type table<integer, boolean>
         local visited = {}

@@ -1070,8 +1070,6 @@ end
 ---parent is locked or hidden, they intended to do so.
 ---
 ---The selection option will create a new layer and cel.
----The all and active options will clear the range.
----This method should be called after any range accesses.
 ---@param sprite Sprite active sprite
 ---@param layer Layer|nil active layer
 ---@param frame Frame|integer|nil active frame
@@ -1087,13 +1085,6 @@ function AseUtilities.filterCels(
     includeHidden,
     includeTiles,
     includeBkg)
-    ---@type Cel[]
-    local trgCels = {}
-
-    -- Ideally, this would restore the user's range from
-    -- prior to the function call, but cel-type ranges
-    -- can't be preserved anyway, and the performance cost
-    -- may outweigh the convenience.
     if target == "ALL" then
         local leaves = AseUtilities.getLayerHierarchy(
             sprite,
@@ -1101,11 +1092,17 @@ function AseUtilities.filterCels(
             includeHidden,
             includeTiles,
             includeBkg)
-        local frIdcs = AseUtilities.frameObjsToIdcs(
-            sprite.frames)
-        AseUtilities.getUniqueCelsFromLeaves(
-            sprite, leaves, frIdcs, trgCels)
+        return AseUtilities.getUniqueCelsFromLeaves(
+            leaves, sprite.frames)
     elseif target == "RANGE" then
+        ---@type Cel[]
+        local trgCels = {}
+
+        local tlHidden = not app.preferences.general.visible_timeline
+        if tlHidden then
+            app.command.Timeline { open = true }
+        end
+
         local appRange = app.range
         if appRange.sprite == sprite then
             local imgsRange = appRange.images
@@ -1126,6 +1123,12 @@ function AseUtilities.filterCels(
                 end -- End reference layer check.
             end     -- End range images loop.
         end         -- End valid range sprite check.
+
+        if tlHidden then
+            app.command.Timeline { close = true }
+        end
+
+        return trgCels
     elseif target == "SELECTION" then
         if frame then
             local sel = AseUtilities.getSelection(sprite)
@@ -1168,8 +1171,9 @@ function AseUtilities.filterCels(
                     flatImage, Point(xSel, ySel))
             end)
 
-            trgCels[#trgCels + 1] = adjCel
+            return { adjCel }
         end
+        return {}
     else
         -- Default to "ACTIVE"
         if layer and frame then
@@ -1181,22 +1185,11 @@ function AseUtilities.filterCels(
                 includeHidden,
                 includeTiles,
                 includeBkg)
-
-            ---@type integer[]
-            local frIdcs = {}
-            if type(frame) == "number"
-                and math.type(frame) == "integer" then
-                frIdcs[1] = frame
-            else
-                frIdcs[1] = frame.frameNumber
-            end
-
-            AseUtilities.getUniqueCelsFromLeaves(
-                sprite, leaves, frIdcs, trgCels)
+            return AseUtilities.getUniqueCelsFromLeaves(
+                leaves, { frame })
         end
+        return {}
     end
-
-    return trgCels
 end
 
 ---Flattens a group layer to a composite image, including
@@ -1705,52 +1698,36 @@ end
 ---Get unique cels from layers that have already been
 ---verified as leaves and filtered. If the output
 ---target array is not supplied, a new one is created.
----This sets and then clears the range. It also reopens
----the timeline if it is hidden.
----@param sprite Sprite sprite
 ---@param leaves Layer[] leaf layers
----@param frIdcs integer[] frame indices
----@param trgCels Cel[]? target array
+---@param frames integer[]|Frame[] frames
 ---@return Cel[]
-function AseUtilities.getUniqueCelsFromLeaves(
-    sprite, leaves, frIdcs, trgCels)
-    local vTrgCels = trgCels or {}
-    if #leaves > 0 then
-        -- When the timeline is hidden, the range
-        -- cannot be accessed properly.
-        local tlHidden = not app.preferences.general.visible_timeline
-        if tlHidden then
-            app.command.Timeline { open = true }
-        end
+function AseUtilities.getUniqueCelsFromLeaves(leaves, frames)
+    ---@type table<integer, Cel>
+    local uniqueCels = {}
 
-        -- The active sprite and the sprite referred
-        -- to by the range could be unequal.
-        local appRange = app.range
-        if appRange.sprite ~= sprite then
-            appRange:clear()
-        end
+    local lenLeaves = #leaves
+    local lenFrames = #frames
+    local lenCompound = lenLeaves * lenFrames
+    local k = 0
+    while k < lenCompound do
+        local i = k // lenFrames
+        local j = k % lenFrames
+        k = k + 1
 
-        appRange.layers = leaves
-        appRange.frames = frIdcs
-
-        -- Editability has already been determined
-        -- by layers loop above.
-        local imgsRange = appRange.images
-        local lenImgsRange = #imgsRange
-        local j = 0
-        while j < lenImgsRange do
-            j = j + 1
-            vTrgCels[#vTrgCels + 1] = imgsRange[j].cel
-        end
-
-        appRange:clear()
-
-        if tlHidden then
-            app.command.Timeline { close = true }
+        local leaf = leaves[1 + i]
+        local frame = frames[1 + j]
+        local cel = leaf:cel(frame)
+        if cel then
+            uniqueCels[cel.image.id] = cel
         end
     end
 
-    return vTrgCels
+    ---@type Cel[]
+    local celsArr = {}
+    for _, cel in pairs(uniqueCels) do
+        celsArr[#celsArr + 1] = cel
+    end
+    return celsArr
 end
 
 ---Gets the unique tiles from a tile map.

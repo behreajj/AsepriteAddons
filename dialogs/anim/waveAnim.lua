@@ -36,7 +36,7 @@ local defaults = {
     interPick = 1,
     -- Gerstner
     gerstItrs = 3,
-    gerstWaveLen = 0.25,
+    gerstWaveLen = 0.3,
     gerstSteep = 0.375,
     gerstSpeed = 1.0,
     gerstAngle = 90,
@@ -726,7 +726,14 @@ dlg:button {
             cs[1] = math.sqrt(gravity / ks[1])
             as[1] = gerstSteep / ks[1]
 
+            -- print(string.format(
+            --     "direction: (%.6f, %.6f) mag: %.6f, waveLen: %.3f, steep: %.3f",
+            --     directions[1].x, directions[1].y, Vec2.mag(directions[1]),
+            --     gerstWaveLen, gerstSteep))
+
             -- Scale randomness by user input.
+            --Add option for random seed input?
+            local hToFac = 1.0 / gerstItrs
             local minSteep = gerstSteep * 0.667
             local maxSteep = gerstSteep * 1.5
             local minWaveLen = gerstWaveLen * 0.5
@@ -734,6 +741,7 @@ dlg:button {
 
             local h = 1
             while h < gerstItrs do
+                local hFac = h * hToFac
                 h = h + 1
 
                 local x = Utilities.gaussian()
@@ -741,7 +749,7 @@ dlg:button {
                 local sqMag = x * x + y * y
                 local xn = 0.0
                 local yn = 1.0
-                if sqMag ~= 0.0 then
+                if sqMag > 0.0 then
                     local invMag = 1.0 / sqrt(sqMag)
                     xn = x * invMag
                     yn = y * invMag
@@ -749,21 +757,28 @@ dlg:button {
                 directions[h] = Vec2.new(xn, yn)
 
                 local waveLenFac = math.random()
-                local waveLen = (1.0 - waveLenFac) * minWaveLen
+                local waveLenRnd = (1.0 - waveLenFac) * minWaveLen
                     + waveLenFac * maxWaveLen
+                waveLenRnd = (1.0 - hFac) * waveLenRnd
 
-                local k = 6.2831853071796 / waveLen
+                local k = 6.2831853071796 / waveLenRnd
                 ks[h] = k
-
-                local c = sqrt(gravity / k)
-                cs[h] = c
+                cs[h] = sqrt(gravity / k)
 
                 local steepFac = math.random()
-                local steepness = (1.0 - steepFac) * minSteep
+                local steepRnd = (1.0 - steepFac) * minSteep
                     + steepFac * maxSteep
 
-                local a = steepness / k
-                as[h] = a
+                -- Make randomness less noticeable as iterations
+                -- progress to simulate finer details.
+                steepRnd = (1.0 - hFac) * steepRnd
+
+                as[h] = steepRnd / k
+
+                -- print(string.format(
+                --     "direction: (%.6f, %.6f) mag: %.6f, waveLen: %.3f, steep: %.3f",
+                --     directions[h].x, directions[h].y, Vec2.mag(directions[h]),
+                --     waveLenRnd, steepRnd))
             end
 
             local aspect = wn1 / hn1
@@ -786,9 +801,12 @@ dlg:button {
                     local d = directions[i]
                     local dotcod = d.x * xSgn + d.y * ySgn
                     local f = k * (dotcod - c * tSpeed)
-                    local acosf = a * cos(f)
-                    xSum = xSum + d.x * acosf
-                    ySum = ySum - d.y * acosf
+
+                    -- cos(a) = cos(-a), sin(a) ~= sin(-a),
+                    -- so prefer latter to flip y axis.
+                    local asinf = a * sin(f)
+                    xSum = xSum + d.x * asinf
+                    ySum = ySum - d.y * asinf
                 end
                 return (xSum * 0.5 + 0.5) * wn1Aspect,
                     (ySum * 0.5 + 0.5) * hn1

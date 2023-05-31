@@ -121,9 +121,10 @@ dlg:button {
             activeSprite,
             includeLocked, includeHidden, true, false)
         local lenLeaves = #leaves
+        -- TODO: Is it necessary to create frame indices here?
         local frIdcs = AseUtilities.frameObjsToIdcs(activeSprite.frames)
         local cels = AseUtilities.getUniqueCelsFromLeaves(
-            activeSprite, leaves, frIdcs, {})
+            leaves, frIdcs)
         local lenCels = #cels
 
         -- Cache methods used in loop.

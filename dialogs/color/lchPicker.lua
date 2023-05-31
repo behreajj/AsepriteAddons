@@ -745,6 +745,7 @@ dlg:button {
                 app.command.Timeline { open = true }
             end
 
+            -- TODO: Is using frame indices here necessary?
             local frameIdcs = { app.activeFrame.frameNumber }
             local appRange = app.range
             if appRange.sprite == sprite then
