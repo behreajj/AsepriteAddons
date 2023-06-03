@@ -14,6 +14,7 @@ local defaults = {
     includeLocked = false,
     includeHidden = false,
     tolerance = 0,
+    ignoreAlpha = false,
     pullFocus = true
 }
 
@@ -25,6 +26,13 @@ local function distSqInclAlpha(a, b, alphaScale)
     local da = b.a - a.a
     local db = b.b - a.b
     return dt * dt + dl * dl + da * da + db * db
+end
+
+local function distSqNoAlpha(a, b)
+    local dl = b.l - a.l
+    local da = b.a - a.a
+    local db = b.b - a.b
+    return dl * dl + da * da + db * db
 end
 
 local function expandCelToCanvas(cel, sprite)
@@ -141,7 +149,23 @@ dlg:slider {
     max = 255,
     value = defaults.tolerance,
     visible = defaults.target ~= "TILE_SET"
-        and defaults.target ~= "TILE_SETS"
+        and defaults.target ~= "TILE_SETS",
+    onchange = function()
+        local args = dlg.data
+        local tolerance = args.tolerance --[[@as integer]]
+        local state = tolerance > 0
+        dlg:modify { id = "ignoreAlpha", visible = state }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "ignoreAlpha",
+    label = "Ignore:",
+    text = "&Alpha",
+    selected = defaults.ignoreAlpha,
+    visible = defaults.tolerance > 0
 }
 
 dlg:newrow { always = false }
@@ -170,6 +194,7 @@ dlg:button {
             or defaults.tolerance --[[@as integer]]
         local includeLocked = args.includeLocked --[[@as boolean]]
         local includeHidden = args.includeHidden --[[@as boolean]]
+        local ignoreAlpha = args.ignoreAlpha --[[@as boolean]]
 
         local includeTiles = false
         local includeBkg = toColor.alpha >= 255
@@ -266,6 +291,7 @@ dlg:button {
                     local fromHex = Clr.fromHex
                     local sRgbaToLab = Clr.sRgbToSrLab2
                     local distSq = distSqInclAlpha
+                    if ignoreAlpha then distSq = distSqNoAlpha end
 
                     local tScl = 100.0
                     local tolsq = tolerance * tolerance
@@ -307,9 +333,20 @@ dlg:button {
                             trgImg = srcImg:clone()
                         end
 
-                        local trgPxItr = trgImg:pixels()
-                        for trgPixel in trgPxItr do
-                            trgPixel(dict[trgPixel()])
+                        if ignoreAlpha then
+                            local trgPxItr = trgImg:pixels()
+                            for trgPixel in trgPxItr do
+                                local srcHex = trgPixel()
+                                local srcAlpha = srcHex & 0xff000000
+                                local trgHex = dict[srcHex]
+                                local trgRgb = trgHex & 0x00ffffff
+                                trgPixel(srcAlpha | trgRgb)
+                            end
+                        else
+                            local trgPxItr = trgImg:pixels()
+                            for trgPixel in trgPxItr do
+                                trgPixel(dict[trgPixel()])
+                            end
                         end
 
                         cel.image = trgImg

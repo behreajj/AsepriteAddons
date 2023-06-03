@@ -22,18 +22,18 @@ AseUtilities.DEFAULT_PAL_ARR = {
     0x00000000, -- Mask
     0xff000000, -- Black
     0xffffffff, -- White
-    0xff0000ff, -- Red
-    0xff006aff, -- Red-orange
-    0xff00a2ff, -- Orange
-    0xff00cfff, -- Yellow-orange
-    0xff00ffff, -- Yellow
-    0xff1ad481, -- Green-yellow
-    0xff33a900, -- Green
-    0xff668415, -- Blue-green
-    0xffa65911, -- Blue
-    0xff922a3c, -- Blue-purple
-    0xff850c69, -- Purple
-    0xff5500aa  -- Red-purple
+    0xff3a3adc,
+    0xff2a7af2,
+    0xff14aefe,
+    0xff19ddfd,
+    0xff1ddbca,
+    0xff3cc286,
+    0xff699d03,
+    0xff968e00,
+    0xff9c7300,
+    0xff9c5a02,
+    0xff793162,
+    0xff581b99
 }
 
 ---Angles in degrees which are remapped to
@@ -1192,11 +1192,12 @@ function AseUtilities.filterCels(
     end
 end
 
----Flattens a group layer to a composite image, including
----layers according to the provided criteria. Assumes that
----the layer has already been confirmed to be a group.
----If no composite could be made, returns a 1x1 image and
----a rectangle situated in the top left corner.
+---Flattens a group layer to a composite image.
+---Does not verify that a layer is a group. Child
+---layers are filtered according to the provided
+---criteria. Returns an image and a cel bounds.
+---If no composite could be made, returns a 1x1
+---image and a rectangle in the top left corner.
 ---@param group Layer group layer
 ---@param frame Frame|integer frame
 ---@param sprClrMode ColorMode|integer sprite color mode

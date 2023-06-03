@@ -169,6 +169,14 @@ dlg:button {
             return
         end
 
+        if srcLayer.isReference then
+            app.alert {
+                title = "Error",
+                text = "Reference layers are not supported."
+            }
+            return
+        end
+
         -- Check for tile maps.
         local isTilemap = srcLayer.isTilemap
         local tileSet = nil
