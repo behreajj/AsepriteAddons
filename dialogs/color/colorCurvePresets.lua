@@ -31,10 +31,14 @@ local defaults = {
     useAlpha = false,
     celsTarget = "ALL",
     usePreview = true,
+    ap0x = 0.0,
+    ap0y = 0.0,
     cp0x = 0.42,
     cp0y = 0.0,
     cp1x = 0.58,
     cp1y = 1.0,
+    ap1x = 1.0,
+    ap1y = 1.0,
     phase = -90,
     freq = 0.5,
     sw_amp = 1.0,
@@ -47,11 +51,15 @@ local defaults = {
     quantization = 8
 }
 
+---@param x number
+---@return number
 local function stdToLin(x)
     if x <= 0.04045 then return x * 0.077399380804954 end
     return ((x + 0.055) * 0.9478672985782) ^ 2.4
 end
 
+---@param x number
+---@return number
 local function linToStd(x)
     if x <= 0.0031308 then return x * 12.92 end
     return (x ^ 0.41666666666667) * 1.055 - 0.055
@@ -69,22 +77,40 @@ local function bezier(cp0x, cp0y, cp1x, cp1y, t)
         cp0x * usq3t + cp1x * tsq3u + tcb
 end
 
+---@param x number
+---@param c number
+---@param amplitude number
+---@param offset number
+---@return number
 local function gamma(x, c, amplitude, offset)
     return math.max(0.0, math.min(1.0,
         amplitude * (x ^ c) + offset))
 end
 
+---@param x number
+---@param slope number
+---@param intercept number
+---@return number
 local function linear(x, slope, intercept)
     return math.max(0.0, math.min(1.0,
         slope * x + intercept))
 end
 
+---@param x number
+---@param levels integer
+---@return number
 local function quantize(x, levels)
     return math.max(0.0, math.min(1.0,
         (math.ceil(x * levels) - 1.0)
         / (levels - 1.0)))
 end
 
+---@param x number
+---@param freq number
+---@param phase number
+---@param amp number
+---@param basis number
+---@return number
 local function sineWave(x, freq, phase, amp, basis)
     return math.max(0.0, math.min(1.0,
         0.5 + 0.5 * (basis + amp * math.sin(
@@ -402,9 +428,10 @@ dlg:button {
                 return sineWave(x, freq, phaseRad, amp, basis)
             end
         elseif preset == "QUANTIZE" then
-            if args.quantization > 1 then
+            local levels = args.quantization or defaults.quantization --[[@as integer]]
+            if levels > 1 then
                 func = function(x)
-                    return quantize(x, args.quantization)
+                    return quantize(x, levels)
                 end
             end
         end
@@ -429,8 +456,8 @@ dlg:button {
                 end
                 i = i + 1
                 points[i] = Point(
-                    math.floor(xStd * 0xff + 0.5),
-                    math.floor(yStd * 0xff + 0.5))
+                    math.floor(xStd * 255.0 + 0.5),
+                    math.floor(yStd * 255.0 + 0.5))
             end
         else
             local i = 0
@@ -440,8 +467,8 @@ dlg:button {
                 if xp then x = xp end
                 i = i + 1
                 points[i] = Point(
-                    math.floor(x * 0xff + 0.5),
-                    math.floor(y * 0xff + 0.5))
+                    math.floor(x * 255.0 + 0.5),
+                    math.floor(y * 255.0 + 0.5))
             end
         end
 

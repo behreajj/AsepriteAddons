@@ -1,4 +1,5 @@
 dofile("./clr.lua")
+dofile("./utilities.lua")
 
 CanvasUtilities = {}
 CanvasUtilities.__index = CanvasUtilities
@@ -160,10 +161,14 @@ function CanvasUtilities.graphBezier(
     local gridClrVrf = gridColor or Color { r = 128, g = 128, b = 128 }
     local curveClrVrf = curveColor or Color { r = 255, g = 255, b = 255 }
 
+    local ap1xVrf = 1.0
+    local ap1yVrf = 1.0
     local cp1yVrf = cp1yDef or 1.0
     local cp1xVrf = cp1xDef or 0.58
     local cp0yVrf = cp0yDef or 0.0
     local cp0xVrf = cp0xDef or 0.42
+    local ap0xVrf = 0.0
+    local ap0yVrf = 0.0
 
     local grdCntVrf = gridCount or 5
     local visFuncsVrf = false
@@ -184,59 +189,55 @@ function CanvasUtilities.graphBezier(
             local xMouse = event.x
             local yMouse = event.y
 
-            -- Unpack arguments.
-            local args = dialog.data
-            local cp0x = args.cp0x --[[@as number]]
-            local cp0y = args.cp0y --[[@as number]]
-            local cp1x = args.cp1x --[[@as number]]
-            local cp1y = args.cp1y --[[@as number]]
-
-            -- Clamp x control points to [0.0, 1.0].
-            cp0x = math.min(math.max(cp0x, 0.0), 1.0)
-            cp1x = math.min(math.max(cp1x, 0.0), 1.0)
-
             -- Convert from [0.0, 1.0] to canvas pixels.
             local xbr = wVrf - 1
             local ybr = hVrf - 1
 
-            -- Test if mouse is near control point 0.
-            local cp0xPx = Utilities.round(cp0x * xbr)
-            local cp0yPx = ybr - Utilities.round(cp0y * ybr)
-            local xCp0Diff = cp0xPx - xMouse
-            local yCp0Diff = cp0yPx - yMouse
-            local cp0dSqMag = xCp0Diff * xCp0Diff + yCp0Diff * yCp0Diff
-            if cp0dSqMag < hotSpotSq then
-                -- Convert mouse coordinate to [0.0, 1.0].
-                -- Flip y axis.
-                local x01 = xMouse / xbr
-                local y01 = (ybr - yMouse) / ybr
+            -- Convert mouse coordinate to [0.0, 1.0].
+            -- Flip y axis.
+            local xm01 = xMouse / xbr
+            local ym01 = (ybr - yMouse) / ybr
 
-                -- Clamp coordinates.
-                x01 = math.min(math.max(x01, 0.0), 1.0)
-                y01 = math.min(math.max(y01, 0.0), 1.0)
+            -- Clamp coordinates.
+            xm01 = math.min(math.max(xm01, 0.0), 1.0)
+            ym01 = math.min(math.max(ym01, 0.0), 1.0)
 
-                -- Modify number input widgets. Repaint canvas.
-                dialog:modify { id = "cp0x", text = string.format("%.5f", x01) }
-                dialog:modify { id = "cp0y", text = string.format("%.5f", y01) }
-                dialog:repaint()
-                return
-            end
+            ---@type string[][]
+            local args = dialog.data
 
-            -- Test if mouse is near control point 1.
-            local cp1xPx = Utilities.round(cp1x * xbr)
-            local cp1yPx = ybr - Utilities.round(cp1y * ybr)
-            local xCp1Diff = cp1xPx - xMouse
-            local yCp1Diff = cp1yPx - yMouse
-            local cp1dSqMag = xCp1Diff * xCp1Diff + yCp1Diff * yCp1Diff
-            if cp1dSqMag < hotSpotSq then
-                local x01 = xMouse / xbr
-                local y01 = (ybr - yMouse) / ybr
-                x01 = math.min(math.max(x01, 0.0), 1.0)
-                y01 = math.min(math.max(y01, 0.0), 1.0)
-                dialog:modify { id = "cp1x", text = string.format("%.5f", x01) }
-                dialog:modify { id = "cp1y", text = string.format("%.5f", y01) }
-                dialog:repaint()
-                return
+            -- Control points take precedence over anchor points
+            -- when it comes to selecting for mouse movement.
+            local idStrs = {
+                { "cp0x", "cp0y" },
+                { "cp1x", "cp1y" },
+                -- { "ap0x", "ap0y" },
+                -- { "ap1x", "ap1y" }
+            }
+            local lenIdStrs = #idStrs
+
+            local i = 0
+            while i < lenIdStrs do
+                i = i + 1
+                local idPair = idStrs[i]
+                local xId = idPair[1]
+                local yId = idPair[2]
+                local xPoint = args[xId] --[[@as number]]
+                local yPoint = args[yId] --[[@as number]]
+
+                xPoint = math.min(math.max(xPoint, 0.0), 1.0)
+
+                local xPixel = Utilities.round(xPoint * xbr)
+                local yPixel = ybr - Utilities.round(yPoint * ybr)
+
+                local xDiff = xPixel - xMouse
+                local yDiff = yPixel - yMouse
+                local sqMag = xDiff * xDiff + yDiff * yDiff
+                if sqMag < hotSpotSq then
+                    dialog:modify { id = xId, text = string.format("%.5f", xm01) }
+                    dialog:modify { id = yId, text = string.format("%.5f", ym01) }
+                    dialog:repaint()
+                    return
+                end
             end
         end
     end
@@ -259,37 +260,45 @@ function CanvasUtilities.graphBezier(
 
             -- Unpack arguments.
             local args = dialog.data
+            local ap0x = args.ap0x --[[@as number]]
+            local ap0y = args.ap0y --[[@as number]]
             local cp0x = args.cp0x --[[@as number]]
             local cp0y = args.cp0y --[[@as number]]
             local cp1x = args.cp1x --[[@as number]]
             local cp1y = args.cp1y --[[@as number]]
+            local ap1x = args.ap1x --[[@as number]]
+            local ap1y = args.ap1y --[[@as number]]
 
-            -- Clamp x control points to [0.0, 1.0].
+            -- Clamp x points to [0.0, 1.0].
+            ap0x = math.min(math.max(ap0x, 0.0), 1.0)
             cp0x = math.min(math.max(cp0x, 0.0), 1.0)
             cp1x = math.min(math.max(cp1x, 0.0), 1.0)
+            ap1x = math.min(math.max(ap1x, 0.0), 1.0)
 
             -- Convert from [0.0, 1.0] to canvas pixels.
             local xbr = wVrf - 1
             local ybr = hVrf - 1
 
-            local ap0xPx = 0
-            local ap0yPx = ybr
+            local ap0xPx = Utilities.round(ap0x * xbr)
+            local ap0yPx = ybr - Utilities.round(ap0y * ybr)
             local cp0xPx = Utilities.round(cp0x * xbr)
             local cp0yPx = ybr - Utilities.round(cp0y * ybr)
             local cp1xPx = Utilities.round(cp1x * xbr)
             local cp1yPx = ybr - Utilities.round(cp1y * ybr)
-            local ap1xPx = xbr
-            local ap1yPx = 0
+            local ap1xPx = Utilities.round(ap1x * xbr)
+            local ap1yPx = ybr - Utilities.round(ap1y * ybr)
 
             -- Draw curve.
             context.strokeWidth = swCurve
             context.color = curveClrVrf
             context:beginPath()
-            context:moveTo(ap0xPx, ap0yPx)
+            context:moveTo(0, ap0yPx)
+            context:lineTo(ap0xPx, ap0yPx)
             context:cubicTo(
                 cp0xPx, cp0yPx,
                 cp1xPx, cp1yPx,
                 ap1xPx, ap1yPx)
+            context:lineTo(xbr, ap1yPx)
             context:stroke()
 
             -- Draw control point 0 diagnostic stem.
@@ -300,7 +309,7 @@ function CanvasUtilities.graphBezier(
             context:lineTo(cp0xPx, cp0yPx)
             context:stroke()
 
-            local cp0Rot = math.atan(cp0y, cp0x)
+            local cp0Rot = math.atan(cp0y - ap0y, cp0x - ap0x)
             CanvasUtilities.drawPolygon(context, 3, polyRadius,
                 cp0xPx, cp0yPx, cp0Rot)
             context:fill()
@@ -313,13 +322,38 @@ function CanvasUtilities.graphBezier(
             context:lineTo(cp1xPx, cp1yPx)
             context:stroke()
 
-            local cp1Rot = math.atan(cp1y - 1.0, cp1x - 1.0)
+            local cp1Rot = math.atan(cp1y - ap1y, cp1x - ap1x)
             CanvasUtilities.drawPolygon(context, 3, polyRadius,
                 cp1xPx, cp1yPx, cp1Rot)
             context:fill()
         end,
         onmousedown = onMouseFunc,
         onmousemove = onMouseFunc
+    }
+
+    dialog:newrow { always = false }
+
+    dialog:number {
+        id = "ap0x",
+        label = "Anchor 0:",
+        text = string.format("%.5f", ap0xVrf),
+        decimals = 5,
+        focus = false,
+        visible = isVisVrf and visCtrlVrf,
+        onchange = function()
+            dialog:repaint()
+        end
+    }
+
+    dialog:number {
+        id = "ap0y",
+        text = string.format("%.5f", ap0yVrf),
+        decimals = 5,
+        focus = false,
+        visible = isVisVrf and visCtrlVrf,
+        onchange = function()
+            dialog:repaint()
+        end
     }
 
     dialog:newrow { always = false }
@@ -372,6 +406,33 @@ function CanvasUtilities.graphBezier(
         end
     }
 
+    dialog:newrow { always = false }
+
+    dialog:number {
+        id = "ap1x",
+        label = "Anchor 1:",
+        text = string.format("%.5f", ap1xVrf),
+        decimals = 5,
+        focus = false,
+        visible = isVisVrf and visCtrlVrf,
+        onchange = function()
+            dialog:repaint()
+        end
+    }
+
+    dialog:number {
+        id = "ap1y",
+        text = string.format("%.5f", ap1yVrf),
+        decimals = 5,
+        focus = false,
+        visible = isVisVrf and visCtrlVrf,
+        onchange = function()
+            dialog:repaint()
+        end
+    }
+
+    dialog:newrow { always = false }
+
     dialog:combobox {
         id = "easeFuncs",
         label = "Function:",
@@ -388,30 +449,50 @@ function CanvasUtilities.graphBezier(
             local args = dialog.data
             local easeFunc = args.easeFuncs --[[@as string]]
             if easeFunc == "EASE" then
+                dialog:modify { id = "ap0x", text = string.format("%.1f", 0.0) }
+                dialog:modify { id = "ap0y", text = string.format("%.1f", 0.0) }
                 dialog:modify { id = "cp0x", text = string.format("%.2f", 0.25) }
                 dialog:modify { id = "cp0y", text = string.format("%.1f", 0.1) }
                 dialog:modify { id = "cp1x", text = string.format("%.2f", 0.25) }
                 dialog:modify { id = "cp1y", text = string.format("%.1f", 1.0) }
+                dialog:modify { id = "ap1x", text = string.format("%.1f", 1.0) }
+                dialog:modify { id = "ap1y", text = string.format("%.1f", 1.0) }
             elseif easeFunc == "EASE_IN" then
+                dialog:modify { id = "ap0x", text = string.format("%.1f", 0.0) }
+                dialog:modify { id = "ap0y", text = string.format("%.1f", 0.0) }
                 dialog:modify { id = "cp0x", text = string.format("%.2f", 0.42) }
                 dialog:modify { id = "cp0y", text = string.format("%.1f", 0.0) }
                 dialog:modify { id = "cp1x", text = string.format("%.1f", 1.0) }
                 dialog:modify { id = "cp1y", text = string.format("%.1f", 1.0) }
+                dialog:modify { id = "ap1x", text = string.format("%.1f", 1.0) }
+                dialog:modify { id = "ap1y", text = string.format("%.1f", 1.0) }
             elseif easeFunc == "EASE_IN_OUT" then
+                dialog:modify { id = "ap0x", text = string.format("%.1f", 0.0) }
+                dialog:modify { id = "ap0y", text = string.format("%.1f", 0.0) }
                 dialog:modify { id = "cp0x", text = string.format("%.2f", 0.42) }
                 dialog:modify { id = "cp0y", text = string.format("%.1f", 0.0) }
                 dialog:modify { id = "cp1x", text = string.format("%.2f", 0.58) }
                 dialog:modify { id = "cp1y", text = string.format("%.1f", 1.0) }
+                dialog:modify { id = "ap1x", text = string.format("%.1f", 1.0) }
+                dialog:modify { id = "ap1y", text = string.format("%.1f", 1.0) }
             elseif easeFunc == "EASE_OUT" then
+                dialog:modify { id = "ap0x", text = string.format("%.1f", 0.0) }
+                dialog:modify { id = "ap0y", text = string.format("%.1f", 0.0) }
                 dialog:modify { id = "cp0x", text = string.format("%.1f", 0.0) }
                 dialog:modify { id = "cp0y", text = string.format("%.1f", 0.0) }
                 dialog:modify { id = "cp1x", text = string.format("%.2f", 0.58) }
                 dialog:modify { id = "cp1y", text = string.format("%.1f", 1.0) }
+                dialog:modify { id = "ap1x", text = string.format("%.1f", 1.0) }
+                dialog:modify { id = "ap1y", text = string.format("%.1f", 1.0) }
             elseif easeFunc == "LINEAR" then
+                dialog:modify { id = "ap0x", text = string.format("%.1f", 0.0) }
+                dialog:modify { id = "ap0y", text = string.format("%.1f", 0.0) }
                 dialog:modify { id = "cp0x", text = string.format("%.5f", 0.33333) }
                 dialog:modify { id = "cp0y", text = string.format("%.5f", 0.33333) }
                 dialog:modify { id = "cp1x", text = string.format("%.5f", 0.66667) }
                 dialog:modify { id = "cp1y", text = string.format("%.5f", 0.66667) }
+                dialog:modify { id = "ap1x", text = string.format("%.1f", 1.0) }
+                dialog:modify { id = "ap1y", text = string.format("%.1f", 1.0) }
             end
             dialog:repaint()
         end

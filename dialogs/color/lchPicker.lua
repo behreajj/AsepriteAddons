@@ -13,6 +13,10 @@ local harmonyTypes = {
 }
 
 local defaults = {
+    -- TODO: Hold down a button when clicking on sliders
+    -- to quantize? Problem is that Space will trigger
+    -- a focused button, so that only leaves Alt.
+
     -- lchTosRgb = Clr.cieLchTosRgb,
     -- sRgbToLch = Clr.sRgbToCieLch,
     -- sRgbToLab = Clr.sRgbToCieLab,
@@ -24,9 +28,9 @@ local defaults = {
     labToLch = Clr.srLab2ToSrLch,
     lchToLab = Clr.srLchToSrLab2,
     harmonyType = "SHADING",
-    barWidth = 240 / screenScale,
-    barHeight = 16 / screenScale,
-    reticleSize = 3 / screenScale,
+    barWidth = 240 // screenScale,
+    barHeight = 16 // screenScale,
+    reticleSize = 3 // screenScale,
     inGamutEps = 0.115,
     maxChroma = 135,
     textShadow = 0xffe7e7e7,
@@ -36,7 +40,7 @@ local defaults = {
     hueSpreadLgt = 0.33333333333333,
     chromaSpreadShd = 5.0,
     chromaSpreadLgt = 15.0,
-    lightSpread = 37.5,
+    lightSpread = 33.33,
     hYellow = 0.28570825759858,
     hViolet = 0.78570825759858
 }
@@ -89,6 +93,9 @@ local function setFromSelect(dialog, sprite, frame)
     if not sprite then return end
     if not frame then return end
 
+    -- TODO: Generalize this so that other dialogs
+    -- can sample a selection. For example, in Adobe
+    -- PS the levels tool can sample an image.
     local sel = AseUtilities.getSelection(sprite)
     local selBounds = sel.bounds
     local xSel = selBounds.x
