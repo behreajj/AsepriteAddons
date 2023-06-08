@@ -17,11 +17,6 @@ local defaults = {
     -- to quantize? Problem is that Space will trigger
     -- a focused button, so that only leaves Alt.
 
-    -- lchTosRgb = Clr.cieLchTosRgb,
-    -- sRgbToLch = Clr.sRgbToCieLch,
-    -- sRgbToLab = Clr.sRgbToCieLab,
-    -- labToLch = Clr.cieLabToCieLch,
-    -- lchToLab = Clr.cieLchToCieLab,
     lchTosRgb = Clr.srLchTosRgb,
     sRgbToLch = Clr.sRgbToSrLch,
     sRgbToLab = Clr.sRgbToSrLab2,
@@ -90,111 +85,10 @@ local function setFromAse(dialog, aseColor)
 end
 
 local function setFromSelect(dialog, sprite, frame)
-    if not sprite then return end
-    if not frame then return end
-
-    -- TODO: Generalize this so that other dialogs
-    -- can sample a selection. For example, in Adobe
-    -- PS the levels tool can sample an image.
-    local sel = AseUtilities.getSelection(sprite)
-    local selBounds = sel.bounds
-    local xSel = selBounds.x
-    local ySel = selBounds.y
-
-    local sprSpec = sprite.spec
-    local colorMode = sprSpec.colorMode
-    local selSpec = ImageSpec {
-        width = math.max(1, selBounds.width),
-        height = math.max(1, selBounds.height),
-        colorMode = colorMode,
-        transparentColor = sprSpec.transparentColor
-    }
-    selSpec.colorSpace = sprSpec.colorSpace
-    local flatImage = Image(selSpec)
-
-    -- This will ignore a reference image,
-    -- meaning you can't sample it for color.
-    flatImage:drawSprite(
-        sprite, frame, Point(-xSel, -ySel))
-    local pxItr = flatImage:pixels()
-
-    -- The key is the color in hex; the value is a
-    -- number of pixels with that color in the
-    -- selection. This tally is for the average.
-    ---@type table<integer, integer>
-    local hexDict = {}
-    local eval = nil
-    if colorMode == ColorMode.RGB then
-        eval = function(h, d)
-            if (h & 0xff000000) ~= 0 then
-                local q = d[h]
-                if q then d[h] = q + 1 else d[h] = 1 end
-            end
-        end
-    elseif colorMode == ColorMode.GRAY then
-        eval = function(gray, d)
-            local a = (gray >> 0x08) & 0xff
-            if a > 0 then
-                local v = gray & 0xff
-                local h = a << 0x18 | v << 0x10 | v << 0x08 | v
-                local q = d[h]
-                if q then d[h] = q + 1 else d[h] = 1 end
-            end
-        end
-    elseif colorMode == ColorMode.INDEXED then
-        eval = function(idx, d, pal)
-            if idx > -1 and idx < #pal then
-                local aseColor = pal:getColor(idx)
-                local a = aseColor.alpha
-                if a > 0 then
-                    local h = aseColor.rgbaPixel
-                    local q = d[h]
-                    if q then d[h] = q + 1 else d[h] = 1 end
-                end
-            end
-        end
-    else
-        -- Tile maps have a color mode of 4 in 1.3 beta.
-        return
-    end
-
-    local palette = AseUtilities.getPalette(
-        app.activeFrame, sprite.palettes)
-    for pixel in pxItr do
-        local x = pixel.x + xSel
-        local y = pixel.y + ySel
-        if sel:contains(x, y) then
-            eval(pixel(), hexDict, palette)
-        end
-    end
-
-    local lSum = 0.0
-    local aSum = 0.0
-    local bSum = 0.0
-    local alphaSum = 0.0
-    local count = 0
-
-    local fromHex = Clr.fromHex
-    local sRgbToLab = defaults.sRgbToLab
-
-    for k, v in pairs(hexDict) do
-        local srgb = fromHex(k)
-        local lab = sRgbToLab(srgb)
-        lSum = lSum + lab.l * v
-        aSum = aSum + lab.a * v
-        bSum = bSum + lab.b * v
-        alphaSum = alphaSum + lab.alpha * v
-        count = count + v
-    end
-
-    if alphaSum > 0 and count > 0 then
-        local countInv = 1.0 / count
-        local alphaAvg = alphaSum * countInv
-        local lAvg = lSum * countInv
-        local aAvg = aSum * countInv
-        local bAvg = bSum * countInv
-
-        local lch = defaults.labToLch(lAvg, aAvg, bAvg, alphaAvg)
+    local lab = AseUtilities.averageColor(sprite, frame)
+    if lab.alpha > 0.0 then
+        -- Average color uses SR LAB 2.
+        local lch = Clr.srLab2ToSrLch(lab.l, lab.a, lab.b, lab.alpha)
 
         active.l = lch.l
         active.c = lch.c

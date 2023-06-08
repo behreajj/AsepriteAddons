@@ -153,6 +153,125 @@ function AseUtilities.appendLeaves(
     return array
 end
 
+---Finds the average color of a selection in a sprite.
+---Calculates in the SR LAB 2 color space.
+---@param sprite Sprite
+---@param frame Frame|integer
+---@return { l: number, a: number, b: number, alpha: number }
+function AseUtilities.averageColor(sprite, frame)
+    if not sprite then
+        return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+    end
+
+    local sel = AseUtilities.getSelection(sprite)
+    local selBounds = sel.bounds
+    local xSel = selBounds.x
+    local ySel = selBounds.y
+
+    local sprSpec = sprite.spec
+    local colorMode = sprSpec.colorMode
+    local selSpec = ImageSpec {
+        width = math.max(1, selBounds.width),
+        height = math.max(1, selBounds.height),
+        colorMode = colorMode,
+        transparentColor = sprSpec.transparentColor
+    }
+    selSpec.colorSpace = sprSpec.colorSpace
+
+    local flatImage = Image(selSpec)
+    flatImage:drawSprite(
+        sprite, frame, Point(-xSel, -ySel))
+
+    local palette = nil
+    local eval = nil
+    if colorMode == ColorMode.RGB then
+        eval = function(h, d)
+            if (h & 0xff000000) ~= 0 then
+                local q = d[h]
+                if q then d[h] = q + 1 else d[h] = 1 end
+            end
+        end
+    elseif colorMode == ColorMode.GRAY then
+        eval = function(gray, d)
+            local a = (gray >> 0x08) & 0xff
+            if a > 0 then
+                local v = gray & 0xff
+                local h = a << 0x18 | v << 0x10 | v << 0x08 | v
+                local q = d[h]
+                if q then d[h] = q + 1 else d[h] = 1 end
+            end
+        end
+    elseif colorMode == ColorMode.INDEXED then
+        if not frame then
+            return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+        end
+
+        palette = AseUtilities.getPalette(
+            frame, sprite.palettes)
+
+        eval = function(idx, d, pal)
+            if idx > -1 and idx < #pal then
+                local aseColor = pal:getColor(idx)
+                local a = aseColor.alpha
+                if a > 0 then
+                    local h = aseColor.rgbaPixel
+                    local q = d[h]
+                    if q then d[h] = q + 1 else d[h] = 1 end
+                end
+            end
+        end
+    else
+        return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+    end
+
+    -- The key is the color in hex; the value is a
+    -- number of pixels with that color in the
+    -- selection. This tally is for the average.
+    ---@type table<integer, integer>
+    local hexDict = {}
+    local pxItr = flatImage:pixels()
+
+    for pixel in pxItr do
+        local x = pixel.x + xSel
+        local y = pixel.y + ySel
+        if sel:contains(x, y) then
+            eval(pixel(), hexDict, palette)
+        end
+    end
+
+    -- Cache methods used in loop.
+    local fromHex = Clr.fromHex
+    local sRgbToLab = Clr.sRgbToSrLab2
+
+    local lSum = 0.0
+    local aSum = 0.0
+    local bSum = 0.0
+    local alphaSum = 0.0
+    local count = 0
+
+    for k, v in pairs(hexDict) do
+        local srgb = fromHex(k)
+        local lab = sRgbToLab(srgb)
+        lSum = lSum + lab.l * v
+        aSum = aSum + lab.a * v
+        bSum = bSum + lab.b * v
+        alphaSum = alphaSum + lab.alpha * v
+        count = count + v
+    end
+
+    if alphaSum > 0 and count > 0 then
+        local countInv = 1.0 / count
+        return {
+            l = lSum * countInv,
+            a = aSum * countInv,
+            b = bSum * countInv,
+            alpha = alphaSum * countInv
+        }
+    end
+
+    return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+end
+
 ---Copies an Aseprite Color object by sRGB
 ---channel values. This is to prevent accidental
 ---pass by reference. The Color constructor does

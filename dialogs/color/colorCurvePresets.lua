@@ -242,12 +242,16 @@ dlg:combobox {
             dlg:modify { id = "mid", visible = true }
             dlg:modify { id = "lbOut", visible = true }
             dlg:modify { id = "ubOut", visible = true }
+            dlg:modify { id = "selGetLbIn", visible = true }
+            dlg:modify { id = "selGetUbIn", visible = true }
         else
             dlg:modify { id = "lbIn", visible = false }
             dlg:modify { id = "ubIn", visible = false }
             dlg:modify { id = "mid", visible = false }
             dlg:modify { id = "lbOut", visible = false }
             dlg:modify { id = "ubOut", visible = false }
+            dlg:modify { id = "selGetLbIn", visible = false }
+            dlg:modify { id = "selGetUbIn", visible = false }
         end
 
         if prs == "LINEAR" then
@@ -304,6 +308,42 @@ dlg:slider {
     max = 255,
     value = defaults.ubIn,
     visible = defaults.preset == "LEVELS"
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "selGetLbIn",
+    text = "B&LACK",
+    focus = false,
+    visible = defaults.preset == "LEVELS",
+    onclick = function()
+        local site = app.site
+        local sprite = site.sprite
+        if not sprite then return end
+        local frame = site.frame
+        if not frame then return end
+        local lab = AseUtilities.averageColor(sprite, frame)
+        local gray = math.floor(lab.l * 2.55 + 0.5)
+        dlg:modify { id = "lbIn", value = gray }
+    end
+}
+
+dlg:button {
+    id = "selGetUbIn",
+    text = "&WHITE",
+    focus = false,
+    visible = defaults.preset == "LEVELS",
+    onclick = function()
+        local site = app.site
+        local sprite = site.sprite
+        if not sprite then return end
+        local frame = site.frame
+        if not frame then return end
+        local lab = AseUtilities.averageColor(sprite, frame)
+        local gray = math.floor(lab.l * 2.55 + 0.5)
+        dlg:modify { id = "ubIn", value = gray }
+    end
 }
 
 dlg:newrow { always = false }
