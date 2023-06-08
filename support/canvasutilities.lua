@@ -230,7 +230,7 @@ function CanvasUtilities.graphBezier(
             -- Control points take precedence over anchor points
             -- when it comes to selecting for mouse movement.
             local collideCheckIds = {
-                -- TODO: Group into knots, move control points with anchors.
+                -- TODO: Group into knots, move control points with anchors?
                 { idPoints[3], idPoints[4] },
                 { idPoints[5], idPoints[6] },
                 { idPoints[1], idPoints[2] },

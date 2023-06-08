@@ -4,7 +4,7 @@ local screenScale = app.preferences.general.screen_scale
 
 local prsStrs = {
     "BEZIER",
-    "GAMMA",
+    "LEVELS",
     "LINEAR",
     "SINE_WAVE",
     "QUANTIZE"
@@ -31,6 +31,8 @@ local defaults = {
     useAlpha = false,
     celsTarget = "ALL",
     usePreview = true,
+
+    -- Bezier fields:
     ap0x = 0.0,
     ap0y = 0.0,
     cp0x = 0.42,
@@ -39,16 +41,26 @@ local defaults = {
     cp1y = 1.0,
     ap1x = 1.0,
     ap1y = 1.0,
+
+    -- Levels fields:
+    lbIn = 0,
+    ubIn = 255,
+    mid = 1.0,
+    lbOut = 0,
+    ubOut = 255,
+
+    -- Linear fields:
+    slope = 1.0,
+    intercept = 0.0,
+
+    -- Quantize fields:
+    quantization = 8,
+
+    -- Sine Wave fields:
     phase = -90,
     freq = 0.5,
     sw_amp = 1.0,
-    basis = 0.0,
-    slope = 1.0,
-    intercept = 0.0,
-    gamma = 2.2,
-    amplitude = 1.0,
-    offset = 0.0,
-    quantization = 8
+    basis = 0.0
 }
 
 ---@param x number
@@ -101,13 +113,31 @@ local function bezier(ap0x, ap0y, cp0x, cp0y, cp1x, cp1y, ap1x, ap1y, w)
 end
 
 ---@param x number
----@param c number
----@param amplitude number
----@param offset number
+---@param lbIn number
+---@param ubIn number
+---@param mid number
+---@param lbOut number
+---@param ubOut number
 ---@return number
-local function gamma(x, c, amplitude, offset)
-    return math.max(0.0, math.min(1.0,
-        amplitude * (x ^ c) + offset))
+local function levels(x, lbIn, ubIn, mid, lbOut, ubOut)
+    local xRemapped = x - lbIn
+    local rangeIn = ubIn - lbIn
+    if rangeIn ~= 0.0 then
+        xRemapped = (x - lbIn) / rangeIn
+    end
+
+    local xClamped = math.max(0.0, math.min(1.0, xRemapped))
+    local xGamma = xClamped
+    if mid ~= 0.0 then
+        xGamma = xGamma ^ (1.0 / mid)
+    end
+
+    if ubOut >= lbOut then
+        return lbOut + xGamma * (ubOut - lbOut)
+    elseif ubOut < lbOut then
+        return lbOut - xGamma * (lbOut - ubOut)
+    end
+    return xGamma
 end
 
 ---@param x number
@@ -165,7 +195,8 @@ dlg:combobox {
     id = "spaceStr",
     label = "Space:",
     options = spaceStrs,
-    option = defaults.spaceStr
+    option = defaults.spaceStr,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -205,14 +236,18 @@ dlg:combobox {
             dlg:modify { id = "graphBezier_easeFuncs", visible = false }
         end
 
-        if prs == "GAMMA" then
-            dlg:modify { id = "gamma", visible = true }
-            dlg:modify { id = "amplitude", visible = true }
-            dlg:modify { id = "offset", visible = true }
+        if prs == "LEVELS" then
+            dlg:modify { id = "lbIn", visible = true }
+            dlg:modify { id = "ubIn", visible = true }
+            dlg:modify { id = "mid", visible = true }
+            dlg:modify { id = "lbOut", visible = true }
+            dlg:modify { id = "ubOut", visible = true }
         else
-            dlg:modify { id = "gamma", visible = false }
-            dlg:modify { id = "amplitude", visible = false }
-            dlg:modify { id = "offset", visible = false }
+            dlg:modify { id = "lbIn", visible = false }
+            dlg:modify { id = "ubIn", visible = false }
+            dlg:modify { id = "mid", visible = false }
+            dlg:modify { id = "lbOut", visible = false }
+            dlg:modify { id = "ubOut", visible = false }
         end
 
         if prs == "LINEAR" then
@@ -254,32 +289,50 @@ CanvasUtilities.graphBezier(
     app.theme.color.text,
     Color { r = 128, g = 128, b = 128 })
 
-dlg:number {
-    id = "gamma",
-    label = "Gamma:",
-    text = string.format("%.1f", defaults.gamma),
-    decimals = 5,
-    visible = defaults.preset == "GAMMA"
+dlg:slider {
+    id = "lbIn",
+    label = "Inputs:",
+    min = 0,
+    max = 255,
+    value = defaults.lbIn,
+    visible = defaults.preset == "LEVELS"
+}
+
+dlg:slider {
+    id = "ubIn",
+    min = 0,
+    max = 255,
+    value = defaults.ubIn,
+    visible = defaults.preset == "LEVELS"
 }
 
 dlg:newrow { always = false }
 
 dlg:number {
-    id = "amplitude",
-    label = "Amplitude:",
-    text = string.format("%.1f", defaults.amplitude),
+    id = "mid",
+    label = "Midpoint:",
+    text = string.format("%.1f", defaults.mid),
     decimals = 5,
-    visible = defaults.preset == "GAMMA"
+    visible = defaults.preset == "LEVELS"
 }
 
 dlg:newrow { always = false }
 
-dlg:number {
-    id = "offset",
-    label = "Offset:",
-    text = string.format("%.1f", defaults.offset),
-    decimals = 5,
-    visible = defaults.preset == "GAMMA"
+dlg:slider {
+    id = "lbOut",
+    label = "Outputs:",
+    min = 0,
+    max = 255,
+    value = defaults.lbOut,
+    visible = defaults.preset == "LEVELS"
+}
+
+dlg:slider {
+    id = "ubOut",
+    min = 0,
+    max = 255,
+    value = defaults.ubOut,
+    visible = defaults.preset == "LEVELS"
 }
 
 dlg:newrow { always = false }
@@ -442,15 +495,24 @@ dlg:button {
             func = function(x)
                 return bezier(ap0x, ap0y, cp0x, cp0y, cp1x, cp1y, ap1x, ap1y, x)
             end
-        elseif preset == "GAMMA" then
-            local g = 1.0
-            if args.gamma ~= 0.0 then
-                g = args.gamma --[[@as number]]
-            end
-            local amplitude = args.amplitude or defaults.amplitude --[[@as number]]
-            local offset = args.offset or defaults.offset --[[@as number]]
+        elseif preset == "LEVELS" then
+            local lbIn255 = args.lbIn or defaults.lbIn --[[@as integer]]
+            local ubIn255 = args.ubIn or defaults.ubIn --[[@as integer]]
+            local mid = args.mid or defaults.mid --[[@as integer]]
+            local lbOut255 = args.lbOut or defaults.lbOut --[[@as integer]]
+            local ubOut255 = args.ubOut or defaults.ubOut --[[@as integer]]
+
+            local lbIn = lbIn255 / 255.0
+            local ubIn = ubIn255 / 255.0
+            local midVrf = math.max(0.000001, math.abs(mid))
+            local lbOut = lbOut255 / 255.0
+            local ubOut = ubOut255 / 255.0
+
+            -- Swap if flipped.
+            if ubIn < lbIn then lbIn, ubIn = ubIn, lbIn end
+
             func = function(x)
-                return gamma(x, g, amplitude, offset)
+                return levels(x, lbIn, ubIn, midVrf, lbOut, ubOut)
             end
         elseif preset == "SINE_WAVE" then
             local freq = args.freq or defaults.freq --[[@as number]]
