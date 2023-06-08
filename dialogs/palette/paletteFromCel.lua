@@ -56,16 +56,6 @@ local function boundsFromPreset(preset)
     end
 end
 
-local function clrToVec3CieLab(clr)
-    local lab = Clr.sRgbToCieLab(clr)
-    return Vec3.new(lab.a, lab.b, lab.l)
-end
-
-local function clrToVec3CieXyz(clr)
-    local xyz = Clr.sRgbToCieXyz(clr)
-    return Vec3.new(xyz.x, xyz.y, xyz.z)
-end
-
 local function clrToVec3lRgb(clr)
     local lin = Clr.sRgbTolRgbInternal(clr)
     return Vec3.new(lin.r, lin.g, lin.b)
@@ -81,25 +71,13 @@ local function clrToVec3SrLab2(clr)
 end
 
 local function clrToV3FuncFromPreset(preset)
-    if preset == "CIE_LAB" then
-        return clrToVec3CieLab
-    elseif preset == "CIE_XYZ" then
-        return clrToVec3CieXyz
-    elseif preset == "LINEAR_RGB" then
+    if preset == "LINEAR_RGB" then
         return clrToVec3lRgb
     elseif preset == "SR_LAB_2" then
         return clrToVec3SrLab2
     else
         return clrToVec3sRgb
     end
-end
-
-local function vec3ToClrCieLab(v3)
-    return Clr.cieLabTosRgb(v3.z, v3.x, v3.y, 1.0)
-end
-
-local function vec3ToClrCieXyz(v3)
-    return Clr.cieXyzTosRgb(v3.x, v3.y, v3.z, 1.0)
 end
 
 local function vec3ToClrlRgb(v3)
@@ -116,11 +94,7 @@ local function vec3ToClrSrLab2(v3)
 end
 
 local function v3ToClrFuncFromPreset(preset)
-    if preset == "CIE_LAB" then
-        return vec3ToClrCieLab
-    elseif preset == "CIE_XYZ" then
-        return vec3ToClrCieXyz
-    elseif preset == "LINEAR_RGB" then
+    if preset == "LINEAR_RGB" then
         return vec3ToClrlRgb
     elseif preset == "SR_LAB_2" then
         return vec3ToClrSrLab2

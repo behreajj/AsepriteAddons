@@ -5,7 +5,6 @@ local screenScale = app.preferences.general.screen_scale
 local prsStrs = {
     "BEZIER",
     "LEVELS",
-    "LINEAR",
     "SINE_WAVE",
     "QUANTIZE"
 }
@@ -48,10 +47,6 @@ local defaults = {
     mid = 1.0,
     lbOut = 0,
     ubOut = 255,
-
-    -- Linear fields:
-    slope = 1.0,
-    intercept = 0.0,
 
     -- Quantize fields:
     quantization = 8,
@@ -138,15 +133,6 @@ local function levels(x, lbIn, ubIn, mid, lbOut, ubOut)
         return lbOut - xGamma * (lbOut - ubOut)
     end
     return xGamma
-end
-
----@param x number
----@param slope number
----@param intercept number
----@return number
-local function linear(x, slope, intercept)
-    return math.max(0.0, math.min(1.0,
-        slope * x + intercept))
 end
 
 ---@param x number
@@ -252,14 +238,6 @@ dlg:combobox {
             dlg:modify { id = "ubOut", visible = false }
             dlg:modify { id = "selGetLbIn", visible = false }
             dlg:modify { id = "selGetUbIn", visible = false }
-        end
-
-        if prs == "LINEAR" then
-            dlg:modify { id = "slope", visible = true }
-            dlg:modify { id = "intercept", visible = true }
-        else
-            dlg:modify { id = "slope", visible = false }
-            dlg:modify { id = "intercept", visible = false }
         end
 
         if prs == "QUANTIZE" then
@@ -373,26 +351,6 @@ dlg:slider {
     max = 255,
     value = defaults.ubOut,
     visible = defaults.preset == "LEVELS"
-}
-
-dlg:newrow { always = false }
-
-dlg:number {
-    id = "slope",
-    label = "Slope:",
-    text = string.format("%.1f", defaults.slope),
-    decimals = 5,
-    visible = defaults.preset == "LINEAR"
-}
-
-dlg:newrow { always = false }
-
-dlg:number {
-    id = "intercept",
-    label = "Intercept:",
-    text = string.format("%.1f", defaults.intercept),
-    decimals = 5,
-    visible = defaults.preset == "LINEAR"
 }
 
 dlg:newrow { always = false }
@@ -512,10 +470,8 @@ dlg:button {
         if args.useGray then channels = channels | FilterChannels.GRAY end
         if args.useIndex then channels = channels | FilterChannels.INDEX end
 
-        local slope = args.slope or defaults.slope --[[@as number]]
-        local intercept = args.intercept or defaults.intercept --[[@as number]]
         local func = function(x)
-            return linear(x, slope, intercept)
+            return math.max(0.0, math.min(1.0, x))
         end
 
         local preset = args.preset

@@ -154,6 +154,7 @@ function CanvasUtilities.graphBezier(
     local hotSpot = 16 / screenScale
     local hotSpotSq = hotSpot * hotSpot
     local polyRadius = 4 * swCurve / screenScale
+    local halfRadius = polyRadius * 0.5
 
     -- Verify arguments.
     local cp1ClrVrf = cp1Color or Color { r = 0, g = 132, b = 159 }
@@ -172,6 +173,8 @@ function CanvasUtilities.graphBezier(
     local wVrf = width or 128
     local idVrf = id or "graphBezier"
 
+    -- In case this widget is used more than once in a dialog,
+    -- the widget ids need to be distinct from each other.
     local easeFuncId = idVrf .. "_easeFuncs"
     local idPoints = {
         idVrf .. "_ap0x",
@@ -224,40 +227,74 @@ function CanvasUtilities.graphBezier(
             xm01 = math.min(math.max(xm01, 0.0), 1.0)
             ym01 = math.min(math.max(ym01, 0.0), 1.0)
 
+            -- Epsilon is inverse of max resolution (64).
+            local clampEpsilon = 1.0 / 64.0
+
             ---@type string[][]
             local args = dialog.data
 
             -- Control points take precedence over anchor points
             -- when it comes to selecting for mouse movement.
-            local collideCheckIds = {
-                -- TODO: Group into knots, move control points with anchors?
-                { idPoints[3], idPoints[4] },
-                { idPoints[5], idPoints[6] },
-                { idPoints[1], idPoints[2] },
-                { idPoints[7], idPoints[8] }
+            local knotIds = {
+                { idPoints[1], idPoints[2], idPoints[3], idPoints[4] },
+                { idPoints[7], idPoints[8], idPoints[5], idPoints[6] }
             }
-            local lenIdStrs = #collideCheckIds
+            local lenKnotIds = #knotIds
 
             local i = 0
-            while i < lenIdStrs do
+            while i < lenKnotIds do
+                local isEven = (i % 2) ~= 1
                 i = i + 1
-                local idPair = collideCheckIds[i]
-                local xId = idPair[1]
-                local yId = idPair[2]
-                local xPoint = args[xId] --[[@as number]]
-                local yPoint = args[yId] --[[@as number]]
+                local knot = knotIds[i]
 
-                xPoint = math.min(math.max(xPoint, 0.0), 1.0)
+                local xAnchorId = knot[1]
+                local yAnchorId = knot[2]
+                local xAnchor = args[xAnchorId] --[[@as number]]
+                local yAnchor = args[yAnchorId] --[[@as number]]
 
-                local xPixel = Utilities.round(xPoint * xbr)
-                local yPixel = ybr - Utilities.round(yPoint * ybr)
+                local xControlId = knot[3]
+                local yControlId = knot[4]
+                local xControl = args[xControlId] --[[@as number]]
+                local yControl = args[yControlId] --[[@as number]]
 
-                local xDiff = xPixel - xMouse
-                local yDiff = yPixel - yMouse
-                local sqMag = xDiff * xDiff + yDiff * yDiff
-                if sqMag < hotSpotSq then
-                    dialog:modify { id = xId, text = string.format("%.5f", xm01) }
-                    dialog:modify { id = yId, text = string.format("%.5f", ym01) }
+                local xCtrlPixel = Utilities.round(xControl * xbr)
+                local yCtrlPixel = ybr - Utilities.round(yControl * ybr)
+
+                local xCtrlDiff = xCtrlPixel - xMouse
+                local yCtrlDiff = yCtrlPixel - yMouse
+                local sqMagCtrl = xCtrlDiff * xCtrlDiff + yCtrlDiff * yCtrlDiff
+                if sqMagCtrl < hotSpotSq then
+                    -- Prevent invalid outputs by limiting Bezier cage.
+                    -- Even knots have outgoing tangents,
+                    -- odd knots have incoming tangents.
+                    local xClamped = xm01
+                    if isEven then
+                        xClamped = math.max(xm01 + clampEpsilon, xAnchor)
+                    else
+                        xClamped = math.min(xm01 - clampEpsilon, xAnchor)
+                    end
+                    dialog:modify { id = xControlId, text = string.format("%.5f", xClamped) }
+                    dialog:modify { id = yControlId, text = string.format("%.5f", ym01) }
+                    dialog:modify { id = easeFuncId, option = "CUSTOM" }
+                    dialog:repaint()
+                    return
+                end
+
+                -- Prioritize interacting with control points over
+                -- anchor points.
+                local xAnchPixel = Utilities.round(xAnchor * xbr)
+                local yAnchPixel = ybr - Utilities.round(yAnchor * ybr)
+
+                local xAnchDiff = xAnchPixel - xMouse
+                local yAnchDiff = yAnchPixel - yMouse
+                local sqMagAnch = xAnchDiff * xAnchDiff + yAnchDiff * yAnchDiff
+                if sqMagAnch < hotSpotSq then
+                    local xCtrlNew = xm01 + (xControl - xAnchor)
+                    local yCtrlNew = ym01 + (yControl - yAnchor)
+                    dialog:modify { id = xAnchorId, text = string.format("%.5f", xm01) }
+                    dialog:modify { id = yAnchorId, text = string.format("%.5f", ym01) }
+                    dialog:modify { id = xControlId, text = string.format("%.5f", xCtrlNew) }
+                    dialog:modify { id = yControlId, text = string.format("%.5f", yCtrlNew) }
                     dialog:modify { id = easeFuncId, option = "CUSTOM" }
                     dialog:repaint()
                     return
@@ -293,16 +330,13 @@ function CanvasUtilities.graphBezier(
             local ap1x = args[idPoints[7]] --[[@as number]]
             local ap1y = args[idPoints[8]] --[[@as number]]
 
-            -- Clamp x points to [0.0, 1.0].
-            ap0x = math.min(math.max(ap0x, 0.0), 1.0)
-            cp0x = math.min(math.max(cp0x, 0.0), 1.0)
-            cp1x = math.min(math.max(cp1x, 0.0), 1.0)
-            ap1x = math.min(math.max(ap1x, 0.0), 1.0)
-
             -- Convert from [0.0, 1.0] to canvas pixels.
             local xbr = wVrf - 1
             local ybr = hVrf - 1
 
+            -- TODO: Seems wasteful to import Utilities file
+            -- just to use round function... At the very least
+            -- use the Curve2 class if you've got it.
             local ap0xPx = Utilities.round(ap0x * xbr)
             local ap0yPx = ybr - Utilities.round(ap0y * ybr)
             local cp0xPx = Utilities.round(cp0x * xbr)
@@ -334,6 +368,9 @@ function CanvasUtilities.graphBezier(
             context:stroke()
 
             local cp0Rot = math.atan(cp0y - ap0y, cp0x - ap0x)
+            CanvasUtilities.drawPolygon(context, 6, halfRadius,
+                ap0xPx, ap0yPx, 0)
+            context:fill()
             CanvasUtilities.drawPolygon(context, 3, polyRadius,
                 cp0xPx, cp0yPx, cp0Rot)
             context:fill()
@@ -347,6 +384,9 @@ function CanvasUtilities.graphBezier(
             context:stroke()
 
             local cp1Rot = math.atan(cp1y - ap1y, cp1x - ap1x)
+            CanvasUtilities.drawPolygon(context, 6, halfRadius,
+                ap1xPx, ap1yPx, 0)
+            context:fill()
             CanvasUtilities.drawPolygon(context, 3, polyRadius,
                 cp1xPx, cp1yPx, cp1Rot)
             context:fill()
@@ -357,7 +397,7 @@ function CanvasUtilities.graphBezier(
 
     dialog:newrow { always = false }
 
-
+    -- Create number input widgets.
     local j = 0
     while j < lenIdPoints do
         local isEven = j % 2 ~= 1

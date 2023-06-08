@@ -223,9 +223,17 @@ dlg:button {
             local varyChroma = args.varyChroma --[[@as boolean]]
             local varyHue = args.varyHue --[[@as boolean]]
 
+            -- Localize functions.
+            local rng = math.random
+            local max = math.max
+            local min = math.min
+            local drawMesh2 = ShapeUtilities.drawMesh2
+            local lchTosRgba = Clr.srLchTosRgb
+            local clrToAseColor = AseUtilities.clrToAseColor
+
             -- Find LCHA.
             local clr = AseUtilities.aseColorToClr(brickColor)
-            local lch = Clr.sRgbToCieLch(clr, 0.007072)
+            local lch = Clr.sRgbToSrLch(clr, 0.007072)
             local lightBrick = lch.l
             local chromaBrick = lch.c
             local hueBrick = lch.h
@@ -242,14 +250,6 @@ dlg:button {
             -- Separate faces.
             local separated = Mesh2.separateFaces(mesh)
             local sepLen = #separated
-
-            -- Localize functions.
-            local rng = math.random
-            local max = math.max
-            local min = math.min
-            local drawMesh2 = ShapeUtilities.drawMesh2
-            local lchTosRgba = Clr.cieLchTosRgb
-            local clrToAseColor = AseUtilities.clrToAseColor
 
             app.transaction("Bricks", function()
                 local i = 0

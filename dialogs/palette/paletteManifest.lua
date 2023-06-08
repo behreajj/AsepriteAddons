@@ -332,8 +332,8 @@ dlg:button {
         local round = Utilities.round
         local strfmt = string.format
         local strsub = string.sub
-        local sRgbToLab = Clr.sRgbToCieLab
-        local labToLch = Clr.cieLabToCieLch
+        local sRgbToLab = Clr.sRgbToSrLab2
+        local labToLch = Clr.srLab2ToSrLch
         local strToChars = Utilities.stringToCharTable
         local hexToAse = AseUtilities.hexToAseColor
 
