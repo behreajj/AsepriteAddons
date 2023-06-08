@@ -161,15 +161,6 @@ function CanvasUtilities.graphBezier(
     local gridClrVrf = gridColor or Color { r = 128, g = 128, b = 128 }
     local curveClrVrf = curveColor or Color { r = 255, g = 255, b = 255 }
 
-    local ap1xVrf = 1.0
-    local ap1yVrf = 1.0
-    local cp1yVrf = cp1yDef or 1.0
-    local cp1xVrf = cp1xDef or 0.58
-    local cp0yVrf = cp0yDef or 0.0
-    local cp0xVrf = cp0xDef or 0.42
-    local ap0xVrf = 0.0
-    local ap0yVrf = 0.0
-
     local grdCntVrf = gridCount or 5
     local visFuncsVrf = false
     if visFuncs then visFuncsVrf = true end
@@ -180,6 +171,37 @@ function CanvasUtilities.graphBezier(
     local hVrf = height or 128
     local wVrf = width or 128
     local idVrf = id or "graphBezier"
+
+    local easeFuncId = idVrf .. "_easeFuncs"
+    local idPoints = {
+        idVrf .. "_ap0x",
+        idVrf .. "_ap0y",
+        idVrf .. "_cp0x",
+        idVrf .. "_cp0y",
+        idVrf .. "_cp1x",
+        idVrf .. "_cp1y",
+        idVrf .. "_ap1x",
+        idVrf .. "_ap1y",
+    }
+    local lenIdPoints = #idPoints
+
+    local labelPoints = {
+        "Anchor 0:",
+        "Control 0:",
+        "Control 1:",
+        "Anchor 1:"
+    }
+
+    local valuePoints = {
+        0.0,
+        0.0,
+        cp0xDef or 0.42,
+        cp0yDef or 0.0,
+        cp1xDef or 0.58,
+        cp1yDef or 1.0,
+        1.0,
+        1.0
+    }
 
     ---@param event MouseEvent
     local onMouseFunc = function(event)
@@ -207,18 +229,19 @@ function CanvasUtilities.graphBezier(
 
             -- Control points take precedence over anchor points
             -- when it comes to selecting for mouse movement.
-            local idStrs = {
-                { "cp0x", "cp0y" },
-                { "cp1x", "cp1y" },
-                -- { "ap0x", "ap0y" },
-                -- { "ap1x", "ap1y" }
+            local collideCheckIds = {
+                -- TODO: Group into knots, move control points with anchors.
+                { idPoints[3], idPoints[4] },
+                { idPoints[5], idPoints[6] },
+                { idPoints[1], idPoints[2] },
+                { idPoints[7], idPoints[8] }
             }
-            local lenIdStrs = #idStrs
+            local lenIdStrs = #collideCheckIds
 
             local i = 0
             while i < lenIdStrs do
                 i = i + 1
-                local idPair = idStrs[i]
+                local idPair = collideCheckIds[i]
                 local xId = idPair[1]
                 local yId = idPair[2]
                 local xPoint = args[xId] --[[@as number]]
@@ -235,6 +258,7 @@ function CanvasUtilities.graphBezier(
                 if sqMag < hotSpotSq then
                     dialog:modify { id = xId, text = string.format("%.5f", xm01) }
                     dialog:modify { id = yId, text = string.format("%.5f", ym01) }
+                    dialog:modify { id = easeFuncId, option = "CUSTOM" }
                     dialog:repaint()
                     return
                 end
@@ -260,14 +284,14 @@ function CanvasUtilities.graphBezier(
 
             -- Unpack arguments.
             local args = dialog.data
-            local ap0x = args.ap0x --[[@as number]]
-            local ap0y = args.ap0y --[[@as number]]
-            local cp0x = args.cp0x --[[@as number]]
-            local cp0y = args.cp0y --[[@as number]]
-            local cp1x = args.cp1x --[[@as number]]
-            local cp1y = args.cp1y --[[@as number]]
-            local ap1x = args.ap1x --[[@as number]]
-            local ap1y = args.ap1y --[[@as number]]
+            local ap0x = args[idPoints[1]] --[[@as number]]
+            local ap0y = args[idPoints[2]] --[[@as number]]
+            local cp0x = args[idPoints[3]] --[[@as number]]
+            local cp0y = args[idPoints[4]] --[[@as number]]
+            local cp1x = args[idPoints[5]] --[[@as number]]
+            local cp1y = args[idPoints[6]] --[[@as number]]
+            local ap1x = args[idPoints[7]] --[[@as number]]
+            local ap1y = args[idPoints[8]] --[[@as number]]
 
             -- Clamp x points to [0.0, 1.0].
             ap0x = math.min(math.max(ap0x, 0.0), 1.0)
@@ -333,108 +357,37 @@ function CanvasUtilities.graphBezier(
 
     dialog:newrow { always = false }
 
-    dialog:number {
-        id = "ap0x",
-        label = "Anchor 0:",
-        text = string.format("%.5f", ap0xVrf),
-        decimals = 5,
-        focus = false,
-        visible = isVisVrf and visCtrlVrf,
-        onchange = function()
-            dialog:repaint()
+
+    local j = 0
+    while j < lenIdPoints do
+        local isEven = j % 2 ~= 1
+        local k = 1 + j // 2
+        j = j + 1
+        local idPoint = idPoints[j]
+        local labelPoint = nil
+        if isEven then
+            labelPoint = labelPoints[k]
         end
-    }
-
-    dialog:number {
-        id = "ap0y",
-        text = string.format("%.5f", ap0yVrf),
-        decimals = 5,
-        focus = false,
-        visible = isVisVrf and visCtrlVrf,
-        onchange = function()
-            dialog:repaint()
+        local valuePoint = valuePoints[j]
+        dialog:number {
+            id = idPoint,
+            label = labelPoint,
+            text = string.format("%.5f", valuePoint),
+            decimals = 5,
+            focus = false,
+            visible = isVisVrf and visCtrlVrf,
+            onchange = function()
+                dialog:modify { id = easeFuncId, option = "CUSTOM" }
+                dialog:repaint()
+            end
+        }
+        if not isEven then
+            dialog:newrow { always = false }
         end
-    }
-
-    dialog:newrow { always = false }
-
-    dialog:number {
-        id = "cp0x",
-        label = "Control 0:",
-        text = string.format("%.5f", cp0xVrf),
-        decimals = 5,
-        focus = false,
-        visible = isVisVrf and visCtrlVrf,
-        onchange = function()
-            dialog:repaint()
-        end
-    }
-
-    dialog:number {
-        id = "cp0y",
-        text = string.format("%.5f", cp0yVrf),
-        decimals = 5,
-        focus = false,
-        visible = isVisVrf and visCtrlVrf,
-        onchange = function()
-            dialog:repaint()
-        end
-    }
-
-    dialog:newrow { always = false }
-
-    dialog:number {
-        id = "cp1x",
-        label = "Control 1:",
-        text = string.format("%.5f", cp1xVrf),
-        decimals = 5,
-        focus = false,
-        visible = isVisVrf and visCtrlVrf,
-        onchange = function()
-            dialog:repaint()
-        end
-    }
-
-    dialog:number {
-        id = "cp1y",
-        text = string.format("%.5f", cp1yVrf),
-        decimals = 5,
-        focus = false,
-        visible = isVisVrf and visCtrlVrf,
-        onchange = function()
-            dialog:repaint()
-        end
-    }
-
-    dialog:newrow { always = false }
-
-    dialog:number {
-        id = "ap1x",
-        label = "Anchor 1:",
-        text = string.format("%.5f", ap1xVrf),
-        decimals = 5,
-        focus = false,
-        visible = isVisVrf and visCtrlVrf,
-        onchange = function()
-            dialog:repaint()
-        end
-    }
-
-    dialog:number {
-        id = "ap1y",
-        text = string.format("%.5f", ap1yVrf),
-        decimals = 5,
-        focus = false,
-        visible = isVisVrf and visCtrlVrf,
-        onchange = function()
-            dialog:repaint()
-        end
-    }
-
-    dialog:newrow { always = false }
+    end
 
     dialog:combobox {
-        id = "easeFuncs",
+        id = easeFuncId,
         label = "Function:",
         option = "CUSTOM",
         options = {
@@ -447,54 +400,30 @@ function CanvasUtilities.graphBezier(
         visible = isVisVrf and visFuncsVrf,
         onchange = function()
             local args = dialog.data
-            local easeFunc = args.easeFuncs --[[@as string]]
-            if easeFunc == "EASE" then
-                dialog:modify { id = "ap0x", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "ap0y", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "cp0x", text = string.format("%.2f", 0.25) }
-                dialog:modify { id = "cp0y", text = string.format("%.1f", 0.1) }
-                dialog:modify { id = "cp1x", text = string.format("%.2f", 0.25) }
-                dialog:modify { id = "cp1y", text = string.format("%.1f", 1.0) }
-                dialog:modify { id = "ap1x", text = string.format("%.1f", 1.0) }
-                dialog:modify { id = "ap1y", text = string.format("%.1f", 1.0) }
-            elseif easeFunc == "EASE_IN" then
-                dialog:modify { id = "ap0x", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "ap0y", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "cp0x", text = string.format("%.2f", 0.42) }
-                dialog:modify { id = "cp0y", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "cp1x", text = string.format("%.1f", 1.0) }
-                dialog:modify { id = "cp1y", text = string.format("%.1f", 1.0) }
-                dialog:modify { id = "ap1x", text = string.format("%.1f", 1.0) }
-                dialog:modify { id = "ap1y", text = string.format("%.1f", 1.0) }
-            elseif easeFunc == "EASE_IN_OUT" then
-                dialog:modify { id = "ap0x", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "ap0y", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "cp0x", text = string.format("%.2f", 0.42) }
-                dialog:modify { id = "cp0y", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "cp1x", text = string.format("%.2f", 0.58) }
-                dialog:modify { id = "cp1y", text = string.format("%.1f", 1.0) }
-                dialog:modify { id = "ap1x", text = string.format("%.1f", 1.0) }
-                dialog:modify { id = "ap1y", text = string.format("%.1f", 1.0) }
-            elseif easeFunc == "EASE_OUT" then
-                dialog:modify { id = "ap0x", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "ap0y", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "cp0x", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "cp0y", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "cp1x", text = string.format("%.2f", 0.58) }
-                dialog:modify { id = "cp1y", text = string.format("%.1f", 1.0) }
-                dialog:modify { id = "ap1x", text = string.format("%.1f", 1.0) }
-                dialog:modify { id = "ap1y", text = string.format("%.1f", 1.0) }
-            elseif easeFunc == "LINEAR" then
-                dialog:modify { id = "ap0x", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "ap0y", text = string.format("%.1f", 0.0) }
-                dialog:modify { id = "cp0x", text = string.format("%.5f", 0.33333) }
-                dialog:modify { id = "cp0y", text = string.format("%.5f", 0.33333) }
-                dialog:modify { id = "cp1x", text = string.format("%.5f", 0.66667) }
-                dialog:modify { id = "cp1y", text = string.format("%.5f", 0.66667) }
-                dialog:modify { id = "ap1x", text = string.format("%.1f", 1.0) }
-                dialog:modify { id = "ap1y", text = string.format("%.1f", 1.0) }
+            local easeFunc = args[easeFuncId] --[[@as string]]
+
+            if easeFunc ~= "CUSTOM" then
+                local presetPoints = { 0.0, 0.0, 0.33333, 0.33333, 0.66667, 0.66667, 1.0, 1.0 }
+                if easeFunc == "EASE" then
+                    presetPoints = { 0.0, 0.0, 0.25, 0.1, 0.25, 1.0, 1.0, 1.0 }
+                elseif easeFunc == "EASE_IN" then
+                    presetPoints = { 0.0, 0.0, 0.42, 0.0, 1.0, 1.0, 1.0, 1.0 }
+                elseif easeFunc == "EASE_IN_OUT" then
+                    presetPoints = { 0.0, 0.0, 0.42, 0.0, 0.58, 1.0, 1.0, 1.0 }
+                elseif easeFunc == "EASE_OUT" then
+                    presetPoints = { 0.0, 0.0, 0.0, 0.0, 0.58, 1.0, 1.0, 1.0 }
+                end
+
+                local i = 0
+                while i < lenIdPoints do
+                    i = i + 1
+                    dialog:modify {
+                        id = idPoints[i],
+                        text = string.format("%.5f", presetPoints[i])
+                    }
+                end
+                dialog:repaint()
             end
-            dialog:repaint()
         end
     }
 

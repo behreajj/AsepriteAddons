@@ -65,16 +65,39 @@ local function linToStd(x)
     return (x ^ 0.41666666666667) * 1.055 - 0.055
 end
 
-local function bezier(cp0x, cp0y, cp1x, cp1y, t)
-    if t <= 0.0 then return 0.0, 0.0 end
-    if t >= 1.0 then return 1.0, 1.0 end
+---@param ap0x number
+---@param ap0y number
+---@param cp0x number
+---@param cp0y number
+---@param cp1x number
+---@param cp1y number
+---@param ap1x number
+---@param ap1y number
+---@param w number
+---@return number
+---@return number
+local function bezier(ap0x, ap0y, cp0x, cp0y, cp1x, cp1y, ap1x, ap1y, w)
+    if w <= ap0x then return ap0y, ap0x end
+    if w >= ap1x then return ap1y, ap1x end
+
+    local t = 0.0
+    local range = ap1x - ap0x
+    if range ~= 0.0 then
+        t = (w - ap0x) / range
+    end
+
     local u = 1.0 - t
     local tsq = t * t
-    local usq3t = u * u * (t + t + t)
+    local usq = u * u
+    local usq3t = usq * (t + t + t)
     local tsq3u = tsq * (u + u + u)
     local tcb = tsq * t
-    return cp0y * usq3t + cp1y * tsq3u + tcb,
-        cp0x * usq3t + cp1x * tsq3u + tcb
+    local ucb = usq * u
+
+    return ap0y * ucb + cp0y * usq3t +
+        cp1y * tsq3u + ap1y * tcb,
+        ap0x * ucb + cp0x * usq3t +
+        cp1x * tsq3u + ap1x * tcb
 end
 
 ---@param x number
@@ -160,18 +183,26 @@ dlg:combobox {
         -- invisible.
         if prs == "BEZIER" then
             dlg:modify { id = "graphBezier", visible = true }
-            dlg:modify { id = "cp0x", visible = true }
-            dlg:modify { id = "cp0y", visible = true }
-            dlg:modify { id = "cp1x", visible = true }
-            dlg:modify { id = "cp1y", visible = true }
-            dlg:modify { id = "easeFuncs", visible = true }
+            dlg:modify { id = "graphBezier_ap0x", visible = true }
+            dlg:modify { id = "graphBezier_ap0y", visible = true }
+            dlg:modify { id = "graphBezier_cp0x", visible = true }
+            dlg:modify { id = "graphBezier_cp0y", visible = true }
+            dlg:modify { id = "graphBezier_cp1x", visible = true }
+            dlg:modify { id = "graphBezier_cp1y", visible = true }
+            dlg:modify { id = "graphBezier_ap1x", visible = true }
+            dlg:modify { id = "graphBezier_ap1y", visible = true }
+            dlg:modify { id = "graphBezier_easeFuncs", visible = true }
         else
             dlg:modify { id = "graphBezier", visible = false }
-            dlg:modify { id = "cp0x", visible = false }
-            dlg:modify { id = "cp0y", visible = false }
-            dlg:modify { id = "cp1x", visible = false }
-            dlg:modify { id = "cp1y", visible = false }
-            dlg:modify { id = "easeFuncs", visible = false }
+            dlg:modify { id = "graphBezier_ap0x", visible = false }
+            dlg:modify { id = "graphBezier_ap0y", visible = false }
+            dlg:modify { id = "graphBezier_cp0x", visible = false }
+            dlg:modify { id = "graphBezier_cp0y", visible = false }
+            dlg:modify { id = "graphBezier_cp1x", visible = false }
+            dlg:modify { id = "graphBezier_cp1y", visible = false }
+            dlg:modify { id = "graphBezier_ap1x", visible = false }
+            dlg:modify { id = "graphBezier_ap1y", visible = false }
+            dlg:modify { id = "graphBezier_easeFuncs", visible = false }
         end
 
         if prs == "GAMMA" then
@@ -396,16 +427,20 @@ dlg:button {
 
         local preset = args.preset
         if preset == "BEZIER" then
-            local cp0x = args.cp0x or defaults.cp0x --[[@as number]]
-            local cp0y = args.cp0y or defaults.cp0y --[[@as number]]
-            local cp1x = args.cp1x or defaults.cp1x --[[@as number]]
-            local cp1y = args.cp1y or defaults.cp1y --[[@as number]]
+            local ap0x = args.graphBezier_ap0x or defaults.ap0x --[[@as number]]
+            local ap0y = args.graphBezier_ap0y or defaults.ap0y --[[@as number]]
+            local cp0x = args.graphBezier_cp0x or defaults.cp0x --[[@as number]]
+            local cp0y = args.graphBezier_cp0y or defaults.cp0y --[[@as number]]
+            local cp1x = args.graphBezier_cp1x or defaults.cp1x --[[@as number]]
+            local cp1y = args.graphBezier_cp1y or defaults.cp1y --[[@as number]]
+            local ap1x = args.graphBezier_ap1x or defaults.ap1x --[[@as number]]
+            local ap1y = args.graphBezier_ap1y or defaults.ap1y --[[@as number]]
 
             cp0x = math.min(math.max(cp0x, 0.0), 1.0)
             cp1x = math.min(math.max(cp1x, 0.0), 1.0)
 
             func = function(x)
-                return bezier(cp0x, cp0y, cp1x, cp1y, x)
+                return bezier(ap0x, ap0y, cp0x, cp0y, cp1x, cp1y, ap1x, ap1y, x)
             end
         elseif preset == "GAMMA" then
             local g = 1.0
