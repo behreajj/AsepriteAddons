@@ -269,9 +269,9 @@ function CanvasUtilities.graphBezier(
                     -- odd knots have incoming tangents.
                     local xClamped = xm01
                     if isEven then
-                        xClamped = math.max(xm01 + clampEpsilon, xAnchor)
+                        xClamped = math.max(xm01, xAnchor + clampEpsilon)
                     else
-                        xClamped = math.min(xm01 - clampEpsilon, xAnchor)
+                        xClamped = math.min(xm01, xAnchor - clampEpsilon)
                     end
                     dialog:modify { id = xControlId, text = string.format("%.5f", xClamped) }
                     dialog:modify { id = yControlId, text = string.format("%.5f", ym01) }
