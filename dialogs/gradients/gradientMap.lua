@@ -156,9 +156,9 @@ dlg:button {
 
                 ---@type table<integer, boolean>
                 local srcHexDict = {}
-                local srcItr = srcImg:pixels()
-                for srcHex in srcItr do
-                    srcHexDict[srcHex()] = true
+                local srcPxItr = srcImg:pixels()
+                for srcPixel in srcPxItr do
+                    srcHexDict[srcPixel()] = true
                 end
 
                 ---@type table<integer, number>
@@ -194,7 +194,7 @@ dlg:button {
                 end
 
                 local trgImg = srcImg:clone()
-                local trgPixelItr = trgImg:pixels()
+                local trgPxItr = trgImg:pixels()
 
                 if useMixed then
                     ---@type table<integer, integer>
@@ -214,11 +214,11 @@ dlg:button {
                             | (trgHex & 0x00ffffff)
                     end
 
-                    for trgPixel in trgPixelItr do
+                    for trgPixel in trgPxItr do
                         trgPixel(trgHexDict[trgPixel()])
                     end
                 else
-                    for trgPixel in trgPixelItr do
+                    for trgPixel in trgPxItr do
                         local srcHex = trgPixel()
                         local fac = lumDict[srcHex]
                         fac = facAdjust(fac)

@@ -65,6 +65,31 @@ function Utilities.new()
     return inst
 end
 
+---Bisects an array of elements to find
+---the appropriate index. Biases towards the right
+---insert point. Should be used with sorted arrays.
+---@generic T array type
+---@generic U element type
+---@param arr T[] array
+---@param elm U query
+---@param compare fun(a: U, b: T): boolean comparator
+---@return integer
+function Utilities.bisectRight(arr, elm, compare)
+    local low = 0
+    local high = #arr
+    if high < 1 then return 1 end
+    while low < high do
+        local middle = (low + high) // 2
+        local right = arr[1 + middle]
+        if right and compare(elm, right) then
+            high = middle
+        else
+            low = middle + 1
+        end
+    end
+    return 1 + low
+end
+
 ---Converts a dictionary to a sorted set.
 ---If a comparator is not provided, elements
 ---are sorted by their less than (<) operator.

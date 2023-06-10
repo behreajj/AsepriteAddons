@@ -72,41 +72,6 @@ local function linToStd(x)
     return (x ^ 0.41666666666667) * 1.055 - 0.055
 end
 
----@param ap0x number
----@param ap0y number
----@param cp0x number
----@param cp0y number
----@param cp1x number
----@param cp1y number
----@param ap1x number
----@param ap1y number
----@param w number
----@return number
----@return number
-local function bezier(ap0x, ap0y, cp0x, cp0y, cp1x, cp1y, ap1x, ap1y, w)
-    if w <= ap0x then return ap0y, ap0x end
-    if w >= ap1x then return ap1y, ap1x end
-
-    local t = 0.0
-    local range = ap1x - ap0x
-    if range ~= 0.0 then
-        t = (w - ap0x) / range
-    end
-
-    local u = 1.0 - t
-    local tsq = t * t
-    local usq = u * u
-    local usq3t = usq * (t + t + t)
-    local tsq3u = tsq * (u + u + u)
-    local tcb = tsq * t
-    local ucb = usq * u
-
-    return ap0y * ucb + cp0y * usq3t +
-        cp1y * tsq3u + ap1y * tcb,
-        ap0x * ucb + cp0x * usq3t +
-        cp1x * tsq3u + ap1x * tcb
-end
-
 ---@param x number
 ---@param lbIn number
 ---@param ubIn number
@@ -209,6 +174,9 @@ dlg:combobox {
             dlg:modify { id = "graphBezier_ap1x", visible = true }
             dlg:modify { id = "graphBezier_ap1y", visible = true }
             dlg:modify { id = "graphBezier_easeFuncs", visible = true }
+            dlg:modify { id = "graphBezier_flipv", visible = true }
+            dlg:modify { id = "graphBezier_straight", visible = true }
+            dlg:modify { id = "graphBezier_parallel", visible = true }
         else
             dlg:modify { id = "graphBezier", visible = false }
             dlg:modify { id = "graphBezier_ap0x", visible = false }
@@ -220,6 +188,9 @@ dlg:combobox {
             dlg:modify { id = "graphBezier_ap1x", visible = false }
             dlg:modify { id = "graphBezier_ap1y", visible = false }
             dlg:modify { id = "graphBezier_easeFuncs", visible = false }
+            dlg:modify { id = "graphBezier_flipv", visible = false }
+            dlg:modify { id = "graphBezier_straight", visible = false }
+            dlg:modify { id = "graphBezier_parallel", visible = false }
         end
 
         if prs == "LEVELS" then
@@ -265,7 +236,8 @@ dlg:newrow { always = false }
 CanvasUtilities.graphBezier(
     dlg, "graphBezier", "Bezier:",
     128 // screenScale, 128 // screenScale,
-    defaults.preset == "BEZIER", true, true, 5,
+    defaults.preset == "BEZIER",
+    true, true, true, true, 5,
     defaults.cp0x, defaults.cp0y,
     defaults.cp1x, defaults.cp1y,
     app.theme.color.text,
@@ -485,11 +457,26 @@ dlg:button {
             local ap1x = args.graphBezier_ap1x or defaults.ap1x --[[@as number]]
             local ap1y = args.graphBezier_ap1y or defaults.ap1y --[[@as number]]
 
-            cp0x = math.min(math.max(cp0x, 0.0), 1.0)
-            cp1x = math.min(math.max(cp1x, 0.0), 1.0)
+            local curve = Curve2.new(false, {
+                Knot2.new(
+                    Vec2.new(ap0x, ap0y),
+                    Vec2.new(cp0x, cp0y),
+                    Vec2.new(0.0, ap0y)),
+                Knot2.new(
+                    Vec2.new(ap1x, ap1y),
+                    Vec2.new(1.0, ap1y),
+                    Vec2.new(cp1x, cp1y))
+            })
+            local totalLength, arcLengths = Curve2.arcLength(curve, 96)
+            local paramPoints = Curve2.paramPoints(curve, totalLength, arcLengths, 96)
+            local comparator = function(a, b) return a < b.x end
 
             func = function(x)
-                return bezier(ap0x, ap0y, cp0x, cp0y, cp1x, cp1y, ap1x, ap1y, x)
+                if x <= ap0x then return ap0y, x end
+                if x >= ap1x then return ap1y, x end
+                local nearestIndex = Utilities.bisectRight(paramPoints, x, comparator)
+                local point = paramPoints[nearestIndex]
+                return point.y, point.x
             end
         elseif preset == "LEVELS" then
             local lbIn255 = args.lbIn or defaults.lbIn --[[@as integer]]

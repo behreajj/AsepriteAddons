@@ -3,10 +3,6 @@
 ---@field public g number green channel
 ---@field public b number blue channel
 ---@field public a number transparency
----@operator band(Clr): Clr
----@operator bnot(): Clr
----@operator bor(Clr): Clr
----@operator bxor(Clr): Clr
 ---@operator len(): integer
 Clr = {}
 Clr.__index = Clr
@@ -44,22 +40,6 @@ function Clr.new(r, g, b, a)
     return inst
 end
 
-function Clr:__band(b)
-    return Clr.bitAnd(self, b)
-end
-
-function Clr:__bnot()
-    return Clr.bitNot(self)
-end
-
-function Clr:__bor(b)
-    return Clr.bitOr(self, b)
-end
-
-function Clr:__bxor(b)
-    return Clr.bitXor(self, b)
-end
-
 function Clr:__eq(b)
     return Clr.bitEq(self, b)
 end
@@ -88,14 +68,6 @@ end
 function Clr.alphaIsInGamut(c, tol)
     local eps = tol or 0.0
     return c.a >= -eps and c.a <= (1.0 + eps)
-end
-
----Finds the bitwise and (&) for two colors.
----@param a Clr left operand
----@param b Clr right operand
----@return Clr
-function Clr.bitAnd(a, b)
-    return Clr.fromHex(Clr.toHex(a) & Clr.toHex(b))
 end
 
 ---Evaluates whether two colors have equal red,
@@ -169,29 +141,6 @@ function Clr.bitEqRgb(a, b)
     end
 
     return true
-end
-
----Finds the bitwise not (~) for a color.
----@param c Clr color
----@return Clr
-function Clr.bitNot(c)
-    return Clr.fromHex(~Clr.toHex(c))
-end
-
----Finds the bitwise inclusive or (|) for two colors.
----@param a Clr left operand
----@param b Clr right operand
----@return Clr
-function Clr.bitOr(a, b)
-    return Clr.fromHex(Clr.toHex(a) | Clr.toHex(b))
-end
-
----Finds the bitwise exclusive or (~) for two colors.
----@param a Clr left operand
----@param b Clr right operand
----@return Clr
-function Clr.bitXor(a, b)
-    return Clr.fromHex(Clr.toHex(a) ~ Clr.toHex(b))
 end
 
 ---Blends two colors together by their alpha.

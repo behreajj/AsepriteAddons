@@ -608,17 +608,15 @@ dlg:button {
             return
         end
 
-        -- Get the range as soon as possible, before any changes
-        -- cause it to be removed or updated.
         local args = dlg.data
         local target = args.target or defaults.target --[[@as string]]
-        local isSelect = target == "SELECTION"
         local frames = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
         local lenFrames = #frames
 
         -- If isSelect is true, then a new layer will be created.
         local srcLayer = site.layer --[[@as Layer]]
+        local isSelect = target == "SELECTION"
         if not isSelect then
             if not srcLayer then
                 app.alert {

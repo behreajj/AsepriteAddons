@@ -38,6 +38,47 @@ function Curve2:__tostring()
     return Curve2.toJson(self)
 end
 
+---Calculates the arc length of a curve. Does so
+---by creating a number of sampled points, then
+---accumulating the lengths between a current and
+---previous point. Returns the summed length and
+---an array of cumulative lengths
+---@param curve Curve2 curve
+---@param sampleCount number sample count
+---@return number totalLength curve length
+---@return number[] arcLengths cumulative lengths
+function Curve2.arcLength(curve, sampleCount)
+    --https://openprocessing.org/sketch/669242
+    local countVrf = sampleCount or 256
+    countVrf = math.max(1, countVrf)
+    local countVrfp1 = countVrf + 1
+    local hToFac = 1.0 / countVrf
+
+    ---@type Vec2[]
+    local points = {}
+
+    local h = 0
+    while h < countVrfp1 do
+        local hFac = h * hToFac
+        h = h + 1
+        points[h] = Curve2.eval(curve, hFac)
+    end
+
+    ---@type number[]
+    local arcLengths = {}
+    local totalLength = 0.0
+    local i = 1
+    while i < countVrfp1 do
+        local prev = points[i]
+        local curr = points[i + 1]
+        local d = Vec2.dist(curr, prev)
+        totalLength = totalLength + d
+        arcLengths[i] = totalLength
+        i = i + 1
+    end
+    return totalLength, arcLengths
+end
+
 ---Evaluates a curve by a step in [0.0, 1.0].
 ---Returns a vector representing a point on the curve.
 ---@param curve Curve2 curve
@@ -53,14 +94,11 @@ function Curve2.eval(curve, step)
     local b = nil
 
     if curve.closedLoop then
-
         tScaled = (t % 1.0) * knotLength
         i = math.floor(tScaled)
         a = knots[1 + (i % knotLength)]
         b = knots[1 + ((i + 1) % knotLength)]
-
     else
-
         if t <= 0.0 or knotLength == 1 then
             return Curve2.evalFirst(curve)
         end
@@ -73,7 +111,6 @@ function Curve2.eval(curve, step)
         i = math.floor(tScaled)
         a = knots[1 + i]
         b = knots[2 + i]
-
     end
 
     local tsni = tScaled - i
@@ -98,6 +135,69 @@ function Curve2.evalLast(curve)
     local kLast = curve.knots[#curve.knots]
     local coLast = kLast.co
     return Vec2.new(coLast.x, coLast.y)
+end
+
+---Creates an array containing points on a
+---polyline that are approximately equidistant.
+---Depends on the results of the arcLength method.
+---@param curve Curve2 curve
+---@param totalLength number curve length
+---@param arcLengths number[] cumulative lengths
+---@param sampleCount integer? sample count
+---@return Vec2[]
+function Curve2.paramPoints(
+    curve,
+    totalLength,
+    arcLengths,
+    sampleCount)
+    local countVrf = sampleCount or 256
+    countVrf = math.max(1, countVrf)
+
+    ---@type Vec2[]
+    local result = {}
+    local cl = curve.closedLoop
+    local first = 2
+    if cl then first = 1 end
+    local toLength = totalLength / sampleCount
+    local lenArcLengths = #arcLengths
+    local toParam = 1.0 / (lenArcLengths - 1)
+
+    if not cl then
+        result[1] = Curve2.evalFirst(curve)
+    end
+
+    local i = first
+    while i < countVrf do
+        local request = i * toLength
+
+        -- This cannot use utilities method as
+        -- that would create a circular dependency.
+        local low = 0
+        local high = lenArcLengths
+        if high >= 1 then
+            while low < high do
+                local middle = (low + high) // 2
+                local right = arcLengths[1 + middle]
+                if right and request < right then
+                    high = middle
+                else
+                    low = middle + 1
+                end
+            end
+        end
+
+        local param = low * toParam
+        local point = Curve2.eval(curve, param)
+        result[#result + 1] = point
+
+        i = i + 1
+    end
+
+    if not cl then
+        result[#result + 1] = Curve2.evalLast(curve)
+    end
+
+    return result
 end
 
 ---Returns a JSON string of a curve.

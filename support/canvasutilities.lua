@@ -132,7 +132,9 @@ end
 ---@param height integer canvas height
 ---@param isVisible boolean? is visible
 ---@param visCtrl boolean? visible numbers
+---@param visButtons boolean? visible buttons
 ---@param visFuncs boolean? visible functions
+---@param allowApMove boolean? allow anchor points
 ---@param gridCount integer? grid count
 ---@param cp0xDef number? x control point 0 default
 ---@param cp0yDef number? y control point 0 default
@@ -145,7 +147,8 @@ end
 ---@return Dialog
 function CanvasUtilities.graphBezier(
     dialog, id, label, width, height,
-    isVisible, visCtrl, visFuncs, gridCount,
+    isVisible, visCtrl, visButtons, visFuncs,
+    allowApMove, gridCount,
     cp0xDef, cp0yDef, cp1xDef, cp1yDef,
     curveColor, gridColor, cp0Color, cp1Color)
     -- Constants.
@@ -163,8 +166,12 @@ function CanvasUtilities.graphBezier(
     local curveClrVrf = curveColor or Color { r = 255, g = 255, b = 255 }
 
     local grdCntVrf = gridCount or 5
+    local allowApVrf = false
+    if allowApMove then allowApVrf = true end
     local visFuncsVrf = false
     if visFuncs then visFuncsVrf = true end
+    local visButtonsVrf = false
+    if visButtons then visButtonsVrf = true end
     local visCtrlVrf = false
     if visCtrl then visCtrlVrf = true end
     local isVisVrf = false
@@ -175,7 +182,11 @@ function CanvasUtilities.graphBezier(
 
     -- In case this widget is used more than once in a dialog,
     -- the widget ids need to be distinct from each other.
-    local easeFuncId = idVrf .. "_easeFuncs"
+    local easeFuncsId = idVrf .. "_easeFuncs"
+    local flipvButtonId = idVrf .. "_flipv"
+    local straightButtonId = idVrf .. "_straight"
+    local parallelButtonId = idVrf .. "_parallel"
+
     local idPoints = {
         idVrf .. "_ap0x",
         idVrf .. "_ap0y",
@@ -275,33 +286,35 @@ function CanvasUtilities.graphBezier(
                     end
                     dialog:modify { id = xControlId, text = string.format("%.5f", xClamped) }
                     dialog:modify { id = yControlId, text = string.format("%.5f", ym01) }
-                    dialog:modify { id = easeFuncId, option = "CUSTOM" }
+                    dialog:modify { id = easeFuncsId, option = "CUSTOM" }
                     dialog:repaint()
                     return
                 end
 
                 -- Prioritize interacting with control points over
                 -- anchor points.
-                local xAnchPixel = Utilities.round(xAnchor * xbr)
-                local yAnchPixel = ybr - Utilities.round(yAnchor * ybr)
+                if allowApVrf then
+                    local xAnchPixel = Utilities.round(xAnchor * xbr)
+                    local yAnchPixel = ybr - Utilities.round(yAnchor * ybr)
 
-                local xAnchDiff = xAnchPixel - xMouse
-                local yAnchDiff = yAnchPixel - yMouse
-                local sqMagAnch = xAnchDiff * xAnchDiff + yAnchDiff * yAnchDiff
-                if sqMagAnch < hotSpotSq then
-                    local xCtrlNew = xm01 + (xControl - xAnchor)
-                    local yCtrlNew = ym01 + (yControl - yAnchor)
-                    dialog:modify { id = xAnchorId, text = string.format("%.5f", xm01) }
-                    dialog:modify { id = yAnchorId, text = string.format("%.5f", ym01) }
-                    dialog:modify { id = xControlId, text = string.format("%.5f", xCtrlNew) }
-                    dialog:modify { id = yControlId, text = string.format("%.5f", yCtrlNew) }
-                    dialog:modify { id = easeFuncId, option = "CUSTOM" }
-                    dialog:repaint()
-                    return
-                end
-            end
-        end
-    end
+                    local xAnchDiff = xAnchPixel - xMouse
+                    local yAnchDiff = yAnchPixel - yMouse
+                    local sqMagAnch = xAnchDiff * xAnchDiff + yAnchDiff * yAnchDiff
+                    if sqMagAnch < hotSpotSq then
+                        local xCtrlNew = xm01 + (xControl - xAnchor)
+                        local yCtrlNew = ym01 + (yControl - yAnchor)
+                        dialog:modify { id = xAnchorId, text = string.format("%.5f", xm01) }
+                        dialog:modify { id = yAnchorId, text = string.format("%.5f", ym01) }
+                        dialog:modify { id = xControlId, text = string.format("%.5f", xCtrlNew) }
+                        dialog:modify { id = yControlId, text = string.format("%.5f", yCtrlNew) }
+                        dialog:modify { id = easeFuncsId, option = "CUSTOM" }
+                        dialog:repaint()
+                        return
+                    end -- End point is in radius.
+                end     -- End allow anchor point movement.
+            end         -- End knots loop.
+        end             -- End mouse button is not none.
+    end                 -- End mouse listener function.
 
     dialog:canvas {
         id = idVrf,
@@ -350,6 +363,7 @@ function CanvasUtilities.graphBezier(
             context.strokeWidth = swCurve
             context.color = curveClrVrf
             context:beginPath()
+            -- TODO: Different extrapolate options?
             context:moveTo(0, ap0yPx)
             context:lineTo(ap0xPx, ap0yPx)
             context:cubicTo(
@@ -368,7 +382,7 @@ function CanvasUtilities.graphBezier(
             context:stroke()
 
             local cp0Rot = math.atan(cp0y - ap0y, cp0x - ap0x)
-            CanvasUtilities.drawPolygon(context, 6, halfRadius,
+            CanvasUtilities.drawPolygon(context, 4, halfRadius,
                 ap0xPx, ap0yPx, 0)
             context:fill()
             CanvasUtilities.drawPolygon(context, 3, polyRadius,
@@ -384,7 +398,7 @@ function CanvasUtilities.graphBezier(
             context:stroke()
 
             local cp1Rot = math.atan(cp1y - ap1y, cp1x - ap1x)
-            CanvasUtilities.drawPolygon(context, 6, halfRadius,
+            CanvasUtilities.drawPolygon(context, 4, halfRadius,
                 ap1xPx, ap1yPx, 0)
             context:fill()
             CanvasUtilities.drawPolygon(context, 3, polyRadius,
@@ -401,14 +415,15 @@ function CanvasUtilities.graphBezier(
     local j = 0
     while j < lenIdPoints do
         local isEven = j % 2 ~= 1
-        local k = 1 + j // 2
+        local k = j // 2
         j = j + 1
         local idPoint = idPoints[j]
         local labelPoint = nil
         if isEven then
-            labelPoint = labelPoints[k]
+            labelPoint = labelPoints[1 + k]
         end
         local valuePoint = valuePoints[j]
+
         dialog:number {
             id = idPoint,
             label = labelPoint,
@@ -417,7 +432,7 @@ function CanvasUtilities.graphBezier(
             focus = false,
             visible = isVisVrf and visCtrlVrf,
             onchange = function()
-                dialog:modify { id = easeFuncId, option = "CUSTOM" }
+                dialog:modify { id = easeFuncsId, option = "CUSTOM" }
                 dialog:repaint()
             end
         }
@@ -426,8 +441,87 @@ function CanvasUtilities.graphBezier(
         end
     end
 
+    dialog:button {
+        id = straightButtonId,
+        text = "&STRAIGHT",
+        focus = false,
+        visible = isVisVrf and visButtonsVrf,
+        onclick = function()
+            local args = dialog.data
+            local ap0x = args[idPoints[1]] --[[@as number]]
+            local ap0y = args[idPoints[2]] --[[@as number]]
+            local ap1x = args[idPoints[7]] --[[@as number]]
+            local ap1y = args[idPoints[8]] --[[@as number]]
+
+            local twoThirds = 2.0 / 3.0
+            local oneThird = 1.0 / 3.0
+
+            local cp0x = twoThirds * ap0x + oneThird * ap1x
+            local cp0y = twoThirds * ap0y + oneThird * ap1y
+            local cp1x = twoThirds * ap1x + oneThird * ap0x
+            local cp1y = twoThirds * ap1y + oneThird * ap0y
+
+            dialog:modify { id = idPoints[3], text = string.format("%.5f", cp0x) }
+            dialog:modify { id = idPoints[4], text = string.format("%.5f", cp0y) }
+            dialog:modify { id = idPoints[5], text = string.format("%.5f", cp1x) }
+            dialog:modify { id = idPoints[6], text = string.format("%.5f", cp1y) }
+
+            dialog:repaint()
+        end
+    }
+
+    dialog:button {
+        id = parallelButtonId,
+        text = "&PARALLEL",
+        focus = false,
+        visible = isVisVrf and visButtonsVrf,
+        onclick = function()
+            local args = dialog.data
+            local ap0x = args[idPoints[1]] --[[@as number]]
+            local ap0y = args[idPoints[2]] --[[@as number]]
+            local ap1x = args[idPoints[7]] --[[@as number]]
+            local ap1y = args[idPoints[8]] --[[@as number]]
+
+            local k = 0.55228474983079
+            local l = 1.0 - k
+
+            local cp0x = l * ap0x + k * ap1x
+            local cp1x = l * ap1x + k * ap0x
+
+            dialog:modify { id = idPoints[3], text = string.format("%.5f", cp0x) }
+            dialog:modify { id = idPoints[4], text = string.format("%.5f", ap0y) }
+            dialog:modify { id = idPoints[5], text = string.format("%.5f", cp1x) }
+            dialog:modify { id = idPoints[6], text = string.format("%.5f", ap1y) }
+
+            dialog:repaint()
+        end
+    }
+
+    dialog:button {
+        id = flipvButtonId,
+        text = "FLIP &V",
+        focus = false,
+        visible = isVisVrf and visButtonsVrf,
+        onclick = function()
+            local args = dialog.data
+            local ap0y = args[idPoints[2]] --[[@as number]]
+            local cp0y = args[idPoints[4]] --[[@as number]]
+            local cp1y = args[idPoints[6]] --[[@as number]]
+            local ap1y = args[idPoints[8]] --[[@as number]]
+
+            dialog:modify { id = idPoints[2], text = string.format("%.5f", 1.0 - ap0y) }
+            dialog:modify { id = idPoints[4], text = string.format("%.5f", 1.0 - cp0y) }
+            dialog:modify { id = idPoints[6], text = string.format("%.5f", 1.0 - cp1y) }
+            dialog:modify { id = idPoints[8], text = string.format("%.5f", 1.0 - ap1y) }
+
+            dialog:repaint()
+        end
+    }
+
+    dialog:newrow { always = false }
+
     dialog:combobox {
-        id = easeFuncId,
+        id = easeFuncsId,
         label = "Function:",
         option = "CUSTOM",
         options = {
@@ -440,10 +534,14 @@ function CanvasUtilities.graphBezier(
         visible = isVisVrf and visFuncsVrf,
         onchange = function()
             local args = dialog.data
-            local easeFunc = args[easeFuncId] --[[@as string]]
+            local easeFunc = args[easeFuncsId] --[[@as string]]
 
             if easeFunc ~= "CUSTOM" then
-                local presetPoints = { 0.0, 0.0, 0.33333, 0.33333, 0.66667, 0.66667, 1.0, 1.0 }
+                local presetPoints = {
+                    0.0, 0.0,
+                    0.33333, 0.33333,
+                    0.66667, 0.66667,
+                    1.0, 1.0 }
                 if easeFunc == "EASE" then
                     presetPoints = { 0.0, 0.0, 0.25, 0.1, 0.25, 1.0, 1.0, 1.0 }
                 elseif easeFunc == "EASE_IN" then
