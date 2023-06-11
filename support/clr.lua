@@ -21,6 +21,10 @@ Clr.SR_LCH_HUE_LIGHT = 0.306391
 ---in SR LCH conversion functions.
 Clr.SR_LCH_HUE_SHADOW = 0.874676
 
+---Maximum chroma of a color in SR LCH
+---that is in gamut in standard RGB.
+Clr.SR_LCH_MAX_CHROMA = 119.07602046756
+
 ---Constructs a new color from red, green
 ---blue and transparency channels.
 ---The expected range is [0.0, 1.0], however,
@@ -29,7 +33,7 @@ Clr.SR_LCH_HUE_SHADOW = 0.874676
 ---@param r number red channel
 ---@param g number green channel
 ---@param b number blue channel
----@param a number transparency
+---@param a number? transparency
 ---@return Clr
 function Clr.new(r, g, b, a)
     local inst = setmetatable({}, Clr)

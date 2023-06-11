@@ -13,7 +13,7 @@ local defaults = {
     maxLight = 67,
     usec = false,
     minc = 10,
-    maxc = 135,
+    maxc = 120,
     useh = false,
     minh = 0,
     maxh = 360,
@@ -231,7 +231,7 @@ dlg:slider {
     id = "minc",
     label = "Chroma:",
     min = 0,
-    max = 135,
+    max = 120,
     value = defaults.minc,
     visible = defaults.uiMode == "CRITERIA"
         and defaults.usec
@@ -240,7 +240,7 @@ dlg:slider {
 dlg:slider {
     id = "maxc",
     min = 0,
-    max = 135,
+    max = 120,
     value = defaults.maxc,
     visible = defaults.uiMode == "CRITERIA"
         and defaults.usec

@@ -279,7 +279,7 @@ dlg:button {
             end
 
             if maskCriterion == "CHROMA" then
-                local ratio = 135.0 / 100.0
+                local ratio = Clr.SR_LCH_MAX_CHROMA / 100.0
                 lbThresh = lbThresh100 * ratio
                 ubThresh = ubThresh100 * ratio
                 maskFunc = function(lch, lb, ub)

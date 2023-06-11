@@ -13,7 +13,10 @@ local lenIdSliders = #idSliders
 local defaults = {
     target = "ACTIVE",
     channel = "L",
-    printElapsed = false
+    useRelative = true,
+    printElapsed = false,
+    aAbsMin = -104.18850360397,
+    bAbsMin = -110.47816964815
 }
 
 local dlg = Dialog { title = "Color Levels" }
@@ -100,11 +103,11 @@ local function setInputFromColor(idPostfix)
         val = math.floor(lab.l * 2.55 + 0.5)
     elseif channel == "A" then
         idPrefix = idPrefixes[2]
-        local aNorm = (lab.a + 111.0) / 222.0
+        local aNorm = (lab.a - defaults.aAbsMin) / defaults.aAbsRange
         val = math.floor(aNorm * 255.0 + 0.5)
     elseif channel == "B" then
         idPrefix = idPrefixes[3]
-        local bNorm = (lab.b + 111.0) / 222.0
+        local bNorm = (lab.b - defaults.bAbsMin) / defaults.bAbsRange
         val = math.floor(bNorm * 255.0 + 0.5)
     elseif channel == "Alpha" then
         idPrefix = idPrefixes[4]
@@ -155,7 +158,23 @@ dlg:combobox {
                 }
             end
         end
+
+        dlg:modify {
+            id = "useRelative",
+            visible = bools[2] or bools[3]
+        }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useRelative",
+    label = "Bounds:",
+    text = "Relative",
+    selected = defaults.useRelative,
+    visible = defaults.channel == "A"
+        or defaults.channel == "B"
 }
 
 dlg:newrow { always = false }
@@ -372,6 +391,17 @@ dlg:button {
         local bGamma = function(x) return x ^ bgVrf end
         local tGamma = function(x) return x ^ tgVrf end
 
+        local useRelative = args.useRelative --[[@as boolean]]
+        local aAbsMin = defaults.aAbsMin
+        local aAbsMax = -defaults.aAbsMin
+        local aAbsRange = aAbsMax - aAbsMin
+        local aAbsDenom = 1.0 / aAbsRange
+
+        local bAbsMin = defaults.bAbsMin
+        local bAbsMax = -defaults.bAbsMin
+        local bAbsRange = bAbsMax - bAbsMin
+        local bAbsDenom = 1.0 / bAbsRange
+
         local lenFrames = #frames
         local k = 0
         while k < lenFrames do
@@ -384,17 +414,33 @@ dlg:button {
                     srcImg = tilesToImage(srcImg, tileSet, colorMode)
                 end
 
-                local hexToLabDict, aMin, aMax, bMin, bMax = auditImage(srcImg)
+                local aMin = aAbsMin
+                local aMax = aAbsMax
+                local aRange = aAbsRange
+                local aViable = true
+                local aDenom = aAbsDenom
 
-                local aRange = aMax - aMin
-                local aViable = aRange ~= 0.0
-                local aDenom = 0.0
-                if aViable then aDenom = 1.0 / aRange end
+                local bMin = bAbsMin
+                local bMax = bAbsMax
+                local bRange = bAbsRange
+                local bViable = true
+                local bDenom = bAbsDenom
 
-                local bRange = bMax - bMin
-                local bViable = bRange ~= 0.0
-                local bDenom = 0.0
-                if bViable then bDenom = 1.0 / bRange end
+                local hexToLabDict = {}
+                if useRelative then
+                    hexToLabDict, aMin, aMax, bMin, bMax = auditImage(srcImg)
+                    aRange = aMax - aMin
+                    aViable = aRange > 0.5
+                    aDenom = 0.0
+                    if aViable then aDenom = 1.0 / aRange end
+
+                    bRange = bMax - bMin
+                    bViable = bRange > 0.5
+                    bDenom = 0.0
+                    if bViable then bDenom = 1.0 / bRange end
+                else
+                    hexToLabDict, _, _, _, _ = auditImage(srcImg)
+                end
 
                 ---@type table<integer, integer>
                 local srcToTrgDict = {}

@@ -48,7 +48,8 @@ end
 ---@return number totalLength curve length
 ---@return number[] arcLengths cumulative lengths
 function Curve2.arcLength(curve, sampleCount)
-    --https://openprocessing.org/sketch/669242
+    -- Old p5js implementation:
+    -- https://openprocessing.org/sketch/669242
     local countVrf = sampleCount or 256
     countVrf = math.max(1, countVrf)
     local countVrfp1 = countVrf + 1

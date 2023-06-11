@@ -27,7 +27,6 @@ local defaults = {
     barHeight = 16 // screenScale,
     reticleSize = 3 // screenScale,
     inGamutEps = 0.115,
-    maxChroma = 135,
     textShadow = 0xffe7e7e7,
     textColor = 0xff181818,
     shadeCount = 7,
@@ -150,8 +149,8 @@ end
 local function setChromaMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth
-        local mc = defaults.maxChroma
-        local mx135 = mc * event.x / (bw - 1.0)
+        local maxChroma = Clr.SR_LCH_MAX_CHROMA
+        local mx120 = maxChroma * event.x / (bw - 1.0)
         if event.ctrlKey then
             local inGamutEps = defaults.inGamutEps
             local incr = 1.0
@@ -172,13 +171,13 @@ local function setChromaMouseListen(event)
             active.c = c
         elseif event.shiftKey then
             local incr = 1.0
-            if math.abs(mx135 - active.c) > incr then
-                if mx135 < active.c then incr = -incr end
+            if math.abs(mx120 - active.c) > incr then
+                if mx120 < active.c then incr = -incr end
                 active.c = math.min(math.max(
-                    active.c + incr, 0.0), mc)
+                    active.c + incr, 0.0), maxChroma)
             end
         else
-            active.c = math.min(math.max(mx135, 0.0), mc)
+            active.c = math.min(math.max(mx120, 0.0), maxChroma)
         end
         dlg:repaint()
         updateHexCode(dlg, active.l, active.c, active.h)
@@ -416,7 +415,7 @@ dlg:canvas {
         local barWidth = defaults.barWidth
         local barHeight = defaults.barHeight
         local inGamutEps = defaults.inGamutEps
-        local maxChroma = defaults.maxChroma
+        local maxChroma = Clr.SR_LCH_MAX_CHROMA
         local reticleSize = defaults.reticleSize
 
         -- Unpack active.

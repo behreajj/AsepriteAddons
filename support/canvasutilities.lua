@@ -873,7 +873,7 @@ function CanvasUtilities.spectrum(
     local xToAlph01 = 1.0 / (wVrf - 1.0)
     local xToAlpha255 = 255.0 / (wVrf - 1.0)
     local yToLgt = 100.0 / (spectrumHeight - 1.0)
-    local xToChr = 135.0 / (wVrf - 1.0)
+    local xToChr = Clr.SR_LCH_MAX_CHROMA / (wVrf - 1.0)
     local xToHue = 1.0 / wVrf
 
     local inSpectrum = false

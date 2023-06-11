@@ -244,7 +244,8 @@ dlg:button {
             local vnHalf = varNrm * 0.5
             local varLgt = varNrm * 100.0
             local vlHalf = varLgt * 0.5
-            local varCrm = varNrm * 135.0
+            local mxCrm = Clr.SR_LCH_MAX_CHROMA
+            local varCrm = varNrm * mxCrm
             local vcHalf = varCrm * 0.5
 
             -- Separate faces.
@@ -262,7 +263,7 @@ dlg:button {
 
                     local cVary = chromaBrick
                     if varyChroma then
-                        cVary = max(0.0, min(135.0,
+                        cVary = max(0.0, min(mxCrm,
                             chromaBrick + varCrm * rng() - vcHalf))
                     end
 

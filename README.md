@@ -39,7 +39,7 @@ This repo includes
 
   ![Arc](screencaps/arc.png)
 
-- Color curve presets. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
+- Color curves. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
 
   ![Color Curve](screencaps/colorCurve.png)
   
