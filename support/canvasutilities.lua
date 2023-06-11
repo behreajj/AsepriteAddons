@@ -522,7 +522,7 @@ function CanvasUtilities.graphBezier(
 
     dialog:combobox {
         id = easeFuncsId,
-        label = "Function:",
+        label = "Preset:",
         option = "CUSTOM",
         options = {
             "CUSTOM",
