@@ -212,7 +212,7 @@ dlg:button {
     text = "F&ORE",
     focus = false,
     onclick = function()
-        if app.activeSprite then
+        if app.site.sprite then
             setFromAse(dlg, app.fgColor)
         end
     end
@@ -223,7 +223,7 @@ dlg:button {
     text = "B&ACK",
     focus = false,
     onclick = function()
-        if app.activeSprite then
+        if app.site.sprite then
             app.command.SwitchColors()
             setFromAse(dlg, app.fgColor)
             app.command.SwitchColors()

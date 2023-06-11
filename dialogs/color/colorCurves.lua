@@ -1,43 +1,41 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/canvasutilities.lua")
 
 local targets = { "ACTIVE", "ALL", "RANGE" }
 local channels = { "L", "A", "B", "Alpha" }
-local idPrefixes = { "l", "a", "b", "t" }
-local idPostfixes = { "LbIn", "UbIn", "LbOut", "UbOut", "Gamma" }
-local idSliders = { "LbIn", "UbIn", "LbOut", "UbOut" }
-local labelSliders = { "Inputs (X):", "Outputs (Y):" }
+
+local idPrefixes = {
+    "lCurve",
+    "aCurve",
+    "bCurve",
+    "tCurve"
+}
 local lenIdPrefixes = #idPrefixes
-local lenIdPostfixes = #idPostfixes
-local lenIdSliders = #idSliders
+
+local coPostfixes = {
+    [1] = "ap0x",
+    [2] = "ap0y",
+    [3] = "cp0x",
+    [4] = "cp0y",
+    [5] = "cp1x",
+    [6] = "cp1y",
+    [7] = "ap1x",
+    [8] = "ap1y",
+}
+local lenCoPostfixes = #coPostfixes
+
+local screenScale = app.preferences.general.screen_scale
+local curveColor = app.theme.color.text
+local gridColor = Color { r = 128, g = 128, b = 128 }
 
 local defaults = {
     target = "ACTIVE",
     channel = "L",
-    printElapsed = false
+    printElapsed = false,
+    alpSampleCount = 256
 }
 
-local dlg = Dialog { title = "Color Levels" }
-
----@param x number
----@param lbIn number
----@param ubIn number
----@param lbOut number
----@param ubOut number
----@param f fun(x: number): number
----@return number
-local function remapChannel(x, lbIn, ubIn, lbOut, ubOut, f)
-    local xrm = x - lbIn
-    local rangeIn = ubIn - lbIn
-    if rangeIn ~= 0.0 then xrm = xrm / rangeIn end
-    local xClamped = math.min(math.max(xrm, 0.0), 1.0)
-    local y = f(xClamped)
-    if ubOut >= lbOut then
-        return lbOut + y * (ubOut - lbOut)
-    elseif ubOut < lbOut then
-        return lbOut - y * (lbOut - ubOut)
-    end
-    return y
-end
+local dlg = Dialog { title = "Color Curves" }
 
 ---@param srcImg Image
 ---@return table<integer, { l: number, a: number, b: number, alpha: number }> hexToLabDict
@@ -80,8 +78,8 @@ local function auditImage(srcImg)
     return hexToLabDict, aMin, aMax, bMin, bMax
 end
 
----@param idPostfix string
-local function setInputFromColor(idPostfix)
+---@param coPostfix string
+local function setInputFromColor(coPostfix)
     local site = app.site
     local sprite = site.sprite
     if not sprite then return end
@@ -97,22 +95,21 @@ local function setInputFromColor(idPostfix)
     local val = 0.0
     if channel == "L" then
         idPrefix = idPrefixes[1]
-        val = math.floor(lab.l * 2.55 + 0.5)
+        val = lab.l * 0.01
     elseif channel == "A" then
         idPrefix = idPrefixes[2]
-        local aNorm = (lab.a + 111.0) / 222.0
-        val = math.floor(aNorm * 255.0 + 0.5)
+        val = (lab.a + 111.0) / 222.0
     elseif channel == "B" then
         idPrefix = idPrefixes[3]
-        local bNorm = (lab.b + 111.0) / 222.0
-        val = math.floor(bNorm * 255.0 + 0.5)
+        val = (lab.b + 111.0) / 222.0
     elseif channel == "Alpha" then
         idPrefix = idPrefixes[4]
-        val = math.floor(lab.alpha * 255.0 + 0.5)
+        val = lab.alpha
     end
 
-    local id = idPrefix .. idPostfix
-    dlg:modify { id = id, value = val }
+    local id = idPrefix .. "_" .. coPostfix
+    dlg:modify { id = id, text = string.format("%.5f", val) }
+    dlg:repaint()
 end
 
 dlg:combobox {
@@ -146,14 +143,18 @@ dlg:combobox {
             local bool = bools[i]
 
             local j = 0
-            while j < lenIdPostfixes do
+            while j < lenCoPostfixes do
                 j = j + 1
-                local idPostfix = idPostfixes[j]
-                dlg:modify {
-                    id = idPrefix .. idPostfix,
-                    visible = bool
-                }
+                local coPostfix = coPostfixes[j]
+                local id = idPrefix .. "_" .. coPostfix
+                dlg:modify { id = id, visible = bool }
             end
+
+            dlg:modify { id = idPrefix, visible = bool }
+            dlg:modify { id = idPrefix .. "_easeFuncs", visible = bool }
+            dlg:modify { id = idPrefix .. "_flipv", visible = bool }
+            dlg:modify { id = idPrefix .. "_straight", visible = bool }
+            dlg:modify { id = idPrefix .. "_parallel", visible = bool }
         end
     end
 }
@@ -166,7 +167,7 @@ dlg:button {
     text = "BLAC&K",
     focus = false,
     onclick = function()
-        setInputFromColor(idPostfixes[1])
+        setInputFromColor(coPostfixes[1])
     end
 }
 
@@ -175,54 +176,28 @@ dlg:button {
     text = "&WHITE",
     focus = false,
     onclick = function()
-        setInputFromColor(idPostfixes[2])
+        setInputFromColor(coPostfixes[7])
     end
 }
 
 dlg:newrow { always = false }
 
-local i = 0
-while i < lenIdPrefixes do
-    i = i + 1
-    local idPrefix = idPrefixes[i]
-    local channelPreset = channels[i]
-    local isVisible = defaults.channel == channelPreset
+dlg:newrow { always = false }
 
-    local j = 0
-    while j < lenIdSliders do
-        local isEven = j % 2 ~= 1
-        local label = nil
-        local value = 255
-        if isEven then
-            label = labelSliders[1 + j // 2]
-            value = 0
-        end
-
-        j = j + 1
-        local idSlider = idSliders[j]
-        dlg:slider {
-            id = idPrefix .. idSlider,
-            label = label,
-            min = 0,
-            max = 255,
-            value = value,
-            visible = isVisible
-        }
-
-        if not isEven then
-            dlg:newrow { always = false }
-        end
-    end
-
-    dlg:number {
-        id = idPrefix .. idPostfixes[5],
-        label = "Midpoint:",
-        text = string.format("%.5f", 1.0),
-        decimals = 5,
-        visible = isVisible
-    }
-
-    dlg:newrow { always = false }
+local h = 0
+while h < lenIdPrefixes do
+    h = h + 1
+    local currChannel = channels[h]
+    CanvasUtilities.graphBezier(
+        dlg,
+        idPrefixes[h],
+        currChannel .. ":",
+        128 // screenScale,
+        128 // screenScale,
+        defaults.channel == currChannel,
+        true, true, true, true,
+        5, 0.33333, 0.33333, 0.66667, 0.66667,
+        curveColor, gridColor)
 end
 
 dlg:check {
@@ -324,53 +299,66 @@ dlg:button {
             trgLayer = activeSprite:newLayer()
             trgLayer.parent = srcLayer.parent
             trgLayer.name = string.format(
-                "%s.Levels", srcLayerName)
+                "%s.Curves", srcLayerName)
         end)
 
+        ---@type Vec2[][]
+        local curveSamples = {}
+        local alpSampleCount = defaults.alpSampleCount
+        local samplesCompare = function(a, b) return a < b.x end
+
+        local i = 0
+        while i < lenIdPrefixes do
+            i = i + 1
+            local idPrefix = idPrefixes[i]
+
+            ---@type number[]
+            local nums = {}
+            local j = 0
+            while j < lenCoPostfixes do
+                j = j + 1
+                local coPostfix = coPostfixes[j]
+                local id = idPrefix .. "_" .. coPostfix
+                local num = args[id] --[[@as number]]
+                nums[j] = num
+            end
+
+            local co0 = Vec2.new(nums[1], nums[2])
+            local fh0 = Vec2.new(nums[3], nums[4])
+            local rh0 = Vec2.new(0.0, co0.y)
+
+            local co1 = Vec2.new(nums[7], nums[8])
+            local fh1 = Vec2.new(1.0, co1.y)
+            local rh1 = Vec2.new(nums[5], nums[6])
+
+            local kn0 = Knot2.new(co0, fh0, rh0)
+            local kn1 = Knot2.new(co1, fh1, rh1)
+            -- kn0:mirrorHandlesForward()
+            -- kn1:mirrorHandlesBackward()
+
+            local curve = Curve2.new(false, { kn0, kn1 }, idPrefix)
+
+            local totalLength, arcLengths = Curve2.arcLength(
+                curve, alpSampleCount)
+            local paramPoints = Curve2.paramPoints(
+                curve, totalLength, arcLengths, alpSampleCount)
+            curveSamples[i] = paramPoints
+
+            -- local strs = {}
+            -- for n, v in ipairs(paramPoints) do
+            --     strs[n] = n .. ": " .. Vec2.toJson(v)
+            -- end
+            -- print(table.concat(strs, ",\n"))
+        end
         -- Cache methods.
         local strfmt = string.format
         local tilesToImage = AseUtilities.tilesToImage
         local transact = app.transaction
         local labTosRgb = Clr.srLab2TosRgb
         local toHex = Clr.toHex
-
-        ---@type number[][]
-        local remapParams = { {} }
-
-        local h = 0
-        while h < lenIdPrefixes do
-            h = h + 1
-
-            ---@type number[]
-            local channelParams = {}
-            local idPrefix = idPrefixes[h]
-
-            local j = 0
-            while j < lenIdPostfixes do
-                j = j + 1
-                local idPostfix = idPostfixes[j]
-                local id = idPrefix .. idPostfix
-                local value = args[id] --[[@as number]]
-                channelParams[j] = value
-            end
-
-            remapParams[h] = channelParams
-        end
-
-        local lParams = remapParams[1]
-        local aParams = remapParams[2]
-        local bParams = remapParams[3]
-        local tParams = remapParams[4]
-
-        local lgVrf = 1.0 / math.max(0.000001, math.abs(lParams[5]))
-        local agVrf = 1.0 / math.max(0.000001, math.abs(aParams[5]))
-        local bgVrf = 1.0 / math.max(0.000001, math.abs(bParams[5]))
-        local tgVrf = 1.0 / math.max(0.000001, math.abs(tParams[5]))
-
-        local lGamma = function(x) return x ^ lgVrf end
-        local aGamma = function(x) return x ^ agVrf end
-        local bGamma = function(x) return x ^ bgVrf end
-        local tGamma = function(x) return x ^ tgVrf end
+        local bisectRight = Utilities.bisectRight
+        local min = math.min
+        local max = math.max
 
         local lenFrames = #frames
         local k = 0
@@ -402,20 +390,23 @@ dlg:button {
                     -- Lightness.
                     local lTrg = lab.l
                     local lx = lab.l * 0.01
-                    local ly = remapChannel(lx,
-                        lParams[1] / 255.0, lParams[2] / 255.0,
-                        lParams[3] / 255.0, lParams[4] / 255.0,
-                        lGamma)
+                    local lSamples = curveSamples[1]
+                    local li = bisectRight(
+                        lSamples, lx, samplesCompare)
+                    li = min(max(li, 1), alpSampleCount)
+                    local ly = lSamples[li].y
                     lTrg = ly * 100.0
+
 
                     -- A (green to magenta).
                     local aTrg = lab.a
                     if aViable then
                         local ax = (lab.a - aMin) * aDenom
-                        local ay = remapChannel(ax,
-                            aParams[1] / 255.0, aParams[2] / 255.0,
-                            aParams[3] / 255.0, aParams[4] / 255.0,
-                            aGamma)
+                        local aSamples = curveSamples[2]
+                        local ai = bisectRight(
+                            aSamples, ax, samplesCompare)
+                        ai = min(max(ai, 1), alpSampleCount)
+                        local ay = aSamples[ai].y
                         aTrg = ay * aRange + aMin
                     end
 
@@ -423,20 +414,22 @@ dlg:button {
                     local bTrg = lab.b
                     if bViable then
                         local bx = (lab.b - bMin) * bDenom
-                        local by = remapChannel(bx,
-                            bParams[1] / 255.0, bParams[2] / 255.0,
-                            bParams[3] / 255.0, bParams[4] / 255.0,
-                            bGamma)
+                        local bSamples = curveSamples[3]
+                        local bi = bisectRight(
+                            bSamples, bx, samplesCompare)
+                        bi = min(max(bi, 1), alpSampleCount)
+                        local by = bSamples[bi].y
                         bTrg = by * bRange + bMin
                     end
 
                     -- Transparency.
                     local tTrg = lab.alpha
                     local tx = lab.alpha
-                    local ty = remapChannel(tx,
-                        tParams[1] / 255.0, tParams[2] / 255.0,
-                        tParams[3] / 255.0, tParams[4] / 255.0,
-                        tGamma)
+                    local tSamples = curveSamples[4]
+                    local ti = bisectRight(
+                        tSamples, tx, samplesCompare)
+                    ti = min(max(ti, 1), alpSampleCount)
+                    local ty = tSamples[ti].y
                     tTrg = ty
 
                     local clrTrg = labTosRgb(lTrg, aTrg, bTrg, tTrg)
@@ -481,31 +474,28 @@ dlg:button {
     text = "&RESET",
     focus = false,
     onclick = function()
-        local j = 0
-        while j < lenIdPrefixes do
-            j = j + 1
-            local idPrefix = idPrefixes[j]
+        local init = {
+            0.0, 0.0,
+            0.33333, 0.33333,
+            0.66667, 0.66667,
+            1.0, 1.0
+        }
+        local strfmt = string.format
 
-            local k = 0
-            while k < lenIdSliders do
-                local isEven = k % 2 ~= 1
-                local value = 255
-                if isEven then value = 0 end
+        local i = 0
+        while i < lenIdPrefixes do
+            i = i + 1
+            local idPrefix = idPrefixes[i]
 
-                k = k + 1
-                local idSlider = idSliders[k]
-
-                dlg:modify {
-                    id = idPrefix .. idSlider,
-                    value = value
-                }
+            local j = 0
+            while j < lenCoPostfixes do
+                j = j + 1
+                local coPostfix = coPostfixes[j]
+                local id = idPrefix .. "_" .. coPostfix
+                dlg:modify { id = id, text = strfmt("%.5f", init[j]) }
             end
-
-            dlg:modify {
-                id = idPrefix .. idPostfixes[5],
-                text = string.format("%.5f", 1.0)
-            }
         end
+        dlg:repaint()
     end
 }
 

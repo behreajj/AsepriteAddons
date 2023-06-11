@@ -526,6 +526,8 @@ function CanvasUtilities.graphBezier(
         option = "CUSTOM",
         options = {
             "CUSTOM",
+            "CIRC_IN",
+            "CIRC_OUT",
             "EASE",
             "EASE_IN",
             "EASE_IN_OUT",
@@ -550,6 +552,10 @@ function CanvasUtilities.graphBezier(
                     presetPoints = { 0.0, 0.0, 0.42, 0.0, 0.58, 1.0, 1.0, 1.0 }
                 elseif easeFunc == "EASE_OUT" then
                     presetPoints = { 0.0, 0.0, 0.0, 0.0, 0.58, 1.0, 1.0, 1.0 }
+                elseif easeFunc == "CIRC_IN" then
+                    presetPoints = { 0.0, 0.0, 0.0, 0.55228, 0.44772, 1.0, 1.0, 1.0 }
+                elseif easeFunc == "CIRC_OUT" then
+                    presetPoints = { 0.0, 0.0, 0.55228, 0.0, 1.0, 0.44772, 1.0, 1.0 }
                 end
 
                 local i = 0
