@@ -149,7 +149,7 @@ end
 local function setChromaMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth
-        local maxChroma = Clr.SR_LCH_MAX_CHROMA
+        local maxChroma = Clr.SR_LCH_MAX_CHROMA + 0.5
         local mx120 = maxChroma * event.x / (bw - 1.0)
         if event.ctrlKey then
             local inGamutEps = defaults.inGamutEps
@@ -415,7 +415,7 @@ dlg:canvas {
         local barWidth = defaults.barWidth
         local barHeight = defaults.barHeight
         local inGamutEps = defaults.inGamutEps
-        local maxChroma = Clr.SR_LCH_MAX_CHROMA
+        local maxChroma = Clr.SR_LCH_MAX_CHROMA + 0.5
         local reticleSize = defaults.reticleSize
 
         -- Unpack active.

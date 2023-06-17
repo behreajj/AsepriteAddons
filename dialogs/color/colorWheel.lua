@@ -18,10 +18,6 @@ local defaults = {
     palCount = 256,
     strokeSize = 6,
     fillSize = 5,
-    -- CIE LCH max chroma is higher than
-    -- that of SR LCH.
-    -- maxChroma = 135.0,
-    maxChroma = 120.0,
     pullFocus = true
 }
 
@@ -242,7 +238,7 @@ dlg:button {
         -- Quantization calculations.
         local quantAzims = sectorCount > 0
         local quantRad = ringCount > 0
-        local maxChroma = defaults.maxChroma
+        local maxChroma = Clr.SR_LCH_MAX_CHROMA
 
         -- Depending on case, may be hue, radians or degrees.
         local azimAlpha = sectorCount / 1.0

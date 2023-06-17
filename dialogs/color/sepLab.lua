@@ -5,6 +5,9 @@ local channels = { "L", "A", "B" }
 local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults = {
+    -- TODO: Create a space combo box so that this can be
+    -- consolidated with separate RGB?
+    -- TODO: Separate LCH?
     target = "ACTIVE",
     delSrc = "NONE",
     channel = "L",
@@ -305,7 +308,9 @@ dlg:button {
         local toFac = function(lab) return 0.0 end
         local biasLabel = ""
         if channel == "A" then
-            toFac = function(lab) return (lab.a - defaults.aAbsMin) / defaults.aAbsRange end
+            toFac = function(lab)
+                return (lab.a - defaults.aAbsMin) / defaults.aAbsRange
+            end
 
             local aGreens = args.aGreens --[[@as boolean]]
             local aMagentas = args.aMagentas --[[@as boolean]]
@@ -324,7 +329,9 @@ dlg:button {
                 biasLabel = ".A.Central"
             end
         elseif channel == "B" then
-            toFac = function(lab) return (lab.b - defaults.bAbsMin) / defaults.bAbsRange end
+            toFac = function(lab)
+                return (lab.b - defaults.bAbsMin) / defaults.bAbsRange
+            end
 
             local bBlues = args.bBlues --[[@as boolean]]
             local bYellows = args.bYellows --[[@as boolean]]

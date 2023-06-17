@@ -149,6 +149,7 @@ dlg:button {
             local srcFrame = frames[i]
             local srcCel = srcLayer:cel(srcFrame)
             if srcCel then
+                local srcPos = srcCel.position
                 local srcImg = srcCel.image
                 if isTilemap then
                     srcImg = tilesToImage(srcImg, tileSet, colorMode)
@@ -218,13 +219,19 @@ dlg:button {
                         trgPixel(trgHexDict[trgPixel()])
                     end
                 else
+                    -- Cel position needs to be added to the dither,
+                    -- otherwise there's flickering in animations as
+                    -- the same image is translated across frames.
+                    local xSrcPos = srcPos.x
+                    local ySrcPos = srcPos.y
                     for trgPixel in trgPxItr do
                         local srcHex = trgPixel()
                         local fac = lumDict[srcHex]
                         fac = facAdjust(fac)
                         local trgClr = dither(
                             gradient, fac,
-                            trgPixel.x, trgPixel.y)
+                            xSrcPos + trgPixel.x,
+                            ySrcPos + trgPixel.y)
 
                         local trgHex = toHex(trgClr)
                         local minAlpha = min(
@@ -239,7 +246,7 @@ dlg:button {
                     strfmt("Gradient Map %d", srcFrame),
                     function()
                         local trgCel = activeSprite:newCel(
-                            trgLayer, srcFrame, trgImg, srcCel.position)
+                            trgLayer, srcFrame, trgImg, srcPos)
                         trgCel.opacity = srcCel.opacity
                     end)
             end -- End cel exists check.

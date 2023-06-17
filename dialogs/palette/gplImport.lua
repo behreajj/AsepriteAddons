@@ -50,7 +50,7 @@ dlg:slider {
     min = 4,
     max = 32,
     value = app.preferences.color_bar.box_size,
-    onchange= function()
+    onchange = function()
         local args = dlg.data
         local size = args.swatchSize --[[@as integer]]
         app.command.SetPaletteEntrySize { size = size }
@@ -80,7 +80,8 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         local filepath = args.filepath --[[@as string]]
-        local fileExt = app.fs.fileExtension(filepath)
+        local fileExt = string.lower(
+            app.fs.fileExtension(filepath))
         if fileExt ~= "gpl" and fileExt ~= "pal" then
             app.alert {
                 title = "Error",
@@ -142,7 +143,6 @@ dlg:button {
                 elseif strsub(lc, 1, 1) == '#' then
                     comments[#comments + 1] = strsub(line, 1)
                 elseif #lc > 0 then
-
                     if palHeaderFound > 0
                         and palMagicFound > 0
                         and jascPalClrCountFound < 1 then
@@ -215,7 +215,6 @@ dlg:button {
                 profileFlag = profile ~= ColorSpace { sRGB = true }
                     and profile ~= ColorSpace()
             else
-
                 -- Try to base sprite width on columns
                 -- in GPL file. If not, find square root
                 -- of colors length.

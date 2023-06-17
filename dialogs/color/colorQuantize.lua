@@ -6,6 +6,7 @@ local units = { "BITS", "INTEGERS" }
 local levelsInputs = { "NON_UNIFORM", "UNIFORM" }
 
 local defaults = {
+    -- TODO: Option to quantize lightness, maybe LAB.
     minLevels = 2,
     maxLevels = 256,
     minBits = 1,
@@ -27,7 +28,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Quantize Color" }
+local dlg = Dialog { title = "Quantize RGB" }
 
 dlg:combobox {
     id = "target",
@@ -440,7 +441,7 @@ dlg:button {
                     local r = k & 0xff
 
                     -- Do not cache the division in a variable
-                    -- as 1.0 / 255.0. Its leads to precision errors
+                    -- as 1.0 / 255.0. It leads to precision errors
                     -- which impact alpha during unsigned quantize.
                     local aQtz = aqFunc(a / 255.0, aLevels, aDelta)
                     local bQtz = bqFunc(b / 255.0, bLevels, bDelta)

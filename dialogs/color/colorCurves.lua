@@ -31,11 +31,13 @@ local gridColor = Color { r = 128, g = 128, b = 128 }
 local defaults = {
     target = "ACTIVE",
     channel = "L",
-    useRelative = true,
+    useRelative = false,
     printElapsed = false,
     alpSampleCount = 256,
     aAbsMin = -104.18850360397,
-    bAbsMin = -110.47816964815
+    aAbsRange = 208.37700720794,
+    bAbsMin = -110.47816964815,
+    bAbsRange = 220.9563392963
 }
 
 local dlg = Dialog { title = "Color Curves" }
@@ -417,6 +419,10 @@ dlg:button {
 
                 local hexToLabDict = {}
                 if useRelative then
+                    -- For animations this will cause flickering bc
+                    -- each image is independent from the prior frame.
+                    -- Would need a preliminary loop to build a dict
+                    -- across frames.
                     hexToLabDict, aMin, aMax, bMin, bMax = auditImage(srcImg)
                     aRange = aMax - aMin
                     aViable = aRange > 0.5
@@ -443,7 +449,6 @@ dlg:button {
                     li = min(max(li, 1), alpSampleCount)
                     local ly = lSamples[li].y
                     lTrg = ly * 100.0
-
 
                     -- A (green to magenta).
                     local aTrg = lab.a

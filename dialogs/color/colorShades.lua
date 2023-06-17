@@ -8,10 +8,6 @@ local defaults = {
     fps = 24,
     outOfGamut = 64,
     quantization = 0,
-    -- CIE LCH max chroma is higher than
-    -- that of SR LCH.
-    -- maxChroma = 135.0,
-    maxChroma = 120.0,
     maxLight = 100.0,
     useHueBar = false,
     plotPalette = true,
@@ -162,7 +158,7 @@ dlg:button {
 
         -- Unpack arguments.
         local args = dlg.data
-        local maxChroma = args.maxChroma or defaults.maxChroma
+        local maxChroma = Clr.SR_LCH_MAX_CHROMA
         local maxLight = args.maxLight or defaults.maxLight
         local outOfGamut = args.outOfGamut or defaults.outOfGamut
         local useHueBar = args.useHueBar
