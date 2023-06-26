@@ -546,42 +546,6 @@ function Vec2.pow(a, b)
         a.y ^ b.y)
 end
 
----Finds the scalar projection of the left
----operand onto the right.
----@param a Vec2 left operand
----@param b Vec2 right operand
----@return number
-function Vec2.projectScalar(a, b)
-    local bSq = b.x * b.x + b.y * b.y
-    if bSq > 0.0 then
-        return (a.x * b.x + a.y * b.y) / bSq
-    end
-    return 0.0
-end
-
----Finds the vector projection of the left
----operand onto the right.
----@param a Vec2 left operand
----@param b Vec2 right operand
----@return Vec2
-function Vec2.projectVector(a, b)
-    return Vec2.scale(b, Vec2.projectScalar(a, b))
-end
-
----Reduces the granularity of a vector's components.
----@param v Vec2 vector
----@param levels integer levels
----@return Vec2
-function Vec2.quantize(v, levels)
-    if levels and levels > 1 then
-        local delta = 1.0 / levels
-        return Vec2.new(
-            delta * math.floor(0.5 + v.x * levels),
-            delta * math.floor(0.5 + v.y * levels))
-    end
-    return Vec2.new(v.x, v.y)
-end
-
 ---Creates a random point in Cartesian space given
 ---a lower and an upper bound. If lower and upper
 ---bounds are not given, defaults to [-1.0, 1.0].
@@ -797,29 +761,6 @@ function Vec2.trunc(v)
     return Vec2.new(
         v.x - math.fmod(v.x, 1.0),
         v.y - math.fmod(v.y, 1.0))
-end
-
----Wraps a vector's components around a range
----defined by a lower and upper bound. If the
----range is invalid, the component is unchanged.
----@param v Vec2 vector
----@param lb Vec2 lower bound
----@param ub Vec2 upper bound
----@return Vec2
-function Vec2.wrap(v, lb, ub)
-    local cx = v.x
-    local rx = ub.x - lb.x
-    if rx ~= 0.0 then
-        cx = v.x - rx * ((v.x - lb.x) // rx)
-    end
-
-    local cy = v.y
-    local ry = ub.y - lb.y
-    if ry ~= 0.0 then
-        cy = v.y - ry * ((v.y - lb.y) // ry)
-    end
-
-    return Vec2.new(cx, cy)
 end
 
 ---Creates a right facing vector, (1.0, 0.0).

@@ -931,7 +931,7 @@ dlg:button {
                     labDict = labInvDict
                 end
 
-                -- Convert CIE LAB to sRGBA hexadecimal.
+                ---@type table<integer, integer>
                 local trgDict = {}
                 for key, value in pairs(labDict) do
                     trgDict[key] = toHex(labTosRgba(

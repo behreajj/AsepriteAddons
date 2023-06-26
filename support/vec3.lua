@@ -437,7 +437,10 @@ end
 ---@param sinIncl number inclination sine
 ---@param radius number radius
 ---@return Vec3
-function Vec3.fromSphericalInternal(cosAzim, sinAzim, cosIncl, sinIncl, radius)
+function Vec3.fromSphericalInternal(
+    cosAzim, sinAzim,
+    cosIncl, sinIncl,
+    radius)
     local rhoCosIncl = radius * cosIncl
     return Vec3.new(
         rhoCosIncl * cosAzim,
@@ -741,45 +744,6 @@ function Vec3.pow(a, b)
         a.x ^ b.x,
         a.y ^ b.y,
         a.z ^ b.z)
-end
-
----Finds the scalar projection of the left
----operand onto the right.
----@param a Vec3 left operand
----@param b Vec3 right operand
----@return number
-function Vec3.projectScalar(a, b)
-    local bSq = b.x * b.x + b.y * b.y + b.z * b.z
-    if bSq > 0.0 then
-        return (a.x * b.x
-            + a.y * b.y
-            + a.z * b.z) / bSq
-    end
-    return 0.0
-end
-
----Finds the vector projection of the left
----operand onto the right.
----@param a Vec3 left operand
----@param b Vec3 right operand
----@return Vec3
-function Vec3.projectVector(a, b)
-    return Vec3.scale(b, Vec3.projectScalar(a, b))
-end
-
----Reduces the granularity of a vector's components.
----@param v Vec3 vector
----@param levels integer levels
----@return Vec3
-function Vec3.quantize(v, levels)
-    if levels and levels > 1 then
-        local delta = 1.0 / levels
-        return Vec3.new(
-            delta * math.floor(0.5 + v.x * levels),
-            delta * math.floor(0.5 + v.y * levels),
-            delta * math.floor(0.5 + v.z * levels))
-    end
-    return Vec3.new(v.x, v.y, v.z)
 end
 
 ---Creates a random point in Cartesian space given
@@ -1097,35 +1061,6 @@ function Vec3.trunc(v)
         v.x - math.fmod(v.x, 1.0),
         v.y - math.fmod(v.y, 1.0),
         v.z - math.fmod(v.z, 1.0))
-end
-
----Wraps a vector's components around a range
----defined by a lower and upper bound. If the
----range is invalid, the component is unchanged.
----@param v Vec3 vector
----@param lb Vec3 lower bound
----@param ub Vec3 upper bound
----@return Vec3
-function Vec3.wrap(v, lb, ub)
-    local cx = v.x
-    local rx = ub.x - lb.x
-    if rx ~= 0.0 then
-        cx = v.x - rx * ((v.x - lb.x) // rx)
-    end
-
-    local cy = v.y
-    local ry = ub.y - lb.y
-    if ry ~= 0.0 then
-        cy = v.y - ry * ((v.y - lb.y) // ry)
-    end
-
-    local cz = v.z
-    local rz = ub.z - lb.z
-    if rz ~= 0.0 then
-        cz = v.z - rz * ((v.z - lb.z) // rz)
-    end
-
-    return Vec3.new(cx, cy, cz)
 end
 
 ---Creates a right facing vector,

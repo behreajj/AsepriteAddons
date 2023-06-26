@@ -285,8 +285,8 @@ function Clr.gridsRgb(cols, rows, layers, alpha)
     -- Validate arguments.
     aVrf = math.min(math.max(aVrf, 0.003921568627451), 1.0)
     lVrf = math.min(math.max(lVrf, 2), 256)
-    rVrf = math.min(math.max(lVrf, 2), 256)
-    cVrf = math.min(math.max(lVrf, 2), 256)
+    rVrf = math.min(math.max(rVrf, 2), 256)
+    cVrf = math.min(math.max(cVrf, 2), 256)
 
     local hToStep = 1.0 / (lVrf - 1.0)
     local iToStep = 1.0 / (rVrf - 1.0)

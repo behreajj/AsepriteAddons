@@ -104,11 +104,11 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "border",
-    label = "Border:",
-    min = 0,
-    max = 32,
-    value = defaults.border
+    id = "scale",
+    label = "Scale:",
+    min = 1,
+    max = 10,
+    value = defaults.scale
 }
 
 dlg:newrow { always = false }
@@ -124,11 +124,11 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "scale",
-    label = "Scale:",
-    min = 1,
-    max = 10,
-    value = defaults.scale
+    id = "border",
+    label = "Border:",
+    min = 0,
+    max = 32,
+    value = defaults.border
 }
 
 dlg:newrow { always = false }

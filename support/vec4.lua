@@ -537,22 +537,6 @@ function Vec4.pow(a, b)
         a.w ^ b.w)
 end
 
----Reduces the granularity of a vector's components.
----@param v Vec4 vector
----@param levels integer levels
----@return Vec4
-function Vec4.quantize(v, levels)
-    if levels and levels > 1 then
-        local delta = 1.0 / levels
-        return Vec4.new(
-            delta * math.floor(0.5 + v.x * levels),
-            delta * math.floor(0.5 + v.y * levels),
-            delta * math.floor(0.5 + v.z * levels),
-            delta * math.floor(0.5 + v.w * levels))
-    end
-    return Vec4.new(v.x, v.y, v.z, v.w)
-end
-
 ---Creates a random point in Cartesian space given
 ---a lower and an upper bound. If lower and upper
 ---bounds are not given, defaults to [-1.0, 1.0].
@@ -758,41 +742,6 @@ function Vec4.trunc(v)
         v.y - math.fmod(v.y, 1.0),
         v.z - math.fmod(v.z, 1.0),
         v.w - math.fmod(v.w, 1.0))
-end
-
----Wraps a vector's components around a range
----defined by a lower and upper bound. If the
----range is invalid, the component is unchanged.
----@param v Vec4 vector
----@param lb Vec4 lower bound
----@param ub Vec4 upper bound
----@return Vec4
-function Vec4.wrap(v, lb, ub)
-    local cx = v.x
-    local rx = ub.x - lb.x
-    if rx ~= 0.0 then
-        cx = v.x - rx * ((v.x - lb.x) // rx)
-    end
-
-    local cy = v.y
-    local ry = ub.y - lb.y
-    if ry ~= 0.0 then
-        cy = v.y - ry * ((v.y - lb.y) // ry)
-    end
-
-    local cz = v.z
-    local rz = ub.z - lb.z
-    if rz ~= 0.0 then
-        cz = v.z - rz * ((v.z - lb.z) // rz)
-    end
-
-    local cw = v.w
-    local rw = ub.w - lb.w
-    if rw ~= 0.0 then
-        cw = v.w - rw * ((v.w - lb.w) // rw)
-    end
-
-    return Vec4.new(cx, cy, cz, cw)
 end
 
 ---Creates a right facing vector,
