@@ -32,7 +32,7 @@ local defaults = {
     minSwatchSize = 2,
     maxSwatchSize = 10,
     swatchAlpha = 217,
-    bkgColor = Color { r = 32, g = 32, b = 32 },
+    bkgColor = 0xff101010,
     frames = 16,
     fps = 24,
     pullFocus = false
@@ -169,7 +169,7 @@ dlg:newrow { always = false }
 dlg:color {
     id = "bkgColor",
     label = "Background:",
-    color = defaults.bkgColor
+    color = AseUtilities.hexToAseColor(defaults.bkgColor)
 }
 
 dlg:newrow { always = false }
@@ -209,8 +209,8 @@ dlg:button {
         local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
             palType, palFile, startIndex, count)
 
-        -- Create cover profile.
-        -- This should be done BEFORE the coverage sprite is
+        -- Create profile.
+        -- This should be done BEFORE the sprite is
         -- created, while the reference sprite is active.
         local cvrClrPrf = nil
         if palType == "ACTIVE" and app.site.sprite then
@@ -332,6 +332,8 @@ dlg:button {
         -- Create replacement colors.
         local queryRad = args.queryRad
             or defaults.queryRad --[[@as number]]
+
+        ---@type integer[]
         local replaceClrs = {}
         local gridLen = #gridPts
         local swatchAlphaMask = swatchAlpha << 0x18

@@ -6,6 +6,9 @@ if not activeSprite then return end
 
 local activeLayer = site.layer
 if not activeLayer then return end
+if activeLayer.isReference then return end
+-- Any way to make this work with backgrounds?
+if activeLayer.isBackground then return end
 
 local origFrObj = site.frame
 if not origFrObj then return end
