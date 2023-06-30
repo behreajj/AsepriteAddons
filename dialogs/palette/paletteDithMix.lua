@@ -1,6 +1,7 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../support/gradientutilities.lua")
 
 local palTypes = { "ACTIVE", "FILE" }
+local ditherTypes = { "CHECKER", "CUSTOM" }
 
 local defaults = {
     palType = "ACTIVE",
@@ -13,7 +14,14 @@ local defaults = {
     minHighlight = 15,
     maxHighlight = 50,
     highColor = 0x80d5f7ff,
-    bkgColor = 0xff101010
+    bkgColor = 0xff101010,
+    ditherType = "CHECKER",
+    matrix = {
+        0.0, 1.0,
+        1.0, 0.0
+    },
+    mw = 2,
+    mh = 2
 }
 
 local dlg = Dialog { title = "Palette Dither Mix" }
@@ -24,7 +32,8 @@ dlg:combobox {
     option = defaults.palType,
     options = palTypes,
     onchange = function()
-        local state = dlg.data.palType
+        local args = dlg.data
+        local state = args.palType --[[@as string]]
         dlg:modify {
             id = "palFile",
             visible = state == "FILE"
@@ -39,6 +48,34 @@ dlg:file {
     filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
     open = true,
     visible = defaults.palType == "FILE"
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "ditherType",
+    label = "Dither:",
+    option = defaults.ditherType,
+    options = ditherTypes,
+    onchange = function()
+        local args = dlg.data
+        local state = args.ditherType --[[@as string]]
+        dlg:modify {
+            id = "ditherPath",
+            visible = state == "CUSTOM"
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "ditherPath",
+    label = "File:",
+    filetypes = AseUtilities.FILE_FORMATS,
+    open = true,
+    focus = false,
+    visible = defaults.ditherType == "CUSTOM"
 }
 
 dlg:newrow { always = false }
@@ -134,6 +171,8 @@ dlg:button {
         local palType = args.palType
             or defaults.palType --[[@as string]]
         local palFile = args.palFile --[[@as string]]
+        local ditherType = args.ditherType
+            or defaults.ditherType --[[@as string]]
         local swatchSize = args.swatchSize
             or defaults.swatchSize --[[@as integer]]
         local padding = args.padding
@@ -147,6 +186,21 @@ dlg:button {
             or defaults.maxHighlight --[[@as integer]]
         local highColor = args.highColor --[[@as Color]]
         local bkgColor = args.bkgColor --[[@as Color]]
+
+        local matrix = defaults.matrix
+        local mw = defaults.mw
+        local mh = defaults.mh
+
+        if ditherType == "CUSTOM" then
+            local ditherPath = args.ditherPath --[[@as string]]
+            if ditherPath and #ditherPath > 0
+                and app.fs.isFile(ditherPath) then
+                local image = Image { fromFile = ditherPath }
+                if image then
+                    matrix, mw, mh = GradientUtilities.imageToMatrix(image)
+                end
+            end
+        end
 
         -- Convert Color objects to hex
         local bkgHex = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
@@ -343,9 +397,9 @@ dlg:button {
         local toHex = Clr.toHex
         local hexToAseColor = AseUtilities.hexToAseColor
 
-        local i = 0
-        while i < lenUniqueHexes do
-            i = i + 1
+        local i = lenUniqueHexes + 1
+        while i > 1 do
+            i = i - 1
             local rowHex = uniqueHexes[i]
             local rowLab = hexLabDict[rowHex]
             local rowWebStr = hexWebDict[rowHex]
@@ -380,9 +434,9 @@ dlg:button {
             end)
 
             app.transaction("Create Swatches", function()
-                local j = 0
-                while j < lenUniqueHexes do
-                    j = j + 1
+                local j = lenUniqueHexes + 1
+                while j > 1 do
+                    j = j - 1
                     local colHex = uniqueHexes[j]
                     local colLab = hexLabDict[colHex]
                     local colWebStr = hexWebDict[colHex]
@@ -396,14 +450,10 @@ dlg:button {
                         for pixel in dithPxItr do
                             local xpx = pixel.x
                             local ypx = pixel.y
-                            -- TODO: Allow custom dither pattern instead
-                            -- where 0.5 is passed in as factor and
-                            -- default is {0,1,0,1..}
-                            if (xpx % 2) == (ypx % 2) then
-                                pixel(rowHex)
-                            else
-                                pixel(colHex)
-                            end
+                            local midx = 1 + (xpx % mw) + (ypx % mh) * mw
+                            local hex = colHex
+                            if 0.5 >= matrix[midx] then hex = rowHex end
+                            pixel(hex)
                         end
 
                         -- Display distance as a metric for how high

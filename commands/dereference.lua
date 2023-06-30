@@ -18,6 +18,7 @@ app.transaction("Dereference Layer", function()
     derefLayer = sprite:newLayer()
     derefLayer.name = "Ref"
     derefLayer.blendMode = refLayer.blendMode
+    derefLayer.color = refLayer.color
     derefLayer.data = refLayer.data
     derefLayer.opacity = refLayer.opacity
     derefLayer.parent = refLayer.parent
@@ -32,12 +33,15 @@ app.transaction("Dereference Layer", function()
     while i < lenFrames do
         i = i + 1
         local frObj = frames[i]
-        local sourceCel = refLayer:cel(frObj)
-        if sourceCel then
-            sprite:newCel(
+        local refCel = refLayer:cel(frObj)
+        if refCel then
+            local derefCel = sprite:newCel(
                 derefLayer, frObj,
-                sourceCel.image,
-                sourceCel.position)
+                refCel.image,
+                refCel.position)
+            derefCel.color = refCel.color
+            derefCel.data = refCel.data
+            derefCel.opacity = refCel.opacity
         end
     end
 

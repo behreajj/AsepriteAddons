@@ -4,7 +4,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `bakeChecker`: Creates a layer that replicates the size and color of Aseprite's background checker. In most cases, this will be the background layer. Ignores the checker zoom preference.
 
-- `correctPalette`: Prepends `0x00000000`, which is clear black, to a palette at index 0 if it doesn't already exists. Removes duplicate palette entries. Converts a sprite to and from RGB color mode and sets its `transparentColor` to `0`. This is to avoid a number of issues in indexed color mode, e.g., with the outline tool or with exporting.
+- `correctPalette`: Prepends `0x00000000`, which is clear black, to a palette at index 0 if it doesn't already exist. Removes duplicate palette entries. Converts a sprite to and from RGB color mode and sets its `transparentColor` to `0`. This is to avoid a number of issues in indexed color mode, e.g., with the outline tool or with exporting.
 
 - `cycleCelLeft`: Moves a cel to the previous frame. If the previous frame is occupied by another cel, swaps the other cel into the active cel's frame. Loops around at the first and last frame. Ignores background and reference layers.
 

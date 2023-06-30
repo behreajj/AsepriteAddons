@@ -6,9 +6,6 @@ if not activeSprite then return end
 
 local activeLayer = site.layer
 if not activeLayer then return end
-if activeLayer.isReference then return end
--- Any way to make this work with backgrounds?
-if activeLayer.isBackground then return end
 
 local origFrObj = site.frame
 if not origFrObj then return end
@@ -22,29 +19,32 @@ local destFrObj = frames[destFrIdx]
 
 -- No point in basing this on a range, which will be removed
 -- by the swap. Could use getLayerHierarchy for all layers.
+-- Background layers cause an unknown issue. Reference layers
+-- are ignored though for this case they coule be included.
 local leaves = AseUtilities.appendLeaves(
     activeLayer, {},
-    true, true, true, true)
+    true, true, true, false)
 local lenLeaves = #leaves
-
-app.transaction("Cycle Cel Right", function()
-    local tempFrameObj = activeSprite:newEmptyFrame()
-    local i = 0
-    while i < lenLeaves do
-        i = i + 1
-        local leaf = leaves[i]
-        local origCel = leaf:cel(origFrObj)
-        local destCel = leaf:cel(destFrObj)
-        if origCel and destCel then
-            origCel.frame = tempFrameObj
-            destCel.frame = origFrObj
-            origCel.frame = destFrObj
-        elseif origCel then
-            origCel.frame = destFrObj
-        elseif destCel then
-            destCel.frame = origFrObj
+if lenLeaves > 0 then
+    app.transaction("Cycle Cel Right", function()
+        local tempFrameObj = activeSprite:newEmptyFrame()
+        local i = 0
+        while i < lenLeaves do
+            i = i + 1
+            local leaf = leaves[i]
+            local origCel = leaf:cel(origFrObj)
+            local destCel = leaf:cel(destFrObj)
+            if origCel and destCel then
+                origCel.frame = tempFrameObj
+                destCel.frame = origFrObj
+                origCel.frame = destFrObj
+            elseif origCel then
+                origCel.frame = destFrObj
+            elseif destCel then
+                destCel.frame = origFrObj
+            end
         end
-    end
-    activeSprite:deleteFrame(tempFrameObj)
-    app.activeFrame = destFrObj
-end)
+        activeSprite:deleteFrame(tempFrameObj)
+        app.activeFrame = destFrObj
+    end)
+end
