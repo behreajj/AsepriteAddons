@@ -48,7 +48,7 @@ dlg:separator { id = "uiSep" }
 
 dlg:slider {
     id = "swatchSize",
-    label = "Swatch: ",
+    label = "Swatch:",
     min = 4,
     max = 32,
     value = app.preferences.color_bar.box_size,
@@ -63,7 +63,7 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "useSeparator",
-    label = "Display: ",
+    label = "Display:",
     text = "Separator",
     value = app.preferences.color_bar.entries_separator,
     onclick = function()
@@ -82,42 +82,51 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         local filepath = args.filepath --[[@as string]]
+
+        if (not filepath)
+            or (#filepath < 1)
+            or (not app.fs.isFile(filepath)) then
+            app.alert {
+                title = "Error",
+                text = "Invalid file path."
+            }
+            return
+        end
+
         local fileExt = string.lower(
             app.fs.fileExtension(filepath))
         if fileExt ~= "gpl" and fileExt ~= "pal" then
             app.alert {
                 title = "Error",
-                text = {
-                    "File format is not gpl."
-                }
+                text = "File format is not gpl."
             }
             return
         end
 
-        local file, err = io.open(filepath, "r")
-
-        -- Cache functions to local when used in loop.
-        local strlower = string.lower
-        local strsub = string.sub
-        local strgmatch = string.gmatch
-        local strmatch = string.match
-
-        -- Implicitly tries to support JASC-PAL.
-        local gplHeaderFound = 0
-        local palHeaderFound = 0
-        local palMagicFound = 0
-        local nameFound = 0
-        local jascPalClrCountFound = 0
-        local aseAlphaFound = 0
-        local columns = 0
-        local lenColors = 0
-        ---@type string[]
-        local comments = {}
         ---@type integer[]
         local colors = {}
+        local lenColors = 0
+        local columns = 0
 
+        local file, err = io.open(filepath, "r")
         if file ~= nil then
             AseUtilities.preserveForeBack()
+
+            -- Cache functions to local when used in loop.
+            local strlower = string.lower
+            local strsub = string.sub
+            local strgmatch = string.gmatch
+            local strmatch = string.match
+
+            -- Implicitly tries to support JASC-PAL.
+            local gplHeaderFound = 0
+            local palHeaderFound = 0
+            local palMagicFound = 0
+            local nameFound = 0
+            local jascPalClrCountFound = 0
+            local aseAlphaFound = 0
+            ---@type string[]
+            local comments = {}
 
             local lineCount = 1
             local linesItr = file:lines()
@@ -196,14 +205,14 @@ dlg:button {
             end
             file:close()
 
-            local uniquesOnly = args.uniquesOnly
+            local uniquesOnly = args.uniquesOnly --[[@as boolean]]
             if uniquesOnly then
                 local uniques, _ = Utilities.uniqueColors(
                     colors, true)
                 colors = uniques
             end
 
-            local prependMask = args.prependMask
+            local prependMask = args.prependMask --[[@as boolean]]
             if prependMask then
                 Utilities.prependMask(colors)
             end
@@ -228,12 +237,9 @@ dlg:button {
                 end
                 local spriteHeight = math.max(1,
                     math.ceil(lenColors / spriteWidth))
-                activeSprite = Sprite(spriteWidth, spriteHeight)
-                local layer = activeSprite.layers[1]
-                local cel = layer.cels[1]
-                local image = cel.image
-                local pxItr = image:pixels()
 
+                local image = Image(spriteWidth, spriteHeight)
+                local pxItr = image:pixels()
                 local index = 0
                 for pixel in pxItr do
                     if index <= lenColors then
@@ -241,6 +247,11 @@ dlg:button {
                         pixel(colors[index])
                     end
                 end
+
+                activeSprite = Sprite(spriteWidth, spriteHeight)
+                local layer = activeSprite.layers[1]
+                local cel = layer.cels[1]
+                cel.image = image
 
                 app.command.FitScreen()
                 app.activeTool = "hand"

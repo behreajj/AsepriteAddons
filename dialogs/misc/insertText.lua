@@ -217,8 +217,8 @@ dlg:button {
             and app.activeSprite.colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "Only RGB color mode is supported." }
-            dlg:close()
+                text = "Only RGB color mode is supported."
+            }
             return
         end
 

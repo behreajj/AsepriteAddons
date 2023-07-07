@@ -1570,8 +1570,8 @@ end
 ---"ACTIVE", the default, returns the active frame.
 ---If there's no active frame, returns an empty array.
 ---
----For tags and ranges, duplicates will be included
----when the batched flag is true; otherwise a unique
+---For tags and manual, duplicates will be included
+---when the batched flag is true. Otherwise a unique
 ---set is returned.
 ---
 ---For ranges, call this method before new layers,
@@ -1591,15 +1591,12 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
     if target == "ALL" then
         return { AseUtilities.frameObjsToIdcs(sprite.frames) }
     elseif target == "MANUAL" then
-        -- print("Get frames called with manual tag")
         if mnStr then
             local lenFrames = #sprite.frames
             if batch then
-                -- print("Batching")
                 return Utilities.parseRangeStringOverlap(
                     mnStr, lenFrames)
             else
-                -- print("No batching")
                 return { Utilities.parseRangeStringUnique(
                     mnStr, lenFrames) }
             end
@@ -1622,15 +1619,18 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
             app.command.Timeline { open = true }
         end
 
-        ---@type integer[]
-        local frIdcsRange = {}
+        ---@type integer[][]
+        local frIdcsRange = { {} }
         local appRange = app.range
         if appRange.sprite == sprite then
             local rangeType = appRange.type
             if rangeType == RangeType.LAYERS then
-                frIdcsRange = AseUtilities.frameObjsToIdcs(sprite.frames)
+                frIdcsRange = { AseUtilities.frameObjsToIdcs(sprite.frames) }
             else
-                frIdcsRange = AseUtilities.frameObjsToIdcs(appRange.frames)
+                -- TODO: It's possible for these to not be consecutive if
+                -- shift key is held down when selecting.
+                local frIdcs1 = AseUtilities.frameObjsToIdcs(appRange.frames)
+                frIdcsRange = { frIdcs1 }
             end
         end
 
@@ -1638,7 +1638,7 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
             app.command.Timeline { close = true }
         end
 
-        return { frIdcsRange }
+        return frIdcsRange
     else
         -- Default to "ACTIVE".
         local activeFrame = app.site.frame
@@ -1762,7 +1762,9 @@ function AseUtilities.getSelectedTiles(
     -- Results.
     ---@type table<integer, Tile>
     local tiles = {}
-    if tileMap.colorMode ~= 4 then return tiles end
+    if tileMap.colorMode ~= ColorMode.TILEMAP then
+        return tiles
+    end
 
     -- Unpack tile set.
     local tileGrid = tileSet.grid

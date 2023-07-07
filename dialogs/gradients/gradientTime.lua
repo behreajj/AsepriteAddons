@@ -1,6 +1,11 @@
 dofile("../../support/gradientutilities.lua")
 
+local frameTargetOptions = { "ALL", "MANUAL", "RANGE" }
+
 local defaults = {
+    frameTarget = "ALL",
+    rangeStr = "",
+    strExample = "4,6-9,13",
     isCyclic = false,
     pullFocus = true
 }
@@ -8,6 +13,44 @@ local defaults = {
 local dlg = Dialog { title = "Time Gradient" }
 
 GradientUtilities.dialogWidgets(dlg, true)
+
+dlg:combobox {
+    id = "frameTarget",
+    label = "Frames:",
+    option = defaults.frameTarget,
+    options = frameTargetOptions,
+    onchange = function()
+        local args = dlg.data
+        local state = args.frameTarget --[[@as string]]
+        local isManual = state == "MANUAL"
+        dlg:modify { id = "rangeStr", visible = isManual }
+        dlg:modify { id = "strExample", visible = false }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "rangeStr",
+    label = "Entry:",
+    text = defaults.rangeStr,
+    focus = false,
+    visible = defaults.frameTarget == "MANUAL",
+    onchange = function()
+        dlg:modify { id = "strExample", visible = true }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "strExample",
+    label = "Example:",
+    text = defaults.strExample,
+    visible = false
+}
+
+dlg:newrow { always = false }
 
 dlg:check {
     id = "isCyclic",
@@ -44,11 +87,16 @@ dlg:button {
 
         local args = dlg.data
         local isCyclic = args.isCyclic --[[@as boolean]]
+        local frameTarget = args.frameTarget
+            or defaults.frameTarget --[[@as string]]
+        local rangeStr = args.rangeStr
+            or defaults.rangeStr --[[@as string]]
+
         local stylePreset = args.stylePreset --[[@as string]]
         local clrSpacePreset = args.clrSpacePreset --[[@as string]]
         local easPreset = args.easPreset --[[@as string]]
         local huePreset = args.huePreset --[[@as string]]
-        local aseColors = args.shades --[[@as Color[] ]]
+        local aseColors = args.shades --[=[@as Color[]]=]
         local levels = args.quantize --[[@as integer]]
         local bayerIndex = args.bayerIndex --[[@as integer]]
         local ditherPath = args.ditherPath --[[@as string]]
@@ -60,17 +108,22 @@ dlg:button {
             clrSpacePreset, huePreset)
         local toHex = Clr.toHex
 
-        -- TODO: Option to choose between all and active tag?
+        -- Frames are potentially discontinuous, but for now assume
+        -- that, if so, user intended them to be that way?
+        local frIdcs = Utilities.flatArr2(AseUtilities.getFrames(
+            activeSprite, frameTarget,
+            false, rangeStr, activeSprite.tags))
+        local lenFrIdcs = #frIdcs
+        local frObjs = activeSprite.frames
 
         ---@type number[]
         local timeStamps = {}
         local totalDuration = 0
-        local frObjs = activeSprite.frames
-        local lenFrames = #frObjs
         local h = 0
-        while h < lenFrames do
+        while h < lenFrIdcs do
             h = h + 1
-            local frObj = frObjs[h]
+            local frIdx = frIdcs[h]
+            local frObj = frObjs[frIdx]
             local duration = frObj.duration
             timeStamps[h] = totalDuration
             totalDuration = totalDuration + duration
@@ -82,7 +135,7 @@ dlg:button {
                 timeToFac = 1.0 / totalDuration
             end
         else
-            local finalDuration = timeStamps[lenFrames]
+            local finalDuration = timeStamps[lenFrIdcs]
             if finalDuration ~= 0.0 then
                 timeToFac = 1.0 / finalDuration
             end
@@ -101,7 +154,7 @@ dlg:button {
             end
 
             local i = 0
-            while i < lenFrames do
+            while i < lenFrIdcs do
                 i = i + 1
                 local timeStamp = timeStamps[i]
                 local fac = timeStamp * timeToFac
@@ -118,23 +171,23 @@ dlg:button {
             local dither = GradientUtilities.ditherFromPreset(
                 stylePreset, bayerIndex, ditherPath)
             local i = 0
-            while i < lenFrames do
+            while i < lenFrIdcs do
                 i = i + 1
                 local timeStamp = timeStamps[i]
                 local fac = timeStamp * timeToFac
                 local trgImage = Image(activeSpec)
                 local trgItr = trgImage:pixels()
-                -- Could optimize this by only looping over
-                -- the gradient and getting the matrix hexes.
-                -- However, that would undo the method
-                -- from preset...
+                -- TODO: Could optimize this by only looping over
+                -- the gradient only for the size of the matrix, then
+                -- repeating. Maybe update ditherFromPreset to return
+                -- that info? The only issue would be IGN doesn't fit
+                -- with the others...
                 for pixel in trgItr do
                     local x = pixel.x
                     local y = pixel.y
                     local clr = dither(gradient, fac, x, y)
                     -- Time-based IGN is not worth it -- the changing pattern
                     -- flickers in such a way that it hurts the eyes.
-                    -- local clr = ign(gradient, fac, x, y, (i - 1) % lenFrames)
                     pixel(toHex(clr))
                 end
                 trgImages[i] = trgImage
@@ -154,9 +207,9 @@ dlg:button {
 
         app.transaction("Time Gradient", function()
             local j = 0
-            while j < lenFrames do
+            while j < lenFrIdcs do
                 j = j + 1
-                activeSprite:newCel(trgLayer, j, trgImages[j])
+                activeSprite:newCel(trgLayer, frIdcs[j], trgImages[j])
             end
         end)
 

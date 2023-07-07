@@ -138,6 +138,7 @@ dlg:button {
     onclick = function()
         local args = dlg.data
         local spriteFile = args.spriteFile --[[@as string]]
+
         if (not spriteFile)
             or (#spriteFile < 1)
             or (not app.fs.isFile(spriteFile)) then

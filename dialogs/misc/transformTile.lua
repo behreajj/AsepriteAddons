@@ -84,28 +84,29 @@ local function transformCel(dialog, preset)
     local xtlCel = celPos.x
     local ytlCel = celPos.y
 
+    local tileGrid = tileSet.grid --[[@as Grid]]
+    local tileDim = tileGrid.tileSize --[[@as Size]]
+    local wTile = tileDim.width
+    local hTile = tileDim.height
+    if wTile ~= hTile
+        and (preset == "90"
+            or preset == "270") then
+        app.alert {
+            title = "Error",
+            text = "Tile size is nonuniform."
+        }
+        return
+    end
+
     local containedTiles = {}
     ---@type table<integer, Tile>
     if target == "TILE_MAP" then
         containedTiles = AseUtilities.getUniqueTiles(
             activeCel.image, tileSet)
-
-        local tileGrid = tileSet.grid --[[@as Grid]]
-        local tileDim = tileGrid.tileSize --[[@as Size]]
-        local wTile = tileDim.width
-        local hTile = tileDim.height
-
         local transactionName = "Transform Map"
         local transformFunc = nil
         local updateCelPos = false
         if preset == "90" then
-            if wTile ~= hTile then
-                app.alert {
-                    title = "Error",
-                    text = "Tile size is nonuniform."
-                }
-                return
-            end
             transactionName = "Rotate Map 90"
             transformFunc = AseUtilities.rotateImage90
             updateCelPos = true
@@ -113,13 +114,6 @@ local function transformCel(dialog, preset)
             transactionName = "Rotate Map 180"
             transformFunc = AseUtilities.rotateImage180
         elseif preset == "270" then
-            if wTile ~= hTile then
-                app.alert {
-                    title = "Error",
-                    text = "Tile size is nonuniform."
-                }
-                return
-            end
             transactionName = "Rotate Map 270"
             transformFunc = AseUtilities.rotateImage270
             updateCelPos = true
@@ -156,6 +150,12 @@ local function transformCel(dialog, preset)
     else
         -- In theory, app.range.tiles could also be used,
         -- but atm it doesn't seem to work.
+
+        -- A regular layer's cel bounds may be within the
+        -- canvas, but after conversion to tilemap layer,
+        -- it may go outside the canvas due to uniform tile
+        -- size. This will lead to getSelectedTiles omitting
+        -- tiles because tiles must be entirely contained.
         local selection = AseUtilities.getSelection(activeSprite)
         containedTiles = AseUtilities.getSelectedTiles(
             activeCel.image, tileSet, selection,

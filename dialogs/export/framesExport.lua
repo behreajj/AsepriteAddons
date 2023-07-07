@@ -381,11 +381,15 @@ dlg:check {
     onclick = function()
         local args = dlg.data
         local frameTarget = args.frameTarget --[[@as string]]
+        local useSheet = args.useSheet --[[@as boolean]]
+
+        -- TODO: If ranges is updated to support batches,
+        -- then this needs to reflect that.
         local isManual = frameTarget == "MANUAL"
         local isTags = frameTarget == "TAGS"
-        local useSheet = args.useSheet --[[@as boolean]]
         local state = useSheet
             and (isTags or isManual)
+
         dlg:modify { id = "useBatches", visible = state }
         dlg:modify { id = "border", visible = useSheet }
     end
@@ -597,6 +601,8 @@ dlg:button {
         -- Process other variables.
         local useCrop = cropType == "CROPPED"
         local nonUniformDim = not potUniform
+        -- TODO: If ranges is updated to support batches,
+        -- then this needs to reflect that.
         useBatches = useBatches
             and useSheet
             and (frameTarget == "TAGS"
@@ -623,8 +629,6 @@ dlg:button {
         local hMaxesLocal = {}
 
         ---@type table<integer, table>
-        ---The key is the frame index.
-        ---The value is a flattened image.
         local packetsUnique = {}
         ---@type table[][]
         local packets2 = {}
