@@ -18,29 +18,54 @@ local defaults = {
     pullFocus = true
 }
 
+---@param ax number
+---@param ay number
+---@param bx number
+---@param by number
+---@return number
 local function chebDist(ax, ay, bx, by)
     return math.max(
         math.abs(bx - ax),
         math.abs(by - ay))
 end
 
+---@param ax number
+---@param ay number
+---@param bx number
+---@param by number
+---@return number
 local function euclDist(ax, ay, bx, by)
     local dx = bx - ax
     local dy = by - ay
     return math.sqrt(dx * dx + dy * dy)
 end
 
+---@param ax number
+---@param ay number
+---@param bx number
+---@param by number
+---@return number
 local function manhDist(ax, ay, bx, by)
     return math.abs(bx - ax)
         + math.abs(by - ay)
 end
 
+---@param ax number
+---@param ay number
+---@param bx number
+---@param by number
+---@param c number
+---@param d number
+---@return number
 local function minkDist(ax, ay, bx, by, c, d)
     return (math.abs(bx - ax) ^ c
             + math.abs(by - ay) ^ c)
         ^ d
 end
 
+---@param distMetric string
+---@param me number
+---@return fun(ax: number, ay: number, bx: number, by: number): number
 local function distFuncFromPreset(distMetric, me)
     if distMetric == "CHEBYSHEV" then
         return chebDist
@@ -171,8 +196,8 @@ dlg:button {
         local huePreset = args.huePreset --[[@as string]]
         local aseColors = args.shades --[=[@as Color[]]=]
         local levels = args.quantize --[[@as integer]]
-        local mnr100 = args.minRad --[[@as integer]]
-        local mxr100 = args.maxRad --[[@as integer]]
+        local mnr100 = args.minRad or defaults.minRad --[[@as integer]]
+        local mxr100 = args.maxRad or defaults.maxRad --[[@as integer]]
         local bayerIndex = args.bayerIndex --[[@as integer]]
         local ditherPath = args.ditherPath --[[@as string]]
 
@@ -182,8 +207,8 @@ dlg:button {
             clrSpacePreset, huePreset)
 
         -- Choose distance metric based on preset.
-        local distMetric = args.distMetric
-        local minkExp = args.minkExp
+        local distMetric = args.distMetric or defaults.distMetric --[[@as string]]
+        local minkExp = args.minkExp or defaults.minkExp --[[@as number]]
         local distFunc = distFuncFromPreset(distMetric, minkExp)
 
         -- Validate minimum and maximum radii.
@@ -200,8 +225,10 @@ dlg:button {
         local linDenom = 1.0 / diffRad
 
         -- Shift origin from [0, 100] to [0.0, 1.0].
-        local xOrig = 0.01 * args.xOrig
-        local yOrig = 0.01 * args.yOrig
+        local xOrig100 = args.xOrig or defaults.xOrig --[[@as integer]]
+        local yOrig100 = args.yOrig or defaults.yOrig --[[@as integer]]
+        local xOrig = 0.01 * xOrig100
+        local yOrig = 0.01 * yOrig100
 
         -- Convert from normalized to pixel size.
         local wn1 = max(1.0, activeSprite.width - 1.0)

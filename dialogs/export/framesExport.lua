@@ -11,7 +11,7 @@ local defaults = {
     -- if useSheet is true.
     frameTarget = "ALL",
     rangeStr = "",
-    strExample = "4,6-9,13",
+    strExample = "4,6:9,13",
     cropType = "CROPPED",
     border = 0,
     padding = 0,

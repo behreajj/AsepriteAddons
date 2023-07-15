@@ -1592,13 +1592,15 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
         return { AseUtilities.frameObjsToIdcs(sprite.frames) }
     elseif target == "MANUAL" then
         if mnStr then
+            local docPrefs = app.preferences.document(sprite)
+            local frameUiOffset = docPrefs.timeline.first_frame - 1
             local lenFrames = #sprite.frames
             if batch then
                 return Utilities.parseRangeStringOverlap(
-                    mnStr, lenFrames)
+                    mnStr, lenFrames, frameUiOffset)
             else
                 return { Utilities.parseRangeStringUnique(
-                    mnStr, lenFrames) }
+                    mnStr, lenFrames, frameUiOffset) }
             end
         else
             return { {} }

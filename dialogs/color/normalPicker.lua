@@ -58,7 +58,6 @@ local function colorToVec(color)
     end
 end
 
----
 ---@param x number
 ---@param y number
 ---@param z number
@@ -75,11 +74,12 @@ local function vecToHex(x, y, z)
     return 0xff808080
 end
 
+---@param dialog Dialog
 local function updateWidgetCart(dialog)
     local args = dialog.data
-    local x = args.x
-    local y = args.y
-    local z = args.z
+    local x = args.x --[[@as number]]
+    local y = args.y --[[@as number]]
+    local z = args.z --[[@as number]]
 
     local azSigned = math.atan(y, x)
     active.azimuth = azSigned % 6.2831853071796
@@ -94,6 +94,8 @@ local function updateWidgetCart(dialog)
     dialog:repaint()
 end
 
+---@param dialog Dialog
+---@param clr Color
 local function updateFromColor(dialog, clr)
     local x, y, z = colorToVec(clr)
     if x ~= 0.0 or y ~= 0.0 or z ~= 0.0 then
@@ -115,7 +117,7 @@ local function updateFromColor(dialog, clr)
 end
 
 local function assignFore()
-    if app.activeSprite then
+    if app.site.sprite then
         local v = Vec3.fromSpherical(active.azimuth, active.inclination, 1.0)
         if math.abs(v.x) < 0.0039216 then v.x = 0.0 end
         if math.abs(v.y) < 0.0039216 then v.y = 0.0 end
@@ -139,7 +141,6 @@ end
 
 local dlg = Dialog { title = "Normal Picker" }
 
----
 ---@param event MouseEvent
 local function setAzimMouseListen(event)
     if event.button ~= MouseButton.NONE then
@@ -165,7 +166,6 @@ local function setAzimMouseListen(event)
     end
 end
 
----
 ---@param event MouseEvent
 local function setInclMouseListen(event)
     if event.button ~= MouseButton.NONE then
@@ -201,7 +201,7 @@ dlg:button {
     text = "F&ORE",
     focus = false,
     onclick = function()
-        if app.activeSprite then
+        if app.site.sprite then
             updateFromColor(dlg, app.fgColor)
         end
     end
@@ -212,7 +212,7 @@ dlg:button {
     text = "B&ACK",
     focus = false,
     onclick = function()
-        if app.activeSprite then
+        if app.site.sprite then
             -- Bug where assigning to app.bgColor leads
             -- to unlocked palette colors changing.
             app.command.SwitchColors()

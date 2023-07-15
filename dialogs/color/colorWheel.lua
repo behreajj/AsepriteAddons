@@ -315,7 +315,7 @@ dlg:button {
                 end
 
                 -- If color is within SRGB gamut, then display
-                -- at full opacity; otherwise display at reduced
+                -- at full opacity. Otherwise, display at reduced
                 -- alpha. Find the valid boundary of the gamut.
                 local hex = toHex(clr)
                 if rgbIsInGamut(clr, 0.0) then

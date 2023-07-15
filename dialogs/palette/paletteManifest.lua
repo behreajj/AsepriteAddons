@@ -39,6 +39,16 @@ local defaults = {
     pullFocus = false
 }
 
+---@param lut table
+---@param image Image
+---@param chars string[]
+---@param fillHex integer
+---@param shadHex integer
+---@param x integer
+---@param y integer
+---@param gw integer
+---@param gh integer
+---@param scale integer
 local function drawCharsHorizShd(
     lut, image, chars, fillHex, shadHex,
     x, y, gw, gh, scale)
@@ -51,6 +61,12 @@ local function drawCharsHorizShd(
         x, y, gw, gh, scale)
 end
 
+---@param image Image
+---@param hex integer
+---@param x integer
+---@param y integer
+---@param w integer
+---@param h integer
 local function drawSwatch(image, hex, x, y, w, h)
     local lenn1 = (w * h) - 1
     local i = -1

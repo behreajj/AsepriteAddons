@@ -7,6 +7,8 @@ local paletteTypes = {
     "FILE"
 }
 
+---@param filePath string
+---@return Sprite
 local function loadSprite(filePath)
     -- GPL and PAL file formats cannot be loaded as sprites.
     local fileExt = app.fs.fileExtension(filePath)

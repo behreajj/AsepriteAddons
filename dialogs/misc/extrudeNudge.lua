@@ -32,6 +32,8 @@ local shifts = {
     }
 }
 
+---@param str string
+---@return { right: integer[], up: integer[], left: integer[], down: integer[] }
 local function shiftFromStr(str)
     if str == "DIAGONAL" then
         return shifts.diagonal
@@ -41,6 +43,9 @@ local function shiftFromStr(str)
     return shifts.ortho
 end
 
+---@param dx integer
+---@param dy integer
+---@param trim boolean
 local function extrude(dx, dy, trim)
     local site = app.site
     local activeSprite = site.sprite
@@ -93,6 +98,8 @@ local function extrude(dx, dy, trim)
     app.refresh()
 end
 
+---@param dx integer
+---@param dy integer
 local function nudgeCel(dx, dy)
     local site = app.site
     local activeSprite = site.sprite
@@ -139,9 +146,9 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local amount = args.amount
-        local trim = args.trimCels
-        local shift = args.shiftOption
+        local amount = args.amount --[[@as integer]]
+        local trim = args.trimCels --[[@as boolean]]
+        local shift = args.shiftOption --[[@as string]]
         local tr = shiftFromStr(shift)
         extrude(tr.up[1] * amount,
             tr.up[2] * amount, trim)
@@ -154,9 +161,9 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local amount = args.amount
-        local trim = args.trimCels
-        local shift = args.shiftOption
+        local amount = args.amount --[[@as integer]]
+        local trim = args.trimCels --[[@as boolean]]
+        local shift = args.shiftOption --[[@as string]]
         local dir = shiftFromStr(shift)
         extrude(dir.left[1] * amount,
             dir.left[2] * amount, trim)
@@ -169,9 +176,9 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local amount = args.amount
-        local trim = args.trimCels
-        local shift = args.shiftOption
+        local amount = args.amount --[[@as integer]]
+        local trim = args.trimCels --[[@as boolean]]
+        local shift = args.shiftOption --[[@as string]]
         local dir = shiftFromStr(shift)
         extrude(dir.down[1] * amount,
             dir.down[2] * amount, trim)
@@ -184,9 +191,9 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local amount = args.amount
-        local trim = args.trimCels
-        local shift = args.shiftOption
+        local amount = args.amount --[[@as integer]]
+        local trim = args.trimCels --[[@as boolean]]
+        local shift = args.shiftOption --[[@as string]]
         local dir = shiftFromStr(shift)
         extrude(dir.right[1] * amount,
             dir.right[2] * amount, trim)
@@ -202,8 +209,8 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local shift = args.shiftOption
-        local amount = args.amount
+        local amount = args.amount  --[[@as integer]]
+        local shift = args.shiftOption --[[@as string]]
         local tr = shiftFromStr(shift)
         nudgeCel(
             tr.up[1] * amount,
@@ -217,8 +224,8 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local shift = args.shiftOption
-        local amount = args.amount
+        local amount = args.amount  --[[@as integer]]
+        local shift = args.shiftOption --[[@as string]]
         local tr = shiftFromStr(shift)
         nudgeCel(
             tr.left[1] * amount,
@@ -232,8 +239,8 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local shift = args.shiftOption
-        local amount = args.amount
+        local amount = args.amount  --[[@as integer]]
+        local shift = args.shiftOption --[[@as string]]
         local tr = shiftFromStr(shift)
         nudgeCel(
             tr.down[1] * amount,
@@ -247,8 +254,8 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local shift = args.shiftOption
-        local amount = args.amount
+        local amount = args.amount  --[[@as integer]]
+        local shift = args.shiftOption --[[@as string]]
         local tr = shiftFromStr(shift)
         nudgeCel(
             tr.right[1] * amount,

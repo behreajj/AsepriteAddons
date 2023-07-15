@@ -517,7 +517,7 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
-        if sprite and app.activeSprite == sprite then
+        if sprite and app.site.sprite == sprite then
             local args = dlg.data
             local aPxRatio = args.aPxRatio --[[@as integer]]
             local bPxRatio = args.bPxRatio --[[@as integer]]

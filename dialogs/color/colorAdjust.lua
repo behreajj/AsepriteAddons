@@ -43,6 +43,7 @@ local active = {
 
 local dlg = Dialog { title = "Adjust Color" }
 
+---@param event MouseEvent
 local function setLightMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth
@@ -64,6 +65,7 @@ local function setLightMouseListen(event)
     end
 end
 
+---@param event MouseEvent
 local function setChromaMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth
@@ -88,6 +90,7 @@ local function setChromaMouseListen(event)
     end
 end
 
+---@param event MouseEvent
 local function setHueMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth
@@ -107,6 +110,7 @@ local function setHueMouseListen(event)
     end
 end
 
+---@param event MouseEvent
 local function setAMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth
@@ -131,6 +135,7 @@ local function setAMouseListen(event)
     end
 end
 
+---@param event MouseEvent
 local function setBMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth
@@ -155,6 +160,7 @@ local function setBMouseListen(event)
     end
 end
 
+---@param event MouseEvent
 local function setAlphaMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw = defaults.barWidth

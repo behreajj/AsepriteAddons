@@ -1,5 +1,6 @@
 local defaults = {
     flattenImage = true,
+    animate = false,
     includeLocked = true,
     includeHidden = false,
     includeTiles = true,
@@ -248,6 +249,7 @@ local function layerToSvgStr(
                         childStrs)
                 end
 
+                -- TODO: Use layer id instead of layer name?
                 local grpStr = string.format(
                     "<g id=\"%s\"%s>\n%s\n</g>",
                     layerName, visStr, table.concat(childStrs, "\n"))
@@ -298,6 +300,7 @@ local function layerToSvgStr(
                         wScale, hScale, xCel, yCel,
                         palette)
 
+                    -- TODO: Use layer id instead of layer name.
                     local grpStr = string.format(
                         "<g id=\"%s\"%s style=\"mix-blend-mode: %s;\"%s>\n%s\n</g>",
                         layerName, visStr, bmStr, alphaStr, imgStr)
@@ -313,16 +316,31 @@ local dlg = Dialog { title = "SVG Export" }
 dlg:check {
     id = "flattenImage",
     label = "Flatten:",
+    text = "&Sprite",
     selected = defaults.flattenImage,
     onclick = function()
         local args = dlg.data
-        local show = not args.flattenImage
-        dlg:modify { id = "includeLocked", visible = show }
-        dlg:modify { id = "includeHidden", visible = show }
-        dlg:modify { id = "includeTiles", visible = show }
-        dlg:modify { id = "includeBkg", visible = show }
-        dlg:modify { id = "zIndexWarning", visible = show }
+        local flat = args.flattenImage --[[@as boolean]]
+        local notFlat = not flat
+
+        dlg:modify { id = "animate", visible = flat }
+
+        dlg:modify { id = "includeLocked", visible = notFlat }
+        dlg:modify { id = "includeHidden", visible = notFlat }
+        dlg:modify { id = "includeTiles", visible = notFlat }
+        dlg:modify { id = "includeBkg", visible = notFlat }
+        dlg:modify { id = "zIndexWarning", visible = notFlat }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "animate",
+    label = "Animate:",
+    text = "&All",
+    selected = defaults.animate,
+    visible = defaults.flattenImage
 }
 
 dlg:newrow { always = false }
@@ -463,15 +481,6 @@ dlg:button {
             return
         end
 
-        local activeFrame = site.frame
-        if not activeFrame then
-            app.alert {
-                title = "Error",
-                text = "There is no active frame."
-            }
-            return
-        end
-
         -- Unpack file path.
         local args = dlg.data
         local filepath = args.filepath --[[@as string]]
@@ -488,10 +497,7 @@ dlg:button {
 
         -- Unpack arguments.
         local flattenImage = args.flattenImage --[[@as boolean]]
-        local includeLocked = args.includeLocked --[[@as boolean]]
-        local includeHidden = args.includeHidden --[[@as boolean]]
-        local includeTiles = args.includeTiles --[[@as boolean]]
-        local includeBkg = args.includeBkg --[[@as boolean]]
+        local animate = args.animate --[[@as boolean]]
         local border = args.border
             or defaults.border --[[@as integer]]
         local borderClr = args.borderClr --[[@as Color]]
@@ -500,6 +506,10 @@ dlg:button {
         local paddingClr = args.paddingClr --[[@as Color]]
         local scale = args.scale or defaults.scale --[[@as integer]]
         local usePixelAspect = args.usePixelAspect --[[@as boolean]]
+
+        -- To reduce complexity of SVG, animate requires that flattenImage
+        -- be true.
+        animate = flattenImage and animate
 
         -- Process scale
         local wScale = scale
@@ -525,22 +535,104 @@ dlg:button {
         local wTotal = wClip + border + border
         local hTotal = hClip + border + border
 
-        local palette = AseUtilities.getPalette(
-            activeFrame, activeSprite.palettes)
-
         ---@type string[]
         local layersStrArr = {}
         if flattenImage then
-            local flatImg = Image(activeSpec)
-            flatImg:drawSprite(activeSprite, activeFrame)
-            layersStrArr[1] = imgToSvgStr(
-                flatImg, border, padding,
-                wScale, hScale, 0, 0,
-                palette)
+            if animate then
+                local frObjs = activeSprite.frames
+                local palettes = activeSprite.palettes
+                local lenFrObjs = #frObjs
+
+                local frameFormat = table.concat({
+                    "<g",
+                    " id=\"frame%03d\"",
+                    " visibility=\"hidden\"",
+                    ">",
+                    "<animate",
+                    " id=\"anim%03d\"",
+                    " attributeName=\"visibility\"",
+                    " to=\"visible\"",
+                    " begin=\"%s\"",
+                    " dur=\"%.6fs\"",
+                    "/>",
+                    "%s",
+                    "</g>"
+                })
+
+                local strfmt = string.format
+
+                ---@type string[]
+                local frameStrs = {}
+                local currentTime = 0.0
+                local beginStr = string.format("0s;anim%03d.end", lenFrObjs)
+                local i = 0
+                while i < lenFrObjs do
+                    i = i + 1
+                    local frObj = frObjs[i]
+                    local duration = frObj.duration
+
+                    local flatImg = Image(activeSpec)
+                    flatImg:drawSprite(activeSprite, frObj)
+
+                    local palette = AseUtilities.getPalette(
+                        frObj, palettes)
+                    local imgStr = imgToSvgStr(
+                        flatImg, border, padding,
+                        wScale, hScale, 0, 0,
+                        palette)
+
+                    local frameStr = strfmt(
+                        frameFormat, i, i,
+                        beginStr, duration,
+                        imgStr)
+                    frameStrs[i] = frameStr
+
+                    currentTime = currentTime + duration
+                    beginStr = strfmt("anim%03d.end", i)
+                end
+
+                layersStrArr[1] = table.concat(frameStrs)
+            else
+                local activeFrame = site.frame
+                if not activeFrame then
+                    app.alert {
+                        title = "Error",
+                        text = "There is no active frame."
+                    }
+                    return
+                end
+
+                local palette = AseUtilities.getPalette(
+                    activeFrame, activeSprite.palettes)
+
+                local flatImg = Image(activeSpec)
+                flatImg:drawSprite(activeSprite, activeFrame)
+                layersStrArr[1] = imgToSvgStr(
+                    flatImg, border, padding,
+                    wScale, hScale, 0, 0,
+                    palette)
+            end
         else
+            local includeLocked = args.includeLocked --[[@as boolean]]
+            local includeHidden = args.includeHidden --[[@as boolean]]
+            local includeTiles = args.includeTiles --[[@as boolean]]
+            local includeBkg = args.includeBkg --[[@as boolean]]
+
             local spriteBounds = activeSprite.bounds
             local spriteLayers = activeSprite.layers
             local lenSpriteLayers = #spriteLayers
+
+            local activeFrame = site.frame
+            if not activeFrame then
+                app.alert {
+                    title = "Error",
+                    text = "There is no active frame."
+                }
+                return
+            end
+
+            local palette = AseUtilities.getPalette(
+                activeFrame, activeSprite.palettes)
 
             local j = 0
             while j < lenSpriteLayers do

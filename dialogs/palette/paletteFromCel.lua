@@ -28,6 +28,8 @@ local defaults = {
     pullFocus = false
 }
 
+---@param preset string
+---@param arr table
 local function sortByPreset(preset, arr)
     if preset == "CIE_XYZ" then
         -- Y corresponds to perceived brightness.
@@ -47,6 +49,8 @@ local function sortByPreset(preset, arr)
     end
 end
 
+---@param preset string
+---@return Bounds3
 local function boundsFromPreset(preset)
     if preset == "CIE_LAB"
         or preset == "SR_LAB_2" then
@@ -56,20 +60,28 @@ local function boundsFromPreset(preset)
     end
 end
 
+---@param clr Clr
+---@return Vec3
 local function clrToVec3lRgb(clr)
     local lin = Clr.sRgbTolRgbInternal(clr)
     return Vec3.new(lin.r, lin.g, lin.b)
 end
 
+---@param clr Clr
+---@return Vec3
 local function clrToVec3sRgb(clr)
     return Vec3.new(clr.r, clr.g, clr.b)
 end
 
+---@param clr Clr
+---@return Vec3
 local function clrToVec3SrLab2(clr)
     local lab = Clr.sRgbToSrLab2(clr)
     return Vec3.new(lab.a, lab.b, lab.l)
 end
 
+---@param preset string
+---@return fun(clr: Clr): Vec3
 local function clrToV3FuncFromPreset(preset)
     if preset == "LINEAR_RGB" then
         return clrToVec3lRgb
@@ -80,19 +92,27 @@ local function clrToV3FuncFromPreset(preset)
     end
 end
 
+---@param v3 Vec3
+---@return Clr
 local function vec3ToClrlRgb(v3)
     local lin = Clr.new(v3.x, v3.y, v3.z, 1.0)
     return Clr.lRgbTosRgbInternal(lin)
 end
 
+---@param v3 Vec3
+---@return Clr
 local function vec3ToClrsRgb(v3)
     return Clr.new(v3.x, v3.y, v3.z, 1.0)
 end
 
+---@param v3 Vec3
+---@return Clr
 local function vec3ToClrSrLab2(v3)
     return Clr.srLab2TosRgb(v3.z, v3.x, v3.y, 1.0)
 end
 
+---@param preset string
+---@return fun(v3: Vec3): Clr
 local function v3ToClrFuncFromPreset(preset)
     if preset == "LINEAR_RGB" then
         return vec3ToClrlRgb

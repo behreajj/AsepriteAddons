@@ -18,6 +18,10 @@ local defaults = {
     pullFocus = true
 }
 
+---@param a { l: number, a: number, b: number, alpha: number }
+---@param b { l: number, a: number, b: number, alpha: number }
+---@param alphaScale number
+---@return number
 local function distSqInclAlpha(a, b, alphaScale)
     -- Scale alpha to be at least somewhat
     -- proportional to other channels.
@@ -28,6 +32,9 @@ local function distSqInclAlpha(a, b, alphaScale)
     return dt * dt + dl * dl + da * da + db * db
 end
 
+---@param a { l: number, a: number, b: number, alpha: number }
+---@param b { l: number, a: number, b: number, alpha: number }
+---@return number
 local function distSqNoAlpha(a, b)
     local dl = b.l - a.l
     local da = b.a - a.a
@@ -35,6 +42,11 @@ local function distSqNoAlpha(a, b)
     return dl * dl + da * da + db * db
 end
 
+---@param cel Cel
+---@param sprite Sprite
+---@return Image
+---@return integer
+---@return integer
 local function expandCelToCanvas(cel, sprite)
     local celPos = cel.position
     local xSrc = celPos.x
@@ -70,6 +82,7 @@ local function expandCelToCanvas(cel, sprite)
     return trgImg, xMin, yMin
 end
 
+---@param dialog Dialog
 local function swapColors(dialog)
     local args = dialog.data
     local frColor = args.fromColor --[[@as Color]]

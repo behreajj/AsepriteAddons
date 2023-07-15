@@ -21,6 +21,11 @@ local defaults = {
     printElapsed = false,
 }
 
+---@param pxArray integer[]
+---@param srcWidth integer
+---@param srcHeight integer
+---@param factor number
+---@param closestFunc fun(rSrc: integer, gSrc: integer, bSrc: integer, aSrc: integer): integer
 local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
     local pxLen = #pxArray
     local floor = math.floor

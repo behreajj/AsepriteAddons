@@ -63,6 +63,11 @@ local function assignBack()
     app.command.SwitchColors()
 end
 
+---@param dialog Dialog
+---@param l number
+---@param c number
+---@param h number
+---@return string
 local function updateHexCode(dialog, l, c, h)
     local srgb = defaults.lchTosRgb(l, c, h, 1.0)
     local str = Clr.toHexWeb(srgb)
@@ -70,6 +75,8 @@ local function updateHexCode(dialog, l, c, h)
     return str
 end
 
+---@param dialog Dialog
+---@param aseColor Color
 local function setFromAse(dialog, aseColor)
     local srgb = AseUtilities.aseColorToClr(aseColor)
     local lch = defaults.sRgbToLch(srgb, 0.007072)
@@ -83,6 +90,9 @@ local function setFromAse(dialog, aseColor)
     updateHexCode(dialog, active.l, active.c, active.h)
 end
 
+---@param dialog Dialog
+---@param sprite Sprite
+---@param frame integer|Frame
 local function setFromSelect(dialog, sprite, frame)
     local lab = AseUtilities.averageColor(sprite, frame)
     if lab.alpha > 0.0 then

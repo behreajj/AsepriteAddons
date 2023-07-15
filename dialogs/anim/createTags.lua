@@ -16,7 +16,7 @@ local defaults = {
     totalCount = 6,
     spanCount = 6,
     rangeStr = "",
-    strExample = "4,6-9,13",
+    strExample = "4,6:9,13",
     nameFormat = "[%%02d,%%02d]",
     colorOption = "ALL",
     aniDir = "FORWARD",
@@ -233,6 +233,8 @@ dlg:button {
         -- print(app.preferences.editor.play_once)
         -- print(app.preferences.editor.play_all)
         -- print(app.preferences.editor.play_subtags)
+        local docPrefs = app.preferences.document(activeSprite)
+        local frameUiOffset = docPrefs.timeline.first_frame - 1
 
         local frIdcs2 = {}
         if inputType == "COUNT" then
@@ -321,7 +323,9 @@ dlg:button {
 
                 transact("New Tag", function()
                     local tag = activeSprite:newTag(start, stop)
-                    tag.name = strfmt(nameFormat, start, stop)
+                    tag.name = strfmt(nameFormat,
+                        frameUiOffset + start,
+                        frameUiOffset + stop)
                     tag.aniDir = aniDirEnum
                     tag.repeats = repeats
 

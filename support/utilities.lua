@@ -493,10 +493,10 @@ function Utilities.nextPowerOf2(x)
     return 0
 end
 
----Parses a string of positive integers separated
+---Parses a string of integers separated
 ---by a comma. The integers may either be individual
----or ranges connected by a hyphen. For example,
----"1,5,10-15,7".
+---or ranges connected by a colon. For example,
+---"1,5,10:15,7".
 ---
 ---Supplying the frame count ensures the range is not
 ---out of bounds. Defaults to an arbitrary large number.
@@ -506,8 +506,10 @@ end
 ---the same frame to appear in multiple groups.
 ---@param s string range string
 ---@param frameCount integer? number of frames
+---@param offset integer? offset
 ---@return integer[][]
-function Utilities.parseRangeStringOverlap(s, frameCount)
+function Utilities.parseRangeStringOverlap(s, frameCount, offset)
+    local offVerif = offset or 0
     local fcVerif = frameCount or 2147483647
     local strgmatch = string.gmatch
 
@@ -520,12 +522,12 @@ function Utilities.parseRangeStringOverlap(s, frameCount)
         ---@type integer[]
         local edges = {}
         local idxEdges = 0
-        for subtoken in strgmatch(token, "[^-]+") do
+        for subtoken in strgmatch(token, "[^:]+") do
             local trial = tonumber(subtoken, 10)
             if trial then
                 -- print(string.format("trial: %d", trial))
                 idxEdges = idxEdges + 1
-                edges[idxEdges] = trial
+                edges[idxEdges] = trial - offVerif
             end
         end
 
@@ -586,10 +588,10 @@ function Utilities.parseRangeStringOverlap(s, frameCount)
     return arrOuter
 end
 
----Parses a string of positive integers separated
+---Parses a string of integers separated
 ---by a comma. The integers may either be individual
 ---or ranges connected by a hyphen. For example,
----"1,5,10-15,7".
+---"1,5,10:15,7".
 ---
 ---Supplying the frame count ensures the range is not
 ---out of bounds. Defaults to an arbitrary large number.
@@ -597,10 +599,11 @@ end
 ---Returns an ordered set of integers.
 ---@param s string range string
 ---@param frameCount integer? number of frames
+---@param offset integer? offset
 ---@return integer[]
-function Utilities.parseRangeStringUnique(s, frameCount)
+function Utilities.parseRangeStringUnique(s, frameCount, offset)
     local arr2 = Utilities.parseRangeStringOverlap(
-        s, frameCount)
+        s, frameCount, offset)
 
     -- Convert 2D array to a dictionary.
     -- Use dummy true, not some idx scheme,

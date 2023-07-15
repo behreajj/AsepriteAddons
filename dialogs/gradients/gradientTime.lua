@@ -5,7 +5,7 @@ local frameTargetOptions = { "ALL", "MANUAL", "RANGE" }
 local defaults = {
     frameTarget = "ALL",
     rangeStr = "",
-    strExample = "4,6-9,13",
+    strExample = "4,6:9,13",
     isCyclic = false,
     pullFocus = true
 }
@@ -178,7 +178,7 @@ dlg:button {
                 local trgImage = Image(activeSpec)
                 local trgItr = trgImage:pixels()
                 -- TODO: Could optimize this by only looping over
-                -- the gradient only for the size of the matrix, then
+                -- the gradient for the size of the matrix, then
                 -- repeating. Maybe update ditherFromPreset to return
                 -- that info? The only issue would be IGN doesn't fit
                 -- with the others...

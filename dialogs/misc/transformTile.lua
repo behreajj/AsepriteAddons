@@ -149,7 +149,9 @@ local function transformCel(dialog, preset)
         end)
     else
         -- In theory, app.range.tiles could also be used,
-        -- but atm it doesn't seem to work.
+        -- but atm it doesn't seem to work. For active:
+        -- app.preferences.color_bar.fg_tile
+        -- app.preferences.color_bar.bg_tile
 
         -- A regular layer's cel bounds may be within the
         -- canvas, but after conversion to tilemap layer,

@@ -45,12 +45,20 @@ local defaults = {
     printElapsed = false
 }
 
+---@param x integer
+---@param y integer
+---@param img Image
+---@return integer
 local function wrapClamp(x, y, img)
     return img:getPixel(
         math.min(math.max(x, 0), img.width - 1),
         math.min(math.max(y, 0), img.height - 1))
 end
 
+---@param x integer
+---@param y integer
+---@param img Image
+---@return integer
 local function wrapOmit(x, y, img)
     if y >= 0 and y < img.height
         and x >= 0 and x < img.width then
@@ -59,6 +67,10 @@ local function wrapOmit(x, y, img)
     return img.spec.transparentColor
 end
 
+---@param x integer
+---@param y integer
+---@param img Image
+---@return integer
 local function wrapMod(x, y, img)
     return img:getPixel(x % img.width, y % img.height)
 end
@@ -802,7 +814,7 @@ dlg:button {
                     local dotcod = d.x * xSgn + d.y * ySgn
                     local f = k * (dotcod - c * tSpeed)
 
-                    -- cos(a) = cos(-a), sin(a) ~= sin(-a),
+                    -- cos(a) == cos(-a), sin(a) ~= sin(-a),
                     -- so prefer latter to flip y axis.
                     local asinf = a * sin(f)
                     xSum = xSum + d.x * asinf

@@ -268,9 +268,9 @@ dlg:button {
                     local rangeLum = math.abs(lMax - lMin)
                     if rangeLum > 0.07 then
                         local invRangeLum = 1.0 / rangeLum
-                        local lumLen = #lumTable
+                        local lenLum = #lumTable
                         local j = 0
-                        while j < lumLen do
+                        while j < lenLum do
                             j = j + 1
                             local lum = lumTable[j]
                             lumTable[j] = (lum - lMin) * invRangeLum

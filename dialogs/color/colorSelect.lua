@@ -386,6 +386,7 @@ dlg:button {
                 minLight = refLab.l - tol100
                 maxLight = refLab.l + tol100
 
+                -- TODO: Replace with appropriate SR LAB 2 tol.
                 local tol111 = math.max(0.000001,
                     tolerance * (50.0 / 111.0))
                 mina = refLab.a - tol111
