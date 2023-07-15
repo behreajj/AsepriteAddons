@@ -608,14 +608,14 @@ dlg:button {
                 end
 
                 -- There was flickering in Firefox until
-                -- from, repeatCount and fill were specified.
-                -- Not all of these may be necessary.
+                -- from, repeatCount and fill were added.
+                -- fill="remove" and repeatCount="1" were later
+                -- removed. The display and opacity attributes
+                -- could also be modified.
                 local frameFormat = table.concat({
                     "<g",
                     " id=\"frame%03d\"",
                     " visibility=\"hidden\"",
-                    -- " display=\"none\"",
-                    -- " opacity=\"0\"",
                     ">",
                     "<animate",
                     " id=\"anim%03d\"",
@@ -624,8 +624,6 @@ dlg:button {
                     " to=\"visible\"",
                     " begin=\"%s\"",
                     " dur=\"%s\"",
-                    " repeatCount=\"1\"",
-                    " fill=\"remove\"",
                     "/>%s</g>"
                 })
 
