@@ -1,6 +1,11 @@
+local frameTargetOptions = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
+
 local defaults = {
     flattenImage = true,
-    animate = false,
+    frameTarget = "ACTIVE",
+    rangeStr = "",
+    strExample = "4,6:9,13",
+    useLoop = true,
     includeLocked = true,
     includeHidden = false,
     includeTiles = true,
@@ -16,9 +21,8 @@ local defaults = {
 local function blendModeToStr(bm)
     -- The blend mode for group layers is nil.
     if bm then
-        -- As of v1.3, blend mode normal reports as
-        -- SRC-OVER. CSS does not support addition,
-        -- subtract or divide.
+        -- As of v1.3, blend mode NORMAL reports as SRC-OVER.
+        -- CSS does not support addition, subtract or divide.
         if bm == BlendMode.NORMAL
             or bm == BlendMode.ADDITION
             or bm == BlendMode.SUBTRACT
@@ -171,7 +175,7 @@ local function imgToSvgStr(
             if a < 0xff then
                 alphaStr = strfmt(
                     " fill-opacity=\"%.6f\"",
-                    a * 0.003921568627451)
+                    a / 255.0)
             end
             local pathStr = strfmt(
                 "<path id=\"%08x\" fill=\"#%06X\"%s d=\"%s\" />",
@@ -249,7 +253,6 @@ local function layerToSvgStr(
                         childStrs)
                 end
 
-                -- TODO: Use layer id instead of layer name?
                 local grpStr = string.format(
                     "<g id=\"%s\"%s>\n%s\n</g>",
                     layerName, visStr, table.concat(childStrs, "\n"))
@@ -261,7 +264,7 @@ local function layerToSvgStr(
             local cel = layer:cel(frame)
             if cel then
                 -- A definition could be created for tile sets,
-                -- then accssed with use xlink:href, but best to
+                -- then accessed with use xlink:href, but best to
                 -- keep things simple for compatibility with Inkscape,
                 -- Processing, Blender, etc.
                 local celImg = cel.image
@@ -300,7 +303,6 @@ local function layerToSvgStr(
                         wScale, hScale, xCel, yCel,
                         palette)
 
-                    -- TODO: Use layer id instead of layer name.
                     local grpStr = string.format(
                         "<g id=\"%s\"%s style=\"mix-blend-mode: %s;\"%s>\n%s\n</g>",
                         layerName, visStr, bmStr, alphaStr, imgStr)
@@ -321,10 +323,15 @@ dlg:check {
     onclick = function()
         local args = dlg.data
         local flat = args.flattenImage --[[@as boolean]]
+        local state = args.frameTarget --[[@as string]]
+        local isManual = state == "MANUAL"
+
+        -- dlg:modify { id = "frameTarget", visible = flat }
+        -- dlg:modify { id = "rangeStr", visible = flat and isManual }
+        -- dlg:modify { id = "strExample", visible = false }
+        -- dlg:modify { id = "useLoop", visible = flat }
+
         local notFlat = not flat
-
-        dlg:modify { id = "animate", visible = flat }
-
         dlg:modify { id = "includeLocked", visible = notFlat }
         dlg:modify { id = "includeHidden", visible = notFlat }
         dlg:modify { id = "includeTiles", visible = notFlat }
@@ -335,12 +342,55 @@ dlg:check {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "frameTarget",
+    label = "Frames:",
+    option = defaults.frameTarget,
+    options = frameTargetOptions,
+    -- visible = defaults.flattenImage,
+    visible = false,
+    onchange = function()
+        local args = dlg.data
+        local state = args.frameTarget --[[@as string]]
+        local isManual = state == "MANUAL"
+        dlg:modify { id = "rangeStr", visible = isManual }
+        dlg:modify { id = "strExample", visible = false }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "rangeStr",
+    label = "Entry:",
+    text = defaults.rangeStr,
+    focus = false,
+    -- visible = defaults.flattenImage
+    --     and defaults.frameTarget == "MANUAL",
+    visible = false,
+    onchange = function()
+        dlg:modify { id = "strExample", visible = true }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "strExample",
+    label = "Example:",
+    text = defaults.strExample,
+    visible = false
+}
+
+dlg:newrow { always = false }
+
 dlg:check {
-    id = "animate",
-    label = "Animate:",
-    text = "&All",
-    selected = defaults.animate,
-    visible = defaults.flattenImage
+    id = "useLoop",
+    label = "Loop:",
+    text = "&Infinite",
+    selected = defaults.useLoop,
+    -- visible = defaults.flattenImage
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -497,7 +547,6 @@ dlg:button {
 
         -- Unpack arguments.
         local flattenImage = args.flattenImage --[[@as boolean]]
-        local animate = args.animate --[[@as boolean]]
         local border = args.border
             or defaults.border --[[@as integer]]
         local borderClr = args.borderClr --[[@as Color]]
@@ -506,10 +555,6 @@ dlg:button {
         local paddingClr = args.paddingClr --[[@as Color]]
         local scale = args.scale or defaults.scale --[[@as integer]]
         local usePixelAspect = args.usePixelAspect --[[@as boolean]]
-
-        -- To reduce complexity of SVG, animate requires that flattenImage
-        -- be true.
-        animate = flattenImage and animate
 
         -- Process scale
         local wScale = scale
@@ -538,62 +583,105 @@ dlg:button {
         ---@type string[]
         local layersStrArr = {}
         if flattenImage then
-            if animate then
-                local frObjs = activeSprite.frames
-                local palettes = activeSprite.palettes
-                local lenFrObjs = #frObjs
+            local frameTarget = args.frameTarget
+                or defaults.frameTarget --[[@as string]]
+            local rangeStr = args.rangeStr
+                or defaults.rangeStr --[[@as string]]
+            local chosenFrIdcs = Utilities.flatArr2(
+                AseUtilities.getFrames(
+                    activeSprite, frameTarget,
+                    true, rangeStr))
+            local lenChosenFrames = #chosenFrIdcs
+            local animate = lenChosenFrames > 1
 
+            if animate then
+                local useLoop = args.useLoop --[[@as boolean]]
+
+                local docPrefs = app.preferences.document(activeSprite)
+                local frameUiOffset = docPrefs.timeline.first_frame - 1
+                local spritePalettes = activeSprite.palettes
+                local spriteFrames = activeSprite.frames
+                local currentTime = 0.0
+
+                local animBeginStr = "0s"
+                if useLoop then
+                    animBeginStr = string.format(
+                        "0s;anim%03d.end",
+                        lenChosenFrames)
+                end
+
+                -- Causes flickering in Mozilla Firefox.
+                -- fill freeze|remove doesn't work.
+                -- backface-visibility added to group style doesn't work.
+                -- Might need to be a sequence of values where all but one
+                -- are visible, with discrete calc mode.
                 local frameFormat = table.concat({
                     "<g",
                     " id=\"frame%03d\"",
                     " visibility=\"hidden\"",
+                    -- " display=\"none\"",
+                    -- " opacity=\"0\"",
                     ">",
                     "<animate",
                     " id=\"anim%03d\"",
                     " attributeName=\"visibility\"",
                     " to=\"visible\"",
                     " begin=\"%s\"",
-                    " dur=\"%.6fs\"",
-                    "/>",
-                    "%s",
-                    "</g>"
+                    " dur=\"%s\"",
+                    "/>%s</g>"
                 })
 
+                -- Cache methods used in loop.
                 local strfmt = string.format
+                local floor = math.floor
+                local getPalette = AseUtilities.getPalette
 
                 ---@type string[]
                 local frameStrs = {}
-                local currentTime = 0.0
-                local beginStr = string.format("0s;anim%03d.end", lenFrObjs)
+
                 local i = 0
-                while i < lenFrObjs do
+                while i < lenChosenFrames do
                     i = i + 1
-                    local frObj = frObjs[i]
+                    local frIdx = chosenFrIdcs[i]
+                    local frObj = spriteFrames[frIdx]
                     local duration = frObj.duration
 
+                    -- Create image SVG string.
                     local flatImg = Image(activeSpec)
                     flatImg:drawSprite(activeSprite, frObj)
-
-                    local palette = AseUtilities.getPalette(
-                        frObj, palettes)
+                    local palette = getPalette(frIdx, spritePalettes)
                     local imgStr = imgToSvgStr(
                         flatImg, border, padding,
                         wScale, hScale, 0, 0,
                         palette)
 
+                    -- Create frame SVG string.
+                    local durStr = "indefinite"
+                    if useLoop or i < lenChosenFrames then
+                        durStr = strfmt("%.6fs", duration)
+                        -- Switching to milliseconds does not change flickering.
+                        -- durStr = strfmt(
+                        --     "%dms",
+                        --     floor(duration * 1000.0 + 0.5))
+                    end
                     local frameStr = strfmt(
-                        frameFormat, i, i,
-                        beginStr, duration,
+                        frameFormat,
+                        frameUiOffset + frIdx, i,
+                        animBeginStr, durStr,
                         imgStr)
                     frameStrs[i] = frameStr
 
+                    -- Update for next iteration in loop.
                     currentTime = currentTime + duration
-                    beginStr = strfmt("anim%03d.end", i)
+                    animBeginStr = strfmt("anim%03d.end", i)
                 end
 
                 layersStrArr[1] = table.concat(frameStrs)
             else
                 local activeFrame = site.frame
+                if lenChosenFrames > 0 then
+                    activeFrame = activeSprite.frames[chosenFrIdcs[1]]
+                end
                 if not activeFrame then
                     app.alert {
                         title = "Error",
