@@ -326,10 +326,10 @@ dlg:check {
         local state = args.frameTarget --[[@as string]]
         local isManual = state == "MANUAL"
 
-        -- dlg:modify { id = "frameTarget", visible = flat }
-        -- dlg:modify { id = "rangeStr", visible = flat and isManual }
-        -- dlg:modify { id = "strExample", visible = false }
-        -- dlg:modify { id = "useLoop", visible = flat }
+        dlg:modify { id = "frameTarget", visible = flat }
+        dlg:modify { id = "rangeStr", visible = flat and isManual }
+        dlg:modify { id = "strExample", visible = false }
+        dlg:modify { id = "useLoop", visible = flat }
 
         local notFlat = not flat
         dlg:modify { id = "includeLocked", visible = notFlat }
@@ -347,8 +347,7 @@ dlg:combobox {
     label = "Frames:",
     option = defaults.frameTarget,
     options = frameTargetOptions,
-    -- visible = defaults.flattenImage,
-    visible = false,
+    visible = defaults.flattenImage,
     onchange = function()
         local args = dlg.data
         local state = args.frameTarget --[[@as string]]
@@ -365,9 +364,8 @@ dlg:entry {
     label = "Entry:",
     text = defaults.rangeStr,
     focus = false,
-    -- visible = defaults.flattenImage
-    --     and defaults.frameTarget == "MANUAL",
-    visible = false,
+    visible = defaults.flattenImage
+        and defaults.frameTarget == "MANUAL",
     onchange = function()
         dlg:modify { id = "strExample", visible = true }
     end
@@ -389,8 +387,7 @@ dlg:check {
     label = "Loop:",
     text = "&Infinite",
     selected = defaults.useLoop,
-    -- visible = defaults.flattenImage
-    visible = false
+    visible = defaults.flattenImage
 }
 
 dlg:newrow { always = false }
@@ -610,11 +607,9 @@ dlg:button {
                         lenChosenFrames)
                 end
 
-                -- Causes flickering in Mozilla Firefox.
-                -- fill freeze|remove doesn't work.
-                -- backface-visibility added to group style doesn't work.
-                -- Might need to be a sequence of values where all but one
-                -- are visible, with discrete calc mode.
+                -- There was flickering in Firefox until
+                -- from, repeatCount and fill were specified.
+                -- Not all of these may be necessary.
                 local frameFormat = table.concat({
                     "<g",
                     " id=\"frame%03d\"",
@@ -625,9 +620,12 @@ dlg:button {
                     "<animate",
                     " id=\"anim%03d\"",
                     " attributeName=\"visibility\"",
+                    " from=\"visible\"",
                     " to=\"visible\"",
                     " begin=\"%s\"",
                     " dur=\"%s\"",
+                    " repeatCount=\"1\"",
+                    " fill=\"remove\"",
                     "/>%s</g>"
                 })
 
