@@ -223,8 +223,9 @@ dlg:combobox {
     options = modes,
     onchange = function()
         local args = dlg.data
-        local isLch = args.mode == "LCH"
-        local isLab = args.mode == "LAB"
+        local mode = args.mode --[[@as string]]
+        local isLch = mode == "LCH"
+        local isLab = mode == "LAB"
         dlg:modify { id = "cAdjCanvas", visible = isLch }
         dlg:modify { id = "hAdjCanvas", visible = isLch }
         dlg:modify { id = "aAdjCanvas", visible = isLab }
@@ -565,6 +566,39 @@ dlg:canvas {
     end,
     onmousedown = setAlphaMouseListen,
     onmousemove = setAlphaMouseListen
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "neutral",
+    label = "Get:",
+    text = "&GRAY",
+    focus = false,
+    onclick = function()
+        local site = app.site
+        local sprite = site.sprite
+        if not sprite then return end
+        local frame = site.frame
+        if not frame then return end
+
+        local lab = AseUtilities.averageColor(sprite, frame)
+
+        local args = dlg.data
+        local mode = args.mode --[[@as string]]
+
+        -- Black and white buttons could also set
+        -- the active lightness?
+        if mode == "LCH" then
+            local lch = Clr.srLab2ToSrLch(
+                lab.l, lab.a, lab.b, lab.alpha)
+            active.cAdj = -lch.c
+        else
+            active.aAdj = -lab.a
+            active.bAdj = -lab.b
+        end
+        dlg:repaint()
+    end
 }
 
 dlg:separator { id = "invertSep" }

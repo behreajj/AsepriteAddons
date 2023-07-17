@@ -231,6 +231,7 @@ local function layerToSvgStr(
         end
 
         if isGroup then
+            ---@type string[]
             local childStrs = {}
             local children = layer.layers --[=[@as Layer[]]=]
             local lenChildren = #children
@@ -598,38 +599,34 @@ dlg:button {
                 local frameUiOffset = docPrefs.timeline.first_frame - 1
                 local spritePalettes = activeSprite.palettes
                 local spriteFrames = activeSprite.frames
-                local currentTime = 0.0
 
                 local animBeginStr = "0s"
                 if useLoop then
                     animBeginStr = string.format(
-                        "0s;anim%03d.end",
+                        "0s;anim%d.end",
                         lenChosenFrames)
                 end
 
-                -- There was flickering in Firefox until
-                -- from, repeatCount and fill were added.
-                -- fill="remove" and repeatCount="1" were later
-                -- removed. The display and opacity attributes
-                -- could also be modified.
+                -- There was flickering in Firefox until "from=\"visible\""
+                -- was added. The display and opacity attributes might also
+                -- work for animation.
                 local frameFormat = table.concat({
                     "<g",
-                    " id=\"frame%03d\"",
+                    " id=\"frame%d\"",
                     " visibility=\"hidden\"",
-                    ">",
+                    ">\n",
                     "<animate",
-                    " id=\"anim%03d\"",
+                    " id=\"anim%d\"",
                     " attributeName=\"visibility\"",
                     " from=\"visible\"",
                     " to=\"visible\"",
                     " begin=\"%s\"",
                     " dur=\"%s\"",
-                    "/>%s</g>"
+                    " />\n%s\n</g>"
                 })
 
                 -- Cache methods used in loop.
                 local strfmt = string.format
-                local floor = math.floor
                 local getPalette = AseUtilities.getPalette
 
                 ---@type string[]
@@ -654,11 +651,9 @@ dlg:button {
                     -- Create frame SVG string.
                     local durStr = "indefinite"
                     if useLoop or i < lenChosenFrames then
-                        durStr = strfmt("%.6fs", duration)
-                        -- Switching to milliseconds does not change flickering.
-                        -- durStr = strfmt(
-                        --     "%dms",
-                        --     floor(duration * 1000.0 + 0.5))
+                        -- Only 3 decimals needed because duration is
+                        -- truncated from millis representation.
+                        durStr = strfmt("%.3fs", duration)
                     end
                     local frameStr = strfmt(
                         frameFormat,
@@ -668,11 +663,10 @@ dlg:button {
                     frameStrs[i] = frameStr
 
                     -- Update for next iteration in loop.
-                    currentTime = currentTime + duration
-                    animBeginStr = strfmt("anim%03d.end", i)
+                    animBeginStr = strfmt("anim%d.end", i)
                 end
 
-                layersStrArr[1] = table.concat(frameStrs)
+                layersStrArr[1] = table.concat(frameStrs, "\n")
             else
                 local activeFrame = site.frame
                 if lenChosenFrames > 0 then
@@ -750,7 +744,7 @@ dlg:button {
             if aPadding < 0xff then
                 alphaStr = string.format(
                     " fill-opacity=\"%.6f\"",
-                    aPadding * 0.003921568627451)
+                    aPadding / 255.0)
             end
 
             -- Cut out a hole for each pixel (counter-clockwise).
@@ -800,7 +794,7 @@ dlg:button {
             if aBorder < 0xff then
                 alphaStr = string.format(
                     " fill-opacity=\"%.6f\"",
-                    aBorder * 0.003921568627451)
+                    aBorder / 255.0)
             end
 
             borderStr = string.format(

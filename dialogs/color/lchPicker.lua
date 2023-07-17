@@ -35,8 +35,8 @@ local defaults = {
     chromaSpreadShd = 5.0,
     chromaSpreadLgt = 15.0,
     lightSpread = 33.33,
-    hYellow = 0.28570825759858,
-    hViolet = 0.78570825759858
+    hYellow = 0.30922841685655,
+    hViolet = 0.80922841685655
 }
 
 local active = {
