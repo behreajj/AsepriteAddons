@@ -736,14 +736,14 @@ dlg:canvas {
         elseif harmonyType == "TETRADIC" then
             local lTri = (200.0 - l) / 3.0
             local lTet = (100.0 + l) / 3.0
-            local h120 = 0.3333333333333333
+            local h120 = 0.33333333333333
             local h60 = 0.16666666666667
             swatches[1] = { l = lTri, c = c, h = (h + h120) % 1.0, a = a }
             swatches[2] = { l = 100.0 - l, c = c, h = (h + 0.5) % 1.0, a = a }
             swatches[3] = { l = lTet, c = c, h = (h - h60) % 1.0, a = a }
         elseif harmonyType == "TRIADIC" then
             local lTri = (200.0 - l) / 3.0
-            local h120 = 0.3333333333333333
+            local h120 = 0.33333333333333
             swatches[1] = { l = lTri, c = c, h = (h + h120) % 1.0, a = a }
             swatches[2] = { l = lTri, c = c, h = (h - h120) % 1.0, a = a }
         else

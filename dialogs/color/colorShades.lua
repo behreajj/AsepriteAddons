@@ -147,47 +147,51 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Cache methods
-        local floor = math.floor
-        local fromHex = Clr.fromHex
-        local rgbIsInGamut = Clr.rgbIsInGamut
-        local toHex = Clr.toHex
-        local quantize = Utilities.quantizeUnsigned
-        local drawCircleFill = AseUtilities.drawCircleFill
-        local lchTosRgba = Clr.srLchTosRgb
-        local sRgbaToLch = Clr.sRgbToSrLch
+        local floor <const> = math.floor
+
+        local fromHex <const> = Clr.fromHex
+        local lchTosRgba <const> = Clr.srLchTosRgb
+        local rgbIsInGamut <const> = Clr.rgbIsInGamut
+        local sRgbaToLch <const> = Clr.sRgbToSrLch
+        local toHex <const> = Clr.toHex
+
+        local drawCircleFill <const> = AseUtilities.drawCircleFill
+        local quantize <const> = Utilities.quantizeUnsigned
 
         -- Unpack arguments.
-        local args = dlg.data
-        local maxChroma = Clr.SR_LCH_MAX_CHROMA
-        local maxLight = args.maxLight or defaults.maxLight
-        local outOfGamut = args.outOfGamut or defaults.outOfGamut
-        local useHueBar = args.useHueBar
-        local plotPalette = args.plotPalette
+        local args <const> = dlg.data
+        local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA
+        local maxLight <const> = args.maxLight
+            or defaults.maxLight --[[@as integer]]
+        local outOfGamut <const> = args.outOfGamut
+            or defaults.outOfGamut --[[@as integer]]
+        local useHueBar <const> = args.useHueBar --[[@as boolean]]
+        local plotPalette <const> = args.plotPalette --[[@as boolean]]
 
         -- Must be done before a new sprite is created.
         local hexesSrgb = {}
         local hexesProfile = {}
         if plotPalette then
-            local palType = args.palType
+            local palType <const> = args.palType
                 or defaults.palType --[[@as string]]
             if palType ~= "DEFAULT" then
-                local palFile = args.palFile --[[@as string]]
-                local palStart = args.palStart
+                local palFile <const> = args.palFile --[[@as string]]
+                local palStart <const> = args.palStart
                     or defaults.palStart --[[@as integer]]
-                local palCount = args.palCount
+                local palCount <const> = args.palCount
                     or defaults.palCount --[[@as integer]]
 
                 hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                     palType, palFile, palStart, palCount, true)
             else
                 -- As of circa apiVersion 24, version v1.3-rc4.
-                local defaultPalette = app.defaultPalette
+                local defaultPalette <const> = app.defaultPalette
                 if defaultPalette then
                     hexesProfile = AseUtilities.asePaletteToHexArr(
                         defaultPalette, 0, #defaultPalette)
                 else
-                    local hexesDefault = AseUtilities.DEFAULT_PAL_ARR
-                    local lenHexesDef = #hexesDefault
+                    local hexesDefault <const> = AseUtilities.DEFAULT_PAL_ARR
+                    local lenHexesDef <const> = #hexesDefault
                     local i = 0
                     while i < lenHexesDef do
                         i = i + 1
@@ -200,20 +204,21 @@ dlg:button {
         end
 
         -- Create sprite.
-        local size = args.size or defaults.size --[[@as integer]]
-        local szInv = 1.0 / size
+        local size <const> = args.size
+            or defaults.size --[[@as integer]]
+        local szInv <const> = 1.0 / size
         local spec = ImageSpec {
             width = size,
             height = size,
             colorMode = ColorMode.RGB
         }
         spec.colorSpace = ColorSpace { sRGB = true }
-        local sprite = Sprite(spec)
+        local sprite <const> = Sprite(spec)
         sprite.filename = "LCh Color Shades"
 
         -- Calculate frame count to normalization.
         local iToStep = 0.5
-        local reqFrames = args.frames
+        local reqFrames <const> = args.frames
             or defaults.frames --[[@as integer]]
         if reqFrames > 0 then
             -- Because hue is periodic, don't subtract 1.
@@ -221,32 +226,35 @@ dlg:button {
         end
 
         ---@type Image[]
-        local gamutImgs = {}
-        local oogaNorm = outOfGamut * 0.003921568627451
-        local oogaEps = 2.0 * 0.003921568627451
-        local quantization = args.quantization
+        local gamutImgs <const> = {}
+        local oogaNorm <const> = outOfGamut * 0.003921568627451
+        local oogaEps <const> = 2.0 * 0.003921568627451
+        local quantization <const> = args.quantization
             or defaults.quantization --[[@as integer]]
         local idxFrame = 0
         while idxFrame < reqFrames do
             -- Convert i to a step, which will be its hue.
-            local iStep = idxFrame * iToStep
-            local hue = iStep
+            local iStep <const> = idxFrame * iToStep
+            local hue <const> = iStep
 
-            local gamutImg = Image(spec)
-            local pxItr = gamutImg:pixels()
+            local gamutImg <const> = Image(spec)
+            local pxItr <const> = gamutImg:pixels()
             for pixel in pxItr do
                 -- Convert coordinates from [0, size] to
                 -- [0.0, 1.0], then to LCH.
                 local xNrm = pixel.x * szInv
                 xNrm = quantize(xNrm, quantization)
-                local chroma = xNrm * maxChroma
+                local chroma <const> = xNrm * maxChroma
 
                 local yNrm = pixel.y * szInv
                 yNrm = quantize(yNrm, quantization)
-                local light = (1.0 - yNrm) * maxLight
+                local light <const> = (1.0 - yNrm) * maxLight
 
-                local clr = lchTosRgba(light, chroma, hue, 1.0)
+                local clr <const> = lchTosRgba(light, chroma, hue, 1.0)
                 if not rgbIsInGamut(clr, oogaEps) then
+                    -- TODO: This breaks the general rules of good code
+                    -- in this repository, as it should be assumed
+                    -- that colors are immutable.
                     clr.a = oogaNorm
                 end
 
@@ -258,10 +266,10 @@ dlg:button {
         end
 
         -- Create frames.
-        local oldFrameLen = #sprite.frames
-        local needed = math.max(0, reqFrames - oldFrameLen)
-        local fps = args.fps or defaults.fps --[[@as integer]]
-        local duration = 1.0 / math.max(1, fps)
+        local oldFrameLen <const> = #sprite.frames
+        local needed <const> = math.max(0, reqFrames - oldFrameLen)
+        local fps <const> = args.fps or defaults.fps --[[@as integer]]
+        local duration <const> = 1.0 / math.max(1, fps)
         sprite.frames[1].duration = duration
         app.transaction("New Frames", function()
             AseUtilities.createFrames(sprite, needed, duration)
@@ -271,7 +279,7 @@ dlg:button {
         -- These are not wrapped in a transaction because
         -- gamut layer needs to be available beyond the
         -- transaction scope.
-        local gamutLayer = sprite.layers[1]
+        local gamutLayer <const> = sprite.layers[1]
         if quantization > 0 then
             gamutLayer.name = string.format(
                 "Gamut.Quantize%d",
@@ -282,58 +290,60 @@ dlg:button {
 
         -- Create gamut layer cels.
         app.transaction("New Cels", function()
+            local spriteFrames <const> = sprite.frames
             local idxCel = 0
             while idxCel < reqFrames do
                 idxCel = idxCel + 1
                 sprite:newCel(
                     gamutLayer,
-                    sprite.frames[idxCel],
+                    spriteFrames[idxCel],
                     gamutImgs[idxCel])
             end
         end)
 
         if useHueBar then
-            local hueBarLayer = sprite:newLayer()
+            local hueBarLayer <const> = sprite:newLayer()
             hueBarLayer.name = "Hue"
 
             local hueBarWidth = math.ceil(size / 24)
-            local hueBarHeight = size
+            local hueBarHeight <const> = size
             if hueBarWidth < 8 then hueBarWidth = 8 end
-            local hueBarSpec = ImageSpec {
+            local hueBarSpec <const> = ImageSpec {
                 width = hueBarWidth,
                 height = hueBarHeight,
                 colorMode = ColorMode.RGB
             }
             spec.colorSpace = ColorSpace { sRGB = true }
-            local hueBarImage = Image(hueBarSpec)
+            local hueBarImage <const> = Image(hueBarSpec)
 
-            local yToHue = 1.0 / (hueBarHeight - 1.0)
-            local hueBarPixels = hueBarImage:pixels()
-            local halfChroma = maxChroma * 0.5
+            local yToHue <const> = 1.0 / (hueBarHeight - 1.0)
+            local hueBarPixels <const> = hueBarImage:pixels()
+            local halfChroma <const> = maxChroma * 0.5
             for pixel in hueBarPixels do
-                local hue = 1.0 - pixel.y * yToHue
+                local hue <const> = 1.0 - pixel.y * yToHue
                 pixel(toHex(lchTosRgba(50.0, halfChroma, hue, 1.0)))
             end
 
             app.transaction("Hue Bar", function()
-                local huePoint = Point(size - hueBarWidth, 0)
-                local strokeColor = 0xffffffff
-                local xi = hueBarWidth // 2
-                local strokeSize = hueBarWidth // 2
+                local huePoint <const> = Point(size - hueBarWidth, 0)
+                local strokeColor <const> = 0xffffffff
+                local xi <const> = hueBarWidth // 2
+                local strokeSize <const> = hueBarWidth // 2
                 local idxCel = 0
                 local iToHue = hueBarHeight * 0.5
                 if reqFrames > 0 then
                     iToHue = hueBarHeight / reqFrames
                 end
+                local spriteFrames <const> = sprite.frames
                 while idxCel < reqFrames do
-                    local yi = size - floor(0.5 + idxCel * iToHue)
-                    local hueClone = hueBarImage:clone()
+                    local yi <const> = size - floor(0.5 + idxCel * iToHue)
+                    local hueClone <const> = hueBarImage:clone()
                     drawCircleFill(hueClone, xi, yi, strokeSize, strokeColor)
 
                     idxCel = idxCel + 1
                     sprite:newCel(
                         hueBarLayer,
-                        sprite.frames[idxCel],
+                        spriteFrames[idxCel],
                         hueClone,
                         huePoint)
                 end
@@ -342,17 +352,17 @@ dlg:button {
 
         if plotPalette then
             -- Unpack arguments.
-            local strokeSize = args.strokeSize
+            local strokeSize <const> = args.strokeSize
                 or defaults.strokeSize --[[@as integer]]
-            local fillSize = args.fillSize
+            local fillSize <const> = args.fillSize
                 or defaults.fillSize --[[@as integer]]
 
             ---@type integer[]
-            local strokes = {}
+            local strokes <const> = {}
             ---@type integer[]
-            local xs = {}
+            local xs <const> = {}
             ---@type integer[]
-            local ys = {}
+            local ys <const> = {}
 
             -- Find min and max.
             local xMin = 2147483647
@@ -360,23 +370,23 @@ dlg:button {
             local xMax = -2147483648
             local yMax = -2147483648
 
-            local invMaxChroma = 1.0 / maxChroma
-            local invMaxLight = 1.0 / maxLight
+            local invMaxChroma <const> = 1.0 / maxChroma
+            local invMaxLight <const> = 1.0 / maxLight
 
-            local lenHexesSrgb = #hexesSrgb
+            local lenHexesSrgb <const> = #hexesSrgb
             local j = 0
             while j < lenHexesSrgb do
                 j = j + 1
-                local hexSrgb = hexesSrgb[j]
+                local hexSrgb <const> = hexesSrgb[j]
                 local xi = 0
                 local yi = size
                 local stroke = 0x0
                 if (hexSrgb & 0xff000000) ~= 0 then
-                    local lch = sRgbaToLch(fromHex(hexSrgb))
+                    local lch <const> = sRgbaToLch(fromHex(hexSrgb))
 
                     -- Convert chroma to [0.0, 1.0].
-                    local xNrm = lch.c * invMaxChroma
-                    local yNrm = 1.0 - (lch.l * invMaxLight)
+                    local xNrm <const> = lch.c * invMaxChroma
+                    local yNrm <const> = 1.0 - (lch.l * invMaxLight)
 
                     -- From [0.0, 1.0] to [0, size].
                     xi = floor(0.5 + xNrm * size)
@@ -399,45 +409,58 @@ dlg:button {
                 ys[j] = yi
             end
 
-            if xMax > xMin and yMax > yMin then
-                local stroke2 = strokeSize + strokeSize
-                local xOff = 1 + xMin - strokeSize
-                local yOff = 1 + yMin - strokeSize
-
-                local plotSpec = ImageSpec {
-                    width = (xMax - xMin) + stroke2 - 1,
-                    height = (yMax - yMin) + stroke2 - 1,
-                    colorMode = spec.colorMode
-                }
-                plotSpec.colorSpace = spec.colorSpace
-                local plotImage = Image(plotSpec)
-                local plotPos = Point(xOff, yOff)
-
-                local k = 0
-                while k < lenHexesSrgb do
-                    k = k + 1
-                    local hexSrgb = hexesSrgb[k]
-                    if (hexSrgb & 0xff000000) ~= 0 then
-                        local xi = xs[k] - xOff
-                        local yi = ys[k] - yOff
-                        local hexProfile = hexesProfile[k]
-                        local strokeColor = strokes[k]
-                        drawCircleFill(plotImage, xi, yi, strokeSize, strokeColor)
-                        drawCircleFill(plotImage, xi, yi, fillSize, hexProfile)
-                    end
-                end
-
-                local plotPalLayer = sprite:newLayer()
-                plotPalLayer.name = "Palette"
-
-                app.transaction("Plot Palette", function()
-                    AseUtilities.createCels(
-                        sprite,
-                        1, reqFrames,
-                        plotPalLayer.stackIndex, 1,
-                        plotImage, plotPos, 0x0)
-                end)
+            -- if xMax > xMin and yMax > yMin then
+            -- end
+            -- The above can fail for certain sets of harmonious
+            -- shades, which means palettes go unplotted without
+            -- much explanation.
+            if yMax == yMin then
+                yMax = size
+                yMin = 0
             end
+
+            if xMax == xMin then
+                xMax = size
+                xMin = 0
+            end
+
+            local stroke2 <const> = strokeSize + strokeSize
+            local xOff <const> = 1 + xMin - strokeSize
+            local yOff <const> = 1 + yMin - strokeSize
+
+            local plotSpec <const> = ImageSpec {
+                width = (xMax - xMin) + stroke2 - 1,
+                height = (yMax - yMin) + stroke2 - 1,
+                colorMode = spec.colorMode
+            }
+            plotSpec.colorSpace = spec.colorSpace
+            local plotImage <const> = Image(plotSpec)
+            local plotPos <const> = Point(xOff, yOff)
+
+            local k = 0
+            while k < lenHexesSrgb do
+                k = k + 1
+                local hexSrgb <const> = hexesSrgb[k]
+                if (hexSrgb & 0xff000000) ~= 0 then
+                    local xi <const> = xs[k] - xOff
+                    local yi <const> = ys[k] - yOff
+                    local hexProfile <const> = hexesProfile[k]
+                    local strokeColor <const> = strokes[k]
+                    drawCircleFill(plotImage, xi, yi, strokeSize, strokeColor)
+                    drawCircleFill(plotImage, xi, yi, fillSize, hexProfile)
+                end
+            end
+
+            local plotPalLayer <const> = sprite:newLayer()
+            plotPalLayer.name = "Palette"
+
+            app.transaction("Plot Palette", function()
+                AseUtilities.createCels(
+                    sprite,
+                    1, reqFrames,
+                    plotPalLayer.stackIndex, 1,
+                    plotImage, plotPos, 0x0)
+            end)
 
             -- This needs to be done at the very end because
             -- prependMask modifies hexesProfile.
