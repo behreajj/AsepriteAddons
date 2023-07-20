@@ -22,7 +22,7 @@ setmetatable(Glyph, {
 ---@param drop integer? drop amount
 ---@return Glyph
 function Glyph.new(character, matrix, drop)
-    local inst = setmetatable({}, Glyph)
+    local inst <const> = setmetatable({}, Glyph)
     inst.character = character or ' '
     inst.matrix = matrix or 0
     inst.drop = drop or 0

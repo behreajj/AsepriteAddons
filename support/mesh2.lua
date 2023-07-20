@@ -21,7 +21,7 @@ setmetatable(Mesh2, {
 ---@param name string? name
 ---@return Mesh2
 function Mesh2.new(fs, vs, name)
-    local inst = setmetatable({}, Mesh2)
+    local inst <const> = setmetatable({}, Mesh2)
     inst.fs = fs or {}
     inst.vs = vs or {}
     inst.name = name or "Mesh2"
@@ -44,7 +44,7 @@ end
 ---@param fac number? inset factor
 ---@return Mesh2
 function Mesh2:insetFace(faceIndex, fac)
-    local t = fac or 0.5
+    local t <const> = fac or 0.5
 
     if t <= 0.0 then
         return self
@@ -53,42 +53,45 @@ function Mesh2:insetFace(faceIndex, fac)
         return self:subdivFaceFan(faceIndex)
     end
 
-    local facesLen = #self.fs
-    local i = 1 + (faceIndex - 1) % facesLen
-    local face = self.fs[i]
-    local faceLen = #face
+    local facesLen <const> = #self.fs
+    local i <const> = 1 + (faceIndex - 1) % facesLen
+    local face <const> = self.fs[i]
+    local faceLen <const> = #face
+    local vsOldLen <const> = #self.vs
 
-    local vsOldLen = #self.vs
-    local centerFace = {}
+    ---@type integer[]
+    local centerFace <const> = {}
 
     -- Find center.
     local vCenter = Vec2.new(0.0, 0.0)
     local h = 0
     while h < faceLen do
         h = h + 1
-        local vertCurr = face[h]
+        local vertCurr <const> = face[h]
         vCenter = Vec2.add(vCenter, self.vs[vertCurr])
     end
     if faceLen > 0 then
         vCenter = Vec2.scale(vCenter, 1.0 / faceLen)
     end
 
-    local u = 1.0 - t
+    local u <const> = 1.0 - t
     local j = 0
     while j < faceLen do
         j = j + 1
-        local k = 1 + j % faceLen
-        local vertCurr = face[j]
-        local vertNext = face[k]
+        local k <const> = 1 + j % faceLen
+        local vertCurr <const> = face[j]
+        local vertNext <const> = face[k]
 
-        local vCurr = self.vs[vertCurr]
-        local vNew = Vec2.new(
+        local vCurr <const> = self.vs[vertCurr]
+        local vNew <const> = Vec2.new(
             u * vCurr.x + t * vCenter.x,
             u * vCurr.y + t * vCenter.y)
         self.vs[vsOldLen + j] = vNew
 
-        local vSubdivIdx = vsOldLen + j
-        local fNew = {
+        local vSubdivIdx <const> = vsOldLen + j
+
+        ---@type integer[]
+        local fNew <const> = {
             vertCurr,
             vertNext,
             vsOldLen + k,
@@ -121,7 +124,7 @@ end
 ---@param sina number sine of the angle
 ---@return Mesh2
 function Mesh2:rotateZInternal(cosa, sina)
-    local vsLen = #self.vs
+    local vsLen <const> = #self.vs
     local i = 0
     while i < vsLen do
         i = i + 1
@@ -153,20 +156,20 @@ function Mesh2:scaleFacesIndiv(scale)
         end
     end
 
-    local fsLen = #self.fs
+    local fsLen <const> = #self.fs
     local i = 0
     while i < fsLen do
         i = i + 1
-        local f = self.fs[i]
-        local fLen = #f
+        local f <const> = self.fs[i]
+        local fLen <const> = #f
 
         -- Find center.
         local center = Vec2.new(0.0, 0.0)
         local j = 0
         while j < fLen do
             j = j + 1
-            local vert = f[j]
-            local v = self.vs[vert]
+            local vert <const> = f[j]
+            local v <const> = self.vs[vert]
             center = Vec2.add(center, v)
         end
 
@@ -179,8 +182,8 @@ function Mesh2:scaleFacesIndiv(scale)
         local k = 0
         while k < fLen do
             k = k + 1
-            local vert = f[k]
-            local v = self.vs[vert]
+            local vert <const> = f[k]
+            local v <const> = self.vs[vert]
             self.vs[vert] = Vec2.add(
                 Vec2.hadamard(Vec2.sub(
                     v, center), vscl), center)
@@ -197,22 +200,22 @@ end
 ---@param faceIndex integer face index
 ---@return Mesh2
 function Mesh2:subdivFaceFan(faceIndex)
-    local facesLen = #self.fs
-    local i = 1 + (faceIndex - 1) % facesLen
-    local face = self.fs[i]
-    local faceLen = #face
+    local facesLen <const> = #self.fs
+    local i <const> = 1 + (faceIndex - 1) % facesLen
+    local face <const> = self.fs[i]
+    local faceLen <const> = #face
 
     local vCenter = Vec2.new(0.0, 0.0)
-    local vCenterIdx = 1 + #self.vs
+    local vCenterIdx <const> = 1 + #self.vs
 
     for j = 0, faceLen - 1, 1 do
-        local k = (j + 1) % faceLen
-        local vertCurr = face[1 + j]
-        local vertNext = face[1 + k]
+        local k <const> = (j + 1) % faceLen
+        local vertCurr <const> = face[1 + j]
+        local vertNext <const> = face[1 + k]
 
         vCenter = Vec2.add(vCenter, self.vs[vertCurr])
 
-        local fNew = { vCenterIdx, vertCurr, vertNext }
+        local fNew <const> = { vCenterIdx, vertCurr, vertNext }
         self.fs[#self.fs + 1] = fNew
     end
 
@@ -237,53 +240,55 @@ end
 ---@param useQuads boolean? use quads
 ---@return Mesh2
 function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQuads)
-    local a = startAngle % 6.2831853071796
-    local b = stopAngle % 6.2831853071796
-    local arcLen = (b - a) % 6.2831853071796
-    local c = a + arcLen
+    local a <const> = startAngle % 6.2831853071796
+    local b <const> = stopAngle % 6.2831853071796
+    local arcLen <const> = (b - a) % 6.2831853071796
+    local c <const> = a + arcLen
 
     -- If arc len is less than TAU / 720
     if arcLen < 0.00873 then
-        local target = Mesh2.polygon(sectors)
+        local target <const> = Mesh2.polygon(sectors)
         target.name = "Ring"
         target:rotateZ(startAngle)
-        local r = math.min(0.999999, math.max(0.000001,
+        local r <const> = math.min(0.999999, math.max(0.000001,
             0.5 * startWeight + stopWeight))
         target:insetFace(1, r)
         table.remove(target.fs, #target.fs)
         return target
     end
 
-    local sctVal = math.max(3, sectors)
-    local sctCount = math.ceil(1.0 + sctVal *
+    local sctVal <const> = math.max(3, sectors)
+    local sctCount <const> = math.ceil(1.0 + sctVal *
         arcLen * 0.1591549430919)
-    local sctCount2 = sctCount + sctCount
+    local sctCount2 <const> = sctCount + sctCount
 
-    local radius = 0.5
-    local oculFac0 = math.min(math.max(startWeight,
+    local radius <const> = 0.5
+    local oculFac0 <const> = math.min(math.max(startWeight,
         0.000001), 0.999999)
-    local oculFac1 = math.min(math.max(stopWeight,
+    local oculFac1 <const> = math.min(math.max(stopWeight,
         0.000001), 0.999999)
-    local oculRad0 = radius * (1.0 - oculFac0)
-    local oculRad1 = radius * (1.0 - oculFac1)
+    local oculRad0 <const> = radius * (1.0 - oculFac0)
+    local oculRad1 <const> = radius * (1.0 - oculFac1)
 
-    local vs = {}
-    local fs = {}
+    ---@type Vec2[]
+    local vs <const> = {}
+    ---@type integer[][]
+    local fs <const> = {}
 
-    local cos = math.cos
-    local sin = math.sin
-    local toStep = 1.0 / (sctCount - 1.0)
+    local cos <const> = math.cos
+    local sin <const> = math.sin
+    local toStep <const> = 1.0 / (sctCount - 1.0)
     for i = 0, sctCount - 1, 1 do
-        local t = i * toStep
-        local u = 1.0 - t
+        local t <const> = i * toStep
+        local u <const> = 1.0 - t
 
-        local oculRad = u * oculRad0 + t * oculRad1
+        local oculRad <const> = u * oculRad0 + t * oculRad1
 
-        local theta = u * a + t * c
-        local cosTheta = cos(theta)
-        local sinTheta = sin(theta)
+        local theta <const> = u * a + t * c
+        local cosTheta <const> = cos(theta)
+        local sinTheta <const> = sin(theta)
 
-        local i2 = i + i
+        local i2 <const> = i + i
         vs[i2 + 1] = Vec2.new(
             cosTheta * radius,
             sinTheta * radius)
@@ -295,13 +300,14 @@ function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQ
 
     if useQuads then
         for k = 0, sctCount - 2, 1 do
-            local i = k + k
+            local i <const> = k + k
             fs[1 + k] = { 1 + i, 3 + i, 4 + i, 2 + i }
         end
     else
-        local f = {}
+        ---@type integer[]
+        local f <const> = {}
         for i = 0, sctCount - 1, 1 do
-            local j = i + i
+            local j <const> = i + i
             f[1 + i] = 1 + j
             f[1 + sctCount + i] = 1 + (sctCount2 - 1) - j
         end
@@ -342,29 +348,31 @@ function Mesh2.gridBricks(cols, rows, offset, aspect, skip, pick)
     if skip and skip > 0 then vskip = skip end
     if pick and pick > 0 then vpick = pick end
 
-    local all = vpick + vskip
+    local all <const> = vpick + vskip
 
-    local halfOff = voff * 0.5
-    local invAspect = 1.0 / vasp
+    local halfOff <const> = voff * 0.5
+    local invAspect <const> = 1.0 / vasp
 
-    local jToStep = 1.0 / vcols
-    local iToStep = 1.0 / vrows
+    local jToStep <const> = 1.0 / vcols
+    local iToStep <const> = 1.0 / vrows
 
-    local fs = {}
-    local vs = {}
+    ---@type Vec2[]
+    local vs <const> = {}
+    ---@type integer[][]
+    local fs <const> = {}
 
-    local len2n1 = vcols * vrows - 1
+    local len2n1 <const> = vcols * vrows - 1
     local k = -1
     while k < len2n1 do
         k = k + 1
 
-        local i = k // vcols
-        local j = k % vcols
+        local i <const> = k // vcols
+        local j <const> = k % vcols
 
-        local iStp0 = i * iToStep
-        local iStp1 = (i + 1) * iToStep
-        local y0 = invAspect * (0.5 - iStp0)
-        local y1 = invAspect * (0.5 - iStp1)
+        local iStp0 <const> = i * iToStep
+        local iStp1 <const> = (i + 1) * iToStep
+        local y0 <const> = invAspect * (0.5 - iStp0)
+        local y1 <const> = invAspect * (0.5 - iStp1)
 
         local x0 = 0.0
         local x1 = 0.0
@@ -376,7 +384,7 @@ function Mesh2.gridBricks(cols, rows, offset, aspect, skip, pick)
             x1 = (j + 1 + halfOff) * jToStep - 0.5
         end
 
-        local n4 = k * 4
+        local n4 <const> = k * 4
         vs[1 + n4] = Vec2.new(x0, y0)
         vs[2 + n4] = Vec2.new(x1, y0)
         vs[3 + n4] = Vec2.new(x1, y1)
@@ -394,45 +402,49 @@ end
 ---@return Mesh2
 function Mesh2.gridCartesian(cols, rows)
     -- Validate inputs.
-    local cVal = cols or 2
-    if cVal < 2 then cVal = 2 end
-    local rVal = rows or cVal
-    if rVal < 2 then rVal = 2 end
+    local cVrf = cols or 2
+    if cVrf < 2 then cVrf = 2 end
+    local rVrf = rows or cVrf
+    if rVrf < 2 then rVrf = 2 end
 
     -- Fence posting problem:
     -- There is one more edge than cell.
-    local rVal1 = rVal + 1
-    local cVal1 = cVal + 1
+    local rVal1 <const> = rVrf + 1
+    local cVal1 <const> = cVrf + 1
+
+    ---@type Vec2[]
+    local vs <const> = {}
+    local iToStep <const> = 1.0 / rVrf
+    local jToStep <const> = 1.0 / cVrf
+    local fLen1 <const> = rVal1 * cVal1
 
     -- Set vertex coordinates.
-    local vs = {}
-    local iToStep = 1.0 / rVal
-    local jToStep = 1.0 / cVal
-    local fLen1 = rVal1 * cVal1
     local h = 0
     while h < fLen1 do
-        local i = h // cVal1
-        local j = h % cVal1
+        local i <const> = h // cVal1
+        local j <const> = h % cVal1
         h = h + 1
         vs[h] = Vec2.new(
             j * jToStep - 0.5,
             i * iToStep - 0.5)
     end
 
+    ---@type integer[][]
+    local fs <const> = {}
+    local fLen <const> = rVrf * cVrf
+
     -- Set face indices.
-    local fs = {}
-    local fLen = rVal * cVal
     local k = 0
     while k < fLen do
-        local i = k // cVal
-        local j = k % cVal
+        local i <const> = k // cVrf
+        local j <const> = k % cVrf
 
-        local cOff0 = 1 + i * cVal1
+        local cOff0 <const> = 1 + i * cVal1
 
-        local c00 = cOff0 + j
-        local c10 = c00 + 1
-        local c01 = cOff0 + cVal1 + j
-        local c11 = c01 + 1
+        local c00 <const> = cOff0 + j
+        local c10 <const> = c00 + 1
+        local c01 <const> = cOff0 + cVal1 + j
+        local c11 <const> = c01 + 1
 
         k = k + 1
         fs[k] = { c00, c10, c11, c01 }
@@ -445,14 +457,14 @@ end
 ---@param cells integer cell count
 ---@return Mesh2
 function Mesh2.gridDimetric(cells)
-    local mesh = Mesh2.gridCartesian(cells, cells)
+    local mesh <const> = Mesh2.gridCartesian(cells, cells)
 
-    local vs = mesh.vs
-    local vsLen = #vs
+    local vs <const> = mesh.vs
+    local vsLen <const> = #vs
     local i = 0
     while i < vsLen do
         i = i + 1
-        local vSrc = vs[i]
+        local vSrc <const> = vs[i]
         vs[i] = Vec2.new(
             0.5 * vSrc.x - 0.5 * vSrc.y,
             0.25 * vSrc.x + 0.25 * vSrc.y)
@@ -469,18 +481,21 @@ end
 function Mesh2.gridHex(rings)
     local vRings = 1
     if rings > 1 then vRings = rings end
-    local vrad = 0.5
-    local extent = vrad * 1.7320508075689
-    local halfExt = extent * 0.5
-    local rad15 = vrad * 1.5
-    local radrt32 = vrad * 0.86602540378444
-    local halfRad = vrad * 0.5
+    local vrad <const> = 0.5
+    local extent <const> = vrad * 1.7320508075689
+    local halfExt <const> = extent * 0.5
+    local rad15 <const> = vrad * 1.5
+    local radrt32 <const> = vrad * 0.86602540378444
+    local halfRad <const> = vrad * 0.5
 
-    local iMax = vRings - 1
-    local iMin = -iMax
+    local iMax <const> = vRings - 1
+    local iMin <const> = -iMax
 
-    local fs = {}
-    local vs = {}
+    ---@type Vec2[]
+    local vs <const> = {}
+    ---@type integer[][]
+    local fs <const> = {}
+
     local fIdx = 0
     local vIdx = -5
     local i = iMin - 1
@@ -492,18 +507,18 @@ function Mesh2.gridHex(rings)
         if i < 0 then jMin = jMin - i end
         if i > 0 then jMax = jMax - i end
 
-        local iExt = i * extent
+        local iExt <const> = i * extent
 
         local j = jMin - 1
         while j < jMax do
             j = j + 1
-            local x = iExt + j * halfExt
-            local y = j * rad15
+            local x <const> = iExt + j * halfExt
+            local y <const> = j * rad15
 
-            local left = x - radrt32
-            local right = x + radrt32
-            local top = y + halfRad
-            local bottom = y - halfRad
+            local left <const> = x - radrt32
+            local right <const> = x + radrt32
+            local top <const> = y + halfRad
+            local bottom <const> = y - halfRad
 
             vIdx = vIdx + 6
             vs[vIdx] = Vec2.new(x, y + vrad)
@@ -530,16 +545,20 @@ end
 function Mesh2.polygon(sectors)
     local vSect = 3
     if sectors > 3 then vSect = sectors end
-    local vRad = 0.5
-    local toTheta = 6.2831853071796 / vSect
-    local vs = {}
-    local f = {}
+    local vRad <const> = 0.5
+    local toTheta <const> = 6.2831853071796 / vSect
 
-    local cos = math.cos
-    local sin = math.sin
+    ---@type Vec2[]
+    local vs <const> = {}
+    ---@type integer[]
+    local f <const> = {}
+
+    local cos <const> = math.cos
+    local sin <const> = math.sin
+
     local i = 0
     while i < vSect do
-        local theta = i * toTheta
+        local theta <const> = i * toTheta
         i = i + 1
         vs[i] = Vec2.new(
             vRad * cos(theta),
@@ -577,10 +596,11 @@ end
 ---@param to integer? stop index
 ---@return Mesh2[]
 function Mesh2.separateFaces(source, from, to)
-    local meshes = {}
-    local fsSrc = source.fs
-    local vsSrc = source.vs
-    local fsSrcLen = #fsSrc
+    ---@type Mesh2[]
+    local meshes <const> = {}
+    local fsSrc <const> = source.fs
+    local vsSrc <const> = source.vs
+    local fsSrcLen <const> = #fsSrc
 
     local origin = 1
     local dest = fsSrcLen
@@ -591,21 +611,25 @@ function Mesh2.separateFaces(source, from, to)
     local i = origin - 1
     while i < dest do
         i = i + 1
-        local fSrc = fsSrc[i]
-        local fSrcLen = #fSrc
-        local vsTrg = {}
-        local fTrg = {}
+        local fSrc <const> = fsSrc[i]
+        local fSrcLen <const> = #fSrc
+        ---@type Vec2[]
+        local vsTrg <const> = {}
+        ---@type integer[]
+        local fTrg <const> = {}
+
         local j = 0
         while j < fSrcLen do
             j = j + 1
-            local vertSrc = fSrc[j]
-            local vSrc = vsSrc[vertSrc]
-            local vTrg = Vec2.new(vSrc.x, vSrc.y)
+            local vertSrc <const> = fSrc[j]
+            local vSrc <const> = vsSrc[vertSrc]
+            local vTrg <const> = Vec2.new(vSrc.x, vSrc.y)
             vsTrg[j] = vTrg
             fTrg[j] = j
         end
 
-        local mesh = Mesh2.new({ fTrg }, vsTrg, "Mesh2")
+        local mesh <const> = Mesh2.new(
+            { fTrg }, vsTrg, "Mesh2")
         meshes[#meshes + 1] = mesh
     end
 
@@ -634,7 +658,7 @@ function Mesh2.star(sectors, skip, pick, inset)
     end
 
     -- Validate other arguments.
-    local vRad = 0.5
+    local vRad <const> = 0.5
     local vIns = 0.25
     local vSect = 3
     if inset then
@@ -643,20 +667,23 @@ function Mesh2.star(sectors, skip, pick, inset)
     end
     if sectors > 3 then vSect = sectors end
 
-    local all = vPick + vSkip
-    local seg = all * vSect
-    local toTheta = 6.2831853071796 / seg
+    local all <const> = vPick + vSkip
+    local seg <const> = all * vSect
+    local toTheta <const> = 6.2831853071796 / seg
 
-    local vs = {}
-    local f = {}
+    ---@type Vec2[]
+    local vs <const> = {}
+    ---@type integer[]
+    local f <const> = {}
 
-    -- TODO: Angle offset so that the middle
-    -- of an edge lines up with the x axis.
-    local cos = math.cos
-    local sin = math.sin
+    local cos <const> = math.cos
+    local sin <const> = math.sin
+
     local i = 0
     while i < seg do
-        local theta = i * toTheta
+        -- TODO: Angle offset so that the middle
+        -- of an edge lines up with the x axis.
+        local theta <const> = i * toTheta
         local r = vIns
         if (i % all) < vPick then
             r = vRad
@@ -667,7 +694,7 @@ function Mesh2.star(sectors, skip, pick, inset)
             r * sin(theta))
         f[i] = i
     end
-    local fs = { f }
+    local fs <const> = { f }
 
     return Mesh2.new(fs, vs, "Star")
 end
@@ -676,22 +703,26 @@ end
 ---@param a Mesh2 mesh
 ---@return string
 function Mesh2.toJson(a)
-    local tconcat = table.concat
+    local tconcat <const> = table.concat
 
     local str = "{\"name\":\""
     str = str .. a.name
     str = str .. "\",\"fs\":["
 
-    local fs = a.fs
-    local fsLen = #fs
-    local fsStrArr = {}
+    local fs <const> = a.fs
+    local fsLen <const> = #fs
+    ---@type string[]
+    local fsStrArr <const> = {}
+
     local i = 0
     while i < fsLen do
         i = i + 1
-        local f = fs[i]
-        local fLen = #f
-        local fStrArr = {}
+        local f <const> = fs[i]
+        local fLen <const> = #f
+        ---@type integer[]
+        local fStrArr <const> = {}
         local fStr = "["
+
         local j = 0
         while j < fLen do
             j = j + 1
@@ -705,9 +736,11 @@ function Mesh2.toJson(a)
     str = str .. tconcat(fsStrArr, ",")
     str = str .. "],\"vs\":["
 
-    local vs = a.vs
-    local vsLen = #vs
-    local vsStrArr = {}
+    local vs <const> = a.vs
+    local vsLen <const> = #vs
+    ---@type string[]
+    local vsStrArr <const> = {}
+
     local k = 0
     while k < vsLen do
         k = k + 1
@@ -725,29 +758,32 @@ end
 ---@param target Mesh2 target mesh
 ---@return Mesh2
 function Mesh2.uniformData(source, target)
-    local trg = target or source
-    local fsTrg = {}
-    local vsTrg = {}
+    local trg <const> = target or source
+    ---@type Vec2[]
+    local vsTrg <const> = {}
+    ---@type integer[][]
+    local fsTrg <const> = {}
 
-    local fsSrc = source.fs
-    local vsSrc = source.vs
+    local vsSrc <const> = source.vs
+    local fsSrc <const> = source.fs
+    local fsSrcLen <const> = #fsSrc
 
     local i = 0
     local k = 0
-    local fsSrcLen = #fsSrc
     while i < fsSrcLen do
         i = i + 1
-        local fSrc = fsSrc[i]
-        local fSrcLen = #fSrc
-        local fTrg = {}
+        local fSrc <const> = fsSrc[i]
+        local fSrcLen <const> = #fSrc
+        ---@type integer[]
+        local fTrg <const> = {}
 
         local j = 0
         while j < fSrcLen do
             j = j + 1
             k = k + 1
-            local vertSrc = fSrc[j]
-            local vSrc = vsSrc[vertSrc]
-            local vTrg = Vec2.new(vSrc.x, vSrc.y)
+            local vertSrc <const> = fSrc[j]
+            local vSrc <const> = vsSrc[vertSrc]
+            local vTrg <const> = Vec2.new(vSrc.x, vSrc.y)
             vsTrg[k] = vTrg
             fTrg[j] = k
         end

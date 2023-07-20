@@ -24,17 +24,17 @@ function CanvasUtilities.drawGrid(context, count, w, h, color, sw)
     context.color = color
     context.strokeWidth = sw
 
-    local floor = math.floor
+    local floor <const> = math.floor
 
-    local xbr = w - 1.0
-    local ybr = h - 1.0
-    local iToFac = ybr / (count - 1.0)
-    local jToFac = xbr / (count - 1.0)
+    local xbr <const> = w - 1.0
+    local ybr <const> = h - 1.0
+    local iToFac <const> = ybr / (count - 1.0)
+    local jToFac <const> = xbr / (count - 1.0)
 
     -- Draw vertical grid lines.
     local i = 0
     while i < count do
-        local y = floor(i * iToFac)
+        local y <const> = floor(i * iToFac)
         context:beginPath()
         context:moveTo(0, y)
         context:lineTo(xbr, y)
@@ -45,7 +45,7 @@ function CanvasUtilities.drawGrid(context, count, w, h, color, sw)
     -- Draw horizontal grid lines.
     local j = 0
     while j < count do
-        local x = floor(j * jToFac)
+        local x <const> = floor(j * jToFac)
         context:beginPath()
         context:moveTo(x, 0)
         context:lineTo(x, ybr)
@@ -66,11 +66,11 @@ end
 ---@param rotation number? rotation
 function CanvasUtilities.drawPolygon(
     context, sides, radius, x, y, rotation)
-    local aVrf = rotation or 0.0
+    local aVrf <const> = rotation or 0.0
 
-    local iToTheta = 6.2831853071796 / sides
-    local cos = math.cos
-    local sin = math.sin
+    local iToTheta <const> = 6.2831853071796 / sides
+    local cos <const> = math.cos
+    local sin <const> = math.sin
 
     context:beginPath()
     context:moveTo(
@@ -79,7 +79,7 @@ function CanvasUtilities.drawPolygon(
     local i = 0
     while i < sides do
         i = i + 1
-        local a = i * iToTheta + aVrf
+        local a <const> = i * iToTheta + aVrf
         context:lineTo(
             cos(a) * radius + x,
             y - sin(a) * radius)
@@ -101,8 +101,8 @@ function CanvasUtilities.drawSliderReticle(
     context, fac,
     barWidth, barHeight,
     fillColor, triSize)
-    local x = fac * (barWidth - 1.0)
-    local trszvrf = triSize or 3
+    local x <const> = fac * (barWidth - 1.0)
+    local trszvrf <const> = triSize or 3
 
     context.color = fillColor
 
@@ -152,20 +152,20 @@ function CanvasUtilities.graphBezier(
     cp0xDef, cp0yDef, cp1xDef, cp1yDef,
     curveColor, gridColor, cp0Color, cp1Color)
     -- Constants.
-    local screenScale = app.preferences.general.screen_scale
-    local swCurve = 2
-    local hotSpot = 16 / screenScale
-    local hotSpotSq = hotSpot * hotSpot
-    local polyRadius = 4 * swCurve / screenScale
-    local halfRadius = polyRadius * 0.5
+    local screenScale <const> = app.preferences.general.screen_scale
+    local swCurve <const> = 2
+    local hotSpot <const> = 16 / screenScale
+    local hotSpotSq <const> = hotSpot * hotSpot
+    local polyRadius <const> = 4 * swCurve / screenScale
+    local halfRadius <const> = polyRadius * 0.5
 
     -- Verify arguments.
-    local cp1ClrVrf = cp1Color or Color { r = 0, g = 132, b = 159 }
-    local cp0ClrVrf = cp0Color or Color { r = 168, g = 0, b = 51 }
-    local gridClrVrf = gridColor or Color { r = 128, g = 128, b = 128 }
-    local curveClrVrf = curveColor or Color { r = 255, g = 255, b = 255 }
+    local cp1ClrVrf <const> = cp1Color or Color { r = 0, g = 132, b = 159 }
+    local cp0ClrVrf <const> = cp0Color or Color { r = 168, g = 0, b = 51 }
+    local gridClrVrf <const> = gridColor or Color { r = 128, g = 128, b = 128 }
+    local curveClrVrf <const> = curveColor or Color { r = 255, g = 255, b = 255 }
 
-    local grdCntVrf = gridCount or 5
+    local grdCntVrf <const> = gridCount or 5
     local allowApVrf = false
     if allowApMove then allowApVrf = true end
     local visFuncsVrf = false
@@ -176,18 +176,18 @@ function CanvasUtilities.graphBezier(
     if visCtrl then visCtrlVrf = true end
     local isVisVrf = false
     if isVisible then isVisVrf = true end
-    local hVrf = height or 128
-    local wVrf = width or 128
-    local idVrf = id or "graphBezier"
+    local hVrf <const> = height or 128
+    local wVrf <const> = width or 128
+    local idVrf <const> = id or "graphBezier"
 
     -- In case this widget is used more than once in a dialog,
     -- the widget ids need to be distinct from each other.
-    local easeFuncsId = idVrf .. "_easeFuncs"
-    local flipvButtonId = idVrf .. "_flipv"
-    local straightButtonId = idVrf .. "_straight"
-    local parallelButtonId = idVrf .. "_parallel"
+    local easeFuncsId <const> = idVrf .. "_easeFuncs"
+    local flipvButtonId <const> = idVrf .. "_flipv"
+    local straightButtonId <const> = idVrf .. "_straight"
+    local parallelButtonId <const> = idVrf .. "_parallel"
 
-    local idPoints = {
+    local idPoints <const> = {
         idVrf .. "_ap0x",
         idVrf .. "_ap0y",
         idVrf .. "_cp0x",
@@ -197,16 +197,16 @@ function CanvasUtilities.graphBezier(
         idVrf .. "_ap1x",
         idVrf .. "_ap1y",
     }
-    local lenIdPoints = #idPoints
+    local lenIdPoints <const> = #idPoints
 
-    local labelPoints = {
+    local labelPoints <const> = {
         "Anchor 0:",
         "Control 0:",
         "Control 1:",
         "Anchor 1:"
     }
 
-    local valuePoints = {
+    local valuePoints <const> = {
         0.0,
         0.0,
         cp0xDef or 0.42,
@@ -218,16 +218,16 @@ function CanvasUtilities.graphBezier(
     }
 
     ---@param event MouseEvent
-    local onMouseFunc = function(event)
+    local onMouseFunc <const> = function(event)
         -- TODO: How to handle canvas resize.
         if event.button ~= MouseButton.NONE then
             -- Unpack mouse event coordinates.
-            local xMouse = event.x
-            local yMouse = event.y
+            local xMouse <const> = event.x
+            local yMouse <const> = event.y
 
             -- Convert from [0.0, 1.0] to canvas pixels.
-            local xbr = wVrf - 1
-            local ybr = hVrf - 1
+            local xbr <const> = wVrf - 1
+            local ybr <const> = hVrf - 1
 
             -- Convert mouse coordinate to [0.0, 1.0].
             -- Flip y axis.
@@ -239,41 +239,41 @@ function CanvasUtilities.graphBezier(
             ym01 = math.min(math.max(ym01, 0.0), 1.0)
 
             -- Epsilon is inverse of max resolution (64).
-            local clampEpsilon = 1.0 / 64.0
+            local clampEpsilon <const> = 1.0 / 64.0
 
             ---@type string[][]
-            local args = dialog.data
+            local args <const> = dialog.data
 
             -- Control points take precedence over anchor points
             -- when it comes to selecting for mouse movement.
-            local knotIds = {
+            local knotIds <const> = {
                 { idPoints[1], idPoints[2], idPoints[3], idPoints[4] },
                 { idPoints[7], idPoints[8], idPoints[5], idPoints[6] }
             }
-            local lenKnotIds = #knotIds
+            local lenKnotIds <const> = #knotIds
 
             local i = 0
             while i < lenKnotIds do
-                local isEven = (i % 2) ~= 1
+                local isEven <const> = (i % 2) ~= 1
                 i = i + 1
-                local knot = knotIds[i]
+                local knot <const> = knotIds[i]
 
-                local xAnchorId = knot[1]
-                local yAnchorId = knot[2]
-                local xAnchor = args[xAnchorId] --[[@as number]]
-                local yAnchor = args[yAnchorId] --[[@as number]]
+                local xAnchorId <const> = knot[1]
+                local yAnchorId <const> = knot[2]
+                local xAnchor <const> = args[xAnchorId] --[[@as number]]
+                local yAnchor <const> = args[yAnchorId] --[[@as number]]
 
-                local xControlId = knot[3]
-                local yControlId = knot[4]
-                local xControl = args[xControlId] --[[@as number]]
-                local yControl = args[yControlId] --[[@as number]]
+                local xControlId <const> = knot[3]
+                local yControlId <const> = knot[4]
+                local xControl <const> = args[xControlId] --[[@as number]]
+                local yControl <const> = args[yControlId] --[[@as number]]
 
-                local xCtrlPixel = Utilities.round(xControl * xbr)
-                local yCtrlPixel = ybr - Utilities.round(yControl * ybr)
+                local xCtrlPixel <const> = Utilities.round(xControl * xbr)
+                local yCtrlPixel <const> = ybr - Utilities.round(yControl * ybr)
 
-                local xCtrlDiff = xCtrlPixel - xMouse
-                local yCtrlDiff = yCtrlPixel - yMouse
-                local sqMagCtrl = xCtrlDiff * xCtrlDiff + yCtrlDiff * yCtrlDiff
+                local xCtrlDiff <const> = xCtrlPixel - xMouse
+                local yCtrlDiff <const> = yCtrlPixel - yMouse
+                local sqMagCtrl <const> = xCtrlDiff * xCtrlDiff + yCtrlDiff * yCtrlDiff
                 if sqMagCtrl < hotSpotSq then
                     -- Prevent invalid outputs by limiting Bezier cage.
                     -- Even knots have outgoing tangents,
@@ -294,15 +294,15 @@ function CanvasUtilities.graphBezier(
                 -- Prioritize interacting with control points over
                 -- anchor points.
                 if allowApVrf then
-                    local xAnchPixel = Utilities.round(xAnchor * xbr)
-                    local yAnchPixel = ybr - Utilities.round(yAnchor * ybr)
+                    local xAnchPixel <const> = Utilities.round(xAnchor * xbr)
+                    local yAnchPixel <const> = ybr - Utilities.round(yAnchor * ybr)
 
-                    local xAnchDiff = xAnchPixel - xMouse
-                    local yAnchDiff = yAnchPixel - yMouse
-                    local sqMagAnch = xAnchDiff * xAnchDiff + yAnchDiff * yAnchDiff
+                    local xAnchDiff <const> = xAnchPixel - xMouse
+                    local yAnchDiff <const> = yAnchPixel - yMouse
+                    local sqMagAnch <const> = xAnchDiff * xAnchDiff + yAnchDiff * yAnchDiff
                     if sqMagAnch < hotSpotSq then
-                        local xCtrlNew = xm01 + (xControl - xAnchor)
-                        local yCtrlNew = ym01 + (yControl - yAnchor)
+                        local xCtrlNew <const> = xm01 + (xControl - xAnchor)
+                        local yCtrlNew <const> = ym01 + (yControl - yAnchor)
                         dialog:modify { id = xAnchorId, text = string.format("%.5f", xm01) }
                         dialog:modify { id = yAnchorId, text = string.format("%.5f", ym01) }
                         dialog:modify { id = xControlId, text = string.format("%.5f", xCtrlNew) }
@@ -324,7 +324,7 @@ function CanvasUtilities.graphBezier(
         visible = isVisVrf,
         autoScaling = false,
         onpaint = function(event)
-            local context = event.context
+            local context <const> = event.context
 
             -- Draw grid, then set antialiasing to
             -- true afterward.
@@ -333,31 +333,31 @@ function CanvasUtilities.graphBezier(
             context.antialias = true
 
             -- Unpack arguments.
-            local args = dialog.data
-            local ap0x = args[idPoints[1]] --[[@as number]]
-            local ap0y = args[idPoints[2]] --[[@as number]]
-            local cp0x = args[idPoints[3]] --[[@as number]]
-            local cp0y = args[idPoints[4]] --[[@as number]]
-            local cp1x = args[idPoints[5]] --[[@as number]]
-            local cp1y = args[idPoints[6]] --[[@as number]]
-            local ap1x = args[idPoints[7]] --[[@as number]]
-            local ap1y = args[idPoints[8]] --[[@as number]]
+            local args <const> = dialog.data
+            local ap0x <const> = args[idPoints[1]] --[[@as number]]
+            local ap0y <const> = args[idPoints[2]] --[[@as number]]
+            local cp0x <const> = args[idPoints[3]] --[[@as number]]
+            local cp0y <const> = args[idPoints[4]] --[[@as number]]
+            local cp1x <const> = args[idPoints[5]] --[[@as number]]
+            local cp1y <const> = args[idPoints[6]] --[[@as number]]
+            local ap1x <const> = args[idPoints[7]] --[[@as number]]
+            local ap1y <const> = args[idPoints[8]] --[[@as number]]
 
             -- Convert from [0.0, 1.0] to canvas pixels.
-            local xbr = wVrf - 1
-            local ybr = hVrf - 1
+            local xbr <const> = wVrf - 1
+            local ybr <const> = hVrf - 1
 
             -- TODO: Seems wasteful to import Utilities file
             -- just to use round function... At the very least
             -- use the Curve2 class if you've got it.
-            local ap0xPx = Utilities.round(ap0x * xbr)
-            local ap0yPx = ybr - Utilities.round(ap0y * ybr)
-            local cp0xPx = Utilities.round(cp0x * xbr)
-            local cp0yPx = ybr - Utilities.round(cp0y * ybr)
-            local cp1xPx = Utilities.round(cp1x * xbr)
-            local cp1yPx = ybr - Utilities.round(cp1y * ybr)
-            local ap1xPx = Utilities.round(ap1x * xbr)
-            local ap1yPx = ybr - Utilities.round(ap1y * ybr)
+            local ap0xPx <const> = Utilities.round(ap0x * xbr)
+            local ap0yPx <const> = ybr - Utilities.round(ap0y * ybr)
+            local cp0xPx <const> = Utilities.round(cp0x * xbr)
+            local cp0yPx <const> = ybr - Utilities.round(cp0y * ybr)
+            local cp1xPx <const> = Utilities.round(cp1x * xbr)
+            local cp1yPx <const> = ybr - Utilities.round(cp1y * ybr)
+            local ap1xPx <const> = Utilities.round(ap1x * xbr)
+            local ap1yPx <const> = ybr - Utilities.round(ap1y * ybr)
 
             -- Draw curve.
             context.strokeWidth = swCurve
@@ -381,7 +381,7 @@ function CanvasUtilities.graphBezier(
             context:lineTo(cp0xPx, cp0yPx)
             context:stroke()
 
-            local cp0Rot = math.atan(cp0y - ap0y, cp0x - ap0x)
+            local cp0Rot <const> = math.atan(cp0y - ap0y, cp0x - ap0x)
             CanvasUtilities.drawPolygon(context, 4, halfRadius,
                 ap0xPx, ap0yPx, 0)
             context:fill()
@@ -397,7 +397,7 @@ function CanvasUtilities.graphBezier(
             context:lineTo(cp1xPx, cp1yPx)
             context:stroke()
 
-            local cp1Rot = math.atan(cp1y - ap1y, cp1x - ap1x)
+            local cp1Rot <const> = math.atan(cp1y - ap1y, cp1x - ap1x)
             CanvasUtilities.drawPolygon(context, 4, halfRadius,
                 ap1xPx, ap1yPx, 0)
             context:fill()
@@ -414,15 +414,15 @@ function CanvasUtilities.graphBezier(
     -- Create number input widgets.
     local j = 0
     while j < lenIdPoints do
-        local isEven = j % 2 ~= 1
-        local k = j // 2
+        local isEven <const> = j % 2 ~= 1
+        local k <const> = j // 2
         j = j + 1
-        local idPoint = idPoints[j]
+        local idPoint <const> = idPoints[j]
         local labelPoint = nil
         if isEven then
             labelPoint = labelPoints[1 + k]
         end
-        local valuePoint = valuePoints[j]
+        local valuePoint <const> = valuePoints[j]
 
         dialog:number {
             id = idPoint,
@@ -447,19 +447,19 @@ function CanvasUtilities.graphBezier(
         focus = false,
         visible = isVisVrf and visButtonsVrf,
         onclick = function()
-            local args = dialog.data
-            local ap0x = args[idPoints[1]] --[[@as number]]
-            local ap0y = args[idPoints[2]] --[[@as number]]
-            local ap1x = args[idPoints[7]] --[[@as number]]
-            local ap1y = args[idPoints[8]] --[[@as number]]
+            local args <const> = dialog.data
+            local ap0x <const> = args[idPoints[1]] --[[@as number]]
+            local ap0y <const> = args[idPoints[2]] --[[@as number]]
+            local ap1x <const> = args[idPoints[7]] --[[@as number]]
+            local ap1y <const> = args[idPoints[8]] --[[@as number]]
 
-            local twoThirds = 2.0 / 3.0
-            local oneThird = 1.0 / 3.0
+            local twoThirds <const> = 2.0 / 3.0
+            local oneThird <const> = 1.0 / 3.0
 
-            local cp0x = twoThirds * ap0x + oneThird * ap1x
-            local cp0y = twoThirds * ap0y + oneThird * ap1y
-            local cp1x = twoThirds * ap1x + oneThird * ap0x
-            local cp1y = twoThirds * ap1y + oneThird * ap0y
+            local cp0x <const> = twoThirds * ap0x + oneThird * ap1x
+            local cp0y <const> = twoThirds * ap0y + oneThird * ap1y
+            local cp1x <const> = twoThirds * ap1x + oneThird * ap0x
+            local cp1y <const> = twoThirds * ap1y + oneThird * ap0y
 
             dialog:modify { id = idPoints[3], text = string.format("%.5f", cp0x) }
             dialog:modify { id = idPoints[4], text = string.format("%.5f", cp0y) }
@@ -476,17 +476,17 @@ function CanvasUtilities.graphBezier(
         focus = false,
         visible = isVisVrf and visButtonsVrf,
         onclick = function()
-            local args = dialog.data
-            local ap0x = args[idPoints[1]] --[[@as number]]
-            local ap0y = args[idPoints[2]] --[[@as number]]
-            local ap1x = args[idPoints[7]] --[[@as number]]
-            local ap1y = args[idPoints[8]] --[[@as number]]
+            local args <const> = dialog.data
+            local ap0x <const> = args[idPoints[1]] --[[@as number]]
+            local ap0y <const> = args[idPoints[2]] --[[@as number]]
+            local ap1x <const> = args[idPoints[7]] --[[@as number]]
+            local ap1y <const> = args[idPoints[8]] --[[@as number]]
 
-            local k = 0.55228474983079
-            local l = 1.0 - k
+            local k <const> = 0.55228474983079
+            local l <const> = 1.0 - k
 
-            local cp0x = l * ap0x + k * ap1x
-            local cp1x = l * ap1x + k * ap0x
+            local cp0x <const> = l * ap0x + k * ap1x
+            local cp1x <const> = l * ap1x + k * ap0x
 
             dialog:modify { id = idPoints[3], text = string.format("%.5f", cp0x) }
             dialog:modify { id = idPoints[4], text = string.format("%.5f", ap0y) }
@@ -503,11 +503,11 @@ function CanvasUtilities.graphBezier(
         focus = false,
         visible = isVisVrf and visButtonsVrf,
         onclick = function()
-            local args = dialog.data
-            local ap0y = args[idPoints[2]] --[[@as number]]
-            local cp0y = args[idPoints[4]] --[[@as number]]
-            local cp1y = args[idPoints[6]] --[[@as number]]
-            local ap1y = args[idPoints[8]] --[[@as number]]
+            local args <const> = dialog.data
+            local ap0y <const> = args[idPoints[2]] --[[@as number]]
+            local cp0y <const> = args[idPoints[4]] --[[@as number]]
+            local cp1y <const> = args[idPoints[6]] --[[@as number]]
+            local ap1y <const> = args[idPoints[8]] --[[@as number]]
 
             dialog:modify { id = idPoints[2], text = string.format("%.5f", 1.0 - ap0y) }
             dialog:modify { id = idPoints[4], text = string.format("%.5f", 1.0 - cp0y) }
@@ -535,8 +535,8 @@ function CanvasUtilities.graphBezier(
             "LINEAR" },
         visible = isVisVrf and visFuncsVrf,
         onchange = function()
-            local args = dialog.data
-            local easeFunc = args[easeFuncsId] --[[@as string]]
+            local args <const> = dialog.data
+            local easeFunc <const> = args[easeFuncsId] --[[@as string]]
 
             if easeFunc ~= "CUSTOM" then
                 local presetPoints = {
@@ -603,20 +603,20 @@ function CanvasUtilities.graphLine(
     lineColor, gridColor)
     local gridCountPolar = 16
 
-    local gridClrVrf = gridColor or Color { r = 128, g = 128, b = 128 }
-    local lineClrVrf = lineColor or Color { r = 255, g = 255, b = 255 }
-    local ydVrf = yDest or 50
-    local xdVrf = xDest or 50
-    local yoVrf = yOrig or -50
-    local xoVrf = xOrig or -50
-    local grdCntVrf = gridCount or 5
+    local gridClrVrf <const> = gridColor or Color { r = 128, g = 128, b = 128 }
+    local lineClrVrf <const> = lineColor or Color { r = 255, g = 255, b = 255 }
+    local ydVrf <const> = yDest or 50
+    local xdVrf <const> = xDest or 50
+    local yoVrf <const> = yOrig or -50
+    local xoVrf <const> = xOrig or -50
+    local grdCntVrf <const> = gridCount or 5
     local visSlidersVrf = false
     if visSlide then visSlidersVrf = true end
     local isVisVrf = false
     if isVisible then isVisVrf = true end
     local hVrf = height or 128
     local wVrf = width or 128
-    local idVrf = id or "graphCartesian"
+    local idVrf <const> = id or "graphCartesian"
 
     wVrf = math.max(8, wVrf)
     hVrf = math.max(8, hVrf)
@@ -629,37 +629,37 @@ function CanvasUtilities.graphLine(
         visible = isVisVrf,
         autoScaling = false,
         onpaint = function(event)
-            local context = event.context
+            local context <const> = event.context
 
             CanvasUtilities.drawGrid(context, grdCntVrf,
                 wVrf, hVrf, gridClrVrf, 1)
 
             -- Unpack arguments.
-            local args = dialog.data
-            local xo100 = args.xOrig --[[@as integer]]
-            local yo100 = args.yOrig --[[@as integer]]
-            local xd100 = args.xDest --[[@as integer]]
-            local yd100 = args.yDest --[[@as integer]]
+            local args <const> = dialog.data
+            local xo100 <const> = args.xOrig --[[@as integer]]
+            local yo100 <const> = args.yOrig --[[@as integer]]
+            local xd100 <const> = args.xDest --[[@as integer]]
+            local yd100 <const> = args.yDest --[[@as integer]]
 
             -- Convert from [-100, 100] to [-1.0, 1.0].
-            local xoSigned = xo100 * 0.01
-            local yoSigned = yo100 * 0.01
-            local xdSigned = xd100 * 0.01
-            local ydSigned = yd100 * 0.01
+            local xoSigned <const> = xo100 * 0.01
+            local yoSigned <const> = yo100 * 0.01
+            local xdSigned <const> = xd100 * 0.01
+            local ydSigned <const> = yd100 * 0.01
 
             -- Convert from [-1.0, 1.0] to [0.0, 1.0].
-            local xoUnsigned = xoSigned * 0.5 + 0.5
-            local yoUnsigned = 0.5 - yoSigned * 0.5
-            local xdUnsigned = xdSigned * 0.5 + 0.5
-            local ydUnsigned = 0.5 - ydSigned * 0.5
+            local xoUnsigned <const> = xoSigned * 0.5 + 0.5
+            local yoUnsigned <const> = 0.5 - yoSigned * 0.5
+            local xdUnsigned <const> = xdSigned * 0.5 + 0.5
+            local ydUnsigned <const> = 0.5 - ydSigned * 0.5
 
             -- Convert from [0.0, 1.0] to canvas pixels.
-            local ybr = hVrf - 1
-            local xbr = wVrf - 1
-            local xoPx = math.floor(xoUnsigned * xbr + 0.5)
-            local yoPx = math.floor(yoUnsigned * ybr + 0.5)
-            local xdPx = math.floor(xdUnsigned * xbr + 0.5)
-            local ydPx = math.floor(ydUnsigned * ybr + 0.5)
+            local ybr <const> = hVrf - 1
+            local xbr <const> = wVrf - 1
+            local xoPx <const> = math.floor(xoUnsigned * xbr + 0.5)
+            local yoPx <const> = math.floor(yoUnsigned * ybr + 0.5)
+            local xdPx <const> = math.floor(xdUnsigned * xbr + 0.5)
+            local ydPx <const> = math.floor(ydUnsigned * ybr + 0.5)
 
             -- Set context style.
             context.antialias = true
@@ -674,12 +674,12 @@ function CanvasUtilities.graphLine(
 
             -- Subtract origin from dest to create vector.
             -- Find heading of vector.
-            local xVec = xdSigned - xoSigned
-            local yVec = ydSigned - yoSigned
-            local rot = math.atan(yVec, xVec)
+            local xVec <const> = xdSigned - xoSigned
+            local yVec <const> = ydSigned - yoSigned
+            local rot <const> = math.atan(yVec, xVec)
 
-            local screenScale = app.preferences.general.screen_scale
-            local polyRadius = 4 * context.strokeWidth / screenScale
+            local screenScale <const> = app.preferences.general.screen_scale
+            local polyRadius <const> = 4 * context.strokeWidth / screenScale
             CanvasUtilities.drawPolygon(context, 4, polyRadius, xoPx, yoPx, rot)
             context:fill()
             CanvasUtilities.drawPolygon(context, 3, polyRadius, xdPx, ydPx, rot)
@@ -688,46 +688,46 @@ function CanvasUtilities.graphLine(
         onmousemove = function(event)
             -- TODO: How to handle canvas resize.
             if event.button ~= MouseButton.NONE then
-                local xMouse = math.min(math.max(event.x, 0), wVrf - 1)
-                local yMouse = math.min(math.max(event.y, 0), hVrf - 1)
-                local xdUnsigned = xMouse / (wVrf - 1.0)
-                local ydUnsigned = yMouse / (hVrf - 1.0)
+                local xMouse <const> = math.min(math.max(event.x, 0), wVrf - 1)
+                local yMouse <const> = math.min(math.max(event.y, 0), hVrf - 1)
+                local xdUnsigned <const> = xMouse / (wVrf - 1.0)
+                local ydUnsigned <const> = yMouse / (hVrf - 1.0)
                 local xdSigned = xdUnsigned + xdUnsigned - 1.0
                 local ydSigned = 1.0 - (ydUnsigned + ydUnsigned)
 
                 -- Quantize angle if the shift key is held down.
                 if event.shiftKey then
                     -- Get the origin, convert from [-100, 100] to [-1.0, 1.0].
-                    local args = dialog.data
-                    local xo100 = args.xOrig --[[@as integer]]
-                    local yo100 = args.yOrig --[[@as integer]]
-                    local xoSigned = xo100 * 0.01
-                    local yoSigned = yo100 * 0.01
+                    local args <const> = dialog.data
+                    local xo100 <const> = args.xOrig --[[@as integer]]
+                    local yo100 <const> = args.yOrig --[[@as integer]]
+                    local xoSigned <const> = xo100 * 0.01
+                    local yoSigned <const> = yo100 * 0.01
 
                     -- Find the difference from destination to origin
                     -- as a vector.
-                    local xDiff = xdSigned - xoSigned
-                    local yDiff = ydSigned - yoSigned
+                    local xDiff <const> = xdSigned - xoSigned
+                    local yDiff <const> = ydSigned - yoSigned
 
                     -- Find the square magnitude of the vector, i.e.,
                     -- the vector's dot product with itself.
-                    local sqMag = xDiff * xDiff + yDiff * yDiff
+                    local sqMag <const> = xDiff * xDiff + yDiff * yDiff
                     if sqMag > 0.000001 then
                         -- Convert vector from Cartesian to polar coordinates.
-                        local mag = math.sqrt(sqMag)
-                        local angle = math.atan(yDiff, xDiff)
+                        local mag <const> = math.sqrt(sqMag)
+                        local angle <const> = math.atan(yDiff, xDiff)
 
                         -- Convert angle from [-pi, pi] to [-0.5, 0.5],
                         -- quantize, then convert back to original range.
-                        local quantAngle = 6.2831853071796 * Utilities.quantizeSigned(
+                        local quantAngle <const> = 6.2831853071796 * Utilities.quantizeSigned(
                             angle * 0.1591549430919, gridCountPolar)
 
                         -- Convert vector from polar to Cartesian coordinates,
                         -- add to the origin to convert vector to point.
-                        local cosqa = math.cos(quantAngle)
-                        local sinqa = math.sin(quantAngle)
-                        local xdPolar = cosqa * mag + xoSigned
-                        local ydPolar = sinqa * mag + yoSigned
+                        local cosqa <const> = math.cos(quantAngle)
+                        local sinqa <const> = math.sin(quantAngle)
+                        local xdPolar <const> = cosqa * mag + xoSigned
+                        local ydPolar <const> = sinqa * mag + yoSigned
 
                         xdSigned = xdPolar
                         ydSigned = ydPolar
@@ -735,13 +735,13 @@ function CanvasUtilities.graphLine(
                 end
 
                 if event.ctrlKey then
-                    local halfCart = grdCntVrf // 2
+                    local halfCart <const> = grdCntVrf // 2
                     xdSigned = Utilities.quantizeSigned(xdSigned, halfCart)
                     ydSigned = Utilities.quantizeSigned(ydSigned, halfCart)
                 end
 
-                local xi = Utilities.round(xdSigned * 100.0)
-                local yi = Utilities.round(ydSigned * 100.0)
+                local xi <const> = Utilities.round(xdSigned * 100.0)
+                local yi <const> = Utilities.round(ydSigned * 100.0)
                 dialog:modify { id = "xDest", value = xi }
                 dialog:modify { id = "yDest", value = yi }
                 dialog:repaint()
@@ -750,21 +750,21 @@ function CanvasUtilities.graphLine(
         onmousedown = function(event)
             -- TODO: How to handle canvas resize.
 
-            local xMouse = math.min(math.max(event.x, 0), wVrf - 1)
-            local yMouse = math.min(math.max(event.y, 0), hVrf - 1)
-            local xUnsigned = xMouse / (wVrf - 1.0)
-            local yUnsigned = yMouse / (hVrf - 1.0)
+            local xMouse <const> = math.min(math.max(event.x, 0), wVrf - 1)
+            local yMouse <const> = math.min(math.max(event.y, 0), hVrf - 1)
+            local xUnsigned <const> = xMouse / (wVrf - 1.0)
+            local yUnsigned <const> = yMouse / (hVrf - 1.0)
             local xSigned = xUnsigned + xUnsigned - 1.0
             local ySigned = 1.0 - (yUnsigned + yUnsigned)
 
             if event.ctrlKey then
-                local halfCart = grdCntVrf // 2
+                local halfCart <const> = grdCntVrf // 2
                 xSigned = Utilities.quantizeSigned(xSigned, halfCart)
                 ySigned = Utilities.quantizeSigned(ySigned, halfCart)
             end
 
-            local xi = Utilities.round(xSigned * 100.0)
-            local yi = Utilities.round(ySigned * 100.0)
+            local xi <const> = Utilities.round(xSigned * 100.0)
+            local yi <const> = Utilities.round(ySigned * 100.0)
             dialog:modify { id = "xOrig", value = xi }
             dialog:modify { id = "yOrig", value = yi }
             dialog:modify { id = "xDest", value = xi }
@@ -851,39 +851,39 @@ end
 function CanvasUtilities.spectrum(
     dialog, id, label, width, height,
     isVisible, lDef, cDef, hDef, aDef)
-    local aDefVrf = aDef or 1.0
-    local hDefVrf = hDef or 0.0
-    local cDefVrf = cDef or (Clr.SR_LCH_MAX_CHROMA * 0.5)
-    local lDefVrf = lDef or 50.0
+    local aDefVrf <const> = aDef or 1.0
+    local hDefVrf <const> = hDef or 0.0
+    local cDefVrf <const> = cDef or (Clr.SR_LCH_MAX_CHROMA * 0.5)
+    local lDefVrf <const> = lDef or 50.0
 
     local isVisVrf = false
     if isVisible then isVisVrf = true end
     local hVrf = height or 128
     local wVrf = width or 128
-    local idVrf = id or "spectrum"
+    local idVrf <const> = id or "spectrum"
 
     wVrf = math.max(8, wVrf)
     hVrf = math.max(8, hVrf)
 
-    local spectrumHeight = math.floor(0.5 + hVrf * (40.0 / 56.0))
-    local chrBarHeight = math.floor(0.5 + hVrf * (8.0 / 56.0))
-    local alphaBarHeight = chrBarHeight
-    local chrBarThresh = spectrumHeight + chrBarHeight
+    local spectrumHeight <const> = math.floor(0.5 + hVrf * (40.0 / 56.0))
+    local chrBarHeight <const> = math.floor(0.5 + hVrf * (8.0 / 56.0))
+    local alphaBarHeight <const> = chrBarHeight
+    local chrBarThresh <const> = spectrumHeight + chrBarHeight
 
-    local xToAlph01 = 1.0 / (wVrf - 1.0)
-    local xToAlpha255 = 255.0 / (wVrf - 1.0)
-    local yToLgt = 100.0 / (spectrumHeight - 1.0)
-    local xToChr = Clr.SR_LCH_MAX_CHROMA / (wVrf - 1.0)
-    local xToHue = 1.0 / wVrf
+    local xToAlph01 <const> = 1.0 / (wVrf - 1.0)
+    local xToAlpha255 <const> = 255.0 / (wVrf - 1.0)
+    local yToLgt <const> = 100.0 / (spectrumHeight - 1.0)
+    local xToChr <const> = Clr.SR_LCH_MAX_CHROMA / (wVrf - 1.0)
+    local xToHue <const> = 1.0 / wVrf
 
     local inSpectrum = false
     local inChrBar = false
     local inAlphaBar = false
 
     ---@param event MouseEvent
-    local onMouseFunc = function(event)
-        local xMouse = event.x
-        local yMouse = event.y
+    local onMouseFunc <const> = function(event)
+        local xMouse <const> = event.x
+        local yMouse <const> = event.y
 
         if inSpectrum or
             (not (inChrBar or inAlphaBar)
@@ -891,8 +891,8 @@ function CanvasUtilities.spectrum(
                 and yMouse < spectrumHeight) then
             inSpectrum = true
 
-            local hMouse = (xMouse * xToHue) % 1.0
-            local lMouse = math.min(math.max(
+            local hMouse <const> = (xMouse * xToHue) % 1.0
+            local lMouse <const> = math.min(math.max(
                 100.0 - yMouse * yToLgt, 0.0), 100.0)
             dialog:modify {
                 id = "spectrumHue",
@@ -910,7 +910,7 @@ function CanvasUtilities.spectrum(
                 and yMouse < chrBarThresh) then
             inChrBar = true
 
-            local sMouse = math.min(math.max(
+            local sMouse <const> = math.min(math.max(
                 xMouse * xToChr, 0.0), Clr.SR_LCH_MAX_CHROMA)
             dialog:modify {
                 id = "spectrumChroma",
@@ -924,7 +924,7 @@ function CanvasUtilities.spectrum(
                 and yMouse < hVrf) then
             inAlphaBar = true
 
-            local alphaf = math.min(math.max(
+            local alphaf <const> = math.min(math.max(
                 xMouse * xToAlph01, 0.0), 1.0)
             dialog:modify {
                 id = "spectrumAlpha",
@@ -943,43 +943,43 @@ function CanvasUtilities.spectrum(
         visible = isVisVrf,
         autoScaling = false,
         onpaint = function(event)
-            local context = event.context
+            local context <const> = event.context
 
-            local args = dialog.data
-            local lActive = args.spectrumLight --[[@as number]]
-            local cActive = args.spectrumChroma --[[@as number]]
-            local hActive = args.spectrumHue --[[@as number]]
-            local aActive = args.spectrumAlpha --[[@as number]]
+            local args <const> = dialog.data
+            local lActive <const> = args.spectrumLight --[[@as number]]
+            local cActive <const> = args.spectrumChroma --[[@as number]]
+            local hActive <const> = args.spectrumHue --[[@as number]]
+            local aActive <const> = args.spectrumAlpha --[[@as number]]
 
-            local floor = math.floor
-            local lchTosRgb = Clr.srLchTosRgb
-            local toHex = Clr.toHex
+            local floor <const> = math.floor
+            local lchTosRgb <const> = Clr.srLchTosRgb
+            local toHex <const> = Clr.toHex
 
-            local image = Image(wVrf, hVrf)
-            local pxItr = image:pixels()
+            local image <const> = Image(wVrf, hVrf)
+            local pxItr <const> = image:pixels()
             for pixel in pxItr do
-                local x = pixel.x
-                local y = pixel.y
+                local x <const> = pixel.x
+                local y <const> = pixel.y
                 if y < spectrumHeight then
-                    local l = 100.0 - y * yToLgt
-                    local h = x * xToHue
-                    local clr = lchTosRgb(l, cActive, h, 1.0)
+                    local l <const> = 100.0 - y * yToLgt
+                    local h <const> = x * xToHue
+                    local clr <const> = lchTosRgb(l, cActive, h, 1.0)
                     pixel(toHex(clr))
                 elseif y < chrBarThresh then
-                    local c = x * xToChr
-                    local clr = lchTosRgb(lActive, c, hActive, 1.0)
+                    local c <const> = x * xToChr
+                    local clr <const> = lchTosRgb(lActive, c, hActive, 1.0)
                     pixel(toHex(clr))
                 else
-                    local v = floor(x * xToAlpha255 + 0.5)
+                    local v <const> = floor(x * xToAlpha255 + 0.5)
                     pixel(0xff000000 | v << 0x10 | v << 0x08 | v)
                 end
             end
             context:drawImage(image, 0, 0)
 
-            local black = Color { r = 0, g = 0, b = 0, a = 255 }
-            local white = Color { r = 255, g = 255, b = 255, a = 255 }
-            local reticleSize = 4
-            local retHalfSize = reticleSize * 0.5
+            local black <const> = Color { r = 0, g = 0, b = 0, a = 255 }
+            local white <const> = Color { r = 255, g = 255, b = 255, a = 255 }
+            local reticleSize <const> = 4
+            local retHalfSize <const> = reticleSize * 0.5
 
             if lActive > 0.5 then
                 context.color = black

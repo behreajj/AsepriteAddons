@@ -24,7 +24,7 @@ setmetatable(Vec2, {
 ---@param y number? y component
 ---@return Vec2
 function Vec2.new(x, y)
-    local inst = setmetatable({}, Vec2)
+    local inst <const> = setmetatable({}, Vec2)
     inst.x = x or 0.0
     inst.y = y or 0.0
     return inst
@@ -129,7 +129,7 @@ end
 ---@param tol number? tolerance
 ---@return boolean
 function Vec2.approx(a, b, tol)
-    local eps = tol or 0.000001
+    local eps <const> = tol or 0.000001
     return math.abs(b.x - a.x) <= eps
         and math.abs(b.y - a.y) <= eps
 end
@@ -143,17 +143,17 @@ end
 ---@param step number step
 ---@return Vec2
 function Vec2.bezierPoint(ap0, cp0, cp1, ap1, step)
-    local t = step or 0.5
+    local t <const> = step or 0.5
     if t <= 0.0 then return Vec2.new(ap0.x, ap0.y) end
     if t >= 1.0 then return Vec2.new(ap1.x, ap1.y) end
 
-    local u = 1.0 - t
-    local tsq = t * t
-    local usq = u * u
-    local usq3t = usq * (t + t + t)
-    local tsq3u = tsq * (u + u + u)
-    local tcb = tsq * t
-    local ucb = usq * u
+    local u <const> = 1.0 - t
+    local tsq <const> = t * t
+    local usq <const> = u * u
+    local usq3t <const> = usq * (t + t + t)
+    local tsq3u <const> = tsq * (u + u + u)
+    local tcb <const> = tsq * t
+    local ucb <const> = usq * u
 
     return Vec2.new(
         ap0.x * ucb + cp0.x * usq3t +
@@ -192,7 +192,7 @@ end
 ---@return Vec2
 function Vec2.copySign(a, b)
     local cx = 0.0
-    local axAbs = math.abs(a.x)
+    local axAbs <const> = math.abs(a.x)
     if b.x < -0.0 then
         cx = -axAbs
     elseif b.x > 0.0 then
@@ -200,7 +200,7 @@ function Vec2.copySign(a, b)
     end
 
     local cy = 0.0
-    local ayAbs = math.abs(a.y)
+    local ayAbs <const> = math.abs(a.y)
     if b.y < -0.0 then
         cy = -ayAbs
     elseif b.y > 0.0 then
@@ -225,8 +225,8 @@ end
 ---@param b Vec2 right operand
 ---@return number
 function Vec2.distEuclidean(a, b)
-    local dx = b.x - a.x
-    local dy = b.y - a.y
+    local dx <const> = b.x - a.x
+    local dy <const> = b.y - a.y
     return math.sqrt(dx * dx + dy * dy)
 end
 
@@ -236,8 +236,8 @@ end
 ---@param b Vec2 right operand
 ---@return number
 function Vec2.distSq(a, b)
-    local dx = b.x - a.x
-    local dy = b.y - a.y
+    local dx <const> = b.x - a.x
+    local dy <const> = b.y - a.y
     return dx * dx + dy * dy
 end
 
@@ -321,7 +321,7 @@ end
 ---@param radius number? radius, rho
 ---@return Vec2
 function Vec2.fromPolar(heading, radius)
-    local r = radius or 1.0
+    local r <const> = radius or 1.0
     return Vec2.new(
         r * math.cos(heading),
         r * math.sin(heading))
@@ -345,9 +345,9 @@ function Vec2.hashCode(v)
     -- 300840/force-php-integer-overflow
     -- https://readafterwrite.wordpress.com/
     -- 2017/03/23/floating-point-keys-in-lua/
-    local xBits = string.unpack("i4",
+    local xBits <const> = string.unpack("i4",
         string.pack("f", v.x))
-    local yBits = string.unpack("i4",
+    local yBits <const> = string.unpack("i4",
         string.pack("f", v.y))
     return (84696351 ~ xBits) * 16777619 ~ yBits
 end
@@ -382,14 +382,14 @@ end
 ---@return Vec2
 function Vec2.linearstep(edge0, edge1, x)
     local cx = 0.0
-    local xDenom = edge1.x - edge0.x
+    local xDenom <const> = edge1.x - edge0.x
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
             (x.x - edge0.x) / xDenom))
     end
 
     local cy = 0.0
-    local yDenom = edge1.y - edge0.y
+    local yDenom <const> = edge1.y - edge0.y
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,
             (x.y - edge0.y) / yDenom))
@@ -449,11 +449,11 @@ end
 ---The step is a number.
 ---@param a Vec2 origin
 ---@param b Vec2 destination
----@param t number step
+---@param t number? step
 ---@return Vec2
 function Vec2.mixNum(a, b, t)
-    local v = t or 0.5
-    local u = 1.0 - v
+    local v <const> = t or 0.5
+    local u <const> = 1.0 - v
     return Vec2.new(
         u * a.x + v * b.x,
         u * a.y + v * b.y)
@@ -503,9 +503,9 @@ end
 ---@param v Vec2 vector
 ---@return Vec2
 function Vec2.normalize(v)
-    local mSq = v.x * v.x + v.y * v.y
+    local mSq <const> = v.x * v.x + v.y * v.y
     if mSq > 0.0 then
-        local mInv = 1.0 / math.sqrt(mSq)
+        local mInv <const> = 1.0 / math.sqrt(mSq)
         return Vec2.new(
             v.x * mInv,
             v.y * mInv)
@@ -553,9 +553,9 @@ end
 ---@param ub Vec2? upper bound
 ---@return Vec2
 function Vec2.randomCartesian(lb, ub)
-    local lval = lb or Vec2.new(-1.0, -1.0)
-    local uval = ub or Vec2.new(1.0, 1.0)
-    return Vec2.randomCartesianInternal(lval, uval)
+    local lVrf <const> = lb or Vec2.new(-1.0, -1.0)
+    local uVrf <const> = ub or Vec2.new(1.0, 1.0)
+    return Vec2.randomCartesianInternal(lVrf, uVrf)
 end
 
 ---Creates a random point in Cartesian space given
@@ -565,8 +565,8 @@ end
 ---@param ub Vec2 upper bound
 ---@return Vec2
 function Vec2.randomCartesianInternal(lb, ub)
-    local rx = math.random()
-    local ry = math.random()
+    local rx <const> = math.random()
+    local ry <const> = math.random()
 
     return Vec2.new(
         (1.0 - rx) * lb.x + rx * ub.x,
@@ -579,7 +579,7 @@ end
 ---@param radians number angle
 ---@return Vec2
 function Vec2.rotateX(a, radians)
-    local cr = math.cos(radians)
+    local cr <const> = math.cos(radians)
     return Vec2.rotateXInternal(a, cr)
 end
 
@@ -598,7 +598,7 @@ end
 ---@param radians number angle
 ---@return Vec2
 function Vec2.rotateY(a, radians)
-    local cr = math.cos(radians)
+    local cr <const> = math.cos(radians)
     return Vec2.rotateYInternal(a, cr)
 end
 
@@ -638,14 +638,14 @@ end
 ---@param v Vec2 vector
 ---@return Vec2
 function Vec2.round(v)
-    local ix, fx = math.modf(v.x)
+    local ix, fx <const> = math.modf(v.x)
     if ix <= 0 and fx <= -0.5 then
         ix = ix - 1
     elseif ix >= 0 and fx >= 0.5 then
         ix = ix + 1
     end
 
-    local iy, fy = math.modf(v.y)
+    local iy, fy <const> = math.modf(v.y)
     if iy <= 0 and fy <= -0.5 then
         iy = iy - 1
     elseif iy >= 0 and fy >= 0.5 then
@@ -692,7 +692,7 @@ end
 ---@return Vec2
 function Vec2.smoothstep(edge0, edge1, x)
     local cx = 0.0
-    local xDenom = edge1.x - edge0.x
+    local xDenom <const> = edge1.x - edge0.x
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
             (x.x - edge0.x) / xDenom))
@@ -700,7 +700,7 @@ function Vec2.smoothstep(edge0, edge1, x)
     end
 
     local cy = 0.0
-    local yDenom = edge1.y - edge0.y
+    local yDenom <const> = edge1.y - edge0.y
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,
             (x.y - edge0.y) / yDenom))

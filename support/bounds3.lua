@@ -31,7 +31,7 @@ end
 ---@param mx Vec3 upper bound
 ---@return Bounds3
 function Bounds3.newByRef(mn, mx)
-    local inst = setmetatable({}, Bounds3)
+    local inst <const> = setmetatable({}, Bounds3)
     inst.mn = mn or Vec3.new(-0.5, -0.5, -0.5)
     inst.mx = mx or Vec3.new(0.5, 0.5, 0.5)
     return inst
@@ -45,7 +45,7 @@ end
 ---@param mx Vec3|number upper bound
 ---@return Bounds3
 function Bounds3.newByVal(mn, mx)
-    local inst = setmetatable({}, Bounds3)
+    local inst <const> = setmetatable({}, Bounds3)
 
     inst.mn = nil
     if mn then
@@ -99,8 +99,8 @@ end
 ---@param pt Vec3 point
 ---@return boolean
 function Bounds3.containsInclExcl(b, pt)
-    local mn = b.mn
-    local mx = b.mx
+    local mn <const> = b.mn
+    local mx <const> = b.mx
     return (pt.x >= mn.x and pt.x < mx.x)
         and (pt.y >= mn.y and pt.y < mx.y)
         and (pt.z >= mn.z and pt.z < mx.z)
@@ -168,13 +168,15 @@ end
 ---@param fse Bounds3 front south east octant
 ---@param fnw Bounds3 front north west octant
 ---@param fne Bounds3 front north east octant
-function Bounds3.splitInternal(b, xFac, yFac, zFac, bsw, bse, bnw, bne, fsw, fse, fnw, fne)
-    local bMn = b.mn
-    local bMx = b.mx
+function Bounds3.splitInternal(
+    b, xFac, yFac, zFac,
+    bsw, bse, bnw, bne, fsw, fse, fnw, fne)
+    local bMn <const> = b.mn
+    local bMx <const> = b.mx
 
-    local x = (1.0 - xFac) * bMn.x + xFac * bMx.x
-    local y = (1.0 - yFac) * bMn.y + yFac * bMx.y
-    local z = (1.0 - zFac) * bMn.z + zFac * bMx.z
+    local x <const> = (1.0 - xFac) * bMn.x + xFac * bMx.x
+    local y <const> = (1.0 - yFac) * bMn.y + yFac * bMx.y
+    local z <const> = (1.0 - zFac) * bMn.z + zFac * bMx.z
 
     bsw.mn = Vec3.new(bMn.x, bMn.y, bMn.z)
     bse.mn = Vec3.new(x, bMn.y, bMn.z)
@@ -199,15 +201,14 @@ end
 ---@param b Bounds3 bounds
 ---@return string
 function Bounds3.toJson(b)
-    return "{\"mn\":"
-        .. Vec3.toJson(b.mn)
-        .. ",\"mx\":"
-        .. Vec3.toJson(b.mx)
-        .. "}"
+    return string.format(
+        "{\"mn\":%s,\"mx\":%s}",
+        Vec3.toJson(b.mn),
+        Vec3.toJson(b.mx))
 end
 
 ---Returns a bounds with the dimensions
----of the CIE LAB or SR Lab 2 color spaces.
+---of the CIE LAB or SR LAB 2 color spaces.
 ---Intended for use with an octree containing
 ---points of color.
 ---@return Bounds3

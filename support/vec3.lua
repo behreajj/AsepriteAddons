@@ -26,7 +26,7 @@ setmetatable(Vec3, {
 ---@param z number? z component
 ---@return Vec3
 function Vec3.new(x, y, z)
-    local inst = setmetatable({}, Vec3)
+    local inst <const> = setmetatable({}, Vec3)
     inst.x = x or 0.0
     inst.y = y or 0.0
     inst.z = z or 0.0
@@ -138,7 +138,7 @@ end
 ---@param tol number? tolerance
 ---@return boolean
 function Vec3.approx(a, b, tol)
-    local eps = tol or 0.000001
+    local eps <const> = tol or 0.000001
     return math.abs(b.x - a.x) <= eps
         and math.abs(b.y - a.y) <= eps
         and math.abs(b.z - a.z) <= eps
@@ -175,7 +175,7 @@ end
 ---@param step number step
 ---@return Vec3
 function Vec3.bezierPoint(ap0, cp0, cp1, ap1, step)
-    local t = step or 0.5
+    local t <const> = step or 0.5
     if t <= 0.0 then
         return Vec3.new(ap0.x, ap0.y, ap0.z)
     end
@@ -183,13 +183,13 @@ function Vec3.bezierPoint(ap0, cp0, cp1, ap1, step)
         return Vec3.new(ap1.x, ap1.y, ap1.z)
     end
 
-    local u = 1.0 - t
-    local tsq = t * t
-    local usq = u * u
-    local usq3t = usq * (t + t + t)
-    local tsq3u = tsq * (u + u + u)
-    local tcb = tsq * t
-    local ucb = usq * u
+    local u <const> = 1.0 - t
+    local tsq <const> = t * t
+    local usq <const> = u * u
+    local usq3t <const> = usq * (t + t + t)
+    local tsq3u <const> = tsq * (u + u + u)
+    local tcb <const> = tsq * t
+    local ucb <const> = usq * u
 
     return Vec3.new(
         ap0.x * ucb + cp0.x * usq3t +
@@ -212,10 +212,10 @@ function Vec3.bisectRight(arr, elm, compare)
     local low = 0
     local high = #arr
     if high < 1 then return 1 end
-    local f = compare or Vec3.comparator
+    local f <const> = compare or Vec3.comparator
     while low < high do
-        local middle = (low + high) // 2
-        local right = arr[1 + middle]
+        local middle <const> = (low + high) // 2
+        local right <const> = arr[1 + middle]
         if right and f(elm, right) then
             high = middle
         else
@@ -258,7 +258,7 @@ end
 ---@return Vec3
 function Vec3.copySign(a, b)
     local cx = 0.0
-    local axAbs = math.abs(a.x)
+    local axAbs <const> = math.abs(a.x)
     if b.x < -0.0 then
         cx = -axAbs
     elseif b.x > 0.0 then
@@ -266,7 +266,7 @@ function Vec3.copySign(a, b)
     end
 
     local cy = 0.0
-    local ayAbs = math.abs(a.y)
+    local ayAbs <const> = math.abs(a.y)
     if b.y < -0.0 then
         cy = -ayAbs
     elseif b.y > 0.0 then
@@ -274,7 +274,7 @@ function Vec3.copySign(a, b)
     end
 
     local cz = 0.0
-    local azAbs = math.abs(a.z)
+    local azAbs <const> = math.abs(a.z)
     if b.z < -0.0 then
         cz = -azAbs
     elseif b.z > 0.0 then
@@ -310,9 +310,9 @@ end
 ---@param b Vec3 right operand
 ---@return number
 function Vec3.distEuclidean(a, b)
-    local dx = b.x - a.x
-    local dy = b.y - a.y
-    local dz = b.z - a.z
+    local dx <const> = b.x - a.x
+    local dy <const> = b.y - a.y
+    local dz <const> = b.z - a.z
     return math.sqrt(dx * dx + dy * dy + dz * dz)
 end
 
@@ -322,9 +322,9 @@ end
 ---@param b Vec3 right operand
 ---@return number
 function Vec3.distSq(a, b)
-    local dx = b.x - a.x
-    local dy = b.y - a.y
-    local dz = b.z - a.z
+    local dx <const> = b.x - a.x
+    local dy <const> = b.y - a.y
+    local dz <const> = b.z - a.z
     return dx * dx + dy * dy + dz * dz
 end
 
@@ -420,9 +420,9 @@ end
 ---@param radius number? radius, rho
 ---@return Vec3
 function Vec3.fromSpherical(azimuth, inclination, radius)
-    local a = azimuth or 0.0
-    local i = inclination or 0.0
-    local r = radius or 1.0
+    local a <const> = azimuth or 0.0
+    local i <const> = inclination or 0.0
+    local r <const> = radius or 1.0
     return Vec3.fromSphericalInternal(
         math.cos(a), math.sin(a),
         math.cos(i), math.sin(i), r)
@@ -441,7 +441,7 @@ function Vec3.fromSphericalInternal(
     cosAzim, sinAzim,
     cosIncl, sinIncl,
     radius)
-    local rhoCosIncl = radius * cosIncl
+    local rhoCosIncl <const> = radius * cosIncl
     return Vec3.new(
         rhoCosIncl * cosAzim,
         rhoCosIncl * sinAzim,
@@ -458,41 +458,41 @@ end
 ---@param ub Vec3 upper bound
 ---@return Vec3[]
 function Vec3.gridCartesian(cols, rows, layers, lb, ub)
-    local ubVal = ub or Vec3.new(1.0, 1.0, 1.0)
-    local lbVal = lb or Vec3.new(-1.0, -1.0, -1.0)
+    local ubVrf <const> = ub or Vec3.new(1.0, 1.0, 1.0)
+    local lbVrf <const> = lb or Vec3.new(-1.0, -1.0, -1.0)
 
-    local lVal = layers or 2
-    local rVal = rows or 2
-    local cVal = cols or 2
+    local lVrf = layers or 2
+    local rVrf = rows or 2
+    local cVrf = cols or 2
 
-    if lVal < 2 then lVal = 2 end
-    if rVal < 2 then rVal = 2 end
-    if cVal < 2 then cVal = 2 end
+    if lVrf < 2 then lVrf = 2 end
+    if rVrf < 2 then rVrf = 2 end
+    if cVrf < 2 then cVrf = 2 end
 
-    local lbx = lbVal.x
-    local lby = lbVal.y
-    local lbz = lbVal.z
+    local lbx <const> = lbVrf.x
+    local lby <const> = lbVrf.y
+    local lbz <const> = lbVrf.z
 
-    local ubx = ubVal.x
-    local uby = ubVal.y
-    local ubz = ubVal.z
+    local ubx <const> = ubVrf.x
+    local uby <const> = ubVrf.y
+    local ubz <const> = ubVrf.z
 
-    local hToStep = 1.0 / (lVal - 1.0)
-    local iToStep = 1.0 / (rVal - 1.0)
-    local jToStep = 1.0 / (cVal - 1.0)
+    local hToStep <const> = 1.0 / (lVrf - 1.0)
+    local iToStep <const> = 1.0 / (rVrf - 1.0)
+    local jToStep <const> = 1.0 / (cVrf - 1.0)
 
     ---@type Vec3[]
-    local result = {}
-    local rcVal = rVal * cVal
-    local length = lVal * rcVal
+    local result <const> = {}
+    local rcVal <const> = rVrf * cVrf
+    local length <const> = lVrf * rcVal
     local k = 0
     while k < length do
-        local h = k // rcVal
-        local m = k - h * rcVal
+        local h <const> = k // rcVal
+        local m <const> = k - h * rcVal
 
-        local hStep = h * hToStep
-        local iStep = (m // cVal) * iToStep
-        local jStep = (m % cVal) * jToStep
+        local hStep <const> = h * hToStep
+        local iStep <const> = (m // cVrf) * iToStep
+        local jStep <const> = (m % cVrf) * jToStep
 
         k = k + 1
         result[k] = Vec3.new(
@@ -519,11 +519,11 @@ end
 ---@param v Vec3 vector
 ---@return integer
 function Vec3.hashCode(v)
-    local xBits = string.unpack("i4",
+    local xBits <const> = string.unpack("i4",
         string.pack("f", v.x))
-    local yBits = string.unpack("i4",
+    local yBits <const> = string.unpack("i4",
         string.pack("f", v.y))
-    local zBits = string.unpack("i4",
+    local zBits <const> = string.unpack("i4",
         string.pack("f", v.z))
 
     return ((84696351 ~ xBits)
@@ -550,7 +550,7 @@ end
 ---@param v Vec3 vector
 ---@return number
 function Vec3.inclinationUnsigned(v)
-    local mSq = v.x * v.x + v.y * v.y + v.z * v.z
+    local mSq <const> = v.x * v.x + v.y * v.y + v.z * v.z
     if mSq > 0.0 then
         return math.acos(v.z / math.sqrt(mSq))
     end
@@ -566,8 +566,8 @@ end
 ---@param compare? fun(a: Vec3, b: Vec3): boolean comparator
 ---@return boolean
 function Vec3.insortRight(arr, elm, compare)
-    local i = Vec3.bisectRight(arr, elm, compare)
-    local dupe = arr[i - 1]
+    local i <const> = Vec3.bisectRight(arr, elm, compare)
+    local dupe <const> = arr[i - 1]
     if dupe and Vec3.equals(dupe, elm) then
         return false
     end
@@ -583,21 +583,21 @@ end
 ---@return Vec3
 function Vec3.linearstep(edge0, edge1, x)
     local cx = 0.0
-    local xDenom = edge1.x - edge0.x
+    local xDenom <const> = edge1.x - edge0.x
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
             (x.x - edge0.x) / xDenom))
     end
 
     local cy = 0.0
-    local yDenom = edge1.y - edge0.y
+    local yDenom <const> = edge1.y - edge0.y
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,
             (x.y - edge0.y) / yDenom))
     end
 
     local cz = 0.0
-    local zDenom = edge1.z - edge0.z
+    local zDenom <const> = edge1.z - edge0.z
     if zDenom ~= 0.0 then
         cz = math.min(1.0, math.max(0.0,
             (x.z - edge0.z) / zDenom))
@@ -664,11 +664,11 @@ end
 ---The step is a number.
 ---@param a Vec3 origin
 ---@param b Vec3 destination
----@param t number step
+---@param t number? step
 ---@return Vec3
 function Vec3.mixNum(a, b, t)
-    local v = t or 0.5
-    local u = 1.0 - v
+    local v <const> = t or 0.5
+    local u <const> = 1.0 - v
     return Vec3.new(
         u * a.x + v * b.x,
         u * a.y + v * b.y,
@@ -724,9 +724,9 @@ end
 ---@param v Vec3 vector
 ---@return Vec3
 function Vec3.normalize(v)
-    local mSq = v.x * v.x + v.y * v.y + v.z * v.z
+    local mSq <const> = v.x * v.x + v.y * v.y + v.z * v.z
     if mSq > 0.0 then
-        local mInv = 1.0 / math.sqrt(mSq)
+        local mInv <const> = 1.0 / math.sqrt(mSq)
         return Vec3.new(
             v.x * mInv,
             v.y * mInv,
@@ -753,9 +753,9 @@ end
 ---@param ub Vec3? upper bound
 ---@return Vec3
 function Vec3.randomCartesian(lb, ub)
-    local lval = lb or Vec3.new(-1.0, -1.0, -1.0)
-    local uval = ub or Vec3.new(1.0, 1.0, 1.0)
-    return Vec3.randomCartesianInternal(lval, uval)
+    local lVrf <const> = lb or Vec3.new(-1.0, -1.0, -1.0)
+    local uVrf <const> = ub or Vec3.new(1.0, 1.0, 1.0)
+    return Vec3.randomCartesianInternal(lVrf, uVrf)
 end
 
 ---Creates a random point in Cartesian space given
@@ -765,9 +765,9 @@ end
 ---@param ub Vec3 upper bound
 ---@return Vec3
 function Vec3.randomCartesianInternal(lb, ub)
-    local rx = math.random()
-    local ry = math.random()
-    local rz = math.random()
+    local rx <const> = math.random()
+    local ry <const> = math.random()
+    local rz <const> = math.random()
 
     return Vec3.new(
         (1.0 - rx) * lb.x + rx * ub.x,
@@ -833,18 +833,18 @@ end
 ---@param axis Vec3 axis
 ---@return Vec3
 function Vec3.rotateInternal(a, cosa, sina, axis)
-    local xAxis = axis.x
-    local yAxis = axis.y
-    local zAxis = axis.z
+    local xAxis <const> = axis.x
+    local yAxis <const> = axis.y
+    local zAxis <const> = axis.z
 
-    local complCos = 1.0 - cosa
-    local xyCompl = complCos * xAxis * yAxis
-    local xzCompl = complCos * xAxis * zAxis
-    local yzCompl = complCos * yAxis * zAxis
+    local complCos <const> = 1.0 - cosa
+    local xyCompl <const> = complCos * xAxis * yAxis
+    local xzCompl <const> = complCos * xAxis * zAxis
+    local yzCompl <const> = complCos * yAxis * zAxis
 
-    local xSin = sina * xAxis
-    local ySin = sina * yAxis
-    local zSin = sina * zAxis
+    local xSin <const> = sina * xAxis
+    local ySin <const> = sina * yAxis
+    local zSin <const> = sina * zAxis
 
     return Vec3.new(
         (complCos * xAxis * xAxis + cosa) * a.x +
@@ -906,21 +906,21 @@ end
 ---@param v Vec3 vector
 ---@return Vec3
 function Vec3.round(v)
-    local ix, fx = math.modf(v.x)
+    local ix, fx <const> = math.modf(v.x)
     if ix <= 0 and fx <= -0.5 then
         ix = ix - 1
     elseif ix >= 0 and fx >= 0.5 then
         ix = ix + 1
     end
 
-    local iy, fy = math.modf(v.y)
+    local iy, fy <const> = math.modf(v.y)
     if iy <= 0 and fy <= -0.5 then
         iy = iy - 1
     elseif iy >= 0 and fy >= 0.5 then
         iy = iy + 1
     end
 
-    local iz, fz = math.modf(v.z)
+    local iz, fz <const> = math.modf(v.z)
     if iz <= 0 and fz <= -0.5 then
         iz = iz - 1
     elseif iz >= 0 and fz >= 0.5 then
@@ -977,7 +977,7 @@ end
 ---@return Vec3
 function Vec3.smoothstep(edge0, edge1, x)
     local cx = 0.0
-    local xDenom = edge1.x - edge0.x
+    local xDenom <const> = edge1.x - edge0.x
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
             (x.x - edge0.x) / xDenom))
@@ -985,7 +985,7 @@ function Vec3.smoothstep(edge0, edge1, x)
     end
 
     local cy = 0.0
-    local yDenom = edge1.y - edge0.y
+    local yDenom <const> = edge1.y - edge0.y
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,
             (x.y - edge0.y) / yDenom))
@@ -993,7 +993,7 @@ function Vec3.smoothstep(edge0, edge1, x)
     end
 
     local cz = 0.0
-    local zDenom = edge1.z - edge0.z
+    local zDenom <const> = edge1.z - edge0.z
     if zDenom ~= 0.0 then
         cz = math.min(1.0, math.max(0.0,
             (x.z - edge0.z) / zDenom))

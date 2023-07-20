@@ -23,7 +23,7 @@ setmetatable(Curve3, {
 ---@param name string? name
 ---@return Curve3
 function Curve3.new(cl, knots, name)
-    local inst = setmetatable({}, Curve3)
+    local inst <const> = setmetatable({}, Curve3)
     inst.closedLoop = cl or false
     inst.knots = knots or {}
     inst.name = name or "Curve3"
@@ -49,9 +49,9 @@ end
 ---@return Curve3
 function Curve3.ellipse(xRadius, yRadius, xOrigin, yOrigin, zOrigin)
     -- Supply default arguments.
-    local cz = zOrigin or 0.0
-    local cy = yOrigin or 0.0
-    local cx = xOrigin or 0.0
+    local cz <const> = zOrigin or 0.0
+    local cy <const> = yOrigin or 0.0
+    local cx <const> = xOrigin or 0.0
     local ry = yRadius or 0.5
     local rx = xRadius or 0.5
 
@@ -59,19 +59,19 @@ function Curve3.ellipse(xRadius, yRadius, xOrigin, yOrigin, zOrigin)
     rx = math.max(0.000001, math.abs(rx))
     ry = math.max(0.000001, math.abs(ry))
 
-    local right = cx + rx
-    local top = cy + ry
-    local left = cx - rx
-    local bottom = cy - ry
+    local right <const> = cx + rx
+    local top <const> = cy + ry
+    local left <const> = cx - rx
+    local bottom <const> = cy - ry
 
     -- kappa := 4 * (math.sqrt(2) - 1) / 3
-    local horizHandle = rx * 0.55228474983079
-    local vertHandle = ry * 0.55228474983079
+    local horizHandle <const> = rx * 0.55228474983079
+    local vertHandle <const> = ry * 0.55228474983079
 
-    local xHandlePos = cx + horizHandle
-    local xHandleNeg = cx - horizHandle
-    local yHandlePos = cy + vertHandle
-    local yHandleNeg = cy - vertHandle
+    local xHandlePos <const> = cx + horizHandle
+    local xHandleNeg <const> = cx - horizHandle
+    local yHandlePos <const> = cy + vertHandle
+    local yHandleNeg <const> = cy - vertHandle
 
     return Curve3.new(true, {
         Knot3.new(
@@ -99,9 +99,9 @@ end
 ---@param step number step
 ---@return Vec3
 function Curve3.eval(curve, step)
-    local t = step or 0.5
-    local knots = curve.knots
-    local knotLength = #knots
+    local t <const> = step or 0.5
+    local knots <const> = curve.knots
+    local knotLength <const> = #knots
     local tScaled = 0.0
     local i = 0
     local a = nil
@@ -127,7 +127,7 @@ function Curve3.eval(curve, step)
         b = knots[2 + i]
     end
 
-    local tsni = tScaled - i
+    local tsni <const> = tScaled - i
     return Knot3.bezierPoint(a, b, tsni)
 end
 
@@ -136,8 +136,8 @@ end
 ---@param curve Curve3 curve
 ---@return Vec3
 function Curve3.evalFirst(curve)
-    local kFirst = curve.knots[1]
-    local coFirst = kFirst.co
+    local kFirst <const> = curve.knots[1]
+    local coFirst <const> = kFirst.co
     return Vec3.new(
         coFirst.x,
         coFirst.y,
@@ -149,8 +149,8 @@ end
 ---@param curve Curve3 curve
 ---@return Vec3
 function Curve3.evalLast(curve)
-    local kLast = curve.knots[#curve.knots]
-    local coLast = kLast.co
+    local kLast <const> = curve.knots[#curve.knots]
+    local coLast <const> = kLast.co
     return Vec3.new(
         coLast.x,
         coLast.y,
@@ -202,9 +202,9 @@ function Curve3.fromCatmull(closedLoop, points, tightness, name)
         knotCount = ptsLen
     else
         valPts = {}
-        local lenPts = #points
+        local oldLen <const> = #points
         local i = 0
-        while i < lenPts do
+        while i < oldLen do
             i = i + 1
             valPts[i] = points[i]
         end
@@ -226,14 +226,15 @@ function Curve3.fromCatmull(closedLoop, points, tightness, name)
         knotCount = ptsLen - 2
     end
 
-    local kns = {}
-    local firstKnot = Knot3.new(
+    ---@type Knot3[]
+    local kns <const> = {}
+    local firstKnot <const> = Knot3.new(
         valPts[2],
         valPts[2],
         valPts[2])
     kns[1] = firstKnot
 
-    local valTight = tightness or 0.0
+    local valTight <const> = tightness or 0.0
     for i = 0, knotCount - 2, 1 do
         local i1 = i + 1
         local i2 = i + 2
@@ -247,7 +248,7 @@ function Curve3.fromCatmull(closedLoop, points, tightness, name)
             i3 = ptsLast
         end
 
-        local nextKnot = Knot3.new(
+        local nextKnot <const> = Knot3.new(
             valPts[1 + i2],
             valPts[1 + i2],
             valPts[1 + i2])
@@ -293,25 +294,26 @@ end
 function Curve3.fromPoints(closedLoop, points, name)
     -- If a closed loop has similar start and
     -- stop points, then skip the last point.
-    local len = #points
+    local len <const> = #points
     local last = len
     if closedLoop and Vec3.approx(
             points[1], points[len]) then
         last = len - 1
     end
 
-    local kns = {}
+    ---@type Knot3[]
+    local kns <const> = {}
     local i = 0
     while i < last do
         i = i + 1
-        local pt = points[i]
+        local pt <const> = points[i]
         kns[i] = Knot3.new(
             Vec3.new(pt.x, pt.y, pt.z),
             Vec3.new(pt.x, pt.y, pt.z),
             Vec3.new(pt.x, pt.y, pt.z))
     end
 
-    local crv = Curve3.new(closedLoop, kns, name)
+    local crv <const> = Curve3.new(closedLoop, kns, name)
     if len < 3 then
         return Curve3.straightHandles(crv)
     else
@@ -323,18 +325,18 @@ end
 ---a smooth, continuous curve.
 ---@param target Curve3
 function Curve3.smoothHandles(target)
-    local knots = target.knots
-    local knotCount = #knots
+    local knots <const> = target.knots
+    local knotCount <const> = #knots
     if knotCount < 3 then return target end
 
     local carry = Vec3.new(0.0, 0.0, 0.0)
-    local knFirst = knots[1]
+    local knFirst <const> = knots[1]
 
     if target.closedLoop then
         local knPrev = knots[knotCount]
         local knCurr = knFirst
         for i = 2, knotCount, 1 do
-            local knNext = knots[i]
+            local knNext <const> = knots[i]
             carry = Knot3.smoothHandlesInternal(
                 knPrev, knCurr, knNext, carry)
             knPrev = knCurr
@@ -351,7 +353,7 @@ function Curve3.smoothHandles(target)
         Knot3.mirrorHandlesForward(knCurr)
 
         for i = 3, knotCount, 1 do
-            local knNext = knots[i]
+            local knNext <const> = knots[i]
             carry = Knot3.smoothHandlesInternal(
                 knPrev, knCurr, knNext, carry)
             knPrev = knCurr
@@ -371,13 +373,13 @@ end
 ---its coordinates.
 ---@param target Curve3
 function Curve3.straightHandles(target)
-    local knots = target.knots
-    local knotCount = #knots
+    local knots <const> = target.knots
+    local knotCount <const> = #knots
     if knotCount < 2 then return target end
 
     for i = 2, knotCount, 1 do
-        local knPrev = knots[i - 1]
-        local knNext = knots[i]
+        local knPrev <const> = knots[i - 1]
+        local knNext <const> = knots[i]
         knPrev.fh = Vec3.mixNum(
             knPrev.co, knNext.co,
             0.33333333333333)
@@ -386,8 +388,8 @@ function Curve3.straightHandles(target)
             0.33333333333333)
     end
 
-    local knFirst = knots[1]
-    local knLast = knots[knotCount]
+    local knFirst <const> = knots[1]
+    local knLast <const> = knots[knotCount]
     if target.closedLoop then
         knFirst.rh = Vec3.mixNum(
             knFirst.co, knLast.co,
@@ -417,9 +419,10 @@ function Curve3.toJson(c)
     end
     str = str .. ",\"knots\":["
 
-    local kns = c.knots
-    local knsLen = #kns
-    local strArr = {}
+    ---@type string[]
+    local strArr <const> = {}
+    local kns <const> = c.knots
+    local knsLen <const> = #kns
     local i = 0
     while i < knsLen do
         i = i + 1

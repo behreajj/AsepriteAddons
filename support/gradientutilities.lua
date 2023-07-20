@@ -108,22 +108,22 @@ function GradientUtilities.aseColorsToClrGradient(aseColors)
     -- iterations are lost if background is zero.
 
     ---@type ClrKey[]
-    local clrKeys = {}
-    local lenColors = #aseColors
+    local clrKeys <const> = {}
+    local lenColors <const> = #aseColors
     if lenColors < 1 then
         clrKeys[1] = ClrKey.newByRef(0.0, Clr.black())
         clrKeys[2] = ClrKey.newByRef(1.0, Clr.white())
     elseif lenColors < 2 then
-        local c = AseUtilities.aseColorToClr(aseColors[1])
+        local c <const> = AseUtilities.aseColorToClr(aseColors[1])
         clrKeys[1] = ClrKey.newByRef(0.0, c)
         clrKeys[2] = ClrKey.newByRef(1.0, Clr.new(c.r, c.g, c.b, 1.0))
     else
-        local toStep = 1.0 / (lenColors - 1)
+        local toStep <const> = 1.0 / (lenColors - 1)
         local i = 0
         while i < lenColors do
-            local step = i * toStep
+            local step <const> = i * toStep
             i = i + 1
-            local c = AseUtilities.aseColorToClr(aseColors[i])
+            local c <const> = AseUtilities.aseColorToClr(aseColors[i])
             clrKeys[i] = ClrKey.newByRef(step, c)
         end
     end
@@ -143,7 +143,7 @@ function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
     elseif clrSpcPreset == "SR_LAB_2" then
         return Clr.mixSrLab2Internal
     elseif clrSpcPreset == "SR_LCH" then
-        local hef = GradientUtilities.hueEasingFuncFromPreset(huePreset)
+        local hef <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
         return function(o, d, t)
             return Clr.mixSrLchInternal(o, d, t, hef)
         end
@@ -174,37 +174,37 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         text = "&ADD",
         focus = false,
         onclick = function()
-            local args = dlg.data
-            local oldColors = args.shades --[=[@as Color[]]=]
-            local lenOldColors = #oldColors
+            local args <const> = dlg.data
+            local oldColors <const> = args.shades --[=[@as Color[]]=]
+            local lenOldColors <const> = #oldColors
 
             ---@type Color[]
-            local newColors = {}
+            local newColors <const> = {}
             local h = 0
             while h < lenOldColors do
                 h = h + 1
                 newColors[h] = oldColors[h]
             end
 
-            local activeSprite = app.site.sprite
+            local activeSprite <const> = app.site.sprite
             if activeSprite then
                 -- Range colors do not seem to have the same issues as range
                 -- layers and frames? They appear to be cleared automatically
                 -- on sprite tab change and are not impacted by timeline
                 -- visibility.
-                local appRange = app.range
+                local appRange <const> = app.range
                 local validRange = false
-                local rangeColors = appRange.colors
-                local lenRangeColors = #rangeColors
+                local rangeColors <const> = appRange.colors
+                local lenRangeColors <const> = #rangeColors
                 if lenRangeColors > 0 then
                     validRange = true
-                    local pal = AseUtilities.getPalette(
+                    local pal <const> = AseUtilities.getPalette(
                         app.activeFrame, activeSprite.palettes)
                     local i = 0
                     while i < lenRangeColors do
                         i = i + 1
-                        local idx = rangeColors[i]
-                        local clr = pal:getColor(idx)
+                        local idx <const> = rangeColors[i]
+                        local clr <const> = pal:getColor(idx)
                         newColors[lenOldColors + i] = clr
                     end
                 end
@@ -214,13 +214,13 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                     -- then add both the back- and fore-colors.
                     if lenOldColors < 1 then
                         app.command.SwitchColors()
-                        local bgClr = app.fgColor
+                        local bgClr <const> = app.fgColor
                         newColors[#newColors + 1] = AseUtilities.aseColorCopy(
                             bgClr, "UNBOUNDED")
                         app.command.SwitchColors()
                     end
 
-                    local fgClr = app.fgColor
+                    local fgClr <const> = app.fgColor
                     newColors[#newColors + 1] = AseUtilities.aseColorCopy(
                         fgClr, "UNBOUNDED")
                 end -- End of invalid range check
@@ -249,21 +249,21 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         text = "&SMOOTH",
         focus = false,
         onclick = function()
-            local args = dlg.data
-            local oldColors = args.shades --[=[@as Color[]]=]
-            local lenOldColors = #oldColors
+            local args <const> = dlg.data
+            local oldColors <const> = args.shades --[=[@as Color[]]=]
+            local lenOldColors <const> = #oldColors
             if lenOldColors < 2 then return end
             if lenOldColors > 64 then return end
 
             ---@type Color[]
-            local newColors = {}
+            local newColors <const> = {}
 
             -- Use LCH for two colors, otherwise use curve.
             if lenOldColors < 3 then
-                local huePreset = args.huePreset --[[@as string]]
-                local mixer = GradientUtilities.hueEasingFuncFromPreset(huePreset)
-                local leftEdge = oldColors[1]
-                local rightEdge = oldColors[2]
+                local huePreset <const> = args.huePreset --[[@as string]]
+                local mixer <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
+                local leftEdge <const> = oldColors[1]
+                local rightEdge <const> = oldColors[2]
 
                 newColors[1] = AseUtilities.aseColorCopy(
                     leftEdge, "UNBOUNDED")
@@ -276,48 +276,50 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                     rightEdge, "UNBOUNDED")
             else
                 -- Cache methods used in loop.
-                local floor = math.floor
-                local eval = Curve3.eval
-                local aseToClr = AseUtilities.aseColorToClr
-                local clrToAse = AseUtilities.clrToAseColor
-                local labTosRgb = Clr.srLab2TosRgb
-                local sRgbToLab = Clr.sRgbToSrLab2
+                local floor <const> = math.floor
+                local aseToClr <const> = AseUtilities.aseColorToClr
+                local clrToAse <const> = AseUtilities.clrToAseColor
+                local labTosRgb <const> = Clr.srLab2TosRgb
+                local sRgbToLab <const> = Clr.sRgbToSrLab2
+                local eval <const> = Curve3.eval
+
+                ---@type Vec3[]
+                local points <const> = {}
+                ---@type number[]
+                local alphas <const> = {}
 
                 local h = 0
-                ---@type Vec3[]
-                local points = {}
-                ---@type number[]
-                local alphas = {}
                 while h < lenOldColors do
                     h = h + 1
-                    local clr = aseToClr(oldColors[h])
-                    local lab = sRgbToLab(clr)
+                    local clr <const> = aseToClr(oldColors[h])
+                    local lab <const> = sRgbToLab(clr)
                     points[h] = Vec3.new(lab.a, lab.b, lab.l)
                     alphas[h] = clr.a
                 end
 
-                local curve = Curve3.fromCatmull(false, points, 0.0)
+                local curve <const> = Curve3.fromCatmull(false, points, 0.0)
 
-                local sampleCount = math.min(math.max(
+                local sampleCount <const> = math.min(math.max(
                     lenOldColors * 2 - 1, 3), 64)
+                local iToFac <const> = 1.0 / (sampleCount - 1.0)
+                local locn1 <const> = lenOldColors - 1
+
                 local i = 0
-                local iToFac = 1.0 / (sampleCount - 1.0)
-                local locn1 = lenOldColors - 1
                 while i < sampleCount do
-                    local iFac = i * iToFac
+                    local iFac <const> = i * iToFac
                     local alpha = 1.0
                     if iFac <= 0.0 then
                         alpha = alphas[1]
                     elseif iFac >= 1.0 then
                         alpha = alphas[lenOldColors]
                     else
-                        local aScaled = iFac * locn1
-                        local aFloor = floor(aScaled)
-                        local aFrac = aScaled - aFloor;
+                        local aScaled <const> = iFac * locn1
+                        local aFloor <const> = floor(aScaled)
+                        local aFrac <const> = aScaled - aFloor;
                         alpha = (1.0 - aFrac) * alphas[1 + aFloor]
                             + aFrac * alphas[2 + aFloor]
                     end
-                    local point = eval(curve, iFac)
+                    local point <const> = eval(curve, iFac)
                     i = i + 1
                     newColors[i] = clrToAse(labTosRgb(
                         point.z, point.x, point.y, alpha))
@@ -346,15 +348,15 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         options = GradientUtilities.STYLE_PRESETS,
         visible = showStyle,
         onchange = function()
-            local args = dlg.data
+            local args <const> = dlg.data
 
-            local style = args.stylePreset --[[@as string]]
-            local isMixed = style == "MIXED"
-            local isBayer = style == "DITHER_BAYER"
-            local isCustom = style == "DITHER_CUSTOM"
+            local style <const> = args.stylePreset --[[@as string]]
+            local isMixed <const> = style == "MIXED"
+            local isBayer <const> = style == "DITHER_BAYER"
+            local isCustom <const> = style == "DITHER_CUSTOM"
 
-            local csp = args.clrSpacePreset --[[@as string]]
-            local isPolar = csp == "SR_LCH"
+            local csp <const> = args.clrSpacePreset --[[@as string]]
+            local isPolar <const> = csp == "SR_LCH"
 
             dlg:modify {
                 id = "clrSpacePreset",
@@ -393,11 +395,11 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         visible = (not showStyle) or
             GradientUtilities.DEFAULT_STYLE == "MIXED",
         onchange = function()
-            local args = dlg.data
-            local style = args.stylePreset --[[@as string]]
-            local csp = args.clrSpacePreset --[[@as string]]
-            local isPolar = csp == "SR_LCH"
-            local isMixed = style == "MIXED"
+            local args <const> = dlg.data
+            local style <const> = args.stylePreset --[[@as string]]
+            local csp <const> = args.clrSpacePreset --[[@as string]]
+            local isPolar <const> = csp == "SR_LCH"
+            local isMixed <const> = style == "MIXED"
             dlg:modify {
                 id = "huePreset",
                 visible = isMixed and isPolar
@@ -483,7 +485,7 @@ end
 ---@param t number factor
 ---@return number
 function GradientUtilities.circleOut(t)
-    local u = t - 1.0
+    local u <const> = t - 1.0
     return math.sqrt(1.0 - u * u)
 end
 
@@ -517,9 +519,9 @@ end
 function GradientUtilities.ditherFromPreset(
     stylePreset, bayerIndex, ditherPath)
     if stylePreset == "DITHER_BAYER" then
-        local biVrf = bayerIndex or 2
-        local matrix = GradientUtilities.BAYER_MATRICES[biVrf]
-        local bayerSize = 1 << biVrf
+        local biVrf <const> = bayerIndex or 2
+        local matrix <const> = GradientUtilities.BAYER_MATRICES[biVrf]
+        local bayerSize <const> = 1 << biVrf
 
         return function(cg, step, x, y)
             return ClrGradient.dither(
@@ -533,7 +535,7 @@ function GradientUtilities.ditherFromPreset(
 
         if ditherPath and #ditherPath > 0
             and app.fs.isFile(ditherPath) then
-            local image = Image { fromFile = ditherPath }
+            local image <const> = Image { fromFile = ditherPath }
             if image then
                 matrix, c, r = GradientUtilities.imageToMatrix(image)
             end -- End image exists check.
@@ -564,9 +566,9 @@ function GradientUtilities.imageToMatrix(image)
     -- Intended for use with:
     -- https://bitbucket.org/jjhaggar/aseprite-dithering-matrices,
 
-    local spec = image.spec
-    local width = spec.width
-    local height = spec.height
+    local spec <const> = image.spec
+    local width <const> = spec.width
+    local height <const> = spec.height
 
     if width > GradientUtilities.DITHER_MAX_SIZE
         or height > GradientUtilities.DITHER_MAX_SIZE
@@ -574,10 +576,10 @@ function GradientUtilities.imageToMatrix(image)
         return GradientUtilities.BAYER_MATRICES[2], 4, 4
     end
 
-    local colorMode = spec.colorMode
-    local pxItr = image:pixels()
+    local colorMode <const> = spec.colorMode
+    local pxItr <const> = image:pixels()
     ---@type number[]
-    local matrix = {}
+    local matrix <const> = {}
     local lenMat = 0
 
     if colorMode == ColorMode.RGB then
@@ -585,21 +587,21 @@ function GradientUtilities.imageToMatrix(image)
         -- will agree on RGB to gray conversion.
         -- To unpack colors to floats, you could try, e.g.,
         -- string.unpack("f", string.pack("i", 0x40490FDB))
-        local fromHex = Clr.fromHex
-        local sRgbToLab = Clr.sRgbToSrLab2
+        local fromHex <const> = Clr.fromHex
+        local sRgbToLab <const> = Clr.sRgbToSrLab2
 
         for pixel in pxItr do
-            local hex = pixel()
-            local srgb = fromHex(hex)
-            local lab = sRgbToLab(srgb)
-            local v = lab.l * 0.01
+            local hex <const> = pixel()
+            local srgb <const> = fromHex(hex)
+            local lab <const> = sRgbToLab(srgb)
+            local v <const> = lab.l * 0.01
             lenMat = lenMat + 1
             matrix[lenMat] = v
         end
     elseif colorMode == ColorMode.GRAY then
         for pixel in pxItr do
-            local hex = pixel()
-            local v = (hex & 0xff) * 0.003921568627451
+            local hex <const> = pixel()
+            local v <const> = (hex & 0xff) * 0.003921568627451
             lenMat = lenMat + 1
             matrix[lenMat] = v
         end
@@ -610,7 +612,7 @@ function GradientUtilities.imageToMatrix(image)
         local mnElm = 2147483647
 
         for pixel in pxItr do
-            local i = pixel()
+            local i <const> = pixel()
             if i > mxElm then mxElm = i end
             if i < mnElm then mnElm = i end
             lenMat = lenMat + 1
@@ -620,9 +622,9 @@ function GradientUtilities.imageToMatrix(image)
         -- Normalize. Include half edges.
         mnElm = mnElm - 0.5
         mxElm = mxElm + 0.5
-        local range = math.abs(mxElm - mnElm)
+        local range <const> = math.abs(mxElm - mnElm)
         if range > 0.0 then
-            local denom = 1.0 / range
+            local denom <const> = 1.0 / range
             local j = 0
             while j < lenMat do
                 j = j + 1

@@ -39,7 +39,7 @@ function Mat3.new(
     m00, m01, m02,
     m10, m11, m12,
     m20, m21, m22)
-    local inst = setmetatable({}, Mat3)
+    local inst <const> = setmetatable({}, Mat3)
 
     inst.m00 = m00 or 1.0
     inst.m01 = m01 or 0.0
@@ -169,12 +169,12 @@ end
 ---@param a Mat3 matrix
 ---@return Mat3
 function Mat3.inverse(a)
-    local b01 = a.m22 * a.m11 - a.m12 * a.m21
-    local b11 = a.m12 * a.m20 - a.m22 * a.m10
-    local b21 = a.m21 * a.m10 - a.m11 * a.m20
-    local det = a.m00 * b01 + a.m01 * b11 + a.m02 * b21
+    local b01 <const> = a.m22 * a.m11 - a.m12 * a.m21
+    local b11 <const> = a.m12 * a.m20 - a.m22 * a.m10
+    local b21 <const> = a.m21 * a.m10 - a.m11 * a.m20
+    local det <const> = a.m00 * b01 + a.m01 * b11 + a.m02 * b21
     if det ~= 0.0 then
-        local detInv = 1.0 / det
+        local detInv <const> = 1.0 / det
         return Mat3.new(
             b01 * detInv,
             (a.m02 * a.m21 - a.m22 * a.m01) * detInv,
@@ -232,13 +232,13 @@ end
 ---@param a Mat3 matrix
 ---@return string
 function Mat3.toJson(a)
-    local m0 = string.format(
+    local m0 <const> = string.format(
         "{\"m00\":%.4f,\"m01\":%.4f,\"m02\":%.4f,",
         a.m00, a.m01, a.m02)
-    local m1 = string.format(
+    local m1 <const> = string.format(
         "\"m10\":%.4f,\"m11\":%.4f,\"m12\":%.4f,",
         a.m10, a.m11, a.m12)
-    local m2 = string.format(
+    local m2 <const> = string.format(
         "\"m20\":%.4f,\"m21\":%.4f,\"m22\":%.4f}",
         a.m20, a.m21, a.m22)
     return m0 .. m1 .. m2
@@ -251,13 +251,13 @@ end
 ---@param a Mat3 matrix
 ---@return string
 function Mat3.toStringCol(a)
-    local m0 = string.format(
+    local m0 <const> = string.format(
         "%+3.4f   %+3.4f   %+3.4f\n",
         a.m00, a.m01, a.m02)
-    local m1 = string.format(
+    local m1 <const> = string.format(
         "%+3.4f   %+3.4f   %+3.4f\n",
         a.m10, a.m11, a.m12)
-    local m2 = string.format(
+    local m2 <const> = string.format(
         "%+3.4f   %+3.4f   %+3.4f\n",
         a.m20, a.m21, a.m22)
     return m0 .. m1 .. m2

@@ -28,13 +28,13 @@ function ShapeUtilities.drawCurve2(
     local vres = 2
     if resolution > 2 then vres = resolution end
 
-    local toPoint = AseUtilities.vec2ToPoint
-    local bezier = Vec2.bezierPoint
+    local toPoint <const> = AseUtilities.vec2ToPoint
+    local bezier <const> = Vec2.bezierPoint
 
-    local isLoop = curve.closedLoop
-    local kns = curve.knots
-    local knsLen = #kns
-    local toPercent = 1.0 / vres
+    local isLoop <const> = curve.closedLoop
+    local kns <const> = curve.knots
+    local knsLen <const> = #kns
+    local toPercent <const> = 1.0 / vres
     local start = 2
     local prevKnot = kns[1]
     if isLoop then
@@ -43,17 +43,17 @@ function ShapeUtilities.drawCurve2(
     end
 
     ---@type Point[]
-    local pts = {}
+    local pts <const> = {}
     local h = start - 1
     local j = 0
     while h < knsLen do
         h = h + 1
-        local currKnot = kns[h]
+        local currKnot <const> = kns[h]
 
-        local coPrev = prevKnot.co
-        local fhPrev = prevKnot.fh
-        local rhNext = currKnot.rh
-        local coNext = currKnot.co
+        local coPrev <const> = prevKnot.co
+        local fhPrev <const> = prevKnot.fh
+        local rhNext <const> = currKnot.rh
+        local coNext <const> = currKnot.co
 
         j = j + 1
         pts[j] = toPoint(coPrev)
@@ -71,7 +71,7 @@ function ShapeUtilities.drawCurve2(
     end
 
     -- Draw fill.
-    local useTool = app.useTool
+    local useTool <const> = app.useTool
     if isLoop and useFill then
         app.transaction("Draw Curve Fill", function()
             useTool {
@@ -90,7 +90,7 @@ function ShapeUtilities.drawCurve2(
     if useStroke then
         app.transaction("Draw Curve Stroke", function()
             local ptPrev = pts[1]
-            local ptsLen = #pts
+            local ptsLen <const> = #pts
             if isLoop then
                 ptPrev = pts[ptsLen]
             end
@@ -98,7 +98,7 @@ function ShapeUtilities.drawCurve2(
             local k = start - 1
             while k < ptsLen do
                 k = k + 1
-                local ptCurr = pts[k]
+                local ptCurr <const> = pts[k]
                 useTool {
                     tool = "line",
                     color = strokeClr,
@@ -126,9 +126,9 @@ end
 function ShapeUtilities.drawHandles2(
     curve, frame, layer,
     lnClr, coClr, fhClr, rhClr)
-    local kns = curve.knots
-    local knsLen = #kns
-    local drawKnot = ShapeUtilities.drawKnot2
+    local kns <const> = curve.knots
+    local knsLen <const> = #kns
+    local drawKnot <const> = ShapeUtilities.drawKnot2
     app.transaction("Draw Curve Handles", function()
         local i = 0
         while i < knsLen do
@@ -153,19 +153,19 @@ end
 function ShapeUtilities.drawKnot2(
     knot, frame, layer,
     lnClr, coClr, fhClr, rhClr)
-    local lnClrVal = lnClr or Color { r = 175, g = 175, b = 175 }
-    local rhClrVal = rhClr or Color { r = 2, g = 167, b = 235 }
-    local coClrVal = coClr or Color { r = 235, g = 225, b = 40 }
-    local fhClrVal = fhClr or Color { r = 235, g = 26, b = 64 }
+    local lnClrVal <const> = lnClr or Color { r = 175, g = 175, b = 175 }
+    local rhClrVal <const> = rhClr or Color { r = 2, g = 167, b = 235 }
+    local coClrVal <const> = coClr or Color { r = 235, g = 225, b = 40 }
+    local fhClrVal <const> = fhClr or Color { r = 235, g = 26, b = 64 }
 
-    local lnBrush = Brush { size = 1 }
-    local rhBrush = Brush { size = 4 }
-    local coBrush = Brush { size = 6 }
-    local fhBrush = Brush { size = 5 }
+    local lnBrush <const> = Brush { size = 1 }
+    local rhBrush <const> = Brush { size = 4 }
+    local coBrush <const> = Brush { size = 6 }
+    local fhBrush <const> = Brush { size = 5 }
 
-    local coPt = AseUtilities.vec2ToPoint(knot.co)
-    local fhPt = AseUtilities.vec2ToPoint(knot.fh)
-    local rhPt = AseUtilities.vec2ToPoint(knot.rh)
+    local coPt <const> = AseUtilities.vec2ToPoint(knot.co)
+    local fhPt <const> = AseUtilities.vec2ToPoint(knot.fh)
+    local rhPt <const> = AseUtilities.vec2ToPoint(knot.rh)
 
     app.transaction("Draw Knot Handles", function()
         -- Line from rear handle to coordinate.
@@ -237,10 +237,10 @@ function ShapeUtilities.drawMesh2(
     brsh, frame, layer)
     -- Convert Vec2s to Points.
     ---@type Point[]
-    local pts = {}
-    local vs = mesh.vs
-    local vsLen = #vs
-    local toPt = AseUtilities.vec2ToPoint
+    local pts <const> = {}
+    local vs <const> = mesh.vs
+    local vsLen <const> = #vs
+    local toPt <const> = AseUtilities.vec2ToPoint
     local idx0 = 0
     while idx0 < vsLen do
         idx0 = idx0 + 1
@@ -248,17 +248,17 @@ function ShapeUtilities.drawMesh2(
     end
 
     -- Group points by face.
-    local fs = mesh.fs
-    local fsLen = #fs
+    local fs <const> = mesh.fs
+    local fsLen <const> = #fs
     ---@type Point[][]
-    local ptsGrouped = {}
+    local ptsGrouped <const> = {}
     local idx1 = 0
     while idx1 < fsLen do
         idx1 = idx1 + 1
-        local f = fs[idx1]
-        local fLen = #f
+        local f <const> = fs[idx1]
+        local fLen <const> = #f
         ---@type Point[]
-        local ptsFace = {}
+        local ptsFace <const> = {}
         local idx2 = 0
         while idx2 < fLen do
             idx2 = idx2 + 1
@@ -268,7 +268,7 @@ function ShapeUtilities.drawMesh2(
     end
 
     -- Group fills into one transaction.
-    local useTool = app.useTool
+    local useTool <const> = app.useTool
     if useFill then
         app.transaction("Mesh Fill", function()
             local idx3 = 0
@@ -293,13 +293,13 @@ function ShapeUtilities.drawMesh2(
             local idx4 = 0
             while idx4 < fsLen do
                 idx4 = idx4 + 1
-                local ptGroup = ptsGrouped[idx4]
-                local lenPtGrp = #ptGroup
+                local ptGroup <const> = ptsGrouped[idx4]
+                local lenPtGrp <const> = #ptGroup
                 local ptPrev = ptGroup[lenPtGrp]
                 local idx5 = 0
                 while idx5 < lenPtGrp do
                     idx5 = idx5 + 1
-                    local ptCurr = ptGroup[idx5]
+                    local ptCurr <const> = ptGroup[idx5]
                     useTool {
                         tool = "line",
                         color = strokeClr,

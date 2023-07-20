@@ -28,7 +28,7 @@ setmetatable(Vec4, {
 ---@param w number? w component
 ---@return Vec4
 function Vec4.new(x, y, z, w)
-    local inst = setmetatable({}, Vec4)
+    local inst <const> = setmetatable({}, Vec4)
     inst.x = x or 0.0
     inst.y = y or 0.0
     inst.z = z or 0.0
@@ -145,7 +145,7 @@ end
 ---@param tol number? tolerance
 ---@return boolean
 function Vec4.approx(a, b, tol)
-    local eps = tol or 0.000001
+    local eps <const> = tol or 0.000001
     return math.abs(b.x - a.x) <= eps
         and math.abs(b.y - a.y) <= eps
         and math.abs(b.z - a.z) <= eps
@@ -190,7 +190,7 @@ end
 ---@return Vec4
 function Vec4.copySign(a, b)
     local cx = 0.0
-    local axAbs = math.abs(a.x)
+    local axAbs <const> = math.abs(a.x)
     if b.x < -0.0 then
         cx = -axAbs
     elseif b.x > 0.0 then
@@ -198,7 +198,7 @@ function Vec4.copySign(a, b)
     end
 
     local cy = 0.0
-    local ayAbs = math.abs(a.y)
+    local ayAbs <const> = math.abs(a.y)
     if b.y < -0.0 then
         cy = -ayAbs
     elseif b.y > 0.0 then
@@ -206,7 +206,7 @@ function Vec4.copySign(a, b)
     end
 
     local cz = 0.0
-    local azAbs = math.abs(a.z)
+    local azAbs <const> = math.abs(a.z)
     if b.z < -0.0 then
         cz = -azAbs
     elseif b.z > 0.0 then
@@ -214,7 +214,7 @@ function Vec4.copySign(a, b)
     end
 
     local cw = 0.0
-    local awAbs = math.abs(a.w)
+    local awAbs <const> = math.abs(a.w)
     if b.w < -0.0 then
         cw = -awAbs
     elseif b.w > 0.0 then
@@ -330,13 +330,13 @@ end
 ---@param v Vec4 vector
 ---@return integer
 function Vec4.hashCode(v)
-    local xBits = string.unpack("i4",
+    local xBits <const> = string.unpack("i4",
         string.pack("f", v.x))
-    local yBits = string.unpack("i4",
+    local yBits <const> = string.unpack("i4",
         string.pack("f", v.y))
-    local zBits = string.unpack("i4",
+    local zBits <const> = string.unpack("i4",
         string.pack("f", v.z))
-    local wBits = string.unpack("i4",
+    local wBits <const> = string.unpack("i4",
         string.pack("f", v.w))
 
     return (((84696351 ~ xBits)
@@ -353,28 +353,28 @@ end
 ---@return Vec4
 function Vec4.linearstep(edge0, edge1, x)
     local cx = 0.0
-    local xDenom = edge1.x - edge0.x
+    local xDenom <const> = edge1.x - edge0.x
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
             (x.x - edge0.x) / xDenom))
     end
 
     local cy = 0.0
-    local yDenom = edge1.y - edge0.y
+    local yDenom <const> = edge1.y - edge0.y
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,
             (x.y - edge0.y) / yDenom))
     end
 
     local cz = 0.0
-    local zDenom = edge1.z - edge0.z
+    local zDenom <const> = edge1.z - edge0.z
     if zDenom ~= 0.0 then
         cz = math.min(1.0, math.max(0.0,
             (x.z - edge0.z) / zDenom))
     end
 
     local cw = 0.0
-    local wDenom = edge1.w - edge0.w
+    local wDenom <const> = edge1.w - edge0.w
     if wDenom ~= 0.0 then
         cw = math.min(1.0, math.max(0.0,
             (x.w - edge0.w) / wDenom))
@@ -445,11 +445,11 @@ end
 ---The step is a number.
 ---@param a Vec4 origin
 ---@param b Vec4 destination
----@param t number step
+---@param t number? step
 ---@return Vec4
 function Vec4.mixNum(a, b, t)
-    local v = t or 0.5
-    local u = 1.0 - v
+    local v <const> = t or 0.5
+    local u <const> = 1.0 - v
     return Vec4.new(
         u * a.x + v * b.x,
         u * a.y + v * b.y,
@@ -510,12 +510,12 @@ end
 ---@param v Vec4 vector
 ---@return Vec4
 function Vec4.normalize(v)
-    local mSq = v.x * v.x
+    local mSq <const> = v.x * v.x
         + v.y * v.y
         + v.z * v.z
         + v.w * v.w
     if mSq > 0.0 then
-        local mInv = 1.0 / math.sqrt(mSq)
+        local mInv <const> = 1.0 / math.sqrt(mSq)
         return Vec4.new(
             v.x * mInv,
             v.y * mInv,
@@ -544,9 +544,9 @@ end
 ---@param ub Vec4? upper bound
 ---@return Vec4
 function Vec4.randomCartesian(lb, ub)
-    local lval = lb or Vec4.new(-1.0, -1.0, -1.0, -1.0)
-    local uval = ub or Vec4.new(1.0, 1.0, 1.0, 1.0)
-    return Vec4.randomCartesianInternal(lval, uval)
+    local lVrf <const> = lb or Vec4.new(-1.0, -1.0, -1.0, -1.0)
+    local uVrf <const> = ub or Vec4.new(1.0, 1.0, 1.0, 1.0)
+    return Vec4.randomCartesianInternal(lVrf, uVrf)
 end
 
 ---Creates a random point in Cartesian space given
@@ -556,10 +556,10 @@ end
 ---@param ub Vec4 upper bound
 ---@return Vec4
 function Vec4.randomCartesianInternal(lb, ub)
-    local rx = math.random()
-    local ry = math.random()
-    local rz = math.random()
-    local rw = math.random()
+    local rx <const> = math.random()
+    local ry <const> = math.random()
+    local rz <const> = math.random()
+    local rw <const> = math.random()
 
     return Vec4.new(
         (1.0 - rx) * lb.x + rx * ub.x,
@@ -572,28 +572,28 @@ end
 ---@param v Vec4 left operand
 ---@return Vec4
 function Vec4.round(v)
-    local ix, fx = math.modf(v.x)
+    local ix, fx <const> = math.modf(v.x)
     if ix <= 0 and fx <= -0.5 then
         ix = ix - 1
     elseif ix >= 0 and fx >= 0.5 then
         ix = ix + 1
     end
 
-    local iy, fy = math.modf(v.y)
+    local iy, fy <const> = math.modf(v.y)
     if iy <= 0 and fy <= -0.5 then
         iy = iy - 1
     elseif iy >= 0 and fy >= 0.5 then
         iy = iy + 1
     end
 
-    local iz, fz = math.modf(v.z)
+    local iz, fz <const> = math.modf(v.z)
     if iz <= 0 and fz <= -0.5 then
         iz = iz - 1
     elseif iz >= 0 and fz >= 0.5 then
         iz = iz + 1
     end
 
-    local iw, fw = math.modf(v.w)
+    local iw, fw <const> = math.modf(v.w)
     if iw <= 0 and fw <= -0.5 then
         iw = iw - 1
     elseif iw >= 0 and fw >= 0.5 then
@@ -658,7 +658,7 @@ end
 ---@return Vec4
 function Vec4.smoothstep(edge0, edge1, x)
     local cx = 0.0
-    local xDenom = edge1.x - edge0.x
+    local xDenom <const> = edge1.x - edge0.x
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
             (x.x - edge0.x) / xDenom))
@@ -666,7 +666,7 @@ function Vec4.smoothstep(edge0, edge1, x)
     end
 
     local cy = 0.0
-    local yDenom = edge1.y - edge0.y
+    local yDenom <const> = edge1.y - edge0.y
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,
             (x.y - edge0.y) / yDenom))
@@ -674,7 +674,7 @@ function Vec4.smoothstep(edge0, edge1, x)
     end
 
     local cz = 0.0
-    local zDenom = edge1.z - edge0.z
+    local zDenom <const> = edge1.z - edge0.z
     if zDenom ~= 0.0 then
         cz = math.min(1.0, math.max(0.0,
             (x.z - edge0.z) / zDenom))
@@ -682,7 +682,7 @@ function Vec4.smoothstep(edge0, edge1, x)
     end
 
     local cw = 0.0
-    local wDenom = edge1.w - edge0.w
+    local wDenom <const> = edge1.w - edge0.w
     if wDenom ~= 0.0 then
         cw = math.min(1.0, math.max(0.0,
             (x.w - edge0.w) / wDenom))

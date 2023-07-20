@@ -138,21 +138,21 @@ end
 ---@return string
 function JsonUtilities.celToJson(cel, fileName, originFormat)
     local celDataVrf = "null"
-    local celData = cel.data
+    local celData <const> = cel.data
     if celData and #celData > 0 then
         celDataVrf = celData
     end
 
-    local layerVerif = -1
-    local layer = cel.layer
-    local typeLayer = type(layer)
+    local layerVrf = -1
+    local layer <const> = cel.layer
+    local typeLayer <const> = type(layer)
     if typeLayer == "userdata" then
         if layer.__name == "Layer" then
-            layerVerif = layer.id
+            layerVrf = layer.id
         end
     elseif typeLayer == "number"
         and math.type(layer) == "integer" then
-        layerVerif = layer
+        layerVrf = layer
     end
 
     return string.format(
@@ -161,7 +161,7 @@ function JsonUtilities.celToJson(cel, fileName, originFormat)
         JsonUtilities.rectToJson(cel.bounds, originFormat),
         celDataVrf,
         cel.frameNumber - 1,
-        layerVerif,
+        layerVrf,
         cel.opacity,
         cel.zIndex)
 end
@@ -187,21 +187,21 @@ end
 ---@return string
 function JsonUtilities.layerToJson(layer)
     local layerDataVrf = "null"
-    local layerData = layer.data
+    local layerData <const> = layer.data
     if layerData and #layerData > 0 then
         layerDataVrf = layerData
     end
 
-    local parentVerif = -1
-    local parent = layer.parent
-    local typeParent = type(parent)
+    local parentVrf = -1
+    local parent <const> = layer.parent
+    local typeParent <const> = type(parent)
     if typeParent == "userdata" then
         if parent.__name == "Layer" then
-            parentVerif = parent.id
+            parentVrf = parent.id
         end
     elseif typeParent == "number"
         and math.type(parent) == "integer" then
-        parentVerif = parent
+        parentVrf = parent
     end
 
     return string.format(
@@ -211,7 +211,7 @@ function JsonUtilities.layerToJson(layer)
         layerDataVrf,
         layer.name,
         layer.opacity,
-        parentVerif,
+        parentVrf,
         layer.stackIndex)
 end
 
@@ -241,20 +241,20 @@ end
 ---@return string
 function JsonUtilities.rectToJson(r, format)
     if format == "CENTER_FULL" then
-        local rw_2 = r.width * 0.5
-        local rh_2 = r.height * 0.5
+        local rw_2 <const> = r.width * 0.5
+        local rh_2 <const> = r.height * 0.5
         return string.format("{\"center\":%s,\"size\":%s}",
             JsonUtilities.pointToJson(r.x + rw_2, r.y + rh_2),
             JsonUtilities.pointToJson(r.width, r.height))
     elseif format == "CENTER_HALF" then
-        local rw_2 = r.width * 0.5
-        local rh_2 = r.height * 0.5
+        local rw_2 <const> = r.width * 0.5
+        local rh_2 <const> = r.height * 0.5
         return string.format("{\"center\":%s,\"size\":%s}",
             JsonUtilities.pointToJson(r.x + rw_2, r.y + rh_2),
             JsonUtilities.pointToJson(rw_2, rh_2))
     elseif format == "CORNERS" then
-        local xbr = r.x + r.width - 1
-        local ybr = r.y + r.height - 1
+        local xbr <const> = r.x + r.width - 1
+        local ybr <const> = r.y + r.height - 1
         return string.format("{\"topLeft\":%s,\"bottomRight\":%s}",
             JsonUtilities.pointToJson(r.x, r.y),
             JsonUtilities.pointToJson(xbr, ybr))
@@ -272,13 +272,13 @@ end
 function JsonUtilities.spriteToJson(sprite)
     -- User data is in 1.3 only.
     local spriteDataVrf = "null"
-    local spriteData = sprite.data
+    local spriteData <const> = sprite.data
     if spriteData and #spriteData > 0 then
         spriteDataVrf = spriteData
     end
 
-    local spec = sprite.spec
-    local pxa = sprite.pixelRatio
+    local spec <const> = sprite.spec
+    local pxa <const> = sprite.pixelRatio
 
     return string.format(
         JsonUtilities.SPRITE_FORMAT,
@@ -305,7 +305,7 @@ end
 ---@return string
 function JsonUtilities.tagToJson(tag, fileName)
     local tagDataVrf = "null"
-    local tagData = tag.data
+    local tagData <const> = tag.data
     if tagData and #tagData > 0 then
         tagDataVrf = tagData
     end
@@ -324,7 +324,7 @@ end
 ---Formats the Aseprite version as a JSON string.
 ---@return string
 function JsonUtilities.versionToJson()
-    local v = app.version
+    local v <const> = app.version
     return string.format(
         JsonUtilities.VERSION_FORMAT,
         app.apiVersion,

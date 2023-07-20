@@ -474,11 +474,15 @@ dlg:button {
             local bMax = -2147483648
 
             -- Cache methods to local.
+            local sqrt = math.sqrt
+            local abs = math.abs
+            local cnew = Clr.new
             local fromHex = Clr.fromHex
             local sRgbaToLab = Clr.sRgbToSrLab2
+            local octins = Octree.insert
+            local octquery = Octree.queryInternal
             local v3new = Vec3.new
             local v3hash = Vec3.hashCode
-            local octins = Octree.insert
 
             -- Unpack source palette to a dictionary and an octree.
             -- Ignore transparent colors in palette.
@@ -539,25 +543,24 @@ dlg:button {
             local distFunc = function(a, b)
                 local da = b.x - a.x
                 local db = b.y - a.y
-                return math.sqrt(da * da + db * db)
-                    + math.abs(b.z - a.z)
+                return sqrt(da * da + db * db) + abs(b.z - a.z)
             end
 
             Octree.cull(octree)
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
-                local srgb = Clr.new(
+                local srgb = cnew(
                     rSrc * 0.003921568627451,
                     gSrc * 0.003921568627451,
                     bSrc * 0.003921568627451,
                     1.0)
-                local lab = Clr.sRgbToSrLab2(srgb)
-                local query = Vec3.new(lab.a, lab.b, lab.l)
-                local nearPoint, _ = Octree.queryInternal(
+                local lab = sRgbaToLab(srgb)
+                local query = v3new(lab.a, lab.b, lab.l)
+                local nearPoint, _ = octquery(
                     octree, query, queryRad, distFunc)
 
                 local trgHex = 0x0
                 if nearPoint then
-                    local nearHash = Vec3.hashCode(nearPoint)
+                    local nearHash = v3hash(nearPoint)
                     local nearHex = ptToHexDict[nearHash]
                     if nearHex ~= nil then
                         trgHex = (aSrc << 0x18)

@@ -61,7 +61,7 @@ Utilities.STL_LUT = {
 ---Houses utility methods not included in Lua.
 ---@return table
 function Utilities.new()
-    local inst = setmetatable({}, Utilities)
+    local inst <const> = setmetatable({}, Utilities)
     return inst
 end
 
@@ -79,8 +79,8 @@ function Utilities.bisectRight(arr, elm, compare)
     local high = #arr
     if high < 1 then return 1 end
     while low < high do
-        local middle = (low + high) // 2
-        local right = arr[1 + middle]
+        local middle <const> = (low + high) // 2
+        local right <const> = arr[1 + middle]
         if right and compare(elm, right) then
             high = middle
         else
@@ -99,7 +99,7 @@ end
 ---@param comp? fun(a: K, b: K): boolean
 ---@return K[]
 function Utilities.dictToSortedSet(dict, comp)
-    local orderedSet = {}
+    local orderedSet <const> = {}
     local osCursor = 0
     for k, _ in pairs(dict) do
         osCursor = osCursor + 1
@@ -115,13 +115,13 @@ end
 ---@param arr2 T[][] array of arrays
 ---@return T[]
 function Utilities.flatArr2(arr2)
-    local flat = {}
-    local lenOuter = #arr2
+    local flat <const> = {}
+    local lenOuter <const> = #arr2
     local i = 0
     while i < lenOuter do
         i = i + 1
-        local arr1 = arr2[i]
-        local lenInner = #arr1
+        local arr1 <const> = arr2[i]
+        local lenInner <const> = #arr1
         local j = 0
         while j < lenInner do
             j = j + 1
@@ -138,16 +138,16 @@ end
 ---@param h integer image height
 ---@return integer[]
 function Utilities.flipPixelsHoriz(source, w, h)
-    local wd2 = w // 2
-    local wn1 = w - 1
-    local len = wd2 * h
+    local wd2 <const> = w // 2
+    local wn1 <const> = w - 1
+    local len <const> = wd2 * h
     local k = 0
     while k < len do
-        local x = k % wd2
-        local yw = w * (k // wd2)
-        local idxSrc = 1 + x + yw
-        local idxTrg = 1 + yw + wn1 - x
-        local swap = source[idxSrc]
+        local x <const> = k % wd2
+        local yw <const> = w * (k // wd2)
+        local idxSrc <const> = 1 + x + yw
+        local idxTrg <const> = 1 + yw + wn1 - x
+        local swap <const> = source[idxSrc]
         source[idxSrc] = source[idxTrg]
         source[idxTrg] = swap
         k = k + 1
@@ -162,15 +162,15 @@ end
 ---@param h integer image height
 ---@return integer[]
 function Utilities.flipPixelsVert(source, w, h)
-    local hd2 = h // 2
-    local hn1 = h - 1
-    local len = w * hd2
+    local hd2 <const> = h // 2
+    local hn1 <const> = h - 1
+    local len <const> = w * hd2
     local k = 0
     while k < len do
-        local idxSrc = 1 + k
-        local idxTrg = 1 + k % w
+        local idxSrc <const> = 1 + k
+        local idxTrg <const> = 1 + k % w
             + w * (hn1 - k // w)
-        local swap = source[idxSrc]
+        local swap <const> = source[idxSrc]
         source[idxSrc] = source[idxTrg]
         source[idxTrg] = swap
         k = k + 1
@@ -185,17 +185,17 @@ end
 ---@param mu number? offset
 ---@return number
 function Utilities.gaussian(sigma, mu)
-    local m = mu or 0.0
-    local s = sigma or 1.0
+    local m <const> = mu or 0.0
+    local s <const> = sigma or 1.0
 
     local u1 = 0.0
     repeat
         u1 = math.random()
     until (u1 > 0.000001)
-    local u2 = math.random()
+    local u2 <const> = math.random()
 
-    local r = s * math.sqrt(-2.0 * math.log(u1))
-    local x = r * math.cos(6.2831853071796 * u2) + m
+    local r <const> = s * math.sqrt(-2.0 * math.log(u1))
+    local x <const> = r * math.cos(6.2831853071796 * u2) + m
     -- local y = r * math.sin(6.2831853071796 * u2) + m
     return x
 end
@@ -220,8 +220,8 @@ end
 ---@return table<integer, integer>
 function Utilities.hexArrToDict(hexes, za)
     ---@type table<integer, integer>
-    local dict = {}
-    local lenHexes = #hexes
+    local dict <const> = {}
+    local lenHexes <const> = #hexes
     local idxRead = 0
     local idxValue = 0
     while idxRead < lenHexes do
@@ -229,7 +229,7 @@ function Utilities.hexArrToDict(hexes, za)
         local hex = hexes[idxRead]
 
         if za then
-            local a = (hex >> 0x18) & 0xff
+            local a <const> = (hex >> 0x18) & 0xff
             if a < 1 then hex = 0x0 end
         end
 
@@ -252,13 +252,13 @@ end
 ---@param range number range
 ---@return number
 function Utilities.lerpAngleCcw(origin, dest, t, range)
-    local valRange = range or 360.0
-    local o = origin % valRange
-    local d = dest % valRange
-    local diff = d - o
+    local valRange <const> = range or 360.0
+    local o <const> = origin % valRange
+    local d <const> = dest % valRange
+    local diff <const> = d - o
     if diff == 0.0 then return o end
 
-    local u = 1.0 - t
+    local u <const> = 1.0 - t
     if o > d then
         return (u * o + t * (d + valRange)) % valRange
     else
@@ -277,13 +277,13 @@ end
 ---@param range number range
 ---@return number
 function Utilities.lerpAngleCw(origin, dest, t, range)
-    local valRange = range or 360.0
-    local o = origin % valRange
-    local d = dest % valRange
-    local diff = d - o
+    local valRange <const> = range or 360.0
+    local o <const> = origin % valRange
+    local d <const> = dest % valRange
+    local diff <const> = d - o
     if diff == 0.0 then return d end
 
-    local u = 1.0 - t
+    local u <const> = 1.0 - t
     if o < d then
         return (u * (o + valRange) + t * d) % valRange
     else
@@ -302,12 +302,12 @@ end
 ---@param range number range
 ---@return number
 function Utilities.lerpAngleFar(origin, dest, t, range)
-    local valRange = range or 360.0
-    local halfRange = valRange * 0.5
-    local o = origin % valRange
-    local d = dest % valRange
-    local diff = d - o
-    local u = 1.0 - t
+    local valRange <const> = range or 360.0
+    local halfRange <const> = valRange * 0.5
+    local o <const> = origin % valRange
+    local d <const> = dest % valRange
+    local diff <const> = d - o
+    local u <const> = 1.0 - t
 
     if diff == 0.0 or (o < d and diff < halfRange) then
         return (u * (o + valRange) + t * d) % valRange
@@ -329,14 +329,14 @@ end
 ---@param range number range
 ---@return number
 function Utilities.lerpAngleNear(origin, dest, t, range)
-    local valRange = range or 360.0
-    local o = origin % valRange
-    local d = dest % valRange
-    local diff = d - o
+    local valRange <const> = range or 360.0
+    local o <const> = origin % valRange
+    local d <const> = dest % valRange
+    local diff <const> = d - o
     if diff == 0.0 then return o end
 
-    local u = 1.0 - t
-    local halfRange = valRange * 0.5
+    local u <const> = 1.0 - t
+    local halfRange <const> = valRange * 0.5
     if o < d and diff > halfRange then
         return (u * (o + valRange) + t * d) % valRange
     elseif o > d and diff < -halfRange then
@@ -352,8 +352,8 @@ end
 ---@param b Curve2 curve
 ---@return Curve2
 function Utilities.mulMat3Curve2(a, b)
-    local kns = b.knots
-    local knsLen = #kns
+    local kns <const> = b.knots
+    local knsLen <const> = #kns
     local i = 0
     -- Knot is changed in place.
     while i < knsLen do
@@ -381,8 +381,8 @@ end
 ---@param b Mesh2 mesh
 ---@return Mesh2
 function Utilities.mulMat3Mesh2(a, b)
-    local vs = b.vs
-    local vsLen = #vs
+    local vs <const> = b.vs
+    local vsLen <const> = #vs
     local i = 0
     while i < vsLen do
         i = i + 1
@@ -397,9 +397,9 @@ end
 ---@param b Vec2 vector
 ---@return Vec2
 function Utilities.mulMat3Point2(a, b)
-    local w = a.m20 * b.x + a.m21 * b.y + a.m22
+    local w <const> = a.m20 * b.x + a.m21 * b.y + a.m22
     if w ~= 0.0 then
-        local wInv = 1.0 / w
+        local wInv <const> = 1.0 / w
         return Vec2.new(
             (a.m00 * b.x + a.m01 * b.y + a.m02) * wInv,
             (a.m10 * b.x + a.m11 * b.y + a.m12) * wInv)
@@ -414,8 +414,8 @@ end
 ---@param b Curve3 curve
 ---@return Curve3
 function Utilities.mulMat4Curve3(a, b)
-    local kns = b.knots
-    local knsLen = #kns
+    local kns <const> = b.knots
+    local knsLen <const> = #kns
     local i = 0
     -- Knot is changed in place.
     while i < knsLen do
@@ -443,9 +443,9 @@ end
 ---@param b Vec3 vector
 ---@return Vec3
 function Utilities.mulMat4Point3(a, b)
-    local w = a.m30 * b.x + a.m31 * b.y + a.m33
+    local w <const> = a.m30 * b.x + a.m31 * b.y + a.m33
     if w ~= 0.0 then
-        local wInv = 1.0 / w
+        local wInv <const> = 1.0 / w
         return Vec3.new(
             (a.m00 * b.x + a.m01 * b.y + a.m03) * wInv,
             (a.m10 * b.x + a.m11 * b.y + a.m13) * wInv,
@@ -509,21 +509,21 @@ end
 ---@param offset integer? offset
 ---@return integer[][]
 function Utilities.parseRangeStringOverlap(s, frameCount, offset)
-    local offVerif = offset or 0
-    local fcVerif = frameCount or 2147483647
-    local strgmatch = string.gmatch
+    local offVerif <const> = offset or 0
+    local fcVerif <const> = frameCount or 2147483647
+    local strgmatch <const> = string.gmatch
 
     -- Parse string by comma.
     ---@type integer[][]
-    local arrOuter = {}
+    local arrOuter <const> = {}
     local idxOuter = 0
     for token in strgmatch(s, "([^,]+)") do
         -- Parse string by hyphen.
         ---@type integer[]
-        local edges = {}
+        local edges <const> = {}
         local idxEdges = 0
         for subtoken in strgmatch(token, "[^:]+") do
-            local trial = tonumber(subtoken, 10)
+            local trial <const> = tonumber(subtoken, 10)
             if trial then
                 -- print(string.format("trial: %d", trial))
                 idxEdges = idxEdges + 1
@@ -532,9 +532,9 @@ function Utilities.parseRangeStringOverlap(s, frameCount, offset)
         end
 
         ---@type integer[]
-        local arrInner = {}
+        local arrInner <const> = {}
         local idxInner = 0
-        local lenEdges = #edges
+        local lenEdges <const> = #edges
         if lenEdges > 1 then
             -- print("lenEdges > 1")
             local origIdx = edges[1]
@@ -571,7 +571,7 @@ function Utilities.parseRangeStringOverlap(s, frameCount, offset)
         elseif lenEdges > 0 then
             -- Filter out unique numbers if invalid,
             -- don't bother to clamp them.
-            local trial = edges[1]
+            local trial <const> = edges[1]
             if trial >= 1
                 and trial <= fcVerif then
                 idxInner = idxInner + 1
@@ -602,20 +602,20 @@ end
 ---@param offset integer? offset
 ---@return integer[]
 function Utilities.parseRangeStringUnique(s, frameCount, offset)
-    local arr2 = Utilities.parseRangeStringOverlap(
+    local arr2 <const> = Utilities.parseRangeStringOverlap(
         s, frameCount, offset)
 
     -- Convert 2D array to a dictionary.
     -- Use dummy true, not some idx scheme,
     -- because natural ordering is preferred.
     ---@type table<integer, boolean>
-    local dict = {}
-    local lenArr2 = #arr2
+    local dict <const> = {}
+    local lenArr2 <const> = #arr2
     local i = 0
     while i < lenArr2 do
         i = i + 1
-        local arr1 = arr2[i]
-        local lenArr1 = #arr1
+        local arr1 <const> = arr2[i]
+        local lenArr1 <const> = #arr1
         local j = 0
         while j < lenArr1 do
             j = j + 1
@@ -638,8 +638,8 @@ end
 ---@return integer[]
 function Utilities.prependMask(hexes)
     if hexes[1] == 0x0 then return hexes end
-    local cDict = Utilities.hexArrToDict(hexes, false)
-    local maskIdx = cDict[0x0]
+    local cDict <const> = Utilities.hexArrToDict(hexes, false)
+    local maskIdx <const> = cDict[0x0]
     if maskIdx then
         if maskIdx > 1 then
             table.remove(hexes, maskIdx)
@@ -657,7 +657,7 @@ end
 ---@param z number? z component
 ---@return Vec3
 function Utilities.promoteVec2ToVec3(a, z)
-    local vz = z or 0.0
+    local vz <const> = z or 0.0
     return Vec3.new(a.x, a.y, vz)
 end
 
@@ -724,7 +724,7 @@ end
 ---@return integer
 ---@return integer
 function Utilities.reduceRatio(a, b)
-    local denom = Utilities.gcd(a, b)
+    local denom <const> = Utilities.gcd(a, b)
     return a // denom, b // denom
 end
 
@@ -738,16 +738,16 @@ end
 ---@param hTrg integer resized height
 ---@return integer[]
 function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg)
-    local floor = math.floor
-    local tx = wSrc / wTrg
-    local ty = hSrc / hTrg
-    local len = wTrg * hTrg
+    local floor <const> = math.floor
+    local tx <const> = wSrc / wTrg
+    local ty <const> = hSrc / hTrg
+    local len <const> = wTrg * hTrg
     ---@type integer[]
-    local target = {}
+    local target <const> = {}
     local i = 0
     while i < len do
-        local nx = floor((i % wTrg) * tx)
-        local ny = floor((i // wTrg) * ty)
+        local nx <const> = floor((i % wTrg) * tx)
+        local ny <const> = floor((i // wTrg) * ty)
         i = i + 1
         target[i] = source[1 + ny * wSrc + nx]
     end
@@ -782,7 +782,7 @@ end
 ---@return integer
 function Utilities.round(x)
     -- math.tointeger(-0.000001) = -1, so modf must be used.
-    local ix, fx = math.modf(x)
+    local ix <const>, fx <const> = math.modf(x)
     if ix <= 0 and fx <= -0.5 then
         return ix - 1
     elseif ix >= 0 and fx >= 0.5 then
@@ -798,10 +798,10 @@ end
 ---@return T[]
 function Utilities.shuffle(t)
     -- https://stackoverflow.com/a/68486276
-    local rng = math.random
-    local s = {}
+    local rng <const> = math.random
+    local s <const> = {}
 
-    local len = #t
+    local len <const> = #t
     local h = 0
     while h < len do
         h = h + 1
@@ -811,7 +811,7 @@ function Utilities.shuffle(t)
     local i = len + 1
     while i > 2 do
         i = i - 1
-        local j = rng(i)
+        local j <const> = rng(i)
         s[i], s[j] = s[j], s[i]
     end
 
@@ -824,9 +824,9 @@ end
 function Utilities.stringToCharTable(str)
     -- For more on different methods, see
     -- https://stackoverflow.com/a/49222705
-    local chars = {}
-    local strsub = string.sub
-    local lenStr = #str
+    local chars <const> = {}
+    local strsub <const> = string.sub
+    local lenStr <const> = #str
     local i = 0
     while i < lenStr do
         i = i + 1
@@ -855,7 +855,7 @@ function Utilities.toRatio(num, itrs, precision)
     cVerif = math.max(1, math.abs(cVerif))
     pVerif = math.max(1e-10, math.abs(pVerif))
 
-    local absNum = math.abs(num)
+    local absNum <const> = math.abs(num)
     local integer, fraction = math.modf(absNum)
 
     local a0 = integer
@@ -863,14 +863,15 @@ function Utilities.toRatio(num, itrs, precision)
     local b0 = 1
     local b1 = 0
 
+    local modf <const> = math.modf
     local counter = 0
     while fraction > pVerif and counter < cVerif do
-        local newNum = 1.0 / fraction
-        integer, fraction = math.modf(newNum)
-        local t0 = a0
+        local newNum <const> = 1.0 / fraction
+        integer, fraction = modf(newNum)
+        local t0 <const> = a0
         a0 = integer * a0 + b0
         b0 = t0
-        local t1 = a1
+        local t1 <const> = a1
         a1 = integer * a1 + b1
         b1 = t1
         counter = counter + 1
@@ -889,18 +890,18 @@ end
 ---@return Vec3
 function Utilities.toScreen(modelview, projection, pt3, width, height)
     -- Promote to homogenous coordinate.
-    local pt4 = Vec4.new(pt3.x, pt3.y, pt3.z, 1.0)
-    local mvpt4 = Utilities.mulMat4Vec4(modelview, pt4)
-    local scr = Utilities.mulMat4Vec4(projection, mvpt4)
+    local pt4 <const> = Vec4.new(pt3.x, pt3.y, pt3.z, 1.0)
+    local mvpt4 <const> = Utilities.mulMat4Vec4(modelview, pt4)
+    local scr <const> = Utilities.mulMat4Vec4(projection, mvpt4)
 
-    local w = scr.w
+    local w <const> = scr.w
     local x = scr.x
     local y = scr.y
     local z = scr.z
 
     -- Demote from homogenous coordinate.
     if w ~= 0.0 then
-        local wInv = 1.0 / w
+        local wInv <const> = 1.0 / w
         x = x * wInv
         y = y * wInv
         z = z * wInv
@@ -924,7 +925,7 @@ end
 ---@param chars string[] characters
 ---@return string[]
 function Utilities.trimCharsFinal(chars)
-    local tr = table.remove
+    local tr <const> = table.remove
     while chars[#chars] == ' ' do tr(chars) end
     return chars
 end
@@ -935,7 +936,7 @@ end
 ---@param chars string[] characters
 ---@return string[]
 function Utilities.trimCharsInitial(chars)
-    local tr = table.remove
+    local tr <const> = table.remove
     while chars[1] == ' ' do tr(chars, 1) end
     return chars
 end
@@ -951,9 +952,9 @@ end
 ---@return integer[]
 ---@return table<integer, integer>
 function Utilities.uniqueColors(hexes, za)
-    local dict = Utilities.hexArrToDict(hexes, za)
+    local dict <const> = Utilities.hexArrToDict(hexes, za)
     ---@type integer[]
-    local uniques = {}
+    local uniques <const> = {}
     for k, v in pairs(dict) do
         uniques[v] = k
     end
@@ -969,14 +970,14 @@ end
 ---@param filename string file name
 ---@return string
 function Utilities.validateFilename(filename)
-    local fileChars = Utilities.stringToCharTable(filename)
+    local fileChars <const> = Utilities.stringToCharTable(filename)
     Utilities.trimCharsInitial(fileChars)
     Utilities.trimCharsFinal(fileChars)
-    local len = #fileChars
+    local len <const> = #fileChars
     local i = 0
     while i < len do
         i = i + 1
-        local char = fileChars[i]
+        local char <const> = fileChars[i]
         if char == '\\' or char == '`'
             or char == '/' or char == ':'
             or char == '*' or char == '?'
@@ -999,12 +1000,13 @@ end
 ---@param h integer image height
 ---@return integer[]
 function Utilities.wrapPixels(source, x, y, w, h)
-    local len = #source
-    local wrapped = {}
+    ---@type integer[]
+    local wrapped <const> = {}
+    local len <const> = #source
     local i = 0
     while i < len do
-        local xSrc = ((i % w) - x) % w
-        local ySrc = ((i // w) + y) % h
+        local xSrc <const> = ((i % w) - x) % w
+        local ySrc <const> = ((i // w) + y) % h
         i = i + 1
         wrapped[i] = source[1 + xSrc + ySrc * w]
     end

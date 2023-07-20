@@ -132,9 +132,9 @@ function AseUtilities.appendLeaves(
     if (includeLocked or layer.isEditable)
         and (includeHidden or layer.isVisible) then
         if layer.isGroup then
-            local append = AseUtilities.appendLeaves
-            local childLayers = layer.layers --[[@as Layer]]
-            local lenChildLayers = #childLayers
+            local append <const> = AseUtilities.appendLeaves
+            local childLayers <const> = layer.layers --[[@as Layer]]
+            local lenChildLayers <const> = #childLayers
             local i = 0
             while i < lenChildLayers do
                 i = i + 1
@@ -163,14 +163,14 @@ function AseUtilities.averageColor(sprite, frame)
         return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
     end
 
-    local sel = AseUtilities.getSelection(sprite)
-    local selBounds = sel.bounds
-    local xSel = selBounds.x
-    local ySel = selBounds.y
+    local sel <const> = AseUtilities.getSelection(sprite)
+    local selBounds <const> = sel.bounds
+    local xSel <const> = selBounds.x
+    local ySel <const> = selBounds.y
 
-    local sprSpec = sprite.spec
-    local colorMode = sprSpec.colorMode
-    local selSpec = ImageSpec {
+    local sprSpec <const> = sprite.spec
+    local colorMode <const> = sprSpec.colorMode
+    local selSpec <const> = ImageSpec {
         width = math.max(1, selBounds.width),
         height = math.max(1, selBounds.height),
         colorMode = colorMode,
@@ -178,16 +178,16 @@ function AseUtilities.averageColor(sprite, frame)
     }
     selSpec.colorSpace = sprSpec.colorSpace
 
-    local flatImage = Image(selSpec)
+    local flatImage <const> = Image(selSpec)
     flatImage:drawSprite(
         sprite, frame, Point(-xSel, -ySel))
 
-    local palette = nil
     local eval = nil
+    local palette = nil
     if colorMode == ColorMode.RGB then
         eval = function(h, d)
             if (h & 0xff000000) ~= 0 then
-                local q = d[h]
+                local q <const> = d[h]
                 if q then d[h] = q + 1 else d[h] = 1 end
             end
         end
@@ -195,9 +195,9 @@ function AseUtilities.averageColor(sprite, frame)
         eval = function(gray, d)
             local a = (gray >> 0x08) & 0xff
             if a > 0 then
-                local v = gray & 0xff
-                local h = a << 0x18 | v << 0x10 | v << 0x08 | v
-                local q = d[h]
+                local v <const> = gray & 0xff
+                local h <const> = a << 0x18 | v << 0x10 | v << 0x08 | v
+                local q <const> = d[h]
                 if q then d[h] = q + 1 else d[h] = 1 end
             end
         end
@@ -211,11 +211,11 @@ function AseUtilities.averageColor(sprite, frame)
 
         eval = function(idx, d, pal)
             if idx > -1 and idx < #pal then
-                local aseColor = pal:getColor(idx)
-                local a = aseColor.alpha
+                local aseColor <const> = pal:getColor(idx)
+                local a <const> = aseColor.alpha
                 if a > 0 then
-                    local h = aseColor.rgbaPixel
-                    local q = d[h]
+                    local h <const> = aseColor.rgbaPixel
+                    local q <const> = d[h]
                     if q then d[h] = q + 1 else d[h] = 1 end
                 end
             end
@@ -228,20 +228,19 @@ function AseUtilities.averageColor(sprite, frame)
     -- number of pixels with that color in the
     -- selection. This tally is for the average.
     ---@type table<integer, integer>
-    local hexDict = {}
-    local pxItr = flatImage:pixels()
-
+    local hexDict <const> = {}
+    local pxItr <const> = flatImage:pixels()
     for pixel in pxItr do
-        local x = pixel.x + xSel
-        local y = pixel.y + ySel
+        local x <const> = pixel.x + xSel
+        local y <const> = pixel.y + ySel
         if sel:contains(x, y) then
             eval(pixel(), hexDict, palette)
         end
     end
 
     -- Cache methods used in loop.
-    local fromHex = Clr.fromHex
-    local sRgbToLab = Clr.sRgbToSrLab2
+    local fromHex <const> = Clr.fromHex
+    local sRgbToLab <const> = Clr.sRgbToSrLab2
 
     local lSum = 0.0
     local aSum = 0.0
@@ -250,8 +249,8 @@ function AseUtilities.averageColor(sprite, frame)
     local count = 0
 
     for k, v in pairs(hexDict) do
-        local srgb = fromHex(k)
-        local lab = sRgbToLab(srgb)
+        local srgb <const> = fromHex(k)
+        local lab <const> = sRgbToLab(srgb)
         lSum = lSum + lab.l * v
         aSum = aSum + lab.a * v
         bSum = bSum + lab.b * v
@@ -260,7 +259,7 @@ function AseUtilities.averageColor(sprite, frame)
     end
 
     if alphaSum > 0 and count > 0 then
-        local countInv = 1.0 / count
+        local countInv <const> = 1.0 / count
         return {
             l = lSum * countInv,
             a = aSum * countInv,
@@ -272,16 +271,18 @@ function AseUtilities.averageColor(sprite, frame)
     return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
 end
 
----Copies an Aseprite Color object by sRGB
----channel values. This is to prevent accidental
----pass by reference. The Color constructor does
----no boundary checking for [0, 255]. If the flag
----is "UNBOUNDED", then the raw values are used.
+---Copies an Aseprite Color object by sRGB channel
+---values. This is to prevent accidental pass by
+---reference. The Color constructor does no bounds
+---boundary checking for [0, 255].
+---If the flag is "UNBOUNDED", then the raw values
+---are used.
 ---If the flag is "MODULAR," this will copy by
 ---hexadecimal value, and hence use modular
----arithmetic. For more info, see
----https://www.wikiwand.com/en/Modular_arithmetic .
+---arithmetic.
 ---The default is saturation arithmetic.
+---For more info, see
+---https://www.wikiwand.com/en/Modular_arithmetic .
 ---@param aseColor Color aseprite color
 ---@param flag string out of bounds interpretation
 ---@return Color
@@ -375,32 +376,32 @@ function AseUtilities.asePaletteLoad(
 
     if palType == "FILE" then
         if filePath and #filePath > 0 then
-            local isFile = app.fs.isFile(filePath)
+            local isFile <const> = app.fs.isFile(filePath)
             if isFile then
                 -- Loading an .aseprite file with multiple palettes
                 -- will register only the first palette. Also may be
                 -- problems with color profiles being ignored.
-                local palFile = Palette { fromFile = filePath }
+                local palFile <const> = Palette { fromFile = filePath }
                 if palFile then
-                    local cntVal = count or 256
-                    local siVal = startIndex or 0
+                    local cntVrf <const> = count or 256
+                    local siVrf <const> = startIndex or 0
                     hexesProfile = AseUtilities.asePaletteToHexArr(
-                        palFile, siVal, cntVal)
+                        palFile, siVrf, cntVrf)
                 end
             end
         end
     elseif palType == "ACTIVE" then
-        local palActSpr = app.site.sprite
+        local palActSpr <const> = app.site.sprite
         if palActSpr then
-            local modeAct = palActSpr.colorMode
+            local modeAct <const> = palActSpr.colorMode
             if modeAct == ColorMode.GRAY then
-                local grCntVal = AseUtilities.GRAY_COUNT
-                if count then grCntVal = math.min(count, 256) end
-                hexesProfile = AseUtilities.grayHexes(grCntVal)
+                local grCntVrf = AseUtilities.GRAY_COUNT
+                if count then grCntVrf = math.min(count, 256) end
+                hexesProfile = AseUtilities.grayHexes(grCntVrf)
             else
                 hexesProfile = AseUtilities.asePalettesToHexArr(
                     palActSpr.palettes)
-                local profileAct = palActSpr.colorSpace
+                local profileAct <const> = palActSpr.colorSpace
                 if profileAct then
                     -- Tests a number of color profile components for
                     -- approximate equality. See
@@ -411,7 +412,7 @@ function AseUtilities.asePaletteLoad(
                     -- It might be safer not to treat the NONE color
                     -- space as equivalent to SRGB, as the user could
                     -- have a display profile which differs radically.
-                    local profileSrgb = ColorSpace { sRGB = true }
+                    local profileSrgb <const> = ColorSpace { sRGB = true }
                     if profileAct ~= profileSrgb then
                         palActSpr:convertColorSpace(profileSrgb)
                         hexesSrgb = AseUtilities.asePalettesToHexArr(
@@ -426,8 +427,8 @@ function AseUtilities.asePaletteLoad(
     -- Malformed file path could lead to nil.
     if hexesProfile == nil then
         hexesProfile = {}
-        local src = AseUtilities.DEFAULT_PAL_ARR
-        local lenSrc = #src
+        local src <const> = AseUtilities.DEFAULT_PAL_ARR
+        local lenSrc <const> = #src
         local i = 0
         while i < lenSrc do
             i = i + 1
@@ -438,7 +439,7 @@ function AseUtilities.asePaletteLoad(
     -- Copy by value as a precaution.
     if hexesSrgb == nil then
         hexesSrgb = {}
-        local lenProf = #hexesProfile
+        local lenProf <const> = #hexesProfile
         local i = 0
         while i < lenProf do
             i = i + 1
@@ -450,7 +451,7 @@ function AseUtilities.asePaletteLoad(
     -- are clear black. Since both arrays should have
     -- the same length, avoid safety of separate loops.
     if correctZeroAlpha then
-        local lenHexes = #hexesProfile
+        local lenHexes <const> = #hexesProfile
         local i = 0
         while i < lenHexes do
             i = i + 1
@@ -475,7 +476,7 @@ end
 ---@return integer[]
 function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
     if pal then
-        local lenPal = #pal
+        local lenPal <const> = #pal
 
         local si = startIndex or 0
         si = math.min(math.max(si, 0), lenPal - 1)
@@ -483,18 +484,18 @@ function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
         vc = math.min(math.max(vc, 2), lenPal - si)
 
         ---@type integer[]
-        local hexes = {}
+        local hexes <const> = {}
+        local convert <const> = AseUtilities.aseColorToHex
+        local rgbColorMode <const> = ColorMode.RGB
         local i = 0
-        local convert = AseUtilities.aseColorToHex
-        local rgbColorMode = ColorMode.RGB
         while i < vc do
-            local aseColor = pal:getColor(si + i)
+            local aseColor <const> = pal:getColor(si + i)
             i = i + 1
             hexes[i] = convert(aseColor, rgbColorMode)
         end
 
         if #hexes == 1 then
-            local amsk = hexes[1] & 0xff000000
+            local amsk <const> = hexes[1] & 0xff000000
             table.insert(hexes, 1, amsk)
             hexes[3] = amsk | 0x00ffffff
         end
@@ -511,22 +512,23 @@ end
 function AseUtilities.asePalettesToHexArr(palettes)
     if palettes then
         ---@type integer[]
-        local hexes = {}
-        local lenPalettes = #palettes
+        local hexes <const> = {}
+        local lenPalettes <const> = #palettes
+        local convert <const> = AseUtilities.aseColorToHex
+        local rgbColorMode <const> = ColorMode.RGB
+
         local i = 0
         local k = 0
-        local convert = AseUtilities.aseColorToHex
-        local rgbColorMode = ColorMode.RGB
         while i < lenPalettes do
             i = i + 1
-            local palette = palettes[i]
+            local palette <const> = palettes[i]
             if palette then
-                local lenPalette = #palette
+                local lenPalette <const> = #palette
                 local j = 0
                 while j < lenPalette do
-                    local aseColor = palette:getColor(j)
+                    local aseColor <const> = palette:getColor(j)
                     j = j + 1
-                    local hex = convert(
+                    local hex <const> = convert(
                         aseColor, rgbColorMode)
                     k = k + 1
                     hexes[k] = hex
@@ -535,7 +537,7 @@ function AseUtilities.asePalettesToHexArr(palettes)
         end
 
         if #hexes == 1 then
-            local amsk = hexes[1] & 0xff000000
+            local amsk <const> = hexes[1] & 0xff000000
             table.insert(hexes, 1, amsk)
             hexes[3] = amsk | 0x00ffffff
         end
@@ -575,27 +577,27 @@ function AseUtilities.blendImage(
     -- This can also be used as a polyfill for indexed
     -- color mode.
 
-    local cmVrf = cumulative or false
-    local oycVrf = oyCel or 0
-    local oxcVrf = oxCel or 0
-    local uycVrf = uyCel or 0
-    local uxcVrf = uxCel or 0
+    local cmVrf <const> = cumulative or false
+    local oycVrf <const> = oyCel or 0
+    local oxcVrf <const> = oxCel or 0
+    local uycVrf <const> = uyCel or 0
+    local uxcVrf <const> = uxCel or 0
 
-    local uSpec = under.spec
-    local uw = uSpec.width
-    local uh = uSpec.height
-    local ucm = uSpec.colorMode
-    local uMask = uSpec.transparentColor
+    local uSpec <const> = under.spec
+    local uw <const> = uSpec.width
+    local uh <const> = uSpec.height
+    local ucm <const> = uSpec.colorMode
+    local uMask <const> = uSpec.transparentColor
 
-    local oSpec = over.spec
-    local ow = oSpec.width
-    local oh = oSpec.height
-    local ocm = oSpec.colorMode
-    local oMask = oSpec.transparentColor
+    local oSpec <const> = over.spec
+    local ow <const> = oSpec.width
+    local oh <const> = oSpec.height
+    local ocm <const> = oSpec.colorMode
+    local oMask <const> = oSpec.transparentColor
 
     -- Find union of image bounds a and b.
-    local uxMax = uxcVrf + uw - 1
-    local uyMax = uycVrf + uh - 1
+    local uxMax <const> = uxcVrf + uw - 1
+    local uyMax <const> = uycVrf + uh - 1
     local xMin = math.min(uxcVrf, oxcVrf)
     local yMin = math.min(uycVrf, oycVrf)
     local xMax = math.max(uxMax, oxcVrf + ow - 1)
@@ -606,9 +608,9 @@ function AseUtilities.blendImage(
 
     local selVrf = mask
     if selVrf and (not selVrf.isEmpty) then
-        local selBounds = selVrf.bounds
-        local xSel = selBounds.x
-        local ySel = selBounds.y
+        local selBounds <const> = selVrf.bounds
+        local xSel <const> = selBounds.x
+        local ySel <const> = selBounds.y
 
         -- Find intersection of composite and selection.
         xMin = math.max(xMin, xSel)
@@ -634,28 +636,28 @@ function AseUtilities.blendImage(
 
     local tMask = 0
     if uMask == oMask then tMask = uMask end
-    local modeTarget = ucm
+    local modeTarget <const> = ucm
 
-    local tSpec = ImageSpec {
+    local tSpec <const> = ImageSpec {
         width = wTarget,
         height = hTarget,
         colorMode = modeTarget,
         transparentColor = tMask
     }
     tSpec.colorSpace = uSpec.colorSpace
-    local target = Image(tSpec)
+    local target <const> = Image(tSpec)
 
     -- Avoid tile map images and mismatched image modes.
-    if (ucm ~= ocm) or ucm == 4 then
+    if (ucm ~= ocm) or ucm == ColorMode.TILEMAP then
         return target, 0, 0
     end
 
     -- Offset needed when reading from source images
     -- into target image.
-    local uxDiff = uxcVrf - xMin
-    local uyDiff = uycVrf - yMin
-    local oxDiff = oxcVrf - xMin
-    local oyDiff = oycVrf - yMin
+    local uxDiff <const> = uxcVrf - xMin
+    local uyDiff <const> = uycVrf - yMin
+    local oxDiff <const> = oxcVrf - xMin
+    local oyDiff <const> = oycVrf - yMin
 
     local blendFunc = nil
     if modeTarget == ColorMode.INDEXED then
@@ -666,19 +668,19 @@ function AseUtilities.blendImage(
         blendFunc = AseUtilities.blendRgba
     end
 
-    local pxItr = target:pixels()
+    local pxItr <const> = target:pixels()
     for pixel in pxItr do
-        local xPixel = pixel.x
-        local yPixel = pixel.y
+        local xPixel <const> = pixel.x
+        local yPixel <const> = pixel.y
 
-        local xSmpl = xPixel + xMin
-        local ySmpl = yPixel + yMin
-        local isContained = selVrf:contains(xSmpl, ySmpl)
+        local xSmpl <const> = xPixel + xMin
+        local ySmpl <const> = yPixel + yMin
+        local isContained <const> = selVrf:contains(xSmpl, ySmpl)
 
         local uHex = 0x0
         if cmVrf or isContained then
-            local ux = xPixel - uxDiff
-            local uy = yPixel - uyDiff
+            local ux <const> = xPixel - uxDiff
+            local uy <const> = yPixel - uyDiff
             if uy > -1 and uy < uh
                 and ux > -1 and ux < uw then
                 uHex = under:getPixel(ux, uy)
@@ -687,8 +689,8 @@ function AseUtilities.blendImage(
 
         local oHex = 0x0
         if isContained then
-            local ox = xPixel - oxDiff
-            local oy = yPixel - oyDiff
+            local ox <const> = xPixel - oxDiff
+            local oy <const> = yPixel - oyDiff
             if oy > -1 and oy < oh
                 and ox > -1 and ox < ow then
                 oHex = over:getPixel(ox, oy)
@@ -710,19 +712,19 @@ end
 function AseUtilities.blendGray(a, b)
     local t = b >> 0x08 & 0xff
     if t > 0xfe then return b end
-    local v = a >> 0x08 & 0xff
+    local v <const> = a >> 0x08 & 0xff
     if v < 0x01 then return b end
 
-    local u = 0xff - t
+    local u <const> = 0xff - t
     if t > 0x7f then t = t + 1 end
 
-    local uv = (v * u) // 0xff
+    local uv <const> = (v * u) // 0xff
     local tuv = t + uv
     if tuv < 0x01 then return 0x0 end
     if tuv > 0xff then tuv = 0xff end
 
-    local ag = a & 0xff
-    local bg = b & 0xff
+    local ag <const> = a & 0xff
+    local bg <const> = b & 0xff
     local cg = (bg * t + ag * uv) // tuv
     if cg > 0xff then cg = 0xff end
     return tuv << 0x08 | cg
@@ -753,28 +755,28 @@ end
 function AseUtilities.blendRgba(a, b)
     local t = b >> 0x18 & 0xff
     if t > 0xfe then return b end
-    local v = a >> 0x18 & 0xff
+    local v <const> = a >> 0x18 & 0xff
     if v < 0x01 then return b end
 
     -- Experimented with subtracting
     -- from 0x100 instead of 0xff, due to 255//2
     -- not having a whole number middle, but 0xff
     -- lead to more accurate results.
-    local u = 0xff - t
+    local u <const> = 0xff - t
     if t > 0x7f then t = t + 1 end
 
-    local uv = (v * u) // 0xff
+    local uv <const> = (v * u) // 0xff
     local tuv = t + uv
     if tuv < 0x01 then return 0x0 end
     if tuv > 0xff then tuv = 0xff end
 
-    local ab = a >> 0x10 & 0xff
-    local ag = a >> 0x08 & 0xff
-    local ar = a & 0xff
+    local ab <const> = a >> 0x10 & 0xff
+    local ag <const> = a >> 0x08 & 0xff
+    local ar <const> = a & 0xff
 
-    local bb = b >> 0x10 & 0xff
-    local bg = b >> 0x08 & 0xff
-    local br = b & 0xff
+    local bb <const> = b >> 0x10 & 0xff
+    local bg <const> = b >> 0x08 & 0xff
+    local br <const> = b & 0xff
 
     local cb = (bb * t + ab * uv) // tuv
     local cg = (bg * t + ag * uv) // tuv
@@ -815,21 +817,16 @@ end
 ---@param clr Clr clr
 ---@return Color
 function AseUtilities.clrToAseColor(clr)
-    local r = clr.r
-    local g = clr.g
-    local b = clr.b
-    local a = clr.a
-
-    if r < 0.0 then r = 0.0 elseif r > 1.0 then r = 1.0 end
-    if g < 0.0 then g = 0.0 elseif g > 1.0 then g = 1.0 end
-    if b < 0.0 then b = 0.0 elseif b > 1.0 then b = 1.0 end
-    if a < 0.0 then a = 0.0 elseif a > 1.0 then a = 1.0 end
+    local r <const> = math.min(math.max(clr.r, 0.0), 1.0)
+    local g <const> = math.min(math.max(clr.g, 0.0), 1.0)
+    local b <const> = math.min(math.max(clr.b, 0.0), 1.0)
+    local a <const> = math.min(math.max(clr.a, 0.0), 1.0)
 
     return Color {
-        r = math.floor(r * 0xff + 0.5),
-        g = math.floor(g * 0xff + 0.5),
-        b = math.floor(b * 0xff + 0.5),
-        a = math.floor(a * 0xff + 0.5)
+        r = math.floor(r * 255.0 + 0.5),
+        g = math.floor(g * 255.0 + 0.5),
+        b = math.floor(b * 255.0 + 0.5),
+        a = math.floor(a * 255.0 + 0.5)
     }
 end
 
@@ -865,10 +862,10 @@ function AseUtilities.createCels(
         return {}
     end
 
-    local sprLayers = sprite.layers
-    local sprFrames = sprite.frames
-    local sprLyrCt = #sprLayers
-    local sprFrmCt = #sprFrames
+    local sprLayers <const> = sprite.layers
+    local sprFrames <const> = sprite.frames
+    local sprLyrCt <const> = #sprLayers
+    local sprFrmCt <const> = #sprFrames
 
     -- Validate layer start index.
     -- Allow for negative indices, which are wrapped.
@@ -908,10 +905,10 @@ function AseUtilities.createCels(
     end
     -- print("valFrmCt: " .. valFrmCt)
 
-    local flatCount = valLyrCt * valFrmCt
+    local flatCount <const> = valLyrCt * valFrmCt
     -- print("flatCount: " .. flatCount)
     if flatCount > AseUtilities.CEL_COUNT_LIMIT then
-        local response = app.alert {
+        local response <const> = app.alert {
             title = "Warning",
             text = {
                 string.format(
@@ -932,19 +929,19 @@ function AseUtilities.createCels(
     end
 
     -- Shouldn't need to bother with image spec in this case.
-    local valImg = image or Image(1, 1)
-    local valPos = position or Point(0, 0)
+    local valImg <const> = image or Image(1, 1)
+    local valPos <const> = position or Point(0, 0)
 
     -- Layers = y = rows
     -- Frames = x = columns
     ---@type Cel[]
-    local cels = {}
+    local cels <const> = {}
     local i = 0
     while i < flatCount do
-        local frameIndex = valFrmIdx + (i % valFrmCt)
-        local layerIndex = valLyrIdx + (i // valFrmCt)
-        local frameObj = sprFrames[frameIndex]
-        local layerObj = sprLayers[layerIndex]
+        local frameIndex <const> = valFrmIdx + (i % valFrmCt)
+        local layerIndex <const> = valLyrIdx + (i // valFrmCt)
+        local frameObj <const> = sprFrames[frameIndex]
+        local layerObj <const> = sprLayers[layerIndex]
 
         -- print(string.format("Frame Index %d", frameIndex))
         -- print(string.format("Layer Index %d", layerIndex))
@@ -956,7 +953,7 @@ function AseUtilities.createCels(
     end
 
     if guiClr and guiClr ~= 0x0 then
-        local aseColor = AseUtilities.hexToAseColor(guiClr)
+        local aseColor <const> = AseUtilities.hexToAseColor(guiClr)
         local j = 0
         while j < flatCount do
             j = j + 1
@@ -990,7 +987,7 @@ function AseUtilities.createFrames(sprite, count, duration)
 
     if count < 1 then return {} end
     if count > AseUtilities.FRAME_COUNT_LIMIT then
-        local response = app.alert {
+        local response <const> = app.alert {
             title = "Warning",
             text = {
                 string.format(
@@ -1010,19 +1007,20 @@ function AseUtilities.createFrames(sprite, count, duration)
         end
     end
 
-    local valDur = duration or 1
-    local valCount = count or 1
-    if valCount < 1 then valCount = 1 end
+    local durVrf <const> = duration or 1
+    local countVrf = count or 1
+    if countVrf < 1 then countVrf = 1 end
 
     ---@type Frame[]
-    local frames = {}
+    local frames <const> = {}
     local i = 0
-    while i < valCount do
+    while i < countVrf do
         i = i + 1
-        local frame = sprite:newEmptyFrame()
-        frame.duration = valDur
+        local frame <const> = sprite:newEmptyFrame()
+        frame.duration = durVrf
         frames[i] = frame
     end
+
     return frames
 end
 
@@ -1049,7 +1047,7 @@ function AseUtilities.createNewLayers(
 
     if count < 1 then return {} end
     if count > AseUtilities.LAYER_COUNT_LIMIT then
-        local response = app.alert {
+        local response <const> = app.alert {
             title = "Warning",
             text = {
                 string.format(
@@ -1069,23 +1067,23 @@ function AseUtilities.createNewLayers(
         end
     end
 
-    local valOpac = opacity or 255
-    if valOpac < 0 then valOpac = 0 end
-    if valOpac > 255 then valOpac = 255 end
-    local valBlendMode = blendMode or BlendMode.NORMAL
-    local valCount = count or 1
-    if valCount < 1 then valCount = 1 end
+    local opacVrf = opacity or 255
+    if opacVrf < 0 then opacVrf = 0 end
+    if opacVrf > 255 then opacVrf = 255 end
+    local bmVrf = blendMode or BlendMode.NORMAL
+    local countVrf = count or 1
+    if countVrf < 1 then countVrf = 1 end
 
     ---@type Layer[]
-    local layers = {}
-    local oldLayerCount = #sprite.layers
+    local layers <const> = {}
+    local oldLayerCount <const> = #sprite.layers
     app.transaction("New Layers", function()
         local i = 0
-        while i < valCount do
+        while i < countVrf do
             i = i + 1
-            local layer = sprite:newLayer()
-            layer.blendMode = valBlendMode
-            layer.opacity = valOpac
+            local layer <const> = sprite:newLayer()
+            layer.blendMode = bmVrf
+            layer.opacity = opacVrf
             layer.name = string.format(
                 "Layer %d",
                 oldLayerCount + i)
@@ -1094,10 +1092,10 @@ function AseUtilities.createNewLayers(
     end)
 
     if guiClr and guiClr ~= 0x0 then
-        local aseColor = AseUtilities.hexToAseColor(guiClr)
+        local aseColor <const> = AseUtilities.hexToAseColor(guiClr)
         app.transaction("Layer Colors", function()
             local i = 0
-            while i < valCount do
+            while i < countVrf do
                 i = i + 1
                 layers[i].color = aseColor
             end
@@ -1116,20 +1114,20 @@ end
 ---@param r integer radius
 ---@param hex integer rgba integer
 function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
-    local blend = AseUtilities.blendRgba
-    local rsq = r * r
-    local r2 = r * 2
-    local lenn1 = r2 * r2 - 1
+    local blend <const> = AseUtilities.blendRgba
+    local rsq <const> = r * r
+    local r2 <const> = r * 2
+    local lenn1 <const> = r2 * r2 - 1
     local i = -1
     while i < lenn1 do
         i = i + 1
-        local x = (i % r2) - r
-        local y = (i // r2) - r
+        local x <const> = (i % r2) - r
+        local y <const> = (i // r2) - r
         if (x * x + y * y) < rsq then
-            local xMark = xc + x
-            local yMark = yc + y
-            local srcHex = image:getPixel(xMark, yMark)
-            local trgHex = blend(srcHex, hex)
+            local xMark <const> = xc + x
+            local yMark <const> = yc + y
+            local srcHex <const> = image:getPixel(xMark, yMark)
+            local trgHex <const> = blend(srcHex, hex)
             image:drawPixel(xMark, yMark, trgHex)
         end
     end
@@ -1149,8 +1147,8 @@ end
 ---@return Image
 function AseUtilities.expandImageToPow2(
     img, colorMode, alphaMask, colorSpace, nonUniform)
-    local wOrig = img.width
-    local hOrig = img.height
+    local wOrig <const> = img.width
+    local hOrig <const> = img.height
     local wDest = wOrig
     local hDest = hOrig
     if nonUniform then
@@ -1166,15 +1164,16 @@ function AseUtilities.expandImageToPow2(
         return img
     end
 
-    local potSpec = ImageSpec {
+    local potSpec <const> = ImageSpec {
         width = wDest,
         height = hDest,
         colorMode = colorMode,
         transparentColor = alphaMask
     }
     potSpec.colorSpace = colorSpace
-    local potImg = Image(potSpec)
+    local potImg <const> = Image(potSpec)
     potImg:drawImage(img)
+
     return potImg
 end
 
@@ -1205,7 +1204,7 @@ function AseUtilities.filterCels(
     includeTiles,
     includeBkg)
     if target == "ALL" then
-        local leaves = AseUtilities.getLayerHierarchy(
+        local leaves <const> = AseUtilities.getLayerHierarchy(
             sprite,
             includeLocked,
             includeHidden,
@@ -1215,23 +1214,23 @@ function AseUtilities.filterCels(
             leaves, sprite.frames)
     elseif target == "RANGE" then
         ---@type Cel[]
-        local trgCels = {}
+        local trgCels <const> = {}
 
-        local tlHidden = not app.preferences.general.visible_timeline
+        local tlHidden <const> = not app.preferences.general.visible_timeline
         if tlHidden then
             app.command.Timeline { open = true }
         end
 
-        local appRange = app.range
+        local appRange <const> = app.range
         if appRange.sprite == sprite then
-            local imgsRange = appRange.images
-            local lenImgsRange = #imgsRange
+            local imgsRange <const> = appRange.images
+            local lenImgsRange <const> = #imgsRange
             local i = 0
             while i < lenImgsRange do
                 i = i + 1
-                local image = imgsRange[i]
-                local cel = image.cel
-                local celLayer = cel.layer
+                local image <const> = imgsRange[i]
+                local cel <const> = image.cel
+                local celLayer <const> = cel.layer
 
                 if (not celLayer.isReference)
                     and (includeHidden or celLayer.isVisible)
@@ -1250,15 +1249,15 @@ function AseUtilities.filterCels(
         return trgCels
     elseif target == "SELECTION" then
         if frame then
-            local sel = AseUtilities.getSelection(sprite)
-            local selBounds = sel.bounds
-            local xSel = selBounds.x
-            local ySel = selBounds.y
-            local activeSpec = sprite.spec
-            local alphaMask = activeSpec.transparentColor
+            local sel <const> = AseUtilities.getSelection(sprite)
+            local selBounds <const> = sel.bounds
+            local xSel <const> = selBounds.x
+            local ySel <const> = selBounds.y
+            local activeSpec <const> = sprite.spec
+            local alphaMask <const> = activeSpec.transparentColor
 
             -- Create a subset of flattened sprite.
-            local flatSpec = ImageSpec {
+            local flatSpec <const> = ImageSpec {
                 width = math.max(1, selBounds.width),
                 height = math.max(1, selBounds.height),
                 colorMode = activeSpec.colorMode,
@@ -1266,16 +1265,16 @@ function AseUtilities.filterCels(
             }
             flatSpec.colorSpace = activeSpec.colorSpace
 
-            local flatImage = Image(flatSpec)
+            local flatImage <const> = Image(flatSpec)
             flatImage:drawSprite(
                 sprite, frame, Point(-xSel, -ySel))
 
             -- Remove pixels within selection bounds
             -- but not within selection itself.
-            local flatPxItr = flatImage:pixels()
+            local flatPxItr <const> = flatImage:pixels()
             for pixel in flatPxItr do
-                local x = pixel.x + xSel
-                local y = pixel.y + ySel
+                local x <const> = pixel.x + xSel
+                local y <const> = pixel.y + ySel
                 if not sel:contains(x, y) then
                     pixel(alphaMask)
                 end
@@ -1283,7 +1282,7 @@ function AseUtilities.filterCels(
 
             local adjCel = nil
             app.transaction("Cel From Mask", function()
-                local adjLayer = sprite:newLayer()
+                local adjLayer <const> = sprite:newLayer()
                 adjLayer.name = "Mask.Layer"
                 adjCel = sprite:newCel(
                     adjLayer, frame,
@@ -1297,7 +1296,7 @@ function AseUtilities.filterCels(
         -- Default to "ACTIVE"
         if layer and frame then
             ---@type Layer[]
-            local leaves = {}
+            local leaves <const> = {}
             AseUtilities.appendLeaves(
                 layer, leaves,
                 includeLocked,
@@ -1336,19 +1335,19 @@ function AseUtilities.flattenGroup(
     local aiVerif = 0
     if alphaIndex then aiVerif = alphaIndex end
 
-    local leaves = AseUtilities.appendLeaves(
+    local leaves <const> = AseUtilities.appendLeaves(
         group, {},
         includeLocked, includeHidden,
         includeTiles, includeBkg)
-    local lenLeaves = #leaves
+    local lenLeaves <const> = #leaves
 
-    local useZIndex = app.apiVersion >= 23
-    local packets = {}
+    local useZIndex <const> = app.apiVersion >= 23
+    local packets <const> = {}
     local lenPackets = 0
 
-    local isIndexed = sprClrMode == ColorMode.INDEXED
-    local tilesToImage = AseUtilities.tilesToImage
-    local blendImage = AseUtilities.blendImage
+    local isIndexed <const> = sprClrMode == ColorMode.INDEXED
+    local tilesToImage <const> = AseUtilities.tilesToImage
+    local blendImage <const> = AseUtilities.blendImage
     local xTlGroup = 2147483647
     local yTlGroup = 2147483647
     local xBrGroup = -2147483648
@@ -1360,12 +1359,12 @@ function AseUtilities.flattenGroup(
     local i = 0
     while i < lenLeaves do
         i = i + 1
-        local leafLayer = leaves[i]
-        local leafCel = leafLayer:cel(frame)
+        local leafLayer <const> = leaves[i]
+        local leafCel <const> = leafLayer:cel(frame)
         if leafCel then
             local leafImage = leafCel.image
             if leafLayer.isTilemap then
-                local tileSet = leafLayer.tileset --[[@as Tileset]]
+                local tileSet <const> = leafLayer.tileset --[[@as Tileset]]
                 leafImage = tilesToImage(
                     leafImage, tileSet, sprClrMode)
             end
@@ -1373,11 +1372,11 @@ function AseUtilities.flattenGroup(
             -- An Image:isEmpty check could be used here, but
             -- it was avoided to not incur performance cost.
             -- Calculate manually. Do not use cel bounds.
-            local leafPos = leafCel.position
-            local xTlCel = leafPos.x
-            local yTlCel = leafPos.y
-            local xBrCel = xTlCel + leafImage.width - 1
-            local yBrCel = yTlCel + leafImage.height - 1
+            local leafPos <const> = leafCel.position
+            local xTlCel <const> = leafPos.x
+            local yTlCel <const> = leafPos.y
+            local xBrCel <const> = xTlCel + leafImage.width - 1
+            local yBrCel <const> = yTlCel + leafImage.height - 1
 
             if xTlCel < xTlGroup then xTlGroup = xTlCel end
             if yTlCel < yTlGroup then yTlGroup = yTlCel end
@@ -1386,7 +1385,7 @@ function AseUtilities.flattenGroup(
 
             local zIndex = 0
             if useZIndex then zIndex = leafCel.zIndex end
-            local order = (i - 1) + zIndex
+            local order <const> = (i - 1) + zIndex
 
             lenPackets = lenPackets + 1
             packets[lenPackets] = {
@@ -1409,8 +1408,8 @@ function AseUtilities.flattenGroup(
                 and (a.zIndex < b.zIndex))
     end)
 
-    local wGroup = 1 + xBrGroup - xTlGroup
-    local hGroup = 1 + yBrGroup - yTlGroup
+    local wGroup <const> = 1 + xBrGroup - xTlGroup
+    local hGroup <const> = 1 + yBrGroup - yTlGroup
     if wGroup > 0 and hGroup > 0 then
         bounds = Rectangle {
             x = xTlGroup,
@@ -1419,7 +1418,7 @@ function AseUtilities.flattenGroup(
             height = hGroup
         }
 
-        local compSpec = ImageSpec {
+        local compSpec <const> = ImageSpec {
             width = wGroup,
             height = hGroup,
             colorMode = sprClrMode,
@@ -1428,25 +1427,25 @@ function AseUtilities.flattenGroup(
         compSpec.colorSpace = colorSpace
         image = Image(compSpec)
 
-        local floor = math.floor
+        local floor <const> = math.floor
 
         local j = 0
         while j < lenPackets do
             j = j + 1
-            local packet = packets[j]
-            local leafBlendMode = packet.blendMode --[[@as BlendMode]]
-            local leafImage = packet.image --[[@as Image]]
-            local leafCelOpacity = packet.opacityCel --[[@as integer]]
-            local leafLayerOpacity = packet.opacityLayer --[[@as integer]]
-            local xTlLeaf = packet.xtl --[[@as integer]]
-            local yTlLeaf = packet.ytl --[[@as integer]]
+            local packet <const> = packets[j]
+            local leafBlendMode <const> = packet.blendMode --[[@as BlendMode]]
+            local leafImage <const> = packet.image --[[@as Image]]
+            local leafCelOpacity <const> = packet.opacityCel --[[@as integer]]
+            local leafLayerOpacity <const> = packet.opacityLayer --[[@as integer]]
+            local xTlLeaf <const> = packet.xtl --[[@as integer]]
+            local yTlLeaf <const> = packet.ytl --[[@as integer]]
 
-            local celOpac01 = leafCelOpacity * 0.003921568627451
-            local layerOpac01 = leafLayerOpacity * 0.003921568627451
-            local leafOpac01 = celOpac01 * layerOpac01
-            local leafOpacity = floor(leafOpac01 * 255.0 + 0.5)
+            local celOpac01 <const> = leafCelOpacity * 0.003921568627451
+            local layerOpac01 <const> = leafLayerOpacity * 0.003921568627451
+            local leafOpac01 <const> = celOpac01 * layerOpac01
+            local leafOpacity <const> = floor(leafOpac01 * 255.0 + 0.5)
 
-            local compPos = Point(
+            local compPos <const> = Point(
                 xTlLeaf - xTlGroup,
                 yTlLeaf - yTlGroup)
 
@@ -1463,7 +1462,7 @@ function AseUtilities.flattenGroup(
 
     if (not image) or (not bounds) then
         bounds = Rectangle(0, 0, 1, 1)
-        local invalSpec = ImageSpec {
+        local invalSpec <const> = ImageSpec {
             width = 1,
             height = 1,
             colorMode = sprClrMode,
@@ -1486,26 +1485,27 @@ end
 ---@return integer
 function AseUtilities.flipImageHoriz(source)
     ---@type integer[]
-    local px = {}
+    local px <const> = {}
+    local srcPxItr <const> = source:pixels()
     local i = 0
-    local srcPxItr = source:pixels()
     for pixel in srcPxItr do
         i = i + 1
         px[i] = pixel()
     end
 
-    local srcSpec = source.spec
-    local w = srcSpec.width
-    local h = srcSpec.height
+    local srcSpec <const> = source.spec
+    local w <const> = srcSpec.width
+    local h <const> = srcSpec.height
     Utilities.flipPixelsHoriz(px, w, h)
 
-    local target = Image(srcSpec)
+    local target <const> = Image(srcSpec)
+    local trgPxItr <const> = target:pixels()
     local j = 0
-    local trgPxItr = target:pixels()
     for pixel in trgPxItr do
         j = j + 1
         pixel(px[j])
     end
+
     return target, 1 - w, 0
 end
 
@@ -1519,26 +1519,27 @@ end
 ---@return integer
 function AseUtilities.flipImageVert(source)
     ---@type integer[]
-    local px = {}
+    local px <const> = {}
+    local srcPxItr <const> = source:pixels()
     local i = 0
-    local srcPxItr = source:pixels()
     for pixel in srcPxItr do
         i = i + 1
         px[i] = pixel()
     end
 
-    local srcSpec = source.spec
-    local w = srcSpec.width
-    local h = srcSpec.height
+    local srcSpec <const> = source.spec
+    local w <const> = srcSpec.width
+    local h <const> = srcSpec.height
     Utilities.flipPixelsVert(px, w, h)
 
-    local target = Image(srcSpec)
+    local target <const> = Image(srcSpec)
+    local trgPxItr <const> = target:pixels()
     local j = 0
-    local trgPxItr = target:pixels()
     for pixel in trgPxItr do
         j = j + 1
         pixel(px[j])
     end
+
     return target, 0, 1 - h
 end
 
@@ -1550,8 +1551,8 @@ function AseUtilities.frameObjsToIdcs(frObjs)
     -- Next and previous layer could use this function
     -- but it's not worth it putting a dofile at the top.
     ---@type integer[]
-    local frIdcs = {}
-    local lenFrames = #frObjs
+    local frIdcs <const> = {}
+    local lenFrames <const> = #frObjs
     local i = 0
     while i < lenFrames do
         i = i + 1
@@ -1592,9 +1593,9 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
         return { AseUtilities.frameObjsToIdcs(sprite.frames) }
     elseif target == "MANUAL" then
         if mnStr then
-            local docPrefs = app.preferences.document(sprite)
-            local frameUiOffset = docPrefs.timeline.first_frame - 1
-            local lenFrames = #sprite.frames
+            local docPrefs <const> = app.preferences.document(sprite)
+            local frameUiOffset <const> = docPrefs.timeline.first_frame - 1
+            local lenFrames <const> = #sprite.frames
             if batch then
                 return Utilities.parseRangeStringOverlap(
                     mnStr, lenFrames, frameUiOffset)
@@ -1616,22 +1617,23 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
             return { {} }
         end
     elseif target == "RANGE" then
-        local tlHidden = not app.preferences.general.visible_timeline
+        local tlHidden <const> = not app.preferences.general.visible_timeline
         if tlHidden then
             app.command.Timeline { open = true }
         end
 
         ---@type integer[][]
         local frIdcsRange = { {} }
-        local appRange = app.range
+        local appRange <const> = app.range
         if appRange.sprite == sprite then
-            local rangeType = appRange.type
+            local rangeType <const> = appRange.type
             if rangeType == RangeType.LAYERS then
                 frIdcsRange = { AseUtilities.frameObjsToIdcs(sprite.frames) }
             else
                 -- TODO: It's possible for these to not be consecutive if
                 -- shift key is held down when selecting.
-                local frIdcs1 = AseUtilities.frameObjsToIdcs(appRange.frames)
+                local frIdcs1 <const> = AseUtilities.frameObjsToIdcs(
+                    appRange.frames)
                 frIdcsRange = { frIdcs1 }
             end
         end
@@ -1643,7 +1645,7 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
         return frIdcsRange
     else
         -- Default to "ACTIVE".
-        local activeFrame = app.site.frame
+        local activeFrame <const> = app.site.frame
         if activeFrame then
             return { { activeFrame.frameNumber } }
         else
@@ -1666,10 +1668,10 @@ function AseUtilities.getLayerHierarchy(
     sprite,
     includeLocked, includeHidden,
     includeTiles, includeBkg)
-    local append = AseUtilities.appendLeaves
-    local array = {}
-    local layers = sprite.layers
-    local lenLayers = #layers
+    local append <const> = AseUtilities.appendLeaves
+    local array <const> = {}
+    local layers <const> = sprite.layers
+    local lenLayers <const> = #layers
     local i = 0
     while i < lenLayers do
         i = i + 1
@@ -1692,14 +1694,14 @@ end
 ---@return Palette
 function AseUtilities.getPalette(frame, palettes)
     local idx = 1
-    local typeFrObj = type(frame)
+    local typeFrObj <const> = type(frame)
     if typeFrObj == "number"
         and math.type(frame) == "integer" then
         idx = frame
     elseif typeFrObj == "userdata" then
         idx = frame.frameNumber
     end
-    local lenPalettes = #palettes
+    local lenPalettes <const> = #palettes
     if idx > lenPalettes then idx = 1 end
     return palettes[idx]
 end
@@ -1721,15 +1723,15 @@ function AseUtilities.getSelection(sprite)
         app.command.InvertMask()
     end)
 
-    local srcSel = sprite.selection
+    local srcSel <const> = sprite.selection
     if (not srcSel) or srcSel.isEmpty then
-        local activeCel = app.site.cel
+        local activeCel <const> = app.site.cel
         if activeCel then
-            -- Cel bounds could be out-of-bounds, so this
+            -- Cel could be out-of-bounds, so this
             -- also needs to intersect with the sprite
             -- canvas. This ignores possibility that
             -- the cel image could be empty.
-            local trgSel = Selection(activeCel.bounds)
+            local trgSel <const> = Selection(activeCel.bounds)
             trgSel:intersect(sprite.bounds)
             if not trgSel.isEmpty then return trgSel end
         end
@@ -1737,7 +1739,7 @@ function AseUtilities.getSelection(sprite)
         return Selection(sprite.bounds)
     end
 
-    local trgSel = Selection()
+    local trgSel <const> = Selection()
     trgSel:add(srcSel)
     return trgSel
 end
@@ -1758,49 +1760,49 @@ end
 function AseUtilities.getSelectedTiles(
     tileMap, tileSet, selection, xtlCel, ytlCel)
     -- Validate optional arguments.
-    local vytlCel = ytlCel or 0
-    local vxtlCel = xtlCel or 0
+    local vytlCel <const> = ytlCel or 0
+    local vxtlCel <const> = xtlCel or 0
 
     -- Results.
     ---@type table<integer, Tile>
-    local tiles = {}
+    local tiles <const> = {}
     if tileMap.colorMode ~= ColorMode.TILEMAP then
         return tiles
     end
 
     -- Unpack tile set.
-    local tileGrid = tileSet.grid
-    local tileDim = tileGrid.tileSize
-    local wTile = tileDim.width
-    local hTile = tileDim.height
-    local flatDimTile = wTile * hTile
-    local lenTileSet = #tileSet
+    local tileGrid <const> = tileSet.grid
+    local tileDim <const> = tileGrid.tileSize
+    local wTile <const> = tileDim.width
+    local hTile <const> = tileDim.height
+    local flatDimTile <const> = wTile * hTile
+    local lenTileSet <const> = #tileSet
 
     -- Cache methods used in loop.
-    local pxTilei = app.pixelColor.tileI
+    local pxTilei <const> = app.pixelColor.tileI
 
     ---@type table<integer, boolean>
-    local visitedTiles = {}
-    local mapItr = tileMap:pixels()
+    local visitedTiles <const> = {}
+    local mapItr <const> = tileMap:pixels()
     for mapEntry in mapItr do
-        local mapif = mapEntry() --[[@as integer]]
-        local index = pxTilei(mapif)
+        local mapif <const> = mapEntry() --[[@as integer]]
+        local index <const> = pxTilei(mapif)
         if index > 0 and index < lenTileSet
             and (not visitedTiles[index]) then
             visitedTiles[index] = true
 
-            local xMap = mapEntry.x
-            local yMap = mapEntry.y
-            local xtlTile = vxtlCel + xMap * wTile
-            local ytlTile = vytlCel + yMap * hTile
+            local xMap <const> = mapEntry.x
+            local yMap <const> = mapEntry.y
+            local xtlTile <const> = vxtlCel + xMap * wTile
+            local ytlTile <const> = vytlCel + yMap * hTile
 
             local contained = true
             local i = 0
-            while i < flatDimTile and contained do
-                local xLocal = i % wTile
-                local yLocal = i // wTile
-                local xPixel = xtlTile + xLocal
-                local yPixel = ytlTile + yLocal
+            while contained and i < flatDimTile do
+                local xLocal <const> = i % wTile
+                local yLocal <const> = i // wTile
+                local xPixel <const> = xtlTile + xLocal
+                local yPixel <const> = ytlTile + yLocal
                 contained = contained
                     and selection:contains(
                         Point(xPixel, yPixel))
@@ -1827,27 +1829,27 @@ end
 ---@return Cel[]
 function AseUtilities.getUniqueCelsFromLeaves(leaves, frames)
     ---@type table<integer, Cel>
-    local uniqueCels = {}
+    local uniqueCels <const> = {}
 
-    local lenLeaves = #leaves
-    local lenFrames = #frames
-    local lenCompound = lenLeaves * lenFrames
+    local lenLeaves <const> = #leaves
+    local lenFrames <const> = #frames
+    local lenCompound <const> = lenLeaves * lenFrames
     local k = 0
     while k < lenCompound do
-        local i = k // lenFrames
-        local j = k % lenFrames
+        local i <const> = k // lenFrames
+        local j <const> = k % lenFrames
         k = k + 1
 
-        local leaf = leaves[1 + i]
-        local frame = frames[1 + j]
-        local cel = leaf:cel(frame)
+        local leaf <const> = leaves[1 + i]
+        local frame <const> = frames[1 + j]
+        local cel <const> = leaf:cel(frame)
         if cel then
             uniqueCels[cel.image.id] = cel
         end
     end
 
     ---@type Cel[]
-    local celsArr = {}
+    local celsArr <const> = {}
     for _, cel in pairs(uniqueCels) do
         celsArr[#celsArr + 1] = cel
     end
@@ -1862,16 +1864,16 @@ end
 ---@return table<integer, Tile>
 function AseUtilities.getUniqueTiles(tileMap, tileSet)
     ---@type table<integer, Tile>
-    local tiles = {}
+    local tiles <const> = {}
     if tileMap.colorMode ~= ColorMode.TILEMAP then
         return tiles
     end
-    local lenTileSet = #tileSet
-    local pxTilei = app.pixelColor.tileI
-    local mapItr = tileMap:pixels()
+    local lenTileSet <const> = #tileSet
+    local pxTilei <const> = app.pixelColor.tileI
+    local mapItr <const> = tileMap:pixels()
     for mapEntry in mapItr do
-        local mapif = mapEntry() --[[@as integer]]
-        local index = pxTilei(mapif)
+        local mapif <const> = mapEntry() --[[@as integer]]
+        local index <const> = pxTilei(mapif)
         if index > 0 and index < lenTileSet
             and (not tiles[index]) then
             tiles[index] = tileSet:tile(index)
@@ -1886,16 +1888,16 @@ end
 ---@param count integer swatch count
 ---@return integer[]
 function AseUtilities.grayHexes(count)
-    local floor = math.floor
+    local floor <const> = math.floor
     local valCount = count or 255
     if valCount < 2 then valCount = 2 end
-    local toGray = 255.0 / (valCount - 1.0)
+    local toGray <const> = 255.0 / (valCount - 1.0)
 
     ---@type integer[]
-    local result = {}
+    local result <const> = {}
     local i = 0
     while i < valCount do
-        local g = floor(i * toGray + 0.5)
+        local g <const> = floor(i * toGray + 0.5)
         i = i + 1
         result[i] = 0xff000000
             | g << 0x10 | g << 0x08 | g
@@ -1930,16 +1932,16 @@ end
 function AseUtilities.padImage(image, padding)
     if padding < 1 then return image end
 
-    local pad2 = padding + padding
-    local imageSpec = image.spec
-    local padSpec = ImageSpec {
+    local pad2 <const> = padding + padding
+    local imageSpec <const> = image.spec
+    local padSpec <const> = ImageSpec {
         colorMode = imageSpec.colorMode,
         width = imageSpec.width + pad2,
         height = imageSpec.height + pad2,
         transparentColor = imageSpec.transparentColor
     }
     padSpec.colorSpace = imageSpec.colorSpace
-    local padded = Image(padSpec)
+    local padded <const> = Image(padSpec)
     padded:drawImage(image, Point(padding, padding))
     return padded
 end
@@ -1958,20 +1960,20 @@ end
 ---@param tag Tag Aseprite Tag
 ---@return integer[]
 function AseUtilities.parseTag(tag)
-    local destFrObj = tag.toFrame
+    local destFrObj <const> = tag.toFrame
     if not destFrObj then return {} end
 
-    local origFrObj = tag.fromFrame
+    local origFrObj <const> = tag.fromFrame
     if not origFrObj then return {} end
 
-    local origIdx = origFrObj.frameNumber
-    local destIdx = destFrObj.frameNumber
+    local origIdx <const> = origFrObj.frameNumber
+    local destIdx <const> = destFrObj.frameNumber
     if origIdx == destIdx then return { destIdx } end
 
     ---@type integer[]
-    local arr = {}
+    local arr <const> = {}
     local idxArr = 0
-    local aniDir = tag.aniDir
+    local aniDir <const> = tag.aniDir
     if aniDir == AniDir.REVERSE then
         local j = destIdx + 1
         while j > origIdx do
@@ -1986,7 +1988,7 @@ function AseUtilities.parseTag(tag)
             idxArr = idxArr + 1
             arr[idxArr] = j
         end
-        local op1 = origIdx + 1
+        local op1 <const> = origIdx + 1
         while j > op1 do
             j = j - 1
             idxArr = idxArr + 1
@@ -1999,7 +2001,7 @@ function AseUtilities.parseTag(tag)
             idxArr = idxArr + 1
             arr[idxArr] = j
         end
-        local dn1 = destIdx - 1
+        local dn1 <const> = destIdx - 1
         while j < dn1 do
             j = j + 1
             idxArr = idxArr + 1
@@ -2025,11 +2027,11 @@ end
 ---@param tags Tag[] tags array
 ---@return integer[][]
 function AseUtilities.parseTagsOverlap(tags)
-    local tagsLen = #tags
-    local arr2 = {}
+    local lenTags <const> = #tags
+    local arr2 <const> = {}
+    local parseTag <const> = AseUtilities.parseTag
     local i = 0
-    local parseTag = AseUtilities.parseTag
-    while i < tagsLen do
+    while i < lenTags do
         i = i + 1
         arr2[i] = parseTag(tags[i])
     end
@@ -2042,14 +2044,14 @@ end
 ---@return integer[]
 function AseUtilities.parseTagsUnique(tags)
     ---@type table<integer, boolean>
-    local dict = {}
-    local arr2 = AseUtilities.parseTagsOverlap(tags)
+    local dict <const> = {}
+    local arr2 <const> = AseUtilities.parseTagsOverlap(tags)
     local i = 0
-    local lenArr2 = #arr2
+    local lenArr2 <const> = #arr2
     while i < lenArr2 do
         i = i + 1
-        local arr1 = arr2[i]
-        local lenArr1 = #arr1
+        local arr1 <const> = arr2[i]
+        local lenArr1 <const> = #arr1
         local j = 0
         while j < lenArr1 do
             j = j + 1
@@ -2081,48 +2083,49 @@ end
 ---@param hTrg integer resized height
 ---@return Image
 function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
-    local srcSpec = source.spec
-    local wSrc = srcSpec.width
-    local hSrc = srcSpec.height
+    local srcSpec <const> = source.spec
+    local wSrc <const> = srcSpec.width
+    local hSrc <const> = srcSpec.height
 
-    local wVal = wTrg
-    local hVal = hTrg
-    if wVal < 0 then wVal = -wVal end
-    if hVal < 0 then hVal = -hVal end
-    if wVal < 1 then wVal = 1 end
-    if hVal < 1 then hVal = 1 end
+    local wVrf = wTrg
+    local hVrf = hTrg
+    if wVrf < 0 then wVrf = -wVrf end
+    if hVrf < 0 then hVrf = -hVrf end
+    if wVrf < 1 then wVrf = 1 end
+    if hVrf < 1 then hVrf = 1 end
 
     if wTrg == wSrc and hTrg == hSrc then
         return source
     end
 
     ---@type integer[]
-    local px = {}
+    local px <const> = {}
+    local srcPxItr <const> = source:pixels()
     local i = 0
-    local srcPxItr = source:pixels()
     for pixel in srcPxItr do
         i = i + 1
         px[i] = pixel()
     end
 
-    local trgSpec = ImageSpec {
+    local trgSpec <const> = ImageSpec {
         width = wTrg,
         height = hTrg,
         colorMode = source.colorMode,
         transparentColor = srcSpec.transparentColor
     }
     trgSpec.colorSpace = srcSpec.colorSpace
-    local target = Image(trgSpec)
+    local target <const> = Image(trgSpec)
 
-    local pxRsz = Utilities.resizePixelsNearest(
+    local pxRsz <const> = Utilities.resizePixelsNearest(
         px, wSrc, hSrc, wTrg, hTrg)
 
+    local trgPxItr <const> = target:pixels()
     local j = 0
-    local trgPxItr = target:pixels()
     for pixel in trgPxItr do
         j = j + 1
         pixel(pxRsz[j])
     end
+
     return target
 end
 
@@ -2135,29 +2138,29 @@ end
 ---@return integer
 ---@return integer
 function AseUtilities.rotateImage90(source)
-    local srcSpec = source.spec
-    local w = srcSpec.width
-    local h = srcSpec.height
+    local srcSpec <const> = source.spec
+    local w <const> = srcSpec.width
+    local h <const> = srcSpec.height
 
     ---@type integer[]
-    local pxRot = {}
-    local lennh = w * h - h
-    local srcPxItr = source:pixels()
+    local pxRot <const> = {}
+    local lennh <const> = w * h - h
+    local srcPxItr <const> = source:pixels()
     for pixel in srcPxItr do
         pxRot[1 + lennh + pixel.y - pixel.x * h] = pixel()
     end
 
-    local trgSpec = ImageSpec {
+    local trgSpec <const> = ImageSpec {
         width = h,
         height = w,
         colorMode = source.colorMode,
         transparentColor = srcSpec.transparentColor
     }
     trgSpec.colorSpace = srcSpec.colorSpace
-    local target = Image(trgSpec)
+    local target <const> = Image(trgSpec)
 
+    local trgPxItr <const> = target:pixels()
     local j = 0
-    local trgPxItr = target:pixels()
     for pixel in trgPxItr do
         j = j + 1
         pixel(pxRot[j])
@@ -2174,9 +2177,9 @@ end
 ---@return integer
 function AseUtilities.rotateImage180(source)
     ---@type integer[]
-    local px = {}
+    local px <const> = {}
+    local srcPxItr <const> = source:pixels()
     local i = 0
-    local srcPxItr = source:pixels()
     for pixel in srcPxItr do
         i = i + 1
         px[i] = pixel()
@@ -2184,9 +2187,9 @@ function AseUtilities.rotateImage180(source)
 
     -- Table is reversed in-place.
     Utilities.reverseTable(px)
-    local target = Image(source.spec)
+    local target <const> = Image(source.spec)
+    local trgPxItr <const> = target:pixels()
     local j = 0
-    local trgPxItr = target:pixels()
     for pixel in trgPxItr do
         j = j + 1
         pixel(px[j])
@@ -2206,33 +2209,34 @@ end
 ---@return integer
 ---@return integer
 function AseUtilities.rotateImage270(source)
-    local srcSpec = source.spec
-    local w = srcSpec.width
-    local h = srcSpec.height
+    local srcSpec <const> = source.spec
+    local w <const> = srcSpec.width
+    local h <const> = srcSpec.height
 
     ---@type integer[]
-    local pxRot = {}
-    local hn1 = h - 1
-    local srcPxItr = source:pixels()
+    local pxRot <const> = {}
+    local hn1 <const> = h - 1
+    local srcPxItr <const> = source:pixels()
     for pixel in srcPxItr do
         pxRot[1 + pixel.x * h + hn1 - pixel.y] = pixel()
     end
 
-    local trgSpec = ImageSpec {
+    local trgSpec <const> = ImageSpec {
         width = h,
         height = w,
         colorMode = source.colorMode,
         transparentColor = srcSpec.transparentColor
     }
     trgSpec.colorSpace = srcSpec.colorSpace
-    local target = Image(trgSpec)
+    local target <const> = Image(trgSpec)
 
+    local trgPxItr <const> = target:pixels()
     local j = 0
-    local trgPxItr = target:pixels()
     for pixel in trgPxItr do
         j = j + 1
         pixel(pxRot[j])
     end
+
     return target, 1 - h, 0
 end
 
@@ -2245,18 +2249,18 @@ end
 ---@param spriteBounds Rectangle? sprite bounds
 ---@return Selection
 function AseUtilities.selectCel(cel, spriteBounds)
-    local celBounds = cel.bounds
-    local xCel = celBounds.x
-    local yCel = celBounds.y
+    local celBounds <const> = cel.bounds
+    local xCel <const> = celBounds.x
+    local yCel <const> = celBounds.y
 
-    local celImage = cel.image
-    local pxItr = celImage:pixels()
-    local celSpec = celImage.spec
-    local colorMode = celSpec.colorMode
+    local celImage <const> = cel.image
+    local pxItr <const> = celImage:pixels()
+    local celSpec <const> = celImage.spec
+    local colorMode <const> = celSpec.colorMode
 
     -- Beware naming, 'select' is a method built-in to Lua.
-    local mask = Selection(celBounds)
-    local pxRect = Rectangle(0, 0, 1, 1)
+    local mask <const> = Selection(celBounds)
+    local pxRect <const> = Rectangle(0, 0, 1, 1)
 
     if colorMode == ColorMode.RGB then
         for pixel in pxItr do
@@ -2267,7 +2271,7 @@ function AseUtilities.selectCel(cel, spriteBounds)
             end
         end
     elseif colorMode == ColorMode.INDEXED then
-        local alphaIndex = celSpec.transparentColor
+        local alphaIndex <const> = celSpec.transparentColor
         for pixel in pxItr do
             if pixel() == alphaIndex then
                 pxRect.x = pixel.x + xCel
@@ -2300,12 +2304,12 @@ end
 ---@param paletteIndex integer? index
 function AseUtilities.setPalette(arr, sprite, paletteIndex)
     local palIdxVerif = paletteIndex or 1
-    local palettes = sprite.palettes
-    local lenPalettes = #palettes
-    local lenHexArr = #arr
+    local palettes <const> = sprite.palettes
+    local lenPalettes <const> = #palettes
+    local lenHexArr <const> = #arr
     -- This should be consistent behavior with getPalette.
     if palIdxVerif > lenPalettes then palIdxVerif = 1 end
-    local palette = palettes[palIdxVerif]
+    local palette <const> = palettes[palIdxVerif]
     if lenHexArr > 0 then
         app.transaction("Set Palette", function()
             palette:resize(lenHexArr)
@@ -2320,13 +2324,13 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
                 -- blob/main/src/app/script/palette_class.cpp#L196 ,
                 -- https://github.com/aseprite/aseprite/blob/
                 -- main/src/app/color_utils.cpp .
-                local hex = arr[i]
-                local aseColor = AseUtilities.hexToAseColor(hex)
+                local hex <const> = arr[i]
+                local aseColor <const> = AseUtilities.hexToAseColor(hex)
                 palette:setColor(i - 1, aseColor)
             end
         end)
     else
-        local clearBlack = Color { r = 0, g = 0, b = 0, a = 0 }
+        local clearBlack <const> = Color { r = 0, g = 0, b = 0, a = 0 }
         app.transaction("Set Palette", function()
             palette:resize(1)
             palette:setColor(0, clearBlack)
@@ -2341,24 +2345,24 @@ end
 ---@param sprClrMode ColorMode|integer sprite color mode
 ---@return Image
 function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
-    local tileGrid = tileSet.grid
-    local tileDim = tileGrid.tileSize
-    local tileWidth = tileDim.width
-    local tileHeight = tileDim.height
-    local lenTileSet = #tileSet
+    local tileGrid <const> = tileSet.grid
+    local tileDim <const> = tileGrid.tileSize
+    local tileWidth <const> = tileDim.width
+    local tileHeight <const> = tileDim.height
+    local lenTileSet <const> = #tileSet
 
     -- The source image's color mode is 4 if it is a tile map.
     -- Assigning 4 to the target image when the sprite color
     -- mode is 2 (indexed) crashes Aseprite.
-    local specSrc = imgSrc.spec
-    local specTrg = ImageSpec {
+    local specSrc <const> = imgSrc.spec
+    local specTrg <const> = ImageSpec {
         width = specSrc.width * tileWidth,
         height = specSrc.height * tileHeight,
         colorMode = sprClrMode,
         transparentColor = specSrc.transparentColor
     }
     specTrg.colorSpace = specSrc.colorSpace
-    local imgTrg = Image(specTrg)
+    local imgTrg <const> = Image(specTrg)
 
     -- Separate a tile's index from the meta-data.
     -- The underlying logic is here:
@@ -2369,16 +2373,16 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     -- local maskRot90cw = 0x80000000
     -- local maskRot180 = maskFlipX | maskFlipY
     -- local maskRot90ccw = maskRot180 | maskRot90cw
-    local pxTilei = app.pixelColor.tileI
+    local pxTilei <const> = app.pixelColor.tileI
 
-    local mapItr = imgSrc:pixels()
+    local mapItr <const> = imgSrc:pixels()
     for mapEntry in mapItr do
-        local mapif = mapEntry() --[[@as integer]]
-        local i = pxTilei(mapif)
+        local mapif <const> = mapEntry() --[[@as integer]]
+        local i <const> = pxTilei(mapif)
 
         if i > 0 and i < lenTileSet then
-            local tile = tileSet:tile(i)
-            local tileImage = tile.image
+            local tile <const> = tileSet:tile(i)
+            local tileImage <const> = tile.image
             -- TODO: Wait until this is useful to implement.
             -- local meta = tlData & tileMetaMask
             -- if meta == maskRot90ccw then
@@ -2418,23 +2422,23 @@ end
 ---@param hexDefault integer? default color
 function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
     -- Beware naming, 'select' is a method built-in to Lua.
-    local selBounds = mask.bounds
-    local celBounds = cel.bounds
-    local clip = celBounds:intersect(selBounds)
-    local xClip = clip.x
-    local yClip = clip.y
+    local selBounds <const> = mask.bounds
+    local celBounds <const> = cel.bounds
+    local clip <const> = celBounds:intersect(selBounds)
+    local xClip <const> = clip.x
+    local yClip <const> = clip.y
 
     -- Avoid transactions if possible.
-    local oldPos = cel.position
+    local oldPos <const> = cel.position
     if oldPos.x ~= xClip
         or oldPos.y ~= yClip then
         cel.position = Point(xClip, yClip)
     end
 
-    local celImg = cel.image
-    local celSpec = celImg.spec
-    local alphaMask = celSpec.transparentColor
-    local trimSpec = ImageSpec {
+    local celImg <const> = cel.image
+    local celSpec <const> = celImg.spec
+    local alphaMask <const> = celSpec.transparentColor
+    local trimSpec <const> = ImageSpec {
         width = math.max(1, clip.width),
         height = math.max(1, clip.height),
         colorMode = celSpec.colorMode,
@@ -2442,16 +2446,16 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
     }
     trimSpec.colorSpace = celSpec.colorSpace
 
-    local trimImage = Image(trimSpec)
+    local trimImage <const> = Image(trimSpec)
     if clip.width > 0 and clip.height > 0 then
-        local celPos = cel.position
+        local celPos <const> = cel.position
         trimImage:drawImage(
             celImg, Point(
                 oldPos.x - celPos.x,
                 oldPos.y - celPos.y))
 
-        local hexVrf = hexDefault or alphaMask
-        local pxItr = trimImage:pixels()
+        local hexVrf <const> = hexDefault or alphaMask
+        local pxItr <const> = trimImage:pixels()
         for pixel in pxItr do
             if not mask:contains(
                     xClip + pixel.x,
@@ -2469,31 +2473,31 @@ end
 ---@param cel Cel source cel
 ---@param sprite Sprite parent sprite
 function AseUtilities.trimCelToSprite(cel, sprite)
-    local celBounds = cel.bounds
-    local spriteBounds = sprite.bounds
-    local clip = celBounds:intersect(spriteBounds)
+    local celBounds <const> = cel.bounds
+    local spriteBounds <const> = sprite.bounds
+    local clip <const> = celBounds:intersect(spriteBounds)
 
     -- Avoid transactions if possible.
-    local oldPos = cel.position
+    local oldPos <const> = cel.position
     if oldPos.x ~= clip.x
         or oldPos.y ~= clip.y then
         cel.position = Point(clip.x, clip.y)
     end
 
-    local celImg = cel.image
-    local celSpec = celImg.spec
+    local celImg <const> = cel.image
+    local celSpec <const> = celImg.spec
 
-    local trimSpec = ImageSpec {
+    local trimSpec <const> = ImageSpec {
         width = math.max(1, clip.width),
         height = math.max(1, clip.height),
         colorMode = celSpec.colorMode,
         transparentColor = celSpec.transparentColor
     }
     trimSpec.colorSpace = celSpec.colorSpace
-    local trimImage = Image(trimSpec)
+    local trimImage <const> = Image(trimSpec)
 
     if clip.width > 0 and clip.height > 0 then
-        local celPos = cel.position
+        local celPos <const> = cel.position
         trimImage:drawImage(
             celImg, Point(
                 oldPos.x - celPos.x,
@@ -2527,13 +2531,13 @@ function AseUtilities.trimImageAlpha(
     wDefault, hDefault)
     local padVrf = padding or 0
     padVrf = math.abs(padVrf)
-    local pad2 = padVrf + padVrf
+    local pad2 <const> = padVrf + padVrf
 
     -- Available as of version 1.3-rc1.
     -- If the image contains no nonzero pixels,
     -- returns a rectangle of zero size.
-    local rect = image:shrinkBounds(alphaIndex)
-    local rectIsValid = rect.width > 0
+    local rect <const> = image:shrinkBounds(alphaIndex)
+    local rectIsValid <const> = rect.width > 0
         and rect.height > 0
 
     local lft = 0
@@ -2547,15 +2551,15 @@ function AseUtilities.trimImageAlpha(
         hTrg = rect.height
     end
 
-    local srcSpec = image.spec
-    local trgSpec = ImageSpec {
+    local srcSpec <const> = image.spec
+    local trgSpec <const> = ImageSpec {
         colorMode = srcSpec.colorMode,
         width = wTrg + pad2,
         height = hTrg + pad2,
         transparentColor = alphaIndex
     }
     trgSpec.colorSpace = srcSpec.colorSpace
-    local target = Image(trgSpec)
+    local target <const> = Image(trgSpec)
 
     if rectIsValid then
         target:drawImage(image,
@@ -2582,22 +2586,22 @@ end
 ---@return Image
 function AseUtilities.wrapImage(source, x, y)
     ---@type integer[]
-    local px = {}
+    local px <const> = {}
+    local srcPxItr <const> = source:pixels()
     local i = 0
-    local srcPxItr = source:pixels()
     for pixel in srcPxItr do
         i = i + 1
         px[i] = pixel()
     end
 
-    local sourceSpec = source.spec
-    local w = sourceSpec.width
-    local h = sourceSpec.height
-    local wrp = Utilities.wrapPixels(px, x, y, w, h)
+    local sourceSpec <const> = source.spec
+    local w <const> = sourceSpec.width
+    local h <const> = sourceSpec.height
+    local wrp <const> = Utilities.wrapPixels(px, x, y, w, h)
 
-    local target = Image(sourceSpec)
+    local target <const> = Image(sourceSpec)
+    local trgPxItr <const> = target:pixels()
     local j = 0
-    local trgPxItr = target:pixels()
     for pixel in trgPxItr do
         j = j + 1
         pixel(wrp[j])

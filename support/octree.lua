@@ -49,7 +49,7 @@ Octree.FRONT_NORTH_EAST = 8
 ---@param level integer? level, or depth
 ---@return Octree
 function Octree.new(bounds, capacity, level)
-    local inst = setmetatable({}, Octree)
+    local inst <const> = setmetatable({}, Octree)
     inst.bounds = bounds or Bounds3.unitCubeSigned()
     inst.capacity = capacity or 16
     inst.children = {}
@@ -85,21 +85,21 @@ end
 ---@param arr Vec3[]? array
 ---@return Vec3[]
 function Octree.centersMean(o, arr)
-    local arrVrf = arr or {}
-    local children = o.children
-    local lenChildren = #children
+    local arrVrf <const> = arr or {}
+    local children <const> = o.children
+    local lenChildren <const> = #children
 
     local i = 0
     while i < lenChildren do
         i = i + 1
-        Octree.centersMean(
-            children[i], arrVrf)
+        local child <const> = children[i]
+        Octree.centersMean(child, arrVrf)
     end
 
     if lenChildren < 1 then
-        local cursor = #arrVrf + 1
-        local leafPoints = o.points
-        local lenLeafPoints = #leafPoints
+        local cursor <const> = #arrVrf + 1
+        local leafPoints <const> = o.points
+        local lenLeafPoints <const> = #leafPoints
         if lenLeafPoints > 1 then
             local xSum = 0.0
             local ySum = 0.0
@@ -108,19 +108,19 @@ function Octree.centersMean(o, arr)
             local j = 0
             while j < lenLeafPoints do
                 j = j + 1
-                local pt = leafPoints[j]
+                local pt <const> = leafPoints[j]
                 xSum = xSum + pt.x
                 ySum = ySum + pt.y
                 zSum = zSum + pt.z
             end
 
-            local lenInv = 1.0 / lenLeafPoints
+            local lenInv <const> = 1.0 / lenLeafPoints
             arrVrf[cursor] = Vec3.new(
                 xSum * lenInv,
                 ySum * lenInv,
                 zSum * lenInv)
         elseif lenLeafPoints > 0 then
-            local pt = leafPoints[1]
+            local pt <const> = leafPoints[1]
             arrVrf[cursor] = Vec3.new(
                 pt.x, pt.y, pt.z)
         end
@@ -136,15 +136,15 @@ end
 function Octree.countLeaves(o)
     -- Even if this is not used directly by
     -- any dialog, retain it for diagnostics.
-    local children = o.children
-    local lenChildren = #children
+    local children <const> = o.children
+    local lenChildren <const> = #children
     if lenChildren < 1 then return 1 end
 
     local sum = 0
     local i = 0
     while i < lenChildren do
         i = i + 1
-        local child = children[i]
+        local child <const> = children[i]
         sum = sum + Octree.countLeaves(child)
     end
     return sum
@@ -155,15 +155,15 @@ end
 ---@param o Octree octree
 ---@return integer
 function Octree.countPoints(o)
-    local children = o.children
-    local lenChildren = #children
+    local children <const> = o.children
+    local lenChildren <const> = #children
     if lenChildren < 1 then return #o.points end
 
     local sum = 0
     local i = 0
     while i < lenChildren do
         i = i + 1
-        local child = children[i]
+        local child <const> = children[i]
         sum = sum + Octree.countPoints(child)
     end
     return sum
@@ -179,8 +179,8 @@ end
 ---@param o Octree octree
 ---@return boolean
 function Octree.cull(o)
-    local children = o.children
-    local lenChildren = #children
+    local children <const> = o.children
+    local lenChildren <const> = #children
     local cullThis = 0
 
     -- Because of how length operator works this
@@ -189,7 +189,7 @@ function Octree.cull(o)
     local i = lenChildren + 1
     while i > 1 do
         i = i - 1
-        local child = children[i]
+        local child <const> = children[i]
         if Octree.cull(child) then
             table.remove(children, i)
             cullThis = cullThis + 1
@@ -209,12 +209,12 @@ end
 ---@return boolean
 function Octree.insert(o, point)
     if Bounds3.containsInclExcl(o.bounds, point) then
-        local children = o.children
-        local lenChildren = #children
+        local children <const> = o.children
+        local lenChildren <const> = #children
         local i = 0
         while i < lenChildren do
             i = i + 1
-            local child = children[i]
+            local child <const> = children[i]
             if Octree.insert(child, point) then
                 return true
             end
@@ -223,7 +223,7 @@ function Octree.insert(o, point)
         if lenChildren < 1 then
             -- Using table.sort here was definitely the
             -- cause of a major performance loss.
-            local points = o.points
+            local points <const> = o.points
             Vec3.insortRight(points, point, Vec3.comparator)
             if #points > o.capacity then
                 Octree.split(o, o.capacity)
@@ -245,7 +245,7 @@ end
 ---@param ins Vec3[] insertions array
 ---@return boolean
 function Octree.insertAll(o, ins)
-    local lenIns = #ins
+    local lenIns <const> = #ins
     local flag = true
     local i = 0
     while i < lenIns do
@@ -270,15 +270,15 @@ end
 function Octree.maxLevel(o)
     -- Even if this is not used directly by
     -- any dialog, retain it for diagnostics.
-    local children = o.children
-    local lenChildren = #children
+    local children <const> = o.children
+    local lenChildren <const> = #children
     local maxLevel = o.level
 
     local i = 0
     while i < lenChildren do
         i = i + 1
-        local child = children[i]
-        local lvl = Octree.maxLevel(child)
+        local child <const> = children[i]
+        local lvl <const> = Octree.maxLevel(child)
         if lvl > maxLevel then
             maxLevel = lvl
         end
@@ -298,8 +298,8 @@ end
 ---@return Vec3|nil
 ---@return number
 function Octree.query(o, center, radius, dfPt)
-    local rVrf = radius or 46340
-    local v, d = Octree.queryInternal(
+    local rVrf <const> = radius or 46340
+    local v <const>, d <const> = Octree.queryInternal(
         o, center, rVrf, Vec3.distEuclidean)
     if v then
         return Vec3.new(v.x, v.y, v.z), d
@@ -323,12 +323,12 @@ function Octree.queryInternal(o, center, rad, df)
     local nearDist = 2147483647
     if Bounds3.intersectsSphere(
             o.bounds, center, rad) then
-        local children = o.children
-        local lenChildren = #children
+        local children <const> = o.children
+        local lenChildren <const> = #children
         local i = 0
         while i < lenChildren do
             i = i + 1
-            local child = children[i]
+            local child <const> = children[i]
             local candDist = 2147483647
             local candPoint = nil
             candPoint, candDist = Octree.queryInternal(
@@ -340,14 +340,14 @@ function Octree.queryInternal(o, center, rad, df)
         end
 
         if lenChildren < 1 then
-            local points = o.points
-            local lenPoints = #points
+            local points <const> = o.points
+            local lenPoints <const> = #points
 
             local j = 0
             while j < lenPoints do
                 j = j + 1
-                local point = points[j]
-                local candDist = df(center, point)
+                local point <const> = points[j]
+                local candDist <const> = df(center, point)
                 if (candDist < rad)
                     and (candDist < nearDist) then
                     nearPoint = point
@@ -367,9 +367,9 @@ end
 ---@param childCapacity integer? child capacity
 ---@return Octree
 function Octree.split(o, childCapacity)
-    local chCpVerif = childCapacity or o.capacity
-    local children = o.children
-    local nextLevel = o.level + 1
+    local chCpVerif <const> = childCapacity or o.capacity
+    local children <const> = o.children
+    local nextLevel <const> = o.level + 1
 
     local i = 0
     while i < 8 do
@@ -393,15 +393,15 @@ function Octree.split(o, childCapacity)
     -- This is faster than looping through
     -- children in reverse and removing from
     -- the points table in the inner loop.
-    local pts = o.points
-    local ptsLen = #pts
+    local pts <const> = o.points
+    local ptsLen <const> = #pts
 
     -- Inner loop has an irregular length due to
     -- early break, so this isn't flattened.
     local j = 0
     while j < ptsLen do
         j = j + 1
-        local pt = pts[j]
+        local pt <const> = pts[j]
         local k = 0
         while k < 8 do
             k = k + 1
@@ -426,17 +426,17 @@ end
 ---@return Octree
 function Octree.subdivide(o, itr, childCapacity)
     if (not itr) or (itr < 1) then return o end
-    local chCpVerif = childCapacity or o.capacity
+    local chCpVerif <const> = childCapacity or o.capacity
 
     local i = 0
     while i < itr do
         i = i + 1
-        local children = o.children
-        local lenChildren = #children
+        local children <const> = o.children
+        local lenChildren <const> = #children
         local j = 0
         while j < lenChildren do
             j = j + 1
-            local child = children[j]
+            local child <const> = children[j]
             Octree.subdivide(child, itr - 1, chCpVerif)
         end
 
@@ -460,28 +460,35 @@ function Octree.toJson(o)
 
     if Octree.isLeaf(o) then
         str = str .. ",\"points\":["
-        local pts = o.points
-        local ptsLen = #pts
-        local ptsStrs = {}
+
+        ---@type string[]
+        local ptsStrs <const> = {}
+        local pts <const> = o.points
+        local ptsLen <const> = #pts
 
         local i = 0
         while i < ptsLen do
             i = i + 1
             ptsStrs[i] = Vec3.toJson(pts[i])
         end
+
         str = str .. table.concat(ptsStrs, ",")
         str = str .. "]"
     else
         str = str .. ",\"children\":["
-        local children = o.children
-        local childStrs = {}
-        local lenChildren = #children
+
+        ---@type string[]
+        local childStrs <const> = {}
+        local children <const> = o.children
+        local lenChildren <const> = #children
+
         local j = 0
         while j < lenChildren do
             j = j + 1
-            local child = children[j]
+            local child <const> = children[j]
             childStrs[j] = Octree.toJson(child)
         end
+
         str = str .. table.concat(childStrs, ",")
         str = str .. "]"
     end

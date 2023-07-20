@@ -36,7 +36,7 @@ Clr.SR_LCH_MAX_CHROMA = 119.07602046756
 ---@param a number? transparency
 ---@return Clr
 function Clr.new(r, g, b, a)
-    local inst = setmetatable({}, Clr)
+    local inst <const> = setmetatable({}, Clr)
     inst.a = a or 1.0
     inst.b = b or 1.0
     inst.g = g or 1.0
@@ -70,7 +70,7 @@ end
 ---@param tol number? tolerance
 ---@return boolean
 function Clr.alphaIsInGamut(c, tol)
-    local eps = tol or 0.0
+    local eps <const> = tol or 0.0
     return c.a >= -eps and c.a <= (1.0 + eps)
 end
 
@@ -169,11 +169,11 @@ end
 ---@param b Clr destination
 ---@return Clr
 function Clr.blendInternal(a, b)
-    local t = b.a
-    local u = 1.0 - t
-    local v = a.a
-    local uv = v * u
-    local tuv = t + uv
+    local t <const> = b.a
+    local u <const> = 1.0 - t
+    local v <const> = a.a
+    local uv <const> = v * u
+    local tuv <const> = t + uv
     if tuv >= 1.0 then
         return Clr.new(
             b.r * t + a.r * uv,
@@ -181,7 +181,7 @@ function Clr.blendInternal(a, b)
             b.b * t + a.b * uv,
             1.0)
     elseif tuv > 0.0 then
-        local tuvInv = 1.0 / tuv
+        local tuvInv <const> = 1.0 / tuv
         return Clr.new(
             (b.r * t + a.r * uv) * tuvInv,
             (b.g * t + a.g * uv) * tuvInv,
@@ -196,15 +196,11 @@ end
 ---@param c Clr color
 ---@return Clr
 function Clr.clamp01(c)
-    local cr = c.r or 0.0
-    local cg = c.g or 0.0
-    local cb = c.b or 0.0
-    local ca = c.a or 0.0
     return Clr.new(
-        math.min(math.max(cr, 0.0), 1.0),
-        math.min(math.max(cg, 0.0), 1.0),
-        math.min(math.max(cb, 0.0), 1.0),
-        math.min(math.max(ca, 0.0), 1.0))
+        math.min(math.max(c.r, 0.0), 1.0),
+        math.min(math.max(c.g, 0.0), 1.0),
+        math.min(math.max(c.b, 0.0), 1.0),
+        math.min(math.max(c.a, 0.0), 1.0))
 end
 
 ---Converts from a hexadecimal representation
@@ -224,8 +220,8 @@ end
 ---@param arr integer[] hexadecimal array
 ---@return Clr[]
 function Clr.fromHexArray(arr)
-    local len = #arr
-    local result = {}
+    local len <const> = #arr
+    local result <const> = {}
     local i = 0
     while i < len do
         i = i + 1
@@ -248,14 +244,14 @@ function Clr.fromHexWeb(hexstr)
 
     -- Account for #abc.
     if #s == 3 then
-        local r = string.sub(s, 1, 1)
-        local g = string.sub(s, 2, 2)
-        local b = string.sub(s, 3, 3)
+        local r <const> = string.sub(s, 1, 1)
+        local g <const> = string.sub(s, 2, 2)
+        local b <const> = string.sub(s, 3, 3)
         s = r .. r .. g .. g .. b .. b
     end
 
     -- tonumber may return fail.
-    local sn = tonumber(s, 16)
+    local sn <const> = tonumber(s, 16)
     if sn then
         return Clr.new(
             (sn >> 0x10 & 0xff) / 255.0,
@@ -288,20 +284,20 @@ function Clr.gridsRgb(cols, rows, layers, alpha)
     rVrf = math.min(math.max(rVrf, 2), 256)
     cVrf = math.min(math.max(cVrf, 2), 256)
 
-    local hToStep = 1.0 / (lVrf - 1.0)
-    local iToStep = 1.0 / (rVrf - 1.0)
-    local jToStep = 1.0 / (cVrf - 1.0)
+    local hToStep <const> = 1.0 / (lVrf - 1.0)
+    local iToStep <const> = 1.0 / (rVrf - 1.0)
+    local jToStep <const> = 1.0 / (cVrf - 1.0)
 
-    local rcVal = rVrf * cVrf
-    local length = lVrf * rcVal
-    local result = {}
+    local rcVrf <const> = rVrf * cVrf
+    local length <const> = lVrf * rcVrf
+    local result <const> = {}
 
     local k = 0
     while k < length do
-        local h = k // rcVal
-        local m = k - h * rcVal
-        local i = m // cVrf
-        local j = m % cVrf
+        local h <const> = k // rcVrf
+        local m <const> = k - h * rcVrf
+        local i <const> = m // cVrf
+        local j <const> = m % cVrf
 
         k = k + 1
         result[k] = Clr.new(
@@ -330,9 +326,9 @@ end
 ---@param c Clr linear color
 ---@return { l: number, a: number, b: number, alpha: number }
 function Clr.lRgbToSrLab2Internal(c)
-    local r = c.r
-    local g = c.g
-    local b = c.b
+    local r <const> = c.r
+    local g <const> = c.g
+    local b <const> = c.b
 
     local x = 0.32053 * r + 0.63692 * g + 0.04256 * b
     local y = 0.161987 * r + 0.756636 * g + 0.081376 * b
@@ -455,7 +451,7 @@ end
 ---@param t number step
 ---@return Clr
 function Clr.mixlRgb(o, d, t)
-    local u = t or 0.5
+    local u <const> = t or 0.5
     if u <= 0.0 then
         return Clr.new(o.r, o.g, o.b, o.a)
     end
@@ -472,7 +468,7 @@ end
 ---@param t number step
 ---@return Clr
 function Clr.mixlRgbaInternal(o, d, t)
-    local u = 1.0 - t
+    local u <const> = 1.0 - t
     return Clr.new(
         u * o.r + t * d.r,
         u * o.g + t * d.g,
@@ -493,16 +489,16 @@ function Clr.mixNormal(o, d, t)
     local ox = o.r + o.r - 1.0
     local oy = o.g + o.g - 1.0
     local oz = o.b + o.b - 1.0
-    local oa = o.a
-    local omsq = ox * ox + oy * oy + oz * oz
+    local oa <const> = o.a
+    local omsq <const> = ox * ox + oy * oy + oz * oz
     if omsq > 0.0 then
-        local omInv = 1.0 / math.sqrt(omsq)
+        local omInv <const> = 1.0 / math.sqrt(omsq)
         ox = ox * omInv
         oy = oy * omInv
         oz = oz * omInv
     end
 
-    local u = t or 0.5
+    local u <const> = t or 0.5
     if u <= 0.0 then
         return Clr.new(
             ox * 0.5 + 0.5,
@@ -513,10 +509,10 @@ function Clr.mixNormal(o, d, t)
     local dx = d.r + d.r - 1.0
     local dy = d.g + d.g - 1.0
     local dz = d.b + d.b - 1.0
-    local da = d.a
-    local dmsq = dx * dx + dy * dy + dz * dz
+    local da <const> = d.a
+    local dmsq <const> = dx * dx + dy * dy + dz * dz
     if dmsq > 0.0 then
-        local dmInv = 1.0 / math.sqrt(omsq)
+        local dmInv <const> = 1.0 / math.sqrt(omsq)
         dx = dx * dmInv
         dy = dy * dmInv
         dz = dz * dmInv
@@ -529,24 +525,24 @@ function Clr.mixNormal(o, d, t)
             dz * 0.5 + 0.5, da)
     end
 
-    local odDot = math.min(math.max(
+    local odDot <const> = math.min(math.max(
         ox * dx + oy * dy + oz * dz,
         -0.999999), 0.999999)
-    local omega = math.acos(odDot)
-    local omSin = math.sin(omega)
+    local omega <const> = math.acos(odDot)
+    local omSin <const> = math.sin(omega)
     local omSinInv = 1.0
     if omSin ~= 0.0 then omSinInv = 1.0 / omSin end
-    local v = 1.0 - u
-    local oFac = math.sin(v * omega) * omSinInv
-    local dFac = math.sin(u * omega) * omSinInv
+    local v <const> = 1.0 - u
+    local oFac <const> = math.sin(v * omega) * omSinInv
+    local dFac <const> = math.sin(u * omega) * omSinInv
 
-    local cx = oFac * ox + dFac * dx
-    local cy = oFac * oy + dFac * dy
-    local cz = oFac * oz + dFac * dz
-    local ca = v * oa + u * da
-    local cmsq = cx * cx + cy * cy + cz * cz
+    local cx <const> = oFac * ox + dFac * dx
+    local cy <const> = oFac * oy + dFac * dy
+    local cz <const> = oFac * oz + dFac * dz
+    local ca <const> = v * oa + u * da
+    local cmsq <const> = cx * cx + cy * cy + cz * cz
     if cmsq > 0.0 then
-        local cmInv = 0.5 / math.sqrt(cmsq)
+        local cmInv <const> = 0.5 / math.sqrt(cmsq)
         return Clr.new(
             cx * cmInv + 0.5,
             cy * cmInv + 0.5,
@@ -564,7 +560,7 @@ end
 ---@param t number step
 ---@return Clr
 function Clr.mixsRgb(o, d, t)
-    local u = t or 0.5
+    local u <const> = t or 0.5
     if u <= 0.0 then
         return Clr.new(o.r, o.g, o.b, o.a)
     end
@@ -597,7 +593,7 @@ end
 ---@param t number step
 ---@return Clr
 function Clr.mixSrLab2(o, d, t)
-    local u = t or 0.5
+    local u <const> = t or 0.5
     if u <= 0.0 then
         return Clr.new(o.r, o.g, o.b, o.a)
     end
@@ -614,9 +610,9 @@ end
 ---@param t number step
 ---@return Clr
 function Clr.mixSrLab2Internal(o, d, t)
-    local u = 1.0 - t
-    local oLab = Clr.sRgbToSrLab2(o)
-    local dLab = Clr.sRgbToSrLab2(d)
+    local u <const> = 1.0 - t
+    local oLab <const> = Clr.sRgbToSrLab2(o)
+    local dLab <const> = Clr.sRgbToSrLab2(d)
     return Clr.srLab2TosRgb(
         u * oLab.l + t * dLab.l,
         u * oLab.a + t * dLab.a,
@@ -635,7 +631,7 @@ end
 ---@param hueFunc? fun(o: number, d: number, t: number): number hue function
 ---@return Clr
 function Clr.mixSrLch(o, d, t, hueFunc)
-    local u = t or 0.5
+    local u <const> = t or 0.5
     if u <= 0.0 then
         return Clr.new(o.r, o.g, o.b, o.a)
     end
@@ -644,9 +640,9 @@ function Clr.mixSrLch(o, d, t, hueFunc)
     end
 
     local f = hueFunc or function(oh, dh, x)
-        local diff = dh - oh
+        local diff <const> = dh - oh
         if diff ~= 0.0 then
-            local y = 1.0 - x
+            local y <const> = 1.0 - x
             if oh < dh and diff > 0.5 then
                 return (y * (oh + 1.0) + x * dh) % 1.0
             elseif oh > dh and diff < -0.5 then
@@ -671,17 +667,17 @@ end
 ---@param hueFunc fun(o: number, d: number, t: number): number hue function
 ---@return Clr
 function Clr.mixSrLchInternal(o, d, t, hueFunc)
-    local oLab = Clr.sRgbToSrLab2(o)
-    local oa = oLab.a
-    local ob = oLab.b
-    local ocsq = oa * oa + ob * ob
+    local oLab <const> = Clr.sRgbToSrLab2(o)
+    local oa <const> = oLab.a
+    local ob <const> = oLab.b
+    local ocsq <const> = oa * oa + ob * ob
 
-    local dLab = Clr.sRgbToSrLab2(d)
-    local da = dLab.a
-    local db = dLab.b
-    local dcsq = da * da + db * db
+    local dLab <const> = Clr.sRgbToSrLab2(d)
+    local da <const> = dLab.a
+    local db <const> = dLab.b
+    local dcsq <const> = da * da + db * db
 
-    local u = 1.0 - t
+    local u <const> = 1.0 - t
     if ocsq < 0.00005 or dcsq < 0.00005 then
         return Clr.srLab2TosRgb(
             u * oLab.l + t * dLab.l,
@@ -689,11 +685,11 @@ function Clr.mixSrLchInternal(o, d, t, hueFunc)
             u * ob + t * db,
             u * oLab.alpha + t * dLab.alpha)
     else
-        local oChr = math.sqrt(ocsq)
+        local oChr <const> = math.sqrt(ocsq)
         local oHue = math.atan(ob, oa) * 0.1591549430919
         oHue = oHue % 1.0
 
-        local dChr = math.sqrt(dcsq)
+        local dChr <const> = math.sqrt(dcsq)
         local dHue = math.atan(db, da) * 0.1591549430919
         dHue = dHue % 1.0
 
@@ -734,7 +730,7 @@ end
 ---@param tol number? tolerance
 ---@return boolean
 function Clr.rgbIsInGamut(c, tol)
-    local eps = tol or 0.0
+    local eps <const> = tol or 0.0
     return (c.r >= -eps and c.r <= (1.0 + eps))
         and (c.g >= -eps and c.g <= (1.0 + eps))
         and (c.b >= -eps and c.b <= (1.0 + eps))
@@ -816,7 +812,7 @@ end
 ---@param tol number? gray tolerance
 ---@return { l: number, c: number, h: number, a: number }
 function Clr.sRgbToSrLch(c, tol)
-    local lab = Clr.sRgbToSrLab2(c)
+    local lab <const> = Clr.sRgbToSrLab2(c)
     return Clr.srLab2ToSrLch(lab.l, lab.a, lab.b, lab.alpha, tol)
 end
 
@@ -832,7 +828,7 @@ end
 ---@param alpha number transparency
 ---@return Clr
 function Clr.srLab2TolRgb(l, a, b, alpha)
-    local l01 = l * 0.01
+    local l01 <const> = l * 0.01
     local x = l01 + 0.000904127 * a + 0.000456344 * b
     local y = l01 - 0.000533159 * a - 0.000269178 * b
     local z = l01 - 0.0058 * b
@@ -860,7 +856,7 @@ function Clr.srLab2TolRgb(l, a, b, alpha)
         z = z * z * z
     end
 
-    local aVrf = alpha or 1.0
+    local aVrf <const> = alpha or 1.0
     return Clr.new(
         5.435679 * x - 4.599131 * y + 0.163593 * z,
         -1.16809 * x + 2.327977 * y - 0.159798 * z,
@@ -894,17 +890,13 @@ function Clr.srLab2ToSrLch(l, a, b, alpha, tol)
     local vTol = 0.007072
     if tol then vTol = tol end
 
-    local chromasq = a * a + b * b
+    local chromasq <const> = a * a + b * b
     local c = 0.0
     local h = 0.0
 
     if chromasq < (vTol * vTol) then
-        local fac = l * 0.01
-        if fac < 0.0 then
-            fac = 0.0
-        elseif fac > 1.0 then
-            fac = 1.0
-        end
+        local fac <const> = math.min(math.max(
+            l * 0.01, 0.0), 1.0)
         h = (1.0 - fac) * Clr.SR_LCH_HUE_SHADOW
             + fac * (1.0 + Clr.SR_LCH_HUE_LIGHT)
     else
@@ -913,7 +905,7 @@ function Clr.srLab2ToSrLch(l, a, b, alpha, tol)
     end
 
     if h ~= 1.0 then h = h % 1.0 end
-    local aVrf = alpha or 1.0
+    local aVrf <const> = alpha or 1.0
     return { l = l, c = c, h = h, a = aVrf }
 end
 
@@ -928,7 +920,7 @@ end
 ---@param tol number? gray tolerance
 ---@return Clr
 function Clr.srLchTosRgb(l, c, h, a, tol)
-    local lab = Clr.srLchToSrLab2(l, c, h, a, tol)
+    local lab <const> = Clr.srLchToSrLab2(l, c, h, a, tol)
     return Clr.srLab2TosRgb(lab.l, lab.a, lab.b, lab.alpha)
 end
 
@@ -954,8 +946,8 @@ function Clr.srLchToSrLab2(l, c, h, a, tol)
 
     local cVrf = c or 0.0
     if cVrf < vTol then cVrf = 0.0 end
-    local hVrf = h % 1.0
-    local aVrf = a or 1.0
+    local hVrf <const> = h % 1.0
+    local aVrf <const> = a or 1.0
     return Clr.srLchToSrLab2Internal(
         lVrf, cVrf, hVrf, aVrf)
 end
@@ -969,7 +961,7 @@ end
 ---@param a number transparency
 ---@return { l: number, a: number, b: number, alpha: number }
 function Clr.srLchToSrLab2Internal(l, c, h, a)
-    local hRad = h * 6.2831853071796
+    local hRad <const> = h * 6.2831853071796
     return {
         l = l,
         a = c * math.cos(hRad),
@@ -1044,7 +1036,7 @@ function Clr.unpremul(c)
     elseif c.a >= 1.0 then
         return Clr.new(c.r, c.g, c.b, 1.0)
     else
-        local aInv = 1.0 / c.a
+        local aInv <const> = 1.0 / c.a
         return Clr.new(
             c.r * aInv,
             c.g * aInv,

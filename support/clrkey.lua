@@ -28,7 +28,7 @@ end
 ---@param clr Clr color
 ---@return ClrKey
 function ClrKey.newByRef(step, clr)
-    local inst = setmetatable({}, ClrKey)
+    local inst <const> = setmetatable({}, ClrKey)
     inst.step = 0.0
     if step then
         inst.step = math.min(math.max(step, 0.0), 1.0)
@@ -44,7 +44,7 @@ end
 ---@param clr Clr|integer color
 ---@return ClrKey
 function ClrKey.newByVal(step, clr)
-    local inst = setmetatable({}, ClrKey)
+    local inst <const> = setmetatable({}, ClrKey)
 
     inst.step = 0.0
     if step then

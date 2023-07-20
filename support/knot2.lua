@@ -21,7 +21,7 @@ setmetatable(Knot2, {
 ---@param rh Vec2 rear handle
 ---@return Knot2
 function Knot2.new(co, fh, rh)
-    local inst = setmetatable({}, Knot2)
+    local inst <const> = setmetatable({}, Knot2)
     inst.co = co or Vec2.new(0.0, 0.0)
     inst.fh = fh or Vec2.new(inst.co.x + 0.000001, inst.co.y)
     inst.rh = rh or (inst.co - (inst.fh - inst.co))
@@ -42,8 +42,8 @@ end
 ---rear handle while preserving magnitude.
 ---@return Knot2
 function Knot2:alignHandlesBackward()
-    local rDir = Vec2.sub(self.rh, self.co)
-    local rMagSq = Vec2.magSq(rDir)
+    local rDir <const> = Vec2.sub(self.rh, self.co)
+    local rMagSq <const> = Vec2.magSq(rDir)
     if rMagSq > 0.0 then
         self.fh = Vec2.sub(
             self.co, Vec2.scale(rDir,
@@ -57,8 +57,8 @@ end
 ---fore handle while preserving magnitude.
 ---@return Knot2
 function Knot2:alignHandlesForward()
-    local fDir = Vec2.sub(self.fh, self.co)
-    local fMagSq = Vec2.magSq(fDir)
+    local fDir <const> = Vec2.sub(self.fh, self.co)
+    local fMagSq <const> = Vec2.magSq(fDir)
     if fMagSq > 0.0 then
         self.rh = Vec2.sub(
             self.co, Vec2.scale(fDir,
@@ -96,7 +96,7 @@ end
 ---its fore and rear handles.
 ---@return Knot2
 function Knot2:reverse()
-    local temp = self.fh
+    local temp <const> = self.fh
     self.fh = self.rh
     self.rh = temp
     return self
@@ -194,16 +194,16 @@ end
 ---@return Knot2
 function Knot2.fromPolarInternal(
     cosa, sina, radius, handleMag, xCenter, yCenter)
-    local hmsina = sina * handleMag
-    local hmcosa = cosa * handleMag
+    local hmsina <const> = sina * handleMag
+    local hmcosa <const> = cosa * handleMag
 
-    local co = Vec2.new(
+    local co <const> = Vec2.new(
         xCenter + radius * cosa,
         yCenter + radius * sina)
-    local fh = Vec2.new(
+    local fh <const> = Vec2.new(
         co.x - hmsina,
         co.y + hmcosa)
-    local rh = Vec2.new(
+    local rh <const> = Vec2.new(
         co.x + hmsina,
         co.y - hmcosa)
 

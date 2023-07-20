@@ -21,7 +21,7 @@ setmetatable(Knot3, {
 ---@param rh table rear handle
 ---@return Knot3
 function Knot3.new(co, fh, rh)
-    local inst = setmetatable({}, Knot3)
+    local inst <const> = setmetatable({}, Knot3)
     inst.co = co or Vec3.new(0.0, 0.0, 0.0)
     inst.fh = fh or Vec3.new(
         inst.co.x + 0.000001,
@@ -45,8 +45,8 @@ end
 ---rear handle while preserving magnitude.
 ---@return Knot3
 function Knot3:alignHandlesBackward()
-    local rDir = Vec3.sub(self.rh, self.co)
-    local rMagSq = Vec3.magSq(rDir)
+    local rDir <const> = Vec3.sub(self.rh, self.co)
+    local rMagSq <const> = Vec3.magSq(rDir)
     if rMagSq > 0.0 then
         self.fh = Vec3.sub(self.co,
             Vec3.scale(rDir,
@@ -60,8 +60,8 @@ end
 ---fore handle while preserving magnitude.
 ---@return Knot3
 function Knot3:alignHandlesForward()
-    local fDir = Vec3.sub(self.fh, self.co)
-    local fMagSq = Vec3.magSq(fDir)
+    local fDir <const> = Vec3.sub(self.fh, self.co)
+    local fMagSq <const> = Vec3.magSq(fDir)
     if fMagSq > 0.0 then
         self.rh = Vec3.sub(self.co,
             Vec3.scale(fDir,
@@ -97,7 +97,7 @@ end
 ---its fore and rear handles.
 ---@return Knot3
 function Knot3:reverse()
-    local temp = self.fh
+    local temp <const> = self.fh
     self.fh = self.rh
     self.rh = temp
     return self
@@ -248,7 +248,7 @@ function Knot3.fromSegCatmull(
             nextAnchor, prevKnot, nextKnot)
     end
 
-    local fac = (tightness - 1.0) * 0.16666666666667
+    local fac <const> = (tightness - 1.0) * 0.16666666666667
 
     prevKnot.fh = Vec3.sub(currAnchor,
         Vec3.scale(Vec3.sub(
@@ -281,8 +281,8 @@ function Knot3.fromSegLinear(nextAnchor, prevKnot, nextKnot)
         nextAnchor.y,
         nextAnchor.z)
 
-    local prevCoord = prevKnot.co
-    local nextCoord = nextKnot.co
+    local prevCoord <const> = prevKnot.co
+    local nextCoord <const> = nextKnot.co
 
     prevKnot.fh = Vec3.new(
         prevCoord.x * 0.66666666666667
@@ -313,19 +313,19 @@ end
 ---@param carry Vec3 temporary vector
 ---@return Vec3
 function Knot3.smoothHandlesInternal(prev, curr, next, carry)
-    local coCurr = curr.co
-    local coPrev = prev.co
-    local coNext = next.co
+    local coCurr <const> = curr.co
+    local coPrev <const> = prev.co
+    local coNext <const> = next.co
 
-    local xRear = coPrev.x - coCurr.x
-    local yRear = coPrev.y - coCurr.y
-    local zRear = coPrev.z - coCurr.z
+    local xRear <const> = coPrev.x - coCurr.x
+    local yRear <const> = coPrev.y - coCurr.y
+    local zRear <const> = coPrev.z - coCurr.z
 
-    local xFore = coNext.x - coCurr.x
-    local yFore = coNext.y - coCurr.y
-    local zFore = coNext.z - coCurr.z
+    local xFore <const> = coNext.x - coCurr.x
+    local yFore <const> = coNext.y - coCurr.y
+    local zFore <const> = coNext.z - coCurr.z
 
-    local bmSq = xRear * xRear
+    local bmSq <const> = xRear * xRear
         + yRear * yRear
         + zRear * zRear
     local bmInv = 0.0
@@ -333,7 +333,7 @@ function Knot3.smoothHandlesInternal(prev, curr, next, carry)
         bmInv = 1.0 / math.sqrt(bmSq)
     end
 
-    local fmSq = xFore * xFore
+    local fmSq <const> = xFore * xFore
         + yFore * yFore
         + zFore * zFore
     local fmInv = 0.0
@@ -341,29 +341,29 @@ function Knot3.smoothHandlesInternal(prev, curr, next, carry)
         fmInv = 1.0 / math.sqrt(fmSq)
     end
 
-    local xDir = carry.x + xRear * bmInv - xFore * fmInv
-    local yDir = carry.y + yRear * bmInv - yFore * fmInv
-    local zDir = carry.z + zRear * bmInv - zFore * fmInv
+    local xDir <const> = carry.x + xRear * bmInv - xFore * fmInv
+    local yDir <const> = carry.y + yRear * bmInv - yFore * fmInv
+    local zDir <const> = carry.z + zRear * bmInv - zFore * fmInv
 
     local rescl = 0.0
-    local dmSq = xDir * xDir
+    local dmSq <const> = xDir * xDir
         + yDir * yDir
         + zDir * zDir
     if dmSq > 0.0 then
         rescl = 1.0 / (3.0 * math.sqrt(dmSq))
     end
 
-    local xCarry = xDir * rescl
-    local yCarry = yDir * rescl
-    local zCarry = zDir * rescl
+    local xCarry <const> = xDir * rescl
+    local yCarry <const> = yDir * rescl
+    local zCarry <const> = zDir * rescl
 
-    local bMag = bmSq * bmInv;
+    local bMag <const> = bmSq * bmInv;
     curr.rh = Vec3.new(
         coCurr.x + bMag * xCarry,
         coCurr.y + bMag * yCarry,
         coCurr.z + bMag * zCarry)
 
-    local fMag = fmSq * fmInv
+    local fMag <const> = fmSq * fmInv
     curr.fh = Vec3.new(
         coCurr.x - fMag * xCarry,
         coCurr.y - fMag * yCarry,
@@ -381,18 +381,18 @@ end
 ---@param carry Vec3 temporary vector
 ---@return Vec3
 function Knot3.smoothHandlesFirstInternal(curr, next, carry)
-    local coCurr = curr.co
-    local coNext = next.co
+    local coCurr <const> = curr.co
+    local coNext <const> = next.co
 
-    local xRear = -coCurr.x
-    local yRear = -coCurr.y
-    local zRear = -coCurr.z
+    local xRear <const> = -coCurr.x
+    local yRear <const> = -coCurr.y
+    local zRear <const> = -coCurr.z
 
-    local xFore = coNext.x + xRear
-    local yFore = coNext.y + yRear
-    local zFore = coNext.z + zRear
+    local xFore <const> = coNext.x + xRear
+    local yFore <const> = coNext.y + yRear
+    local zFore <const> = coNext.z + zRear
 
-    local bmSq = xRear * xRear
+    local bmSq <const> = xRear * xRear
         + yRear * yRear
         + zRear * zRear
     local bmInv = 0.0
@@ -400,7 +400,7 @@ function Knot3.smoothHandlesFirstInternal(curr, next, carry)
         bmInv = 1.0 / math.sqrt(bmSq)
     end
 
-    local fmSq = xFore * xFore
+    local fmSq <const> = xFore * xFore
         + yFore * yFore
         + zFore * zFore
     local fmInv = 0.0
@@ -408,23 +408,23 @@ function Knot3.smoothHandlesFirstInternal(curr, next, carry)
         fmInv = 1.0 / math.sqrt(fmSq)
     end
 
-    local xDir = carry.x + xRear * bmInv - xFore * fmInv
-    local yDir = carry.y + yRear * bmInv - yFore * fmInv
-    local zDir = carry.z + zRear * bmInv - zFore * fmInv
+    local xDir <const> = carry.x + xRear * bmInv - xFore * fmInv
+    local yDir <const> = carry.y + yRear * bmInv - yFore * fmInv
+    local zDir <const> = carry.z + zRear * bmInv - zFore * fmInv
 
     local rescl = 0.0
-    local dmSq = xDir * xDir
+    local dmSq <const> = xDir * xDir
         + yDir * yDir
         + zDir * zDir
     if dmSq > 0.0 then
         rescl = 1.0 / (3.0 * math.sqrt(dmSq))
     end
 
-    local xCarry = xDir * rescl
-    local yCarry = yDir * rescl
-    local zCarry = zDir * rescl
+    local xCarry <const> = xDir * rescl
+    local yCarry <const> = yDir * rescl
+    local zCarry <const> = zDir * rescl
 
-    local fMag = fmSq * fmInv
+    local fMag <const> = fmSq * fmInv
     curr.fh = Vec3.new(
         coCurr.x - fMag * xCarry,
         coCurr.y - fMag * yCarry,
@@ -442,18 +442,18 @@ end
 ---@param carry Vec3 temporary vector
 ---@return Vec3
 function Knot3.smoothHandlesLastInternal(prev, curr, carry)
-    local coCurr = curr.co
-    local coPrev = prev.co
+    local coCurr <const> = curr.co
+    local coPrev <const> = prev.co
 
-    local xFore = -coCurr.x
-    local yFore = -coCurr.y
-    local zFore = -coCurr.z
+    local xFore <const> = -coCurr.x
+    local yFore <const> = -coCurr.y
+    local zFore <const> = -coCurr.z
 
-    local xRear = coPrev.x + xFore
-    local yRear = coPrev.y + yFore
-    local zRear = coPrev.z + zFore
+    local xRear <const> = coPrev.x + xFore
+    local yRear <const> = coPrev.y + yFore
+    local zRear <const> = coPrev.z + zFore
 
-    local bmSq = xRear * xRear
+    local bmSq <const> = xRear * xRear
         + yRear * yRear
         + zRear * zRear
     local bmInv = 0.0
@@ -461,7 +461,7 @@ function Knot3.smoothHandlesLastInternal(prev, curr, carry)
         bmInv = 1.0 / math.sqrt(bmSq)
     end
 
-    local fmSq = xFore * xFore
+    local fmSq <const> = xFore * xFore
         + yFore * yFore
         + zFore * zFore
     local fmInv = 0.0
@@ -469,23 +469,23 @@ function Knot3.smoothHandlesLastInternal(prev, curr, carry)
         fmInv = 1.0 / math.sqrt(fmSq)
     end
 
-    local xDir = carry.x + xRear * bmInv - xFore * fmInv
-    local yDir = carry.y + yRear * bmInv - yFore * fmInv
-    local zDir = carry.z + zRear * bmInv - zFore * fmInv
+    local xDir <const> = carry.x + xRear * bmInv - xFore * fmInv
+    local yDir <const> = carry.y + yRear * bmInv - yFore * fmInv
+    local zDir <const> = carry.z + zRear * bmInv - zFore * fmInv
 
     local rescl = 0.0
-    local dmSq = xDir * xDir
+    local dmSq <const> = xDir * xDir
         + yDir * yDir
         + zDir * zDir
     if dmSq > 0.0 then
         rescl = 1.0 / (3.0 * math.sqrt(dmSq))
     end
 
-    local xCarry = xDir * rescl
-    local yCarry = yDir * rescl
-    local zCarry = zDir * rescl
+    local xCarry <const> = xDir * rescl
+    local yCarry <const> = yDir * rescl
+    local zCarry <const> = zDir * rescl
 
-    local bMag = bmSq * bmInv
+    local bMag <const> = bmSq * bmInv
     curr.rh = Vec3.new(
         coCurr.x + bMag * xCarry,
         coCurr.y + bMag * yCarry,

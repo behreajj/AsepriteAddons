@@ -53,7 +53,7 @@ function Mat4.new(
     m10, m11, m12, m13,
     m20, m21, m22, m23,
     m30, m31, m32, m33)
-    local inst = setmetatable({}, Mat4)
+    local inst <const> = setmetatable({}, Mat4)
 
     inst.m00 = m00 or 1.0
     inst.m01 = m01 or 0.0
@@ -149,15 +149,15 @@ function Mat4.camera(
 
     -- Optional args for reference up.
     -- Default to z-up.
-    local xrv = xRef or 0.0
-    local yrv = yRef or 0.0
-    local zrv = zRef or 1.0
+    local xrv <const> = xRef or 0.0
+    local yrv <const> = yRef or 0.0
+    local zrv <const> = zRef or 1.0
 
     -- Optional args for focus.
     -- Default to origin.
-    local xfv = xFocus or 0.0
-    local yfv = yFocus or 0.0
-    local zfv = zFocus or 0.0
+    local xfv <const> = xFocus or 0.0
+    local yfv <const> = yFocus or 0.0
+    local zfv <const> = zFocus or 0.0
 
     -- Find k by subtracting
     -- location from focus.
@@ -166,17 +166,17 @@ function Mat4.camera(
     local kz = zLoc - zfv
 
     -- Normalize k.
-    local kmSq = kx * kx + ky * ky + kz * kz
+    local kmSq <const> = kx * kx + ky * ky + kz * kz
     if kmSq ~= 0.0 then
-        local kmInv = 1.0 / math.sqrt(kmSq)
+        local kmInv <const> = 1.0 / math.sqrt(kmSq)
         kx = kx * kmInv
         ky = ky * kmInv
         kz = kz * kmInv
     end
 
     -- Check for parallel forward and up.
-    local dotp = kx * xrv + ky * yrv + kz * zrv
-    local tol = 0.999999
+    local dotp <const> = kx * xrv + ky * yrv + kz * zrv
+    local tol <const> = 0.999999
     if dotp < -tol or dotp > tol then
         return Mat4.fromTranslation(xLoc, yLoc, zLoc)
     end
@@ -196,9 +196,9 @@ function Mat4.camera(
         iz = kx * yrv - ky * xrv
 
         -- Normalize i.
-        local imSq = ix * ix + iy * iy + iz * iz
+        local imSq <const> = ix * ix + iy * iy + iz * iz
         if imSq ~= 0.0 then
-            local imInv = 1.0 / math.sqrt(imSq)
+            local imInv <const> = 1.0 / math.sqrt(imSq)
             ix = ix * imInv
             iy = iy * imInv
             iz = iz * imInv
@@ -210,9 +210,9 @@ function Mat4.camera(
         jz = ix * ky - iy * kx
 
         -- Normalize j.
-        local jmSq = jx * jx + jy * jy + jz * jz
+        local jmSq <const> = jx * jx + jy * jy + jz * jz
         if jmSq ~= 0.0 then
-            local jmInv = 1.0 / math.sqrt(jmSq)
+            local jmInv <const> = 1.0 / math.sqrt(jmSq)
             jx = jx * jmInv
             jy = jy * jmInv
             jz = jz * jmInv
@@ -224,9 +224,9 @@ function Mat4.camera(
         iz = xrv * ky - yrv * kx
 
         -- Normalize i.
-        local imSq = ix * ix + iy * iy + iz * iz
+        local imSq <const> = ix * ix + iy * iy + iz * iz
         if imSq ~= 0.0 then
-            local imInv = 1.0 / math.sqrt(imSq)
+            local imInv <const> = 1.0 / math.sqrt(imSq)
             ix = ix * imInv
             iy = iy * imInv
             iz = iz * imInv
@@ -238,9 +238,9 @@ function Mat4.camera(
         jz = kx * iy - ky * ix
 
         -- Normalize j.
-        local jmSq = jx * jx + jy * jy + jz * jz
+        local jmSq <const> = jx * jx + jy * jy + jz * jz
         if jmSq ~= 0.0 then
-            local jmInv = 1.0 / math.sqrt(jmSq)
+            local jmInv <const> = 1.0 / math.sqrt(jmSq)
             jx = jx * jmInv
             jy = jy * jmInv
             jz = jz * jmInv
@@ -400,12 +400,12 @@ end
 ---@param az number axis z
 ---@return Mat4
 function Mat4.fromRotation(radians, ax, ay, az)
-    local xv = ax or 0.0
-    local yv = ay or 0.0
-    local zv = az or 0.0
-    local mSq = xv * xv + yv * yv + zv * zv
+    local xv <const> = ax or 0.0
+    local yv <const> = ay or 0.0
+    local zv <const> = az or 0.0
+    local mSq <const> = xv * xv + yv * yv + zv * zv
     if mSq ~= 0.0 then
-        local mInv = 1.0 / math.sqrt(mSq)
+        local mInv <const> = 1.0 / math.sqrt(mSq)
         return Mat4.fromRotInternal(
             math.cos(radians),
             math.sin(radians),
@@ -426,14 +426,14 @@ end
 ---@param az number axis z
 ---@return Mat4
 function Mat4.fromRotInternal(cosa, sina, ax, ay, az)
-    local d = 1.0 - cosa
-    local x = ax * d
-    local y = ay * d
-    local z = az * d
+    local d <const> = 1.0 - cosa
+    local x <const> = ax * d
+    local y <const> = ay * d
+    local z <const> = az * d
 
-    local axay = x * ay
-    local axaz = x * az
-    local ayaz = y * az
+    local axay <const> = x * ay
+    local axaz <const> = x * az
+    local ayaz <const> = y * az
 
     return Mat4.new(
         cosa + x * ax, axay - sina * az, axaz + sina * ay, 0.0,
@@ -476,7 +476,7 @@ end
 ---@param z number translation z
 ---@return Mat4
 function Mat4.fromTranslation(x, y, z)
-    local zv = z or 0.0
+    local zv <const> = z or 0.0
     return Mat4.new(
         1.0, 0.0, 0.0, x,
         0.0, 1.0, 0.0, y,
@@ -489,20 +489,20 @@ end
 ---@param a Mat4 matrix
 ---@return Mat4
 function Mat4.inverse(a)
-    local b00 = a.m00 * a.m11 - a.m01 * a.m10
-    local b01 = a.m00 * a.m12 - a.m02 * a.m10
-    local b02 = a.m00 * a.m13 - a.m03 * a.m10
-    local b03 = a.m01 * a.m12 - a.m02 * a.m11
-    local b04 = a.m01 * a.m13 - a.m03 * a.m11
-    local b05 = a.m02 * a.m13 - a.m03 * a.m12
-    local b06 = a.m20 * a.m31 - a.m21 * a.m30
-    local b07 = a.m20 * a.m32 - a.m22 * a.m30
-    local b08 = a.m20 * a.m33 - a.m23 * a.m30
-    local b09 = a.m21 * a.m32 - a.m22 * a.m31
-    local b10 = a.m21 * a.m33 - a.m23 * a.m31
-    local b11 = a.m22 * a.m33 - a.m23 * a.m32
+    local b00 <const> = a.m00 * a.m11 - a.m01 * a.m10
+    local b01 <const> = a.m00 * a.m12 - a.m02 * a.m10
+    local b02 <const> = a.m00 * a.m13 - a.m03 * a.m10
+    local b03 <const> = a.m01 * a.m12 - a.m02 * a.m11
+    local b04 <const> = a.m01 * a.m13 - a.m03 * a.m11
+    local b05 <const> = a.m02 * a.m13 - a.m03 * a.m12
+    local b06 <const> = a.m20 * a.m31 - a.m21 * a.m30
+    local b07 <const> = a.m20 * a.m32 - a.m22 * a.m30
+    local b08 <const> = a.m20 * a.m33 - a.m23 * a.m30
+    local b09 <const> = a.m21 * a.m32 - a.m22 * a.m31
+    local b10 <const> = a.m21 * a.m33 - a.m23 * a.m31
+    local b11 <const> = a.m22 * a.m33 - a.m23 * a.m32
 
-    local det = b00 * b11 - b01 * b10 +
+    local det <const> = b00 * b11 - b01 * b10 +
         b02 * b09 + b03 * b08 -
         b04 * b07 + b05 * b06
     if det ~= 0.0 then
@@ -579,9 +579,9 @@ function Mat4.orthographic(left, right, bottom, top, near, far)
     local fVal = 1000.0
     if far and far ~= 0.0 then fVal = far end
 
-    local w = right - left
-    local h = top - bottom
-    local d = fVal - nVal
+    local w <const> = right - left
+    local h <const> = top - bottom
+    local d <const> = fVal - nVal
 
     local wInv = 1.0
     local hInv = 1.0
@@ -617,9 +617,9 @@ function Mat4.perspective(fov, aspect, near, far)
     local fVal = 1000.0
     if far and far ~= 0.0 then fVal = far end
 
-    local tanFov = math.tan(fovVal * 0.5)
-    local cotFov = 1.0 / tanFov
-    local d = fVal - nVal
+    local tanFov <const> = math.tan(fovVal * 0.5)
+    local cotFov <const> = 1.0 / tanFov
+    local d <const> = fVal - nVal
     local dInv = 1.0
     if d ~= 0.0 then dInv = 1.0 / d end
 
@@ -647,16 +647,16 @@ end
 ---@param a Mat4 matrix
 ---@return string
 function Mat4.toJson(a)
-    local m0 = string.format(
+    local m0 <const> = string.format(
         "{\"m00\":%.4f,\"m01\":%.4f,\"m02\":%.4f,\"m03\":%.4f,",
         a.m00, a.m01, a.m02, a.m03)
-    local m1 = string.format(
+    local m1 <const> = string.format(
         "\"m10\":%.4f,\"m11\":%.4f,\"m12\":%.4f,\"m13\":%.4f,",
         a.m10, a.m11, a.m12, a.m13)
-    local m2 = string.format(
+    local m2 <const> = string.format(
         "\"m20\":%.4f,\"m21\":%.4f,\"m22\":%.4f,\"m23\":%.4f,",
         a.m20, a.m21, a.m22, a.m23)
-    local m3 = string.format(
+    local m3 <const> = string.format(
         "\"m30\":%.4f,\"m31\":%.4f,\"m32\":%.4f,\"m33\":%.4f}",
         a.m30, a.m31, a.m32, a.m33)
     return m0 .. m1 .. m2 .. m3
@@ -669,16 +669,16 @@ end
 ---@param a Mat4 matrix
 ---@return string
 function Mat4.toStringCol(a)
-    local m0 = string.format(
+    local m0 <const> = string.format(
         "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
         a.m00, a.m01, a.m02, a.m03)
-    local m1 = string.format(
+    local m1 <const> = string.format(
         "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
         a.m10, a.m11, a.m12, a.m13)
-    local m2 = string.format(
+    local m2 <const> = string.format(
         "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
         a.m20, a.m21, a.m22, a.m23)
-    local m3 = string.format(
+    local m3 <const> = string.format(
         "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
         a.m30, a.m31, a.m32, a.m33)
     return m0 .. m1 .. m2 .. m3

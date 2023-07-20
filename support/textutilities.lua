@@ -144,22 +144,22 @@ TextUtilities.GLYPH_LUT = {
 ---@param gh integer glyph height
 function TextUtilities.drawGlyph(
     image, glyph, hex, x, y, gw, gh)
-    local lenn1 = gw * gh - 1
-    local blend = AseUtilities.blendRgba
-    local glMat = glyph.matrix
-    local glDrop = glyph.drop
-    local ypDrop = y + glDrop
+    local lenn1 <const> = gw * gh - 1
+    local blend <const> = AseUtilities.blendRgba
+    local glMat <const> = glyph.matrix
+    local glDrop <const> = glyph.drop
+    local ypDrop <const> = y + glDrop
 
     local i = -1
     while i < lenn1 do
         i = i + 1
-        local shift = lenn1 - i
-        local mark = (glMat >> shift) & 1
+        local shift <const> = lenn1 - i
+        local mark <const> = (glMat >> shift) & 1
         if mark ~= 0 then
-            local xMark = x + (i % gw)
-            local yMark = ypDrop + (i // gw)
-            local srcHex = image:getPixel(xMark, yMark)
-            local trgHex = blend(srcHex, hex)
+            local xMark <const> = x + (i % gw)
+            local yMark <const> = ypDrop + (i // gw)
+            local srcHex <const> = image:getPixel(xMark, yMark)
+            local trgHex <const> = blend(srcHex, hex)
             image:drawPixel(xMark, yMark, trgHex)
         end
     end
@@ -188,32 +188,32 @@ function TextUtilities.drawGlyphNearest(
             x, y, gw, gh)
     end
 
-    local lenTrgn1 = dw * dh - 1
-    local lenSrcn1 = gw * gh - 1
-    local tx = gw / dw
-    local ty = gh / dh
-    local floor = math.floor
-    local blend = AseUtilities.blendRgba
-    local glMat = glyph.matrix
-    local glDrop = glyph.drop
-    local ypDrop = floor(y + glDrop * (dh / gh))
+    local lenTrgn1 <const> = dw * dh - 1
+    local lenSrcn1 <const> = gw * gh - 1
+    local tx <const> = gw / dw
+    local ty <const> = gh / dh
+    local floor <const> = math.floor
+    local blend <const> = AseUtilities.blendRgba
+    local glMat <const> = glyph.matrix
+    local glDrop <const> = glyph.drop
+    local ypDrop <const> = floor(y + glDrop * (dh / gh))
     local i = -1
     while i < lenTrgn1 do
         i = i + 1
-        local xTrg = i % dw
-        local yTrg = i // dw
+        local xTrg <const> = i % dw
+        local yTrg <const> = i // dw
 
-        local xSrc = floor(xTrg * tx)
-        local ySrc = floor(yTrg * ty)
-        local idxSrc = ySrc * gw + xSrc
+        local xSrc <const> = floor(xTrg * tx)
+        local ySrc <const> = floor(yTrg * ty)
+        local idxSrc <const> = ySrc * gw + xSrc
 
-        local shift = lenSrcn1 - idxSrc
-        local mark = (glMat >> shift) & 1
+        local shift <const> = lenSrcn1 - idxSrc
+        local mark <const> = (glMat >> shift) & 1
         if mark ~= 0 then
-            local xMark = x + xTrg
-            local yMark = ypDrop + yTrg
-            local srcHex = image:getPixel(xMark, yMark)
-            local trgHex = blend(srcHex, hex)
+            local xMark <const> = x + xTrg
+            local yMark <const> = ypDrop + yTrg
+            local srcHex <const> = image:getPixel(xMark, yMark)
+            local trgHex <const> = blend(srcHex, hex)
             image:drawPixel(xMark, yMark, trgHex)
         end
     end
@@ -236,22 +236,22 @@ function TextUtilities.drawString(
     lut, image, chars, hex, x, y, gw, gh, scale)
     local writeChar = x
     local writeLine = y
-    local charLen = #chars
-    local dw = gw * scale
-    local dh = gh * scale
-    local scale2 = scale + scale
-    local drawGlyph = TextUtilities.drawGlyphNearest
-    local defGlyph = lut[' ']
+    local charLen <const> = #chars
+    local dw <const> = gw * scale
+    local dh <const> = gh * scale
+    local scale2 <const> = scale + scale
+    local drawGlyph <const> = TextUtilities.drawGlyphNearest
+    local defGlyph <const> = lut[' ']
     local i = 0
     while i < charLen do
         i = i + 1
-        local ch = chars[i]
+        local ch <const> = chars[i]
         -- print(ch)
         if ch == '\n' then
             writeLine = writeLine + dh + scale2
             writeChar = x
         else
-            local glyph = lut[ch] or defGlyph
+            local glyph <const> = lut[ch] or defGlyph
             -- print(glyph)
 
             drawGlyph(
@@ -275,28 +275,30 @@ end
 ---@return string[][]
 function TextUtilities.lineWrapStringToChars(srcStr, limit)
     if srcStr and #srcStr > 0 then
-        local insert = table.insert
-        local remove = table.remove
-        local trimLeft = Utilities.trimCharsInitial
-        local trimRight = Utilities.trimCharsFinal
+        local insert <const> = table.insert
+        local remove <const> = table.remove
+        local trimLeft <const> = Utilities.trimCharsInitial
+        local trimRight <const> = Utilities.trimCharsFinal
 
         local valLimit = limit or 80
         if valLimit < 16 then valLimit = 16 end
         if valLimit > 120 then valLimit = 120 end
 
-        local charTally = 0
-        local result = {}
+        ---@type string[][]
+        local result <const> = {}
+        ---@type string[]
         local currLine = {}
+        local charTally = 0
         local lastSpace = 0
 
-        local flatChars = Utilities.stringToCharTable(srcStr)
-        local flatCharLen = #flatChars
+        local flatChars <const> = Utilities.stringToCharTable(srcStr)
+        local flatCharLen <const> = #flatChars
         local prevChar = flatChars[flatCharLen]
 
         local i = 0
         while i < flatCharLen do
             i = i + 1
-            local currChar = flatChars[i]
+            local currChar <const> = flatChars[i]
             if currChar == '\n' or currChar == '\r' then
                 if #currLine < 1 then currLine = { '' } end
                 insert(result, currLine)
@@ -305,7 +307,7 @@ function TextUtilities.lineWrapStringToChars(srcStr, limit)
                 lastSpace = 0
             else
                 insert(currLine, currChar)
-                local currLnLen = #currLine
+                local currLnLen <const> = #currLine
 
                 if currChar == ' '
                     or currChar == '\t' then
@@ -324,7 +326,8 @@ function TextUtilities.lineWrapStringToChars(srcStr, limit)
                     -- The greater than half the char length condition
                     -- is to handle problematic words like
                     -- "supercalifragilisticexpialidocious".
-                    local excess = {}
+                    ---@type string[]
+                    local excess <const> = {}
                     if lastSpace > 0 and lastSpace > currLnLen // 2 then
                         local j = currLnLen + 1
                         while j > lastSpace do
@@ -346,7 +349,7 @@ function TextUtilities.lineWrapStringToChars(srcStr, limit)
                     lastSpace = 0
 
                     -- Consume excess.
-                    local excLen = #excess
+                    local excLen <const> = #excess
                     while charTally < excLen do
                         charTally = charTally + 1
                         insert(currLine, excess[charTally])
