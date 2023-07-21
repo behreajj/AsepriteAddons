@@ -1,11 +1,11 @@
 dofile("../../support/aseutilities.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE" }
-local edgeTypes = { "CLAMP", "OMIT", "WRAP" }
-local interTypes = { "HORIZONTAL", "VERTICAL" }
-local waveTypes = { "BILINEAR", "GERSTNER", "INTERLACED", "RADIAL" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local edgeTypes <const> = { "CLAMP", "OMIT", "WRAP" }
+local interTypes <const> = { "HORIZONTAL", "VERTICAL" }
+local waveTypes <const> = { "BILINEAR", "GERSTNER", "INTERLACED", "RADIAL" }
 
-local defaults = {
+local defaults <const> = {
     target = "ACTIVE",
     frameCount = 8,
     fps = 24,
@@ -75,7 +75,7 @@ local function wrapMod(x, y, img)
     return img:getPixel(x % img.width, y % img.height)
 end
 
-local dlg = Dialog { title = "Wave" }
+local dlg <const> = Dialog { title = "Wave" }
 
 dlg:combobox {
     id = "target",
@@ -83,9 +83,9 @@ dlg:combobox {
     option = defaults.target,
     options = targets,
     onchange = function()
-        local args = dlg.data
-        local target = args.target --[[@as string]]
-        local isActive = target == "ACTIVE"
+        local args <const> = dlg.data
+        local target <const> = args.target --[[@as string]]
+        local isActive <const> = target == "ACTIVE"
         dlg:modify { id = "frameCount", visible = isActive }
         dlg:modify { id = "fps", visible = isActive }
     end
@@ -130,14 +130,14 @@ dlg:combobox {
     option = defaults.waveType,
     options = waveTypes,
     onchange = function()
-        local args = dlg.data
-        local waveType = args.waveType --[[@as string]]
-        local interType = args.interType --[[@as string]]
+        local args <const> = dlg.data
+        local waveType <const> = args.waveType --[[@as string]]
+        local interType <const> = args.interType --[[@as string]]
 
-        local isInter = waveType == "INTERLACED"
-        local isBilinear = waveType == "BILINEAR"
-        local isRadial = waveType == "RADIAL"
-        local isGerst = waveType == "GERSTNER"
+        local isInter <const> = waveType == "INTERLACED"
+        local isBilinear <const> = waveType == "BILINEAR"
+        local isRadial <const> = waveType == "RADIAL"
+        local isGerst <const> = waveType == "GERSTNER"
 
         dlg:modify { id = "spaceScalar", visible = not isGerst }
         dlg:modify { id = "timeScalar", visible = not isGerst }
@@ -164,8 +164,8 @@ dlg:combobox {
         dlg:modify { id = "gerstSpeed", visible = isGerst }
         dlg:modify { id = "gerstAngle", visible = isGerst }
 
-        local isHoriz = interType == "HORIZONTAL"
-        local isVert = interType == "VERTICAL"
+        local isHoriz <const> = interType == "HORIZONTAL"
+        local isVert <const> = interType == "VERTICAL"
 
         dlg:modify {
             id = "xDisplaceOrig",
@@ -276,11 +276,11 @@ dlg:combobox {
     options = interTypes,
     visible = defaults.waveType == "INTERLACED",
     onchange = function()
-        local args = dlg.data
-        local interType = args.interType --[[@as string]]
+        local args <const> = dlg.data
+        local interType <const> = args.interType --[[@as string]]
 
-        local isHoriz = interType == "HORIZONTAL"
-        local isVert = interType == "VERTICAL"
+        local isHoriz <const> = interType == "HORIZONTAL"
+        local isVert <const> = interType == "VERTICAL"
         dlg:modify { id = "xDisplaceOrig", visible = isHoriz }
         dlg:modify { id = "xDisplaceDest", visible = isHoriz }
         dlg:modify { id = "yDisplaceOrig", visible = isVert }
@@ -462,15 +462,15 @@ dlg:button {
     focus = false,
     onclick = function()
         -- Begin timing the function elapsed.
-        local args = dlg.data
-        local printElapsed = args.printElapsed --[[@as boolean]]
+        local args <const> = dlg.data
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         local startTime = 0
         local endTime = 0
         local elapsed = 0
         if printElapsed then startTime = os.clock() end
 
         -- Early returns.
-        local srcSprite = app.site.sprite
+        local srcSprite <const> = app.site.sprite
         if not srcSprite then
             app.alert {
                 title = "Error",
@@ -479,8 +479,8 @@ dlg:button {
             return
         end
 
-        local srcSpec = srcSprite.spec
-        local colorMode = srcSpec.colorMode
+        local srcSpec <const> = srcSprite.spec
+        local colorMode <const> = srcSpec.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -491,20 +491,21 @@ dlg:button {
 
         -- Cache palette, preserve fore and background.
         AseUtilities.preserveForeBack()
-        local hexArr = AseUtilities.asePalettesToHexArr(
+        local hexArr <const> = AseUtilities.asePalettesToHexArr(
             srcSprite.palettes)
 
-        local target = args.target or defaults.target --[[@as string]]
-        local srcFrames = srcSprite.frames
-        local lenSrcFrames = #srcFrames
-        local isActive = target == "ACTIVE"
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
+        local srcFrames <const> = srcSprite.frames
+        local lenSrcFrames <const> = #srcFrames
+        local isActive <const> = target == "ACTIVE"
 
-        local selFrames = Utilities.flatArr2(
+        local selFrames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(srcSprite, target))
 
-        local timeOffsetDeg = defaults.timeOffset
-        local timeOffset = timeOffsetDeg * 0.017453292519943
-        local timeScalar = args.timeScalar
+        local timeOffsetDeg <const> = defaults.timeOffset
+        local timeOffset <const> = timeOffsetDeg * 0.017453292519943
+        local timeScalar <const> = args.timeScalar
             or defaults.timeScalar --[[@as integer]]
 
         -- Flatten sprite to images, associate with a factor
@@ -513,13 +514,14 @@ dlg:button {
         -- TODO: Destructure this to an array of
         -- durations, images, factors, thetas?
         ---@type {duration: number, image: Image, fac: number, theta: number}[]
-        local packets = {}
+        local packets <const> = {}
         if isActive then
-            local frameCount = args.frameCount
+            local frameCount <const> = args.frameCount
                 or defaults.frameCount --[[@as integer]]
-            local fps = args.fps or defaults.fps --[[@as integer]]
+            local fps <const> = args.fps
+                or defaults.fps --[[@as integer]]
 
-            local selImg = Image(srcSpec)
+            local selImg <const> = Image(srcSpec)
             selImg:drawSprite(srcSprite, selFrames[1])
 
             local frameToFac = 0.0
@@ -537,9 +539,9 @@ dlg:button {
 
             local j = 0
             while j < frameCount do
-                local fac = j * frameToFac
-                local theta = timeOffset + j * frameToTheta
-                local packet = {
+                local fac <const> = j * frameToFac
+                local theta <const> = timeOffset + j * frameToTheta
+                local packet <const> = {
                     duration = duration,
                     image = selImg,
                     fac = fac,
@@ -555,19 +557,19 @@ dlg:button {
             -- range is contiguous (1,2,3,4) or not (1,5,3,10).
 
             ---@type number[]
-            local timeStamps = {}
+            local timeStamps <const> = {}
             local totalDuration = 0.0
             local i = 0
             while i < lenSrcFrames do
                 i = i + 1
-                local srcFrame = srcFrames[i]
-                local duration = srcFrame.duration
+                local srcFrame <const> = srcFrames[i]
+                local duration <const> = srcFrame.duration
                 timeStamps[i] = totalDuration
                 totalDuration = totalDuration + duration
             end
 
             local timeToFac = 0.0
-            local finalDuration = timeStamps[lenSrcFrames]
+            local finalDuration <const> = timeStamps[lenSrcFrames]
             if finalDuration and finalDuration ~= 0.0 then
                 timeToFac = 1.0 / finalDuration
             end
@@ -577,22 +579,22 @@ dlg:button {
                 timeToTheta = timeScalar * 6.2831853071796 / totalDuration
             end
 
-            local lenSelFrames = #selFrames
+            local lenSelFrames <const> = #selFrames
             local j = 0
             while j < lenSelFrames do
                 j = j + 1
-                local selFrameIdx = selFrames[j]
-                local selFrameObj = srcFrames[selFrameIdx]
-                local selDuration = selFrameObj.duration
+                local selFrameIdx <const> = selFrames[j]
+                local selFrameObj <const> = srcFrames[selFrameIdx]
+                local selDuration <const> = selFrameObj.duration
 
-                local selImg = Image(srcSpec)
+                local selImg <const> = Image(srcSpec)
                 selImg:drawSprite(srcSprite, selFrameIdx)
 
-                local selTime = timeStamps[selFrameIdx]
-                local fac = selTime * timeToFac
-                local theta = timeOffset + selTime * timeToTheta
+                local selTime <const> = timeStamps[selFrameIdx]
+                local fac <const> = selTime * timeToFac
+                local theta <const> = timeOffset + selTime * timeToTheta
 
-                local packet = {
+                local packet <const> = {
                     duration = selDuration,
                     image = selImg,
                     fac = fac,
@@ -603,16 +605,16 @@ dlg:button {
         end
 
         -- Cache methods.
-        local round = Utilities.round
-        local abs = math.abs
-        local cos = math.cos
-        local sin = math.sin
-        local max = math.max
-        local min = math.min
-        local sqrt = math.sqrt
-        local trimImage = AseUtilities.trimImageAlpha
-        local strfmt = string.format
-        local transact = app.transaction
+        local abs <const> = math.abs
+        local cos <const> = math.cos
+        local sin <const> = math.sin
+        local max <const> = math.max
+        local min <const> = math.min
+        local sqrt <const> = math.sqrt
+        local strfmt <const> = string.format
+        local transact <const> = app.transaction
+        local round <const> = Utilities.round
+        local trimImage <const> = AseUtilities.trimImageAlpha
 
         -- Determine how to wrap out of bounds pixels.
         local edgeType = args.edgeType
@@ -624,27 +626,27 @@ dlg:button {
             wrapper = wrapOmit
         end
 
-        local spaceScalar = args.spaceScalar
+        local spaceScalar <const> = args.spaceScalar
             or defaults.spaceScalar --[[@as integer]]
-        local waveType = args.waveType
+        local waveType <const> = args.waveType
             or defaults.waveType --[[@as string]]
 
-        local srcWidth = srcSpec.width
-        local srcHeight = srcSpec.height
-        local wn1 = srcWidth - 1
-        local hn1 = srcHeight - 1
+        local srcWidth <const> = srcSpec.width
+        local srcHeight <const> = srcSpec.height
+        local wn1 <const> = srcWidth - 1
+        local hn1 <const> = srcHeight - 1
 
         ---@type fun(x: integer, y: integer, angle: number, t: number): number, number
         local eval = nil
 
         -- Determine which wave function the user wants.
         if waveType == "BILINEAR" then
-            local xCenter = args.xCenter
+            local xCenter <const> = args.xCenter
                 or defaults.xCenter --[[@as integer]]
-            local yCenter = args.yCenter
+            local yCenter <const> = args.yCenter
                 or defaults.yCenter --[[@as integer]]
-            local pxxCenter = xCenter * 0.01 * srcWidth
-            local pxyCenter = yCenter * 0.01 * srcHeight
+            local pxxCenter <const> = xCenter * 0.01 * srcWidth
+            local pxyCenter <const> = yCenter * 0.01 * srcHeight
 
             local maxChebyshev = 0.0
             if xCenter <= 0 or yCenter <= 0
@@ -665,39 +667,41 @@ dlg:button {
             xBaseSustain = xBaseSustain * 0.01
 
             -- This was tested to make sure it tiles correctly.
-            local xDisplaceOrig = args.xDisplaceOrig
+            local xDisplaceOrig <const> = args.xDisplaceOrig
                 or defaults.xDisplaceOrig --[[@as integer]]
-            local xDisplaceDest = args.xDisplaceDest
+            local xDisplaceDest <const> = args.xDisplaceDest
                 or defaults.xDisplaceDest --[[@as integer]]
-            local yDisplaceOrig = args.yDisplaceOrig
+            local yDisplaceOrig <const> = args.yDisplaceOrig
                 or defaults.yDisplaceOrig --[[@as integer]]
-            local yDisplaceDest = args.yDisplaceDest
+            local yDisplaceDest <const> = args.yDisplaceDest
                 or defaults.yDisplaceDest --[[@as integer]]
 
-            local pxxDisplaceOrig = srcWidth * xDisplaceOrig * 0.005
-            local pxxDisplaceDest = srcWidth * xDisplaceDest * 0.005
-            local pxyDisplaceOrig = srcHeight * yDisplaceOrig * 0.005
-            local pxyDisplaceDest = srcHeight * yDisplaceDest * 0.005
+            local pxxDisplaceOrig <const> = srcWidth * xDisplaceOrig * 0.005
+            local pxxDisplaceDest <const> = srcWidth * xDisplaceDest * 0.005
+            local pxyDisplaceOrig <const> = srcHeight * yDisplaceOrig * 0.005
+            local pxyDisplaceDest <const> = srcHeight * yDisplaceDest * 0.005
 
-            local xToTheta = spaceScalar * 6.2831853071796 / srcWidth
-            local yToTheta = spaceScalar * 6.2831853071796 / srcHeight
+            local xToTheta <const> = spaceScalar * 6.2831853071796 / srcWidth
+            local yToTheta <const> = spaceScalar * 6.2831853071796 / srcHeight
 
             eval = function(x, y, angle, t)
-                local dx = x - pxxCenter
-                local dy = pxyCenter - y
+                local dx <const> = x - pxxCenter
+                local dy <const> = pxyCenter - y
                 local fac = toFac * max(abs(dx), abs(dy))
                 fac = min(max(fac, 0.0), 1.0)
-                local xSst = (1.0 - fac) + fac * xBaseSustain
-                local ySst = (1.0 - fac) + fac * yBaseSustain
+                local xSst <const> = (1.0 - fac) + fac * xBaseSustain
+                local ySst <const> = (1.0 - fac) + fac * yBaseSustain
 
-                local u = 1.0 - t
-                local xDsplScl = u * pxxDisplaceOrig + t * pxxDisplaceDest
-                local yDsplScl = u * pxyDisplaceOrig + t * pxyDisplaceDest
+                local u <const> = 1.0 - t
+                local xDsplScl <const> = u * pxxDisplaceOrig
+                    + t * pxxDisplaceDest
+                local yDsplScl <const> = u * pxyDisplaceOrig
+                    + t * pxyDisplaceDest
 
-                local xTheta = angle - x * xToTheta
-                local yTheta = angle + y * yToTheta
-                local xWarp = xDsplScl * xSst * sin(yTheta)
-                local yWarp = yDsplScl * ySst * cos(xTheta)
+                local xTheta <const> = angle - x * xToTheta
+                local yTheta <const> = angle + y * yToTheta
+                local xWarp <const> = xDsplScl * xSst * sin(yTheta)
+                local yWarp <const> = yDsplScl * ySst * cos(xTheta)
                 return x + xWarp, y + yWarp
             end
         elseif waveType == "GERSTNER" then
@@ -706,26 +710,26 @@ dlg:button {
             -- https://en.wikipedia.org/wiki/Trochoidal_wave
             -- https://www.shadertoy.com/view/7djGRR
 
-            local gerstItrs = args.gerstItrs
+            local gerstItrs <const> = args.gerstItrs
                 or defaults.gerstItrs --[[@as integer]]
-            local gerstWaveLen = args.gerstWaveLen
+            local gerstWaveLen <const> = args.gerstWaveLen
                 or defaults.gerstWaveLen --[[@as number]]
-            local gerstSteep = args.gerstSteep
+            local gerstSteep <const> = args.gerstSteep
                 or defaults.gerstSteep --[[@as number]]
-            local gerstSpeed = args.gerstSpeed
+            local gerstSpeed <const> = args.gerstSpeed
                 or defaults.gerstSpeed --[[@as number]]
-            local gerstAngle = args.gerstAngle
+            local gerstAngle <const> = args.gerstAngle
                 or defaults.gerstAngle --[[@as integer]]
-            local gravity = defaults.gravity
+            local gravity <const> = defaults.gravity
 
             ---@type Vec2[]
-            local directions = {}
+            local directions <const> = {}
             ---@type number[]
-            local ks = {}
+            local ks <const> = {}
             ---@type number[]
-            local cs = {}
+            local cs <const> = {}
             ---@type number[]
-            local as = {}
+            local as <const> = {}
 
             -- Parameters per iteration. The first iteration
             -- is handled by the user, the rest are random.
@@ -746,38 +750,38 @@ dlg:button {
             -- Scale randomness by user input.
             --Add option for random seed input?
             local hToFac = 1.0 / gerstItrs
-            local minSteep = gerstSteep * 0.667
-            local maxSteep = gerstSteep * 1.5
-            local minWaveLen = gerstWaveLen * 0.5
-            local maxWaveLen = gerstWaveLen * 2.0
+            local minSteep <const> = gerstSteep * 0.667
+            local maxSteep <const> = gerstSteep * 1.5
+            local minWaveLen <const> = gerstWaveLen * 0.5
+            local maxWaveLen <const> = gerstWaveLen * 2.0
 
             local h = 1
             while h < gerstItrs do
-                local hFac = h * hToFac
+                local hFac <const> = h * hToFac
                 h = h + 1
 
-                local x = Utilities.gaussian()
-                local y = Utilities.gaussian()
-                local sqMag = x * x + y * y
+                local x <const> = Utilities.gaussian()
+                local y <const> = Utilities.gaussian()
+                local sqMag <const> = x * x + y * y
                 local xn = 0.0
                 local yn = 1.0
                 if sqMag > 0.0 then
-                    local invMag = 1.0 / sqrt(sqMag)
+                    local invMag <const> = 1.0 / sqrt(sqMag)
                     xn = x * invMag
                     yn = y * invMag
                 end
                 directions[h] = Vec2.new(xn, yn)
 
-                local waveLenFac = math.random()
+                local waveLenFac <const> = math.random()
                 local waveLenRnd = (1.0 - waveLenFac) * minWaveLen
                     + waveLenFac * maxWaveLen
                 waveLenRnd = (1.0 - hFac) * waveLenRnd
 
-                local k = 6.2831853071796 / waveLenRnd
+                local k <const> = 6.2831853071796 / waveLenRnd
                 ks[h] = k
                 cs[h] = sqrt(gravity / k)
 
-                local steepFac = math.random()
+                local steepFac <const> = math.random()
                 local steepRnd = (1.0 - steepFac) * minSteep
                     + steepFac * maxSteep
 
@@ -793,30 +797,30 @@ dlg:button {
                 --     waveLenRnd, steepRnd))
             end
 
-            local aspect = wn1 / hn1
-            local wInv = aspect / wn1
-            local hInv = 1.0 / hn1
-            local wn1Aspect = wn1 / aspect
+            local aspect <const> = wn1 / hn1
+            local wInv <const> = aspect / wn1
+            local hInv <const> = 1.0 / hn1
+            local wn1Aspect <const> = wn1 / aspect
 
             eval = function(x, y, angle, t)
-                local tSpeed = t * gerstSpeed
-                local xSgn = x * wInv * 2.0 - 1.0
-                local ySgn = y * hInv * 2.0 - 1.0
+                local tSpeed <const> = t * gerstSpeed
+                local xSgn <const> = x * wInv * 2.0 - 1.0
+                local ySgn <const> = y * hInv * 2.0 - 1.0
                 local xSum = xSgn
                 local ySum = ySgn
                 local i = 0
                 while i < gerstItrs do
                     i = i + 1
-                    local k = ks[i]
-                    local c = cs[i]
-                    local a = as[i]
-                    local d = directions[i]
-                    local dotcod = d.x * xSgn + d.y * ySgn
-                    local f = k * (dotcod - c * tSpeed)
+                    local k <const> = ks[i]
+                    local c <const> = cs[i]
+                    local a <const> = as[i]
+                    local d <const> = directions[i]
+                    local dotcod <const> = d.x * xSgn + d.y * ySgn
+                    local f <const> = k * (dotcod - c * tSpeed)
 
                     -- cos(a) == cos(-a), sin(a) ~= sin(-a),
                     -- so prefer latter to flip y axis.
-                    local asinf = a * sin(f)
+                    local asinf <const> = a * sin(f)
                     xSum = xSum + d.x * asinf
                     ySum = ySum - d.y * asinf
                 end
@@ -826,31 +830,31 @@ dlg:button {
         elseif waveType == "INTERLACED" then
             -- wn1 and hn1 work better for sprites with even width, height
             -- when converting to theta.
-            local interType = args.interType
+            local interType <const> = args.interType
                 or defaults.interType --[[@as string]]
-            local interOffOrig = args.interOffOrig
+            local interOffOrig <const> = args.interOffOrig
                 or defaults.interOffOrig --[[@as integer]]
-            local interOffDest = args.interOffDest
+            local interOffDest <const> = args.interOffDest
                 or defaults.interOffDest --[[@as integer]]
-            local skip = args.interSkip
+            local skip <const> = args.interSkip
                 or defaults.interSkip --[[@as integer]]
-            local pick = args.interPick
+            local pick <const> = args.interPick
                 or defaults.interPick --[[@as integer]]
 
             -- Pattern is sum of both on/off: e.g., 001110011100,
             -- pick 2 skip 3, is 5 total. Modulo all to repeat
             -- pattern, then check if lt pick.
-            local all = pick + skip
-            local lacRadOrig = 0.017453292519943 * interOffOrig
-            local lacRadDest = 0.017453292519943 * interOffDest
+            local all <const> = pick + skip
+            local lacRadOrig <const> = 0.017453292519943 * interOffOrig
+            local lacRadDest <const> = 0.017453292519943 * interOffDest
 
             if interType == "VERTICAL" then
-                local yDisplaceOrig = args.yDisplaceOrig
+                local yDisplaceOrig <const> = args.yDisplaceOrig
                     or defaults.yDisplaceOrig --[[@as integer]]
-                local yDisplaceDest = args.yDisplaceDest
+                local yDisplaceDest <const> = args.yDisplaceDest
                     or defaults.yDisplaceDest --[[@as integer]]
-                local pxyDisplaceOrig = srcWidth * yDisplaceOrig * 0.005
-                local pxyDisplaceDest = srcWidth * yDisplaceDest * 0.005
+                local pxyDisplaceOrig <const> = srcWidth * yDisplaceOrig * 0.005
+                local pxyDisplaceDest <const> = srcWidth * yDisplaceDest * 0.005
 
                 local xToTheta = spaceScalar * 6.2831853071796
                 if wn1 > 0 then
@@ -858,25 +862,25 @@ dlg:button {
                 end
 
                 eval = function(x, y, angle, t)
-                    local u = 1.0 - t
+                    local u <const> = 1.0 - t
                     local xTheta = angle + x * xToTheta
                     if x % all < pick then
-                        local lacOrig = u * lacRadOrig
+                        local lacOrig <const> = u * lacRadOrig
                             + t * lacRadDest
                         xTheta = xTheta + lacOrig
                     end
-                    local yDsplScl = u * pxyDisplaceOrig
+                    local yDsplScl <const> = u * pxyDisplaceOrig
                         + t * pxyDisplaceDest
                     return x, y + yDsplScl * cos(xTheta)
                 end
             else
                 -- Default to horizontal.
-                local xDisplaceOrig = args.xDisplaceOrig
+                local xDisplaceOrig <const> = args.xDisplaceOrig
                     or defaults.xDisplaceOrig --[[@as integer]]
-                local xDisplaceDest = args.xDisplaceDest
+                local xDisplaceDest <const> = args.xDisplaceDest
                     or defaults.xDisplaceDest --[[@as integer]]
-                local pxxDisplaceOrig = srcHeight * xDisplaceOrig * 0.005
-                local pxxDisplaceDest = srcHeight * xDisplaceDest * 0.005
+                local pxxDisplaceOrig <const> = srcHeight * xDisplaceOrig * 0.005
+                local pxxDisplaceDest <const> = srcHeight * xDisplaceDest * 0.005
 
                 local yToTheta = spaceScalar * 6.2831853071796
                 if hn1 > 0 then
@@ -884,47 +888,47 @@ dlg:button {
                 end
 
                 eval = function(x, y, angle, t)
-                    local u = 1.0 - t
+                    local u <const> = 1.0 - t
                     local yTheta = angle + y * yToTheta
                     if y % all < pick then
-                        local lacOrig = u * lacRadOrig
+                        local lacOrig <const> = u * lacRadOrig
                             + t * lacRadDest
                         yTheta = yTheta + lacOrig
                     end
-                    local xDsplScl = u * pxxDisplaceOrig
+                    local xDsplScl <const> = u * pxxDisplaceOrig
                         + t * pxxDisplaceDest
                     return x + xDsplScl * sin(yTheta), y
                 end
             end
         else
             -- Default to radial wave.
-            local xCenter = args.xCenter
+            local xCenter <const> = args.xCenter
                 or defaults.xCenter --[[@as integer]]
-            local yCenter = args.yCenter
+            local yCenter <const> = args.yCenter
                 or defaults.yCenter --[[@as integer]]
-            local uDisplaceOrig = args.uDisplaceOrig
+            local uDisplaceOrig <const> = args.uDisplaceOrig
                 or defaults.uDisplaceOrig --[[@as integer]]
-            local uDisplaceDest = args.uDisplaceDest
+            local uDisplaceDest <const> = args.uDisplaceDest
                 or defaults.uDisplaceDest --[[@as integer]]
-            local sustain = args.sustain
+            local sustain <const> = args.sustain
                 or defaults.sustain --[[@as integer]]
-            local warp = args.warp
+            local warp <const> = args.warp
                 or defaults.warp --[[@as integer]]
 
             -- Working on what would be most intuitive.
             local maxDist = 0.0
             local distToFac = 0.0
-            local shortEdge = min(srcWidth, srcHeight)
+            local shortEdge <const> = min(srcWidth, srcHeight)
             if yCenter <= -50 or yCenter >= 150
                 or xCenter <= -50 or xCenter >= 150 then
-                local se3 = shortEdge * 3
+                local se3 <const> = shortEdge * 3
                 maxDist = sqrt(se3 * se3 + se3 * se3)
                 if maxDist ~= 0.0 then
                     distToFac = 2.8284 / maxDist
                 end
             elseif yCenter <= 0 or yCenter >= 100
                 or xCenter <= 0 or xCenter >= 100 then
-                local se2 = shortEdge * 2
+                local se2 <const> = shortEdge * 2
                 maxDist = sqrt(se2 * se2 + se2 * se2)
                 if maxDist ~= 0.0 then
                     distToFac = 2.8284 / maxDist
@@ -937,21 +941,21 @@ dlg:button {
                 end
             end
 
-            local pxxCenter = wn1 * xCenter * 0.01
-            local pxyCenter = hn1 * yCenter * 0.01
-            local pxuDisplaceOrig = maxDist * uDisplaceOrig * 0.005
-            local pxuDisplaceDest = maxDist * uDisplaceDest * 0.005
+            local pxxCenter <const> = wn1 * xCenter * 0.01
+            local pxyCenter <const> = hn1 * yCenter * 0.01
+            local pxuDisplaceOrig <const> = maxDist * uDisplaceOrig * 0.005
+            local pxuDisplaceDest <const> = maxDist * uDisplaceDest * 0.005
 
-            local distToTheta = spaceScalar * 6.2831853071796 / maxDist
-            local sustFac = sustain * 0.01
-            local warpRad = warp * 0.017453292519943
-            local cosWarp = cos(warpRad)
-            local sinWarp = sin(warpRad)
+            local distToTheta <const> = spaceScalar * 6.2831853071796 / maxDist
+            local sustFac <const> = sustain * 0.01
+            local warpRad <const> = warp * 0.017453292519943
+            local cosWarp <const> = cos(warpRad)
+            local sinWarp <const> = sin(warpRad)
 
             eval = function(x, y, angle, t)
-                local ax = x - pxxCenter
-                local ay = y - pxyCenter
-                local dSq = ax * ax + ay * ay
+                local ax <const> = x - pxxCenter
+                local ay <const> = y - pxyCenter
+                local dSq <const> = ax * ax + ay * ay
 
                 -- Normalize distance from center to point
                 -- to get displacement direction.
@@ -967,26 +971,26 @@ dlg:button {
                 -- Dminish displacement scale over space.
                 -- Because center could be outside of canvas,
                 -- this needs to be clamped to [0.0, 1.0].
-                local fac = min(max(d * distToFac, 0.0), 1.0)
-                local falloff = (1.0 - fac) + fac * sustFac
+                local fac <const> = min(max(d * distToFac, 0.0), 1.0)
+                local falloff <const> = (1.0 - fac) + fac * sustFac
 
                 -- Subtract space angle from time angle.
                 -- Use - instead of + to make wave head
                 -- away from the center instead of toward.
-                local theta = angle - d * distToTheta
+                local theta <const> = angle - d * distToTheta
 
                 -- Diminish displacement scale over time.
-                local uDsplScl = (1.0 - t) * pxuDisplaceOrig
+                local uDsplScl <const> = (1.0 - t) * pxuDisplaceOrig
                     + t * pxuDisplaceDest
 
                 -- Rescale displacement vector by falloff.
-                local offset = falloff * uDsplScl * sin(theta)
-                local xOff = nx * offset
-                local yOff = ny * offset
+                local offset <const> = falloff * uDsplScl * sin(theta)
+                local xOff <const> = nx * offset
+                local yOff <const> = ny * offset
 
                 -- Rotate displacement vector by warp.
-                local xWarp = cosWarp * xOff - sinWarp * yOff
-                local yWarp = cosWarp * yOff + sinWarp * xOff
+                local xWarp <const> = cosWarp * xOff - sinWarp * yOff
+                local yWarp <const> = cosWarp * yOff + sinWarp * xOff
 
                 return x + xWarp, y + yWarp
             end
@@ -999,13 +1003,13 @@ dlg:button {
         local h = 0
         while h < lenPackets do
             h = h + 1
-            local packet = packets[h]
-            local fac = packet.fac
-            local theta = packet.theta
-            local srcImg = packet.image
+            local packet <const> = packets[h]
+            local fac <const> = packet.fac
+            local theta <const> = packet.theta
+            local srcImg <const> = packet.image
 
-            local trgImg = Image(srcSpec)
-            local pxItr = trgImg:pixels()
+            local trgImg <const> = Image(srcSpec)
+            local pxItr <const> = trgImg:pixels()
 
             for pixel in pxItr do
                 local xp, yp = eval(pixel.x, pixel.y, theta, fac)
@@ -1018,7 +1022,7 @@ dlg:button {
         end
 
         -- Create sprite, name sprite, set palette.
-        local trgSprite = Sprite(srcSpec)
+        local trgSprite <const> = Sprite(srcSpec)
         trgSprite.filename = "Wave"
         AseUtilities.setPalette(hexArr, trgSprite, 1)
 
@@ -1028,25 +1032,25 @@ dlg:button {
             local i = 1
             while i < lenPackets do
                 i = i + 1
-                local frame = trgSprite:newEmptyFrame()
+                local frame <const> = trgSprite:newEmptyFrame()
                 frame.duration = packets[i].duration
             end
         end)
 
         -- Rename layer.
-        local trgLayer = trgSprite.layers[1]
+        local trgLayer <const> = trgSprite.layers[1]
         trgLayer.name = string.format(
             "%s.%s",
             waveType, edgeType)
 
         -- Create cels.
-        local trimCels = true
-        local trgFrames = trgSprite.frames
-        local alphaMask = srcSpec.transparentColor
+        local trimCels <const> = true
+        local trgFrames <const> = trgSprite.frames
+        local alphaMask <const> = srcSpec.transparentColor
         local j = 0
         while j < lenPackets do
             j = j + 1
-            local trgFrame = trgFrames[j]
+            local trgFrame <const> = trgFrames[j]
             local img = trgImages[j]
             local x = 0
             local y = 0

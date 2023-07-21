@@ -1,12 +1,12 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE" }
-local ditherModes = { "ONE_BIT", "PALETTE", "QUANTIZE" }
-local greyMethods = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
-local palTypes = { "ACTIVE", "FILE" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local ditherModes <const> = { "ONE_BIT", "PALETTE", "QUANTIZE" }
+local greyMethods <const> = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
+local palTypes <const> = { "ACTIVE", "FILE" }
 
-local defaults = {
+local defaults <const> = {
     target = "ACTIVE",
     ditherMode = "PALETTE",
     levels = 16,
@@ -27,47 +27,47 @@ local defaults = {
 ---@param factor number
 ---@param closestFunc fun(rSrc: integer, gSrc: integer, bSrc: integer, aSrc: integer): integer
 local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
-    local pxLen = #pxArray
-    local floor = math.floor
+    local pxLen <const> = #pxArray
+    local floor <const> = math.floor
 
-    local fs_1_16 = 0.0625 * factor
-    local fs_3_16 = 0.1875 * factor
-    local fs_5_16 = 0.3125 * factor
-    local fs_7_16 = 0.4375 * factor
+    local fs_1_16 <const> = 0.0625 * factor
+    local fs_3_16 <const> = 0.1875 * factor
+    local fs_5_16 <const> = 0.3125 * factor
+    local fs_7_16 <const> = 0.4375 * factor
 
     local k = 0
     while k < pxLen do
         -- Calculate conversions from 1D to 2D indices.
-        local x = k % srcWidth
-        local y = k // srcWidth
-        local yp1 = y + 1
-        local xp1 = x + 1
-        local xp1InBounds = xp1 < srcWidth
-        local yp1InBounds = yp1 < srcHeight
-        local yp1w = yp1 * srcWidth
+        local x <const> = k % srcWidth
+        local y <const> = k // srcWidth
+        local yp1 <const> = y + 1
+        local xp1 <const> = x + 1
+        local xp1InBounds <const> = xp1 < srcWidth
+        local yp1InBounds <const> = yp1 < srcHeight
+        local yp1w <const> = yp1 * srcWidth
 
         k = k + 1
-        local srcHex = pxArray[k]
-        local rSrc = srcHex & 0xff
-        local gSrc = srcHex >> 0x08 & 0xff
-        local bSrc = srcHex >> 0x10 & 0xff
-        local aSrc = srcHex >> 0x18 & 0xff
+        local srcHex <const> = pxArray[k]
+        local rSrc <const> = srcHex & 0xff
+        local gSrc <const> = srcHex >> 0x08 & 0xff
+        local bSrc <const> = srcHex >> 0x10 & 0xff
+        local aSrc <const> = srcHex >> 0x18 & 0xff
 
-        local trgHex = closestFunc(rSrc, gSrc, bSrc, aSrc)
-        local rTrg = trgHex & 0xff
-        local gTrg = trgHex >> 0x08 & 0xff
-        local bTrg = trgHex >> 0x10 & 0xff
+        local trgHex <const> = closestFunc(rSrc, gSrc, bSrc, aSrc)
+        local rTrg <const> = trgHex & 0xff
+        local gTrg <const> = trgHex >> 0x08 & 0xff
+        local bTrg <const> = trgHex >> 0x10 & 0xff
         pxArray[k] = trgHex
 
         -- Find difference between palette color and source color.
-        local rErr = rSrc - rTrg
-        local gErr = gSrc - gTrg
-        local bErr = bSrc - bTrg
+        local rErr <const> = rSrc - rTrg
+        local gErr <const> = gSrc - gTrg
+        local bErr <const> = bSrc - bTrg
 
         -- Find right neighbor.
         if xp1InBounds then
-            local k0 = 1 + xp1 + y * srcWidth
-            local neighbor0 = pxArray[k0]
+            local k0 <const> = 1 + xp1 + y * srcWidth
+            local neighbor0 <const> = pxArray[k0]
 
             local rne0 = (neighbor0 & 0xff) + floor(rErr * fs_7_16)
             local gne0 = (neighbor0 >> 0x08 & 0xff) + floor(gErr * fs_7_16)
@@ -84,8 +84,8 @@ local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
 
             -- Find bottom-right neighbor.
             if yp1InBounds then
-                local k3 = 1 + xp1 + yp1w
-                local neighbor3 = pxArray[k3]
+                local k3 <const> = 1 + xp1 + yp1w
+                local neighbor3 <const> = pxArray[k3]
 
                 local rne3 = (neighbor3 & 0xff) + floor(rErr * fs_1_16)
                 local gne3 = (neighbor3 >> 0x08 & 0xff) + floor(gErr * fs_1_16)
@@ -104,8 +104,8 @@ local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
 
         -- Find bottom neighbor.
         if yp1InBounds then
-            local k2 = 1 + x + yp1w
-            local neighbor2 = pxArray[k2]
+            local k2 <const> = 1 + x + yp1w
+            local neighbor2 <const> = pxArray[k2]
 
             local rne2 = (neighbor2 & 0xff) + floor(rErr * fs_5_16)
             local gne2 = (neighbor2 >> 0x08 & 0xff) + floor(gErr * fs_5_16)
@@ -122,8 +122,8 @@ local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
 
             -- Find left neighbor.
             if x > 0 then
-                local k1 = x + yp1w
-                local neighbor1 = pxArray[k1]
+                local k1 <const> = x + yp1w
+                local neighbor1 <const> = pxArray[k1]
 
                 local rne1 = (neighbor1 & 0xff) + floor(rErr * fs_3_16)
                 local gne1 = (neighbor1 >> 0x08 & 0xff) + floor(gErr * fs_3_16)
@@ -142,7 +142,7 @@ local function fsDither(pxArray, srcWidth, srcHeight, factor, closestFunc)
     end
 end
 
-local dlg = Dialog { title = "Dither" }
+local dlg <const> = Dialog { title = "Dither" }
 
 dlg:combobox {
     id = "target",
@@ -159,10 +159,13 @@ dlg:combobox {
     option = defaults.ditherMode,
     options = ditherModes,
     onchange = function()
-        local args = dlg.data
-        local isQnt = args.ditherMode == "QUANTIZE"
-        local isOne = args.ditherMode == "ONE_BIT"
-        local isPal = args.ditherMode == "PALETTE"
+        local args <const> = dlg.data
+        local ditherMode <const> = args.ditherMode --[[@as string]]
+        local palType <const> = args.palType --[[@as string]]
+
+        local isQnt <const> = ditherMode == "QUANTIZE"
+        local isOne <const> = ditherMode == "ONE_BIT"
+        local isPal <const> = ditherMode == "PALETTE"
 
         dlg:modify { id = "levels", visible = isQnt }
 
@@ -171,7 +174,6 @@ dlg:combobox {
         dlg:modify { id = "greyMethod", visible = isOne }
         dlg:modify { id = "threshold", visible = isOne }
 
-        local palType = dlg.data.palType
         dlg:modify { id = "palType", visible = isPal }
         dlg:modify {
             id = "palFile",
@@ -236,10 +238,11 @@ dlg:combobox {
     option = defaults.palType,
     options = palTypes,
     onchange = function()
-        local state = dlg.data.palType
+        local args <const> = dlg.data
+        local palType <const> = args.palType --[[@as string]]
         dlg:modify {
             id = "palFile",
-            visible = state == "FILE"
+            visible = palType == "FILE"
         }
     end,
     visible = defaults.ditherMode == "PALETTE"
@@ -292,8 +295,8 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Begin timing the function elapsed.
-        local args = dlg.data
-        local printElapsed = args.printElapsed --[[@as boolean]]
+        local args <const> = dlg.data
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         local startTime = 0
         local endTime = 0
         local elapsed = 0
@@ -301,8 +304,8 @@ dlg:button {
             startTime = os.clock()
         end
 
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -311,7 +314,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = site.layer
+        local srcLayer <const> = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -337,41 +340,43 @@ dlg:button {
         end
 
         -- Check for tile maps.
-        local isTilemap = srcLayer.isTilemap
+        local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
             tileSet = srcLayer.tileset --[[@as Tileset]]
         end
 
-        local oldMode = activeSprite.colorMode
+        local oldMode <const> = activeSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
-        local target = args.target or defaults.target --[[@as string]]
-        local ditherMode = args.ditherMode
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
+        local ditherMode <const> = args.ditherMode
             or defaults.ditherMode --[[@as string]]
-        local factor100 = args.factor or defaults.factor --[[@as integer]]
+        local factor100 <const> = args.factor
+            or defaults.factor --[[@as integer]]
 
-        local factor = factor100 * 0.01
-        local frames = Utilities.flatArr2(
+        local factor <const> = factor100 * 0.01
+        local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
         -- Choose function based on dither mode.
         local closestFunc = nil
         local dmStr = ""
         if ditherMode == "ONE_BIT" then
-            local aColorAse = args.aColor --[[@as Color]]
-            local bColorAse = args.bColor --[[@as Color]]
-            local thresh100 = args.threshold
+            local aColorAse <const> = args.aColor --[[@as Color]]
+            local bColorAse <const> = args.bColor --[[@as Color]]
+            local thresh100 <const> = args.threshold
                 or defaults.threshold --[[@as integer]]
-            local greyPreset = args.greyMethod
+            local greyPreset <const> = args.greyMethod
                 or defaults.greyMethod --[[@as string]]
 
             -- Mask out alpha, source alpha will be used.
-            local aHex = 0x00ffffff & AseUtilities.aseColorToHex(
+            local aHex <const> = 0x00ffffff & AseUtilities.aseColorToHex(
                 aColorAse, ColorMode.RGB)
-            local bHex = 0x00ffffff & AseUtilities.aseColorToHex(
+            local bHex <const> = 0x00ffffff & AseUtilities.aseColorToHex(
                 bColorAse, ColorMode.RGB)
-            local threshold = thresh100 * 0.01
+            local threshold <const> = thresh100 * 0.01
 
             -- Swap colors so that origin (a) is always the
             -- darker color.
@@ -401,13 +406,13 @@ dlg:button {
                 greyStr = "HSV"
             else
                 -- TODO: Phase out use of look up tables?
-                local stlLut = Utilities.STL_LUT
-                local ltsLut = Utilities.LTS_LUT
+                local stlLut <const> = Utilities.STL_LUT
+                local ltsLut <const> = Utilities.LTS_LUT
                 greyMethod = function(rSrc, gSrc, bSrc)
-                    local rLin = stlLut[1 + rSrc]
-                    local gLin = stlLut[1 + gSrc]
-                    local bLin = stlLut[1 + bSrc]
-                    local lum = math.floor(
+                    local rLin <const> = stlLut[1 + rSrc]
+                    local gLin <const> = stlLut[1 + gSrc]
+                    local bLin <const> = stlLut[1 + bSrc]
+                    local lum <const> = math.floor(
                         rLin * 0.21264934272065
                         + gLin * 0.7151691357059
                         + bLin * 0.072181521573443)
@@ -417,8 +422,8 @@ dlg:button {
             end
 
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
-                local fac = greyMethod(rSrc, gSrc, bSrc)
-                local alpha = aSrc << 0x18
+                local fac <const> = greyMethod(rSrc, gSrc, bSrc)
+                local alpha <const> = aSrc << 0x18
                 if fac >= threshold then
                     return alpha | bHex
                 end
@@ -427,22 +432,22 @@ dlg:button {
 
             dmStr = string.format("OneBit.%s.%03d", greyStr, thresh100)
         elseif ditherMode == "QUANTIZE" then
-            local levels = args.levels
+            local levels <const> = args.levels
                 or defaults.levels --[[@as integer]]
-            local delta = 1.0 / (levels - 1.0)
-            local quantize = Utilities.quantizeUnsignedInternal
-            local floor = math.floor
+            local delta <const> = 1.0 / (levels - 1.0)
+            local quantize <const> = Utilities.quantizeUnsignedInternal
+            local floor <const> = math.floor
 
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
-                local aQtz = quantize(aSrc / 255.0, levels, delta)
-                local bQtz = quantize(bSrc / 255.0, levels, delta)
-                local gQtz = quantize(gSrc / 255.0, levels, delta)
-                local rQtz = quantize(rSrc / 255.0, levels, delta)
+                local aQtz <const> = quantize(aSrc / 255.0, levels, delta)
+                local bQtz <const> = quantize(bSrc / 255.0, levels, delta)
+                local gQtz <const> = quantize(gSrc / 255.0, levels, delta)
+                local rQtz <const> = quantize(rSrc / 255.0, levels, delta)
 
-                local a255 = floor(aQtz * 255.0 + 0.5)
-                local b255 = floor(bQtz * 255.0 + 0.5)
-                local g255 = floor(gQtz * 255.0 + 0.5)
-                local r255 = floor(rQtz * 255.0 + 0.5)
+                local a255 <const> = floor(aQtz * 255.0 + 0.5)
+                local b255 <const> = floor(bQtz * 255.0 + 0.5)
+                local g255 <const> = floor(gQtz * 255.0 + 0.5)
+                local r255 <const> = floor(rQtz * 255.0 + 0.5)
 
                 return (a255 << 0x18)
                     | (b255 << 0x10)
@@ -452,17 +457,18 @@ dlg:button {
 
             dmStr = string.format("Quantize.%02d", levels)
         else
-            local palType = args.palType or defaults.palType --[[@as string]]
-            local palFile = args.palFile --[[@as string]]
+            local palType <const> = args.palType
+                or defaults.palType --[[@as string]]
+            local palFile <const> = args.palFile --[[@as string]]
             local octCapacity = args.octCapacity
                 or defaults.octCapacityBits --[[@as integer]]
 
-            local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
+            local hexesProfile <const>, hexesSrgb <const> = AseUtilities.asePaletteLoad(
                 palType, palFile, 0, 256, true)
 
             octCapacity = 1 << octCapacity
-            local bounds = Bounds3.lab()
-            local octree = Octree.new(bounds, octCapacity, 1)
+            local bounds <const> = Bounds3.lab()
+            local octree <const> = Octree.new(bounds, octCapacity, 1)
 
             -- Find minimum and maximum channel values.
             local lMin = 2147483647
@@ -474,33 +480,33 @@ dlg:button {
             local bMax = -2147483648
 
             -- Cache methods to local.
-            local sqrt = math.sqrt
-            local abs = math.abs
-            local cnew = Clr.new
-            local fromHex = Clr.fromHex
-            local sRgbaToLab = Clr.sRgbToSrLab2
-            local octins = Octree.insert
-            local octquery = Octree.queryInternal
-            local v3new = Vec3.new
-            local v3hash = Vec3.hashCode
+            local sqrt <const> = math.sqrt
+            local abs <const> = math.abs
+            local cnew <const> = Clr.new
+            local fromHex <const> = Clr.fromHex
+            local sRgbaToLab <const> = Clr.sRgbToSrLab2
+            local octins <const> = Octree.insert
+            local octquery <const> = Octree.queryInternal
+            local v3new <const> = Vec3.new
+            local v3hash <const> = Vec3.hashCode
 
             -- Unpack source palette to a dictionary and an octree.
             -- Ignore transparent colors in palette.
-            local lenPalHexes = #hexesSrgb
+            local lenPalHexes <const> = #hexesSrgb
             ---@type table<integer, integer>
-            local ptToHexDict = {}
+            local ptToHexDict <const> = {}
             local viableCount = 0
             local idxPalHex = 0
             while idxPalHex < lenPalHexes do
                 idxPalHex = idxPalHex + 1
-                local hexSrgb = hexesSrgb[idxPalHex]
+                local hexSrgb <const> = hexesSrgb[idxPalHex]
                 if (hexSrgb & 0xff000000) ~= 0x0 then
-                    local clr = fromHex(hexSrgb)
-                    local lab = sRgbaToLab(clr)
-                    local l = lab.l
-                    local a = lab.a
-                    local b = lab.b
-                    local point = v3new(a, b, l)
+                    local clr <const> = fromHex(hexSrgb)
+                    local lab <const> = sRgbaToLab(clr)
+                    local l <const> = lab.l
+                    local a <const> = lab.a
+                    local b <const> = lab.b
+                    local point <const> = v3new(a, b, l)
 
                     if l < lMin then lMin = l end
                     if a < aMin then aMin = a end
@@ -510,7 +516,7 @@ dlg:button {
                     if a > aMax then aMax = a end
                     if b > bMax then bMax = b end
 
-                    local hexProfile = hexesProfile[idxPalHex]
+                    local hexProfile <const> = hexesProfile[idxPalHex]
                     ptToHexDict[v3hash(point)] = hexProfile
                     octins(octree, point)
                     viableCount = viableCount + 1
@@ -530,38 +536,38 @@ dlg:button {
             end
 
             -- Find largest needed query radius and result limit.
-            local lDiff = lMax - lMin
-            local aDiff = aMax - aMin
-            local bDiff = bMax - bMin
+            local lDiff <const> = lMax - lMin
+            local aDiff <const> = aMax - aMin
+            local bDiff <const> = bMax - bMin
 
             -- Square-root for this regularly seems too
             -- small, leading to transparent patches.
-            local queryRad = lDiff * lDiff
+            local queryRad <const> = lDiff * lDiff
                 + aDiff * aDiff
                 + bDiff * bDiff
 
             local distFunc = function(a, b)
-                local da = b.x - a.x
-                local db = b.y - a.y
+                local da <const> = b.x - a.x
+                local db <const> = b.y - a.y
                 return sqrt(da * da + db * db) + abs(b.z - a.z)
             end
 
             Octree.cull(octree)
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
-                local srgb = cnew(
+                local srgb <const> = cnew(
                     rSrc * 0.003921568627451,
                     gSrc * 0.003921568627451,
                     bSrc * 0.003921568627451,
                     1.0)
-                local lab = sRgbaToLab(srgb)
-                local query = v3new(lab.a, lab.b, lab.l)
-                local nearPoint, _ = octquery(
+                local lab <const> = sRgbaToLab(srgb)
+                local query <const> = v3new(lab.a, lab.b, lab.l)
+                local nearPoint <const>, _ <const> = octquery(
                     octree, query, queryRad, distFunc)
 
                 local trgHex = 0x0
                 if nearPoint then
-                    local nearHash = v3hash(nearPoint)
-                    local nearHex = ptToHexDict[nearHash]
+                    local nearHash <const> = v3hash(nearPoint)
+                    local nearHex <const> = ptToHexDict[nearHash]
                     if nearHex ~= nil then
                         trgHex = (aSrc << 0x18)
                             | (nearHex & 0x00ffffff)
@@ -592,30 +598,30 @@ dlg:button {
         end)
 
         -- Cache global methods.
-        local tilesToImage = AseUtilities.tilesToImage
-        local transact = app.transaction
-        local strfmt = string.format
+        local tilesToImage <const> = AseUtilities.tilesToImage
+        local transact <const> = app.transaction
+        local strfmt <const> = string.format
 
-        local lenFrames = #frames
+        local lenFrames <const> = #frames
         local i = 0
-        local rgbColorMode = ColorMode.RGB
+        local rgbColorMode <const> = ColorMode.RGB
         while i < lenFrames do
             i = i + 1
-            local srcFrame = frames[i]
-            local srcCel = srcLayer:cel(srcFrame)
+            local srcFrame <const> = frames[i]
+            local srcCel <const> = srcLayer:cel(srcFrame)
             if srcCel then
                 local srcImg = srcCel.image
                 if isTilemap then
                     srcImg = tilesToImage(srcImg, tileSet, rgbColorMode)
                 end
 
-                local srcSpec = srcImg.spec
-                local srcWidth = srcSpec.width
-                local srcHeight = srcSpec.height
+                local srcSpec <const> = srcImg.spec
+                local srcWidth <const> = srcSpec.width
+                local srcHeight <const> = srcSpec.height
 
-                local srcPxItr = srcImg:pixels()
+                local srcPxItr <const> = srcImg:pixels()
                 ---@type integer[]
-                local arrSrcPixels = {}
+                local arrSrcPixels <const> = {}
                 local idxRdPixels = 0
                 for pixel in srcPxItr do
                     idxRdPixels = idxRdPixels + 1
@@ -624,8 +630,8 @@ dlg:button {
 
                 fsDither(arrSrcPixels, srcWidth, srcHeight, factor, closestFunc)
 
-                local trgImg = Image(srcSpec)
-                local trgPxItr = trgImg:pixels()
+                local trgImg <const> = Image(srcSpec)
+                local trgPxItr <const> = trgImg:pixels()
                 local idxWtPixels = 0
                 for pixel in trgPxItr do
                     idxWtPixels = idxWtPixels + 1

@@ -1,10 +1,10 @@
 dofile("../../support/aseutilities.lua")
 
-local uiModes = { "COLOR", "CRITERIA" }
-local selModes = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
-local sampleModes = { "ACTIVE", "COMPOSITE" }
+local uiModes <const> = { "COLOR", "CRITERIA" }
+local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
+local sampleModes <const> = { "ACTIVE", "COMPOSITE" }
 
-local defaults = {
+local defaults <const> = {
     uiMode = "COLOR",
     sampleMode = "ACTIVE",
     tolerance = 0,
@@ -31,10 +31,10 @@ local function eval(
     usePolar,
     usec, mincsq, maxcsq,
     useh, minhrd, maxhrd)
-    local l = lab.l
-    local a = lab.a
-    local b = lab.b
-    local t = lab.alpha
+    local l <const> = lab.l
+    local a <const> = lab.a
+    local b <const> = lab.b
+    local t <const> = lab.alpha
 
     local include = t >= mint01 and t <= maxt01
     if useLight and (l < minLight or l > maxLight) then
@@ -48,10 +48,10 @@ local function eval(
     end
 
     if usePolar then
-        local csq = a * a + b * b
+        local csq <const> = a * a + b * b
         if useh then
             if csq > 0.00005 then
-                local h = math.atan(b, a) % 6.2831853071796
+                local h <const> = math.atan(b, a) % 6.2831853071796
                 if h < minhrd or h > maxhrd then
                     include = false
                 end
@@ -67,7 +67,7 @@ local function eval(
     return include
 end
 
-local dlg = Dialog { title = "Select Color" }
+local dlg <const> = Dialog { title = "Select Color" }
 
 dlg:combobox {
     id = "selMode",
@@ -94,14 +94,15 @@ dlg:combobox {
     option = defaults.uiMode,
     options = uiModes,
     onchange = function()
-        local args = dlg.data
-        local uiMode = args.uiMode
+        local args <const> = dlg.data
+        local uiMode <const> = args.uiMode --[[@as string]]
+        local useLight <const> = args.useLight --[[@as boolean]]
+        local usec <const> = args.usec --[[@as boolean]]
+        local useh <const> = args.useh --[[@as boolean]]
+        local useAlpha <const> = args.useAlpha --[[@as boolean]]
 
-        local isCriteria = uiMode == "CRITERIA"
-        local useLight = args.useLight
-        local usec = args.usec
-        local useh = args.useh
-        local useAlpha = args.useAlpha
+        local isCriteria <const> = uiMode == "CRITERIA"
+        local isColor <const> = uiMode == "COLOR"
 
         dlg:modify { id = "useLight", visible = isCriteria }
         dlg:modify { id = "minLight", visible = isCriteria and useLight }
@@ -119,7 +120,6 @@ dlg:combobox {
         dlg:modify { id = "minAlpha", visible = isCriteria and useAlpha }
         dlg:modify { id = "maxAlpha", visible = isCriteria and useAlpha }
 
-        local isColor = uiMode == "COLOR"
         dlg:modify { id = "refColor", visible = isColor }
         dlg:modify { id = "refColor", color = app.preferences.color_bar.fg_color }
         dlg:modify { id = "tolerance", visible = isColor }
@@ -156,8 +156,8 @@ dlg:check {
     selected = defaults.useLight,
     visible = defaults.uiMode == "CRITERIA",
     onclick = function()
-        local args = dlg.data
-        local state = args.useLight
+        local args <const> = dlg.data
+        local state <const> = args.useLight --[[@as boolean]]
         dlg:modify { id = "minLight", visible = state }
         dlg:modify { id = "maxLight", visible = state }
     end
@@ -169,8 +169,8 @@ dlg:check {
     selected = defaults.usec,
     visible = defaults.uiMode == "CRITERIA",
     onclick = function()
-        local args = dlg.data
-        local state = args.usec
+        local args <const> = dlg.data
+        local state <const> = args.usec --[[@as boolean]]
         dlg:modify { id = "minc", visible = state }
         dlg:modify { id = "maxc", visible = state }
     end
@@ -182,8 +182,8 @@ dlg:check {
     selected = defaults.useh,
     visible = defaults.uiMode == "CRITERIA",
     onclick = function()
-        local args = dlg.data
-        local state = args.useh
+        local args <const> = dlg.data
+        local state <const> = args.useh --[[@as boolean]]
         dlg:modify { id = "minh", visible = state }
         dlg:modify { id = "maxh", visible = state }
     end
@@ -197,8 +197,8 @@ dlg:check {
     selected = defaults.useAlpha,
     visible = defaults.uiMode == "CRITERIA",
     onclick = function()
-        local args = dlg.data
-        local state = args.useAlpha
+        local args <const> = dlg.data
+        local state <const> = args.useAlpha --[[@as boolean]]
         dlg:modify { id = "minAlpha", visible = state }
         dlg:modify { id = "maxAlpha", visible = state }
     end
@@ -295,8 +295,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -305,7 +305,7 @@ dlg:button {
             return
         end
 
-        local activeLayer = site.layer
+        local activeLayer <const> = site.layer
         if not activeLayer then
             app.alert {
                 title = "Error",
@@ -322,7 +322,7 @@ dlg:button {
             return
         end
 
-        local activeFrame = site.frame
+        local activeFrame <const> = site.frame
         if not activeFrame then
             app.alert {
                 title = "Error",
@@ -331,11 +331,14 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local selMode = args.selMode or defaults.selMode --[[@as string]]
-        local sampleMode = args.sampleMode or defaults.sampleMode --[[@as string]]
-        local uiMode = args.uiMode or defaults.uiMode --[[@as string]]
-        local refColor = args.refColor --[[@as Color]]
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+        local sampleMode <const> = args.sampleMode
+            or defaults.sampleMode --[[@as string]]
+        local uiMode <const> = args.uiMode
+            or defaults.uiMode --[[@as string]]
+        local refColor <const> = args.refColor --[[@as Color]]
 
         local useLight = false
         local usea = false
@@ -359,20 +362,21 @@ dlg:button {
         local maxAlpha = 255.0
 
         -- Cache global methods.
-        local fromHex = Clr.fromHex
-        local sRgbaToLab = Clr.sRgbToSrLab2
-        local aseColorToClr = AseUtilities.aseColorToClr
-        local aseColorToHex = AseUtilities.aseColorToHex
+        local fromHex <const> = Clr.fromHex
+        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local aseColorToClr <const> = AseUtilities.aseColorToClr
+        local aseColorToHex <const> = AseUtilities.aseColorToHex
 
-        local colorMode = activeSprite.colorMode
+        local colorMode <const> = activeSprite.colorMode
         local exactSearch = false
 
-        local refClr = aseColorToClr(refColor)
-        local refLab = sRgbaToLab(refClr)
-        local refInt = aseColorToHex(refColor, colorMode)
+        local refClr <const> = aseColorToClr(refColor)
+        local refLab <const> = sRgbaToLab(refClr)
+        local refInt <const> = aseColorToHex(refColor, colorMode)
 
         if uiMode == "COLOR" then
-            local tolerance = args.tolerance --[[@as integer]]
+            local tolerance <const> = args.tolerance
+                or defaults.tolerance --[[@as integer]]
             exactSearch = tolerance == 0
 
             if not exactSearch then
@@ -381,13 +385,13 @@ dlg:button {
                 useb = true
                 useAlpha = true
 
-                local tol100 = math.max(0.000001,
+                local tol100 <const> = math.max(0.000001,
                     tolerance * 0.5)
                 minLight = refLab.l - tol100
                 maxLight = refLab.l + tol100
 
                 -- TODO: Replace with appropriate SR LAB 2 tol.
-                local tol111 = math.max(0.000001,
+                local tol111 <const> = math.max(0.000001,
                     tolerance * (50.0 / 111.0))
                 mina = refLab.a - tol111
                 maxa = refLab.a + tol111
@@ -395,7 +399,7 @@ dlg:button {
                 minb = refLab.b - tol111
                 maxb = refLab.b + tol111
 
-                local tol255 = math.max(0.000001,
+                local tol255 <const> = math.max(0.000001,
                     tolerance * (50.0 / 255.0))
                 minAlpha = refColor.alpha - tol255
                 maxAlpha = refColor.alpha + tol255
@@ -460,8 +464,8 @@ dlg:button {
             image = Image(activeSprite.spec)
             image:drawSprite(activeSprite, activeFrame)
         elseif activeLayer.isGroup then
-            local spriteSpec = activeSprite.spec
-            local flat, rect = AseUtilities.flattenGroup(
+            local spriteSpec <const> = activeSprite.spec
+            local flat <const>, rect <const> = AseUtilities.flattenGroup(
                 activeLayer, activeFrame, colorMode,
                 spriteSpec.colorSpace, spriteSpec.transparentColor,
                 true, true, true, true)
@@ -470,7 +474,7 @@ dlg:button {
             xtl = rect.x
             ytl = rect.y
         else
-            local activeCel = activeLayer:cel(activeFrame)
+            local activeCel <const> = activeLayer:cel(activeFrame)
             if not activeCel then
                 app.alert {
                     title = "Error",
@@ -484,14 +488,14 @@ dlg:button {
                 image = AseUtilities.tilesToImage(
                     image, activeLayer.tileset, colorMode)
             end
-            local celPos = activeCel.position
+            local celPos <const> = activeCel.position
             xtl = celPos.x
             ytl = celPos.y
         end
 
-        local pxItr = image:pixels()
-        local trgSel = Selection()
-        local pxRect = Rectangle(0, 0, 1, 1)
+        local pxItr <const> = image:pixels()
+        local trgSel <const> = Selection()
+        local pxRect <const> = Rectangle(0, 0, 1, 1)
 
         if exactSearch then
             for pixel in pxItr do
@@ -505,27 +509,27 @@ dlg:button {
             -- Alpha is listed in [0, 255] but compared in [0.0, 1.0].
             -- Chroma is compared in magnitude squared.
             -- Hue is listed in [0, 360] but compared in [0, tau].
-            local usePolar = usec or useh
-            local mint01 = minAlpha * 0.003921568627451
-            local maxt01 = maxAlpha * 0.003921568627451
-            local mincsq = minc * minc
-            local maxcsq = maxc * maxc
-            local minhrd = minh * 0.017453292519943
-            local maxhrd = maxh * 0.017453292519943
+            local usePolar <const> = usec or useh
+            local mint01 <const> = minAlpha * 0.003921568627451
+            local maxt01 <const> = maxAlpha * 0.003921568627451
+            local mincsq <const> = minc * minc
+            local maxcsq <const> = maxc * maxc
+            local minhrd <const> = minh * 0.017453292519943
+            local maxhrd <const> = maxh * 0.017453292519943
 
             -- When a color mode convert to to RGB is attempted,
             -- there's either a crash or nothing is selected.
             if colorMode == ColorMode.INDEXED then
-                local palette = AseUtilities.getPalette(
+                local palette <const> = AseUtilities.getPalette(
                     activeFrame, activeSprite.palettes)
-                local lenPalette = #palette
+                local lenPalette <const> = #palette
                 ---@type boolean[]
-                local includes = {}
+                local includes <const> = {}
                 local j = 0
                 while j < lenPalette do
-                    local aseColor = palette:getColor(j)
-                    local clr = aseColorToClr(aseColor)
-                    local lab = sRgbaToLab(clr)
+                    local aseColor <const> = palette:getColor(j)
+                    local clr <const> = aseColorToClr(aseColor)
+                    local lab <const> = sRgbaToLab(clr)
 
                     j = j + 1
                     includes[j] = eval(
@@ -539,7 +543,7 @@ dlg:button {
                 end
 
                 for pixel in pxItr do
-                    local idx = pixel()
+                    local idx <const> = pixel()
                     if includes[1 + idx] then
                         pxRect.x = xtl + pixel.x
                         pxRect.y = ytl + pixel.y
@@ -560,16 +564,16 @@ dlg:button {
                 end
 
                 ---@type table<integer, boolean>
-                local visited = {}
+                local visited <const> = {}
                 ---@type table<integer, boolean>
-                local filtered = {}
+                local filtered <const> = {}
                 for pixel in pxItr do
-                    local hex = parseHex(pixel())
+                    local hex <const> = parseHex(pixel())
                     local include = false
                     if visited[hex] then
                         include = filtered[hex]
                     else
-                        local lab = sRgbaToLab(fromHex(hex))
+                        local lab <const> = sRgbaToLab(fromHex(hex))
                         include = eval(
                             lab, mint01, maxt01,
                             useLight, minLight, maxLight,
@@ -592,7 +596,7 @@ dlg:button {
         end
 
         if selMode ~= "REPLACE" then
-            local activeSel = AseUtilities.getSelection(activeSprite)
+            local activeSel <const> = AseUtilities.getSelection(activeSprite)
             if selMode == "INTERSECT" then
                 activeSel:intersect(trgSel)
             elseif selMode == "SUBTRACT" then

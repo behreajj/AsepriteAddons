@@ -1,18 +1,18 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE" }
-local channels = { "L", "A", "B", "Alpha" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local channels <const> = { "L", "A", "B", "Alpha" }
 
-local idPrefixes = {
+local idPrefixes <const> = {
     "lCurve",
     "aCurve",
     "bCurve",
     "tCurve"
 }
-local lenIdPrefixes = #idPrefixes
+local lenIdPrefixes <const> = #idPrefixes
 
-local coPostfixes = {
+local coPostfixes <const> = {
     [1] = "ap0x",
     [2] = "ap0y",
     [3] = "cp0x",
@@ -22,13 +22,13 @@ local coPostfixes = {
     [7] = "ap1x",
     [8] = "ap1y",
 }
-local lenCoPostfixes = #coPostfixes
+local lenCoPostfixes <const> = #coPostfixes
 
-local screenScale = app.preferences.general.screen_scale
-local curveColor = app.theme.color.text
-local gridColor = Color { r = 128, g = 128, b = 128 }
+local screenScale <const> = app.preferences.general.screen_scale
+local curveColor <const> = app.theme.color.text
+local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 
-local defaults = {
+local defaults <const> = {
     target = "ACTIVE",
     channel = "L",
     useRelative = false,
@@ -40,7 +40,7 @@ local defaults = {
     bAbsRange = 220.9563392963
 }
 
-local dlg = Dialog { title = "Color Curves" }
+local dlg <const> = Dialog { title = "Color Curves" }
 
 ---@param srcImg Image
 ---@return table<integer, { l: number, a: number, b: number, alpha: number }> hexToLabDict
@@ -49,11 +49,11 @@ local dlg = Dialog { title = "Color Curves" }
 ---@return number bMin
 ---@return number bMax
 local function auditImage(srcImg)
-    local fromHex = Clr.fromHex
-    local sRgbToLab = Clr.sRgbToSrLab2
+    local fromHex <const> = Clr.fromHex
+    local sRgbToLab <const> = Clr.sRgbToSrLab2
 
     ---@type table<integer, {l: number, a: number, b: number, alpha: number}>
-    local hexToLabDict = {}
+    local hexToLabDict <const> = {}
     local aMin = 2147483647
     local bMin = 2147483647
     local aMax = -2147483648
@@ -61,15 +61,15 @@ local function auditImage(srcImg)
 
     -- Since a and b are unbounded, gather the relative
     -- bounds for this image.
-    local srcItr = srcImg:pixels()
+    local srcItr <const> = srcImg:pixels()
     for srcPixel in srcItr do
-        local srcHex = srcPixel()
+        local srcHex <const> = srcPixel()
         if not hexToLabDict[srcHex] then
-            local srcClr = fromHex(srcHex)
-            local srcLab = sRgbToLab(srcClr)
+            local srcClr <const> = fromHex(srcHex)
+            local srcLab <const> = sRgbToLab(srcClr)
 
-            local aSrc = srcLab.a
-            local bSrc = srcLab.b
+            local aSrc <const> = srcLab.a
+            local bSrc <const> = srcLab.b
 
             if aSrc < aMin then aMin = aSrc end
             if aSrc > aMax then aMax = aSrc end
@@ -85,16 +85,16 @@ end
 
 ---@param coPostfix string
 local function setInputFromColor(coPostfix)
-    local site = app.site
-    local sprite = site.sprite
+    local site <const> = app.site
+    local sprite <const> = site.sprite
     if not sprite then return end
-    local frame = site.frame
+    local frame <const> = site.frame
     if not frame then return end
 
-    local lab = AseUtilities.averageColor(sprite, frame)
+    local lab <const> = AseUtilities.averageColor(sprite, frame)
 
-    local args = dlg.data
-    local channel = args.channel --[[@as string]]
+    local args <const> = dlg.data
+    local channel <const> = args.channel --[[@as string]]
 
     local idPrefix = ""
     local val = 0.0
@@ -112,7 +112,7 @@ local function setInputFromColor(coPostfix)
         val = lab.alpha
     end
 
-    local id = idPrefix .. "_" .. coPostfix
+    local id <const> = idPrefix .. "_" .. coPostfix
     dlg:modify { id = id, text = string.format("%.5f", val) }
     dlg:repaint()
 end
@@ -132,9 +132,9 @@ dlg:combobox {
     options = channels,
     option = defaults.channel,
     onchange = function()
-        local args = dlg.data
-        local channel = args.channel --[[@as string]]
-        local bools = {
+        local args <const> = dlg.data
+        local channel <const> = args.channel --[[@as string]]
+        local bools <const> = {
             channel == "L",
             channel == "A",
             channel == "B",
@@ -144,14 +144,14 @@ dlg:combobox {
         local i = 0
         while i < lenIdPrefixes do
             i = i + 1
-            local idPrefix = idPrefixes[i]
-            local bool = bools[i]
+            local idPrefix <const> = idPrefixes[i]
+            local bool <const> = bools[i]
 
             local j = 0
             while j < lenCoPostfixes do
                 j = j + 1
-                local coPostfix = coPostfixes[j]
-                local id = idPrefix .. "_" .. coPostfix
+                local coPostfix <const> = coPostfixes[j]
+                local id <const> = idPrefix .. "_" .. coPostfix
                 dlg:modify { id = id, visible = bool }
             end
 
@@ -208,7 +208,7 @@ dlg:newrow { always = false }
 local h = 0
 while h < lenIdPrefixes do
     h = h + 1
-    local currChannel = channels[h]
+    local currChannel <const> = channels[h]
     CanvasUtilities.graphBezier(
         dlg,
         idPrefixes[h],
@@ -242,8 +242,8 @@ dlg:button {
         -- does auto color mode convert.
 
         -- Begin timing the function elapsed.
-        local args = dlg.data
-        local printElapsed = args.printElapsed --[[@as boolean]]
+        local args <const> = dlg.data
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         local startTime = 0
         local endTime = 0
         local elapsed = 0
@@ -252,8 +252,8 @@ dlg:button {
         end
 
         -- Early returns.
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -262,8 +262,8 @@ dlg:button {
             return
         end
 
-        local activeSpec = activeSprite.spec
-        local colorMode = activeSpec.colorMode
+        local activeSpec <const> = activeSprite.spec
+        local colorMode <const> = activeSpec.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -272,7 +272,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = site.layer
+        local srcLayer <const> = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -298,12 +298,13 @@ dlg:button {
         end
 
         -- Get frames from target.
-        local target = args.target or defaults.target --[[@as string]]
-        local frames = Utilities.flatArr2(
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
+        local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
         -- Check for tile maps.
-        local isTilemap = srcLayer.isTilemap
+        local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
             tileSet = srcLayer.tileset --[[@as Tileset]]
@@ -324,44 +325,44 @@ dlg:button {
         end)
 
         ---@type Vec2[][]
-        local curveSamples = {}
-        local alpSampleCount = defaults.alpSampleCount
-        local samplesCompare = function(a, b) return a < b.x end
+        local curveSamples <const> = {}
+        local alpSampleCount <const> = defaults.alpSampleCount
+        local samplesCompare <const> = function(a, b) return a < b.x end
 
         local i = 0
         while i < lenIdPrefixes do
             i = i + 1
-            local idPrefix = idPrefixes[i]
+            local idPrefix <const> = idPrefixes[i]
 
             ---@type number[]
-            local nums = {}
+            local nums <const> = {}
             local j = 0
             while j < lenCoPostfixes do
                 j = j + 1
-                local coPostfix = coPostfixes[j]
-                local id = idPrefix .. "_" .. coPostfix
-                local num = args[id] --[[@as number]]
+                local coPostfix <const> = coPostfixes[j]
+                local id <const> = idPrefix .. "_" .. coPostfix
+                local num <const> = args[id] --[[@as number]]
                 nums[j] = num
             end
 
-            local co0 = Vec2.new(nums[1], nums[2])
-            local fh0 = Vec2.new(nums[3], nums[4])
-            local rh0 = Vec2.new(0.0, co0.y)
+            local co0 <const> = Vec2.new(nums[1], nums[2])
+            local fh0 <const> = Vec2.new(nums[3], nums[4])
+            local rh0 <const> = Vec2.new(0.0, co0.y)
 
-            local co1 = Vec2.new(nums[7], nums[8])
-            local fh1 = Vec2.new(1.0, co1.y)
-            local rh1 = Vec2.new(nums[5], nums[6])
+            local co1 <const> = Vec2.new(nums[7], nums[8])
+            local fh1 <const> = Vec2.new(1.0, co1.y)
+            local rh1 <const> = Vec2.new(nums[5], nums[6])
 
-            local kn0 = Knot2.new(co0, fh0, rh0)
-            local kn1 = Knot2.new(co1, fh1, rh1)
+            local kn0 <const> = Knot2.new(co0, fh0, rh0)
+            local kn1 <const> = Knot2.new(co1, fh1, rh1)
             -- kn0:mirrorHandlesForward()
             -- kn1:mirrorHandlesBackward()
 
-            local curve = Curve2.new(false, { kn0, kn1 }, idPrefix)
+            local curve <const> = Curve2.new(false, { kn0, kn1 }, idPrefix)
 
-            local totalLength, arcLengths = Curve2.arcLength(
+            local totalLength <const>, arcLengths <const> = Curve2.arcLength(
                 curve, alpSampleCount)
-            local paramPoints = Curve2.paramPoints(
+            local paramPoints <const> = Curve2.paramPoints(
                 curve, totalLength, arcLengths, alpSampleCount)
             curveSamples[i] = paramPoints
 
@@ -372,33 +373,33 @@ dlg:button {
             -- print(table.concat(strs, ",\n"))
         end
 
-        local useRelative = args.useRelative --[[@as boolean]]
-        local aAbsMin = defaults.aAbsMin
-        local aAbsMax = -defaults.aAbsMin
-        local aAbsRange = aAbsMax - aAbsMin
-        local aAbsDenom = 1.0 / aAbsRange
+        local useRelative <const> = args.useRelative --[[@as boolean]]
+        local aAbsMin <const> = defaults.aAbsMin
+        local aAbsMax <const> = -defaults.aAbsMin
+        local aAbsRange <const> = aAbsMax - aAbsMin
+        local aAbsDenom <const> = 1.0 / aAbsRange
 
-        local bAbsMin = defaults.bAbsMin
-        local bAbsMax = -defaults.bAbsMin
-        local bAbsRange = bAbsMax - bAbsMin
-        local bAbsDenom = 1.0 / bAbsRange
+        local bAbsMin <const> = defaults.bAbsMin
+        local bAbsMax <const> = -defaults.bAbsMin
+        local bAbsRange <const> = bAbsMax - bAbsMin
+        local bAbsDenom <const> = 1.0 / bAbsRange
 
         -- Cache methods.
-        local strfmt = string.format
-        local tilesToImage = AseUtilities.tilesToImage
-        local transact = app.transaction
-        local labTosRgb = Clr.srLab2TosRgb
-        local toHex = Clr.toHex
-        local bisectRight = Utilities.bisectRight
-        local min = math.min
-        local max = math.max
+        local strfmt <const> = string.format
+        local tilesToImage <const> = AseUtilities.tilesToImage
+        local transact <const> = app.transaction
+        local labTosRgb <const> = Clr.srLab2TosRgb
+        local toHex <const> = Clr.toHex
+        local bisectRight <const> = Utilities.bisectRight
+        local min <const> = math.min
+        local max <const> = math.max
 
-        local lenFrames = #frames
+        local lenFrames <const> = #frames
         local k = 0
         while k < lenFrames do
             k = k + 1
-            local srcFrame = frames[k]
-            local srcCel = srcLayer:cel(srcFrame)
+            local srcFrame <const> = frames[k]
+            local srcCel <const> = srcLayer:cel(srcFrame)
             if srcCel then
                 local srcImg = srcCel.image
                 if isTilemap then
@@ -438,58 +439,58 @@ dlg:button {
                 end
 
                 ---@type table<integer, integer>
-                local srcToTrgDict = {}
+                local srcToTrgDict <const> = {}
                 for hex, lab in pairs(hexToLabDict) do
                     -- Lightness.
                     local lTrg = lab.l
-                    local lx = lab.l * 0.01
-                    local lSamples = curveSamples[1]
+                    local lx <const> = lab.l * 0.01
+                    local lSamples <const> = curveSamples[1]
                     local li = bisectRight(
                         lSamples, lx, samplesCompare)
                     li = min(max(li, 1), alpSampleCount)
-                    local ly = lSamples[li].y
+                    local ly <const> = lSamples[li].y
                     lTrg = ly * 100.0
 
                     -- A (green to magenta).
                     local aTrg = lab.a
                     if aViable then
-                        local ax = (lab.a - aMin) * aDenom
-                        local aSamples = curveSamples[2]
+                        local ax <const> = (lab.a - aMin) * aDenom
+                        local aSamples <const> = curveSamples[2]
                         local ai = bisectRight(
                             aSamples, ax, samplesCompare)
                         ai = min(max(ai, 1), alpSampleCount)
-                        local ay = aSamples[ai].y
+                        local ay <const> = aSamples[ai].y
                         aTrg = ay * aRange + aMin
                     end
 
                     -- B (blue to yellow).
                     local bTrg = lab.b
                     if bViable then
-                        local bx = (lab.b - bMin) * bDenom
-                        local bSamples = curveSamples[3]
+                        local bx <const> = (lab.b - bMin) * bDenom
+                        local bSamples <const> = curveSamples[3]
                         local bi = bisectRight(
                             bSamples, bx, samplesCompare)
                         bi = min(max(bi, 1), alpSampleCount)
-                        local by = bSamples[bi].y
+                        local by <const> = bSamples[bi].y
                         bTrg = by * bRange + bMin
                     end
 
                     -- Transparency.
                     local tTrg = lab.alpha
-                    local tx = lab.alpha
-                    local tSamples = curveSamples[4]
+                    local tx <const> = lab.alpha
+                    local tSamples <const> = curveSamples[4]
                     local ti = bisectRight(
                         tSamples, tx, samplesCompare)
                     ti = min(max(ti, 1), alpSampleCount)
-                    local ty = tSamples[ti].y
+                    local ty <const> = tSamples[ti].y
                     tTrg = ty
 
-                    local clrTrg = labTosRgb(lTrg, aTrg, bTrg, tTrg)
+                    local clrTrg <const> = labTosRgb(lTrg, aTrg, bTrg, tTrg)
                     srcToTrgDict[hex] = toHex(clrTrg)
                 end
 
-                local trgImg = srcImg:clone()
-                local trgPxItr = trgImg:pixels()
+                local trgImg <const> = srcImg:clone()
+                local trgPxItr <const> = trgImg:pixels()
                 for trgPixel in trgPxItr do
                     trgPixel(srcToTrgDict[trgPixel()])
                 end
@@ -497,7 +498,7 @@ dlg:button {
                 transact(
                     strfmt("Levels Adjust %d", srcFrame),
                     function()
-                        local trgCel = activeSprite:newCel(
+                        local trgCel <const> = activeSprite:newCel(
                             trgLayer, srcFrame, trgImg, srcCel.position)
                         trgCel.opacity = srcCel.opacity
                     end)
@@ -526,28 +527,28 @@ dlg:button {
     text = "&RESET",
     focus = false,
     onclick = function()
-        local init = {
+        local init <const> = {
             0.0, 0.0,
             0.33333, 0.33333,
             0.66667, 0.66667,
             1.0, 1.0
         }
-        local strfmt = string.format
+        local strfmt <const> = string.format
 
         local i = 0
         while i < lenIdPrefixes do
             i = i + 1
-            local idPrefix = idPrefixes[i]
+            local idPrefix <const> = idPrefixes[i]
 
             local j = 0
             while j < lenCoPostfixes do
                 j = j + 1
-                local coPostfix = coPostfixes[j]
-                local id = idPrefix .. "_" .. coPostfix
+                local coPostfix <const> = coPostfixes[j]
+                local id <const> = idPrefix .. "_" .. coPostfix
                 dlg:modify { id = id, text = strfmt("%.5f", init[j]) }
             end
 
-            local easeFuncsId = idPrefix .. "_easeFuncs"
+            local easeFuncsId <const> = idPrefix .. "_easeFuncs"
             dlg:modify { id = easeFuncsId, option = "LINEAR" }
         end
         dlg:repaint()

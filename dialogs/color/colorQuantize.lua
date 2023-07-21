@@ -1,11 +1,11 @@
 dofile("../../support/aseutilities.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE" }
-local methods = { "SIGNED", "UNSIGNED" }
-local units = { "BITS", "INTEGERS" }
-local levelsInputs = { "NON_UNIFORM", "UNIFORM" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local methods <const> = { "SIGNED", "UNSIGNED" }
+local units <const> = { "BITS", "INTEGERS" }
+local levelsInputs <const> = { "NON_UNIFORM", "UNIFORM" }
 
-local defaults = {
+local defaults <const> = {
     -- TODO: Option to quantize lightness, maybe LAB.
     minLevels = 2,
     maxLevels = 256,
@@ -28,7 +28,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Quantize RGB" }
+local dlg <const> = Dialog { title = "Quantize RGB" }
 
 dlg:combobox {
     id = "target",
@@ -54,15 +54,15 @@ dlg:combobox {
     option = defaults.levelsInput,
     options = levelsInputs,
     onchange = function()
-        local args = dlg.data
+        local args <const> = dlg.data
 
-        local md = args.levelsInput --[[@as string]]
-        local isu = md == "UNIFORM"
-        local isnu = md == "NON_UNIFORM"
+        local md <const> = args.levelsInput --[[@as string]]
+        local isu <const> = md == "UNIFORM"
+        local isnu <const> = md == "NON_UNIFORM"
 
-        local unit = args.unitsInput --[[@as string]]
-        local isbit = unit == "BITS"
-        local isint = unit == "INTEGERS"
+        local unit <const> = args.unitsInput --[[@as string]]
+        local isbit <const> = unit == "BITS"
+        local isint <const> = unit == "INTEGERS"
 
         dlg:modify { id = "rBits", visible = isnu and isbit }
         dlg:modify { id = "gBits", visible = isnu and isbit }
@@ -95,8 +95,8 @@ dlg:slider {
     visible = defaults.levelsInput == "UNIFORM"
         and defaults.unit == "INTEGERS",
     onchange = function()
-        local args = dlg.data
-        local uni = args.levelsUni --[[@as integer]]
+        local args <const> = dlg.data
+        local uni <const> = args.levelsUni --[[@as integer]]
         dlg:modify { id = "rLevels", value = uni }
         dlg:modify { id = "gLevels", value = uni }
         dlg:modify { id = "bLevels", value = uni }
@@ -157,14 +157,14 @@ dlg:slider {
     visible = defaults.levelsInput == "UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local args = dlg.data
-        local bd = args.bitsUni --[[@as integer]]
+        local args <const> = dlg.data
+        local bd <const> = args.bitsUni --[[@as integer]]
         dlg:modify { id = "rBits", value = bd }
         dlg:modify { id = "gBits", value = bd }
         dlg:modify { id = "bBits", value = bd }
         dlg:modify { id = "aBits", value = bd }
 
-        local lv = 1 << bd
+        local lv <const> = 1 << bd
         dlg:modify { id = "levelsUni", value = lv }
         dlg:modify { id = "rLevels", value = lv }
         dlg:modify { id = "gLevels", value = lv }
@@ -184,9 +184,9 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local args = dlg.data
-        local rBits = args.rBits --[[@as integer]]
-        local lv = 1 << rBits
+        local args <const> = dlg.data
+        local rBits <const> = args.rBits --[[@as integer]]
+        local lv <const> = 1 << rBits
         dlg:modify { id = "rLevels", value = lv }
     end
 }
@@ -200,9 +200,9 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local args = dlg.data
-        local gBits = args.gBits --[[@as integer]]
-        local lv = 1 << gBits
+        local args <const> = dlg.data
+        local gBits <const> = args.gBits --[[@as integer]]
+        local lv <const> = 1 << gBits
         dlg:modify { id = "gLevels", value = lv }
     end
 }
@@ -216,9 +216,9 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local args = dlg.data
-        local bBits = args.bBits --[[@as integer]]
-        local lv = 1 << bBits
+        local args <const> = dlg.data
+        local bBits <const> = args.bBits --[[@as integer]]
+        local lv <const> = 1 << bBits
         dlg:modify { id = "bLevels", value = lv }
     end
 }
@@ -232,9 +232,9 @@ dlg:slider {
     visible = defaults.levelsInput == "NON_UNIFORM"
         and defaults.unit == "BITS",
     onchange = function()
-        local args = dlg.data
-        local aBits = args.aBits --[[@as integer]]
-        local lv = 1 << aBits
+        local args <const> = dlg.data
+        local aBits <const> = args.aBits --[[@as integer]]
+        local lv <const> = 1 << aBits
         dlg:modify { id = "aLevels", value = lv }
     end
 }
@@ -247,15 +247,15 @@ dlg:combobox {
     option = defaults.unit,
     options = units,
     onchange = function()
-        local args = dlg.data
+        local args <const> = dlg.data
 
-        local md = args.levelsInput --[[@as string]]
-        local isnu = md == "NON_UNIFORM"
-        local isu = md == "UNIFORM"
+        local md <const> = args.levelsInput --[[@as string]]
+        local isnu <const> = md == "NON_UNIFORM"
+        local isu <const> = md == "UNIFORM"
 
-        local unit = args.unitsInput --[[@as string]]
-        local isbit = unit == "BITS"
-        local isint = unit == "INTEGERS"
+        local unit <const> = args.unitsInput --[[@as string]]
+        local isbit <const> = unit == "BITS"
+        local isint <const> = unit == "INTEGERS"
 
         dlg:modify { id = "rBits", visible = isnu and isbit }
         dlg:modify { id = "gBits", visible = isnu and isbit }
@@ -285,8 +285,8 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Early returns.
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -295,7 +295,7 @@ dlg:button {
             return
         end
 
-        local colorMode = activeSprite.colorMode
+        local colorMode <const> = activeSprite.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -304,7 +304,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = site.layer
+        local srcLayer <const> = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -322,22 +322,22 @@ dlg:button {
         end
 
         -- Check for tile map support.
-        local isTilemap = srcLayer.isTilemap
+        local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
             tileSet = srcLayer.tileset --[[@as Tileset]]
         end
 
         -- Unpack arguments.
-        local args = dlg.data
-        local target = args.target or defaults.target --[[@as string]]
-        local method = args.method or defaults.method --[[@as string]]
+        local args <const> = dlg.data
+        local target <const> = args.target or defaults.target --[[@as string]]
+        local method <const> = args.method or defaults.method --[[@as string]]
         local rLevels = args.rLevels or defaults.rLevels --[[@as integer]]
         local gLevels = args.gLevels or defaults.gLevels --[[@as integer]]
         local bLevels = args.bLevels or defaults.bLevels --[[@as integer]]
         local aLevels = args.aLevels or defaults.aLevels --[[@as integer]]
 
-        local frames = Utilities.flatArr2(
+        local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
         local trgLayer = nil
@@ -356,11 +356,11 @@ dlg:button {
             trgLayer.blendMode = srcLayer.blendMode
         end)
 
-        local rgbColorMode = ColorMode.RGB
-        local floor = math.floor
-        local tilesToImage = AseUtilities.tilesToImage
-        local transact = app.transaction
-        local strfmt = string.format
+        local rgbColorMode <const> = ColorMode.RGB
+        local floor <const> = math.floor
+        local strfmt <const> = string.format
+        local tilesToImage <const> = AseUtilities.tilesToImage
+        local transact <const> = app.transaction
 
         local aDelta = 0.0
         local bDelta = 0.0
@@ -412,11 +412,11 @@ dlg:button {
         --     aDelta, bDelta, gDelta, rDelta))
 
         local i = 0
-        local lenFrames = #frames
+        local lenFrames <const> = #frames
         while i < lenFrames do
             i = i + 1
-            local srcFrame = frames[i]
-            local srcCel = srcLayer:cel(srcFrame)
+            local srcFrame <const> = frames[i]
+            local srcCel <const> = srcLayer:cel(srcFrame)
             if srcCel then
                 local srcImg = srcCel.image
                 if isTilemap then
@@ -425,8 +425,8 @@ dlg:button {
 
                 -- Gather unique colors in image.
                 ---@type table<integer, boolean>
-                local srcDict = {}
-                local srcPxItr = srcImg:pixels()
+                local srcDict <const> = {}
+                local srcPxItr <const> = srcImg:pixels()
                 for pixel in srcPxItr do
                     srcDict[pixel()] = true
                 end
@@ -435,23 +435,23 @@ dlg:button {
                 ---@type table<integer, integer>
                 local trgDict = {}
                 for k, _ in pairs(srcDict) do
-                    local a = (k >> 0x18) & 0xff
-                    local b = (k >> 0x10) & 0xff
-                    local g = (k >> 0x08) & 0xff
-                    local r = k & 0xff
+                    local a <const> = (k >> 0x18) & 0xff
+                    local b <const> = (k >> 0x10) & 0xff
+                    local g <const> = (k >> 0x08) & 0xff
+                    local r <const> = k & 0xff
 
                     -- Do not cache the division in a variable
                     -- as 1.0 / 255.0. It leads to precision errors
                     -- which impact alpha during unsigned quantize.
-                    local aQtz = aqFunc(a / 255.0, aLevels, aDelta)
-                    local bQtz = bqFunc(b / 255.0, bLevels, bDelta)
-                    local gQtz = gqFunc(g / 255.0, gLevels, gDelta)
-                    local rQtz = rqFunc(r / 255.0, rLevels, rDelta)
+                    local aQtz <const> = aqFunc(a / 255.0, aLevels, aDelta)
+                    local bQtz <const> = bqFunc(b / 255.0, bLevels, bDelta)
+                    local gQtz <const> = gqFunc(g / 255.0, gLevels, gDelta)
+                    local rQtz <const> = rqFunc(r / 255.0, rLevels, rDelta)
 
-                    local a255 = floor(aQtz * 255.0 + 0.5)
-                    local b255 = floor(bQtz * 255.0 + 0.5)
-                    local g255 = floor(gQtz * 255.0 + 0.5)
-                    local r255 = floor(rQtz * 255.0 + 0.5)
+                    local a255 <const> = floor(aQtz * 255.0 + 0.5)
+                    local b255 <const> = floor(bQtz * 255.0 + 0.5)
+                    local g255 <const> = floor(gQtz * 255.0 + 0.5)
+                    local r255 <const> = floor(rQtz * 255.0 + 0.5)
 
                     trgDict[k] = (a255 << 0x18)
                         | (b255 << 0x10)
@@ -460,8 +460,8 @@ dlg:button {
                 end
 
                 -- Clone image, replace color with quantized.
-                local trgImg = srcImg:clone()
-                local trgPxItr = trgImg:pixels()
+                local trgImg <const> = srcImg:clone()
+                local trgPxItr <const> = trgImg:pixels()
                 for pixel in trgPxItr do
                     pixel(trgDict[pixel()])
                 end

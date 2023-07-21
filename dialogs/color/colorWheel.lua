@@ -1,8 +1,8 @@
 dofile("../../support/aseutilities.lua")
 
-local paletteTypes = { "ACTIVE", "DEFAULT", "FILE" }
+local paletteTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
 
-local defaults = {
+local defaults <const> = {
     size = 256,
     minLight = 5,
     maxLight = 95,
@@ -21,7 +21,7 @@ local defaults = {
     pullFocus = true
 }
 
-local dlg = Dialog { title = "Lch Color Wheel" }
+local dlg <const> = Dialog { title = "Lch Color Wheel" }
 
 dlg:slider {
     id = "size",
@@ -484,11 +484,6 @@ dlg:button {
                 ys[j] = yi
             end
 
-            -- if xMax > xMin and yMax > yMin then
-            -- end
-            -- The above can fail for certain sets of harmonious
-            -- shades, which means palettes go unplotted without
-            -- much explanation.
             if yMax == yMin then
                 yMax = size
                 yMin = 0

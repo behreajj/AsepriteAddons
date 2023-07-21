@@ -1,13 +1,13 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
-local colorSpaces = {
+local colorSpaces <const> = {
     "LINEAR_RGB",
     "S_RGB",
     "SR_LAB_2"
 }
 
-local defaults = {
+local defaults <const> = {
     removeAlpha = true,
     clampTo256 = true,
     printElapsed = false,
@@ -63,7 +63,7 @@ end
 ---@param clr Clr
 ---@return Vec3
 local function clrToVec3lRgb(clr)
-    local lin = Clr.sRgbTolRgbInternal(clr)
+    local lin <const> = Clr.sRgbTolRgbInternal(clr)
     return Vec3.new(lin.r, lin.g, lin.b)
 end
 
@@ -76,7 +76,7 @@ end
 ---@param clr Clr
 ---@return Vec3
 local function clrToVec3SrLab2(clr)
-    local lab = Clr.sRgbToSrLab2(clr)
+    local lab <const> = Clr.sRgbToSrLab2(clr)
     return Vec3.new(lab.a, lab.b, lab.l)
 end
 
@@ -95,7 +95,7 @@ end
 ---@param v3 Vec3
 ---@return Clr
 local function vec3ToClrlRgb(v3)
-    local lin = Clr.new(v3.x, v3.y, v3.z, 1.0)
+    local lin <const> = Clr.new(v3.x, v3.y, v3.z, 1.0)
     return Clr.lRgbTosRgbInternal(lin)
 end
 
@@ -123,7 +123,7 @@ local function v3ToClrFuncFromPreset(preset)
     end
 end
 
-local dlg = Dialog { title = "Palette From Cel" }
+local dlg <const> = Dialog { title = "Palette From Cel" }
 
 dlg:check {
     id = "prependMask",
@@ -138,18 +138,20 @@ dlg:check {
     label = "Opaque Colors:",
     selected = defaults.removeAlpha,
     onclick = function()
-        local args = dlg.data
-        local state = args.clampTo256
-        local removeAlpha = args.removeAlpha
+        local args <const> = dlg.data
+        local clamp <const> = args.clampTo256 --[[@as boolean]]
+        local removeAlpha <const> = args.removeAlpha --[[@as boolean]]
+        local octThreshold <const> = args.octThreshold --[[@as integer]]
+
         dlg:modify {
             id = "alphaWarn",
-            visible = state and (not removeAlpha)
+            visible = clamp and (not removeAlpha)
         }
         dlg:modify {
             id = "alphaWarn",
             text = string.format(
                 "Opaque if over %d.",
-                args.octThreshold)
+                octThreshold)
         }
     end
 }
@@ -172,10 +174,12 @@ dlg:check {
     text = "At Threshold",
     selected = defaults.clampTo256,
     onclick = function()
-        local args = dlg.data
-        local clamp = args.clampTo256
-        local removeAlpha = args.removeAlpha
-        local octCap = args.octCapacity
+        local args <const> = dlg.data
+        local clamp <const> = args.clampTo256 --[[@as boolean]]
+        local removeAlpha <const> = args.removeAlpha --[[@as boolean]]
+        local octCap <const> = args.octCapacity --[[@as integer]]
+        local octThreshold <const> = args.octThreshold --[[@as integer]]
+
         dlg:modify { id = "octThreshold", visible = clamp }
         dlg:modify { id = "octCapacity", visible = clamp }
         dlg:modify { id = "refineCapacity", visible = clamp and (octCap > 8) }
@@ -189,7 +193,7 @@ dlg:check {
             id = "alphaWarn",
             text = string.format(
                 "Opaque if over %d.",
-                args.octThreshold)
+                octThreshold)
         }
     end
 }
@@ -204,12 +208,14 @@ dlg:slider {
     value = defaults.octThreshold,
     visible = defaults.clampTo256,
     onchange = function()
-        local args = dlg.data
+        local args <const> = dlg.data
+        local octThreshold <const> = args.octThreshold --[[@as integer]]
+
         dlg:modify {
             id = "alphaWarn",
             text = string.format(
                 "Opaque if over %d.",
-                args.octThreshold)
+                octThreshold)
         }
     end
 }
@@ -224,8 +230,8 @@ dlg:slider {
     value = defaults.octCapacityBits,
     visible = defaults.clampTo256,
     onchange = function()
-        local args = dlg.data
-        local octCap = args.octCapacity
+        local args <const> = dlg.data
+        local octCap <const> = args.octCapacity --[[@as integer]]
         dlg:modify {
             id = "refineCapacity",
             visible = (octCap >= defaults.showRefineAt)
@@ -318,16 +324,16 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Begin measuring elapsed time.
-        local args = dlg.data
-        local printElapsed = args.printElapsed --[[@as boolean]]
+        local args <const> = dlg.data
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         local startTime = 0
         local endTime = 0
         local elapsed = 0
         if printElapsed then startTime = os.clock() end
 
         -- Early returns.
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -336,7 +342,7 @@ dlg:button {
             return
         end
 
-        local srcFrame = site.frame
+        local srcFrame <const> = site.frame
         if not srcFrame then
             app.alert {
                 title = "Error",
@@ -345,7 +351,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = site.layer
+        local srcLayer <const> = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -363,21 +369,21 @@ dlg:button {
         end
 
         -- Unpack arguments.
-        local target = args.target
+        local target <const> = args.target
             or defaults.target --[[@as string]]
-        local ocThreshold = args.octThreshold
+        local ocThreshold <const> = args.octThreshold
             or defaults.octThreshold --[[@as integer]]
-        local clampTo256 = args.clampTo256 --[[@as boolean]]
-        local prependMask = args.prependMask --[[@as boolean]]
-        local removeAlpha = args.removeAlpha --[[@as boolean]]
-        local octCapBits = args.octCapacity
+        local clampTo256 <const> = args.clampTo256 --[[@as boolean]]
+        local prependMask <const> = args.prependMask --[[@as boolean]]
+        local removeAlpha <const> = args.removeAlpha --[[@as boolean]]
+        local octCapBits <const> = args.octCapacity
             or defaults.octCapacityBits --[[@as integer]]
-        local refineCap = args.refineCapacity
+        local refineCap <const> = args.refineCapacity
             or defaults.refineCapacity --[[@as integer]]
 
         local srcImg = nil
-        local spriteSpec = activeSprite.spec
-        local spriteColorMode = spriteSpec.colorMode
+        local spriteSpec <const> = activeSprite.spec
+        local spriteColorMode <const> = spriteSpec.colorMode
         if srcLayer.isGroup then
             local groupRect = nil
             srcImg, groupRect = AseUtilities.flattenGroup(
@@ -387,7 +393,7 @@ dlg:button {
                 spriteSpec.transparentColor,
                 true, true, true, true)
         else
-            local srcCel = srcLayer:cel(srcFrame)
+            local srcCel <const> = srcLayer:cel(srcFrame)
             if not srcCel then
                 app.alert {
                     title = "Error",
@@ -412,10 +418,10 @@ dlg:button {
             end
         end
 
-        ---@type table<integer, integer>
-        local dictionary = {}
         local idx = 0
-        local pxItr = srcImg:pixels()
+        ---@type table<integer, integer>
+        local dictionary <const> = {}
+        local pxItr <const> = srcImg:pixels()
 
         if spriteColorMode == ColorMode.RGB then
             for pixel in pxItr do
@@ -429,15 +435,15 @@ dlg:button {
                 end
             end
         elseif spriteColorMode == ColorMode.INDEXED then
-            local srcPal = AseUtilities.getPalette(
+            local srcPal <const> = AseUtilities.getPalette(
                 srcFrame, activeSprite.palettes)
-            local aseToHex = AseUtilities.aseColorToHex
-            local rgbColorMode = ColorMode.RGB
-            local srcPalLen = #srcPal
+            local aseToHex <const> = AseUtilities.aseColorToHex
+            local rgbColorMode <const> = ColorMode.RGB
+            local lenSrcPal <const> = #srcPal
             for pixel in pxItr do
-                local srcIndex = pixel()
-                if srcIndex > -1 and srcIndex < srcPalLen then
-                    local aseColor = srcPal:getColor(srcIndex)
+                local srcIndex <const> = pixel()
+                if srcIndex > -1 and srcIndex < lenSrcPal then
+                    local aseColor <const> = srcPal:getColor(srcIndex)
                     if aseColor.alpha > 0 then
                         local hex = aseToHex(aseColor, rgbColorMode)
                         hex = alphaMask | hex
@@ -453,18 +459,19 @@ dlg:button {
                 local hexGray = pixel()
                 if ((hexGray >> 0x08) & 0xff) > 0 then
                     hexGray = alphaMask | hexGray
-                    local a = (hexGray >> 0x08) & 0xff
-                    local v = hexGray & 0xff
-                    local hex = a << 0x18 | v << 0x10 | v << 0x08 | v
-                    if not dictionary[hex] then
+                    local a <const> = (hexGray >> 0x08) & 0xff
+                    local v <const> = hexGray & 0xff
+                    local h <const> = a << 0x18 | v << 0x10 | v << 0x08 | v
+                    if not dictionary[h] then
                         idx = idx + 1
-                        dictionary[hex] = idx
+                        dictionary[h] = idx
                     end
                 end
             end
         end
 
         -- Convert dictionary to set.
+        ---@type integer[]
         local hexes = {}
         for k, v in pairs(dictionary) do
             hexes[v] = k
@@ -472,25 +479,26 @@ dlg:button {
 
         -- The oldHexesLen and centersLen need to be
         -- set here for print diagnostic purposes.
-        local oldLenHexes = #hexes
+        local oldLenHexes <const> = #hexes
         local lenCenters = 0
-        local octCapacity = refineCap + (1 << octCapBits)
+        local octCapacity <const> = refineCap + (1 << octCapBits)
         local lenHexes = oldLenHexes
         if clampTo256 and lenHexes > ocThreshold then
-            local clrSpacePreset = args.clrSpacePreset
+            local clrSpacePreset <const> = args.clrSpacePreset
                 or defaults.clrSpacePreset --[[@as string]]
 
-            local fromHex = Clr.fromHex
-            local toHex = Clr.toHex
-            local octins = Octree.insert
-            local clrV3Func = clrToV3FuncFromPreset(clrSpacePreset)
-            local v3ClrFunc = v3ToClrFuncFromPreset(clrSpacePreset)
-            local bounds = boundsFromPreset(clrSpacePreset)
+            -- Cache methods to local.
+            local fromHex <const> = Clr.fromHex
+            local toHex <const> = Clr.toHex
+            local octins <const> = Octree.insert
+            local clrV3Func <const> = clrToV3FuncFromPreset(clrSpacePreset)
+            local v3ClrFunc <const> = v3ToClrFuncFromPreset(clrSpacePreset)
 
             -- Subdivide once so that there are at least 8 colors
             -- returned in cases where an input palette count
             -- is barely over threshold, e.g., 380 over 255.
-            local octree = Octree.new(bounds, octCapacity, 1)
+            local bounds <const> = boundsFromPreset(clrSpacePreset)
+            local octree <const> = Octree.new(bounds, octCapacity, 1)
             Octree.subdivide(octree, 1, octCapacity)
 
             -- This shouldn't need to check for transparent
@@ -498,21 +506,22 @@ dlg:button {
             local i = 0
             while i < lenHexes do
                 i = i + 1
-                local clr = fromHex(hexes[i])
+                local clr <const> = fromHex(hexes[i])
                 octins(octree, clrV3Func(clr))
             end
 
             Octree.cull(octree)
 
-            local centers = Octree.centersMean(octree, {})
+            local centers <const> = Octree.centersMean(octree, {})
             sortByPreset(clrSpacePreset, centers)
 
             lenCenters = #centers
-            local centerHexes = {}
+            ---@type integer[]
+            local centerHexes <const> = {}
             local j = 0
             while j < lenCenters do
                 j = j + 1
-                local srgb = v3ClrFunc(centers[j])
+                local srgb <const> = v3ClrFunc(centers[j])
                 centerHexes[j] = toHex(srgb)
             end
 
@@ -525,8 +534,8 @@ dlg:button {
         end
 
         if target == "SAVE" then
-            local filepath = args.filepath --[[@as string]]
-            local palette = Palette(lenHexes)
+            local filepath <const> = args.filepath --[[@as string]]
+            local palette <const> = Palette(lenHexes)
             local k = 0
             while k < lenHexes do
                 k = k + 1
@@ -538,7 +547,7 @@ dlg:button {
             app.alert { title = "Success", text = "Palette saved." }
         else
             -- How to handle out of bounds palette index?
-            local palIdx = args.paletteIndex
+            local palIdx <const> = args.paletteIndex
                 or defaults.paletteIndex --[[@as integer]]
             if palIdx > #activeSprite.palettes then
                 app.alert {
@@ -561,7 +570,7 @@ dlg:button {
             endTime = os.clock()
             elapsed = endTime - startTime
 
-            local txtArr = {
+            local txtArr <const> = {
                 string.format("Start: %.2f", startTime),
                 string.format("End: %.2f", endTime),
                 string.format("Elapsed: %.6f", elapsed),

@@ -1,12 +1,12 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
-local screenScale = app.preferences.general.screen_scale
+local screenScale <const> = app.preferences.general.screen_scale
 
-local targets = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
-local modes = { "LAB", "LCH" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
+local modes <const> = { "LAB", "LCH" }
 
-local defaults = {
+local defaults <const> = {
     -- Note: standardization is not the same as normalization.
     -- For standardization, a range's average must be found,
     -- then its standard deviation must be found:
@@ -32,7 +32,7 @@ local defaults = {
     maxChroma = 135.0
 }
 
-local active = {
+local active <const> = {
     lAdj = 0.0,
     cAdj = 0.0,
     hAdj = 0.5,
@@ -41,13 +41,13 @@ local active = {
     alphaAdj = 0.0
 }
 
-local dlg = Dialog { title = "Adjust Color" }
+local dlg <const> = Dialog { title = "Adjust Color" }
 
 ---@param event MouseEvent
 local function setLightMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw = defaults.barWidth
-        local mx100 = 200.0 * event.x / (bw - 1.0) - 100.0
+        local bw <const> = defaults.barWidth
+        local mx100 <const> = 200.0 * event.x / (bw - 1.0) - 100.0
         if event.ctrlKey then
             active.lAdj = 0.0
         elseif event.shiftKey then
@@ -68,11 +68,11 @@ end
 ---@param event MouseEvent
 local function setChromaMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw = defaults.barWidth
-        local clb = -defaults.maxChroma
-        local cub = defaults.maxChroma
-        local mx01 = event.x / (bw - 1.0)
-        local mxc = (1.0 - mx01) * clb + mx01 * cub
+        local bw <const> = defaults.barWidth
+        local clb <const> = -defaults.maxChroma
+        local cub <const> = defaults.maxChroma
+        local mx01 <const> = event.x / (bw - 1.0)
+        local mxc <const> = (1.0 - mx01) * clb + mx01 * cub
         if event.ctrlKey then
             active.cAdj = 0.0
         elseif event.shiftKey then
@@ -93,8 +93,8 @@ end
 ---@param event MouseEvent
 local function setHueMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw = defaults.barWidth
-        local mx01 = event.x / (bw - 1.0)
+        local bw <const> = defaults.barWidth
+        local mx01 <const> = event.x / (bw - 1.0)
         if event.ctrlKey then
             active.hAdj = 0.5
         elseif event.shiftKey then
@@ -113,11 +113,11 @@ end
 ---@param event MouseEvent
 local function setAMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw = defaults.barWidth
-        local alb = defaults.labAxisMin
-        local aub = defaults.labAxisMax
-        local mx01 = event.x / (bw - 1.0)
-        local mxa = (1.0 - mx01) * alb + mx01 * aub
+        local bw <const> = defaults.barWidth
+        local alb <const> = defaults.labAxisMin
+        local aub <const> = defaults.labAxisMax
+        local mx01 <const> = event.x / (bw - 1.0)
+        local mxa <const> = (1.0 - mx01) * alb + mx01 * aub
         if event.ctrlKey then
             active.aAdj = 0.0
         elseif event.shiftKey then
@@ -138,11 +138,11 @@ end
 ---@param event MouseEvent
 local function setBMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw = defaults.barWidth
-        local blb = defaults.labAxisMin
-        local bub = defaults.labAxisMax
-        local mx01 = event.x / (bw - 1.0)
-        local mxb = (1.0 - mx01) * blb + mx01 * bub
+        local bw <const> = defaults.barWidth
+        local blb <const> = defaults.labAxisMin
+        local bub <const> = defaults.labAxisMax
+        local mx01 <const> = event.x / (bw - 1.0)
+        local mxb <const> = (1.0 - mx01) * blb + mx01 * bub
         if event.ctrlKey then
             active.bAdj = 0.0
         elseif event.shiftKey then
@@ -163,9 +163,9 @@ end
 ---@param event MouseEvent
 local function setAlphaMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw = defaults.barWidth
-        local mx01 = event.x / (bw - 1.0)
-        local mxalpha = mx01 + mx01 - 1.0
+        local bw <const> = defaults.barWidth
+        local mx01 <const> = event.x / (bw - 1.0)
+        local mxalpha <const> = mx01 + mx01 - 1.0
         if event.ctrlKey then
             active.alphaAdj = 0.0
         elseif event.shiftKey then
@@ -222,10 +222,10 @@ dlg:combobox {
     option = defaults.mode,
     options = modes,
     onchange = function()
-        local args = dlg.data
-        local mode = args.mode --[[@as string]]
-        local isLch = mode == "LCH"
-        local isLab = mode == "LAB"
+        local args <const> = dlg.data
+        local mode <const> = args.mode --[[@as string]]
+        local isLch <const> = mode == "LCH"
+        local isLab <const> = mode == "LAB"
         dlg:modify { id = "cAdjCanvas", visible = isLch }
         dlg:modify { id = "hAdjCanvas", visible = isLch }
         dlg:modify { id = "aAdjCanvas", visible = isLab }
@@ -242,33 +242,33 @@ dlg:canvas {
     height = defaults.barheight,
     autoScaling = false,
     onpaint = function(event)
-        local barWidth = defaults.barWidth
-        local barHeight = defaults.barHeight
-        local reticleSize = defaults.reticleSize
+        local barWidth <const> = defaults.barWidth
+        local barHeight <const> = defaults.barHeight
+        local reticleSize <const> = defaults.reticleSize
 
         -- The problem with coloring the light bar is that
         -- it is visible in both LAB and LCH mode.
         -- local c = 50.0
         -- local h = active.hAdj - 0.5
-        local lchTosRgb = Clr.srLchTosRgb
-        local toHex = Clr.toHex
+        local lchTosRgb <const> = Clr.srLchTosRgb
+        local toHex <const> = Clr.toHex
 
-        local xToLight = 100.0 / (barWidth - 1.0)
-        local img = Image(barWidth, 1, ColorMode.RGB)
-        local pxItr = img:pixels()
+        local xToLight <const> = 100.0 / (barWidth - 1.0)
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        local pxItr <const> = img:pixels()
         for pixel in pxItr do
-            local xLight = pixel.x * xToLight
+            local xLight <const> = pixel.x * xToLight
             pixel(toHex(lchTosRgb(xLight, 0.0, 0.0, 1.0)))
         end
         img:resize(barWidth, barHeight)
 
-        local ctx = event.context
+        local ctx <const> = event.context
         ctx:drawImage(img, 0, 0)
 
-        local lAdj = active.lAdj
-        local l01 = lAdj * 0.005 + 0.5
-        local black = Color { r = 0, g = 0, b = 0 }
-        local white = Color { r = 255, g = 255, b = 255 }
+        local lAdj <const> = active.lAdj
+        local l01 <const> = lAdj * 0.005 + 0.5
+        local black <const> = Color { r = 0, g = 0, b = 0 }
+        local white <const> = Color { r = 255, g = 255, b = 255 }
         local fill = black
         if lAdj < 0.0 then
             fill = white
@@ -277,7 +277,7 @@ dlg:canvas {
             ctx, l01, barWidth, barHeight,
             fill, reticleSize)
 
-        local strDisplay = string.format(
+        local strDisplay <const> = string.format(
             "%+04d", Utilities.round(active.lAdj))
         ctx.color = black
         ctx:fillText(strDisplay, 2, 2)
@@ -298,35 +298,35 @@ dlg:canvas {
     autoScaling = false,
     visible = defaults.mode == "LCH",
     onpaint = function(event)
-        local barWidth = defaults.barWidth
-        local barHeight = defaults.barHeight
-        local reticleSize = defaults.reticleSize
-        local clb = -defaults.maxChroma
-        local cub = defaults.maxChroma
+        local barWidth <const> = defaults.barWidth
+        local barHeight <const> = defaults.barHeight
+        local reticleSize <const> = defaults.reticleSize
+        local clb <const> = -defaults.maxChroma
+        local cub <const> = defaults.maxChroma
 
-        local h = active.hAdj - 0.5
-        local lchTosRgb = Clr.srLchTosRgb
-        local toHex = Clr.toHex
+        local h <const> = active.hAdj - 0.5
+        local lchTosRgb <const> = Clr.srLchTosRgb
+        local toHex <const> = Clr.toHex
 
-        local xToChroma = cub / (barWidth - 1.0)
-        local img = Image(barWidth, 1, ColorMode.RGB)
-        local pxItr = img:pixels()
+        local xToChroma <const> = cub / (barWidth - 1.0)
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        local pxItr <const> = img:pixels()
         for pixel in pxItr do
-            local c = pixel.x * xToChroma
+            local c <const> = pixel.x * xToChroma
             pixel(toHex(lchTosRgb(50.0, c, h, 1.0)))
         end
         img:resize(barWidth, barHeight)
 
-        local ctx = event.context
-        local c01 = (active.cAdj - clb) / (cub - clb)
-        local black = Color { r = 0, g = 0, b = 0 }
-        local white = Color { r = 255, g = 255, b = 255 }
+        local ctx <const> = event.context
+        local c01 <const> = (active.cAdj - clb) / (cub - clb)
+        local black <const> = Color { r = 0, g = 0, b = 0 }
+        local white <const> = Color { r = 255, g = 255, b = 255 }
         ctx:drawImage(img, 0, 0)
         CanvasUtilities.drawSliderReticle(
             ctx, c01, barWidth, barHeight,
             white, reticleSize)
 
-        local strDisplay = string.format(
+        local strDisplay <const> = string.format(
             "%+04d", Utilities.round(active.cAdj))
         ctx.color = black
         ctx:fillText(strDisplay, 2, 2)
@@ -347,18 +347,18 @@ dlg:canvas {
     autoScaling = false,
     visible = defaults.mode == "LCH",
     onpaint = function(event)
-        local barWidth = defaults.barWidth
-        local barHeight = defaults.barHeight
-        local reticleSize = defaults.reticleSize
+        local barWidth <const> = defaults.barWidth
+        local barHeight <const> = defaults.barHeight
+        local reticleSize <const> = defaults.reticleSize
 
-        local c = 50.0
-        local lchTosRgb = Clr.srLchTosRgb
-        local toHex = Clr.toHex
+        local c <const> = 50.0
+        local lchTosRgb <const> = Clr.srLchTosRgb
+        local toHex <const> = Clr.toHex
 
-        local xToHue = 1.0 / (barWidth - 1.0)
-        local hAdj = active.hAdj - 0.5
-        local img = Image(barWidth, 2, ColorMode.RGB)
-        local pxItr = img:pixels()
+        local xToHue <const> = 1.0 / (barWidth - 1.0)
+        local hAdj <const> = active.hAdj - 0.5
+        local img <const> = Image(barWidth, 2, ColorMode.RGB)
+        local pxItr <const> = img:pixels()
         for pixel in pxItr do
             local xHue = pixel.x * xToHue + 0.5
             if pixel.y > 0 then xHue = xHue + hAdj end
@@ -366,15 +366,15 @@ dlg:canvas {
         end
         img:resize(barWidth, barHeight)
 
-        local ctx = event.context
-        local black = Color { r = 0, g = 0, b = 0 }
-        local white = Color { r = 255, g = 255, b = 255 }
+        local ctx <const> = event.context
+        local black <const> = Color { r = 0, g = 0, b = 0 }
+        local white <const> = Color { r = 255, g = 255, b = 255 }
         ctx:drawImage(img, 0, 0)
         CanvasUtilities.drawSliderReticle(
             ctx, active.hAdj, barWidth, barHeight,
             white, reticleSize)
 
-        local strDisplay = string.format("%+04d",
+        local strDisplay <const> = string.format("%+04d",
             Utilities.round(hAdj * 360.0))
         ctx.color = black
         ctx:fillText(strDisplay, 2, 2)
@@ -395,37 +395,37 @@ dlg:canvas {
     autoScaling = false,
     visible = defaults.mode == "LAB",
     onpaint = function(event)
-        local barWidth = defaults.barWidth
-        local barHeight = defaults.barHeight
-        local reticleSize = defaults.reticleSize
-        local alb = defaults.labAxisMin
-        local aub = defaults.labAxisMax
-        local visMin = defaults.labVisMin
-        local visMax = defaults.labVisMax
+        local barWidth <const> = defaults.barWidth
+        local barHeight <const> = defaults.barHeight
+        local reticleSize <const> = defaults.reticleSize
+        local alb <const> = defaults.labAxisMin
+        local aub <const> = defaults.labAxisMax
+        local visMin <const> = defaults.labVisMin
+        local visMax <const> = defaults.labVisMax
 
-        local labTosRgb = Clr.srLab2TosRgb
-        local toHex = Clr.toHex
+        local labTosRgb <const> = Clr.srLab2TosRgb
+        local toHex <const> = Clr.toHex
 
-        local xToFac = 1.0 / (barWidth - 1.0)
-        local img = Image(barWidth, 1, ColorMode.RGB)
-        local pxItr = img:pixels()
+        local xToFac <const> = 1.0 / (barWidth - 1.0)
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        local pxItr <const> = img:pixels()
         for pixel in pxItr do
-            local xFac = pixel.x * xToFac
-            local a = (1.0 - xFac) * visMin + xFac * visMax
+            local xFac <const> = pixel.x * xToFac
+            local a <const> = (1.0 - xFac) * visMin + xFac * visMax
             pixel(toHex(labTosRgb(50.0, a, 0.0, 1.0)))
         end
         img:resize(barWidth, barHeight)
 
-        local ctx = event.context
-        local a01 = (active.aAdj - alb) / (aub - alb)
-        local black = Color { r = 0, g = 0, b = 0 }
-        local white = Color { r = 255, g = 255, b = 255 }
+        local ctx <const> = event.context
+        local a01 <const> = (active.aAdj - alb) / (aub - alb)
+        local black <const> = Color { r = 0, g = 0, b = 0 }
+        local white <const> = Color { r = 255, g = 255, b = 255 }
         ctx:drawImage(img, 0, 0)
         CanvasUtilities.drawSliderReticle(
             ctx, a01, barWidth, barHeight,
             white, reticleSize)
 
-        local strDisplay = string.format(
+        local strDisplay <const> = string.format(
             "%+04d", Utilities.round(active.aAdj))
         ctx.color = black
         ctx:fillText(strDisplay, 2, 2)
@@ -446,37 +446,37 @@ dlg:canvas {
     autoScaling = false,
     visible = defaults.mode == "LAB",
     onpaint = function(event)
-        local barWidth = defaults.barWidth
-        local barHeight = defaults.barHeight
-        local reticleSize = defaults.reticleSize
-        local blb = defaults.labAxisMin
-        local bub = defaults.labAxisMax
-        local visMin = defaults.labVisMin
-        local visMax = defaults.labVisMax
+        local barWidth <const> = defaults.barWidth
+        local barHeight <const> = defaults.barHeight
+        local reticleSize <const> = defaults.reticleSize
+        local blb <const> = defaults.labAxisMin
+        local bub <const> = defaults.labAxisMax
+        local visMin <const> = defaults.labVisMin
+        local visMax <const> = defaults.labVisMax
 
-        local labTosRgb = Clr.srLab2TosRgb
-        local toHex = Clr.toHex
+        local labTosRgb <const> = Clr.srLab2TosRgb
+        local toHex <const> = Clr.toHex
 
-        local xToFac = 1.0 / (barWidth - 1.0)
-        local img = Image(barWidth, 1, ColorMode.RGB)
-        local pxItr = img:pixels()
+        local xToFac <const> = 1.0 / (barWidth - 1.0)
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        local pxItr <const> = img:pixels()
         for pixel in pxItr do
-            local xFac = pixel.x * xToFac
-            local b = (1.0 - xFac) * visMin + xFac * visMax
+            local xFac <const> = pixel.x * xToFac
+            local b <const> = (1.0 - xFac) * visMin + xFac * visMax
             pixel(toHex(labTosRgb(50.0, 0.0, b, 1.0)))
         end
         img:resize(barWidth, barHeight)
 
-        local ctx = event.context
-        local b01 = (active.bAdj - blb) / (bub - blb)
-        local black = Color { r = 0, g = 0, b = 0 }
-        local white = Color { r = 255, g = 255, b = 255 }
+        local ctx <const> = event.context
+        local b01 <const> = (active.bAdj - blb) / (bub - blb)
+        local black <const> = Color { r = 0, g = 0, b = 0 }
+        local white <const> = Color { r = 255, g = 255, b = 255 }
         ctx:drawImage(img, 0, 0)
         CanvasUtilities.drawSliderReticle(
             ctx, b01, barWidth, barHeight,
             white, reticleSize)
 
-        local strDisplay = string.format(
+        local strDisplay <const> = string.format(
             "%+04d", Utilities.round(active.bAdj))
         ctx.color = black
         ctx:fillText(strDisplay, 2, 2)
@@ -496,20 +496,20 @@ dlg:canvas {
     height = defaults.barheight,
     autoScaling = false,
     onpaint = function(event)
-        local barWidth = defaults.barWidth
-        local barHeight = defaults.barHeight
-        local reticleSize = defaults.reticleSize
+        local barWidth <const> = defaults.barWidth
+        local barHeight <const> = defaults.barHeight
+        local reticleSize <const> = defaults.reticleSize
 
-        local bkgColor = app.theme.color.window_face
-        local bBkg = bkgColor.blue * 0.003921568627451
-        local gBkg = bkgColor.green * 0.003921568627451
-        local rBkg = bkgColor.red * 0.003921568627451
+        local bkgColor <const> = app.theme.color.window_face
+        local bBkg <const> = bkgColor.blue * 0.003921568627451
+        local gBkg <const> = bkgColor.green * 0.003921568627451
+        local rBkg <const> = bkgColor.red * 0.003921568627451
 
         local bTrg = 0.0
         local gTrg = 0.0
         local rTrg = 0.0
-        local white = Color { r = 255, g = 255, b = 255 }
-        local black = Color { r = 0, g = 0, b = 0 }
+        local white <const> = Color { r = 255, g = 255, b = 255 }
+        local black <const> = Color { r = 0, g = 0, b = 0 }
         local textFill = black
         local textShadow = white
         local reticleBright = white
@@ -526,27 +526,27 @@ dlg:canvas {
             reticleShade = white
         end
 
-        local floor = math.floor
-        local xToFac = 1.0 / (barWidth - 1.0)
-        local img = Image(barWidth, 1, ColorMode.RGB)
-        local pxItr = img:pixels()
+        local floor <const> = math.floor
+        local xToFac <const> = 1.0 / (barWidth - 1.0)
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        local pxItr <const> = img:pixels()
         for pixel in pxItr do
-            local t = pixel.x * xToFac
-            local u = 1.0 - t
+            local t <const> = pixel.x * xToFac
+            local u <const> = 1.0 - t
 
-            local b = floor((u * bBkg + t * bTrg) * 255 + 0.5)
-            local g = floor((u * gBkg + t * gTrg) * 255 + 0.5)
-            local r = floor((u * rBkg + t * rTrg) * 255 + 0.5)
+            local b <const> = floor((u * bBkg + t * bTrg) * 255 + 0.5)
+            local g <const> = floor((u * gBkg + t * gTrg) * 255 + 0.5)
+            local r <const> = floor((u * rBkg + t * rTrg) * 255 + 0.5)
 
             pixel(0xff000000 | b << 0x10 | g << 0x08 | r)
         end
         img:resize(barWidth, barHeight)
 
-        local ctx = event.context
+        local ctx <const> = event.context
         ctx:drawImage(img, 0, 0)
 
         local reticleClr = white
-        local a01 = active.alphaAdj * 0.5 + 0.5
+        local a01 <const> = active.alphaAdj * 0.5 + 0.5
         if a01 < 0.5 then
             reticleClr = reticleShade
         else
@@ -557,7 +557,7 @@ dlg:canvas {
             ctx, a01, barWidth, barHeight,
             reticleClr, reticleSize)
 
-        local strDisplay = string.format(
+        local strDisplay <const> = string.format(
             "%+04d", Utilities.round(active.alphaAdj * 255))
         ctx.color = textShadow
         ctx:fillText(strDisplay, 2, 2)
@@ -576,21 +576,21 @@ dlg:button {
     text = "&GRAY",
     focus = false,
     onclick = function()
-        local site = app.site
-        local sprite = site.sprite
+        local site <const> = app.site
+        local sprite <const> = site.sprite
         if not sprite then return end
-        local frame = site.frame
+        local frame <const> = site.frame
         if not frame then return end
 
-        local lab = AseUtilities.averageColor(sprite, frame)
+        local lab <const> = AseUtilities.averageColor(sprite, frame)
 
-        local args = dlg.data
-        local mode = args.mode --[[@as string]]
+        local args <const> = dlg.data
+        local mode <const> = args.mode --[[@as string]]
 
         -- Black and white buttons could also set
         -- the active lightness?
         if mode == "LCH" then
-            local lch = Clr.srLab2ToSrLch(
+            local lch <const> = Clr.srLab2ToSrLch(
                 lab.l, lab.a, lab.b, lab.alpha)
             active.cAdj = -lch.c
         else
@@ -638,8 +638,8 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Early returns.
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -648,15 +648,16 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local target = args.target or defaults.target --[[@as string]]
-        local frames = Utilities.flatArr2(
+        local args <const> = dlg.data
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
+        local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
-        local lenFrames = #frames
+        local lenFrames <const> = #frames
 
         -- If isSelect is true, then a new layer will be created.
         local srcLayer = site.layer --[[@as Layer]]
-        local isSelect = target == "SELECTION"
+        local isSelect <const> = target == "SELECTION"
         if not isSelect then
             if not srcLayer then
                 app.alert {
@@ -683,18 +684,18 @@ dlg:button {
             end
         end
 
-        local oldMode = activeSprite.colorMode
+        local oldMode <const> = activeSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
-        local activeSpec = activeSprite.spec
+        local activeSpec <const> = activeSprite.spec
 
         if isSelect then
-            local sel = AseUtilities.getSelection(activeSprite)
-            local selBounds = sel.bounds
-            local xSel = selBounds.x
-            local ySel = selBounds.y
+            local sel <const> = AseUtilities.getSelection(activeSprite)
+            local selBounds <const> = sel.bounds
+            local xSel <const> = selBounds.x
+            local ySel <const> = selBounds.y
 
-            local alphaIndex = activeSpec.transparentColor
-            local selSpec = ImageSpec {
+            local alphaIndex <const> = activeSpec.transparentColor
+            local selSpec <const> = ImageSpec {
                 width = math.max(1, selBounds.width),
                 height = math.max(1, selBounds.height),
                 colorMode = ColorMode.RGB,
@@ -703,17 +704,17 @@ dlg:button {
             selSpec.colorSpace = activeSpec.colorSpace
 
             -- Blit flattened sprite to image.
-            local selFrame = site.frame
+            local selFrame <const> = site.frame
                 or activeSprite.frames[1] --[[@as Frame]]
-            local selImage = Image(selSpec)
+            local selImage <const> = Image(selSpec)
             selImage:drawSprite(
                 activeSprite, selFrame, Point(-xSel, -ySel))
 
             -- Set pixels not in selection to alpha.
-            local pxItr = selImage:pixels()
+            local pxItr <const> = selImage:pixels()
             for pixel in pxItr do
-                local x = pixel.x + xSel
-                local y = pixel.y + ySel
+                local x <const> = pixel.x + xSel
+                local y <const> = pixel.y + ySel
                 if not sel:contains(x, y) then
                     pixel(alphaIndex)
                 end
@@ -730,42 +731,45 @@ dlg:button {
         end
 
         -- Check for tile map support.
-        local isTilemap = srcLayer.isTilemap
+        local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
             tileSet = srcLayer.tileset --[[@as Tileset]]
         end
 
         -- Unpack arguments.
-        local mode = args.mode or defaults.mode --[[@as string]]
-        local contrast = args.contrast or defaults.contrast --[[@as integer]]
-        local normalize = args.normalize or defaults.normalize --[[@as integer]]
-        local lInvert = args.lInvert --[[@as boolean]]
-        local aInvert = args.aInvert --[[@as boolean]]
-        local bInvert = args.bInvert --[[@as boolean]]
-        local alphaInvert = args.alphaInvert --[[@as boolean]]
+        local mode <const> = args.mode
+            or defaults.mode --[[@as string]]
+        local contrast <const> = args.contrast
+            or defaults.contrast --[[@as integer]]
+        local normalize <const> = args.normalize
+            or defaults.normalize --[[@as integer]]
+        local lInvert <const> = args.lInvert --[[@as boolean]]
+        local aInvert <const> = args.aInvert --[[@as boolean]]
+        local bInvert <const> = args.bInvert --[[@as boolean]]
+        local alphaInvert <const> = args.alphaInvert --[[@as boolean]]
 
-        local lAdj = active.lAdj
-        local cAdj = active.cAdj
-        local hAdj = active.hAdj - 0.5
-        local aAdj = active.aAdj
-        local bAdj = active.bAdj
+        local lAdj <const> = active.lAdj
+        local cAdj <const> = active.cAdj
+        local hAdj <const> = active.hAdj - 0.5
+        local aAdj <const> = active.aAdj
+        local bAdj <const> = active.bAdj
         local alphaAdj = active.alphaAdj
 
         -- Cache booleans for whether or not adjustments
         -- will be made in loop.
-        local useNormalize = normalize ~= 0
-        local useContrast = contrast ~= 0
-        local useLabInvert = bInvert or aInvert or lInvert
+        local useNormalize <const> = normalize ~= 0
+        local useContrast <const> = contrast ~= 0
+        local useLabInvert <const> = bInvert or aInvert or lInvert
 
-        local lAdjNonZero = lAdj ~= 0.0
-        local alphaAdjNonZero = alphaAdj ~= 0.0
-        local useLabAdj = mode == "LAB"
+        local lAdjNonZero <const> = lAdj ~= 0.0
+        local alphaAdjNonZero <const> = alphaAdj ~= 0.0
+        local useLabAdj <const> = mode == "LAB"
             and (lAdjNonZero
             or aAdj ~= 0.0
             or bAdj ~= 0.0
             or alphaAdjNonZero)
-        local useLchAdj = mode == "LCH"
+        local useLchAdj <const> = mode == "LCH"
             and (lAdjNonZero
             or cAdj ~= 0.0
             or hAdj ~= 0.0
@@ -776,12 +780,12 @@ dlg:button {
         -- adjustment. Logically, though, alpha invert
         -- comes before.
         if alphaInvert then alphaAdj = -alphaAdj end
-        local normFac = normalize * 0.01
-        local normGtZero = normFac > 0.0
-        local normLtZero = normFac < 0.0
-        local absNormFac = math.abs(normFac)
-        local complNormFac = 1.0 - absNormFac
-        local contrastFac = 1.0 + contrast * 0.01
+        local normFac <const> = normalize * 0.01
+        local normGtZero <const> = normFac > 0.0
+        local normLtZero <const> = normFac < 0.0
+        local absNormFac <const> = math.abs(normFac)
+        local complNormFac <const> = 1.0 - absNormFac
+        local contrastFac <const> = 1.0 + contrast * 0.01
         local aSign = 1.0
         local bSign = 1.0
         if aInvert then aSign = -1.0 end
@@ -803,23 +807,24 @@ dlg:button {
         end)
 
         -- Cache methods used in loops.
-        local abs = math.abs
-        local tilesToImage = AseUtilities.tilesToImage
-        local fromHex = Clr.fromHex
-        local toHex = Clr.toHex
-        local sRgbaToLab = Clr.sRgbToSrLab2
-        local labTosRgba = Clr.srLab2TosRgb
-        local labToLch = Clr.srLab2ToSrLch
-        local lchToLab = Clr.srLchToSrLab2
-        local rgbColorMode = ColorMode.RGB
-        local transact = app.transaction
-        local strfmt = string.format
+        local abs <const> = math.abs
+        local tilesToImage <const> = AseUtilities.tilesToImage
+        local fromHex <const> = Clr.fromHex
+        local toHex <const> = Clr.toHex
+        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local labTosRgba <const> = Clr.srLab2TosRgb
+        local labToLch <const> = Clr.srLab2ToSrLch
+        local lchToLab <const> = Clr.srLchToSrLab2
+        local transact <const> = app.transaction
+        local strfmt <const> = string.format
+
+        local rgbColorMode <const> = ColorMode.RGB
 
         local i = 0
         while i < lenFrames do
             i = i + 1
-            local srcFrame = frames[i]
-            local srcCel = srcLayer:cel(srcFrame)
+            local srcFrame <const> = frames[i]
+            local srcCel <const> = srcLayer:cel(srcFrame)
             if srcCel then
                 local srcImg = srcCel.image
                 if isTilemap then
@@ -831,8 +836,8 @@ dlg:button {
                 -- occupy a small part of the canvas. Ensure that
                 -- there is always a zero key for alpha invert.
                 ---@type table<integer, boolean>
-                local srcDict = {}
-                local srcPxItr = srcImg:pixels()
+                local srcDict <const> = {}
+                local srcPxItr <const> = srcImg:pixels()
                 for pixel in srcPxItr do
                     local h = pixel()
                     if (h & 0xff000000) == 0 then h = 0x0 end
@@ -840,9 +845,9 @@ dlg:button {
                 end
                 srcDict[0x0] = true
 
-                -- Convert unique colors to CIE LAB.
+                -- Convert unique colors to LAB.
                 -- Normalization should ignore transparent pixels.
-                ---@type table<integer, table>
+                ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
                 local labDict = {}
                 local minLum = 100.0
                 local maxLum = 0.0
@@ -863,7 +868,7 @@ dlg:button {
                 end
 
                 if useNormalize then
-                    local rangeLum = abs(maxLum - minLum)
+                    local rangeLum <const> = abs(maxLum - minLum)
                     if rangeLum > 0.07 then
                         -- When factor is less than zero, the average lum
                         -- can be multiplied by the factor prior to the loop.
@@ -872,12 +877,13 @@ dlg:button {
                         avgLum = absNormFac * avgLum
 
                         -- When factor is greater than zero.
-                        local tDenom = absNormFac * (100.0 / rangeLum)
-                        local lumMintDenom = minLum * tDenom
+                        local tDenom <const> = absNormFac * (100.0 / rangeLum)
+                        local lumMintDenom <const> = minLum * tDenom
 
-                        local normDict = {}
+                        ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
+                        local normDict <const> = {}
                         for key, value in pairs(labDict) do
-                            local lOld = value.l
+                            local lOld <const> = value.l
                             local lNew = lOld
                             if key ~= 0 then
                                 if normGtZero then
@@ -900,7 +906,8 @@ dlg:button {
                 end
 
                 if alphaInvert then
-                    local aInvDict = {}
+                    ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
+                    local aInvDict <const> = {}
                     for key, value in pairs(labDict) do
                         aInvDict[key] = {
                             l = value.l,
@@ -913,6 +920,7 @@ dlg:button {
                 end
 
                 if useContrast then
+                    ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
                     local contrDict = {}
                     for key, value in pairs(labDict) do
                         contrDict[key] = {
@@ -926,6 +934,7 @@ dlg:button {
                 end
 
                 if useLabAdj then
+                    ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
                     local labAdjDict = {}
                     for key, value in pairs(labDict) do
                         local al = value.alpha
@@ -939,9 +948,10 @@ dlg:button {
                     end
                     labDict = labAdjDict
                 elseif useLchAdj then
+                    ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
                     local lchAdjDict = {}
                     for key, value in pairs(labDict) do
-                        local lch = labToLch(
+                        local lch <const> = labToLch(
                             value.l,
                             value.a,
                             value.b,
@@ -957,6 +967,7 @@ dlg:button {
                 end
 
                 if useLabInvert then
+                    ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
                     local labInvDict = {}
                     for key, value in pairs(labDict) do
                         local lNew = value.l
@@ -972,14 +983,14 @@ dlg:button {
                 end
 
                 ---@type table<integer, integer>
-                local trgDict = {}
+                local trgDict <const> = {}
                 for key, value in pairs(labDict) do
                     trgDict[key] = toHex(labTosRgba(
                         value.l, value.a, value.b,
                         value.alpha))
                 end
 
-                local srcPos = srcCel.position
+                local srcPos <const> = srcCel.position
                 local trgPos = srcPos
                 local trgImg = nil
                 if alphaInvert then
@@ -990,7 +1001,7 @@ dlg:button {
                     trgImg = srcImg:clone()
                 end
 
-                local trgPxItr = trgImg:pixels()
+                local trgPxItr <const> = trgImg:pixels()
                 for pixel in trgPxItr do
                     local h = pixel()
                     if (h & 0xff000000) == 0 then h = 0x0 end
