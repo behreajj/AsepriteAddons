@@ -1,15 +1,21 @@
 dofile("../../support/aseutilities.lua")
 
-local targets = { "TILES", "TILE_MAP" }
+local targets <const> = { "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP" }
 
-local defaults = {
+local defaults <const> = {
     -- Built-in Image:flip method has not
     -- been adopted here due to issues with
     -- undo history.
-    target = "TILES",
+    target = "FORE_TILE",
     inPlace = true
 }
 
+---@param preset string
+---@param containedTiles table<integer, Tile>
+---@param inPlace boolean
+---@param activeSprite Sprite
+---@param tileSet Tileset
+---@return table<integer, integer>
 local function transformTiles(
     preset, containedTiles, inPlace,
     activeSprite, tileSet)
@@ -33,21 +39,21 @@ local function transformTiles(
     end
 
     ---@type table<integer, integer>
-    local srcToTrgIdcs = {}
+    local srcToTrgIdcs <const> = {}
 
     app.transaction(transactionName, function()
         if inPlace then
             for _, tile in pairs(containedTiles) do
-                local trgImage = transformFunc(tile.image)
+                local trgImage <const> = transformFunc(tile.image)
                 tile.image = trgImage
             end
         else
             for srcIdx, srcTile in pairs(containedTiles) do
-                local srcImage = srcTile.image
+                local srcImage <const> = srcTile.image
                 if srcImage:isEmpty() then
                     srcToTrgIdcs[srcIdx] = 0
                 else
-                    local trgTile = activeSprite:newTile(tileSet)
+                    local trgTile <const> = activeSprite:newTile(tileSet)
                     trgTile.image = transformFunc(srcImage)
                     srcToTrgIdcs[srcIdx] = trgTile.index
                 end
@@ -58,36 +64,41 @@ local function transformTiles(
     return srcToTrgIdcs
 end
 
+---@param dialog Dialog
+---@param preset string
 local function transformCel(dialog, preset)
-    local site = app.site
-    local activeSprite = site.sprite
+    local site <const> = app.site
+    local activeSprite <const> = site.sprite
     if not activeSprite then return end
 
-    local activeFrame = site.frame
+    local activeFrame <const> = site.frame
     if not activeFrame then return end
 
-    local activeLayer = site.layer
+    local activeLayer <const> = site.layer
     if not activeLayer then return end
     if not activeLayer.isVisible then return end
     if not activeLayer.isEditable then return end
     if not activeLayer.isTilemap then return end
-    local tileSet = activeLayer.tileset --[[@as Tileset]]
 
-    local activeCel = activeLayer:cel(activeFrame)
+    local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
+    local lenTileSet <const> = #tileSet
+
+    local activeCel <const> = activeLayer:cel(activeFrame)
     if not activeCel then return end
 
-    local args = dialog.data
-    local target = args.target or defaults.target --[[@as string]]
-    local inPlace = args.inPlace --[[@as boolean]]
+    local args <const> = dialog.data
+    local target <const> = args.target
+        or defaults.target --[[@as string]]
+    local inPlace <const> = args.inPlace --[[@as boolean]]
 
-    local celPos = activeCel.position
-    local xtlCel = celPos.x
-    local ytlCel = celPos.y
+    local celPos <const> = activeCel.position
+    local xtlCel <const> = celPos.x
+    local ytlCel <const> = celPos.y
 
-    local tileGrid = tileSet.grid --[[@as Grid]]
-    local tileDim = tileGrid.tileSize --[[@as Size]]
-    local wTile = tileDim.width
-    local hTile = tileDim.height
+    local tileGrid <const> = tileSet.grid --[[@as Grid]]
+    local tileDim <const> = tileGrid.tileSize --[[@as Size]]
+    local wTile <const> = tileDim.width
+    local hTile <const> = tileDim.height
     if wTile ~= hTile
         and (preset == "90"
             or preset == "270") then
@@ -98,8 +109,8 @@ local function transformCel(dialog, preset)
         return
     end
 
-    local containedTiles = {}
     ---@type table<integer, Tile>
+    local containedTiles = {}
     if target == "TILE_MAP" then
         containedTiles = AseUtilities.getUniqueTiles(
             activeCel.image, tileSet)
@@ -126,19 +137,19 @@ local function transformCel(dialog, preset)
         end
 
         app.transaction(transactionName, function()
-            local srcMap = activeCel.image
-            local trgMap = transformFunc(srcMap)
+            local srcMap <const> = activeCel.image
+            local trgMap <const> = transformFunc(srcMap)
 
             if updateCelPos then
-                local wSrcPixels = srcMap.width * wTile
-                local hSrcPixels = srcMap.height * hTile
-                local wSrcHalf = wSrcPixels // 2
-                local hSrcHalf = hSrcPixels // 2
+                local wSrcPixels <const> = srcMap.width * wTile
+                local hSrcPixels <const> = srcMap.height * hTile
+                local wSrcHalf <const> = wSrcPixels // 2
+                local hSrcHalf <const> = hSrcPixels // 2
 
-                local wTrgPixels = trgMap.width * wTile
-                local hTrgPixels = trgMap.height * hTile
-                local wTrgHalf = wTrgPixels // 2
-                local hTrgHalf = hTrgPixels // 2
+                local wTrgPixels <const> = trgMap.width * wTile
+                local hTrgPixels <const> = trgMap.height * hTile
+                local wTrgHalf <const> = wTrgPixels // 2
+                local hTrgHalf <const> = hTrgPixels // 2
 
                 activeCel.position = Point(
                     xtlCel + wSrcHalf - wTrgHalf,
@@ -147,39 +158,47 @@ local function transformCel(dialog, preset)
 
             activeCel.image = trgMap
         end)
-    else
+    elseif target == "TILES" then
         -- In theory, app.range.tiles could also be used,
-        -- but atm it doesn't seem to work. For active:
-        -- app.preferences.color_bar.fg_tile
-        -- app.preferences.color_bar.bg_tile
+        -- but atm it doesn't seem to work.
 
         -- A regular layer's cel bounds may be within the
         -- canvas, but after conversion to tilemap layer,
         -- it may go outside the canvas due to uniform tile
         -- size. This will lead to getSelectedTiles omitting
         -- tiles because tiles must be entirely contained.
-        local selection = AseUtilities.getSelection(activeSprite)
+        local selection <const> = AseUtilities.getSelection(activeSprite)
         containedTiles = AseUtilities.getSelectedTiles(
             activeCel.image, tileSet, selection,
             xtlCel, ytlCel)
+    elseif target == "BACK_TILE" then
+        local tileIndex <const> = app.preferences.color_bar.bg_tile
+        if tileIndex > 0 and tileIndex < lenTileSet then
+            containedTiles[tileIndex] = tileSet:tile(tileIndex)
+        end
+    else
+        local tileIndex <const> = app.preferences.color_bar.fg_tile
+        if tileIndex > 0 and tileIndex < lenTileSet then
+            containedTiles[tileIndex] = tileSet:tile(tileIndex)
+        end
     end
 
-    local srcToTrgIdcs = transformTiles(
+    local srcToTrgIdcs <const> = transformTiles(
         preset, containedTiles, inPlace,
         activeSprite, tileSet)
 
     if not inPlace then
-        local pxTilei = app.pixelColor.tileI
-        local pxTilef = app.pixelColor.tileF
-        local pxTileCompose = app.pixelColor.tile
-        local trgMap = activeCel.image:clone()
-        local trgItr = trgMap:pixels()
+        local pxTilei <const> = app.pixelColor.tileI
+        local pxTilef <const> = app.pixelColor.tileF
+        local pxTileCompose <const> = app.pixelColor.tile
+        local trgMap <const> = activeCel.image:clone()
+        local trgItr <const> = trgMap:pixels()
         for mapEntry in trgItr do
-            local tileData = mapEntry()
-            local srcIdx = pxTilei(tileData)
-            local srcFlags = pxTilef(tileData)
+            local tileData <const> = mapEntry()
+            local srcIdx <const> = pxTilei(tileData)
+            local srcFlags <const> = pxTilef(tileData)
             if srcToTrgIdcs[srcIdx] then
-                local trgIdx = srcToTrgIdcs[srcIdx]
+                local trgIdx <const> = srcToTrgIdcs[srcIdx]
                 mapEntry(pxTileCompose(trgIdx, srcFlags))
             end
         end
@@ -187,12 +206,22 @@ local function transformCel(dialog, preset)
         app.transaction("Update Map", function()
             activeCel.image = trgMap
         end)
+
+        if target == "BACK_TILE" then
+            local cbPref <const> = app.preferences.color_bar
+            local trgIdx <const> = srcToTrgIdcs[cbPref.bg_tile]
+            if trgIdx then cbPref.bg_tile = trgIdx end
+        elseif target == "FORE_TILE" then
+            local cbPref <const> = app.preferences.color_bar
+            local trgIdx <const> = srcToTrgIdcs[cbPref.fg_tile]
+            if trgIdx then cbPref.fg_tile = trgIdx end
+        end
     end
 
     app.refresh()
 end
 
-local dlg = Dialog { title = "Edit Tile" }
+local dlg <const> = Dialog { title = "Edit Tile" }
 
 dlg:combobox {
     id = "target",
@@ -269,28 +298,29 @@ dlg:button {
     text = "&SORT",
     focus = false,
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then return end
 
-        local activeFrame = site.frame
+        local activeFrame <const> = site.frame
         if not activeFrame then return end
 
-        local activeLayer = site.layer
+        local activeLayer <const> = site.layer
         if not activeLayer then return end
         if not activeLayer.isVisible then return end
         if not activeLayer.isEditable then return end
         if not activeLayer.isTilemap then return end
-        local tileSet = activeLayer.tileset --[[@as Tileset]]
-        local lenTileSet = #tileSet
 
-        local activeCel = activeLayer:cel(activeFrame)
+        local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
+        local lenTileSet <const> = #tileSet
+
+        local activeCel <const> = activeLayer:cel(activeFrame)
         if not activeCel then return end
 
         -- Cache methods used in a for loop.
-        local pxTilei = app.pixelColor.tileI
-        local pxTilef = app.pixelColor.tileF
-        local pxTileCompose = app.pixelColor.tile
+        local pxTilei <const> = app.pixelColor.tileI
+        local pxTilef <const> = app.pixelColor.tileF
+        local pxTileCompose <const> = app.pixelColor.tile
 
         --Contains the first usage of a tile in the set
         --by the active map. Ignores index 0. Because all
@@ -298,24 +328,24 @@ dlg:button {
         --not just the active map, no point in storing
         --an array of all visitations as dict value.
         ---@type table<integer, integer>
-        local visited = {}
+        local visited <const> = {}
 
-        local srcMap = activeCel.image
-        local srcWidth = srcMap.width
-        local srcItr = srcMap:pixels()
+        local srcMap <const> = activeCel.image
+        local srcWidth <const> = srcMap.width
+        local srcItr <const> = srcMap:pixels()
         for mapEntry in srcItr do
-            local mapif = mapEntry() --[[@as integer]]
-            local srcTsIdx = pxTilei(mapif)
+            local mapif <const> = mapEntry() --[[@as integer]]
+            local srcTsIdx <const> = pxTilei(mapif)
             if srcTsIdx > 0 and srcTsIdx < lenTileSet
                 and (not visited[srcTsIdx]) then
-                local flatIdx = mapEntry.x + mapEntry.y * srcWidth
+                local flatIdx <const> = mapEntry.x + mapEntry.y * srcWidth
                 visited[srcTsIdx] = flatIdx
             end
         end
 
         -- Convert dictionary to a set.
         ---@type integer[]
-        local sortedTsIdcs = {}
+        local sortedTsIdcs <const> = {}
         for srcTsIdx, _ in pairs(visited) do
             sortedTsIdcs[#sortedTsIdcs + 1] = srcTsIdx
         end
@@ -354,8 +384,8 @@ dlg:button {
         local i = 0
         while i < lenTileSet do
             i = i + 1
-            local tsIdx = sortedTsIdcs[i]
-            local tile = tileSet:tile(tsIdx)
+            local tsIdx <const> = sortedTsIdcs[i]
+            local tile <const> = tileSet:tile(tsIdx)
             local packet = {
                 image = tile.image:clone()
             }
@@ -369,31 +399,31 @@ dlg:button {
                 local j = 1
                 while j < lenTileSet do
                     j = j + 1
-                    local tile = tileSet:tile(j - 1)
-                    local packet = sortedTsPackets[j]
+                    local tile <const> = tileSet:tile(j - 1)
+                    local packet <const> = sortedTsPackets[j]
                     -- tile.color = packet.color
                     -- tile.data = packet.data
                     tile.image = packet.image
                 end
             end)
 
-        local uniqueCels = AseUtilities.getUniqueCelsFromLeaves(
+        local uniqueCels <const> = AseUtilities.getUniqueCelsFromLeaves(
             { activeLayer }, activeSprite.frames)
 
-        local lenUniques = #uniqueCels
+        local lenUniques <const> = #uniqueCels
         local k = 0
         while k < lenUniques do
             k = k + 1
-            local uniqueCel = uniqueCels[k]
-            local uniqueMap = uniqueCel.image
-            local reordered = uniqueMap:clone()
-            local reoItr = reordered:pixels()
+            local uniqueCel <const> = uniqueCels[k]
+            local uniqueMap <const> = uniqueCel.image
+            local reordered <const> = uniqueMap:clone()
+            local reoItr <const> = reordered:pixels()
             for mapEntry in reoItr do
-                local mapif = mapEntry() --[[@as integer]]
-                local oldTsIdx = pxTilei(mapif)
-                local flags = pxTilef(mapif)
+                local mapif <const> = mapEntry() --[[@as integer]]
+                local oldTsIdx <const> = pxTilei(mapif)
+                local flags <const> = pxTilef(mapif)
                 if oldTsIdx > 0 and oldTsIdx < lenTileSet then
-                    local newTsIdx = oldToNew[1 + oldTsIdx] - 1
+                    local newTsIdx <const> = oldToNew[1 + oldTsIdx] - 1
                     mapEntry(pxTileCompose(newTsIdx, flags))
                 else
                     mapEntry(pxTileCompose(0, flags))
@@ -414,40 +444,41 @@ dlg:button {
     text = "C&ULL",
     focus = false,
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then return end
 
-        local activeLayer = site.layer
+        local activeLayer <const> = site.layer
         if not activeLayer then return end
         if not activeLayer.isVisible then return end
         if not activeLayer.isEditable then return end
         if not activeLayer.isTilemap then return end
-        local tileSet = activeLayer.tileset --[[@as Tileset]]
-        local lenTileSet = #tileSet
+
+        local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
+        local lenTileSet <const> = #tileSet
 
         -- Cache methods used in a for loop.
-        local pxTilei = app.pixelColor.tileI
-        local pxTilef = app.pixelColor.tileF
-        local pxTileCompose = app.pixelColor.tile
+        local pxTilei <const> = app.pixelColor.tileI
+        local pxTilef <const> = app.pixelColor.tileF
+        local pxTileCompose <const> = app.pixelColor.tile
 
-        local uniqueCels = AseUtilities.getUniqueCelsFromLeaves(
+        local uniqueCels <const> = AseUtilities.getUniqueCelsFromLeaves(
             { activeLayer }, activeSprite.frames)
 
         ---@type table<integer, boolean>
-        local visited = {}
+        local visited <const> = {}
         visited[0] = true
 
-        local lenUniques = #uniqueCels
+        local lenUniques <const> = #uniqueCels
         local h = 0
         while h < lenUniques do
             h = h + 1
-            local srcCel = uniqueCels[h]
-            local srcMap = srcCel.image
-            local srcItr = srcMap:pixels()
+            local srcCel <const> = uniqueCels[h]
+            local srcMap <const> = srcCel.image
+            local srcItr <const> = srcMap:pixels()
             for mapEntry in srcItr do
-                local mapif = mapEntry() --[[@as integer]]
-                local srcTsIdx = pxTilei(mapif)
+                local mapif <const> = mapEntry() --[[@as integer]]
+                local srcTsIdx <const> = pxTilei(mapif)
                 if srcTsIdx > 0 and srcTsIdx < lenTileSet
                     and (not visited[srcTsIdx]) then
                     visited[srcTsIdx] = true
@@ -455,10 +486,13 @@ dlg:button {
             end
         end
 
-        local oldToNew = {}
+        ---@type integer[]
+        local oldToNew <const> = {}
         oldToNew[0] = 0
         local lenOldToNew = 0
-        local toCull = {}
+        ---@type Tile[]
+        local toCull <const> = {}
+
         local i = 0
         while i < lenTileSet do
             if visited[i] then
@@ -472,7 +506,7 @@ dlg:button {
         end
 
         app.transaction("Cull Tile Set", function()
-            local lenMarked = #toCull
+            local lenMarked <const> = #toCull
             local j = lenMarked + 1
             while j > 1 do
                 j = j - 1
@@ -483,16 +517,16 @@ dlg:button {
         local k = 0
         while k < lenUniques do
             k = k + 1
-            local uniqueCel = uniqueCels[k]
-            local uniqueMap = uniqueCel.image
-            local reordered = uniqueMap:clone()
-            local reoItr = reordered:pixels()
+            local uniqueCel <const> = uniqueCels[k]
+            local uniqueMap <const> = uniqueCel.image
+            local reordered <const> = uniqueMap:clone()
+            local reoItr <const> = reordered:pixels()
             for mapEntry in reoItr do
-                local rawData = mapEntry()
-                local oldTsIdx = pxTilei(rawData)
-                local flags = pxTilef(rawData)
+                local rawData <const> = mapEntry()
+                local oldTsIdx <const> = pxTilei(rawData)
+                local flags <const> = pxTilef(rawData)
                 if oldTsIdx > 0 and oldTsIdx < lenTileSet then
-                    local newTsIdx = oldToNew[oldTsIdx]
+                    local newTsIdx <const> = oldToNew[oldTsIdx]
                     mapEntry(pxTileCompose(newTsIdx, flags))
                 else
                     mapEntry(pxTileCompose(0, flags))
