@@ -1,17 +1,17 @@
 dofile("../../support/gradientutilities.lua")
 
-local inputTypes = { "COUNT", "MANUAL", "SPAN" }
+local inputTypes <const> = { "COUNT", "MANUAL", "SPAN" }
 
-local aniDirs = {
+local aniDirs <const> = {
     "FORWARD",
     "REVERSE",
     "PING_PONG",
     "PING_PONG_REVERSE"
 }
 
-local colorOptions = { "ALL", "NEW" }
+local colorOptions <const> = { "ALL", "NEW" }
 
-local defaults = {
+local defaults <const> = {
     inputType = "MANUAL",
     totalCount = 6,
     spanCount = 6,
@@ -27,7 +27,7 @@ local defaults = {
     deleteExisting = false
 }
 
-local dlg = Dialog { title = "Create Tags" }
+local dlg <const> = Dialog { title = "Create Tags" }
 
 dlg:combobox {
     id = "inputType",
@@ -35,10 +35,10 @@ dlg:combobox {
     option = defaults.inputType,
     options = inputTypes,
     onchange = function()
-        local args = dlg.data
-        local isManual = args.inputType == "MANUAL"
-        local isSpan = args.inputType == "SPAN"
-        local isCount = args.inputType == "COUNT"
+        local args <const> = dlg.data
+        local isManual <const> = args.inputType == "MANUAL"
+        local isSpan <const> = args.inputType == "SPAN"
+        local isCount <const> = args.inputType == "COUNT"
         dlg:modify { id = "rangeStr", visible = isManual }
         dlg:modify { id = "strExample", visible = false }
         dlg:modify { id = "spanCount", visible = isSpan }
@@ -163,8 +163,8 @@ dlg:button {
     id = "confirm",
     text = "&OK",
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -173,24 +173,24 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local inputType = args.inputType
+        local args <const> = dlg.data
+        local inputType <const> = args.inputType
             or defaults.inputType --[[@as string]]
-        local rangeStr = args.rangeStr
+        local rangeStr <const> = args.rangeStr
             or defaults.rangeStr --[[@as string]]
         local nameFormat = args.nameFormat
             or defaults.nameFormat --[[@as string]]
-        local fromColor = args.fromColor --[[@as Color]]
-        local toColor = args.toColor --[[@as Color]]
-        local colorOption = args.colorOption
+        local fromColor <const> = args.fromColor --[[@as Color]]
+        local toColor <const> = args.toColor --[[@as Color]]
+        local colorOption <const> = args.colorOption
             or defaults.colorOption --[[@as string]]
-        local aniDirStr = args.aniDir
+        local aniDirStr <const> = args.aniDir
             or defaults.aniDir --[[@as string]]
         local repeats = args.repeats
             or defaults.repeats --[[@as integer]]
-        local deleteExisting = args.deleteExisting --[[@as boolean]]
+        local deleteExisting <const> = args.deleteExisting --[[@as boolean]]
 
-        local validNameFormat = #nameFormat > 0
+        local validNameFormat <const> = #nameFormat > 0
             and pcall(function()
                 return string.format(nameFormat, 1, 2)
             end)
@@ -201,23 +201,23 @@ dlg:button {
         end
 
         if deleteExisting then
-            local oldTags = activeSprite.tags
-            local lenOldTags = #oldTags
+            local oldTags <const> = activeSprite.tags
+            local lenOldTags <const> = #oldTags
             app.transaction("Remove Tags", function()
                 local h = lenOldTags + 1
                 while h > 1 do
                     h = h - 1
-                    local oldTag = oldTags[h]
+                    local oldTag <const> = oldTags[h]
                     activeSprite:deleteTag(oldTag)
                 end
             end)
         end
 
-        local recolorNew = colorOption == "NEW"
-        local recolorAll = colorOption == "ALL"
+        local recolorNew <const> = colorOption == "NEW"
+        local recolorAll <const> = colorOption == "ALL"
         repeats = math.abs(repeats)
-        local fromClr = AseUtilities.aseColorToClr(fromColor)
-        local toClr = AseUtilities.aseColorToClr(toColor)
+        local fromClr <const> = AseUtilities.aseColorToClr(fromColor)
+        local toClr <const> = AseUtilities.aseColorToClr(toColor)
 
         local aniDirEnum = AniDir.FOWARD
         if aniDirStr == "REVERSE" then
@@ -233,26 +233,27 @@ dlg:button {
         -- print(app.preferences.editor.play_once)
         -- print(app.preferences.editor.play_all)
         -- print(app.preferences.editor.play_subtags)
-        local docPrefs = app.preferences.document(activeSprite)
-        local frameUiOffset = docPrefs.timeline.first_frame - 1
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local frameUiOffset <const> = docPrefs.timeline.first_frame - 1
 
+        ---@type integer[][]
         local frIdcs2 = {}
         if inputType == "COUNT" then
-            local totalCount = args.totalCount
+            local totalCount <const> = args.totalCount
                 or defaults.totalCount --[[@as integer]]
 
-            local lenFrames = #activeSprite.frames
-            local span = lenFrames // totalCount
+            local lenFrames <const> = #activeSprite.frames
+            local span <const> = lenFrames // totalCount
             if span > 0 then
                 local h = 0
                 while h < totalCount do
-                    local idxOrig = 1 + h * span
-                    local idxDest = idxOrig + span - 1
+                    local idxOrig <const> = 1 + h * span
+                    local idxDest <const> = idxOrig + span - 1
                     h = h + 1
                     frIdcs2[h] = { idxOrig, idxDest }
                 end
 
-                local remainder = lenFrames % totalCount
+                local remainder <const> = lenFrames % totalCount
                 if remainder > 0 then
                     frIdcs2[totalCount][2] = lenFrames
                 end
@@ -267,13 +268,13 @@ dlg:button {
             local spanCount = args.spanCount
                 or defaults.spanCount --[[@as integer]]
 
-            local lenFrames = #activeSprite.frames
+            local lenFrames <const> = #activeSprite.frames
             spanCount = math.min(math.max(spanCount, 1), lenFrames)
-            local iterations = lenFrames // spanCount
+            local iterations <const> = lenFrames // spanCount
             local h = 0
             while h < iterations do
-                local idxOrig = 1 + h * spanCount
-                local idxDest = idxOrig + spanCount - 1
+                local idxOrig <const> = 1 + h * spanCount
+                local idxDest <const> = idxOrig + spanCount - 1
                 h = h + 1
                 frIdcs2[h] = { idxOrig, idxDest }
             end
@@ -286,14 +287,14 @@ dlg:button {
                 activeSprite, "MANUAL",
                 true, rangeStr, nil)
         end
-        local lenOuter = #frIdcs2
+        local lenOuter <const> = #frIdcs2
 
         local toFacNew = 0.0
         if lenOuter > 1 then
             toFacNew = 1.0 / (lenOuter - 1.0)
         end
 
-        local autoSort = recolorNew
+        local autoSort <const> = recolorNew
             and inputType == "MANUAL"
         if autoSort then
             table.sort(frIdcs2, function(a, b)
@@ -301,28 +302,28 @@ dlg:button {
             end)
         end
 
-        local min = math.min
-        local max = math.max
-        local strfmt = string.format
-        local hueFunc = GradientUtilities.lerpHueCcw
-        local mixer = Clr.mixSrLch
-        local clrToAse = AseUtilities.clrToAseColor
-        local transact = app.transaction
+        local min <const> = math.min
+        local max <const> = math.max
+        local strfmt <const> = string.format
+        local hueFunc <const> = GradientUtilities.lerpHueCcw
+        local mixer <const> = Clr.mixSrLch
+        local clrToAse <const> = AseUtilities.clrToAseColor
+        local transact <const> = app.transaction
 
         local i = 0
         while i < lenOuter do
             i = i + 1
-            local frIdcs1 = frIdcs2[i]
-            local lenInner = #frIdcs1
+            local frIdcs1 <const> = frIdcs2[i]
+            local lenInner <const> = #frIdcs1
             if lenInner > 0 then
-                local idxFirst = frIdcs1[1]
-                local idxLast = frIdcs1[lenInner]
+                local idxFirst <const> = frIdcs1[1]
+                local idxLast <const> = frIdcs1[lenInner]
 
-                local start = min(idxFirst, idxLast)
-                local stop = max(idxFirst, idxLast)
+                local start <const> = min(idxFirst, idxLast)
+                local stop <const> = max(idxFirst, idxLast)
 
                 transact("New Tag", function()
-                    local tag = activeSprite:newTag(start, stop)
+                    local tag <const> = activeSprite:newTag(start, stop)
                     tag.name = strfmt(nameFormat,
                         frameUiOffset + start,
                         frameUiOffset + stop)
@@ -330,9 +331,9 @@ dlg:button {
                     tag.repeats = repeats
 
                     if recolorNew then
-                        local fac = (i - 1) * toFacNew
-                        local clr = mixer(fromClr, toClr, fac, hueFunc)
-                        local color = clrToAse(clr)
+                        local fac <const> = (i - 1) * toFacNew
+                        local clr <const> = mixer(fromClr, toClr, fac, hueFunc)
+                        local color <const> = clrToAse(clr)
                         tag.color = color
                     end
                 end)
@@ -343,8 +344,8 @@ dlg:button {
         -- that contains their frames, and because an empty
         -- cel cannot be colored, propagating tag colors to
         -- cels is not viable.
-        local allTags = activeSprite.tags
-        local lenAllTags = #allTags
+        local allTags <const> = activeSprite.tags
+        local lenAllTags <const> = #allTags
         if recolorAll then
             local toFacAll = 0.0
             if lenAllTags > 1 then
@@ -355,10 +356,10 @@ dlg:button {
                 local j = 0
                 while j < lenAllTags do
                     j = j + 1
-                    local fac = (j - 1) * toFacAll
-                    local clr = mixer(fromClr, toClr, fac, hueFunc)
-                    local color = clrToAse(clr)
-                    local tag = allTags[j]
+                    local fac <const> = (j - 1) * toFacAll
+                    local clr <const> = mixer(fromClr, toClr, fac, hueFunc)
+                    local color <const> = clrToAse(clr)
+                    local tag <const> = allTags[j]
                     tag.color = color
                 end
             end)

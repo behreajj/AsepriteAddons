@@ -1,11 +1,11 @@
-local defaults = {
+local defaults <const> = {
     delete = 1,
     skip = 1,
     offset = 0,
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Reduce Frames" }
+local dlg <const> = Dialog { title = "Reduce Frames" }
 
 dlg:slider {
     id = "delete",
@@ -42,7 +42,7 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local activeSprite = app.site.sprite
+        local activeSprite <const> = app.site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -51,16 +51,19 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local delete = args.delete or defaults.delete --[[@as integer]]
-        local skip = args.skip or defaults.skip --[[@as integer]]
-        local offset = args.offset or defaults.offset --[[@as integer]]
+        local args <const> = dlg.data
+        local delete = args.delete
+            or defaults.delete --[[@as integer]]
+        local skip <const> = args.skip
+            or defaults.skip --[[@as integer]]
+        local offset <const> = args.offset
+            or defaults.offset --[[@as integer]]
 
-        local frames = activeSprite.frames
-        local lenFrames = #frames
+        local frames <const> = activeSprite.frames
+        local lenFrames <const> = #frames
 
         delete = math.min(delete, lenFrames - 1)
-        local all = delete + skip
+        local all <const> = delete + skip
 
         app.transaction("Reduce Frames",
             function()

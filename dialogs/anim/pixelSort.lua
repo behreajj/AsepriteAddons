@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local maskCriteria = {
+local maskCriteria <const> = {
     "LIGHTNESS",
     "CHROMA",
     "HUE",
@@ -8,7 +8,7 @@ local maskCriteria = {
     "SELECTION"
 }
 
-local sortCriteria = {
+local sortCriteria <const> = {
     "INTEGER",
     "LIGHTNESS",
     "CHROMA",
@@ -19,7 +19,7 @@ local sortCriteria = {
     "ALPHA"
 }
 
-local directions = {
+local directions <const> = {
     "HORIZONTAL",
     "VERTICAL"
 }
@@ -32,8 +32,7 @@ local directions = {
 --     return v
 -- end
 
-local defaults = {
-    -- TODO: Support animations as source, like wave.
+local defaults <const> = {
     frameCount = 8,
     fps = 24,
     maskCriterion = "LIGHTNESS",
@@ -45,7 +44,7 @@ local defaults = {
     direction = "VERTICAL"
 }
 
-local dlg = Dialog { title = "Pixel Sort" }
+local dlg <const> = Dialog { title = "Pixel Sort" }
 
 dlg:slider {
     id = "frameCount",
@@ -73,8 +72,9 @@ dlg:combobox {
     option = defaults.maskCriterion,
     options = maskCriteria,
     onchange = function()
-        local args = dlg.data
-        local isNotSel = args.maskCriterion ~= "SELECTION"
+        local args <const> = dlg.data
+        local maskCriterion <const> = args.maskCriterion --[[@as string]]
+        local isNotSel <const> = maskCriterion ~= "SELECTION"
         dlg:modify { id = "lbThresh", visible = isNotSel }
         dlg:modify { id = "ubThresh", visible = isNotSel }
     end
@@ -141,8 +141,8 @@ dlg:button {
     text = "&OK",
     focus = true,
     onclick = function()
-        local site = app.site
-        local srcSprite = site.sprite
+        local site <const> = app.site
+        local srcSprite <const> = site.sprite
         if not srcSprite then
             app.alert {
                 title = "Error",
@@ -151,8 +151,8 @@ dlg:button {
             return
         end
 
-        local srcSpriteSpec = srcSprite.spec
-        local srcColorMode = srcSpriteSpec.colorMode
+        local srcSpriteSpec <const> = srcSprite.spec
+        local srcColorMode <const> = srcSpriteSpec.colorMode
 
         if srcColorMode ~= ColorMode.RGB then
             app.alert {
@@ -162,7 +162,7 @@ dlg:button {
             return
         end
 
-        local srcFrame = site.frame
+        local srcFrame <const> = site.frame
         if not srcFrame then
             app.alert {
                 title = "Error",
@@ -173,38 +173,38 @@ dlg:button {
 
         -- Cache palette, preserve fore and background.
         AseUtilities.preserveForeBack()
-        local hexArr = AseUtilities.asePalettesToHexArr(
+        local hexArr <const> = AseUtilities.asePalettesToHexArr(
             srcSprite.palettes)
 
         -- Unpack arguments.
-        local args = dlg.data
-        local frameCount = args.frameCount
+        local args <const> = dlg.data
+        local frameCount <const> = args.frameCount
             or defaults.frameCount --[[@as integer]]
-        local fps = args.fps
+        local fps <const> = args.fps
             or defaults.fps --[[@as integer]]
-        local maskCriterion = args.maskCriterion
+        local maskCriterion <const> = args.maskCriterion
             or defaults.maskCriterion --[[@as string]]
         local lbThresh100 = args.lbThresh
             or defaults.lbThresh --[[@as integer]]
         local ubThresh100 = args.ubThresh
             or defaults.ubThresh --[[@as integer]]
-        local sortCriterion = args.sortCriterion
+        local sortCriterion <const> = args.sortCriterion
             or defaults.sortCriterion --[[@as string]]
-        local xRandom100 = args.xRandom
+        local xRandom100 <const> = args.xRandom
             or defaults.xRandom --[[@as integer]]
-        local yRandom100 = args.yRandom
+        local yRandom100 <const> = args.yRandom
             or defaults.yRandom --[[@as integer]]
-        local direction = args.direction
+        local direction <const> = args.direction
             or defaults.direction --[[@as string]]
 
         --Cache methods used in loops.
-        local fromHex = Clr.fromHex
-        local sRgbToLch = Clr.sRgbToSrLch
-        local rng = math.random
-        local floor = math.floor
-        local tSort = table.sort
-        local strfmt = string.format
-        local transact = app.transaction
+        local fromHex <const> = Clr.fromHex
+        local sRgbToLch <const> = Clr.sRgbToSrLch
+        local rng <const> = math.random
+        local floor <const> = math.floor
+        local tSort <const> = table.sort
+        local strfmt <const> = string.format
+        local transact <const> = app.transaction
 
         -- Blit sprite to image, then trim image.
         local srcImg = Image(srcSpriteSpec)
@@ -213,36 +213,36 @@ dlg:button {
         local tly = 0
         srcImg, tlx, tly = AseUtilities.trimImageAlpha(
             srcImg, 0, srcSpriteSpec.transparentColor, 8, 8)
-        local srcPos = Point(tlx, tly)
-        local srcImgSpec = srcImg.spec
-        local wSrc = srcImgSpec.width
-        local hSrc = srcImgSpec.height
-        local srcItr = srcImg:pixels()
+        local srcPos <const> = Point(tlx, tly)
+        local srcImgSpec <const> = srcImg.spec
+        local wSrc <const> = srcImgSpec.width
+        local hSrc <const> = srcImgSpec.height
+        local srcItr <const> = srcImg:pixels()
 
         local lenSrcPxArr = 0
         ---@type integer[]
-        local srcPxArr = {}
+        local srcPxArr <const> = {}
         ---@type table<integer, boolean>
-        local masked = {}
+        local masked <const> = {}
         ---@type table<integer, table>
-        local lchDict = {}
+        local lchDict <const> = {}
 
-        local colOrigAbs = 0
-        local colDestAbs = wSrc - 1
-        local rowOrigAbs = 0
-        local rowDestAbs = hSrc - 1
+        local colOrigAbs <const> = 0
+        local colDestAbs <const> = wSrc - 1
+        local rowOrigAbs <const> = 0
+        local rowDestAbs <const> = hSrc - 1
 
         if maskCriterion == "SELECTION" then
-            local sel = AseUtilities.getSelection(srcSprite)
+            local sel <const> = AseUtilities.getSelection(srcSprite)
             for pixel in srcItr do
                 lenSrcPxArr = lenSrcPxArr + 1
-                local hex = pixel()
-                local mask = sel:contains(
+                local hex <const> = pixel()
+                local mask <const> = sel:contains(
                     tlx + pixel.x,
                     tly + pixel.y)
                 if not lchDict[hex] then
-                    local srgb = fromHex(hex)
-                    local lch = sRgbToLch(srgb)
+                    local srgb <const> = fromHex(hex)
+                    local lch <const> = sRgbToLch(srgb)
                     lchDict[hex] = lch
                 end
                 masked[hex] = mask
@@ -279,7 +279,7 @@ dlg:button {
             end
 
             if maskCriterion == "CHROMA" then
-                local ratio = Clr.SR_LCH_MAX_CHROMA / 100.0
+                local ratio <const> = Clr.SR_LCH_MAX_CHROMA / 100.0
                 lbThresh = lbThresh100 * ratio
                 ubThresh = ubThresh100 * ratio
                 maskFunc = function(lch, lb, ub)
@@ -302,13 +302,13 @@ dlg:button {
 
             for pixel in srcItr do
                 lenSrcPxArr = lenSrcPxArr + 1
-                local hex = pixel()
+                local hex <const> = pixel()
                 local mask = false
                 if masked[hex] ~= nil then
                     mask = masked[hex]
                 else
-                    local srgb = fromHex(hex)
-                    local lch = sRgbToLch(srgb)
+                    local srgb <const> = fromHex(hex)
+                    local lch <const> = sRgbToLch(srgb)
                     mask = maskFunc(lch, lbThresh, ubThresh)
                     lchDict[hex] = lch
                 end
@@ -321,20 +321,20 @@ dlg:button {
         local sorter = nil
         if sortCriterion == "LIGHTNESS" then
             sorter = function(o, d)
-                local left = lchDict[o]
-                local right = lchDict[d]
+                local left <const> = lchDict[o]
+                local right <const> = lchDict[d]
                 return left.l < right.l
             end
         elseif sortCriterion == "CHROMA" then
             sorter = function(o, d)
-                local left = lchDict[o]
-                local right = lchDict[d]
+                local left <const> = lchDict[o]
+                local right <const> = lchDict[d]
                 return left.c < right.c
             end
         elseif sortCriterion == "HUE" then
             sorter = function(o, d)
-                local left = lchDict[o]
-                local right = lchDict[d]
+                local left <const> = lchDict[o]
+                local right <const> = lchDict[d]
                 if left.c < 0.5 or right.c < 0.5 then
                     return left.l < right.l
                 end
@@ -356,8 +356,8 @@ dlg:button {
             end
         elseif sortCriterion == "ALPHA" then
             sorter = function(o, d)
-                local left = lchDict[o]
-                local right = lchDict[d]
+                local left <const> = lchDict[o]
+                local right <const> = lchDict[d]
                 if left.a == right.a then
                     return left.l < right.l
                 end
@@ -370,16 +370,19 @@ dlg:button {
             frToFac = 1.0 / (frameCount - 1.0)
         end
 
-        local dirIsVertical = direction == "VERTICAL"
-        local yRndOffsets = {}
-        local xRndOffsets = {}
-        local fRndOffsets = {}
+        local dirIsVertical <const> = direction == "VERTICAL"
+        ---@type integer[]
+        local yRndOffsets <const> = {}
+        ---@type integer[]
+        local xRndOffsets <const> = {}
+        ---@type integer[]
+        local fRndOffsets <const> = {}
 
         local yOffMax = 0
         local yOffMin = 0
         if yRandom100 > 0 then
-            local yRnd01 = yRandom100 * 0.005
-            local yRndScale = 1 + rowDestAbs - rowOrigAbs
+            local yRnd01 <const> = yRandom100 * 0.005
+            local yRndScale <const> = 1 + rowDestAbs - rowOrigAbs
             yOffMax = math.floor(0.5 + yRndScale * yRnd01)
             yOffMin = -yOffMax
         end
@@ -387,14 +390,14 @@ dlg:button {
         local xOffMax = 0
         local xOffMin = 0
         if xRandom100 > 0 then
-            local xRnd01 = xRandom100 * 0.005
-            local xRndScale = 1 + colDestAbs - colOrigAbs
+            local xRnd01 <const> = xRandom100 * 0.005
+            local xRndScale <const> = 1 + colDestAbs - colOrigAbs
             xOffMax = math.floor(0.5 + xRndScale * xRnd01)
             xOffMin = -xOffMax
         end
 
-        local xSearchRange = 1 + colDestAbs - colOrigAbs
-        local ySearchRange = 1 + rowDestAbs - rowOrigAbs
+        local xSearchRange <const> = 1 + colDestAbs - colOrigAbs
+        local ySearchRange <const> = 1 + rowDestAbs - rowOrigAbs
 
         if dirIsVertical then
             local h = 0
@@ -422,23 +425,25 @@ dlg:button {
             end
         end
 
-        local frameImages = {}
+        ---@type Image[]
+        local frameImages <const> = {}
         if dirIsVertical then
-            local colOrig = colOrigAbs
-            local colDest = colDestAbs
+            local colOrig <const> = colOrigAbs
+            local colDest <const> = colDestAbs
 
-            local rowOrigFirst = rowOrigAbs
+            local rowOrigFirst <const> = rowOrigAbs
             local rowDestFirst = rowOrigAbs
             if frameCount < 2 then
                 rowDestFirst = rowDestAbs
             end
-            local rowOrigLast = rowOrigAbs
-            local rowDestLast = rowDestAbs
+            local rowOrigLast <const> = rowOrigAbs
+            local rowDestLast <const> = rowDestAbs
 
             local frIdx = 0
             while frIdx < frameCount do
                 -- Copy source array to a frame array.
-                local frPxArr = {}
+                ---@type integer[]
+                local frPxArr <const> = {}
                 local k = 0
                 while k < lenSrcPxArr do
                     k = k + 1
@@ -447,39 +452,41 @@ dlg:button {
 
                 -- Convert frame index to the number of rows
                 -- to sort.
-                local t = frIdx * frToFac
-                local u = 1.0 - t
+                local t <const> = frIdx * frToFac
+                local u <const> = 1.0 - t
 
-                local rowOrig = floor(0.5 + u * rowOrigFirst
+                local rowOrig <const> = floor(0.5 + u * rowOrigFirst
                     + t * rowOrigLast)
-                local rowDest = floor(0.5 + u * rowDestFirst
+                local rowDest <const> = floor(0.5 + u * rowDestFirst
                     + t * rowDestLast)
 
                 -- Offset the x column.
                 frIdx = frIdx + 1
-                local xRndOffset = fRndOffsets[frIdx]
+                local xRndOffset <const> = fRndOffsets[frIdx]
 
                 local rndIdx = 0
                 local x = colOrig - 1
                 while x < colDest do
                     x = x + 1
-                    local xOff = (xRndOffset + x) % wSrc
+                    local xOff <const> = (xRndOffset + x) % wSrc
                     -- local xOff = wrap(xRndOffset + x, colOrig, colDest + 1)
 
                     rndIdx = rndIdx + 1
-                    local yRndOffset = yRndOffsets[rndIdx]
+                    local yRndOffset <const> = yRndOffsets[rndIdx]
 
                     local lenFound = 0
-                    local indices = {}
-                    local sorted = {}
+                    ---@type integer[]
+                    local indices <const> = {}
+                    ---@type integer[]
+                    local sorted <const> = {}
 
                     local y = rowDest + 1
                     while y > rowOrig do
                         y = y - 1
-                        local yOff = (yRndOffset + y) % hSrc
+                        local yOff <const> = (yRndOffset + y) % hSrc
                         -- local yOff = wrap(yRndOffset + y, rowOrig, rowDest + 1)
-                        local index = 1 + xOff + yOff * wSrc
-                        local hex = frPxArr[index]
+                        local index <const> = 1 + xOff + yOff * wSrc
+                        local hex <const> = frPxArr[index]
                         if masked[hex] then
                             lenFound = lenFound + 1
                             indices[lenFound] = index
@@ -495,8 +502,8 @@ dlg:button {
                     end
                 end -- End of outer loop (x, cols).
 
-                local frameImage = Image(srcImgSpec)
-                local frameItr = frameImage:pixels()
+                local frameImage <const> = Image(srcImgSpec)
+                local frameItr <const> = frameImage:pixels()
                 local j = 0
                 for pixel in frameItr do
                     j = j + 1
@@ -507,21 +514,22 @@ dlg:button {
             end -- End of frame loop.
         else
             -- Default is to search the whole image.
-            local rowOrig = rowOrigAbs
-            local rowDest = rowDestAbs
+            local rowOrig <const> = rowOrigAbs
+            local rowDest <const> = rowDestAbs
 
-            local colOrigFirst = colOrigAbs
+            local colOrigFirst <const> = colOrigAbs
             local colDestFirst = colOrigAbs
             if frameCount < 2 then
                 colDestFirst = colDestAbs
             end
-            local colOrigLast = colOrigAbs
-            local colDestLast = colDestAbs
+            local colOrigLast <const> = colOrigAbs
+            local colDestLast <const> = colDestAbs
 
             local frIdx = 0
             while frIdx < frameCount do
                 -- Copy source array to a frame array.
-                local frPxArr = {}
+                ---@type integer[]
+                local frPxArr <const> = {}
                 local k = 0
                 while k < lenSrcPxArr do
                     k = k + 1
@@ -530,40 +538,42 @@ dlg:button {
 
                 -- Convert frame index to the number of columns
                 -- to sort.
-                local t = frIdx * frToFac
-                local u = 1.0 - t
-                local colOrig = floor(0.5 + u * colOrigFirst
+                local t <const> = frIdx * frToFac
+                local u <const> = 1.0 - t
+                local colOrig <const> = floor(0.5 + u * colOrigFirst
                     + t * colOrigLast)
-                local colDest = floor(0.5 + u * colDestFirst
+                local colDest <const> = floor(0.5 + u * colDestFirst
                     + t * colDestLast)
 
                 -- Offset the yRow.
                 frIdx = frIdx + 1
-                local yRndOffset = fRndOffsets[frIdx]
+                local yRndOffset <const> = fRndOffsets[frIdx]
 
                 local rndIdx = 0
                 local y = rowDest + 1
                 while y > rowOrig do
                     y = y - 1
-                    local yOff = (yRndOffset + y) % hSrc
+                    local yOff <const> = (yRndOffset + y) % hSrc
                     -- local yOff = wrap(yRndOffset + y, rowOrig, rowDest + 1)
                     rndIdx = rndIdx + 1
-                    local xRndOffset = xRndOffsets[rndIdx]
+                    local xRndOffset <const> = xRndOffsets[rndIdx]
 
                     -- For horizontal only, y * w can be cached.
-                    local yw = yOff * wSrc
+                    local yw <const> = yOff * wSrc
 
                     local lenFound = 0
-                    local indices = {}
-                    local sorted = {}
+                    ---@type integer[]
+                    local indices <const> = {}
+                    ---@type integer[]
+                    local sorted <const> = {}
 
                     local x = colOrig - 1
                     while x < colDest do
                         x = x + 1
-                        local xOff = (xRndOffset + x) % wSrc
+                        local xOff <const> = (xRndOffset + x) % wSrc
                         -- local xOff = wrap(xRndOffset + x, colOrig, colDest + 1)
-                        local index = 1 + xOff + yw
-                        local hex = frPxArr[index]
+                        local index <const> = 1 + xOff + yw
+                        local hex <const> = frPxArr[index]
                         if masked[hex] then
                             lenFound = lenFound + 1
                             indices[lenFound] = index
@@ -579,8 +589,8 @@ dlg:button {
                     end
                 end -- End of outer loop (y, rows).
 
-                local frameImage = Image(srcImgSpec)
-                local frameItr = frameImage:pixels()
+                local frameImage <const> = Image(srcImgSpec)
+                local frameItr <const> = frameImage:pixels()
                 local j = 0
                 for pixel in frameItr do
                     j = j + 1
@@ -590,7 +600,7 @@ dlg:button {
             end -- End of frame loop.
         end
 
-        local trgSprite = Sprite(srcSpriteSpec)
+        local trgSprite <const> = Sprite(srcSpriteSpec)
         trgSprite.filename = "Pixel Sort"
         AseUtilities.setPalette(hexArr, trgSprite, 1)
 
@@ -603,22 +613,22 @@ dlg:button {
             local i = 1
             while i < frameCount do
                 i = i + 1
-                local frameObj = trgSprite:newEmptyFrame()
+                local frameObj <const> = trgSprite:newEmptyFrame()
                 frameObj.duration = duration
             end
         end)
 
-        local trgLayer = trgSprite.layers[1]
+        local trgLayer <const> = trgSprite.layers[1]
         trgLayer.name = string.format(
             "%s.%s",
             maskCriterion, sortCriterion)
 
         local j = 0
-        local trgFrames = trgSprite.frames
+        local trgFrames <const> = trgSprite.frames
         while j < frameCount do
             j = j + 1
-            local trgFrame = trgFrames[j]
-            local frameImage = frameImages[j]
+            local trgFrame <const> = trgFrames[j]
+            local frameImage <const> = frameImages[j]
 
             transact(strfmt(
                     "Pixel Sort %d", trgFrame.frameNumber),

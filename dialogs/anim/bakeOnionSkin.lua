@@ -1,9 +1,9 @@
 dofile("../../support/aseutilities.lua")
 
-local directOps = { "BACKWARD", "BOTH", "FORWARD" }
-local targets = { "ACTIVE", "ALL", "RANGE" }
+local directOps <const> = { "BACKWARD", "BOTH", "FORWARD" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
-local defaults = {
+local defaults <const> = {
     -- Also known as ghost trail or Echo in After Effects.
     -- This could be refactored with new trgImg:drawImage, but
     -- it wouldn't offer much convenience, as layer blend modes
@@ -20,7 +20,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Bake Onion Skin" }
+local dlg <const> = Dialog { title = "Bake Onion Skin" }
 
 dlg:combobox {
     id = "target",
@@ -67,9 +67,9 @@ dlg:combobox {
     option = defaults.direcions,
     options = directOps,
     onchange = function()
-        local args = dlg.data
-        local md = args.directions
-        local useTint = args.useTint
+        local args <const> = dlg.data
+        local md <const> = args.directions --[[@as string]]
+        local useTint <const> = args.useTint --[[@as boolean]]
         if md == "FORWARD" then
             dlg:modify { id = "foreTint", visible = useTint }
             dlg:modify { id = "backTint", visible = false }
@@ -90,9 +90,9 @@ dlg:check {
     label = "Tint:",
     selected = defaults.useTint,
     onclick = function()
-        local args = dlg.data
-        local md = args.directions
-        local useTint = args.useTint
+        local args <const> = dlg.data
+        local md <const> = args.directions --[[@as string]]
+        local useTint <const> = args.useTint --[[@as boolean]]
         if md == "FORWARD" then
             dlg:modify { id = "foreTint", visible = useTint }
             dlg:modify { id = "backTint", visible = false }
@@ -135,8 +135,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -145,7 +145,7 @@ dlg:button {
             return
         end
 
-        local maxFrameCount = #activeSprite.frames
+        local maxFrameCount <const> = #activeSprite.frames
         if maxFrameCount < 2 then
             app.alert {
                 title = "Error",
@@ -154,7 +154,7 @@ dlg:button {
             return
         end
 
-        local colorMode = activeSprite.colorMode
+        local colorMode <const> = activeSprite.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -163,7 +163,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = site.layer
+        local srcLayer <const> = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -197,42 +197,47 @@ dlg:button {
         end
 
         -- Get sprite properties.
-        local colorSpace = activeSprite.colorSpace
-        local alphaIdx = activeSprite.transparentColor
+        local colorSpace <const> = activeSprite.colorSpace
+        local alphaIdx <const> = activeSprite.transparentColor
 
         -- Cache global functions used in for loops.
-        local abs = math.abs
-        local max = math.max
-        local min = math.min
-        local floor = math.floor
-        local blend = AseUtilities.blendRgba
-        local strfmt = string.format
-        local transact = app.transaction
+        local abs <const> = math.abs
+        local max <const> = math.max
+        local min <const> = math.min
+        local floor <const> = math.floor
+        local blend <const> = AseUtilities.blendRgba
+        local strfmt <const> = string.format
+        local transact <const> = app.transaction
 
         -- Unpack arguments.
-        local args = dlg.data
-        local target = args.target or defaults.target --[[@as string]]
-        local iterations = args.iterations or defaults.iterations --[[@as integer]]
-        local directions = args.directions or defaults.directions --[[@as string]]
-        local minAlpha = args.minAlpha or defaults.minAlpha --[[@as integer]]
-        local maxAlpha = args.maxAlpha or defaults.maxAlpha --[[@as integer]]
-        local useTint = args.useTint --[[@as boolean]]
-        local backTint = args.backTint --[[@as Color]]
-        local foreTint = args.foreTint --[[@as Color]]
+        local args <const> = dlg.data
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
+        local iterations <const> = args.iterations
+            or defaults.iterations --[[@as integer]]
+        local directions <const> = args.directions
+            or defaults.directions --[[@as string]]
+        local minAlpha <const> = args.minAlpha
+            or defaults.minAlpha --[[@as integer]]
+        local maxAlpha <const> = args.maxAlpha
+            or defaults.maxAlpha --[[@as integer]]
+        local useTint <const> = args.useTint --[[@as boolean]]
+        local backTint <const> = args.backTint --[[@as Color]]
+        local foreTint <const> = args.foreTint --[[@as Color]]
 
         -- Find directions.
-        local useBoth = directions == "BOTH"
-        local useFore = directions == "FORWARD"
-        local useBack = directions == "BACKWARD"
-        local lookForward = useBoth or useFore
-        local lookBackward = useBoth or useBack
+        local useBoth <const> = directions == "BOTH"
+        local useFore <const> = directions == "FORWARD"
+        local useBack <const> = directions == "BACKWARD"
+        local lookForward <const> = useBoth or useFore
+        local lookBackward <const> = useBoth or useBack
 
         -- Unpack colors.
         -- Neutral hex is when onion skin lands
         -- on current frame. When "BOTH" directions
         -- are used, mix between back and fore.
-        local backHex = AseUtilities.aseColorToHex(backTint, ColorMode.RGB)
-        local foreHex = AseUtilities.aseColorToHex(foreTint, ColorMode.RGB)
+        local backHex <const> = AseUtilities.aseColorToHex(backTint, ColorMode.RGB)
+        local foreHex <const> = AseUtilities.aseColorToHex(foreTint, ColorMode.RGB)
         local neutHex = 0x00808080
         if useBoth then
             neutHex = Clr.toHex(Clr.mixSrLab2(
@@ -241,7 +246,7 @@ dlg:button {
         end
 
         -- Fill frames.
-        local frames = Utilities.flatArr2(
+        local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
         -- Do not copy source layer blend mode.
@@ -254,12 +259,12 @@ dlg:button {
             trgLayer.opacity = srcLayer.opacity
         end)
 
-        local lenFrames = #frames
-        local rgbColorMode = ColorMode.RGB --[[@as integer]]
+        local lenFrames <const> = #frames
+        local rgbColorMode <const> = ColorMode.RGB
         local i = 0
         while i < lenFrames do
             i = i + 1
-            local srcFrame = frames[i]
+            local srcFrame <const> = frames[i]
 
             local startFrameIdx = srcFrame
             local endFrameIdx = srcFrame
@@ -274,7 +279,7 @@ dlg:button {
                 endFrameIdx = min(maxFrameCount, endFrameIdx)
             end
 
-            local sampleCount = abs(1 + endFrameIdx - startFrameIdx)
+            local sampleCount <const> = abs(1 + endFrameIdx - startFrameIdx)
 
             -- For the image to be as efficient (i.e., small) as
             -- it can, find the top left and bottom right viable
@@ -284,26 +289,27 @@ dlg:button {
             local xMax = -2147483648
             local yMax = -2147483648
 
-            local packets = {}
+            ---@type table[]
+            local packets <const> = {}
             local packetIdx = 0
             local j = 0
             while j < sampleCount do
-                local frameIdx = startFrameIdx + j
+                local frameIdx <const> = startFrameIdx + j
                 j = j + 1
                 if frameIdx >= 1 and frameIdx <= maxFrameCount then
-                    local currCel = srcLayer:cel(frameIdx)
+                    local currCel <const> = srcLayer:cel(frameIdx)
                     if currCel then
-                        local currImg = currCel.image
-                        local currPos = currCel.position
-                        local xTopLeft = currPos.x
-                        local yTopLeft = currPos.y
+                        local currImg <const> = currCel.image
+                        local currPos <const> = currCel.position
+                        local xTopLeft <const> = currPos.x
+                        local yTopLeft <const> = currPos.y
 
                         -- Bottom right corner is cel's position
                         -- plus image dimensions.
-                        local imgWidth = currImg.width
-                        local imgHeight = currImg.height
-                        local xBottomRight = xTopLeft + imgWidth
-                        local yBottomRight = yTopLeft + imgHeight
+                        local imgWidth <const> = currImg.width
+                        local imgHeight <const> = currImg.height
+                        local xBottomRight <const> = xTopLeft + imgWidth
+                        local yBottomRight <const> = yTopLeft + imgHeight
 
                         -- Update minima and maxima.
                         if xTopLeft < xMin then xMin = xTopLeft end
@@ -313,9 +319,9 @@ dlg:button {
 
                         -- Store pixels from the image.
                         ---@type integer[]
-                        local pixels = {}
+                        local pixels <const> = {}
                         local pixelIdx = 0
-                        local pxItr = currImg:pixels()
+                        local pxItr <const> = currImg:pixels()
                         for pixel in pxItr do
                             pixelIdx = pixelIdx + 1
                             local hex = pixel()
@@ -345,25 +351,25 @@ dlg:button {
             if xMax ~= xMin and yMax ~= yMin then
                 -- Find maximum containing axis aligned bounding
                 -- box. Find minimum for top-left corner of cels.
-                local trgImgWidth = abs(xMax - xMin)
-                local trgImgHeight = abs(yMax - yMin)
-                local trgPos = Point(xMin, yMin)
+                local trgImgWidth <const> = abs(xMax - xMin)
+                local trgImgHeight <const> = abs(yMax - yMin)
+                local trgPos <const> = Point(xMin, yMin)
 
-                local trgSpec = ImageSpec {
+                local trgSpec <const> = ImageSpec {
                     width = trgImgWidth,
                     height = trgImgHeight,
                     colorMode = rgbColorMode,
                     transparentColor = alphaIdx
                 }
                 trgSpec.colorSpace = colorSpace
-                local trgImg = Image(trgSpec)
+                local trgImg <const> = Image(trgSpec)
 
                 -- Set function for both vs. forward or backward.
                 local lerpFunc = nil
                 if useBoth then
                     lerpFunc = function(a, b, c, d)
                         if sampleCount > 2 then
-                            local t = (abs(c - d) - 1.0) / (0.5 * sampleCount - 1.0)
+                            local t <const> = (abs(c - d) - 1.0) / (0.5 * sampleCount - 1.0)
                             if t <= 0.0 then return b end
                             if t >= 1.0 then return a end
                             return (1.0 - t) * b + t * a
@@ -376,7 +382,7 @@ dlg:button {
                 else
                     lerpFunc = function(a, b, c, d)
                         if sampleCount > 2 then
-                            local t = (abs(c - d) - 1.0) / (sampleCount - 2.0)
+                            local t <const> = (abs(c - d) - 1.0) / (sampleCount - 2.0)
                             return (1.0 - t) * b + t * a
                         elseif sampleCount > 1 then
                             return (a + b) * 0.5
@@ -389,10 +395,10 @@ dlg:button {
                 local h = 0
                 while h < sampleCount do
                     h = h + 1
-                    local packet = packets[h]
+                    local packet <const> = packets[h]
                     if packet then
-                        local frameIdxShd = packet.frameIdx
-                        local relFrameIdx = srcFrame - frameIdxShd
+                        local frameIdxShd <const> = packet.frameIdx
+                        local relFrameIdx <const> = srcFrame - frameIdxShd
 
                         local fadeAlpha = maxAlpha
                         if relFrameIdx ~= 0 then
@@ -409,29 +415,29 @@ dlg:button {
                             tint = foreHex
                         end
 
-                        local shadowPixels = packet.pixels
-                        local shadowWidth = packet.width
-                        local xOffset = packet.tlx - xMin
-                        local yOffset = packet.tly - yMin
+                        local shadowPixels <const> = packet.pixels
+                        local shadowWidth <const> = packet.width
+                        local xOffset <const> = packet.tlx - xMin
+                        local yOffset <const> = packet.tly - yMin
 
-                        local lenShadowPixels = #shadowPixels - 1
+                        local lenShadowPixels <const> = #shadowPixels - 1
                         local k = -1
                         while k < lenShadowPixels do
                             k = k + 1
-                            local shadowHex = shadowPixels[1 + k]
-                            local shadowAlpha = shadowHex >> 0x18 & 0xff
+                            local shadowHex <const> = shadowPixels[1 + k]
+                            local shadowAlpha <const> = shadowHex >> 0x18 & 0xff
                             if shadowAlpha > 0 then
-                                local x = (k % shadowWidth) + xOffset
-                                local y = (k // shadowWidth) + yOffset
+                                local x <const> = (k % shadowWidth) + xOffset
+                                local y <const> = (k // shadowWidth) + yOffset
 
                                 local dest = shadowHex
                                 if useTint then
                                     dest = blend(shadowHex, tint)
                                 end
-                                local compAlpha = min(shadowAlpha, fadeAlpha)
+                                local compAlpha <const> = min(shadowAlpha, fadeAlpha)
                                 dest = (compAlpha << 0x18) | (dest & 0x00ffffff)
 
-                                local orig = trgImg:getPixel(x, y)
+                                local orig <const> = trgImg:getPixel(x, y)
                                 trgImg:drawPixel(x, y, blend(orig, dest))
                             end
                         end

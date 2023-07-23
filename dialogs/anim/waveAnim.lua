@@ -617,7 +617,7 @@ dlg:button {
         local trimImage <const> = AseUtilities.trimImageAlpha
 
         -- Determine how to wrap out of bounds pixels.
-        local edgeType = args.edgeType
+        local edgeType <const> = args.edgeType
             or defaults.edgeType --[[@as string]]
         local wrapper = wrapMod
         if edgeType == "CLAMP" then
@@ -998,8 +998,8 @@ dlg:button {
 
         -- Create wave images from packet data.
         ---@type Image[]
-        local trgImages = {}
-        local lenPackets = #packets
+        local trgImages <const> = {}
+        local lenPackets <const> = #packets
         local h = 0
         while h < lenPackets do
             h = h + 1
@@ -1073,7 +1073,7 @@ dlg:button {
             endTime = os.clock()
             elapsed = endTime - startTime
 
-            local txtArr = {
+            local txtArr <const> = {
                 string.format("Start: %.2f", startTime),
                 string.format("End: %.2f", endTime),
                 string.format("Elapsed: %.6f", elapsed),
