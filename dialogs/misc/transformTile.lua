@@ -10,6 +10,38 @@ local defaults <const> = {
     inPlace = true
 }
 
+---@param flag "FORE"|"BACK"
+---@param shift integer
+local function cycleActive(flag, shift)
+    local site <const> = app.site
+    local activeSprite = site.sprite
+    if not activeSprite then return end
+
+    local activeLayer = site.layer
+    if not activeLayer then return end
+
+    local isTilemap = activeLayer.isTilemap
+    if not isTilemap then return end
+
+    local tileset = activeLayer.tileset
+    local lenTileset = #tileset
+
+    local appPrefs = app.preferences
+    local colorBarPrefs = appPrefs.color_bar
+
+    local access = "fg_tile"
+    if flag == "BACK" then
+        access = "bg_tile"
+    end
+
+    local ti = colorBarPrefs[access]
+    if ti > lenTileset - 1 or ti < 0 then
+        colorBarPrefs[access] = 0
+    else
+        colorBarPrefs[access] = (ti + shift) % lenTileset
+    end
+end
+
 ---@param preset string
 ---@param containedTiles table<integer, Tile>
 ---@param inPlace boolean
@@ -539,6 +571,48 @@ dlg:button {
         end
 
         app.refresh()
+    end
+}
+
+dlg:separator { id = "sortSep" }
+
+dlg:button {
+    id = "nextFore",
+    label = "Next:",
+    text = "&FORE",
+    focus = false,
+    onclick = function()
+        cycleActive("FORE", 1)
+    end
+}
+
+dlg:button {
+    id = "nextBack",
+    text = "&BACK",
+    focus = false,
+    onclick = function()
+        cycleActive("BACK", 1)
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "prevFore",
+    label = "Prev:",
+    text = "F&ORE",
+    focus = false,
+    onclick = function()
+        cycleActive("FORE", -1)
+    end
+}
+
+dlg:button {
+    id = "prevBack",
+    text = "B&ACK",
+    focus = false,
+    onclick = function()
+        cycleActive("BACK", -1)
     end
 }
 
