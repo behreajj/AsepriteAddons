@@ -1,13 +1,13 @@
 dofile("../../support/gradientutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
-local screenScale = app.preferences.general.screen_scale
+local screenScale <const> = app.preferences.general.screen_scale
 
-local defaults = {
+local defaults <const> = {
     pullFocus = true
 }
 
-local dlg = Dialog { title = "Linear Gradient" }
+local dlg <const> = Dialog { title = "Linear Gradient" }
 
 GradientUtilities.dialogWidgets(dlg, true)
 
@@ -24,10 +24,10 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Early returns.
-        local site = app.site
+        local site <const> = app.site
         local activeSprite = site.sprite
         if not activeSprite then
-            local newSpec = ImageSpec {
+            local newSpec <const> = ImageSpec {
                 width = app.preferences.new_file.width,
                 height = app.preferences.new_file.height,
                 colorMode = ColorMode.RGB
@@ -38,8 +38,8 @@ dlg:button {
                 AseUtilities.DEFAULT_PAL_ARR, activeSprite, 1)
         end
 
-        local activeSpec = activeSprite.spec
-        local colorMode = activeSpec.colorMode
+        local activeSpec <const> = activeSprite.spec
+        local colorMode <const> = activeSpec.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -49,36 +49,36 @@ dlg:button {
         end
 
         -- Cache methods.
-        local max = math.max
-        local min = math.min
-        local toHex = Clr.toHex
-        local quantize = Utilities.quantizeUnsigned
+        local max <const> = math.max
+        local min <const> = math.min
+        local toHex <const> = Clr.toHex
+        local quantize <const> = Utilities.quantizeUnsigned
 
         -- Unpack arguments.
-        local args = dlg.data
-        local stylePreset = args.stylePreset --[[@as string]]
-        local clrSpacePreset = args.clrSpacePreset --[[@as string]]
-        local easPreset = args.easPreset --[[@as string]]
-        local huePreset = args.huePreset --[[@as string]]
-        local aseColors = args.shades --[=[@as Color[]]=]
-        local levels = args.quantize --[[@as integer]]
-        local bayerIndex = args.bayerIndex --[[@as integer]]
-        local ditherPath = args.ditherPath --[[@as string]]
+        local args <const> = dlg.data
+        local stylePreset <const> = args.stylePreset --[[@as string]]
+        local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
+        local easPreset <const> = args.easPreset --[[@as string]]
+        local huePreset <const> = args.huePreset --[[@as string]]
+        local aseColors <const> = args.shades --[=[@as Color[]]=]
+        local levels <const> = args.quantize --[[@as integer]]
+        local bayerIndex <const> = args.bayerIndex --[[@as integer]]
+        local ditherPath <const> = args.ditherPath --[[@as string]]
 
-        local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
-        local facAdjust = GradientUtilities.easingFuncFromPreset(easPreset)
-        local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
+        local gradient <const> = GradientUtilities.aseColorsToClrGradient(aseColors)
+        local facAdjust <const> = GradientUtilities.easingFuncFromPreset(easPreset)
+        local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
 
-        local wn1 = max(1.0, activeSprite.width - 1.0)
-        local hn1 = max(1.0, activeSprite.height - 1.0)
+        local wn1 <const> = max(1.0, activeSprite.width - 1.0)
+        local hn1 <const> = max(1.0, activeSprite.height - 1.0)
 
         -- Calculate origin and destination.
         -- Divide by 100 to account for percentage.
-        local xOrig = args.xOrig --[[@as integer]]
-        local yOrig = args.yOrig --[[@as integer]]
-        local xDest = args.xDest --[[@as integer]]
-        local yDest = args.yDest --[[@as integer]]
+        local xOrig <const> = args.xOrig --[[@as integer]]
+        local yOrig <const> = args.yOrig --[[@as integer]]
+        local xDest <const> = args.xDest --[[@as integer]]
+        local yDest <const> = args.yDest --[[@as integer]]
 
         local xOrPx = wn1 * (xOrig * 0.005 + 0.5)
         local xDsPx = wn1 * (xDest * 0.005 + 0.5)
@@ -87,7 +87,7 @@ dlg:button {
 
         local bx = xDsPx - xOrPx
         local by = yDsPx - yOrPx
-        local invalidFlag = (math.abs(bx) < 1)
+        local invalidFlag <const> = (math.abs(bx) < 1)
             and (math.abs(by) < 1)
         if invalidFlag then
             xOrPx = 0
@@ -97,11 +97,11 @@ dlg:button {
             bx = xDsPx - xOrPx
             by = yDsPx - yOrPx
         end
-        local bbDot = bx * bx + by * by
+        local bbDot <const> = bx * bx + by * by
         local bbInv = 0.0
         if bbDot ~= 0.0 then bbInv = 1.0 / bbDot end
 
-        local grdSpec = ImageSpec {
+        local grdSpec <const> = ImageSpec {
             width = max(1, activeSprite.width),
             height = max(1, activeSprite.height),
             colorMode = activeSpec.colorMode,
@@ -109,19 +109,20 @@ dlg:button {
         }
         grdSpec.colorSpace = activeSpec.colorSpace
 
-        local grdImg = Image(grdSpec)
-        local grdItr = grdImg:pixels()
+        local grdImg <const> = Image(grdSpec)
+        local grdItr <const> = grdImg:pixels()
 
-        local linearEval = function(x, y)
-            local ax = x - xOrPx
-            local ay = y - yOrPx
-            local adotb = (ax * bx + ay * by) * bbInv
+        local linearEval <const> = function(x, y)
+            local ax <const> = x - xOrPx
+            local ay <const> = y - yOrPx
+            local adotb <const> = (ax * bx + ay * by) * bbInv
             return min(max(adotb, 0.0), 1.0)
         end
 
         if stylePreset == "MIXED" then
-            local facDict = {}
-            local cgmix = ClrGradient.eval
+            ---@type table<number, integer>
+            local facDict <const> = {}
+            local cgmix <const> = ClrGradient.eval
             for pixel in grdItr do
                 local fac = linearEval(pixel.x, pixel.y)
                 fac = facAdjust(fac)
@@ -130,32 +131,32 @@ dlg:button {
                 if facDict[fac] then
                     pixel(facDict[fac])
                 else
-                    local clr = cgmix(gradient, fac, mixFunc)
-                    local hex = toHex(clr)
+                    local clr <const> = cgmix(gradient, fac, mixFunc)
+                    local hex <const> = toHex(clr)
                     pixel(hex)
                     facDict[fac] = hex
                 end
             end
         else
-            local dither = GradientUtilities.ditherFromPreset(
+            local dither <const> = GradientUtilities.ditherFromPreset(
                 stylePreset, bayerIndex, ditherPath)
             for pixel in grdItr do
-                local x = pixel.x
-                local y = pixel.y
-                local fac = linearEval(x, y)
-                local clr = dither(gradient, fac, x, y)
+                local x <const> = pixel.x
+                local y <const> = pixel.y
+                local fac <const> = linearEval(x, y)
+                local clr <const> = dither(gradient, fac, x, y)
                 pixel(toHex(clr))
             end
         end
 
         app.transaction("Linear Gradient", function()
-            local grdLayer = activeSprite:newLayer()
+            local grdLayer <const> = activeSprite:newLayer()
             grdLayer.name = "Gradient.Linear"
             if stylePreset == "MIXED" then
                 grdLayer.name = grdLayer.name
                     .. "." .. clrSpacePreset
             end
-            local activeFrame = site.frame
+            local activeFrame <const> = site.frame
                 or activeSprite.frames[1] --[[@as Frame]]
             activeSprite:newCel(
                 grdLayer, activeFrame, grdImg)
@@ -176,40 +177,40 @@ dlg:button {
     text = "&PALETTE",
     focus = false,
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then return end
 
-        local activeFrame = site.frame
+        local activeFrame <const> = site.frame
             or activeSprite.frames[1] --[[@as Frame]]
-        local trgPalette = AseUtilities.getPalette(
+        local trgPalette <const> = AseUtilities.getPalette(
             activeFrame, activeSprite.palettes)
 
         -- Unpack arguments.
-        local args = dlg.data
-        local clrSpacePreset = args.clrSpacePreset --[[@as string]]
-        local huePreset = args.huePreset --[[@as string]]
-        local aseColors = args.shades --[=[@as Color[]]=]
+        local args <const> = dlg.data
+        local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
+        local huePreset <const> = args.huePreset --[[@as string]]
+        local aseColors <const> = args.shades --[=[@as Color[]]=]
 
-        local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
-        local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
+        local gradient <const> = GradientUtilities.aseColorsToClrGradient(aseColors)
+        local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
-        local eval = ClrGradient.eval
-        local clrToAseColor = AseUtilities.clrToAseColor
+        local eval <const> = ClrGradient.eval
+        local clrToAseColor <const> = AseUtilities.clrToAseColor
 
         -- Due to concerns with range sprite reference expiring,
         -- it's better to keep this to a simple append.
         local levels = args.quantize --[[@as integer]]
         if levels < 3 then levels = 5 end
-        local jToFac = 1.0 / (levels - 1.0)
+        local jToFac <const> = 1.0 / (levels - 1.0)
         app.transaction("Append to Palette", function()
-            local lenPalette = #trgPalette
+            local lenPalette <const> = #trgPalette
             trgPalette:resize(lenPalette + levels)
             local j = 0
             while j < levels do
-                local jFac = j * jToFac
-                local clr = eval(gradient, jFac, mixFunc)
-                local aseColor = clrToAseColor(clr)
+                local jFac <const> = j * jToFac
+                local clr <const> = eval(gradient, jFac, mixFunc)
+                local aseColor <const> = clrToAseColor(clr)
                 trgPalette:setColor(lenPalette + j, aseColor)
                 j = j + 1
             end

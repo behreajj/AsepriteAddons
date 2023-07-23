@@ -1,14 +1,14 @@
 dofile("../../support/gradientutilities.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
-local defaults = {
+local defaults <const> = {
     target = "ACTIVE",
     normalize = false,
     pullFocus = true
 }
 
-local dlg = Dialog { title = "Gradient Map" }
+local dlg <const> = Dialog { title = "Gradient Map" }
 
 GradientUtilities.dialogWidgets(dlg, true)
 
@@ -36,8 +36,8 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Early returns.
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -46,8 +46,8 @@ dlg:button {
             return
         end
 
-        local activeSpec = activeSprite.spec
-        local colorMode = activeSpec.colorMode
+        local activeSpec <const> = activeSprite.spec
+        local colorMode <const> = activeSpec.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -56,7 +56,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = site.layer
+        local srcLayer <const> = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -82,44 +82,44 @@ dlg:button {
         end
 
         -- Cache methods.
-        local abs = math.abs
-        local min = math.min
-        local fromHex = Clr.fromHex
-        local toHex = Clr.toHex
-        local sRgbToLab = Clr.sRgbToSrLab2
-        local quantize = Utilities.quantizeUnsigned
-        local tilesToImage = AseUtilities.tilesToImage
-        local strfmt = string.format
-        local transact = app.transaction
+        local abs <const> = math.abs
+        local min <const> = math.min
+        local fromHex <const> = Clr.fromHex
+        local toHex <const> = Clr.toHex
+        local sRgbToLab <const> = Clr.sRgbToSrLab2
+        local quantize <const> = Utilities.quantizeUnsigned
+        local tilesToImage <const> = AseUtilities.tilesToImage
+        local strfmt <const> = string.format
+        local transact <const> = app.transaction
 
         -- Unpack arguments.
-        local args = dlg.data
-        local stylePreset = args.stylePreset --[[@as string]]
-        local target = args.target or defaults.target --[[@as string]]
-        local useNormalize = args.useNormalize --[[@as boolean]]
-        local clrSpacePreset = args.clrSpacePreset --[[@as string]]
-        local easPreset = args.easPreset --[[@as string]]
-        local huePreset = args.huePreset --[[@as string]]
-        local aseColors = args.shades --[=[@as Color[]]=]
-        local levels = args.quantize --[[@as integer]]
-        local bayerIndex = args.bayerIndex --[[@as integer]]
-        local ditherPath = args.ditherPath --[[@as string]]
+        local args <const> = dlg.data
+        local stylePreset <const> = args.stylePreset --[[@as string]]
+        local target <const> = args.target or defaults.target --[[@as string]]
+        local useNormalize <const> = args.useNormalize --[[@as boolean]]
+        local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
+        local easPreset <const> = args.easPreset --[[@as string]]
+        local huePreset <const> = args.huePreset --[[@as string]]
+        local aseColors <const> = args.shades --[=[@as Color[]]=]
+        local levels <const> = args.quantize --[[@as integer]]
+        local bayerIndex <const> = args.bayerIndex --[[@as integer]]
+        local ditherPath <const> = args.ditherPath --[[@as string]]
 
         -- Find frames from target.
-        local frames = Utilities.flatArr2(
+        local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
-        local useMixed = stylePreset == "MIXED"
-        local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
-        local facAdjust = GradientUtilities.easingFuncFromPreset(easPreset)
-        local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
+        local useMixed <const> = stylePreset == "MIXED"
+        local gradient <const> = GradientUtilities.aseColorsToClrGradient(aseColors)
+        local facAdjust <const> = GradientUtilities.easingFuncFromPreset(easPreset)
+        local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
-        local dither = GradientUtilities.ditherFromPreset(
+        local dither <const> = GradientUtilities.ditherFromPreset(
             stylePreset, bayerIndex, ditherPath)
-        local cgmix = ClrGradient.eval
+        local cgmix <const> = ClrGradient.eval
 
         -- Check for tile maps.
-        local isTilemap = srcLayer.isTilemap
+        local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
             tileSet = srcLayer.tileset --[[@as Tileset]]
@@ -142,35 +142,35 @@ dlg:button {
             end
         end)
 
-        local lenFrames = #frames
+        local lenFrames <const> = #frames
         local i = 0
         while i < lenFrames do
             i = i + 1
-            local srcFrame = frames[i]
-            local srcCel = srcLayer:cel(srcFrame)
+            local srcFrame <const> = frames[i]
+            local srcCel <const> = srcLayer:cel(srcFrame)
             if srcCel then
-                local srcPos = srcCel.position
+                local srcPos <const> = srcCel.position
                 local srcImg = srcCel.image
                 if isTilemap then
                     srcImg = tilesToImage(srcImg, tileSet, colorMode)
                 end
 
                 ---@type table<integer, boolean>
-                local srcHexDict = {}
-                local srcPxItr = srcImg:pixels()
+                local srcHexDict <const> = {}
+                local srcPxItr <const> = srcImg:pixels()
                 for srcPixel in srcPxItr do
                     srcHexDict[srcPixel()] = true
                 end
 
                 ---@type table<integer, number>
-                local lumDict = {}
+                local lumDict <const> = {}
                 local minLum = 1.0
                 local maxLum = 0.0
                 for srcHex, _ in pairs(srcHexDict) do
                     if (srcHex & 0xff000000) ~= 0 then
-                        local srgb = fromHex(srcHex)
-                        local lab = sRgbToLab(srgb)
-                        local lum = lab.l * 0.01
+                        local srgb <const> = fromHex(srcHex)
+                        local lab <const> = sRgbToLab(srgb)
+                        local lum <const> = lab.l * 0.01
                         if lum < minLum then minLum = lum end
                         if lum > maxLum then maxLum = lum end
                         lumDict[srcHex] = lum
@@ -182,9 +182,9 @@ dlg:button {
                 -- Normalize range if requested.
                 -- A color disc with uniform perceptual luminance
                 -- generated by Okhsl has a range of about 0.069.
-                local rangeLum = abs(maxLum - minLum)
+                local rangeLum <const> = abs(maxLum - minLum)
                 if useNormalize and rangeLum > 0.07 then
-                    local invRangeLum = 1.0 / rangeLum
+                    local invRangeLum <const> = 1.0 / rangeLum
                     for hex, lum in pairs(lumDict) do
                         if (hex & 0xff000000) ~= 0 then
                             lumDict[hex] = (lum - minLum) * invRangeLum
@@ -194,21 +194,21 @@ dlg:button {
                     end
                 end
 
-                local trgImg = srcImg:clone()
-                local trgPxItr = trgImg:pixels()
+                local trgImg <const> = srcImg:clone()
+                local trgPxItr <const> = trgImg:pixels()
 
                 if useMixed then
                     ---@type table<integer, integer>
-                    local trgHexDict = {}
+                    local trgHexDict <const> = {}
                     for srcHex, _ in pairs(srcHexDict) do
                         local fac = lumDict[srcHex]
                         fac = facAdjust(fac)
                         fac = quantize(fac, levels)
-                        local trgClr = cgmix(
+                        local trgClr <const> = cgmix(
                             gradient, fac, mixFunc)
 
-                        local trgHex = toHex(trgClr)
-                        local minAlpha = min(
+                        local trgHex <const> = toHex(trgClr)
+                        local minAlpha <const> = min(
                             srcHex >> 0x18 & 0xff,
                             trgHex >> 0x18 & 0xff)
                         trgHexDict[srcHex] = (minAlpha << 0x18)
@@ -222,19 +222,19 @@ dlg:button {
                     -- Cel position needs to be added to the dither,
                     -- otherwise there's flickering in animations as
                     -- the same image is translated across frames.
-                    local xSrcPos = srcPos.x
-                    local ySrcPos = srcPos.y
+                    local xSrcPos <const> = srcPos.x
+                    local ySrcPos <const> = srcPos.y
                     for trgPixel in trgPxItr do
-                        local srcHex = trgPixel()
+                        local srcHex <const> = trgPixel()
                         local fac = lumDict[srcHex]
                         fac = facAdjust(fac)
-                        local trgClr = dither(
+                        local trgClr <const> = dither(
                             gradient, fac,
                             xSrcPos + trgPixel.x,
                             ySrcPos + trgPixel.y)
 
-                        local trgHex = toHex(trgClr)
-                        local minAlpha = min(
+                        local trgHex <const> = toHex(trgClr)
+                        local minAlpha <const> = min(
                             srcHex >> 0x18 & 0xff,
                             trgHex >> 0x18 & 0xff)
                         trgPixel((minAlpha << 0x18)
@@ -245,7 +245,7 @@ dlg:button {
                 transact(
                     strfmt("Gradient Map %d", srcFrame),
                     function()
-                        local trgCel = activeSprite:newCel(
+                        local trgCel <const> = activeSprite:newCel(
                             trgLayer, srcFrame, trgImg, srcPos)
                         trgCel.opacity = srcCel.opacity
                     end)

@@ -1,8 +1,8 @@
 dofile("../../support/gradientutilities.lua")
 
-local frameTargetOptions = { "ALL", "MANUAL", "RANGE" }
+local frameTargetOptions <const> = { "ALL", "MANUAL", "RANGE" }
 
-local defaults = {
+local defaults <const> = {
     frameTarget = "ALL",
     rangeStr = "",
     strExample = "4,6:9,13",
@@ -10,7 +10,7 @@ local defaults = {
     pullFocus = true
 }
 
-local dlg = Dialog { title = "Time Gradient" }
+local dlg <const> = Dialog { title = "Time Gradient" }
 
 GradientUtilities.dialogWidgets(dlg, true)
 
@@ -20,9 +20,9 @@ dlg:combobox {
     option = defaults.frameTarget,
     options = frameTargetOptions,
     onchange = function()
-        local args = dlg.data
-        local state = args.frameTarget --[[@as string]]
-        local isManual = state == "MANUAL"
+        local args <const> = dlg.data
+        local state <const> = args.frameTarget --[[@as string]]
+        local isManual <const> = state == "MANUAL"
         dlg:modify { id = "rangeStr", visible = isManual }
         dlg:modify { id = "strExample", visible = false }
     end
@@ -66,7 +66,7 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Early returns.
-        local activeSprite = app.activeSprite
+        local activeSprite <const> = app.activeSprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -75,8 +75,8 @@ dlg:button {
             return
         end
 
-        local activeSpec = activeSprite.spec
-        local colorMode = activeSpec.colorMode
+        local activeSpec <const> = activeSprite.spec
+        local colorMode <const> = activeSpec.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -85,45 +85,45 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local isCyclic = args.isCyclic --[[@as boolean]]
-        local frameTarget = args.frameTarget
+        local args <const> = dlg.data
+        local isCyclic <const> = args.isCyclic --[[@as boolean]]
+        local frameTarget <const> = args.frameTarget
             or defaults.frameTarget --[[@as string]]
-        local rangeStr = args.rangeStr
+        local rangeStr <const> = args.rangeStr
             or defaults.rangeStr --[[@as string]]
 
-        local stylePreset = args.stylePreset --[[@as string]]
-        local clrSpacePreset = args.clrSpacePreset --[[@as string]]
-        local easPreset = args.easPreset --[[@as string]]
-        local huePreset = args.huePreset --[[@as string]]
-        local aseColors = args.shades --[=[@as Color[]]=]
-        local levels = args.quantize --[[@as integer]]
-        local bayerIndex = args.bayerIndex --[[@as integer]]
-        local ditherPath = args.ditherPath --[[@as string]]
+        local stylePreset <const> = args.stylePreset --[[@as string]]
+        local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
+        local easPreset <const> = args.easPreset --[[@as string]]
+        local huePreset <const> = args.huePreset --[[@as string]]
+        local aseColors <const> = args.shades --[=[@as Color[]]=]
+        local levels <const> = args.quantize --[[@as integer]]
+        local bayerIndex <const> = args.bayerIndex --[[@as integer]]
+        local ditherPath <const> = args.ditherPath --[[@as string]]
 
-        local useMixed = stylePreset == "MIXED"
-        local gradient = GradientUtilities.aseColorsToClrGradient(aseColors)
-        local facAdjust = GradientUtilities.easingFuncFromPreset(easPreset)
-        local mixFunc = GradientUtilities.clrSpcFuncFromPreset(
+        local useMixed <const> = stylePreset == "MIXED"
+        local gradient <const> = GradientUtilities.aseColorsToClrGradient(aseColors)
+        local facAdjust <const> = GradientUtilities.easingFuncFromPreset(easPreset)
+        local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
-        local toHex = Clr.toHex
+        local toHex <const> = Clr.toHex
 
         -- Frames are potentially discontinuous, but for now assume
         -- that, if so, user intended them to be that way?
-        local frIdcs = Utilities.flatArr2(AseUtilities.getFrames(
+        local frIdcs <const> = Utilities.flatArr2(AseUtilities.getFrames(
             activeSprite, frameTarget,
             false, rangeStr, activeSprite.tags))
-        local lenFrIdcs = #frIdcs
-        local frObjs = activeSprite.frames
+        local lenFrIdcs <const> = #frIdcs
+        local frObjs <const> = activeSprite.frames
 
         ---@type number[]
-        local timeStamps = {}
+        local timeStamps <const> = {}
         local totalDuration = 0
         local h = 0
         while h < lenFrIdcs do
             h = h + 1
-            local frIdx = frIdcs[h]
-            local frObj = frObjs[frIdx]
+            local frIdx <const> = frIdcs[h]
+            local frObj <const> = frObjs[frIdx]
             local duration = frObj.duration
             timeStamps[h] = totalDuration
             totalDuration = totalDuration + duration
@@ -142,10 +142,10 @@ dlg:button {
         end
 
         ---@type Image[]
-        local trgImages = {}
+        local trgImages <const> = {}
         if useMixed then
             -- Cache methods used in loop.
-            local cgmix = ClrGradient.eval
+            local cgmix <const> = ClrGradient.eval
             local quantize = nil
             if isCyclic then
                 quantize = Utilities.quantizeSigned
@@ -156,36 +156,36 @@ dlg:button {
             local i = 0
             while i < lenFrIdcs do
                 i = i + 1
-                local timeStamp = timeStamps[i]
+                local timeStamp <const> = timeStamps[i]
                 local fac = timeStamp * timeToFac
                 fac = facAdjust(fac)
                 fac = quantize(fac, levels)
-                local trgClr = cgmix(
+                local trgClr <const> = cgmix(
                     gradient, fac, mixFunc)
-                local trgHex = toHex(trgClr)
-                local trgImage = Image(activeSpec)
+                local trgHex <const> = toHex(trgClr)
+                local trgImage <const> = Image(activeSpec)
                 trgImage:clear(trgHex)
                 trgImages[i] = trgImage
             end
         else
-            local dither = GradientUtilities.ditherFromPreset(
+            local dither <const> = GradientUtilities.ditherFromPreset(
                 stylePreset, bayerIndex, ditherPath)
             local i = 0
             while i < lenFrIdcs do
                 i = i + 1
-                local timeStamp = timeStamps[i]
-                local fac = timeStamp * timeToFac
-                local trgImage = Image(activeSpec)
-                local trgItr = trgImage:pixels()
-                -- TODO: Could optimize this by only looping over
+                local timeStamp <const> = timeStamps[i]
+                local fac <const> = timeStamp * timeToFac
+                local trgImage <const> = Image(activeSpec)
+                local trgItr <const> = trgImage:pixels()
+                -- Could optimize this by only looping over
                 -- the gradient for the size of the matrix, then
                 -- repeating. Maybe update ditherFromPreset to return
                 -- that info? The only issue would be IGN doesn't fit
                 -- with the others...
                 for pixel in trgItr do
-                    local x = pixel.x
-                    local y = pixel.y
-                    local clr = dither(gradient, fac, x, y)
+                    local x <const> = pixel.x
+                    local y <const> = pixel.y
+                    local clr <const> = dither(gradient, fac, x, y)
                     -- Time-based IGN is not worth it -- the changing pattern
                     -- flickers in such a way that it hurts the eyes.
                     pixel(toHex(clr))
