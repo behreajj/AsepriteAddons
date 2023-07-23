@@ -1,9 +1,9 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/jsonutilities.lua")
 
-local targetOptions = { "ACTIVE", "ALL" }
+local targetOptions <const> = { "ACTIVE", "ALL" }
 
-local defaults = {
+local defaults <const> = {
     -- Atm, Aseprite tile and tile set objects
     -- don't include enough useful information
     -- to necessitate including them in JSON,
@@ -23,25 +23,28 @@ local defaults = {
     boundsFormat = "TOP_LEFT"
 }
 
-local sectionFormat = table.concat({
+local sectionFormat <const> = table.concat({
     "{\"id\":%s",
     "\"rect\":%s}",
 }, ",")
 
-local sheetFormat = table.concat({
+local sheetFormat <const> = table.concat({
     "{\"fileName\":\"%s\"",
     "\"size\":%s",
     "\"sizeGrid\":%s",
     "\"tiles\":[%s]}",
 }, ",")
 
-local mapFormat = table.concat({
+local mapFormat <const> = table.concat({
     "{\"size\":%s",
     "\"indices\":[%s]",
     "\"frame\":%d",
     "\"layer\":%d}",
 }, ",")
 
+---@param section table
+---@param boundsFormat string
+---@return string
 local function sectionToJson(section, boundsFormat)
     return string.format(sectionFormat,
         JsonUtilities.pointToJson(
@@ -50,6 +53,8 @@ local function sectionToJson(section, boundsFormat)
             section.rect, boundsFormat))
 end
 
+---@param map table
+---@return string
 local function mapToJson(map)
     return string.format(
         mapFormat,
@@ -59,11 +64,14 @@ local function mapToJson(map)
         map.layer)
 end
 
+---@param sheet table
+---@param boundsFormat string
+---@return string
 local function sheetToJson(sheet, boundsFormat)
     ---@type string[]
-    local sectionsStrs = {}
-    local sections = sheet.sections
-    local lenSections = #sections
+    local sectionsStrs <const> = {}
+    local sections <const> = sheet.sections
+    local lenSections <const> = #sections
     local i = 0
     while i < lenSections do
         i = i + 1
@@ -82,7 +90,7 @@ local function sheetToJson(sheet, boundsFormat)
         table.concat(sectionsStrs, ","))
 end
 
-local dlg = Dialog { title = "Export Tilesets" }
+local dlg <const> = Dialog { title = "Export Tilesets" }
 
 dlg:combobox {
     id = "target",
@@ -90,10 +98,10 @@ dlg:combobox {
     option = defaults.target,
     options = targetOptions,
     onchange = function()
-        local args = dlg.data
-        local saveJson = args.saveJson --[[@as boolean]]
-        local includeMaps = args.includeMaps --[[@as boolean]]
-        local allTarget = args.target == "ALL"
+        local args <const> = dlg.data
+        local saveJson <const> = args.saveJson --[[@as boolean]]
+        local includeMaps <const> = args.includeMaps --[[@as boolean]]
+        local allTarget <const> = args.target == "ALL"
         dlg:modify { id = "includeLocked", visible = saveJson
             and includeMaps and allTarget }
         dlg:modify { id = "includeHidden", visible = saveJson
@@ -150,8 +158,8 @@ dlg:check {
     selected = defaults.toPow2,
     visible = true,
     onclick = function()
-        local args = dlg.data
-        local state = args.toPow2 --[[@as boolean]]
+        local args <const> = dlg.data
+        local state <const> = args.toPow2 --[[@as boolean]]
         dlg:modify { id = "potUniform", visible = state }
     end
 }
@@ -181,10 +189,10 @@ dlg:check {
     text = "&JSON",
     selected = defaults.saveJson,
     onclick = function()
-        local args = dlg.data
-        local saveJson = args.saveJson --[[@as boolean]]
-        local includeMaps = args.includeMaps --[[@as boolean]]
-        local allTarget = args.target == "ALL"
+        local args <const> = dlg.data
+        local saveJson <const> = args.saveJson --[[@as boolean]]
+        local includeMaps <const> = args.includeMaps --[[@as boolean]]
+        local allTarget <const> = args.target == "ALL"
         dlg:modify { id = "includeMaps", visible = saveJson }
         dlg:modify { id = "boundsFormat", visible = saveJson }
         dlg:modify { id = "userDataWarning", visible = saveJson }
@@ -202,9 +210,9 @@ dlg:check {
     selected = defaults.includeMaps,
     visible = defaults.saveJson,
     onclick = function()
-        local args = dlg.data
-        local enabled = args.includeMaps --[[@as boolean]]
-        local allTarget = args.target == "ALL"
+        local args <const> = dlg.data
+        local enabled <const> = args.includeMaps --[[@as boolean]]
+        local allTarget <const> = args.target == "ALL"
         dlg:modify { id = "includeLocked", visible = enabled
             and allTarget }
         dlg:modify { id = "includeHidden", visible = enabled
@@ -255,8 +263,8 @@ dlg:button {
     id = "confirm",
     text = "&OK",
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -266,32 +274,32 @@ dlg:button {
         end
 
         -- Unpack arguments.
-        local args = dlg.data
+        local args <const> = dlg.data
         local filename = args.filename --[[@as string]]
-        local target = args.target
+        local target <const> = args.target
             or defaults.target --[[@as string]]
-        local margin = args.border
+        local margin <const> = args.border
             or defaults.border --[[@as integer]]
-        local padding = args.padding
+        local padding <const> = args.padding
             or defaults.padding --[[@as integer]]
-        local scale = args.scale
+        local scale <const> = args.scale
             or defaults.scale --[[@as integer]]
-        local usePixelAspect = args.usePixelAspect --[[@as boolean]]
-        local usePow2 = args.toPow2 --[[@as boolean]]
-        local potUniform = args.potUniform --[[@as boolean]]
-        local saveJson = args.saveJson --[[@as boolean]]
-        local includeMaps = args.includeMaps --[[@as boolean]]
-        local includeLocked = args.includeLocked --[[@as boolean]]
-        local includeHidden = args.includeHidden --[[@as boolean]]
-        local boundsFormat = args.boundsFormat
+        local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
+        local usePow2 <const> = args.toPow2 --[[@as boolean]]
+        local potUniform <const> = args.potUniform --[[@as boolean]]
+        local saveJson <const> = args.saveJson --[[@as boolean]]
+        local includeMaps <const> = args.includeMaps --[[@as boolean]]
+        local includeLocked <const> = args.includeLocked --[[@as boolean]]
+        local includeHidden <const> = args.includeHidden --[[@as boolean]]
+        local boundsFormat <const> = args.boundsFormat
             or defaults.boundsFormat --[[@as string]]
 
         -- Unpack sprite spec.
-        local spriteSpec = activeSprite.spec
-        local spriteColorMode = spriteSpec.colorMode
-        local spriteColorSpace = spriteSpec.colorSpace
-        local spriteAlphaIndex = spriteSpec.transparentColor
-        local spritePalettes = activeSprite.palettes
+        local spriteSpec <const> = activeSprite.spec
+        local spriteColorMode <const> = spriteSpec.colorMode
+        local spriteColorSpace <const> = spriteSpec.colorSpace
+        local spriteAlphaIndex <const> = spriteSpec.transparentColor
+        local spritePalettes <const> = activeSprite.palettes
 
         -- Validate file name.
         local fileExt = app.fs.fileExtension(filename)
@@ -311,7 +319,7 @@ dlg:button {
         -- color mode and Aseprite doesn't handle this
         -- limitation gracefully.
         if spriteColorMode == ColorMode.INDEXED then
-            local lcFileExt = string.lower(fileExt)
+            local lcFileExt <const> = string.lower(fileExt)
             if lcFileExt == "webp"
                 or lcFileExt == "jpg"
                 or lcFileExt == "jpeg" then
@@ -351,28 +359,29 @@ dlg:button {
         fileTitle = Utilities.validateFilename(fileTitle)
 
         filePath = filePath .. pathSep
-        local filePrefix = filePath .. fileTitle
+        local filePrefix <const> = filePath .. fileTitle
 
         -- Process scale.
         local wScale = scale
         local hScale = scale
         if usePixelAspect then
-            local pxRatio = activeSprite.pixelRatio
-            local pxw = math.max(1, math.abs(pxRatio.width))
-            local pxh = math.max(1, math.abs(pxRatio.height))
+            local pxRatio <const> = activeSprite.pixelRatio
+            local pxw <const> = math.max(1, math.abs(pxRatio.width))
+            local pxh <const> = math.max(1, math.abs(pxRatio.height))
             wScale = wScale * pxw
             hScale = hScale * pxh
         end
-        local useResize = wScale ~= 1 or hScale ~= 1
-        local margin2 = margin + margin
-        local nonUniformDim = not potUniform
+        local useResize <const> = wScale ~= 1 or hScale ~= 1
+        local margin2 <const> = margin + margin
+        local nonUniformDim <const> = not potUniform
 
-        local sheetPalette = AseUtilities.getPalette(
+        local sheetPalette <const> = AseUtilities.getPalette(
             app.activeFrame, spritePalettes)
 
+        ---@type Tileset[]
         local tileSets = {}
         if target == "ACTIVE" then
-            local activeLayer = site.layer
+            local activeLayer <const> = site.layer
             if not activeLayer then
                 app.alert {
                     title = "Error",
@@ -381,7 +390,7 @@ dlg:button {
                 return
             end
 
-            local isTilemap = activeLayer.isTilemap
+            local isTilemap <const> = activeLayer.isTilemap
             if not isTilemap then
                 app.alert {
                     title = "Error",
@@ -398,27 +407,28 @@ dlg:button {
         end
 
         -- Cache methods used in loops.
-        local resize = AseUtilities.resizeImageNearest
-        local nextPow2 = Utilities.nextPowerOf2
-        local ceil = math.ceil
-        local max = math.max
-        local sqrt = math.sqrt
-        local strfmt = string.format
-        local verifName = Utilities.validateFilename
+        local resize <const> = AseUtilities.resizeImageNearest
+        local nextPow2 <const> = Utilities.nextPowerOf2
+        local ceil <const> = math.ceil
+        local max <const> = math.max
+        local sqrt <const> = math.sqrt
+        local strfmt <const> = string.format
+        local verifName <const> = Utilities.validateFilename
 
         -- For JSON export.
-        local sheetPackets = {}
-        local lenTileSets = #tileSets
+        ---@type table[]
+        local sheetPackets <const> = {}
+        local lenTileSets <const> = #tileSets
         local i = 0
         while i < lenTileSets do
             i = i + 1
-            local tileSet = tileSets[i]
-            local tileSetName = tileSet.name
+            local tileSet <const> = tileSets[i]
+            local tileSetName <const> = tileSet.name
 
-            local tileGrid = tileSet.grid
-            local tileDim = tileGrid.tileSize
-            local wTileSrc = tileDim.width
-            local hTileSrc = tileDim.height
+            local tileGrid <const> = tileSet.grid
+            local tileDim <const> = tileGrid.tileSize
+            local wTileSrc <const> = tileDim.width
+            local hTileSrc <const> = tileDim.height
 
             local tsNameVerif = tileSetName
             if tsNameVerif and #tsNameVerif > 1 then
@@ -427,12 +437,12 @@ dlg:button {
                 tsNameVerif = strfmt("%03d", i - 1)
             end
 
-            local wTileTrg = wTileSrc * wScale
-            local hTileTrg = hTileSrc * hScale
+            local wTileTrg <const> = wTileSrc * wScale
+            local hTileTrg <const> = hTileSrc * hScale
 
             -- Same procedure as saving batched sheets in
             -- framesExport.
-            local lenTileSet = #tileSet
+            local lenTileSet <const> = #tileSet
             local columns = max(1, ceil(sqrt(lenTileSet)))
             local rows = max(1, ceil(lenTileSet / columns))
             local wSheet = margin2 + wTileTrg * columns
@@ -460,40 +470,41 @@ dlg:button {
             end
 
             -- Create composite image.
-            local sheetSpec = ImageSpec {
+            local sheetSpec <const> = ImageSpec {
                 width = wSheet,
                 height = hSheet,
                 colorMode = spriteColorMode,
                 transparentColor = spriteAlphaIndex
             }
             sheetSpec.colorSpace = spriteColorSpace
-            local sheetImage = Image(sheetSpec)
+            local sheetImage <const> = Image(sheetSpec)
 
             -- For JSON export.
-            local sectionPackets = {}
+            ---@type table[]
+            local sectionPackets <const> = {}
 
             -- The first tile in a tile set is empty.
             -- Include this empty tile, and all others, to
             -- maintain indexing with tile maps.
             local k = 0
             while k < lenTileSet do
-                local row = k // columns
-                local column = k % columns
-                local tile = tileSet:tile(k)
+                local row <const> = k // columns
+                local column <const> = k % columns
+                local tile <const> = tileSet:tile(k)
 
                 -- Is the index different from j
                 -- because of the tile set base index?
-                local tileImage = tile.image --[[@as Image]]
+                local tileImage <const> = tile.image --[[@as Image]]
                 local tileScaled = tileImage
                 if useResize then
                     tileScaled = resize(tileImage,
                         wTileTrg, hTileTrg)
                 end
 
-                local xOff = margin + column * padding
-                local yOff = margin + row * padding
-                local xTrg = xOff + column * wTileTrg
-                local yTrg = yOff + row * hTileTrg
+                local xOff <const> = margin + column * padding
+                local yOff <const> = margin + row * padding
+                local xTrg <const> = xOff + column * wTileTrg
+                local yTrg <const> = yOff + row * hTileTrg
                 sheetImage:drawImage(tileScaled, Point(xTrg, yTrg))
 
                 k = k + 1
@@ -509,10 +520,10 @@ dlg:button {
                 }
             end
 
-            local fileNameShort = strfmt(
+            local fileNameShort <const> = strfmt(
                 "%s_%s",
                 fileTitle, tsNameVerif)
-            local fileNameLong = strfmt(
+            local fileNameLong <const> = strfmt(
                 "%s%s.%s",
                 filePath, fileNameShort, fileExt)
 
@@ -521,7 +532,7 @@ dlg:button {
                 palette = sheetPalette
             }
 
-            local sheetPacket = {
+            local sheetPacket <const> = {
                 fileName = fileNameShort,
                 width = wSheet,
                 height = hSheet,
@@ -534,22 +545,22 @@ dlg:button {
 
         if saveJson then
             ---@type table[]
-            local celPackets = {}
+            local celPackets <const> = {}
             -- Because frames is an inner array, use a dictionary
             -- to track unique frames that contain tile map cels.
             ---@type table<integer,table>
-            local framePackets = {}
+            local framePackets <const> = {}
             ---@type table[]
-            local layerPackets = {}
+            local layerPackets <const> = {}
             ---@type table[]
-            local mapPackets = {}
+            local mapPackets <const> = {}
 
             if includeMaps then
-                local pxTilei = app.pixelColor.tileI
-                local useZIndex = app.apiVersion >= 23
+                local pxTilei <const> = app.pixelColor.tileI
+                local useZIndex <const> = app.apiVersion >= 23
 
-                local frObjs = activeSprite.frames
-                local tmFrames = Utilities.flatArr2(
+                local frObjs <const> = activeSprite.frames
+                local tmFrames <const> = Utilities.flatArr2(
                     AseUtilities.getFrames(activeSprite, target))
 
                 ---@type Layer[]
@@ -566,29 +577,29 @@ dlg:button {
                         true, false)
                 end
 
-                local lenTmFrames = #tmFrames
-                local lenTmLayers = #tmLayers
+                local lenTmFrames <const> = #tmFrames
+                local lenTmLayers <const> = #tmLayers
                 local j = 0
                 while j < lenTmLayers do
                     j = j + 1
-                    local tmLayer = tmLayers[j]
+                    local tmLayer <const> = tmLayers[j]
                     if tmLayer.isTilemap then
-                        local tileSet = tmLayer.tileset --[[@as Tileset]]
-                        local tileGrid = tileSet.grid
-                        local tileDim = tileGrid.tileSize
-                        local wTile = tileDim.width
-                        local hTile = tileDim.height
-                        local lenTileSet = #tileSet
+                        local tileSet <const> = tmLayer.tileset --[[@as Tileset]]
+                        local tileGrid <const> = tileSet.grid
+                        local tileDim <const> = tileGrid.tileSize
+                        local wTile <const> = tileDim.width
+                        local hTile <const> = tileDim.height
+                        local lenTileSet <const> = #tileSet
 
-                        local layerId = tmLayer.id
+                        local layerId <const> = tmLayer.id
                         ---@type userdata|Sprite|Layer
-                        local parent = tmLayer.parent
+                        local parent <const> = tmLayer.parent
                         local parentId = -1
                         if parent.__name ~= "doc::Sprite" then
                             parentId = parent.id
                         end
 
-                        local layerPacket = {
+                        local layerPacket <const> = {
                             blendMode = tmLayer.blendMode,
                             data = tmLayer.data,
                             id = layerId,
@@ -602,10 +613,10 @@ dlg:button {
                         local k = 0
                         while k < lenTmFrames do
                             k = k + 1
-                            local tmFrame = tmFrames[k]
+                            local tmFrame <const> = tmFrames[k]
                             local framePacket = framePackets[tmFrame]
                             if not framePacket then
-                                local frObj = frObjs[tmFrame]
+                                local frObj <const> = frObjs[tmFrame]
                                 framePacket = {
                                     frameNumber = tmFrame,
                                     duration = frObj.duration
@@ -613,17 +624,17 @@ dlg:button {
                                 framePackets[tmFrame] = framePacket
                             end
 
-                            local tmCel = tmLayer:cel(tmFrame)
+                            local tmCel <const> = tmLayer:cel(tmFrame)
                             if tmCel then
-                                local tmImage = tmCel.image
-                                local tmPxItr = tmImage:pixels()
+                                local tmImage <const> = tmCel.image
+                                local tmPxItr <const> = tmImage:pixels()
 
                                 -- In the future, this would also need
                                 -- a separate array of rotation flags.
                                 ---@type integer[]
-                                local tmIndicesArr = {}
+                                local tmIndicesArr <const> = {}
                                 for pixel in tmPxItr do
-                                    local tlData = pixel()
+                                    local tlData <const> = pixel()
                                     local tlIndex = pxTilei(tlData)
                                     if tlIndex >= lenTileSet then
                                         tlIndex = 0
@@ -631,9 +642,9 @@ dlg:button {
                                     tmIndicesArr[#tmIndicesArr + 1] = tlIndex
                                 end
 
-                                local wTileMap = tmImage.width
-                                local hTileMap = tmImage.height
-                                local mapPacket = {
+                                local wTileMap <const> = tmImage.width
+                                local hTileMap <const> = tmImage.height
+                                local mapPacket <const> = {
                                     width = wTileMap,
                                     height = hTileMap,
                                     indices = tmIndicesArr,
@@ -642,8 +653,8 @@ dlg:button {
                                 }
                                 mapPackets[#mapPackets + 1] = mapPacket
 
-                                local tmCelPos = tmCel.position
-                                local tmBounds = {
+                                local tmCelPos <const> = tmCel.position
+                                local tmBounds <const> = {
                                     x = tmCelPos.x,
                                     y = tmCelPos.y,
                                     width = wTileMap * wTile,
@@ -653,7 +664,7 @@ dlg:button {
                                 local zIndex = 0
                                 if useZIndex then zIndex = tmCel.zIndex end
 
-                                local celPacket = {
+                                local celPacket <const> = {
                                     fileName = "",
                                     bounds = tmBounds,
                                     data = tmCel.data,
@@ -670,58 +681,58 @@ dlg:button {
             end                 -- End include maps check.
 
             -- Cache Json methods.
-            local celToJson = JsonUtilities.celToJson
-            local frameToJson = JsonUtilities.frameToJson
-            local layerToJson = JsonUtilities.layerToJson
+            local celToJson <const> = JsonUtilities.celToJson
+            local frameToJson <const> = JsonUtilities.frameToJson
+            local layerToJson <const> = JsonUtilities.layerToJson
 
             local h = 0
             ---@type string[]
-            local tsStrs = {}
-            local lenSheetPackets = #sheetPackets
+            local tsStrs <const> = {}
+            local lenSheetPackets <const> = #sheetPackets
             while h < lenSheetPackets do
                 h = h + 1
-                local sheet = sheetPackets[h]
+                local sheet <const> = sheetPackets[h]
                 tsStrs[h] = sheetToJson(sheet, boundsFormat)
             end
 
             ---@type string[]
-            local tmStrs = {}
-            local lenMapPackets = #mapPackets
+            local tmStrs <const> = {}
+            local lenMapPackets <const> = #mapPackets
             local j = 0
             while j < lenMapPackets do
                 j = j + 1
-                local map = mapPackets[j]
+                local map <const> = mapPackets[j]
                 tmStrs[j] = mapToJson(map)
             end
 
             local k = 0
             ---@type string[]
-            local celStrs = {}
-            local lenCelPackets = #celPackets
+            local celStrs <const> = {}
+            local lenCelPackets <const> = #celPackets
             while k < lenCelPackets do
                 k = k + 1
-                local cel = celPackets[k]
+                local cel <const> = celPackets[k]
                 celStrs[k] = celToJson(
                     cel, cel.fileName, boundsFormat)
             end
 
             ---@type string[]
-            local frameStrs = {}
+            local frameStrs <const> = {}
             for _, frame in pairs(framePackets) do
                 frameStrs[#frameStrs + 1] = frameToJson(frame)
             end
 
             local m = 0
             ---@type string[]
-            local layerStrs = {}
-            local lenLayerPackets = #layerPackets
+            local layerStrs <const> = {}
+            local lenLayerPackets <const> = #layerPackets
             while m < lenLayerPackets do
                 m = m + 1
-                local layer = layerPackets[m]
+                local layer <const> = layerPackets[m]
                 layerStrs[m] = layerToJson(layer)
             end
 
-            local jsonFormat = table.concat({
+            local jsonFormat <const> = table.concat({
                 "{\"fileDir\":\"%s\"",
                 "\"fileExt\":\"%s\"",
                 "\"border\":%d",
@@ -735,7 +746,7 @@ dlg:button {
                 "\"sprite\":%s",
                 "\"version\":%s}"
             }, ",")
-            local jsonString = string.format(
+            local jsonString <const> = string.format(
                 jsonFormat,
                 filePath, fileExt,
                 margin, padding, scale,
@@ -753,7 +764,7 @@ dlg:button {
             end
             jsonFilepath = jsonFilepath .. ".json"
 
-            local file, err = io.open(jsonFilepath, "w")
+            local file <const>, err <const> = io.open(jsonFilepath, "w")
             if file then
                 file:write(jsonString)
                 file:close()

@@ -1,17 +1,17 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
-local screenScale = app.preferences.general.screen_scale
+local screenScale <const> = app.preferences.general.screen_scale
 
 -- New Sprite Plus doesn't support Color Space conversion
 -- because setting color space via script interferes with
 -- Aseprite's routine to ask the user what to do when
 -- opening a sprite with a profile.
-local colorModes = { "RGB", "INDEXED", "GRAY" }
-local palTypes = { "ACTIVE", "DEFAULT", "FILE" }
-local sizeModes = { "ASPECT", "CUSTOM" }
+local colorModes <const> = { "RGB", "INDEXED", "GRAY" }
+local palTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
+local sizeModes <const> = { "ASPECT", "CUSTOM" }
 
-local defaults = {
+local defaults <const> = {
     filename = "Sprite",
     sizeMode = "CUSTOM",
     width = 320,
@@ -34,33 +34,33 @@ local defaults = {
 }
 
 local function updateRatio(dialog)
-    local args = dialog.data
-    local aRatio = args.aRatio
-    local bRatio = args.bRatio
+    local args <const> = dialog.data
+    local aRatio = args.aRatio --[[@as integer]]
+    local bRatio = args.bRatio --[[@as integer]]
     aRatio, bRatio = Utilities.reduceRatio(aRatio, bRatio)
     dialog:modify { id = "aRatio", value = aRatio }
     dialog:modify { id = "bRatio", value = bRatio }
 end
 
 local function updateSizeFromAspect(dialog)
-    local args = dialog.data
-    local aRatio = args.aRatio
-    local bRatio = args.bRatio
-    local scale = args.aspectScale
+    local args <const> = dialog.data
+    local aRatio = args.aRatio --[[@as integer]]
+    local bRatio = args.bRatio --[[@as integer]]
+    local scale = args.aspectScale --[[@as number]]
 
     scale = math.abs(scale)
     scale = math.floor(0.5 + scale)
     if scale < 1 then scale = 1 end
 
     aRatio, bRatio = Utilities.reduceRatio(aRatio, bRatio)
-    local w = aRatio * scale
-    local h = bRatio * scale
+    local w <const> = aRatio * scale
+    local h <const> = bRatio * scale
 
     dialog:modify { id = "width", text = string.format("%d", w) }
     dialog:modify { id = "height", text = string.format("%d", h) }
 end
 
-local dlg = Dialog { title = "New Sprite +" }
+local dlg <const> = Dialog { title = "New Sprite +" }
 
 dlg:entry {
     id = "filename",
@@ -77,14 +77,14 @@ dlg:combobox {
     option = defaults.sizeMode,
     options = sizeModes,
     onchange = function()
-        local args = dlg.data
-        local sizeMode = args.sizeMode
+        local args <const> = dlg.data --[[@as integer]]
+        local sizeMode <const> = args.sizeMode --[[@as string]]
 
-        local isCst = sizeMode == "CUSTOM"
+        local isCst <const> = sizeMode == "CUSTOM"
         dlg:modify { id = "width", visible = isCst }
         dlg:modify { id = "height", visible = isCst }
 
-        local isAsp = sizeMode == "ASPECT"
+        local isAsp <const> = sizeMode == "ASPECT"
         dlg:modify { id = "aRatio", visible = isAsp }
         dlg:modify { id = "bRatio", visible = isAsp }
         dlg:modify { id = "aspectScale", visible = isAsp }
@@ -160,16 +160,17 @@ dlg:combobox {
     option = defaults.colorMode,
     options = colorModes,
     onchange = function()
-        local args = dlg.data
-        local state = args.colorMode
-        local isIndexed = state == "INDEXED"
-        local isGray = state == "GRAY"
-        local isRgb = state == "RGB"
+        local args <const> = dlg.data
+        local state <const> = args.colorMode --[[@as string]]
+        local palType <const> = args.palType --[[@as string]]
+
+        local isIndexed <const> = state == "INDEXED"
+        local isGray <const> = state == "GRAY"
+        local isRgb <const> = state == "RGB"
 
         dlg:modify { id = "bkgSpectrum", visible = isGray or isRgb }
         dlg:modify { id = "bkgIdx", visible = isIndexed }
 
-        local palType = args.palType
         dlg:modify { id = "palType", visible = not isGray }
         dlg:modify {
             id = "palFile",
@@ -267,42 +268,42 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local args = dlg.data
+        local args <const> = dlg.data
         local scale = args.aspectScale
             or defaults.aspectScale --[[@as number]]
-        local palType = args.palType
+        local palType <const> = args.palType
             or defaults.palType --[[@as string]]
-        local prependMask = args.prependMask --[[@as boolean]]
-        local sizeMode = args.sizeMode
+        local prependMask <const> = args.prependMask --[[@as boolean]]
+        local sizeMode <const> = args.sizeMode
             or defaults.sizeMode --[[@as string]]
-        local colorModeStr = args.colorMode
+        local colorModeStr <const> = args.colorMode
             or defaults.colorMode --[[@as string]]
 
-        local useGray = colorModeStr == "GRAY"
-        local useIndexed = colorModeStr == "INDEXED"
-        local useAspect = sizeMode == "ASPECT"
+        local useGray <const> = colorModeStr == "GRAY"
+        local useIndexed <const> = colorModeStr == "INDEXED"
+        local useAspect <const> = sizeMode == "ASPECT"
 
         -- Create palette.
         local hexesSrgb = {}
         local hexesProfile = {}
         if useGray then
-            local grayCount = args.grayCount
+            local grayCount <const> = args.grayCount
                 or AseUtilities.GRAY_COUNT --[[@as integer]]
             hexesProfile = AseUtilities.grayHexes(grayCount)
             hexesSrgb = hexesProfile
         elseif palType ~= "DEFAULT" then
-            local palFile = args.palFile --[[@as string]]
+            local palFile <const> = args.palFile --[[@as string]]
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 palType, palFile, 0, 256, true)
         else
             -- As of circa apiVersion 24, version v1.3-rc4.
-            local defaultPalette = app.defaultPalette
+            local defaultPalette <const> = app.defaultPalette
             if defaultPalette then
                 hexesProfile = AseUtilities.asePaletteToHexArr(
                     defaultPalette, 0, #defaultPalette)
             else
-                local hexesDefault = AseUtilities.DEFAULT_PAL_ARR
-                local lenHexesDef = #hexesDefault
+                local hexesDefault <const> = AseUtilities.DEFAULT_PAL_ARR
+                local lenHexesDef <const> = #hexesDefault
                 local i = 0
                 while i < lenHexesDef do
                     i = i + 1
@@ -323,13 +324,13 @@ dlg:button {
         local hexBkg = 0x0
         if useIndexed then
             colorModeInt = ColorMode.INDEXED
-            local bkgIdx = args.bkgIdx or defaults.bkgIdx --[[@as integer]]
+            local bkgIdx <const> = args.bkgIdx or defaults.bkgIdx --[[@as integer]]
             if bkgIdx < #hexesProfile then
                 -- Problem with offset caused by prepending an alpha
                 -- mask to start of palette. At the least, make the
                 -- check widget visible.
                 hexBkg = hexesProfile[1 + bkgIdx]
-                local aChannel = (hexBkg >> 0x18) & 0xff
+                local aChannel <const> = (hexBkg >> 0x18) & 0xff
                 createBackground = aChannel > 0
             else
                 app.alert {
@@ -344,12 +345,12 @@ dlg:button {
                 colorModeInt = ColorMode.RGB
             end
 
-            local specAlpha = args.spectrumAlpha --[[@as number]]
+            local specAlpha <const> = args.spectrumAlpha --[[@as number]]
             createBackground = specAlpha > 0.0
             if createBackground then
-                local specLight = args.spectrumLight --[[@as number]]
-                local specChroma = args.spectrumChroma --[[@as number]]
-                local specHue = args.spectrumHue --[[@as number]]
+                local specLight <const> = args.spectrumLight --[[@as number]]
+                local specChroma <const> = args.spectrumChroma --[[@as number]]
+                local specHue <const> = args.spectrumHue --[[@as number]]
 
                 hexBkg = Clr.toHex(
                     Clr.srLchTosRgb(
@@ -381,28 +382,28 @@ dlg:button {
 
         -- The maximum size defined in source code is 65535,
         -- but the canvas size command allows for more.
-        local dfms = defaults.maxSize
+        local dfms <const> = defaults.maxSize
         if width < 1 then width = 1 end
         if width > dfms then width = dfms end
         if height < 1 then height = 1 end
         if height > dfms then height = dfms end
 
         -- Store new dimensions in preferences.
-        local filePrefs = app.preferences.new_file
+        local filePrefs <const> = app.preferences.new_file
         filePrefs.width = width
         filePrefs.height = height
         filePrefs.color_mode = colorModeInt
 
         -- Create sprite, set file name, set to active.
         AseUtilities.preserveForeBack()
-        local spec = ImageSpec {
+        local spec <const> = ImageSpec {
             width = width,
             height = height,
             colorMode = ColorMode.RGB,
             transparentColor = 0
         }
         spec.colorSpace = ColorSpace { sRGB = true }
-        local newSprite = Sprite(spec)
+        local newSprite <const> = Sprite(spec)
 
         -- File name needs extra validation to remove characters
         -- that could compromise saving a sprite.
@@ -420,12 +421,12 @@ dlg:button {
         end
 
         -- Create frames.
-        local frameReqs = args.frames
+        local frameReqs <const> = args.frames
             or defaults.frames --[[@as integer]]
-        local fps = args.fps
+        local fps <const> = args.fps
             or defaults.fps --[[@as integer]]
-        local duration = 1.0 / math.max(1, fps)
-        local firstFrame = newSprite.frames[1]
+        local duration <const> = 1.0 / math.max(1, fps)
+        local firstFrame <const> = newSprite.frames[1]
 
         app.transaction("New Frames", function()
             firstFrame.duration = duration
@@ -446,10 +447,10 @@ dlg:button {
                 -- a separate transaction.
 
                 -- Assign a name to layer, avoid "Background".
-                local layer = newSprite.layers[1]
+                local layer <const> = newSprite.layers[1]
                 layer.name = "Bkg"
 
-                local bkgImg = Image(spec)
+                local bkgImg <const> = Image(spec)
                 bkgImg:clear(hexBkg)
                 layer.cels[1].image = bkgImg
 

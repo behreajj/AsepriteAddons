@@ -1,11 +1,11 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/jsonutilities.lua")
 
-local frameTargetOptions = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
-local layerTargetOptions = { "ACTIVE", "ALL", "RANGE" }
-local cropTypes = { "CROPPED", "SPRITE" }
+local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
+local layerTargetOptions <const> = { "ACTIVE", "ALL", "RANGE" }
+local cropTypes <const> = { "CROPPED", "SPRITE" }
 
-local defaults = {
+local defaults <const> = {
     layerTarget = "ALL",
     includeLocked = true,
     includeHidden = false,
@@ -26,7 +26,7 @@ local defaults = {
     boundsFormat = "TOP_LEFT"
 }
 
-local dlg = Dialog { title = "Export Layers" }
+local dlg <const> = Dialog { title = "Export Layers" }
 
 dlg:combobox {
     id = "layerTarget",
@@ -34,9 +34,9 @@ dlg:combobox {
     option = defaults.layerTarget,
     options = layerTargetOptions,
     onchange = function()
-        local args = dlg.data
-        local state = args.layerTarget --[[@as string]]
-        local isNotRange = state ~= "RANGE"
+        local args <const> = dlg.data
+        local state <const> = args.layerTarget --[[@as string]]
+        local isNotRange <const> = state ~= "RANGE"
         dlg:modify { id = "flatGroups", visible = isNotRange }
     end
 }
@@ -78,9 +78,9 @@ dlg:combobox {
     option = defaults.frameTarget,
     options = frameTargetOptions,
     onchange = function()
-        local args = dlg.data
-        local state = args.frameTarget --[[@as string]]
-        local isManual = state == "MANUAL"
+        local args <const> = dlg.data
+        local state <const> = args.frameTarget --[[@as string]]
+        local isManual <const> = state == "MANUAL"
         dlg:modify { id = "rangeStr", visible = isManual }
         dlg:modify { id = "strExample", visible = false }
     end
@@ -174,8 +174,8 @@ dlg:check {
     selected = defaults.toPow2,
     visible = true,
     onclick = function()
-        local args = dlg.data
-        local state = args.toPow2 --[[@as boolean]]
+        local args <const> = dlg.data
+        local state <const> = args.toPow2 --[[@as boolean]]
         dlg:modify { id = "potUniform", visible = state }
     end
 }
@@ -205,8 +205,8 @@ dlg:check {
     text = "&JSON",
     selected = defaults.saveJson,
     onclick = function()
-        local args = dlg.data
-        local enabled = args.saveJson --[[@as boolean]]
+        local args <const> = dlg.data
+        local enabled <const> = args.saveJson --[[@as boolean]]
         dlg:modify { id = "boundsFormat", visible = enabled }
         dlg:modify { id = "userDataWarning", visible = enabled }
     end
@@ -237,8 +237,8 @@ dlg:button {
     id = "confirm",
     text = "&OK",
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -248,39 +248,40 @@ dlg:button {
         end
 
         -- Unpack sprite spec.
-        local spriteSpec = activeSprite.spec
-        local spriteColorMode = spriteSpec.colorMode
-        local spriteColorSpace = spriteSpec.colorSpace
-        local spriteAlphaIndex = spriteSpec.transparentColor
-        local spritePalettes = activeSprite.palettes
-        local spriteWidth = spriteSpec.width
-        local spriteHeight = spriteSpec.height
+        local spriteSpec <const> = activeSprite.spec
+        local spriteColorMode <const> = spriteSpec.colorMode
+        local spriteColorSpace <const> = spriteSpec.colorSpace
+        local spriteAlphaIndex <const> = spriteSpec.transparentColor
+        local spritePalettes <const> = activeSprite.palettes
+        local spriteWidth <const> = spriteSpec.width
+        local spriteHeight <const> = spriteSpec.height
 
         -- Unpack arguments.
-        local args = dlg.data
+        local args <const> = dlg.data
         local filename = args.filename --[[@as string]]
         local layerTarget = args.layerTarget
             or defaults.layerTarget --[[@as string]]
-        local includeLocked = args.includeLocked --[[@as boolean]]
-        local includeHidden = args.includeHidden --[[@as boolean]]
-        local includeTiles = args.includeTiles --[[@as boolean]]
-        local includeBkg = args.includeBkg --[[@as boolean]]
-        local bakeOpacity = args.bakeOpacity --[[@as boolean]]
-        local flatGroups = args.flatGroups --[[@as boolean]]
-        local frameTarget = args.frameTarget
+        local includeLocked <const> = args.includeLocked --[[@as boolean]]
+        local includeHidden <const> = args.includeHidden --[[@as boolean]]
+        local includeTiles <const> = args.includeTiles --[[@as boolean]]
+        local includeBkg <const> = args.includeBkg --[[@as boolean]]
+        local bakeOpacity <const> = args.bakeOpacity --[[@as boolean]]
+        local flatGroups <const> = args.flatGroups --[[@as boolean]]
+        local frameTarget <const> = args.frameTarget
             or defaults.frameTarget --[[@as string]]
-        local rangeStr = args.rangeStr
+        local rangeStr <const> = args.rangeStr
             or defaults.rangeStr --[[@as string]]
-        local cropType = args.cropType
+        local cropType <const> = args.cropType
             or defaults.cropType --[[@as string]]
-        local scale = args.scale or defaults.scale --[[@as integer]]
-        local padding = args.padding
+        local scale <const> = args.scale
+            or defaults.scale --[[@as integer]]
+        local padding <const> = args.padding
             or defaults.padding --[[@as integer]]
-        local usePixelAspect = args.usePixelAspect --[[@as boolean]]
-        local toPow2 = args.toPow2 --[[@as boolean]]
-        local potUniform = args.potUniform --[[@as boolean]]
-        local saveJson = args.saveJson --[[@as boolean]]
-        local boundsFormat = args.boundsFormat
+        local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
+        local toPow2 <const> = args.toPow2 --[[@as boolean]]
+        local potUniform <const> = args.potUniform --[[@as boolean]]
+        local saveJson <const> = args.saveJson --[[@as boolean]]
+        local boundsFormat <const> = args.boundsFormat
             or defaults.boundsFormat --[[@as string]]
 
         -- Validate file name.
@@ -301,7 +302,7 @@ dlg:button {
         -- color mode and Aseprite doesn't handle this
         -- limitation gracefully.
         if spriteColorMode == ColorMode.INDEXED then
-            local lcFileExt = string.lower(fileExt)
+            local lcFileExt <const> = string.lower(fileExt)
             if lcFileExt == "webp"
                 or lcFileExt == "jpg"
                 or lcFileExt == "jpeg" then
@@ -331,45 +332,45 @@ dlg:button {
         fileTitle = Utilities.validateFilename(fileTitle)
 
         filePath = filePath .. pathSep
-        local filePrefix = filePath .. fileTitle
+        local filePrefix <const> = filePath .. fileTitle
 
         -- Process scale
         local wScale = scale
         local hScale = scale
         if usePixelAspect then
-            local pxRatio = activeSprite.pixelRatio
-            local pxw = math.max(1, math.abs(pxRatio.width))
-            local pxh = math.max(1, math.abs(pxRatio.height))
+            local pxRatio <const> = activeSprite.pixelRatio
+            local pxw <const> = math.max(1, math.abs(pxRatio.width))
+            local pxh <const> = math.max(1, math.abs(pxRatio.height))
             wScale = wScale * pxw
             hScale = hScale * pxh
         end
-        local useResize = wScale ~= 1 or hScale ~= 1
+        local useResize <const> = wScale ~= 1 or hScale ~= 1
 
         -- Process commonly used equivalences.
-        local cropToSprite = cropType == "SPRITE"
-        local normalBlendMode = BlendMode.NORMAL
-        local zeroPoint = Point(0, 0)
-        local nonUniformDim = not potUniform
-        local usePadding = padding > 0
-        local useZIndex = app.apiVersion >= 23
+        local cropToSprite <const> = cropType == "SPRITE"
+        local normalBlendMode <const> = BlendMode.NORMAL
+        local zeroPoint <const> = Point(0, 0)
+        local nonUniformDim <const> = not potUniform
+        local usePadding <const> = padding > 0
+        local useZIndex <const> = app.apiVersion >= 23
 
         -- Cache methods used in loops.
-        local floor = math.floor
-        local strfmt = string.format
-        local appendLeaves = AseUtilities.appendLeaves
-        local getPalette = AseUtilities.getPalette
-        local expandPow2 = AseUtilities.expandImageToPow2
-        local nameVerify = Utilities.validateFilename
-        local padImage = AseUtilities.padImage
-        local resize = AseUtilities.resizeImageNearest
-        local trimAlpha = AseUtilities.trimImageAlpha
+        local floor <const> = math.floor
+        local strfmt <const> = string.format
+        local appendLeaves <const> = AseUtilities.appendLeaves
+        local getPalette <const> = AseUtilities.getPalette
+        local expandPow2 <const> = AseUtilities.expandImageToPow2
+        local nameVerify <const> = Utilities.validateFilename
+        local padImage <const> = AseUtilities.padImage
+        local resize <const> = AseUtilities.resizeImageNearest
+        local trimAlpha <const> = AseUtilities.trimImageAlpha
 
-        local chosenFrames = Utilities.flatArr2(
+        local chosenFrames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(
                 activeSprite, frameTarget,
                 true, rangeStr))
-        local lenChosenFrames = #chosenFrames
-        local spriteFrameObjs = activeSprite.frames
+        local lenChosenFrames <const> = #chosenFrames
+        local spriteFrameObjs <const> = activeSprite.frames
 
         ---@type Layer[]
         local topLayers = {}
@@ -383,14 +384,14 @@ dlg:button {
                 app.command.Timeline { open = true }
             end
 
-            local appRange = app.range
+            local appRange <const> = app.range
             if appRange.sprite == activeSprite then
-                local rangeLayers = appRange.layers
-                local lenRangeLayers = #rangeLayers
+                local rangeLayers <const> = appRange.layers
+                local lenRangeLayers <const> = #rangeLayers
                 local i = 0
                 while i < lenRangeLayers do
                     i = i + 1
-                    local rangeLayer = rangeLayers[i]
+                    local rangeLayer <const> = rangeLayers[i]
                     if not rangeLayer.isGroup then
                         topLayers[#topLayers + 1] = rangeLayer
                     end
@@ -402,40 +403,40 @@ dlg:button {
             end
         else
             -- print("ACTIVE layers chosen")
-            local activeLayer = site.layer
+            local activeLayer <const> = site.layer
             if activeLayer then
                 topLayers = { activeLayer }
             end
         end
-        local lenTopLayers = #topLayers
+        local lenTopLayers <const> = #topLayers
 
         -- Because the layers loop is the inner loop below,
         -- avoid processing this information for each frame.
         local g = 0
         local lenChosenLayers = 0
         ---@type Layer[]
-        local chosenLayers = {}
+        local chosenLayers <const> = {}
         ---@type string[]
-        local verifLayerNames = {}
+        local verifLayerNames <const> = {}
         while g < lenTopLayers do
             g = g + 1
-            local topLayer = topLayers[g]
+            local topLayer <const> = topLayers[g]
             if topLayer.isGroup then
                 if flatGroups then
                     lenChosenLayers = lenChosenLayers + 1
                     chosenLayers[lenChosenLayers] = topLayer
                     verifLayerNames[lenChosenLayers] = nameVerify(topLayer.name)
                 else
-                    local leaves = appendLeaves(
+                    local leaves <const> = appendLeaves(
                         topLayer, {},
                         includeLocked, includeHidden,
                         includeTiles, includeBkg)
-                    local lenLeaves = #leaves
+                    local lenLeaves <const> = #leaves
 
                     local h = 0
                     while h < lenLeaves do
                         h = h + 1
-                        local leaf = leaves[h]
+                        local leaf <const> = leaves[h]
                         -- print(string.format("leaf:%s", leaf.name))
                         lenChosenLayers = lenChosenLayers + 1
                         chosenLayers[lenChosenLayers] = leaf
@@ -455,30 +456,30 @@ dlg:button {
 
         local i = 0
         ---@type table<integer, table>
-        local layerPackets = {}
+        local layerPackets <const> = {}
         ---@type table[]
-        local framePackets = {}
+        local framePackets <const> = {}
         ---@type table[]
-        local celPackets = {}
+        local celPackets <const> = {}
         while i < lenChosenFrames do
             i = i + 1
-            local frIdx = chosenFrames[i]
+            local frIdx <const> = chosenFrames[i]
 
             -- For JSON writing:
-            local frObj = spriteFrameObjs[frIdx]
-            local framePacket = {
+            local frObj <const> = spriteFrameObjs[frIdx]
+            local framePacket <const> = {
                 frameNumber = frIdx,
                 duration = frObj.duration
             }
             framePackets[i] = framePacket
 
             -- For saving the image in Indexed color mode.
-            local activePalette = getPalette(frIdx, spritePalettes)
+            local activePalette <const> = getPalette(frIdx, spritePalettes)
 
             local j = 0
             while j < lenChosenLayers do
                 j = j + 1
-                local chosenLayer = chosenLayers[j]
+                local chosenLayer <const> = chosenLayers[j]
 
                 -- Reset on inner loop to avoid repeating images.
                 local image = nil
@@ -506,7 +507,7 @@ dlg:button {
                     layerOpacity = chosenLayer.opacity
                     layerBlendMode = chosenLayer.blendMode
 
-                    local cel = chosenLayer:cel(frIdx)
+                    local cel <const> = chosenLayer:cel(frIdx)
                     if cel then
                         -- print("Cel was found.")
                         celData = cel.data
@@ -515,19 +516,19 @@ dlg:button {
 
                         image = cel.image
                         if chosenLayer.isTilemap then
-                            local tileSet = chosenLayer.tileset --[[@as Tileset]]
+                            local tileSet <const> = chosenLayer.tileset --[[@as Tileset]]
                             image = AseUtilities.tilesToImage(
                                 image, tileSet, spriteColorMode)
                         end
 
                         if bakeOpacity then
                             -- print("Baking opacity.")
-                            local celOpac01 = celOpacity * 0.003921568627451
-                            local layerOpac01 = layerOpacity * 0.003921568627451
-                            local compOpac01 = celOpac01 * layerOpac01
-                            local compOpacity = floor(compOpac01 * 255.0 + 0.5)
+                            local celOpac01 <const> = celOpacity / 255.0
+                            local layerOpac01 <const> = layerOpacity / 255.0
+                            local compOpac01 <const> = celOpac01 * layerOpac01
+                            local compOpacity <const> = floor(compOpac01 * 255.0 + 0.5)
 
-                            local bakedImage = Image(image.spec)
+                            local bakedImage <const> = Image(image.spec)
                             bakedImage:drawImage(
                                 image, zeroPoint,
                                 compOpacity, normalBlendMode)
@@ -549,7 +550,7 @@ dlg:button {
 
                 if image and bounds then
                     if cropToSprite then
-                        local imgSprite = Image(spriteSpec)
+                        local imgSprite <const> = Image(spriteSpec)
                         imgSprite:drawImage(image, Point(bounds.x, bounds.y))
 
                         image = imgSprite
@@ -558,7 +559,7 @@ dlg:button {
                         bounds.width = spriteWidth
                         bounds.height = spriteHeight
                     else
-                        local imgTrim, xTrim, yTrim = trimAlpha(
+                        local imgTrim <const>, xTrim <const>, yTrim <const> = trimAlpha(
                             image, 0, spriteAlphaIndex, 8, 8)
 
                         image = imgTrim
@@ -573,19 +574,19 @@ dlg:button {
                     if not image:isEmpty() then
                         -- print("Image is not clear")
                         if useResize then
-                            local imgResized = resize(image,
+                            local imgResized <const> = resize(image,
                                 image.width * wScale,
                                 image.height * hScale)
                             image = imgResized
                         end
 
                         if usePadding then
-                            local imgPadded = padImage(image, padding)
+                            local imgPadded <const> = padImage(image, padding)
                             image = imgPadded
                         end
 
                         if toPow2 then
-                            local imgPow2 = expandPow2(
+                            local imgPow2 <const> = expandPow2(
                                 image,
                                 spriteColorMode,
                                 spriteAlphaIndex,
@@ -597,11 +598,11 @@ dlg:button {
                             image = imgPow2
                         end
 
-                        local layerName = verifLayerNames[j]
-                        local fileNameShort = strfmt(
+                        local layerName <const> = verifLayerNames[j]
+                        local fileNameShort <const> = strfmt(
                             "%s_%s_%03d",
                             fileTitle, layerName, frIdx - 1)
-                        local fileNameLong = strfmt(
+                        local fileNameLong <const> = strfmt(
                             "%s%s.%s",
                             filePath, fileNameShort, fileExt)
 
@@ -613,16 +614,16 @@ dlg:button {
                         }
 
                         if saveJson then
-                            local layerId = chosenLayer.id
+                            local layerId <const> = chosenLayer.id
                             if not layerPackets[layerId] then
                                 ---@type userdata|Sprite|Layer
-                                local parent = chosenLayer.parent
+                                local parent <const> = chosenLayer.parent
                                 local parentId = -1
                                 if parent.__name ~= "doc::Sprite" then
                                     parentId = parent.id
                                 end
 
-                                local layerPacket = {
+                                local layerPacket <const> = {
                                     blendMode = layerBlendMode,
                                     data = chosenLayer.data,
                                     id = layerId,
@@ -634,7 +635,7 @@ dlg:button {
                                 layerPackets[layerId] = layerPacket
                             end
 
-                            local celPacket = {
+                            local celPacket <const> = {
                                 fileName = fileNameShort,
                                 bounds = bounds,
                                 data = celData,
@@ -652,36 +653,36 @@ dlg:button {
 
         if saveJson then
             -- Cache Json methods.
-            local celToJson = JsonUtilities.celToJson
-            local frameToJson = JsonUtilities.frameToJson
-            local layerToJson = JsonUtilities.layerToJson
+            local celToJson <const> = JsonUtilities.celToJson
+            local frameToJson <const> = JsonUtilities.frameToJson
+            local layerToJson <const> = JsonUtilities.layerToJson
 
             local k = 0
             ---@type string[]
-            local celStrs = {}
-            local lenCelPackets = #celPackets
+            local celStrs <const> = {}
+            local lenCelPackets <const> = #celPackets
             while k < lenCelPackets do
                 k = k + 1
-                local cel = celPackets[k]
+                local cel <const> = celPackets[k]
                 celStrs[k] = celToJson(
                     cel, cel.fileName, boundsFormat)
             end
 
             local m = 0
             ---@type string[]
-            local frameStrs = {}
+            local frameStrs <const> = {}
             while m < lenChosenFrames do
                 m = m + 1
                 frameStrs[m] = frameToJson(framePackets[m])
             end
 
             ---@type string[]
-            local layerStrs = {}
+            local layerStrs <const> = {}
             for _, layer in pairs(layerPackets) do
                 layerStrs[#layerStrs + 1] = layerToJson(layer)
             end
 
-            local jsonFormat = table.concat({
+            local jsonFormat <const> = table.concat({
                 "{\"fileDir\":\"%s\"",
                 "\"fileExt\":\"%s\"",
                 "\"padding\":%d",
@@ -692,7 +693,7 @@ dlg:button {
                 "\"sprite\":%s",
                 "\"version\":%s}",
             }, ",")
-            local jsonString = string.format(
+            local jsonString <const> = string.format(
                 jsonFormat,
                 filePath, fileExt,
                 padding, scale,
@@ -709,7 +710,7 @@ dlg:button {
             end
             jsonFilepath = jsonFilepath .. ".json"
 
-            local file, err = io.open(jsonFilepath, "w")
+            local file <const>, err <const> = io.open(jsonFilepath, "w")
             if file then
                 file:write(jsonString)
                 file:close()

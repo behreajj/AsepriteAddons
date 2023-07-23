@@ -515,7 +515,7 @@ dlg:canvas {
         local reticleBright = white
         local reticleShade = black
 
-        local lAvg = (rBkg + gBkg + bBkg) / 3.0
+        local lAvg <const> = (rBkg + gBkg + bBkg) / 3.0
         if lAvg <= 0.5 then
             bTrg = 1.0
             gTrg = 1.0
@@ -854,12 +854,12 @@ dlg:button {
                 local sumLum = 0.0
                 local countLum = 0
                 for key, _ in pairs(srcDict) do
-                    local srgb = fromHex(key)
-                    local lab = sRgbaToLab(srgb)
+                    local srgb <const> = fromHex(key)
+                    local lab <const> = sRgbaToLab(srgb)
                     labDict[key] = lab
 
                     if key ~= 0 then
-                        local lum = lab.l
+                        local lum <const> = lab.l
                         if lum < minLum then minLum = lum end
                         if lum > maxLum then maxLum = lum end
                         sumLum = sumLum + lum
@@ -921,7 +921,7 @@ dlg:button {
 
                 if useContrast then
                     ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
-                    local contrDict = {}
+                    local contrDict <const> = {}
                     for key, value in pairs(labDict) do
                         contrDict[key] = {
                             l = (value.l - 50.0) * contrastFac + 50.0,
@@ -935,7 +935,7 @@ dlg:button {
 
                 if useLabAdj then
                     ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
-                    local labAdjDict = {}
+                    local labAdjDict <const> = {}
                     for key, value in pairs(labDict) do
                         local al = value.alpha
                         if al > 0.0 then al = al + alphaAdj end
@@ -949,7 +949,7 @@ dlg:button {
                     labDict = labAdjDict
                 elseif useLchAdj then
                     ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
-                    local lchAdjDict = {}
+                    local lchAdjDict <const> = {}
                     for key, value in pairs(labDict) do
                         local lch <const> = labToLch(
                             value.l,
@@ -968,7 +968,7 @@ dlg:button {
 
                 if useLabInvert then
                     ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
-                    local labInvDict = {}
+                    local labInvDict <const> = {}
                     for key, value in pairs(labDict) do
                         local lNew = value.l
                         if lInvert then lNew = 100.0 - lNew end

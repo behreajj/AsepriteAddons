@@ -1,10 +1,10 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/jsonutilities.lua")
 
-local frameTargetOptions = { "ACTIVE", "ALL", "MANUAL", "RANGE", "TAGS" }
-local cropTypes = { "CROPPED", "SPRITE" }
+local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE", "TAGS" }
+local cropTypes <const> = { "CROPPED", "SPRITE" }
 
-local defaults = {
+local defaults <const> = {
     -- Option to put batches (sprite sheet off)
     -- into subfolders? If this is not implemented,
     -- then the batches option should only be available
@@ -25,7 +25,7 @@ local defaults = {
     boundsFormat = "TOP_LEFT"
 }
 
-local sheetFormat = table.concat({
+local sheetFormat <const> = table.concat({
     "{\"fileName\":\"%s\"",
     "\"size\":%s",
     "\"sizeCell\":%s",
@@ -33,6 +33,9 @@ local sheetFormat = table.concat({
     "\"sections\":[%s]}"
 }, ",")
 
+---@param section table
+---@param boundsFormat string
+---@return string
 local function sectionToJson(section, boundsFormat)
     return string.format(
         "{\"id\":%s, \"rect\":%s}",
@@ -42,11 +45,14 @@ local function sectionToJson(section, boundsFormat)
             section.rect, boundsFormat))
 end
 
+---@param sheet table
+---@param boundsFormat string
+---@return string
 local function sheetToJson(sheet, boundsFormat)
     ---@type string[]
-    local sectionsStrs = {}
-    local sections = sheet.sections
-    local lenSections = #sections
+    local sectionsStrs <const> = {}
+    local sections <const> = sheet.sections
+    local lenSections <const> = #sections
     local i = 0
     while i < lenSections do
         i = i + 1
@@ -75,10 +81,10 @@ end
 ---@param packets1 table[] packets 1D array
 ---@return string
 local function makeBatchFileName(fileTitle, packets1)
-    local first = packets1[1].frame
-    local last = packets1[#packets1].frame
-    local frIdx0 = first.frameNumber
-    local frIdxLen = last.frameNumber
+    local first <const> = packets1[1].frame
+    local last <const> = packets1[#packets1].frame
+    local frIdx0 <const> = first.frameNumber
+    local frIdxLen <const> = last.frameNumber
     return string.format(
         "%s_%03d_%03d",
         fileTitle, frIdx0 - 1, frIdxLen - 1)
@@ -103,14 +109,14 @@ local function saveSheet(
     spriteSpec, compPalette,
     margin, padding,
     usePow2, nonUniformDim)
-    local lenPackets1 = #packets1
-    local columns = math.max(1,
+    local lenPackets1 <const> = #packets1
+    local cols = math.max(1,
         math.ceil(math.sqrt(lenPackets1)))
     local rows = math.max(1,
-        math.ceil(lenPackets1 / columns))
-    local margin2 = margin + margin
-    local wSheet = margin2 + wMax * columns
-        + padding * (columns - 1)
+        math.ceil(lenPackets1 / cols))
+    local margin2 <const> = margin + margin
+    local wSheet = margin2 + wMax * cols
+        + padding * (cols - 1)
     local hSheet = margin2 + hMax * rows
         + padding * (rows - 1)
 
@@ -126,7 +132,7 @@ local function saveSheet(
 
         -- There's one less padding per denominator,
         -- so experiment adding one padding to numerator.
-        columns = math.max(1,
+        cols = math.max(1,
             (wSheet + padding - margin2)
             // (wMax + padding))
         rows = math.max(1,
@@ -135,31 +141,31 @@ local function saveSheet(
     end
 
     -- Unpack source spec.
-    local colorMode = spriteSpec.colorMode
-    local alphaIndex = spriteSpec.transparentColor
-    local colorSpace = spriteSpec.colorSpace
+    local colorMode <const> = spriteSpec.colorMode
+    local alphaIndex <const> = spriteSpec.transparentColor
+    local colorSpace <const> = spriteSpec.colorSpace
 
     -- Create composite image.
-    local sheetSpec = ImageSpec {
+    local sheetSpec <const> = ImageSpec {
         width = wSheet,
         height = hSheet,
         colorMode = colorMode,
         transparentColor = alphaIndex
     }
     sheetSpec.colorSpace = colorSpace
-    local compImg = Image(sheetSpec)
+    local compImg <const> = Image(sheetSpec)
 
     -- For centering the image.
-    local xCellCenter = wMax // 2
-    local yCellCenter = hMax // 2
+    local xCellCenter <const> = wMax // 2
+    local yCellCenter <const> = hMax // 2
 
     ---@type table[]
-    local sectionPackets = {}
+    local sectionPackets <const> = {}
 
     local k = 0
     while k < lenPackets1 do
-        local row = k // columns
-        local column = k % columns
+        local row <const> = k // cols
+        local column <const> = k % cols
         local x = margin + column * wMax
         local y = margin + row * hMax
 
@@ -167,13 +173,13 @@ local function saveSheet(
         y = y + row * padding
 
         k = k + 1
-        local packet = packets1[k]
-        local image = packet.cel.image
-        local wImage = image.width
-        local hImage = image.height
+        local packet <const> = packets1[k]
+        local image <const> = packet.cel.image
+        local wImage <const> = image.width
+        local hImage <const> = image.height
 
-        local wHalf = wImage // 2
-        local hHalf = hImage // 2
+        local wHalf <const> = wImage // 2
+        local hHalf <const> = hImage // 2
         x = x + xCellCenter - wHalf
         y = y + yCellCenter - hHalf
 
@@ -203,7 +209,7 @@ local function saveSheet(
         height = hSheet,
         wCell = wMax,
         hCell = hMax,
-        columns = columns,
+        columns = cols,
         rows = rows
     }
 end
@@ -233,9 +239,9 @@ local function genPacket(
     local ytl = 0
     local wImage = spriteSpec.width
     local hImage = spriteSpec.height
-    local alphaIndex = spriteSpec.transparentColor
+    local alphaIndex <const> = spriteSpec.transparentColor
     if useCrop then
-        local trimmed, xd, yd = AseUtilities.trimImageAlpha(
+        local trimmed <const>, xd <const>, yd <const> = AseUtilities.trimImageAlpha(
             flat, 0, alphaIndex, 8, 8)
 
         flat = trimmed
@@ -249,28 +255,28 @@ local function genPacket(
     -- If user wants an empty image, give it to them.
 
     if useResize then
-        local wr = flat.width * wScale
-        local hr = flat.height * hScale
-        local resized = AseUtilities.resizeImageNearest(
+        local wr <const> = flat.width * wScale
+        local hr <const> = flat.height * hScale
+        local resized <const> = AseUtilities.resizeImageNearest(
             flat, wr, hr)
 
         flat = resized
     end
 
-    local frObj = spriteFrameObjs[frIdx]
-    local framePacket = {
+    local frObj <const> = spriteFrameObjs[frIdx]
+    local framePacket <const> = {
         duration = frObj.duration,
         frameNumber = frIdx
     }
 
-    local boundsPacket = {
+    local boundsPacket <const> = {
         x = xtl,
         y = ytl,
         width = wImage,
         height = hImage
     }
 
-    local celPacket = {
+    local celPacket <const> = {
         bounds = boundsPacket,
         data = nil,
         fileName = "",
@@ -287,7 +293,7 @@ local function genPacket(
     }
 end
 
-local dlg = Dialog { title = "Export Frames" }
+local dlg <const> = Dialog { title = "Export Frames" }
 
 dlg:combobox {
     id = "frameTarget",
@@ -295,12 +301,14 @@ dlg:combobox {
     option = defaults.frameTarget,
     options = frameTargetOptions,
     onchange = function()
-        local args = dlg.data
-        local state = args.frameTarget --[[@as string]]
-        local isManual = state == "MANUAL"
-        local isTags = state == "TAGS"
-        local useSheet = args.useSheet --[[@as boolean]]
-        local validBatching = useSheet and (isTags or isManual)
+        local args <const> = dlg.data
+        local state <const> = args.frameTarget --[[@as string]]
+        local useSheet <const> = args.useSheet --[[@as boolean]]
+
+        local isManual <const> = state == "MANUAL"
+        local isTags <const> = state == "TAGS"
+        local validBatching <const> = useSheet and (isTags or isManual)
+
         dlg:modify { id = "rangeStr", visible = isManual }
         dlg:modify { id = "strExample", visible = false }
         dlg:modify { id = "useBatches", visible = validBatching }
@@ -379,15 +387,15 @@ dlg:check {
     selected = defaults.useSheet,
     visible = true,
     onclick = function()
-        local args = dlg.data
-        local frameTarget = args.frameTarget --[[@as string]]
-        local useSheet = args.useSheet --[[@as boolean]]
+        local args <const> = dlg.data
+        local frameTarget <const> = args.frameTarget --[[@as string]]
+        local useSheet <const> = args.useSheet --[[@as boolean]]
 
         -- TODO: If ranges is updated to support batches,
         -- then this needs to reflect that.
-        local isManual = frameTarget == "MANUAL"
-        local isTags = frameTarget == "TAGS"
-        local state = useSheet
+        local isManual <const> = frameTarget == "MANUAL"
+        local isTags <const> = frameTarget == "TAGS"
+        local state <const> = useSheet
             and (isTags or isManual)
 
         dlg:modify { id = "useBatches", visible = state }
@@ -423,8 +431,8 @@ dlg:check {
     selected = defaults.toPow2,
     visible = true,
     onclick = function()
-        local args = dlg.data
-        local state = args.toPow2 --[[@as boolean]]
+        local args <const> = dlg.data
+        local state <const> = args.toPow2 --[[@as boolean]]
         dlg:modify { id = "potUniform", visible = state }
     end
 }
@@ -454,8 +462,8 @@ dlg:check {
     text = "&JSON",
     selected = defaults.saveJson,
     onclick = function()
-        local args = dlg.data
-        local enabled = args.saveJson --[[@as boolean]]
+        local args <const> = dlg.data
+        local enabled <const> = args.saveJson --[[@as boolean]]
         dlg:modify { id = "boundsFormat", visible = enabled }
         dlg:modify { id = "userDataWarning", visible = enabled }
     end
@@ -486,7 +494,7 @@ dlg:button {
     id = "confirm",
     text = "&OK",
     onclick = function()
-        local activeSprite = app.site.sprite
+        local activeSprite <const> = app.site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -496,34 +504,34 @@ dlg:button {
         end
 
         -- Unpack sprite spec.
-        local spriteSpec = activeSprite.spec
-        local spriteColorMode = spriteSpec.colorMode
-        local spriteColorSpace = spriteSpec.colorSpace
-        local spriteAlphaIndex = spriteSpec.transparentColor
-        local spritePalettes = activeSprite.palettes
+        local spriteSpec <const> = activeSprite.spec
+        local spriteColorMode <const> = spriteSpec.colorMode
+        local spriteColorSpace <const> = spriteSpec.colorSpace
+        local spriteAlphaIndex <const> = spriteSpec.transparentColor
+        local spritePalettes <const> = activeSprite.palettes
 
         -- Unpack arguments.
-        local args = dlg.data
+        local args <const> = dlg.data
         local filename = args.filename --[[@as string]]
-        local frameTarget = args.frameTarget
+        local frameTarget <const> = args.frameTarget
             or defaults.frameTarget --[[@as string]]
-        local rangeStr = args.rangeStr
+        local rangeStr <const> = args.rangeStr
             or defaults.rangeStr --[[@as string]]
-        local cropType = args.cropType
+        local cropType <const> = args.cropType
             or defaults.cropType --[[@as string]]
         local margin = args.border
             or defaults.border --[[@as integer]]
-        local padding = args.padding
+        local padding <const> = args.padding
             or defaults.padding --[[@as integer]]
-        local scale = args.scale
+        local scale <const> = args.scale
             or defaults.scale --[[@as integer]]
-        local useSheet = args.useSheet --[[@as boolean]]
+        local useSheet <const> = args.useSheet --[[@as boolean]]
         local useBatches = args.useBatches --[[@as boolean]]
-        local usePixelAspect = args.usePixelAspect --[[@as boolean]]
-        local usePow2 = args.toPow2 --[[@as boolean]]
-        local potUniform = args.potUniform --[[@as boolean]]
-        local saveJson = args.saveJson --[[@as boolean]]
-        local boundsFormat = args.boundsFormat
+        local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
+        local usePow2 <const> = args.toPow2 --[[@as boolean]]
+        local potUniform <const> = args.potUniform --[[@as boolean]]
+        local saveJson <const> = args.saveJson --[[@as boolean]]
+        local boundsFormat <const> = args.boundsFormat
             or defaults.boundsFormat --[[@as string]]
 
         -- Validate file name.
@@ -544,7 +552,7 @@ dlg:button {
         -- color mode and Aseprite doesn't handle this
         -- limitation gracefully.
         if spriteColorMode == ColorMode.INDEXED then
-            local lcFileExt = string.lower(fileExt)
+            local lcFileExt <const> = string.lower(fileExt)
             if lcFileExt == "webp"
                 or lcFileExt == "jpg"
                 or lcFileExt == "jpeg" then
@@ -584,69 +592,69 @@ dlg:button {
         fileTitle = Utilities.validateFilename(fileTitle)
 
         filePath = filePath .. pathSep
-        local filePrefix = filePath .. fileTitle
+        local filePrefix <const> = filePath .. fileTitle
 
         -- Process scale.
         local wScale = scale
         local hScale = scale
         if usePixelAspect then
-            local pxRatio = activeSprite.pixelRatio
-            local pxw = math.max(1, math.abs(pxRatio.width))
-            local pxh = math.max(1, math.abs(pxRatio.height))
+            local pxRatio <const> = activeSprite.pixelRatio
+            local pxw <const> = math.max(1, math.abs(pxRatio.width))
+            local pxh <const> = math.max(1, math.abs(pxRatio.height))
             wScale = wScale * pxw
             hScale = hScale * pxh
         end
-        local useResize = wScale ~= 1 or hScale ~= 1
+        local useResize <const> = wScale ~= 1 or hScale ~= 1
 
         -- Process other variables.
-        local useCrop = cropType == "CROPPED"
-        local nonUniformDim = not potUniform
+        local useCrop <const> = cropType == "CROPPED"
+        local nonUniformDim <const> = not potUniform
         -- TODO: If ranges is updated to support batches,
         -- then this needs to reflect that.
         useBatches = useBatches
             and useSheet
             and (frameTarget == "TAGS"
                 or frameTarget == "MANUAL")
-        local usePadding = padding > 0
+        local usePadding <const> = padding > 0
         if not useSheet then margin = 0 end
 
         -- Cache methods used in loops.
-        local strfmt = string.format
+        local strfmt <const> = string.format
 
         -- Get frames.
-        local tags = activeSprite.tags
-        local frIdcs2 = AseUtilities.getFrames(
+        local tags <const> = activeSprite.tags
+        local frIdcs2 <const> = AseUtilities.getFrames(
             activeSprite, frameTarget,
             useBatches, rangeStr, tags)
-        local spriteFrameObjs = activeSprite.frames
+        local spriteFrameObjs <const> = activeSprite.frames
 
         -- Track the global and local maximum dimensions.
         local wMaxGlobal = -2147483648
         local hMaxGlobal = -2147483648
         ---@type integer[]
-        local wMaxesLocal = {}
+        local wMaxesLocal <const> = {}
         ---@type integer[]
-        local hMaxesLocal = {}
+        local hMaxesLocal <const> = {}
 
         ---@type table<integer, table>
-        local packetsUnique = {}
+        local packetsUnique <const> = {}
         ---@type table[][]
-        local packets2 = {}
-        local lenOuter = #frIdcs2
+        local packets2 <const> = {}
+        local lenOuter <const> = #frIdcs2
         local i = 0
         while i < lenOuter do
             i = i + 1
-            local frIdcs1 = frIdcs2[i]
-            local lenInner = #frIdcs1
+            local frIdcs1 <const> = frIdcs2[i]
+            local lenInner <const> = #frIdcs1
             ---@type table[]
-            local packets1 = {}
+            local packets1 <const> = {}
             local wMaxLocal = -2147483648
             local hMaxLocal = -2147483648
 
             local j = 0
             while j < lenInner do
                 j = j + 1
-                local frIdx = frIdcs1[j]
+                local frIdx <const> = frIdcs1[j]
                 local packet = packetsUnique[frIdx]
                 if not packet then
                     packet = genPacket(
@@ -659,9 +667,9 @@ dlg:button {
                 packets1[j] = packet
 
                 -- Update the maximum width and height.
-                local celBounds = packet.cel.bounds
-                local w = celBounds.width
-                local h = celBounds.height
+                local celBounds <const> = packet.cel.bounds
+                local w <const> = celBounds.width
+                local h <const> = celBounds.height
                 if w > wMaxLocal then wMaxLocal = w end
                 if h > hMaxLocal then hMaxLocal = h end
             end
@@ -681,17 +689,17 @@ dlg:button {
         -- If tags are not used in the export, then dummy
         -- data needs to be generated for them.
         ---@type string[]
-        local tagFileNames = {}
-        local lenTags = #tags
-        local exportByTags = useBatches
+        local tagFileNames <const> = {}
+        local lenTags <const> = #tags
+        local exportByTags <const> = useBatches
             and frameTarget == "TAGS"
         if exportByTags then
-            local validate = Utilities.validateFilename
+            local validate <const> = Utilities.validateFilename
             local m = 0
             while m < lenTags do
                 m = m + 1
-                local tag = tags[m]
-                local fileNameShort = strfmt(
+                local tag <const> = tags[m]
+                local fileNameShort <const> = strfmt(
                     "%s_%s",
                     fileTitle,
                     validate(tag.name))
@@ -711,32 +719,33 @@ dlg:button {
         -- to be offset, e.g. for an image on frame 2,
         -- the length of the palette from frame 1
         -- would need to be added.
-        local sheetPalette = AseUtilities.getPalette(
+        local sheetPalette <const> = AseUtilities.getPalette(
             1, spritePalettes)
-        local sheetPackets = {}
+        ---@type table[]
+        local sheetPackets <const> = {}
         if useBatches then
             if useSheet then
                 local j = 0
                 while j < lenOuter do
                     j = j + 1
 
-                    local packets1 = packets2[j]
+                    local packets1 <const> = packets2[j]
 
                     local batchFileShort = tagFileNames[j]
                     if (not batchFileShort)
                         or #batchFileShort < 1 then
                         batchFileShort = makeBatchFileName(fileTitle, packets1)
                     end
-                    local batchFileLong = strfmt(
+                    local batchFileLong <const> = strfmt(
                         "%s%s.%s",
                         filePath, batchFileShort, fileExt)
                     -- print(batchFileLong)
 
-                    local wMaxLocal = wMaxesLocal[j]
-                    local hMaxLocal = hMaxesLocal[j]
-                    local wCell = wMaxLocal * wScale
-                    local hCell = hMaxLocal * hScale
-                    local sheetPacket = saveSheet(
+                    local wMaxLocal <const> = wMaxesLocal[j]
+                    local hMaxLocal <const> = hMaxesLocal[j]
+                    local wCell <const> = wMaxLocal * wScale
+                    local hCell <const> = hMaxLocal * hScale
+                    local sheetPacket <const> = saveSheet(
                         batchFileLong, packets1,
                         wCell, hCell,
                         spriteSpec, sheetPalette,
@@ -750,16 +759,16 @@ dlg:button {
                 -- individual images in subfolders were implemented.
             end
         else
-            local expandPot = AseUtilities.expandImageToPow2
-            local padImage = AseUtilities.padImage
+            local expandPot <const> = AseUtilities.expandImageToPow2
+            local padImage <const> = AseUtilities.padImage
 
             ---@type table[]
-            local packets1 = packets2[1]
-            local lenInner = #packets1
+            local packets1 <const> = packets2[1]
+            local lenInner <const> = #packets1
             if useSheet then
-                local wCell = wMaxGlobal * wScale
-                local hCell = hMaxGlobal * hScale
-                local sheetPacket = saveSheet(
+                local wCell <const> = wMaxGlobal * wScale
+                local hCell <const> = hMaxGlobal * hScale
+                local sheetPacket <const> = saveSheet(
                     filename, packets1,
                     wCell, hCell,
                     spriteSpec, sheetPalette,
@@ -773,13 +782,13 @@ dlg:button {
                     k = k + 1
 
                     if usePadding then
-                        local imgPadded = padImage(
+                        local imgPadded <const> = padImage(
                             packets1[k].cel.image, padding)
                         packets1[k].cel.image = imgPadded
                     end
 
                     if usePow2 then
-                        local imgPow2 = expandPot(
+                        local imgPow2 <const> = expandPot(
                             packets1[k].cel.image,
                             spriteColorMode,
                             spriteAlphaIndex,
@@ -791,22 +800,22 @@ dlg:button {
                         packets1[k].cel.image = imgPow2
                     end
 
-                    local packet = packets1[k]
-                    local cel = packet.cel
-                    local frame = packet.frame
+                    local packet <const> = packets1[k]
+                    local cel <const> = packet.cel
+                    local frame <const> = packet.frame
 
-                    local frIdx = frame.frameNumber
-                    local activePalette = AseUtilities.getPalette(
+                    local frIdx <const> = frame.frameNumber
+                    local activePalette <const> = AseUtilities.getPalette(
                         frIdx, spritePalettes)
 
-                    local fileNameShort = strfmt(
+                    local fileNameShort <const> = strfmt(
                         "%s_%03d",
                         fileTitle, frIdx - 1)
-                    local fileNameLong = strfmt(
+                    local fileNameLong <const> = strfmt(
                         "%s%s.%s",
                         filePath, fileNameShort, fileExt)
 
-                    local image = cel.image
+                    local image <const> = cel.image
                     image:saveAs {
                         filename = fileNameLong,
                         palette = activePalette
@@ -821,18 +830,18 @@ dlg:button {
 
         if saveJson then
             -- Cache Json methods.
-            local celToJson = JsonUtilities.celToJson
-            local frameToJson = JsonUtilities.frameToJson
-            local tagToJson = JsonUtilities.tagToJson
+            local celToJson <const> = JsonUtilities.celToJson
+            local frameToJson <const> = JsonUtilities.frameToJson
+            local tagToJson <const> = JsonUtilities.tagToJson
 
             local lenFrameStrs = 0
             ---@type string[]
-            local celStrs = {}
+            local celStrs <const> = {}
             ---@type string[]
-            local frameStrs = {}
+            local frameStrs <const> = {}
             for _, packet in pairs(packetsUnique) do
-                local cel = packet.cel
-                local frame = packet.frame
+                local cel <const> = packet.cel
+                local frame <const> = packet.frame
                 lenFrameStrs = lenFrameStrs + 1
                 celStrs[lenFrameStrs] = celToJson(
                     cel, cel.fileName, boundsFormat)
@@ -841,18 +850,18 @@ dlg:button {
 
             local k = 0
             ---@type string[]
-            local tagStrs = {}
+            local tagStrs <const> = {}
             while k < lenTags do
                 k = k + 1
-                local tag = tags[k]
-                local fileName = tagFileNames[k]
+                local tag <const> = tags[k]
+                local fileName <const> = tagFileNames[k]
                 tagStrs[k] = tagToJson(tag, fileName)
             end
 
             ---@type string[]
-            local sheetStrArr = {}
+            local sheetStrArr <const> = {}
             if useSheet then
-                local lenSheetPackets = #sheetPackets
+                local lenSheetPackets <const> = #sheetPackets
                 local j = 0
                 while j < lenSheetPackets do
                     j = j + 1
@@ -862,7 +871,7 @@ dlg:button {
             end
 
             -- Layers array included for the sake of uniformity.
-            local jsonFormat = table.concat({
+            local jsonFormat <const> = table.concat({
                 "{\"fileDir\":\"%s\"",
                 "\"fileExt\":\"%s\"",
                 "\"border\":%d",
@@ -876,7 +885,7 @@ dlg:button {
                 "\"tags\":[%s]",
                 "\"version\":%s}"
             }, ",")
-            local jsonString = string.format(
+            local jsonString <const> = string.format(
                 jsonFormat,
                 filePath, fileExt,
                 margin, padding, scale,
@@ -893,7 +902,7 @@ dlg:button {
             end
             jsonFilepath = jsonFilepath .. ".json"
 
-            local file, err = io.open(jsonFilepath, "w")
+            local file <const>, err <const> = io.open(jsonFilepath, "w")
             if file then
                 file:write(jsonString)
                 file:close()

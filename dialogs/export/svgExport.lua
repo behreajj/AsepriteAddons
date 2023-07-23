@@ -1,6 +1,6 @@
-local frameTargetOptions = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
+local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 
-local defaults = {
+local defaults <const> = {
     flattenImage = true,
     frameTarget = "ACTIVE",
     rangeStr = "",
@@ -70,30 +70,32 @@ local function imgToSvgStr(
     -- the right edge interferes with margin, can cause other
     -- zooming artifacts. Creating a path for each color
     -- then using subpaths for each square diminishes issue.
-    local strfmt = string.format
-    local tconcat = table.concat
+    local strfmt <const> = string.format
+    local tconcat <const> = table.concat
 
-    local imgSpec = img.spec
-    local imgWidth = imgSpec.width
-    local colorMode = imgSpec.colorMode
+    local imgSpec <const> = img.spec
+    local imgWidth <const> = imgSpec.width
+    local colorMode <const> = imgSpec.colorMode
 
     ---@type table<integer, integer[]>
-    local pixelDict = {}
-    local pxItr = img:pixels()
+    local pixelDict <const> = {}
+    local pxItr <const> = img:pixels()
 
     if colorMode == ColorMode.INDEXED then
-        local aseColorToHex = AseUtilities.aseColorToHex
-        local alphaIdx = imgSpec.transparentColor
-        local rgbColorMode = ColorMode.RGB
+        local aseColorToHex <const> = AseUtilities.aseColorToHex
+        local alphaIdx <const> = imgSpec.transparentColor
+        local rgbColorMode <const> = ColorMode.RGB
         for pixel in pxItr do
-            local clrIdx = pixel()
+            local clrIdx <const> = pixel()
             if clrIdx ~= alphaIdx then
-                local idx = pixel.x + pixel.y * imgWidth
+                local idx <const> = pixel.x + pixel.y * imgWidth
 
-                local aseColor = palette:getColor(clrIdx)
-                local hex = aseColorToHex(aseColor, rgbColorMode)
+                -- TODO: Make a dictionary of previously visited
+                -- indices that have already converted palette to int?
+                local aseColor <const> = palette:getColor(clrIdx)
+                local hex <const> = aseColorToHex(aseColor, rgbColorMode)
 
-                local idcs = pixelDict[hex]
+                local idcs <const> = pixelDict[hex]
                 if idcs then
                     idcs[#idcs + 1] = idx
                 else
@@ -103,15 +105,15 @@ local function imgToSvgStr(
         end
     elseif colorMode == ColorMode.GRAY then
         for pixel in pxItr do
-            local gray = pixel()
+            local gray <const> = pixel()
             if gray & 0xff00 ~= 0 then
-                local idx = pixel.x + pixel.y * imgWidth
+                local idx <const> = pixel.x + pixel.y * imgWidth
 
-                local a = (gray >> 0x08) & 0xff
-                local v = gray & 0xff
-                local hex = a << 0x18 | v << 0x10 | v << 0x08 | v
+                local a <const> = (gray >> 0x08) & 0xff
+                local v <const> = gray & 0xff
+                local hex <const> = a << 0x18 | v << 0x10 | v << 0x08 | v
 
-                local idcs = pixelDict[hex]
+                local idcs <const> = pixelDict[hex]
                 if idcs then
                     idcs[#idcs + 1] = idx
                 else
@@ -121,10 +123,10 @@ local function imgToSvgStr(
         end
     elseif colorMode == ColorMode.RGB then
         for pixel in pxItr do
-            local hex = pixel()
+            local hex <const> = pixel()
             if hex & 0xff000000 ~= 0 then
-                local idx = pixel.x + pixel.y * imgWidth
-                local idcs = pixelDict[hex]
+                local idx <const> = pixel.x + pixel.y * imgWidth
+                local idcs <const> = pixelDict[hex]
                 if idcs then
                     idcs[#idcs + 1] = idx
                 else
@@ -135,25 +137,25 @@ local function imgToSvgStr(
     end
 
     ---@type string[]
-    local pathsArr = {}
+    local pathsArr <const> = {}
     for hex, idcs in pairs(pixelDict) do
         ---@type string[]
-        local subPathsArr = {}
-        local lenIdcs = #idcs
+        local subPathsArr <const> = {}
+        local lenIdcs <const> = #idcs
         local i = 0
         while i < lenIdcs do
             i = i + 1
-            local idx = idcs[i]
-            local x0 = xOff + (idx % imgWidth)
-            local y0 = yOff + (idx // imgWidth)
+            local idx <const> = idcs[i]
+            local x0 <const> = xOff + (idx % imgWidth)
+            local y0 <const> = yOff + (idx // imgWidth)
 
-            local x1mrg = border + (x0 + 1) * padding
-            local y1mrg = border + (y0 + 1) * padding
+            local x1mrg <const> = border + (x0 + 1) * padding
+            local y1mrg <const> = border + (y0 + 1) * padding
 
-            local ax = x1mrg + x0 * wScale
-            local ay = y1mrg + y0 * hScale
-            local bx = ax + wScale
-            local by = ay + hScale
+            local ax <const> = x1mrg + x0 * wScale
+            local ay <const> = y1mrg + y0 * hScale
+            local bx <const> = ax + wScale
+            local by <const> = ay + hScale
 
             subPathsArr[i] = strfmt(
                 "M %d %d L %d %d L %d %d L %d %d Z",
@@ -165,19 +167,19 @@ local function imgToSvgStr(
             --     ax, ay, wScale, hScale, -wScale, -hScale)
         end
 
-        local lenSubPaths = #subPathsArr
+        local lenSubPaths <const> = #subPathsArr
         if lenSubPaths > 0 then
-            local webHex = (hex & 0xff) << 0x10
+            local webHex <const> = (hex & 0xff) << 0x10
                 | (hex & 0xff00)
                 | (hex >> 0x10 & 0xff)
             local alphaStr = ""
-            local a = hex >> 0x18 & 0xff
+            local a <const> = hex >> 0x18 & 0xff
             if a < 0xff then
                 alphaStr = strfmt(
                     " fill-opacity=\"%.6f\"",
                     a / 255.0)
             end
-            local pathStr = strfmt(
+            local pathStr <const> = strfmt(
                 "<path id=\"%08x\" fill=\"#%06X\"%s d=\"%s\" />",
                 hex, webHex, alphaStr,
                 tconcat(subPathsArr, " "))
@@ -210,12 +212,12 @@ local function layerToSvgStr(
     includeTiles, includeBkg,
     colorMode, palette,
     layersStrArr)
-    local isEditable = layer.isEditable
-    local isVisible = layer.isVisible
-    local isGroup = layer.isGroup
-    local isRef = layer.isReference
-    local isBkg = layer.isBackground
-    local isTilemap = layer.isTilemap
+    local isEditable <const> = layer.isEditable
+    local isVisible <const> = layer.isVisible
+    local isGroup <const> = layer.isGroup
+    local isRef <const> = layer.isReference
+    local isBkg <const> = layer.isBackground
+    local isTilemap <const> = layer.isTilemap
 
     if (includeLocked or isEditable)
         and (includeHidden or isVisible) then
@@ -232,15 +234,15 @@ local function layerToSvgStr(
 
         if isGroup then
             ---@type string[]
-            local childStrs = {}
-            local children = layer.layers --[=[@as Layer[]]=]
-            local lenChildren = #children
+            local childStrs <const> = {}
+            local children <const> = layer.layers --[=[@as Layer[]]=]
+            local lenChildren <const> = #children
 
             if lenChildren > 0 then
                 local i = 0
                 while i < lenChildren do
                     i = i + 1
-                    local child = children[i]
+                    local child <const> = children[i]
                     layerToSvgStr(
                         child, frame,
                         border, padding, wScale, hScale,
@@ -254,7 +256,7 @@ local function layerToSvgStr(
                         childStrs)
                 end
 
-                local grpStr = string.format(
+                local grpStr <const> = string.format(
                     "<g id=\"%s\"%s>\n%s\n</g>",
                     layerName, visStr, table.concat(childStrs, "\n"))
                 layersStrArr[#layersStrArr + 1] = grpStr
@@ -262,7 +264,7 @@ local function layerToSvgStr(
         elseif (not isRef)
             and (includeTiles or (not isTilemap))
             and (includeBkg or (not isBkg)) then
-            local cel = layer:cel(frame)
+            local cel <const> = layer:cel(frame)
             if cel then
                 -- A definition could be created for tile sets,
                 -- then accessed with use xlink:href, but best to
@@ -276,11 +278,11 @@ local function layerToSvgStr(
 
                 if not celImg:isEmpty() then
                     -- Layer opacity and cel opacity are compounded.
-                    local celAlpha = cel.opacity
-                    local lyrAlpha = layer.opacity
+                    local celAlpha <const> = cel.opacity
+                    local lyrAlpha <const> = layer.opacity
                     local alphaStr = ""
                     if lyrAlpha < 0xff or celAlpha < 0xff then
-                        local cmpAlpha = (lyrAlpha * 0.003921568627451)
+                        local cmpAlpha <const> = (lyrAlpha * 0.003921568627451)
                             * (celAlpha * 0.003921568627451)
                         alphaStr = string.format(
                             " opacity=\"%.6f\"",
@@ -289,22 +291,22 @@ local function layerToSvgStr(
 
                     -- feBlend seems more backward compatible, but inline
                     -- CSS style results in shorter code.
-                    local bmStr = blendModeToStr(layer.blendMode)
+                    local bmStr <const> = blendModeToStr(layer.blendMode)
 
                     -- Clip off cels that are beyond sprite canvas.
-                    local celBounds = cel.bounds
-                    local xCel = celBounds.x
-                    local yCel = celBounds.y
-                    local intersect = celBounds:intersect(spriteBounds)
+                    local celBounds <const> = cel.bounds
+                    local xCel <const> = celBounds.x
+                    local yCel <const> = celBounds.y
+                    local intersect <const> = celBounds:intersect(spriteBounds)
                     intersect.x = intersect.x - xCel
                     intersect.y = intersect.y - yCel
 
-                    local imgStr = imgToSvgStr(
+                    local imgStr <const> = imgToSvgStr(
                         celImg, border, padding,
                         wScale, hScale, xCel, yCel,
                         palette)
 
-                    local grpStr = string.format(
+                    local grpStr <const> = string.format(
                         "<g id=\"%s\"%s style=\"mix-blend-mode: %s;\"%s>\n%s\n</g>",
                         layerName, visStr, bmStr, alphaStr, imgStr)
                     layersStrArr[#layersStrArr + 1] = grpStr
@@ -322,17 +324,17 @@ dlg:check {
     text = "&Sprite",
     selected = defaults.flattenImage,
     onclick = function()
-        local args = dlg.data
-        local flat = args.flattenImage --[[@as boolean]]
-        local state = args.frameTarget --[[@as string]]
-        local isManual = state == "MANUAL"
+        local args <const> = dlg.data
+        local flat <const> = args.flattenImage --[[@as boolean]]
+        local state <const> = args.frameTarget --[[@as string]]
+        local isManual <const> = state == "MANUAL"
+        local notFlat <const> = not flat
 
         dlg:modify { id = "frameTarget", visible = flat }
         dlg:modify { id = "rangeStr", visible = flat and isManual }
         dlg:modify { id = "strExample", visible = false }
         dlg:modify { id = "useLoop", visible = flat }
 
-        local notFlat = not flat
         dlg:modify { id = "includeLocked", visible = notFlat }
         dlg:modify { id = "includeHidden", visible = notFlat }
         dlg:modify { id = "includeTiles", visible = notFlat }
@@ -350,9 +352,9 @@ dlg:combobox {
     options = frameTargetOptions,
     visible = defaults.flattenImage,
     onchange = function()
-        local args = dlg.data
-        local state = args.frameTarget --[[@as string]]
-        local isManual = state == "MANUAL"
+        local args <const> = dlg.data
+        local state <const> = args.frameTarget --[[@as string]]
+        local isManual <const> = state == "MANUAL"
         dlg:modify { id = "rangeStr", visible = isManual }
         dlg:modify { id = "strExample", visible = false }
     end
@@ -452,9 +454,9 @@ dlg:slider {
     max = 64,
     value = defaults.border,
     onchange = function()
-        local args = dlg.data
-        local border = args.border --[[@as integer]]
-        local gtz = border > 0
+        local args <const> = dlg.data
+        local border <const> = args.border --[[@as integer]]
+        local gtz <const> = border > 0
         dlg:modify { id = "borderClr", visible = gtz }
     end
 }
@@ -476,9 +478,9 @@ dlg:slider {
     max = 64,
     value = defaults.padding,
     onchange = function()
-        local args = dlg.data
-        local padding = args.padding --[[@as integer]]
-        local gtz = padding > 0
+        local args <const> = dlg.data
+        local padding <const> = args.padding --[[@as integer]]
+        local gtz <const> = padding > 0
         dlg:modify { id = "paddingClr", visible = gtz }
     end
 }
@@ -519,8 +521,8 @@ dlg:button {
     focus = false,
     onclick = function()
         -- Early returns.
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -530,56 +532,56 @@ dlg:button {
         end
 
         -- Unpack file path.
-        local args = dlg.data
-        local filepath = args.filepath --[[@as string]]
+        local args <const> = dlg.data
+        local filepath <const> = args.filepath --[[@as string]]
         if (not filepath) or (#filepath < 1) then
             app.alert { title = "Error", text = "Filepath is empty." }
             return
         end
 
-        local ext = app.fs.fileExtension(filepath)
+        local ext <const> = app.fs.fileExtension(filepath)
         if string.lower(ext) ~= "svg" then
             app.alert { title = "Error", text = "Extension is not svg." }
             return
         end
 
         -- Unpack arguments.
-        local flattenImage = args.flattenImage --[[@as boolean]]
-        local border = args.border
+        local flattenImage <const> = args.flattenImage --[[@as boolean]]
+        local border <const> = args.border
             or defaults.border --[[@as integer]]
-        local borderClr = args.borderClr --[[@as Color]]
-        local padding = args.padding
+        local borderClr <const> = args.borderClr --[[@as Color]]
+        local padding <const> = args.padding
             or defaults.padding --[[@as integer]]
-        local paddingClr = args.paddingClr --[[@as Color]]
-        local scale = args.scale or defaults.scale --[[@as integer]]
-        local usePixelAspect = args.usePixelAspect --[[@as boolean]]
+        local paddingClr <const> = args.paddingClr --[[@as Color]]
+        local scale <const> = args.scale or defaults.scale --[[@as integer]]
+        local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
 
         -- Process scale
         local wScale = scale
         local hScale = scale
         if usePixelAspect then
-            local pxRatio = activeSprite.pixelRatio
-            local pxw = math.max(1, math.abs(pxRatio.width))
-            local pxh = math.max(1, math.abs(pxRatio.height))
+            local pxRatio <const> = activeSprite.pixelRatio
+            local pxw <const> = math.max(1, math.abs(pxRatio.width))
+            local pxh <const> = math.max(1, math.abs(pxRatio.height))
             wScale = wScale * pxw
             hScale = hScale * pxh
         end
 
-        local activeSpec = activeSprite.spec
-        local colorMode = activeSpec.colorMode
-        local wNative = activeSpec.width
-        local hNative = activeSpec.height
+        local activeSpec <const> = activeSprite.spec
+        local colorMode <const> = activeSpec.colorMode
+        local wNative <const> = activeSpec.width
+        local hNative <const> = activeSpec.height
 
-        local wClip = wScale * wNative
+        local wClip <const> = wScale * wNative
             + padding * (wNative + 1)
-        local hClip = hScale * hNative
+        local hClip <const> = hScale * hNative
             + padding * (hNative + 1)
 
-        local wTotal = wClip + border + border
-        local hTotal = hClip + border + border
+        local wTotal <const> = wClip + border + border
+        local hTotal <const> = hClip + border + border
 
         ---@type string[]
-        local layersStrArr = {}
+        local layersStrArr <const> = {}
         if flattenImage then
             local frameTarget = args.frameTarget
                 or defaults.frameTarget --[[@as string]]
@@ -589,16 +591,16 @@ dlg:button {
                 AseUtilities.getFrames(
                     activeSprite, frameTarget,
                     true, rangeStr))
-            local lenChosenFrames = #chosenFrIdcs
-            local animate = lenChosenFrames > 1
+            local lenChosenFrames <const> = #chosenFrIdcs
+            local animate <const> = lenChosenFrames > 1
 
             if animate then
-                local useLoop = args.useLoop --[[@as boolean]]
+                local useLoop <const> = args.useLoop --[[@as boolean]]
 
-                local docPrefs = app.preferences.document(activeSprite)
-                local frameUiOffset = docPrefs.timeline.first_frame - 1
-                local spritePalettes = activeSprite.palettes
-                local spriteFrames = activeSprite.frames
+                local docPrefs <const> = app.preferences.document(activeSprite)
+                local frameUiOffset <const> = docPrefs.timeline.first_frame - 1
+                local spritePalettes <const> = activeSprite.palettes
+                local spriteFrames <const> = activeSprite.frames
 
                 local animBeginStr = "0s"
                 if useLoop then
@@ -610,7 +612,7 @@ dlg:button {
                 -- There was flickering in Firefox until "from=\"visible\""
                 -- was added. The display and opacity attributes might also
                 -- work for animation.
-                local frameFormat = table.concat({
+                local frameFormat <const> = table.concat({
                     "<g",
                     " id=\"frame%d\"",
                     " visibility=\"hidden\"",
@@ -626,24 +628,24 @@ dlg:button {
                 })
 
                 -- Cache methods used in loop.
-                local strfmt = string.format
-                local getPalette = AseUtilities.getPalette
+                local strfmt <const> = string.format
+                local getPalette <const> = AseUtilities.getPalette
 
                 ---@type string[]
-                local frameStrs = {}
+                local frameStrs <const> = {}
 
                 local i = 0
                 while i < lenChosenFrames do
                     i = i + 1
-                    local frIdx = chosenFrIdcs[i]
-                    local frObj = spriteFrames[frIdx]
-                    local duration = frObj.duration
+                    local frIdx <const> = chosenFrIdcs[i]
+                    local frObj <const> = spriteFrames[frIdx]
+                    local duration <const> = frObj.duration
 
                     -- Create image SVG string.
-                    local flatImg = Image(activeSpec)
+                    local flatImg <const> = Image(activeSpec)
                     flatImg:drawSprite(activeSprite, frObj)
-                    local palette = getPalette(frIdx, spritePalettes)
-                    local imgStr = imgToSvgStr(
+                    local palette <const> = getPalette(frIdx, spritePalettes)
+                    local imgStr <const> = imgToSvgStr(
                         flatImg, border, padding,
                         wScale, hScale, 0, 0,
                         palette)
@@ -655,7 +657,7 @@ dlg:button {
                         -- truncated from millis representation.
                         durStr = strfmt("%.3fs", duration)
                     end
-                    local frameStr = strfmt(
+                    local frameStr <const> = strfmt(
                         frameFormat,
                         frameUiOffset + frIdx, i,
                         animBeginStr, durStr,
@@ -680,10 +682,10 @@ dlg:button {
                     return
                 end
 
-                local palette = AseUtilities.getPalette(
+                local palette <const> = AseUtilities.getPalette(
                     activeFrame, activeSprite.palettes)
 
-                local flatImg = Image(activeSpec)
+                local flatImg <const> = Image(activeSpec)
                 flatImg:drawSprite(activeSprite, activeFrame)
                 layersStrArr[1] = imgToSvgStr(
                     flatImg, border, padding,
@@ -691,16 +693,16 @@ dlg:button {
                     palette)
             end
         else
-            local includeLocked = args.includeLocked --[[@as boolean]]
-            local includeHidden = args.includeHidden --[[@as boolean]]
-            local includeTiles = args.includeTiles --[[@as boolean]]
-            local includeBkg = args.includeBkg --[[@as boolean]]
+            local includeLocked <const> = args.includeLocked --[[@as boolean]]
+            local includeHidden <const> = args.includeHidden --[[@as boolean]]
+            local includeTiles <const> = args.includeTiles --[[@as boolean]]
+            local includeBkg <const> = args.includeBkg --[[@as boolean]]
 
-            local spriteBounds = activeSprite.bounds
-            local spriteLayers = activeSprite.layers
-            local lenSpriteLayers = #spriteLayers
+            local spriteBounds <const> = activeSprite.bounds
+            local spriteLayers <const> = activeSprite.layers
+            local lenSpriteLayers <const> = #spriteLayers
 
-            local activeFrame = site.frame
+            local activeFrame <const> = site.frame
             if not activeFrame then
                 app.alert {
                     title = "Error",
@@ -709,13 +711,13 @@ dlg:button {
                 return
             end
 
-            local palette = AseUtilities.getPalette(
+            local palette <const> = AseUtilities.getPalette(
                 activeFrame, activeSprite.palettes)
 
             local j = 0
             while j < lenSpriteLayers do
                 j = j + 1
-                local layer = spriteLayers[j]
+                local layer <const> = spriteLayers[j]
                 layerToSvgStr(
                     layer, activeFrame,
                     border, padding, wScale, hScale,
@@ -730,13 +732,13 @@ dlg:button {
             end
         end
 
-        local wnBorder = wTotal - border
-        local hnBorder = hTotal - border
+        local wnBorder <const> = wTotal - border
+        local hnBorder <const> = hTotal - border
 
         local padStr = ""
-        local aPadding = paddingClr.alpha
+        local aPadding <const> = paddingClr.alpha
         if padding > 0 and aPadding > 0 then
-            local webHex = paddingClr.red << 0x10
+            local webHex <const> = paddingClr.red << 0x10
                 | paddingClr.green << 0x08
                 | paddingClr.blue
 
@@ -749,21 +751,21 @@ dlg:button {
 
             -- Cut out a hole for each pixel (counter-clockwise).
             ---@type string[]
-            local holeStrArr = {}
-            local lenPixels = wNative * hNative
-            local strfmt = string.format
+            local holeStrArr <const> = {}
+            local lenPixels <const> = wNative * hNative
+            local strfmt <const> = string.format
             local i = 0
             while i < lenPixels do
-                local y = i // wNative
-                local x = i % wNative
+                local y <const> = i // wNative
+                local x <const> = i % wNative
 
-                local x1mrg = border + (x + 1) * padding
-                local y1mrg = border + (y + 1) * padding
+                local x1mrg <const> = border + (x + 1) * padding
+                local y1mrg <const> = border + (y + 1) * padding
 
-                local ax = x1mrg + x * wScale
-                local ay = y1mrg + y * hScale
-                local bx = ax + wScale
-                local by = ay + hScale
+                local ax <const> = x1mrg + x * wScale
+                local ay <const> = y1mrg + y * hScale
+                local bx <const> = ax + wScale
+                local by <const> = ay + hScale
 
                 i = i + 1
                 holeStrArr[i] = strfmt(
@@ -784,9 +786,9 @@ dlg:button {
         end
 
         local borderStr = ""
-        local aBorder = borderClr.alpha
+        local aBorder <const> = borderClr.alpha
         if border > 0 and aBorder > 0 then
-            local webHex = borderClr.red << 0x10
+            local webHex <const> = borderClr.red << 0x10
                 | borderClr.green << 0x08
                 | borderClr.blue
 
@@ -810,7 +812,7 @@ dlg:button {
                 wnBorder, border)
         end
 
-        local svgStr = table.concat({
+        local svgStr <const> = table.concat({
             "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n",
             "<svg ",
             "xmlns=\"http://www.w3.org/2000/svg\" ",
@@ -830,7 +832,7 @@ dlg:button {
             "\n</svg>"
         })
 
-        local file, err = io.open(filepath, "w")
+        local file <const>, err <const> = io.open(filepath, "w")
         if file then
             file:write(svgStr)
             file:close()
