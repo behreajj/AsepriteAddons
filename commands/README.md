@@ -28,4 +28,4 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `prevTab`: Moves the active sprite to the previous tab. Converts the fore- and background colors to RGB.
 
-- `selectCelsRange`: Creates a selection based on the timeline range, or the active cel if the range is empty. Finds the union of images in the range. Equivalent to holding down `Ctrl` and clicking on a non-active layer in the timeline.
+- `selectCelsRange`: Creates a selection based on the timeline range, or the active cel if the range is empty. Finds the union of images in the range. Equivalent to holding down `Ctrl` and clicking on an inactive layer in the timeline.

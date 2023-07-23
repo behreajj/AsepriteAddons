@@ -1,10 +1,18 @@
 dofile("../../support/aseutilities.lua")
 
-local dirTypes = { "AND", "DIAGONAL", "HORIZONTAL", "RANDOM", "SQUARE", "VERTICAL", "XOR" }
-local targets = { "ACTIVE", "ALL", "RANGE" }
-local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
+local dirTypes <const> = {
+    "AND",
+    "DIAGONAL",
+    "HORIZONTAL",
+    "RANDOM",
+    "SQUARE",
+    "VERTICAL",
+    "XOR"
+}
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
-local defaults = {
+local defaults <const> = {
     target = "ACTIVE",
     delLyr = "HIDE",
     dirType = "HORIZONTAL",
@@ -19,7 +27,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Interlace" }
+local dlg <const> = Dialog { title = "Interlace" }
 
 dlg:combobox {
     id = "target",
@@ -129,8 +137,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -139,7 +147,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = site.layer
+        local srcLayer <const> = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -165,33 +173,33 @@ dlg:button {
         end
 
         -- Check for tile maps.
-        local isTilemap = srcLayer.isTilemap
+        local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
             tileSet = srcLayer.tileset --[[@as Tileset]]
         end
 
         -- Unpack arguments.
-        local args = dlg.data
-        local target = args.target or defaults.target --[[@as string]]
-        local dirType = args.dirType or defaults.dirType --[[@as string]]
-        local delLyr = args.delLyr or defaults.delLyr --[[@as string]]
+        local args <const> = dlg.data
+        local target <const> = args.target or defaults.target --[[@as string]]
+        local dirType <const> = args.dirType or defaults.dirType --[[@as string]]
+        local delLyr <const> = args.delLyr or defaults.delLyr --[[@as string]]
 
-        local skip = args.skip or defaults.skip --[[@as integer]]
-        local xSkip = args.xSkip or defaults.xSkip --[[@as integer]]
-        local ySkip = args.ySkip or defaults.ySkip --[[@as integer]]
-        local aSkip = args.aSkip or defaults.aSkip --[[@as integer]]
+        local skip <const> = args.skip or defaults.skip --[[@as integer]]
+        local xSkip <const> = args.xSkip or defaults.xSkip --[[@as integer]]
+        local ySkip <const> = args.ySkip or defaults.ySkip --[[@as integer]]
+        local aSkip <const> = args.aSkip or defaults.aSkip --[[@as integer]]
 
-        local pick = args.pick or defaults.pick --[[@as integer]]
-        local xPick = args.xPick or defaults.xPick --[[@as integer]]
-        local yPick = args.yPick or defaults.yPick --[[@as integer]]
-        local aPick = args.aPick or defaults.aPick --[[@as integer]]
+        local pick <const> = args.pick or defaults.pick --[[@as integer]]
+        local xPick <const> = args.xPick or defaults.xPick --[[@as integer]]
+        local yPick <const> = args.yPick or defaults.yPick --[[@as integer]]
+        local aPick <const> = args.aPick or defaults.aPick --[[@as integer]]
 
-        local frames = Utilities.flatArr2(
+        local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
-        local srcBlendMode = srcLayer.blendMode
-        local srcParent = srcLayer.parent
+        local srcBlendMode <const> = srcLayer.blendMode
+        local srcParent <const> = srcLayer.parent
 
         local skipLayer = nil
         local pickLayer = nil
@@ -219,7 +227,7 @@ dlg:button {
                 srcLayer.name, dirType)
         end)
 
-        local all = pick + skip
+        local all <const> = pick + skip
         local eval = nil
         if dirType == "AND" then
             eval = function(x, y, p, a)
@@ -237,8 +245,8 @@ dlg:button {
         elseif dirType == "SQUARE" then
             eval = function(x, y, p, a)
                 return math.max(
-                        math.abs(x - activeSprite.width // 2),
-                        math.abs(y - activeSprite.height // 2)) % a < p
+                    math.abs(x - activeSprite.width // 2),
+                    math.abs(y - activeSprite.height // 2)) % a < p
             end
         elseif dirType == "VERTICAL" then
             eval = function(x, y, p, a)
@@ -256,44 +264,44 @@ dlg:button {
             end
         end
 
-        local tilesToImage = AseUtilities.tilesToImage
-        local strfmt = string.format
-        local transact = app.transaction
+        local tilesToImage <const> = AseUtilities.tilesToImage
+        local strfmt <const> = string.format
+        local transact <const> = app.transaction
 
-        local colorMode = activeSprite.colorMode
-        local offSkip = Point(xSkip, ySkip)
-        local offPick = Point(xPick, yPick)
+        local colorMode <const> = activeSprite.colorMode
+        local offSkip <const> = Point(xSkip, ySkip)
+        local offPick <const> = Point(xPick, yPick)
 
-        local lenFrames = #frames
+        local lenFrames <const> = #frames
         local idxFrame = 0
         while idxFrame < lenFrames do
             idxFrame = idxFrame + 1
-            local srcFrame = frames[idxFrame]
-            local srcCel = srcLayer:cel(srcFrame)
+            local srcFrame <const> = frames[idxFrame]
+            local srcCel <const> = srcLayer:cel(srcFrame)
             if srcCel then
                 local imgSrc = srcCel.image
                 if isTilemap then
                     imgSrc = tilesToImage(imgSrc, tileSet, colorMode)
                 end
-                local posSrc = srcCel.position
-                local xPos = posSrc.x
-                local yPos = posSrc.y
+                local posSrc <const> = srcCel.position
+                local xPos <const> = posSrc.x
+                local yPos <const> = posSrc.y
 
-                local specSrc = imgSrc.spec
-                local imgPick = Image(specSrc)
-                local imgSkip = Image(specSrc)
+                local specSrc <const> = imgSrc.spec
+                local imgPick <const> = Image(specSrc)
+                local imgSkip <const> = Image(specSrc)
 
-                local alphaMask = specSrc.transparentColor
+                local alphaMask <const> = specSrc.transparentColor
                 imgPick:clear(alphaMask)
                 imgSkip:clear(alphaMask)
 
-                local pxItr = imgSrc:pixels()
+                local pxItr <const> = imgSrc:pixels()
                 for pixel in pxItr do
-                    local x = pixel.x
-                    local y = pixel.y
-                    local xSmpl = xPos + x
-                    local ySmpl = yPos + y
-                    local hex = pixel()
+                    local x <const> = pixel.x
+                    local y <const> = pixel.y
+                    local xSmpl <const> = xPos + x
+                    local ySmpl <const> = yPos + y
+                    local hex <const> = pixel()
                     if eval(xSmpl, ySmpl, pick, all) then
                         imgPick:drawPixel(x, y, hex)
                     else
@@ -304,14 +312,14 @@ dlg:button {
                 transact(
                     strfmt("Interlace %d", srcFrame),
                     function()
-                        local pickCel = activeSprite:newCel(
+                        local pickCel <const> = activeSprite:newCel(
                             pickLayer, srcFrame, imgPick,
                             posSrc + offPick)
-                        local skipCel = activeSprite:newCel(
+                        local skipCel <const> = activeSprite:newCel(
                             skipLayer, srcFrame, imgSkip,
                             posSrc + offSkip)
 
-                        local srcOpacity = srcCel.opacity
+                        local srcOpacity <const> = srcCel.opacity
                         pickCel.opacity = srcOpacity
                         skipCel.opacity = srcOpacity
                     end)
@@ -328,8 +336,8 @@ dlg:button {
                     local idxDel = lenFrames + 1
                     while idxDel > 1 do
                         idxDel = idxDel - 1
-                        local frame = frames[idxDel]
-                        local cel = srcLayer:cel(frame)
+                        local frame <const> = frames[idxDel]
+                        local cel <const> = srcLayer:cel(frame)
                         if cel then activeSprite:deleteCel(cel) end
                     end
                 end)

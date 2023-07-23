@@ -1,17 +1,17 @@
 dofile("../../support/aseutilities.lua")
 
-local brushOptions = { "CIRCLE", "SQUARE" }
-local shiftOptions = { "CARDINAL", "DIAGONAL", "DIMETRIC" }
-local selModes = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
+local brushOptions <const> = { "CIRCLE", "SQUARE" }
+local shiftOptions <const> = { "CARDINAL", "DIAGONAL", "DIMETRIC" }
+local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
-local defaults = {
+local defaults <const> = {
     amount = 1,
     shiftOption = "CARDINAL",
     brushOption = "CIRCLE",
     trimCels = true
 }
 
-local shifts = {
+local shifts <const> = {
     ortho = {
         right = { 1, 0 },
         up = { 0, 1 },
@@ -47,15 +47,19 @@ end
 ---@param dy integer
 ---@param trim boolean
 local function extrude(dx, dy, trim)
-    local site = app.site
-    local activeSprite = site.sprite
+    local site <const> = app.site
+    local activeSprite <const> = site.sprite
     if not activeSprite then return end
-    local activeCel = site.cel
-    if not activeCel then return end
 
-    local srcImage = activeCel.image
-    local srccm = srcImage.colorMode
-    if srccm == ColorMode.TILEMAP then
+    local activeFrame <const> = site.frame
+    if not activeFrame then return end
+
+    local activeLayer <const> = site.layer
+    if not activeLayer then return end
+    if activeLayer.isGroup then return end
+    if activeLayer.isBackground then return end
+    if activeLayer.isReference then return end
+    if activeLayer.isTilemap then
         app.alert {
             title = "Error",
             text = "Tile maps are not supported."
@@ -63,29 +67,34 @@ local function extrude(dx, dy, trim)
         return
     end
 
+    local activeCel <const> = activeLayer:cel(activeFrame)
+    if not activeCel then return end
+
+    local srcImage = activeCel.image
+
     app.transaction("Extrude", function()
-        local celBounds = activeCel.bounds
+        local celBounds <const> = activeCel.bounds
         local xCel = celBounds.x
         local yCel = celBounds.y
 
         if trim then
-            local trm, tmx, tmy = AseUtilities.trimImageAlpha(
+            local trm <const>, tmx <const>, tmy <const> = AseUtilities.trimImageAlpha(
                 srcImage, 0, 0)
             srcImage = trm
             xCel = xCel + tmx
             yCel = yCel + tmy
         end
 
-        local selCurr = AseUtilities.getSelection(activeSprite)
-        local selOrigin = selCurr.origin
+        local selCurr <const> = AseUtilities.getSelection(activeSprite)
+        local selOrigin <const> = selCurr.origin
 
-        local selNext = Selection()
+        local selNext <const> = Selection()
         selNext:add(selCurr)
         selNext.origin = Point(
             selOrigin.x + dx,
             selOrigin.y - dy)
 
-        local trgImage, tlx, tly = AseUtilities.blendImage(
+        local trgImage <const>, tlx <const>, tly <const> = AseUtilities.blendImage(
             srcImage, srcImage,
             xCel, yCel, xCel + dx, yCel - dy,
             selNext, true)
@@ -101,12 +110,21 @@ end
 ---@param dx integer
 ---@param dy integer
 local function nudgeCel(dx, dy)
-    local site = app.site
-    local activeSprite = site.sprite
+    local site <const> = app.site
+    local activeSprite <const> = site.sprite
     if not activeSprite then return end
-    local activeCel = site.cel
+
+    local activeFrame <const> = site.frame
+    if not activeFrame then return end
+
+    local activeLayer <const> = site.layer
+    if not activeLayer then return end
+    if activeLayer.isBackground then return end
+
+    local activeCel <const> = activeLayer:cel(activeFrame)
     if not activeCel then return end
-    local srcPos = activeCel.position
+
+    local srcPos <const> = activeCel.position
     activeCel.position = Point(srcPos.x + dx, srcPos.y - dy)
     app.refresh()
 end
@@ -145,11 +163,11 @@ dlg:button {
     text = "&W",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local amount = args.amount --[[@as integer]]
-        local trim = args.trimCels --[[@as boolean]]
-        local shift = args.shiftOption --[[@as string]]
-        local tr = shiftFromStr(shift)
+        local args <const> = dlg.data
+        local amount <const> = args.amount --[[@as integer]]
+        local trim <const> = args.trimCels --[[@as boolean]]
+        local shift <const> = args.shiftOption --[[@as string]]
+        local tr <const> = shiftFromStr(shift)
         extrude(tr.up[1] * amount,
             tr.up[2] * amount, trim)
     end
@@ -160,11 +178,11 @@ dlg:button {
     text = "&A",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local amount = args.amount --[[@as integer]]
-        local trim = args.trimCels --[[@as boolean]]
-        local shift = args.shiftOption --[[@as string]]
-        local dir = shiftFromStr(shift)
+        local args <const> = dlg.data
+        local amount <const> = args.amount --[[@as integer]]
+        local trim <const> = args.trimCels --[[@as boolean]]
+        local shift <const> = args.shiftOption --[[@as string]]
+        local dir <const> = shiftFromStr(shift)
         extrude(dir.left[1] * amount,
             dir.left[2] * amount, trim)
     end
@@ -175,11 +193,11 @@ dlg:button {
     text = "&S",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local amount = args.amount --[[@as integer]]
-        local trim = args.trimCels --[[@as boolean]]
-        local shift = args.shiftOption --[[@as string]]
-        local dir = shiftFromStr(shift)
+        local args <const> = dlg.data
+        local amount <const> = args.amount --[[@as integer]]
+        local trim <const> = args.trimCels --[[@as boolean]]
+        local shift <const> = args.shiftOption --[[@as string]]
+        local dir <const> = shiftFromStr(shift)
         extrude(dir.down[1] * amount,
             dir.down[2] * amount, trim)
     end
@@ -190,11 +208,11 @@ dlg:button {
     text = "&D",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local amount = args.amount --[[@as integer]]
-        local trim = args.trimCels --[[@as boolean]]
-        local shift = args.shiftOption --[[@as string]]
-        local dir = shiftFromStr(shift)
+        local args <const> = dlg.data
+        local amount <const> = args.amount --[[@as integer]]
+        local trim <const> = args.trimCels --[[@as boolean]]
+        local shift <const> = args.shiftOption --[[@as string]]
+        local dir <const> = shiftFromStr(shift)
         extrude(dir.right[1] * amount,
             dir.right[2] * amount, trim)
     end
@@ -208,10 +226,10 @@ dlg:button {
     text = "&I",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local amount = args.amount  --[[@as integer]]
-        local shift = args.shiftOption --[[@as string]]
-        local tr = shiftFromStr(shift)
+        local args <const> = dlg.data
+        local amount <const> = args.amount --[[@as integer]]
+        local shift <const> = args.shiftOption --[[@as string]]
+        local tr <const> = shiftFromStr(shift)
         nudgeCel(
             tr.up[1] * amount,
             tr.up[2] * amount)
@@ -223,10 +241,10 @@ dlg:button {
     text = "&J",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local amount = args.amount  --[[@as integer]]
-        local shift = args.shiftOption --[[@as string]]
-        local tr = shiftFromStr(shift)
+        local args <const> = dlg.data
+        local amount <const> = args.amount --[[@as integer]]
+        local shift <const> = args.shiftOption --[[@as string]]
+        local tr <const> = shiftFromStr(shift)
         nudgeCel(
             tr.left[1] * amount,
             tr.left[2] * amount)
@@ -238,9 +256,9 @@ dlg:button {
     text = "&K",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local amount = args.amount  --[[@as integer]]
-        local shift = args.shiftOption --[[@as string]]
+        local args <const> = dlg.data
+        local amount <const> = args.amount --[[@as integer]]
+        local shift <const> = args.shiftOption --[[@as string]]
         local tr = shiftFromStr(shift)
         nudgeCel(
             tr.down[1] * amount,
@@ -253,10 +271,10 @@ dlg:button {
     text = "&L",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local amount = args.amount  --[[@as integer]]
-        local shift = args.shiftOption --[[@as string]]
-        local tr = shiftFromStr(shift)
+        local args <const> = dlg.data
+        local amount <const> = args.amount --[[@as integer]]
+        local shift <const> = args.shiftOption --[[@as string]]
+        local tr <const> = shiftFromStr(shift)
         nudgeCel(
             tr.right[1] * amount,
             tr.right[2] * amount)
@@ -289,9 +307,9 @@ dlg:button {
     text = "E&XPAND",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local brushOption = args.brushOption --[[@as string]]
-        local amount = args.amount --[[@as integer]]
+        local args <const> = dlg.data
+        local brushOption <const> = args.brushOption --[[@as string]]
+        local amount <const> = args.amount --[[@as integer]]
         app.command.ModifySelection {
             modifier = "expand",
             brush = string.lower(brushOption),
@@ -305,9 +323,9 @@ dlg:button {
     text = "C&ONTRACT",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local brushOption = args.brushOption --[[@as string]]
-        local amount = args.amount --[[@as integer]]
+        local args <const> = dlg.data
+        local brushOption <const> = args.brushOption --[[@as string]]
+        local amount <const> = args.amount --[[@as integer]]
         app.command.ModifySelection {
             modifier = "contract",
             brush = string.lower(brushOption),
@@ -323,20 +341,28 @@ dlg:button {
     text = "C&EL",
     focus = false,
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then return end
-        local activeCel = site.cel
+
+        local activeFrame <const> = site.frame
+        if not activeFrame then return end
+
+        local activeLayer <const> = site.layer
+        if not activeLayer then return end
+        if activeLayer.isReference then return end
+
+        local activeCel <const> = activeLayer:cel(activeFrame)
         if not activeCel then return end
 
-        local trgSel = AseUtilities.selectCel(
+        local trgSel <const> = AseUtilities.selectCel(
             activeCel, activeSprite.bounds)
 
-        local args = dlg.data
-        local selMode = args.selMode
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
         if selMode ~= "REPLACE" then
-            local activeSel = AseUtilities.getSelection(activeSprite)
+            local activeSel <const> = AseUtilities.getSelection(activeSprite)
 
             if selMode == "INTERSECT" then
                 activeSel:intersect(trgSel)
@@ -365,9 +391,9 @@ dlg:button {
     text = "&BORDER",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local brushOption = args.brushOption --[[@as string]]
-        local amount = args.amount --[[@as integer]]
+        local args <const> = dlg.data
+        local brushOption <const> = args.brushOption --[[@as string]]
+        local amount <const> = args.amount --[[@as integer]]
         app.command.ModifySelection {
             modifier = "border",
             brush = string.lower(brushOption),

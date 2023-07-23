@@ -1,9 +1,9 @@
 dofile("../../support/aseutilities.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE" }
-local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
-local defaults = {
+local defaults <const> = {
     target = "ACTIVE",
     trimCels = false,
     delOver = "HIDE",
@@ -11,7 +11,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Layer Mask" }
+local dlg <const> = Dialog { title = "Layer Mask" }
 
 dlg:combobox {
     id = "target",
@@ -62,8 +62,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -72,7 +72,7 @@ dlg:button {
             return
         end
 
-        local colorMode = activeSprite.colorMode
+        local colorMode <const> = activeSprite.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -81,7 +81,7 @@ dlg:button {
             return
         end
 
-        local overLayer = site.layer
+        local overLayer <const> = site.layer
         if not overLayer then
             app.alert {
                 title = "Error",
@@ -90,7 +90,7 @@ dlg:button {
             return
         end
 
-        local overIndex = overLayer.stackIndex
+        local overIndex <const> = overLayer.stackIndex
         if overIndex < 2 then
             app.alert {
                 title = "Error",
@@ -101,9 +101,9 @@ dlg:button {
 
         -- A parent may be a sprite or a group layer.
         -- Over and under layer should belong to same group.
-        local parent = overLayer.parent
-        local underIndex = overIndex - 1
-        local underLayer = parent.layers[underIndex]
+        local parent <const> = overLayer.parent
+        local underIndex <const> = overIndex - 1
+        local underLayer <const> = parent.layers[underIndex]
 
         if overLayer.isGroup or underLayer.isGroup then
             app.alert {
@@ -122,40 +122,43 @@ dlg:button {
         end
 
         -- Cache global functions used in loop.
-        local min = math.min
-        local max = math.max
-        local tilesToImage = AseUtilities.tilesToImage
-        local trim = AseUtilities.trimImageAlpha
+        local min <const> = math.min
+        local max <const> = math.max
+        local tilesToImage <const> = AseUtilities.tilesToImage
+        local trim <const> = AseUtilities.trimImageAlpha
 
         -- Unpack arguments.
-        local args = dlg.data
-        local target = args.target or defaults.target --[[@as string]]
-        local trimCels = args.trimCels
-        local delOverStr = args.delOver or defaults.delOver
-        local delUnderStr = args.delUnder or defaults.delUnder
+        local args <const> = dlg.data
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
+        local trimCels <const> = args.trimCels --[[@as boolean]]
+        local delOverStr <const> = args.delOver
+            or defaults.delOver --[[@as string]]
+        local delUnderStr <const> = args.delUnder
+            or defaults.delUnder --[[@as string]]
 
-        local overIsValidTrg = true
-        local underIsValidTrg = (not underLayer.isBackground)
+        local overIsValidTrg <const> = true
+        local underIsValidTrg <const> = (not underLayer.isBackground)
 
-        local hideOverLayer = delOverStr == "HIDE"
-        local delOverLayer = delOverStr == "DELETE_LAYER"
+        local hideOverLayer <const> = delOverStr == "HIDE"
+        local delOverLayer <const> = delOverStr == "DELETE_LAYER"
             and overIsValidTrg
-        local delUnderLayer = delUnderStr == "DELETE_LAYER"
+        local delUnderLayer <const> = delUnderStr == "DELETE_LAYER"
             and underIsValidTrg
 
-        local hideUnderLayer = delOverStr == "HIDE"
-        local delOverCels = delOverStr == "DELETE_CELS"
+        local hideUnderLayer <const> = delOverStr == "HIDE"
+        local delOverCels <const> = delOverStr == "DELETE_CELS"
             and overIsValidTrg
-        local delUnderCels = delUnderStr == "DELETE_CELS"
+        local delUnderCels <const> = delUnderStr == "DELETE_CELS"
             and underIsValidTrg
 
         -- Determine how a pixel is judged to be transparent.
-        local alphaIndex = activeSprite.transparentColor
-        local colorSpace = activeSprite.colorSpace
+        local alphaIndex <const> = activeSprite.transparentColor
+        local colorSpace <const> = activeSprite.colorSpace
 
-        local overIsTile = overLayer.isTilemap
+        local overIsTile <const> = overLayer.isTilemap
         local tileSetOver = nil
-        local underIsTile = underLayer.isTilemap
+        local underIsTile <const> = underLayer.isTilemap
         local tileSetUnder = nil
         if overIsTile then
             tileSetOver = overLayer.tileset --[[@as Tileset]]
@@ -168,10 +171,13 @@ dlg:button {
             AseUtilities.getFrames(activeSprite, target))
 
         -- Unpack layer opacity.
-        local overLyrOpacity = 0xff
-        local underLyrOpacity = 0xff
-        if overLayer.opacity then overLyrOpacity = overLayer.opacity end
-        if underLayer.opacity then underLyrOpacity = underLayer.opacity end
+        local overLyrOpacity = 255
+        local underLyrOpacity = 255
+        if overLayer.opacity then
+            overLyrOpacity = overLayer.opacity end
+        if underLayer.opacity then
+            underLyrOpacity = underLayer.opacity
+        end
 
         -- Create new layer.
         -- Layer and cel opacity are baked in loop below.
@@ -184,22 +190,22 @@ dlg:button {
             compLayer.blendMode = underLayer.blendMode
         end)
 
-        local lenFrames = #frames
-        local rgbColorMode = ColorMode.RGB
+        local lenFrames <const> = #frames
+        local rgbColorMode <const> = ColorMode.RGB
         app.transaction("Layer Mask", function()
             local idxFrame = 0
             while idxFrame < lenFrames do
                 idxFrame = idxFrame + 1
-                local frame = frames[idxFrame]
-                local overCel = overLayer:cel(frame)
-                local underCel = underLayer:cel(frame)
+                local frame <const> = frames[idxFrame]
+                local overCel <const> = overLayer:cel(frame)
+                local underCel <const> = underLayer:cel(frame)
                 if overCel and underCel then
                     local imgOver = overCel.image
                     if overIsTile then
                         imgOver = tilesToImage(
                             imgOver, tileSetOver, colorMode)
                     end
-                    local posOver = overCel.position
+                    local posOver <const> = overCel.position
                     local xTlOver = posOver.x
                     local yTlOver = posOver.y
 
@@ -213,7 +219,7 @@ dlg:button {
                         imgUnder = tilesToImage(
                             imgUnder, tileSetUnder, colorMode)
                     end
-                    local posUnder = underCel.position
+                    local posUnder <const> = underCel.position
                     local xTlUnder = posUnder.x
                     local yTlUnder = posUnder.y
 
@@ -251,53 +257,52 @@ dlg:button {
                     end
 
                     -- Find intersection of over and under.
-                    local xTlTarget = max(xTlOver, xTlUnder)
-                    local yTlTarget = max(yTlOver, yTlUnder)
-                    local xBrTarget = min(xBrOver, xBrUnder)
-                    local yBrTarget = min(yBrOver, yBrUnder)
+                    local xTlTarget <const> = max(xTlOver, xTlUnder)
+                    local yTlTarget <const> = max(yTlOver, yTlUnder)
+                    local xBrTarget <const> = min(xBrOver, xBrUnder)
+                    local yBrTarget <const> = min(yBrOver, yBrUnder)
 
                     -- Intersection may be empty (invalid).
                     if xBrTarget > xTlTarget and yBrTarget > yTlTarget then
-                        local overCelOpacity = overCel.opacity
-                        local underCelOpacity = underCel.opacity
-                        local overCompOpacity = (overLyrOpacity * overCelOpacity) // 0xff
-                        local underCompOpacity = (underLyrOpacity * underCelOpacity) // 0xff
+                        local overCelOpacity <const> = overCel.opacity
+                        local underCelOpacity <const> = underCel.opacity
+                        local overCompOpacity <const> = (overLyrOpacity * overCelOpacity) // 255
+                        local underCompOpacity <const> = (underLyrOpacity * underCelOpacity) // 255
 
-                        local widthTarget = xBrTarget - xTlTarget
-                        local heightTarget = yBrTarget - yTlTarget
+                        local widthTarget <const> = xBrTarget - xTlTarget
+                        local heightTarget <const> = yBrTarget - yTlTarget
 
-                        local trgSpec = ImageSpec {
+                        local trgSpec <const> = ImageSpec {
                             width = widthTarget,
                             height = heightTarget,
                             colorMode = rgbColorMode,
                             transparentColor = alphaIndex
                         }
                         trgSpec.colorSpace = colorSpace
-                        local trgImage = Image(trgSpec)
-                        local trgPos = Point(xTlTarget, yTlTarget)
+                        local trgImage <const> = Image(trgSpec)
+                        local trgPos <const> = Point(xTlTarget, yTlTarget)
 
-                        local trgPxItr = trgImage:pixels()
+                        local trgPxItr <const> = trgImage:pixels()
                         for pixel in trgPxItr do
-                            local xSprite = pixel.x + xTlTarget
-                            local ySprite = pixel.y + yTlTarget
+                            local xSprite <const> = pixel.x + xTlTarget
+                            local ySprite <const> = pixel.y + yTlTarget
 
-                            local xOver = xSprite - xTlOver
-                            local yOver = ySprite - yTlOver
-                            local hexOver = imgOver:getPixel(xOver, yOver)
+                            local xOver <const> = xSprite - xTlOver
+                            local yOver <const> = ySprite - yTlOver
+                            local hexOver <const> = imgOver:getPixel(xOver, yOver)
                             local alphaOver = (hexOver >> 0x18) & 0xff
-                            alphaOver = (alphaOver * overCompOpacity) // 0xff
+                            alphaOver = (alphaOver * overCompOpacity) // 255
 
                             if alphaOver > 0 then
-                                local xUnder = xSprite - xTlUnder
-                                local yUnder = ySprite - yTlUnder
+                                local xUnder <const> = xSprite - xTlUnder
+                                local yUnder <const> = ySprite - yTlUnder
 
-                                -- TODO: Does this need to be premultiplied before blend
-                                -- then unpremultiplied after?
-                                local hexUnder = imgUnder:getPixel(xUnder, yUnder)
+                                -- No sign that alpha premultiply affects this.
+                                local hexUnder <const> = imgUnder:getPixel(xUnder, yUnder)
                                 local alphaUnder = (hexUnder >> 0x18) & 0xff
-                                alphaUnder = (alphaUnder * underCompOpacity) // 0xff
-                                local alphaComp = (alphaOver * alphaUnder) // 0xff
-                                local hexComp = (alphaComp << 0x18)
+                                alphaUnder = (alphaUnder * underCompOpacity) // 255
+                                local alphaComp <const> = (alphaOver * alphaUnder) // 255
+                                local hexComp <const> = (alphaComp << 0x18)
                                     | (hexUnder & 0x00ffffff)
                                 pixel(hexComp)
                             end
@@ -324,11 +329,11 @@ dlg:button {
                 local idxDel0 = lenFrames + 1
                 while idxDel0 > 1 do
                     idxDel0 = idxDel0 - 1
-                    local frame = frames[idxDel0]
+                    local frame <const> = frames[idxDel0]
                     -- API reports an error if a cel cannot be
                     -- found, so the layer needs to check that
                     -- it has a cel first.
-                    local overCel = overLayer:cel(frame)
+                    local overCel <const> = overLayer:cel(frame)
                     if overCel then activeSprite:deleteCel(overCel) end
                 end
             end)
@@ -343,8 +348,8 @@ dlg:button {
                 local idxDel1 = lenFrames + 1
                 while idxDel1 > 1 do
                     idxDel1 = idxDel1 - 1
-                    local frame = frames[idxDel1]
-                    local underCel = underLayer:cel(frame)
+                    local frame <const> = frames[idxDel1]
+                    local underCel <const> = underLayer:cel(frame)
                     if underCel then activeSprite:deleteCel(underCel) end
                 end
             end)

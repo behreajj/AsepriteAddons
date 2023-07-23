@@ -1440,8 +1440,8 @@ function AseUtilities.flattenGroup(
             local xTlLeaf <const> = packet.xtl --[[@as integer]]
             local yTlLeaf <const> = packet.ytl --[[@as integer]]
 
-            local celOpac01 <const> = leafCelOpacity * 0.003921568627451
-            local layerOpac01 <const> = leafLayerOpacity * 0.003921568627451
+            local celOpac01 <const> = leafCelOpacity / 255.0
+            local layerOpac01 <const> = leafLayerOpacity / 255.0
             local leafOpac01 <const> = celOpac01 * layerOpac01
             local leafOpacity <const> = floor(leafOpac01 * 255.0 + 0.5)
 
