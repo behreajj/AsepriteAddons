@@ -1,9 +1,9 @@
 dofile("../../support/aseutilities.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE" }
-local edges = { "CLAMP", "WRAP" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local edges <const> = { "CLAMP", "WRAP" }
 
-local defaults = {
+local defaults <const> = {
     target = "ACTIVE",
     stretchContrast = false,
     scale = 16,
@@ -17,7 +17,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Normal From Height Map" }
+local dlg <const> = Dialog { title = "Normal From Height Map" }
 
 dlg:combobox {
     id = "target",
@@ -104,7 +104,7 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Early returns.
-        local activeSprite = app.site.sprite
+        local activeSprite <const> = app.site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -122,25 +122,28 @@ dlg:button {
         end
 
         -- Unpack arguments.
-        local args = dlg.data
-        local target = args.target or defaults.target --[[@as string]]
-        local scale = args.scale or defaults.scale --[[@as integer]]
-        local stretchContrast = args.stretchContrast --[[@as boolean]]
-        local xFlip = args.xFlip --[[@as boolean]]
-        local yFlip = args.yFlip --[[@as boolean]]
-        local zFlip = args.zFlip --[[@as boolean]]
-        local showFlatMap = args.showFlatMap --[[@as boolean]]
-        local showGrayMap = args.showGrayMap --[[@as boolean]]
-        local preserveAlpha = args.preserveAlpha --[[@as boolean]]
+        local args <const> = dlg.data
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
+        local scale <const> = args.scale
+            or defaults.scale --[[@as integer]]
+        local stretchContrast <const> = args.stretchContrast --[[@as boolean]]
+        local xFlip <const> = args.xFlip --[[@as boolean]]
+        local yFlip <const> = args.yFlip --[[@as boolean]]
+        local zFlip <const> = args.zFlip --[[@as boolean]]
+        local showFlatMap <const> = args.showFlatMap --[[@as boolean]]
+        local showGrayMap <const> = args.showGrayMap --[[@as boolean]]
+        local preserveAlpha <const> = args.preserveAlpha --[[@as boolean]]
 
         -- Cache global methods to locals.
-        local max = math.max
-        local min = math.min
-        local sqrt = math.sqrt
-        local floor = math.floor
+        local max <const> = math.max
+        local min <const> = math.min
+        local sqrt <const> = math.sqrt
+        local floor <const> = math.floor
 
         -- Choose edge wrapping method.
-        local edgeType = args.edgeType or defaults.edgeType --[[@as string]]
+        local edgeType <const> = args.edgeType
+            or defaults.edgeType --[[@as string]]
         local wrapper = nil
         if edgeType == "CLAMP" then
             wrapper = function(a, b)
@@ -155,16 +158,16 @@ dlg:button {
         end
 
         -- Choose frames based on input.
-        local frames = Utilities.flatArr2(
+        local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
         -- Held constant in loop to follow.
-        local spriteWidth = activeSprite.width
-        local spriteHeight = activeSprite.height
-        local spriteSpec = activeSprite.spec
-        local halfScale = scale * 0.5
-        local originPt = Point(0, 0)
-        local lenFrames = #frames
+        local spriteWidth <const> = activeSprite.width
+        local spriteHeight <const> = activeSprite.height
+        local spriteSpec <const> = activeSprite.spec
+        local halfScale <const> = scale * 0.5
+        local originPt <const> = Point(0, 0)
+        local lenFrames <const> = #frames
 
         -- For flipping normals.
         local xFlipNum = 1
@@ -187,8 +190,8 @@ dlg:button {
         end
 
         -- In the event that the image is trimmed.
-        local activeWidth = spriteWidth
-        local activeHeight = spriteHeight
+        local activeWidth <const> = spriteWidth
+        local activeHeight <const> = spriteHeight
 
         -- Create necessary layers.
         local flatLayer = nil
@@ -210,7 +213,7 @@ dlg:button {
             normalLayer.name = string.format("Normal.Map.%03d", scale)
         end)
 
-        local specNone = ImageSpec {
+        local specNone <const> = ImageSpec {
             width = activeWidth,
             height = activeHeight
         }
@@ -220,10 +223,10 @@ dlg:button {
             local i = 0
             while i < lenFrames do
                 i = i + 1
-                local frame = frames[i]
+                local frame <const> = frames[i]
 
                 -- Create flat image.
-                local flatImg = Image(spriteSpec)
+                local flatImg <const> = Image(spriteSpec)
                 flatImg:drawSprite(activeSprite, frame)
 
                 -- Show flattened image.
@@ -234,9 +237,9 @@ dlg:button {
 
                 -- Prep variables for loop.
                 ---@type number[]
-                local lumTable = {}
+                local lumTable <const> = {}
                 ---@type integer[]
-                local alphaTable = {}
+                local alphaTable <const> = {}
                 local flatIdx = 0
                 local lMin = 2147483647
                 local lMax = -2147483648
@@ -245,14 +248,14 @@ dlg:button {
                 local flatPxItr = flatImg:pixels()
                 for pixel in flatPxItr do
                     flatIdx = flatIdx + 1
-                    local hex = pixel()
-                    local alpha = (hex >> 0x18) & 0xff
+                    local hex <const> = pixel()
+                    local alpha <const> = (hex >> 0x18) & 0xff
                     alphaTable[flatIdx] = alpha
 
                     local lum = 0.0
                     if alpha > 0 then
-                        local clr = Clr.fromHex(hex)
-                        local lab = Clr.sRgbToSrLab2(clr)
+                        local clr <const> = Clr.fromHex(hex)
+                        local lab <const> = Clr.sRgbToSrLab2(clr)
                         lum = lab.l * 0.01
                     end
 
@@ -265,14 +268,14 @@ dlg:button {
                 -- A color disc with uniform perceptual luminance
                 -- generated by Okhsl has a range of about 0.069.
                 if stretchContrast and lMax > lMin then
-                    local rangeLum = math.abs(lMax - lMin)
+                    local rangeLum <const> = math.abs(lMax - lMin)
                     if rangeLum > 0.07 then
-                        local invRangeLum = 1.0 / rangeLum
-                        local lenLum = #lumTable
+                        local invRangeLum <const> = 1.0 / rangeLum
+                        local lenLum <const> = #lumTable
                         local j = 0
                         while j < lenLum do
                             j = j + 1
-                            local lum = lumTable[j]
+                            local lum <const> = lumTable[j]
                             lumTable[j] = (lum - lMin) * invRangeLum
                         end
                     end
@@ -280,16 +283,16 @@ dlg:button {
 
                 -- Show gray image.
                 if showGrayMap then
-                    local grayImg = Image(specNone)
-                    local grayPxItr = grayImg:pixels()
+                    local grayImg <const> = Image(specNone)
+                    local grayPxItr <const> = grayImg:pixels()
                     local grayIdx = 0
                     for pixel in grayPxItr do
                         grayIdx = grayIdx + 1
-                        local alpha = alphaTable[grayIdx]
-                        local lum = lumTable[grayIdx]
+                        local alpha <const> = alphaTable[grayIdx]
+                        local lum <const> = lumTable[grayIdx]
                         if alpha > 0 then
-                            local v = floor(0.5 + lum * 255.0)
-                            local hex = alpha << 0x18 | v << 0x10 | v << 0x08 | v
+                            local v <const> = floor(0.5 + lum * 255.0)
+                            local hex <const> = alpha << 0x18 | v << 0x10 | v << 0x08 | v
                             pixel(hex)
                         end
                     end
@@ -299,58 +302,58 @@ dlg:button {
                 end
 
                 local writeIdx = 0
-                local normalImg = Image(specNone)
-                local normPxItr = normalImg:pixels()
+                local normalImg <const> = Image(specNone)
+                local normPxItr <const> = normalImg:pixels()
 
                 for pixel in normPxItr do
                     writeIdx = writeIdx + 1
-                    local alphaCenter = alphaTable[writeIdx]
+                    local alphaCenter <const> = alphaTable[writeIdx]
                     if alphaCenter > 0 then
-                        local yc = pixel.y
-                        local yn1 = wrapper(yc - 1, activeHeight)
-                        local yp1 = wrapper(yc + 1, activeHeight)
+                        local yc <const> = pixel.y
+                        local yn1 <const> = wrapper(yc - 1, activeHeight)
+                        local yp1 <const> = wrapper(yc + 1, activeHeight)
 
-                        local xc = pixel.x
-                        local xn1 = wrapper(xc - 1, activeWidth)
-                        local xp1 = wrapper(xc + 1, activeWidth)
+                        local xc <const> = pixel.x
+                        local xn1 <const> = wrapper(xc - 1, activeWidth)
+                        local xp1 <const> = wrapper(xc + 1, activeWidth)
 
-                        local yn1Index = xc + yn1 * activeWidth
-                        local yp1Index = xc + yp1 * activeWidth
+                        local yn1Index <const> = xc + yn1 * activeWidth
+                        local yp1Index <const> = xc + yp1 * activeWidth
 
-                        local ycw = yc * activeWidth
-                        local xn1Index = xn1 + ycw
-                        local xp1Index = xp1 + ycw
+                        local ycw <const> = yc * activeWidth
+                        local xn1Index <const> = xn1 + ycw
+                        local xp1Index <const> = xp1 + ycw
 
                         -- Treat transparent pixels as zero height.
                         local grayNorth = 0.0
-                        local alphaNorth = alphaTable[1 + yn1Index]
+                        local alphaNorth <const> = alphaTable[1 + yn1Index]
                         if alphaNorth > 0 then
                             grayNorth = lumTable[1 + yn1Index]
                         end
 
                         local grayWest = 0.0
-                        local alphaWest = alphaTable[1 + xn1Index]
+                        local alphaWest <const> = alphaTable[1 + xn1Index]
                         if alphaWest > 0 then
                             grayWest = lumTable[1 + xn1Index]
                         end
 
                         local grayEast = 0.0
-                        local alphaEast = alphaTable[1 + xp1Index]
+                        local alphaEast <const> = alphaTable[1 + xp1Index]
                         if alphaEast > 0 then
                             grayEast = lumTable[1 + xp1Index]
                         end
 
                         local graySouth = 0.0
-                        local alphaSouth = alphaTable[1 + yp1Index]
+                        local alphaSouth <const> = alphaTable[1 + yp1Index]
                         if alphaSouth > 0 then
                             graySouth = lumTable[1 + yp1Index]
                         end
 
-                        local dx = halfScale * (grayWest - grayEast)
-                        local dy = halfScale * (graySouth - grayNorth)
+                        local dx <const> = halfScale * (grayWest - grayEast)
+                        local dy <const> = halfScale * (graySouth - grayNorth)
 
-                        local sqMag = dx * dx + dy * dy + 1.0
-                        local alphaMask = (alphaCenter | alphaPart) << 0x18
+                        local sqMag <const> = dx * dx + dy * dy + 1.0
+                        local alphaMask <const> = (alphaCenter | alphaPart) << 0x18
                         if sqMag > 1.0 then
                             local nz = 1.0 / sqrt(sqMag)
                             local nx = min(max(dx * nz, -1.0), 1.0)

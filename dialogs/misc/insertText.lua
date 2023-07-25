@@ -1,13 +1,17 @@
 dofile("../../support/textutilities.lua")
 
-local msgSrcs = { "ENTRY", "FILE" }
-local txtFormats = { "gpl", "md", "pal", "txt" }
+local msgSrcs <const> = { "ENTRY", "FILE" }
+local txtFormats <const> = { "gpl", "md", "pal", "txt" }
 
+---@param tbl string[]
+---@param start integer
+---@param finish integer
+---@return string[]
 local function slice(tbl, start, finish)
-    local sl = {}
-    local dest = finish or #tbl
-    local orig = (start or 1) - 1
-    local range = dest - orig
+    local sl <const> = {}
+    local dest <const> = finish or #tbl
+    local orig <const> = (start or 1) - 1
+    local range <const> = dest - orig
     if range < 1 then return {} end
     local pos = 0
     while pos < range do
@@ -17,7 +21,7 @@ local function slice(tbl, start, finish)
     return sl
 end
 
-local defaults = {
+local defaults <const> = {
     msgSrc = "ENTRY",
     msgEntry = "Lorem ipsum dolor sit amet",
     charLimit = 72,
@@ -37,7 +41,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Insert Text" }
+local dlg <const> = Dialog { title = "Insert Text" }
 
 dlg:combobox {
     id = "msgSrc",
@@ -45,13 +49,14 @@ dlg:combobox {
     option = defaults.msgSrc,
     options = msgSrcs,
     onchange = function()
-        local state = dlg.data.msgSrc
+        local args <const> = dlg.data
+        local state <const> = args.msgSrc --[[@as string]]
         dlg:modify {
             id = "msgEntry",
             visible = state == "ENTRY"
         }
 
-        local isf = state == "FILE"
+        local isf <const> = state == "FILE"
         dlg:modify { id = "msgFilePath", visible = isf }
         dlg:modify { id = "printElapsed", visible = isf }
     end
@@ -205,8 +210,8 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Begin measuring elapsed time.
-        local args = dlg.data
-        local printElapsed = args.printElapsed --[[@as boolean]]
+        local args <const> = dlg.data
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         local startTime = 0
         local endTime = 0
         local elapsed = 0
@@ -223,47 +228,48 @@ dlg:button {
         end
 
         -- Constants, as far as we're concerned.
-        local lut = TextUtilities.GLYPH_LUT
-        local gw = TextUtilities.GLYPH_WIDTH
-        local gh = TextUtilities.GLYPH_HEIGHT
-        local mxDrop = 2
+        local lut <const> = TextUtilities.GLYPH_LUT
+        local gw <const> = TextUtilities.GLYPH_WIDTH
+        local gh <const> = TextUtilities.GLYPH_HEIGHT
+        local mxDrop <const> = 2
 
         -- Cache methods used in for loops to local.
-        local displayString = TextUtilities.drawString
+        local displayString <const> = TextUtilities.drawString
 
         -- Unpack arguments.
-        local msgSrc = args.msgSrc or defaults.msgSrc
+        local msgSrc <const> = args.msgSrc or defaults.msgSrc --[[@as string]]
         local msgEntry = args.msgEntry --[[@as string]]
-        local msgFilePath = args.msgFilePath --[[@as string]]
-        local charLimit = args.charLimit or defaults.charLimit --[[@as integer]]
-        local animate = args.animate
-        local fps = args.fps or defaults.fps --[[@as integer]]
+        local msgFilePath <const> = args.msgFilePath --[[@as string]]
+        local charLimit <const> = args.charLimit or defaults.charLimit --[[@as integer]]
+        local animate <const> = args.animate --[[@as boolean]]
+        local fps <const> = args.fps or defaults.fps --[[@as integer]]
         local xOrigin = args.xOrigin or defaults.xOrigin --[[@as integer]]
         local yOrigin = args.yOrigin or defaults.yOrigin --[[@as integer]]
-        local scale = args.scale or defaults.scale --[[@as integer]]
-        local leading = args.leading or defaults.leading --[[@as integer]]
-        local alignLine = args.alignHoriz or defaults.alignLine --[[@as string]]
-        local alignChar = args.alignVert or defaults.alignChar --[[@as string]]
-        local aseFill = args.fillClr --[[@as Color]]
-        local aseShd = args.shdColor --[[@as Color]]
-        local aseBkg = args.bkgColor --[[@as Color]]
+        local scale <const> = args.scale or defaults.scale --[[@as integer]]
+        local leading <const> = args.leading or defaults.leading --[[@as integer]]
+        local alignLine <const> = args.alignHoriz or defaults.alignLine --[[@as string]]
+        local alignChar <const> = args.alignVert or defaults.alignChar --[[@as string]]
+        local aseFill <const> = args.fillClr --[[@as Color]]
+        local aseShd <const> = args.shdColor --[[@as Color]]
+        local aseBkg <const> = args.bkgColor --[[@as Color]]
 
         -- Reinterpret and validate.
-        local duration = 1.0 / math.max(1, fps)
+        local duration <const> = 1.0 / math.max(1, fps)
         if msgEntry == nil or #msgEntry < 1 then
             msgEntry = defaults.msgEntry
         end
 
         -- Cache Aseprite colors to hexadecimals.
-        local hexBkg = AseUtilities.aseColorToHex(aseBkg, ColorMode.RGB)
-        local hexShd = AseUtilities.aseColorToHex(aseShd, ColorMode.RGB)
-        local hexFill = AseUtilities.aseColorToHex(aseFill, ColorMode.RGB)
+        local hexBkg <const> = AseUtilities.aseColorToHex(aseBkg, ColorMode.RGB)
+        local hexShd <const> = AseUtilities.aseColorToHex(aseShd, ColorMode.RGB)
+        local hexFill <const> = AseUtilities.aseColorToHex(aseFill, ColorMode.RGB)
 
+        ---@type string[][]
         local charTableStill = {}
 
         if msgSrc == "FILE" then
             if msgFilePath and #msgFilePath > 0 then
-                local file, err = io.open(msgFilePath, "r")
+                local file <const>, err <const> = io.open(msgFilePath, "r")
                 local flatStr = nil
                 if file ~= nil then
                     flatStr = file:read("*all")
@@ -292,13 +298,14 @@ dlg:button {
 
         -- Find the widths (measured in characters)
         -- for each line. Find the maximum line width.
-        local lineWidths = {}
+        ---@type integer[]
+        local lineWidths <const> = {}
         local maxLineWidth = 0
-        local lineCount = #charTableStill
+        local lineCount <const> = #charTableStill
         local totalCharCount = 0
         for i = 1, lineCount, 1 do
-            local charsLine = charTableStill[i]
-            local lineWidth = #charsLine
+            local charsLine <const> = charTableStill[i]
+            local lineWidth <const> = #charsLine
             if lineWidth > maxLineWidth then
                 maxLineWidth = lineWidth
             end
@@ -308,18 +315,18 @@ dlg:button {
 
         -- Calculate display width and height from
         -- scale multiplied by glyph width and height.
-        local dw = gw * scale
-        local dh = gh * scale
+        local dw <const> = gw * scale
+        local dh <const> = gh * scale
 
         -- Calculate dimensions of new image.
-        local widthImg = dw * maxLineWidth
-        local heightImg = dh * lineCount
+        local widthImg <const> = dw * maxLineWidth
+        local heightImg <const> = dh * lineCount
             + scale * (lineCount - 1)   -- drop shadow
             + leading * (lineCount - 1) -- leading
             + (scale + 1) * mxDrop      -- for descenders
 
         local layer = nil
-        local site = app.site
+        local site <const> = app.site
         local sprite = site.sprite
         if not sprite then
             sprite = Sprite(widthImg, heightImg)
@@ -327,7 +334,7 @@ dlg:button {
                 if app.defaultPalette then
                     sprite:setPalette(app.defaultPalette)
                 else
-                    local pal = sprite.palettes[1]
+                    local pal <const> = sprite.palettes[1]
                     pal:resize(3)
                     pal:setColor(0, hexBkg)
                     pal:setColor(1, hexShd)
@@ -344,18 +351,19 @@ dlg:button {
             end)
         end
 
-        local widthSprite = sprite.width
-        local heightSprite = sprite.height
+        local widthSprite <const> = sprite.width
+        local heightSprite <const> = sprite.height
 
         -- Determine if background and shadow should
         -- be used based on their alpha.
-        local useBkg = (hexBkg & 0xff000000) ~= 0
-        local useShadow = (hexShd & 0xff000000) ~= 0
+        local useBkg <const> = (hexBkg & 0xff000000) ~= 0
+        local useShadow <const> = (hexShd & 0xff000000) ~= 0
 
         -- Create background source image to copy.
-        local bkgSrcSpec = ImageSpec {
+        local bkgSrcSpec <const> = ImageSpec {
             width = widthImg,
-            height = heightImg }
+            height = heightImg
+        }
         bkgSrcSpec.colorSpace = sprite.colorSpace
         local bkgSrcImg = Image(bkgSrcSpec)
         if useBkg then
@@ -369,14 +377,15 @@ dlg:button {
             0.5 + yOrigin * 0.01 * heightSprite)
 
         -- Find the display width and center of a line.
-        local dispWidth = maxLineWidth * dw
-        local dispCenter = dispWidth // 2
+        local dispWidth <const> = maxLineWidth * dw
+        local dispCenter <const> = dispWidth // 2
 
         -- For static text, the cel position can be set.
         -- The numbers in lineOffsets use characters as a measure,
         -- so they need to be multiplied by dw (display width) later.
-        local stillPos = Point(xOrigin, yOrigin)
-        local lineOffsets = {}
+        local stillPos <const> = Point(xOrigin, yOrigin)
+        ---@type integer[]
+        local lineOffsets <const> = {}
         if alignLine == "CENTER" then
             stillPos.x = stillPos.x - dispCenter
 
@@ -408,13 +417,13 @@ dlg:button {
             stillPos.y = stillPos.y - heightImg
         end
 
-        local activeFrameObj = site.frame
+        local activeFrameObj <const> = site.frame
             or sprite.frames[1]
-        local actFrIdx = activeFrameObj.frameNumber
+        local actFrIdx <const> = activeFrameObj.frameNumber
         if animate then
-            local frames = sprite.frames
-            local lenFrames = #frames
-            local reqFrames = actFrIdx
+            local frames <const> = sprite.frames
+            local lenFrames <const> = #frames
+            local reqFrames <const> = actFrIdx
                 + totalCharCount - (1 + lenFrames)
 
             -- Extra error check wrapping when debugging:
@@ -443,8 +452,8 @@ dlg:button {
             local i = 0
             while i < lineCount do
                 i = i + 1
-                local charsLine = charTableStill[i]
-                local lineWidth = lineWidths[i]
+                local charsLine <const> = charTableStill[i]
+                local lineWidth <const> = lineWidths[i]
                 local animImage = nil
 
                 -- Ideally, this would create new images that are
@@ -454,12 +463,12 @@ dlg:button {
                     local j = 0
                     while j < lineWidth do
                         currFrameIdx = currFrameIdx + 1
-                        local animCel = layer:cel(currFrameIdx)
+                        local animCel <const> = layer:cel(currFrameIdx)
                         if animCel then
                             animImage = bkgSrcImg:clone()
 
                             j = j + 1
-                            local animSlice = slice(charsLine, 1, j)
+                            local animSlice <const> = slice(charsLine, 1, j)
                             local animPosx = 0
                             if alignLine == "CENTER" then
                                 animPosx = animPosx + dispCenter - (j * dw) // 2
@@ -485,7 +494,7 @@ dlg:button {
                 bkgSrcImg = animImage:clone()
             end
         else
-            local activeCel = layer:cel(actFrIdx)
+            local activeCel <const> = layer:cel(actFrIdx)
                 or sprite:newCel(layer, actFrIdx)
             activeCel.position = stillPos
 
@@ -494,8 +503,8 @@ dlg:button {
                 local k = 0
                 while k < lineCount do
                     k = k + 1
-                    local charsLine = charTableStill[k]
-                    local lineOffset = lineOffsets[k] * dw
+                    local charsLine <const> = charTableStill[k]
+                    local lineOffset <const> = lineOffsets[k] * dw
 
                     if useShadow then
                         displayString(
@@ -516,7 +525,7 @@ dlg:button {
         if printElapsed then
             endTime = os.clock()
             elapsed = endTime - startTime
-            local txtArr = {
+            local txtArr <const> = {
                 string.format("Start: %.2f", startTime),
                 string.format("End: %.2f", endTime),
                 string.format("Elapsed: %.6f", elapsed),

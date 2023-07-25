@@ -1,6 +1,6 @@
 dofile("../../support/shapeutilities.lua")
 
-local defaults = {
+local defaults <const> = {
     resolution = 32,
     handles = 0,
     xRadius = 32.0,
@@ -15,7 +15,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Ellipse" }
+local dlg <const> = Dialog { title = "Ellipse" }
 
 dlg:slider {
     id = "resolution",
@@ -106,13 +106,15 @@ dlg:check {
     text = "Enable",
     selected = defaults.useStroke,
     onclick = function()
+        local args <const> = dlg.data
+        local useStroke <const> = args.useStroke --[[@as boolean]]
         dlg:modify {
             id = "strokeWeight",
-            visible = dlg.data.useStroke
+            visible = useStroke
         }
         dlg:modify {
             id = "strokeClr",
-            visible = dlg.data.useStroke
+            visible = useStroke
         }
     end
 }
@@ -139,9 +141,11 @@ dlg:check {
     text = "Enable",
     selected = defaults.useFill,
     onclick = function()
+        local args <const> = dlg.data
+        local useFill <const> = args.useFill --[[@as boolean]]
         dlg:modify {
             id = "fillClr",
-            visible = dlg.data.useFill
+            visible = useFill
         }
     end
 }
@@ -162,8 +166,8 @@ dlg:button {
         -- Support for 3D rotation.
         -- See https://github.com/aseprite/api/issues/17 .
 
-        local site = app.site
-        local sprite = site.sprite
+        local site <const> = app.site
+        local sprite <const> = site.sprite
         if not sprite then
             app.alert {
                 title = "Error",
@@ -172,7 +176,7 @@ dlg:button {
             return
         end
 
-        local frame = site.frame
+        local frame <const> = site.frame
         if not frame then
             app.alert {
                 title = "Error",
@@ -181,26 +185,30 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local resolution = args.resolution or defaults.resolution --[[@as integer]]
-        local handles = args.handles or defaults.handles --[[@as integer]]
-        local xr = args.xRadius or defaults.xRadius --[[@as number]]
-        local yr = args.yRadius or defaults.yRadius --[[@as number]]
-        local xc = args.xOrig --[[@as number]]
-        local yc = args.yOrig --[[@as number]]
-        local angDeg = args.angle or defaults.angle --[[@as integer]]
-        local axx = args.axx or defaults.axx --[[@as number]]
-        local axy = args.axy or defaults.axy --[[@as number]]
-        local axz = args.axz or defaults.axz --[[@as number]]
+        local args <const> = dlg.data
+        local resolution <const> = args.resolution
+            or defaults.resolution --[[@as integer]]
+        local handles <const> = args.handles
+            or defaults.handles --[[@as integer]]
+        local xr <const> = args.xRadius
+            or defaults.xRadius --[[@as number]]
+        local yr <const> = args.yRadius
+            or defaults.yRadius --[[@as number]]
+        local xc <const> = args.xOrig --[[@as number]]
+        local yc <const> = args.yOrig --[[@as number]]
+        local angDeg <const> = args.angle or defaults.angle --[[@as integer]]
+        local axx <const> = args.axx or defaults.axx --[[@as number]]
+        local axy <const> = args.axy or defaults.axy --[[@as number]]
+        local axz <const> = args.axz or defaults.axz --[[@as number]]
 
-        local useStroke = args.useStroke --[[@as boolean]]
-        local strokeWeight = args.strokeWeight
+        local useStroke <const> = args.useStroke --[[@as boolean]]
+        local strokeWeight <const> = args.strokeWeight
             or defaults.strokeWeight --[[@as integer]]
-        local strokeColor = args.strokeClr --[[@as Color]]
-        local useFill = args.useFill --[[@as boolean]]
-        local fillColor = args.fillClr --[[@as Color]]
+        local strokeColor <const> = args.strokeClr --[[@as Color]]
+        local useFill <const> = args.useFill --[[@as boolean]]
+        local fillColor <const> = args.fillClr --[[@as Color]]
 
-        local angRad = math.rad(angDeg)
+        local angRad <const> = math.rad(angDeg)
         local axis = Vec3.new(axx, axy, axz)
         if Vec3.any(axis) then
             axis = Vec3.normalize(axis)
@@ -208,14 +216,14 @@ dlg:button {
             axis = Vec3.forward()
         end
 
-        local curve = Curve3.ellipse(xr, yr)
+        local curve <const> = Curve3.ellipse(xr, yr)
 
-        local t = Mat4.fromTranslation(xc, yc, 0.0)
-        local r = Mat4.fromRotInternal(
+        local t <const> = Mat4.fromTranslation(xc, yc, 0.0)
+        local r <const> = Mat4.fromRotInternal(
             math.cos(angRad), math.sin(angRad),
             axis.x, axis.y, axis.z)
-        local s = Mat4.fromScale(1.0, -1.0, 1.0)
-        local mat = Mat4.mul(Mat4.mul(t, s), r)
+        local s <const> = Mat4.fromScale(1.0, -1.0, 1.0)
+        local mat <const> = Mat4.mul(Mat4.mul(t, s), r)
         Utilities.mulMat4Curve3(mat, curve)
 
         local layer = nil

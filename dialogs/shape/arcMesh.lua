@@ -1,6 +1,6 @@
 dofile("../../support/shapeutilities.lua")
 
-local defaults = {
+local defaults <const> = {
     startAngle = 0,
     stopAngle = 90,
     startWeight = 50,
@@ -14,7 +14,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Mesh Arc" }
+local dlg <const> = Dialog { title = "Mesh Arc" }
 
 dlg:slider {
     id = "startAngle",
@@ -103,8 +103,8 @@ dlg:check {
     text = "Enable",
     selected = defaults.useStroke,
     onclick = function()
-        local args = dlg.data
-        local useStroke = args.useStroke --[[@as boolean]]
+        local args <const> = dlg.data
+        local useStroke <const> = args.useStroke --[[@as boolean]]
         dlg:modify { id = "strokeWeight", visible = useStroke }
         dlg:modify { id = "strokeClr", visible = useStroke }
     end
@@ -132,8 +132,8 @@ dlg:check {
     text = "Enable",
     selected = defaults.useFill,
     onclick = function()
-        local args = dlg.data
-        local useFill = args.useFill --[[@as boolean]]
+        local args <const> = dlg.data
+        local useFill <const> = args.useFill --[[@as boolean]]
         dlg:modify { id = "fillClr", visible = useFill }
     end
 }
@@ -151,8 +151,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local site = app.site
-        local sprite = site.sprite
+        local site <const> = app.site
+        local sprite <const> = site.sprite
         if not sprite then
             app.alert {
                 title = "Error",
@@ -161,7 +161,7 @@ dlg:button {
             return
         end
 
-        local frame = site.frame
+        local frame <const> = site.frame
         if not frame then
             app.alert {
                 title = "Error",
@@ -170,26 +170,34 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local startAngle = args.startAngle or defaults.startAngle --[[@as integer]]
-        local stopAngle = args.stopAngle or defaults.stopAngle --[[@as integer]]
-        local sectors = args.sectors or defaults.sectors --[[@as integer]]
-        local startWeight = args.startWieght or defaults.startWeight --[[@as integer]]
-        local stopWeight = args.stopWieght or defaults.stopWeight --[[@as integer]]
-        local margin = args.margin or defaults.margin --[[@as integer]]
+        local args <const> = dlg.data
+        local startAngle <const> = args.startAngle
+            or defaults.startAngle --[[@as integer]]
+        local stopAngle <const> = args.stopAngle
+            or defaults.stopAngle --[[@as integer]]
+        local sectors <const> = args.sectors
+            or defaults.sectors --[[@as integer]]
+        local startWeight <const> = args.startWieght
+            or defaults.startWeight --[[@as integer]]
+        local stopWeight <const> = args.stopWieght
+            or defaults.stopWeight --[[@as integer]]
+        local margin <const> = args.margin
+            or defaults.margin --[[@as integer]]
 
-        local scale = args.scale or defaults.scale --[[@as number]]
-        local xOrig = args.xOrig --[[@as number]]
-        local yOrig = args.yOrig --[[@as number]]
+        local scale <const> = args.scale
+            or defaults.scale --[[@as number]]
+        local xOrig <const> = args.xOrig --[[@as number]]
+        local yOrig <const> = args.yOrig --[[@as number]]
 
-        local useStroke = args.useStroke --[[@as boolean]]
-        local strokeWeight = args.strokeWeight or defaults.strokeWeight --[[@as integer]]
-        local strokeColor = args.strokeClr --[[@as Color]]
-        local useFill = args.useFill --[[@as boolean]]
-        local fillColor = args.fillClr --[[@as Color]]
+        local useStroke <const> = args.useStroke --[[@as boolean]]
+        local strokeWeight <const> = args.strokeWeight
+            or defaults.strokeWeight --[[@as integer]]
+        local strokeColor <const> = args.strokeClr --[[@as Color]]
+        local useFill <const> = args.useFill --[[@as boolean]]
+        local fillColor <const> = args.fillClr --[[@as Color]]
 
         local useQuads = margin > 0
-        local mesh = Mesh2.arc(
+        local mesh <const> = Mesh2.arc(
             0.017453292519943 * startAngle,
             0.017453292519943 * stopAngle,
             0.01 * startWeight,
@@ -197,7 +205,7 @@ dlg:button {
             sectors,
             useQuads)
 
-        local scaleVerif = math.max(2.0, scale)
+        local scaleVerif <const> = math.max(2.0, scale)
         local marginVerif = margin * 0.01
         if marginVerif > 0.0 then
             marginVerif = math.min(marginVerif, 0.99)
@@ -205,9 +213,9 @@ dlg:button {
             mesh:scaleFacesIndiv(1.0 - marginVerif)
         end
 
-        local t = Mat3.fromTranslation(xOrig, yOrig)
-        local s = Mat3.fromScale(scaleVerif, -scaleVerif)
-        local mat = Mat3.mul(t, s)
+        local t <const> = Mat3.fromTranslation(xOrig, yOrig)
+        local s <const> = Mat3.fromScale(scaleVerif, -scaleVerif)
+        local mat <const> = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
         local layer = nil

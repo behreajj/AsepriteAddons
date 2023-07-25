@@ -14,10 +14,6 @@ local harmonyTypes <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Hold down a button when clicking on sliders
-    -- to quantize? Problem is that Space will trigger
-    -- a focused button, so that only leaves Alt.
-
     lchTosRgb = Clr.srLchTosRgb,
     sRgbToLch = Clr.sRgbToSrLch,
     sRgbToLab = Clr.sRgbToSrLab2,
@@ -717,7 +713,8 @@ dlg:canvas {
         -- (060.0 / 180.0) * l + (120.0 / 180.0) * (100.0 - l)
         -- (150.0 / 180.0) * l + (030.0 / 180.0) * (100.0 - l)
         -- (030.0 / 180.0) * l + (150.0 / 180.0) * (100.0 - l)
-        local swatches = {}
+        ---@type { l: number, c: number, h: number, a: number }[]
+        local swatches <const> = {}
         if harmonyType == "ANALOGOUS" then
             local lAna <const> = (l + l + 50.0) / 3.0
             local h30 <const> = 0.08333333333333

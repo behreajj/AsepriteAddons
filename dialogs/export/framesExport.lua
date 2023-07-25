@@ -551,14 +551,21 @@ dlg:button {
         -- .webp file extensions do not allow indexed
         -- color mode and Aseprite doesn't handle this
         -- limitation gracefully.
+        --
+        -- .tga files are not properly imported into Blender.
+        -- GIMP converts them from indexed to RGB on import
+        -- and export doesn't support translucency. Unity does
+        -- not import with transparency. See
+        -- https://github.com/aseprite/aseprite/issues/3982
         if spriteColorMode == ColorMode.INDEXED then
             local lcFileExt <const> = string.lower(fileExt)
             if lcFileExt == "webp"
                 or lcFileExt == "jpg"
-                or lcFileExt == "jpeg" then
+                or lcFileExt == "jpeg"
+                or lcFileExt == "tga" then
                 app.alert {
                     title = "Error",
-                    text = "Indexed color not supported for jpeg, jpg or webp."
+                    text = "Indexed color not supported for jpeg, jpg, tga or webp."
                 }
                 return
             end
@@ -573,7 +580,8 @@ dlg:button {
                 }
             end
         elseif spriteColorMode == ColorMode.GRAY then
-            if string.lower(fileExt) == "bmp" then
+            local lcFileExt <const> = string.lower(fileExt)
+            if lcFileExt == "bmp" then
                 app.alert {
                     title = "Error",
                     text = "Grayscale not supported for bmp."

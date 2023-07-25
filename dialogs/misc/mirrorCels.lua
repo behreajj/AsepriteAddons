@@ -1,13 +1,13 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
-local screenScale = app.preferences.general.screen_scale
+local screenScale <const> = app.preferences.general.screen_scale
 
-local edgeTypes = { "CLAMP", "OMIT", "WRAP" }
-local targets = { "ACTIVE", "ALL", "RANGE" }
-local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
+local edgeTypes <const> = { "CLAMP", "OMIT", "WRAP" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
-local defaults = {
+local defaults <const> = {
     target = "ACTIVE",
     delSrc = "NONE",
     edgeType = "OMIT",
@@ -17,7 +17,7 @@ local defaults = {
     pullFocus = true
 }
 
-local dlg = Dialog { title = "Mirror" }
+local dlg <const> = Dialog { title = "Mirror" }
 
 dlg:combobox {
     id = "target",
@@ -77,8 +77,8 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Early returns.
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -87,7 +87,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = site.layer
+        local srcLayer <const> = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -113,19 +113,22 @@ dlg:button {
         end
 
         -- Check for tile maps.
-        local isTilemap = srcLayer.isTilemap
+        local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
             tileSet = srcLayer.tileset --[[@as Tileset]]
         end
 
         -- Unpack arguments.
-        local args = dlg.data
-        local target = args.target or defaults.target --[[@as string]]
-        local delSrcStr = args.delSrc or defaults.delSrc --[[@as string]]
-        local edgeType = args.edgeType or defaults.edgeType --[[@as string]]
-        local useInverse = args.useInverse --[[@as boolean]]
-        local trimCels = args.trimCels --[[@as boolean]]
+        local args <const> = dlg.data
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
+        local delSrcStr <const> = args.delSrc
+            or defaults.delSrc --[[@as string]]
+        local edgeType <const> = args.edgeType
+            or defaults.edgeType --[[@as string]]
+        local useInverse <const> = args.useInverse --[[@as boolean]]
+        local trimCels <const> = args.trimCels --[[@as boolean]]
 
         -- Whether to use greater than or less than to
         -- determine which side of the line to mirror.
@@ -133,7 +136,7 @@ dlg:button {
         if useInverse then flipSign = -1.0 end
 
         -- Find frames from target.
-        local frames = Utilities.flatArr2(
+        local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
         -- Determine how to wrap pixels.
@@ -159,11 +162,11 @@ dlg:button {
             end
         end
 
-        local spriteSpec = activeSprite.spec
-        local wSprite = spriteSpec.width
-        local hSprite = spriteSpec.height
-        local colorMode = spriteSpec.colorMode
-        local alphaMask = spriteSpec.transparentColor
+        local spriteSpec <const> = activeSprite.spec
+        local wSprite <const> = spriteSpec.width
+        local hSprite <const> = spriteSpec.height
+        local colorMode <const> = spriteSpec.colorMode
+        local alphaMask <const> = spriteSpec.transparentColor
 
         -- Calculate origin and destination.
         -- Divide by 100 to account for percentage.
@@ -199,7 +202,7 @@ dlg:button {
             dx = xDsPx - xOrPx
             dy = yDsPx - yOrPx
         end
-        local dInvMagSq = 1.0 / (dx * dx + dy * dy)
+        local dInvMagSq <const> = 1.0 / (dx * dx + dy * dy)
 
         -- Right side of line is mirrored, left side
         -- copies original pixels.
@@ -226,31 +229,31 @@ dlg:button {
         end)
 
         -- Cache global methods.
-        local floor = math.floor
-        local trimAlpha = AseUtilities.trimImageAlpha
-        local tilesToImage = AseUtilities.tilesToImage
-        local strfmt = string.format
-        local transact = app.transaction
+        local floor <const> = math.floor
+        local trimAlpha <const> = AseUtilities.trimImageAlpha
+        local tilesToImage <const> = AseUtilities.tilesToImage
+        local strfmt <const> = string.format
+        local transact <const> = app.transaction
 
-        local lenFrames = #frames
+        local lenFrames <const> = #frames
         local i = 0
         while i < lenFrames do
             i = i + 1
-            local srcFrame = frames[i]
-            local srcCel = srcLayer:cel(srcFrame)
+            local srcFrame <const> = frames[i]
+            local srcCel <const> = srcLayer:cel(srcFrame)
             if srcCel then
                 local srcImg = srcCel.image
-                local srcPos = srcCel.position
-                local xSrcPos = srcPos.x
-                local ySrcPos = srcPos.y
+                local srcPos <const> = srcCel.position
+                local xSrcPos <const> = srcPos.x
+                local ySrcPos <const> = srcPos.y
 
                 if isTilemap then
                     srcImg = tilesToImage(
                         srcImg, tileSet, colorMode)
                 end
 
-                local wSrcImg = srcImg.width
-                local hSrcImg = srcImg.height
+                local wSrcImg <const> = srcImg.width
+                local hSrcImg <const> = srcImg.height
                 local flatImg = srcImg
                 if xSrcPos ~= 0
                     or ySrcPos ~= 0
@@ -267,26 +270,26 @@ dlg:button {
                     lftImg:clear(alphaMask)
                 end
 
-                local pxItr = flatImg:pixels()
+                local pxItr <const> = flatImg:pixels()
                 for pixel in pxItr do
-                    local cx = pixel.x
-                    local cy = pixel.y
-                    local ex = cx - xOrPx
-                    local ey = cy - yOrPx
-                    local cross = ex * dy - ey * dx
+                    local cx <const> = pixel.x
+                    local cy <const> = pixel.y
+                    local ex <const> = cx - xOrPx
+                    local ey <const> = cy - yOrPx
+                    local cross <const> = ex * dy - ey * dx
                     if flipSign * cross < 0.0 then
-                        local hex = pixel()
+                        local hex <const> = pixel()
                         lftImg:drawPixel(cx, cy, hex)
                     else
-                        local t = (ex * dx + ey * dy) * dInvMagSq
-                        local u = 1.0 - t
-                        local pxProj = u * xOrPx + t * xDsPx
-                        local pyProj = u * yOrPx + t * yDsPx
-                        local pxOpp = pxProj + pxProj - cx
-                        local pyOpp = pyProj + pyProj - cy
+                        local t <const> = (ex * dx + ey * dy) * dInvMagSq
+                        local u <const> = 1.0 - t
+                        local pxProj <const> = u * xOrPx + t * xDsPx
+                        local pyProj <const> = u * yOrPx + t * yDsPx
+                        local pxOpp <const> = pxProj + pxProj - cx
+                        local pyOpp <const> = pyProj + pyProj - cy
 
-                        local ixOpp = floor(0.5 + pxOpp)
-                        local iyOpp = floor(0.5 + pyOpp)
+                        local ixOpp <const> = floor(0.5 + pxOpp)
+                        local iyOpp <const> = floor(0.5 + pyOpp)
 
                         rgtImg:drawPixel(cx, cy, wrapper(
                             ixOpp, iyOpp, wSprite, hSprite,
@@ -308,14 +311,14 @@ dlg:button {
                 transact(
                     strfmt("Mirror %d", srcFrame),
                     function()
-                        local lftCel = activeSprite:newCel(
+                        local lftCel <const> = activeSprite:newCel(
                             lftLayer, srcFrame, lftImg,
                             Point(xTrimLft, yTrimLft))
-                        local rgtCel = activeSprite:newCel(
+                        local rgtCel <const> = activeSprite:newCel(
                             rgtLayer, srcFrame, rgtImg,
                             Point(xTrimRgt, yTrimRgt))
 
-                        local srcOpacity = srcCel.opacity
+                        local srcOpacity <const> = srcCel.opacity
                         lftCel.opacity = srcOpacity
                         rgtCel.opacity = srcOpacity
                     end)
@@ -332,8 +335,8 @@ dlg:button {
                     local idxDel = lenFrames + 1
                     while idxDel > 1 do
                         idxDel = idxDel - 1
-                        local frame = frames[idxDel]
-                        local cel = srcLayer:cel(frame)
+                        local frame <const> = frames[idxDel]
+                        local cel <const> = srcLayer:cel(frame)
                         if cel then activeSprite:deleteCel(cel) end
                     end
                 end)

@@ -14,20 +14,20 @@ local defaults <const> = {
 ---@param shift integer
 local function cycleActive(flag, shift)
     local site <const> = app.site
-    local activeSprite = site.sprite
+    local activeSprite <const> = site.sprite
     if not activeSprite then return end
 
-    local activeLayer = site.layer
+    local activeLayer <const> = site.layer
     if not activeLayer then return end
 
-    local isTilemap = activeLayer.isTilemap
+    local isTilemap <const> = activeLayer.isTilemap
     if not isTilemap then return end
 
-    local tileset = activeLayer.tileset
-    local lenTileset = #tileset
+    local tileset <const> = activeLayer.tileset
+    local lenTileset <const> = #tileset
 
-    local appPrefs = app.preferences
-    local colorBarPrefs = appPrefs.color_bar
+    local appPrefs <const> = app.preferences
+    local colorBarPrefs <const> = appPrefs.color_bar
 
     local access = "fg_tile"
     if flag == "BACK" then

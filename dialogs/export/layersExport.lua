@@ -298,22 +298,22 @@ dlg:button {
         end
         filePath = string.gsub(filePath, "\\", "\\\\")
 
-        -- .webp file extensions do not allow indexed
-        -- color mode and Aseprite doesn't handle this
-        -- limitation gracefully.
+        -- For explanatory comment, see framesExport.lua .
         if spriteColorMode == ColorMode.INDEXED then
             local lcFileExt <const> = string.lower(fileExt)
             if lcFileExt == "webp"
                 or lcFileExt == "jpg"
-                or lcFileExt == "jpeg" then
+                or lcFileExt == "jpeg"
+                or lcFileExt == "tga" then
                 app.alert {
                     title = "Error",
-                    text = "Indexed color not supported for jpeg, jpg or webp."
+                    text = "Indexed color not supported for jpeg, jpg, tga or webp."
                 }
                 return
             end
         elseif spriteColorMode == ColorMode.GRAY then
-            if string.lower(fileExt) == "bmp" then
+            local lcFileExt <const> = string.lower(fileExt)
+            if lcFileExt == "bmp" then
                 app.alert {
                     title = "Error",
                     text = "Grayscale not supported for bmp."

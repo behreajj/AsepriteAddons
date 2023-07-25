@@ -1,9 +1,9 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
-local screenScale = app.preferences.general.screen_scale
+local screenScale <const> = app.preferences.general.screen_scale
 
-local defaults = {
+local defaults <const> = {
     -- Should this keep hexadecimal and RGB labels?
     -- Get and set select?
     barWidth = 240 / screenScale,
@@ -16,7 +16,7 @@ local defaults = {
     z = 1.0
 }
 
-local active = {
+local active <const> = {
     azimuth = 0.0,
     inclination = 1.5707963267949,
 }
@@ -36,16 +36,16 @@ local function colorToVec(color)
         b255 = color.blue
     end
 
-    local x = (r255 + r255 - 255) * 0.003921568627451
-    local y = (g255 + g255 - 255) * 0.003921568627451
-    local z = (b255 + b255 - 255) * 0.003921568627451
+    local x <const> = (r255 + r255 - 255) * 0.003921568627451
+    local y <const> = (g255 + g255 - 255) * 0.003921568627451
+    local z <const> = (b255 + b255 - 255) * 0.003921568627451
 
     -- The square magnitude for the color #808080
     -- is 0.000046 . Have to account for how 255
     -- is not divided cleanly by 2.
-    local sqMag = x * x + y * y + z * z
+    local sqMag <const> = x * x + y * y + z * z
     if sqMag > 0.000047 then
-        local magInv = 1.0 / math.sqrt(sqMag)
+        local magInv <const> = 1.0 / math.sqrt(sqMag)
         local xn = x * magInv
         local yn = y * magInv
         local zn = z * magInv
@@ -63,9 +63,9 @@ end
 ---@param z number
 ---@return integer
 local function vecToHex(x, y, z)
-    local sqMag = x * x + y * y + z * z
+    local sqMag <const> = x * x + y * y + z * z
     if sqMag > 0.0 then
-        local invMag = 127.5 / math.sqrt(sqMag)
+        local invMag <const> = 127.5 / math.sqrt(sqMag)
         return 0xff000000
             | math.floor(z * invMag + 128.0) << 0x10
             | math.floor(y * invMag + 128.0) << 0x08
@@ -76,15 +76,15 @@ end
 
 ---@param dialog Dialog
 local function updateWidgetCart(dialog)
-    local args = dialog.data
-    local x = args.x --[[@as number]]
-    local y = args.y --[[@as number]]
-    local z = args.z --[[@as number]]
+    local args <const> = dialog.data
+    local x <const> = args.x --[[@as number]]
+    local y <const> = args.y --[[@as number]]
+    local z <const> = args.z --[[@as number]]
 
-    local azSigned = math.atan(y, x)
+    local azSigned <const> = math.atan(y, x)
     active.azimuth = azSigned % 6.2831853071796
 
-    local sqMag = x * x + y * y + z * z
+    local sqMag <const> = x * x + y * y + z * z
     local inUnsigned = 1.5707963267949
     if sqMag > 0.0 then
         inUnsigned = math.acos(z / math.sqrt(sqMag))
@@ -97,14 +97,14 @@ end
 ---@param dialog Dialog
 ---@param clr Color
 local function updateFromColor(dialog, clr)
-    local x, y, z = colorToVec(clr)
+    local x <const>, y <const>, z <const> = colorToVec(clr)
     if x ~= 0.0 or y ~= 0.0 or z ~= 0.0 then
         dialog:modify { id = "x", text = string.format("%.3f", x) }
         dialog:modify { id = "y", text = string.format("%.3f", y) }
         dialog:modify { id = "z", text = string.format("%.3f", z) }
 
-        local sph = Vec3.toSpherical(Vec3.new(x, y, z))
-        local i = sph.inclination
+        local sph <const> = Vec3.toSpherical(Vec3.new(x, y, z))
+        local i <const> = sph.inclination
         active.inclination = i
 
         -- Azimuth is undefined at sphere poles.
@@ -118,7 +118,8 @@ end
 
 local function assignFore()
     if app.site.sprite then
-        local v = Vec3.fromSpherical(active.azimuth, active.inclination, 1.0)
+        local v <const> = Vec3.fromSpherical(
+            active.azimuth, active.inclination, 1.0)
         if math.abs(v.x) < 0.0039216 then v.x = 0.0 end
         if math.abs(v.y) < 0.0039216 then v.y = 0.0 end
         if math.abs(v.z) < 0.0039216 then v.z = 0.0 end
@@ -144,8 +145,8 @@ local dlg = Dialog { title = "Normal Picker" }
 ---@param event MouseEvent
 local function setAzimMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw = defaults.barWidth
-        local mxtau = 6.2831853071796 * event.x / (bw - 1.0)
+        local bw <const> = defaults.barWidth
+        local mxtau <const> = 6.2831853071796 * event.x / (bw - 1.0)
         if event.ctrlKey then
             active.azimuth = 0.0
         elseif event.shiftKey then
@@ -159,7 +160,8 @@ local function setAzimMouseListen(event)
         end
         dlg:repaint()
 
-        local v = Vec3.fromSpherical(active.azimuth, active.inclination, 1.0)
+        local v <const> = Vec3.fromSpherical(
+            active.azimuth, active.inclination, 1.0)
         dlg:modify { id = "x", text = string.format("%.3f", v.x) }
         dlg:modify { id = "y", text = string.format("%.3f", v.y) }
         dlg:modify { id = "z", text = string.format("%.3f", v.z) }
@@ -169,9 +171,9 @@ end
 ---@param event MouseEvent
 local function setInclMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw = defaults.barWidth
-        local halfPi = 1.5707963267949
-        local mxIncl = math.pi * event.x / (bw - 1.0) - halfPi
+        local bw <const> = defaults.barWidth
+        local halfPi <const> = 1.5707963267949
+        local mxIncl <const> = math.pi * event.x / (bw - 1.0) - halfPi
         if event.ctrlKey then
             active.inclination = 0.0
         elseif event.shiftKey then
@@ -263,46 +265,46 @@ dlg:canvas {
     focus = true,
     onpaint = function(event)
         -- Unpack defaults.
-        local barWidth = defaults.barWidth
-        local barHeight = defaults.barHeight
+        local barWidth <const> = defaults.barWidth
+        local barHeight <const> = defaults.barHeight
         local textColor = defaults.textColor
         local textShadow = defaults.textShadow
 
         -- Unpack active.
-        local azimuth = active.azimuth
-        local inclination = active.inclination
-        local cosIncl = math.cos(inclination)
-        local srgbHex = vecToHex(
+        local azimuth <const> = active.azimuth
+        local inclination <const> = active.inclination
+        local cosIncl <const> = math.cos(inclination)
+        local srgbHex <const> = vecToHex(
             cosIncl * math.cos(azimuth),
             cosIncl * math.sin(azimuth),
             math.sin(inclination))
 
         -- Fill image with color.
-        local ctx = event.context
-        local bkgImg = Image(barWidth, barHeight)
+        local ctx <const> = event.context
+        local bkgImg <const> = Image(barWidth, barHeight)
         bkgImg:clear(srgbHex)
-        ctx:drawImage(bkgImg, 0 ,0)
+        ctx:drawImage(bkgImg, 0, 0)
 
         -- Create display string.
-        local strDisplay = string.format(
+        local strDisplay <const> = string.format(
             "A:%03d I:%03d",
             Utilities.round(math.deg(azimuth)),
             Utilities.round(math.deg(inclination)))
-        local strMeasure = ctx:measureText(strDisplay)
+        local strMeasure <const> = ctx:measureText(strDisplay)
 
         -- Find average brightness, flip text color
         -- if too bright.
-        local r = (srgbHex & 0xff) * 0.003921568627451
-        local g = (srgbHex >> 0x08 & 0xff) * 0.003921568627451
-        local b = (srgbHex >> 0x10 & 0xff) * 0.003921568627451
-        local avgBri = (r + g + b) / 3.0
+        local r <const> = (srgbHex & 0xff) * 0.003921568627451
+        local g <const> = (srgbHex >> 0x08 & 0xff) * 0.003921568627451
+        local b <const> = (srgbHex >> 0x10 & 0xff) * 0.003921568627451
+        local avgBri <const> = (r + g + b) / 3.0
         if avgBri < 0.5 then
             textShadow, textColor = textColor, textShadow
         end
 
-        local wBarCenter = barWidth * 0.5
-        local wStrHalf = strMeasure.width * 0.5
-        local xTextCenter = wBarCenter - wStrHalf
+        local wBarCenter <const> = barWidth * 0.5
+        local wStrHalf <const> = strMeasure.width * 0.5
+        local xTextCenter <const> = wBarCenter - wStrHalf
 
         -- Use Aseprite color as an intermediary so as
         -- to support all color modes.
@@ -312,10 +314,10 @@ dlg:canvas {
         ctx:fillText(strDisplay, xTextCenter, 1)
     end,
     onmouseup = function(event)
-        local button = event.button
-        local leftPressed = button == MouseButton.LEFT
-        local rightPressed = button == MouseButton.RIGHT
-        local ctrlKey = event.ctrlKey
+        local button <const> = event.button
+        local leftPressed <const> = button == MouseButton.LEFT
+        local rightPressed <const> = button == MouseButton.RIGHT
+        local ctrlKey <const> = event.ctrlKey
 
         if leftPressed and (not ctrlKey) then
             assignFore()
@@ -337,25 +339,25 @@ dlg:canvas {
     autoScaling = false,
     onpaint = function(event)
         -- Unpack defaults.
-        local barWidth = defaults.barWidth
-        local barHeight = defaults.barHeight
-        local reticleSize = defaults.reticleSize
+        local barWidth <const> = defaults.barWidth
+        local barHeight <const> = defaults.barHeight
+        local reticleSize <const> = defaults.reticleSize
 
         -- Cache methods.
-        local cos = math.cos
-        local sin = math.sin
+        local cos <const> = math.cos
+        local sin <const> = math.sin
 
         -- Unpack active.
-        local azimuth = active.azimuth
-        local inclination = active.inclination
-        local cosIncl = cos(inclination)
-        local sinIncl = sin(inclination)
+        local azimuth <const> = active.azimuth
+        local inclination <const> = active.inclination
+        local cosIncl <const> = cos(inclination)
+        local sinIncl <const> = sin(inclination)
 
-        local xToAzimuth = 6.2831853071796 / (barWidth - 1.0)
-        local img = Image(barWidth, 1, ColorMode.RGB)
-        local pxItr = img:pixels()
+        local xToAzimuth <const> = 6.2831853071796 / (barWidth - 1.0)
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        local pxItr <const> = img:pixels()
         for pixel in pxItr do
-            local az = pixel.x * xToAzimuth
+            local az <const> = pixel.x * xToAzimuth
             pixel(vecToHex(
                 cosIncl * cos(az),
                 cosIncl * sin(az),
@@ -363,11 +365,11 @@ dlg:canvas {
         end
         img:resize(barWidth, barHeight)
 
-        local ctx = event.context
+        local ctx <const> = event.context
         ctx:drawImage(img, 0, 0)
 
-        local az01 = 0.1591549430919 * azimuth
-        local fill = Color { r = 255, g = 255, b = 255 }
+        local az01 <const> = 0.1591549430919 * azimuth
+        local fill <const> = Color { r = 255, g = 255, b = 255 }
         CanvasUtilities.drawSliderReticle(ctx,
             az01, barWidth, barHeight,
             fill, reticleSize)
@@ -384,27 +386,27 @@ dlg:canvas {
     autoScaling = false,
     onpaint = function(event)
         -- Unpack defaults.
-        local barWidth = defaults.barWidth
-        local barHeight = defaults.barHeight
-        local reticleSize = defaults.reticleSize
+        local barWidth <const> = defaults.barWidth
+        local barHeight <const> = defaults.barHeight
+        local reticleSize <const> = defaults.reticleSize
 
         -- Cache methods.
-        local cos = math.cos
-        local sin = math.sin
+        local cos <const> = math.cos
+        local sin <const> = math.sin
 
         -- Unpack active.
-        local azimuth = active.azimuth
-        local inclination = active.inclination
-        local cosAzim = cos(azimuth)
-        local sinAzim = sin(azimuth)
+        local azimuth <const> = active.azimuth
+        local inclination <const> = active.inclination
+        local cosAzim <const> = cos(azimuth)
+        local sinAzim <const> = sin(azimuth)
 
-        local halfPi = 1.5707963267949
-        local xToIncl = math.pi / (barWidth - 1.0)
-        local img = Image(barWidth, 1, ColorMode.RGB)
-        local pxItr = img:pixels()
+        local halfPi <const> = 1.5707963267949
+        local xToIncl <const> = math.pi / (barWidth - 1.0)
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        local pxItr <const> = img:pixels()
         for pixel in pxItr do
-            local incl = pixel.x * xToIncl - halfPi
-            local cosIncl = cos(incl)
+            local incl <const> = pixel.x * xToIncl - halfPi
+            local cosIncl <const> = cos(incl)
             pixel(vecToHex(
                 cosIncl * cosAzim,
                 cosIncl * sinAzim,
@@ -412,11 +414,11 @@ dlg:canvas {
         end
         img:resize(barWidth, barHeight)
 
-        local ctx = event.context
+        local ctx <const> = event.context
         ctx:drawImage(img, 0, 0)
 
-        local in01 = 0.5 + inclination / 3.1415926535898
-        local fill = Color { r = 255, g = 255, b = 255 }
+        local in01 <const> = 0.5 + inclination / 3.1415926535898
+        local fill <const> = Color { r = 255, g = 255, b = 255 }
         CanvasUtilities.drawSliderReticle(ctx,
             in01, barWidth, barHeight,
             fill, reticleSize)

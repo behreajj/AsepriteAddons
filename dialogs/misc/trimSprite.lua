@@ -1,8 +1,8 @@
 dofile("../../support/aseutilities.lua")
 
-local cropTypes = { "CROP", "EXPAND", "SELECTION" }
+local cropTypes <const> = { "CROP", "EXPAND", "SELECTION" }
 
-local defaults = {
+local defaults <const> = {
     cropType = "CROP",
     includeLocked = false,
     includeHidden = true,
@@ -10,7 +10,7 @@ local defaults = {
     trimFrames = false
 }
 
-local dlg = Dialog { title = "Trim Sprite" }
+local dlg <const> = Dialog { title = "Trim Sprite" }
 
 dlg:combobox {
     id = "cropType",
@@ -61,7 +61,7 @@ dlg:button {
     text = "&OK",
     focus = true,
     onclick = function()
-        local activeSprite = app.site.sprite
+        local activeSprite <const> = app.site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -71,24 +71,24 @@ dlg:button {
         end
 
         -- Unpack sprite spec.
-        local spec = activeSprite.spec
-        local wSprite = spec.width
-        local hSprite = spec.height
-        local alphaMask = spec.transparentColor
+        local spec <const> = activeSprite.spec
+        local wSprite <const> = spec.width
+        local hSprite <const> = spec.height
+        local alphaMask <const> = spec.transparentColor
 
         -- Unpack arguments.
-        local args = dlg.data
-        local cropType = args.cropType
+        local args <const> = dlg.data
+        local cropType <const> = args.cropType
             or defaults.cropType --[[@as string]]
-        local includeLocked = args.includeLocked --[[@as boolean]]
-        local includeHidden = args.includeHidden --[[@as boolean]]
-        local padding = args.padding
+        local includeLocked <const> = args.includeLocked --[[@as boolean]]
+        local includeHidden <const> = args.includeHidden --[[@as boolean]]
+        local padding <const> = args.padding
             or defaults.padding --[[@as integer]]
-        local trimFrames = args.trimFrames --[[@as boolean]]
+        local trimFrames <const> = args.trimFrames --[[@as boolean]]
 
-        local useCrop = cropType == "CROP"
-        local useExpand = cropType == "EXPAND"
-        local useSel = cropType == "SELECTION"
+        local useCrop <const> = cropType == "CROP"
+        local useExpand <const> = cropType == "EXPAND"
+        local useSel <const> = cropType == "SELECTION"
 
         -- Record minimum and maximum positions.
         local xMin = 2147483647
@@ -99,7 +99,7 @@ dlg:button {
         -- Test to see if there is a background layer.
         -- If so, remove it. Backgrounds in indexed color
         -- mode may contain transparency.
-        local bkgLayer = activeSprite.backgroundLayer
+        local bkgLayer <const> = activeSprite.backgroundLayer
         if bkgLayer then
             if includeLocked or bkgLayer.isEditable then
                 app.activeLayer = bkgLayer
@@ -117,35 +117,35 @@ dlg:button {
             sel = AseUtilities.getSelection(activeSprite)
         end
 
-        local leaves = AseUtilities.getLayerHierarchy(
+        local leaves <const> = AseUtilities.getLayerHierarchy(
             activeSprite,
             includeLocked, includeHidden, true, false)
-        local lenLeaves = #leaves
+        local lenLeaves <const> = #leaves
         -- TODO: Is it necessary to create frame indices here?
-        local frIdcs = AseUtilities.frameObjsToIdcs(activeSprite.frames)
-        local cels = AseUtilities.getUniqueCelsFromLeaves(
+        local frIdcs <const> = AseUtilities.frameObjsToIdcs(activeSprite.frames)
+        local cels <const> = AseUtilities.getUniqueCelsFromLeaves(
             leaves, frIdcs)
-        local lenCels = #cels
+        local lenCels <const> = #cels
 
         -- Cache methods used in loop.
-        local trimAlpha = AseUtilities.trimImageAlpha
-        local cropCel = AseUtilities.trimCelToSprite
-        local selectCel = AseUtilities.trimCelToSelect
-        local strfmt = string.format
-        local transact = app.transaction
+        local trimAlpha <const> = AseUtilities.trimImageAlpha
+        local cropCel <const> = AseUtilities.trimCelToSprite
+        local selectCel <const> = AseUtilities.trimCelToSelect
+        local strfmt <const> = string.format
+        local transact <const> = app.transaction
 
         ---@type Cel[]
-        local toCull = {}
+        local toCull <const> = {}
         local lenToCull = 0
         local i = 0
         while i < lenCels do
             i = i + 1
 
-            local cel = cels[i]
+            local cel <const> = cels[i]
             local celPos = cel.position
             local celImg = cel.image
-            local layer = cel.layer
-            local layerName = layer.name
+            local layer <const> = cel.layer
+            local layerName <const> = layer.name
 
             local tlx = celPos.x
             local tly = celPos.y
@@ -153,11 +153,11 @@ dlg:button {
             local bry = tly + celImg.height - 1
 
             if layer.isTilemap then
-                local tileSet = layer.tileset --[[@as Tileset]]
-                local tileGrid = tileSet.grid
-                local tileDim = tileGrid.tileSize
-                local wTile = tileDim.width
-                local hTile = tileDim.height
+                local tileSet <const> = layer.tileset --[[@as Tileset]]
+                local tileGrid <const> = tileSet.grid
+                local tileDim <const> = tileGrid.tileSize
+                local wTile <const> = tileDim.width
+                local hTile <const> = tileDim.height
                 brx = tlx + celImg.width * wTile - 1
                 bry = tly + celImg.height * hTile - 1
             elseif useSel then
@@ -243,7 +243,7 @@ dlg:button {
         end
 
         if padding > 0 then
-            local pad2 = padding + padding
+            local pad2 <const> = padding + padding
             transact("Pad Canvas", function()
                 activeSprite:crop(
                     -padding, -padding,
@@ -259,7 +259,7 @@ dlg:button {
                 local j = lenToCull + 1
                 while j > 1 do
                     j = j - 1
-                    local cel = toCull[j]
+                    local cel <const> = toCull[j]
                     activeSprite:deleteCel(cel)
                 end
             end)
@@ -275,7 +275,7 @@ dlg:button {
                         local k = 0
                         while k < lenLeaves and frameEmptyRight do
                             k = k + 1
-                            local leaf = leaves[k]
+                            local leaf <const> = leaves[k]
                             if leaf:cel(m) then
                                 frameEmptyRight = false
                             end
@@ -293,7 +293,7 @@ dlg:button {
                         local k = 0
                         while k < lenLeaves and frameEmptyLeft do
                             k = k + 1
-                            local leaf = leaves[k]
+                            local leaf <const> = leaves[k]
                             if leaf:cel(1) then
                                 frameEmptyLeft = false
                             end

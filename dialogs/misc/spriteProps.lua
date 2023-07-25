@@ -10,7 +10,7 @@ Around line 141:
         window.name()->setText(document->name());
     }
 --]]
-local defaults = {
+local defaults <const> = {
     -- Should some diagnostic data be toggled via a t/f
     -- in defaults, esp. if it is expensive to calculate?
     maskWarningInvalid = "Mask index is out of bounds.",
@@ -40,7 +40,7 @@ local function updateSprite()
     end
     if not sprite then return false end
     filename = sprite.filename
-    local spec = sprite.spec
+    local spec <const> = sprite.spec
     colorSpace = spec.colorSpace
 
     return true
@@ -59,7 +59,7 @@ updatePrefsShowPath()
 -- sprite to be changed? Alternative versions have
 -- a pixel dimension label only, so pxRatioStr
 -- defaults to the string for that label.
-local dlg = Dialog {
+local dlg <const> = Dialog {
     title = string.format(
         "Properties (v %s)",
         tostring(app.version))
@@ -203,7 +203,7 @@ local function updatePath()
     if showFullPath then
         path = app.fs.filePath(filename)
     end
-    local lenPath = #path
+    local lenPath <const> = #path
     if lenPath >= defaults.textLenLimit then
         path = "..." .. string.sub(path,
             lenPath - defaults.textLenLimit, lenPath)
@@ -232,8 +232,8 @@ local function updateExtension()
 end
 
 local function updateColorMode()
-    local spec = sprite.spec
-    local colorMode = spec.colorMode
+    local spec <const> = sprite.spec
+    local colorMode <const> = spec.colorMode
     local colorModeStr = ""
     if colorMode == ColorMode.RGB then
         colorModeStr = "RGB"
@@ -248,7 +248,7 @@ local function updateColorMode()
 end
 
 local function updateColorSpace()
-    local spec = sprite.spec
+    local spec <const> = sprite.spec
     colorSpace = spec.colorSpace
     local csName = ""
     if colorSpace then
@@ -265,11 +265,11 @@ local function updateColorSpace()
 end
 
 local function updatePalettes()
-    local spec = sprite.spec
-    local colorMode = spec.colorMode
-    local palettes = sprite.palettes
-    local lenPals = #palettes
-    local palCountStr = string.format("%d", lenPals)
+    local spec <const> = sprite.spec
+    local colorMode <const> = spec.colorMode
+    local palettes <const> = sprite.palettes
+    local lenPals <const> = #palettes
+    local palCountStr <const> = string.format("%d", lenPals)
     dlg:modify { id = "palettesLabel", text = palCountStr }
     dlg:modify {
         id = "palettesLabel",
@@ -278,19 +278,19 @@ local function updatePalettes()
 end
 
 local function updatePalCount()
-    local spec = sprite.spec
-    local colorMode = spec.colorMode
+    local spec <const> = sprite.spec
+    local colorMode <const> = spec.colorMode
 
-    local palettes = sprite.palettes
-    local lenPalettes = #palettes
+    local palettes <const> = sprite.palettes
+    local lenPalettes <const> = #palettes
     local actFrIdx = 1
-    local actFrObj = app.site.frame
+    local actFrObj <const> = app.site.frame
     if actFrObj then
         actFrIdx = actFrObj.frameNumber
         if actFrIdx > lenPalettes then actFrIdx = 1 end
     end
-    local pal = palettes[actFrIdx]
-    local palCount = #pal
+    local pal <const> = palettes[actFrIdx]
+    local palCount <const> = #pal
 
     local palCountStr = string.format("%d", palCount)
     if lenPalettes > 1 then
@@ -303,10 +303,10 @@ local function updatePalCount()
 end
 
 local function updateMaskIndex()
-    local spec = sprite.spec
-    local colorMode = spec.colorMode
-    local maskIdxNum = spec.transparentColor
-    local maskIdxStr = string.format("%d", maskIdxNum)
+    local spec <const> = sprite.spec
+    local colorMode <const> = spec.colorMode
+    local maskIdxNum <const> = spec.transparentColor
+    local maskIdxStr <const> = string.format("%d", maskIdxNum)
     dlg:modify { id = "maskIdxLabel", text = maskIdxStr }
     dlg:modify { id = "maskIdxLabel", visible = colorMode == ColorMode.INDEXED }
 end
@@ -314,25 +314,25 @@ end
 local function updateMaskColor()
     -- TODO: This should not only have a color swatch, but display its
     -- RGBA values, so as to cover (255, 0, 0, 255) vs. (0, 255, 0, 255).
-    local spec = sprite.spec
-    local colorMode = spec.colorMode
+    local spec <const> = sprite.spec
+    local colorMode <const> = spec.colorMode
 
-    local palettes = sprite.palettes
-    local lenPalettes = #palettes
+    local palettes <const> = sprite.palettes
+    local lenPalettes <const> = #palettes
     local actFrIdx = 1
-    local actFrObj = app.site.frame
+    local actFrObj <const> = app.site.frame
     if actFrObj then
         actFrIdx = actFrObj.frameNumber
         if actFrIdx > lenPalettes then actFrIdx = 1 end
     end
-    local pal = palettes[actFrIdx]
-    local palLen = #pal
+    local pal <const> = palettes[actFrIdx]
+    local palLen <const> = #pal
 
-    local maskIdxNum = spec.transparentColor
-    local maskIdxIsValid = maskIdxNum > -1 and maskIdxNum < palLen
+    local maskIdxNum <const> = spec.transparentColor
+    local maskIdxIsValid <const> = maskIdxNum > -1 and maskIdxNum < palLen
     local maskColorVal = Color { r = 0, g = 0, b = 0, a = 0 }
     if maskIdxIsValid then
-        local maskColorRef = pal:getColor(maskIdxNum)
+        local maskColorRef <const> = pal:getColor(maskIdxNum)
         maskColorVal = AseUtilities.aseColorCopy(maskColorRef, "UNBOUNDED")
     end
     dlg:modify { id = "maskClr", colors = { maskColorVal } }
@@ -341,26 +341,27 @@ local function updateMaskColor()
 end
 
 local function updateMaskWarning()
-    local spec = sprite.spec
-    local colorMode = spec.colorMode
+    local spec <const> = sprite.spec
+    local colorMode <const> = spec.colorMode
 
-    local palettes = sprite.palettes
-    local lenPalettes = #palettes
+    local palettes <const> = sprite.palettes
+    local lenPalettes <const> = #palettes
     local actFrIdx = 1
-    local actFrObj = app.site.frame
+    local actFrObj <const> = app.site.frame
     if actFrObj then
         actFrIdx = actFrObj.frameNumber
         if actFrIdx > lenPalettes then actFrIdx = 1 end
     end
-    local pal = palettes[actFrIdx]
-    local palLen = #pal
+    local pal <const> = palettes[actFrIdx]
+    local palLen <const> = #pal
 
-    local maskIdxNum = spec.transparentColor
-    local maskIdxIsValid = maskIdxNum > -1 and maskIdxNum < palLen
+    local maskIdxNum <const> = spec.transparentColor
+    local maskIdxIsValid <const> = maskIdxNum > -1
+        and maskIdxNum < palLen
 
     local idx0IsNotMask = false
     if maskIdxIsValid then
-        local maskColorRef = pal:getColor(maskIdxNum)
+        local maskColorRef <const> = pal:getColor(maskIdxNum)
         idx0IsNotMask = AseUtilities.aseColorToHex(
                 maskColorRef, ColorMode.RGB) ~= 0
     end
@@ -386,10 +387,10 @@ local function updateMaskWarning()
 end
 
 local function updateDimensions()
-    local spec = sprite.spec
-    local width = spec.width
-    local height = spec.height
-    local dimStr = string.format("%d x %d", width, height)
+    local spec <const> = sprite.spec
+    local width <const> = spec.width
+    local height <const> = spec.height
+    local dimStr <const> = string.format("%d x %d", width, height)
     dlg:modify { id = "dimLabel", text = dimStr }
     dlg:modify { id = "dimLabel", visible = true }
 end
@@ -397,16 +398,16 @@ end
 local function updateAspect()
     -- Pixel aspect ratio is applied to calculation
     -- of sprite aspect ratio.
-    local sprPixelRatio = sprite.pixelRatio
-    local pixelWidth = sprPixelRatio.width
-    local pixelHeight = sprPixelRatio.height
+    local sprPixelRatio <const> = sprite.pixelRatio
+    local pixelWidth <const> = sprPixelRatio.width
+    local pixelHeight <const> = sprPixelRatio.height
 
-    local spec = sprite.spec
-    local width = spec.width
-    local height = spec.height
+    local spec <const> = sprite.spec
+    local width <const> = spec.width
+    local height <const> = spec.height
 
-    local augWidth = pixelWidth * width
-    local augHeight = pixelHeight * height
+    local augWidth <const> = pixelWidth * width
+    local augHeight <const> = pixelHeight * height
 
     local aspect = 0.0
     local wRatio = 0
@@ -431,16 +432,16 @@ local function updateAspect()
 end
 
 local function updateFrames()
-    local frames = sprite.frames
-    local lenFrames = #frames
-    local frameStr = string.format("%d", lenFrames)
+    local frames <const> = sprite.frames
+    local lenFrames <const> = #frames
+    local frameStr <const> = string.format("%d", lenFrames)
     dlg:modify { id = "framesLabel", text = frameStr }
     dlg:modify { id = "framesLabel", visible = lenFrames > 1 }
 end
 
 local function updateDuration()
-    local frames = sprite.frames
-    local lenFrames = #frames
+    local frames <const> = sprite.frames
+    local lenFrames <const> = #frames
     local durSum = 0
     local i = 0
     while i < lenFrames do
@@ -448,15 +449,15 @@ local function updateDuration()
         durSum = durSum + frames[i].duration
     end
 
-    local durStr = string.format("%d ms",
+    local durStr <const> = string.format("%d ms",
         math.floor(0.5 + durSum * 1000.0))
     dlg:modify { id = "durationLabel", text = durStr }
     dlg:modify { id = "durationLabel", visible = lenFrames > 1 }
 end
 
 local function updateTabColor()
-    local sprColorRef = sprite.color --[[@as Color]]
-    local sprColorVal = AseUtilities.aseColorCopy(
+    local sprColorRef <const> = sprite.color --[[@as Color]]
+    local sprColorVal <const> = AseUtilities.aseColorCopy(
         sprColorRef, "UNBOUNDED")
 
     dlg:modify { id = "sprTabColor", color = sprColorVal }
@@ -474,7 +475,7 @@ local function updateUserData()
 end
 
 local function updatePixelRatio()
-    local sprPixelRatio = sprite.pixelRatio
+    local sprPixelRatio <const> = sprite.pixelRatio
     local pixelWidth = sprPixelRatio.width
     local pixelHeight = sprPixelRatio.height
 
@@ -518,11 +519,11 @@ dlg:button {
     focus = false,
     onclick = function()
         if sprite and app.site.sprite == sprite then
-            local args = dlg.data
+            local args <const> = dlg.data
             local aPxRatio = args.aPxRatio --[[@as integer]]
             local bPxRatio = args.bPxRatio --[[@as integer]]
-            local sprColor = args.sprTabColor --[[@as Color]]
-            local userData = args.sprUserData --[[@as string]]
+            local sprColor <const> = args.sprTabColor --[[@as Color]]
+            local userData <const> = args.sprUserData --[[@as string]]
 
             aPxRatio, bPxRatio = Utilities.reduceRatio(aPxRatio, bPxRatio)
 

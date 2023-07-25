@@ -1,6 +1,6 @@
 dofile("../../support/shapeutilities.lua")
 
-local defaults = {
+local defaults <const> = {
     cells = 8,
     margin = 0,
     useStroke = true,
@@ -9,7 +9,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Dimetric Grid" }
+local dlg <const> = Dialog { title = "Dimetric Grid" }
 
 dlg:slider {
     id = "cells",
@@ -65,13 +65,15 @@ dlg:check {
     text = "Enable",
     selected = defaults.useStroke,
     onclick = function()
+        local args <const> = dlg.data
+        local useStroke <const> = args.useStroke --[[@as boolean]]
         dlg:modify {
             id = "strokeWeight",
-            visible = dlg.data.useStroke
+            visible = useStroke
         }
         dlg:modify {
             id = "strokeClr",
-            visible = dlg.data.useStroke
+            visible = useStroke
         }
     end
 }
@@ -98,9 +100,11 @@ dlg:check {
     text = "Enable",
     selected = defaults.useFill,
     onclick = function()
+        local args <const> = dlg.data
+        local useFill <const> = args.useFill --[[@as boolean]]
         dlg:modify {
             id = "fillClr",
-            visible = dlg.data.useFill
+            visible = useFill
         }
     end
 }
@@ -118,8 +122,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local site = app.site
-        local sprite = site.sprite
+        local site <const> = app.site
+        local sprite <const> = site.sprite
         if not sprite then
             app.alert {
                 title = "Error",
@@ -128,7 +132,7 @@ dlg:button {
             return
         end
 
-        local frame = site.frame
+        local frame <const> = site.frame
         if not frame then
             app.alert {
                 title = "Error",
@@ -137,24 +141,24 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local cells = args.cells
+        local args <const> = dlg.data
+        local cells <const> = args.cells
             or defaults.cells --[[@as integer]]
-        local margin100 = args.margin
+        local margin100 <const> = args.margin
             or defaults.margin --[[@as integer]]
 
-        local scale = args.scale --[[@as number]]
-        local xOrig = args.xOrig --[[@as number]]
-        local yOrig = args.yOrig --[[@as number]]
+        local scale <const> = args.scale --[[@as number]]
+        local xOrig <const> = args.xOrig --[[@as number]]
+        local yOrig <const> = args.yOrig --[[@as number]]
 
-        local useStroke = args.useStroke --[[@as boolean]]
-        local strokeWeight = args.strokeWeight
+        local useStroke <const> = args.useStroke --[[@as boolean]]
+        local strokeWeight <const> = args.strokeWeight
             or defaults.strokeWeight --[[@as integer]]
-        local strokeColor = args.strokeClr --[[@as Color]]
-        local useFill = args.useFill --[[@as boolean]]
-        local fillColor = args.fillClr --[[@as Color]]
+        local strokeColor <const> = args.strokeClr --[[@as Color]]
+        local useFill <const> = args.useFill --[[@as boolean]]
+        local fillColor <const> = args.fillClr --[[@as Color]]
 
-        local mesh = Mesh2.gridDimetric(cells)
+        local mesh <const> = Mesh2.gridDimetric(cells)
 
         -- Convert margin from [0, 100] to [0.0, 1.0].
         -- Ensure that it is less than 100%.
@@ -165,12 +169,12 @@ dlg:button {
             Mesh2.uniformData(mesh, mesh)
             mesh:scaleFacesIndiv(1.0 - marginVerif)
         end
-        local scaleVerif = math.max(2.0, scale)
+        local scaleVerif <const> = math.max(2.0, scale)
 
         -- Create transformation matrix.
-        local t = Mat3.fromTranslation(xOrig, yOrig)
-        local s = Mat3.fromScale(scaleVerif, -scaleVerif)
-        local mat = Mat3.mul(t, s)
+        local t <const> = Mat3.fromTranslation(xOrig, yOrig)
+        local s <const> = Mat3.fromScale(scaleVerif, -scaleVerif)
+        local mat <const> = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
         local layer = nil

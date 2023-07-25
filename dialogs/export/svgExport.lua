@@ -85,21 +85,24 @@ local function imgToSvgStr(
         local aseColorToHex <const> = AseUtilities.aseColorToHex
         local alphaIdx <const> = imgSpec.transparentColor
         local rgbColorMode <const> = ColorMode.RGB
+        ---@type table<integer, integer>
+        local clrIdxToHex <const> = {}
         for pixel in pxItr do
             local clrIdx <const> = pixel()
             if clrIdx ~= alphaIdx then
-                local idx <const> = pixel.x + pixel.y * imgWidth
+                local hex = clrIdxToHex[clrIdx]
+                if not hex then
+                    local aseColor <const> = palette:getColor(clrIdx)
+                    hex = aseColorToHex(aseColor, rgbColorMode)
+                    clrIdxToHex[clrIdx] = hex
+                end
 
-                -- TODO: Make a dictionary of previously visited
-                -- indices that have already converted palette to int?
-                local aseColor <const> = palette:getColor(clrIdx)
-                local hex <const> = aseColorToHex(aseColor, rgbColorMode)
-
+                local pxIdx <const> = pixel.x + pixel.y * imgWidth
                 local idcs <const> = pixelDict[hex]
                 if idcs then
-                    idcs[#idcs + 1] = idx
+                    idcs[#idcs + 1] = pxIdx
                 else
-                    pixelDict[hex] = { idx }
+                    pixelDict[hex] = { pxIdx }
                 end
             end
         end

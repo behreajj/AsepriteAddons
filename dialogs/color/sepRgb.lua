@@ -1,9 +1,9 @@
 dofile("../../support/aseutilities.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE" }
-local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
-local defaults = {
+local defaults <const> = {
     target = "ACTIVE",
     delSrc = "NONE",
     fillBase = true,
@@ -19,7 +19,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Separate Layer RGB" }
+local dlg <const> = Dialog { title = "Separate Layer RGB" }
 
 dlg:combobox {
     id = "target",
@@ -133,8 +133,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -143,7 +143,7 @@ dlg:button {
             return
         end
 
-        local colorMode = activeSprite.colorMode
+        local colorMode <const> = activeSprite.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -152,7 +152,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = site.layer
+        local srcLayer <const> = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -178,32 +178,32 @@ dlg:button {
         end
 
         -- Check for tile maps.
-        local isTilemap = srcLayer.isTilemap
+        local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
             tileSet = srcLayer.tileset --[[@as Tileset]]
         end
 
-        local args = dlg.data
-        local target = args.target or defaults.target --[[@as string]]
-        local delSrcStr = args.delSrc or defaults.delSrc --[[@as string]]
-        local fillBase = args.fillBase --[[@as boolean]]
+        local args <const> = dlg.data
+        local target <const> = args.target or defaults.target --[[@as string]]
+        local delSrcStr <const> = args.delSrc or defaults.delSrc --[[@as string]]
+        local fillBase <const> = args.fillBase --[[@as boolean]]
 
-        local xRed = args.xRed or defaults.xRed --[[@as integer]]
-        local yRed = args.yRed or defaults.yRed --[[@as integer]]
-        local xGreen = args.xGreen or defaults.xGreen --[[@as integer]]
-        local yGreen = args.yGreen or defaults.yGreen --[[@as integer]]
-        local xBlue = args.xBlue or defaults.xBlue --[[@as integer]]
-        local yBlue = args.yBlue or defaults.yBlue --[[@as integer]]
+        local xRed <const> = args.xRed or defaults.xRed --[[@as integer]]
+        local yRed <const> = args.yRed or defaults.yRed --[[@as integer]]
+        local xGreen <const> = args.xGreen or defaults.xGreen --[[@as integer]]
+        local yGreen <const> = args.yGreen or defaults.yGreen --[[@as integer]]
+        local xBlue <const> = args.xBlue or defaults.xBlue --[[@as integer]]
+        local yBlue <const> = args.yBlue or defaults.yBlue --[[@as integer]]
 
-        local opacityRed = args.opacityRed
+        local opacityRed <const> = args.opacityRed
             or defaults.opacityRed --[[@as integer]]
-        local opacityGreen = args.opacityGreen
+        local opacityGreen <const> = args.opacityGreen
             or defaults.opacityGreen --[[@as integer]]
-        local opacityBlue = args.opacityBlue
+        local opacityBlue <const> = args.opacityBlue
             or defaults.opacityBlue --[[@as integer]]
 
-        local frames = Utilities.flatArr2(
+        local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
         local sepGroup = nil
@@ -255,125 +255,125 @@ dlg:button {
             greenLyr.parent = sepGroup
             blueLyr.parent = sepGroup
 
-            local srcParent = srcLayer.parent
+            local srcParent <const> = srcLayer.parent
             sepGroup.parent = srcParent
             sepGroup.isCollapsed = true
             sepGroup.name = srcLayer.name .. ".Separated"
         end)
 
-        local rdMsk = 0xff0000ff
-        local grMsk = 0xff00ff00
-        local blMsk = 0xffff0000
+        local rdMsk <const> = 0xff0000ff
+        local grMsk <const> = 0xff00ff00
+        local blMsk <const> = 0xffff0000
 
-        local max = math.max
-        local min = math.min
-        local tilesToImage = AseUtilities.tilesToImage
+        local max <const> = math.max
+        local min <const> = math.min
+        local tilesToImage <const> = AseUtilities.tilesToImage
 
-        local lenFrames = #frames
+        local lenFrames <const> = #frames
         app.transaction("Separate RGB", function()
             local i = 0
             while i < lenFrames do
                 i = i + 1
-                local srcFrame = frames[i]
-                local srcCel = srcLayer:cel(srcFrame)
+                local srcFrame <const> = frames[i]
+                local srcCel <const> = srcLayer:cel(srcFrame)
                 if srcCel then
                     local srcImg = srcCel.image
                     if isTilemap then
                         srcImg = tilesToImage(srcImg, tileSet, colorMode)
                     end
 
-                    local srcImgWidth = srcImg.width
-                    local srcImgHeight = srcImg.height
-                    local srcPos = srcCel.position
-                    local xSrc = srcPos.x
-                    local ySrc = srcPos.y
+                    local srcImgWidth <const> = srcImg.width
+                    local srcImgHeight <const> = srcImg.height
+                    local srcPos <const> = srcCel.position
+                    local xSrc <const> = srcPos.x
+                    local ySrc <const> = srcPos.y
 
                     -- Treat y axis as (1, 0) points up.
-                    local redPos = Point(xSrc + xRed, ySrc - yRed)
-                    local greenPos = Point(xSrc + xGreen, ySrc - yGreen)
-                    local bluePos = Point(xSrc + xBlue, ySrc - yBlue)
+                    local redPos <const> = Point(xSrc + xRed, ySrc - yRed)
+                    local greenPos <const> = Point(xSrc + xGreen, ySrc - yGreen)
+                    local bluePos <const> = Point(xSrc + xBlue, ySrc - yBlue)
 
-                    local redCel = activeSprite:newCel(
+                    local redCel <const> = activeSprite:newCel(
                         redLyr, srcFrame, srcImg, redPos)
-                    local greenCel = activeSprite:newCel(
+                    local greenCel <const> = activeSprite:newCel(
                         greenLyr, srcFrame, srcImg, greenPos)
-                    local blueCel = activeSprite:newCel(
+                    local blueCel <const> = activeSprite:newCel(
                         blueLyr, srcFrame, srcImg, bluePos)
 
-                    local srcOpacity = srcCel.opacity
+                    local srcOpacity <const> = srcCel.opacity
                     redCel.opacity = srcOpacity
                     greenCel.opacity = srcOpacity
                     blueCel.opacity = srcOpacity
 
-                    local redImg = redCel.image
-                    local greenImg = greenCel.image
-                    local blueImg = blueCel.image
+                    local redImg <const> = redCel.image
+                    local greenImg <const> = greenCel.image
+                    local blueImg <const> = blueCel.image
 
-                    local rdItr = redImg:pixels()
-                    local grItr = greenImg:pixels()
-                    local blItr = blueImg:pixels()
+                    local rdItr <const> = redImg:pixels()
+                    local grItr <const> = greenImg:pixels()
+                    local blItr <const> = blueImg:pixels()
 
                     for pixel in rdItr do pixel(pixel() & rdMsk) end
                     for pixel in grItr do pixel(pixel() & grMsk) end
                     for pixel in blItr do pixel(pixel() & blMsk) end
 
                     if fillBase then
-                        local trxRed = redPos.x
-                        local trxGreen = greenPos.x
-                        local trxBlue = bluePos.x
+                        local trxRed <const> = redPos.x
+                        local trxGreen <const> = greenPos.x
+                        local trxBlue <const> = bluePos.x
 
-                        local tryRed = redPos.y
-                        local tryGreen = greenPos.y
-                        local tryBlue = bluePos.y
+                        local tryRed <const> = redPos.y
+                        local tryGreen <const> = greenPos.y
+                        local tryBlue <const> = bluePos.y
 
                         -- Technically, bottom right should subtract 1, but since
                         -- this will be added again to find wxh for base, it's omitted.
-                        local trxBase = min(trxRed, trxGreen, trxBlue)
-                        local tryBase = min(tryRed, tryGreen, tryBlue)
-                        local brxBase = max(trxRed, trxGreen, trxBlue) + srcImgWidth
-                        local bryBase = max(tryRed, tryGreen, tryBlue) + srcImgHeight
+                        local trxBase <const> = min(trxRed, trxGreen, trxBlue)
+                        local tryBase <const> = min(tryRed, tryGreen, tryBlue)
+                        local brxBase <const> = max(trxRed, trxGreen, trxBlue) + srcImgWidth
+                        local bryBase <const> = max(tryRed, tryGreen, tryBlue) + srcImgHeight
 
-                        local baseWidth = brxBase - trxBase
-                        local baseHeight = bryBase - tryBase
-                        local baseCel = activeSprite:newCel(baseLyr, srcFrame)
+                        local baseWidth <const> = brxBase - trxBase
+                        local baseHeight <const> = bryBase - tryBase
+                        local baseCel <const> = activeSprite:newCel(baseLyr, srcFrame)
                         baseCel.position = Point(trxBase, tryBase)
                         baseCel.image = Image(baseWidth, baseHeight)
 
-                        local xRedBase = trxBase - trxRed
-                        local xGreenBase = trxBase - trxGreen
-                        local xBlueBase = trxBase - trxBlue
+                        local xRedBase <const> = trxBase - trxRed
+                        local xGreenBase <const> = trxBase - trxGreen
+                        local xBlueBase <const> = trxBase - trxBlue
 
-                        local yRedBase = tryBase - tryRed
-                        local yGreenBase = tryBase - tryGreen
-                        local yBlueBase = tryBase - tryBlue
+                        local yRedBase <const> = tryBase - tryRed
+                        local yGreenBase <const> = tryBase - tryGreen
+                        local yBlueBase <const> = tryBase - tryBlue
 
-                        local baseItr = baseCel.image:pixels()
+                        local baseItr <const> = baseCel.image:pixels()
                         for pixel in baseItr do
-                            local x = pixel.x
-                            local y = pixel.y
+                            local x <const> = pixel.x
+                            local y <const> = pixel.y
                             local placeMark = false
 
                             -- getPixel returns -1 when coordinates are out of
                             -- bounds. This wraps around to 4294967295
                             -- or the color white.
-                            local xbTest = x + xBlueBase
-                            local ybTest = y + yBlueBase
+                            local xbTest <const> = x + xBlueBase
+                            local ybTest <const> = y + yBlueBase
                             if xbTest > -1 and xbTest < srcImgWidth
                                 and ybTest > -1 and ybTest < srcImgHeight then
                                 placeMark = placeMark or 0xff000000 &
                                     blueImg:getPixel(xbTest, ybTest) ~= 0
                             end
 
-                            local xgTest = x + xGreenBase
-                            local ygTest = y + yGreenBase
+                            local xgTest <const> = x + xGreenBase
+                            local ygTest <const> = y + yGreenBase
                             if xgTest > -1 and xgTest < srcImgWidth
                                 and ygTest > -1 and ygTest < srcImgHeight then
                                 placeMark = placeMark or 0xff000000 &
                                     greenImg:getPixel(xgTest, ygTest) ~= 0
                             end
 
-                            local xrTest = x + xRedBase
-                            local yrTest = y + yRedBase
+                            local xrTest <const> = x + xRedBase
+                            local yrTest <const> = y + yRedBase
                             if xrTest > -1 and xrTest < srcImgWidth
                                 and yrTest > -1 and yrTest < srcImgHeight then
                                 placeMark = placeMark or 0xff000000 &
@@ -399,8 +399,8 @@ dlg:button {
                     local idxDel = lenFrames + 1
                     while idxDel > 1 do
                         idxDel = idxDel - 1
-                        local frame = frames[idxDel]
-                        local cel = srcLayer:cel(frame)
+                        local frame <const> = frames[idxDel]
+                        local cel <const> = srcLayer:cel(frame)
                         if cel then activeSprite:deleteCel(cel) end
                     end
                 end)

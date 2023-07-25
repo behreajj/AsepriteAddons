@@ -1,6 +1,6 @@
 dofile("../../support/shapeutilities.lua")
 
-local defaults = {
+local defaults <const> = {
     sides = 6,
     skip = 0,
     pick = 0,
@@ -14,7 +14,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Polygon" }
+local dlg <const> = Dialog { title = "Polygon" }
 
 dlg:slider {
     id = "sides",
@@ -33,10 +33,12 @@ dlg:slider {
     max = 10,
     value = defaults.skip,
     onchange = function()
-        local args = dlg.data
+        local args <const> = dlg.data
+        local skip <const> = args.skip --[[@as integer]]
+        local pick <const> = args.pick --[[@as integer]]
         dlg:modify {
             id = "inset",
-            visible = args.skip > 0 and args.pick > 0
+            visible = skip > 0 and pick > 0
         }
     end
 }
@@ -47,10 +49,12 @@ dlg:slider {
     max = 10,
     value = defaults.pick,
     onchange = function()
-        local args = dlg.data
+        local args <const> = dlg.data
+        local skip <const> = args.skip --[[@as integer]]
+        local pick <const> = args.pick --[[@as integer]]
         dlg:modify {
             id = "inset",
-            visible = args.skip > 0 and args.pick > 0
+            visible = skip > 0 and pick > 0
         }
     end
 }
@@ -109,13 +113,15 @@ dlg:check {
     text = "Enable",
     selected = defaults.useStroke,
     onclick = function()
+        local args <const> = dlg.data
+        local useStroke <const> = args.useStroke --[[@as boolean]]
         dlg:modify {
             id = "strokeWeight",
-            visible = dlg.data.useStroke
+            visible = useStroke
         }
         dlg:modify {
             id = "strokeClr",
-            visible = dlg.data.useStroke
+            visible = useStroke
         }
     end
 }
@@ -142,9 +148,11 @@ dlg:check {
     text = "Enable",
     selected = defaults.useFill,
     onclick = function()
+        local args <const> = dlg.data
+        local useFill <const> = args.useFill --[[@as boolean]]
         dlg:modify {
             id = "fillClr",
-            visible = dlg.data.useFill
+            visible = useFill
         }
     end
 }
@@ -162,8 +170,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local site = app.site
-        local sprite = site.sprite
+        local site <const> = app.site
+        local sprite <const> = site.sprite
         if not sprite then
             app.alert {
                 title = "Error",
@@ -172,7 +180,7 @@ dlg:button {
             return
         end
 
-        local frame = site.frame
+        local frame <const> = site.frame
         if not frame then
             app.alert {
                 title = "Error",
@@ -181,39 +189,39 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local sectors = args.sides or defaults.sides --[[@as integer]]
-        local skip = args.skip or defaults.skip --[[@as integer]]
-        local pick = args.pick or defaults.pick --[[@as integer]]
-        local inset = args.inset or defaults.inset --[[@as integer]]
+        local args <const> = dlg.data
+        local sectors <const> = args.sides or defaults.sides --[[@as integer]]
+        local skip <const> = args.skip or defaults.skip --[[@as integer]]
+        local pick <const> = args.pick or defaults.pick --[[@as integer]]
+        local inset <const> = args.inset or defaults.inset --[[@as integer]]
 
-        local degrees = args.angle or defaults.angle --[[@as integer]]
-        local scale = args.scale or defaults.scale --[[@as number]]
-        local xOrig = args.xOrig --[[@as number]]
-        local yOrig = args.yOrig --[[@as number]]
+        local degrees <const> = args.angle or defaults.angle --[[@as integer]]
+        local scale <const> = args.scale or defaults.scale --[[@as number]]
+        local xOrig <const> = args.xOrig --[[@as number]]
+        local yOrig <const> = args.yOrig --[[@as number]]
 
-        local useStroke = args.useStroke --[[@as boolean]]
-        local strokeWeight = args.strokeWeight
+        local useStroke <const> = args.useStroke --[[@as boolean]]
+        local strokeWeight <const> = args.strokeWeight
             or defaults.strokeWeight --[[@as integer]]
-        local strokeColor = args.strokeClr --[[@as Color]]
-        local useFill = args.useFill --[[@as boolean]]
-        local fillColor = args.fillClr --[[@as Color]]
+        local strokeColor <const> = args.strokeClr --[[@as Color]]
+        local useFill <const> = args.useFill --[[@as boolean]]
+        local fillColor <const> = args.fillClr --[[@as Color]]
 
         -- Create transform matrix.
-        local t = Mat3.fromTranslation(xOrig, yOrig)
+        local t <const> = Mat3.fromTranslation(xOrig, yOrig)
 
         local a = degrees * 0.017453292519943
-        local query = AseUtilities.DIMETRIC_ANGLES[degrees]
+        local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
         if query then a = query end
-        local r = Mat3.fromRotZ(a)
+        local r <const> = Mat3.fromRotZ(a)
 
         local sclVerif = scale
         if sclVerif < 2.0 then sclVerif = 2.0 end
-        local s = Mat3.fromScale(sclVerif, -sclVerif)
+        local s <const> = Mat3.fromScale(sclVerif, -sclVerif)
 
-        local mat = Mat3.mul(Mat3.mul(t, s), r)
+        local mat <const> = Mat3.mul(Mat3.mul(t, s), r)
 
-        local mesh = Mesh2.star(
+        local mesh <const> = Mesh2.star(
             sectors, skip, pick, inset * 0.01)
         Utilities.mulMat3Mesh2(mat, mesh)
 

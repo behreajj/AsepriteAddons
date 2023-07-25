@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local paletteTypes = {
+local paletteTypes <const> = {
     "ACTIVE",
     "DEFAULT",
     "EMBEDDED",
@@ -11,22 +11,22 @@ local paletteTypes = {
 ---@return Sprite
 local function loadSprite(filePath)
     -- GPL and PAL file formats cannot be loaded as sprites.
-    local fileExt = app.fs.fileExtension(filePath)
+    local fileExt <const> = app.fs.fileExtension(filePath)
     local sprite = nil
     if string.lower(fileExt) == "gpl"
         or string.lower(fileExt) == "pal" then
-        local spriteHexes, _ = AseUtilities.asePaletteLoad(
+        local spriteHexes <const>, _ <const> = AseUtilities.asePaletteLoad(
             "FILE", filePath, 0, 256, true)
-        local lenColors = #spriteHexes
-        local rtLen = math.max(16,
+        local lenColors <const> = #spriteHexes
+        local rtLen <const> = math.max(16,
             math.ceil(math.sqrt(math.max(1, lenColors))))
         sprite = Sprite(rtLen, rtLen)
         AseUtilities.setPalette(spriteHexes, sprite, 1)
 
-        local layer = sprite.layers[1]
-        local cel = layer.cels[1]
-        local image = cel.image
-        local pxItr = image:pixels()
+        local layer <const> = sprite.layers[1]
+        local cel <const> = layer.cels[1]
+        local image <const> = cel.image
+        local pxItr <const> = image:pixels()
 
         local index = 0
         for pixel in pxItr do
@@ -42,7 +42,7 @@ local function loadSprite(filePath)
     return sprite
 end
 
-local defaults = {
+local defaults <const> = {
     removeBkg = true,
     trimCels = true,
     palType = "EMBEDDED",
@@ -54,7 +54,7 @@ local defaults = {
     hGrid = 32
 }
 
-local dlg = Dialog { title = "Open Sprite +" }
+local dlg <const> = Dialog { title = "Open Sprite +" }
 
 dlg:file {
     id = "spriteFile",
@@ -92,7 +92,8 @@ dlg:combobox {
     option = defaults.palType,
     options = paletteTypes,
     onchange = function()
-        local state = dlg.data.palType
+        local args <const> = dlg.data
+        local state <const> = args.palType --[[@as string]]
         dlg:modify { id = "palFile", visible = state == "FILE" }
     end
 }
@@ -138,8 +139,8 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local spriteFile = args.spriteFile --[[@as string]]
+        local args <const> = dlg.data
+        local spriteFile <const> = args.spriteFile --[[@as string]]
 
         if (not spriteFile)
             or (#spriteFile < 1)
@@ -153,7 +154,7 @@ dlg:button {
 
         -- Do not ask to open animation sequences.
         -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L125
-        local oldOpSeqPref = app.preferences.open_file.open_sequence
+        local oldOpSeqPref <const> = app.preferences.open_file.open_sequence
         app.preferences.open_file.open_sequence = 2
 
         -- Palettes need to be retrieved before a new sprite
@@ -161,12 +162,13 @@ dlg:button {
         -- to the new sprite. Unfortunately, that means this
         -- is wasted effort if the palette type is "EMBEDDED"
         -- or there is no new sprite.
-        local palType = args.palType or defaults.palType --[[@as string]]
+        local palType <const> = args.palType
+            or defaults.palType --[[@as string]]
         local hexesSrgb = {}
         local hexesProfile = {}
 
         if palType ~= "DEFAULT" then
-            local palFile = args.palFile --[[@as string]]
+            local palFile <const> = args.palFile --[[@as string]]
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 palType, palFile, 0, 256, true)
         else
@@ -176,8 +178,8 @@ dlg:button {
                 hexesProfile = AseUtilities.asePaletteToHexArr(
                     defaultPalette, 0, #defaultPalette)
             else
-                local hexesDefault = AseUtilities.DEFAULT_PAL_ARR
-                local lenHexesDef = #hexesDefault
+                local hexesDefault <const> = AseUtilities.DEFAULT_PAL_ARR
+                local lenHexesDef <const> = #hexesDefault
                 local i = 0
                 while i < lenHexesDef do
                     i = i + 1
@@ -191,7 +193,7 @@ dlg:button {
         -- Shift indexed fore- and back colors to RGB.
         AseUtilities.preserveForeBack()
 
-        local openSprite = loadSprite(spriteFile)
+        local openSprite <const> = loadSprite(spriteFile)
         if not openSprite then
             app.alert {
                 title = "Error",
@@ -201,12 +203,12 @@ dlg:button {
         end
 
         app.activeSprite = openSprite
-        local oldColorMode = openSprite.colorMode
+        local oldColorMode <const> = openSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
-        local removeBkg = args.removeBkg
+        local removeBkg <const> = args.removeBkg --[[@as boolean]]
         if removeBkg then
-            local bkgLayer = openSprite.backgroundLayer
+            local bkgLayer <const> = openSprite.backgroundLayer
             if bkgLayer then
                 app.transaction("Layer From Bkg", function()
                     app.activeLayer = bkgLayer
@@ -219,7 +221,7 @@ dlg:button {
         -- Adjustable transparent color causes problems
         -- with multiple palettes.
         if openSprite.transparentColor ~= 0 then
-            local oldAlphaMask = openSprite.transparentColor
+            local oldAlphaMask <const> = openSprite.transparentColor
             openSprite.transparentColor = 0
             app.alert {
                 title = "Warning",
@@ -240,40 +242,40 @@ dlg:button {
             end
         end
 
-        local uniquesOnly = args.uniquesOnly --[[@as boolean]]
+        local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
         if uniquesOnly then
-            local uniques, _ = Utilities.uniqueColors(
+            local uniques <const>, _ <const> = Utilities.uniqueColors(
                 hexesProfile, true)
             hexesProfile = uniques
         end
 
-        local prependMask = args.prependMask --[[@as boolean]]
+        local prependMask <const> = args.prependMask --[[@as boolean]]
         if prependMask then
             Utilities.prependMask(hexesProfile)
         end
 
-        local lenPalettes = #openSprite.palettes
-        local setPalette = AseUtilities.setPalette
+        local lenPalettes <const> = #openSprite.palettes
+        local setPalette <const> = AseUtilities.setPalette
         local i = 0
         while i < lenPalettes do
             i = i + 1
             setPalette(hexesProfile, openSprite, i)
         end
 
-        local trimCels = args.trimCels
+        local trimCels <const> = args.trimCels --[[@as boolean]]
         if trimCels then
-            local cels = AseUtilities.filterCels(
+            local cels <const> = AseUtilities.filterCels(
                 openSprite, nil, nil, "ALL",
                 true, true, false, false)
             app.transaction("Trim Cels", function()
                 local j = 0
-                local lenCels = #cels
-                local trimImage = AseUtilities.trimImageAlpha
+                local lenCels <const> = #cels
+                local trimImage <const> = AseUtilities.trimImageAlpha
                 while j < lenCels do
                     j = j + 1
-                    local cel = cels[j]
-                    local trgImg, x, y = trimImage(cel.image, 0, 0)
-                    local srcPos = cel.position
+                    local cel <const> = cels[j]
+                    local trgImg <const>, x <const>, y <const> = trimImage(cel.image, 0, 0)
+                    local srcPos <const> = cel.position
                     cel.position = Point(srcPos.x + x, srcPos.y + y)
                     cel.image = trgImg
                 end

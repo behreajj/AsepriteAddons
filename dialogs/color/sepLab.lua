@@ -1,10 +1,10 @@
 dofile("../../support/aseutilities.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE" }
-local channels = { "L", "A", "B" }
-local delOptions = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local channels <const> = { "L", "A", "B" }
+local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
-local defaults = {
+local defaults <const> = {
     -- TODO: Create a space combo box so that this can be
     -- consolidated with separate RGB?
     -- TODO: Separate LCH?
@@ -83,7 +83,7 @@ local function splitResponse(x)
     return fullResponse(math.abs(1.0 - (x + x)))
 end
 
-local dlg = Dialog { title = "Separate LAB" }
+local dlg <const> = Dialog { title = "Separate LAB" }
 
 dlg:combobox {
     id = "target",
@@ -109,12 +109,12 @@ dlg:combobox {
     options = channels,
     option = defaults.channel,
     onchange = function()
-        local args = dlg.data
-        local channel = args.channel --[[@as string]]
+        local args <const> = dlg.data
+        local channel <const> = args.channel --[[@as string]]
 
-        local isl = channel == "L"
-        local isa = channel == "A"
-        local isb = channel == "B"
+        local isl <const> = channel == "L"
+        local isa <const> = channel == "A"
+        local isb <const> = channel == "B"
 
         dlg:modify { id = "lShadows", visible = isl }
         dlg:modify { id = "lMidtones", visible = isl }
@@ -202,8 +202,8 @@ dlg:check {
     text = "Source",
     selected = defaults.useSrcClr,
     onclick = function()
-        local args = dlg.data
-        local useSrcClr = args.useSrcClr --[[@as boolean]]
+        local args <const> = dlg.data
+        local useSrcClr <const> = args.useSrcClr --[[@as boolean]]
         dlg:modify { id = "maskColor", visible = not useSrcClr }
     end
 }
@@ -232,8 +232,8 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -242,8 +242,8 @@ dlg:button {
             return
         end
 
-        local spriteSpec = activeSprite.spec
-        local colorMode = spriteSpec.colorMode
+        local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -252,7 +252,7 @@ dlg:button {
             return
         end
 
-        local srcLayer = site.layer
+        local srcLayer <const> = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -278,28 +278,28 @@ dlg:button {
         end
 
         -- Check for tile maps.
-        local isTilemap = srcLayer.isTilemap
+        local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
             tileSet = srcLayer.tileset --[[@as Tileset]]
         end
 
-        local args = dlg.data
-        local target = args.target
+        local args <const> = dlg.data
+        local target <const> = args.target
             or defaults.target --[[@as string]]
-        local delSrcStr = args.delSrc
+        local delSrcStr <const> = args.delSrc
             or defaults.delSrc --[[@as string]]
-        local channel = args.channel
+        local channel <const> = args.channel
             or defaults.channel --[[@as string]]
-        local useSrcClr = args.useSrcClr --[[@as boolean]]
-        local maskColor = args.maskColor --[[@as Color]]
-        local trimCels = args.trimCels --[[@as boolean]]
+        local useSrcClr <const> = args.useSrcClr --[[@as boolean]]
+        local maskColor <const> = args.maskColor --[[@as Color]]
+        local trimCels <const> = args.trimCels --[[@as boolean]]
 
-        local alphaIndex = spriteSpec.transparentColor
-        local maskRgb = maskColor.blue << 0x10
+        local alphaIndex <const> = spriteSpec.transparentColor
+        local maskRgb <const> = maskColor.blue << 0x10
             | maskColor.green << 0x08
             | maskColor.red
-        local frames = Utilities.flatArr2(
+        local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
         ---@type fun(x: number): number
@@ -312,8 +312,8 @@ dlg:button {
                 return (lab.a - defaults.aAbsMin) / defaults.aAbsRange
             end
 
-            local aGreens = args.aGreens --[[@as boolean]]
-            local aMagentas = args.aMagentas --[[@as boolean]]
+            local aGreens <const> = args.aGreens --[[@as boolean]]
+            local aMagentas <const> = args.aMagentas --[[@as boolean]]
 
             if aGreens and aMagentas then
                 responseFunc = splitResponse
@@ -333,8 +333,8 @@ dlg:button {
                 return (lab.b - defaults.bAbsMin) / defaults.bAbsRange
             end
 
-            local bBlues = args.bBlues --[[@as boolean]]
-            local bYellows = args.bYellows --[[@as boolean]]
+            local bBlues <const> = args.bBlues --[[@as boolean]]
+            local bYellows <const> = args.bYellows --[[@as boolean]]
 
             if bBlues and bYellows then
                 responseFunc = splitResponse
@@ -353,9 +353,9 @@ dlg:button {
             -- Default to lightness.
             toFac = function(lab) return lab.l * 0.01 end
 
-            local lShadows = args.lShadows --[[@as boolean]]
-            local lMidtones = args.lMidtones --[[@as boolean]]
-            local lHighlights = args.lHighlights --[[@as boolean]]
+            local lShadows <const> = args.lShadows --[[@as boolean]]
+            local lMidtones <const> = args.lMidtones --[[@as boolean]]
+            local lHighlights <const> = args.lHighlights --[[@as boolean]]
 
             if lShadows and lMidtones and lHighlights then
                 responseFunc = fullResponse
@@ -397,14 +397,14 @@ dlg:button {
         end)
 
         -- Cache functions used in loop.
-        local tilesToImage = AseUtilities.tilesToImage
-        local trimAlpha = AseUtilities.trimImageAlpha
-        local fromHex = Clr.fromHex
-        local sRgbaToLab = Clr.sRgbToSrLab2
-        local floor = math.floor
+        local tilesToImage <const> = AseUtilities.tilesToImage
+        local trimAlpha <const> = AseUtilities.trimImageAlpha
+        local fromHex <const> = Clr.fromHex
+        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local floor <const> = math.floor
         -- local flattenGroup = AseUtilities.flattenGroup
 
-        local lenFrames = #frames
+        local lenFrames <const> = #frames
         app.transaction("Separate LAB", function()
             local i = 0
             while i < lenFrames do
@@ -423,13 +423,13 @@ dlg:button {
                 --     xSrcPos = groupBounds.x
                 --     ySrcPos = groupBounds.y
                 -- else
-                local srcCel = srcLayer:cel(srcFrame)
+                local srcCel <const> = srcLayer:cel(srcFrame)
                 if srcCel then
                     srcImg = srcCel.image
                     if isTilemap then
                         srcImg = tilesToImage(srcImg, tileSet, colorMode)
                     end
-                    local srcPos = srcCel.position
+                    local srcPos <const> = srcCel.position
                     xSrcPos = srcPos.x
                     ySrcPos = srcPos.y
                 end
@@ -437,19 +437,19 @@ dlg:button {
 
                 if srcImg then
                     ---@type table<integer, integer>
-                    local srcToTrg = {}
-                    local srcPxItr = srcImg:pixels()
+                    local srcToTrg <const> = {}
+                    local srcPxItr <const> = srcImg:pixels()
                     for pixel in srcPxItr do
-                        local srcHex = pixel()
+                        local srcHex <const> = pixel()
                         if not srcToTrg[srcHex] then
                             local trgHex = 0x0
-                            local srcAlpha = (srcHex >> 0x18) & 0xff
+                            local srcAlpha <const> = (srcHex >> 0x18) & 0xff
                             if srcAlpha > 0 then
-                                local clr = fromHex(srcHex)
-                                local lab = sRgbaToLab(clr)
-                                local fac = toFac(lab)
-                                local facw = responseFunc(fac)
-                                local trgAlpha = floor(facw * 255.0 + 0.5)
+                                local clr <const> = fromHex(srcHex)
+                                local lab <const> = sRgbaToLab(clr)
+                                local fac <const> = toFac(lab)
+                                local facw <const> = responseFunc(fac)
+                                local trgAlpha <const> = floor(facw * 255.0 + 0.5)
                                 local trgRgb = maskRgb
                                 if useSrcClr then
                                     trgRgb = srcHex & 0x00ffffff
@@ -461,7 +461,7 @@ dlg:button {
                     end
 
                     local trgImg = srcImg:clone()
-                    local trgPxItr = trgImg:pixels()
+                    local trgPxItr <const> = trgImg:pixels()
                     for pixel in trgPxItr do
                         pixel(srcToTrg[pixel()])
                     end
@@ -489,8 +489,8 @@ dlg:button {
                     local idxDel = lenFrames + 1
                     while idxDel > 1 do
                         idxDel = idxDel - 1
-                        local frame = frames[idxDel]
-                        local cel = srcLayer:cel(frame)
+                        local frame <const> = frames[idxDel]
+                        local cel <const> = srcLayer:cel(frame)
                         if cel then activeSprite:deleteCel(cel) end
                     end
                 end)

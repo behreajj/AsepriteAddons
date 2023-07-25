@@ -1,9 +1,9 @@
 dofile("../../support/gradientutilities.lua")
 
-local palTypes = { "ACTIVE", "FILE" }
-local ditherTypes = { "CHECKER", "CUSTOM" }
+local palTypes <const> = { "ACTIVE", "FILE" }
+local ditherTypes <const> = { "CHECKER", "CUSTOM" }
 
-local defaults = {
+local defaults <const> = {
     palType = "ACTIVE",
     startIndex = 0,
     count = 256,
@@ -24,7 +24,7 @@ local defaults = {
     mh = 2
 }
 
-local dlg = Dialog { title = "Palette Dither Mix" }
+local dlg <const> = Dialog { title = "Palette Dither Mix" }
 
 dlg:combobox {
     id = "palType",
@@ -32,8 +32,8 @@ dlg:combobox {
     option = defaults.palType,
     options = palTypes,
     onchange = function()
-        local args = dlg.data
-        local state = args.palType --[[@as string]]
+        local args <const> = dlg.data
+        local state <const> = args.palType --[[@as string]]
         dlg:modify {
             id = "palFile",
             visible = state == "FILE"
@@ -58,8 +58,8 @@ dlg:combobox {
     option = defaults.ditherType,
     options = ditherTypes,
     onchange = function()
-        local args = dlg.data
-        local state = args.ditherType --[[@as string]]
+        local args <const> = dlg.data
+        local state <const> = args.ditherType --[[@as string]]
         dlg:modify {
             id = "ditherPath",
             visible = state == "CUSTOM"
@@ -116,8 +116,8 @@ dlg:check {
     text = "Contrast",
     selected = defaults.useHighlight,
     onclick = function()
-        local args = dlg.data
-        local useHigh = args.useHighlight --[[@as boolean]]
+        local args <const> = dlg.data
+        local useHigh <const> = args.useHighlight --[[@as boolean]]
         dlg:modify { id = "highColor", visible = useHigh }
         dlg:modify { id = "minHighlight", visible = useHigh }
         dlg:modify { id = "maxHighlight", visible = useHigh }
@@ -167,35 +167,35 @@ dlg:button {
     focus = defaults.pullFocus,
     onclick = function()
         -- Unpack arguments.
-        local args = dlg.data
-        local palType = args.palType
+        local args <const> = dlg.data
+        local palType <const> = args.palType
             or defaults.palType --[[@as string]]
-        local palFile = args.palFile --[[@as string]]
-        local ditherType = args.ditherType
+        local palFile <const> = args.palFile --[[@as string]]
+        local ditherType <const> = args.ditherType
             or defaults.ditherType --[[@as string]]
-        local swatchSize = args.swatchSize
+        local swatchSize <const> = args.swatchSize
             or defaults.swatchSize --[[@as integer]]
-        local padding = args.padding
+        local padding <const> = args.padding
             or defaults.padding --[[@as integer]]
-        local border = args.border
+        local border <const> = args.border
             or defaults.border --[[@as integer]]
-        local useHighlight = args.useHighlight --[[@as boolean]]
-        local minHighlight = args.minHighlight
+        local useHighlight <const> = args.useHighlight --[[@as boolean]]
+        local minHighlight <const> = args.minHighlight
             or defaults.minHighlight --[[@as integer]]
-        local maxHighlight = args.maxHighlight
+        local maxHighlight <const> = args.maxHighlight
             or defaults.maxHighlight --[[@as integer]]
-        local highColor = args.highColor --[[@as Color]]
-        local bkgColor = args.bkgColor --[[@as Color]]
+        local highColor <const> = args.highColor --[[@as Color]]
+        local bkgColor <const> = args.bkgColor --[[@as Color]]
 
         local matrix = defaults.matrix
         local mw = defaults.mw
         local mh = defaults.mh
 
         if ditherType == "CUSTOM" then
-            local ditherPath = args.ditherPath --[[@as string]]
+            local ditherPath <const> = args.ditherPath --[[@as string]]
             if ditherPath and #ditherPath > 0
                 and app.fs.isFile(ditherPath) then
-                local image = Image { fromFile = ditherPath }
+                local image <const> = Image { fromFile = ditherPath }
                 if image then
                     matrix, mw, mh = GradientUtilities.imageToMatrix(image)
                 end
@@ -203,8 +203,8 @@ dlg:button {
         end
 
         -- Convert Color objects to hex
-        local bkgHex = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
-        local highHex = AseUtilities.aseColorToHex(highColor, ColorMode.RGB)
+        local bkgHex <const> = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
+        local highHex <const> = AseUtilities.aseColorToHex(highColor, ColorMode.RGB)
 
         -- Verify min and max highlight.
         local minHighVrf = minHighlight
@@ -215,15 +215,15 @@ dlg:button {
         end
 
         -- Get palette.
-        local startIndex = defaults.startIndex
-        local count = defaults.count
-        local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
+        local startIndex <const> = defaults.startIndex
+        local count <const> = defaults.count
+        local hexesProfile <const>, hexesSrgb <const> = AseUtilities.asePaletteLoad(
             palType, palFile, startIndex, count)
 
         -- Create profile.
         -- This should be done BEFORE the sprite is
         -- created, while the reference sprite is active.
-        local activeSprite = app.site.sprite
+        local activeSprite <const> = app.site.sprite
         local clrPrf = nil
         if palType == "ACTIVE" and activeSprite then
             clrPrf = activeSprite.colorSpace
@@ -235,31 +235,31 @@ dlg:button {
         end
 
         -- Only include mixed colors if color space is SRGB.
-        local useMix = clrPrf == ColorSpace { sRGB = true }
-        local paddingGtEq1 = padding >= 1
+        local useMix <const> = clrPrf == ColorSpace { sRGB = true }
+        local paddingGtEq1 <const> = padding >= 1
 
         ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
-        local hexLabDict = {}
+        local hexLabDict <const> = {}
 
         ---@type table<integer, string>
-        local hexWebDict = {}
+        local hexWebDict <const> = {}
 
         ---@type integer[]
-        local uniqueHexes = {}
+        local uniqueHexes <const> = {}
         local lenUniqueHexes = 0
-        local lenHexesProfile = #hexesProfile
+        local lenHexesProfile <const> = #hexesProfile
         local g = 0
         while g < lenHexesProfile do
             g = g + 1
-            local hexProfile = hexesProfile[g]
+            local hexProfile <const> = hexesProfile[g]
             if (hexProfile & 0xff000000) ~= 0x0 then
                 if not hexLabDict[hexProfile] then
                     lenUniqueHexes = lenUniqueHexes + 1
                     uniqueHexes[lenUniqueHexes] = hexProfile
 
-                    local hexSrgb = hexesSrgb[g]
-                    local clr = Clr.fromHex(hexSrgb)
-                    local lab = Clr.sRgbToSrLab2(clr)
+                    local hexSrgb <const> = hexesSrgb[g]
+                    local clr <const> = Clr.fromHex(hexSrgb)
+                    local lab <const> = Clr.sRgbToSrLab2(clr)
                     hexLabDict[hexProfile] = lab
                     hexWebDict[hexProfile] = Clr.toHexWeb(clr)
                 end
@@ -267,26 +267,26 @@ dlg:button {
         end
 
         -- Create sprite.
-        local spriteSize = border * 2
+        local spriteSize <const> = border * 2
             + swatchSize * (lenUniqueHexes + 1)
             + padding * lenUniqueHexes
-        local spriteSpec = ImageSpec {
+        local spriteSpec <const> = ImageSpec {
             width = spriteSize,
             height = spriteSize,
             colorMode = ColorMode.RGB,
             transparentColor = 0
         }
         spriteSpec.colorSpace = clrPrf
-        local comboSprite = Sprite(spriteSpec)
+        local comboSprite <const> = Sprite(spriteSpec)
         comboSprite.filename = "Dither Mix"
-        local firstFrame = comboSprite.frames[1]
+        local firstFrame <const> = comboSprite.frames[1]
 
         app.transaction(
             "Set Background", function()
-                local bkgLayer = comboSprite.layers[1]
+                local bkgLayer <const> = comboSprite.layers[1]
                 bkgLayer.name = "Bkg"
 
-                local bkgImg = Image(spriteSpec)
+                local bkgImg <const> = Image(spriteSpec)
                 bkgImg:clear(bkgHex)
                 comboSprite:newCel(
                     bkgLayer, firstFrame,
@@ -341,7 +341,7 @@ dlg:button {
             end
         end)
 
-        local swatchSpec = ImageSpec {
+        local swatchSpec <const> = ImageSpec {
             width = swatchSize,
             height = swatchSize,
             colorMode = ColorMode.RGB,
@@ -352,9 +352,9 @@ dlg:button {
         local highlightFrame = nil
         local frameWeight = 1
         if useHighlight and paddingGtEq1 then
-            local wHigh = swatchSize + frameWeight * 2
-            local hHigh = swatchSize + frameWeight * 2
-            local highFrameSpec = ImageSpec {
+            local wHigh <const> = swatchSize + frameWeight * 2
+            local hHigh <const> = swatchSize + frameWeight * 2
+            local highFrameSpec <const> = ImageSpec {
                 width = wHigh,
                 height = hHigh,
                 colorMode = ColorMode.RGB,
@@ -363,51 +363,51 @@ dlg:button {
             swatchSpec.colorSpace = clrPrf
             highlightFrame = Image(highFrameSpec)
 
-            local topRect = Rectangle(
+            local topRect <const> = Rectangle(
                 0, 0,
                 wHigh - frameWeight, frameWeight)
-            local topItr = highlightFrame:pixels(topRect)
+            local topItr <const> = highlightFrame:pixels(topRect)
             for pixel in topItr do pixel(highHex) end
 
-            local rgtRect = Rectangle(
+            local rgtRect <const> = Rectangle(
                 wHigh - frameWeight, 0,
                 border, hHigh - frameWeight)
-            local rgtItr = highlightFrame:pixels(rgtRect)
+            local rgtItr <const> = highlightFrame:pixels(rgtRect)
             for pixel in rgtItr do pixel(highHex) end
 
-            local btmRect = Rectangle(
+            local btmRect <const> = Rectangle(
                 frameWeight, hHigh - frameWeight,
                 wHigh - frameWeight, frameWeight)
-            local btmItr = highlightFrame:pixels(btmRect)
+            local btmItr <const> = highlightFrame:pixels(btmRect)
             for pixel in btmItr do pixel(highHex) end
 
-            local lftRect = Rectangle(
+            local lftRect <const> = Rectangle(
                 0, frameWeight,
                 frameWeight, hHigh - frameWeight)
-            local lftItr = highlightFrame:pixels(lftRect)
+            local lftItr <const> = highlightFrame:pixels(lftRect)
             for pixel in lftItr do pixel(highHex) end
         end
 
         -- Cache methods used in loop
-        local abs = math.abs
-        local sqrt = math.sqrt
-        local strfmt = string.format
-        local clrToAseColor = AseUtilities.clrToAseColor
-        local srLab2TosRgb = Clr.srLab2TosRgb
-        local toHex = Clr.toHex
-        local hexToAseColor = AseUtilities.hexToAseColor
+        local abs <const> = math.abs
+        local sqrt <const> = math.sqrt
+        local strfmt <const> = string.format
+        local clrToAseColor <const> = AseUtilities.clrToAseColor
+        local srLab2TosRgb <const> = Clr.srLab2TosRgb
+        local toHex <const> = Clr.toHex
+        local hexToAseColor <const> = AseUtilities.hexToAseColor
 
         local i = lenUniqueHexes + 1
         while i > 1 do
             i = i - 1
-            local rowHex = uniqueHexes[i]
-            local rowLab = hexLabDict[rowHex]
-            local rowWebStr = hexWebDict[rowHex]
+            local rowHex <const> = uniqueHexes[i]
+            local rowLab <const> = hexLabDict[rowHex]
+            local rowWebStr <const> = hexWebDict[rowHex]
 
-            local y = border + i * swatchSize + i * padding
+            local y <const> = border + i * swatchSize + i * padding
 
             app.transaction("Create Headers", function()
-                local refImage = Image(swatchSpec)
+                local refImage <const> = Image(swatchSpec)
                 refImage:clear(rowHex)
 
                 local leftHeader = nil
@@ -437,20 +437,20 @@ dlg:button {
                 local j = lenUniqueHexes + 1
                 while j > 1 do
                     j = j - 1
-                    local colHex = uniqueHexes[j]
-                    local colLab = hexLabDict[colHex]
-                    local colWebStr = hexWebDict[colHex]
+                    local colHex <const> = uniqueHexes[j]
+                    local colLab <const> = hexLabDict[colHex]
+                    local colWebStr <const> = hexWebDict[colHex]
 
-                    local x = border + j * swatchSize + j * padding
+                    local x <const> = border + j * swatchSize + j * padding
 
                     if i < j then
                         -- Dither colors.
-                        local ditherImage = Image(swatchSpec)
-                        local dithPxItr = ditherImage:pixels()
+                        local ditherImage <const> = Image(swatchSpec)
+                        local dithPxItr <const> = ditherImage:pixels()
                         for pixel in dithPxItr do
-                            local xpx = pixel.x
-                            local ypx = pixel.y
-                            local midx = 1 + (xpx % mw) + (ypx % mh) * mw
+                            local xpx <const> = pixel.x
+                            local ypx <const> = pixel.y
+                            local midx <const> = 1 + (xpx % mw) + (ypx % mh) * mw
                             local hex = colHex
                             if 0.5 >= matrix[midx] then hex = rowHex end
                             pixel(hex)
@@ -458,14 +458,14 @@ dlg:button {
 
                         -- Display distance as a metric for how high
                         -- contrast the dither is.
-                        local da = rowLab.a - colLab.a
-                        local db = rowLab.b - colLab.b
-                        local dist = sqrt(da * da + db * db)
+                        local da <const> = rowLab.a - colLab.a
+                        local db <const> = rowLab.b - colLab.b
+                        local dist <const> = sqrt(da * da + db * db)
                             + abs(rowLab.l - colLab.l)
-                        local fitsHigh = useHighlight
+                        local fitsHigh <const> = useHighlight
                             and dist >= minHighVrf
                             and dist <= maxHighVrf
-                        local layerName = strfmt(
+                        local layerName <const> = strfmt(
                             "Dither.%s.%s.%03d",
                             rowWebStr, colWebStr, dist)
 
@@ -474,7 +474,7 @@ dlg:button {
                         ditherLayer.name = layerName
                         ditherLayer.parent = dithersGroup
 
-                        local ditherCel = comboSprite:newCel(
+                        local ditherCel <const> = comboSprite:newCel(
                             ditherLayer,
                             firstFrame,
                             ditherImage,
@@ -484,7 +484,8 @@ dlg:button {
                             ditherCel.color = hexToAseColor(highHex)
 
                             if paddingGtEq1 then
-                                local highLayer = comboSprite:newLayer()
+                                local highLayer = nil
+                                highLayer = comboSprite:newLayer()
                                 highLayer.name = layerName
                                 highLayer.parent = highsGroup
 
@@ -497,16 +498,16 @@ dlg:button {
                         end
                     elseif useMix and i > j then
                         -- Mix colors.
-                        local lMixed = (rowLab.l + colLab.l) * 0.5
-                        local aMixed = (rowLab.a + colLab.a) * 0.5
-                        local bMixed = (rowLab.b + colLab.b) * 0.5
-                        local tMixed = (rowLab.alpha + colLab.alpha) * 0.5
+                        local lMixed <const> = (rowLab.l + colLab.l) * 0.5
+                        local aMixed <const> = (rowLab.a + colLab.a) * 0.5
+                        local bMixed <const> = (rowLab.b + colLab.b) * 0.5
+                        local tMixed <const> = (rowLab.alpha + colLab.alpha) * 0.5
 
-                        local srgbMixed = srLab2TosRgb(
+                        local srgbMixed <const> = srLab2TosRgb(
                             lMixed, aMixed, bMixed, tMixed)
-                        local hexMixed = toHex(srgbMixed)
+                        local hexMixed <const> = toHex(srgbMixed)
 
-                        local mixImage = Image(swatchSpec)
+                        local mixImage <const> = Image(swatchSpec)
                         mixImage:clear(hexMixed)
 
                         local mixLayer = nil
@@ -516,7 +517,7 @@ dlg:button {
                             rowWebStr, colWebStr)
                         mixLayer.parent = mixesGroup
 
-                        local mixedCel = comboSprite:newCel(
+                        local mixedCel <const> = comboSprite:newCel(
                             mixLayer,
                             firstFrame,
                             mixImage,

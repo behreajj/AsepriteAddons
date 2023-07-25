@@ -8,16 +8,16 @@ https://stackoverflow.com/questions/40017741/
 mathematical-conversion-srgb-and-adobergb
 https://www.w3.org/TR/css-color-4/#color-conversion-code
 --]]
-local colorSpaceTypes = { "FILE", "NONE", "SRGB" }
-local continuityOps = { "NUMERIC", "VISUAL" }
+local colorSpaceTypes <const> = { "FILE", "NONE", "SRGB" }
+local continuityOps <const> = { "NUMERIC", "VISUAL" }
 
-local defaults = {
+local defaults <const> = {
     colorSpaceType = "SRGB",
     continuityOp = "VISUAL",
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Set Color Profile" }
+local dlg <const> = Dialog { title = "Set Color Profile" }
 
 dlg:combobox {
     id = "colorSpaceType",
@@ -25,7 +25,8 @@ dlg:combobox {
     option = defaults.colorSpaceType,
     options = colorSpaceTypes,
     onchange = function()
-        local state = dlg.data.colorSpaceType
+        local args <const> = dlg.data
+        local state <const> = args.colorSpaceType --[[@as string]]
         dlg:modify {
             id = "profilePath",
             visible = state == "FILE"
@@ -58,7 +59,7 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local activeSprite = app.site.sprite
+        local activeSprite <const> = app.site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -67,15 +68,15 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local csType = args.colorSpaceType
+        local args <const> = dlg.data
+        local csType <const> = args.colorSpaceType
             or defaults.colorSpaceType --[[@as string]]
 
         local newColorSpace = nil
         if csType == "FILE" then
-            local profilePath = args.profilePath --[[@as string]]
+            local profilePath <const> = args.profilePath --[[@as string]]
             if profilePath and #profilePath > 0 then
-                local isFile = app.fs.isFile(profilePath)
+                local isFile <const> = app.fs.isFile(profilePath)
                 if isFile then
                     newColorSpace = ColorSpace { fromFile = profilePath }
                 else
@@ -100,8 +101,9 @@ dlg:button {
         -- is 2 when normal map is activated.
         -- Normal wheel maps are adversely impacted
         -- by color models other than None or SRGB.
-        local formerColorSpace = activeSprite.colorSpace
-        local continuity = args.continuity or defaults.continuity
+        local formerColorSpace <const> = activeSprite.colorSpace
+        local continuity <const> = args.continuity
+            or defaults.continuityOp --[[@as string]]
 
         -- Yes is 1, no is 2.
         local confirm = 1

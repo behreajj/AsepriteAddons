@@ -709,6 +709,7 @@ dlg:button {
             -- https://catlikecoding.com/unity/tutorials/flow/waves/
             -- https://en.wikipedia.org/wiki/Trochoidal_wave
             -- https://www.shadertoy.com/view/7djGRR
+            -- https://www.youtube.com/watch?v=PH9q0HNBjT4
 
             local gerstItrs <const> = args.gerstItrs
                 or defaults.gerstItrs --[[@as integer]]

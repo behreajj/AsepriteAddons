@@ -1,8 +1,8 @@
 dofile("../../support/aseutilities.lua")
 
-local targets = { "ACTIVE", "ALL", "RANGE" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
-local defaults = {
+local defaults <const> = {
     padding = 0,
     target = "ACTIVE",
     includeLocked = false,
@@ -10,7 +10,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Trim Image Alpha" }
+local dlg <const> = Dialog { title = "Trim Image Alpha" }
 
 dlg:combobox {
     id = "target",
@@ -51,8 +51,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local site = app.site
-        local activeSprite = site.sprite
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -61,7 +61,7 @@ dlg:button {
             return
         end
 
-        local activeLayer = site.layer
+        local activeLayer <const> = site.layer
         if not activeLayer then
             app.alert {
                 title = "Error",
@@ -70,7 +70,7 @@ dlg:button {
             return
         end
 
-        local activeFrame = site.frame
+        local activeFrame <const> = site.frame
         if not activeFrame then
             app.alert {
                 title = "Error",
@@ -79,30 +79,30 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local target = args.target
+        local args <const> = dlg.data
+        local target <const> = args.target
             or defaults.target --[[@as string]]
-        local padding = args.padding
+        local padding <const> = args.padding
             or defaults.padding --[[@as integer]]
-        local includeLocked = args.includeLocked --[[@as boolean]]
-        local includeHidden = args.includeHidden --[[@as boolean]]
+        local includeLocked <const> = args.includeLocked --[[@as boolean]]
+        local includeHidden <const> = args.includeHidden --[[@as boolean]]
 
-        local trgCels = AseUtilities.filterCels(
+        local trgCels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, activeFrame, target,
             includeLocked, includeHidden, false, false)
 
-        local lenTrgCels = #trgCels
-        local trimImage = AseUtilities.trimImageAlpha
-        local alphaMask = activeSprite.transparentColor
+        local lenTrgCels <const> = #trgCels
+        local trimImage <const> = AseUtilities.trimImageAlpha
+        local alphaMask <const> = activeSprite.transparentColor
 
         app.transaction("Trim Images", function()
             local i = 0
             while i < lenTrgCels do
                 i = i + 1
-                local cel = trgCels[i]
-                local trgImg, x, y = trimImage(
+                local cel <const> = trgCels[i]
+                local trgImg <const>, x <const>, y <const> = trimImage(
                     cel.image, padding, alphaMask)
-                local srcPos = cel.position
+                local srcPos <const> = cel.position
                 cel.position = Point(srcPos.x + x, srcPos.y + y)
                 cel.image = trgImg
             end

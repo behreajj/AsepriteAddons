@@ -1,6 +1,6 @@
 dofile("../../support/shapeutilities.lua")
 
-local defaults = {
+local defaults <const> = {
     cols = 8,
     rows = 8,
     offset = 50,
@@ -17,7 +17,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Brick" }
+local dlg <const> = Dialog { title = "Brick" }
 
 dlg:slider {
     id = "cols",
@@ -161,8 +161,8 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local site = app.site
-        local sprite = site.sprite
+        local site <const> = app.site
+        local sprite <const> = site.sprite
         if not sprite then
             app.alert {
                 title = "Error",
@@ -171,7 +171,7 @@ dlg:button {
             return
         end
 
-        local frame = site.frame
+        local frame <const> = site.frame
         if not frame then
             app.alert {
                 title = "Error",
@@ -180,30 +180,32 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local cols = args.cols or defaults.cols --[[@as integer]]
-        local rows = args.rows or defaults.rows --[[@as integer]]
-        local off100 = args.offset or defaults.offset --[[@as integer]]
-        local aspect = args.aspect or defaults.aspect --[[@as number]]
-        local skip = args.skip or defaults.skip --[[@as integer]]
-        local pick = args.pick or defaults.pick --[[@as integer]]
-        local scale = args.scale --[[@as number]]
-        local mortarThick = args.mortarThick or defaults.mortarThick --[[@as integer]]
-        local xOrig = args.xOrig --[[@as number]]
-        local yOrig = args.yOrig --[[@as number]]
-        local brickColor = args.brickClr --[[@as Color]]
-        local mortarColor = args.mortarClr --[[@as Color]]
-        local vari100 = args.variance or defaults.variance --[[@as integer]]
+        local args <const> = dlg.data
+        local cols <const> = args.cols or defaults.cols --[[@as integer]]
+        local rows <const> = args.rows or defaults.rows --[[@as integer]]
+        local off100 <const> = args.offset or defaults.offset --[[@as integer]]
+        local aspect <const> = args.aspect or defaults.aspect --[[@as number]]
+        local skip <const> = args.skip or defaults.skip --[[@as integer]]
+        local pick <const> = args.pick or defaults.pick --[[@as integer]]
+        local scale <const> = args.scale --[[@as number]]
+        local mortarThick <const> = args.mortarThick
+            or defaults.mortarThick --[[@as integer]]
+        local xOrig <const> = args.xOrig --[[@as number]]
+        local yOrig <const> = args.yOrig --[[@as number]]
+        local brickColor <const> = args.brickClr --[[@as Color]]
+        local mortarColor <const> = args.mortarClr --[[@as Color]]
+        local vari100 <const> = args.variance
+            or defaults.variance --[[@as integer]]
 
-        local offset = off100 * 0.01
-        local sclval = math.max(2.0, scale)
+        local offset <const> = off100 * 0.01
+        local sclval <const> = math.max(2.0, scale)
 
-        local mesh = Mesh2.gridBricks(
+        local mesh <const> = Mesh2.gridBricks(
             cols, rows, offset, aspect, skip, pick)
 
-        local t = Mat3.fromTranslation(xOrig, yOrig)
-        local s = Mat3.fromScale(sclval, -sclval)
-        local mat = Mat3.mul(t, s)
+        local t <const> = Mat3.fromTranslation(xOrig, yOrig)
+        local s <const> = Mat3.fromScale(sclval, -sclval)
+        local mat <const> = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
         local layer = nil
@@ -212,45 +214,45 @@ dlg:button {
             layer.name = mesh.name
         end)
 
-        local brush = Brush { size = mortarThick }
+        local brush <const> = Brush { size = mortarThick }
 
         if vari100 > 0 then
             -- time returns an integer, clock returns a number.
             math.randomseed(os.time())
 
             -- Unpack arguments.
-            local varyLight = args.varyLight --[[@as boolean]]
-            local varyChroma = args.varyChroma --[[@as boolean]]
-            local varyHue = args.varyHue --[[@as boolean]]
+            local varyLight <const> = args.varyLight --[[@as boolean]]
+            local varyChroma <const> = args.varyChroma --[[@as boolean]]
+            local varyHue <const> = args.varyHue --[[@as boolean]]
 
             -- Localize functions.
-            local rng = math.random
-            local max = math.max
-            local min = math.min
-            local drawMesh2 = ShapeUtilities.drawMesh2
-            local lchTosRgba = Clr.srLchTosRgb
-            local clrToAseColor = AseUtilities.clrToAseColor
+            local rng <const> = math.random
+            local max <const> = math.max
+            local min <const> = math.min
+            local drawMesh2 <const> = ShapeUtilities.drawMesh2
+            local lchTosRgba <const> = Clr.srLchTosRgb
+            local clrToAseColor <const> = AseUtilities.clrToAseColor
 
             -- Find LCHA.
-            local clr = AseUtilities.aseColorToClr(brickColor)
-            local lch = Clr.sRgbToSrLch(clr, 0.007072)
-            local lightBrick = lch.l
-            local chromaBrick = lch.c
-            local hueBrick = lch.h
-            local alpBrick = lch.a
+            local clr <const> = AseUtilities.aseColorToClr(brickColor)
+            local lch <const> = Clr.sRgbToSrLch(clr, 0.007072)
+            local lightBrick <const> = lch.l
+            local chromaBrick <const> = lch.c
+            local hueBrick <const> = lch.h
+            local alpBrick <const> = lch.a
 
             -- Calculate offsets.
-            local varNrm = vari100 * 0.01
-            local vnHalf = varNrm * 0.5
-            local varLgt = varNrm * 100.0
-            local vlHalf = varLgt * 0.5
-            local mxCrm = Clr.SR_LCH_MAX_CHROMA
-            local varCrm = varNrm * mxCrm
-            local vcHalf = varCrm * 0.5
+            local varNrm <const> = vari100 * 0.01
+            local vnHalf <const> = varNrm * 0.5
+            local varLgt <const> = varNrm * 100.0
+            local vlHalf <const> = varLgt * 0.5
+            local mxCrm <const> = Clr.SR_LCH_MAX_CHROMA
+            local varCrm <const> = varNrm * mxCrm
+            local vcHalf <const> = varCrm * 0.5
 
             -- Separate faces.
-            local separated = Mesh2.separateFaces(mesh)
-            local sepLen = #separated
+            local separated <const> = Mesh2.separateFaces(mesh)
+            local sepLen <const> = #separated
 
             app.transaction("Bricks", function()
                 local i = 0
@@ -273,10 +275,8 @@ dlg:button {
                             lightBrick + varLgt * rng() - vlHalf))
                     end
 
-                    -- Don't use { hue, saturation, lightness, alpha }
-                    -- Color constructor. There is a bug with the API.
-                    local varyClr = lchTosRgba(lVary, cVary, hVary, alpBrick)
-                    local variety = clrToAseColor(varyClr)
+                    local varyClr <const> = lchTosRgba(lVary, cVary, hVary, alpBrick)
+                    local variety <const> = clrToAseColor(varyClr)
 
                     drawMesh2(
                         separated[i],
