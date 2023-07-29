@@ -249,7 +249,7 @@ end
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
----@param range number range
+---@param range number? range
 ---@return number
 function Utilities.lerpAngleCcw(origin, dest, t, range)
     local valRange <const> = range or 360.0
@@ -274,7 +274,7 @@ end
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
----@param range number range
+---@param range number? range
 ---@return number
 function Utilities.lerpAngleCw(origin, dest, t, range)
     local valRange <const> = range or 360.0
@@ -299,7 +299,7 @@ end
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
----@param range number range
+---@param range number? range
 ---@return number
 function Utilities.lerpAngleFar(origin, dest, t, range)
     local valRange <const> = range or 360.0
@@ -326,7 +326,7 @@ end
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
----@param range number range
+---@param range number? range
 ---@return number
 function Utilities.lerpAngleNear(origin, dest, t, range)
     local valRange <const> = range or 360.0

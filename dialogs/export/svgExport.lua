@@ -1,6 +1,7 @@
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 
 local defaults <const> = {
+    -- TODO: Time scalar, so 1.5x, 2x, etc. speed is possible?
     flattenImage = true,
     frameTarget = "ACTIVE",
     rangeStr = "",

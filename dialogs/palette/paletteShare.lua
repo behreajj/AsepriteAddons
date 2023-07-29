@@ -1,6 +1,6 @@
-local palTypes = { "ACTIVE", "FILE" }
+local palTypes <const> = { "ACTIVE", "FILE" }
 
-local defaults = {
+local defaults <const> = {
     palType = "ACTIVE",
     uniquesOnly = false,
     prependMask = true,
@@ -9,7 +9,7 @@ local defaults = {
     pullFocus = false
 }
 
-local dlg = Dialog { title = "Share Palette" }
+local dlg <const> = Dialog { title = "Share Palette" }
 
 dlg:combobox {
     id = "palType",
@@ -17,7 +17,8 @@ dlg:combobox {
     option = "ACTIVE",
     options = palTypes,
     onchange = function()
-        local state = dlg.data.palType
+        local args <const> = dlg.data
+        local state <const> = args.palType --[[@as string]]
         dlg:modify {
             id = "palFile",
             visible = state == "FILE"
@@ -79,12 +80,12 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local profileNone = ColorSpace()
-        local profileSrgb = ColorSpace { sRGB = true }
+        local profileNone <const> = ColorSpace()
+        local profileSrgb <const> = ColorSpace { sRGB = true }
         local profActive = profileSrgb
         local cmActive = ColorMode.RGB
 
-        local activeSprite = app.site.sprite
+        local activeSprite <const> = app.site.sprite
         if activeSprite then
             profActive = activeSprite.colorSpace
             if activeSprite.colorMode ~= ColorMode.INDEXED then
@@ -99,16 +100,16 @@ dlg:button {
         end
 
         AseUtilities.preserveForeBack()
-        local openSprites = app.sprites
-        local openLen = #openSprites
+        local openSprites <const> = app.sprites
+        local openLen <const> = #openSprites
 
-        local args = dlg.data
-        local palType = args.palType or defaults.palType --[[@as string]]
-        local palFile = args.palFile --[[@as string]]
-        local prependMask = args.prependMask
-        local startIndex = args.startIndex
+        local args <const> = dlg.data
+        local palType <const> = args.palType or defaults.palType --[[@as string]]
+        local palFile <const> = args.palFile --[[@as string]]
+        local prependMask <const> = args.prependMask --[[@as boolean]]
+        local startIndex <const> = args.startIndex
             or defaults.startIndex --[[@as integer]]
-        local count = args.count
+        local count <const> = args.count
             or defaults.count --[[@as integer]]
 
         local hexesProfile = {}
@@ -116,9 +117,9 @@ dlg:button {
         hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
             palType, palFile, startIndex, count, true)
 
-        local uniquesOnly = args.uniquesOnly
+        local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
         if uniquesOnly then
-            local uniques, _ = Utilities.uniqueColors(
+            local uniques <const>, _ <const> = Utilities.uniqueColors(
                 hexesSrgb, true)
             hexesSrgb = uniques
         end
@@ -127,9 +128,11 @@ dlg:button {
             Utilities.prependMask(hexesSrgb)
         end
 
-        local candidatesApprox = {}
-        local candidatesExact = {}
-        local rejected = {
+        ---@type Sprite[]
+        local candidatesApprox <const> = {}
+        ---@type Sprite[]
+        local candidatesExact <const> = {}
+        local rejected <const> = {
             "Not all sprites were included. Check to see",
             "if the sprite has a matching color mode and",
             "color profile. Excluded sprites are:"
@@ -143,18 +146,18 @@ dlg:button {
         local h = 0
         while h < openLen do
             h = h + 1
-            local sprite = openSprites[h]
-            local colorMode = sprite.colorMode
-            local filename = app.fs.fileTitle(sprite.filename)
+            local sprite <const> = openSprites[h]
+            local colorMode <const> = sprite.colorMode
+            local filename <const> = app.fs.fileTitle(sprite.filename)
 
             if colorMode == cmActive then
-                local profile = sprite.colorSpace
+                local profile <const> = sprite.colorSpace
                 if profile == profActive then
                     candLenExact = candLenExact + 1
                     candidatesExact[candLenExact] = sprite
                 elseif (profile == nil
-                    or profile == profileSrgb
-                    or profile == profileNone) then
+                        or profile == profileSrgb
+                        or profile == profileNone) then
                     candLenApprox = candLenApprox + 1
                     candidatesApprox[candLenApprox] = sprite
                 else
@@ -172,8 +175,8 @@ dlg:button {
         local i = 0
         while i < candLenApprox do
             i = i + 1
-            local candidate = candidatesApprox[i]
-            local lenPals = #candidate.palettes
+            local candidate <const> = candidatesApprox[i]
+            local lenPals <const> = #candidate.palettes
             -- This isn't as efficient as it could be
             -- because the same Aseprite Colors are
             -- recreated for each target palette when
@@ -189,8 +192,8 @@ dlg:button {
         local k = 0
         while k < candLenExact do
             k = k + 1
-            local candidate = candidatesExact[k]
-            local lenPals = #candidate.palettes
+            local candidate <const> = candidatesExact[k]
+            local lenPals <const> = #candidate.palettes
             local j = 0
             while j < lenPals do
                 j = j + 1

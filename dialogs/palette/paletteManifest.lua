@@ -1,16 +1,16 @@
 dofile("../../support/textutilities.lua")
 
-local palTypes = { "ACTIVE", "FILE" }
-local palFormats = { "aseprite", "gpl", "png", "pal", "webp" }
+local palTypes <const> = { "ACTIVE", "FILE" }
+local palFormats <const> = { "aseprite", "gpl", "png", "pal", "webp" }
 local sortPresets = {
     "A", "ALPHA", "B",
     "CHROMA", "HUE",
     "INDEX", "LUMA"
 }
-local sortOrders = { "ASCENDING", "DESCENDING" }
-local numBases = { "PROFILE", "S_RGB" }
+local sortOrders <const> = { "ASCENDING", "DESCENDING" }
+local numBases <const> = { "PROFILE", "S_RGB" }
 
-local defaults = {
+local defaults <const> = {
     -- TODO: Support Normal map azim, incl, vector?
     maxCount = 512,
     count = 512,
@@ -52,7 +52,6 @@ local defaults = {
 local function drawCharsHorizShd(
     lut, image, chars, fillHex, shadHex,
     x, y, gw, gh, scale)
-
     TextUtilities.drawString(
         lut, image, chars, shadHex,
         x, y + 1, gw, gh, scale)
@@ -68,9 +67,10 @@ end
 ---@param w integer
 ---@param h integer
 local function drawSwatch(image, hex, x, y, w, h)
-    local lenn1 = (w * h) - 1
+    local lenn1 <const> = (w * h) - 1
     local i = -1
-    while i < lenn1 do i = i + 1
+    while i < lenn1 do
+        i = i + 1
         image:drawPixel(
             x + (i % w),
             y + (i // w),
@@ -78,7 +78,7 @@ local function drawSwatch(image, hex, x, y, w, h)
     end
 end
 
-local dlg = Dialog { title = "Palette Manifest" }
+local dlg <const> = Dialog { title = "Palette Manifest" }
 
 dlg:entry {
     id = "title",
@@ -95,7 +95,8 @@ dlg:combobox {
     option = defaults.palType,
     options = palTypes,
     onchange = function()
-        local state = dlg.data.palType
+        local args <const> = dlg.data
+        local state <const> = args.palType --[[@as string]]
         dlg:modify {
             id = "palFile",
             visible = state == "FILE"
@@ -172,10 +173,12 @@ dlg:check {
     text = "He&x",
     selected = defaults.hexDisplay,
     onclick = function()
+        local args <const> = dlg.data
+        local hexDisplay <const> = args.hexDisplay --[[@as boolean]]
+        local rgbDisplay <const> = args.rgbDisplay --[[@as boolean]]
         dlg:modify {
             id = "numBasis",
-            visible = dlg.data.hexDisplay
-                or dlg.data.rgbDisplay
+            visible = hexDisplay or rgbDisplay
         }
     end
 }
@@ -193,10 +196,12 @@ dlg:check {
     text = "&RGB",
     selected = defaults.rgbDisplay,
     onclick = function()
+        local args <const> = dlg.data
+        local hexDisplay <const> = args.hexDisplay --[[@as boolean]]
+        local rgbDisplay <const> = args.rgbDisplay --[[@as boolean]]
         dlg:modify {
             id = "numBasis",
-            visible = dlg.data.hexDisplay
-                or dlg.data.rgbDisplay
+            visible = hexDisplay or rgbDisplay
         }
     end
 }
@@ -307,7 +312,7 @@ dlg:button {
         -- different color mode, then closed.
         app.refresh()
 
-        local args = dlg.data
+        local args <const> = dlg.data
 
         -- Determine how important it is to specify the transparency mask.
         local useMaskIdx = false
@@ -315,20 +320,20 @@ dlg:button {
         local palType = args.palType
             or defaults.palType --[[@as string]]
         if palType == "ACTIVE" then
-            local idxActSpr = app.site.sprite
+            local idxActSpr <const> = app.site.sprite
             if idxActSpr then
-                local idxActSprClrMd = idxActSpr.colorMode
+                local idxActSprClrMd <const> = idxActSpr.colorMode
                 useMaskIdx = idxActSprClrMd == ColorMode.INDEXED
                 srcMaskIdx = idxActSpr.transparentColor
             end
         end
 
-        local startIndex = args.startIndex
+        local startIndex <const> = args.startIndex
             or defaults.startIndex --[[@as integer]]
-        local palCount = args.count
+        local palCount <const> = args.count
             or defaults.count --[[@as integer]]
-        local palFile = args.palFile --[[@as string]]
-        local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
+        local palFile <const> = args.palFile --[[@as string]]
+        local hexesProfile <const>, hexesSrgb = AseUtilities.asePaletteLoad(
             palType, palFile, startIndex, palCount, false)
 
         -- Set manifest profile.
@@ -345,18 +350,18 @@ dlg:button {
         end
 
         -- Cache global functions to locals.
-        local round = Utilities.round
-        local strfmt = string.format
-        local strsub = string.sub
-        local sRgbToLab = Clr.sRgbToSrLab2
-        local labToLch = Clr.srLab2ToSrLch
-        local strToChars = Utilities.stringToCharTable
-        local hexToAse = AseUtilities.hexToAseColor
+        local round <const> = Utilities.round
+        local strfmt <const> = string.format
+        local strsub <const> = string.sub
+        local sRgbToLab <const> = Clr.sRgbToSrLab2
+        local labToLch <const> = Clr.srLab2ToSrLch
+        local strToChars <const> = Utilities.stringToCharTable
+        local hexToAse <const> = AseUtilities.hexToAseColor
 
         -- Do not take the length of hexesSrgb
         -- after this point, as it will potentially
         -- contain nils and premature boundaries.
-        local hexesSrgbLen = #hexesSrgb
+        local hexesSrgbLen <const> = #hexesSrgb
 
         -- Stage 1 validate hex integer mask.
         if srcMaskIdx < 0 then srcMaskIdx = 0 end
@@ -367,11 +372,12 @@ dlg:button {
         -- alpha zero, but otherwise different, that
         -- difference should be retained. That's why
         -- there are no alpha filters.
-        local uniquesOnly = args.uniquesOnly
+        local uniquesOnly <const> = args.uniquesOnly
         if uniquesOnly then
-            local hexDict = {}
+            ---@type table<integer, integer>
+            local hexDict <const> = {}
             for i = 1, hexesSrgbLen, 1 do
-                local hex = hexesSrgb[i]
+                local hex <const> = hexesSrgb[i]
 
                 -- Mask color should be included even if it is
                 -- already present in palette at another index.
@@ -389,20 +395,21 @@ dlg:button {
         -- Package together different representations
         -- of color into one object, so that all can
         -- remain affiliated when the data are sorted.
-        local palData = {}
+        ---@type table[]
+        local palData <const> = {}
         local entryIdx = 1
         for i = 1, hexesSrgbLen, 1 do
-            local hexSrgb = hexesSrgb[i]
+            local hexSrgb <const> = hexesSrgb[i]
             if hexSrgb then
-                local palIdx = startIndex + i - 1
-                local isMaskIdx = palIdx == srcMaskIdx
+                local palIdx <const> = startIndex + i - 1
+                local isMaskIdx <const> = palIdx == srcMaskIdx
 
-                local alphaSrgb255 = hexSrgb >> 0x18 & 0xff
-                local blueSrgb255 = hexSrgb >> 0x10 & 0xff
-                local greenSrgb255 = hexSrgb >> 0x08 & 0xff
-                local redSrgb255 = hexSrgb & 0xff
+                local alphaSrgb255 <const> = hexSrgb >> 0x18 & 0xff
+                local blueSrgb255 <const> = hexSrgb >> 0x10 & 0xff
+                local greenSrgb255 <const> = hexSrgb >> 0x08 & 0xff
+                local redSrgb255 <const> = hexSrgb & 0xff
 
-                local webSrgbStr = strfmt("#%06X",
+                local webSrgbStr <const> = strfmt("#%06X",
                     (redSrgb255 << 0x10)
                     | (greenSrgb255 << 0x08)
                     | blueSrgb255)
@@ -412,7 +419,7 @@ dlg:button {
                 local redProfile255 = redSrgb255
                 local webProfileStr = webSrgbStr
 
-                local hexProfile = hexesProfile[i]
+                local hexProfile <const> = hexesProfile[i]
                 if hexSrgb ~= hexProfile then
                     blueProfile255 = hexProfile >> 0x10 & 0xff
                     greenProfile255 = hexProfile >> 0x08 & 0xff
@@ -425,19 +432,19 @@ dlg:button {
                     -- print(webProfileStr)
                 end
 
-                local clr = Clr.new(
+                local clr <const> = Clr.new(
                     redSrgb255 * 0.003921568627451,
                     greenSrgb255 * 0.003921568627451,
                     blueSrgb255 * 0.003921568627451,
                     1.0)
-                local lab = sRgbToLab(clr)
-                local lch = labToLch(
+                local lab <const> = sRgbToLab(clr)
+                local lch <const> = labToLch(
                     lab.l, lab.a, lab.b, 1.0)
 
                 -- Convert values to integers to make them
                 -- easier to sort and to make sorting conform
                 -- to visual presentation.
-                local palEntry = {
+                local palEntry <const> = {
                     palIdx = palIdx,
                     isMaskIdx = isMaskIdx,
 
@@ -469,9 +476,10 @@ dlg:button {
         end
 
         -- Treat any transparent color as grayscale.
-        local sortPreset = args.sortPreset or defaults.sortPreset
+        local sortPreset <const> = args.sortPreset
+            or defaults.sortPreset --[[@as string]]
         if sortPreset == "A" then
-            local f = function(a, b)
+            local f <const> = function(a, b)
                 if a.alphaSrgb255 < 1 and b.alphaSrgb255 < 1 then
                     return a.l < b.l
                 end
@@ -481,7 +489,7 @@ dlg:button {
             end
             table.sort(palData, f)
         elseif sortPreset == "B" then
-            local f = function(a, b)
+            local f <const> = function(a, b)
                 if a.alphaSrgb255 < 1 and b.alphaSrgb255 < 1 then
                     return a.l < b.l
                 end
@@ -491,7 +499,7 @@ dlg:button {
             end
             table.sort(palData, f)
         elseif sortPreset == "ALPHA" then
-            local f = function(a, b)
+            local f <const> = function(a, b)
                 if a.alphaSrgb255 == b.alphaSrgb255 then
                     return a.l < b.l
                 end
@@ -499,17 +507,18 @@ dlg:button {
             end
             table.sort(palData, f)
         elseif sortPreset == "CHROMA" then
-            local f = function(a, b)
+            local f <const> = function(a, b)
                 if a.alphaSrgb255 < 1 and b.alphaSrgb255 < 1 then
                     return a.l < b.l
                 end
                 if a.alphaSrgb255 < 1 then return true end
                 if b.alphaSrgb255 < 1 then return false end
+                if a.c < 1 and b.c < 1 then return a.l < b.l end
                 return a.c < b.c
             end
             table.sort(palData, f)
         elseif sortPreset == "HUE" then
-            local f = function(a, b)
+            local f <const> = function(a, b)
                 if a.alphaSrgb255 < 1 and b.alphaSrgb255 < 1 then
                     return a.l < b.l
                 end
@@ -536,7 +545,7 @@ dlg:button {
             end
             table.sort(palData, f)
         elseif sortPreset == "LUMA" then
-            local f = function(a, b)
+            local f <const> = function(a, b)
                 if a.alphaSrgb255 < 1 and b.alphaSrgb255 < 1 then
                     return a.l < b.l
                 end
@@ -547,54 +556,55 @@ dlg:button {
             table.sort(palData, f)
         end
 
-        local ascDesc = args.ascDesc or defaults.ascDesc
+        local ascDesc <const> = args.ascDesc
+            or defaults.ascDesc --[[@as string]]
         if ascDesc == "DESCENDING" then
             Utilities.reverseTable(palData)
         end
 
         -- Pal data length will not equal srcHex length.
-        local lenPalData = #palData
+        local lenPalData <const> = #palData
         local spriteHeight = 768
         local spriteWidth = 512
 
         -- Declare constants.
-        local lut = TextUtilities.GLYPH_LUT
-        local gw = TextUtilities.GLYPH_WIDTH
-        local gh = TextUtilities.GLYPH_HEIGHT
-        local txtDispScl = 1
-        local dw = txtDispScl * gw
-        local dh = txtDispScl * gh
+        local lut <const> = TextUtilities.GLYPH_LUT
+        local gw <const> = TextUtilities.GLYPH_WIDTH
+        local gh <const> = TextUtilities.GLYPH_HEIGHT
+        local txtDispScl <const> = 1
+        local dw <const> = txtDispScl * gw
+        local dh <const> = txtDispScl * gh
 
-        local swchSize = dh + 1
-        local swchOffs = 3
-        local swchSizeTotal = swchSize + swchOffs
-        local spriteMargin = 2
-        local entryPadding = 2
-        local colCount = 1
+        local swchSize <const> = dh + 1
+        local swchOffs <const> = 3
+        local swchSizeTotal <const> = swchSize + swchOffs
+        local spriteMargin <const> = 2
+        local entryPadding <const> = 2
+        local colCount <const> = 1
 
         -- Get user prefs for what to display.
-        local idxDisplay = args.idxDisplay
-        local hexDisplay = args.hexDisplay
-        local alphaDisplay = args.alphaDisplay
-        local rgbDisplay = args.rgbDisplay
-        local labDisplay = args.labDisplay
-        local lchDisplay = args.lchDisplay
-        local lumDisplay = lchDisplay or labDisplay
+        local idxDisplay <const> = args.idxDisplay --[[@as boolean]]
+        local hexDisplay <const> = args.hexDisplay --[[@as boolean]]
+        local alphaDisplay <const> = args.alphaDisplay --[[@as boolean]]
+        local rgbDisplay <const> = args.rgbDisplay --[[@as boolean]]
+        local labDisplay <const> = args.labDisplay --[[@as boolean]]
+        local lchDisplay <const> = args.lchDisplay --[[@as boolean]]
+        local lumDisplay <const> = lchDisplay or labDisplay
 
         -- Calculate column offets.
-        local idxColOffset = dw * 4 + entryPadding
-        local hexColOffset = dw * 8 + entryPadding
-        local alphaColOffset = dw * 4 + entryPadding
-        local rgbColOffset = dw * 12 + entryPadding
-        local lumColOffset = dw * 4 + entryPadding
-        local abColOffset = dw * 10 + entryPadding
-        local chColOffset = dw * 8 + entryPadding
+        local idxColOffset <const> = dw * 4 + entryPadding
+        local hexColOffset <const> = dw * 8 + entryPadding
+        local alphaColOffset <const> = dw * 4 + entryPadding
+        local rgbColOffset <const> = dw * 12 + entryPadding
+        local lumColOffset <const> = dw * 4 + entryPadding
+        local abColOffset <const> = dw * 10 + entryPadding
+        local chColOffset <const> = dw * 8 + entryPadding
         -- chColOffset has not been tested to make
         -- sure it is right because there is nothing
         -- to the right of it.
 
         -- Find width and height of each entry.
-        local entryHeight = swchSizeTotal + entryPadding * 2
+        local entryHeight <const> = swchSizeTotal + entryPadding * 2
         local entryWidth = swchSizeTotal + entryPadding * 2
         if idxDisplay then entryWidth = entryWidth + idxColOffset end
         if hexDisplay then entryWidth = entryWidth + hexColOffset end
@@ -607,29 +617,29 @@ dlg:button {
         entryWidth = math.max(entryWidth, 128)
 
         -- Validate how often to repeat the header.
-        local hdrRepeatRate = args.hdrRepeatRate or defaults.hdrRepeatRate
+        local hdrRepeatRate <const> = args.hdrRepeatRate or defaults.hdrRepeatRate
         local hdrUseRepeat = true
         if hdrRepeatRate >= (lenPalData - 1) or hdrRepeatRate < 4 then
             hdrUseRepeat = false
         end
 
         -- Unpack text and text shadow colors.
-        local txtColor = args.txtColor --[[@as Color]]
-        local shdColor = args.shdColor --[[@as Color]]
-        local hdrTxtColor = args.hdrTxtColor --[[@as Color]]
-        local hdrBkgColor = args.hdrBkgColor --[[@as Color]]
-        local row0Color = args.rowColor0 --[[@as Color]]
-        local row1Color = args.rowColor1 --[[@as Color]]
-        local bkgColor = args.bkgColor --[[@as Color]]
+        local txtColor <const> = args.txtColor --[[@as Color]]
+        local shdColor <const> = args.shdColor --[[@as Color]]
+        local hdrTxtColor <const> = args.hdrTxtColor --[[@as Color]]
+        local hdrBkgColor <const> = args.hdrBkgColor --[[@as Color]]
+        local row0Color <const> = args.rowColor0 --[[@as Color]]
+        local row1Color <const> = args.rowColor1 --[[@as Color]]
+        local bkgColor <const> = args.bkgColor --[[@as Color]]
 
         -- Convert to hexadecimal.
-        local txtHex = AseUtilities.aseColorToHex(txtColor, ColorMode.RGB)
-        local shdHex = AseUtilities.aseColorToHex(shdColor, ColorMode.RGB)
-        local hdrTxtHex = AseUtilities.aseColorToHex(hdrTxtColor, ColorMode.RGB)
-        local hdrBkgHex = AseUtilities.aseColorToHex(hdrBkgColor, ColorMode.RGB)
-        local row0Hex = AseUtilities.aseColorToHex(row0Color, ColorMode.RGB)
-        local row1Hex = AseUtilities.aseColorToHex(row1Color, ColorMode.RGB)
-        local bkgHex = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
+        local txtHex <const> = AseUtilities.aseColorToHex(txtColor, ColorMode.RGB)
+        local shdHex <const> = AseUtilities.aseColorToHex(shdColor, ColorMode.RGB)
+        local hdrTxtHex <const> = AseUtilities.aseColorToHex(hdrTxtColor, ColorMode.RGB)
+        local hdrBkgHex <const> = AseUtilities.aseColorToHex(hdrBkgColor, ColorMode.RGB)
+        local row0Hex <const> = AseUtilities.aseColorToHex(row0Color, ColorMode.RGB)
+        local row1Hex <const> = AseUtilities.aseColorToHex(row1Color, ColorMode.RGB)
+        local bkgHex <const> = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
 
         -- Recalaculate sprite width and height.
         spriteWidth = colCount * entryWidth + spriteMargin * 2
@@ -657,12 +667,11 @@ dlg:button {
         end
 
         -- Create background image.
-
-        local bkgImg = Image(spriteWidth, spriteHeight, ColorMode.RGB)
+        local bkgImg <const> = Image(spriteWidth, spriteHeight, ColorMode.RGB)
         bkgImg:clear(bkgHex)
 
         -- Create footer to display profile name.
-        local footImg = Image(entryWidth, entryHeight, ColorMode.RGB)
+        local footImg <const> = Image(entryWidth, entryHeight, ColorMode.RGB)
         local footText = "NONE"
         if mnfstClrPrf then
             if mnfstClrPrf.name and #mnfstClrPrf.name > 0 then
@@ -670,7 +679,7 @@ dlg:button {
             end
         end
         footText = "PROFILE: " .. footText
-        local footChars = strToChars(footText)
+        local footChars <const> = strToChars(footText)
         drawCharsHorizShd(
             lut, footImg, footChars,
             hdrTxtHex, shdHex,
@@ -679,13 +688,14 @@ dlg:button {
             gw, gh, txtDispScl)
 
         -- Create title image.
-        local mnfstTitle = args.title or defaults.title --[[@as string]]
+        local mnfstTitle = args.title
+            or defaults.title --[[@as string]]
         if #mnfstTitle < 1 then mnfstTitle = defaults.title end
         local mnfstTitleDisp = string.sub(mnfstTitle, 1, 14)
         mnfstTitleDisp = string.upper(mnfstTitleDisp)
-        local titleImg = Image(entryWidth, entryHeight, ColorMode.RGB)
-        local titleChars = strToChars(mnfstTitleDisp)
-        local titleHalfLen = dw * #titleChars // 2
+        local titleImg <const> = Image(entryWidth, entryHeight, ColorMode.RGB)
+        local titleChars <const> = strToChars(mnfstTitleDisp)
+        local titleHalfLen <const> = dw * #titleChars // 2
         drawCharsHorizShd(
             lut, titleImg, titleChars,
             hdrTxtHex, shdHex,
@@ -693,61 +703,61 @@ dlg:button {
             gw, gh, txtDispScl)
 
         -- Create templates for alternating rows.
-        local row0Tmpl = Image(entryWidth, entryHeight, ColorMode.RGB)
+        local row0Tmpl <const> = Image(entryWidth, entryHeight, ColorMode.RGB)
         row0Tmpl:clear(row0Hex)
 
-        local row1Tmpl = Image(entryWidth, entryHeight, ColorMode.RGB)
+        local row1Tmpl <const> = Image(entryWidth, entryHeight, ColorMode.RGB)
         row1Tmpl:clear(row1Hex)
 
         -- Create header image.
-        local hdrImg = Image(entryWidth, entryHeight, ColorMode.RGB)
+        local hdrImg <const> = Image(entryWidth, entryHeight, ColorMode.RGB)
         hdrImg:clear(hdrBkgHex)
 
         local xCrtHdr = swchSizeTotal + entryPadding
 
         if idxDisplay then
-            local idxChars = strToChars("IDX")
+            local idxChars <const> = strToChars("IDX")
             drawCharsHorizShd(lut, hdrImg, idxChars, hdrTxtHex, shdHex,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + idxColOffset
         end
 
         if hexDisplay then
-            local hexChars = strToChars("    HEX")
+            local hexChars <const> = strToChars("    HEX")
             drawCharsHorizShd(lut, hdrImg, hexChars, hdrTxtHex, shdHex,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + hexColOffset
         end
 
         if alphaDisplay then
-            local hexChars = strToChars("ALP")
+            local hexChars <const> = strToChars("ALP")
             drawCharsHorizShd(lut, hdrImg, hexChars, hdrTxtHex, shdHex,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + alphaColOffset
         end
 
         if rgbDisplay then
-            local rgbChars = strToChars("RED GRN BLU")
+            local rgbChars <const> = strToChars("RED GRN BLU")
             drawCharsHorizShd(lut, hdrImg, rgbChars, hdrTxtHex, shdHex,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + rgbColOffset
         end
 
         if lumDisplay then
-            local lumChars = strToChars("LUM")
+            local lumChars <const> = strToChars("LUM")
             drawCharsHorizShd(lut, hdrImg, lumChars, hdrTxtHex, shdHex,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + lumColOffset
 
             if labDisplay then
-                local abChars = strToChars("   A    B")
+                local abChars <const> = strToChars("   A    B")
                 drawCharsHorizShd(lut, hdrImg, abChars, hdrTxtHex, shdHex,
                     xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
                 xCrtHdr = xCrtHdr + abColOffset
             end
 
             if lchDisplay then
-                local chChars = strToChars("CRM HUE")
+                local chChars <const> = strToChars("CRM HUE")
                 drawCharsHorizShd(lut, hdrImg, chChars, hdrTxtHex, shdHex,
                     xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
                 xCrtHdr = xCrtHdr + chColOffset
@@ -755,22 +765,22 @@ dlg:button {
         end
 
         -- Create sprite.
-        local manifestSprite = Sprite(spriteWidth, spriteHeight, ColorMode.RGB)
+        local manifestSprite <const> = Sprite(spriteWidth, spriteHeight, ColorMode.RGB)
         manifestSprite.filename = mnfstTitle
 
         -- This is not necessary. It is retained in case this
         -- script ever needs to use multiple frames.
-        local frameObj = manifestSprite.frames[1]
+        local frameObj <const> = manifestSprite.frames[1]
 
         -- Create background layer and cel.
-        local bkgLayer = manifestSprite.layers[1]
+        local bkgLayer <const> = manifestSprite.layers[1]
         bkgLayer.name = "Bkg"
         manifestSprite:newCel(
             bkgLayer, frameObj, bkgImg)
 
         -- Create foot layer.
         local yCaret = spriteHeight - spriteMargin - entryHeight
-        local footLayer = manifestSprite:newLayer()
+        local footLayer <const> = manifestSprite:newLayer()
         footLayer.name = "Profile"
         manifestSprite:newCel(
             footLayer, frameObj, footImg,
@@ -781,24 +791,25 @@ dlg:button {
 
         -- Proceed in reverse order, from bottom to top, so
         -- layers in stack read from top to bottom.
-        local numBasis = args.numBasis or defaults.numBasis
-        local nbIsSrgb = numBasis == "S_RGB"
+        local numBasis <const> = args.numBasis or defaults.numBasis
+        local nbIsSrgb <const> = numBasis == "S_RGB"
 
-        local grayHue = args.grayHue or defaults.grayHue
-        local grIsZero = grayHue == "ZERO"
-        local grIsShad = grayHue == "SHADING"
+        local grayHue <const> = args.grayHue
+            or defaults.grayHue --[[@as string]]
+        local grIsZero <const> = grayHue == "ZERO"
+        local grIsShad <const> = grayHue == "SHADING"
 
         local swatchMask = 0x0
-        local noAlpha = true
+        local noAlpha <const> = true
         if noAlpha then swatchMask = 0xff000000 end
 
         app.transaction("Manifest", function()
             -- TODO: Replace for loop.
             for i = lenPalData, 1, -1 do
-                local palEntry = palData[i]
-                local palIdx = palEntry.palIdx
-                local hexSrgb = palEntry.hexSrgb
-                local hexProfile = palEntry.hexProfile
+                local palEntry <const> = palData[i]
+                local palIdx <const> = palEntry.palIdx
+                local hexSrgb <const> = palEntry.hexSrgb
+                local hexProfile <const> = palEntry.hexProfile
 
                 local hexWeb = nil
                 local hexCel = nil
@@ -817,13 +828,13 @@ dlg:button {
                     rowImg = row1Tmpl:clone()
                 end
 
-                local rowLayer = manifestSprite:newLayer()
+                local rowLayer <const> = manifestSprite:newLayer()
                 rowLayer.name = strfmt("%03d.%s",
                     palIdx, strsub(hexWeb, 2))
 
                 if hexSrgb ~= hexProfile then
-                    local back = swatchMask | hexSrgb
-                    local fore = swatchMask | hexProfile
+                    local back <const> = swatchMask | hexSrgb
+                    local fore <const> = swatchMask | hexProfile
 
                     drawSwatch(rowImg, back,
                         entryPadding + swchOffs, entryPadding + swchOffs,
@@ -841,7 +852,7 @@ dlg:button {
                 if useMaskIdx and palEntry.isMaskIdx then
                     rowLayer.name = rowLayer.name .. " (MASK)"
                     local pipColor = 0xffffffff
-                    local halfSz = swchSize // 2
+                    local halfSz <const> = swchSize // 2
                     if palEntry.l > 50 then
                         pipColor = 0xff000000
                     end
@@ -853,24 +864,24 @@ dlg:button {
                 local xCaret = swchSizeTotal + entryPadding
 
                 if idxDisplay then
-                    local idxStr = strfmt("%3d", palIdx)
-                    local idxChars = strToChars(idxStr)
+                    local idxStr <const> = strfmt("%3d", palIdx)
+                    local idxChars <const> = strToChars(idxStr)
                     drawCharsHorizShd(lut, rowImg, idxChars, txtHex, shdHex,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + idxColOffset
                 end
 
                 if hexDisplay then
-                    local hexChars = strToChars(hexWeb)
+                    local hexChars <const> = strToChars(hexWeb)
                     drawCharsHorizShd(lut, rowImg, hexChars, txtHex, shdHex,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + hexColOffset
                 end
 
                 if alphaDisplay then
-                    local alpha = palEntry.alphaSrgb255
-                    local alphaStr = strfmt("%3d", alpha)
-                    local alphaChars = strToChars(alphaStr)
+                    local alpha <const> = palEntry.alphaSrgb255
+                    local alphaStr <const> = strfmt("%3d", alpha)
+                    local alphaChars <const> = strToChars(alphaStr)
                     drawCharsHorizShd(lut, rowImg, alphaChars, txtHex, shdHex,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + alphaColOffset
@@ -890,39 +901,45 @@ dlg:button {
                         b = palEntry.blueProfile255
                     end
 
-                    local rgbStr = strfmt("%3d %3d %3d", r, g, b)
-                    local rgbChars = strToChars(rgbStr)
+                    local rgbStr <const> = strfmt("%3d %3d %3d", r, g, b)
+                    local rgbChars <const> = strToChars(rgbStr)
                     drawCharsHorizShd(lut, rowImg, rgbChars, txtHex, shdHex,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + rgbColOffset
                 end
 
                 if lumDisplay then
-                    local lum = palEntry.l
-                    local lumStr = strfmt("%3d", lum)
-                    local lumChars = strToChars(lumStr)
+                    local lum <const> = palEntry.l
+                    local lumStr <const> = strfmt("%3d", lum)
+                    local lumChars <const> = strToChars(lumStr)
                     drawCharsHorizShd(lut, rowImg, lumChars, txtHex, shdHex,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + lumColOffset
 
                     if labDisplay then
-                        local a = palEntry.a
-                        local b = palEntry.b
+                        local a <const> = palEntry.a
+                        local b <const> = palEntry.b
 
                         local abStr = ""
-                        if a == 0 then abStr = " 000"
-                        else abStr = strfmt("%+04d", a) end
-                        if b == 0 then abStr = abStr .. "  000"
-                        else abStr = abStr .. strfmt(" %+04d", b) end
+                        if a == 0 then
+                            abStr = " 000"
+                        else
+                            abStr = strfmt("%+04d", a)
+                        end
+                        if b == 0 then
+                            abStr = abStr .. "  000"
+                        else
+                            abStr = abStr .. strfmt(" %+04d", b)
+                        end
 
-                        local abChars = strToChars(abStr)
+                        local abChars <const> = strToChars(abStr)
                         drawCharsHorizShd(lut, rowImg, abChars, txtHex, shdHex,
                             xCaret, entryPadding + 1, gw, gh, txtDispScl)
                         xCaret = xCaret + abColOffset
                     end
 
                     if lchDisplay then
-                        local chroma = palEntry.c
+                        local chroma <const> = palEntry.c
                         local chStr = strfmt("%3d", chroma)
                         if chroma < 1 then
                             if grIsZero then
@@ -934,15 +951,14 @@ dlg:button {
                             chStr = chStr .. strfmt(" %3d", palEntry.h)
                         end
 
-                        local chChars = strToChars(chStr)
+                        local chChars <const> = strToChars(chStr)
                         drawCharsHorizShd(lut, rowImg, chChars, txtHex, shdHex,
                             xCaret, entryPadding + 1, gw, gh, txtDispScl)
                         xCaret = xCaret + chColOffset
                     end
-
                 end
 
-                local rowCel = manifestSprite:newCel(
+                local rowCel <const> = manifestSprite:newCel(
                     rowLayer, frameObj, rowImg,
                     Point(spriteMargin, yCaret))
                 rowCel.color = hexToAse(hexCel)
@@ -952,9 +968,9 @@ dlg:button {
                 -- Otherwise check to see if user wanted repeating headers.
                 -- Never place a header at the bottom.
                 if i == 1 or (hdrUseRepeat
-                    and i < lenPalData
-                    and (i - 1) % hdrRepeatRate == 0) then
-                    local hdrRptLayer = manifestSprite:newLayer()
+                        and i < lenPalData
+                        and (i - 1) % hdrRepeatRate == 0) then
+                    local hdrRptLayer <const> = manifestSprite:newLayer()
                     hdrRptLayer.name = "Header"
                     manifestSprite:newCel(
                         hdrRptLayer, frameObj, hdrImg,
@@ -965,7 +981,7 @@ dlg:button {
         end)
 
         -- Create title layer.
-        local titleLayer = manifestSprite:newLayer()
+        local titleLayer <const> = manifestSprite:newLayer()
         titleLayer.name = "Title"
         manifestSprite:newCel(
             titleLayer, frameObj, titleImg,

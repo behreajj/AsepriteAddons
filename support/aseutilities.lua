@@ -1688,7 +1688,7 @@ end
 ---For sprites with multiple palettes, tries to get
 ---a palette from an Aseprite frame object. Defaults
 ---to index 1 if the frame index exceeds the number
----of palettes.
+---of palettes. Does not check if frame is nil.
 ---@param frame Frame|integer frame
 ---@param palettes Palette[] palettes
 ---@return Palette

@@ -288,9 +288,10 @@ function Clr.gridsRgb(cols, rows, layers, alpha)
     local iToStep <const> = 1.0 / (rVrf - 1.0)
     local jToStep <const> = 1.0 / (cVrf - 1.0)
 
+    ---@type Clr[]
+    local result <const> = {}
     local rcVrf <const> = rVrf * cVrf
     local length <const> = lVrf * rcVrf
-    local result <const> = {}
 
     local k = 0
     while k < length do
@@ -789,8 +790,10 @@ function Clr.sRgbTolRgbInternal(c)
 end
 
 ---Converts a color from standard RGB to SR Lab 2.
----The return table uses the keys l, a, b and alpha.
 ---Clamps the input color to [0.0, 1.0].
+---The return table uses the keys l, a, b and alpha.
+---The green to red axis is a.
+---The blue to yellow axis is b.
 ---@param c Clr linear color
 ---@return { l: number, a: number, b: number, alpha: number }
 function Clr.sRgbToSrLab2(c)
@@ -799,7 +802,8 @@ end
 
 ---Converts a color from standard RGB to SR Lab 2.
 ---The return table uses the keys l, a, b and alpha.
----The alpha channel is unaffected by the transform.
+---The green to red axis is a.
+---The blue to yellow axis is b.
 function Clr.sRgbToSrLab2Internal(c)
     return Clr.lRgbToSrLab2Internal(
         Clr.sRgbTolRgbInternal(c))

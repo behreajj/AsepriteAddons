@@ -239,7 +239,10 @@ end
 ---@param sectors integer sectors
 ---@param useQuads boolean? use quads
 ---@return Mesh2
-function Mesh2.arc(startAngle, stopAngle, startWeight, stopWeight, sectors, useQuads)
+function Mesh2.arc(
+    startAngle, stopAngle,
+    startWeight, stopWeight,
+    sectors, useQuads)
     local a <const> = startAngle % 6.2831853071796
     local b <const> = stopAngle % 6.2831853071796
     local arcLen <const> = (b - a) % 6.2831853071796

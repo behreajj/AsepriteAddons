@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local defaults = {
+local defaults <const> = {
     -- TODO: Separate out the parse function,
     -- make a separate set and append button?
     uniquesOnly = false,
@@ -8,7 +8,7 @@ local defaults = {
     paletteIndex = 1
 }
 
-local dlg = Dialog { title = "GPL Import" }
+local dlg <const> = Dialog { title = "GPL Import" }
 
 dlg:file {
     id = "filepath",
@@ -31,7 +31,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
-    selected = defaults.prependMask,
+    selected = defaults.prependMask
 }
 
 dlg:newrow { always = false }
@@ -53,8 +53,8 @@ dlg:slider {
     max = 32,
     value = app.preferences.color_bar.box_size,
     onchange = function()
-        local args = dlg.data
-        local size = args.swatchSize --[[@as integer]]
+        local args <const> = dlg.data
+        local size <const> = args.swatchSize --[[@as integer]]
         app.command.SetPaletteEntrySize { size = size }
     end
 }
@@ -67,8 +67,8 @@ dlg:check {
     text = "Separator",
     value = app.preferences.color_bar.entries_separator,
     onclick = function()
-        local args = dlg.data
-        local useSep = args.useSeparator --[[@as boolean]]
+        local args <const> = dlg.data
+        local useSep <const> = args.useSeparator --[[@as boolean]]
         app.preferences.color_bar.entries_separator = useSep
     end
 }
@@ -80,8 +80,8 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
-        local args = dlg.data
-        local filepath = args.filepath --[[@as string]]
+        local args <const> = dlg.data
+        local filepath <const> = args.filepath --[[@as string]]
 
         if (not filepath)
             or (#filepath < 1)
@@ -93,7 +93,7 @@ dlg:button {
             return
         end
 
-        local fileExt = string.lower(
+        local fileExt <const> = string.lower(
             app.fs.fileExtension(filepath))
         if fileExt ~= "gpl" and fileExt ~= "pal" then
             app.alert {
@@ -108,15 +108,15 @@ dlg:button {
         local lenColors = 0
         local columns = 0
 
-        local file, err = io.open(filepath, "r")
+        local file <const>, err <const> = io.open(filepath, "r")
         if file ~= nil then
             AseUtilities.preserveForeBack()
 
             -- Cache functions to local when used in loop.
-            local strlower = string.lower
-            local strsub = string.sub
-            local strgmatch = string.gmatch
-            local strmatch = string.match
+            local strlower <const> = string.lower
+            local strsub <const> = string.sub
+            local strgmatch <const> = string.gmatch
+            local strmatch <const> = string.match
 
             -- Implicitly tries to support JASC-PAL.
             local gplHeaderFound = 0
@@ -126,13 +126,13 @@ dlg:button {
             local jascPalClrCountFound = 0
             local aseAlphaFound = 0
             ---@type string[]
-            local comments = {}
+            local comments <const> = {}
 
             local lineCount = 1
-            local linesItr = file:lines()
+            local linesItr <const> = file:lines()
 
             for line in linesItr do
-                local lc = strlower(line)
+                local lc <const> = strlower(line)
 
                 if lc == "gimp palette" then
                     gplHeaderFound = lineCount
@@ -144,8 +144,8 @@ dlg:button {
                 elseif strsub(lc, 1, 4) == "name" then
                     nameFound = lineCount
                 elseif strsub(lc, 1, 7) == "columns" then
-                    local colStr = strmatch(lc, ":(.*)")
-                    local colDraft = tonumber(colStr, 10)
+                    local colStr <const> = strmatch(lc, ":(.*)")
+                    local colDraft <const> = tonumber(colStr, 10)
                     if colDraft then
                         columns = colDraft
                     end
@@ -165,7 +165,7 @@ dlg:button {
                         local r = 0
 
                         ---@type string[]
-                        local tokens = {}
+                        local tokens <const> = {}
                         local lenTokens = 0
                         for token in strgmatch(line, "%S+") do
                             lenTokens = lenTokens + 1
@@ -175,14 +175,14 @@ dlg:button {
                         if lenTokens > 2 then
                             if (aseAlphaFound > 0 or palHeaderFound > 0)
                                 and lenTokens > 3 then
-                                local aPrs = tonumber(tokens[4], 10)
+                                local aPrs <const> = tonumber(tokens[4], 10)
                                 if aPrs then a = aPrs end
                             end
 
                             if a > 0 then
-                                local bPrs = tonumber(tokens[3], 10)
-                                local gPrs = tonumber(tokens[2], 10)
-                                local rPrs = tonumber(tokens[1], 10)
+                                local bPrs <const> = tonumber(tokens[3], 10)
+                                local gPrs <const> = tonumber(tokens[2], 10)
+                                local rPrs <const> = tonumber(tokens[1], 10)
 
                                 if bPrs then b = bPrs end
                                 if gPrs then g = gPrs end
@@ -196,7 +196,7 @@ dlg:button {
                         if g < 0 then g = 0 elseif g > 255 then g = 255 end
                         if r < 0 then r = 0 elseif r > 255 then r = 255 end
 
-                        local hex = a << 0x18 | b << 0x10 | g << 0x08 | r
+                        local hex <const> = a << 0x18 | b << 0x10 | g << 0x08 | r
                         lenColors = lenColors + 1
                         colors[lenColors] = hex
                     end
@@ -205,14 +205,14 @@ dlg:button {
             end
             file:close()
 
-            local uniquesOnly = args.uniquesOnly --[[@as boolean]]
+            local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
             if uniquesOnly then
-                local uniques, _ = Utilities.uniqueColors(
+                local uniques <const>, _ <const> = Utilities.uniqueColors(
                     colors, true)
                 colors = uniques
             end
 
-            local prependMask = args.prependMask --[[@as boolean]]
+            local prependMask <const> = args.prependMask --[[@as boolean]]
             if prependMask then
                 Utilities.prependMask(colors)
             end
@@ -222,7 +222,7 @@ dlg:button {
             local activeSprite = app.site.sprite
             local profileFlag = false
             if activeSprite then
-                local profile = activeSprite.colorSpace
+                local profile <const> = activeSprite.colorSpace
                 profileFlag = profile ~= ColorSpace { sRGB = true }
                     and profile ~= ColorSpace()
             else
@@ -238,8 +238,8 @@ dlg:button {
                 local spriteHeight = math.max(1,
                     math.ceil(lenColors / spriteWidth))
 
-                local image = Image(spriteWidth, spriteHeight)
-                local pxItr = image:pixels()
+                local image <const> = Image(spriteWidth, spriteHeight)
+                local pxItr <const> = image:pixels()
                 local index = 0
                 for pixel in pxItr do
                     if index <= lenColors then
@@ -249,17 +249,17 @@ dlg:button {
                 end
 
                 activeSprite = Sprite(spriteWidth, spriteHeight)
-                local layer = activeSprite.layers[1]
-                local cel = layer.cels[1]
+                local layer <const> = activeSprite.layers[1]
+                local cel <const> = layer.cels[1]
                 cel.image = image
 
                 app.command.FitScreen()
                 app.activeTool = "hand"
             end
 
-            local oldMode = activeSprite.colorMode
+            local oldMode <const> = activeSprite.colorMode
             app.command.ChangePixelFormat { format = "rgb" }
-            local palIdx = args.paletteIndex
+            local palIdx <const> = args.paletteIndex
                 or defaults.paletteIndex --[[@as integer]]
             AseUtilities.setPalette(colors, activeSprite, palIdx)
             AseUtilities.changePixelFormat(oldMode)

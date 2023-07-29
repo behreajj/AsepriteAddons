@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local defaults = {
+local defaults <const> = {
     palName = "Palette",
     columns = 0,
     attribName = "Anonymous",
@@ -9,7 +9,7 @@ local defaults = {
     allPalettes = false
 }
 
-local dlg = Dialog { title = "GPL Export" }
+local dlg <const> = Dialog { title = "GPL Export" }
 
 dlg:entry {
     id = "palName",
@@ -80,7 +80,7 @@ dlg:button {
     focus = false,
     onclick = function()
         -- Early returns.
-        local activeSprite = app.site.sprite
+        local activeSprite <const> = app.site.sprite
         if not activeSprite then
             app.alert {
                 title = "Error",
@@ -89,14 +89,14 @@ dlg:button {
             return
         end
 
-        local args = dlg.data
-        local filepath = args.filepath --[[@as string]]
+        local args <const> = dlg.data
+        local filepath <const> = args.filepath --[[@as string]]
         if (not filepath) or (#filepath < 1) then
             app.alert { title = "Error", text = "Filepath is empty." }
             return
         end
 
-        local fileExt = app.fs.fileExtension(filepath)
+        local fileExt <const> = app.fs.fileExtension(filepath)
         if string.lower(fileExt) ~= "gpl" then
             app.alert { title = "Error", text = "Extension is not gpl." }
             return
@@ -104,11 +104,11 @@ dlg:button {
 
         -- Unpack arguments.
         local palName = args.palName or defaults.palName --[[@as string]]
-        local columns = args.columns or defaults.columns --[[@as integer]]
+        local columns <const> = args.columns or defaults.columns --[[@as integer]]
         local attribName = args.attribName or defaults.attribName --[[@as string]]
         local attribUrl = args.attribUrl or defaults.attribUrl --[[@as string]]
-        local useAseGpl = args.useAseGpl --[[@as boolean]]
-        local allPalettes = args.allPalettes --[[@as boolean]]
+        local useAseGpl <const> = args.useAseGpl --[[@as boolean]]
+        local allPalettes <const> = args.allPalettes --[[@as boolean]]
 
         -- Validate arguments.
         -- Palette name will be added no matter what.
@@ -119,7 +119,7 @@ dlg:button {
         attribName = attribName:sub(1, 64)
         attribUrl = attribUrl:sub(1, 96)
 
-        local strfmt = string.format
+        local strfmt <const> = string.format
         local gplStr = strfmt(
             "GIMP Palette\nName: %s\nColumns: %d\n",
             palName, columns)
@@ -142,7 +142,7 @@ dlg:button {
                 attribUrl)
         end
 
-        local colorSpace = activeSprite.colorSpace
+        local colorSpace <const> = activeSprite.colorSpace
         if colorSpace and #colorSpace.name > 0 then
             gplStr = gplStr .. strfmt(
                 "# Profile: %s\n",
@@ -152,20 +152,20 @@ dlg:button {
         end
 
         ---@type Palette[]
-        local selectedPalettes = {}
-        local palettes = activeSprite.palettes
-        local lenPalettes = #palettes
+        local selectedPalettes <const> = {}
+        local palettes <const> = activeSprite.palettes
+        local lenPalettes <const> = #palettes
         local lenSum = 0
         if allPalettes then
             local h = 0
             while h < lenPalettes do
                 h = h + 1
-                local palette = palettes[h]
+                local palette <const> = palettes[h]
                 selectedPalettes[h] = palette
                 lenSum = lenSum + #palette
             end
         else
-            local palette = AseUtilities.getPalette(
+            local palette <const> = AseUtilities.getPalette(
                 app.activeFrame, palettes)
             selectedPalettes[1] = palette
             lenSum = #palette
@@ -175,26 +175,26 @@ dlg:button {
             "# Colors: %d\n", lenSum)
 
         ---@type string[]
-        local entryStrArr = {}
-        local lenSelected = #selectedPalettes
+        local entryStrArr <const> = {}
+        local lenSelected <const> = #selectedPalettes
         local i = 0
         local k = 0
         while i < lenSelected do
             i = i + 1
-            local palette = selectedPalettes[i]
-            local lenPaletten1 = #palette - 1
+            local palette <const> = selectedPalettes[i]
+            local lenPaletten1 <const> = #palette - 1
 
             local j = -1
             while j < lenPaletten1 do
                 j = j + 1
-                local aseColor = palette:getColor(j)
-                local r = aseColor.red
-                local g = aseColor.green
-                local b = aseColor.blue
+                local aseColor <const> = palette:getColor(j)
+                local r <const> = aseColor.red
+                local g <const> = aseColor.green
+                local b <const> = aseColor.blue
 
                 local entryStr = ""
                 if useAseGpl then
-                    local a = aseColor.alpha
+                    local a <const> = aseColor.alpha
                     entryStr = strfmt(
                         "%3d %3d %3d %3d 0x%08x",
                         r, g, b, a,
@@ -213,7 +213,7 @@ dlg:button {
 
         gplStr = gplStr .. table.concat(entryStrArr, '\n')
 
-        local file, err = io.open(filepath, "w")
+        local file <const>, err <const> = io.open(filepath, "w")
         if file then
             file:write(gplStr)
             file:close()
