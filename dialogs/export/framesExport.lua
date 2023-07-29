@@ -785,6 +785,9 @@ dlg:button {
                 sheetPacket.fileName = fileTitle
                 sheetPackets[1] = sheetPacket
             else
+                -- TODO: Create dummy sprite to hold frames for
+                -- cases where file extension supports it, e.g.,
+                -- gif and webp?
                 local k = 0
                 while k < lenInner do
                     k = k + 1

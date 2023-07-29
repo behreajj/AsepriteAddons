@@ -1,12 +1,12 @@
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 
 local defaults <const> = {
-    -- TODO: Time scalar, so 1.5x, 2x, etc. speed is possible?
     flattenImage = true,
     frameTarget = "ACTIVE",
     rangeStr = "",
     strExample = "4,6:9,13",
     useLoop = true,
+    timeScalar = 1,
     includeLocked = true,
     includeHidden = false,
     includeTiles = true,
@@ -338,6 +338,7 @@ dlg:check {
         dlg:modify { id = "rangeStr", visible = flat and isManual }
         dlg:modify { id = "strExample", visible = false }
         dlg:modify { id = "useLoop", visible = flat }
+        dlg:modify { id = "timeScalar", visible = flat }
 
         dlg:modify { id = "includeLocked", visible = notFlat }
         dlg:modify { id = "includeHidden", visible = notFlat }
@@ -385,6 +386,16 @@ dlg:label {
     label = "Example:",
     text = defaults.strExample,
     visible = false
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "timeScalar",
+    label = "Speed:",
+    text = string.format("%.3f", defaults.timeScalar),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
+    visible = defaults.flattenImage
 }
 
 dlg:newrow { always = false }
@@ -600,6 +611,8 @@ dlg:button {
 
             if animate then
                 local useLoop <const> = args.useLoop --[[@as boolean]]
+                local timeScalar <const> = args.timeScalar
+                    or defaults.timeScalar --[[@as number]]
 
                 local docPrefs <const> = app.preferences.document(activeSprite)
                 local frameUiOffset <const> = docPrefs.timeline.first_frame - 1
@@ -611,6 +624,10 @@ dlg:button {
                     animBeginStr = string.format(
                         "0s;anim%d.end",
                         lenChosenFrames)
+                end
+                local timeScaleVrf = 1.0
+                if timeScalar ~= 0.0 then
+                    timeScaleVrf = 1.0 / math.abs(timeScalar)
                 end
 
                 -- There was flickering in Firefox until "from=\"visible\""
@@ -657,9 +674,9 @@ dlg:button {
                     -- Create frame SVG string.
                     local durStr = "indefinite"
                     if useLoop or i < lenChosenFrames then
-                        -- Only 3 decimals needed because duration is
-                        -- truncated from millis representation.
-                        durStr = strfmt("%.3fs", duration)
+                        -- Before time scalar, only 3 decimals needed
+                        -- because duration is truncated from millis.
+                        durStr = strfmt("%.6fs", timeScaleVrf * duration)
                     end
                     local frameStr <const> = strfmt(
                         frameFormat,
