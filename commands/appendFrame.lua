@@ -1,10 +1,10 @@
-local site = app.site
-local activeSprite = site.sprite
+local site <const> = app.site
+local activeSprite <const> = site.sprite
 if not activeSprite then return end
 
-local oldActiveFrObj = site.frame
+local oldActiveFrObj <const> = site.frame
 if oldActiveFrObj then
-    local oldActiveFrIdx = oldActiveFrObj.frameNumber
+    local oldActiveFrIdx <const> = oldActiveFrObj.frameNumber
     activeSprite:newEmptyFrame(oldActiveFrIdx + 1)
     app.activeFrame = oldActiveFrObj
 else

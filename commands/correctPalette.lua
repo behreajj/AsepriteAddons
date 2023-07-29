@@ -1,28 +1,28 @@
 dofile("../support/aseutilities.lua")
 
-local activeSprite = app.site.sprite
+local activeSprite <const> = app.site.sprite
 if not activeSprite then return end
 
-local oldColorMode = activeSprite.colorMode
+local oldColorMode <const> = activeSprite.colorMode
 app.command.ChangePixelFormat { format = "rgb" }
 
 activeSprite.transparentColor = 0
 
-local hexesProfile = AseUtilities.asePalettesToHexArr(activeSprite.palettes)
-local uniques, _ = Utilities.uniqueColors(hexesProfile, true)
-local masked = Utilities.prependMask(uniques)
+local hexesProfile <const> = AseUtilities.asePalettesToHexArr(activeSprite.palettes)
+local uniques <const>, _ <const> = Utilities.uniqueColors(hexesProfile, true)
+local masked <const> = Utilities.prependMask(uniques)
 
 ---@type Color[]
-local aseColors = {}
-local lenAseColors = #masked
+local aseColors <const> = {}
+local lenAseColors <const> = #masked
 local i = 0
 while i < lenAseColors do
     i = i + 1
     aseColors[i] = AseUtilities.hexToAseColor(masked[i])
 end
 
-local palettes = activeSprite.palettes
-local lenPalettes = #palettes
+local palettes <const> = activeSprite.palettes
+local lenPalettes <const> = #palettes
 
 -- It seems safe to assign the same Aseprite color
 -- to multiple palettes because they are copied by
@@ -31,12 +31,12 @@ app.transaction("Correct Palette", function()
     local j = 0
     while j < lenPalettes do
         j = j + 1
-        local palette = palettes[j]
+        local palette <const> = palettes[j]
         palette:resize(lenAseColors)
         local k = 0
         while k < lenAseColors do
             k = k + 1
-            local aseColor = aseColors[k]
+            local aseColor <const> = aseColors[k]
             palette:setColor(k - 1, aseColor)
         end
     end

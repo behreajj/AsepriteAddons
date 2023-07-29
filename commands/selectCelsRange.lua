@@ -1,35 +1,35 @@
 dofile("../support/aseutilities.lua")
 
-local site = app.site
-local activeSprite = site.sprite
+local site <const> = app.site
+local activeSprite <const> = site.sprite
 if not activeSprite then return end
 
-local tlHidden = not app.preferences.general.visible_timeline
+local tlHidden <const> = not app.preferences.general.visible_timeline
 if tlHidden then
     app.command.Timeline { open = true }
 end
 
-local appRange = app.range
+local appRange <const> = app.range
 if appRange.sprite == activeSprite then
-    local selectCel = AseUtilities.selectCel
-    local sprBounds = activeSprite.bounds
+    local selectCel <const> = AseUtilities.selectCel
+    local sprBounds <const> = activeSprite.bounds
 
     if appRange.isEmpty then
-        local activeCel = site.cel
+        local activeCel <const> = site.cel
         if activeCel then
             activeSprite.selection = selectCel(activeCel, sprBounds)
         end
     else
-        local images = app.range.images
-        local lenImages = #images
-        local union = Selection()
+        local images <const> = app.range.images
+        local lenImages <const> = #images
+        local union <const> = Selection()
 
         local i = 0
         while i < lenImages do
             i = i + 1
-            local image = images[i]
-            local cel = image.cel
-            local sel = selectCel(cel, sprBounds)
+            local image <const> = images[i]
+            local cel <const> = image.cel
+            local sel <const> = selectCel(cel, sprBounds)
             union:add(sel)
         end
 

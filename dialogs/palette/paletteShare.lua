@@ -104,7 +104,8 @@ dlg:button {
         local openLen <const> = #openSprites
 
         local args <const> = dlg.data
-        local palType <const> = args.palType or defaults.palType --[[@as string]]
+        local palType <const> = args.palType
+            or defaults.palType --[[@as string]]
         local palFile <const> = args.palFile --[[@as string]]
         local prependMask <const> = args.prependMask --[[@as boolean]]
         local startIndex <const> = args.startIndex

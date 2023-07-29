@@ -1,8 +1,15 @@
 dofile("../../support/aseutilities.lua")
 
 local palTypes <const> = { "ACTIVE", "FILE" }
-local sortPresets <const> = { "ALPHA", "BLUE_YELLOW", "GREEN_RED", "CHROMA", "HUE", "LUMA" }
 local sortOrders <const> = { "ASCENDING", "DESCENDING" }
+local sortPresets <const> = {
+    "ALPHA",
+    "BLUE_YELLOW",
+    "CHROMA",
+    "GREEN_RED",
+    "HUE",
+    "LUMA"
+}
 
 local defaults <const> = {
     aPalType = "ACTIVE",
@@ -125,13 +132,22 @@ dlg:button {
     focus = true,
     onclick = function()
         local site <const> = app.site
-        local activeSprite <const> = site.sprite
+        local activeSprite = site.sprite
         if not activeSprite then
-            app.alert {
-                title = "Error",
-                text = "There is no active sprite."
+            local newSpec <const> = ImageSpec {
+                width = app.preferences.new_file.width,
+                height = app.preferences.new_file.height,
+                colorMode = ColorMode.RGB
             }
-            return
+            newSpec.colorSpace = ColorSpace { sRGB = true }
+            activeSprite = Sprite(newSpec)
+            local defaultPalette <const> = app.defaultPalette
+            if defaultPalette then
+                activeSprite:setPalette(defaultPalette)
+            else
+                AseUtilities.setPalette(
+                    AseUtilities.DEFAULT_PAL_ARR, activeSprite, 1)
+            end
         end
 
         local spec <const> = activeSprite.spec

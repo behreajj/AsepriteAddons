@@ -1,20 +1,20 @@
-local stepInto = false
+local stepInto <const> = false
 
-local site = app.site
-local activeSprite = site.sprite
+local site <const> = app.site
+local activeSprite <const> = site.sprite
 if not activeSprite then return end
 
 -- Preserve range if frames are selected. However, the
 -- range could be from another sprite.
 ---@type integer[]
-local rangeFrIdcs = {}
-local range = app.range
-local isFramesType = range.type == RangeType.FRAMES
-local sameSprite = activeSprite == range.sprite
-local isValid = isFramesType and sameSprite
+local rangeFrIdcs <const> = {}
+local range <const> = app.range
+local isFramesType <const> = range.type == RangeType.FRAMES
+local sameSprite <const> = activeSprite == range.sprite
+local isValid <const> = isFramesType and sameSprite
 if isValid then
-    local rangeFrames = range.frames --[=[@as Frame[]]=]
-    local lenRangeFrames = #rangeFrames
+    local rangeFrames <const> = range.frames --[=[@as Frame[]]=]
+    local lenRangeFrames <const> = #rangeFrames
     local i = 0
     while i < lenRangeFrames do
         i = i + 1

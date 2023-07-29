@@ -1,39 +1,39 @@
 dofile("../support/aseutilities.lua")
 
-local site = app.site
-local activeSprite = site.sprite
+local site <const> = app.site
+local activeSprite <const> = site.sprite
 if not activeSprite then return end
 
-local activeLayer = site.layer
+local activeLayer <const> = site.layer
 if not activeLayer then return end
 
-local origFrObj = site.frame
+local origFrObj <const> = site.frame
 if not origFrObj then return end
 
-local shift = 1
-local frames = activeSprite.frames
-local lenFrames = #frames
-local origFrIdx = origFrObj.frameNumber
-local destFrIdx = 1 + (shift + origFrIdx - 1) % lenFrames
-local destFrObj = frames[destFrIdx]
+local shift <const> = 1
+local frames <const> = activeSprite.frames
+local lenFrames <const> = #frames
+local origFrIdx <const> = origFrObj.frameNumber
+local destFrIdx <const> = 1 + (shift + origFrIdx - 1) % lenFrames
+local destFrObj <const> = frames[destFrIdx]
 
 -- No point in basing this on a range, which will be removed
 -- by the swap. Could use getLayerHierarchy for all layers.
 -- Background layers cause an unknown issue. Reference layers
 -- are ignored though for this case they coule be included.
-local leaves = AseUtilities.appendLeaves(
+local leaves <const> = AseUtilities.appendLeaves(
     activeLayer, {},
     true, true, true, false)
-local lenLeaves = #leaves
+local lenLeaves <const> = #leaves
 if lenLeaves > 0 then
     app.transaction("Cycle Cel Right", function()
-        local tempFrameObj = activeSprite:newEmptyFrame()
+        local tempFrameObj <const> = activeSprite:newEmptyFrame()
         local i = 0
         while i < lenLeaves do
             i = i + 1
-            local leaf = leaves[i]
-            local origCel = leaf:cel(origFrObj)
-            local destCel = leaf:cel(destFrObj)
+            local leaf <const> = leaves[i]
+            local origCel <const> = leaf:cel(origFrObj)
+            local destCel <const> = leaf:cel(destFrObj)
             if origCel and destCel then
                 origCel.frame = tempFrameObj
                 destCel.frame = origFrObj
