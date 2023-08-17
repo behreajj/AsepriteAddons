@@ -404,34 +404,6 @@ function Clr.lRgbTosRgbInternal(c)
     return Clr.new(sr, sg, sb, c.a)
 end
 
----Finds the relative luminance of a color.
----Assumes the color is in sRGB.
----@param c Clr color
----@return number
-function Clr.luminance(c)
-    return Clr.lumsRgb(c)
-end
-
----Finds the relative luminance of a linear color,
----https://www.wikiwand.com/en/Relative_luminance,
----according to recommendation 709.
----@param c Clr color
----@return number
-function Clr.lumlRgb(c)
-    return c.r * 0.21264934272065
-        + c.g * 0.7151691357059
-        + c.b * 0.072181521573443
-end
-
----Finds the relative luminance of a sRGB color,
----https://www.wikiwand.com/en/Relative_luminance,
----according to recommendation 709.
----@param c Clr color
----@return number
-function Clr.lumsRgb(c)
-    return Clr.lumlRgb(Clr.sRgbTolRgbInternal(c))
-end
-
 ---Mixes two colors by a step.
 ---Defaults to the fastest algorithm, i.e.,
 ---applies linear interpolation to each channel
@@ -700,28 +672,6 @@ function Clr.mixSrLchInternal(o, d, t, hueFunc)
             hueFunc(oHue, dHue, t),
             u * oLab.alpha + t * dLab.alpha,
             0.00005)
-    end
-end
-
----Multiplies a color's red, green and blue
----channels by its alpha channel.
----
----Returns clear black if the alpha is less
----than or equal to 0.0. Sets the alpha to
----1.0 it is greater than or equal to 1.0.
----@param c Clr color
----@return Clr
-function Clr.premul(c)
-    if c.a <= 0.0 then
-        return Clr.clearBlack()
-    elseif c.a >= 1.0 then
-        return Clr.new(c.r, c.g, c.b, 1.0)
-    else
-        return Clr.new(
-            c.r * c.a,
-            c.g * c.a,
-            c.b * c.a,
-            c.a)
     end
 end
 
@@ -1023,30 +973,6 @@ function Clr.toJson(c)
     return string.format(
         "{\"r\":%.4f,\"g\":%.4f,\"b\":%.4f,\"a\":%.4f}",
         c.r, c.g, c.b, c.a)
-end
-
----Divides a color's red, green and blue
----channels by its alpha channel, reversing
----the premultiply operation.
----
----Returns clear black if the alpha is less
----than or equal to 0.0. Sets the alpha to
----1.0 it is greater than or equal to 1.0.
----@param c Clr color
----@return Clr
-function Clr.unpremul(c)
-    if c.a <= 0.0 then
-        return Clr.clearBlack()
-    elseif c.a >= 1.0 then
-        return Clr.new(c.r, c.g, c.b, 1.0)
-    else
-        local aInv <const> = 1.0 / c.a
-        return Clr.new(
-            c.r * aInv,
-            c.g * aInv,
-            c.b * aInv,
-            c.a)
-    end
 end
 
 ---Creates a red color.
