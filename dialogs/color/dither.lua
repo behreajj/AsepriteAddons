@@ -372,17 +372,16 @@ dlg:button {
                 or defaults.greyMethod --[[@as string]]
 
             -- Mask out alpha, source alpha will be used.
-            local aHex <const> = 0x00ffffff & AseUtilities.aseColorToHex(
+            local aHex = 0x00ffffff & AseUtilities.aseColorToHex(
                 aColorAse, ColorMode.RGB)
-            local bHex <const> = 0x00ffffff & AseUtilities.aseColorToHex(
+            local bHex = 0x00ffffff & AseUtilities.aseColorToHex(
                 bColorAse, ColorMode.RGB)
-            local threshold <const> = thresh100 * 0.01
 
             -- Swap colors so that origin (a) is always the
             -- darker color.
-            local aLum = Clr.lumsRgb(Clr.fromHex(aHex))
-            local bLum = Clr.lumsRgb(Clr.fromHex(bHex))
-            if aLum > bLum then aLum, bLum = bLum, aLum end
+            local aLum <const> = Clr.sRgbToSrLab2(Clr.fromHex(aHex)).l
+            local bLum <const> = Clr.sRgbToSrLab2(Clr.fromHex(bHex)).l
+            if aLum > bLum then aHex, bHex = bHex, aHex end
 
             local greyMethod = nil
             local greyStr = ""
@@ -421,6 +420,7 @@ dlg:button {
                 greyStr = "Luminance"
             end
 
+            local threshold <const> = thresh100 * 0.01
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
                 local fac <const> = greyMethod(rSrc, gSrc, bSrc)
                 local alpha <const> = aSrc << 0x18
@@ -449,10 +449,7 @@ dlg:button {
                 local g255 <const> = floor(gQtz * 255.0 + 0.5)
                 local r255 <const> = floor(rQtz * 255.0 + 0.5)
 
-                return (a255 << 0x18)
-                    | (b255 << 0x10)
-                    | (g255 << 0x08)
-                    |  r255
+                return a255 << 0x18 | b255 << 0x10 | g255 << 0x08 |  r255
             end
 
             dmStr = string.format("Quantize.%02d", levels)
