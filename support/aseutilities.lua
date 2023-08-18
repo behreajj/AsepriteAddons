@@ -159,10 +159,6 @@ end
 ---@param frame Frame|integer
 ---@return { l: number, a: number, b: number, alpha: number }
 function AseUtilities.averageColor(sprite, frame)
-    if not sprite then
-        return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
-    end
-
     local sel <const> = AseUtilities.getSelection(sprite)
     local selBounds <const> = sel.bounds
     local xSel <const> = selBounds.x
@@ -2008,7 +2004,7 @@ function AseUtilities.parseTag(tag)
             arr[idxArr] = j
         end
     else
-        -- Default to AniDir.FOWARD
+        -- Default to AniDir.FORWARD
         local j = origIdx - 1
         while j < destIdx do
             j = j + 1

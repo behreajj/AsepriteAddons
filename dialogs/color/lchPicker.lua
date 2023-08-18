@@ -243,9 +243,12 @@ dlg:button {
     text = "&SELECT",
     focus = false,
     onclick = function()
-        setFromSelect(dlg,
-            app.activeSprite,
-            app.activeFrame)
+        local site = app.site
+        local sprite = site.sprite
+        local frame = site.frame
+        if sprite and frame then
+            setFromSelect(dlg, sprite, frame)
+        end
     end
 }
 

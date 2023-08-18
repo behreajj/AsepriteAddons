@@ -13,7 +13,7 @@ local colorOptions <const> = { "ALL", "NEW" }
 
 local defaults <const> = {
     inputType = "MANUAL",
-    totalCount = 6,
+    totalCount = 1,
     spanCount = 6,
     rangeStr = "",
     strExample = "4,6:9,13",
@@ -219,7 +219,7 @@ dlg:button {
         local fromClr <const> = AseUtilities.aseColorToClr(fromColor)
         local toClr <const> = AseUtilities.aseColorToClr(toColor)
 
-        local aniDirEnum = AniDir.FOWARD
+        local aniDirEnum = AniDir.FORWARD
         if aniDirStr == "REVERSE" then
             aniDirEnum = AniDir.REVERSE
         elseif aniDirStr == "PING_PONG" then
