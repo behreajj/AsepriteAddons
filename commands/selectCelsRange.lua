@@ -20,7 +20,7 @@ if appRange.sprite == activeSprite then
             activeSprite.selection = selectCel(activeCel, sprBounds)
         end
     else
-        local images <const> = app.range.images
+        local images <const> = appRange.images
         local lenImages <const> = #images
         local union <const> = Selection()
 

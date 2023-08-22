@@ -8,13 +8,13 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `correctTags`: Removes tags with out-of-bounds frames. Tags with duplicate names have a number appended to the end of the name.
 
-- `cycleCelLeft`: Moves a cel to the previous frame. If the previous frame is occupied by another cel, swaps the other cel into the active cel's frame. Loops around at the first and last frame. Ignores background and reference layers.
+- `cycleCelLeft`: Moves a cel to the previous frame. If the previous frame is occupied by another cel, swaps the other cel into the active cel's frame. Loops around at the first and last frame. Ignores reference layers.
 
-- `cycleCelRight`: Moves a cel to the next frame. If the next frame is occupied by another cel, swaps the other cel into the active cel's frame. Loops around at the first and last frame. Ignores background and reference layers.
+- `cycleCelRight`: Moves a cel to the next frame. If the next frame is occupied by another cel, swaps the other cel into the active cel's frame. Loops around at the first and last frame. Ignores reference layers.
 
 - `cycleStackDown`: Moves a layer down the stack. Ignores background layers. If the layer is at the bottom of the stack and its parent does not contain a background layer, moves it to the top.
 
-- `cycleStackUp`: Moves a layer up the stack. Ignores background layers. If the layer is at the top of the stack and its parent does not contain a background layer, moves it to the top.
+- `cycleStackUp`: Moves a layer up the stack. Ignores background layers. If the layer is at the top of the stack and its parent does not contain a background layer, moves it to the bottom.
 
 - `dereference`: Converts a reference layer to a normal layer. Transfers the reference layer's parent to the new layer but the new layer remains at the top of the stack.
 

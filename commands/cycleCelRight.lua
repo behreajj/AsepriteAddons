@@ -17,34 +17,59 @@ local origFrIdx <const> = origFrObj.frameNumber
 local destFrIdx <const> = 1 + (shift + origFrIdx - 1) % lenFrames
 local destFrObj <const> = frames[destFrIdx]
 
--- No point in basing this on a range, which will be removed
--- by the swap. Could use getLayerHierarchy for all layers.
--- Background layers cause an unknown issue. Reference layers
--- are ignored though for this case they coule be included.
-local leaves <const> = AseUtilities.appendLeaves(
-    activeLayer, {},
-    true, true, true, false)
-local lenLeaves <const> = #leaves
-if lenLeaves > 0 then
+if activeLayer.isBackground then
+    -- Background cels are supposed to be not nil.
+    -- Cels need to be copied by field.
+    local origCel <const> = activeLayer:cel(origFrObj) --[[@as Cel]]
+    local origImg <const> = Image(origCel.image)
+    local origData <const> = origCel.data
+    local origColor <const> = origCel.color
+
+    local destCel <const> = activeLayer:cel(destFrObj) --[[@as Cel]]
+    local destImg <const> = Image(destCel.image)
+    local destData <const> = destCel.data
+    local destColor <const> = destCel.color
+
     app.transaction("Cycle Cel Right", function()
-        local tempFrameObj <const> = activeSprite:newEmptyFrame()
-        local i = 0
-        while i < lenLeaves do
-            i = i + 1
-            local leaf <const> = leaves[i]
-            local origCel <const> = leaf:cel(origFrObj)
-            local destCel <const> = leaf:cel(destFrObj)
-            if origCel and destCel then
-                origCel.frame = tempFrameObj
-                destCel.frame = origFrObj
-                origCel.frame = destFrObj
-            elseif origCel then
-                origCel.frame = destFrObj
-            elseif destCel then
-                destCel.frame = origFrObj
-            end
-        end
-        activeSprite:deleteFrame(tempFrameObj)
+        origCel.image = destImg
+        origCel.data = destData
+        origCel.color = destColor
+
+        destCel.image = origImg
+        destCel.data = origData
+        destCel.color = origColor
+
         app.activeFrame = destFrObj
     end)
+else
+    -- No point in basing this on a range, which will be removed
+    -- by the swap. Could use getLayerHierarchy for all layers.
+    -- Reference layers are ignored, even though they coule be included.
+    local leaves <const> = AseUtilities.appendLeaves(
+        activeLayer, {},
+        true, true, true, false)
+    local lenLeaves <const> = #leaves
+    if lenLeaves > 0 then
+        app.transaction("Cycle Cel Right", function()
+            local tempFrameObj <const> = activeSprite:newEmptyFrame()
+            local i = 0
+            while i < lenLeaves do
+                i = i + 1
+                local leaf <const> = leaves[i]
+                local origCel <const> = leaf:cel(origFrObj)
+                local destCel <const> = leaf:cel(destFrObj)
+                if origCel and destCel then
+                    origCel.frame = tempFrameObj
+                    destCel.frame = origFrObj
+                    origCel.frame = destFrObj
+                elseif origCel then
+                    origCel.frame = destFrObj
+                elseif destCel then
+                    destCel.frame = origFrObj
+                end
+            end
+            activeSprite:deleteFrame(tempFrameObj)
+            app.activeFrame = destFrObj
+        end)
+    end
 end
