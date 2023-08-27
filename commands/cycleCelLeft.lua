@@ -18,29 +18,29 @@ local destFrIdx <const> = 1 + (shift + origFrIdx - 1) % lenFrames
 local destFrObj <const> = frames[destFrIdx]
 
 if activeLayer.isBackground then
-    -- Background cels are supposed to be not nil.
-    -- Cels need to be copied by field.
-    local origCel <const> = activeLayer:cel(origFrObj) --[[@as Cel]]
-    local origImg <const> = Image(origCel.image)
-    local origData <const> = origCel.data
-    local origColor <const> = origCel.color
+    local origCel <const> = activeLayer:cel(origFrObj)
+    local destCel <const> = activeLayer:cel(destFrObj)
+    if origCel and destCel then
+        local origImg <const> = Image(origCel.image)
+        local origData <const> = origCel.data
+        local origColor <const> = origCel.color
 
-    local destCel <const> = activeLayer:cel(destFrObj) --[[@as Cel]]
-    local destImg <const> = Image(destCel.image)
-    local destData <const> = destCel.data
-    local destColor <const> = destCel.color
+        local destImg <const> = Image(destCel.image)
+        local destData <const> = destCel.data
+        local destColor <const> = destCel.color
 
-    app.transaction("Cycle Cel Left", function()
-        origCel.image = destImg
-        origCel.data = destData
-        origCel.color = destColor
+        app.transaction("Cycle Cel Left", function()
+            origCel.image = destImg
+            origCel.data = destData
+            origCel.color = destColor
 
-        destCel.image = origImg
-        destCel.data = origData
-        destCel.color = origColor
+            destCel.image = origImg
+            destCel.data = origData
+            destCel.color = origColor
 
-        app.activeFrame = destFrObj
-    end)
+            app.activeFrame = destFrObj
+        end)
+    end
 else
     -- No point in basing this on a range, which will be removed
     -- by the swap. Could use getLayerHierarchy for all layers.

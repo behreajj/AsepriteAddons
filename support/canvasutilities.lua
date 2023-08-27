@@ -418,6 +418,9 @@ function CanvasUtilities.graphBezier(
         local k <const> = j // 2
         j = j + 1
         local idPoint <const> = idPoints[j]
+
+        -- This string is nil in order to avoid line breaks between numbers.
+        -- A zero length string, "", will trigger a line break.
         local labelPoint = nil
         if isEven then
             labelPoint = labelPoints[1 + k]

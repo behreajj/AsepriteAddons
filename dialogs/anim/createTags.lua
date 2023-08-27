@@ -367,7 +367,7 @@ dlg:button {
 
         -- This triggers an update to the timeline, causing the tags
         -- to order correctly, but it erases the user's range.
-        app.activeLayer = app.activeLayer
+        app.layer = app.layer
         app.refresh()
         app.command.Refresh()
 

@@ -4,7 +4,7 @@ local paletteTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
 
 local defaults <const> = {
     size = 256,
-    frames = 32,
+    frames = 36,
     fps = 24,
     outOfGamut = 64,
     quantization = 0,
@@ -35,7 +35,7 @@ dlg:slider {
     id = "frames",
     label = "Frames:",
     min = 1,
-    max = 96,
+    max = 108,
     value = defaults.frames
 }
 
@@ -221,14 +221,14 @@ dlg:button {
         local reqFrames <const> = args.frames
             or defaults.frames --[[@as integer]]
         if reqFrames > 0 then
-            -- Because hue is periodic, don't subtract 1.
+            -- Because hue is periodic, don't subtract 1 from denominator.
             iToStep = 1.0 / reqFrames
         end
 
         ---@type Image[]
         local gamutImgs <const> = {}
         local oogaNorm <const> = outOfGamut * 0.003921568627451
-        local oogaEps <const> = 2.0 * 0.003921568627451
+        local oogaEps <const> = 0.0
         local quantization <const> = args.quantization
             or defaults.quantization --[[@as integer]]
         local idxFrame = 0

@@ -10,7 +10,7 @@ There is a [known issue](https://community.aseprite.org/t/script-folder-path-can
 
 ## Usage
 
-Aseprite version 1.3-rc4 is the minimum version needed to run these scripts. It is currently in [beta](https://aseprite.org/beta).
+Aseprite version 1.3-rc6 is the minimum version needed to run these scripts. It is currently in [beta](https://aseprite.org/beta).
 
 To use, go to `File > Scripts` and choose from entries in the `dialogs` or `commands` folder.
 
