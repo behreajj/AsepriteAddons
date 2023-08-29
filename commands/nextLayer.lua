@@ -24,7 +24,7 @@ end
 
 local activeLayer <const> = site.layer
 if activeLayer then
-    local activeParent <const> = activeLayer.parent --[[@as userdata]]
+    local activeParent <const> = activeLayer.parent
     local index <const> = activeLayer.stackIndex
     local parentLayers <const> = activeParent.layers --[=[@as Layer[]]=]
     if index < #parentLayers then

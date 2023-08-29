@@ -232,6 +232,7 @@ dlg:slider {
     onchange = function()
         local args <const> = dlg.data
         local octCap <const> = args.octCapacity --[[@as integer]]
+
         dlg:modify {
             id = "refineCapacity",
             visible = (octCap >= defaults.showRefineAt)
@@ -284,7 +285,9 @@ dlg:combobox {
     option = defaults.target,
     options = { "ACTIVE", "SAVE" },
     onchange = function()
-        local md = dlg.data.target
+        local args <const> = dlg.data
+        local md <const> = args.target --[[@as string]]
+
         dlg:modify {
             id = "paletteIndex",
             visible = md == "ACTIVE"

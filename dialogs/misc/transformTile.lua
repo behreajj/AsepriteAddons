@@ -3,8 +3,7 @@ dofile("../../support/aseutilities.lua")
 local targets <const> = { "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP" }
 
 local defaults <const> = {
-    -- Built-in Image:flip method has not
-    -- been adopted here due to issues with
+    -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
     target = "FORE_TILE",
     inPlace = true
@@ -52,7 +51,7 @@ local function transformTiles(
     preset, containedTiles, inPlace,
     activeSprite, tileSet)
     local transactionName = "Transform Tiles"
-    local transformFunc = nil
+    local transformFunc = function(img) return img, 0, 0 end
     if preset == "90" then
         transactionName = "Rotate Tiles 90"
         transformFunc = AseUtilities.rotateImage90
@@ -147,7 +146,7 @@ local function transformCel(dialog, preset)
         containedTiles = AseUtilities.getUniqueTiles(
             activeCel.image, tileSet)
         local transactionName = "Transform Map"
-        local transformFunc = nil
+        local transformFunc = function(img) return img, 0, 0 end
         local updateCelPos = false
         if preset == "90" then
             transactionName = "Rotate Map 90"
@@ -191,14 +190,13 @@ local function transformCel(dialog, preset)
             activeCel.image = trgMap
         end)
     elseif target == "TILES" then
-        -- In theory, app.range.tiles could also be used,
-        -- but atm it doesn't seem to work.
+        -- In theory, app.range.tiles could also be used, but it doesn't seem
+        -- to work.
 
-        -- A regular layer's cel bounds may be within the
-        -- canvas, but after conversion to tilemap layer,
-        -- it may go outside the canvas due to uniform tile
-        -- size. This will lead to getSelectedTiles omitting
-        -- tiles because tiles must be entirely contained.
+        -- A regular layer's cel bounds may be within the canvas, but after
+        -- conversion to tilemap layer, it may go outside the canvas due to
+        -- uniform tile size. This will lead to getSelectedTiles omitting tiles
+        -- because tiles must be entirely contained.
         local selection <const> = AseUtilities.getSelection(activeSprite)
         containedTiles = AseUtilities.getSelectedTiles(
             activeCel.image, tileSet, selection,
@@ -354,11 +352,10 @@ dlg:button {
         local pxTilef <const> = app.pixelColor.tileF
         local pxTileCompose <const> = app.pixelColor.tile
 
-        --Contains the first usage of a tile in the set
-        --by the active map. Ignores index 0. Because all
-        --tile maps in the layer have to be updated later,
-        --not just the active map, no point in storing
-        --an array of all visitations as dict value.
+        -- Contains the first usage of a tile in the set by the active map.
+        -- Ignores index 0. Because all tile maps in the layer have to be
+        -- updated later, not just the active map, no point in storing an array
+        -- of all visitations as dict value.
         ---@type table<integer, integer>
         local visited <const> = {}
 
@@ -388,7 +385,7 @@ dlg:button {
         end)
 
         -- Tile set index zero is unaffected by the sort.
-        -- Same with tiles in the tile set  not visited by the map.
+        -- Same with tiles in the tile set not visited by the map.
         -- Tile set indexing begins at 0, so it goes to len - 1.
         table.insert(sortedTsIdcs, 1, 0)
         local h = 0
@@ -407,9 +404,8 @@ dlg:button {
         ---@type table[]
         local sortedTsPackets = {}
 
-        -- Flip the relationship between old (unsorted) and
-        -- new (sorted) indices so that other tile maps can
-        -- easily be updated.
+        -- Flip the relationship between old (unsorted) and new (sorted)
+        -- indices so that other tile maps can easily be updated.
         ---@type integer[]
         local oldToNew = {}
 

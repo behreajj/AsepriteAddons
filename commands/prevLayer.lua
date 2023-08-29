@@ -22,7 +22,7 @@ if isValid then
     end
 end
 
-local activeLayer = site.layer --[[@as userdata]]
+local activeLayer = site.layer
 if activeLayer then
     local stackIndex = activeLayer.stackIndex
     if activeLayer.isGroup

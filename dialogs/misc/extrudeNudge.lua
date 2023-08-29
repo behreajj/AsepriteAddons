@@ -129,7 +129,7 @@ local function nudgeCel(dx, dy)
     app.refresh()
 end
 
-local dlg = Dialog { title = "Extrude" }
+local dlg <const> = Dialog { title = "Extrude" }
 
 dlg:combobox {
     id = "shiftOption",
@@ -259,7 +259,7 @@ dlg:button {
         local args <const> = dlg.data
         local amount <const> = args.amount --[[@as integer]]
         local shift <const> = args.shiftOption --[[@as string]]
-        local tr = shiftFromStr(shift)
+        local tr <const> = shiftFromStr(shift)
         nudgeCel(
             tr.down[1] * amount,
             tr.down[2] * amount)
@@ -369,11 +369,10 @@ dlg:button {
             elseif selMode == "SUBTRACT" then
                 activeSel:subtract(trgSel)
             else
-                -- Additive selection can be confusing when no prior
-                -- selection is made and getSelection returns the cel
-                -- bounds, which is cruder than trgSel. However, there
-                -- could be a square selection contained by, but
-                -- differently shaped than trgSel.
+                -- Additive selection can be confusing when no prior selection
+                -- is made and getSelection returns the cel bounds, which is
+                -- cruder than trgSel. However, there could be a square
+                -- selection contained by, but differently shaped than trgSel.
                 activeSel:add(trgSel)
             end
 

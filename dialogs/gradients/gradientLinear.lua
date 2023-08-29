@@ -27,9 +27,10 @@ dlg:button {
         local site <const> = app.site
         local activeSprite = site.sprite
         if not activeSprite then
+            local newFilePrefs <const> = app.preferences.new_file
             local newSpec <const> = ImageSpec {
-                width = app.preferences.new_file.width,
-                height = app.preferences.new_file.height,
+                width = newFilePrefs.width,
+                height = newFilePrefs.height,
                 colorMode = ColorMode.RGB
             }
             newSpec.colorSpace = ColorSpace { sRGB = true }

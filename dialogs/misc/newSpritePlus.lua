@@ -389,10 +389,10 @@ dlg:button {
         if height > dfms then height = dfms end
 
         -- Store new dimensions in preferences.
-        local filePrefs <const> = app.preferences.new_file
-        filePrefs.width = width
-        filePrefs.height = height
-        filePrefs.color_mode = colorModeInt
+        local newFilePrefs <const> = app.preferences.new_file
+        newFilePrefs.width = width
+        newFilePrefs.height = height
+        newFilePrefs.color_mode = colorModeInt
 
         -- Create sprite, set file name, set to active.
         AseUtilities.preserveForeBack()

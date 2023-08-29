@@ -379,7 +379,7 @@ dlg:button {
             topLayers = activeSprite.layers
         elseif layerTarget == "RANGE" then
             -- print("RANGE layers chosen")
-            local tlHidden = not app.preferences.general.visible_timeline
+            local tlHidden <const> = not app.preferences.general.visible_timeline
             if tlHidden then
                 app.command.Timeline { open = true }
             end
@@ -616,7 +616,6 @@ dlg:button {
                         if saveJson then
                             local layerId <const> = chosenLayer.id
                             if not layerPackets[layerId] then
-                                ---@type userdata|Sprite|Layer
                                 local parent <const> = chosenLayer.parent
                                 local parentId = -1
                                 if parent.__name ~= "doc::Sprite" then

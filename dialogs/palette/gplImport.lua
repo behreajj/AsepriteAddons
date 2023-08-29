@@ -1,8 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
 local defaults <const> = {
-    -- TODO: Separate out the parse function,
-    -- make a separate set and append button?
     uniquesOnly = false,
     prependMask = true,
     paletteIndex = 1

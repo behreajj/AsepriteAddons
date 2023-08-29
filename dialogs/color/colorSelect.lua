@@ -23,6 +23,26 @@ local defaults <const> = {
     pullFocus = true
 }
 
+---@param lab { l: number, a: number, b: number, alpha: number }
+---@param mint01 number
+---@param maxt01 number
+---@param useLight boolean
+---@param minLight number
+---@param maxLight number
+---@param usea boolean
+---@param mina number
+---@param maxa number
+---@param useb boolean
+---@param minb number
+---@param maxb number
+---@param usePolar boolean
+---@param usec boolean
+---@param mincsq number
+---@param maxcsq number
+---@param useh boolean
+---@param minhrd number
+---@param maxhrd number
+---@return boolean
 local function eval(
     lab, mint01, maxt01,
     useLight, minLight, maxLight,

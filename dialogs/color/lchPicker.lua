@@ -657,13 +657,13 @@ dlg:button {
         app.transaction("Set Selection", function()
             -- This is an extra precaution because creating
             -- a new layer wipes out a range.
-            local tlHidden = not app.preferences.general.visible_timeline
+            local tlHidden <const> = not app.preferences.general.visible_timeline
             if tlHidden then
                 app.command.Timeline { open = true }
             end
 
             local frameIdcs = { app.activeFrame.frameNumber }
-            local appRange = app.range
+            local appRange <const> = app.range
             if appRange.sprite == sprite then
                 frameIdcs = AseUtilities.frameObjsToIdcs(appRange.frames)
             end
@@ -845,7 +845,7 @@ dlg:canvas {
             idx = math.floor(fac * lenSwatches)
         end
 
-        local swatch = swatches[1 + idx]
+        local swatch <const> = swatches[1 + idx]
         if event.shiftKey then
             local srgb <const> = defaults.lchTosRgb(
                 swatch.l, swatch.c, swatch.h, swatch.a)

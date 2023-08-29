@@ -17,7 +17,7 @@ local defaults <const> = {
     usePixelAspect = true,
 }
 
----@param bm BlendMode|integer blend mode
+---@param bm BlendMode blend mode
 ---@return string
 local function blendModeToStr(bm)
     -- The blend mode for group layers is nil.
@@ -65,12 +65,11 @@ local function imgToSvgStr(
     xOff, yOff,
     palette)
     -- https://github.com/aseprite/aseprite/issues/3561
-    -- SVGs displayed in Firefox and Inkscape have thin gaps
-    -- between squares at fractional zoom levels, e.g., 133%.
-    -- Subtracting an epsilon from the left edge and adding to
-    -- the right edge interferes with margin, can cause other
-    -- zooming artifacts. Creating a path for each color
-    -- then using subpaths for each square diminishes issue.
+    -- SVGs displayed in Firefox and Inkscape have thin gaps between squares at
+    -- fractional zoom levels, e.g., 133%. Subtracting an epsilon from the left
+    -- edge and adding to the right edge interferes with margin, can cause other
+    -- zooming artifacts. Creating a path for each color then using subpaths for
+    -- each square diminishes issue.
     local strfmt <const> = string.format
     local tconcat <const> = table.concat
 
@@ -248,16 +247,9 @@ local function layerToSvgStr(
                     i = i + 1
                     local child <const> = children[i]
                     layerToSvgStr(
-                        child, frame,
-                        border, padding, wScale, hScale,
-                        spriteBounds,
-                        includeLocked,
-                        includeHidden,
-                        includeTiles,
-                        includeBkg,
-                        colorMode,
-                        palette,
-                        childStrs)
+                        child, frame, border, padding, wScale, hScale,
+                        spriteBounds, includeLocked, includeHidden,
+                        includeTiles, includeBkg, colorMode, palette, childStrs)
                 end
 
                 local grpStr <const> = string.format(
@@ -270,10 +262,9 @@ local function layerToSvgStr(
             and (includeBkg or (not isBkg)) then
             local cel <const> = layer:cel(frame)
             if cel then
-                -- A definition could be created for tile sets,
-                -- then accessed with use xlink:href, but best to
-                -- keep things simple for compatibility with Inkscape,
-                -- Processing, Blender, etc.
+                -- A definition could be created for tile sets, then accessed
+                -- with use xlink:href, but best to keep things simple for
+                -- compatibility with Inkscape, Processing, Blender, etc.
                 local celImg = cel.image
                 if layer.isTilemap then
                     celImg = AseUtilities.tilesToImage(
@@ -740,16 +731,9 @@ dlg:button {
                 j = j + 1
                 local layer <const> = spriteLayers[j]
                 layerToSvgStr(
-                    layer, activeFrame,
-                    border, padding, wScale, hScale,
-                    spriteBounds,
-                    includeLocked,
-                    includeHidden,
-                    includeTiles,
-                    includeBkg,
-                    colorMode,
-                    palette,
-                    layersStrArr)
+                    layer, activeFrame, border, padding, wScale, hScale,
+                    spriteBounds, includeLocked, includeHidden, includeTiles,
+                    includeBkg, colorMode, palette, layersStrArr)
             end
         end
 

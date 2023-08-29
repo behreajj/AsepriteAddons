@@ -24,14 +24,6 @@ local directions <const> = {
     "VERTICAL"
 }
 
--- local function wrap(v, lb, ub)
---     local r = ub - lb
---     if r ~= 0.0 then
---         return v - r * ((v - lb) // r)
---     end
---     return v
--- end
-
 local defaults <const> = {
     frameCount = 8,
     fps = 24,
@@ -469,7 +461,6 @@ dlg:button {
                 while x < colDest do
                     x = x + 1
                     local xOff <const> = (xRndOffset + x) % wSrc
-                    -- local xOff = wrap(xRndOffset + x, colOrig, colDest + 1)
 
                     rndIdx = rndIdx + 1
                     local yRndOffset <const> = yRndOffsets[rndIdx]
@@ -484,7 +475,6 @@ dlg:button {
                     while y > rowOrig do
                         y = y - 1
                         local yOff <const> = (yRndOffset + y) % hSrc
-                        -- local yOff = wrap(yRndOffset + y, rowOrig, rowDest + 1)
                         local index <const> = 1 + xOff + yOff * wSrc
                         local hex <const> = frPxArr[index]
                         if masked[hex] then
@@ -554,7 +544,6 @@ dlg:button {
                 while y > rowOrig do
                     y = y - 1
                     local yOff <const> = (yRndOffset + y) % hSrc
-                    -- local yOff = wrap(yRndOffset + y, rowOrig, rowDest + 1)
                     rndIdx = rndIdx + 1
                     local xRndOffset <const> = xRndOffsets[rndIdx]
 
@@ -571,7 +560,6 @@ dlg:button {
                     while x < colDest do
                         x = x + 1
                         local xOff <const> = (xRndOffset + x) % wSrc
-                        -- local xOff = wrap(xRndOffset + x, colOrig, colDest + 1)
                         local index <const> = 1 + xOff + yw
                         local hex <const> = frPxArr[index]
                         if masked[hex] then

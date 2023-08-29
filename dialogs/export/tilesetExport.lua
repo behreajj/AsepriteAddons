@@ -592,7 +592,6 @@ dlg:button {
                         local lenTileSet <const> = #tileSet
 
                         local layerId <const> = tmLayer.id
-                        ---@type userdata|Sprite|Layer
                         local parent <const> = tmLayer.parent
                         local parentId = -1
                         if parent.__name ~= "doc::Sprite" then
@@ -629,7 +628,7 @@ dlg:button {
                                 local tmImage <const> = tmCel.image
                                 local tmPxItr <const> = tmImage:pixels()
 
-                                -- In the future, this would also need
+                                -- TODO: In the future, this would also need
                                 -- a separate array of rotation flags.
                                 ---@type integer[]
                                 local tmIndicesArr <const> = {}
