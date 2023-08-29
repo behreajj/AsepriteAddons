@@ -5,7 +5,7 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults <const> = {
     -- Also known as ghost trail or Echo in After Effects.
-    -- This could be refactored with new trgImg:drawImage, but
+    -- This could be refactored with new drawImage, but
     -- it wouldn't offer much convenience, as layer blend modes
     -- use dest alpha, not source alpha (union, not intersect).
     target = "ACTIVE",

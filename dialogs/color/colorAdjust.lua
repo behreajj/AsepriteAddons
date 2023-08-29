@@ -260,10 +260,11 @@ dlg:canvas {
             local xLight <const> = pixel.x * xToLight
             pixel(toHex(lchTosRgb(xLight, 0.0, 0.0, 1.0)))
         end
-        img:resize(barWidth, barHeight)
 
         local ctx <const> = event.context
-        ctx:drawImage(img, 0, 0)
+        ctx:drawImage(img,
+            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, barHeight))
 
         local lAdj <const> = active.lAdj
         local l01 <const> = lAdj * 0.005 + 0.5
@@ -315,13 +316,14 @@ dlg:canvas {
             local c <const> = pixel.x * xToChroma
             pixel(toHex(lchTosRgb(50.0, c, h, 1.0)))
         end
-        img:resize(barWidth, barHeight)
 
         local ctx <const> = event.context
         local c01 <const> = (active.cAdj - clb) / (cub - clb)
         local black <const> = Color { r = 0, g = 0, b = 0 }
         local white <const> = Color { r = 255, g = 255, b = 255 }
-        ctx:drawImage(img, 0, 0)
+        ctx:drawImage(img,
+            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, barHeight))
         CanvasUtilities.drawSliderReticle(
             ctx, c01, barWidth, barHeight,
             white, reticleSize)
@@ -364,12 +366,13 @@ dlg:canvas {
             if pixel.y > 0 then xHue = xHue + hAdj end
             pixel(toHex(lchTosRgb(50.0, c, xHue, 1.0)))
         end
-        img:resize(barWidth, barHeight)
 
         local ctx <const> = event.context
         local black <const> = Color { r = 0, g = 0, b = 0 }
         local white <const> = Color { r = 255, g = 255, b = 255 }
-        ctx:drawImage(img, 0, 0)
+        ctx:drawImage(img,
+            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, barHeight))
         CanvasUtilities.drawSliderReticle(
             ctx, active.hAdj, barWidth, barHeight,
             white, reticleSize)
@@ -414,13 +417,14 @@ dlg:canvas {
             local a <const> = (1.0 - xFac) * visMin + xFac * visMax
             pixel(toHex(labTosRgb(50.0, a, 0.0, 1.0)))
         end
-        img:resize(barWidth, barHeight)
 
         local ctx <const> = event.context
         local a01 <const> = (active.aAdj - alb) / (aub - alb)
         local black <const> = Color { r = 0, g = 0, b = 0 }
         local white <const> = Color { r = 255, g = 255, b = 255 }
-        ctx:drawImage(img, 0, 0)
+        ctx:drawImage(img,
+            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, barHeight))
         CanvasUtilities.drawSliderReticle(
             ctx, a01, barWidth, barHeight,
             white, reticleSize)
@@ -465,13 +469,14 @@ dlg:canvas {
             local b <const> = (1.0 - xFac) * visMin + xFac * visMax
             pixel(toHex(labTosRgb(50.0, 0.0, b, 1.0)))
         end
-        img:resize(barWidth, barHeight)
 
         local ctx <const> = event.context
         local b01 <const> = (active.bAdj - blb) / (bub - blb)
         local black <const> = Color { r = 0, g = 0, b = 0 }
         local white <const> = Color { r = 255, g = 255, b = 255 }
-        ctx:drawImage(img, 0, 0)
+        ctx:drawImage(img,
+            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, barHeight))
         CanvasUtilities.drawSliderReticle(
             ctx, b01, barWidth, barHeight,
             white, reticleSize)
@@ -540,10 +545,11 @@ dlg:canvas {
 
             pixel(0xff000000 | b << 0x10 | g << 0x08 | r)
         end
-        img:resize(barWidth, barHeight)
 
         local ctx <const> = event.context
-        ctx:drawImage(img, 0, 0)
+        ctx:drawImage(img,
+            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, barHeight))
 
         local reticleClr = white
         local a01 <const> = active.alphaAdj * 0.5 + 0.5
@@ -766,14 +772,14 @@ dlg:button {
         local alphaAdjNonZero <const> = alphaAdj ~= 0.0
         local useLabAdj <const> = mode == "LAB"
             and (lAdjNonZero
-            or aAdj ~= 0.0
-            or bAdj ~= 0.0
-            or alphaAdjNonZero)
+                or aAdj ~= 0.0
+                or bAdj ~= 0.0
+                or alphaAdjNonZero)
         local useLchAdj <const> = mode == "LCH"
             and (lAdjNonZero
-            or cAdj ~= 0.0
-            or hAdj ~= 0.0
-            or alphaAdjNonZero)
+                or cAdj ~= 0.0
+                or hAdj ~= 0.0
+                or alphaAdjNonZero)
 
         -- Alpha invert is grouped with LAB invert, so
         -- the expectation is that it occurs after

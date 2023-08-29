@@ -977,7 +977,9 @@ function CanvasUtilities.spectrum(
                     pixel(0xff000000 | v << 0x10 | v << 0x08 | v)
                 end
             end
-            context:drawImage(image, 0, 0)
+            context:drawImage(image,
+                Rectangle(0, 0, wVrf, hVrf),
+                Rectangle(0, 0, wVrf, hVrf))
 
             local black <const> = Color { r = 0, g = 0, b = 0, a = 255 }
             local white <const> = Color { r = 255, g = 255, b = 255, a = 255 }

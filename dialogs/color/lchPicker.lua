@@ -306,7 +306,9 @@ dlg:canvas {
         local ctx <const> = event.context
         local bkgImg <const> = Image(barWidth, barHeight)
         bkgImg:clear(srgbHex)
-        ctx:drawImage(bkgImg, 0, 0)
+        ctx:drawImage(bkgImg,
+            Rectangle(0, 0, barWidth, barHeight),
+            Rectangle(0, 0, barWidth, barHeight))
 
         -- Create display string.
         local strDisplay <const> = string.format(
@@ -391,10 +393,11 @@ dlg:canvas {
                 pixel(bkgHex)
             end
         end
-        img:resize(barWidth, barHeight)
 
         local ctx <const> = event.context
-        ctx:drawImage(img, 0, 0)
+        ctx:drawImage(img,
+            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, barHeight))
 
         local fill = Color { r = 0, g = 0, b = 0 }
         if l < 54.0 then
@@ -451,10 +454,11 @@ dlg:canvas {
                 pixel(bkgHex)
             end
         end
-        img:resize(barWidth, barHeight)
 
         local ctx <const> = event.context
-        ctx:drawImage(img, 0, 0)
+        ctx:drawImage(img,
+            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, barHeight))
 
         local fill = Color { r = 0, g = 0, b = 0 }
         if l < 54.0 then
@@ -510,10 +514,11 @@ dlg:canvas {
                 pixel(bkgHex)
             end
         end
-        img:resize(barWidth, barHeight)
 
         local ctx <const> = event.context
-        ctx:drawImage(img, 0, 0)
+        ctx:drawImage(img,
+            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, barHeight))
 
         local fill = Color { r = 0, g = 0, b = 0 }
         if l < 54.0 then
@@ -570,10 +575,11 @@ dlg:canvas {
 
             pixel(0xff000000 | b << 0x10 | g << 0x08 | r)
         end
-        img:resize(barWidth, barHeight)
 
         local ctx <const> = event.context
-        ctx:drawImage(img, 0, 0)
+        ctx:drawImage(img,
+            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, barHeight))
 
         local fill = Color { r = 0, g = 0, b = 0 }
         if l < 54.0 then

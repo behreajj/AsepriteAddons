@@ -283,7 +283,9 @@ dlg:canvas {
         local ctx <const> = event.context
         local bkgImg <const> = Image(barWidth, barHeight)
         bkgImg:clear(srgbHex)
-        ctx:drawImage(bkgImg, 0, 0)
+        ctx:drawImage(bkgImg,
+            Rectangle(0, 0, barWidth, barHeight),
+            Rectangle(0, 0, barWidth, barHeight))
 
         -- Create display string.
         local strDisplay <const> = string.format(
@@ -363,10 +365,11 @@ dlg:canvas {
                 cosIncl * sin(az),
                 sinIncl))
         end
-        img:resize(barWidth, barHeight)
 
         local ctx <const> = event.context
-        ctx:drawImage(img, 0, 0)
+        ctx:drawImage(img,
+            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, barHeight))
 
         local az01 <const> = 0.1591549430919 * azimuth
         local fill <const> = Color { r = 255, g = 255, b = 255 }
@@ -412,10 +415,11 @@ dlg:canvas {
                 cosIncl * sinAzim,
                 sin(incl)))
         end
-        img:resize(barWidth, barHeight)
 
         local ctx <const> = event.context
-        ctx:drawImage(img, 0, 0)
+        ctx:drawImage(img,
+            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, barHeight))
 
         local in01 <const> = 0.5 + inclination / 3.1415926535898
         local fill <const> = Color { r = 255, g = 255, b = 255 }
