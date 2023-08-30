@@ -153,7 +153,7 @@ dlg:button {
             local bry = tly + celImg.height - 1
 
             if layer.isTilemap then
-                local tileSet <const> = layer.tileset --[[@as Tileset]]
+                local tileSet <const> = layer.tileset
                 local tileGrid <const> = tileSet.grid
                 local tileDim <const> = tileGrid.tileSize
                 local wTile <const> = tileDim.width

@@ -325,7 +325,7 @@ dlg:button {
         local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
-            tileSet = srcLayer.tileset --[[@as Tileset]]
+            tileSet = srcLayer.tileset
         end
 
         -- Unpack arguments.

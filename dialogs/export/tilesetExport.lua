@@ -584,7 +584,7 @@ dlg:button {
                     j = j + 1
                     local tmLayer <const> = tmLayers[j]
                     if tmLayer.isTilemap then
-                        local tileSet <const> = tmLayer.tileset --[[@as Tileset]]
+                        local tileSet <const> = tmLayer.tileset
                         local tileGrid <const> = tileSet.grid
                         local tileDim <const> = tileGrid.tileSize
                         local wTile <const> = tileDim.width

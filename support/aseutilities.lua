@@ -10,14 +10,12 @@ setmetatable(AseUtilities, {
     end
 })
 
--- Maximum number of a cels a script may
--- request to create before the user is
--- prompted to confirm.
+---Maximum number of a cels a script may request to create before the user is
+---prompted to confirm.
 AseUtilities.CEL_COUNT_LIMIT = 256
 
----Default palette used when no other
----is available. Simulates a RYB
----color wheel with black and white.
+---Default palette used when no other is available. Simulates a RYB color wheel
+---with black and white.
 AseUtilities.DEFAULT_PAL_ARR = {
     0x00000000, -- Mask
     0xff000000, -- Black
@@ -36,8 +34,7 @@ AseUtilities.DEFAULT_PAL_ARR = {
     0xff581b99
 }
 
----Angles in degrees which are remapped to
----permutations of atan(1,2) and atan(1,3).
+---Angles in degrees which are remapped to permutations of atan(1,2), atan(1,3).
 AseUtilities.DIMETRIC_ANGLES = {
     [18] = 0.32175055439664,
     [19] = 0.32175055439664,
@@ -73,30 +70,25 @@ AseUtilities.DIMETRIC_ANGLES = {
     [342] = 5.9614347527829
 }
 
----Number of decimals to display when
----printing real numbers to the console.
+---Number of decimals to display when printing real numbers to the console.
 AseUtilities.DISPLAY_DECIMAL = 3
 
----Table of file extensions supported by
----Aseprite for open and save file dialogs.
+---Table of file extensions supported for open and save file dialogs.
 AseUtilities.FILE_FORMATS = {
     "ase", "aseprite", "bmp", "flc", "fli",
     "gif", "ico", "jpeg", "jpg", "pcc", "pcx",
     "png", "tga", "webp"
 }
 
--- Maximum number of frames a script may
--- request to create before the user is
--- prompted to confirm.
+---Maximum number of frames a script may request to create before the user is
+---prompted to confirm.
 AseUtilities.FRAME_COUNT_LIMIT = 256
 
--- Number of swatches to generate for
--- gray color mode sprites.
+---Number of swatches to generate for gray color mode sprites.
 AseUtilities.GRAY_COUNT = 32
 
--- Maximum number of layers a script may
--- request to create before the user is
--- prompted to confirm.
+---Maximum number of layers a script may request to create before the user is
+---prompted to confirm.
 AseUtilities.LAYER_COUNT_LIMIT = 96
 
 ---Camera projections.
@@ -105,17 +97,15 @@ AseUtilities.PROJECTIONS = {
     "PERSPECTIVE"
 }
 
----Houses utility methods for scripting
----Aseprite add-ons.
+---Houses utility methods for scripting Aseprite add-ons.
 ---@return table
 function AseUtilities.new()
     local inst = setmetatable({}, AseUtilities)
     return inst
 end
 
----Appends the child layers of a layer if it is a group
----to an array. If the layer is not a group, then whther
----it's appended depends on the arguments provided.
+---Appends the child layers of a layer if it is a group to an array. If the
+---layer is not a group, then whther it's appended depends on the arguments.
 ---@param layer Layer parent layer
 ---@param array Layer[] leaves array
 ---@param includeLocked? boolean include locked layers
@@ -153,8 +143,8 @@ function AseUtilities.appendLeaves(
     return array
 end
 
----Finds the average color of a selection in a sprite.
----Calculates in the SR LAB 2 color space.
+---Finds the average color of a selection in a sprite. Calculates the average
+---in the SR LAB 2 color space.
 ---@param sprite Sprite
 ---@param frame Frame|integer
 ---@return { l: number, a: number, b: number, alpha: number }
@@ -220,9 +210,8 @@ function AseUtilities.averageColor(sprite, frame)
         return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
     end
 
-    -- The key is the color in hex; the value is a
-    -- number of pixels with that color in the
-    -- selection. This tally is for the average.
+    -- The key is the color in hex; the value is a number of pixels with that
+    -- color in the selection. This tally is for the average.
     ---@type table<integer, integer>
     local hexDict <const> = {}
     local pxItr <const> = flatImage:pixels()
@@ -267,17 +256,11 @@ function AseUtilities.averageColor(sprite, frame)
     return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
 end
 
----Copies an Aseprite Color object by sRGB channel
----values. This is to prevent accidental pass by
----reference. The Color constructor does no bounds
----boundary checking for [0, 255].
----If the flag is "UNBOUNDED", then the raw values
----are used.
----If the flag is "MODULAR," this will copy by
----hexadecimal value, and hence use modular
----arithmetic.
----The default is saturation arithmetic.
----For more info, see
+---Copies an Aseprite Color object by sRGB channel values. This is to prevent
+---accidental pass by reference. The Color constructor does no bounds checking
+---for [0, 255]. If the flag is "UNBOUNDED", then the raw values are used. If
+---the flag is "MODULAR," this will copy by hexadecimal value, and hence use
+---modular arithmetic. The default is saturation arithmetic. For more, see
 ---https://www.wikiwand.com/en/Modular_arithmetic .
 ---@param aseColor Color aseprite color
 ---@param flag string out of bounds interpretation
@@ -303,11 +286,9 @@ function AseUtilities.aseColorCopy(aseColor, flag)
     end
 end
 
----Converts an Aseprite Color object to a Clr.
----Assumes that the Aseprite Color is in sRGB.
----Both Aseprite Color and Clr allow arguments
----to exceed the expected ranges, [0, 255] and
----[0.0, 1.0], respectively.
+---Converts an Aseprite Color object to a Clr. Both Aseprite Color and Clr
+---allow arguments to exceed the expected ranges, [0, 255] and [0.0, 1.0],
+---respectively.
 ---@param aseColor Color aseprite color
 ---@return Clr
 function AseUtilities.aseColorToClr(aseColor)
@@ -318,16 +299,13 @@ function AseUtilities.aseColorToClr(aseColor)
         0.003921568627451 * aseColor.alpha)
 end
 
----Converts an Aseprite color object to an
----integer. The meaning of the integer depends
----on the color mode: the RGB integer is 32
----bits; GRAY, 16; INDEXED, 8. For RGB mode,
----uses modular arithmetic, i.e., does not check
----if red, green, blue and alpha channels are out
----of range [0, 255]. Returns zero if the color
+---Converts an Aseprite color object to an integer. The meaning of the integer
+---depends on the color mode: the RGB integer is 32 bits. GRAY, 16. INDEXED, 8.
+---For RGB mode, uses modular arithmetic, i.e., does not check if red, green,
+---blue and alpha channels are out of range [0, 255]. Returns zero if the color
 ---mode is not recognized.
 ---@param clr Color aseprite color
----@param clrMode ColorMode|integer color mode
+---@param clrMode ColorMode color mode
 ---@return integer
 function AseUtilities.aseColorToHex(clr, clrMode)
     if clrMode == ColorMode.RGB then
@@ -343,19 +321,16 @@ function AseUtilities.aseColorToHex(clr, clrMode)
     return 0
 end
 
----Loads a palette based on a string. The string is
----expected to be either "FILE", "PRESET" or "ACTIVE".
----The correctZeroAlpha flag replaces zero alpha colors
----with clear black, regardless of RGB channel values.
+---Loads a palette based on a string. The string is expected to be either
+---"FILE", "PRESET" or "ACTIVE". The correctZeroAlpha flag replaces zero alpha
+---colors with clear black, regardless of RGB channel values.
 ---
----Returns a tuple of tables. The first table is an
----array of hexadecimals according to the sprite color
----profile. The second is a copy of the first converted
----to sRGB.
+---Returns a tuple of tables. The first table is an array of hexadecimals
+---according to the sprite color profile. The second is a copy of the first
+---converted to sRGB.
 ---
----If a palette is loaded from a filepath or a
----preset the two tables should match, as Aseprite does
----not support color management for palettes.
+---If a palette is loaded from a filepath, the two tables should match, as
+---Aseprite does not support color management for palettes.
 ---@param palType string enumeration
 ---@param filePath string file path
 ---@param startIndex integer? start index
@@ -461,11 +436,9 @@ function AseUtilities.asePaletteLoad(
     return hexesProfile, hexesSrgb
 end
 
----Converts an Aseprite palette to a table of
----hex color integers. If the palette is nil
----returns a default table. Assumes palette
----is in sRGB. The start index defaults to 0.
----The count defaults to 256.
+---Converts an Aseprite palette to a table of hex color integers. If the
+---palette is nil, returns a default table. Assumes palette is in sRGB. The
+---start index defaults to 0. The count defaults to 256.
 ---@param pal Palette aseprite palette
 ---@param startIndex integer? start index
 ---@param count integer? sample count
@@ -501,9 +474,8 @@ function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
     end
 end
 
----Converts an array of Aseprite palettes to a
----table of hex color integers.
----@param palettes Palette[] aseprite palettes
+---Converts an array of Aseprite palettes to a table of hex color integers.
+---@param palettes Palette[] Aseprite palettes
 ---@return integer[]
 function AseUtilities.asePalettesToHexArr(palettes)
     if palettes then
@@ -544,15 +516,12 @@ function AseUtilities.asePalettesToHexArr(palettes)
     end
 end
 
----Blends a backdrop and overlay image, creating a union
----image from the two sources. The union then intersects
----with a selection. If a selection is empty, or is not
----provided, a new selection is created from the union.
----If the cumulative flag is true, the backdrop image is
----sampled regardless of its inclusion in the selection.
----Returns a new, blended image and its top left corner
----x, y. Does not support tile maps or images with
----mismatched color modes.
+---Blends a backdrop and overlay image, creating a union image from the two
+---sources. The union then intersects with a selection. If a selection is empty,
+---or is not provided, a new selection is created from the union. If the
+---cumulative flag is true, the backdrop image is sampled regardless of its
+---inclusion in the selection. Returns a new, blended image and its top left
+---corner. Does not support tile maps or images with mismatched color modes.
 ---@param under Image under image
 ---@param over Image overlay image
 ---@param uxCel integer? under cel top left corner x
@@ -567,11 +536,9 @@ end
 function AseUtilities.blendImage(
     under, over, uxCel, uyCel, oxCel, oyCel,
     mask, cumulative)
-    -- Because this method uses a mask and offers a
-    -- cumulative option, it cannot be replaced by
-    -- drawImage in 1.3rc-2, which supports blend modes.
-    -- This can also be used as a polyfill for indexed
-    -- color mode.
+    -- Because this method uses a mask and offers a cumulative option, it can't
+    -- be replaced by drawImage in 1.3rc-2, which supports blend modes. This
+    -- can also be used as a polyfill for indexed color mode.
 
     local cmVrf <const> = cumulative or false
     local oycVrf <const> = oyCel or 0
@@ -699,8 +666,7 @@ function AseUtilities.blendImage(
     return target, xMin, yMin
 end
 
----Blends two 16-bit gray colors.
----Premultiplies each color by its alpha prior
+---Blends two 16-bit gray colors. Premultiplies each color by its alpha prior
 ---to blending. Unpremultiplies the result.
 ---@param a integer backdrop color
 ---@param b integer overlay color
@@ -726,10 +692,9 @@ function AseUtilities.blendGray(a, b)
     return tuv << 0x08 | cg
 end
 
----Blends two indexed image colors. Prioritizes
----the overlay color, so long as it does not
----equal the mask index. Assumes backdrop and
----overlay use the same mask index.
+---Blends two indexed image colors. Prioritizes the overlay color, so long as
+---it does not equal the mask index. Assumes backdrop and overlay use the same
+---mask index.
 ---@param a integer backdrop color
 ---@param b integer overlay color
 ---@param mask integer mask index
@@ -740,11 +705,9 @@ function AseUtilities.blendIndices(a, b, mask)
     return mask
 end
 
----Blends two 32-bit RGBA colors.
----Premultiplies each color by its alpha prior
----to blending. Unpremultiplies the result.
----For more information,
----see https://www.w3.org/TR/compositing-1/ .
+---Blends two 32-bit RGBA colors. Premultiplies each color by its alpha prior
+---to blending. Unpremultiplies the result. For more information, see
+---https://www.w3.org/TR/compositing-1/ .
 ---@param a integer backdrop color
 ---@param b integer overlay color
 ---@return integer
@@ -754,10 +717,8 @@ function AseUtilities.blendRgba(a, b)
     local v <const> = a >> 0x18 & 0xff
     if v < 0x01 then return b end
 
-    -- Experimented with subtracting
-    -- from 0x100 instead of 0xff, due to 255//2
-    -- not having a whole number middle, but 0xff
-    -- lead to more accurate results.
+    -- Experimented with subtracting from 0x100 instead of 0xff, due to 255//2
+    -- not having a whole number middle, but 0xff lead to more accurate results.
     local u <const> = 0xff - t
     if t > 0x7f then t = t + 1 end
 
@@ -788,10 +749,9 @@ function AseUtilities.blendRgba(a, b)
         | cr
 end
 
----Wrapper for app.command.ChangePixelFormat which
----accepts an integer constant as an input. The constant
----should be included in the ColorMode enum: INDEXED,
----GRAY or RGB. Does nothing if the constant is invalid.
+---Wrapper for app.command.ChangePixelFormat which accepts an integer constant
+---as an input. The constant should be included in the ColorMode enum:
+---INDEXED, GRAY or RGB. Does nothing if the constant is invalid.
 ---@param format ColorMode|integer format constant
 function AseUtilities.changePixelFormat(format)
     if format == ColorMode.INDEXED then
@@ -803,13 +763,10 @@ function AseUtilities.changePixelFormat(format)
     end
 end
 
----Converts a Clr to an Aseprite Color.
----Assumes that source and target are in sRGB.
----Clamps the Clr's channels to [0.0, 1.0] before
----they are converted. Beware that this could return
----(255, 0, 0, 0) or (0, 255, 0, 0), which may be
----visually indistinguishable from - and confused
----with - an alpha mask, (0, 0, 0, 0).
+---Converts a Clr to an Aseprite Color. Assumes that source and target are in
+---sRGB. Clamps the Clr's channels to [0.0, 1.0] before they are converted.
+---Beware that this could return (255, 0, 0, 0) or (0, 255, 0, 0), which may be
+---visually indistinguishable from - and confused with - an alpha mask.
 ---@param clr Clr clr
 ---@return Color
 function AseUtilities.clrToAseColor(clr)
@@ -826,15 +783,11 @@ function AseUtilities.clrToAseColor(clr)
     }
 end
 
----Creates new cels in a sprite. Prompts users to
----confirm if requested count exceeds a limit. The
----count is derived from frameCount x layerCount.
----Returns a one-dimensional table of cels, where
----layers are treated as rows, frames are treated
----as columns and the flat ordering is row-major.
----To assign a GUI color, use a hexadecimal integer
----as an argument.
----Returns a table of layers.
+---Creates new cels in a sprite. Prompts users to confirm if requested count
+---exceeds a limit. The count is derived from frameCount x layerCount. Returns
+---a one-dimensional table of cels, where layers are treated as rows, frames
+---are treated as columns and the flat ordering is row-major. To assign a GUI
+---color, use a hexadecimal integer as an argument. Returns a table of layers.
 ---@param sprite Sprite
 ---@param frStrtIdx integer frame start index
 ---@param frCount integer frame count
@@ -960,11 +913,9 @@ function AseUtilities.createCels(
     return cels
 end
 
----Creates new empty frames in a sprite. Prompts user
----to confirm if requested count exceeds a limit.
---- Returns a table of frames. Frame duration is assumed
----to have been divided by 1000.0, and ready to be
----assigned as is.
+---Creates new empty frames in a sprite. Prompts user to confirm if requested
+---count exceeds a limit. Returns a table of frames. Frame duration is assumed
+---to have been divided by 1000.0, and ready to be assigned as is.
 ---@param sprite Sprite sprite
 ---@param count integer frames to create
 ---@param duration number frame duration
@@ -1020,11 +971,9 @@ function AseUtilities.createFrames(sprite, count, duration)
     return frames
 end
 
----Creates new layers in a sprite. Prompts user
----to confirm if requested count exceeds a limit. Wraps
----the process in an app.transaction. To assign a GUI
--- color, use a hexadecimal integer as an argument.
----Returns a table of layers.
+---Creates new layers in a sprite. Prompts user to confirm if requested count
+---exceeds a limit. Wraps the process in an app.transaction. To assign a GUI
+-- color, use a hexadecimal integer as an argument. Returns a table of layers.
 ---@param sprite Sprite sprite
 ---@param count integer number of layers to create
 ---@param blendMode BlendMode? blend mode
@@ -1101,9 +1050,8 @@ function AseUtilities.createNewLayers(
     return layers
 end
 
----Draws a filled circle. Uses the Aseprite image
----instance method drawPixel. This means that the
----pixel changes will not be tracked as a transaction.
+---Draws a filled circle. Uses the Aseprite Image instance method drawPixel.
+---This means that the pixel changes will not be tracked as a transaction.
 ---@param image Image Aseprite image
 ---@param xc integer center x
 ---@param yc integer center y
@@ -1129,11 +1077,9 @@ function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
     end
 end
 
----Blits input image onto another that is the
----next power of 2 in dimension. The nonUniform
----flag specifies whether the result can have
----unequal width and height, e.g., 64x32. Returns
----the image by reference if its size is already
+---Blits input image onto another that is the next power of 2 in dimension. The
+---nonUniform flag specifies whether the result can have unequal width and
+---height, e.g., 64x32. Returns the image by reference if its size is already
 ---a power of 2.
 ---@param img Image image
 ---@param colorMode ColorMode color mode
@@ -1173,15 +1119,14 @@ function AseUtilities.expandImageToPow2(
     return potImg
 end
 
----Finds a filtered array of cels to be edited in-place
----according to the provided criteria. The target is a
----string constant that could be "ALL", "ACTIVE", "RANGE"
----or "SELECTION". When the target is "ACTIVE", this
+---Finds a filtered array of cels to be edited in-place according to the
+---provided criteria. The target is a string constant that could be "ALL",
+---"ACTIVE", "RANGE" or "SELECTION". When the target is "ACTIVE", this
 ---includes the children of the active layer if it's a group.
 ---
----Visibility and editability are only considered locally;
----it's assumed that if the user selects a child layer whose
----parent is locked or hidden, they intended to do so.
+---Visibility and editability are only considered locally. It's assumed that if
+---the user selects a child layer whose parent is locked or hidden, they
+---intended to do so.
 ---
 ---The selection option will create a new layer and cel.
 ---@param sprite Sprite active sprite
@@ -1306,12 +1251,10 @@ function AseUtilities.filterCels(
     end
 end
 
----Flattens a group layer to a composite image.
----Does not verify that a layer is a group. Child
----layers are filtered according to the provided
----criteria. Returns an image and a cel bounds.
----If no composite could be made, returns a 1x1
----image and a rectangle in the top left corner.
+---Flattens a group layer to a composite image. Does not verify that a layer is
+---a group. Child layers are filtered according to the provided criteria.
+---Returns an image and a cel bounds. If no composite could be made, returns a
+---1 by 1 image and a rectangle in the top left corner.
 ---@param group Layer group layer
 ---@param frame Frame|integer frame
 ---@param sprClrMode ColorMode|integer sprite color mode
@@ -1360,9 +1303,8 @@ function AseUtilities.flattenGroup(
         if leafCel then
             local leafImage = leafCel.image
             if leafLayer.isTilemap then
-                local tileSet <const> = leafLayer.tileset --[[@as Tileset]]
-                leafImage = tilesToImage(
-                    leafImage, tileSet, sprClrMode)
+                local tileSet <const> = leafLayer.tileset
+                leafImage = tilesToImage(leafImage, tileSet, sprClrMode)
             end
 
             -- An Image:isEmpty check could be used here, but
@@ -1471,10 +1413,8 @@ function AseUtilities.flattenGroup(
     return image, bounds
 end
 
----Returns a copy of the source image that has
----been flipped horizontally.
----Also returns displaced coordinates for the
----top-left corner.
+---Returns a copy of the source image that has been flipped horizontally.
+---Also returns displaced coordinates for the top left corner.
 ---@param source Image source image
 ---@return Image
 ---@return integer
@@ -1505,10 +1445,8 @@ function AseUtilities.flipImageHoriz(source)
     return target, 1 - w, 0
 end
 
----Returns a copy of the source image that has
----been flipped vertically.
----Also returns displaced coordinates for the
----top-left corner.
+---Returns a copy of the source image that has been flipped vertically.
+---Also returns displaced coordinates for the top left corner.
 ---@param source Image source image
 ---@return Image
 ---@return integer
@@ -1539,8 +1477,8 @@ function AseUtilities.flipImageVert(source)
     return target, 0, 1 - h
 end
 
----Converts an array of frame objects to an array of
----frame numbers. Used primarily to set a range's frames.
+---Converts an array of frame objects to an array of frame numbers.
+---Used primarily to set a range's frames.
 ---@param frObjs Frame[]
 ---@return integer[]
 function AseUtilities.frameObjsToIdcs(frObjs)
@@ -1557,27 +1495,22 @@ function AseUtilities.frameObjsToIdcs(frObjs)
     return frIdcs
 end
 
----Gets an array of arrays of frame indices from a
----sprite according to a string constant.
+---Gets an array of arrays of frame indices from a sprite according to a string.
 ---"ALL" gets all frames in the sprite.
 ---"RANGE" gets the frames in the timeline range.
----"MANUAL" attempts to parse string of integers
----defined by commas and hyphens.
+---"MANUAL" attempts to parse string of integers defined by commas and colons.
 ---"TAGS" gets the frames from an array of tags.
 ---"ACTIVE", the default, returns the active frame.
 ---If there's no active frame, returns an empty array.
 ---
----For tags and manual, duplicates will be included
----when the batched flag is true. Otherwise a unique
----set is returned.
+---For tags and manual, duplicates will be included when the batched flag is
+---true. Otherwise a unique set is returned.
 ---
----For ranges, call this method before new layers,
----frames or cels are created. Otherwise the range
----will be lost. Checks timeline visibility before
+---For ranges, call this method before new layers, frames or cels are created.
+---Otherwise the range will be lost. Checks timeline visibility before
 ---accessing range.
 ---
----If a range is a layer type, returns all frames
----in the sprite.
+---If a range is a layer type, returns all frames in the sprite.
 ---@param sprite Sprite sprite
 ---@param target string preset
 ---@param batch boolean? batch
@@ -1650,10 +1583,8 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
     end
 end
 
----Appends a sprite's layer hierarchy to an array.
----If no array is provided, one is created.
----Whether layers are appended depends on the
----arguments provided.
+---Appends a sprite's layer hierarchy to an array. If no array is provided, one
+---is created. Whether layers are appended depends on the arguments provided.
 ---@param sprite Sprite sprite
 ---@param includeLocked? boolean include locked layers
 ---@param includeHidden? boolean include hidden layers
@@ -1681,10 +1612,9 @@ function AseUtilities.getLayerHierarchy(
     return array
 end
 
----For sprites with multiple palettes, tries to get
----a palette from an Aseprite frame object. Defaults
----to index 1 if the frame index exceeds the number
----of palettes. Does not check if frame is nil.
+---For sprites with multiple palettes, tries to get a palette from an Aseprite
+---frame object. Defaults to index 1 if the frame index exceeds the number of
+---palettes. Does not check if frame is nil.
 ---@param frame Frame|integer frame
 ---@param palettes Palette[] palettes
 ---@return Palette
@@ -1695,6 +1625,7 @@ function AseUtilities.getPalette(frame, palettes)
         and math.type(frame) == "integer" then
         idx = frame
     elseif typeFrObj == "userdata" then
+        ---@diagnostic disable-next-line: undefined-field
         idx = frame.frameNumber
     end
     local lenPalettes <const> = #palettes
@@ -1702,18 +1633,15 @@ function AseUtilities.getPalette(frame, palettes)
     return palettes[idx]
 end
 
----Gets a selection from a sprite. Calls InvertMask
----command twice. Returns a copy of the selection,
----not a reference. If the selection is empty, then
----trys to return the cel bounds; if that is empty,
----then returns the sprite bounds.
+---Gets a selection from a sprite. Calls InvertMask command twice. Returns a
+---copy of the selection, not a reference. If the selection is empty, then tries
+---to return the cel bounds; if that is empty, then returns the sprite bounds.
 ---@param sprite Sprite sprite
 ---@return Selection
 function AseUtilities.getSelection(sprite)
-    -- If a selection is moved, but the drag and
-    -- drop pixels checkmark is not pressed, then
-    -- a crash will result. MoveMask doesn't work
-    -- because move quantity has a minimum of 1.
+    -- If a selection is moved, but the drag and drop pixels checkmark is not
+    -- pressed, then a crash will result. MoveMask doesn't work because move
+    -- quantity has a minimum of 1.
     app.transaction("Commit Mask", function()
         app.command.InvertMask()
         app.command.InvertMask()
@@ -1723,10 +1651,9 @@ function AseUtilities.getSelection(sprite)
     if (not srcSel) or srcSel.isEmpty then
         local activeCel <const> = app.site.cel
         if activeCel then
-            -- Cel could be out-of-bounds, so this
-            -- also needs to intersect with the sprite
-            -- canvas. This ignores possibility that
-            -- the cel image could be empty.
+            -- Cel could be out-of-bounds, so this also needs to intersect with
+            -- the sprite canvas. This ignores possibility that the cel image
+            -- could be empty.
             local trgSel <const> = Selection(activeCel.bounds)
             trgSel:intersect(sprite.bounds)
             if not trgSel.isEmpty then return trgSel end
@@ -1740,13 +1667,12 @@ function AseUtilities.getSelection(sprite)
     return trgSel
 end
 
----Gets tiles from a tile map that are entirely
----contained by a selection. Returns a dictionary
----where the tile map index serves as the key
----and the Tile object is the value.
+---Gets tiles from a tile map that are entirely contained by a selection.
+---Returns a dictionary where the tile map index serves as the key and the Tile
+---object is the value.
 ---
----Assumes that tile map and tile set have been
----vetted to confirm their association.
+---Assumes that tile map and tile set have been vetted to confirm their
+---association.
 ---@param tileMap Image tile map, an image
 ---@param tileSet Tileset tile set
 ---@param selection Selection selection
@@ -1817,9 +1743,8 @@ function AseUtilities.getSelectedTiles(
     return tiles
 end
 
----Get unique cels from layers that have already been
----verified as leaves and filtered. If the output
----target array is not supplied, a new one is created.
+---Get unique cels from layers that have already been verified as leaves and
+---filtered. If the output target array is not supplied, a new one is created.
 ---@param leaves Layer[] leaf layers
 ---@param frames integer[]|Frame[] frames
 ---@return Cel[]
@@ -1852,9 +1777,8 @@ function AseUtilities.getUniqueCelsFromLeaves(leaves, frames)
     return celsArr
 end
 
----Gets the unique tiles from a tile map.
----Assumes that tile map and tile set have been
----vetted to confirm their association.
+---Gets the unique tiles from a tile map. Assumes that tile map and tile set
+---have been vetted to confirm their association.
 ---@param tileMap Image tile map, an image
 ---@param tileSet Tileset tile set
 ---@return table<integer, Tile>
@@ -1878,9 +1802,8 @@ function AseUtilities.getUniqueTiles(tileMap, tileSet)
     return tiles
 end
 
----Creates a table of gray colors represented as
----32 bit integers, where the gray is repeated
----three times in red, green and blue channels.
+---Creates a table of gray colors represented as 32 bit integers, where the
+---gray is repeated three times in red, green and blue channels.
 ---@param count integer swatch count
 ---@return integer[]
 function AseUtilities.grayHexes(count)
@@ -1901,10 +1824,9 @@ function AseUtilities.grayHexes(count)
     return result
 end
 
----Converts a 32 bit ABGR hexadecimal integer
----to an Aseprite Color object. Does not use
----the Color rgbaPixel constructor, as the color
----mode dictates how the integer is interpreted.
+---Converts a 32 bit ABGR hexadecimal integer to an Aseprite Color object.
+---Does not use the Color rgbaPixel constructor, as the color mode dictates how
+---the integer is interpreted.
 ---@param hex integer hexadecimal color
 ---@return Color
 function AseUtilities.hexToAseColor(hex)
@@ -1918,10 +1840,8 @@ function AseUtilities.hexToAseColor(hex)
     }
 end
 
----Adds padding around the edges of an image.
----Does not check if image is a tile map.
----If the padding is less than one, returns the
----source image.
+---Adds padding around the edges of an image. Does not check if image is a tile
+---map. If the padding is less than one, returns the source image.
 ---@param image Image source image
 ---@param padding integer padding
 ---@return Image
@@ -1942,17 +1862,14 @@ function AseUtilities.padImage(image, padding)
     return padded
 end
 
----Parses an Aseprite Tag to an array of frame
----indices. For example, a tag with a fromFrame
----of 8 and a toFrame of 10 will return 8, 9, 10
----if the tag has FORWARD direction; 10, 9, 8 for
----REVERSE. Ping-pong and its reverse excludes
----one boundary so that other renderers don't draw
----it twice. Doesn't interpret a tag's repeat count.
+---Parses an Aseprite Tag to an array of frame indices. For example, a tag with
+---a fromFrame of 8 and a toFrame of 10 will return 8, 9, 10 if the tag has
+---FORWARD direction. 10, 9, 8 for REVERSE. Ping-pong and its reverse excludes
+---one boundary so that other renderers don't draw it twice. Doesn't interpret
+---a tag's repeat count.
 ---
----A tag may contain frame indices that are out of
----bounds for the sprite that contains the tag.
----Returns an empty array if so.
+---A tag may contain frame indices that are out of bounds for the sprite that
+---contains the tag. Returns an empty array if so.
 ---@param tag Tag Aseprite Tag
 ---@return integer[]
 function AseUtilities.parseTag(tag)
@@ -2016,10 +1933,9 @@ function AseUtilities.parseTag(tag)
     return arr
 end
 
----Parses an array of Aseprite tags. Returns
----an array of arrays. Inner arrays may hold
----duplicate frame indices, as the same frame
----could appear in multiple groups.
+---Parses an array of Aseprite tags. Returns an array of arrays. Inner arrays
+---may hold duplicate frame indices, as the same frame could appear in multiple
+---groups.
 ---@param tags Tag[] tags array
 ---@return integer[][]
 function AseUtilities.parseTagsOverlap(tags)
@@ -2034,8 +1950,7 @@ function AseUtilities.parseTagsOverlap(tags)
     return arr2
 end
 
----Parses an array of Aseprite tags. Returns
----an ordered set of integers.
+---Parses an array of Aseprite tags. Returns an ordered set of integers.
 ---@param tags Tag[] tags array
 ---@return integer[]
 function AseUtilities.parseTagsUnique(tags)
@@ -2057,12 +1972,11 @@ function AseUtilities.parseTagsUnique(tags)
     return Utilities.dictToSortedSet(dict)
 end
 
----Preserves the application fore- and background
----colors across sprite changes. Copies and
----reassigns the colors to themselves. Does nothing
----if there is no active sprite.
+---Preserves the application fore- and background colors across sprite changes.
+---Copies and reassigns the colors to themselves. Does nothing if there is no
+---active sprite.
 function AseUtilities.preserveForeBack()
-    if app.activeSprite then
+    if app.site.sprite then
         app.fgColor = AseUtilities.aseColorCopy(app.fgColor, "")
         app.command.SwitchColors()
         app.fgColor = AseUtilities.aseColorCopy(app.fgColor, "")
@@ -2070,10 +1984,9 @@ function AseUtilities.preserveForeBack()
     end
 end
 
----Returns a copy of the source image that has
----been resized to the width and height. Uses nearest
----neighbor sampling. If the width and height are
----equal to the original, returns the source image.
+---Returns a copy of the source image that has been resized to the width and
+---height. Uses nearest neighbor sampling. If the width and height are equal to
+---the original, returns the source image.
 ---@param source Image source image
 ---@param wTrg integer resized width
 ---@param hTrg integer resized height
@@ -2125,10 +2038,8 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
     return target
 end
 
----Returns a copy of the source image that has
----been rotated 90 degrees counter-clockwise.
----Also returns displaced coordinates for the
----top-left corner.
+---Returns a copy of the source image that has been rotated 90 degrees counter
+---clockwise. Also returns displaced coordinates for the top left corner.
 ---@param source Image source image
 ---@return Image
 ---@return integer
@@ -2164,9 +2075,8 @@ function AseUtilities.rotateImage90(source)
     return target, 0, 1 - w
 end
 
----Returns a copy of the source image that has
----been rotated 180 degrees. Also returns
----displaced coordinates for the top-left corner.
+---Returns a copy of the source image that has been rotated 180 degrees. Also
+---returns displaced coordinates for the top left corner.
 ---@param source Image source image
 ---@return Image
 ---@return integer
@@ -2196,10 +2106,8 @@ function AseUtilities.rotateImage180(source)
         1 - source.height
 end
 
----Returns a copy of the source image that has
----been rotated 270 degrees counter-clockwise.
----Also returns displaced coordinates for the
----top-left corner.
+---Returns a copy of the source image that has been rotated 270 degrees counter
+---clockwise. Also returns displaced coordinates for the top left corner.
 ---@param source Image source image
 ---@return Image
 ---@return integer
@@ -2236,11 +2144,9 @@ function AseUtilities.rotateImage270(source)
     return target, 1 - h, 0
 end
 
----Selects the non-zero pixels of a cel's image.
----Intersects the selection with the sprite bounds
----if provided. For cases where cel may be partially
----outside the canvas edges. For tile map layers,
----selects the cel's bounds.
+---Selects the non-zero pixels of a cel's image. Intersects the selection with
+---the sprite bounds if provided. For cases where cel may be partially outside
+---the canvas edges. For tile map layers, selects the cel's bounds.
 ---@param cel Cel cel
 ---@param spriteBounds Rectangle? sprite bounds
 ---@return Selection
@@ -2292,9 +2198,8 @@ function AseUtilities.selectCel(cel, spriteBounds)
     return mask
 end
 
----Sets a palette in a sprite at a given index to a table
----of colors represented as hexadecimal integers. The
----palette index defaults to 1.
+---Sets a palette in a sprite at a given index to a table of colors represented
+---as hexadecimal integers. The palette index defaults to 1.
 ---@param arr integer[] color array
 ---@param sprite Sprite sprite
 ---@param paletteIndex integer? index
@@ -2334,13 +2239,16 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
     end
 end
 
----Converts an image from a tile set layer to a regular
----image.
+---Converts an image from a tile set layer to a regular image. If the Tileset
+---is nil, returns an image that copies the source's ImageSpec.
 ---@param imgSrc Image source image
----@param tileSet Tileset tile set
+---@param tileSet Tileset|nil tile set
 ---@param sprClrMode ColorMode|integer sprite color mode
 ---@return Image
 function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
+    -- This is mostly to keep the Lua Language Server happy.
+    if not tileSet then return Image(imgSrc.spec) end
+
     local tileGrid <const> = tileSet.grid
     local tileDim <const> = tileGrid.tileSize
     local tileWidth <const> = tileDim.width
@@ -2409,10 +2317,9 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     return imgTrg
 end
 
----Trims a cel's image and position to a selection.
----An image's pixel is cleared to the default color
----if it isn't contained by the selection. If the
----default is nil, uses the cel image's alpha mask.
+---Trims a cel's image and position to a selection. An image's pixel is cleared
+---to the default color if it isn't contained by the selection. If the default
+---is nil, uses the cel image's alpha mask.
 ---@param cel Cel source cel
 ---@param mask Selection selection
 ---@param hexDefault integer? default color
@@ -2463,9 +2370,8 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
     cel.image = trimImage
 end
 
----Trims a cel's image and position such that it no longer
----exceeds the sprite's boundaries. Unlike built-in method,
----does not trim the image's alpha.
+---Trims a cel's image and position such that it no longer exceeds the sprite's
+---boundaries. Unlike built-in method, does not trim the image's alpha.
 ---@param cel Cel source cel
 ---@param sprite Sprite parent sprite
 function AseUtilities.trimCelToSprite(cel, sprite)
@@ -2502,18 +2408,16 @@ function AseUtilities.trimCelToSprite(cel, sprite)
     cel.image = trimImage
 end
 
----Creates a copy of the image where excess
----transparent pixels have been trimmed from
----the edges. Padding is expected to be a positive
----number. It defaults to zero.
+---Creates a copy of the image where excess transparent pixels have been
+---trimmed from the edges. Padding is expected to be a positive number. It
+---defaults to zero.
 ---
----Default width and height can be given in the
----event that the image is completey transparent.
+---Default width and height can be given in the event that the image is
+---completely transparent.
 ---
----Returns a tuple containing the cropped image,
----the top left x and top left y. The top left
----should be added to the position of the cel
----that contained the source image.
+---Returns a tuple containing the cropped image, the top left x and top left y.
+---The top left should be added to the position of the cel that contained the
+---source image.
 ---@param image Image aseprite image
 ---@param padding integer padding
 ---@param alphaIndex integer alpha mask index
@@ -2573,9 +2477,8 @@ function AseUtilities.vec2ToPoint(v)
         Utilities.round(v.y))
 end
 
----Translates the pixels of an image by a vector,
----wrapping the elements that exceed its dimensions back
----to the beginning.
+---Translates the pixels of an image by a vector, wrapping the elements that
+---exceed its dimensions back to the beginning.
 ---@param source Image source image
 ---@param x integer x translation
 ---@param y integer y translation

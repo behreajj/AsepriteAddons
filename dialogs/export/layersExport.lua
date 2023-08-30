@@ -516,7 +516,7 @@ dlg:button {
 
                         image = cel.image
                         if chosenLayer.isTilemap then
-                            local tileSet <const> = chosenLayer.tileset --[[@as Tileset]]
+                            local tileSet <const> = chosenLayer.tileset
                             image = AseUtilities.tilesToImage(
                                 image, tileSet, spriteColorMode)
                         end
