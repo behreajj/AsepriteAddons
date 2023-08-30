@@ -2,7 +2,7 @@ dofile("../../support/textutilities.lua")
 
 local palTypes <const> = { "ACTIVE", "FILE" }
 local palFormats <const> = { "aseprite", "gpl", "png", "pal", "webp" }
-local sortPresets = {
+local sortPresets <const> = {
     "A", "ALPHA", "B",
     "CHROMA", "HUE",
     "INDEX", "LUMA"
@@ -643,8 +643,7 @@ dlg:button {
 
         -- Recalaculate sprite width and height.
         spriteWidth = colCount * entryWidth + spriteMargin * 2
-        spriteHeight = entryHeight * (lenPalData + 3)
-            + spriteMargin * 2
+        spriteHeight = entryHeight * (lenPalData + 3) + spriteMargin * 2
 
         -- Add extra height to image for repeated headers.
         if hdrUseRepeat then

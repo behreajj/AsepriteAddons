@@ -40,10 +40,9 @@ Octree.FRONT_NORTH_WEST = 7
 ---Front North East child index.
 Octree.FRONT_NORTH_EAST = 8
 
----Creates a new Octree node with an empty list of
----points at a given level. The capacity specifies
----the number of points the node can hold before it
----is split into children.
+---Creates a new Octree node with an empty list of points at a given level. The
+---capacity specifies the number of points the node can hold before it is split
+---into children.
 ---@param bounds Bounds3 bounding volume
 ---@param capacity integer point capacity
 ---@param level integer? level, or depth
@@ -78,9 +77,8 @@ function Octree:__tostring()
     return Octree.toJson(self)
 end
 
----Finds the mean center of each leaf node in
----an octree. Appends centers to an array
----if provided, otherwise creates a new array.
+---Finds the mean center of each leaf node in an octree. Appends centers to an
+---array if provided, otherwise creates a new array.
 ---@param o Octree octree
 ---@param arr Vec3[]? array
 ---@return Vec3[]
@@ -129,8 +127,8 @@ function Octree.centersMean(o, arr)
     return arrVrf
 end
 
----Counts the number of leaves held by this node.
----Returns 1 if the node is itself a leaf.
+---Counts the number of leaves held by this node. Returns 1 if the node is
+---itself a leaf.
 ---@param o Octree octree
 ---@return integer
 function Octree.countLeaves(o)
@@ -150,8 +148,7 @@ function Octree.countLeaves(o)
     return sum
 end
 
----Counts the number of points held by this octree's
----leaf nodes.
+---Counts the number of points held by this octree's leaf nodes.
 ---@param o Octree octree
 ---@return integer
 function Octree.countPoints(o)
@@ -169,13 +166,10 @@ function Octree.countPoints(o)
     return sum
 end
 
----Removes empty child nodes from the octree.
----Returns true if this octree node should be
----removed, i.e., it has no children and
----its points array is empty.
+---Removes empty child nodes from the octree. Returns true if this octree node
+---should be removed, i.e., it has no children and its points array is empty.
 ---
----This should only be called after all points
----have been inserted into the tree.
+---This should only be called after all points have been inserted into the tree.
 ---@param o Octree octree
 ---@return boolean
 function Octree.cull(o)
@@ -200,10 +194,8 @@ function Octree.cull(o)
         and (#o.points < 1)
 end
 
----Inserts a point into the node by reference,
----not by value. Returns true if the point was
----successfully inserted into either the node or
----its children.
+---Inserts a point into the node by reference, not by value. Returns true if
+---the point was successfully inserted into either the node or its children.
 ---@param o Octree octree
 ---@param point Vec3 point
 ---@return boolean
@@ -238,9 +230,8 @@ function Octree.insert(o, point)
     return false
 end
 
----Inserts an array of points into an node.
----Returns true if all point insertions succeeded.
----Otherwise, returns false.
+---Inserts an array of points into an node. Returns true if all point
+---insertions succeeded. Otherwise, returns false.
 ---@param o Octree octree
 ---@param ins Vec3[] insertions array
 ---@return boolean
@@ -255,16 +246,14 @@ function Octree.insertAll(o, ins)
     return flag
 end
 
----Evaluates whether a node has any children.
----Returns true if not.
+---Evaluates whether a node has any children. Returns true if not.
 ---@param o Octree octree
 ---@return boolean
 function Octree.isLeaf(o)
     return #o.children < 1
 end
 
----Finds the maximum level, or depth, of
----the node and its children.
+---Finds the maximum level, or depth, of the node and its children.
 ---@param o Octree octree
 ---@return integer
 function Octree.maxLevel(o)
@@ -287,10 +276,9 @@ function Octree.maxLevel(o)
     return maxLevel
 end
 
----Queries the node with a sphere. If a point can be
----found within the bounds, returns a point and
----distance from the query center. If it can't be
----found, returns a default point, which may be nil.
+---Queries the node with a sphere. If a point can be found within the bounds,
+---returns a point and distance from the query center. If it cannot be found,
+---returns a default point, which may be nil.
 ---@param o Octree octree
 ---@param center Vec3 sphere center
 ---@param radius number sphere radius
@@ -308,9 +296,8 @@ function Octree.query(o, center, radius, dfPt)
     end
 end
 
----Queries the node with a sphere. If a point can be
----found within the bounds, returns it with the
----square distance from the query center. If a point
+---Queries the node with a sphere. If a point can be found within the bounds,
+---returns it with the square distance from the query center. If a point
 ---cannot be found, returns nil.
 ---@param o Octree octree
 ---@param center Vec3 sphere center
@@ -360,9 +347,8 @@ function Octree.queryInternal(o, center, rad, df)
     return nearPoint, nearDist
 end
 
----Splits the octree node into eight child nodes.
----If a child capacity is not provided, defaults
----to the parent's capacity.
+---Splits the octree node into eight child nodes. If a child capacity is not
+---provided, defaults to the parent's capacity.
 ---@param o Octree octree
 ---@param childCapacity integer? child capacity
 ---@return Octree
@@ -415,11 +401,9 @@ function Octree.split(o, childCapacity)
     return o
 end
 
----Splits an octree into children. For cases where
----a minimum number of children nodes is desired,
----independent of point insertion. The result will
----be 8 raised to the power of iterations, e.g.:
----8, 64, 512, etc.
+---Splits an octree into children. For cases where a minimum number of children
+---nodes is desired, independent of point insertion. The result will be 8
+---raised to the power of iterations, e.g.: 8, 64, 512, etc.
 ---@param o Octree octree
 ---@param itr integer iterations
 ---@param childCapacity integer? child capacity

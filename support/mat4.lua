@@ -118,12 +118,9 @@ function Mat4.add(a, b)
         a.m30 + b.m30, a.m31 + b.m31, a.m32 + b.m32, a.m33 + b.m33)
 end
 
----Creates an orbiting camera matrix.
----The camera looks from its location
----at its focal target with reference
----to the world up axis (0.0, 0.0, 1.0)
----or (0.0, 1.0, 0.0). Handedness is a
----string, either "RIGHT" or "LEFT".
+---Creates an orbiting camera matrix. The camera looks from its location at its
+---focal target with reference to the world up axis (0.0, 0.0, 1.0) or
+---(0.0, 1.0, 0.0). Handedness is a string, either "RIGHT" or "LEFT".
 ---@param xLoc number location x
 ---@param yLoc number location y
 ---@param zLoc number location z
@@ -297,10 +294,9 @@ function Mat4.cameraIsometric(xLoc, yLoc, zLoc, handedness)
     end
 end
 
----Creates a dimetric camera at a location.
----A dimetric camera is similar to isometric, except
----that it follows the pixel art convention of a 2:1
----rise over run, 25.565 degrees.
+---Creates a dimetric camera at a location. A dimetric camera is similar to
+---isometric, except that it follows the pixel art convention of a 2:1 rise
+---over run, 25.565 degrees.
 ---@param xLoc number location x
 ---@param yLoc number location y
 ---@param zLoc number location z
@@ -390,10 +386,9 @@ function Mat4.determinant(m)
         m.m11 * m.m20 * m.m32)
 end
 
----Constructs a rotation matrix from an angle in radians
----around an arbitrary axis. Checks the magnitude of
----the axis and normalizes it. Returns the identity
----if the axis magnitude is zero.
+---Constructs a rotation matrix from an angle in radians around an arbitrary
+---axis. Checks the magnitude of the axis and normalizes it. Returns the
+---identity if the axis magnitude is zero.
 ---@param radians number angle
 ---@param ax number axis x
 ---@param ay number axis y
@@ -415,10 +410,9 @@ function Mat4.fromRotation(radians, ax, ay, az)
     end
 end
 
----Constructs a rotation matrix from the cosine and sine
----of an angle around an arbitrary axis.
----Does not check if axis is well-formed.
----A well-formed axis should have unit length.
+---Constructs a rotation matrix from the cosine and sine of an angle around an
+---arbitrary axis. Does not check if axis is well-formed. A well-formed axis
+---should have unit length.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@param ax number axis x
@@ -484,8 +478,7 @@ function Mat4.fromTranslation(x, y, z)
         0.0, 0.0, 0.0, 1.0)
 end
 
----Finds the matrix inverse.
----Returns the identity if not possible.
+---Finds the matrix inverse. Returns the identity if not possible.
 ---@param a Mat4 matrix
 ---@return Mat4
 function Mat4.inverse(a)
@@ -662,10 +655,8 @@ function Mat4.toJson(a)
     return m0 .. m1 .. m2 .. m3
 end
 
----Returns a console print friendly string
----of a matrix, where each row is separated
----by a line break, '\n', and each column
----is separated by three spaces.
+---Returns a console print friendly string of a matrix, where each row is
+---separated by a line break, '\n', and each column is separated by 3 spaces.
 ---@param a Mat4 matrix
 ---@return string
 function Mat4.toStringCol(a)

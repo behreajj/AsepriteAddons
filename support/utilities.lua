@@ -16,8 +16,7 @@ setmetatable(Utilities, {
     end
 })
 
----Look up table of linear to standard
----color space conversion.
+---Look up table of linear to standard color space conversion.
 Utilities.LTS_LUT = {
     0, 13, 22, 28, 34, 38, 42, 46, 50, 53, 56, 59, 61, 64, 66, 69,
     71, 73, 75, 77, 79, 81, 83, 85, 86, 88, 90, 92, 93, 95, 96, 98,
@@ -37,8 +36,7 @@ Utilities.LTS_LUT = {
     248, 249, 249, 250, 250, 251, 251, 251, 252, 252, 253, 253, 254, 254, 255, 255
 }
 
----Look up table of standard to linear
----color space conversion.
+---Look up table of standard to linear color space conversion.
 Utilities.STL_LUT = {
     0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3,
@@ -65,9 +63,8 @@ function Utilities.new()
     return inst
 end
 
----Bisects an array of elements to find
----the appropriate index. Biases towards the right
----insert point. Should be used with sorted arrays.
+---Bisects an array of elements to find the appropriate index. Biases towards
+---the right insert point. Should be used with sorted arrays.
 ---@generic T array type
 ---@generic U element type
 ---@param arr T[] array
@@ -90,9 +87,8 @@ function Utilities.bisectRight(arr, elm, compare)
     return 1 + low
 end
 
----Converts a dictionary to a sorted set.
----If a comparator is not provided, elements
----are sorted by their less than (<) operator.
+---Converts a dictionary to a sorted set. If a comparator is not provided,
+---elements are sorted by their less than operator.
 ---@generic K key
 ---@generic V value
 ---@param dict table<K, V> dictionary
@@ -131,8 +127,7 @@ function Utilities.flatArr2(arr2)
     return flat
 end
 
----Flips a source pixel array horizontally.
----Changes the array in-place.
+---Flips a source pixel array horizontally. Changes the array in-place.
 ---@param source integer[] source pixels
 ---@param w integer image width
 ---@param h integer image height
@@ -155,8 +150,7 @@ function Utilities.flipPixelsHoriz(source, w, h)
     return source
 end
 
----Flips a source pixel array vertically.
----Changes the array in-place.
+---Flips a source pixel array vertically. Changes the array in-place.
 ---@param source integer[] source pixels
 ---@param w integer image width
 ---@param h integer image height
@@ -178,9 +172,9 @@ function Utilities.flipPixelsVert(source, w, h)
     return source
 end
 
----Generates a random number with normal distribution.
----Based on the Box-Muller transform as described here:
----https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
+---Generates a random number with normal distribution. Based on the Box-Muller
+---transform as described here:
+---https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform .
 ---@param sigma number? scalar
 ---@param mu number? offset
 ---@return number
@@ -200,8 +194,7 @@ function Utilities.gaussian(sigma, mu)
     return x
 end
 
----Finds the greatest common denominator
----between two positive integers.
+---Finds the greatest common denominator between two positive integers.
 ---@param a integer antecedent term
 ---@param b integer consequent term
 ---@return integer
@@ -210,11 +203,10 @@ function Utilities.gcd(a, b)
     return a
 end
 
----Converts an array of integers representing color
----in hexadecimal to a dictionary. The value in each
----entry is the first index where the color was found.
----When true, the flag specifies that all completely
----transparent colors are considered equal, not unique.
+---Converts an array of integers representing color in hexadecimal to a
+---dictionary. The value in each entry is the first index where the color was
+---found. When true, the flag specifies that all completely transparent colors
+---are considered equal, not unique.
 ---@param hexes integer[] hexadecimal colors
 ---@param za boolean zero alpha
 ---@return table<integer, integer>
@@ -241,11 +233,9 @@ function Utilities.hexArrToDict(hexes, za)
     return dict
 end
 
----Unclamped linear interpolation from an origin angle
----to a destination by a factor, t, in [0.0, 1.0].
----The range defaults to 360.0 for degrees, but can be
----math.pi * 2.0 for radians.
----Uses the counter-clockwise angular direction.
+---Unclamped linear interpolation from an origin angle to a destination by a
+---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
+---math.pi * 2.0 for radians. Uses the counter-clockwise angular direction.
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -266,11 +256,9 @@ function Utilities.lerpAngleCcw(origin, dest, t, range)
     end
 end
 
----Unclamped linear interpolation from an origin angle
----to a destination by a factor, t, in [0.0, 1.0].
----The range defaults to 360.0 for degrees, but can be
----math.pi * 2.0 for radians.
----Uses the clockwise angular direction.
+---Unclamped linear interpolation from an origin angle to a destination by a
+---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
+---math.pi * 2.0 for radians. Uses the clockwise angular direction.
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -291,11 +279,9 @@ function Utilities.lerpAngleCw(origin, dest, t, range)
     end
 end
 
----Unclamped linear interpolation from an origin angle
----to a destination by a factor, t, in [0.0, 1.0].
----The range defaults to 360.0 for degrees, but can be
----math.pi * 2.0 for radians.
----Uses the furthest angular direction.
+---Unclamped linear interpolation from an origin angle to a destination by a
+---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
+---math.pi * 2.0 for radians. Uses the furthest angular direction.
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -318,11 +304,9 @@ function Utilities.lerpAngleFar(origin, dest, t, range)
     end
 end
 
----Unclamped linear interpolation from an origin angle
----to a destination by a factor, t, in [0.0, 1.0].
----The range defaults to 360.0 for degrees, but can be
----math.pi * 2.0 for radians.
----Uses the nearest angular direction.
+---Unclamped linear interpolation from an origin angle to a destination by a
+---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
+---math.pi * 2.0 for radians. Uses the nearest angular direction.
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -346,8 +330,7 @@ function Utilities.lerpAngleNear(origin, dest, t, range)
     end
 end
 
----Multiplies a Mat3 with a Curve2.
----Changes the curve in place.
+---Multiplies a Mat3 with a Curve2. Changes the curve in place.
 ---@param a Mat3 matrix
 ---@param b Curve2 curve
 ---@return Curve2
@@ -363,8 +346,7 @@ function Utilities.mulMat3Curve2(a, b)
     return b
 end
 
----Multiplies a Mat3 with a Knot2.
----Changes the knot in place.
+---Multiplies a Mat3 with a Knot2. Changes the knot in place.
 ---@param a Mat3 matrix
 ---@param b Knot2 knot
 ---@return Knot2
@@ -375,8 +357,7 @@ function Utilities.mulMat3Knot2(a, b)
     return b
 end
 
----Multiplies a Mat3 with a Mesh2.
----Changes the mesh in place.
+---Multiplies a Mat3 with a Mesh2. Changes the mesh in place.
 ---@param a Mat3 matrix
 ---@param b Mesh2 mesh
 ---@return Mesh2
@@ -391,8 +372,7 @@ function Utilities.mulMat3Mesh2(a, b)
     return b
 end
 
----Multiplies a Mat3 with a Vec2.
----The vector is treated as a point.
+---Multiplies a Mat3 with a Vec2. The vector is treated as a point.
 ---@param a Mat3 matrix
 ---@param b Vec2 vector
 ---@return Vec2
@@ -408,8 +388,7 @@ function Utilities.mulMat3Point2(a, b)
     end
 end
 
----Multiplies a Mat4 with a Curve3.
----Changes the curve in place.
+---Multiplies a Mat4 with a Curve3. Changes the curve in place.
 ---@param a Mat4 matrix
 ---@param b Curve3 curve
 ---@return Curve3
@@ -425,8 +404,7 @@ function Utilities.mulMat4Curve3(a, b)
     return b
 end
 
----Multiplies a Mat4 with a Knot3.
----Changes the knot in place.
+---Multiplies a Mat4 with a Knot3. Changes the knot in place.
 ---@param a Mat4 matrix
 ---@param b Knot3 knot
 ---@return Knot3
@@ -437,8 +415,7 @@ function Utilities.mulMat4Knot3(a, b)
     return b
 end
 
----Multiplies a Mat4 with a Vec3.
----The vector is treated as a point.
+---Multiplies a Mat4 with a Vec3. The vector is treated as a point.
 ---@param a Mat4 matrix
 ---@param b Vec3 vector
 ---@return Vec3
@@ -470,10 +447,8 @@ function Utilities.mulMat4Vec4(a, b)
         + a.m32 * b.z + a.m33 * b.w)
 end
 
----Finds the next power of 2 for a signed
----integer, i.e., multiplies the next power
----by the integer's sign. Returns zero
----if input is equal to zero.
+---Finds the next power of 2 for a signed integer, i.e., multiplies the next
+---power by the integer's sign. Returns zero if input is equal to zero.
 ---@param x integer input value
 ---@return integer
 function Utilities.nextPowerOf2(x)
@@ -493,17 +468,14 @@ function Utilities.nextPowerOf2(x)
     return 0
 end
 
----Parses a string of integers separated
----by a comma. The integers may either be individual
----or ranges connected by a colon. For example,
----"1,5,10:15,7".
+---Parses a string of integers separated by a comma. The integers may either be
+---individual or ranges connected by a colon. For example, "1,5,10:15,7".
 ---
----Supplying the frame count ensures the range is not
----out of bounds. Defaults to an arbitrary large number.
+---Supplying the frame count ensures the range is not out of bounds. Defaults
+---to an arbitrary large number.
 ---
----Returns an array of arrays. Inner arrays can hold
----duplicate frame indices,  as the user may intend for
----the same frame to appear in multiple groups.
+---Returns an array of arrays. Inner arrays can hold duplicate frame indices,
+---as the user may intend for the same frame to appear in multiple groups.
 ---@param s string range string
 ---@param frameCount integer? number of frames
 ---@param offset integer? offset
@@ -518,7 +490,7 @@ function Utilities.parseRangeStringOverlap(s, frameCount, offset)
     local arrOuter <const> = {}
     local idxOuter = 0
     for token in strgmatch(s, "([^,]+)") do
-        -- Parse string by hyphen.
+        -- Parse string by colon.
         ---@type integer[]
         local edges <const> = {}
         local idxEdges = 0
@@ -588,10 +560,8 @@ function Utilities.parseRangeStringOverlap(s, frameCount, offset)
     return arrOuter
 end
 
----Parses a string of integers separated
----by a comma. The integers may either be individual
----or ranges connected by a hyphen. For example,
----"1,5,10:15,7".
+---Parses a string of integers separated by a comma. The integers may either be
+---individual or ranges connected by a colon. For example, "1,5,10:15,7".
 ---
 ---Supplying the frame count ensures the range is not
 ---out of bounds. Defaults to an arbitrary large number.
@@ -626,14 +596,10 @@ function Utilities.parseRangeStringUnique(s, frameCount, offset)
     return Utilities.dictToSortedSet(dict, nil)
 end
 
----Prepends an alpha mask to a table of
----hexadecimal integers representing color.
----If the table already includes a mask,
----the input table is returned unchanged.
----If it contains a mask at another index,
----it is removed and placed at the start.
----Colors with zero alpha are not considered
----equal to an alpha mask.
+---Prepends an alpha mask to a table of hexadecimal integers representing color.
+---If the table already includes a mask, the input table is returned unchanged.
+---If it contains a mask at another index, it is removed and placed at the
+---start. Colors with zero alpha are not considered equal to an alpha mask.
 ---@param hexes integer[] colors
 ---@return integer[]
 function Utilities.prependMask(hexes)
@@ -651,8 +617,7 @@ function Utilities.prependMask(hexes)
     return hexes
 end
 
----Promotes a Vec2 to a Vec3.
----The z component defaults to 0.0.
+---Promotes a Vec2 to a Vec3. The z component defaults to 0.0.
 ---@param a Vec2 vector
 ---@param z number? z component
 ---@return Vec3
@@ -661,8 +626,7 @@ function Utilities.promoteVec2ToVec3(a, z)
     return Vec3.new(a.x, a.y, vz)
 end
 
----Quantizes a signed number according
----to a number of levels. The quantization
+---Quantizes a signed number according to a number of levels. The quantization
 ---is centered about the range.
 ---@param a number value
 ---@param levels number levels
@@ -675,11 +639,9 @@ function Utilities.quantizeSigned(a, levels)
     return a
 end
 
----Quantizes a signed number according
----to a number of levels. The quantization
----is centered about the range.
----Internal helper function. Assumes that
----delta has been calculated as 1 / levels.
+---Quantizes a signed number according to a number of levels. The quantization
+---is centered about the range. Internal helper function. Assumes that delta
+---has been calculated as 1 / levels.
 ---@param a number value
 ---@param levels number levels
 ---@param delta number inverse levels
@@ -688,9 +650,8 @@ function Utilities.quantizeSignedInternal(a, levels, delta)
     return math.floor(0.5 + a * levels) * delta
 end
 
----Quantizes an unsigned number according
----to a number of levels. The quantization
----is based on the left edge.
+---Quantizes an unsigned number according to a number of levels. The
+---quantization is based on the left edge.
 ---@param a number value
 ---@param levels number levels
 ---@return number
@@ -702,11 +663,9 @@ function Utilities.quantizeUnsigned(a, levels)
     return math.max(0.0, a)
 end
 
----Quantizes an unsigned number according
----to a number of levels. The quantization
----is based on the left edge.
----Internal helper function. Assumes that
----delta has been calculated as 1 / (levels - 1).
+---Quantizes an unsigned number according to a number of levels. The
+---quantization is based on the left edge. Internal helper function. Assumes
+---that delta has been calculated as 1 / (levels - 1).
 ---@param a number value
 ---@param levels number levels
 ---@param delta number inverse levels
@@ -716,9 +675,8 @@ function Utilities.quantizeUnsignedInternal(a, levels, delta)
         (math.ceil(a * levels) - 1.0) * delta)
 end
 
----Reduces a ratio of positive integers
----to their smallest terms through division
----by their greatest common denominator.
+---Reduces a ratio of positive integers to their smallest terms through
+---division by their greatest common denominator.
 ---@param a integer antecedent term
 ---@param b integer consequent term
 ---@return integer
@@ -728,9 +686,9 @@ function Utilities.reduceRatio(a, b)
     return a // denom, b // denom
 end
 
----Resizes a source pixel array to new dimensions with
----nearest neighbor sampling. Performs no validation on
----target width or height. Creates a new pixel array.
+---Resizes a source pixel array to new dimensions with nearest neighbor
+---sampling. Performs no validation on target width or height. Creates a new
+---pixel array.
 ---@param source integer[] source pixels
 ---@param wSrc integer original width
 ---@param hSrc integer original height
@@ -754,15 +712,13 @@ function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg)
     return target
 end
 
----Reverses a table used as an array.
----Useful for rotating an array of pixels 180 degrees.
----Changes the table in place.
+---Reverses a table used as an array. Useful for rotating an array of pixels
+---180 degrees. Changes the table in place.
 ---@generic T element
 ---@param t T[] input table
 ---@return T[]
 function Utilities.reverseTable(t)
-    -- https://programming-idioms.org/
-    -- idiom/19/reverse-a-list/1314/lua
+    -- https://programming-idioms.org/idiom/19/reverse-a-list/1314/lua
     local n = #t
     local i = 1
     while i < n do
@@ -775,9 +731,9 @@ function Utilities.reverseTable(t)
     return t
 end
 
----Rounds a number to an integer based on its relationship to
----0.5. Returns zero when the number cannot be determined
----to be either greater than or less than zero.
+---Rounds a number to an integer based on its relationship to 0.5. Returns zero
+---when the number cannot be determined to be either greater than or less than
+---zero.
 ---@param x number real number
 ---@return integer
 function Utilities.round(x)
@@ -791,8 +747,7 @@ function Utilities.round(x)
     return ix
 end
 
----Creates a new table from the source
----and shuffles it.
+---Creates a new table from the source and shuffles it.
 ---@generic T element
 ---@param t T[] input table
 ---@return T[]
@@ -835,10 +790,9 @@ function Utilities.stringToCharTable(str)
     return chars
 end
 
----Approximates a real number with a ratio of integers.
----Cycles determines the maximum iterations to search.
----Precision determines an early exit from the search.
----Returns a tuple with the antecedent and consequent.
+---Approximates a real number with a ratio of integers. Cycles determines the
+---maximum iterations to search. Precision determines an early exit from the
+---search. Returns a tuple with the antecedent and consequent.
 ---@param num number real number
 ---@param itrs integer? iterations
 ---@param precision number? precision
@@ -880,8 +834,7 @@ function Utilities.toRatio(num, itrs, precision)
     return sgnNum * a0, a1
 end
 
----Finds a point on the screen given a modelview,
----projection and 3D point.
+---Finds a point on the screen given a modelview, projection and 3D point.
 ---@param modelview Mat4 modelview
 ---@param projection Mat4 projection
 ---@param pt3 Vec3 point
@@ -909,9 +862,8 @@ function Utilities.toScreen(modelview, projection, pt3, width, height)
         return Vec3.new(0.0, 0.0, 0.0)
     end
 
-    -- Convert from normalized coordinates to
-    -- screen dimensions. Flip y axis. Retain
-    -- z coordinate for purpose of depth sort.
+    -- Convert from normalized coordinates to screen dimensions. Flip y axis.
+    -- Retain z coordinate for purpose of depth sort.
     x = (width - 1) * (0.5 + 0.5 * x)
     y = (height - 1) * (0.5 - 0.5 * y)
     z = 0.5 + 0.5 * z
@@ -919,8 +871,7 @@ function Utilities.toScreen(modelview, projection, pt3, width, height)
     return Vec3.new(x, y, z)
 end
 
----Removes white spaces from the end,
----or right edge, of a table of characters.
+---Removes white spaces from the end, or right edge, of a table of characters.
 ---Mutates the table in place.
 ---@param chars string[] characters
 ---@return string[]
@@ -930,8 +881,7 @@ function Utilities.trimCharsFinal(chars)
     return chars
 end
 
----Removes white spaces from the start,
----or left edge, of a table of characters.
+---Removes white spaces from the start, or left edge, of a table of characters.
 ---Mutates the table in place.
 ---@param chars string[] characters
 ---@return string[]
@@ -941,12 +891,10 @@ function Utilities.trimCharsInitial(chars)
     return chars
 end
 
----Finds the unique colors in a table of integers
----representing hexadecimal colors in the format
----AABBGGRR. When true, the flag specifies that all
----completely transparent colors are considered
----equal, not unique. The dictionary used to
----create the set is the second returned value.
+---Finds the unique colors in a table of integers representing hexadecimal
+---colors in the format AABBGGRR. When true, the flag specifies that all
+---completely transparent colors are considered equal, not unique. The
+---dictionary used to create the set is the second returned value.
 ---@param hexes integer[] color array
 ---@param za boolean all masks equal
 ---@return integer[]
@@ -961,12 +909,10 @@ function Utilities.uniqueColors(hexes, za)
     return uniques, dict
 end
 
----Trims left and right ends of a string that
----holds a file name. Assumes file name does
----not include file extension or directory.
----Replaces the characters '\\', '/', ':',
----'*', '?', '"', '<', '>', '|', '.', '''
----and '`' with an underscore, '_'.
+---Trims left and right ends of a string that holds a file name. Assumes file
+---name does not include file extension or directory. Replaces the characters
+---'\\', '/', ':', '*', '?', '"', '<', '>', '|', '.', ''' and '`' with an
+---underscore, '_'.
 ---@param filename string file name
 ---@return string
 function Utilities.validateFilename(filename)
@@ -990,9 +936,8 @@ function Utilities.validateFilename(filename)
     return table.concat(fileChars)
 end
 
----Translates the elements in a pixel array by a vector,
----wrapping the elements that exceed its dimensions back
----to the beginning.
+---Translates the elements in a pixel array by a vector, wrapping the elements
+---that exceed its dimensions back to the beginning.
 ---@param source integer[] source pixels
 ---@param x integer x translation
 ---@param y integer y translation

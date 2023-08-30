@@ -138,8 +138,7 @@ function Vec4.any(v)
         or v.w ~= 0.0
 end
 
----Evaluates whether two vectors are, within a
----tolerance, approximately equal.
+---Evaluates whether two vectors are, within a tolerance, approximately equal.
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
 ---@param tol number? tolerance
@@ -163,8 +162,7 @@ function Vec4.ceil(v)
         math.ceil(v.w))
 end
 
----A comparator method to sort vectors
----in a table according to their highest
+---A comparator method to sort vectors in a table according to their highest
 ---dimension first.
 ---@param a Vec4 left comparisand
 ---@param b Vec4 right comparisand
@@ -179,12 +177,9 @@ function Vec4.comparator(a, b)
     return a.x < b.x
 end
 
----Copies the sign of the right operand
----to the magnitude of the left. Both
----operands are assumed to be Vec4s. Where
----the sign of b is zero, the result is zero.
----Equivalent to multiplying the
----absolute value of a and the sign of b.
+---Copies the sign of the right operand to the magnitude of the left. Both
+---operands are assumed to be Vec4s. Where the sign of b is zero, the result is
+---zero.
 ---@param a Vec4 magnitude
 ---@param b Vec4 sign
 ---@return Vec4
@@ -251,9 +246,8 @@ function Vec4.dot(a, b)
         + a.w * b.w
 end
 
----Evaluates whether two vectors are exactly
----equal. Checks for reference equality prior
----to value equality.
+---Evaluates whether two vectors are exactly equal. Checks for reference
+---equality prior to value equality.
 ---@param a Vec4 left comparisand
 ---@param b Vec4 right comparisand
 ---@return boolean
@@ -262,8 +256,7 @@ function Vec4.equals(a, b)
         or Vec4.equalsValue(a, b)
 end
 
----Evaluates whether two vectors are exactly
----equal by component value.
+---Evaluates whether two vectors are exactly equal by component value.
 ---@param a Vec4 left comparisand
 ---@param b Vec4 right comparisand
 ---@return boolean
@@ -301,9 +294,8 @@ function Vec4.floorDiv(a, b)
     return Vec4.new(cx, cy, cz, cw)
 end
 
----Finds the fractional portion of of a vector.
----Subtracts the truncation of each component
----from itself, not the floor, unlike in GLSL.
+---Finds the fractional portion of of a vector. Subtracts the truncation of
+---each component from itself, not the floor, unlike in GLSL.
 ---@param v Vec4 vector
 ---@return Vec4
 function Vec4.fract(v)
@@ -345,8 +337,7 @@ function Vec4.hashCode(v)
         * 16777619 ~ wBits
 end
 
----Finds the linear step between a left and
----right edge given a factor.
+---Finds the linear step between a left and right edge given a factor.
 ---@param edge0 Vec4 left edge
 ---@param edge1 Vec4 right edge
 ---@param x Vec4 factor
@@ -428,8 +419,7 @@ function Vec4.min(a, b)
         math.min(a.w, b.w))
 end
 
----Mixes two vectors together by a step.
----Defaults to mixing by a vector.
+---Mixes two vectors together by a step. Defaults to mixing by a vector.
 ---@param a Vec4 origin
 ---@param b Vec4 destination
 ---@param t Vec4|number step
@@ -442,7 +432,6 @@ function Vec4.mix(a, b, t)
 end
 
 ---Mixes two vectors together by a step.
----The step is a number.
 ---@param a Vec4 origin
 ---@param b Vec4 destination
 ---@param t number? step
@@ -457,9 +446,8 @@ function Vec4.mixNum(a, b, t)
         u * a.w + v * b.w)
 end
 
----Mixes two vectors together by a step.
----The step is a vector. Use in conjunction
----with step, linearstep and smoothstep.
+---Mixes two vectors together by a step. The step is a vector. Use with step,
+---linearstep and smoothstep.
 ---@param a Vec4 origin
 ---@param b Vec4 destination
 ---@param t Vec4 step
@@ -505,8 +493,7 @@ function Vec4.none(v)
         and v.w == 0.0
 end
 
----Divides a vector by its magnitude, such that it
----lies on the unit circle.
+---Divides a vector by its magnitude, such that it lies on the unit circle.
 ---@param v Vec4 vector
 ---@return Vec4
 function Vec4.normalize(v)
@@ -537,9 +524,8 @@ function Vec4.pow(a, b)
         a.w ^ b.w)
 end
 
----Creates a random point in Cartesian space given
----a lower and an upper bound. If lower and upper
----bounds are not given, defaults to [-1.0, 1.0].
+---Creates a random point in Cartesian space given a lower and an upper bound.
+---If lower and upper bounds are not given, defaults to [-1.0, 1.0].
 ---@param lb Vec4? lower bound
 ---@param ub Vec4? upper bound
 ---@return Vec4
@@ -549,9 +535,8 @@ function Vec4.randomCartesian(lb, ub)
     return Vec4.randomCartesianInternal(lVrf, uVrf)
 end
 
----Creates a random point in Cartesian space given
----a lower and an upper bound. Does not validate
----upper or lower bounds.
+---Creates a random point in Cartesian space given a lower and an upper bound.
+---Does not validate upper or lower bounds.
 ---@param lb Vec4 lower bound
 ---@param ub Vec4 upper bound
 ---@return Vec4
@@ -650,8 +635,7 @@ function Vec4.sign(v)
     return Vec4.new(cx, cy, cz, cw)
 end
 
----Finds the smooth step between a left and
----right edge given a factor.
+---Finds the smooth step between a left and right edge given a factor.
 ---@param edge0 Vec4 left edge
 ---@param edge1 Vec4 right edge
 ---@param x Vec4 factor
@@ -744,50 +728,43 @@ function Vec4.trunc(v)
         v.w - math.fmod(v.w, 1.0))
 end
 
----Creates a right facing vector,
----(1.0, 0.0, 0.0, 0.0).
+---Creates a right facing vector, (1.0, 0.0, 0.0, 0.0).
 ---@return Vec4
 function Vec4.right()
     return Vec4.new(1.0, 0.0, 0.0, 0.0)
 end
 
----Creates a forward facing vector,
----(0.0, 1.0, 0.0, 0.0).
+---Creates a forward facing vector, (0.0, 1.0, 0.0, 0.0).
 ---@return Vec4
 function Vec4.forward()
     return Vec4.new(0.0, 1.0, 0.0, 0.0)
 end
 
----Creates an up facing vector,
----(0.0, 0.0, 1.0, 0.0).
+---Creates an up facing vector, (0.0, 0.0, 1.0, 0.0).
 ---@return Vec4
 function Vec4.up()
     return Vec4.new(0.0, 0.0, 1.0, 0.0)
 end
 
----Creates a left facing vector,
----(-1.0, 0.0, 0.0, 0.0).
+---Creates a left facing vector, (-1.0, 0.0, 0.0, 0.0).
 ---@return Vec4
 function Vec4.left()
     return Vec4.new(-1.0, 0.0, 0.0, 0.0)
 end
 
----Creates a back facing vector,
----(0.0, -1.0, 0.0, 0.0).
+---Creates a back facing vector, (0.0, -1.0, 0.0, 0.0).
 ---@return Vec4
 function Vec4.back()
     return Vec4.new(0.0, -1.0, 0.0, 0.0)
 end
 
----Creates a down facing vector,
----(0.0, 0.0, -1.0, 0.0).
+---Creates a down facing vector, (0.0, 0.0, -1.0, 0.0).
 ---@return Vec4
 function Vec4.down()
     return Vec4.new(0.0, 0.0, -1.0, 0.0)
 end
 
----Creates a vector with all components
----set to 1.0.
+---Creates a vector with all components set to 1.0.
 ---@return Vec4
 function Vec4.one()
     return Vec4.new(1.0, 1.0, 1.0, 1.0)

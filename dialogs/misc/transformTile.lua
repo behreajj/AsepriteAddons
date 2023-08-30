@@ -111,7 +111,7 @@ local function transformCel(dialog, preset)
     if not activeLayer.isEditable then return end
     if not activeLayer.isTilemap then return end
 
-    local tileSet <const> = activeLayer.tileset
+    local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
     local lenTileSet <const> = #tileSet
 
     local activeCel <const> = activeLayer:cel(activeFrame)
@@ -341,7 +341,7 @@ dlg:button {
         if not activeLayer.isEditable then return end
         if not activeLayer.isTilemap then return end
 
-        local tileSet <const> = activeLayer.tileset
+        local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
         local lenTileSet <const> = #tileSet
 
         local activeCel <const> = activeLayer:cel(activeFrame)
@@ -482,7 +482,7 @@ dlg:button {
         if not activeLayer.isEditable then return end
         if not activeLayer.isTilemap then return end
 
-        local tileSet <const> = activeLayer.tileset
+        local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
         local lenTileSet <const> = #tileSet
 
         -- Cache methods used in a for loop.

@@ -114,8 +114,7 @@ function ShapeUtilities.drawCurve2(
     end
 end
 
----Draws the knot handles of a curve.
----Color arguments are optional.
+---Draws the knot handles of a curve. Color arguments are optional.
 ---@param curve Curve2 curve
 ---@param frame Frame frame
 ---@param layer Layer layer
@@ -141,8 +140,7 @@ function ShapeUtilities.drawHandles2(
     end)
 end
 
----Draws a knot for diagnostic purposes.
----Color arguments are optional.
+---Draws a knot for diagnostic purposes. Color arguments are optional.
 ---@param knot Knot2 knot
 ---@param frame Frame frame
 ---@param layer Layer layer

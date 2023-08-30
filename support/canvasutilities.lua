@@ -429,6 +429,7 @@ function CanvasUtilities.graphBezier(
 
         dialog:number {
             id = idPoint,
+            ---@diagnostic disable-next-line: assign-type-mismatch
             label = labelPoint,
             text = string.format("%.5f", valuePoint),
             decimals = 5,

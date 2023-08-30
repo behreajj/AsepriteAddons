@@ -93,7 +93,7 @@ dlg:button {
             end
         elseif csType == "SRGB" then
             newColorSpace = ColorSpace { sRGB = true }
-        elseif csType == "NONE" then
+        else
             newColorSpace = ColorSpace()
         end
 

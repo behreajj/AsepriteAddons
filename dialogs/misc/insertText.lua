@@ -444,11 +444,9 @@ dlg:button {
             local yCaret = 0
             local currFrameIdx = actFrIdx - 1
 
-            -- If a transaction is placed around
-            -- the outer loop, seems like it hogs up
-            -- too much memory. But without any, there
-            -- are too many little transactions. The
-            -- compromise is to wrap the inner loop.
+            -- If a transaction is placed around the outer loop, seems like it
+            -- hogs up too much memory. But without any, there are too many
+            -- little transactions. The compromise is to wrap the inner loop.
             local i = 0
             while i < lineCount do
                 i = i + 1
@@ -456,9 +454,9 @@ dlg:button {
                 local lineWidth <const> = lineWidths[i]
                 local animImage = nil
 
-                -- Ideally, this would create new images that are
-                -- not connected to any cel, then create the cel
-                -- and assign the image in the sprite method.
+                -- Ideally, this would create new images that are not connected
+                -- to any cel, then create the cel and assign the image in the
+                -- sprite method.
                 app.transaction("Insert Text", function()
                     local j = 0
                     while j < lineWidth do

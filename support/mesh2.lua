@@ -14,8 +14,7 @@ setmetatable(Mesh2, {
     end
 })
 
----Constructs a 2D mesh with a variable
----number of vertices per face.
+---Constructs a 2D mesh with a variable number of vertices per face.
 ---@param fs integer[][] faces
 ---@param vs Vec2[] coordinates
 ---@param name string? name
@@ -36,10 +35,8 @@ function Mesh2:__tostring()
     return Mesh2.toJson(self)
 end
 
----Insets a face by calculating its center then
----easing from the face's vertices toward the center
----by the factor, in range [0.0, 1.0]. The factor
----defaults to 0.5.
+---Insets a face by calculating its center then easing from the face's vertices
+---toward the center by the factor, in [0.0, 1.0]. The factor defaults to 0.5.
 ---@param faceIndex integer face index
 ---@param fac number? inset factor
 ---@return Mesh2
@@ -107,8 +104,7 @@ function Mesh2:insetFace(faceIndex, fac)
     return self
 end
 
----Rotates all coordinates in a mesh by
----an angle in radians.
+---Rotates all coordinates in a mesh by an angle in radians.
 ---@param radians number angle
 ---@return Mesh2
 function Mesh2:rotateZ(radians)
@@ -118,8 +114,7 @@ function Mesh2:rotateZ(radians)
         math.sin(radians))
 end
 
----Rotates all coordinates in a mesh by
----the cosine and sine of an angle.
+---Rotates all coordinates in a mesh by the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return Mesh2
@@ -134,9 +129,8 @@ function Mesh2:rotateZInternal(cosa, sina)
     return self
 end
 
----Scales each face of a mesh individually,
----based on its median center. Meshes should
----call uniformData first for best results.
+---Scales each face of a mesh individually, based on its median center. Meshes
+---should call uniformData first for best results.
 ---@param scale Vec2|number scale
 ---@return Mesh2
 function Mesh2:scaleFacesIndiv(scale)
@@ -193,10 +187,9 @@ function Mesh2:scaleFacesIndiv(scale)
     return self
 end
 
----Subdivides a convex face by calculating its
----center, then connecting its vertices to the center.
----Generates a triangle for the number of edges
----in the face.
+---Subdivides a convex face by calculating its center, then connecting its
+---vertices to the center. Generates a triangle for the number of edges in the
+---face.
 ---@param faceIndex integer face index
 ---@return Mesh2
 function Mesh2:subdivFaceFan(faceIndex)
@@ -228,10 +221,8 @@ function Mesh2:subdivFaceFan(faceIndex)
     return self
 end
 
----Creates an arc. Start and stop weights
----specify the inset of an oculus.
----Sectors specifies the number of sides
----to approximate a full circle.
+---Creates an arc. Start and stop weights specify the inset of an oculus.
+---Sectors specifies the number of sides to approximate a full circle.
 ---@param startAngle number start angle
 ---@param stopAngle number stop angle
 ---@param startWeight number start weight
@@ -477,8 +468,7 @@ function Mesh2.gridDimetric(cells)
     return mesh
 end
 
----Creates a grid of hexagons in rings around
----a central cell.
+---Creates a grid of hexagons in rings around a central cell.
 ---@param rings integer number of rings
 ---@return Mesh2
 function Mesh2.gridHex(rings)
@@ -590,10 +580,9 @@ function Mesh2.polygon(sectors)
     return Mesh2.new(fs, vs, name)
 end
 
----Separates a mesh into several meshes with one
----face per mesh. The default start index is 1.
----The default stop index is the length of the
----mesh's faces array.
+---Separates a mesh into several meshes with one face per mesh. The default
+---start index is 1. The default stop index is the length of the mesh's faces
+---array.
 ---@param source Mesh2 source mesh
 ---@param from integer? start index
 ---@param to integer? stop index
@@ -639,11 +628,9 @@ function Mesh2.separateFaces(source, from, to)
     return meshes
 end
 
----Creates a regular polygon where a count of
----vertices are picked to be inset after a count
----are skipped. The inset is expected to be a
----factor in [0.0, 1.0] that is multiplied by
----the polygon radius. The default is to pick
+---Creates a regular polygon where a count of vertices are picked to be inset
+---after a count are skipped. The inset is expected to be a factor in
+---[0.0, 1.0] that is multiplied by the polygon radius. The default is to pick
 ---1, skip 1, and inset by 0.5.
 ---@param sectors integer sides
 ---@param skip integer? vertices to skip
@@ -755,8 +742,7 @@ function Mesh2.toJson(a)
     return str
 end
 
----Restructures the mesh so that each face index
----refers to unique data.
+---Restructures the mesh so that each face index refers to unique data.
 ---@param source Mesh2 source mesh
 ---@param target Mesh2 target mesh
 ---@return Mesh2

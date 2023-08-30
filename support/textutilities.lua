@@ -30,8 +30,7 @@ TextUtilities.GLYPH_HEIGHT = 8
 ---Glyph width.
 TextUtilities.GLYPH_WIDTH = 8
 
----Glyph look up table. Glyphs occupy
----an 8 x 8 grid, where 1 represents
+---Glyph look up table. Glyphs occupy an 8 x 8 grid, where 1 represents
 ---a mark and 0 represents empty.
 TextUtilities.GLYPH_LUT = {
     [' '] = Glyph.new(' ', 0, 0),
@@ -131,10 +130,9 @@ TextUtilities.GLYPH_LUT = {
     ['~'] = Glyph.new('~', 7248543600252813312, 0)
 }
 
----Draws a glyph at its native scale to an image.
----The color is to be represented as an rgba integer.
----Operates on pixels. This should not be used
----with app.useTool.
+---Draws a glyph at its native scale to an image. The color is to be
+---represented as an AABBGGRR integer. Operates on pixels. This should not be
+---used with app.useTool.
 ---@param image Image image
 ---@param glyph Glyph glyph
 ---@param hex integer rgba integer
@@ -165,11 +163,9 @@ function TextUtilities.drawGlyph(
     end
 end
 
----Draws a glyph to an image at a pixel scale.
----Resizes the glyph according to nearest neighbor.
----The color is to be represented as an rgba integer.
----Operates on pixels. This should not be used
----with app.useTool.
+---Draws a glyph to an image at a pixel scale. Resizes the glyph according to
+---nearest neighbor. The color is to be represented as an AABBGGRR integer.
+---Operates on pixels. This should not be used with app.useTool.
 ---@param image Image image
 ---@param glyph Glyph glyph
 ---@param hex integer rgba integer
@@ -219,10 +215,8 @@ function TextUtilities.drawGlyphNearest(
     end
 end
 
----Draws an array of characters to an image
----according to the coordinates.
----Operates on pixel by pixel level. Its use
----should not be mixed with app.useTool.
+---Draws an array of characters to an image according to the coordinates.
+---Operates on pixel by pixel level. This should not be used with app.useTool.
 ---@param lut table glyph look up table
 ---@param image Image image
 ---@param chars string[] characters table
@@ -263,13 +257,11 @@ function TextUtilities.drawString(
     end
 end
 
----Breaks a long string into multiple lines according
----to a character-per-line limit. The limit should be
----in the range 16 to 120. Tries to find the last space
----to use as a breaking point; breaks by character for
----low limits or long words. Returns a table of tables;
----each inner table contains characters representing a
----line of text. Tabs are treated as spaces.
+---Breaks a long string into multiple lines according to a character per line
+---limit. The limit should be in the range 16 to 120. Tries to find the last
+---space to use as a breaking point. Breaks by character for low limits or long
+---words. Returns a table of tables. Each inner table contains characters
+---representing a line of text. Tabs are treated as spaces.
 ---@param srcStr string source string
 ---@param limit integer? character limit per line
 ---@return string[][]

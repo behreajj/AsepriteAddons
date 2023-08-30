@@ -122,8 +122,7 @@ function Vec2.any(v)
     return v.x ~= 0.0 or v.y ~= 0.0
 end
 
----Evaluates whether two vectors are, within a
----tolerance, approximately equal.
+---Evaluates whether two vectors are, within a tolerance, approximately equal.
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@param tol number? tolerance
@@ -134,8 +133,7 @@ function Vec2.approx(a, b, tol)
         and math.abs(b.y - a.y) <= eps
 end
 
----Finds a point on a cubic Bezier curve
----according to a step in [0.0, 1.0] .
+---Finds a point on a cubic Bezier curve according to a step in [0.0, 1.0] .
 ---@param ap0 Vec2 anchor point 0
 ---@param cp0 Vec2 control point 0
 ---@param cp1 Vec2 control point 1
@@ -171,8 +169,7 @@ function Vec2.ceil(v)
         math.ceil(v.y))
 end
 
----A comparator method to sort vectors
----in a table according to their highest
+---A comparator method to sort vectors in a table according to their highest
 ---dimension first.
 ---@param a Vec2 left comparisand
 ---@param b Vec2 right comparisand
@@ -183,10 +180,9 @@ function Vec2.comparator(a, b)
     return a.x < b.x
 end
 
----Copies the sign of the right operand to
----the magnitude of the left. Both operands
----are assumed to be Vec2s. Where the sign of
----b is zero, the result is zero.
+---Copies the sign of the right operand to the magnitude of the left. Both
+---operands are assumed to be Vec2s. Where the sign of b is zero, the result is
+---zero.
 ---@param a Vec2 magnitude
 ---@param b Vec2 sign
 ---@return Vec2
@@ -210,8 +206,7 @@ function Vec2.copySign(a, b)
     return Vec2.new(cx, cy)
 end
 
----Finds the distance between two vectors.
----Defaults to Euclidean distance.
+---Finds the distance between two vectors. Defaults to Euclidean distance.
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return number
@@ -219,8 +214,8 @@ function Vec2.dist(a, b)
     return Vec2.distEuclidean(a, b)
 end
 
----Finds the Euclidean distance between two vectors.
----Forms a circle when plotted.
+---Finds the Euclidean distance between two vectors. Forms a circle when
+---plotted.
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return number
@@ -230,8 +225,7 @@ function Vec2.distEuclidean(a, b)
     return math.sqrt(dx * dx + dy * dy)
 end
 
----Finds the squared Euclidean distance between
----two vectors.
+---Finds the squared Euclidean distance between two vectors.
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return number
@@ -261,9 +255,8 @@ function Vec2.dot(a, b)
     return a.x * b.x + a.y * b.y
 end
 
----Evaluates whether two vectors are exactly
----equal. Checks for reference equality prior
----to value equality.
+---Evaluates whether two vectors are exactly equal. Checks for reference
+---equality prior to value equality.
 ---@param a Vec2 left comparisand
 ---@param b Vec2 right comparisand
 ---@return boolean
@@ -272,8 +265,7 @@ function Vec2.equals(a, b)
         or Vec2.equalsValue(a, b)
 end
 
----Evaluates whether two vectors are exactly
----equal by component value.
+---Evaluates whether two vectors are exactly equal by component value.
 ---@param a Vec2 left comparisand
 ---@param b Vec2 right comparisand
 ---@return boolean
@@ -303,9 +295,8 @@ function Vec2.floorDiv(a, b)
     return Vec2.new(cx, cy)
 end
 
----Finds the fractional portion of of a vector.
----Subtracts the truncation of each component
----from itself, not the floor, unlike in GLSL.
+---Finds the fractional portion of of a vector. Subtracts the truncation of
+---each component from itself, not the floor, unlike in GLSL.
 ---@param v Vec2 vector
 ---@return Vec2
 function Vec2.fract(v)
@@ -314,9 +305,8 @@ function Vec2.fract(v)
         math.fmod(v.y, 1.0))
 end
 
----Converts from polar to Cartesian coordinates.
----The heading, or azimuth, is in radians.
----The radius defaults to 1.0.
+---Converts from polar to Cartesian coordinates. The heading, or azimuth, is in
+---radians. The radius defaults to 1.0.
 ---@param heading number heading, theta
 ---@param radius number? radius, rho
 ---@return Vec2
@@ -352,8 +342,7 @@ function Vec2.hashCode(v)
     return (84696351 ~ xBits) * 16777619 ~ yBits
 end
 
----Finds a vector's heading.
----Defaults to the signed heading.
+---Finds a vector's heading. Defaults to the signed heading.
 ---@param v Vec2 vector
 ---@return number
 function Vec2.heading(v)
@@ -374,8 +363,7 @@ function Vec2.headingUnsigned(v)
     return math.atan(v.y, v.x) % 6.2831853071796
 end
 
----Finds the linear step between a left and
----right edge given a factor.
+---Finds the linear step between a left and right edge given a factor.
 ---@param edge0 Vec2 left edge
 ---@param edge1 Vec2 right edge
 ---@param x Vec2 factor
@@ -432,8 +420,7 @@ function Vec2.min(a, b)
         math.min(a.y, b.y))
 end
 
----Mixes two vectors together by a step.
----Defaults to mixing by a vector.
+---Mixes two vectors together by a step. Defaults to mixing by a vector.
 ---@param a Vec2 origin
 ---@param b Vec2 destination
 ---@param t Vec2|number step
@@ -445,8 +432,7 @@ function Vec2.mix(a, b, t)
     return Vec2.mixVec2(a, b, t)
 end
 
----Mixes two vectors together by a step.
----The step is a number.
+---Mixes two vectors together by a step. The step is a number.
 ---@param a Vec2 origin
 ---@param b Vec2 destination
 ---@param t number? step
@@ -459,9 +445,8 @@ function Vec2.mixNum(a, b, t)
         u * a.y + v * b.y)
 end
 
----Mixes two vectors together by a step.
----The step is a vector. Use in conjunction
----with step, linearstep and smoothstep.
+---Mixes two vectors together by a step. The step is a vector. Use with step,
+---linearstep and smoothstep.
 ---@param a Vec2 origin
 ---@param b Vec2 destination
 ---@param t Vec2 step
@@ -498,8 +483,7 @@ function Vec2.none(v)
     return v.x == 0.0 and v.y == 0.0
 end
 
----Divides a vector by its magnitude, such that it
----lies on the unit circle.
+---Divides a vector by its magnitude, such that it lies on the unit circle.
 ---@param v Vec2 vector
 ---@return Vec2
 function Vec2.normalize(v)
@@ -513,16 +497,15 @@ function Vec2.normalize(v)
     return Vec2.new(0.0, 0.0)
 end
 
----Finds the perpendicular to a vector.
----Defaults to the counter-clockwise direction.
+---Finds the perpendicular to a vector. Defaults to the counter clockwise
+---direction.
 ---@param v Vec2 vector
 ---@return Vec2
 function Vec2.perpendicular(v)
     return Vec2.perpendicularCcw(v)
 end
 
----Finds the counter-clockwise perpendicular to
----a vector.
+---Finds the counter-clockwise perpendicular to a vector.
 ---@param v Vec2 vector
 ---@return Vec2
 function Vec2.perpendicularCcw(v)
@@ -546,9 +529,8 @@ function Vec2.pow(a, b)
         a.y ^ b.y)
 end
 
----Creates a random point in Cartesian space given
----a lower and an upper bound. If lower and upper
----bounds are not given, defaults to [-1.0, 1.0].
+---Creates a random point in Cartesian space given a lower and an upper bound.
+---If lower and upper bounds are not given, defaults to [-1.0, 1.0].
 ---@param lb Vec2? lower bound
 ---@param ub Vec2? upper bound
 ---@return Vec2
@@ -558,9 +540,8 @@ function Vec2.randomCartesian(lb, ub)
     return Vec2.randomCartesianInternal(lVrf, uVrf)
 end
 
----Creates a random point in Cartesian space given
----a lower and an upper bound. Does not validate
----upper or lower bounds.
+---Creates a random point in Cartesian space given a lower and an upper bound.
+---Does not validate upper or lower bounds.
 ---@param lb Vec2 lower bound
 ---@param ub Vec2 upper bound
 ---@return Vec2
@@ -573,8 +554,7 @@ function Vec2.randomCartesianInternal(lb, ub)
         (1.0 - ry) * lb.y + ry * ub.y)
 end
 
----Rotates a vector by an angle in radians
----around the x axis. For use in 2.5D.
+---Rotates a vector by an angle in radians around the x axis. For use in 2.5D.
 ---@param a Vec2 vector
 ---@param radians number angle
 ---@return Vec2
@@ -583,8 +563,8 @@ function Vec2.rotateX(a, radians)
     return Vec2.rotateXInternal(a, cr)
 end
 
----Rotates a vector by the cosine of an angle.
----Used when rotating many vectors by the same angle.
+---Rotates a vector by the cosine of an angle. Used when rotating many vectors
+---by the same angle.
 ---@param a Vec2 vector
 ---@param cosa number cosine of the angle
 ---@return Vec2
@@ -592,8 +572,7 @@ function Vec2.rotateXInternal(a, cosa)
     return Vec2.new(a.x, a.y * cosa)
 end
 
----Rotates a vector by an angle in radians
----around the y axis. For use in 2.5D.
+---Rotates a vector by an angle in radians around the y axis. For use in 2.5D.
 ---@param a Vec2 vector
 ---@param radians number angle
 ---@return Vec2
@@ -602,8 +581,8 @@ function Vec2.rotateY(a, radians)
     return Vec2.rotateYInternal(a, cr)
 end
 
----Rotates a vector by the cosine of an angle.
----Used when rotating many vectors by the same angle.
+---Rotates a vector by the cosine of an angle. Used when rotating many vectors
+---by the same angle.
 ---@param a Vec2 vector
 ---@param cosa number cosine of the angle
 ---@return Vec2
@@ -611,8 +590,7 @@ function Vec2.rotateYInternal(a, cosa)
     return Vec2.new(a.x * cosa, a.y)
 end
 
----Rotates a vector by an angle in radians
----around the z axis.
+---Rotates a vector by an angle in radians around the z axis.
 ---@param a Vec2 vector
 ---@param radians number angle
 ---@return Vec2
@@ -622,8 +600,8 @@ function Vec2.rotateZ(a, radians)
         math.sin(radians))
 end
 
----Rotates a vector by the cosine and sine of an angle.
----Used when rotating many vectors by the same angle.
+---Rotates a vector by the cosine and sine of an angle. Used when rotating many
+---vectors by the same angle.
 ---@param a Vec2 vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
@@ -684,8 +662,7 @@ function Vec2.sign(v)
     return Vec2.new(cx, cy)
 end
 
----Finds the smooth step between a left and
----right edge given a factor.
+---Finds the smooth step between a left and right edge given a factor.
 ---@param edge0 Vec2 left edge
 ---@param edge1 Vec2 right edge
 ---@param x Vec2 factor
@@ -743,8 +720,8 @@ function Vec2.toJson(v)
         v.x, v.y)
 end
 
----Converts a vector to polar coordinates.
----Returns a table with 'radius' and 'heading'.
+---Converts a vector to polar coordinates. Returns a table with 'radius' and
+---'heading'.
 ---@param v Vec2 vector
 ---@return { radius: number, heading: number }
 function Vec2.toPolar(v)
@@ -787,8 +764,7 @@ function Vec2.back()
     return Vec2.new(0.0, -1.0)
 end
 
----Creates a vector with all components
----set to 1.0.
+---Creates a vector with all components set to 1.0.
 ---@return Vec2
 function Vec2.one()
     return Vec2.new(1.0, 1.0)

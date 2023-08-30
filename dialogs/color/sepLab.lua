@@ -5,8 +5,6 @@ local channels <const> = { "L", "A", "B" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
-    -- TODO: Create a space combo box so that this can be
-    -- consolidated with separate RGB?
     -- TODO: Separate LCH?
     target = "ACTIVE",
     delSrc = "NONE",

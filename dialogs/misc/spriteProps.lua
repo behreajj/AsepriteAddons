@@ -456,7 +456,7 @@ local function updateDuration()
 end
 
 local function updateTabColor()
-    local sprColorRef <const> = sprite.color --[[@as Color]]
+    local sprColorRef <const> = sprite.color
     local sprColorVal <const> = AseUtilities.aseColorCopy(
         sprColorRef, "UNBOUNDED")
 
@@ -465,8 +465,7 @@ local function updateTabColor()
 end
 
 local function updateUserData()
-    local sprUserData = ""
-    sprUserData = sprite.data --[[@as string]]
+    local sprUserData <const> = sprite.data
 
     -- Because this is a text entry widget, not a label, it
     -- needs to be shown even if the string is of length 0.

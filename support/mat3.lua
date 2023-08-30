@@ -164,8 +164,7 @@ function Mat3.fromTranslation(x, y)
         0.0, 0.0, 1.0)
 end
 
----Finds the matrix inverse.
----Returns the identity if not possible.
+---Finds the matrix inverse. Returns the identity if not possible.
 ---@param a Mat3 matrix
 ---@return Mat3
 function Mat3.inverse(a)
@@ -244,10 +243,8 @@ function Mat3.toJson(a)
     return m0 .. m1 .. m2
 end
 
----Returns a console print friendly string
----of a matrix, where each row is separated
----by a line break, '\n', and each column
----is separated by three spaces.
+---Returns a console print friendly string of a matrix, where each row is
+---separated by a line break, '\n', and each column is separated by 3 spaces.
 ---@param a Mat3 matrix
 ---@return string
 function Mat3.toStringCol(a)

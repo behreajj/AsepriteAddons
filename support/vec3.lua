@@ -131,8 +131,7 @@ function Vec3.any(v)
         or v.z ~= 0.0
 end
 
----Evaluates whether two vectors are, within a
----tolerance, approximately equal.
+---Evaluates whether two vectors are, within a tolerance, approximately equal.
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@param tol number? tolerance
@@ -144,8 +143,7 @@ function Vec3.approx(a, b, tol)
         and math.abs(b.z - a.z) <= eps
 end
 
----Finds a vector's azimuth.
----Defaults to the signed azimuth.
+---Finds a vector's azimuth. Defaults to the signed azimuth.
 ---@param v Vec3 vector
 ---@return number
 function Vec3.azimuth(v)
@@ -166,8 +164,7 @@ function Vec3.azimuthUnsigned(v)
     return math.atan(v.y, v.x) % 6.2831853071796
 end
 
----Finds a point on a cubic Bezier curve
----according to a step in [0.0, 1.0] .
+---Finds a point on a cubic Bezier curve according to a step in [0.0, 1.0] .
 ---@param ap0 Vec3 anchor point 0
 ---@param cp0 Vec3 control point 0
 ---@param cp1 Vec3 control point 1
@@ -200,10 +197,9 @@ function Vec3.bezierPoint(ap0, cp0, cp1, ap1, step)
         cp1.z * tsq3u + ap1.z * tcb)
 end
 
----Bisects an array of vectors to find
----the appropriate insertion point for
----a vector. Biases towards the right insert
----point. Should be used with sorted arrays.
+---Bisects an array of vectors to find the appropriate insertion point for a
+---vector. Biases towards the right insert point. Should be used with sorted
+---arrays.
 ---@param arr Vec3[] vectors array
 ---@param elm Vec3 vector
 ---@param compare? fun(a: Vec3, b: Vec3): boolean comparator
@@ -235,8 +231,7 @@ function Vec3.ceil(v)
         math.ceil(v.z))
 end
 
----A comparator method to sort vectors
----in a table according to their highest
+---A comparator method to sort vectors in a table according to their highest
 ---dimension first.
 ---@param a Vec3 left comparisand
 ---@param b Vec3 right comparisand
@@ -249,10 +244,9 @@ function Vec3.comparator(a, b)
     return a.x < b.x
 end
 
----Copies the sign of the right operand to
----the magnitude of the left. Both operands
----are assumed to be Vec3s. Where the sign of
----b is zero, the result is zero.
+---Copies the sign of the right operand to the magnitude of the left. Both
+---operands are assumed to be Vec3s. Where the sign of b is zero, the result is
+---zero.
 ---@param a Vec3 magnitude
 ---@param b Vec3 sign
 ---@return Vec3
@@ -295,8 +289,7 @@ function Vec3.cross(a, b)
         a.x * b.y - a.y * b.x)
 end
 
----Finds the distance between two vectors.
----Defaults to Euclidean distance.
+---Finds the distance between two vectors. Defaults to Euclidean distance.
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return number
@@ -304,8 +297,8 @@ function Vec3.dist(a, b)
     return Vec3.distEuclidean(a, b)
 end
 
----Finds the Euclidean distance between two vectors.
----Forms a sphere when plotted.
+---Finds the Euclidean distance between two vectors. Forms a sphere when
+---plotted.
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return number
@@ -316,8 +309,7 @@ function Vec3.distEuclidean(a, b)
     return math.sqrt(dx * dx + dy * dy + dz * dz)
 end
 
----Finds the squared Euclidean distance between
----two vectors.
+---Finds the squared Euclidean distance between two vectors.
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return number
@@ -352,9 +344,8 @@ function Vec3.dot(a, b)
         + a.z * b.z
 end
 
----Evaluates whether two vectors are exactly
----equal. Checks for reference equality prior
----to value equality.
+---Evaluates whether two vectors are exactly equal. Checks for reference
+---equality prior to value equality.
 ---@param a Vec3 left comparisand
 ---@param b Vec3 right comparisand
 ---@return boolean
@@ -363,8 +354,7 @@ function Vec3.equals(a, b)
         or Vec3.equalsValue(a, b)
 end
 
----Evaluates whether two vectors are exactly
----equal by component value.
+---Evaluates whether two vectors are exactly equal by component value.
 ---@param a Vec3 left comparisand
 ---@param b Vec3 right comparisand
 ---@return boolean
@@ -398,9 +388,8 @@ function Vec3.floorDiv(a, b)
     return Vec3.new(cx, cy, cz)
 end
 
----Finds the fractional portion of of a vector.
----Subtracts the truncation of each component
----from itself, not the floor, unlike in GLSL.
+---Finds the fractional portion of of a vector. Subtracts the truncation of
+---each component from itself, not the floor, unlike in GLSL.
 ---@param v Vec3 vector
 ---@return Vec3
 function Vec3.fract(v)
@@ -410,11 +399,9 @@ function Vec3.fract(v)
         math.fmod(v.z, 1.0))
 end
 
----Creates a vector from an azimuth (or yaw),
----inclination (or pitch) and radius. Expects the
----inclination to be a signed value between -pi / 2
----and pi / 2. The poles are upright in a Z-Up
----coordinate system.
+---Creates a vector from an azimuth (or yaw), inclination (or pitch) and radius.
+---Expects the inclination to be a signed value between -pi / 2 and pi / 2. The
+---poles are upright in a Z-Up coordinate system.
 ---@param azimuth number azimuth, yaw, theta
 ---@param inclination number inclination, pitch, phi
 ---@param radius number? radius, rho
@@ -428,9 +415,8 @@ function Vec3.fromSpherical(azimuth, inclination, radius)
         math.cos(i), math.sin(i), r)
 end
 
----Creates a vector from the cosine and sine
----of azimuth and inclination. Multiplies by
----the radius.
+---Creates a vector from the cosine and sine of azimuth and inclination.
+---Multiplies by the radius.
 ---@param cosAzim number azimuth cosine
 ---@param sinAzim number azimuth sine
 ---@param cosIncl number inclination cosine
@@ -448,9 +434,8 @@ function Vec3.fromSphericalInternal(
         radius * sinIncl)
 end
 
----Creates a one-dimensional table of vectors
----arranged in a Cartesian grid from the lower
----to the upper bound. Both bounds are vectors.
+---Creates a one-dimensional table of vectors arranged in a Cartesian grid from
+---the lower to the upper bound. Both bounds are vectors.
 ---@param cols integer columns
 ---@param rows integer rows
 ---@param layers integer layers
@@ -532,8 +517,7 @@ function Vec3.hashCode(v)
         * 16777619 ~ zBits
 end
 
----Finds the vector's inclination.
----Defaults to signed inclination.
+---Finds the vector's inclination. Defaults to signed inclination.
 ---@param v Vec3 vector
 ---@return number
 function Vec3.inclination(v)
@@ -558,10 +542,8 @@ function Vec3.inclinationUnsigned(v)
     return 1.5707963267949
 end
 
----Inserts a vector into a table so as to
----maintain sorted order. Biases toward the right
----insertion point. Returns true if the unique
----vector was inserted; false if not.
+---Inserts a vector into a table so as to maintain sorted order. Biases toward
+---the right insertion point. Returns true if the unique vector was inserted.
 ---@param arr Vec3[] vectors array
 ---@param elm Vec3 vector
 ---@param compare? fun(a: Vec3, b: Vec3): boolean comparator
@@ -576,8 +558,7 @@ function Vec3.insortRight(arr, elm, compare)
     return true
 end
 
----Finds the linear step between a left and
----right edge given a factor.
+---Finds the linear step between a left and right edge given a factor.
 ---@param edge0 Vec3 left edge
 ---@param edge1 Vec3 right edge
 ---@param x Vec3 factor
@@ -648,8 +629,7 @@ function Vec3.min(a, b)
         math.min(a.z, b.z))
 end
 
----Mixes two vectors together by a step.
----Defaults to mixing by a vector.
+---Mixes two vectors together by a step. Defaults to mixing by a vector.
 ---@param a Vec3 origin
 ---@param b Vec3 destination
 ---@param t Vec3|number step
@@ -661,8 +641,7 @@ function Vec3.mix(a, b, t)
     return Vec3.mixVec3(a, b, t)
 end
 
----Mixes two vectors together by a step.
----The step is a number.
+---Mixes two vectors together by a step. The step is a number.
 ---@param a Vec3 origin
 ---@param b Vec3 destination
 ---@param t number? step
@@ -676,9 +655,8 @@ function Vec3.mixNum(a, b, t)
         u * a.z + v * b.z)
 end
 
----Mixes two vectors together by a step.
----The step is a vector. Use in conjunction
----with step, linearstep and smoothstep.
+---Mixes two vectors together by a step. The step is a vector. Use with step,
+---linearstep and smoothstep.
 ---@param a Vec3 origin
 ---@param b Vec3 destination
 ---@param t Vec3 step
@@ -720,8 +698,7 @@ function Vec3.none(v)
         and v.z == 0.0
 end
 
----Divides a vector by its magnitude, such that it
----lies on the unit circle.
+---Divides a vector by its magnitude, such that it lies on the unit circle.
 ---@param v Vec3 vector
 ---@return Vec3
 function Vec3.normalize(v)
@@ -747,9 +724,8 @@ function Vec3.pow(a, b)
         a.z ^ b.z)
 end
 
----Creates a random point in Cartesian space given
----a lower and an upper bound. If lower and upper
----bounds are not given, defaults to [-1.0, 1.0].
+---Creates a random point in Cartesian space given a lower and an upper bound.
+---If lower and upper bounds are not given, defaults to [-1.0, 1.0].
 ---@param lb Vec3? lower bound
 ---@param ub Vec3? upper bound
 ---@return Vec3
@@ -759,9 +735,8 @@ function Vec3.randomCartesian(lb, ub)
     return Vec3.randomCartesianInternal(lVrf, uVrf)
 end
 
----Creates a random point in Cartesian space given
----a lower and an upper bound. Does not validate
----upper or lower bounds.
+---Creates a random point in Cartesian space given a lower and an upper bound.
+---Does not validate upper or lower bounds.
 ---@param lb Vec3 lower bound
 ---@param ub Vec3 upper bound
 ---@return Vec3
@@ -776,9 +751,8 @@ function Vec3.randomCartesianInternal(lb, ub)
         (1.0 - rz) * lb.z + rz * ub.z)
 end
 
----Rotates a vector around an axis by an angle
----in radians. Validates the axis to see if it is
----of unit length. Defaults to rotateZ.
+---Rotates a vector around an axis by an angle in radians. Validates the axis
+---to see if it is of unit length. Defaults to rotateZ.
 ---@param a Vec3 vector
 ---@param radians number angle
 ---@param axis Vec3 rotation axis
@@ -792,8 +766,7 @@ function Vec3.rotate(a, radians, axis)
     return Vec3.rotateZ(a, radians)
 end
 
----Rotates a vector around the x axis by an angle
----in radians.
+---Rotates a vector around the x axis by an angle in radians.
 ---@param a Vec3 vector
 ---@param radians number angle
 ---@return Vec3
@@ -803,8 +776,7 @@ function Vec3.rotateX(a, radians)
         math.sin(radians))
 end
 
----Rotates a vector around the y axis by an angle
----in radians.
+---Rotates a vector around the y axis by an angle in radians.
 ---@param a Vec3 vector
 ---@param radians number angle
 ---@return Vec3
@@ -814,8 +786,7 @@ function Vec3.rotateY(a, radians)
         math.sin(radians))
 end
 
----Rotates a vector around the z axis by an angle
----in radians.
+---Rotates a vector around the z axis by an angle in radians.
 ---@param a Vec3 vector
 ---@param radians number angle
 ---@return Vec3
@@ -825,9 +796,8 @@ function Vec3.rotateZ(a, radians)
         math.sin(radians))
 end
 
----Rotates a vector around an axis by an angle
----in radians. The axis is assumed to be of unit
----length.
+---Rotates a vector around an axis by an angle in radians. The axis is assumed
+---to be of unit length.
 ---@param a Vec3 vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
@@ -861,9 +831,8 @@ function Vec3.rotateInternal(a, cosa, sina, axis)
         (complCos * zAxis * zAxis + cosa) * a.z)
 end
 
----Rotates a vector around the x axis by the cosine
----and sine of an angle. Used when rotating many
----vectors by the same angle.
+---Rotates a vector around the x axis by the cosine and sine of an angle. Used
+---when rotating many vectors by the same angle.
 ---@param a Vec3 vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
@@ -875,9 +844,8 @@ function Vec3.rotateXInternal(a, cosa, sina)
         cosa * a.z + sina * a.y)
 end
 
----Rotates a vector around the y axis by the cosine
----and sine of an angle. Used when rotating many
----vectors by the same angle.
+---Rotates a vector around the y axis by the cosine and sine of an angle. Used
+---when rotating many vectors by the same angle.
 ---@param a Vec3 vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
@@ -889,9 +857,8 @@ function Vec3.rotateYInternal(a, cosa, sina)
         cosa * a.z - sina * a.x)
 end
 
----Rotates a vector around the z axis by the cosine
----and sine of an angle. Used when rotating many
----vectors by the same angle.
+---Rotates a vector around the z axis by the cosine and sine of an angle. Used
+---when rotating many vectors by the same angle.
 ---@param a Vec3 vector
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
@@ -970,8 +937,7 @@ function Vec3.sign(v)
     return Vec3.new(cx, cy, cz)
 end
 
----Finds the smooth step between a left and
----right edge given a factor.
+---Finds the smooth step between a left and right edge given a factor.
 ---@param edge0 Vec3 left edge
 ---@param edge1 Vec3 right edge
 ---@param x Vec3 factor
@@ -1041,9 +1007,8 @@ function Vec3.toJson(v)
         v.x, v.y, v.z)
 end
 
----Converts a vector to spherical coordinates.
----Returns a table with 'radius', 'azimuth' and
----'inclination'.
+---Converts a vector to spherical coordinates. Returns a table with 'radius',
+---'azimuth' and 'inclination'.
 ---@param v Vec3 vector
 ---@return { radius: number, azimuth: number, inclination: number }
 function Vec3.toSpherical(v)
@@ -1064,50 +1029,43 @@ function Vec3.trunc(v)
         v.z - math.fmod(v.z, 1.0))
 end
 
----Creates a right facing vector,
----(1.0, 0.0, 0.0).
+---Creates a right facing vector, (1.0, 0.0, 0.0).
 ---@return Vec3
 function Vec3.right()
     return Vec3.new(1.0, 0.0, 0.0)
 end
 
----Creates a forward facing vector,
----(0.0, 1.0, 0.0).
+---Creates a forward facing vector, (0.0, 1.0, 0.0).
 ---@return Vec3
 function Vec3.forward()
     return Vec3.new(0.0, 1.0, 0.0)
 end
 
----Creates an up facing vector,
----(0.0, 0.0, 1.0).
+---Creates an up facing vector, (0.0, 0.0, 1.0).
 ---@return Vec3
 function Vec3.up()
     return Vec3.new(0.0, 0.0, 1.0)
 end
 
----Creates a left facing vector,
----(-1.0, 0.0, 0.0).
+---Creates a left facing vector, (-1.0, 0.0, 0.0).
 ---@return Vec3
 function Vec3.left()
     return Vec3.new(-1.0, 0.0, 0.0)
 end
 
----Creates a back facing vector,
----(0.0, -1.0, 0.0).
+---Creates a back facing vector, (0.0, -1.0, 0.0).
 ---@return Vec3
 function Vec3.back()
     return Vec3.new(0.0, -1.0, 0.0)
 end
 
----Creates a down facing vector,
----(0.0, 0.0, -1.0).
+---Creates a down facing vector, (0.0, 0.0, -1.0).
 ---@return Vec3
 function Vec3.down()
     return Vec3.new(0.0, 0.0, -1.0)
 end
 
----Creates a vector with all components
----set to 1.0.
+---Creates a vector with all components set to 1.0.
 ---@return Vec3
 function Vec3.one()
     return Vec3.new(1.0, 1.0, 1.0)
