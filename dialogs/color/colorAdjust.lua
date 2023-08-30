@@ -371,7 +371,7 @@ dlg:canvas {
         local black <const> = Color { r = 0, g = 0, b = 0 }
         local white <const> = Color { r = 255, g = 255, b = 255 }
         ctx:drawImage(img,
-            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, 2),
             Rectangle(0, 0, barWidth, barHeight))
         CanvasUtilities.drawSliderReticle(
             ctx, active.hAdj, barWidth, barHeight,
