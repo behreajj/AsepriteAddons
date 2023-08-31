@@ -11,8 +11,7 @@ setmetatable(ClrGradient, {
     end
 })
 
----Constructs a color gradient. The first
----parameter should be a table of ClrKeys.
+---Constructs a color gradient. The first parameter is a table of ClrKeys.
 ---@param keys ClrKey[] color keys
 ---@return ClrGradient
 function ClrGradient.new(keys)
@@ -29,9 +28,7 @@ function ClrGradient.new(keys)
     return inst
 end
 
----Constructs a color gradient.
----The first parameter should be a table
----of ClrKeys.
+---Constructs a color gradient. The first parameter is a table of ClrKeys.
 ---@param keys ClrKey[] color keys
 ---@return ClrGradient
 function ClrGradient.newInternal(keys)
@@ -48,10 +45,9 @@ function ClrGradient:__tostring()
     return ClrGradient.toJson(self)
 end
 
----Inserts a color key into the keys array based
----on the index returned by bisectRight. Does not
----check for duplicates. Returns true if the key
----was successfully inserted.
+---Inserts a color key into the keys array based on the index returned by
+---bisectRight. Does not check for duplicates. Returns true if the key was
+---successfully inserted.
 ---@param ck ClrKey color key
 ---@param tol number? tolerance
 ---@return boolean
@@ -66,9 +62,8 @@ function ClrGradient:insortRight(ck, tol)
     return true
 end
 
----Internal helper function to locate the insertion
----point for a step in the gradient so as to keep
----sorted order.
+---Internal helper function to locate the insertion point for a step in the
+---gradient so as to keep sorted order.
 ---@param cg ClrGradient color gradient
 ---@param step number step
 ---@return integer
@@ -87,14 +82,11 @@ function ClrGradient.bisectRight(cg, step)
     return 1 + low
 end
 
----Evaluates a color gradient by a step according
----to a dithering matrix. The matrix should be
----normalized in advance. The x and y coordinates
----are relative to the image. See
----https://www.wikiwand.com/en/Ordered_dithering/
+---Evaluates a color gradient by a step according to a dithering matrix. The
+---matrix should be normalized in advance. The x and y coordinates are relative
+---to the image. See https://www.wikiwand.com/en/Ordered_dithering/ .
 ---
----Unlike eval, returns a reference to a color in
----the gradient, not a new color.
+---Unlike eval, returns a reference to a color in the gradient, not a new color.
 ---@param cg ClrGradient color gradient
 ---@param step number step
 ---@param matrix number[] matrix
@@ -123,12 +115,10 @@ function ClrGradient.dither(
     return prKey.clr
 end
 
----Evaluates a color gradient by a step with
----an easing function. Returns a color.
----The easing function is expected to accept
----an origin color, a destination color,
----and a number as a step. If nil, it defaults
----to a mix in linear sRGB.
+---Evaluates a color gradient by a step with an easing function. Returns a
+---color. The easing function is expected to accept an origin color, a
+---destination color and a number as a step. If nil, it defaults to a mix in
+---standard RGB.
 ---@param cg ClrGradient color gradient
 ---@param step number? step
 ---@param easing? fun(o: Clr, d: Clr, t: number): Clr easing function
@@ -145,10 +135,8 @@ function ClrGradient.eval(cg, step, easing)
         (t - prStep) * denom)
 end
 
----Internal helper to find the previous and
----next key to ease between at the local level.
----Returns the previous key, the next key,
----and the validated step.
+---Internal helper to find the previous and next key to ease between at the
+---local level. Returns the previous key, the next key and the validated step.
 ---@param cg ClrGradient color gradient
 ---@param step number? step
 ---@return ClrKey
@@ -172,12 +160,10 @@ function ClrGradient.findKeys(cg, step)
     return prevKey, nextKey, t
 end
 
----Evaluates a color gradient by a step according
----to interleaved gradient noise, IGN, developed by
----Jorge Jimenez.
+---Evaluates a color gradient by a step according to interleaved gradient
+---noise, IGN, developed by Jorge Jimenez.
 ---
----Unlike eval, returns a reference to a color in
----the gradient, not a new color.
+---Unlike eval, returns a reference to a color in the gradient, not a new color.
 ---@param cg ClrGradient color gradient
 ---@param step number step
 ---@param x integer x coordinate

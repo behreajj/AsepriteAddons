@@ -13,23 +13,18 @@ setmetatable(Clr, {
     end
 })
 
----Arbitrary hue assigned to lighter grays
----in SR LCH conversion functions.
+---Arbitrary hue assigned to lighter grays in SR LCH conversion functions.
 Clr.SR_LCH_HUE_LIGHT = 0.306391
 
----Arbitrary hue assigned to darker grays
----in SR LCH conversion functions.
+---Arbitrary hue assigned to darker grays in SR LCH conversion functions.
 Clr.SR_LCH_HUE_SHADOW = 0.874676
 
----Maximum chroma of a color in SR LCH
----that is in gamut in standard RGB.
+---Maximum chroma of a color in SR LCH that is in gamut in standard RGB.
 Clr.SR_LCH_MAX_CHROMA = 119.07602046756
 
----Constructs a new color from red, green
----blue and transparency channels.
----The expected range is [0.0, 1.0], however,
----to accomodate other color spaces, these
----bounds are not checked by the constructor.
+---Constructs a new color from red, green, blue and transparency channels. The
+---expected range is [0.0, 1.0], however, to accomodate other color spaces,
+---these bounds are not checked by the constructor.
 ---@param r number red channel
 ---@param g number green channel
 ---@param b number blue channel
@@ -64,8 +59,7 @@ function Clr:__tostring()
     return Clr.toJson(self)
 end
 
----Returns true if the alpha channel is within
----the range [0.0, 1.0].
+---Returns true if the alpha channel is within the range [0.0, 1.0].
 ---@param c Clr color
 ---@param tol number? tolerance
 ---@return boolean
@@ -74,10 +68,8 @@ function Clr.alphaIsInGamut(c, tol)
     return c.a >= -eps and c.a <= (1.0 + eps)
 end
 
----Evaluates whether two colors have equal red,
----green, blue and alpha channels when considered
----as 32 bit integers where overflow is clamped
----to [0, 255].
+---Evaluates whether two colors have equal red, green, blue and alpha channels
+---when considered as 32 bit integers where overflow is clamped to [0, 255].
 ---@param a Clr left comparisand
 ---@param b Clr right comparisand
 ---@return boolean
@@ -86,9 +78,8 @@ function Clr.bitEq(a, b)
         and Clr.bitEqRgb(a, b)
 end
 
----Evaluates whether two colors have equal alpha
----when considered as a byte where overflow is
----clamped to [0, 255].
+---Evaluates whether two colors have equal alpha when considered as a byte
+---where overflow is clamped to [0, 255].
 ---@param a Clr left comparisand
 ---@param b Clr right comparisand
 ---@return boolean
@@ -104,10 +95,8 @@ function Clr.bitEqAlpha(a, b)
         == math.floor(ba * 255.0 + 0.5)
 end
 
----Evaluates whether two colors have equal red,
----green and blue channels when considered as
----24 bit integers where overflow is clamped
----to [0, 255].
+---Evaluates whether two colors have equal red, green and blue channels when
+---considered as 24 bit integers where overflow is clamped to [0, 255].
 ---@param a Clr left comparisand
 ---@param b Clr right comparisand
 ---@return boolean
@@ -147,9 +136,8 @@ function Clr.bitEqRgb(a, b)
     return true
 end
 
----Blends two colors together by their alpha.
----Premultiplies each color by its alpha prior
----to blending. Unpremultiplies the result.
+---Blends two colors together by their alpha. Premultiplies each color by its
+---alpha prior to blending. Unpremultiplies the result.
 ---@param a Clr source
 ---@param b Clr destination
 ---@return Clr
@@ -159,12 +147,10 @@ function Clr.blend(a, b)
         Clr.clamp01(b))
 end
 
----Blends two colors together by their alpha.
----Premultiplies each color by its alpha prior
----to blending. Unpremultiplies the result.
----Does not check to see if color channels
----are in gamut. For more information,
----see https://www.w3.org/TR/compositing-1/ .
+---Blends two colors together by their alpha. Premultiplies each color by its
+---alpha prior to blending. Unpremultiplies the result. Does not check to see
+---if color channels are in gamut. For more information, see
+---https://www.w3.org/TR/compositing-1/ .
 ---@param a Clr source
 ---@param b Clr destination
 ---@return Clr
@@ -203,8 +189,7 @@ function Clr.clamp01(c)
         math.min(math.max(c.a, 0.0), 1.0))
 end
 
----Converts from a hexadecimal representation
----of a color stored as 0xAABBGGRR.
+---Converts from a hexadecimal representation of a color stored as 0xAABBGGRR.
 ---@param c integer hexadecimal color
 ---@return Clr
 function Clr.fromHex(c)
@@ -215,8 +200,7 @@ function Clr.fromHex(c)
         (c >> 0x18 & 0xff) / 255.0)
 end
 
----Converts an array of hexadecimal values to
----an array of colors.
+---Converts an array of hexadecimal values to an array of colors.
 ---@param arr integer[] hexadecimal array
 ---@return Clr[]
 function Clr.fromHexArray(arr)
@@ -230,8 +214,7 @@ function Clr.fromHexArray(arr)
     return result
 end
 
----Converts from a web-friendly hexadecimal
----string, such as #AABBCC, to a color.
+---Converts from a web-friendly hexadecimal string, such as #AABBCC, to a color.
 ---@param hexstr string web string
 ---@return Clr
 function Clr.fromHexWeb(hexstr)
@@ -262,10 +245,8 @@ function Clr.fromHexWeb(hexstr)
     return Clr.clearBlack()
 end
 
----Creates a one-dimensional table of colors
----arranged in a Cartesian grid from (0.0, 0.0, 0.0)
----to (1.0, 1.0, 1.0), representing the standard
----RGB color space.
+---Creates a one-dimensional table of colors arranged in a Cartesian grid from
+---(0.0, 0.0, 0.0) to (1.0, 1.0, 1.0), representing standard RGB.
 ---@param cols integer columns
 ---@param rows integer rows
 ---@param layers integer layers
@@ -404,10 +385,8 @@ function Clr.lRgbTosRgbInternal(c)
     return Clr.new(sr, sg, sb, c.a)
 end
 
----Mixes two colors by a step.
----Defaults to the fastest algorithm, i.e.,
----applies linear interpolation to each channel
----with no color space transformation.
+---Mixes two colors by a step. Defaults to the fastest algorithm, i.e., applies
+---linear interpolation to each channel with no color space transformation.
 ---@param o Clr origin
 ---@param d Clr destination
 ---@param t number step
@@ -416,9 +395,8 @@ function Clr.mix(o, d, t)
     return Clr.mixlRgb(o, d, t)
 end
 
----Mixes two colors in RGBA space by a step.
----Assumes that the colors are in linear space.
----Clamps the step to [0.0, 1.0].
+---Mixes two colors in RGBA space by a step. Assumes that the colors are in
+---linear space. Clamps the step to [0.0, 1.0].
 ---@param o Clr origin
 ---@param d Clr destination
 ---@param t number step
@@ -434,8 +412,8 @@ function Clr.mixlRgb(o, d, t)
     return Clr.mixlRgbaInternal(o, d, u)
 end
 
----Mixes two colors in RGBA space by a step.
----Assumes that the colors are in linear space.
+---Mixes two colors in RGBA space by a step. Assumes that the colors are in
+---linear space.
 ---@param o Clr origin
 ---@param d Clr destination
 ---@param t number step
@@ -449,11 +427,9 @@ function Clr.mixlRgbaInternal(o, d, t)
         u * o.a + t * d.a)
 end
 
----Mixes two colors that represent normals
----used in dynamic lighting. Uses spherical
----linear interpolation, geometric formula. See
----https://en.wikipedia.org/wiki/Slerp .
----Colors should be in standard RGB.
+---Mixes two colors that represent normals used in dynamic lighting. Uses
+---spherical linear interpolation, geometric formula. See
+---https://en.wikipedia.org/wiki/Slerp . Colors should be in standard RGB.
 ---@param o Clr origin
 ---@param d Clr destination
 ---@param t number step
@@ -524,10 +500,9 @@ function Clr.mixNormal(o, d, t)
     return Clr.new(0.5, 0.5, 0.5, ca)
 end
 
----Mixes two colors in RGBA space by a step.
----Converts the colors from standard to linear,
----interpolates, then converts from linear
----to standard. Clamps the step to [0.0, 1.0].
+---Mixes two colors in RGBA space by a step. Converts the colors from standard
+---to linear, interpolates, then converts from linear to standard. Clamps the
+---step to [0.0, 1.0].
 ---@param o Clr origin
 ---@param d Clr destination
 ---@param t number step
@@ -543,10 +518,8 @@ function Clr.mixsRgb(o, d, t)
     return Clr.mixsRgbInternal(o, d, u)
 end
 
----Mixes two colors in RGBA space by a step.
----Converts the colors from standard to linear,
----interpolates, then converts from linear
----to standard.
+---Mixes two colors in RGBA space by a step. Converts the colors from standard
+---to linear, interpolates, then converts from linear to standard.
 ---@param o Clr origin
 ---@param d Clr destination
 ---@param t number step
@@ -558,8 +531,7 @@ function Clr.mixsRgbInternal(o, d, t)
             Clr.sRgbTolRgbInternal(d), t))
 end
 
----Mixes two colors in SR LAB 2 by a step,
----then converts the result to a sRGB color.
+---Mixes two colors in SR LAB 2 by a step, then converts the result to sRGB.
 ---Clamps the step to [0.0, 1.0].
 ---@param o Clr origin
 ---@param d Clr destination
@@ -576,8 +548,7 @@ function Clr.mixSrLab2(o, d, t)
     return Clr.mixSrLab2Internal(o, d, u)
 end
 
----Mixes two colors in SR LAB 2 by a step,
----then converts the result to a sRGB color.
+---Mixes two colors in SR LAB 2 by a step, then converts the result to sRGB.
 ---@param o Clr origin
 ---@param d Clr destination
 ---@param t number step
@@ -593,11 +564,9 @@ function Clr.mixSrLab2Internal(o, d, t)
         u * oLab.alpha + t * dLab.alpha)
 end
 
----Mixes two colors in SR LCH by a step.
----The hue function should accept an origin,
----destination and factor, all numbers.
----The hue function defaults to nearest.
----The step is clamped to [0.0, 1.0].
+---Mixes two colors in SR LCH by a step. The hue function should accept an
+---origin, destination and factor, all numbers. The hue function defaults to
+---nearest. The step is clamped to [0.0, 1.0].
 ---@param o Clr origin
 ---@param d Clr destination
 ---@param t number step
@@ -631,9 +600,8 @@ function Clr.mixSrLch(o, d, t, hueFunc)
     return Clr.mixSrLchInternal(o, d, u, f)
 end
 
----Mixes two colors in SR LCH by a step.
----The hue function should accept an origin,
----destination and factor, all numbers.
+---Mixes two colors in SR LCH by a step. The hue function should accept an
+---origin, destination and factor, all numbers.
 ---@param o Clr origin
 ---@param d Clr color
 ---@param t number step
@@ -675,8 +643,8 @@ function Clr.mixSrLchInternal(o, d, t, hueFunc)
     end
 end
 
----Returns true if the red, green and blue
----channels are within the range [0.0, 1.0].
+---Returns true if the red, green and blue channels are within the range
+---[0.0, 1.0].
 ---@param c Clr color
 ---@param tol number? tolerance
 ---@return boolean
@@ -687,8 +655,7 @@ function Clr.rgbIsInGamut(c, tol)
         and (c.b >= -eps and c.b <= (1.0 + eps))
 end
 
----Returns true if all color channels are
----within the range [0.0, 1.0].
+---Returns true if all color channels are within the range [0.0, 1.0].
 ---@param c Clr color
 ---@param tol number? tolerance
 ---@return boolean
@@ -770,12 +737,10 @@ function Clr.sRgbToSrLch(c, tol)
     return Clr.srLab2ToSrLch(lab.l, lab.a, lab.b, lab.alpha, tol)
 end
 
----Converts a color from SR Lab 2 to linear RGB.
----See Jan Behrens, https://www.magnetkern.de/srlab2.html .
----The a and b components are unbounded but for sRGB
----[-111.0, 111.0] suffice. For light, the expected
----range is [0.0, 100.0].
----The alpha channel is unaffected by the transform.
+---Converts a color from SR Lab 2 to linear RGB. See Jan Behrens,
+---https://www.magnetkern.de/srlab2.html . The a and b components are unbounded
+---but for sRGB [-111.0, 111.0] suffice. For light, the expected range is
+---[0.0, 100.0]. The alpha channel is unaffected by the transform.
 ---@param l number lightness
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
@@ -831,8 +796,7 @@ end
 
 ---Converts a color from SR Lab 2 to SR LCH.
 ---Returns a table with the keys l, c, h, a.
----Neither alpha nor lightness are affected by
----the transformation.
+---Neither alpha nor lightness are affected by the transformation.
 ---@param l number lightness
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
@@ -906,9 +870,8 @@ function Clr.srLchToSrLab2(l, c, h, a, tol)
         lVrf, cVrf, hVrf, aVrf)
 end
 
----Converts a color from SR LCH to SR Lab 2.
----Does not validate arguments for defaults or
----out-of-bounds.
+---Converts a color from SR LCH to SR Lab 2. Does not validate arguments for
+---defaults or out of bounds.
 ---@param l number lightness
 ---@param c number chromaticity
 ---@param h number hue
@@ -924,17 +887,16 @@ function Clr.srLchToSrLab2Internal(l, c, h, a)
     }
 end
 
----Converts from a color to a hexadecimal integer.
----Channels are packed in 0xAABBGGRR order.
----Ensures that color values are valid, in [0.0, 1.0].
+---Converts from a color to a hexadecimal integer. Channels are packed in
+---0xAABBGGRR order. Ensures that color values are valid, in [0.0, 1.0].
 ---@param c Clr color
 ---@return integer
 function Clr.toHex(c)
     return Clr.toHexUnchecked(Clr.clamp01(c))
 end
 
----Converts from a color to a hexadecimal integer.
----Channels are packed in 0xAABBGGRR order.
+---Converts from a color to a hexadecimal integer. Channels are packed in
+---0xAABBGGRR order.
 ---@param c Clr color
 ---@return integer
 function Clr.toHexUnchecked(c)
@@ -944,19 +906,17 @@ function Clr.toHexUnchecked(c)
         | math.floor(c.r * 255.0 + 0.5)
 end
 
----Converts from a color to a web-friendly hexadecimal
----string. Channels are packed in RRGGBB order. Does
----not prepend a hashtag ('#').
----Ensures that color values are valid, in [0.0, 1.0].
+---Converts from a color to a web-friendly hexadecimal string. Channels are
+---packed in RRGGBB order. Does not prepend a hashtag ('#'). Ensures that color
+---values are valid, in [0.0, 1.0].
 ---@param c Clr color
 ---@return string
 function Clr.toHexWeb(c)
     return Clr.toHexWebUnchecked(Clr.clamp01(c))
 end
 
----Converts from a color to a web-friendly hexadecimal
----string. Channels are packed in RRGGBB order. Does
----not prepend a hashtag ('#').
+---Converts from a color to a web-friendly hexadecimal string. Channels are
+---packed in RRGGBB order. Does not prepend a hashtag ('#').
 ---@param c Clr color
 ---@return string
 function Clr.toHexWebUnchecked(c)

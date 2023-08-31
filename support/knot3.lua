@@ -13,9 +13,8 @@ setmetatable(Knot3, {
     end
 })
 
----Constructs a new Bezier knot from a coordinate,
----fore handle and rear handle. All are Vec3s passed
----by reference.
+---Constructs a new Bezier knot from a coordinate, fore handle and rear handle.
+---All are Vec3s passed by reference.
 ---@param co table coordinate
 ---@param fh table fore handle
 ---@param rh table rear handle
@@ -41,8 +40,7 @@ function Knot3:alignHandles()
     return self:alignHandlesForward()
 end
 
----Aligns the knot's fore handle to its
----rear handle while preserving magnitude.
+---Aligns the knot's fore handle to its rear handle while preserving magnitude.
 ---@return Knot3
 function Knot3:alignHandlesBackward()
     local rDir <const> = Vec3.sub(self.rh, self.co)
@@ -56,8 +54,7 @@ function Knot3:alignHandlesBackward()
     return self
 end
 
----Aligns the knot's rear handle to its
----fore handle while preserving magnitude.
+---Aligns the knot's rear handle to its fore handle while preserving magnitude.
 ---@return Knot3
 function Knot3:alignHandlesForward()
     local fDir <const> = Vec3.sub(self.fh, self.co)
@@ -77,24 +74,21 @@ function Knot3:mirrorHandles()
     return self:mirrorHandlesForward()
 end
 
----Sets the fore handle to mirror
----the rear handle.
+---Sets the fore handle to mirror the rear handle.
 ---@return Knot3
 function Knot3:mirrorHandlesBackward()
     self.fh = Vec3.sub(self.co, Vec3.sub(self.rh, self.co))
     return self
 end
 
----Sets the rear handle to mirror
----the fore handle.
+---Sets the rear handle to mirror the fore handle.
 ---@return Knot3
 function Knot3:mirrorHandlesForward()
     self.rh = Vec3.sub(self.co, Vec3.sub(self.fh, self.co))
     return self
 end
 
----Reverses the knots direction by swapping
----its fore and rear handles.
+---Reverses the knots direction by swapping its fore and rear handles.
 ---@return Knot3
 function Knot3:reverse()
     local temp <const> = self.fh
@@ -103,8 +97,7 @@ function Knot3:reverse()
     return self
 end
 
----Rotates this knot around the x axis by
----an angle in radians.
+---Rotates this knot around the x axis by an angle in radians.
 ---@param radians number angle
 ---@return Knot3
 function Knot3:rotateX(radians)
@@ -113,8 +106,7 @@ function Knot3:rotateX(radians)
         math.sin(radians))
 end
 
----Rotates this knot around the x axis by
----the cosine and sine of an angle.
+---Rotates this knot around the x axis by the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return Knot3
@@ -125,8 +117,7 @@ function Knot3:rotateXInternal(cosa, sina)
     return self
 end
 
----Rotates this knot around the y axis by
----an angle in radians.
+---Rotates this knot around the y axis by an angle in radians.
 ---@param radians number angle
 ---@return Knot3
 function Knot3:rotateY(radians)
@@ -135,8 +126,7 @@ function Knot3:rotateY(radians)
         math.sin(radians))
 end
 
----Rotates this knot around the y axis by
----the cosine and sine of an angle.
+---Rotates this knot around the y axis by the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return Knot3
@@ -147,8 +137,7 @@ function Knot3:rotateYInternal(cosa, sina)
     return self
 end
 
----Rotates this knot around the z axis by
----an angle in radians.
+---Rotates this knot around the z axis by an angle in radians.
 ---@param radians number angle
 ---@return Knot3
 function Knot3:rotateZ(radians)
@@ -157,8 +146,7 @@ function Knot3:rotateZ(radians)
         math.sin(radians))
 end
 
----Rotates this knot around the z axis by
----the cosine and sine of an angle.
+---Rotates this knot around the z axis by the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return Knot3
@@ -169,8 +157,7 @@ function Knot3:rotateZInternal(cosa, sina)
     return self
 end
 
----Scales this knot.
----Defaults to scale by a Vec3.
+---Scales this knot. Defaults to scale by a Vec3.
 ---@param v Vec3|number scalar
 ---@return Knot3
 function Knot3:scale(v)
@@ -211,8 +198,7 @@ function Knot3:translate(v)
     return self
 end
 
----Evaluates a point between two knots
----given an origin, destination and step.
+---Evaluates a point between two knots given an origin, destination and step.
 ---@param a Knot3 origin knot
 ---@param b Knot3 destination knot
 ---@param step number step
@@ -224,14 +210,12 @@ function Knot3.bezierPoint(a, b, step)
         step)
 end
 
----Sets two knots from a segment of a Catmull-Rom
----curve. The default curve tightness is 0.0. Assumes
----that the previous knot's coordinate is set to a
+---Sets two knots from a segment of a Catmull-Rom curve. The default curve
+---tightness is 0.0. Assumes that the previous knot's coordinate is set to a
 ---prior anchor point.
 ---
----The previous knot's fore handle,
----the next knot's rear handle and the next knot's
----coordinate are set by this function.
+---The previous knot's fore handle, the next knot's rear handle and the next
+---knot's coordinate are set by this function.
 ---@param prevAnchor Vec3 previous anchor point
 ---@param currAnchor Vec3 current anchor point
 ---@param nextAnchor Vec3 next anchor point
@@ -264,13 +248,11 @@ function Knot3.fromSegCatmull(
     return nextKnot
 end
 
----Sets a knot from a line segment. Assumes that
----the previous knot's coordinate is set to the
----first anchor point.
+---Sets a knot from a line segment. Assumes that the previous knot's coordinate
+---is set to the first anchor point.
 ---
----The previous knot's fore handle,
----the next knot's rear handle and the next knot's
----coordinate are set by this function.
+---The previous knot's fore handle, the next knot's rear handle and the next
+---knot's coordinate are set by this function.
 ---@param nextAnchor Vec3 next anchor point
 ---@param prevKnot Knot3 previous knot
 ---@param nextKnot Knot3 next knot
@@ -303,10 +285,8 @@ function Knot3.fromSegLinear(nextAnchor, prevKnot, nextKnot)
     return nextKnot
 end
 
----Smoothes the handles of a knot with
----reference to a previous and next knot.
----An internal helper function.
----Returns a new carry vector.
+---Smoothes the handles of a knot with reference to a previous and next knot.
+---An internal helper function. Returns a new carry vector.
 ---@param prev Knot3 previous knot
 ---@param curr Knot3 current knot
 ---@param next Knot3 next knot
@@ -372,10 +352,8 @@ function Knot3.smoothHandlesInternal(prev, curr, next, carry)
     return Vec3.new(xCarry, yCarry, zCarry)
 end
 
----Smooths the fore handle of the first knot
----in an open curve.
----An internal helper function.
----Returns a new carry vector.
+---Smooths the fore handle of the first knot in an open curve. An internal
+---helper function. Returns a new carry vector.
 ---@param curr Knot3 current knot
 ---@param next Knot3 next knot
 ---@param carry Vec3 temporary vector
@@ -433,10 +411,8 @@ function Knot3.smoothHandlesFirstInternal(curr, next, carry)
     return Vec3.new(xCarry, yCarry, zCarry)
 end
 
----Smooths the rear handle of the last knot
----in an open curve.
----An internal helper function.
----Returns a new carry vector.
+---Smooths the rear handle of the last knot in an open curve. An internal
+---helper function. Returns a new carry vector.
 ---@param prev Knot3 previous knot
 ---@param curr Knot3 current knot
 ---@param carry Vec3 temporary vector

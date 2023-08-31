@@ -29,8 +29,7 @@ GradientUtilities.HUE_EASING_PRESETS = {
     "NEAR"
 }
 
----Easing function presets for non-polar
----color representations.
+---Easing function presets for non-polar color representations.
 GradientUtilities.RGB_EASING_PRESETS = {
     "CIRCLE_IN",
     "CIRCLE_OUT",
@@ -59,15 +58,11 @@ GradientUtilities.DEFAULT_RGB_EASING = "LINEAR"
 ---Default style preset.
 GradientUtilities.DEFAULT_STYLE = "MIXED"
 
----Bayer dithering matrices, in 2^1, 2^2, 2^3
----or 2x2, 4x4, 8x8. For matrix generators, see
----https://codegolf.stackexchange.com/q/259633
----and https://www.shadertoy.com/view/XtV3RG .
----More than 2^4 is overkill for 8-bit color.
----The largest element is rows * columns - 1.
----These are normalized in a non-standard way
----for the sake of consistency with custom
----dither matrices.
+---Bayer dithering matrices, in 2^1, 2^2, 2^3 or 2x2, 4x4, 8x8. For matrix
+---generators, see https://codegolf.stackexchange.com/q/259633 and
+---https://www.shadertoy.com/view/XtV3RG . More than 2^4 is overkill for
+---8-bit color. The largest element is rows * columns - 1. These are normalized
+---in a non-standard way for the sake of consistency with custom dithers.
 ---@type number[][]
 GradientUtilities.BAYER_MATRICES = {
     {
@@ -95,11 +90,9 @@ GradientUtilities.BAYER_MATRICES = {
 --- Maximum width or height for a custom dither image.
 GradientUtilities.DITHER_MAX_SIZE = 64
 
----Converts an array of Aseprite colors to a
----ClrGradient. If the number of colors is less
----than one, returns a gradient with black and
----white. If the number is less than two, returns
----with the original color and its opaque variant.
+---Converts an array of Aseprite colors to a ClrGradient. If the number of
+---colors is less than one, returns a gradient with black and white. If the
+---number is less than two, returns the original color and its opaque variant.
 ---@param aseColors Color[] array of aseprite colors
 ---@return ClrGradient
 function GradientUtilities.aseColorsToClrGradient(aseColors)
@@ -130,8 +123,8 @@ function GradientUtilities.aseColorsToClrGradient(aseColors)
     return ClrGradient.newInternal(clrKeys)
 end
 
----Finds the appropriate color easing function based on
----the color space preset and hue preset.
+---Finds the appropriate color easing function based on the color space preset
+---and hue preset.
 ---@param clrSpcPreset string color space preset
 ---@param huePreset string hue preset
 ---@return fun(o: Clr, d: Clr, t: number): Clr
@@ -152,11 +145,9 @@ function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
     end
 end
 
----Generates the dialog widgets shared across
----gradient dialogs. Places a new row at the
----end of the widgets. The show style flag specifies
----whether to show the style combo box for gradients
----which allow dithered vs. mixed color.
+---Generates the dialog widgets shared across gradient dialogs. Places a new
+---row at the end of the widgets. The show style flag specifies whether to show
+---the style combo box for gradients which allow dithered vs. mixed color.
 ---@param dlg Dialog dialog
 ---@param showStyle boolean? show style combo box
 function GradientUtilities.dialogWidgets(dlg, showStyle)
@@ -489,8 +480,7 @@ function GradientUtilities.circleOut(t)
     return math.sqrt(1.0 - u * u)
 end
 
----Finds the appropriate easing function in RGB
----given a preset.
+---Finds the appropriate easing function in RGB given a preset.
 ---@param preset string rgb preset
 ---@return fun(t: number): number
 function GradientUtilities.easingFuncFromPreset(preset)
@@ -507,9 +497,8 @@ function GradientUtilities.easingFuncFromPreset(preset)
     end
 end
 
----Finds the appropriate color gradient dither from
----a string preset. "DITHER_CUSTOM" will return a
----custom matrix loaded from an image file path.
+---Finds the appropriate color gradient dither from a string preset.
+---"DITHER_CUSTOM" returns a custom matrix loaded from an image file path.
 ---"DITHER_BAYER" returns a Bayer matrix.
 ---Defaults to a smooth mix.
 ---@param stylePreset string style preset
@@ -551,13 +540,11 @@ function GradientUtilities.ditherFromPreset(
     end
 end
 
----Converts an Aseprite image to a dithering matrix. Returns
----the matrix along with its width (columns), height (rows)
----maximum and minimum element. Indexed images depend on
----a palette argument. If nil, then the image's indices will
----be used instead of their color referents. Images greater
----than the size limit will not be considered, and a default
----will be returned.
+---Converts an Aseprite image to a dithering matrix. Returns the matrix along
+---with its width (columns), height (rows) maximum and minimum element. RGB
+---images use a grayscale conversion. Grayscale images use the gray value as is.
+---Indexed images find the minimum and maximum index used, then normalize.
+---Images greater than the size limit will return a default instead.
 ---@param image Image image
 ---@return number[] matrix
 ---@return integer columns
@@ -583,9 +570,8 @@ function GradientUtilities.imageToMatrix(image)
     local lenMat = 0
 
     if colorMode == ColorMode.RGB then
-        -- Problem with this approach is that no one
-        -- will agree on RGB to gray conversion.
-        -- To unpack colors to floats, you could try, e.g.,
+        -- Problem with this approach is that no one will agree on RGB to gray
+        -- conversion. To unpack colors to floats, you could try, e.g.,
         -- string.unpack("f", string.pack("i", 0x40490FDB))
         local fromHex <const> = Clr.fromHex
         local sRgbToLab <const> = Clr.sRgbToSrLab2
@@ -638,8 +624,7 @@ function GradientUtilities.imageToMatrix(image)
     return matrix, width, height
 end
 
----Finds the appropriate easing function in HSL or HSV
----given a preset.
+---Finds the appropriate easing function in HSL or HSV given a preset.
 ---@param preset string hue preset
 ---@return fun(o: number, d: number, t: number): number
 function GradientUtilities.hueEasingFuncFromPreset(preset)
@@ -654,9 +639,8 @@ function GradientUtilities.hueEasingFuncFromPreset(preset)
     end
 end
 
----Interpolates a hue from an origin to a destination
----by a factor in [0.0, 1.0] in the counter-clockwise
----direction.
+---Interpolates a hue from an origin to a destination by a factor in [0.0, 1.0]
+---in the counter-clockwise direction.
 ---@param o number origin
 ---@param d number destination
 ---@param t number factor
@@ -665,9 +649,8 @@ function GradientUtilities.lerpHueCcw(o, d, t)
     return Utilities.lerpAngleCcw(o, d, t, 1.0)
 end
 
----Interpolates a hue from an origin to a destination
----by a factor in [0.0, 1.0] in the clockwise
----direction.
+---Interpolates a hue from an origin to a destination by a factor in [0.0, 1.0]
+---in the clockwise direction.
 ---@param o number origin
 ---@param d number destination
 ---@param t number factor
@@ -676,9 +659,8 @@ function GradientUtilities.lerpHueCw(o, d, t)
     return Utilities.lerpAngleCw(o, d, t, 1.0)
 end
 
----Interpolates a hue from an origin to a destination
----by a factor in [0.0, 1.0] in the far
----direction.
+---Interpolates a hue from an origin to a destination by a factor in [0.0, 1.0]
+---in the far direction.
 ---@param o number origin
 ---@param d number destination
 ---@param t number factor
@@ -687,9 +669,8 @@ function GradientUtilities.lerpHueFar(o, d, t)
     return Utilities.lerpAngleFar(o, d, t, 1.0)
 end
 
----Interpolates a hue from an origin to a destination
----by a factor in [0.0, 1.0] in the near
----direction.
+---Interpolates a hue from an origin to a destination by a factor in [0.0, 1.0]
+---in the near direction.
 ---@param o number origin
 ---@param d number destination
 ---@param t number factor

@@ -14,10 +14,8 @@ setmetatable(Curve2, {
     end
 })
 
----Constructs a piecewise cubic Bezier curve.
----The first parameter specifies a closed loop
----if true. The second parameter should be
----a table of Knot2s.
+---Constructs a piecewise cubic Bezier curve. The first parameter specifies a
+---closed loop if true. The second parameter should be a table of Knot2s.
 ---@param cl boolean closed loop
 ---@param knots Knot2[] knots
 ---@param name string? name
@@ -38,11 +36,9 @@ function Curve2:__tostring()
     return Curve2.toJson(self)
 end
 
----Calculates the arc length of a curve. Does so
----by creating a number of sampled points, then
----accumulating the lengths between a current and
----previous point. Returns the summed length and
----an array of cumulative lengths
+---Calculates the arc length of a curve. Does so by creating a number of
+---sampled points, then accumulating the lengths between a current and previous
+---point. Returns the summed length and an array of cumulative lengths
 ---@param curve Curve2 curve
 ---@param sampleCount number sample count
 ---@return number totalLength curve length
@@ -80,8 +76,8 @@ function Curve2.arcLength(curve, sampleCount)
     return totalLength, arcLengths
 end
 
----Evaluates a curve by a step in [0.0, 1.0].
----Returns a vector representing a point on the curve.
+---Evaluates a curve by a step in [0.0, 1.0]. Returns a vector representing a
+---point on the curve.
 ---@param curve Curve2 curve
 ---@param step number step
 ---@return Vec2
@@ -118,8 +114,7 @@ function Curve2.eval(curve, step)
     return Knot2.bezierPoint(a, b, tsni)
 end
 
----Evaluates a curve at its first knot,
----returning a copy of the first knot coord.
+---Evaluates a curve at its first knot, returns a copy of the first knot coord.
 ---@param curve Curve2 curve
 ---@return Vec2
 function Curve2.evalFirst(curve)
@@ -128,8 +123,7 @@ function Curve2.evalFirst(curve)
     return Vec2.new(coFirst.x, coFirst.y)
 end
 
----Evaluates a curve at its last knot,
----returning a copy of the last knot coord.
+---Evaluates a curve at its last knot, returns a copy of the last knot coord.
 ---@param curve Curve2 curve
 ---@return Vec2
 function Curve2.evalLast(curve)
@@ -138,9 +132,8 @@ function Curve2.evalLast(curve)
     return Vec2.new(coLast.x, coLast.y)
 end
 
----Creates an array containing points on a
----polyline that are approximately equidistant.
----Depends on the results of the arcLength method.
+---Creates an array containing points on a polyline that are approximately
+---equidistant. Depends on the results of the arcLength method.
 ---@param curve Curve2 curve
 ---@param totalLength number curve length
 ---@param arcLengths number[] cumulative lengths

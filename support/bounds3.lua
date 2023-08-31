@@ -12,10 +12,9 @@ setmetatable(Bounds3, {
     end
 })
 
----Constructs a new axis aligned bounding box
----(AABB) for a 3D volume, represented by a
----minimum and maximum coordinate.
----Defaults to passing vectors by value.
+---Constructs a new axis aligned bounding box (AABB) for a 3D volume,
+---represented by a minimum and maximum coordinate. Defaults to passing vectors
+---by value.
 ---@param mn Vec3|number lower bound
 ---@param mx Vec3|number upper bound
 ---@return Bounds3
@@ -23,10 +22,9 @@ function Bounds3.new(mn, mx)
     return Bounds3.newByVal(mn, mx)
 end
 
----Constructs a new axis aligned bounding box
----(AABB) for a 3D volume, represented by a
----minimum and maximum coordinate. Vectors
----are assigned by reference.
+---Constructs a new axis aligned bounding box (AABB) for a 3D volume,
+---represented by a minimum and maximum coordinate. Vectors are assigned by
+---reference.
 ---@param mn Vec3 lower bound
 ---@param mx Vec3 upper bound
 ---@return Bounds3
@@ -37,10 +35,8 @@ function Bounds3.newByRef(mn, mx)
     return inst
 end
 
----Constructs a new axis aligned bounding box
----(AABB) for a 3D volume, represented by a
----minimum and maximum coordinate. Vectors
----are copied by value.
+---Constructs a new axis aligned bounding box (AABB) for a 3D volume,
+---represented by a minimum and maximum coordinate. Vectors are copied by value.
 ---@param mn Vec3|number lower bound
 ---@param mx Vec3|number upper bound
 ---@return Bounds3
@@ -84,16 +80,14 @@ function Bounds3:__tostring()
     return Bounds3.toJson(self)
 end
 
----Finds the center of a bounding box.
----Returns a Vec3.
+---Finds the center of a bounding box. Returns a Vec3.
 ---@param b Bounds3 bounds
 ---@return Vec3
 function Bounds3.center(b)
     return Vec3.mixNum(b.mn, b.mx, 0.5)
 end
 
----Evaluates whether a point is within the
----bounds, lower bounds inclusive, upper
+---Evaluates whether a point is within the bounds, lower bounds inclusive, upper
 ---bounds exclusive.
 ---@param b Bounds3 bounds
 ---@param pt Vec3 point
@@ -106,8 +100,7 @@ function Bounds3.containsInclExcl(b, pt)
         and (pt.z >= mn.z and pt.z < mx.z)
 end
 
----Evaluates whether a bounding box intersects
----a sphere.
+---Evaluates whether a bounding box intersects a sphere.
 ---@param a Bounds3 bounds
 ---@param center Vec3 sphere center
 ---@param radius number sphere radius
@@ -117,10 +110,9 @@ function Bounds3.intersectsSphere(a, center, radius)
         a, center, radius * radius)
 end
 
----Evaluates whether a bounding box intersects
----a sphere. Internal helper function for octrees,
----as it assumes that the squared-radius has already
----been calculated.
+---Evaluates whether a bounding box intersects a sphere. Internal helper
+---function for octrees, as it assumes that the squared-radius has already been
+---calculated.
 ---@param a Bounds3 bounds
 ---@param center Vec3 sphere center
 ---@param rsq number sphere radius, squared
@@ -150,12 +142,9 @@ function Bounds3.intersectsSphereInternal(a, center, rsq)
     return (xd * xd + yd * yd + zd * zd) < rsq
 end
 
----Splits a bounding box into octants
----according to three factors in the range
----[0.0, 1.0]. The factor on the x axis
----governs the vertical split. On the y axis,
----the horizontal split. On the z axis, the
----depth split.
+---Splits a bounding box into octants according to three factors in the range
+---[0.0, 1.0]. The factor on the x axis governs the vertical split. On the y
+---axis, the horizontal split. On the z axis, the depth split.
 ---@param b Bounds3 bounds
 ---@param xFac number vertical factor
 ---@param yFac number horizontal vector
@@ -207,10 +196,8 @@ function Bounds3.toJson(b)
         Vec3.toJson(b.mx))
 end
 
----Returns a bounds with the dimensions
----of the CIE LAB or SR LAB 2 color spaces.
----Intended for use with an octree containing
----points of color.
+---Returns a bounds with the dimensions of the CIE LAB or SR LAB 2 color spaces.
+---Intended for use with an octree containing points of color.
 ---@return Bounds3
 function Bounds3.lab()
     return Bounds3.newByRef(
@@ -218,9 +205,8 @@ function Bounds3.lab()
         Vec3.new(111.0, 111.0, 101.0))
 end
 
----Returns a bounds containing a signed
----unit cube in Cartesian coordinates, from
----[-1.0, 1.0].
+---Returns a bounds containing a signed unit cube in Cartesian coordinates,
+---from [-1.0, 1.0].
 ---@return Bounds3
 function Bounds3.unitCubeSigned()
     return Bounds3.newByRef(
@@ -228,9 +214,8 @@ function Bounds3.unitCubeSigned()
         Vec3.new(1.000002, 1.000002, 1.000002))
 end
 
----Returns a bounds containing an unsigned
----unit cube in Cartesian coordinates, from
----[0.0, 1.0].
+---Returns a bounds containing an unsigned unit cube in Cartesian coordinates,
+---from [0.0, 1.0].
 ---@return Bounds3
 function Bounds3.unitCubeUnsigned()
     return Bounds3.newByRef(

@@ -13,9 +13,8 @@ setmetatable(Knot2, {
     end
 })
 
----Constructs a new Bezier knot from a coordinate,
----fore handle and rear handle. All are Vec2s passed
----by reference.
+---Constructs a new Bezier knot from a coordinate, fore handle and rear handle.
+---All are Vec2s passed by reference.
 ---@param co Vec2 coordinate
 ---@param fh Vec2 fore handle
 ---@param rh Vec2 rear handle
@@ -38,8 +37,7 @@ function Knot2:alignHandles()
     return self:alignHandlesForward()
 end
 
----Aligns the knot's fore handle to its
----rear handle while preserving magnitude.
+---Aligns the knot's fore handle to its rear handle while preserving magnitude.
 ---@return Knot2
 function Knot2:alignHandlesBackward()
     local rDir <const> = Vec2.sub(self.rh, self.co)
@@ -53,8 +51,7 @@ function Knot2:alignHandlesBackward()
     return self
 end
 
----Aligns the knot's rear handle to its
----fore handle while preserving magnitude.
+---Aligns the knot's rear handle to its fore handle while preserving magnitude.
 ---@return Knot2
 function Knot2:alignHandlesForward()
     local fDir <const> = Vec2.sub(self.fh, self.co)
@@ -74,8 +71,7 @@ function Knot2:mirrorHandles()
     return self:mirrorHandlesForward()
 end
 
----Sets the fore handle to mirror
----the rear handle.
+---Sets the fore handle to mirror the rear handle.
 ---@return Knot2
 function Knot2:mirrorHandlesBackward()
     self.fh = Vec2.sub(self.co,
@@ -83,8 +79,7 @@ function Knot2:mirrorHandlesBackward()
     return self
 end
 
----Sets the rear handle to mirror
----the fore handle.
+---Sets the rear handle to mirror the fore handle.
 ---@return Knot2
 function Knot2:mirrorHandlesForward()
     self.rh = Vec2.sub(self.co,
@@ -92,8 +87,7 @@ function Knot2:mirrorHandlesForward()
     return self
 end
 
----Reverses the knots direction by swapping
----its fore and rear handles.
+---Reverses the knots direction by swapping its fore and rear handles.
 ---@return Knot2
 function Knot2:reverse()
     local temp <const> = self.fh
@@ -102,8 +96,7 @@ function Knot2:reverse()
     return self
 end
 
----Rotates this knot around the z axis by
----an angle in radians.
+---Rotates this knot around the z axis by an angle in radians.
 ---@param radians number angle
 ---@return Knot2
 function Knot2:rotateZ(radians)
@@ -112,8 +105,7 @@ function Knot2:rotateZ(radians)
         math.sin(radians))
 end
 
----Rotates this knot around the z axis by
----the cosine and sine of an angle.
+---Rotates this knot around the z axis by the cosine and sine of an angle.
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return Knot2
@@ -127,8 +119,7 @@ function Knot2:rotateZInternal(cosa, sina)
     return self
 end
 
----Scales this knot.
----Defaults to scale by a vector.
+---Scales this knot. Defaults to scale by a vector.
 ---@param v Vec2|number scalar
 ---@return Knot2
 function Knot2:scale(v)
@@ -169,8 +160,7 @@ function Knot2:translate(v)
     return self
 end
 
----Evaluates a point between two knots
----given an origin, destination and step.
+---Evaluates a point between two knots given an origin, destination and step.
 ---@param a Knot2 origin knot
 ---@param b Knot2 destination knot
 ---@param step number step
@@ -182,8 +172,7 @@ function Knot2.bezierPoint(a, b, step)
         step)
 end
 
----Forms a knot to be used in arcs and circles
----at an origin with a given radius.
+---Forms a knot to be used in arcs and circles at an origin with a given radius.
 ---For internal use only. Does not validate arguments.
 ---@param cosa number cosine of an angle
 ---@param sina number sine of an angle

@@ -14,10 +14,8 @@ setmetatable(Curve3, {
     end
 })
 
----Constructs a piecewise cubic Bezier curve.
----The first parameter specifies a closed loop
----if true. The second parameter should be
----a table of Knot3s.
+---Constructs a piecewise cubic Bezier curve. The first parameter specifies a
+---closed loop if true. The second parameter should be a table of Knot3s.
 ---@param cl boolean closed loop
 ---@param knots Knot3[] knots
 ---@param name string? name
@@ -38,9 +36,8 @@ function Curve3:__tostring()
     return Curve3.toJson(self)
 end
 
----Creates a curve to approximate an ellipse.
----The radii default to 0.5.
----The origin defaults to (0.0, 0.0, 0.0).
+---Creates a curve to approximate an ellipse. The radii default to 0.5. The
+---origin defaults to (0.0, 0.0, 0.0).
 ---@param xRadius number? horizontal radius
 ---@param yRadius number? vertical radius
 ---@param xOrigin number? x origin
@@ -93,8 +90,8 @@ function Curve3.ellipse(xRadius, yRadius, xOrigin, yOrigin, zOrigin)
     }, "Ellipse")
 end
 
----Evaluates a curve by a step in [0.0, 1.0].
----Returns a vector representing a point on the curve.
+---Evaluates a curve by a step in [0.0, 1.0]. Returns a vector representing a
+---point on the curve.
 ---@param curve Curve3 curve
 ---@param step number step
 ---@return Vec3
@@ -131,8 +128,7 @@ function Curve3.eval(curve, step)
     return Knot3.bezierPoint(a, b, tsni)
 end
 
----Evaluates a curve at its first knot,
----returning a copy of the first knot coord.
+---Evaluates a curve at its first knot, returns a copy of the first knot coord.
 ---@param curve Curve3 curve
 ---@return Vec3
 function Curve3.evalFirst(curve)
@@ -144,8 +140,7 @@ function Curve3.evalFirst(curve)
         coFirst.z)
 end
 
----Evaluates a curve at its last knot,
----returning a copy of the last knot coord.
+---Evaluates a curve at its last knot, returns a copy of the last knot coord.
 ---@param curve Curve3 curve
 ---@return Vec3
 function Curve3.evalLast(curve)
@@ -157,9 +152,8 @@ function Curve3.evalLast(curve)
         coLast.z)
 end
 
----Converts a set of points on a Catmull-Rom spline
----to a Bezier curve. The default tightness is 0.0.
----There must be at least 4 points in the array.
+---Converts a set of points on a Catmull-Rom spline to a Bezier curve. The
+---default tightness is 0.0. There must be at least 4 points in the array.
 ---@param closedLoop boolean closed loop flag
 ---@param points Vec3[] array of points
 ---@param tightness number? curve tightness
@@ -285,8 +279,8 @@ function Curve3.fromCatmull(closedLoop, points, tightness, name)
     return Curve3.new(closedLoop, kns, name)
 end
 
----Creates a curve from a series of points.
----Smoothes the fore and rear handles of knots.
+---Creates a curve from a series of points. Smoothes the fore and rear handles
+---of knots.
 ---@param closedLoop boolean closed loop
 ---@param points Vec3[] points array
 ---@param name string? curve name
@@ -321,8 +315,7 @@ function Curve3.fromPoints(closedLoop, points, name)
     end
 end
 
----Adjusts knot handles so as to create
----a smooth, continuous curve.
+---Adjusts knot handles so as to create a smooth, continuous curve.
 ---@param target Curve3
 function Curve3.smoothHandles(target)
     local knots <const> = target.knots
@@ -368,9 +361,8 @@ function Curve3.smoothHandles(target)
     return target
 end
 
----Straightens the fore and rear handles of
----a curve's knots so they are collinear with
----its coordinates.
+---Straightens the fore and rear handles of a curve's knots so they are
+---collinear with its coordinates.
 ---@param target Curve3
 function Curve3.straightHandles(target)
     local knots <const> = target.knots

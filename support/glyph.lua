@@ -11,12 +11,10 @@ setmetatable(Glyph, {
     end
 })
 
----Constructs a new glyph from a character,
----a number representing an 8x8 matrix that
----stores the glyph's visual representation,
----and a number to drop the glyph down by
----a number of steps (for glyphs with
----descenders, such as 'g', 'p', 'q').
+---Constructs a new glyph from a character, a number representing an 8x8 matrix
+---that stores the glyph's visual representation, and a number to drop the
+---glyph down by a number of steps (for glyphs with descenders, such as 'g',
+---'p', 'q').
 ---@param character string character
 ---@param matrix integer visual matrix
 ---@param drop integer? drop amount

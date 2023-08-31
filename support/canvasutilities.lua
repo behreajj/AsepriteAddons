@@ -10,9 +10,8 @@ setmetatable(CanvasUtilities, {
     end
 })
 
----Draws a grid of overlapping horizontal and vertical
----lines. Turns off antialiasing. Sets color and stroke
----width.
+---Draws a grid of overlapping horizontal and vertical lines. Turns off
+---antialiasing. Sets color and stroke width.
 ---@param context GraphicsContext canvas
 ---@param count integer grid line count
 ---@param w integer width
@@ -54,10 +53,8 @@ function CanvasUtilities.drawGrid(context, count, w, h, color, sw)
     end
 end
 
----Draws a polygon on a graphics context.
----Only creates the shape, does not assign
----fill or stroke. The rotation is expected
----in radians.
+---Draws a polygon on a graphics context. Only creates the shape, does not
+---assign fill or stroke. The rotation is expected in radians.
 ---@param context GraphicsContext canvas
 ---@param sides integer sides
 ---@param radius number radius
@@ -87,10 +84,9 @@ function CanvasUtilities.drawPolygon(
     context:closePath()
 end
 
----Draws a filled reticle on a graphics context.
----The input factor is expected to be in the range
----[0.0, 1.0]. Draws two triangles on the top
----and bottom tracks of the slider bar.
+---Draws a filled reticle on a graphics context. The input factor is expected
+---to be in the range [0.0, 1.0]. Draws two triangles on the top and bottom
+---tracks of the slider bar.
 ---@param context GraphicsContext canvas
 ---@param fac number normalized factor
 ---@param barWidth integer bar width
@@ -120,11 +116,9 @@ function CanvasUtilities.drawSliderReticle(
     context:fill()
 end
 
----Generates the dialog widgets used by a Bezier curve.
----This includes a canvas, four number inputs for
----the two control points x and y coordinate.
----The ids for these sliders are "cp0x," "cp0y",
----"cp1x" and "cp1y."
+---Generates the dialog widgets used by a Bezier curve. This includes a canvas,
+---four number inputs for the two control points x and y coordinate. The ids
+---for these sliders are "cp0x," "cp0y", "cp1x" and "cp1y."
 ---@param dialog Dialog dialog
 ---@param id string canvas id
 ---@param label string canvas label
@@ -580,11 +574,9 @@ function CanvasUtilities.graphBezier(
     return dialog
 end
 
----Generates the dialog widgets used by a Cartesian
----graph. This includes a canvas, four sliders for
----the signed x axis in and y axis in [-100, 100].
----The ids for these sliders are "xOrig," "yOrig",
----"xDest" and "yDest."
+---Generates the dialog widgets used by a Cartesian graph. This includes a
+---canvas, four sliders for the signed x axis in and y axis in [-100, 100]. The
+---ids for these sliders are "xOrig," "yOrig", "xDest" and "yDest."
 ---@param dialog Dialog dialog
 ---@param id string canvas id
 ---@param label string canvas label
@@ -836,11 +828,9 @@ function CanvasUtilities.graphLine(
     return dialog
 end
 
----Generates the dialog widgets used by an HSL
----spectrum. This includes a canvas and 4 numbers.
----The ids for these numbers are "spectrumHue",
----"spectrumChroma", "spectrumLight" and
----"spectrumAlpha".
+---Generates the dialog widgets used by an LCH spectrum. This includes a canvas
+---and 4 numbers. The ids for these numbers are "spectrumHue", "spectrumChroma",
+---"spectrumLight" and "spectrumAlpha".
 ---@param dialog Dialog dialog
 ---@param id string canvas id
 ---@param label string canvas label

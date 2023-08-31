@@ -76,8 +76,8 @@ JsonUtilities.VERSION_FORMAT = table.concat({
     "\"prNo\":%d}",
 }, ",")
 
----Converts a tag animation direction to a string.
----"FORWARD" is returned as a default.
+---Converts a tag animation direction to a string. "FORWARD" is returned as
+---a default.
 ---@param ad AniDir|integer|nil animation direction
 ---@return string
 function JsonUtilities.aniDirToStr(ad)
@@ -89,10 +89,8 @@ function JsonUtilities.aniDirToStr(ad)
     return "FORWARD"
 end
 
----Converts a layer blend mode to a string.
----If the layer is a group layer, it does not
----have a blend mode. "NORMAL" is returned
----as a default.
+---Converts a layer blend mode to a string. If the layer is a group layer, it
+---does not have a blend mode. "NORMAL" is returned as a default.
 ---@param bm BlendMode|integer|nil blend mode
 ---@return string
 function JsonUtilities.blendModeToStr(bm)
@@ -109,8 +107,7 @@ function JsonUtilities.blendModeToStr(bm)
     return "NORMAL"
 end
 
----Converts a color mode to a string.
----"RGB" is returned as a default.
+---Converts a color mode to a string. "RGB" is returned as a default.
 ---@param cm ColorMode|integer|nil color mode
 ---@return string
 function JsonUtilities.colorModeToStr(cm)
@@ -122,16 +119,13 @@ function JsonUtilities.colorModeToStr(cm)
     return "RGB"
 end
 
----Fomats a cel, or table containing similar
----properties, as a JSON string.
+---Fomats a cel, or table containing similar properties, as a JSON string.
 ---
----The filename reference allows the JSON string to
----locate a file in a directory. This function does
----not do any filename validation.
+---The filename reference allows the JSON string to locate a file in a
+---directory. This function does not do any filename validation.
 ---
----The cel's layer property is expected to refer to
----the layer id, not the layer object itself. However,
----the function will attempt type checking.
+---The cel's layer property is expected to refer to the layer id, not the layer
+---object itself. However, the function will attempt type checking.
 ---@param cel Cel|table cel or packet
 ---@param fileName string file name reference
 ---@param originFormat? string origin format
@@ -166,11 +160,9 @@ function JsonUtilities.celToJson(cel, fileName, originFormat)
         cel.zIndex)
 end
 
----Formats a frame, or table containing the same
----properties, as a JSON string.
----One is subtracted from the frame number to match the
----indexing conventions of other languages.
----The duration is multiplied by 1000 and then floored.
+---Formats a frame, or table containing the same properties, as a JSON string.
+---One is subtracted from the frame number to match the indexing conventions of
+---other languages. The duration is multiplied by 1000 and then floored.
 ---@param frame Frame|table frame or packet
 ---@return string
 function JsonUtilities.frameToJson(frame)
@@ -180,9 +172,9 @@ function JsonUtilities.frameToJson(frame)
         math.floor(frame.duration * 1000))
 end
 
----Formats a layer, or table containing similar properties.
----Instead of a parent and stackIndex, the string contains
----an array of stack indices of the layer and of its parents.
+---Formats a layer, or table containing similar properties. Instead of a parent
+---and stackIndex, the string contains an array of stack indices of the layer
+---and of its parents.
 ---@param layer Layer|table
 ---@return string
 function JsonUtilities.layerToJson(layer)
@@ -231,11 +223,9 @@ function JsonUtilities.pointToJson(x, y)
         x, y)
 end
 
----Formats a rectangle, or table containing the
----same properties, as a JSON string.
----The format flag can be "CENTER_FULL",
----"CENTER_HALF, "CORNERS" or the default,
----"TOP_LEFT".
+---Formats a rectangle, or table containing the same properties, as a JSON
+---string. The format flag can be "CENTER_FULL", "CENTER_HALF, "CORNERS" or the
+---default, "TOP_LEFT".
 ---@param r Rectangle|table rectangle or packet
 ---@param format? string origin format
 ---@return string
@@ -265,8 +255,7 @@ function JsonUtilities.rectToJson(r, format)
     end
 end
 
----Formats a sprite, or table containing the
----same properties, as a JSON string.
+---Formats a sprite, or table containing the same properties, as a JSON string.
 ---@param sprite Sprite|table sprite or packet
 ---@return string
 function JsonUtilities.spriteToJson(sprite)
@@ -290,16 +279,13 @@ function JsonUtilities.spriteToJson(sprite)
         JsonUtilities.pointToJson(spec.width, spec.height))
 end
 
----Fomats a tag, or table containing the
----same properties, as a JSON string.
+---Fomats a tag, or table containing the same properties, as a JSON string.
 ---
----One is subtracted from the start and end
----frame numbers to match the indexing
+---One is subtracted from the start and end frame numbers to match the indexing
 ---conventions of other languages.
 ---
----The filename reference allows the JSON string to
----locate a file in a directory. This function does
----not do any filename validation.
+---The filename reference allows the JSON string to locate a file in a
+---directory. This function does not do any filename validation.
 ---@param tag Tag|table tag or packet
 ---@param fileName string file name reference
 ---@return string
