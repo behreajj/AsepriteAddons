@@ -141,9 +141,8 @@ function JsonUtilities.celToJson(cel, fileName, originFormat)
     local layer <const> = cel.layer
     local typeLayer <const> = type(layer)
     if typeLayer == "userdata" then
-        if layer.__name == "Layer" then
-            layerVrf = layer.id
-        end
+        ---@diagnostic disable-next-line: undefined-field
+        if layer.__name == "Layer" then layerVrf = layer.id end
     elseif typeLayer == "number"
         and math.type(layer) == "integer" then
         layerVrf = layer
@@ -188,9 +187,8 @@ function JsonUtilities.layerToJson(layer)
     local parent <const> = layer.parent
     local typeParent <const> = type(parent)
     if typeParent == "userdata" then
-        if parent.__name == "Layer" then
-            parentVrf = parent.id
-        end
+        ---@diagnostic disable-next-line: undefined-field
+        if parent.__name == "Layer" then parentVrf = parent.id end
     elseif typeParent == "number"
         and math.type(parent) == "integer" then
         parentVrf = parent

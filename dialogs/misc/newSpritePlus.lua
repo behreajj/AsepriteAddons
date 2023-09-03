@@ -326,9 +326,8 @@ dlg:button {
             colorModeInt = ColorMode.INDEXED
             local bkgIdx <const> = args.bkgIdx or defaults.bkgIdx --[[@as integer]]
             if bkgIdx < #hexesProfile then
-                -- Problem with offset caused by prepending an alpha
-                -- mask to start of palette. At the least, make the
-                -- check widget visible.
+                -- Problem with offset caused by prepending an alpha mask to
+                -- start of palette. At least make the check widget visible.
                 hexBkg = hexesProfile[1 + bkgIdx]
                 local aChannel <const> = (hexBkg >> 0x18) & 0xff
                 createBackground = aChannel > 0
@@ -472,6 +471,12 @@ dlg:button {
         -- update properly, even with app.command.Refresh().
         -- local toolPrefs = app.preferences.tool(app.activeTool)
         -- if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
+
+        -- https://steamcommunity.com/app/431730/discussions/2/3803906367798695226/
+        local docPrefs <const> = app.preferences.document(newSprite)
+        local onionSkinPrefs <const> = docPrefs.onionskin
+        onionSkinPrefs.loop_tag = false
+
         app.activeFrame = firstFrame
         app.command.FitScreen()
         app.refresh()
