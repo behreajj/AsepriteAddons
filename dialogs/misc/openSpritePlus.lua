@@ -154,14 +154,14 @@ dlg:button {
 
         -- Do not ask to open animation sequences.
         -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L125
-        local oldOpSeqPref <const> = app.preferences.open_file.open_sequence
-        app.preferences.open_file.open_sequence = 2
+        local openFilePrefs <const> = app.preferences.open_file
+        local oldOpSeqPref <const> = openFilePrefs.open_sequence
+        openFilePrefs.open_sequence = 2
 
-        -- Palettes need to be retrieved before a new sprite
-        -- is created in case it auto-sets the app.activeSprite
-        -- to the new sprite. Unfortunately, that means this
-        -- is wasted effort if the palette type is "EMBEDDED"
-        -- or there is no new sprite.
+        -- Palettes need to be retrieved before a new sprite is created in case
+        -- it sets the app.activeSprite to the new sprite. Unfortunately, that
+        -- means this is wasted effort if the palette type is "EMBEDDED" or
+        -- there is no new sprite.
         local palType <const> = args.palType
             or defaults.palType --[[@as string]]
         local hexesSrgb = {}
@@ -218,8 +218,7 @@ dlg:button {
             end
         end
 
-        -- Adjustable transparent color causes problems
-        -- with multiple palettes.
+        -- Adjustable transparent color causes problems with multiple palettes.
         if openSprite.transparentColor ~= 0 then
             local oldAlphaMask <const> = openSprite.transparentColor
             openSprite.transparentColor = 0
@@ -282,7 +281,7 @@ dlg:button {
             end)
         end
 
-        app.preferences.open_file.open_sequence = oldOpSeqPref
+        openFilePrefs.open_sequence = oldOpSeqPref
         app.activeTool = "hand"
         app.command.FitScreen()
         app.refresh()

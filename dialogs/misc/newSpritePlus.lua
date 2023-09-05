@@ -324,7 +324,8 @@ dlg:button {
         local hexBkg = 0x0
         if useIndexed then
             colorModeInt = ColorMode.INDEXED
-            local bkgIdx <const> = args.bkgIdx or defaults.bkgIdx --[[@as integer]]
+            local bkgIdx <const> = args.bkgIdx
+                or defaults.bkgIdx --[[@as integer]]
             if bkgIdx < #hexesProfile then
                 -- Problem with offset caused by prepending an alpha mask to
                 -- start of palette. At least make the check widget visible.

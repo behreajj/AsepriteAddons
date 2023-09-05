@@ -12,7 +12,7 @@ local lenFrames <const> = #activeSprite.frames
 
 ---@type table<string, Tag[]>
 local dict <const> = {}
----@type Tag[]
+---@type Tag[][]
 local tagsToRename <const> = {}
 ---@type Tag[]
 local tagsToRemove <const> = {}
@@ -26,7 +26,8 @@ while i < lenTags do
     if toFrame and fromFrame then
         local fromIdx <const> = fromFrame.frameNumber
         local toIdx <const> = toFrame.frameNumber
-        if fromIdx >= 1 and toIdx <= lenFrames then
+        if fromIdx <= lenFrames and toIdx <= lenFrames
+            and fromIdx >= 1 and toIdx >= 1 then
             local name <const> = tag.name
             local arr <const> = dict[name]
             if arr then
@@ -42,31 +43,35 @@ while i < lenTags do
     end
 end
 
+-- Transfer dictionary of arrays to array of arrays.
 for _, arr in pairs(dict) do
     local lenArr <const> = #arr
     if lenArr > 1 then
-        local j = 0
-        while j < lenArr do
-            j = j + 1
-            tagsToRename[#tagsToRename + 1] = arr[j]
-        end
+        tagsToRename[#tagsToRename + 1] = arr
     end
 end
 
 local lenTagsToRename <const> = #tagsToRename
 if lenTagsToRename > 0 then
+    local strfmt <const> = string.format
     app.transaction("Rename tags", function()
         local k = 0
         while k < lenTagsToRename do
             k = k + 1
-            local tag <const> = tagsToRename[k]
-            local oldName <const> = tag.name
+            local arr <const> = tagsToRename[k]
+            local lenArr <const> = #arr
 
-            -- Two tags could have the same fromFrame and toFrame, so those
-            -- cannot be used as distinguishing features.
-            local newName <const> = string.format(
-                "%s (%d)", oldName, k)
-            tag.name = newName
+            local m = 0
+            while m < lenArr do
+                -- Two tags could have the same fromFrame and toFrame, so those
+                -- cannot be used as distinguishing features.
+
+                m = m + 1
+                local tag <const> = arr[m]
+                local oldName <const> = tag.name
+                local newName <const> = strfmt("%s (%d)", oldName, m)
+                tag.name = newName
+            end
         end
     end)
 end
