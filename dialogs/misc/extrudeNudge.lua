@@ -85,7 +85,7 @@ local function extrude(dx, dy, trim)
             yCel = yCel + tmy
         end
 
-        local selCurr <const> = AseUtilities.getSelection(activeSprite)
+        local selCurr <const>, _ <const> = AseUtilities.getSelection(activeSprite)
         local selOrigin <const> = selCurr.origin
 
         local selNext <const> = Selection()
@@ -362,21 +362,24 @@ dlg:button {
         local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
         if selMode ~= "REPLACE" then
-            local activeSel <const> = AseUtilities.getSelection(activeSprite)
+            local activeSel <const>, selIsValid <const> = AseUtilities.getSelection(activeSprite)
 
             if selMode == "INTERSECT" then
                 activeSel:intersect(trgSel)
+                activeSprite.selection = activeSel
             elseif selMode == "SUBTRACT" then
                 activeSel:subtract(trgSel)
+                activeSprite.selection = activeSel
             else
-                -- Additive selection can be confusing when no prior selection
-                -- is made and getSelection returns the cel bounds, which is
-                -- cruder than trgSel. However, there could be a square
-                -- selection contained by, but differently shaped than trgSel.
-                activeSel:add(trgSel)
+                -- Additive selection.
+                -- See https://github.com/aseprite/aseprite/issues/4045 .
+                if selIsValid then
+                    activeSel:add(trgSel)
+                    activeSprite.selection = activeSel
+                else
+                    activeSprite.selection = trgSel
+                end
             end
-
-            activeSprite.selection = activeSel
         else
             activeSprite.selection = trgSel
         end

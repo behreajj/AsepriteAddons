@@ -114,7 +114,7 @@ dlg:button {
 
         local sel = nil
         if useSel then
-            sel = AseUtilities.getSelection(activeSprite)
+            sel, _ = AseUtilities.getSelection(activeSprite)
         end
 
         local leaves <const> = AseUtilities.getLayerHierarchy(

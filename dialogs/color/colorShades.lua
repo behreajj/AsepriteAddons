@@ -240,8 +240,7 @@ dlg:button {
             local gamutImg <const> = Image(spec)
             local pxItr <const> = gamutImg:pixels()
             for pixel in pxItr do
-                -- Convert coordinates from [0, size] to
-                -- [0.0, 1.0], then to LCH.
+                -- Convert coordinates from [0, size] to [0.0, 1.0] then to LCH.
                 local xNrm = pixel.x * szInv
                 xNrm = quantize(xNrm, quantization)
                 local chroma <const> = xNrm * maxChroma

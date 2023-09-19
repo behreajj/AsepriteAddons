@@ -12,9 +12,9 @@ local parentLayers <const> = parent.layers --[=[@as Layer[]]=]
 local lenNeighbors <const> = #parentLayers
 
 if lenNeighbors > 1 then
-    -- Edge case where background layer is at the bottom
-    -- of the stack. A background can still be moved into
-    -- a group. Sprite:backgroundLayer is unreliable here.
+    -- Edge case where background layer is at the bottom of the stack.
+    -- A background can still be moved into a group. Sprite:backgroundLayer
+    -- is unreliable here.
     local currStackIndex <const> = layer.stackIndex
     if currStackIndex == lenNeighbors
         and parentLayers[1].isBackground then

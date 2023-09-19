@@ -45,10 +45,10 @@ local function colorToVec(color)
     -- is not divided cleanly by 2.
     local sqMag <const> = x * x + y * y + z * z
     if sqMag > 0.000047 then
-        local magInv <const> = 1.0 / math.sqrt(sqMag)
-        local xn = x * magInv
-        local yn = y * magInv
-        local zn = z * magInv
+        local invMag <const> = 1.0 / math.sqrt(sqMag)
+        local xn = x * invMag
+        local yn = y * invMag
+        local zn = z * invMag
         if math.abs(xn) < 0.0039216 then xn = 0.0 end
         if math.abs(yn) < 0.0039216 then yn = 0.0 end
         if math.abs(zn) < 0.0039216 then zn = 0.0 end

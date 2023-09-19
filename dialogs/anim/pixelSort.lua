@@ -225,7 +225,7 @@ dlg:button {
         local rowDestAbs <const> = hSrc - 1
 
         if maskCriterion == "SELECTION" then
-            local sel <const> = AseUtilities.getSelection(srcSprite)
+            local sel <const>, _ <const> = AseUtilities.getSelection(srcSprite)
             for pixel in srcItr do
                 lenSrcPxArr = lenSrcPxArr + 1
                 local hex <const> = pixel()

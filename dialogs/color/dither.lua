@@ -377,15 +377,10 @@ dlg:button {
             local bHex = 0x00ffffff & AseUtilities.aseColorToHex(
                 bColorAse, ColorMode.RGB)
 
-            -- Swap colors so that origin (a) is always the
-            -- darker color.
-            local aLum <const> = Clr.sRgbToSrLab2(Clr.fromHex(aHex)).l
-            local bLum <const> = Clr.sRgbToSrLab2(Clr.fromHex(bHex)).l
-            if aLum > bLum then aHex, bHex = bHex, aHex end
-
-            local greyMethod = nil
+            local greyMethod = function(rSrc, gSrc, bSrc) return 0.5 end
             local greyStr = ""
             if greyPreset == "AVERAGE" then
+                -- In HSI, I = (r + g + b) / 3, S = 1 - min(r, g, b) / I.
                 -- 3 * 255 = 765
                 greyMethod = function(rSrc, gSrc, bSrc)
                     return (rSrc + gSrc + bSrc) * 0.0013071895424837
@@ -418,6 +413,12 @@ dlg:button {
                     return ltsLut[1 + lum] * 0.003921568627451
                 end
                 greyStr = "Luminance"
+            end
+
+            -- Swap colors so that origin (a) is the darker color.
+            if greyMethod(aColorAse.red, aColorAse.green, aColorAse.blue) >
+                greyMethod(bColorAse.red, bColorAse.green, bColorAse.blue) then
+                aHex, bHex = bHex, aHex
             end
 
             local threshold <const> = thresh100 * 0.01

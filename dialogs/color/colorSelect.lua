@@ -616,17 +616,23 @@ dlg:button {
         end
 
         if selMode ~= "REPLACE" then
-            local activeSel <const> = AseUtilities.getSelection(activeSprite)
+            local activeSel <const>, selIsValid <const> = AseUtilities.getSelection(activeSprite)
             if selMode == "INTERSECT" then
                 activeSel:intersect(trgSel)
+                activeSprite.selection = activeSel
             elseif selMode == "SUBTRACT" then
                 activeSel:subtract(trgSel)
+                activeSprite.selection = activeSel
             else
-                -- Additive selection can be confusing when no prior
-                -- selection is made and getSelection returns cel bounds.
-                activeSel:add(trgSel)
+                -- Additive selection.
+                -- See https://github.com/aseprite/aseprite/issues/4045 .
+                if selIsValid then
+                    activeSel:add(trgSel)
+                    activeSprite.selection = activeSel
+                else
+                    activeSprite.selection = trgSel
+                end
             end
-            activeSprite.selection = activeSel
         else
             activeSprite.selection = trgSel
         end

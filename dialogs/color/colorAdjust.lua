@@ -695,7 +695,7 @@ dlg:button {
         local activeSpec <const> = activeSprite.spec
 
         if isSelect then
-            local sel <const> = AseUtilities.getSelection(activeSprite)
+            local sel <const>, _ <const> = AseUtilities.getSelection(activeSprite)
             local selBounds <const> = sel.bounds
             local xSel <const> = selBounds.x
             local ySel <const> = selBounds.y

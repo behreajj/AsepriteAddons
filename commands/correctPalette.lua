@@ -24,9 +24,8 @@ end
 local palettes <const> = activeSprite.palettes
 local lenPalettes <const> = #palettes
 
--- It seems safe to assign the same Aseprite color
--- to multiple palettes because they are copied by
--- value, not passed by reference...?
+-- It seems safe to assign the same Aseprite color to multiple palettes because
+-- they are copied by value, not passed by reference...?
 app.transaction("Correct Palette", function()
     local j = 0
     while j < lenPalettes do

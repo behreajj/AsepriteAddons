@@ -111,11 +111,11 @@ local function transformCel(dialog, preset)
     if not activeLayer.isEditable then return end
     if not activeLayer.isTilemap then return end
 
-    local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
-    local lenTileSet <const> = #tileSet
-
     local activeCel <const> = activeLayer:cel(activeFrame)
     if not activeCel then return end
+
+    local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
+    local lenTileSet <const> = #tileSet
 
     local args <const> = dialog.data
     local target <const> = args.target
@@ -197,7 +197,7 @@ local function transformCel(dialog, preset)
         -- conversion to tilemap layer, it may go outside the canvas due to
         -- uniform tile size. This will lead to getSelectedTiles omitting tiles
         -- because tiles must be entirely contained.
-        local selection <const> = AseUtilities.getSelection(activeSprite)
+        local selection <const>, _ <const> = AseUtilities.getSelection(activeSprite)
         containedTiles = AseUtilities.getSelectedTiles(
             activeCel.image, tileSet, selection,
             xtlCel, ytlCel)
@@ -341,11 +341,11 @@ dlg:button {
         if not activeLayer.isEditable then return end
         if not activeLayer.isTilemap then return end
 
-        local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
-        local lenTileSet <const> = #tileSet
-
         local activeCel <const> = activeLayer:cel(activeFrame)
         if not activeCel then return end
+
+        local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
+        local lenTileSet <const> = #tileSet
 
         -- Cache methods used in a for loop.
         local pxTilei <const> = app.pixelColor.tileI
@@ -397,9 +397,8 @@ dlg:button {
         end
 
         -- Clone the tiles from the tile set.
-        -- The blank image at 0 is included so that the
-        -- array doesn't have a nil at its first index.
-        -- Any other relevant data from a tile would
+        -- The blank image at 0 is included so that the array doesn't have a
+        -- nil at its first index. Any other relevant data from a tile would
         -- also be cloned at this stage, e.g., user data.
         ---@type table[]
         local sortedTsPackets = {}
@@ -414,7 +413,8 @@ dlg:button {
             i = i + 1
             local tsIdx <const> = sortedTsIdcs[i]
             local tile <const> = tileSet:tile(tsIdx)
-            local packet = {
+            -- This could optionally include tile color and data.
+            local packet <const> = {
                 image = tile.image:clone()
             }
             sortedTsPackets[i] = packet

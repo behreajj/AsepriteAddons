@@ -259,7 +259,7 @@ dlg:button {
             radBeta = maxChroma / ringCount
         end
 
-        -- Create new sprite.
+        -- Create sprite.
         local spec <const> = ImageSpec {
             width = size,
             height = size,
@@ -289,9 +289,8 @@ dlg:button {
             local gamutImg <const> = Image(spec)
             local pxItr <const> = gamutImg:pixels()
             for pixel in pxItr do
-                -- Convert coordinates from [0, size] to
-                -- [0.0, 1.0], then to [-1.0, 1.0], then
-                -- to LAB range [-111.0, 111.0].
+                -- Convert coordinates from [0, size] to [0.0, 1.0], then to
+                -- [-1.0, 1.0], then to LAB range [-111.0, 111.0].
                 local xNrm <const> = pixel.x * szInv
                 local xSgn <const> = xNrm + xNrm - 1.0
                 local a <const> = xSgn * maxChroma
@@ -541,8 +540,7 @@ dlg:button {
                 AseUtilities.DEFAULT_PAL_ARR, sprite, 1)
         end
 
-        app.activeFrame = sprite.frames[
-        math.ceil(#sprite.frames / 2)]
+        app.activeFrame = sprite.frames[math.ceil(#sprite.frames / 2)]
         app.activeLayer = gamutLayer
         app.refresh()
     end

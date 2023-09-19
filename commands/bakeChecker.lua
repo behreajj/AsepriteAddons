@@ -3,7 +3,7 @@ dofile("../support/aseutilities.lua")
 local activeSprite <const> = app.site.sprite
 if not activeSprite then return end
 
-local oldColorMode = activeSprite.colorMode
+local oldColorMode <const> = activeSprite.colorMode
 app.command.ChangePixelFormat { format = "rgb" }
 
 local bkgLayer <const> = activeSprite.backgroundLayer
@@ -20,10 +20,8 @@ local docPref <const> = app.preferences.document(activeSprite)
 local bgPref <const> = docPref.bg
 local size <const> = bgPref.size
 
-local wGrid = size.width
-local hGrid = size.height
-if wGrid < 2 then wGrid = 2 end
-if hGrid < 2 then hGrid = 2 end
+local wGrid <const> = math.max(1, math.abs(size.width))
+local hGrid <const> = math.max(1, math.abs(size.height))
 
 local aAse <const> = bgPref.color1
 local bAse <const> = bgPref.color2

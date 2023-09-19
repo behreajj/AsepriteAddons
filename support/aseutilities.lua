@@ -149,7 +149,7 @@ end
 ---@param frame Frame|integer
 ---@return { l: number, a: number, b: number, alpha: number }
 function AseUtilities.averageColor(sprite, frame)
-    local sel <const> = AseUtilities.getSelection(sprite)
+    local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
     local selBounds <const> = sel.bounds
     local xSel <const> = selBounds.x
     local ySel <const> = selBounds.y
@@ -1190,7 +1190,7 @@ function AseUtilities.filterCels(
         return trgCels
     elseif target == "SELECTION" then
         if frame then
-            local sel <const> = AseUtilities.getSelection(sprite)
+            local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
             local selBounds <const> = sel.bounds
             local xSel <const> = selBounds.x
             local ySel <const> = selBounds.y
@@ -1500,6 +1500,7 @@ end
 ---"RANGE" gets the frames in the timeline range.
 ---"MANUAL" attempts to parse string of integers defined by commas and colons.
 ---"TAGS" gets the frames from an array of tags.
+---"TAG" gets the frames from the active tag.
 ---"ACTIVE", the default, returns the active frame.
 ---If there's no active frame, returns an empty array.
 ---
@@ -1520,31 +1521,6 @@ end
 function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
     if target == "ALL" then
         return { AseUtilities.frameObjsToIdcs(sprite.frames) }
-    elseif target == "MANUAL" then
-        if mnStr then
-            local docPrefs <const> = app.preferences.document(sprite)
-            local frameUiOffset <const> = docPrefs.timeline.first_frame - 1
-            local lenFrames <const> = #sprite.frames
-            if batch then
-                return Utilities.parseRangeStringOverlap(
-                    mnStr, lenFrames, frameUiOffset)
-            else
-                return { Utilities.parseRangeStringUnique(
-                    mnStr, lenFrames, frameUiOffset) }
-            end
-        else
-            return { {} }
-        end
-    elseif target == "TAGS" then
-        if tags then
-            if batch then
-                return AseUtilities.parseTagsOverlap(tags)
-            else
-                return { AseUtilities.parseTagsUnique(tags) }
-            end
-        else
-            return { {} }
-        end
     elseif target == "RANGE" then
         local tlHidden <const> = not app.preferences.general.visible_timeline
         if tlHidden then
@@ -1572,6 +1548,38 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
         end
 
         return frIdcsRange
+    elseif target == "MANUAL" then
+        if mnStr then
+            local docPrefs <const> = app.preferences.document(sprite)
+            local frameUiOffset <const> = docPrefs.timeline.first_frame - 1
+            local lenFrames <const> = #sprite.frames
+            if batch then
+                return Utilities.parseRangeStringOverlap(
+                    mnStr, lenFrames, frameUiOffset)
+            else
+                return { Utilities.parseRangeStringUnique(
+                    mnStr, lenFrames, frameUiOffset) }
+            end
+        else
+            return { {} }
+        end
+    elseif target == "TAG" then
+        local tag <const> = app.tag
+        if tag then
+            return AseUtilities.parseTagsOverlap({ tag })
+        else
+            return { {} }
+        end
+    elseif target == "TAGS" then
+        if tags then
+            if batch then
+                return AseUtilities.parseTagsOverlap(tags)
+            else
+                return { AseUtilities.parseTagsUnique(tags) }
+            end
+        else
+            return { {} }
+        end
     else
         -- Default to "ACTIVE".
         local activeFrame <const> = app.site.frame
@@ -1635,9 +1643,12 @@ end
 
 ---Gets a selection from a sprite. Calls InvertMask command twice. Returns a
 ---copy of the selection, not a reference. If the selection is empty, then tries
----to return the cel bounds; if that is empty, then returns the sprite bounds.
+---to return the cel bounds. If that is empty, then returns the sprite bounds.
+---Returns true if a selection was found. Returns false if a default selection
+---was created from either a cel or sprite.
 ---@param sprite Sprite sprite
 ---@return Selection
+---@return boolean
 function AseUtilities.getSelection(sprite)
     -- If a selection is moved, but the drag and drop pixels checkmark is not
     -- pressed, then a crash will result. MoveMask doesn't work because move
@@ -1656,15 +1667,17 @@ function AseUtilities.getSelection(sprite)
             -- could be empty.
             local trgSel <const> = Selection(activeCel.bounds)
             trgSel:intersect(sprite.bounds)
-            if not trgSel.isEmpty then return trgSel end
+            if not trgSel.isEmpty then
+                return trgSel, false
+            end
         end
 
-        return Selection(sprite.bounds)
+        return Selection(sprite.bounds), false
     end
 
     local trgSel <const> = Selection()
     trgSel:add(srcSel)
-    return trgSel
+    return trgSel, true
 end
 
 ---Gets tiles from a tile map that are entirely contained by a selection.

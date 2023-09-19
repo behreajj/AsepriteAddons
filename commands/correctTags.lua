@@ -55,21 +55,21 @@ local lenTagsToRename <const> = #tagsToRename
 if lenTagsToRename > 0 then
     local strfmt <const> = string.format
     app.transaction("Rename tags", function()
-        local k = 0
-        while k < lenTagsToRename do
-            k = k + 1
-            local arr <const> = tagsToRename[k]
+        local j = 0
+        while j < lenTagsToRename do
+            j = j + 1
+            local arr <const> = tagsToRename[j]
             local lenArr <const> = #arr
 
-            local m = 0
-            while m < lenArr do
+            local k = 0
+            while k < lenArr do
+                k = k + 1
+                local tag <const> = arr[k]
+
                 -- Two tags could have the same fromFrame and toFrame, so those
                 -- cannot be used as distinguishing features.
-
-                m = m + 1
-                local tag <const> = arr[m]
                 local oldName <const> = tag.name
-                local newName <const> = strfmt("%s (%d)", oldName, m)
+                local newName <const> = strfmt("%s (%d)", oldName, k)
                 tag.name = newName
             end
         end

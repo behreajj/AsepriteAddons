@@ -1,14 +1,15 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/jsonutilities.lua")
 
+-- TODO: Support a single tag option. Would have to test all the other variants,
+-- e.g., batched vs. unbatched, sheet or not.
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE", "TAGS" }
 local cropTypes <const> = { "CROPPED", "SPRITE" }
 
 local defaults <const> = {
-    -- Option to put batches (sprite sheet off)
-    -- into subfolders? If this is not implemented,
-    -- then the batches option should only be available
-    -- if useSheet is true.
+    -- Option to put batches (sprite sheet off) into subfolders? If this is not
+    -- implemented, then the batches option should only be available if
+    -- useSheet is true.
     frameTarget = "ALL",
     rangeStr = "",
     strExample = "4,6:9,13",

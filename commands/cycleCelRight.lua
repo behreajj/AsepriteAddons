@@ -44,7 +44,7 @@ if activeLayer.isBackground then
 else
     -- No point in basing this on a range, which will be removed
     -- by the swap. Could use getLayerHierarchy for all layers.
-    -- Reference layers are ignored, even though they coule be included.
+    -- Reference layers are ignored, even though they could be included.
     local leaves <const> = AseUtilities.appendLeaves(
         activeLayer, {},
         true, true, true, false)

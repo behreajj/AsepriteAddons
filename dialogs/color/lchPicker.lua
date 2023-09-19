@@ -631,7 +631,7 @@ dlg:button {
         local aseColor <const> = AseUtilities.clrToAseColor(srgb)
         local hex <const> = AseUtilities.aseColorToHex(aseColor, colorMode)
 
-        local sel <const> = AseUtilities.getSelection(sprite)
+        local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
         local selBounds <const> = sel.bounds
         local xSel <const> = selBounds.x
         local ySel <const> = selBounds.y
