@@ -618,7 +618,8 @@ dlg:button {
     focus = false,
     onclick = function()
         if active.a <= 0.0 then return end
-        local sprite <const> = app.site.sprite
+        local site <const> = app.site
+        local sprite <const> = site.sprite
         if not sprite then return end
 
         local sprSpec <const> = sprite.spec
@@ -662,7 +663,7 @@ dlg:button {
                 app.command.Timeline { open = true }
             end
 
-            local frameIdcs = { app.activeFrame.frameNumber }
+            local frameIdcs = { site.frame.frameNumber }
             local appRange <const> = app.range
             if appRange.sprite == sprite then
                 frameIdcs = AseUtilities.frameObjsToIdcs(appRange.frames)
@@ -770,11 +771,15 @@ dlg:canvas {
             local toShdFac <const> = math.abs(50.0 - minLight) * 0.02
             local toLgtFac <const> = math.abs(50.0 - maxLight) * 0.02
 
-            local shdHue <const> = Utilities.lerpAngleNear(h, hViolet, hueSpreadShd * toShdFac, 1.0)
-            local lgtHue <const> = Utilities.lerpAngleNear(h, hYellow, hueSpreadLgt * toLgtFac, 1.0)
+            local shdHue <const> = Utilities.lerpAngleNear(
+                h, hViolet, hueSpreadShd * toShdFac, 1.0)
+            local lgtHue <const> = Utilities.lerpAngleNear(
+                h, hYellow, hueSpreadLgt * toLgtFac, 1.0)
 
-            local shdCrm <const> = (1.0 - toShdFac) * c + minChromaShd * toShdFac
-            local lgtCrm <const> = (1.0 - toLgtFac) * c + minChromaLgt * toLgtFac
+            local shdCrm <const> = (1.0 - toShdFac) * c
+                + toShdFac * minChromaShd
+            local lgtCrm <const> = (1.0 - toLgtFac) * c
+                + toLgtFac * minChromaLgt
 
             local labShd <const> = defaults.lchToLab(minLight, shdCrm, shdHue, 1.0, 0.5)
             local labKey <const> = defaults.lchToLab(l, c, h, 1.0, 0.5)

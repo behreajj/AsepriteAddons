@@ -3,7 +3,14 @@ dofile("../../support/jsonutilities.lua")
 
 -- TODO: Support a single tag option. Would have to test all the other variants,
 -- e.g., batched vs. unbatched, sheet or not.
-local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE", "TAGS" }
+local frameTargetOptions <const> = {
+    "ACTIVE",
+    "ALL",
+    "MANUAL",
+    "RANGE",
+    "TAG",
+    "TAGS"
+}
 local cropTypes <const> = { "CROPPED", "SPRITE" }
 
 local defaults <const> = {
@@ -233,19 +240,18 @@ local function genPacket(
     local flat = Image(spriteSpec)
     flat:drawSprite(activeSprite, frIdx)
 
-    -- These should reflect the unscaled, unpadded
-    -- cel image in the original sprite, so no alterations
-    -- should be made to them after cropping.
+    -- These should reflect the unscaled, unpadded cel image in the original
+    -- sprite, so no alterations should be made to them after cropping.
     local xtl = 0
     local ytl = 0
     local wImage = spriteSpec.width
     local hImage = spriteSpec.height
     local alphaIndex <const> = spriteSpec.transparentColor
     if useCrop then
-        local trimmed <const>, xd <const>, yd <const> = AseUtilities.trimImageAlpha(
+        local tr <const>, xd <const>, yd <const> = AseUtilities.trimImageAlpha(
             flat, 0, alphaIndex, 8, 8)
 
-        flat = trimmed
+        flat = tr
         xtl = xtl + xd
         ytl = ytl + yd
         wImage = flat.width
@@ -392,8 +398,8 @@ dlg:check {
         local frameTarget <const> = args.frameTarget --[[@as string]]
         local useSheet <const> = args.useSheet --[[@as boolean]]
 
-        -- TODO: If ranges is updated to support batches,
-        -- then this needs to reflect that.
+        -- TODO: Range can hypothetically contain non-contiguous frames.
+        -- If range is updated, then useBatches would have to reflect that.
         local isManual <const> = frameTarget == "MANUAL"
         local isTags <const> = frameTarget == "TAGS"
         local state <const> = useSheet
@@ -618,8 +624,8 @@ dlg:button {
         -- Process other variables.
         local useCrop <const> = cropType == "CROPPED"
         local nonUniformDim <const> = not potUniform
-        -- TODO: If ranges is updated to support batches,
-        -- then this needs to reflect that.
+        -- TODO: Range can hypothetically contain non-contiguous frames.
+        -- If range is updated, then useBatches would have to reflect that.
         useBatches = useBatches
             and useSheet
             and (frameTarget == "TAGS"
@@ -860,6 +866,8 @@ dlg:button {
                 frameStrs[lenFrameStrs] = frameToJson(frame)
             end
 
+            -- TODO: Make JSON result more efficient here. Only include tags if
+            -- "TAG" or "TAGS" export is chosen.
             local k = 0
             ---@type string[]
             local tagStrs <const> = {}
