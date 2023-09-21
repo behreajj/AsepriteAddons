@@ -1,7 +1,6 @@
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 local guideOptions <const> = {
     "CENTER",
-    "DIMETRIC",
     "GRID",
     "NONE",
     "RULE_OF_THIRDS",
@@ -875,46 +874,6 @@ dlg:button {
                 guideStrsArr[#guideStrsArr + 1] = string.format(
                     "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
                     border, yCenter, wnBorder, yCenter)
-            elseif guide == "DIMETRIC" then
-                local cellCount <const> = 32
-
-                local xCenter <const> = wTotal * 0.5
-                local yCenter <const> = hTotal * 0.5
-                local scalar <const> = 2.0 * math.min(wClip, hClip)
-
-                local mesh <const> = Mesh2.gridDimetric(cellCount)
-                local t <const> = Mat3.fromTranslation(xCenter, yCenter)
-                local s <const> = Mat3.fromScale(scalar, -scalar)
-                local mat <const> = Mat3.mul(t, s)
-                Utilities.mulMat3Mesh2(mat, mesh)
-
-                local strfmt <const> = string.format
-                local fs <const> = mesh.fs
-                local fsLen <const> = #fs
-                local vs <const> = mesh.vs
-
-                local idx1 = 0
-                while idx1 < fsLen do
-                    idx1 = idx1 + 1
-                    local f <const> = fs[idx1]
-                    local fLen <const> = #f
-
-                    local vertFirst <const> = f[1]
-                    local coFirst <const> = vs[vertFirst]
-                    guideStrsArr[#guideStrsArr + 1] = strfmt(
-                        "<path d=\"M %.6f %.6f", coFirst.x, coFirst.y)
-
-                    local idx2 = 1
-                    while idx2 < fLen do
-                        idx2 = idx2 + 1
-                        local vert <const> = f[idx2]
-                        local co <const> = vs[vert]
-                        guideStrsArr[#guideStrsArr + 1] = strfmt(
-                            " L %.6f %.6f", co.x, co.y)
-                    end
-
-                    guideStrsArr[#guideStrsArr + 1] = " Z\" />\n"
-                end
             elseif guide == "GRID" then
                 local strfmt <const> = string.format
                 local grid <const> = activeSprite.gridBounds
