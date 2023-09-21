@@ -1,4 +1,12 @@
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
+local guideOptions <const> = {
+    "CENTER",
+    "DIMETRIC",
+    "GRID",
+    "NONE",
+    "RULE_OF_THIRDS",
+    "SYMMETRY"
+}
 
 local defaults <const> = {
     flattenImage = true,
@@ -15,6 +23,7 @@ local defaults <const> = {
     padding = 0,
     scale = 1,
     usePixelAspect = true,
+    guide = "NONE",
 }
 
 ---@param bm BlendMode blend mode
@@ -488,6 +497,7 @@ dlg:slider {
         local padding <const> = args.padding --[[@as integer]]
         local gtz <const> = padding > 0
         dlg:modify { id = "paddingClr", visible = gtz }
+        dlg:modify { id = "guide", visible = not gtz }
     end
 }
 
@@ -497,6 +507,16 @@ dlg:color {
     id = "paddingClr",
     color = Color { r = 255, g = 255, b = 255 },
     visible = defaults.padding > 0
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "guide",
+    label = "Guides:",
+    option = defaults.guide,
+    options = guideOptions,
+    visible = defaults.padding == 0
 }
 
 dlg:newrow { always = false }
@@ -560,6 +580,7 @@ dlg:button {
             or defaults.padding --[[@as integer]]
         local paddingClr <const> = args.paddingClr --[[@as Color]]
         local scale <const> = args.scale or defaults.scale --[[@as integer]]
+        local guide <const> = args.guide or defaults.guide --[[@as string]]
         local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
 
         -- Process scale
@@ -817,6 +838,178 @@ dlg:button {
                 wnBorder, border)
         end
 
+        local guideStr = ""
+        local useGuide = guide ~= "NONE" and padding <= 0
+        if useGuide then
+            local strokeWidth <const> = scale / 3.0
+
+            local docPrefs <const> = app.preferences.document(activeSprite)
+            local gridPrefs <const> = docPrefs.grid
+            local gridAutoOpacity <const> = gridPrefs.auto_opacity
+            local gridOpacity = 1.0
+            if not gridAutoOpacity then
+                gridOpacity = gridPrefs.opacity / 255.0
+            end
+            local gridColor <const> = gridPrefs.color
+            local strokeHexStr <const> = string.format("#%06x",
+                gridColor.red << 0x10
+                | gridColor.green << 0x08
+                | gridColor.blue)
+
+            ---@type string[]
+            local guideStrsArr = {
+                "\n<g id=\"guides\" ",
+                "visibility=\"visible\" ",
+                "fill=\"none\" ",
+                string.format("opacity=\"%.6f\" ", gridOpacity),
+                string.format("stroke=\"%s\" ", strokeHexStr),
+                string.format("stroke-width=\"%.6f\">\n", strokeWidth)
+            }
+
+            if guide == "CENTER" then
+                local xCenter <const> = wTotal * 0.5
+                local yCenter <const> = hTotal * 0.5
+                guideStrsArr[#guideStrsArr + 1] = string.format(
+                    "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
+                    xCenter, border, xCenter, hnBorder)
+                guideStrsArr[#guideStrsArr + 1] = string.format(
+                    "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
+                    border, yCenter, wnBorder, yCenter)
+            elseif guide == "DIMETRIC" then
+                local cellCount <const> = 32
+
+                local xCenter <const> = wTotal * 0.5
+                local yCenter <const> = hTotal * 0.5
+                local scalar <const> = 2.0 * math.min(wClip, hClip)
+
+                local mesh <const> = Mesh2.gridDimetric(cellCount)
+                local t <const> = Mat3.fromTranslation(xCenter, yCenter)
+                local s <const> = Mat3.fromScale(scalar, -scalar)
+                local mat <const> = Mat3.mul(t, s)
+                Utilities.mulMat3Mesh2(mat, mesh)
+
+                local strfmt <const> = string.format
+                local fs <const> = mesh.fs
+                local fsLen <const> = #fs
+                local vs <const> = mesh.vs
+
+                local idx1 = 0
+                while idx1 < fsLen do
+                    idx1 = idx1 + 1
+                    local f <const> = fs[idx1]
+                    local fLen <const> = #f
+
+                    local vertFirst <const> = f[1]
+                    local coFirst <const> = vs[vertFirst]
+                    guideStrsArr[#guideStrsArr + 1] = strfmt(
+                        "<path d=\"M %.6f %.6f", coFirst.x, coFirst.y)
+
+                    local idx2 = 1
+                    while idx2 < fLen do
+                        idx2 = idx2 + 1
+                        local vert <const> = f[idx2]
+                        local co <const> = vs[vert]
+                        guideStrsArr[#guideStrsArr + 1] = strfmt(
+                            " L %.6f %.6f", co.x, co.y)
+                    end
+
+                    guideStrsArr[#guideStrsArr + 1] = " Z\" />\n"
+                end
+            elseif guide == "GRID" then
+                local strfmt <const> = string.format
+                local grid <const> = activeSprite.gridBounds
+
+                local wGrid <const> = math.abs(grid.width)
+                local xGrid <const> = grid.x % wGrid
+                local vertsCount <const> = math.ceil((wNative - xGrid) / wGrid)
+
+                if vertsCount > 0 then
+                    local wGrScaled <const> = wGrid * wScale
+                    local xGrScaled <const> = xGrid * wScale
+
+                    guideStrsArr[#guideStrsArr + 1] = "<g id=\"vertical\">\n"
+                    local i = 0
+                    while i < vertsCount do
+                        local xRule <const> = border + xGrScaled + i * wGrScaled
+                        if xRule > border and xRule < wnBorder then
+                            guideStrsArr[#guideStrsArr + 1] = strfmt(
+                                "<line id=\"vert%03d\" x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
+                                i, xRule, border, xRule, hnBorder)
+                        end
+                        i = i + 1
+                    end
+                    guideStrsArr[#guideStrsArr + 1] = "</g>\n"
+                end
+
+                local hGrid <const> = math.abs(grid.height)
+                local yGrid <const> = grid.y % hGrid
+                local horisCount <const> = math.ceil((hNative - yGrid) / hGrid)
+
+                if horisCount > 0 then
+                    local hGrScaled <const> = hGrid * hScale
+                    local yGrScaled <const> = yGrid * hScale
+
+                    guideStrsArr[#guideStrsArr + 1] = "<g id=\"horizontal\">\n"
+                    local j = 0
+                    while j < horisCount do
+                        local yRule <const> = border + yGrScaled + j * hGrScaled
+                        if yRule > border and yRule < hnBorder then
+                            guideStrsArr[#guideStrsArr + 1] = strfmt(
+                                "<line id=\"hori%03d\" x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
+                                j, border, yRule, wnBorder, yRule)
+                        end
+                        j = j + 1
+                    end
+                    guideStrsArr[#guideStrsArr + 1] = "</g>\n"
+                end
+            elseif guide == "RULE_OF_THIRDS" then
+                local t1_3 <const> = 1.0 / 3.0
+                local t2_3 <const> = 2.0 / 3.0
+                local x1_3 <const> = t2_3 * border + t1_3 * wnBorder
+                local x2_3 <const> = t2_3 * wnBorder + t1_3 * border
+                local y1_3 <const> = t2_3 * border + t1_3 * hnBorder
+                local y2_3 <const> = t2_3 * hnBorder + t1_3 * border
+
+                guideStrsArr[#guideStrsArr + 1] = string.format(
+                    "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
+                    x1_3, border, x1_3, hnBorder)
+                guideStrsArr[#guideStrsArr + 1] = string.format(
+                    "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
+                    x2_3, border, x2_3, hnBorder)
+
+                guideStrsArr[#guideStrsArr + 1] = string.format(
+                    "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
+                    border, y1_3, wnBorder, y1_3)
+                guideStrsArr[#guideStrsArr + 1] = string.format(
+                    "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
+                    border, y2_3, wnBorder, y2_3)
+            elseif guide == "SYMMETRY" then
+                local symmPrefs <const> = docPrefs.symmetry
+                local symmMode <const> = symmPrefs.mode
+                local isOff <const> = symmMode == 0
+                local isBoth <const> = symmMode == 3
+
+                if symmMode == 1 or isBoth or isOff then
+                    local xAxis <const> = symmPrefs.x_axis
+                    local xaScaled <const> = xAxis * wScale
+                    guideStrsArr[#guideStrsArr + 1] = string.format(
+                        "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
+                        xaScaled, border, xaScaled, hnBorder)
+                end
+
+                if symmMode == 2 or isBoth or isOff then
+                    local yAxis <const> = symmPrefs.y_axis
+                    local yaScaled <const> = yAxis * hScale
+                    guideStrsArr[#guideStrsArr + 1] = string.format(
+                        "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
+                        border, yaScaled, wnBorder, yaScaled)
+                end
+            end
+
+            guideStrsArr[#guideStrsArr + 1] = "</g>"
+            guideStr = table.concat(guideStrsArr)
+        end
+
         local svgStr <const> = table.concat({
             "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n",
             "<svg ",
@@ -834,6 +1027,7 @@ dlg:button {
             table.concat(layersStrArr, "\n"),
             padStr,
             borderStr,
+            guideStr,
             "\n</svg>"
         })
 
