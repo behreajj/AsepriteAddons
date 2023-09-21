@@ -20,8 +20,8 @@ local docPref <const> = app.preferences.document(activeSprite)
 local bgPref <const> = docPref.bg
 local size <const> = bgPref.size
 
-local wGrid <const> = math.max(1, math.abs(size.width))
-local hGrid <const> = math.max(1, math.abs(size.height))
+local wCheck <const> = math.max(1, math.abs(size.width))
+local hCheck <const> = math.max(1, math.abs(size.height))
 
 local aAse <const> = bgPref.color1
 local bAse <const> = bgPref.color2
@@ -38,7 +38,7 @@ for pixel in pxItr do
     local hex = b
     local x <const> = pixel.x
     local y <const> = pixel.y
-    if (((x // wGrid) + (y // hGrid)) % 2) ~= 1 then
+    if (((x // wCheck) + (y // hCheck)) % 2) ~= 1 then
         hex = a
     end
     pixel(hex)

@@ -22,6 +22,7 @@ local defaults <const> = {
     padding = 0,
     scale = 1,
     usePixelAspect = true,
+    useChecker = true,
     guide = "NONE",
 }
 
@@ -521,11 +522,19 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:check {
+    id = "useChecker",
+    label = "Background:",
+    text = "Chec&ker",
+    selected = defaults.useChecker
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
     id = "usePixelAspect",
     label = "Apply:",
     text = "Pi&xel Aspect",
-    selected = defaults.usePixelAspect,
-    visible = true
+    selected = defaults.usePixelAspect
 }
 
 dlg:newrow { always = false }
@@ -580,6 +589,7 @@ dlg:button {
         local paddingClr <const> = args.paddingClr --[[@as Color]]
         local scale <const> = args.scale or defaults.scale --[[@as integer]]
         local guide <const> = args.guide or defaults.guide --[[@as string]]
+        local useChecker <const> = args.useChecker --[[@as boolean]]
         local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
 
         -- Process scale
@@ -593,18 +603,87 @@ dlg:button {
             hScale = hScale * pxh
         end
 
+        -- Doc prefs are needed to get the frame UI offset, grid color and
+        -- background checker.
+        local docPrefs <const> = app.preferences.document(activeSprite)
+
         local activeSpec <const> = activeSprite.spec
         local colorMode <const> = activeSpec.colorMode
         local wNative <const> = activeSpec.width
         local hNative <const> = activeSpec.height
 
-        local wClip <const> = wScale * wNative
-            + padding * (wNative + 1)
-        local hClip <const> = hScale * hNative
-            + padding * (hNative + 1)
+        local wClip <const> = wScale * wNative + padding * (wNative + 1)
+        local hClip <const> = hScale * hNative + padding * (hNative + 1)
+        local wnBorder <const> = wClip + border
+        local hnBorder <const> = hClip + border
+        local wTotal <const> = wnBorder + border
+        local hTotal <const> = hnBorder + border
 
-        local wTotal <const> = wClip + border + border
-        local hTotal <const> = hClip + border + border
+        local defsStr = ""
+        local bkgStr = ""
+        if useChecker then
+            local bgPref <const> = docPrefs.bg
+
+            local size <const> = bgPref.size
+            local wCheck <const> = math.max(1, math.abs(size.width))
+            local hCheck <const> = math.max(1, math.abs(size.height))
+            local wCheckScaled <const> = wCheck * wScale
+            local hCheckScaled <const> = hCheck * hScale
+            local wcs2 = wCheckScaled + wCheckScaled
+            local hcs2 = hCheckScaled + hCheckScaled
+
+            local aColor <const> = bgPref.color1
+            local aHex <const> = aColor.red << 0x10
+                | aColor.green << 0x08
+                | aColor.blue
+            local bColor <const> = bgPref.color2
+            local bHex <const> = bColor.red << 0x10
+                | bColor.green << 0x08
+                | bColor.blue
+
+            defsStr = table.concat({
+                "<defs>\n",
+                string.format(
+                    "<pattern id=\"checkerPattern\" x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" patternUnits=\"%s\">\n",
+                    border, border, wcs2, hcs2, "userSpaceOnUse"),
+                string.format(
+                    "<path d=\"M 0 0 L %d 0 L %d %d L 0 %d Z\" fill=\"#%06x\" />\n",
+                    wCheckScaled,
+                    wCheckScaled, hCheckScaled,
+                    hCheckScaled,
+                    aHex),
+                string.format(
+                    "<path d=\"M %d 0 L %d 0 L %d %d L %d %d Z\" fill=\"#%06x\" />\n",
+                    wCheckScaled,
+                    wcs2,
+                    wcs2, hCheckScaled,
+                    wCheckScaled, hCheckScaled,
+                    bHex),
+                string.format(
+                    "<path d=\"M 0 %d L %d %d L %d %d L 0 %d Z\" fill=\"#%06x\" />\n",
+                    hCheckScaled,
+                    wCheckScaled, hCheckScaled,
+                    wCheckScaled, hcs2,
+                    hcs2,
+                    bHex),
+                string.format(
+                    "<path d=\"M %d %d L %d %d L %d %d L %d %d Z\" fill=\"#%06x\" />\n",
+                    wCheckScaled, hCheckScaled,
+                    wcs2, hCheckScaled,
+                    wcs2, hcs2,
+                    wCheckScaled, hcs2,
+                    aHex),
+                "</pattern>\n",
+                "</defs>\n"
+            })
+
+            bkgStr = string.format(
+                "<path id =\"checker\" d=\"M %d %d L %d %d L %d %d L %d %d Z\" fill=\"url(#checkerPattern)\" />\n",
+                border, border,
+                wnBorder, border,
+                wnBorder, hnBorder,
+                border, hnBorder)
+        end
 
         ---@type string[]
         local layersStrArr <const> = {}
@@ -625,7 +704,6 @@ dlg:button {
                 local timeScalar <const> = args.timeScalar
                     or defaults.timeScalar --[[@as number]]
 
-                local docPrefs <const> = app.preferences.document(activeSprite)
                 local frameUiOffset <const> = docPrefs.timeline.first_frame - 1
                 local spritePalettes <const> = activeSprite.palettes
                 local spriteFrames <const> = activeSprite.frames
@@ -685,8 +763,8 @@ dlg:button {
                     -- Create frame SVG string.
                     local durStr = "indefinite"
                     if useLoop or i < lenChosenFrames then
-                        -- Before time scalar, only 3 decimals needed
-                        -- because duration is truncated from millis.
+                        -- Before time scalar, only 3 decimals were needed
+                        -- because duration was truncated from millis.
                         durStr = strfmt("%.6fs", timeScaleVrf * duration)
                     end
                     local frameStr <const> = strfmt(
@@ -757,8 +835,6 @@ dlg:button {
             end
         end
 
-        local wnBorder <const> = wTotal - border
-        local hnBorder <const> = hTotal - border
 
         local padStr = ""
         local aPadding <const> = paddingClr.alpha
@@ -842,14 +918,14 @@ dlg:button {
         if useGuide then
             local strokeWidth <const> = scale / 3.0
 
-            local docPrefs <const> = app.preferences.document(activeSprite)
             local gridPrefs <const> = docPrefs.grid
             local gridAutoOpacity <const> = gridPrefs.auto_opacity
+            local gridColor <const> = gridPrefs.color
             local gridOpacity = 1.0
             if not gridAutoOpacity then
                 gridOpacity = gridPrefs.opacity / 255.0
             end
-            local gridColor <const> = gridPrefs.color
+
             local strokeHexStr <const> = string.format("#%06x",
                 gridColor.red << 0x10
                 | gridColor.green << 0x08
@@ -983,6 +1059,8 @@ dlg:button {
             string.format(
                 "viewBox=\"0 0 %d %d\">\n",
                 wTotal, hTotal),
+            defsStr,
+            bkgStr,
             table.concat(layersStrArr, "\n"),
             padStr,
             borderStr,
