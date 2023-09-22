@@ -98,9 +98,8 @@ dlg:button {
         end
 
         -- app.preferences.color_bar.wheel_model
-        -- is 2 when normal map is activated.
-        -- Normal wheel maps are adversely impacted
-        -- by color models other than None or SRGB.
+        -- is 2 when normal map is activated. Normal wheel maps are adversely
+        -- impacted by color models other than None or SRGB.
         local formerColorSpace <const> = activeSprite.colorSpace
         local continuity <const> = args.continuity
             or defaults.continuityOp --[[@as string]]

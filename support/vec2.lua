@@ -206,6 +206,15 @@ function Vec2.copySign(a, b)
     return Vec2.new(cx, cy)
 end
 
+---Returns the z component of the cross product between two vectors. The x and
+---y components of the cross between 2D vectors are always zero.
+---@param a Vec2
+---@param b Vec2
+---@return number
+function Vec2.cross(a, b)
+    return a.x * b.y - a.y * b.x
+end
+
 ---Finds the distance between two vectors. Defaults to Euclidean distance.
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand

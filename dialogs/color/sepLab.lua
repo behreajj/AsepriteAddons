@@ -5,7 +5,6 @@ local channels <const> = { "L", "A", "B" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
-    -- TODO: Separate LCH?
     target = "ACTIVE",
     delSrc = "NONE",
     channel = "L",

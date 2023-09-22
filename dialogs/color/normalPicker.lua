@@ -37,9 +37,9 @@ local function colorToVec(color)
         b255 = color.blue
     end
 
-    local x <const> = (r255 + r255 - 255) * 0.003921568627451
-    local y <const> = (g255 + g255 - 255) * 0.003921568627451
-    local z <const> = (b255 + b255 - 255) * 0.003921568627451
+    local x <const> = (r255 + r255 - 255) / 255.0
+    local y <const> = (g255 + g255 - 255) / 255.0
+    local z <const> = (b255 + b255 - 255) / 255.0
 
     -- The square magnitude for the color #808080
     -- is 0.000046 . Have to account for how 255
@@ -329,11 +329,10 @@ dlg:canvas {
             Utilities.round(math.deg(inclination)))
         local strMeasure <const> = ctx:measureText(strDisplay)
 
-        -- Find average brightness, flip text color
-        -- if too bright.
-        local r <const> = (srgbHex & 0xff) * 0.003921568627451
-        local g <const> = (srgbHex >> 0x08 & 0xff) * 0.003921568627451
-        local b <const> = (srgbHex >> 0x10 & 0xff) * 0.003921568627451
+        -- Find average brightness, flip text color if too bright.
+        local r <const> = (srgbHex & 0xff) / 255.0
+        local g <const> = (srgbHex >> 0x08 & 0xff) / 255.0
+        local b <const> = (srgbHex >> 0x10 & 0xff) / 255.0
         local avgBri <const> = (r + g + b) / 3.0
         if avgBri < 0.5 then
             textShadow, textColor = textColor, textShadow

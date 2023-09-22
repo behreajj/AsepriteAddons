@@ -392,9 +392,9 @@ dlg:button {
             local yMax = -2147483648
 
             local center <const> = size // 2
-            local xFlipScale <const> = xFlipNum * 0.003921568627451
-            local yFlipScale <const> = yFlipNum * 0.003921568627451
-            local zFlipScale <const> = zFlipNum * 0.003921568627451
+            local xFlipScale <const> = xFlipNum / 255.0
+            local yFlipScale <const> = yFlipNum / 255.0
+            local zFlipScale <const> = zFlipNum / 255.0
 
             local i = 0
             while i < lenHexesPlot do

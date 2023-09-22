@@ -326,8 +326,9 @@ dlg:button {
                         local tryGreen <const> = greenPos.y
                         local tryBlue <const> = bluePos.y
 
-                        -- Technically, bottom right should subtract 1, but since
-                        -- this will be added again to find wxh for base, it's omitted.
+                        -- Technically, bottom right should subtract 1, but
+                        -- since this will be added again to find wxh for base,
+                        -- it's omitted.
                         local trxBase <const> = min(trxRed, trxGreen, trxBlue)
                         local tryBase <const> = min(tryRed, tryGreen, tryBlue)
                         local brxBase <const> = max(trxRed, trxGreen, trxBlue) + srcImgWidth
@@ -382,11 +383,11 @@ dlg:button {
 
                             if placeMark then
                                 pixel(0xff000000)
-                            end
-                        end
-                    end
-                end
-            end
+                            end -- End of place mark check.
+                        end     -- End of pixel loop.
+                    end         -- End of fill base check.
+                end             -- End of source cel check.
+            end                 -- End of frames loop.
         end)
 
         if delSrcStr == "HIDE" then
