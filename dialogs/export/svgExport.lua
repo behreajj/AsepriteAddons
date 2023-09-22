@@ -21,8 +21,8 @@ local defaults <const> = {
     border = 0,
     padding = 0,
     scale = 1,
+    useChecker = false,
     usePixelAspect = true,
-    useChecker = true,
     guide = "NONE",
 }
 
@@ -286,8 +286,8 @@ local function layerToSvgStr(
                     local lyrAlpha <const> = layer.opacity
                     local alphaStr = ""
                     if lyrAlpha < 0xff or celAlpha < 0xff then
-                        local cmpAlpha <const> = (lyrAlpha * 0.003921568627451)
-                            * (celAlpha * 0.003921568627451)
+                        local cmpAlpha <const> = (lyrAlpha / 255.0)
+                            * (celAlpha * 255.0)
                         alphaStr = string.format(
                             " opacity=\"%.6f\"",
                             cmpAlpha)
@@ -581,8 +581,7 @@ dlg:button {
 
         -- Unpack arguments.
         local flattenImage <const> = args.flattenImage --[[@as boolean]]
-        local border <const> = args.border
-            or defaults.border --[[@as integer]]
+        local border <const> = args.border or defaults.border --[[@as integer]]
         local borderClr <const> = args.borderClr --[[@as Color]]
         local padding <const> = args.padding
             or defaults.padding --[[@as integer]]
@@ -607,17 +606,24 @@ dlg:button {
         -- background checker.
         local docPrefs <const> = app.preferences.document(activeSprite)
 
+        -- Unpack sprite spec.
         local activeSpec <const> = activeSprite.spec
         local colorMode <const> = activeSpec.colorMode
         local wNative <const> = activeSpec.width
         local hNative <const> = activeSpec.height
 
+        -- Determine size of scaled image plus pixel padding, then the right
+        -- edge facing the border, then the total dimension.
         local wClip <const> = wScale * wNative + padding * (wNative + 1)
         local hClip <const> = hScale * hNative + padding * (hNative + 1)
         local wnBorder <const> = wClip + border
         local hnBorder <const> = hClip + border
         local wTotal <const> = wnBorder + border
         local hTotal <const> = hnBorder + border
+
+        -- Cache these methods because they are used so often
+        local strfmt <const> = string.format
+        local tconcat <const> = table.concat
 
         local defsStr = ""
         local bkgStr = ""
@@ -641,48 +647,31 @@ dlg:button {
                 | bColor.green << 0x08
                 | bColor.blue
 
-            defsStr = table.concat({
+            local sqFmt <const> = "<path d=\"M %d %d L %d %d L %d %d L %d %d "
+                .. "Z\" fill=\"#%06x\" />\n"
+            defsStr = tconcat({
                 "<defs>\n",
-                string.format(
-                    "<pattern id=\"checkerPattern\" x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" patternUnits=\"%s\">\n",
+                strfmt(
+                    "<pattern id=\"checkerPattern\" x=\"%d\" y=\"%d\" "
+                    .. "width=\"%d\" height=\"%d\" patternUnits=\"%s\">\n",
                     border, border, wcs2, hcs2, "userSpaceOnUse"),
-                string.format(
-                    "<path d=\"M 0 0 L %d 0 L %d %d L 0 %d Z\" fill=\"#%06x\" />\n",
-                    wCheckScaled,
-                    wCheckScaled, hCheckScaled,
-                    hCheckScaled,
-                    aHex),
-                string.format(
-                    "<path d=\"M %d 0 L %d 0 L %d %d L %d %d Z\" fill=\"#%06x\" />\n",
-                    wCheckScaled,
-                    wcs2,
-                    wcs2, hCheckScaled,
-                    wCheckScaled, hCheckScaled,
-                    bHex),
-                string.format(
-                    "<path d=\"M 0 %d L %d %d L %d %d L 0 %d Z\" fill=\"#%06x\" />\n",
-                    hCheckScaled,
-                    wCheckScaled, hCheckScaled,
-                    wCheckScaled, hcs2,
-                    hcs2,
-                    bHex),
-                string.format(
-                    "<path d=\"M %d %d L %d %d L %d %d L %d %d Z\" fill=\"#%06x\" />\n",
-                    wCheckScaled, hCheckScaled,
-                    wcs2, hCheckScaled,
-                    wcs2, hcs2,
-                    wCheckScaled, hcs2,
-                    aHex),
+                strfmt(sqFmt, 0, 0, wCheckScaled, 0, wCheckScaled, hCheckScaled,
+                    0, hCheckScaled, aHex),
+                strfmt(sqFmt, wCheckScaled, 0, wcs2, 0, wcs2, hCheckScaled,
+                    wCheckScaled, hCheckScaled, bHex),
+                strfmt(sqFmt, 0, hCheckScaled, wCheckScaled, hCheckScaled,
+                    wCheckScaled, hcs2, 0, hcs2, bHex),
+                strfmt(sqFmt, wCheckScaled, hCheckScaled, wcs2, hCheckScaled,
+                    wcs2, hcs2, wCheckScaled, hcs2, aHex),
                 "</pattern>\n",
                 "</defs>\n"
             })
 
-            bkgStr = string.format(
-                "<path id =\"checker\" d=\"M %d %d L %d %d L %d %d L %d %d Z\" fill=\"url(#checkerPattern)\" />\n",
-                border, border,
-                wnBorder, border,
-                wnBorder, hnBorder,
-                border, hnBorder)
+            bkgStr = strfmt(
+                "<path id =\"checker\" d=\"M %d %d L %d %d L %d %d L %d %d Z\" "
+                .. "fill=\"url(#checkerPattern)\" />\n",
+                border, border, wnBorder, border,
+                wnBorder, hnBorder, border, hnBorder)
         end
 
         ---@type string[]
@@ -692,10 +681,9 @@ dlg:button {
                 or defaults.frameTarget --[[@as string]]
             local rangeStr = args.rangeStr
                 or defaults.rangeStr --[[@as string]]
-            local chosenFrIdcs = Utilities.flatArr2(
-                AseUtilities.getFrames(
-                    activeSprite, frameTarget,
-                    true, rangeStr))
+
+            local chosenFrIdcs = Utilities.flatArr2(AseUtilities.getFrames(
+                    activeSprite, frameTarget, true, rangeStr))
             local lenChosenFrames <const> = #chosenFrIdcs
             local animate <const> = lenChosenFrames > 1
 
@@ -710,7 +698,7 @@ dlg:button {
 
                 local animBeginStr = "0s"
                 if useLoop then
-                    animBeginStr = string.format(
+                    animBeginStr = strfmt(
                         "0s;anim%d.end",
                         lenChosenFrames)
                 end
@@ -722,7 +710,7 @@ dlg:button {
                 -- There was flickering in Firefox until "from=\"visible\""
                 -- was added. The display and opacity attributes might also
                 -- work for animation.
-                local frameFormat <const> = table.concat({
+                local frameFormat <const> = tconcat({
                     "<g",
                     " id=\"frame%d\"",
                     " visibility=\"hidden\"",
@@ -738,7 +726,6 @@ dlg:button {
                 })
 
                 -- Cache methods used in loop.
-                local strfmt <const> = string.format
                 local getPalette <const> = AseUtilities.getPalette
 
                 ---@type string[]
@@ -778,7 +765,7 @@ dlg:button {
                     animBeginStr = strfmt("anim%d.end", i)
                 end
 
-                layersStrArr[1] = table.concat(frameStrs, "\n")
+                layersStrArr[1] = tconcat(frameStrs, "\n")
             else
                 local activeFrame = site.frame
                 if lenChosenFrames > 0 then
@@ -845,16 +832,13 @@ dlg:button {
 
             local alphaStr = ""
             if aPadding < 0xff then
-                alphaStr = string.format(
-                    " fill-opacity=\"%.6f\"",
-                    aPadding / 255.0)
+                alphaStr = strfmt(" fill-opacity=\"%.6f\"", aPadding / 255.0)
             end
 
             -- Cut out a hole for each pixel (counter-clockwise).
             ---@type string[]
             local holeStrArr <const> = {}
             local lenPixels <const> = wNative * hNative
-            local strfmt <const> = string.format
             local i = 0
             while i < lenPixels do
                 local y <const> = i // wNative
@@ -874,7 +858,7 @@ dlg:button {
                     ax, ay, ax, by, bx, by, bx, ay)
             end
 
-            padStr = string.format(
+            padStr = strfmt(
                 "\n<path id=\"grid\" fill=\"#%06X\"%s "
                 .. "d=\"M %d %d L %d %d L %d %d L %d %d Z %s\" />",
                 webHex, alphaStr,
@@ -882,7 +866,7 @@ dlg:button {
                 wnBorder, border,
                 wnBorder, hnBorder,
                 border, hnBorder,
-                table.concat(holeStrArr, " ")
+                tconcat(holeStrArr, " ")
             )
         end
 
@@ -895,12 +879,12 @@ dlg:button {
 
             local alphaStr = ""
             if aBorder < 0xff then
-                alphaStr = string.format(
+                alphaStr = strfmt(
                     " fill-opacity=\"%.6f\"",
                     aBorder / 255.0)
             end
 
-            borderStr = string.format(
+            borderStr = strfmt(
                 "\n<path id=\"border\" fill=\"#%06X\"%s "
                 .. "d=\"M 0 0 L %d 0 L %d %d L 0 %d Z"
                 .. "M %d %d L %d %d L %d %d L %d %d Z\" />",
@@ -926,7 +910,7 @@ dlg:button {
                 gridOpacity = gridPrefs.opacity / 255.0
             end
 
-            local strokeHexStr <const> = string.format("#%06x",
+            local strokeHexStr <const> = strfmt("#%06x",
                 gridColor.red << 0x10
                 | gridColor.green << 0x08
                 | gridColor.blue)
@@ -936,22 +920,21 @@ dlg:button {
                 "\n<g id=\"guides\" ",
                 "visibility=\"visible\" ",
                 "fill=\"none\" ",
-                string.format("opacity=\"%.6f\" ", gridOpacity),
-                string.format("stroke=\"%s\" ", strokeHexStr),
-                string.format("stroke-width=\"%.6f\">\n", strokeWidth)
+                strfmt("opacity=\"%.6f\" ", gridOpacity),
+                strfmt("stroke=\"%s\" ", strokeHexStr),
+                strfmt("stroke-width=\"%.6f\">\n", strokeWidth)
             }
 
             if guide == "CENTER" then
                 local xCenter <const> = wTotal * 0.5
                 local yCenter <const> = hTotal * 0.5
-                guideStrsArr[#guideStrsArr + 1] = string.format(
+                guideStrsArr[#guideStrsArr + 1] = strfmt(
                     "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
                     xCenter, border, xCenter, hnBorder)
-                guideStrsArr[#guideStrsArr + 1] = string.format(
+                guideStrsArr[#guideStrsArr + 1] = strfmt(
                     "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
                     border, yCenter, wnBorder, yCenter)
             elseif guide == "GRID" then
-                local strfmt <const> = string.format
                 local grid <const> = activeSprite.gridBounds
 
                 local wGrid <const> = math.abs(grid.width)
@@ -959,6 +942,8 @@ dlg:button {
                 local vertsCount <const> = math.ceil((wNative - xGrid) / wGrid)
 
                 if vertsCount > 0 then
+                    local frmtr <const> = "<line id=\"vert%03d\" x1=\"%.6f\" "
+                        .. "y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n"
                     local wGrScaled <const> = wGrid * wScale
                     local xGrScaled <const> = xGrid * wScale
 
@@ -968,7 +953,7 @@ dlg:button {
                         local xRule <const> = border + xGrScaled + i * wGrScaled
                         if xRule > border and xRule < wnBorder then
                             guideStrsArr[#guideStrsArr + 1] = strfmt(
-                                "<line id=\"vert%03d\" x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
+                                frmtr,
                                 i, xRule, border, xRule, hnBorder)
                         end
                         i = i + 1
@@ -981,6 +966,8 @@ dlg:button {
                 local horisCount <const> = math.ceil((hNative - yGrid) / hGrid)
 
                 if horisCount > 0 then
+                    local frmtr <const> = "<line id=\"hori%03d\" x1=\"%.6f\" "
+                        .. "y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n"
                     local hGrScaled <const> = hGrid * hScale
                     local yGrScaled <const> = yGrid * hScale
 
@@ -990,7 +977,7 @@ dlg:button {
                         local yRule <const> = border + yGrScaled + j * hGrScaled
                         if yRule > border and yRule < hnBorder then
                             guideStrsArr[#guideStrsArr + 1] = strfmt(
-                                "<line id=\"hori%03d\" x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
+                                frmtr,
                                 j, border, yRule, wnBorder, yRule)
                         end
                         j = j + 1
@@ -1005,17 +992,17 @@ dlg:button {
                 local y1_3 <const> = t2_3 * border + t1_3 * hnBorder
                 local y2_3 <const> = t2_3 * hnBorder + t1_3 * border
 
-                guideStrsArr[#guideStrsArr + 1] = string.format(
+                guideStrsArr[#guideStrsArr + 1] = strfmt(
                     "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
                     x1_3, border, x1_3, hnBorder)
-                guideStrsArr[#guideStrsArr + 1] = string.format(
+                guideStrsArr[#guideStrsArr + 1] = strfmt(
                     "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
                     x2_3, border, x2_3, hnBorder)
 
-                guideStrsArr[#guideStrsArr + 1] = string.format(
+                guideStrsArr[#guideStrsArr + 1] = strfmt(
                     "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
                     border, y1_3, wnBorder, y1_3)
-                guideStrsArr[#guideStrsArr + 1] = string.format(
+                guideStrsArr[#guideStrsArr + 1] = strfmt(
                     "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
                     border, y2_3, wnBorder, y2_3)
             elseif guide == "SYMMETRY" then
@@ -1027,7 +1014,7 @@ dlg:button {
                 if symmMode == 1 or isBoth or isOff then
                     local xAxis <const> = symmPrefs.x_axis
                     local xaScaled <const> = xAxis * wScale
-                    guideStrsArr[#guideStrsArr + 1] = string.format(
+                    guideStrsArr[#guideStrsArr + 1] = strfmt(
                         "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
                         xaScaled, border, xaScaled, hnBorder)
                 end
@@ -1035,17 +1022,17 @@ dlg:button {
                 if symmMode == 2 or isBoth or isOff then
                     local yAxis <const> = symmPrefs.y_axis
                     local yaScaled <const> = yAxis * hScale
-                    guideStrsArr[#guideStrsArr + 1] = string.format(
+                    guideStrsArr[#guideStrsArr + 1] = strfmt(
                         "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\" />\n",
                         border, yaScaled, wnBorder, yaScaled)
                 end
             end
 
             guideStrsArr[#guideStrsArr + 1] = "</g>"
-            guideStr = table.concat(guideStrsArr)
+            guideStr = tconcat(guideStrsArr)
         end
 
-        local svgStr <const> = table.concat({
+        local svgStr <const> = tconcat({
             "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n",
             "<svg ",
             "xmlns=\"http://www.w3.org/2000/svg\" ",
@@ -1053,15 +1040,15 @@ dlg:button {
             "shape-rendering=\"crispEdges\" ",
             "stroke=\"none\" ",
             "preserveAspectRatio=\"xMidYMid slice\" ",
-            string.format(
+            strfmt(
                 "width=\"%d\" height=\"%d\" ",
                 wTotal, hTotal),
-            string.format(
+            strfmt(
                 "viewBox=\"0 0 %d %d\">\n",
                 wTotal, hTotal),
             defsStr,
             bkgStr,
-            table.concat(layersStrArr, "\n"),
+            tconcat(layersStrArr, "\n"),
             padStr,
             borderStr,
             guideStr,

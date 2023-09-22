@@ -13,7 +13,8 @@ local defaults <const> = {
     textColor = 0xff181818,
     x = 0.0,
     y = 0.0,
-    z = 1.0
+    z = 1.0,
+    hexCode = "8080FF"
 }
 
 local active <const> = {
@@ -74,6 +75,23 @@ local function vecToHex(x, y, z)
     return 0xff808080
 end
 
+---@param x number
+---@param y number
+---@param z number
+---@return string
+local function vecToWebHex(x, y, z)
+    -- This could be less redundant if it did not normalize.
+    local sqMag <const> = x * x + y * y + z * z
+    if sqMag > 0.0 then
+        local invMag <const> = 127.5 / math.sqrt(sqMag)
+        return string.format("%06X",
+            math.floor(x * invMag + 128.0) << 0x10
+            | math.floor(y * invMag + 128.0) << 0x08
+            | math.floor(z * invMag + 128.0))
+    end
+    return defaults.hexCode
+end
+
 ---@param dialog Dialog
 local function updateWidgetCart(dialog)
     local args <const> = dialog.data
@@ -87,7 +105,12 @@ local function updateWidgetCart(dialog)
     local sqMag <const> = x * x + y * y + z * z
     local inUnsigned = 1.5707963267949
     if sqMag > 0.0 then
-        inUnsigned = math.acos(z / math.sqrt(sqMag))
+        local invMag <const> = 1.0 / math.sqrt(sqMag)
+        local zn <const> = z * invMag
+        inUnsigned = math.acos(zn)
+        dialog:modify { id = "hexCode", text = vecToWebHex(x, y, z) }
+    else
+        dialog:modify { id = "hexCode", text = defaults.hexCode }
     end
     active.inclination = 1.5707963267949 - inUnsigned
 
@@ -102,6 +125,7 @@ local function updateFromColor(dialog, clr)
         dialog:modify { id = "x", text = string.format("%.3f", x) }
         dialog:modify { id = "y", text = string.format("%.3f", y) }
         dialog:modify { id = "z", text = string.format("%.3f", z) }
+        dialog:modify { id = "hexCode", text = vecToWebHex(x, y, z) }
 
         local sph <const> = Vec3.toSpherical(Vec3.new(x, y, z))
         local i <const> = sph.inclination
@@ -165,6 +189,7 @@ local function setAzimMouseListen(event)
         dlg:modify { id = "x", text = string.format("%.3f", v.x) }
         dlg:modify { id = "y", text = string.format("%.3f", v.y) }
         dlg:modify { id = "z", text = string.format("%.3f", v.z) }
+        dlg:modify { id = "hexCode", text = vecToWebHex(v.x, v.y, v.z) }
     end
 end
 
@@ -190,10 +215,12 @@ local function setInclMouseListen(event)
         end
         dlg:repaint()
 
-        local v = Vec3.fromSpherical(active.azimuth, active.inclination, 1.0)
+        local v <const> = Vec3.fromSpherical(
+            active.azimuth, active.inclination, 1.0)
         dlg:modify { id = "x", text = string.format("%.3f", v.x) }
         dlg:modify { id = "y", text = string.format("%.3f", v.y) }
         dlg:modify { id = "z", text = string.format("%.3f", v.z) }
+        dlg:modify { id = "hexCode", text = vecToWebHex(v.x, v.y, v.z) }
     end
 end
 
@@ -222,6 +249,14 @@ dlg:button {
             app.command.SwitchColors()
         end
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "hexCode",
+    label = "#:",
+    text = defaults.hexCode
 }
 
 dlg:newrow { always = false }
