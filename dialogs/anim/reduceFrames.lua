@@ -77,7 +77,6 @@ dlg:button {
             end)
 
         app.refresh()
-        app.command.Refresh()
     end
 }
 

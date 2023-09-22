@@ -365,7 +365,6 @@ dlg:button {
         -- to order correctly, but it erases the user's range.
         app.layer = app.layer
         app.refresh()
-        app.command.Refresh()
 
         if not validNameFormat then
             app.alert {

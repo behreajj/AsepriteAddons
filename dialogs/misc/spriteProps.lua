@@ -534,9 +534,6 @@ dlg:button {
                 sprite.data = userData
             end)
 
-            -- This is needed to update the sprite tab color.
-            -- Not sure if app.refresh is needed any more...
-            app.command.Refresh()
             dlg:close()
         else
             app.alert {
