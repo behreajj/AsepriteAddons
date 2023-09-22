@@ -5,7 +5,6 @@ local guideOptions <const> = {
     "NONE",
     "RULE_OF_THIRDS",
     "SYMMETRY",
-    "VAN_DE_GRAAF"
 }
 
 local defaults <const> = {
@@ -26,18 +25,6 @@ local defaults <const> = {
     usePixelAspect = true,
     guide = "NONE",
 }
-
----@param a0 Vec2
----@param a1 Vec2
----@param b0 Vec2
----@param b1 Vec2
----@return Vec2
-local function intersection(a0, a1, b0, b1)
-    local r <const> = a1 - a0
-    local s <const> = b1 - b0
-    local t <const> = Vec2.cross(b0 - a0, s) / Vec2.cross(r, s)
-    return a0 + t * r
-end
 
 ---@param bm BlendMode blend mode
 ---@return string
@@ -910,8 +897,8 @@ dlg:button {
         end
 
         -- If there are any diagonal guidelines, then this shape rendering
-        -- will no longer be a suitable choice. Problem is that geometric
-        -- precision causes problems with background checker pattern.
+        -- is no longer a suitable choice. However, geometricPrecision causes
+        -- problems with background checker pattern.
         local renderHintStr = "shape-rendering=\"crispEdges\" "
 
         local guideStr = ""
@@ -1042,60 +1029,6 @@ dlg:button {
                     gdStrsArr[#gdStrsArr + 1] = strfmt(
                         "<line x1=\"%d\" y1=\"%.6f\" x2=\"%d\" y2=\"%.6f\" />\n",
                         border, yaScaled, wnBorder, yaScaled)
-                end
-            elseif guide == "VAN_DE_GRAAF" then
-                if wTotal > hTotal then
-                    -- Center line.
-                    local xCenter <const> = wTotal * 0.5
-                    gdStrsArr[#gdStrsArr + 1] = strfmt(
-                        "<line x1=\"%.1f\" y1=\"%d\" x2=\"%.1f\" y2=\"%d\" />\n",
-                        xCenter, border, xCenter, hnBorder)
-
-                    -- Diagonals between corners.
-                    gdStrsArr[#gdStrsArr + 1] = strfmt(
-                        "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" />\n",
-                        border, border, wnBorder, hnBorder)
-                    gdStrsArr[#gdStrsArr + 1] = strfmt(
-                        "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" />\n",
-                        border, hnBorder, wnBorder, border)
-
-                    -- Triangle to center line.
-                    gdStrsArr[#gdStrsArr + 1] = strfmt(
-                        "<line x1=\"%d\" y1=\"%d\" x2=\"%.1f\" y2=\"%d\" />\n",
-                        border, hnBorder, xCenter, border)
-                    gdStrsArr[#gdStrsArr + 1] = strfmt(
-                        "<line x1=\"%d\" y1=\"%d\" x2=\"%.1f\" y2=\"%d\" />\n",
-                        wnBorder, hnBorder, xCenter, border)
-
-                    local a <const> = intersection(
-                        Vec2(wnBorder, hnBorder), Vec2(xCenter, border),
-                        Vec2(border, hnBorder), Vec2(wnBorder, border))
-                    gdStrsArr[#gdStrsArr + 1] = strfmt(
-                        "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%d\" />\n",
-                        a.x, a.y, a.x, border)
-
-                    local b <const> = intersection(
-                        Vec2(border, border), Vec2(wnBorder, hnBorder),
-                        Vec2(border, hnBorder), Vec2(xCenter, border))
-                    gdStrsArr[#gdStrsArr + 1] = strfmt(
-                        "<line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%d\" />\n",
-                        b.x, b.y, a.x, border)
-
-                    local c = intersection(
-                        Vec2(wnBorder, hnBorder), Vec2(xCenter, border),
-                        b, Vec2(a.x, border))
-                    local d = intersection(
-                        c, Vec2(wnBorder, c.y),
-                        Vec2(border, hnBorder), Vec2(wnBorder, border))
-                    local e = intersection(
-                        d, Vec2(d.x, hnBorder),
-                        Vec2(wnBorder, hnBorder), Vec2(xCenter, border))
-
-                    -- TODO: Mirror this to other side of the page?
-                    gdStrsArr[#gdStrsArr + 1] = strfmt(
-                        "<path d=\"M %.6f %.6f L %.6f %.6f L %.6f %.6f L %.6f %.6f Z\" />",
-                        c.x, c.y, d.x, d.y, e.x, e.y, c.x, e.y)
-                else
                 end
             end
 
