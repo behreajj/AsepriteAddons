@@ -23,22 +23,15 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- Early returns.
         local site <const> = app.site
         local activeSprite = site.sprite
         if not activeSprite then
-            local newFilePrefs <const> = app.preferences.new_file
-            local newSpec <const> = ImageSpec {
-                width = newFilePrefs.width --[[@as integer]],
-                height = newFilePrefs.height --[[@as integer]],
-                colorMode = ColorMode.RGB
-            }
-            newSpec.colorSpace = ColorSpace { sRGB = true }
-            activeSprite = Sprite(newSpec)
+            activeSprite = Sprite(AseUtilities.createImageSpec())
             AseUtilities.setPalette(
                 AseUtilities.DEFAULT_PAL_ARR, activeSprite, 1)
         end
 
+        -- Early returns.
         local activeSpec <const> = activeSprite.spec
         local colorMode <const> = activeSpec.colorMode
         if colorMode ~= ColorMode.RGB then

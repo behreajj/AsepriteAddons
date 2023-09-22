@@ -971,6 +971,56 @@ function AseUtilities.createFrames(sprite, count, duration)
     return frames
 end
 
+---Creates a new ImageSpec. Width and height will be clamped to [1, 65535].
+---If they are not defined, they default to new file preferences. The color
+---mode defaults to RGB. The transparent color defaults to zero. If a color
+---space is provided, it is assigned to the spec after construction. Otherwise,
+---assigns an sRGB color space.
+---@param width? integer image width
+---@param height? integer image height
+---@param colorMode? ColorMode color mode
+---@param colorSpace? ColorSpace color space
+---@param transparentColor? integer transparent color
+---@return ImageSpec
+function AseUtilities.createImageSpec(
+    width, height,
+    colorMode,
+    colorSpace,
+    transparentColor)
+
+    -- TODO: Find other places where this can be used.
+
+    local tcVerif <const> = transparentColor or 0
+    local cmVerif <const> = colorMode or ColorMode.RGB
+
+    local newFilePrefs <const> = app.preferences.new_file
+    local wVerif = newFilePrefs.width --[[@as integer]]
+    local hVerif = newFilePrefs.height --[[@as integer]]
+
+    if width then
+        wVerif = math.min(math.max(math.abs(width), 1), 65535)
+    end
+
+    if height then
+        hVerif = math.min(math.max(math.abs(height), 1), 65535)
+    end
+
+    local spec <const> = ImageSpec {
+        width = wVerif,
+        height = hVerif,
+        colorMode = cmVerif,
+        transparentColor = tcVerif
+    }
+
+    if colorSpace then
+        spec.colorSpace = colorSpace
+    else
+        spec.colorSpace = ColorSpace { sRGB = true }
+    end
+
+    return spec
+end
+
 ---Creates new layers in a sprite. Prompts user to confirm if requested count
 ---exceeds a limit. Wraps the process in an app.transaction. To assign a GUI
 -- color, use a hexadecimal integer as an argument. Returns a table of layers.
@@ -980,7 +1030,7 @@ end
 ---@param opacity integer? layer opacity
 ---@param guiClr integer? rgba color
 ---@return Layer[]
-function AseUtilities.createNewLayers(
+function AseUtilities.createLayers(
     sprite, count, blendMode, opacity, guiClr)
     if not sprite then
         app.alert {

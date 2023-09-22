@@ -65,16 +65,18 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- Early returns.
-        local activeSprite <const> = app.activeSprite
+        local activeSprite = app.activeSprite
         if not activeSprite then
-            app.alert {
-                title = "Error",
-                text = "There is no active sprite."
-            }
-            return
+            activeSprite = Sprite(AseUtilities.createImageSpec())
+            AseUtilities.setPalette(
+                AseUtilities.DEFAULT_PAL_ARR, activeSprite, 1)
+            app.transaction("New Frames", function()
+                AseUtilities.createFrames(
+                    activeSprite, 32 - 1, 1.0 / 12.0)
+            end)
         end
 
+        -- Early returns.
         local activeSpec <const> = activeSprite.spec
         local colorMode <const> = activeSpec.colorMode
         if colorMode ~= ColorMode.RGB then
