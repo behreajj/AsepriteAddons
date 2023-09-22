@@ -71,8 +71,8 @@ dlg:button {
         if not activeSprite then
             local newFilePrefs <const> = app.preferences.new_file
             local newSpec <const> = ImageSpec {
-                width = newFilePrefs.width,
-                height = newFilePrefs.height,
+                width = newFilePrefs.width --[[@as integer]],
+                height = newFilePrefs.height --[[@as integer]],
                 colorMode = ColorMode.RGB
             }
             newSpec.colorSpace = ColorSpace { sRGB = true }

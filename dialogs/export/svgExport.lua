@@ -1,11 +1,4 @@
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
-local guideOptions <const> = {
-    "CENTER",
-    "GRID",
-    "NONE",
-    "RULE_OF_THIRDS",
-    "SYMMETRY",
-}
 
 local defaults <const> = {
     flattenImage = true,
@@ -23,7 +16,6 @@ local defaults <const> = {
     scale = 1,
     useChecker = false,
     usePixelAspect = true,
-    guide = "NONE",
 }
 
 ---@param bm BlendMode blend mode
@@ -497,7 +489,6 @@ dlg:slider {
         local padding <const> = args.padding --[[@as integer]]
         local gtz <const> = padding > 0
         dlg:modify { id = "paddingClr", visible = gtz }
-        dlg:modify { id = "guide", visible = not gtz }
     end
 }
 
@@ -507,16 +498,6 @@ dlg:color {
     id = "paddingClr",
     color = Color { r = 255, g = 255, b = 255 },
     visible = defaults.padding > 0
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "guide",
-    label = "Guides:",
-    option = defaults.guide,
-    options = guideOptions,
-    visible = defaults.padding == 0
 }
 
 dlg:newrow { always = false }
@@ -587,7 +568,6 @@ dlg:button {
             or defaults.padding --[[@as integer]]
         local paddingClr <const> = args.paddingClr --[[@as Color]]
         local scale <const> = args.scale or defaults.scale --[[@as integer]]
-        local guide <const> = args.guide or defaults.guide --[[@as string]]
         local useChecker <const> = args.useChecker --[[@as boolean]]
         local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
 
@@ -596,10 +576,8 @@ dlg:button {
         local hScale = scale
         if usePixelAspect then
             local pxRatio <const> = activeSprite.pixelRatio
-            local pxw <const> = math.max(1, math.abs(pxRatio.width))
-            local pxh <const> = math.max(1, math.abs(pxRatio.height))
-            wScale = wScale * pxw
-            hScale = hScale * pxh
+            wScale = wScale * math.max(1, math.abs(pxRatio.width))
+            hScale = hScale * math.max(1, math.abs(pxRatio.height))
         end
 
         -- Doc prefs are needed to get the frame UI offset, grid color and
@@ -630,7 +608,7 @@ dlg:button {
         if useChecker then
             local bgPref <const> = docPrefs.bg
 
-            local size <const> = bgPref.size
+            local size <const> = bgPref.size --[[@as Size]]
             local wCheck <const> = math.max(1, math.abs(size.width))
             local hCheck <const> = math.max(1, math.abs(size.height))
             local wCheckScaled <const> = wCheck * wScale
@@ -638,11 +616,11 @@ dlg:button {
             local wcs2 = wCheckScaled + wCheckScaled
             local hcs2 = hCheckScaled + hCheckScaled
 
-            local aColor <const> = bgPref.color1
+            local aColor <const> = bgPref.color1 --[[@as Color]]
             local aHex <const> = aColor.red << 0x10
                 | aColor.green << 0x08
                 | aColor.blue
-            local bColor <const> = bgPref.color2
+            local bColor <const> = bgPref.color2 --[[@as Color]]
             local bHex <const> = bColor.red << 0x10
                 | bColor.green << 0x08
                 | bColor.blue
@@ -692,7 +670,8 @@ dlg:button {
                 local timeScalar <const> = args.timeScalar
                     or defaults.timeScalar --[[@as number]]
 
-                local frameUiOffset <const> = docPrefs.timeline.first_frame - 1
+                local tlPrefs <const> = docPrefs.timeline
+                local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
                 local spritePalettes <const> = activeSprite.palettes
                 local spriteFrames <const> = activeSprite.frames
 
@@ -896,145 +875,10 @@ dlg:button {
                 wnBorder, border)
         end
 
-        -- If there are any diagonal guidelines, then this shape rendering
+        -- If there were any diagonal guidelines, then this shape rendering
         -- is no longer a suitable choice. However, geometricPrecision causes
         -- problems with background checker pattern.
         local renderHintStr = "shape-rendering=\"crispEdges\" "
-
-        local guideStr = ""
-        local useGuide <const> = guide ~= "NONE" and padding <= 0
-        if useGuide then
-            local strokeWidth <const> = scale / 3.0
-
-            local gridPrefs <const> = docPrefs.grid
-            local gridAutoOpacity <const> = gridPrefs.auto_opacity
-            local gridColor <const> = gridPrefs.color
-            local gridOpacity = 1.0
-            if not gridAutoOpacity then
-                gridOpacity = gridPrefs.opacity / 255.0
-            end
-
-            local strokeHexStr <const> = strfmt("#%06x",
-                gridColor.red << 0x10
-                | gridColor.green << 0x08
-                | gridColor.blue)
-
-            ---@type string[]
-            local gdStrsArr = {
-                "\n<g id=\"guides\" ",
-                "visibility=\"visible\" ",
-                "fill=\"none\" ",
-                strfmt("opacity=\"%.6f\" ", gridOpacity),
-                strfmt("stroke=\"%s\" ", strokeHexStr),
-                strfmt("stroke-width=\"%.6f\">\n", strokeWidth)
-            }
-
-            if guide == "CENTER" then
-                local xCenter <const> = wTotal * 0.5
-                local yCenter <const> = hTotal * 0.5
-                gdStrsArr[#gdStrsArr + 1] = strfmt(
-                    "<line x1=\"%.1f\" y1=\"%d\" x2=\"%.1f\" y2=\"%d\" />\n",
-                    xCenter, border, xCenter, hnBorder)
-                gdStrsArr[#gdStrsArr + 1] = strfmt(
-                    "<line x1=\"%d\" y1=\"%.1f\" x2=\"%d\" y2=\"%.1f\" />\n",
-                    border, yCenter, wnBorder, yCenter)
-            elseif guide == "GRID" then
-                local grid <const> = activeSprite.gridBounds
-
-                local wGrid <const> = math.abs(grid.width)
-                local xGrid <const> = grid.x % wGrid
-                local vertsCount <const> = math.ceil((wNative - xGrid) / wGrid)
-
-                if vertsCount > 0 then
-                    local frmtr <const> = "<line id=\"vert%03d\" x1=\"%d\" "
-                        .. "y1=\"%d\" x2=\"%d\" y2=\"%d\" />\n"
-                    local wGrScaled <const> = wGrid * wScale
-                    local xGrScaled <const> = xGrid * wScale
-
-                    gdStrsArr[#gdStrsArr + 1] = "<g id=\"vertical\">\n"
-                    local i = 0
-                    while i < vertsCount do
-                        local xRule <const> = border + xGrScaled + i * wGrScaled
-                        if xRule > border and xRule < wnBorder then
-                            gdStrsArr[#gdStrsArr + 1] = strfmt(
-                                frmtr,
-                                i, xRule, border, xRule, hnBorder)
-                        end
-                        i = i + 1
-                    end
-                    gdStrsArr[#gdStrsArr + 1] = "</g>\n"
-                end
-
-                local hGrid <const> = math.abs(grid.height)
-                local yGrid <const> = grid.y % hGrid
-                local horisCount <const> = math.ceil((hNative - yGrid) / hGrid)
-
-                if horisCount > 0 then
-                    local frmtr <const> = "<line id=\"hori%03d\" x1=\"%d\" "
-                        .. "y1=\"%d\" x2=\"%d\" y2=\"%d\" />\n"
-                    local hGrScaled <const> = hGrid * hScale
-                    local yGrScaled <const> = yGrid * hScale
-
-                    gdStrsArr[#gdStrsArr + 1] = "<g id=\"horizontal\">\n"
-                    local j = 0
-                    while j < horisCount do
-                        local yRule <const> = border + yGrScaled + j * hGrScaled
-                        if yRule > border and yRule < hnBorder then
-                            gdStrsArr[#gdStrsArr + 1] = strfmt(
-                                frmtr,
-                                j, border, yRule, wnBorder, yRule)
-                        end
-                        j = j + 1
-                    end
-                    gdStrsArr[#gdStrsArr + 1] = "</g>\n"
-                end
-            elseif guide == "RULE_OF_THIRDS" then
-                local t1_3 <const> = 1.0 / 3.0
-                local t2_3 <const> = 2.0 / 3.0
-                local x1_3 <const> = t2_3 * border + t1_3 * wnBorder
-                local x2_3 <const> = t2_3 * wnBorder + t1_3 * border
-                local y1_3 <const> = t2_3 * border + t1_3 * hnBorder
-                local y2_3 <const> = t2_3 * hnBorder + t1_3 * border
-
-                gdStrsArr[#gdStrsArr + 1] = strfmt(
-                    "<line x1=\"%.6f\" y1=\"%d\" x2=\"%.6f\" y2=\"%d\" />\n",
-                    x1_3, border, x1_3, hnBorder)
-                gdStrsArr[#gdStrsArr + 1] = strfmt(
-                    "<line x1=\"%.6f\" y1=\"%d\" x2=\"%.6f\" y2=\"%d\" />\n",
-                    x2_3, border, x2_3, hnBorder)
-
-                gdStrsArr[#gdStrsArr + 1] = strfmt(
-                    "<line x1=\"%d\" y1=\"%.6f\" x2=\"%d\" y2=\"%.6f\" />\n",
-                    border, y1_3, wnBorder, y1_3)
-                gdStrsArr[#gdStrsArr + 1] = strfmt(
-                    "<line x1=\"%d\" y1=\"%.6f\" x2=\"%d\" y2=\"%.6f\" />\n",
-                    border, y2_3, wnBorder, y2_3)
-            elseif guide == "SYMMETRY" then
-                local symmPrefs <const> = docPrefs.symmetry
-                local symmMode <const> = symmPrefs.mode
-                local isOff <const> = symmMode == 0
-                local isBoth <const> = symmMode == 3
-
-                if symmMode == 1 or isBoth or isOff then
-                    local xAxis <const> = symmPrefs.x_axis --[[@as number]]
-                    local xaScaled <const> = xAxis * wScale
-                    gdStrsArr[#gdStrsArr + 1] = strfmt(
-                        "<line x1=\"%.6f\" y1=\"%d\" x2=\"%.6f\" y2=\"%d\" />\n",
-                        xaScaled, border, xaScaled, hnBorder)
-                end
-
-                if symmMode == 2 or isBoth or isOff then
-                    local yAxis <const> = symmPrefs.y_axis --[[@as number]]
-                    local yaScaled <const> = yAxis * hScale
-                    gdStrsArr[#gdStrsArr + 1] = strfmt(
-                        "<line x1=\"%d\" y1=\"%.6f\" x2=\"%d\" y2=\"%.6f\" />\n",
-                        border, yaScaled, wnBorder, yaScaled)
-                end
-            end
-
-            gdStrsArr[#gdStrsArr + 1] = "</g>"
-            guideStr = tconcat(gdStrsArr)
-        end
 
         local svgStr <const> = tconcat({
             "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n",
@@ -1055,7 +899,6 @@ dlg:button {
             tconcat(layersStrArr, "\n"),
             padStr,
             borderStr,
-            guideStr,
             "\n</svg>"
         })
 

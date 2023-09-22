@@ -155,7 +155,7 @@ dlg:button {
         -- Do not ask to open animation sequences.
         -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L125
         local openFilePrefs <const> = app.preferences.open_file
-        local oldOpSeqPref <const> = openFilePrefs.open_sequence
+        local oldOpSeqPref <const> = openFilePrefs.open_sequence --[[@as integer]]
         openFilePrefs.open_sequence = 2
 
         -- Palettes need to be retrieved before a new sprite is created in case

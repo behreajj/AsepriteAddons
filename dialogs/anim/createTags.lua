@@ -228,13 +228,9 @@ dlg:button {
             aniDirEnum = AniDir.PING_PONG_REVERSE
         end
 
-        -- Way to set play subtags and repetitions
-        -- vs Play all, play once?
-        -- print(app.preferences.editor.play_once)
-        -- print(app.preferences.editor.play_all)
-        -- print(app.preferences.editor.play_subtags)
         local docPrefs <const> = app.preferences.document(activeSprite)
-        local frameUiOffset <const> = docPrefs.timeline.first_frame - 1
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
 
         ---@type integer[][]
         local frIdcs2 = {}

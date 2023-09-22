@@ -1,8 +1,6 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/jsonutilities.lua")
 
--- TODO: Support a single tag option. Would have to test all the other variants,
--- e.g., batched vs. unbatched, sheet or not.
 local frameTargetOptions <const> = {
     "ACTIVE",
     "ALL",
@@ -555,14 +553,12 @@ dlg:button {
         end
         filePath = string.gsub(filePath, "\\", "\\\\")
 
-        -- .webp file extensions do not allow indexed
-        -- color mode and Aseprite doesn't handle this
-        -- limitation gracefully.
+        -- .webp file extensions do not allow indexed color mode and Aseprite
+        -- doesn't handle this limitation gracefully.
         --
-        -- .tga files are not properly imported into Blender.
-        -- GIMP converts them from indexed to RGB on import
-        -- and export doesn't support translucency. Unity does
-        -- not import with transparency. See
+        -- .tga files are not properly imported into Blender. GIMP converts
+        -- them from indexed to RGB on import and export doesn't support
+        -- translucency. Unity does not import with transparency. See
         -- https://github.com/aseprite/aseprite/issues/3982
         if spriteColorMode == ColorMode.INDEXED then
             local lcFileExt <const> = string.lower(fileExt)
@@ -728,12 +724,10 @@ dlg:button {
             end
         end
 
-        -- If a sprite did have a palette per frame,
-        -- a comprehensive palette would have to be made,
-        -- then each indexed image's indices would need
-        -- to be offset, e.g. for an image on frame 2,
-        -- the length of the palette from frame 1
-        -- would need to be added.
+        -- If a sprite did have a palette per frame, a comprehensive palette
+        -- would have to be made, then each indexed image's indices would need
+        -- to be offset, e.g. for an image on frame 2, the length of the
+        -- palette from frame 1 would need to be added.
         local sheetPalette <const> = AseUtilities.getPalette(
             1, spritePalettes)
         ---@type table[]
@@ -839,8 +833,7 @@ dlg:button {
                         palette = activePalette
                     }
 
-                    -- This needs to be re-set because of
-                    -- the saveJson option.
+                    -- This needs to be re-set because of the saveJson option.
                     packets1[k].cel.fileName = fileNameShort
                 end
             end

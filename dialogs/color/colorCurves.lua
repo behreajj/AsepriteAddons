@@ -24,8 +24,8 @@ local coPostfixes <const> = {
 }
 local lenCoPostfixes <const> = #coPostfixes
 
-local screenScale <const> = app.preferences.general.screen_scale
-local curveColor <const> = app.theme.color.text
+local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
+local curveColor <const> = app.theme.color.text --[[@as Color]]
 local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 
 local defaults <const> = {

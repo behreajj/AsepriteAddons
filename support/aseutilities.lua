@@ -1551,7 +1551,8 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
     elseif target == "MANUAL" then
         if mnStr then
             local docPrefs <const> = app.preferences.document(sprite)
-            local frameUiOffset <const> = docPrefs.timeline.first_frame - 1
+            local tlPrefs <const> = docPrefs.timeline
+            local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
             local lenFrames <const> = #sprite.frames
             if batch then
                 return Utilities.parseRangeStringOverlap(

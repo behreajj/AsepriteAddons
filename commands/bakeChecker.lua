@@ -18,13 +18,13 @@ end
 
 local docPref <const> = app.preferences.document(activeSprite)
 local bgPref <const> = docPref.bg
-local size <const> = bgPref.size
+local size <const> = bgPref.size --[[@as Size]]
 
 local wCheck <const> = math.max(1, math.abs(size.width))
 local hCheck <const> = math.max(1, math.abs(size.height))
 
-local aAse <const> = bgPref.color1
-local bAse <const> = bgPref.color2
+local aAse <const> = bgPref.color1 --[[@as Color]]
+local bAse <const> = bgPref.color2 --[[@as Color]]
 local a = AseUtilities.aseColorToHex(aAse, ColorMode.RGB)
 local b = AseUtilities.aseColorToHex(bAse, ColorMode.RGB)
 a = 0xff000000 | a

@@ -255,7 +255,7 @@ dlg:button {
         local lenCels = #cels
 
         local docPrefs <const> = app.preferences.document(activeSprite)
-        local snap <const> = docPrefs.grid.snap
+        local snap <const> = docPrefs.grid.snap --[[@as boolean]]
         if snap then
             local grid <const> = activeSprite.gridBounds
             local xGrOff <const> = grid.x
@@ -331,7 +331,7 @@ dlg:button {
         local alphaMask <const> = spriteSpec.transparentColor
 
         local docPrefs <const> = app.preferences.document(activeSprite)
-        local tiledMode <const> = docPrefs.tiled.mode
+        local tiledMode <const> = docPrefs.tiled.mode --[[@as integer]]
         if tiledMode == 3 then
             -- Tiling on both axes.
             app.transaction("Wrap Cels", function()
