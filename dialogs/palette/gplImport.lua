@@ -224,19 +224,19 @@ dlg:button {
                 profileFlag = profile ~= ColorSpace { sRGB = true }
                     and profile ~= ColorSpace()
             else
-                -- Try to base sprite width on columns
-                -- in GPL file. If not, find square root
-                -- of colors length.
-                local spriteWidth = columns
+                -- Try to base sprite width on columns in GPL file. If not,
+                -- find square root of colors length.
+                local wSprite = columns
                 if columns < 1 then
-                    spriteWidth = math.max(8,
+                    wSprite = math.max(8,
                         math.ceil(math.sqrt(math.max(
                             1, lenColors))))
                 end
-                local spriteHeight = math.max(1,
-                    math.ceil(lenColors / spriteWidth))
+                local hSprite <const> = math.max(1,
+                    math.ceil(lenColors / wSprite))
 
-                local image <const> = Image(spriteWidth, spriteHeight)
+                local spec <const> = AseUtilities.createSpec(wSprite, hSprite)
+                local image <const> = Image(spec)
                 local pxItr <const> = image:pixels()
                 local index = 0
                 for pixel in pxItr do
@@ -246,7 +246,7 @@ dlg:button {
                     end
                 end
 
-                activeSprite = Sprite(spriteWidth, spriteHeight)
+                activeSprite = AseUtilities.createSprite(spec, "Palette")
                 local layer <const> = activeSprite.layers[1]
                 local cel <const> = layer.cels[1]
                 cel.image = image

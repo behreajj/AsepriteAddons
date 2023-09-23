@@ -270,15 +270,10 @@ dlg:button {
         local spriteSize <const> = border * 2
             + swatchSize * (lenUniqueHexes + 1)
             + padding * lenUniqueHexes
-        local spriteSpec <const> = ImageSpec {
-            width = spriteSize,
-            height = spriteSize,
-            colorMode = ColorMode.RGB,
-            transparentColor = 0
-        }
-        spriteSpec.colorSpace = clrPrf
-        local comboSprite <const> = Sprite(spriteSpec)
-        comboSprite.filename = "Dither Mix"
+        local spriteSpec <const> = AseUtilities.createSpec(
+            spriteSize, spriteSize, ColorMode.RGB, clrPrf, 0)
+        local comboSprite <const> = AseUtilities.createSprite(
+            spriteSpec, "Dither Mix")
         local firstFrame <const> = comboSprite.frames[1]
 
         app.transaction(
@@ -341,26 +336,16 @@ dlg:button {
             end
         end)
 
-        local swatchSpec <const> = ImageSpec {
-            width = swatchSize,
-            height = swatchSize,
-            colorMode = ColorMode.RGB,
-            transparentColor = 0
-        }
-        swatchSpec.colorSpace = clrPrf
+        local swatchSpec<const> = AseUtilities.createSpec(
+            swatchSize, swatchSize, ColorMode.RGB, clrPrf, 0)
 
         local highlightFrame = nil
         local frameWeight = 1
         if useHighlight and paddingGtEq1 then
             local wHigh <const> = swatchSize + frameWeight * 2
             local hHigh <const> = swatchSize + frameWeight * 2
-            local highFrameSpec <const> = ImageSpec {
-                width = wHigh,
-                height = hHigh,
-                colorMode = ColorMode.RGB,
-                transparentColor = 0
-            }
-            swatchSpec.colorSpace = clrPrf
+            local highFrameSpec <const> = AseUtilities.createSpec(
+                wHigh, hHigh, ColorMode.RGB, clrPrf, 0)
             highlightFrame = Image(highFrameSpec)
 
             local topRect <const> = Rectangle(

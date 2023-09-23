@@ -329,7 +329,8 @@ dlg:button {
         local site <const> = app.site
         local sprite = site.sprite
         if not sprite then
-            sprite = Sprite(widthImg, heightImg)
+            sprite = AseUtilities.createSprite(
+                AseUtilities.createSpec(widthImg, heightImg), "Text")
             app.transaction("Set Palette", function()
                 if app.defaultPalette then
                     sprite:setPalette(app.defaultPalette)
@@ -360,12 +361,8 @@ dlg:button {
         local useShadow <const> = (hexShd & 0xff000000) ~= 0
 
         -- Create background source image to copy.
-        local bkgSrcSpec <const> = ImageSpec {
-            width = widthImg,
-            height = heightImg
-        }
-        bkgSrcSpec.colorSpace = sprite.colorSpace
-        local bkgSrcImg = Image(bkgSrcSpec)
+        local spriteSpec <const> = sprite.spec
+        local bkgSrcImg = Image(spriteSpec)
         if useBkg then
             bkgSrcImg:clear(hexBkg)
         end

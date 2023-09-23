@@ -394,16 +394,7 @@ dlg:button {
         newFilePrefs.height = height
         newFilePrefs.color_mode = colorModeInt
 
-        -- Create sprite, set file name, set to active.
         AseUtilities.preserveForeBack()
-        local spec <const> = ImageSpec {
-            width = width,
-            height = height,
-            colorMode = ColorMode.RGB,
-            transparentColor = 0
-        }
-        spec.colorSpace = ColorSpace { sRGB = true }
-        local newSprite <const> = Sprite(spec)
 
         -- File name needs extra validation to remove characters
         -- that could compromise saving a sprite.
@@ -411,9 +402,22 @@ dlg:button {
             or defaults.filename --[[@as string]]
         filename = Utilities.validateFilename(filename)
         if #filename < 1 then filename = defaults.filename end
-        newSprite.filename = filename
 
+        local spec = AseUtilities.createSpec(width, height)
+        local newSprite <const> = AseUtilities.createSprite(spec, filename)
         app.activeSprite = newSprite
+
+        -- Maintain default pixel aspect ratio.
+        -- local pxRatioStr <const> = newFilePrefs.pixel_ratio
+        -- if pxRatioStr ~= "1:1" then
+        --     app.transaction("Set Pixel Aspect", function()
+        --         if pxRatioStr == "2:1" then
+        --             newSprite.pixelRatio = Size(2, 1)
+        --         elseif pxRatioStr == "1:2" then
+        --             newSprite.pixelRatio = Size(1, 2)
+        --         end
+        --     end)
+        -- end
 
         -- Only assign palette here if not gray.
         if not useGray then
@@ -468,15 +472,9 @@ dlg:button {
             AseUtilities.setPalette(hexesProfile, newSprite, 1)
         end
 
-        -- Could help to change ink to simple, but the UI doesn't
-        -- update properly, even with app.command.Refresh().
+        -- Could help to change ink to simple, but the UI doesn't update.
         -- local toolPrefs = app.preferences.tool(app.activeTool)
         -- if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
-
-        -- https://steamcommunity.com/app/431730/discussions/2/3803906367798695226/
-        local docPrefs <const> = app.preferences.document(newSprite)
-        local onionSkinPrefs <const> = docPrefs.onionskin
-        onionSkinPrefs.loop_tag = false
 
         app.activeFrame = firstFrame
         app.command.FitScreen()

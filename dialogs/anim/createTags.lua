@@ -364,6 +364,9 @@ dlg:button {
         -- This triggers an update to the timeline, causing the tags
         -- to order correctly, but it erases the user's range.
         app.layer = app.layer
+
+        -- app.command.Refresh() cannot be used because it crashes older
+        -- versions of Aseprite.
         app.refresh()
 
         if not validNameFormat then

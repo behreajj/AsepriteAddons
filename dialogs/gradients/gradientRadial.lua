@@ -162,7 +162,8 @@ dlg:button {
         local site <const> = app.site
         local activeSprite = site.sprite
         if not activeSprite then
-            activeSprite = Sprite(AseUtilities.createImageSpec())
+            activeSprite = AseUtilities.createSprite(
+                AseUtilities.createSpec(), "Radial Gradient")
             AseUtilities.setPalette(
                 AseUtilities.DEFAULT_PAL_ARR, activeSprite, 1)
         end
@@ -241,15 +242,7 @@ dlg:button {
         -- Need a scalar to normalize distance to [0.0, 1.0]
         local normDist <const> = 2.0 / (maxRad * distFunc(0.0, 0.0, wn1, hn1))
 
-        local grdSpec <const> = ImageSpec {
-            width = max(1, activeSprite.width),
-            height = max(1, activeSprite.height),
-            colorMode = activeSpec.colorMode,
-            transparentColor = activeSpec.transparentColor
-        }
-        grdSpec.colorSpace = activeSpec.colorSpace
-
-        local grdImg <const> = Image(grdSpec)
+        local grdImg <const> = Image(activeSpec)
         local grdItr <const> = grdImg:pixels()
 
         local function radialEval(x, y)

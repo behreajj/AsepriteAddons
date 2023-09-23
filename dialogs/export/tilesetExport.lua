@@ -407,13 +407,14 @@ dlg:button {
         end
 
         -- Cache methods used in loops.
-        local resize <const> = AseUtilities.resizeImageNearest
-        local nextPow2 <const> = Utilities.nextPowerOf2
         local ceil <const> = math.ceil
         local max <const> = math.max
         local sqrt <const> = math.sqrt
         local strfmt <const> = string.format
+        local nextPow2 <const> = Utilities.nextPowerOf2
         local verifName <const> = Utilities.validateFilename
+        local createSpec <const> = AseUtilities.createSpec
+        local resize <const> = AseUtilities.resizeImageNearest
 
         -- For JSON export.
         ---@type table[]
@@ -470,13 +471,9 @@ dlg:button {
             end
 
             -- Create composite image.
-            local sheetSpec <const> = ImageSpec {
-                width = wSheet,
-                height = hSheet,
-                colorMode = spriteColorMode,
-                transparentColor = spriteAlphaIndex
-            }
-            sheetSpec.colorSpace = spriteColorSpace
+            local sheetSpec <const> = createSpec(
+                wSheet,hSheet, spriteColorMode, spriteColorSpace,
+                spriteAlphaIndex)
             local sheetImage <const> = Image(sheetSpec)
 
             -- For JSON export.

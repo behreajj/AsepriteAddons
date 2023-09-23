@@ -114,7 +114,7 @@ dlg:color {
     color = defaults.backTint,
     visible = defaults.useTint
         and (defaults.directions == "BACKWARD"
-        or defaults.direcions == "BOTH")
+            or defaults.direcions == "BOTH")
 }
 
 dlg:newrow { always = false }
@@ -125,7 +125,7 @@ dlg:color {
     color = defaults.foreTint,
     visible = defaults.useTint
         and (defaults.directions == "FORWARD"
-        or defaults.direcions == "BOTH")
+            or defaults.direcions == "BOTH")
 }
 
 dlg:newrow { always = false }
@@ -198,7 +198,7 @@ dlg:button {
 
         -- Get sprite properties.
         local colorSpace <const> = activeSprite.colorSpace
-        local alphaIdx <const> = activeSprite.transparentColor
+        local alphaIndex <const> = activeSprite.transparentColor
 
         -- Cache global functions used in for loops.
         local abs <const> = math.abs
@@ -206,6 +206,7 @@ dlg:button {
         local min <const> = math.min
         local floor <const> = math.floor
         local blend <const> = AseUtilities.blendRgba
+        local createSpec <const> = AseUtilities.createSpec
         local strfmt <const> = string.format
         local transact <const> = app.transaction
 
@@ -355,13 +356,9 @@ dlg:button {
                 local trgImgHeight <const> = abs(yMax - yMin)
                 local trgPos <const> = Point(xMin, yMin)
 
-                local trgSpec <const> = ImageSpec {
-                    width = trgImgWidth,
-                    height = trgImgHeight,
-                    colorMode = rgbColorMode,
-                    transparentColor = alphaIdx
-                }
-                trgSpec.colorSpace = colorSpace
+                local trgSpec = createSpec(
+                    trgImgWidth, trgImgHeight,
+                    rgbColorMode, colorSpace, alphaIndex)
                 local trgImg <const> = Image(trgSpec)
 
                 -- Set function for both vs. forward or backward.
@@ -369,7 +366,8 @@ dlg:button {
                 if useBoth then
                     lerpFunc = function(a, b, c, d)
                         if sampleCount > 2 then
-                            local t <const> = (abs(c - d) - 1.0) / (0.5 * sampleCount - 1.0)
+                            local t <const> = (abs(c - d) - 1.0)
+                                / (0.5 * sampleCount - 1.0)
                             if t <= 0.0 then return b end
                             if t >= 1.0 then return a end
                             return (1.0 - t) * b + t * a
@@ -382,7 +380,8 @@ dlg:button {
                 else
                     lerpFunc = function(a, b, c, d)
                         if sampleCount > 2 then
-                            local t <const> = (abs(c - d) - 1.0) / (sampleCount - 2.0)
+                            local t <const> = (abs(c - d) - 1.0)
+                                / (sampleCount - 2.0)
                             return (1.0 - t) * b + t * a
                         elseif sampleCount > 1 then
                             return (a + b) * 0.5

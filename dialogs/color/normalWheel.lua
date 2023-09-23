@@ -209,10 +209,9 @@ dlg:button {
         end
 
         -- Create sprite.
-        local spec <const> = ImageSpec { width = size, height = size }
-        spec.colorSpace = ColorSpace()
-        local sprite <const> = Sprite(spec)
-        sprite.filename = "Normal Map Color Wheel"
+        local spec = AseUtilities.createSpec(
+            size, size, ColorMode.RGB, ColorSpace(), 0)
+        local sprite = AseUtilities.createSprite(spec, "Normal Map Wheel")
         local wheelCel <const> = sprite.cels[1]
 
         -- For flipping the wheel orientation.
@@ -258,9 +257,7 @@ dlg:button {
         local quantUse <const> = quantAzims or quantIncls
         local szInv <const> = 1.0 / (size - 1.0)
 
-        local imgSpec <const> = ImageSpec { width = size, height = size }
-        imgSpec.colorSpace = ColorSpace()
-        local wheelImg <const> = Image(imgSpec)
+        local wheelImg <const> = Image(spec)
 
         local pxItr <const> = wheelImg:pixels()
         for pixel in pxItr do
@@ -457,10 +454,12 @@ dlg:button {
                 local xOff <const> = 1 + xMin - strokeSize
                 local yOff <const> = 1 + yMin - strokeSize
 
-                local plotSpec <const> = ImageSpec {
-                    width = (xMax - xMin) + stroke2 - 1,
-                    height = (yMax - yMin) + stroke2 - 1,
-                }
+                local plotSpec <const> = AseUtilities.createSpec(
+                    (xMax - xMin) + stroke2 - 1,
+                    (yMax - yMin) + stroke2 - 1,
+                    spec.colorMode,
+                    spec.colorSpace,
+                    spec.transparentColor)
                 local plotImage <const> = Image(plotSpec)
                 local plotPos <const> = Point(xOff, yOff)
 

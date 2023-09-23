@@ -126,6 +126,7 @@ dlg:button {
         local max <const> = math.max
         local tilesToImage <const> = AseUtilities.tilesToImage
         local trim <const> = AseUtilities.trimImageAlpha
+        local createSpec <const> = AseUtilities.createSpec
 
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -174,7 +175,8 @@ dlg:button {
         local overLyrOpacity = 255
         local underLyrOpacity = 255
         if overLayer.opacity then
-            overLyrOpacity = overLayer.opacity end
+            overLyrOpacity = overLayer.opacity
+        end
         if underLayer.opacity then
             underLyrOpacity = underLayer.opacity
         end
@@ -272,13 +274,9 @@ dlg:button {
                         local widthTarget <const> = xBrTarget - xTlTarget
                         local heightTarget <const> = yBrTarget - yTlTarget
 
-                        local trgSpec <const> = ImageSpec {
-                            width = widthTarget,
-                            height = heightTarget,
-                            colorMode = rgbColorMode,
-                            transparentColor = alphaIndex
-                        }
-                        trgSpec.colorSpace = colorSpace
+                        local trgSpec <const> = createSpec(
+                            widthTarget, heightTarget,
+                            rgbColorMode, colorSpace, alphaIndex)
                         local trgImage <const> = Image(trgSpec)
                         local trgPos <const> = Point(xTlTarget, yTlTarget)
 

@@ -134,14 +134,8 @@ dlg:button {
         local site <const> = app.site
         local activeSprite = site.sprite
         if not activeSprite then
-            local newFilePrefs <const> = app.preferences.new_file
-            local newSpec <const> = ImageSpec {
-                width = newFilePrefs.width --[[@as integer]],
-                height = newFilePrefs.height --[[@as integer]],
-                colorMode = ColorMode.RGB
-            }
-            newSpec.colorSpace = ColorSpace { sRGB = true }
-            activeSprite = Sprite(newSpec)
+            local newSpec <const> = AseUtilities.createSpec()
+            activeSprite = AseUtilities.createSprite(newSpec, "Palettes")
             local defaultPalette <const> = app.defaultPalette
             if defaultPalette then
                 activeSprite:setPalette(defaultPalette)

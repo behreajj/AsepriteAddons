@@ -218,7 +218,7 @@ local function updateTitle()
     title = app.fs.fileTitle(filename)
     if #title >= defaults.textLenLimit then
         title = string.sub(title, 1,
-                defaults.textLenLimit) .. "..."
+            defaults.textLenLimit) .. "..."
     end
 
     dlg:modify { id = "titleLabel", text = title }
@@ -255,7 +255,7 @@ local function updateColorSpace()
         csName = colorSpace.name
         if csName and #csName >= defaults.textLenLimit then
             csName = string.sub(csName, 1,
-                    defaults.textLenLimit) .. "..."
+                defaults.textLenLimit) .. "..."
         end
     end
 
@@ -363,7 +363,7 @@ local function updateMaskWarning()
     if maskIdxIsValid then
         local maskColorRef <const> = pal:getColor(maskIdxNum)
         idx0IsNotMask = AseUtilities.aseColorToHex(
-                maskColorRef, ColorMode.RGB) ~= 0
+            maskColorRef, ColorMode.RGB) ~= 0
     end
     local maskIsNotIdx0 = maskIdxNum ~= 0
     local maskIsProblem = false
@@ -532,8 +532,18 @@ dlg:button {
                 sprite.pixelRatio = Size(aPxRatio, bPxRatio)
                 sprite.color = sprColor
                 sprite.data = userData
+
+                if aPxRatio == 1 and bPxRatio == 1 then
+                    prefs.new_file.pixel_ratio = "1:1"
+                elseif aPxRatio == 2 and bPxRatio == 1 then
+                    prefs.new_file.pixel_ratio = "2:1"
+                elseif aPxRatio == 1 and bPxRatio == 2 then
+                    prefs.new_file.pixel_ratio = "1:2"
+                end
             end)
 
+            -- app.command.Refresh() cannot be used to update sprite tab color
+            -- because it crashes older versions of Aseprite.
             dlg:close()
         else
             app.alert {

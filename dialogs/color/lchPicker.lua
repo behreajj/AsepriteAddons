@@ -637,13 +637,9 @@ dlg:button {
         local xSel <const> = selBounds.x
         local ySel <const> = selBounds.y
 
-        local selSpec <const> = ImageSpec {
-            width = math.max(1, selBounds.width),
-            height = math.max(1, selBounds.height),
-            colorMode = colorMode,
-            transparentColor = sprSpec.transparentColor
-        }
-        selSpec.colorSpace = sprSpec.colorSpace
+        local selSpec <const> = AseUtilities.createSpec(
+            selBounds.width, selBounds.height,
+            colorMode, sprSpec.colorSpace, sprSpec.transparentColor)
         local selImage <const> = Image(selSpec)
         local pxItr <const> = selImage:pixels()
 

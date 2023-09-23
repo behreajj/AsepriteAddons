@@ -12,22 +12,21 @@ local paletteTypes <const> = {
 local function loadSprite(filePath)
     -- GPL and PAL file formats cannot be loaded as sprites.
     local fileExt <const> = app.fs.fileExtension(filePath)
+    local fileExtLower <const> = string.lower(fileExt)
     local sprite = nil
-    if string.lower(fileExt) == "gpl"
-        or string.lower(fileExt) == "pal" then
+    if fileExtLower == "gpl" or fileExtLower == "pal" then
         local spriteHexes <const>, _ <const> = AseUtilities.asePaletteLoad(
             "FILE", filePath, 0, 256, true)
         local lenColors <const> = #spriteHexes
         local rtLen <const> = math.max(16,
             math.ceil(math.sqrt(math.max(1, lenColors))))
-        sprite = Sprite(rtLen, rtLen)
+
+        local spec <const> = AseUtilities.createSpec(rtLen, rtLen)
+        sprite = AseUtilities.createSprite(spec, "Palette")
         AseUtilities.setPalette(spriteHexes, sprite, 1)
 
-        local layer <const> = sprite.layers[1]
-        local cel <const> = layer.cels[1]
-        local image <const> = cel.image
+        local image <const> = Image(spec)
         local pxItr <const> = image:pixels()
-
         local index = 0
         for pixel in pxItr do
             if index <= lenColors then
@@ -35,8 +34,18 @@ local function loadSprite(filePath)
                 pixel(spriteHexes[index])
             end
         end
+
+        -- This creates a transaction in undo history.
+        local layer <const> = sprite.layers[1]
+        local cel <const> = layer.cels[1]
+        cel.image = image
     else
         sprite = Sprite { fromFile = filePath }
+        if fileExtLower ~= "ase" and fileExtLower ~= "aseprite" then
+            local docPrefs <const> = app.preferences.document(sprite)
+            local onionSkinPrefs <const> = docPrefs.onionskin
+            onionSkinPrefs.loop_tag = false
+        end
     end
 
     return sprite

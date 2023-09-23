@@ -971,56 +971,6 @@ function AseUtilities.createFrames(sprite, count, duration)
     return frames
 end
 
----Creates a new ImageSpec. Width and height will be clamped to [1, 65535].
----If they are not defined, they default to new file preferences. The color
----mode defaults to RGB. The transparent color defaults to zero. If a color
----space is provided, it is assigned to the spec after construction. Otherwise,
----assigns an sRGB color space.
----@param width? integer image width
----@param height? integer image height
----@param colorMode? ColorMode color mode
----@param colorSpace? ColorSpace color space
----@param transparentColor? integer transparent color
----@return ImageSpec
-function AseUtilities.createImageSpec(
-    width, height,
-    colorMode,
-    colorSpace,
-    transparentColor)
-
-    -- TODO: Find other places where this can be used.
-
-    local tcVerif <const> = transparentColor or 0
-    local cmVerif <const> = colorMode or ColorMode.RGB
-
-    local newFilePrefs <const> = app.preferences.new_file
-    local wVerif = newFilePrefs.width --[[@as integer]]
-    local hVerif = newFilePrefs.height --[[@as integer]]
-
-    if width then
-        wVerif = math.min(math.max(math.abs(width), 1), 65535)
-    end
-
-    if height then
-        hVerif = math.min(math.max(math.abs(height), 1), 65535)
-    end
-
-    local spec <const> = ImageSpec {
-        width = wVerif,
-        height = hVerif,
-        colorMode = cmVerif,
-        transparentColor = tcVerif
-    }
-
-    if colorSpace then
-        spec.colorSpace = colorSpace
-    else
-        spec.colorSpace = ColorSpace { sRGB = true }
-    end
-
-    return spec
-end
-
 ---Creates new layers in a sprite. Prompts user to confirm if requested count
 ---exceeds a limit. Wraps the process in an app.transaction. To assign a GUI
 -- color, use a hexadecimal integer as an argument. Returns a table of layers.
@@ -1098,6 +1048,75 @@ function AseUtilities.createLayers(
     end
 
     return layers
+end
+
+---Creates a new ImageSpec. Width and height will be clamped to [1, 65535].
+---If they are not defined, they default to new file preferences. The color
+---mode defaults to RGB. The transparent color defaults to zero. If a color
+---space is provided, it is assigned to the spec after construction. Otherwise,
+---assigns an sRGB color space.
+---@param width? integer image width
+---@param height? integer image height
+---@param colorMode? ColorMode color mode
+---@param colorSpace? ColorSpace color space
+---@param alphaIndex? integer transparent color
+---@return ImageSpec
+function AseUtilities.createSpec(
+    width, height, colorMode, colorSpace, alphaIndex)
+
+    -- TODO: Replace ImageSpec constructors in AseUtilities as well?
+
+    local tcVerif <const> = alphaIndex or 0
+    local cmVerif <const> = colorMode or ColorMode.RGB
+
+    local newFilePrefs <const> = app.preferences.new_file
+
+    local wVerif = newFilePrefs.width --[[@as integer]]
+    if width then
+        wVerif = math.min(math.max(math.abs(width), 1), 65535)
+    end
+
+    local hVerif = newFilePrefs.height --[[@as integer]]
+    if height then
+        hVerif = math.min(math.max(math.abs(height), 1), 65535)
+    end
+
+    local spec <const> = ImageSpec {
+        width = wVerif,
+        height = hVerif,
+        colorMode = cmVerif,
+        transparentColor = tcVerif
+    }
+
+    if colorSpace then
+        spec.colorSpace = colorSpace
+    else
+        spec.colorSpace = ColorSpace { sRGB = true }
+    end
+
+    return spec
+end
+
+---Creates a sprite from an ImageSpec. Gets the sprite's document preferences
+---and turns off "Loop through tag frames" property. The file name argument is
+---not validated by the method.
+---@param spec ImageSpec specification
+---@param fileName? string file name
+---@return Sprite
+function AseUtilities.createSprite(spec, fileName)
+    local sprite <const> = Sprite(spec)
+    if fileName then sprite.filename = fileName end
+
+    -- It's overkill to handle sprite.pixelRatio (a Size) here. Handle it in
+    -- newSpritePlus and spriteProps, if at all. See also
+    -- app.preferences.new_file.pixel_ratio, a string, "1:2", "2:1", "1:1" .
+
+    -- https://steamcommunity.com/app/431730/discussions/2/3803906367798695226/
+    local docPrefs <const> = app.preferences.document(sprite)
+    local onionSkinPrefs <const> = docPrefs.onionskin
+    onionSkinPrefs.loop_tag = false
+
+    return sprite
 end
 
 ---Draws a filled circle. Uses the Aseprite Image instance method drawPixel.
@@ -2264,6 +2283,7 @@ end
 
 ---Sets a palette in a sprite at a given index to a table of colors represented
 ---as hexadecimal integers. The palette index defaults to 1.
+---Creates a transaction.
 ---@param arr integer[] color array
 ---@param sprite Sprite sprite
 ---@param paletteIndex integer? index
@@ -2322,15 +2342,15 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     -- The source image's color mode is 4 if it is a tile map.
     -- Assigning 4 to the target image when the sprite color
     -- mode is 2 (indexed) crashes Aseprite.
-    local specSrc <const> = imgSrc.spec
-    local specTrg <const> = ImageSpec {
-        width = specSrc.width * tileWidth,
-        height = specSrc.height * tileHeight,
+    local srcSpec <const> = imgSrc.spec
+    local trgSpec <const> = ImageSpec {
+        width = srcSpec.width * tileWidth,
+        height = srcSpec.height * tileHeight,
         colorMode = sprClrMode,
-        transparentColor = specSrc.transparentColor
+        transparentColor = srcSpec.transparentColor
     }
-    specTrg.colorSpace = specSrc.colorSpace
-    local imgTrg <const> = Image(specTrg)
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local imgTrg <const> = Image(trgSpec)
 
     -- Separate a tile's index from the meta-data.
     -- The underlying logic is here:

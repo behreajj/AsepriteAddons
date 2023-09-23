@@ -67,7 +67,8 @@ dlg:button {
     onclick = function()
         local activeSprite = app.activeSprite
         if not activeSprite then
-            activeSprite = Sprite(AseUtilities.createImageSpec())
+            activeSprite = AseUtilities.createSprite(
+                AseUtilities.createSpec(), "Time Gradient")
             AseUtilities.setPalette(
                 AseUtilities.DEFAULT_PAL_ARR, activeSprite, 1)
             app.transaction("New Frames", function()

@@ -146,19 +146,10 @@ local function saveSheet(
             // (hMax + padding))
     end
 
-    -- Unpack source spec.
-    local colorMode <const> = spriteSpec.colorMode
-    local alphaIndex <const> = spriteSpec.transparentColor
-    local colorSpace <const> = spriteSpec.colorSpace
-
     -- Create composite image.
-    local sheetSpec <const> = ImageSpec {
-        width = wSheet,
-        height = hSheet,
-        colorMode = colorMode,
-        transparentColor = alphaIndex
-    }
-    sheetSpec.colorSpace = colorSpace
+    local sheetSpec <const> = AseUtilities.createSpec(
+        wSheet, hSheet, spriteSpec.colorMode,
+        spriteSpec.colorSpace, spriteSpec.transparentColor)
     local compImg <const> = Image(sheetSpec)
 
     -- For centering the image.

@@ -701,13 +701,9 @@ dlg:button {
             local ySel <const> = selBounds.y
 
             local alphaIndex <const> = activeSpec.transparentColor
-            local selSpec <const> = ImageSpec {
-                width = math.max(1, selBounds.width),
-                height = math.max(1, selBounds.height),
-                colorMode = ColorMode.RGB,
-                transparentColor = alphaIndex
-            }
-            selSpec.colorSpace = activeSpec.colorSpace
+            local selSpec <const> = AseUtilities.createSpec(
+                selBounds.width, selBounds.height,
+                ColorMode.RGB, activeSpec.colorSpace, alphaIndex)
 
             -- Blit flattened sprite to image.
             local selFrame <const> = site.frame

@@ -1023,8 +1023,7 @@ dlg:button {
         end
 
         -- Create sprite, name sprite, set palette.
-        local trgSprite <const> = Sprite(srcSpec)
-        trgSprite.filename = "Wave"
+        local trgSprite <const> = AseUtilities.createSprite(srcSpec, "Wave")
         AseUtilities.setPalette(hexArr, trgSprite, 1)
 
         -- Create frames.
@@ -1047,7 +1046,7 @@ dlg:button {
         -- Create cels.
         local trimCels <const> = true
         local trgFrames <const> = trgSprite.frames
-        local alphaMask <const> = srcSpec.transparentColor
+        local alphaIndex <const> = srcSpec.transparentColor
         local j = 0
         while j < lenPackets do
             j = j + 1
@@ -1056,7 +1055,7 @@ dlg:button {
             local x = 0
             local y = 0
             if trimCels then
-                img, x, y = trimImage(img, 0, alphaMask)
+                img, x, y = trimImage(img, 0, alphaIndex)
             end
             transact(strfmt("Wave %d", trgFrame.frameNumber),
                 function()

@@ -213,11 +213,8 @@ dlg:button {
             normalLayer.name = string.format("Normal.Map.%03d", scale)
         end)
 
-        local specNone <const> = ImageSpec {
-            width = activeWidth,
-            height = activeHeight
-        }
-        specNone.colorSpace = ColorSpace()
+        local specNone <const> = AseUtilities.createSpec(
+            activeWidth, activeHeight, ColorMode.RGB, ColorSpace())
 
         app.transaction("Normal From Height", function()
             local i = 0

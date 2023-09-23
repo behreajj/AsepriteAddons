@@ -203,18 +203,13 @@ dlg:button {
             end
         end
 
+        local size <const> = args.size or defaults.size --[[@as integer]]
+        local szInv = 0.0
+        if size ~= 0.0 then szInv = 1.0 / size end
+
         -- Create sprite.
-        local size <const> = args.size
-            or defaults.size --[[@as integer]]
-        local szInv <const> = 1.0 / size
-        local spec = ImageSpec {
-            width = size,
-            height = size,
-            colorMode = ColorMode.RGB
-        }
-        spec.colorSpace = ColorSpace { sRGB = true }
-        local sprite <const> = Sprite(spec)
-        sprite.filename = "LCh Color Shades"
+        local spec <const> = AseUtilities.createSpec(size, size)
+        local sprite <const> = AseUtilities.createSprite(spec, "LCH Shades")
 
         -- Calculate frame count to normalization.
         local iToStep = 0.5
@@ -307,12 +302,11 @@ dlg:button {
             local hueBarWidth = math.ceil(size / 24)
             local hueBarHeight <const> = size
             if hueBarWidth < 8 then hueBarWidth = 8 end
-            local hueBarSpec <const> = ImageSpec {
-                width = hueBarWidth,
-                height = hueBarHeight,
-                colorMode = ColorMode.RGB
-            }
-            spec.colorSpace = ColorSpace { sRGB = true }
+            local hueBarSpec <const> = AseUtilities.createSpec(
+                hueBarWidth, hueBarHeight,
+                spec.colorMode,
+                spec.colorSpace,
+                spec.transparentColor)
             local hueBarImage <const> = Image(hueBarSpec)
 
             local yToHue <const> = 1.0 / (hueBarHeight - 1.0)
@@ -422,12 +416,12 @@ dlg:button {
             local xOff <const> = 1 + xMin - strokeSize
             local yOff <const> = 1 + yMin - strokeSize
 
-            local plotSpec <const> = ImageSpec {
-                width = (xMax - xMin) + stroke2 - 1,
-                height = (yMax - yMin) + stroke2 - 1,
-                colorMode = spec.colorMode
-            }
-            plotSpec.colorSpace = spec.colorSpace
+            local plotSpec <const> = AseUtilities.createSpec(
+                (xMax - xMin) + stroke2 - 1,
+                (yMax - yMin) + stroke2 - 1,
+                spec.colorMode,
+                spec.colorSpace,
+                spec.transparentColor)
             local plotImage <const> = Image(plotSpec)
             local plotPos <const> = Point(xOff, yOff)
 

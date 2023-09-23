@@ -588,8 +588,8 @@ dlg:button {
             end -- End of frame loop.
         end
 
-        local trgSprite <const> = Sprite(srcSpriteSpec)
-        trgSprite.filename = "Pixel Sort"
+        local trgSprite <const> = AseUtilities.createSprite(
+            srcSpriteSpec, "Pixel Sort")
         AseUtilities.setPalette(hexArr, trgSprite, 1)
 
         -- Create frames

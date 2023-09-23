@@ -653,9 +653,10 @@ dlg:button {
         end
 
         -- Cache methods.
+        local ceil <const> = math.ceil
+        local createSpec <const> = AseUtilities.createSpec
         local trimAlpha <const> = AseUtilities.trimImageAlpha
         local round <const> = Utilities.round
-        local ceil <const> = math.ceil
 
         local target <const> = args.target
             or defaults.target --[[@as string]]
@@ -680,31 +681,28 @@ dlg:button {
                     local srcSpec <const> = srcImg.spec
                     local wSrc <const> = srcSpec.width
                     local hSrc <const> = srcSpec.height
-                    local alphaMask <const> = srcSpec.transparentColor
+                    local alphaIndex <const> = srcSpec.transparentColor
 
                     local wTrg <const> = ceil(wSrc + absTan * hSrc)
                     local yCenter <const> = hSrc * 0.5
                     local xDiff <const> = (wSrc - wTrg) * 0.5
                     local wDiffHalf <const> = round((wTrg - wSrc) * 0.5)
 
-                    local trgSpec <const> = ImageSpec {
-                        width = wTrg, height = hSrc,
-                        colorMode = srcSpec.colorMode,
-                        transparentColor = alphaMask
-                    }
-                    trgSpec.colorSpace = srcSpec.colorSpace
+                    local trgSpec <const> = createSpec(
+                        wTrg, hSrc, srcSpec.colorMode,
+                        srcSpec.colorSpace, alphaIndex)
                     local trgImg = Image(trgSpec)
 
                     local trgPxItr <const> = trgImg:pixels()
                     for pixel in trgPxItr do
                         pixel(sample(
                             xDiff + pixel.x + tana * (pixel.y - yCenter),
-                            pixel.y, wSrc, hSrc, srcImg, alphaMask))
+                            pixel.y, wSrc, hSrc, srcImg, alphaIndex))
                     end
 
                     local xTrim = 0
                     local yTrim = 0
-                    trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaMask)
+                    trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaIndex)
 
                     local srcPos <const> = cel.position
                     cel.position = Point(
@@ -755,9 +753,10 @@ dlg:button {
         end
 
         -- Cache methods.
+        local ceil <const> = math.ceil
+        local createSpec <const> = AseUtilities.createSpec
         local trimAlpha <const> = AseUtilities.trimImageAlpha
         local round <const> = Utilities.round
-        local ceil <const> = math.ceil
 
         local target <const> = args.target
             or defaults.target --[[@as string]]
@@ -782,31 +781,28 @@ dlg:button {
                     local srcSpec <const> = srcImg.spec
                     local wSrc <const> = srcSpec.width
                     local hSrc <const> = srcSpec.height
-                    local alphaMask <const> = srcSpec.transparentColor
+                    local alphaIndex <const> = srcSpec.transparentColor
 
                     local hTrg <const> = ceil(hSrc + absTan * wSrc)
                     local xTrgCenter <const> = wSrc * 0.5
                     local yDiff <const> = (hSrc - hTrg) * 0.5
                     local hDiffHalf <const> = round((hTrg - hSrc) * 0.5)
 
-                    local trgSpec <const> = ImageSpec {
-                        width = wSrc, height = hTrg,
-                        colorMode = srcSpec.colorMode,
-                        transparentColor = alphaMask
-                    }
-                    trgSpec.colorSpace = srcSpec.colorSpace
+                    local trgSpec <const> = createSpec(
+                        wSrc, hTrg, srcSpec.colorMode,
+                        srcSpec.colorSpace, alphaIndex)
                     local trgImg = Image(trgSpec)
 
                     local trgPxItr <const> = trgImg:pixels()
                     for pixel in trgPxItr do
                         pixel(sample(pixel.x,
                             yDiff + pixel.y + tana * (pixel.x - xTrgCenter),
-                            wSrc, hSrc, srcImg, alphaMask))
+                            wSrc, hSrc, srcImg, alphaIndex))
                     end
 
                     local xTrim = 0
                     local yTrim = 0
-                    trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaMask)
+                    trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaIndex)
 
                     local srcPos <const> = cel.position
                     cel.position = Point(
@@ -888,9 +884,10 @@ dlg:button {
             end)
         else
             -- Cache methods.
+            local ceil <const> = math.ceil
+            local createSpec <const> = AseUtilities.createSpec
             local trimAlpha <const> = AseUtilities.trimImageAlpha
             local round <const> = Utilities.round
-            local ceil <const> = math.ceil
 
             -- Determine bilinear vs. nearest.
             local easeMethod <const> = args.easeMethod
@@ -948,13 +945,9 @@ dlg:button {
                         local wDiffHalf <const> = round((wTrg - wSrc) * 0.5)
                         local hDiffHalf <const> = round((hTrg - hSrc) * 0.5)
 
-                        local trgSpec <const> = ImageSpec {
-                            width = wTrg,
-                            height = hTrg,
-                            colorMode = srcSpec.colorMode,
-                            transparentColor = alphaMask
-                        }
-                        trgSpec.colorSpace = srcSpec.colorSpace
+                        local trgSpec<const> = createSpec(
+                            wTrg,hTrg, srcSpec.colorMode,
+                            srcSpec.colorSpace, alphaMask)
                         local trgImg = Image(trgSpec)
 
                         -- Loop through target pixels and read from
@@ -1133,6 +1126,7 @@ dlg:button {
         local abs <const> = math.abs
         local max <const> = math.max
         local floor <const> = math.floor
+        local createSpec <const> = AseUtilities.createSpec
 
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -1204,22 +1198,17 @@ dlg:button {
                         local tx <const> = (wSrc - 1.0) / (wTrg - 1.0)
                         local ty <const> = (hSrc - 1.0) / (hTrg - 1.0)
 
-                        local colorMode <const> = srcSpec.colorMode
-                        local alphaMask <const> = srcSpec.transparentColor
-                        local colorSpace <const> = srcSpec.colorSpace
-                        local trgSpec <const> = ImageSpec {
-                            width = wTrg, height = hTrg,
-                            colorMode = colorMode,
-                            transparentColor = alphaMask
-                        }
-                        trgSpec.colorSpace = colorSpace
+                        local alphaIndex <const> = srcSpec.transparentColor
+                        local trgSpec <const> = createSpec(
+                            wTrg, hTrg, srcSpec.colorMode,
+                            srcSpec.colorSpace, alphaIndex)
                         local trgImg <const> = Image(trgSpec)
                         local trgPxItr <const> = trgImg:pixels()
 
                         for pixel in trgPxItr do
                             pixel(sample(
                                 pixel.x * tx, pixel.y * ty, wSrc, hSrc,
-                                srcImg, alphaMask))
+                                srcImg, alphaIndex))
                         end
 
                         local celPos <const> = cel.position

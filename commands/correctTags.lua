@@ -1,7 +1,3 @@
--- TODO: Would this be more useful if it were generalized to correct any names,
--- including layer names, as seen in
--- https://community.aseprite.org/t/export-sprite-sheet-group-name-conflict/4902
-
 local site <const> = app.site
 local activeSprite <const> = site.sprite
 if not activeSprite then return end

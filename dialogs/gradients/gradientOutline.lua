@@ -224,8 +224,7 @@ dlg:button {
 
         -- Unpack arguments.
         local args <const> = dlg.data
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
+        local target <const> = args.target or defaults.target --[[@as string]]
         local alphaFade <const> = args.alphaFade --[[@as boolean]]
         local reverseFade <const> = args.reverseFade --[[@as boolean]]
         local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
@@ -293,6 +292,7 @@ dlg:button {
         local blend <const> = Clr.blendInternal
         local clrNew <const> = Clr.new
         local tilesToImage <const> = AseUtilities.tilesToImage
+        local createSpec <const> = AseUtilities.createSpec
         local strfmt <const> = string.format
         local transact <const> = app.transaction
 
@@ -377,16 +377,15 @@ dlg:button {
                 clr = clrNew(clr.r, clr.g, clr.b, a)
             end
 
-            -- This needs to be blended whether or not
-            -- alpha fade is on auto, because colors
-            -- from shades may contain alpha as well.
+            -- This needs to be blended whether or not alpha fade is on auto,
+            -- because colors from shades may contain alpha as well.
             clr = blend(bkgClr, clr)
             local otlHex <const> = toHex(clr)
             hexesOutline[h] = otlHex
         end
 
-        -- Wrapping this while loop in a transaction
-        -- causes problems with undo history.
+        -- Wrapping this while loop in a transaction causes problems
+        -- with undo history.
         local lenFrames <const> = #frames
         local g = 0
         while g < lenFrames do
@@ -399,17 +398,13 @@ dlg:button {
                     srcImg = tilesToImage(srcImg, tileSet, colorMode)
                 end
 
-                local specSrc <const> = srcImg.spec
-                local wTrg <const> = specSrc.width + itr2
-                local hTrg <const> = specSrc.height + itr2
-                local specTrg <const> = {
-                    width = wTrg,
-                    height = hTrg,
-                    colorMode = specSrc.colorMode,
-                    transparentColor = specSrc.transparentColor
-                }
-                specTrg.colorSpace = specSrc.colorSpace
-                local trgImg <const> = Image(specTrg)
+                local srcSpec <const> = srcImg.spec
+                local wTrg <const> = srcSpec.width + itr2
+                local hTrg <const> = srcSpec.height + itr2
+                local trgSpec = createSpec(
+                    wTrg, hTrg, srcSpec.colorMode,
+                    srcSpec.colorSpace, srcSpec.transparentColor)
+                local trgImg <const> = Image(trgSpec)
                 trgImg:drawImage(srcImg, itrPoint)
 
                 h = 0

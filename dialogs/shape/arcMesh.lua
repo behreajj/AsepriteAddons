@@ -196,7 +196,7 @@ dlg:button {
         local useFill <const> = args.useFill --[[@as boolean]]
         local fillColor <const> = args.fillClr --[[@as Color]]
 
-        local useQuads = margin > 0
+        local useQuads <const> = margin > 0
         local mesh <const> = Mesh2.arc(
             0.017453292519943 * startAngle,
             0.017453292519943 * stopAngle,

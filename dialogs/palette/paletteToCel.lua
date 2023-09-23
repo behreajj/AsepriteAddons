@@ -23,6 +23,8 @@ local defaults <const> = {
     pullFocus = false
 }
 
+---@param preset string
+---@return Bounds3
 local function boundsFromPreset(preset)
     if preset == "CIE_LAB"
         or preset == "SR_LAB_2" then
@@ -32,20 +34,28 @@ local function boundsFromPreset(preset)
     end
 end
 
+---@param clr Clr
+---@return Vec3
 local function clrToVec3lRgb(clr)
     local lin <const> = Clr.sRgbTolRgbInternal(clr)
     return Vec3.new(lin.r, lin.g, lin.b)
 end
 
+---@param clr Clr
+---@return Vec3
 local function clrToVec3sRgb(clr)
     return Vec3.new(clr.r, clr.g, clr.b)
 end
 
+---@param clr Clr
+---@return Vec3
 local function clrToVec3SrLab2(clr)
     local lab <const> = Clr.sRgbToSrLab2(clr)
     return Vec3.new(lab.a, lab.b, lab.l)
 end
 
+---@param preset string
+---@return fun(clr: Clr): Vec3
 local function clrToV3FuncFromPreset(preset)
     if preset == "LINEAR_RGB" then
         return clrToVec3lRgb

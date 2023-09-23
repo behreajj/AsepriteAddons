@@ -369,8 +369,10 @@ dlg:button {
             axis = Vec3.forward()
         end
 
-        local coverSprite <const> = Sprite(512, 512)
-        coverSprite.filename = "Coverage"
+        -- TODO: Check if you can reuse sprite spec
+        local coverSprite <const> = AseUtilities.createSprite(
+            AseUtilities.createSpec(512, 512),
+            "Palette Coverage")
 
         -- Add requested number of frames.
         local oldFrameLen <const> = #coverSprite.frames

@@ -26,7 +26,8 @@ dlg:button {
         local site <const> = app.site
         local activeSprite = site.sprite
         if not activeSprite then
-            activeSprite = Sprite(AseUtilities.createImageSpec())
+            activeSprite = AseUtilities.createSprite(
+                AseUtilities.createSpec(), "Linear Gradient")
             AseUtilities.setPalette(
                 AseUtilities.DEFAULT_PAL_ARR, activeSprite, 1)
         end
@@ -95,15 +96,7 @@ dlg:button {
         local bbInv = 0.0
         if bbDot ~= 0.0 then bbInv = 1.0 / bbDot end
 
-        local grdSpec <const> = ImageSpec {
-            width = max(1, activeSprite.width),
-            height = max(1, activeSprite.height),
-            colorMode = activeSpec.colorMode,
-            transparentColor = activeSpec.transparentColor
-        }
-        grdSpec.colorSpace = activeSpec.colorSpace
-
-        local grdImg <const> = Image(grdSpec)
+        local grdImg <const> = Image(activeSpec)
         local grdItr <const> = grdImg:pixels()
 
         local linearEval <const> = function(x, y)

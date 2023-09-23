@@ -687,8 +687,7 @@ dlg:button {
             gw, gh, txtDispScl)
 
         -- Create title image.
-        local mnfstTitle = args.title
-            or defaults.title --[[@as string]]
+        local mnfstTitle = args.title or defaults.title --[[@as string]]
         if #mnfstTitle < 1 then mnfstTitle = defaults.title end
         local mnfstTitleDisp = string.sub(mnfstTitle, 1, 14)
         mnfstTitleDisp = string.upper(mnfstTitleDisp)
@@ -764,8 +763,10 @@ dlg:button {
         end
 
         -- Create sprite.
-        local manifestSprite <const> = Sprite(spriteWidth, spriteHeight, ColorMode.RGB)
-        manifestSprite.filename = mnfstTitle
+        local mnfstSpec <const> = AseUtilities.createSpec(
+            spriteWidth, spriteHeight)
+        local manifestSprite <const> = AseUtilities.createSprite(
+            mnfstSpec, mnfstTitle)
 
         -- This is not necessary. It is retained in case this
         -- script ever needs to use multiple frames.

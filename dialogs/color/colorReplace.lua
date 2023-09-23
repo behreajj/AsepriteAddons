@@ -68,13 +68,9 @@ local function expandCelToCanvas(cel, sprite)
         return celImg, xSrc, ySrc
     end
 
-    local trgSpec <const> = ImageSpec {
-        width = wTrg,
-        height = hTrg,
-        colorMode = celSpec.colorMode,
-        transparentColor = celSpec.transparentColor
-    }
-    trgSpec.colorSpace = celSpec.colorSpace
+    local trgSpec <const> = AseUtilities.createSpec(
+        wTrg, hTrg, celSpec.colorMode, celSpec.colorSpace,
+        celSpec.transparentColor)
     local trgImg <const> = Image(trgSpec)
     trgImg:drawImage(celImg,
         Point(xSrc - xMin, ySrc - yMin))

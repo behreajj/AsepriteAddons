@@ -178,15 +178,13 @@ dlg:button {
             i = i + 1
             local candidate <const> = candidatesApprox[i]
             local lenPals <const> = #candidate.palettes
-            -- This isn't as efficient as it could be
-            -- because the same Aseprite Colors are
-            -- recreated for each target palette when
-            -- they are converted by value anyway.
+            -- This isn't as efficient as it could be because the same
+            -- Aseprite Colors are recreated for each target palette when they
+            -- are converted by value anyway.
             local j = 0
             while j < lenPals do
                 j = j + 1
-                AseUtilities.setPalette(
-                    hexesSrgb, candidate, j)
+                AseUtilities.setPalette(hexesSrgb, candidate, j)
             end
         end
 
@@ -198,8 +196,7 @@ dlg:button {
             local j = 0
             while j < lenPals do
                 j = j + 1
-                AseUtilities.setPalette(
-                    hexesProfile, candidate, j)
+                AseUtilities.setPalette(hexesProfile, candidate, j)
             end
         end
 

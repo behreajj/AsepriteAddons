@@ -283,17 +283,17 @@ dlg:button {
                 if isTilemap then
                     imgSrc = tilesToImage(imgSrc, tileSet, colorMode)
                 end
-                local posSrc <const> = srcCel.position
-                local xPos <const> = posSrc.x
-                local yPos <const> = posSrc.y
+                local srcPos <const> = srcCel.position
+                local xPos <const> = srcPos.x
+                local yPos <const> = srcPos.y
 
-                local specSrc <const> = imgSrc.spec
-                local imgPick <const> = Image(specSrc)
-                local imgSkip <const> = Image(specSrc)
+                local srcSpec <const> = imgSrc.spec
+                local imgPick <const> = Image(srcSpec)
+                local imgSkip <const> = Image(srcSpec)
 
-                local alphaMask <const> = specSrc.transparentColor
-                imgPick:clear(alphaMask)
-                imgSkip:clear(alphaMask)
+                local alphaIndex <const> = srcSpec.transparentColor
+                imgPick:clear(alphaIndex)
+                imgSkip:clear(alphaIndex)
 
                 local pxItr <const> = imgSrc:pixels()
                 for pixel in pxItr do
@@ -314,10 +314,10 @@ dlg:button {
                     function()
                         local pickCel <const> = activeSprite:newCel(
                             pickLayer, srcFrame, imgPick,
-                            posSrc + offPick)
+                            srcPos + offPick)
                         local skipCel <const> = activeSprite:newCel(
                             skipLayer, srcFrame, imgSkip,
-                            posSrc + offSkip)
+                            srcPos + offSkip)
 
                         local srcOpacity <const> = srcCel.opacity
                         pickCel.opacity = srcOpacity
