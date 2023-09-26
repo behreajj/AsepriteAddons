@@ -2079,14 +2079,10 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
 
-    local wVrf = wTrg
-    local hVrf = hTrg
-    if wVrf < 0 then wVrf = -wVrf end
-    if hVrf < 0 then hVrf = -hVrf end
-    if wVrf < 1 then wVrf = 1 end
-    if hVrf < 1 then hVrf = 1 end
+    local wVrf <const> = math.max(1, math.abs(wTrg))
+    local hVrf <const> = math.max(1, math.abs(hTrg))
 
-    if wTrg == wSrc and hTrg == hSrc then
+    if wVrf == wSrc and hVrf == hSrc then
         return source
     end
 
@@ -2100,8 +2096,8 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
     end
 
     local trgSpec <const> = ImageSpec {
-        width = wTrg,
-        height = hTrg,
+        width = wVrf,
+        height = hVrf,
         colorMode = source.colorMode,
         transparentColor = srcSpec.transparentColor
     }
@@ -2109,7 +2105,7 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
     local target <const> = Image(trgSpec)
 
     local pxRsz <const> = Utilities.resizePixelsNearest(
-        px, wSrc, hSrc, wTrg, hTrg)
+        px, wSrc, hSrc, wVrf, hVrf)
 
     local trgPxItr <const> = target:pixels()
     local j = 0
@@ -2355,7 +2351,7 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     -- Separate a tile's index from the meta-data.
     -- The underlying logic is here:
     -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
-    -- local tileMetaMask  = 0xe0000000
+    -- local tileMetaMask = 0xe0000000
     -- local maskFlipX = 0x20000000
     -- local maskFlipY = 0x40000000
     -- local maskRot90cw = 0x80000000
