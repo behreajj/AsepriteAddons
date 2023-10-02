@@ -236,10 +236,9 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
-        -- This is consistent with dialogs like gradientMap,
-        -- but not with colorAdjust, which has the option
-        -- to create a new layer from selection, and which
-        -- does auto color mode convert.
+        -- This is consistent with dialogs like gradientMap, but not with
+        -- colorAdjust, which has the option to create a new layer from
+        -- selection, and which does auto color mode convert.
 
         -- Begin timing the function elapsed.
         local args <const> = dlg.data
@@ -420,10 +419,9 @@ dlg:button {
 
                 local hexToLabDict = {}
                 if useRelative then
-                    -- For animations this will cause flickering bc
-                    -- each image is independent from the prior frame.
-                    -- Would need a preliminary loop to build a dict
-                    -- across frames.
+                    -- For animations this will cause flickering because each
+                    -- image is independent from the prior frame. Would need a
+                    -- preliminary loop to build a dict across frames.
                     hexToLabDict, aMin, aMax, bMin, bMax = auditImage(srcImg)
                     aRange = aMax - aMin
                     aViable = aRange > 0.5

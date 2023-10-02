@@ -743,16 +743,13 @@ function AseUtilities.blendRgba(a, b)
     if cg > 0xff then cg = 0xff end
     if cr > 0xff then cr = 0xff end
 
-    return tuv << 0x18
-        | cb << 0x10
-        | cg << 0x08
-        | cr
+    return tuv << 0x18 | cb << 0x10 | cg << 0x08 | cr
 end
 
 ---Wrapper for app.command.ChangePixelFormat which accepts an integer constant
 ---as an input. The constant should be included in the ColorMode enum:
 ---INDEXED, GRAY or RGB. Does nothing if the constant is invalid.
----@param format ColorMode|integer format constant
+---@param format ColorMode format constant
 function AseUtilities.changePixelFormat(format)
     if format == ColorMode.INDEXED then
         app.command.ChangePixelFormat { format = "indexed" }
@@ -1264,14 +1261,14 @@ function AseUtilities.filterCels(
             local xSel <const> = selBounds.x
             local ySel <const> = selBounds.y
             local activeSpec <const> = sprite.spec
-            local alphaMask <const> = activeSpec.transparentColor
+            local alphaIndex <const> = activeSpec.transparentColor
 
             -- Create a subset of flattened sprite.
             local flatSpec <const> = ImageSpec {
                 width = math.max(1, selBounds.width),
                 height = math.max(1, selBounds.height),
                 colorMode = activeSpec.colorMode,
-                transparentColor = alphaMask
+                transparentColor = alphaIndex
             }
             flatSpec.colorSpace = activeSpec.colorSpace
 
@@ -1279,14 +1276,13 @@ function AseUtilities.filterCels(
             flatImage:drawSprite(
                 sprite, frame, Point(-xSel, -ySel))
 
-            -- Remove pixels within selection bounds
-            -- but not within selection itself.
+            -- Remove pixels within selection bounds but not in selection.
             local flatPxItr <const> = flatImage:pixels()
             for pixel in flatPxItr do
                 local x <const> = pixel.x + xSel
                 local y <const> = pixel.y + ySel
                 if not sel:contains(x, y) then
-                    pixel(alphaMask)
+                    pixel(alphaIndex)
                 end
             end
 
@@ -1901,8 +1897,7 @@ function AseUtilities.grayHexes(count)
     while i < valCount do
         local g <const> = floor(i * toGray + 0.5)
         i = i + 1
-        result[i] = 0xff000000
-            | g << 0x10 | g << 0x08 | g
+        result[i] = 0xff000000 | g << 0x10 | g << 0x08 | g
     end
     return result
 end
@@ -2023,6 +2018,7 @@ end
 ---@return integer[][]
 function AseUtilities.parseTagsOverlap(tags)
     local lenTags <const> = #tags
+    ---@type integer[][]
     local arr2 <const> = {}
     local parseTag <const> = AseUtilities.parseTag
     local i = 0
@@ -2098,7 +2094,7 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
     local trgSpec <const> = ImageSpec {
         width = wVrf,
         height = hVrf,
-        colorMode = source.colorMode,
+        colorMode = srcSpec.colorMode,
         transparentColor = srcSpec.transparentColor
     }
     trgSpec.colorSpace = srcSpec.colorSpace
@@ -2139,7 +2135,7 @@ function AseUtilities.rotateImage90(source)
     local trgSpec <const> = ImageSpec {
         width = h,
         height = w,
-        colorMode = source.colorMode,
+        colorMode = srcSpec.colorMode,
         transparentColor = srcSpec.transparentColor
     }
     trgSpec.colorSpace = srcSpec.colorSpace
@@ -2207,7 +2203,7 @@ function AseUtilities.rotateImage270(source)
     local trgSpec <const> = ImageSpec {
         width = h,
         height = w,
-        colorMode = source.colorMode,
+        colorMode = srcSpec.colorMode,
         transparentColor = srcSpec.transparentColor
     }
     trgSpec.colorSpace = srcSpec.colorSpace
@@ -2323,30 +2319,30 @@ end
 ---is nil, returns an image that copies the source's ImageSpec.
 ---@param imgSrc Image source image
 ---@param tileSet Tileset|nil tile set
----@param sprClrMode ColorMode|integer sprite color mode
+---@param sprClrMode ColorMode sprite color mode
 ---@return Image
 function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
-    -- This is mostly to keep the Lua Language Server happy.
-    if not tileSet then return Image(imgSrc.spec) end
+    -- The source image's color mode is 4 if it is a tile map.
+    -- Assigning 4 to the target image when the sprite color
+    -- mode is 2 (indexed) crashes Aseprite.
+    local srcSpec <const> = imgSrc.spec
+
+    if not tileSet then
+        return Image(AseUtilities.createSpec(srcSpec.width, srcSpec.height,
+            sprClrMode, srcSpec.colorSpace, srcSpec.transparentColor))
+    end
 
     local tileGrid <const> = tileSet.grid
     local tileDim <const> = tileGrid.tileSize
     local tileWidth <const> = tileDim.width
     local tileHeight <const> = tileDim.height
-    local lenTileSet <const> = #tileSet
 
-    -- The source image's color mode is 4 if it is a tile map.
-    -- Assigning 4 to the target image when the sprite color
-    -- mode is 2 (indexed) crashes Aseprite.
-    local srcSpec <const> = imgSrc.spec
-    local trgSpec <const> = ImageSpec {
-        width = srcSpec.width * tileWidth,
-        height = srcSpec.height * tileHeight,
-        colorMode = sprClrMode,
-        transparentColor = srcSpec.transparentColor
-    }
-    trgSpec.colorSpace = srcSpec.colorSpace
-    local imgTrg <const> = Image(trgSpec)
+    local imgTrg <const> = Image(AseUtilities.createSpec(
+        srcSpec.width * tileWidth,
+        srcSpec.height * tileHeight,
+        sprClrMode,
+        srcSpec.colorSpace,
+        srcSpec.transparentColor))
 
     -- Separate a tile's index from the meta-data.
     -- The underlying logic is here:
@@ -2359,6 +2355,7 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     -- local maskRot90ccw = maskRot180 | maskRot90cw
     local pxTilei <const> = app.pixelColor.tileI
 
+    local lenTileSet <const> = #tileSet
     local mapItr <const> = imgSrc:pixels()
     for mapEntry in mapItr do
         local mapif <const> = mapEntry() --[[@as integer]]
@@ -2533,9 +2530,9 @@ function AseUtilities.trimImageAlpha(
 
     local srcSpec <const> = image.spec
     local trgSpec <const> = ImageSpec {
-        colorMode = srcSpec.colorMode,
         width = wTrg + pad2,
         height = hTrg + pad2,
+        colorMode = srcSpec.colorMode,
         transparentColor = alphaIndex
     }
     trgSpec.colorSpace = srcSpec.colorSpace

@@ -40,12 +40,10 @@ local function rgbMix(
     local aMix <const> = u * aOrig + t * aDest
     if aMix <= 0.0 then return 0.0, 0.0, 0.0, 0.0 end
 
-    -- Origin and destination colors have been
-    -- checked for zero alpha before this function
-    -- is called.
+    -- Origin and destination colors have been checked for zero alpha before
+    -- this function is called.
     --
-    -- Premul and unpremul have to be done
-    -- for both horizontal and vertical mixes.
+    -- Premul and unpremul have to be done for horizontal and vertical mixes.
     local ro = rOrig
     local go = gOrig
     local bo = bOrig
@@ -145,8 +143,7 @@ local function sampleBilinear(
     local g0 = 0.0
     local r0 = 0.0
 
-    -- The trim alpha results are better when
-    -- alpha zero check is done here.
+    -- The trim alpha results are better when alpha zero check is done here.
     local xErr <const> = xSrc - xf
     local a00 <const> = c00 >> 0x18 & 0xff
     local a10 <const> = c10 >> 0x18 & 0xff

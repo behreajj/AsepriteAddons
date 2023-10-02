@@ -4,7 +4,6 @@ dofile("../../support/canvasutilities.lua")
 local screenScale <const> = app.preferences.general.screen_scale
 
 local defaults <const> = {
-    -- Should this keep hexadecimal and RGB labels?
     -- Get and set select?
     barWidth = 240 / screenScale,
     barHeight = 16 / screenScale,

@@ -235,16 +235,15 @@ function CanvasUtilities.graphBezier(
             -- Epsilon is inverse of max resolution (64).
             local clampEpsilon <const> = 1.0 / 64.0
 
-            ---@type string[][]
-            local args <const> = dialog.data
-
             -- Control points take precedence over anchor points
             -- when it comes to selecting for mouse movement.
+            ---@type string[][]
             local knotIds <const> = {
                 { idPoints[1], idPoints[2], idPoints[3], idPoints[4] },
                 { idPoints[7], idPoints[8], idPoints[5], idPoints[6] }
             }
             local lenKnotIds <const> = #knotIds
+            local args <const> = dialog.data
 
             local i = 0
             while i < lenKnotIds do
