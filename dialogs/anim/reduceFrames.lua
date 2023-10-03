@@ -52,12 +52,9 @@ dlg:button {
         end
 
         local args <const> = dlg.data
-        local delete = args.delete
-            or defaults.delete --[[@as integer]]
-        local skip <const> = args.skip
-            or defaults.skip --[[@as integer]]
-        local offset <const> = args.offset
-            or defaults.offset --[[@as integer]]
+        local delete = args.delete or defaults.delete --[[@as integer]]
+        local skip <const> = args.skip or defaults.skip --[[@as integer]]
+        local offset <const> = args.offset or defaults.offset --[[@as integer]]
 
         local frames <const> = activeSprite.frames
         local lenFrames <const> = #frames

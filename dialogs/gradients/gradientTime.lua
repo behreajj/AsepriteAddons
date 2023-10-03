@@ -127,7 +127,7 @@ dlg:button {
             h = h + 1
             local frIdx <const> = frIdcs[h]
             local frObj <const> = frObjs[frIdx]
-            local duration = frObj.duration
+            local duration <const> = frObj.duration
             timeStamps[h] = totalDuration
             totalDuration = totalDuration + duration
         end

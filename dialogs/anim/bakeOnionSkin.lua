@@ -349,7 +349,7 @@ dlg:button {
                 end
             end
 
-            if xMax ~= xMin and yMax ~= yMin then
+            if packetIdx > 0 and xMax > xMin and yMax > yMin then
                 -- Find maximum containing axis aligned bounding
                 -- box. Find minimum for top-left corner of cels.
                 local trgImgWidth <const> = abs(xMax - xMin)

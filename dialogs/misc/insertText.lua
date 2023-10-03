@@ -352,8 +352,9 @@ dlg:button {
             end)
         end
 
-        local widthSprite <const> = sprite.width
-        local heightSprite <const> = sprite.height
+        local spriteSpec <const> = sprite.spec
+        local widthSprite <const> = spriteSpec.width
+        local heightSprite <const> = spriteSpec.height
 
         -- Determine if background and shadow should
         -- be used based on their alpha.
@@ -361,7 +362,6 @@ dlg:button {
         local useShadow <const> = (hexShd & 0xff000000) ~= 0
 
         -- Create background source image to copy.
-        local spriteSpec <const> = sprite.spec
         local bkgSrcImg = Image(AseUtilities.createSpec(widthImg, heightImg,
             spriteSpec.colorMode, spriteSpec.colorSpace,
             spriteSpec.transparentColor))
@@ -370,10 +370,8 @@ dlg:button {
         end
 
         -- Convert from percentage to pixel dimensions.
-        xOrigin = math.floor(
-            0.5 + xOrigin * 0.01 * widthSprite)
-        yOrigin = math.floor(
-            0.5 + yOrigin * 0.01 * heightSprite)
+        xOrigin = math.floor(0.5 + xOrigin * 0.01 * widthSprite)
+        yOrigin = math.floor(0.5 + yOrigin * 0.01 * heightSprite)
 
         -- Find the display width and center of a line.
         local dispWidth <const> = maxLineWidth * dw
@@ -416,8 +414,7 @@ dlg:button {
             stillPos.y = stillPos.y - heightImg
         end
 
-        local activeFrameObj <const> = site.frame
-            or sprite.frames[1]
+        local activeFrameObj <const> = site.frame or sprite.frames[1]
         local actFrIdx <const> = activeFrameObj.frameNumber
         if animate then
             local frames <const> = sprite.frames
