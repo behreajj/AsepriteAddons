@@ -362,7 +362,9 @@ dlg:button {
 
         -- Create background source image to copy.
         local spriteSpec <const> = sprite.spec
-        local bkgSrcImg = Image(spriteSpec)
+        local bkgSrcImg = Image(AseUtilities.createSpec(widthImg, heightImg,
+            spriteSpec.colorMode, spriteSpec.colorSpace,
+            spriteSpec.transparentColor))
         if useBkg then
             bkgSrcImg:clear(hexBkg)
         end
