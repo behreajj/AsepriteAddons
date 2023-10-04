@@ -106,7 +106,7 @@ dlg:number {
     label = "Number:",
     text = string.format("%d", defaults.opNum),
     decimals = 0,
-    focus = true
+    focus = false
 }
 
 dlg:newrow { always = false }
@@ -218,44 +218,45 @@ dlg:button {
             return
         end
 
+        -- This approach wouldn't work for indexed and gray color.
+        -- local mapLyr = nil
+        -- app.transaction("New Layer", function()
+        --     mapLyr = sprite:newLayer()
+        --     mapLyr.name = "Heat.Map"
+        --     mapLyr.blendMode = BlendMode.NORMAL
+        --     mapLyr.opacity = 128
+        -- end)
 
-        local mapLyr = nil
-        app.transaction("New Layer", function()
-            mapLyr = sprite:newLayer()
-            mapLyr.name = "Duration Heat Map"
-            mapLyr.blendMode = BlendMode.NORMAL
-            mapLyr.opacity = 128
-        end)
-
-        local spriteSpec <const> = sprite.spec
+        -- local spriteSpec <const> = sprite.spec
         local durToFac <const> = 1.0 / durRange
 
         local easing <const> = Clr.mixlRgb
         local cgeval <const> = ClrGradient.eval
-        local toHex <const> = Clr.toHex
+        -- local toHex <const> = Clr.toHex
+        local clrToAseColor <const> = AseUtilities.clrToAseColor
 
-        -- local leaves <const> = AseUtilities.getLayerHierarchy(
-        --     sprite, true, true, true, true)
-        -- local lenLeaves <const> = #leaves
-        -- local clrToAseColor <const> = AseUtilities.clrToAseColor
+        local leaves <const> = AseUtilities.getLayerHierarchy(
+            sprite, true, true, true, true)
+        local lenLeaves <const> = #leaves
 
+        local t <const> = 2.0 / 3.0
         local cg <const> = ClrGradient.new({
-            ClrKey.new(0.0, Clr.new(0.266667, 0.003922, 0.329412)),
-            ClrKey.new(0.06666667, Clr.new(0.282353, 0.100131, 0.420654)),
-            ClrKey.new(0.13333333, Clr.new(0.276078, 0.184575, 0.487582)),
-            ClrKey.new(0.2, Clr.new(0.254902, 0.265882, 0.527843)),
-            ClrKey.new(0.26666668, Clr.new(0.221961, 0.340654, 0.549281)),
-            ClrKey.new(0.33333334, Clr.new(0.192157, 0.405229, 0.554248)),
-            ClrKey.new(0.4, Clr.new(0.164706, 0.469804, 0.556863)),
-            ClrKey.new(0.46666667, Clr.new(0.139869, 0.534379, 0.553464)),
-            ClrKey.new(0.5333333, Clr.new(0.122092, 0.595033, 0.543007)),
-            ClrKey.new(0.6, Clr.new(0.139608, 0.658039, 0.516863)),
-            ClrKey.new(0.6666667, Clr.new(0.210458, 0.717647, 0.471895)),
-            ClrKey.new(0.73333335, Clr.new(0.326797, 0.773595, 0.407582)),
-            ClrKey.new(0.8, Clr.new(0.477647, 0.821961, 0.316863)),
-            ClrKey.new(0.8666667, Clr.new(0.648366, 0.858039, 0.208889)),
-            ClrKey.new(0.93333334, Clr.new(0.825098, 0.884967, 0.114771)),
-            ClrKey.new(1.0, Clr.new(0.992157, 0.905882, 0.145098))
+            ClrKey.new(0.0, Clr.new(0.266667, 0.003922, 0.329412, t)),
+            ClrKey.new(0.06666667, Clr.new(0.282353, 0.100131, 0.420654, t)),
+            ClrKey.new(0.13333333, Clr.new(0.276078, 0.184575, 0.487582, t)),
+            ClrKey.new(0.2, Clr.new(0.254902, 0.265882, 0.527843, t)),
+            ClrKey.new(0.26666668, Clr.new(0.221961, 0.340654, 0.549281, t)),
+            ClrKey.new(0.33333334, Clr.new(0.192157, 0.405229, 0.554248, t)),
+            ClrKey.new(0.4, Clr.new(0.164706, 0.469804, 0.556863, t)),
+            ClrKey.new(0.46666667, Clr.new(0.139869, 0.534379, 0.553464, t)),
+            ClrKey.new(0.5333333, Clr.new(0.122092, 0.595033, 0.543007, t)),
+            ClrKey.new(0.6, Clr.new(0.139608, 0.658039, 0.516863, t)),
+            ClrKey.new(0.6666667, Clr.new(0.210458, 0.717647, 0.471895, t)),
+            ClrKey.new(0.73333335, Clr.new(0.326797, 0.773595, 0.407582, t)),
+            ClrKey.new(0.8, Clr.new(0.477647, 0.821961, 0.316863, t)),
+            ClrKey.new(0.8666667, Clr.new(0.648366, 0.858039, 0.208889, t)),
+            ClrKey.new(0.93333334, Clr.new(0.825098, 0.884967, 0.114771, t)),
+            ClrKey.new(1.0, Clr.new(0.992157, 0.905882, 0.145098, t))
         })
 
         app.transaction("Time Heat Map", function()
@@ -265,21 +266,21 @@ dlg:button {
                 local dur <const> = durations[i]
                 local fac <const> = (dur - durMin) * durToFac
                 local clr <const> = cgeval(cg, fac, easing)
-                local hex <const> = toHex(clr)
-                local img <const> = Image(spriteSpec)
-                img:clear(hex)
-                sprite:newCel(mapLyr, i, img, Point(0, 0))
+                -- local hex <const> = toHex(clr)
+                -- local img <const> = Image(spriteSpec)
+                -- img:clear(hex)
+                -- sprite:newCel(mapLyr, i, img, Point(0, 0))
 
-                -- local ase <const> = clrToAseColor(clr)
-                -- local j = 0
-                -- while j < lenLeaves do
-                --     j = j + 1
-                --     local leaf <const> = leaves[j]
-                --     local cel <const> = leaf:cel(i)
-                --     if cel then
-                --         cel.color = ase
-                --     end
-                -- end
+                local ase <const> = clrToAseColor(clr)
+                local j = 0
+                while j < lenLeaves do
+                    j = j + 1
+                    local leaf <const> = leaves[j]
+                    local cel <const> = leaf:cel(i)
+                    if cel then
+                        cel.color = ase
+                    end
+                end
             end
         end)
 
