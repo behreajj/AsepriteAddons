@@ -157,15 +157,18 @@ dlg:combobox {
 
             dlg:modify { id = idPrefix, visible = bool }
             dlg:modify { id = idPrefix .. "_easeFuncs", visible = bool }
+            dlg:modify { id = idPrefix .. "_fliph", visible = bool }
             dlg:modify { id = idPrefix .. "_flipv", visible = bool }
             dlg:modify { id = idPrefix .. "_straight", visible = bool }
             dlg:modify { id = idPrefix .. "_parallel", visible = bool }
         end
 
-        dlg:modify {
-            id = "useRelative",
-            visible = bools[2] or bools[3]
-        }
+        -- Get white and black point work with A and B, but they are hidden to
+        -- conserve space and because how they work is not intuitive.
+        local aorb <const> = bools[2] or bools[3]
+        dlg:modify { id = "useRelative", visible = aorb }
+        dlg:modify { id = "selGetLbIn", visible = not aorb }
+        dlg:modify { id = "selGetUbIn", visible = not aorb }
     end
 }
 
@@ -200,8 +203,6 @@ dlg:button {
         setInputFromColor(coPostfixes[7])
     end
 }
-
-dlg:newrow { always = false }
 
 dlg:newrow { always = false }
 

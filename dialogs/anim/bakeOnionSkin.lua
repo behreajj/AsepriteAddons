@@ -260,6 +260,34 @@ dlg:button {
             trgLayer.stackIndex = srcLayer.stackIndex
         end)
 
+        -- Set function for both vs. forward or backward.
+        local lerpFunc = nil
+        if useBoth then
+            lerpFunc = function(aMin, aMax, i, d, s)
+                if s > 2 then
+                    local t <const> = (abs(i - d) - 1.0) / (0.5 * s - 1.0)
+                    if t <= 0.0 then return aMax end
+                    if t >= 1.0 then return aMin end
+                    return (1.0 - t) * aMax + t * aMin
+                elseif s > 1 then
+                    return (aMin + aMax) * 0.5
+                else
+                    return aMin
+                end
+            end
+        else
+            lerpFunc = function(aMin, aMax, i, d, s)
+                if s > 2 then
+                    local t <const> = (abs(i - d) - 1.0) / (s - 2.0)
+                    return (1.0 - t) * aMax + t * aMin
+                elseif s > 1 then
+                    return (aMin + aMax) * 0.5
+                else
+                    return aMin
+                end
+            end
+        end
+
         local lenFrames <const> = #frames
         local rgbColorMode <const> = ColorMode.RGB
         local i = 0
@@ -268,16 +296,13 @@ dlg:button {
             local srcFrame <const> = frames[i]
 
             local startFrameIdx = srcFrame
-            local endFrameIdx = srcFrame
-
             if lookBackward then
-                startFrameIdx = srcFrame - iterations
-                startFrameIdx = max(1, startFrameIdx)
+                startFrameIdx = max(1, srcFrame - iterations)
             end
 
+            local endFrameIdx = srcFrame
             if lookForward then
-                endFrameIdx = srcFrame + iterations
-                endFrameIdx = min(maxFrameCount, endFrameIdx)
+                endFrameIdx = min(maxFrameCount, srcFrame + iterations)
             end
 
             local sampleCount <const> = abs(1 + endFrameIdx - startFrameIdx)
@@ -325,7 +350,7 @@ dlg:button {
                         local pxItr <const> = currImg:pixels()
                         for pixel in pxItr do
                             pixelIdx = pixelIdx + 1
-                            local hex = pixel()
+                            local hex <const> = pixel()
                             if (hex & 0xff000000) ~= 0x0 then
                                 pixels[pixelIdx] = hex
                             else
@@ -349,47 +374,17 @@ dlg:button {
                 end
             end
 
+            -- This was initially xMax ~= xMin and yMax ~= yMin, but then there
+            -- was a problem where a range containing empty cels in the initial
+            -- slots would freeze the program.
             if packetIdx > 0 and xMax > xMin and yMax > yMin then
-                -- Find maximum containing axis aligned bounding
-                -- box. Find minimum for top-left corner of cels.
-                local trgImgWidth <const> = abs(xMax - xMin)
-                local trgImgHeight <const> = abs(yMax - yMin)
+                -- Find containing axis aligned bounding box.
+                -- Find minimum for top-left corner of cels.
                 local trgPos <const> = Point(xMin, yMin)
-
                 local trgSpec = createSpec(
-                    trgImgWidth, trgImgHeight,
+                    xMax - xMin, yMax - yMin,
                     rgbColorMode, colorSpace, alphaIndex)
                 local trgImg <const> = Image(trgSpec)
-
-                -- Set function for both vs. forward or backward.
-                local lerpFunc = nil
-                if useBoth then
-                    lerpFunc = function(a, b, c, d)
-                        if sampleCount > 2 then
-                            local t <const> = (abs(c - d) - 1.0)
-                                / (0.5 * sampleCount - 1.0)
-                            if t <= 0.0 then return b end
-                            if t >= 1.0 then return a end
-                            return (1.0 - t) * b + t * a
-                        elseif sampleCount > 1 then
-                            return (a + b) * 0.5
-                        else
-                            return a
-                        end
-                    end
-                else
-                    lerpFunc = function(a, b, c, d)
-                        if sampleCount > 2 then
-                            local t <const> = (abs(c - d) - 1.0)
-                                / (sampleCount - 2.0)
-                            return (1.0 - t) * b + t * a
-                        elseif sampleCount > 1 then
-                            return (a + b) * 0.5
-                        else
-                            return a
-                        end
-                    end
-                end
 
                 local h = 0
                 while h < sampleCount do
@@ -403,7 +398,7 @@ dlg:button {
                         if relFrameIdx ~= 0 then
                             fadeAlpha = lerpFunc(
                                 minAlpha, maxAlpha,
-                                frameIdxShd, srcFrame)
+                                frameIdxShd, srcFrame, sampleCount)
                             fadeAlpha = floor(0.5 + fadeAlpha)
                         end
 

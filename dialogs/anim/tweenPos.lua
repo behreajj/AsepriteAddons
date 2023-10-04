@@ -128,7 +128,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "getOrig",
     label = "Get:",
-    text = "ORI&GIN",
+    text = "&FROM",
     onclick = function()
         local frIdx, xc, yc = getCelPosAtFrame()
         dlg:modify { id = "frameOrig", text = string.format("%d", frIdx) }
@@ -169,7 +169,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "getDest",
     label = "Get:",
-    text = "&DESTINATION",
+    text = "&TO",
     onclick = function()
         local frIdx, xc, yc = getCelPosAtFrame()
         dlg:modify { id = "frameDest", text = string.format("%d", frIdx) }
@@ -348,8 +348,8 @@ dlg:button {
         local trgLayer = nil
         app.transaction("New Layer", function()
             trgLayer = activeSprite:newLayer()
-            trgLayer.name = string.format("%s.Tween.%d",
-                srcLayer.name, srcFrame.frameNumber + frameUiOffset)
+            trgLayer.name = string.format("%s.Tween.%d.%s",
+                srcLayer.name, srcFrame.frameNumber + frameUiOffset, easeType)
             trgLayer.parent = srcLayer.parent
         end)
 

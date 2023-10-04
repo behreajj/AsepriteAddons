@@ -177,11 +177,12 @@ function CanvasUtilities.graphBezier(
     -- In case this widget is used more than once in a dialog,
     -- the widget ids need to be distinct from each other.
     local easeFuncsId <const> = idVrf .. "_easeFuncs"
+    local fliphButtonId <const> = idVrf .. "_fliph"
     local flipvButtonId <const> = idVrf .. "_flipv"
     local straightButtonId <const> = idVrf .. "_straight"
     local parallelButtonId <const> = idVrf .. "_parallel"
 
-    local idPoints <const> = {
+    local idPts <const> = {
         idVrf .. "_ap0x",
         idVrf .. "_ap0y",
         idVrf .. "_cp0x",
@@ -191,7 +192,7 @@ function CanvasUtilities.graphBezier(
         idVrf .. "_ap1x",
         idVrf .. "_ap1y",
     }
-    local lenIdPoints <const> = #idPoints
+    local lenIdPoints <const> = #idPts
 
     local labelPoints <const> = {
         "Anchor 0:",
@@ -200,7 +201,7 @@ function CanvasUtilities.graphBezier(
         "Anchor 1:"
     }
 
-    local valuePoints <const> = {
+    local valPts <const> = {
         0.0,
         0.0,
         cp0xDef or 0.42,
@@ -239,8 +240,8 @@ function CanvasUtilities.graphBezier(
             -- when it comes to selecting for mouse movement.
             ---@type string[][]
             local knotIds <const> = {
-                { idPoints[1], idPoints[2], idPoints[3], idPoints[4] },
-                { idPoints[7], idPoints[8], idPoints[5], idPoints[6] }
+                { idPts[1], idPts[2], idPts[3], idPts[4] },
+                { idPts[7], idPts[8], idPts[5], idPts[6] }
             }
             local lenKnotIds <const> = #knotIds
             local args <const> = dialog.data
@@ -327,14 +328,14 @@ function CanvasUtilities.graphBezier(
 
             -- Unpack arguments.
             local args <const> = dialog.data
-            local ap0x <const> = args[idPoints[1]] --[[@as number]]
-            local ap0y <const> = args[idPoints[2]] --[[@as number]]
-            local cp0x <const> = args[idPoints[3]] --[[@as number]]
-            local cp0y <const> = args[idPoints[4]] --[[@as number]]
-            local cp1x <const> = args[idPoints[5]] --[[@as number]]
-            local cp1y <const> = args[idPoints[6]] --[[@as number]]
-            local ap1x <const> = args[idPoints[7]] --[[@as number]]
-            local ap1y <const> = args[idPoints[8]] --[[@as number]]
+            local ap0x <const> = args[idPts[1]] --[[@as number]]
+            local ap0y <const> = args[idPts[2]] --[[@as number]]
+            local cp0x <const> = args[idPts[3]] --[[@as number]]
+            local cp0y <const> = args[idPts[4]] --[[@as number]]
+            local cp1x <const> = args[idPts[5]] --[[@as number]]
+            local cp1y <const> = args[idPts[6]] --[[@as number]]
+            local ap1x <const> = args[idPts[7]] --[[@as number]]
+            local ap1y <const> = args[idPts[8]] --[[@as number]]
 
             -- Convert from [0.0, 1.0] to canvas pixels.
             local xbr <const> = wVrf - 1
@@ -410,7 +411,7 @@ function CanvasUtilities.graphBezier(
         local isEven <const> = j % 2 ~= 1
         local k <const> = j // 2
         j = j + 1
-        local idPoint <const> = idPoints[j]
+        local idPoint <const> = idPts[j]
 
         -- This string is nil in order to avoid line breaks between numbers.
         -- A zero length string, "", will trigger a line break.
@@ -418,7 +419,7 @@ function CanvasUtilities.graphBezier(
         if isEven then
             labelPoint = labelPoints[1 + k]
         end
-        local valuePoint <const> = valuePoints[j]
+        local valuePoint <const> = valPts[j]
 
         dialog:number {
             id = idPoint,
@@ -445,10 +446,10 @@ function CanvasUtilities.graphBezier(
         visible = isVisVrf and visButtonsVrf,
         onclick = function()
             local args <const> = dialog.data
-            local ap0x <const> = args[idPoints[1]] --[[@as number]]
-            local ap0y <const> = args[idPoints[2]] --[[@as number]]
-            local ap1x <const> = args[idPoints[7]] --[[@as number]]
-            local ap1y <const> = args[idPoints[8]] --[[@as number]]
+            local ap0x <const> = args[idPts[1]] --[[@as number]]
+            local ap0y <const> = args[idPts[2]] --[[@as number]]
+            local ap1x <const> = args[idPts[7]] --[[@as number]]
+            local ap1y <const> = args[idPts[8]] --[[@as number]]
 
             local twoThirds <const> = 2.0 / 3.0
             local oneThird <const> = 1.0 / 3.0
@@ -458,10 +459,10 @@ function CanvasUtilities.graphBezier(
             local cp1x <const> = twoThirds * ap1x + oneThird * ap0x
             local cp1y <const> = twoThirds * ap1y + oneThird * ap0y
 
-            dialog:modify { id = idPoints[3], text = string.format("%.5f", cp0x) }
-            dialog:modify { id = idPoints[4], text = string.format("%.5f", cp0y) }
-            dialog:modify { id = idPoints[5], text = string.format("%.5f", cp1x) }
-            dialog:modify { id = idPoints[6], text = string.format("%.5f", cp1y) }
+            dialog:modify { id = idPts[3], text = string.format("%.5f", cp0x) }
+            dialog:modify { id = idPts[4], text = string.format("%.5f", cp0y) }
+            dialog:modify { id = idPts[5], text = string.format("%.5f", cp1x) }
+            dialog:modify { id = idPts[6], text = string.format("%.5f", cp1y) }
 
             dialog:repaint()
         end
@@ -474,10 +475,10 @@ function CanvasUtilities.graphBezier(
         visible = isVisVrf and visButtonsVrf,
         onclick = function()
             local args <const> = dialog.data
-            local ap0x <const> = args[idPoints[1]] --[[@as number]]
-            local ap0y <const> = args[idPoints[2]] --[[@as number]]
-            local ap1x <const> = args[idPoints[7]] --[[@as number]]
-            local ap1y <const> = args[idPoints[8]] --[[@as number]]
+            local ap0x <const> = args[idPts[1]] --[[@as number]]
+            local ap0y <const> = args[idPts[2]] --[[@as number]]
+            local ap1x <const> = args[idPts[7]] --[[@as number]]
+            local ap1y <const> = args[idPts[8]] --[[@as number]]
 
             local k <const> = 0.55228474983079
             local l <const> = 1.0 - k
@@ -485,10 +486,41 @@ function CanvasUtilities.graphBezier(
             local cp0x <const> = l * ap0x + k * ap1x
             local cp1x <const> = l * ap1x + k * ap0x
 
-            dialog:modify { id = idPoints[3], text = string.format("%.5f", cp0x) }
-            dialog:modify { id = idPoints[4], text = string.format("%.5f", ap0y) }
-            dialog:modify { id = idPoints[5], text = string.format("%.5f", cp1x) }
-            dialog:modify { id = idPoints[6], text = string.format("%.5f", ap1y) }
+            dialog:modify { id = idPts[3], text = string.format("%.5f", cp0x) }
+            dialog:modify { id = idPts[4], text = string.format("%.5f", ap0y) }
+            dialog:modify { id = idPts[5], text = string.format("%.5f", cp1x) }
+            dialog:modify { id = idPts[6], text = string.format("%.5f", ap1y) }
+
+            dialog:repaint()
+        end
+    }
+
+    dialog:newrow { always = false }
+
+    dialog:button {
+        id = fliphButtonId,
+        text = "FLIP &H",
+        focus = false,
+        visible = isVisVrf and visButtonsVrf,
+        onclick = function()
+            local args <const> = dialog.data
+            local ap0x <const> = args[idPts[1]] --[[@as number]]
+            local ap0y <const> = args[idPts[2]] --[[@as number]]
+            local cp0x <const> = args[idPts[3]] --[[@as number]]
+            local cp0y <const> = args[idPts[4]] --[[@as number]]
+            local cp1x <const> = args[idPts[5]] --[[@as number]]
+            local cp1y <const> = args[idPts[6]] --[[@as number]]
+            local ap1x <const> = args[idPts[7]] --[[@as number]]
+            local ap1y <const> = args[idPts[8]] --[[@as number]]
+
+            dialog:modify { id = idPts[1], text = string.format("%.5f", 1.0 - ap1x) }
+            dialog:modify { id = idPts[2], text = string.format("%.5f", ap1y) }
+            dialog:modify { id = idPts[3], text = string.format("%.5f", 1.0 - cp1x) }
+            dialog:modify { id = idPts[4], text = string.format("%.5f", cp1y) }
+            dialog:modify { id = idPts[5], text = string.format("%.5f", 1.0 - cp0x) }
+            dialog:modify { id = idPts[6], text = string.format("%.5f", cp0y) }
+            dialog:modify { id = idPts[7], text = string.format("%.5f", 1.0 - ap0x) }
+            dialog:modify { id = idPts[8], text = string.format("%.5f", ap0y) }
 
             dialog:repaint()
         end
@@ -501,15 +533,15 @@ function CanvasUtilities.graphBezier(
         visible = isVisVrf and visButtonsVrf,
         onclick = function()
             local args <const> = dialog.data
-            local ap0y <const> = args[idPoints[2]] --[[@as number]]
-            local cp0y <const> = args[idPoints[4]] --[[@as number]]
-            local cp1y <const> = args[idPoints[6]] --[[@as number]]
-            local ap1y <const> = args[idPoints[8]] --[[@as number]]
+            local ap0y <const> = args[idPts[2]] --[[@as number]]
+            local cp0y <const> = args[idPts[4]] --[[@as number]]
+            local cp1y <const> = args[idPts[6]] --[[@as number]]
+            local ap1y <const> = args[idPts[8]] --[[@as number]]
 
-            dialog:modify { id = idPoints[2], text = string.format("%.5f", 1.0 - ap0y) }
-            dialog:modify { id = idPoints[4], text = string.format("%.5f", 1.0 - cp0y) }
-            dialog:modify { id = idPoints[6], text = string.format("%.5f", 1.0 - cp1y) }
-            dialog:modify { id = idPoints[8], text = string.format("%.5f", 1.0 - ap1y) }
+            dialog:modify { id = idPts[2], text = string.format("%.5f", 1.0 - ap0y) }
+            dialog:modify { id = idPts[4], text = string.format("%.5f", 1.0 - cp0y) }
+            dialog:modify { id = idPts[6], text = string.format("%.5f", 1.0 - cp1y) }
+            dialog:modify { id = idPts[8], text = string.format("%.5f", 1.0 - ap1y) }
 
             dialog:repaint()
         end
@@ -559,7 +591,7 @@ function CanvasUtilities.graphBezier(
                 while i < lenIdPoints do
                     i = i + 1
                     dialog:modify {
-                        id = idPoints[i],
+                        id = idPts[i],
                         text = string.format("%.5f", presetPoints[i])
                     }
                 end
@@ -1020,10 +1052,8 @@ function CanvasUtilities.spectrum(
         end
     }
 
-    -- TODO: These ids should be formatted based
-    -- on the overall id to avoid contamination
-    -- in case you have multiple widgets in one
-    -- dialog.
+    -- TODO: These ids should be formatted based on the overall id to avoid
+    -- contamination in case you have multiple widgets in one dialog.
     dialog:number {
         id = "spectrumLight",
         label = "Lightness:",
