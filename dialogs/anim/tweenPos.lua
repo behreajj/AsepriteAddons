@@ -14,6 +14,7 @@ local easeTypes <const> = {
 local defaults <const> = {
     facType = "FRAME",
     easeType = "EASE",
+    trimCel = true,
 
     frameOrig = 1,
     xPosOrig = 0.0,
@@ -94,6 +95,16 @@ dlg:combobox {
     label = "Easing:",
     option = defaults.easeType,
     options = easeTypes
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "trimCel",
+    label = "Trim:",
+    text = "Layer Ed&ges",
+    selected = defaults.trimCel,
+    visible = false
 }
 
 dlg:separator {
@@ -223,6 +234,7 @@ dlg:button {
         local args <const> = dlg.data
         local facType <const> = args.facType --[[@as string]]
         local easeType <const> = args.easeType --[[@as string]]
+        local trimCel <const> = args.trimCel --[[@as boolean]]
         local frIdxOrig <const> = args.frameOrig --[[@as integer]]
         local xPosOrig <const> = args.xPosOrig --[[@as number]]
         local yPosOrig <const> = args.yPosOrig --[[@as number]]
@@ -282,12 +294,40 @@ dlg:button {
             end
         end
 
-        if (not srcImg) or srcImg:isEmpty() then
+        if not srcImg then
             app.alert {
                 title = "Error",
                 text = "There is no source image."
             }
             return
+        end
+
+        if srcImg:isEmpty() then
+            app.alert {
+                title = "Error",
+                text = "Source image is empty."
+            }
+            return
+        end
+
+        if srcLayer.isBackground then
+            app.command.SwitchColors()
+            local aseBkg <const> = app.fgColor
+            local bkgHex <const> = AseUtilities.aseColorToHex(aseBkg, colorMode)
+            app.command.SwitchColors()
+
+            local cleared <const> = srcImg:clone()
+            local clearedItr <const> = cleared:pixels()
+            for pixel in clearedItr do
+                if pixel() == bkgHex then pixel(alphaIndex) end
+            end
+            srcImg = cleared
+        end
+
+        if trimCel then
+            local trimmed <const>, _, _ = AseUtilities.trimImageAlpha(
+                srcImg, 0, alphaIndex)
+            srcImg = trimmed
         end
 
         ---@type number[]

@@ -314,7 +314,16 @@ function AseUtilities.aseColorToHex(clr, clrMode)
             | (clr.green << 0x08)
             | clr.red
     elseif clrMode == ColorMode.GRAY then
-        return clr.grayPixel
+        -- Color:grayPixel depends primarily on HSL lightness, not on the user
+        -- gray conversion preference (HSL, HSV or luma). See
+        -- https://github.com/aseprite/aseprite/blob/main/src/app/color.cpp#L810
+        -- https://github.com/aseprite/aseprite/blob/main/src/doc/color.h#L62
+        -- and app.preferences.quantization.to_gray .
+        local sr <const> = clr.red
+        local sg <const> = clr.green
+        local sb <const> = clr.blue
+        local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
+        return (clr.alpha << 0x08) | gray
     elseif clrMode == ColorMode.INDEXED then
         return clr.index
     end
