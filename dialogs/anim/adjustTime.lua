@@ -1,4 +1,5 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/clrgradient.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
@@ -36,45 +37,55 @@ local function adjustDuration(sprite, target, opFlag, opNum)
     local min <const> = math.min
 
     if opFlag == "ADD" then
-        local i = 0
-        while i < lenFrIdcs do
-            i = i + 1
-            local frObj <const> = frObjs[frIdcs[i]]
-            local durms = floor(frObj.duration * 1000.0 + 0.5)
-            frObj.duration = min(max((durms + opNum) * 0.001, lb), ub)
-        end
+        app.transaction("Add Duration", function()
+            local i = 0
+            while i < lenFrIdcs do
+                i = i + 1
+                local frObj <const> = frObjs[frIdcs[i]]
+                local durms = floor(frObj.duration * 1000.0 + 0.5)
+                frObj.duration = min(max((durms + opNum) * 0.001, lb), ub)
+            end
+        end)
     elseif opFlag == "SUBTRACT" then
-        local i = 0
-        while i < lenFrIdcs do
-            i = i + 1
-            local frObj <const> = frObjs[frIdcs[i]]
-            local durms = floor(frObj.duration * 1000.0 + 0.5)
-            frObj.duration = min(max((durms - opNum) * 0.001, lb), ub)
-        end
+        app.transaction("Subtract Duration", function()
+            local i = 0
+            while i < lenFrIdcs do
+                i = i + 1
+                local frObj <const> = frObjs[frIdcs[i]]
+                local durms = floor(frObj.duration * 1000.0 + 0.5)
+                frObj.duration = min(max((durms - opNum) * 0.001, lb), ub)
+            end
+        end)
     elseif opFlag == "MULTIPLY" then
-        local opNumAbs = abs(opNum)
-        local i = 0
-        while i < lenFrIdcs do
-            i = i + 1
-            local frObj <const> = frObjs[frIdcs[i]]
-            frObj.duration = min(max(frObj.duration * opNumAbs, lb), ub)
-        end
+        app.transaction("Multiply Duration", function()
+            local opNumAbs = abs(opNum)
+            local i = 0
+            while i < lenFrIdcs do
+                i = i + 1
+                local frObj <const> = frObjs[frIdcs[i]]
+                frObj.duration = min(max(frObj.duration * opNumAbs, lb), ub)
+            end
+        end)
     elseif opFlag == "DIVIDE" then
-        local opNumAbs = abs(opNum)
-        local i = 0
-        while i < lenFrIdcs do
-            i = i + 1
-            local frObj <const> = frObjs[frIdcs[i]]
-            frObj.duration = min(max(frObj.duration / opNumAbs, lb), ub)
-        end
+        app.transaction("Divide Duration", function()
+            local opNumAbs = abs(opNum)
+            local i = 0
+            while i < lenFrIdcs do
+                i = i + 1
+                local frObj <const> = frObjs[frIdcs[i]]
+                frObj.duration = min(max(frObj.duration / opNumAbs, lb), ub)
+            end
+        end)
     else
         -- Default to set.
-        local opNumVrf <const> = min(max(abs(opNum) * 0.001, lb), ub)
-        local i = 0
-        while i < lenFrIdcs do
-            i = i + 1
-            frObjs[frIdcs[i]].duration = opNumVrf
-        end
+        app.transaction("Set Duration", function()
+            local opNumVrf <const> = min(max(abs(opNum) * 0.001, lb), ub)
+            local i = 0
+            while i < lenFrIdcs do
+                i = i + 1
+                frObjs[frIdcs[i]].duration = opNumVrf
+            end
+        end)
     end
 end
 
