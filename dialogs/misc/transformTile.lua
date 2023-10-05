@@ -118,8 +118,7 @@ local function transformCel(dialog, preset)
     local lenTileSet <const> = #tileSet
 
     local args <const> = dialog.data
-    local target <const> = args.target
-        or defaults.target --[[@as string]]
+    local target <const> = args.target or defaults.target --[[@as string]]
     local inPlace <const> = args.inPlace --[[@as boolean]]
 
     local celPos <const> = activeCel.position
@@ -143,6 +142,7 @@ local function transformCel(dialog, preset)
     ---@type table<integer, Tile>
     local containedTiles = {}
     if target == "TILE_MAP" then
+        -- TODO: This would be superseded when tile map flags are implemented.
         containedTiles = AseUtilities.getUniqueTiles(
             activeCel.image, tileSet)
         local transactionName = "Transform Map"

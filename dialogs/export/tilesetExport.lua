@@ -625,8 +625,10 @@ dlg:button {
                                 local tmImage <const> = tmCel.image
                                 local tmPxItr <const> = tmImage:pixels()
 
-                                -- TODO: In the future, this would also need
-                                -- a separate array of rotation flags.
+                                -- TODO: In the future, this must also handle
+                                -- flip rotation flags. Should they be two
+                                -- separate arrays, or an array of structs,
+                                -- each of which contains a flag and index?
                                 ---@type integer[]
                                 local tmIndicesArr <const> = {}
                                 for pixel in tmPxItr do

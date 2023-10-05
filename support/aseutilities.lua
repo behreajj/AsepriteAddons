@@ -192,8 +192,7 @@ function AseUtilities.averageColor(sprite, frame)
             return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
         end
 
-        palette = AseUtilities.getPalette(
-            frame, sprite.palettes)
+        palette = AseUtilities.getPalette(frame, sprite.palettes)
 
         eval = function(idx, d, pal)
             if idx > -1 and idx < #pal then
@@ -301,9 +300,13 @@ end
 
 ---Converts an Aseprite color object to an integer. The meaning of the integer
 ---depends on the color mode: the RGB integer is 32 bits. GRAY, 16. INDEXED, 8.
+---
 ---For RGB mode, uses modular arithmetic, i.e., does not check if red, green,
 ---blue and alpha channels are out of range [0, 255]. Returns zero if the color
 ---mode is not recognized.
+---
+---For grayscale, uses Aseprite's definition of relative luminance, not HSL
+---lightness.
 ---@param clr Color aseprite color
 ---@param clrMode ColorMode color mode
 ---@return integer
@@ -314,14 +317,15 @@ function AseUtilities.aseColorToHex(clr, clrMode)
             | (clr.green << 0x08)
             | clr.red
     elseif clrMode == ColorMode.GRAY then
-        -- Color:grayPixel depends primarily on HSL lightness, not on the user
-        -- gray conversion preference (HSL, HSV or luma). See
+        -- Color:grayPixel depends on HSL lightness, not on the user gray
+        -- conversion preference (HSL, HSV or luma). See
         -- https://github.com/aseprite/aseprite/blob/main/src/app/color.cpp#L810
         -- https://github.com/aseprite/aseprite/blob/main/src/doc/color.h#L62
         -- and app.preferences.quantization.to_gray .
         local sr <const> = clr.red
         local sg <const> = clr.green
         local sb <const> = clr.blue
+        -- Prioritize consistency over correctness.
         local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
         return (clr.alpha << 0x08) | gray
     elseif clrMode == ColorMode.INDEXED then
@@ -1069,7 +1073,6 @@ end
 ---@return ImageSpec
 function AseUtilities.createSpec(
     width, height, colorMode, colorSpace, alphaIndex)
-
     -- TODO: Replace ImageSpec constructors in AseUtilities as well?
 
     local tcVerif <const> = alphaIndex or 0
@@ -1917,8 +1920,7 @@ end
 ---@param hex integer hexadecimal color
 ---@return Color
 function AseUtilities.hexToAseColor(hex)
-    -- See https://github.com/aseprite/aseprite/
-    -- blob/main/src/app/script/color_class.cpp#L22
+    -- https://github.com/aseprite/aseprite/blob/main/src/app/script/color_class.cpp#L22
     return Color {
         r = hex & 0xff,
         g = (hex >> 0x08) & 0xff,
@@ -2353,16 +2355,15 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
         srcSpec.colorSpace,
         srcSpec.transparentColor))
 
-    -- Separate a tile's index from the meta-data.
-    -- The underlying logic is here:
+    -- Separate a tile's index from the meta-data. See
     -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
-    -- local tileMetaMask = 0xe0000000
-    -- local maskFlipX = 0x20000000
-    -- local maskFlipY = 0x40000000
-    -- local maskRot90cw = 0x80000000
-    -- local maskRot180 = maskFlipX | maskFlipY
-    -- local maskRot90ccw = maskRot180 | maskRot90cw
+    local maskFlipX <const> = 0x20000000
+    local maskFlipY <const> = 0x40000000
+    local maskRot90cw <const> = 0x80000000
+    local maskRot180 <const> = maskFlipX | maskFlipY
+    local maskRot90ccw <const> = maskRot180 | maskRot90cw
     local pxTilei <const> = app.pixelColor.tileI
+    local pxTilef <const> = app.pixelColor.tileF
 
     local lenTileSet <const> = #tileSet
     local mapItr <const> = imgSrc:pixels()
@@ -2372,26 +2373,26 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
 
         if i > 0 and i < lenTileSet then
             local tile <const> = tileSet:tile(i)
-            local tileImage <const> = tile.image
-            -- TODO: Wait until this is useful to implement.
-            -- local meta = tlData & tileMetaMask
-            -- if meta == maskRot90ccw then
-            --     tileImage = AseUtilities.rotateImage90(tileImage)
-            -- elseif meta == maskRot180 then
-            --     tileImage = AseUtilities.rotateImage180(tileImage)
-            -- elseif meta == maskRot90cw then
-            --     tileImage = AseUtilities.rotateImage270(tileImage)
-            -- elseif meta == maskFlipY then
-            --     tileImage = AseUtilities.flipImageVert(tileImage)
-            -- elseif meta == maskFlipX then
-            --     tileImage = AseUtilities.flipImageHoriz(tileImage)
-            -- elseif meta == 0xc0000000 then
-            --     tileImage = AseUtilities.flipImageVert(tileImage)
-            --     tileImage = AseUtilities.rotateImage90(tileImage)
-            -- elseif meta == 0xa0000000 then
-            --     tileImage = AseUtilities.flipImageHoriz(tileImage)
-            --     tileImage = AseUtilities.rotateImage90(tileImage)
-            -- end
+            local tileImage = tile.image
+
+            local meta <const> = pxTilef(mapif)
+            if meta == maskRot90ccw then
+                tileImage = AseUtilities.rotateImage90(tileImage)
+            elseif meta == maskRot180 then
+                tileImage = AseUtilities.rotateImage180(tileImage)
+            elseif meta == maskRot90cw then
+                tileImage = AseUtilities.rotateImage270(tileImage)
+            elseif meta == maskFlipY then
+                tileImage = AseUtilities.flipImageVert(tileImage)
+            elseif meta == maskFlipX then
+                tileImage = AseUtilities.flipImageHoriz(tileImage)
+                -- elseif meta == 0xc0000000 then
+                --     tileImage = AseUtilities.flipImageVert(tileImage)
+                --     tileImage = AseUtilities.rotateImage90(tileImage)
+                -- elseif meta == 0xa0000000 then
+                --     tileImage = AseUtilities.flipImageHoriz(tileImage)
+                --     tileImage = AseUtilities.rotateImage90(tileImage)
+            end
 
             imgTrg:drawImage(
                 tileImage,
