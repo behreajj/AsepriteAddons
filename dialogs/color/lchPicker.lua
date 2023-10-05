@@ -4,7 +4,6 @@ dofile("../../support/canvasutilities.lua")
 local screenScale <const> = app.preferences.general.screen_scale
 
 local harmonyTypes <const> = {
-    -- TODO: Support a color history.
     "ANALOGOUS",
     "COMPLEMENT",
     -- "GRAYS",

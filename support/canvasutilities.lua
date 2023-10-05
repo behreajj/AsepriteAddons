@@ -463,6 +463,7 @@ function CanvasUtilities.graphBezier(
             dialog:modify { id = idPts[4], text = string.format("%.5f", cp0y) }
             dialog:modify { id = idPts[5], text = string.format("%.5f", cp1x) }
             dialog:modify { id = idPts[6], text = string.format("%.5f", cp1y) }
+            dialog:modify { id = easeFuncsId, option = "CUSTOM" }
 
             dialog:repaint()
         end
@@ -490,6 +491,7 @@ function CanvasUtilities.graphBezier(
             dialog:modify { id = idPts[4], text = string.format("%.5f", ap0y) }
             dialog:modify { id = idPts[5], text = string.format("%.5f", cp1x) }
             dialog:modify { id = idPts[6], text = string.format("%.5f", ap1y) }
+            dialog:modify { id = easeFuncsId, option = "CUSTOM" }
 
             dialog:repaint()
         end
@@ -521,6 +523,7 @@ function CanvasUtilities.graphBezier(
             dialog:modify { id = idPts[6], text = string.format("%.5f", cp0y) }
             dialog:modify { id = idPts[7], text = string.format("%.5f", 1.0 - ap0x) }
             dialog:modify { id = idPts[8], text = string.format("%.5f", ap0y) }
+            dialog:modify { id = easeFuncsId, option = "CUSTOM" }
 
             dialog:repaint()
         end
@@ -542,6 +545,7 @@ function CanvasUtilities.graphBezier(
             dialog:modify { id = idPts[4], text = string.format("%.5f", 1.0 - cp0y) }
             dialog:modify { id = idPts[6], text = string.format("%.5f", 1.0 - cp1y) }
             dialog:modify { id = idPts[8], text = string.format("%.5f", 1.0 - ap1y) }
+            dialog:modify { id = easeFuncsId, option = "CUSTOM" }
 
             dialog:repaint()
         end

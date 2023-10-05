@@ -218,9 +218,11 @@ local function transformCel(dialog, preset)
         activeSprite, tileSet)
 
     if not inPlace then
-        local pxTilei <const> = app.pixelColor.tileI
-        local pxTilef <const> = app.pixelColor.tileF
-        local pxTileCompose <const> = app.pixelColor.tile
+        local pixelColor <const> = app.pixelColor
+        local pxTilei <const> = pixelColor.tileI
+        local pxTilef <const> = pixelColor.tileF
+        local pxTileCompose <const> = pixelColor.tile
+
         local trgMap <const> = activeCel.image:clone()
         local trgItr <const> = trgMap:pixels()
         for mapEntry in trgItr do
@@ -348,9 +350,10 @@ dlg:button {
         local lenTileSet <const> = #tileSet
 
         -- Cache methods used in a for loop.
-        local pxTilei <const> = app.pixelColor.tileI
-        local pxTilef <const> = app.pixelColor.tileF
-        local pxTileCompose <const> = app.pixelColor.tile
+        local pixelColor <const> = app.pixelColor
+        local pxTilei <const> = pixelColor.tileI
+        local pxTilef <const> = pixelColor.tileF
+        local pxTileCompose <const> = pixelColor.tile
 
         -- Contains the first usage of a tile in the set by the active map.
         -- Ignores index 0. Because all tile maps in the layer have to be
@@ -486,9 +489,10 @@ dlg:button {
         local lenTileSet <const> = #tileSet
 
         -- Cache methods used in a for loop.
-        local pxTilei <const> = app.pixelColor.tileI
-        local pxTilef <const> = app.pixelColor.tileF
-        local pxTileCompose <const> = app.pixelColor.tile
+        local pixelColor <const> = app.pixelColor
+        local pxTilei <const> = pixelColor.tileI
+        local pxTilef <const> = pixelColor.tileF
+        local pxTileCompose <const> = pixelColor.tile
 
         local uniqueCels <const> = AseUtilities.getUniqueCelsFromLeaves(
             { activeLayer }, activeSprite.frames)

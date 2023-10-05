@@ -2362,8 +2362,10 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     local maskRot90cw <const> = 0x80000000
     local maskRot180 <const> = maskFlipX | maskFlipY
     local maskRot90ccw <const> = maskRot180 | maskRot90cw
-    local pxTilei <const> = app.pixelColor.tileI
-    local pxTilef <const> = app.pixelColor.tileF
+
+    local pixelColor <const> = app.pixelColor
+    local pxTilei <const> = pixelColor.tileI
+    local pxTilef <const> = pixelColor.tileF
 
     local lenTileSet <const> = #tileSet
     local mapItr <const> = imgSrc:pixels()
