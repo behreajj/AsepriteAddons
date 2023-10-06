@@ -235,6 +235,14 @@ dlg:button {
             if frInt == toInt then return end
 
             local lenTileSets <const> = #tileSets
+            if lenTileSets <= 0 then
+                app.alert {
+                    title = "Error",
+                    text = "No tile sets could be found."
+                }
+                return
+            end
+
             local h = 0
             while h < lenTileSets do
                 h = h + 1

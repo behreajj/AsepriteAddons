@@ -65,7 +65,7 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        local activeSprite = app.activeSprite
+        local activeSprite = app.site.sprite
         if not activeSprite then
             activeSprite = AseUtilities.createSprite(
                 AseUtilities.createSpec(), "Time Gradient")
@@ -180,11 +180,10 @@ dlg:button {
                 local fac <const> = timeStamp * timeToFac
                 local trgImage <const> = Image(activeSpec)
                 local trgItr <const> = trgImage:pixels()
-                -- Could optimize this by only looping over
-                -- the gradient for the size of the matrix, then
-                -- repeating. Maybe update ditherFromPreset to return
-                -- that info? The only issue would be IGN doesn't fit
-                -- with the others...
+                -- Could optimize this by only looping over the gradient for
+                -- the size of the matrix, then repeating. Maybe update
+                -- ditherFromPreset to return that info? The only issue would
+                -- be IGN doesn't fit with the others...
                 for pixel in trgItr do
                     local x <const> = pixel.x
                     local y <const> = pixel.y

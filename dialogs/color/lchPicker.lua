@@ -46,7 +46,7 @@ local active <const> = {
 }
 
 local function assignFore()
-    if app.activeSprite then
+    if app.site.sprite then
         local srgb = defaults.lchTosRgb(
             active.l, active.c, active.h, active.a)
         app.fgColor = AseUtilities.clrToAseColor(srgb)
@@ -853,7 +853,7 @@ dlg:canvas {
         local swatch <const> = swatches[1 + idx]
         if event.shiftKey then
             local srgb <const> = defaults.lchTosRgb(
-                swatch.l, swatch.c, swatch.h, swatch.a)
+                swatch.l, swatch.c, swatch.h, active.a)
             local aseColor <const> = AseUtilities.clrToAseColor(srgb)
             if event.button == MouseButton.RIGHT
                 or event.ctrlKey then

@@ -105,7 +105,7 @@ function AseUtilities.new()
 end
 
 ---Appends the child layers of a layer if it is a group to an array. If the
----layer is not a group, then whther it's appended depends on the arguments.
+---layer is not a group, then whether it's appended depends on the arguments.
 ---@param layer Layer parent layer
 ---@param array Layer[] leaves array
 ---@param includeLocked? boolean include locked layers
@@ -117,13 +117,12 @@ function AseUtilities.appendLeaves(
     layer, array,
     includeLocked, includeHidden,
     includeTiles, includeBkg)
-    -- First check properties which are passed on by parents
-    -- to their children.
+    -- First, check properties passed by parents to their children.
     if (includeLocked or layer.isEditable)
         and (includeHidden or layer.isVisible) then
         if layer.isGroup then
             local append <const> = AseUtilities.appendLeaves
-            local childLayers <const> = layer.layers --[[@as Layer]]
+            local childLayers <const> = layer.layers --[=[@as Layer[]]=]
             local lenChildLayers <const> = #childLayers
             local i = 0
             while i < lenChildLayers do
@@ -135,8 +134,8 @@ function AseUtilities.appendLeaves(
         elseif (not layer.isReference)
             and (includeTiles or (not layer.isTilemap))
             and (includeBkg or (not layer.isBackground)) then
-            -- Leaf order should be what's ideal for composition,
-            -- with ascending stack indices.
+            -- Leaf order should be what's ideal for composition, with
+            -- ascending stack indices.
             table.insert(array, layer)
         end
     end
@@ -165,8 +164,7 @@ function AseUtilities.averageColor(sprite, frame)
     selSpec.colorSpace = sprSpec.colorSpace
 
     local flatImage <const> = Image(selSpec)
-    flatImage:drawSprite(
-        sprite, frame, Point(-xSel, -ySel))
+    flatImage:drawSprite(sprite, frame, Point(-xSel, -ySel))
 
     local eval = nil
     local palette = nil
@@ -325,7 +323,7 @@ function AseUtilities.aseColorToHex(clr, clrMode)
         local sr <const> = clr.red
         local sg <const> = clr.green
         local sb <const> = clr.blue
-        -- Prioritize consistency over correctness.
+        -- Prioritize consistency with grayscale convert over correctness.
         local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
         return (clr.alpha << 0x08) | gray
     elseif clrMode == ColorMode.INDEXED then
@@ -509,8 +507,7 @@ function AseUtilities.asePalettesToHexArr(palettes)
                 while j < lenPalette do
                     local aseColor <const> = palette:getColor(j)
                     j = j + 1
-                    local hex <const> = convert(
-                        aseColor, rgbColorMode)
+                    local hex <const> = convert(aseColor, rgbColorMode)
                     k = k + 1
                     hexes[k] = hex
                 end
@@ -628,8 +625,7 @@ function AseUtilities.blendImage(
         return target, 0, 0
     end
 
-    -- Offset needed when reading from source images
-    -- into target image.
+    -- Offset needed when reading from source images into target image.
     local uxDiff <const> = uxcVrf - xMin
     local uyDiff <const> = uycVrf - yMin
     local oxDiff <const> = oxcVrf - xMin
@@ -1073,8 +1069,6 @@ end
 ---@return ImageSpec
 function AseUtilities.createSpec(
     width, height, colorMode, colorSpace, alphaIndex)
-    -- TODO: Replace ImageSpec constructors in AseUtilities as well?
-
     local tcVerif <const> = alphaIndex or 0
     local cmVerif <const> = colorMode or ColorMode.RGB
 
@@ -1816,9 +1810,8 @@ function AseUtilities.getSelectedTiles(
                 local yLocal <const> = i // wTile
                 local xPixel <const> = xtlTile + xLocal
                 local yPixel <const> = ytlTile + yLocal
-                contained = contained
-                    and selection:contains(
-                        Point(xPixel, yPixel))
+                contained = contained and selection:contains(
+                    Point(xPixel, yPixel))
                 i = i + 1
             end
 
@@ -2231,7 +2224,7 @@ function AseUtilities.rotateImage270(source)
 end
 
 ---Selects the non-zero pixels of a cel's image. Intersects the selection with
----the sprite bounds if provided. For cases where cel may be partially outside
+---the sprite bounds, if provided, for cases where cel may be partially outside
 ---the canvas edges. For tile map layers, selects the cel's bounds.
 ---@param cel Cel cel
 ---@param spriteBounds Rectangle? sprite bounds
@@ -2420,7 +2413,7 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
     local xClip <const> = clip.x
     local yClip <const> = clip.y
 
-    -- Avoid transactions if possible.
+    -- Avoid creating transactions if possible.
     local oldPos <const> = cel.position
     if oldPos.x ~= xClip
         or oldPos.y ~= yClip then
@@ -2468,7 +2461,7 @@ function AseUtilities.trimCelToSprite(cel, sprite)
     local spriteBounds <const> = sprite.bounds
     local clip <const> = celBounds:intersect(spriteBounds)
 
-    -- Avoid transactions if possible.
+    -- Avoid creating transactions if possible.
     local oldPos <const> = cel.position
     if oldPos.x ~= clip.x
         or oldPos.y ~= clip.y then
