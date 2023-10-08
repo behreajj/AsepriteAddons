@@ -1,6 +1,8 @@
 dofile("../../support/aseutilities.lua")
 
 local facTypes <const> = { "FRAME", "TIME" }
+
+-- TODO: Replace with a bezier graph where the end points cannot be moved?
 local easeTypes <const> = {
     "CIRC_IN",
     "CIRC_OUT",

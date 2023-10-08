@@ -74,8 +74,7 @@ end
 ---@param b Clr right comparisand
 ---@return boolean
 function Clr.bitEq(a, b)
-    return Clr.bitEqAlpha(a, b)
-        and Clr.bitEqRgb(a, b)
+    return Clr.bitEqAlpha(a, b) and Clr.bitEqRgb(a, b)
 end
 
 ---Evaluates whether two colors have equal alpha when considered as a byte
@@ -84,15 +83,13 @@ end
 ---@param b Clr right comparisand
 ---@return boolean
 function Clr.bitEqAlpha(a, b)
-    -- This is used by the == operator, so defaults
-    -- are in case b is a non-color object.
+    -- This is used by the == operator, so defaults are in case b is not a clr.
     local ba = b.a
     if not ba then return false end
     local aa = a.a
     if aa < 0.0 then aa = 0.0 elseif aa > 1.0 then aa = 1.0 end
     if ba < 0.0 then ba = 0.0 elseif ba > 1.0 then ba = 1.0 end
-    return math.floor(aa * 255.0 + 0.5)
-        == math.floor(ba * 255.0 + 0.5)
+    return math.floor(aa * 255.0 + 0.5) == math.floor(ba * 255.0 + 0.5)
 end
 
 ---Evaluates whether two colors have equal red, green and blue channels when
@@ -101,15 +98,13 @@ end
 ---@param b Clr right comparisand
 ---@return boolean
 function Clr.bitEqRgb(a, b)
-    -- This is used by the == operator, so defaults
-    -- are in case b is a non-color object.
+    -- This is used by the == operator, so defaults are in case b is not a clr.
     local bb = b.b
     if not bb then return false end
     local ab = a.b
     if ab < 0.0 then ab = 0.0 elseif ab > 1.0 then ab = 1.0 end
     if bb < 0.0 then bb = 0.0 elseif bb > 1.0 then bb = 1.0 end
-    if math.floor(ab * 255.0 + 0.5)
-        ~= math.floor(bb * 255.0 + 0.5) then
+    if math.floor(ab * 255.0 + 0.5) ~= math.floor(bb * 255.0 + 0.5) then
         return false
     end
 
@@ -118,8 +113,7 @@ function Clr.bitEqRgb(a, b)
     local ag = a.g
     if ag < 0.0 then ag = 0.0 elseif ag > 1.0 then ag = 1.0 end
     if bg < 0.0 then bg = 0.0 elseif bg > 1.0 then bg = 1.0 end
-    if math.floor(ag * 255.0 + 0.5)
-        ~= math.floor(bg * 255.0 + 0.5) then
+    if math.floor(ag * 255.0 + 0.5) ~= math.floor(bg * 255.0 + 0.5) then
         return false
     end
 
@@ -128,8 +122,7 @@ function Clr.bitEqRgb(a, b)
     local ar = a.r
     if ar < 0.0 then ar = 0.0 elseif ar > 1.0 then ar = 1.0 end
     if br < 0.0 then br = 0.0 elseif br > 1.0 then br = 1.0 end
-    if math.floor(ar * 255.0 + 0.5)
-        ~= math.floor(br * 255.0 + 0.5) then
+    if math.floor(ar * 255.0 + 0.5) ~= math.floor(br * 255.0 + 0.5) then
         return false
     end
 
@@ -142,9 +135,7 @@ end
 ---@param b Clr destination
 ---@return Clr
 function Clr.blend(a, b)
-    return Clr.blendInternal(
-        Clr.clamp01(a),
-        Clr.clamp01(b))
+    return Clr.blendInternal(Clr.clamp01(a), Clr.clamp01(b))
 end
 
 ---Blends two colors together by their alpha. Premultiplies each color by its
@@ -612,35 +603,73 @@ function Clr.mixSrLchInternal(o, d, t, hueFunc)
     local oa <const> = oLab.a
     local ob <const> = oLab.b
     local ocsq <const> = oa * oa + ob * ob
+    local oIsGray <const> = ocsq < 0.00005
 
     local dLab <const> = Clr.sRgbToSrLab2(d)
     local da <const> = dLab.a
     local db <const> = dLab.b
     local dcsq <const> = da * da + db * db
+    local dIsGray <const> = dcsq < 0.00005
 
     local u <const> = 1.0 - t
-    if ocsq < 0.00005 or dcsq < 0.00005 then
+    local cl <const> = u * oLab.l + t * dLab.l
+    local ct <const> = u * oLab.alpha + t * dLab.alpha
+
+    if oIsGray and dIsGray then
         return Clr.srLab2TosRgb(
-            u * oLab.l + t * dLab.l,
+            cl,
             u * oa + t * da,
             u * ob + t * db,
-            u * oLab.alpha + t * dLab.alpha)
-    else
-        local oChr <const> = math.sqrt(ocsq)
-        local oHue = math.atan(ob, oa) * 0.1591549430919
-        oHue = oHue % 1.0
-
-        local dChr <const> = math.sqrt(dcsq)
-        local dHue = math.atan(db, da) * 0.1591549430919
-        dHue = dHue % 1.0
-
-        return Clr.srLchTosRgb(
-            u * oLab.l + t * dLab.l,
-            u * oChr + t * dChr,
-            hueFunc(oHue, dHue, t),
-            u * oLab.alpha + t * dLab.alpha,
-            0.00005)
+            ct)
     end
+
+    local oChr = 0.0
+    local dChr = 0.0
+    local oHue = 0.0
+    local dHue = 0.0
+
+    local hYellow <const> = 0.30922841685655
+    local hViolet <const> = 0.80922841685655
+
+    if oIsGray then
+        dChr = math.sqrt(dcsq)
+
+        local oFac <const> = oLab.l * 0.01
+        if dHue > hYellow and dHue <= hViolet then
+            oHue = (1.0 - oFac) * hViolet + oFac * hYellow
+        else
+            oHue = (1.0 - oFac) * hViolet + oFac * (1.0 + hYellow)
+            oHue = oHue % 1.0
+        end
+
+        dHue = math.atan(db, da) * 0.1591549430919
+        dHue = dHue % 1.0
+    elseif dIsGray then
+        oChr = math.sqrt(ocsq)
+
+        local dFac <const> = dLab.l * 0.01
+        if oHue > hYellow and oHue <= hViolet then
+            dHue = (1.0 - dFac) * hViolet + dFac * hYellow
+        else
+            dHue = (1.0 - dFac) * hViolet + dFac * (1.0 + hYellow)
+            dHue = dHue % 1.0
+        end
+
+        oHue = math.atan(ob, oa) * 0.1591549430919
+        oHue = oHue % 1.0
+    else
+        oChr = math.sqrt(ocsq)
+        dChr = math.sqrt(dcsq)
+
+        oHue = math.atan(ob, oa) * 0.1591549430919
+        oHue = oHue % 1.0
+        dHue = math.atan(db, da) * 0.1591549430919
+        dHue = dHue % 1.0
+    end
+
+    local cc <const> = u * oChr + t * dChr
+    local ch <const> = hueFunc(oHue, dHue, t)
+    return Clr.srLchTosRgb(cl, cc, ch, ct, 0.00005)
 end
 
 ---Returns true if the red, green and blue channels are within the range
@@ -660,8 +689,7 @@ end
 ---@param tol number? tolerance
 ---@return boolean
 function Clr.rgbaIsInGamut(c, tol)
-    return Clr.alphaIsInGamut(c, tol)
-        and Clr.rgbIsInGamut(c, tol)
+    return Clr.alphaIsInGamut(c, tol) and Clr.rgbIsInGamut(c, tol)
 end
 
 ---Converts a color from standard RGB (sRGB) to linear RGB.
@@ -722,8 +750,7 @@ end
 ---The green to red axis is a.
 ---The blue to yellow axis is b.
 function Clr.sRgbToSrLab2Internal(c)
-    return Clr.lRgbToSrLab2Internal(
-        Clr.sRgbTolRgbInternal(c))
+    return Clr.lRgbToSrLab2Internal(Clr.sRgbTolRgbInternal(c))
 end
 
 ---Converts a color from standard RGB to SR LCH.
@@ -790,8 +817,7 @@ end
 ---@param alpha number transparency
 ---@return Clr
 function Clr.srLab2TosRgb(l, a, b, alpha)
-    return Clr.lRgbTosRgbInternal(
-        Clr.srLab2TolRgb(l, a, b, alpha))
+    return Clr.lRgbTosRgbInternal(Clr.srLab2TolRgb(l, a, b, alpha))
 end
 
 ---Converts a color from SR Lab 2 to SR LCH.

@@ -228,8 +228,7 @@ local function layerToSvgStr(
         -- Possible for layer name to be empty string.
         local layerName = "layer"
         if layer.name and #layer.name > 0 then
-            layerName = string.lower(
-                Utilities.validateFilename(layer.name))
+            layerName = string.lower(Utilities.validateFilename(layer.name))
         end
         local visStr = ""
         if not isVisible then
@@ -267,7 +266,7 @@ local function layerToSvgStr(
                 -- with use xlink:href, but best to keep things simple for
                 -- compatibility with Inkscape, Processing, Blender, etc.
                 local celImg = cel.image
-                if layer.isTilemap then
+                if isTilemap then
                     celImg = AseUtilities.tilesToImage(
                         celImg, layer.tileset, colorMode)
                 end
