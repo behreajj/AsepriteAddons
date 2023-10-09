@@ -612,64 +612,26 @@ function Clr.mixSrLchInternal(o, d, t, hueFunc)
     local dIsGray <const> = dcsq < 0.00005
 
     local u <const> = 1.0 - t
-    local cl <const> = u * oLab.l + t * dLab.l
-    local ct <const> = u * oLab.alpha + t * dLab.alpha
-
-    if oIsGray and dIsGray then
+    if oIsGray or dIsGray then
         return Clr.srLab2TosRgb(
-            cl,
+            u * oLab.l + t * dLab.l,
             u * oa + t * da,
             u * ob + t * db,
-            ct)
-    end
-
-    local oChr = 0.0
-    local dChr = 0.0
-    local oHue = 0.0
-    local dHue = 0.0
-
-    local hYellow <const> = 0.30922841685655
-    local hViolet <const> = 0.80922841685655
-
-    if oIsGray then
-        dChr = math.sqrt(dcsq)
-
-        local oFac <const> = oLab.l * 0.01
-        if dHue > hYellow and dHue <= hViolet then
-            oHue = (1.0 - oFac) * hViolet + oFac * hYellow
-        else
-            oHue = (1.0 - oFac) * hViolet + oFac * (1.0 + hYellow)
-            oHue = oHue % 1.0
-        end
-
-        dHue = math.atan(db, da) * 0.1591549430919
-        dHue = dHue % 1.0
-    elseif dIsGray then
-        oChr = math.sqrt(ocsq)
-
-        local dFac <const> = dLab.l * 0.01
-        if oHue > hYellow and oHue <= hViolet then
-            dHue = (1.0 - dFac) * hViolet + dFac * hYellow
-        else
-            dHue = (1.0 - dFac) * hViolet + dFac * (1.0 + hYellow)
-            dHue = dHue % 1.0
-        end
-
-        oHue = math.atan(ob, oa) * 0.1591549430919
-        oHue = oHue % 1.0
+            u * oLab.alpha + t * dLab.alpha)
     else
-        oChr = math.sqrt(ocsq)
-        dChr = math.sqrt(dcsq)
+        local oChr <const> = math.sqrt(ocsq)
+        local oHue <const> = (math.atan(ob, oa) * 0.1591549430919) % 1.0
 
-        oHue = math.atan(ob, oa) * 0.1591549430919
-        oHue = oHue % 1.0
-        dHue = math.atan(db, da) * 0.1591549430919
-        dHue = dHue % 1.0
+        local dChr <const> = math.sqrt(dcsq)
+        local dHue <const> = (math.atan(db, da) * 0.1591549430919) % 1.0
+
+        return Clr.srLchTosRgb(
+            u * oLab.l + t * dLab.l,
+            u * oChr + t * dChr,
+            hueFunc(oHue, dHue, t),
+            u * oLab.alpha + t * dLab.alpha,
+            0.00005)
     end
-
-    local cc <const> = u * oChr + t * dChr
-    local ch <const> = hueFunc(oHue, dHue, t)
-    return Clr.srLchTosRgb(cl, cc, ch, ct, 0.00005)
 end
 
 ---Returns true if the red, green and blue channels are within the range
