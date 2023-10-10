@@ -142,117 +142,6 @@ function AseUtilities.appendLeaves(
     return array
 end
 
----Finds the average color of a selection in a sprite. Calculates the average
----in the SR LAB 2 color space.
----@param sprite Sprite
----@param frame Frame|integer
----@return { l: number, a: number, b: number, alpha: number }
-function AseUtilities.averageColor(sprite, frame)
-    local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
-    local selBounds <const> = sel.bounds
-    local xSel <const> = selBounds.x
-    local ySel <const> = selBounds.y
-
-    local sprSpec <const> = sprite.spec
-    local colorMode <const> = sprSpec.colorMode
-    local selSpec <const> = ImageSpec {
-        width = math.max(1, selBounds.width),
-        height = math.max(1, selBounds.height),
-        colorMode = colorMode,
-        transparentColor = sprSpec.transparentColor
-    }
-    selSpec.colorSpace = sprSpec.colorSpace
-
-    local flatImage <const> = Image(selSpec)
-    flatImage:drawSprite(sprite, frame, Point(-xSel, -ySel))
-
-    local eval = nil
-    local palette = nil
-    if colorMode == ColorMode.RGB then
-        eval = function(h, d)
-            if (h & 0xff000000) ~= 0 then
-                local q <const> = d[h]
-                if q then d[h] = q + 1 else d[h] = 1 end
-            end
-        end
-    elseif colorMode == ColorMode.GRAY then
-        eval = function(gray, d)
-            local a = (gray >> 0x08) & 0xff
-            if a > 0 then
-                local v <const> = gray & 0xff
-                local h <const> = a << 0x18 | v << 0x10 | v << 0x08 | v
-                local q <const> = d[h]
-                if q then d[h] = q + 1 else d[h] = 1 end
-            end
-        end
-    elseif colorMode == ColorMode.INDEXED then
-        if not frame then
-            return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
-        end
-
-        palette = AseUtilities.getPalette(frame, sprite.palettes)
-
-        eval = function(idx, d, pal)
-            if idx > -1 and idx < #pal then
-                local aseColor <const> = pal:getColor(idx)
-                local a <const> = aseColor.alpha
-                if a > 0 then
-                    local h <const> = aseColor.rgbaPixel
-                    local q <const> = d[h]
-                    if q then d[h] = q + 1 else d[h] = 1 end
-                end
-            end
-        end
-    else
-        return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
-    end
-
-    -- The key is the color in hex; the value is a number of pixels with that
-    -- color in the selection. This tally is for the average.
-    ---@type table<integer, integer>
-    local hexDict <const> = {}
-    local pxItr <const> = flatImage:pixels()
-    for pixel in pxItr do
-        local x <const> = pixel.x + xSel
-        local y <const> = pixel.y + ySel
-        if sel:contains(x, y) then
-            eval(pixel(), hexDict, palette)
-        end
-    end
-
-    -- Cache methods used in loop.
-    local fromHex <const> = Clr.fromHex
-    local sRgbToLab <const> = Clr.sRgbToSrLab2
-
-    local lSum = 0.0
-    local aSum = 0.0
-    local bSum = 0.0
-    local alphaSum = 0.0
-    local count = 0
-
-    for k, v in pairs(hexDict) do
-        local srgb <const> = fromHex(k)
-        local lab <const> = sRgbToLab(srgb)
-        lSum = lSum + lab.l * v
-        aSum = aSum + lab.a * v
-        bSum = bSum + lab.b * v
-        alphaSum = alphaSum + lab.alpha * v
-        count = count + v
-    end
-
-    if alphaSum > 0 and count > 0 then
-        local countInv <const> = 1.0 / count
-        return {
-            l = lSum * countInv,
-            a = aSum * countInv,
-            b = bSum * countInv,
-            alpha = alphaSum * countInv
-        }
-    end
-
-    return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
-end
-
 ---Copies an Aseprite Color object by sRGB channel values. This is to prevent
 ---accidental pass by reference. The Color constructor does no bounds checking
 ---for [0, 255]. If the flag is "UNBOUNDED", then the raw values are used. If
@@ -271,6 +160,10 @@ function AseUtilities.aseColorCopy(aseColor, flag)
             a = aseColor.alpha
         }
     elseif flag == "MODULAR" then
+        -- TODO: Test to see, aseColor.red % 255 would not be the same as using
+        -- rgbaPixel because in the latter there would be overflow into the
+        -- next higher digit? Maybe change the latter to "OVERFLOW" if there's
+        -- a difference?
         return AseUtilities.hexToAseColor(
             AseUtilities.aseColorToHex(aseColor, ColorMode.RGB))
     else
@@ -360,9 +253,9 @@ function AseUtilities.asePaletteLoad(
         if filePath and #filePath > 0 then
             local isFile <const> = app.fs.isFile(filePath)
             if isFile then
-                -- Loading an .aseprite file with multiple palettes
-                -- will register only the first palette. Also may be
-                -- problems with color profiles being ignored.
+                -- Loading an .aseprite file with multiple palettes will
+                -- register only the first palette. Also may be problems with
+                -- color profiles being ignored?
                 local palFile <const> = Palette { fromFile = filePath }
                 if palFile then
                     local cntVrf <const> = count or 256
@@ -391,9 +284,9 @@ function AseUtilities.asePaletteLoad(
                     -- 11ffdbd9cc6232faaff5eecd8cc628bb5a2c706f/
                     -- gfx/color_space.cpp#L142
 
-                    -- It might be safer not to treat the NONE color
-                    -- space as equivalent to SRGB, as the user could
-                    -- have a display profile which differs radically.
+                    -- It might be safer not to treat the NONE color space as
+                    -- equivalent to SRGB, as the user could have a display
+                    -- profile which differs radically.
                     local profileSrgb <const> = ColorSpace { sRGB = true }
                     if profileAct ~= profileSrgb then
                         palActSpr:convertColorSpace(profileSrgb)
@@ -524,6 +417,172 @@ function AseUtilities.asePalettesToHexArr(palettes)
     else
         return { 0x00000000, 0xffffffff }
     end
+end
+
+---Finds the average color of a selection in a sprite. Calculates the average
+---in the SR LAB 2 color space.
+---@param sprite Sprite
+---@param frame Frame|integer
+---@return { l: number, a: number, b: number, alpha: number }
+function AseUtilities.averageColor(sprite, frame)
+    local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
+    local selBounds <const> = sel.bounds
+    local xSel <const> = selBounds.x
+    local ySel <const> = selBounds.y
+
+    local sprSpec <const> = sprite.spec
+    local colorMode <const> = sprSpec.colorMode
+
+    local flatImage <const> = Image(AseUtilities.createSpec(
+        selBounds.width, selBounds.height,
+        colorMode, sprSpec.colorSpace,
+        sprSpec.transparentColor))
+    flatImage:drawSprite(sprite, frame, Point(-xSel, -ySel))
+
+    local eval = nil
+    local palette = nil
+    if colorMode == ColorMode.RGB then
+        eval = function(h, d)
+            if (h & 0xff000000) ~= 0 then
+                local q <const> = d[h]
+                if q then d[h] = q + 1 else d[h] = 1 end
+            end
+        end
+    elseif colorMode == ColorMode.GRAY then
+        eval = function(gray, d)
+            local a = (gray >> 0x08) & 0xff
+            if a > 0 then
+                local v <const> = gray & 0xff
+                local h <const> = a << 0x18 | v << 0x10 | v << 0x08 | v
+                local q <const> = d[h]
+                if q then d[h] = q + 1 else d[h] = 1 end
+            end
+        end
+    elseif colorMode == ColorMode.INDEXED then
+        if not frame then
+            return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+        end
+
+        palette = AseUtilities.getPalette(frame, sprite.palettes)
+
+        eval = function(idx, d, pal)
+            if idx > -1 and idx < #pal then
+                local aseColor <const> = pal:getColor(idx)
+                local a <const> = aseColor.alpha
+                if a > 0 then
+                    local h <const> = aseColor.rgbaPixel
+                    local q <const> = d[h]
+                    if q then d[h] = q + 1 else d[h] = 1 end
+                end
+            end
+        end
+    else
+        return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+    end
+
+    -- The key is the color in hex. The value is a number of pixels with that
+    -- color in the selection. This tally is for the average.
+    ---@type table<integer, integer>
+    local hexDict <const> = {}
+    local pxItr <const> = flatImage:pixels()
+    for pixel in pxItr do
+        if sel:contains(pixel.x + xSel, pixel.y + ySel) then
+            eval(pixel(), hexDict, palette)
+        end
+    end
+
+    -- Cache methods used in loop.
+    local fromHex <const> = Clr.fromHex
+    local sRgbToLab <const> = Clr.sRgbToSrLab2
+
+    local lSum = 0.0
+    local aSum = 0.0
+    local bSum = 0.0
+    local alphaSum = 0.0
+    local count = 0
+
+    for hex, tally in pairs(hexDict) do
+        local srgb <const> = fromHex(hex)
+        local lab <const> = sRgbToLab(srgb)
+        lSum = lSum + lab.l * tally
+        aSum = aSum + lab.a * tally
+        bSum = bSum + lab.b * tally
+        alphaSum = alphaSum + lab.alpha * tally
+        count = count + tally
+    end
+
+    if alphaSum > 0 and count > 0 then
+        local countInv <const> = 1.0 / count
+        return {
+            l = lSum * countInv,
+            a = aSum * countInv,
+            b = bSum * countInv,
+            alpha = alphaSum * countInv
+        }
+    end
+
+    return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+end
+
+---Finds the average color of a selection in a sprite. Treats the color as a
+---normal used in a normal map. If the sprite color mode is not RGB, returns
+---forward.
+---@param sprite Sprite
+---@param frame Frame|integer
+---@return Vec3
+function AseUtilities.averageNormal(sprite, frame)
+    local sprSpec <const> = sprite.spec
+    local colorMode <const> = sprSpec.colorMode
+    if colorMode ~= ColorMode.RGB then
+        return Vec3.forward()
+    end
+
+    local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
+    local selBounds <const> = sel.bounds
+    local xSel <const> = selBounds.x
+    local ySel <const> = selBounds.y
+
+    local flatImage <const> = Image(AseUtilities.createSpec(
+        selBounds.width, selBounds.height,
+        colorMode, sprSpec.colorSpace,
+        sprSpec.transparentColor))
+    flatImage:drawSprite(sprite, frame, Point(-xSel, -ySel))
+
+    local abs <const> = math.abs
+    local xSum = 0.0
+    local ySum = 0.0
+    local zSum = 0.0
+
+    local pxItr <const> = flatImage:pixels()
+    for pixel in pxItr do
+        if sel:contains(pixel.x + xSel, pixel.y + ySel) then
+            local hex <const> = pixel()
+            if (hex & 0xff000000) ~= 0 then
+                local r255 <const> = hex & 0xff
+                local g255 <const> = hex >> 0x08 & 0xff
+                local b255 <const> = hex >> 0x10 & 0xff
+
+                local x = (r255 + r255 - 255) / 255.0
+                local y = (g255 + g255 - 255) / 255.0
+                local z = (b255 + b255 - 255) / 255.0
+
+                if abs(x) < 0.0039216 then x = 0.0 end
+                if abs(y) < 0.0039216 then y = 0.0 end
+                if abs(z) < 0.0039216 then z = 0.0 end
+
+                xSum = xSum + x
+                ySum = ySum + y
+                zSum = zSum + z
+            end
+        end
+    end
+
+    local mSq <const> = xSum * xSum + ySum * ySum + zSum * zSum
+    if mSq > 0.0 then
+        local mInv <const> = 1.0 / math.sqrt(mSq)
+        return Vec3.new(xSum * mInv, ySum * mInv, zSum * mInv)
+    end
+    return Vec3.forward()
 end
 
 ---Blends a backdrop and overlay image, creating a union image from the two
@@ -1074,14 +1133,18 @@ function AseUtilities.createSpec(
 
     local newFilePrefs <const> = app.preferences.new_file
 
-    local wVerif = newFilePrefs.width --[[@as integer]]
+    local wVerif = 0
     if width then
         wVerif = math.min(math.max(math.abs(width), 1), 65535)
+    else
+        wVerif = newFilePrefs.width --[[@as integer]]
     end
 
-    local hVerif = newFilePrefs.height --[[@as integer]]
+    local hVerif = 0
     if height then
         hVerif = math.min(math.max(math.abs(height), 1), 65535)
+    else
+        hVerif = newFilePrefs.height --[[@as integer]]
     end
 
     local spec <const> = ImageSpec {
@@ -1553,8 +1616,9 @@ end
 ---@param frObjs Frame[]
 ---@return integer[]
 function AseUtilities.frameObjsToIdcs(frObjs)
-    -- Next and previous layer could use this function
-    -- but it's not worth it putting a dofile at the top.
+    -- Next and previous layer could use this function but it's not worth it
+    -- putting a dofile at the top.
+
     ---@type integer[]
     local frIdcs <const> = {}
     local lenFrames <const> = #frObjs

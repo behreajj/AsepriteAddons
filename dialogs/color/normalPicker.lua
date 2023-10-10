@@ -21,6 +21,30 @@ local active <const> = {
     inclination = 1.5707963267949,
 }
 
+local function assignFore()
+    if app.site.sprite then
+        local v <const> = Vec3.fromSpherical(
+            active.azimuth, active.inclination, 1.0)
+        if math.abs(v.x) < 0.0039216 then v.x = 0.0 end
+        if math.abs(v.y) < 0.0039216 then v.y = 0.0 end
+        if math.abs(v.z) < 0.0039216 then v.z = 0.0 end
+        app.fgColor = Color {
+            r = math.floor(v.x * 127.5 + 128.0),
+            g = math.floor(v.y * 127.5 + 128.0),
+            b = math.floor(v.z * 127.5 + 128.0),
+            a = 255
+        }
+    end
+end
+
+local function assignBack()
+    -- Bug where assigning to app.bgColor leads
+    -- to unlocked palette colors changing.
+    app.command.SwitchColors()
+    assignFore()
+    app.command.SwitchColors()
+end
+
 ---@param color Color
 ---@return number
 ---@return number
@@ -92,7 +116,7 @@ local function vecToWebHex(x, y, z)
 end
 
 ---@param dialog Dialog
-local function updateWidgetCart(dialog)
+local function updateFromCartesian(dialog)
     local args <const> = dialog.data
     local x <const> = args.x --[[@as number]]
     local y <const> = args.y --[[@as number]]
@@ -139,28 +163,26 @@ local function updateFromColor(dialog, clr)
     end
 end
 
-local function assignFore()
-    if app.site.sprite then
-        local v <const> = Vec3.fromSpherical(
-            active.azimuth, active.inclination, 1.0)
-        if math.abs(v.x) < 0.0039216 then v.x = 0.0 end
-        if math.abs(v.y) < 0.0039216 then v.y = 0.0 end
-        if math.abs(v.z) < 0.0039216 then v.z = 0.0 end
-        app.fgColor = Color {
-            r = math.floor(v.x * 127.5 + 128.0),
-            g = math.floor(v.y * 127.5 + 128.0),
-            b = math.floor(v.z * 127.5 + 128.0),
-            a = 255
-        }
-    end
-end
+---@param dialog Dialog
+---@param sprite Sprite
+---@param frame integer|Frame
+local function updateFromSelect(dialog, sprite, frame)
+    local v = AseUtilities.averageNormal(sprite, frame)
+    dialog:modify { id = "x", text = string.format("%.3f", v.x) }
+    dialog:modify { id = "y", text = string.format("%.3f", v.y) }
+    dialog:modify { id = "z", text = string.format("%.3f", v.z) }
+    dialog:modify { id = "hexCode", text = vecToWebHex(v.x, v.y, v.z) }
 
-local function assignBack()
-    -- Bug where assigning to app.bgColor leads
-    -- to unlocked palette colors changing.
-    app.command.SwitchColors()
-    assignFore()
-    app.command.SwitchColors()
+    local sph <const> = Vec3.toSpherical(v)
+    local i <const> = sph.inclination
+    active.inclination = i
+
+    -- Azimuth is undefined at sphere poles.
+    if i < 1.5707963267949 and i > -1.5707963267949 then
+        active.azimuth = sph.azimuth % 6.2831853071796
+    end
+
+    dialog:repaint()
 end
 
 local dlg = Dialog { title = "Normal Picker" }
@@ -250,6 +272,20 @@ dlg:button {
     end
 }
 
+dlg:button {
+    id = "selGet",
+    text = "&SELECT",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        local frame <const> = site.frame
+        if sprite and frame then
+            updateFromSelect(dlg, sprite, frame)
+        end
+    end
+}
+
 dlg:newrow { always = false }
 
 dlg:label {
@@ -266,7 +302,7 @@ dlg:number {
     text = string.format("%.3f", defaults.x),
     decimals = AseUtilities.DISPLAY_DECIMAL,
     onchange = function()
-        updateWidgetCart(dlg)
+        updateFromCartesian(dlg)
     end
 }
 
@@ -275,7 +311,7 @@ dlg:number {
     text = string.format("%.3f", defaults.y),
     decimals = AseUtilities.DISPLAY_DECIMAL,
     onchange = function()
-        updateWidgetCart(dlg)
+        updateFromCartesian(dlg)
     end
 }
 
@@ -284,7 +320,7 @@ dlg:number {
     text = string.format("%.3f", defaults.z),
     decimals = AseUtilities.DISPLAY_DECIMAL,
     onchange = function()
-        updateWidgetCart(dlg)
+        updateFromCartesian(dlg)
     end
 }
 
@@ -471,7 +507,6 @@ dlg:button {
     label = "Set:",
     text = "&FORE",
     focus = false,
-    visible = true,
     onclick = assignFore
 }
 
@@ -479,8 +514,97 @@ dlg:button {
     id = "bgSet",
     text = "&BACK",
     focus = false,
-    visible = true,
     onclick = assignBack
+}
+
+dlg:button {
+    id = "selSet",
+    text = "S&ELECT",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+
+        local sprSpec <const> = sprite.spec
+        local colorMode <const> = sprSpec.colorMode
+        if colorMode ~= ColorMode.RGB then
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported."
+            }
+            return
+        end
+
+        local v <const> = Vec3.fromSpherical(
+            active.azimuth, active.inclination, 1.0)
+        if math.abs(v.x) < 0.0039216 then v.x = 0.0 end
+        if math.abs(v.y) < 0.0039216 then v.y = 0.0 end
+        if math.abs(v.z) < 0.0039216 then v.z = 0.0 end
+        local aseColor <const> = Color {
+            r = math.floor(v.x * 127.5 + 128.0),
+            g = math.floor(v.y * 127.5 + 128.0),
+            b = math.floor(v.z * 127.5 + 128.0),
+            a = 255
+        }
+        local hex <const> = AseUtilities.aseColorToHex(aseColor, colorMode)
+
+        local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
+        local selBounds <const> = sel.bounds
+        local xSel <const> = selBounds.x
+        local ySel <const> = selBounds.y
+
+        local selSpec <const> = AseUtilities.createSpec(
+            selBounds.width, selBounds.height,
+            colorMode, sprSpec.colorSpace, sprSpec.transparentColor)
+        local selImage <const> = Image(selSpec)
+        local pxItr <const> = selImage:pixels()
+
+        for pixel in pxItr do
+            local x <const> = pixel.x + xSel
+            local y <const> = pixel.y + ySel
+            if sel:contains(x, y) then
+                pixel(hex)
+            end
+        end
+
+        -- TODO: Can this use a built-in AseUtilities method to be
+        -- more DRY less copy-paste?
+        app.transaction("Set Selection", function()
+            -- This is an extra precaution because creating
+            -- a new layer wipes out a range.
+            local tlHidden <const> = not app.preferences.general.visible_timeline
+            if tlHidden then
+                app.command.Timeline { open = true }
+            end
+
+            local frameIdcs = { site.frame.frameNumber }
+            local appRange <const> = app.range
+            if appRange.sprite == sprite then
+                frameIdcs = AseUtilities.frameObjsToIdcs(appRange.frames)
+            end
+
+            if tlHidden then
+                app.command.Timeline { close = true }
+            end
+
+            local lenFrames <const> = #frameIdcs
+            local sprFrames <const> = sprite.frames
+            local layer <const> = sprite:newLayer()
+            local tlSel <const> = Point(xSel, ySel)
+            layer.name = "Selection"
+            local i = 0
+            while i < lenFrames do
+                i = i + 1
+                local frameIdx <const> = frameIdcs[i]
+                local frameObj <const> = sprFrames[frameIdx]
+                sprite:newCel(
+                    layer, frameObj,
+                    selImage, tlSel)
+            end
+        end)
+        app.refresh()
+    end
 }
 
 dlg:newrow { always = false }

@@ -106,6 +106,7 @@ local function setFromSelect(dialog, sprite, frame)
         dialog:repaint()
         updateHexCode(dialog, active.l, active.c, active.h)
     end
+    -- TODO: Why is this refresh necessary?
     app.refresh()
 end
 
@@ -244,9 +245,9 @@ dlg:button {
     text = "&SELECT",
     focus = false,
     onclick = function()
-        local site = app.site
-        local sprite = site.sprite
-        local frame = site.frame
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        local frame <const> = site.frame
         if sprite and frame then
             setFromSelect(dlg, sprite, frame)
         end
