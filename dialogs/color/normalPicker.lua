@@ -281,6 +281,13 @@ dlg:button {
         local sprite <const> = site.sprite
         local frame <const> = site.frame
         if sprite and frame then
+            if sprite.colorMode ~= ColorMode.RGB then
+                app.alert {
+                    title = "Error",
+                    text = "Only RGB color mode is supported."
+                }
+                return
+            end
             updateFromSelect(dlg, sprite, frame)
         end
     end
