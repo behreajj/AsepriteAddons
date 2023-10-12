@@ -646,44 +646,28 @@ dlg:button {
         local pxItr <const> = selImage:pixels()
 
         for pixel in pxItr do
-            local x <const> = pixel.x + xSel
-            local y <const> = pixel.y + ySel
-            if sel:contains(x, y) then
+            if sel:contains(pixel.x + xSel, pixel.y + ySel) then
                 pixel(hex)
             end
         end
 
         app.transaction("Set Selection", function()
-            -- This is an extra precaution because creating
-            -- a new layer wipes out a range.
-            local tlHidden <const> = not app.preferences.general.visible_timeline
-            if tlHidden then
-                app.command.Timeline { open = true }
-            end
+            local frIdcs = Utilities.flatArr2(AseUtilities.getFrames(
+                sprite, "RANGE", false))
+            if #frIdcs < 1 then frIdcs = { site.frame.frameNumber } end
 
-            local frameIdcs = { site.frame.frameNumber }
-            local appRange <const> = app.range
-            if appRange.sprite == sprite then
-                frameIdcs = AseUtilities.frameObjsToIdcs(appRange.frames)
-            end
-
-            if tlHidden then
-                app.command.Timeline { close = true }
-            end
-
-            local lenFrames <const> = #frameIdcs
-            local sprFrames <const> = sprite.frames
+            local lenFrIdcs <const> = #frIdcs
+            local frObjs <const> = sprite.frames
             local layer <const> = sprite:newLayer()
-            local tlSel <const> = Point(xSel, ySel)
             layer.name = "Selection"
+            local tlSel <const> = Point(xSel, ySel)
+
             local i = 0
-            while i < lenFrames do
+            while i < lenFrIdcs do
                 i = i + 1
-                local frameIdx <const> = frameIdcs[i]
-                local frameObj <const> = sprFrames[frameIdx]
-                sprite:newCel(
-                    layer, frameObj,
-                    selImage, tlSel)
+                local frIdx <const> = frIdcs[i]
+                local frObj <const> = frObjs[frIdx]
+                sprite:newCel(layer, frObj, selImage, tlSel)
             end
         end)
         app.refresh()
@@ -729,9 +713,9 @@ dlg:canvas {
             swatches[2] = { l = lAna, c = c, h = (h - h30) % 1.0, a = a }
         elseif harmonyType == "COMPLEMENT" then
             swatches[1] = { l = 100.0 - l, c = c, h = (h + 0.5) % 1.0, a = a }
-        -- elseif harmonyType == "GRAYS" then
-        --     swatches[1] = { l = 100.0 - l, c = 0.0, h = h, a = a }
-        --     swatches[2] = { l = l, c = 0.0, h = h, a = a }
+            -- elseif harmonyType == "GRAYS" then
+            --     swatches[1] = { l = 100.0 - l, c = 0.0, h = h, a = a }
+            --     swatches[2] = { l = l, c = 0.0, h = h, a = a }
         elseif harmonyType == "SPLIT" then
             local lSpl <const> = (250.0 - (l + l)) / 3.0
             local h150 <const> = 0.41666666666667

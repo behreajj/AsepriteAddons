@@ -370,9 +370,8 @@ dlg:button {
             local lightBarLayer <const> = sprite:newLayer()
             lightBarLayer.name = "Light"
 
-            local lightBarWidth = math.ceil(size / 24)
+            local lightBarWidth <const> = math.max(8, math.ceil(size / 24))
             local lightBarHeight <const> = size
-            if lightBarWidth < 8 then lightBarWidth = 8 end
             local lightBarSpec <const> = AseUtilities.createSpec(
                 lightBarWidth, lightBarHeight,
                 spec.colorMode,

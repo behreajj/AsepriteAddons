@@ -299,9 +299,8 @@ dlg:button {
             local hueBarLayer <const> = sprite:newLayer()
             hueBarLayer.name = "Hue"
 
-            local hueBarWidth = math.ceil(size / 24)
+            local hueBarWidth <const> = math.max(8, math.ceil(size / 24))
             local hueBarHeight <const> = size
-            if hueBarWidth < 8 then hueBarWidth = 8 end
             local hueBarSpec <const> = AseUtilities.createSpec(
                 hueBarWidth, hueBarHeight,
                 spec.colorMode,

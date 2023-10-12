@@ -561,46 +561,28 @@ dlg:button {
         local pxItr <const> = selImage:pixels()
 
         for pixel in pxItr do
-            local x <const> = pixel.x + xSel
-            local y <const> = pixel.y + ySel
-            if sel:contains(x, y) then
+            if sel:contains(pixel.x + xSel, pixel.y + ySel) then
                 pixel(hex)
             end
         end
 
-        -- TODO: Can this use a built-in AseUtilities method to be
-        -- more DRY less copy-paste?
         app.transaction("Set Selection", function()
-            -- This is an extra precaution because creating
-            -- a new layer wipes out a range.
-            local tlHidden <const> = not app.preferences.general.visible_timeline
-            if tlHidden then
-                app.command.Timeline { open = true }
-            end
+            local frIdcs = Utilities.flatArr2(AseUtilities.getFrames(
+                sprite, "RANGE", false))
+            if #frIdcs < 1 then frIdcs = { site.frame.frameNumber } end
 
-            local frameIdcs = { site.frame.frameNumber }
-            local appRange <const> = app.range
-            if appRange.sprite == sprite then
-                frameIdcs = AseUtilities.frameObjsToIdcs(appRange.frames)
-            end
-
-            if tlHidden then
-                app.command.Timeline { close = true }
-            end
-
-            local lenFrames <const> = #frameIdcs
-            local sprFrames <const> = sprite.frames
+            local lenFrIdcs <const> = #frIdcs
+            local frObjs <const> = sprite.frames
             local layer <const> = sprite:newLayer()
-            local tlSel <const> = Point(xSel, ySel)
             layer.name = "Selection"
+            local tlSel <const> = Point(xSel, ySel)
+
             local i = 0
-            while i < lenFrames do
+            while i < lenFrIdcs do
                 i = i + 1
-                local frameIdx <const> = frameIdcs[i]
-                local frameObj <const> = sprFrames[frameIdx]
-                sprite:newCel(
-                    layer, frameObj,
-                    selImage, tlSel)
+                local frIdx <const> = frIdcs[i]
+                local frObj <const> = frObjs[frIdx]
+                sprite:newCel(layer, frObj, selImage, tlSel)
             end
         end)
         app.refresh()
