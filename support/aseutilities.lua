@@ -526,7 +526,7 @@ end
 
 ---Finds the average color of a selection in a sprite. Treats the color as a
 ---normal used in a normal map. If the sprite color mode is not RGB, returns
----forward.
+---up direction.
 ---@param sprite Sprite
 ---@param frame Frame|integer
 ---@return Vec3
@@ -534,7 +534,7 @@ function AseUtilities.averageNormal(sprite, frame)
     local sprSpec <const> = sprite.spec
     local colorMode <const> = sprSpec.colorMode
     if colorMode ~= ColorMode.RGB then
-        return Vec3.forward()
+        return Vec3.up()
     end
 
     local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
@@ -582,7 +582,7 @@ function AseUtilities.averageNormal(sprite, frame)
         local mInv <const> = 1.0 / math.sqrt(mSq)
         return Vec3.new(xSum * mInv, ySum * mInv, zSum * mInv)
     end
-    return Vec3.forward()
+    return Vec3.up()
 end
 
 ---Blends a backdrop and overlay image, creating a union image from the two
