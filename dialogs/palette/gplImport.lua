@@ -42,7 +42,7 @@ dlg:slider {
     value = defaults.paletteIndex
 }
 
-dlg:separator { id = "uiSep" }
+dlg:separator { id = "uiSep", text = "Display" }
 
 dlg:slider {
     id = "swatchSize",

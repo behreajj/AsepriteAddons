@@ -80,10 +80,8 @@ dlg:button {
         end
 
         local args <const> = dlg.data
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
-        local padding <const> = args.padding
-            or defaults.padding --[[@as integer]]
+        local target <const> = args.target or defaults.target --[[@as string]]
+        local padding <const> = args.padding or defaults.padding --[[@as integer]]
         local includeLocked <const> = args.includeLocked --[[@as boolean]]
         local includeHidden <const> = args.includeHidden --[[@as boolean]]
 

@@ -17,7 +17,7 @@ if appRange.sprite == activeSprite then
     if appRange.isEmpty then
         local activeCel <const> = site.cel
         if activeCel then
-            activeSprite.selection = selectCel(activeCel, sprBounds)
+            activeSprite.selection = selectCel(activeCel)
         end
     else
         local images <const> = appRange.images
@@ -29,7 +29,7 @@ if appRange.sprite == activeSprite then
             i = i + 1
             local image <const> = images[i]
             local cel <const> = image.cel
-            local sel <const> = selectCel(cel, sprBounds)
+            local sel <const> = selectCel(cel)
             union:add(sel)
         end
 

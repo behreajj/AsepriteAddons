@@ -339,7 +339,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "contentButton",
     text = "C&EL",
-    focus = false,
+    focus = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite
@@ -355,8 +355,7 @@ dlg:button {
         local activeCel <const> = activeLayer:cel(activeFrame)
         if not activeCel then return end
 
-        local trgSel <const> = AseUtilities.selectCel(
-            activeCel, activeSprite.bounds)
+        local trgSel <const> = AseUtilities.selectCel(activeCel)
 
         local args <const> = dlg.data
         local selMode <const> = args.selMode

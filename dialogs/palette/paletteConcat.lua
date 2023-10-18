@@ -157,7 +157,7 @@ dlg:button {
 
         local spriteFrames <const> = activeSprite.frames
         local spritePalettes <const> = activeSprite.palettes
-        local activeFrame = app.activeFrame
+        local activeFrame = site.frame
         if not activeFrame then
             activeFrame = spriteFrames[1]
         end

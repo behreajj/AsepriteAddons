@@ -285,7 +285,7 @@ dlg:button {
 
         -- Create Octree.
         local octCapacity = args.octCapacity
-            or defaults.octCapacityBits
+            or defaults.octCapacityBits --[[@as integer]]
         octCapacity = 1 << octCapacity
         local bounds <const> = Bounds3.lab()
         local octree <const> = Octree.new(bounds, octCapacity, 1)
@@ -456,8 +456,7 @@ dlg:button {
 
         -- Create layer.
         local layer <const> = coverSprite.layers[#coverSprite.layers]
-        layer.name = string.format(
-            "Palette.Coverage.%s", projPreset)
+        layer.name = string.format("Palette.Coverage.%s", projPreset)
 
         local zDiff = zMin - zMax
         local zDenom = 1.0

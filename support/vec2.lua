@@ -340,10 +340,8 @@ end
 ---@param v Vec2 vector
 ---@return integer
 function Vec2.hashCode(v)
-    -- https://stackoverflow.com/questions/
-    -- 300840/force-php-integer-overflow
-    -- https://readafterwrite.wordpress.com/
-    -- 2017/03/23/floating-point-keys-in-lua/
+    -- https://stackoverflow.com/questions/300840/force-php-integer-overflow
+    -- https://readafterwrite.wordpress.com/2017/03/23/floating-point-keys-in-lua/
     local xBits <const> = string.unpack("i4",
         string.pack("f", v.x))
     local yBits <const> = string.unpack("i4",
@@ -561,42 +559,6 @@ function Vec2.randomCartesianInternal(lb, ub)
     return Vec2.new(
         (1.0 - rx) * lb.x + rx * ub.x,
         (1.0 - ry) * lb.y + ry * ub.y)
-end
-
----Rotates a vector by an angle in radians around the x axis. For use in 2.5D.
----@param a Vec2 vector
----@param radians number angle
----@return Vec2
-function Vec2.rotateX(a, radians)
-    local cr <const> = math.cos(radians)
-    return Vec2.rotateXInternal(a, cr)
-end
-
----Rotates a vector by the cosine of an angle. Used when rotating many vectors
----by the same angle.
----@param a Vec2 vector
----@param cosa number cosine of the angle
----@return Vec2
-function Vec2.rotateXInternal(a, cosa)
-    return Vec2.new(a.x, a.y * cosa)
-end
-
----Rotates a vector by an angle in radians around the y axis. For use in 2.5D.
----@param a Vec2 vector
----@param radians number angle
----@return Vec2
-function Vec2.rotateY(a, radians)
-    local cr <const> = math.cos(radians)
-    return Vec2.rotateYInternal(a, cr)
-end
-
----Rotates a vector by the cosine of an angle. Used when rotating many vectors
----by the same angle.
----@param a Vec2 vector
----@param cosa number cosine of the angle
----@return Vec2
-function Vec2.rotateYInternal(a, cosa)
-    return Vec2.new(a.x * cosa, a.y)
 end
 
 ---Rotates a vector by an angle in radians around the z axis.

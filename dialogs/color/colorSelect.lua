@@ -101,7 +101,7 @@ dlg:newrow { always = false }
 
 dlg:combobox {
     id = "sampleMode",
-    label = "Include:",
+    label = "Refer To:",
     option = defaults.sampleMode,
     options = sampleModes
 }
@@ -410,7 +410,6 @@ dlg:button {
                 minLight = refLab.l - tol100
                 maxLight = refLab.l + tol100
 
-                -- TODO: Replace with appropriate SR LAB 2 tol.
                 local tol111 <const> = math.max(0.000001,
                     tolerance * (50.0 / 111.0))
                 mina = refLab.a - tol111
