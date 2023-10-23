@@ -109,9 +109,7 @@ end
 ---@return Mesh2
 function Mesh2:rotateZ(radians)
     -- Used by arc early return.
-    return self:rotateZInternal(
-        math.cos(radians),
-        math.sin(radians))
+    return self:rotateZInternal(math.cos(radians), math.sin(radians))
 end
 
 ---Rotates all coordinates in a mesh by the cosine and sine of an angle.

@@ -101,9 +101,7 @@ end
 ---@param radians number angle
 ---@return Knot3
 function Knot3:rotateX(radians)
-    return self:rotateXInternal(
-        math.cos(radians),
-        math.sin(radians))
+    return self:rotateXInternal(math.cos(radians), math.sin(radians))
 end
 
 ---Rotates this knot around the x axis by the cosine and sine of an angle.
@@ -121,9 +119,7 @@ end
 ---@param radians number angle
 ---@return Knot3
 function Knot3:rotateY(radians)
-    return self:rotateYInternal(
-        math.cos(radians),
-        math.sin(radians))
+    return self:rotateYInternal(math.cos(radians), math.sin(radians))
 end
 
 ---Rotates this knot around the y axis by the cosine and sine of an angle.
@@ -141,9 +137,7 @@ end
 ---@param radians number angle
 ---@return Knot3
 function Knot3:rotateZ(radians)
-    return self:rotateZInternal(
-        math.cos(radians),
-        math.sin(radians))
+    return self:rotateZInternal(math.cos(radians), math.sin(radians))
 end
 
 ---Rotates this knot around the z axis by the cosine and sine of an angle.
@@ -204,10 +198,7 @@ end
 ---@param step number step
 ---@return Vec3
 function Knot3.bezierPoint(a, b, step)
-    return Vec3.bezierPoint(
-        a.co, a.fh,
-        b.rh, b.co,
-        step)
+    return Vec3.bezierPoint(a.co, a.fh, b.rh, b.co, step)
 end
 
 ---Sets two knots from a segment of a Catmull-Rom curve. The default curve

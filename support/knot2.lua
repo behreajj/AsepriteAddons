@@ -74,16 +74,14 @@ end
 ---Sets the fore handle to mirror the rear handle.
 ---@return Knot2
 function Knot2:mirrorHandlesBackward()
-    self.fh = Vec2.sub(self.co,
-        Vec2.sub(self.rh, self.co))
+    self.fh = Vec2.sub(self.co, Vec2.sub(self.rh, self.co))
     return self
 end
 
 ---Sets the rear handle to mirror the fore handle.
 ---@return Knot2
 function Knot2:mirrorHandlesForward()
-    self.rh = Vec2.sub(self.co,
-        Vec2.sub(self.fh, self.co))
+    self.rh = Vec2.sub(self.co, Vec2.sub(self.fh, self.co))
     return self
 end
 
@@ -166,10 +164,7 @@ end
 ---@param step number step
 ---@return Vec2
 function Knot2.bezierPoint(a, b, step)
-    return Vec2.bezierPoint(
-        a.co, a.fh,
-        b.rh, b.co,
-        step)
+    return Vec2.bezierPoint(a.co, a.fh, b.rh, b.co, step)
 end
 
 ---Forms a knot to be used in arcs and circles at an origin with a given radius.

@@ -191,10 +191,10 @@ end
 
 ---Converts an Aseprite color object to an integer. The meaning of the integer
 ---depends on the color mode: the RGB integer is 32 bits. GRAY, 16. INDEXED, 8.
+---Returns zero if the color mode is not recognized.
 ---
----For RGB mode, uses modular arithmetic, i.e., does not check if red, green,
----blue and alpha channels are out of range [0, 255]. Returns zero if the color
----mode is not recognized.
+---Uses modular arithmetic, i.e., does not check if red, green, blue and alpha
+---channels are out of range [0, 255].
 ---
 ---For grayscale, uses Aseprite's definition of relative luminance, not HSL
 ---lightness.
@@ -470,6 +470,7 @@ function AseUtilities.averageColor(sprite, frame)
                 local aseColor <const> = pal:getColor(idx)
                 local a <const> = aseColor.alpha
                 if a > 0 then
+                    -- TODO: Don't use rgbaPixel.
                     local h <const> = aseColor.rgbaPixel
                     local q <const> = d[h]
                     if q then d[h] = q + 1 else d[h] = 1 end
@@ -1286,8 +1287,7 @@ function AseUtilities.filterCels(
             includeHidden,
             includeTiles,
             includeBkg)
-        return AseUtilities.getUniqueCelsFromLeaves(
-            leaves, sprite.frames)
+        return AseUtilities.getUniqueCelsFromLeaves(leaves, sprite.frames)
     elseif target == "RANGE" then
         ---@type Cel[]
         local trgCels <const> = {}
@@ -2182,11 +2182,9 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
 end
 
 ---Returns a copy of the source image that has been rotated 90 degrees counter
----clockwise. Also returns displaced coordinates for the top left corner.
+---clockwise.
 ---@param source Image source image
 ---@return Image
----@return integer
----@return integer
 function AseUtilities.rotateImage90(source)
     local srcSpec <const> = source.spec
     local w <const> = srcSpec.width
@@ -2215,15 +2213,12 @@ function AseUtilities.rotateImage90(source)
         j = j + 1
         pixel(pxRot[j])
     end
-    return target, 0, 1 - w
+    return target
 end
 
----Returns a copy of the source image that has been rotated 180 degrees. Also
----returns displaced coordinates for the top left corner.
+---Returns a copy of the source image that has been rotated 180 degrees.
 ---@param source Image source image
 ---@return Image
----@return integer
----@return integer
 function AseUtilities.rotateImage180(source)
     ---@type integer[]
     local px <const> = {}
@@ -2244,17 +2239,13 @@ function AseUtilities.rotateImage180(source)
         pixel(px[j])
     end
 
-    return target,
-        1 - source.width,
-        1 - source.height
+    return target
 end
 
 ---Returns a copy of the source image that has been rotated 270 degrees counter
----clockwise. Also returns displaced coordinates for the top left corner.
+---clockwise.
 ---@param source Image source image
 ---@return Image
----@return integer
----@return integer
 function AseUtilities.rotateImage270(source)
     local srcSpec <const> = source.spec
     local w <const> = srcSpec.width
@@ -2284,7 +2275,7 @@ function AseUtilities.rotateImage270(source)
         pixel(pxRot[j])
     end
 
-    return target, 1 - h, 0
+    return target
 end
 
 ---Selects the non-zero pixels of a cel's image. Intersects the selection with

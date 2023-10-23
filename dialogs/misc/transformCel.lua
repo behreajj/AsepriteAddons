@@ -664,7 +664,7 @@ dlg:button {
 
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians = degrees * 0.017453292519943
-        if query then radians = query end
+        if query and (not useBilinear) then radians = query end
         local tana <const> = math.tan(radians)
         local absTan <const> = math.abs(tana)
 
@@ -680,13 +680,14 @@ dlg:button {
                     local hSrc <const> = srcSpec.height
                     local alphaIndex <const> = srcSpec.transparentColor
 
-                    local wTrg <const> = ceil(wSrc + absTan * hSrc)
+                    local wTrgf <const> = wSrc + absTan * hSrc
+                    local wTrgi <const> = ceil(wTrgf)
                     local yCenter <const> = hSrc * 0.5
-                    local xDiff <const> = (wSrc - wTrg) * 0.5
-                    local wDiffHalf <const> = round((wTrg - wSrc) * 0.5)
+                    local xDiff <const> = (wSrc - wTrgf) * 0.5
+                    local wDiffHalf <const> = round((wTrgf - wSrc) * 0.5)
 
                     local trgSpec <const> = createSpec(
-                        wTrg, hSrc, srcSpec.colorMode,
+                        wTrgi, hSrc, srcSpec.colorMode,
                         srcSpec.colorSpace, alphaIndex)
                     local trgImg = Image(trgSpec)
 
@@ -764,7 +765,7 @@ dlg:button {
 
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians = degrees * 0.017453292519943
-        if query then radians = query end
+        if query and (not useBilinear) then radians = query end
         local tana <const> = math.tan(radians)
         local absTan <const> = math.abs(tana)
 
@@ -780,13 +781,14 @@ dlg:button {
                     local hSrc <const> = srcSpec.height
                     local alphaIndex <const> = srcSpec.transparentColor
 
-                    local hTrg <const> = ceil(hSrc + absTan * wSrc)
+                    local hTrgf <const> = hSrc + absTan * wSrc
+                    local hTrgi <const> = ceil(hTrgf)
                     local xTrgCenter <const> = wSrc * 0.5
-                    local yDiff <const> = (hSrc - hTrg) * 0.5
-                    local hDiffHalf <const> = round((hTrg - hSrc) * 0.5)
+                    local yDiff <const> = (hSrc - hTrgf) * 0.5
+                    local hDiffHalf <const> = round((hTrgf - hSrc) * 0.5)
 
                     local trgSpec <const> = createSpec(
-                        wSrc, hTrg, srcSpec.colorMode,
+                        wSrc, hTrgi, srcSpec.colorMode,
                         srcSpec.colorSpace, alphaIndex)
                     local trgImg = Image(trgSpec)
 
@@ -858,8 +860,7 @@ dlg:button {
                     local xSrcHalf <const> = srcImg.width // 2
                     local ySrcHalf <const> = srcImg.height // 2
 
-                    local trgImg, _, _ = rotFunc(srcImg)
-                    cel.image = trgImg
+                    cel.image = rotFunc(srcImg)
 
                     -- The target image width and height
                     -- are the source image height and width.
@@ -870,7 +871,7 @@ dlg:button {
                 end
             end)
         elseif degrees == 180 then
-            local rot180 = AseUtilities.rotateImage180
+            local rot180 <const> = AseUtilities.rotateImage180
             app.transaction("Rotate Cels", function()
                 local i = 0
                 while i < lenCels do
@@ -903,7 +904,7 @@ dlg:button {
             degrees = 360 - degrees
             local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
             local radians = degrees * 0.017453292519943
-            if query then radians = query end
+            if query and (not useBilinear) then radians = query end
 
             -- Avoid trigonmetric functions in while loop below.
             -- Cache sine and cosine here, then use formula for
@@ -922,28 +923,32 @@ dlg:button {
                 local i = 0
                 while i < lenCels do
                     i = i + 1
-                    local cel = cels[i]
-                    local srcImg = cel.image
+                    local cel <const> = cels[i]
+                    local srcImg <const> = cel.image
                     if not srcImg:isEmpty() then
                         local srcSpec <const> = srcImg.spec
                         local wSrc <const> = srcSpec.width
                         local hSrc <const> = srcSpec.height
                         local alphaMask <const> = srcSpec.transparentColor
 
+                        local wTrgf <const> = hSrc * absSina + wSrc * absCosa
+                        local hTrgf <const> = hSrc * absCosa + wSrc * absSina
+
                         -- Just in case, ceil this instead of floor.
-                        local wTrg <const> = ceil(hSrc * absSina + wSrc * absCosa)
-                        local hTrg <const> = ceil(hSrc * absCosa + wSrc * absSina)
+                        local wTrgi <const> = ceil(wTrgf)
+                        local hTrgi <const> = ceil(hTrgf)
+
                         local xSrcCenter <const> = wSrc * 0.5
                         local ySrcCenter <const> = hSrc * 0.5
-                        local xTrgCenter <const> = wTrg * 0.5
-                        local yTrgCenter <const> = hTrg * 0.5
+                        local xTrgCenter <const> = wTrgf * 0.5
+                        local yTrgCenter <const> = hTrgf * 0.5
 
                         -- Try to minimize drift in the cel's position.
-                        local wDiffHalf <const> = round((wTrg - wSrc) * 0.5)
-                        local hDiffHalf <const> = round((hTrg - hSrc) * 0.5)
+                        local wDiffHalf <const> = round((wTrgf - wSrc) * 0.5)
+                        local hDiffHalf <const> = round((hTrgf - hSrc) * 0.5)
 
-                        local trgSpec<const> = createSpec(
-                            wTrg,hTrg, srcSpec.colorMode,
+                        local trgSpec <const> = createSpec(
+                            wTrgi, hTrgi, srcSpec.colorMode,
                             srcSpec.colorSpace, alphaMask)
                         local trgImg = Image(trgSpec)
 
@@ -1049,8 +1054,7 @@ dlg:button {
         local activeFrame <const> = site.frame
 
         local args <const> = dlg.data
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
+        local target <const> = args.target or defaults.target --[[@as string]]
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, true)
@@ -1084,8 +1088,7 @@ dlg:button {
         local activeFrame <const> = site.frame
 
         local args <const> = dlg.data
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
+        local target <const> = args.target or defaults.target --[[@as string]]
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, true)

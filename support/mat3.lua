@@ -116,9 +116,7 @@ end
 ---@param radians number angle
 ---@return Mat3
 function Mat3.fromRotZ(radians)
-    return Mat3.fromRotZInternal(
-        math.cos(radians),
-        math.sin(radians))
+    return Mat3.fromRotZInternal(math.cos(radians), math.sin(radians))
 end
 
 ---Constructs a matrix from the cosine and sine of an angle.
