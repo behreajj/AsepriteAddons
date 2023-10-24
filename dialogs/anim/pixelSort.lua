@@ -257,6 +257,7 @@ dlg:button {
                     title = "Error",
                     text = "Threshold bounds are equal."
                 }
+                return
             end
 
             if lbThresh100 > ubThresh100 then
