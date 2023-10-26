@@ -10,6 +10,8 @@ local paletteTypes <const> = {
 ---@param filePath string
 ---@return Sprite
 local function loadSprite(filePath)
+    -- TODO: Support pbm, pgm, ppm.
+
     -- GPL and PAL file formats cannot be loaded as sprites.
     local fileExt <const> = app.fs.fileExtension(filePath)
     local fileExtLower <const> = string.lower(fileExt)

@@ -443,8 +443,7 @@ dlg:button {
                     frPxArr[k] = srcPxArr[k]
                 end
 
-                -- Convert frame index to the number of rows
-                -- to sort.
+                -- Convert frame index to the number of rows to sort.
                 local t <const> = frIdx * frToFac
                 local u <const> = 1.0 - t
 
@@ -527,8 +526,7 @@ dlg:button {
                     frPxArr[k] = srcPxArr[k]
                 end
 
-                -- Convert frame index to the number of columns
-                -- to sort.
+                -- Convert frame index to the number of columns to sort.
                 local t <const> = frIdx * frToFac
                 local u <const> = 1.0 - t
                 local colOrig <const> = floor(0.5 + u * colOrigFirst

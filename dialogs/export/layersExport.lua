@@ -365,10 +365,8 @@ dlg:button {
         local resize <const> = AseUtilities.resizeImageNearest
         local trimAlpha <const> = AseUtilities.trimImageAlpha
 
-        local chosenFrames <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(
-                activeSprite, frameTarget,
-                true, rangeStr))
+        local chosenFrames <const> = Utilities.flatArr2(AseUtilities.getFrames(
+                activeSprite, frameTarget, true, rangeStr))
         local lenChosenFrames <const> = #chosenFrames
         local spriteFrameObjs <const> = activeSprite.frames
 
