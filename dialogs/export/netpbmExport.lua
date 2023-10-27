@@ -240,6 +240,8 @@ dlg:button {
         local colSep = " "
         local rowSep = "\n"
         local isBinPbm = false
+        local offTok <const> = "1"
+        local onTok <const> = "0"
         if fmtIsBinary then
             writerType = "wb"
             colSep = ""
@@ -391,8 +393,6 @@ dlg:button {
             -- an extra blank line which could throw a parser off.
             headerStr = "P1"
             channelSzStr = ""
-            local offTok <const> = "0"
-            local onTok <const> = "1"
             if fmtIsBinary then
                 headerStr = "P4"
                 isBinPbm = true
@@ -495,7 +495,8 @@ dlg:button {
                         while m < lenRowChars do
                             local idxOrig <const> = 1 + m * 8
                             local idxDest <const> = idxOrig + 7
-                            local strSeg <const> = strsub(rowStr, idxOrig, idxDest)
+                            local strSeg = strsub(rowStr, idxOrig, idxDest)
+                            while #strSeg < 8 do strSeg = strSeg .. offTok end
                             local numSeg <const> = tonumber(strSeg, 2)
                             charStrs[#charStrs + 1] = strpack("B", numSeg)
                             m = m + 1
