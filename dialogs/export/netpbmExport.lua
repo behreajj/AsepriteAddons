@@ -9,7 +9,8 @@ local defaults <const> = {
     rangeStr = "",
     strExample = "4,6:9,13",
     scale = 1,
-    usePixelAspect = true
+    usePixelAspect = true,
+    channelSize = 255,
 }
 
 local dlg <const> = Dialog { title = "Export Netpbm" }
@@ -73,6 +74,16 @@ dlg:check {
 
 dlg:newrow { always = false }
 
+dlg:slider {
+    id = "channelSize",
+    label = "Channel:",
+    min = 1,
+    max = 255,
+    value = defaults.channelSize
+}
+
+dlg:newrow { always = false }
+
 dlg:file {
     id = "filename",
     label = "File:",
@@ -114,6 +125,8 @@ dlg:button {
         local scale <const> = args.scale
             or defaults.scale --[[@as integer]]
         local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
+        local channelSize <const> = args.channelSize
+            or defaults.channelSize --[[@as integer]]
 
         local fileExt <const> = app.fs.fileExtension(filename)
         local fileExtLower <const> = string.lower(fileExt)
@@ -183,6 +196,7 @@ dlg:button {
         local getPalette <const> = AseUtilities.getPalette
         local strfmt <const> = string.format
         local tconcat <const> = table.concat
+        local floor <const> = math.floor
 
         -- Handle color mode.
         local cmIsRgb <const> = colorMode == ColorMode.RGB
@@ -194,8 +208,7 @@ dlg:button {
         local channelSzStr = ""
         local writePixel = nil
 
-        -- TODO: Customizable channel depth for ppm and pgm?
-        local channelSize <const> = 255
+        local toChnlSz <const> = channelSize / 255.0
         local frmtrStr = "%03d"
         if channelSize < 10 then
             frmtrStr = "%01d"
@@ -215,21 +228,30 @@ dlg:button {
             if cmIsIdx then
                 writePixel = function(h, p)
                     local c <const> = p:getColor(h)
-                    return strfmt(rgbFrmtrStr, c.red, c.green, c.blue)
+                    local sr <const> = c.red
+                    local sg <const> = c.green
+                    local sb <const> = c.blue
+                    return strfmt(rgbFrmtrStr,
+                        floor(sr * toChnlSz + 0.5),
+                        floor(sg * toChnlSz + 0.5),
+                        floor(sb * toChnlSz + 0.5))
                 end
             elseif cmIsGry then
                 writePixel = function(h)
                     local gray <const> = h & 0xff
-                    return strfmt(rgbFrmtrStr, gray, gray, gray)
+                    local v <const> = floor(gray * toChnlSz + 0.5)
+                    return strfmt(rgbFrmtrStr, v, v, v)
                 end
             else
                 -- Default to RGB color mode.
                 writePixel = function(h)
-                    return strfmt(
-                        rgbFrmtrStr,
-                        h & 0xff,
-                        (h >> 0x08) & 0xff,
-                        (h >> 0x10) & 0xff)
+                    local sr <const> = h & 0xff
+                    local sg <const> = (h >> 0x08) & 0xff
+                    local sb <const> = (h >> 0x10) & 0xff
+                    return strfmt(rgbFrmtrStr,
+                        floor(sr * toChnlSz + 0.5),
+                        floor(sg * toChnlSz + 0.5),
+                        floor(sb * toChnlSz + 0.5))
                 end
             end
         elseif extIsPgm then
@@ -249,7 +271,8 @@ dlg:button {
                     local sg <const> = c.green
                     local sb <const> = c.blue
                     local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
-                    return strfmt(frmtrStr, gray)
+                    local v <const> = floor(gray * toChnlSz + 0.5)
+                    return strfmt(frmtrStr, v)
                 end
             elseif cmIsRgb then
                 writePixel = function(h)
@@ -257,12 +280,14 @@ dlg:button {
                     local sg <const> = (h >> 0x08) & 0xff
                     local sb <const> = (h >> 0x10) & 0xff
                     local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
-                    return strfmt(frmtrStr, gray)
+                    local v <const> = floor(gray * toChnlSz + 0.5)
+                    return strfmt(frmtrStr, v)
                 end
             else
                 -- Default to grayscale color mode.
                 writePixel = function(h)
-                    return strfmt(frmtrStr, h & 0xff)
+                    local gray <const> = h & 0xff
+                    return strfmt(frmtrStr, floor(gray * toChnlSz + 0.5))
                 end
             end
         else
