@@ -154,7 +154,6 @@ dlg:button {
         local spriteSpec <const> = activeSprite.spec
         local wSprite <const> = spriteSpec.width
         local hSprite <const> = spriteSpec.height
-        local alphaIndex <const> = spriteSpec.transparentColor
         local colorMode <const> = spriteSpec.colorMode
 
         -- Process scale.
@@ -170,6 +169,7 @@ dlg:button {
         local useResize <const> = wScale ~= 1 or hScale ~= 1
         local wSpriteScld <const> = wSprite * wScale
         local hSpriteScld <const> = hSprite * hScale
+        local rowRect <const> = Rectangle(0, 0, wSpriteScld, 1)
 
         -- Get frames.
         local frIdcs <const> = Utilities.flatArr2(AseUtilities.getFrames(
@@ -195,26 +195,38 @@ dlg:button {
         local writePixel = nil
 
         -- TODO: Customizable channel depth for ppm and pgm?
+        local channelSize <const> = 255
+        local frmtrStr = "%03d"
+        if channelSize < 10 then
+            frmtrStr = "%01d"
+        elseif channelSize < 100 then
+            frmtrStr = "%02d"
+        end
+
         if extIsPpm then
             -- File extension supports RGB.
             headerStr = "P3"
-            channelSzStr = "255"
+            channelSzStr = strfmt("%d", channelSize)
+
+            local rgbFrmtrStr <const> = strfmt(
+                "%s %s %s",
+                frmtrStr, frmtrStr, frmtrStr)
 
             if cmIsIdx then
                 writePixel = function(h, p)
-                    local c = p:getColor(h)
-                    return strfmt("%03d %03d %03d", c.red, c.green, c.blue)
+                    local c <const> = p:getColor(h)
+                    return strfmt(rgbFrmtrStr, c.red, c.green, c.blue)
                 end
             elseif cmIsGry then
                 writePixel = function(h)
                     local gray <const> = h & 0xff
-                    return strfmt("%03d %03d %03d", gray, gray, gray)
+                    return strfmt(rgbFrmtrStr, gray, gray, gray)
                 end
             else
                 -- Default to RGB color mode.
                 writePixel = function(h)
                     return strfmt(
-                        "%03d %03d %03d",
+                        rgbFrmtrStr,
                         h & 0xff,
                         (h >> 0x08) & 0xff,
                         (h >> 0x10) & 0xff)
@@ -223,17 +235,21 @@ dlg:button {
         elseif extIsPgm then
             -- File extension supports grayscale.
             -- Use Aseprite's definition of relative luma.
+            -- From Wikipedia: "Conventionally PGM stores values in linear
+            -- color space, but depending on the application, it can often use
+            -- either sRGB or a simplified gamma representation."
+
             headerStr = "P2"
-            channelSzStr = "255"
+            channelSzStr = strfmt("%d", channelSize)
 
             if cmIsIdx then
                 writePixel = function(h, p)
-                    local c = p:getColor(h)
+                    local c <const> = p:getColor(h)
                     local sr <const> = c.red
                     local sg <const> = c.green
                     local sb <const> = c.blue
                     local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
-                    return strfmt("%03d", gray)
+                    return strfmt(frmtrStr, gray)
                 end
             elseif cmIsRgb then
                 writePixel = function(h)
@@ -241,16 +257,18 @@ dlg:button {
                     local sg <const> = (h >> 0x08) & 0xff
                     local sb <const> = (h >> 0x10) & 0xff
                     local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
-                    return strfmt("%03d", gray)
+                    return strfmt(frmtrStr, gray)
                 end
             else
                 -- Default to grayscale color mode.
                 writePixel = function(h)
-                    return strfmt("%03d", h & 0xff)
+                    return strfmt(frmtrStr, h & 0xff)
                 end
             end
         else
             -- Default to extIsPbm (1 or 0).
+            -- The channelSzStr cannot be nil. As an empty string it causes
+            -- an extra blank line which could throw a parser off.
             headerStr = "P1"
             channelSzStr = ""
 
@@ -271,7 +289,7 @@ dlg:button {
                 end
             else
                 writePixel = function(h, p)
-                    local c = p:getColor(h)
+                    local c <const> = p:getColor(h)
                     local sr <const> = c.red
                     local sg <const> = c.green
                     local sb <const> = c.blue
@@ -291,22 +309,41 @@ dlg:button {
 
             local trgImage = Image(spriteSpec)
             trgImage:drawSprite(activeSprite, frObj)
+            local trgPxItr <const> = trgImage:pixels()
+
+            ---@type table<integer, string>
+            local hexToStr <const> = {}
+            for pixel in trgPxItr do
+                local hex <const> = pixel()
+                if not hexToStr[hex] then
+                    hexToStr[hex] = writePixel(hex, palette)
+                end
+            end
 
             if useResize then
-                local resized <const> = resizeImage(
+                trgImage = resizeImage(
                     trgImage, wSpriteScld, hSpriteScld)
-                trgImage = resized
             end
 
             ---@type string[]
-            local pixelStrs <const> = {}
-            local trgPxItr <const> = trgImage:pixels()
-            for pixel in trgPxItr do
-                local pixelStr <const> = writePixel(pixel(), palette)
-                pixelStrs[#pixelStrs + 1] = pixelStr
+            local rowStrs <const> = {}
+            local j = 0
+            while j < hSpriteScld do
+                ---@type string[]
+                local colStrs <const> = {}
+                rowRect.y = j
+                local rowItr <const> = trgImage:pixels(rowRect)
+                for rowPixel in rowItr do
+                    colStrs[#colStrs + 1] = hexToStr[rowPixel()]
+                end
+
+                j = j + 1
+                rowStrs[j] = tconcat(colStrs, " ")
             end
 
             -- Exports ignore frame UI offset and begin at zero.
+            -- TODO: Ignore frame number if there is only one
+            -- (change formatter string)?
             local frFilepath <const> = strfmt(
                 "%s_%03d.%s",
                 filePrefix, frIdx - 1, fileExt)
@@ -316,27 +353,17 @@ dlg:button {
                     headerStr,
                     sizeStr,
                     channelSzStr,
-                    tconcat(pixelStrs, " ")
+                    tconcat(rowStrs, "\n")
                 }, "\n")
                 file:write(netString)
                 file:close()
             end
         end
 
-        -- if activeSprite.backgroundLayer then
         app.alert {
             title = "Success",
             text = "File(s) exported."
         }
-        -- else
-        -- app.alert {
-        --     title = "Warning",
-        --     text = {
-        --         "Background layer not found.",
-        --         "Transparency data could be lost."
-        --     }
-        -- }
-        -- end
     end
 }
 
