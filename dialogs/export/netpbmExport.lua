@@ -1,16 +1,18 @@
 dofile("../../support/aseutilities.lua")
 
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
+local formatOptions <const> = { "ASCII", "BINARY" }
 
 local defaults <const> = {
     -- https://github.com/aseprite/aseprite/issues/2834
-    -- https://www.wikiwand.com/en/Netpbm#PPM_example
+    -- https://www.wikiwand.com/en/Netpbm
     frameTarget = "ACTIVE",
     rangeStr = "",
     strExample = "4,6:9,13",
     scale = 1,
     usePixelAspect = true,
     channelSize = 255,
+    format = "ASCII",
 }
 
 local dlg <const> = Dialog { title = "Export Netpbm" }
@@ -84,6 +86,15 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "format",
+    label = "Format:",
+    option = defaults.format,
+    options = formatOptions
+}
+
+dlg:newrow { always = false }
+
 dlg:file {
     id = "filename",
     label = "File:",
@@ -127,6 +138,8 @@ dlg:button {
         local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
         local channelSize <const> = args.channelSize
             or defaults.channelSize --[[@as integer]]
+        local format <const> = args.format
+            or defaults.format --[[@as string]]
 
         local fileExt <const> = app.fs.fileExtension(filename)
         local fileExtLower <const> = string.lower(fileExt)
@@ -192,11 +205,21 @@ dlg:button {
         local palettes <const> = activeSprite.palettes
 
         -- Cache global methods to local.
+        local floor <const> = math.floor
+        local ceil <const> = math.ceil
+        local strfmt <const> = string.format
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+        local tconcat <const> = table.concat
+        local tinsert <const> = table.insert
         local resizeImage <const> = AseUtilities.resizeImageNearest
         local getPalette <const> = AseUtilities.getPalette
-        local strfmt <const> = string.format
-        local tconcat <const> = table.concat
-        local floor <const> = math.floor
+
+        -- Use Aseprite's definition of relative luma.
+        ---@type fun(r: integer, g: integer, b: integer): integer
+        local lum <const> = function(r, g, b)
+            return (r * 2126 + g * 7152 + b * 722) // 10000
+        end
 
         -- Handle color mode.
         local cmIsRgb <const> = colorMode == ColorMode.RGB
@@ -208,86 +231,158 @@ dlg:button {
         local channelSzStr = ""
         local writePixel = nil
 
-        local toChnlSz <const> = channelSize / 255.0
-        local frmtrStr = "%03d"
-        if channelSize < 10 then
-            frmtrStr = "%01d"
-        elseif channelSize < 100 then
-            frmtrStr = "%02d"
+        -- Handle ASCII vs. binary format.
+        local fmtIsBinary <const> = format == "BINARY"
+        local fmtIsAscii <const> = format == "ASCII"
+        local cSzVerif <const> = math.min(math.max(channelSize, 1), 255)
+        local writerType = "w"
+        local chunkSep <const> = "\n"
+        local colSep = " "
+        local rowSep = "\n"
+        local isBinPbm = false
+        if fmtIsBinary then
+            writerType = "wb"
+            colSep = ""
+            rowSep = ""
+        end
+
+        -- Change number of digits in print display based on channel size
+        -- for .pgm and .ppm.
+        local toChnlSz <const> = cSzVerif / 255.0
+        local frmtrStr = "%d"
+        if fmtIsAscii then
+            if cSzVerif < 10 then
+                frmtrStr = "%01d"
+            elseif cSzVerif < 100 then
+                frmtrStr = "%02d"
+            elseif cSzVerif < 1000 then
+                frmtrStr = "%03d"
+            end
         end
 
         if extIsPpm then
             -- File extension supports RGB.
             headerStr = "P3"
-            channelSzStr = strfmt("%d", channelSize)
-
-            local rgbFrmtrStr <const> = strfmt(
+            channelSzStr = strfmt("%d", cSzVerif)
+            local rgbFrmtrStr = strfmt(
                 "%s %s %s",
                 frmtrStr, frmtrStr, frmtrStr)
+            if fmtIsBinary then
+                headerStr = "P6"
+                rgbFrmtrStr = "%s%s%s"
+            end
 
             if cmIsIdx then
-                writePixel = function(h, p)
-                    local c <const> = p:getColor(h)
-                    local sr <const> = c.red
-                    local sg <const> = c.green
-                    local sb <const> = c.blue
-                    return strfmt(rgbFrmtrStr,
-                        floor(sr * toChnlSz + 0.5),
-                        floor(sg * toChnlSz + 0.5),
-                        floor(sb * toChnlSz + 0.5))
+                if fmtIsBinary then
+                    writePixel = function(h, p)
+                        local c <const> = p:getColor(h)
+                        return strfmt(rgbFrmtrStr,
+                            strpack("B", floor(c.red * toChnlSz + 0.5)),
+                            strpack("B", floor(c.green * toChnlSz + 0.5)),
+                            strpack("B", floor(c.blue * toChnlSz + 0.5)))
+                    end
+                else
+                    writePixel = function(h, p)
+                        local c <const> = p:getColor(h)
+                        return strfmt(rgbFrmtrStr,
+                            floor(c.red * toChnlSz + 0.5),
+                            floor(c.green * toChnlSz + 0.5),
+                            floor(c.blue * toChnlSz + 0.5))
+                    end
                 end
             elseif cmIsGry then
-                writePixel = function(h)
-                    local gray <const> = h & 0xff
-                    local v <const> = floor(gray * toChnlSz + 0.5)
-                    return strfmt(rgbFrmtrStr, v, v, v)
+                if fmtIsBinary then
+                    writePixel = function(h)
+                        local vc <const> = strpack("B", floor(
+                            (h & 0xff) * toChnlSz + 0.5))
+                        return strfmt(rgbFrmtrStr, vc, vc, vc)
+                    end
+                else
+                    writePixel = function(h)
+                        local v <const> = floor((h & 0xff) * toChnlSz + 0.5)
+                        return strfmt(rgbFrmtrStr, v, v, v)
+                    end
                 end
             else
                 -- Default to RGB color mode.
-                writePixel = function(h)
-                    local sr <const> = h & 0xff
-                    local sg <const> = (h >> 0x08) & 0xff
-                    local sb <const> = (h >> 0x10) & 0xff
-                    return strfmt(rgbFrmtrStr,
-                        floor(sr * toChnlSz + 0.5),
-                        floor(sg * toChnlSz + 0.5),
-                        floor(sb * toChnlSz + 0.5))
+                if fmtIsBinary then
+                    writePixel = function(h)
+                        local r255 <const> = h & 0xff
+                        local g255 <const> = (h >> 0x08) & 0xff
+                        local b255 <const> = (h >> 0x10) & 0xff
+
+                        local rCmp <const> = floor(r255 * toChnlSz + 0.5)
+                        local gCmp <const> = floor(g255 * toChnlSz + 0.5)
+                        local bCmp <const> = floor(b255 * toChnlSz + 0.5)
+
+                        local rChar <const> = strpack("B", rCmp)
+                        local gChar <const> = strpack("B", gCmp)
+                        local bChar <const> = strpack("B", bCmp)
+
+                        return strfmt(rgbFrmtrStr, rChar, gChar, bChar)
+                    end
+                else
+                    writePixel = function(h)
+                        return strfmt(rgbFrmtrStr,
+                            floor((h & 0xff) * toChnlSz + 0.5),
+                            floor((h >> 0x08 & 0xff) * toChnlSz + 0.5),
+                            floor((h >> 0x10 & 0xff) * toChnlSz + 0.5))
+                    end
                 end
             end
         elseif extIsPgm then
             -- File extension supports grayscale.
-            -- Use Aseprite's definition of relative luma.
-            -- From Wikipedia: "Conventionally PGM stores values in linear
-            -- color space, but depending on the application, it can often use
-            -- either sRGB or a simplified gamma representation."
+            -- From Wikipedia:
+            -- "Conventionally PGM stores values in linear color space, but
+            -- depending on the application, it can often use either sRGB or a
+            -- simplified gamma representation."
 
             headerStr = "P2"
-            channelSzStr = strfmt("%d", channelSize)
+            channelSzStr = strfmt("%d", cSzVerif)
+            if fmtIsBinary then
+                headerStr = "P5"
+            end
 
             if cmIsIdx then
-                writePixel = function(h, p)
-                    local c <const> = p:getColor(h)
-                    local sr <const> = c.red
-                    local sg <const> = c.green
-                    local sb <const> = c.blue
-                    local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
-                    local v <const> = floor(gray * toChnlSz + 0.5)
-                    return strfmt(frmtrStr, v)
+                if fmtIsBinary then
+                    writePixel = function(h, p)
+                        local c <const> = p:getColor(h)
+                        return strpack("B", floor(lum(
+                            c.red, c.green, c.blue) * toChnlSz + 0.5))
+                    end
+                else
+                    writePixel = function(h, p)
+                        local c <const> = p:getColor(h)
+                        return strfmt(frmtrStr, floor(lum(
+                            c.red, c.green, c.blue) * toChnlSz + 0.5))
+                    end
                 end
             elseif cmIsRgb then
-                writePixel = function(h)
-                    local sr <const> = h & 0xff
-                    local sg <const> = (h >> 0x08) & 0xff
-                    local sb <const> = (h >> 0x10) & 0xff
-                    local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
-                    local v <const> = floor(gray * toChnlSz + 0.5)
-                    return strfmt(frmtrStr, v)
+                if fmtIsBinary then
+                    writePixel = function(h)
+                        return strpack("B", floor(lum(
+                            h & 0xff,
+                            h >> 0x08 & 0xff,
+                            h >> 0x10 & 0xff) * toChnlSz + 0.5))
+                    end
+                else
+                    writePixel = function(h)
+                        return strfmt(frmtrStr, floor(lum(
+                            h & 0xff,
+                            h >> 0x08 & 0xff,
+                            h >> 0x10 & 0xff) * toChnlSz + 0.5))
+                    end
                 end
             else
                 -- Default to grayscale color mode.
-                writePixel = function(h)
-                    local gray <const> = h & 0xff
-                    return strfmt(frmtrStr, floor(gray * toChnlSz + 0.5))
+                if fmtIsBinary then
+                    writePixel = function(h)
+                        return strpack("B", floor((h & 0xff) * toChnlSz + 0.5))
+                    end
+                else
+                    writePixel = function(h)
+                        return strfmt(frmtrStr, floor((h & 0xff) * toChnlSz + 0.5))
+                    end
                 end
             end
         else
@@ -296,31 +391,31 @@ dlg:button {
             -- an extra blank line which could throw a parser off.
             headerStr = "P1"
             channelSzStr = ""
+            local offTok <const> = "0"
+            local onTok <const> = "1"
+            if fmtIsBinary then
+                headerStr = "P4"
+                isBinPbm = true
+            end
 
             if cmIsGry then
                 writePixel = function(h)
-                    local gray <const> = h & 0xff
-                    if gray < 128 then return "1" end
-                    return "0"
+                    if (h & 0xff) < 128 then return offTok end
+                    return onTok
                 end
             elseif cmIsRgb then
                 writePixel = function(h)
-                    local sr <const> = h & 0xff
-                    local sg <const> = (h >> 0x08) & 0xff
-                    local sb <const> = (h >> 0x10) & 0xff
-                    local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
-                    if gray < 128 then return "1" end
-                    return "0"
+                    if lum(h & 0xff, h >> 0x08 & 0xff,
+                            h >> 0x10 & 0xff) < 128 then
+                        return offTok
+                    end
+                    return onTok
                 end
             else
                 writePixel = function(h, p)
                     local c <const> = p:getColor(h)
-                    local sr <const> = c.red
-                    local sg <const> = c.green
-                    local sb <const> = c.blue
-                    local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
-                    if gray < 128 then return "1" end
-                    return "0"
+                    if lum(c.red, c.green, c.blue) < 128 then return offTok end
+                    return onTok
                 end
             end
         end
@@ -363,23 +458,65 @@ dlg:button {
                 end
 
                 j = j + 1
-                rowStrs[j] = tconcat(colStrs, " ")
+                rowStrs[j] = tconcat(colStrs, colSep)
             end
 
-            -- Exports ignore frame UI offset and begin at zero.
-            -- TODO: Ignore frame number if there is only one
-            -- (change formatter string)?
-            local frFilepath <const> = strfmt(
-                "%s_%03d.%s",
-                filePrefix, frIdx - 1, fileExt)
-            local file <const>, err <const> = io.open(frFilepath, "w")
+            local frFilepath = filename
+            if lenFrIdcs > 1 then
+                -- Exports ignore frame UI offset and begin at zero.
+                frFilepath = strfmt(
+                    "%s_%03d.%s",
+                    filePrefix, frIdx - 1, fileExt)
+            end
+
+            local file <const>, err <const> = io.open(frFilepath, writerType)
             if file then
-                local netString <const> = tconcat({
+                local imgDataStr = ""
+                if isBinPbm then
+                    -- From Wikipedia:
+                    -- "The P4 binary format of the same image represents each
+                    -- pixel with a single bit, packing 8 pixels per byte, with
+                    -- the first pixel as the most significant bit. Extra bits
+                    -- are added at the end of each row to fill a whole byte."
+
+                    ---@type string[]
+                    local charStrs <const> = {}
+
+                    local lenRows = #rowStrs
+                    local k = 0
+                    while k < lenRows do
+                        k = k + 1
+                        local rowStr <const> = rowStrs[k]
+
+                        local lenRowStr <const> = #rowStr
+                        local lenRowChars <const> = ceil(lenRowStr / 8)
+
+                        local m = 0
+                        while m < lenRowChars do
+                            local idxOrig <const> = 1 + m * 8
+                            local idxDest <const> = idxOrig + 7
+                            local strSeg <const> = strsub(rowStr, idxOrig, idxDest)
+                            local numSeg <const> = tonumber(strSeg, 2)
+                            charStrs[#charStrs + 1] = strpack("B", numSeg)
+                            m = m + 1
+                        end
+                    end
+
+                    imgDataStr = tconcat(charStrs)
+                else
+                    imgDataStr = tconcat(rowStrs, rowSep)
+                end
+
+                ---@type string[]
+                local chunks <const> = {
                     headerStr,
                     sizeStr,
-                    channelSzStr,
-                    tconcat(rowStrs, "\n")
-                }, "\n")
+                    imgDataStr
+                }
+                if not extIsPbm then
+                    tinsert(chunks, 3, channelSzStr)
+                end
+                local netString <const> = tconcat(chunks, chunkSep)
                 file:write(netString)
                 file:close()
             end
