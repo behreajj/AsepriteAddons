@@ -8,10 +8,145 @@ local paletteTypes <const> = {
 }
 
 ---@param filePath string
----@return Sprite
-local function loadSprite(filePath)
-    -- TODO: Support pbm, pgm, ppm.
+---@return Sprite|nil
+local function loadPpm(filePath)
+    local file <const>, err <const> = io.open(filePath, "r")
+    if file then
+        -- Cache functions to local when used in loop.
+        local strlower <const> = string.lower
+        local strsub <const> = string.sub
+        local strgmatch <const> = string.gmatch
+        local floor <const> = math.floor
 
+        local p3HeaderFound = 0
+        local channelMaxFound = 0
+        local whFound = 0
+        ---@type string[]
+        local comments <const> = {}
+
+        local channelMax = 255.0
+        local fromChnlSz = 1.0
+        local w = 1
+        local h = 1
+        ---@type number[]
+        local rgbs = {}
+
+        local lineCount = 0
+        local linesItr <const> = file:lines()
+
+        for line in linesItr do
+            lineCount = lineCount + 1
+            local lc <const> = strlower(line)
+            if strsub(lc, 1, 1) == '#' then
+                comments[#comments + 1] = strsub(line, 1)
+            elseif #line > 0 then
+                if lc == "p3" then
+                    p3HeaderFound = lineCount
+                elseif channelMaxFound > 0 then
+                    ---@type string[]
+                    local tokens <const> = {}
+                    local lenTokens = 0
+                    for token in strgmatch(line, "%S+") do
+                        lenTokens = lenTokens + 1
+                        tokens[lenTokens] = token
+                    end
+
+                    local j = 0
+                    while j < lenTokens do
+                        j = j + 1
+                        local num = 0
+                        local numPrs <const> = tonumber(tokens[j], 10)
+                        if numPrs then num = numPrs end
+                        rgbs[#rgbs + 1] = num
+                    end
+                elseif whFound > 0 then
+                    channelMaxFound = lineCount
+                    channelMax = tonumber(lc, 10)
+                    if channelMax and channelMax ~= 0.0 then
+                        fromChnlSz = 255.0 / channelMax
+                    end
+                elseif p3HeaderFound > 0 then
+                    whFound = lineCount
+
+                    ---@type string[]
+                    local whTokens <const> = {}
+                    local lenWhTokens = 0
+                    for token in strgmatch(line, "%S+") do
+                        lenWhTokens = lenWhTokens + 1
+                        whTokens[lenWhTokens] = token
+                    end
+
+                    if lenWhTokens > 1 then
+                        w = floor(tonumber(whTokens[1], 10))
+                        h = floor(tonumber(whTokens[2], 10))
+                    elseif lenWhTokens > 0 then
+                        w = floor(tonumber(whTokens[1], 10))
+                        h = w
+                    end
+                end
+            end
+        end
+        file:close()
+
+        local spec <const> = AseUtilities.createSpec(w, h, ColorMode.RGB)
+        local sprite <const> = Sprite(spec)
+        local image <const> = Image(spec)
+
+        ---@type table<integer, Color>
+        local uniques <const> = {}
+        local lenUniques = 0
+
+        local i = 0
+        local pxItr = image:pixels()
+        for pixel in pxItr do
+            local k <const> = i * 3
+
+            local r <const> = rgbs[1 + k]
+            local g <const> = rgbs[2 + k]
+            local b <const> = rgbs[3 + k]
+
+            local r255 <const> = floor(r * fromChnlSz + 0.5)
+            local g255 <const> = floor(g * fromChnlSz + 0.5)
+            local b255 <const> = floor(b * fromChnlSz + 0.5)
+
+            local hex <const> = 0xff000000 | b255 << 0x10 | g255 << 0x08 | r255
+            if not uniques[hex] then
+                lenUniques = lenUniques + 1
+                uniques[hex] = Color { r = r255, g = g255, b = b255, a = 255 }
+            end
+            pixel(hex)
+            i = i + 1
+        end
+
+        app.transaction("Set Palette", function()
+            local palette <const> = sprite.palettes[1]
+            palette:resize(lenUniques + 1)
+            palette:setColor(0, Color { r = 0, g = 0, b = 0, a = 0 })
+            local j = 1
+            for _, ase in pairs(uniques) do
+                palette:setColor(j, ase)
+                j = j + 1
+            end
+        end)
+
+        app.transaction("Set Image", function()
+            local layer <const> = sprite.layers[1]
+            local cel <const> = layer.cels[1]
+            cel.image = image
+        end)
+
+        return sprite
+    else
+        if err ~= nil then
+            app.alert { title = "Error", text = err }
+        end
+        return nil
+    end
+end
+
+---@param filePath string
+---@return Sprite|nil
+local function loadSprite(filePath)
     -- GPL and PAL file formats cannot be loaded as sprites.
     local fileExt <const> = app.fs.fileExtension(filePath)
     local fileExtLower <const> = string.lower(fileExt)
@@ -37,10 +172,13 @@ local function loadSprite(filePath)
             end
         end
 
-        -- This creates a transaction in undo history.
-        local layer <const> = sprite.layers[1]
-        local cel <const> = layer.cels[1]
-        cel.image = image
+        app.transaction("Set Image", function()
+            local layer <const> = sprite.layers[1]
+            local cel <const> = layer.cels[1]
+            cel.image = image
+        end)
+    elseif fileExtLower == "ppm" then
+        sprite = loadPpm(filePath)
     else
         sprite = Sprite { fromFile = filePath }
         if fileExtLower ~= "ase" and fileExtLower ~= "aseprite" then
