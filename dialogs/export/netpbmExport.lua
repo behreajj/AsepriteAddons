@@ -98,7 +98,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "filename",
     label = "File:",
-    filetypes = AseUtilities.FILE_FORMATS,
+    filetypes = { "pbm", "pgm", "ppm" },
     save = true,
     focus = true
 }
