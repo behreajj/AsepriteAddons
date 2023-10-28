@@ -481,13 +481,11 @@ dlg:button {
 
                     ---@type string[]
                     local charStrs <const> = {}
-
-                    local lenRows = #rowStrs
+                    local lenRows <const> = #rowStrs
                     local k = 0
                     while k < lenRows do
                         k = k + 1
                         local rowStr <const> = rowStrs[k]
-
                         local lenRowStr <const> = #rowStr
                         local lenRowChars <const> = ceil(lenRowStr / 8)
 
@@ -509,16 +507,11 @@ dlg:button {
                 end
 
                 ---@type string[]
-                local chunks <const> = {
-                    headerStr,
-                    sizeStr,
-                    imgDataStr
-                }
+                local chunks <const> = { headerStr, sizeStr, imgDataStr }
                 if not extIsPbm then
                     tinsert(chunks, 3, channelSzStr)
                 end
-                local netString <const> = tconcat(chunks, chunkSep)
-                file:write(netString)
+                file:write(tconcat(chunks, chunkSep))
                 file:close()
             end
         end

@@ -9,63 +9,62 @@ local paletteTypes <const> = {
 
 ---@param filePath string
 ---@return Sprite|nil
-local function loadPpm(filePath)
+local function loadNetPbm(filePath)
     local file <const>, err <const> = io.open(filePath, "r")
     if file then
         -- Cache functions to local when used in loop.
+        local floor <const> = math.floor
+        local strgmatch <const> = string.gmatch
         local strlower <const> = string.lower
         local strsub <const> = string.sub
-        local strgmatch <const> = string.gmatch
-        local floor <const> = math.floor
+        local strunpack <const> = string.unpack
 
-        local p3HeaderFound = 0
         local channelMaxFound = 0
         local whFound = 0
         ---@type string[]
         local comments <const> = {}
 
+        local channels3 = false
+        local isBinary = false
+        local isp4 = false
+        local invert = false
+        local includesChnlSz = false
         local channelMax = 255.0
-        local fromChnlSz = 1.0
+        local fromChnlSz = 255.0
         local w = 1
         local h = 1
         ---@type number[]
-        local rgbs = {}
+        local data = {}
 
         local lineCount = 0
         local linesItr <const> = file:lines()
 
         for line in linesItr do
             lineCount = lineCount + 1
-            local lc <const> = strlower(line)
-            if strsub(lc, 1, 1) == '#' then
-                comments[#comments + 1] = strsub(line, 1)
-            elseif #line > 0 then
-                if lc == "p3" then
-                    p3HeaderFound = lineCount
-                elseif channelMaxFound > 0 then
-                    ---@type string[]
-                    local tokens <const> = {}
-                    local lenTokens = 0
-                    for token in strgmatch(line, "%S+") do
-                        lenTokens = lenTokens + 1
-                        tokens[lenTokens] = token
-                    end
-
-                    local j = 0
-                    while j < lenTokens do
-                        j = j + 1
-                        local num = 0
-                        local numPrs <const> = tonumber(tokens[j], 10)
-                        if numPrs then num = numPrs end
-                        rgbs[#rgbs + 1] = num
-                    end
-                elseif whFound > 0 then
-                    channelMaxFound = lineCount
-                    channelMax = tonumber(lc, 10)
-                    if channelMax and channelMax ~= 0.0 then
-                        fromChnlSz = 255.0 / channelMax
-                    end
-                elseif p3HeaderFound > 0 then
+            local lenLine <const> = #line
+            if lenLine > 0 then
+                local lc <const> = strlower(line)
+                if strsub(line, 1, 1) == '#' then
+                    comments[#comments + 1] = strsub(line, 1)
+                elseif lc == "p1" then
+                    invert = true
+                elseif lc == "p2" then
+                    includesChnlSz = true
+                elseif lc == "p3" then
+                    includesChnlSz = true
+                    channels3 = true
+                elseif lc == "p4" then
+                    isBinary = true
+                    invert = true
+                    isp4 = true
+                elseif lc == "p5" then
+                    isBinary = true
+                    includesChnlSz = true
+                elseif lc == "p6" then
+                    isBinary = true
+                    includesChnlSz = true
+                    channels3 = true
+                elseif whFound <= 0 then
                     whFound = lineCount
 
                     ---@type string[]
@@ -76,12 +75,51 @@ local function loadPpm(filePath)
                         whTokens[lenWhTokens] = token
                     end
 
+                    if lenWhTokens > 0 then
+                        local wPrs <const> = tonumber(whTokens[1], 10)
+                        if wPrs then w = floor(wPrs) end
+                    end
+
                     if lenWhTokens > 1 then
-                        w = floor(tonumber(whTokens[1], 10))
-                        h = floor(tonumber(whTokens[2], 10))
-                    elseif lenWhTokens > 0 then
-                        w = floor(tonumber(whTokens[1], 10))
-                        h = w
+                        local hPrs <const> = tonumber(whTokens[2], 10)
+                        if hPrs then h = floor(hPrs) end
+                    end
+                elseif includesChnlSz and channelMaxFound <= 0 then
+                    channelMaxFound = lineCount
+                    local channelMaxPrs <const> = tonumber(lc, 10)
+                    if channelMaxPrs then
+                        channelMax = floor(channelMaxPrs)
+                        if channelMax ~= 0.0 then
+                            fromChnlSz = 255.0 / channelMax
+                        end
+                    end
+                else
+                    -- Parse line as image data.
+                    if isBinary then
+                        if isp4 then
+                            for char in strgmatch(line, ".") do
+                                local num <const> = strunpack("B", char)
+                                local i = -1
+                                while i < 7 do
+                                    i = i + 1
+                                    local shift <const> = 7 - i
+                                    local bit = (num >> shift) & 1
+                                    data[#data + 1] = bit
+                                end
+                            end
+                        else
+                            for char in strgmatch(line, ".") do
+                                local num <const> = strunpack("B", char)
+                                data[#data + 1] = num
+                            end
+                        end
+                    else
+                        for token in strgmatch(line, "%S+") do
+                            local numPrs <const> = tonumber(token, 10)
+                            local num = 0
+                            if numPrs then num = numPrs end
+                            data[#data + 1] = num
+                        end
                     end
                 end
             end
@@ -89,51 +127,38 @@ local function loadPpm(filePath)
         file:close()
 
         local spec <const> = AseUtilities.createSpec(w, h, ColorMode.RGB)
-        local sprite <const> = Sprite(spec)
+        local sprite <const> = AseUtilities.createSprite(spec, "Sprite")
         local image <const> = Image(spec)
 
-        ---@type table<integer, Color>
-        local uniques <const> = {}
-        local lenUniques = 0
-
-        local i = 0
-        local pxItr = image:pixels()
-        for pixel in pxItr do
-            local k <const> = i * 3
-
-            local r <const> = rgbs[1 + k]
-            local g <const> = rgbs[2 + k]
-            local b <const> = rgbs[3 + k]
-
-            local r255 <const> = floor(r * fromChnlSz + 0.5)
-            local g255 <const> = floor(g * fromChnlSz + 0.5)
-            local b255 <const> = floor(b * fromChnlSz + 0.5)
-
-            local hex <const> = 0xff000000 | b255 << 0x10 | g255 << 0x08 | r255
-            if not uniques[hex] then
-                lenUniques = lenUniques + 1
-                uniques[hex] = Color { r = r255, g = g255, b = b255, a = 255 }
+        if channels3 then
+            local i = 0
+            local pxItr = image:pixels()
+            for pixel in pxItr do
+                local k <const> = i * 3
+                local r <const> = floor(data[1 + k] * fromChnlSz + 0.5)
+                local g <const> = floor(data[2 + k] * fromChnlSz + 0.5)
+                local b <const> = floor(data[3 + k] * fromChnlSz + 0.5)
+                local hex <const> = 0xff000000 | b << 0x10 | g << 0x08 | r
+                pixel(hex)
+                i = i + 1
             end
-            pixel(hex)
-            i = i + 1
+        else
+            local i = 0
+            local pxItr = image:pixels()
+            for pixel in pxItr do
+                i = i + 1
+                local v = floor(data[i] * fromChnlSz + 0.5)
+                if invert then v = 255 ~ v end
+                local hex <const> = 0xff000000 | v << 0x10 | v << 0x08 | v
+                pixel(hex)
+            end
         end
 
-        app.transaction("Set Palette", function()
-            local palette <const> = sprite.palettes[1]
-            palette:resize(lenUniques + 1)
-            palette:setColor(0, Color { r = 0, g = 0, b = 0, a = 0 })
-            local j = 1
-            for _, ase in pairs(uniques) do
-                palette:setColor(j, ase)
-                j = j + 1
-            end
+        app.transaction("Set Image", function()
+            sprite.cels[1].image = image
         end)
 
-        app.transaction("Set Image", function()
-            local layer <const> = sprite.layers[1]
-            local cel <const> = layer.cels[1]
-            cel.image = image
-        end)
+        app.command.ColorQuantization { ui = false, maxColors = 255 }
 
         return sprite
     else
@@ -173,12 +198,12 @@ local function loadSprite(filePath)
         end
 
         app.transaction("Set Image", function()
-            local layer <const> = sprite.layers[1]
-            local cel <const> = layer.cels[1]
-            cel.image = image
+            sprite.cels[1].image = image
         end)
-    elseif fileExtLower == "ppm" then
-        sprite = loadPpm(filePath)
+    elseif fileExtLower == "ppm"
+        or fileExtLower == "pgm"
+        or fileExtLower == "pbm" then
+        sprite = loadNetPbm(filePath)
     else
         sprite = Sprite { fromFile = filePath }
         if fileExtLower ~= "ase" and fileExtLower ~= "aseprite" then
