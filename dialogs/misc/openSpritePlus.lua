@@ -10,6 +10,8 @@ local paletteTypes <const> = {
 ---@param filePath string
 ---@return Sprite|nil
 local function loadNetPbm(filePath)
+    -- This would need to know in advance that file is binary so as to read
+    -- "rb" instead of "r".
     local file <const>, err <const> = io.open(filePath, "r")
     if file then
         -- Cache functions to local when used in loop.
@@ -17,24 +19,21 @@ local function loadNetPbm(filePath)
         local strgmatch <const> = string.gmatch
         local strlower <const> = string.lower
         local strsub <const> = string.sub
-        local strunpack <const> = string.unpack
 
         local channelMaxFound = 0
         local whFound = 0
         ---@type string[]
         local comments <const> = {}
 
+        ---@type number[]
+        local data = {}
         local channels3 = false
-        local isBinary = false
-        local isp4 = false
         local invert = false
         local includesChnlSz = false
         local channelMax = 255.0
         local fromChnlSz = 255.0
         local w = 1
         local h = 1
-        ---@type number[]
-        local data = {}
 
         local lineCount = 0
         local linesItr <const> = file:lines()
@@ -51,17 +50,6 @@ local function loadNetPbm(filePath)
                 elseif lc == "p2" then
                     includesChnlSz = true
                 elseif lc == "p3" then
-                    includesChnlSz = true
-                    channels3 = true
-                elseif lc == "p4" then
-                    isBinary = true
-                    invert = true
-                    isp4 = true
-                elseif lc == "p5" then
-                    isBinary = true
-                    includesChnlSz = true
-                elseif lc == "p6" then
-                    isBinary = true
                     includesChnlSz = true
                     channels3 = true
                 elseif whFound <= 0 then
@@ -95,31 +83,11 @@ local function loadNetPbm(filePath)
                     end
                 else
                     -- Parse line as image data.
-                    if isBinary then
-                        if isp4 then
-                            for char in strgmatch(line, ".") do
-                                local num <const> = strunpack("B", char)
-                                local i = -1
-                                while i < 7 do
-                                    i = i + 1
-                                    local shift <const> = 7 - i
-                                    local bit = (num >> shift) & 1
-                                    data[#data + 1] = bit
-                                end
-                            end
-                        else
-                            for char in strgmatch(line, ".") do
-                                local num <const> = strunpack("B", char)
-                                data[#data + 1] = num
-                            end
-                        end
-                    else
-                        for token in strgmatch(line, "%S+") do
-                            local numPrs <const> = tonumber(token, 10)
-                            local num = 0
-                            if numPrs then num = numPrs end
-                            data[#data + 1] = num
-                        end
+                    for token in strgmatch(line, "%S+") do
+                        local numPrs <const> = tonumber(token, 10)
+                        local num = 0
+                        if numPrs then num = numPrs end
+                        data[#data + 1] = num
                     end
                 end
             end
@@ -127,7 +95,8 @@ local function loadNetPbm(filePath)
         file:close()
 
         local spec <const> = AseUtilities.createSpec(w, h, ColorMode.RGB)
-        local sprite <const> = AseUtilities.createSprite(spec, "Sprite")
+        local sprite <const> = AseUtilities.createSprite(spec,
+            app.fs.fileName(filePath))
         local image <const> = Image(spec)
 
         if channels3 then
@@ -184,7 +153,7 @@ local function loadSprite(filePath)
             math.ceil(math.sqrt(math.max(1, lenColors))))
 
         local spec <const> = AseUtilities.createSpec(rtLen, rtLen)
-        sprite = AseUtilities.createSprite(spec, "Palette")
+        sprite = AseUtilities.createSprite(spec, app.fs.fileName(filePath))
         AseUtilities.setPalette(spriteHexes, sprite, 1)
 
         local image <const> = Image(spec)
