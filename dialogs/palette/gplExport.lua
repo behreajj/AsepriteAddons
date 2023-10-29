@@ -67,9 +67,9 @@ dlg:newrow { always = false }
 dlg:file {
     id = "filepath",
     label = "Path:",
-    focus = true,
     filetypes = { "gpl" },
-    save = true
+    save = true,
+    focus = true
 }
 
 dlg:newrow { always = false }

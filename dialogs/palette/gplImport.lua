@@ -11,9 +11,9 @@ local dlg <const> = Dialog { title = "GPL Import" }
 dlg:file {
     id = "filepath",
     label = "Path:",
-    focus = true,
     filetypes = { "gpl", "pal" },
-    open = true
+    open = true,
+    focus = true
 }
 
 dlg:newrow { always = false }
