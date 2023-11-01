@@ -483,7 +483,10 @@ end
 function Utilities.parseRangeStringOverlap(s, frameCount, offset)
     local offVerif <const> = offset or 0
     local fcVerif <const> = frameCount or 2147483647
+
     local strgmatch <const> = string.gmatch
+    local min <const> = math.min
+    local max <const> = math.max
 
     -- Parse string by comma.
     ---@type integer[][]
@@ -513,8 +516,8 @@ function Utilities.parseRangeStringOverlap(s, frameCount, offset)
             local destIdx = edges[lenEdges]
 
             -- Edges of a range should be clamped to valid.
-            origIdx = math.min(math.max(origIdx, 1), fcVerif)
-            destIdx = math.min(math.max(destIdx, 1), fcVerif)
+            origIdx = min(max(origIdx, 1), fcVerif)
+            destIdx = min(max(destIdx, 1), fcVerif)
 
             if destIdx < origIdx then
                 -- print("destIdx < origIdx")
@@ -535,21 +538,19 @@ function Utilities.parseRangeStringOverlap(s, frameCount, offset)
                     -- print(j)
                 end
             else
-                idxInner = idxInner + 1
-                arrInner[idxInner] = destIdx
                 -- print("destIdx == origIdx")
                 -- print(destIdx)
+                idxInner = idxInner + 1
+                arrInner[idxInner] = destIdx
             end
         elseif lenEdges > 0 then
-            -- Filter out unique numbers if invalid,
-            -- don't bother to clamp them.
+            -- Filter out unique numbers if invalid, don't bother clamping.
             local trial <const> = edges[1]
-            if trial >= 1
-                and trial <= fcVerif then
+            if trial >= 1 and trial <= fcVerif then
                 idxInner = idxInner + 1
-                arrInner[idxInner] = edges[1]
+                arrInner[idxInner] = trial
                 -- print("lenEdges > 0")
-                -- print(edges[1])
+                -- print(trial)
             end
         end
 
@@ -671,8 +672,7 @@ end
 ---@param delta number inverse levels
 ---@return number
 function Utilities.quantizeUnsignedInternal(a, levels, delta)
-    return math.max(0.0,
-        (math.ceil(a * levels) - 1.0) * delta)
+    return math.max(0.0, (math.ceil(a * levels) - 1.0) * delta)
 end
 
 ---Reduces a ratio of positive integers to their smallest terms through
@@ -723,8 +723,7 @@ function Utilities.reverseTable(t)
     local i = 1
     while i < n do
         t[i], t[n] = t[n], t[i]
-        -- These should stay as post-increment,
-        -- otherwise a table of len 2 won't flip.
+        -- Post-increment, otherwise a table of len 2 won't flip.
         i = i + 1
         n = n - 1
     end
@@ -903,9 +902,7 @@ function Utilities.uniqueColors(hexes, za)
     local dict <const> = Utilities.hexArrToDict(hexes, za)
     ---@type integer[]
     local uniques <const> = {}
-    for k, v in pairs(dict) do
-        uniques[v] = k
-    end
+    for k, v in pairs(dict) do uniques[v] = k end
     return uniques, dict
 end
 

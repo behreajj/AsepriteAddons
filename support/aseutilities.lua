@@ -322,9 +322,8 @@ function AseUtilities.asePaletteLoad(
         end
     end
 
-    -- Replace colors, e.g., 0x00ff0000, so that all
-    -- are clear black. Since both arrays should have
-    -- the same length, avoid safety of separate loops.
+    -- Replace colors, e.g., 0x00ff0000, so that all are clear black. Since
+    -- both arrays should have the same length, avoid safety of separate loops.
     if correctZeroAlpha then
         local lenHexes <const> = #hexesProfile
         local i = 0
@@ -963,8 +962,7 @@ function AseUtilities.createCels(
 
         -- Frame and layer must objects, not indices.
         i = i + 1
-        cels[i] = sprite:newCel(
-            layerObj, frameObj, valImg, valPos)
+        cels[i] = sprite:newCel(layerObj, frameObj, valImg, valPos)
     end
 
     if guiClr and guiClr ~= 0x0 then
@@ -1342,8 +1340,7 @@ function AseUtilities.filterCels(
             flatSpec.colorSpace = activeSpec.colorSpace
 
             local flatImage <const> = Image(flatSpec)
-            flatImage:drawSprite(
-                sprite, frame, Point(-xSel, -ySel))
+            flatImage:drawSprite(sprite, frame, Point(-xSel, -ySel))
 
             -- Remove pixels within selection bounds but not in selection.
             local flatPxItr <const> = flatImage:pixels()
@@ -1378,8 +1375,7 @@ function AseUtilities.filterCels(
                 includeHidden,
                 includeTiles,
                 includeBkg)
-            return AseUtilities.getUniqueCelsFromLeaves(
-                leaves, { frame })
+            return AseUtilities.getUniqueCelsFromLeaves(leaves, { frame })
         end
         return {}
     end

@@ -278,7 +278,7 @@ local function layerToSvgStr(
                     local alphaStr = ""
                     if lyrAlpha < 0xff or celAlpha < 0xff then
                         local cmpAlpha <const> = (lyrAlpha / 255.0)
-                            * (celAlpha * 255.0)
+                            * (celAlpha / 255.0)
                         alphaStr = string.format(
                             " opacity=\"%.6f\"",
                             cmpAlpha)

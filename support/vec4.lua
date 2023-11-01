@@ -322,18 +322,12 @@ end
 ---@param v Vec4 vector
 ---@return integer
 function Vec4.hashCode(v)
-    local xBits <const> = string.unpack("i4",
-        string.pack("f", v.x))
-    local yBits <const> = string.unpack("i4",
-        string.pack("f", v.y))
-    local zBits <const> = string.unpack("i4",
-        string.pack("f", v.z))
-    local wBits <const> = string.unpack("i4",
-        string.pack("f", v.w))
+    local xBits <const> = string.unpack("i4", string.pack("f", v.x))
+    local yBits <const> = string.unpack("i4", string.pack("f", v.y))
+    local zBits <const> = string.unpack("i4", string.pack("f", v.z))
+    local wBits <const> = string.unpack("i4", string.pack("f", v.w))
 
-    return (((84696351 ~ xBits)
-        * 16777619 ~ yBits)
-        * 16777619 ~ zBits)
+    return (((84696351 ~ xBits) * 16777619 ~ yBits) * 16777619 ~ zBits)
         * 16777619 ~ wBits
 end
 

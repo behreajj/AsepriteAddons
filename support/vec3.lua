@@ -505,16 +505,11 @@ end
 ---@param v Vec3 vector
 ---@return integer
 function Vec3.hashCode(v)
-    local xBits <const> = string.unpack("i4",
-        string.pack("f", v.x))
-    local yBits <const> = string.unpack("i4",
-        string.pack("f", v.y))
-    local zBits <const> = string.unpack("i4",
-        string.pack("f", v.z))
+    local xBits <const> = string.unpack("i4", string.pack("f", v.x))
+    local yBits <const> = string.unpack("i4", string.pack("f", v.y))
+    local zBits <const> = string.unpack("i4", string.pack("f", v.z))
 
-    return ((84696351 ~ xBits)
-        * 16777619 ~ yBits)
-        * 16777619 ~ zBits
+    return ((84696351 ~ xBits) * 16777619 ~ yBits) * 16777619 ~ zBits
 end
 
 ---Finds the vector's inclination. Defaults to signed inclination.
