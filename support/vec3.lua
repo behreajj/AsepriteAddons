@@ -325,13 +325,10 @@ end
 ---@param b Vec3 right operand
 ---@return Vec3
 function Vec3.div(a, b)
-    local cx = 0.0
-    local cy = 0.0
-    local cz = 0.0
-    if b.x ~= 0.0 then cx = a.x / b.x end
-    if b.y ~= 0.0 then cy = a.y / b.y end
-    if b.z ~= 0.0 then cz = a.z / b.z end
-    return Vec3.new(cx, cy, cz)
+    return Vec3.new(
+        b.x ~= 0.0 and a.x / b.x or 0.0,
+        b.y ~= 0.0 and a.y / b.y or 0.0,
+        b.z ~= 0.0 and a.z / b.z or 0.0)
 end
 
 ---Finds the dot product between two vectors.
@@ -379,13 +376,10 @@ end
 ---@param b Vec3 right operand
 ---@return Vec3
 function Vec3.floorDiv(a, b)
-    local cx = 0.0
-    local cy = 0.0
-    local cz = 0.0
-    if b.x ~= 0.0 then cx = a.x // b.x end
-    if b.y ~= 0.0 then cy = a.y // b.y end
-    if b.z ~= 0.0 then cz = a.z // b.z end
-    return Vec3.new(cx, cy, cz)
+    return Vec3.new(
+        b.x ~= 0.0 and a.x // b.x or 0.0,
+        b.y ~= 0.0 and a.y // b.y or 0.0,
+        b.z ~= 0.0 and a.z // b.z or 0.0)
 end
 
 ---Finds the fractional portion of of a vector. Subtracts the truncation of
@@ -508,7 +502,6 @@ function Vec3.hashCode(v)
     local xBits <const> = string.unpack("i4", string.pack("f", v.x))
     local yBits <const> = string.unpack("i4", string.pack("f", v.y))
     local zBits <const> = string.unpack("i4", string.pack("f", v.z))
-
     return ((84696351 ~ xBits) * 16777619 ~ yBits) * 16777619 ~ zBits
 end
 
@@ -668,13 +661,10 @@ end
 ---@param b Vec3 right operand
 ---@return Vec3
 function Vec3.mod(a, b)
-    local cx = a.x
-    local cy = a.y
-    local cz = a.z
-    if b.x ~= 0.0 then cx = a.x % b.x end
-    if b.y ~= 0.0 then cy = a.y % b.y end
-    if b.z ~= 0.0 then cz = a.z % b.z end
-    return Vec3.new(cx, cy, cz)
+    return Vec3.new(
+        b.x ~= 0.0 and a.x % b.x or a.x,
+        b.y ~= 0.0 and a.y % b.y or a.y,
+        b.z ~= 0.0 and a.z % b.z or a.z)
 end
 
 ---Negates a vector.
@@ -908,28 +898,10 @@ end
 ---@param v Vec3 left operand
 ---@return Vec3
 function Vec3.sign(v)
-    local cx = 0.0
-    if v.x < -0.0 then
-        cx = -1.0
-    elseif v.x > 0.0 then
-        cx = 1.0
-    end
-
-    local cy = 0.0
-    if v.y < -0.0 then
-        cy = -1.0
-    elseif v.y > 0.0 then
-        cy = 1.0
-    end
-
-    local cz = 0.0
-    if v.z < -0.0 then
-        cz = -1.0
-    elseif v.z > 0.0 then
-        cz = 1.0
-    end
-
-    return Vec3.new(cx, cy, cz)
+    return Vec3.new(
+        v.x < -0.0 and -1.0 or v.x > 0.0 and 1.0 or 0.0,
+        v.y < -0.0 and -1.0 or v.y > 0.0 and 1.0 or 0.0,
+        v.z < -0.0 and -1.0 or v.z > 0.0 and 1.0 or 0.0)
 end
 
 ---Finds the smooth step between a left and right edge given a factor.
@@ -970,16 +942,10 @@ end
 ---@param x Vec3 factor
 ---@return Vec3
 function Vec3.step(edge, x)
-    local cx = 1.0
-    if x.x < edge.x then cx = 0.0 end
-
-    local cy = 1.0
-    if x.y < edge.y then cy = 0.0 end
-
-    local cz = 1.0
-    if x.z < edge.z then cz = 0.0 end
-
-    return Vec3.new(cx, cy, cz)
+    return Vec3.new(
+        x.x < edge.x and 0.0 or 1.0,
+        x.y < edge.y and 0.0 or 1.0,
+        x.z < edge.z and 0.0 or 1.0)
 end
 
 ---Subtracts the right vector from the left.

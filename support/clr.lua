@@ -309,23 +309,12 @@ function Clr.lRgbToSrLab2Internal(c)
 
     -- 216.0 / 24389.0 = 0.0088564516790356
     -- 24389.0 / 2700.0 = 9.032962962963
-    if x <= 0.0088564516790356 then
-        x = x * 9.032962962963
-    else
-        x = (x ^ 0.33333333333333) * 1.16 - 0.16
-    end
-
-    if y <= 0.0088564516790356 then
-        y = y * 9.032962962963
-    else
-        y = (y ^ 0.33333333333333) * 1.16 - 0.16
-    end
-
-    if z <= 0.0088564516790356 then
-        z = z * 9.032962962963
-    else
-        z = (z ^ 0.33333333333333) * 1.16 - 0.16
-    end
+    x = x <= 0.0088564516790356 and x * 9.032962962963
+        or (x ^ 0.33333333333333) * 1.16 - 0.16
+    y = y <= 0.0088564516790356 and y * 9.032962962963
+        or (y ^ 0.33333333333333) * 1.16 - 0.16
+    z = z <= 0.0088564516790356 and z * 9.032962962963
+        or (z ^ 0.33333333333333) * 1.16 - 0.16
 
     return {
         l = 37.0950 * x + 62.9054 * y - 0.0008 * z,
@@ -350,28 +339,17 @@ end
 ---@param c Clr linear color
 ---@return Clr
 function Clr.lRgbTosRgbInternal(c)
-    -- 1.0 / 2.4 = 0.41666666666667
-
     local sr = c.r
-    if sr <= 0.0031308 then
-        sr = sr * 12.92
-    else
-        sr = (sr ^ 0.41666666666667) * 1.055 - 0.055
-    end
-
     local sg = c.g
-    if sg <= 0.0031308 then
-        sg = sg * 12.92
-    else
-        sg = (sg ^ 0.41666666666667) * 1.055 - 0.055
-    end
-
     local sb = c.b
-    if sb <= 0.0031308 then
-        sb = sb * 12.92
-    else
-        sb = (sb ^ 0.41666666666667) * 1.055 - 0.055
-    end
+
+    -- 1.0 / 2.4 = 0.41666666666667
+    sr = sr <= 0.0031308 and sr * 12.92
+        or (sr ^ 0.41666666666667) * 1.055 - 0.055
+    sg = sg <= 0.0031308 and sg * 12.92
+        or (sg ^ 0.41666666666667) * 1.055 - 0.055
+    sb = sb <= 0.0031308 and sb * 12.92
+        or (sb ^ 0.41666666666667) * 1.055 - 0.055
 
     return Clr.new(sr, sg, sb, c.a)
 end
@@ -669,31 +647,20 @@ end
 ---@param c Clr color
 ---@return Clr
 function Clr.sRgbTolRgbInternal(c)
+    local lr = c.r
+    local lg = c.g
+    local lb = c.b
+
     -- 1.0 / 12.92 = 0.077399380804954
     -- 1.0 / 1.055 = 0.9478672985782
-
-    local lr = c.r
-    if lr <= 0.04045 then
-        lr = lr * 0.077399380804954
-    else
-        lr = ((lr + 0.055) * 0.9478672985782) ^ 2.4
-    end
-
-    local lg = c.g
-    if lg <= 0.04045 then
-        lg = lg * 0.077399380804954
-    else
-        lg = ((lg + 0.055) * 0.9478672985782) ^ 2.4
-    end
-
-    local lb = c.b
-    if lb <= 0.04045 then
-        lb = lb * 0.077399380804954
-    else
-        lb = ((lb + 0.055) * 0.9478672985782) ^ 2.4
-    end
-
-    return Clr.new(lr, lg, lb, c.a)
+    return Clr.new(
+        lr <= 0.04045 and lr * 0.077399380804954
+        or ((lr + 0.055) * 0.9478672985782) ^ 2.4,
+        lg <= 0.04045 and lg * 0.077399380804954
+        or ((lg + 0.055) * 0.9478672985782) ^ 2.4,
+        lb <= 0.04045 and lb * 0.077399380804954
+        or ((lb + 0.055) * 0.9478672985782) ^ 2.4,
+        c.a)
 end
 
 ---Converts a color from standard RGB to SR Lab 2.

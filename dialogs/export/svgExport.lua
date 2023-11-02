@@ -843,8 +843,7 @@ dlg:button {
                 wnBorder, border,
                 wnBorder, hnBorder,
                 border, hnBorder,
-                tconcat(holeStrArr, " ")
-            )
+                tconcat(holeStrArr, " "))
         end
 
         local borderStr = ""

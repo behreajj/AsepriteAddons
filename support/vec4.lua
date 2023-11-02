@@ -224,15 +224,11 @@ end
 ---@param b Vec4 right operand
 ---@return Vec4
 function Vec4.div(a, b)
-    local cx = 0.0
-    local cy = 0.0
-    local cz = 0.0
-    local cw = 0.0
-    if b.x ~= 0.0 then cx = a.x / b.x end
-    if b.y ~= 0.0 then cy = a.y / b.y end
-    if b.z ~= 0.0 then cz = a.z / b.z end
-    if b.w ~= 0.0 then cw = a.w / b.w end
-    return Vec4.new(cx, cy, cz, cw)
+    return Vec4.new(
+        b.x ~= 0.0 and a.x / b.x or 0.0,
+        b.y ~= 0.0 and a.y / b.y or 0.0,
+        b.z ~= 0.0 and a.z / b.z or 0.0,
+        b.w ~= 0.0 and a.w / b.w or 0.0)
 end
 
 ---Finds the dot product between two vectors.
@@ -283,15 +279,11 @@ end
 ---@param b Vec4 right operand
 ---@return Vec4
 function Vec4.floorDiv(a, b)
-    local cx = 0.0
-    local cy = 0.0
-    local cz = 0.0
-    local cw = 0.0
-    if b.x ~= 0.0 then cx = a.x // b.x end
-    if b.y ~= 0.0 then cy = a.y // b.y end
-    if b.z ~= 0.0 then cz = a.z // b.z end
-    if b.w ~= 0.0 then cw = a.w // b.w end
-    return Vec4.new(cx, cy, cz, cw)
+    return Vec4.new(
+        b.x ~= 0.0 and a.x // b.x or 0.0,
+        b.y ~= 0.0 and a.y // b.y or 0.0,
+        b.z ~= 0.0 and a.z // b.z or 0.0,
+        b.w ~= 0.0 and a.w // b.w or 0.0)
 end
 
 ---Finds the fractional portion of of a vector. Subtracts the truncation of
@@ -326,7 +318,6 @@ function Vec4.hashCode(v)
     local yBits <const> = string.unpack("i4", string.pack("f", v.y))
     local zBits <const> = string.unpack("i4", string.pack("f", v.z))
     local wBits <const> = string.unpack("i4", string.pack("f", v.w))
-
     return (((84696351 ~ xBits) * 16777619 ~ yBits) * 16777619 ~ zBits)
         * 16777619 ~ wBits
 end
@@ -459,15 +450,11 @@ end
 ---@param b Vec4 right operand
 ---@return Vec4
 function Vec4.mod(a, b)
-    local cx = a.x
-    local cy = a.y
-    local cz = a.z
-    local cw = a.w
-    if b.x ~= 0.0 then cx = a.x % b.x end
-    if b.y ~= 0.0 then cy = a.y % b.y end
-    if b.z ~= 0.0 then cz = a.z % b.z end
-    if b.w ~= 0.0 then cw = a.w % b.w end
-    return Vec4.new(cx, cy, cz, cw)
+    return Vec4.new(
+        b.x ~= 0.0 and a.x % b.x or a.x,
+        b.y ~= 0.0 and a.y % b.y or a.y,
+        b.z ~= 0.0 and a.z % b.z or a.z,
+        b.w ~= 0.0 and a.w % b.w or a.w)
 end
 
 ---Negates a vector.
@@ -598,35 +585,11 @@ end
 ---@param v Vec4 vector
 ---@return Vec4
 function Vec4.sign(v)
-    local cx = 0.0
-    if v.x < -0.0 then
-        cx = -1.0
-    elseif v.x > 0.0 then
-        cx = 1.0
-    end
-
-    local cy = 0.0
-    if v.y < -0.0 then
-        cy = -1.0
-    elseif v.y > 0.0 then
-        cy = 1.0
-    end
-
-    local cz = 0.0
-    if v.z < -0.0 then
-        cz = -1.0
-    elseif v.z > 0.0 then
-        cz = 1.0
-    end
-
-    local cw = 0.0
-    if v.w < -0.0 then
-        cw = -1.0
-    elseif v.w > 0.0 then
-        cw = 1.0
-    end
-
-    return Vec4.new(cx, cy, cz, cw)
+    return Vec4.new(
+        v.x < -0.0 and -1.0 or v.x > 0.0 and 1.0 or 0.0,
+        v.y < -0.0 and -1.0 or v.y > 0.0 and 1.0 or 0.0,
+        v.z < -0.0 and -1.0 or v.z > 0.0 and 1.0 or 0.0,
+        v.w < -0.0 and -1.0 or v.w > 0.0 and 1.0 or 0.0)
 end
 
 ---Finds the smooth step between a left and right edge given a factor.
@@ -675,19 +638,11 @@ end
 ---@param x Vec4 factor
 ---@return Vec4
 function Vec4.step(edge, x)
-    local cx = 1.0
-    if x.x < edge.x then cx = 0.0 end
-
-    local cy = 1.0
-    if x.y < edge.y then cy = 0.0 end
-
-    local cz = 1.0
-    if x.z < edge.z then cz = 0.0 end
-
-    local cw = 1.0
-    if x.w < edge.w then cw = 0.0 end
-
-    return Vec4.new(cx, cy, cz, cw)
+    return Vec4.new(
+        x.x < edge.x and 0.0 or 1.0,
+        x.y < edge.y and 0.0 or 1.0,
+        x.z < edge.z and 0.0 or 1.0,
+        x.w < edge.w and 0.0 or 1.0)
 end
 
 ---Subtracts the right vector from the left.

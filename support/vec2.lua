@@ -249,11 +249,9 @@ end
 ---@param b Vec2 right operand
 ---@return Vec2
 function Vec2.div(a, b)
-    local cx = 0.0
-    local cy = 0.0
-    if b.x ~= 0.0 then cx = a.x / b.x end
-    if b.y ~= 0.0 then cy = a.y / b.y end
-    return Vec2.new(cx, cy)
+    return Vec2.new(
+        b.x ~= 0.0 and a.x / b.x or 0.0,
+        b.y ~= 0.0 and a.y / b.y or 0.0)
 end
 
 ---Finds the dot product between two vectors.
@@ -297,11 +295,9 @@ end
 ---@param b Vec2 right operand
 ---@return Vec2
 function Vec2.floorDiv(a, b)
-    local cx = 0.0
-    local cy = 0.0
-    if b.x ~= 0.0 then cx = a.x // b.x end
-    if b.y ~= 0.0 then cy = a.y // b.y end
-    return Vec2.new(cx, cy)
+    return Vec2.new(
+        b.x ~= 0.0 and a.x // b.x or 0.0,
+        b.y ~= 0.0 and a.y // b.y or 0.0)
 end
 
 ---Finds the fractional portion of of a vector. Subtracts the truncation of
@@ -467,11 +463,9 @@ end
 ---@param b Vec2 right operand
 ---@return Vec2
 function Vec2.mod(a, b)
-    local cx = a.x
-    local cy = a.y
-    if b.x ~= 0.0 then cx = a.x % b.x end
-    if b.y ~= 0.0 then cy = a.y % b.y end
-    return Vec2.new(cx, cy)
+    return Vec2.new(
+        b.x ~= 0.0 and a.x % b.x or a.x,
+        b.y ~= 0.0 and a.y % b.y or a.y)
 end
 
 ---Negates a vector.
@@ -614,21 +608,9 @@ end
 ---@param v Vec2 vector
 ---@return Vec2
 function Vec2.sign(v)
-    local cx = 0.0
-    if v.x < -0.0 then
-        cx = -1.0
-    elseif v.x > 0.0 then
-        cx = 1.0
-    end
-
-    local cy = 0.0
-    if v.y < -0.0 then
-        cy = -1.0
-    elseif v.y > 0.0 then
-        cy = 1.0
-    end
-
-    return Vec2.new(cx, cy)
+    return Vec2.new(
+        v.x < -0.0 and -1.0 or v.x > 0.0 and 1.0 or 0.0,
+        v.y < -0.0 and -1.0 or v.y > 0.0 and 1.0 or 0.0)
 end
 
 ---Finds the smooth step between a left and right edge given a factor.
@@ -661,13 +643,9 @@ end
 ---@param x Vec2 factor
 ---@return Vec2
 function Vec2.step(edge, x)
-    local cx = 1.0
-    if x.x < edge.x then cx = 0.0 end
-
-    local cy = 1.0
-    if x.y < edge.y then cy = 0.0 end
-
-    return Vec2.new(cx, cy)
+    return Vec2.new(
+        x.x < edge.x and 0.0 or 1.0,
+        x.y < edge.y and 0.0 or 1.0)
 end
 
 ---Subtracts the right vector from the left.

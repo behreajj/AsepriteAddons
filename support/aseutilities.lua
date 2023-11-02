@@ -100,7 +100,7 @@ AseUtilities.PROJECTIONS = {
 ---Houses utility methods for scripting Aseprite add-ons.
 ---@return table
 function AseUtilities.new()
-    local inst = setmetatable({}, AseUtilities)
+    local inst <const> = setmetatable({}, AseUtilities)
     return inst
 end
 
