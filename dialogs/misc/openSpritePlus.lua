@@ -29,7 +29,7 @@ local function loadSprite(filePath)
         local pxItr <const> = image:pixels()
         local index = 0
         for pixel in pxItr do
-            if index <= lenColors then
+            if index < lenColors then
                 index = index + 1
                 pixel(spriteHexes[index])
             end
