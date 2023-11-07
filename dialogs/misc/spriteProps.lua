@@ -19,8 +19,9 @@ local defaults <const> = {
     textLenLimit = 32,
     -- Crash report for custom pixel aspect ratio?
     -- https://steamcommunity.com/app/431730/discussions/2/6126615404777201709/
+    -- Common Amiga ILBM ratios are 10:11, 11:13.
     minPxRatio = 1,
-    maxPxRatio = 8
+    maxPxRatio = 16
 }
 
 local sprite = nil
