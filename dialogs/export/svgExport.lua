@@ -601,9 +601,10 @@ dlg:button {
         -- Cache these methods because they are used so often
         local strfmt <const> = string.format
         local tconcat <const> = table.concat
+        local getPalette <const> = AseUtilities.getPalette
 
         local defsStr = ""
-        local bkgStr = ""
+        local checkerStr = ""
         if useChecker then
             local bgPref <const> = docPrefs.bg
 
@@ -644,11 +645,42 @@ dlg:button {
                 "</defs>\n"
             })
 
-            bkgStr = strfmt(
+            checkerStr = strfmt(
                 "<path id =\"checker\" d=\"M %d %d L %d %d L %d %d L %d %d Z\" "
                 .. "fill=\"url(#checkerPattern)\" />\n",
                 border, border, wnBorder, border,
                 wnBorder, hnBorder, border, hnBorder)
+        end
+
+        -- In indexed color mode, the transparent color is ignored when the
+        -- sprite has a background color.
+        local bkgStr = ""
+        if activeSprite.backgroundLayer ~= nil
+            and colorMode == ColorMode.INDEXED then
+            -- TODO: This poses a problem for animation, because the
+            -- background color could change per multi-palette sprites.
+            local alphaIdx <const> = activeSpec.transparentColor
+            local palette1 <const> = getPalette(1, activeSprite.palettes)
+            local lenPalette1 = #palette1
+
+            local bkgHex = 0x0
+            if alphaIdx >= 0 and alphaIdx < lenPalette1 then
+                local aseColor <const> = palette1:getColor(alphaIdx)
+                bkgHex = AseUtilities.aseColorToHex(aseColor, ColorMode.RGB)
+            else
+                app.command.SwitchColors()
+                local aseColor <const> = app.fgColor
+                bkgHex = AseUtilities.aseColorToHex(aseColor, ColorMode.RGB)
+                app.command.SwitchColors()
+            end
+            local webHex <const> = (bkgHex & 0xff) << 0x10
+                | (bkgHex & 0xff00)
+                | (bkgHex >> 0x10 & 0xff)
+            bkgStr = strfmt(
+                "<path id =\"bkg\" d=\"M %d %d L %d %d L %d %d L %d %d Z\" "
+                .. "fill=\"#%06X\" />\n",
+                border, border, wnBorder, border,
+                wnBorder, hnBorder, border, hnBorder, webHex)
         end
 
         ---@type string[]
@@ -702,9 +734,6 @@ dlg:button {
                     " dur=\"%s\"",
                     " />\n%s\n</g>"
                 })
-
-                -- Cache methods used in loop.
-                local getPalette <const> = AseUtilities.getPalette
 
                 ---@type string[]
                 local frameStrs <const> = {}
@@ -893,6 +922,7 @@ dlg:button {
                 "viewBox=\"0 0 %d %d\">\n",
                 wTotal, hTotal),
             defsStr,
+            checkerStr,
             bkgStr,
             tconcat(layersStrArr, "\n"),
             padStr,

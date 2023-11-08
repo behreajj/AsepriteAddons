@@ -1,8 +1,8 @@
 local importFileExts <const> = {
-    "aco", "act", "anim", "ase", "aseprite", "bmp",
-    "ggr", "gpl", "ham", "iff", "ilbm", "pal",
-    "pbm", "pgm", "ppm"
+    "aco", "act", "anim", "ase", "aseprite", "bmp", "ham",
+    "hex", "iff", "ilbm", "pbm", "pgm", "ppm", "txt"
 }
+local exportFileExts <const> = { "csv", "md", "txt" }
 local outputTypes <const> = { "FILE", "PRINT" }
 local inputTypes <const> = { "CEL", "FILE" }
 
@@ -95,7 +95,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "exportFilepath",
-    filetypes = { "txt" },
+    filetypes = exportFileExts,
     save = true,
     focus = false,
     visible = defaults.outputType == "FILE"
@@ -111,13 +111,14 @@ dlg:button {
         local inputType <const> = args.inputType
             or defaults.inputType --[[@as string]]
         local importFilepath <const> = args.importFilepath --[[@as string]]
-        local useColLabel <const> = args.useColLabel --[[@as boolean]]
-        local useRowLabel <const> = args.useRowLabel --[[@as boolean]]
-        local useFilename <const> = args.useFilename --[[@as boolean]]
-        local usePlainText <const> = args.usePlainText --[[@as boolean]]
         local outputType <const> = args.outputType
             or defaults.outputType --[[@as string]]
         local exportFilepath <const> = args.exportFilepath --[[@as string]]
+
+        local useColLabel = args.useColLabel --[[@as boolean]]
+        local useRowLabel = args.useRowLabel --[[@as boolean]]
+        local useFilename = args.useFilename --[[@as boolean]]
+        local useUtf8 = args.usePlainText --[[@as boolean]]
 
         local diplayFilepath = importFilepath
         local binData = ""
@@ -188,6 +189,35 @@ dlg:button {
         local strchar <const> = string.char
         local tconcat <const> = table.concat
 
+        local useMarkdown = false
+        local useCsv = false
+        if outputType == "FILE" and exportFilepath and #exportFilepath > 0 then
+            local fileExt = string.lower(app.fs.fileExtension(exportFilepath))
+            useMarkdown = fileExt == "md"
+            useCsv = fileExt == "csv"
+
+            if useCsv then
+                useColLabel = false
+                useRowLabel = false
+                useFilename = false
+                useUtf8 = false
+            end
+        end
+
+        local colDelimiter = " "
+        if useMarkdown then
+            colDelimiter = "|"
+        elseif useCsv then
+            colDelimiter = ","
+        end
+
+        local rowDelimiter = "\n"
+
+        local byteFormat = "%02X"
+        if useCsv then
+            byteFormat = "%03d"
+        end
+
         ---@type string[]
         local hexLines <const> = {}
 
@@ -197,17 +227,33 @@ dlg:button {
 
         if useColLabel then
             local headerStr = ""
-            if useRowLabel then headerStr = headerStr .. "           " end
-            headerStr = headerStr .. "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F"
-            if usePlainText then
-                headerStr = headerStr .. " | 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5"
+            if useMarkdown then
+                if useRowLabel then headerStr = headerStr .. "Row | " end
+                headerStr = headerStr .. "00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0A | 0B | 0C | 0D | 0E | 0F"
+                if useUtf8 then
+                    headerStr = headerStr .. " | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0 | 1 | 2 | 3 | 4 | 5"
+                end
+            else
+                if useRowLabel then headerStr = headerStr .. "         " end
+                headerStr = headerStr .. "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F"
+                if useUtf8 then
+                    headerStr = headerStr .. " 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5"
+                end
             end
 
             local headerSep = ""
-            if useRowLabel then headerSep = headerSep .. "         +-" end
-            headerSep = headerSep .. "-----------------------------------------------"
-            if usePlainText then
-                headerSep = headerSep .. "-+--------------------------------"
+            if useMarkdown then
+                if useRowLabel then headerSep = headerSep .. "---: | " end
+                headerSep = headerSep .. string.rep("---:", 16, " | ")
+                if useUtf8 then
+                    headerSep = headerSep .. " | " .. string.rep(":---:", 16, " | ")
+                end
+            else
+                if useRowLabel then headerSep = headerSep .. "         " end
+                headerSep = headerSep .. "-----------------------------------------------"
+                if useUtf8 then
+                    headerSep = headerSep .. "--------------------------------"
+                end
             end
 
             hexLines[#hexLines + 1] = headerStr
@@ -224,7 +270,8 @@ dlg:button {
 
             local rowCols <const> = row * cols
             if useRowLabel then
-                colStrs[#colStrs + 1] = strfmt("%08X |", rowCols)
+                -- colStrs[#colStrs + 1] = strfmt("%08X |", rowCols)
+                colStrs[#colStrs + 1] = strfmt("%08X", rowCols)
             end
 
             ---@type integer[]
@@ -236,22 +283,22 @@ dlg:button {
                 if i <= lenBinData then
                     local byte <const> = strbyte(binData, i, i)
                     bytes[#bytes + 1] = byte
-                    colStrs[#colStrs + 1] = strfmt("%02X", byte)
+                    colStrs[#colStrs + 1] = strfmt(byteFormat, byte)
                 else
                     colStrs[#colStrs + 1] = "  "
                 end
                 col = col + 1
             end
 
-            if usePlainText then
-                colStrs[#colStrs + 1] = "|"
+            if useUtf8 then
+                -- colStrs[#colStrs + 1] = "|"
 
                 local lenBytes <const> = #bytes
                 local j = 0
                 while j < lenBytes do
                     j = j + 1
                     local byte <const> = bytes[j]
-                    if byte >= 20 then
+                    if byte > 0x20 and byte ~= 0x7f then
                         local char <const> = strchar(byte)
                         colStrs[#colStrs + 1] = char
                     else
@@ -260,13 +307,13 @@ dlg:button {
                 end
             end
 
-            local colStr <const> = tconcat(colStrs, " ")
+            local colStr <const> = tconcat(colStrs, colDelimiter)
             hexLines[#hexLines + 1] = colStr
 
             row = row + 1
         end
 
-        local compStr <const> = tconcat(hexLines, "\n")
+        local compStr <const> = tconcat(hexLines, rowDelimiter)
 
         if outputType == "FILE" then
             if (not exportFilepath) or (#exportFilepath < 1) then
@@ -277,7 +324,7 @@ dlg:button {
                 return
             end
 
-            local writeFile <const> , writeErr <const> = io.open(exportFilepath, "w")
+            local writeFile <const>, writeErr <const> = io.open(exportFilepath, "w")
             if writeErr ~= nil then
                 if writeFile then writeFile:close() end
                 app.alert { title = "Error", text = writeErr }
