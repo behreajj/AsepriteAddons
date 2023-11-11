@@ -462,13 +462,13 @@ function Vec3.gridCartesian(cols, rows, layers, lb, ub)
 
     ---@type Vec3[]
     local result <const> = {}
-    local rcVal <const> = rVrf * cVrf
-    local length <const> = lVrf * rcVal
+    local rcVrf <const> = rVrf * cVrf
+    local length <const> = lVrf * rcVrf
 
     local k = 0
     while k < length do
-        local h <const> = k // rcVal
-        local m <const> = k - h * rcVal
+        local h <const> = k // rcVrf
+        local m <const> = k - h * rcVrf
 
         local hStep <const> = h * hToStep
         local iStep <const> = (m // cVrf) * iToStep

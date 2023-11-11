@@ -667,11 +667,6 @@ dlg:button {
             if alphaIdx >= 0 and alphaIdx < lenPalette1 then
                 local aseColor <const> = palette1:getColor(alphaIdx)
                 bkgHex = AseUtilities.aseColorToHex(aseColor, ColorMode.RGB)
-            else
-                app.command.SwitchColors()
-                local aseColor <const> = app.fgColor
-                bkgHex = AseUtilities.aseColorToHex(aseColor, ColorMode.RGB)
-                app.command.SwitchColors()
             end
             local webHex <const> = (bkgHex & 0xff) << 0x10
                 | (bkgHex & 0xff00)

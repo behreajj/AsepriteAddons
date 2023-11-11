@@ -1,10 +1,13 @@
+local inputTypes <const> = { "CEL", "COMPOSITE", "FILE", "PALETTE" }
 local importFileExts <const> = {
     "aco", "act", "anim", "ase", "aseprite", "bmp", "ham",
-    "hex", "iff", "ilbm", "pbm", "pgm", "ppm", "txt"
+    "hex", "iff", "ilbm", "lbm", "pbm", "pgm", "ppm"
 }
-local exportFileExts <const> = { "csv", "md", "txt" }
+
+local exportFileExts <const> = { "c", "csv", "md", "txt" }
 local outputTypes <const> = { "FILE", "PRINT" }
-local inputTypes <const> = { "CEL", "FILE" }
+
+local rgbaFormats <const> = { "RGB", "BGR", "RGBA", "ABGR" }
 
 local defaults <const> = {
     inputType = "FILE",
@@ -12,7 +15,8 @@ local defaults <const> = {
     useColLabel = true,
     useRowLabel = true,
     useFilename = true,
-    usePlainText = true
+    usePlainText = true,
+    rgbaFormat = "RGBA"
 }
 
 local dlg <const> = Dialog { title = "Hex Dump" }
@@ -27,8 +31,21 @@ dlg:combobox {
         local args <const> = dlg.data
         local inputType <const> = args.inputType
         local isFile <const> = inputType == "FILE"
+        local isPal <const> = inputType == "PALETTE"
         dlg:modify { id = "importFilepath", visible = isFile }
+        dlg:modify { id = "rgbaFormat", visible = isPal }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "rgbaFormat",
+    label = "Format:",
+    option = defaults.rgbaFormat,
+    options = rgbaFormats,
+    focus = false,
+    visible = defaults.inputType == "PALETTE"
 }
 
 dlg:newrow { always = false }
@@ -114,6 +131,8 @@ dlg:button {
         local outputType <const> = args.outputType
             or defaults.outputType --[[@as string]]
         local exportFilepath <const> = args.exportFilepath --[[@as string]]
+        local rgbaFormat <const> = args.rgbaFormat
+            or defaults.rgbaFormat --[[@as string]]
 
         local useColLabel = args.useColLabel --[[@as boolean]]
         local useRowLabel = args.useRowLabel --[[@as boolean]]
@@ -152,15 +171,6 @@ dlg:button {
                 return
             end
 
-            local activeLayer <const> = site.layer
-            if not activeLayer then
-                app.alert {
-                    title = "Error",
-                    text = "There is no active layer."
-                }
-                return
-            end
-
             local activeFrame <const> = site.frame
             if not activeFrame then
                 app.alert {
@@ -170,16 +180,87 @@ dlg:button {
                 return
             end
 
-            local activeCel <const> = activeLayer:cel(activeFrame)
-            if not activeCel then
-                app.alert {
-                    title = "Error",
-                    text = "There is no active cel."
-                }
-                return
+            if inputType == "PALETTE" then
+                local palettes <const> = activeSprite.palettes
+                local lenPalettes <const> = #palettes
+                local palIdx = 1
+                local frIdx <const> = activeFrame.frameNumber
+                if frIdx <= lenPalettes then palIdx = frIdx end
+                local palette <const> = palettes[palIdx]
+                local lenPalette <const> = #palette
+
+                local strchar <const> = string.char
+
+                local stride = 4
+                local rOffset = 1
+                local gOffset = 2
+                local bOffset = 3
+                local tOffset = 4
+
+                if rgbaFormat == "RGB" then
+                    stride = 3
+                    rOffset = 1
+                    gOffset = 2
+                    bOffset = 3
+                    tOffset = 0
+                elseif rgbaFormat == "BGR" then
+                    stride = 3
+                    rOffset = 3
+                    gOffset = 2
+                    bOffset = 1
+                    tOffset = 0
+                elseif rgbaFormat == "ABGR" then
+                    stride = 4
+                    rOffset = 4
+                    gOffset = 3
+                    bOffset = 2
+                    tOffset = 1
+                end
+
+                ---@type string[]
+                local palChars = {}
+                local i = 0
+                while i < lenPalette do
+                    local aseColor <const> = palette:getColor(i)
+                    local iStride <const> = i * stride
+                    palChars[rOffset + iStride] = strchar(aseColor.red)
+                    palChars[gOffset + iStride] = strchar(aseColor.green)
+                    palChars[bOffset + iStride] = strchar(aseColor.blue)
+                    if stride >= 4 then
+                        palChars[tOffset + iStride] = strchar(aseColor.alpha)
+                    end
+                    i = i + 1
+                end
+
+                binData = table.concat(palChars, "")
+            else
+                local activeLayer <const> = site.layer
+                if not activeLayer then
+                    app.alert {
+                        title = "Error",
+                        text = "There is no active layer."
+                    }
+                    return
+                end
+
+                local activeCel <const> = activeLayer:cel(activeFrame)
+                if not activeCel then
+                    app.alert {
+                        title = "Error",
+                        text = "There is no active cel."
+                    }
+                    return
+                end
+
+                if inputType == "COMPOSITE" then
+                    local flat <const> = Image(activeSprite.spec)
+                    flat:drawSprite(activeSprite, activeFrame)
+                    binData = flat.bytes
+                else
+                    binData = activeCel.image.bytes
+                end
             end
 
-            binData = activeCel.image.bytes
             diplayFilepath = activeSprite.filename
         end
 
@@ -191,16 +272,20 @@ dlg:button {
 
         local useMarkdown = false
         local useCsv = false
+        local useC = false
+        local padBytes = true
         if outputType == "FILE" and exportFilepath and #exportFilepath > 0 then
             local fileExt = string.lower(app.fs.fileExtension(exportFilepath))
             useMarkdown = fileExt == "md"
             useCsv = fileExt == "csv"
+            useC = fileExt == "c"
 
-            if useCsv then
+            if useCsv or useC then
                 useColLabel = false
                 useRowLabel = false
                 useFilename = false
                 useUtf8 = false
+                padBytes = false
             end
         end
 
@@ -209,13 +294,20 @@ dlg:button {
             colDelimiter = "|"
         elseif useCsv then
             colDelimiter = ","
+        elseif useC then
+            colDelimiter = ", "
         end
 
         local rowDelimiter = "\n"
+        if useC then
+            rowDelimiter = ",\n"
+        end
 
         local byteFormat = "%02X"
         if useCsv then
             byteFormat = "%03d"
+        elseif useC then
+            byteFormat = "0x%02X"
         end
 
         ---@type string[]
@@ -270,7 +362,6 @@ dlg:button {
 
             local rowCols <const> = row * cols
             if useRowLabel then
-                -- colStrs[#colStrs + 1] = strfmt("%08X |", rowCols)
                 colStrs[#colStrs + 1] = strfmt("%08X", rowCols)
             end
 
@@ -284,15 +375,13 @@ dlg:button {
                     local byte <const> = strbyte(binData, i, i)
                     bytes[#bytes + 1] = byte
                     colStrs[#colStrs + 1] = strfmt(byteFormat, byte)
-                else
+                elseif padBytes then
                     colStrs[#colStrs + 1] = "  "
                 end
                 col = col + 1
             end
 
             if useUtf8 then
-                -- colStrs[#colStrs + 1] = "|"
-
                 local lenBytes <const> = #bytes
                 local j = 0
                 while j < lenBytes do
@@ -313,7 +402,8 @@ dlg:button {
             row = row + 1
         end
 
-        local compStr <const> = tconcat(hexLines, rowDelimiter)
+        local compStr = tconcat(hexLines, rowDelimiter)
+        if useC then compStr = strfmt("char arr[] = {\n%s\n};", compStr) end
 
         if outputType == "FILE" then
             if (not exportFilepath) or (#exportFilepath < 1) then
