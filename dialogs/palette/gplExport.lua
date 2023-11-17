@@ -69,6 +69,7 @@ dlg:file {
     label = "Path:",
     filetypes = { "gpl" },
     save = true,
+    entry = true,
     focus = true
 }
 
