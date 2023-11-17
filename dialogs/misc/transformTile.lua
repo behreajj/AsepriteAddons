@@ -143,6 +143,8 @@ local function transformCel(dialog, preset)
     local containedTiles = {}
     if target == "TILE_MAP" then
         -- TODO: This would be superseded when tile map flags are implemented.
+        -- It looks like there's some work to be done on bugs related to
+        -- this so... maybe wait.
         containedTiles = AseUtilities.getUniqueTiles(
             activeCel.image, tileSet)
         local transactionName = "Transform Map"
@@ -627,4 +629,7 @@ dlg:button {
     end
 }
 
-dlg:show { wait = false }
+dlg:show {
+    autoscrollbars = true,
+    wait = false
+}

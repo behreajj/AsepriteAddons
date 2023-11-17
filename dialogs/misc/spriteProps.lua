@@ -578,5 +578,7 @@ dlg:button {
 
 -- Do this to prevent other user inputs from
 -- changing state while this is open.
-dlg:show { wait = true }
--- dlg:show { wait = false }
+dlg:show {
+    autoscrollbars = true,
+    wait = true
+}

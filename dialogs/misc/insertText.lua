@@ -542,4 +542,7 @@ dlg:button {
     end
 }
 
-dlg:show { wait = false }
+dlg:show {
+    autoscrollbars = true,
+    wait = false
+}

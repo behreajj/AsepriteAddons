@@ -881,4 +881,7 @@ dlg:button {
 }
 
 setFromAse(dlg, app.preferences.color_bar.fg_color)
-dlg:show { wait = false }
+dlg:show {
+    autoscrollbars = true,
+    wait = false
+}

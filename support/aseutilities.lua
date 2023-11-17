@@ -2182,6 +2182,7 @@ end
 ---@param source Image source image
 ---@return Image
 function AseUtilities.rotateImage90(source)
+    -- TODO: Try using byte strings instead of pixel iterator?
     local srcSpec <const> = source.spec
     local w <const> = srcSpec.width
     local h <const> = srcSpec.height
@@ -2401,11 +2402,15 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
 
     -- Separate a tile's index from the meta-data. See
     -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
-    local maskFlipX <const> = 0x20000000
+
+    -- TODO: All this needs to be retested, as flags have changed and UI
+    -- commands (Space+D, Space+H, Space+V) were introduced as of v1.3-rc7.
+    local maskFlipX <const> = 0x80000000
     local maskFlipY <const> = 0x40000000
-    local maskRot90cw <const> = 0x80000000
+    local maskFlipD <const> = 0x20000000
+    local maskRot90cw <const> = maskFlipD | maskFlipY
     local maskRot180 <const> = maskFlipX | maskFlipY
-    local maskRot90ccw <const> = maskRot180 | maskRot90cw
+    local maskRot90ccw <const> = maskFlipD | maskFlipX
 
     local pixelColor <const> = app.pixelColor
     local pxTilei <const> = pixelColor.tileI
