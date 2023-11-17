@@ -1,7 +1,21 @@
 local inputTypes <const> = { "CEL", "COMPOSITE", "FILE", "PALETTE" }
 local importFileExts <const> = {
-    "aco", "act", "anim", "ase", "aseprite", "bmp", "ham",
-    "hex", "iff", "ilbm", "lbm", "pbm", "pgm", "ppm"
+    "acbm", -- Amiga Continuous Bitmap
+    "acb",  -- Adobe Color Book
+    "aco",  -- Adobe Color
+    "act",  -- Adobe Color Table
+    "anim", -- IFF Animated
+    "ase",  -- Adobe Swatch Exchange
+    "aseprite",
+    "bmp",
+    "ham", -- IFF Hold-And-Modify
+    "hex",
+    "iff",
+    "ilbm", -- Interleaved Bitmap
+    "lbm",  -- IFF image
+    "pbm",  -- Binary PNM
+    "pgm",  -- Gray PNM
+    "ppm"   -- Color PNM
 }
 
 local exportFileExts <const> = { "c", "csv", "md", "txt" }
@@ -114,6 +128,7 @@ dlg:file {
     id = "exportFilepath",
     filetypes = exportFileExts,
     save = true,
+    entry = true,
     focus = false,
     visible = defaults.outputType == "FILE"
 }
@@ -218,7 +233,7 @@ dlg:button {
                 end
 
                 ---@type string[]
-                local palChars = {}
+                local palChars <const> = {}
                 local i = 0
                 while i < lenPalette do
                     local aseColor <const> = palette:getColor(i)
@@ -234,31 +249,36 @@ dlg:button {
 
                 binData = table.concat(palChars, "")
             else
-                local activeLayer <const> = site.layer
-                if not activeLayer then
-                    app.alert {
-                        title = "Error",
-                        text = "There is no active layer."
-                    }
-                    return
-                end
-
-                local activeCel <const> = activeLayer:cel(activeFrame)
-                if not activeCel then
-                    app.alert {
-                        title = "Error",
-                        text = "There is no active cel."
-                    }
-                    return
-                end
-
+                local spriteSpec <const> = activeSprite.spec
+                local image = nil
                 if inputType == "COMPOSITE" then
-                    local flat <const> = Image(activeSprite.spec)
-                    flat:drawSprite(activeSprite, activeFrame)
-                    binData = flat.bytes
+                    image = Image(spriteSpec)
+                    image:drawSprite(activeSprite, activeFrame)
                 else
-                    binData = activeCel.image.bytes
+                    local activeLayer <const> = site.layer
+                    if not activeLayer then
+                        app.alert {
+                            title = "Error",
+                            text = "There is no active layer."
+                        }
+                        return
+                    end
+
+                    local activeCel <const> = activeLayer:cel(activeFrame)
+                    if not activeCel then
+                        app.alert {
+                            title = "Error",
+                            text = "There is no active cel."
+                        }
+                        return
+                    end
+
+                    image = activeCel.image
                 end
+
+                -- TODO: RGBA format options, what about grayscale and indexed
+                -- color mode?
+                binData = image.bytes
             end
 
             diplayFilepath = activeSprite.filename
@@ -366,7 +386,7 @@ dlg:button {
             end
 
             ---@type integer[]
-            local bytes = {}
+            local bytes <const> = {}
 
             local col = 0
             while col < cols do

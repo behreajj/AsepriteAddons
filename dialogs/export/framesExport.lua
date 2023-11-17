@@ -45,10 +45,8 @@ local sheetFormat <const> = table.concat({
 local function sectionToJson(section, boundsFormat)
     return string.format(
         "{\"id\":%s, \"rect\":%s}",
-        JsonUtilities.pointToJson(
-            section.column, section.row),
-        JsonUtilities.rectToJson(
-            section.rect, boundsFormat))
+        JsonUtilities.pointToJson(section.column, section.row),
+        JsonUtilities.rectToJson(section.rect, boundsFormat))
 end
 
 ---@param sheet table
@@ -62,22 +60,15 @@ local function sheetToJson(sheet, boundsFormat)
     local i = 0
     while i < lenSections do
         i = i + 1
-        sectionsStrs[i] = sectionToJson(
-            sections[i], boundsFormat)
+        sectionsStrs[i] = sectionToJson(sections[i], boundsFormat)
     end
 
     return string.format(
         sheetFormat,
         sheet.fileName,
-        JsonUtilities.pointToJson(
-            sheet.width,
-            sheet.height),
-        JsonUtilities.pointToJson(
-            sheet.wCell,
-            sheet.hCell),
-        JsonUtilities.pointToJson(
-            sheet.columns,
-            sheet.rows),
+        JsonUtilities.pointToJson(sheet.width, sheet.height),
+        JsonUtilities.pointToJson(sheet.wCell, sheet.hCell),
+        JsonUtilities.pointToJson(sheet.columns, sheet.rows),
         table.concat(sectionsStrs, ","))
 end
 
@@ -116,23 +107,18 @@ local function saveSheet(
     margin, padding,
     usePow2, nonUniformDim)
     local lenPackets1 <const> = #packets1
-    local cols = math.max(1,
-        math.ceil(math.sqrt(lenPackets1)))
-    local rows = math.max(1,
-        math.ceil(lenPackets1 / cols))
+    local cols = math.max(1, math.ceil(math.sqrt(lenPackets1)))
+    local rows = math.max(1, math.ceil(lenPackets1 / cols))
     local margin2 <const> = margin + margin
-    local wSheet = margin2 + wMax * cols
-        + padding * (cols - 1)
-    local hSheet = margin2 + hMax * rows
-        + padding * (rows - 1)
+    local wSheet = margin2 + wMax * cols + padding * (cols - 1)
+    local hSheet = margin2 + hMax * rows + padding * (rows - 1)
 
     if usePow2 then
         if nonUniformDim then
             wSheet = Utilities.nextPowerOf2(wSheet)
             hSheet = Utilities.nextPowerOf2(hSheet)
         else
-            wSheet = Utilities.nextPowerOf2(
-                math.max(wSheet, hSheet))
+            wSheet = Utilities.nextPowerOf2(math.max(wSheet, hSheet))
             hSheet = wSheet
         end
 
@@ -447,6 +433,7 @@ dlg:file {
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS,
     save = true,
+    entry = true,
     focus = true
 }
 
@@ -499,7 +486,7 @@ dlg:button {
             return
         end
 
-        -- Unpack sprite spec.
+        -- Unpack sprite.
         local spriteSpec <const> = activeSprite.spec
         local spriteColorMode <const> = spriteSpec.colorMode
         local spriteColorSpace <const> = spriteSpec.colorSpace
