@@ -282,7 +282,7 @@ dlg:canvas {
     label = "Color:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     focus = true,
     onpaint = function(event)
         -- Unpack defaults.
@@ -360,7 +360,7 @@ dlg:canvas {
     label = "L:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     onpaint = function(event)
         -- Unpack theme.
         local bkgColor <const> = app.theme.color.window_face
@@ -420,7 +420,7 @@ dlg:canvas {
     label = "C:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     onpaint = function(event)
         -- Unpack theme.
         local bkgColor <const> = app.theme.color.window_face
@@ -481,7 +481,7 @@ dlg:canvas {
     label = "H:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     onpaint = function(event)
         -- Unpack theme.
         local bkgColor <const> = app.theme.color.window_face
@@ -541,7 +541,7 @@ dlg:canvas {
     label = "Alpha:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     onpaint = function(event)
         local barWidth <const> = defaults.barWidth
         local barHeight <const> = defaults.barHeight
@@ -681,7 +681,7 @@ dlg:canvas {
     label = "Swatch:",
     width = defaults.barWidth,
     height = defaults.barHeight,
-    autoScaling = false,
+    autoscaling = false,
     onpaint = function(event)
         -- Unpack defaults.
         local barWidth <const> = defaults.barWidth

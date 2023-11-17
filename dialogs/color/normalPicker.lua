@@ -338,7 +338,7 @@ dlg:canvas {
     label = "Color:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     focus = true,
     onpaint = function(event)
         -- Unpack defaults.
@@ -414,7 +414,7 @@ dlg:canvas {
     label = "Azimuth:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     onpaint = function(event)
         -- Unpack defaults.
         local barWidth <const> = defaults.barWidth
@@ -462,7 +462,7 @@ dlg:canvas {
     label = "Incline:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     onpaint = function(event)
         -- Unpack defaults.
         local barWidth <const> = defaults.barWidth

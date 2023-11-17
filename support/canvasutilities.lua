@@ -316,7 +316,7 @@ function CanvasUtilities.graphBezier(
         width = wVrf,
         height = hVrf,
         visible = isVisVrf,
-        autoScaling = false,
+        autoscaling = false,
         onpaint = function(event)
             local context <const> = event.context
 
@@ -658,7 +658,7 @@ function CanvasUtilities.graphLine(
         width = wVrf,
         height = hVrf,
         visible = isVisVrf,
-        autoScaling = false,
+        autoscaling = false,
         onpaint = function(event)
             local context <const> = event.context
 
@@ -970,7 +970,7 @@ function CanvasUtilities.spectrum(
         width = wVrf,
         height = hVrf,
         visible = isVisVrf,
-        autoScaling = false,
+        autoscaling = false,
         onpaint = function(event)
             local context <const> = event.context
 

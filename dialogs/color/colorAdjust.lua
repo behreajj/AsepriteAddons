@@ -240,7 +240,7 @@ dlg:canvas {
     label = "L:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     onpaint = function(event)
         local barWidth <const> = defaults.barWidth
         local barHeight <const> = defaults.barHeight
@@ -296,7 +296,7 @@ dlg:canvas {
     label = "C:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     visible = defaults.mode == "LCH",
     onpaint = function(event)
         local barWidth <const> = defaults.barWidth
@@ -346,7 +346,7 @@ dlg:canvas {
     label = "H:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     visible = defaults.mode == "LCH",
     onpaint = function(event)
         local barWidth <const> = defaults.barWidth
@@ -395,7 +395,7 @@ dlg:canvas {
     label = "A:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     visible = defaults.mode == "LAB",
     onpaint = function(event)
         local barWidth <const> = defaults.barWidth
@@ -447,7 +447,7 @@ dlg:canvas {
     label = "B:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     visible = defaults.mode == "LAB",
     onpaint = function(event)
         local barWidth <const> = defaults.barWidth
@@ -499,7 +499,7 @@ dlg:canvas {
     label = "Alpha:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoScaling = false,
+    autoscaling = false,
     onpaint = function(event)
         local barWidth <const> = defaults.barWidth
         local barHeight <const> = defaults.barHeight
