@@ -4,11 +4,9 @@ dofile("../../support/jsonutilities.lua")
 local targetOptions <const> = { "ACTIVE", "ALL" }
 
 local defaults <const> = {
-    -- Atm, Aseprite tile and tile set objects
-    -- don't include enough useful information
-    -- to necessitate including them in JSON,
-    -- esp. when they raise issues of how to
-    -- format and organize.
+    -- Atm, Aseprite tile and tile set objects don't include enough useful
+    -- information to necessitate including them in JSON, esp. when they raise
+    -- issues of how to format and organize.
     target = "ALL",
     border = 0,
     padding = 0,
@@ -178,7 +176,7 @@ dlg:file {
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS,
     save = true,
-    entry = true,
+    entry = false,
     focus = true
 }
 

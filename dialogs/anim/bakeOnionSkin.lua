@@ -4,7 +4,7 @@ local directOps <const> = { "BACKWARD", "BOTH", "FORWARD" }
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults <const> = {
-    -- Also known as ghost trail or Echo in After Effects.
+    -- Also known as light table, ghost trail or echo in After Effects.
     -- This could be refactored with new drawImage, but
     -- it wouldn't offer much convenience, as layer blend modes
     -- use dest alpha, not source alpha (union, not intersect).

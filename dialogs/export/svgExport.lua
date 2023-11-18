@@ -98,12 +98,14 @@ local function imgToSvgStr(
                     clrIdxToHex[clrIdx] = hex
                 end
 
-                local pxIdx <const> = pixel.x + pixel.y * imgWidth
-                local idcs <const> = pixelDict[hex]
-                if idcs then
-                    idcs[#idcs + 1] = pxIdx
-                else
-                    pixelDict[hex] = { pxIdx }
+                if hex & 0xff000000 ~= 0 then
+                    local pxIdx <const> = pixel.x + pixel.y * imgWidth
+                    local idcs <const> = pixelDict[hex]
+                    if idcs then
+                        idcs[#idcs + 1] = pxIdx
+                    else
+                        pixelDict[hex] = { pxIdx }
+                    end
                 end
             end
         end
@@ -180,7 +182,7 @@ local function imgToSvgStr(
             local a <const> = hex >> 0x18 & 0xff
             if a < 0xff then
                 alphaStr = strfmt(
-                    " fill-opacity=\"%.6f\"",
+                    " fill-opacity=\"%.3f\"",
                     a / 255.0)
             end
             local pathStr <const> = strfmt(
@@ -280,7 +282,7 @@ local function layerToSvgStr(
                         local cmpAlpha <const> = (lyrAlpha / 255.0)
                             * (celAlpha / 255.0)
                         alphaStr = string.format(
-                            " opacity=\"%.6f\"",
+                            " opacity=\"%.3f\"",
                             cmpAlpha)
                     end
 
@@ -524,7 +526,7 @@ dlg:file {
     label = "Path:",
     filetypes = { "svg" },
     save = true,
-    entry = true,
+    entry = false,
     focus = true
 }
 
@@ -669,14 +671,28 @@ dlg:button {
                 local aseColor <const> = palette1:getColor(alphaIdx)
                 bkgHex = AseUtilities.aseColorToHex(aseColor, ColorMode.RGB)
             end
-            local webHex <const> = (bkgHex & 0xff) << 0x10
-                | (bkgHex & 0xff00)
-                | (bkgHex >> 0x10 & 0xff)
-            bkgStr = strfmt(
-                "<path id =\"bkg\" d=\"M %d %d L %d %d L %d %d L %d %d Z\" "
-                .. "fill=\"#%06X\" />\n",
-                border, border, wnBorder, border,
-                wnBorder, hnBorder, border, hnBorder, webHex)
+
+            -- An indexed color mode sprite may contain a background, yet have
+            -- translucent, or even transparent colors in its palette.
+            if bkgHex & 0xff000000 ~= 0 then
+                local webHex <const> = (bkgHex & 0xff) << 0x10
+                    | (bkgHex & 0xff00)
+                    | (bkgHex >> 0x10 & 0xff)
+
+                local aBkg <const> = (bkgHex >> 0x18) & 0xff
+                local alphaStr = ""
+                if aBkg < 0xff then
+                    alphaStr = strfmt(
+                        " fill-opacity=\"%.3f\"",
+                        aBkg / 255.0)
+                end
+
+                bkgStr = strfmt(
+                    "<path id =\"bkg\" d=\"M %d %d L %d %d L %d %d L %d %d Z\" "
+                    .. "fill=\"#%06X\"%s />\n",
+                    border, border, wnBorder, border,
+                    wnBorder, hnBorder, border, hnBorder, webHex, alphaStr)
+            end
         end
 
         ---@type string[]
@@ -834,7 +850,7 @@ dlg:button {
 
             local alphaStr = ""
             if aPadding < 0xff then
-                alphaStr = strfmt(" fill-opacity=\"%.6f\"", aPadding / 255.0)
+                alphaStr = strfmt(" fill-opacity=\"%.3f\"", aPadding / 255.0)
             end
 
             -- Cut out a hole for each pixel (counter-clockwise).
@@ -881,7 +897,7 @@ dlg:button {
             local alphaStr = ""
             if aBorder < 0xff then
                 alphaStr = strfmt(
-                    " fill-opacity=\"%.6f\"",
+                    " fill-opacity=\"%.3f\"",
                     aBorder / 255.0)
             end
 

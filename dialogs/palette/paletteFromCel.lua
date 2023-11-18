@@ -316,7 +316,7 @@ dlg:file {
     id = "filepath",
     filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
     save = true,
-    entry = true,
+    entry = false,
     visible = defaults.target == "SAVE"
 }
 

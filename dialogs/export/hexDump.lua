@@ -128,7 +128,7 @@ dlg:file {
     id = "exportFilepath",
     filetypes = exportFileExts,
     save = true,
-    entry = true,
+    entry = false,
     focus = false,
     visible = defaults.outputType == "FILE"
 }
