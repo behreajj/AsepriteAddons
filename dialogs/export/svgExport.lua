@@ -526,7 +526,7 @@ dlg:file {
     label = "Path:",
     filetypes = { "svg" },
     save = true,
-    entry = false,
+
     focus = true
 }
 

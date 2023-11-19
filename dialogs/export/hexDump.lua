@@ -128,7 +128,7 @@ dlg:file {
     id = "exportFilepath",
     filetypes = exportFileExts,
     save = true,
-    entry = false,
+
     focus = false,
     visible = defaults.outputType == "FILE"
 }
@@ -145,6 +145,10 @@ dlg:button {
         local importFilepath <const> = args.importFilepath --[[@as string]]
         local outputType <const> = args.outputType
             or defaults.outputType --[[@as string]]
+
+        -- TODO: File save widget with entry true makes more validation
+        -- necessary, as a file could have no extension whatsoever. Maybe
+        -- make an AseUtililties function for this?
         local exportFilepath <const> = args.exportFilepath --[[@as string]]
         local rgbaFormat <const> = args.rgbaFormat
             or defaults.rgbaFormat --[[@as string]]
