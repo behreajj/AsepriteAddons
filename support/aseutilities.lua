@@ -2402,15 +2402,13 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
 
     -- Separate a tile's index from the meta-data. See
     -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
-
-    -- TODO: All this needs to be retested, as flags have changed and UI
-    -- commands (Space+D, Space+H, Space+V) were introduced as of v1.3-rc7.
     local maskFlipX <const> = 0x80000000
     local maskFlipY <const> = 0x40000000
     local maskFlipD <const> = 0x20000000
-    local maskRot90cw <const> = maskFlipD | maskFlipY
+    local maskRot90ccw <const> = maskFlipD | maskFlipY
     local maskRot180 <const> = maskFlipX | maskFlipY
-    local maskRot90ccw <const> = maskFlipD | maskFlipX
+    local maskRot90cw <const> = maskFlipD | maskFlipX
+    local maskAll <const> = maskFlipD | maskFlipX | maskFlipY
 
     local pixelColor <const> = app.pixelColor
     local pxTilei <const> = pixelColor.tileI
@@ -2437,12 +2435,12 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
                 tileImage = AseUtilities.flipImageVert(tileImage)
             elseif meta == maskFlipX then
                 tileImage = AseUtilities.flipImageHoriz(tileImage)
-                -- elseif meta == 0xc0000000 then
-                --     tileImage = AseUtilities.flipImageVert(tileImage)
-                --     tileImage = AseUtilities.rotateImage90(tileImage)
-                -- elseif meta == 0xa0000000 then
-                --     tileImage = AseUtilities.flipImageHoriz(tileImage)
-                --     tileImage = AseUtilities.rotateImage90(tileImage)
+            elseif meta == maskFlipD then
+                tileImage = AseUtilities.rotateImage270(tileImage)
+                tileImage = AseUtilities.flipImageHoriz(tileImage)
+            elseif meta == maskAll then
+                tileImage = AseUtilities.rotateImage90(tileImage)
+                tileImage = AseUtilities.flipImageHoriz(tileImage)
             end
 
             imgTrg:drawImage(
