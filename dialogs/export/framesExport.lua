@@ -615,6 +615,15 @@ dlg:button {
         local frIdcs2 <const> = AseUtilities.getFrames(
             activeSprite, frameTarget,
             useBatches, rangeStr, tags)
+        local lenOuter <const> = #frIdcs2
+        if lenOuter <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No frames were selected."
+            }
+            return
+        end
+
         local spriteFrameObjs <const> = activeSprite.frames
 
         -- Track the global and local maximum dimensions.
@@ -629,7 +638,6 @@ dlg:button {
         local packetsUnique <const> = {}
         ---@type table[][]
         local packets2 <const> = {}
-        local lenOuter <const> = #frIdcs2
         local i = 0
         while i < lenOuter do
             i = i + 1

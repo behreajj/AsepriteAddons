@@ -706,6 +706,14 @@ dlg:button {
             local chosenFrIdcs = Utilities.flatArr2(AseUtilities.getFrames(
                 activeSprite, frameTarget, true, rangeStr))
             local lenChosenFrames <const> = #chosenFrIdcs
+            if lenChosenFrames <= 0 then
+                app.alert {
+                    title = "Error",
+                    text = "No frames were selected."
+                }
+                return
+            end
+
             local animate <const> = lenChosenFrames > 1
 
             if animate then

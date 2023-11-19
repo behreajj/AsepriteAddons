@@ -470,7 +470,7 @@ dlg:button {
 
             -- Create composite image.
             local sheetSpec <const> = createSpec(
-                wSheet,hSheet, spriteColorMode, spriteColorSpace,
+                wSheet, hSheet, spriteColorMode, spriteColorSpace,
                 spriteAlphaIndex)
             local sheetImage <const> = Image(sheetSpec)
 
@@ -557,6 +557,14 @@ dlg:button {
                 local frObjs <const> = activeSprite.frames
                 local tmFrames <const> = Utilities.flatArr2(
                     AseUtilities.getFrames(activeSprite, target))
+                local lenTmFrames <const> = #tmFrames
+                if lenTmFrames <= 0 then
+                    app.alert {
+                        title = "Error",
+                        text = "No frames were selected."
+                    }
+                    return
+                end
 
                 ---@type Layer[]
                 local tmLayers = {}
@@ -571,9 +579,15 @@ dlg:button {
                         includeHidden,
                         true, false)
                 end
-
-                local lenTmFrames <const> = #tmFrames
                 local lenTmLayers <const> = #tmLayers
+                if lenTmLayers <= 0 then
+                    app.alert {
+                        title = "Error",
+                        text = "No layers were selected."
+                    }
+                    return
+                end
+
                 local j = 0
                 while j < lenTmLayers do
                     j = j + 1

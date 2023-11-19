@@ -367,8 +367,16 @@ dlg:button {
         local trimAlpha <const> = AseUtilities.trimImageAlpha
 
         local chosenFrames <const> = Utilities.flatArr2(AseUtilities.getFrames(
-                activeSprite, frameTarget, true, rangeStr))
+            activeSprite, frameTarget, true, rangeStr))
         local lenChosenFrames <const> = #chosenFrames
+        if lenChosenFrames <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No frames were selected."
+            }
+            return
+        end
+
         local spriteFrameObjs <const> = activeSprite.frames
 
         ---@type Layer[]
@@ -451,6 +459,14 @@ dlg:button {
                 chosenLayers[lenChosenLayers] = topLayer
                 verifLayerNames[lenChosenLayers] = nameVerify(topLayer.name)
             end
+        end
+
+        if lenChosenLayers <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No layers were selected."
+            }
+            return
         end
 
         local i = 0
