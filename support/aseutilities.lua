@@ -1550,6 +1550,8 @@ end
 ---@return integer
 ---@return integer
 function AseUtilities.flipImageHoriz(source)
+    -- TODO: Switch to string bytes approach.
+
     ---@type integer[]
     local px <const> = {}
     local srcPxItr <const> = source:pixels()
@@ -1582,6 +1584,8 @@ end
 ---@return integer
 ---@return integer
 function AseUtilities.flipImageVert(source)
+    -- TODO: Switch to string bytes approach.
+
     ---@type integer[]
     local px <const> = {}
     local srcPxItr <const> = source:pixels()
@@ -2203,26 +2207,13 @@ end
 ---@param source Image source image
 ---@return Image
 function AseUtilities.rotateImage180(source)
-    -- TODO: Switch to string bytes approach.
-    ---@type integer[]
-    local px <const> = {}
-    local srcPxItr <const> = source:pixels()
-    local i = 0
-    for pixel in srcPxItr do
-        i = i + 1
-        px[i] = pixel()
-    end
+    local srcSpec <const> = source.spec
+    local w <const> = srcSpec.width
+    local h <const> = srcSpec.height
 
-    -- Table is reversed in-place.
-    Utilities.reverseTable(px)
-    local target <const> = Image(source.spec)
-    local trgPxItr <const> = target:pixels()
-    local j = 0
-    for pixel in trgPxItr do
-        j = j + 1
-        pixel(px[j])
-    end
-
+    local target <const> = Image(srcSpec)
+    target.bytes = Utilities.rotatePixels180(
+        source.bytes, w, h, source.bytesPerPixel)
     return target
 end
 

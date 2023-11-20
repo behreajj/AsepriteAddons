@@ -758,6 +758,31 @@ function Utilities.rotatePixels90(source, w, h, bpp)
     return table.concat(rotated, "")
 end
 
+---Rotates an image's bytes 180 degrees.
+---@param source string source bytes
+---@param w integer image width
+---@param h integer image height
+---@param bpp integer bits per pixel
+---@return string
+function Utilities.rotatePixels180(source, w, h, bpp)
+    ---@type string[]
+    local rotated <const> = {}
+    local strsub <const> = string.sub
+    local len <const> = w * h
+    local bppn1 <const> = bpp - 1
+
+    local i = 0
+    while i < len do
+        local j <const> = len - i
+        local orig <const> = 1 + i * bpp
+        local dest <const> = orig + bppn1
+        rotated[j] = strsub(source, orig, dest)
+        i = i + 1
+    end
+
+    return table.concat(rotated, "")
+end
+
 ---Rotates an image's bytes 270 degrees counter clockwise.
 ---@param source string source bytes
 ---@param w integer image width
