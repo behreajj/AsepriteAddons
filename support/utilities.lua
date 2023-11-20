@@ -700,27 +700,34 @@ end
 ---Resizes a source pixel array to new dimensions with nearest neighbor
 ---sampling. Performs no validation on target width or height. Creates a new
 ---pixel array.
----@param source integer[] source pixels
+---@param source string source pixels
 ---@param wSrc integer original width
 ---@param hSrc integer original height
 ---@param wTrg integer resized width
 ---@param hTrg integer resized height
----@return integer[]
-function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg)
+---@return string
+function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg, bpp)
+    ---@type string[]
+    local resized <const> = {}
+    local strsub <const> = string.sub
     local floor <const> = math.floor
     local tx <const> = wSrc / wTrg
     local ty <const> = hSrc / hTrg
-    local len <const> = wTrg * hTrg
-    ---@type integer[]
-    local target <const> = {}
+    local lenSrc <const> = wSrc * hSrc
+    local lenTrg <const> = wTrg * hTrg
+    local bppn1 <const> = bpp - 1
     local i = 0
-    while i < len do
+    while i < lenTrg do
         local nx <const> = floor((i % wTrg) * tx)
         local ny <const> = floor((i // wTrg) * ty)
+        local j <const> = ny * wSrc + nx
+        local orig <const> = 1 + j * bpp
+        local dest <const> = orig + bppn1
+        resized[1 + i] = strsub(source, orig, dest)
         i = i + 1
-        target[i] = source[1 + ny * wSrc + nx]
     end
-    return target
+
+    return table.concat(resized, "")
 end
 
 ---Reverses a table used as an array. Useful for rotating an array of pixels

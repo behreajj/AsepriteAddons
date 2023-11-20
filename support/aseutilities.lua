@@ -2093,7 +2093,7 @@ end
 
 ---Returns a copy of the source image that has been resized to the width and
 ---height. Uses nearest neighbor sampling. If the width and height are equal to
----the original, returns the source image.
+---the original, returns the source image by reference.
 ---@param source Image source image
 ---@param wTrg integer resized width
 ---@param hTrg integer resized height
@@ -2110,15 +2110,6 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
         return source
     end
 
-    ---@type integer[]
-    local px <const> = {}
-    local srcPxItr <const> = source:pixels()
-    local i = 0
-    for pixel in srcPxItr do
-        i = i + 1
-        px[i] = pixel()
-    end
-
     local trgSpec <const> = ImageSpec {
         width = wVrf,
         height = hVrf,
@@ -2128,16 +2119,9 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
     trgSpec.colorSpace = srcSpec.colorSpace
     local target <const> = Image(trgSpec)
 
-    local pxRsz <const> = Utilities.resizePixelsNearest(
-        px, wSrc, hSrc, wVrf, hVrf)
-
-    local trgPxItr <const> = target:pixels()
-    local j = 0
-    for pixel in trgPxItr do
-        j = j + 1
-        pixel(pxRsz[j])
-    end
-
+    local bytesRsz <const> = Utilities.resizePixelsNearest(
+        source.bytes, wSrc, hSrc, wVrf, hVrf, source.bytesPerPixel)
+    target.bytes = bytesRsz
     return target
 end
 
