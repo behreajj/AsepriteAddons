@@ -2182,18 +2182,9 @@ end
 ---@param source Image source image
 ---@return Image
 function AseUtilities.rotateImage90(source)
-    -- TODO: Try using byte strings instead of pixel iterator?
     local srcSpec <const> = source.spec
     local w <const> = srcSpec.width
     local h <const> = srcSpec.height
-
-    ---@type integer[]
-    local pxRot <const> = {}
-    local lennh <const> = w * h - h
-    local srcPxItr <const> = source:pixels()
-    for pixel in srcPxItr do
-        pxRot[1 + lennh + pixel.y - pixel.x * h] = pixel()
-    end
 
     local trgSpec <const> = ImageSpec {
         width = h,
@@ -2203,13 +2194,8 @@ function AseUtilities.rotateImage90(source)
     }
     trgSpec.colorSpace = srcSpec.colorSpace
     local target <const> = Image(trgSpec)
-
-    local trgPxItr <const> = target:pixels()
-    local j = 0
-    for pixel in trgPxItr do
-        j = j + 1
-        pixel(pxRot[j])
-    end
+    target.bytes = Utilities.rotatePixels90(
+        source.bytes, w, h, source.bytesPerPixel)
     return target
 end
 
@@ -2217,6 +2203,7 @@ end
 ---@param source Image source image
 ---@return Image
 function AseUtilities.rotateImage180(source)
+    -- TODO: Switch to string bytes approach.
     ---@type integer[]
     local px <const> = {}
     local srcPxItr <const> = source:pixels()
@@ -2248,14 +2235,6 @@ function AseUtilities.rotateImage270(source)
     local w <const> = srcSpec.width
     local h <const> = srcSpec.height
 
-    ---@type integer[]
-    local pxRot <const> = {}
-    local hn1 <const> = h - 1
-    local srcPxItr <const> = source:pixels()
-    for pixel in srcPxItr do
-        pxRot[1 + pixel.x * h + hn1 - pixel.y] = pixel()
-    end
-
     local trgSpec <const> = ImageSpec {
         width = h,
         height = w,
@@ -2264,14 +2243,8 @@ function AseUtilities.rotateImage270(source)
     }
     trgSpec.colorSpace = srcSpec.colorSpace
     local target <const> = Image(trgSpec)
-
-    local trgPxItr <const> = target:pixels()
-    local j = 0
-    for pixel in trgPxItr do
-        j = j + 1
-        pixel(pxRot[j])
-    end
-
+    target.bytes = Utilities.rotatePixels270(
+        source.bytes, w, h, source.bytesPerPixel)
     return target
 end
 

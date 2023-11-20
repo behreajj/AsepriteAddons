@@ -730,6 +730,62 @@ function Utilities.reverseTable(t)
     return t
 end
 
+---Rotates an image's bytes 90 degrees counter clockwise.
+---@param source string source bytes
+---@param w integer image width
+---@param h integer image height
+---@param bpp integer bits per pixel
+---@return string
+function Utilities.rotatePixels90(source, w, h, bpp)
+    ---@type string[]
+    local rotated <const> = {}
+    local strsub <const> = string.sub
+    local len <const> = w * h
+    local bppn1 <const> = bpp - 1
+    local lennh <const> = w * h - h
+
+    local i = 0
+    while i < len do
+        local y <const> = i // w
+        local x <const> = i % w
+        local j <const> = 1 + lennh + y - x * h
+        local orig <const> = 1 + i * bpp
+        local dest <const> = orig + bppn1
+        rotated[j] = strsub(source, orig, dest)
+        i = i + 1
+    end
+
+    return table.concat(rotated, "")
+end
+
+---Rotates an image's bytes 270 degrees counter clockwise.
+---@param source string source bytes
+---@param w integer image width
+---@param h integer image height
+---@param bpp integer bits per pixel
+---@return string
+function Utilities.rotatePixels270(source, w, h, bpp)
+    ---@type string[]
+    local rotated <const> = {}
+    local strsub <const> = string.sub
+    local len <const> = w * h
+    local bppn1 <const> = bpp - 1
+    local hn1 <const> = h - 1
+
+    local i = 0
+    while i < len do
+        local y <const> = i // w
+        local x <const> = i % w
+        local j <const> = 1 + x * h + hn1 - y
+        local orig <const> = 1 + i * bpp
+        local dest <const> = orig + bppn1
+        rotated[j] = strsub(source, orig, dest)
+        i = i + 1
+    end
+
+    return table.concat(rotated, "")
+end
+
 ---Rounds a number to an integer based on its relationship to 0.5. Returns zero
 ---when the number cannot be determined to be either greater than or less than
 ---zero.
@@ -933,9 +989,9 @@ function Utilities.validateFilename(filename)
     return table.concat(fileChars)
 end
 
----Translates the elements in an image's bytes by a vector, wrapping
----the elements that exceed its dimensions back to the beginning.
----@param source string image bytes
+---Translates an image's bytes by a vector, wrapping elements that exceed its
+---dimensions back to the beginning.
+---@param source string source bytes
 ---@param xt integer x translation
 ---@param yt integer y translation
 ---@param w integer image width
@@ -948,6 +1004,7 @@ function Utilities.wrapPixels(source, xt, yt, w, h, bpp)
     local strsub <const> = string.sub
     local len <const> = w * h
     local bppn1 <const> = bpp - 1
+
     local i = 0
     while i < len do
         local y <const> = i // w
@@ -960,6 +1017,7 @@ function Utilities.wrapPixels(source, xt, yt, w, h, bpp)
         wrapped[1 + i] = strsub(source, orig, dest)
         i = i + 1
     end
+
     return table.concat(wrapped, "")
 end
 
