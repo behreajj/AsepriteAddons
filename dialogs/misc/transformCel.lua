@@ -86,7 +86,7 @@ end
 ---@param bpp integer
 ---@param defaultValue string
 ---@return string
-local function sampleNearChars(
+local function sampleNear(
     xSrc, ySrc, wSrc, hSrc,
     sourceBytes, bpp,
     defaultValue)
@@ -106,30 +106,11 @@ end
 ---@param ySrc number
 ---@param wSrc integer
 ---@param hSrc integer
----@param srcImg Image
----@param alphaIndex integer
----@return integer
-local function sampleNear(
-    xSrc, ySrc, wSrc, hSrc,
-    srcImg, alphaIndex)
-    local xr <const> = Utilities.round(xSrc)
-    local yr <const> = Utilities.round(ySrc)
-    if yr > -1 and yr < hSrc
-        and xr > -1 and xr < wSrc then
-        return srcImg:getPixel(xr, yr)
-    end
-    return alphaIndex
-end
-
----@param xSrc number
----@param ySrc number
----@param wSrc integer
----@param hSrc integer
 ---@param sourceBytes string
 ---@param bpp integer
 ---@param defaultValue string
 ---@return string
-local function sampleBilinearChars(
+local function sampleBilinear(
     xSrc, ySrc, wSrc, hSrc,
     sourceBytes, bpp,
     defaultValue)
@@ -229,99 +210,6 @@ local function sampleBilinearChars(
         return string.pack("B B B B", rt, gt, bt, at)
     end
     return defaultValue
-end
-
----@param xSrc number
----@param ySrc number
----@param wSrc integer
----@param hSrc integer
----@param srcImg Image
----@param alphaIndex integer
----@return integer
-local function sampleBilinear(
-    xSrc, ySrc, wSrc, hSrc,
-    srcImg, alphaIndex)
-    local xf <const> = math.floor(xSrc)
-    local yf <const> = math.floor(ySrc)
-    local xc <const> = xf + 1
-    local yc <const> = yf + 1
-
-    local yfInBounds <const> = yf > -1 and yf < hSrc
-    local ycInBounds <const> = yc > -1 and yc < hSrc
-    local xfInBounds <const> = xf > -1 and xf < wSrc
-    local xcInBounds <const> = xc > -1 and xc < wSrc
-
-    local c00 = 0x0
-    local c10 = 0x0
-    local c11 = 0x0
-    local c01 = 0x0
-
-    if yfInBounds and xfInBounds then
-        c00 = srcImg:getPixel(xf, yf)
-    end
-
-    if yfInBounds and xcInBounds then
-        c10 = srcImg:getPixel(xc, yf)
-    end
-
-    if ycInBounds and xcInBounds then
-        c11 = srcImg:getPixel(xc, yc)
-    end
-
-    if ycInBounds and xfInBounds then
-        c01 = srcImg:getPixel(xf, yc)
-    end
-
-    local a0 = 0.0
-    local b0 = 0.0
-    local g0 = 0.0
-    local r0 = 0.0
-
-    -- The trim alpha results are better when alpha zero check is done here.
-    local xErr <const> = xSrc - xf
-    local a00 <const> = c00 >> 0x18 & 0xff
-    local a10 <const> = c10 >> 0x18 & 0xff
-    if a00 > 0 or a10 > 0 then
-        r0, g0, b0, a0 = rgbMix(
-            c00 & 0xff, c00 >> 0x08 & 0xff,
-            c00 >> 0x10 & 0xff, a00,
-            c10 & 0xff, c10 >> 0x08 & 0xff,
-            c10 >> 0x10 & 0xff, a10, xErr)
-    end
-
-    local a1 = 0.0
-    local b1 = 0.0
-    local g1 = 0.0
-    local r1 = 0.0
-
-    local a01 <const> = c01 >> 0x18 & 0xff
-    local a11 <const> = c11 >> 0x18 & 0xff
-    if a01 > 0 or a11 > 0 then
-        r1, g1, b1, a1 = rgbMix(
-            c01 & 0xff, c01 >> 0x08 & 0xff,
-            c01 >> 0x10 & 0xff, a01,
-            c11 & 0xff, c11 >> 0x08 & 0xff,
-            c11 >> 0x10 & 0xff, a11, xErr)
-    end
-
-    if a0 > 0.0 or a1 > 0.0 then
-        local rt, gt, bt, at = rgbMix(
-            r0, g0, b0, a0,
-            r1, g1, b1, a1, ySrc - yf)
-
-        at = math.floor(0.5 + at)
-        bt = math.floor(0.5 + bt)
-        gt = math.floor(0.5 + gt)
-        rt = math.floor(0.5 + rt)
-
-        if at > 255 then at = 255 end
-        if bt > 255 then bt = 255 end
-        if gt > 255 then gt = 255 end
-        if rt > 255 then rt = 255 end
-
-        return at << 0x18 | bt << 0x10 | gt << 0x08 | rt
-    end
-    return alphaIndex
 end
 
 local dlg <const> = Dialog { title = "Transform" }
@@ -552,6 +440,7 @@ dlg:button {
             false, false, false, false)
         local lenCels <const> = #cels
         local xCtrSprite <const> = activeSprite.width * 0.5
+        local floor <const> = math.floor
 
         app.transaction("Align Top", function()
             local i = 0
@@ -563,7 +452,7 @@ dlg:button {
                 local yNew <const> = 0
                 if op.y == yNew then
                     local w <const> = cel.image.width
-                    xNew = math.floor(0.5 + xCtrSprite - w * 0.5)
+                    xNew = floor(0.5 + xCtrSprite - w * 0.5)
                 end
                 cel.position = Point(xNew, yNew)
             end
@@ -592,6 +481,7 @@ dlg:button {
             false, false, false, false)
         local lenCels <const> = #cels
         local yCtrSprite <const> = activeSprite.height * 0.5
+        local floor <const> = math.floor
 
         app.transaction("Align Left", function()
             local i = 0
@@ -603,7 +493,7 @@ dlg:button {
                 local yNew = op.y
                 if op.x == xNew then
                     local h <const> = cel.image.height
-                    yNew = math.floor(0.5 + yCtrSprite - h * 0.5)
+                    yNew = floor(0.5 + yCtrSprite - h * 0.5)
                 end
                 cel.position = Point(xNew, yNew)
             end
@@ -633,6 +523,7 @@ dlg:button {
         local lenCels <const> = #cels
         local xCtrSprite <const> = activeSprite.width * 0.5
         local hSprite <const> = activeSprite.height
+        local floor <const> = math.floor
 
         app.transaction("Align Bottom", function()
             local i = 0
@@ -645,7 +536,7 @@ dlg:button {
                 local yNew <const> = hSprite - celImg.height
                 if op.y == yNew then
                     local w <const> = celImg.width
-                    xNew = math.floor(0.5 + xCtrSprite - w * 0.5)
+                    xNew = floor(0.5 + xCtrSprite - w * 0.5)
                 end
                 cel.position = Point(xNew, yNew)
             end
@@ -675,6 +566,7 @@ dlg:button {
         local lenCels <const> = #cels
         local wSprite <const> = activeSprite.width
         local yCtrSprite <const> = activeSprite.height * 0.5
+        local floor <const> = math.floor
 
         app.transaction("Align Right", function()
             local i = 0
@@ -687,7 +579,7 @@ dlg:button {
                 local yNew = op.y
                 if op.x == xNew then
                     local h <const> = cel.image.height
-                    yNew = math.floor(0.5 + yCtrSprite - h * 0.5)
+                    yNew = floor(0.5 + yCtrSprite - h * 0.5)
                 end
                 cel.position = Point(xNew, yNew)
             end
@@ -788,6 +680,8 @@ dlg:button {
         local createSpec <const> = AseUtilities.createSpec
         local trimAlpha <const> = AseUtilities.trimImageAlpha
         local round <const> = Utilities.round
+        local strpack <const> = string.pack
+        local tconcat <const> = table.concat
 
         local target <const> = args.target
             or defaults.target --[[@as string]]
@@ -814,6 +708,10 @@ dlg:button {
                     local hSrc <const> = srcSpec.height
                     local alphaIndex <const> = srcSpec.transparentColor
 
+                    local srcBytes <const> = srcImg.bytes
+                    local srcBpp <const> = srcImg.bytesPerPixel
+                    local pxAlpha <const> = strpack(">I" .. srcBpp, alphaIndex)
+
                     local wTrgf <const> = wSrc + absTan * hSrc
                     local wTrgi <const> = ceil(wTrgf)
                     local yCenter <const> = hSrc * 0.5
@@ -825,12 +723,19 @@ dlg:button {
                         srcSpec.colorSpace, alphaIndex)
                     local trgImg = Image(trgSpec)
 
-                    local trgPxItr <const> = trgImg:pixels()
-                    for pixel in trgPxItr do
-                        pixel(sample(
-                            xDiff + pixel.x + tana * (pixel.y - yCenter),
-                            pixel.y, wSrc, hSrc, srcImg, alphaIndex))
+                    ---@type string[]
+                    local byteArr <const> = {}
+                    local lenFlat <const> = wTrgi * hSrc
+                    local j = 0
+                    while j < lenFlat do
+                        local ySrc = j // wTrgi
+                        local xSrc = xDiff + (j % wTrgi) + tana * (ySrc - yCenter)
+
+                        j = j + 1
+                        byteArr[j] = sample(xSrc, ySrc,
+                            wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
                     end
+                    trgImg.bytes = tconcat(byteArr, "")
 
                     local xTrim = 0
                     local yTrim = 0
@@ -889,6 +794,8 @@ dlg:button {
         local createSpec <const> = AseUtilities.createSpec
         local trimAlpha <const> = AseUtilities.trimImageAlpha
         local round <const> = Utilities.round
+        local strpack <const> = string.pack
+        local tconcat <const> = table.concat
 
         local target <const> = args.target
             or defaults.target --[[@as string]]
@@ -915,6 +822,10 @@ dlg:button {
                     local hSrc <const> = srcSpec.height
                     local alphaIndex <const> = srcSpec.transparentColor
 
+                    local srcBytes <const> = srcImg.bytes
+                    local srcBpp <const> = srcImg.bytesPerPixel
+                    local pxAlpha <const> = strpack(">I" .. srcBpp, alphaIndex)
+
                     local hTrgf <const> = hSrc + absTan * wSrc
                     local hTrgi <const> = ceil(hTrgf)
                     local xTrgCenter <const> = wSrc * 0.5
@@ -926,12 +837,19 @@ dlg:button {
                         srcSpec.colorSpace, alphaIndex)
                     local trgImg = Image(trgSpec)
 
-                    local trgPxItr <const> = trgImg:pixels()
-                    for pixel in trgPxItr do
-                        pixel(sample(pixel.x,
-                            yDiff + pixel.y + tana * (pixel.x - xTrgCenter),
-                            wSrc, hSrc, srcImg, alphaIndex))
+                    ---@type string[]
+                    local byteArr <const> = {}
+                    local lenFlat <const> = wSrc * hTrgi
+                    local j = 0
+                    while j < lenFlat do
+                        local xSrc = j % wSrc
+                        local ySrc = yDiff + (j // wSrc) + tana * (xSrc - xTrgCenter)
+
+                        j = j + 1
+                        byteArr[j] = sample(xSrc, ySrc,
+                            wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
                     end
+                    trgImg.bytes = tconcat(byteArr, "")
 
                     local xTrim = 0
                     local yTrim = 0
@@ -1031,9 +949,9 @@ dlg:button {
             local sample = nil
             if useBilinear then
                 app.command.ChangePixelFormat { format = "rgb" }
-                sample = sampleBilinearChars
+                sample = sampleBilinear
             else
-                sample = sampleNearChars
+                sample = sampleNear
             end
 
             -- Unpack angle.
@@ -1069,7 +987,7 @@ dlg:button {
 
                         local srcBytes <const> = srcImg.bytes
                         local srcBpp <const> = srcImg.bytesPerPixel
-                        local defaultValue = strpack(">I" .. srcBpp, alphaIndex)
+                        local pxAlpha <const> = strpack(">I" .. srcBpp, alphaIndex)
 
                         local wTrgf <const> = hSrc * absSina + wSrc * absCosa
                         local hTrgf <const> = hSrc * absCosa + wSrc * absSina
@@ -1106,7 +1024,7 @@ dlg:button {
 
                             j = j + 1
                             byteArr[j] = sample(xSrc, ySrc,
-                                wSrc, hSrc, srcBytes, srcBpp, defaultValue)
+                                wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
                         end
                         trgImg.bytes = tconcat(byteArr, "")
 
@@ -1312,11 +1230,11 @@ dlg:button {
         local lenCels = #cels
 
         local oldMode <const> = activeSprite.colorMode
-        local sample = sampleNearChars
+        local sample = sampleNear
         local useBilinear <const> = easeMethod == "BILINEAR"
         if useBilinear then
             app.command.ChangePixelFormat { format = "rgb" }
-            sample = sampleBilinearChars
+            sample = sampleBilinear
         end
 
         app.transaction("Scale Cels", function()
@@ -1333,7 +1251,7 @@ dlg:button {
 
                     local srcBytes <const> = srcImg.bytes
                     local srcBpp <const> = srcImg.bytesPerPixel
-                    local defaultValue = strpack(">I" .. srcBpp, alphaIndex)
+                    local pxAlpha <const> = strpack(">I" .. srcBpp, alphaIndex)
 
                     local wTrg = wPxl
                     local hTrg = hPxl
@@ -1363,7 +1281,7 @@ dlg:button {
                             local yTrg <const> = (j // wTrg) * ty
                             j = j + 1
                             byteArr[j] = sample(xTrg, yTrg,
-                                wSrc, hSrc, srcBytes, srcBpp, defaultValue)
+                                wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
                         end
                         trgImg.bytes = tconcat(byteArr, "")
 
