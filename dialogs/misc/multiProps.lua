@@ -95,26 +95,6 @@ dlg:number {
     focus = false,
 }
 
-dlg:newrow { always = false }
-
-dlg:button {
-    id = "frameUpdate",
-    text = "UP&DATE",
-    focus = false,
-    onclick = function()
-        local args = dlg.data
-        local msDur <const> = args.frameDuration --[[@as integer]]
-
-        app.transaction("Set Frame", function()
-            frame.duration = math.min(math.max(math.abs(
-                msDur) * 0.001, 0.001), 65.535)
-        end)
-
-        app.refresh()
-        dlg:close()
-    end
-}
-
 dlg:separator { id = "layerSep", text = "Layer" }
 
 dlg:label {
@@ -171,35 +151,6 @@ dlg:entry {
     label = "User Data:",
     text = layer.data,
     focus = false,
-}
-
-dlg:newrow { always = false }
-
-dlg:button {
-    id = "layerUpdate",
-    text = "U&PDATE",
-    focus = false,
-    onclick = function()
-        local args = dlg.data
-        local name <const> = args.layerName --[[@as string]]
-        local blendStr <const> = args.layerBlend --[[@as string]]
-        local opacity <const> = args.layerOpacity --[[@as integer]]
-        local uiColor <const> = args.layerColor --[[@as Color]]
-        local userData <const> = args.layerUserData --[[@as string]]
-
-        app.transaction("Set Layer", function()
-            layer.name = name
-            if (not layer.isGroup) and (not layer.isBackground) then
-                layer.blendMode = BlendMode[blendStr]
-                layer.opacity = opacity
-            end
-            layer.color = uiColor
-            layer.data = userData
-        end)
-
-        app.refresh()
-        dlg:close()
-    end
 }
 
 if layer.isTilemap then
@@ -268,37 +219,58 @@ if cel then
         text = cel.data,
         focus = false,
     }
-
-    dlg:newrow { always = false }
-
-    dlg:button {
-        id = "celUpdate",
-        text = "&UPDATE",
-        focus = false,
-        onclick = function()
-            local args = dlg.data
-            local xPos <const> = args.xPosCel --[[@as integer]]
-            local yPos <const> = args.yPosCel --[[@as integer]]
-            local opacity <const> = args.celOpacity --[[@as integer]]
-            local zIndex <const> = args.celZIndex --[[@as integer]]
-            local uiColor <const> = args.celColor --[[@as Color]]
-            local userData <const> = args.celUserData --[[@as string]]
-
-            app.transaction("Set Cel", function()
-                cel.position = Point(xPos, yPos)
-                cel.opacity = opacity
-                cel.zIndex = zIndex
-                cel.color = uiColor
-                cel.data = userData
-            end)
-
-            app.refresh()
-            dlg:close()
-        end
-    }
 end
 
 dlg:separator { id = "cancelSep" }
+
+dlg:button {
+    id = "confirm",
+    text = "&OK",
+    focus = false,
+    onclick = function()
+        local args <const> = dlg.data
+
+        -- Frame.
+        local msDur <const> = args.frameDuration --[[@as integer]]
+
+        -- Layer.
+        local name <const> = args.layerName --[[@as string]]
+        local blendStr <const> = args.layerBlend --[[@as string]]
+        local layerOpacity <const> = args.layerOpacity --[[@as integer]]
+        local layerColor <const> = args.layerColor --[[@as Color]]
+        local layerUserData <const> = args.layerUserData --[[@as string]]
+
+        -- Cel.
+        local xPos <const> = args.xPosCel --[[@as integer]]
+        local yPos <const> = args.yPosCel --[[@as integer]]
+        local celOpacity <const> = args.celOpacity --[[@as integer]]
+        local zIndex <const> = args.celZIndex --[[@as integer]]
+        local celColor <const> = args.celColor --[[@as Color]]
+        local celUserData <const> = args.celUserData --[[@as string]]
+
+        app.transaction("Set Cel", function()
+            frame.duration = math.min(math.max(math.abs(
+                msDur) * 0.001, 0.001), 65.535)
+
+            layer.name = name
+            if (not layer.isGroup) and (not layer.isBackground) then
+                layer.blendMode = BlendMode[blendStr]
+                layer.opacity = layerOpacity
+            end
+            layer.color = layerColor
+            layer.data = layerUserData
+
+            cel.position = Point(xPos, yPos)
+            cel.opacity = celOpacity
+            cel.zIndex = zIndex
+            cel.color = celColor
+            cel.data = celUserData
+        end)
+
+        app.refresh()
+        dlg:close()
+    end
+}
 
 dlg:button {
     id = "cancel",
