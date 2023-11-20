@@ -127,49 +127,60 @@ function Utilities.flatArr2(arr2)
     return flat
 end
 
----Flips a source pixel array horizontally. Changes the array in-place.
----@param source integer[] source pixels
+---Flips an image's bytes horizontally.
+---@param source string source bytes
 ---@param w integer image width
 ---@param h integer image height
----@return integer[]
-function Utilities.flipPixelsHoriz(source, w, h)
-    local wd2 <const> = w // 2
+---@param bpp integer bits per pixel
+---@return string
+function Utilities.flipPixelsX(source, w, h, bpp)
+    ---@type string[]
+    local flipped <const> = {}
+    local strsub <const> = string.sub
+    local len <const> = w * h
+    local bppn1 <const> = bpp - 1
     local wn1 <const> = w - 1
-    local len <const> = wd2 * h
-    local k = 0
-    while k < len do
-        local x <const> = k % wd2
-        local yw <const> = w * (k // wd2)
-        local idxSrc <const> = 1 + x + yw
-        local idxTrg <const> = 1 + yw + wn1 - x
-        local swap <const> = source[idxSrc]
-        source[idxSrc] = source[idxTrg]
-        source[idxTrg] = swap
-        k = k + 1
+
+    local i = 0
+    while i < len do
+        local y <const> = i // w
+        local x <const> = i % w
+        local j <const> = 1 + y * w + wn1 - x
+        local orig <const> = 1 + i * bpp
+        local dest <const> = orig + bppn1
+        flipped[j] = strsub(source, orig, dest)
+        i = i + 1
     end
-    return source
+
+    return table.concat(flipped, "")
 end
 
----Flips a source pixel array vertically. Changes the array in-place.
----@param source integer[] source pixels
+---Flips an image's bytes vertically.
+---@param source string source bytes
 ---@param w integer image width
 ---@param h integer image height
----@return integer[]
-function Utilities.flipPixelsVert(source, w, h)
-    local hd2 <const> = h // 2
+---@param bpp integer bits per pixel
+---@return string
+function Utilities.flipPixelsY(source, w, h, bpp)
+    ---@type string[]
+    local flipped <const> = {}
+    local strsub <const> = string.sub
+    local len <const> = w * h
+    local bppn1 <const> = bpp - 1
     local hn1 <const> = h - 1
-    local len <const> = w * hd2
-    local k = 0
-    while k < len do
-        local idxSrc <const> = 1 + k
-        local idxTrg <const> = 1 + k % w
-            + w * (hn1 - k // w)
-        local swap <const> = source[idxSrc]
-        source[idxSrc] = source[idxTrg]
-        source[idxTrg] = swap
-        k = k + 1
+
+    local i = 0
+    while i < len do
+        local y <const> = i // w
+        local x <const> = i % w
+        local j <const> = 1 + (hn1 - y) * w + x
+        local orig <const> = 1 + i * bpp
+        local dest <const> = orig + bppn1
+        flipped[j] = strsub(source, orig, dest)
+        i = i + 1
     end
-    return source
+
+    return table.concat(flipped, "")
 end
 
 ---Generates a random number with normal distribution. Based on the Box-Muller

@@ -1544,71 +1544,31 @@ function AseUtilities.flattenGroup(
 end
 
 ---Returns a copy of the source image that has been flipped horizontally.
----Also returns displaced coordinates for the top left corner.
 ---@param source Image source image
 ---@return Image
----@return integer
----@return integer
-function AseUtilities.flipImageHoriz(source)
-    -- TODO: Switch to string bytes approach.
-
-    ---@type integer[]
-    local px <const> = {}
-    local srcPxItr <const> = source:pixels()
-    local i = 0
-    for pixel in srcPxItr do
-        i = i + 1
-        px[i] = pixel()
-    end
-
+function AseUtilities.flipImageX(source)
     local srcSpec <const> = source.spec
     local w <const> = srcSpec.width
     local h <const> = srcSpec.height
-    Utilities.flipPixelsHoriz(px, w, h)
 
     local target <const> = Image(srcSpec)
-    local trgPxItr <const> = target:pixels()
-    local j = 0
-    for pixel in trgPxItr do
-        j = j + 1
-        pixel(px[j])
-    end
-
-    return target, 1 - w, 0
+    target.bytes = Utilities.flipPixelsX(
+        source.bytes, w, h, source.bytesPerPixel)
+    return target
 end
 
 ---Returns a copy of the source image that has been flipped vertically.
----Also returns displaced coordinates for the top left corner.
 ---@param source Image source image
 ---@return Image
----@return integer
----@return integer
-function AseUtilities.flipImageVert(source)
-    -- TODO: Switch to string bytes approach.
-
-    ---@type integer[]
-    local px <const> = {}
-    local srcPxItr <const> = source:pixels()
-    local i = 0
-    for pixel in srcPxItr do
-        i = i + 1
-        px[i] = pixel()
-    end
-
+function AseUtilities.flipImageY(source)
     local srcSpec <const> = source.spec
     local w <const> = srcSpec.width
     local h <const> = srcSpec.height
-    Utilities.flipPixelsVert(px, w, h)
 
     local target <const> = Image(srcSpec)
-    local trgPxItr <const> = target:pixels()
-    local j = 0
-    for pixel in trgPxItr do
-        j = j + 1
-        pixel(px[j])
-    end
-
-    return target, 0, 1 - h
+    target.bytes = Utilities.flipPixelsY(
+        source.bytes, w, h, source.bytesPerPixel)
+    return target
 end
 
 ---Converts an array of frame objects to an array of frame numbers.
@@ -2396,15 +2356,15 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
             elseif meta == maskRot90cw then
                 tileImage = AseUtilities.rotateImage270(tileImage)
             elseif meta == maskFlipY then
-                tileImage = AseUtilities.flipImageVert(tileImage)
+                tileImage = AseUtilities.flipImageY(tileImage)
             elseif meta == maskFlipX then
-                tileImage = AseUtilities.flipImageHoriz(tileImage)
+                tileImage = AseUtilities.flipImageX(tileImage)
             elseif meta == maskFlipD then
                 tileImage = AseUtilities.rotateImage270(tileImage)
-                tileImage = AseUtilities.flipImageHoriz(tileImage)
+                tileImage = AseUtilities.flipImageX(tileImage)
             elseif meta == maskAll then
                 tileImage = AseUtilities.rotateImage90(tileImage)
-                tileImage = AseUtilities.flipImageHoriz(tileImage)
+                tileImage = AseUtilities.flipImageX(tileImage)
             end
 
             imgTrg:drawImage(

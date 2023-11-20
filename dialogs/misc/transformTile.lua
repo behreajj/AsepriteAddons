@@ -63,10 +63,10 @@ local function transformTiles(
         transformFunc = AseUtilities.rotateImage270
     elseif preset == "FLIP_H" then
         transactionName = "Flip Tiles H"
-        transformFunc = AseUtilities.flipImageHoriz
+        transformFunc = AseUtilities.flipImageX
     elseif preset == "FLIP_V" then
         transactionName = "Flip Tiles V"
-        transformFunc = AseUtilities.flipImageVert
+        transformFunc = AseUtilities.flipImageY
     end
 
     ---@type table<integer, integer>
@@ -163,10 +163,10 @@ local function transformCel(dialog, preset)
             updateCelPos = true
         elseif preset == "FLIP_H" then
             transactionName = "Flip Map H"
-            transformFunc = AseUtilities.flipImageHoriz
+            transformFunc = AseUtilities.flipImageX
         elseif preset == "FLIP_V" then
             transactionName = "Flip Map V"
-            transformFunc = AseUtilities.flipImageVert
+            transformFunc = AseUtilities.flipImageY
         end
 
         app.transaction(transactionName, function()
