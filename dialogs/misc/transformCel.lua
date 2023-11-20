@@ -82,19 +82,24 @@ end
 ---@param ySrc number
 ---@param wSrc integer
 ---@param hSrc integer
----@param srcImg Image
----@param alphaMask integer
----@return integer
-local function sampleNear(
+---@param sourceBytes string
+---@param bpp integer
+---@param defaultValue string
+---@return string
+local function sampleNearChars(
     xSrc, ySrc, wSrc, hSrc,
-    srcImg, alphaMask)
+    sourceBytes, bpp,
+    defaultValue)
     local xr <const> = Utilities.round(xSrc)
     local yr <const> = Utilities.round(ySrc)
-    if yr > -1 and yr < hSrc
-        and xr > -1 and xr < wSrc then
-        return srcImg:getPixel(xr, yr)
+    if yr >= 0 and yr < hSrc
+        and xr >= 0 and xr < wSrc then
+        local j <const> = yr * wSrc + xr
+        local orig <const> = 1 + j * bpp
+        local dest <const> = orig + bpp - 1
+        return string.sub(sourceBytes, orig, dest)
     end
-    return alphaMask
+    return defaultValue
 end
 
 ---@param xSrc number
@@ -102,11 +107,140 @@ end
 ---@param wSrc integer
 ---@param hSrc integer
 ---@param srcImg Image
----@param alphaMask integer
+---@param alphaIndex integer
+---@return integer
+local function sampleNear(
+    xSrc, ySrc, wSrc, hSrc,
+    srcImg, alphaIndex)
+    local xr <const> = Utilities.round(xSrc)
+    local yr <const> = Utilities.round(ySrc)
+    if yr > -1 and yr < hSrc
+        and xr > -1 and xr < wSrc then
+        return srcImg:getPixel(xr, yr)
+    end
+    return alphaIndex
+end
+
+---@param xSrc number
+---@param ySrc number
+---@param wSrc integer
+---@param hSrc integer
+---@param sourceBytes string
+---@param bpp integer
+---@param defaultValue string
+---@return string
+local function sampleBilinearChars(
+    xSrc, ySrc, wSrc, hSrc,
+    sourceBytes, bpp,
+    defaultValue)
+    local xf <const> = math.floor(xSrc)
+    local yf <const> = math.floor(ySrc)
+    local xc <const> = xf + 1
+    local yc <const> = yf + 1
+
+    local yfInBounds <const> = yf > -1 and yf < hSrc
+    local ycInBounds <const> = yc > -1 and yc < hSrc
+    local xfInBounds <const> = xf > -1 and xf < wSrc
+    local xcInBounds <const> = xc > -1 and xc < wSrc
+
+    local a00 = 0
+    local b00 = 0
+    local g00 = 0
+    local r00 = 0
+    if yfInBounds and xfInBounds then
+        local j <const> = yf * wSrc + xf
+        local orig <const> = 1 + j * bpp
+        local dest <const> = orig + bpp - 1
+        r00, g00, b00, a00 = string.byte(sourceBytes, orig, dest)
+    end
+
+    local a10 = 0
+    local b10 = 0
+    local g10 = 0
+    local r10 = 0
+    if yfInBounds and xcInBounds then
+        local j <const> = yf * wSrc + xc
+        local orig <const> = 1 + j * bpp
+        local dest <const> = orig + bpp - 1
+        r10, g10, b10, a10 = string.byte(sourceBytes, orig, dest)
+    end
+
+    local a11 = 0
+    local b11 = 0
+    local g11 = 0
+    local r11 = 0
+    if ycInBounds and xcInBounds then
+        local j <const> = yc * wSrc + xc
+        local orig <const> = 1 + j * bpp
+        local dest <const> = orig + bpp - 1
+        r11, g11, b11, a11 = string.byte(sourceBytes, orig, dest)
+    end
+
+    local a01 = 0
+    local b01 = 0
+    local g01 = 0
+    local r01 = 0
+    if ycInBounds and xfInBounds then
+        local j <const> = yc * wSrc + xf
+        local orig <const> = 1 + j * bpp
+        local dest <const> = orig + bpp - 1
+        r01, g01, b01, a01 = string.byte(sourceBytes, orig, dest)
+    end
+
+    local a0 = 0.0
+    local b0 = 0.0
+    local g0 = 0.0
+    local r0 = 0.0
+
+    -- The trim alpha results are better when alpha zero check is done here.
+    local xErr <const> = xSrc - xf
+    if a00 > 0 or a10 > 0 then
+        r0, g0, b0, a0 = rgbMix(
+            r00, g00, b00, a00,
+            r10, g10, b10, a10, xErr)
+    end
+
+    local a1 = 0.0
+    local b1 = 0.0
+    local g1 = 0.0
+    local r1 = 0.0
+
+    if a01 > 0 or a11 > 0 then
+        r1, g1, b1, a1 = rgbMix(
+            r01, g01, b01, a01,
+            r11, g11, b11, a11, xErr)
+    end
+
+    if a0 > 0.0 or a1 > 0.0 then
+        local rt, gt, bt, at = rgbMix(
+            r0, g0, b0, a0,
+            r1, g1, b1, a1, ySrc - yf)
+
+        at = math.floor(0.5 + at)
+        bt = math.floor(0.5 + bt)
+        gt = math.floor(0.5 + gt)
+        rt = math.floor(0.5 + rt)
+
+        if at > 255 then at = 255 end
+        if bt > 255 then bt = 255 end
+        if gt > 255 then gt = 255 end
+        if rt > 255 then rt = 255 end
+
+        return string.pack("B B B B", rt, gt, bt, at)
+    end
+    return defaultValue
+end
+
+---@param xSrc number
+---@param ySrc number
+---@param wSrc integer
+---@param hSrc integer
+---@param srcImg Image
+---@param alphaIndex integer
 ---@return integer
 local function sampleBilinear(
     xSrc, ySrc, wSrc, hSrc,
-    srcImg, alphaMask)
+    srcImg, alphaIndex)
     local xf <const> = math.floor(xSrc)
     local yf <const> = math.floor(ySrc)
     local xc <const> = xf + 1
@@ -187,7 +321,7 @@ local function sampleBilinear(
 
         return at << 0x18 | bt << 0x10 | gt << 0x08 | rt
     end
-    return alphaMask
+    return alphaIndex
 end
 
 local dlg <const> = Dialog { title = "Transform" }
@@ -325,7 +459,7 @@ dlg:button {
         local trimAlpha <const> = AseUtilities.trimImageAlpha
         local wrap <const> = AseUtilities.wrapImage
         local spriteSpec <const> = activeSprite.spec
-        local alphaMask <const> = spriteSpec.transparentColor
+        local alphaIndex <const> = spriteSpec.transparentColor
 
         local docPrefs <const> = app.preferences.document(activeSprite)
         local tiledMode <const> = docPrefs.tiled.mode --[[@as integer]]
@@ -341,7 +475,7 @@ dlg:button {
                     local imgTrg = wrap(blit, dx, dy)
                     local xTrg = 0
                     local yTrg = 0
-                    imgTrg, xTrg, yTrg = trimAlpha(imgTrg, 0, alphaMask)
+                    imgTrg, xTrg, yTrg = trimAlpha(imgTrg, 0, alphaIndex)
                     cel.image = imgTrg
                     cel.position = Point(xTrg, yTrg)
                 end
@@ -358,7 +492,7 @@ dlg:button {
                     local imgTrg = wrap(blit, 0, dy)
                     local xTrg = 0
                     local yTrg = 0
-                    imgTrg, xTrg, yTrg = trimAlpha(imgTrg, 0, alphaMask)
+                    imgTrg, xTrg, yTrg = trimAlpha(imgTrg, 0, alphaIndex)
                     cel.image = imgTrg
                     cel.position = Point(xTrg + dx, yTrg)
                 end
@@ -375,7 +509,7 @@ dlg:button {
                     local imgTrg = wrap(blit, dx, 0)
                     local xTrg = 0
                     local yTrg = 0
-                    imgTrg, xTrg, yTrg = trimAlpha(imgTrg, 0, alphaMask)
+                    imgTrg, xTrg, yTrg = trimAlpha(imgTrg, 0, alphaIndex)
                     cel.image = imgTrg
                     cel.position = Point(xTrg, yTrg - dy)
                 end
@@ -885,6 +1019,8 @@ dlg:button {
             local ceil <const> = math.ceil
             local createSpec <const> = AseUtilities.createSpec
             local trimAlpha <const> = AseUtilities.trimImageAlpha
+            local strpack <const> = string.pack
+            local tconcat <const> = table.concat
             local round <const> = Utilities.round
 
             -- Determine bilinear vs. nearest.
@@ -895,9 +1031,9 @@ dlg:button {
             local sample = nil
             if useBilinear then
                 app.command.ChangePixelFormat { format = "rgb" }
-                sample = sampleBilinear
+                sample = sampleBilinearChars
             else
-                sample = sampleNear
+                sample = sampleNearChars
             end
 
             -- Unpack angle.
@@ -929,7 +1065,11 @@ dlg:button {
                         local srcSpec <const> = srcImg.spec
                         local wSrc <const> = srcSpec.width
                         local hSrc <const> = srcSpec.height
-                        local alphaMask <const> = srcSpec.transparentColor
+                        local alphaIndex <const> = srcSpec.transparentColor
+
+                        local srcBytes <const> = srcImg.bytes
+                        local srcBpp <const> = srcImg.bytesPerPixel
+                        local defaultValue = strpack(">I" .. srcBpp, alphaIndex)
 
                         local wTrgf <const> = hSrc * absSina + wSrc * absCosa
                         local hTrgf <const> = hSrc * absCosa + wSrc * absSina
@@ -949,27 +1089,30 @@ dlg:button {
 
                         local trgSpec <const> = createSpec(
                             wTrgi, hTrgi, srcSpec.colorMode,
-                            srcSpec.colorSpace, alphaMask)
+                            srcSpec.colorSpace, alphaIndex)
                         local trgImg = Image(trgSpec)
 
-                        -- Loop through target pixels and read from
-                        -- source pixels. Looping through source pixels
-                        -- results in gaps between pixels.
-                        local trgPxItr <const> = trgImg:pixels()
-                        for pixel in trgPxItr do
-                            local xSgn <const> = pixel.x - xTrgCenter
-                            local ySgn <const> = pixel.y - yTrgCenter
+                        ---@type string[]
+                        local byteArr <const> = {}
+                        local lenFlat <const> = wTrgi * hTrgi
+                        local j = 0
+                        while j < lenFlat do
+                            local xSgn <const> = (j % wTrgi) - xTrgCenter
+                            local ySgn <const> = (j // wTrgi) - yTrgCenter
                             local xRot <const> = cosa * xSgn - sina * ySgn
                             local yRot <const> = cosa * ySgn + sina * xSgn
                             local xSrc <const> = xSrcCenter + xRot
                             local ySrc <const> = ySrcCenter + yRot
-                            pixel(sample(xSrc, ySrc, wSrc, hSrc,
-                                srcImg, alphaMask))
+
+                            j = j + 1
+                            byteArr[j] = sample(xSrc, ySrc,
+                                wSrc, hSrc, srcBytes, srcBpp, defaultValue)
                         end
+                        trgImg.bytes = tconcat(byteArr, "")
 
                         local xTrim = 0
                         local yTrim = 0
-                        trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaMask)
+                        trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaIndex)
 
                         local srcPos <const> = cel.position
                         cel.position = Point(
@@ -1126,6 +1269,8 @@ dlg:button {
         local abs <const> = math.abs
         local max <const> = math.max
         local floor <const> = math.floor
+        local strpack <const> = string.pack
+        local tconcat <const> = table.concat
         local createSpec <const> = AseUtilities.createSpec
 
         -- Unpack arguments.
@@ -1167,11 +1312,11 @@ dlg:button {
         local lenCels = #cels
 
         local oldMode <const> = activeSprite.colorMode
-        local sample = sampleNear
+        local sample = sampleNearChars
         local useBilinear <const> = easeMethod == "BILINEAR"
         if useBilinear then
             app.command.ChangePixelFormat { format = "rgb" }
-            sample = sampleBilinear
+            sample = sampleBilinearChars
         end
 
         app.transaction("Scale Cels", function()
@@ -1184,6 +1329,11 @@ dlg:button {
                     local srcSpec <const> = srcImg.spec
                     local wSrc <const> = srcSpec.width
                     local hSrc <const> = srcSpec.height
+                    local alphaIndex <const> = srcSpec.transparentColor
+
+                    local srcBytes <const> = srcImg.bytes
+                    local srcBpp <const> = srcImg.bytesPerPixel
+                    local defaultValue = strpack(">I" .. srcBpp, alphaIndex)
 
                     local wTrg = wPxl
                     local hTrg = hPxl
@@ -1198,18 +1348,24 @@ dlg:button {
                         local tx <const> = (wSrc - 1.0) / (wTrg - 1.0)
                         local ty <const> = (hSrc - 1.0) / (hTrg - 1.0)
 
-                        local alphaIndex <const> = srcSpec.transparentColor
+
                         local trgSpec <const> = createSpec(
                             wTrg, hTrg, srcSpec.colorMode,
                             srcSpec.colorSpace, alphaIndex)
                         local trgImg <const> = Image(trgSpec)
-                        local trgPxItr <const> = trgImg:pixels()
 
-                        for pixel in trgPxItr do
-                            pixel(sample(
-                                pixel.x * tx, pixel.y * ty, wSrc, hSrc,
-                                srcImg, alphaIndex))
+                        ---@type string[]
+                        local byteArr <const> = {}
+                        local lenFlat <const> = wTrg * hTrg
+                        local j = 0
+                        while j < lenFlat do
+                            local xTrg <const> = (j % wTrg) * tx
+                            local yTrg <const> = (j // wTrg) * ty
+                            j = j + 1
+                            byteArr[j] = sample(xTrg, yTrg,
+                                wSrc, hSrc, srcBytes, srcBpp, defaultValue)
                         end
+                        trgImg.bytes = tconcat(byteArr, "")
 
                         local celPos <const> = cel.position
                         local xCenter <const> = celPos.x + wSrc * 0.5

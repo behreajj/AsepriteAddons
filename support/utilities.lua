@@ -713,7 +713,6 @@ function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg, bpp)
     local floor <const> = math.floor
     local tx <const> = wSrc / wTrg
     local ty <const> = hSrc / hTrg
-    local lenSrc <const> = wSrc * hSrc
     local lenTrg <const> = wTrg * hTrg
     local bppn1 <const> = bpp - 1
     local i = 0
