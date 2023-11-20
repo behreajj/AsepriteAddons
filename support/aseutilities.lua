@@ -2616,32 +2616,16 @@ end
 ---Translates the pixels of an image by a vector, wrapping the elements that
 ---exceed its dimensions back to the beginning.
 ---@param source Image source image
----@param x integer x translation
----@param y integer y translation
+---@param xt integer x translation
+---@param yt integer y translation
 ---@return Image
-function AseUtilities.wrapImage(source, x, y)
-    ---@type integer[]
-    local px <const> = {}
-    local srcPxItr <const> = source:pixels()
-    local i = 0
-    for pixel in srcPxItr do
-        i = i + 1
-        px[i] = pixel()
-    end
-
+function AseUtilities.wrapImage(source, xt, yt)
     local sourceSpec <const> = source.spec
-    local w <const> = sourceSpec.width
-    local h <const> = sourceSpec.height
-    local wrp <const> = Utilities.wrapPixels(px, x, y, w, h)
-
     local target <const> = Image(sourceSpec)
-    local trgPxItr <const> = target:pixels()
-    local j = 0
-    for pixel in trgPxItr do
-        j = j + 1
-        pixel(wrp[j])
-    end
-
+    target.bytes = Utilities.wrapPixels(
+        source.bytes, xt, yt,
+        sourceSpec.width, sourceSpec.height,
+        source.bytesPerPixel)
     return target
 end
 

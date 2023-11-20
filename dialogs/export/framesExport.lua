@@ -845,8 +845,6 @@ dlg:button {
                 frameStrs[lenFrameStrs] = frameToJson(frame)
             end
 
-            -- TODO: Make JSON result more efficient here. Only include tags if
-            -- "TAG" or "TAGS" export is chosen.
             local k = 0
             ---@type string[]
             local tagStrs <const> = {}

@@ -933,26 +933,37 @@ function Utilities.validateFilename(filename)
     return table.concat(fileChars)
 end
 
----Translates the elements in a pixel array by a vector, wrapping the elements
----that exceed its dimensions back to the beginning.
----@param source integer[] source pixels
----@param x integer x translation
----@param y integer y translation
+---Translates the elements in an image's bytes by a vector, wrapping
+---the elements that exceed its dimensions back to the beginning.
+---@param source string image bytes
+---@param xt integer x translation
+---@param yt integer y translation
 ---@param w integer image width
 ---@param h integer image height
----@return integer[]
-function Utilities.wrapPixels(source, x, y, w, h)
-    ---@type integer[]
+---@param bpp integer bits per pixel
+---@return string
+function Utilities.wrapPixels(source, xt, yt, w, h, bpp)
+    ---@type string[]
     local wrapped <const> = {}
     local len <const> = #source
+    local rowStride <const> = w * bpp
+    local strsub <const> = string.sub
     local i = 0
     while i < len do
-        local xSrc <const> = ((i % w) - x) % w
-        local ySrc <const> = ((i // w) + y) % h
+        local y <const> = i // rowStride
+        local xz <const> = i - y * rowStride
+        local x <const> = xz // bpp
+        local z <const> = xz % bpp
+
+        local xShift <const> = (x - xt) % w
+        local yShift <const> = (y + yt) % h
+        local j <const> = yShift * rowStride + xShift * bpp + z
+
+        wrapped[1 + i] = strsub(source, 1 + j, 1 + j)
+
         i = i + 1
-        wrapped[i] = source[1 + xSrc + ySrc * w]
     end
-    return wrapped
+    return table.concat(wrapped, "")
 end
 
 return Utilities
