@@ -945,22 +945,19 @@ end
 function Utilities.wrapPixels(source, xt, yt, w, h, bpp)
     ---@type string[]
     local wrapped <const> = {}
-    local len <const> = #source
-    local rowStride <const> = w * bpp
     local strsub <const> = string.sub
+    local len <const> = w * h
+    local bppn1 <const> = bpp - 1
     local i = 0
     while i < len do
-        local y <const> = i // rowStride
-        local xz <const> = i - y * rowStride
-        local x <const> = xz // bpp
-        local z <const> = xz % bpp
-
-        local xShift <const> = (x - xt) % w
+        local y <const> = i // w
+        local x <const> = i % w
         local yShift <const> = (y + yt) % h
-        local j <const> = yShift * rowStride + xShift * bpp + z
-
-        wrapped[1 + i] = strsub(source, 1 + j, 1 + j)
-
+        local xShift <const> = (x - xt) % w
+        local j <const> = yShift * w + xShift
+        local orig <const> = 1 + j * bpp
+        local dest <const> = orig + bppn1
+        wrapped[1 + i] = strsub(source, orig, dest)
         i = i + 1
     end
     return table.concat(wrapped, "")
