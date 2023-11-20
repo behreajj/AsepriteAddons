@@ -36,6 +36,7 @@ local sheetFormat <const> = table.concat({
 local mapFormat <const> = table.concat({
     "{\"size\":%s",
     "\"indices\":[%s]",
+    "\"flags\":[%s]",
     "\"frame\":%d",
     "\"layer\":%d}",
 }, ",")
@@ -58,6 +59,7 @@ local function mapToJson(map)
         mapFormat,
         JsonUtilities.pointToJson(map.width, map.height),
         table.concat(map.indices, ","),
+        table.concat(map.flags, ","),
         map.frameNumber - 1,
         map.layer)
 end
@@ -552,6 +554,7 @@ dlg:button {
 
             if includeMaps then
                 local pxTilei <const> = app.pixelColor.tileI
+                local pxTilef <const> = app.pixelColor.tileF
                 local useZIndex <const> = app.apiVersion >= 23
 
                 local frObjs <const> = activeSprite.frames
@@ -637,19 +640,21 @@ dlg:button {
                                 local tmImage <const> = tmCel.image
                                 local tmPxItr <const> = tmImage:pixels()
 
-                                -- TODO: In the future, this must also handle
-                                -- flip rotation flags. Should they be two
-                                -- separate arrays, or an array of structs,
-                                -- each of which contains a flag and index?
                                 ---@type integer[]
                                 local tmIndicesArr <const> = {}
+                                ---@type integer[]
+                                local tmFlagsArr <const> = {}
+
                                 for pixel in tmPxItr do
                                     local tlData <const> = pixel()
                                     local tlIndex = pxTilei(tlData)
+                                    local tlFlag = pxTilef(tlData)
                                     if tlIndex >= lenTileSet then
                                         tlIndex = 0
+                                        tlFlag = 0
                                     end
                                     tmIndicesArr[#tmIndicesArr + 1] = tlIndex
+                                    tmFlagsArr[#tmFlagsArr + 1] = tlFlag
                                 end
 
                                 local wTileMap <const> = tmImage.width
@@ -658,6 +663,7 @@ dlg:button {
                                     width = wTileMap,
                                     height = hTileMap,
                                     indices = tmIndicesArr,
+                                    flags = tmFlagsArr,
                                     frameNumber = tmFrame,
                                     layer = layerId
                                 }
