@@ -45,36 +45,6 @@ local defaults <const> = {
     printElapsed = false
 }
 
----@param x integer
----@param y integer
----@param img Image
----@return integer
-local function wrapClamp(x, y, img)
-    return img:getPixel(
-        math.min(math.max(x, 0), img.width - 1),
-        math.min(math.max(y, 0), img.height - 1))
-end
-
----@param x integer
----@param y integer
----@param img Image
----@return integer
-local function wrapOmit(x, y, img)
-    if y >= 0 and y < img.height
-        and x >= 0 and x < img.width then
-        return img:getPixel(x, y)
-    end
-    return img.spec.transparentColor
-end
-
----@param x integer
----@param y integer
----@param img Image
----@return integer
-local function wrapMod(x, y, img)
-    return img:getPixel(x % img.width, y % img.height)
-end
-
 local dlg <const> = Dialog { title = "Wave" }
 
 dlg:combobox {
@@ -613,17 +583,17 @@ dlg:button {
         local sqrt <const> = math.sqrt
         local strfmt <const> = string.format
         local transact <const> = app.transaction
+        local tconcat <const> = table.concat
         local round <const> = Utilities.round
         local trimImage <const> = AseUtilities.trimImageAlpha
 
-        -- Determine how to wrap out of bounds pixels.
         local edgeType <const> = args.edgeType
             or defaults.edgeType --[[@as string]]
-        local wrapper = wrapMod
+        local getPixel = Utilities.getPixelOmit
         if edgeType == "CLAMP" then
-            wrapper = wrapClamp
-        elseif edgeType == "OMIT" then
-            wrapper = wrapOmit
+            getPixel = Utilities.getPixelClamp
+        elseif edgeType == "WRAP" then
+            getPixel = Utilities.getPixelWrap
         end
 
         local spaceScalar <const> = args.spaceScalar
@@ -1001,6 +971,7 @@ dlg:button {
         ---@type Image[]
         local trgImages <const> = {}
         local lenPackets <const> = #packets
+        local alphaIndex <const> = srcSpec.transparentColor
         local h = 0
         while h < lenPackets do
             h = h + 1
@@ -1009,16 +980,30 @@ dlg:button {
             local theta <const> = packet.theta
             local srcImg <const> = packet.image
 
-            local trgImg <const> = Image(srcSpec)
-            local pxItr <const> = trgImg:pixels()
+            local srcBytes <const> = srcImg.bytes
+            local srcBpp <const> = srcImg.bytesPerPixel
+            local pxAlpha <const> = string.pack(
+                ">I" .. srcBpp, alphaIndex)
 
-            for pixel in pxItr do
-                local xp, yp = eval(pixel.x, pixel.y, theta, fac)
+            local wSrc <const> = srcImg.width
+            local hSrc <const> = srcImg.height
+            local lenFlat <const> = wSrc * hSrc
+
+            ---@type string[]
+            local byteArr <const> = {}
+            local i = 0
+            while i < lenFlat do
+                local x <const> = i % wSrc
+                local y <const> = i // wSrc
+                local xp, yp = eval(x, y, theta, fac)
                 xp = round(xp)
                 yp = round(yp)
-                pixel(wrapper(xp, yp, srcImg))
+                i = i + 1
+                byteArr[i] = getPixel(srcBytes, xp, yp, wSrc, hSrc, srcBpp, pxAlpha)
             end
 
+            local trgImg <const> = Image(srcSpec)
+            trgImg.bytes = tconcat(byteArr, "")
             trgImages[h] = trgImg
         end
 
@@ -1046,7 +1031,6 @@ dlg:button {
         -- Create cels.
         local trimCels <const> = true
         local trgFrames <const> = trgSprite.frames
-        local alphaIndex <const> = srcSpec.transparentColor
         local j = 0
         while j < lenPackets do
             j = j + 1
