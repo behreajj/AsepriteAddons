@@ -662,22 +662,21 @@ function AseUtilities.blendImage(
         wTarget = 1 + xMax - xMin
         hTarget = 1 + yMax - yMin
     else
-        selVrf = Selection(Rectangle(
-            xMin, yMin, wTarget, hTarget))
+        selVrf = Selection(Rectangle(xMin, yMin, wTarget, hTarget))
     end
 
-    local tMask = 0
-    if uMask == oMask then tMask = uMask end
+    local trgMask = 0
+    if uMask == oMask then trgMask = uMask end
     local modeTarget <const> = ucm
 
-    local tSpec <const> = ImageSpec {
+    local trgSpec <const> = ImageSpec {
         width = wTarget,
         height = hTarget,
         colorMode = modeTarget,
-        transparentColor = tMask
+        transparentColor = trgMask
     }
-    tSpec.colorSpace = uSpec.colorSpace
-    local target <const> = Image(tSpec)
+    trgSpec.colorSpace = uSpec.colorSpace
+    local target <const> = Image(trgSpec)
 
     -- Avoid tile map images and mismatched image modes.
     if (ucm ~= ocm) or ucm == ColorMode.TILEMAP then
@@ -690,74 +689,121 @@ function AseUtilities.blendImage(
     local oxDiff <const> = oxcVrf - xMin
     local oyDiff <const> = oycVrf - yMin
 
-    local blendFunc = nil
-    if modeTarget == ColorMode.INDEXED then
-        blendFunc = AseUtilities.blendIndices
-    elseif modeTarget == ColorMode.GRAY then
-        blendFunc = AseUtilities.blendGray
-    else
-        blendFunc = AseUtilities.blendRgba
-    end
+    ---@type string[]
+    local uStrs <const> = {}
+    local uBytes <const> = under.bytes
+    local uBpp <const> = under.bytesPerPixel
+    local uDefault <const> = string.pack(">I" .. uBpp, uMask)
 
-    local pxItr <const> = target:pixels()
-    for pixel in pxItr do
-        local xPixel <const> = pixel.x
-        local yPixel <const> = pixel.y
+    ---@type string[]
+    local oStrs <const> = {}
+    local oBytes <const> = over.bytes
+    local oBpp <const> = over.bytesPerPixel
+    local oDefault <const> = string.pack(">I" .. oBpp, oMask)
+
+    local getPixel <const> = Utilities.getPixelOmit
+    local strbyte <const> = string.byte
+
+    local lenFlat = wTarget * hTarget
+    local i = 0
+    while i < lenFlat do
+        local xPixel <const> = i % wTarget
+        local yPixel <const> = i // wTarget
 
         local xSmpl <const> = xPixel + xMin
         local ySmpl <const> = yPixel + yMin
         local isContained <const> = selVrf:contains(xSmpl, ySmpl)
 
-        local uHex = 0x0
+        local uStr = uDefault
         if cmVrf or isContained then
             local ux <const> = xPixel - uxDiff
             local uy <const> = yPixel - uyDiff
-            if uy > -1 and uy < uh
-                and ux > -1 and ux < uw then
-                uHex = under:getPixel(ux, uy)
-            end
+            uStr = getPixel(uBytes, ux, uy, uw, uh, uBpp, uDefault)
         end
 
-        local oHex = 0x0
+        local oStr = oDefault
         if isContained then
             local ox <const> = xPixel - oxDiff
             local oy <const> = yPixel - oyDiff
-            if oy > -1 and oy < oh
-                and ox > -1 and ox < ow then
-                oHex = over:getPixel(ox, oy)
-            end
+            oStr = getPixel(oBytes, ox, oy, ow, oh, oBpp, oDefault)
         end
 
-        pixel(blendFunc(uHex, oHex, tMask))
+        i = i + 1
+        uStrs[i] = uStr
+        oStrs[i] = oStr
     end
 
+    ---@type string[]
+    local trgBytes <const> = {}
+    if modeTarget == ColorMode.INDEXED then
+        local blend <const> = AseUtilities.blendIndices
+        local strchar <const> = string.char
+        local j = 0
+        while j < lenFlat do
+            j = j + 1
+            local uStr <const> = uStrs[j]
+            local oStr <const> = oStrs[j]
+            local aa <const> = strbyte(uStr)
+            local ba <const> = strbyte(oStr)
+            local ca <const> = blend(aa, ba, trgMask)
+            trgBytes[j] = strchar(ca)
+        end
+    elseif modeTarget == ColorMode.GRAY then
+        local blend <const> = AseUtilities.blendGray
+        local strpack <const> = string.pack
+        local j = 0
+        while j < lenFlat do
+            j = j + 1
+            local uStr <const> = uStrs[j]
+            local oStr <const> = oStrs[j]
+            local ag <const>, aa <const> = strbyte(uStr, 1, 4)
+            local bg <const>, ba <const> = strbyte(oStr, 1, 4)
+            local cg <const>, ca <const> = blend(ag, aa, bg, ba)
+            trgBytes[j] = strpack("B B", cg, ca)
+        end
+    else
+        local blend <const> = AseUtilities.blendRgba
+        local strpack <const> = string.pack
+        local j = 0
+        while j < lenFlat do
+            j = j + 1
+            local uStr <const> = uStrs[j]
+            local oStr <const> = oStrs[j]
+            local ar <const>, ag <const>, ab <const>, aa <const> = strbyte(uStr, 1, 4)
+            local br <const>, bg <const>, bb <const>, ba <const> = strbyte(oStr, 1, 4)
+            local cr <const>, cg <const>, cb <const>, ca <const> = blend(
+                ar, ag, ab, aa, br, bg, bb, ba)
+            trgBytes[j] = strpack("B B B B", cr, cg, cb, ca)
+        end
+    end
+
+    target.bytes = table.concat(trgBytes, "")
     return target, xMin, yMin
 end
 
----Blends two 16-bit gray colors. Premultiplies each color by its alpha prior
+---Blends two gray colors. Premultiplies each color by its alpha prior
 ---to blending. Unpremultiplies the result.
----@param a integer backdrop color
----@param b integer overlay color
----@return integer
-function AseUtilities.blendGray(a, b)
-    local t = b >> 0x08 & 0xff
-    if t > 0xfe then return b end
-    local v <const> = a >> 0x08 & 0xff
-    if v < 0x01 then return b end
+---@param ag integer backdrop gray
+---@param aa integer backdrop alpha
+---@param bg integer overlay gray
+---@param ba integer overlay alpha
+---@return integer cg blend gray
+---@return integer ca blend alpha
+function AseUtilities.blendGray(ag, aa, bg, ba)
+    if ba > 0xfe or aa < 0x01 then return bg, ba end
 
+    local t = ba
     local u <const> = 0xff - t
     if t > 0x7f then t = t + 1 end
 
-    local uv <const> = (v * u) // 0xff
+    local uv <const> = (aa * u) // 0xff
     local tuv = t + uv
-    if tuv < 0x01 then return 0x0 end
+    if tuv < 0x01 then return 0, 0 end
     if tuv > 0xff then tuv = 0xff end
 
-    local ag <const> = a & 0xff
-    local bg <const> = b & 0xff
     local cg = (bg * t + ag * uv) // tuv
     if cg > 0xff then cg = 0xff end
-    return tuv << 0x08 | cg
+    return cg, tuv
 end
 
 ---Blends two indexed image colors. Prioritizes the overlay color, so long as
@@ -773,35 +819,34 @@ function AseUtilities.blendIndices(a, b, mask)
     return mask
 end
 
----Blends two 32-bit RGBA colors. Premultiplies each color by its alpha prior
+---Blends two RGBA colors. Premultiplies each color by its alpha prior
 ---to blending. Unpremultiplies the result. For more information, see
 ---https://www.w3.org/TR/compositing-1/ .
----@param a integer backdrop color
----@param b integer overlay color
----@return integer
-function AseUtilities.blendRgba(a, b)
-    local t = b >> 0x18 & 0xff
-    if t > 0xfe then return b end
-    local v <const> = a >> 0x18 & 0xff
-    if v < 0x01 then return b end
+---@param ar integer backdrop red
+---@param ag integer backdrop green
+---@param ab integer backdrop blue
+---@param aa integer backdrop alpha
+---@param br integer overlay red
+---@param bg integer overlay green
+---@param bb integer overlay blue
+---@param ba integer overlay alpha
+---@return integer cr blend red
+---@return integer cg blend green
+---@return integer cb blend blue
+---@return integer ca blend alpha
+function AseUtilities.blendRgba(
+    ar, ag, ab, aa,
+    br, bg, bb, ba)
+    if ba > 0xfe or aa < 0x01 then return br, bg, bb, ba end
 
-    -- Experimented with subtracting from 0x100 instead of 0xff, due to 255//2
-    -- not having a whole number middle, but 0xff lead to more accurate results.
+    local t = ba
     local u <const> = 0xff - t
     if t > 0x7f then t = t + 1 end
 
-    local uv <const> = (v * u) // 0xff
+    local uv <const> = (aa * u) // 0xff
     local tuv = t + uv
-    if tuv < 0x01 then return 0x0 end
+    if tuv < 0x01 then return 0, 0, 0, 0 end
     if tuv > 0xff then tuv = 0xff end
-
-    local ab <const> = a >> 0x10 & 0xff
-    local ag <const> = a >> 0x08 & 0xff
-    local ar <const> = a & 0xff
-
-    local bb <const> = b >> 0x10 & 0xff
-    local bg <const> = b >> 0x08 & 0xff
-    local br <const> = b & 0xff
 
     local cb = (bb * t + ab * uv) // tuv
     local cg = (bg * t + ag * uv) // tuv
@@ -811,7 +856,7 @@ function AseUtilities.blendRgba(a, b)
     if cg > 0xff then cg = 0xff end
     if cr > 0xff then cr = 0xff end
 
-    return tuv << 0x18 | cb << 0x10 | cg << 0x08 | cr
+    return cr, cg, cb, tuv
 end
 
 ---Wrapper for app.command.ChangePixelFormat which accepts an integer constant
@@ -1737,6 +1782,14 @@ function AseUtilities.getPalette(frame, palettes)
     return palettes[idx]
 end
 
+---Gets the pixels of an image as a byte array. The array's length is equal to
+---width times height times bytes per pixel.
+---@param image Image
+---@return integer[]
+function AseUtilities.getPixels(image)
+    return Utilities.stringToByteArr(image.bytes)
+end
+
 ---Gets a selection from a sprite. Calls InvertMask command twice. Returns a
 ---copy of the selection, not a reference. If the selection is empty, then tries
 ---to return the cel bounds. If that is empty, then returns the sprite bounds.
@@ -2277,6 +2330,17 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
             palette:setColor(0, clearBlack)
         end)
     end
+end
+
+---Sets an image to an array of bytes. No validation is performed on the array
+---elements or length. The length should be width times height times bytes per
+---pixel.
+---@param image Image
+---@param pixels integer[]
+---@return Image
+function AseUtilities.setPixels(image, pixels)
+    image.bytes = Utilities.bytesArrToString(pixels)
+    return image
 end
 
 ---Converts an image from a tile set layer to a regular image. If the Tileset

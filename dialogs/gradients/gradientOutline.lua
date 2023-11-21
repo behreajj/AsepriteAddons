@@ -312,6 +312,7 @@ dlg:button {
             local aseColor <const> = aseColors[k]
             if aseColor.alpha > 0
                 and aseColor.rgbaPixel ~= bkgHex then
+                -- TODO: Don't use rgbaPixel
                 filtered[#filtered + 1] = aseColor
             end
         end

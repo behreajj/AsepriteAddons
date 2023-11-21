@@ -355,7 +355,7 @@ dlg:button {
         local strsub <const> = string.sub
         local sRgbToLab <const> = Clr.sRgbToSrLab2
         local labToLch <const> = Clr.srLab2ToSrLch
-        local strToChars <const> = Utilities.stringToCharTable
+        local strToChars <const> = Utilities.stringToCharArr
         local hexToAse <const> = AseUtilities.hexToAseColor
 
         -- Do not take the length of hexesSrgb

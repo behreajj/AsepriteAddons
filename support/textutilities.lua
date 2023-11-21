@@ -283,7 +283,7 @@ function TextUtilities.lineWrapStringToChars(srcStr, limit)
         local charTally = 0
         local lastSpace = 0
 
-        local flatChars <const> = Utilities.stringToCharTable(srcStr)
+        local flatChars <const> = Utilities.stringToCharArr(srcStr)
         local flatCharLen <const> = #flatChars
         local prevChar = flatChars[flatCharLen]
 

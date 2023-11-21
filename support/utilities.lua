@@ -87,6 +87,23 @@ function Utilities.bisectRight(arr, elm, compare)
     return 1 + low
 end
 
+---Concatenates an array of bytes into a string. Performs no validation on
+---array elements; they are assumed to be in [0, 255].
+---@param source integer[]
+---@return string
+function Utilities.bytesArrToString(source)
+    ---@type string[]
+    local chars <const> = {}
+    local len <const> = #source
+    local strchar <const> = string.char
+    local i = 0
+    while i < len do
+        i = i + 1
+        chars[i] = strchar(source[i])
+    end
+    return table.concat(chars)
+end
+
 ---Converts a dictionary to a sorted set. If a comparator is not provided,
 ---elements are sorted by their less than operator.
 ---@generic K key
@@ -923,10 +940,26 @@ function Utilities.shuffle(t)
     return s
 end
 
----Converts a string to a table of characters.
+---Decomposes a string containing byte data into an array of integers.
+---@param source string
+---@return integer[]
+function Utilities.stringToByteArr(source)
+    ---@type integer[]
+    local arr <const> = {}
+    local len <const> = #source
+    local strbyte <const> = string.byte
+    local i = 0
+    while i < len do
+        i = i + 1
+        arr[i] = strbyte(source, i, i)
+    end
+    return arr
+end
+
+---Decomposes a string to an array of characters.
 ---@param str string string
 ---@return string[]
-function Utilities.stringToCharTable(str)
+function Utilities.stringToCharArr(str)
     -- For more on different methods, see
     -- https://stackoverflow.com/a/49222705
     local chars <const> = {}
@@ -1064,7 +1097,7 @@ end
 ---@param filename string file name
 ---@return string
 function Utilities.validateFilename(filename)
-    local fileChars <const> = Utilities.stringToCharTable(filename)
+    local fileChars <const> = Utilities.stringToCharArr(filename)
     Utilities.trimCharsInitial(fileChars)
     Utilities.trimCharsFinal(fileChars)
     local len <const> = #fileChars
