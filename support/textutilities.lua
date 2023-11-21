@@ -142,6 +142,7 @@ TextUtilities.GLYPH_LUT = {
 ---@param gh integer glyph height
 function TextUtilities.drawGlyph(
     image, glyph, hex, x, y, gw, gh)
+    -- TODO: This needs to be fixed.
     local lenn1 <const> = gw * gh - 1
     local blend <const> = AseUtilities.blendRgba
     local glMat <const> = glyph.matrix
@@ -184,6 +185,7 @@ function TextUtilities.drawGlyphNearest(
             x, y, gw, gh)
     end
 
+    -- TODO: This needs to be fixed.
     local lenTrgn1 <const> = dw * dh - 1
     local lenSrcn1 <const> = gw * gh - 1
     local tx <const> = gw / dw
