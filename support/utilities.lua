@@ -183,6 +183,59 @@ function Utilities.flipPixelsY(source, w, h, bpp)
     return table.concat(flipped, "")
 end
 
+---Gets a pixel from an image's bytes, formatted as a string.
+---Clamps coordinates to the image's boundaries.
+function Utilities.getPixelClamp(
+    source, x, y, w, h, bpp, defaultValue)
+    local xc <const> = math.min(math.max(x, 0), w - 1)
+    local yc <const> = math.min(math.max(y, 0), h - 1)
+    local orig <const> = 1 + (yc * w + xc) * bpp
+    local dest <const> = orig + bpp - 1
+    return string.sub(source, orig, dest)
+end
+
+---Gets a pixel from an image's bytes, formatted as a string.
+---Out of bounds coordinates return the default value, usually
+---the image's transparent color packed as a string acccording
+---to the number of bytes per pixel,  4 for RGB, 2 for gray, etc.
+---@param source string image bytes
+---@param x integer x coordinate
+---@param y integer y coordinate
+---@param w integer image width
+---@param h integer image height
+---@param bpp integer bytes per pixel
+---@param defaultValue string default value
+---@return string
+function Utilities.getPixelOmit(
+    source, x, y, w, h, bpp, defaultValue)
+    if x >= 0 and x < w
+        and y >= 0 and y < h then
+        local orig <const> = 1 + (y * w + x) * bpp
+        local dest <const> = orig + bpp - 1
+        return string.sub(source, orig, dest)
+    end
+    return defaultValue
+end
+
+---Gets a pixel from an image's bytes, formatted as a string.
+---Out of bounds coordinates are wrapped around the edges.
+---@param source string image bytes
+---@param x integer x coordinate
+---@param y integer y coordinate
+---@param w integer image width
+---@param h integer image height
+---@param bpp integer bytes per pixel
+---@param defaultValue string default value
+---@return string
+function Utilities.getPixelWrap(
+    source, x, y, w, h, bpp, defaultValue)
+    local xfm <const> = x % w
+    local yfm <const> = y % h
+    local orig <const> = 1 + (yfm * w + xfm) * bpp
+    local dest <const> = orig + bpp - 1
+    return string.sub(source, orig, dest)
+end
+
 ---Generates a random number with normal distribution. Based on the Box-Muller
 ---transform as described here:
 ---https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform .

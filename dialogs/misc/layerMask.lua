@@ -285,6 +285,7 @@ dlg:button {
                             local xSprite <const> = pixel.x + xTlTarget
                             local ySprite <const> = pixel.y + yTlTarget
 
+                            -- TODO: Replace getPixel with bytes string.
                             local xOver <const> = xSprite - xTlOver
                             local yOver <const> = ySprite - yTlOver
                             local hexOver <const> = imgOver:getPixel(xOver, yOver)

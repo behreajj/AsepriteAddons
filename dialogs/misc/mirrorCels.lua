@@ -140,33 +140,18 @@ dlg:button {
             AseUtilities.getFrames(activeSprite, target))
 
         -- Determine how to wrap pixels.
-        local wrapper = nil
+        local getPixel = Utilities.getPixelOmit
         if edgeType == "CLAMP" then
-            wrapper = function(x, y, w, h, srcImg, alphaMask)
-                return srcImg:getPixel(
-                    math.min(math.max(x, 0), w - 1),
-                    math.min(math.max(y, 0), h - 1))
-            end
-        elseif edgeType == "OMIT" then
-            wrapper = function(x, y, w, h, srcImg, alphaMask)
-                if x >= 0 and x < w
-                    and y >= 0 and y < h then
-                    return srcImg:getPixel(x, y)
-                else
-                    return alphaMask
-                end
-            end
-        else
-            wrapper = function(x, y, w, h, srcImg, alphaMask)
-                return srcImg:getPixel(x % w, y % h)
-            end
+            getPixel = Utilities.getPixelClamp
+        elseif edgeType == "WRAP" then
+            getPixel = Utilities.getPixelWrap
         end
 
         local spriteSpec <const> = activeSprite.spec
         local wSprite <const> = spriteSpec.width
         local hSprite <const> = spriteSpec.height
         local colorMode <const> = spriteSpec.colorMode
-        local alphaMask <const> = spriteSpec.transparentColor
+        local alphaIndex <const> = spriteSpec.transparentColor
 
         -- Calculate origin and destination.
         -- Divide by 100 to account for percentage.
@@ -204,6 +189,9 @@ dlg:button {
         end
         local dInvMagSq <const> = 1.0 / (dx * dx + dy * dy)
 
+        -- Flat length of image for loop iteration.
+        local lenFlat <const> = wSprite * hSprite
+
         -- Right side of line is mirrored, left side
         -- copies original pixels.
         local rgtLayer = nil
@@ -233,7 +221,9 @@ dlg:button {
         local trimAlpha <const> = AseUtilities.trimImageAlpha
         local tilesToImage <const> = AseUtilities.tilesToImage
         local strfmt <const> = string.format
+        local strsub <const> = string.sub
         local transact <const> = app.transaction
+        local tconcat <const> = table.concat
 
         local lenFrames <const> = #frames
         local i = 0
@@ -265,21 +255,30 @@ dlg:button {
 
                 local rgtImg = Image(spriteSpec)
                 local lftImg = Image(spriteSpec)
-                if alphaMask ~= 0 then
-                    rgtImg:clear(alphaMask)
-                    lftImg:clear(alphaMask)
-                end
 
-                local pxItr <const> = flatImg:pixels()
-                for pixel in pxItr do
-                    local cx <const> = pixel.x
-                    local cy <const> = pixel.y
+                ---@type string[]
+                local lftByteArr <const> = {}
+                ---@type string[]
+                local rgtByteArr <const> = {}
+                local flatBytes <const> = flatImg.bytes
+                local flatBpp <const> = flatImg.bytesPerPixel
+                local pxAlpha <const> = string.pack(
+                    ">I" .. flatBpp, alphaIndex)
+
+                local j = 0
+                while j < lenFlat do
+                    local cx <const> = j % wSprite
+                    local cy <const> = j // wSprite
                     local ex <const> = cx - xOrPx
                     local ey <const> = cy - yOrPx
                     local cross <const> = ex * dy - ey * dx
+
+                    local lftStr = pxAlpha
+                    local rgtStr = pxAlpha
                     if flipSign * cross < 0.0 then
-                        local hex <const> = pixel()
-                        lftImg:drawPixel(cx, cy, hex)
+                        local orig <const> = 1 + j * flatBpp
+                        local dest <const> = orig + flatBpp - 1
+                        lftStr = strsub(flatBytes, orig, dest)
                     else
                         local t <const> = (ex * dx + ey * dy) * dInvMagSq
                         local u <const> = 1.0 - t
@@ -291,11 +290,17 @@ dlg:button {
                         local ixOpp <const> = floor(0.5 + pxOpp)
                         local iyOpp <const> = floor(0.5 + pyOpp)
 
-                        rgtImg:drawPixel(cx, cy, wrapper(
-                            ixOpp, iyOpp, wSprite, hSprite,
-                            flatImg, alphaMask))
+                        rgtStr = getPixel(flatBytes, ixOpp, iyOpp,
+                            wSprite, hSprite, flatBpp, pxAlpha)
                     end
+
+                    j = j + 1
+                    lftByteArr[j] = lftStr
+                    rgtByteArr[j] = rgtStr
                 end
+
+                lftImg.bytes = tconcat(lftByteArr, "")
+                rgtImg.bytes = tconcat(rgtByteArr, "")
 
                 local xTrimLft = 0
                 local yTrimLft = 0
@@ -303,9 +308,9 @@ dlg:button {
                 local yTrimRgt = 0
                 if trimCels then
                     lftImg, xTrimLft, yTrimLft = trimAlpha(
-                        lftImg, 0, alphaMask)
+                        lftImg, 0, alphaIndex)
                     rgtImg, xTrimRgt, yTrimRgt = trimAlpha(
-                        rgtImg, 0, alphaMask)
+                        rgtImg, 0, alphaIndex)
                 end
 
                 transact(
