@@ -133,7 +133,8 @@ TextUtilities.GLYPH_LUT = {
 ---Draws a glyph at its native scale to an image. The color is to be
 ---represented as an AABBGGRR integer. Operates on pixels. This should not be
 ---used with app.useTool.
----@param image Image image
+---@param pixels integer[] pixels,
+---@param wImage integer image width
 ---@param glyph Glyph glyph
 ---@param rMark integer red
 ---@param gMark integer green
@@ -143,8 +144,9 @@ TextUtilities.GLYPH_LUT = {
 ---@param y integer y top left corner
 ---@param gw integer glyph width
 ---@param gh integer glyph height
+---@return integer[]
 function TextUtilities.drawGlyph(
-    image, glyph,
+    pixels, wImage, glyph,
     rMark, gMark, bMark, aMark,
     x, y, gw, gh)
     local lenn1 <const> = gw * gh - 1
@@ -152,8 +154,6 @@ function TextUtilities.drawGlyph(
     local glMat <const> = glyph.matrix
     local glDrop <const> = glyph.drop
     local ypDrop <const> = y + glDrop
-    local pixels <const> = AseUtilities.getPixels(image)
-    local wImage <const> = image.width
 
     local i = -1
     while i < lenn1 do
@@ -185,13 +185,14 @@ function TextUtilities.drawGlyph(
         end
     end
 
-    AseUtilities.setPixels(image, pixels)
+    return pixels
 end
 
 ---Draws a glyph to an image at a pixel scale. Resizes the glyph according to
 ---nearest neighbor. The color is to be represented as an AABBGGRR integer.
 ---Operates on pixels. This should not be used with app.useTool.
----@param image Image image
+---@param pixels integer[] pixels,
+---@param wImage integer image width
 ---@param glyph Glyph glyph
 ---@param rMark integer red
 ---@param gMark integer green
@@ -203,13 +204,15 @@ end
 ---@param gh integer glyph height
 ---@param dw integer display width
 ---@param dh integer display height
+---@return integer[]
 function TextUtilities.drawGlyphNearest(
-    image, glyph,
+    pixels, wImage, glyph,
     rMark, gMark, bMark, aMark,
     x, y, gw, gh, dw, dh)
     if gw == dw and gh == dh then
         return TextUtilities.drawGlyph(
-            image, glyph, rMark, gMark, bMark, aMark,
+            pixels, wImage, glyph,
+            rMark, gMark, bMark, aMark,
             x, y, gw, gh)
     end
 
@@ -222,11 +225,6 @@ function TextUtilities.drawGlyphNearest(
     local glMat <const> = glyph.matrix
     local glDrop <const> = glyph.drop
     local ypDrop <const> = floor(y + glDrop * (dh / gh))
-
-    -- TODO: This is now very slow... instead of getting and setting pixels,
-    -- this needs to work and return byte arrays!
-    local pixels <const> = AseUtilities.getPixels(image)
-    local wImage <const> = image.width
 
     local i = -1
     while i < lenTrgn1 do
@@ -265,7 +263,7 @@ function TextUtilities.drawGlyphNearest(
         end
     end
 
-    AseUtilities.setPixels(image, pixels)
+    return pixels
 end
 
 ---Draws an array of characters to an image according to the coordinates.
@@ -286,7 +284,6 @@ function TextUtilities.drawString(
     lut, image, chars,
     rMark, gMark, bMark, aMark,
     x, y, gw, gh, scale)
-
     local writeChar = x
     local writeLine = y
     local charLen <const> = #chars
@@ -295,6 +292,11 @@ function TextUtilities.drawString(
     local scale2 <const> = scale + scale
     local drawGlyph <const> = TextUtilities.drawGlyphNearest
     local defGlyph <const> = lut[' ']
+
+    -- TODO: Test to see if this is still too slow.
+    local wImage <const> = image.width
+    local pixels <const> = AseUtilities.getPixels(image)
+
     local i = 0
     while i < charLen do
         i = i + 1
@@ -308,12 +310,14 @@ function TextUtilities.drawString(
             -- print(glyph)
 
             drawGlyph(
-                image, glyph, rMark, gMark, bMark, aMark,
+                pixels, wImage, glyph, rMark, gMark, bMark, aMark,
                 writeChar, writeLine,
                 gw, gh, dw, dh)
             writeChar = writeChar + dw
         end
     end
+
+    AseUtilities.setPixels(image, pixels)
 end
 
 ---Breaks a long string into multiple lines according to a character per line
