@@ -133,7 +133,7 @@ TextUtilities.GLYPH_LUT = {
 ---Draws a glyph at its native scale to an image. The color is to be
 ---represented as an AABBGGRR integer. Operates on pixels. This should not be
 ---used with app.useTool.
----@param pixels integer[] pixels,
+---@param pixels integer[] pixels
 ---@param wImage integer image width
 ---@param glyph Glyph glyph
 ---@param rMark integer red
@@ -191,7 +191,7 @@ end
 ---Draws a glyph to an image at a pixel scale. Resizes the glyph according to
 ---nearest neighbor. The color is to be represented as an AABBGGRR integer.
 ---Operates on pixels. This should not be used with app.useTool.
----@param pixels integer[] pixels,
+---@param pixels integer[] pixels
 ---@param wImage integer image width
 ---@param glyph Glyph glyph
 ---@param rMark integer red
@@ -269,7 +269,8 @@ end
 ---Draws an array of characters to an image according to the coordinates.
 ---Operates on pixel by pixel level. This should not be used with app.useTool.
 ---@param lut table glyph look up table
----@param image Image image
+---@param pixels integer[] pixels
+---@param wImage integer image width
 ---@param chars string[] characters table
 ---@param rMark integer red
 ---@param gMark integer green
@@ -280,8 +281,9 @@ end
 ---@param gw integer glyph width
 ---@param gh integer glyph height
 ---@param scale integer display scale
+---@return integer[]
 function TextUtilities.drawString(
-    lut, image, chars,
+    lut, pixels, wImage, chars,
     rMark, gMark, bMark, aMark,
     x, y, gw, gh, scale)
     local writeChar = x
@@ -292,10 +294,6 @@ function TextUtilities.drawString(
     local scale2 <const> = scale + scale
     local drawGlyph <const> = TextUtilities.drawGlyphNearest
     local defGlyph <const> = lut[' ']
-
-    -- TODO: Test to see if this is still too slow.
-    local wImage <const> = image.width
-    local pixels <const> = AseUtilities.getPixels(image)
 
     local i = 0
     while i < charLen do
@@ -317,7 +315,7 @@ function TextUtilities.drawString(
         end
     end
 
-    AseUtilities.setPixels(image, pixels)
+    return pixels
 end
 
 ---Breaks a long string into multiple lines according to a character per line

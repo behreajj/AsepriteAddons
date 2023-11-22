@@ -60,14 +60,17 @@ local function drawCharsHorizShd(
     rFill, gFill, bFill, aFill,
     rShad, gShad, bShad, aShad,
     x, y, gw, gh, scale)
+    local pixels <const> = AseUtilities.getPixels(image)
+    local wImage <const> = image.width
     TextUtilities.drawString(
-        lut, image, chars,
+        lut, pixels, wImage, chars,
         rShad, gShad, bShad, aShad,
         x, y + 1, gw, gh, scale)
     TextUtilities.drawString(
-        lut, image, chars,
+        lut, pixels, wImage, chars,
         rFill, gFill, bFill, aFill,
         x, y, gw, gh, scale)
+    AseUtilities.setPixels(image, pixels)
 end
 
 ---@param image Image

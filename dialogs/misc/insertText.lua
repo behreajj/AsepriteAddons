@@ -235,6 +235,8 @@ dlg:button {
 
         -- Cache methods used in for loops to local.
         local displayString <const> = TextUtilities.drawString
+        local getPixels <const> = AseUtilities.getPixels
+        local setPixels <const> = AseUtilities.setPixels
 
         -- Unpack arguments.
         local msgSrc <const> = args.msgSrc or defaults.msgSrc --[[@as string]]
@@ -480,16 +482,18 @@ dlg:button {
                                 animPosx = animPosx + dispWidth - j * dw
                             end
 
+                            local pixels <const> = getPixels(animImage)
                             if useShadow then
                                 displayString(
-                                    lut, animImage, animSlice,
+                                    lut, pixels, widthImg, animSlice,
                                     rShd, gShd, bShd, aShd,
                                     animPosx, yCaret + scale, gw, gh, scale)
                             end
                             displayString(
-                                lut, animImage, animSlice,
+                                lut, pixels, widthImg, animSlice,
                                 rFill, gFill, bFill, aFill,
                                 animPosx, yCaret, gw, gh, scale)
+                            setPixels(animImage, pixels)
 
                             animCel.image = animImage
                         end
@@ -512,16 +516,18 @@ dlg:button {
                     local charsLine <const> = charTableStill[k]
                     local lineOffset <const> = lineOffsets[k] * dw
 
+                    local pixels <const> = getPixels(bkgSrcImg)
                     if useShadow then
                         displayString(
-                            lut, bkgSrcImg, charsLine,
+                            lut, pixels, widthImg, charsLine,
                             rShd, gShd, bShd, aShd,
                             lineOffset, yCaret + scale, gw, gh, scale)
                     end
                     displayString(
-                        lut, bkgSrcImg, charsLine,
+                        lut, pixels, widthImg, charsLine,
                         rFill, gFill, bFill, aFill,
                         lineOffset, yCaret, gw, gh, scale)
+                    setPixels(bkgSrcImg, pixels)
 
                     yCaret = yCaret + dh + scale + leading
 
