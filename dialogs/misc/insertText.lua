@@ -507,16 +507,16 @@ dlg:button {
             local activeCel <const> = layer:cel(actFrIdx)
                 or sprite:newCel(layer, actFrIdx)
             activeCel.position = stillPos
+            local pixels <const> = getPixels(bkgSrcImg)
 
-            local yCaret = 0
             app.transaction("Insert Text", function()
+                local yCaret = 0
                 local k = 0
                 while k < lineCount do
                     k = k + 1
                     local charsLine <const> = charTableStill[k]
                     local lineOffset <const> = lineOffsets[k] * dw
 
-                    local pixels <const> = getPixels(bkgSrcImg)
                     if useShadow then
                         displayString(
                             lut, pixels, widthImg, charsLine,
@@ -527,12 +527,10 @@ dlg:button {
                         lut, pixels, widthImg, charsLine,
                         rFill, gFill, bFill, aFill,
                         lineOffset, yCaret, gw, gh, scale)
-                    setPixels(bkgSrcImg, pixels)
-
                     yCaret = yCaret + dh + scale + leading
-
-                    activeCel.image = bkgSrcImg
                 end
+                setPixels(bkgSrcImg, pixels)
+                activeCel.image = bkgSrcImg
             end)
         end
 

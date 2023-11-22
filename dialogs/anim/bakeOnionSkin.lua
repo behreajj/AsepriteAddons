@@ -253,9 +253,9 @@ dlg:button {
         local bNeut = 128
         local aNeut = 0
         if useBoth then
-            local clrBck = AseUtilities.aseColorToClr(backTint)
-            local clrFor = AseUtilities.aseColorToClr(foreTint)
-            local clrNeu = Clr.mixSrLab2(clrBck, clrFor, 0.5)
+            local clrBck <const> = AseUtilities.aseColorToClr(backTint)
+            local clrFor <const> = AseUtilities.aseColorToClr(foreTint)
+            local clrNeu <const> = Clr.mixSrLab2(clrBck, clrFor, 0.5)
             rNeut = math.floor(clrNeu.r * 255.0 + 0.5)
             gNeut = math.floor(clrNeu.g * 255.0 + 0.5)
             bNeut = math.floor(clrNeu.b * 255.0 + 0.5)
@@ -461,11 +461,10 @@ dlg:button {
                                 local bOrig <const> = pxTrg[3 + m4]
                                 local aOrig <const> = pxTrg[4 + m4]
 
-                                local rComp = 0
-                                local gComp = 0
-                                local bComp = 0
-                                local aComp = 0
-                                rComp, gComp, bComp, aComp = blend(
+                                local rComp <const>,
+                                gComp <const>,
+                                bComp <const>,
+                                aComp <const> = blend(
                                     rOrig, gOrig, bOrig, aOrig,
                                     rDest, gDest, bDest, aDest)
 
@@ -477,19 +476,17 @@ dlg:button {
 
                             k = k + 1
                         end -- End of pixels loop.
+                    end     -- End packet exists check.
+                end         -- End sample count loop.
 
-                    end -- End packet exists check.
-                end     -- End sample count loop.
+                setPixels(trgImg, pxTrg)
 
                 -- Important to break this into separate transactions
                 -- in case there is a bug that is causing an Aseprite crash.
-                setPixels(trgImg, pxTrg)
                 transact(
                     strfmt("Bake Onion %d", srcFrame),
                     function()
-                        activeSprite:newCel(
-                            trgLayer, srcFrame,
-                            trgImg, trgPos)
+                        activeSprite:newCel(trgLayer, srcFrame, trgImg, trgPos)
                     end)
             end -- End nonzero min max size check.
         end     -- End frames loop.
