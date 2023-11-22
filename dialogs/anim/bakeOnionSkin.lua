@@ -478,12 +478,12 @@ dlg:button {
                             k = k + 1
                         end -- End of pixels loop.
 
-                        setPixels(trgImg, pxTrg)
                     end -- End packet exists check.
                 end     -- End sample count loop.
 
                 -- Important to break this into separate transactions
                 -- in case there is a bug that is causing an Aseprite crash.
+                setPixels(trgImg, pxTrg)
                 transact(
                     strfmt("Bake Onion %d", srcFrame),
                     function()
