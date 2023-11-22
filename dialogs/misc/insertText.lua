@@ -264,6 +264,16 @@ dlg:button {
         local hexShd <const> = AseUtilities.aseColorToHex(aseShd, ColorMode.RGB)
         local hexFill <const> = AseUtilities.aseColorToHex(aseFill, ColorMode.RGB)
 
+        local rShd <const> = aseShd.red
+        local gShd <const> = aseShd.green
+        local bShd <const> = aseShd.blue
+        local aShd <const> = aseShd.alpha
+
+        local rFill <const> = aseFill.red
+        local gFill <const> = aseFill.green
+        local bFill <const> = aseFill.blue
+        local aFill <const> = aseFill.alpha
+
         ---@type string[][]
         local charTableStill = {}
 
@@ -472,11 +482,13 @@ dlg:button {
 
                             if useShadow then
                                 displayString(
-                                    lut, animImage, animSlice, hexShd,
+                                    lut, animImage, animSlice,
+                                    rShd, gShd, bShd, aShd,
                                     animPosx, yCaret + scale, gw, gh, scale)
                             end
                             displayString(
-                                lut, animImage, animSlice, hexFill,
+                                lut, animImage, animSlice,
+                                rFill, gFill, bFill, aFill,
                                 animPosx, yCaret, gw, gh, scale)
 
                             animCel.image = animImage
@@ -502,11 +514,13 @@ dlg:button {
 
                     if useShadow then
                         displayString(
-                            lut, bkgSrcImg, charsLine, hexShd,
+                            lut, bkgSrcImg, charsLine,
+                            rShd, gShd, bShd, aShd,
                             lineOffset, yCaret + scale, gw, gh, scale)
                     end
                     displayString(
-                        lut, bkgSrcImg, charsLine, hexFill,
+                        lut, bkgSrcImg, charsLine,
+                        rFill, gFill, bFill, aFill,
                         lineOffset, yCaret, gw, gh, scale)
 
                     yCaret = yCaret + dh + scale + leading

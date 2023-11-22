@@ -135,19 +135,25 @@ TextUtilities.GLYPH_LUT = {
 ---used with app.useTool.
 ---@param image Image image
 ---@param glyph Glyph glyph
----@param hex integer rgba integer
+---@param rMark integer red
+---@param gMark integer green
+---@param bMark integer blue
+---@param aMark integer alpha
 ---@param x integer x top left corner
 ---@param y integer y top left corner
 ---@param gw integer glyph width
 ---@param gh integer glyph height
 function TextUtilities.drawGlyph(
-    image, glyph, hex, x, y, gw, gh)
-    -- TODO: This needs to be fixed.
+    image, glyph,
+    rMark, gMark, bMark, aMark,
+    x, y, gw, gh)
     local lenn1 <const> = gw * gh - 1
     local blend <const> = AseUtilities.blendRgba
     local glMat <const> = glyph.matrix
     local glDrop <const> = glyph.drop
     local ypDrop <const> = y + glDrop
+    local pixels <const> = AseUtilities.getPixels(image)
+    local wImage <const> = image.width
 
     local i = -1
     while i < lenn1 do
@@ -157,11 +163,29 @@ function TextUtilities.drawGlyph(
         if mark ~= 0 then
             local xMark <const> = x + (i % gw)
             local yMark <const> = ypDrop + (i // gw)
-            local srcHex <const> = image:getPixel(xMark, yMark)
-            local trgHex <const> = blend(srcHex, hex)
-            image:drawPixel(xMark, yMark, trgHex)
+            local j <const> = yMark * wImage + xMark
+            local j4 <const> = j * 4
+
+            local rSrc <const> = pixels[1 + j4]
+            local gSrc <const> = pixels[2 + j4]
+            local bSrc <const> = pixels[3 + j4]
+            local aSrc <const> = pixels[4 + j4]
+
+            local rTrg <const>,
+            gTrg <const>,
+            bTrg <const>,
+            aTrg <const> = blend(
+                rSrc, gSrc, bSrc, aSrc,
+                rMark, gMark, bMark, aMark)
+
+            pixels[1 + j4] = rTrg
+            pixels[2 + j4] = gTrg
+            pixels[3 + j4] = bTrg
+            pixels[4 + j4] = aTrg
         end
     end
+
+    AseUtilities.setPixels(image, pixels)
 end
 
 ---Draws a glyph to an image at a pixel scale. Resizes the glyph according to
@@ -169,7 +193,10 @@ end
 ---Operates on pixels. This should not be used with app.useTool.
 ---@param image Image image
 ---@param glyph Glyph glyph
----@param hex integer rgba integer
+---@param rMark integer red
+---@param gMark integer green
+---@param bMark integer blue
+---@param aMark integer alpha
 ---@param x integer x top left corner
 ---@param y integer y top left corner
 ---@param gw integer glyph width
@@ -177,15 +204,15 @@ end
 ---@param dw integer display width
 ---@param dh integer display height
 function TextUtilities.drawGlyphNearest(
-    image, glyph, hex,
+    image, glyph,
+    rMark, gMark, bMark, aMark,
     x, y, gw, gh, dw, dh)
     if gw == dw and gh == dh then
         return TextUtilities.drawGlyph(
-            image, glyph, hex,
+            image, glyph, rMark, gMark, bMark, aMark,
             x, y, gw, gh)
     end
 
-    -- TODO: This needs to be fixed.
     local lenTrgn1 <const> = dw * dh - 1
     local lenSrcn1 <const> = gw * gh - 1
     local tx <const> = gw / dw
@@ -195,6 +222,12 @@ function TextUtilities.drawGlyphNearest(
     local glMat <const> = glyph.matrix
     local glDrop <const> = glyph.drop
     local ypDrop <const> = floor(y + glDrop * (dh / gh))
+
+    -- TODO: This is now very slow... instead of getting and setting pixels,
+    -- this needs to work and return byte arrays!
+    local pixels <const> = AseUtilities.getPixels(image)
+    local wImage <const> = image.width
+
     local i = -1
     while i < lenTrgn1 do
         i = i + 1
@@ -210,11 +243,29 @@ function TextUtilities.drawGlyphNearest(
         if mark ~= 0 then
             local xMark <const> = x + xTrg
             local yMark <const> = ypDrop + yTrg
-            local srcHex <const> = image:getPixel(xMark, yMark)
-            local trgHex <const> = blend(srcHex, hex)
-            image:drawPixel(xMark, yMark, trgHex)
+            local j <const> = yMark * wImage + xMark
+            local j4 <const> = j * 4
+
+            local rSrc <const> = pixels[1 + j4]
+            local gSrc <const> = pixels[2 + j4]
+            local bSrc <const> = pixels[3 + j4]
+            local aSrc <const> = pixels[4 + j4]
+
+            local rTrg <const>,
+            gTrg <const>,
+            bTrg <const>,
+            aTrg <const> = blend(
+                rSrc, gSrc, bSrc, aSrc,
+                rMark, gMark, bMark, aMark)
+
+            pixels[1 + j4] = rTrg
+            pixels[2 + j4] = gTrg
+            pixels[3 + j4] = bTrg
+            pixels[4 + j4] = aTrg
         end
     end
+
+    AseUtilities.setPixels(image, pixels)
 end
 
 ---Draws an array of characters to an image according to the coordinates.
@@ -222,14 +273,20 @@ end
 ---@param lut table glyph look up table
 ---@param image Image image
 ---@param chars string[] characters table
----@param hex integer rgba integer
+---@param rMark integer red
+---@param gMark integer green
+---@param bMark integer blue
+---@param aMark integer alpha
 ---@param x integer x top left corner
 ---@param y integer y top left corner
 ---@param gw integer glyph width
 ---@param gh integer glyph height
 ---@param scale integer display scale
 function TextUtilities.drawString(
-    lut, image, chars, hex, x, y, gw, gh, scale)
+    lut, image, chars,
+    rMark, gMark, bMark, aMark,
+    x, y, gw, gh, scale)
+
     local writeChar = x
     local writeLine = y
     local charLen <const> = #chars
@@ -251,7 +308,7 @@ function TextUtilities.drawString(
             -- print(glyph)
 
             drawGlyph(
-                image, glyph, hex,
+                image, glyph, rMark, gMark, bMark, aMark,
                 writeChar, writeLine,
                 gw, gh, dw, dh)
             writeChar = writeChar + dw

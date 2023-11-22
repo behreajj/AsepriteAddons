@@ -42,21 +42,31 @@ local defaults <const> = {
 ---@param lut table
 ---@param image Image
 ---@param chars string[]
----@param fillHex integer
----@param shadHex integer
+---@param rFill integer
+---@param gFill integer
+---@param bFill integer
+---@param aFill integer
+---@param rShad integer
+---@param gShad integer
+---@param bShad integer
+---@param aShad integer
 ---@param x integer
 ---@param y integer
 ---@param gw integer
 ---@param gh integer
 ---@param scale integer
 local function drawCharsHorizShd(
-    lut, image, chars, fillHex, shadHex,
+    lut, image, chars,
+    rFill, gFill, bFill, aFill,
+    rShad, gShad, bShad, aShad,
     x, y, gw, gh, scale)
     TextUtilities.drawString(
-        lut, image, chars, shadHex,
+        lut, image, chars,
+        rShad, gShad, bShad, aShad,
         x, y + 1, gw, gh, scale)
     TextUtilities.drawString(
-        lut, image, chars, fillHex,
+        lut, image, chars,
+        rFill, gFill, bFill, aFill,
         x, y, gw, gh, scale)
 end
 
@@ -633,13 +643,25 @@ dlg:button {
         local bkgColor <const> = args.bkgColor --[[@as Color]]
 
         -- Convert to hexadecimal.
-        local txtHex <const> = AseUtilities.aseColorToHex(txtColor, ColorMode.RGB)
-        local shdHex <const> = AseUtilities.aseColorToHex(shdColor, ColorMode.RGB)
-        local hdrTxtHex <const> = AseUtilities.aseColorToHex(hdrTxtColor, ColorMode.RGB)
         local hdrBkgHex <const> = AseUtilities.aseColorToHex(hdrBkgColor, ColorMode.RGB)
         local row0Hex <const> = AseUtilities.aseColorToHex(row0Color, ColorMode.RGB)
         local row1Hex <const> = AseUtilities.aseColorToHex(row1Color, ColorMode.RGB)
         local bkgHex <const> = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
+
+        local rHdr <const> = hdrTxtColor.red
+        local gHdr <const> = hdrTxtColor.green
+        local bHdr <const> = hdrTxtColor.blue
+        local aHdr <const> = hdrTxtColor.alpha
+
+        local rTxt <const> = txtColor.red
+        local gTxt <const> = txtColor.green
+        local bTxt <const> = txtColor.blue
+        local aTxt <const> = txtColor.alpha
+
+        local rShd <const> = shdColor.red
+        local gShd <const> = shdColor.green
+        local bShd <const> = shdColor.blue
+        local aShd <const> = shdColor.alpha
 
         -- Recalaculate sprite width and height.
         spriteWidth = colCount * entryWidth + spriteMargin * 2
@@ -681,7 +703,8 @@ dlg:button {
         local footChars <const> = strToChars(footText)
         drawCharsHorizShd(
             lut, footImg, footChars,
-            hdrTxtHex, shdHex,
+            rHdr, gHdr, bHdr, aHdr,
+            rShd, gShd, bShd, aShd,
             entryPadding,
             entryPadding,
             gw, gh, txtDispScl)
@@ -696,7 +719,8 @@ dlg:button {
         local titleHalfLen <const> = dw * #titleChars // 2
         drawCharsHorizShd(
             lut, titleImg, titleChars,
-            hdrTxtHex, shdHex,
+            rHdr, gHdr, bHdr, aHdr,
+            rShd, gShd, bShd, aShd,
             spriteWidth // 2 - titleHalfLen, entryPadding,
             gw, gh, txtDispScl)
 
@@ -715,48 +739,62 @@ dlg:button {
 
         if idxDisplay then
             local idxChars <const> = strToChars("IDX")
-            drawCharsHorizShd(lut, hdrImg, idxChars, hdrTxtHex, shdHex,
+            drawCharsHorizShd(lut, hdrImg, idxChars,
+                rHdr, gHdr, bHdr, aHdr,
+                rShd, gShd, bShd, aShd,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + idxColOffset
         end
 
         if hexDisplay then
             local hexChars <const> = strToChars("    HEX")
-            drawCharsHorizShd(lut, hdrImg, hexChars, hdrTxtHex, shdHex,
+            drawCharsHorizShd(lut, hdrImg, hexChars,
+                rHdr, gHdr, bHdr, aHdr,
+                rShd, gShd, bShd, aShd,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + hexColOffset
         end
 
         if alphaDisplay then
             local hexChars <const> = strToChars("ALP")
-            drawCharsHorizShd(lut, hdrImg, hexChars, hdrTxtHex, shdHex,
+            drawCharsHorizShd(lut, hdrImg, hexChars,
+                rHdr, gHdr, bHdr, aHdr,
+                rShd, gShd, bShd, aShd,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + alphaColOffset
         end
 
         if rgbDisplay then
             local rgbChars <const> = strToChars("RED GRN BLU")
-            drawCharsHorizShd(lut, hdrImg, rgbChars, hdrTxtHex, shdHex,
+            drawCharsHorizShd(lut, hdrImg, rgbChars,
+                rHdr, gHdr, bHdr, aHdr,
+                rShd, gShd, bShd, aShd,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + rgbColOffset
         end
 
         if lumDisplay then
             local lumChars <const> = strToChars("LUM")
-            drawCharsHorizShd(lut, hdrImg, lumChars, hdrTxtHex, shdHex,
+            drawCharsHorizShd(lut, hdrImg, lumChars,
+                rHdr, gHdr, bHdr, aHdr,
+                rShd, gShd, bShd, aShd,
                 xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
             xCrtHdr = xCrtHdr + lumColOffset
 
             if labDisplay then
                 local abChars <const> = strToChars("   A    B")
-                drawCharsHorizShd(lut, hdrImg, abChars, hdrTxtHex, shdHex,
+                drawCharsHorizShd(lut, hdrImg, abChars,
+                    rHdr, gHdr, bHdr, aHdr,
+                    rShd, gShd, bShd, aShd,
                     xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
                 xCrtHdr = xCrtHdr + abColOffset
             end
 
             if lchDisplay then
                 local chChars <const> = strToChars("CRM HUE")
-                drawCharsHorizShd(lut, hdrImg, chChars, hdrTxtHex, shdHex,
+                drawCharsHorizShd(lut, hdrImg, chChars,
+                    rHdr, gHdr, bHdr, aHdr,
+                    rShd, gShd, bShd, aShd,
                     xCrtHdr, entryPadding + 1, gw, gh, txtDispScl)
                 xCrtHdr = xCrtHdr + chColOffset
             end
@@ -866,14 +904,18 @@ dlg:button {
                 if idxDisplay then
                     local idxStr <const> = strfmt("%3d", palIdx)
                     local idxChars <const> = strToChars(idxStr)
-                    drawCharsHorizShd(lut, rowImg, idxChars, txtHex, shdHex,
+                    drawCharsHorizShd(lut, rowImg, idxChars,
+                        rTxt, gTxt, bTxt, aTxt,
+                        rShd, gShd, bShd, aShd,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + idxColOffset
                 end
 
                 if hexDisplay then
                     local hexChars <const> = strToChars(hexWeb)
-                    drawCharsHorizShd(lut, rowImg, hexChars, txtHex, shdHex,
+                    drawCharsHorizShd(lut, rowImg, hexChars,
+                        rTxt, gTxt, bTxt, aTxt,
+                        rShd, gShd, bShd, aShd,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + hexColOffset
                 end
@@ -882,7 +924,9 @@ dlg:button {
                     local alpha <const> = palEntry.alphaSrgb255
                     local alphaStr <const> = strfmt("%3d", alpha)
                     local alphaChars <const> = strToChars(alphaStr)
-                    drawCharsHorizShd(lut, rowImg, alphaChars, txtHex, shdHex,
+                    drawCharsHorizShd(lut, rowImg, alphaChars,
+                        rTxt, gTxt, bTxt, aTxt,
+                        rShd, gShd, bShd, aShd,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + alphaColOffset
                 end
@@ -903,7 +947,9 @@ dlg:button {
 
                     local rgbStr <const> = strfmt("%3d %3d %3d", r, g, b)
                     local rgbChars <const> = strToChars(rgbStr)
-                    drawCharsHorizShd(lut, rowImg, rgbChars, txtHex, shdHex,
+                    drawCharsHorizShd(lut, rowImg, rgbChars,
+                        rTxt, gTxt, bTxt, aTxt,
+                        rShd, gShd, bShd, aShd,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + rgbColOffset
                 end
@@ -912,7 +958,9 @@ dlg:button {
                     local lum <const> = palEntry.l
                     local lumStr <const> = strfmt("%3d", lum)
                     local lumChars <const> = strToChars(lumStr)
-                    drawCharsHorizShd(lut, rowImg, lumChars, txtHex, shdHex,
+                    drawCharsHorizShd(lut, rowImg, lumChars,
+                        rTxt, gTxt, bTxt, aTxt,
+                        rShd, gShd, bShd, aShd,
                         xCaret, entryPadding + 1, gw, gh, txtDispScl)
                     xCaret = xCaret + lumColOffset
 
@@ -933,7 +981,9 @@ dlg:button {
                         end
 
                         local abChars <const> = strToChars(abStr)
-                        drawCharsHorizShd(lut, rowImg, abChars, txtHex, shdHex,
+                        drawCharsHorizShd(lut, rowImg, abChars,
+                            rTxt, gTxt, bTxt, aTxt,
+                            rShd, gShd, bShd, aShd,
                             xCaret, entryPadding + 1, gw, gh, txtDispScl)
                         xCaret = xCaret + abColOffset
                     end
@@ -952,7 +1002,9 @@ dlg:button {
                         end
 
                         local chChars <const> = strToChars(chStr)
-                        drawCharsHorizShd(lut, rowImg, chChars, txtHex, shdHex,
+                        drawCharsHorizShd(lut, rowImg, chChars,
+                            rTxt, gTxt, bTxt, aTxt,
+                            rShd, gShd, bShd, aShd,
                             xCaret, entryPadding + 1, gw, gh, txtDispScl)
                         xCaret = xCaret + chColOffset
                     end
