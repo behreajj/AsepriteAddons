@@ -236,20 +236,8 @@ dlg:button {
         local lookBackward <const> = useBoth or useBack
 
         -- Unpack colors.
-        -- Neutral hex is when onion skin lands
-        -- on current frame. When "BOTH" directions
-        -- are used, mix between back and fore.
-
-        -- TODO: All this needs to be redone.
-        -- local backHex <const> = AseUtilities.aseColorToHex(backTint, ColorMode.RGB)
-        -- local foreHex <const> = AseUtilities.aseColorToHex(foreTint, ColorMode.RGB)
-        -- local neutHex = 0x00808080
-        -- if useBoth then
-        --     neutHex = Clr.toHex(Clr.mixSrLab2(
-        --         Clr.fromHex(backHex),
-        --         Clr.fromHex(foreHex), 0.5))
-        -- end
-
+        -- Neutral hex is when onion skin lands on current frame.
+        -- When "BOTH" directions are used, mix between back and fore.
         local rBack <const> = backTint.red
         local gBack <const> = backTint.green
         local bBack <const> = backTint.blue
@@ -291,10 +279,9 @@ dlg:button {
         -- Set function for both vs. forward or backward.
         local lerpFunc = nil
         if useBoth then
-            -- TODO: This needs to be re-checked for issues...
             lerpFunc = function(aMin, aMax, i, d, s)
                 if s > 2 then
-                    local t <const> = (abs(i - d) - 1.0) / (0.5 * s - 1.0)
+                    local t <const> = (abs(i - d) + 1.0) / (0.5 * s)
                     if t <= 0.0 then return aMax end
                     if t >= 1.0 then return aMin end
                     return (1.0 - t) * aMax + t * aMin
