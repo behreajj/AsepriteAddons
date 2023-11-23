@@ -454,29 +454,43 @@ dlg:button {
                 local xOff <const> = 1 + xMin - strokeSize
                 local yOff <const> = 1 + yMin - strokeSize
 
+                local wPlot <const> = (xMax - xMin) + stroke2 - 1
+                local hPlot <const> = (yMax - yMin) + stroke2 - 1
                 local plotSpec <const> = AseUtilities.createSpec(
-                    (xMax - xMin) + stroke2 - 1,
-                    (yMax - yMin) + stroke2 - 1,
+                    wPlot, hPlot,
                     spec.colorMode,
                     spec.colorSpace,
                     spec.transparentColor)
+
                 local plotImage <const> = Image(plotSpec)
                 local plotPos <const> = Point(xOff, yOff)
-
+                ---@type integer[]
+                local plotPixels<const> = {}
+                local lenPixels <const> = wPlot * hPlot * 4
                 local j = 0
+                while j < lenPixels do
+                    j = j + 1
+                    plotPixels[j] = 0
+                end
+
+                j = 0
                 while j < lenHexesPlot do
                     j = j + 1
                     local hexPlot <const> = hexesPlot[j]
                     if (hexPlot & 0xff000000) ~= 0 then
                         local xi <const> = xs[j] - xOff
                         local yi <const> = ys[j] - yOff
-                        drawCircleFill(plotImage, xi, yi, strokeSize,
-                            0xffffffff)
-                        drawCircleFill(plotImage, xi, yi, fillSize,
-                            0xff000000 | hexPlot)
+                        drawCircleFill(plotPixels, wPlot, xi, yi, strokeSize,
+                            255, 255, 255, 255)
+                        drawCircleFill(plotPixels, wPlot, xi, yi, fillSize,
+                            hexPlot & 0xff,
+                            (hexPlot >> 0x08) & 0xff,
+                            (hexPlot >> 0x10) & 0xff,
+                            255)
                     end
                 end
 
+                AseUtilities.setPixels(plotImage, plotPixels)
                 local plotPalLayer <const> = sprite:newLayer()
                 plotPalLayer.name = "Palette"
                 sprite:newCel(
