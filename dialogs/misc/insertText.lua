@@ -501,7 +501,7 @@ dlg:button {
                 end)
 
                 yCaret = yCaret + dh + scale + leading
-                bkgSrcImg = animImage:clone()
+                if animImage then bkgSrcImg = animImage:clone() end
             end
         else
             local activeCel <const> = layer:cel(actFrIdx)

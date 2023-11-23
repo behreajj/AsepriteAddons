@@ -25,31 +25,31 @@ local blendModes <const> = {
     "HSL_LUMINOSITY",
 }
 
----@param blendMode BlendMode
+---@param bm BlendMode
 ---@return string
-local function blendModeToStr(blendMode)
-    if blendMode == BlendMode.DARKEN then return "DARKEN" end
-    if blendMode == BlendMode.MULTIPLY then return "MULTIPLY" end
-    if blendMode == BlendMode.COLOR_BURN then return "COLOR_BURN" end
+local function blendModeToStr(bm)
+    if bm == BlendMode.DARKEN then return "DARKEN" end
+    if bm == BlendMode.MULTIPLY then return "MULTIPLY" end
+    if bm == BlendMode.COLOR_BURN then return "COLOR_BURN" end
 
-    if blendMode == BlendMode.LIGHTEN then return "LIGHTEN" end
-    if blendMode == BlendMode.SCREEN then return "SCREEN" end
-    if blendMode == BlendMode.COLOR_DODGE then return "COLOR_DODGE" end
-    if blendMode == BlendMode.ADDITION then return "ADDITION" end
+    if bm == BlendMode.LIGHTEN then return "LIGHTEN" end
+    if bm == BlendMode.SCREEN then return "SCREEN" end
+    if bm == BlendMode.COLOR_DODGE then return "COLOR_DODGE" end
+    if bm == BlendMode.ADDITION then return "ADDITION" end
 
-    if blendMode == BlendMode.OVERLAY then return "OVERLAY" end
-    if blendMode == BlendMode.SOFT_LIGHT then return "SOFT_LIGHT" end
-    if blendMode == BlendMode.HARD_LIGHT then return "HARD_LIGHT" end
+    if bm == BlendMode.OVERLAY then return "OVERLAY" end
+    if bm == BlendMode.SOFT_LIGHT then return "SOFT_LIGHT" end
+    if bm == BlendMode.HARD_LIGHT then return "HARD_LIGHT" end
 
-    if blendMode == BlendMode.DIFFERENCE then return "DIFFERENCE" end
-    if blendMode == BlendMode.EXCLUSION then return "EXCLUSION" end
-    if blendMode == BlendMode.SUBTRACT then return "SUBTRACT" end
-    if blendMode == BlendMode.DIVIDE then return "DIVIDE" end
+    if bm == BlendMode.DIFFERENCE then return "DIFFERENCE" end
+    if bm == BlendMode.EXCLUSION then return "EXCLUSION" end
+    if bm == BlendMode.SUBTRACT then return "SUBTRACT" end
+    if bm == BlendMode.DIVIDE then return "DIVIDE" end
 
-    if blendMode == BlendMode.HSL_HUE then return "HSL_HUE" end
-    if blendMode == BlendMode.HSL_SATURATION then return "HSL_SATURATION" end
-    if blendMode == BlendMode.HSL_COLOR then return "HSL_COLOR" end
-    if blendMode == BlendMode.HSL_LUMINOSITY then return "HSL_LUMINOSITY" end
+    if bm == BlendMode.HSL_HUE then return "HSL_HUE" end
+    if bm == BlendMode.HSL_SATURATION then return "HSL_SATURATION" end
+    if bm == BlendMode.HSL_COLOR then return "HSL_COLOR" end
+    if bm == BlendMode.HSL_LUMINOSITY then return "HSL_LUMINOSITY" end
 
     return "NORMAL"
 end

@@ -281,6 +281,8 @@ dlg:button {
         end
         local screen <const> = Utilities.toScreen
         local drawCirc <const> = AseUtilities.drawCircleFill
+        local getPixels <const> = AseUtilities.getPixels
+        local setPixels <const> = AseUtilities.setPixels
         local tablesort <const> = table.sort
 
         -- Create Octree.
@@ -307,7 +309,8 @@ dlg:button {
 
         Octree.cull(octree)
 
-        local swatchAlpha <const> = args.swatchAlpha or defaults.swatchAlpha
+        local swatchAlpha <const> = args.swatchAlpha
+            or defaults.swatchAlpha --[[@as integer]]
         local swatchAlpha01 <const> = swatchAlpha / 255.0
         local cols <const> = args.cols or defaults.cols --[[@as integer]]
         local rows <const> = args.rows or defaults.rows --[[@as integer]]
@@ -337,11 +340,11 @@ dlg:button {
             or defaults.queryRad --[[@as number]]
 
         ---@type integer[]
-        local replaceClrs <const> = {}
+        local replaceRgbs <const> = {}
         local gridLen <const> = #gridPts
-        local swatchAlphaMask <const> = swatchAlpha << 0x18
         local j = 0
         while j < gridLen do
+            local j4 <const> = j * 4
             j = j + 1
             local srcClr <const> = gridClrs[j]
             local srcLab <const> = sRgbToLab(srcClr)
@@ -351,10 +354,16 @@ dlg:button {
             local nearPoint <const>, _ <const> = search(octree, srcLabPt, queryRad, distFunc)
             if nearPoint then
                 local ptHash <const> = v3hash(nearPoint)
-                replaceClrs[j] = swatchAlphaMask
-                    | (ptHexDict[ptHash] & 0x00ffffff)
+                local abgr32 <const> = ptHexDict[ptHash]
+                replaceRgbs[1 + j4] = abgr32 & 0xff
+                replaceRgbs[2 + j4] = (abgr32 >> 0x08) & 0xff
+                replaceRgbs[3 + j4] = (abgr32 >> 0x10) & 0xff
+                replaceRgbs[4 + j4] = swatchAlpha
             else
-                replaceClrs[j] = 0x0
+                replaceRgbs[1 + j4] = 0
+                replaceRgbs[2 + j4] = 0
+                replaceRgbs[3 + j4] = 0
+                replaceRgbs[4 + j4] = 0
             end
         end
 
@@ -416,7 +425,7 @@ dlg:button {
         local maxSwatchSize <const> = args.maxSwatchSize --[[@as integer]]
         local swatchDiff <const> = maxSwatchSize - minSwatchSize
 
-        ---@type { point: Vec3, color: integer}[][]
+        ---@type { point: Vec3, r: integer, g: integer, b: integer, a: integer}[][]
         local pts2d <const> = {}
         local zMin = 2147483647
         local zMax = -2147483648
@@ -429,10 +438,11 @@ dlg:button {
             local theta <const> = h * hToTheta
             local cosa <const> = cos(theta)
             local sina <const> = sin(theta)
-            ---@type { point: Vec3, color: integer}[]
+            ---@type { point: Vec3, r: integer, g: integer, b: integer, a: integer}[]
             local frame2d <const> = {}
             local k = 0
             while k < gridLen do
+                local k4 <const> = k * 4
                 k = k + 1
                 local vec <const> = gridPts[k]
                 local vr <const> = rotax(vec, cosa, sina, axis)
@@ -445,7 +455,10 @@ dlg:button {
 
                 frame2d[k] = {
                     point = scrpt,
-                    color = replaceClrs[k]
+                    r = replaceRgbs[1 + k4],
+                    g = replaceRgbs[2 + k4],
+                    b = replaceRgbs[3 + k4],
+                    a = replaceRgbs[4 + k4]
                 }
             end
             -- Depth sorting.
@@ -477,6 +490,7 @@ dlg:button {
                 local frame <const> = coverSprite.frames[m]
                 frame.duration = duration
                 local img <const> = bkgImg:clone()
+                local imgPixels <const> = getPixels(img)
                 local frame2d <const> = pts2d[m]
 
                 local n = 0
@@ -490,13 +504,14 @@ dlg:button {
                         * ((screenPoint.z - zMax) * zDenom)
 
                     drawCirc(
-                        img,
+                        imgPixels, width,
                         floor(0.5 + screenPoint.x),
                         floor(0.5 + screenPoint.y),
                         floor(0.5 + scl),
-                        packet.color)
+                        packet.r, packet.g, packet.b, packet.a)
                 end
 
+                setPixels(img, imgPixels)
                 coverSprite:newCel(layer, frame, img)
             end
         end)

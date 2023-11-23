@@ -1231,12 +1231,25 @@ end
 
 ---Draws a filled circle. Uses the Aseprite Image instance method drawPixel.
 ---This means that the pixel changes will not be tracked as a transaction.
----@param image Image Aseprite image
+---@param pixels integer[] pixels
+---@param wImage integer image width
 ---@param xc integer center x
 ---@param yc integer center y
 ---@param r integer radius
----@param hex integer rgba integer
-function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
+---@param rFill integer fill red
+---@param gFill integer fill red
+---@param bFill integer fill red
+---@param aFill integer fill red
+---@return integer[]
+function AseUtilities.drawCircleFill(
+    pixels, wImage, xc, yc, r,
+    rFill, gFill, bFill, aFill)
+    -- TODO: Fix all dialogs that use this method
+    -- colorShades
+    -- colorWheel
+    -- normalWheel
+    -- paletteCoverage
+
     local blend <const> = AseUtilities.blendRgba
     local rsq <const> = r * r
     local r2 <const> = r * 2
@@ -1249,11 +1262,29 @@ function AseUtilities.drawCircleFill(image, xc, yc, r, hex)
         if (x * x + y * y) < rsq then
             local xMark <const> = xc + x
             local yMark <const> = yc + y
-            local srcHex <const> = image:getPixel(xMark, yMark)
-            local trgHex <const> = blend(srcHex, hex)
-            image:drawPixel(xMark, yMark, trgHex)
+            local j <const> = yMark * wImage + xMark
+            local j4 <const> = j * 4
+
+            local rSrc <const> = pixels[1 + j4]
+            local gSrc <const> = pixels[2 + j4]
+            local bSrc <const> = pixels[3 + j4]
+            local aSrc <const> = pixels[4 + j4]
+
+            local rTrg <const>,
+            gTrg <const>,
+            bTrg <const>,
+            aTrg <const> = blend(
+                rSrc, gSrc, bSrc, aSrc,
+                rFill, gFill, bFill, aFill)
+
+            pixels[1 + j4] = rTrg
+            pixels[2 + j4] = gTrg
+            pixels[3 + j4] = bTrg
+            pixels[4 + j4] = aTrg
         end
     end
+
+    return pixels
 end
 
 ---Blits input image onto another that is the next power of 2 in dimension. The

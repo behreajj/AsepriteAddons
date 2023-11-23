@@ -1,6 +1,8 @@
 dofile("../../support/aseutilities.lua")
 
 local targets <const> = {
+    -- TODO: Instead of swap replacing the two widget values, maybe have it
+    -- swap colors on the canvas, but only be enabled when tolerance is 0?
     "ACTIVE",
     "ALL",
     "RANGE",
