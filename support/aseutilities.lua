@@ -1248,7 +1248,6 @@ function AseUtilities.drawCircleFill(
     -- colorShades
     -- colorWheel
     -- normalWheel
-    -- paletteCoverage
 
     local blend <const> = AseUtilities.blendRgba
     local rsq <const> = r * r

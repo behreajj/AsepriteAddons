@@ -11,7 +11,6 @@ local defaults <const> = {
     outOfGamut = 64,
     sectorCount = 0,
     ringCount = 0,
-    useLightBar = false,
     plotPalette = true,
     palType = "ACTIVE",
     palStart = 0,
@@ -96,14 +95,6 @@ dlg:slider {
     min = 0,
     max = 16,
     value = defaults.ringCount
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
-    id = "useLightBar",
-    label = "Light Bar:",
-    selected = defaults.useLightBar
 }
 
 dlg:newrow { always = false }
@@ -203,7 +194,6 @@ dlg:button {
             or defaults.maxLight --[[@as integer]]
         local outOfGamut <const> = args.outOfGamut
             or defaults.outOfGamut --[[@as integer]]
-        local useLightBar <const> = args.useLightBar --[[@as boolean]]
         local plotPalette <const> = args.plotPalette --[[@as boolean]]
 
         -- Must be done before a new sprite is created.
@@ -365,58 +355,6 @@ dlg:button {
                     gamutImgs[idxCel])
             end
         end)
-
-        if useLightBar then
-            local lightBarLayer <const> = sprite:newLayer()
-            lightBarLayer.name = "Light"
-
-            local lightBarWidth <const> = math.max(8, math.ceil(size / 24))
-            local lightBarHeight <const> = size
-            local lightBarSpec <const> = AseUtilities.createSpec(
-                lightBarWidth, lightBarHeight,
-                spec.colorMode,
-                spec.colorSpace,
-                spec.transparentColor)
-            local lightBarImage <const> = Image(lightBarSpec)
-            local yToLight <const> = 100.0 / (lightBarHeight - 1.0)
-
-            local lightBarPixels <const> = lightBarImage:pixels()
-            for pixel in lightBarPixels do
-                local light <const> = 100.0 - pixel.y * yToLight
-                pixel(toHex(labTosRgba(light, 0.0, 0.0, 1.0)))
-            end
-
-            app.transaction("Light Bar", function()
-                local lightPoint <const> = Point(size - lightBarWidth, 0)
-                local halfHeight <const> = lightBarHeight // 2
-                local xi <const> = lightBarWidth // 2
-                local strokeSize <const> = lightBarWidth // 2
-                local idxCel = 0
-                local iToFac = 0.5
-                if reqFrames > 1 then
-                    iToFac = 1.0 / (reqFrames - 1.0)
-                end
-                local yMin <const> = minLight * lightBarHeight * 0.01
-                local yMax <const> = maxLight * lightBarHeight * 0.01
-                local spriteFrames <const> = sprite.frames
-                while idxCel < reqFrames do
-                    local fac <const> = idxCel * iToFac
-                    local yf <const> = (1.0 - fac) * yMin + fac * yMax
-                    local yi <const> = size - floor(0.5 + yf)
-                    local lightClone <const> = lightBarImage:clone()
-                    local strokeColor = 0xffffffff
-                    if yi < halfHeight then strokeColor = 0xff000000 end
-                    drawCircleFill(lightClone, xi, yi, strokeSize, strokeColor)
-
-                    idxCel = idxCel + 1
-                    sprite:newCel(
-                        lightBarLayer,
-                        spriteFrames[idxCel],
-                        lightClone,
-                        lightPoint)
-                end
-            end)
-        end
 
         if plotPalette then
             -- Unpack arguments.

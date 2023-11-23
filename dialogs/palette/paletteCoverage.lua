@@ -480,6 +480,8 @@ dlg:button {
         local bkgColor <const> = args.bkgColor --[[@as Color]]
         local bkgHex <const> = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
         bkgImg:clear(bkgHex)
+        local bkgPixels <const> = getPixels(bkgImg)
+        local lenBkgPixels <const> = #bkgPixels
 
         local fps <const> = args.fps or defaults.fps --[[@as integer]]
         local duration <const> = 1.0 / math.max(1, fps)
@@ -487,11 +489,17 @@ dlg:button {
             local m = 0
             while m < reqFrames do
                 m = m + 1
+                local frame2d <const> = pts2d[m]
                 local frame <const> = coverSprite.frames[m]
                 frame.duration = duration
-                local img <const> = bkgImg:clone()
-                local imgPixels <const> = getPixels(img)
-                local frame2d <const> = pts2d[m]
+
+                ---@type integer[]
+                local imgPixels <const> = {}
+                local o = 0
+                while o < lenBkgPixels do
+                    o = o + 1
+                    imgPixels[o] = bkgPixels[o]
+                end
 
                 local n = 0
                 while n < gridLen do
@@ -511,6 +519,7 @@ dlg:button {
                         packet.r, packet.g, packet.b, packet.a)
                 end
 
+                local img <const> = Image(width, height)
                 setPixels(img, imgPixels)
                 coverSprite:newCel(layer, frame, img)
             end

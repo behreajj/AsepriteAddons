@@ -9,7 +9,6 @@ local defaults <const> = {
     outOfGamut = 64,
     quantization = 0,
     maxLight = 100.0,
-    useHueBar = false,
     plotPalette = true,
     palType = "ACTIVE",
     palStart = 0,
@@ -67,14 +66,6 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.outOfGamut
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
-    id = "useHueBar",
-    label = "Hue Bar:",
-    selected = defaults.useHueBar
 }
 
 dlg:newrow { always = false }
@@ -148,6 +139,8 @@ dlg:button {
     onclick = function()
         -- Cache methods
         local floor <const> = math.floor
+        local max <const> = math.max
+        local min <const> = math.min
 
         local fromHex <const> = Clr.fromHex
         local lchTosRgba <const> = Clr.srLchTosRgb
@@ -155,6 +148,8 @@ dlg:button {
         local sRgbaToLch <const> = Clr.sRgbToSrLch
         local toHex <const> = Clr.toHex
 
+        local getPixels <const> = AseUtilities.getPixels
+        local setPixels <const> = AseUtilities.setPixels
         local drawCircleFill <const> = AseUtilities.drawCircleFill
         local quantize <const> = Utilities.quantizeUnsigned
 
@@ -165,7 +160,6 @@ dlg:button {
             or defaults.maxLight --[[@as integer]]
         local outOfGamut <const> = args.outOfGamut
             or defaults.outOfGamut --[[@as integer]]
-        local useHueBar <const> = args.useHueBar --[[@as boolean]]
         local plotPalette <const> = args.plotPalette --[[@as boolean]]
 
         -- Must be done before a new sprite is created.
@@ -294,53 +288,6 @@ dlg:button {
                     gamutImgs[idxCel])
             end
         end)
-
-        if useHueBar then
-            local hueBarLayer <const> = sprite:newLayer()
-            hueBarLayer.name = "Hue"
-
-            local hueBarWidth <const> = math.max(8, math.ceil(size / 24))
-            local hueBarHeight <const> = size
-            local hueBarSpec <const> = AseUtilities.createSpec(
-                hueBarWidth, hueBarHeight,
-                spec.colorMode,
-                spec.colorSpace,
-                spec.transparentColor)
-            local hueBarImage <const> = Image(hueBarSpec)
-
-            local yToHue <const> = 1.0 / (hueBarHeight - 1.0)
-            local hueBarPixels <const> = hueBarImage:pixels()
-            local halfChroma <const> = maxChroma * 0.5
-            for pixel in hueBarPixels do
-                local hue <const> = 1.0 - pixel.y * yToHue
-                pixel(toHex(lchTosRgba(50.0, halfChroma, hue, 1.0)))
-            end
-
-            app.transaction("Hue Bar", function()
-                local huePoint <const> = Point(size - hueBarWidth, 0)
-                local strokeColor <const> = 0xffffffff
-                local xi <const> = hueBarWidth // 2
-                local strokeSize <const> = hueBarWidth // 2
-                local idxCel = 0
-                local iToHue = hueBarHeight * 0.5
-                if reqFrames > 0 then
-                    iToHue = hueBarHeight / reqFrames
-                end
-                local spriteFrames <const> = sprite.frames
-                while idxCel < reqFrames do
-                    local yi <const> = size - floor(0.5 + idxCel * iToHue)
-                    local hueClone <const> = hueBarImage:clone()
-                    drawCircleFill(hueClone, xi, yi, strokeSize, strokeColor)
-
-                    idxCel = idxCel + 1
-                    sprite:newCel(
-                        hueBarLayer,
-                        spriteFrames[idxCel],
-                        hueClone,
-                        huePoint)
-                end
-            end)
-        end
 
         if plotPalette then
             -- Unpack arguments.
