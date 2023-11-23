@@ -464,8 +464,9 @@ dlg:button {
 
                 local plotImage <const> = Image(plotSpec)
                 local plotPos <const> = Point(xOff, yOff)
+
                 ---@type integer[]
-                local plotPixels<const> = {}
+                local plotPixels <const> = {}
                 local lenPixels <const> = wPlot * hPlot * 4
                 local j = 0
                 while j < lenPixels do

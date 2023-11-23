@@ -139,8 +139,6 @@ dlg:button {
     onclick = function()
         -- Cache methods
         local floor <const> = math.floor
-        local max <const> = math.max
-        local min <const> = math.min
 
         local fromHex <const> = Clr.fromHex
         local lchTosRgba <const> = Clr.srLchTosRgb
@@ -148,9 +146,9 @@ dlg:button {
         local sRgbaToLch <const> = Clr.sRgbToSrLch
         local toHex <const> = Clr.toHex
 
-        local getPixels <const> = AseUtilities.getPixels
-        local setPixels <const> = AseUtilities.setPixels
         local drawCircleFill <const> = AseUtilities.drawCircleFill
+        local setPixels <const> = AseUtilities.setPixels
+
         local quantize <const> = Utilities.quantizeUnsigned
 
         -- Unpack arguments.
@@ -362,14 +360,24 @@ dlg:button {
             local xOff <const> = 1 + xMin - strokeSize
             local yOff <const> = 1 + yMin - strokeSize
 
+            local wPlot <const> = (xMax - xMin) + stroke2 - 1
+            local hPlot <const> = (yMax - yMin) + stroke2 - 1
             local plotSpec <const> = AseUtilities.createSpec(
-                (xMax - xMin) + stroke2 - 1,
-                (yMax - yMin) + stroke2 - 1,
+                wPlot, hPlot,
                 spec.colorMode,
                 spec.colorSpace,
                 spec.transparentColor)
             local plotImage <const> = Image(plotSpec)
             local plotPos <const> = Point(xOff, yOff)
+
+            ---@type integer[]
+            local plotPixels <const> = {}
+            local lenPixels <const> = wPlot * hPlot * 4
+            local g = 0
+            while g < lenPixels do
+                g = g + 1
+                plotPixels[g] = 0
+            end
 
             local k = 0
             while k < lenHexesSrgb do
@@ -380,11 +388,20 @@ dlg:button {
                     local yi <const> = ys[k] - yOff
                     local hexProfile <const> = hexesProfile[k]
                     local strokeColor <const> = strokes[k]
-                    drawCircleFill(plotImage, xi, yi, strokeSize, strokeColor)
-                    drawCircleFill(plotImage, xi, yi, fillSize, hexProfile)
+                    drawCircleFill(plotPixels, wPlot, xi, yi, strokeSize,
+                        strokeColor & 0xff,
+                        (strokeColor >> 0x08) & 0xff,
+                        (strokeColor >> 0x10) & 0xff,
+                        255)
+                    drawCircleFill(plotPixels, wPlot, xi, yi, fillSize,
+                        hexProfile & 0xff,
+                        (hexProfile >> 0x08) & 0xff,
+                        (hexProfile >> 0x10) & 0xff,
+                        255)
                 end
             end
 
+            setPixels(plotImage, plotPixels)
             local plotPalLayer <const> = sprite:newLayer()
             plotPalLayer.name = "Palette"
 
