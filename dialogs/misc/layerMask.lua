@@ -124,6 +124,8 @@ dlg:button {
         -- Cache global functions used in loop.
         local min <const> = math.min
         local max <const> = math.max
+        local getPixels <const> = AseUtilities.getPixels
+        local setPixels <const> = AseUtilities.setPixels
         local tilesToImage <const> = AseUtilities.tilesToImage
         local trim <const> = AseUtilities.trimImageAlpha
         local createSpec <const> = AseUtilities.createSpec
@@ -207,28 +209,24 @@ dlg:button {
                         imgOver = tilesToImage(
                             imgOver, tileSetOver, colorMode)
                     end
+
                     local posOver <const> = overCel.position
                     local xTlOver = posOver.x
                     local yTlOver = posOver.y
-
                     local widthOver = imgOver.width
                     local heightOver = imgOver.height
-                    local xBrOver = xTlOver + widthOver
-                    local yBrOver = yTlOver + heightOver
 
                     local imgUnder = underCel.image
                     if underIsTile then
                         imgUnder = tilesToImage(
                             imgUnder, tileSetUnder, colorMode)
                     end
+
                     local posUnder <const> = underCel.position
                     local xTlUnder = posUnder.x
                     local yTlUnder = posUnder.y
-
                     local widthUnder = imgUnder.width
                     local heightUnder = imgUnder.height
-                    local xBrUnder = xTlUnder + widthUnder
-                    local yBrUnder = yTlUnder + heightUnder
 
                     if trimCels then
                         local xTlOverShift = 0
@@ -243,20 +241,20 @@ dlg:button {
 
                         xTlOver = xTlOver + xTlOverShift
                         yTlOver = yTlOver + yTlOverShift
+                        widthOver = imgOver.width
+                        heightOver = imgOver.height
 
                         xTlUnder = xTlUnder + xTlUnderShift
                         yTlUnder = yTlUnder + yTlUnderShift
-
-                        widthOver = imgOver.width
-                        heightOver = imgOver.height
-                        xBrOver = xTlOver + widthOver
-                        yBrOver = yTlOver + heightOver
-
                         widthUnder = imgUnder.width
                         heightUnder = imgUnder.height
-                        xBrUnder = xTlUnder + widthUnder
-                        yBrUnder = yTlUnder + heightUnder
                     end
+
+                    local xBrOver <const> = xTlOver + widthOver - 1
+                    local yBrOver <const> = yTlOver + heightOver - 1
+
+                    local xBrUnder <const> = xTlUnder + widthUnder - 1
+                    local yBrUnder <const> = yTlUnder + heightUnder - 1
 
                     -- Find intersection of over and under.
                     local xTlTarget <const> = max(xTlOver, xTlUnder)
@@ -271,41 +269,62 @@ dlg:button {
                         local overCompOpacity <const> = (overLyrOpacity * overCelOpacity) // 255
                         local underCompOpacity <const> = (underLyrOpacity * underCelOpacity) // 255
 
-                        local widthTarget <const> = xBrTarget - xTlTarget
-                        local heightTarget <const> = yBrTarget - yTlTarget
+                        local pxOver <const> = getPixels(imgOver)
+                        local pxUnder <const> = getPixels(imgUnder)
+
+                        ---@type integer[]
+                        local pxTarget <const> = {}
+                        local widthTarget <const> = 1 + xBrTarget - xTlTarget
+                        local heightTarget <const> = 1 + yBrTarget - yTlTarget
+                        local lenPxTarget <const> = widthTarget * heightTarget
+
+                        local i = 0
+                        while i < lenPxTarget do
+                            local rTarget = 0
+                            local gTarget = 0
+                            local bTarget = 0
+                            local aTarget = 0
+
+                            local xSprite <const> = i % widthTarget + xTlTarget
+                            local ySprite <const> = i // widthTarget + yTlTarget
+
+                            local xOver <const> = xSprite - xTlOver
+                            local yOver <const> = ySprite - yTlOver
+                            local iOver <const> = yOver * widthOver + xOver
+                            local iOver4 <const> = iOver * 4
+                            local aOver = pxOver[4 + iOver4]
+                            aOver = (aOver * overCompOpacity) // 255
+                            if aOver > 0 then
+                                local xUnder <const> = xSprite - xTlUnder
+                                local yUnder <const> = ySprite - yTlUnder
+                                local iUnder <const> = yUnder * widthUnder + xUnder
+                                local iUnder4 <const> = iUnder * 4
+                                local aUnder = pxUnder[4 + iUnder4]
+                                aUnder = (aUnder * underCompOpacity) // 255
+                                if aUnder > 0 then
+                                    -- RGB are assigned the under layer's color.
+                                    rTarget = pxUnder[1 + iUnder4]
+                                    gTarget = pxUnder[2 + iUnder4]
+                                    bTarget = pxUnder[3 + iUnder4]
+                                    aTarget = (aOver * aUnder) // 255
+                                end
+                            end
+
+                            local i4 <const> = i * 4
+                            pxTarget[1 + i4] = rTarget
+                            pxTarget[2 + i4] = gTarget
+                            pxTarget[3 + i4] = bTarget
+                            pxTarget[4 + i4] = aTarget
+
+                            i = i + 1
+                        end
 
                         local trgSpec <const> = createSpec(
                             widthTarget, heightTarget,
                             rgbColorMode, colorSpace, alphaIndex)
                         local trgImage <const> = Image(trgSpec)
                         local trgPos <const> = Point(xTlTarget, yTlTarget)
-
-                        local trgPxItr <const> = trgImage:pixels()
-                        for pixel in trgPxItr do
-                            local xSprite <const> = pixel.x + xTlTarget
-                            local ySprite <const> = pixel.y + yTlTarget
-
-                            -- TODO: Replace getPixel with bytes string.
-                            local xOver <const> = xSprite - xTlOver
-                            local yOver <const> = ySprite - yTlOver
-                            local hexOver <const> = imgOver:getPixel(xOver, yOver)
-                            local alphaOver = (hexOver >> 0x18) & 0xff
-                            alphaOver = (alphaOver * overCompOpacity) // 255
-
-                            if alphaOver > 0 then
-                                local xUnder <const> = xSprite - xTlUnder
-                                local yUnder <const> = ySprite - yTlUnder
-
-                                -- No sign that alpha premultiply affects this.
-                                local hexUnder <const> = imgUnder:getPixel(xUnder, yUnder)
-                                local alphaUnder = (hexUnder >> 0x18) & 0xff
-                                alphaUnder = (alphaUnder * underCompOpacity) // 255
-                                local alphaComp <const> = (alphaOver * alphaUnder) // 255
-                                local hexComp <const> = (alphaComp << 0x18)
-                                    | (hexUnder & 0x00ffffff)
-                                pixel(hexComp)
-                            end
-                        end
+                        setPixels(trgImage, pxTarget)
 
                         -- Do NOT assign source cel opacity,
                         -- as that is baked into the mask.
