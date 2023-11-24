@@ -555,7 +555,6 @@ dlg:button {
             if includeMaps then
                 local pxTilei <const> = app.pixelColor.tileI
                 local pxTilef <const> = app.pixelColor.tileF
-                local useZIndex <const> = app.apiVersion >= 23
 
                 local frObjs <const> = activeSprite.frames
                 local tmFrames <const> = Utilities.flatArr2(
@@ -677,9 +676,6 @@ dlg:button {
                                     height = hTileMap * hTile
                                 }
 
-                                local zIndex = 0
-                                if useZIndex then zIndex = tmCel.zIndex end
-
                                 local celPacket <const> = {
                                     fileName = "",
                                     bounds = tmBounds,
@@ -687,7 +683,7 @@ dlg:button {
                                     frameNumber = tmFrame,
                                     layer = layerId,
                                     opacity = tmCel.opacity,
-                                    zIndex = zIndex
+                                    zIndex = tmCel.zIndex
                                 }
                                 celPackets[#celPackets + 1] = celPacket
                             end -- End cel exists check.

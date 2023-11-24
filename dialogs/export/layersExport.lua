@@ -353,7 +353,6 @@ dlg:button {
         local zeroPoint <const> = Point(0, 0)
         local nonUniformDim <const> = not potUniform
         local usePadding <const> = padding > 0
-        local useZIndex <const> = app.apiVersion >= 23
 
         -- Cache methods used in loops.
         local floor <const> = math.floor
@@ -527,7 +526,7 @@ dlg:button {
                         -- print("Cel was found.")
                         celData = cel.data
                         celOpacity = cel.opacity
-                        if useZIndex then zIndex = cel.zIndex end
+                        zIndex = cel.zIndex
 
                         image = cel.image
                         if chosenLayer.isTilemap then

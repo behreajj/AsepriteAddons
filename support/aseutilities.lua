@@ -1485,7 +1485,6 @@ function AseUtilities.flattenGroup(
         includeTiles, includeBkg)
     local lenLeaves <const> = #leaves
 
-    local useZIndex <const> = app.apiVersion >= 23
     local packets <const> = {}
     local lenPackets = 0
 
@@ -1526,8 +1525,7 @@ function AseUtilities.flattenGroup(
             if xBrCel > xBrGroup then xBrGroup = xBrCel end
             if yBrCel > yBrGroup then yBrGroup = yBrCel end
 
-            local zIndex = 0
-            if useZIndex then zIndex = leafCel.zIndex end
+            local zIndex <const> = leafCel.zIndex
             local order <const> = (i - 1) + zIndex
 
             lenPackets = lenPackets + 1
