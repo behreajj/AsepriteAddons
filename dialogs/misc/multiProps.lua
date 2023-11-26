@@ -76,16 +76,10 @@ local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
 
 local dlg <const> = Dialog { title = "Properties" }
 
-dlg:separator { id = "frameSep", text = "Frame" }
-
-dlg:label {
-    id = "frameNo",
-    label = "Number:",
-    text = string.format("%d", frameUiOffset + frame.frameNumber),
-    focus = false
+dlg:separator {
+    id = "frameSep",
+    text = string.format("Frame %d", frameUiOffset + frame.frameNumber)
 }
-
-dlg:newrow { always = false }
 
 dlg:number {
     id = "frameDuration",
@@ -95,16 +89,10 @@ dlg:number {
     focus = false,
 }
 
-dlg:separator { id = "layerSep", text = "Layer" }
-
-dlg:label {
-    id = "layerType",
-    label = "Type:",
-    text = getLayerType(layer),
-    visible = false,
+dlg:separator {
+    id = "layerSep",
+    text = string.format("%s Layer", getLayerType(layer))
 }
-
-dlg:newrow { always = false }
 
 dlg:entry {
     id = "layerName",
@@ -154,9 +142,29 @@ dlg:entry {
 }
 
 if layer.isTilemap then
-    -- TODO: Extra section for if layer is a tile map?
-    -- Except for tile set name, none of the information can be changed
-    -- or is all that useful...
+    local tileset <const> = layer.tileset
+    if tileset then
+        -- TODO: Any way to set the allowed flip flags (X, Y, D)?
+
+        dlg:separator { id = "tileSep", text = "Tileset" }
+
+        dlg:entry {
+            id = "tilesetName",
+            label = "Name:",
+            text = layer.tileset.name,
+            focus = false,
+        }
+
+        dlg:newrow { always = false }
+
+        dlg:number {
+            id = "tilesetBaseIndex",
+            label = "Base Index:",
+            text = string.format("%0d", tileset.baseIndex),
+            decimals = 0,
+            focus = false,
+        }
+    end
 end
 
 if cel then
@@ -248,11 +256,11 @@ dlg:button {
         local celColor <const> = args.celColor --[[@as Color]]
         local celUserData <const> = args.celUserData --[[@as string]]
 
-        app.transaction("Set Cel", function()
+        app.transaction("Set Properties", function()
             frame.duration = math.min(math.max(math.abs(
                 msDur) * 0.001, 0.001), 65.535)
 
-            layer.name = name
+            layer.name = #name > 0 and name or "Layer"
             if (not layer.isGroup) and (not layer.isBackground) then
                 layer.blendMode = BlendMode[blendStr]
                 layer.opacity = layerOpacity
@@ -265,6 +273,16 @@ dlg:button {
             cel.zIndex = zIndex
             cel.color = celColor
             cel.data = celUserData
+
+            if layer.isTilemap and layer.tileset then
+                local tileset <const> = layer.tileset
+
+                local tilesetName <const> = args.tilesetName --[[@as string]]
+                local tilesetBaseIndex <const> = args.tilesetBaseIndex --[[@as integer]]
+
+                tileset.name = #tilesetName > 0 and tilesetName or "Tileset"
+                tileset.baseIndex = math.max(1, math.abs(tilesetBaseIndex))
+            end
         end)
 
         app.refresh()
