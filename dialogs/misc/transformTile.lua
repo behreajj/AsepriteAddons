@@ -6,7 +6,7 @@ local defaults <const> = {
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
     target = "FORE_TILE",
-    inPlace = true
+    inPlace = false
 }
 
 ---@param target "FORE_TILE"|"BACK_TILE"
@@ -54,6 +54,8 @@ local function flipFlagX(flag)
     return flag ~ 0x80000000
 end
 
+---@param flag integer
+---@return integer
 local function flipFlagY(flag)
     -- 0x00000000 (   ) --> 0x40000000 (  Y)
     -- 0x20000000 (  D) --> 0x60000000 ( YD)
