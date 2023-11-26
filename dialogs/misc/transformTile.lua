@@ -751,7 +751,7 @@ dlg:button {
     text = "F&ORE",
     focus = false,
     onclick = function()
-        cycleActive("FORE", -1)
+        cycleActive("FORE_TILE", -1)
     end
 }
 
@@ -760,7 +760,7 @@ dlg:button {
     text = "B&ACK",
     focus = false,
     onclick = function()
-        cycleActive("BACK", -1)
+        cycleActive("BACK_TILE", -1)
     end
 }
 
