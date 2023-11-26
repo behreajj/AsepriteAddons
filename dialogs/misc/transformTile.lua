@@ -18,15 +18,12 @@ local function cycleActive(flag, shift)
 
     local activeLayer <const> = site.layer
     if not activeLayer then return end
-
-    local isTilemap <const> = activeLayer.isTilemap
-    if not isTilemap then return end
+    if not activeLayer.isTilemap then return end
 
     local tileset <const> = activeLayer.tileset
     local lenTileset <const> = #tileset
 
-    local appPrefs <const> = app.preferences
-    local colorBarPrefs <const> = appPrefs.color_bar
+    local colorBarPrefs <const> = app.preferences.color_bar
 
     local access = "fg_tile"
     if flag == "BACK" then
@@ -54,7 +51,7 @@ local function transformTiles(
     preset, containedTiles, inPlace,
     activeSprite, tileSet)
     local transactionName = "Transform Tiles"
-    local transformFunc = function(img) return img, 0, 0 end
+    local transformFunc = function(img) return img end
     if preset == "90" then
         transactionName = "Rotate Tiles 90"
         transformFunc = AseUtilities.rotateImage90
@@ -78,8 +75,7 @@ local function transformTiles(
     app.transaction(transactionName, function()
         if inPlace then
             for _, tile in pairs(containedTiles) do
-                local trgImage <const> = transformFunc(tile.image)
-                tile.image = trgImage
+                tile.image = transformFunc(tile.image)
             end
         else
             for srcIdx, srcTile in pairs(containedTiles) do
@@ -128,8 +124,8 @@ local function transformCel(dialog, preset)
     local xtlCel <const> = celPos.x
     local ytlCel <const> = celPos.y
 
-    local tileGrid <const> = tileSet.grid --[[@as Grid]]
-    local tileDim <const> = tileGrid.tileSize --[[@as Size]]
+    local tileGrid <const> = tileSet.grid
+    local tileDim <const> = tileGrid.tileSize
     local wTile <const> = tileDim.width
     local hTile <const> = tileDim.height
     if wTile ~= hTile
@@ -204,12 +200,14 @@ local function transformCel(dialog, preset)
             activeCel.image, tileSet, selection,
             xtlCel, ytlCel)
     elseif target == "BACK_TILE" then
-        local tileIndex <const> = app.preferences.color_bar.bg_tile
+        local tileIndex <const> = app.pixelColor.tileI(
+            app.preferences.color_bar.bg_tile)
         if tileIndex > 0 and tileIndex < lenTileSet then
             containedTiles[tileIndex] = tileSet:tile(tileIndex)
         end
     else
-        local tileIndex <const> = app.preferences.color_bar.fg_tile
+        local tileIndex <const> = app.pixelColor.tileI(
+            app.preferences.color_bar.fg_tile)
         if tileIndex > 0 and tileIndex < lenTileSet then
             containedTiles[tileIndex] = tileSet:tile(tileIndex)
         end
@@ -243,12 +241,24 @@ local function transformCel(dialog, preset)
 
         if target == "BACK_TILE" then
             local cbPref <const> = app.preferences.color_bar
-            local trgIdx <const> = srcToTrgIdcs[cbPref.bg_tile]
-            if trgIdx then cbPref.bg_tile = trgIdx end
+            local tifCurr <const> = cbPref.bg_tile
+            local tiCurr <const> = app.pixelColor.tileI(tifCurr)
+            local trgIdx <const> = srcToTrgIdcs[tiCurr]
+
+            if trgIdx then
+                local tfCurr <const> = app.pixelColor.tileF(tifCurr)
+                cbPref.bg_tile = app.pixelColor.tile(trgIdx, tfCurr)
+            end
         elseif target == "FORE_TILE" then
             local cbPref <const> = app.preferences.color_bar
-            local trgIdx <const> = srcToTrgIdcs[cbPref.fg_tile]
-            if trgIdx then cbPref.fg_tile = trgIdx end
+            local tifCurr <const> = cbPref.bg_tile
+            local tiCurr <const> = app.pixelColor.tileI(tifCurr)
+            local trgIdx <const> = srcToTrgIdcs[tiCurr]
+
+            if trgIdx then
+                local tfCurr <const> = app.pixelColor.tileF(tifCurr)
+                cbPref.fg_tile = app.pixelColor.tile(trgIdx, tfCurr)
+            end
         end
     end
 
