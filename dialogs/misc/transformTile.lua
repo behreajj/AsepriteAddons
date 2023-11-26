@@ -251,7 +251,7 @@ local function transformCel(dialog, preset)
             end
         elseif target == "FORE_TILE" then
             local cbPref <const> = app.preferences.color_bar
-            local tifCurr <const> = cbPref.bg_tile
+            local tifCurr <const> = cbPref.fg_tile
             local tiCurr <const> = app.pixelColor.tileI(tifCurr)
             local trgIdx <const> = srcToTrgIdcs[tiCurr]
 
