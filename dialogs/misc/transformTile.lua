@@ -9,9 +9,9 @@ local defaults <const> = {
     inPlace = true
 }
 
----@param flag "FORE"|"BACK"
+---@param target "FORE_TILE"|"BACK_TILE"
 ---@param shift integer
-local function cycleActive(flag, shift)
+local function cycleActive(target, shift)
     local site <const> = app.site
     local activeSprite <const> = site.sprite
     if not activeSprite then return end
@@ -23,13 +23,12 @@ local function cycleActive(flag, shift)
     local tileset <const> = activeLayer.tileset
     local lenTileset <const> = #tileset
 
-    local colorBarPrefs <const> = app.preferences.color_bar
-
     local access = "fg_tile"
-    if flag == "BACK" then
+    if target == "BACK_TILE" then
         access = "bg_tile"
     end
 
+    local colorBarPrefs <const> = app.preferences.color_bar
     local tifCurr <const> = colorBarPrefs[access]
     local tiCurr <const> = app.pixelColor.tileI(tifCurr)
     if tiCurr > lenTileset - 1 or tiCurr < 0 then
@@ -39,6 +38,127 @@ local function cycleActive(flag, shift)
         local tiNext <const> = (tiCurr + shift) % lenTileset
         colorBarPrefs[access] = app.pixelColor.tile(tiNext, tfCurr)
     end
+end
+
+---@param flag integer
+---@return integer
+local function flipFlagX(flag)
+    -- 0x00000000 (   ) --> 0x80000000 (  X)
+    -- 0x20000000 (  D) --> 0xa0000000 ( XD)
+    -- 0x40000000 (  Y) --> 0xc0000000 ( XY)
+    -- 0x60000000 ( YD) --> 0xe0000000 (XYD)
+    -- 0x80000000 (  X) --> 0x00000000 (   )
+    -- 0xc0000000 ( XY) --> 0x40000000 (  Y)
+    -- 0xa0000000 ( XD) --> 0x20000000 (  D)
+    -- 0xe0000000 (XYD) --> 0x60000000 ( YD)
+    return flag ~ 0x80000000
+end
+
+local function flipFlagY(flag)
+    -- 0x00000000 (   ) --> 0x40000000 (  Y)
+    -- 0x20000000 (  D) --> 0x60000000 ( YD)
+    -- 0x40000000 (  Y) --> 0x00000000 (   )
+    -- 0x60000000 ( YD) --> 0x20000000 (  D)
+    -- 0x80000000 (  X) --> 0xc0000000 ( XY)
+    -- 0xc0000000 ( XY) --> 0x80000000 (  X)
+    -- 0xa0000000 ( XD) --> 0xe0000000 (XYD)
+    -- 0xe0000000 (XYD) --> 0xa0000000 ( XD)
+    return flag ~ 0x40000000
+end
+
+---@param flag integer
+---@return integer
+local function rotateFlag90Ccw(flag)
+    -- Pattern:
+    -- 0x00000000, 0x60000000, 0xc0000000, 0xa0000000
+    -- 0x20000000, 0x40000000, 0xe0000000, 0x80000000
+
+    if flag == 0x20000000 then
+        -- D --> Y
+        return 0x40000000
+    elseif flag == 0x40000000 then
+        -- Y --> XYD
+        return 0xe0000000
+    elseif flag == 0x60000000 then
+        -- YD --> XY
+        return 0xc0000000
+    elseif flag == 0x80000000 then
+        -- X --> D
+        return 0x20000000
+    elseif flag == 0xc0000000 then
+        -- XY --> XD
+        return 0xa0000000
+    elseif flag == 0xa0000000 then
+        -- XD --> 0
+        return 0x00000000
+    elseif flag == 0xe0000000 then
+        -- XYD --> X
+        return 0x80000000
+    end
+    -- 0 --> YD
+    return 0x60000000
+end
+
+---@param flag integer
+---@return integer
+local function rotateFlag180(flag)
+    if flag == 0x20000000 then
+        -- D --> XYD
+        return 0xe0000000
+    elseif flag == 0x40000000 then
+        -- Y --> X
+        return 0x80000000
+    elseif flag == 0x60000000 then
+        -- YD --> XD
+        return 0xa0000000
+    elseif flag == 0x80000000 then
+        -- X --> Y
+        return 0x40000000
+    elseif flag == 0xc0000000 then
+        -- XY --> 0
+        return 0x00000000
+    elseif flag == 0xa0000000 then
+        -- XD --> YD
+        return 0x60000000
+    elseif flag == 0xe0000000 then
+        -- XYD --> D
+        return 0x20000000
+    end
+    -- 0 --> XY
+    return 0xc0000000
+end
+
+---@param flag integer
+---@return integer
+local function rotateFlag270Ccw(flag)
+    -- Pattern:
+    -- 0x00000000, 0xa0000000, 0xc0000000, 0x60000000
+    -- 0x20000000, 0x80000000, 0xe0000000, 0x40000000
+
+    if flag == 0x20000000 then
+        -- D --> X
+        return 0x80000000
+    elseif flag == 0x40000000 then
+        -- Y --> D
+        return 0x20000000
+    elseif flag == 0x60000000 then
+        -- YD --> 0
+        return 0x00000000
+    elseif flag == 0x80000000 then
+        -- X --> XYD
+        return 0xe0000000
+    elseif flag == 0xc0000000 then
+        -- XY --> YD
+        return 0x60000000
+    elseif flag == 0xa0000000 then
+        -- XD --> XY
+        return 0xc0000000
+    elseif flag == 0xe0000000 then
+        -- XYD --> Y
+        return 0x40000000
+    end
+    -- 0 --> XD
+    return 0xa0000000
 end
 
 ---@param preset string
@@ -138,36 +258,81 @@ local function transformCel(dialog, preset)
         return
     end
 
-    ---@type table<integer, Tile>
-    local containedTiles = {}
+    -- Cache tile map functions.
+    local pixelColor <const> = app.pixelColor
+    local pxTilei <const> = pixelColor.tileI
+    local pxTilef <const> = pixelColor.tileF
+    local pxTileCompose <const> = pixelColor.tile
+
+    -- Decide on meta transform function.
+    local flgTrFunc = function(flag) return flag end
+    if preset == "90" then
+        flgTrFunc = rotateFlag90Ccw
+    elseif preset == "180" then
+        flgTrFunc = rotateFlag180
+    elseif preset == "270" then
+        flgTrFunc = rotateFlag270Ccw
+    elseif preset == "FLIP_H" then
+        flgTrFunc = flipFlagX
+    elseif preset == "FLIP_V" then
+        flgTrFunc = flipFlagY
+    end
+
+    if target == "FORE_TILE" or target == "BACK_TILE" then
+        local access = "fg_tile"
+        if target == "BACK_TILE" then
+            access = "bg_tile"
+        end
+
+        local colorBarPrefs <const> = app.preferences.color_bar
+        local tifCurr <const> = colorBarPrefs[access]
+        local tiCurr <const> = pxTilei(tifCurr)
+        if tiCurr > lenTileSet - 1 or tiCurr < 0 then
+            colorBarPrefs[access] = 0
+        else
+            local tfCurr <const> = pxTilef(tifCurr)
+            local tfNext <const> = flgTrFunc(tfCurr)
+            colorBarPrefs[access] = pxTileCompose(tiCurr, tfNext)
+        end
+        app.refresh()
+        return
+    end
+
     if target == "TILE_MAP" then
-        containedTiles = AseUtilities.getUniqueTiles(
-            activeCel.image, tileSet)
         local transactionName = "Transform Map"
-        local transformFunc = function(img) return img, 0, 0 end
+        local mapTrFunc = function(img) return img, 0, 0 end
         local updateCelPos = false
         if preset == "90" then
             transactionName = "Rotate Map 90"
-            transformFunc = AseUtilities.rotateImage90
+            mapTrFunc = AseUtilities.rotateImage90
             updateCelPos = true
         elseif preset == "180" then
             transactionName = "Rotate Map 180"
-            transformFunc = AseUtilities.rotateImage180
+            mapTrFunc = AseUtilities.rotateImage180
         elseif preset == "270" then
             transactionName = "Rotate Map 270"
-            transformFunc = AseUtilities.rotateImage270
+            mapTrFunc = AseUtilities.rotateImage270
             updateCelPos = true
         elseif preset == "FLIP_H" then
             transactionName = "Flip Map H"
-            transformFunc = AseUtilities.flipImageX
+            mapTrFunc = AseUtilities.flipImageX
         elseif preset == "FLIP_V" then
             transactionName = "Flip Map V"
-            transformFunc = AseUtilities.flipImageY
+            mapTrFunc = AseUtilities.flipImageY
         end
 
         app.transaction(transactionName, function()
             local srcMap <const> = activeCel.image
-            local trgMap <const> = transformFunc(srcMap)
+            local trgMap <const> = mapTrFunc(srcMap)
+
+            local trgItr <const> = trgMap:pixels()
+            for mapEntry in trgItr do
+                local mapif <const> = mapEntry() --[[@as integer]]
+                local i <const> = pxTilei(mapif)
+                local meta <const> = pxTilef(mapif)
+                local trMeta <const> = flgTrFunc(meta)
+                mapEntry(pxTileCompose(i, trMeta))
+            end
 
             if updateCelPos then
                 local wSrcPixels <const> = srcMap.width * wTile
@@ -187,50 +352,36 @@ local function transformCel(dialog, preset)
 
             activeCel.image = trgMap
         end)
-    elseif target == "TILES" then
-        -- In theory, app.range.tiles could also be used, but it doesn't seem
-        -- to work.
 
-        -- A regular layer's cel bounds may be within the canvas, but after
-        -- conversion to tilemap layer, it may go outside the canvas due to
-        -- uniform tile size. This will lead to getSelectedTiles omitting tiles
-        -- because tiles must be entirely contained.
-        local selection <const>, _ <const> = AseUtilities.getSelection(activeSprite)
-        containedTiles = AseUtilities.getSelectedTiles(
-            activeCel.image, tileSet, selection,
-            xtlCel, ytlCel)
-    elseif target == "BACK_TILE" then
-        local tileIndex <const> = app.pixelColor.tileI(
-            app.preferences.color_bar.bg_tile)
-        if tileIndex > 0 and tileIndex < lenTileSet then
-            containedTiles[tileIndex] = tileSet:tile(tileIndex)
-        end
-    else
-        local tileIndex <const> = app.pixelColor.tileI(
-            app.preferences.color_bar.fg_tile)
-        if tileIndex > 0 and tileIndex < lenTileSet then
-            containedTiles[tileIndex] = tileSet:tile(tileIndex)
-        end
+        app.refresh()
+        return
     end
+
+    -- In theory, app.range.tiles could also be used, but it doesn't seem
+    -- to work.
+
+    -- A regular layer's cel bounds may be within the canvas, but after
+    -- conversion to tilemap layer, it may go outside the canvas due to
+    -- uniform tile size. This will lead to getSelectedTiles omitting tiles
+    -- because tiles must be entirely contained.
+    local selection <const>, _ <const> = AseUtilities.getSelection(activeSprite)
+    local containedTiles <const> = AseUtilities.getSelectedTiles(
+        activeCel.image, tileSet, selection,
+        xtlCel, ytlCel)
 
     local srcToTrgIdcs <const> = transformTiles(
         preset, containedTiles, inPlace,
         activeSprite, tileSet)
 
     if not inPlace then
-        local pixelColor <const> = app.pixelColor
-        local pxTilei <const> = pixelColor.tileI
-        local pxTilef <const> = pixelColor.tileF
-        local pxTileCompose <const> = pixelColor.tile
-
         local trgMap <const> = activeCel.image:clone()
         local trgItr <const> = trgMap:pixels()
         for mapEntry in trgItr do
             local tileData <const> = mapEntry()
             local srcIdx <const> = pxTilei(tileData)
-            local srcFlags <const> = pxTilef(tileData)
             if srcToTrgIdcs[srcIdx] then
                 local trgIdx <const> = srcToTrgIdcs[srcIdx]
+                local srcFlags <const> = pxTilef(tileData)
                 mapEntry(pxTileCompose(trgIdx, srcFlags))
             end
         end
@@ -238,28 +389,6 @@ local function transformCel(dialog, preset)
         app.transaction("Update Map", function()
             activeCel.image = trgMap
         end)
-
-        if target == "BACK_TILE" then
-            local cbPref <const> = app.preferences.color_bar
-            local tifCurr <const> = cbPref.bg_tile
-            local tiCurr <const> = app.pixelColor.tileI(tifCurr)
-            local trgIdx <const> = srcToTrgIdcs[tiCurr]
-
-            if trgIdx then
-                local tfCurr <const> = app.pixelColor.tileF(tifCurr)
-                cbPref.bg_tile = app.pixelColor.tile(trgIdx, tfCurr)
-            end
-        elseif target == "FORE_TILE" then
-            local cbPref <const> = app.preferences.color_bar
-            local tifCurr <const> = cbPref.fg_tile
-            local tiCurr <const> = app.pixelColor.tileI(tifCurr)
-            local trgIdx <const> = srcToTrgIdcs[tiCurr]
-
-            if trgIdx then
-                local tfCurr <const> = app.pixelColor.tileF(tifCurr)
-                cbPref.fg_tile = app.pixelColor.tile(trgIdx, tfCurr)
-            end
-        end
     end
 
     app.refresh()
@@ -271,7 +400,13 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    onchange = function()
+        local args <const> = dlg.data
+        local target <const> = args.target
+        local isTiles <const> = target == "TILES"
+        dlg:modify { id = "inPlace", visible = isTiles }
+    end
 }
 
 dlg:newrow { always = false }
@@ -281,6 +416,7 @@ dlg:check {
     label = "Edit:",
     text = "In &Place",
     selected = defaults.inPlace,
+    visible = defaults.target == "TILES"
 }
 
 dlg:newrow { always = false }
@@ -594,7 +730,7 @@ dlg:button {
     text = "&FORE",
     focus = false,
     onclick = function()
-        cycleActive("FORE", 1)
+        cycleActive("FORE_TILE", 1)
     end
 }
 
@@ -603,7 +739,7 @@ dlg:button {
     text = "&BACK",
     focus = false,
     onclick = function()
-        cycleActive("BACK", 1)
+        cycleActive("BACK_TILE", 1)
     end
 }
 

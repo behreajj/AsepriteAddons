@@ -4,7 +4,6 @@ dofile("../../support/canvasutilities.lua")
 local screenScale <const> = app.preferences.general.screen_scale
 
 local defaults <const> = {
-    -- Get and set select?
     barWidth = 240 / screenScale,
     barHeight = 16 / screenScale,
     reticleSize = 3 / screenScale,

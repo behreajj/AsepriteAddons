@@ -90,6 +90,32 @@ local function sheetToJson(sheet, boundsFormat)
         table.concat(sectionsStrs, ","))
 end
 
+---@param flag integer
+---@return string
+local function tileFlagToStr(flag)
+    if flag == 0x20000000 then
+        return "D"
+    elseif flag == 0x40000000 then
+        -- Flip V
+        return "Y"
+    elseif flag == 0x60000000 then
+        -- Rotate 90 CCW
+        return "YD"
+    elseif flag == 0x80000000 then
+        -- Flip H
+        return "X"
+    elseif flag == 0xc0000000 then
+        -- Rotate 180
+        return "XY"
+    elseif flag == 0xa0000000 then
+        -- Rotate 270 CCW (90 CW)
+        return "XD"
+    elseif flag == 0xe0000000 then
+        return "XYD"
+    end
+    return ""
+end
+
 local dlg <const> = Dialog { title = "Export Tilesets" }
 
 dlg:combobox {
@@ -641,7 +667,7 @@ dlg:button {
 
                                 ---@type integer[]
                                 local tmIndicesArr <const> = {}
-                                ---@type integer[]
+                                ---@type string[]
                                 local tmFlagsArr <const> = {}
 
                                 for pixel in tmPxItr do
@@ -653,7 +679,7 @@ dlg:button {
                                         tlFlag = 0
                                     end
                                     tmIndicesArr[#tmIndicesArr + 1] = tlIndex
-                                    tmFlagsArr[#tmFlagsArr + 1] = tlFlag
+                                    tmFlagsArr[#tmFlagsArr + 1] = tileFlagToStr(tlFlag)
                                 end
 
                                 local wTileMap <const> = tmImage.width

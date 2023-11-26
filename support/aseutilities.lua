@@ -1871,16 +1871,16 @@ end
 ---@return table<integer, Tile>
 function AseUtilities.getSelectedTiles(
     tileMap, tileSet, selection, xtlCel, ytlCel)
-    -- Validate optional arguments.
-    local vytlCel <const> = ytlCel or 0
-    local vxtlCel <const> = xtlCel or 0
-
     -- Results.
     ---@type table<integer, Tile>
     local tiles <const> = {}
     if tileMap.colorMode ~= ColorMode.TILEMAP then
         return tiles
     end
+
+    -- Validate optional arguments.
+    local vytlCel <const> = ytlCel or 0
+    local vxtlCel <const> = xtlCel or 0
 
     -- Unpack tile set.
     local tileGrid <const> = tileSet.grid
