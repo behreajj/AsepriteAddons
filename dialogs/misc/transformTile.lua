@@ -33,11 +33,14 @@ local function cycleActive(flag, shift)
         access = "bg_tile"
     end
 
-    local ti = colorBarPrefs[access]
-    if ti > lenTileset - 1 or ti < 0 then
+    local tifCurr <const> = colorBarPrefs[access]
+    local tiCurr <const> = app.pixelColor.tileI(tifCurr)
+    if tiCurr > lenTileset - 1 or tiCurr < 0 then
         colorBarPrefs[access] = 0
     else
-        colorBarPrefs[access] = (ti + shift) % lenTileset
+        local tfCurr <const> = app.pixelColor.tileF(tifCurr)
+        local tiNext <const> = (tiCurr + shift) % lenTileset
+        colorBarPrefs[access] = app.pixelColor.tile(tiNext, tfCurr)
     end
 end
 
@@ -142,9 +145,6 @@ local function transformCel(dialog, preset)
     ---@type table<integer, Tile>
     local containedTiles = {}
     if target == "TILE_MAP" then
-        -- TODO: This would be superseded when tile map flags are implemented.
-        -- It looks like there's some work to be done on bugs related to
-        -- this so... maybe wait.
         containedTiles = AseUtilities.getUniqueTiles(
             activeCel.image, tileSet)
         local transactionName = "Transform Map"
