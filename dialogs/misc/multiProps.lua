@@ -68,6 +68,8 @@ local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
 local layer <const> = site.layer or sprite.layers[1]
+local isBkg <const> = layer.isBackground
+local isGroup <const> = layer.isGroup
 local frame <const> = site.frame or sprite.frames[1]
 local cel <const> = layer:cel(frame)
 local docPrefs <const> = app.preferences.document(sprite)
@@ -84,9 +86,16 @@ dlg:separator {
 dlg:number {
     id = "frameDuration",
     label = "Duration:",
-    text = string.format("%05d", math.floor(1000.0 * frame.duration + 0.5)),
+    text = string.format("%d", math.floor(1000.0 * frame.duration + 0.5)),
     decimals = 0,
     focus = false,
+    onchange = function()
+        local args <const> = dlg.data
+        local msDur <const> = args.frameDuration --[[@as integer]]
+        frame.duration = math.min(math.max(math.abs(
+            msDur) * 0.001, 0.001), 65.535)
+        app.refresh()
+    end
 }
 
 dlg:separator {
@@ -99,6 +108,12 @@ dlg:entry {
     label = "Name:",
     text = layer.name,
     focus = false,
+    onchange = function()
+        local args <const> = dlg.data
+        local layerName <const> = args.layerName --[[@as string]]
+        layer.name = layerName
+        app.refresh()
+    end
 }
 
 dlg:newrow { always = false }
@@ -108,8 +123,16 @@ dlg:combobox {
     label = "Blend:",
     option = blendModeToStr(layer.blendMode),
     options = blendModes,
-    visible = (not layer.isBackground)
-        and (not layer.isGroup),
+    focus = false,
+    visible = (not isBkg) and (not isGroup),
+    onchange = function()
+        if (not isBkg) and (not isGroup) then
+            local args <const> = dlg.data
+            local blendStr <const> = args.layerBlend --[[@as string]]
+            layer.blendMode = BlendMode[blendStr]
+            app.refresh()
+        end
+    end
 }
 
 dlg:newrow { always = false }
@@ -120,8 +143,16 @@ dlg:slider {
     min = 0,
     max = 255,
     value = layer.opacity,
-    visible = (not layer.isBackground)
-        and (not layer.isGroup),
+    focus = false,
+    visible = (not isBkg) and (not isGroup),
+    onchange = function()
+        if (not isBkg) and (not isGroup) then
+            local args <const> = dlg.data
+            local layerOpacity <const> = args.layerOpacity --[[@as integer]]
+            layer.opacity = layerOpacity
+            app.refresh()
+        end
+    end
 }
 
 dlg:newrow { always = false }
@@ -130,6 +161,13 @@ dlg:color {
     id = "layerColor",
     label = "UI:",
     color = layer.color,
+    focus = false,
+    onchange = function()
+        local args <const> = dlg.data
+        local layerColor <const> = args.layerColor --[[@as Color]]
+        layer.color = layerColor
+        app.refresh()
+    end
 }
 
 dlg:newrow { always = false }
@@ -139,6 +177,12 @@ dlg:entry {
     label = "User Data:",
     text = layer.data,
     focus = false,
+    onchange = function()
+        local args <const> = dlg.data
+        local layerUserData <const> = args.layerUserData --[[@as string]]
+        layer.data = layerUserData
+        app.refresh()
+    end
 }
 
 if layer.isTilemap then
@@ -151,8 +195,14 @@ if layer.isTilemap then
         dlg:entry {
             id = "tilesetName",
             label = "Name:",
-            text = layer.tileset.name,
+            text = tileset.name,
             focus = false,
+            onchange = function()
+                local args <const> = dlg.data
+                local tilesetName <const> = args.tilesetName --[[@as string]]
+                tileset.name = tilesetName
+                app.refresh()
+            end
         }
 
         dlg:newrow { always = false }
@@ -163,6 +213,12 @@ if layer.isTilemap then
             text = string.format("%0d", tileset.baseIndex),
             decimals = 0,
             focus = false,
+            onchange = function()
+                local args <const> = dlg.data
+                local tilesetBaseIndex <const> = args.tilesetBaseIndex --[[@as integer]]
+                tileset.baseIndex = math.max(1, math.abs(tilesetBaseIndex))
+                app.refresh()
+            end
         }
     end
 end
@@ -179,7 +235,16 @@ if cel then
         min = 0,
         max = 255,
         value = cel.opacity,
-        visible = not layer.isBackground,
+        visible = not isBkg,
+        focus = false,
+        onchange = function()
+            if not isBkg then
+                local args <const> = dlg.data
+                local celOpacity <const> = args.celOpacity --[[@as integer]]
+                cel.opacity = celOpacity
+                app.refresh()
+            end
+        end
     }
 
     dlg:newrow { always = false }
@@ -190,7 +255,13 @@ if cel then
         min = -128,
         max = 127,
         value = cel.zIndex,
-        visible = not layer.isBackground,
+        focus = false,
+        onchange = function()
+            local args <const> = dlg.data
+            local zIndex <const> = args.celZIndex --[[@as integer]]
+            cel.zIndex = zIndex
+            app.refresh()
+        end
     }
 
     dlg:newrow { always = false }
@@ -199,6 +270,13 @@ if cel then
         id = "celColor",
         label = "UI:",
         color = cel.color,
+        focus = false,
+        onchange = function()
+            local args <const> = dlg.data
+            local celColor <const> = args.celColor --[[@as Color]]
+            cel.color = celColor
+            app.refresh()
+        end
     }
 
     dlg:newrow { always = false }
@@ -208,66 +286,16 @@ if cel then
         label = "User Data:",
         text = cel.data,
         focus = false,
+        onchange = function()
+            local args <const> = dlg.data
+            local celUserData <const> = args.celUserData --[[@as string]]
+            cel.data = celUserData
+            app.refresh()
+        end
     }
 end
 
 dlg:separator { id = "cancelSep" }
-
-dlg:button {
-    id = "confirm",
-    text = "&OK",
-    focus = false,
-    onclick = function()
-        local args <const> = dlg.data
-
-        -- Frame.
-        local msDur <const> = args.frameDuration --[[@as integer]]
-
-        -- Layer.
-        local name <const> = args.layerName --[[@as string]]
-        local blendStr <const> = args.layerBlend --[[@as string]]
-        local layerOpacity <const> = args.layerOpacity --[[@as integer]]
-        local layerColor <const> = args.layerColor --[[@as Color]]
-        local layerUserData <const> = args.layerUserData --[[@as string]]
-
-        -- Cel.
-        local celOpacity <const> = args.celOpacity --[[@as integer]]
-        local zIndex <const> = args.celZIndex --[[@as integer]]
-        local celColor <const> = args.celColor --[[@as Color]]
-        local celUserData <const> = args.celUserData --[[@as string]]
-
-        app.transaction("Set Properties", function()
-            frame.duration = math.min(math.max(math.abs(
-                msDur) * 0.001, 0.001), 65.535)
-
-            layer.name = #name > 0 and name or "Layer"
-            if (not layer.isGroup) and (not layer.isBackground) then
-                layer.blendMode = BlendMode[blendStr]
-                layer.opacity = layerOpacity
-            end
-            layer.color = layerColor
-            layer.data = layerUserData
-
-            cel.opacity = celOpacity
-            cel.zIndex = zIndex
-            cel.color = celColor
-            cel.data = celUserData
-
-            if layer.isTilemap and layer.tileset then
-                local tileset <const> = layer.tileset
-
-                local tilesetName <const> = args.tilesetName --[[@as string]]
-                local tilesetBaseIndex <const> = args.tilesetBaseIndex --[[@as integer]]
-
-                tileset.name = #tilesetName > 0 and tilesetName or "Tileset"
-                tileset.baseIndex = math.max(1, math.abs(tilesetBaseIndex))
-            end
-        end)
-
-        app.refresh()
-        dlg:close()
-    end
-}
 
 dlg:button {
     id = "cancel",
