@@ -38,6 +38,7 @@ local function cycleActive(target, shift)
         local tiNext <const> = (tiCurr + shift) % lenTileset
         colorBarPrefs[access] = app.pixelColor.tile(tiNext, tfCurr)
     end
+    app.refresh()
 end
 
 ---@param flag integer
