@@ -44,28 +44,12 @@ end
 ---@param flag integer
 ---@return integer
 local function flipFlagX(flag)
-    -- 0x00000000 (   ) --> 0x80000000 (  X)
-    -- 0x20000000 (  D) --> 0xa0000000 ( XD)
-    -- 0x40000000 (  Y) --> 0xc0000000 ( XY)
-    -- 0x60000000 ( YD) --> 0xe0000000 (XYD)
-    -- 0x80000000 (  X) --> 0x00000000 (   )
-    -- 0xc0000000 ( XY) --> 0x40000000 (  Y)
-    -- 0xa0000000 ( XD) --> 0x20000000 (  D)
-    -- 0xe0000000 (XYD) --> 0x60000000 ( YD)
     return flag ~ 0x80000000
 end
 
 ---@param flag integer
 ---@return integer
 local function flipFlagY(flag)
-    -- 0x00000000 (   ) --> 0x40000000 (  Y)
-    -- 0x20000000 (  D) --> 0x60000000 ( YD)
-    -- 0x40000000 (  Y) --> 0x00000000 (   )
-    -- 0x60000000 ( YD) --> 0x20000000 (  D)
-    -- 0x80000000 (  X) --> 0xc0000000 ( XY)
-    -- 0xc0000000 ( XY) --> 0x80000000 (  X)
-    -- 0xa0000000 ( XD) --> 0xe0000000 (XYD)
-    -- 0xe0000000 (XYD) --> 0xa0000000 ( XD)
     return flag ~ 0x40000000
 end
 
@@ -76,58 +60,42 @@ local function rotateFlag90Ccw(flag)
     -- 0x00000000, 0x60000000, 0xc0000000, 0xa0000000
     -- 0x20000000, 0x40000000, 0xe0000000, 0x80000000
 
-    if flag == 0x20000000 then
-        -- D --> Y
+    if flag == 0x20000000 then     -- D --> Y
         return 0x40000000
-    elseif flag == 0x40000000 then
-        -- Y --> XYD
+    elseif flag == 0x40000000 then -- Y --> XYD
         return 0xe0000000
-    elseif flag == 0x60000000 then
-        -- YD --> XY
+    elseif flag == 0x60000000 then -- YD --> XY
         return 0xc0000000
-    elseif flag == 0x80000000 then
-        -- X --> D
+    elseif flag == 0x80000000 then -- X --> D
         return 0x20000000
-    elseif flag == 0xc0000000 then
-        -- XY --> XD
+    elseif flag == 0xc0000000 then -- XY --> XD
         return 0xa0000000
-    elseif flag == 0xa0000000 then
-        -- XD --> 0
+    elseif flag == 0xa0000000 then -- XD --> 0
         return 0x00000000
-    elseif flag == 0xe0000000 then
-        -- XYD --> X
+    elseif flag == 0xe0000000 then -- XYD --> X
         return 0x80000000
-    end
-    -- 0 --> YD
+    end                            -- 0 --> YD
     return 0x60000000
 end
 
 ---@param flag integer
 ---@return integer
 local function rotateFlag180(flag)
-    if flag == 0x20000000 then
-        -- D --> XYD
+    if flag == 0x20000000 then     -- D --> XYD
         return 0xe0000000
-    elseif flag == 0x40000000 then
-        -- Y --> X
+    elseif flag == 0x40000000 then -- Y --> X
         return 0x80000000
-    elseif flag == 0x60000000 then
-        -- YD --> XD
+    elseif flag == 0x60000000 then -- YD --> XD
         return 0xa0000000
-    elseif flag == 0x80000000 then
-        -- X --> Y
+    elseif flag == 0x80000000 then -- X --> Y
         return 0x40000000
-    elseif flag == 0xc0000000 then
-        -- XY --> 0
+    elseif flag == 0xc0000000 then -- XY --> 0
         return 0x00000000
-    elseif flag == 0xa0000000 then
-        -- XD --> YD
+    elseif flag == 0xa0000000 then -- XD --> YD
         return 0x60000000
-    elseif flag == 0xe0000000 then
-        -- XYD --> D
+    elseif flag == 0xe0000000 then -- XYD --> D
         return 0x20000000
-    end
-    -- 0 --> XY
+    end                            -- 0 --> XY
     return 0xc0000000
 end
 
@@ -138,29 +106,21 @@ local function rotateFlag270Ccw(flag)
     -- 0x00000000, 0xa0000000, 0xc0000000, 0x60000000
     -- 0x20000000, 0x80000000, 0xe0000000, 0x40000000
 
-    if flag == 0x20000000 then
-        -- D --> X
+    if flag == 0x20000000 then     -- D --> X
         return 0x80000000
-    elseif flag == 0x40000000 then
-        -- Y --> D
+    elseif flag == 0x40000000 then -- Y --> D
         return 0x20000000
-    elseif flag == 0x60000000 then
-        -- YD --> 0
+    elseif flag == 0x60000000 then -- YD --> 0
         return 0x00000000
-    elseif flag == 0x80000000 then
-        -- X --> XYD
+    elseif flag == 0x80000000 then -- X --> XYD
         return 0xe0000000
-    elseif flag == 0xc0000000 then
-        -- XY --> YD
+    elseif flag == 0xc0000000 then -- XY --> YD
         return 0x60000000
-    elseif flag == 0xa0000000 then
-        -- XD --> XY
+    elseif flag == 0xa0000000 then -- XD --> XY
         return 0xc0000000
-    elseif flag == 0xe0000000 then
-        -- XYD --> Y
+    elseif flag == 0xe0000000 then -- XYD --> Y
         return 0x40000000
-    end
-    -- 0 --> XD
+    end                            -- 0 --> XD
     return 0xa0000000
 end
 
@@ -229,8 +189,6 @@ local function transformCel(dialog, preset)
 
     local activeLayer <const> = site.layer
     if not activeLayer then return end
-    if not activeLayer.isVisible then return end
-    if not activeLayer.isEditable then return end
     if not activeLayer.isTilemap then return end
 
     local activeCel <const> = activeLayer:cel(activeFrame)
@@ -300,6 +258,9 @@ local function transformCel(dialog, preset)
         app.refresh()
         return
     end
+
+    if not activeLayer.isVisible then return end
+    if not activeLayer.isEditable then return end
 
     if target == "TILE_MAP" then
         local transactionName = "Transform Map"
