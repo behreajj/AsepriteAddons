@@ -418,3 +418,8 @@ dlg:show {
     autoscrollbars = true,
     wait = false
 }
+
+local dlgBounds <const> = dlg.bounds
+dlg.bounds = Rectangle(
+    dlgBounds.x * 2 - 16, dlgBounds.y,
+    dlgBounds.w, dlgBounds.h)
