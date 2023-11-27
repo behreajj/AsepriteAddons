@@ -23,10 +23,7 @@ local function cycleActive(target, shift)
     local tileset <const> = activeLayer.tileset
     local lenTileset <const> = #tileset
 
-    local access = "fg_tile"
-    if target == "BACK_TILE" then
-        access = "bg_tile"
-    end
+    local access <const> = target == "BACK_TILE" and "bg_tile" or "fg_tile"
 
     local colorBarPrefs <const> = app.preferences.color_bar
     local tifCurr <const> = colorBarPrefs[access]
@@ -240,10 +237,7 @@ local function transformCel(dialog, preset)
     end
 
     if target == "FORE_TILE" or target == "BACK_TILE" then
-        local access = "fg_tile"
-        if target == "BACK_TILE" then
-            access = "bg_tile"
-        end
+        local access <const> = target == "BACK_TILE" and "bg_tile" or "fg_tile"
 
         local colorBarPrefs <const> = app.preferences.color_bar
         local tifCurr <const> = colorBarPrefs[access]

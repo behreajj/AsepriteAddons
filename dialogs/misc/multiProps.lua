@@ -168,28 +168,10 @@ if layer.isTilemap then
 end
 
 if cel then
+    -- There are enough other ways to change a cel's position, it doesn't need
+    -- to be changed here.
+
     dlg:separator { id = "celSep", text = "Cel" }
-
-    dlg:number {
-        id = "xPosCel",
-        label = "Position:",
-        text = string.format("%0d", cel.position.x),
-        decimals = 0,
-        focus = false,
-        visible = (not layer.isBackground)
-            and (not layer.isReference),
-    }
-
-    dlg:number {
-        id = "yPosCel",
-        text = string.format("%0d", cel.position.y),
-        decimals = 0,
-        focus = false,
-        visible = (not layer.isBackground)
-            and (not layer.isReference),
-    }
-
-    dlg:newrow { always = false }
 
     dlg:slider {
         id = "celOpacity",
@@ -249,8 +231,6 @@ dlg:button {
         local layerUserData <const> = args.layerUserData --[[@as string]]
 
         -- Cel.
-        local xPos <const> = args.xPosCel --[[@as integer]]
-        local yPos <const> = args.yPosCel --[[@as integer]]
         local celOpacity <const> = args.celOpacity --[[@as integer]]
         local zIndex <const> = args.celZIndex --[[@as integer]]
         local celColor <const> = args.celColor --[[@as Color]]
@@ -268,7 +248,6 @@ dlg:button {
             layer.color = layerColor
             layer.data = layerUserData
 
-            cel.position = Point(xPos, yPos)
             cel.opacity = celOpacity
             cel.zIndex = zIndex
             cel.color = celColor
