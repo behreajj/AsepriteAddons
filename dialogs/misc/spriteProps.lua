@@ -622,12 +622,8 @@ dlg:button {
 
 -- Use wait = true to prevent other user inputs from changing state while
 -- the dialog is open.
+-- Dialog bounds cannot be realigned because of this.
 dlg:show {
     autoscrollbars = true,
     wait = true
 }
-
-local dlgBounds <const> = dlg.bounds
-dlg.bounds = Rectangle(
-    dlgBounds.x * 2 - 16, dlgBounds.y,
-    dlgBounds.w, dlgBounds.h)
