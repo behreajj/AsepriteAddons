@@ -194,6 +194,37 @@ dlg:slider {
     visible = false
 }
 dlg:newrow { always = false }
+dlg:number {
+    id = "xGrid",
+    label = "Grid:",
+    text = "0",
+    decimals = 0,
+    focus = false,
+    visible = false
+}
+dlg:number {
+    id = "yGrid",
+    text = "0",
+    decimals = 0,
+    focus = false,
+    visible = false
+}
+dlg:newrow { always = false }
+dlg:number {
+    id = "wGrid",
+    text = "0",
+    decimals = 0,
+    focus = false,
+    visible = false
+}
+dlg:number {
+    id = "hGrid",
+    text = "0",
+    decimals = 0,
+    focus = false,
+    visible = false
+}
+dlg:newrow { always = false }
 
 local function updatePath()
     if showFullPath then
@@ -474,6 +505,8 @@ local function updatePixelRatio()
     local pixelWidth = sprPixelRatio.width
     local pixelHeight = sprPixelRatio.height
 
+    -- There is no extra validation for size.
+    -- Size(0, 0) and Size(-1, -1) are both possible.
     pixelWidth = math.min(math.max(math.abs(pixelWidth),
         defaults.minPxRatio), defaults.maxPxRatio)
     pixelHeight = math.min(math.max(math.abs(pixelHeight),
@@ -484,6 +517,24 @@ local function updatePixelRatio()
 
     dlg:modify { id = "aPxRatio", visible = true }
     dlg:modify { id = "bPxRatio", visible = true }
+end
+
+local function updateGrid()
+    local spriteGrid <const> = sprite.gridBounds
+    local xGrid <const> = spriteGrid.x
+    local yGrid <const> = spriteGrid.y
+    local wGrid <const> = spriteGrid.width
+    local hGrid <const> = spriteGrid.height
+
+    dlg:modify { id = "xGrid", text = string.format("%d", xGrid) }
+    dlg:modify { id = "yGrid", text = string.format("%d", yGrid) }
+    dlg:modify { id = "wGrid", text = string.format("%d", wGrid) }
+    dlg:modify { id = "hGrid", text = string.format("%d", hGrid) }
+
+    dlg:modify { id = "xGrid", visible = true }
+    dlg:modify { id = "yGrid", visible = true }
+    dlg:modify { id = "wGrid", visible = true }
+    dlg:modify { id = "hGrid", visible = true }
 end
 
 local function updateDialogWidgets()
@@ -504,6 +555,7 @@ local function updateDialogWidgets()
     updateTabColor()
     updateUserData()
     updatePixelRatio()
+    updateGrid()
 end
 
 updateDialogWidgets()
@@ -515,16 +567,23 @@ dlg:button {
     onclick = function()
         if sprite and app.site.sprite == sprite then
             local args <const> = dlg.data
-            local aPxRatio = args.aPxRatio --[[@as integer]]
-            local bPxRatio = args.bPxRatio --[[@as integer]]
             local sprColor <const> = args.sprTabColor --[[@as Color]]
             local userData <const> = args.sprUserData --[[@as string]]
 
+            local xGrid <const> = args.xGrid --[[@as integer]]
+            local yGrid <const> = args.yGrid --[[@as integer]]
+
+            local wGrid = args.wGrid --[[@as integer]]
+            local hGrid = args.hGrid --[[@as integer]]
+            wGrid = math.max(1, math.abs(wGrid))
+            hGrid = math.max(1, math.abs(hGrid))
+
+            local aPxRatio = args.aPxRatio --[[@as integer]]
+            local bPxRatio = args.bPxRatio --[[@as integer]]
             aPxRatio, bPxRatio = Utilities.reduceRatio(aPxRatio, bPxRatio)
 
             app.transaction("Set Sprite Props", function()
-                -- There is no extra validation for size.
-                -- Size(0, 0) and Size(-1, -1) are both possible.
+                sprite.gridBounds = Rectangle(xGrid, yGrid, wGrid, hGrid)
                 sprite.pixelRatio = Size(aPxRatio, bPxRatio)
                 sprite.color = sprColor
                 sprite.data = userData

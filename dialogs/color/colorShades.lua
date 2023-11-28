@@ -15,7 +15,8 @@ local defaults <const> = {
     palCount = 256,
     strokeSize = 6,
     fillSize = 5,
-    pullFocus = true
+    pullFocus = true,
+    gamutTol = 0.001
 }
 
 local dlg <const> = Dialog { title = "Lch Color Shades" }
@@ -141,6 +142,8 @@ dlg:button {
         local floor <const> = math.floor
         local min <const> = math.min
         local max <const> = math.max
+        local strpack <const> = string.pack
+        local tconcat <const> = table.concat
 
         local fromHex <const> = Clr.fromHex
         local lchTosRgba <const> = Clr.srLchTosRgb
@@ -155,6 +158,7 @@ dlg:button {
         -- Unpack arguments.
         local args <const> = dlg.data
         local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA
+        local gamutTol <const> = defaults.gamutTol
         local maxLight <const> = args.maxLight
             or defaults.maxLight --[[@as integer]]
         local outOfGamut <const> = args.outOfGamut
@@ -221,7 +225,7 @@ dlg:button {
             local iStep <const> = idxFrame * iToStep
             local hue <const> = iStep
 
-            ---@type integer[]
+            ---@type string[]
             local pixels <const> = {}
             local j = 0
             while j < szSq do
@@ -238,19 +242,16 @@ dlg:button {
                 local r8 <const> = floor(min(max(srgb.r, 0.0), 1.0) * 255 + 0.5)
                 local g8 <const> = floor(min(max(srgb.g, 0.0), 1.0) * 255 + 0.5)
                 local b8 <const> = floor(min(max(srgb.b, 0.0), 1.0) * 255 + 0.5)
-                local a8 <const> = rgbIsInGamut(srgb, 0.0) and 255 or outOfGamut
-
-                local j4 <const> = j * 4
-                pixels[1 + j4] = r8
-                pixels[2 + j4] = g8
-                pixels[3 + j4] = b8
-                pixels[4 + j4] = a8
+                local a8 <const> = rgbIsInGamut(srgb, gamutTol) and 255 or outOfGamut
 
                 j = j + 1
+                pixels[j] = strpack("B B B B", r8, g8, b8, a8)
             end
 
+            local gamutImg <const> = Image(spec)
+            gamutImg.bytes = tconcat(pixels)
             idxFrame = idxFrame + 1
-            gamutImgs[idxFrame] = setPixels(Image(spec), pixels)
+            gamutImgs[idxFrame] = gamutImg
         end
 
         -- Create frames.
