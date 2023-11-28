@@ -170,13 +170,14 @@ dlg:button {
         local atan2 <const> = math.atan
         local floor <const> = math.floor
         local sqrt <const> = math.sqrt
+        local min <const> = math.min
+        local max <const> = math.max
 
         local fromHex <const> = Clr.fromHex
         local labTosRgba <const> = Clr.srLab2TosRgb
         local lchTosRgba <const> = Clr.srLchTosRgb
         local rgbIsInGamut <const> = Clr.rgbIsInGamut
         local sRgbaToLab <const> = Clr.sRgbToSrLab2
-        local toHex <const> = Clr.toHex
 
         local drawCircleFill <const> = AseUtilities.drawCircleFill
         local setPixels <const> = AseUtilities.setPixels
@@ -239,86 +240,78 @@ dlg:button {
 
         -- Depending on case, may be hue, radians or degrees.
         local azimAlpha <const> = sectorCount / 1.0
-        local azimBeta = 0.0
-        if quantAzims then
-            azimBeta = 1.0 / sectorCount
-        end
-
+        local azimBeta <const> = quantAzims and 1.0 / sectorCount or 0.0
         local radAlpha <const> = ringCount / maxChroma
-        local radBeta = 0.0
-        if quantRad then
-            radBeta = maxChroma / ringCount
-        end
-
-        local szInv = 0.0
-        if size ~= 0.0 then szInv = 1.0 / size end
+        local radBeta <const> = quantRad and maxChroma / ringCount or 0.0
+        local szInv <const> = size ~= 0.0 and 1.0 / size or 0.0
+        local szSq <const> = size * size
 
         -- Create sprite.
         local spec <const> = AseUtilities.createSpec(size, size)
         local sprite <const> = AseUtilities.createSprite(spec, "LCH Wheel")
 
-        -- Create color field images.
-        ---@type Image[]
-        local gamutImgs <const> = {}
-        local iToStep = 0.5
         local reqFrames <const> = args.frames
             or defaults.frames --[[@as integer]]
-        if reqFrames > 1 then iToStep = 1.0 / (reqFrames - 1.0) end
+        local iToStep <const> = reqFrames > 1
+            and 1.0 / (reqFrames - 1.0) or 0.5
 
-        local oogamask <const> = outOfGamut << 0x18
+        ---@type Image[]
+        local gamutImgs <const> = {}
+
         local idxFrame = 0
         while idxFrame < reqFrames do
-            -- Convert i to a step, then lerp from minimum
-            -- to maximum light.
             local iStep <const> = idxFrame * iToStep
             local light <const> = (1.0 - iStep) * minLight + iStep * maxLight
 
-            local gamutImg <const> = Image(spec)
-            local pxItr <const> = gamutImg:pixels()
-            for pixel in pxItr do
-                -- Convert coordinates from [0, size] to [0.0, 1.0], then to
-                -- [-1.0, 1.0], then to LAB range [-111.0, 111.0].
-                local xNrm <const> = pixel.x * szInv
-                local xSgn <const> = xNrm + xNrm - 1.0
-                local a <const> = xSgn * maxChroma
-
-                local yNrm <const> = pixel.y * szInv
+            ---@type integer[]
+            local pixels <const> = {}
+            local j = 0
+            while j < szSq do
+                local y <const> = j // size
+                local yNrm <const> = y * szInv
                 local ySgn <const> = 1.0 - (yNrm + yNrm)
                 local b <const> = ySgn * maxChroma
 
-                local clr = nil
+                local x <const> = j % size
+                local xNrm <const> = x * szInv
+                local xSgn <const> = xNrm + xNrm - 1.0
+                local a <const> = xSgn * maxChroma
+
+                local srgb = nil
                 local csq <const> = a * a + b * b
                 if csq > 0.0 then
                     local c = sqrt(csq)
                     local h = atan2(b, a) * 0.1591549430919
 
+                    if quantRad then
+                        c = floor(0.5 + c * radAlpha) * radBeta
+                    end
+
                     if quantAzims then
                         h = floor(0.5 + h * azimAlpha) * azimBeta
                     end
 
-                    if quantRad then
-                        -- Use unsigned?
-                        c = floor(0.5 + c * radAlpha) * radBeta
-                    end
-
-                    clr = lchTosRgba(light, c, h, 1.0)
+                    srgb = lchTosRgba(light, c, h, 1.0)
                 else
-                    clr = labTosRgba(light, 0.0, 0.0, 1.0)
+                    srgb = labTosRgba(light, 0.0, 0.0, 1.0)
                 end
 
-                -- If color is within SRGB gamut, then display
-                -- at full opacity. Otherwise, display at reduced
-                -- alpha. Find the valid boundary of the gamut.
-                local hex <const> = toHex(clr)
-                if rgbIsInGamut(clr, 0.0) then
-                    pixel(hex)
-                else
-                    pixel(oogamask | (hex & 0x00ffffff))
-                end
+                local r8 <const> = floor(min(max(srgb.r, 0.0), 1.0) * 255 + 0.5)
+                local g8 <const> = floor(min(max(srgb.g, 0.0), 1.0) * 255 + 0.5)
+                local b8 <const> = floor(min(max(srgb.b, 0.0), 1.0) * 255 + 0.5)
+                local a8 <const> = rgbIsInGamut(srgb, 0.0) and 255 or outOfGamut
+
+                local j4 <const> = j * 4
+                pixels[1 + j4] = r8
+                pixels[2 + j4] = g8
+                pixels[3 + j4] = b8
+                pixels[4 + j4] = a8
+
+                j = j + 1
             end
 
             idxFrame = idxFrame + 1
-            gamutImgs[idxFrame] = gamutImg
+            gamutImgs[idxFrame] = setPixels(Image(spec), pixels)
         end
 
         -- Create frames.

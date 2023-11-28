@@ -10,16 +10,13 @@ Around line 141:
         window.name()->setText(document->name());
     }
 --]]
+
 local defaults <const> = {
-    -- Should some diagnostic data be toggled via a t/f
-    -- in defaults, esp. if it is expensive to calculate?
+    -- TODO: Add sprite grid inputs?
     maskWarningInvalid = "Mask index is out of bounds.",
     maskWarningIndexed = "Non-zero mask may cause bugs.",
     maskWarningRgb = "Non-zero color at index 0.",
     textLenLimit = 32,
-    -- Crash report for custom pixel aspect ratio?
-    -- https://steamcommunity.com/app/431730/discussions/2/6126615404777201709/
-    -- Common Amiga ILBM ratios are 10:11, 11:13.
     minPxRatio = 1,
     maxPxRatio = 16
 }
@@ -129,10 +126,8 @@ dlg:shades {
 }
 dlg:newrow { always = false }
 
--- There are multiple bugs related to indexed
--- color mode, problematic palettes without
--- a transparent color at index 0, and the
--- custom transparent color property.
+-- Many bugs are related to indexed color mode, problematic palettes ithout a
+-- transparent color at index 0, and the custom transparent color property.
 dlg:label {
     id = "maskWarning",
     label = "Warning:",
@@ -555,18 +550,6 @@ dlg:button {
     end
 }
 
--- dlg:button {
---     id = "refresh",
---     text = "&REFRESH",
---     focus = false,
---     onclick = function()
---         if updateSprite() then
---             updatePrefsShowPath()
---             updateDialogWidgets()
---         end
---     end
--- }
-
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
@@ -576,8 +559,8 @@ dlg:button {
     end
 }
 
--- Do this to prevent other user inputs from
--- changing state while this is open.
+-- Use wait = true to prevent other user inputs from changing state while
+-- the dialog is open.
 dlg:show {
     autoscrollbars = true,
     wait = true

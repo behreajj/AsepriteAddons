@@ -139,12 +139,13 @@ dlg:button {
     onclick = function()
         -- Cache methods
         local floor <const> = math.floor
+        local min <const> = math.min
+        local max <const> = math.max
 
         local fromHex <const> = Clr.fromHex
         local lchTosRgba <const> = Clr.srLchTosRgb
         local rgbIsInGamut <const> = Clr.rgbIsInGamut
         local sRgbaToLch <const> = Clr.sRgbToSrLch
-        local toHex <const> = Clr.toHex
 
         local drawCircleFill <const> = AseUtilities.drawCircleFill
         local setPixels <const> = AseUtilities.setPixels
@@ -196,59 +197,60 @@ dlg:button {
         end
 
         local size <const> = args.size or defaults.size --[[@as integer]]
-        local szInv = 0.0
-        if size ~= 0.0 then szInv = 1.0 / size end
+        local szInv <const> = size ~= 0.0 and 1.0 / size or 0.0
+        local szSq <const> = size * size
 
         -- Create sprite.
         local spec <const> = AseUtilities.createSpec(size, size)
         local sprite <const> = AseUtilities.createSprite(spec, "LCH Shades")
 
         -- Calculate frame count to normalization.
-        local iToStep = 0.5
+        local quantization <const> = args.quantization
+            or defaults.quantization --[[@as integer]]
         local reqFrames <const> = args.frames
             or defaults.frames --[[@as integer]]
-        if reqFrames > 0 then
-            -- Because hue is periodic, don't subtract 1 from denominator.
-            iToStep = 1.0 / reqFrames
-        end
+
+        local iToStep <const> = reqFrames > 0
+            and 1.0 / reqFrames or 0.5
 
         ---@type Image[]
         local gamutImgs <const> = {}
-        local oogaNorm <const> = outOfGamut * 0.003921568627451
-        local oogaEps <const> = 0.0
-        local quantization <const> = args.quantization
-            or defaults.quantization --[[@as integer]]
+
         local idxFrame = 0
         while idxFrame < reqFrames do
-            -- Convert i to a step, which will be its hue.
             local iStep <const> = idxFrame * iToStep
             local hue <const> = iStep
 
-            local gamutImg <const> = Image(spec)
-            local pxItr <const> = gamutImg:pixels()
-            for pixel in pxItr do
-                -- Convert coordinates from [0, size] to [0.0, 1.0] then to LCH.
-                local xNrm = pixel.x * szInv
-                xNrm = quantize(xNrm, quantization)
-                local chroma <const> = xNrm * maxChroma
-
-                local yNrm = pixel.y * szInv
-                yNrm = quantize(yNrm, quantization)
+            ---@type integer[]
+            local pixels <const> = {}
+            local j = 0
+            while j < szSq do
+                local y <const> = j // size
+                local yNrm <const> = quantize(y * szInv, quantization)
                 local light <const> = (1.0 - yNrm) * maxLight
 
-                local clr <const> = lchTosRgba(light, chroma, hue, 1.0)
-                if not rgbIsInGamut(clr, oogaEps) then
-                    -- TODO: This breaks the general rules of good code
-                    -- in this repository, as it should be assumed
-                    -- that colors are immutable.
-                    clr.a = oogaNorm
-                end
+                local x <const> = j % size
+                local xNrm <const> = quantize(x * szInv, quantization)
+                local chroma <const> = xNrm * maxChroma
 
-                pixel(toHex(clr))
+                local srgb <const> = lchTosRgba(light, chroma, hue, 1.0)
+
+                local r8 <const> = floor(min(max(srgb.r, 0.0), 1.0) * 255 + 0.5)
+                local g8 <const> = floor(min(max(srgb.g, 0.0), 1.0) * 255 + 0.5)
+                local b8 <const> = floor(min(max(srgb.b, 0.0), 1.0) * 255 + 0.5)
+                local a8 <const> = rgbIsInGamut(srgb, 0.0) and 255 or outOfGamut
+
+                local j4 <const> = j * 4
+                pixels[1 + j4] = r8
+                pixels[2 + j4] = g8
+                pixels[3 + j4] = b8
+                pixels[4 + j4] = a8
+
+                j = j + 1
             end
 
             idxFrame = idxFrame + 1
-            gamutImgs[idxFrame] = gamutImg
+            gamutImgs[idxFrame] = setPixels(Image(spec), pixels)
         end
 
         -- Create frames.

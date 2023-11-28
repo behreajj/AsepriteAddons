@@ -57,42 +57,42 @@ local function rotateFlag90Ccw(flag)
     -- 0x00000000, 0x60000000, 0xc0000000, 0xa0000000
     -- 0x20000000, 0x40000000, 0xe0000000, 0x80000000
 
-    if flag == 0x20000000 then     -- D --> Y
+    if flag == 0x20000000 then     -- D to Y
         return 0x40000000
-    elseif flag == 0x40000000 then -- Y --> XYD
+    elseif flag == 0x40000000 then -- Y to XYD
         return 0xe0000000
-    elseif flag == 0x60000000 then -- YD --> XY
+    elseif flag == 0x60000000 then -- YD to XY
         return 0xc0000000
-    elseif flag == 0x80000000 then -- X --> D
+    elseif flag == 0x80000000 then -- X to D
         return 0x20000000
-    elseif flag == 0xc0000000 then -- XY --> XD
+    elseif flag == 0xc0000000 then -- XY to XD
         return 0xa0000000
-    elseif flag == 0xa0000000 then -- XD --> 0
+    elseif flag == 0xa0000000 then -- XD to 0
         return 0x00000000
-    elseif flag == 0xe0000000 then -- XYD --> X
+    elseif flag == 0xe0000000 then -- XYD to X
         return 0x80000000
-    end                            -- 0 --> YD
+    end                            -- 0 to YD
     return 0x60000000
 end
 
 ---@param flag integer
 ---@return integer
 local function rotateFlag180(flag)
-    if flag == 0x20000000 then     -- D --> XYD
+    if flag == 0x20000000 then     -- D to XYD
         return 0xe0000000
-    elseif flag == 0x40000000 then -- Y --> X
+    elseif flag == 0x40000000 then -- Y to X
         return 0x80000000
-    elseif flag == 0x60000000 then -- YD --> XD
+    elseif flag == 0x60000000 then -- YD to XD
         return 0xa0000000
-    elseif flag == 0x80000000 then -- X --> Y
+    elseif flag == 0x80000000 then -- X to Y
         return 0x40000000
-    elseif flag == 0xc0000000 then -- XY --> 0
+    elseif flag == 0xc0000000 then -- XY to 0
         return 0x00000000
-    elseif flag == 0xa0000000 then -- XD --> YD
+    elseif flag == 0xa0000000 then -- XD to YD
         return 0x60000000
-    elseif flag == 0xe0000000 then -- XYD --> D
+    elseif flag == 0xe0000000 then -- XYD to D
         return 0x20000000
-    end                            -- 0 --> XY
+    end                            -- 0 to XY
     return 0xc0000000
 end
 
@@ -103,21 +103,21 @@ local function rotateFlag270Ccw(flag)
     -- 0x00000000, 0xa0000000, 0xc0000000, 0x60000000
     -- 0x20000000, 0x80000000, 0xe0000000, 0x40000000
 
-    if flag == 0x20000000 then     -- D --> X
+    if flag == 0x20000000 then     -- D to X
         return 0x80000000
-    elseif flag == 0x40000000 then -- Y --> D
+    elseif flag == 0x40000000 then -- Y to D
         return 0x20000000
-    elseif flag == 0x60000000 then -- YD --> 0
+    elseif flag == 0x60000000 then -- YD to 0
         return 0x00000000
-    elseif flag == 0x80000000 then -- X --> XYD
+    elseif flag == 0x80000000 then -- X to XYD
         return 0xe0000000
-    elseif flag == 0xc0000000 then -- XY --> YD
+    elseif flag == 0xc0000000 then -- XY to YD
         return 0x60000000
-    elseif flag == 0xa0000000 then -- XD --> XY
+    elseif flag == 0xa0000000 then -- XD to XY
         return 0xc0000000
-    elseif flag == 0xe0000000 then -- XYD --> Y
+    elseif flag == 0xe0000000 then -- XYD to Y
         return 0x40000000
-    end                            -- 0 --> XD
+    end                            -- 0 to XD
     return 0xa0000000
 end
 
