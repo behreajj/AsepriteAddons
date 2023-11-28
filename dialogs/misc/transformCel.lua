@@ -271,7 +271,7 @@ dlg:button {
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, false)
-        local lenCels = #cels
+        local lenCels <const> = #cels
 
         local docPrefs <const> = app.preferences.document(activeSprite)
         local snap <const> = docPrefs.grid.snap --[[@as boolean]]
@@ -281,9 +281,9 @@ dlg:button {
             local yGrOff <const> = grid.y
             local xGrScl <const> = grid.width
             local yGrScl <const> = grid.height
-            local dxnz = dx ~= 0.0
-            local dynz = dy ~= 0.0
-            local round = Utilities.round
+            local dxnz <const> = dx ~= 0.0
+            local dynz <const> = dy ~= 0.0
+            local round <const> = Utilities.round
             app.transaction("Move Cels Snap", function()
                 local i = 0
                 while i < lenCels do
