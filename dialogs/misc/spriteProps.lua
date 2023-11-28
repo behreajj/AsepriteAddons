@@ -53,9 +53,8 @@ end
 
 updatePrefsShowPath()
 
--- Should this show information only or allow the
--- sprite to be changed? Alternative versions have
--- a pixel dimension label only, so pxRatioStr
+-- Should this show information only or allow the sprite to be changed?
+-- Alternative versions have a pixel dimension label only, so pxRatioStr
 -- defaults to the string for that label.
 local dlg <const> = Dialog {
     title = string.format(
@@ -194,6 +193,9 @@ dlg:slider {
     visible = false
 }
 dlg:newrow { always = false }
+
+-- This is confusing if a tile map layer is active and the grid is visible,
+-- since its grid is independent from the sprite grid.
 dlg:number {
     id = "xGrid",
     label = "Grid:",

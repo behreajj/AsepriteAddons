@@ -190,7 +190,13 @@ if layer.isTilemap then
     if tileset then
         -- TODO: Any way to set the allowed flip flags (X, Y, D)?
 
-        dlg:separator { id = "tileSep", text = "Tileset" }
+        local gridSize <const> = tileset.grid.tileSize
+
+        dlg:separator {
+            id = "tileSep",
+            text = string.format("Tileset %d x %d",
+                gridSize.width, gridSize.height)
+        }
 
         dlg:entry {
             id = "tilesetName",
@@ -230,6 +236,23 @@ if cel then
     dlg:separator { id = "celSep", text = "Cel" }
 
     dlg:slider {
+        id = "celZIndex",
+        label = "Z Index:",
+        min = -128,
+        max = 127,
+        value = cel.zIndex,
+        focus = false,
+        onchange = function()
+            local args <const> = dlg.data
+            local zIndex <const> = args.celZIndex --[[@as integer]]
+            cel.zIndex = zIndex
+            app.refresh()
+        end
+    }
+
+    dlg:newrow { always = false }
+
+    dlg:slider {
         id = "celOpacity",
         label = "Opacity:",
         min = 0,
@@ -244,23 +267,6 @@ if cel then
                 cel.opacity = celOpacity
                 app.refresh()
             end
-        end
-    }
-
-    dlg:newrow { always = false }
-
-    dlg:slider {
-        id = "celZIndex",
-        label = "Z Index:",
-        min = -128,
-        max = 127,
-        value = cel.zIndex,
-        focus = false,
-        onchange = function()
-            local args <const> = dlg.data
-            local zIndex <const> = args.celZIndex --[[@as integer]]
-            cel.zIndex = zIndex
-            app.refresh()
         end
     }
 
