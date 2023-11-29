@@ -94,26 +94,26 @@ end
 ---@return string
 local function tileFlagToStr(flag)
     if flag == 0x20000000 then
-        return "D"
+        return "\"D\""
     elseif flag == 0x40000000 then
         -- Flip V
-        return "Y"
+        return "\"Y\""
     elseif flag == 0x60000000 then
         -- Rotate 90 CCW
-        return "YD"
+        return "\"YD\""
     elseif flag == 0x80000000 then
         -- Flip H
-        return "X"
+        return "\"X\""
     elseif flag == 0xc0000000 then
         -- Rotate 180
-        return "XY"
+        return "\"XY\""
     elseif flag == 0xa0000000 then
         -- Rotate 270 CCW (90 CW)
-        return "XD"
+        return "\"XD\""
     elseif flag == 0xe0000000 then
-        return "XYD"
+        return "\"XYD\""
     end
-    return ""
+    return "\"\""
 end
 
 local dlg <const> = Dialog { title = "Export Tilesets" }
