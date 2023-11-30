@@ -459,7 +459,7 @@ dlg:button {
         local ceil <const> = math.ceil
         local max <const> = math.max
         local rng <const> = math.random
-        local maxint <const> = math.maxinteger
+        local maxint32 <const> = 0xffffffff
         local sqrt <const> = math.sqrt
         local strfmt <const> = string.format
         local nextPow2 <const> = Utilities.nextPowerOf2
@@ -484,16 +484,10 @@ dlg:button {
             local hTileSrc <const> = tileDim.height
 
             local tsNameVerif = tileSetName
-            if tsNameVerif and #tsNameVerif > 1 then
+            if tsNameVerif and #tsNameVerif > 0 then
                 tsNameVerif = verifName(tileSetName)
             else
-                -- Include number of tiles in name?
-                -- tsNameVerif = strfmt("%03d_%03dx%03d",
-                --     i - 1,
-                --     wTileSrc,
-                --     hTileSrc)
-
-                tsNameVerif = strfmt("%16x", rng(1, maxint))
+                tsNameVerif = strfmt("%08x", rng(1, maxint32))
                 tileSet.name = tsNameVerif
             end
 
