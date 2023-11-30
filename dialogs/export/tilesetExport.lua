@@ -2,8 +2,11 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/jsonutilities.lua")
 
 local targetOptions <const> = { "ACTIVE", "ALL" }
+local dataOptions <const> = { "JSON", "TILED", "NONE" }
 
 local defaults <const> = {
+    -- TODO: Option for tmx export...?
+
     -- Atm, Aseprite tile and tile set objects don't include enough useful
     -- information to necessitate including them in JSON, esp. when they raise
     -- issues of how to format and organize.
@@ -15,6 +18,7 @@ local defaults <const> = {
     toPow2 = false,
     potUniform = false,
     saveJson = true,
+    dataOptions = "JSON",
     includeMaps = true,
     includeLocked = true,
     includeHidden = false,
@@ -92,7 +96,7 @@ end
 
 ---@param flag integer
 ---@return string
-local function tileFlagToStr(flag)
+local function flipFlagToStr(flag)
     if flag == 0x20000000 then
         return "\"D\""
     elseif flag == 0x40000000 then
@@ -114,6 +118,25 @@ local function tileFlagToStr(flag)
         return "\"XYD\""
     end
     return "\"\""
+end
+
+local function flipStrToFlag(str)
+    if str == "\"D\"" then
+        return 0x20000000
+    elseif str == "\"Y\"" then
+        return 0x40000000
+    elseif str == "\"YD\"" then
+        return 0x60000000
+    elseif str == "\"X\"" then
+        return 0x80000000
+    elseif str == "\"XY\"" then
+        return 0xc0000000
+    elseif str == "\"XD\"" then
+        return 0xa0000000
+    elseif str == "\"XYD\"" then
+        return 0xe0000000
+    end
+    return 0
 end
 
 local dlg <const> = Dialog { title = "Export Tilesets" }
@@ -402,7 +425,7 @@ dlg:button {
         local nonUniformDim <const> = not potUniform
 
         local sheetPalette <const> = AseUtilities.getPalette(
-            app.activeFrame, spritePalettes)
+            app.site.frame, spritePalettes)
 
         ---@type Tileset[]
         local tileSets = {}
@@ -435,6 +458,8 @@ dlg:button {
         -- Cache methods used in loops.
         local ceil <const> = math.ceil
         local max <const> = math.max
+        local rng <const> = math.random
+        local maxint <const> = math.maxinteger
         local sqrt <const> = math.sqrt
         local strfmt <const> = string.format
         local nextPow2 <const> = Utilities.nextPowerOf2
@@ -450,6 +475,7 @@ dlg:button {
         while i < lenTileSets do
             i = i + 1
             local tileSet <const> = tileSets[i]
+            local lenTileSet <const> = #tileSet
             local tileSetName <const> = tileSet.name
 
             local tileGrid <const> = tileSet.grid
@@ -461,7 +487,14 @@ dlg:button {
             if tsNameVerif and #tsNameVerif > 1 then
                 tsNameVerif = verifName(tileSetName)
             else
-                tsNameVerif = strfmt("%03d", i - 1)
+                -- Include number of tiles in name?
+                -- tsNameVerif = strfmt("%03d_%03dx%03d",
+                --     i - 1,
+                --     wTileSrc,
+                --     hTileSrc)
+
+                tsNameVerif = strfmt("%16x", rng(1, maxint))
+                tileSet.name = tsNameVerif
             end
 
             local wTileTrg <const> = wTileSrc * wScale
@@ -469,7 +502,6 @@ dlg:button {
 
             -- Same procedure as saving batched sheets in
             -- framesExport.
-            local lenTileSet <const> = #tileSet
             local columns = max(1, ceil(sqrt(lenTileSet)))
             local rows = max(1, ceil(lenTileSet / columns))
             local wSheet = margin2 + wTileTrg * columns
@@ -667,7 +699,7 @@ dlg:button {
 
                                 ---@type integer[]
                                 local tmIndicesArr <const> = {}
-                                ---@type string[]
+                                ---@type integer[]
                                 local tmFlagsArr <const> = {}
 
                                 for pixel in tmPxItr do
@@ -679,7 +711,7 @@ dlg:button {
                                         tlFlag = 0
                                     end
                                     tmIndicesArr[#tmIndicesArr + 1] = tlIndex
-                                    tmFlagsArr[#tmFlagsArr + 1] = tileFlagToStr(tlFlag)
+                                    tmFlagsArr[#tmFlagsArr + 1] = tlFlag
                                 end
 
                                 local wTileMap <const> = tmImage.width

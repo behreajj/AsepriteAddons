@@ -178,13 +178,12 @@ local function imgToSvgStr(
             local webHex <const> = (hex & 0xff) << 0x10
                 | (hex & 0xff00)
                 | (hex >> 0x10 & 0xff)
-            local alphaStr = ""
             local a <const> = hex >> 0x18 & 0xff
-            if a < 0xff then
-                alphaStr = strfmt(
-                    " fill-opacity=\"%.3f\"",
-                    a / 255.0)
-            end
+
+            local alphaStr <const> = a < 0xff
+                and strfmt(" fill-opacity=\"%.3f\"", a / 255.0)
+                or ""
+
             local pathStr <const> = strfmt(
                 "<path id=\"%08x\" fill=\"#%06X\"%s d=\"%s\" />",
                 hex, webHex, alphaStr,
@@ -277,6 +276,7 @@ local function layerToSvgStr(
                     -- Layer opacity and cel opacity are compounded.
                     local celAlpha <const> = cel.opacity
                     local lyrAlpha <const> = layer.opacity
+
                     local alphaStr = ""
                     if lyrAlpha < 0xff or celAlpha < 0xff then
                         local cmpAlpha <const> = (lyrAlpha / 255.0)
@@ -616,8 +616,8 @@ dlg:button {
             local hCheck <const> = math.max(1, math.abs(size.height))
             local wCheckScaled <const> = wCheck * wScale
             local hCheckScaled <const> = hCheck * hScale
-            local wcs2 = wCheckScaled + wCheckScaled
-            local hcs2 = hCheckScaled + hCheckScaled
+            local wcs2 <const> = wCheckScaled + wCheckScaled
+            local hcs2 <const> = hCheckScaled + hCheckScaled
 
             local aColor <const> = bgPref.color1 --[[@as Color]]
             local aHex <const> = aColor.red << 0x10
@@ -678,14 +678,11 @@ dlg:button {
                 local webHex <const> = (bkgHex & 0xff) << 0x10
                     | (bkgHex & 0xff00)
                     | (bkgHex >> 0x10 & 0xff)
-
                 local aBkg <const> = (bkgHex >> 0x18) & 0xff
-                local alphaStr = ""
-                if aBkg < 0xff then
-                    alphaStr = strfmt(
-                        " fill-opacity=\"%.3f\"",
-                        aBkg / 255.0)
-                end
+
+                local alphaStr <const> = aBkg < 0xff
+                    and strfmt(" fill-opacity=\"%.3f\"", aBkg / 255.0)
+                    or ""
 
                 bkgStr = strfmt(
                     "<path id =\"bkg\" d=\"M %d %d L %d %d L %d %d L %d %d Z\" "
@@ -856,10 +853,9 @@ dlg:button {
                 | paddingClr.green << 0x08
                 | paddingClr.blue
 
-            local alphaStr = ""
-            if aPadding < 0xff then
-                alphaStr = strfmt(" fill-opacity=\"%.3f\"", aPadding / 255.0)
-            end
+            local alphaStr <const> = aPadding < 0xff
+                and strfmt(" fill-opacity=\"%.3f\"", aPadding / 255.0)
+                or ""
 
             -- Cut out a hole for each pixel (counter-clockwise).
             ---@type string[]
@@ -902,12 +898,9 @@ dlg:button {
                 | borderClr.green << 0x08
                 | borderClr.blue
 
-            local alphaStr = ""
-            if aBorder < 0xff then
-                alphaStr = strfmt(
-                    " fill-opacity=\"%.3f\"",
-                    aBorder / 255.0)
-            end
+            local alphaStr <const> = aBorder < 0xff
+                and strfmt(" fill-opacity=\"%.3f\"", aBorder / 255.0)
+                or ""
 
             borderStr = strfmt(
                 "\n<path id=\"border\" fill=\"#%06X\"%s "
