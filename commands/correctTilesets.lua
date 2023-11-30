@@ -18,6 +18,7 @@ local maxint64 <const> = 0x7fffffffffffffff
 local uniques = {}
 
 app.transaction("Correct tile sets", function()
+    local tileSum = 0
     local i = 0
     while i < lenTileSets do
         i = i + 1
@@ -39,6 +40,9 @@ app.transaction("Correct tile sets", function()
 
         uniques[tsNameVerif] = true
         tileSet.name = tsNameVerif
+
+        tileSet.baseIndex = 1 + tileSum
+        tileSum = tileSum + #tileSet
     end
 end)
 

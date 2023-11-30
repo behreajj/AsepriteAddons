@@ -186,27 +186,27 @@ dlg:entry {
 }
 
 if layer.isTilemap then
-    local tileset <const> = layer.tileset
-    if tileset then
+    local tileSet <const> = layer.tileset
+    if tileSet then
         -- TODO: Any way to set the allowed flip flags (X, Y, D)?
 
-        local gridSize <const> = tileset.grid.tileSize
+        local gridSize <const> = tileSet.grid.tileSize
 
         dlg:separator {
             id = "tileSep",
-            text = string.format("Tileset %d x %d",
-                gridSize.width, gridSize.height)
+            text = string.format("Tileset %d x %d (#%d)",
+                gridSize.width, gridSize.height, #tileSet)
         }
 
         dlg:entry {
             id = "tilesetName",
             label = "Name:",
-            text = tileset.name,
+            text = tileSet.name,
             focus = false,
             onchange = function()
                 local args <const> = dlg.data
                 local tilesetName <const> = args.tilesetName --[[@as string]]
-                tileset.name = tilesetName
+                tileSet.name = tilesetName
                 app.refresh()
             end
         }
@@ -216,13 +216,13 @@ if layer.isTilemap then
         dlg:number {
             id = "tilesetBaseIndex",
             label = "Base Index:",
-            text = string.format("%0d", tileset.baseIndex),
+            text = string.format("%0d", tileSet.baseIndex),
             decimals = 0,
             focus = false,
             onchange = function()
                 local args <const> = dlg.data
                 local tilesetBaseIndex <const> = args.tilesetBaseIndex --[[@as integer]]
-                tileset.baseIndex = math.max(1, math.abs(tilesetBaseIndex))
+                tileSet.baseIndex = math.max(1, math.abs(tilesetBaseIndex))
                 app.refresh()
             end
         }
