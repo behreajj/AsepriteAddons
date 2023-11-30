@@ -730,7 +730,6 @@ dlg:button {
             end
 
             if err then
-                app.refresh()
                 app.alert { title = "Error", text = err }
                 return
             end
