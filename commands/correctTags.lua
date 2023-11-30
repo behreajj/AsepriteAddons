@@ -2,6 +2,7 @@ local site <const> = app.site
 local activeSprite <const> = site.sprite
 if not activeSprite then return end
 
+-- TODO: Use Utilities.validateFilename on tag names?
 local tags <const> = activeSprite.tags
 local lenTags <const> = #tags
 local lenFrames <const> = #activeSprite.frames
