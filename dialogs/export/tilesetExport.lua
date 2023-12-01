@@ -5,11 +5,6 @@ local targetOptions <const> = { "ACTIVE", "ALL" }
 local dataOptions <const> = { "JSON", "TILED", "NONE" }
 
 local defaults <const> = {
-    -- TODO: Option for tmx export...?
-
-    -- Atm, Aseprite tile and tile set objects don't include enough useful
-    -- information to necessitate including them in JSON, esp. when they raise
-    -- issues of how to format and organize.
     target = "ALL",
     border = 0,
     padding = 0,
@@ -17,27 +12,31 @@ local defaults <const> = {
     usePixelAspect = true,
     toPow2 = false,
     potUniform = false,
-    saveJson = true,
-    dataOptions = "JSON",
+    metaData = "JSON",
     includeMaps = true,
     includeLocked = true,
     includeHidden = false,
-    boundsFormat = "TOP_LEFT"
+    boundsFormat = "TOP_LEFT",
+    tmxVersion = "1.10",
+    tmxTiledVersion = "1.10.2",
+    tmxOrientation = "orthogonal",
+    tmxRenderOrder = "right-down",
 }
 
-local sectionFormat <const> = table.concat({
+local jsonSectionFormat <const> = table.concat({
     "{\"id\":%s",
     "\"rect\":%s}",
 }, ",")
 
-local sheetFormat <const> = table.concat({
+local jsonTileSetFormat <const> = table.concat({
     "{\"fileName\":\"%s\"",
+    "\"baseIndex\":%d",
     "\"size\":%s",
     "\"sizeGrid\":%s",
     "\"tiles\":[%s]}",
 }, ",")
 
-local mapFormat <const> = table.concat({
+local jsonTileMapFormat <const> = table.concat({
     "{\"size\":%s",
     "\"indices\":[%s]",
     "\"flags\":[%s]",
@@ -45,11 +44,74 @@ local mapFormat <const> = table.concat({
     "\"layer\":%d}",
 }, ",")
 
+local tmxMapFormat <const> = table.concat({
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
+    "<map ",
+    "version=\"%s\" ",
+    "tiledversion=\"%s\" ",
+    "orientation=\"%s\" ",
+    "renderorder=\"%s\" ",
+    "width=\"%d\" ",
+    "height=\"%d\" ",
+    "tilewidth=\"%d\" ",
+    "tileheight=\"%d\" ",
+    "infinite=\"0\">\n",
+    "%s\n", -- tsx use ref array
+    "%s\n", -- layer array
+    "</map>"
+}, "")
+
+local tmxLayerFormat <const> = table.concat({
+    "<layer ",
+    "id=\"%d\" ",
+    "name=\"%s\" ",
+    "width=\"%d\" ",
+    "height=\"%d\" ",
+    "offsetx=\"%d\" ",
+    "offsety=\"%d\" ",
+    "visible=\"%d\" ",
+    "locked=\"%d\" ",
+    "opacity=\"%.6f\">\n",
+    "<data encoding=\"csv\">\n%s\n</data>\n",
+    "</layer>"
+}, "")
+
+local tilsetRefFormat <const> = table.concat({
+    "<tileset ",
+    "firstgid=\"%d\" ",
+    "source=\"%s\"/>"
+}, "")
+
+local tsxFormat <const> = table.concat({
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
+    "<tileset ",
+    "version=\"%s\" ",
+    "tiledversion=\"%s\" ",
+    "name=\"%s\" ",
+    "tilewidth=\"%d\" ",
+    "tileheight=\"%d\" ",
+    "spacing=\"%d\" ",
+    "margin=\"%d\" ",
+    "tilecount=\"%d\" ",
+    "columns=\"%d\">\n",
+    " <transformations ",
+    "hflip=\"%d\" ",
+    "vflip=\"%d\" ",
+    "rotate=\"%d\" ",
+    "preferuntransformed=\"%d\"/>\n",
+    " <image ",
+    "source=\"%s\" ",
+    "%s", -- transparency string
+    "width=\"%d\" ",
+    "height=\"%d\"/>\n",
+    "</tileset>"
+})
+
 ---@param section table
 ---@param boundsFormat string
 ---@return string
 local function sectionToJson(section, boundsFormat)
-    return string.format(sectionFormat,
+    return string.format(jsonSectionFormat,
         JsonUtilities.pointToJson(
             section.column, section.row),
         JsonUtilities.rectToJson(
@@ -60,7 +122,7 @@ end
 ---@return string
 local function mapToJson(map)
     return string.format(
-        mapFormat,
+        jsonTileMapFormat,
         JsonUtilities.pointToJson(map.width, map.height),
         table.concat(map.indices, ","),
         table.concat(map.flags, ","),
@@ -68,13 +130,13 @@ local function mapToJson(map)
         map.layer)
 end
 
----@param sheet table
+---@param ts table
 ---@param boundsFormat string
 ---@return string
-local function sheetToJson(sheet, boundsFormat)
+local function tileSetToJson(ts, boundsFormat)
     ---@type string[]
     local sectionsStrs <const> = {}
-    local sections <const> = sheet.sections
+    local sections <const> = ts.sections
     local lenSections <const> = #sections
     local i = 0
     while i < lenSections do
@@ -83,60 +145,16 @@ local function sheetToJson(sheet, boundsFormat)
             sections[i], boundsFormat)
     end
 
-    return string.format(sheetFormat,
-        sheet.fileName,
+    return string.format(jsonTileSetFormat,
+        ts.fileName,
+        ts.baseIndex,
         JsonUtilities.pointToJson(
-            sheet.width,
-            sheet.height),
+            ts.width,
+            ts.height),
         JsonUtilities.pointToJson(
-            sheet.columns,
-            sheet.rows),
+            ts.columns,
+            ts.rows),
         table.concat(sectionsStrs, ","))
-end
-
----@param flag integer
----@return string
-local function flipFlagToStr(flag)
-    if flag == 0x20000000 then
-        return "\"D\""
-    elseif flag == 0x40000000 then
-        -- Flip V
-        return "\"Y\""
-    elseif flag == 0x60000000 then
-        -- Rotate 90 CCW
-        return "\"YD\""
-    elseif flag == 0x80000000 then
-        -- Flip H
-        return "\"X\""
-    elseif flag == 0xc0000000 then
-        -- Rotate 180
-        return "\"XY\""
-    elseif flag == 0xa0000000 then
-        -- Rotate 270 CCW (90 CW)
-        return "\"XD\""
-    elseif flag == 0xe0000000 then
-        return "\"XYD\""
-    end
-    return "\"\""
-end
-
-local function flipStrToFlag(str)
-    if str == "\"D\"" then
-        return 0x20000000
-    elseif str == "\"Y\"" then
-        return 0x40000000
-    elseif str == "\"YD\"" then
-        return 0x60000000
-    elseif str == "\"X\"" then
-        return 0x80000000
-    elseif str == "\"XY\"" then
-        return 0xc0000000
-    elseif str == "\"XD\"" then
-        return 0xa0000000
-    elseif str == "\"XYD\"" then
-        return 0xe0000000
-    end
-    return 0
 end
 
 local dlg <const> = Dialog { title = "Export Tilesets" }
@@ -148,12 +166,13 @@ dlg:combobox {
     options = targetOptions,
     onchange = function()
         local args <const> = dlg.data
-        local saveJson <const> = args.saveJson --[[@as boolean]]
+        local metaData <const> = args.metaData --[[@as string]]
+        local usemd <const> = metaData ~= "NONE"
         local includeMaps <const> = args.includeMaps --[[@as boolean]]
         local allTarget <const> = args.target == "ALL"
-        dlg:modify { id = "includeLocked", visible = saveJson
+        dlg:modify { id = "includeLocked", visible = usemd
             and includeMaps and allTarget }
-        dlg:modify { id = "includeHidden", visible = saveJson
+        dlg:modify { id = "includeHidden", visible = usemd
             and includeMaps and allTarget }
     end
 }
@@ -232,22 +251,24 @@ dlg:file {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "saveJson",
-    label = "Save:",
-    text = "&JSON",
-    selected = defaults.saveJson,
-    onclick = function()
+dlg:combobox {
+    id = "metaData",
+    label = "Data:",
+    option = defaults.metaData,
+    options = dataOptions,
+    onchange = function()
         local args <const> = dlg.data
-        local saveJson <const> = args.saveJson --[[@as boolean]]
+        local metaData <const> = args.metaData --[[@as string]]
+        local usemd <const> = metaData ~= "NONE"
+        local useJson <const> = metaData == "JSON"
         local includeMaps <const> = args.includeMaps --[[@as boolean]]
         local allTarget <const> = args.target == "ALL"
-        dlg:modify { id = "includeMaps", visible = saveJson }
-        dlg:modify { id = "boundsFormat", visible = saveJson }
-        dlg:modify { id = "userDataWarning", visible = saveJson }
-        dlg:modify { id = "includeLocked", visible = saveJson
+        dlg:modify { id = "includeMaps", visible = usemd }
+        dlg:modify { id = "boundsFormat", visible = useJson }
+        dlg:modify { id = "userDataWarning", visible = useJson }
+        dlg:modify { id = "includeLocked", visible = usemd
             and includeMaps and allTarget }
-        dlg:modify { id = "includeHidden", visible = saveJson
+        dlg:modify { id = "includeHidden", visible = usemd
             and includeMaps and allTarget }
     end
 }
@@ -257,7 +278,7 @@ dlg:check {
     label = "Include:",
     text = "&Tilemaps",
     selected = defaults.includeMaps,
-    visible = defaults.saveJson,
+    visible = defaults.metaData ~= "NONE",
     onclick = function()
         local args <const> = dlg.data
         local enabled <const> = args.includeMaps --[[@as boolean]]
@@ -275,7 +296,7 @@ dlg:check {
     id = "includeLocked",
     text = "&Locked",
     selected = defaults.includeLocked,
-    visible = defaults.saveJson
+    visible = defaults.metaData ~= "NONE"
         and defaults.includeMaps
         and defaults.target == "ALL"
 }
@@ -284,7 +305,7 @@ dlg:check {
     id = "includeHidden",
     text = "&Hidden",
     selected = defaults.includeHidden,
-    visible = defaults.saveJson
+    visible = defaults.metaData ~= "NONE"
         and defaults.includeMaps
         and defaults.target == "ALL"
 }
@@ -294,7 +315,7 @@ dlg:combobox {
     label = "Format:",
     option = defaults.boundsFormat,
     options = JsonUtilities.RECT_OPTIONS,
-    visible = defaults.saveJson
+    visible = defaults.metaData == "JSON"
 }
 
 dlg:newrow { always = false }
@@ -303,7 +324,7 @@ dlg:label {
     id = "userDataWarning",
     label = "Note:",
     text = "User data not escaped.",
-    visible = defaults.saveJson
+    visible = defaults.metaData == "JSON"
 }
 
 dlg:newrow { always = false }
@@ -336,7 +357,8 @@ dlg:button {
         local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
         local usePow2 <const> = args.toPow2 --[[@as boolean]]
         local potUniform <const> = args.potUniform --[[@as boolean]]
-        local saveJson <const> = args.saveJson --[[@as boolean]]
+        -- local saveJson <const> = args.saveJson --[[@as boolean]]
+        local metaData <const> = args.metaData or defaults.metaData --[[@as string]]
         local includeMaps <const> = args.includeMaps --[[@as boolean]]
         local includeLocked <const> = args.includeLocked --[[@as boolean]]
         local includeHidden <const> = args.includeHidden --[[@as boolean]]
@@ -425,7 +447,7 @@ dlg:button {
         local nonUniformDim <const> = not potUniform
 
         local sheetPalette <const> = AseUtilities.getPalette(
-            app.site.frame, spritePalettes)
+            site.frame, spritePalettes)
 
         ---@type Tileset[]
         local tileSets = {}
@@ -458,8 +480,6 @@ dlg:button {
         -- Cache methods used in loops.
         local ceil <const> = math.ceil
         local max <const> = math.max
-        local rng <const> = math.random
-        local maxint32 <const> = 0xffffffff
         local sqrt <const> = math.sqrt
         local strfmt <const> = string.format
         local nextPow2 <const> = Utilities.nextPowerOf2
@@ -467,7 +487,7 @@ dlg:button {
         local createSpec <const> = AseUtilities.createSpec
         local resize <const> = AseUtilities.resizeImageNearest
 
-        -- For JSON export.
+        -- For meta data export.
         ---@type table[]
         local sheetPackets <const> = {}
         local lenTileSets <const> = #tileSets
@@ -477,6 +497,7 @@ dlg:button {
             local tileSet <const> = tileSets[i]
             local lenTileSet <const> = #tileSet
             local tileSetName <const> = tileSet.name
+            local baseIndex <const> = tileSet.baseIndex
 
             local tileGrid <const> = tileSet.grid
             local tileDim <const> = tileGrid.tileSize
@@ -487,15 +508,13 @@ dlg:button {
             if tsNameVerif and #tsNameVerif > 0 then
                 tsNameVerif = verifName(tileSetName)
             else
-                tsNameVerif = strfmt("%08x", rng(1, maxint32))
-                tileSet.name = tsNameVerif
+                tsNameVerif = strfmt("TileSet %d", i - 1)
             end
 
             local wTileTrg <const> = wTileSrc * wScale
             local hTileTrg <const> = hTileSrc * hScale
 
-            -- Same procedure as saving batched sheets in
-            -- framesExport.
+            -- Same procedure as saving batched sheets in framesExport.
             local columns = max(1, ceil(sqrt(lenTileSet)))
             local rows = max(1, ceil(lenTileSet / columns))
             local wSheet = margin2 + wTileTrg * columns
@@ -528,7 +547,7 @@ dlg:button {
                 spriteAlphaIndex)
             local sheetImage <const> = Image(sheetSpec)
 
-            -- For JSON export.
+            -- For Meta data (JSON, TMX) export.
             ---@type table[]
             local sectionPackets <const> = {}
 
@@ -581,18 +600,24 @@ dlg:button {
                 palette = sheetPalette
             }
 
+            -- Tile width and height are not used by JSON, but would be useful
+            -- for Tiled (TMX, TSX) export.
             local sheetPacket <const> = {
                 fileName = fileNameShort,
+                baseIndex = baseIndex,
                 width = wSheet,
                 height = hSheet,
                 columns = columns,
                 rows = rows,
-                sections = sectionPackets
+                sections = sectionPackets,
+                wTile = wTileTrg,
+                hTile = hTileTrg,
+                lenTileSet = lenTileSet
             }
             sheetPackets[i] = sheetPacket
         end
 
-        if saveJson then
+        if metaData ~= "NONE" then
             ---@type table[]
             local celPackets <const> = {}
             -- Because frames is an inner array, use a dictionary
@@ -625,7 +650,7 @@ dlg:button {
                 if target == "ACTIVE" then
                     -- This has already been validated to be
                     -- non-nil and a tile map at start of function.
-                    tmLayers = { app.activeLayer --[[@as Layer]] }
+                    tmLayers = { site.layer --[[@as Layer]] }
                 else
                     tmLayers = AseUtilities.getLayerHierarchy(
                         activeSprite,
@@ -661,14 +686,29 @@ dlg:button {
                             parentId = parent.id
                         end
 
+                        local tileSetName <const> = tileSet.name
+                        local tsNameVerif = tileSetName
+                        if tsNameVerif and #tsNameVerif > 0 then
+                            tsNameVerif = verifName(tileSetName)
+                        else
+                            tsNameVerif = strfmt("TileSet %d", i - 1)
+                        end
+                        local fileNameShort <const> = strfmt(
+                            "%s_%s",
+                            fileTitle, tsNameVerif)
+
                         local layerPacket <const> = {
                             blendMode = tmLayer.blendMode,
                             data = tmLayer.data,
                             id = layerId,
+                            isLocked = not tmLayer.isEditable,
+                            isVisible = tmLayer.isVisible,
                             name = tmLayer.name,
                             opacity = tmLayer.opacity,
                             parent = parentId,
-                            stackIndex = tmLayer.stackIndex
+                            stackIndex = tmLayer.stackIndex,
+                            tileSetName = fileNameShort,
+                            lenTileSet = #tileSet
                         }
                         layerPackets[#layerPackets + 1] = layerPacket
 
@@ -744,100 +784,304 @@ dlg:button {
                 end             -- End layers loop.
             end                 -- End include maps check.
 
-            -- Cache Json methods.
-            local celToJson <const> = JsonUtilities.celToJson
-            local frameToJson <const> = JsonUtilities.frameToJson
-            local layerToJson <const> = JsonUtilities.layerToJson
+            if metaData == "TILED" then
+                local tconcat <const> = table.concat
+                local tmxVersion <const> = defaults.tmxVersion
+                local tmxTiledVersion <const> = defaults.tmxTiledVersion
+                local lenSheetPackets <const> = #sheetPackets
 
-            local h = 0
-            ---@type string[]
-            local tsStrs <const> = {}
-            local lenSheetPackets <const> = #sheetPackets
-            while h < lenSheetPackets do
-                h = h + 1
-                local sheet <const> = sheetPackets[h]
-                tsStrs[h] = sheetToJson(sheet, boundsFormat)
-            end
+                local h = 0
+                while h < lenSheetPackets do
+                    h = h + 1
 
-            ---@type string[]
-            local tmStrs <const> = {}
-            local lenMapPackets <const> = #mapPackets
-            local j = 0
-            while j < lenMapPackets do
-                j = j + 1
-                local map <const> = mapPackets[j]
-                tmStrs[j] = mapToJson(map)
-            end
+                    local sheetPacket <const> = sheetPackets[h]
+                    local fileName <const> = sheetPacket.fileName
 
-            local k = 0
-            ---@type string[]
-            local celStrs <const> = {}
-            local lenCelPackets <const> = #celPackets
-            while k < lenCelPackets do
-                k = k + 1
-                local cel <const> = celPackets[k]
-                celStrs[k] = celToJson(
-                    cel, cel.fileName, boundsFormat)
-            end
+                    -- TODO: Write transparency string based on sprite
+                    -- being in indexed color mode and the color in the
+                    -- palette having 255 alpha.
+                    local transparencyString = ""
+                    local wTile <const> = sheetPacket.wTile
+                    local hTile <const> = sheetPacket.hTile
+                    local width <const> = sheetPacket.width
+                    local height <const> = sheetPacket.height
+                    local lenTileSet <const> = sheetPacket.lenTileSet
+                    local columns <const> = sheetPacket.columns
+                    local tsxStr <const> = strfmt(
+                        tsxFormat,
+                        tmxVersion, tmxTiledVersion,
+                        fileName,
+                        wTile, hTile,
+                        padding, margin,
+                        lenTileSet, columns,
+                        1, 1, 1, 0, -- Default to all enabled for now.
+                        strfmt("%s.%s", fileName, fileExt),
+                        transparencyString,
+                        width, height)
 
-            ---@type string[]
-            local frameStrs <const> = {}
-            for _, frame in pairs(framePackets) do
-                frameStrs[#frameStrs + 1] = frameToJson(frame)
-            end
+                    local tsxFilePath <const> = strfmt("%s%s.tsx", filePath, fileName)
+                    local tsxFile <const>, _ <const> = io.open(tsxFilePath, "w")
+                    if tsxFile then
+                        tsxFile:write(tsxStr)
+                        tsxFile:close()
+                    end
+                end
 
-            local m = 0
-            ---@type string[]
-            local layerStrs <const> = {}
-            local lenLayerPackets <const> = #layerPackets
-            while m < lenLayerPackets do
-                m = m + 1
-                local layer <const> = layerPackets[m]
-                layerStrs[m] = layerToJson(layer)
-            end
+                if includeMaps then
+                    local tmxOrientation <const> = defaults.tmxOrientation
+                    local tmxRenderOrder <const> = defaults.tmxRenderOrder
 
-            local jsonFormat <const> = table.concat({
-                "{\"fileDir\":\"%s\"",
-                "\"fileExt\":\"%s\"",
-                "\"border\":%d",
-                "\"padding\":%d",
-                "\"scale\":%d",
-                "\"tileSets\":[%s]",
-                "\"tileMaps\":[%s]",
-                "\"cels\":[%s]",
-                "\"frames\":[%s]",
-                "\"layers\":[%s]",
-                "\"sprite\":%s",
-                "\"version\":%s}"
-            }, ",")
-            local jsonString <const> = string.format(
-                jsonFormat,
-                filePath, fileExt,
-                margin, padding, scale,
-                table.concat(tsStrs, ","),
-                table.concat(tmStrs, ","),
-                table.concat(celStrs, ","),
-                table.concat(frameStrs, ","),
-                table.concat(layerStrs, ","),
-                JsonUtilities.spriteToJson(activeSprite),
-                JsonUtilities.versionToJson())
+                    -- Use these for map tile width and height.
+                    local spriteGrid <const> = activeSprite.gridBounds
+                    local wSprGrid <const> = math.max(1, math.abs(
+                        spriteGrid.width))
+                    local hSprGrid <const> = math.max(1, math.abs(
+                        spriteGrid.height))
 
-            local jsonFilepath = filePrefix
-            if #fileTitle < 1 then
-                jsonFilepath = filePath .. pathSep .. "manifest"
-            end
-            jsonFilepath = jsonFilepath .. ".json"
 
-            local file <const>, err <const> = io.open(jsonFilepath, "w")
-            if file then
-                file:write(jsonString)
-                file:close()
-            end
 
-            if err then
-                app.refresh()
-                app.alert { title = "Error", text = err }
-                return
+                    local wSprInTiles <const> = math.max(1, math.ceil(
+                        spriteSpec.width / wSprGrid))
+                    local hSprInTiles <const> = math.max(1, math.ceil(
+                        spriteSpec.height / hSprGrid))
+
+                    local lenLayerPackets <const> = #layerPackets
+                    local lenCelPackets <const> = #celPackets
+                    local lenMapPackets <const> = #mapPackets
+
+                    for _, frame in pairs(framePackets) do
+                        local frIdx <const> = frame.frameNumber
+
+                        -- Use layer ID as a key to access packet.
+                        ---@type table<integer, table>
+                        local filteredMapPackets <const> = {}
+                        local k = 0
+                        while k < lenMapPackets do
+                            k = k + 1
+                            local mapPacket <const> = mapPackets[k]
+                            if mapPacket.frameNumber == frIdx then
+                                filteredMapPackets[mapPacket.layer] = mapPacket
+                            end
+                        end
+
+                        -- Use layer ID as a key to access packet.
+                        ---@type table<integer, table>
+                        local filteredCelPackets <const> = {}
+                        local j = 0
+                        while j < lenCelPackets do
+                            j = j + 1
+                            local celPacket <const> = celPackets[j]
+                            if celPacket.frameNumber == frIdx then
+                                filteredCelPackets[celPacket.layer] = celPacket
+                            end
+                        end
+
+                        local firstgid = 1
+                        ---@type table<string, integer>
+                        local usedTileSets <const> = {}
+                        ---@type string[]
+                        local tmxLayerStrs <const> = {}
+                        local m = 0
+                        while m < lenLayerPackets do
+                            m = m + 1
+                            local layerPacket <const> = layerPackets[m]
+                            local layerId <const> = layerPacket.id
+                            local isLocked <const> = layerPacket.isLocked and 1 or 0
+                            local isVisible <const> = layerPacket.isVisible and 1 or 0
+                            local layerOpacity <const> = layerPacket.opacity
+                            local layerName <const> = layerPacket.name
+                            local tileSetName <const> = layerPacket.tileSetName
+
+                            local idxOffset = 0
+                            if usedTileSets[tileSetName] then
+                                idxOffset = usedTileSets[tileSetName]
+                            else
+                                idxOffset = firstgid
+                                usedTileSets[tileSetName] = firstgid
+                                local lenTileSet <const> = layerPacket.lenTileSet
+                                firstgid = firstgid + lenTileSet
+                            end
+
+                            ---@type string[]
+                            local csvData = {}
+                            local wMap = 0
+                            local hMap = 0
+                            local mapPacket <const> = filteredMapPackets[layerId]
+                            if mapPacket then
+                                wMap = mapPacket.width
+                                hMap = mapPacket.height
+
+                                local indices <const> = mapPacket.indices
+                                local flags <const> = mapPacket.flags
+
+                                local y = 0
+                                while y < hMap do
+                                    ---@type integer[]
+                                    local colArr = {}
+                                    local x = 0
+                                    while x < wMap do
+                                        local flat <const> = 1 + y * wMap + x
+                                        local index <const> = indices[flat]
+                                        local flag <const> = flags[flat]
+                                        local comp = 0
+                                        if index ~= 0 then
+                                            comp = flag | (idxOffset + index)
+                                        end
+                                        x = x + 1
+                                        colArr[x] = comp
+                                    end
+
+                                    y = y + 1
+                                    csvData[y] = tconcat(colArr, ",")
+                                end
+                            end
+
+                            local xOffset = 0
+                            local yOffset = 0
+                            local celPacket <const> = filteredCelPackets[layerId]
+                            if celPacket then
+                                local boundsPacket <const> = celPacket.bounds
+                                xOffset = boundsPacket.x
+                                yOffset = boundsPacket.y
+                            end
+
+                            local tmxLayerStr <const> = strfmt(
+                                tmxLayerFormat,
+                                m, layerName,
+                                wMap, hMap,
+                                xOffset, yOffset,
+                                isVisible, isLocked,
+                                layerOpacity / 255.0,
+                                tconcat(csvData, ",\n"))
+                            tmxLayerStrs[m] = tmxLayerStr
+                        end
+
+                        ---@type string[]
+                        local tsxRefStrs = {}
+                        for tsName, tsGid in pairs(usedTileSets) do
+                            tsxRefStrs[#tsxRefStrs + 1] = strfmt(
+                                tilsetRefFormat,
+                                tsGid,
+                                strfmt("%s.tsx", tsName))
+                        end
+
+                        local tmxString <const> = strfmt(
+                            tmxMapFormat,
+                            tmxVersion, tmxTiledVersion,
+                            tmxOrientation, tmxRenderOrder,
+                            wSprInTiles,
+                            hSprInTiles,
+                            wSprGrid,
+                            hSprGrid,
+                            tconcat(tsxRefStrs, "\n"),
+                            tconcat(tmxLayerStrs, "\n")
+                        )
+
+                        local tmxFilepath = filePrefix
+                        if #fileTitle < 1 then
+                            tmxFilepath = filePath .. pathSep .. "manifest"
+                        end
+                        tmxFilepath = strfmt("%s_%03d.tmx", tmxFilepath, frIdx - 1)
+
+                        local tmxFile <const>, _ <const> = io.open(tmxFilepath, "w")
+                        if tmxFile then
+                            tmxFile:write(tmxString)
+                            tmxFile:close()
+                        end
+                    end -- End frame dict loop.
+                end     -- End include maps check.
+            elseif metaData == "JSON" then
+                -- Cache Json methods.
+                local celToJson <const> = JsonUtilities.celToJson
+                local frameToJson <const> = JsonUtilities.frameToJson
+                local layerToJson <const> = JsonUtilities.layerToJson
+
+                ---@type string[]
+                local tsStrs <const> = {}
+                local lenSheetPackets <const> = #sheetPackets
+                local h = 0
+                while h < lenSheetPackets do
+                    h = h + 1
+                    tsStrs[h] = tileSetToJson(sheetPackets[h], boundsFormat)
+                end
+
+                ---@type string[]
+                local tmStrs <const> = {}
+                local lenMapPackets <const> = #mapPackets
+                local j = 0
+                while j < lenMapPackets do
+                    j = j + 1
+                    tmStrs[j] = mapToJson(mapPackets[j])
+                end
+
+                ---@type string[]
+                local celStrs <const> = {}
+                local lenCelPackets <const> = #celPackets
+                local k = 0
+                while k < lenCelPackets do
+                    k = k + 1
+                    local cel <const> = celPackets[k]
+                    celStrs[k] = celToJson(
+                        cel, cel.fileName, boundsFormat)
+                end
+
+                ---@type string[]
+                local frameStrs <const> = {}
+                for _, frame in pairs(framePackets) do
+                    frameStrs[#frameStrs + 1] = frameToJson(frame)
+                end
+
+                ---@type string[]
+                local layerStrs <const> = {}
+                local lenLayerPackets <const> = #layerPackets
+                local m = 0
+                while m < lenLayerPackets do
+                    m = m + 1
+                    layerStrs[m] = layerToJson(layerPackets[m])
+                end
+
+                local jsonFormat <const> = table.concat({
+                    "{\"fileDir\":\"%s\"",
+                    "\"fileExt\":\"%s\"",
+                    "\"border\":%d",
+                    "\"padding\":%d",
+                    "\"scale\":%d",
+                    "\"tileSets\":[%s]",
+                    "\"tileMaps\":[%s]",
+                    "\"cels\":[%s]",
+                    "\"frames\":[%s]",
+                    "\"layers\":[%s]",
+                    "\"sprite\":%s",
+                    "\"version\":%s}"
+                }, ",")
+                local jsonString <const> = string.format(
+                    jsonFormat,
+                    filePath, fileExt,
+                    margin, padding, scale,
+                    table.concat(tsStrs, ","),
+                    table.concat(tmStrs, ","),
+                    table.concat(celStrs, ","),
+                    table.concat(frameStrs, ","),
+                    table.concat(layerStrs, ","),
+                    JsonUtilities.spriteToJson(activeSprite),
+                    JsonUtilities.versionToJson())
+
+                local jsonFilepath = filePrefix
+                if #fileTitle < 1 then
+                    jsonFilepath = filePath .. pathSep .. "manifest"
+                end
+                jsonFilepath = jsonFilepath .. ".json"
+
+                local jsonFile <const>, jsonErr <const> = io.open(jsonFilepath, "w")
+                if jsonFile then
+                    jsonFile:write(jsonString)
+                    jsonFile:close()
+                end
+
+                if jsonErr then
+                    app.alert { title = "Error", text = jsonErr }
+                    return
+                end
             end
         end
 

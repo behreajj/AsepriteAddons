@@ -41,6 +41,9 @@ app.transaction("Correct tile sets", function()
         uniques[tsNameVerif] = true
         tileSet.name = tsNameVerif
 
+        -- Because Tiled uses a firstgid offset based on count of tile set
+        -- references in a map, not in the tile set file itself, it's not as
+        -- necessary to do this.
         tileSet.baseIndex = 1 + tileSum
         tileSum = tileSum + #tileSet
     end
