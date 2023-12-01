@@ -764,7 +764,7 @@ dlg:button {
                         if tsNameVerif and #tsNameVerif > 0 then
                             tsNameVerif = verifName(tileSetName)
                         else
-                            tsNameVerif = strfmt("TileSet %d", i - 1)
+                            tsNameVerif = strfmt("tileset_%03d", i - 1)
                         end
                         local fileNameShort <const> = strfmt(
                             "%s_%s",
@@ -861,13 +861,14 @@ dlg:button {
                 local alphaStr = ""
                 if spriteColorMode == ColorMode.INDEXED then
                     local trColor <const> = sheetPalette:getColor(spriteAlphaIndex)
-                    if trColor.alpha == 255 then
+                    if trColor.alpha > 0 then
+                        local aTr <const> = trColor.alpha
                         local rTr <const> = trColor.red
                         local gTr <const> = trColor.green
                         local bTr <const> = trColor.blue
 
-                        alphaStr = string.format("trans=\"%06x\" ",
-                            rTr << 0x10 | gTr << 0x08 | bTr)
+                        alphaStr = string.format("trans=\"%08x\" ",
+                            aTr << 0x18 | rTr << 0x10 | gTr << 0x08 | bTr)
                     end
                 end
 
