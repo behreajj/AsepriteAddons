@@ -95,7 +95,7 @@ local tmxLayerFormat <const> = table.concat({
     "offsety=\"%d\" ",
     "visible=\"%d\" ",
     "locked=\"%d\" ",
-    "opacity=\"%.6f\">\n",
+    "opacity=\"%.2f\">\n",
     "<data encoding=\"csv\">\n%s\n</data>\n",
     "</layer>"
 }, "")
@@ -583,7 +583,7 @@ dlg:button {
             if tsNameVerif and #tsNameVerif > 0 then
                 tsNameVerif = verifName(tileSetName)
             else
-                tsNameVerif = strfmt("TileSet %d", i - 1)
+                tsNameVerif = strfmt("tileset_%03d", i - 1)
             end
 
             local wTileTrg <const> = wTileSrc * wScale
