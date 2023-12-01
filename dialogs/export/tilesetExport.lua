@@ -3,8 +3,15 @@ dofile("../../support/jsonutilities.lua")
 
 local targetOptions <const> = { "ACTIVE", "ALL" }
 local dataOptions <const> = { "JSON", "TILED", "NONE" }
+local tiledImgExts <const> = {
+    "bmp",
+    "jpeg",
+    "jpg",
+    "png"
+}
 
 local defaults <const> = {
+    -- TODO: Specify layer's tileset name in JSON export?
     target = "ALL",
     border = 0,
     padding = 0,
@@ -12,7 +19,7 @@ local defaults <const> = {
     usePixelAspect = true,
     toPow2 = false,
     potUniform = false,
-    metaData = "JSON",
+    metaData = "TILED",
     includeMaps = true,
     includeLocked = true,
     includeHidden = false,
@@ -244,7 +251,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "filename",
     label = "File:",
-    filetypes = AseUtilities.FILE_FORMATS,
+    filetypes = tiledImgExts,
     save = true,
     focus = true
 }
@@ -785,6 +792,19 @@ dlg:button {
             end                 -- End include maps check.
 
             if metaData == "TILED" then
+                local alphaStr = ""
+                if spriteColorMode == ColorMode.INDEXED then
+                    local trColor <const> = sheetPalette:getColor(spriteAlphaIndex)
+                    if trColor.alpha == 255 then
+                        local rTr <const> = trColor.red
+                        local gTr <const> = trColor.green
+                        local bTr <const> = trColor.blue
+
+                        alphaStr = string.format("trans=\"%06x\" ",
+                            rTr << 0x10 | gTr << 0x08 | bTr)
+                    end
+                end
+
                 local tconcat <const> = table.concat
                 local tmxVersion <const> = defaults.tmxVersion
                 local tmxTiledVersion <const> = defaults.tmxTiledVersion
@@ -797,10 +817,6 @@ dlg:button {
                     local sheetPacket <const> = sheetPackets[h]
                     local fileName <const> = sheetPacket.fileName
 
-                    -- TODO: Write transparency string based on sprite
-                    -- being in indexed color mode and the color in the
-                    -- palette having 255 alpha.
-                    local transparencyString = ""
                     local wTile <const> = sheetPacket.wTile
                     local hTile <const> = sheetPacket.hTile
                     local width <const> = sheetPacket.width
@@ -816,7 +832,7 @@ dlg:button {
                         lenTileSet, columns,
                         1, 1, 1, 0, -- Default to all enabled for now.
                         strfmt("%s.%s", fileName, fileExt),
-                        transparencyString,
+                        alphaStr,
                         width, height)
 
                     local tsxFilePath <const> = strfmt("%s%s.tsx", filePath, fileName)
@@ -888,7 +904,7 @@ dlg:button {
                             local layerId <const> = layerPacket.id
                             local isLocked <const> = layerPacket.isLocked and 1 or 0
                             local isVisible <const> = layerPacket.isVisible and 1 or 0
-                            local layerOpacity <const> = layerPacket.opacity
+                            local layerOpacity <const> = layerPacket.opacity / 255.0
                             local layerName <const> = layerPacket.name
                             local tileSetName <const> = layerPacket.tileSetName
 
@@ -936,22 +952,25 @@ dlg:button {
                                 end
                             end
 
+                            local celOpacity = 1.0
                             local xOffset = 0
                             local yOffset = 0
                             local celPacket <const> = filteredCelPackets[layerId]
                             if celPacket then
+                                celOpacity = celPacket.opacity / 255.0
                                 local boundsPacket <const> = celPacket.bounds
                                 xOffset = boundsPacket.x
                                 yOffset = boundsPacket.y
                             end
 
+                            local compOpacity <const> = layerOpacity * celOpacity
                             local tmxLayerStr <const> = strfmt(
                                 tmxLayerFormat,
                                 m, layerName,
                                 wMap, hMap,
                                 xOffset, yOffset,
                                 isVisible, isLocked,
-                                layerOpacity / 255.0,
+                                compOpacity,
                                 tconcat(csvData, ",\n"))
                             tmxLayerStrs[m] = tmxLayerStr
                         end
