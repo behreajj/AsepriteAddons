@@ -28,6 +28,8 @@ local defaults <const> = {
     tmxTiledVersion = "1.10.2",
     tmxOrientation = "orthogonal",
     tmxRenderOrder = "right-down",
+    tsxRender = "grid",
+    tsxFill = "preserve-aspect-fit"
 }
 
 local jsonSectionFormat <const> = table.concat({
@@ -100,7 +102,9 @@ local tsxFormat <const> = table.concat({
     "spacing=\"%d\" ",
     "margin=\"%d\" ",
     "tilecount=\"%d\" ",
-    "columns=\"%d\">\n",
+    "columns=\"%d\" ",
+    "tilerendersize=\"%s\" ",
+    "fillmode=\"%s\">\n",
     " <transformations ",
     "hflip=\"%d\" ",
     "vflip=\"%d\" ",
@@ -364,8 +368,8 @@ dlg:button {
         local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
         local usePow2 <const> = args.toPow2 --[[@as boolean]]
         local potUniform <const> = args.potUniform --[[@as boolean]]
-        -- local saveJson <const> = args.saveJson --[[@as boolean]]
-        local metaData <const> = args.metaData or defaults.metaData --[[@as string]]
+        local metaData <const> = args.metaData
+            or defaults.metaData --[[@as string]]
         local includeMaps <const> = args.includeMaps --[[@as boolean]]
         local includeLocked <const> = args.includeLocked --[[@as boolean]]
         local includeHidden <const> = args.includeHidden --[[@as boolean]]
@@ -381,9 +385,16 @@ dlg:button {
 
         -- Validate file name.
         local fileExt = app.fs.fileExtension(filename)
-        if string.lower(fileExt) == "json" then
-            fileExt = app.preferences.export_file.image_default_extension
-            filename = string.sub(filename, 1, -5) .. fileExt
+        local fileExtLc = string.lower(fileExt)
+        if fileExtLc == "json"
+            or fileExtLc == "tmx"
+            or fileExtLc == "tsx" then
+            -- Now that this exporter works with Tiled, it has to use a
+            -- narrower band of supported extensions.
+            -- fileExt = app.preferences.export_file.image_default_extension
+            fileExt = "png"
+            fileExtLc = string.lower(fileExt)
+            filename = string.sub(filename, 1, -(#fileExtLc) - 1) .. fileExt
         end
 
         local filePath = app.fs.filePath(filename)
@@ -567,8 +578,6 @@ dlg:button {
                 local column <const> = k % columns
                 local tile <const> = tileSet:tile(k)
 
-                -- Is the index different from j
-                -- because of the tile set base index?
                 local tileImage <const> = tile.image --[[@as Image]]
                 local tileScaled = tileImage
                 if useResize then
@@ -617,9 +626,9 @@ dlg:button {
                 columns = columns,
                 rows = rows,
                 sections = sectionPackets,
+                lenTileSet = lenTileSet,
                 wTile = wTileTrg,
                 hTile = hTileTrg,
-                lenTileSet = lenTileSet
             }
             sheetPackets[i] = sheetPacket
         end
@@ -808,6 +817,8 @@ dlg:button {
                 local tconcat <const> = table.concat
                 local tmxVersion <const> = defaults.tmxVersion
                 local tmxTiledVersion <const> = defaults.tmxTiledVersion
+                local tsxRender <const> = defaults.tsxRender
+                local tsxFill <const> = defaults.tsxFill
                 local lenSheetPackets <const> = #sheetPackets
 
                 local h = 0
@@ -823,6 +834,9 @@ dlg:button {
                     local height <const> = sheetPacket.height
                     local lenTileSet <const> = sheetPacket.lenTileSet
                     local columns <const> = sheetPacket.columns
+
+                    -- Currently the allowed flips and rotations doesn't seem
+                    -- accessible from Lua API, so default to 1, 1, 1, 0.
                     local tsxStr <const> = strfmt(
                         tsxFormat,
                         tmxVersion, tmxTiledVersion,
@@ -830,7 +844,8 @@ dlg:button {
                         wTile, hTile,
                         padding, margin,
                         lenTileSet, columns,
-                        1, 1, 1, 0, -- Default to all enabled for now.
+                        tsxRender, tsxFill,
+                        1, 1, 1, 0,
                         strfmt("%s.%s", fileName, fileExt),
                         alphaStr,
                         width, height)
@@ -853,8 +868,6 @@ dlg:button {
                         spriteGrid.width))
                     local hSprGrid <const> = math.max(1, math.abs(
                         spriteGrid.height))
-
-
 
                     local wSprInTiles <const> = math.max(1, math.ceil(
                         spriteSpec.width / wSprGrid))
@@ -976,7 +989,7 @@ dlg:button {
                         end
 
                         ---@type string[]
-                        local tsxRefStrs = {}
+                        local tsxRefStrs <const> = {}
                         for tsName, tsGid in pairs(usedTileSets) do
                             tsxRefStrs[#tsxRefStrs + 1] = strfmt(
                                 tilsetRefFormat,
