@@ -1,13 +1,27 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/jsonutilities.lua")
 
+local dataOptions <const> = { "JSON", "NONE", "TILED" }
 local targetOptions <const> = { "ACTIVE", "ALL" }
-local dataOptions <const> = { "JSON", "TILED", "NONE" }
 local tiledImgExts <const> = {
     "bmp",
     "jpeg",
     "jpg",
     "png"
+}
+local tsxRenders <const> = { "GRID", "TILE" }
+local tsxFills <const> = { "PRESERVE-ASPECT-FIT", "STRETCH" }
+local tsxAligns <const> = {
+    "BOTTOM",
+    "BOTTOMLEFT",
+    "BOTTOMRIGHT",
+    "CENTER",
+    "LEFT",
+    "RIGHT",
+    "TOP",
+    "TOPLEFT",
+    "TOPRIGHT",
+    "UNSPECIFIED"
 }
 
 local defaults <const> = {
@@ -28,8 +42,9 @@ local defaults <const> = {
     tmxTiledVersion = "1.10.2",
     tmxOrientation = "orthogonal",
     tmxRenderOrder = "right-down",
-    tsxRender = "grid",
-    tsxFill = "preserve-aspect-fit"
+    tsxAlign = "TOPLEFT",
+    tsxRender = "TILE",
+    tsxFill = "PRESERVE-ASPECT-FIT"
 }
 
 local jsonSectionFormat <const> = table.concat({
@@ -103,6 +118,7 @@ local tsxFormat <const> = table.concat({
     "margin=\"%d\" ",
     "tilecount=\"%d\" ",
     "columns=\"%d\" ",
+    "objectalignment=\"%s\" ",
     "tilerendersize=\"%s\" ",
     "fillmode=\"%s\">\n",
     " <transformations ",
@@ -272,17 +288,26 @@ dlg:combobox {
         local metaData <const> = args.metaData --[[@as string]]
         local usemd <const> = metaData ~= "NONE"
         local useJson <const> = metaData == "JSON"
-        local includeMaps <const> = args.includeMaps --[[@as boolean]]
-        local allTarget <const> = args.target == "ALL"
+        local useTsx <const> = metaData == "TILED"
+
         dlg:modify { id = "includeMaps", visible = usemd }
         dlg:modify { id = "boundsFormat", visible = useJson }
         dlg:modify { id = "userDataWarning", visible = useJson }
+        dlg:modify { id = "tsxAlign", visible = useTsx }
+        dlg:modify { id = "tsxRender", visible = useTsx }
+        dlg:modify { id = "tsxFill", visible = useTsx }
+
+        local includeMaps <const> = args.includeMaps --[[@as boolean]]
+        local allTarget <const> = args.target == "ALL"
+
         dlg:modify { id = "includeLocked", visible = usemd
             and includeMaps and allTarget }
         dlg:modify { id = "includeHidden", visible = usemd
             and includeMaps and allTarget }
     end
 }
+
+dlg:newrow { always = false }
 
 dlg:check {
     id = "includeMaps",
@@ -321,12 +346,44 @@ dlg:check {
         and defaults.target == "ALL"
 }
 
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "boundsFormat",
     label = "Format:",
     option = defaults.boundsFormat,
     options = JsonUtilities.RECT_OPTIONS,
     visible = defaults.metaData == "JSON"
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "tsxAlign",
+    label = "Align:",
+    option = defaults.tsxAlign,
+    options = tsxAligns,
+    visible = defaults.metaData == "TILED"
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "tsxRender",
+    label = "Render:",
+    option = defaults.tsxRender,
+    options = tsxRenders,
+    visible = defaults.metaData == "TILED"
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "tsxFill",
+    label = "Fill:",
+    option = defaults.tsxFill,
+    options = tsxFills,
+    visible = defaults.metaData == "TILED"
 }
 
 dlg:newrow { always = false }
@@ -817,8 +874,12 @@ dlg:button {
                 local tconcat <const> = table.concat
                 local tmxVersion <const> = defaults.tmxVersion
                 local tmxTiledVersion <const> = defaults.tmxTiledVersion
-                local tsxRender <const> = defaults.tsxRender
-                local tsxFill <const> = defaults.tsxFill
+                local tsxAlign <const> = string.lower(args.tsxAlign
+                    or defaults.tsxAlign --[[@as string]])
+                local tsxRender <const> = string.lower(args.tsxRender
+                    or defaults.tsxRender --[[@as string]])
+                local tsxFill <const> = string.lower(args.tsxFill
+                    or defaults.tsxFill --[[@as string]])
                 local lenSheetPackets <const> = #sheetPackets
 
                 local h = 0
@@ -844,7 +905,7 @@ dlg:button {
                         wTile, hTile,
                         padding, margin,
                         lenTileSet, columns,
-                        tsxRender, tsxFill,
+                        tsxAlign, tsxRender, tsxFill,
                         1, 1, 1, 0,
                         strfmt("%s.%s", fileName, fileExt),
                         alphaStr,
