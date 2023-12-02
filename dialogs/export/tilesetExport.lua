@@ -553,6 +553,7 @@ dlg:button {
         end
 
         -- For generating a Tileset id.
+        math.randomseed(os.time())
         local minint64 <const> = 0x1000000000000000
         local maxint64 <const> = 0x7fffffffffffffff
 

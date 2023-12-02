@@ -1,4 +1,4 @@
-dofile("../support/utilities.lua")
+dofile("../support/aseutilities.lua")
 
 local site <const> = app.site
 local activeSprite <const> = site.sprite
@@ -11,6 +11,7 @@ local strfmt <const> = string.format
 local rng <const> = math.random
 local verifName <const> = Utilities.validateFilename
 
+math.randomseed(os.time())
 local minint64 <const> = 0x1000000000000000
 local maxint64 <const> = 0x7fffffffffffffff
 
@@ -24,22 +25,15 @@ app.transaction("Correct tile sets", function()
         i = i + 1
         local tileSet <const> = tileSets[i]
 
-        local tileId = 0
-        local tileSetProps <const> = tileSet.properties
-        if tileSetProps["id"] then
-            tileId = tileSetProps["id"] --[[@as integer]]
-            tileSetProps["id"] = tileId
-        else
-            tileId = rng(minint64, maxint64)
-            tileSet.properties["id"] = tileId
-        end
+        local tileId <const> = rng(minint64, maxint64)
+        tileSet.properties["id"] = tileId
 
         local origName <const> = tileSet.name
         local tsNameVerif = ""
         if origName and #origName > 0 then
             tsNameVerif = verifName(origName)
         else
-            tsNameVerif = strfmt("%08x", tileId)
+            tsNameVerif = strfmt("%16x", tileId)
         end
 
         local attempts = 0
@@ -57,6 +51,32 @@ app.transaction("Correct tile sets", function()
         -- necessary to do this.
         tileSet.baseIndex = 1 + tileSum
         tileSum = tileSum + #tileSet
+    end
+end)
+
+app.transaction("Remove unused tile sets", function()
+    local leaves <const> = AseUtilities.getLayerHierarchy(
+        activeSprite, true, true, true, false)
+    local lenLeaves <const> = #leaves
+    ---@type table<integer, boolean>
+    local usedTileSets = {}
+    local i = 0
+    while i < lenLeaves do
+        i = i + 1
+        local leaf <const> = leaves[i]
+        if leaf.isTilemap then
+            local id <const> = leaf.tileset.properties["id"]
+            usedTileSets[id] = true
+        end
+    end
+
+    local j = lenTileSets + 1
+    while j > 1 do
+        j = j - 1
+        local tileSet <const> = tileSets[j]
+        if not usedTileSets[tileSet.properties.id] then
+            activeSprite:deleteTileset(tileSet)
+        end
     end
 end)
 
