@@ -1,7 +1,6 @@
 dofile("../../support/aseutilities.lua")
-dofile("../../support/jsonutilities.lua")
 
-local dataOptions <const> = { "JSON", "NONE", "TILED" }
+local dataOptions <const> = { "NONE", "TILED" }
 local targetOptions <const> = { "ACTIVE", "ALL" }
 local tiledImgExts <const> = {
     "bmp",
@@ -25,7 +24,8 @@ local tsxAligns <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Remove JSON Format?
+    -- TODO: Could remove includeLocked and includeHidden, since a tmx
+    -- file can handle both properties.
     target = "ALL",
     border = 0,
     padding = 0,
@@ -46,28 +46,6 @@ local defaults <const> = {
     tsxRender = "TILE",
     tsxFill = "PRESERVE-ASPECT-FIT"
 }
-
-local jsonSectionFormat <const> = table.concat({
-    "{\"id\":%s",
-    "\"rect\":%s}",
-}, ",")
-
-local jsonTileSetFormat <const> = table.concat({
-    "{\"id\":%d",
-    "\"fileName\":\"%s\"",
-    "\"baseIndex\":%d",
-    "\"size\":%s",
-    "\"sizeGrid\":%s",
-    "\"tiles\":[%s]}",
-}, ",")
-
-local jsonTileMapFormat <const> = table.concat({
-    "{\"size\":%s",
-    "\"indices\":[%s]",
-    "\"flags\":[%s]",
-    "\"frame\":%d",
-    "\"layer\":%d}",
-}, ",")
 
 local tmxMapFormat <const> = table.concat({
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
@@ -134,59 +112,6 @@ local tsxFormat <const> = table.concat({
     "height=\"%d\"/>\n",
     "</tileset>"
 })
-
----@param section table
----@param boundsFormat string
----@return string
-local function sectionToJson(section, boundsFormat)
-    return string.format(jsonSectionFormat,
-        JsonUtilities.pointToJson(
-            section.column, section.row),
-        JsonUtilities.rectToJson(
-            section.rect, boundsFormat))
-end
-
----@param map table
----@return string
-local function mapToJson(map)
-    return string.format(
-        jsonTileMapFormat,
-        JsonUtilities.pointToJson(map.width, map.height),
-        table.concat(map.indices, ","),
-        table.concat(map.flags, ","),
-        map.frameNumber - 1,
-        map.layer)
-end
-
----@param ts table
----@param boundsFormat string
----@return string
-local function tileSetToJson(ts, boundsFormat)
-    ---@type string[]
-    local sectionsStrs <const> = {}
-    local sections <const> = ts.sections
-    local lenSections <const> = #sections
-    local i = 0
-    while i < lenSections do
-        i = i + 1
-        sectionsStrs[i] = sectionToJson(
-            sections[i], boundsFormat)
-    end
-
-    -- TODO: Unlike a sprite sheet export, you probably don't have to id the
-    -- size of each tile...
-    return string.format(jsonTileSetFormat,
-        ts.id,
-        ts.fileName,
-        ts.baseIndex,
-        JsonUtilities.pointToJson(
-            ts.width,
-            ts.height),
-        JsonUtilities.pointToJson(
-            ts.columns,
-            ts.rows),
-        table.concat(sectionsStrs, ","))
-end
 
 local dlg <const> = Dialog { title = "Export Tilesets" }
 
@@ -291,12 +216,9 @@ dlg:combobox {
         local args <const> = dlg.data
         local metaData <const> = args.metaData --[[@as string]]
         local usemd <const> = metaData ~= "NONE"
-        local useJson <const> = metaData == "JSON"
         local useTsx <const> = metaData == "TILED"
 
         dlg:modify { id = "includeMaps", visible = usemd }
-        dlg:modify { id = "boundsFormat", visible = useJson }
-        dlg:modify { id = "userDataWarning", visible = useJson }
         dlg:modify { id = "tsxAlign", visible = useTsx }
         dlg:modify { id = "tsxRender", visible = useTsx }
         dlg:modify { id = "tsxFill", visible = useTsx }
@@ -353,16 +275,6 @@ dlg:check {
 dlg:newrow { always = false }
 
 dlg:combobox {
-    id = "boundsFormat",
-    label = "Format:",
-    option = defaults.boundsFormat,
-    options = JsonUtilities.RECT_OPTIONS,
-    visible = defaults.metaData == "JSON"
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
     id = "tsxAlign",
     label = "Align:",
     option = defaults.tsxAlign,
@@ -388,15 +300,6 @@ dlg:combobox {
     option = defaults.tsxFill,
     options = tsxFills,
     visible = defaults.metaData == "TILED"
-}
-
-dlg:newrow { always = false }
-
-dlg:label {
-    id = "userDataWarning",
-    label = "Note:",
-    text = "User data not escaped.",
-    visible = defaults.metaData == "JSON"
 }
 
 dlg:newrow { always = false }
@@ -434,8 +337,6 @@ dlg:button {
         local includeMaps <const> = args.includeMaps --[[@as boolean]]
         local includeLocked <const> = args.includeLocked --[[@as boolean]]
         local includeHidden <const> = args.includeHidden --[[@as boolean]]
-        local boundsFormat <const> = args.boundsFormat
-            or defaults.boundsFormat --[[@as string]]
 
         -- Unpack sprite spec.
         local spriteSpec <const> = activeSprite.spec
@@ -447,8 +348,7 @@ dlg:button {
         -- Validate file name.
         local fileExt = app.fs.fileExtension(filename)
         local fileExtLc = string.lower(fileExt)
-        if fileExtLc == "json"
-            or fileExtLc == "tmx"
+        if fileExtLc == "tmx"
             or fileExtLc == "tsx" then
             -- Now that this exporter works with Tiled, it has to use a
             -- narrower band of supported extensions.
@@ -576,6 +476,7 @@ dlg:button {
         local rng <const> = math.random
         local sqrt <const> = math.sqrt
         local strfmt <const> = string.format
+        local tconcat <const> = table.concat
         local nextPow2 <const> = Utilities.nextPowerOf2
         local verifName <const> = Utilities.validateFilename
         local createSpec <const> = AseUtilities.createSpec
@@ -661,10 +562,6 @@ dlg:button {
                 spriteAlphaIndex)
             local sheetImage <const> = Image(sheetSpec)
 
-            -- For Meta data (JSON, TMX) export.
-            ---@type table[]
-            local sectionPackets <const> = {}
-
             -- The first tile in a tile set is empty.
             -- Include this empty tile, and all others, to
             -- maintain indexing with tile maps.
@@ -688,16 +585,6 @@ dlg:button {
                 sheetImage:drawImage(tileScaled, Point(xTrg, yTrg))
 
                 k = k + 1
-                sectionPackets[k] = {
-                    column = column,
-                    row = row,
-                    rect = {
-                        x = xTrg,
-                        y = yTrg,
-                        width = wTileTrg,
-                        height = hTileTrg
-                    }
-                }
             end
 
             local fileNameShort <const> = strfmt(
@@ -712,17 +599,14 @@ dlg:button {
                 palette = sheetPalette
             }
 
-            -- Tile width and height are not used by JSON, but would be useful
-            -- for Tiled (TMX, TSX) export.
             local sheetPacket <const> = {
                 id = tileId,
                 fileName = fileNameShort,
                 baseIndex = tileSetBaseIndex,
+                columns = columns,
                 height = hSheet,
                 hTile = hTileTrg,
-                columns = columns,
                 rows = rows,
-                sections = sectionPackets,
                 lenTileSet = lenTileSet,
                 width = wSheet,
                 wTile = wTileTrg
@@ -786,12 +670,13 @@ dlg:button {
                     local tmLayer <const> = tmLayers[j]
                     if tmLayer.isTilemap then
                         local tileSet <const> = tmLayer.tileset --[[@as Tileset]]
-                        local tileId <const> = tileSet.properties["id"]
+                        local lenTileSet <const> = #tileSet
+                        local tileSetId <const> = tileSet.properties["id"]
+
                         local tileGrid <const> = tileSet.grid
                         local tileDim <const> = tileGrid.tileSize
                         local wTile <const> = tileDim.width
                         local hTile <const> = tileDim.height
-                        local lenTileSet <const> = #tileSet
 
                         local layerId <const> = tmLayer.id
                         local parent <const> = tmLayer.parent
@@ -801,16 +686,16 @@ dlg:button {
                         end
 
                         local layerPacket <const> = {
-                            blendMode = tmLayer.blendMode,
+                            blendMode = tmLayer.blendMode or BlendMode.NORMAL,
                             data = tmLayer.data,
                             id = layerId,
                             isLocked = not tmLayer.isEditable,
                             isVisible = tmLayer.isVisible,
                             name = tmLayer.name,
-                            opacity = tmLayer.opacity,
+                            opacity = tmLayer.opacity or 255,
                             parent = parentId,
                             stackIndex = tmLayer.stackIndex,
-                            tileset = tileId
+                            tileset = tileSetId
                         }
                         layerPackets[#layerPackets + 1] = layerPacket
 
@@ -830,6 +715,9 @@ dlg:button {
 
                             local tmCel <const> = tmLayer:cel(tmFrame)
                             if tmCel then
+                                -- TODO: Can the image ID be given to map
+                                -- and cel packets so that they are easier to
+                                -- find in a collection later on?
                                 local tmImage <const> = tmCel.image
                                 local tmPxItr <const> = tmImage:pixels()
 
@@ -839,7 +727,7 @@ dlg:button {
                                 local tmFlagsArr <const> = {}
 
                                 for pixel in tmPxItr do
-                                    local tlData <const> = pixel()
+                                    local tlData <const> = pixel() --[[@as integer]]
                                     local tlIndex = pxTilei(tlData)
                                     local tlFlag = pxTilef(tlData)
                                     if tlIndex >= lenTileSet then
@@ -853,12 +741,12 @@ dlg:button {
                                 local wTileMap <const> = tmImage.width
                                 local hTileMap <const> = tmImage.height
                                 local mapPacket <const> = {
-                                    width = wTileMap,
-                                    height = hTileMap,
-                                    indices = tmIndicesArr,
                                     flags = tmFlagsArr,
                                     frameNumber = tmFrame,
-                                    layer = layerId
+                                    height = hTileMap,
+                                    indices = tmIndicesArr,
+                                    layer = layerId,
+                                    width = wTileMap,
                                 }
                                 mapPackets[#mapPackets + 1] = mapPacket
 
@@ -871,9 +759,9 @@ dlg:button {
                                 }
 
                                 local celPacket <const> = {
-                                    fileName = "",
                                     bounds = tmBounds,
                                     data = tmCel.data,
+                                    fileName = "",
                                     frameNumber = tmFrame,
                                     layer = layerId,
                                     opacity = tmCel.opacity,
@@ -890,18 +778,18 @@ dlg:button {
                 local alphaStr = ""
                 if spriteColorMode == ColorMode.INDEXED then
                     local trColor <const> = sheetPalette:getColor(spriteAlphaIndex)
-                    if trColor.alpha > 0 then
-                        local aTr <const> = trColor.alpha
+                    local aTr <const> = trColor.alpha
+                    if aTr > 0 then
                         local rTr <const> = trColor.red
                         local gTr <const> = trColor.green
                         local bTr <const> = trColor.blue
 
+                        -- TMX format is AARRGGBB.
                         alphaStr = string.format("trans=\"%08x\" ",
                             aTr << 0x18 | rTr << 0x10 | gTr << 0x08 | bTr)
                     end
                 end
 
-                local tconcat <const> = table.concat
                 local tmxVersion <const> = defaults.tmxVersion
                 local tmxTiledVersion <const> = defaults.tmxTiledVersion
                 local tsxAlign <const> = string.lower(args.tsxAlign
@@ -912,29 +800,24 @@ dlg:button {
                     or defaults.tsxFill --[[@as string]])
 
                 for _, sheet in pairs(sheetPackets) do
-                    local fileName <const> = sheet.fileName
-
-                    local wTile <const> = sheet.wTile
-                    local hTile <const> = sheet.hTile
-                    local width <const> = sheet.width
-                    local height <const> = sheet.height
-                    local lenTileSet <const> = sheet.lenTileSet
                     local columns <const> = sheet.columns
+                    local fileName <const> = sheet.fileName
+                    local height <const> = sheet.height
+                    local hTile <const> = sheet.hTile
+                    local lenTileSet <const> = sheet.lenTileSet
+                    local width <const> = sheet.width
+                    local wTile <const> = sheet.wTile
 
                     -- Currently the allowed flips and rotations doesn't seem
                     -- accessible from Lua API, so default to 1, 1, 1, 0.
                     local tsxStr <const> = strfmt(
                         tsxFormat,
-                        tmxVersion, tmxTiledVersion,
-                        fileName,
-                        wTile, hTile,
-                        padding, margin,
-                        lenTileSet, columns,
+                        tmxVersion, tmxTiledVersion, fileName,
+                        wTile, hTile, padding, margin, lenTileSet, columns,
                         tsxAlign, tsxRender, tsxFill,
                         1, 1, 1, 0,
                         strfmt("%s.%s", fileName, fileExt),
-                        alphaStr,
-                        width, height)
+                        alphaStr, width, height)
 
                     local tsxFilePath <const> = strfmt("%s%s.tsx", filePath, fileName)
                     local tsxFile <const>, _ <const> = io.open(tsxFilePath, "w")
@@ -1030,15 +913,16 @@ dlg:button {
 
                                 local y = 0
                                 while y < hMap do
+                                    local yw <const> = y * wMap
                                     ---@type integer[]
                                     local colArr = {}
                                     local x = 0
                                     while x < wMap do
-                                        local flat <const> = 1 + y * wMap + x
+                                        local flat <const> = 1 + yw + x
                                         local index <const> = indices[flat]
-                                        local flag <const> = flags[flat]
                                         local comp = 0
                                         if index ~= 0 then
+                                            local flag <const> = flags[flat]
                                             comp = flag | (idxOffset + index)
                                         end
                                         x = x + 1
@@ -1108,97 +992,8 @@ dlg:button {
                         end
                     end -- End frame dict loop.
                 end     -- End include maps check.
-            elseif metaData == "JSON" then
-                -- Cache Json methods.
-                local celToJson <const> = JsonUtilities.celToJson
-                local frameToJson <const> = JsonUtilities.frameToJson
-                local layerToJson <const> = JsonUtilities.layerToJson
-
-                ---@type string[]
-                local tsStrs <const> = {}
-                for _, sheet in pairs(sheetPackets) do
-                    tsStrs[#tsStrs + 1] = tileSetToJson(sheet, boundsFormat)
-                end
-
-                ---@type string[]
-                local tmStrs <const> = {}
-                local lenMapPackets <const> = #mapPackets
-                local j = 0
-                while j < lenMapPackets do
-                    j = j + 1
-                    tmStrs[j] = mapToJson(mapPackets[j])
-                end
-
-                ---@type string[]
-                local celStrs <const> = {}
-                local lenCelPackets <const> = #celPackets
-                local k = 0
-                while k < lenCelPackets do
-                    k = k + 1
-                    local cel <const> = celPackets[k]
-                    celStrs[k] = celToJson(
-                        cel, cel.fileName, boundsFormat)
-                end
-
-                ---@type string[]
-                local frameStrs <const> = {}
-                for _, frame in pairs(framePackets) do
-                    frameStrs[#frameStrs + 1] = frameToJson(frame)
-                end
-
-                ---@type string[]
-                local layerStrs <const> = {}
-                local lenLayerPackets <const> = #layerPackets
-                local m = 0
-                while m < lenLayerPackets do
-                    m = m + 1
-                    layerStrs[m] = layerToJson(layerPackets[m])
-                end
-
-                local jsonFormat <const> = table.concat({
-                    "{\"fileDir\":\"%s\"",
-                    "\"fileExt\":\"%s\"",
-                    "\"border\":%d",
-                    "\"padding\":%d",
-                    "\"scale\":%d",
-                    "\"tileSets\":[%s]",
-                    "\"tileMaps\":[%s]",
-                    "\"cels\":[%s]",
-                    "\"frames\":[%s]",
-                    "\"layers\":[%s]",
-                    "\"sprite\":%s",
-                    "\"version\":%s}"
-                }, ",")
-                local jsonString <const> = string.format(
-                    jsonFormat,
-                    filePath, fileExt,
-                    margin, padding, scale,
-                    table.concat(tsStrs, ","),
-                    table.concat(tmStrs, ","),
-                    table.concat(celStrs, ","),
-                    table.concat(frameStrs, ","),
-                    table.concat(layerStrs, ","),
-                    JsonUtilities.spriteToJson(activeSprite),
-                    JsonUtilities.versionToJson())
-
-                local jsonFilepath = filePrefix
-                if #fileTitle < 1 then
-                    jsonFilepath = filePath .. pathSep .. "manifest"
-                end
-                jsonFilepath = jsonFilepath .. ".json"
-
-                local jsonFile <const>, jsonErr <const> = io.open(jsonFilepath, "w")
-                if jsonFile then
-                    jsonFile:write(jsonString)
-                    jsonFile:close()
-                end
-
-                if jsonErr then
-                    app.alert { title = "Error", text = jsonErr }
-                    return
-                end
-            end
-        end
+            end         -- End Tiled format check.
+        end             -- End write meta data check.
 
         app.alert {
             title = "Success",
