@@ -553,6 +553,15 @@ dlg:button {
             tileSets = activeSprite.tilesets
         end
 
+        local lenTileSets <const> = #tileSets
+        if lenTileSets <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No tile sets were found."
+            }
+            return
+        end
+
         -- For generating a Tileset id.
         math.randomseed(os.time())
         local minint64 <const> = 0x1000000000000000
@@ -569,11 +578,6 @@ dlg:button {
         local createSpec <const> = AseUtilities.createSpec
         local resize <const> = AseUtilities.resizeImageNearest
 
-        -- For meta data export.
-        ---@type table<integer, table>
-        local sheetPackets <const> = {}
-        local lenTileSets <const> = #tileSets
-
         app.transaction("Set Tileset IDs", function()
             local h = 0
             while h < lenTileSets do
@@ -589,6 +593,10 @@ dlg:button {
                 end
             end
         end)
+
+        -- For meta data export.
+        ---@type table<integer, table>
+        local sheetPackets <const> = {}
 
         local i = 0
         while i < lenTileSets do

@@ -201,6 +201,7 @@ function JsonUtilities.layerToJson(layer)
         local typeTileSet <const> = type(tileSet)
         if typeTileSet == "userdata" then
             -- This is a lousy hack based on properties field.
+            ---@diagnostic disable-next-line: undefined-field
             local tileSetProps <const> = tileSet.properties
             if tileSetProps["id"] then
                 tileSetVrf = tileSetProps["id"]
