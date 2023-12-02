@@ -6,6 +6,7 @@ if not activeSprite then return end
 
 local tileSets <const> = activeSprite.tilesets
 local lenTileSets <const> = #tileSets
+if lenTileSets <= 0 then return end
 
 local strfmt <const> = string.format
 local rng <const> = math.random
@@ -39,7 +40,9 @@ app.transaction("Correct tile sets", function()
         local attempts = 0
         while (uniques[tsNameVerif] or #tsNameVerif <= 0)
             and attempts < 16 do
-            tsNameVerif = strfmt("%16x", tileId)
+            local newTileId <const> = rng(minint64, maxint64)
+            tileSet.properties["id"] = newTileId
+            tsNameVerif = strfmt("%16x", newTileId)
             attempts = attempts + 1
         end
 

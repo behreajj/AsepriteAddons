@@ -33,7 +33,6 @@ local defaults <const> = {
     potUniform = false,
     metaData = "TILED",
     includeMaps = true,
-    boundsFormat = "TOP_LEFT",
     tmxVersion = "1.10",
     tmxTiledVersion = "1.10.2",
     tmxOrientation = "orthogonal",
@@ -752,7 +751,7 @@ dlg:button {
                     local width <const> = sheet.width
                     local wTile <const> = sheet.wTile
 
-                    -- Currently the allowed flips and rotations doesn't seem
+                    -- Currently the allowed flips and rotations don't seem
                     -- accessible from Lua API, so default to 1, 1, 1, 0.
                     local tsxStr <const> = strfmt(
                         tsxFormat,
@@ -920,8 +919,7 @@ dlg:button {
                             wSprGrid,
                             hSprGrid,
                             tconcat(tsxRefStrs, "\n"),
-                            tconcat(tmxLayerStrs, "\n")
-                        )
+                            tconcat(tmxLayerStrs, "\n"))
 
                         local tmxFilepath = filePrefix
                         if #fileTitle < 1 then
