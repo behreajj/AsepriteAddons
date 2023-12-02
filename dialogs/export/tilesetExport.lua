@@ -581,6 +581,9 @@ dlg:button {
         local createSpec <const> = AseUtilities.createSpec
         local resize <const> = AseUtilities.resizeImageNearest
 
+        -- If you wanted to include an option to target the layers in a range,
+        -- then you'd have to perform this on all tilesets in the sprite, not
+        -- just the tilesets chosen by the user.
         app.transaction("Set Tileset IDs", function()
             local h = 0
             while h < lenTileSets do

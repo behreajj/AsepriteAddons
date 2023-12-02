@@ -69,6 +69,7 @@ local sprite <const> = site.sprite
 if not sprite then return end
 local layer <const> = site.layer or sprite.layers[1]
 local isBkg <const> = layer.isBackground
+local isTilemap <const> = layer.isTilemap
 local isGroup <const> = layer.isGroup
 local frame <const> = site.frame or sprite.frames[1]
 local cel <const> = layer:cel(frame)
@@ -185,7 +186,7 @@ dlg:entry {
     end
 }
 
-if layer.isTilemap then
+if isTilemap then
     local tileSet <const> = layer.tileset
     if tileSet then
         -- TODO: Any way to set the allowed flip flags (X, Y, D)?
@@ -233,7 +234,18 @@ if cel then
     -- There are enough other ways to change a cel's position, it doesn't need
     -- to be changed here.
 
-    dlg:separator { id = "celSep", text = "Cel" }
+    local celBounds <const> = cel.bounds
+    local celImage <const> = cel.image
+    local celText <const> = isTilemap and
+        string.format("Cel %d x %d (%d x %d)",
+            celImage.width, celImage.height,
+            celBounds.width, celBounds.height)
+    or string.format("Cel %d x %d",
+            celImage.width, celImage.height)
+    dlg:separator {
+        id = "celSep",
+        text = celText
+    }
 
     dlg:slider {
         id = "celZIndex",

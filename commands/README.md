@@ -8,7 +8,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `correctTags`: Removes tags with out-of-bounds frames. Tags with duplicate names have a number appended to the end of the name.
 
-- `correctTilesets`: Checks tile set names for empty names, invalid characters in file paths, and duplicates. Renames tile sets as needed. Offsets each base index based on the total count of tiles across all sets.
+- `correctTilesets`: Checks tile set names for empty names, invalid characters in file paths, and duplicates. Renames tile sets as needed. Assigns a unique ID to each set's `properties`. Offsets each base index based on the total count of tiles across all sets.
 
 - `cycleCelLeft`: Moves a cel to the previous frame. If the previous frame is occupied by another cel, swaps the other cel into the active cel's frame. Loops around at the first and last frame. Ignores reference layers.
 
