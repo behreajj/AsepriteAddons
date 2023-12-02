@@ -24,8 +24,6 @@ local tsxAligns <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Could remove includeLocked and includeHidden, since a tmx
-    -- file can handle both properties.
     target = "ALL",
     border = 0,
     padding = 0,
@@ -35,8 +33,6 @@ local defaults <const> = {
     potUniform = false,
     metaData = "TILED",
     includeMaps = true,
-    includeLocked = true,
-    includeHidden = false,
     boundsFormat = "TOP_LEFT",
     tmxVersion = "1.10",
     tmxTiledVersion = "1.10.2",
@@ -119,18 +115,7 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targetOptions,
-    onchange = function()
-        local args <const> = dlg.data
-        local metaData <const> = args.metaData --[[@as string]]
-        local usemd <const> = metaData ~= "NONE"
-        local includeMaps <const> = args.includeMaps --[[@as boolean]]
-        local allTarget <const> = args.target == "ALL"
-        dlg:modify { id = "includeLocked", visible = usemd
-            and includeMaps and allTarget }
-        dlg:modify { id = "includeHidden", visible = usemd
-            and includeMaps and allTarget }
-    end
+    options = targetOptions
 }
 
 dlg:newrow { always = false }
@@ -222,14 +207,6 @@ dlg:combobox {
         dlg:modify { id = "tsxAlign", visible = useTsx }
         dlg:modify { id = "tsxRender", visible = useTsx }
         dlg:modify { id = "tsxFill", visible = useTsx }
-
-        local includeMaps <const> = args.includeMaps --[[@as boolean]]
-        local allTarget <const> = args.target == "ALL"
-
-        dlg:modify { id = "includeLocked", visible = usemd
-            and includeMaps and allTarget }
-        dlg:modify { id = "includeHidden", visible = usemd
-            and includeMaps and allTarget }
     end
 }
 
@@ -240,36 +217,7 @@ dlg:check {
     label = "Include:",
     text = "&Tilemaps",
     selected = defaults.includeMaps,
-    visible = defaults.metaData ~= "NONE",
-    onclick = function()
-        local args <const> = dlg.data
-        local enabled <const> = args.includeMaps --[[@as boolean]]
-        local allTarget <const> = args.target == "ALL"
-        dlg:modify { id = "includeLocked", visible = enabled
-            and allTarget }
-        dlg:modify { id = "includeHidden", visible = enabled
-            and allTarget }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
-    id = "includeLocked",
-    text = "&Locked",
-    selected = defaults.includeLocked,
     visible = defaults.metaData ~= "NONE"
-        and defaults.includeMaps
-        and defaults.target == "ALL"
-}
-
-dlg:check {
-    id = "includeHidden",
-    text = "&Hidden",
-    selected = defaults.includeHidden,
-    visible = defaults.metaData ~= "NONE"
-        and defaults.includeMaps
-        and defaults.target == "ALL"
 }
 
 dlg:newrow { always = false }
@@ -335,8 +283,6 @@ dlg:button {
         local metaData <const> = args.metaData
             or defaults.metaData --[[@as string]]
         local includeMaps <const> = args.includeMaps --[[@as boolean]]
-        local includeLocked <const> = args.includeLocked --[[@as boolean]]
-        local includeHidden <const> = args.includeHidden --[[@as boolean]]
 
         -- Unpack sprite spec.
         local spriteSpec <const> = activeSprite.spec
@@ -651,9 +597,7 @@ dlg:button {
                 else
                     tmLayers = AseUtilities.getLayerHierarchy(
                         activeSprite,
-                        includeLocked,
-                        includeHidden,
-                        true, false)
+                        true, true, true, true)
                 end
                 local lenTmLayers <const> = #tmLayers
                 if lenTmLayers <= 0 then
