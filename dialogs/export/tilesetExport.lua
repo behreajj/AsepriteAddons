@@ -25,7 +25,6 @@ local tsxAligns <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Specify layer's tileset name in JSON export?
     target = "ALL",
     border = 0,
     padding = 0,
@@ -53,7 +52,8 @@ local jsonSectionFormat <const> = table.concat({
 }, ",")
 
 local jsonTileSetFormat <const> = table.concat({
-    "{\"fileName\":\"%s\"",
+    "{\"id\":%d",
+    "\"fileName\":\"%s\"",
     "\"baseIndex\":%d",
     "\"size\":%s",
     "\"sizeGrid\":%s",
@@ -173,6 +173,7 @@ local function tileSetToJson(ts, boundsFormat)
     end
 
     return string.format(jsonTileSetFormat,
+        ts.id,
         ts.fileName,
         ts.baseIndex,
         JsonUtilities.pointToJson(
@@ -795,7 +796,7 @@ dlg:button {
                             opacity = tmLayer.opacity,
                             parent = parentId,
                             stackIndex = tmLayer.stackIndex,
-                            tileSet = tileId
+                            tileset = tileId
                         }
                         layerPackets[#layerPackets + 1] = layerPacket
 
@@ -990,7 +991,7 @@ dlg:button {
                             local isVisible <const> = layerPacket.isVisible and 1 or 0
                             local layerOpacity <const> = layerPacket.opacity / 255.0
                             local layerName <const> = layerPacket.name
-                            local tileSetId <const> = layerPacket.tileSet
+                            local tileSetId <const> = layerPacket.tileset
 
                             local idxOffset = 0
                             if usedTileSets[tileSetId] then

@@ -32,7 +32,8 @@ JsonUtilities.LAYER_FORMAT = table.concat({
     "\"name\":\"%s\"",
     "\"opacity\":%d",
     "\"parent\":%d",
-    "\"stackIndex\":%d}",
+    "\"stackIndex\":%d",
+    "\"tileset\":%d}",
 }, ",")
 
 ---Rectangle origin formatting presets.
@@ -194,6 +195,22 @@ function JsonUtilities.layerToJson(layer)
         parentVrf = parent
     end
 
+    local tileSetVrf = -1
+    local tileSet <const> = layer.tileset
+    if tileSet then
+        local typeTileSet <const> = type(tileSet)
+        if typeTileSet == "userdata" then
+            -- This is a lousy hack based on properties field.
+            local tileSetProps <const> = tileSet.properties
+            if tileSetProps["id"] then
+                tileSetVrf = tileSetProps["id"]
+            end
+        elseif typeTileSet == "number"
+            and math.type(tileSet) == "integer" then
+            tileSetVrf = tileSet
+        end
+    end
+
     return string.format(
         JsonUtilities.LAYER_FORMAT,
         layer.id,
@@ -202,7 +219,8 @@ function JsonUtilities.layerToJson(layer)
         layer.name,
         layer.opacity,
         parentVrf,
-        layer.stackIndex)
+        layer.stackIndex,
+        tileSetVrf)
 end
 
 ---Formats a point as a JSON string.
