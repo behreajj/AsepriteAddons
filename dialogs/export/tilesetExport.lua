@@ -25,6 +25,7 @@ local tsxAligns <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Remove JSON Format?
     target = "ALL",
     border = 0,
     padding = 0,
@@ -172,6 +173,8 @@ local function tileSetToJson(ts, boundsFormat)
             sections[i], boundsFormat)
     end
 
+    -- TODO: Unlike a sprite sheet export, you probably don't have to id the
+    -- size of each tile...
     return string.format(jsonTileSetFormat,
         ts.id,
         ts.fileName,
@@ -942,17 +945,16 @@ dlg:button {
                     local tmxOrientation <const> = defaults.tmxOrientation
                     local tmxRenderOrder <const> = defaults.tmxRenderOrder
 
-                    -- Use these for map tile width and height.
                     local spriteGrid <const> = activeSprite.gridBounds
                     local wSprGrid <const> = math.max(1, math.abs(
-                        spriteGrid.width))
+                        wScale * spriteGrid.width))
                     local hSprGrid <const> = math.max(1, math.abs(
-                        spriteGrid.height))
+                        hScale * spriteGrid.height))
 
                     local wSprInTiles <const> = math.max(1, math.ceil(
-                        spriteSpec.width / wSprGrid))
+                        (wScale * spriteSpec.width) / wSprGrid))
                     local hSprInTiles <const> = math.max(1, math.ceil(
-                        spriteSpec.height / hSprGrid))
+                        (hScale * spriteSpec.height) / hSprGrid))
 
                     local lenLayerPackets <const> = #layerPackets
                     local lenCelPackets <const> = #celPackets
