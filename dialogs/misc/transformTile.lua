@@ -130,8 +130,10 @@ end
 local function transformTiles(
     preset, containedTiles, inPlace,
     activeSprite, tileSet)
+    ---@type fun(source: Image): Image
+    local transformFunc = function(source) return source end
     local transactionName = "Transform Tiles"
-    local transformFunc = function(img) return img end
+
     if preset == "90" then
         transactionName = "Rotate Tiles 90"
         transformFunc = AseUtilities.rotateImage90
@@ -223,6 +225,7 @@ local function transformCel(dialog, preset)
     local pxTileCompose <const> = pixelColor.tile
 
     -- Decide on meta transform function.
+    ---@type fun(flag: integer): integer
     local flgTrFunc = function(flag) return flag end
     if preset == "90" then
         flgTrFunc = rotateFlag90Ccw
@@ -257,9 +260,11 @@ local function transformCel(dialog, preset)
     if not activeLayer.isEditable then return end
 
     if target == "TILE_MAP" then
+        ---@type fun(source: Image): Image
+        local mapTrFunc = function(source) return source end
         local transactionName = "Transform Map"
-        local mapTrFunc = function(img) return img, 0, 0 end
         local updateCelPos = false
+
         if preset == "90" then
             transactionName = "Rotate Map 90"
             mapTrFunc = AseUtilities.rotateImage90

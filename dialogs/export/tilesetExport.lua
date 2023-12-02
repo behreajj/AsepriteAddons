@@ -103,7 +103,7 @@ local tmxLayerFormat <const> = table.concat({
 local tilsetRefFormat <const> = table.concat({
     "<tileset ",
     "firstgid=\"%d\" ",
-    "source=\"%s\"/>"
+    "source=\"%s.tsx\"/>"
 }, "")
 
 local tsxFormat <const> = table.concat({
@@ -552,9 +552,14 @@ dlg:button {
             tileSets = activeSprite.tilesets
         end
 
+        -- For generating a Tileset id.
+        local minint64 <const> = 0x1000000000000000
+        local maxint64 <const> = 0x7fffffffffffffff
+
         -- Cache methods used in loops.
         local ceil <const> = math.ceil
         local max <const> = math.max
+        local rng <const> = math.random
         local sqrt <const> = math.sqrt
         local strfmt <const> = string.format
         local nextPow2 <const> = Utilities.nextPowerOf2
@@ -563,16 +568,34 @@ dlg:button {
         local resize <const> = AseUtilities.resizeImageNearest
 
         -- For meta data export.
-        ---@type table[]
+        ---@type table<integer, table>
         local sheetPackets <const> = {}
         local lenTileSets <const> = #tileSets
+
+        app.transaction("Set Tileset IDs", function()
+            local h = 0
+            while h < lenTileSets do
+                h = h + 1
+                local tileSet <const> = tileSets[h]
+                local tileId = 0
+                local tileSetProps <const> = tileSet.properties
+                if tileSetProps["id"] then
+                    tileId = tileSetProps["id"] --[[@as integer]]
+                else
+                    tileId = rng(minint64, maxint64)
+                    tileSet.properties["id"] = tileId
+                end
+            end
+        end)
+
         local i = 0
         while i < lenTileSets do
             i = i + 1
             local tileSet <const> = tileSets[i]
             local lenTileSet <const> = #tileSet
             local tileSetName <const> = tileSet.name
-            local baseIndex <const> = tileSet.baseIndex
+            local tileSetBaseIndex <const> = tileSet.baseIndex
+            local tileId <const> = tileSet.properties["id"]
 
             local tileGrid <const> = tileSet.grid
             local tileDim <const> = tileGrid.tileSize
@@ -676,18 +699,19 @@ dlg:button {
             -- Tile width and height are not used by JSON, but would be useful
             -- for Tiled (TMX, TSX) export.
             local sheetPacket <const> = {
+                id = tileId,
                 fileName = fileNameShort,
-                baseIndex = baseIndex,
-                width = wSheet,
+                baseIndex = tileSetBaseIndex,
                 height = hSheet,
+                hTile = hTileTrg,
                 columns = columns,
                 rows = rows,
                 sections = sectionPackets,
                 lenTileSet = lenTileSet,
-                wTile = wTileTrg,
-                hTile = hTileTrg,
+                width = wSheet,
+                wTile = wTileTrg
             }
-            sheetPackets[i] = sheetPacket
+            sheetPackets[tileId] = sheetPacket
         end
 
         if metaData ~= "NONE" then
@@ -746,6 +770,7 @@ dlg:button {
                     local tmLayer <const> = tmLayers[j]
                     if tmLayer.isTilemap then
                         local tileSet <const> = tmLayer.tileset --[[@as Tileset]]
+                        local tileId <const> = tileSet.properties["id"]
                         local tileGrid <const> = tileSet.grid
                         local tileDim <const> = tileGrid.tileSize
                         local wTile <const> = tileDim.width
@@ -759,17 +784,6 @@ dlg:button {
                             parentId = parent.id
                         end
 
-                        local tileSetName <const> = tileSet.name
-                        local tsNameVerif = tileSetName
-                        if tsNameVerif and #tsNameVerif > 0 then
-                            tsNameVerif = verifName(tileSetName)
-                        else
-                            tsNameVerif = strfmt("tileset_%03d", i - 1)
-                        end
-                        local fileNameShort <const> = strfmt(
-                            "%s_%s",
-                            fileTitle, tsNameVerif)
-
                         local layerPacket <const> = {
                             blendMode = tmLayer.blendMode,
                             data = tmLayer.data,
@@ -780,8 +794,7 @@ dlg:button {
                             opacity = tmLayer.opacity,
                             parent = parentId,
                             stackIndex = tmLayer.stackIndex,
-                            tileSetName = fileNameShort,
-                            lenTileSet = #tileSet
+                            tileSet = tileId
                         }
                         layerPackets[#layerPackets + 1] = layerPacket
 
@@ -881,21 +894,16 @@ dlg:button {
                     or defaults.tsxRender --[[@as string]])
                 local tsxFill <const> = string.lower(args.tsxFill
                     or defaults.tsxFill --[[@as string]])
-                local lenSheetPackets <const> = #sheetPackets
 
-                local h = 0
-                while h < lenSheetPackets do
-                    h = h + 1
+                for _, sheet in pairs(sheetPackets) do
+                    local fileName <const> = sheet.fileName
 
-                    local sheetPacket <const> = sheetPackets[h]
-                    local fileName <const> = sheetPacket.fileName
-
-                    local wTile <const> = sheetPacket.wTile
-                    local hTile <const> = sheetPacket.hTile
-                    local width <const> = sheetPacket.width
-                    local height <const> = sheetPacket.height
-                    local lenTileSet <const> = sheetPacket.lenTileSet
-                    local columns <const> = sheetPacket.columns
+                    local wTile <const> = sheet.wTile
+                    local hTile <const> = sheet.hTile
+                    local width <const> = sheet.width
+                    local height <const> = sheet.height
+                    local lenTileSet <const> = sheet.lenTileSet
+                    local columns <const> = sheet.columns
 
                     -- Currently the allowed flips and rotations doesn't seem
                     -- accessible from Lua API, so default to 1, 1, 1, 0.
@@ -968,7 +976,7 @@ dlg:button {
                         end
 
                         local firstgid = 1
-                        ---@type table<string, integer>
+                        ---@type table<integer, integer>
                         local usedTileSets <const> = {}
                         ---@type string[]
                         local tmxLayerStrs <const> = {}
@@ -981,15 +989,15 @@ dlg:button {
                             local isVisible <const> = layerPacket.isVisible and 1 or 0
                             local layerOpacity <const> = layerPacket.opacity / 255.0
                             local layerName <const> = layerPacket.name
-                            local tileSetName <const> = layerPacket.tileSetName
+                            local tileSetId <const> = layerPacket.tileSet
 
                             local idxOffset = 0
-                            if usedTileSets[tileSetName] then
-                                idxOffset = usedTileSets[tileSetName]
+                            if usedTileSets[tileSetId] then
+                                idxOffset = usedTileSets[tileSetId]
                             else
                                 idxOffset = firstgid
-                                usedTileSets[tileSetName] = firstgid
-                                local lenTileSet <const> = layerPacket.lenTileSet
+                                usedTileSets[tileSetId] = firstgid
+                                local lenTileSet <const> = sheetPackets[tileSetId].lenTileSet
                                 firstgid = firstgid + lenTileSet
                             end
 
@@ -1052,11 +1060,12 @@ dlg:button {
 
                         ---@type string[]
                         local tsxRefStrs <const> = {}
-                        for tsName, tsGid in pairs(usedTileSets) do
+                        for tsId, tsGid in pairs(usedTileSets) do
+                            local sheet <const> = sheetPackets[tsId]
                             tsxRefStrs[#tsxRefStrs + 1] = strfmt(
                                 tilsetRefFormat,
                                 tsGid,
-                                strfmt("%s.tsx", tsName))
+                                sheet.fileName)
                         end
 
                         local tmxString <const> = strfmt(
@@ -1092,11 +1101,8 @@ dlg:button {
 
                 ---@type string[]
                 local tsStrs <const> = {}
-                local lenSheetPackets <const> = #sheetPackets
-                local h = 0
-                while h < lenSheetPackets do
-                    h = h + 1
-                    tsStrs[h] = tileSetToJson(sheetPackets[h], boundsFormat)
+                for _, sheet in pairs(sheetPackets) do
+                    tsStrs[#tsStrs + 1] = tileSetToJson(sheet, boundsFormat)
                 end
 
                 ---@type string[]

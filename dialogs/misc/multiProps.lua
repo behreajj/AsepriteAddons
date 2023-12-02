@@ -116,44 +116,44 @@ dlg:entry {
     end
 }
 
-dlg:newrow { always = false }
+if (not isBkg) and (not isGroup) then
+    dlg:newrow { always = false }
 
-dlg:combobox {
-    id = "layerBlend",
-    label = "Blend:",
-    option = blendModeToStr(layer.blendMode),
-    options = blendModes,
-    focus = false,
-    visible = (not isBkg) and (not isGroup),
-    onchange = function()
-        if (not isBkg) and (not isGroup) then
-            local args <const> = dlg.data
-            local blendStr <const> = args.layerBlend --[[@as string]]
-            layer.blendMode = BlendMode[blendStr]
-            app.refresh()
+    dlg:combobox {
+        id = "layerBlend",
+        label = "Blend:",
+        option = blendModeToStr(layer.blendMode),
+        options = blendModes,
+        focus = true,
+        onchange = function()
+            if (not isBkg) and (not isGroup) then
+                local args <const> = dlg.data
+                local blendStr <const> = args.layerBlend --[[@as string]]
+                layer.blendMode = BlendMode[blendStr]
+                app.refresh()
+            end
         end
-    end
-}
+    }
 
-dlg:newrow { always = false }
+    dlg:newrow { always = false }
 
-dlg:slider {
-    id = "layerOpacity",
-    label = "Opacity:",
-    min = 0,
-    max = 255,
-    value = layer.opacity,
-    focus = false,
-    visible = (not isBkg) and (not isGroup),
-    onchange = function()
-        if (not isBkg) and (not isGroup) then
-            local args <const> = dlg.data
-            local layerOpacity <const> = args.layerOpacity --[[@as integer]]
-            layer.opacity = layerOpacity
-            app.refresh()
+    dlg:slider {
+        id = "layerOpacity",
+        label = "Opacity:",
+        min = 0,
+        max = 255,
+        value = layer.opacity or 255,
+        focus = false,
+        onchange = function()
+            if (not isBkg) and (not isGroup) then
+                local args <const> = dlg.data
+                local layerOpacity <const> = args.layerOpacity --[[@as integer]]
+                layer.opacity = layerOpacity
+                app.refresh()
+            end
         end
-    end
-}
+    }
+end
 
 dlg:newrow { always = false }
 
@@ -221,8 +221,8 @@ if layer.isTilemap then
             focus = false,
             onchange = function()
                 local args <const> = dlg.data
-                local tilesetBaseIndex <const> = args.tilesetBaseIndex --[[@as integer]]
-                tileSet.baseIndex = math.max(1, math.abs(tilesetBaseIndex))
+                local idx <const> = args.tilesetBaseIndex --[[@as integer]]
+                tileSet.baseIndex = math.max(1, math.abs(idx))
                 app.refresh()
             end
         }
@@ -250,25 +250,26 @@ if cel then
         end
     }
 
-    dlg:newrow { always = false }
+    if not isBkg then
+        dlg:newrow { always = false }
 
-    dlg:slider {
-        id = "celOpacity",
-        label = "Opacity:",
-        min = 0,
-        max = 255,
-        value = cel.opacity,
-        visible = not isBkg,
-        focus = false,
-        onchange = function()
-            if not isBkg then
-                local args <const> = dlg.data
-                local celOpacity <const> = args.celOpacity --[[@as integer]]
-                cel.opacity = celOpacity
-                app.refresh()
+        dlg:slider {
+            id = "celOpacity",
+            label = "Opacity:",
+            min = 0,
+            max = 255,
+            value = cel.opacity,
+            focus = false,
+            onchange = function()
+                if not isBkg then
+                    local args <const> = dlg.data
+                    local celOpacity <const> = args.celOpacity --[[@as integer]]
+                    cel.opacity = celOpacity
+                    app.refresh()
+                end
             end
-        end
-    }
+        }
+    end
 
     dlg:newrow { always = false }
 
@@ -306,7 +307,7 @@ dlg:separator { id = "cancelSep" }
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
-    focus = true,
+    focus = false,
     onclick = function()
         dlg:close()
     end

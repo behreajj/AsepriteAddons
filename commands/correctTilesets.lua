@@ -23,18 +23,29 @@ app.transaction("Correct tile sets", function()
     while i < lenTileSets do
         i = i + 1
         local tileSet <const> = tileSets[i]
+
+        local tileId = 0
+        local tileSetProps <const> = tileSet.properties
+        if tileSetProps["id"] then
+            tileId = tileSetProps["id"] --[[@as integer]]
+            tileSetProps["id"] = tileId
+        else
+            tileId = rng(minint64, maxint64)
+            tileSet.properties["id"] = tileId
+        end
+
         local origName <const> = tileSet.name
         local tsNameVerif = ""
         if origName and #origName > 0 then
             tsNameVerif = verifName(origName)
         else
-            tsNameVerif = strfmt("%08x", rng(1, maxint64))
+            tsNameVerif = strfmt("%08x", tileId)
         end
 
         local attempts = 0
         while (uniques[tsNameVerif] or #tsNameVerif <= 0)
             and attempts < 16 do
-            tsNameVerif = strfmt("%16x", rng(minint64, maxint64))
+            tsNameVerif = strfmt("%16x", tileId)
             attempts = attempts + 1
         end
 
