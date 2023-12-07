@@ -255,13 +255,15 @@ dlg:button {
                     while i < lenTileSet - 1 do
                         i = i + 1
                         local tile <const> = tileSet:tile(i)
-                        local srcImg <const> = tile.image
-                        local trgImg <const> = srcImg:clone()
-                        local pxItr <const> = trgImg:pixels()
-                        for pixel in pxItr do
-                            if pixel() == frInt then pixel(toInt) end
+                        if tile then
+                            local srcImg <const> = tile.image
+                            local trgImg <const> = srcImg:clone()
+                            local pxItr <const> = trgImg:pixels()
+                            for pixel in pxItr do
+                                if pixel() == frInt then pixel(toInt) end
+                            end
+                            tile.image = trgImg
                         end
-                        tile.image = trgImg
                     end
                 end)
             end

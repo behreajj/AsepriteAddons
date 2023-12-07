@@ -457,14 +457,24 @@ dlg:button {
         local activeCel <const> = activeLayer:cel(activeFrame)
         if not activeCel then return end
 
+        local spriteSpec <const> = activeSprite.spec
+        local alphaIndex <const> = spriteSpec.transparentColor
+        local colorMode <const> = spriteSpec.colorMode
+        local colorSpace <const> = spriteSpec.colorSpace
+
         local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
         local lenTileSet <const> = #tileSet
+
+        local tileSize <const> = tileSet.grid.tileSize
+        local wTile <const> = math.max(1, math.abs(tileSize.width))
+        local hTile <const> = math.max(1, math.abs(tileSize.height))
 
         -- Cache methods used in a for loop.
         local pixelColor <const> = app.pixelColor
         local pxTilei <const> = pixelColor.tileI
         local pxTilef <const> = pixelColor.tileF
         local pxTileCompose <const> = pixelColor.tile
+        local createSpec <const> = AseUtilities.createSpec
 
         -- Contains the first usage of a tile in the set by the active map.
         -- Ignores index 0. Because all tile maps in the layer have to be
@@ -514,7 +524,7 @@ dlg:button {
         -- The blank image at 0 is included so that the array doesn't have a
         -- nil at its first index. Any other relevant data from a tile would
         -- also be cloned at this stage, e.g., user data.
-        ---@type table[]
+        ---@type {image: Image, color: Color, data: string}[]
         local sortedTsPackets = {}
 
         -- Flip the relationship between old (unsorted) and new (sorted)
@@ -527,10 +537,24 @@ dlg:button {
             i = i + 1
             local tsIdx <const> = sortedTsIdcs[i]
             local tile <const> = tileSet:tile(tsIdx)
-            -- This could optionally include tile color and data.
-            local packet <const> = {
-                image = tile.image:clone()
-            }
+
+            local packet = nil
+            if tile then
+                packet = {
+                    color = tile.color,
+                    data = tile.data,
+                    image = tile.image:clone()
+                }
+            else
+                packet = {
+                    color = Color { r = 0, g = 0, b = 0, a = 0 },
+                    data = "",
+                    image = Image(createSpec(
+                        wTile, hTile,
+                        colorMode, colorSpace, alphaIndex))
+                }
+            end
+
             sortedTsPackets[i] = packet
             oldToNew[1 + sortedTsIdcs[i]] = i
         end
@@ -542,10 +566,12 @@ dlg:button {
                 while j < lenTileSet do
                     j = j + 1
                     local tile <const> = tileSet:tile(j - 1)
-                    local packet <const> = sortedTsPackets[j]
-                    -- tile.color = packet.color
-                    -- tile.data = packet.data
-                    tile.image = packet.image
+                    if tile then
+                        local packet <const> = sortedTsPackets[j]
+                        tile.color = packet.color
+                        tile.data = packet.data
+                        tile.image = packet.image
+                    end
                 end
             end)
 

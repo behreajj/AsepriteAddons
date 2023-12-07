@@ -357,7 +357,6 @@ function CanvasUtilities.graphBezier(
             context.strokeWidth = swCurve
             context.color = curveClrVrf
             context:beginPath()
-            -- TODO: Different extrapolate options?
             context:moveTo(0, ap0yPx)
             context:lineTo(ap0xPx, ap0yPx)
             context:cubicTo(

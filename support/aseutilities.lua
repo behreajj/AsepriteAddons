@@ -1244,11 +1244,6 @@ end
 function AseUtilities.drawCircleFill(
     pixels, wImage, xc, yc, r,
     rFill, gFill, bFill, aFill)
-    -- TODO: Fix all dialogs that use this method
-    -- colorShades
-    -- colorWheel
-    -- normalWheel
-
     local blend <const> = AseUtilities.blendRgba
     local rsq <const> = r * r
     local r2 <const> = r * 2
@@ -1966,31 +1961,6 @@ function AseUtilities.getUniqueCelsFromLeaves(leaves, frames)
     return celsArr
 end
 
----Gets the unique tiles from a tile map. Assumes that tile map and tile set
----have been vetted to confirm their association.
----@param tileMap Image tile map, an image
----@param tileSet Tileset tile set
----@return table<integer, Tile>
-function AseUtilities.getUniqueTiles(tileMap, tileSet)
-    ---@type table<integer, Tile>
-    local tiles <const> = {}
-    if tileMap.colorMode ~= ColorMode.TILEMAP then
-        return tiles
-    end
-    local lenTileSet <const> = #tileSet
-    local pxTilei <const> = app.pixelColor.tileI
-    local mapItr <const> = tileMap:pixels()
-    for mapEntry in mapItr do
-        local mapif <const> = mapEntry() --[[@as integer]]
-        local index <const> = pxTilei(mapif)
-        if index > 0 and index < lenTileSet
-            and (not tiles[index]) then
-            tiles[index] = tileSet:tile(index)
-        end
-    end
-    return tiles
-end
-
 ---Creates a table of gray colors represented as 32 bit integers, where the
 ---gray is repeated three times in red, green and blue channels.
 ---@param count integer swatch count
@@ -2414,16 +2384,14 @@ function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     local pxTilei <const> = pixelColor.tileI
     local pxTilef <const> = pixelColor.tileF
 
-    local lenTileSet <const> = #tileSet
     local mapItr <const> = imgSrc:pixels()
     for mapEntry in mapItr do
         local mapif <const> = mapEntry() --[[@as integer]]
         local i <const> = pxTilei(mapif)
-
-        if i > 0 and i < lenTileSet then
-            local tile <const> = tileSet:tile(i)
+        -- Tileset:tile method returns nil if the index is out of bounds.
+        local tile <const> = tileSet:tile(i)
+        if tile then
             local tileImage = tile.image
-
             local meta <const> = pxTilef(mapif)
             if meta == maskRot90ccw then
                 tileImage = AseUtilities.rotateImage90(tileImage)

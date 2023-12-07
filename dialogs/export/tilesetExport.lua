@@ -1,5 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
+--[[ https://doc.mapeditor.org/en/stable/reference/tmx-map-format/ ]]
+
 local dataOptions <const> = { "NONE", "TILED" }
 local targetOptions <const> = { "ACTIVE", "ALL" }
 local tiledImgExts <const> = {
@@ -54,11 +56,21 @@ local tmxMapFormat <const> = table.concat({
     "tilewidth=\"%d\" ",
     "tileheight=\"%d\" ",
     "infinite=\"0\">\n",
+    "%s\n", -- custom properties
     "%s\n", -- tsx use ref array
     "%s\n", -- layer array
     "</map>"
 }, "")
 
+local tmxMapPropsFormat <const> = table.concat({
+    "<properties>",
+    " <property name=\"duration\" type=\"int\" value=\"%d\"/>",
+    " <property name=\"frameNumber\" type=\"int\" value=\"%d\"/>",
+    "</properties>",
+}, "\n")
+
+-- TODO: Layers can also contain custom properties, if you want to include, for
+-- example, blendMode.
 local tmxLayerFormat <const> = table.concat({
     "<layer ",
     "id=\"%d\" ",
@@ -417,6 +429,7 @@ dlg:button {
 
         -- Cache methods used in loops.
         local ceil <const> = math.ceil
+        local floor <const> = math.floor
         local max <const> = math.max
         local rng <const> = math.random
         local sqrt <const> = math.sqrt
@@ -515,20 +528,20 @@ dlg:button {
                 local row <const> = k // columns
                 local column <const> = k % columns
                 local tile <const> = tileSet:tile(k)
+                if tile then
+                    local tileImage <const> = tile.image --[[@as Image]]
+                    local tileScaled = tileImage
+                    if useResize then
+                        tileScaled = resize(tileImage,
+                            wTileTrg, hTileTrg)
+                    end
 
-                local tileImage <const> = tile.image --[[@as Image]]
-                local tileScaled = tileImage
-                if useResize then
-                    tileScaled = resize(tileImage,
-                        wTileTrg, hTileTrg)
+                    local xOff <const> = margin + column * padding
+                    local yOff <const> = margin + row * padding
+                    local xTrg <const> = xOff + column * wTileTrg
+                    local yTrg <const> = yOff + row * hTileTrg
+                    sheetImage:drawImage(tileScaled, Point(xTrg, yTrg))
                 end
-
-                local xOff <const> = margin + column * padding
-                local yOff <const> = margin + row * padding
-                local xTrg <const> = xOff + column * wTileTrg
-                local yTrg <const> = yOff + row * hTileTrg
-                sheetImage:drawImage(tileScaled, Point(xTrg, yTrg))
-
                 k = k + 1
             end
 
@@ -564,7 +577,7 @@ dlg:button {
             local celPackets <const> = {}
             -- Because frames is an inner array, use a dictionary
             -- to track unique frames that contain tile map cels.
-            ---@type table<integer,table>
+            ---@type table<integer, { duration: number, frameNumber: integer }>
             local framePackets <const> = {}
             ---@type table[]
             local layerPackets <const> = {}
@@ -622,22 +635,22 @@ dlg:button {
                         local hTile <const> = tileDim.height
 
                         local layerId <const> = tmLayer.id
-                        local parent <const> = tmLayer.parent
-                        local parentId = -1
-                        if parent.__name ~= "doc::Sprite" then
-                            parentId = parent.id
-                        end
+                        -- local parent <const> = tmLayer.parent
+                        -- local parentId = -1
+                        -- if parent.__name ~= "doc::Sprite" then
+                        --     parentId = parent.id
+                        -- end
 
                         local layerPacket <const> = {
-                            blendMode = tmLayer.blendMode or BlendMode.NORMAL,
-                            data = tmLayer.data,
+                            -- blendMode = tmLayer.blendMode or BlendMode.NORMAL,
+                            -- data = tmLayer.data,
                             id = layerId,
                             isLocked = not tmLayer.isEditable,
                             isVisible = tmLayer.isVisible,
                             name = tmLayer.name,
                             opacity = tmLayer.opacity or 255,
-                            parent = parentId,
-                            stackIndex = tmLayer.stackIndex,
+                            -- parent = parentId,
+                            -- stackIndex = tmLayer.stackIndex,
                             tileset = tileSetId
                         }
                         layerPackets[#layerPackets + 1] = layerPacket
@@ -703,12 +716,12 @@ dlg:button {
 
                                 local celPacket <const> = {
                                     bounds = tmBounds,
-                                    data = tmCel.data,
-                                    fileName = "",
+                                    -- data = tmCel.data,
+                                    -- fileName = "",
                                     frameNumber = tmFrame,
                                     layer = layerId,
                                     opacity = tmCel.opacity,
-                                    zIndex = tmCel.zIndex
+                                    -- zIndex = tmCel.zIndex
                                 }
                                 celPackets[#celPackets + 1] = celPacket
                             end -- End cel exists check.
@@ -775,15 +788,18 @@ dlg:button {
                     local tmxRenderOrder <const> = defaults.tmxRenderOrder
 
                     local spriteGrid <const> = activeSprite.gridBounds
-                    local wSprGrid <const> = math.max(1, math.abs(
-                        wScale * spriteGrid.width))
-                    local hSprGrid <const> = math.max(1, math.abs(
-                        hScale * spriteGrid.height))
+                    local wSprGrd <const> = math.max(1, math.abs(
+                        spriteGrid.width))
+                    local hSprGrd <const> = math.max(1, math.abs(
+                        spriteGrid.height))
+                    local wSprGridScaled <const> = wScale * wSprGrd
+                    local hSprGridScaled <const> = hScale * hSprGrd
+                    local warningFlag = false
 
                     local wSprInTiles <const> = math.max(1, math.ceil(
-                        (wScale * spriteSpec.width) / wSprGrid))
+                        (wScale * spriteSpec.width) / wSprGridScaled))
                     local hSprInTiles <const> = math.max(1, math.ceil(
-                        (hScale * spriteSpec.height) / hSprGrid))
+                        (hScale * spriteSpec.height) / hSprGridScaled))
 
                     local lenLayerPackets <const> = #layerPackets
                     local lenCelPackets <const> = #celPackets
@@ -828,8 +844,8 @@ dlg:button {
                             local layerId <const> = layerPacket.id
                             local isLocked <const> = layerPacket.isLocked and 1 or 0
                             local isVisible <const> = layerPacket.isVisible and 1 or 0
-                            local layerOpacity <const> = layerPacket.opacity / 255.0
                             local layerName <const> = layerPacket.name
+                            local layerOpacity <const> = layerPacket.opacity / 255.0
                             local tileSetId <const> = layerPacket.tileset
 
                             local idxOffset = 0
@@ -838,12 +854,18 @@ dlg:button {
                             else
                                 idxOffset = firstgid
                                 usedTileSets[tileSetId] = firstgid
-                                local lenTileSet <const> = sheetPackets[tileSetId].lenTileSet
+                                local sheetPacket <const> = sheetPackets[tileSetId]
+                                local lenTileSet <const> = sheetPacket.lenTileSet
+                                local wTile <const> = sheetPacket.wTile
+                                local hTile <const> = sheetPacket.hTile
+                                if wTile ~= wSprGrd or hTile ~= hSprGrd then
+                                    warningFlag = true
+                                end
                                 firstgid = firstgid + lenTileSet
                             end
 
                             ---@type string[]
-                            local csvData = {}
+                            local csvData <const> = {}
                             local wMap = 0
                             local hMap = 0
                             local mapPacket <const> = filteredMapPackets[layerId]
@@ -910,14 +932,20 @@ dlg:button {
                                 sheet.fileName)
                         end
 
+                        local mapPropsString <const> = strfmt(
+                            tmxMapPropsFormat,
+                            floor(frame.duration * 1000),
+                            frame.frameNumber - 1)
+
                         local tmxString <const> = strfmt(
                             tmxMapFormat,
                             tmxVersion, tmxTiledVersion,
                             tmxOrientation, tmxRenderOrder,
                             wSprInTiles,
                             hSprInTiles,
-                            wSprGrid,
-                            hSprGrid,
+                            wSprGridScaled,
+                            hSprGridScaled,
+                            mapPropsString,
                             tconcat(tsxRefStrs, "\n"),
                             tconcat(tmxLayerStrs, "\n"))
 
@@ -933,9 +961,16 @@ dlg:button {
                             tmxFile:close()
                         end
                     end -- End frame dict loop.
-                end     -- End include maps check.
-            end         -- End Tiled format check.
-        end             -- End write meta data check.
+
+                    if warningFlag then
+                        app.alert {
+                            title = "Warning",
+                            text = { "Mismatch found between sprite grid and tile set grids." }
+                        }
+                    end
+                end -- End include maps check.
+            end     -- End Tiled format check.
+        end         -- End write meta data check.
 
         app.alert {
             title = "Success",
