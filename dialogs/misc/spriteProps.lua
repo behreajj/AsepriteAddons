@@ -12,13 +12,12 @@ Around line 141:
 --]]
 
 local defaults <const> = {
-    -- TODO: Add sprite grid inputs?
     maskWarningInvalid = "Mask index is out of bounds.",
     maskWarningIndexed = "Non-zero mask may cause bugs.",
     maskWarningRgb = "Non-zero color at index 0.",
     textLenLimit = 32,
     minPxRatio = 1,
-    maxPxRatio = 16
+    maxPxRatio = 20
 }
 
 local sprite = nil

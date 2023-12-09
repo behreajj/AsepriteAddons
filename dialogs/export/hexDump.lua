@@ -21,7 +21,7 @@ local importFileExts <const> = {
 local exportFileExts <const> = { "c", "csv", "md", "txt" }
 local outputTypes <const> = { "FILE", "PRINT" }
 
-local rgbaFormats <const> = { "RGB", "BGR", "RGBA", "ABGR" }
+local rgbaFormats <const> = { "ABGR", "BGR", "RGB", "RGBA" }
 
 local defaults <const> = {
     inputType = "FILE",

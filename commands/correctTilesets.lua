@@ -17,7 +17,7 @@ local minint64 <const> = 0x1000000000000000
 local maxint64 <const> = 0x7fffffffffffffff
 
 ---@type table<string, boolean>
-local uniques = {}
+local uniques <const> = {}
 
 app.transaction("Correct tile sets", function()
     local tileSum = 0

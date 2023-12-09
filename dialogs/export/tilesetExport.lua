@@ -64,13 +64,13 @@ local tmxMapFormat <const> = table.concat({
 
 local tmxMapPropsFormat <const> = table.concat({
     "<properties>",
-    " <property name=\"duration\" type=\"int\" value=\"%d\"/>",
-    " <property name=\"frameNumber\" type=\"int\" value=\"%d\"/>",
+    "<property name=\"duration\" type=\"int\" value=\"%d\"/>",
+    "<property name=\"frameNumber\" type=\"int\" value=\"%d\"/>",
     "</properties>",
 }, "\n")
 
--- TODO: Layers can also contain custom properties, if you want to include, for
--- example, blendMode.
+-- This doesn't record blend modes in custom properties because the cost of
+-- another blendMode enum const to string function outweighs the benefit.
 local tmxLayerFormat <const> = table.concat({
     "<layer ",
     "id=\"%d\" ",
@@ -107,7 +107,7 @@ local tsxFormat <const> = table.concat({
     "objectalignment=\"%s\" ",
     "tilerendersize=\"%s\" ",
     "fillmode=\"%s\">\n",
-    " <transformations ",
+    "<transformations ",
     "hflip=\"%d\" ",
     "vflip=\"%d\" ",
     "rotate=\"%d\" ",
@@ -635,22 +635,12 @@ dlg:button {
                         local hTile <const> = tileDim.height
 
                         local layerId <const> = tmLayer.id
-                        -- local parent <const> = tmLayer.parent
-                        -- local parentId = -1
-                        -- if parent.__name ~= "doc::Sprite" then
-                        --     parentId = parent.id
-                        -- end
-
                         local layerPacket <const> = {
-                            -- blendMode = tmLayer.blendMode or BlendMode.NORMAL,
-                            -- data = tmLayer.data,
                             id = layerId,
                             isLocked = not tmLayer.isEditable,
                             isVisible = tmLayer.isVisible,
                             name = tmLayer.name,
                             opacity = tmLayer.opacity or 255,
-                            -- parent = parentId,
-                            -- stackIndex = tmLayer.stackIndex,
                             tileset = tileSetId
                         }
                         layerPackets[#layerPackets + 1] = layerPacket
@@ -671,9 +661,6 @@ dlg:button {
 
                             local tmCel <const> = tmLayer:cel(tmFrame)
                             if tmCel then
-                                -- TODO: Can the image ID be given to map
-                                -- and cel packets so that they are easier to
-                                -- find in a collection later on?
                                 local tmImage <const> = tmCel.image
                                 local tmPxItr <const> = tmImage:pixels()
 
@@ -716,12 +703,9 @@ dlg:button {
 
                                 local celPacket <const> = {
                                     bounds = tmBounds,
-                                    -- data = tmCel.data,
-                                    -- fileName = "",
                                     frameNumber = tmFrame,
                                     layer = layerId,
-                                    opacity = tmCel.opacity,
-                                    -- zIndex = tmCel.zIndex
+                                    opacity = tmCel.opacity
                                 }
                                 celPackets[#celPackets + 1] = celPacket
                             end -- End cel exists check.
