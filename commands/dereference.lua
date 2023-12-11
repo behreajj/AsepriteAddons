@@ -4,8 +4,7 @@ if not sprite then return end
 local refLayer <const> = site.layer
 if not refLayer then return end
 
-local isRef <const> = refLayer.isReference
-if not isRef then
+if not refLayer.isReference then
     app.alert {
         title = "Error",
         text = "Layer is not a reference."

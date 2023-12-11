@@ -1,0 +1,56 @@
+dofile("../support/aseutilities.lua")
+
+local site <const> = app.site
+local activeSprite <const> = site.sprite
+if not activeSprite then return end
+
+local activeLayer <const> = site.layer
+if not activeLayer then return end
+if not activeLayer.isGroup then
+    app.alert {
+        title = "Error",
+        text = "Layer is not a group."
+    }
+    return
+end
+
+local spriteSpec <const> = activeSprite.spec
+local sprClrMode <const> = spriteSpec.colorMode
+local colorSpace <const> = spriteSpec.colorSpace
+local alphaIndex <const> = spriteSpec.transparentColor
+
+local frObjs <const> = activeSprite.frames
+local lenFrames <const> = #frObjs
+
+local flatGroup <const> = AseUtilities.flattenGroup
+
+app.transaction("Flatten Group", function()
+    local flattened <const> = activeSprite:newLayer()
+
+    local i = 0
+    while i < lenFrames do
+        i = i + 1
+        local frObj <const> = frObjs[i]
+        local comp <const>, bounds <const> = flatGroup(
+            activeLayer, frObj,
+            sprClrMode, colorSpace, alphaIndex,
+            true, false, true, true)
+        if not comp:isEmpty() then
+            activeSprite:newCel(
+                flattened, frObj, comp,
+                Point(bounds.x, bounds.y))
+        end
+    end
+
+    flattened.name = activeLayer.name
+    flattened.color = activeLayer.color
+    flattened.data = activeLayer.data
+    flattened.isVisible = activeLayer.isVisible
+    flattened.isEditable = activeLayer.isEditable
+    flattened.parent = activeLayer.parent
+    flattened.stackIndex = activeLayer.stackIndex
+
+    activeSprite:deleteLayer(activeLayer)
+end)
+
+app.refresh()

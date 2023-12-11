@@ -106,8 +106,6 @@ local function setFromSelect(dialog, sprite, frame)
         dialog:repaint()
         updateHexCode(dialog, active.l, active.c, active.h)
     end
-    -- TODO: Why is this refresh necessary?
-    app.refresh()
 end
 
 local dlg <const> = Dialog { title = "LCH Color Picker" }
