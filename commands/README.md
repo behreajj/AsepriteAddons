@@ -20,6 +20,8 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `dereference`: Converts a reference layer to a normal layer. Transfers the reference layer's parent to the new layer but the new layer remains at the top of the stack.
 
+- `flattenGroup`: Flattens a group layer. Includes locked layers, but excludes hidden layers.
+
 - `nextFrame`: Moves the active frame to the next frame index. Preserves timeline ranges of `RangeType.LAYERS`. If play once is false, then returns to the first frame after reaching the last.
 
 - `nextLayer`: Moves the active layer to the next layer up the stack. Preserves timeline ranges of `RangeType.FRAMES`. Stops when the top of the sprite layer stack is reached. 
