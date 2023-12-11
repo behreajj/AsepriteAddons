@@ -295,6 +295,7 @@ dlg:button {
                 imgPick:clear(alphaIndex)
                 imgSkip:clear(alphaIndex)
 
+                -- TODO: Switch from drawPixel to bytes array?
                 local pxItr <const> = imgSrc:pixels()
                 for pixel in pxItr do
                     local x <const> = pixel.x

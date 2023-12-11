@@ -18,8 +18,8 @@ local importFileExts <const> = {
     "ppm"   -- Color PNM
 }
 
-local exportFileExts <const> = { "c", "csv", "md", "txt" }
 local outputTypes <const> = { "FILE", "PRINT" }
+local exportFileExts <const> = { "c", "csv", "md", "txt" }
 
 local rgbaFormats <const> = { "ABGR", "BGR", "RGB", "RGBA" }
 
@@ -145,10 +145,6 @@ dlg:button {
         local importFilepath <const> = args.importFilepath --[[@as string]]
         local outputType <const> = args.outputType
             or defaults.outputType --[[@as string]]
-
-        -- TODO: File save widget with entry true makes more validation
-        -- necessary, as a file could have no extension whatsoever. Maybe
-        -- make an AseUtililties function for this?
         local exportFilepath <const> = args.exportFilepath --[[@as string]]
         local rgbaFormat <const> = args.rgbaFormat
             or defaults.rgbaFormat --[[@as string]]
@@ -280,8 +276,6 @@ dlg:button {
                     image = activeCel.image
                 end
 
-                -- TODO: RGBA format options, what about grayscale and indexed
-                -- color mode?
                 binData = image.bytes
             end
 

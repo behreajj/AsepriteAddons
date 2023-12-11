@@ -728,14 +728,15 @@ dlg:button {
                     local lenFlat <const> = wTrgi * hSrc
                     local j = 0
                     while j < lenFlat do
-                        local ySrc = j // wTrgi
-                        local xSrc = xDiff + (j % wTrgi) + tana * (ySrc - yCenter)
+                        local ySrc <const> = j // wTrgi
+                        local xSrc <const> = xDiff
+                            + (j % wTrgi) + tana * (ySrc - yCenter)
 
                         j = j + 1
                         byteArr[j] = sample(xSrc, ySrc,
                             wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
                     end
-                    trgImg.bytes = tconcat(byteArr, "")
+                    trgImg.bytes = tconcat(byteArr)
 
                     local xTrim = 0
                     local yTrim = 0
@@ -842,14 +843,15 @@ dlg:button {
                     local lenFlat <const> = wSrc * hTrgi
                     local j = 0
                     while j < lenFlat do
-                        local xSrc = j % wSrc
-                        local ySrc = yDiff + (j // wSrc) + tana * (xSrc - xTrgCenter)
+                        local xSrc <const> = j % wSrc
+                        local ySrc <const> = yDiff + (j // wSrc)
+                            + tana * (xSrc - xTrgCenter)
 
                         j = j + 1
                         byteArr[j] = sample(xSrc, ySrc,
                             wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
                     end
-                    trgImg.bytes = tconcat(byteArr, "")
+                    trgImg.bytes = tconcat(byteArr)
 
                     local xTrim = 0
                     local yTrim = 0
@@ -1026,7 +1028,7 @@ dlg:button {
                             byteArr[j] = sample(xSrc, ySrc,
                                 wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
                         end
-                        trgImg.bytes = tconcat(byteArr, "")
+                        trgImg.bytes = tconcat(byteArr)
 
                         local xTrim = 0
                         local yTrim = 0
@@ -1266,7 +1268,6 @@ dlg:button {
                         local tx <const> = (wSrc - 1.0) / (wTrg - 1.0)
                         local ty <const> = (hSrc - 1.0) / (hTrg - 1.0)
 
-
                         local trgSpec <const> = createSpec(
                             wTrg, hTrg, srcSpec.colorMode,
                             srcSpec.colorSpace, alphaIndex)
@@ -1283,7 +1284,7 @@ dlg:button {
                             byteArr[j] = sample(xTrg, yTrg,
                                 wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
                         end
-                        trgImg.bytes = tconcat(byteArr, "")
+                        trgImg.bytes = tconcat(byteArr)
 
                         local celPos <const> = cel.position
                         local xCenter <const> = celPos.x + wSrc * 0.5

@@ -864,7 +864,7 @@ dlg:button {
                                 while y < hMap do
                                     local yw <const> = y * wMap
                                     ---@type integer[]
-                                    local colArr = {}
+                                    local colArr <const> = {}
                                     local x = 0
                                     while x < wMap do
                                         local flat <const> = 1 + yw + x
