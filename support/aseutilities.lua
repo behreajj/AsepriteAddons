@@ -1246,7 +1246,7 @@ function AseUtilities.drawCircleFill(
     rFill, gFill, bFill, aFill)
     local blend <const> = AseUtilities.blendRgba
     local rsq <const> = r * r
-    local r2 <const> = r * 2
+    local r2 <const> = r + r
     local lenn1 <const> = r2 * r2 - 1
     local i = -1
     while i < lenn1 do
@@ -1616,12 +1616,9 @@ end
 ---@return Image
 function AseUtilities.flipImageX(source)
     local srcSpec <const> = source.spec
-    local w <const> = srcSpec.width
-    local h <const> = srcSpec.height
-
     local target <const> = Image(srcSpec)
-    target.bytes = Utilities.flipPixelsX(
-        source.bytes, w, h, source.bytesPerPixel)
+    target.bytes = Utilities.flipPixelsX(source.bytes, srcSpec.width,
+        srcSpec.height, source.bytesPerPixel)
     return target
 end
 
@@ -1630,12 +1627,9 @@ end
 ---@return Image
 function AseUtilities.flipImageY(source)
     local srcSpec <const> = source.spec
-    local w <const> = srcSpec.width
-    local h <const> = srcSpec.height
-
     local target <const> = Image(srcSpec)
-    target.bytes = Utilities.flipPixelsY(
-        source.bytes, w, h, source.bytesPerPixel)
+    target.bytes = Utilities.flipPixelsY(source.bytes, srcSpec.width,
+        srcSpec.height, source.bytesPerPixel)
     return target
 end
 
@@ -2203,12 +2197,9 @@ end
 ---@return Image
 function AseUtilities.rotateImage180(source)
     local srcSpec <const> = source.spec
-    local w <const> = srcSpec.width
-    local h <const> = srcSpec.height
-
     local target <const> = Image(srcSpec)
-    target.bytes = Utilities.rotatePixels180(
-        source.bytes, w, h, source.bytesPerPixel)
+    target.bytes = Utilities.rotatePixels180(source.bytes, srcSpec.width,
+        srcSpec.height, source.bytesPerPixel)
     return target
 end
 

@@ -21,7 +21,7 @@ local defaults <const> = {
     colorOption = "ALL",
     aniDir = "FORWARD",
     -- This is 1, not 0 (infinity), because of
-    -- Play Subtags and Repetitions Setting.
+    -- Play Subtags and Repetitions setting.
     repeats = 1,
     infiniteNote = "Use 0 for infinite loop.",
     deleteExisting = false

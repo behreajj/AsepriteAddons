@@ -202,6 +202,14 @@ end
 
 ---Gets a pixel from an image's bytes, formatted as a string.
 ---Clamps coordinates to the image's boundaries.
+---@param source string image bytes
+---@param x integer x coordinate
+---@param y integer y coordinate
+---@param w integer image width
+---@param h integer image height
+---@param bpp integer bytes per pixel
+---@param defaultValue string default value
+---@return string
 function Utilities.getPixelClamp(
     source, x, y, w, h, bpp, defaultValue)
     local xc <const> = math.min(math.max(x, 0), w - 1)

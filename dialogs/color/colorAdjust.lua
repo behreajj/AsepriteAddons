@@ -506,9 +506,9 @@ dlg:canvas {
         local reticleSize <const> = defaults.reticleSize
 
         local bkgColor <const> = app.theme.color.window_face
-        local bBkg <const> = bkgColor.blue * 0.003921568627451
-        local gBkg <const> = bkgColor.green * 0.003921568627451
-        local rBkg <const> = bkgColor.red * 0.003921568627451
+        local bBkg <const> = bkgColor.blue / 255.0
+        local gBkg <const> = bkgColor.green / 255.0
+        local rBkg <const> = bkgColor.red / 255.0
 
         local bTrg = 0.0
         local gTrg = 0.0

@@ -77,9 +77,9 @@ dlg:check {
     text = "Palette",
     selected = defaults.plotPalette,
     onclick = function()
-        local args = dlg.data
-        local usePlot = args.plotPalette
-        local palType = args.palType
+        local args <const> = dlg.data
+        local usePlot <const> = args.plotPalette
+        local palType <const> = args.palType
         dlg:modify { id = "palType", visible = usePlot }
         dlg:modify { id = "palFile", visible = usePlot and palType == "FILE" }
     end
@@ -94,7 +94,7 @@ dlg:combobox {
     options = paletteTypes,
     visible = defaults.plotPalette,
     onchange = function()
-        local state = dlg.data.palType
+        local state <const> = dlg.data.palType
         dlg:modify { id = "palFile", visible = state == "FILE" }
     end
 }

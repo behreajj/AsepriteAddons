@@ -6,7 +6,9 @@ local defaults <const> = {
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
     target = "FORE_TILE",
-    inPlace = false
+    -- Since the cull button has been removed from this dialog, it makes more
+    -- sense to edit in place.
+    inPlace = true
 }
 
 ---@param target "FORE_TILE"|"BACK_TILE"

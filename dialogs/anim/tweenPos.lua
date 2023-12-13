@@ -143,7 +143,7 @@ dlg:button {
     label = "Get:",
     text = "&FROM",
     onclick = function()
-        local frIdx, xc, yc = getCelPosAtFrame()
+        local frIdx <const>, xc <const>, yc <const> = getCelPosAtFrame()
         dlg:modify { id = "frameOrig", text = string.format("%d", frIdx) }
         dlg:modify { id = "xPosOrig", text = string.format("%.1f", xc) }
         dlg:modify { id = "yPosOrig", text = string.format("%.1f", yc) }
@@ -184,7 +184,7 @@ dlg:button {
     label = "Get:",
     text = "&TO",
     onclick = function()
-        local frIdx, xc, yc = getCelPosAtFrame()
+        local frIdx <const>, xc <const>, yc <const> = getCelPosAtFrame()
         dlg:modify { id = "frameDest", text = string.format("%d", frIdx) }
         dlg:modify { id = "xPosDest", text = string.format("%.1f", xc) }
         dlg:modify { id = "yPosDest", text = string.format("%.1f", yc) }

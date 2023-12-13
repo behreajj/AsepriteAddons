@@ -433,7 +433,7 @@ dlg:button {
 
                 -- Quantize colors, place in dictionary.
                 ---@type table<integer, integer>
-                local trgDict = {}
+                local trgDict <const> = {}
                 for k, _ in pairs(srcDict) do
                     local a <const> = (k >> 0x18) & 0xff
                     local b <const> = (k >> 0x10) & 0xff

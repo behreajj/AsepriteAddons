@@ -182,7 +182,7 @@ dlg:button {
     text = "&HEAT MAP",
     focus = false,
     onclick = function()
-        local sprite = app.site.sprite
+        local sprite <const> = app.site.sprite
         if not sprite then
             app.alert {
                 title = "Error",
