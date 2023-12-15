@@ -41,6 +41,7 @@ app.transaction("Dereference Layer", function()
             derefCel.color = refCel.color
             derefCel.data = refCel.data
             derefCel.opacity = refCel.opacity
+            derefCel.zIndex = refCel.zIndex
         end
     end
 
