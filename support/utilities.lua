@@ -71,6 +71,7 @@ end
 ---@param elm U query
 ---@param compare fun(a: U, b: T): boolean comparator
 ---@return integer
+---@nodiscard
 function Utilities.bisectRight(arr, elm, compare)
     local low = 0
     local high = #arr
@@ -91,6 +92,7 @@ end
 ---array elements; they are assumed to be in [0, 255].
 ---@param source integer[]
 ---@return string
+---@nodiscard
 function Utilities.bytesArrToString(source)
     ---@type string[]
     local chars <const> = {}
@@ -111,6 +113,7 @@ end
 ---@param dict table<K, V> dictionary
 ---@param comp? fun(a: K, b: K): boolean
 ---@return K[]
+---@nodiscard
 function Utilities.dictToSortedSet(dict, comp)
     local orderedSet <const> = {}
     local osCursor = 0
@@ -127,6 +130,7 @@ end
 ---@generic T element
 ---@param arr2 T[][] array of arrays
 ---@return T[]
+---@nodiscard
 function Utilities.flatArr2(arr2)
     local flat <const> = {}
     local lenOuter <const> = #arr2
@@ -150,6 +154,7 @@ end
 ---@param h integer image height
 ---@param bpp integer bits per pixel
 ---@return string
+---@nodiscard
 function Utilities.flipPixelsX(source, w, h, bpp)
     ---@type string[]
     local flipped <const> = {}
@@ -178,6 +183,7 @@ end
 ---@param h integer image height
 ---@param bpp integer bits per pixel
 ---@return string
+---@nodiscard
 function Utilities.flipPixelsY(source, w, h, bpp)
     ---@type string[]
     local flipped <const> = {}
@@ -210,6 +216,7 @@ end
 ---@param bpp integer bytes per pixel
 ---@param defaultValue string default value
 ---@return string
+---@nodiscard
 function Utilities.getPixelClamp(
     source, x, y, w, h, bpp, defaultValue)
     local xc <const> = math.min(math.max(x, 0), w - 1)
@@ -231,6 +238,7 @@ end
 ---@param bpp integer bytes per pixel
 ---@param defaultValue string default value
 ---@return string
+---@nodiscard
 function Utilities.getPixelOmit(
     source, x, y, w, h, bpp, defaultValue)
     if x >= 0 and x < w
@@ -252,6 +260,7 @@ end
 ---@param bpp integer bytes per pixel
 ---@param defaultValue string default value
 ---@return string
+---@nodiscard
 function Utilities.getPixelWrap(
     source, x, y, w, h, bpp, defaultValue)
     local xfm <const> = x % w
@@ -267,6 +276,7 @@ end
 ---@param sigma number? scalar
 ---@param mu number? offset
 ---@return number
+---@nodiscard
 function Utilities.gaussian(sigma, mu)
     local m <const> = mu or 0.0
     local s <const> = sigma or 1.0
@@ -287,6 +297,7 @@ end
 ---@param a integer antecedent term
 ---@param b integer consequent term
 ---@return integer
+---@nodiscard
 function Utilities.gcd(a, b)
     while b ~= 0 do a, b = b, a % b end
     return a
@@ -299,6 +310,7 @@ end
 ---@param hexes integer[] hexadecimal colors
 ---@param za boolean zero alpha
 ---@return table<integer, integer>
+---@nodiscard
 function Utilities.hexArrToDict(hexes, za)
     ---@type table<integer, integer>
     local dict <const> = {}
@@ -330,6 +342,7 @@ end
 ---@param t number factor
 ---@param range number? range
 ---@return number
+---@nodiscard
 function Utilities.lerpAngleCcw(origin, dest, t, range)
     local valRange <const> = range or 360.0
     local o <const> = origin % valRange
@@ -353,6 +366,7 @@ end
 ---@param t number factor
 ---@param range number? range
 ---@return number
+---@nodiscard
 function Utilities.lerpAngleCw(origin, dest, t, range)
     local valRange <const> = range or 360.0
     local o <const> = origin % valRange
@@ -376,6 +390,7 @@ end
 ---@param t number factor
 ---@param range number? range
 ---@return number
+---@nodiscard
 function Utilities.lerpAngleFar(origin, dest, t, range)
     local valRange <const> = range or 360.0
     local halfRange <const> = valRange * 0.5
@@ -401,6 +416,7 @@ end
 ---@param t number factor
 ---@param range number? range
 ---@return number
+---@nodiscard
 function Utilities.lerpAngleNear(origin, dest, t, range)
     local valRange <const> = range or 360.0
     local o <const> = origin % valRange
@@ -465,6 +481,7 @@ end
 ---@param a Mat3 matrix
 ---@param b Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Utilities.mulMat3Point2(a, b)
     local w <const> = a.m20 * b.x + a.m21 * b.y + a.m22
     if w ~= 0.0 then
@@ -508,6 +525,7 @@ end
 ---@param a Mat4 matrix
 ---@param b Vec3 vector
 ---@return Vec3
+---@nodiscard
 function Utilities.mulMat4Point3(a, b)
     local w <const> = a.m30 * b.x + a.m31 * b.y + a.m33
     if w ~= 0.0 then
@@ -524,6 +542,7 @@ end
 ---@param a Mat4 matrix
 ---@param b Vec4 vector
 ---@return Vec4
+---@nodiscard
 function Utilities.mulMat4Vec4(a, b)
     return Vec4.new(
         a.m00 * b.x + a.m01 * b.y
@@ -540,6 +559,7 @@ end
 ---power by the integer's sign. Returns zero if input is equal to zero.
 ---@param x integer input value
 ---@return integer
+---@nodiscard
 function Utilities.nextPowerOf2(x)
     if x ~= 0 then
         local xSgn = 1
@@ -569,6 +589,7 @@ end
 ---@param frameCount integer? number of frames
 ---@param offset integer? offset
 ---@return integer[][]
+---@nodiscard
 function Utilities.parseRangeStringOverlap(s, frameCount, offset)
     local offVerif <const> = offset or 0
     local fcVerif <const> = frameCount or 2147483647
@@ -661,6 +682,7 @@ end
 ---@param frameCount integer? number of frames
 ---@param offset integer? offset
 ---@return integer[]
+---@nodiscard
 function Utilities.parseRangeStringUnique(s, frameCount, offset)
     local arr2 <const> = Utilities.parseRangeStringOverlap(
         s, frameCount, offset)
@@ -711,6 +733,7 @@ end
 ---@param a Vec2 vector
 ---@param z number? z component
 ---@return Vec3
+---@nodiscard
 function Utilities.promoteVec2ToVec3(a, z)
     local vz <const> = z or 0.0
     return Vec3.new(a.x, a.y, vz)
@@ -721,6 +744,7 @@ end
 ---@param a number value
 ---@param levels number levels
 ---@return number
+---@nodiscard
 function Utilities.quantizeSigned(a, levels)
     if levels ~= 0 then
         return Utilities.quantizeSignedInternal(
@@ -736,6 +760,7 @@ end
 ---@param levels number levels
 ---@param delta number inverse levels
 ---@return number
+---@nodiscard
 function Utilities.quantizeSignedInternal(a, levels, delta)
     return math.floor(0.5 + a * levels) * delta
 end
@@ -745,6 +770,7 @@ end
 ---@param a number value
 ---@param levels number levels
 ---@return number
+---@nodiscard
 function Utilities.quantizeUnsigned(a, levels)
     if levels > 1 then
         return Utilities.quantizeUnsignedInternal(
@@ -760,6 +786,7 @@ end
 ---@param levels number levels
 ---@param delta number inverse levels
 ---@return number
+---@nodiscard
 function Utilities.quantizeUnsignedInternal(a, levels, delta)
     return math.max(0.0, (math.ceil(a * levels) - 1.0) * delta)
 end
@@ -770,6 +797,7 @@ end
 ---@param b integer consequent term
 ---@return integer
 ---@return integer
+---@nodiscard
 function Utilities.reduceRatio(a, b)
     local denom <const> = Utilities.gcd(a, b)
     return a // denom, b // denom
@@ -784,6 +812,7 @@ end
 ---@param wTrg integer resized width
 ---@param hTrg integer resized height
 ---@return string
+---@nodiscard
 function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg, bpp)
     ---@type string[]
     local resized <const> = {}
@@ -831,6 +860,7 @@ end
 ---@param h integer image height
 ---@param bpp integer bits per pixel
 ---@return string
+---@nodiscard
 function Utilities.rotatePixels90(source, w, h, bpp)
     ---@type string[]
     local rotated <const> = {}
@@ -859,6 +889,7 @@ end
 ---@param h integer image height
 ---@param bpp integer bits per pixel
 ---@return string
+---@nodiscard
 function Utilities.rotatePixels180(source, w, h, bpp)
     ---@type string[]
     local rotated <const> = {}
@@ -884,6 +915,7 @@ end
 ---@param h integer image height
 ---@param bpp integer bits per pixel
 ---@return string
+---@nodiscard
 function Utilities.rotatePixels270(source, w, h, bpp)
     ---@type string[]
     local rotated <const> = {}
@@ -911,6 +943,7 @@ end
 ---zero.
 ---@param x number real number
 ---@return integer
+---@nodiscard
 function Utilities.round(x)
     -- math.tointeger(-0.000001) = -1, so modf must be used.
     local ix <const>, fx <const> = math.modf(x)
@@ -926,6 +959,7 @@ end
 ---@generic T element
 ---@param t T[] input table
 ---@return T[]
+---@nodiscard
 function Utilities.shuffle(t)
     -- https://stackoverflow.com/a/68486276
     local rng <const> = math.random
@@ -951,6 +985,7 @@ end
 ---Decomposes a string containing byte data into an array of integers.
 ---@param source string
 ---@return integer[]
+---@nodiscard
 function Utilities.stringToByteArr(source)
     ---@type integer[]
     local arr <const> = {}
@@ -967,6 +1002,7 @@ end
 ---Decomposes a string to an array of characters.
 ---@param str string string
 ---@return string[]
+---@nodiscard
 function Utilities.stringToCharArr(str)
     -- For more on different methods, see
     -- https://stackoverflow.com/a/49222705
@@ -989,6 +1025,7 @@ end
 ---@param precision number? precision
 ---@return integer
 ---@return integer
+---@nodiscard
 function Utilities.toRatio(num, itrs, precision)
     local sgnNum = 0
     if num == 0.0 then return 0, 0 end
@@ -1032,6 +1069,7 @@ end
 ---@param width number screen width
 ---@param height number screen height
 ---@return Vec3
+---@nodiscard
 function Utilities.toScreen(modelview, projection, pt3, width, height)
     -- Promote to homogenous coordinate.
     local pt4 <const> = Vec4.new(pt3.x, pt3.y, pt3.z, 1.0)
@@ -1104,6 +1142,7 @@ end
 ---underscore, '_'.
 ---@param filename string file name
 ---@return string
+---@nodiscard
 function Utilities.validateFilename(filename)
     local fileChars <const> = Utilities.stringToCharArr(filename)
     Utilities.trimCharsInitial(fileChars)
@@ -1134,6 +1173,7 @@ end
 ---@param h integer image height
 ---@param bpp integer bits per pixel
 ---@return string
+---@nodiscard
 function Utilities.wrapPixels(source, xt, yt, w, h, bpp)
     ---@type string[]
     local wrapped <const> = {}

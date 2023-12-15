@@ -35,6 +35,7 @@ setmetatable(Mat3, {
 ---@param m21 number row 2, col 1 forward z
 ---@param m22 number row 2, col 2 translation z
 ---@return Mat3
+---@nodiscard
 function Mat3.new(
     m00, m01, m02,
     m10, m11, m12,
@@ -88,6 +89,7 @@ end
 ---@param a Mat3 left operand
 ---@param b Mat3 right operand
 ---@return Mat3
+---@nodiscard
 function Mat3.add(a, b)
     return Mat3.new(
         a.m00 + b.m00, a.m01 + b.m01, a.m02 + b.m02,
@@ -99,6 +101,7 @@ end
 ---@param a Mat3 left operand
 ---@param b Mat3 right operand
 ---@return Mat3
+---@nodiscard
 function Mat3.div(a, b)
     return Mat3.mul(a, Mat3.inverse(b))
 end
@@ -106,6 +109,7 @@ end
 ---Finds the matrix determinant.
 ---@param m Mat3 matrix
 ---@return number
+---@nodiscard
 function Mat3.determinant(m)
     return m.m00 * (m.m22 * m.m11 - m.m12 * m.m21) +
         m.m01 * (m.m12 * m.m20 - m.m22 * m.m10) +
@@ -115,6 +119,7 @@ end
 ---Constructs a matrix from an angle in radians.
 ---@param radians number angle
 ---@return Mat3
+---@nodiscard
 function Mat3.fromRotZ(radians)
     return Mat3.fromRotZInternal(math.cos(radians), math.sin(radians))
 end
@@ -123,6 +128,7 @@ end
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return Mat3
+---@nodiscard
 function Mat3.fromRotZInternal(cosa, sina)
     return Mat3.new(
         cosa, -sina, 0.0,
@@ -134,6 +140,7 @@ end
 ---@param width number width
 ---@param depth number depth
 ---@return Mat3
+---@nodiscard
 function Mat3.fromScale(width, depth)
     local w = 1.0
     if width and width ~= 0.0 then
@@ -155,6 +162,7 @@ end
 ---@param x number translation x
 ---@param y number translation y
 ---@return Mat3
+---@nodiscard
 function Mat3.fromTranslation(x, y)
     return Mat3.new(
         1.0, 0.0, x,
@@ -165,6 +173,7 @@ end
 ---Finds the matrix inverse. Returns the identity if not possible.
 ---@param a Mat3 matrix
 ---@return Mat3
+---@nodiscard
 function Mat3.inverse(a)
     local b01 <const> = a.m22 * a.m11 - a.m12 * a.m21
     local b11 <const> = a.m12 * a.m20 - a.m22 * a.m10
@@ -191,6 +200,7 @@ end
 ---@param a Mat3 left operand
 ---@param b Mat3 right operand
 ---@return Mat3
+---@nodiscard
 function Mat3.mul(a, b)
     return Mat3.new(
         a.m00 * b.m00 + a.m01 * b.m10 + a.m02 * b.m20,
@@ -207,6 +217,7 @@ end
 ---Negates a matrix.
 ---@param m Mat3 matrix
 ---@return Mat3
+---@nodiscard
 function Mat3.negate(m)
     return Mat3.new(
         -m.m00, -m.m01, -m.m02,
@@ -218,6 +229,7 @@ end
 ---@param a Mat3 left operand
 ---@param b Mat3 right operand
 ---@return Mat3
+---@nodiscard
 function Mat3.sub(a, b)
     return Mat3.new(
         a.m00 - b.m00, a.m01 - b.m01, a.m02 - b.m02,
@@ -228,6 +240,7 @@ end
 ---Returns a JSON string of a matrix.
 ---@param a Mat3 matrix
 ---@return string
+---@nodiscard
 function Mat3.toJson(a)
     local m0 <const> = string.format(
         "{\"m00\":%.4f,\"m01\":%.4f,\"m02\":%.4f,",
@@ -245,6 +258,7 @@ end
 ---separated by a line break, '\n', and each column is separated by 3 spaces.
 ---@param a Mat3 matrix
 ---@return string
+---@nodiscard
 function Mat3.toStringCol(a)
     local m0 <const> = string.format(
         "%+3.4f   %+3.4f   %+3.4f\n",
@@ -260,6 +274,7 @@ end
 
 ---Creates the identity matrix.
 ---@return Mat3
+---@nodiscard
 function Mat3.identity()
     return Mat3.new(
         1.0, 0.0, 0.0,

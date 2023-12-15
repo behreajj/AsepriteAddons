@@ -2,7 +2,7 @@
 ---@field public r number red channel
 ---@field public g number green channel
 ---@field public b number blue channel
----@field public a number transparency
+---@field public a number opacity
 ---@operator len(): integer
 Clr = {}
 Clr.__index = Clr
@@ -22,14 +22,15 @@ Clr.SR_LCH_HUE_SHADOW = 0.874676
 ---Maximum chroma of a color in SR LCH that is in gamut in standard RGB.
 Clr.SR_LCH_MAX_CHROMA = 119.07602046756
 
----Constructs a new color from red, green, blue and transparency channels. The
+---Constructs a new color from red, green, blue and opacity channels. The
 ---expected range is [0.0, 1.0], however, to accomodate other color spaces,
 ---these bounds are not checked by the constructor.
 ---@param r number red channel
 ---@param g number green channel
 ---@param b number blue channel
----@param a number? transparency
+---@param a number? opacity
 ---@return Clr
+---@nodiscard
 function Clr.new(r, g, b, a)
     local inst <const> = setmetatable({}, Clr)
     inst.a = a or 1.0
@@ -63,6 +64,7 @@ end
 ---@param c Clr color
 ---@param tol number? tolerance
 ---@return boolean
+---@nodiscard
 function Clr.alphaIsInGamut(c, tol)
     local eps <const> = tol or 0.0
     return c.a >= -eps and c.a <= (1.0 + eps)
@@ -73,6 +75,7 @@ end
 ---@param a Clr left comparisand
 ---@param b Clr right comparisand
 ---@return boolean
+---@nodiscard
 function Clr.bitEq(a, b)
     return Clr.bitEqAlpha(a, b) and Clr.bitEqRgb(a, b)
 end
@@ -82,6 +85,7 @@ end
 ---@param a Clr left comparisand
 ---@param b Clr right comparisand
 ---@return boolean
+---@nodiscard
 function Clr.bitEqAlpha(a, b)
     -- This is used by the == operator, so defaults are in case b is not a clr.
     local ba = b.a
@@ -97,6 +101,7 @@ end
 ---@param a Clr left comparisand
 ---@param b Clr right comparisand
 ---@return boolean
+---@nodiscard
 function Clr.bitEqRgb(a, b)
     -- This is used by the == operator, so defaults are in case b is not a clr.
     local bb = b.b
@@ -134,6 +139,7 @@ end
 ---@param a Clr source
 ---@param b Clr destination
 ---@return Clr
+---@nodiscard
 function Clr.blend(a, b)
     return Clr.blendInternal(Clr.clamp01(a), Clr.clamp01(b))
 end
@@ -145,6 +151,7 @@ end
 ---@param a Clr source
 ---@param b Clr destination
 ---@return Clr
+---@nodiscard
 function Clr.blendInternal(a, b)
     -- TODO: Replace this with AseUtilities.blendRgbaChar?
     local t <const> = b.a
@@ -173,6 +180,7 @@ end
 ---Clamps a color to [0.0, 1.0].
 ---@param c Clr color
 ---@return Clr
+---@nodiscard
 function Clr.clamp01(c)
     return Clr.new(
         math.min(math.max(c.r, 0.0), 1.0),
@@ -184,6 +192,7 @@ end
 ---Converts from a hexadecimal representation of a color stored as 0xAABBGGRR.
 ---@param c integer hexadecimal color
 ---@return Clr
+---@nodiscard
 function Clr.fromHex(c)
     return Clr.new(
         (c & 0xff) / 255.0,
@@ -195,6 +204,7 @@ end
 ---Converts an array of hexadecimal values to an array of colors.
 ---@param arr integer[] hexadecimal array
 ---@return Clr[]
+---@nodiscard
 function Clr.fromHexArray(arr)
     local len <const> = #arr
     local result <const> = {}
@@ -209,6 +219,7 @@ end
 ---Converts from a web-friendly hexadecimal string, such as #AABBCC, to a color.
 ---@param hexstr string web string
 ---@return Clr
+---@nodiscard
 function Clr.fromHexWeb(hexstr)
     local s = hexstr
 
@@ -242,8 +253,9 @@ end
 ---@param cols integer columns
 ---@param rows integer rows
 ---@param layers integer layers
----@param alpha number transparency
+---@param alpha number opacity
 ---@return Clr[]
+---@nodiscard
 function Clr.gridsRgb(cols, rows, layers, alpha)
     -- Default arguments.
     local aVrf = alpha or 1.0
@@ -289,6 +301,7 @@ end
 ---Clamps the input color to [0.0, 1.0].
 ---@param c Clr linear color
 ---@return { l: number, a: number, b: number, alpha: number }
+---@nodiscard
 function Clr.lRgbToSrLab2(c)
     return Clr.lRgbToSrLab2Internal(Clr.clamp01(c))
 end
@@ -299,6 +312,7 @@ end
 ---The alpha channel is unaffected by the transform.
 ---@param c Clr linear color
 ---@return { l: number, a: number, b: number, alpha: number }
+---@nodiscard
 function Clr.lRgbToSrLab2Internal(c)
     local r <const> = c.r
     local g <const> = c.g
@@ -328,8 +342,9 @@ end
 ---Converts a color from linear RGB to standard RGB (sRGB).
 ---Clamps the input color to [0.0, 1.0].
 ---Does not transform the alpha channel.
----@param c table linear color
+---@param c Clr linear color
 ---@return Clr
+---@nodiscard
 function Clr.lRgbTosRgb(c)
     return Clr.lRgbTosRgbInternal(Clr.clamp01(c))
 end
@@ -339,6 +354,7 @@ end
 ---See https://www.wikiwand.com/en/SRGB.
 ---@param c Clr linear color
 ---@return Clr
+---@nodiscard
 function Clr.lRgbTosRgbInternal(c)
     local sr = c.r
     local sg = c.g
@@ -361,6 +377,7 @@ end
 ---@param d Clr destination
 ---@param t number step
 ---@return Clr
+---@nodiscard
 function Clr.mix(o, d, t)
     return Clr.mixlRgb(o, d, t)
 end
@@ -371,6 +388,7 @@ end
 ---@param d Clr destination
 ---@param t number step
 ---@return Clr
+---@nodiscard
 function Clr.mixlRgb(o, d, t)
     local u <const> = t or 0.5
     if u <= 0.0 then
@@ -388,6 +406,7 @@ end
 ---@param d Clr destination
 ---@param t number step
 ---@return Clr
+---@nodiscard
 function Clr.mixlRgbaInternal(o, d, t)
     local u <const> = 1.0 - t
     return Clr.new(
@@ -404,6 +423,7 @@ end
 ---@param d Clr destination
 ---@param t number step
 ---@return Clr
+---@nodiscard
 function Clr.mixNormal(o, d, t)
     local ox = o.r + o.r - 1.0
     local oy = o.g + o.g - 1.0
@@ -477,6 +497,7 @@ end
 ---@param d Clr destination
 ---@param t number step
 ---@return Clr
+---@nodiscard
 function Clr.mixsRgb(o, d, t)
     local u <const> = t or 0.5
     if u <= 0.0 then
@@ -494,6 +515,7 @@ end
 ---@param d Clr destination
 ---@param t number step
 ---@return Clr
+---@nodiscard
 function Clr.mixsRgbInternal(o, d, t)
     return Clr.lRgbTosRgbInternal(
         Clr.mixlRgbaInternal(
@@ -507,6 +529,7 @@ end
 ---@param d Clr destination
 ---@param t number step
 ---@return Clr
+---@nodiscard
 function Clr.mixSrLab2(o, d, t)
     local u <const> = t or 0.5
     if u <= 0.0 then
@@ -523,6 +546,7 @@ end
 ---@param d Clr destination
 ---@param t number step
 ---@return Clr
+---@nodiscard
 function Clr.mixSrLab2Internal(o, d, t)
     local u <const> = 1.0 - t
     local oLab <const> = Clr.sRgbToSrLab2(o)
@@ -542,6 +566,7 @@ end
 ---@param t number step
 ---@param hueFunc? fun(o: number, d: number, t: number): number hue function
 ---@return Clr
+---@nodiscard
 function Clr.mixSrLch(o, d, t, hueFunc)
     local u <const> = t or 0.5
     if u <= 0.0 then
@@ -577,6 +602,7 @@ end
 ---@param t number step
 ---@param hueFunc fun(o: number, d: number, t: number): number hue function
 ---@return Clr
+---@nodiscard
 function Clr.mixSrLchInternal(o, d, t, hueFunc)
     local oLab <const> = Clr.sRgbToSrLab2(o)
     local oa <const> = oLab.a
@@ -618,6 +644,7 @@ end
 ---@param c Clr color
 ---@param tol number? tolerance
 ---@return boolean
+---@nodiscard
 function Clr.rgbIsInGamut(c, tol)
     local eps <const> = tol or 0.0
     return (c.r >= -eps and c.r <= (1.0 + eps))
@@ -629,6 +656,7 @@ end
 ---@param c Clr color
 ---@param tol number? tolerance
 ---@return boolean
+---@nodiscard
 function Clr.rgbaIsInGamut(c, tol)
     return Clr.alphaIsInGamut(c, tol) and Clr.rgbIsInGamut(c, tol)
 end
@@ -638,6 +666,7 @@ end
 ---Does not transform the alpha channel.
 ---@param c Clr color
 ---@return Clr
+---@nodiscard
 function Clr.sRgbTolRgb(c)
     return Clr.sRgbTolRgbInternal(Clr.clamp01(c))
 end
@@ -647,6 +676,7 @@ end
 ---See https://www.wikiwand.com/en/SRGB.
 ---@param c Clr color
 ---@return Clr
+---@nodiscard
 function Clr.sRgbTolRgbInternal(c)
     local lr = c.r
     local lg = c.g
@@ -671,6 +701,7 @@ end
 ---The blue to yellow axis is b.
 ---@param c Clr linear color
 ---@return { l: number, a: number, b: number, alpha: number }
+---@nodiscard
 function Clr.sRgbToSrLab2(c)
     return Clr.sRgbToSrLab2Internal(Clr.clamp01(c))
 end
@@ -679,6 +710,9 @@ end
 ---The return table uses the keys l, a, b and alpha.
 ---The green to red axis is a.
 ---The blue to yellow axis is b.
+---@param c Clr color
+---@return { l: number, a: number, b: number, alpha: number }
+---@nodiscard
 function Clr.sRgbToSrLab2Internal(c)
     return Clr.lRgbToSrLab2Internal(Clr.sRgbTolRgbInternal(c))
 end
@@ -689,6 +723,7 @@ end
 ---@param c Clr color
 ---@param tol number? gray tolerance
 ---@return { l: number, c: number, h: number, a: number }
+---@nodiscard
 function Clr.sRgbToSrLch(c, tol)
     local lab <const> = Clr.sRgbToSrLab2(c)
     return Clr.srLab2ToSrLch(lab.l, lab.a, lab.b, lab.alpha, tol)
@@ -701,8 +736,9 @@ end
 ---@param l number lightness
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
----@param alpha number transparency
+---@param alpha number opacity
 ---@return Clr
+---@nodiscard
 function Clr.srLab2TolRgb(l, a, b, alpha)
     local l01 <const> = l * 0.01
     local x = l01 + 0.000904127 * a + 0.000456344 * b
@@ -744,8 +780,9 @@ end
 ---@param l number lightness
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
----@param alpha number transparency
+---@param alpha number opacity
 ---@return Clr
+---@nodiscard
 function Clr.srLab2TosRgb(l, a, b, alpha)
     return Clr.lRgbTosRgbInternal(Clr.srLab2TolRgb(l, a, b, alpha))
 end
@@ -756,9 +793,10 @@ end
 ---@param l number lightness
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
----@param alpha number transparency
+---@param alpha number opacity
 ---@param tol number? gray tolerance
 ---@return { l: number, c: number, h: number, a: number }
+---@nodiscard
 function Clr.srLab2ToSrLch(l, a, b, alpha, tol)
     -- 0.00004 is the square chroma for white.
     local vTol = 0.007072
@@ -790,9 +828,10 @@ end
 ---@param l number lightness
 ---@param c number chromaticity
 ---@param h number hue
----@param a number transparency
+---@param a number opacity
 ---@param tol number? gray tolerance
 ---@return Clr
+---@nodiscard
 function Clr.srLchTosRgb(l, c, h, a, tol)
     local lab <const> = Clr.srLchToSrLab2(l, c, h, a, tol)
     return Clr.srLab2TosRgb(lab.l, lab.a, lab.b, lab.alpha)
@@ -805,9 +844,10 @@ end
 ---@param l number lightness
 ---@param c number chromaticity
 ---@param h number hue
----@param a number transparency
+---@param a number opacity
 ---@param tol number? gray tolerance
 ---@return { l: number, a: number, b: number, alpha: number }
+---@nodiscard
 function Clr.srLchToSrLab2(l, c, h, a, tol)
     -- Return early cannot be done here because
     -- saturated colors are still possible at
@@ -831,8 +871,9 @@ end
 ---@param l number lightness
 ---@param c number chromaticity
 ---@param h number hue
----@param a number transparency
+---@param a number opacity
 ---@return { l: number, a: number, b: number, alpha: number }
+---@nodiscard
 function Clr.srLchToSrLab2Internal(l, c, h, a)
     local hRad <const> = h * 6.2831853071796
     return {
@@ -847,6 +888,7 @@ end
 ---0xAABBGGRR order. Ensures that color values are valid, in [0.0, 1.0].
 ---@param c Clr color
 ---@return integer
+---@nodiscard
 function Clr.toHex(c)
     return Clr.toHexUnchecked(Clr.clamp01(c))
 end
@@ -855,6 +897,7 @@ end
 ---0xAABBGGRR order.
 ---@param c Clr color
 ---@return integer
+---@nodiscard
 function Clr.toHexUnchecked(c)
     return math.floor(c.a * 255.0 + 0.5) << 0x18
         | math.floor(c.b * 255.0 + 0.5) << 0x10
@@ -867,6 +910,7 @@ end
 ---values are valid, in [0.0, 1.0].
 ---@param c Clr color
 ---@return string
+---@nodiscard
 function Clr.toHexWeb(c)
     return Clr.toHexWebUnchecked(Clr.clamp01(c))
 end
@@ -875,6 +919,7 @@ end
 ---packed in RRGGBB order. Does not prepend a hashtag ('#').
 ---@param c Clr color
 ---@return string
+---@nodiscard
 function Clr.toHexWebUnchecked(c)
     return string.format("%06X",
         math.floor(c.r * 255.0 + 0.5) << 0x10
@@ -885,6 +930,7 @@ end
 ---Returns a JSON string of a color.
 ---@param c Clr color
 ---@return string
+---@nodiscard
 function Clr.toJson(c)
     return string.format(
         "{\"r\":%.4f,\"g\":%.4f,\"b\":%.4f,\"a\":%.4f}",
@@ -893,60 +939,70 @@ end
 
 ---Creates a red color.
 ---@return Clr
+---@nodiscard
 function Clr.red()
     return Clr.new(1.0, 0.0, 0.0, 1.0)
 end
 
 ---Creates a green color.
 ---@return Clr
+---@nodiscard
 function Clr.green()
     return Clr.new(0.0, 1.0, 0.0, 1.0)
 end
 
 ---Creates a blue color.
 ---@return Clr
+---@nodiscard
 function Clr.blue()
     return Clr.new(0.0, 0.0, 1.0, 1.0)
 end
 
 ---Creates a cyan color.
 ---@return Clr
+---@nodiscard
 function Clr.cyan()
     return Clr.new(0.0, 1.0, 1.0, 1.0)
 end
 
 ---Creates a magenta color.
 ---@return Clr
+---@nodiscard
 function Clr.magenta()
     return Clr.new(1.0, 0.0, 1.0, 1.0)
 end
 
 ---Creates a yellow color.
 ---@return Clr
+---@nodiscard
 function Clr.yellow()
     return Clr.new(1.0, 1.0, 0.0, 1.0)
 end
 
 ---Creates a black color.
 ---@return Clr
+---@nodiscard
 function Clr.black()
     return Clr.new(0.0, 0.0, 0.0, 1.0)
 end
 
 ---Creates a white color.
 ---@return Clr
+---@nodiscard
 function Clr.white()
     return Clr.new(1.0, 1.0, 1.0, 1.0)
 end
 
 ---Creates a transparent black color.
 ---@return Clr
+---@nodiscard
 function Clr.clearBlack()
     return Clr.new(0.0, 0.0, 0.0, 0.0)
 end
 
 ---Creates a transparent white color.
 ---@return Clr
+---@nodiscard
 function Clr.clearWhite()
     return Clr.new(1.0, 1.0, 1.0, 0.0)
 end

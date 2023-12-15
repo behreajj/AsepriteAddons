@@ -27,6 +27,7 @@ setmetatable(Vec4, {
 ---@param z number? z component
 ---@param w number? w component
 ---@return Vec4
+---@nodiscard
 function Vec4.new(x, y, z, w)
     local inst <const> = setmetatable({}, Vec4)
     inst.x = x or 0.0
@@ -98,6 +99,7 @@ end
 ---Finds a vector's absolute value, component-wise.
 ---@param v Vec4 vector
 ---@return Vec4
+---@nodiscard
 function Vec4.abs(v)
     return Vec4.new(
         math.abs(v.x),
@@ -110,6 +112,7 @@ end
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
 ---@return Vec4
+---@nodiscard
 function Vec4.add(a, b)
     return Vec4.new(
         a.x + b.x,
@@ -121,6 +124,7 @@ end
 ---Evaluates if all vector components are non-zero.
 ---@param v Vec4 vector
 ---@return boolean
+---@nodiscard
 function Vec4.all(v)
     return v.x ~= 0.0
         and v.y ~= 0.0
@@ -131,6 +135,7 @@ end
 ---Evaluates if any vector components are non-zero.
 ---@param v Vec4 vector
 ---@return boolean
+---@nodiscard
 function Vec4.any(v)
     return v.x ~= 0.0
         or v.y ~= 0.0
@@ -143,6 +148,7 @@ end
 ---@param b Vec4 right operand
 ---@param tol number? tolerance
 ---@return boolean
+---@nodiscard
 function Vec4.approx(a, b, tol)
     local eps <const> = tol or 0.000001
     return math.abs(b.x - a.x) <= eps
@@ -154,6 +160,7 @@ end
 ---Finds the ceiling of the vector.
 ---@param v Vec4 vector
 ---@return Vec4
+---@nodiscard
 function Vec4.ceil(v)
     return Vec4.new(
         math.ceil(v.x),
@@ -167,6 +174,7 @@ end
 ---@param a Vec4 left comparisand
 ---@param b Vec4 right comparisand
 ---@return boolean
+---@nodiscard
 function Vec4.comparator(a, b)
     if a.w < b.w then return true end
     if a.w > b.w then return false end
@@ -183,6 +191,7 @@ end
 ---@param a Vec4 magnitude
 ---@param b Vec4 sign
 ---@return Vec4
+---@nodiscard
 function Vec4.copySign(a, b)
     local cx = 0.0
     local axAbs <const> = math.abs(a.x)
@@ -223,6 +232,7 @@ end
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
 ---@return Vec4
+---@nodiscard
 function Vec4.div(a, b)
     return Vec4.new(
         b.x ~= 0.0 and a.x / b.x or 0.0,
@@ -235,6 +245,7 @@ end
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
 ---@return number
+---@nodiscard
 function Vec4.dot(a, b)
     return a.x * b.x
         + a.y * b.y
@@ -247,6 +258,7 @@ end
 ---@param a Vec4 left comparisand
 ---@param b Vec4 right comparisand
 ---@return boolean
+---@nodiscard
 function Vec4.equals(a, b)
     return rawequal(a, b)
         or Vec4.equalsValue(a, b)
@@ -256,6 +268,7 @@ end
 ---@param a Vec4 left comparisand
 ---@param b Vec4 right comparisand
 ---@return boolean
+---@nodiscard
 function Vec4.equalsValue(a, b)
     return a.w == b.w
         and a.z == b.z
@@ -266,6 +279,7 @@ end
 ---Finds the floor of the vector.
 ---@param v Vec4 vector
 ---@return Vec4
+---@nodiscard
 function Vec4.floor(v)
     return Vec4.new(
         math.floor(v.x),
@@ -278,6 +292,7 @@ end
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
 ---@return Vec4
+---@nodiscard
 function Vec4.floorDiv(a, b)
     return Vec4.new(
         b.x ~= 0.0 and a.x // b.x or 0.0,
@@ -290,6 +305,7 @@ end
 ---each component from itself, not the floor, unlike in GLSL.
 ---@param v Vec4 vector
 ---@return Vec4
+---@nodiscard
 function Vec4.fract(v)
     return Vec4.new(
         math.fmod(v.x, 1.0),
@@ -302,6 +318,7 @@ end
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
 ---@return Vec4
+---@nodiscard
 function Vec4.hadamard(a, b)
     return Vec4.new(
         a.x * b.x,
@@ -313,6 +330,7 @@ end
 ---Finds an integer hash code for a vector.
 ---@param v Vec4 vector
 ---@return integer
+---@nodiscard
 function Vec4.hashCode(v)
     local xBits <const> = string.unpack("i4", string.pack("f", v.x))
     local yBits <const> = string.unpack("i4", string.pack("f", v.y))
@@ -327,6 +345,7 @@ end
 ---@param edge1 Vec4 right edge
 ---@param x Vec4 factor
 ---@return Vec4
+---@nodiscard
 function Vec4.linearstep(edge0, edge1, x)
     local cx = 0.0
     local xDenom <const> = edge1.x - edge0.x
@@ -362,6 +381,7 @@ end
 ---Finds a vector's magnitude, or length.
 ---@param v Vec4 vector
 ---@return number
+---@nodiscard
 function Vec4.mag(v)
     return math.sqrt(
         v.x * v.x
@@ -373,6 +393,7 @@ end
 ---Finds a vector's magnitude squared.
 ---@param v Vec4 vector
 ---@return number
+---@nodiscard
 function Vec4.magSq(v)
     return v.x * v.x
         + v.y * v.y
@@ -384,6 +405,7 @@ end
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
 ---@return Vec4
+---@nodiscard
 function Vec4.max(a, b)
     return Vec4.new(
         math.max(a.x, b.x),
@@ -396,6 +418,7 @@ end
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
 ---@return Vec4
+---@nodiscard
 function Vec4.min(a, b)
     return Vec4.new(
         math.min(a.x, b.x),
@@ -409,6 +432,7 @@ end
 ---@param b Vec4 destination
 ---@param t Vec4|number step
 ---@return Vec4
+---@nodiscard
 function Vec4.mix(a, b, t)
     if type(t) == "number" then
         return Vec4.mixNum(a, b, t)
@@ -421,6 +445,7 @@ end
 ---@param b Vec4 destination
 ---@param t number? step
 ---@return Vec4
+---@nodiscard
 function Vec4.mixNum(a, b, t)
     local v <const> = t or 0.5
     local u <const> = 1.0 - v
@@ -437,6 +462,7 @@ end
 ---@param b Vec4 destination
 ---@param t Vec4 step
 ---@return Vec4
+---@nodiscard
 function Vec4.mixVec4(a, b, t)
     return Vec4.new(
         (1.0 - t.x) * a.x + t.x * b.x,
@@ -449,6 +475,7 @@ end
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
 ---@return Vec4
+---@nodiscard
 function Vec4.mod(a, b)
     return Vec4.new(
         b.x ~= 0.0 and a.x % b.x or a.x,
@@ -460,6 +487,7 @@ end
 ---Negates a vector.
 ---@param v Vec4 vector
 ---@return Vec4
+---@nodiscard
 function Vec4.negate(v)
     return Vec4.new(-v.x, -v.y, -v.z, -v.w)
 end
@@ -467,6 +495,7 @@ end
 ---Evaluates if all vector components are zero.
 ---@param v Vec4 vector
 ---@return boolean
+---@nodiscard
 function Vec4.none(v)
     return v.x == 0.0
         and v.y == 0.0
@@ -477,6 +506,7 @@ end
 ---Divides a vector by its magnitude, such that it lies on the unit circle.
 ---@param v Vec4 vector
 ---@return Vec4
+---@nodiscard
 function Vec4.normalize(v)
     local mSq <const> = v.x * v.x
         + v.y * v.y
@@ -497,6 +527,7 @@ end
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
 ---@return Vec4
+---@nodiscard
 function Vec4.pow(a, b)
     return Vec4.new(
         a.x ^ b.x,
@@ -510,6 +541,7 @@ end
 ---@param lb Vec4? lower bound
 ---@param ub Vec4? upper bound
 ---@return Vec4
+---@nodiscard
 function Vec4.randomCartesian(lb, ub)
     local lVrf <const> = lb or Vec4.new(-1.0, -1.0, -1.0, -1.0)
     local uVrf <const> = ub or Vec4.new(1.0, 1.0, 1.0, 1.0)
@@ -521,6 +553,7 @@ end
 ---@param lb Vec4 lower bound
 ---@param ub Vec4 upper bound
 ---@return Vec4
+---@nodiscard
 function Vec4.randomCartesianInternal(lb, ub)
     local rx <const> = math.random()
     local ry <const> = math.random()
@@ -537,6 +570,7 @@ end
 ---Rounds the vector by sign and fraction.
 ---@param v Vec4 left operand
 ---@return Vec4
+---@nodiscard
 function Vec4.round(v)
     local ix, fx <const> = math.modf(v.x)
     if ix <= 0 and fx <= -0.5 then
@@ -573,6 +607,7 @@ end
 ---@param a Vec4 left operand
 ---@param b number right operand
 ---@return Vec4
+---@nodiscard
 function Vec4.scale(a, b)
     return Vec4.new(
         a.x * b,
@@ -584,6 +619,7 @@ end
 ---Finds the sign of a vector by component.
 ---@param v Vec4 vector
 ---@return Vec4
+---@nodiscard
 function Vec4.sign(v)
     return Vec4.new(
         v.x < -0.0 and -1.0 or v.x > 0.0 and 1.0 or 0.0,
@@ -597,6 +633,7 @@ end
 ---@param edge1 Vec4 right edge
 ---@param x Vec4 factor
 ---@return Vec4
+---@nodiscard
 function Vec4.smoothstep(edge0, edge1, x)
     local cx = 0.0
     local xDenom <const> = edge1.x - edge0.x
@@ -637,6 +674,7 @@ end
 ---@param edge Vec4 edge
 ---@param x Vec4 factor
 ---@return Vec4
+---@nodiscard
 function Vec4.step(edge, x)
     return Vec4.new(
         x.x < edge.x and 0.0 or 1.0,
@@ -649,6 +687,7 @@ end
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
 ---@return Vec4
+---@nodiscard
 function Vec4.sub(a, b)
     return Vec4.new(
         a.x - b.x,
@@ -660,6 +699,7 @@ end
 ---Returns a JSON string of a vector.
 ---@param v Vec4 vector
 ---@return string
+---@nodiscard
 function Vec4.toJson(v)
     return string.format(
         "{\"x\":%.4f,\"y\":%.4f,\"z\":%.4f,\"w\":%.4f}",
@@ -669,6 +709,7 @@ end
 ---Truncates a vector's components.
 ---@param v Vec4 vector
 ---@return Vec4
+---@nodiscard
 function Vec4.trunc(v)
     return Vec4.new(
         v.x - math.fmod(v.x, 1.0),
@@ -679,42 +720,49 @@ end
 
 ---Creates a right facing vector, (1.0, 0.0, 0.0, 0.0).
 ---@return Vec4
+---@nodiscard
 function Vec4.right()
     return Vec4.new(1.0, 0.0, 0.0, 0.0)
 end
 
 ---Creates a forward facing vector, (0.0, 1.0, 0.0, 0.0).
 ---@return Vec4
+---@nodiscard
 function Vec4.forward()
     return Vec4.new(0.0, 1.0, 0.0, 0.0)
 end
 
 ---Creates an up facing vector, (0.0, 0.0, 1.0, 0.0).
 ---@return Vec4
+---@nodiscard
 function Vec4.up()
     return Vec4.new(0.0, 0.0, 1.0, 0.0)
 end
 
 ---Creates a left facing vector, (-1.0, 0.0, 0.0, 0.0).
 ---@return Vec4
+---@nodiscard
 function Vec4.left()
     return Vec4.new(-1.0, 0.0, 0.0, 0.0)
 end
 
 ---Creates a back facing vector, (0.0, -1.0, 0.0, 0.0).
 ---@return Vec4
+---@nodiscard
 function Vec4.back()
     return Vec4.new(0.0, -1.0, 0.0, 0.0)
 end
 
 ---Creates a down facing vector, (0.0, 0.0, -1.0, 0.0).
 ---@return Vec4
+---@nodiscard
 function Vec4.down()
     return Vec4.new(0.0, 0.0, -1.0, 0.0)
 end
 
 ---Creates a vector with all components set to 1.0.
 ---@return Vec4
+---@nodiscard
 function Vec4.one()
     return Vec4.new(1.0, 1.0, 1.0, 1.0)
 end

@@ -25,6 +25,7 @@ setmetatable(Vec3, {
 ---@param y number? y component
 ---@param z number? z component
 ---@return Vec3
+---@nodiscard
 function Vec3.new(x, y, z)
     local inst <const> = setmetatable({}, Vec3)
     inst.x = x or 0.0
@@ -95,6 +96,7 @@ end
 ---Finds a vector's absolute value, component-wise.
 ---@param v Vec3 vector
 ---@return Vec3
+---@nodiscard
 function Vec3.abs(v)
     return Vec3.new(
         math.abs(v.x),
@@ -106,6 +108,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return Vec3
+---@nodiscard
 function Vec3.add(a, b)
     return Vec3.new(
         a.x + b.x,
@@ -116,6 +119,7 @@ end
 ---Evaluates if all vector components are non-zero.
 ---@param v Vec3 vector
 ---@return boolean
+---@nodiscard
 function Vec3.all(v)
     return v.x ~= 0.0
         and v.y ~= 0.0
@@ -125,6 +129,7 @@ end
 ---Evaluates if any vector components are non-zero.
 ---@param v Vec3 vector
 ---@return boolean
+---@nodiscard
 function Vec3.any(v)
     return v.x ~= 0.0
         or v.y ~= 0.0
@@ -136,6 +141,7 @@ end
 ---@param b Vec3 right operand
 ---@param tol number? tolerance
 ---@return boolean
+---@nodiscard
 function Vec3.approx(a, b, tol)
     local eps <const> = tol or 0.000001
     return math.abs(b.x - a.x) <= eps
@@ -146,6 +152,7 @@ end
 ---Finds a vector's azimuth. Defaults to the signed azimuth.
 ---@param v Vec3 vector
 ---@return number
+---@nodiscard
 function Vec3.azimuth(v)
     return Vec3.azimuthSigned(v)
 end
@@ -153,6 +160,7 @@ end
 ---Finds a vector's signed azimuth, in [-pi, pi].
 ---@param v Vec3 vector
 ---@return number
+---@nodiscard
 function Vec3.azimuthSigned(v)
     return math.atan(v.y, v.x)
 end
@@ -160,6 +168,7 @@ end
 ---Finds a vector's unsigned azimuth, in [0.0, tau].
 ---@param v Vec3 vector
 ---@return number
+---@nodiscard
 function Vec3.azimuthUnsigned(v)
     return math.atan(v.y, v.x) % 6.2831853071796
 end
@@ -171,6 +180,7 @@ end
 ---@param ap1 Vec3 anchor point 1
 ---@param step number step
 ---@return Vec3
+---@nodiscard
 function Vec3.bezierPoint(ap0, cp0, cp1, ap1, step)
     local t <const> = step or 0.5
     if t <= 0.0 then
@@ -204,6 +214,7 @@ end
 ---@param elm Vec3 vector
 ---@param compare? fun(a: Vec3, b: Vec3): boolean comparator
 ---@return integer
+---@nodiscard
 function Vec3.bisectRight(arr, elm, compare)
     local low = 0
     local high = #arr
@@ -224,6 +235,7 @@ end
 ---Finds the ceiling of the vector.
 ---@param v Vec3 vector
 ---@return Vec3
+---@nodiscard
 function Vec3.ceil(v)
     return Vec3.new(
         math.ceil(v.x),
@@ -236,6 +248,7 @@ end
 ---@param a Vec3 left comparisand
 ---@param b Vec3 right comparisand
 ---@return boolean
+---@nodiscard
 function Vec3.comparator(a, b)
     if a.z < b.z then return true end
     if a.z > b.z then return false end
@@ -250,6 +263,7 @@ end
 ---@param a Vec3 magnitude
 ---@param b Vec3 sign
 ---@return Vec3
+---@nodiscard
 function Vec3.copySign(a, b)
     local cx = 0.0
     local axAbs <const> = math.abs(a.x)
@@ -282,6 +296,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return Vec3
+---@nodiscard
 function Vec3.cross(a, b)
     return Vec3.new(
         a.y * b.z - a.z * b.y,
@@ -293,6 +308,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return number
+---@nodiscard
 function Vec3.dist(a, b)
     return Vec3.distEuclidean(a, b)
 end
@@ -302,6 +318,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return number
+---@nodiscard
 function Vec3.distEuclidean(a, b)
     local dx <const> = b.x - a.x
     local dy <const> = b.y - a.y
@@ -313,6 +330,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return number
+---@nodiscard
 function Vec3.distSq(a, b)
     local dx <const> = b.x - a.x
     local dy <const> = b.y - a.y
@@ -324,6 +342,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return Vec3
+---@nodiscard
 function Vec3.div(a, b)
     return Vec3.new(
         b.x ~= 0.0 and a.x / b.x or 0.0,
@@ -335,6 +354,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return number
+---@nodiscard
 function Vec3.dot(a, b)
     return a.x * b.x
         + a.y * b.y
@@ -346,6 +366,7 @@ end
 ---@param a Vec3 left comparisand
 ---@param b Vec3 right comparisand
 ---@return boolean
+---@nodiscard
 function Vec3.equals(a, b)
     return rawequal(a, b)
         or Vec3.equalsValue(a, b)
@@ -355,6 +376,7 @@ end
 ---@param a Vec3 left comparisand
 ---@param b Vec3 right comparisand
 ---@return boolean
+---@nodiscard
 function Vec3.equalsValue(a, b)
     return a.z == b.z
         and a.y == b.y
@@ -364,6 +386,7 @@ end
 ---Finds the floor of the vector.
 ---@param v Vec3 vector
 ---@return Vec3
+---@nodiscard
 function Vec3.floor(v)
     return Vec3.new(
         math.floor(v.x),
@@ -375,6 +398,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return Vec3
+---@nodiscard
 function Vec3.floorDiv(a, b)
     return Vec3.new(
         b.x ~= 0.0 and a.x // b.x or 0.0,
@@ -386,6 +410,7 @@ end
 ---each component from itself, not the floor, unlike in GLSL.
 ---@param v Vec3 vector
 ---@return Vec3
+---@nodiscard
 function Vec3.fract(v)
     return Vec3.new(
         math.fmod(v.x, 1.0),
@@ -400,6 +425,7 @@ end
 ---@param inclination number inclination, pitch, phi
 ---@param radius number? radius, rho
 ---@return Vec3
+---@nodiscard
 function Vec3.fromSpherical(azimuth, inclination, radius)
     local a <const> = azimuth or 0.0
     local i <const> = inclination or 0.0
@@ -417,6 +443,7 @@ end
 ---@param sinIncl number inclination sine
 ---@param radius number radius
 ---@return Vec3
+---@nodiscard
 function Vec3.fromSphericalInternal(
     cosAzim, sinAzim,
     cosIncl, sinIncl,
@@ -436,6 +463,7 @@ end
 ---@param lb Vec3 lower bound
 ---@param ub Vec3 upper bound
 ---@return Vec3[]
+---@nodiscard
 function Vec3.gridCartesian(cols, rows, layers, lb, ub)
     local ubVrf <const> = ub or Vec3.new(1.0, 1.0, 1.0)
     local lbVrf <const> = lb or Vec3.new(-1.0, -1.0, -1.0)
@@ -488,6 +516,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return Vec3
+---@nodiscard
 function Vec3.hadamard(a, b)
     return Vec3.new(
         a.x * b.x,
@@ -498,6 +527,7 @@ end
 ---Finds an integer hash code for a vector.
 ---@param v Vec3 vector
 ---@return integer
+---@nodiscard
 function Vec3.hashCode(v)
     local xBits <const> = string.unpack("i4", string.pack("f", v.x))
     local yBits <const> = string.unpack("i4", string.pack("f", v.y))
@@ -508,6 +538,7 @@ end
 ---Finds the vector's inclination. Defaults to signed inclination.
 ---@param v Vec3 vector
 ---@return number
+---@nodiscard
 function Vec3.inclination(v)
     return Vec3.inclinationSigned(v)
 end
@@ -515,6 +546,7 @@ end
 ---Finds the vector's signed inclination.
 ---@param v Vec3 vector
 ---@return number
+---@nodiscard
 function Vec3.inclinationSigned(v)
     return 1.5707963267949 - Vec3.inclinationUnsigned(v)
 end
@@ -522,6 +554,7 @@ end
 ---Finds the vector's unsigned inclination.
 ---@param v Vec3 vector
 ---@return number
+---@nodiscard
 function Vec3.inclinationUnsigned(v)
     local mSq <const> = v.x * v.x + v.y * v.y + v.z * v.z
     if mSq > 0.0 then
@@ -551,6 +584,7 @@ end
 ---@param edge1 Vec3 right edge
 ---@param x Vec3 factor
 ---@return Vec3
+---@nodiscard
 function Vec3.linearstep(edge0, edge1, x)
     local cx = 0.0
     local xDenom <const> = edge1.x - edge0.x
@@ -579,6 +613,7 @@ end
 ---Finds a vector's magnitude, or length.
 ---@param v Vec3 vector
 ---@return number
+---@nodiscard
 function Vec3.mag(v)
     return math.sqrt(
         v.x * v.x
@@ -589,6 +624,7 @@ end
 ---Finds a vector's magnitude squared.
 ---@param v Vec3 vector
 ---@return number
+---@nodiscard
 function Vec3.magSq(v)
     return v.x * v.x
         + v.y * v.y
@@ -599,6 +635,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return Vec3
+---@nodiscard
 function Vec3.max(a, b)
     return Vec3.new(
         math.max(a.x, b.x),
@@ -610,6 +647,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return Vec3
+---@nodiscard
 function Vec3.min(a, b)
     return Vec3.new(
         math.min(a.x, b.x),
@@ -622,6 +660,7 @@ end
 ---@param b Vec3 destination
 ---@param t Vec3|number step
 ---@return Vec3
+---@nodiscard
 function Vec3.mix(a, b, t)
     if type(t) == "number" then
         return Vec3.mixNum(a, b, t)
@@ -634,6 +673,7 @@ end
 ---@param b Vec3 destination
 ---@param t number? step
 ---@return Vec3
+---@nodiscard
 function Vec3.mixNum(a, b, t)
     local v <const> = t or 0.5
     local u <const> = 1.0 - v
@@ -649,6 +689,7 @@ end
 ---@param b Vec3 destination
 ---@param t Vec3 step
 ---@return Vec3
+---@nodiscard
 function Vec3.mixVec3(a, b, t)
     return Vec3.new(
         (1.0 - t.x) * a.x + t.x * b.x,
@@ -660,6 +701,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return Vec3
+---@nodiscard
 function Vec3.mod(a, b)
     return Vec3.new(
         b.x ~= 0.0 and a.x % b.x or a.x,
@@ -670,6 +712,7 @@ end
 ---Negates a vector.
 ---@param v Vec3 vector
 ---@return Vec3
+---@nodiscard
 function Vec3.negate(v)
     return Vec3.new(-v.x, -v.y, -v.z)
 end
@@ -677,6 +720,7 @@ end
 ---Evaluates if all vector components are zero.
 ---@param v Vec3 vector
 ---@return boolean
+---@nodiscard
 function Vec3.none(v)
     return v.x == 0.0
         and v.y == 0.0
@@ -686,6 +730,7 @@ end
 ---Divides a vector by its magnitude, such that it lies on the unit circle.
 ---@param v Vec3 vector
 ---@return Vec3
+---@nodiscard
 function Vec3.normalize(v)
     local mSq <const> = v.x * v.x + v.y * v.y + v.z * v.z
     if mSq > 0.0 then
@@ -702,6 +747,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return Vec3
+---@nodiscard
 function Vec3.pow(a, b)
     return Vec3.new(
         a.x ^ b.x,
@@ -714,6 +760,7 @@ end
 ---@param lb Vec3? lower bound
 ---@param ub Vec3? upper bound
 ---@return Vec3
+---@nodiscard
 function Vec3.randomCartesian(lb, ub)
     local lVrf <const> = lb or Vec3.new(-1.0, -1.0, -1.0)
     local uVrf <const> = ub or Vec3.new(1.0, 1.0, 1.0)
@@ -725,6 +772,7 @@ end
 ---@param lb Vec3 lower bound
 ---@param ub Vec3 upper bound
 ---@return Vec3
+---@nodiscard
 function Vec3.randomCartesianInternal(lb, ub)
     local rx <const> = math.random()
     local ry <const> = math.random()
@@ -742,6 +790,7 @@ end
 ---@param radians number angle
 ---@param axis Vec3 rotation axis
 ---@return Vec3
+---@nodiscard
 function Vec3.rotate(a, radians, axis)
     if axis and Vec3.any(axis) then
         return Vec3.rotateInternal(a,
@@ -755,6 +804,7 @@ end
 ---@param a Vec3 vector
 ---@param radians number angle
 ---@return Vec3
+---@nodiscard
 function Vec3.rotateX(a, radians)
     return Vec3.rotateXInternal(a,
         math.cos(radians),
@@ -765,6 +815,7 @@ end
 ---@param a Vec3 vector
 ---@param radians number angle
 ---@return Vec3
+---@nodiscard
 function Vec3.rotateY(a, radians)
     return Vec3.rotateYInternal(a,
         math.cos(radians),
@@ -775,6 +826,7 @@ end
 ---@param a Vec3 vector
 ---@param radians number angle
 ---@return Vec3
+---@nodiscard
 function Vec3.rotateZ(a, radians)
     return Vec3.rotateZInternal(a,
         math.cos(radians),
@@ -788,6 +840,7 @@ end
 ---@param sina number sine of the angle
 ---@param axis Vec3 axis
 ---@return Vec3
+---@nodiscard
 function Vec3.rotateInternal(a, cosa, sina, axis)
     local xAxis <const> = axis.x
     local yAxis <const> = axis.y
@@ -822,6 +875,7 @@ end
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return Vec3
+---@nodiscard
 function Vec3.rotateXInternal(a, cosa, sina)
     return Vec3.new(
         a.x,
@@ -835,6 +889,7 @@ end
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return Vec3
+---@nodiscard
 function Vec3.rotateYInternal(a, cosa, sina)
     return Vec3.new(
         cosa * a.x + sina * a.z,
@@ -848,6 +903,7 @@ end
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return Vec3
+---@nodiscard
 function Vec3.rotateZInternal(a, cosa, sina)
     return Vec3.new(
         cosa * a.x - sina * a.y,
@@ -858,6 +914,7 @@ end
 ---Rounds the vector by sign and fraction.
 ---@param v Vec3 vector
 ---@return Vec3
+---@nodiscard
 function Vec3.round(v)
     local ix, fx <const> = math.modf(v.x)
     if ix <= 0 and fx <= -0.5 then
@@ -887,6 +944,7 @@ end
 ---@param a Vec3 left operand
 ---@param b number right operand
 ---@return Vec3
+---@nodiscard
 function Vec3.scale(a, b)
     return Vec3.new(
         a.x * b,
@@ -897,6 +955,7 @@ end
 ---Finds the sign of a vector by component.
 ---@param v Vec3 left operand
 ---@return Vec3
+---@nodiscard
 function Vec3.sign(v)
     return Vec3.new(
         v.x < -0.0 and -1.0 or v.x > 0.0 and 1.0 or 0.0,
@@ -909,6 +968,7 @@ end
 ---@param edge1 Vec3 right edge
 ---@param x Vec3 factor
 ---@return Vec3
+---@nodiscard
 function Vec3.smoothstep(edge0, edge1, x)
     local cx = 0.0
     local xDenom <const> = edge1.x - edge0.x
@@ -941,6 +1001,7 @@ end
 ---@param edge Vec3 edge
 ---@param x Vec3 factor
 ---@return Vec3
+---@nodiscard
 function Vec3.step(edge, x)
     return Vec3.new(
         x.x < edge.x and 0.0 or 1.0,
@@ -952,6 +1013,7 @@ end
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
 ---@return Vec3
+---@nodiscard
 function Vec3.sub(a, b)
     return Vec3.new(
         a.x - b.x,
@@ -962,6 +1024,7 @@ end
 ---Returns a JSON string of a vector.
 ---@param v Vec3 vector
 ---@return string
+---@nodiscard
 function Vec3.toJson(v)
     return string.format(
         "{\"x\":%.4f,\"y\":%.4f,\"z\":%.4f}",
@@ -972,6 +1035,7 @@ end
 ---'azimuth' and 'inclination'.
 ---@param v Vec3 vector
 ---@return { radius: number, azimuth: number, inclination: number }
+---@nodiscard
 function Vec3.toSpherical(v)
     return {
         radius = Vec3.mag(v),
@@ -983,6 +1047,7 @@ end
 ---Truncates a vector's components.
 ---@param v Vec3 vector
 ---@return Vec3
+---@nodiscard
 function Vec3.trunc(v)
     return Vec3.new(
         v.x - math.fmod(v.x, 1.0),
@@ -992,42 +1057,49 @@ end
 
 ---Creates a right facing vector, (1.0, 0.0, 0.0).
 ---@return Vec3
+---@nodiscard
 function Vec3.right()
     return Vec3.new(1.0, 0.0, 0.0)
 end
 
 ---Creates a forward facing vector, (0.0, 1.0, 0.0).
 ---@return Vec3
+---@nodiscard
 function Vec3.forward()
     return Vec3.new(0.0, 1.0, 0.0)
 end
 
 ---Creates an up facing vector, (0.0, 0.0, 1.0).
 ---@return Vec3
+---@nodiscard
 function Vec3.up()
     return Vec3.new(0.0, 0.0, 1.0)
 end
 
 ---Creates a left facing vector, (-1.0, 0.0, 0.0).
 ---@return Vec3
+---@nodiscard
 function Vec3.left()
     return Vec3.new(-1.0, 0.0, 0.0)
 end
 
 ---Creates a back facing vector, (0.0, -1.0, 0.0).
 ---@return Vec3
+---@nodiscard
 function Vec3.back()
     return Vec3.new(0.0, -1.0, 0.0)
 end
 
 ---Creates a down facing vector, (0.0, 0.0, -1.0).
 ---@return Vec3
+---@nodiscard
 function Vec3.down()
     return Vec3.new(0.0, 0.0, -1.0)
 end
 
 ---Creates a vector with all components set to 1.0.
 ---@return Vec3
+---@nodiscard
 function Vec3.one()
     return Vec3.new(1.0, 1.0, 1.0)
 end

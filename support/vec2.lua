@@ -23,6 +23,7 @@ setmetatable(Vec2, {
 ---@param x number? x component
 ---@param y number? y component
 ---@return Vec2
+---@nodiscard
 function Vec2.new(x, y)
     local inst <const> = setmetatable({}, Vec2)
     inst.x = x or 0.0
@@ -92,6 +93,7 @@ end
 ---Finds a vector's absolute value, component-wise.
 ---@param v Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Vec2.abs(v)
     return Vec2.new(
         math.abs(v.x),
@@ -102,6 +104,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return Vec2
+---@nodiscard
 function Vec2.add(a, b)
     return Vec2.new(
         a.x + b.x,
@@ -111,6 +114,7 @@ end
 ---Evaluates if all vector components are non-zero.
 ---@param v Vec2 vector
 ---@return boolean
+---@nodiscard
 function Vec2.all(v)
     return v.x ~= 0.0 and v.y ~= 0.0
 end
@@ -118,6 +122,7 @@ end
 ---Evaluates if any vector components are non-zero.
 ---@param v Vec2 vector
 ---@return boolean
+---@nodiscard
 function Vec2.any(v)
     return v.x ~= 0.0 or v.y ~= 0.0
 end
@@ -127,6 +132,7 @@ end
 ---@param b Vec2 right operand
 ---@param tol number? tolerance
 ---@return boolean
+---@nodiscard
 function Vec2.approx(a, b, tol)
     local eps <const> = tol or 0.000001
     return math.abs(b.x - a.x) <= eps
@@ -140,6 +146,7 @@ end
 ---@param ap1 Vec2 anchor point 1
 ---@param step number step
 ---@return Vec2
+---@nodiscard
 function Vec2.bezierPoint(ap0, cp0, cp1, ap1, step)
     local t <const> = step or 0.5
     if t <= 0.0 then return Vec2.new(ap0.x, ap0.y) end
@@ -163,6 +170,7 @@ end
 ---Finds the ceiling of the vector.
 ---@param v Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Vec2.ceil(v)
     return Vec2.new(
         math.ceil(v.x),
@@ -174,6 +182,7 @@ end
 ---@param a Vec2 left comparisand
 ---@param b Vec2 right comparisand
 ---@return boolean
+---@nodiscard
 function Vec2.comparator(a, b)
     if a.y < b.y then return true end
     if a.y > b.y then return false end
@@ -186,6 +195,7 @@ end
 ---@param a Vec2 magnitude
 ---@param b Vec2 sign
 ---@return Vec2
+---@nodiscard
 function Vec2.copySign(a, b)
     local cx = 0.0
     local axAbs <const> = math.abs(a.x)
@@ -211,6 +221,7 @@ end
 ---@param a Vec2
 ---@param b Vec2
 ---@return number
+---@nodiscard
 function Vec2.cross(a, b)
     return a.x * b.y - a.y * b.x
 end
@@ -219,6 +230,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return number
+---@nodiscard
 function Vec2.dist(a, b)
     return Vec2.distEuclidean(a, b)
 end
@@ -228,6 +240,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return number
+---@nodiscard
 function Vec2.distEuclidean(a, b)
     local dx <const> = b.x - a.x
     local dy <const> = b.y - a.y
@@ -238,6 +251,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return number
+---@nodiscard
 function Vec2.distSq(a, b)
     local dx <const> = b.x - a.x
     local dy <const> = b.y - a.y
@@ -248,6 +262,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return Vec2
+---@nodiscard
 function Vec2.div(a, b)
     return Vec2.new(
         b.x ~= 0.0 and a.x / b.x or 0.0,
@@ -258,6 +273,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return number
+---@nodiscard
 function Vec2.dot(a, b)
     return a.x * b.x + a.y * b.y
 end
@@ -267,6 +283,7 @@ end
 ---@param a Vec2 left comparisand
 ---@param b Vec2 right comparisand
 ---@return boolean
+---@nodiscard
 function Vec2.equals(a, b)
     return rawequal(a, b)
         or Vec2.equalsValue(a, b)
@@ -276,6 +293,7 @@ end
 ---@param a Vec2 left comparisand
 ---@param b Vec2 right comparisand
 ---@return boolean
+---@nodiscard
 function Vec2.equalsValue(a, b)
     return a.y == b.y
         and a.x == b.x
@@ -284,6 +302,7 @@ end
 ---Finds the floor of the vector.
 ---@param v Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Vec2.floor(v)
     return Vec2.new(
         math.floor(v.x),
@@ -294,6 +313,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return Vec2
+---@nodiscard
 function Vec2.floorDiv(a, b)
     return Vec2.new(
         b.x ~= 0.0 and a.x // b.x or 0.0,
@@ -304,6 +324,7 @@ end
 ---each component from itself, not the floor, unlike in GLSL.
 ---@param v Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Vec2.fract(v)
     return Vec2.new(
         math.fmod(v.x, 1.0),
@@ -315,6 +336,7 @@ end
 ---@param heading number heading, theta
 ---@param radius number? radius, rho
 ---@return Vec2
+---@nodiscard
 function Vec2.fromPolar(heading, radius)
     local r <const> = radius or 1.0
     return Vec2.new(
@@ -326,6 +348,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return Vec2
+---@nodiscard
 function Vec2.hadamard(a, b)
     return Vec2.new(
         a.x * b.x,
@@ -335,6 +358,7 @@ end
 ---Finds an integer hash code for a vector.
 ---@param v Vec2 vector
 ---@return integer
+---@nodiscard
 function Vec2.hashCode(v)
     -- https://stackoverflow.com/questions/300840/force-php-integer-overflow
     -- https://readafterwrite.wordpress.com/2017/03/23/floating-point-keys-in-lua/
@@ -346,6 +370,7 @@ end
 ---Finds a vector's heading. Defaults to the signed heading.
 ---@param v Vec2 vector
 ---@return number
+---@nodiscard
 function Vec2.heading(v)
     return Vec2.headingSigned(v)
 end
@@ -353,6 +378,7 @@ end
 ---Finds a vector's signed heading, in [-pi, pi].
 ---@param v Vec2 vector
 ---@return number
+---@nodiscard
 function Vec2.headingSigned(v)
     return math.atan(v.y, v.x)
 end
@@ -360,6 +386,7 @@ end
 ---Finds a vector's unsigned heading, in [0.0, tau].
 ---@param v Vec2 vector
 ---@return number
+---@nodiscard
 function Vec2.headingUnsigned(v)
     return math.atan(v.y, v.x) % 6.2831853071796
 end
@@ -369,6 +396,7 @@ end
 ---@param edge1 Vec2 right edge
 ---@param x Vec2 factor
 ---@return Vec2
+---@nodiscard
 function Vec2.linearstep(edge0, edge1, x)
     local cx = 0.0
     local xDenom <const> = edge1.x - edge0.x
@@ -390,6 +418,7 @@ end
 ---Finds a vector's magnitude, or length.
 ---@param v Vec2 vector
 ---@return number
+---@nodiscard
 function Vec2.mag(v)
     return math.sqrt(v.x * v.x + v.y * v.y)
 end
@@ -397,6 +426,7 @@ end
 ---Finds a vector's magnitude squared.
 ---@param v Vec2 vector
 ---@return number
+---@nodiscard
 function Vec2.magSq(v)
     return v.x * v.x + v.y * v.y
 end
@@ -405,6 +435,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return Vec2
+---@nodiscard
 function Vec2.max(a, b)
     return Vec2.new(
         math.max(a.x, b.x),
@@ -415,6 +446,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return Vec2
+---@nodiscard
 function Vec2.min(a, b)
     return Vec2.new(
         math.min(a.x, b.x),
@@ -426,6 +458,7 @@ end
 ---@param b Vec2 destination
 ---@param t Vec2|number step
 ---@return Vec2
+---@nodiscard
 function Vec2.mix(a, b, t)
     if type(t) == "number" then
         return Vec2.mixNum(a, b, t)
@@ -438,6 +471,7 @@ end
 ---@param b Vec2 destination
 ---@param t number? step
 ---@return Vec2
+---@nodiscard
 function Vec2.mixNum(a, b, t)
     local v <const> = t or 0.5
     local u <const> = 1.0 - v
@@ -452,6 +486,7 @@ end
 ---@param b Vec2 destination
 ---@param t Vec2 step
 ---@return Vec2
+---@nodiscard
 function Vec2.mixVec2(a, b, t)
     return Vec2.new(
         (1.0 - t.x) * a.x + t.x * b.x,
@@ -462,6 +497,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return Vec2
+---@nodiscard
 function Vec2.mod(a, b)
     return Vec2.new(
         b.x ~= 0.0 and a.x % b.x or a.x,
@@ -471,6 +507,7 @@ end
 ---Negates a vector.
 ---@param v Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Vec2.negate(v)
     return Vec2.new(-v.x, -v.y)
 end
@@ -478,6 +515,7 @@ end
 ---Evaluates if all vector components are zero.
 ---@param v Vec2 vector
 ---@return boolean
+---@nodiscard
 function Vec2.none(v)
     return v.x == 0.0 and v.y == 0.0
 end
@@ -485,6 +523,7 @@ end
 ---Divides a vector by its magnitude, such that it lies on the unit circle.
 ---@param v Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Vec2.normalize(v)
     local mSq <const> = v.x * v.x + v.y * v.y
     if mSq > 0.0 then
@@ -500,6 +539,7 @@ end
 ---direction.
 ---@param v Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Vec2.perpendicular(v)
     return Vec2.perpendicularCcw(v)
 end
@@ -507,6 +547,7 @@ end
 ---Finds the counter-clockwise perpendicular to a vector.
 ---@param v Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Vec2.perpendicularCcw(v)
     return Vec2.new(-v.y, v.x)
 end
@@ -514,6 +555,7 @@ end
 ---Finds the clockwise perpendicular to a vector.
 ---@param v Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Vec2.perpendicularCw(v)
     return Vec2.new(v.y, -v.x)
 end
@@ -522,6 +564,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return Vec2
+---@nodiscard
 function Vec2.pow(a, b)
     return Vec2.new(
         a.x ^ b.x,
@@ -533,6 +576,7 @@ end
 ---@param lb Vec2? lower bound
 ---@param ub Vec2? upper bound
 ---@return Vec2
+---@nodiscard
 function Vec2.randomCartesian(lb, ub)
     local lVrf <const> = lb or Vec2.new(-1.0, -1.0)
     local uVrf <const> = ub or Vec2.new(1.0, 1.0)
@@ -544,6 +588,7 @@ end
 ---@param lb Vec2 lower bound
 ---@param ub Vec2 upper bound
 ---@return Vec2
+---@nodiscard
 function Vec2.randomCartesianInternal(lb, ub)
     local rx <const> = math.random()
     local ry <const> = math.random()
@@ -557,6 +602,7 @@ end
 ---@param a Vec2 vector
 ---@param radians number angle
 ---@return Vec2
+---@nodiscard
 function Vec2.rotateZ(a, radians)
     return Vec2.rotateZInternal(a,
         math.cos(radians),
@@ -569,6 +615,7 @@ end
 ---@param cosa number cosine of the angle
 ---@param sina number sine of the angle
 ---@return Vec2
+---@nodiscard
 function Vec2.rotateZInternal(a, cosa, sina)
     return Vec2.new(
         cosa * a.x - sina * a.y,
@@ -578,6 +625,7 @@ end
 ---Rounds a vector according to its sign.
 ---@param v Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Vec2.round(v)
     local ix, fx <const> = math.modf(v.x)
     if ix <= 0 and fx <= -0.5 then
@@ -600,6 +648,7 @@ end
 ---@param a Vec2 left operand
 ---@param b number right operand
 ---@return Vec2
+---@nodiscard
 function Vec2.scale(a, b)
     return Vec2.new(a.x * b, a.y * b)
 end
@@ -607,6 +656,7 @@ end
 ---Finds the sign of a vector by component.
 ---@param v Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Vec2.sign(v)
     return Vec2.new(
         v.x < -0.0 and -1.0 or v.x > 0.0 and 1.0 or 0.0,
@@ -618,6 +668,7 @@ end
 ---@param edge1 Vec2 right edge
 ---@param x Vec2 factor
 ---@return Vec2
+---@nodiscard
 function Vec2.smoothstep(edge0, edge1, x)
     local cx = 0.0
     local xDenom <const> = edge1.x - edge0.x
@@ -642,6 +693,7 @@ end
 ---@param edge Vec2 edge
 ---@param x Vec2 factor
 ---@return Vec2
+---@nodiscard
 function Vec2.step(edge, x)
     return Vec2.new(
         x.x < edge.x and 0.0 or 1.0,
@@ -652,6 +704,7 @@ end
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
 ---@return Vec2
+---@nodiscard
 function Vec2.sub(a, b)
     return Vec2.new(
         a.x - b.x,
@@ -661,6 +714,7 @@ end
 ---Returns a JSON string of a vector.
 ---@param v Vec2 vector
 ---@return string
+---@nodiscard
 function Vec2.toJson(v)
     return string.format(
         "{\"x\":%.4f,\"y\":%.4f}",
@@ -671,6 +725,7 @@ end
 ---'heading'.
 ---@param v Vec2 vector
 ---@return { radius: number, heading: number }
+---@nodiscard
 function Vec2.toPolar(v)
     return {
         radius = Vec2.mag(v),
@@ -681,6 +736,7 @@ end
 ---Truncates a vector's components.
 ---@param v Vec2 vector
 ---@return Vec2
+---@nodiscard
 function Vec2.trunc(v)
     return Vec2.new(
         v.x - math.fmod(v.x, 1.0),
@@ -689,30 +745,35 @@ end
 
 ---Creates a right facing vector, (1.0, 0.0).
 ---@return Vec2
+---@nodiscard
 function Vec2.right()
     return Vec2.new(1.0, 0.0)
 end
 
 ---Creates a forward facing vector, (0.0, 1.0).
 ---@return Vec2
+---@nodiscard
 function Vec2.forward()
     return Vec2.new(0.0, 1.0)
 end
 
 ---Creates a left facing vector, (-1.0, 0.0).
 ---@return Vec2
+---@nodiscard
 function Vec2.left()
     return Vec2.new(-1.0, 0.0)
 end
 
 ---Creates a back facing vector, (0.0, -1.0).
 ---@return Vec2
+---@nodiscard
 function Vec2.back()
     return Vec2.new(0.0, -1.0)
 end
 
 ---Creates a vector with all components set to 1.0.
 ---@return Vec2
+---@nodiscard
 function Vec2.one()
     return Vec2.new(1.0, 1.0)
 end

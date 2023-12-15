@@ -48,6 +48,7 @@ setmetatable(Mat4, {
 ---@param m32 number row 3, col 2 up w
 ---@param m33 number row 3, col 3 translation w
 ---@return Mat4
+---@nodiscard
 function Mat4.new(
     m00, m01, m02, m03,
     m10, m11, m12, m13,
@@ -110,6 +111,7 @@ end
 ---@param a Mat4 left operand
 ---@param b Mat4 right operand
 ---@return Mat4
+---@nodiscard
 function Mat4.add(a, b)
     return Mat4.new(
         a.m00 + b.m00, a.m01 + b.m01, a.m02 + b.m02, a.m03 + b.m03,
@@ -132,6 +134,7 @@ end
 ---@param zRef number reference z
 ---@param handedness string? handedness
 ---@return Mat4
+---@nodiscard
 function Mat4.camera(
     xLoc, yLoc, zLoc,
     xFocus, yFocus, zFocus,
@@ -257,6 +260,7 @@ end
 ---@param zLoc number location z
 ---@param handedness string? handedness
 ---@return Mat4
+---@nodiscard
 function Mat4.cameraIsometric(xLoc, yLoc, zLoc, handedness)
     local hVal = "RIGHT"
     local xVal = 0.0
@@ -302,6 +306,7 @@ end
 ---@param zLoc number location z
 ---@param handedness string? handedness
 ---@return Mat4
+---@nodiscard
 function Mat4.cameraDimetric(xLoc, yLoc, zLoc, handedness)
     local hVal = "RIGHT"
     local xVal = 0.0
@@ -352,6 +357,7 @@ end
 ---@param a Mat4 left operand
 ---@param b Mat4 right operand
 ---@return Mat4
+---@nodiscard
 function Mat4.div(a, b)
     return Mat4.mul(a, Mat4.inverse(b))
 end
@@ -359,6 +365,7 @@ end
 ---Finds the matrix determinant.
 ---@param m Mat4 matrix
 ---@return number
+---@nodiscard
 function Mat4.determinant(m)
     return m.m00 * (m.m11 * m.m22 * m.m33 +
         m.m12 * m.m23 * m.m31 +
@@ -394,6 +401,7 @@ end
 ---@param ay number axis y
 ---@param az number axis z
 ---@return Mat4
+---@nodiscard
 function Mat4.fromRotation(radians, ax, ay, az)
     local xv <const> = ax or 0.0
     local yv <const> = ay or 0.0
@@ -419,6 +427,7 @@ end
 ---@param ay number axis y
 ---@param az number axis z
 ---@return Mat4
+---@nodiscard
 function Mat4.fromRotInternal(cosa, sina, ax, ay, az)
     local d <const> = 1.0 - cosa
     local x <const> = ax * d
@@ -441,6 +450,7 @@ end
 ---@param depth number depth
 ---@param height number height
 ---@return Mat4
+---@nodiscard
 function Mat4.fromScale(width, depth, height)
     local w = 1.0
     if width and width ~= 0.0 then
@@ -469,6 +479,7 @@ end
 ---@param y number translation y
 ---@param z number translation z
 ---@return Mat4
+---@nodiscard
 function Mat4.fromTranslation(x, y, z)
     local zv <const> = z or 0.0
     return Mat4.new(
@@ -481,6 +492,7 @@ end
 ---Finds the matrix inverse. Returns the identity if not possible.
 ---@param a Mat4 matrix
 ---@return Mat4
+---@nodiscard
 function Mat4.inverse(a)
     local b00 <const> = a.m00 * a.m11 - a.m01 * a.m10
     local b01 <const> = a.m00 * a.m12 - a.m02 * a.m10
@@ -526,6 +538,7 @@ end
 ---@param a Mat4 left operand
 ---@param b Mat4 right operand
 ---@return Mat4
+---@nodiscard
 function Mat4.mul(a, b)
     return Mat4.new(
         a.m00 * b.m00 + a.m01 * b.m10 + a.m02 * b.m20 + a.m03 * b.m30,
@@ -549,6 +562,7 @@ end
 ---Negates a matrix.
 ---@param m Mat4 matrix
 ---@return Mat4
+---@nodiscard
 function Mat4.negate(m)
     return Mat4.new(
         -m.m00, -m.m01, -m.m02, -m.m03,
@@ -565,6 +579,7 @@ end
 ---@param near number near clip plane
 ---@param far number far clip plane
 ---@return Mat4
+---@nodiscard
 function Mat4.orthographic(left, right, bottom, top, near, far)
     local nVal = 0.001
     if near and near ~= 0.0 then nVal = near end
@@ -597,6 +612,7 @@ end
 ---@param near number near clip plane
 ---@param far number far clip plane
 ---@return Mat4
+---@nodiscard
 function Mat4.perspective(fov, aspect, near, far)
     local fovVal = 0.86602540378444
     if fov and fov ~= 0.0 then fovVal = fov end
@@ -628,6 +644,7 @@ end
 ---@param a Mat4 left operand
 ---@param b Mat4 right operand
 ---@return Mat4
+---@nodiscard
 function Mat4.sub(a, b)
     return Mat4.new(
         a.m00 - b.m00, a.m01 - b.m01, a.m02 - b.m02, a.m03 - b.m03,
@@ -639,6 +656,7 @@ end
 ---Returns a JSON string of a matrix.
 ---@param a Mat4 matrix
 ---@return string
+---@nodiscard
 function Mat4.toJson(a)
     local m0 <const> = string.format(
         "{\"m00\":%.4f,\"m01\":%.4f,\"m02\":%.4f,\"m03\":%.4f,",
@@ -659,6 +677,7 @@ end
 ---separated by a line break, '\n', and each column is separated by 3 spaces.
 ---@param a Mat4 matrix
 ---@return string
+---@nodiscard
 function Mat4.toStringCol(a)
     local m0 <const> = string.format(
         "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
@@ -677,6 +696,7 @@ end
 
 ---Creates the identity matrix.
 ---@return Mat4
+---@nodiscard
 function Mat4.identity()
     return Mat4.new(
         1.0, 0.0, 0.0, 0.0,
