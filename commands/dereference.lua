@@ -20,9 +20,10 @@ app.transaction("Dereference Layer", function()
     derefLayer.data = refLayer.data
     derefLayer.opacity = refLayer.opacity
     derefLayer.parent = refLayer.parent
+    derefLayer.stackIndex = refLayer.stackIndex
 
-    derefLayer.isEditable = refLayer.isEditable
     derefLayer.isContinuous = refLayer.isContinuous
+    derefLayer.isEditable = refLayer.isEditable
     derefLayer.isVisible = refLayer.isVisible
 
     local frames <const> = sprite.frames

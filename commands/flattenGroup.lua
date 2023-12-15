@@ -42,13 +42,20 @@ app.transaction("Flatten Group", function()
         end
     end
 
-    flattened.name = activeLayer.name
+    local layerName = "Flattened"
+    if activeLayer.name and #activeLayer.name > 0 then
+        layerName = Utilities.validateFilename(activeLayer.name)
+    end
+    flattened.name = layerName
+
     flattened.color = activeLayer.color
     flattened.data = activeLayer.data
-    flattened.isVisible = activeLayer.isVisible
-    flattened.isEditable = activeLayer.isEditable
     flattened.parent = activeLayer.parent
     flattened.stackIndex = activeLayer.stackIndex
+
+    flattened.isContinuous = activeLayer.isContinuous
+    flattened.isEditable = activeLayer.isEditable
+    flattened.isVisible = activeLayer.isVisible
 
     activeSprite:deleteLayer(activeLayer)
 end)
