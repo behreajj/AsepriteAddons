@@ -19,6 +19,7 @@ setmetatable(Knot2, {
 ---@param fh Vec2 fore handle
 ---@param rh Vec2 rear handle
 ---@return Knot2
+---@nodiscard
 function Knot2.new(co, fh, rh)
     local inst <const> = setmetatable({}, Knot2)
     inst.co = co or Vec2.new(0.0, 0.0)
@@ -163,6 +164,7 @@ end
 ---@param b Knot2 destination knot
 ---@param step number step
 ---@return Vec2
+---@nodiscard
 function Knot2.bezierPoint(a, b, step)
     return Vec2.bezierPoint(a.co, a.fh, b.rh, b.co, step)
 end
@@ -176,6 +178,7 @@ end
 ---@param xCenter number x center
 ---@param yCenter number y center
 ---@return Knot2
+---@nodiscard
 function Knot2.fromPolarInternal(
     cosa, sina, radius, handleMag, xCenter, yCenter)
     local hmsina <const> = sina * handleMag
@@ -197,6 +200,7 @@ end
 ---Returns a JSON string of a knot.
 ---@param knot Knot2 knot
 ---@return string
+---@nodiscard
 function Knot2.toJson(knot)
     return string.format(
         "{\"co\":%s,\"fh\":%s,\"rh\":%s}",

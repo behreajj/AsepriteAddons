@@ -19,6 +19,7 @@ setmetatable(Glyph, {
 ---@param matrix integer visual matrix
 ---@param drop integer? drop amount
 ---@return Glyph
+---@nodiscard
 function Glyph.new(character, matrix, drop)
     local inst <const> = setmetatable({}, Glyph)
     inst.character = character or ' '
@@ -48,6 +49,7 @@ end
 ---Returns a JSON string of a glyph.
 ---@param g Glyph glyph
 ---@return string
+---@nodiscard
 function Glyph.toJson(g)
     return string.format(
         "{\"character\":\"%s\",\"matrix\":%d,\"drop\":%d}",

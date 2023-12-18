@@ -20,6 +20,7 @@ setmetatable(Curve3, {
 ---@param knots Knot3[] knots
 ---@param name string? name
 ---@return Curve3
+---@nodiscard
 function Curve3.new(cl, knots, name)
     local inst <const> = setmetatable({}, Curve3)
     inst.closedLoop = cl or false
@@ -44,6 +45,7 @@ end
 ---@param yOrigin number? y origin
 ---@param zOrigin number? z origin
 ---@return Curve3
+---@nodiscard
 function Curve3.ellipse(xRadius, yRadius, xOrigin, yOrigin, zOrigin)
     -- Supply default arguments.
     local cz <const> = zOrigin or 0.0
@@ -95,6 +97,7 @@ end
 ---@param curve Curve3 curve
 ---@param step number step
 ---@return Vec3
+---@nodiscard
 function Curve3.eval(curve, step)
     local t <const> = step or 0.5
     local knots <const> = curve.knots
@@ -131,6 +134,7 @@ end
 ---Evaluates a curve at its first knot, returns a copy of the first knot coord.
 ---@param curve Curve3 curve
 ---@return Vec3
+---@nodiscard
 function Curve3.evalFirst(curve)
     local kFirst <const> = curve.knots[1]
     local coFirst <const> = kFirst.co
@@ -143,6 +147,7 @@ end
 ---Evaluates a curve at its last knot, returns a copy of the last knot coord.
 ---@param curve Curve3 curve
 ---@return Vec3
+---@nodiscard
 function Curve3.evalLast(curve)
     local kLast <const> = curve.knots[#curve.knots]
     local coLast <const> = kLast.co
@@ -159,6 +164,7 @@ end
 ---@param tightness number? curve tightness
 ---@param name string? curve name
 ---@return Curve3
+---@nodiscard
 function Curve3.fromCatmull(closedLoop, points, tightness, name)
     local ptsLen = #points
     if ptsLen < 2 then
@@ -285,6 +291,7 @@ end
 ---@param points Vec3[] points array
 ---@param name string? curve name
 ---@return Curve3
+---@nodiscard
 function Curve3.fromPoints(closedLoop, points, name)
     -- If a closed loop has similar start and
     -- stop points, then skip the last point.
@@ -317,6 +324,7 @@ end
 
 ---Adjusts knot handles so as to create a smooth, continuous curve.
 ---@param target Curve3
+---@return Curve3
 function Curve3.smoothHandles(target)
     local knots <const> = target.knots
     local knotCount <const> = #knots
@@ -364,6 +372,7 @@ end
 ---Straightens the fore and rear handles of a curve's knots so they are
 ---collinear with its coordinates.
 ---@param target Curve3
+---@return Curve3
 function Curve3.straightHandles(target)
     local knots <const> = target.knots
     local knotCount <const> = #knots
@@ -400,6 +409,7 @@ end
 ---Returns a JSON string of a curve.
 ---@param c Curve3 curve
 ---@return string
+---@nodiscard
 function Curve3.toJson(c)
     local str = "{\"name\":\""
     str = str .. c.name

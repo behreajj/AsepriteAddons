@@ -151,6 +151,7 @@ end
 ---@param aseColor Color aseprite color
 ---@param flag string out of bounds interpretation
 ---@return Color
+---@nodiscard
 function AseUtilities.aseColorCopy(aseColor, flag)
     if flag == "UNBOUNDED" then
         return Color {
@@ -160,10 +161,6 @@ function AseUtilities.aseColorCopy(aseColor, flag)
             a = aseColor.alpha
         }
     elseif flag == "MODULAR" then
-        -- TODO: Test to see, aseColor.red % 255 would not be the same as using
-        -- rgbaPixel because in the latter there would be overflow into the
-        -- next higher digit? Maybe change the latter to "OVERFLOW" if there's
-        -- a difference?
         return AseUtilities.hexToAseColor(
             AseUtilities.aseColorToHex(aseColor, ColorMode.RGB))
     else
@@ -181,6 +178,7 @@ end
 ---respectively.
 ---@param aseColor Color aseprite color
 ---@return Clr
+---@nodiscard
 function AseUtilities.aseColorToClr(aseColor)
     return Clr.new(
         0.003921568627451 * aseColor.red,
@@ -201,6 +199,7 @@ end
 ---@param clr Color aseprite color
 ---@param clrMode ColorMode color mode
 ---@return integer
+---@nodiscard
 function AseUtilities.aseColorToHex(clr, clrMode)
     if clrMode == ColorMode.RGB then
         return (clr.alpha << 0x18)
@@ -346,6 +345,7 @@ end
 ---@param startIndex integer? start index
 ---@param count integer? sample count
 ---@return integer[]
+---@nodiscard
 function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
     if pal then
         local lenPal <const> = #pal
@@ -380,6 +380,7 @@ end
 ---Converts an array of Aseprite palettes to a table of hex color integers.
 ---@param palettes Palette[] Aseprite palettes
 ---@return integer[]
+---@nodiscard
 function AseUtilities.asePalettesToHexArr(palettes)
     if palettes then
         ---@type integer[]
@@ -423,6 +424,7 @@ end
 ---@param sprite Sprite
 ---@param frame Frame|integer
 ---@return { l: number, a: number, b: number, alpha: number }
+---@nodiscard
 function AseUtilities.averageColor(sprite, frame)
     local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
     local selBounds <const> = sel.bounds
@@ -530,6 +532,7 @@ end
 ---@param sprite Sprite
 ---@param frame Frame|integer
 ---@return Vec3
+---@nodiscard
 function AseUtilities.averageNormal(sprite, frame)
     local sprSpec <const> = sprite.spec
     local colorMode <const> = sprSpec.colorMode
@@ -789,6 +792,7 @@ end
 ---@param ba integer overlay alpha
 ---@return integer cg blend gray
 ---@return integer ca blend alpha
+---@nodiscard
 function AseUtilities.blendGray(ag, aa, bg, ba)
     if ba > 0xfe or aa < 0x01 then return bg, ba end
 
@@ -813,6 +817,7 @@ end
 ---@param b integer overlay color
 ---@param mask integer mask index
 ---@return integer
+---@nodiscard
 function AseUtilities.blendIndices(a, b, mask)
     if b ~= mask then return b end
     if a ~= mask then return a end
@@ -834,6 +839,7 @@ end
 ---@return integer cg blend green
 ---@return integer cb blend blue
 ---@return integer ca blend alpha
+---@nodiscard
 function AseUtilities.blendRgba(
     ar, ag, ab, aa,
     br, bg, bb, ba)
@@ -879,6 +885,7 @@ end
 ---visually indistinguishable from - and confused with - an alpha mask.
 ---@param clr Clr clr
 ---@return Color
+---@nodiscard
 function AseUtilities.clrToAseColor(clr)
     local r <const> = math.min(math.max(clr.r, 0.0), 1.0)
     local g <const> = math.min(math.max(clr.g, 0.0), 1.0)
@@ -1170,6 +1177,7 @@ end
 ---@param colorSpace? ColorSpace color space
 ---@param alphaIndex? integer transparent color
 ---@return ImageSpec
+---@nodiscard
 function AseUtilities.createSpec(
     width, height, colorMode, colorSpace, alphaIndex)
     local tcVerif <const> = alphaIndex or 0
@@ -1213,6 +1221,7 @@ end
 ---@param spec ImageSpec specification
 ---@param fileName? string file name
 ---@return Sprite
+---@nodiscard
 function AseUtilities.createSprite(spec, fileName)
     local sprite <const> = Sprite(spec)
     if fileName then sprite.filename = fileName end
@@ -1291,6 +1300,7 @@ end
 ---@param colorSpace ColorSpace color space
 ---@param nonUniform boolean non uniform dimensions
 ---@return Image
+---@nodiscard
 function AseUtilities.expandImageToPow2(
     img, colorMode, alphaMask, colorSpace, nonUniform)
     local wOrig <const> = img.width
@@ -1342,6 +1352,7 @@ end
 ---@param includeTiles? boolean include tile maps
 ---@param includeBkg? boolean include backgrounds
 ---@return Cel[]
+---@nodiscard
 function AseUtilities.filterCels(
     sprite, layer, frame, target,
     includeLocked,
@@ -1614,6 +1625,7 @@ end
 ---Returns a copy of the source image that has been flipped horizontally.
 ---@param source Image source image
 ---@return Image
+---@nodiscard
 function AseUtilities.flipImageX(source)
     local srcSpec <const> = source.spec
     local target <const> = Image(srcSpec)
@@ -1625,6 +1637,7 @@ end
 ---Returns a copy of the source image that has been flipped vertically.
 ---@param source Image source image
 ---@return Image
+---@nodiscard
 function AseUtilities.flipImageY(source)
     local srcSpec <const> = source.spec
     local target <const> = Image(srcSpec)
@@ -1637,6 +1650,7 @@ end
 ---Used primarily to set a range's frames.
 ---@param frObjs Frame[]
 ---@return integer[]
+---@nodiscard
 function AseUtilities.frameObjsToIdcs(frObjs)
     -- Next and previous layer could use this function but it's not worth it
     -- putting a dofile at the top.
@@ -1675,6 +1689,7 @@ end
 ---@param mnStr string? manual
 ---@param tags Tag[]? tags
 ---@return integer[][]
+---@nodiscard
 function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
     if target == "ALL" then
         return { AseUtilities.frameObjsToIdcs(sprite.frames) }
@@ -1757,6 +1772,7 @@ end
 ---@param includeTiles? boolean include tile maps
 ---@param includeBkg? boolean include backgrounds
 ---@return Layer[]
+---@nodiscard
 function AseUtilities.getLayerHierarchy(
     sprite,
     includeLocked, includeHidden,
@@ -1784,6 +1800,7 @@ end
 ---@param frame Frame|integer frame
 ---@param palettes Palette[] palettes
 ---@return Palette
+---@nodiscard
 function AseUtilities.getPalette(frame, palettes)
     local idx = 1
     local typeFrObj <const> = type(frame)
@@ -1803,6 +1820,7 @@ end
 ---width times height times bytes per pixel.
 ---@param image Image
 ---@return integer[]
+---@nodiscard
 function AseUtilities.getPixels(image)
     return Utilities.stringToByteArr(image.bytes)
 end
@@ -1858,6 +1876,7 @@ end
 ---@param xtlCel integer? cel top left corner x
 ---@param ytlCel integer? cel top left corner y
 ---@return table<integer, Tile>
+---@nodiscard
 function AseUtilities.getSelectedTiles(
     tileMap, tileSet, selection, xtlCel, ytlCel)
     -- Results.
@@ -1926,6 +1945,7 @@ end
 ---@param leaves Layer[] leaf layers
 ---@param frames integer[]|Frame[] frames
 ---@return Cel[]
+---@nodiscard
 function AseUtilities.getUniqueCelsFromLeaves(leaves, frames)
     ---@type table<integer, Cel>
     local uniqueCels <const> = {}
@@ -1959,6 +1979,7 @@ end
 ---gray is repeated three times in red, green and blue channels.
 ---@param count integer swatch count
 ---@return integer[]
+---@nodiscard
 function AseUtilities.grayHexes(count)
     local floor <const> = math.floor
     local valCount = count or 255
@@ -1981,6 +2002,7 @@ end
 ---the integer is interpreted.
 ---@param hex integer hexadecimal color
 ---@return Color
+---@nodiscard
 function AseUtilities.hexToAseColor(hex)
     -- https://github.com/aseprite/aseprite/blob/main/src/app/script/color_class.cpp#L22
     return Color {
@@ -1996,6 +2018,7 @@ end
 ---@param image Image source image
 ---@param padding integer padding
 ---@return Image
+---@nodiscard
 function AseUtilities.padImage(image, padding)
     if padding < 1 then return image end
 
@@ -2023,6 +2046,7 @@ end
 ---contains the tag. Returns an empty array if so.
 ---@param tag Tag Aseprite Tag
 ---@return integer[]
+---@nodiscard
 function AseUtilities.parseTag(tag)
     local destFrObj <const> = tag.toFrame
     if not destFrObj then return {} end
@@ -2089,6 +2113,7 @@ end
 ---groups.
 ---@param tags Tag[] tags array
 ---@return integer[][]
+---@nodiscard
 function AseUtilities.parseTagsOverlap(tags)
     local lenTags <const> = #tags
     ---@type integer[][]
@@ -2105,6 +2130,7 @@ end
 ---Parses an array of Aseprite tags. Returns an ordered set of integers.
 ---@param tags Tag[] tags array
 ---@return integer[]
+---@nodiscard
 function AseUtilities.parseTagsUnique(tags)
     ---@type table<integer, boolean>
     local dict <const> = {}
@@ -2143,6 +2169,7 @@ end
 ---@param wTrg integer resized width
 ---@param hTrg integer resized height
 ---@return Image
+---@nodiscard
 function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
     local srcSpec <const> = source.spec
     local wSrc <const> = srcSpec.width
@@ -2174,6 +2201,7 @@ end
 ---clockwise.
 ---@param source Image source image
 ---@return Image
+---@nodiscard
 function AseUtilities.rotateImage90(source)
     local srcSpec <const> = source.spec
     local w <const> = srcSpec.width
@@ -2195,6 +2223,7 @@ end
 ---Returns a copy of the source image that has been rotated 180 degrees.
 ---@param source Image source image
 ---@return Image
+---@nodiscard
 function AseUtilities.rotateImage180(source)
     local srcSpec <const> = source.spec
     local target <const> = Image(srcSpec)
@@ -2207,6 +2236,7 @@ end
 ---clockwise.
 ---@param source Image source image
 ---@return Image
+---@nodiscard
 function AseUtilities.rotateImage270(source)
     local srcSpec <const> = source.spec
     local w <const> = srcSpec.width
@@ -2231,6 +2261,7 @@ end
 ---@param cel Cel cel
 ---@param spriteBounds Rectangle? sprite bounds
 ---@return Selection
+---@nodiscard
 function AseUtilities.selectCel(cel, spriteBounds)
     local celBounds <const> = cel.bounds
     local xCel <const> = celBounds.x
@@ -2338,6 +2369,7 @@ end
 ---@param tileSet Tileset|nil tile set
 ---@param sprClrMode ColorMode sprite color mode
 ---@return Image
+---@nodiscard
 function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
     -- The source image's color mode is 4 if it is a tile map.
     -- Assigning 4 to the target image when the sprite color
@@ -2566,6 +2598,7 @@ end
 ---Converts a Vec2 to an Aseprite Point.
 ---@param v Vec2 vector
 ---@return Point
+---@nodiscard
 function AseUtilities.vec2ToPoint(v)
     return Point(
         Utilities.round(v.x),
@@ -2578,6 +2611,7 @@ end
 ---@param xt integer x translation
 ---@param yt integer y translation
 ---@return Image
+---@nodiscard
 function AseUtilities.wrapImage(source, xt, yt)
     local sourceSpec <const> = source.spec
     local target <const> = Image(sourceSpec)

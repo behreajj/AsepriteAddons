@@ -81,6 +81,7 @@ JsonUtilities.VERSION_FORMAT = table.concat({
 ---a default.
 ---@param ad AniDir|integer|nil animation direction
 ---@return string
+---@nodiscard
 function JsonUtilities.aniDirToStr(ad)
     if ad then
         for k, v in pairs(AniDir) do
@@ -94,6 +95,7 @@ end
 ---does not have a blend mode. "NORMAL" is returned as a default.
 ---@param bm BlendMode|integer|nil blend mode
 ---@return string
+---@nodiscard
 function JsonUtilities.blendModeToStr(bm)
     -- Undocumented blend modes:
     -- https://github.com/aseprite/aseprite/blob/main/src/doc/blend_mode.h#L15
@@ -111,6 +113,7 @@ end
 ---Converts a color mode to a string. "RGB" is returned as a default.
 ---@param cm ColorMode|integer|nil color mode
 ---@return string
+---@nodiscard
 function JsonUtilities.colorModeToStr(cm)
     if cm then
         for k, v in pairs(ColorMode) do
@@ -131,6 +134,7 @@ end
 ---@param fileName string file name reference
 ---@param originFormat? string origin format
 ---@return string
+---@nodiscard
 function JsonUtilities.celToJson(cel, fileName, originFormat)
     local celDataVrf = "null"
     local celData <const> = cel.data
@@ -165,6 +169,7 @@ end
 ---other languages. The duration is multiplied by 1000 and then floored.
 ---@param frame Frame|table frame or packet
 ---@return string
+---@nodiscard
 function JsonUtilities.frameToJson(frame)
     return string.format(
         JsonUtilities.FRAME_FORMAT,
@@ -177,6 +182,7 @@ end
 ---and of its parents.
 ---@param layer Layer|table
 ---@return string
+---@nodiscard
 function JsonUtilities.layerToJson(layer)
     local layerDataVrf = "null"
     local layerData <const> = layer.data
@@ -228,6 +234,7 @@ end
 ---@param x number x coordinate
 ---@param y number y coordinate
 ---@return string
+---@nodiscard
 function JsonUtilities.pointToJson(x, y)
     if math.type(x) == "float"
         or math.type(y) == "float" then
@@ -246,6 +253,7 @@ end
 ---@param r Rectangle|table rectangle or packet
 ---@param format? string origin format
 ---@return string
+---@nodiscard
 function JsonUtilities.rectToJson(r, format)
     if format == "CENTER_FULL" then
         local rw_2 <const> = r.width * 0.5
@@ -275,6 +283,7 @@ end
 ---Formats a sprite, or table containing the same properties, as a JSON string.
 ---@param sprite Sprite|table sprite or packet
 ---@return string
+---@nodiscard
 function JsonUtilities.spriteToJson(sprite)
     -- User data is in 1.3 only.
     local spriteDataVrf = "null"
@@ -306,6 +315,7 @@ end
 ---@param tag Tag|table tag or packet
 ---@param fileName string file name reference
 ---@return string
+---@nodiscard
 function JsonUtilities.tagToJson(tag, fileName)
     local tagDataVrf = "null"
     local tagData <const> = tag.data
@@ -326,6 +336,7 @@ end
 
 ---Formats the Aseprite version as a JSON string.
 ---@return string
+---@nodiscard
 function JsonUtilities.versionToJson()
     local v <const> = app.version
     return string.format(

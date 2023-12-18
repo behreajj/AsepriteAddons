@@ -19,6 +19,7 @@ setmetatable(Knot3, {
 ---@param fh table fore handle
 ---@param rh table rear handle
 ---@return Knot3
+---@nodiscard
 function Knot3.new(co, fh, rh)
     local inst <const> = setmetatable({}, Knot3)
     inst.co = co or Vec3.new(0.0, 0.0, 0.0)
@@ -197,6 +198,7 @@ end
 ---@param b Knot3 destination knot
 ---@param step number step
 ---@return Vec3
+---@nodiscard
 function Knot3.bezierPoint(a, b, step)
     return Vec3.bezierPoint(a.co, a.fh, b.rh, b.co, step)
 end
@@ -464,6 +466,7 @@ end
 ---Returns a JSON string of a knot.
 ---@param knot Knot3 knot
 ---@return string
+---@nodiscard
 function Knot3.toJson(knot)
     return string.format(
         "{\"co\":%s,\"fh\":%s,\"rh\":%s}",

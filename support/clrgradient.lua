@@ -14,6 +14,7 @@ setmetatable(ClrGradient, {
 ---Constructs a color gradient. The first parameter is a table of ClrKeys.
 ---@param keys ClrKey[] color keys
 ---@return ClrGradient
+---@nodiscard
 function ClrGradient.new(keys)
     local inst <const> = setmetatable({}, ClrGradient)
     inst.keys = {}
@@ -31,6 +32,7 @@ end
 ---Constructs a color gradient. The first parameter is a table of ClrKeys.
 ---@param keys ClrKey[] color keys
 ---@return ClrGradient
+---@nodiscard
 function ClrGradient.newInternal(keys)
     local inst = setmetatable({}, ClrGradient)
     inst.keys = keys or {}
@@ -67,6 +69,7 @@ end
 ---@param cg ClrGradient color gradient
 ---@param step number step
 ---@return integer
+---@nodiscard
 function ClrGradient.bisectRight(cg, step)
     local keys <const> = cg.keys
     local low = 0
@@ -95,6 +98,7 @@ end
 ---@param cols integer matrix columns
 ---@param rows integer matrix rows
 ---@return Clr
+---@nodiscard
 function ClrGradient.dither(
     cg, step, matrix,
     x, y, cols, rows)
@@ -123,6 +127,7 @@ end
 ---@param step number? step
 ---@param easing? fun(o: Clr, d: Clr, t: number): Clr easing function
 ---@return Clr
+---@nodiscard
 function ClrGradient.eval(cg, step, easing)
     local prKey <const>, nxKey <const>, t <const> = ClrGradient.findKeys(
         cg, step)
@@ -169,6 +174,7 @@ end
 ---@param x integer x coordinate
 ---@param y integer y coordinate
 ---@return Clr
+---@nodiscard
 function ClrGradient.noise(cg, step, x, y)
     local prKey <const>, nxKey <const>, t <const> = ClrGradient.findKeys(
         cg, step)
@@ -176,10 +182,9 @@ function ClrGradient.noise(cg, step, x, y)
     local nxStep <const> = nxKey.step
     local range <const> = nxStep - prStep
 
-    -- Radial gradients had noticeable artifacts when
-    -- mod (floor) was used instead of fmod (trunc).
-    -- Time can be included with x + 5.588238 * (frame % 64)
-    -- and the same for y. See
+    -- Radial gradients had noticeable artifacts when mod (floor) was used
+    -- instead of fmod (trunc). Time can be included with x + 5.588238
+    -- * (frame % 64) and the same for y. See
     -- https://blog.demofox.org/2022/01/01/interleaved-
     -- gradient-noise-a-different-kind-of-low-
     -- discrepancy-sequence/
@@ -198,6 +203,7 @@ end
 ---Returns a JSON string of a color gradient.
 ---@param cg ClrGradient color gradient
 ---@return string
+---@nodiscard
 function ClrGradient.toJson(cg)
     local str = "{\"keys\":["
 

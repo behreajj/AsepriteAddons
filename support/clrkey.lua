@@ -16,6 +16,7 @@ setmetatable(ClrKey, {
 ---@param step number step
 ---@param clr Clr|integer color
 ---@return ClrKey
+---@nodiscard
 function ClrKey.new(step, clr)
     return ClrKey.newByVal(step, clr)
 end
@@ -25,6 +26,7 @@ end
 ---@param step number step
 ---@param clr Clr color
 ---@return ClrKey
+---@nodiscard
 function ClrKey.newByRef(step, clr)
     local inst <const> = setmetatable({}, ClrKey)
     inst.step = 0.0
@@ -40,6 +42,7 @@ end
 ---@param step number step
 ---@param clr Clr|integer color
 ---@return ClrKey
+---@nodiscard
 function ClrKey.newByVal(step, clr)
     local inst <const> = setmetatable({}, ClrKey)
 
@@ -82,6 +85,7 @@ end
 ---Returns a JSON string of a color key.
 ---@param ck ClrKey color key
 ---@return string
+---@nodiscard
 function ClrKey.toJson(ck)
     return string.format(
         "{\"step\":%.4f,\"clr\":%s}",

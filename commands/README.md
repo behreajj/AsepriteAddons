@@ -18,7 +18,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `cycleStackUp`: Moves a layer up the stack. Ignores background layers. If the layer is at the top of the stack and its parent does not contain a background layer, moves it to the bottom.
 
-- `dereference`: Converts a reference layer to a normal layer. Transfers the reference layer's parent to the new layer but the new layer remains at the top of the stack.
+- `dereference`: Converts a reference layer to a normal layer. Transfers the reference layer's parent to the new layer.
 
 - `flattenGroup`: Flattens a group layer. Includes locked layers, but excludes hidden layers.
 

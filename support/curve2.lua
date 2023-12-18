@@ -20,6 +20,7 @@ setmetatable(Curve2, {
 ---@param knots Knot2[] knots
 ---@param name string? name
 ---@return Curve2
+---@nodiscard
 function Curve2.new(cl, knots, name)
     local inst <const> = setmetatable({}, Curve2)
     inst.closedLoop = cl or false
@@ -81,6 +82,7 @@ end
 ---@param curve Curve2 curve
 ---@param step number step
 ---@return Vec2
+---@nodiscard
 function Curve2.eval(curve, step)
     local t <const> = step or 0.5
     local knots <const> = curve.knots
@@ -117,6 +119,7 @@ end
 ---Evaluates a curve at its first knot, returns a copy of the first knot coord.
 ---@param curve Curve2 curve
 ---@return Vec2
+---@nodiscard
 function Curve2.evalFirst(curve)
     local kFirst <const> = curve.knots[1]
     local coFirst <const> = kFirst.co
@@ -126,6 +129,7 @@ end
 ---Evaluates a curve at its last knot, returns a copy of the last knot coord.
 ---@param curve Curve2 curve
 ---@return Vec2
+---@nodiscard
 function Curve2.evalLast(curve)
     local kLast <const> = curve.knots[#curve.knots]
     local coLast <const> = kLast.co
@@ -139,6 +143,7 @@ end
 ---@param arcLengths number[] cumulative lengths
 ---@param sampleCount integer? sample count
 ---@return Vec2[]
+---@nodiscard
 function Curve2.paramPoints(
     curve, totalLength,
     arcLengths, sampleCount)
@@ -195,6 +200,7 @@ end
 ---Returns a JSON string of a curve.
 ---@param c Curve2 curve
 ---@return string
+---@nodiscard
 function Curve2.toJson(c)
     local str = "{\"name\":\""
     str = str .. c.name
@@ -223,6 +229,7 @@ end
 
 ---Creates an animation curve for circle in.
 ---@return Curve2
+---@nodiscard
 function Curve2.animCircIn()
     return Curve2.new(false, { Knot2.new(
         Vec2.new(0.0, 0.0),
@@ -235,6 +242,7 @@ end
 
 ---Creates an animation curve for circle out.
 ---@return Curve2
+---@nodiscard
 function Curve2.animCircOut()
     return Curve2.new(false, { Knot2.new(
         Vec2.new(0.0, 0.0),
@@ -247,6 +255,7 @@ end
 
 ---Creates an animation curve for ease.
 ---@return Curve2
+---@nodiscard
 function Curve2.animEase()
     return Curve2.new(false, { Knot2.new(
         Vec2.new(0.0, 0.0),
@@ -259,6 +268,7 @@ end
 
 ---Creates an animation curve for ease-in.
 ---@return Curve2
+---@nodiscard
 function Curve2.animEaseIn()
     return Curve2.new(false, { Knot2.new(
         Vec2.new(0.0, 0.0),
@@ -271,6 +281,7 @@ end
 
 ---Creates an animation curve for ease-in-out.
 ---@return Curve2
+---@nodiscard
 function Curve2.animEaseInOut()
     return Curve2.new(false, { Knot2.new(
         Vec2.new(0.0, 0.0),
@@ -283,6 +294,7 @@ end
 
 ---Creates an animation curve for ease-out.
 ---@return Curve2
+---@nodiscard
 function Curve2.animEaseOut()
     return Curve2.new(false, { Knot2.new(
         Vec2.new(0.0, 0.0),
@@ -295,6 +307,7 @@ end
 
 ---Creates a linear animation curve.
 ---@return Curve2
+---@nodiscard
 function Curve2.animLinear()
     return Curve2.new(false, { Knot2.new(
         Vec2.new(0.0, 0.0),

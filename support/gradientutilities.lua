@@ -95,6 +95,7 @@ GradientUtilities.DITHER_MAX_SIZE = 64
 ---number is less than two, returns the original color and its opaque variant.
 ---@param aseColors Color[] array of aseprite colors
 ---@return ClrGradient
+---@nodiscard
 function GradientUtilities.aseColorsToClrGradient(aseColors)
     -- Different from ClrGradient.fromColors due to
     -- Gradient Outline. Avoid zero alpha colors because
@@ -128,6 +129,7 @@ end
 ---@param clrSpcPreset string color space preset
 ---@param huePreset string hue preset
 ---@return fun(o: Clr, d: Clr, t: number): Clr
+---@nodiscard
 function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
     if clrSpcPreset == "LINEAR_RGB" then
         return Clr.mixsRgbInternal
@@ -468,6 +470,7 @@ end
 ---Returns a factor that eases in by a circular arc.
 ---@param t number factor
 ---@return number
+---@nodiscard
 function GradientUtilities.circleIn(t)
     return 1.0 - math.sqrt(1.0 - t * t)
 end
@@ -475,6 +478,7 @@ end
 ---Returns a factor that eases out by a circular arc.
 ---@param t number factor
 ---@return number
+---@nodiscard
 function GradientUtilities.circleOut(t)
     local u <const> = t - 1.0
     return math.sqrt(1.0 - u * u)
@@ -483,6 +487,7 @@ end
 ---Finds the appropriate easing function in RGB given a preset.
 ---@param preset string rgb preset
 ---@return fun(t: number): number
+---@nodiscard
 function GradientUtilities.easingFuncFromPreset(preset)
     if preset == "CIRCLE_IN" then
         return GradientUtilities.circleIn
@@ -505,6 +510,7 @@ end
 ---@param bayerIndex integer? Bayer exponent, 2^1
 ---@param ditherPath string? dither image path
 ---@return fun(cg: ClrGradient, step: number, x: integer, y: integer): Clr
+---@nodiscard
 function GradientUtilities.ditherFromPreset(
     stylePreset, bayerIndex, ditherPath)
     if stylePreset == "DITHER_BAYER" then
@@ -627,6 +633,7 @@ end
 ---Finds the appropriate easing function in HSL or HSV given a preset.
 ---@param preset string hue preset
 ---@return fun(o: number, d: number, t: number): number
+---@nodiscard
 function GradientUtilities.hueEasingFuncFromPreset(preset)
     if preset == "CCW" then
         return GradientUtilities.lerpHueCcw
@@ -645,6 +652,7 @@ end
 ---@param d number destination
 ---@param t number factor
 ---@return number
+---@nodiscard
 function GradientUtilities.lerpHueCcw(o, d, t)
     return Utilities.lerpAngleCcw(o, d, t, 1.0)
 end
@@ -655,6 +663,7 @@ end
 ---@param d number destination
 ---@param t number factor
 ---@return number
+---@nodiscard
 function GradientUtilities.lerpHueCw(o, d, t)
     return Utilities.lerpAngleCw(o, d, t, 1.0)
 end
@@ -665,6 +674,7 @@ end
 ---@param d number destination
 ---@param t number factor
 ---@return number
+---@nodiscard
 function GradientUtilities.lerpHueFar(o, d, t)
     return Utilities.lerpAngleFar(o, d, t, 1.0)
 end
@@ -675,6 +685,7 @@ end
 ---@param d number destination
 ---@param t number factor
 ---@return number
+---@nodiscard
 function GradientUtilities.lerpHueNear(o, d, t)
     return Utilities.lerpAngleNear(o, d, t, 1.0)
 end
@@ -682,6 +693,7 @@ end
 ---Returns a linear step factor.
 ---@param t number factor
 ---@return number
+---@nodiscard
 function GradientUtilities.linear(t)
     return t
 end
@@ -689,6 +701,7 @@ end
 ---Returns a smooth step factor.
 ---@param t number factor
 ---@return number
+---@nodiscard
 function GradientUtilities.smooth(t)
     return t * t * (3.0 - (t + t))
 end
@@ -696,6 +709,7 @@ end
 ---Returns a smoother step factor.
 ---@param t number factor
 ---@return number
+---@nodiscard
 function GradientUtilities.smoother(t)
     return t * t * t * (t * (t * 6.0 - 15.0) + 10.0)
 end
