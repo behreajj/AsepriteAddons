@@ -1217,6 +1217,10 @@ dlg:button {
         wPrc = 0.01 * abs(wPrc)
         hPrc = 0.01 * abs(hPrc)
 
+        -- print(string.format(
+        --     "wPxl: %.3f, hPxl: %.3f, wPrc: %.3f, hPrc: %.3f",
+        --     wPxl, hPxl, wPrc, hPrc))
+
         if usePercent then
             if (wPrc < 0.000001 or hPrc < 0.000001)
                 or (wPrc == 1.0 and hPrc == 1.0) then
@@ -1265,8 +1269,14 @@ dlg:button {
                     if wSrc ~= wTrg or hSrc ~= hTrg then
                         -- Right-bottom edges were clipped
                         -- using wSrc / wTrg and hSrc / hTrg .
-                        local tx <const> = (wSrc - 1.0) / (wTrg - 1.0)
-                        local ty <const> = (hSrc - 1.0) / (hTrg - 1.0)
+                        local tx <const> = wTrg > 1
+                            and (wSrc - 1.0) / (wTrg - 1.0)
+                            or 1.0
+                        local ty <const> = hTrg > 1
+                            and (hSrc - 1.0) / (hTrg - 1.0)
+                            or 1.0
+                        local tox <const> = wTrg > 1 and 0.0 or 0.5
+                        local toy <const> = hTrg > 1 and 0.0 or 0.5
 
                         local trgSpec <const> = createSpec(
                             wTrg, hTrg, srcSpec.colorMode,
@@ -1278,8 +1288,8 @@ dlg:button {
                         local lenFlat <const> = wTrg * hTrg
                         local j = 0
                         while j < lenFlat do
-                            local xTrg <const> = (j % wTrg) * tx
-                            local yTrg <const> = (j // wTrg) * ty
+                            local xTrg <const> = (j % wTrg) * tx + tox
+                            local yTrg <const> = (j // wTrg) * ty + toy
                             j = j + 1
                             byteArr[j] = sample(xTrg, yTrg,
                                 wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
