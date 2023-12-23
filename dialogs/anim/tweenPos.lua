@@ -390,7 +390,7 @@ dlg:button {
         local trgLayer = nil
         app.transaction("New Layer", function()
             trgLayer = activeSprite:newLayer()
-            trgLayer.name = string.format("%s.Tween.%d.%s",
+            trgLayer.name = string.format("%s Tween %d %s",
                 srcLayer.name, srcFrame.frameNumber + frameUiOffset, easeType)
             trgLayer.parent = srcLayer.parent
         end)

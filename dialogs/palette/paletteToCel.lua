@@ -318,7 +318,7 @@ dlg:button {
             if #srcLayer.name > 0 then
                 srcLayerName = srcLayer.name
             end
-            trgLayer.name = string.format("%s.%s.%03d",
+            trgLayer.name = string.format("%s %s %03d",
                 srcLayerName, clrSpacePreset, hexesSrgbLen)
             trgLayer.parent = srcLayer.parent
             trgLayer.opacity = srcLayer.opacity

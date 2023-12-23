@@ -246,7 +246,7 @@ dlg:button {
             local handlesLayer = nil
             app.transaction("Handles Layer", function()
                 handlesLayer = sprite:newLayer()
-                handlesLayer.name = curve.name .. ".Handles"
+                handlesLayer.name = curve.name .. " Handles"
                 handlesLayer.opacity = handles
             end)
             ShapeUtilities.drawHandles2(

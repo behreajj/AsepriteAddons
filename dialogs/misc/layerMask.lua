@@ -188,7 +188,7 @@ dlg:button {
         local compLayer = nil
         app.transaction("New Layer", function()
             compLayer = activeSprite:newLayer()
-            compLayer.name = string.format("Comp.%s.%s",
+            compLayer.name = string.format("Comp %s %s",
                 overLayer.name, underLayer.name)
             compLayer.parent = parent
             compLayer.blendMode = underLayer.blendMode

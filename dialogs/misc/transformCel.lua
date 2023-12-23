@@ -1271,12 +1271,12 @@ dlg:button {
                         -- using wSrc / wTrg and hSrc / hTrg .
                         local tx <const> = wTrg > 1
                             and (wSrc - 1.0) / (wTrg - 1.0)
-                            or 1.0
+                            or 0.0
                         local ty <const> = hTrg > 1
                             and (hSrc - 1.0) / (hTrg - 1.0)
-                            or 1.0
-                        local tox <const> = wTrg > 1 and 0.0 or 0.5
-                        local toy <const> = hTrg > 1 and 0.0 or 0.5
+                            or 0.0
+                        local ox <const> = wTrg > 1 and 0.0 or 0.5
+                        local oy <const> = hTrg > 1 and 0.0 or 0.5
 
                         local trgSpec <const> = createSpec(
                             wTrg, hTrg, srcSpec.colorMode,
@@ -1288,8 +1288,8 @@ dlg:button {
                         local lenFlat <const> = wTrg * hTrg
                         local j = 0
                         while j < lenFlat do
-                            local xTrg <const> = (j % wTrg) * tx + tox
-                            local yTrg <const> = (j // wTrg) * ty + toy
+                            local xTrg <const> = (j % wTrg) * tx + ox
+                            local yTrg <const> = (j // wTrg) * ty + oy
                             j = j + 1
                             byteArr[j] = sample(xTrg, yTrg,
                                 wSrc, hSrc, srcBytes, srcBpp, pxAlpha)

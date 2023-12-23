@@ -870,7 +870,7 @@ dlg:button {
                 end
 
                 local rowLayer <const> = manifestSprite:newLayer()
-                rowLayer.name = strfmt("%03d.%s",
+                rowLayer.name = strfmt("%03d %s",
                     palIdx, strsub(hexWeb, 2))
 
                 if hexSrgb ~= hexProfile then

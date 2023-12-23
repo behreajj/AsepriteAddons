@@ -607,7 +607,7 @@ dlg:button {
 
         local trgLayer <const> = trgSprite.layers[1]
         trgLayer.name = string.format(
-            "%s.%s",
+            "%s %s",
             maskCriterion, sortCriterion)
 
         local j = 0

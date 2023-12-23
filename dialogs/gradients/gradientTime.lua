@@ -203,7 +203,7 @@ dlg:button {
             trgLayer.name = "Gradient.Time"
             if useMixed then
                 trgLayer.name = trgLayer.name
-                    .. "." .. clrSpacePreset
+                    .. " " .. clrSpacePreset
             end
         end)
 

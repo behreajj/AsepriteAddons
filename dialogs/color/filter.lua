@@ -184,7 +184,7 @@ dlg:button {
                 srcLayerName = srcLayer.name
             end
             trgLayer.name = string.format(
-                "%s.%s.%d",
+                "%s %s %d",
                 srcLayerName, filterType, wKrn)
             trgLayer.parent = srcLayer.parent
             trgLayer.opacity = srcLayer.opacity

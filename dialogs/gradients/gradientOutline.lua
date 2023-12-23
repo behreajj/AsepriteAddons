@@ -357,7 +357,7 @@ dlg:button {
             trgLayer = activeSprite:newLayer()
             trgLayer.parent = srcLayer.parent
             trgLayer.opacity = srcLayer.opacity
-            trgLayer.name = "Gradient.Outline." .. clrSpacePreset
+            trgLayer.name = "Gradient Outline " .. clrSpacePreset
         end)
 
         -- Calculate colors in an outer loop, to

@@ -270,7 +270,7 @@ dlg:button {
         local trgLayer = nil
         app.transaction("New Layer", function()
             trgLayer = activeSprite:newLayer()
-            trgLayer.name = srcLayer.name .. ".Onion"
+            trgLayer.name = srcLayer.name .. " Onion"
             trgLayer.parent = srcLayer.parent
             trgLayer.opacity = srcLayer.opacity
             trgLayer.stackIndex = srcLayer.stackIndex

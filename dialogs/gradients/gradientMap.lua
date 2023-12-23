@@ -135,10 +135,10 @@ dlg:button {
             trgLayer.name = "Gradient.Map"
             if useMixed then
                 trgLayer.name = trgLayer.name
-                    .. "." .. clrSpacePreset
+                    .. " " .. clrSpacePreset
             end
             if useNormalize then
-                trgLayer.name = trgLayer.name .. ".Contrast"
+                trgLayer.name = trgLayer.name .. " Contrast"
             end
         end)
 

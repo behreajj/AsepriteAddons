@@ -223,7 +223,7 @@ dlg:button {
             targetGroup.parent = srcParent
             targetGroup.isCollapsed = true
             targetGroup.name = string.format(
-                "%s.Interlaced.%s",
+                "%s Interlaced %s",
                 srcLayer.name, dirType)
         end)
 

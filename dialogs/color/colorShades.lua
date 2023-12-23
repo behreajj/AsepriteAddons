@@ -271,7 +271,7 @@ dlg:button {
         local gamutLayer <const> = sprite.layers[1]
         if quantization > 0 then
             gamutLayer.name = string.format(
-                "Gamut.Quantize%d",
+                "Gamut Quantize %d",
                 quantization)
         else
             gamutLayer.name = "Gamut"

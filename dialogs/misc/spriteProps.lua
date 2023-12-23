@@ -124,7 +124,7 @@ dlg:shades {
 }
 dlg:newrow { always = false }
 
--- Many bugs are related to indexed color mode, problematic palettes ithout a
+-- Many bugs are related to indexed color mode, problematic palettes without a
 -- transparent color at index 0, and the custom transparent color property.
 dlg:label {
     id = "maskWarning",
@@ -424,8 +424,7 @@ local function updateDimensions()
 end
 
 local function updateAspect()
-    -- Pixel aspect ratio is applied to calculation
-    -- of sprite aspect ratio.
+    -- Pixel aspect ratio is applied to calculation of sprite aspect ratio.
     local sprPixelRatio <const> = sprite.pixelRatio
     local pixelWidth <const> = sprPixelRatio.width
     local pixelHeight <const> = sprPixelRatio.height
@@ -566,6 +565,9 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
+        -- TODO: Instead of an ok button, update each property onchange of its
+        -- widgets above... Just remember that sprite aspect ratio depends on
+        -- pixel aspect ratio, and so must be updated.
         if sprite and app.site.sprite == sprite then
             local args <const> = dlg.data
             local sprColor <const> = args.sprTabColor --[[@as Color]]

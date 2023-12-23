@@ -389,7 +389,7 @@ dlg:button {
             maskLayer = activeSprite:newLayer()
             maskLayer.parent = srcLayer.parent
             maskLayer.name = string.format(
-                "%s.Mask%s",
+                "%s Mask %s",
                 srcLayer.name, biasLabel)
         end)
 

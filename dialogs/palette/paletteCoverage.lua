@@ -469,7 +469,7 @@ dlg:button {
 
         -- Create layer.
         local layer <const> = coverSprite.layers[#coverSprite.layers]
-        layer.name = string.format("Palette.Coverage.%s", projPreset)
+        layer.name = string.format("Palette Coverage %s", projPreset)
 
         local zDiff = zMin - zMax
         local zDenom = 1.0

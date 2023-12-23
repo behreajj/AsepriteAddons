@@ -141,7 +141,7 @@ dlg:button {
             grdLayer.name = "Gradient.Linear"
             if stylePreset == "MIXED" then
                 grdLayer.name = grdLayer.name
-                    .. "." .. clrSpacePreset
+                    .. " " .. clrSpacePreset
             end
             local activeFrame <const> = site.frame
                 or activeSprite.frames[1] --[[@as Frame]]

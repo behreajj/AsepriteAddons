@@ -258,7 +258,7 @@ dlg:button {
             local srcParent <const> = srcLayer.parent
             sepGroup.parent = srcParent
             sepGroup.isCollapsed = true
-            sepGroup.name = srcLayer.name .. ".Separated"
+            sepGroup.name = srcLayer.name .. " Separated"
         end)
 
         local max <const> = math.max

@@ -451,7 +451,7 @@ dlg:button {
                             and dist >= minHighVrf
                             and dist <= maxHighVrf
                         local layerName <const> = strfmt(
-                            "Dither.%s.%s.%03d",
+                            "Dither %s %s %03d",
                             rowWebStr, colWebStr, dist)
 
                         local ditherLayer = nil
@@ -498,7 +498,7 @@ dlg:button {
                         local mixLayer = nil
                         mixLayer = comboSprite:newLayer()
                         mixLayer.name = strfmt(
-                            "Mix.%s.%s",
+                            "Mix %s %s",
                             rowWebStr, colWebStr)
                         mixLayer.parent = mixesGroup
 

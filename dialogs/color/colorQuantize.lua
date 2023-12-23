@@ -348,7 +348,7 @@ dlg:button {
                 srcLayerName = srcLayer.name
             end
             trgLayer.name = string.format(
-                "%s.Quantized.R%02d.G%02d.B%02d.A%02d",
+                "%s Quantized R%02d G%02d B%02d A%02d",
                 srcLayerName,
                 rLevels, gLevels, bLevels, aLevels)
             trgLayer.parent = srcLayer.parent

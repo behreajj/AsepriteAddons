@@ -213,7 +213,7 @@ dlg:button {
 
             mrrGroup.parent = srcLayer.parent
             mrrGroup.isCollapsed = true
-            mrrGroup.name = srcLayer.name .. ".Mirrored"
+            mrrGroup.name = srcLayer.name .. " Mirrored"
         end)
 
         -- Cache global methods.

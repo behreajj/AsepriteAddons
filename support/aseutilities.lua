@@ -1436,7 +1436,7 @@ function AseUtilities.filterCels(
             local adjCel = nil
             app.transaction("Cel From Mask", function()
                 local adjLayer <const> = sprite:newLayer()
-                adjLayer.name = "Mask.Layer"
+                adjLayer.name = "Mask Layer"
                 adjCel = sprite:newCel(
                     adjLayer, frame,
                     flatImage, Point(xSel, ySel))

@@ -802,7 +802,7 @@ dlg:button {
                 srcLayerName = srcLayer.name
             end
             trgLayer.name = string.format(
-                "%s.Adjusted", srcLayerName)
+                "%s Adjusted", srcLayerName)
             trgLayer.parent = srcLayer.parent
             trgLayer.opacity = srcLayer.opacity
             trgLayer.blendMode = srcLayer.blendMode

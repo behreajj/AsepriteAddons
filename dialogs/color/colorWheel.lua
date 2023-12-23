@@ -332,7 +332,7 @@ dlg:button {
         local gamutLayer <const> = sprite.layers[1]
         if quantAzims or quantRad then
             gamutLayer.name = string.format(
-                "Gamut.Sectors%d.Rings%d",
+                "Gamut Sectors %d Rings %d",
                 sectorCount, ringCount)
         else
             gamutLayer.name = "Gamut"

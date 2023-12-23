@@ -321,7 +321,7 @@ dlg:button {
             trgLayer = activeSprite:newLayer()
             trgLayer.parent = srcLayer.parent
             trgLayer.name = string.format(
-                "%s.Curves", srcLayerName)
+                "%s Curves", srcLayerName)
         end)
 
         ---@type Vec2[][]

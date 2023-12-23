@@ -1025,7 +1025,7 @@ dlg:button {
         -- Rename layer.
         local trgLayer <const> = trgSprite.layers[1]
         trgLayer.name = string.format(
-            "%s.%s",
+            "%s %s",
             waveType, edgeType)
 
         -- Create cels.

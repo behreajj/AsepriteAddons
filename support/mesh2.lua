@@ -462,7 +462,7 @@ function Mesh2.gridDimetric(cells)
             0.25 * vSrc.x + 0.25 * vSrc.y)
     end
 
-    mesh.name = "Grid.Dimetric"
+    mesh.name = "Grid Dimetric"
     return mesh
 end
 

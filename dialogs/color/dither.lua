@@ -588,7 +588,7 @@ dlg:button {
                 srcLayerName = srcLayer.name
             end
             trgLayer.name = string.format(
-                "%s.Dither.%s.%03d",
+                "%s Dither %s %03d",
                 srcLayerName, dmStr, factor100)
             trgLayer.parent = srcLayer.parent
             trgLayer.opacity = srcLayer.opacity

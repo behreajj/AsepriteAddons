@@ -206,11 +206,11 @@ dlg:button {
 
             if showGrayMap then
                 grayLayer = activeSprite:newLayer()
-                grayLayer.name = "Height.Map"
+                grayLayer.name = "Height Map"
             end
 
             normalLayer = activeSprite:newLayer()
-            normalLayer.name = string.format("Normal.Map.%03d", scale)
+            normalLayer.name = string.format("Normal Map %03d", scale)
         end)
 
         local specNone <const> = AseUtilities.createSpec(
