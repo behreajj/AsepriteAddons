@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local targets <const> = { "ACTIVE", "ALL", "PALETTE", "RANGE" }
 local methods <const> = { "SIGNED", "UNSIGNED" }
 local units <const> = { "BITS", "INTEGERS" }
 local levelsInputs <const> = { "NON_UNIFORM", "UNIFORM" }
@@ -295,39 +295,6 @@ dlg:button {
             return
         end
 
-        local colorMode <const> = activeSprite.colorMode
-        if colorMode ~= ColorMode.RGB then
-            app.alert {
-                title = "Error",
-                text = "Only RGB color mode is supported."
-            }
-            return
-        end
-
-        local srcLayer <const> = site.layer
-        if not srcLayer then
-            app.alert {
-                title = "Error",
-                text = "There is no active layer."
-            }
-            return
-        end
-
-        if srcLayer.isGroup then
-            app.alert {
-                title = "Error",
-                text = "Group layers are not supported."
-            }
-            return
-        end
-
-        -- Check for tile map support.
-        local isTilemap <const> = srcLayer.isTilemap
-        local tileSet = nil
-        if isTilemap then
-            tileSet = srcLayer.tileset
-        end
-
         -- Unpack arguments.
         local args <const> = dlg.data
         local target <const> = args.target or defaults.target --[[@as string]]
@@ -336,31 +303,6 @@ dlg:button {
         local gLevels = args.gLevels or defaults.gLevels --[[@as integer]]
         local bLevels = args.bLevels or defaults.bLevels --[[@as integer]]
         local aLevels = args.aLevels or defaults.aLevels --[[@as integer]]
-
-        local frames <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(activeSprite, target))
-
-        local trgLayer = nil
-        app.transaction("New Layer", function()
-            trgLayer = activeSprite:newLayer()
-            local srcLayerName = "Layer"
-            if #srcLayer.name > 0 then
-                srcLayerName = srcLayer.name
-            end
-            trgLayer.name = string.format(
-                "%s Quantized R%02d G%02d B%02d A%02d",
-                srcLayerName,
-                rLevels, gLevels, bLevels, aLevels)
-            trgLayer.parent = srcLayer.parent
-            trgLayer.opacity = srcLayer.opacity
-            trgLayer.blendMode = srcLayer.blendMode
-        end)
-
-        local rgbColorMode <const> = ColorMode.RGB
-        local floor <const> = math.floor
-        local strfmt <const> = string.format
-        local tilesToImage <const> = AseUtilities.tilesToImage
-        local transact <const> = app.transaction
 
         local aDelta = 0.0
         local bDelta = 0.0
@@ -411,6 +353,101 @@ dlg:button {
         --     "aDelta: %.3f, bDelta: %.3f, gDelta: %.3f, rDelta: %.3f",
         --     aDelta, bDelta, gDelta, rDelta))
 
+        local rgbColorMode <const> = ColorMode.RGB
+        local floor <const> = math.floor
+        local strfmt <const> = string.format
+        local tilesToImage <const> = AseUtilities.tilesToImage
+        local transact <const> = app.transaction
+
+        if target == "PALETTE" then
+            local palettes <const> = activeSprite.palettes
+            local frObj <const> = site.frame or activeSprite.frames[1]
+            local palette <const> = AseUtilities.getPalette(frObj, palettes)
+            local lenPalette <const> = #palette
+
+            app.transaction("Color Quantize Palette", function()
+                local i = 0
+                while i < lenPalette do
+                    local aseColor <const> = palette:getColor(i)
+
+                    local r <const> = aseColor.red
+                    local g <const> = aseColor.green
+                    local b <const> = aseColor.blue
+                    local a <const> = aseColor.alpha
+
+                    local aQtz <const> = aqFunc(a / 255.0, aLevels, aDelta)
+                    local bQtz <const> = bqFunc(b / 255.0, bLevels, bDelta)
+                    local gQtz <const> = gqFunc(g / 255.0, gLevels, gDelta)
+                    local rQtz <const> = rqFunc(r / 255.0, rLevels, rDelta)
+
+                    local a8 <const> = floor(aQtz * 255.0 + 0.5)
+                    local b8 <const> = floor(bQtz * 255.0 + 0.5)
+                    local g8 <const> = floor(gQtz * 255.0 + 0.5)
+                    local r8 <const> = floor(rQtz * 255.0 + 0.5)
+
+                    local aseQtz = Color { r = r8, g = g8, b = b8, a = a8 }
+                    palette:setColor(i, aseQtz)
+
+                    i = i + 1
+                end
+            end)
+
+            app.refresh()
+            return
+        end
+
+        local colorMode <const> = activeSprite.colorMode
+        if colorMode ~= ColorMode.RGB then
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported."
+            }
+            return
+        end
+
+        local srcLayer <const> = site.layer
+        if not srcLayer then
+            app.alert {
+                title = "Error",
+                text = "There is no active layer."
+            }
+            return
+        end
+
+        if srcLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
+            }
+            return
+        end
+
+        -- Check for tile map support.
+        local isTilemap <const> = srcLayer.isTilemap
+        local tileSet = nil
+        if isTilemap then
+            tileSet = srcLayer.tileset
+        end
+
+        local frames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
+
+        local trgLayer = nil
+        app.transaction("New Layer", function()
+            trgLayer = activeSprite:newLayer()
+            local srcLayerName = "Layer"
+            if #srcLayer.name > 0 then
+                srcLayerName = srcLayer.name
+            end
+            trgLayer.name = string.format(
+                "%s Quantized R%02d G%02d B%02d A%02d",
+                srcLayerName,
+                rLevels, gLevels, bLevels, aLevels)
+            trgLayer.parent = srcLayer.parent
+            trgLayer.opacity = srcLayer.opacity
+            trgLayer.blendMode = srcLayer.blendMode
+        end)
+
         local i = 0
         local lenFrames <const> = #frames
         while i < lenFrames do
@@ -448,15 +485,15 @@ dlg:button {
                     local gQtz <const> = gqFunc(g / 255.0, gLevels, gDelta)
                     local rQtz <const> = rqFunc(r / 255.0, rLevels, rDelta)
 
-                    local a255 <const> = floor(aQtz * 255.0 + 0.5)
-                    local b255 <const> = floor(bQtz * 255.0 + 0.5)
-                    local g255 <const> = floor(gQtz * 255.0 + 0.5)
-                    local r255 <const> = floor(rQtz * 255.0 + 0.5)
+                    local a8 <const> = floor(aQtz * 255.0 + 0.5)
+                    local b8 <const> = floor(bQtz * 255.0 + 0.5)
+                    local g8 <const> = floor(gQtz * 255.0 + 0.5)
+                    local r8 <const> = floor(rQtz * 255.0 + 0.5)
 
-                    trgDict[k] = (a255 << 0x18)
-                        | (b255 << 0x10)
-                        | (g255 << 0x08)
-                        |  r255
+                    trgDict[k] = (a8 << 0x18)
+                        | (b8 << 0x10)
+                        | (g8 << 0x08)
+                        |  r8
                 end
 
                 -- Clone image, replace color with quantized.

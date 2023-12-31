@@ -112,7 +112,7 @@ local tsxFormat <const> = table.concat({
     "vflip=\"%d\" ",
     "rotate=\"%d\" ",
     "preferuntransformed=\"%d\"/>\n",
-    " <image ",
+    "<image ",
     "source=\"%s\" ",
     "%s", -- transparency string
     "width=\"%d\" ",
