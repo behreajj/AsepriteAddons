@@ -10,6 +10,12 @@ local tiledImgExts <const> = {
     "jpg",
     "png"
 }
+local tmxRenderOrders <const> = {
+    "LEFT-DOWN",
+    "LEFT-UP",
+    "RIGHT-DOWN",
+    "RIGHT-UP"
+}
 local tsxRenders <const> = { "GRID", "TILE" }
 local tsxFills <const> = { "PRESERVE-ASPECT-FIT", "STRETCH" }
 local tsxAligns <const> = {
@@ -38,7 +44,7 @@ local defaults <const> = {
     tmxVersion = "1.10",
     tmxTiledVersion = "1.10.2",
     tmxOrientation = "orthogonal",
-    tmxRenderOrder = "right-down",
+    tmxRenderOrder = "RIGHT-DOWN",
     tsxAlign = "TOPLEFT",
     tsxRender = "TILE",
     tsxFill = "PRESERVE-ASPECT-FIT"
@@ -211,6 +217,8 @@ dlg:combobox {
     onchange = function()
         local args <const> = dlg.data
         local metaData <const> = args.metaData --[[@as string]]
+        local inclMaps <const> = args.includeMaps --[[@as boolean]]
+
         local usemd <const> = metaData ~= "NONE"
         local useTsx <const> = metaData == "TILED"
 
@@ -218,17 +226,8 @@ dlg:combobox {
         dlg:modify { id = "tsxAlign", visible = useTsx }
         dlg:modify { id = "tsxRender", visible = useTsx }
         dlg:modify { id = "tsxFill", visible = useTsx }
+        dlg:modify { id = "tmxRenderOrder", visible = useTsx and inclMaps }
     end
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
-    id = "includeMaps",
-    label = "Include:",
-    text = "&Tilemaps",
-    selected = defaults.includeMaps,
-    visible = defaults.metaData ~= "NONE"
 }
 
 dlg:newrow { always = false }
@@ -259,6 +258,35 @@ dlg:combobox {
     option = defaults.tsxFill,
     options = tsxFills,
     visible = defaults.metaData == "TILED"
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "includeMaps",
+    label = "Include:",
+    text = "&Tilemaps",
+    selected = defaults.includeMaps,
+    visible = defaults.metaData ~= "NONE",
+    onclick = function()
+        local args <const> = dlg.data
+        local metaData <const> = args.metaData --[[@as string]]
+        local useTsx <const> = metaData == "TILED"
+        local inclMaps <const> = args.includeMaps --[[@as boolean]]
+
+        dlg:modify { id = "tmxRenderOrder", visible = useTsx and inclMaps }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "tmxRenderOrder",
+    label = "Order:",
+    option = defaults.tmxRenderOrder,
+    options = tmxRenderOrders,
+    visible = defaults.metaData == "TILED"
+        and defaults.includeMaps
 }
 
 dlg:newrow { always = false }
@@ -739,6 +767,10 @@ dlg:button {
                 local tsxFill <const> = string.lower(args.tsxFill
                     or defaults.tsxFill --[[@as string]])
 
+                local tmxOrientation <const> = defaults.tmxOrientation
+                local tmxRenderOrder <const> = string.lower(args.tmxRenderOrder
+                    or defaults.tmxRenderOrder --[[@as string]])
+
                 for _, sheet in pairs(sheetPackets) do
                     local columns <const> = sheet.columns
                     local fileName <const> = sheet.fileName
@@ -768,9 +800,6 @@ dlg:button {
                 end
 
                 if includeMaps then
-                    local tmxOrientation <const> = defaults.tmxOrientation
-                    local tmxRenderOrder <const> = defaults.tmxRenderOrder
-
                     local spriteGrid <const> = activeSprite.gridBounds
                     local wSprGrd <const> = math.max(1, math.abs(
                         spriteGrid.width))

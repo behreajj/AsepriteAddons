@@ -242,7 +242,7 @@ dlg:button {
                 local lMax = -2147483648
 
                 -- Cache pixels from pixel iterator.
-                local flatPxItr = flatImg:pixels()
+                local flatPxItr <const> = flatImg:pixels()
                 for pixel in flatPxItr do
                     flatIdx = flatIdx + 1
                     local hex <const> = pixel()
@@ -298,6 +298,7 @@ dlg:button {
                         grayLayer, frame, grayImg, originPt)
                 end
 
+                -- TODO: Switch to using string bytes approach?
                 local writeIdx = 0
                 local normalImg <const> = Image(specNone)
                 local normPxItr <const> = normalImg:pixels()

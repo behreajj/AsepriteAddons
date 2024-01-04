@@ -6,7 +6,6 @@ local units <const> = { "BITS", "INTEGERS" }
 local levelsInputs <const> = { "NON_UNIFORM", "UNIFORM" }
 
 local defaults <const> = {
-    -- TODO: Option to quantize lightness, maybe LAB.
     minLevels = 2,
     maxLevels = 256,
     minBits = 1,
@@ -370,10 +369,10 @@ dlg:button {
                 while i < lenPalette do
                     local aseColor <const> = palette:getColor(i)
 
-                    local r <const> = aseColor.red
-                    local g <const> = aseColor.green
-                    local b <const> = aseColor.blue
                     local a <const> = aseColor.alpha
+                    local b <const> = aseColor.blue
+                    local g <const> = aseColor.green
+                    local r <const> = aseColor.red
 
                     local aQtz <const> = aqFunc(a / 255.0, aLevels, aDelta)
                     local bQtz <const> = bqFunc(b / 255.0, bLevels, bDelta)
@@ -385,7 +384,12 @@ dlg:button {
                     local g8 <const> = floor(gQtz * 255.0 + 0.5)
                     local r8 <const> = floor(rQtz * 255.0 + 0.5)
 
-                    local aseQtz = Color { r = r8, g = g8, b = b8, a = a8 }
+                    local aseQtz <const> = Color {
+                        r = r8,
+                        g = g8,
+                        b = b8,
+                        a = a8
+                    }
                     palette:setColor(i, aseQtz)
 
                     i = i + 1
