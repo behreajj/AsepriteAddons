@@ -271,9 +271,8 @@ dlg:check {
     onclick = function()
         local args <const> = dlg.data
         local metaData <const> = args.metaData --[[@as string]]
-        local useTsx <const> = metaData == "TILED"
         local inclMaps <const> = args.includeMaps --[[@as boolean]]
-
+        local useTsx <const> = metaData == "TILED"
         dlg:modify { id = "tmxRenderOrder", visible = useTsx and inclMaps }
     end
 }

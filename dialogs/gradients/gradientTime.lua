@@ -200,7 +200,7 @@ dlg:button {
         local trgLayer = nil
         app.transaction("New Layer", function()
             trgLayer = activeSprite:newLayer()
-            trgLayer.name = "Gradient.Time"
+            trgLayer.name = "Gradient Time"
             if useMixed then
                 trgLayer.name = trgLayer.name
                     .. " " .. clrSpacePreset

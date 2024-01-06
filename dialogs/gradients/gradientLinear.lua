@@ -138,7 +138,7 @@ dlg:button {
 
         app.transaction("Linear Gradient", function()
             local grdLayer <const> = activeSprite:newLayer()
-            grdLayer.name = "Gradient.Linear"
+            grdLayer.name = "Gradient Linear"
             if stylePreset == "MIXED" then
                 grdLayer.name = grdLayer.name
                     .. " " .. clrSpacePreset

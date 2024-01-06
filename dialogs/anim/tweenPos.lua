@@ -414,7 +414,6 @@ dlg:button {
                 local ytl <const> = yCenter - hImgHalf
                 local xtlInt <const> = round(xtl)
                 local ytlInt <const> = round(ytl)
-                -- TODO: Option for wrapping cel around sprite.
                 local trgPoint <const> = Point(xtlInt, ytlInt)
 
                 activeSprite:newCel(trgLayer, frObj, srcImg, trgPoint)

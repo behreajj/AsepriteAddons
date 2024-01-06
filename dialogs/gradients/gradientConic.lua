@@ -200,7 +200,7 @@ dlg:button {
 
         app.transaction("Sweep Gradient", function()
             local grdLayer <const> = activeSprite:newLayer()
-            grdLayer.name = "Gradient.Sweep"
+            grdLayer.name = "Gradient Sweep"
             if stylePreset == "MIXED" then
                 grdLayer.name = grdLayer.name
                     .. " " .. clrSpacePreset

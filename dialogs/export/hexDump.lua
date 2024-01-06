@@ -8,6 +8,7 @@ local importFileExts <const> = {
     "ase",  -- Adobe Swatch Exchange
     "aseprite",
     "bmp",
+    "exr", -- https://openexr.com/
     "ham", -- IFF Hold-And-Modify
     "hex",
     "iff",
