@@ -343,8 +343,8 @@ dlg:button {
                                     while j > 1 do
                                         j = j - 1
 
-                                        local t = j * jToFac
-                                        t = t * t * (3.0 - (t + t))
+                                        local t <const> = j * jToFac
+                                        -- t = t * t * (3.0 - (t + t))
                                         local u <const> = 1.0 - t
 
                                         ---@type string[]
