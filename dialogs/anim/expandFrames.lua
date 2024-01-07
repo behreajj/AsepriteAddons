@@ -53,8 +53,8 @@ dlg:combobox {
     onchange = function()
         local args <const> = dlg.data
         local fillOpt <const> = args.fillOpt
-        local notEmpty <const> = fillOpt ~= "EMPTY"
-        dlg:modify { id = "tilemapWarn", visible = notEmpty }
+        local isCross <const> = fillOpt == "CROSS_FADE"
+        dlg:modify { id = "tilemapWarn", visible = isCross }
     end
 }
 
@@ -64,7 +64,7 @@ dlg:label {
     id = "tilemapWarn",
     label = "Note:",
     text = "Tile maps excluded.",
-    visible = defaults.fillOpt ~= "EMPTY"
+    visible = defaults.fillOpt == "CROSS_FADE"
 }
 
 dlg:newrow { always = false }
@@ -93,6 +93,7 @@ dlg:button {
         local fillOpt <const> = args.fillOpt
             or defaults.fillOpt --[[@as string]]
 
+        local isLoopVerif <const> = isLoop and target == "ALL"
         local frObjsBefore <const> = activeSprite.frames
         local lenFrObjsBefore <const> = #frObjsBefore
 
@@ -113,6 +114,8 @@ dlg:button {
                 return
             end
 
+            -- TODO: Better approach than this? Make a special extrapolation
+            -- clause?
             if oldActFrObj.frameNumber <= 1 then
                 app.alert {
                     title = "Error",
@@ -132,6 +135,8 @@ dlg:button {
                 return
             end
 
+            -- TODO: Better approach than this? Make a special extrapolation
+            -- clause?
             if oldActFrObj.frameNumber >= lenFrObjsBefore then
                 app.alert {
                     title = "Error",
@@ -179,7 +184,7 @@ dlg:button {
                 end
             end
 
-            if isLoop and target == "ALL" then
+            if isLoopVerif then
                 local durPrev <const> = activeSprite.frames[#activeSprite.frames].duration
                 local durNext <const> = activeSprite.frames[1].duration
 
@@ -205,7 +210,12 @@ dlg:button {
         end
         app.refresh()
 
-        if fillOpt == "CROSS_FADE" then
+        if fillOpt ~= "EMPTY" then
+            local tlHidden <const> = not app.preferences.general.visible_timeline
+            if tlHidden then
+                app.command.Timeline { open = true }
+            end
+
             local spriteSpec <const> = activeSprite.spec
             local colorMode <const> = spriteSpec.colorMode
             if colorMode ~= ColorMode.RGB then
@@ -265,6 +275,9 @@ dlg:button {
 
                         -- print(strfmt("idNext: %d, idPrev: %d", idNext, idPrev))
 
+                        -- The case where target is ALL and loop is true is a
+                        -- problem for link cels ("SUSTAIN") to be an option,
+                        -- because new frames are appended after the last frame.
                         if idNext == idPrev then
                             app.range:clear()
 
@@ -454,9 +467,15 @@ dlg:button {
                         end             -- End equal image IDs check.
                     end                 -- End previous and next cel exist.
                 end                     -- End chosen frames loop.
-            end                         -- End leaf layers loop.
+
+                -- If sustain were to be an option of its own, the ALL looped
+                -- option would need to be taken care of per layer, here.
+            end -- End leaf layers loop.
 
             app.range:clear()
+            if tlHidden then
+                app.command.Timeline { close = true }
+            end
             app.refresh()
         end
     end
