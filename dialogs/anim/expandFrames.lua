@@ -1,6 +1,6 @@
 -- TODO: To support range, you'd need that consecutive function after all.
 local targets <const> = { "ALL", "AFTER", "BEFORE" }
-local fillOpts <const> = { "CROSS_FADE", "EMPTY" }
+local fillOpts <const> = { "CROSS_FADE", "EMPTY", "SUSTAIN" }
 
 local defaults <const> = {
     target = "ALL",
@@ -211,6 +211,7 @@ dlg:button {
         app.refresh()
 
         if fillOpt ~= "EMPTY" then
+            local useSustain <const> = fillOpt == "SUSTAIN"
             local tlHidden <const> = not app.preferences.general.visible_timeline
             if tlHidden then
                 app.command.Timeline { open = true }
@@ -275,10 +276,7 @@ dlg:button {
 
                         -- print(strfmt("idNext: %d, idPrev: %d", idNext, idPrev))
 
-                        -- The case where target is ALL and loop is true is a
-                        -- problem for link cels ("SUSTAIN") to be an option,
-                        -- because new frames are appended after the last frame.
-                        if idNext == idPrev then
+                        if useSustain or idNext == idPrev then
                             app.range:clear()
 
                             ---@type integer[]
@@ -468,9 +466,27 @@ dlg:button {
                     end                 -- End previous and next cel exist.
                 end                     -- End chosen frames loop.
 
-                -- If sustain were to be an option of its own, the ALL looped
-                -- option would need to be taken care of per layer, here.
-            end -- End leaf layers loop.
+                if isLoopVerif and useSustain then
+                    -- In this case, the first frame will be appended to the
+                    -- chosen frames, so the last sprite frame is one less.
+                    local frIdxPrevBefore <const> = frIdcs[lenChosenFrames - 1]
+                    local frIdxPrevAfter <const> = frIdxDict[frIdxPrevBefore]
+
+                    app.range:clear()
+
+                    ---@type integer[]
+                    local rangeFrIdcs <const> = {}
+                    local j = -1
+                    while j < inbetweens do
+                        j = j + 1
+                        rangeFrIdcs[j] = frIdxPrevAfter + j
+                    end
+
+                    app.range.frames = rangeFrIdcs
+                    app.range.layers = { leaf }
+                    app.command.LinkCels()
+                end -- End sustain link check.
+            end     -- End leaf layers loop.
 
             app.range:clear()
             if tlHidden then
