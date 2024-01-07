@@ -212,6 +212,7 @@ dlg:button {
         app.refresh()
 
         if fillOpt ~= "EMPTY" then
+            local useCross <const> = fillOpt == "CROSS_FADE"
             local useSustain <const> = fillOpt == "SUSTAIN"
             local tlHidden <const> = not app.preferences.general.visible_timeline
             if tlHidden then
@@ -220,7 +221,7 @@ dlg:button {
 
             local spriteSpec <const> = activeSprite.spec
             local colorMode <const> = spriteSpec.colorMode
-            if colorMode ~= ColorMode.RGB then
+            if useCross and colorMode ~= ColorMode.RGB then
                 app.alert {
                     title = "Error",
                     text = "Only RGB color mode is supported."
