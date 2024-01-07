@@ -53,8 +53,8 @@ dlg:combobox {
     onchange = function()
         local args <const> = dlg.data
         local fillOpt <const> = args.fillOpt
-        local isCross <const> = fillOpt == "CROSS_FADE"
-        dlg:modify { id = "tilemapWarn", visible = isCross }
+        local notEmpty <const> = fillOpt ~= "EMPTY"
+        dlg:modify { id = "tilemapWarn", visible = notEmpty }
     end
 }
 
@@ -64,7 +64,7 @@ dlg:label {
     id = "tilemapWarn",
     label = "Note:",
     text = "Tile maps excluded.",
-    visible = defaults.fillOpt == "CROSS_FADE"
+    visible = defaults.fillOpt ~= "EMPTY"
 }
 
 dlg:newrow { always = false }
