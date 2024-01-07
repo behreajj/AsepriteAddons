@@ -5,7 +5,7 @@ local fillOpts <const> = { "CROSS_FADE", "EMPTY", "SUSTAIN" }
 local defaults <const> = {
     target = "ALL",
     isLoop = false,
-    fillOpt = "EMPTY",
+    fillOpt = "SUSTAIN",
     inbetweens = 1
 }
 
@@ -342,8 +342,9 @@ dlg:button {
                                     while j > 1 do
                                         j = j - 1
 
-                                        local jFac <const> = j * jToFac
-                                        local cFac <const> = 1.0 - jFac
+                                        local t = j * jToFac
+                                        t = t * t * (3.0 - (t + t))
+                                        local u <const> = 1.0 - t
 
                                         ---@type string[]
                                         local bytesComp <const> = {}
@@ -411,7 +412,7 @@ dlg:button {
 
                                                 local ap01 <const> = aPrev / 255.0
                                                 local an01 <const> = aNext / 255.0
-                                                local ac01 <const> = cFac * ap01 + jFac * an01
+                                                local ac01 <const> = u * ap01 + t * an01
                                                 aComp = floor(ac01 * 255.0 + 0.5)
 
                                                 rComp = rNext
@@ -433,7 +434,7 @@ dlg:button {
                                                         bPrev / 255.0,
                                                         1.0)
 
-                                                    local clrComp <const> = mixSrLab2(clrPrev, clrNext, jFac)
+                                                    local clrComp <const> = mixSrLab2(clrPrev, clrNext, t)
                                                     rComp = floor(min(max(clrComp.r, 0.0), 1.0) * 255.0 + 0.5)
                                                     gComp = floor(min(max(clrComp.g, 0.0), 1.0) * 255.0 + 0.5)
                                                     bComp = floor(min(max(clrComp.b, 0.0), 1.0) * 255.0 + 0.5)
@@ -450,9 +451,9 @@ dlg:button {
                                         local imageComp <const> = Image(specComp)
                                         imageComp.bytes = tconcat(bytesComp)
 
-                                        local opacComp01 <const> = cFac * opacPrev01 + jFac * opacNext01
+                                        local opacComp01 <const> = u * opacPrev01 + t * opacNext01
                                         local opacComp <const> = floor(opacComp01 * 255.0 + 0.5)
-                                        local zIdxComp <const> = round(cFac * zIdxPrev + jFac * zIdxNext)
+                                        local zIdxComp <const> = round(u * zIdxPrev + t * zIdxNext)
 
                                         local frIdxComp <const> = frIdxPrevAfter + j
                                         local celComp <const> = activeSprite:newCel(
