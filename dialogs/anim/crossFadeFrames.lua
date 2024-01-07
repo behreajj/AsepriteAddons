@@ -3,6 +3,8 @@ dofile("../../support/aseutilities.lua")
 local facTypes <const> = { "FRAME", "TIME" }
 
 local easeTypes <const> = {
+    -- TODO: What if you want to take fr 1 as your origin and fr 4 as your dest
+    -- but you want the fade to be 8 frames long?
     "CIRC_IN",
     "CIRC_OUT",
     "EASE",
@@ -39,7 +41,7 @@ local function getFrIdx()
     return frIdx
 end
 
-local dlg <const> = Dialog { title = "Tween Pixels" }
+local dlg <const> = Dialog { title = "Cross Fade Frames" }
 
 dlg:combobox {
     id = "facType",
@@ -398,7 +400,6 @@ dlg:button {
         local blitOrig <const> = Image(compSpec)
         local blitDest <const> = Image(compSpec)
 
-        -- TODO: Handle case where srcLayer is background?
         blitOrig:drawImage(imageOrig, Point(xtlDiffOrig, ytlDiffOrig))
         blitDest:drawImage(imageDest, Point(xtlDiffDest, ytlDiffDest))
 
@@ -413,14 +414,18 @@ dlg:button {
         local max <const> = math.max
         local min <const> = math.min
         local mixSrLab2 <const> = Clr.mixSrLab2
+        local tconcat <const> = table.concat
+        local strpack <const> = string.pack
+        local packZero <const> = strpack("B B B B", 0, 0, 0, 0)
 
+        -- TODO: Should this be wrapped in a transaction?
         local j = 0
         while j < countFrames do
             local frObj <const> = frObjs[frIdxOrigVerif + j]
             local fac <const> = factors[1 + j]
             local t <const> = eval(curve, fac).y
 
-            ---@type integer[]
+            ---@type string[]
             local bytesComp = {}
             local k = 0
             while k < flatLen do
@@ -432,10 +437,7 @@ dlg:button {
                 local clearOrig = aOrig <= 0
                 local clearDest = aDest <= 0
                 if clearOrig and clearDest then
-                    bytesComp[1 + k4] = 0
-                    bytesComp[2 + k4] = 0
-                    bytesComp[3 + k4] = 0
-                    bytesComp[4 + k4] = 0
+                    bytesComp[1 + k] = packZero
                 else
                     local rOrig = bytesOrig[1 + k4]
                     local gOrig = bytesOrig[2 + k4]
@@ -485,17 +487,15 @@ dlg:button {
                         bComp = floor(min(max(clrComp.b, 0.0), 1.0) * 255.0 + 0.5)
                     end
 
-                    bytesComp[1 + k4] = rComp
-                    bytesComp[2 + k4] = gComp
-                    bytesComp[3 + k4] = bComp
-                    bytesComp[4 + k4] = aComp
+                    bytesComp[1 + k] = strpack("B B B B", rComp, gComp, bComp, aComp)
                 end
 
                 k = k + 1
             end
 
             local compImage <const> = Image(compSpec)
-            AseUtilities.setPixels(compImage, bytesComp)
+            compImage.bytes = tconcat(bytesComp)
+
             activeSprite:newCel(trgLayer, frObj, compImage, compPoint)
 
             j = j + 1
