@@ -93,7 +93,8 @@ dlg:button {
         local fillOpt <const> = args.fillOpt
             or defaults.fillOpt --[[@as string]]
 
-        local isLoopVerif <const> = isLoop and target == "ALL"
+        local isAll <const> = target == "ALL"
+        local isLoopVerif <const> = isLoop and isAll
         local frObjsBefore <const> = activeSprite.frames
         local lenFrObjsBefore <const> = #frObjsBefore
 
@@ -467,10 +468,12 @@ dlg:button {
                     end                 -- End previous and next cel exist.
                 end                     -- End chosen frames loop.
 
-                if isLoopVerif and useSustain then
-                    -- In this case, the first frame will be appended to the
+                if isAll and useSustain then
+                    -- In loop case, the first frame will be appended to the
                     -- chosen frames, so the last sprite frame is one less.
-                    local frIdxPrevBefore <const> = frIdcs[lenChosenFrames - 1]
+                    local lastIdx <const> = isLoopVerif and lenChosenFrames - 1
+                        or lenChosenFrames
+                    local frIdxPrevBefore <const> = frIdcs[lastIdx]
                     local frIdxPrevAfter <const> = frIdxDict[frIdxPrevBefore]
 
                     app.range:clear()
