@@ -1,9 +1,10 @@
+-- TODO: To support range, you'd need that consecutive function after all.
 local targets <const> = { "ALL", "AFTER", "BEFORE" }
 local fillOpts <const> = { "CROSS_FADE", "EMPTY" }
 
 local defaults <const> = {
-    -- TODO: For ALL option, what if anim is a loop?
     target = "ALL",
+    isLoop = false,
     fillOpt = "EMPTY",
     inbetweens = 1
 }
@@ -14,7 +15,22 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    onchange = function()
+        local args <const> = dlg.data
+        local target <const> = args.target --[[@as string]]
+        local isAll <const> = target == "ALL"
+        dlg:modify { id = "isLoop", visible = isAll }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "isLoop",
+    label = "Loop:",
+    selected = defaults.isLoop,
+    visible = defaults.target == "ALL"
 }
 
 dlg:newrow { always = false }
@@ -29,12 +45,26 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
--- TODO: Notify that tile map layers do not count.
 dlg:combobox {
     id = "fillOpt",
     label = "Fill:",
     option = defaults.fillOpt,
-    options = fillOpts
+    options = fillOpts,
+    onchange = function()
+        local args <const> = dlg.data
+        local fillOpt <const> = args.fillOpt
+        local notEmpty <const> = fillOpt ~= "EMPTY"
+        dlg:modify { id = "tilemapWarn", visible = notEmpty }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "tilemapWarn",
+    label = "Note:",
+    text = "Tile maps excluded.",
+    visible = defaults.fillOpt ~= "EMPTY"
 }
 
 dlg:newrow { always = false }
@@ -57,6 +87,7 @@ dlg:button {
         local args <const> = dlg.data
         local target <const> = args.target
             or defaults.target --[[@as string]]
+        local isLoop <const> = args.isLoop --[[@as boolean]]
         local inbetweens <const> = args.inbetweens
             or defaults.inbetweens --[[@as integer]]
         local fillOpt <const> = args.fillOpt
@@ -118,7 +149,7 @@ dlg:button {
         ---@type table<integer, integer>
         local frIdxDict <const> = {}
         local jToFac <const> = 1.0 / (inbetweens + 1.0)
-        local lenChosenFrames <const> = #frIdcs
+        local lenChosenFrames = #frIdcs
 
         app.transaction("Create New Frames", function()
             local i = lenChosenFrames + 1
@@ -146,6 +177,23 @@ dlg:button {
                     local btwn <const> = activeSprite:newEmptyFrame(frIdxNext)
                     btwn.duration = dur
                 end
+            end
+
+            if isLoop and target == "ALL" then
+                local durPrev <const> = activeSprite.frames[#activeSprite.frames].duration
+                local durNext <const> = activeSprite.frames[1].duration
+
+                local j = 0
+                while j < inbetweens do
+                    j = j + 1
+                    local jFac <const> = j * jToFac
+                    local dur <const> = (1.0 - jFac) * durPrev + jFac * durNext
+                    local btwn <const> = activeSprite:newEmptyFrame()
+                    btwn.duration = dur
+                end
+
+                lenChosenFrames = lenChosenFrames + 1
+                frIdcs[#frIdcs + 1] = 1
             end
         end)
 
@@ -200,9 +248,13 @@ dlg:button {
                     local frIdxNextAfter <const> = frIdxDict[frIdxNextBefore]
                     local celNext <const> = leaf:cel(frIdxNextAfter)
 
+                    -- print(strfmt("frIdxNext: %d, %d", frIdxNextBefore, frIdxNextAfter))
+
                     local frIdxPrevBefore <const> = frIdcs[i - 1]
                     local frIdxPrevAfter <const> = frIdxDict[frIdxPrevBefore]
                     local celPrev <const> = leaf:cel(frIdxPrevAfter)
+
+                    -- print(strfmt("frIdxPrev: %d, %d", frIdxPrevBefore, frIdxPrevAfter))
 
                     if celNext and celPrev then
                         local imgNext <const> = celNext.image
@@ -210,6 +262,8 @@ dlg:button {
 
                         local imgPrev <const> = celPrev.image
                         local idPrev <const> = imgPrev.id
+
+                        -- print(strfmt("idNext: %d, idPrev: %d", idNext, idPrev))
 
                         if idNext == idPrev then
                             app.range:clear()
