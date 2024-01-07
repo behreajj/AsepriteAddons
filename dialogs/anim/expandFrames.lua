@@ -203,14 +203,6 @@ dlg:button {
             end
         end)
 
-        local frObjsAfter <const> = activeSprite.frames
-        if oldActFrObj then
-            app.frame = frObjsAfter[frIdxDict[oldActFrIdx]]
-        else
-            app.frame = frObjsAfter[1]
-        end
-        app.refresh()
-
         if fillOpt ~= "EMPTY" then
             local useCross <const> = fillOpt == "CROSS_FADE"
             local useSustain <const> = fillOpt == "SUSTAIN"
@@ -497,8 +489,15 @@ dlg:button {
             if tlHidden then
                 app.command.Timeline { close = true }
             end
-            app.refresh()
         end
+
+        local frObjsAfter <const> = activeSprite.frames
+        if oldActFrObj then
+            app.frame = frObjsAfter[frIdxDict[oldActFrIdx]]
+        else
+            app.frame = frObjsAfter[1]
+        end
+        app.refresh()
     end
 }
 
