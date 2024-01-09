@@ -3,7 +3,7 @@ dofile("../../support/aseutilities.lua")
 local cropTypes <const> = { "CROP", "EXPAND", "SELECTION" }
 
 local defaults <const> = {
-    cropType = "CROP",
+    cropType = "SELECTION",
     includeLocked = false,
     includeHidden = true,
     padding = 0,
