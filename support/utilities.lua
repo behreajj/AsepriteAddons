@@ -729,16 +729,6 @@ function Utilities.prependMask(hexes)
     return hexes
 end
 
----Promotes a Vec2 to a Vec3. The z component defaults to 0.0.
----@param a Vec2 vector
----@param z number? z component
----@return Vec3
----@nodiscard
-function Utilities.promoteVec2ToVec3(a, z)
-    local vz <const> = z or 0.0
-    return Vec3.new(a.x, a.y, vz)
-end
-
 ---Quantizes a signed number according to a number of levels. The quantization
 ---is centered about the range.
 ---@param a number value
@@ -955,33 +945,6 @@ function Utilities.round(x)
     return ix
 end
 
----Creates a new table from the source and shuffles it.
----@generic T element
----@param t T[] input table
----@return T[]
----@nodiscard
-function Utilities.shuffle(t)
-    -- https://stackoverflow.com/a/68486276
-    local rng <const> = math.random
-    local s <const> = {}
-
-    local len <const> = #t
-    local h = 0
-    while h < len do
-        h = h + 1
-        s[h] = t[h]
-    end
-
-    local i = len + 1
-    while i > 2 do
-        i = i - 1
-        local j <const> = rng(i)
-        s[i], s[j] = s[j], s[i]
-    end
-
-    return s
-end
-
 ---Decomposes a string containing byte data into an array of integers.
 ---@param source string
 ---@return integer[]
@@ -1015,51 +978,6 @@ function Utilities.stringToCharArr(str)
         chars[i] = strsub(str, i, i)
     end
     return chars
-end
-
----Approximates a real number with a ratio of integers. Cycles determines the
----maximum iterations to search. Precision determines an early exit from the
----search. Returns a tuple with the antecedent and consequent.
----@param num number real number
----@param itrs integer? iterations
----@param precision number? precision
----@return integer
----@return integer
----@nodiscard
-function Utilities.toRatio(num, itrs, precision)
-    local sgnNum = 0
-    if num == 0.0 then return 0, 0 end
-    if num > 0.0 then sgnNum = 1 end
-    if num < -0.0 then sgnNum = -1 end
-
-    local cVerif = itrs or 10
-    local pVerif = precision or 5e-4
-    cVerif = math.max(1, math.abs(cVerif))
-    pVerif = math.max(1e-10, math.abs(pVerif))
-
-    local absNum <const> = math.abs(num)
-    local integer, fraction = math.modf(absNum)
-
-    local a0 = integer
-    local a1 = 1
-    local b0 = 1
-    local b1 = 0
-
-    local modf <const> = math.modf
-    local counter = 0
-    while fraction > pVerif and counter < cVerif do
-        local newNum <const> = 1.0 / fraction
-        integer, fraction = modf(newNum)
-        local t0 <const> = a0
-        a0 = integer * a0 + b0
-        b0 = t0
-        local t1 <const> = a1
-        a1 = integer * a1 + b1
-        b1 = t1
-        counter = counter + 1
-    end
-
-    return sgnNum * a0, a1
 end
 
 ---Finds a point on the screen given a modelview, projection and 3D point.
