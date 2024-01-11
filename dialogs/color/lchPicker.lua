@@ -42,6 +42,11 @@ local active <const> = {
     c = 30.0,
     h = 0.0,
     a = 1.0,
+    lBarWidth = defaults.barWidth,
+    cBarWidth = defaults.barWidth,
+    hBarWidth = defaults.barWidth,
+    aBarWidth = defaults.barWidth,
+    swatchesWidth = defaults.barWidth,
     swatches = {}
 }
 
@@ -113,7 +118,7 @@ local dlg <const> = Dialog { title = "LCH Color Picker" }
 ---@param event MouseEvent
 local function setAlphaMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw <const> = defaults.barWidth
+        local bw <const> = active.aBarWidth
         local mx01 <const> = event.x / (bw - 1.0)
         if event.ctrlKey then
             active.a = 1.0
@@ -134,7 +139,7 @@ end
 ---@param event MouseEvent
 local function setLightMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw <const> = defaults.barWidth
+        local bw <const> = active.lBarWidth
         local mx100 <const> = 100.0 * event.x / (bw - 1.0)
         if event.ctrlKey then
             active.l = 50.0
@@ -156,7 +161,7 @@ end
 ---@param event MouseEvent
 local function setChromaMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw <const> = defaults.barWidth
+        local bw <const> = active.cBarWidth
         local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA + 0.5
         local mx120 <const> = maxChroma * event.x / (bw - 1.0)
         if event.ctrlKey then
@@ -195,7 +200,7 @@ end
 ---@param event MouseEvent
 local function setHueMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw <const> = defaults.barWidth
+        local bw <const> = active.hBarWidth
         local mx01 <const> = event.x / (bw - 1.0)
         if event.ctrlKey then
             active.h = 0.0
@@ -280,12 +285,9 @@ dlg:canvas {
     label = "Color:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoscaling = false,
     focus = true,
     onpaint = function(event)
         -- Unpack defaults.
-        local barWidth <const> = defaults.barWidth
-        local barHeight <const> = defaults.barHeight
         local textColor = defaults.textColor
         local textShadow = defaults.textShadow
 
@@ -304,6 +306,9 @@ dlg:canvas {
 
         -- Fill image with color.
         local ctx <const> = event.context
+        local barWidth <const> = ctx.width
+        local barHeight <const> = ctx.height
+
         local bkgImg <const> = Image(barWidth, barHeight)
         bkgImg:clear(srgbHex)
         ctx:drawImage(bkgImg,
@@ -326,7 +331,7 @@ dlg:canvas {
 
         local wBarCenter <const> = barWidth * 0.5
         local wStrHalf <const> = strMeasure.width * 0.5
-        local xTextCenter <const> = wBarCenter - wStrHalf
+        local xTextCenter <const> = math.floor(wBarCenter - wStrHalf)
 
         -- Use Aseprite color as an intermediary so as
         -- to support all color modes.
@@ -358,7 +363,6 @@ dlg:canvas {
     label = "L:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoscaling = false,
     onpaint = function(event)
         -- Unpack theme.
         local bkgColor <const> = app.theme.color.window_face
@@ -366,8 +370,6 @@ dlg:canvas {
             bkgColor, ColorMode.RGB)
 
         -- Unpack defaults.
-        local barWidth <const> = defaults.barWidth
-        local barHeight <const> = defaults.barHeight
         local inGamutEps <const> = defaults.inGamutEps
         local reticleSize <const> = defaults.reticleSize
 
@@ -380,6 +382,11 @@ dlg:canvas {
         local lchTosRgb <const> = defaults.lchTosRgb
         local isInGamut <const> = Clr.rgbIsInGamut
         local toHex <const> = Clr.toHex
+
+        local ctx <const> = event.context
+        local barWidth <const> = ctx.width
+        local barHeight <const> = ctx.height
+        active.lBarWidth = barWidth
 
         local xToLight <const> = 100.0 / (barWidth - 1.0)
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
@@ -394,7 +401,6 @@ dlg:canvas {
             end
         end
 
-        local ctx <const> = event.context
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -418,7 +424,6 @@ dlg:canvas {
     label = "C:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoscaling = false,
     onpaint = function(event)
         -- Unpack theme.
         local bkgColor <const> = app.theme.color.window_face
@@ -426,8 +431,6 @@ dlg:canvas {
             bkgColor, ColorMode.RGB)
 
         -- Unpack defaults.
-        local barWidth <const> = defaults.barWidth
-        local barHeight <const> = defaults.barHeight
         local inGamutEps <const> = defaults.inGamutEps
         local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA + 0.5
         local reticleSize <const> = defaults.reticleSize
@@ -442,6 +445,11 @@ dlg:canvas {
         local isInGamut <const> = Clr.rgbIsInGamut
         local toHex <const> = Clr.toHex
 
+        local ctx <const> = event.context
+        local barWidth <const> = ctx.width
+        local barHeight <const> = ctx.height
+        active.cBarWidth = barWidth
+
         local xToChroma <const> = maxChroma / (barWidth - 1.0)
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
         local pxItr <const> = img:pixels()
@@ -455,7 +463,6 @@ dlg:canvas {
             end
         end
 
-        local ctx <const> = event.context
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -479,7 +486,6 @@ dlg:canvas {
     label = "H:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoscaling = false,
     onpaint = function(event)
         -- Unpack theme.
         local bkgColor <const> = app.theme.color.window_face
@@ -487,8 +493,6 @@ dlg:canvas {
             bkgColor, ColorMode.RGB)
 
         -- Unpack defaults.
-        local barWidth <const> = defaults.barWidth
-        local barHeight <const> = defaults.barHeight
         local inGamutEps <const> = defaults.inGamutEps
         local reticleSize <const> = defaults.reticleSize
 
@@ -501,6 +505,11 @@ dlg:canvas {
         local lchTosRgb <const> = defaults.lchTosRgb
         local isInGamut <const> = Clr.rgbIsInGamut
         local toHex <const> = Clr.toHex
+
+        local ctx <const> = event.context
+        local barWidth <const> = ctx.width
+        local barHeight <const> = ctx.height
+        active.hBarWidth = barWidth
 
         local xToHue <const> = 1.0 / (barWidth - 1.0)
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
@@ -515,7 +524,6 @@ dlg:canvas {
             end
         end
 
-        local ctx <const> = event.context
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -539,10 +547,12 @@ dlg:canvas {
     label = "Alpha:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoscaling = false,
     onpaint = function(event)
-        local barWidth <const> = defaults.barWidth
-        local barHeight <const> = defaults.barHeight
+        local ctx <const> = event.context
+        local barWidth <const> = ctx.width
+        local barHeight <const> = ctx.height
+        active.aBarWidth = barWidth
+
         local reticleSize <const> = defaults.reticleSize
 
         local bkgColor <const> = app.theme.color.window_face
@@ -576,7 +586,6 @@ dlg:canvas {
             pixel(0xff000000 | b << 0x10 | g << 0x08 | r)
         end
 
-        local ctx <const> = event.context
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -679,11 +688,8 @@ dlg:canvas {
     label = "Swatch:",
     width = defaults.barWidth,
     height = defaults.barHeight,
-    autoscaling = false,
     onpaint = function(event)
         -- Unpack defaults.
-        local barWidth <const> = defaults.barWidth
-        local barHeight <const> = defaults.barHeight
         local inGamutEps <const> = defaults.inGamutEps
 
         -- Unpack dialog arguments.
@@ -797,9 +803,14 @@ dlg:canvas {
 
         -- Display.
         local lenSwatches <const> = #swatches
+
+        local ctx <const> = event.context
+        local barWidth <const> = ctx.width
+        local barHeight <const> = ctx.height
+        active.swatchesWidth = barWidth
+
         local wsw <const> = math.floor(barWidth / lenSwatches + 0.5)
         local hsw <const> = barHeight
-        local ctx <const> = event.context
         local swatchRect <const> = Rectangle(0, 0, wsw, hsw)
 
         local lchTosRgb <const> = defaults.lchTosRgb
@@ -820,7 +831,7 @@ dlg:canvas {
     end,
     onmouseup = function(event)
         local x <const> = event.x
-        local fac <const> = x / (defaults.barWidth - 1.0)
+        local fac <const> = x / (active.swatchesWidth - 1.0)
         local swatches <const> = active.swatches
         local lenSwatches <const> = #swatches
 

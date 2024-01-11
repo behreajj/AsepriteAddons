@@ -71,6 +71,8 @@ dlg:slider {
         and defaults.pick > 0
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "angle",
     label = "Angle:",
