@@ -18,6 +18,8 @@ local defaults <const> = {
 local active <const> = {
     azimuth = 0.0,
     inclination = 1.5707963267949,
+    azBarWidth = defaults.barWidth,
+    inBarWidth = defaults.barWidth
 }
 
 local function assignFore()
@@ -189,7 +191,7 @@ local dlg = Dialog { title = "Normal Picker" }
 ---@param event MouseEvent
 local function setAzimMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw <const> = defaults.barWidth
+        local bw <const> = active.azBarWidth
         local mxtau <const> = 6.2831853071796 * event.x / (bw - 1.0)
         if event.ctrlKey then
             active.azimuth = 0.0
@@ -216,7 +218,7 @@ end
 ---@param event MouseEvent
 local function setInclMouseListen(event)
     if event.button ~= MouseButton.NONE then
-        local bw <const> = defaults.barWidth
+        local bw <const> = active.inBarWidth
         local halfPi <const> = 1.5707963267949
         local mxIncl <const> = math.pi * event.x / (bw - 1.0) - halfPi
         if event.ctrlKey then
@@ -337,12 +339,9 @@ dlg:canvas {
     label = "Color:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoscaling = false,
     focus = true,
     onpaint = function(event)
         -- Unpack defaults.
-        local barWidth <const> = defaults.barWidth
-        local barHeight <const> = defaults.barHeight
         local textColor = defaults.textColor
         local textShadow = defaults.textShadow
 
@@ -357,6 +356,9 @@ dlg:canvas {
 
         -- Fill image with color.
         local ctx <const> = event.context
+        local barWidth <const> = ctx.width
+        local barHeight <const> = ctx.height
+
         local bkgImg <const> = Image(barWidth, barHeight)
         bkgImg:clear(srgbHex)
         ctx:drawImage(bkgImg,
@@ -381,7 +383,7 @@ dlg:canvas {
 
         local wBarCenter <const> = barWidth * 0.5
         local wStrHalf <const> = strMeasure.width * 0.5
-        local xTextCenter <const> = wBarCenter - wStrHalf
+        local xTextCenter <const> = math.floor(wBarCenter - wStrHalf)
 
         -- Use Aseprite color as an intermediary so as
         -- to support all color modes.
@@ -413,11 +415,8 @@ dlg:canvas {
     label = "Azimuth:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoscaling = false,
     onpaint = function(event)
         -- Unpack defaults.
-        local barWidth <const> = defaults.barWidth
-        local barHeight <const> = defaults.barHeight
         local reticleSize <const> = defaults.reticleSize
 
         -- Cache methods.
@@ -430,6 +429,11 @@ dlg:canvas {
         local cosIncl <const> = cos(inclination)
         local sinIncl <const> = sin(inclination)
 
+        local ctx <const> = event.context
+        local barWidth <const> = ctx.width
+        local barHeight <const> = ctx.height
+        active.azBarWidth = barWidth
+
         local xToAzimuth <const> = 6.2831853071796 / (barWidth - 1.0)
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
         local pxItr <const> = img:pixels()
@@ -441,7 +445,6 @@ dlg:canvas {
                 sinIncl))
         end
 
-        local ctx <const> = event.context
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -461,11 +464,8 @@ dlg:canvas {
     label = "Incline:",
     width = defaults.barWidth,
     height = defaults.barheight,
-    autoscaling = false,
     onpaint = function(event)
         -- Unpack defaults.
-        local barWidth <const> = defaults.barWidth
-        local barHeight <const> = defaults.barHeight
         local reticleSize <const> = defaults.reticleSize
 
         -- Cache methods.
@@ -477,6 +477,11 @@ dlg:canvas {
         local inclination <const> = active.inclination
         local cosAzim <const> = cos(azimuth)
         local sinAzim <const> = sin(azimuth)
+
+        local ctx <const> = event.context
+        local barWidth <const> = ctx.width
+        local barHeight <const> = ctx.height
+        active.inBarWidth = barWidth
 
         local halfPi <const> = 1.5707963267949
         local xToIncl <const> = math.pi / (barWidth - 1.0)
@@ -491,7 +496,6 @@ dlg:canvas {
                 sin(incl)))
         end
 
-        local ctx <const> = event.context
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
