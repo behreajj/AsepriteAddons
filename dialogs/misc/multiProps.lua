@@ -240,7 +240,7 @@ if cel then
         string.format("Cel %d x %d (%d x %d)",
             celImage.width, celImage.height,
             celBounds.width, celBounds.height)
-    or string.format("Cel %d x %d",
+        or string.format("Cel %d x %d",
             celImage.width, celImage.height)
     dlg:separator {
         id = "celSep",

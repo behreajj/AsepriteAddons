@@ -22,7 +22,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `flattenGroup`: Flattens a group layer. Includes locked layers, but excludes hidden layers.
 
-- `groupLayers`: Places layers in the active range into a new group layer. If all child layers have the same parent, the group is placed under the parent.
+- `groupLayers`: Places layers in the active range into a new group layer. If all child layers have the same parent, the group is placed under the parent. Does not group background layers.
 
 - `nextFrame`: Moves the active frame to the next frame index. Preserves timeline ranges of `RangeType.LAYERS`. If play once is false, then returns to the first frame after reaching the last.
 

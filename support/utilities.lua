@@ -227,9 +227,9 @@ function Utilities.getPixelClamp(
 end
 
 ---Gets a pixel from an image's bytes, formatted as a string.
----Out of bounds coordinates return the default value, usually
----the image's transparent color packed as a string acccording
----to the number of bytes per pixel,  4 for RGB, 2 for gray, etc.
+---Out of bounds coordinates return the default value, usually the image's
+---transparent color packed as a string acccording to the number of bytes per
+---pixel, 4 for RGB, 2 for gray, etc.
 ---@param source string image bytes
 ---@param x integer x coordinate
 ---@param y integer y coordinate
@@ -943,6 +943,40 @@ function Utilities.round(x)
         return ix + 1
     end
     return ix
+end
+
+---Segments a one dimensional array of integers into a two dimensional array
+---based on sequential elements. Assumes that the input array has been sorted
+---and contains only unique integers.
+---@param arr integer[]
+---@return integer[][]
+function Utilities.sequential(arr)
+    local lenArr <const> = #arr
+    if lenArr <= 0 then return { {} } end
+
+    ---@type integer[][]
+    local seqs <const> = {}
+    local start = 0
+    local i = 1
+    while i <= lenArr do
+        if i == lenArr or (arr[1 + i] ~= (arr[i] + 1)) then
+            local seqStart <const> = arr[1 + start]
+            local seqEnd <const> = arr[i]
+            local seqLen <const> = 1 + seqEnd - seqStart
+            ---@type integer[]
+            local seq <const> = {}
+            local j = 0
+            while j < seqLen do
+                j = j + 1
+                seq[j] = arr[start + j]
+            end
+            seqs[#seqs + 1] = seq
+            start = i
+        end
+        i = i + 1
+    end
+
+    return seqs
 end
 
 ---Decomposes a string containing byte data into an array of integers.

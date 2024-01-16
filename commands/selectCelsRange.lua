@@ -12,7 +12,6 @@ end
 local appRange <const> = app.range
 if appRange.sprite == activeSprite then
     local selectCel <const> = AseUtilities.selectCel
-    local sprBounds <const> = activeSprite.bounds
 
     if appRange.isEmpty then
         local activeCel <const> = site.cel

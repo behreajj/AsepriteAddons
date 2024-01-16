@@ -288,8 +288,10 @@ dlg:combobox {
         local useSheet <const> = args.useSheet --[[@as boolean]]
 
         local isManual <const> = state == "MANUAL"
+        local isRange <const> = state == "RANGE"
         local isTags <const> = state == "TAGS"
-        local validBatching <const> = useSheet and (isTags or isManual)
+        local validBatching <const> = useSheet
+            and (isTags or isRange or isManual)
 
         dlg:modify { id = "rangeStr", visible = isManual }
         dlg:modify { id = "strExample", visible = false }
@@ -373,12 +375,11 @@ dlg:check {
         local frameTarget <const> = args.frameTarget --[[@as string]]
         local useSheet <const> = args.useSheet --[[@as boolean]]
 
-        -- TODO: Range can hypothetically contain non-contiguous frames.
-        -- If range is updated, then useBatches would have to reflect that.
         local isManual <const> = frameTarget == "MANUAL"
+        local isRange <const> = frameTarget == "RANGE"
         local isTags <const> = frameTarget == "TAGS"
         local state <const> = useSheet
-            and (isTags or isManual)
+            and (isTags or isRange or isManual)
 
         dlg:modify { id = "useBatches", visible = state }
         dlg:modify { id = "border", visible = useSheet }
@@ -391,6 +392,7 @@ dlg:check {
     selected = defaults.useBatches,
     visible = defaults.useSheet
         and (defaults.frameTarget == "TAGS"
+            or defaults.frameTarget == "RANGE"
             or defaults.frameTarget == "MANUAL")
 }
 
@@ -598,11 +600,10 @@ dlg:button {
         -- Process other variables.
         local useCrop <const> = cropType == "CROPPED"
         local nonUniformDim <const> = not potUniform
-        -- TODO: Range can hypothetically contain non-contiguous frames.
-        -- If range is updated, then useBatches would have to reflect that.
         useBatches = useBatches
             and useSheet
             and (frameTarget == "TAGS"
+                or frameTarget == "RANGE"
                 or frameTarget == "MANUAL")
         local usePadding <const> = padding > 0
         if not useSheet then margin = 0 end
@@ -828,6 +829,8 @@ dlg:button {
             local frameToJson <const> = JsonUtilities.frameToJson
             local tagToJson <const> = JsonUtilities.tagToJson
 
+            -- TODO: Frames array can be out of order, depending on order of
+            -- keys in packetsUnique.
             local lenFrameStrs = 0
             ---@type string[]
             local celStrs <const> = {}

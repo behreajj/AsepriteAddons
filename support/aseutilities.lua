@@ -1680,9 +1680,8 @@ end
 ---
 ---For ranges, call this method before new layers, frames or cels are created.
 ---Otherwise the range will be lost. Checks timeline visibility before
----accessing range.
----
----If a range is a layer type, returns all frames in the sprite.
+---accessing range. If a range is a layer type, all sprite frames will be
+---returned. The batched flag will break the return array into sequences.
 ---@param sprite Sprite sprite
 ---@param target string preset
 ---@param batch boolean? batch
@@ -1707,11 +1706,13 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
             if rangeType == RangeType.LAYERS then
                 frIdcsRange = { AseUtilities.frameObjsToIdcs(sprite.frames) }
             else
-                -- TODO: It's possible for these to not be consecutive if
-                -- shift key is held down when selecting.
                 local frIdcs1 <const> = AseUtilities.frameObjsToIdcs(
                     appRange.frames)
-                frIdcsRange = { frIdcs1 }
+                if batch then
+                    frIdcsRange = Utilities.sequential(frIdcs1)
+                else
+                    frIdcsRange = { frIdcs1 }
+                end
             end
         end
 

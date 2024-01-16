@@ -44,7 +44,7 @@ dlg:combobox {
     focus = true,
     onchange = function()
         local args <const> = dlg.data
-        local inputType <const> = args.inputType
+        local inputType <const> = args.inputType --[[@as string]]
         local isFile <const> = inputType == "FILE"
         local isPal <const> = inputType == "PALETTE"
         dlg:modify { id = "importFilepath", visible = isFile }
@@ -117,7 +117,7 @@ dlg:combobox {
     focus = false,
     onchange = function()
         local args <const> = dlg.data
-        local outputType <const> = args.outputType
+        local outputType <const> = args.outputType --[[@as string]]
         local isFile <const> = outputType == "FILE"
         dlg:modify { id = "exportFilepath", visible = isFile }
     end
@@ -129,7 +129,6 @@ dlg:file {
     id = "exportFilepath",
     filetypes = exportFileExts,
     save = true,
-
     focus = false,
     visible = defaults.outputType == "FILE"
 }

@@ -7,8 +7,9 @@ local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 local defaults <const> = {
     amount = 1,
     shiftOption = "CARDINAL",
+    selMode = "REPLACE",
     brushOption = "CIRCLE",
-    trimCels = true
+    trimCels = true,
 }
 
 local shifts <const> = {
@@ -287,7 +288,7 @@ dlg:combobox {
     id = "selMode",
     label = "Select:",
     -- option = selModes[1 + app.preferences.selection.mode],
-    option = "REPLACE",
+    option = defaults.selMode,
     options = selModes
 }
 

@@ -1,5 +1,3 @@
--- TODO: Option for ungroup layers, particularly ungroup and delete parent?
-
 local site <const> = app.site
 local activeSprite <const> = site.sprite
 if not activeSprite then return end
