@@ -373,7 +373,7 @@ dlg:button {
             end)
         end
 
-        app.activeLayer = compLayer
+        app.layer = compLayer
         app.refresh()
     end
 }

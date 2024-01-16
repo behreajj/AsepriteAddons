@@ -6,7 +6,7 @@ local oldActiveFrObj <const> = site.frame
 if oldActiveFrObj then
     local oldActiveFrIdx <const> = oldActiveFrObj.frameNumber
     activeSprite:newEmptyFrame(oldActiveFrIdx + 1)
-    app.activeFrame = oldActiveFrObj
+    app.frame = oldActiveFrObj
 else
     activeSprite:newEmptyFrame()
 end

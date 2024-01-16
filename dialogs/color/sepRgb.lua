@@ -447,7 +447,7 @@ dlg:button {
         end
 
         -- Active layer assignment triggers a timeline update.
-        app.activeLayer = sepGroup
+        app.layer = sepGroup
         app.refresh()
     end
 }

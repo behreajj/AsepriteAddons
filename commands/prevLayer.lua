@@ -28,12 +28,12 @@ if activeLayer then
     if activeLayer.isGroup
         and #activeLayer.layers > 0
         and (stepInto or activeLayer.isExpanded) then
-        app.activeLayer = activeLayer.layers[#activeLayer.layers]
+        app.layer = activeLayer.layers[#activeLayer.layers]
     elseif stackIndex > 1 then
         -- Needed for group layers with no children.
-        app.activeLayer = activeLayer.parent.layers[stackIndex - 1]
+        app.layer = activeLayer.parent.layers[stackIndex - 1]
     elseif activeLayer.parent.__name == "doc::Sprite" then
-        app.activeLayer = activeSprite.layers[1]
+        app.layer = activeSprite.layers[1]
     else
         while activeLayer.__name ~= "doc::Sprite"
             and stackIndex < 2 do
@@ -43,11 +43,11 @@ if activeLayer then
 
         -- Bottom-most layer in the stack is a group and has one child.
         if stackIndex > 1 then
-            app.activeLayer = activeLayer.layers[stackIndex - 1]
+            app.layer = activeLayer.layers[stackIndex - 1]
         end
     end
 else
-    app.activeLayer = activeSprite.layers[1]
+    app.layer = activeSprite.layers[1]
 end
 
 if isValid then

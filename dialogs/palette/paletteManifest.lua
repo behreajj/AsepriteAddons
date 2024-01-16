@@ -1042,11 +1042,11 @@ dlg:button {
             titleLayer, frameObj, titleImg,
             Point(spriteMargin, spriteMargin))
 
-        app.activeSprite = manifestSprite
+        app.sprite = manifestSprite
 
         -- Create and set the manifest palette.
         -- Wait to do this until the end, so we have greater
-        -- assurance that the manifestSprite is app.active.
+        -- assurance that the manifestSprite is active.
         AseUtilities.setPalette(hexesProfile,
             manifestSprite, 1)
         app.refresh()

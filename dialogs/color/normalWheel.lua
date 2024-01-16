@@ -507,7 +507,7 @@ dlg:button {
             AseUtilities.setPalette(normalsPal, sprite, 1)
         end
 
-        app.activeLayer = sprite.layers[1]
+        app.layer = sprite.layers[1]
         app.command.FitScreen()
         app.refresh()
     end

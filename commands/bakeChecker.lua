@@ -11,7 +11,7 @@ local bkgUnlocked = true
 if bkgLayer then
     bkgUnlocked = bkgLayer.isEditable
     if bkgUnlocked then
-        app.activeLayer = bkgLayer
+        app.layer = bkgLayer
         app.command.LayerFromBackground()
     end
 end

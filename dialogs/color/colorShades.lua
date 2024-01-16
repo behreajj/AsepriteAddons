@@ -425,7 +425,7 @@ dlg:button {
                 AseUtilities.DEFAULT_PAL_ARR, sprite, 1)
         end
 
-        app.activeLayer = gamutLayer
+        app.layer = gamutLayer
         app.refresh()
     end
 }

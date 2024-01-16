@@ -102,7 +102,7 @@ dlg:button {
         local bkgLayer <const> = activeSprite.backgroundLayer
         if bkgLayer then
             if includeLocked or bkgLayer.isEditable then
-                app.activeLayer = bkgLayer
+                app.layer = bkgLayer
                 app.command.LayerFromBackground()
             else
                 xMin = 0

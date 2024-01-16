@@ -34,14 +34,14 @@ if activeLayer then
             and (stepInto or nextLayer.isExpanded) do
             nextLayer = nextLayer.layers[1]
         end
-        app.activeLayer = nextLayer
+        app.layer = nextLayer
     elseif activeParent.__name == "doc::Sprite" then
-        app.activeLayer = activeSprite.layers[#activeSprite.layers]
+        app.layer = activeSprite.layers[#activeSprite.layers]
     else
-        app.activeLayer = activeParent
+        app.layer = activeParent
     end
 else
-    app.activeLayer = activeSprite.layers[#activeSprite.layers]
+    app.layer = activeSprite.layers[#activeSprite.layers]
 end
 
 if isValid then

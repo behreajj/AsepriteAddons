@@ -495,7 +495,7 @@ dlg:button {
         end
 
         -- Active layer assignment triggers a timeline update.
-        app.activeLayer = maskLayer
+        app.layer = maskLayer
         app.refresh()
     end
 }

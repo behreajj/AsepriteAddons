@@ -28,13 +28,13 @@ if activeFrame then
     local frameNo <const> = activeFrame.frameNumber - 1
     local lenFrames <const> = #activeSprite.frames
     if app.preferences.editor.play_once then
-        app.activeFrame = activeSprite.frames[1
+        app.frame = activeSprite.frames[1
             + math.min(math.max(frameNo - 1, 0), lenFrames - 1)]
     else
-        app.activeFrame = activeSprite.frames[1 + (frameNo - 1) % lenFrames]
+        app.frame = activeSprite.frames[1 + (frameNo - 1) % lenFrames]
     end
 else
-    app.activeFrame = activeSprite.frames[1]
+    app.frame = activeSprite.frames[1]
 end
 
 if isValid then

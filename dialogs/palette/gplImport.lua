@@ -252,7 +252,7 @@ dlg:button {
                 cel.image = image
 
                 app.command.FitScreen()
-                app.activeTool = "hand"
+                app.tool = "hand"
             end
 
             local oldMode <const> = activeSprite.colorMode

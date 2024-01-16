@@ -192,7 +192,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                 if lenRangeColors > 0 then
                     validRange = true
                     local pal <const> = AseUtilities.getPalette(
-                        app.activeFrame, activeSprite.palettes)
+                        app.site.frame, activeSprite.palettes)
                     local i = 0
                     while i < lenRangeColors do
                         i = i + 1

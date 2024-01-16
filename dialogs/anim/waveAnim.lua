@@ -1048,7 +1048,7 @@ dlg:button {
                 end)
         end
 
-        app.activeFrame = trgFrames[1]
+        app.frame = trgFrames[1]
         app.command.FitScreen()
         app.refresh()
 

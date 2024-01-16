@@ -405,7 +405,7 @@ dlg:button {
 
         local spec = AseUtilities.createSpec(width, height)
         local newSprite <const> = AseUtilities.createSprite(spec, filename)
-        app.activeSprite = newSprite
+        app.sprite = newSprite
 
         -- Maintain default pixel aspect ratio.
         -- local pxRatioStr <const> = newFilePrefs.pixel_ratio
@@ -473,10 +473,10 @@ dlg:button {
         end
 
         -- Could help to change ink to simple, but the UI doesn't update.
-        -- local toolPrefs = app.preferences.tool(app.activeTool)
+        -- local toolPrefs = app.preferences.tool(app.tool)
         -- if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
 
-        app.activeFrame = firstFrame
+        app.frame = firstFrame
         app.command.FitScreen()
         app.refresh()
         dlg:close()

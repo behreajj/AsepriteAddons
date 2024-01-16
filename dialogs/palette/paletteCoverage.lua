@@ -525,12 +525,12 @@ dlg:button {
             end
         end)
 
-        app.activeSprite = coverSprite
-        app.activeFrame = coverSprite.frames[1]
+        app.sprite = coverSprite
+        app.frame = coverSprite.frames[1]
 
         -- Create and set the coverage palette.
         -- Wait to do this until the end, so we have greater
-        -- assurance that the coverSprite is app.active.
+        -- assurance that the coverSprite is active.
         AseUtilities.setPalette(
             uniqueHexesProfile, coverSprite, 1)
         app.refresh()

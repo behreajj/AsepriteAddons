@@ -42,7 +42,7 @@ if activeLayer.isBackground then
             destCel.color = origColor
             destCel.zIndex = origzIndex
 
-            app.activeFrame = destFrObj
+            app.frame = destFrObj
         end)
     end
 else
@@ -73,7 +73,7 @@ else
                 end
             end
             activeSprite:deleteFrame(tempFrameObj)
-            app.activeFrame = destFrObj
+            app.frame = destFrObj
         end)
     end
 end

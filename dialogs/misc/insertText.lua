@@ -218,8 +218,8 @@ dlg:button {
         if printElapsed then startTime = os.clock() end
 
         -- Only support RGB color mode.
-        if app.activeSprite
-            and app.activeSprite.colorMode ~= ColorMode.RGB then
+        if app.sprite
+            and app.sprite.colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
                 text = "Only RGB color mode is supported."

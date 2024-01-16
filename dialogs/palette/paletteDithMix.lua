@@ -513,9 +513,9 @@ dlg:button {
             end)
         end
 
-        app.activeSprite = comboSprite
-        app.activeFrame = firstFrame
-        app.activeLayer = swatchesGroup
+        app.sprite = comboSprite
+        app.frame = firstFrame
+        app.layer = swatchesGroup
 
         AseUtilities.setPalette(
             hexesProfile, comboSprite, 1)

@@ -486,8 +486,8 @@ dlg:button {
                 AseUtilities.DEFAULT_PAL_ARR, sprite, 1)
         end
 
-        app.activeFrame = sprite.frames[math.ceil(#sprite.frames / 2)]
-        app.activeLayer = gamutLayer
+        app.frame = sprite.frames[math.ceil(#sprite.frames / 2)]
+        app.layer = gamutLayer
         app.refresh()
     end
 }

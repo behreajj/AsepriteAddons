@@ -349,7 +349,7 @@ dlg:button {
         end
 
         -- Active layer assignment triggers a timeline update.
-        app.activeLayer = mrrGroup
+        app.layer = mrrGroup
         app.refresh()
 
         if invalidFlag then

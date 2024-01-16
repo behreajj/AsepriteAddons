@@ -167,7 +167,7 @@ dlg:button {
         openFilePrefs.open_sequence = 2
 
         -- Palettes need to be retrieved before a new sprite is created in case
-        -- it sets the app.activeSprite to the new sprite. Unfortunately, that
+        -- it sets the app.sprite to the new sprite. Unfortunately, that
         -- means this is wasted effort if the palette type is "EMBEDDED" or
         -- there is no new sprite.
         local palType <const> = args.palType
@@ -210,7 +210,7 @@ dlg:button {
             return
         end
 
-        app.activeSprite = openSprite
+        app.sprite = openSprite
         local oldColorMode <const> = openSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
@@ -219,7 +219,7 @@ dlg:button {
             local bkgLayer <const> = openSprite.backgroundLayer
             if bkgLayer then
                 app.transaction("Layer From Bkg", function()
-                    app.activeLayer = bkgLayer
+                    app.layer = bkgLayer
                     app.command.LayerFromBackground()
                     bkgLayer.name = "Bkg"
                 end)
@@ -290,7 +290,7 @@ dlg:button {
         end
 
         openFilePrefs.open_sequence = oldOpSeqPref
-        app.activeTool = "hand"
+        app.tool = "hand"
         app.command.FitScreen()
         app.refresh()
         dlg:close()

@@ -33,7 +33,7 @@ local function updateSprite()
     sprite = app.site.sprite
     if not sprite and #app.sprites > 0 then
         sprite = app.sprites[#app.sprites]
-        app.activeSprite = sprite
+        app.sprite = sprite
     end
     if not sprite then return false end
     filename = sprite.filename

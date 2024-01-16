@@ -24,6 +24,6 @@ if lenNeighbors > 1 then
     app.transaction("Cycle Stack Up", function()
         local shifted <const> = currStackIndex - 1 + shift
         layer.stackIndex = 1 + shifted % lenNeighbors
-        app.activeLayer = layer
+        app.layer = layer
     end)
 end

@@ -167,7 +167,7 @@ dlg:button {
             end
         else
             local palette <const> = AseUtilities.getPalette(
-                app.activeFrame, palettes)
+                app.site.frame, palettes)
             selectedPalettes[1] = palette
             lenSum = #palette
         end
