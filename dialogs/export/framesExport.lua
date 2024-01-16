@@ -829,20 +829,29 @@ dlg:button {
             local frameToJson <const> = JsonUtilities.frameToJson
             local tagToJson <const> = JsonUtilities.tagToJson
 
-            -- TODO: Frames array can be out of order, depending on order of
-            -- keys in packetsUnique.
-            local lenFrameStrs = 0
+            ---@type table[]
+            local pckUnqArr <const> = {}
+            for _, packet in pairs(packetsUnique) do
+                pckUnqArr[#pckUnqArr + 1] = packet
+            end
+            table.sort(pckUnqArr, function(a, b)
+                return a.frame.frameNumber < b.frame.frameNumber
+            end)
+
+            local lenPackStrs <const> = #pckUnqArr
             ---@type string[]
             local celStrs <const> = {}
             ---@type string[]
             local frameStrs <const> = {}
-            for _, packet in pairs(packetsUnique) do
+            local m = 0
+            while m < lenPackStrs do
+                m = m + 1
+                local packet <const> = pckUnqArr[m]
                 local cel <const> = packet.cel
                 local frame <const> = packet.frame
-                lenFrameStrs = lenFrameStrs + 1
-                celStrs[lenFrameStrs] = celToJson(
+                celStrs[m] = celToJson(
                     cel, cel.fileName, boundsFormat)
-                frameStrs[lenFrameStrs] = frameToJson(frame)
+                frameStrs[m] = frameToJson(frame)
             end
 
             local k = 0
