@@ -57,30 +57,32 @@ app.transaction("Correct tile sets", function()
     end
 end)
 
-app.transaction("Remove unused tile sets", function()
-    local leaves <const> = AseUtilities.getLayerHierarchy(
-        activeSprite, true, true, true, false)
-    local lenLeaves <const> = #leaves
-    ---@type table<integer, boolean>
-    local usedTileSets = {}
-    local i = 0
-    while i < lenLeaves do
-        i = i + 1
-        local leaf <const> = leaves[i]
-        if leaf.isTilemap then
-            local id <const> = leaf.tileset.properties["id"]
-            usedTileSets[id] = true
+if not app.preferences.tilemap.show_delete_unused_tileset_alert then
+    app.transaction("Remove unused tile sets", function()
+        local leaves <const> = AseUtilities.getLayerHierarchy(
+            activeSprite, true, true, true, false)
+        local lenLeaves <const> = #leaves
+        ---@type table<integer, boolean>
+        local usedTileSets = {}
+        local i = 0
+        while i < lenLeaves do
+            i = i + 1
+            local leaf <const> = leaves[i]
+            if leaf.isTilemap then
+                local id <const> = leaf.tileset.properties["id"]
+                usedTileSets[id] = true
+            end
         end
-    end
 
-    local j = lenTileSets + 1
-    while j > 1 do
-        j = j - 1
-        local tileSet <const> = tileSets[j]
-        if not usedTileSets[tileSet.properties.id] then
-            activeSprite:deleteTileset(tileSet)
+        local j = lenTileSets + 1
+        while j > 1 do
+            j = j - 1
+            local tileSet <const> = tileSets[j]
+            if not usedTileSets[tileSet.properties.id] then
+                activeSprite:deleteTileset(tileSet)
+            end
         end
-    end
-end)
+    end)
+end
 
 app.refresh()
