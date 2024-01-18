@@ -313,7 +313,7 @@ local function layerToSvgStr(
     end         -- End isVisible and isEditable.
 end
 
-local dlg = Dialog { title = "SVG Export" }
+local dlg <const> = Dialog { title = "SVG Export" }
 
 dlg:check {
     id = "flattenImage",
@@ -695,12 +695,12 @@ dlg:button {
         ---@type string[]
         local layersStrArr <const> = {}
         if flattenImage then
-            local frameTarget = args.frameTarget
+            local frameTarget <const> = args.frameTarget
                 or defaults.frameTarget --[[@as string]]
-            local rangeStr = args.rangeStr
+            local rangeStr <const> = args.rangeStr
                 or defaults.rangeStr --[[@as string]]
 
-            local chosenFrIdcs = Utilities.flatArr2(AseUtilities.getFrames(
+            local chosenFrIdcs <const> = Utilities.flatArr2(AseUtilities.getFrames(
                 activeSprite, frameTarget, true, rangeStr))
             local lenChosenFrames <const> = #chosenFrIdcs
             if lenChosenFrames <= 0 then

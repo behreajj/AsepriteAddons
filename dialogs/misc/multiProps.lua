@@ -104,6 +104,15 @@ dlg:separator {
     text = string.format("%s Layer", getLayerType(layer))
 }
 
+-- dlg:label {
+--     id = "stackIndex",
+--     label = "Stack:",
+--     text = string.format("%d", layer.stackIndex),
+--     visible = true
+-- }
+
+-- dlg:newrow { always = false }
+
 dlg:entry {
     id = "layerName",
     label = "Name:",

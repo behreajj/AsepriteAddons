@@ -42,6 +42,10 @@ if range.sprite == activeSprite and (not range.isEmpty) then
             stckIdxGroup = stckIdxMax
         end
     end
+
+    -- Layers can be out of order in terms of stack, even if the range is
+    -- sequential and all layers have the same parent.
+    table.sort(layers, function(a, b) return a.stackIndex < b.stackIndex end)
 else
     local activeLayer <const> = site.layer
     if activeLayer then
@@ -65,6 +69,10 @@ app.transaction("Group Layers", function()
         end
     end
 
+    -- TODO: Does going in reverse prevent problems with stack indices?
+    -- Does the range table need to be sorted if all have same parent?
+    -- Seems to be a problem ordering layers when they are duplicates
+    -- of a source layer.
     local i = 0
     while i < lenLayers do
         i = i + 1
