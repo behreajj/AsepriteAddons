@@ -401,6 +401,14 @@ dlg:button {
                         topLayers[#topLayers + 1] = rangeLayer
                     end
                 end
+
+                -- Layers in a range can be out of order.
+                table.sort(topLayers, function(a, b)
+                    if a.stackIndex == b.stackIndex then
+                        return a.name < b.name
+                    end
+                    return a.stackIndex < b.stackIndex
+                end)
             end
 
             if tlHidden then

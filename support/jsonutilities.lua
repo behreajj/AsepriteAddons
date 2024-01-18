@@ -285,7 +285,6 @@ end
 ---@return string
 ---@nodiscard
 function JsonUtilities.spriteToJson(sprite)
-    -- User data is in 1.3 only.
     local spriteDataVrf = "null"
     local spriteData <const> = sprite.data
     if spriteData and #spriteData > 0 then
