@@ -6,8 +6,8 @@ local defaults <const> = {
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
     target = "FORE_TILE",
-    -- Since the cull button has been removed from this dialog, it makes more
-    -- sense to edit in place.
+    rangeStr = "",
+    strExample = "4,6:9,13",
     inPlace = true
 }
 
@@ -23,18 +23,17 @@ local function cycleActive(target, shift)
     if not activeLayer.isTilemap then return end
 
     local tileset <const> = activeLayer.tileset
-    local lenTileset <const> = #tileset
+    local lenTileSet <const> = #tileset
 
     local access <const> = target == "BACK_TILE" and "bg_tile" or "fg_tile"
-
     local colorBarPrefs <const> = app.preferences.color_bar
     local tifCurr <const> = colorBarPrefs[access]
     local tiCurr <const> = app.pixelColor.tileI(tifCurr)
-    if tiCurr > lenTileset - 1 or tiCurr < 0 then
+    if tiCurr > lenTileSet - 1 or tiCurr < 0 then
         colorBarPrefs[access] = 0
     else
         local tfCurr <const> = app.pixelColor.tileF(tifCurr)
-        local tiNext <const> = (tiCurr + shift) % lenTileset
+        local tiNext <const> = (tiCurr + shift) % lenTileSet
         colorBarPrefs[access] = app.pixelColor.tile(tiNext, tfCurr)
     end
     app.refresh()
@@ -368,9 +367,15 @@ dlg:combobox {
     options = targets,
     onchange = function()
         local args <const> = dlg.data
-        local target <const> = args.target
+        local target <const> = args.target --[[@as string]]
+
         local isTiles <const> = target == "TILES"
+        local isTileMap <const> = target == "TILE_MAP"
+        local isRange <const> = isTileMap or isTiles
+
         dlg:modify { id = "inPlace", visible = isTiles }
+        dlg:modify { id = "rangeStr", visible = isRange }
+        dlg:modify { id = "strExample", visible = false }
     end
 }
 
@@ -435,12 +440,142 @@ dlg:button {
     end
 }
 
+dlg:separator { id = "selectSep" }
+
+dlg:entry {
+    id = "rangeStr",
+    label = "Entry:",
+    text = defaults.rangeStr,
+    focus = false,
+    visible = defaults.frameTarget == "MANUAL",
+    onchange = function()
+        dlg:modify { id = "strExample", visible = true }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "strExample",
+    label = "Example:",
+    text = defaults.strExample,
+    visible = false
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "selectButton",
+    label = "Tiles:",
+    text = "&SELECT",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+
+        local activeLayer <const> = site.layer
+        if not activeLayer then return end
+        if not activeLayer.isTilemap then return end
+
+        local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
+        local lenTileSet <const> = #tileSet
+
+        local args <const> = dlg.data
+        local target <const> = args.target or defaults.target --[[@as string]]
+        local colorBarPrefs <const> = app.preferences.color_bar
+
+        local selIndices = {}
+        if target == "FORE_TILE" then
+            local tifFore <const> = colorBarPrefs["fg_tile"]
+            local tiFore = app.pixelColor.tileI(tifFore)
+            if tiFore > lenTileSet - 1 or tiFore < 0 then
+                tiFore = 0
+            end
+            selIndices[1] = tiFore
+        elseif target == "BACK_TILE" then
+            local tifBack <const> = colorBarPrefs["bg_tile"]
+            local tiBack = app.pixelColor.tileI(tifBack)
+            if tiBack > lenTileSet - 1 or tiBack < 0 then
+                tiBack = 0
+            end
+            selIndices[1] = tiBack
+        else
+            -- Default to "TILE_MAP" or "TILES"
+            local rangeStr <const> = args.rangeStr
+                or defaults.rangeStr --[[@as string]]
+            local baseIndex <const> = tileSet.baseIndex
+            -- Prase range was designed for frames,
+            -- in [1, len], not tiles in [0, len - 1].
+            selIndices = Utilities.parseRangeStringUnique(
+                rangeStr, lenTileSet - 1, baseIndex - 1)
+            -- print(table.concat(selIndices, ", "))
+        end
+
+        if target == "TILES" then
+            app.range:clear()
+            app.range.tiles = selIndices
+        else
+            local activeFrame <const> = site.frame
+            if not activeFrame then return end
+
+            local activeCel <const> = activeLayer:cel(activeFrame)
+            if not activeCel then return end
+
+            local celPos <const> = activeCel.position
+            local xTopLeft <const> = celPos.x
+            local yTopLeft <const> = celPos.y
+
+            local lenSelIndices <const> = #selIndices
+            local tileGrid <const> = tileSet.grid
+            local tileSize <const> = tileGrid.tileSize
+            local wTile <const> = tileSize.width
+            local hTile <const> = tileSize.height
+
+            local sel <const> = Selection()
+            local selRect <const> = Rectangle(0, 0, wTile, hTile)
+
+            local pxTilei <const> = app.pixelColor.tileI
+
+            local tileMap <const> = activeCel.image
+            local mapItr <const> = tileMap:pixels()
+            for mapEntry in mapItr do
+                local mapif <const> = mapEntry() --[[@as integer]]
+                local idx <const> = pxTilei(mapif)
+
+                local found = false
+                local k = 0
+                while (not found) and k < lenSelIndices do
+                    k = k + 1
+                    local compIdx <const> = selIndices[k]
+                    found = idx == compIdx
+                end
+
+                if found then
+                    local j <const> = mapEntry.x
+                    local i <const> = mapEntry.y
+                    local x <const> = xTopLeft + j * wTile
+                    local y <const> = yTopLeft + i * hTile
+                    selRect.x = x
+                    selRect.y = y
+                    sel:add(selRect)
+                end
+            end
+
+            -- TODO: Support adding, subtracting, etc.
+            activeSprite.selection = sel
+        end
+
+        app.refresh()
+    end
+}
+
 dlg:separator { id = "sortSep" }
 
 dlg:button {
     id = "reorderButton",
     label = "Tile Set:",
-    text = "&SORT",
+    text = "SO&RT",
     focus = false,
     onclick = function()
         local site <const> = app.site

@@ -656,6 +656,8 @@ function Utilities.parseRangeStringOverlap(s, frameCount, offset)
         elseif lenEdges > 0 then
             -- Filter out unique numbers if invalid, don't bother clamping.
             local trial <const> = edges[1]
+            -- TODO: Generalize this for sequences that begin
+            -- at zero and end at len - 1 ?
             if trial >= 1 and trial <= fcVerif then
                 idxInner = idxInner + 1
                 arrInner[idxInner] = trial
