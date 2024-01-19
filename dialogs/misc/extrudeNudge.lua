@@ -286,7 +286,7 @@ dlg:separator { id = "maskSep", text = "Mask" }
 
 dlg:combobox {
     id = "selMode",
-    label = "Select:",
+    label = "Logic:",
     -- option = selModes[1 + app.preferences.selection.mode],
     option = defaults.selMode,
     options = selModes

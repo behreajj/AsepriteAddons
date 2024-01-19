@@ -91,7 +91,7 @@ local dlg <const> = Dialog { title = "Select Color" }
 
 dlg:combobox {
     id = "selMode",
-    label = "Select:",
+    label = "Logic:",
     -- option = selModes[1 + app.preferences.selection.mode],
     option = "REPLACE",
     options = selModes
