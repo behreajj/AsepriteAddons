@@ -594,6 +594,9 @@ function Utilities.parseRangeStringOverlap(s, frameCount, offset)
     local offVerif <const> = offset or 0
     local fcVerif <const> = frameCount or 2147483647
 
+    -- This could use an arbitrary min and max index, inclusive, instead of a
+    -- max length, but it doesn't help for tile sets anyway, because the empty
+    -- zero index counts as zero, regardless of the Tileset.baseIndex.
     local strgmatch <const> = string.gmatch
     local min <const> = math.min
     local max <const> = math.max
@@ -656,8 +659,6 @@ function Utilities.parseRangeStringOverlap(s, frameCount, offset)
         elseif lenEdges > 0 then
             -- Filter out unique numbers if invalid, don't bother clamping.
             local trial <const> = edges[1]
-            -- TODO: Generalize this for sequences that begin
-            -- at zero and end at len - 1 ?
             if trial >= 1 and trial <= fcVerif then
                 idxInner = idxInner + 1
                 arrInner[idxInner] = trial
@@ -676,8 +677,8 @@ end
 ---Parses a string of integers separated by a comma. The integers may either be
 ---individual or ranges connected by a colon. For example, "1,5,10:15,7".
 ---
----Supplying the frame count ensures the range is not
----out of bounds. Defaults to an arbitrary large number.
+---Supplying the frame count ensures the range is not out of bounds. Defaults
+---to an arbitrary large number.
 ---
 ---Returns an ordered set of integers.
 ---@param s string range string

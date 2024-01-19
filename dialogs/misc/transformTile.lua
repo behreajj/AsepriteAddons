@@ -7,10 +7,10 @@ local defaults <const> = {
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
     target = "FORE_TILE",
-    -- TODO: Selection: allow for filtering by flip/rotate?
-    -- useXFlip = true,
-    -- useYFlip = true,
-    -- useDFlip = true,
+    useXFlip = false,
+    useYFlip = false,
+    useDFlip = false,
+    useNFlip = false,
     rangeStr = "",
     strExample = "4,6:9,13",
     inPlace = true
@@ -406,9 +406,10 @@ dlg:combobox {
 
         dlg:modify { id = "inPlace", visible = isTiles }
         dlg:modify { id = "selMode", visible = not isTiles }
-        -- dlg:modify { id = "useXFlip", visible = not isTiles }
-        -- dlg:modify { id = "useYFlip", visible = not isTiles }
-        -- dlg:modify { id = "useDFlip", visible = not isTiles }
+        dlg:modify { id = "useXFlip", visible = not isTiles }
+        dlg:modify { id = "useYFlip", visible = not isTiles }
+        dlg:modify { id = "useDFlip", visible = not isTiles }
+        dlg:modify { id = "useNFlip", visible = not isTiles }
         dlg:modify { id = "rangeStr", visible = isRange }
         dlg:modify { id = "strExample", visible = false }
     end
@@ -488,33 +489,42 @@ dlg:combobox {
 
 -- dlg:newrow { always = false }
 
--- dlg:check {
---     id = "useXFlip",
---     label = "Flips:",
---     text = "X",
---     selected = defaults.useXFlip,
---     visible = defaults.target ~= "TILES"
--- }
+dlg:check {
+    id = "useXFlip",
+    label = "Flips:",
+    text = "&X",
+    selected = defaults.useXFlip,
+    visible = defaults.target ~= "TILES"
+}
 
--- dlg:check {
---     id = "useYFlip",
---     text = "Y",
---     selected = defaults.useYFlip,
---     visible = defaults.target ~= "TILES"
--- }
+dlg:check {
+    id = "useYFlip",
+    text = "&Y",
+    selected = defaults.useYFlip,
+    visible = defaults.target ~= "TILES"
+}
 
--- dlg:check {
---     id = "useDFlip",
---     text = "D",
---     selected = defaults.useDFlip,
---     visible = defaults.target ~= "TILES"
--- }
+dlg:check {
+    id = "useDFlip",
+    text = "&D",
+    selected = defaults.useDFlip,
+    visible = defaults.target ~= "TILES"
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useNFlip",
+    text = "&Invert",
+    selected = defaults.useNFlip,
+    visible = defaults.target ~= "TILES"
+}
 
 dlg:newrow { always = false }
 
 dlg:entry {
     id = "rangeStr",
-    label = "Entry:",
+    label = "Indices:",
     text = defaults.rangeStr,
     focus = false,
     visible = defaults.frameTarget == "MANUAL",
@@ -598,6 +608,23 @@ dlg:button {
             local lenSelIndices <const> = #selIndices
             if lenSelIndices < 1 then return end
 
+            local useXFlip <const> = args.useXFlip --[[@as boolean]]
+            local useYFlip <const> = args.useYFlip --[[@as boolean]]
+            local useDFlip <const> = args.useDFlip --[[@as boolean]]
+            local useNFlip <const> = args.useNFlip --[[@as boolean]]
+
+            local flipMask = 0x0
+            if useXFlip then flipMask = flipMask | 0x80000000 end
+            if useYFlip then flipMask = flipMask | 0x40000000 end
+            if useDFlip then flipMask = flipMask | 0x20000000 end
+
+            local eval = function(flag) return flag ~= 0 end
+            if flipMask == 0x0 then
+                flipMask = 0x1fffffff
+            elseif useNFlip then
+                eval = function(flag) return flag == 0 end
+            end
+
             local celPos <const> = activeCel.position
             local xTopLeft <const> = celPos.x
             local yTopLeft <const> = celPos.y
@@ -607,39 +634,32 @@ dlg:button {
             local wTile <const> = tileSize.width
             local hTile <const> = tileSize.height
 
-            -- local useXFlip <const> = args.useXFlip --[[@as boolean]]
-            -- local useYFlip <const> = args.useYFlip --[[@as boolean]]
-            -- local useDFlip <const> = args.useDFlip --[[@as boolean]]
-
-            -- local flipMask = 0
-            -- if useXFlip then flipMask = flipMask | 0x80000000 end
-            -- if useYFlip then flipMask = flipMask | 0x40000000 end
-            -- if useDFlip then flipMask = flipMask | 0x20000000 end
-
             local trgSel <const> = Selection()
             local selRect <const> = Rectangle(0, 0, wTile, hTile)
 
             -- Cache methods used in loop.
             local pxTilei <const> = app.pixelColor.tileI
-            -- local pxTilef <const> = app.pixelColor.tileF
 
             local tileMap <const> = activeCel.image
             local mapItr <const> = tileMap:pixels()
             for mapEntry in mapItr do
                 local mapif <const> = mapEntry() --[[@as integer]]
-                local idx <const> = pxTilei(mapif)
+                local flag <const> = flipMask & mapif
 
-                local found = false
-                local k = 0
-                while (not found) and k < lenSelIndices do
-                    k = k + 1
-                    found = idx == selIndices[k]
-                end
+                if eval(flag) then
+                    local idx <const> = pxTilei(mapif)
+                    local found = false
+                    local k = 0
+                    while (not found) and k < lenSelIndices do
+                        k = k + 1
+                        found = idx == selIndices[k]
+                    end
 
-                if found then
-                    selRect.x = xTopLeft + mapEntry.x * wTile
-                    selRect.y = yTopLeft + mapEntry.y * hTile
-                    trgSel:add(selRect)
+                    if found then
+                        selRect.x = xTopLeft + mapEntry.x * wTile
+                        selRect.y = yTopLeft + mapEntry.y * hTile
+                        trgSel:add(selRect)
+                    end
                 end
             end
 
@@ -897,7 +917,7 @@ dlg:button {
     id = "nextFore",
     label = "Next:",
     text = "&FORE",
-    focus = false,
+    focus = true,
     onclick = function()
         cycleActive("FORE_TILE", 1)
     end
