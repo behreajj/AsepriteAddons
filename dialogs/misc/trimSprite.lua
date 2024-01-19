@@ -153,13 +153,15 @@ dlg:button {
             local bry = tly + celImg.height - 1
 
             if layer.isTilemap then
-                local tileSet <const> = layer.tileset --[[@as Tileset]]
-                local tileGrid <const> = tileSet.grid
-                local tileDim <const> = tileGrid.tileSize
-                local wTile <const> = tileDim.width
-                local hTile <const> = tileDim.height
-                brx = tlx + celImg.width * wTile - 1
-                bry = tly + celImg.height * hTile - 1
+                local tileSet <const> = layer.tileset
+                if tileSet then
+                    local tileGrid <const> = tileSet.grid
+                    local tileDim <const> = tileGrid.tileSize
+                    local wTile <const> = tileDim.width
+                    local hTile <const> = tileDim.height
+                    brx = tlx + celImg.width * wTile - 1
+                    bry = tly + celImg.height * hTile - 1
+                end
             elseif useSel then
                 transact(
                     strfmt("Crop %s", layerName),

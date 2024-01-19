@@ -652,6 +652,7 @@ dlg:button {
                     j = j + 1
                     local tmLayer <const> = tmLayers[j]
                     if tmLayer.isTilemap then
+                        -- TODO: Should this use a nil check?
                         local tileSet <const> = tmLayer.tileset --[[@as Tileset]]
                         local lenTileSet <const> = #tileSet
                         local tileSetId <const> = tileSet.properties["id"]

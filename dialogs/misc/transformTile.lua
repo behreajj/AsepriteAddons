@@ -1,15 +1,44 @@
 dofile("../../support/aseutilities.lua")
 
 local targets <const> = { "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP" }
+local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
     target = "FORE_TILE",
+    -- TODO: Selection: allow for filtering by flip/rotate?
+    -- useXFlip = true,
+    -- useYFlip = true,
+    -- useDFlip = true,
     rangeStr = "",
     strExample = "4,6:9,13",
     inPlace = true
 }
+
+local function selectWithMode(activeSprite, trgSel, selMode)
+    if selMode ~= "REPLACE" then
+        local activeSel <const>,
+        selIsValid <const> = AseUtilities.getSelection(activeSprite)
+        if selMode == "INTERSECT" then
+            activeSel:intersect(trgSel)
+            activeSprite.selection = activeSel
+        elseif selMode == "SUBTRACT" then
+            activeSel:subtract(trgSel)
+            activeSprite.selection = activeSel
+        else
+            -- Additive selection.
+            if selIsValid then
+                activeSel:add(trgSel)
+                activeSprite.selection = activeSel
+            else
+                activeSprite.selection = trgSel
+            end
+        end
+    else
+        activeSprite.selection = trgSel
+    end
+end
 
 ---@param target "FORE_TILE"|"BACK_TILE"
 ---@param shift integer
@@ -22,8 +51,9 @@ local function cycleActive(target, shift)
     if not activeLayer then return end
     if not activeLayer.isTilemap then return end
 
-    local tileset <const> = activeLayer.tileset
-    local lenTileSet <const> = #tileset
+    local tileSet <const> = activeLayer.tileset
+    if not tileSet then return end
+    local lenTileSet <const> = #tileSet
 
     local access <const> = target == "BACK_TILE" and "bg_tile" or "fg_tile"
     local colorBarPrefs <const> = app.preferences.color_bar
@@ -194,8 +224,8 @@ local function transformCel(dialog, preset)
     local activeCel <const> = activeLayer:cel(activeFrame)
     if not activeCel then return end
 
-    local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
-    local lenTileSet <const> = #tileSet
+    local tileSet <const> = activeLayer.tileset
+    if not tileSet then return end
 
     local args <const> = dialog.data
     local target <const> = args.target or defaults.target --[[@as string]]
@@ -205,6 +235,7 @@ local function transformCel(dialog, preset)
     local xtlCel <const> = celPos.x
     local ytlCel <const> = celPos.y
 
+    local lenTileSet <const> = #tileSet
     local tileGrid <const> = tileSet.grid
     local tileDim <const> = tileGrid.tileSize
     local wTile <const> = tileDim.width
@@ -374,6 +405,10 @@ dlg:combobox {
         local isRange <const> = isTileMap or isTiles
 
         dlg:modify { id = "inPlace", visible = isTiles }
+        dlg:modify { id = "selMode", visible = not isTiles }
+        -- dlg:modify { id = "useXFlip", visible = not isTiles }
+        -- dlg:modify { id = "useYFlip", visible = not isTiles }
+        -- dlg:modify { id = "useDFlip", visible = not isTiles }
         dlg:modify { id = "rangeStr", visible = isRange }
         dlg:modify { id = "strExample", visible = false }
     end
@@ -442,6 +477,41 @@ dlg:button {
 
 dlg:separator { id = "selectSep" }
 
+dlg:combobox {
+    id = "selMode",
+    label = "Logic:",
+    -- option = selModes[1 + app.preferences.selection.mode],
+    option = "REPLACE",
+    options = selModes,
+    visible = defaults.target ~= "TILES"
+}
+
+-- dlg:newrow { always = false }
+
+-- dlg:check {
+--     id = "useXFlip",
+--     label = "Flips:",
+--     text = "X",
+--     selected = defaults.useXFlip,
+--     visible = defaults.target ~= "TILES"
+-- }
+
+-- dlg:check {
+--     id = "useYFlip",
+--     text = "Y",
+--     selected = defaults.useYFlip,
+--     visible = defaults.target ~= "TILES"
+-- }
+
+-- dlg:check {
+--     id = "useDFlip",
+--     text = "D",
+--     selected = defaults.useDFlip,
+--     visible = defaults.target ~= "TILES"
+-- }
+
+dlg:newrow { always = false }
+
 dlg:entry {
     id = "rangeStr",
     label = "Entry:",
@@ -466,8 +536,8 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "selectButton",
-    label = "Tiles:",
-    text = "&SELECT",
+    label = "Select:",
+    text = "&TARGET",
     focus = false,
     onclick = function()
         local site <const> = app.site
@@ -478,11 +548,14 @@ dlg:button {
         if not activeLayer then return end
         if not activeLayer.isTilemap then return end
 
-        local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
+        local tileSet <const> = activeLayer.tileset
+        if not tileSet then return end
         local lenTileSet <const> = #tileSet
 
         local args <const> = dlg.data
-        local target <const> = args.target or defaults.target --[[@as string]]
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
+
         local colorBarPrefs <const> = app.preferences.color_bar
 
         local selIndices = {}
@@ -522,20 +595,33 @@ dlg:button {
             local activeCel <const> = activeLayer:cel(activeFrame)
             if not activeCel then return end
 
+            local lenSelIndices <const> = #selIndices
+            if lenSelIndices < 1 then return end
+
             local celPos <const> = activeCel.position
             local xTopLeft <const> = celPos.x
             local yTopLeft <const> = celPos.y
 
-            local lenSelIndices <const> = #selIndices
             local tileGrid <const> = tileSet.grid
             local tileSize <const> = tileGrid.tileSize
             local wTile <const> = tileSize.width
             local hTile <const> = tileSize.height
 
-            local sel <const> = Selection()
+            -- local useXFlip <const> = args.useXFlip --[[@as boolean]]
+            -- local useYFlip <const> = args.useYFlip --[[@as boolean]]
+            -- local useDFlip <const> = args.useDFlip --[[@as boolean]]
+
+            -- local flipMask = 0
+            -- if useXFlip then flipMask = flipMask | 0x80000000 end
+            -- if useYFlip then flipMask = flipMask | 0x40000000 end
+            -- if useDFlip then flipMask = flipMask | 0x20000000 end
+
+            local trgSel <const> = Selection()
             local selRect <const> = Rectangle(0, 0, wTile, hTile)
 
+            -- Cache methods used in loop.
             local pxTilei <const> = app.pixelColor.tileI
+            -- local pxTilef <const> = app.pixelColor.tileF
 
             local tileMap <const> = activeCel.image
             local mapItr <const> = tileMap:pixels()
@@ -547,24 +633,84 @@ dlg:button {
                 local k = 0
                 while (not found) and k < lenSelIndices do
                     k = k + 1
-                    local compIdx <const> = selIndices[k]
-                    found = idx == compIdx
+                    found = idx == selIndices[k]
                 end
 
                 if found then
-                    local j <const> = mapEntry.x
-                    local i <const> = mapEntry.y
-                    local x <const> = xTopLeft + j * wTile
-                    local y <const> = yTopLeft + i * hTile
-                    selRect.x = x
-                    selRect.y = y
-                    sel:add(selRect)
+                    selRect.x = xTopLeft + mapEntry.x * wTile
+                    selRect.y = yTopLeft + mapEntry.y * hTile
+                    trgSel:add(selRect)
                 end
             end
 
-            -- TODO: Support adding, subtracting, etc.
-            activeSprite.selection = sel
+            local selMode <const> = args.selMode
+                or defaults.selMode --[[@as string]]
+            app.transaction("Select Tiles", function()
+                selectWithMode(activeSprite, trgSel, selMode)
+            end)
         end
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "dupesButton",
+    text = "D&UPES",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+
+        local activeLayer <const> = site.layer
+        if not activeLayer then return end
+        if not activeLayer.isTilemap then return end
+
+        local activeFrame <const> = site.frame
+        if not activeFrame then return end
+
+        local activeCel <const> = activeLayer:cel(activeFrame)
+        if not activeCel then return end
+
+        local celPos <const> = activeCel.position
+        local xTopLeft <const> = celPos.x
+        local yTopLeft <const> = celPos.y
+
+        local tileSet <const> = activeLayer.tileset
+        if not tileSet then return end
+        local tileGrid <const> = tileSet.grid
+        local tileSize <const> = tileGrid.tileSize
+        local wTile <const> = tileSize.width
+        local hTile <const> = tileSize.height
+
+        local trgSel <const> = Selection()
+        local selRect <const> = Rectangle(0, 0, wTile, hTile)
+
+        -- Cache methods used in loop.
+        local pxTilei <const> = app.pixelColor.tileI
+
+        ---@type table<integer, boolean>
+        local visited <const> = {}
+        local tileMap <const> = activeCel.image
+        local mapItr <const> = tileMap:pixels()
+        for mapEntry in mapItr do
+            local mapif <const> = mapEntry() --[[@as integer]]
+            local index = pxTilei(mapif)
+            if index ~= 0 and visited[index] then
+                selRect.x = xTopLeft + mapEntry.x * wTile
+                selRect.y = yTopLeft + mapEntry.y * hTile
+                trgSel:add(selRect)
+            end
+            visited[index] = true
+        end
+
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+        app.transaction("Select Tiles", function()
+            selectWithMode(activeSprite, trgSel, selMode)
+        end)
 
         app.refresh()
     end
@@ -594,14 +740,15 @@ dlg:button {
         local activeCel <const> = activeLayer:cel(activeFrame)
         if not activeCel then return end
 
+        local tileSet <const> = activeLayer.tileset
+        if not tileSet then return end
+
         local spriteSpec <const> = activeSprite.spec
         local alphaIndex <const> = spriteSpec.transparentColor
         local colorMode <const> = spriteSpec.colorMode
         local colorSpace <const> = spriteSpec.colorSpace
 
-        local tileSet <const> = activeLayer.tileset --[[@as Tileset]]
         local lenTileSet <const> = #tileSet
-
         local tileSize <const> = tileSet.grid.tileSize
         local wTile <const> = math.max(1, math.abs(tileSize.width))
         local hTile <const> = math.max(1, math.abs(tileSize.height))

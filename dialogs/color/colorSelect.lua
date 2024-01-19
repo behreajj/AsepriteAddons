@@ -614,27 +614,29 @@ dlg:button {
             end
         end
 
-        if selMode ~= "REPLACE" then
-            local activeSel <const>, selIsValid <const> = AseUtilities.getSelection(activeSprite)
-            if selMode == "INTERSECT" then
-                activeSel:intersect(trgSel)
-                activeSprite.selection = activeSel
-            elseif selMode == "SUBTRACT" then
-                activeSel:subtract(trgSel)
-                activeSprite.selection = activeSel
-            else
-                -- Additive selection.
-                -- See https://github.com/aseprite/aseprite/issues/4045 .
-                if selIsValid then
-                    activeSel:add(trgSel)
+        app.transaction("Select Colors", function()
+            if selMode ~= "REPLACE" then
+                local activeSel <const>, selIsValid <const> = AseUtilities.getSelection(activeSprite)
+                if selMode == "INTERSECT" then
+                    activeSel:intersect(trgSel)
+                    activeSprite.selection = activeSel
+                elseif selMode == "SUBTRACT" then
+                    activeSel:subtract(trgSel)
                     activeSprite.selection = activeSel
                 else
-                    activeSprite.selection = trgSel
+                    -- Additive selection.
+                    -- See https://github.com/aseprite/aseprite/issues/4045 .
+                    if selIsValid then
+                        activeSel:add(trgSel)
+                        activeSprite.selection = activeSel
+                    else
+                        activeSprite.selection = trgSel
+                    end
                 end
+            else
+                activeSprite.selection = trgSel
             end
-        else
-            activeSprite.selection = trgSel
-        end
+        end)
 
         app.refresh()
     end
