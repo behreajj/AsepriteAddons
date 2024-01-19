@@ -10,7 +10,6 @@ local defaults <const> = {
     useXFlip = false,
     useYFlip = false,
     useDFlip = false,
-    useNFlip = false,
     rangeStr = "",
     strExample = "4,6:9,13",
     inPlace = true
@@ -409,7 +408,6 @@ dlg:combobox {
         dlg:modify { id = "useXFlip", visible = not isTiles }
         dlg:modify { id = "useYFlip", visible = not isTiles }
         dlg:modify { id = "useDFlip", visible = not isTiles }
-        dlg:modify { id = "useNFlip", visible = not isTiles }
         dlg:modify { id = "rangeStr", visible = isRange }
         dlg:modify { id = "strExample", visible = false }
     end
@@ -513,15 +511,6 @@ dlg:check {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "useNFlip",
-    text = "&Invert",
-    selected = defaults.useNFlip,
-    visible = defaults.target ~= "TILES"
-}
-
-dlg:newrow { always = false }
-
 dlg:entry {
     id = "rangeStr",
     label = "Indices:",
@@ -611,18 +600,13 @@ dlg:button {
             local useXFlip <const> = args.useXFlip --[[@as boolean]]
             local useYFlip <const> = args.useYFlip --[[@as boolean]]
             local useDFlip <const> = args.useDFlip --[[@as boolean]]
-            local useNFlip <const> = args.useNFlip --[[@as boolean]]
 
             local flipMask = 0x0
             if useXFlip then flipMask = flipMask | 0x80000000 end
             if useYFlip then flipMask = flipMask | 0x40000000 end
             if useDFlip then flipMask = flipMask | 0x20000000 end
-
-            local eval = function(flag) return flag ~= 0 end
             if flipMask == 0x0 then
                 flipMask = 0x1fffffff
-            elseif useNFlip then
-                eval = function(flag) return flag == 0 end
             end
 
             local celPos <const> = activeCel.position
@@ -646,7 +630,7 @@ dlg:button {
                 local mapif <const> = mapEntry() --[[@as integer]]
                 local flag <const> = flipMask & mapif
 
-                if eval(flag) then
+                if flag ~= 0 then
                     local idx <const> = pxTilei(mapif)
                     local found = false
                     local k = 0
