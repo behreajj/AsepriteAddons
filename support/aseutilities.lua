@@ -2345,6 +2345,25 @@ function AseUtilities.selectCel(cel, spriteBounds)
                 mask:subtract(pxRect)
             end
         end
+    elseif colorMode == ColorMode.TILEMAP then
+        local layer <const> = cel.layer
+        local tileSet <const> = layer.tileset
+        if tileSet then
+            local tileGrid <const> = tileSet.grid
+            local tileDim <const> = tileGrid.tileSize
+            local wTile <const> = tileDim.width
+            local hTile <const> = tileDim.height
+            pxRect.width = wTile
+            pxRect.height = hTile
+            local pxTilei <const> = app.pixelColor.tileI
+            for pixel in pxItr do
+                if pxTilei(pixel()) == 0 then
+                    pxRect.x = pixel.x * wTile + xCel
+                    pxRect.y = pixel.y * hTile + yCel
+                    mask:subtract(pxRect)
+                end
+            end
+        end
     end
 
     if spriteBounds then
