@@ -6,15 +6,9 @@ if not activeSprite then return end
 local oldColorMode <const> = activeSprite.colorMode
 app.command.ChangePixelFormat { format = "rgb" }
 
-local bkgLayer <const> = activeSprite.backgroundLayer
-local bkgUnlocked = true
-if bkgLayer then
-    bkgUnlocked = bkgLayer.isEditable
-    if bkgUnlocked then
-        app.layer = bkgLayer
-        app.command.LayerFromBackground()
-    end
-end
+app.transaction("Background to Layer", function()
+    AseUtilities.bkgToLayer(activeSprite, false)
+end)
 
 local docPref <const> = app.preferences.document(activeSprite)
 local bgPref <const> = docPref.bg
@@ -59,8 +53,7 @@ app.transaction("Bake Checker", function()
             checker)
     end
 
-    if bkgUnlocked then
-        app.command.BackgroundFromLayer()
-    end
+    checkerLayer.stackIndex = activeSprite.backgroundLayer and 2 or 1
+    app.layer = checkerLayer
     AseUtilities.changePixelFormat(oldColorMode)
 end)

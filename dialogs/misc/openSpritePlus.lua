@@ -51,7 +51,7 @@ local function loadSprite(filePath)
 end
 
 local defaults <const> = {
-    removeBkg = true,
+    removeBkg = false,
     trimCels = true,
     palType = "EMBEDDED",
     uniquesOnly = true,
@@ -211,19 +211,19 @@ dlg:button {
         end
 
         app.sprite = openSprite
+
         local oldColorMode <const> = openSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
 
+        -- Due to indexed color mode backgrounds potentiallly containing
+        -- transparent colors, or having an opaque color set as the sprite
+        -- transparent color, there's no great solution as to whether this
+        -- should go before or after RGB conversion.
         local removeBkg <const> = args.removeBkg --[[@as boolean]]
         if removeBkg then
-            local bkgLayer <const> = openSprite.backgroundLayer
-            if bkgLayer then
-                app.transaction("Layer From Bkg", function()
-                    app.layer = bkgLayer
-                    app.command.LayerFromBackground()
-                    bkgLayer.name = "Bkg"
+                app.transaction("Background to Layer", function()
+                    AseUtilities.bkgToLayer(openSprite, true)
                 end)
-            end
         end
 
         -- Adjustable transparent color causes problems with multiple palettes.

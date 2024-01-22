@@ -588,6 +588,49 @@ function AseUtilities.averageNormal(sprite, frame)
     return Vec3.up()
 end
 
+---Converts a sprite's background layer, if any, to a normal layer. Uses the
+---method Sprite.backgroundLayer to determine this; if a background has been
+---childed to a group, this may fail. Returns true if a background was found
+---and converted; otherwise, returns false. Ignores linked cels. Always sets
+---the new layer to stack index 1, parented to the sprite.
+---@param sprite Sprite sprite
+---@param overrideLock boolean? ignore layer lock
+---@returns boolean
+function AseUtilities.bkgToLayer(sprite, overrideLock)
+    local bkgLayer <const> = sprite.backgroundLayer
+    if bkgLayer and (overrideLock or bkgLayer.isEditable) then
+        local unBkgLayer <const> = sprite:newLayer()
+        unBkgLayer.color = bkgLayer.color
+        unBkgLayer.data = bkgLayer.data
+        unBkgLayer.isEditable = bkgLayer.isEditable
+        unBkgLayer.isVisible = bkgLayer.isVisible
+        unBkgLayer.isContinuous = bkgLayer.isContinuous
+        unBkgLayer.name = "Bkg"
+
+        local frObjs <const> = sprite.frames
+        local lenFrObjs <const> = #frObjs
+        local i = 0
+        while i < lenFrObjs do
+            i = i + 1
+            local bkgCel <const> = bkgLayer:cel(i)
+            if bkgCel then
+                local bkgCelPos <const> = bkgCel.position
+                local bkgImage <const> = bkgCel.image
+                local unBkgCel <const> = sprite:newCel(unBkgLayer, i,
+                    bkgImage, bkgCelPos)
+                unBkgCel.color = bkgCel.color
+                unBkgCel.data = bkgCel.data
+                unBkgCel.zIndex = bkgCel.zIndex
+            end
+        end
+
+        sprite:deleteLayer(bkgLayer)
+        unBkgLayer.stackIndex = 1
+        return true
+    end
+    return false
+end
+
 ---Blends a backdrop and overlay image, creating a union image from the two
 ---sources. The union then intersects with a selection. If a selection is empty,
 ---or is not provided, a new selection is created from the union. If the
