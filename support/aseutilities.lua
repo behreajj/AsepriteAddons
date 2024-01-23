@@ -544,30 +544,37 @@ function AseUtilities.averageNormal(sprite, frame)
     local selBounds <const> = sel.bounds
     local xSel <const> = selBounds.x
     local ySel <const> = selBounds.y
+    local wSel <const> = selBounds.width
+    local hSel <const> = selBounds.height
 
     local flatImage <const> = Image(AseUtilities.createSpec(
-        selBounds.width, selBounds.height,
-        colorMode, sprSpec.colorSpace,
-        sprSpec.transparentColor))
+        wSel, hSel, colorMode, sprSpec.colorSpace, sprSpec.transparentColor))
     flatImage:drawSprite(sprite, frame, Point(-xSel, -ySel))
+    local lenSel <const> = wSel * hSel
 
     local abs <const> = math.abs
+    local strbyte <const> = string.byte
+
     local xSum = 0.0
     local ySum = 0.0
     local zSum = 0.0
 
-    local pxItr <const> = flatImage:pixels()
-    for pixel in pxItr do
-        if sel:contains(pixel.x + xSel, pixel.y + ySel) then
-            local hex <const> = pixel()
-            if (hex & 0xff000000) ~= 0 then
-                local r255 <const> = hex & 0xff
-                local g255 <const> = hex >> 0x08 & 0xff
-                local b255 <const> = hex >> 0x10 & 0xff
+    local bytes = flatImage.bytes
+    local i = 0
+    while i < lenSel do
+        local xPixel <const> = i % wSel
+        local yPixel <const> = i // wSel
+        if sel:contains(xPixel + xSel, yPixel + ySel) then
+            local i4 <const> = i * 4
+            local a8 <const> = strbyte(bytes, 4 + i4)
+            if a8 >= 0 then
+                local r8 <const> = strbyte(bytes, 1 + i4)
+                local g8 <const> = strbyte(bytes, 2 + i4)
+                local b8 <const> = strbyte(bytes, 3 + i4)
 
-                local x = (r255 + r255 - 255) / 255.0
-                local y = (g255 + g255 - 255) / 255.0
-                local z = (b255 + b255 - 255) / 255.0
+                local x = (r8 + r8 - 255) / 255.0
+                local y = (g8 + g8 - 255) / 255.0
+                local z = (b8 + b8 - 255) / 255.0
 
                 if abs(x) < 0.0039216 then x = 0.0 end
                 if abs(y) < 0.0039216 then y = 0.0 end
@@ -578,6 +585,7 @@ function AseUtilities.averageNormal(sprite, frame)
                 zSum = zSum + z
             end
         end
+        i = i + 1
     end
 
     local mSq <const> = xSum * xSum + ySum * ySum + zSum * zSum
@@ -2320,6 +2328,7 @@ function AseUtilities.selectCel(cel, spriteBounds)
     local mask <const> = Selection(celBounds)
     local pxRect <const> = Rectangle(0, 0, 1, 1)
 
+    -- TODO: Replace pixel iterator with bytes string?
     if colorMode == ColorMode.RGB then
         for pixel in pxItr do
             if pixel() & 0xff000000 == 0 then
