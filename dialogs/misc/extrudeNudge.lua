@@ -108,29 +108,34 @@ local function extrude(dx, dy, trim)
     app.refresh()
 end
 
----@param dx integer
----@param dy integer
-local function nudgeCel(dx, dy)
-    local site <const> = app.site
-    local activeSprite <const> = site.sprite
-    if not activeSprite then return end
+local function updateSel(sprite, trgSel, selMode)
+    if selMode ~= "REPLACE" then
+        local activeSel <const>, selIsValid <const> = AseUtilities.getSelection(sprite)
 
-    local activeFrame <const> = site.frame
-    if not activeFrame then return end
-
-    local activeLayer <const> = site.layer
-    if not activeLayer then return end
-    if activeLayer.isBackground then return end
-
-    local activeCel <const> = activeLayer:cel(activeFrame)
-    if not activeCel then return end
-
-    local srcPos <const> = activeCel.position
-    activeCel.position = Point(srcPos.x + dx, srcPos.y - dy)
-    app.refresh()
+        if selMode == "INTERSECT" then
+            activeSel:intersect(trgSel)
+            sprite.selection = activeSel
+        elseif selMode == "SUBTRACT" then
+            activeSel:subtract(trgSel)
+            sprite.selection = activeSel
+        else
+            -- Additive selection.
+            -- See https://github.com/aseprite/aseprite/issues/4045 .
+            if selIsValid then
+                activeSel:add(trgSel)
+                sprite.selection = activeSel
+            else
+                sprite.selection = trgSel
+            end
+        end
+    else
+        sprite.selection = trgSel
+    end
 end
 
-local dlg <const> = Dialog { title = "Extrude" }
+local dlg <const> = Dialog { title = "Selection" }
+
+dlg:separator { id = "extrudeSep", text = "Extrude" }
 
 dlg:combobox {
     id = "shiftOption",
@@ -219,70 +224,7 @@ dlg:button {
     end
 }
 
-dlg:separator { id = "celSep", text = "Cel" }
-
-dlg:button {
-    id = "iNudge",
-    label = "Nudge:",
-    text = "&I",
-    focus = false,
-    onclick = function()
-        local args <const> = dlg.data
-        local amount <const> = args.amount --[[@as integer]]
-        local shift <const> = args.shiftOption --[[@as string]]
-        local tr <const> = shiftFromStr(shift)
-        nudgeCel(
-            tr.up[1] * amount,
-            tr.up[2] * amount)
-    end
-}
-
-dlg:button {
-    id = "jNudge",
-    text = "&J",
-    focus = false,
-    onclick = function()
-        local args <const> = dlg.data
-        local amount <const> = args.amount --[[@as integer]]
-        local shift <const> = args.shiftOption --[[@as string]]
-        local tr <const> = shiftFromStr(shift)
-        nudgeCel(
-            tr.left[1] * amount,
-            tr.left[2] * amount)
-    end
-}
-
-dlg:button {
-    id = "kNudge",
-    text = "&K",
-    focus = false,
-    onclick = function()
-        local args <const> = dlg.data
-        local amount <const> = args.amount --[[@as integer]]
-        local shift <const> = args.shiftOption --[[@as string]]
-        local tr <const> = shiftFromStr(shift)
-        nudgeCel(
-            tr.down[1] * amount,
-            tr.down[2] * amount)
-    end
-}
-
-dlg:button {
-    id = "lNudge",
-    text = "&L",
-    focus = false,
-    onclick = function()
-        local args <const> = dlg.data
-        local amount <const> = args.amount --[[@as integer]]
-        local shift <const> = args.shiftOption --[[@as string]]
-        local tr <const> = shiftFromStr(shift)
-        nudgeCel(
-            tr.right[1] * amount,
-            tr.right[2] * amount)
-    end
-}
-
-dlg:separator { id = "maskSep", text = "Mask" }
+dlg:separator { id = "presetSep", text = "Presets" }
 
 dlg:combobox {
     id = "selMode",
@@ -293,6 +235,172 @@ dlg:combobox {
 }
 
 dlg:newrow { always = false }
+
+dlg:button {
+    id = "leftHalfButton",
+    text = "&LEFT",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+        local spec <const> = sprite.spec
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+        local trgSel <const> = Selection(Rectangle(
+            0, 0, math.ceil(spec.width / 2), spec.height))
+        updateSel(sprite, trgSel, selMode)
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "rightHalfButton",
+    text = "&RIGHT",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+        local spec <const> = sprite.spec
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+        local trgSel <const> = Selection(Rectangle(
+            spec.width // 2, 0, math.ceil(spec.width / 2), spec.height))
+        updateSel(sprite, trgSel, selMode)
+        app.refresh()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "topHalfButton",
+    text = "&TOP",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+        local spec <const> = sprite.spec
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+        local trgSel <const> = Selection(Rectangle(
+            0, 0, spec.width, math.ceil(spec.height / 2)))
+        updateSel(sprite, trgSel, selMode)
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "bottomHalfButton",
+    text = "BOTTO&M",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+        local spec <const> = sprite.spec
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+        local trgSel <const> = Selection(Rectangle(
+            0, spec.height // 2, spec.width, math.ceil(spec.height / 2)))
+        updateSel(sprite, trgSel, selMode)
+        app.refresh()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "centerButton",
+    text = "CENTER",
+    focus = false,
+    visible = false,
+    onclick = function()
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+        local spec <const> = sprite.spec
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+        local w <const> = spec.width
+        local h <const> = spec.height
+        local xtl <const> = math.floor(w * 0.5 - w / 6.0)
+        local ytl <const> = math.floor(h * 0.5 - h / 6.0)
+        local trgSel <const> = Selection(Rectangle(
+            xtl, ytl, w - xtl * 2, h - ytl * 2))
+        updateSel(sprite, trgSel, selMode)
+        app.refresh()
+    end
+}
+
+
+dlg:button {
+    id = "contentButton",
+    text = "C&EL",
+    focus = true,
+    visible = true,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+
+        local activeFrame <const> = site.frame
+        if not activeFrame then return end
+
+        local activeLayer <const> = site.layer
+        if not activeLayer then return end
+        if activeLayer.isReference then return end
+
+        local activeCel <const> = activeLayer:cel(activeFrame)
+        if not activeCel then return end
+
+        local trgSel <const> = AseUtilities.selectCel(activeCel)
+
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+
+        app.transaction("Select Cel", function()
+            updateSel(activeSprite, trgSel, selMode)
+        end)
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "inSquareButton",
+    text = "INS&QUARE",
+    focus = false,
+    visible = true,
+    onclick = function()
+        -- https://en.wikipedia.org/wiki/Rabatment_of_the_rectangle
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+        local spec <const> = sprite.spec
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+        local w <const> = spec.width
+        local h <const> = spec.height
+        local short <const> = math.min(w, h)
+        local xtl <const> = (w == short) and 0 or (w - short) // 2
+        local ytl <const> = (h == short) and 0 or (h - short) // 2
+        local trgSel <const> = Selection(Rectangle(
+            xtl, ytl, short, short))
+        updateSel(sprite, trgSel, selMode)
+        app.refresh()
+    end
+}
+
+dlg:separator { id = "maskSep", text = "Modify" }
 
 dlg:combobox {
     id = "brushOption",
@@ -336,61 +444,6 @@ dlg:button {
 }
 
 dlg:newrow { always = false }
-
-dlg:button {
-    id = "contentButton",
-    text = "C&EL",
-    focus = true,
-    onclick = function()
-        local site <const> = app.site
-        local activeSprite <const> = site.sprite
-        if not activeSprite then return end
-
-        local activeFrame <const> = site.frame
-        if not activeFrame then return end
-
-        local activeLayer <const> = site.layer
-        if not activeLayer then return end
-        if activeLayer.isReference then return end
-
-        local activeCel <const> = activeLayer:cel(activeFrame)
-        if not activeCel then return end
-
-        local trgSel <const> = AseUtilities.selectCel(activeCel)
-
-        local args <const> = dlg.data
-        local selMode <const> = args.selMode
-            or defaults.selMode --[[@as string]]
-
-        app.transaction("Select Cel", function()
-            if selMode ~= "REPLACE" then
-                local activeSel <const>,
-                selIsValid <const> = AseUtilities.getSelection(activeSprite)
-
-                if selMode == "INTERSECT" then
-                    activeSel:intersect(trgSel)
-                    activeSprite.selection = activeSel
-                elseif selMode == "SUBTRACT" then
-                    activeSel:subtract(trgSel)
-                    activeSprite.selection = activeSel
-                else
-                    -- Additive selection.
-                    -- See https://github.com/aseprite/aseprite/issues/4045 .
-                    if selIsValid then
-                        activeSel:add(trgSel)
-                        activeSprite.selection = activeSel
-                    else
-                        activeSprite.selection = trgSel
-                    end
-                end
-            else
-                activeSprite.selection = trgSel
-            end
-        end)
-
-        app.refresh()
-    end
-}
 
 dlg:button {
     id = "borderButton",
