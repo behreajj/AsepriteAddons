@@ -80,6 +80,41 @@ local function flipFlagY(flag)
     return flag ~ 0x40000000
 end
 
+---@param xShift integer
+---@param yShift integer
+local function moveMap(xShift, yShift)
+    local site <const> = app.site
+    local activeSprite <const> = site.sprite
+    if not activeSprite then return end
+
+    local activeFrame <const> = site.frame
+    if not activeFrame then return end
+
+    local activeLayer <const> = site.layer
+    if not activeLayer then return end
+
+    local activeCel <const> = activeLayer:cel(activeFrame)
+    if not activeCel then return end
+
+    local xShScl = xShift
+    local yShScl = yShift
+    if activeLayer.isTilemap then
+        local tileSet <const> = activeLayer.tileset
+        if tileSet then
+            local tileGrid <const> = tileSet.grid
+            local tileDim <const> = tileGrid.tileSize
+            local wTile <const> = tileDim.width
+            local hTile <const> = tileDim.height
+            xShScl = xShScl * wTile
+            yShScl = yShScl * hTile
+        end
+    end
+
+    local currPos <const> = activeCel.position
+    activeCel.position = Point(currPos.x + xShScl, currPos.y + yShScl)
+    app.refresh()
+end
+
 ---@param flag integer
 ---@return integer
 local function rotateFlag90Ccw(flag)
@@ -388,7 +423,7 @@ local function transformCel(dialog, preset)
     app.refresh()
 end
 
-local dlg <const> = Dialog { title = "Edit Tile" }
+local dlg <const> = Dialog { title = "Transform Tile" }
 
 dlg:combobox {
     id = "target",
@@ -403,6 +438,10 @@ dlg:combobox {
         local isTileMap <const> = target == "TILE_MAP"
         local isRange <const> = isTileMap or isTiles
 
+        dlg:modify { id = "iMove", visible = isTileMap }
+        dlg:modify { id = "jMove", visible = isTileMap }
+        dlg:modify { id = "kMove", visible = isTileMap }
+        dlg:modify { id = "lMove", visible = isTileMap }
         dlg:modify { id = "inPlace", visible = isTiles }
         dlg:modify { id = "selMode", visible = not isTiles }
         dlg:modify { id = "useXFlip", visible = not isTiles }
@@ -471,6 +510,49 @@ dlg:button {
     focus = false,
     onclick = function()
         transformCel(dlg, "FLIP_V")
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "iMove",
+    label = "Move:",
+    text = "&I",
+    focus = false,
+    visible = defaults.target == "TILE_MAP",
+    onclick = function()
+        moveMap(0, -1)
+    end
+}
+
+dlg:button {
+    id = "jMove",
+    text = "&J",
+    focus = false,
+    visible = defaults.target == "TILE_MAP",
+    onclick = function()
+        moveMap(-1, 0)
+    end
+}
+
+dlg:button {
+    id = "kMove",
+    text = "&K",
+    focus = false,
+    visible = defaults.target == "TILE_MAP",
+    onclick = function()
+        moveMap(0, 1)
+    end
+}
+
+dlg:button {
+    id = "lMove",
+    text = "&L",
+    focus = false,
+    visible = defaults.target == "TILE_MAP",
+    onclick = function()
+        moveMap(1, 0)
     end
 }
 

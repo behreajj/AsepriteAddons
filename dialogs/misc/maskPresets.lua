@@ -135,6 +135,14 @@ end
 
 local dlg <const> = Dialog { title = "Selection" }
 
+dlg:slider {
+    id = "amount",
+    label = "Amount:",
+    min = 1,
+    max = 96,
+    value = defaults.amount
+}
+
 dlg:separator { id = "extrudeSep", text = "Extrude" }
 
 dlg:combobox {
@@ -142,14 +150,6 @@ dlg:combobox {
     label = "Direction:",
     option = defaults.shiftOption,
     options = shiftOptions
-}
-
-dlg:slider {
-    id = "amount",
-    label = "Amount:",
-    min = 1,
-    max = 96,
-    value = defaults.amount
 }
 
 dlg:newrow { always = false }
