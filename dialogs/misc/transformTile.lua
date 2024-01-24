@@ -368,13 +368,15 @@ local function transformCel(dialog, preset)
             for mapEntry in trgItr do
                 local mapif <const> = mapEntry() --[[@as integer]]
                 local i <const> = pxTilei(mapif)
-                if i > 0 and i < lenTileSet then
-                    local meta <const> = pxTilef(mapif)
-                    local trMeta <const> = flgTrFunc(meta)
-                    mapEntry(pxTileCompose(i, trMeta))
-                else
-                    mapEntry(0)
-                end
+                -- Built-in Aseprite flags allow for rotations of index zero
+                -- and for rotations of non-uniform tiles.
+                -- if i > 0 and i < lenTileSet then
+                local meta <const> = pxTilef(mapif)
+                local trMeta <const> = flgTrFunc(meta)
+                mapEntry(pxTileCompose(i, trMeta))
+                -- else
+                -- mapEntry(0)
+                -- end
             end
 
             if updateCelPos then

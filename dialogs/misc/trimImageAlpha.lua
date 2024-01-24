@@ -85,6 +85,7 @@ dlg:button {
         local includeLocked <const> = args.includeLocked --[[@as boolean]]
         local includeHidden <const> = args.includeHidden --[[@as boolean]]
 
+        -- TODO: Refactor this to make trimming tile map images easier?
         local trgCels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, activeFrame, target,
             includeLocked, includeHidden, false, false)

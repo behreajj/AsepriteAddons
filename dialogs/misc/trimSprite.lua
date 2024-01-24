@@ -99,18 +99,16 @@ dlg:button {
         -- Test to see if there is a background layer.
         -- If so, remove it. Backgrounds in indexed color
         -- mode may contain transparency.
-        local bkgLayer <const> = activeSprite.backgroundLayer
-        if bkgLayer then
-            if includeLocked or bkgLayer.isEditable then
-                -- TODO: Replace all calls to this method with a manual approach?
-                app.layer = bkgLayer
-                app.command.LayerFromBackground()
-            else
-                xMin = 0
-                yMin = 0
-                xMax = wSprite - 1
-                yMax = hSprite - 1
-            end
+        local bkgResult = false
+        app.transaction("Background to Layer", function()
+            bkgResult = AseUtilities.bkgToLayer(
+                activeSprite, includeLocked)
+        end)
+        if not bkgResult then
+            xMin = 0
+            yMin = 0
+            xMax = wSprite - 1
+            yMax = hSprite - 1
         end
 
         local sel = nil
