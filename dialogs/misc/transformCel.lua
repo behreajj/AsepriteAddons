@@ -212,7 +212,7 @@ local function sampleBilinear(
     return defaultValue
 end
 
-local dlg <const> = Dialog { title = "Transform" }
+local dlg <const> = Dialog { title = "Transform Cel" }
 
 dlg:combobox {
     id = "target",

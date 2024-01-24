@@ -108,6 +108,16 @@ local function moveMap(xShift, yShift)
             xShScl = xShScl * wTile
             yShScl = yShScl * hTile
         end
+    else
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local snap <const> = docPrefs.grid.snap --[[@as boolean]]
+        if snap then
+            local grid <const> = activeSprite.gridBounds
+            local xGrid <const> = grid.width
+            local yGrid <const> = grid.height
+            xShScl = xShScl * xGrid
+            yShScl = yShScl * yGrid
+        end
     end
 
     local currPos <const> = activeCel.position
