@@ -2628,43 +2628,160 @@ end
 function AseUtilities.trimImageAlpha(
     image, padding, alphaIndex,
     wDefault, hDefault)
-    local padVrf = padding or 0
-    padVrf = math.abs(padVrf)
-    local pad2 <const> = padVrf + padVrf
-
-    -- Available as of version 1.3-rc1.
-    -- If the image contains no nonzero pixels,
-    -- returns a rectangle of zero size.
-    local rect <const> = image:shrinkBounds(alphaIndex)
-    local rectIsValid <const> = rect.width > 0
-        and rect.height > 0
+    local srcSpec <const> = image.spec
+    local wSrc <const> = srcSpec.width
+    local hSrc <const> = srcSpec.height
 
     local lft = 0
     local top = 0
-    local wTrg = wDefault or image.width
-    local hTrg = hDefault or image.height
-    if rectIsValid then
-        lft = rect.x
-        top = rect.y
-        wTrg = rect.width
-        hTrg = rect.height
-    end
+    local wTrg = wDefault or wSrc
+    local hTrg = hDefault or hSrc
+    local isValid = false
 
-    local srcSpec <const> = image.spec
-    local trgSpec <const> = ImageSpec {
-        width = wTrg + pad2,
-        height = hTrg + pad2,
-        colorMode = srcSpec.colorMode,
-        transparentColor = alphaIndex
-    }
-    trgSpec.colorSpace = srcSpec.colorSpace
-    local target <const> = Image(trgSpec)
+    -- Revert to old method for trimming image.
+    -- TODO: Even if you erase this, keep the reference
+    -- to the link of the last alternative.
+    -- https://github.com/behreajj/AsepriteAddons/blob/606a86e64801e63e18662650288ccd5df3b4ef27
+    if image.colorMode == ColorMode.TILEMAP then
+        local pxTilei <const> = app.pixelColor.tileI
+        local strunpack <const> = string.unpack
+        local strsub <const> = string.sub
+        local bytes <const> = image.bytes
+        local bpp <const> = image.bytesPerPixel
+        local wSrcn1 <const> = math.max(0, wSrc - 1)
+        local hSrcn1 <const> = math.max(0, hSrc - 1)
+        local minRight = wSrcn1
+        local minBottom = hSrcn1
 
-    if rectIsValid then
-        target:drawImage(image,
-            Point(padVrf - lft, padVrf - top))
+        -- Top edge.
+        local topSearch = -1
+        local goTop = true
+        while topSearch < hSrcn1 and goTop do
+            topSearch = topSearch + 1
+            local x = -1
+            while x < wSrcn1 and goTop do
+                x = x + 1
+                local iTop <const> = bpp * (x + wSrc * topSearch)
+                local mapif <const> = strunpack(">I4", strsub(
+                    bytes, 1 + iTop, bpp + iTop))
+                if pxTilei(mapif) ~= 0 then
+                    minRight = x
+                    minBottom = topSearch
+                    goTop = false
+                end
+            end
+        end
+
+        -- Left edge.
+        local lftSearch = -1
+        local goLft = true
+        while lftSearch < minRight and goLft do
+            lftSearch = lftSearch + 1
+            local y = hSrc
+            while y > topSearch and goLft do
+                y = y - 1
+                local iLft <const> = bpp * (lftSearch + wSrc * y)
+                local mapif <const> = strunpack(">I4", strsub(
+                    bytes, 1 + iLft, bpp + iLft))
+                if pxTilei(mapif) ~= 0 then
+                    minBottom = y
+                    goLft = false
+                end
+            end
+        end
+
+        -- Bottom edge.
+        local btm = hSrc
+        local goBtm = true
+        while btm > minBottom and goBtm do
+            btm = btm - 1
+            local x = wSrc
+            while x > lftSearch and goBtm do
+                x = x - 1
+                local iBtm <const> = bpp * (x + wSrc * btm)
+                local mapif <const> = strunpack(">I4", strsub(
+                    bytes, 1 + iBtm, bpp + iBtm))
+                if pxTilei(mapif) ~= 0 then
+                    minRight = x
+                    goBtm = false
+                end
+            end
+        end
+
+        -- Right edge.
+        local rgt = wSrc
+        local goRgt = true
+        while rgt > minRight and goRgt do
+            rgt = rgt - 1
+            local y = btm + 1
+            while y > topSearch and goRgt do
+                y = y - 1
+                local iRgt <const> = bpp * (rgt + wSrc * y)
+                local mapif <const> = strunpack(">I4", strsub(
+                    bytes, 1 + iRgt, bpp + iRgt))
+                if pxTilei(mapif) ~= 0 then
+                    goRgt = false
+                end
+            end
+        end
+
+        local wSum <const> = 1 + rgt - lftSearch
+        local hSum <const> = 1 + btm - topSearch
+        isValid = wSum > 0 and hSum > 0
+        if isValid then
+            lft = lftSearch
+            top = topSearch
+            wTrg = wSum
+            hTrg = hSum
+        end
+
+        local trgSpec <const> = ImageSpec {
+            width = wTrg,
+            height = hTrg,
+            colorMode = ColorMode.TILEMAP,
+            transparentColor = alphaIndex
+        }
+        trgSpec.colorSpace = srcSpec.colorSpace
+        local target <const> = Image(trgSpec)
+
+        if isValid then
+            target:drawImage(image, Point(-lft, -top))
+        end
+
+        -- TODO: The offsets need to be scaled by tilewidth and height...
+        return target, lft, top
+    else
+        local padVrf = padding or 0
+        padVrf = math.abs(padVrf)
+        local pad2 <const> = padVrf + padVrf
+
+        -- If the image contains no nonzero pixels, or is a tile map,
+        -- then returns a rectangle of zero size.
+        local rect <const> = image:shrinkBounds(alphaIndex)
+        isValid = rect.width > 0 and rect.height > 0
+
+        if isValid then
+            lft = rect.x
+            top = rect.y
+            wTrg = rect.width
+            hTrg = rect.height
+        end
+
+        local trgSpec <const> = ImageSpec {
+            width = wTrg + pad2,
+            height = hTrg + pad2,
+            colorMode = srcSpec.colorMode,
+            transparentColor = alphaIndex
+        }
+        trgSpec.colorSpace = srcSpec.colorSpace
+        local target <const> = Image(trgSpec)
+
+        if isValid then
+            target:drawImage(image,
+                Point(padVrf - lft, padVrf - top))
+        end
+        return target, lft - padVrf, top - padVrf
     end
-    return target, lft - padVrf, top - padVrf
 end
 
 ---Converts a Vec2 to an Aseprite Point.
