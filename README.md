@@ -35,6 +35,10 @@ For more resources, see
 
 This repo includes
 
+- Export Tile Maps and Sets to Tiled.
+
+  ![Export Tiles](screencaps/exportTiles.png)
+
 - An arc (mesh).
 
   ![Arc](screencaps/arc.png)
@@ -94,10 +98,6 @@ This repo includes
 - Outline Gradient.
 
   ![Outline Gradient](screencaps/outlineGradient.png)
-
-- Palette Coverage.
-
-  ![Palette Coverage](screencaps/paletteCoverage.png)
 
 - Palette Manifest.
 

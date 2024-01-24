@@ -71,7 +71,7 @@ local function extrude(dx, dy, trim)
     local activeCel <const> = activeLayer:cel(activeFrame)
     if not activeCel then return end
 
-    local srcImage = activeCel.image
+    local srcImg = activeCel.image
 
     app.transaction("Extrude", function()
         local celBounds <const> = activeCel.bounds
@@ -80,8 +80,8 @@ local function extrude(dx, dy, trim)
 
         if trim then
             local trm <const>, tmx <const>, tmy <const> = AseUtilities.trimImageAlpha(
-                srcImage, 0, 0)
-            srcImage = trm
+                srcImg, 0, 0)
+            srcImg = trm
             xCel = xCel + tmx
             yCel = yCel + tmy
         end
@@ -95,12 +95,12 @@ local function extrude(dx, dy, trim)
             selOrigin.x + dx,
             selOrigin.y - dy)
 
-        local trgImage <const>, tlx <const>, tly <const> = AseUtilities.blendImage(
-            srcImage, srcImage,
+        local trgImg <const>, tlx <const>, tly <const> = AseUtilities.blendImage(
+            srcImg, srcImg,
             xCel, yCel, xCel + dx, yCel - dy,
             selNext, true)
 
-        activeCel.image = trgImage
+        activeCel.image = trgImg
         activeCel.position = Point(tlx, tly)
         activeSprite.selection = selNext
     end)
