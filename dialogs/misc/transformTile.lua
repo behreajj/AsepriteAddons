@@ -675,7 +675,7 @@ dlg:button {
             local rangeStr <const> = args.rangeStr
                 or defaults.rangeStr --[[@as string]]
             local baseIndex <const> = tileSet.baseIndex
-            -- Prase range was designed for frames,
+            -- Parse range was designed for frames,
             -- in [1, len], not tiles in [0, len - 1].
             selIndices = Utilities.parseRangeStringUnique(
                 rangeStr, lenTileSet - 1, baseIndex - 1)

@@ -972,6 +972,8 @@ function CanvasUtilities.spectrum(
         autoscaling = false,
         onpaint = function(event)
             local context <const> = event.context
+            context.blendMode = BlendMode.SRC
+            context.antialias = false
 
             local args <const> = dialog.data
             local lActive <const> = args.spectrumLight --[[@as number]]

@@ -356,6 +356,8 @@ dlg:canvas {
 
         -- Fill image with color.
         local ctx <const> = event.context
+        ctx.blendMode = BlendMode.SRC
+
         local barWidth <const> = ctx.width
         local barHeight <const> = ctx.height
 
@@ -430,6 +432,9 @@ dlg:canvas {
         local sinIncl <const> = sin(inclination)
 
         local ctx <const> = event.context
+        ctx.blendMode = BlendMode.SRC
+        ctx.antialias = false
+
         local barWidth <const> = ctx.width
         local barHeight <const> = ctx.height
         active.azBarWidth = barWidth
@@ -479,6 +484,9 @@ dlg:canvas {
         local sinAzim <const> = sin(azimuth)
 
         local ctx <const> = event.context
+        ctx.blendMode = BlendMode.SRC
+        ctx.antialias = false
+
         local barWidth <const> = ctx.width
         local barHeight <const> = ctx.height
         active.inBarWidth = barWidth

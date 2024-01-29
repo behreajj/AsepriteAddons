@@ -586,17 +586,18 @@ end
 ---Returns an array of arrays. Inner arrays can hold duplicate frame indices,
 ---as the user may intend for the same frame to appear in multiple groups.
 ---@param s string range string
----@param frameCount integer? number of frames
+---@param maxIdx integer? maximum index
 ---@param offset integer? offset
 ---@return integer[][]
 ---@nodiscard
-function Utilities.parseRangeStringOverlap(s, frameCount, offset)
-    local offVerif <const> = offset or 0
-    local fcVerif <const> = frameCount or 2147483647
-
+function Utilities.parseRangeStringOverlap(s, maxIdx, offset)
     -- This could use an arbitrary min and max index, inclusive, instead of a
     -- max length, but it doesn't help for tile sets anyway, because the empty
     -- zero index counts as zero, regardless of the Tileset.baseIndex.
+    local mnIdxVerif <const> = 1
+    local mxIdxVerif <const> = maxIdx or 2147483647
+    local offVerif <const> = offset or 0
+
     local strgmatch <const> = string.gmatch
     local min <const> = math.min
     local max <const> = math.max
@@ -629,8 +630,8 @@ function Utilities.parseRangeStringOverlap(s, frameCount, offset)
             local destIdx = edges[lenEdges]
 
             -- Edges of a range should be clamped to valid.
-            origIdx = min(max(origIdx, 1), fcVerif)
-            destIdx = min(max(destIdx, 1), fcVerif)
+            origIdx = min(max(origIdx, mnIdxVerif), mxIdxVerif)
+            destIdx = min(max(destIdx, mnIdxVerif), mxIdxVerif)
 
             if destIdx < origIdx then
                 -- print("destIdx < origIdx")
@@ -659,7 +660,7 @@ function Utilities.parseRangeStringOverlap(s, frameCount, offset)
         elseif lenEdges > 0 then
             -- Filter out unique numbers if invalid, don't bother clamping.
             local trial <const> = edges[1]
-            if trial >= 1 and trial <= fcVerif then
+            if trial >= mnIdxVerif and trial <= mxIdxVerif then
                 idxInner = idxInner + 1
                 arrInner[idxInner] = trial
                 -- print("lenEdges > 0")
@@ -682,13 +683,13 @@ end
 ---
 ---Returns an ordered set of integers.
 ---@param s string range string
----@param frameCount integer? number of frames
+---@param maxIdx integer? maximum index
 ---@param offset integer? offset
 ---@return integer[]
 ---@nodiscard
-function Utilities.parseRangeStringUnique(s, frameCount, offset)
+function Utilities.parseRangeStringUnique(s, maxIdx, offset)
     local arr2 <const> = Utilities.parseRangeStringOverlap(
-        s, frameCount, offset)
+        s, maxIdx, offset)
 
     -- Convert 2D array to a dictionary.
     -- Use dummy true, not some idx scheme,

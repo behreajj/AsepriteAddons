@@ -306,6 +306,8 @@ dlg:canvas {
 
         -- Fill image with color.
         local ctx <const> = event.context
+        ctx.blendMode = BlendMode.SRC
+
         local barWidth <const> = ctx.width
         local barHeight <const> = ctx.height
 
@@ -384,6 +386,9 @@ dlg:canvas {
         local toHex <const> = Clr.toHex
 
         local ctx <const> = event.context
+        ctx.blendMode = BlendMode.SRC
+        ctx.antialias = false
+
         local barWidth <const> = ctx.width
         local barHeight <const> = ctx.height
         active.lBarWidth = barWidth
@@ -446,6 +451,9 @@ dlg:canvas {
         local toHex <const> = Clr.toHex
 
         local ctx <const> = event.context
+        ctx.blendMode = BlendMode.SRC
+        ctx.antialias = false
+
         local barWidth <const> = ctx.width
         local barHeight <const> = ctx.height
         active.cBarWidth = barWidth
@@ -507,6 +515,9 @@ dlg:canvas {
         local toHex <const> = Clr.toHex
 
         local ctx <const> = event.context
+        ctx.blendMode = BlendMode.SRC
+        ctx.antialias = false
+
         local barWidth <const> = ctx.width
         local barHeight <const> = ctx.height
         active.hBarWidth = barWidth
@@ -549,6 +560,9 @@ dlg:canvas {
     height = defaults.barheight,
     onpaint = function(event)
         local ctx <const> = event.context
+        ctx.blendMode = BlendMode.SRC
+        ctx.antialias = false
+
         local barWidth <const> = ctx.width
         local barHeight <const> = ctx.height
         active.aBarWidth = barWidth
@@ -571,6 +585,7 @@ dlg:canvas {
         local gTrg <const> = srgb.g
         local bTrg <const> = srgb.b
 
+        -- TODO: Switch to pixel byte array?
         local floor <const> = math.floor
         local xToFac <const> = 1.0 / (barWidth - 1.0)
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
@@ -805,6 +820,9 @@ dlg:canvas {
         local lenSwatches <const> = #swatches
 
         local ctx <const> = event.context
+        ctx.blendMode = BlendMode.SRC
+        ctx.antialias = false
+
         local barWidth <const> = ctx.width
         local barHeight <const> = ctx.height
         active.swatchesWidth = barWidth

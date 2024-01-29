@@ -2636,6 +2636,7 @@ function AseUtilities.trimImageAlpha(
     -- returns a rectangle of zero size. Old version which could
     -- work around this is at:
     -- https://github.com/behreajj/AsepriteAddons/blob/606a86e64801e63e18662650288ccd5df3b4ef27
+    -- https://github.com/behreajj/AsepriteAddons/blob/213d322f67c0ff36e8d17405a0a00e854108ab4f
     local rect <const> = image:shrinkBounds(alphaIndex)
     local rectIsValid <const> = rect.width > 0
         and rect.height > 0
