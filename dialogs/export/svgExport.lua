@@ -1,3 +1,5 @@
+dofile("../../support/aseutilities.lua")
+
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 
 local defaults <const> = {
