@@ -39,6 +39,10 @@ This repo includes
 
   ![Export Tiles](screencaps/exportTiles.png)
 
+- An arc (mesh).
+
+  ![Arc](screencaps/arc.png)
+
 - Color curves. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
 
   ![Color Curve](screencaps/colorCurve.png)
@@ -51,6 +55,10 @@ This repo includes
 
   ![FS Dither](screencaps/dither.png)
 
+- A hexagon grid generator.
+
+  ![Hexagon Grid](screencaps/hexGrid.png)
+
 - A text insertion dialog.
 
   ![Insert Text](screencaps/insertText.png)
@@ -58,6 +66,10 @@ This repo includes
 - Interlaced layers. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
 
   ![Interlaced](screencaps/interlaced.png)
+
+- A pixel art isometric (dimetric) grid.
+
+  ![Dimetric Grid](screencaps/isoGrid.png)
 
 - LCh color picker.
 
@@ -94,6 +106,10 @@ This repo includes
 - Palette To Cel Assignment.
 
   ![Palette To Cel](screencaps/paletteToCel.png)
+
+- A regular convex polygon.
+
+  ![Polygon](screencaps/polygon.png)
 
 - A radial gradient.
 
