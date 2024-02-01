@@ -4,7 +4,7 @@ This repository developed out of the Medium article, ["How To Script Aseprite To
 
 ## Installation
 
-To install, click on the green `Code` button above. Select `Download ZIP` from the pop-up menu. Unzip the file after it has finished downloading. In Aseprite, go to `File > Scripts > Open Scripts Folder`. Copy `commands`, `dialog` and `support` folders from the unzipped download into the folder that Aseprite has opened. Return to Aseprite, go to `File > Scripts > Rescan Scripts Folder`.
+To install, click on the green `Code` button above. Select `Download ZIP` from the pop-up menu. Unzip the file after it has finished downloading. In Aseprite, go to `File > Scripts > Open Scripts Folder`. Copy `commands`, `dialogs` and `support` folders from the unzipped download into the folder that Aseprite has opened. Return to Aseprite, go to `File > Scripts > Rescan Scripts Folder`.
 
 There is a [known issue](https://community.aseprite.org/t/script-folder-path-cannot-open-no-such-file-or-directory/16818/) when Aseprite's script folder is on a file path that includes characters such as 'é' (e acute) or 'ö' (o umlaut).
 
@@ -22,7 +22,7 @@ In dialogs that use custom sliders -- such as the LCH picker, color adjustment a
 
 For more resources, see
 
-- [Aseprite Type Definitions](https://github.com/behreajj/aseprite-type-definition)
+- [Aseprite Type Definition](https://github.com/behreajj/aseprite-type-definition)
 - [Aseprite CPP source that receives Lua inputs](https://github.com/aseprite/aseprite/tree/main/src/app/script)
 - [Aseprite Scripting API](https://github.com/aseprite/api)
 - [Lua Documentation](http://www.lua.org/docs.html)
