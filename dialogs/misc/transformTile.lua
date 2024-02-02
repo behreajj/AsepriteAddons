@@ -909,14 +909,12 @@ dlg:button {
         local activeLayer <const> = site.layer
         if not activeLayer then return end
         if not activeLayer.isTilemap then return end
-        if not activeLayer.isVisible then
-            app.alert { title = "Error", text = "Active layer is hidden." }
-            return
-        end
-        if not activeLayer.isEditable then
-            app.alert { title = "Error", text = "Active layer is locked." }
-            return
-        end
+
+        -- It doesn't make sense to return early if a tile map is locked,
+        -- because a tile set sort will affect all tile maps that use the set,
+        -- and this doesn't bother to check other layers.
+        -- if not activeLayer.isEditable then return end
+        if not activeLayer.isVisible then return end
 
         local activeCel <const> = activeLayer:cel(activeFrame)
         if not activeCel then return end
