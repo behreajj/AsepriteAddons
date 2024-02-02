@@ -73,6 +73,7 @@ function ShapeUtilities.drawCurve2(
     -- Draw fill.
     local useTool <const> = app.useTool
     if isLoop and useFill then
+        -- TODO: Display issues on Windows 11.
         app.transaction("Draw Curve Fill", function()
             useTool {
                 tool = "contour",
@@ -250,6 +251,8 @@ function ShapeUtilities.drawMesh2(
     local fsLen <const> = #fs
     ---@type Point[][]
     local ptsGrouped <const> = {}
+    ---@type Point[][]
+    local pts2x <const> = {}
     local idx1 = 0
     while idx1 < fsLen do
         idx1 = idx1 + 1
@@ -257,30 +260,36 @@ function ShapeUtilities.drawMesh2(
         local fLen <const> = #f
         ---@type Point[]
         local ptsFace <const> = {}
+        ---@type Point[]
+        local ptsf2x <const> = {}
         local idx2 = 0
         while idx2 < fLen do
+            local pt <const> = pts[f[1 + idx2]]
+            ptsFace[1 + idx2] = pt
+            ptsf2x[1 + idx2 * 2] = pt
+            ptsf2x[2 + idx2 * 2] = pt
             idx2 = idx2 + 1
-            ptsFace[idx2] = pts[f[idx2]]
         end
         ptsGrouped[idx1] = ptsFace
+        pts2x[idx1] = ptsf2x
     end
 
     -- Group fills into one transaction.
     local useTool <const> = app.useTool
     if useFill then
         app.transaction("Mesh Fill", function()
+            local fsLen2 <const> = fsLen + fsLen
             local idx3 = 0
-            while idx3 < fsLen do
+            while idx3 < fsLen2 do
                 idx3 = idx3 + 1
-                -- TODO: Try doubling up ptsGrouped for contour for Windows 11
-                -- contour problems.
                 useTool {
                     tool = "contour",
                     color = fillClr,
                     brush = brsh,
-                    points = ptsGrouped[idx3],
+                    points = pts2x[idx3],
                     frame = frame,
-                    layer = layer
+                    layer = layer,
+                    freehandAlgorithm = 0
                 }
             end
         end)
