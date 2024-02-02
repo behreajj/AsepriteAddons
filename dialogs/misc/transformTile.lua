@@ -821,8 +821,84 @@ dlg:button {
 dlg:separator { id = "sortSep" }
 
 dlg:button {
-    id = "reorderButton",
+    id = "mapButton",
     label = "Tile Set:",
+    text = "&MAP",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+
+        local activeFrame <const> = site.frame
+        if not activeFrame then return end
+
+        local activeLayer <const> = site.layer
+        if not activeLayer then return end
+        if not activeLayer.isVisible then return end
+        if not activeLayer.isEditable then return end
+        if not activeLayer.isTilemap then return end
+
+        local tileSet <const> = activeLayer.tileset
+        if not tileSet then return end
+
+        local lenTileSet <const> = #tileSet
+        local tileGrid <const> = tileSet.grid
+        local tileDim <const> = tileGrid.tileSize
+        local wTile <const> = tileDim.width
+        local hTile <const> = tileDim.height
+
+        local spriteSpec <const> = activeSprite.spec
+        local colorSpace <const> = spriteSpec.colorSpace
+        local alphaIndex <const> = spriteSpec.transparentColor
+        local wSprite <const> = spriteSpec.width
+        local hSprite <const> = spriteSpec.height
+
+        local columns = wSprite // wTile
+        local rows = hSprite // hTile
+        if columns * rows < lenTileSet then
+            columns = math.max(1, math.ceil(math.sqrt(lenTileSet)))
+            rows = math.max(1, math.ceil(lenTileSet / columns))
+        end
+
+        local mapSpec <const> = AseUtilities.createSpec(
+            columns, rows,
+            ColorMode.TILEMAP,
+            colorSpace, alphaIndex)
+        local mapImage = Image(mapSpec)
+
+        local k = 0
+        while k < lenTileSet do
+            mapImage:drawPixel(k % columns, k // columns, k)
+            k = k + 1
+        end
+
+        app.transaction("Map Tile Set", function()
+            app.command.NewLayer {
+                tilemap = true,
+                gridBounds = Rectangle(0, 0, wTile, hTile)
+            }
+
+            local newLayer <const> = app.layer --[[@as Layer]]
+            if newLayer then
+                local dummyTileset <const> = newLayer.tileset
+                newLayer.tileset = tileSet
+                activeSprite:newCel(newLayer, activeFrame, mapImage)
+                if dummyTileset then
+                    activeSprite:deleteTileset(dummyTileset)
+                end
+                if #tileSet.name > 0 then
+                    newLayer.name = tileSet.name
+                else
+                    newLayer.name = "Tile Set"
+                end
+            end
+        end)
+    end
+}
+
+dlg:button {
+    id = "reorderButton",
     text = "SO&RT",
     focus = false,
     onclick = function()

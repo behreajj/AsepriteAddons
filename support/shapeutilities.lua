@@ -272,6 +272,8 @@ function ShapeUtilities.drawMesh2(
             local idx3 = 0
             while idx3 < fsLen do
                 idx3 = idx3 + 1
+                -- TODO: Try doubling up ptsGrouped for contour for Windows 11
+                -- contour problems.
                 useTool {
                     tool = "contour",
                     color = fillClr,

@@ -552,17 +552,17 @@ dlg:button {
             -- maintain indexing with tile maps.
             local k = 0
             while k < lenTileSet do
-                local row <const> = k // columns
-                local column <const> = k % columns
                 local tile <const> = tileSet:tile(k)
                 if tile then
-                    local tileImage <const> = tile.image --[[@as Image]]
+                    local tileImage <const> = tile.image
                     local tileScaled = tileImage
                     if useResize then
                         tileScaled = resize(tileImage,
                             wTileTrg, hTileTrg)
                     end
 
+                    local column <const> = k % columns
+                    local row <const> = k // columns
                     local xOff <const> = margin + column * padding
                     local yOff <const> = margin + row * padding
                     local xTrg <const> = xOff + column * wTileTrg
