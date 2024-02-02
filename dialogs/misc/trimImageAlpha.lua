@@ -7,6 +7,7 @@ local defaults <const> = {
     target = "ACTIVE",
     includeLocked = false,
     includeHidden = true,
+    includeTiles = true,
     pullFocus = false
 }
 
@@ -32,6 +33,14 @@ dlg:check {
     id = "includeHidden",
     text = "&Hidden",
     selected = defaults.includeHidden
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "includeTiles",
+    text = "&Tiles",
+    selected = defaults.includeTiles
 }
 
 dlg:newrow { always = false }
@@ -84,23 +93,52 @@ dlg:button {
         local padding <const> = args.padding or defaults.padding --[[@as integer]]
         local includeLocked <const> = args.includeLocked --[[@as boolean]]
         local includeHidden <const> = args.includeHidden --[[@as boolean]]
+        local includeTiles <const> = args.includeTiles --[[@as boolean]]
 
-        -- TODO: Refactor this to make trimming tile map images easier?
         local trgCels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, activeFrame, target,
-            includeLocked, includeHidden, false, false)
-
+            includeLocked, includeHidden, includeTiles, false)
         local lenTrgCels <const> = #trgCels
+        if lenTrgCels <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No eligible cels were selected."
+            }
+            return
+        end
+
         local trimImage <const> = AseUtilities.trimImageAlpha
-        local alphaMask <const> = activeSprite.transparentColor
+        local trimMap <const> = AseUtilities.trimMapAlpha
+        local alphaIndex <const> = activeSprite.transparentColor
 
         app.transaction("Trim Images", function()
             local i = 0
             while i < lenTrgCels do
                 i = i + 1
+
                 local cel <const> = trgCels[i]
-                local trgImg <const>, x <const>, y <const> = trimImage(
-                    cel.image, padding, alphaMask)
+                local srcImg <const> = cel.image
+                local layer <const> = cel.layer
+
+                local trgImg = srcImg
+                local x = 0
+                local y = 0
+
+                if layer.isTilemap then
+                    local tileSet <const> = layer.tileset
+                    if tileSet then
+                        local tileGrid <const> = tileSet.grid
+                        local tileDim <const> = tileGrid.tileSize
+                        local wTile <const> = tileDim.width
+                        local hTile <const> = tileDim.height
+
+                        trgImg, x, y = trimMap(srcImg, alphaIndex, wTile, hTile)
+                    end
+                else
+                    trgImg, x, y = trimImage(
+                        srcImg, padding, alphaIndex)
+                end
+
                 local srcPos <const> = cel.position
                 cel.position = Point(srcPos.x + x, srcPos.y + y)
                 cel.image = trgImg

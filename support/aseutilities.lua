@@ -2622,9 +2622,9 @@ end
 ---@param alphaIndex integer alpha mask index
 ---@param wDefault integer? width default
 ---@param hDefault integer? height default
----@return Image
----@return integer
----@return integer
+---@return Image trimmed
+---@return integer xShift
+---@return integer yShift
 function AseUtilities.trimImageAlpha(
     image, padding, alphaIndex,
     wDefault, hDefault)
@@ -2636,7 +2636,6 @@ function AseUtilities.trimImageAlpha(
     -- returns a rectangle of zero size. Old version which could
     -- work around this is at:
     -- https://github.com/behreajj/AsepriteAddons/blob/606a86e64801e63e18662650288ccd5df3b4ef27
-    -- https://github.com/behreajj/AsepriteAddons/blob/213d322f67c0ff36e8d17405a0a00e854108ab4f
     local rect <const> = image:shrinkBounds(alphaIndex)
     local rectIsValid <const> = rect.width > 0
         and rect.height > 0
@@ -2667,6 +2666,144 @@ function AseUtilities.trimImageAlpha(
             Point(padVrf - lft, padVrf - top))
     end
     return target, lft - padVrf, top - padVrf
+end
+
+---Creates a copy of the map where excess transparent pixels have been
+---trimmed from the edges.
+---
+---Default width and height can be given in the event that the image is
+---completely transparent.
+---
+---Returns a tuple containing the cropped image, the top left x and top left y.
+---The top left should be added to the position of the cel that contained the
+---source image.
+---@param map any
+---@param alphaIndex integer alpha mask index
+---@param wTile integer tile width
+---@param hTile integer tile height
+---@param wDefault integer? map width default
+---@param hDefault integer? map height default
+---@return Image trimmed
+---@return integer xShift
+---@return integer yShift
+function AseUtilities.trimMapAlpha(
+    map, alphaIndex, wTile, hTile, wDefault, hDefault)
+    local pxTilei <const> = app.pixelColor.tileI
+    local strunpack <const> = string.unpack
+    local strsub <const> = string.sub
+
+    local bytes <const> = map.bytes
+    local bpp <const> = map.bytesPerPixel
+    local srcSpec <const> = map.spec
+    local wSrc <const> = srcSpec.width
+    local hSrc <const> = srcSpec.height
+    local wSrcn1 <const> = math.max(0, wSrc - 1)
+    local hSrcn1 <const> = math.max(0, hSrc - 1)
+    local minRight = wSrcn1
+    local minBottom = hSrcn1
+
+    local lft = 0
+    local top = 0
+    local wTrg = wDefault or wSrc
+    local hTrg = hDefault or hSrc
+    local isValid = false
+
+    -- Top edge.
+    local topSearch = -1
+    local goTop = true
+    while topSearch < hSrcn1 and goTop do
+        topSearch = topSearch + 1
+        local x = -1
+        while x < wSrcn1 and goTop do
+            x = x + 1
+            local iTop <const> = bpp * (x + wSrc * topSearch)
+            local mapif <const> = strunpack(">I4", strsub(
+                bytes, 1 + iTop, bpp + iTop))
+            if pxTilei(mapif) ~= 0 then
+                minRight = x
+                minBottom = topSearch
+                goTop = false
+            end
+        end
+    end
+
+    -- Left edge.
+    local lftSearch = -1
+    local goLft = true
+    while lftSearch < minRight and goLft do
+        lftSearch = lftSearch + 1
+        local y = hSrc
+        while y > topSearch and goLft do
+            y = y - 1
+            local iLft <const> = bpp * (lftSearch + wSrc * y)
+            local mapif <const> = strunpack(">I4", strsub(
+                bytes, 1 + iLft, bpp + iLft))
+            if pxTilei(mapif) ~= 0 then
+                minBottom = y
+                goLft = false
+            end
+        end
+    end
+
+    -- Bottom edge.
+    local btm = hSrc
+    local goBtm = true
+    while btm > minBottom and goBtm do
+        btm = btm - 1
+        local x = wSrc
+        while x > lftSearch and goBtm do
+            x = x - 1
+            local iBtm <const> = bpp * (x + wSrc * btm)
+            local mapif <const> = strunpack(">I4", strsub(
+                bytes, 1 + iBtm, bpp + iBtm))
+            if pxTilei(mapif) ~= 0 then
+                minRight = x
+                goBtm = false
+            end
+        end
+    end
+
+    -- Right edge.
+    local rgt = wSrc
+    local goRgt = true
+    while rgt > minRight and goRgt do
+        rgt = rgt - 1
+        local y = btm + 1
+        while y > topSearch and goRgt do
+            y = y - 1
+            local iRgt <const> = bpp * (rgt + wSrc * y)
+            local mapif <const> = strunpack(">I4", strsub(
+                bytes, 1 + iRgt, bpp + iRgt))
+            if pxTilei(mapif) ~= 0 then
+                goRgt = false
+            end
+        end
+    end
+
+    local wSum <const> = 1 + rgt - lftSearch
+    local hSum <const> = 1 + btm - topSearch
+    isValid = wSum > 0 and hSum > 0
+    if isValid then
+        lft = lftSearch
+        top = topSearch
+        wTrg = wSum
+        hTrg = hSum
+    end
+
+    local trgSpec <const> = ImageSpec {
+        width = wTrg,
+        height = hTrg,
+        colorMode = ColorMode.TILEMAP,
+        transparentColor = alphaIndex
+    }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target <const> = Image(trgSpec)
+
+    if isValid then
+        target:drawImage(map, Point(-lft, -top))
+    end
+
+    return target, lft * wTile, top * hTile
 end
 
 ---Converts a Vec2 to an Aseprite Point.
