@@ -914,7 +914,7 @@ dlg:button {
         -- because a tile set sort will affect all tile maps that use the set,
         -- and this doesn't bother to check other layers.
         -- if not activeLayer.isEditable then return end
-        if not activeLayer.isVisible then return end
+        -- if not activeLayer.isVisible then return end
 
         local activeCel <const> = activeLayer:cel(activeFrame)
         if not activeCel then return end
