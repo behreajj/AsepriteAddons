@@ -841,10 +841,9 @@ dlg:button {
         if not tileSet then return end
 
         local lenTileSet <const> = #tileSet
-        local tileGrid <const> = tileSet.grid
-        local tileDim <const> = tileGrid.tileSize
-        local wTile <const> = tileDim.width
-        local hTile <const> = tileDim.height
+        local tileSize <const> = tileSet.grid.tileSize
+        local wTile <const> = tileSize.width
+        local hTile <const> = tileSize.height
 
         local spriteSpec <const> = activeSprite.spec
         local colorSpace <const> = spriteSpec.colorSpace
@@ -909,9 +908,15 @@ dlg:button {
 
         local activeLayer <const> = site.layer
         if not activeLayer then return end
-        if not activeLayer.isVisible then return end
-        if not activeLayer.isEditable then return end
         if not activeLayer.isTilemap then return end
+        if not activeLayer.isVisible then
+            app.alert { title = "Error", text = "Active layer is hidden." }
+            return
+        end
+        if not activeLayer.isEditable then
+            app.alert { title = "Error", text = "Active layer is locked." }
+            return
+        end
 
         local activeCel <const> = activeLayer:cel(activeFrame)
         if not activeCel then return end
