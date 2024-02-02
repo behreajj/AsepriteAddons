@@ -835,8 +835,6 @@ dlg:button {
 
         local activeLayer <const> = site.layer
         if not activeLayer then return end
-        if not activeLayer.isVisible then return end
-        if not activeLayer.isEditable then return end
         if not activeLayer.isTilemap then return end
 
         local tileSet <const> = activeLayer.tileset

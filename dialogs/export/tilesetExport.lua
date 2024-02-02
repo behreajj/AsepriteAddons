@@ -32,6 +32,8 @@ local tsxAligns <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Export to CSV? Abstract the CSV writing routine for TMX to its own
+    -- function so that it can be reused.
     target = "ALL",
     border = 0,
     padding = 0,
