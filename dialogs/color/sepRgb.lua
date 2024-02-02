@@ -263,7 +263,7 @@ dlg:button {
 
         local max <const> = math.max
         local min <const> = math.min
-        local tilesToImage <const> = AseUtilities.tilesToImage
+        local tilesToImage <const> = AseUtilities.tileMapToImage
         local createSpec <const> = AseUtilities.createSpec
         local tconcat <const> = table.concat
         local strbyte <const> = string.byte

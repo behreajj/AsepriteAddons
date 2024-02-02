@@ -270,7 +270,7 @@ local function layerToSvgStr(
                 -- compatibility with Inkscape, Processing, Blender, etc.
                 local celImg = cel.image
                 if isTilemap then
-                    celImg = AseUtilities.tilesToImage(
+                    celImg = AseUtilities.tileMapToImage(
                         celImg, layer.tileset, colorMode)
                 end
 

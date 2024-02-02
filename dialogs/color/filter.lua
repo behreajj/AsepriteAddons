@@ -134,7 +134,7 @@ dlg:button {
         local labToRgb <const> = Clr.srLab2TosRgb
         local rgbToLab <const> = Clr.sRgbToSrLab2Internal
         local sqrt <const> = math.sqrt
-        local tilesToImage <const> = AseUtilities.tilesToImage
+        local tilesToImage <const> = AseUtilities.tileMapToImage
         local toHex <const> = Clr.toHex
         local strfmt <const> = string.format
         local transact <const> = app.transaction

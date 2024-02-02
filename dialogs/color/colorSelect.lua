@@ -504,7 +504,7 @@ dlg:button {
 
             image = activeCel.image
             if activeLayer.isTilemap then
-                image = AseUtilities.tilesToImage(
+                image = AseUtilities.tileMapToImage(
                     image, activeLayer.tileset, colorMode)
             end
             local celPos <const> = activeCel.position

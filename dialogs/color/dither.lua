@@ -596,7 +596,7 @@ dlg:button {
         end)
 
         -- Cache global methods.
-        local tilesToImage <const> = AseUtilities.tilesToImage
+        local tilesToImage <const> = AseUtilities.tileMapToImage
         local transact <const> = app.transaction
         local strfmt <const> = string.format
 

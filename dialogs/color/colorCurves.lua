@@ -386,7 +386,7 @@ dlg:button {
 
         -- Cache methods.
         local strfmt <const> = string.format
-        local tilesToImage <const> = AseUtilities.tilesToImage
+        local tilesToImage <const> = AseUtilities.tileMapToImage
         local transact <const> = app.transaction
         local labTosRgb <const> = Clr.srLab2TosRgb
         local toHex <const> = Clr.toHex

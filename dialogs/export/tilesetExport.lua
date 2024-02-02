@@ -1,7 +1,9 @@
 dofile("../../support/aseutilities.lua")
 
---[[ https://doc.mapeditor.org/en/stable/reference/tmx-map-format/ ]]
-
+--[[ https://doc.mapeditor.org/en/stable/reference/tmx-map-format/
+    The problem with export to CSV is that tile maps would contain
+    meta-data, but there's no meta-data for tile sets only.
+]]
 local dataOptions <const> = { "NONE", "TILED" }
 local targetOptions <const> = { "ACTIVE", "ALL" }
 local tiledImgExts <const> = {
@@ -32,8 +34,6 @@ local tsxAligns <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Export to CSV? Abstract the CSV writing routine for TMX to its own
-    -- function so that it can be reused.
     target = "ALL",
     border = 0,
     padding = 0,

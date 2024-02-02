@@ -88,7 +88,7 @@ dlg:button {
         local toHex <const> = Clr.toHex
         local sRgbToLab <const> = Clr.sRgbToSrLab2
         local quantize <const> = Utilities.quantizeUnsigned
-        local tilesToImage <const> = AseUtilities.tilesToImage
+        local tilesToImage <const> = AseUtilities.tileMapToImage
         local strfmt <const> = string.format
         local transact <const> = app.transaction
 

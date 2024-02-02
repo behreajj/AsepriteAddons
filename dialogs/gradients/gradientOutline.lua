@@ -291,7 +291,7 @@ dlg:button {
         local toHex <const> = Clr.toHex
         local blend <const> = Clr.blendInternal
         local clrNew <const> = Clr.new
-        local tilesToImage <const> = AseUtilities.tilesToImage
+        local tilesToImage <const> = AseUtilities.tileMapToImage
         local createSpec <const> = AseUtilities.createSpec
         local strfmt <const> = string.format
         local transact <const> = app.transaction

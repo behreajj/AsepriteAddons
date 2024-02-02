@@ -1546,7 +1546,7 @@ function AseUtilities.flattenGroup(
     local lenPackets = 0
 
     local isIndexed <const> = sprClrMode == ColorMode.INDEXED
-    local tilesToImage <const> = AseUtilities.tilesToImage
+    local tilesToImage <const> = AseUtilities.tileMapToImage
     local blendImage <const> = AseUtilities.blendImage
     local xTlGroup = 2147483647
     local yTlGroup = 2147483647
@@ -2442,7 +2442,7 @@ end
 ---@param sprClrMode ColorMode sprite color mode
 ---@return Image
 ---@nodiscard
-function AseUtilities.tilesToImage(imgSrc, tileSet, sprClrMode)
+function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
     -- The source image's color mode is 4 if it is a tile map.
     -- Assigning 4 to the target image when the sprite color
     -- mode is 2 (indexed) crashes Aseprite.

@@ -126,7 +126,7 @@ dlg:button {
         local max <const> = math.max
         local getPixels <const> = AseUtilities.getPixels
         local setPixels <const> = AseUtilities.setPixels
-        local tilesToImage <const> = AseUtilities.tilesToImage
+        local tilesToImage <const> = AseUtilities.tileMapToImage
         local trim <const> = AseUtilities.trimImageAlpha
         local createSpec <const> = AseUtilities.createSpec
 

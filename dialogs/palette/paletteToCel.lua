@@ -237,7 +237,7 @@ dlg:button {
         local v3Hash <const> = Vec3.hashCode
         local octInsert <const> = Octree.insert
         local search <const> = Octree.queryInternal
-        local tilesToImage <const> = AseUtilities.tilesToImage
+        local tilesToImage <const> = AseUtilities.tileMapToImage
         local strfmt <const> = string.format
         local transact <const> = app.transaction
 

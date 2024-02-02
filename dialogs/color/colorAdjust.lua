@@ -822,7 +822,7 @@ dlg:button {
 
         -- Cache methods used in loops.
         local abs <const> = math.abs
-        local tilesToImage <const> = AseUtilities.tilesToImage
+        local tilesToImage <const> = AseUtilities.tileMapToImage
         local fromHex <const> = Clr.fromHex
         local toHex <const> = Clr.toHex
         local sRgbaToLab <const> = Clr.sRgbToSrLab2

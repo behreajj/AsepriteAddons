@@ -219,7 +219,7 @@ dlg:button {
         -- Cache global methods.
         local floor <const> = math.floor
         local trimAlpha <const> = AseUtilities.trimImageAlpha
-        local tilesToImage <const> = AseUtilities.tilesToImage
+        local tilesToImage <const> = AseUtilities.tileMapToImage
         local strfmt <const> = string.format
         local strsub <const> = string.sub
         local transact <const> = app.transaction

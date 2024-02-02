@@ -407,7 +407,7 @@ dlg:button {
             end
             srcImg = srcCel.image
             if srcLayer.isTilemap then
-                srcImg = AseUtilities.tilesToImage(
+                srcImg = AseUtilities.tileMapToImage(
                     srcImg, srcLayer.tileset, spriteColorMode)
             end
         end

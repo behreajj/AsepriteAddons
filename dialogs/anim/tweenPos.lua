@@ -288,7 +288,7 @@ dlg:button {
                 local celImg <const> = srcCel.image
                 if srcLayer.isTilemap then
                     local tileSet <const> = srcLayer.tileset
-                    srcImg = AseUtilities.tilesToImage(
+                    srcImg = AseUtilities.tileMapToImage(
                         celImg, tileSet, colorMode)
                 else
                     srcImg = celImg

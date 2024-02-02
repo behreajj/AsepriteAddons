@@ -355,7 +355,7 @@ dlg:button {
         local rgbColorMode <const> = ColorMode.RGB
         local floor <const> = math.floor
         local strfmt <const> = string.format
-        local tilesToImage <const> = AseUtilities.tilesToImage
+        local tilesToImage <const> = AseUtilities.tileMapToImage
         local transact <const> = app.transaction
 
         if target == "PALETTE" then
