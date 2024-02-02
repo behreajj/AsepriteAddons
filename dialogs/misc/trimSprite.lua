@@ -96,20 +96,21 @@ dlg:button {
         local xMax = -2147483648
         local yMax = -2147483648
 
-        -- Test to see if there is a background layer.
-        -- If so, remove it. Backgrounds in indexed color
-        -- mode may contain transparency.
-        local bkgResult = false
-        app.transaction("Background to Layer", function()
-            bkgResult = AseUtilities.bkgToLayer(
-                activeSprite, includeLocked)
-        end)
-        if not bkgResult then
+        if activeSprite.backgroundLayer then
             xMin = 0
             yMin = 0
             xMax = wSprite - 1
             yMax = hSprite - 1
         end
+
+        -- Test to see if there is a background layer.
+        -- If so, remove it. Backgrounds in indexed color
+        -- mode may contain transparency.
+        app.transaction("Background to Layer", function()
+            local oldActiveLayer <const> = app.layer
+            AseUtilities.bkgToLayer(activeSprite, includeLocked)
+            app.layer = oldActiveLayer
+        end)
 
         local sel = nil
         if useSel then

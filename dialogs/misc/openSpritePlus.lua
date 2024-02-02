@@ -222,7 +222,9 @@ dlg:button {
         local removeBkg <const> = args.removeBkg --[[@as boolean]]
         if removeBkg then
                 app.transaction("Background to Layer", function()
+                    local oldActiveLayer <const> = app.layer
                     AseUtilities.bkgToLayer(openSprite, true)
+                    app.layer = oldActiveLayer
                 end)
         end
 
