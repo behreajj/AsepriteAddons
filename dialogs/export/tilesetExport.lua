@@ -128,6 +128,52 @@ local tsxFormat <const> = table.concat({
     "</tileset>"
 })
 
+---@param mapPacket table
+---@param idxOffset integer?
+---@return string[] csvData
+---@return integer wMap
+---@return integer hMap
+local function writeCsv(mapPacket, idxOffset)
+    ---@type string[]
+    local csvData <const> = {}
+    local wMap = 0
+    local hMap = 0
+    if mapPacket then
+        wMap = mapPacket.width
+        hMap = mapPacket.height
+
+        local indices <const> = mapPacket.indices
+        local flags <const> = mapPacket.flags
+
+        local idxOffVrf <const> = idxOffset or 0
+        local y = 0
+        while y < hMap do
+            local yw <const> = y * wMap
+            ---@type integer[]
+            local colArr <const> = {}
+            local x = 0
+            while x < wMap do
+                local flat <const> = 1 + yw + x
+                local index <const> = indices[flat]
+                local comp = 0
+                if index ~= 0 then
+                    comp = idxOffVrf + index
+                    -- Option to omit flipping flags?
+                    local flag <const> = flags[flat]
+                    comp = flag | comp
+                end
+                x = x + 1
+                colArr[x] = comp
+            end
+
+            y = y + 1
+            csvData[y] = table.concat(colArr, ",")
+        end
+    end
+
+    return csvData, wMap, hMap
+end
+
 local dlg <const> = Dialog { title = "Export Tilesets" }
 
 dlg:combobox {
@@ -879,40 +925,10 @@ dlg:button {
                                 firstgid = firstgid + lenTileSet
                             end
 
-                            ---@type string[]
-                            local csvData <const> = {}
-                            local wMap = 0
-                            local hMap = 0
                             local mapPacket <const> = filteredMapPackets[layerId]
-                            if mapPacket then
-                                wMap = mapPacket.width
-                                hMap = mapPacket.height
-
-                                local indices <const> = mapPacket.indices
-                                local flags <const> = mapPacket.flags
-
-                                local y = 0
-                                while y < hMap do
-                                    local yw <const> = y * wMap
-                                    ---@type integer[]
-                                    local colArr <const> = {}
-                                    local x = 0
-                                    while x < wMap do
-                                        local flat <const> = 1 + yw + x
-                                        local index <const> = indices[flat]
-                                        local comp = 0
-                                        if index ~= 0 then
-                                            local flag <const> = flags[flat]
-                                            comp = flag | (idxOffset + index)
-                                        end
-                                        x = x + 1
-                                        colArr[x] = comp
-                                    end
-
-                                    y = y + 1
-                                    csvData[y] = tconcat(colArr, ",")
-                                end
-                            end
+                            local csvData <const>,
+                            wMap <const>,
+                            hMap <const> = writeCsv(mapPacket, idxOffset)
 
                             local celOpacity = 1.0
                             local xOffset = 0
