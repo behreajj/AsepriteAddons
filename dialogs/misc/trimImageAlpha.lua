@@ -120,9 +120,9 @@ dlg:button {
                 local srcImg <const> = cel.image
                 local layer <const> = cel.layer
 
-                local trgImg = srcImg
-                local x = 0
-                local y = 0
+                local xTrm = 0
+                local yTrm = 0
+                local trimmed = srcImg
 
                 if layer.isTilemap then
                     local tileSet <const> = layer.tileset
@@ -132,16 +132,17 @@ dlg:button {
                         local wTile <const> = tileDim.width
                         local hTile <const> = tileDim.height
 
-                        trgImg, x, y = trimMap(srcImg, alphaIndex, wTile, hTile)
+                        trimmed, xTrm, yTrm = trimMap(
+                            srcImg, alphaIndex, wTile, hTile)
                     end
                 else
-                    trgImg, x, y = trimImage(
+                    trimmed, xTrm, yTrm = trimImage(
                         srcImg, padding, alphaIndex)
                 end
 
                 local srcPos <const> = cel.position
-                cel.position = Point(srcPos.x + x, srcPos.y + y)
-                cel.image = trgImg
+                cel.position = Point(srcPos.x + xTrm, srcPos.y + yTrm)
+                cel.image = trimmed
             end
         end)
 

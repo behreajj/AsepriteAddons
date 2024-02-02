@@ -74,7 +74,7 @@ dlg:button {
         local spec <const> = activeSprite.spec
         local wSprite <const> = spec.width
         local hSprite <const> = spec.height
-        local alphaMask <const> = spec.transparentColor
+        local alphaIndex <const> = spec.transparentColor
 
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -120,16 +120,16 @@ dlg:button {
             activeSprite,
             includeLocked, includeHidden, true, false)
         local lenLeaves <const> = #leaves
-        -- TODO: Is it necessary to create frame indices here?
         local frIdcs <const> = AseUtilities.frameObjsToIdcs(activeSprite.frames)
         local cels <const> = AseUtilities.getUniqueCelsFromLeaves(
             leaves, frIdcs)
         local lenCels <const> = #cels
 
         -- Cache methods used in loop.
-        local trimAlpha <const> = AseUtilities.trimImageAlpha
-        local cropCel <const> = AseUtilities.trimCelToSprite
         local selectCel <const> = AseUtilities.trimCelToSelect
+        local cropCel <const> = AseUtilities.trimCelToSprite
+        local trimImage <const> = AseUtilities.trimImageAlpha
+        local trimMap <const> = AseUtilities.trimMapAlpha
         local strfmt <const> = string.format
         local transact <const> = app.transaction
 
@@ -145,28 +145,29 @@ dlg:button {
             local celImg = cel.image
             local layer <const> = cel.layer
             local layerName <const> = layer.name
+            local isTilemap <const> = layer.isTilemap
 
-            local tlx = celPos.x
-            local tly = celPos.y
-            local brx = tlx + celImg.width - 1
-            local bry = tly + celImg.height - 1
-
-            if layer.isTilemap then
+            local wTile = 1
+            local hTile = 1
+            if isTilemap then
                 local tileSet <const> = layer.tileset
                 if tileSet then
                     local tileGrid <const> = tileSet.grid
                     local tileDim <const> = tileGrid.tileSize
-                    local wTile <const> = tileDim.width
-                    local hTile <const> = tileDim.height
-                    brx = tlx + celImg.width * wTile - 1
-                    bry = tly + celImg.height * hTile - 1
+                    wTile = tileDim.width
+                    hTile = tileDim.height
                 end
-            elseif useSel then
-                transact(
-                    strfmt("Crop %s", layerName),
-                    function()
-                        selectCel(cel, sel)
-                    end)
+            end
+
+            local tlx = celPos.x
+            local tly = celPos.y
+            local brx = tlx + wTile * celImg.width - 1
+            local bry = tly + hTile * celImg.height - 1
+
+            if useSel and (not isTilemap) then
+                transact(strfmt("Crop %s", layerName), function()
+                    selectCel(cel, sel)
+                end)
                 celPos = cel.position
                 tlx = celPos.x
                 tly = celPos.y
@@ -176,13 +177,19 @@ dlg:button {
             else
                 local xTrm = 0
                 local yTrm = 0
-                local trimmed = nil
-                trimmed, xTrm, yTrm = trimAlpha(celImg, 0, alphaMask)
+                local trimmed = celImg
+
+                if isTilemap then
+                    trimmed, xTrm, yTrm = trimMap(
+                        celImg, alphaIndex, wTile, hTile)
+                else
+                    trimmed, xTrm, yTrm = trimImage(celImg, 0, alphaIndex)
+                end
 
                 tlx = tlx + xTrm
                 tly = tly + yTrm
-                brx = tlx + trimmed.width - 1
-                bry = tly + trimmed.height - 1
+                brx = tlx + wTile * trimmed.width - 1
+                bry = tly + hTile * trimmed.height - 1
 
                 transact(
                     strfmt("Trim %s", layerName),
@@ -193,12 +200,10 @@ dlg:button {
                 celPos = cel.position
                 celImg = cel.image
 
-                if useCrop then
-                    transact(
-                        strfmt("Crop %s", layerName),
-                        function()
-                            cropCel(cel, activeSprite)
-                        end)
+                if useCrop and (not isTilemap) then
+                    transact(strfmt("Crop %s", layerName), function()
+                        cropCel(cel, activeSprite)
+                    end)
                     celPos = cel.position
                     tlx = celPos.x
                     tly = celPos.y
@@ -253,8 +258,7 @@ dlg:button {
             end)
         end
 
-        -- Trim cels cannot be optional due to
-        -- invalid cel boundaries.
+        -- Trim cels cannot be optional due to invalid cel boundaries.
         if lenToCull > 0 then
             transact("Delete Cels", function()
                 local j = lenToCull + 1
@@ -267,43 +271,41 @@ dlg:button {
         end
 
         if trimFrames and #frIdcs > 1 then
-            app.transaction("Cull Frames Reverse",
-                function()
-                    local frameEmptyRight = true
-                    local m = 1 + #activeSprite.frames
-                    while m > 2 and frameEmptyRight do
-                        m = m - 1
-                        local k = 0
-                        while k < lenLeaves and frameEmptyRight do
-                            k = k + 1
-                            local leaf <const> = leaves[k]
-                            if leaf:cel(m) then
-                                frameEmptyRight = false
-                            end
-                        end
-                        if frameEmptyRight then
-                            activeSprite:deleteFrame(m)
+            app.transaction("Cull Frames Reverse", function()
+                local frameEmptyRight = true
+                local m = 1 + #activeSprite.frames
+                while m > 2 and frameEmptyRight do
+                    m = m - 1
+                    local k = 0
+                    while k < lenLeaves and frameEmptyRight do
+                        k = k + 1
+                        local leaf <const> = leaves[k]
+                        if leaf:cel(m) then
+                            frameEmptyRight = false
                         end
                     end
-                end)
+                    if frameEmptyRight then
+                        activeSprite:deleteFrame(m)
+                    end
+                end
+            end)
 
-            app.transaction("Cull Frames Forward",
-                function()
-                    local frameEmptyLeft = true
-                    while frameEmptyLeft and #activeSprite.frames > 1 do
-                        local k = 0
-                        while k < lenLeaves and frameEmptyLeft do
-                            k = k + 1
-                            local leaf <const> = leaves[k]
-                            if leaf:cel(1) then
-                                frameEmptyLeft = false
-                            end
-                        end
-                        if frameEmptyLeft then
-                            activeSprite:deleteFrame(1)
+            app.transaction("Cull Frames Forward", function()
+                local frameEmptyLeft = true
+                while frameEmptyLeft and #activeSprite.frames > 1 do
+                    local k = 0
+                    while k < lenLeaves and frameEmptyLeft do
+                        k = k + 1
+                        local leaf <const> = leaves[k]
+                        if leaf:cel(1) then
+                            frameEmptyLeft = false
                         end
                     end
-                end)
+                    if frameEmptyLeft then
+                        activeSprite:deleteFrame(1)
+                    end
+                end
+            end)
         end
 
         app.command.FitScreen()
