@@ -15,6 +15,9 @@ local defaults <const> = {
     inPlace = true
 }
 
+---@param activeSprite Sprite
+---@param trgSel Selection
+---@param selMode "REPLACE"|"ADD"|"SUBTRACT"|"INTERSECT"
 local function selectWithMode(activeSprite, trgSel, selMode)
     if selMode ~= "REPLACE" then
         local activeSel <const>,
