@@ -107,9 +107,7 @@ dlg:button {
         -- If so, remove it. Backgrounds in indexed color
         -- mode may contain transparency.
         app.transaction("Background to Layer", function()
-            local oldActiveLayer <const> = app.layer
             AseUtilities.bkgToLayer(activeSprite, includeLocked)
-            app.layer = oldActiveLayer
         end)
 
         local sel = nil
@@ -309,6 +307,7 @@ dlg:button {
             end)
         end
 
+        app.layer = activeSprite.layers[#activeSprite.layers]
         app.command.FitScreen()
         app.refresh()
     end
