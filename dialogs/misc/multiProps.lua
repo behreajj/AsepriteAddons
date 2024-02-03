@@ -61,7 +61,7 @@ local function getLayerType(layer)
     if layer.isBackground then return "Background" end
     if layer.isGroup then return "Group" end
     if layer.isTilemap then return "Tile Map" end
-    return "Normal"
+    return "Regular"
 end
 
 local site <const> = app.site
