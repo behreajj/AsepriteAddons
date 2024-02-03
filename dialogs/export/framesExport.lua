@@ -435,7 +435,6 @@ dlg:file {
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS,
     save = true,
-
     focus = true
 }
 

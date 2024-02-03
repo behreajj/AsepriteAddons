@@ -221,9 +221,9 @@ dlg:button {
         -- should go before or after RGB conversion.
         local removeBkg <const> = args.removeBkg --[[@as boolean]]
         if removeBkg then
-                app.transaction("Background to Layer", function()
-                    AseUtilities.bkgToLayer(openSprite, true)
-                end)
+            app.transaction("Background to Layer", function()
+                AseUtilities.bkgToLayer(openSprite, true)
+            end)
         end
 
         -- Adjustable transparent color causes problems with multiple palettes.

@@ -846,6 +846,7 @@ dlg:button {
         local hTile <const> = tileSize.height
 
         local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
         local colorSpace <const> = spriteSpec.colorSpace
         local alphaIndex <const> = spriteSpec.transparentColor
         local wSprite <const> = spriteSpec.width
@@ -858,39 +859,40 @@ dlg:button {
             rows = math.max(1, math.ceil(lenTileSet / columns))
         end
 
+        -- The approach which relies on app.command.NewLayer to create a new
+        -- tile map layer then delete the spare tile set breaks on dev build
+        -- for Windows 11.
+        local wMap <const> = columns * wTile
+        local hMap <const> = rows * hTile
         local mapSpec <const> = AseUtilities.createSpec(
-            columns, rows,
-            ColorMode.TILEMAP,
-            colorSpace, alphaIndex)
-        local mapImage = Image(mapSpec)
+            wMap, hMap, colorMode, colorSpace, alphaIndex)
+        local tileMap <const> = Image(mapSpec)
 
         local k = 0
         while k < lenTileSet do
-            mapImage:drawPixel(k % columns, k // columns, k)
+            local tile <const> = tileSet:tile(k)
+            if tile then
+                local tileImage <const> = tile.image
+                local column <const> = k % columns
+                local row <const> = k // columns
+                local xTrg <const> = column * wTile
+                local yTrg <const> = row * hTile
+                tileMap:drawImage(tileImage, Point(xTrg, yTrg))
+            end
             k = k + 1
         end
 
         app.transaction("Map Tile Set", function()
-            app.command.NewLayer {
-                tilemap = true,
-                gridBounds = Rectangle(0, 0, wTile, hTile)
-            }
-
-            local newLayer <const> = app.layer --[[@as Layer]]
-            if newLayer then
-                local dummyTileset <const> = newLayer.tileset
-                newLayer.tileset = tileSet
-                activeSprite:newCel(newLayer, activeFrame, mapImage)
-                if dummyTileset then
-                    activeSprite:deleteTileset(dummyTileset)
-                end
-                if #tileSet.name > 0 then
-                    newLayer.name = tileSet.name
-                else
-                    newLayer.name = "Tile Set"
-                end
+            local tileSetLayer <const> = activeSprite:newLayer()
+            if #tileSet.name > 0 then
+                tileSetLayer.name = tileSet.name
+            else
+                tileSetLayer.name = "Tile Set"
             end
+            activeSprite:newCel(tileSetLayer, activeFrame, tileMap)
         end)
+
+        app.refresh()
     end
 }
 
