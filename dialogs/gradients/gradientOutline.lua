@@ -343,6 +343,7 @@ dlg:button {
 
         local itr2 <const> = iterations + iterations
         local itrPoint <const> = Point(iterations, iterations)
+        local blendModeSrc <const> = BlendMode.SRC
 
         -- Convert iterations to a factor given to gradient.
         local toFac = 1.0
@@ -406,7 +407,7 @@ dlg:button {
                     wTrg, hTrg, srcSpec.colorMode,
                     srcSpec.colorSpace, srcSpec.transparentColor)
                 local trgImg <const> = Image(trgSpec)
-                trgImg:drawImage(srcImg, itrPoint)
+                trgImg:drawImage(srcImg, itrPoint, 255, blendModeSrc)
 
                 h = 0
                 while h < iterations do

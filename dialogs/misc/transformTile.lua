@@ -867,6 +867,7 @@ dlg:button {
         local mapSpec <const> = AseUtilities.createSpec(
             wMap, hMap, colorMode, colorSpace, alphaIndex)
         local tileMap <const> = Image(mapSpec)
+        local blendModeSrc <const> = BlendMode.SRC
 
         local k = 0
         while k < lenTileSet do
@@ -877,7 +878,9 @@ dlg:button {
                 local row <const> = k // columns
                 local xTrg <const> = column * wTile
                 local yTrg <const> = row * hTile
-                tileMap:drawImage(tileImage, Point(xTrg, yTrg))
+                tileMap:drawImage(tileImage,
+                    Point(xTrg, yTrg),
+                    255, blendModeSrc)
             end
             k = k + 1
         end

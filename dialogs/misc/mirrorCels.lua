@@ -152,6 +152,7 @@ dlg:button {
         local hSprite <const> = spriteSpec.height
         local colorMode <const> = spriteSpec.colorMode
         local alphaIndex <const> = spriteSpec.transparentColor
+        local blendModeSrc <const> = BlendMode.SRC
 
         -- Calculate origin and destination.
         -- Divide by 100 to account for percentage.
@@ -250,7 +251,7 @@ dlg:button {
                     or wSrcImg ~= wSprite
                     or hSrcImg ~= hSprite then
                     flatImg = Image(spriteSpec)
-                    flatImg:drawImage(srcImg, srcPos)
+                    flatImg:drawImage(srcImg, srcPos, 255, blendModeSrc)
                 end
 
                 local rgtImg = Image(spriteSpec)

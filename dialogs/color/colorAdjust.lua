@@ -833,6 +833,7 @@ dlg:button {
         local strfmt <const> = string.format
 
         local rgbColorMode <const> = ColorMode.RGB
+        local blendModeSrc <const> = BlendMode.SRC
 
         local i = 0
         while i < lenFrames do
@@ -1009,7 +1010,7 @@ dlg:button {
                 local trgImg = nil
                 if alphaInvert then
                     trgImg = Image(activeSpec)
-                    trgImg:drawImage(srcImg, srcPos)
+                    trgImg:drawImage(srcImg, srcPos, 255, blendModeSrc)
                     trgPos = Point(0, 0)
                 else
                     trgImg = srcImg:clone()

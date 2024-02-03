@@ -75,7 +75,7 @@ local function expandCelToCanvas(cel, sprite)
         celSpec.transparentColor)
     local trgImg <const> = Image(trgSpec)
     trgImg:drawImage(celImg,
-        Point(xSrc - xMin, ySrc - yMin))
+        Point(xSrc - xMin, ySrc - yMin), 255, BlendMode.SRC)
 
     return trgImg, xMin, yMin
 end

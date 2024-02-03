@@ -348,6 +348,7 @@ dlg:button {
         local wrap <const> = AseUtilities.wrapImage
         local spriteSpec <const> = activeSprite.spec
         local alphaIndex <const> = spriteSpec.transparentColor
+        local blendModeSrc <const> = BlendMode.SRC
 
         local docPrefs <const> = app.preferences.document(activeSprite)
         local tiledMode <const> = docPrefs.tiled.mode --[[@as integer]]
@@ -359,7 +360,7 @@ dlg:button {
                     i = i + 1
                     local cel <const> = cels[i]
                     local blit <const> = Image(spriteSpec)
-                    blit:drawImage(cel.image, cel.position)
+                    blit:drawImage(cel.image, cel.position, 255, blendModeSrc)
                     local imgTrg = wrap(blit, dx, dy)
                     local xTrg = 0
                     local yTrg = 0
@@ -376,7 +377,7 @@ dlg:button {
                     i = i + 1
                     local cel <const> = cels[i]
                     local blit <const> = Image(spriteSpec)
-                    blit:drawImage(cel.image, cel.position)
+                    blit:drawImage(cel.image, cel.position, 255, blendModeSrc)
                     local imgTrg = wrap(blit, 0, dy)
                     local xTrg = 0
                     local yTrg = 0
@@ -393,7 +394,7 @@ dlg:button {
                     i = i + 1
                     local cel <const> = cels[i]
                     local blit <const> = Image(spriteSpec)
-                    blit:drawImage(cel.image, cel.position)
+                    blit:drawImage(cel.image, cel.position, 255, blendModeSrc)
                     local imgTrg = wrap(blit, dx, 0)
                     local xTrg = 0
                     local yTrg = 0

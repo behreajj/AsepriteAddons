@@ -1379,7 +1379,7 @@ function AseUtilities.expandImageToPow2(
     }
     potSpec.colorSpace = colorSpace
     local potImg <const> = Image(potSpec)
-    potImg:drawImage(img)
+    potImg:drawImage(img, Point(0, 0), 255, BlendMode.SRC)
 
     return potImg
 end
@@ -2084,7 +2084,8 @@ function AseUtilities.padImage(image, padding)
     }
     padSpec.colorSpace = imageSpec.colorSpace
     local padded <const> = Image(padSpec)
-    padded:drawImage(image, Point(padding, padding))
+    padded:drawImage(image, Point(padding, padding),
+        255, BlendMode.SRC)
     return padded
 end
 
@@ -2464,6 +2465,7 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
         sprClrMode,
         srcSpec.colorSpace,
         srcSpec.transparentColor))
+    local blendModeSrc <const> = BlendMode.SRC
 
     -- Separate a tile's index from the meta-data. See
     -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
@@ -2509,7 +2511,8 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
             imgTrg:drawImage(
                 tileImage,
                 Point(mapEntry.x * tileWidth,
-                    mapEntry.y * tileHeight))
+                    mapEntry.y * tileHeight),
+                255, blendModeSrc)
         end
     end
 
@@ -2554,7 +2557,8 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
         trimImage:drawImage(
             celImg, Point(
                 oldPos.x - celPos.x,
-                oldPos.y - celPos.y))
+                oldPos.y - celPos.y),
+            255, BlendMode.SRC)
 
         local hexVrf <const> = hexDefault or alphaMask
         local pxItr <const> = trimImage:pixels()
@@ -2602,7 +2606,8 @@ function AseUtilities.trimCelToSprite(cel, sprite)
         trimImage:drawImage(
             celImg, Point(
                 oldPos.x - celPos.x,
-                oldPos.y - celPos.y))
+                oldPos.y - celPos.y),
+            255, BlendMode.SRC)
     end
     cel.image = trimImage
 end
@@ -2663,7 +2668,8 @@ function AseUtilities.trimImageAlpha(
 
     if rectIsValid then
         target:drawImage(image,
-            Point(padVrf - lft, padVrf - top))
+            Point(padVrf - lft, padVrf - top),
+            255, BlendMode.SRC)
     end
     return target, lft - padVrf, top - padVrf
 end
@@ -2800,7 +2806,9 @@ function AseUtilities.trimMapAlpha(
     local target <const> = Image(trgSpec)
 
     if isValid then
-        target:drawImage(map, Point(-lft, -top))
+        target:drawImage(map,
+            Point(-lft, -top),
+            255, BlendMode.SRC)
     end
 
     return target, lft * wTile, top * hTile

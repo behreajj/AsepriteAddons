@@ -348,7 +348,8 @@ dlg:button {
 
         -- Process commonly used equivalences.
         local cropToSprite <const> = cropType == "SPRITE"
-        local normalBlendMode <const> = BlendMode.NORMAL
+        local blendModeNormal <const> = BlendMode.NORMAL
+        local blendModeSrc <const> = BlendMode.SRC
         local zeroPoint <const> = Point(0, 0)
         local nonUniformDim <const> = not potUniform
         local usePadding <const> = padding > 0
@@ -511,7 +512,7 @@ dlg:button {
                 local celOpacity = 255
                 local zIndex = 0
                 local layerOpacity = 255
-                local layerBlendMode = normalBlendMode
+                local layerBlendMode = blendModeNormal
 
                 if chosenLayer.isGroup then
                     -- print("Layer is a group")
@@ -552,7 +553,7 @@ dlg:button {
                             local bakedImage <const> = Image(image.spec)
                             bakedImage:drawImage(
                                 image, zeroPoint,
-                                compOpacity, normalBlendMode)
+                                compOpacity, blendModeSrc)
 
                             image = bakedImage
 
@@ -572,7 +573,9 @@ dlg:button {
                 if image and bounds then
                     if cropToSprite then
                         local imgSprite <const> = Image(spriteSpec)
-                        imgSprite:drawImage(image, Point(bounds.x, bounds.y))
+                        imgSprite:drawImage(image,
+                            Point(bounds.x, bounds.y),
+                            255, blendModeSrc)
 
                         image = imgSprite
                         bounds.x = 0

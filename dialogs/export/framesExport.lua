@@ -137,6 +137,7 @@ local function saveSheet(
         wSheet, hSheet, spriteSpec.colorMode,
         spriteSpec.colorSpace, spriteSpec.transparentColor)
     local compImg <const> = Image(sheetSpec)
+    local blendModeSrc <const> = BlendMode.SRC
 
     -- For centering the image.
     local xCellCenter <const> = wMax // 2
@@ -166,7 +167,7 @@ local function saveSheet(
         x = x + xCellCenter - wHalf
         y = y + yCellCenter - hHalf
 
-        compImg:drawImage(image, Point(x, y))
+        compImg:drawImage(image, Point(x, y), 255, blendModeSrc)
 
         sectionPackets[k] = {
             row = row,

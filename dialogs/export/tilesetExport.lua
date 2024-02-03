@@ -594,6 +594,7 @@ dlg:button {
                 wSheet, hSheet, spriteColorMode, spriteColorSpace,
                 spriteAlphaIndex)
             local sheetImage <const> = Image(sheetSpec)
+            local blendModeSrc <const> = BlendMode.SRC
 
             -- The first tile in a tile set is empty.
             -- Include this empty tile, and all others, to
@@ -615,7 +616,8 @@ dlg:button {
                     local yOff <const> = margin + row * padding
                     local xTrg <const> = xOff + column * wTileTrg
                     local yTrg <const> = yOff + row * hTileTrg
-                    sheetImage:drawImage(tileScaled, Point(xTrg, yTrg))
+                    sheetImage:drawImage(tileScaled, Point(xTrg, yTrg),
+                        255, blendModeSrc)
                 end
                 k = k + 1
             end
