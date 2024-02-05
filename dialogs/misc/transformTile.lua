@@ -853,10 +853,11 @@ dlg:button {
         local colorSpace <const> = spriteSpec.colorSpace
         local alphaIndex <const> = spriteSpec.transparentColor
         local wSprite <const> = spriteSpec.width
-        local hSprite <const> = spriteSpec.height
+        -- local hSprite <const> = spriteSpec.height
 
         local columns = wSprite // wTile
-        local rows = hSprite // hTile
+        -- local rows = hSprite // hTile
+        local rows = columns ~= 0 and math.ceil(lenTileSet / columns) or 0
         if columns * rows < lenTileSet then
             columns = math.max(1, math.ceil(math.sqrt(lenTileSet)))
             rows = math.max(1, math.ceil(lenTileSet / columns))
@@ -872,6 +873,7 @@ dlg:button {
         local tileMap <const> = Image(mapSpec)
         local blendModeSrc <const> = BlendMode.SRC
 
+        -- Make a group layer with each tile is on a separate child layer?
         local k = 0
         while k < lenTileSet do
             local tile <const> = tileSet:tile(k)
@@ -1138,5 +1140,5 @@ dlg:show {
 
 local dlgBounds <const> = dlg.bounds
 dlg.bounds = Rectangle(
-    dlgBounds.x * 2 - 32, dlgBounds.y,
+    dlgBounds.x * 2 - 42, dlgBounds.y,
     dlgBounds.w, dlgBounds.h)

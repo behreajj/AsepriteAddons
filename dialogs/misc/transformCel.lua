@@ -1158,7 +1158,7 @@ dlg:button {
             false, false, false, true)
         local lenCels <const> = #cels
 
-        local flipv = FlipType.VERTICAL
+        local flipv <const> = FlipType.VERTICAL
         app.transaction("Flip V", function()
             local i = 0
             while i < lenCels do
@@ -1335,5 +1335,5 @@ dlg:show {
 
 local dlgBounds <const> = dlg.bounds
 dlg.bounds = Rectangle(
-    dlgBounds.x * 2 - 32, dlgBounds.y,
+    dlgBounds.x * 2 - 42, dlgBounds.y,
     dlgBounds.w, dlgBounds.h)

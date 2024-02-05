@@ -479,5 +479,5 @@ dlg:show {
 
 local dlgBounds <const> = dlg.bounds
 dlg.bounds = Rectangle(
-    dlgBounds.x * 2 - 32, dlgBounds.y,
+    dlgBounds.x * 2 - 42, dlgBounds.y,
     dlgBounds.w, dlgBounds.h)

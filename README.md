@@ -35,7 +35,7 @@ For more resources, see
 
 This repo includes
 
-- Export Tile Maps and Sets to Tiled.
+- Export Tile Maps and Sets to [Tiled](https://www.mapeditor.org/).
 
   ![Export Tiles](screencaps/exportTiles.png)
 
