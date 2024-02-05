@@ -1,4 +1,3 @@
--- TODO: To support range, you'd need that consecutive function after all.
 local targets <const> = { "ALL", "AFTER", "BEFORE" }
 local fillOpts <const> = { "CROSS_FADE", "EMPTY", "SUSTAIN" }
 
@@ -271,19 +270,21 @@ dlg:button {
                         -- print(strfmt("idNext: %d, idPrev: %d", idNext, idPrev))
 
                         if useSustain or idNext == idPrev then
-                            app.range:clear()
+                            local opacPrev <const> = celPrev.opacity
+                            local posPrev <const> = celPrev.position
+                            local zIdxPrev <const> = celPrev.zIndex
 
-                            ---@type integer[]
-                            local rangeFrIdcs <const> = {}
-                            local j = frIdxPrevAfter - 1
-                            while j < frIdxNextAfter - 1 do
-                                j = j + 1
-                                rangeFrIdcs[#rangeFrIdcs + 1] = j
-                            end
-
-                            app.range.frames = rangeFrIdcs
-                            app.range.layers = { leaf }
-                            app.command.LinkCels()
+                            app.transaction(strfmt("Sustain %d to %d",
+                                frIdxPrevAfter, frIdxNextAfter), function()
+                                local j = frIdxPrevAfter
+                                while j < frIdxNextAfter - 1 do
+                                    j = j + 1
+                                    local celSust <const> = activeSprite:newCel(
+                                        leaf, j, imgPrev, posPrev)
+                                    celSust.opacity = opacPrev
+                                    celSust.zIndex = zIdxPrev
+                                end
+                            end)
                         else
                             local wNext <const> = imgNext.width
                             local hNext <const> = imgNext.height
@@ -461,27 +462,33 @@ dlg:button {
                     end                 -- End previous and next cel exist.
                 end                     -- End chosen frames loop.
 
-                if isAll and useSustain then
+                if isAll and useSustain and isLoopVerif then
                     -- In loop case, the first frame will be appended to the
                     -- chosen frames, so the last sprite frame is one less.
-                    local lastIdx <const> = isLoopVerif and lenChosenFrames - 1
-                        or lenChosenFrames
+                    local lastIdx <const> = lenChosenFrames - 1
                     local frIdxPrevBefore <const> = frIdcs[lastIdx]
                     local frIdxPrevAfter <const> = frIdxDict[frIdxPrevBefore]
+                    local frIdxNextAfter <const> = #activeSprite.frames
 
-                    app.range:clear()
+                    local celPrev <const> = leaf:cel(frIdxPrevAfter)
+                    if celPrev then
+                        local imgPrev <const> = celPrev.image
+                        local opacPrev <const> = celPrev.opacity
+                        local posPrev <const> = celPrev.position
+                        local zIdxPrev <const> = celPrev.zIndex
 
-                    ---@type integer[]
-                    local rangeFrIdcs <const> = {}
-                    local j = -1
-                    while j < inbetweens do
-                        j = j + 1
-                        rangeFrIdcs[j] = frIdxPrevAfter + j
+                        app.transaction(strfmt("Sustain %d to %d",
+                            frIdxPrevAfter, frIdxNextAfter), function()
+                            local j = frIdxPrevAfter
+                            while j < frIdxNextAfter do
+                                j = j + 1
+                                local celSust <const> = activeSprite:newCel(
+                                    leaf, j, imgPrev, posPrev)
+                                celSust.opacity = opacPrev
+                                celSust.zIndex = zIdxPrev
+                            end
+                        end)
                     end
-
-                    app.range.frames = rangeFrIdcs
-                    app.range.layers = { leaf }
-                    app.command.LinkCels()
                 end -- End sustain link check.
             end     -- End leaf layers loop.
 
