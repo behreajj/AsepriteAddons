@@ -76,7 +76,8 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "removeBkg",
-    label = "Convert Bkg:",
+    label = "Convert:",
+    text = "&Bkg",
     selected = defaults.removeBkg
 }
 
