@@ -7,6 +7,15 @@ dlg:entry {
     text = "Layer"
 }
 
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "reverse",
+    label = "Order:",
+    text = "&Reverse",
+    selected = false
+}
+
 dlg:button {
     id = "confirm",
     text = "&OK",
@@ -29,33 +38,46 @@ dlg:button {
                 local sortedLayers <const> = {}
                 local h = 0
                 while h < lenRangeLayers do
-                    -- TODO: Exclude reference and background?
+                    -- Exclude reference or background?
                     h = h + 1
                     sortedLayers[h] = rangeLayers[h]
                 end
 
-                table.sort(sortedLayers, function(a, b)
-                    local apid <const> = a.parent.id
-                    local bpid <const> = b.parent.id
-                    if apid == bpid then
-                        return a.stackIndex < b.stackIndex
-                    end
-                    return apid < bpid
-                end)
-
+                -- TODO: Exclude empty name entry?
                 local args <const> = dlg.data
                 local nameEntry <const> = args.nameEntry --[[@as string]]
-                local format <const> = "%s %d"
-                local strfmt <const> = string.format
+                local reverse <const> = args.reverse --[[@as boolean]]
 
-                app.transaction("Rename Layers", function()
-                    local i = 0
-                    while i < lenRangeLayers do
-                        i = i + 1
-                        local layer <const> = sortedLayers[i]
-                        layer.name = strfmt(format, nameEntry, i)
-                    end
-                end)
+                local lenSortedLayers <const> = #sortedLayers
+                if lenSortedLayers == 1 then
+                    app.transaction("Rename Layer", function()
+                        sortedLayers[1].name = nameEntry
+                    end)
+                else
+                    table.sort(sortedLayers, function(a, b)
+                        local apid <const> = a.parent.id
+                        local bpid <const> = b.parent.id
+                        if apid == bpid then
+                            return a.stackIndex < b.stackIndex
+                        end
+                        return apid < bpid
+                    end)
+
+                    local format <const> = "%s %d"
+                    local strfmt <const> = string.format
+
+                    app.transaction("Rename Layers", function()
+                        local i = 0
+                        while i < lenSortedLayers do
+                            i = i + 1
+                            local layer <const> = sortedLayers[i]
+                            local n <const> = reverse
+                                and lenSortedLayers + 1 - i
+                                or i
+                            layer.name = strfmt(format, nameEntry, n)
+                        end
+                    end)
+                end
             end
         end
 
