@@ -33,6 +33,7 @@ local defaults <const> = {
     maxSize = 65535
 }
 
+---@param dialog Dialog
 local function updateRatio(dialog)
     local args <const> = dialog.data
     local aRatio = args.aRatio --[[@as integer]]
@@ -42,6 +43,7 @@ local function updateRatio(dialog)
     dialog:modify { id = "bRatio", value = bRatio }
 end
 
+---@param dialog Dialog
 local function updateSizeFromAspect(dialog)
     local args <const> = dialog.data
     local aRatio = args.aRatio --[[@as integer]]
@@ -443,13 +445,6 @@ dlg:button {
         -- Create background image. Assign to cels.
         if createBackground then
             app.transaction("Background", function()
-                -- For continuous layer, see:
-                -- https://community.aseprite.org/t/create-new-continuous-layer/13502
-                -- Beware of timeline visibility:
-                -- https://github.com/aseprite/aseprite/issues/3722
-                -- Not used here because each new cel link creates
-                -- a separate transaction.
-
                 -- Assign a name to layer, avoid "Background".
                 local layer <const> = newSprite.layers[1]
                 layer.name = "Bkg"
