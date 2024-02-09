@@ -3,9 +3,6 @@ dofile("../support/aseutilities.lua")
 local activeSprite <const> = app.site.sprite
 if not activeSprite then return end
 
-local oldColorMode <const> = activeSprite.colorMode
-app.command.ChangePixelFormat { format = "rgb" }
-
 app.transaction("Background to Layer", function()
     AseUtilities.bkgToLayer(activeSprite, false)
 end)
@@ -17,15 +14,24 @@ local size <const> = bgPref.size --[[@as Size]]
 local wCheck <const> = math.max(1, math.abs(size.width))
 local hCheck <const> = math.max(1, math.abs(size.height))
 
+local activeSpec <const> = activeSprite.spec
+local colorMode <const> = activeSpec.colorMode
+
 local aAse <const> = bgPref.color1 --[[@as Color]]
 local bAse <const> = bgPref.color2 --[[@as Color]]
-local a = AseUtilities.aseColorToHex(aAse, ColorMode.RGB)
-local b = AseUtilities.aseColorToHex(bAse, ColorMode.RGB)
-a = 0xff000000 | a
-b = 0xff000000 | b
+local a = AseUtilities.aseColorToHex(aAse, colorMode)
+local b = AseUtilities.aseColorToHex(bAse, colorMode)
+
+-- Precaution against background checker colors that may have opacity.
+if colorMode == ColorMode.RGB then
+    a = 0xff000000 | a
+    b = 0xff000000 | b
+elseif colorMode == ColorMode.GRAY then
+    a = 0xff00 | a
+    b = 0xff00 | b
+end
 
 -- TODO: Make this its own function in AseUtilities.
-local activeSpec <const> = activeSprite.spec
 local checker <const> = Image(activeSpec)
 local pxItr <const> = checker:pixels()
 for pixel in pxItr do
@@ -55,5 +61,6 @@ app.transaction("Bake Checker", function()
 
     checkerLayer.stackIndex = activeSprite.backgroundLayer and 2 or 1
     app.layer = checkerLayer
-    AseUtilities.changePixelFormat(oldColorMode)
 end)
+
+app.refresh()
