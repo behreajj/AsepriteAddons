@@ -4,6 +4,8 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `bakeChecker`: Creates a layer that replicates the size and color of Aseprite's background checker. In most cases, this will be the background layer. Ignores the checker zoom preference.
 
+- `brushFromMask`: Gets the selection, samples the flattened sprite within the selection to an image, assigns the image to the active brush, deselects and sets the tool to pencil.
+
 - `correctPalette`: Prepends `0x00000000`, clear black, to a palette at index 0 if it doesn't already exist. Removes duplicate palette entries. Converts a sprite to and from RGB color mode and sets its `transparentColor` to `0`. This is to avoid a number of issues in indexed color mode, e.g., with the outline tool or with exporting.
 
 - `correctTags`: Removes tags with out-of-bounds frames. Tags with duplicate names have a number appended to the end of the name.
@@ -37,3 +39,5 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 - `prevTab`: Moves the active sprite to the previous tab. Converts the fore- and background colors to RGB.
 
 - `selectCelsRange`: Creates a selection based on the timeline range, or the active cel if the range is empty. Finds the union of images in the range. Equivalent to holding down `Ctrl` and clicking on an inactive layer in the timeline.
+
+- `ungroupLayers`: Sets the parent of layers in the active layer to their grandparent, if any.

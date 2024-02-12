@@ -863,7 +863,7 @@ dlg:button {
             rows = math.max(1, math.ceil(lenTileSet / columns))
         end
 
-        -- The approach which relies on app.command.NewLayer to create a new
+        -- The approach which relies on NewLayer{} to create a new
         -- tile map layer then delete the spare tile set breaks on dev build
         -- for Windows 11.
         local wMap <const> = columns * wTile

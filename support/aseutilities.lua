@@ -2542,12 +2542,12 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
 
     local celImg <const> = cel.image
     local celSpec <const> = celImg.spec
-    local alphaMask <const> = celSpec.transparentColor
+    local alphaIndex <const> = celSpec.transparentColor
     local trimSpec <const> = ImageSpec {
         width = math.max(1, clip.width),
         height = math.max(1, clip.height),
         colorMode = celSpec.colorMode,
-        transparentColor = alphaMask
+        transparentColor = alphaIndex
     }
     trimSpec.colorSpace = celSpec.colorSpace
 
@@ -2560,7 +2560,7 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
                 oldPos.y - celPos.y),
             255, BlendMode.SRC)
 
-        local hexVrf <const> = hexDefault or alphaMask
+        local hexVrf <const> = hexDefault or alphaIndex
         local pxItr <const> = trimImage:pixels()
         for pixel in pxItr do
             if not mask:contains(

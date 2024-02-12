@@ -151,7 +151,7 @@ end
 ---row at the end of the widgets. The show style flag specifies whether to show
 ---the style combo box for gradients which allow dithered vs. mixed color.
 ---@param dlg Dialog dialog
----@param showStyle boolean? show style combo box
+---@param showStyle boolean show style combo box
 function GradientUtilities.dialogWidgets(dlg, showStyle)
     dlg:shades {
         id = "shades",

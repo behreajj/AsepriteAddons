@@ -43,8 +43,8 @@ if range.sprite == activeSprite and (not range.isEmpty) then
         end
     end
 
-    -- Layers can be out of order vs. the stack, even if the range is
-    -- sequential and all layers have the same parent.
+    -- Layers can be out of order vs. the stack, even if the range
+    -- is sequential and all layers have the same parent.
     table.sort(layers, function(a, b)
         return a.stackIndex < b.stackIndex
     end)
