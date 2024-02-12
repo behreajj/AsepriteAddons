@@ -35,10 +35,10 @@ for pixel in pxItr do
     end
 end
 
-local brushPattern = app.preferences.brush.pattern
-if site.layer and site.layer.isTilemap then
-    brushPattern = BrushPattern.NONE
-end
+local brushPattern <const> = app.preferences.brush.pattern
+-- if site.layer and site.layer.isTilemap then
+--     brushPattern = BrushPattern.NONE
+-- end
 
 app.transaction("Brush From Mask", function()
     sprite.selection:deselect()
