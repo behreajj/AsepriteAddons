@@ -35,17 +35,23 @@ for pixel in pxItr do
     end
 end
 
-local brushPattern <const> = app.preferences.brush.pattern
--- if site.layer and site.layer.isTilemap then
---     brushPattern = BrushPattern.NONE
--- end
+local brushPattern = app.preferences.brush.pattern
+local center = Point(wMask // 2, hMask // 2)
+if site.layer and site.layer.isTilemap then
+    brushPattern = BrushPattern.NONE
+end
+
+if app.preferences.document(sprite).grid.snap then
+    center = Point(0, 0)
+end
 
 app.transaction("Brush From Mask", function()
     sprite.selection:deselect()
     app.brush = Brush {
         type = BrushType.IMAGE,
         image = image,
-        pattern = brushPattern
+        pattern = brushPattern,
+        center = center
     }
     app.tool = "pencil"
 end)
