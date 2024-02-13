@@ -1,3 +1,40 @@
+---@param layer Layer
+---@param tally integer
+---@param idLayerDict table<integer, integer>
+---@return integer
+local function layerHierarchy(layer, tally, idLayerDict)
+    if layer.isGroup then
+        local children <const> = layer.layers
+        if children then
+            local lenChildren <const> = #children
+            local i = 0
+            while i < lenChildren do
+                i = i + 1
+                tally = layerHierarchy(children[i], tally, idLayerDict)
+            end
+        end
+    end
+
+    idLayerDict[layer.id] = tally + 1
+    return tally + 1
+end
+
+---@param sprite Sprite
+---@return table<integer, integer>
+local function spriteHierarchy(sprite)
+    ---@type table<integer, integer>
+    local idLayerDict <const> = {}
+    local tally = 0
+    local topLayers <const> = sprite.layers
+    local lenTopLayers <const> = #topLayers
+    local h = 0
+    while h < lenTopLayers do
+        h = h + 1
+        tally = layerHierarchy(topLayers[h], tally, idLayerDict)
+    end
+    return idLayerDict
+end
+
 local dlg <const> = Dialog { title = "Layer Rename" }
 
 dlg:entry {
@@ -16,52 +53,16 @@ dlg:check {
     selected = false
 }
 
----@param layer Layer
----@param t Layer[]
----@param u table<integer, integer>
----@return Layer[]
----@return table<integer, integer>
-local function layerHierarchy(layer, t, u)
-    if layer.isGroup then
-        local children <const> = layer.layers
-        if children then
-            local lenChildren <const> = #children
-            local i = 0
-            while i < lenChildren do
-                i = i + 1
-                layerHierarchy(children[i], t, u)
-            end
-        end
-    end
-
-    t[#t + 1] = layer
-    u[layer.id] = #t
-    return t, u
-end
-
----@param sprite Sprite
----@return Layer[]
----@return table<integer, integer>
-local function spriteHierarchy(sprite)
-    ---@type Layer[]
-    local t <const> = {}
-    ---@type table<integer, integer>
-    local u <const> = {}
-    local topLayers <const> = sprite.layers
-    local lenTopLayers <const> = #topLayers
-    local h = 0
-    while h < lenTopLayers do
-        h = h + 1
-        layerHierarchy(topLayers[h], t, u)
-    end
-    return t, u
-end
+dlg:newrow { always = false }
 
 dlg:button {
     id = "confirm",
     text = "&OK",
     focus = false,
     onclick = function()
+        -- TODO: Option to recolor or tint layers as well, similar to how Tag
+        -- colors are created?
+
         local sprite <const> = app.sprite
         if not sprite then return end
 
@@ -85,7 +86,7 @@ dlg:button {
             return
         end
 
-        local t <const>, u <const> = spriteHierarchy(sprite)
+        local idLayerDict <const> = spriteHierarchy(sprite)
 
         ---@type Layer[]
         local sortedLayers <const> = {}
@@ -94,7 +95,9 @@ dlg:button {
             j = j + 1
             sortedLayers[j] = rangeLayers[j]
         end
-        table.sort(sortedLayers, function(a, b) return u[a.id] < u[b.id] end)
+        table.sort(sortedLayers, function(a, b)
+            return idLayerDict[a.id] < idLayerDict[b.id]
+        end)
 
         local format <const> = "%s %d"
         local strfmt <const> = string.format

@@ -26,6 +26,8 @@ local imageSpec <const> = AseUtilities.createSpec(
 local image <const> = Image(imageSpec)
 image:drawSprite(sprite, frame, Point(-xMask, -yMask))
 
+-- Alpha index can behave funnily when palette is malformed, but
+-- not sure what can be done about it.
 local pxItr <const> = image:pixels()
 for pixel in pxItr do
     if not mask:contains(
@@ -37,6 +39,10 @@ end
 
 local brushPattern = app.preferences.brush.pattern
 local center = Point(wMask // 2, hMask // 2)
+
+-- Ideally, this would also turn off strict tile alignment mode,
+-- but unsure how to do this, as there's only the command to toggle,
+-- not a preference for the document's current state.
 if site.layer and site.layer.isTilemap then
     brushPattern = BrushPattern.NONE
 end

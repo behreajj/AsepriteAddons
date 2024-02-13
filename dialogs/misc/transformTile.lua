@@ -6,6 +6,10 @@ local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 local defaults <const> = {
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
+
+    -- Size of tiles in color bar is determined by
+    -- app.preferences.color_bar.tiles_box_size . Without a command, however,
+    -- this value can be set, but it won't update until Aseprite is restarted.
     target = "FORE_TILE",
     useXFlip = false,
     useYFlip = false,
