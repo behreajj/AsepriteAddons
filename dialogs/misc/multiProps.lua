@@ -81,7 +81,8 @@ local dlg <const> = Dialog { title = "Properties" }
 
 dlg:separator {
     id = "frameSep",
-    text = string.format("Frame %d", frameUiOffset + frame.frameNumber)
+    text = string.format("Frame %d", frameUiOffset + frame.frameNumber),
+    focus = false
 }
 
 dlg:number {
@@ -129,12 +130,14 @@ dlg:entry {
 if (not isBkg) and (not isGroup) then
     dlg:newrow { always = false }
 
+    -- This cannot have focus because it may not even be created if the layer
+    -- is a group or background.
     dlg:combobox {
         id = "layerBlend",
         label = "Blend:",
         option = blendModeToStr(layer.blendMode),
         options = blendModes,
-        focus = true,
+        focus = false,
         onchange = function()
             if (not isBkg) and (not isGroup) then
                 local args <const> = dlg.data
@@ -328,7 +331,7 @@ dlg:separator { id = "cancelSep" }
 dlg:button {
     id = "cancel",
     text = "&CANCEL",
-    focus = false,
+    focus = true,
     onclick = function()
         dlg:close()
     end

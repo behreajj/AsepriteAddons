@@ -1,5 +1,112 @@
 dofile("../../support/gradientutilities.lua")
 
+---@param sprite Sprite|nil
+---@param range Range
+---@param opFlag string
+---@param opNum integer
+local function adjustOpacity(sprite, range, opFlag, opNum)
+    if not sprite then
+        app.alert {
+            title = "Error",
+            text = "There is no active sprite."
+        }
+        return
+    end
+
+    if range.sprite ~= sprite then
+        app.alert {
+            title = "Error",
+            text = "Range sprite doesn't match active sprite."
+        }
+        return
+    end
+
+    local rangeLayers <const> = range.layers
+    local lenRangeLayers <const> = #rangeLayers
+
+    if lenRangeLayers <= 0 then
+        app.alert {
+            title = "Error",
+            text = "No layers selected."
+        }
+        return
+    end
+
+    local floor <const> = math.floor
+    local max <const> = math.max
+    local min <const> = math.min
+
+    if opFlag == "ADD" then
+        app.transaction("Add Layer Opacity", function()
+            local i = 0
+            while i < lenRangeLayers do
+                i = i + 1
+                local layer <const> = rangeLayers[i]
+                if not (layer.isGroup or layer.isBackground) then
+                    local opLayer <const> = layer.opacity
+                    local opSum <const> = opLayer + opNum
+                    layer.opacity = min(max(opSum, 0), 255)
+                end
+            end
+        end)
+    elseif opFlag == "SUBTRACT" then
+        app.transaction("Subtract Layer Opacity", function()
+            local i = 0
+            while i < lenRangeLayers do
+                i = i + 1
+                local layer <const> = rangeLayers[i]
+                if not (layer.isGroup or layer.isBackground) then
+                    local opLayer <const> = layer.opacity
+                    local opDiff <const> = opLayer - opNum
+                    layer.opacity = min(max(opDiff, 0), 255)
+                end
+            end
+        end)
+    elseif opFlag == "MULTIPLY" then
+        local op01 <const> = opNum / 255.0
+        app.transaction("Multiply Layer Opacity", function()
+            local i = 0
+            while i < lenRangeLayers do
+                i = i + 1
+                local layer <const> = rangeLayers[i]
+                if not (layer.isGroup or layer.isBackground) then
+                    local opLayer01 <const> = layer.opacity / 255.0
+                    local opProd01 <const> = min(max(opLayer01 * op01, 0.0), 1.0)
+                    layer.opacity = floor(opProd01 * 255.0 + 0.5)
+                end
+            end
+        end)
+    elseif opFlag == "DIVIDE" then
+        local op01 <const> = opNum ~= 0 and 255.0 / opNum or 0.0
+        app.transaction("Divide Layer Opacity", function()
+            local i = 0
+            while i < lenRangeLayers do
+                i = i + 1
+                local layer <const> = rangeLayers[i]
+                if not (layer.isGroup or layer.isBackground) then
+                    local opLayer01 <const> = layer.opacity / 255.0
+                    local opQuot01 <const> = min(max(opLayer01 * op01, 0.0), 1.0)
+                    layer.opacity = floor(opQuot01 * 255.0 + 0.5)
+                end
+            end
+        end)
+    else
+        -- Default to set.
+        app.transaction("Set Layer Opacity", function()
+            local i = 0
+            while i < lenRangeLayers do
+                i = i + 1
+                local layer <const> = rangeLayers[i]
+                if not (layer.isGroup or layer.isBackground) then
+                    layer.opacity = opNum
+                end
+            end
+        end)
+    end
+
+    app.refresh()
+end
+
 ---@param layer Layer
 ---@param tally integer
 ---@param idLayerDict table<integer, integer>
@@ -54,6 +161,7 @@ local function swapColors(dialog)
     }
 end
 
+-- TODO: Option to set/multiply/add/divide/subtract opacity.
 local dlg <const> = Dialog { title = "Bulk Edit Layers" }
 
 dlg:entry {
@@ -79,18 +187,34 @@ dlg:button {
     text = "RE&NAME",
     focus = false,
     onclick = function()
-        -- TODO: Option to set/multiply/add/divide/subtract opacity.
-
         local sprite <const> = app.sprite
-        if not sprite then return end
+        if not sprite then
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite."
+            }
+            return
+        end
 
         local range <const> = app.range
-        if range.sprite ~= sprite then return end
+        if range.sprite ~= sprite then
+            app.alert {
+                title = "Error",
+                text = "Range sprite doesn't match active sprite."
+            }
+            return
+        end
 
         local rangeLayers <const> = range.layers
         local lenRangeLayers <const> = #rangeLayers
 
-        if lenRangeLayers <= 0 then return end
+        if lenRangeLayers <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No layers selected."
+            }
+            return
+        end
 
         local args <const> = dlg.data
         local nameEntry <const> = args.nameEntry --[[@as string]]
@@ -137,6 +261,78 @@ dlg:button {
     end
 }
 
+dlg:separator { id = "opacitySep" }
+
+dlg:slider {
+    id = "opNum",
+    label = "Opacity:",
+    min = 0,
+    max = 255,
+    value = 255,
+    focus = false
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "addButton",
+    text = "&ADD",
+    focus = false,
+    onclick = function()
+        local args <const> = dlg.data
+        local opNum <const> = args.opNum --[[@as integer]]
+        adjustOpacity(app.site.sprite, app.range, "ADD", opNum)
+    end
+}
+
+dlg:button {
+    id = "subButton",
+    text = "&SUBTRACT",
+    focus = false,
+    onclick = function()
+        local args <const> = dlg.data
+        local opNum <const> = args.opNum --[[@as integer]]
+        adjustOpacity(app.site.sprite, app.range, "SUBTRACT", opNum)
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "mulButton",
+    text = "&MULTIPLY",
+    focus = false,
+    onclick = function()
+        local args <const> = dlg.data
+        local opNum <const> = args.opNum --[[@as integer]]
+        adjustOpacity(app.site.sprite, app.range, "MULTIPLY", opNum)
+    end
+}
+
+dlg:button {
+    id = "divButton",
+    text = "&DIVIDE",
+    focus = false,
+    onclick = function()
+        local args <const> = dlg.data
+        local opNum <const> = args.opNum --[[@as integer]]
+        adjustOpacity(app.site.sprite, app.range, "DIVIDE", opNum)
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "setButton",
+    text = "S&ET",
+    focus = false,
+    onclick = function()
+        local args <const> = dlg.data
+        local opNum <const> = args.opNum --[[@as integer]]
+        adjustOpacity(app.site.sprite, app.range, "SET", opNum)
+    end
+}
+
 dlg:separator { id = "colorSep" }
 
 dlg:color {
@@ -155,7 +351,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "swapColors",
-    text = "&SWAP",
+    text = "S&WAP",
     focus = false,
     onclick = function() swapColors(dlg) end
 }
@@ -165,22 +361,34 @@ dlg:button {
     text = "&TINT",
     focus = false,
     onclick = function()
-        -- TODO: Option to recolor or tint layers as well, similar to how Tag
-        -- colors are created?
-
-        -- You shouldn't need the reverse option here, since  from and to can
-        -- be reversed by the user.
-
         local sprite <const> = app.sprite
-        if not sprite then return end
+        if not sprite then
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite."
+            }
+            return
+        end
 
         local range <const> = app.range
-        if range.sprite ~= sprite then return end
+        if range.sprite ~= sprite then
+            app.alert {
+                title = "Error",
+                text = "Range sprite doesn't match active sprite."
+            }
+            return
+        end
 
         local rangeLayers <const> = range.layers
         local lenRangeLayers <const> = #rangeLayers
 
-        if lenRangeLayers <= 0 then return end
+        if lenRangeLayers <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No layers selected."
+            }
+            return
+        end
 
         local args <const> = dlg.data
         local fromColor <const> = args.fromColor --[[@as Color]]
@@ -210,8 +418,12 @@ dlg:button {
         local hueFunc <const> = GradientUtilities.lerpHueCw
         local mixer <const> = Clr.mixSrLch
         local clrToAse <const> = AseUtilities.clrToAseColor
-        local fromClr <const> = AseUtilities.aseColorToClr(fromColor)
-        local toClr <const> = AseUtilities.aseColorToClr(toColor)
+        local fromClr = AseUtilities.aseColorToClr(fromColor)
+        local toClr = AseUtilities.aseColorToClr(toColor)
+        if fromClr.a <= 0.0 and toClr.a <= 0.0 then
+            fromClr = Clr.clearBlack()
+            toClr = Clr.clearBlack()
+        end
 
         app.transaction("Tint Layers", function()
             local lenSortedLayers <const> = #sortedLayers

@@ -385,7 +385,7 @@ dlg:button {
 
 dlg:button {
     id = "swapColors",
-    text = "&SWAP",
+    text = "S&WAP",
     focus = false,
     onclick = function() swapColors(dlg) end
 }

@@ -89,6 +89,8 @@ local function adjustDuration(sprite, target, opFlag, opNum)
             end
         end)
     end
+
+    app.refresh()
 end
 
 local dlg <const> = Dialog { title = "Adjust Time" }
