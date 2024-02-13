@@ -35,7 +35,7 @@ local function spriteHierarchy(sprite)
     return idLayerDict
 end
 
-local dlg <const> = Dialog { title = "Layer Rename" }
+local dlg <const> = Dialog { title = "Bulk Edit Layers" }
 
 dlg:entry {
     id = "nameEntry",
@@ -63,6 +63,8 @@ dlg:button {
         -- TODO: Option to recolor or tint layers as well, similar to how Tag
         -- colors are created?
 
+        -- TODO: Option to set/multiply/add/divide/subtract opacity.
+
         local sprite <const> = app.sprite
         if not sprite then return end
 
@@ -86,8 +88,6 @@ dlg:button {
             return
         end
 
-        local idLayerDict <const> = spriteHierarchy(sprite)
-
         ---@type Layer[]
         local sortedLayers <const> = {}
         local j = 0
@@ -95,6 +95,8 @@ dlg:button {
             j = j + 1
             sortedLayers[j] = rangeLayers[j]
         end
+
+        local idLayerDict <const> = spriteHierarchy(sprite)
         table.sort(sortedLayers, function(a, b)
             return idLayerDict[a.id] < idLayerDict[b.id]
         end)

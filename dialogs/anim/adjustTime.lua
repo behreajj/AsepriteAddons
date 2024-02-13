@@ -4,6 +4,8 @@ dofile("../../support/clrgradient.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults <const> = {
+    -- TODO: Support "TAG"? What if tags partial overlap, or one is contained
+    -- by the other?
     target = "ALL",
     opNum = 0
 }
