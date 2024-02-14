@@ -626,7 +626,6 @@ dlg:button {
                 end)
         end
 
-        app.command.FitScreen()
         app.refresh()
     end
 }

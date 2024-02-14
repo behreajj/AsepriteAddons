@@ -291,9 +291,8 @@ dlg:button {
         end
 
         openFilePrefs.open_sequence = oldOpSeqPref
-        app.tool = "hand"
         app.layer = openSprite.layers[#openSprite.layers]
-        app.command.FitScreen()
+        app.tool = "hand"
         app.refresh()
         dlg:close()
     end

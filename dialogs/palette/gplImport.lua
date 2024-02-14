@@ -250,8 +250,6 @@ dlg:button {
                 local layer <const> = activeSprite.layers[1]
                 local cel <const> = layer.cels[1]
                 cel.image = image
-
-                app.command.FitScreen()
                 app.tool = "hand"
             end
 

@@ -1049,7 +1049,6 @@ dlg:button {
         end
 
         app.frame = trgFrames[1]
-        app.command.FitScreen()
         app.refresh()
 
         -- Report elapsed time.

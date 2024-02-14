@@ -336,7 +336,7 @@ dlg:button {
             end
         end)
 
-        local swatchSpec<const> = AseUtilities.createSpec(
+        local swatchSpec <const> = AseUtilities.createSpec(
             swatchSize, swatchSize, ColorMode.RGB, clrPrf, 0)
 
         local highlightFrame = nil
@@ -513,14 +513,12 @@ dlg:button {
             end)
         end
 
+        AseUtilities.setPalette(hexesProfile, comboSprite, 1)
+
         app.sprite = comboSprite
         app.frame = firstFrame
         app.layer = swatchesGroup
 
-        AseUtilities.setPalette(
-            hexesProfile, comboSprite, 1)
-
-        app.command.FitScreen()
         app.refresh()
     end
 }

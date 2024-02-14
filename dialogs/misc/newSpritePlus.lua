@@ -472,7 +472,6 @@ dlg:button {
         -- if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
 
         app.frame = firstFrame
-        app.command.FitScreen()
         app.refresh()
         dlg:close()
     end

@@ -508,7 +508,6 @@ dlg:button {
         end
 
         app.layer = sprite.layers[1]
-        app.command.FitScreen()
         app.refresh()
     end
 }
