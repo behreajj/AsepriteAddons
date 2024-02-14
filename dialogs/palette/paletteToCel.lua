@@ -221,16 +221,21 @@ dlg:button {
             return
         end
 
+        local oldMode <const> = activeSprite.colorMode
+        if oldMode ~= ColorMode.RGB then
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported."
+            }
+            return
+        end
+
         -- Check for tile maps.
         local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
         if isTilemap then
             tileSet = srcLayer.tileset
         end
-
-        -- Change color mode.
-        local oldMode <const> = activeSprite.colorMode
-        app.command.ChangePixelFormat { format = "rgb" }
 
         -- Cache global methods.
         local fromHex <const> = Clr.fromHex
@@ -401,7 +406,6 @@ dlg:button {
             end
         end
 
-        AseUtilities.changePixelFormat(oldMode)
         app.refresh()
 
         if printElapsed then

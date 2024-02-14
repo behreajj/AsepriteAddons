@@ -161,7 +161,8 @@ local function swapColors(dialog)
     }
 end
 
--- TODO: Option to set/multiply/add/divide/subtract opacity.
+-- Blend mode is not included because it would require more of the same
+-- as in multiProps file -- converting to and from strings.
 local dlg <const> = Dialog { title = "Bulk Edit Layers" }
 
 dlg:entry {

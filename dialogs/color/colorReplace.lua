@@ -268,6 +268,14 @@ dlg:button {
                 end)
             end
         else
+            if (not exactSearch) and colorMode ~= ColorMode.RGB then
+                app.alert {
+                    title = "Error",
+                    text = "Only RGB color mode is supported."
+                }
+                return
+            end
+
             local trgCels <const> = AseUtilities.filterCels(
                 activeSprite, activeLayer, activeFrame, target,
                 includeLocked, includeHidden, includeTiles, includeBkg)
@@ -303,8 +311,6 @@ dlg:button {
                         cel.image = trgImg
                     end
                 else
-                    app.command.ChangePixelFormat { format = "rgb" }
-
                     local frInt <const> = AseUtilities.aseColorToHex(
                         frColor, ColorMode.RGB)
                     local toInt <const> = AseUtilities.aseColorToHex(
@@ -372,8 +378,6 @@ dlg:button {
 
                         cel.image = trgImg
                     end
-
-                    AseUtilities.changePixelFormat(colorMode)
                 end
             end)
         end

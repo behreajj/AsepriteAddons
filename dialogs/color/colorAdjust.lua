@@ -666,6 +666,15 @@ dlg:button {
             return
         end
 
+        local oldMode <const> = activeSprite.colorMode
+        if oldMode ~= ColorMode.RGB then
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported."
+            }
+            return
+        end
+
         local args <const> = dlg.data
         local target <const> = args.target
             or defaults.target --[[@as string]]
@@ -702,8 +711,6 @@ dlg:button {
             end
         end
 
-        local oldMode <const> = activeSprite.colorMode
-        app.command.ChangePixelFormat { format = "rgb" }
         local activeSpec <const> = activeSprite.spec
 
         if isSelect then
@@ -1038,7 +1045,6 @@ dlg:button {
             activeSprite:deleteLayer(srcLayer)
         end
 
-        AseUtilities.changePixelFormat(oldMode)
         app.refresh()
     end
 }
