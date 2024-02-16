@@ -600,7 +600,7 @@ dlg:button {
                 end
             end)
 
-            -- app.command.Refresh() cannot be used to update sprite tab color
+            -- Refresh command cannot be used to update sprite tab color
             -- because it crashes older versions of Aseprite.
             dlg:close()
         else

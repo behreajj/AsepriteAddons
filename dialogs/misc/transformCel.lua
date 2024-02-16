@@ -114,6 +114,10 @@ local function sampleBilinear(
     xSrc, ySrc, wSrc, hSrc,
     sourceBytes, bpp,
     defaultValue)
+
+    -- TODO: Make resize bilinear an AseUtilities method? Except in such a
+    -- version, return RGBA tuple instead of string. Or maybe use lab instead?
+
     local xf <const> = math.floor(xSrc)
     local yf <const> = math.floor(ySrc)
     local xc <const> = xf + 1

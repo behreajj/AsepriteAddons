@@ -26,9 +26,9 @@ local function assignFore()
     if app.site.sprite then
         local v <const> = Vec3.fromSpherical(
             active.azimuth, active.inclination, 1.0)
-        if math.abs(v.x) < 0.0039216 then v.x = 0.0 end
-        if math.abs(v.y) < 0.0039216 then v.y = 0.0 end
-        if math.abs(v.z) < 0.0039216 then v.z = 0.0 end
+        -- if math.abs(v.x) < 0.0039216 then v.x = 0.0 end
+        -- if math.abs(v.y) < 0.0039216 then v.y = 0.0 end
+        -- if math.abs(v.z) < 0.0039216 then v.z = 0.0 end
         app.fgColor = Color {
             r = math.floor(v.x * 127.5 + 128.0),
             g = math.floor(v.y * 127.5 + 128.0),
@@ -74,9 +74,9 @@ local function colorToVec(color)
         local xn = x * invMag
         local yn = y * invMag
         local zn = z * invMag
-        if math.abs(xn) < 0.0039216 then xn = 0.0 end
-        if math.abs(yn) < 0.0039216 then yn = 0.0 end
-        if math.abs(zn) < 0.0039216 then zn = 0.0 end
+        -- if math.abs(xn) < 0.0039216 then xn = 0.0 end
+        -- if math.abs(yn) < 0.0039216 then yn = 0.0 end
+        -- if math.abs(zn) < 0.0039216 then zn = 0.0 end
         return xn, yn, zn
     else
         return 0.0, 0.0, 1.0
@@ -556,9 +556,9 @@ dlg:button {
 
         local v <const> = Vec3.fromSpherical(
             active.azimuth, active.inclination, 1.0)
-        if math.abs(v.x) < 0.0039216 then v.x = 0.0 end
-        if math.abs(v.y) < 0.0039216 then v.y = 0.0 end
-        if math.abs(v.z) < 0.0039216 then v.z = 0.0 end
+        -- if math.abs(v.x) < 0.0039216 then v.x = 0.0 end
+        -- if math.abs(v.y) < 0.0039216 then v.y = 0.0 end
+        -- if math.abs(v.z) < 0.0039216 then v.z = 0.0 end
         local aseColor <const> = Color {
             r = math.floor(v.x * 127.5 + 128.0),
             g = math.floor(v.y * 127.5 + 128.0),
