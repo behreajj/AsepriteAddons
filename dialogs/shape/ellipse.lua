@@ -9,9 +9,9 @@ local defaults <const> = {
     axx = 0.0,
     axy = 0.0,
     axz = 1.0,
-    useStroke = false,
+    useStroke = true,
     strokeWeight = 1,
-    useFill = true,
+    useFill = false,
     pullFocus = false
 }
 
@@ -140,6 +140,7 @@ dlg:check {
     label = "Fill:",
     text = "Enable",
     selected = defaults.useFill,
+    enabled = false,
     onclick = function()
         local args <const> = dlg.data
         local useFill <const> = args.useFill --[[@as boolean]]
@@ -153,6 +154,7 @@ dlg:check {
 dlg:color {
     id = "fillClr",
     color = app.preferences.color_bar.fg_color,
+    enabled = false,
     visible = defaults.useFill
 }
 
