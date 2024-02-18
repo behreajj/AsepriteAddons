@@ -6,13 +6,13 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
-    -- TODO: Option to display elapsed time.
     target = "ACTIVE",
     alphaComp = "BLEND",
     labComp = "LAB",
     hueMix = "CCW",
     delOver = "HIDE",
     delUnder = "HIDE",
+    printElapsed = false,
     pullFocus = false
 }
 
@@ -87,11 +87,29 @@ dlg:label {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "printElapsed",
+    label = "Print:",
+    text = "Diagnostic",
+    selected = defaults.printElapsed
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "confirm",
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        local args <const> = dlg.data
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
+        local startTime = 0
+        local endTime = 0
+        local elapsed = 0
+        if printElapsed then
+            startTime = os.clock()
+        end
+
         local site <const> = app.site
         local activeSprite <const> = site.sprite
         if not activeSprite then
@@ -176,7 +194,6 @@ dlg:button {
         local srLchToSrLab2 <const> = Clr.srLchToSrLab2
 
         -- Unpack arguments.
-        local args <const> = dlg.data
         local target <const> = args.target
             or defaults.target --[[@as string]]
         local labComp <const> = args.labComp
@@ -562,6 +579,19 @@ dlg:button {
 
         app.layer = compLayer
         app.refresh()
+
+        if printElapsed then
+            endTime = os.clock()
+            elapsed = endTime - startTime
+            app.alert {
+                title = "Diagnostic",
+                text = {
+                    string.format("Start: %.2f", startTime),
+                    string.format("End: %.2f", endTime),
+                    string.format("Elapsed: %.6f", elapsed)
+                }
+            }
+        end
     end
 }
 
