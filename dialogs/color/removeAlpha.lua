@@ -65,7 +65,7 @@ local defaults <const> = {
     removeCel = true,
     removeImage = true,
     removeTiles = true,
-    removePalette = true,
+    removePalette = true
 }
 
 local dlg <const> = Dialog { title = "Opaque" }
@@ -194,7 +194,7 @@ dlg:button {
             local lenChosenTileSets <const> = #chosenTileSets
 
             if lenChosenTileSets > 0 then
-                app.transaction("Opaque Palette", function()
+                app.transaction("Opaque Tiles", function()
                     local i = 0
                     while i < lenChosenTileSets do
                         i = i + 1
