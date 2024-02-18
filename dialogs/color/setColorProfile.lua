@@ -116,11 +116,13 @@ dlg:button {
         end
 
         if confirm and confirm == 1 then
-            if continuity == "VISUAL" then
-                activeSprite:convertColorSpace(newColorSpace)
-            else
-                activeSprite:assignColorSpace(newColorSpace)
-            end
+            app.transaction("Set Color Profile", function()
+                if continuity == "VISUAL" then
+                    activeSprite:convertColorSpace(newColorSpace)
+                else
+                    activeSprite:assignColorSpace(newColorSpace)
+                end
+            end)
             app.refresh()
             app.alert {
                 title = "Success",
