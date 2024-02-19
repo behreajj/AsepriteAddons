@@ -44,7 +44,7 @@ local center = Point(wMask // 2, hMask // 2)
 -- but unsure how to do this, as there's only the command to toggle,
 -- not a preference for the document's current state.
 if site.layer and site.layer.isTilemap then
-    brushPattern = BrushPattern.NONE
+    brushPattern = BrushPattern.TARGET
 end
 
 if app.preferences.document(sprite).grid.snap then
@@ -52,6 +52,7 @@ if app.preferences.document(sprite).grid.snap then
 end
 
 app.transaction("Brush From Mask", function()
+    app.preferences.brush.pattern = brushPattern
     sprite.selection:deselect()
     app.brush = Brush {
         type = BrushType.IMAGE,
@@ -61,3 +62,5 @@ app.transaction("Brush From Mask", function()
     }
     app.tool = "pencil"
 end)
+
+app.refresh()
