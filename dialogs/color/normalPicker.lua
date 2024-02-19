@@ -12,7 +12,9 @@ local defaults <const> = {
     x = 0.0,
     y = 0.0,
     z = 1.0,
-    hexCode = "8080FF"
+    hexCode = "8080FF",
+    azimIncrScale = 15,
+    inclIncrScale = 15,
 }
 
 local active <const> = {
@@ -196,7 +198,9 @@ local function setAzimMouseListen(event)
         if event.ctrlKey then
             active.azimuth = 0.0
         elseif event.shiftKey then
-            local incr = 0.0159154943092
+            -- Increment is math.pi / 180.
+            local incr = 0.017453292519943
+            if event.altKey then incr = incr * defaults.azimIncrScale end
             if math.abs(mxtau - active.azimuth) > incr then
                 if mxtau < active.azimuth then incr = -incr end
                 active.azimuth = (active.azimuth + incr) % 6.2831853071796
@@ -224,7 +228,8 @@ local function setInclMouseListen(event)
         if event.ctrlKey then
             active.inclination = 0.0
         elseif event.shiftKey then
-            local incr = 0.0159154943092
+            local incr = 0.017453292519943
+            if event.altKey then incr = incr * defaults.inclIncrScale end
             if math.abs(mxIncl - active.inclination) > incr then
                 if mxIncl < active.inclination then incr = -incr end
                 active.inclination = math.min(math.max(
