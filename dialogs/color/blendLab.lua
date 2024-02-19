@@ -497,8 +497,8 @@ dlg:button {
                         elseif useMul then
                             -- Scaling under ab by 0.5 is a fudge factor.
                             local lProd <const> = 100.0 * ((aLab.l * 0.01) * (bLab.l * 0.01))
-                            local aSum <const> = 0.5 * aLab.a + bLab.a
-                            local bSum <const> = 0.5 * aLab.b + bLab.b
+                            local aSum <const> = 0.5 * (aLab.a + bLab.a)
+                            local bSum <const> = 0.5 * (aLab.b + bLab.b)
                             cl = u * aLab.l + t * lProd
                             ca = u * aLab.a + t * aSum
                             cb = u * aLab.b + t * bSum
