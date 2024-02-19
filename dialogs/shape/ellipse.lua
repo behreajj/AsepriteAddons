@@ -129,7 +129,7 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    color = app.preferences.color_bar.bg_color,
+    color = app.preferences.color_bar.fg_color,
     visible = defaults.useStroke
 }
 
@@ -153,7 +153,7 @@ dlg:check {
 
 dlg:color {
     id = "fillClr",
-    color = app.preferences.color_bar.fg_color,
+    color = app.preferences.color_bar.bg_color,
     enabled = false,
     visible = defaults.useFill
 }
