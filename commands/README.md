@@ -4,7 +4,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `bakeChecker`: Creates a layer that replicates the size and color of Aseprite's background checker. In most cases, this will be the background layer. Ignores the checker zoom preference.
 
-- `brushFromMask`: Creates a brush from a selection. If snap to grid is enabled, sets the center to top-left. If a tile map is active, sets the brush alignment to destination.
+- `brushFromMask`: Creates a brush from a selection. If snap to grid is enabled, sets the center to top-left. If a tile map is active, sets the brush alignment.
 
 - `correctPalette`: Prepends `0x00000000`, clear black, to a palette at index 0 if it doesn't already exist. Removes duplicate palette entries. Converts a sprite to and from RGB color mode and sets its `transparentColor` to `0`. This is to avoid a number of issues in indexed color mode, e.g., with the outline tool or with exporting.
 

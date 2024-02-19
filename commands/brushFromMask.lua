@@ -37,22 +37,30 @@ for pixel in pxItr do
     end
 end
 
-local brushPattern = app.preferences.brush.pattern
+local appPrefs <const> = app.preferences
+local brushPrefs <const> = appPrefs.brush
+local useSnap <const> = appPrefs.document(sprite).grid.snap
+
+local brushPattern = BrushPattern.NONE
 local center = Point(wMask // 2, hMask // 2)
 
 -- Ideally, this would also turn off strict tile alignment mode,
 -- but unsure how to do this, as there's only the command to toggle,
 -- not a preference for the document's current state.
 if site.layer and site.layer.isTilemap then
-    brushPattern = BrushPattern.TARGET
+    if useSnap then
+        brushPattern = BrushPattern.TARGET
+    else
+        brushPattern = BrushPattern.ORIGIN
+    end
 end
 
-if app.preferences.document(sprite).grid.snap then
+if useSnap then
     center = Point(0, 0)
 end
 
 app.transaction("Brush From Mask", function()
-    app.preferences.brush.pattern = brushPattern
+    brushPrefs.pattern = brushPattern
     sprite.selection:deselect()
     app.brush = Brush {
         type = BrushType.IMAGE,
