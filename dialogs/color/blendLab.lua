@@ -1,7 +1,7 @@
 dofile("../../support/gradientutilities.lua")
 
 local alphaComps <const> = { "BLEND", "MAX", "MIN", "OVER", "UNDER" }
-local labComps <const> = { "AB", "CHROMA", "COLOR", "LAB", "LCH", "LIGHTNESS", "HUE" }
+local labComps <const> = { "AB", "CHROMA", "COLOR", "LAB", "LCH", "LIGHTNESS", "MULTIPLY", "HUE" }
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
@@ -217,7 +217,7 @@ dlg:button {
         local useLight <const> = labComp == "LIGHTNESS"
         local useAb <const> = labComp == "AB"
         -- local useAdd <const> = labComp == "ADD"
-        -- local useMul <const> = labComp == "MULTIPLY"
+        local useMul <const> = labComp == "MULTIPLY"
         local useChroma <const> = labComp == "CHROMA"
         local useHue <const> = labComp == "HUE"
         local useColor <const> = labComp == "COLOR"
@@ -494,12 +494,14 @@ dlg:button {
                             -- cl = u * aLab.l + t * (aLab.l + bLab.l)
                             -- ca = u * aLab.a + t * (aLab.a + bLab.a)
                             -- cb = u * aLab.b + t * (aLab.b + bLab.b)
-                            -- elseif useMul then
-                            -- Multiply only works on light.
-                            -- local prod <const> = 100.0 * ((aLab.l * 0.01) * (bLab.l * 0.01))
-                            -- cl = u * aLab.l + t * prod
-                            -- ca = u * aLab.a + t * bLab.a
-                            -- cb = u * aLab.b + t * bLab.b
+                        elseif useMul then
+                            -- Scaling under ab by 0.5 is a fudge factor.
+                            local lProd <const> = 100.0 * ((aLab.l * 0.01) * (bLab.l * 0.01))
+                            local aSum <const> = 0.5 * aLab.a + bLab.a
+                            local bSum <const> = 0.5 * aLab.b + bLab.b
+                            cl = u * aLab.l + t * lProd
+                            ca = u * aLab.a + t * aSum
+                            cb = u * aLab.b + t * bSum
                         else
                             cl = u * aLab.l + t * bLab.l
                             ca = u * aLab.a + t * bLab.a
