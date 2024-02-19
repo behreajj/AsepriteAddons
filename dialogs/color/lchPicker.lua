@@ -34,7 +34,11 @@ local defaults <const> = {
     chromaSpreadLgt = 15.0,
     lightSpread = 33.33,
     hYellow = 0.30922841685655,
-    hViolet = 0.80922841685655
+    hViolet = 0.80922841685655,
+    lIncrScale = 5,
+    cIncrScale = 10,
+    hIncrScale = 15,
+    aIncrScale = 16
 }
 
 local active <const> = {
@@ -124,6 +128,7 @@ local function setAlphaMouseListen(event)
             active.a = 1.0
         elseif event.shiftKey then
             local incr = 0.003921568627451
+            if event.altKey then incr = incr * defaults.aIncrScale end
             if math.abs(mx01 - active.a) > incr then
                 if mx01 < active.a then incr = -incr end
                 active.a = math.min(math.max(
@@ -145,6 +150,7 @@ local function setLightMouseListen(event)
             active.l = 50.0
         elseif event.shiftKey then
             local incr = 1.0
+            if event.altKey then incr = incr * defaults.lIncrScale end
             if math.abs(mx100 - active.l) > incr then
                 if mx100 < active.l then incr = -incr end
                 active.l = math.min(math.max(
@@ -184,6 +190,7 @@ local function setChromaMouseListen(event)
             active.c = c
         elseif event.shiftKey then
             local incr = 1.0
+            if event.altKey then incr = incr * defaults.cIncrScale end
             if math.abs(mx120 - active.c) > incr then
                 if mx120 < active.c then incr = -incr end
                 active.c = math.min(math.max(
@@ -206,6 +213,7 @@ local function setHueMouseListen(event)
             active.h = 0.0
         elseif event.shiftKey then
             local incr = 0.0027777777777778
+            if event.altKey then incr = incr * defaults.hIncrScale end
             if math.abs(mx01 - active.h) > incr then
                 if mx01 < active.h then incr = -incr end
                 active.h = (active.h + incr) % 1.0
