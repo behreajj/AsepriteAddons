@@ -221,7 +221,7 @@ dlg:button {
         local useChroma <const> = labComp == "CHROMA"
         local useHue <const> = labComp == "HUE"
         local useColor <const> = labComp == "COLOR"
-        local useLch <const> = useChroma or useHue or useColor
+        local useLch <const> = useChroma or useHue or useColor or useMul
             or labComp == "LCH"
 
         local mixer <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
@@ -461,6 +461,11 @@ dlg:button {
                             cl = aLch.l
                             cc = u * aLch.c + t * bLch.c
                             ch = mixer(aLch.h, bLch.h, t)
+                        elseif useMul then
+                            local lMul <const> = 100.0 * ((aLab.l * 0.01) * (bLab.l * 0.01))
+                            cl = u * aLab.l + t * lMul
+                            cc = u * aLch.c + t * bLch.c
+                            ch = mixer(aLch.h, bLch.h, t)
                         elseif useChroma then
                             cl = aLch.l
                             cc = u * aLch.c + t * bLch.c
@@ -494,14 +499,6 @@ dlg:button {
                             -- cl = u * aLab.l + t * (aLab.l + bLab.l)
                             -- ca = u * aLab.a + t * (aLab.a + bLab.a)
                             -- cb = u * aLab.b + t * (aLab.b + bLab.b)
-                        elseif useMul then
-                            -- Scaling under ab by 0.5 is a fudge factor.
-                            local lProd <const> = 100.0 * ((aLab.l * 0.01) * (bLab.l * 0.01))
-                            local aSum <const> = 0.5 * (aLab.a + bLab.a)
-                            local bSum <const> = 0.5 * (aLab.b + bLab.b)
-                            cl = u * aLab.l + t * lProd
-                            ca = u * aLab.a + t * aSum
-                            cb = u * aLab.b + t * bSum
                         else
                             cl = u * aLab.l + t * bLab.l
                             ca = u * aLab.a + t * bLab.a
