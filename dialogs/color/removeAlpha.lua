@@ -68,7 +68,7 @@ local defaults <const> = {
     removePalette = true
 }
 
-local dlg <const> = Dialog { title = "Opaque" }
+local dlg <const> = Dialog { title = "Remove Alpha" }
 
 dlg:check {
     id = "removeLayer",

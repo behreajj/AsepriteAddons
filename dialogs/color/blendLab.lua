@@ -495,13 +495,16 @@ dlg:button {
                             -- ca = u * aLab.a + t * (aLab.a + bLab.a)
                             -- cb = u * aLab.b + t * (aLab.b + bLab.b)
                         elseif useMul then
-                            -- Scaling under ab by 0.5 is a fudge factor.
-                            local lProd <const> = 100.0 * ((aLab.l * 0.01) * (bLab.l * 0.01))
-                            local aSum <const> = 0.5 * (aLab.a + bLab.a)
-                            local bSum <const> = 0.5 * (aLab.b + bLab.b)
-                            cl = u * aLab.l + t * lProd
-                            ca = u * aLab.a + t * aSum
-                            cb = u * aLab.b + t * bSum
+                            -- This could be an LCH blend mode instead, with
+                            -- better results when over layer's alpha is
+                            -- opaque. However, mixing the hue for translucent
+                            -- layers gives poor results.
+                            local lMul <const> = 100.0 * ((aLab.l * 0.01) * (bLab.l * 0.01))
+                            local aAvg <const> = aLab.a * 0.333 + bLab.a * 0.667
+                            local bAvg <const> = aLab.b * 0.333 + bLab.b * 0.667
+                            cl = u * aLab.l + t * lMul
+                            ca = u * aLab.a + t * aAvg
+                            cb = u * aLab.b + t * bAvg
                         else
                             cl = u * aLab.l + t * bLab.l
                             ca = u * aLab.a + t * bLab.a
