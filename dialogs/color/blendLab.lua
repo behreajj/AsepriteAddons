@@ -35,10 +35,14 @@ dlg:combobox {
     onchange = function()
         local args <const> = dlg.data
         local labComp <const> = args.labComp --[[@as string]]
-        local isHue <const> = labComp == "HUE"
         local isColor <const> = labComp == "COLOR"
+        local isMul <const> = labComp == "MULTIPLY"
+        local isHue <const> = labComp == "HUE"
         local isLch <const> = labComp == "LCH"
-        dlg:modify { id = "huePreset", visible = isHue or isColor or isLch }
+        dlg:modify { id = "huePreset", visible = isColor
+            or isMul
+            or isHue
+            or isLch }
     end
 }
 
@@ -47,8 +51,9 @@ dlg:combobox {
     label = "Easing:",
     option = defaults.hueMix,
     options = GradientUtilities.HUE_EASING_PRESETS,
-    visible = defaults.labComp == "HUE"
-        or defaults.labComp == "COLOR"
+    visible = defaults.labComp == "COLOR"
+        or defaults.labComp == "MULTIPLY"
+        or defaults.labComp == "HUE"
         or defaults.labComp == "LCH"
 }
 
