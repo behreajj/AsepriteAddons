@@ -63,7 +63,7 @@ if not app.preferences.tilemap.show_delete_unused_tileset_alert then
             activeSprite, true, true, true, false)
         local lenLeaves <const> = #leaves
         ---@type table<integer, boolean>
-        local usedTileSets = {}
+        local usedTileSets <const> = {}
         local i = 0
         while i < lenLeaves do
             i = i + 1

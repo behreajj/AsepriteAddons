@@ -39,14 +39,14 @@ end
 
 local appPrefs <const> = app.preferences
 local brushPrefs <const> = appPrefs.brush
+local maskPrefs <const> = appPrefs.selection
+local maskPivot <const> = maskPrefs.pivot_position
 local useSnap <const> = appPrefs.document(sprite).grid.snap
-
-local brushPattern = BrushPattern.NONE
-local center = Point(wMask // 2, hMask // 2)
 
 -- Ideally, this would also turn off strict tile alignment mode,
 -- but unsure how to do this, as there's only the command to toggle,
 -- not a preference for the document's current state.
+local brushPattern = BrushPattern.NONE
 if site.layer and site.layer.isTilemap then
     if useSnap then
         brushPattern = BrushPattern.TARGET
@@ -55,8 +55,29 @@ if site.layer and site.layer.isTilemap then
     end
 end
 
+local center = Point(wMask // 2, hMask // 2)
 if useSnap then
     center = Point(0, 0)
+else
+    if maskPivot == 0 then
+        center = Point(0, 0)
+    elseif maskPivot == 1 then
+        center = Point(wMask // 2, 0)
+    elseif maskPivot == 2 then
+        center = Point(wMask - 1, 0)
+    elseif maskPivot == 3 then
+        center = Point(0, hMask // 2)
+    elseif maskPivot == 4 then
+        center = Point(wMask // 2, hMask // 2)
+    elseif maskPivot == 5 then
+        center = Point(wMask - 1, hMask // 2)
+    elseif maskPivot == 6 then
+        center = Point(0, hMask - 1)
+    elseif maskPivot == 7 then
+        center = Point(wMask // 2, hMask - 1)
+    elseif maskPivot == 8 then
+        center = Point(wMask - 1, hMask - 1)
+    end
 end
 
 app.transaction("Brush From Mask", function()
@@ -65,8 +86,9 @@ app.transaction("Brush From Mask", function()
     app.brush = Brush {
         type = BrushType.IMAGE,
         image = image,
+        center = center,
         pattern = brushPattern,
-        center = center
+        patternOrigin = Point(xMask, yMask),
     }
     app.tool = "pencil"
 end)
