@@ -109,9 +109,9 @@ end
 
 ---@param layer Layer
 ---@param tally integer
----@param idLayerDict table<integer, integer>
+---@param idTallyDict table<integer, integer>
 ---@return integer
-local function layerHierarchy(layer, tally, idLayerDict)
+local function layerHierarchy(layer, tally, idTallyDict)
     if layer.isGroup then
         local children <const> = layer.layers
         if children then
@@ -119,12 +119,12 @@ local function layerHierarchy(layer, tally, idLayerDict)
             local i = 0
             while i < lenChildren do
                 i = i + 1
-                tally = layerHierarchy(children[i], tally, idLayerDict)
+                tally = layerHierarchy(children[i], tally, idTallyDict)
             end
         end
     end
 
-    idLayerDict[layer.id] = tally + 1
+    idTallyDict[layer.id] = tally + 1
     return tally + 1
 end
 
@@ -132,16 +132,16 @@ end
 ---@return table<integer, integer>
 local function spriteHierarchy(sprite)
     ---@type table<integer, integer>
-    local idLayerDict <const> = {}
+    local idTallyDict <const> = {}
     local tally = 0
     local topLayers <const> = sprite.layers
     local lenTopLayers <const> = #topLayers
     local h = 0
     while h < lenTopLayers do
         h = h + 1
-        tally = layerHierarchy(topLayers[h], tally, idLayerDict)
+        tally = layerHierarchy(topLayers[h], tally, idTallyDict)
     end
-    return idLayerDict
+    return idTallyDict
 end
 
 ---@param dialog Dialog
@@ -237,9 +237,9 @@ dlg:button {
             sortedLayers[h] = rangeLayers[h]
         end
 
-        local idLayerDict <const> = spriteHierarchy(sprite)
+        local idTallyDict <const> = spriteHierarchy(sprite)
         table.sort(sortedLayers, function(a, b)
-            return idLayerDict[a.id] < idLayerDict[b.id]
+            return idTallyDict[a.id] < idTallyDict[b.id]
         end)
 
         local format <const> = "%s %d"

@@ -6,7 +6,6 @@ local screenScale <const> = app.preferences.general.screen_scale
 local harmonyTypes <const> = {
     "ANALOGOUS",
     "COMPLEMENT",
-    -- "GRAYS",
     "SHADING",
     "SPLIT",
     "SQUARE",
@@ -55,8 +54,10 @@ local active <const> = {
 }
 
 local function assignFore()
+    -- Ideally, if palette is unlocked, and color in palette at index is
+    -- exact match of the fg/bg color, then set the palette at index.
     if app.site.sprite then
-        local srgb = defaults.lchTosRgb(
+        local srgb <const> = defaults.lchTosRgb(
             active.l, active.c, active.h, active.a)
         app.fgColor = AseUtilities.clrToAseColor(srgb)
     end
@@ -740,9 +741,6 @@ dlg:canvas {
             swatches[2] = { l = lAna, c = c, h = (h - h30) % 1.0, a = a }
         elseif harmonyType == "COMPLEMENT" then
             swatches[1] = { l = 100.0 - l, c = c, h = (h + 0.5) % 1.0, a = a }
-            -- elseif harmonyType == "GRAYS" then
-            --     swatches[1] = { l = 100.0 - l, c = 0.0, h = h, a = a }
-            --     swatches[2] = { l = l, c = 0.0, h = h, a = a }
         elseif harmonyType == "SPLIT" then
             local lSpl <const> = (250.0 - (l + l)) / 3.0
             local h150 <const> = 0.41666666666667

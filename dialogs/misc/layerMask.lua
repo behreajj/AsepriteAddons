@@ -278,6 +278,8 @@ dlg:button {
                         local heightTarget <const> = 1 + yBrTarget - yTlTarget
                         local lenPxTarget <const> = widthTarget * heightTarget
 
+                        -- TODO: Make branches to support indexed and gray
+                        -- color mode?
                         local i = 0
                         while i < lenPxTarget do
                             local rTarget = 0

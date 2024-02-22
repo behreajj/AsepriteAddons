@@ -228,6 +228,7 @@ local function setInclMouseListen(event)
         if event.ctrlKey then
             active.inclination = 0.0
         elseif event.shiftKey then
+            -- Increment is math.pi / 180.
             local incr = 0.017453292519943
             if event.altKey then incr = incr * defaults.inclIncrScale end
             if math.abs(mxIncl - active.inclination) > incr then
