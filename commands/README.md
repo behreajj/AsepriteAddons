@@ -20,6 +20,10 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `cycleStackUp`: Moves a layer up the stack. Ignores background layers. If the layer is at the top of the stack and its parent does not contain a background layer, moves it to the bottom.
 
+- `cycleSwatchLeft`: If the foreground color has an exact palette match, moves the palette swatch to the left. Shifts sprite transparent color as well. Does not trigger a palette remap.
+ 
+- `cycleSwatchRight`: If the foreground color has an exact palette match, moves the palette swatch to the right. Shifts sprite transparent color as well. Does not trigger a palette remap.
+
 - `dereference`: Converts a reference layer to a normal layer. Transfers the reference layer's parent to the new layer.
 
 - `flattenGroup`: Flattens a group layer. Includes locked layers, but excludes hidden layers.
