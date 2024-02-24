@@ -234,6 +234,11 @@ dlg:button {
             layer.name = curve.name
         end)
 
+        local docPrefs <const> = app.preferences.document(sprite)
+        local symmetryPrefs <const> = docPrefs.symmetry
+        local oldSymmetry <const> = symmetryPrefs.mode
+        symmetryPrefs.mode = 0
+
         -- Technically, this shouldn't work, but a Curve3
         -- has the same fields as a Curve2.
         ShapeUtilities.drawCurve2(
@@ -255,6 +260,8 @@ dlg:button {
                 curve --[[@as Curve2]],
                 frame, handlesLayer)
         end
+
+        symmetryPrefs.mode = oldSymmetry
 
         app.refresh()
     end

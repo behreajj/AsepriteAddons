@@ -235,11 +235,18 @@ dlg:button {
             layer.name = mesh.name
         end)
 
+        local docPrefs <const> = app.preferences.document(sprite)
+        local symmetryPrefs <const> = docPrefs.symmetry
+        local oldSymmetry <const> = symmetryPrefs.mode
+        symmetryPrefs.mode = 0
+
         ShapeUtilities.drawMesh2(
             mesh, useFill, fillColor,
             useStroke, strokeColor,
             Brush { size = strokeWeight },
             frame, layer)
+
+        symmetryPrefs.mode = oldSymmetry
 
         app.refresh()
     end

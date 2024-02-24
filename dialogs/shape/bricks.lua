@@ -216,6 +216,11 @@ dlg:button {
 
         local brush <const> = Brush { size = mortarThick }
 
+        local docPrefs <const> = app.preferences.document(sprite)
+        local symmetryPrefs <const> = docPrefs.symmetry
+        local oldSymmetry <const> = symmetryPrefs.mode
+        symmetryPrefs.mode = 0
+
         if vari100 > 0 then
             -- time returns an integer, clock returns a number.
             math.randomseed(os.time())
@@ -292,6 +297,8 @@ dlg:button {
                 true, mortarColor,
                 brush, frame, layer)
         end
+
+        symmetryPrefs.mode = oldSymmetry
 
         app.refresh()
     end

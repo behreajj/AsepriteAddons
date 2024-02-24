@@ -278,7 +278,7 @@ function ShapeUtilities.drawMesh2(
                     brush = brsh,
                     points = ptsGrouped[idx3],
                     frame = frame,
-                    layer = layer
+                    layer = layer,
                 }
             end
         end)
