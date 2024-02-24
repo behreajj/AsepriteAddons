@@ -72,15 +72,6 @@ dlg:button {
             return
         end
 
-        local colorMode <const> = activeSprite.colorMode
-        if colorMode ~= ColorMode.RGB then
-            app.alert {
-                title = "Error",
-                text = "Only RGB color mode is supported."
-            }
-            return
-        end
-
         local overLayer <const> = site.layer
         if not overLayer then
             app.alert {
@@ -124,6 +115,7 @@ dlg:button {
         -- Cache global functions used in loop.
         local min <const> = math.min
         local max <const> = math.max
+        local getPalette <const> = AseUtilities.getPalette
         local getPixels <const> = AseUtilities.getPixels
         local setPixels <const> = AseUtilities.setPixels
         local tilesToImage <const> = AseUtilities.tileMapToImage
@@ -155,9 +147,16 @@ dlg:button {
         local delUnderCels <const> = delUnderStr == "DELETE_CELS"
             and underIsValidTrg
 
-        -- Determine how a pixel is judged to be transparent.
-        local alphaIndex <const> = activeSprite.transparentColor
-        local colorSpace <const> = activeSprite.colorSpace
+        -- Unpack sprite spec.
+        local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
+        local alphaIndex <const> = spriteSpec.transparentColor
+        local colorSpace <const> = spriteSpec.colorSpace
+
+        -- For handling multiple color modes.
+        local isGray <const> = colorMode == ColorMode.GRAY
+        local isIdx <const> = colorMode == ColorMode.INDEXED
+        local palettes <const> = activeSprite.palettes
 
         local overIsTile <const> = overLayer.isTilemap
         local tileSetOver = nil
@@ -195,7 +194,7 @@ dlg:button {
         end)
 
         local lenFrames <const> = #frames
-        local rgbColorMode <const> = ColorMode.RGB
+
         app.transaction("Layer Mask", function()
             local idxFrame = 0
             while idxFrame < lenFrames do
@@ -278,52 +277,118 @@ dlg:button {
                         local heightTarget <const> = 1 + yBrTarget - yTlTarget
                         local lenPxTarget <const> = widthTarget * heightTarget
 
-                        -- TODO: Make branches to support indexed and gray
-                        -- color mode?
-                        local i = 0
-                        while i < lenPxTarget do
-                            local rTarget = 0
-                            local gTarget = 0
-                            local bTarget = 0
-                            local aTarget = 0
+                        if isIdx then
+                            local palette <const> = getPalette(frame, palettes)
 
-                            local xSprite <const> = i % widthTarget + xTlTarget
-                            local ySprite <const> = i // widthTarget + yTlTarget
+                            local i = 0
+                            while i < lenPxTarget do
+                                local jTarget = alphaIndex
 
-                            local xOver <const> = xSprite - xTlOver
-                            local yOver <const> = ySprite - yTlOver
-                            local iOver <const> = yOver * widthOver + xOver
-                            local iOver4 <const> = iOver * 4
-                            local aOver = pxOver[4 + iOver4]
-                            aOver = (aOver * overCompOpacity) // 255
-                            if aOver > 0 then
-                                local xUnder <const> = xSprite - xTlUnder
-                                local yUnder <const> = ySprite - yTlUnder
-                                local iUnder <const> = yUnder * widthUnder + xUnder
-                                local iUnder4 <const> = iUnder * 4
-                                local aUnder = pxUnder[4 + iUnder4]
-                                aUnder = (aUnder * underCompOpacity) // 255
-                                if aUnder > 0 then
-                                    -- RGB are assigned the under layer's color.
-                                    rTarget = pxUnder[1 + iUnder4]
-                                    gTarget = pxUnder[2 + iUnder4]
-                                    bTarget = pxUnder[3 + iUnder4]
-                                    aTarget = (aOver * aUnder) // 255
+                                local xSprite <const> = i % widthTarget + xTlTarget
+                                local ySprite <const> = i // widthTarget + yTlTarget
+
+                                local xOver <const> = xSprite - xTlOver
+                                local yOver <const> = ySprite - yTlOver
+                                local iOver <const> = yOver * widthOver + xOver
+                                local jOver <const> = pxOver[1 + iOver]
+                                if jOver ~= alphaIndex then
+                                    local cOver <const> = palette:getColor(jOver)
+                                    local aOver = (cOver.alpha * overCompOpacity) // 255
+                                    if aOver > 0 then
+                                        local xUnder <const> = xSprite - xTlUnder
+                                        local yUnder <const> = ySprite - yTlUnder
+                                        local iUnder <const> = yUnder * widthUnder + xUnder
+                                        local jUnder <const> = pxUnder[1 + iUnder]
+                                        if jUnder ~= alphaIndex then
+                                            local cUnder <const> = palette:getColor(jUnder)
+                                            local aUnder <const> = (cUnder.alpha * underCompOpacity) // 255
+                                            if aUnder > 0 then
+                                                jTarget = jUnder
+                                            end
+                                        end
+                                    end
                                 end
+
+                                i = i + 1
+                                pxTarget[i] = jTarget
                             end
+                        elseif isGray then
+                            local i = 0
+                            while i < lenPxTarget do
+                                local vTarget = 0
+                                local aTarget = 0
 
-                            local i4 <const> = i * 4
-                            pxTarget[1 + i4] = rTarget
-                            pxTarget[2 + i4] = gTarget
-                            pxTarget[3 + i4] = bTarget
-                            pxTarget[4 + i4] = aTarget
+                                local xSprite <const> = i % widthTarget + xTlTarget
+                                local ySprite <const> = i // widthTarget + yTlTarget
 
-                            i = i + 1
+                                local xOver <const> = xSprite - xTlOver
+                                local yOver <const> = ySprite - yTlOver
+                                local iOver2 <const> = (yOver * widthOver + xOver) * 2
+                                local aOver = pxOver[2 + iOver2]
+                                aOver = (aOver * overCompOpacity) // 255
+                                if aOver > 0 then
+                                    local xUnder <const> = xSprite - xTlUnder
+                                    local yUnder <const> = ySprite - yTlUnder
+                                    local iUnder2 <const> = (yUnder * widthUnder + xUnder) * 2
+                                    local aUnder = pxUnder[2 + iUnder2]
+                                    aUnder = (aUnder * underCompOpacity) // 255
+                                    if aUnder > 0 then
+                                        -- Value is assigned under layer color.
+                                        vTarget = pxUnder[1 + iUnder2]
+                                        aTarget = (aOver * aUnder) // 255
+                                    end
+                                end
+
+                                local i2 <const> = i + i
+                                pxTarget[1 + i2] = vTarget
+                                pxTarget[2 + i2] = aTarget
+
+                                i = i + 1
+                            end
+                        else
+                            local i = 0
+                            while i < lenPxTarget do
+                                local rTarget = 0
+                                local gTarget = 0
+                                local bTarget = 0
+                                local aTarget = 0
+
+                                local xSprite <const> = i % widthTarget + xTlTarget
+                                local ySprite <const> = i // widthTarget + yTlTarget
+
+                                local xOver <const> = xSprite - xTlOver
+                                local yOver <const> = ySprite - yTlOver
+                                local iOver4 <const> = (yOver * widthOver + xOver) * 4
+                                local aOver = pxOver[4 + iOver4]
+                                aOver = (aOver * overCompOpacity) // 255
+                                if aOver > 0 then
+                                    local xUnder <const> = xSprite - xTlUnder
+                                    local yUnder <const> = ySprite - yTlUnder
+                                    local iUnder4 <const> = (yUnder * widthUnder + xUnder) * 4
+                                    local aUnder = pxUnder[4 + iUnder4]
+                                    aUnder = (aUnder * underCompOpacity) // 255
+                                    if aUnder > 0 then
+                                        -- RGB are assigned under layer color.
+                                        rTarget = pxUnder[1 + iUnder4]
+                                        gTarget = pxUnder[2 + iUnder4]
+                                        bTarget = pxUnder[3 + iUnder4]
+                                        aTarget = (aOver * aUnder) // 255
+                                    end
+                                end
+
+                                local i4 <const> = i * 4
+                                pxTarget[1 + i4] = rTarget
+                                pxTarget[2 + i4] = gTarget
+                                pxTarget[3 + i4] = bTarget
+                                pxTarget[4 + i4] = aTarget
+
+                                i = i + 1
+                            end
                         end
 
                         local trgSpec <const> = createSpec(
                             widthTarget, heightTarget,
-                            rgbColorMode, colorSpace, alphaIndex)
+                            colorMode, colorSpace, alphaIndex)
                         local trgImage <const> = Image(trgSpec)
                         local trgPos <const> = Point(xTlTarget, yTlTarget)
                         setPixels(trgImage, pxTarget)
