@@ -618,6 +618,10 @@ dlg:button {
             if selMode ~= "REPLACE" then
                 local activeSel <const>, selIsValid <const> = AseUtilities.getSelection(activeSprite)
                 if selMode == "INTERSECT" then
+                    -- TODO: It can be wasteful to search all pixels as
+                    -- above for subtract and intersect modes, when only the
+                    -- pixels in the existing selection are relevant. See
+                    -- https://community.aseprite.org/t/selecting-pixels-on-a-large-canvas/21541
                     activeSel:intersect(trgSel)
                     activeSprite.selection = activeSel
                 elseif selMode == "SUBTRACT" then

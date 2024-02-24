@@ -9,10 +9,13 @@ local importFileExts <const> = {
     "aseprite",
     "bmp",
     "exr", -- https://openexr.com/
+    "gif",
     "ham", -- IFF Hold-And-Modify
     "hex",
     "iff",
     "ilbm", -- Interleaved Bitmap
+    "jpeg",
+    "jpg",
     "lbm",  -- IFF image
     "pbm",  -- Binary PNM
     "pgm",  -- Gray PNM
