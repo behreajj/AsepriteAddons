@@ -2689,7 +2689,7 @@ end
 ---Returns a tuple containing the cropped image, the top left x and top left y.
 ---The top left should be added to the position of the cel that contained the
 ---source image.
----@param map any
+---@param map Image tile map image
 ---@param alphaIndex integer alpha mask index
 ---@param wTile integer tile width
 ---@param hTile integer tile height

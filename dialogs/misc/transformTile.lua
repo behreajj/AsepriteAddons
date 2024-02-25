@@ -877,7 +877,7 @@ dlg:button {
         local tileMap <const> = Image(mapSpec)
         local blendModeSrc <const> = BlendMode.SRC
 
-        -- Make a group layer with each tile is on a separate child layer?
+        -- TODO: Make a group layer with each tile is on a separate child layer?
         local k = 0
         while k < lenTileSet do
             local tile <const> = tileSet:tile(k)

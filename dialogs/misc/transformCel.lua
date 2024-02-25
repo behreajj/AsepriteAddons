@@ -5,6 +5,7 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local unitOptions <const> = { "PERCENT", "PIXEL" }
 
 local defaults <const> = {
+    -- TODO: Commit mask prior to transforms?
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,
