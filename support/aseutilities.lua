@@ -2729,7 +2729,7 @@ function AseUtilities.trimMapAlpha(
         while x < wSrcn1 and goTop do
             x = x + 1
             local iTop <const> = bpp * (x + wSrc * topSearch)
-            local mapif <const> = strunpack(">I4", strsub(
+            local mapif <const> = strunpack("I4", strsub(
                 bytes, 1 + iTop, bpp + iTop))
             if pxTilei(mapif) ~= 0 then
                 minRight = x
@@ -2748,7 +2748,7 @@ function AseUtilities.trimMapAlpha(
         while y > topSearch and goLft do
             y = y - 1
             local iLft <const> = bpp * (lftSearch + wSrc * y)
-            local mapif <const> = strunpack(">I4", strsub(
+            local mapif <const> = strunpack("I4", strsub(
                 bytes, 1 + iLft, bpp + iLft))
             if pxTilei(mapif) ~= 0 then
                 minBottom = y
@@ -2766,7 +2766,7 @@ function AseUtilities.trimMapAlpha(
         while x > lftSearch and goBtm do
             x = x - 1
             local iBtm <const> = bpp * (x + wSrc * btm)
-            local mapif <const> = strunpack(">I4", strsub(
+            local mapif <const> = strunpack("I4", strsub(
                 bytes, 1 + iBtm, bpp + iBtm))
             if pxTilei(mapif) ~= 0 then
                 minRight = x
@@ -2784,7 +2784,7 @@ function AseUtilities.trimMapAlpha(
         while y > topSearch and goRgt do
             y = y - 1
             local iRgt <const> = bpp * (rgt + wSrc * y)
-            local mapif <const> = strunpack(">I4", strsub(
+            local mapif <const> = strunpack("I4", strsub(
                 bytes, 1 + iRgt, bpp + iRgt))
             if pxTilei(mapif) ~= 0 then
                 goRgt = false
