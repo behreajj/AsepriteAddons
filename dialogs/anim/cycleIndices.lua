@@ -15,7 +15,7 @@ local defaults <const> = {
     incrAmt = 1,
 }
 
-local dlg <const> = Dialog { title = "Cycle Colors" }
+local dlg <const> = Dialog { title = "Cycle Indices" }
 
 dlg:combobox {
     id = "target",
@@ -162,6 +162,11 @@ dlg:button {
         local incrAmt <const> = args.incrAmt
             or defaults.incrAmt --[[@as integer]]
 
+        -- This needs to be done first, otherwise range will be lost.
+        local frames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
+        local lenFrames <const> = #frames
+
         -- Create target layer.
         local trgLayer = nil
         app.transaction("Adjustment Layer", function()
@@ -182,10 +187,6 @@ dlg:button {
             and -incrAmt
             or incrAmt
         local idxIncr = incrSigned
-
-        local frames <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(activeSprite, target))
-        local lenFrames <const> = #frames
 
         ---@type integer[]
         local chosenIdcs = {}
