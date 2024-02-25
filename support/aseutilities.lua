@@ -1266,9 +1266,9 @@ function AseUtilities.createSpec(
     return spec
 end
 
----Creates a sprite from an ImageSpec. Gets the sprite's document preferences
----and turns off "Loop through tag frames" property. The file name argument is
----not validated by the method.
+---Creates a sprite from an ImageSpec. Gets the sprite's document preferences,
+---turns off "Loop through tag frames" property. Turns on timeline overlays.
+---The file name argument is not validated by the method.
 ---@param spec ImageSpec specification
 ---@param fileName? string file name
 ---@return Sprite
@@ -1285,6 +1285,12 @@ function AseUtilities.createSprite(spec, fileName)
     local docPrefs <const> = app.preferences.document(sprite)
     local onionSkinPrefs <const> = docPrefs.onionskin
     onionSkinPrefs.loop_tag = false
+
+    -- Default overlay_size is 5.
+    local thumbPrefs <const> = docPrefs.thumbnails
+    thumbPrefs.enabled = true
+    thumbPrefs.zoom = 1
+    thumbPrefs.overlay_enabled = true
 
     return sprite
 end

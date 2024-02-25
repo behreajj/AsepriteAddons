@@ -666,7 +666,8 @@ dlg:button {
             return
         end
 
-        local oldMode <const> = activeSprite.colorMode
+        local activeSpec <const> = activeSprite.spec
+        local oldMode <const> = activeSpec.colorMode
         if oldMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -710,8 +711,6 @@ dlg:button {
                 return
             end
         end
-
-        local activeSpec <const> = activeSprite.spec
 
         if isSelect then
             local sel <const>, _ <const> = AseUtilities.getSelection(activeSprite)

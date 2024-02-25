@@ -1,9 +1,18 @@
 dofile("../../support/gradientutilities.lua")
 
-local alphaComps <const> = { "BLEND", "MAX", "MIN", "OVER", "UNDER" }
-local labComps <const> = { "AB", "CHROMA", "COLOR", "LAB", "LCH", "LIGHTNESS", "MULTIPLY", "HUE" }
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
+local alphaComps <const> = { "BLEND", "MAX", "MIN", "OVER", "UNDER" }
+local labComps <const> = {
+    "AB",
+    "CHROMA",
+    "COLOR",
+    "LAB",
+    "LCH",
+    "LIGHTNESS",
+    "MULTIPLY",
+    "HUE",
+}
 
 local defaults <const> = {
     target = "ACTIVE",

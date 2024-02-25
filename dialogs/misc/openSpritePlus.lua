@@ -44,6 +44,12 @@ local function loadSprite(filePath)
             local docPrefs <const> = app.preferences.document(sprite)
             local onionSkinPrefs <const> = docPrefs.onionskin
             onionSkinPrefs.loop_tag = false
+
+            -- Default overlay_size is 5.
+            local thumbPrefs <const> = docPrefs.thumbnails
+            thumbPrefs.enabled = true
+            thumbPrefs.zoom = 1
+            thumbPrefs.overlay_enabled = true
         end
     end
 
