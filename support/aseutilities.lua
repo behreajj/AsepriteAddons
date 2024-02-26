@@ -2366,39 +2366,32 @@ function AseUtilities.selectCel(cel, spriteBounds)
     local yCel <const> = celBounds.y
 
     local celImage <const> = cel.image
-    local pxItr <const> = celImage:pixels()
+    local bpp <const> = celImage.bytesPerPixel
+    local bytes <const> = celImage.bytes
+
     local celSpec <const> = celImage.spec
+    local wImage <const> = celSpec.width
+    local hImage <const> = celSpec.height
     local colorMode <const> = celSpec.colorMode
+    local alphaIndex <const> = celSpec.transparentColor
 
     -- Beware naming, 'select' is a method built-in to Lua.
     local mask <const> = Selection(celBounds)
     local pxRect <const> = Rectangle(0, 0, 1, 1)
+    local lenImage <const> = wImage * hImage
 
-    -- TODO: Replace pixel iterator with bytes string?
-    if colorMode == ColorMode.RGB then
-        for pixel in pxItr do
-            if pixel() & 0xff000000 == 0 then
-                pxRect.x = pixel.x + xCel
-                pxRect.y = pixel.y + yCel
+    if colorMode == ColorMode.RGB
+        or colorMode == ColorMode.GRAY
+        or colorMode == ColorMode.INDEXED then
+        local strbyte <const> = string.byte
+        local i = 0
+        while i < lenImage do
+            if strbyte(bytes, i * bpp + bpp) == alphaIndex then
+                pxRect.x = (i % wImage) + xCel
+                pxRect.y = (i // wImage) + yCel
                 mask:subtract(pxRect)
             end
-        end
-    elseif colorMode == ColorMode.INDEXED then
-        local alphaIndex <const> = celSpec.transparentColor
-        for pixel in pxItr do
-            if pixel() == alphaIndex then
-                pxRect.x = pixel.x + xCel
-                pxRect.y = pixel.y + yCel
-                mask:subtract(pxRect)
-            end
-        end
-    elseif colorMode == ColorMode.GRAY then
-        for pixel in pxItr do
-            if pixel() & 0xff00 == 0 then
-                pxRect.x = pixel.x + xCel
-                pxRect.y = pixel.y + yCel
-                mask:subtract(pxRect)
-            end
+            i = i + 1
         end
     elseif colorMode == ColorMode.TILEMAP then
         local layer <const> = cel.layer
@@ -2411,12 +2404,20 @@ function AseUtilities.selectCel(cel, spriteBounds)
             pxRect.width = wTile
             pxRect.height = hTile
             local pxTilei <const> = app.pixelColor.tileI
-            for pixel in pxItr do
-                if pxTilei(pixel()) == 0 then
-                    pxRect.x = pixel.x * wTile + xCel
-                    pxRect.y = pixel.y * hTile + yCel
+            local strsub <const> = string.sub
+            local strunpack <const> = string.unpack
+            local i = 0
+            while i < lenImage do
+                local ibpp <const> = i * bpp
+                local str <const> = strsub(bytes, 1 + ibpp, bpp + ibpp)
+                local mapIf <const> = strunpack("I4", str)
+                local idx <const> = pxTilei(mapIf)
+                if idx == 0 then
+                    pxRect.x = wTile * (i % wImage) + xCel
+                    pxRect.y = hTile * (i // wImage) + yCel
                     mask:subtract(pxRect)
                 end
+                i = i + 1
             end
         end
     end
