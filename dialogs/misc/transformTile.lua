@@ -848,60 +848,54 @@ dlg:button {
         if not tileSet then return end
 
         local lenTileSet <const> = #tileSet
+        local baseIndex <const> = tileSet.baseIndex
         local tileSize <const> = tileSet.grid.tileSize
         local wTile <const> = tileSize.width
         local hTile <const> = tileSize.height
 
         local spriteSpec <const> = activeSprite.spec
-        local colorMode <const> = spriteSpec.colorMode
-        local colorSpace <const> = spriteSpec.colorSpace
-        local alphaIndex <const> = spriteSpec.transparentColor
         local wSprite <const> = spriteSpec.width
-        -- local hSprite <const> = spriteSpec.height
 
         local columns = wSprite // wTile
-        -- local rows = hSprite // hTile
         local rows = columns ~= 0 and math.ceil(lenTileSet / columns) or 0
         if columns * rows < lenTileSet then
             columns = math.max(1, math.ceil(math.sqrt(lenTileSet)))
             rows = math.max(1, math.ceil(lenTileSet / columns))
         end
 
-        -- The approach which relies on NewLayer{} to create a new
-        -- tile map layer then delete the spare tile set breaks on dev build
-        -- for Windows 11.
-        local wMap <const> = columns * wTile
-        local hMap <const> = rows * hTile
-        local mapSpec <const> = AseUtilities.createSpec(
-            wMap, hMap, colorMode, colorSpace, alphaIndex)
-        local tileMap <const> = Image(mapSpec)
-        local blendModeSrc <const> = BlendMode.SRC
-
-        -- TODO: Make a group layer with each tile is on a separate child layer?
-        local k = 0
-        while k < lenTileSet do
-            local tile <const> = tileSet:tile(k)
-            if tile then
-                local tileImage <const> = tile.image
-                local column <const> = k % columns
-                local row <const> = k // columns
-                local xTrg <const> = column * wTile
-                local yTrg <const> = row * hTile
-                tileMap:drawImage(tileImage,
-                    Point(xTrg, yTrg),
-                    255, blendModeSrc)
-            end
-            k = k + 1
-        end
+        local strfmt <const> = string.format
 
         app.transaction("Map Tile Set", function()
-            local tileSetLayer <const> = activeSprite:newLayer()
+            local tileSetLayer <const> = activeSprite:newGroup()
+            tileSetLayer.isCollapsed = true
             if #tileSet.name > 0 then
                 tileSetLayer.name = tileSet.name
             else
                 tileSetLayer.name = "Tile Set"
             end
-            activeSprite:newCel(tileSetLayer, activeFrame, tileMap)
+
+            local k = lenTileSet
+            while k > 0 do
+                k = k - 1
+                local tile <const> = tileSet:tile(k)
+                if tile then
+                    local tileImage <const> = tile.image
+                    if not tileImage:isEmpty() then
+                        local column <const> = k % columns
+                        local row <const> = k // columns
+                        local xTrg <const> = column * wTile
+                        local yTrg <const> = row * hTile
+                        local tileLayer <const> = activeSprite:newLayer()
+                        tileLayer.name = strfmt("Tile %d", k + baseIndex - 1)
+                        tileLayer.parent = tileSetLayer
+                        activeSprite:newCel(
+                            tileLayer, activeFrame,
+                            tileImage, Point(xTrg, yTrg))
+                    end
+                end
+            end
+
+            app.layer = tileSetLayer
         end)
 
         app.refresh()
