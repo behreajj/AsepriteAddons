@@ -10,7 +10,6 @@ local labComps <const> = {
     "LAB",
     "LCH",
     "LIGHTNESS",
-    "MULTIPLY",
     "HUE",
 }
 
@@ -225,8 +224,6 @@ dlg:button {
         -- print(string.format("labComp: %s", labComp))
         local useLight <const> = labComp == "LIGHTNESS"
         local useAb <const> = labComp == "AB"
-        -- local useAdd <const> = labComp == "ADD"
-        local useMul <const> = labComp == "MULTIPLY"
         local useChroma <const> = labComp == "CHROMA"
         local useHue <const> = labComp == "HUE"
         local useColor <const> = labComp == "COLOR"
@@ -483,22 +480,6 @@ dlg:button {
                             cl = aLab.l
                             ca = u * aLab.a + t * bLab.a
                             cb = u * aLab.b + t * bLab.b
-                            -- elseif useAdd then
-                            -- This could be L only, AB only, or LAB...
-                            -- cl = u * aLab.l + t * (aLab.l + bLab.l)
-                            -- ca = u * aLab.a + t * (aLab.a + bLab.a)
-                            -- cb = u * aLab.b + t * (aLab.b + bLab.b)
-                        elseif useMul then
-                            -- This could be an LCH blend mode instead, with
-                            -- better results when over layer's alpha is
-                            -- opaque. However, mixing the hue for translucent
-                            -- layers gives poor results.
-                            local lMul <const> = 100.0 * ((aLab.l * 0.01) * (bLab.l * 0.01))
-                            local aAvg <const> = aLab.a * 0.333 + bLab.a * 0.667
-                            local bAvg <const> = aLab.b * 0.333 + bLab.b * 0.667
-                            cl = u * aLab.l + t * lMul
-                            ca = u * aLab.a + t * aAvg
-                            cb = u * aLab.b + t * bAvg
                         else
                             cl = u * aLab.l + t * bLab.l
                             ca = u * aLab.a + t * bLab.a
