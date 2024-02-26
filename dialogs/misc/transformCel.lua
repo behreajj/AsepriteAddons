@@ -274,6 +274,11 @@ dlg:button {
             false, false, false, false)
         local lenCels <const> = #cels
 
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
+
         local docPrefs <const> = app.preferences.document(activeSprite)
         local snap <const> = docPrefs.grid.snap --[[@as boolean]]
         if snap then
@@ -344,6 +349,11 @@ dlg:button {
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, true)
         local lenCels <const> = #cels
+
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
 
         local trimAlpha <const> = AseUtilities.trimImageAlpha
         local wrap <const> = AseUtilities.wrapImage
@@ -441,6 +451,12 @@ dlg:button {
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, false)
         local lenCels <const> = #cels
+
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
+
         local xCtrSprite <const> = activeSprite.width * 0.5
         local floor <const> = math.floor
 
@@ -482,6 +498,12 @@ dlg:button {
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, false)
         local lenCels <const> = #cels
+
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
+
         local yCtrSprite <const> = activeSprite.height * 0.5
         local floor <const> = math.floor
 
@@ -523,6 +545,12 @@ dlg:button {
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, false)
         local lenCels <const> = #cels
+
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
+
         local xCtrSprite <const> = activeSprite.width * 0.5
         local hSprite <const> = activeSprite.height
         local floor <const> = math.floor
@@ -566,6 +594,12 @@ dlg:button {
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, false)
         local lenCels <const> = #cels
+
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
+
         local wSprite <const> = activeSprite.width
         local yCtrSprite <const> = activeSprite.height * 0.5
         local floor <const> = math.floor
@@ -613,6 +647,12 @@ dlg:button {
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, false)
         local lenCels <const> = #cels
+
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
+
         local xc <const> = activeSprite.width * 0.5
         local yc <const> = activeSprite.height * 0.5
         local floor <const> = math.floor
@@ -691,6 +731,11 @@ dlg:button {
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, false)
         local lenCels <const> = #cels
+
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
 
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians = degrees * 0.017453292519943
@@ -807,6 +852,11 @@ dlg:button {
             false, false, false, false)
         local lenCels <const> = #cels
 
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
+
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians = degrees * 0.017453292519943
         if query and (not useBilinear) then radians = query end
@@ -899,6 +949,11 @@ dlg:button {
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, false)
         local lenCels <const> = #cels
+
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
 
         if degrees == 90 or degrees == 270 then
             local rotFunc = AseUtilities.rotateImage90
@@ -1125,6 +1180,11 @@ dlg:button {
             false, false, false, true)
         local lenCels <const> = #cels
 
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
+
         local fliph <const> = FlipType.HORIZONTAL
         app.transaction("Flip H", function()
             local i = 0
@@ -1158,6 +1218,11 @@ dlg:button {
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, true)
         local lenCels <const> = #cels
+
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
 
         local flipv <const> = FlipType.VERTICAL
         app.transaction("Flip V", function()
@@ -1236,6 +1301,11 @@ dlg:button {
             activeSprite, activeLayer, activeFrame, target,
             false, false, false, false)
         local lenCels = #cels
+
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
 
         local oldMode <const> = activeSprite.colorMode
         local sample = sampleNear
