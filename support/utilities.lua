@@ -805,6 +805,7 @@ end
 ---@param hSrc integer original height
 ---@param wTrg integer resized width
 ---@param hTrg integer resized height
+---@param bpp integer bytes per pixel
 ---@return string
 ---@nodiscard
 function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg, bpp)

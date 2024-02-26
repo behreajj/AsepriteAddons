@@ -49,7 +49,7 @@ local function rgbMix(
     local go = gOrig
     local bo = bOrig
     if aOrig < 255 then
-        local ao01 <const> = aOrig * 0.003921568627451
+        local ao01 <const> = aOrig / 255.0
         ro = rOrig * ao01
         go = gOrig * ao01
         bo = bOrig * ao01
@@ -59,7 +59,7 @@ local function rgbMix(
     local gd = gDest
     local bd = bDest
     if aDest < 255 then
-        local ad01 <const> = aDest * 0.003921568627451
+        local ad01 <const> = aDest / 255.0
         rd = rDest * ad01
         gd = gDest * ad01
         bd = bDest * ad01
@@ -115,10 +115,6 @@ local function sampleBilinear(
     xSrc, ySrc, wSrc, hSrc,
     sourceBytes, bpp,
     defaultValue)
-
-    -- TODO: Make resize bilinear an AseUtilities method? Except in such a
-    -- version, return RGBA tuple instead of string. Or maybe use lab instead?
-
     local xf <const> = math.floor(xSrc)
     local yf <const> = math.floor(ySrc)
     local xc <const> = xf + 1
@@ -1276,13 +1272,13 @@ dlg:button {
                         -- Right-bottom edges were clipped
                         -- using wSrc / wTrg and hSrc / hTrg .
                         local tx <const> = wTrg > 1
-                            and (wSrc - 1.0) / (wTrg - 1.0)
-                            or 0.0
+                            and (wSrc - 1.0) / (wTrg - 1.0) or 0.0
                         local ty <const> = hTrg > 1
-                            and (hSrc - 1.0) / (hTrg - 1.0)
-                            or 0.0
-                        local ox <const> = wTrg > 1 and 0.0 or 0.5
-                        local oy <const> = hTrg > 1 and 0.0 or 0.5
+                            and (hSrc - 1.0) / (hTrg - 1.0) or 0.0
+                        local ox <const> = (wTrg <= 1 and useBilinear)
+                            and 0.5 or 0.0
+                        local oy <const> = (hTrg <= 1 and useBilinear)
+                            and 0.5 or 0.0
 
                         local trgSpec <const> = createSpec(
                             wTrg, hTrg, srcSpec.colorMode,
