@@ -476,25 +476,8 @@ dlg:button {
             end
         end)
 
-        if delSrcStr == "HIDE" then
-            srcLayer.isVisible = false
-        elseif (not srcLayer.isBackground) then
-            if delSrcStr == "DELETE_LAYER" then
-                activeSprite:deleteLayer(srcLayer)
-            elseif delSrcStr == "DELETE_CELS" then
-                app.transaction("Delete Cels", function()
-                    local idxDel = lenFrames + 1
-                    while idxDel > 1 do
-                        idxDel = idxDel - 1
-                        local frame <const> = frames[idxDel]
-                        local cel <const> = srcLayer:cel(frame)
-                        if cel then activeSprite:deleteCel(cel) end
-                    end
-                end)
-            end
-        end
-
         -- Active layer assignment triggers a timeline update.
+        AseUtilities.hideSource(activeSprite, srcLayer, frames, delSrcStr)
         app.layer = maskLayer
         app.refresh()
     end

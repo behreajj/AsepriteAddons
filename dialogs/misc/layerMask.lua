@@ -132,21 +132,6 @@ dlg:button {
         local delUnderStr <const> = args.delUnder
             or defaults.delUnder --[[@as string]]
 
-        local overIsValidTrg <const> = true
-        local underIsValidTrg <const> = (not underLayer.isBackground)
-
-        local hideOverLayer <const> = delOverStr == "HIDE"
-        local delOverLayer <const> = delOverStr == "DELETE_LAYER"
-            and overIsValidTrg
-        local delUnderLayer <const> = delUnderStr == "DELETE_LAYER"
-            and underIsValidTrg
-
-        local hideUnderLayer <const> = delOverStr == "HIDE"
-        local delOverCels <const> = delOverStr == "DELETE_CELS"
-            and overIsValidTrg
-        local delUnderCels <const> = delUnderStr == "DELETE_CELS"
-            and underIsValidTrg
-
         -- Unpack sprite spec.
         local spriteSpec <const> = activeSprite.spec
         local colorMode <const> = spriteSpec.colorMode
@@ -403,43 +388,8 @@ dlg:button {
             end
         end)
 
-        if hideOverLayer then
-            overLayer.isVisible = false
-        elseif delOverLayer then
-            -- Beware: it's possible to delete all layers
-            -- in a sprite with Sprite:deleteLayer.
-            activeSprite:deleteLayer(overLayer)
-        elseif delOverCels then
-            app.transaction("Delete Cels", function()
-                local idxDel0 = lenFrames + 1
-                while idxDel0 > 1 do
-                    idxDel0 = idxDel0 - 1
-                    local frame <const> = frames[idxDel0]
-                    -- API reports an error if a cel cannot be
-                    -- found, so the layer needs to check that
-                    -- it has a cel first.
-                    local overCel <const> = overLayer:cel(frame)
-                    if overCel then activeSprite:deleteCel(overCel) end
-                end
-            end)
-        end
-
-        if hideUnderLayer then
-            underLayer.isVisible = false
-        elseif delUnderLayer then
-            activeSprite:deleteLayer(underLayer)
-        elseif delUnderCels then
-            app.transaction("Delete Cels", function()
-                local idxDel1 = lenFrames + 1
-                while idxDel1 > 1 do
-                    idxDel1 = idxDel1 - 1
-                    local frame <const> = frames[idxDel1]
-                    local underCel <const> = underLayer:cel(frame)
-                    if underCel then activeSprite:deleteCel(underCel) end
-                end
-            end)
-        end
-
+        AseUtilities.hideSource(activeSprite, underLayer, frames, delUnderStr)
+        AseUtilities.hideSource(activeSprite, overLayer, frames, delOverStr)
         app.layer = compLayer
         app.refresh()
     end

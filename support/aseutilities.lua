@@ -2071,6 +2071,45 @@ function AseUtilities.hexToAseColor(hex)
     }
 end
 
+---Hides an aspect of a source layer after an adjusted copy has been made.
+---If the preset is "HIDE", then the layer's visibility is set to false.
+---If a layer is not a background, then it can be deleted with "DELETE_LAYER"
+---or its cels can be deleted with "DELETE_CELS", which creates a transaction.
+---Returns true if the layer was altered, false if no action was taken.
+---@param sprite Sprite sprite
+---@param layer Layer source layer
+---@param frames Frame[] frames array
+---@param preset string preset string
+---@return boolean
+function AseUtilities.hideSource(sprite, layer, frames, preset)
+    if preset == "HIDE" then
+        layer.isVisible = false
+        return true
+    elseif (not layer.isBackground) then
+        if preset == "DELETE_LAYER" then
+            -- It's possible to delete all layers in a sprite with deleteLayer
+            -- method. However, it's not worth protecting against, because this
+            -- should be called by dialogs that create a new layer.
+            sprite:deleteLayer(layer)
+            return true
+        elseif preset == "DELETE_CELS" then
+            app.transaction("Delete Cels", function()
+                local idxDel = #frames + 1
+                while idxDel > 1 do
+                    -- API reports an error if a cel cannot be found, so the
+                    -- layer needs to check that it has a cel first.
+                    idxDel = idxDel - 1
+                    local frame <const> = frames[idxDel]
+                    local cel <const> = layer:cel(frame)
+                    if cel then sprite:deleteCel(cel) end
+                end
+            end)
+            return true
+        end
+    end
+    return false
+end
+
 ---Adds padding around the edges of an image. Does not check if image is a tile
 ---map. If the padding is less than one, returns the source image.
 ---@param image Image source image

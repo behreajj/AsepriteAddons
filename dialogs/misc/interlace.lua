@@ -183,7 +183,7 @@ dlg:button {
         local args <const> = dlg.data
         local target <const> = args.target or defaults.target --[[@as string]]
         local dirType <const> = args.dirType or defaults.dirType --[[@as string]]
-        local delLyr <const> = args.delLyr or defaults.delLyr --[[@as string]]
+        local delSrcStr <const> = args.delLyr or defaults.delLyr --[[@as string]]
 
         local skip <const> = args.skip or defaults.skip --[[@as integer]]
         local xSkip <const> = args.xSkip or defaults.xSkip --[[@as integer]]
@@ -327,25 +327,8 @@ dlg:button {
             end
         end
 
-        if delLyr == "HIDE" then
-            srcLayer.isVisible = false
-        elseif (not srcLayer.isBackground) then
-            if delLyr == "DELETE_LAYER" then
-                activeSprite:deleteLayer(srcLayer)
-            elseif delLyr == "DELETE_CELS" then
-                app.transaction("Delete Cels", function()
-                    local idxDel = lenFrames + 1
-                    while idxDel > 1 do
-                        idxDel = idxDel - 1
-                        local frame <const> = frames[idxDel]
-                        local cel <const> = srcLayer:cel(frame)
-                        if cel then activeSprite:deleteCel(cel) end
-                    end
-                end)
-            end
-        end
-
         -- Active layer assignment triggers a timeline update.
+        AseUtilities.hideSource(activeSprite, srcLayer, frames, delSrcStr)
         app.layer = targetGroup
         app.refresh()
     end
