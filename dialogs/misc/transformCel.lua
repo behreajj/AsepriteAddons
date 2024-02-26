@@ -115,7 +115,6 @@ local function sampleBilinear(
     xSrc, ySrc, wSrc, hSrc,
     sourceBytes, bpp,
     defaultValue)
-
     -- TODO: Make resize bilinear an AseUtilities method? Except in such a
     -- version, return RGBA tuple instead of string. Or maybe use lab instead?
 
@@ -1195,9 +1194,6 @@ dlg:button {
         local abs <const> = math.abs
         local max <const> = math.max
         local floor <const> = math.floor
-        local strpack <const> = string.pack
-        local tconcat <const> = table.concat
-        local createSpec <const> = AseUtilities.createSpec
 
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -1242,11 +1238,11 @@ dlg:button {
         local lenCels = #cels
 
         local oldMode <const> = activeSprite.colorMode
-        local sample = sampleNear
+        local resizePixels = AseUtilities.resizeImageNearest
         local useBilinear <const> = easeMethod == "BILINEAR"
         if useBilinear then
             app.command.ChangePixelFormat { format = "rgb" }
-            sample = sampleBilinear
+            resizePixels = AseUtilities.resizeImageBilinear
         end
 
         app.transaction("Scale Cels", function()
@@ -1259,11 +1255,6 @@ dlg:button {
                     local srcSpec <const> = srcImg.spec
                     local wSrc <const> = srcSpec.width
                     local hSrc <const> = srcSpec.height
-                    local alphaIndex <const> = srcSpec.transparentColor
-
-                    local srcBytes <const> = srcImg.bytes
-                    local srcBpp <const> = srcImg.bytesPerPixel
-                    local pxAlpha <const> = strpack(">I" .. srcBpp, alphaIndex)
 
                     local wTrg = wPxl
                     local hTrg = hPxl
@@ -1273,34 +1264,7 @@ dlg:button {
                     end
 
                     if wSrc ~= wTrg or hSrc ~= hTrg then
-                        -- Right-bottom edges were clipped
-                        -- using wSrc / wTrg and hSrc / hTrg .
-                        local tx <const> = wTrg > 1
-                            and (wSrc - 1.0) / (wTrg - 1.0)
-                            or 0.0
-                        local ty <const> = hTrg > 1
-                            and (hSrc - 1.0) / (hTrg - 1.0)
-                            or 0.0
-                        local ox <const> = wTrg > 1 and 0.0 or 0.5
-                        local oy <const> = hTrg > 1 and 0.0 or 0.5
-
-                        local trgSpec <const> = createSpec(
-                            wTrg, hTrg, srcSpec.colorMode,
-                            srcSpec.colorSpace, alphaIndex)
-                        local trgImg <const> = Image(trgSpec)
-
-                        ---@type string[]
-                        local byteArr <const> = {}
-                        local lenFlat <const> = wTrg * hTrg
-                        local j = 0
-                        while j < lenFlat do
-                            local xTrg <const> = (j % wTrg) * tx + ox
-                            local yTrg <const> = (j // wTrg) * ty + oy
-                            j = j + 1
-                            byteArr[j] = sample(xTrg, yTrg,
-                                wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
-                        end
-                        trgImg.bytes = tconcat(byteArr)
+                        local trgImg = resizePixels(srcImg, wTrg, hTrg)
 
                         local celPos <const> = cel.position
                         local xCenter <const> = celPos.x + wSrc * 0.5
