@@ -469,14 +469,6 @@ dlg:button {
         local prcwDest = args.prcwDest --[[@as number]]
         local prchDest = args.prchDest --[[@as number]]
 
-        if frIdxDestVerif < frIdxOrigVerif then
-            frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
-            -- pxwOrig, pxwDest = pxwDest, pxwOrig
-            -- pxhOrig, pxhDest = pxhDest, pxhOrig
-            -- prcwOrig, prcwDest = prcwDest, prcwOrig
-            -- prchOrig, prchDest = prchDest, prchOrig
-        end
-
         pxwOrig = math.max(1.0, math.abs(pxwOrig))
         pxhOrig = math.max(1.0, math.abs(pxhOrig))
         pxwDest = math.max(1.0, math.abs(pxwDest))

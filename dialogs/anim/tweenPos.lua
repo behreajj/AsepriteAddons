@@ -257,6 +257,9 @@ dlg:button {
             }
             return
         end
+        if frIdxDestVerif < frIdxOrigVerif then
+            frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
+        end
 
         local spriteSpec <const> = activeSprite.spec
         local colorMode <const> = spriteSpec.colorMode
@@ -392,12 +395,6 @@ dlg:button {
         local yPosOrig = args.yPosOrig --[[@as number]]
         local xPosDest = args.xPosDest --[[@as number]]
         local yPosDest = args.yPosDest --[[@as number]]
-
-        if frIdxDestVerif < frIdxOrigVerif then
-            frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
-            -- xPosOrig, xPosDest = xPosDest, xPosOrig
-            -- yPosOrig, yPosDest = yPosDest, yPosOrig
-        end
 
         local wImgHalf <const> = srcImg.width * 0.5
         local hImgHalf <const> = srcImg.height * 0.5
