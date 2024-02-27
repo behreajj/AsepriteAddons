@@ -13,7 +13,7 @@ local isFramesType <const> = range.type == RangeType.FRAMES
 local sameSprite <const> = activeSprite == range.sprite
 local isValid <const> = isFramesType and sameSprite
 if isValid then
-    local rangeFrames <const> = range.frames --[=[@as Frame[]]=]
+    local rangeFrames <const> = range.frames
     local lenRangeFrames <const> = #rangeFrames
     local i = 0
     while i < lenRangeFrames do

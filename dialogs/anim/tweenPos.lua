@@ -1,21 +1,15 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/canvasutilities.lua")
 
 local facTypes <const> = { "FRAME", "TIME" }
 
--- TODO: Replace with a bezier graph where the end points cannot be moved?
-local easeTypes <const> = {
-    "CIRC_IN",
-    "CIRC_OUT",
-    "EASE",
-    "EASE_IN",
-    "EASE_IN_OUT",
-    "EASE_OUT",
-    "LINEAR"
-}
+local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
+local curveColor <const> = app.theme.color.text --[[@as Color]]
+local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 
 local defaults <const> = {
+    -- TODO: Option to hide source layer?
     facType = "FRAME",
-    easeType = "EASE",
     trimCel = true,
 
     frameOrig = 1,
@@ -88,15 +82,6 @@ dlg:combobox {
     label = "Factor:",
     option = defaults.facType,
     options = facTypes
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "easeType",
-    label = "Easing:",
-    option = defaults.easeType,
-    options = easeTypes
 }
 
 dlg:newrow { always = false }
@@ -191,7 +176,17 @@ dlg:button {
     end
 }
 
-dlg:newrow { always = false }
+dlg:separator {
+    id = "easeSeparator",
+}
+
+CanvasUtilities.graphBezier(
+    dlg, "easeCurve", "Easing:",
+    128 // screenScale,
+    128 // screenScale,
+    true, false, false, true, false,
+    5, 0.25, 0.1, 0.25, 1.0,
+    curveColor, gridColor)
 
 dlg:button {
     id = "confirm",
@@ -235,7 +230,6 @@ dlg:button {
 
         local args <const> = dlg.data
         local facType <const> = args.facType --[[@as string]]
-        local easeType <const> = args.easeType --[[@as string]]
         local trimCel <const> = args.trimCel --[[@as boolean]]
         local frIdxOrig <const> = args.frameOrig --[[@as integer]]
         local xPosOrig <const> = args.xPosOrig --[[@as number]]
@@ -243,6 +237,15 @@ dlg:button {
         local frIdxDest <const> = args.frameDest --[[@as integer]]
         local xPosDest <const> = args.xPosDest --[[@as number]]
         local yPosDest <const> = args.yPosDest --[[@as number]]
+
+        local ap0x <const> = args.easeCurve_ap0x --[[@as number]]
+        local ap0y <const> = args.easeCurve_ap0y --[[@as number]]
+        local cp0x <const> = args.easeCurve_cp0x --[[@as number]]
+        local cp0y <const> = args.easeCurve_cp0y --[[@as number]]
+        local cp1x <const> = args.easeCurve_cp1x --[[@as number]]
+        local cp1y <const> = args.easeCurve_cp1y --[[@as number]]
+        local ap1x <const> = args.easeCurve_ap1x --[[@as number]]
+        local ap1y <const> = args.easeCurve_ap1y --[[@as number]]
 
         local frObjs <const> = activeSprite.frames
         local lenFrames <const> = #frObjs
@@ -371,27 +374,24 @@ dlg:button {
             end
         end
 
-        -- Set animation curve. Default to linear.
-        local curve = Curve2.animLinear()
-        if easeType == "EASE" then
-            curve = Curve2.animEase()
-        elseif easeType == "EASE_IN" then
-            curve = Curve2.animEaseIn()
-        elseif easeType == "EASE_IN_OUT" then
-            curve = Curve2.animEaseInOut()
-        elseif easeType == "EASE_OUT" then
-            curve = Curve2.animEaseOut()
-        elseif easeType == "CIRC_IN" then
-            curve = Curve2.animCircIn()
-        elseif easeType == "CIRC_OUT" then
-            curve = Curve2.animCircOut()
-        end
+        local kn0 <const> = Knot2.new(
+            Vec2.new(ap0x, ap0y),
+            Vec2.new(cp0x, cp0y),
+            Vec2.new(0.0, ap0y))
+        local kn1 <const> = Knot2.new(
+            Vec2.new(ap1x, ap1y),
+            Vec2.new(cp1x, cp1y),
+            Vec2.new(1.0, ap1y))
+        local curve = Curve2.new(false, { kn0, kn1 }, "easing")
 
         local trgLayer = nil
         app.transaction("New Layer", function()
             trgLayer = activeSprite:newLayer()
-            trgLayer.name = string.format("%s Tween %d %s",
-                srcLayer.name, srcFrame.frameNumber + frameUiOffset, easeType)
+            trgLayer.name = string.format("Tween %s At %d From %d To %d",
+                srcLayer.name,
+                srcFrame.frameNumber + frameUiOffset,
+                frIdxOrigVerif + frameUiOffset,
+                frIdxDestVerif + frameUiOffset)
             trgLayer.parent = srcLayer.parent
         end)
 

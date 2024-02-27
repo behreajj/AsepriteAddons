@@ -125,7 +125,7 @@ end
 ---@param width integer canvas width
 ---@param height integer canvas height
 ---@param isVisible boolean? is visible
----@param visCtrl boolean? visible numbers
+---@param visNumbers boolean? visible numbers
 ---@param visButtons boolean? visible buttons
 ---@param visFuncs boolean? visible functions
 ---@param allowApMove boolean? allow anchor points
@@ -141,7 +141,7 @@ end
 ---@return Dialog
 function CanvasUtilities.graphBezier(
     dialog, id, label, width, height,
-    isVisible, visCtrl, visButtons, visFuncs,
+    isVisible, visNumbers, visButtons, visFuncs,
     allowApMove, gridCount,
     cp0xDef, cp0yDef, cp1xDef, cp1yDef,
     curveColor, gridColor, cp0Color, cp1Color)
@@ -166,8 +166,8 @@ function CanvasUtilities.graphBezier(
     if visFuncs then visFuncsVrf = true end
     local visButtonsVrf = false
     if visButtons then visButtonsVrf = true end
-    local visCtrlVrf = false
-    if visCtrl then visCtrlVrf = true end
+    local visNumsVrf = false
+    if visNumbers then visNumsVrf = true end
     local isVisVrf = false
     if isVisible then isVisVrf = true end
     local hVrf <const> = height or 128
@@ -427,7 +427,7 @@ function CanvasUtilities.graphBezier(
             text = string.format("%.5f", valuePoint),
             decimals = 5,
             focus = false,
-            visible = isVisVrf and visCtrlVrf,
+            visible = isVisVrf and visNumsVrf,
             onchange = function()
                 dialog:modify { id = easeFuncsId, option = "CUSTOM" }
                 dialog:repaint()

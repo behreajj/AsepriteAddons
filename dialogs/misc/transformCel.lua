@@ -5,7 +5,6 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local unitOptions <const> = { "PERCENT", "PIXEL" }
 
 local defaults <const> = {
-    -- TODO: Commit mask prior to transforms?
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,
@@ -115,6 +114,9 @@ local function sampleBilinear(
     xSrc, ySrc, wSrc, hSrc,
     sourceBytes, bpp,
     defaultValue)
+    -- To see a bilinear scale with LAB based sample, see commit
+    -- 04b2b43801220bf5065175e5429164caee35fa02 .
+
     local xf <const> = math.floor(xSrc)
     local yf <const> = math.floor(ySrc)
     local xc <const> = xf + 1
