@@ -1,7 +1,5 @@
-dofile("../../support/aseutilities.lua")
-dofile("../../support/canvasutilities.lua")
-
 local facTypes <const> = { "FRAME", "TIME" }
+local unitOptions <const> = { "PERCENT", "PIXEL" }
 
 local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
 local curveColor <const> = app.theme.color.text --[[@as Color]]
@@ -12,29 +10,39 @@ local defaults <const> = {
     trimCel = true,
 
     frameOrig = 1,
-    xPosOrig = 0.0,
-    yPosOrig = 0.0,
+    pxwOrig = 64,
+    pxhOrig = 64,
+    prcwOrig = 100,
+    prchOrig = 100,
 
     frameDest = 1,
-    xPosDest = 0.0,
-    yPosDest = 0.0,
+    pxwDest = 64,
+    pxhDest = 64,
+    prcwDest = 100,
+    prchDest = 100,
+
+    units = "PIXEL"
 }
 
 ---@return integer frIdx
----@return number xCenter
----@return number  yCenter
-local function getCelPosAtFrame()
+---@return integer pxWidth
+---@return integer pxHeight
+local function getCelBoundsAtFrame()
     local site <const> = app.site
     local activeSprite <const> = site.sprite
-    if not activeSprite then return 1, 0.0, 0.0 end
+    local appPrefs <const> = app.preferences
+    if not activeSprite then
+        local newFilePrefs <const> = appPrefs.new_file
+        return 1, newFilePrefs.width, newFilePrefs.height
+    end
 
-    local docPrefs <const> = app.preferences.document(activeSprite)
+    local docPrefs <const> = appPrefs.document(activeSprite)
     local tlPrefs <const> = docPrefs.timeline
     local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
 
     local frIdx = frameUiOffset + 1
-    local xCenter = activeSprite.width * 0.5
-    local yCenter = activeSprite.height * 0.5
+    local pxWidth = activeSprite.width
+    local pxHeight = activeSprite.height
 
     local activeFrame <const> = site.frame
     if activeFrame then
@@ -48,9 +56,7 @@ local function getCelPosAtFrame()
         if not activeLayer.isReference then
             local activeCel <const> = activeLayer:cel(activeFrame)
             if activeCel then
-                local celPos <const> = activeCel.position
-                local xtl <const> = celPos.x
-                local ytl <const> = celPos.y
+                local celImage <const> = activeCel.image
                 local wTile = 1
                 local hTile = 1
 
@@ -64,17 +70,16 @@ local function getCelPosAtFrame()
                     end
                 end
 
-                local celImage <const> = activeCel.image
-                xCenter = xtl + (celImage.width * wTile) * 0.5
-                yCenter = ytl + (celImage.height * hTile) * 0.5
+                pxWidth = celImage.width * wTile
+                pxHeight = celImage.height * hTile
             end
         end
     end
 
-    return frIdx, xCenter, yCenter
+    return frIdx, pxWidth, pxHeight
 end
 
-local dlg <const> = Dialog { title = "Tween Cel Position" }
+local dlg <const> = Dialog { title = "Transform Scale" }
 
 dlg:combobox {
     id = "facType",
@@ -108,16 +113,33 @@ dlg:number {
 dlg:newrow { always = false }
 
 dlg:number {
-    id = "xPosOrig",
-    label = "Position:",
-    text = string.format("%.1f", defaults.xPosOrig),
-    decimals = 1
+    id = "pxwOrig",
+    label = "Pixels:",
+    text = string.format("%d", app.preferences.new_file.width),
+    decimals = 0,
+    visible = defaults.units == "PIXEL"
 }
 
 dlg:number {
-    id = "yPosOrig",
-    text = string.format("%.1f", defaults.yPosOrig),
-    decimals = 1
+    id = "pxhOrig",
+    text = string.format("%d", app.preferences.new_file.height),
+    decimals = 0,
+    visible = defaults.units == "PIXEL"
+}
+
+dlg:number {
+    id = "prcwOrig",
+    label = "Percent:",
+    text = string.format("%.2f", defaults.prcwOrig),
+    decimals = 6,
+    visible = defaults.units == "PERCENT"
+}
+
+dlg:number {
+    id = "prchOrig",
+    text = string.format("%.2f", defaults.prchOrig),
+    decimals = 6,
+    visible = defaults.units == "PERCENT"
 }
 
 dlg:newrow { always = false }
@@ -127,10 +149,12 @@ dlg:button {
     label = "Get:",
     text = "&FROM",
     onclick = function()
-        local frIdx <const>, xc <const>, yc <const> = getCelPosAtFrame()
+        local frIdx <const>, pxw <const>, pxh <const> = getCelBoundsAtFrame()
         dlg:modify { id = "frameOrig", text = string.format("%d", frIdx) }
-        dlg:modify { id = "xPosOrig", text = string.format("%.1f", xc) }
-        dlg:modify { id = "yPosOrig", text = string.format("%.1f", yc) }
+        dlg:modify { id = "pxwOrig", text = string.format("%d", pxw) }
+        dlg:modify { id = "pxhOrig", text = string.format("%d", pxh) }
+        dlg:modify { id = "prcwOrig", text = string.format("%.2f", 100) }
+        dlg:modify { id = "prchOrig", text = string.format("%.2f", 100) }
     end
 }
 
@@ -149,16 +173,33 @@ dlg:number {
 dlg:newrow { always = false }
 
 dlg:number {
-    id = "xPosDest",
-    label = "Position:",
-    text = string.format("%.1f", defaults.xPosDest),
-    decimals = 1
+    id = "pxwDest",
+    label = "Pixels:",
+    text = string.format("%d", app.preferences.new_file.width),
+    decimals = 0,
+    visible = defaults.units == "PIXEL"
 }
 
 dlg:number {
-    id = "yPosDest",
-    text = string.format("%.1f", defaults.yPosDest),
-    decimals = 1
+    id = "pxhDest",
+    text = string.format("%d", app.preferences.new_file.height),
+    decimals = 0,
+    visible = defaults.units == "PIXEL"
+}
+
+dlg:number {
+    id = "prcwDest",
+    label = "Percent:",
+    text = string.format("%.2f", defaults.prcwDest),
+    decimals = 6,
+    visible = defaults.units == "PERCENT"
+}
+
+dlg:number {
+    id = "prchDest",
+    text = string.format("%.2f", defaults.prchDest),
+    decimals = 6,
+    visible = defaults.units == "PERCENT"
 }
 
 dlg:newrow { always = false }
@@ -168,10 +209,35 @@ dlg:button {
     label = "Get:",
     text = "&TO",
     onclick = function()
-        local frIdx <const>, xc <const>, yc <const> = getCelPosAtFrame()
+        local frIdx <const>, pxw <const>, pxh <const> = getCelBoundsAtFrame()
         dlg:modify { id = "frameDest", text = string.format("%d", frIdx) }
-        dlg:modify { id = "xPosDest", text = string.format("%.1f", xc) }
-        dlg:modify { id = "yPosDest", text = string.format("%.1f", yc) }
+        dlg:modify { id = "pxwDest", text = string.format("%d", pxw) }
+        dlg:modify { id = "pxhDest", text = string.format("%d", pxh) }
+        dlg:modify { id = "prcwDest", text = string.format("%.2f", 100) }
+        dlg:modify { id = "prchDest", text = string.format("%.2f", 100) }
+    end
+}
+
+dlg:combobox {
+    id = "units",
+    label = "Units:",
+    option = defaults.units,
+    options = unitOptions,
+    onchange = function()
+        local args <const> = dlg.data
+        local unitType <const> = args.units --[[@as string]]
+        local ispx <const> = unitType == "PIXEL"
+        local ispc <const> = unitType == "PERCENT"
+
+        dlg:modify { id = "pxwOrig", visible = ispx }
+        dlg:modify { id = "pxhOrig", visible = ispx }
+        dlg:modify { id = "prcwOrig", visible = ispc }
+        dlg:modify { id = "prchOrig", visible = ispc }
+
+        dlg:modify { id = "pxwDest", visible = ispx }
+        dlg:modify { id = "pxhDest", visible = ispx }
+        dlg:modify { id = "prcwDest", visible = ispc }
+        dlg:modify { id = "prchDest", visible = ispc }
     end
 }
 
@@ -228,6 +294,7 @@ dlg:button {
         local args <const> = dlg.data
         local facType <const> = args.facType --[[@as string]]
         local trimCel <const> = args.trimCel --[[@as boolean]]
+        local unitType <const> = args.units --[[@as string]]
         local frIdxOrig <const> = args.frameOrig --[[@as integer]]
         local frIdxDest <const> = args.frameDest --[[@as integer]]
 
@@ -257,6 +324,9 @@ dlg:button {
             }
             return
         end
+        if frIdxDestVerif < frIdxOrigVerif then
+            frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
+        end
 
         local spriteSpec <const> = activeSprite.spec
         local colorMode <const> = spriteSpec.colorMode
@@ -264,14 +334,23 @@ dlg:button {
         local alphaIndex <const> = spriteSpec.transparentColor
 
         local srcImg = nil
+        local tlxSrc = 0
+        local tlySrc = 0
         if srcLayer.isGroup then
-            local flatImg <const>, _ = AseUtilities.flattenGroup(
+            local flatImg <const>,
+            flatRect <const> = AseUtilities.flattenGroup(
                 srcLayer, srcFrame, colorMode, colorSpace, alphaIndex,
                 true, false, true, true)
             srcImg = flatImg
+            tlxSrc = flatRect.x
+            tlySrc = flatRect.y
         else
             local srcCel <const> = srcLayer:cel(srcFrame)
             if srcCel then
+                local celPos <const> = srcCel.position
+                tlxSrc = celPos.x
+                tlySrc = celPos.y
+
                 local celImg <const> = srcCel.image
                 if srcLayer.isTilemap then
                     local tileSet <const> = srcLayer.tileset
@@ -314,9 +393,12 @@ dlg:button {
         end
 
         if trimCel then
-            local trimmed <const>, _, _ = AseUtilities.trimImageAlpha(
-                srcImg, 0, alphaIndex)
+            local trimmed <const>,
+            tlxTrm <const>,
+            tlyTrm <const> = AseUtilities.trimImageAlpha(srcImg, 0, alphaIndex)
             srcImg = trimmed
+            tlxSrc = tlxSrc + tlxTrm
+            tlySrc = tlySrc + tlyTrm
         end
 
         ---@type number[]
@@ -377,6 +459,47 @@ dlg:button {
             Vec2.new(1.0, ap1y))
         local curve = Curve2.new(false, { kn0, kn1 }, "easing")
 
+        local pxwOrig = args.pxwOrig --[[@as number]]
+        local pxhOrig = args.pxhOrig --[[@as number]]
+        local prcwOrig = args.prcwOrig --[[@as number]]
+        local prchOrig = args.prchOrig --[[@as number]]
+
+        local pxwDest = args.pxwDest --[[@as number]]
+        local pxhDest = args.pxhDest --[[@as number]]
+        local prcwDest = args.prcwDest --[[@as number]]
+        local prchDest = args.prchDest --[[@as number]]
+
+        if frIdxDestVerif < frIdxOrigVerif then
+            frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
+            -- pxwOrig, pxwDest = pxwDest, pxwOrig
+            -- pxhOrig, pxhDest = pxhDest, pxhOrig
+            -- prcwOrig, prcwDest = prcwDest, prcwOrig
+            -- prchOrig, prchDest = prchDest, prchOrig
+        end
+
+        pxwOrig = math.max(1.0, math.abs(pxwOrig))
+        pxhOrig = math.max(1.0, math.abs(pxhOrig))
+        pxwDest = math.max(1.0, math.abs(pxwDest))
+        pxhDest = math.max(1.0, math.abs(pxhDest))
+
+        local usePercent <const> = unitType == "PERCENT"
+        local pxwSrc <const> = srcImg.width
+        local pxhSrc <const> = srcImg.height
+        local xCenter <const> = tlxSrc + pxwSrc * 0.5
+        local yCenter <const> = tlySrc + pxhSrc * 0.5
+
+        if usePercent then
+            prcwOrig = 0.01 * math.abs(prcwOrig)
+            prchOrig = 0.01 * math.abs(prchOrig)
+            pxwOrig = math.max(1.0, pxwSrc * prcwOrig)
+            pxhOrig = math.max(1.0, pxhSrc * prchOrig)
+
+            prcwDest = 0.01 * math.abs(prcwDest)
+            prchDest = 0.01 * math.abs(prchDest)
+            pxwDest = math.max(1.0, pxwSrc * prcwDest)
+            pxhDest = math.max(1.0, pxhSrc * prchDest)
+        end
+
         local trgLayer = nil
         app.transaction("New Layer", function()
             trgLayer = activeSprite:newLayer()
@@ -388,24 +511,12 @@ dlg:button {
             trgLayer.parent = srcLayer.parent
         end)
 
-        local xPosOrig = args.xPosOrig --[[@as number]]
-        local yPosOrig = args.yPosOrig --[[@as number]]
-        local xPosDest = args.xPosDest --[[@as number]]
-        local yPosDest = args.yPosDest --[[@as number]]
-
-        if frIdxDestVerif < frIdxOrigVerif then
-            frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
-            -- xPosOrig, xPosDest = xPosDest, xPosOrig
-            -- yPosOrig, yPosDest = yPosDest, yPosOrig
-        end
-
-        local wImgHalf <const> = srcImg.width * 0.5
-        local hImgHalf <const> = srcImg.height * 0.5
-
-        local round <const> = Utilities.round
+        local max <const> = math.max
+        local floor <const> = math.floor
         local eval <const> = Curve2.eval
+        local resizeImage <const> = AseUtilities.resizeImageNearest
 
-        app.transaction("Tween Cel Position", function()
+        app.transaction("Tween Cel Scale", function()
             local j = 0
             while j < countFrames do
                 local frObj <const> = frObjs[frIdxOrigVerif + j]
@@ -413,18 +524,21 @@ dlg:button {
                 local t <const> = eval(curve, fac).y
                 local u <const> = 1.0 - t
 
-                local xCenter <const> = u * xPosOrig + t * xPosDest
-                local yCenter <const> = u * yPosOrig + t * yPosDest
-                local xtl <const> = xCenter - wImgHalf
-                local ytl <const> = yCenter - hImgHalf
-                local xtlInt <const> = round(xtl)
-                local ytlInt <const> = round(ytl)
-                local trgPoint <const> = Point(xtlInt, ytlInt)
+                local wTrg <const> = max(1, floor(0.5
+                    + u * pxwOrig + t * pxwDest))
+                local hTrg <const> = max(1, floor(0.5
+                    + u * pxhOrig + t * pxhDest))
+                local trgImg <const> = resizeImage(srcImg, wTrg, hTrg)
 
-                activeSprite:newCel(trgLayer, frObj, srcImg, trgPoint)
+                local trgPoint <const> = Point(
+                    floor(xCenter - wTrg * 0.5),
+                    floor(yCenter - hTrg * 0.5))
+
+                activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
                 j = j + 1
             end
         end)
+
 
         app.refresh()
     end

@@ -88,6 +88,7 @@ dlg:button {
         local activeSprite <const> = app.site.sprite
         if activeSprite then
             profActive = activeSprite.colorSpace
+            -- TODO: Allow palettes to be shared between indexed cm sprites?
             if activeSprite.colorMode ~= ColorMode.INDEXED then
                 cmActive = activeSprite.colorMode
             end
