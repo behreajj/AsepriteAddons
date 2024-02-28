@@ -44,6 +44,7 @@ dlg:combobox {
         dlg:modify { id = "easeCurve_easeFuncs", visible = isMix }
 
         dlg:modify { id = "rotIncr", visible = isAdd }
+        dlg:modify { id = "autoCalcIncr", visible = isAdd }
     end
 }
 
@@ -133,6 +134,48 @@ dlg:number {
     visible = defaults.mode == "ADD"
 }
 
+dlg:button {
+    id = "autoCalcIncr",
+    text = "&AUTO",
+    visible = defaults.mode == "ADD",
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+
+        local frObjs <const> = activeSprite.frames
+        local lenFrames <const> = #frObjs
+        if lenFrames <= 1 then return end
+
+        local args <const> = dlg.data
+        local frIdxOrig <const> = args.frameOrig
+            or defaults.frameOrig --[[@as integer]]
+        local frIdxDest <const> = args.frameDest
+            or defaults.frameDest --[[@as integer]]
+
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
+        local frIdxOrigVerif = math.min(math.max(
+            frIdxOrig - frameUiOffset, 1), lenFrames)
+        local frIdxDestVerif = math.min(math.max(
+            frIdxDest - frameUiOffset, 1), lenFrames)
+
+        if frIdxOrigVerif == frIdxDestVerif then
+            frIdxOrigVerif = 1
+            frIdxDestVerif = lenFrames
+        end
+        if frIdxDestVerif < frIdxOrigVerif then
+            frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
+        end
+
+        local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
+        local autoIncr <const> = 360.0 / countFrames
+        dlg:modify { id = "rotIncr", text = string.format("%.1f", autoIncr) }
+    end
+}
+
 dlg:newrow { always = false }
 
 CanvasUtilities.graphBezier(
@@ -195,7 +238,6 @@ dlg:button {
         end
 
         local args <const> = dlg.data
-        local mode <const> = args.mode --[[@as string]]
         local frIdxOrig <const> = args.frameOrig
             or defaults.frameOrig --[[@as integer]]
         local frIdxDest <const> = args.frameDest
@@ -311,9 +353,9 @@ dlg:button {
         local xCenter <const> = tlxSrc + pxwSrc * 0.5
         local yCenter <const> = tlySrc + pxhSrc * 0.5
 
+        local mode <const> = args.mode
+            or defaults.mode --[[@as string]]
         if mode == "ADD" then
-            print("In add mode.")
-
             local rotIncrDeg <const> = args.rotIncr
                 or defaults.rotIncr --[[@as string]]
             local currDeg = 0
@@ -332,15 +374,11 @@ dlg:button {
                     floor(xCenter - trgImg.width * 0.5),
                     floor(yCenter - trgImg.height * 0.5))
 
-                print(trgPoint)
-
                 activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
                 j = j + 1
                 currDeg = currDeg + rotIncrDeg
             end
         else
-            print("In mix mode.")
-
             ---@type number[]
             local factors <const> = {}
             local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
@@ -432,14 +470,11 @@ dlg:button {
 
                 local degTrg <const> = angleMixDeg(
                     rotOrigDeg, rotDestDeg, t, 360.0)
-                print(string.format("degTrg: %.3f", degTrg))
                 local trgImg <const> = rotateImage(srcImg, degTrg)
 
                 local trgPoint <const> = Point(
                     floor(xCenter - trgImg.width * 0.5),
                     floor(yCenter - trgImg.height * 0.5))
-
-                print(trgPoint)
 
                 activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
                 j = j + 1
