@@ -325,23 +325,6 @@ dlg:button {
             return
         end
 
-        local activeLayer <const> = site.layer
-        if not activeLayer then
-            app.alert {
-                title = "Error",
-                text = "There is no active layer."
-            }
-            return
-        end
-
-        if activeLayer.isReference then
-            app.alert {
-                title = "Error",
-                text = "Reference layers are not supported."
-            }
-            return
-        end
-
         local activeFrame <const> = site.frame
         if not activeFrame then
             app.alert {
@@ -351,6 +334,17 @@ dlg:button {
             return
         end
 
+        -- Unpack sprite spec.
+        local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
+        local colorSpace <const> = spriteSpec.colorSpace
+        local alphaIndex <const> = spriteSpec.transparentColor
+
+        -- Get the current selection.
+        local activeSel <const>, selIsValid <const> = AseUtilities.getSelection(activeSprite)
+        local selBounds <const> = activeSel.bounds
+
+        -- Unpack arguments.
         local args <const> = dlg.data
         local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
@@ -359,6 +353,105 @@ dlg:button {
         local uiMode <const> = args.uiMode
             or defaults.uiMode --[[@as string]]
         local refColor <const> = args.refColor --[[@as Color]]
+
+        local selIsInter <const> = selMode == "INTERSECT"
+        local selIsSub <const> = selMode == "SUBTRACT"
+        local selIsReplace <const> = selMode == "REPLACE"
+
+        local image = nil
+        local xtl = 0
+        local ytl = 0
+
+        if sampleMode == "COMPOSITE" then
+            -- Minimize pointless searches outside the current selection.
+            -- See https://community.aseprite.org/t/selecting-pixels-on-a-large-canvas/21541 .
+            if selIsInter or selIsSub then
+                local selSpec <const> = AseUtilities.createSpec(
+                    selBounds.width, selBounds.height,
+                    colorMode, colorSpace, alphaIndex)
+                image = Image(selSpec)
+                image:drawSprite(activeSprite, activeFrame,
+                    Point(-selBounds.x, -selBounds.y))
+                xtl = selBounds.x
+                ytl = selBounds.y
+            else
+                image = Image(activeSprite.spec)
+                image:drawSprite(activeSprite, activeFrame)
+            end
+        else
+            local activeLayer <const> = site.layer
+            if not activeLayer then
+                app.alert {
+                    title = "Error",
+                    text = "There is no active layer."
+                }
+                return
+            end
+
+            if activeLayer.isReference then
+                app.alert {
+                    title = "Error",
+                    text = "Reference layers are not supported."
+                }
+                return
+            end
+
+            if activeLayer.isGroup then
+                local flat <const>, rect <const> = AseUtilities.flattenGroup(
+                    activeLayer, activeFrame, colorMode, colorSpace, alphaIndex,
+                    true, true, true, true)
+
+                image = flat
+                xtl = rect.x
+                ytl = rect.y
+            else
+                local activeCel <const> = activeLayer:cel(activeFrame)
+                if not activeCel then
+                    app.alert {
+                        title = "Error",
+                        text = "There is no active cel."
+                    }
+                    return
+                end
+
+                image = activeCel.image
+                if activeLayer.isTilemap then
+                    image = AseUtilities.tileMapToImage(
+                        image, activeLayer.tileset, colorMode)
+                end
+                local celPos <const> = activeCel.position
+                xtl = celPos.x
+                ytl = celPos.y
+            end
+
+            if selIsInter or selIsSub then
+                local xtlMax <const> = math.max(xtl, selBounds.x)
+                local ytlMax <const> = math.max(ytl, selBounds.y)
+                local xbrMin <const> = math.min(
+                    xtl + image.width - 1,
+                    selBounds.x + selBounds.width - 1)
+                local ybrMin <const> = math.min(
+                    ytl + image.height - 1,
+                    selBounds.y + selBounds.height - 1)
+                local wInter <const> = 1 + xbrMin - xtlMax
+                local hInter <const> = 1 + ybrMin - ytlMax
+
+                -- How to handle cases where width or height is <= 0 and no
+                -- pixels would be selected except for case where mask is
+                -- equal to alpha index? Could return early?
+                if wInter > 0 or hInter > 0 then
+                    local interSpec <const> = AseUtilities.createSpec(
+                        wInter, hInter,
+                        colorMode, colorSpace, alphaIndex)
+                    local interImg <const> = Image(interSpec)
+                    interImg:drawImage(image, Point(xtl - xtlMax, ytl - ytlMax))
+
+                    image = interImg
+                    xtl = xtlMax
+                    ytl = ytlMax
+                end
+            end
+        end
 
         local useLight = false
         local usea = false
@@ -387,7 +480,6 @@ dlg:button {
         local aseColorToClr <const> = AseUtilities.aseColorToClr
         local aseColorToHex <const> = AseUtilities.aseColorToHex
 
-        local colorMode <const> = activeSprite.colorMode
         local exactSearch = false
 
         local refClr <const> = aseColorToClr(refColor)
@@ -474,42 +566,6 @@ dlg:button {
                 }
                 return
             end
-        end
-
-        local image = nil
-        local xtl = 0
-        local ytl = 0
-        if sampleMode == "COMPOSITE" then
-            image = Image(activeSprite.spec)
-            image:drawSprite(activeSprite, activeFrame)
-        elseif activeLayer.isGroup then
-            local spriteSpec <const> = activeSprite.spec
-            local flat <const>, rect <const> = AseUtilities.flattenGroup(
-                activeLayer, activeFrame, colorMode,
-                spriteSpec.colorSpace, spriteSpec.transparentColor,
-                true, true, true, true)
-
-            image = flat
-            xtl = rect.x
-            ytl = rect.y
-        else
-            local activeCel <const> = activeLayer:cel(activeFrame)
-            if not activeCel then
-                app.alert {
-                    title = "Error",
-                    text = "There is no active cel."
-                }
-                return
-            end
-
-            image = activeCel.image
-            if activeLayer.isTilemap then
-                image = AseUtilities.tileMapToImage(
-                    image, activeLayer.tileset, colorMode)
-            end
-            local celPos <const> = activeCel.position
-            xtl = celPos.x
-            ytl = celPos.y
         end
 
         local pxItr <const> = image:pixels()
@@ -615,16 +671,14 @@ dlg:button {
         end
 
         app.transaction("Select Colors", function()
-            if selMode ~= "REPLACE" then
-                local activeSel <const>, selIsValid <const> = AseUtilities.getSelection(activeSprite)
-                if selMode == "INTERSECT" then
-                    -- TODO: It can be wasteful to search all pixels as
-                    -- above for subtract and intersect modes, when only the
-                    -- pixels in the existing selection are relevant. See
-                    -- https://community.aseprite.org/t/selecting-pixels-on-a-large-canvas/21541
+            if not selIsReplace then
+                if selIsInter then
                     activeSel:intersect(trgSel)
                     activeSprite.selection = activeSel
-                elseif selMode == "SUBTRACT" then
+                elseif selIsSub then
+                    -- TODO: Any way to mitigate this kind of problem when
+                    -- alpha index is the search color?
+                    -- https://community.aseprite.org/t/the-tool-select-color-range-does-not-subtract-mask-color/21456
                     activeSel:subtract(trgSel)
                     activeSprite.selection = activeSel
                 else
