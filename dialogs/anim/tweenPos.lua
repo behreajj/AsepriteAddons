@@ -8,7 +8,7 @@ local curveColor <const> = app.theme.color.text --[[@as Color]]
 local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 
 local defaults <const> = {
-    facType = "FRAME",
+    facType = "TIME",
     trimCel = true,
 
     frameOrig = 1,

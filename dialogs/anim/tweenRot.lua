@@ -12,7 +12,7 @@ local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 
 local defaults <const> = {
     mode = "MIX",
-    facType = "FRAME",
+    facType = "TIME",
     angleType = "NEAR",
     trimCel = true,
     frameOrig = 1,
@@ -63,7 +63,7 @@ dlg:newrow { always = false }
 dlg:combobox {
     id = "angleType",
     label = "Easing:",
-    option = defaults.hueMix,
+    option = defaults.angleType,
     options = angleTypes,
     visible = defaults.mode == "MIX"
 }
@@ -353,6 +353,8 @@ dlg:button {
         local mode <const> = args.mode
             or defaults.mode --[[@as string]]
         if mode == "ADD" then
+            -- TODO: Is there a way to remap the rotation from frames to time?
+
             local rotIncrDeg <const> = args.rotIncr
                 or defaults.rotIncr --[[@as string]]
             local currDeg = 0
