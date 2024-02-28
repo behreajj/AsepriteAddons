@@ -50,6 +50,8 @@ dlg:combobox {
     end
 }
 
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "huePreset",
     label = "Easing:",
@@ -59,6 +61,8 @@ dlg:combobox {
         or defaults.labComp == "COLOR"
         or defaults.labComp == "LCH"
 }
+
+dlg:newrow { always = false }
 
 dlg:combobox {
     id = "alphaComp",

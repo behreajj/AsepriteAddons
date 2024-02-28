@@ -74,7 +74,7 @@ local function getCelPosAtFrame()
     return frIdx, xCenter, yCenter
 end
 
-local dlg <const> = Dialog { title = "Tween Cel Position" }
+local dlg <const> = Dialog { title = "Tween Position" }
 
 dlg:combobox {
     id = "facType",
@@ -208,6 +208,16 @@ dlg:button {
             return
         end
 
+        local frObjs <const> = activeSprite.frames
+        local lenFrames <const> = #frObjs
+        if lenFrames <= 1 then
+            app.alert {
+                title = "Error",
+                text = "The sprite has too few frames."
+            }
+            return
+        end
+
         local srcLayer <const> = site.layer
         if not srcLayer then
             app.alert {
@@ -226,20 +236,10 @@ dlg:button {
         end
 
         local args <const> = dlg.data
-        local facType <const> = args.facType --[[@as string]]
-        local trimCel <const> = args.trimCel --[[@as boolean]]
-        local frIdxOrig <const> = args.frameOrig --[[@as integer]]
-        local frIdxDest <const> = args.frameDest --[[@as integer]]
-
-        local frObjs <const> = activeSprite.frames
-        local lenFrames <const> = #frObjs
-        if lenFrames <= 1 then
-            app.alert {
-                title = "Error",
-                text = "The sprite has too few frames."
-            }
-            return
-        end
+        local frIdxOrig <const> = args.frameOrig
+            or defaults.frameOrig --[[@as integer]]
+        local frIdxDest <const> = args.frameDest
+            or defaults.frameDest --[[@as integer]]
 
         local docPrefs <const> = app.preferences.document(activeSprite)
         local tlPrefs <const> = docPrefs.timeline
@@ -316,16 +316,30 @@ dlg:button {
             srcImg = cleared
         end
 
+        local trimCel <const> = args.trimCel --[[@as boolean]]
         if trimCel then
             local trimmed <const>, _, _ = AseUtilities.trimImageAlpha(
                 srcImg, 0, alphaIndex)
             srcImg = trimmed
         end
 
+        local trgLayer = nil
+        app.transaction("New Layer", function()
+            trgLayer = activeSprite:newLayer()
+            trgLayer.name = string.format("Move %s At %d From %d To %d",
+                srcLayer.name,
+                srcFrame.frameNumber + frameUiOffset,
+                frIdxOrigVerif + frameUiOffset,
+                frIdxDestVerif + frameUiOffset)
+            trgLayer.parent = srcLayer.parent
+        end)
+
         ---@type number[]
         local factors <const> = {}
-        local countFrames <const> = 1 + math.abs(frIdxDestVerif - frIdxOrigVerif)
+        local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
+        local facType <const> = args.facType
+            or defaults.facType --[[@as string]]
         if facType == "TIME" then
             ---@type number[]
             local timeStamps <const> = {}
@@ -380,25 +394,20 @@ dlg:button {
             Vec2.new(1.0, ap1y))
         local curve = Curve2.new(false, { kn0, kn1 }, "easing")
 
-        local trgLayer = nil
-        app.transaction("New Layer", function()
-            trgLayer = activeSprite:newLayer()
-            trgLayer.name = string.format("Tween %s At %d From %d To %d",
-                srcLayer.name,
-                srcFrame.frameNumber + frameUiOffset,
-                frIdxOrigVerif + frameUiOffset,
-                frIdxDestVerif + frameUiOffset)
-            trgLayer.parent = srcLayer.parent
-        end)
-
-        local xPosOrig = args.xPosOrig --[[@as number]]
-        local yPosOrig = args.yPosOrig --[[@as number]]
-        local xPosDest = args.xPosDest --[[@as number]]
-        local yPosDest = args.yPosDest --[[@as number]]
+        -- Should these be swapped as well when dest frame is gt orig?
+        local xPosOrig = args.xPosOrig
+            or defaults.xPosOrig --[[@as number]]
+        local yPosOrig = args.yPosOrig
+            or defaults.yPosOrig --[[@as number]]
+        local xPosDest = args.xPosDest
+            or defaults.xPosDest --[[@as number]]
+        local yPosDest = args.yPosDest
+            or defaults.yPosOrig --[[@as number]]
 
         local wImgHalf <const> = srcImg.width * 0.5
         local hImgHalf <const> = srcImg.height * 0.5
 
+        -- Cache methods used in loop.
         local round <const> = Utilities.round
         local eval <const> = Curve2.eval
 

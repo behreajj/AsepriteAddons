@@ -5,6 +5,8 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local unitOptions <const> = { "PERCENT", "PIXEL" }
 
 local defaults <const> = {
+    -- TODO: Remove bilinear sample method,
+    -- a lot of extra code for little payoff.
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,

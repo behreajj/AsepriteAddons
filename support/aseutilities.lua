@@ -2262,7 +2262,7 @@ end
 
 ---Returns a copy of the source image that has been resized to the width and
 ---height. Uses nearest neighbor sampling. If the width and height are equal to
----the original, returns the source image by reference.
+---the original, then returns the source image by reference.
 ---@param source Image source image
 ---@param wTrg integer resized width
 ---@param hTrg integer resized height
@@ -2350,6 +2350,51 @@ function AseUtilities.rotateImage270(source)
     local target <const> = Image(trgSpec)
     target.bytes = Utilities.rotatePixels270(
         source.bytes, w, h, source.bytesPerPixel)
+    return target
+end
+
+---Returns a copy of the source image that has been rotated counter clockwise
+---by the angle in degrees. Uses nearest neighbor sampling. If the angle is 0
+---degrees, then returns the source image by reference. If the angle is 90, 180
+---or 270 degrees, then defers to orthogonal rotations.
+---@param source Image source image
+---@param angle number angle in degrees
+---@return Image
+---@nodiscard
+function AseUtilities.rotateImageNearest(source, angle)
+    local deg <const> = Utilities.round(angle) % 360
+
+    if deg == 0 then
+        return source
+    elseif deg == 90 then
+        return AseUtilities.rotateImage90(source)
+    elseif deg == 180 then
+        return AseUtilities.rotateImage180(source)
+    elseif deg == 270 then
+        return AseUtilities.rotateImage270(source)
+    end
+
+    local srcSpec <const> = source.spec
+    local rad <const> = angle * 0.017453292519943
+    local cosa <const> = math.cos(rad)
+    local sina <const> = math.sin(rad)
+
+    local trgBytes <const>,
+    wTrg <const>,
+    hTrg <const> = Utilities.rotatePixelsNearest(
+        source.bytes, srcSpec.width, srcSpec.height,
+        cosa, sina, source.bytesPerPixel,
+        srcSpec.transparentColor)
+
+    local trgSpec <const> = ImageSpec {
+        width = wTrg,
+        height = hTrg,
+        colorMode = srcSpec.colorMode,
+        transparentColor = srcSpec.transparentColor
+    }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target <const> = Image(trgSpec)
+    target.bytes = trgBytes
     return target
 end
 

@@ -983,7 +983,7 @@ dlg:button {
             local srcBytes <const> = srcImg.bytes
             local srcBpp <const> = srcImg.bytesPerPixel
             local pxAlpha <const> = string.pack(
-                ">I" .. srcBpp, alphaIndex)
+                "I" .. srcBpp, alphaIndex)
 
             local wSrc <const> = srcImg.width
             local hSrc <const> = srcImg.height

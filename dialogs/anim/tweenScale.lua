@@ -79,7 +79,7 @@ local function getCelBoundsAtFrame()
     return frIdx, pxWidth, pxHeight
 end
 
-local dlg <const> = Dialog { title = "Transform Scale" }
+local dlg <const> = Dialog { title = "Tween Scale" }
 
 dlg:combobox {
     id = "facType",
@@ -291,13 +291,6 @@ dlg:button {
             return
         end
 
-        local args <const> = dlg.data
-        local facType <const> = args.facType --[[@as string]]
-        local trimCel <const> = args.trimCel --[[@as boolean]]
-        local unitType <const> = args.units --[[@as string]]
-        local frIdxOrig <const> = args.frameOrig --[[@as integer]]
-        local frIdxDest <const> = args.frameDest --[[@as integer]]
-
         local frObjs <const> = activeSprite.frames
         local lenFrames <const> = #frObjs
         if lenFrames <= 1 then
@@ -307,6 +300,12 @@ dlg:button {
             }
             return
         end
+
+        local args <const> = dlg.data
+        local frIdxOrig <const> = args.frameOrig
+            or defaults.frameOrig --[[@as integer]]
+        local frIdxDest <const> = args.frameDest
+            or defaults.frameDest --[[@as integer]]
 
         local docPrefs <const> = app.preferences.document(activeSprite)
         local tlPrefs <const> = docPrefs.timeline
@@ -392,6 +391,7 @@ dlg:button {
             srcImg = cleared
         end
 
+        local trimCel <const> = args.trimCel --[[@as boolean]]
         if trimCel then
             local trimmed <const>,
             tlxTrm <const>,
@@ -401,10 +401,23 @@ dlg:button {
             tlySrc = tlySrc + tlyTrm
         end
 
+        local trgLayer = nil
+        app.transaction("New Layer", function()
+            trgLayer = activeSprite:newLayer()
+            trgLayer.name = string.format("Scale %s At %d From %d To %d",
+                srcLayer.name,
+                srcFrame.frameNumber + frameUiOffset,
+                frIdxOrigVerif + frameUiOffset,
+                frIdxDestVerif + frameUiOffset)
+            trgLayer.parent = srcLayer.parent
+        end)
+
         ---@type number[]
         local factors <const> = {}
-        local countFrames <const> = 1 + math.abs(frIdxDestVerif - frIdxOrigVerif)
+        local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
+        local facType <const> = args.facType
+            or defaults.facType --[[@as string]]
         if facType == "TIME" then
             ---@type number[]
             local timeStamps <const> = {}
@@ -459,28 +472,38 @@ dlg:button {
             Vec2.new(1.0, ap1y))
         local curve = Curve2.new(false, { kn0, kn1 }, "easing")
 
-        local pxwOrig = args.pxwOrig --[[@as number]]
-        local pxhOrig = args.pxhOrig --[[@as number]]
-        local prcwOrig = args.prcwOrig --[[@as number]]
-        local prchOrig = args.prchOrig --[[@as number]]
+        -- Should these be swapped as well when dest frame is gt orig?
+        local pxwOrig = args.pxwOrig
+            or defaults.pxwOrig --[[@as number]]
+        local pxhOrig = args.pxhOrig
+            or defaults.pxhOrig --[[@as number]]
+        local prcwOrig = args.prcwOrig
+            or defaults.prcwOrig --[[@as number]]
+        local prchOrig = args.prchOrig
+            or defaults.prchOrig --[[@as number]]
 
-        local pxwDest = args.pxwDest --[[@as number]]
-        local pxhDest = args.pxhDest --[[@as number]]
-        local prcwDest = args.prcwDest --[[@as number]]
-        local prchDest = args.prchDest --[[@as number]]
+        local pxwDest = args.pxwDest
+            or defaults.pxwDest --[[@as number]]
+        local pxhDest = args.pxhDest
+            or defaults.pxhDest --[[@as number]]
+        local prcwDest = args.prcwDest
+            or defaults.prcwDest --[[@as number]]
+        local prchDest = args.prchDest
+            or defaults.prchDest --[[@as number]]
 
         pxwOrig = math.max(1.0, math.abs(pxwOrig))
         pxhOrig = math.max(1.0, math.abs(pxhOrig))
         pxwDest = math.max(1.0, math.abs(pxwDest))
         pxhDest = math.max(1.0, math.abs(pxhDest))
 
-        local usePercent <const> = unitType == "PERCENT"
         local pxwSrc <const> = srcImg.width
         local pxhSrc <const> = srcImg.height
         local xCenter <const> = tlxSrc + pxwSrc * 0.5
         local yCenter <const> = tlySrc + pxhSrc * 0.5
 
-        if usePercent then
+        local unitType <const> = args.units
+            or defaults.units --[[@as string]]
+        if unitType == "PERCENT" then
             prcwOrig = 0.01 * math.abs(prcwOrig)
             prchOrig = 0.01 * math.abs(prchOrig)
             pxwOrig = math.max(1.0, pxwSrc * prcwOrig)
@@ -492,17 +515,7 @@ dlg:button {
             pxhDest = math.max(1.0, pxhSrc * prchDest)
         end
 
-        local trgLayer = nil
-        app.transaction("New Layer", function()
-            trgLayer = activeSprite:newLayer()
-            trgLayer.name = string.format("Tween %s At %d From %d To %d",
-                srcLayer.name,
-                srcFrame.frameNumber + frameUiOffset,
-                frIdxOrigVerif + frameUiOffset,
-                frIdxDestVerif + frameUiOffset)
-            trgLayer.parent = srcLayer.parent
-        end)
-
+        -- Cache methods used in loop.
         local max <const> = math.max
         local floor <const> = math.floor
         local eval <const> = Curve2.eval
@@ -530,7 +543,6 @@ dlg:button {
                 j = j + 1
             end
         end)
-
 
         app.refresh()
     end

@@ -811,8 +811,8 @@ end
 function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg, bpp)
     ---@type string[]
     local resized <const> = {}
-    local strsub <const> = string.sub
     local floor <const> = math.floor
+    local strsub <const> = string.sub
     local tx <const> = wSrc / wTrg
     local ty <const> = hSrc / hTrg
     local lenTrg <const> = wTrg * hTrg
@@ -824,8 +824,8 @@ function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg, bpp)
         local j <const> = ny * wSrc + nx
         local orig <const> = 1 + j * bpp
         local dest <const> = orig + bppn1
-        resized[1 + i] = strsub(source, orig, dest)
         i = i + 1
+        resized[i] = strsub(source, orig, dest)
     end
 
     return table.concat(resized, "")
@@ -875,7 +875,7 @@ function Utilities.rotatePixels90(source, w, h, bpp)
         i = i + 1
     end
 
-    return table.concat(rotated, "")
+    return table.concat(rotated)
 end
 
 ---Rotates an image's bytes 180 degrees.
@@ -901,7 +901,7 @@ function Utilities.rotatePixels180(source, w, h, bpp)
         i = i + 1
     end
 
-    return table.concat(rotated, "")
+    return table.concat(rotated)
 end
 
 ---Rotates an image's bytes 270 degrees counter clockwise.
@@ -930,7 +930,66 @@ function Utilities.rotatePixels270(source, w, h, bpp)
         i = i + 1
     end
 
-    return table.concat(rotated, "")
+    return table.concat(rotated)
+end
+
+---Rotates an image's bytes by an angle counter clockwise. The angle is given
+---as a pre calculated cosine and sine. Returns the byte string, the width and
+---height of the rotated image.
+---@param source string source bytes
+---@param wSrc integer source image width
+---@param hSrc integer source image height
+---@param cosa number sine of angle
+---@param sina number cosine of angle
+---@param bpp integer bits per pixel
+---@param alphaIndex integer alpha index
+---@return string rotated
+---@return integer wTrg
+---@return integer hTrg
+function Utilities.rotatePixelsNearest(
+    source, wSrc, hSrc, cosa, sina, bpp, alphaIndex)
+    ---@type string[]
+    local rotated <const> = {}
+
+    local absCosa <const> = math.abs(cosa)
+    local absSina <const> = math.abs(sina)
+    local wTrgf <const> = hSrc * absSina + wSrc * absCosa
+    local hTrgf <const> = hSrc * absCosa + wSrc * absSina
+    local wTrgi <const> = math.ceil(wTrgf)
+    local hTrgi <const> = math.ceil(hTrgf)
+    local lenTrg <const> = wTrgi * hTrgi
+    local bppn1 <const> = bpp - 1
+    local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+
+    local xSrcCenter <const> = wSrc * 0.5
+    local ySrcCenter <const> = hSrc * 0.5
+    local xTrgCenter <const> = wTrgf * 0.5
+    local yTrgCenter <const> = hTrgf * 0.5
+
+    local strsub <const> = string.sub
+    local round <const> = Utilities.round
+
+    local i = 0
+    while i < lenTrg do
+        local xSgnf <const> = (i % wTrgi) - xTrgCenter
+        local ySgnf <const> = (i // wTrgi) - yTrgCenter
+        local xRotf <const> = cosa * xSgnf - sina * ySgnf
+        local yRotf <const> = cosa * ySgnf + sina * xSgnf
+        local xSrci <const> = round(xSrcCenter + xRotf)
+        local ySrci <const> = round(ySrcCenter + yRotf)
+        if ySrci >= 0 and ySrci < hSrc
+            and xSrci >= 0 and xSrci < wSrc then
+            local j <const> = ySrci * wSrc + xSrci
+            local orig <const> = 1 + j * bpp
+            local dest <const> = orig + bppn1
+            rotated[1 + i] = strsub(source, orig, dest)
+        else
+            rotated[1 + i] = alphaStr
+        end
+        i = i + 1
+    end
+
+    return table.concat(rotated), wTrgi, hTrgi
 end
 
 ---Rounds a number to an integer based on its relationship to 0.5. Returns zero
