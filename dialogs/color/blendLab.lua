@@ -7,10 +7,11 @@ local labComps <const> = {
     "AB",
     "CHROMA",
     "COLOR",
+    "HUE",
+    "HUE_SHIFT",
     "LAB",
     "LCH",
     "LIGHTNESS",
-    "HUE",
 }
 
 local defaults <const> = {
@@ -230,8 +231,9 @@ dlg:button {
         local useAb <const> = labComp == "AB"
         local useChroma <const> = labComp == "CHROMA"
         local useHue <const> = labComp == "HUE"
+        local useHueShift <const> = labComp == "HUE_SHIFT"
         local useColor <const> = labComp == "COLOR"
-        local useLch <const> = useChroma or useHue or useColor
+        local useLch <const> = useChroma or useHue or useHueShift or useColor
             or labComp == "LCH"
 
         local mixer <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
@@ -464,6 +466,11 @@ dlg:button {
                             cl = aLch.l
                             cc = aLch.c
                             ch = mixer(aLch.h, bLch.h, t)
+                        elseif useHueShift then
+                            local sum <const> = aLch.h + bLch.h
+                            cl = aLch.l
+                            cc = aLch.c
+                            ch = mixer(aLch.h, sum, t)
                         else
                             cl = u * aLab.l + t * bLab.l
                             cc = u * aLch.c + t * bLch.c

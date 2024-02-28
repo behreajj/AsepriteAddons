@@ -167,7 +167,8 @@ dlg:number {
     id = "frameDest",
     label = "Frame:",
     text = string.format("%d", defaults.frameDest),
-    decimals = 0
+    decimals = 0,
+    focus = true
 }
 
 dlg:newrow { always = false }
