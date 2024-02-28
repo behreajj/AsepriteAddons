@@ -251,11 +251,8 @@ dlg:button {
             frIdxDest - frameUiOffset, 1), lenFrames)
 
         if frIdxOrigVerif == frIdxDestVerif then
-            app.alert {
-                title = "Error",
-                text = "Origin and destination frames are the same."
-            }
-            return
+            frIdxOrigVerif = 1
+            frIdxDestVerif = lenFrames
         end
         if frIdxDestVerif < frIdxOrigVerif then
             frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
