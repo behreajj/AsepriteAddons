@@ -1,16 +1,12 @@
 dofile("../../support/aseutilities.lua")
 
-local easeMethods <const> = { "BILINEAR", "NEAREST" }
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local unitOptions <const> = { "PERCENT", "PIXEL" }
 
 local defaults <const> = {
-    -- TODO: Remove bilinear sample method,
-    -- a lot of extra code for little payoff.
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,
-    easeMethod = "NEAREST",
     degrees = 90,
     pxWidth = 64,
     pxHeight = 64,
@@ -18,67 +14,6 @@ local defaults <const> = {
     prcHeight = 100,
     units = "PERCENT"
 }
-
----@param rOrig number
----@param gOrig number
----@param bOrig number
----@param aOrig number
----@param rDest number
----@param gDest number
----@param bDest number
----@param aDest number
----@param t number
----@return number
----@return number
----@return number
----@return number
-local function rgbMix(
-    rOrig, gOrig, bOrig, aOrig,
-    rDest, gDest, bDest, aDest, t)
-    if t <= 0.0 then return rOrig, gOrig, bOrig, aOrig end
-    if t >= 1.0 then return rDest, gDest, bDest, aDest end
-
-    local u <const> = 1.0 - t
-    local aMix <const> = u * aOrig + t * aDest
-    if aMix <= 0.0 then return 0.0, 0.0, 0.0, 0.0 end
-
-    -- Origin and destination colors have been checked for zero alpha before
-    -- this function is called.
-    --
-    -- Premul and unpremul have to be done for horizontal and vertical mixes.
-    local ro = rOrig
-    local go = gOrig
-    local bo = bOrig
-    if aOrig < 255 then
-        local ao01 <const> = aOrig / 255.0
-        ro = rOrig * ao01
-        go = gOrig * ao01
-        bo = bOrig * ao01
-    end
-
-    local rd = rDest
-    local gd = gDest
-    local bd = bDest
-    if aDest < 255 then
-        local ad01 <const> = aDest / 255.0
-        rd = rDest * ad01
-        gd = gDest * ad01
-        bd = bDest * ad01
-    end
-
-    local rMix = u * ro + t * rd
-    local gMix = u * go + t * gd
-    local bMix = u * bo + t * bd
-
-    if aMix < 255.0 then
-        local aInverse <const> = 255.0 / aMix
-        rMix = rMix * aInverse
-        gMix = gMix * aInverse
-        bMix = bMix * aInverse
-    end
-
-    return rMix, gMix, bMix, aMix
-end
 
 ---@param xSrc number
 ---@param ySrc number
@@ -104,119 +39,6 @@ local function sampleNear(
     return defaultValue
 end
 
----@param xSrc number
----@param ySrc number
----@param wSrc integer
----@param hSrc integer
----@param sourceBytes string
----@param bpp integer
----@param defaultValue string
----@return string
-local function sampleBilinear(
-    xSrc, ySrc, wSrc, hSrc,
-    sourceBytes, bpp,
-    defaultValue)
-    -- To see a bilinear scale with LAB based sample, see commit
-    -- 04b2b43801220bf5065175e5429164caee35fa02 .
-
-    local xf <const> = math.floor(xSrc)
-    local yf <const> = math.floor(ySrc)
-    local xc <const> = xf + 1
-    local yc <const> = yf + 1
-
-    local yfInBounds <const> = yf > -1 and yf < hSrc
-    local ycInBounds <const> = yc > -1 and yc < hSrc
-    local xfInBounds <const> = xf > -1 and xf < wSrc
-    local xcInBounds <const> = xc > -1 and xc < wSrc
-
-    local a00 = 0
-    local b00 = 0
-    local g00 = 0
-    local r00 = 0
-    if yfInBounds and xfInBounds then
-        local j <const> = yf * wSrc + xf
-        local orig <const> = 1 + j * bpp
-        local dest <const> = orig + bpp - 1
-        r00, g00, b00, a00 = string.byte(sourceBytes, orig, dest)
-    end
-
-    local a10 = 0
-    local b10 = 0
-    local g10 = 0
-    local r10 = 0
-    if yfInBounds and xcInBounds then
-        local j <const> = yf * wSrc + xc
-        local orig <const> = 1 + j * bpp
-        local dest <const> = orig + bpp - 1
-        r10, g10, b10, a10 = string.byte(sourceBytes, orig, dest)
-    end
-
-    local a11 = 0
-    local b11 = 0
-    local g11 = 0
-    local r11 = 0
-    if ycInBounds and xcInBounds then
-        local j <const> = yc * wSrc + xc
-        local orig <const> = 1 + j * bpp
-        local dest <const> = orig + bpp - 1
-        r11, g11, b11, a11 = string.byte(sourceBytes, orig, dest)
-    end
-
-    local a01 = 0
-    local b01 = 0
-    local g01 = 0
-    local r01 = 0
-    if ycInBounds and xfInBounds then
-        local j <const> = yc * wSrc + xf
-        local orig <const> = 1 + j * bpp
-        local dest <const> = orig + bpp - 1
-        r01, g01, b01, a01 = string.byte(sourceBytes, orig, dest)
-    end
-
-    local a0 = 0.0
-    local b0 = 0.0
-    local g0 = 0.0
-    local r0 = 0.0
-
-    -- The trim alpha results are better when alpha zero check is done here.
-    local xErr <const> = xSrc - xf
-    if a00 > 0 or a10 > 0 then
-        r0, g0, b0, a0 = rgbMix(
-            r00, g00, b00, a00,
-            r10, g10, b10, a10, xErr)
-    end
-
-    local a1 = 0.0
-    local b1 = 0.0
-    local g1 = 0.0
-    local r1 = 0.0
-
-    if a01 > 0 or a11 > 0 then
-        r1, g1, b1, a1 = rgbMix(
-            r01, g01, b01, a01,
-            r11, g11, b11, a11, xErr)
-    end
-
-    if a0 > 0.0 or a1 > 0.0 then
-        local rt, gt, bt, at = rgbMix(
-            r0, g0, b0, a0,
-            r1, g1, b1, a1, ySrc - yf)
-
-        at = math.floor(0.5 + at)
-        bt = math.floor(0.5 + bt)
-        gt = math.floor(0.5 + gt)
-        rt = math.floor(0.5 + rt)
-
-        if at > 255 then at = 255 end
-        if bt > 255 then bt = 255 end
-        if gt > 255 then gt = 255 end
-        if rt > 255 then rt = 255 end
-
-        return string.pack("B B B B", rt, gt, bt, at)
-    end
-    return defaultValue
-end
-
 local dlg <const> = Dialog { title = "Transform Cel" }
 
 dlg:combobox {
@@ -224,15 +46,6 @@ dlg:combobox {
     label = "Target:",
     option = defaults.target,
     options = targets
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "easeMethod",
-    label = "Sample:",
-    option = defaults.easeMethod,
-    options = easeMethods
 }
 
 dlg:separator { id = "translateSep" }
@@ -710,16 +523,7 @@ dlg:button {
             return
         end
 
-        -- Determine bilinear vs. nearest.
-        local easeMethod <const> = args.easeMethod
-            or defaults.easeMethod --[[@as string]]
-        local useBilinear <const> = easeMethod == "BILINEAR"
-        local oldMode <const> = activeSprite.colorMode
-        local sample = sampleNear
-        if useBilinear then
-            app.command.ChangePixelFormat { format = "rgb" }
-            sample = sampleBilinear
-        end
+        local sample <const> = sampleNear
 
         -- Cache methods.
         local ceil <const> = math.ceil
@@ -743,7 +547,7 @@ dlg:button {
 
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians = degrees * 0.017453292519943
-        if query and (not useBilinear) then radians = query end
+        if query then radians = query end
         local tana <const> = math.tan(radians)
         local absTan <const> = math.abs(tana)
 
@@ -802,9 +606,6 @@ dlg:button {
             end
         end)
 
-        if useBilinear then
-            AseUtilities.changePixelFormat(oldMode)
-        end
         app.refresh()
     end
 }
@@ -830,16 +631,7 @@ dlg:button {
             return
         end
 
-        -- Determine bilinear vs. nearest.
-        local easeMethod <const> = args.easeMethod
-            or defaults.easeMethod --[[@as string]]
-        local useBilinear <const> = easeMethod == "BILINEAR"
-        local oldMode <const> = activeSprite.colorMode
-        local sample = sampleNear
-        if useBilinear then
-            app.command.ChangePixelFormat { format = "rgb" }
-            sample = sampleBilinear
-        end
+        local sample <const> = sampleNear
 
         -- Cache methods.
         local ceil <const> = math.ceil
@@ -863,7 +655,7 @@ dlg:button {
 
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians = degrees * 0.017453292519943
-        if query and (not useBilinear) then radians = query end
+        if query then radians = query end
         local tana <const> = math.tan(radians)
         local absTan <const> = math.abs(tana)
 
@@ -922,9 +714,6 @@ dlg:button {
             end
         end)
 
-        if useBilinear then
-            AseUtilities.changePixelFormat(oldMode)
-        end
         app.refresh()
     end
 }
@@ -1004,24 +793,13 @@ dlg:button {
             local tconcat <const> = table.concat
             local round <const> = Utilities.round
 
-            -- Determine bilinear vs. nearest.
-            local easeMethod <const> = args.easeMethod
-                or defaults.easeMethod --[[@as string]]
-            local useBilinear = easeMethod == "BILINEAR"
-            local oldMode <const> = activeSprite.colorMode
-            local sample = nil
-            if useBilinear then
-                app.command.ChangePixelFormat { format = "rgb" }
-                sample = sampleBilinear
-            else
-                sample = sampleNear
-            end
+            local sample <const> = sampleNear
 
             -- Unpack angle.
             degrees = 360 - degrees
             local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
             local radians = degrees * 0.017453292519943
-            if query and (not useBilinear) then radians = query end
+            if query then radians = query end
 
             -- Avoid trigonmetric functions in while loop below.
             -- Cache sine and cosine here, then use formula for
@@ -1103,10 +881,6 @@ dlg:button {
                     end
                 end
             end)
-
-            if useBilinear then
-                AseUtilities.changePixelFormat(oldMode)
-            end
         end
 
         app.refresh()
@@ -1270,8 +1044,6 @@ dlg:button {
             or defaults.target --[[@as string]]
         local unitType <const> = args.units
             or defaults.units --[[@as string]]
-        local easeMethod <const> = args.easeMethod
-            or defaults.easeMethod --[[@as string]]
 
         local usePercent <const> = unitType == "PERCENT"
         local wPrc = args.prcWidth
@@ -1311,13 +1083,7 @@ dlg:button {
             app.command.InvertMask()
         end)
 
-        local oldMode <const> = activeSprite.colorMode
-        local sample = sampleNear
-        local useBilinear <const> = easeMethod == "BILINEAR"
-        if useBilinear then
-            app.command.ChangePixelFormat { format = "rgb" }
-            sample = sampleBilinear
-        end
+        local sample <const> = sampleNear
 
         app.transaction("Scale Cels", function()
             local o = 0
@@ -1349,10 +1115,6 @@ dlg:button {
                             and (wSrc - 1.0) / (wTrg - 1.0) or 0.0
                         local ty <const> = hTrg > 1
                             and (hSrc - 1.0) / (hTrg - 1.0) or 0.0
-                        local ox <const> = (wTrg <= 1 and useBilinear)
-                            and 0.5 or 0.0
-                        local oy <const> = (hTrg <= 1 and useBilinear)
-                            and 0.5 or 0.0
 
                         local trgSpec <const> = createSpec(
                             wTrg, hTrg, srcSpec.colorMode,
@@ -1364,8 +1126,8 @@ dlg:button {
                         local lenFlat <const> = wTrg * hTrg
                         local j = 0
                         while j < lenFlat do
-                            local xTrg <const> = (j % wTrg) * tx + ox
-                            local yTrg <const> = (j // wTrg) * ty + oy
+                            local xTrg <const> = (j % wTrg) * tx
+                            local yTrg <const> = (j // wTrg) * ty
                             j = j + 1
                             byteArr[j] = sample(xTrg, yTrg,
                                 wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
@@ -1385,9 +1147,6 @@ dlg:button {
             end
         end)
 
-        if useBilinear then
-            AseUtilities.changePixelFormat(oldMode)
-        end
         app.refresh()
     end
 }
