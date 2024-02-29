@@ -10,6 +10,7 @@ local frameTargetOptions <const> = {
     "TAGS"
 }
 local cropTypes <const> = { "CROPPED", "SPRITE" }
+local sheetTypes <const> = { "HORIZONTAL", "SQUARE", "VERTICAL" }
 
 local defaults <const> = {
     -- Option to put batches (sprite sheet off) into subfolders? If this is not
@@ -24,6 +25,7 @@ local defaults <const> = {
     scale = 1,
     useSheet = false,
     useBatches = false,
+    sheetOrient = "SQUARE",
     usePixelAspect = true,
     toPow2 = false,
     potUniform = false,
@@ -99,22 +101,37 @@ end
 ---@param padding integer padding amount
 ---@param usePow2 boolean promote to nearest pot
 ---@param nonUniformDim boolean non uniform npot
+---@param sheetOrient "HORIZONTAL"|"VERTICAL"|"SQUARE" sheet orientation
 ---@return table
 local function saveSheet(
     filename, packets1,
     wMax, hMax,
     spriteSpec, compPalette,
     margin, padding,
-    usePow2, nonUniformDim)
+    usePow2, nonUniformDim, sheetOrient)
     local lenPackets1 <const> = #packets1
-    local cols = math.max(1, math.ceil(math.sqrt(lenPackets1)))
-    local rows = math.max(1, math.ceil(lenPackets1 / cols))
     local margin2 <const> = margin + margin
+
+    local cols = 1
+    local rows = 1
+    local isHoriz <const> = sheetOrient == "HORIZONTAL"
+    local isVert <const> = sheetOrient == "VERTICAL"
+    if isHoriz then
+        cols = lenPackets1
+    elseif isVert then
+        rows = lenPackets1
+    else
+        cols = math.max(1, math.ceil(math.sqrt(lenPackets1)))
+        rows = math.max(1, math.ceil(lenPackets1 / cols))
+    end
+
     local wSheet = margin2 + wMax * cols + padding * (cols - 1)
     local hSheet = margin2 + hMax * rows + padding * (rows - 1)
 
     if usePow2 then
-        if nonUniformDim then
+        -- Horizontal and vertical sheets have performance issues when uniform
+        -- power of 2 is used, e.g., 16384x16384 pixels.
+        if nonUniformDim or isHoriz or isVert then
             wSheet = Utilities.nextPowerOf2(wSheet)
             hSheet = Utilities.nextPowerOf2(hSheet)
         else
@@ -124,12 +141,14 @@ local function saveSheet(
 
         -- There's one less padding per denominator,
         -- so experiment adding one padding to numerator.
-        cols = math.max(1,
-            (wSheet + padding - margin2)
-            // (wMax + padding))
-        rows = math.max(1,
-            (hSheet + padding - margin2)
-            // (hMax + padding))
+        if not (isVert or isHoriz) then
+            cols = math.max(1,
+                (wSheet + padding - margin2)
+                // (wMax + padding))
+            rows = math.max(1,
+                (hSheet + padding - margin2)
+                // (hMax + padding))
+        end
     end
 
     -- Create composite image.
@@ -296,6 +315,7 @@ dlg:combobox {
 
         dlg:modify { id = "rangeStr", visible = isManual }
         dlg:modify { id = "strExample", visible = false }
+        dlg:modify { id = "sheetOrient", visible = useSheet }
         dlg:modify { id = "useBatches", visible = validBatching }
     end
 }
@@ -375,6 +395,11 @@ dlg:check {
         local args <const> = dlg.data
         local frameTarget <const> = args.frameTarget --[[@as string]]
         local useSheet <const> = args.useSheet --[[@as boolean]]
+        local toPow2 <const> = args.toPow2 --[[@as boolean]]
+        local sheetOrient <const> = args.sheetOrient --[[@as string]]
+        local noUniform <const> = useSheet
+            and (sheetOrient == "VERTICAL"
+                or sheetOrient == "HORIZONTAL")
 
         local isManual <const> = frameTarget == "MANUAL"
         local isRange <const> = frameTarget == "RANGE"
@@ -384,6 +409,8 @@ dlg:check {
 
         dlg:modify { id = "useBatches", visible = state }
         dlg:modify { id = "border", visible = useSheet }
+        dlg:modify { id = "sheetOrient", visible = useSheet }
+        dlg:modify { id = "potUniform", visible = toPow2 and (not noUniform) }
     end
 }
 
@@ -395,6 +422,26 @@ dlg:check {
         and (defaults.frameTarget == "TAGS"
             or defaults.frameTarget == "RANGE"
             or defaults.frameTarget == "MANUAL")
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "sheetOrient",
+    label = "Orient:",
+    option = defaults.sheetOrient,
+    options = sheetTypes,
+    visible = defaults.useSheet,
+    onchange = function()
+        local args <const> = dlg.data
+        local toPow2 <const> = args.toPow2 --[[@as boolean]]
+        local useSheet <const> = args.useSheet --[[@as boolean]]
+        local sheetOrient <const> = args.sheetOrient --[[@as string]]
+        local noUniform <const> = useSheet
+            and (sheetOrient == "VERTICAL"
+                or sheetOrient == "HORIZONTAL")
+        dlg:modify { id = "potUniform", visible = toPow2 and (not noUniform) }
+    end
 }
 
 dlg:newrow { always = false }
@@ -417,8 +464,13 @@ dlg:check {
     visible = true,
     onclick = function()
         local args <const> = dlg.data
-        local state <const> = args.toPow2 --[[@as boolean]]
-        dlg:modify { id = "potUniform", visible = state }
+        local toPow2 <const> = args.toPow2 --[[@as boolean]]
+        local useSheet <const> = args.useSheet --[[@as boolean]]
+        local sheetOrient <const> = args.sheetOrient --[[@as string]]
+        local noUniform <const> = useSheet
+            and (sheetOrient == "VERTICAL"
+                or sheetOrient == "HORIZONTAL")
+        dlg:modify { id = "potUniform", visible = toPow2 and (not noUniform) }
     end
 }
 
@@ -512,6 +564,8 @@ dlg:button {
             or defaults.scale --[[@as integer]]
         local useSheet <const> = args.useSheet --[[@as boolean]]
         local useBatches = args.useBatches --[[@as boolean]]
+        local sheetOrient = args.sheetOrient
+            or defaults.sheetOrient --[[@as string]]
         local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
         local usePow2 <const> = args.toPow2 --[[@as boolean]]
         local potUniform <const> = args.potUniform --[[@as boolean]]
@@ -746,7 +800,8 @@ dlg:button {
                         wCell, hCell,
                         spriteSpec, sheetPalette,
                         margin, padding,
-                        usePow2, nonUniformDim)
+                        usePow2, nonUniformDim,
+                        sheetOrient)
                     sheetPacket.fileName = batchFileShort
                     sheetPackets[j] = sheetPacket
                 end
@@ -769,7 +824,8 @@ dlg:button {
                     wCell, hCell,
                     spriteSpec, sheetPalette,
                     margin, padding,
-                    usePow2, nonUniformDim)
+                    usePow2, nonUniformDim,
+                    sheetOrient)
                 sheetPacket.fileName = fileTitle
                 sheetPackets[1] = sheetPacket
             else

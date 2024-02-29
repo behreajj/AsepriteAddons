@@ -5,6 +5,9 @@ local shiftOptions <const> = { "CARDINAL", "DIAGONAL", "DIMETRIC" }
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
+    -- TODO: Make left, right, top, bottom presets respond to symmetry mode,
+    -- if it is active? Symmetry line locations should be accessible from
+    -- preferences? app.preferences.document(sprite).symmetry.x_axis
     amount = 1,
     shiftOption = "CARDINAL",
     selMode = "REPLACE",

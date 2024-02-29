@@ -676,7 +676,7 @@ dlg:button {
                     activeSel:intersect(trgSel)
                     activeSprite.selection = activeSel
                 elseif selIsSub then
-                    -- TODO: Any way to mitigate this kind of problem when
+                    -- Any way to mitigate this kind of problem when
                     -- alpha index is the search color?
                     -- https://community.aseprite.org/t/the-tool-select-color-range-does-not-subtract-mask-color/21456
                     activeSel:subtract(trgSel)
