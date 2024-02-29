@@ -29,7 +29,12 @@ local defaults <const> = {
     labAxisMax = 220.0,
     labVisMin = -80.0,
     labVisMax = 80.0,
-    maxChroma = 135.0
+    maxChroma = 135.0,
+    lIncrScale = 5,
+    cIncrScale = 10,
+    hIncrScale = 15,
+    abIncrScale = 10,
+    tIncrScale = 16,
 }
 
 local active <const> = {
@@ -50,6 +55,30 @@ local active <const> = {
 local dlg <const> = Dialog { title = "Adjust Color" }
 
 ---@param event MouseEvent
+local function setAlphaMouseListen(event)
+    if event.button ~= MouseButton.NONE then
+        local bw <const> = active.tBarWidth
+        local mx01 <const> = event.x / (bw - 1.0)
+        local mxalpha <const> = mx01 + mx01 - 1.0
+        if event.ctrlKey then
+            active.alphaAdj = 0.0
+        elseif event.shiftKey then
+            local incr = 0.003921568627451
+            if math.abs(mxalpha - active.alphaAdj) > incr then
+                if event.altKey then incr = incr * defaults.tIncrScale end
+                if mxalpha < active.alphaAdj then incr = -incr end
+                active.alphaAdj = math.min(math.max(
+                    active.alphaAdj + incr, -1.0), 1.0)
+            end
+        else
+            active.alphaAdj = math.min(math.max(
+                mxalpha, -1.0), 1.0)
+        end
+        dlg:repaint()
+    end
+end
+
+---@param event MouseEvent
 local function setLightMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.lBarWidth
@@ -59,6 +88,7 @@ local function setLightMouseListen(event)
         elseif event.shiftKey then
             local incr = 1.0
             if math.abs(mx100 - active.lAdj) > incr then
+                if event.altKey then incr = incr * defaults.lIncrScale end
                 if mx100 < active.lAdj then incr = -incr end
                 active.lAdj = math.min(math.max(
                     active.lAdj + incr, -100.0), 100.0)
@@ -84,6 +114,7 @@ local function setChromaMouseListen(event)
         elseif event.shiftKey then
             local incr = 1.0
             if math.abs(mxc - active.cAdj) > incr then
+                if event.altKey then incr = incr * defaults.cIncrScale end
                 if mxc < active.cAdj then incr = -incr end
                 active.cAdj = math.min(math.max(
                     active.cAdj + incr, clb), cub)
@@ -106,6 +137,7 @@ local function setHueMouseListen(event)
         elseif event.shiftKey then
             local incr = 0.0027777777777778
             if math.abs(mx01 - active.hAdj) > incr then
+                if event.altKey then incr = incr * defaults.hIncrScale end
                 if mx01 < active.hAdj then incr = -incr end
                 active.hAdj = (active.hAdj + incr) % 1.0
             end
@@ -129,6 +161,7 @@ local function setAMouseListen(event)
         elseif event.shiftKey then
             local incr = 1.0
             if math.abs(mxa - active.aAdj) > incr then
+                if event.altKey then incr = incr * defaults.abIncrScale end
                 if mxa < active.aAdj then incr = -incr end
                 active.aAdj = math.min(math.max(
                     active.aAdj + incr, alb), aub)
@@ -154,6 +187,7 @@ local function setBMouseListen(event)
         elseif event.shiftKey then
             local incr = 1.0
             if math.abs(mxb - active.bAdj) > incr then
+                if event.altKey then incr = incr * defaults.abIncrScale end
                 if mxb < active.bAdj then incr = -incr end
                 active.bAdj = math.min(math.max(
                     active.bAdj + incr, blb), bub)
@@ -161,29 +195,6 @@ local function setBMouseListen(event)
         else
             active.bAdj = math.min(math.max(
                 mxb, blb), bub)
-        end
-        dlg:repaint()
-    end
-end
-
----@param event MouseEvent
-local function setAlphaMouseListen(event)
-    if event.button ~= MouseButton.NONE then
-        local bw <const> = active.tBarWidth
-        local mx01 <const> = event.x / (bw - 1.0)
-        local mxalpha <const> = mx01 + mx01 - 1.0
-        if event.ctrlKey then
-            active.alphaAdj = 0.0
-        elseif event.shiftKey then
-            local incr = 0.003921568627451
-            if math.abs(mxalpha - active.alphaAdj) > incr then
-                if mxalpha < active.alphaAdj then incr = -incr end
-                active.alphaAdj = math.min(math.max(
-                    active.alphaAdj + incr, -1.0), 1.0)
-            end
-        else
-            active.alphaAdj = math.min(math.max(
-                mxalpha, -1.0), 1.0)
         end
         dlg:repaint()
     end

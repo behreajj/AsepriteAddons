@@ -459,10 +459,14 @@ dlg:button {
                         tuv = max(t, v)
                     end
 
+                    -- Timeline overlays display colors that are transparent,
+                    -- but have non-zero RGB channels.
                     if tuv > 0.0 then
                         if useLch then
-                            local aLch <const> = srLab2ToSrLch(aLab.l, aLab.a, aLab.b, 1.0)
-                            local bLch <const> = srLab2ToSrLch(bLab.l, bLab.a, bLab.b, 1.0)
+                            local aLch <const> = srLab2ToSrLch(
+                                aLab.l, aLab.a, aLab.b, 1.0)
+                            local bLch <const> = srLab2ToSrLch(
+                                bLab.l, bLab.a, bLab.b, 1.0)
 
                             local cc = 0.0
                             local ch = 0.0

@@ -6,6 +6,7 @@ local incrDirs <const> = { "LEFT", "RIGHT" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
+    -- TODO: Needs a selection target option. See colorAdjust for example.
     target = "ALL",
     rangeStr = "",
     strExample = "4,6:9,13",
