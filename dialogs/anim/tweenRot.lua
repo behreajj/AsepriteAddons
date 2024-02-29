@@ -1,3 +1,6 @@
+dofile("../../support/aseutilities.lua")
+dofile("../../support/canvasutilities.lua")
+
 local facTypes <const> = { "FRAME", "TIME" }
 local modes <const> = { "ADD", "MIX" }
 local angleTypes <const> = {

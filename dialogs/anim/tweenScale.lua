@@ -1,3 +1,6 @@
+dofile("../../support/aseutilities.lua")
+dofile("../../support/canvasutilities.lua")
+
 local facTypes <const> = { "FRAME", "TIME" }
 local unitOptions <const> = { "PERCENT", "PIXEL" }
 
