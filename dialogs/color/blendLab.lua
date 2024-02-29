@@ -448,56 +448,6 @@ dlg:button {
                     local ca = 0.0
                     local cb = 0.0
 
-                    if useLch then
-                        local aLch <const> = srLab2ToSrLch(aLab.l, aLab.a, aLab.b, 1.0)
-                        local bLch <const> = srLab2ToSrLch(bLab.l, bLab.a, bLab.b, 1.0)
-
-                        local cc = 0.0
-                        local ch = 0.0
-                        if useColor then
-                            cl = aLch.l
-                            cc = u * aLch.c + t * bLch.c
-                            ch = mixer(aLch.h, bLch.h, t)
-                        elseif useChroma then
-                            cl = aLch.l
-                            cc = u * aLch.c + t * bLch.c
-                            ch = aLch.h
-                        elseif useHue then
-                            cl = aLch.l
-                            cc = aLch.c
-                            ch = mixer(aLch.h, bLch.h, t)
-                        elseif useHueShift then
-                            local sum <const> = aLch.h + bLch.h
-                            cl = aLch.l
-                            cc = aLch.c
-                            ch = mixer(aLch.h, sum, t)
-                        else
-                            cl = u * aLab.l + t * bLab.l
-                            cc = u * aLch.c + t * bLch.c
-                            ch = mixer(aLch.h, bLch.h, t)
-                        end
-
-                        local cLab <const> = srLchToSrLab2(cl, cc, ch, 1.0)
-                        cl = cLab.l
-                        ca = cLab.a
-                        cb = cLab.b
-                    else
-                        -- Default to LAB.
-                        if useLight then
-                            cl = u * aLab.l + t * bLab.l
-                            ca = aLab.a
-                            cb = aLab.b
-                        elseif useAb then
-                            cl = aLab.l
-                            ca = u * aLab.a + t * bLab.a
-                            cb = u * aLab.b + t * bLab.b
-                        else
-                            cl = u * aLab.l + t * bLab.l
-                            ca = u * aLab.a + t * bLab.a
-                            cb = u * aLab.b + t * bLab.b
-                        end
-                    end
-
                     local tuv = t + u * v
                     if useAlphaOver then
                         tuv = t
@@ -507,6 +457,58 @@ dlg:button {
                         tuv = min(t, v)
                     elseif useAlphaMax then
                         tuv = max(t, v)
+                    end
+
+                    if tuv > 0.0 then
+                        if useLch then
+                            local aLch <const> = srLab2ToSrLch(aLab.l, aLab.a, aLab.b, 1.0)
+                            local bLch <const> = srLab2ToSrLch(bLab.l, bLab.a, bLab.b, 1.0)
+
+                            local cc = 0.0
+                            local ch = 0.0
+                            if useColor then
+                                cl = aLch.l
+                                cc = u * aLch.c + t * bLch.c
+                                ch = mixer(aLch.h, bLch.h, t)
+                            elseif useChroma then
+                                cl = aLch.l
+                                cc = u * aLch.c + t * bLch.c
+                                ch = aLch.h
+                            elseif useHue then
+                                cl = aLch.l
+                                cc = aLch.c
+                                ch = mixer(aLch.h, bLch.h, t)
+                            elseif useHueShift then
+                                local sum <const> = aLch.h + bLch.h
+                                cl = aLch.l
+                                cc = aLch.c
+                                ch = mixer(aLch.h, sum, t)
+                            else
+                                cl = u * aLab.l + t * bLab.l
+                                cc = u * aLch.c + t * bLch.c
+                                ch = mixer(aLch.h, bLch.h, t)
+                            end
+
+                            local cLab <const> = srLchToSrLab2(cl, cc, ch, 1.0)
+                            cl = cLab.l
+                            ca = cLab.a
+                            cb = cLab.b
+                        else
+                            -- Default to LAB.
+                            if useLight then
+                                cl = u * aLab.l + t * bLab.l
+                                ca = aLab.a
+                                cb = aLab.b
+                            elseif useAb then
+                                cl = aLab.l
+                                ca = u * aLab.a + t * bLab.a
+                                cb = u * aLab.b + t * bLab.b
+                            else
+                                cl = u * aLab.l + t * bLab.l
+                                ca = u * aLab.a + t * bLab.a
+                                cb = u * aLab.b + t * bLab.b
+                            end
+                        end
                     end
 
                     local cClr <const> = srLab2TosRgb(cl, ca, cb, tuv)
