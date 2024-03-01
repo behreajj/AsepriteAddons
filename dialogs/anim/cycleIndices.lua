@@ -3,13 +3,11 @@ dofile("../../support/aseutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local incrTypes <const> = { "CONSTANT", "PER_FRAME" }
 local incrDirs <const> = { "LEFT", "RIGHT" }
-local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
     target = "ALL",
     rangeStr = "",
     strExample = "4,6:9,13",
-    delSrc = "NONE",
     incrType = "PER_FRAME",
     incrDir = "RIGHT",
     incrAmt = 1,
@@ -75,16 +73,6 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:combobox {
-    id = "delSrc",
-    label = "Source:",
-    option = defaults.delSrc,
-    options = delOptions,
-    visible = false
-}
-
-dlg:newrow { always = false }
-
 dlg:button {
     id = "confirm",
     text = "&OK",
@@ -105,8 +93,6 @@ dlg:button {
             or defaults.target --[[@as string]]
         local rangeStr <const> = args.rangeStr
             or defaults.rangeStr --[[@as string]]
-        local delSrcStr <const> = args.delSrc
-            or defaults.delSrc --[[@as string]]
         local incrType <const> = args.incrType
             or defaults.incrType --[[@as string]]
         local incrDir <const> = args.incrDir
@@ -415,7 +401,10 @@ dlg:button {
             end
         end)
 
-        AseUtilities.hideSource(activeSprite, srcLayer, frames, delSrcStr)
+        if isSelect then
+            activeSprite:deleteLayer(srcLayer)
+        end
+
         app.refresh()
     end
 }
