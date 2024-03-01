@@ -1,12 +1,11 @@
 dofile("../../support/aseutilities.lua")
 
-local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local incrTypes <const> = { "CONSTANT", "PER_FRAME" }
 local incrDirs <const> = { "LEFT", "RIGHT" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
-    -- TODO: Needs a selection target option. See colorAdjust for example.
     target = "ALL",
     rangeStr = "",
     strExample = "4,6:9,13",
@@ -80,7 +79,8 @@ dlg:combobox {
     id = "delSrc",
     label = "Source:",
     option = defaults.delSrc,
-    options = delOptions
+    options = delOptions,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -95,55 +95,6 @@ dlg:button {
             app.alert {
                 title = "Error",
                 text = "There is no active sprite."
-            }
-            return
-        end
-
-        local srcLayer <const> = site.layer
-        if not srcLayer then
-            app.alert {
-                title = "Error",
-                text = "There is no active layer."
-            }
-            return
-        end
-
-        if srcLayer.isGroup then
-            app.alert {
-                title = "Error",
-                text = "Group layers are not supported."
-            }
-            return
-        end
-
-        if srcLayer.isReference then
-            app.alert {
-                title = "Error",
-                text = "Reference layers are not supported."
-            }
-            return
-        end
-
-        -- Check for tile map support.
-        local srcIsTilemap <const> = srcLayer.isTilemap
-        local tileSet = nil
-        local lenTileSet = 0
-        local baseIndex = 0
-        if srcIsTilemap then
-            tileSet = srcLayer.tileset
-            if tileSet then
-                lenTileSet = #tileSet
-                baseIndex = tileSet.baseIndex
-            end
-        end
-
-        local activeSpec <const> = activeSprite.spec
-        local colorMode <const> = activeSpec.colorMode
-        local alphaIndex <const> = activeSpec.transparentColor
-        if (not srcIsTilemap) and colorMode ~= ColorMode.INDEXED then
-            app.alert {
-                title = "Error",
-                text = "Only indexed color mode is supported."
             }
             return
         end
@@ -164,9 +115,113 @@ dlg:button {
             or defaults.incrAmt --[[@as integer]]
 
         -- This needs to be done first, otherwise range will be lost.
+        local isSelect <const> = target == "SELECTION"
         local frames <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(activeSprite, target))
+            AseUtilities.getFrames(activeSprite,
+                isSelect and "ALL" or target))
         local lenFrames <const> = #frames
+
+        -- Unpack sprite spec.
+        local activeSpec <const> = activeSprite.spec
+        local colorMode <const> = activeSpec.colorMode
+        local colorSpace <const> = activeSpec.colorSpace
+        local alphaIndex <const> = activeSpec.transparentColor
+
+        local isTileMap = false
+        local tileSet = nil
+        local lenTileSet = 0
+        local baseIndex = 0
+
+        local srcLayer = site.layer --[[@as Layer]]
+        if isSelect then
+            if colorMode ~= ColorMode.INDEXED then
+                app.alert {
+                    title = "Error",
+                    text = "Only indexed color mode is supported."
+                }
+                return
+            end
+
+            local sel <const>, _ <const> = AseUtilities.getSelection(
+                activeSprite)
+            local selBounds <const> = sel.bounds
+            local xSel <const> = selBounds.x
+            local ySel <const> = selBounds.y
+
+            local selSpec <const> = AseUtilities.createSpec(
+                selBounds.width, selBounds.height,
+                colorMode, colorSpace, alphaIndex)
+
+            app.transaction("Selection Layer", function()
+                srcLayer = activeSprite:newLayer()
+                srcLayer.name = "Selection"
+
+                local i = 0
+                while i < lenFrames do
+                    i = i + 1
+
+                    -- Blit flattened sprite to image.
+                    local srcFrame <const> = frames[i]
+                    local selImage <const> = Image(selSpec)
+                    selImage:drawSprite(
+                        activeSprite, srcFrame, Point(-xSel, -ySel))
+
+                    -- Set pixels not in selection to alpha.
+                    local pxItr <const> = selImage:pixels()
+                    for pixel in pxItr do
+                        local x <const> = pixel.x + xSel
+                        local y <const> = pixel.y + ySel
+                        if not sel:contains(x, y) then
+                            pixel(alphaIndex)
+                        end
+                    end
+
+                    activeSprite:newCel(
+                        srcLayer, srcFrame,
+                        selImage, Point(xSel, ySel))
+                end
+            end)
+        else
+            if not srcLayer then
+                app.alert {
+                    title = "Error",
+                    text = "There is no active layer."
+                }
+                return
+            end
+
+            if srcLayer.isGroup then
+                app.alert {
+                    title = "Error",
+                    text = "Group layers are not supported."
+                }
+                return
+            end
+
+            if srcLayer.isReference then
+                app.alert {
+                    title = "Error",
+                    text = "Reference layers are not supported."
+                }
+                return
+            end
+
+            -- Check for tile map support.
+            isTileMap = srcLayer.isTilemap
+            if isTileMap then
+                tileSet = srcLayer.tileset
+                if tileSet then
+                    lenTileSet = #tileSet
+                    baseIndex = tileSet.baseIndex
+                end
+            elseif colorMode ~= ColorMode.INDEXED then
+                app.alert {
+                    title = "Error",
+                    text = "Only indexed color mode is supported."
+                }
+                return
+            end
+        end
 
         -- Create target layer.
         local trgLayer = nil
@@ -191,7 +246,7 @@ dlg:button {
 
         ---@type integer[]
         local chosenIdcs = {}
-        if srcIsTilemap then
+        if isTileMap then
             -- range.tile doesn't work as a getter.
             -- If it did work, you'd have to make sure to isolate
             -- map flags from indices.
@@ -279,7 +334,7 @@ dlg:button {
                     ---@type string[]
                     local trgStrsArr <const> = {}
 
-                    if srcIsTilemap then
+                    if isTileMap then
                         local bpp <const> = srcImg.bytesPerPixel
                         local j = 0
                         while j < lenSrc do
@@ -342,7 +397,7 @@ dlg:button {
 
                     local trgImg = Image(srcSpec)
                     trgImg.bytes = tconcat(trgStrsArr)
-                    if srcIsTilemap then
+                    if isTileMap then
                         -- If you could create tile map layers, then you would
                         -- not have to do this.
                         trgImg = tilesToImage(trgImg, tileSet, colorMode)

@@ -678,8 +678,8 @@ dlg:button {
         end
 
         local activeSpec <const> = activeSprite.spec
-        local oldMode <const> = activeSpec.colorMode
-        if oldMode ~= ColorMode.RGB then
+        local colorMode <const> = activeSpec.colorMode
+        if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
                 text = "Only RGB color mode is supported."
@@ -690,6 +690,9 @@ dlg:button {
         local args <const> = dlg.data
         local target <const> = args.target
             or defaults.target --[[@as string]]
+
+        -- TODO: For parity with cycleIndices, allow selection to cover
+        -- all cels?
         local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
         local lenFrames <const> = #frames
@@ -697,34 +700,9 @@ dlg:button {
         -- If isSelect is true, then a new layer will be created.
         local srcLayer = site.layer --[[@as Layer]]
         local isSelect <const> = target == "SELECTION"
-        if not isSelect then
-            if not srcLayer then
-                app.alert {
-                    title = "Error",
-                    text = "There is no active layer."
-                }
-                return
-            end
-
-            if srcLayer.isGroup then
-                app.alert {
-                    title = "Error",
-                    text = "Group layers are not supported."
-                }
-                return
-            end
-
-            if srcLayer.isReference then
-                app.alert {
-                    title = "Error",
-                    text = "Reference layers are not supported."
-                }
-                return
-            end
-        end
-
         if isSelect then
-            local sel <const>, _ <const> = AseUtilities.getSelection(activeSprite)
+            local sel <const>, _ <const> = AseUtilities.getSelection(
+                activeSprite)
             local selBounds <const> = sel.bounds
             local xSel <const> = selBounds.x
             local ySel <const> = selBounds.y
@@ -732,7 +710,7 @@ dlg:button {
             local alphaIndex <const> = activeSpec.transparentColor
             local selSpec <const> = AseUtilities.createSpec(
                 selBounds.width, selBounds.height,
-                ColorMode.RGB, activeSpec.colorSpace, alphaIndex)
+                colorMode, activeSpec.colorSpace, alphaIndex)
 
             -- Blit flattened sprite to image.
             local selFrame <const> = site.frame
@@ -759,12 +737,36 @@ dlg:button {
                     srcLayer, selFrame,
                     selImage, Point(xSel, ySel))
             end)
+        else
+            if not srcLayer then
+                app.alert {
+                    title = "Error",
+                    text = "There is no active layer."
+                }
+                return
+            end
+
+            if srcLayer.isGroup then
+                app.alert {
+                    title = "Error",
+                    text = "Group layers are not supported."
+                }
+                return
+            end
+
+            if srcLayer.isReference then
+                app.alert {
+                    title = "Error",
+                    text = "Reference layers are not supported."
+                }
+                return
+            end
         end
 
         -- Check for tile map support.
-        local isTilemap <const> = srcLayer.isTilemap
+        local isTileMap <const> = srcLayer.isTilemap
         local tileSet = nil
-        if isTilemap then
+        if isTileMap then
             tileSet = srcLayer.tileset
         end
 
@@ -859,7 +861,7 @@ dlg:button {
             local srcCel <const> = srcLayer:cel(srcFrame)
             if srcCel then
                 local srcImg = srcCel.image
-                if isTilemap then
+                if isTileMap then
                     srcImg = tilesToImage(srcImg, tileSet, rgbColorMode)
                 end
 
