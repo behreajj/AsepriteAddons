@@ -38,7 +38,7 @@ if activeLayer then
         while activeLayer.__name ~= "doc::Sprite"
             and stackIndex < 2 do
             stackIndex = activeLayer.stackIndex
-            activeLayer = activeLayer.parent
+            activeLayer = activeLayer.parent --[[@as Layer]]
         end
 
         -- Bottom-most layer in the stack is a group and has one child.

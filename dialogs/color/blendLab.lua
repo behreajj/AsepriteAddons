@@ -22,7 +22,6 @@ local defaults <const> = {
     delOver = "HIDE",
     delUnder = "HIDE",
     printElapsed = false,
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Blend LAB" }
@@ -112,7 +111,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local args <const> = dlg.data
         local printElapsed <const> = args.printElapsed --[[@as boolean]]

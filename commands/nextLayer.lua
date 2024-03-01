@@ -38,7 +38,7 @@ if activeLayer then
     elseif activeParent.__name == "doc::Sprite" then
         app.layer = activeSprite.layers[#activeSprite.layers]
     else
-        app.layer = activeParent
+        app.layer = activeParent --[[@as Layer]]
     end
 else
     app.layer = activeSprite.layers[#activeSprite.layers]

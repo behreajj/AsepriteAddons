@@ -5,9 +5,6 @@ local shiftOptions <const> = { "CARDINAL", "DIAGONAL", "DIMETRIC" }
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
-    -- TODO: Make left, right, top, bottom presets respond to symmetry mode,
-    -- if it is active? Symmetry line locations should be accessible from
-    -- preferences? app.preferences.document(sprite).symmetry.x_axis
     amount = 1,
     shiftOption = "CARDINAL",
     selMode = "REPLACE",
@@ -247,12 +244,23 @@ dlg:button {
         local site <const> = app.site
         local sprite <const> = site.sprite
         if not sprite then return end
-        local spec <const> = sprite.spec
         local args <const> = dlg.data
         local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
+        local spec <const> = sprite.spec
+
+        local docPrefs <const> = app.preferences.document(sprite)
+        local symPrefs <const> = docPrefs.symmetry
+        local symMode <const> = symPrefs.mode
+
+        local w = math.ceil(spec.width * 0.5)
+        if symMode == 1 or symMode == 3 then
+            local xAxis <const> = symPrefs.x_axis
+            w = math.ceil(xAxis)
+        end
+
         local trgSel <const> = Selection(Rectangle(
-            0, 0, math.ceil(spec.width / 2), spec.height))
+            0, 0, w, spec.height))
         updateSel(sprite, trgSel, selMode)
         app.refresh()
     end
@@ -266,12 +274,25 @@ dlg:button {
         local site <const> = app.site
         local sprite <const> = site.sprite
         if not sprite then return end
-        local spec <const> = sprite.spec
         local args <const> = dlg.data
         local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
+        local spec <const> = sprite.spec
+
+        local docPrefs <const> = app.preferences.document(sprite)
+        local symPrefs <const> = docPrefs.symmetry
+        local symMode <const> = symPrefs.mode
+
+        local x = spec.width // 2
+        local w = math.ceil(spec.width * 0.5)
+        if symMode == 1 or symMode == 3 then
+            local xAxis <const> = symPrefs.x_axis
+            x = math.floor(xAxis)
+            w = math.ceil(spec.width - xAxis)
+        end
+
         local trgSel <const> = Selection(Rectangle(
-            spec.width // 2, 0, math.ceil(spec.width / 2), spec.height))
+            x, 0, w, spec.height))
         updateSel(sprite, trgSel, selMode)
         app.refresh()
     end
@@ -287,12 +308,23 @@ dlg:button {
         local site <const> = app.site
         local sprite <const> = site.sprite
         if not sprite then return end
-        local spec <const> = sprite.spec
         local args <const> = dlg.data
         local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
+        local spec <const> = sprite.spec
+
+        local docPrefs <const> = app.preferences.document(sprite)
+        local symPrefs <const> = docPrefs.symmetry
+        local symMode <const> = symPrefs.mode
+
+        local h = math.ceil(spec.height * 0.5)
+        if symMode == 2 or symMode == 3 then
+            local yAxis <const> = symPrefs.y_axis
+            h = math.ceil(yAxis)
+        end
+
         local trgSel <const> = Selection(Rectangle(
-            0, 0, spec.width, math.ceil(spec.height / 2)))
+            0, 0, spec.width, h))
         updateSel(sprite, trgSel, selMode)
         app.refresh()
     end
@@ -306,12 +338,25 @@ dlg:button {
         local site <const> = app.site
         local sprite <const> = site.sprite
         if not sprite then return end
-        local spec <const> = sprite.spec
         local args <const> = dlg.data
         local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
+        local spec <const> = sprite.spec
+
+        local docPrefs <const> = app.preferences.document(sprite)
+        local symPrefs <const> = docPrefs.symmetry
+        local symMode <const> = symPrefs.mode
+
+        local y = spec.height // 2
+        local h = math.ceil(spec.height * 0.5)
+        if symMode == 2 or symMode == 3 then
+            local yAxis <const> = symPrefs.y_axis
+            y = math.floor(yAxis)
+            h = math.ceil(spec.height - yAxis)
+        end
+
         local trgSel <const> = Selection(Rectangle(
-            0, spec.height // 2, spec.width, math.ceil(spec.height / 2)))
+            0, y, spec.width, h))
         updateSel(sprite, trgSel, selMode)
         app.refresh()
     end
