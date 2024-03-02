@@ -209,7 +209,7 @@ end
 ---@param xOff integer
 ---@param yOff integer
 ---@return string
-local function labelsSvgStr(
+local function genLabelSvgStr(
     id, pixelDict, imgWidth,
     border, padding,
     wScale, hScale,
@@ -255,6 +255,7 @@ local function labelsSvgStr(
         labelsArr[#labelsArr + 1] = "</g>"
     end
     labelsArr[#labelsArr + 1] = "</g>"
+
     return table.concat(labelsArr, "\n")
 end
 
@@ -789,11 +790,10 @@ dlg:button {
         local layerStrsArr <const> = {}
         ---@type string[]
         local labelsStrArr <const> = {}
-        ---@type string[]
-        local paletteStrArr <const> = {}
         if flattenImage then
-            local chosenFrIdcs <const> = Utilities.flatArr2(AseUtilities.getFrames(
-                activeSprite, frameTarget, true, rangeStr))
+            local chosenFrIdcs <const> = Utilities.flatArr2(
+                AseUtilities.getFrames(
+                    activeSprite, frameTarget, true, rangeStr))
             local lenChosenFrames <const> = #chosenFrIdcs
             if lenChosenFrames <= 0 then
                 app.alert {
@@ -911,10 +911,8 @@ dlg:button {
                 layerStrsArr[1] = layerStr
 
                 if usePixelLabels then
-                    labelsStrArr[1] = labelsSvgStr("pixellabels", pixelDict,
+                    labelsStrArr[1] = genLabelSvgStr("pixellabels", pixelDict,
                         flatImg.width, border, padding, wScale, hScale, 0, 0)
-
-                    -- TODO: Handle palette strings here.
                 end
             end
         else
@@ -1082,7 +1080,6 @@ dlg:button {
             padStr,
             borderStr,
             tconcat(labelsStrArr, "\n"),
-            tconcat(paletteStrArr, "\n"),
             "\n</svg>"
         })
 
