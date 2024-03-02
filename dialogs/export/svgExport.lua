@@ -4,7 +4,6 @@ local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 
 local defaults <const> = {
     -- TODO: Add note about ignoring tag repetitions when animation is used?
-    -- TODO: Add space for displaying numbered palette.
     flattenImage = true,
     frameTarget = "ACTIVE",
     rangeStr = "",
@@ -215,16 +214,16 @@ local function labelsSvgStr(
     border, padding,
     wScale, hScale,
     xOff, yOff)
-    -- For cross stitch pattern generation. See
+    -- For cross stitch template generation. See
     -- https://steamcommunity.com/app/431730/discussions/0/4307201018694191898/
     -- https://flosscross.com/
     -- https://stitchfiddle.com/
 
     ---@type string[]
-    local pathsArr <const> = {}
+    local labelsArr <const> = {}
     local strfmt <const> = string.format
 
-    pathsArr[#pathsArr + 1] = strfmt("<g id=\"%s\">", id)
+    labelsArr[#labelsArr + 1] = strfmt("<g id=\"%s\">", id)
     local incr = 0
     for hex, idcs in pairs(pixelDict) do
         local hsi <const> = ((hex >> 0x10 & 0xff)
@@ -233,6 +232,7 @@ local function labelsSvgStr(
         local webHex <const> = hsi > 127 and 0 or 0xffffff
 
         incr = incr + 1
+        labelsArr[#labelsArr + 1] = strfmt("<g id=\"color%d\">", incr - 1)
         local lenIdcs <const> = #idcs
         local i = 0
         while i < lenIdcs do
@@ -248,13 +248,14 @@ local function labelsSvgStr(
             local cy <const> = y1mrg + y0 * hScale + hScale * 0.5
 
             local textStr <const> = strfmt(
-                "<text x=\"%.1f\" y=\"%.1f\" fill=\"#%06X\">%d</text>",
-                cx, cy, webHex, incr)
-            pathsArr[#pathsArr + 1] = textStr
+                "<text id=\"pixel%d_%d_%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#%06X\">%d</text>",
+                incr - 1, x0, y0, cx, cy, webHex, incr)
+            labelsArr[#labelsArr + 1] = textStr
         end
+        labelsArr[#labelsArr + 1] = "</g>"
     end
-    pathsArr[#pathsArr + 1] = "</g>"
-    return table.concat(pathsArr, "\n")
+    labelsArr[#labelsArr + 1] = "</g>"
+    return table.concat(labelsArr, "\n")
 end
 
 ---@param layer Layer
@@ -723,7 +724,7 @@ dlg:button {
                 | bColor.blue
 
             local sqFmt <const> = "<path d=\"M %d %d L %d %d L %d %d L %d %d "
-                .. "Z\" fill=\"#%06x\" />\n"
+                .. "Z M %d %d L %d %d L %d %d L %d %d Z\" fill=\"#%06x\" />\n"
             defsStr = tconcat({
                 "<defs>\n",
                 strfmt(
@@ -731,13 +732,11 @@ dlg:button {
                     .. "width=\"%d\" height=\"%d\" patternUnits=\"%s\">\n",
                     border, border, wcs2, hcs2, "userSpaceOnUse"),
                 strfmt(sqFmt, 0, 0, wCheckScaled, 0, wCheckScaled, hCheckScaled,
-                    0, hCheckScaled, aHex),
+                    0, hCheckScaled, wCheckScaled, hCheckScaled, wcs2,
+                    hCheckScaled, wcs2, hcs2, wCheckScaled, hcs2, aHex),
                 strfmt(sqFmt, wCheckScaled, 0, wcs2, 0, wcs2, hCheckScaled,
-                    wCheckScaled, hCheckScaled, bHex),
-                strfmt(sqFmt, 0, hCheckScaled, wCheckScaled, hCheckScaled,
-                    wCheckScaled, hcs2, 0, hcs2, bHex),
-                strfmt(sqFmt, wCheckScaled, hCheckScaled, wcs2, hCheckScaled,
-                    wcs2, hcs2, wCheckScaled, hcs2, aHex),
+                    wCheckScaled, hCheckScaled, 0, hCheckScaled, wCheckScaled,
+                    hCheckScaled, wCheckScaled, hcs2, 0, hcs2, bHex),
                 "</pattern>\n",
                 "</defs>\n"
             })
@@ -754,8 +753,8 @@ dlg:button {
         local bkgStr = ""
         if activeSprite.backgroundLayer ~= nil
             and colorMode == ColorMode.INDEXED then
-            -- TODO: This poses a problem for animation, because the
-            -- background color could change per multi-palette sprites.
+            -- This poses a problem for animation, because the background
+            -- color could change per multi-palette sprites.
             local alphaIdx <const> = activeSpec.transparentColor
             local palette1 <const> = getPalette(1, activeSprite.palettes)
             local lenPalette1 = #palette1
@@ -790,6 +789,8 @@ dlg:button {
         local layerStrsArr <const> = {}
         ---@type string[]
         local labelsStrArr <const> = {}
+        ---@type string[]
+        local paletteStrArr <const> = {}
         if flattenImage then
             local chosenFrIdcs <const> = Utilities.flatArr2(AseUtilities.getFrames(
                 activeSprite, frameTarget, true, rangeStr))
@@ -912,6 +913,8 @@ dlg:button {
                 if usePixelLabels then
                     labelsStrArr[1] = labelsSvgStr("pixellabels", pixelDict,
                         flatImg.width, border, padding, wScale, hScale, 0, 0)
+
+                    -- TODO: Handle palette strings here.
                 end
             end
         else
@@ -1026,8 +1029,8 @@ dlg:button {
                 local y1mrg <const> = border + (i + 1) * padding
                 local cy <const> = y1mrg + i * hScale + hScale * 0.5
                 local labelStr <const> = strfmt(
-                    "<text x=\"%.1f\" y=\"%.1f\" fill=\"#000000\">%d</text>",
-                    xRowLabel, cy, i % 100)
+                    "<text id=\"rowlabel%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#000000\">%d</text>",
+                    i, xRowLabel, cy, i % 100)
                 labelsStrArr[#labelsStrArr + 1] = labelStr
                 i = i + 1
             end
@@ -1039,8 +1042,8 @@ dlg:button {
                 local x1mrg <const> = border + (j + 1) * padding
                 local cx <const> = x1mrg + j * wScale + wScale * 0.5
                 local labelStr <const> = strfmt(
-                    "<text x=\"%.1f\" y=\"%.1f\" fill=\"#000000\">%d</text>",
-                    cx, yColLabel, j % 100)
+                    "<text id=\"collabel%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#000000\">%d</text>",
+                    j, cx, yColLabel, j % 100)
                 labelsStrArr[#labelsStrArr + 1] = labelStr
                 j = j + 1
             end
@@ -1079,6 +1082,7 @@ dlg:button {
             padStr,
             borderStr,
             tconcat(labelsStrArr, "\n"),
+            tconcat(paletteStrArr, "\n"),
             "\n</svg>"
         })
 
