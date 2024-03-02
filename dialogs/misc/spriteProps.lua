@@ -12,6 +12,7 @@ Around line 288:
 --]]
 
 local defaults <const> = {
+    -- TODO: Show start and end time of each frame?
     maskWarningInvalid = "Mask index is out of bounds.",
     maskWarningIndexed = "Non-zero mask may cause bugs.",
     maskWarningRgb = "Non-zero color at index 0.",

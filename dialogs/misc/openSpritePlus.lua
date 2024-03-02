@@ -16,7 +16,7 @@ local function loadSprite(filePath)
     local sprite = nil
     if fileExtLower == "gpl" or fileExtLower == "pal" then
         local spriteHexes <const>, _ <const> = AseUtilities.asePaletteLoad(
-            "FILE", filePath, 0, 256, true)
+            "FILE", filePath, 0, 512, true)
         local lenColors <const> = #spriteHexes
         local rtLen <const> = math.max(16,
             math.ceil(math.sqrt(math.max(1, lenColors))))
@@ -185,7 +185,7 @@ dlg:button {
         if palType ~= "DEFAULT" then
             local palFile <const> = args.palFile --[[@as string]]
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                palType, palFile, 0, 256, true)
+                palType, palFile, 0, 512, true)
         else
             -- As of circa apiVersion 24, version v1.3-rc4.
             local defaultPalette = app.defaultPalette

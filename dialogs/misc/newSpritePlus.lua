@@ -296,7 +296,7 @@ dlg:button {
         elseif palType ~= "DEFAULT" then
             local palFile <const> = args.palFile --[[@as string]]
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                palType, palFile, 0, 256, true)
+                palType, palFile, 0, 512, true)
         else
             -- As of circa apiVersion 24, version v1.3-rc4.
             local defaultPalette <const> = app.defaultPalette

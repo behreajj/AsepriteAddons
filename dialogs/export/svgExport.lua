@@ -4,6 +4,7 @@ local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 
 local defaults <const> = {
     -- TODO: Add note about ignoring tag repetitions when animation is used?
+    -- TODO: Add space for displaying numbered palette.
     flattenImage = true,
     frameTarget = "ACTIVE",
     rangeStr = "",
@@ -63,6 +64,7 @@ end
 ---@param yOff integer y offset
 ---@param palette Palette palette
 ---@return string
+---@return table<integer, integer[]>
 local function imgToSvgStr(
     img, border, padding,
     wScale, hScale,
@@ -195,7 +197,64 @@ local function imgToSvgStr(
         end
     end
 
-    return tconcat(pathsArr, "\n")
+    return tconcat(pathsArr, "\n"), pixelDict
+end
+
+---@param id string
+---@param pixelDict table<integer, integer[]>
+---@param imgWidth integer
+---@param border integer
+---@param padding integer
+---@param wScale integer
+---@param hScale integer
+---@param xOff integer
+---@param yOff integer
+---@return string
+local function labelsSvgStr(
+    id, pixelDict, imgWidth,
+    border, padding,
+    wScale, hScale,
+    xOff, yOff)
+    -- For cross stitch pattern generation. See
+    -- https://steamcommunity.com/app/431730/discussions/0/4307201018694191898/
+    -- https://flosscross.com/
+    -- https://stitchfiddle.com/
+
+    ---@type string[]
+    local pathsArr <const> = {}
+    local strfmt <const> = string.format
+
+    pathsArr[#pathsArr + 1] = strfmt("<g id=\"%s\">", id)
+    local incr = 0
+    for hex, idcs in pairs(pixelDict) do
+        local hsi <const> = ((hex >> 0x10 & 0xff)
+            + (hex >> 0x08 & 0xff)
+            + (hex & 0xff)) / 3.0
+        local webHex <const> = hsi > 127 and 0 or 0xffffff
+
+        incr = incr + 1
+        local lenIdcs <const> = #idcs
+        local i = 0
+        while i < lenIdcs do
+            i = i + 1
+            local idx <const> = idcs[i]
+            local x0 <const> = xOff + (idx % imgWidth)
+            local y0 <const> = yOff + (idx // imgWidth)
+
+            local x1mrg <const> = border + (x0 + 1) * padding
+            local y1mrg <const> = border + (y0 + 1) * padding
+
+            local cx <const> = x1mrg + x0 * wScale + wScale * 0.5
+            local cy <const> = y1mrg + y0 * hScale + hScale * 0.5
+
+            local textStr <const> = strfmt(
+                "<text x=\"%.1f\" y=\"%.1f\" fill=\"#%06X\">%d</text>",
+                cx, cy, webHex, incr)
+            pathsArr[#pathsArr + 1] = textStr
+        end
+    end
+    pathsArr[#pathsArr + 1] = "</g>"
+    return table.concat(pathsArr, "\n")
 end
 
 ---@param layer Layer
@@ -253,7 +312,8 @@ local function layerToSvgStr(
                     layerToSvgStr(
                         child, frame, border, padding, wScale, hScale,
                         spriteBounds, includeLocked, includeHidden,
-                        includeTiles, includeBkg, colorMode, palette, childStrs)
+                        includeTiles, includeBkg, colorMode, palette,
+                        childStrs)
                 end
 
                 local grpStr <const> = string.format(
@@ -301,7 +361,7 @@ local function layerToSvgStr(
                     intersect.x = intersect.x - xCel
                     intersect.y = intersect.y - yCel
 
-                    local imgStr <const> = imgToSvgStr(
+                    local imgStr <const>, _ <const> = imgToSvgStr(
                         celImg, border, padding,
                         wScale, hScale, xCel, yCel,
                         palette)
@@ -328,6 +388,7 @@ dlg:check {
         local flat <const> = args.flattenImage --[[@as boolean]]
         local state <const> = args.frameTarget --[[@as string]]
         local isManual <const> = state == "MANUAL"
+        local isActive <const> = state == "ACTIVE"
         local notFlat <const> = not flat
 
         dlg:modify { id = "frameTarget", visible = flat }
@@ -335,6 +396,7 @@ dlg:check {
         dlg:modify { id = "strExample", visible = false }
         dlg:modify { id = "useLoop", visible = flat }
         dlg:modify { id = "timeScalar", visible = flat }
+        dlg:modify { id = "useLabels", visible = flat and isActive }
 
         dlg:modify { id = "includeLocked", visible = notFlat }
         dlg:modify { id = "includeHidden", visible = notFlat }
@@ -354,10 +416,13 @@ dlg:combobox {
     visible = defaults.flattenImage,
     onchange = function()
         local args <const> = dlg.data
+        local flat <const> = args.flattenImage --[[@as boolean]]
         local state <const> = args.frameTarget --[[@as string]]
         local isManual <const> = state == "MANUAL"
+        local isActive <const> = state == "ACTIVE"
         dlg:modify { id = "rangeStr", visible = isManual }
         dlg:modify { id = "strExample", visible = false }
+        dlg:modify { id = "useLabels", visible = flat and isActive }
     end
 }
 
@@ -524,6 +589,17 @@ dlg:check {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "useLabels",
+    label = "Text:",
+    text = "L&abels",
+    selected = defaults.useLabels,
+    visible = defaults.flattenImage
+        and defaults.frameTarget == "ACTIVE"
+}
+
+dlg:newrow { always = false }
+
 dlg:file {
     id = "filepath",
     label = "Path:",
@@ -566,6 +642,10 @@ dlg:button {
         end
 
         -- Unpack arguments.
+        local frameTarget <const> = args.frameTarget
+            or defaults.frameTarget --[[@as string]]
+        local rangeStr <const> = args.rangeStr
+            or defaults.rangeStr --[[@as string]]
         local flattenImage <const> = args.flattenImage --[[@as boolean]]
         local border <const> = args.border or defaults.border --[[@as integer]]
         local borderClr <const> = args.borderClr --[[@as Color]]
@@ -575,6 +655,7 @@ dlg:button {
         local scale <const> = args.scale or defaults.scale --[[@as integer]]
         local useChecker <const> = args.useChecker --[[@as boolean]]
         local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
+        local useLabels <const> = args.useLabels --[[@as boolean]]
 
         -- Process scale
         local wScale = scale
@@ -584,6 +665,14 @@ dlg:button {
             wScale = wScale * math.max(1, math.abs(pxRatio.width))
             hScale = hScale * math.max(1, math.abs(pxRatio.height))
         end
+
+        -- Process space for labels
+        local usePixelLabels <const> = useLabels
+            and flattenImage
+            and frameTarget == "ACTIVE"
+        local useRowColLabels <const> = useLabels
+        local wRowColLabel <const> = useRowColLabels and wScale or 0
+        local hRowColLabel <const> = useRowColLabels and hScale or 0
 
         -- Doc prefs are needed to get the frame UI offset, grid color and
         -- background checker.
@@ -603,6 +692,8 @@ dlg:button {
         local hnBorder <const> = hClip + border
         local wTotal <const> = wnBorder + border
         local hTotal <const> = hnBorder + border
+        local wViewBox <const> = wTotal + wRowColLabel
+        local hViewBox <const> = hTotal + hRowColLabel
 
         -- Cache these methods because they are used so often
         local strfmt <const> = string.format
@@ -696,13 +787,10 @@ dlg:button {
         end
 
         ---@type string[]
-        local layersStrArr <const> = {}
+        local layerStrsArr <const> = {}
+        ---@type string[]
+        local labelsStrArr <const> = {}
         if flattenImage then
-            local frameTarget <const> = args.frameTarget
-                or defaults.frameTarget --[[@as string]]
-            local rangeStr <const> = args.rangeStr
-                or defaults.rangeStr --[[@as string]]
-
             local chosenFrIdcs <const> = Utilities.flatArr2(AseUtilities.getFrames(
                 activeSprite, frameTarget, true, rangeStr))
             local lenChosenFrames <const> = #chosenFrIdcs
@@ -715,7 +803,6 @@ dlg:button {
             end
 
             local animate <const> = lenChosenFrames > 1
-
             if animate then
                 local useLoop <const> = args.useLoop --[[@as boolean]]
                 local timeScalar <const> = args.timeScalar
@@ -756,7 +843,7 @@ dlg:button {
                 })
 
                 ---@type string[]
-                local frameStrs <const> = {}
+                local pixelFrameStrs <const> = {}
 
                 local i = 0
                 while i < lenChosenFrames do
@@ -769,7 +856,12 @@ dlg:button {
                     local flatImg <const> = Image(activeSpec)
                     flatImg:drawSprite(activeSprite, frObj)
                     local palette <const> = getPalette(frIdx, spritePalettes)
-                    local imgStr <const> = imgToSvgStr(
+
+                    -- It's not worth allowing pixel labels per frame because
+                    -- the same color could have different indices per each
+                    -- and a palette display on the side would also need to be
+                    -- animated.
+                    local imgStr <const>, _ <const> = imgToSvgStr(
                         flatImg, border, padding,
                         wScale, hScale, 0, 0,
                         palette)
@@ -781,18 +873,18 @@ dlg:button {
                         -- because duration was truncated from millis.
                         durStr = strfmt("%.6fs", timeScaleVrf * duration)
                     end
-                    local frameStr <const> = strfmt(
+                    local pixelFrameStr <const> = strfmt(
                         frameFormat,
                         frameUiOffset + frIdx, i,
                         animBeginStr, durStr,
                         imgStr)
-                    frameStrs[i] = frameStr
+                    pixelFrameStrs[i] = pixelFrameStr
 
                     -- Update for next iteration in loop.
                     animBeginStr = strfmt("anim%d.end", i)
                 end
 
-                layersStrArr[1] = tconcat(frameStrs, "\n")
+                layerStrsArr[1] = tconcat(pixelFrameStrs, "\n")
             else
                 local activeFrame = site.frame
                 if lenChosenFrames > 0 then
@@ -811,10 +903,16 @@ dlg:button {
 
                 local flatImg <const> = Image(activeSpec)
                 flatImg:drawSprite(activeSprite, activeFrame)
-                layersStrArr[1] = imgToSvgStr(
+                local layerStr <const>, pixelDict <const> = imgToSvgStr(
                     flatImg, border, padding,
                     wScale, hScale, 0, 0,
                     palette)
+                layerStrsArr[1] = layerStr
+
+                if usePixelLabels then
+                    labelsStrArr[1] = labelsSvgStr("pixellabels", pixelDict,
+                        flatImg.width, border, padding, wScale, hScale, 0, 0)
+                end
             end
         else
             local includeLocked <const> = args.includeLocked --[[@as boolean]]
@@ -845,7 +943,7 @@ dlg:button {
                 layerToSvgStr(
                     layer, activeFrame, border, padding, wScale, hScale,
                     spriteBounds, includeLocked, includeHidden, includeTiles,
-                    includeBkg, colorMode, palette, layersStrArr)
+                    includeBkg, colorMode, palette, layerStrsArr)
             end
         end
 
@@ -918,6 +1016,37 @@ dlg:button {
                 wnBorder, border)
         end
 
+        if useRowColLabels then
+            local xRowLabel <const> = wnBorder + border + wScale * 0.5
+            local yColLabel <const> = hnBorder + border + hScale * 0.5
+
+            labelsStrArr[#labelsStrArr + 1] = "<g id=\"rowlabels\">"
+            local i = 0
+            while i < hNative do
+                local y1mrg <const> = border + (i + 1) * padding
+                local cy <const> = y1mrg + i * hScale + hScale * 0.5
+                local labelStr <const> = strfmt(
+                    "<text x=\"%.1f\" y=\"%.1f\" fill=\"#000000\">%d</text>",
+                    xRowLabel, cy, i % 100)
+                labelsStrArr[#labelsStrArr + 1] = labelStr
+                i = i + 1
+            end
+            labelsStrArr[#labelsStrArr + 1] = "</g>"
+
+            labelsStrArr[#labelsStrArr + 1] = "<g id=\"collabels\">"
+            local j = 0
+            while j < wNative do
+                local x1mrg <const> = border + (j + 1) * padding
+                local cx <const> = x1mrg + j * wScale + wScale * 0.5
+                local labelStr <const> = strfmt(
+                    "<text x=\"%.1f\" y=\"%.1f\" fill=\"#000000\">%d</text>",
+                    cx, yColLabel, j % 100)
+                labelsStrArr[#labelsStrArr + 1] = labelStr
+                j = j + 1
+            end
+            labelsStrArr[#labelsStrArr + 1] = "</g>"
+        end
+
         -- If there were any diagonal guidelines, then this shape rendering
         -- is no longer a suitable choice. However, geometricPrecision causes
         -- problems with background checker pattern.
@@ -933,16 +1062,23 @@ dlg:button {
             "preserveAspectRatio=\"xMidYMid slice\" ",
             strfmt(
                 "width=\"%d\" height=\"%d\" ",
-                wTotal, hTotal),
+                wViewBox, hViewBox),
             strfmt(
-                "viewBox=\"0 0 %d %d\">\n",
-                wTotal, hTotal),
+                "viewBox=\"0 0 %d %d\" ",
+                wViewBox, hViewBox),
+            "font-family=\"sans-serif\" ",
+            strfmt(
+                "font-size=\"%dpx\" ",
+                math.max(1, math.min(wScale, hScale) * 0.5)),
+            "text-anchor=\"middle\" ",
+            "dominant-baseline=\"middle\">\n",
             defsStr,
             checkerStr,
             bkgStr,
-            tconcat(layersStrArr, "\n"),
+            tconcat(layerStrsArr, "\n"),
             padStr,
             borderStr,
+            tconcat(labelsStrArr, "\n"),
             "\n</svg>"
         })
 
