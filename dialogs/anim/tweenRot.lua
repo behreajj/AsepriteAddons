@@ -133,8 +133,8 @@ dlg:separator { id = "easeSeparator" }
 dlg:number {
     id = "rotIncr",
     label = "Degrees:",
-    text = string.format("%.1f", defaults.rotIncr),
-    decimals = 1,
+    text = string.format("%.3f", defaults.rotIncr),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
     visible = defaults.mode == "ADD"
 }
 
@@ -176,7 +176,7 @@ dlg:button {
 
         local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
         local autoIncr <const> = 360.0 / countFrames
-        dlg:modify { id = "rotIncr", text = string.format("%.1f", autoIncr) }
+        dlg:modify { id = "rotIncr", text = string.format("%.3f", autoIncr) }
     end
 }
 
@@ -464,25 +464,25 @@ dlg:button {
             local eval <const> = Curve2.eval
             local rotateImage <const> = AseUtilities.rotateImageNearest
 
-            -- app.transaction("Tween Cel Rotation", function()
-            local j = 0
-            while j < countFrames do
-                local frObj <const> = frObjs[frIdxOrigVerif + j]
-                local fac <const> = factors[1 + j]
-                local t <const> = eval(curve, fac).y
+            app.transaction("Tween Cel Rotation", function()
+                local j = 0
+                while j < countFrames do
+                    local frObj <const> = frObjs[frIdxOrigVerif + j]
+                    local fac <const> = factors[1 + j]
+                    local t <const> = eval(curve, fac).y
 
-                local degTrg <const> = angleMixDeg(
-                    rotOrigDeg, rotDestDeg, t, 360.0)
-                local trgImg <const> = rotateImage(srcImg, degTrg)
+                    local degTrg <const> = angleMixDeg(
+                        rotOrigDeg, rotDestDeg, t, 360.0)
+                    local trgImg <const> = rotateImage(srcImg, degTrg)
 
-                local trgPoint <const> = Point(
-                    floor(xCenter - trgImg.width * 0.5),
-                    floor(yCenter - trgImg.height * 0.5))
+                    local trgPoint <const> = Point(
+                        floor(xCenter - trgImg.width * 0.5),
+                        floor(yCenter - trgImg.height * 0.5))
 
-                activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
-                j = j + 1
-            end
-            -- end)
+                    activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
+                    j = j + 1
+                end
+            end)
         end
 
         app.refresh()
