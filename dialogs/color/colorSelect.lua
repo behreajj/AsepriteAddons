@@ -6,6 +6,7 @@ local sampleModes <const> = { "ACTIVE", "COMPOSITE" }
 
 local defaults <const> = {
     uiMode = "COLOR",
+    selMode = "INTERSECT",
     sampleMode = "ACTIVE",
     tolerance = 0,
     useLight = true,
@@ -93,7 +94,7 @@ dlg:combobox {
     id = "selMode",
     label = "Logic:",
     -- option = selModes[1 + app.preferences.selection.mode],
-    option = "REPLACE",
+    option = defaults.selMode,
     options = selModes
 }
 
