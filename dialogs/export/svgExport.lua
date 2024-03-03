@@ -222,14 +222,14 @@ local function genLabelSvgStr(
     ---@type string[]
     local labelsArr <const> = {}
     local strfmt <const> = string.format
-
     labelsArr[#labelsArr + 1] = strfmt("<g id=\"%s\">", id)
+
     local incr = 0
     for hex, idcs in pairs(pixelDict) do
         local hsi <const> = ((hex >> 0x10 & 0xff)
             + (hex >> 0x08 & 0xff)
             + (hex & 0xff)) / 3.0
-        local webHex <const> = hsi > 127 and 0 or 0xffffff
+        local idxRgb24 <const> = hsi > 127 and 0 or 0xffffff
 
         incr = incr + 1
         labelsArr[#labelsArr + 1] = strfmt("<g id=\"color%d\">", incr - 1)
@@ -249,14 +249,98 @@ local function genLabelSvgStr(
 
             local textStr <const> = strfmt(
                 "<text id=\"pixel%d_%d_%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#%06X\">%d</text>",
-                incr - 1, x0, y0, cx, cy, webHex, incr)
+                incr - 1, x0, y0, cx, cy, idxRgb24, incr)
             labelsArr[#labelsArr + 1] = textStr
         end
         labelsArr[#labelsArr + 1] = "</g>"
     end
-    labelsArr[#labelsArr + 1] = "</g>"
 
+    labelsArr[#labelsArr + 1] = "</g>"
     return table.concat(labelsArr, "\n")
+end
+
+---@param id string
+---@param pixelDict table<integer, integer[]>
+---@param wViewBox integer
+---@param hTotal integer
+---@return string
+local function genPaletteSvgStr(id, pixelDict, wViewBox, hTotal)
+    ---@type string[]
+    local swatchesArr <const> = {}
+    local strfmt <const> = string.format
+
+    ---@type integer[]
+    local pixelArr <const> = {}
+    local lenPixelArr = 0
+    for hex, _ in pairs(pixelDict) do
+        lenPixelArr = lenPixelArr + 1
+        pixelArr[lenPixelArr] = hex
+    end
+
+    local swatchStrFmt <const> = "<g id=\"swatch%d_%08x\">\n"
+        .. "<rect x=\"%.1f\" y=\"%.1f\" width=\"%.1f\" height=\"%.1f\""
+        .. " rx=\"%.1f\" ry=\"%.1f\" fill=\"#%06x\" />\n"
+        .. "<text x=\"%.1f\" y=\"%.1f\" fill=\"#%06X\">%d</text>\n"
+        -- .. "<text x=\"%.1f\" y=\"%.1f\" fill=\"#%06X\">%06X</text>\n"
+        .. "</g>"
+
+    -- local hexRgb24 <const> = 0
+    local entrySize <const> = hTotal / lenPixelArr
+    local swatchSize <const> = entrySize * 0.875
+    local swatchHalfSize <const> = swatchSize * 0.5
+    local xEntryMid <const> = wViewBox - 16 - entrySize * 0.5
+    local rounding <const> = swatchSize * 0.2
+    local xSwatchLeft <const> = xEntryMid - swatchHalfSize
+    -- local xSwatchRight <const> = xEntryMid + swatchHalfSize
+    -- local xTextCenter <const> = xSwatchRight + entrySize * 1.5
+
+    swatchesArr[#swatchesArr + 1] = strfmt(
+        "<g id=\"%s\" font-size=\"%dpx\">",
+        id, swatchHalfSize)
+
+    local i = 0
+    while i < lenPixelArr do
+        i = i + 1
+        local abgr32 <const> = pixelArr[i]
+        local a8 <const> = (abgr32 >> 0x18) & 0xff
+        local b8 <const> = (abgr32 >> 0x10) & 0xff
+        local g8 <const> = (abgr32 >> 0x08) & 0xff
+        local r8 <const> = abgr32 & 0xff
+
+        local hsi <const> = (r8 + g8 + b8) / 3.0
+        local idxRgb24 <const> = (a8 <= 0 or hsi > 127) and 0 or 0xffffff
+        local rgb24 <const> = r8 << 0x10 | g8 << 0x08 | b8
+
+        local yEntryTop <const> = (i - 1) * entrySize
+        local yEntryBtm <const> = i * entrySize
+        local yEntryMid <const> = (yEntryTop + yEntryBtm) * 0.5
+
+        local ySwatchTop <const> = yEntryMid - swatchHalfSize
+        -- local ySwatchBtm <const> = yEntryMid + swatchHalfSize
+
+        local swatchStr <const> = strfmt(
+            swatchStrFmt,
+            i - 1, abgr32,
+
+            -- xSwatchLeft,  -- 3
+            -- ySwatchTop,   -- 4
+            -- xSwatchRight, -- 5
+            -- ySwatchTop,   -- 6
+            -- xSwatchRight, -- 7
+            -- ySwatchBtm,   -- 8
+            -- xSwatchLeft,  -- 9
+            -- ySwatchBtm,   -- 10
+
+            xSwatchLeft, ySwatchTop, swatchSize, swatchSize,
+            rounding, rounding, rgb24,
+            xEntryMid, yEntryMid, idxRgb24, i
+        -- xTextCenter, yEntryMid, hexRgb24, rgb24
+        )
+        swatchesArr[#swatchesArr + 1] = swatchStr
+    end
+
+    swatchesArr[#swatchesArr + 1] = "</g>"
+    return table.concat(swatchesArr, "\n")
 end
 
 ---@param layer Layer
@@ -694,7 +778,9 @@ dlg:button {
         local hnBorder <const> = hClip + border
         local wTotal <const> = wnBorder + border
         local hTotal <const> = hnBorder + border
-        local wViewBox <const> = wTotal + wRowColLabel
+        local fontSize <const> = math.max(1, math.min(wScale, hScale) * 0.5)
+        local wPal <const> = math.max(fontSize * 6, wTotal * 0.025)
+        local wViewBox <const> = wTotal + wRowColLabel + wPal
         local hViewBox <const> = hTotal + hRowColLabel
 
         -- Cache these methods because they are used so often
@@ -789,7 +875,9 @@ dlg:button {
         ---@type string[]
         local layerStrsArr <const> = {}
         ---@type string[]
-        local labelsStrArr <const> = {}
+        local labelStrsArr <const> = {}
+        ---@type string[]
+        local paletteStrsArr <const> = {}
         if flattenImage then
             local chosenFrIdcs <const> = Utilities.flatArr2(
                 AseUtilities.getFrames(
@@ -911,8 +999,10 @@ dlg:button {
                 layerStrsArr[1] = layerStr
 
                 if usePixelLabels then
-                    labelsStrArr[1] = genLabelSvgStr("pixellabels", pixelDict,
+                    labelStrsArr[1] = genLabelSvgStr("pixellabels", pixelDict,
                         flatImg.width, border, padding, wScale, hScale, 0, 0)
+                    paletteStrsArr[1] = genPaletteSvgStr("palette", pixelDict,
+                        wViewBox, hTotal)
                 end
             end
         else
@@ -1021,7 +1111,7 @@ dlg:button {
             local xRowLabel <const> = wnBorder + border + wScale * 0.5
             local yColLabel <const> = hnBorder + border + hScale * 0.5
 
-            labelsStrArr[#labelsStrArr + 1] = "<g id=\"rowlabels\">"
+            labelStrsArr[#labelStrsArr + 1] = "<g id=\"rowlabels\">"
             local i = 0
             while i < hNative do
                 local y1mrg <const> = border + (i + 1) * padding
@@ -1029,12 +1119,12 @@ dlg:button {
                 local labelStr <const> = strfmt(
                     "<text id=\"rowlabel%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#000000\">%d</text>",
                     i, xRowLabel, cy, i % 100)
-                labelsStrArr[#labelsStrArr + 1] = labelStr
+                labelStrsArr[#labelStrsArr + 1] = labelStr
                 i = i + 1
             end
-            labelsStrArr[#labelsStrArr + 1] = "</g>"
+            labelStrsArr[#labelStrsArr + 1] = "</g>"
 
-            labelsStrArr[#labelsStrArr + 1] = "<g id=\"collabels\">"
+            labelStrsArr[#labelStrsArr + 1] = "<g id=\"collabels\">"
             local j = 0
             while j < wNative do
                 local x1mrg <const> = border + (j + 1) * padding
@@ -1042,10 +1132,10 @@ dlg:button {
                 local labelStr <const> = strfmt(
                     "<text id=\"collabel%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#000000\">%d</text>",
                     j, cx, yColLabel, j % 100)
-                labelsStrArr[#labelsStrArr + 1] = labelStr
+                labelStrsArr[#labelStrsArr + 1] = labelStr
                 j = j + 1
             end
-            labelsStrArr[#labelsStrArr + 1] = "</g>"
+            labelStrsArr[#labelStrsArr + 1] = "</g>"
         end
 
         -- If there were any diagonal guidelines, then this shape rendering
@@ -1070,7 +1160,7 @@ dlg:button {
             "font-family=\"sans-serif\" ",
             strfmt(
                 "font-size=\"%dpx\" ",
-                math.max(1, math.min(wScale, hScale) * 0.5)),
+                fontSize),
             "text-anchor=\"middle\" ",
             "dominant-baseline=\"middle\">\n",
             defsStr,
@@ -1079,7 +1169,8 @@ dlg:button {
             tconcat(layerStrsArr, "\n"),
             padStr,
             borderStr,
-            tconcat(labelsStrArr, "\n"),
+            tconcat(labelStrsArr, "\n"),
+            tconcat(paletteStrsArr, "\n"),
             "\n</svg>"
         })
 
