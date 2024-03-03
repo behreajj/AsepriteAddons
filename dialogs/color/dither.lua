@@ -468,7 +468,7 @@ dlg:button {
                 or defaults.octCapacityBits --[[@as integer]]
 
             local hexesProfile <const>, hexesSrgb <const> = AseUtilities.asePaletteLoad(
-                palType, palFile, 0, 256, true)
+                palType, palFile, 0, 512, true)
 
             octCapacity = 1 << octCapacity
             local bounds <const> = Bounds3.lab()

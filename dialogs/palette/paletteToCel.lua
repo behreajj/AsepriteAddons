@@ -252,7 +252,7 @@ dlg:button {
             or defaults.palType --[[@as string]]
         local palFile <const> = args.palFile --[[@as string]]
         local hexesProfile <const>, hexesSrgb <const> = AseUtilities.asePaletteLoad(
-            palType, palFile, 0, 256, true)
+            palType, palFile, 0, 512, true)
 
         -- Select which conversion functions to use.
         local clrSpacePreset <const> = args.clrSpacePreset
