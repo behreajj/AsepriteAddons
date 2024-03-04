@@ -96,7 +96,7 @@ dlg:button {
         local includeTiles <const> = args.includeTiles --[[@as boolean]]
 
         local trgCels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, activeFrame, target,
+            activeSprite, activeLayer, activeSprite.frames, target,
             includeLocked, includeHidden, includeTiles, false)
         local lenTrgCels <const> = #trgCels
         if lenTrgCels <= 0 then

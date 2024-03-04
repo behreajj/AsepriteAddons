@@ -155,7 +155,7 @@ dlg:button {
 
         if opaqueCel then
             local chosenCels <const> = AseUtilities.filterCels(
-                activeSprite, site.layer, site.frame, "ALL",
+                activeSprite, site.layer, activeSprite.frames, "ALL",
                 true, true, true, false)
             local lenChosenCels <const> = #chosenCels
 
@@ -173,7 +173,7 @@ dlg:button {
 
         if opaqueImage and colorMode ~= ColorMode.INDEXED then
             local chosenCels <const> = AseUtilities.filterCels(
-                activeSprite, site.layer, site.frame, "ALL",
+                activeSprite, site.layer, activeSprite.frames, "ALL",
                 true, true, false, false)
             local lenChosenCels <const> = #chosenCels
 

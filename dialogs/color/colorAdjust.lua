@@ -691,52 +691,19 @@ dlg:button {
         local target <const> = args.target
             or defaults.target --[[@as string]]
 
-        -- TODO: For parity with cycleIndices, allow selection to cover
-        -- all cels?
+        -- This needs to be done first, otherwise range will be lost.
+        local isSelect <const> = target == "SELECTION"
         local frames <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(activeSprite, target))
+            AseUtilities.getFrames(activeSprite,
+                isSelect and "ALL" or target))
         local lenFrames <const> = #frames
 
         -- If isSelect is true, then a new layer will be created.
         local srcLayer = site.layer --[[@as Layer]]
-        local isSelect <const> = target == "SELECTION"
+
         if isSelect then
-            local sel <const>, _ <const> = AseUtilities.getSelection(
-                activeSprite)
-            local selBounds <const> = sel.bounds
-            local xSel <const> = selBounds.x
-            local ySel <const> = selBounds.y
-
-            local alphaIndex <const> = activeSpec.transparentColor
-            local selSpec <const> = AseUtilities.createSpec(
-                selBounds.width, selBounds.height,
-                colorMode, activeSpec.colorSpace, alphaIndex)
-
-            -- Blit flattened sprite to image.
-            local selFrame <const> = site.frame
-                or activeSprite.frames[1] --[[@as Frame]]
-            local selImage <const> = Image(selSpec)
-            selImage:drawSprite(
-                activeSprite, selFrame, Point(-xSel, -ySel))
-
-            -- Set pixels not in selection to alpha.
-            local pxItr <const> = selImage:pixels()
-            for pixel in pxItr do
-                local x <const> = pixel.x + xSel
-                local y <const> = pixel.y + ySel
-                if not sel:contains(x, y) then
-                    pixel(alphaIndex)
-                end
-            end
-
-            -- Create new layer and cel.
-            app.transaction("Selection Layer", function()
-                srcLayer = activeSprite:newLayer()
-                srcLayer.name = "Selection"
-                activeSprite:newCel(
-                    srcLayer, selFrame,
-                    selImage, Point(xSel, ySel))
-            end)
+            AseUtilities.filterCels(activeSprite, srcLayer, frames, "SELECTION")
+            srcLayer = activeSprite.layers[#activeSprite.layers]
         else
             if not srcLayer then
                 app.alert {
@@ -1054,7 +1021,9 @@ dlg:button {
         end
 
         if isSelect then
-            activeSprite:deleteLayer(srcLayer)
+            app.transaction("Delete Layer", function()
+                activeSprite:deleteLayer(srcLayer)
+            end)
         end
 
         app.refresh()

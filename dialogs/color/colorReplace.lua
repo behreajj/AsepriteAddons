@@ -277,7 +277,7 @@ dlg:button {
             end
 
             local trgCels <const> = AseUtilities.filterCels(
-                activeSprite, activeLayer, activeFrame, target,
+                activeSprite, activeLayer, activeSprite.frames, target,
                 includeLocked, includeHidden, includeTiles, includeBkg)
             local lenTrgCels <const> = #trgCels
 

@@ -1392,17 +1392,12 @@ end
 
 ---Finds a filtered array of cels to be edited in-place according to the
 ---provided criteria. The target is a string constant that could be "ALL",
----"ACTIVE", "RANGE" or "SELECTION". When the target is "ACTIVE", this
----includes the children of the active layer if it's a group.
----
----Visibility and editability are only considered locally. It's assumed that if
----the user selects a child layer whose parent is locked or hidden, they
----intended to do so.
+---"ACTIVE", "RANGE" or "SELECTION".
 ---
 ---The selection option will create a new layer and cel.
 ---@param sprite Sprite active sprite
 ---@param layer Layer|nil active layer
----@param frame Frame|integer|nil active frame
+---@param frames Frame[]|integer[] frames
 ---@param target string target preset
 ---@param includeLocked? boolean include locked layers
 ---@param includeHidden? boolean include hidden layers
@@ -1411,109 +1406,146 @@ end
 ---@return Cel[]
 ---@nodiscard
 function AseUtilities.filterCels(
-    sprite, layer, frame, target,
-    includeLocked,
-    includeHidden,
-    includeTiles,
-    includeBkg)
+    sprite, layer, frames, target,
+    includeLocked, includeHidden, includeTiles, includeBkg)
     if target == "ALL" then
-        local leaves <const> = AseUtilities.getLayerHierarchy(
-            sprite,
-            includeLocked,
-            includeHidden,
-            includeTiles,
-            includeBkg)
+        local leaves <const> = AseUtilities.filterLayers(sprite, layer, target,
+            includeLocked, includeHidden, includeTiles, includeBkg)
         return AseUtilities.getUniqueCelsFromLeaves(leaves, sprite.frames)
     elseif target == "RANGE" then
-        ---@type Cel[]
+        local leaves <const> = AseUtilities.filterLayers(sprite, layer,
+            target, includeLocked, includeHidden, includeTiles, includeBkg)
+        local frIdcs <const> = Utilities.flatArr2(AseUtilities.getFrames(
+            sprite, target, false))
+        return AseUtilities.getUniqueCelsFromLeaves(leaves, frIdcs)
+    elseif target == "SELECTION" then
         local trgCels <const> = {}
+
+        local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
+        local selBounds <const> = sel.bounds
+        local xSel <const> = selBounds.x
+        local ySel <const> = selBounds.y
+
+        local spriteSpec <const> = sprite.spec
+        local alphaIndex <const> = spriteSpec.transparentColor
+
+        local selSpec <const> = ImageSpec {
+            width = math.max(1, selBounds.width),
+            height = math.max(1, selBounds.height),
+            colorMode = spriteSpec.colorMode,
+            transparentColor = alphaIndex
+        }
+        selSpec.colorSpace = spriteSpec.colorSpace
+
+        app.transaction("Selection Layer", function()
+            local srcLayer <const> = sprite:newLayer()
+            srcLayer.name = "Selection"
+
+            local lenFrames <const> = #frames
+            local i = 0
+            while i < lenFrames do
+                i = i + 1
+
+                -- Blit flattened sprite to image.
+                local srcFrame <const> = frames[i]
+                local selImage <const> = Image(selSpec)
+                selImage:drawSprite(
+                    sprite, srcFrame, Point(-xSel, -ySel))
+
+                -- Set pixels not in selection to alpha.
+                local pxItr <const> = selImage:pixels()
+                for pixel in pxItr do
+                    local x <const> = pixel.x + xSel
+                    local y <const> = pixel.y + ySel
+                    if not sel:contains(x, y) then
+                        pixel(alphaIndex)
+                    end
+                end
+
+                -- Avoid containing extraneous cels.
+                if not selImage:isEmpty() then
+                    local trgCel <const> = sprite:newCel(
+                        srcLayer, srcFrame,
+                        selImage, Point(xSel, ySel))
+                    trgCels[#trgCels + 1] = trgCel
+                end
+            end
+        end)
+
+        return trgCels
+    else
+        -- Default to "ACTIVE"
+        local leaves <const> = AseUtilities.filterLayers(sprite, layer, target,
+            includeLocked, includeHidden, includeTiles, includeBkg)
+        return AseUtilities.getUniqueCelsFromLeaves(leaves, frames)
+    end
+end
+
+---Finds a filtered array of layers to be edited in-place according to the
+---provided criteria. The target is a string constant that could be "ALL",
+---"ACTIVE", "RANGE". When the target is "ACTIVE", this includes the children
+---of the active layer if it's a group.
+---
+---Visibility and editability are only considered locally. It's assumed that if
+---the user selects a child layer whose parent is locked or hidden, they
+---intended to do so.
+---
+---Layers retrieved from a range may not be in stack index order.
+---@param sprite Sprite active sprite
+---@param layer Layer|nil active layer
+---@param target string target preset
+---@param includeLocked? boolean include locked layers
+---@param includeHidden? boolean include hidden layers
+---@param includeTiles? boolean include tile maps
+---@param includeBkg? boolean include backgrounds
+---@return Layer[]
+---@nodiscard
+function AseUtilities.filterLayers(
+    sprite, layer, target,
+    includeLocked, includeHidden, includeTiles, includeBkg)
+    -- TODO: Are there other, older dialogs where this can be used?
+
+    if target == "ALL" then
+        return AseUtilities.getLayerHierarchy(sprite,
+            includeLocked, includeHidden, includeTiles, includeBkg)
+    elseif target == "RANGE" then
+        ---@type Layer[]
+        local trgLayers <const> = {}
 
         local tlHidden <const> = not app.preferences.general.visible_timeline
         if tlHidden then
             app.command.Timeline { open = true }
         end
 
-        local appRange <const> = app.range
-        if appRange.sprite == sprite then
-            local imgsRange <const> = appRange.images
-            local lenImgsRange <const> = #imgsRange
+        local range <const> = app.range
+        if range.sprite == sprite then
+            local rangeLayers <const> = range.layers
+            local lenRangeLayers <const> = #rangeLayers
             local i = 0
-            while i < lenImgsRange do
+            while i < lenRangeLayers do
                 i = i + 1
-                local image <const> = imgsRange[i]
-                local cel <const> = image.cel
-                local celLayer <const> = cel.layer
-
-                if (not celLayer.isReference)
-                    and (includeHidden or celLayer.isVisible)
-                    and (includeLocked or celLayer.isEditable)
-                    and (includeTiles or (not celLayer.isTilemap))
-                    and (includeBkg or (not celLayer.isBackground)) then
-                    trgCels[#trgCels + 1] = cel
-                end -- End reference layer check.
-            end     -- End range images loop.
-        end         -- End valid range sprite check.
+                local rangeLayer <const> = rangeLayers[i]
+                if (not rangeLayer.isGroup)
+                    and (not rangeLayer.isReference)
+                    and (includeHidden or rangeLayer.isVisible)
+                    and (includeLocked or rangeLayer.isEditable)
+                    and (includeTiles or (not rangeLayer.isTilemap))
+                    and (includeBkg or (not rangeLayer.isBackground)) then
+                    trgLayers[#trgLayers + 1] = rangeLayer
+                end
+            end
+        end
 
         if tlHidden then
             app.command.Timeline { close = true }
         end
 
-        return trgCels
-    elseif target == "SELECTION" then
-        if frame then
-            local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
-            local selBounds <const> = sel.bounds
-            local xSel <const> = selBounds.x
-            local ySel <const> = selBounds.y
-            local activeSpec <const> = sprite.spec
-            local alphaIndex <const> = activeSpec.transparentColor
-
-            -- Create a subset of flattened sprite.
-            local flatSpec <const> = ImageSpec {
-                width = math.max(1, selBounds.width),
-                height = math.max(1, selBounds.height),
-                colorMode = activeSpec.colorMode,
-                transparentColor = alphaIndex
-            }
-            flatSpec.colorSpace = activeSpec.colorSpace
-
-            local flatImage <const> = Image(flatSpec)
-            flatImage:drawSprite(sprite, frame, Point(-xSel, -ySel))
-
-            -- Remove pixels within selection bounds but not in selection.
-            local flatPxItr <const> = flatImage:pixels()
-            for pixel in flatPxItr do
-                local x <const> = pixel.x + xSel
-                local y <const> = pixel.y + ySel
-                if not sel:contains(x, y) then
-                    pixel(alphaIndex)
-                end
-            end
-
-            local adjCel = nil
-            app.transaction("Cel From Mask", function()
-                local adjLayer <const> = sprite:newLayer()
-                adjLayer.name = "Mask Layer"
-                adjCel = sprite:newCel(
-                    adjLayer, frame,
-                    flatImage, Point(xSel, ySel))
-            end)
-
-            return { adjCel }
-        end
-        return {}
+        return trgLayers
     else
         -- Default to "ACTIVE"
-        if layer and frame then
-            ---@type Layer[]
-            local leaves <const> = {}
-            AseUtilities.appendLeaves(
-                layer, leaves,
-                includeLocked,
-                includeHidden,
-                includeTiles,
-                includeBkg)
-            return AseUtilities.getUniqueCelsFromLeaves(leaves, { frame })
+        if layer then
+            return AseUtilities.appendLeaves(layer, {},
+                includeLocked, includeHidden, includeTiles, includeBkg)
         end
         return {}
     end
@@ -1757,14 +1789,14 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
 
         ---@type integer[][]
         local frIdcsRange = { {} }
-        local appRange <const> = app.range
-        if appRange.sprite == sprite then
-            local rangeType <const> = appRange.type
+        local range <const> = app.range
+        if range.sprite == sprite then
+            local rangeType <const> = range.type
             if rangeType == RangeType.LAYERS then
                 frIdcsRange = { AseUtilities.frameObjsToIdcs(sprite.frames) }
             else
                 local frIdcs1 <const> = AseUtilities.frameObjsToIdcs(
-                    appRange.frames)
+                    range.frames)
                 if batch then
                     frIdcsRange = Utilities.sequential(frIdcs1)
                 else

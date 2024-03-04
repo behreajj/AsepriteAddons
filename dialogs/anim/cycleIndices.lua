@@ -110,7 +110,6 @@ dlg:button {
         -- Unpack sprite spec.
         local activeSpec <const> = activeSprite.spec
         local colorMode <const> = activeSpec.colorMode
-        local colorSpace <const> = activeSpec.colorSpace
         local alphaIndex <const> = activeSpec.transparentColor
 
         local isTileMap = false
@@ -128,45 +127,8 @@ dlg:button {
                 return
             end
 
-            local sel <const>, _ <const> = AseUtilities.getSelection(
-                activeSprite)
-            local selBounds <const> = sel.bounds
-            local xSel <const> = selBounds.x
-            local ySel <const> = selBounds.y
-
-            local selSpec <const> = AseUtilities.createSpec(
-                selBounds.width, selBounds.height,
-                colorMode, colorSpace, alphaIndex)
-
-            app.transaction("Selection Layer", function()
-                srcLayer = activeSprite:newLayer()
-                srcLayer.name = "Selection"
-
-                local i = 0
-                while i < lenFrames do
-                    i = i + 1
-
-                    -- Blit flattened sprite to image.
-                    local srcFrame <const> = frames[i]
-                    local selImage <const> = Image(selSpec)
-                    selImage:drawSprite(
-                        activeSprite, srcFrame, Point(-xSel, -ySel))
-
-                    -- Set pixels not in selection to alpha.
-                    local pxItr <const> = selImage:pixels()
-                    for pixel in pxItr do
-                        local x <const> = pixel.x + xSel
-                        local y <const> = pixel.y + ySel
-                        if not sel:contains(x, y) then
-                            pixel(alphaIndex)
-                        end
-                    end
-
-                    activeSprite:newCel(
-                        srcLayer, srcFrame,
-                        selImage, Point(xSel, ySel))
-                end
-            end)
+            AseUtilities.filterCels(activeSprite, srcLayer, frames, "SELECTION")
+            srcLayer = activeSprite.layers[#activeSprite.layers]
         else
             if not srcLayer then
                 app.alert {
@@ -402,7 +364,9 @@ dlg:button {
         end)
 
         if isSelect then
-            activeSprite:deleteLayer(srcLayer)
+            app.transaction("Delete Layer", function()
+                activeSprite:deleteLayer(srcLayer)
+            end)
         end
 
         app.refresh()

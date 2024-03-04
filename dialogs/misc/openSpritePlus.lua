@@ -279,7 +279,7 @@ dlg:button {
         local trimCels <const> = args.trimCels --[[@as boolean]]
         if trimCels then
             local cels <const> = AseUtilities.filterCels(
-                openSprite, nil, nil, "ALL",
+                openSprite, nil, {}, "ALL",
                 true, true, false, false)
             app.transaction("Trim Cels", function()
                 local j = 0
