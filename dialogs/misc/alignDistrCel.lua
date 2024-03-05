@@ -5,8 +5,8 @@ local layerTargetOptions <const> = { "ACTIVE", "ALL", "RANGE" }
 local referToOptions <const> = { "CELS", "SELECTION", "SPRITE" }
 
 local defaults <const> = {
-    -- For full range of options, such as layer filter toggles and frame range,
-    -- see layersExport.
+    -- Refer to Inkscape for more options. Maybe for selection only, have an
+    -- option to align inside or outside of reference.
     layerTarget = "ALL",
     includeLocked = false,
     includeHidden = false,
@@ -251,29 +251,32 @@ local function alignCels(dialog, preset)
     local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
 
     local celFunc = nil
+    local transactPrefix = "Transaction"
     if preset == "LEFT" then
         celFunc = alignLeft
+        transactPrefix = "Align Left"
     elseif preset == "CENTER_HORIZ" then
         celFunc = alignCenterHoriz
+        transactPrefix = "Align Horizontal Center"
     elseif preset == "RIGHT" then
         celFunc = alignRight
+        transactPrefix = "Align Right"
     elseif preset == "TOP" then
         celFunc = alignTop
+        transactPrefix = "Align Top"
     elseif preset == "CENTER_VERT" then
         celFunc = alignCenterVert
+        transactPrefix = "Align Vertical Center"
     elseif preset == "DISTR_HORIZ" then
         celFunc = distrHoriz
+        transactPrefix = "Distribute Horizontal"
     elseif preset == "DISTR_VERT" then
         celFunc = distrVert
+        transactPrefix = "Distribute Vertical"
     else
         -- Default to bottom
         celFunc = alignBottom
-    end
-
-    local transactPrefix = "Align"
-    if preset == "DISTR_HORIZ"
-        or preset == "DISTR_VERT" then
-        transactPrefix = "Distribute"
+        transactPrefix = "Align Bottom"
     end
 
     local sortFunc = nil
@@ -356,8 +359,8 @@ local function alignCels(dialog, preset)
             tsort(cels, sortFunc)
 
             local transactStr <const> = strfmt(
-                "%s %s %d",
-                transactPrefix, preset, frameUiOffset + frIdx)
+                "%s %d",
+                transactPrefix, frameUiOffset + frIdx)
             transact(transactStr, function()
                 local k = 0
                 while k < lenCels do

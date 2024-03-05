@@ -19,6 +19,8 @@ local defaults <const> = {
     scale = 1,
     useChecker = false,
     usePixelAspect = true,
+    lblReset = 100,
+    lblBold = 5,
 }
 
 ---@param bm BlendMode blend mode
@@ -1018,6 +1020,8 @@ dlg:button {
         end
 
         if useRowColLabels then
+            local lblReset <const> = defaults.lblReset
+            local lblBold <const> = defaults.lblBold
             local xRowLabel <const> = wnBorder + border + wScale * 0.5
             local yColLabel <const> = hnBorder + border + hScale * 0.5
 
@@ -1026,9 +1030,12 @@ dlg:button {
             while i < hNative do
                 local y1mrg <const> = border + (i + 1) * padding
                 local cy <const> = y1mrg + i * hScale + hScale * 0.5
+                local fwStr <const> = i % lblBold == 0
+                    and " font-weight=\"bold\""
+                    or ""
                 local labelStr <const> = strfmt(
-                    "<text id=\"rowlabel%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#000000\">%d</text>",
-                    i, xRowLabel, cy, i % 100)
+                    "<text id=\"rowlabel%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#000000\"%s>%d</text>",
+                    i, xRowLabel, cy, fwStr, i % lblReset)
                 labelsStrArr[#labelsStrArr + 1] = labelStr
                 i = i + 1
             end
@@ -1039,9 +1046,12 @@ dlg:button {
             while j < wNative do
                 local x1mrg <const> = border + (j + 1) * padding
                 local cx <const> = x1mrg + j * wScale + wScale * 0.5
+                local fwStr <const> = j % lblBold == 0
+                    and " font-weight=\"bold\""
+                    or ""
                 local labelStr <const> = strfmt(
-                    "<text id=\"collabel%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#000000\">%d</text>",
-                    j, cx, yColLabel, j % 100)
+                    "<text id=\"collabel%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#000000\"%s>%d</text>",
+                    j, cx, yColLabel, fwStr, j % lblReset)
                 labelsStrArr[#labelsStrArr + 1] = labelStr
                 j = j + 1
             end
