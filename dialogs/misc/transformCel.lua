@@ -15,6 +15,43 @@ local defaults <const> = {
     units = "PERCENT"
 }
 
+---@param dialog Dialog
+---@param x integer
+---@param y integer
+local function translateCels(dialog, x, y)
+    if x == 0 and y == 0 then return end
+    local site <const> = app.site
+    local activeSprite <const> = site.sprite
+    if not activeSprite then return end
+    local activeLayer <const> = site.layer
+
+    local args <const> = dialog.data
+    local target <const> = args.target
+        or defaults.target --[[@as string]]
+    local cels <const> = AseUtilities.filterCels(
+        activeSprite, activeLayer, activeSprite.frames, target,
+        false, false, false, false)
+    local lenCels <const> = #cels
+
+    -- TODO: Consolidate this with transaction below.
+    app.transaction("Commit Mask", function()
+        app.command.InvertMask()
+        app.command.InvertMask()
+    end)
+
+    app.transaction("Nudge Cels", function()
+        local i = 0
+        while i < lenCels do
+            i = i + 1
+            local cel <const> = cels[i]
+            local op <const> = cel.position
+            cel.position = Point(op.x + x, op.y + y)
+        end
+    end)
+
+    app.refresh()
+end
+
 ---@param xSrc number
 ---@param ySrc number
 ---@param wSrc integer
@@ -242,6 +279,45 @@ dlg:button {
         end
 
         app.refresh()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "nudgeUp",
+    text = "&I",
+    label = "Nudge:",
+    focus = false,
+    onclick = function()
+        translateCels(dlg, 0, -1)
+    end
+}
+
+dlg:button {
+    id = "nudgeLeft",
+    text = "&J",
+    focus = false,
+    onclick = function()
+        translateCels(dlg, -1, 0)
+    end
+}
+
+dlg:button {
+    id = "nudgeDown",
+    text = "&K",
+    focus = false,
+    onclick = function()
+        translateCels(dlg, 0, 1)
+    end
+}
+
+dlg:button {
+    id = "nudgeRight",
+    text = "&L",
+    focus = false,
+    onclick = function()
+        translateCels(dlg, 1, 0)
     end
 }
 
@@ -770,7 +846,7 @@ dlg:button {
 
 dlg:button {
     id = "scaleButton",
-    text = "SCA&LE",
+    text = "&SCALE",
     focus = false,
     onclick = function()
         -- Early returns.
