@@ -33,13 +33,10 @@ local function translateCels(dialog, x, y)
         false, false, false, false)
     local lenCels <const> = #cels
 
-    -- TODO: Consolidate this with transaction below.
-    app.transaction("Commit Mask", function()
-        app.command.InvertMask()
-        app.command.InvertMask()
-    end)
-
     app.transaction("Nudge Cels", function()
+        app.command.InvertMask()
+        app.command.InvertMask()
+
         local i = 0
         while i < lenCels do
             i = i + 1
@@ -127,11 +124,6 @@ dlg:button {
             false, false, false, false)
         local lenCels <const> = #cels
 
-        app.transaction("Commit Mask", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-        end)
-
         local docPrefs <const> = app.preferences.document(activeSprite)
         local snap <const> = docPrefs.grid.snap --[[@as boolean]]
         if snap then
@@ -144,6 +136,9 @@ dlg:button {
             local dynz <const> = dy ~= 0.0
             local round <const> = Utilities.round
             app.transaction("Move Cels Snap", function()
+                app.command.InvertMask()
+                app.command.InvertMask()
+
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -164,6 +159,9 @@ dlg:button {
             end)
         else
             app.transaction("Move Cels", function()
+                app.command.InvertMask()
+                app.command.InvertMask()
+
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -202,11 +200,6 @@ dlg:button {
             false, false, false, true)
         local lenCels <const> = #cels
 
-        app.transaction("Commit Mask", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-        end)
-
         local trimAlpha <const> = AseUtilities.trimImageAlpha
         local wrap <const> = AseUtilities.wrapImage
         local spriteSpec <const> = activeSprite.spec
@@ -218,6 +211,9 @@ dlg:button {
         if tiledMode == 3 then
             -- Tiling on both axes.
             app.transaction("Wrap Cels", function()
+                app.command.InvertMask()
+                app.command.InvertMask()
+
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -235,6 +231,9 @@ dlg:button {
         elseif tiledMode == 2 then
             -- Vertical tiling.
             app.transaction("Wrap V", function()
+                app.command.InvertMask()
+                app.command.InvertMask()
+
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -252,6 +251,9 @@ dlg:button {
         elseif tiledMode == 1 then
             -- Horizontal tiling.
             app.transaction("Wrap H", function()
+                app.command.InvertMask()
+                app.command.InvertMask()
+
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -269,6 +271,9 @@ dlg:button {
         else
             --No tiling.
             app.transaction("Wrap Cels", function()
+                app.command.InvertMask()
+                app.command.InvertMask()
+
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -370,11 +375,6 @@ dlg:button {
             false, false, false, false)
         local lenCels <const> = #cels
 
-        app.transaction("Commit Mask", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-        end)
-
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians = degrees * 0.017453292519943
         if query then radians = query end
@@ -382,6 +382,9 @@ dlg:button {
         local absTan <const> = math.abs(tana)
 
         app.transaction("Skew X", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -477,11 +480,6 @@ dlg:button {
             false, false, false, false)
         local lenCels <const> = #cels
 
-        app.transaction("Commit Mask", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-        end)
-
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians = degrees * 0.017453292519943
         if query then radians = query end
@@ -489,6 +487,9 @@ dlg:button {
         local absTan <const> = math.abs(tana)
 
         app.transaction("Skew Y", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -571,11 +572,6 @@ dlg:button {
             false, false, false, false)
         local lenCels <const> = #cels
 
-        app.transaction("Commit Mask", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-        end)
-
         if degrees == 90 or degrees == 270 then
             local rotFunc = AseUtilities.rotateImage90
             if degrees == 270 then
@@ -583,6 +579,9 @@ dlg:button {
             end
 
             app.transaction("Rotate Cels", function()
+                app.command.InvertMask()
+                app.command.InvertMask()
+
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -605,6 +604,9 @@ dlg:button {
         elseif degrees == 180 then
             local rot180 <const> = AseUtilities.rotateImage180
             app.transaction("Rotate Cels", function()
+                app.command.InvertMask()
+                app.command.InvertMask()
+
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -643,6 +645,9 @@ dlg:button {
             -- and-no-clipping/
 
             app.transaction("Rotate Cels", function()
+                app.command.InvertMask()
+                app.command.InvertMask()
+
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -785,13 +790,11 @@ dlg:button {
             false, false, false, true)
         local lenCels <const> = #cels
 
-        app.transaction("Commit Mask", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-        end)
-
         local fliph <const> = FlipType.HORIZONTAL
         app.transaction("Flip H", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -823,13 +826,11 @@ dlg:button {
             false, false, false, true)
         local lenCels <const> = #cels
 
-        app.transaction("Commit Mask", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-        end)
-
         local flipv <const> = FlipType.VERTICAL
         app.transaction("Flip V", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -903,14 +904,12 @@ dlg:button {
             false, false, false, false)
         local lenCels = #cels
 
-        app.transaction("Commit Mask", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-        end)
-
         local sample <const> = sampleNear
 
         app.transaction("Scale Cels", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+
             local o = 0
             while o < lenCels do
                 o = o + 1
