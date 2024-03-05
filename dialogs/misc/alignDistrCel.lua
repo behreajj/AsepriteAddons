@@ -167,7 +167,7 @@ local function distrVert(
 end
 
 ---@param dialog Dialog
----@param preset "LEFT"|"CENTER_HORIZ"|"RIGHT"|"TOP"|"CENTER_VERT"|"BOTTOM"|"DISTR_HORIZ"|"DISTR_VERT"
+---@param preset string
 local function alignCels(dialog, preset)
     -- Early returns.
     local site <const> = app.site
@@ -211,10 +211,10 @@ local function alignCels(dialog, preset)
         app.site.layer, layerTarget, includeLocked, includeHidden,
         includeTiles, includeBkg)
     local lenFilteredLayers <const> = #filteredLayers
-    if lenFilteredLayers < 2 then
+    if lenFilteredLayers < 1 then
         app.alert {
             title = "Error",
-            text = "At least 2 layers must be selected."
+            text = "No layers were selected."
         }
         return
     end
@@ -348,7 +348,8 @@ local function alignCels(dialog, preset)
         end
 
         if xMaxEdge > xMinEdge and yMaxEdge > yMinEdge then
-            local kToFac <const> = 1.0 / (lenCels - 1.0)
+            local kToFac <const> = lenCels > 1 and 1.0 / (lenCels - 1.0) or 0.0
+            local facOff <const> = lenCels > 1 and 0.0 or 0.5
             local xCenter <const> = (xMinEdge + xMaxEdge) * 0.5
             local yCenter <const> = (yMinEdge + yMaxEdge) * 0.5
 
@@ -360,7 +361,7 @@ local function alignCels(dialog, preset)
             transact(transactStr, function()
                 local k = 0
                 while k < lenCels do
-                    local kFac <const> = k * kToFac
+                    local kFac <const> = k * kToFac + facOff
                     k = k + 1
                     local cel <const> = cels[k]
                     local srcBounds <const> = cel.bounds
@@ -522,3 +523,8 @@ dlg:show {
     autoscrollbars = true,
     wait = false
 }
+
+local dlgBounds <const> = dlg.bounds
+dlg.bounds = Rectangle(
+    dlgBounds.x * 2 - 42, dlgBounds.y,
+    dlgBounds.w, dlgBounds.h)
