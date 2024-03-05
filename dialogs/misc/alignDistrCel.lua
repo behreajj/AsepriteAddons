@@ -281,14 +281,14 @@ local function alignCels(dialog, preset)
     while i < lenSelFrames do
         i = i + 1
         local frIdx <const> = selFrames[i]
-        local xMinEdge = wSprite
-        local xMaxEdge = 0
-        local yMinEdge = hSprite
-        local yMaxEdge = 0
-        -- local xMinEdge = 2147483647
-        -- local xMaxEdge = -2147483648
-        -- local yMinEdge = 2147483647
-        -- local yMaxEdge = -2147483648
+        -- local xMinEdge = wSprite
+        -- local xMaxEdge = 0
+        -- local yMinEdge = hSprite
+        -- local yMaxEdge = 0
+        local xMinEdge = 2147483647
+        local xMaxEdge = -2147483648
+        local yMinEdge = 2147483647
+        local yMaxEdge = -2147483648
 
         ---@type Cel[]
         local cels <const> = {}
@@ -318,30 +318,32 @@ local function alignCels(dialog, preset)
             end
         end
 
-        local kToFac <const> = 1.0 / (lenCels - 1.0)
-        local xCenter <const> = (xMinEdge + xMaxEdge) * 0.5
-        local yCenter <const> = (yMinEdge + yMaxEdge) * 0.5
+        if xMaxEdge > xMinEdge and yMaxEdge > yMinEdge then
+            local kToFac <const> = 1.0 / (lenCels - 1.0)
+            local xCenter <const> = (xMinEdge + xMaxEdge) * 0.5
+            local yCenter <const> = (yMinEdge + yMaxEdge) * 0.5
 
-        tsort(cels, sortFunc)
+            tsort(cels, sortFunc)
 
-        local transactStr <const> = strfmt(
-            "%s %s %d",
-            transactPrefix, preset, frameUiOffset + frIdx)
-        transact(transactStr, function()
-            local k = 0
-            while k < lenCels do
-                local kFac <const> = k * kToFac
-                k = k + 1
-                local cel <const> = cels[k]
-                local srcBounds <const> = cel.bounds
+            local transactStr <const> = strfmt(
+                "%s %s %d",
+                transactPrefix, preset, frameUiOffset + frIdx)
+            transact(transactStr, function()
+                local k = 0
+                while k < lenCels do
+                    local kFac <const> = k * kToFac
+                    k = k + 1
+                    local cel <const> = cels[k]
+                    local srcBounds <const> = cel.bounds
 
-                local xtlTrg, ytlTrg = celFunc(
-                    srcBounds,
-                    xMinEdge, xCenter, xMaxEdge,
-                    yMinEdge, yCenter, yMaxEdge, kFac)
-                cel.position = Point(xtlTrg, ytlTrg)
-            end
-        end)
+                    local xtlTrg, ytlTrg = celFunc(
+                        srcBounds,
+                        xMinEdge, xCenter, xMaxEdge,
+                        yMinEdge, yCenter, yMaxEdge, kFac)
+                    cel.position = Point(xtlTrg, ytlTrg)
+                end
+            end)
+        end
     end
 
     app.refresh()
