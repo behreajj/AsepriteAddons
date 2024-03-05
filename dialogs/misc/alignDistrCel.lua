@@ -130,7 +130,8 @@ local function distrHoriz(
     srcBounds,
     xMinEdge, xCenter, xMaxEdge,
     yMinEdge, yCenter, yMaxEdge, fac)
-    if fac <= 0.0 or fac >= 1.0 then return srcBounds.x, srcBounds.y end
+    if fac <= 0.0 then return xMinEdge, srcBounds.y end
+    if fac >= 1.0 then return xMaxEdge + 1 - srcBounds.width, srcBounds.y end
     local u <const> = 1.0 - fac
     local wCelHalf <const> = srcBounds.width * 0.5
     local xCelCenter <const> = u * (xMinEdge + wCelHalf)
@@ -153,7 +154,8 @@ local function distrVert(
     srcBounds,
     xMinEdge, xCenter, xMaxEdge,
     yMinEdge, yCenter, yMaxEdge, fac)
-    if fac <= 0.0 or fac >= 1.0 then return srcBounds.x, srcBounds.y end
+    if fac <= 0.0 then return srcBounds.x, yMinEdge end
+    if fac >= 1.0 then return srcBounds.x, yMaxEdge + 1 - srcBounds.height end
     local u <const> = 1.0 - fac
     local hCelHalf <const> = srcBounds.height * 0.5
     local yCelCenter <const> = u * (yMinEdge + hCelHalf)
@@ -283,6 +285,10 @@ local function alignCels(dialog, preset)
         local xMaxEdge = 0
         local yMinEdge = hSprite
         local yMaxEdge = 0
+        -- local xMinEdge = 2147483647
+        -- local xMaxEdge = -2147483648
+        -- local yMinEdge = 2147483647
+        -- local yMaxEdge = -2147483648
 
         ---@type Cel[]
         local cels <const> = {}

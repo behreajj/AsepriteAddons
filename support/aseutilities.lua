@@ -1510,7 +1510,7 @@ function AseUtilities.filterLayers(
             includeLocked, includeHidden, includeTiles, includeBkg)
     elseif target == "RANGE" then
         ---@type Layer[]
-        local trgLayers <const> = {}
+        local trgLayers = {}
 
         local tlHidden <const> = not app.preferences.general.visible_timeline
         if tlHidden then
@@ -1519,19 +1519,24 @@ function AseUtilities.filterLayers(
 
         local range <const> = app.range
         if range.sprite == sprite then
-            local rangeLayers <const> = range.layers
-            local lenRangeLayers <const> = #rangeLayers
-            local i = 0
-            while i < lenRangeLayers do
-                i = i + 1
-                local rangeLayer <const> = rangeLayers[i]
-                if (not rangeLayer.isGroup)
-                    and (not rangeLayer.isReference)
-                    and (includeHidden or rangeLayer.isVisible)
-                    and (includeLocked or rangeLayer.isEditable)
-                    and (includeTiles or (not rangeLayer.isTilemap))
-                    and (includeBkg or (not rangeLayer.isBackground)) then
-                    trgLayers[#trgLayers + 1] = rangeLayer
+            if range.type == RangeType.FRAMES then
+                trgLayers = AseUtilities.getLayerHierarchy(sprite,
+                    includeLocked, includeHidden, includeTiles, includeBkg)
+            else
+                local rangeLayers <const> = range.layers
+                local lenRangeLayers <const> = #rangeLayers
+                local i = 0
+                while i < lenRangeLayers do
+                    i = i + 1
+                    local rangeLayer <const> = rangeLayers[i]
+                    if (not rangeLayer.isGroup)
+                        and (not rangeLayer.isReference)
+                        and (includeHidden or rangeLayer.isVisible)
+                        and (includeLocked or rangeLayer.isEditable)
+                        and (includeTiles or (not rangeLayer.isTilemap))
+                        and (includeBkg or (not rangeLayer.isBackground)) then
+                        trgLayers[#trgLayers + 1] = rangeLayer
+                    end
                 end
             end
         end
