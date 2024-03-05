@@ -1,7 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "RANGE" }
-local layerTargetOptions <const> = { "ALL", "RANGE" }
+local layerTargetOptions <const> = { "ACTIVE", "ALL", "RANGE" }
 local referToOptions <const> = { "CELS", "SELECTION", "SPRITE" }
 
 local defaults <const> = {
@@ -340,7 +340,7 @@ local function alignCels(dialog, preset)
             end
         end
 
-        if useAbsRef then
+        if useAbsRef or lenCels < 2 then
             xMinEdge = xMinRef
             xMaxEdge = xMaxRef
             yMinEdge = yMinRef
