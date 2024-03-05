@@ -1519,7 +1519,8 @@ function AseUtilities.filterLayers(
 
         local range <const> = app.range
         if range.sprite == sprite then
-            if range.type == RangeType.FRAMES then
+            local rangeType <const> = range.type
+            if rangeType == RangeType.FRAMES then
                 trgLayers = AseUtilities.getLayerHierarchy(sprite,
                     includeLocked, includeHidden, includeTiles, includeBkg)
             else

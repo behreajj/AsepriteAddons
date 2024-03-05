@@ -2,6 +2,7 @@ dofile("../../support/aseutilities.lua")
 
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "RANGE" }
 local layerTargetOptions <const> = { "ALL", "RANGE" }
+local referToOptions <const> = { "CELS", "SELECTION", "SPRITE" }
 
 local defaults <const> = {
     -- For full range of options, such as layer filter toggles and frame range,
@@ -12,6 +13,7 @@ local defaults <const> = {
     includeTiles = true,
     includeBkg = false,
     frameTarget = "ACTIVE",
+    referTo = "CELS",
 }
 
 ---@param srcBounds Rectangle
@@ -45,7 +47,7 @@ local function alignCenterHoriz(
     srcBounds,
     xMinEdge, xCenter, xMaxEdge,
     yMinEdge, yCenter, yMaxEdge, fac)
-    return math.floor(0.5 + xCenter - srcBounds.width * 0.5), srcBounds.y
+    return Utilities.round(xCenter - srcBounds.width * 0.5), srcBounds.y
 end
 
 ---@param srcBounds Rectangle
@@ -96,7 +98,7 @@ local function alignCenterVert(
     srcBounds,
     xMinEdge, xCenter, xMaxEdge,
     yMinEdge, yCenter, yMaxEdge, fac)
-    return srcBounds.x, math.floor(0.5 + yCenter - srcBounds.height * 0.5)
+    return srcBounds.x, Utilities.round(yCenter - srcBounds.height * 0.5)
 end
 
 ---@param srcBounds Rectangle
@@ -136,7 +138,7 @@ local function distrHoriz(
     local wCelHalf <const> = srcBounds.width * 0.5
     local xCelCenter <const> = u * (xMinEdge + wCelHalf)
         + fac * (xMaxEdge - wCelHalf)
-    local xtl <const> = math.floor(0.5 + xCelCenter - wCelHalf)
+    local xtl <const> = Utilities.round(xCelCenter - wCelHalf)
     return xtl, srcBounds.y
 end
 
@@ -160,7 +162,7 @@ local function distrVert(
     local hCelHalf <const> = srcBounds.height * 0.5
     local yCelCenter <const> = u * (yMinEdge + hCelHalf)
         + fac * (yMaxEdge - hCelHalf)
-    local ytl <const> = math.floor(0.5 + yCelCenter - hCelHalf)
+    local ytl <const> = Utilities.round(yCelCenter - hCelHalf)
     return srcBounds.x, ytl
 end
 
@@ -183,6 +185,8 @@ local function alignCels(dialog, preset)
     local hSprite <const> = spriteSpec.height
 
     local args <const> = dialog.data
+    local referTo <const> = args.referTo
+        or defaults.referTo --[[@as boolean]]
     local frameTarget <const> = args.frameTarget
         or defaults.frameTarget --[[@as string]]
     local layerTarget <const> = args.layerTarget
@@ -215,10 +219,32 @@ local function alignCels(dialog, preset)
         return
     end
 
-    app.transaction("Commit Mask", function()
-        app.command.InvertMask()
-        app.command.InvertMask()
-    end)
+    local useAbsRef = referTo ~= "CELS"
+    local referToMask = referTo == "SELECTION"
+
+    local xMinRef = 0
+    local xMaxRef = wSprite - 1
+    local yMinRef = 0
+    local yMaxRef = hSprite - 1
+
+    if referToMask then
+        local sel <const>, isValid <const> = AseUtilities.getSelection(
+            activeSprite)
+        if not isValid then
+            useAbsRef = false
+            referToMask = false
+        end
+        local selBounds <const> = sel.bounds
+        xMinRef = selBounds.x
+        xMaxRef = xMinRef + math.max(1, math.abs(selBounds.width)) - 1
+        yMinRef = selBounds.y
+        yMaxRef = yMinRef + math.max(1, math.abs(selBounds.height)) - 1
+    else
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
+    end
 
     local docPrefs <const> = app.preferences.document(activeSprite)
     local tlPrefs <const> = docPrefs.timeline
@@ -281,10 +307,6 @@ local function alignCels(dialog, preset)
     while i < lenSelFrames do
         i = i + 1
         local frIdx <const> = selFrames[i]
-        -- local xMinEdge = wSprite
-        -- local xMaxEdge = 0
-        -- local yMinEdge = hSprite
-        -- local yMaxEdge = 0
         local xMinEdge = 2147483647
         local xMaxEdge = -2147483648
         local yMinEdge = 2147483647
@@ -316,6 +338,13 @@ local function alignCels(dialog, preset)
                 if yTop < yMinEdge then yMinEdge = yTop end
                 if yBottom > yMaxEdge then yMaxEdge = yBottom end
             end
+        end
+
+        if useAbsRef then
+            xMinEdge = xMinRef
+            xMaxEdge = xMaxRef
+            yMinEdge = yMinRef
+            yMaxEdge = yMaxRef
         end
 
         if xMaxEdge > xMinEdge and yMaxEdge > yMinEdge then
@@ -394,6 +423,15 @@ dlg:combobox {
     label = "Frames:",
     option = defaults.frameTarget,
     options = frameTargetOptions
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "referTo",
+    label = "Refer To:",
+    option = defaults.referTo,
+    options = referToOptions
 }
 
 dlg:separator { id = "alignSep", text = "Align" }
