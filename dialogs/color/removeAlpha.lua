@@ -1,3 +1,12 @@
+local defaults <const> = {
+    -- TODO: Replace these with target options comboboxes for each category?
+    removeLayer = true,
+    removeCel = true,
+    removeImage = true,
+    removeTiles = true,
+    removePalette = true
+}
+
 ---@param srcImg Image
 ---@param absOpaque boolean
 ---@return Image
@@ -58,15 +67,6 @@ local function opaque(srcImg, absOpaque)
     trgImg.bytes = table.concat(strBytes)
     return trgImg
 end
-
-local defaults <const> = {
-    -- TODO: Replace these with target options comboboxes for each category?
-    removeLayer = true,
-    removeCel = true,
-    removeImage = true,
-    removeTiles = true,
-    removePalette = true
-}
 
 local dlg <const> = Dialog { title = "Remove Alpha" }
 

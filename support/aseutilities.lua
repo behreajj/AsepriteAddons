@@ -1430,8 +1430,8 @@ function AseUtilities.filterCels(
         local alphaIndex <const> = spriteSpec.transparentColor
 
         local selSpec <const> = ImageSpec {
-            width = math.max(1, selBounds.width),
-            height = math.max(1, selBounds.height),
+            width = math.max(1, math.abs(selBounds.width)),
+            height = math.max(1, math.abs(selBounds.height)),
             colorMode = spriteSpec.colorMode,
             transparentColor = alphaIndex
         }
