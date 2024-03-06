@@ -124,6 +124,7 @@ dlg:button {
             false, false, false, false)
         local lenCels <const> = #cels
 
+        -- TODO: Consolidate this with nudgeCel logic above?
         local docPrefs <const> = app.preferences.document(activeSprite)
         local snap <const> = docPrefs.grid.snap --[[@as boolean]]
         if snap then

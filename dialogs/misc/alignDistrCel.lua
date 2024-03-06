@@ -3,10 +3,10 @@ dofile("../../support/aseutilities.lua")
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "RANGE" }
 local layerTargetOptions <const> = { "ACTIVE", "ALL", "RANGE" }
 local referToOptions <const> = { "CELS", "SELECTION", "SPRITE" }
+local inOutOptions <const> = { "INSIDE", "OUTSIDE" }
 
 local defaults <const> = {
-    -- Refer to Inkscape for more options. Maybe for selection only, have an
-    -- option to align inside or outside of reference.
+    -- Refer to Inkscape for UI/UX.
     layerTarget = "ALL",
     includeLocked = false,
     includeHidden = false,
@@ -14,6 +14,7 @@ local defaults <const> = {
     includeBkg = false,
     frameTarget = "ACTIVE",
     referTo = "CELS",
+    inOut = "INSIDE",
 }
 
 ---@param srcBounds Rectangle
@@ -26,11 +27,28 @@ local defaults <const> = {
 ---@param fac number
 ---@return integer
 ---@return integer
-local function alignLeft(
+local function alignLeftInside(
     srcBounds,
     xMinEdge, xCenter, xMaxEdge,
     yMinEdge, yCenter, yMaxEdge, fac)
     return xMinEdge, srcBounds.y
+end
+
+---@param srcBounds Rectangle
+---@param xMinEdge integer
+---@param xCenter number
+---@param xMaxEdge integer
+---@param yMinEdge integer
+---@param yCenter number
+---@param yMaxEdge integer
+---@param fac number
+---@return integer
+---@return integer
+local function alignLeftOutside(
+    srcBounds,
+    xMinEdge, xCenter, xMaxEdge,
+    yMinEdge, yCenter, yMaxEdge, fac)
+    return xMinEdge - srcBounds.width, srcBounds.y
 end
 
 ---@param srcBounds Rectangle
@@ -60,7 +78,7 @@ end
 ---@param fac number
 ---@return integer
 ---@return integer
-local function alignRight(
+local function alignRightInside(
     srcBounds,
     xMinEdge, xCenter, xMaxEdge,
     yMinEdge, yCenter, yMaxEdge, fac)
@@ -77,11 +95,45 @@ end
 ---@param fac number
 ---@return integer
 ---@return integer
-local function alignTop(
+local function alignRightOutside(
+    srcBounds,
+    xMinEdge, xCenter, xMaxEdge,
+    yMinEdge, yCenter, yMaxEdge, fac)
+    return xMaxEdge + 1, srcBounds.y
+end
+
+---@param srcBounds Rectangle
+---@param xMinEdge integer
+---@param xCenter number
+---@param xMaxEdge integer
+---@param yMinEdge integer
+---@param yCenter number
+---@param yMaxEdge integer
+---@param fac number
+---@return integer
+---@return integer
+local function alignTopInside(
     srcBounds,
     xMinEdge, xCenter, xMaxEdge,
     yMinEdge, yCenter, yMaxEdge, fac)
     return srcBounds.x, yMinEdge
+end
+
+---@param srcBounds Rectangle
+---@param xMinEdge integer
+---@param xCenter number
+---@param xMaxEdge integer
+---@param yMinEdge integer
+---@param yCenter number
+---@param yMaxEdge integer
+---@param fac number
+---@return integer
+---@return integer
+local function alignTopOutside(
+    srcBounds,
+    xMinEdge, xCenter, xMaxEdge,
+    yMinEdge, yCenter, yMaxEdge, fac)
+    return srcBounds.x, yMinEdge - srcBounds.h
 end
 
 ---@param srcBounds Rectangle
@@ -111,11 +163,28 @@ end
 ---@param fac number
 ---@return integer
 ---@return integer
-local function alignBottom(
+local function alignBottomInside(
     srcBounds,
     xMinEdge, xCenter, xMaxEdge,
     yMinEdge, yCenter, yMaxEdge, fac)
     return srcBounds.x, yMaxEdge + 1 - srcBounds.height
+end
+
+---@param srcBounds Rectangle
+---@param xMinEdge integer
+---@param xCenter number
+---@param xMaxEdge integer
+---@param yMinEdge integer
+---@param yCenter number
+---@param yMaxEdge integer
+---@param fac number
+---@return integer
+---@return integer
+local function alignBottomOutside(
+    srcBounds,
+    xMinEdge, xCenter, xMaxEdge,
+    yMinEdge, yCenter, yMaxEdge, fac)
+    return srcBounds.x, yMaxEdge + 1
 end
 
 ---@param srcBounds Rectangle
@@ -187,6 +256,8 @@ local function alignCels(dialog, preset)
     local args <const> = dialog.data
     local referTo <const> = args.referTo
         or defaults.referTo --[[@as boolean]]
+    local inOut <const> = args.inOut
+        or defaults.inOut --[[@as string]]
     local frameTarget <const> = args.frameTarget
         or defaults.frameTarget --[[@as string]]
     local layerTarget <const> = args.layerTarget
@@ -252,17 +323,30 @@ local function alignCels(dialog, preset)
 
     local celFunc = nil
     local transactPrefix = "Transaction"
+    local isOutside = referToMask and inOut == "OUTSIDE"
     if preset == "LEFT" then
-        celFunc = alignLeft
+        if isOutside then
+            celFunc = alignLeftOutside
+        else
+            celFunc = alignLeftInside
+        end
         transactPrefix = "Align Left"
     elseif preset == "CENTER_HORIZ" then
         celFunc = alignCenterHoriz
         transactPrefix = "Align Horizontal Center"
     elseif preset == "RIGHT" then
-        celFunc = alignRight
+        if isOutside then
+            celFunc = alignRightOutside
+        else
+            celFunc = alignRightInside
+        end
         transactPrefix = "Align Right"
     elseif preset == "TOP" then
-        celFunc = alignTop
+        if isOutside then
+            celFunc = alignTopOutside
+        else
+            celFunc = alignTopInside
+        end
         transactPrefix = "Align Top"
     elseif preset == "CENTER_VERT" then
         celFunc = alignCenterVert
@@ -275,7 +359,11 @@ local function alignCels(dialog, preset)
         transactPrefix = "Distribute Vertical"
     else
         -- Default to bottom
-        celFunc = alignBottom
+        if isOutside then
+            celFunc = alignBottomOutside
+        else
+            celFunc = alignBottomInside
+        end
         transactPrefix = "Align Bottom"
     end
 
@@ -435,7 +523,22 @@ dlg:combobox {
     id = "referTo",
     label = "Refer To:",
     option = defaults.referTo,
-    options = referToOptions
+    options = referToOptions,
+    onchange = function()
+        local args <const> = dlg.data
+        local referTo <const> = args.referTo --[[@as string]]
+        local isSel <const> = referTo == "SELECTION"
+        dlg:modify { id = "inOut", visible = isSel }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "inOut",
+    option = defaults.inOut,
+    options = inOutOptions,
+    visible = defaults.referTo == "SELECTION"
 }
 
 dlg:separator { id = "alignSep", text = "Align" }
