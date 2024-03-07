@@ -84,6 +84,8 @@ local function imgToSvgStr(
     local imgWidth <const> = imgSpec.width
     local colorMode <const> = imgSpec.colorMode
     local borderPad <const> = border + padding
+    local wScalePad <const> = wScale + padding
+    local hScalePad <const> = hScale + padding
 
     ---@type table<integer, integer[]>
     local pixelDict <const> = {}
@@ -162,11 +164,8 @@ local function imgToSvgStr(
             local x0 <const> = xOff + (idx % imgWidth)
             local y0 <const> = yOff + (idx // imgWidth)
 
-            local x1mrg <const> = borderPad + x0 * padding
-            local y1mrg <const> = borderPad + y0 * padding
-
-            local ax <const> = x1mrg + x0 * wScale
-            local ay <const> = y1mrg + y0 * hScale
+            local ax <const> = borderPad + x0 * wScalePad
+            local ay <const> = borderPad + y0 * hScalePad
             local bx <const> = ax + wScale
             local by <const> = ay + hScale
 
@@ -228,6 +227,8 @@ local function genLabelSvgStr(
     local wScaleHalf <const> = wScale * 0.5
     local hScaleHalf <const> = hScale * 0.5
     local borderPad <const> = border + padding
+    local wScalePad <const> = wScale + padding
+    local hScalePad <const> = hScale + padding
 
     labelsArr[#labelsArr + 1] = strfmt("<g id=\"%s\">", id)
     local incr = 0
@@ -247,11 +248,8 @@ local function genLabelSvgStr(
             local x0 <const> = xOff + (idx % imgWidth)
             local y0 <const> = yOff + (idx // imgWidth)
 
-            local x1mrg <const> = borderPad + x0 * padding
-            local y1mrg <const> = borderPad + y0 * padding
-
-            local cx <const> = x1mrg + x0 * wScale + wScaleHalf
-            local cy <const> = y1mrg + y0 * hScale + hScaleHalf
+            local cx <const> = borderPad + x0 * wScalePad + wScaleHalf
+            local cy <const> = borderPad + y0 * hScalePad + hScaleHalf
 
             local textStr <const> = strfmt(
                 "<text id=\"pixel%d_%d_%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#%06X\">%d</text>",
@@ -965,6 +963,10 @@ dlg:button {
                 and strfmt(" fill-opacity=\"%.3f\"", aPadding / 255.0)
                 or ""
 
+            local borderPad <const> = border + padding
+            local wScalePad <const> = wScale + padding
+            local hScalePad <const> = hScale + padding
+
             -- Cut out a hole for each pixel (counter-clockwise).
             ---@type string[]
             local holeStrArr <const> = {}
@@ -974,11 +976,8 @@ dlg:button {
                 local y <const> = i // wNative
                 local x <const> = i % wNative
 
-                local x1mrg <const> = border + (x + 1) * padding
-                local y1mrg <const> = border + (y + 1) * padding
-
-                local ax <const> = x1mrg + x * wScale
-                local ay <const> = y1mrg + y * hScale
+                local ax <const> = borderPad + x * wScalePad
+                local ay <const> = borderPad + y * hScalePad
                 local bx <const> = ax + wScale
                 local by <const> = ay + hScale
 
