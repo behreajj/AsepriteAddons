@@ -83,6 +83,7 @@ local function imgToSvgStr(
     local imgSpec <const> = img.spec
     local imgWidth <const> = imgSpec.width
     local colorMode <const> = imgSpec.colorMode
+    local borderPad <const> = border + padding
 
     ---@type table<integer, integer[]>
     local pixelDict <const> = {}
@@ -161,8 +162,8 @@ local function imgToSvgStr(
             local x0 <const> = xOff + (idx % imgWidth)
             local y0 <const> = yOff + (idx // imgWidth)
 
-            local x1mrg <const> = border + (x0 + 1) * padding
-            local y1mrg <const> = border + (y0 + 1) * padding
+            local x1mrg <const> = borderPad + x0 * padding
+            local y1mrg <const> = borderPad + y0 * padding
 
             local ax <const> = x1mrg + x0 * wScale
             local ay <const> = y1mrg + y0 * hScale
@@ -224,6 +225,9 @@ local function genLabelSvgStr(
     ---@type string[]
     local labelsArr <const> = {}
     local strfmt <const> = string.format
+    local wScaleHalf <const> = wScale * 0.5
+    local hScaleHalf <const> = hScale * 0.5
+    local borderPad <const> = border + padding
 
     labelsArr[#labelsArr + 1] = strfmt("<g id=\"%s\">", id)
     local incr = 0
@@ -243,11 +247,11 @@ local function genLabelSvgStr(
             local x0 <const> = xOff + (idx % imgWidth)
             local y0 <const> = yOff + (idx // imgWidth)
 
-            local x1mrg <const> = border + (x0 + 1) * padding
-            local y1mrg <const> = border + (y0 + 1) * padding
+            local x1mrg <const> = borderPad + x0 * padding
+            local y1mrg <const> = borderPad + y0 * padding
 
-            local cx <const> = x1mrg + x0 * wScale + wScale * 0.5
-            local cy <const> = y1mrg + y0 * hScale + hScale * 0.5
+            local cx <const> = x1mrg + x0 * wScale + wScaleHalf
+            local cy <const> = y1mrg + y0 * hScale + hScaleHalf
 
             local textStr <const> = strfmt(
                 "<text id=\"pixel%d_%d_%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#%06X\">%d</text>",
@@ -1022,14 +1026,17 @@ dlg:button {
         if useRowColLabels then
             local lblReset <const> = defaults.lblReset
             local lblBold <const> = defaults.lblBold
-            local xRowLabel <const> = wnBorder + border + wScale * 0.5
-            local yColLabel <const> = hnBorder + border + hScale * 0.5
+            local borderPad <const> = border + padding
+            local wScaleHalf <const> = wScale * 0.5
+            local hScaleHalf <const> = hScale * 0.5
+            local xRowLabel <const> = wnBorder + border + wScaleHalf
+            local yColLabel <const> = hnBorder + border + hScaleHalf
 
             labelsStrArr[#labelsStrArr + 1] = "<g id=\"rowlabels\">"
             local i = 0
             while i < hNative do
-                local y1mrg <const> = border + (i + 1) * padding
-                local cy <const> = y1mrg + i * hScale + hScale * 0.5
+                local y1mrg <const> = borderPad + i * padding
+                local cy <const> = y1mrg + i * hScale + hScaleHalf
                 local fwStr <const> = i % lblBold == 0
                     and " font-weight=\"bold\""
                     or ""
@@ -1044,8 +1051,8 @@ dlg:button {
             labelsStrArr[#labelsStrArr + 1] = "<g id=\"collabels\">"
             local j = 0
             while j < wNative do
-                local x1mrg <const> = border + (j + 1) * padding
-                local cx <const> = x1mrg + j * wScale + wScale * 0.5
+                local x1mrg <const> = borderPad + j * padding
+                local cx <const> = x1mrg + j * wScale + wScaleHalf
                 local fwStr <const> = j % lblBold == 0
                     and " font-weight=\"bold\""
                     or ""
