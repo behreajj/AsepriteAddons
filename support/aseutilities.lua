@@ -2417,6 +2417,9 @@ function AseUtilities.rotateImageNearest(source, angle)
     local cosa <const> = math.cos(rad)
     local sina <const> = math.sin(rad)
 
+    -- TODO: Split this function into a variant which accepts cosine and sine
+    -- like the pixel version, that way you don't have to recalculate for
+    -- multiple images?
     local trgBytes <const>,
     wTrg <const>,
     hTrg <const> = Utilities.rotatePixelsNearest(

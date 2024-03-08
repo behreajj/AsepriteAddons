@@ -207,14 +207,29 @@ dlg:button {
         local includeHidden <const> = args.includeHidden --[[@as boolean]]
         local ignoreAlpha <const> = args.ignoreAlpha --[[@as boolean]]
 
-        local includeTiles <const> = false
-        local includeBkg <const> = toColor.alpha >= 255
-        local exactSearch <const> = tolerance <= 0
+        -- Unpack sprite spec.
         local activeSpec <const> = activeSprite.spec
         local colorMode <const> = activeSpec.colorMode
+        local colorSpace <const> = activeSpec.colorSpace
+        local alphaIndex <const> = activeSpec.transparentColor
+
+        local includeBkg <const> = toColor.alpha >= 255
+        local ignoreAlphaVerif <const> = ignoreAlpha and frColor.alpha > 0
+        local exactSearch <const> = tolerance <= 0
+
+        local frInt <const> = AseUtilities.aseColorToHex(
+            frColor, colorMode)
+        local toInt <const> = AseUtilities.aseColorToHex(
+            toColor, colorMode)
 
         local replaceTileSet <const> = target == "TILE_SET"
         local replaceAllTiles <const> = target == "TILE_SETS"
+        if frInt == toInt
+            and (exactSearch
+                or (replaceTileSet or replaceAllTiles)) then
+            return
+        end
+
         if replaceTileSet or replaceAllTiles then
             ---@type Tileset[]
             local tileSets = {}
@@ -229,12 +244,6 @@ dlg:button {
             if replaceAllTiles then
                 tileSets = activeSprite.tilesets
             end
-
-            local frInt <const> = AseUtilities.aseColorToHex(
-                frColor, colorMode)
-            local toInt <const> = AseUtilities.aseColorToHex(
-                toColor, colorMode)
-            if frInt == toInt then return end
 
             local lenTileSets <const> = #tileSets
             if lenTileSets <= 0 then
@@ -278,16 +287,11 @@ dlg:button {
 
             local trgCels <const> = AseUtilities.filterCels(
                 activeSprite, activeLayer, activeSprite.frames, target,
-                includeLocked, includeHidden, includeTiles, includeBkg)
+                includeLocked, includeHidden, false, includeBkg)
             local lenTrgCels <const> = #trgCels
 
             app.transaction("Replace Color", function()
                 if exactSearch then
-                    local frInt <const> = AseUtilities.aseColorToHex(
-                        frColor, colorMode)
-                    local toInt <const> = AseUtilities.aseColorToHex(
-                        toColor, colorMode)
-                    if frInt == toInt then return end
                     local useExpand = frInt == activeSpec.transparentColor
 
                     local i = 0
@@ -311,15 +315,18 @@ dlg:button {
                         cel.image = trgImg
                     end
                 else
-                    local frInt <const> = AseUtilities.aseColorToHex(
-                        frColor, ColorMode.RGB)
-                    local toInt <const> = AseUtilities.aseColorToHex(
-                        toColor, ColorMode.RGB)
+                    -- Fuzzy tolerance search.
 
+                    local createSpec <const> = AseUtilities.createSpec
                     local fromHex <const> = Clr.fromHex
                     local sRgbaToLab <const> = Clr.sRgbToSrLab2
-                    local distSq = distSqInclAlpha
-                    if ignoreAlpha then distSq = distSqNoAlpha end
+                    local strpack <const> = string.pack
+                    local strsub <const> = string.sub
+                    local strunpack <const> = string.unpack
+                    local tconcat <const> = table.concat
+                    local distSq <const> = ignoreAlphaVerif
+                        and distSqNoAlpha
+                        or distSqInclAlpha
 
                     local tScl <const> = 100.0
                     local tolsq <const> = tolerance * tolerance
@@ -335,47 +342,56 @@ dlg:button {
                     while i < lenTrgCels do
                         i = i + 1
                         local cel <const> = trgCels[i]
-
-                        local srcImg <const> = cel.image
-                        local srcPxItr <const> = srcImg:pixels()
-                        for srcPixel in srcPxItr do
-                            local srcHex <const> = srcPixel()
-                            if not dict[srcHex] then
-                                local srcClr <const> = fromHex(srcHex)
-                                local srcLab <const> = sRgbaToLab(srcClr)
-                                if distSq(srcLab, frLab, tScl) <= tolsq then
-                                    dict[srcHex] = toInt
-                                else
-                                    dict[srcHex] = srcHex
-                                end
-                            end
-                        end
-
-                        local trgImg = nil
+                        local srcImg = cel.image
                         if useExpand then
                             local exp <const>, xtl <const>, ytl <const> = expandCelToCanvas(
                                 cel, activeSprite)
-                            trgImg = exp
+                            srcImg = exp
                             cel.position = Point(xtl, ytl)
-                        else
-                            trgImg = srcImg:clone()
+                        end
+                        local srcBytes <const> = srcImg.bytes
+
+                        local srcSpec <const> = srcImg.spec
+                        local wSrc <const> = srcSpec.width
+                        local hSrc <const> = srcSpec.height
+                        local lenSrc <const> = wSrc * hSrc
+
+                        ---@type string[]
+                        local trgByteStrs <const> = {}
+                        local j = 0
+                        while j < lenSrc do
+                            local jbpp <const> = j * 4
+                            local srcHexStr <const> = strsub(srcBytes, 1 + jbpp, 4 + jbpp)
+                            local srcHexInt <const> = strunpack("I4", srcHexStr)
+
+                            local trgHexInt = 0x00000000
+                            if dict[srcHexInt] then
+                                trgHexInt = dict[srcHexInt]
+                            else
+                                local srcClr <const> = fromHex(srcHexInt)
+                                local srcLab <const> = sRgbaToLab(srcClr)
+                                if distSq(srcLab, frLab, tScl) <= tolsq then
+                                    trgHexInt = toInt
+                                else
+                                    trgHexInt = srcHexInt
+                                end
+                                dict[srcHexInt] = trgHexInt
+                            end
+
+                            j = j + 1
+                            if ignoreAlphaVerif then
+                                trgByteStrs[j] = strpack("I4",
+                                    (srcHexInt & 0xff000000)
+                                    | (trgHexInt & 0x00ffffff))
+                            else
+                                trgByteStrs[j] = strpack("I4", trgHexInt)
+                            end
                         end
 
-                        local trgPxItr <const> = trgImg:pixels()
-                        if ignoreAlpha then
-                            for trgPixel in trgPxItr do
-                                local srcHex <const> = trgPixel()
-                                local srcAlpha <const> = srcHex & 0xff000000
-                                local trgHex <const> = dict[srcHex]
-                                local trgRgb <const> = trgHex & 0x00ffffff
-                                trgPixel(srcAlpha | trgRgb)
-                            end
-                        else
-                            for trgPixel in trgPxItr do
-                                trgPixel(dict[trgPixel()])
-                            end
-                        end
-
+                        local trgSpec <const> = createSpec(wSrc, hSrc,
+                            colorMode, colorSpace, alphaIndex)
+                        local trgImg <const> = Image(trgSpec)
+                        trgImg.bytes = tconcat(trgByteStrs)
                         cel.image = trgImg
                     end
                 end
