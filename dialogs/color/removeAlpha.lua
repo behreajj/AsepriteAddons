@@ -1,10 +1,15 @@
+local removeLayerOptions <const> = { "ACTIVE", "ALL", "NONE", "RANGE" }
+local removeCelOptions <const> = { "ACTIVE", "ALL", "NONE", "RANGE" }
+local removeImageOptions <const> = { "ACTIVE", "ALL", "NONE", "RANGE" }
+local removeTilesOptions <const> = { "ACTIVE", "ALL", "NONE" }
+local removePalOptions <const> = { "ACTIVE", "ALL", "NONE" }
+
 local defaults <const> = {
-    -- TODO: Replace these with target options comboboxes for each category?
-    removeLayer = true,
-    removeCel = true,
-    removeImage = true,
-    removeTiles = true,
-    removePalette = true
+    removeLayer = "ALL",
+    removeCel = "ALL",
+    removeImage = "ALL",
+    removeTiles = "ALL",
+    removePalette = "ALL"
 }
 
 ---@param srcImg Image
@@ -70,44 +75,47 @@ end
 
 local dlg <const> = Dialog { title = "Remove Alpha" }
 
-dlg:check {
+dlg:combobox {
     id = "removeLayer",
-    label = "Change:",
-    text = "&Layer",
-    focus = false,
-    selected = defaults.removeLayer
+    label = "Layers:",
+    option = defaults.removeLayer,
+    options = removeLayerOptions
 }
 
-dlg:check {
+dlg:newrow { always = false }
+
+dlg:combobox {
     id = "removeCel",
-    text = "C&el",
-    focus = false,
-    selected = defaults.removeCel
+    label = "Cels:",
+    option = defaults.removeCel,
+    options = removeCelOptions
 }
 
 dlg:newrow { always = false }
 
-dlg:check {
+dlg:combobox {
     id = "removeImage",
-    text = "&Image",
-    focus = false,
-    selected = defaults.removeImage
-}
-
-dlg:check {
-    id = "removeTiles",
-    text = "&Tiles",
-    focus = false,
-    selected = defaults.removeTiles
+    label = "Images:",
+    option = defaults.removeImage,
+    options = removeImageOptions
 }
 
 dlg:newrow { always = false }
 
-dlg:check {
+dlg:combobox {
+    id = "removeTiles",
+    label = "Tiles:",
+    option = defaults.removeTiles,
+    options = removeTilesOptions
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
     id = "removePalette",
-    text = "&Palette",
-    focus = false,
-    selected = defaults.removePalette
+    label = "Palettes:",
+    option = defaults.removePalette,
+    options = removePalOptions
 }
 
 dlg:button {
@@ -128,17 +136,24 @@ dlg:button {
         local spriteSpec <const> = activeSprite.spec
         local colorMode <const> = spriteSpec.colorMode
         local alphaIndex <const> = spriteSpec.transparentColor
+        local notIndexed <const> = colorMode ~= ColorMode.INDEXED
 
         local args <const> = dlg.data
-        local opaqueLayer <const> = args.removeLayer --[[@as boolean]]
-        local opaqueCel <const> = args.removeCel --[[@as boolean]]
-        local opaqueImage <const> = args.removeImage --[[@as boolean]]
-        local opaqueTiles <const> = args.removeTiles --[[@as boolean]]
+        local opaqueLayer <const> = args.removeLayer --[[@as string]]
+        local opaqueCel <const> = args.removeCel --[[@as string]]
+        local opaqueImage <const> = args.removeImage --[[@as string]]
+        local opaqueTiles <const> = args.removeTiles --[[@as string]]
         local opaquePalette <const> = args.removePalette --[[@as boolean]]
 
-        if opaqueLayer then
-            local chosenLayers = AseUtilities.getLayerHierarchy(
-                activeSprite, true, true, true, false)
+        local includeLocked <const> = true
+        local includeHidden <const> = true
+        local includeTiles <const> = true
+        local includeBkg <const> = true
+
+        if opaqueLayer ~= "NONE" then
+            local chosenLayers = AseUtilities.filterLayers(activeSprite,
+                site.layer, opaqueLayer, includeLocked, includeHidden,
+                includeTiles, false)
             local lenChosenLayers <const> = #chosenLayers
 
             if lenChosenLayers > 0 then
@@ -153,10 +168,10 @@ dlg:button {
             end
         end
 
-        if opaqueCel then
+        if opaqueCel ~= "NONE" then
             local chosenCels <const> = AseUtilities.filterCels(
-                activeSprite, site.layer, activeSprite.frames, "ALL",
-                true, true, true, false)
+                activeSprite, site.layer, activeSprite.frames, opaqueCel,
+                includeLocked, includeHidden, includeTiles, false)
             local lenChosenCels <const> = #chosenCels
 
             if lenChosenCels > 0 then
@@ -171,12 +186,12 @@ dlg:button {
             end
         end
 
-        if opaqueImage and colorMode ~= ColorMode.INDEXED then
+        if opaqueImage ~= "NONE" and notIndexed then
             -- Target background layers as a precaution, since a script
             -- could introduce translucent colors to an image in a background.
             local chosenCels <const> = AseUtilities.filterCels(
-                activeSprite, site.layer, activeSprite.frames, "ALL",
-                true, true, false, true)
+                activeSprite, site.layer, activeSprite.frames, opaqueImage,
+                includeLocked, includeHidden, false, includeBkg)
             local lenChosenCels <const> = #chosenCels
 
             if lenChosenCels > 0 then
@@ -191,8 +206,19 @@ dlg:button {
             end
         end
 
-        if opaqueTiles and colorMode ~= ColorMode.INDEXED then
-            local chosenTileSets = activeSprite.tilesets
+        if opaqueTiles ~= "NONE" and notIndexed then
+            local chosenTileSets = {}
+            if opaqueTiles == "ALL" then
+                chosenTileSets = activeSprite.tilesets
+            else
+                -- Default to active tile set.
+                local activeLayer <const> = site.layer
+                if activeLayer
+                    and activeLayer.isTilemap
+                    and activeLayer.tileset then
+                    chosenTileSets[1] = activeLayer.tileset
+                end
+            end
             local lenChosenTileSets <const> = #chosenTileSets
 
             if lenChosenTileSets > 0 then
@@ -217,8 +243,19 @@ dlg:button {
             end
         end
 
-        if opaquePalette then
-            local chosenPalettes = activeSprite.palettes
+        if opaquePalette ~= "NONE" then
+            local chosenPalettes = {}
+            if opaquePalette == "ALL" then
+                chosenPalettes = activeSprite.palettes
+            else
+                -- Default to active palette.
+                local activeFrame <const> = site.frame
+                if activeFrame then
+                    local pal <const> = AseUtilities.getPalette(
+                        activeFrame, activeSprite.palettes)
+                    chosenPalettes[1] = pal
+                end
+            end
             local lenChosenPalettes <const> = #chosenPalettes
 
             if lenChosenPalettes > 0 then
