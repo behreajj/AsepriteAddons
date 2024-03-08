@@ -33,18 +33,54 @@ local function translateCels(dialog, x, y)
         false, false, false, false)
     local lenCels <const> = #cels
 
-    app.transaction("Nudge Cels", function()
-        app.command.InvertMask()
-        app.command.InvertMask()
+    local docPrefs <const> = app.preferences.document(activeSprite)
+    local snap <const> = docPrefs.grid.snap --[[@as boolean]]
+    if snap then
+        local grid <const> = activeSprite.gridBounds
+        local xGrOff <const> = grid.x
+        local yGrOff <const> = grid.y
+        local xGrScl <const> = grid.width
+        local yGrScl <const> = grid.height
+        local dxnz <const> = x ~= 0
+        local dynz <const> = y ~= 0
+        local round <const> = Utilities.round
 
-        local i = 0
-        while i < lenCels do
-            i = i + 1
-            local cel <const> = cels[i]
-            local op <const> = cel.position
-            cel.position = Point(op.x + x, op.y + y)
-        end
-    end)
+        app.transaction("Move Cels Snap", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+
+            local i = 0
+            while i < lenCels do
+                i = i + 1
+                local cel <const> = cels[i]
+                local op <const> = cel.position
+                local xn = op.x
+                local yn = op.y
+                if dxnz then
+                    local xGrid <const> = round((xn - xGrOff) / xGrScl)
+                    xn = xGrOff + (xGrid + x) * xGrScl
+                end
+                if dynz then
+                    local yGrid <const> = round((yn - yGrOff) / yGrScl)
+                    yn = yGrOff + (yGrid - y) * yGrScl
+                end
+                cel.position = Point(xn, yn)
+            end
+        end)
+    else
+        app.transaction("Move Cels", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+
+            local i = 0
+            while i < lenCels do
+                i = i + 1
+                local cel <const> = cels[i]
+                local op <const> = cel.position
+                cel.position = Point(op.x + x, op.y - y)
+            end
+        end)
+    end
 
     app.refresh()
 end
@@ -104,76 +140,12 @@ dlg:button {
     text = "&MOVE",
     focus = false,
     onclick = function()
-        local site <const> = app.site
-        local activeSprite <const> = site.sprite
-        if not activeSprite then return end
-        local activeLayer <const> = site.layer
-
         local args <const> = dlg.data
-        -- These are number fields, but their decimal places are zero.
         local dx <const> = args.xTranslate
             or defaults.xTranslate --[[@as integer]]
         local dy <const> = args.yTranslate
             or defaults.yTranslate --[[@as integer]]
-        if dx == 0.0 and dy == 0.0 then return end
-
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
-        local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, activeSprite.frames, target,
-            false, false, false, false)
-        local lenCels <const> = #cels
-
-        -- TODO: Consolidate this with nudgeCel logic above?
-        local docPrefs <const> = app.preferences.document(activeSprite)
-        local snap <const> = docPrefs.grid.snap --[[@as boolean]]
-        if snap then
-            local grid <const> = activeSprite.gridBounds
-            local xGrOff <const> = grid.x
-            local yGrOff <const> = grid.y
-            local xGrScl <const> = grid.width
-            local yGrScl <const> = grid.height
-            local dxnz <const> = dx ~= 0.0
-            local dynz <const> = dy ~= 0.0
-            local round <const> = Utilities.round
-            app.transaction("Move Cels Snap", function()
-                app.command.InvertMask()
-                app.command.InvertMask()
-
-                local i = 0
-                while i < lenCels do
-                    i = i + 1
-                    local cel <const> = cels[i]
-                    local op <const> = cel.position
-                    local xn = op.x
-                    local yn = op.y
-                    if dxnz then
-                        local xGrid <const> = round((xn - xGrOff) / xGrScl)
-                        xn = xGrOff + (xGrid + dx) * xGrScl
-                    end
-                    if dynz then
-                        local yGrid <const> = round((yn - yGrOff) / yGrScl)
-                        yn = yGrOff + (yGrid - dy) * yGrScl
-                    end
-                    cel.position = Point(xn, yn)
-                end
-            end)
-        else
-            app.transaction("Move Cels", function()
-                app.command.InvertMask()
-                app.command.InvertMask()
-
-                local i = 0
-                while i < lenCels do
-                    i = i + 1
-                    local cel <const> = cels[i]
-                    local op <const> = cel.position
-                    cel.position = Point(op.x + dx, op.y - dy)
-                end
-            end)
-        end
-
-        app.refresh()
+        translateCels(dlg, dx, dy)
     end
 }
 
@@ -296,7 +268,7 @@ dlg:button {
     label = "Nudge:",
     focus = false,
     onclick = function()
-        translateCels(dlg, 0, -1)
+        translateCels(dlg, 0, 1)
     end
 }
 
@@ -314,7 +286,7 @@ dlg:button {
     text = "&K",
     focus = false,
     onclick = function()
-        translateCels(dlg, 0, 1)
+        translateCels(dlg, 0, -1)
     end
 }
 

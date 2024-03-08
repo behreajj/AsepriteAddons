@@ -65,7 +65,13 @@ local function alignCenterHoriz(
     srcBounds,
     xMinEdge, xCenter, xMaxEdge,
     yMinEdge, yCenter, yMaxEdge, fac)
+    -- For greater granularity, make sign 0, 0.5 or 1.0 a parameter.
+    -- Center on axis:
     return Utilities.round(xCenter - srcBounds.width * 0.5), srcBounds.y
+    -- On left edge, body to right of axis:
+    -- return Utilities.round(xCenter - srcBounds.width * 0.0), srcBounds.y
+    -- On right edge, body to left of axis:
+    -- return Utilities.round(xCenter - srcBounds.width * 1.0), srcBounds.y
 end
 
 ---@param srcBounds Rectangle
@@ -521,7 +527,7 @@ dlg:newrow { always = false }
 
 dlg:combobox {
     id = "referTo",
-    label = "Refer To:",
+    label = "Anchor:",
     option = defaults.referTo,
     options = referToOptions,
     onchange = function()
