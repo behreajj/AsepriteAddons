@@ -5,6 +5,10 @@ local removeTilesOptions <const> = { "ACTIVE", "ALL", "NONE" }
 local removePalOptions <const> = { "ACTIVE", "ALL", "NONE" }
 
 local defaults <const> = {
+    includeLocked = true,
+    includeHidden = true,
+    includeTiles = true,
+    includeBkg = true,
     removeLayer = "ALL",
     removeCel = "ALL",
     removeImage = "ALL",
@@ -75,6 +79,35 @@ end
 
 local dlg <const> = Dialog { title = "Remove Alpha" }
 
+dlg:check {
+    id = "includeLocked",
+    label = "Include:",
+    text = "&Locked",
+    selected = defaults.includeLocked
+}
+
+dlg:check {
+    id = "includeHidden",
+    text = "&Hidden",
+    selected = defaults.includeHidden
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "includeTiles",
+    text = "&Tiles",
+    selected = defaults.includeTiles
+}
+
+dlg:check {
+    id = "includeBkg",
+    text = "&Background",
+    selected = defaults.includeBkg
+}
+
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "removeLayer",
     label = "Layers:",
@@ -118,6 +151,8 @@ dlg:combobox {
     options = removePalOptions
 }
 
+dlg:newrow { always = false }
+
 dlg:button {
     id = "confirm",
     text = "&OK",
@@ -139,16 +174,20 @@ dlg:button {
         local notIndexed <const> = colorMode ~= ColorMode.INDEXED
 
         local args <const> = dlg.data
-        local opaqueLayer <const> = args.removeLayer --[[@as string]]
-        local opaqueCel <const> = args.removeCel --[[@as string]]
-        local opaqueImage <const> = args.removeImage --[[@as string]]
-        local opaqueTiles <const> = args.removeTiles --[[@as string]]
-        local opaquePalette <const> = args.removePalette --[[@as boolean]]
-
-        local includeLocked <const> = true
-        local includeHidden <const> = true
-        local includeTiles <const> = true
-        local includeBkg <const> = true
+        local includeLocked <const> = args.includeLocked --[[@as boolean]]
+        local includeHidden <const> = args.includeHidden --[[@as boolean]]
+        local includeTiles <const> = args.includeTiles --[[@as boolean]]
+        local includeBkg <const> = args.includeBkg --[[@as boolean]]
+        local opaqueLayer <const> = args.removeLayer
+            or defaults.removeLayer --[[@as string]]
+        local opaqueCel <const> = args.removeCel
+            or defaults.removeCel --[[@as string]]
+        local opaqueImage <const> = args.removeImage
+            or defaults.removeImage --[[@as string]]
+        local opaqueTiles <const> = args.removeTiles
+            or defaults.removeTiles --[[@as string]]
+        local opaquePalette <const> = args.removePalette
+            or defaults.removePalette --[[@as boolean]]
 
         if opaqueLayer ~= "NONE" then
             local chosenLayers = AseUtilities.filterLayers(activeSprite,
