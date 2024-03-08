@@ -172,9 +172,11 @@ dlg:button {
         end
 
         if opaqueImage and colorMode ~= ColorMode.INDEXED then
+            -- Target background layers as a precaution, since a script
+            -- could introduce translucent colors to an image in a background.
             local chosenCels <const> = AseUtilities.filterCels(
                 activeSprite, site.layer, activeSprite.frames, "ALL",
-                true, true, false, false)
+                true, true, false, true)
             local lenChosenCels <const> = #chosenCels
 
             if lenChosenCels > 0 then
