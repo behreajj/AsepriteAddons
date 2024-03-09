@@ -34,7 +34,6 @@ else
     local fgColor <const> = app.fgColor
     local fgIdx <const> = fgColor.index
     local matchColor <const> = palette:getColor(fgIdx)
-    -- TODO: Could cycle HSL hue when no match is found?
     if fgColor.red == matchColor.red
         and fgColor.green == matchColor.green
         and fgColor.blue == matchColor.blue
@@ -45,13 +44,6 @@ else
             local nextIdx = fgIdx + 1
             if nextIdx >= lenPalette then
                 nextIdx = 0
-                -- local alphaIdx <const> = sprite.transparentColor
-                -- if alphaIdx == fgIdx then
-                --     sprite.transparentColor = nextIdx
-                -- else
-                --     sprite.transparentColor = alphaIdx + 1
-                -- end
-
                 local i = lenPalette
                 while i > 1 do
                     i = i - 1
@@ -59,13 +51,6 @@ else
                 end
                 palette:setColor(nextIdx, matchColor)
             else
-                -- local alphaIdx <const> = sprite.transparentColor
-                -- if alphaIdx == fgIdx then
-                --     sprite.transparentColor = nextIdx
-                -- elseif alphaIdx == nextIdx then
-                --     sprite.transparentColor = fgIdx
-                -- end
-
                 local nextColor <const> = palette:getColor(nextIdx)
                 palette:setColor(fgIdx, nextColor)
                 palette:setColor(nextIdx, matchColor)
@@ -73,5 +58,14 @@ else
 
             app.fgColor = matchColor
         end)
+    else
+        -- The problem is that this becomes confusing when a color is outside
+        -- the palette, then after shift is inside the palette.
+        -- app.fgColor = Color {
+        --     hue = (fgColor.hslHue + 1.0) % 360.0,
+        --     saturation = fgColor.hslSaturation,
+        --     lightness = fgColor.hslLightness,
+        --     alpha = fgColor.alpha
+        -- }
     end
 end

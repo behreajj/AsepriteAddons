@@ -378,20 +378,31 @@ local function alignCels(dialog, preset)
         or preset == "CENTER_VERT"
         or preset == "TOP"
         or preset == "BOTTOM" then
+        ---@param a Cel left comparisand
+        ---@param b Cel right comparisand
+        ---@return boolean
         sortFunc = function(a, b)
             local aBounds <const> = a.bounds
             local bBounds <const> = b.bounds
             local ayCenter <const> = aBounds.y + aBounds.height * 0.5
             local byCenter <const> = bBounds.y + bBounds.height * 0.5
+            if ayCenter == byCenter then
+                return a.layer.stackIndex < b.layer.stackIndex
+            end
             return ayCenter < byCenter
         end
     else
-        -- Default to horizontal.
+        ---@param a Cel left comparisand
+        ---@param b Cel right comparisand
+        ---@return boolean
         sortFunc = function(a, b)
             local aBounds <const> = a.bounds
             local bBounds <const> = b.bounds
             local axCenter <const> = aBounds.x + aBounds.width * 0.5
             local bxCenter <const> = bBounds.x + bBounds.width * 0.5
+            if axCenter == bxCenter then
+                return a.layer.stackIndex < b.layer.stackIndex
+            end
             return axCenter < bxCenter
         end
     end

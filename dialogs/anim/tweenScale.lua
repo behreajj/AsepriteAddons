@@ -545,6 +545,7 @@ dlg:button {
             end
         end)
 
+        app.layer = trgLayer
         app.refresh()
     end
 }

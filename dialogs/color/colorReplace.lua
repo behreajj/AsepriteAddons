@@ -292,7 +292,7 @@ dlg:button {
                 local hSrc <const> = max(1, abs(tileSize.height))
                 local lenSrc = wSrc * hSrc
 
-                app.transaction("Replace Color", function()
+                app.transaction("Replace Color Tiles", function()
                     local i = 0
                     while i < lenTileSet - 1 do
                         i = i + 1
@@ -342,19 +342,20 @@ dlg:button {
                 includeLocked, includeHidden, false, includeBkg)
             local lenTrgCels <const> = #trgCels
 
-            app.transaction("Replace Color", function()
-                if exactSearch then
-                    local useExpand = (frInt == alphaIndex)
-                        or (switchColors and ((toInt == alphaIndex)))
+            if exactSearch then
+                local useExpand = (frInt == alphaIndex)
+                    or (switchColors and ((toInt == alphaIndex)))
 
+                app.transaction("Replace Color Exact", function()
                     local i = 0
                     while i < lenTrgCels do
                         i = i + 1
                         local cel <const> = trgCels[i]
                         local srcImg = cel.image
                         if useExpand then
-                            local exp <const>, xtl <const>, ytl <const> = expandCelToCanvas(
-                                cel, activeSprite)
+                            local exp <const>,
+                            xtl <const>,
+                            ytl <const> = expandCelToCanvas(cel, activeSprite)
                             srcImg = exp
                             cel.position = Point(xtl, ytl)
                         end
@@ -389,35 +390,38 @@ dlg:button {
                         local trgImg <const> = Image(trgSpec)
                         trgImg.bytes = tconcat(trgByteStrs)
                         cel.image = trgImg
-                    end
-                else
-                    -- Fuzzy tolerance search.
+                    end -- End of cels loop.
+                end)    -- End exact transaction.
+            else
+                -- Fuzzy tolerance search.
 
-                    local fromHex <const> = Clr.fromHex
-                    local sRgbaToLab <const> = Clr.sRgbToSrLab2
-                    local strunpack <const> = string.unpack
-                    local distSq <const> = tIgnoreVerif
-                        and distSqNoAlpha
-                        or distSqInclAlpha
+                local fromHex <const> = Clr.fromHex
+                local sRgbaToLab <const> = Clr.sRgbToSrLab2
+                local strunpack <const> = string.unpack
+                local distSq <const> = tIgnoreVerif
+                    and distSqNoAlpha
+                    or distSqInclAlpha
 
-                    local tScl <const> = 100.0
-                    local tolsq <const> = tolerance * tolerance
-                    local frLab <const> = sRgbaToLab(fromHex(frInt))
+                local tScl <const> = 100.0
+                local tolsq <const> = tolerance * tolerance
+                local frLab <const> = sRgbaToLab(fromHex(frInt))
 
-                    local zeroLab <const> = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
-                    local useExpand <const> = distSq(frLab, zeroLab, tScl) <= tolsq
+                local zeroLab <const> = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+                local useExpand <const> = distSq(frLab, zeroLab, tScl) <= tolsq
 
-                    ---@type table<integer, integer>
-                    local dict <const> = {}
+                ---@type table<integer, integer>
+                local dict <const> = {}
 
+                app.transaction("Replace Color Fuzzy", function()
                     local i = 0
                     while i < lenTrgCels do
                         i = i + 1
                         local cel <const> = trgCels[i]
                         local srcImg = cel.image
                         if useExpand then
-                            local exp <const>, xtl <const>, ytl <const> = expandCelToCanvas(
-                                cel, activeSprite)
+                            local exp <const>,
+                            xtl <const>,
+                            ytl <const> = expandCelToCanvas(cel, activeSprite)
                             srcImg = exp
                             cel.position = Point(xtl, ytl)
                         end
@@ -466,8 +470,8 @@ dlg:button {
                         trgImg.bytes = tconcat(trgByteStrs)
                         cel.image = trgImg
                     end -- End of cels loop.
-                end     -- End of exact vs. tolerance.
-            end)        -- End of canvas transaction.
+                end)    -- End fuzzy transaction.
+            end         -- End of exact vs. tolerance.
         end             -- End of tiles vs. canvas.
 
         app.refresh()
