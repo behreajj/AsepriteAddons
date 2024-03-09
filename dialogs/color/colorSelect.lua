@@ -342,7 +342,7 @@ dlg:button {
         local alphaIndex <const> = spriteSpec.transparentColor
 
         -- Get the current selection.
-        local activeSel <const>, selIsValid <const> = AseUtilities.getSelection(activeSprite)
+        local activeSel <const>, selIsValid = AseUtilities.getSelection(activeSprite)
         local selBounds <const> = activeSel.bounds
 
         -- Unpack arguments.
@@ -359,14 +359,16 @@ dlg:button {
         local selIsSub <const> = selMode == "SUBTRACT"
         local selIsReplace <const> = selMode == "REPLACE"
 
+        -- Minimize pointless searches outside the current selection.
+        -- See https://community.aseprite.org/t/selecting-pixels-on-a-large-canvas/21541 .
+        local blitIntersect <const> = selIsValid and (selIsInter or selIsSub)
+
         local image = nil
         local xtl = 0
         local ytl = 0
 
         if sampleMode == "COMPOSITE" then
-            -- Minimize pointless searches outside the current selection.
-            -- See https://community.aseprite.org/t/selecting-pixels-on-a-large-canvas/21541 .
-            if selIsInter or selIsSub then
+            if blitIntersect then
                 local selSpec <const> = AseUtilities.createSpec(
                     selBounds.width, selBounds.height,
                     colorMode, colorSpace, alphaIndex)
@@ -425,7 +427,7 @@ dlg:button {
                 ytl = celPos.y
             end
 
-            if selIsInter or selIsSub then
+            if blitIntersect then
                 local xtlMax <const> = math.max(xtl, selBounds.x)
                 local ytlMax <const> = math.max(ytl, selBounds.y)
                 local xbrMin <const> = math.min(
@@ -481,11 +483,11 @@ dlg:button {
         local aseColorToClr <const> = AseUtilities.aseColorToClr
         local aseColorToHex <const> = AseUtilities.aseColorToHex
 
-        local exactSearch = false
-
         local refClr <const> = aseColorToClr(refColor)
-        local refLab <const> = sRgbaToLab(refClr)
         local refInt <const> = aseColorToHex(refColor, colorMode)
+        local refLab <const> = sRgbaToLab(refClr)
+
+        local exactSearch = false
 
         if uiMode == "COLOR" then
             local tolerance <const> = args.tolerance

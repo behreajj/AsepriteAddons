@@ -34,6 +34,7 @@ else
     local fgColor <const> = app.fgColor
     local fgIdx <const> = fgColor.index
     local matchColor <const> = palette:getColor(fgIdx)
+    -- TODO: Could cycle HSL hue when no match is found?
     if fgColor.red == matchColor.red
         and fgColor.green == matchColor.green
         and fgColor.blue == matchColor.blue
