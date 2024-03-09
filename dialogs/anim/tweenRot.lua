@@ -22,7 +22,8 @@ local defaults <const> = {
     rotOrig = 0,
     frameDest = 1,
     rotDest = 0,
-    rotIncr = 0
+    rotIncr = 0,
+    alpSampleCount = 96,
 }
 
 local dlg <const> = Dialog { title = "Tween Rotation" }
@@ -438,9 +439,15 @@ dlg:button {
                 Vec2.new(0.0, ap0y))
             local kn1 <const> = Knot2.new(
                 Vec2.new(ap1x, ap1y),
-                Vec2.new(cp1x, cp1y),
-                Vec2.new(1.0, ap1y))
-            local curve = Curve2.new(false, { kn0, kn1 }, "easing")
+                Vec2.new(1.0, ap1y),
+                Vec2.new(cp1x, cp1y))
+            local curve = Curve2.new(false, { kn0, kn1 }, "rot easing")
+
+            local alpSampleCount <const> = defaults.alpSampleCount
+            local totalLength <const>, arcLengths <const> = Curve2.arcLength(
+                curve, alpSampleCount)
+            local samples <const> = Curve2.paramPoints(
+                curve, totalLength, arcLengths, alpSampleCount)
 
             local rotOrigDeg <const> = args.rotOrig
                 or defaults.rotOrig --[[@as integer]]
@@ -469,7 +476,15 @@ dlg:button {
                 while j < countFrames do
                     local frObj <const> = frObjs[frIdxOrigVerif + j]
                     local fac <const> = factors[1 + j]
-                    local t <const> = eval(curve, fac).y
+                    local t = eval(curve, fac).x
+                    if fac > 0.0 and fac < 1.0 then
+                        local tScale <const> = t * (alpSampleCount - 1)
+                        local tFloor <const> = floor(tScale)
+                        local tFrac <const> = tScale - tFloor
+                        local left <const> = samples[1 + tFloor].y
+                        local right <const> = samples[2 + tFloor].y
+                        t = (1.0 - tFrac) * left + tFrac * right
+                    end
 
                     local degTrg <const> = angleMixDeg(
                         rotOrigDeg, rotDestDeg, t, 360.0)

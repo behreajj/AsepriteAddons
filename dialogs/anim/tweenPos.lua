@@ -18,6 +18,8 @@ local defaults <const> = {
     frameDest = 1,
     xPosDest = 0.0,
     yPosDest = 0.0,
+
+    alpSampleCount = 96,
 }
 
 ---@return integer frIdx
@@ -388,9 +390,15 @@ dlg:button {
             Vec2.new(0.0, ap0y))
         local kn1 <const> = Knot2.new(
             Vec2.new(ap1x, ap1y),
-            Vec2.new(cp1x, cp1y),
-            Vec2.new(1.0, ap1y))
-        local curve = Curve2.new(false, { kn0, kn1 }, "easing")
+            Vec2.new(1.0, ap1y),
+            Vec2.new(cp1x, cp1y))
+        local curve = Curve2.new(false, { kn0, kn1 }, "pos easing")
+
+        local alpSampleCount <const> = defaults.alpSampleCount
+        local totalLength <const>, arcLengths <const> = Curve2.arcLength(
+            curve, alpSampleCount)
+        local samples <const> = Curve2.paramPoints(
+            curve, totalLength, arcLengths, alpSampleCount)
 
         -- Should these be swapped as well when dest frame is gt orig?
         local xPosOrig = args.xPosOrig
@@ -408,13 +416,22 @@ dlg:button {
         -- Cache methods used in loop.
         local round <const> = Utilities.round
         local eval <const> = Curve2.eval
+        local floor <const> = math.floor
 
         app.transaction("Tween Cel Position", function()
             local j = 0
             while j < countFrames do
                 local frObj <const> = frObjs[frIdxOrigVerif + j]
                 local fac <const> = factors[1 + j]
-                local t <const> = eval(curve, fac).y
+                local t = eval(curve, fac).x
+                if fac > 0.0 and fac < 1.0 then
+                    local tScale <const> = t * (alpSampleCount - 1)
+                    local tFloor <const> = floor(tScale)
+                    local tFrac <const> = tScale - tFloor
+                    local left <const> = samples[1 + tFloor].y
+                    local right <const> = samples[2 + tFloor].y
+                    t = (1.0 - tFrac) * left + tFrac * right
+                end
                 local u <const> = 1.0 - t
 
                 local xCenter <const> = u * xPosOrig + t * xPosDest
