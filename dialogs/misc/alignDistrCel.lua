@@ -242,6 +242,145 @@ local function distrVert(
     return srcBounds.x, ytl
 end
 
+---@param preset string
+local function restackLayers(preset)
+    -- Early returns.
+    local site <const> = app.site
+    local activeSprite <const> = site.sprite
+    if not activeSprite then
+        app.alert {
+            title = "Error",
+            text = "There is no active sprite."
+        }
+        return
+    end
+
+    local activeFrame <const> = site.frame
+    if not activeFrame then
+        app.alert {
+            title = "Error",
+            text = "There is no active frame."
+        }
+        return
+    end
+
+    local activeLayer <const> = site.layer
+    if not activeLayer then
+        app.alert {
+            title = "Error",
+            text = "There is no active layer."
+        }
+        return
+    end
+
+    local parent <const> = activeLayer.parent
+    local neighbors <const> = parent.layers
+    if not neighbors then return end
+    local lenNeighbors = #neighbors
+
+    ---@type Layer[]
+    local filteredLayers <const> = {}
+    ---@type integer[]
+    local stackIndices <const> = {}
+    local lenFiltered = 0
+    local h = 0
+    while h < lenNeighbors do
+        h = h + 1
+        local neighbor <const> = neighbors[h]
+        if not neighbor.isBackground then
+            lenFiltered = lenFiltered + 1
+            filteredLayers[lenFiltered] = neighbor
+            stackIndices[lenFiltered] = neighbor.stackIndex
+        end
+    end
+
+    if lenFiltered < 2 then return end
+
+    ---@param a Layer
+    ---@param b Layer
+    ---@return boolean
+    local sortFunc = function(a, b)
+        return a.stackIndex < b.stackIndex
+    end
+
+    if preset == "X" then
+        ---@param a Layer
+        ---@param b Layer
+        ---@return boolean
+        sortFunc = function(a, b)
+            local aCel = a:cel(activeFrame)
+            local bCel = b:cel(activeFrame)
+            if aCel and bCel then
+                local aBounds <const> = aCel.bounds
+                local bBounds <const> = bCel.bounds
+                local axCenter <const> = aBounds.x + aBounds.width * 0.5
+                local bxCenter <const> = bBounds.x + bBounds.width * 0.5
+                return axCenter < bxCenter
+            end
+            return a.stackIndex < b.stackIndex
+        end
+    elseif preset == "Y" then
+        ---@param a Layer
+        ---@param b Layer
+        ---@return boolean
+        sortFunc = function(a, b)
+            local aCel = a:cel(activeFrame)
+            local bCel = b:cel(activeFrame)
+            if aCel and bCel then
+                local aBounds <const> = aCel.bounds
+                local bBounds <const> = bCel.bounds
+                local ayCenter <const> = aBounds.y + aBounds.height * 0.5
+                local byCenter <const> = bBounds.y + bBounds.height * 0.5
+                return ayCenter < byCenter
+            end
+            return a.stackIndex < b.stackIndex
+        end
+    elseif preset == "AREA" then
+        ---@param a Layer
+        ---@param b Layer
+        ---@return boolean
+        sortFunc = function(a, b)
+            local aCel = a:cel(activeFrame)
+            local bCel = b:cel(activeFrame)
+            if aCel and bCel then
+                local aBounds <const> = aCel.bounds
+                local bBounds <const> = bCel.bounds
+                local aArea <const> = aBounds.width * aBounds.height
+                local bArea <const> = bBounds.width * bBounds.height
+                -- Place larger cels on the bottom, smaller on the top.
+                return bArea < aArea
+            end
+            return a.stackIndex < b.stackIndex
+        end
+    elseif preset == "NAME" then
+        ---@param a Layer
+        ---@param b Layer
+        ---@return boolean
+        sortFunc = function(a, b)
+            return b.name < a.name
+        end
+    elseif preset == "REVERSE" then
+        ---@param a Layer
+        ---@param b Layer
+        ---@return boolean
+        sortFunc = function(a, b)
+            return b.stackIndex < a.stackIndex
+        end
+    end
+
+    table.sort(filteredLayers, sortFunc)
+
+    app.transaction("Stack Layers", function()
+        local i = 0
+        while i < lenFiltered do
+            i = i + 1
+            filteredLayers[i].stackIndex = stackIndices[i]
+        end
+    end)
+
+    app.layer = activeLayer
+end
+
 ---@param dialog Dialog
 ---@param preset string
 local function alignCels(dialog, preset)
@@ -378,7 +517,7 @@ local function alignCels(dialog, preset)
     ---@param a Cel left comparisand
     ---@param b Cel right comparisand
     ---@return boolean
-    local sortFunc = function(a, b)
+    local orderSort = function(a, b)
         local aIndex <const> = a.layer.stackIndex - 1
         local bIndex <const> = b.layer.stackIndex - 1
         local az <const> = a.zIndex
@@ -390,10 +529,8 @@ local function alignCels(dialog, preset)
                 and (az < bz))
     end
 
-    if preset == "DISTR_VERT"
-        or preset == "CENTER_VERT"
-        or preset == "TOP"
-        or preset == "BOTTOM" then
+    local sortFunc = orderSort
+    if preset == "DISTR_VERT" then
         ---@param a Cel left comparisand
         ---@param b Cel right comparisand
         ---@return boolean
@@ -403,11 +540,11 @@ local function alignCels(dialog, preset)
             local ayCenter <const> = aBounds.y + aBounds.height * 0.5
             local byCenter <const> = bBounds.y + bBounds.height * 0.5
             if ayCenter == byCenter then
-                return a.layer.stackIndex < b.layer.stackIndex
+                return orderSort(a, b)
             end
             return ayCenter < byCenter
         end
-    else
+    elseif preset == "DISTR_HORIZ" then
         ---@param a Cel left comparisand
         ---@param b Cel right comparisand
         ---@return boolean
@@ -417,7 +554,7 @@ local function alignCels(dialog, preset)
             local axCenter <const> = aBounds.x + aBounds.width * 0.5
             local bxCenter <const> = bBounds.x + bBounds.width * 0.5
             if axCenter == bxCenter then
-                return a.layer.stackIndex < b.layer.stackIndex
+                return orderSort(a, b)
             end
             return axCenter < bxCenter
         end
@@ -624,7 +761,7 @@ dlg:button {
 
 dlg:button {
     id = "alignBottomButton",
-    text = "&BOTTOM",
+    text = "B&OTTOM",
     onclick = function()
         alignCels(dlg, "BOTTOM")
     end
@@ -657,6 +794,56 @@ dlg:check {
     label = "Sort:",
     text = "&Position",
     selected = defaults.sortCels
+}
+
+dlg:separator { id = "distrSep", text = "Stack" }
+
+dlg:button {
+    id = "stackxButton",
+    text = "X",
+    label = "Cel:",
+    focus = false,
+    onclick = function()
+        restackLayers("X")
+    end
+}
+
+dlg:button {
+    id = "stackyButton",
+    text = "Y",
+    focus = false,
+    onclick = function()
+        restackLayers("Y")
+    end
+}
+
+dlg:button {
+    id = "stackAreaButton",
+    text = "&AREA",
+    focus = false,
+    onclick = function()
+        restackLayers("AREA")
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "stackNameButton",
+    text = "&NAME",
+    focus = false,
+    onclick = function()
+        restackLayers("NAME")
+    end
+}
+
+dlg:button {
+    id = "stackReverseButton",
+    text = "RE&VERSE",
+    focus = false,
+    onclick = function()
+        restackLayers("REVERSE")
+    end
 }
 
 dlg:newrow { always = false }
