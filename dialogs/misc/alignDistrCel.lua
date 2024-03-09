@@ -15,6 +15,7 @@ local defaults <const> = {
     frameTarget = "ACTIVE",
     referTo = "CELS",
     inOut = "INSIDE",
+    sortCels = true,
 }
 
 ---@param srcBounds Rectangle
@@ -260,18 +261,19 @@ local function alignCels(dialog, preset)
     local hSprite <const> = spriteSpec.height
 
     local args <const> = dialog.data
-    local referTo <const> = args.referTo
-        or defaults.referTo --[[@as boolean]]
-    local inOut <const> = args.inOut
-        or defaults.inOut --[[@as string]]
-    local frameTarget <const> = args.frameTarget
-        or defaults.frameTarget --[[@as string]]
     local layerTarget <const> = args.layerTarget
         or defaults.layerTarget --[[@as string]]
     local includeLocked <const> = args.includeLocked --[[@as boolean]]
     local includeHidden <const> = args.includeHidden --[[@as boolean]]
     local includeTiles <const> = args.includeTiles --[[@as boolean]]
     local includeBkg <const> = args.includeBkg --[[@as boolean]]
+    local frameTarget <const> = args.frameTarget
+        or defaults.frameTarget --[[@as string]]
+    local referTo <const> = args.referTo
+        or defaults.referTo --[[@as boolean]]
+    local inOut <const> = args.inOut
+        or defaults.inOut --[[@as string]]
+    local sortCels <const> = args.sortCels --[[@as boolean]]
 
     local selFrames <const> = Utilities.flatArr2(AseUtilities.getFrames(
         activeSprite, frameTarget))
@@ -373,7 +375,21 @@ local function alignCels(dialog, preset)
         transactPrefix = "Align Bottom"
     end
 
-    local sortFunc = nil
+    ---@param a Cel left comparisand
+    ---@param b Cel right comparisand
+    ---@return boolean
+    local sortFunc = function(a, b)
+        local aIndex <const> = a.layer.stackIndex - 1
+        local bIndex <const> = b.layer.stackIndex - 1
+        local az <const> = a.zIndex
+        local bz <const> = b.zIndex
+        local aOrder <const> = aIndex + az
+        local bOrder <const> = bIndex + bz
+        return (aOrder < bOrder)
+            or ((aOrder == bOrder)
+                and (az < bz))
+    end
+
     if preset == "DISTR_VERT"
         or preset == "CENTER_VERT"
         or preset == "TOP"
@@ -431,7 +447,7 @@ local function alignCels(dialog, preset)
             -- user the choice of multiple frames and have the same cel be
             -- rearranged multiple times.
             local cel <const> = layer:cel(frIdx)
-            if cel then
+            if cel and (not cel.image:isEmpty()) then
                 lenCels = lenCels + 1
                 cels[lenCels] = cel
                 local bounds <const> = cel.bounds
@@ -461,7 +477,9 @@ local function alignCels(dialog, preset)
             local xCenter <const> = (xMinEdge + xMaxEdge) * 0.5
             local yCenter <const> = (yMinEdge + yMaxEdge) * 0.5
 
-            tsort(cels, sortFunc)
+            if sortCels then
+                tsort(cels, sortFunc)
+            end
 
             local transactStr <const> = strfmt(
                 "%s %d",
@@ -630,6 +648,15 @@ dlg:button {
     onclick = function()
         alignCels(dlg, "DISTR_VERT")
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "sortCels",
+    label = "Sort:",
+    text = "&Position",
+    selected = defaults.sortCels
 }
 
 dlg:newrow { always = false }
