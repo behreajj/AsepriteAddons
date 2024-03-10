@@ -811,7 +811,7 @@ end
 function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg, bpp)
     ---@type string[]
     local resized <const> = {}
-    local floor <const> = math.floor
+    local round <const> = math.floor
     local strsub <const> = string.sub
     local tx <const> = wSrc / wTrg
     local ty <const> = hSrc / hTrg
@@ -821,8 +821,14 @@ function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg, bpp)
     local bppn1 <const> = bpp - 1
     local i = 0
     while i < lenTrg do
-        local nx <const> = floor((i % wTrgAbs) * tx)
-        local ny <const> = floor((i // wTrgAbs) * ty)
+        -- Experimented with using this to rotate images around the
+        -- x and y axis by including a % wSrc or hSrc. There was an
+        -- off-by-one wrap for pixels. Maybe floor if tx is positive,
+        -- ceil if it's negative? Would have to have separate for tx, ty.
+        -- Alternatively could try making wMod variable which is abs -1 if
+        -- wTrg is negative, see flip methods for reference.
+        local nx <const> = round((i % wTrgAbs) * tx)
+        local ny <const> = round((i // wTrgAbs) * ty)
         local j <const> = ny * wSrc + nx
         local orig <const> = 1 + j * bpp
         local dest <const> = orig + bppn1
