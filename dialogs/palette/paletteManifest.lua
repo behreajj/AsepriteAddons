@@ -12,6 +12,7 @@ local numBases <const> = { "PROFILE", "S_RGB" }
 
 local defaults <const> = {
     -- TODO: Support Normal map azim, incl, vector?
+    -- TODO: Option to invert color theme?
     maxCount = 512,
     count = 512,
     title = "Manifest",

@@ -28,8 +28,16 @@ local function translateCels(dialog, x, y)
     local args <const> = dialog.data
     local target <const> = args.target
         or defaults.target --[[@as string]]
+
+    local filterFrames = activeSprite.frames
+    if target == "ACTIVE" then
+        local activeFrame <const> = site.frame
+        if not activeFrame then return end
+        filterFrames = { activeFrame }
+    end
+
     local cels <const> = AseUtilities.filterCels(
-        activeSprite, activeLayer, activeSprite.frames, target,
+        activeSprite, activeLayer, filterFrames, target,
         false, false, false, false)
     local lenCels <const> = #cels
 
@@ -168,8 +176,16 @@ dlg:button {
 
         local target <const> = args.target
             or defaults.target --[[@as string]]
+
+        local filterFrames = activeSprite.frames
+        if target == "ACTIVE" then
+            local activeFrame <const> = site.frame
+            if not activeFrame then return end
+            filterFrames = { activeFrame }
+        end
+
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, activeSprite.frames, target,
+            activeSprite, activeLayer, filterFrames, target,
             false, false, false, true)
         local lenCels <const> = #cels
 
@@ -343,8 +359,16 @@ dlg:button {
 
         local target <const> = args.target
             or defaults.target --[[@as string]]
+
+        local filterFrames = activeSprite.frames
+        if target == "ACTIVE" then
+            local activeFrame <const> = site.frame
+            if not activeFrame then return end
+            filterFrames = { activeFrame }
+        end
+
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, activeSprite.frames, target,
+            activeSprite, activeLayer, filterFrames, target,
             false, false, false, false)
         local lenCels <const> = #cels
 
@@ -448,8 +472,16 @@ dlg:button {
 
         local target <const> = args.target
             or defaults.target --[[@as string]]
+
+        local filterFrames = activeSprite.frames
+        if target == "ACTIVE" then
+            local activeFrame <const> = site.frame
+            if not activeFrame then return end
+            filterFrames = { activeFrame }
+        end
+
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, activeSprite.frames, target,
+            activeSprite, activeLayer, filterFrames, target,
             false, false, false, false)
         local lenCels <const> = #cels
 
@@ -540,8 +572,16 @@ dlg:button {
 
         local target <const> = args.target
             or defaults.target --[[@as string]]
+
+        local filterFrames = activeSprite.frames
+        if target == "ACTIVE" then
+            local activeFrame <const> = site.frame
+            if not activeFrame then return end
+            filterFrames = { activeFrame }
+        end
+
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, activeSprite.frames, target,
+            activeSprite, activeLayer, filterFrames, target,
             false, false, false, false)
         local lenCels <const> = #cels
 
@@ -758,8 +798,16 @@ dlg:button {
 
         local args <const> = dlg.data
         local target <const> = args.target or defaults.target --[[@as string]]
+
+        local filterFrames = activeSprite.frames
+        if target == "ACTIVE" then
+            local activeFrame <const> = site.frame
+            if not activeFrame then return end
+            filterFrames = { activeFrame }
+        end
+
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, activeSprite.frames, target,
+            activeSprite, activeLayer, filterFrames, target,
             false, false, false, true)
         local lenCels <const> = #cels
 
@@ -794,8 +842,16 @@ dlg:button {
 
         local args <const> = dlg.data
         local target <const> = args.target or defaults.target --[[@as string]]
+
+        local filterFrames = activeSprite.frames
+        if target == "ACTIVE" then
+            local activeFrame <const> = site.frame
+            if not activeFrame then return end
+            filterFrames = { activeFrame }
+        end
+
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, activeSprite.frames, target,
+            activeSprite, activeLayer, filterFrames, target,
             false, false, false, true)
         local lenCels <const> = #cels
 
@@ -872,8 +928,15 @@ dlg:button {
             return
         end
 
+        local filterFrames = activeSprite.frames
+        if target == "ACTIVE" then
+            local activeFrame <const> = site.frame
+            if not activeFrame then return end
+            filterFrames = { activeFrame }
+        end
+
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, activeSprite.frames, target,
+            activeSprite, activeLayer, filterFrames, target,
             false, false, false, false)
         local lenCels = #cels
 
