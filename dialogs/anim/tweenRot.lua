@@ -1,13 +1,14 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
-local facTypes <const> = { "FRAME", "TIME" }
-local modes <const> = { "ADD", "MIX" }
 local angleTypes <const> = {
     "CCW",
     "CW",
     "NEAR"
 }
+local axes <const> = { "X", "Y", "Z" }
+local facTypes <const> = { "FRAME", "TIME" }
+local modes <const> = { "ADD", "MIX" }
 
 local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
 local curveColor <const> = app.theme.color.text --[[@as Color]]
@@ -16,6 +17,7 @@ local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 local defaults <const> = {
     mode = "MIX",
     facType = "TIME",
+    axis = "Z",
     angleType = "NEAR",
     trimCel = true,
     frameOrig = 1,
@@ -70,6 +72,15 @@ dlg:combobox {
     option = defaults.angleType,
     options = angleTypes,
     visible = defaults.mode == "MIX"
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "axis",
+    label = "Axis:",
+    option = defaults.axis,
+    options = axes
 }
 
 dlg:newrow { always = false }
@@ -339,11 +350,20 @@ dlg:button {
             tlySrc = tlySrc + tlyTrm
         end
 
+        local axis <const> = args.axis
+            or defaults.axis --[[@as string]]
+        local rotateImage = AseUtilities.rotateImageZNearest
+        if axis == "X" then
+            rotateImage = AseUtilities.rotateImageXNearest
+        elseif axis == "Y" then
+            rotateImage = AseUtilities.rotateImageYNearest
+        end
+
         local trgLayer = nil
         app.transaction("New Layer", function()
             trgLayer = activeSprite:newLayer()
-            trgLayer.name = string.format("Rotate %s At %d From %d To %d",
-                srcLayer.name,
+            trgLayer.name = string.format("Rotate%s %s At %d From %d To %d",
+                axis, srcLayer.name,
                 srcFrame.frameNumber + frameUiOffset,
                 frIdxOrigVerif + frameUiOffset,
                 frIdxDestVerif + frameUiOffset)
@@ -367,7 +387,6 @@ dlg:button {
 
             -- Cache methods used in loop.
             local floor <const> = math.floor
-            local rotateImage <const> = AseUtilities.rotateImageNearest
 
             local j = 0
             while j < countFrames do
@@ -469,7 +488,6 @@ dlg:button {
             -- Cache methods used in loop.
             local floor <const> = math.floor
             local eval <const> = Curve2.eval
-            local rotateImage <const> = AseUtilities.rotateImageNearest
 
             app.transaction("Tween Cel Rotation", function()
                 local j = 0
