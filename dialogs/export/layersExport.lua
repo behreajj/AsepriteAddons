@@ -534,6 +534,9 @@ dlg:button {
                         -- print("Cel was found.")
                         celData = cel.data
                         celOpacity = cel.opacity
+
+                        -- Beware that this property is not shared between
+                        -- linked cels.
                         zIndex = cel.zIndex
 
                         image = cel.image

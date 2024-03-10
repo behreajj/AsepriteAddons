@@ -381,10 +381,10 @@ local function restackLayers(preset)
         while i < lenFiltered do
             i = i + 1
             local filtered <const> = filteredLayers[i]
-            -- Might be nice to preserve composite order by adjusting cel
-            -- zIndex, but that would mean having to deal with group cels.
+            -- Could be nice to preserve composite order by adjusting cel
+            -- zIndex, but that would mean having to deal with group leaves
+            -- and linked cels not sharing zIndex property.
             -- Could find delta layer stack index, then add to each cel zIndex.
-            -- local oldStack <const> = filtered.stackIndex
             local newStack <const> = stackIndices[i]
             filtered.stackIndex = newStack
         end
@@ -530,15 +530,7 @@ local function alignCels(dialog, preset)
     ---@param b Cel right comparisand
     ---@return boolean
     local orderSort = function(a, b)
-        local aIndex <const> = a.layer.stackIndex - 1
-        local bIndex <const> = b.layer.stackIndex - 1
-        local az <const> = a.zIndex
-        local bz <const> = b.zIndex
-        local aOrder <const> = aIndex + az
-        local bOrder <const> = bIndex + bz
-        return (aOrder < bOrder)
-            or ((aOrder == bOrder)
-                and (az < bz))
+        return a.layer.stackIndex < b.layer.stackIndex
     end
 
     local sortFunc = orderSort
@@ -842,7 +834,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "stackNameButton",
-    text = "&NAME",
+    text = "NAME",
     focus = false,
     onclick = function()
         restackLayers("NAME")
