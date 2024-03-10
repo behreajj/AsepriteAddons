@@ -2410,7 +2410,7 @@ function AseUtilities.rotateImageXNearest(source, angle)
     elseif deg == 90 or deg == 270 then
         return Image(source.spec)
     elseif deg == 180 then
-        return AseUtilities.flipImageY(source)
+        return AseUtilities.flipImageX(source)
     end
 
     local srcSpec <const> = source.spec
@@ -2452,7 +2452,7 @@ function AseUtilities.rotateImageYNearest(source, angle)
     elseif deg == 90 or deg == 270 then
         return Image(source.spec)
     elseif deg == 180 then
-        return AseUtilities.flipImageX(source)
+        return AseUtilities.flipImageY(source)
     end
 
     local srcSpec <const> = source.spec
