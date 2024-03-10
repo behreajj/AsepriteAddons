@@ -811,7 +811,7 @@ end
 function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg, bpp)
     ---@type string[]
     local resized <const> = {}
-    local floor <const> = math.floor
+    local round <const> = Utilities.round
     local strsub <const> = string.sub
     local tx <const> = wSrc / wTrg
     local ty <const> = hSrc / hTrg
@@ -823,8 +823,8 @@ function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg, bpp)
     local yOff <const> = hTrg < 0 and 1 or 0
     local i = 0
     while i < lenTrg do
-        local nx <const> = (floor((i % wTrgAbs) * tx) - xOff) % wSrc
-        local ny <const> = (floor((i // wTrgAbs) * ty) - yOff) % hSrc
+        local nx <const> = (round((i % wTrgAbs) * tx) - xOff) % wSrc
+        local ny <const> = (round((i // wTrgAbs) * ty) - yOff) % hSrc
         local j <const> = ny * wSrc + nx
         local orig <const> = 1 + j * bpp
         local dest <const> = orig + bppn1
