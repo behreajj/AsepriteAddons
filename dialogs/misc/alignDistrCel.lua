@@ -303,6 +303,7 @@ local function restackLayers(preset)
         return a.stackIndex < b.stackIndex
     end
 
+    local transactPrefix = "Stack Layers"
     if preset == "X" then
         ---@param a Layer
         ---@param b Layer
@@ -319,6 +320,7 @@ local function restackLayers(preset)
             end
             return a.stackIndex < b.stackIndex
         end
+        transactPrefix = "Stack on X"
     elseif preset == "Y" then
         ---@param a Layer
         ---@param b Layer
@@ -335,6 +337,7 @@ local function restackLayers(preset)
             end
             return a.stackIndex < b.stackIndex
         end
+        transactPrefix = "Stack on Y"
     elseif preset == "AREA" then
         ---@param a Layer
         ---@param b Layer
@@ -352,6 +355,7 @@ local function restackLayers(preset)
             end
             return a.stackIndex < b.stackIndex
         end
+        transactPrefix = "Stack by Area"
     elseif preset == "NAME" then
         ---@param a Layer
         ---@param b Layer
@@ -359,6 +363,7 @@ local function restackLayers(preset)
         sortFunc = function(a, b)
             return b.name < a.name
         end
+        transactPrefix = "Stack by Name"
     elseif preset == "REVERSE" then
         ---@param a Layer
         ---@param b Layer
@@ -366,15 +371,22 @@ local function restackLayers(preset)
         sortFunc = function(a, b)
             return b.stackIndex < a.stackIndex
         end
+        transactPrefix = "Reverse Layers"
     end
 
     table.sort(filteredLayers, sortFunc)
 
-    app.transaction("Stack Layers", function()
+    app.transaction(transactPrefix, function()
         local i = 0
         while i < lenFiltered do
             i = i + 1
-            filteredLayers[i].stackIndex = stackIndices[i]
+            local filtered <const> = filteredLayers[i]
+            -- Might be nice to preserve composite order by adjusting cel
+            -- zIndex, but that would mean having to deal with group cels.
+            -- Could find delta layer stack index, then add to each cel zIndex.
+            -- local oldStack <const> = filtered.stackIndex
+            local newStack <const> = stackIndices[i]
+            filtered.stackIndex = newStack
         end
     end)
 
@@ -801,7 +813,7 @@ dlg:separator { id = "distrSep", text = "Stack" }
 dlg:button {
     id = "stackxButton",
     text = "X",
-    label = "Cel:",
+    label = "Criterion:",
     focus = false,
     onclick = function()
         restackLayers("X")
