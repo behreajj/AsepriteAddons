@@ -8,6 +8,7 @@ local curveColor <const> = app.theme.color.text --[[@as Color]]
 local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 
 local defaults <const> = {
+    -- TODO: Introduce an add mode like there is with rotation?
     facType = "TIME",
     trimCel = true,
 

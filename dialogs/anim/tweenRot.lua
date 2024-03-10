@@ -378,8 +378,6 @@ dlg:button {
         local mode <const> = args.mode
             or defaults.mode --[[@as string]]
         if mode == "ADD" then
-            -- TODO: Is there a way to remap the rotation from frames to time?
-
             local rotIncrDeg <const> = args.rotIncr
                 or defaults.rotIncr --[[@as string]]
             local currDeg = 0
@@ -388,19 +386,21 @@ dlg:button {
             -- Cache methods used in loop.
             local floor <const> = math.floor
 
-            local j = 0
-            while j < countFrames do
-                local frObj <const> = frObjs[frIdxOrigVerif + j]
-                local trgImg <const> = rotateImage(srcImg, currDeg)
+            app.transaction("Add Cel Rotation", function()
+                local j = 0
+                while j < countFrames do
+                    local frObj <const> = frObjs[frIdxOrigVerif + j]
+                    local trgImg <const> = rotateImage(srcImg, currDeg)
 
-                local trgPoint <const> = Point(
-                    floor(xCenter - trgImg.width * 0.5),
-                    floor(yCenter - trgImg.height * 0.5))
+                    local trgPoint <const> = Point(
+                        floor(xCenter - trgImg.width * 0.5),
+                        floor(yCenter - trgImg.height * 0.5))
 
-                activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
-                j = j + 1
-                currDeg = currDeg + rotIncrDeg
-            end
+                    activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
+                    j = j + 1
+                    currDeg = currDeg + rotIncrDeg
+                end
+            end)
         else
             ---@type number[]
             local factors <const> = {}
