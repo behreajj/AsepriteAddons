@@ -815,12 +815,14 @@ function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg, bpp)
     local strsub <const> = string.sub
     local tx <const> = wSrc / wTrg
     local ty <const> = hSrc / hTrg
-    local lenTrg <const> = wTrg * hTrg
+    local wTrgAbs <const> = math.abs(wTrg)
+    local hTrgAbs <const> = math.abs(hTrg)
+    local lenTrg <const> = wTrgAbs * hTrgAbs
     local bppn1 <const> = bpp - 1
     local i = 0
     while i < lenTrg do
-        local nx <const> = floor((i % wTrg) * tx)
-        local ny <const> = floor((i // wTrg) * ty)
+        local nx <const> = floor((i % wTrgAbs) * tx)
+        local ny <const> = floor((i // wTrgAbs) * ty)
         local j <const> = ny * wSrc + nx
         local orig <const> = 1 + j * bpp
         local dest <const> = orig + bppn1

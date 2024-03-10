@@ -447,10 +447,9 @@ dlg:button {
             end
         end)
 
-        -- If you were to set this to trgLayer, then
-        -- it'd be nice to also set the active frame
-        -- to activeSprite.frames[frIdxDestVerif]
-        -- and provide options to hide srcLayer.
+        -- If this were to set to trgLayer, then it'd be nice to also set the
+        -- active frame to activeSprite.frames[frIdxDestVerif] and provide
+        -- options to hide srcLayer.
         app.layer = srcLayer
         app.refresh()
     end
