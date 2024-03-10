@@ -20,15 +20,18 @@ local defaults <const> = {
     axis = "Z",
     angleType = "NEAR",
     trimCel = true,
+    alpSampleCount = 96,
+
     frameOrig = 1,
     rotOrig = 0,
+
     frameDest = 1,
     rotDest = 0,
+
     rotIncr = 0,
-    alpSampleCount = 96,
 }
 
-local dlg <const> = Dialog { title = "Tween Rotation" }
+local dlg <const> = Dialog { title = "Anim Rotation" }
 
 dlg:combobox {
     id = "mode",
@@ -379,14 +382,14 @@ dlg:button {
             or defaults.mode --[[@as string]]
         if mode == "ADD" then
             local rotIncrDeg <const> = args.rotIncr
-                or defaults.rotIncr --[[@as string]]
+                or defaults.rotIncr --[[@as integer]]
             local currDeg = 0
             local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
             -- Cache methods used in loop.
             local floor <const> = math.floor
 
-            app.transaction("Add Cel Rotation", function()
+            app.transaction("Rotate Cels", function()
                 local j = 0
                 while j < countFrames do
                     local frObj <const> = frObjs[frIdxOrigVerif + j]
@@ -397,6 +400,7 @@ dlg:button {
                         floor(yCenter - trgImg.height * 0.5))
 
                     activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
+
                     j = j + 1
                     currDeg = currDeg + rotIncrDeg
                 end

@@ -2,15 +2,17 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
 local facTypes <const> = { "FRAME", "TIME" }
+local modes <const> = { "ADD", "MIX" }
 
 local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
 local curveColor <const> = app.theme.color.text --[[@as Color]]
 local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 
 local defaults <const> = {
-    -- TODO: Introduce an add mode like there is with rotation?
+    mode = "MIX",
     facType = "TIME",
     trimCel = true,
+    alpSampleCount = 96,
 
     frameOrig = 1,
     xPosOrig = 0.0,
@@ -20,7 +22,8 @@ local defaults <const> = {
     xPosDest = 0.0,
     yPosDest = 0.0,
 
-    alpSampleCount = 96,
+    xIncr = 0,
+    yIncr = 0,
 }
 
 ---@return integer frIdx
@@ -77,13 +80,43 @@ local function getCelPosAtFrame()
     return frIdx, xCenter, yCenter
 end
 
-local dlg <const> = Dialog { title = "Tween Position" }
+local dlg <const> = Dialog { title = "Anim Position" }
+
+dlg:combobox {
+    id = "mode",
+    label = "Mode:",
+    option = defaults.mode,
+    options = modes,
+    onchange = function()
+        local args <const> = dlg.data
+        local mode <const> = args.mode --[[@as string]]
+        local isMix <const> = mode == "MIX"
+        local isAdd <const> = mode == "ADD"
+
+        dlg:modify { id = "facType", visible = isMix }
+
+        dlg:modify { id = "xPosOrig", visible = isMix }
+        dlg:modify { id = "yPosOrig", visible = isMix }
+
+        dlg:modify { id = "xPosDest", visible = isMix }
+        dlg:modify { id = "yPosDest", visible = isMix }
+
+        dlg:modify { id = "easeCurve", visible = isMix }
+        dlg:modify { id = "easeCurve_easeFuncs", visible = isMix }
+
+        dlg:modify { id = "xIncr", visible = isAdd }
+        dlg:modify { id = "yIncr", visible = isAdd }
+    end
+}
+
+dlg:newrow { always = false }
 
 dlg:combobox {
     id = "facType",
     label = "Factor:",
     option = defaults.facType,
-    options = facTypes
+    options = facTypes,
+    visible = defaults.mode == "MIX"
 }
 
 dlg:newrow { always = false }
@@ -114,13 +147,15 @@ dlg:number {
     id = "xPosOrig",
     label = "Position:",
     text = string.format("%.1f", defaults.xPosOrig),
-    decimals = 1
+    decimals = 1,
+    visible = defaults.mode == "MIX"
 }
 
 dlg:number {
     id = "yPosOrig",
     text = string.format("%.1f", defaults.yPosOrig),
-    decimals = 1
+    decimals = 1,
+    visible = defaults.mode == "MIX"
 }
 
 dlg:newrow { always = false }
@@ -156,13 +191,15 @@ dlg:number {
     id = "xPosDest",
     label = "Position:",
     text = string.format("%.1f", defaults.xPosDest),
-    decimals = 1
+    decimals = 1,
+    visible = defaults.mode == "MIX"
 }
 
 dlg:number {
     id = "yPosDest",
     text = string.format("%.1f", defaults.yPosDest),
-    decimals = 1
+    decimals = 1,
+    visible = defaults.mode == "MIX"
 }
 
 dlg:newrow { always = false }
@@ -181,11 +218,27 @@ dlg:button {
 
 dlg:separator { id = "easeSeparator" }
 
+dlg:number {
+    id = "xIncr",
+    label = "Vector:",
+    text = string.format("%d", defaults.xIncr),
+    decimals = 0,
+    visible = defaults.mode == "ADD"
+}
+
+dlg:number {
+    id = "yIncr",
+    text = string.format("%d", defaults.yIncr),
+    decimals = 0,
+    visible = defaults.mode == "ADD"
+}
+
 CanvasUtilities.graphBezier(
     dlg, "easeCurve", "Easing:",
     128 // screenScale,
     128 // screenScale,
-    true, false, false, true, false,
+    defaults.mode == "MIX",
+    false, false, true, false,
     5, 0.25, 0.1, 0.25, 1.0,
     curveColor, gridColor)
 
@@ -268,14 +321,22 @@ dlg:button {
         local alphaIndex <const> = spriteSpec.transparentColor
 
         local srcImg = nil
+        local tlxSrc = 0
+        local tlySrc = 0
         if srcLayer.isGroup then
-            local flatImg <const>, _ = AseUtilities.flattenGroup(
+            local flatImg <const>, flatRect <const> = AseUtilities.flattenGroup(
                 srcLayer, srcFrame, colorMode, colorSpace, alphaIndex,
                 true, false, true, true)
             srcImg = flatImg
+            tlxSrc = flatRect.x
+            tlySrc = flatRect.y
         else
             local srcCel <const> = srcLayer:cel(srcFrame)
             if srcCel then
+                local celPos <const> = srcCel.position
+                tlxSrc = celPos.x
+                tlySrc = celPos.y
+
                 local celImg <const> = srcCel.image
                 if srcLayer.isTilemap then
                     local tileSet <const> = srcLayer.tileset
@@ -319,9 +380,12 @@ dlg:button {
 
         local trimCel <const> = args.trimCel --[[@as boolean]]
         if trimCel then
-            local trimmed <const>, _, _ = AseUtilities.trimImageAlpha(
-                srcImg, 0, alphaIndex)
+            local trimmed <const>,
+            tlxTrm <const>,
+            tlyTrm <const> = AseUtilities.trimImageAlpha(srcImg, 0, alphaIndex)
             srcImg = trimmed
+            tlxSrc = tlxSrc + tlxTrm
+            tlySrc = tlySrc + tlyTrm
         end
 
         local trgLayer = nil
@@ -335,118 +399,145 @@ dlg:button {
             trgLayer.parent = srcLayer.parent
         end)
 
-        ---@type number[]
-        local factors <const> = {}
-        local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
+        local mode <const> = args.mode
+            or defaults.mode --[[@as string]]
+        if mode == "ADD" then
+            local xIncr <const> = args.xIncr
+                or defaults.xIncr --[[@as integer]]
+            local yIncr <const> = args.yIncr
+                or defaults.yIncr --[[@as integer]]
 
-        local facType <const> = args.facType
-            or defaults.facType --[[@as string]]
-        if facType == "TIME" then
-            ---@type number[]
-            local timeStamps <const> = {}
-            local totalDuration = 0
+            local xCurr = tlxSrc
+            local yCurr = tlySrc
 
-            local h = 0
-            while h < countFrames do
-                local frObj <const> = frObjs[frIdxOrigVerif + h]
-                timeStamps[1 + h] = totalDuration
-                totalDuration = totalDuration + frObj.duration
-                h = h + 1
-            end
+            local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
-            local timeToFac = 0.0
-            local finalDuration <const> = timeStamps[countFrames]
-            if finalDuration and finalDuration ~= 0.0 then
-                timeToFac = 1.0 / finalDuration
-            end
+            app.transaction("Move Cels", function()
+                local j = 0
+                while j < countFrames do
+                    local frObj <const> = frObjs[frIdxOrigVerif + j]
+                    local trgPoint <const> = Point(xCurr, yCurr)
+                    activeSprite:newCel(trgLayer, frObj, srcImg, trgPoint)
 
-            local i = 0
-            while i < countFrames do
-                i = i + 1
-                factors[i] = timeStamps[i] * timeToFac
-            end
-        else
-            -- Default to using frames.
-            local iToFac <const> = 1.0 / (countFrames - 1)
-            local i = 0
-            while i < countFrames do
-                local iFac <const> = i * iToFac
-                i = i + 1
-                factors[i] = iFac
-            end
-        end
-
-        local ap0x <const> = args.easeCurve_ap0x --[[@as number]]
-        local ap0y <const> = args.easeCurve_ap0y --[[@as number]]
-        local cp0x <const> = args.easeCurve_cp0x --[[@as number]]
-        local cp0y <const> = args.easeCurve_cp0y --[[@as number]]
-        local cp1x <const> = args.easeCurve_cp1x --[[@as number]]
-        local cp1y <const> = args.easeCurve_cp1y --[[@as number]]
-        local ap1x <const> = args.easeCurve_ap1x --[[@as number]]
-        local ap1y <const> = args.easeCurve_ap1y --[[@as number]]
-
-        local kn0 <const> = Knot2.new(
-            Vec2.new(ap0x, ap0y),
-            Vec2.new(cp0x, cp0y),
-            Vec2.new(0.0, ap0y))
-        local kn1 <const> = Knot2.new(
-            Vec2.new(ap1x, ap1y),
-            Vec2.new(1.0, ap1y),
-            Vec2.new(cp1x, cp1y))
-        local curve = Curve2.new(false, { kn0, kn1 }, "pos easing")
-
-        local alpSampleCount <const> = defaults.alpSampleCount
-        local totalLength <const>, arcLengths <const> = Curve2.arcLength(
-            curve, alpSampleCount)
-        local samples <const> = Curve2.paramPoints(
-            curve, totalLength, arcLengths, alpSampleCount)
-
-        -- Should these be swapped as well when dest frame is gt orig?
-        local xPosOrig = args.xPosOrig
-            or defaults.xPosOrig --[[@as number]]
-        local yPosOrig = args.yPosOrig
-            or defaults.yPosOrig --[[@as number]]
-        local xPosDest = args.xPosDest
-            or defaults.xPosDest --[[@as number]]
-        local yPosDest = args.yPosDest
-            or defaults.yPosOrig --[[@as number]]
-
-        local wImgHalf <const> = srcImg.width * 0.5
-        local hImgHalf <const> = srcImg.height * 0.5
-
-        -- Cache methods used in loop.
-        local round <const> = Utilities.round
-        local eval <const> = Curve2.eval
-        local floor <const> = math.floor
-
-        app.transaction("Tween Cel Position", function()
-            local j = 0
-            while j < countFrames do
-                local frObj <const> = frObjs[frIdxOrigVerif + j]
-                local fac <const> = factors[1 + j]
-                local t = eval(curve, fac).x
-                if fac > 0.0 and fac < 1.0 then
-                    local tScale <const> = t * (alpSampleCount - 1)
-                    local tFloor <const> = floor(tScale)
-                    local tFrac <const> = tScale - tFloor
-                    local left <const> = samples[1 + tFloor].y
-                    local right <const> = samples[2 + tFloor].y
-                    t = (1.0 - tFrac) * left + tFrac * right
+                    j = j + 1
+                    xCurr = xCurr + xIncr
+                    yCurr = yCurr - yIncr
                 end
-                local u <const> = 1.0 - t
+            end)
+        else
+            ---@type number[]
+            local factors <const> = {}
+            local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
-                local xCenter <const> = u * xPosOrig + t * xPosDest
-                local yCenter <const> = u * yPosOrig + t * yPosDest
-                local xtl <const> = xCenter - wImgHalf
-                local ytl <const> = yCenter - hImgHalf
-                local xtlInt <const> = round(xtl)
-                local ytlInt <const> = round(ytl)
-                local trgPoint <const> = Point(xtlInt, ytlInt)
+            local facType <const> = args.facType
+                or defaults.facType --[[@as string]]
+            if facType == "TIME" then
+                ---@type number[]
+                local timeStamps <const> = {}
+                local totalDuration = 0
 
-                activeSprite:newCel(trgLayer, frObj, srcImg, trgPoint)
-                j = j + 1
+                local h = 0
+                while h < countFrames do
+                    local frObj <const> = frObjs[frIdxOrigVerif + h]
+                    timeStamps[1 + h] = totalDuration
+                    totalDuration = totalDuration + frObj.duration
+                    h = h + 1
+                end
+
+                local timeToFac = 0.0
+                local finalDuration <const> = timeStamps[countFrames]
+                if finalDuration and finalDuration ~= 0.0 then
+                    timeToFac = 1.0 / finalDuration
+                end
+
+                local i = 0
+                while i < countFrames do
+                    i = i + 1
+                    factors[i] = timeStamps[i] * timeToFac
+                end
+            else
+                -- Default to using frames.
+                local iToFac <const> = 1.0 / (countFrames - 1)
+                local i = 0
+                while i < countFrames do
+                    local iFac <const> = i * iToFac
+                    i = i + 1
+                    factors[i] = iFac
+                end
             end
-        end)
+
+            local ap0x <const> = args.easeCurve_ap0x --[[@as number]]
+            local ap0y <const> = args.easeCurve_ap0y --[[@as number]]
+            local cp0x <const> = args.easeCurve_cp0x --[[@as number]]
+            local cp0y <const> = args.easeCurve_cp0y --[[@as number]]
+            local cp1x <const> = args.easeCurve_cp1x --[[@as number]]
+            local cp1y <const> = args.easeCurve_cp1y --[[@as number]]
+            local ap1x <const> = args.easeCurve_ap1x --[[@as number]]
+            local ap1y <const> = args.easeCurve_ap1y --[[@as number]]
+
+            local kn0 <const> = Knot2.new(
+                Vec2.new(ap0x, ap0y),
+                Vec2.new(cp0x, cp0y),
+                Vec2.new(0.0, ap0y))
+            local kn1 <const> = Knot2.new(
+                Vec2.new(ap1x, ap1y),
+                Vec2.new(1.0, ap1y),
+                Vec2.new(cp1x, cp1y))
+            local curve = Curve2.new(false, { kn0, kn1 }, "pos easing")
+
+            local alpSampleCount <const> = defaults.alpSampleCount
+            local totalLength <const>, arcLengths <const> = Curve2.arcLength(
+                curve, alpSampleCount)
+            local samples <const> = Curve2.paramPoints(
+                curve, totalLength, arcLengths, alpSampleCount)
+
+            -- Should these be swapped as well when dest frame is gt orig?
+            local xPosOrig = args.xPosOrig
+                or defaults.xPosOrig --[[@as number]]
+            local yPosOrig = args.yPosOrig
+                or defaults.yPosOrig --[[@as number]]
+            local xPosDest = args.xPosDest
+                or defaults.xPosDest --[[@as number]]
+            local yPosDest = args.yPosDest
+                or defaults.yPosOrig --[[@as number]]
+
+            local wImgHalf <const> = srcImg.width * 0.5
+            local hImgHalf <const> = srcImg.height * 0.5
+
+            -- Cache methods used in loop.
+            local round <const> = Utilities.round
+            local eval <const> = Curve2.eval
+            local floor <const> = math.floor
+
+            app.transaction("Tween Cel Position", function()
+                local j = 0
+                while j < countFrames do
+                    local frObj <const> = frObjs[frIdxOrigVerif + j]
+                    local fac <const> = factors[1 + j]
+                    local t = eval(curve, fac).x
+                    if fac > 0.0 and fac < 1.0 then
+                        local tScale <const> = t * (alpSampleCount - 1)
+                        local tFloor <const> = floor(tScale)
+                        local tFrac <const> = tScale - tFloor
+                        local left <const> = samples[1 + tFloor].y
+                        local right <const> = samples[2 + tFloor].y
+                        t = (1.0 - tFrac) * left + tFrac * right
+                    end
+                    local u <const> = 1.0 - t
+
+                    local xCenter <const> = u * xPosOrig + t * xPosDest
+                    local yCenter <const> = u * yPosOrig + t * yPosDest
+                    local xtl <const> = xCenter - wImgHalf
+                    local ytl <const> = yCenter - hImgHalf
+                    local xtlInt <const> = round(xtl)
+                    local ytlInt <const> = round(ytl)
+                    local trgPoint <const> = Point(xtlInt, ytlInt)
+
+                    activeSprite:newCel(trgLayer, frObj, srcImg, trgPoint)
+                    j = j + 1
+                end
+            end)
+        end
 
         -- If this were to set to trgLayer, then it'd be nice to also set the
         -- active frame to activeSprite.frames[frIdxDestVerif] and provide
