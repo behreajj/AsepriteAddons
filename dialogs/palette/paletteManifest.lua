@@ -96,7 +96,7 @@ end
 local function invertAseColor(aseColor)
     local srgb <const> = AseUtilities.aseColorToClr(aseColor)
     local lab <const> = Clr.sRgbToSrLab2(srgb)
-    local inv <const> = Clr.srLab2TosRgb(100 - lab.l, lab.a, lab.b, lab.alpha)
+    local inv <const> = Clr.srLab2TosRgb(100 - lab.l, -lab.a, -lab.b, lab.alpha)
     return AseUtilities.clrToAseColor(inv)
 end
 
