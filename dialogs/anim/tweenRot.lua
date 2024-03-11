@@ -267,6 +267,7 @@ dlg:button {
         if frIdxDestVerif < frIdxOrigVerif then
             frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
         end
+        local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
         local spriteSpec <const> = activeSprite.spec
         local colorMode <const> = spriteSpec.colorMode
@@ -342,7 +343,10 @@ dlg:button {
             tlySrc = tlySrc + tlyTrm
         end
 
+        -- Cache methods used in loop.
         local rotateImage = AseUtilities.rotateImageZNearest
+        local floor <const> = math.floor
+        local eval <const> = Curve2.eval
 
         local trgLayer = nil
         app.transaction("New Layer", function()
@@ -366,10 +370,6 @@ dlg:button {
             local rotIncrDeg <const> = args.rotIncr
                 or defaults.rotIncr --[[@as integer]]
             local currDeg = 0
-            local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
-
-            -- Cache methods used in loop.
-            local floor <const> = math.floor
 
             app.transaction("Rotate Cels", function()
                 local j = 0
@@ -390,8 +390,6 @@ dlg:button {
         else
             ---@type number[]
             local factors <const> = {}
-            local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
-
             local facType <const> = args.facType
                 or defaults.facType --[[@as string]]
             if facType == "TIME" then
@@ -470,10 +468,6 @@ dlg:button {
             elseif angleType == "FAR" then
                 angleMixDeg = Utilities.lerpAngleFar
             end
-
-            -- Cache methods used in loop.
-            local floor <const> = math.floor
-            local eval <const> = Curve2.eval
 
             app.transaction("Tween Cel Rotation", function()
                 local j = 0

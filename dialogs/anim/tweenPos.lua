@@ -312,6 +312,7 @@ dlg:button {
         if frIdxDestVerif < frIdxOrigVerif then
             frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
         end
+        local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
         local spriteSpec <const> = activeSprite.spec
         local colorMode <const> = spriteSpec.colorMode
@@ -397,6 +398,11 @@ dlg:button {
             trgLayer.parent = srcLayer.parent
         end)
 
+        -- Cache methods used in loop.
+        local round <const> = Utilities.round
+        local eval <const> = Curve2.eval
+        local floor <const> = math.floor
+
         local mode <const> = args.mode
             or defaults.mode --[[@as string]]
         if mode == "ADD" then
@@ -407,8 +413,6 @@ dlg:button {
 
             local xCurr = tlxSrc
             local yCurr = tlySrc
-
-            local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
             app.transaction("Move Cels", function()
                 local j = 0
@@ -427,8 +431,6 @@ dlg:button {
         else
             ---@type number[]
             local factors <const> = {}
-            local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
-
             local facType <const> = args.facType
                 or defaults.facType --[[@as string]]
             if facType == "TIME" then
@@ -503,11 +505,6 @@ dlg:button {
 
             local wImgHalf <const> = srcImg.width * 0.5
             local hImgHalf <const> = srcImg.height * 0.5
-
-            -- Cache methods used in loop.
-            local round <const> = Utilities.round
-            local eval <const> = Curve2.eval
-            local floor <const> = math.floor
 
             app.transaction("Tween Cel Position", function()
                 local j = 0

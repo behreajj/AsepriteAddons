@@ -97,7 +97,6 @@ dlg:combobox {
     label = "Mode:",
     option = defaults.mode,
     options = modes,
-    visible = false,
     onchange = function()
         local args <const> = dlg.data
         local mode <const> = args.mode --[[@as string]]
@@ -419,6 +418,7 @@ dlg:button {
         if frIdxDestVerif < frIdxOrigVerif then
             frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
         end
+        local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
         local spriteSpec <const> = activeSprite.spec
         local colorMode <const> = spriteSpec.colorMode
@@ -510,12 +510,79 @@ dlg:button {
         local xCenter <const> = tlxSrc + pxwSrc * 0.5
         local yCenter <const> = tlySrc + pxhSrc * 0.5
 
+        -- Cache methods used in loop.
+        local resize <const> = AseUtilities.resizeImageNearest
+        local floor <const> = math.floor
+        local max <const> = math.max
+        local eval <const> = Curve2.eval
+        local transact <const> = app.transaction
+
         local mode <const> = args.mode
             or defaults.mode --[[@as string]]
-        if mode == "MIX" then
+        if mode == "ADD" then
+            local wIncr <const> = args.wIncr
+                or defaults.wIncr --[[@as integer]]
+            local hIncr <const> = args.hIncr
+                or defaults.hIncr --[[@as integer]]
+
+            local wCurr = pxwSrc
+            local hCurr = pxhSrc
+
+            local j = 0
+            while j < countFrames do
+                local frIdx <const> = frIdxOrigVerif + j
+                local frObj <const> = frObjs[frIdx]
+                local trgImg <const> = resize(srcImg, wCurr, hCurr)
+
+                local trgPoint <const> = Point(
+                    floor(xCenter - wCurr * 0.5),
+                    floor(yCenter - hCurr * 0.5))
+
+                -- This handles transactions differently due to large images
+                -- eating up memory, making undo crash.
+                transact("Scale Cel", function()
+                    activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
+                end)
+
+                j = j + 1
+                wCurr = max(1, wCurr + wIncr)
+                hCurr = max(1, hCurr + hIncr)
+            end
+        elseif mode == "MULTIPLY" then
+            local wScale <const> = args.wScale
+                or defaults.wIncr --[[@as number]]
+            local hScale <const> = args.hScale
+                or defaults.hScale --[[@as number]]
+
+            local wScaleAbs <const> = math.max(0.000001, math.abs(wScale))
+            local hScaleAbs <const> = math.max(0.000001, math.abs(hScale))
+
+            local wCurr = pxwSrc
+            local hCurr = pxhSrc
+
+            local j = 0
+            while j < countFrames do
+                local frIdx <const> = frIdxOrigVerif + j
+                local frObj <const> = frObjs[frIdx]
+                local trgImg <const> = resize(srcImg, wCurr, hCurr)
+
+                local trgPoint <const> = Point(
+                    floor(xCenter - wCurr * 0.5),
+                    floor(yCenter - hCurr * 0.5))
+
+                -- This handles transactions differently due to large images
+                -- eating up memory, making undo crash.
+                transact("Scale Cel", function()
+                    activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
+                end)
+
+                j = j + 1
+                wCurr = max(1, floor(0.5 + wCurr * wScaleAbs))
+                hCurr = max(1, floor(0.5 + hCurr * hScaleAbs))
+            end
+        else
             ---@type number[]
             local factors <const> = {}
-            local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
             local facType <const> = args.facType
                 or defaults.facType --[[@as string]]
@@ -617,12 +684,6 @@ dlg:button {
                 pxhDest = math.max(1.0, pxhSrc * prchDest)
             end
 
-            -- Cache methods used in loop.
-            local max <const> = math.max
-            local floor <const> = math.floor
-            local eval <const> = Curve2.eval
-            local resize <const> = AseUtilities.resizeImageNearest
-
             app.transaction("Tween Cel Scale", function()
                 local j = 0
                 while j < countFrames do
@@ -639,11 +700,11 @@ dlg:button {
                     end
                     local u <const> = 1.0 - t
 
-                local wTrg <const> = max(1, floor(0.5
-                    + u * pxwOrig + t * pxwDest))
-                local hTrg <const> = max(1, floor(0.5
-                    + u * pxhOrig + t * pxhDest))
-                local trgImg <const> = resize(srcImg, wTrg, hTrg)
+                    local wTrg <const> = max(1, floor(0.5
+                        + u * pxwOrig + t * pxwDest))
+                    local hTrg <const> = max(1, floor(0.5
+                        + u * pxhOrig + t * pxhDest))
+                    local trgImg <const> = resize(srcImg, wTrg, hTrg)
 
                     local trgPoint <const> = Point(
                         floor(xCenter - wTrg * 0.5),
@@ -653,10 +714,6 @@ dlg:button {
                     j = j + 1
                 end
             end)
-        elseif mode == "ADD" then
-
-        elseif mode == "MULTIPLY" then
-
         end
 
         app.layer = srcLayer
