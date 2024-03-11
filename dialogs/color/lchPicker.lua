@@ -594,21 +594,26 @@ dlg:canvas {
         local gTrg <const> = srgb.g
         local bTrg <const> = srgb.b
 
-        -- TODO: Switch to pixel byte array?
         local floor <const> = math.floor
+        local strpack <const> = string.pack
         local xToFac <const> = 1.0 / (barWidth - 1.0)
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local t <const> = pixel.x * xToFac
+
+        ---@type string[]
+        local bytesArr <const> = {}
+        local i = 0
+        while i < barWidth do
+            local t <const> = i * xToFac
             local u <const> = 1.0 - t
 
-            local b <const> = floor((u * bBkg + t * bTrg) * 255 + 0.5)
-            local g <const> = floor((u * gBkg + t * gTrg) * 255 + 0.5)
             local r <const> = floor((u * rBkg + t * rTrg) * 255 + 0.5)
+            local g <const> = floor((u * gBkg + t * gTrg) * 255 + 0.5)
+            local b <const> = floor((u * bBkg + t * bTrg) * 255 + 0.5)
 
-            pixel(0xff000000 | b << 0x10 | g << 0x08 | r)
+            i = i + 1
+            bytesArr[i] = strpack("B B B B", r, g, b, 255)
         end
+        img.bytes = table.concat(bytesArr)
 
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),

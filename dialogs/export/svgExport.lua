@@ -3,7 +3,6 @@ dofile("../../support/aseutilities.lua")
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 
 local defaults <const> = {
-    -- TODO: Add note about ignoring tag repetitions when animation is used?
     flattenImage = true,
     frameTarget = "ACTIVE",
     rangeStr = "",

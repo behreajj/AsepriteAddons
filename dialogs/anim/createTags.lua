@@ -190,7 +190,6 @@ dlg:button {
             or defaults.repeats --[[@as integer]]
         local deleteExisting <const> = args.deleteExisting --[[@as boolean]]
 
-        -- TODO: Call Utilities.validateFilename on this string?
         local validNameFormat <const> = #nameFormat > 0
             and pcall(function()
                 return string.format(nameFormat, 1, 2)

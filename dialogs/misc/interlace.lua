@@ -266,6 +266,9 @@ dlg:button {
 
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local strfmt <const> = string.format
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+        local tconcat <const> = table.concat
         local transact <const> = app.transaction
 
         local colorMode <const> = activeSprite.colorMode
@@ -283,32 +286,50 @@ dlg:button {
                 if isTilemap then
                     imgSrc = tilesToImage(imgSrc, tileSet, colorMode)
                 end
+
                 local srcPos <const> = srcCel.position
                 local xPos <const> = srcPos.x
                 local yPos <const> = srcPos.y
 
+                local srcBpp = imgSrc.bytesPerPixel
+                local srcBytes <const> = imgSrc.bytes
+
                 local srcSpec <const> = imgSrc.spec
-                local imgPick <const> = Image(srcSpec)
-                local imgSkip <const> = Image(srcSpec)
-
+                local wSrc <const> = srcSpec.width
+                local hSrc <const> = srcSpec.height
                 local alphaIndex <const> = srcSpec.transparentColor
-                imgPick:clear(alphaIndex)
-                imgSkip:clear(alphaIndex)
 
-                -- TODO: Switch from drawPixel to bytes array?
-                local pxItr <const> = imgSrc:pixels()
-                for pixel in pxItr do
-                    local x <const> = pixel.x
-                    local y <const> = pixel.y
+                local lenSrc <const> = wSrc * hSrc
+                ---@type string[]
+                local pickByteArr <const> = {}
+                ---@type string[]
+                local skipByteArr <const> = {}
+                local bppFmtStr <const> = "I" .. srcBpp
+                local alphaStr <const> = strpack(bppFmtStr, alphaIndex)
+
+                local i = 0
+                while i < lenSrc do
+                    local x <const> = i % wSrc
+                    local y <const> = i // wSrc
                     local xSmpl <const> = xPos + x
                     local ySmpl <const> = yPos + y
-                    local hex <const> = pixel()
+                    local ibpp <const> = i * srcBpp
+                    local hexStr <const> = strsub(srcBytes, 1 + ibpp, srcBpp + ibpp)
+
+                    i = i + 1
                     if eval(xSmpl, ySmpl, pick, all) then
-                        imgPick:drawPixel(x, y, hex)
+                        pickByteArr[i] = hexStr
+                        skipByteArr[i] = alphaStr
                     else
-                        imgSkip:drawPixel(x, y, hex)
+                        pickByteArr[i] = alphaStr
+                        skipByteArr[i] = hexStr
                     end
                 end
+
+                local imgPick <const> = Image(srcSpec)
+                imgPick.bytes = tconcat(pickByteArr)
+                local imgSkip <const> = Image(srcSpec)
+                imgSkip.bytes = tconcat(skipByteArr)
 
                 transact(
                     strfmt("Interlace %d", srcFrame),

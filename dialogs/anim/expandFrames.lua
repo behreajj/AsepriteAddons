@@ -114,8 +114,6 @@ dlg:button {
                 return
             end
 
-            -- TODO: Better approach than this? Make a special extrapolation
-            -- clause?
             if oldActFrObj.frameNumber <= 1 then
                 app.alert {
                     title = "Error",
@@ -135,8 +133,6 @@ dlg:button {
                 return
             end
 
-            -- TODO: Better approach than this? Make a special extrapolation
-            -- clause?
             if oldActFrObj.frameNumber >= lenFrObjsBefore then
                 app.alert {
                     title = "Error",

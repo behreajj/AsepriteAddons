@@ -184,16 +184,16 @@ dlg:number {
 dlg:number {
     id = "prcwOrig",
     label = "Percent:",
-    text = string.format("%.2f", defaults.prcwOrig),
-    decimals = 6,
+    text = string.format("%.3f", defaults.prcwOrig),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
     visible = defaults.mode == "MIX"
         and defaults.units == "PERCENT"
 }
 
 dlg:number {
     id = "prchOrig",
-    text = string.format("%.2f", defaults.prchOrig),
-    decimals = 6,
+    text = string.format("%.3f", defaults.prchOrig),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
     visible = defaults.mode == "MIX"
         and defaults.units == "PERCENT"
 }
@@ -249,16 +249,16 @@ dlg:number {
 dlg:number {
     id = "prcwDest",
     label = "Percent:",
-    text = string.format("%.2f", defaults.prcwDest),
-    decimals = 6,
+    text = string.format("%.3f", defaults.prcwDest),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
     visible = defaults.mode == "MIX"
         and defaults.units == "PERCENT"
 }
 
 dlg:number {
     id = "prchDest",
-    text = string.format("%.2f", defaults.prchDest),
-    decimals = 6,
+    text = string.format("%.3f", defaults.prchDest),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
     visible = defaults.mode == "MIX"
         and defaults.units == "PERCENT"
 }
