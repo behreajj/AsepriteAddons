@@ -6,7 +6,6 @@ local angleTypes <const> = {
     "CW",
     "NEAR"
 }
-local axes <const> = { "X", "Y", "Z" }
 local facTypes <const> = { "FRAME", "TIME" }
 local modes <const> = { "ADD", "MIX" }
 
@@ -17,7 +16,6 @@ local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 local defaults <const> = {
     mode = "MIX",
     facType = "TIME",
-    axis = "Z",
     angleType = "NEAR",
     trimCel = true,
     alpSampleCount = 96,
@@ -46,11 +44,11 @@ dlg:combobox {
 
         dlg:modify { id = "facType", visible = isMix }
         dlg:modify { id = "angleType", visible = isMix }
-        dlg:modify { id = "rotOrig", visible = isMix }
-        dlg:modify { id = "rotDest", visible = isMix }
-
         dlg:modify { id = "easeCurve", visible = isMix }
         dlg:modify { id = "easeCurve_easeFuncs", visible = isMix }
+
+        dlg:modify { id = "rotOrig", visible = isMix }
+        dlg:modify { id = "rotDest", visible = isMix }
 
         dlg:modify { id = "rotIncr", visible = isAdd }
         dlg:modify { id = "autoCalcIncr", visible = isAdd }
@@ -75,15 +73,6 @@ dlg:combobox {
     option = defaults.angleType,
     options = angleTypes,
     visible = defaults.mode == "MIX"
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "axis",
-    label = "Axis:",
-    option = defaults.axis,
-    options = axes
 }
 
 dlg:newrow { always = false }
@@ -353,20 +342,13 @@ dlg:button {
             tlySrc = tlySrc + tlyTrm
         end
 
-        local axis <const> = args.axis
-            or defaults.axis --[[@as string]]
         local rotateImage = AseUtilities.rotateImageZNearest
-        if axis == "X" then
-            rotateImage = AseUtilities.rotateImageXNearest
-        elseif axis == "Y" then
-            rotateImage = AseUtilities.rotateImageYNearest
-        end
 
         local trgLayer = nil
         app.transaction("New Layer", function()
             trgLayer = activeSprite:newLayer()
-            trgLayer.name = string.format("Rotate%s %s At %d From %d To %d",
-                axis, srcLayer.name,
+            trgLayer.name = string.format("Rotate %s At %d From %d To %d",
+                srcLayer.name,
                 srcFrame.frameNumber + frameUiOffset,
                 frIdxOrigVerif + frameUiOffset,
                 frIdxDestVerif + frameUiOffset)

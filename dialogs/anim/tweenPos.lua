@@ -94,15 +94,13 @@ dlg:combobox {
         local isAdd <const> = mode == "ADD"
 
         dlg:modify { id = "facType", visible = isMix }
+        dlg:modify { id = "easeCurve", visible = isMix }
+        dlg:modify { id = "easeCurve_easeFuncs", visible = isMix }
 
         dlg:modify { id = "xPosOrig", visible = isMix }
         dlg:modify { id = "yPosOrig", visible = isMix }
-
         dlg:modify { id = "xPosDest", visible = isMix }
         dlg:modify { id = "yPosDest", visible = isMix }
-
-        dlg:modify { id = "easeCurve", visible = isMix }
-        dlg:modify { id = "easeCurve_easeFuncs", visible = isMix }
 
         dlg:modify { id = "xIncr", visible = isAdd }
         dlg:modify { id = "yIncr", visible = isAdd }
@@ -419,6 +417,8 @@ dlg:button {
                     local trgPoint <const> = Point(xCurr, yCurr)
                     activeSprite:newCel(trgLayer, frObj, srcImg, trgPoint)
 
+                    -- Might be confusing to some that this is post-increment,
+                    -- not pre-increment.
                     j = j + 1
                     xCurr = xCurr + xIncr
                     yCurr = yCurr - yIncr

@@ -2,6 +2,7 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
 local facTypes <const> = { "FRAME", "TIME" }
+local modes <const> = { "ADD", "MIX", "MULTIPLY" }
 local unitOptions <const> = { "PERCENT", "PIXEL" }
 
 local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
@@ -9,8 +10,10 @@ local curveColor <const> = app.theme.color.text --[[@as Color]]
 local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 
 local defaults <const> = {
+    mode = "MIX",
     facType = "TIME",
     trimCel = true,
+    alpSampleCount = 96,
 
     frameOrig = 1,
     pxwOrig = 64,
@@ -25,7 +28,11 @@ local defaults <const> = {
     prchDest = 100,
 
     units = "PIXEL",
-    alpSampleCount = 96,
+
+    wIncr = 0,
+    hIncr = 0,
+    wScale = 1.0,
+    hScale = 1.0,
 }
 
 ---@return integer frIdx
@@ -83,13 +90,55 @@ local function getCelBoundsAtFrame()
     return frIdx, pxWidth, pxHeight
 end
 
-local dlg <const> = Dialog { title = "Tween Scale" }
+local dlg <const> = Dialog { title = "Anim Scale" }
+
+dlg:combobox {
+    id = "mode",
+    label = "Mode:",
+    option = defaults.mode,
+    options = modes,
+    visible = false,
+    onchange = function()
+        local args <const> = dlg.data
+        local mode <const> = args.mode --[[@as string]]
+        local unitType <const> = args.units --[[@as string]]
+
+        local isMix <const> = mode == "MIX"
+        local isAdd <const> = mode == "ADD"
+        local isMul <const> = mode == "MULTIPLY"
+
+        local ispx <const> = unitType == "PIXEL"
+        local ispc <const> = unitType == "PERCENT"
+
+        dlg:modify { id = "facType", visible = isMix }
+        dlg:modify { id = "easeCurve", visible = isMix }
+        dlg:modify { id = "easeCurve_easeFuncs", visible = isMix }
+        dlg:modify { id = "units", visible = isMix }
+
+        dlg:modify { id = "pxwOrig", visible = isMix and ispx }
+        dlg:modify { id = "pxhOrig", visible = isMix and ispx }
+        dlg:modify { id = "prcwOrig", visible = isMix and ispc }
+        dlg:modify { id = "prchOrig", visible = isMix and ispc }
+
+        dlg:modify { id = "pxwDest", visible = isMix and ispx }
+        dlg:modify { id = "pxhDest", visible = isMix and ispx }
+        dlg:modify { id = "prcwDest", visible = isMix and ispc }
+        dlg:modify { id = "prchDest", visible = isMix and ispc }
+
+        dlg:modify { id = "wIncr", visible = isAdd }
+        dlg:modify { id = "hIncr", visible = isAdd }
+
+        dlg:modify { id = "wScale", visible = isMul }
+        dlg:modify { id = "hScale", visible = isMul }
+    end
+}
 
 dlg:combobox {
     id = "facType",
     label = "Factor:",
     option = defaults.facType,
-    options = facTypes
+    options = facTypes,
+    visible = defaults.mode == "MIX"
 }
 
 dlg:newrow { always = false }
@@ -121,14 +170,16 @@ dlg:number {
     label = "Pixels:",
     text = string.format("%d", app.preferences.new_file.width),
     decimals = 0,
-    visible = defaults.units == "PIXEL"
+    visible = defaults.mode == "MIX"
+        and defaults.units == "PIXEL"
 }
 
 dlg:number {
     id = "pxhOrig",
     text = string.format("%d", app.preferences.new_file.height),
     decimals = 0,
-    visible = defaults.units == "PIXEL"
+    visible = defaults.mode == "MIX"
+        and defaults.units == "PIXEL"
 }
 
 dlg:number {
@@ -136,14 +187,16 @@ dlg:number {
     label = "Percent:",
     text = string.format("%.2f", defaults.prcwOrig),
     decimals = 6,
-    visible = defaults.units == "PERCENT"
+    visible = defaults.mode == "MIX"
+        and defaults.units == "PERCENT"
 }
 
 dlg:number {
     id = "prchOrig",
     text = string.format("%.2f", defaults.prchOrig),
     decimals = 6,
-    visible = defaults.units == "PERCENT"
+    visible = defaults.mode == "MIX"
+        and defaults.units == "PERCENT"
 }
 
 dlg:newrow { always = false }
@@ -182,14 +235,16 @@ dlg:number {
     label = "Pixels:",
     text = string.format("%d", app.preferences.new_file.width),
     decimals = 0,
-    visible = defaults.units == "PIXEL"
+    visible = defaults.mode == "MIX"
+        and defaults.units == "PIXEL"
 }
 
 dlg:number {
     id = "pxhDest",
     text = string.format("%d", app.preferences.new_file.height),
     decimals = 0,
-    visible = defaults.units == "PIXEL"
+    visible = defaults.mode == "MIX"
+        and defaults.units == "PIXEL"
 }
 
 dlg:number {
@@ -197,14 +252,16 @@ dlg:number {
     label = "Percent:",
     text = string.format("%.2f", defaults.prcwDest),
     decimals = 6,
-    visible = defaults.units == "PERCENT"
+    visible = defaults.mode == "MIX"
+        and defaults.units == "PERCENT"
 }
 
 dlg:number {
     id = "prchDest",
     text = string.format("%.2f", defaults.prchDest),
     decimals = 6,
-    visible = defaults.units == "PERCENT"
+    visible = defaults.mode == "MIX"
+        and defaults.units == "PERCENT"
 }
 
 dlg:newrow { always = false }
@@ -228,6 +285,7 @@ dlg:combobox {
     label = "Units:",
     option = defaults.units,
     options = unitOptions,
+    visible = defaults.mode == "MIX",
     onchange = function()
         local args <const> = dlg.data
         local unitType <const> = args.units --[[@as string]]
@@ -248,11 +306,44 @@ dlg:combobox {
 
 dlg:separator { id = "easeSeparator" }
 
+dlg:number {
+    id = "wScale",
+    label = "Scale:",
+    text = string.format("%.3f", defaults.wScale),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
+    visible = defaults.mode == "MULTIPLY"
+}
+
+dlg:number {
+    id = "hScale",
+    text = string.format("%.3f", defaults.hScale),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
+    visible = defaults.mode == "MULTIPLY"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "wIncr",
+    label = "Pixels:",
+    text = string.format("%d", defaults.wIncr),
+    decimals = 0,
+    visible = defaults.mode == "ADD"
+}
+
+dlg:number {
+    id = "hIncr",
+    text = string.format("%d", defaults.hIncr),
+    decimals = 0,
+    visible = defaults.mode == "ADD"
+}
+
 CanvasUtilities.graphBezier(
     dlg, "easeCurve", "Easing:",
     128 // screenScale,
     128 // screenScale,
-    true, false, false, true, false,
+    defaults.mode == "MIX",
+    false, false, true, false,
     5, 0.25, 0.1, 0.25, 1.0,
     curveColor, gridColor)
 
@@ -414,151 +505,159 @@ dlg:button {
             trgLayer.parent = srcLayer.parent
         end)
 
-        ---@type number[]
-        local factors <const> = {}
-        local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
-
-        local facType <const> = args.facType
-            or defaults.facType --[[@as string]]
-        if facType == "TIME" then
-            ---@type number[]
-            local timeStamps <const> = {}
-            local totalDuration = 0
-
-            local h = 0
-            while h < countFrames do
-                local frObj <const> = frObjs[frIdxOrigVerif + h]
-                timeStamps[1 + h] = totalDuration
-                totalDuration = totalDuration + frObj.duration
-                h = h + 1
-            end
-
-            local timeToFac = 0.0
-            local finalDuration <const> = timeStamps[countFrames]
-            if finalDuration and finalDuration ~= 0.0 then
-                timeToFac = 1.0 / finalDuration
-            end
-
-            local i = 0
-            while i < countFrames do
-                i = i + 1
-                factors[i] = timeStamps[i] * timeToFac
-            end
-        else
-            -- Default to using frames.
-            local iToFac <const> = 1.0 / (countFrames - 1)
-            local i = 0
-            while i < countFrames do
-                local iFac <const> = i * iToFac
-                i = i + 1
-                factors[i] = iFac
-            end
-        end
-
-        local ap0x <const> = args.easeCurve_ap0x --[[@as number]]
-        local ap0y <const> = args.easeCurve_ap0y --[[@as number]]
-        local cp0x <const> = args.easeCurve_cp0x --[[@as number]]
-        local cp0y <const> = args.easeCurve_cp0y --[[@as number]]
-        local cp1x <const> = args.easeCurve_cp1x --[[@as number]]
-        local cp1y <const> = args.easeCurve_cp1y --[[@as number]]
-        local ap1x <const> = args.easeCurve_ap1x --[[@as number]]
-        local ap1y <const> = args.easeCurve_ap1y --[[@as number]]
-
-        local kn0 <const> = Knot2.new(
-            Vec2.new(ap0x, ap0y),
-            Vec2.new(cp0x, cp0y),
-            Vec2.new(0.0, ap0y))
-        local kn1 <const> = Knot2.new(
-            Vec2.new(ap1x, ap1y),
-            Vec2.new(1.0, ap1y),
-            Vec2.new(cp1x, cp1y))
-        local curve = Curve2.new(false, { kn0, kn1 }, "scale easing")
-
-        local alpSampleCount <const> = defaults.alpSampleCount
-        local totalLength <const>, arcLengths <const> = Curve2.arcLength(
-            curve, alpSampleCount)
-        local samples <const> = Curve2.paramPoints(
-            curve, totalLength, arcLengths, alpSampleCount)
-
-        -- Should these be swapped as well when dest frame is gt orig?
-        local pxwOrig = args.pxwOrig
-            or defaults.pxwOrig --[[@as number]]
-        local pxhOrig = args.pxhOrig
-            or defaults.pxhOrig --[[@as number]]
-        local prcwOrig = args.prcwOrig
-            or defaults.prcwOrig --[[@as number]]
-        local prchOrig = args.prchOrig
-            or defaults.prchOrig --[[@as number]]
-
-        local pxwDest = args.pxwDest
-            or defaults.pxwDest --[[@as number]]
-        local pxhDest = args.pxhDest
-            or defaults.pxhDest --[[@as number]]
-        local prcwDest = args.prcwDest
-            or defaults.prcwDest --[[@as number]]
-        local prchDest = args.prchDest
-            or defaults.prchDest --[[@as number]]
-
-        pxwOrig = math.max(1.0, math.abs(pxwOrig))
-        pxhOrig = math.max(1.0, math.abs(pxhOrig))
-        pxwDest = math.max(1.0, math.abs(pxwDest))
-        pxhDest = math.max(1.0, math.abs(pxhDest))
-
         local pxwSrc <const> = srcImg.width
         local pxhSrc <const> = srcImg.height
         local xCenter <const> = tlxSrc + pxwSrc * 0.5
         local yCenter <const> = tlySrc + pxhSrc * 0.5
 
-        local unitType <const> = args.units
-            or defaults.units --[[@as string]]
-        if unitType == "PERCENT" then
-            prcwOrig = 0.01 * math.abs(prcwOrig)
-            prchOrig = 0.01 * math.abs(prchOrig)
-            pxwOrig = math.max(1.0, pxwSrc * prcwOrig)
-            pxhOrig = math.max(1.0, pxhSrc * prchOrig)
+        local mode <const> = args.mode
+            or defaults.mode --[[@as string]]
+        if mode == "MIX" then
+            ---@type number[]
+            local factors <const> = {}
+            local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
-            prcwDest = 0.01 * math.abs(prcwDest)
-            prchDest = 0.01 * math.abs(prchDest)
-            pxwDest = math.max(1.0, pxwSrc * prcwDest)
-            pxhDest = math.max(1.0, pxhSrc * prchDest)
-        end
+            local facType <const> = args.facType
+                or defaults.facType --[[@as string]]
+            if facType == "TIME" then
+                ---@type number[]
+                local timeStamps <const> = {}
+                local totalDuration = 0
 
-        -- Cache methods used in loop.
-        local max <const> = math.max
-        local floor <const> = math.floor
-        local eval <const> = Curve2.eval
-        local resizeImage <const> = AseUtilities.resizeImageNearest
-
-        app.transaction("Tween Cel Scale", function()
-            local j = 0
-            while j < countFrames do
-                local frObj <const> = frObjs[frIdxOrigVerif + j]
-                local fac <const> = factors[1 + j]
-                local t = eval(curve, fac).x
-                if fac > 0.0 and fac < 1.0 then
-                    local tScale <const> = t * (alpSampleCount - 1)
-                    local tFloor <const> = floor(tScale)
-                    local tFrac <const> = tScale - tFloor
-                    local left <const> = samples[1 + tFloor].y
-                    local right <const> = samples[2 + tFloor].y
-                    t = (1.0 - tFrac) * left + tFrac * right
+                local h = 0
+                while h < countFrames do
+                    local frObj <const> = frObjs[frIdxOrigVerif + h]
+                    timeStamps[1 + h] = totalDuration
+                    totalDuration = totalDuration + frObj.duration
+                    h = h + 1
                 end
-                local u <const> = 1.0 - t
+
+                local timeToFac = 0.0
+                local finalDuration <const> = timeStamps[countFrames]
+                if finalDuration and finalDuration ~= 0.0 then
+                    timeToFac = 1.0 / finalDuration
+                end
+
+                local i = 0
+                while i < countFrames do
+                    i = i + 1
+                    factors[i] = timeStamps[i] * timeToFac
+                end
+            else
+                -- Default to using frames.
+                local iToFac <const> = 1.0 / (countFrames - 1)
+                local i = 0
+                while i < countFrames do
+                    local iFac <const> = i * iToFac
+                    i = i + 1
+                    factors[i] = iFac
+                end
+            end
+
+            local ap0x <const> = args.easeCurve_ap0x --[[@as number]]
+            local ap0y <const> = args.easeCurve_ap0y --[[@as number]]
+            local cp0x <const> = args.easeCurve_cp0x --[[@as number]]
+            local cp0y <const> = args.easeCurve_cp0y --[[@as number]]
+            local cp1x <const> = args.easeCurve_cp1x --[[@as number]]
+            local cp1y <const> = args.easeCurve_cp1y --[[@as number]]
+            local ap1x <const> = args.easeCurve_ap1x --[[@as number]]
+            local ap1y <const> = args.easeCurve_ap1y --[[@as number]]
+
+            local kn0 <const> = Knot2.new(
+                Vec2.new(ap0x, ap0y),
+                Vec2.new(cp0x, cp0y),
+                Vec2.new(0.0, ap0y))
+            local kn1 <const> = Knot2.new(
+                Vec2.new(ap1x, ap1y),
+                Vec2.new(1.0, ap1y),
+                Vec2.new(cp1x, cp1y))
+            local curve = Curve2.new(false, { kn0, kn1 }, "scale easing")
+
+            local alpSampleCount <const> = defaults.alpSampleCount
+            local totalLength <const>, arcLengths <const> = Curve2.arcLength(
+                curve, alpSampleCount)
+            local samples <const> = Curve2.paramPoints(
+                curve, totalLength, arcLengths, alpSampleCount)
+
+            -- Should these be swapped as well when dest frame is gt orig?
+            local pxwOrig = args.pxwOrig
+                or defaults.pxwOrig --[[@as number]]
+            local pxhOrig = args.pxhOrig
+                or defaults.pxhOrig --[[@as number]]
+            local prcwOrig = args.prcwOrig
+                or defaults.prcwOrig --[[@as number]]
+            local prchOrig = args.prchOrig
+                or defaults.prchOrig --[[@as number]]
+
+            local pxwDest = args.pxwDest
+                or defaults.pxwDest --[[@as number]]
+            local pxhDest = args.pxhDest
+                or defaults.pxhDest --[[@as number]]
+            local prcwDest = args.prcwDest
+                or defaults.prcwDest --[[@as number]]
+            local prchDest = args.prchDest
+                or defaults.prchDest --[[@as number]]
+
+            pxwOrig = math.max(1.0, math.abs(pxwOrig))
+            pxhOrig = math.max(1.0, math.abs(pxhOrig))
+            pxwDest = math.max(1.0, math.abs(pxwDest))
+            pxhDest = math.max(1.0, math.abs(pxhDest))
+
+            local unitType <const> = args.units
+                or defaults.units --[[@as string]]
+            if unitType == "PERCENT" then
+                prcwOrig = 0.01 * math.abs(prcwOrig)
+                prchOrig = 0.01 * math.abs(prchOrig)
+                pxwOrig = math.max(1.0, pxwSrc * prcwOrig)
+                pxhOrig = math.max(1.0, pxhSrc * prchOrig)
+
+                prcwDest = 0.01 * math.abs(prcwDest)
+                prchDest = 0.01 * math.abs(prchDest)
+                pxwDest = math.max(1.0, pxwSrc * prcwDest)
+                pxhDest = math.max(1.0, pxhSrc * prchDest)
+            end
+
+            -- Cache methods used in loop.
+            local max <const> = math.max
+            local floor <const> = math.floor
+            local eval <const> = Curve2.eval
+            local resize <const> = AseUtilities.resizeImageNearest
+
+            app.transaction("Tween Cel Scale", function()
+                local j = 0
+                while j < countFrames do
+                    local frObj <const> = frObjs[frIdxOrigVerif + j]
+                    local fac <const> = factors[1 + j]
+                    local t = eval(curve, fac).x
+                    if fac > 0.0 and fac < 1.0 then
+                        local tScale <const> = t * (alpSampleCount - 1)
+                        local tFloor <const> = floor(tScale)
+                        local tFrac <const> = tScale - tFloor
+                        local left <const> = samples[1 + tFloor].y
+                        local right <const> = samples[2 + tFloor].y
+                        t = (1.0 - tFrac) * left + tFrac * right
+                    end
+                    local u <const> = 1.0 - t
 
                 local wTrg <const> = max(1, floor(0.5
                     + u * pxwOrig + t * pxwDest))
                 local hTrg <const> = max(1, floor(0.5
                     + u * pxhOrig + t * pxhDest))
-                local trgImg <const> = resizeImage(srcImg, wTrg, hTrg)
+                local trgImg <const> = resize(srcImg, wTrg, hTrg)
 
-                local trgPoint <const> = Point(
-                    floor(xCenter - wTrg * 0.5),
-                    floor(yCenter - hTrg * 0.5))
+                    local trgPoint <const> = Point(
+                        floor(xCenter - wTrg * 0.5),
+                        floor(yCenter - hTrg * 0.5))
 
-                activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
-                j = j + 1
-            end
-        end)
+                    activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
+                    j = j + 1
+                end
+            end)
+        elseif mode == "ADD" then
+
+        elseif mode == "MULTIPLY" then
+
+        end
 
         app.layer = srcLayer
         app.refresh()
