@@ -200,6 +200,10 @@ dlg:button {
         local colorSpace <const> = activeSprite.colorSpace
         local alphaIndex <const> = activeSprite.transparentColor
 
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
         -- Cache global functions used in for loops.
         local abs <const> = math.abs
         local max <const> = math.max
@@ -484,7 +488,7 @@ dlg:button {
                 -- Important to break this into separate transactions
                 -- in case there is a bug that is causing an Aseprite crash.
                 transact(
-                    strfmt("Bake Onion %d", srcFrame),
+                    strfmt("Bake Onion %d", frameUiOffset + srcFrame),
                     function()
                         activeSprite:newCel(trgLayer, srcFrame, trgImg, trgPos)
                     end)

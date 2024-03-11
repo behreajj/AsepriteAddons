@@ -294,6 +294,10 @@ dlg:button {
             return
         end
 
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
         -- Unpack arguments.
         local args <const> = dlg.data
         local target <const> = args.target or defaults.target --[[@as string]]
@@ -508,7 +512,7 @@ dlg:button {
                 end
 
                 transact(
-                    strfmt("Color Quantize %d", srcFrame),
+                    strfmt("Color Quantize %d", srcFrame + frameUiOffset),
                     function()
                         local trgCel = activeSprite:newCel(
                             trgLayer, srcFrame,

@@ -112,6 +112,10 @@ dlg:button {
             return
         end
 
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
         -- Check for tile maps.
         local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
@@ -315,7 +319,7 @@ dlg:button {
                 end
 
                 transact(
-                    strfmt("Mirror %d", srcFrame),
+                    strfmt("Mirror %d", srcFrame + frameUiOffset),
                     function()
                         local lftCel <const> = activeSprite:newCel(
                             lftLayer, srcFrame, lftImg,

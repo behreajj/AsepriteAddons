@@ -220,21 +220,10 @@ dlg:button {
             return
         end
 
-        -- This approach wouldn't work for indexed and gray color.
-        -- local mapLyr = nil
-        -- app.transaction("New Layer", function()
-        --     mapLyr = sprite:newLayer()
-        --     mapLyr.name = "Heat.Map"
-        --     mapLyr.blendMode = BlendMode.NORMAL
-        --     mapLyr.opacity = 128
-        -- end)
-
-        -- local spriteSpec <const> = sprite.spec
         local durToFac <const> = 1.0 / durRange
 
         local easing <const> = Clr.mixlRgb
         local cgeval <const> = ClrGradient.eval
-        -- local toHex <const> = Clr.toHex
         local clrToAseColor <const> = AseUtilities.clrToAseColor
 
         local leaves <const> = AseUtilities.getLayerHierarchy(

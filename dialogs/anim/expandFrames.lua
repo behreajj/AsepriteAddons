@@ -82,6 +82,10 @@ dlg:button {
             return
         end
 
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
         -- Unpack arguments.
         local args <const> = dlg.data
         local target <const> = args.target
@@ -233,7 +237,8 @@ dlg:button {
             local colorSpace <const> = spriteSpec.colorSpace
             local alphaIndex <const> = spriteSpec.transparentColor
 
-            local leaves = AseUtilities.getLayerHierarchy(activeSprite, true, true, false, true)
+            local leaves = AseUtilities.getLayerHierarchy(activeSprite,
+                true, true, false, true)
             local lenLeaves = #leaves
             local h = 0
             while h < lenLeaves do
@@ -270,8 +275,9 @@ dlg:button {
                             local posPrev <const> = celPrev.position
                             local zIdxPrev <const> = celPrev.zIndex
 
-                            app.transaction(strfmt("Sustain %d to %d",
-                                frIdxPrevAfter, frIdxNextAfter), function()
+                            transact(strfmt("Sustain %d to %d",
+                                frIdxPrevAfter + frameUiOffset,
+                                frIdxNextAfter + frameUiOffset), function()
                                 local j = frIdxPrevAfter
                                 while j < frIdxNextAfter - 1 do
                                     j = j + 1
@@ -473,8 +479,9 @@ dlg:button {
                         local posPrev <const> = celPrev.position
                         local zIdxPrev <const> = celPrev.zIndex
 
-                        app.transaction(strfmt("Sustain %d to %d",
-                            frIdxPrevAfter, frIdxNextAfter), function()
+                        transact(strfmt("Sustain %d to %d",
+                            frIdxPrevAfter + frameUiOffset,
+                            frIdxNextAfter + frameUiOffset), function()
                             local j = frIdxPrevAfter
                             while j < frIdxNextAfter do
                                 j = j + 1

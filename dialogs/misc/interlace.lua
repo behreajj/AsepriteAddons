@@ -172,6 +172,10 @@ dlg:button {
             return
         end
 
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
         -- Check for tile maps.
         local isTilemap <const> = srcLayer.isTilemap
         local tileSet = nil
@@ -331,8 +335,7 @@ dlg:button {
                 local imgSkip <const> = Image(srcSpec)
                 imgSkip.bytes = tconcat(skipByteArr)
 
-                transact(
-                    strfmt("Interlace %d", srcFrame),
+                transact(strfmt("Interlace %d", srcFrame + frameUiOffset),
                     function()
                         local pickCel <const> = activeSprite:newCel(
                             pickLayer, srcFrame, imgPick,

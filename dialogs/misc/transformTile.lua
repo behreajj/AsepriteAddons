@@ -1031,8 +1031,7 @@ dlg:button {
         end
 
         -- Reassign sorted images to tile set tiles.
-        app.transaction(
-            "Sort Tile Set", function()
+        app.transaction("Sort Tile Set", function()
                 local j = 1
                 while j < lenTileSet do
                     j = j + 1
