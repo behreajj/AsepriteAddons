@@ -12,7 +12,6 @@ local numBases <const> = { "PROFILE", "S_RGB" }
 
 local defaults <const> = {
     -- TODO: Support Normal map azim, incl, vector?
-    -- TODO: Option to invert color theme?
     maxCount = 512,
     count = 512,
     title = "Manifest",
@@ -90,6 +89,15 @@ local function drawSwatch(image, hex, x, y, w, h)
             y + (i // w),
             hex)
     end
+end
+
+---@param aseColor Color
+---@return Color
+local function invertAseColor(aseColor)
+    local srgb <const> = AseUtilities.aseColorToClr(aseColor)
+    local lab <const> = Clr.sRgbToSrLab2(srgb)
+    local inv <const> = Clr.srLab2TosRgb(100 - lab.l, lab.a, lab.b, lab.alpha)
+    return AseUtilities.clrToAseColor(inv)
 end
 
 local dlg <const> = Dialog { title = "Palette Manifest" }
@@ -311,6 +319,33 @@ dlg:color {
     id = "bkgColor",
     label = "Background:",
     color = AseUtilities.hexToAseColor(defaults.bkgColor)
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "invert",
+    label = "Theme:",
+    text = "&INVERT",
+    onclick = function()
+        local args <const> = dlg.data
+
+        local txtColor <const> = args.txtColor --[[@as Color]]
+        local shdColor <const> = args.shdColor --[[@as Color]]
+        local hdrTxtColor <const> = args.hdrTxtColor --[[@as Color]]
+        local hdrBkgColor <const> = args.hdrBkgColor --[[@as Color]]
+        local rowColor0 <const> = args.rowColor0 --[[@as Color]]
+        local rowColor1 <const> = args.rowColor1 --[[@as Color]]
+        local bkgColor <const> = args.bkgColor --[[@as Color]]
+
+        dlg:modify { id = "txtColor", color = invertAseColor(txtColor) }
+        dlg:modify { id = "shdColor", color = invertAseColor(shdColor) }
+        dlg:modify { id = "hdrTxtColor", color = invertAseColor(hdrTxtColor) }
+        dlg:modify { id = "hdrBkgColor", color = invertAseColor(hdrBkgColor) }
+        dlg:modify { id = "rowColor0", color = invertAseColor(rowColor0) }
+        dlg:modify { id = "rowColor1", color = invertAseColor(rowColor1) }
+        dlg:modify { id = "bkgColor", color = invertAseColor(bkgColor) }
+    end
 }
 
 dlg:newrow { always = false }
