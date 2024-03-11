@@ -2320,18 +2320,17 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
         return source
     end
 
-    local alphaIndex <const> = srcSpec.transparentColor
     local trgSpec <const> = ImageSpec {
         width = wVrf,
         height = hVrf,
         colorMode = srcSpec.colorMode,
-        transparentColor = alphaIndex
+        transparentColor = srcSpec.transparentColor
     }
     trgSpec.colorSpace = srcSpec.colorSpace
     local target <const> = Image(trgSpec)
 
     local bytesRsz <const> = Utilities.resizePixelsNearest(
-        source.bytes, wSrc, hSrc, wVrf, hVrf, source.bytesPerPixel, alphaIndex)
+        source.bytes, wSrc, hSrc, wVrf, hVrf, source.bytesPerPixel)
     target.bytes = bytesRsz
     return target
 end
@@ -2416,7 +2415,6 @@ function AseUtilities.rotateImageZNearest(source, angle)
     end
 
     local srcSpec <const> = source.spec
-    local alphaIndex <const> = srcSpec.transparentColor
     local rad <const> = angle * 0.017453292519943
     local cosa <const> = math.cos(rad)
     local sina <const> = math.sin(rad)
@@ -2429,13 +2427,13 @@ function AseUtilities.rotateImageZNearest(source, angle)
     hTrg <const> = Utilities.rotatePixelsZNearest(
         source.bytes, srcSpec.width, srcSpec.height,
         cosa, sina, source.bytesPerPixel,
-        alphaIndex)
+        srcSpec.transparentColor)
 
     local trgSpec <const> = ImageSpec {
         width = wTrg,
         height = hTrg,
         colorMode = srcSpec.colorMode,
-        transparentColor = alphaIndex
+        transparentColor = srcSpec.transparentColor
     }
     trgSpec.colorSpace = srcSpec.colorSpace
     local target <const> = Image(trgSpec)
