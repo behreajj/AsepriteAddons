@@ -806,26 +806,43 @@ end
 ---@param wTrg integer resized width
 ---@param hTrg integer resized height
 ---@param bpp integer bytes per pixel
+---@param alphaIndex integer alpha index
 ---@return string
 ---@nodiscard
-function Utilities.resizePixelsNearest(source, wSrc, hSrc, wTrg, hTrg, bpp)
+function Utilities.resizePixelsNearest(
+    source, wSrc, hSrc, wTrg, hTrg, bpp, alphaIndex)
     ---@type string[]
     local resized <const> = {}
-    local floor <const> = math.floor
+
+    local round <const> = Utilities.round
     local strsub <const> = string.sub
-    local tx <const> = wSrc / wTrg
-    local ty <const> = hSrc / hTrg
-    local lenTrg <const> = wTrg * hTrg
-    local bppn1 <const> = bpp - 1
+
+    local wTrgAbs <const> = math.abs(wTrg)
+    local hTrgAbs <const> = math.abs(hTrg)
+
+    local tx <const> = wTrgAbs > 0.5
+        and (wSrc - 0.5) / (wTrg - 0.5) or 0.0
+    local ty <const> = hTrgAbs > 0.5
+        and (hSrc - 0.5) / (hTrg - 0.5) or 0.0
+
+    local zeroStr <const> = string.pack("I" .. bpp, alphaIndex)
+    local lenTrg <const> = wTrgAbs * hTrgAbs
     local i = 0
     while i < lenTrg do
-        local nx <const> = floor((i % wTrg) * tx)
-        local ny <const> = floor((i // wTrg) * ty)
-        local j <const> = ny * wSrc + nx
-        local orig <const> = 1 + j * bpp
-        local dest <const> = orig + bppn1
+        local trgHex = zeroStr
+        local xTrgf <const> = (i % wTrgAbs) * tx
+        local yTrgf <const> = (i // wTrgAbs) * ty
+        local xTrgi <const> = round(xTrgf)
+        local yTrgi <const> = round(yTrgf)
+        if yTrgi >= 0 and yTrgi < hSrc
+            and xTrgi >= 0 and xTrgi < wSrc then
+            local j <const> = yTrgi * wSrc + xTrgi
+            local jBpp <const> = j * bpp
+            trgHex = strsub(source, 1 + jBpp, bpp + jBpp)
+        end
+
         i = i + 1
-        resized[i] = strsub(source, orig, dest)
+        resized[i] = trgHex
     end
 
     return table.concat(resized, "")
