@@ -64,7 +64,8 @@ end
 ---@param yOff integer y offset
 ---@param palette Palette palette
 ---@return string
----@return table<integer, integer[]>
+---@return integer[]
+---@return integer[][]
 local function imgToSvgStr(
     img, border, padding,
     wScale, hScale,
@@ -150,15 +151,44 @@ local function imgToSvgStr(
         end
     end
 
-    -- TODO: Ideally, pixelDict would be copied into two arrays, both of which
-    -- are sorted according to either color rgb or first occurence from top
-    -- left corner. These arrays would then be returned from this function to
-    -- be used by the label function below. This way a cross-stitcher would
-    -- have an easier time finding the next color to use.
+    ---@type integer[]
+    local hexArr <const> = {}
+    ---@type integer[][]
+    local idcsArr <const> = {}
+    local lenUniques = 0
+    for hex, idcs in pairs(pixelDict) do
+        lenUniques = lenUniques + 1
+        hexArr[lenUniques] = hex
+        idcsArr[lenUniques] = idcs
+    end
+
+    ---@param aIdx integer
+    ---@param bIdx integer
+    ---@return boolean
+    local comparator <const> = function(aIdx, bIdx)
+        local ay <const> = aIdx // imgWidth
+        local by <const> = bIdx // imgWidth
+        if ay < by then return true end
+        if ay > by then return false end
+        return (aIdx % imgWidth) < (bIdx % imgWidth)
+    end
+
+    table.sort(hexArr, function(a, b)
+        return comparator(pixelDict[a][1], pixelDict[b][1])
+    end)
+
+    table.sort(idcsArr, function(a, b)
+        return comparator(a[1], b[1])
+    end)
 
     ---@type string[]
     local pathsArr <const> = {}
-    for hex, idcs in pairs(pixelDict) do
+    local h = 0
+    while h < lenUniques do
+        h = h + 1
+        local hex <const> = hexArr[h]
+        local idcs <const> = idcsArr[h]
+
         ---@type string[]
         local subPathsArr <const> = {}
         local lenIdcs <const> = #idcs
@@ -203,11 +233,12 @@ local function imgToSvgStr(
         end
     end
 
-    return tconcat(pathsArr, "\n"), pixelDict
+    return tconcat(pathsArr, "\n"), hexArr, idcsArr
 end
 
 ---@param id string
----@param pixelDict table<integer, integer[]>
+---@param hexArr integer[],
+---@param idcsArr integer[],
 ---@param imgWidth integer
 ---@param border integer
 ---@param padding integer
@@ -217,7 +248,7 @@ end
 ---@param yOff integer
 ---@return string
 local function genLabelSvgStr(
-    id, pixelDict, imgWidth,
+    id, hexArr, idcsArr, imgWidth,
     border, padding,
     wScale, hScale,
     xOff, yOff)
@@ -236,17 +267,22 @@ local function genLabelSvgStr(
     local hScalePad <const> = hScale + padding
 
     labelsArr[#labelsArr + 1] = strfmt("<g id=\"%s\">", id)
-    local incr = 0
-    for hex, idcs in pairs(pixelDict) do
+
+    local lenUniques = math.min(#hexArr, #idcsArr)
+    local h = 0
+    while h < lenUniques do
+        h = h + 1
+        local hex <const> = hexArr[h]
+        local idcs <const> = idcsArr[h]
+
         local hsi <const> = ((hex >> 0x10 & 0xff)
             + (hex >> 0x08 & 0xff)
             + (hex & 0xff)) / 3.0
         local webHex <const> = hsi > 127 and 0 or 0xffffff
 
-        incr = incr + 1
         labelsArr[#labelsArr + 1] = strfmt(
             "<g id=\"color%d\" fill=\"#%06X\">",
-            incr - 1, webHex)
+            h - 1, webHex)
         local lenIdcs <const> = #idcs
         local i = 0
         while i < lenIdcs do
@@ -260,7 +296,7 @@ local function genLabelSvgStr(
 
             local textStr <const> = strfmt(
                 "<text id=\"pixel%d_%d_%d\" x=\"%.1f\" y=\"%.1f\">%d</text>",
-                incr - 1, x0, y0, cx, cy, incr)
+                h - 1, x0, y0, cx, cy, h)
             labelsArr[#labelsArr + 1] = textStr
         end
         labelsArr[#labelsArr + 1] = "</g>"
@@ -374,7 +410,7 @@ local function layerToSvgStr(
                     intersect.x = intersect.x - xCel
                     intersect.y = intersect.y - yCel
 
-                    local imgStr <const>, _ <const> = imgToSvgStr(
+                    local imgStr <const>, _ <const>, _ <const> = imgToSvgStr(
                         celImg, border, padding,
                         wScale, hScale, xCel, yCel,
                         palette)
@@ -873,7 +909,7 @@ dlg:button {
                     -- the same color could have different indices per each
                     -- and a palette display on the side would also need to be
                     -- animated.
-                    local imgStr <const>, _ <const> = imgToSvgStr(
+                    local imgStr <const>, _ <const>, _ <const> = imgToSvgStr(
                         flatImg, border, padding,
                         wScale, hScale, 0, 0,
                         palette)
@@ -915,14 +951,14 @@ dlg:button {
 
                 local flatImg <const> = Image(activeSpec)
                 flatImg:drawSprite(activeSprite, activeFrame)
-                local layerStr <const>, pixelDict <const> = imgToSvgStr(
-                    flatImg, border, padding,
-                    wScale, hScale, 0, 0,
-                    palette)
+                local layerStr <const>,
+                hexArr <const>,
+                idcsArr <const> = imgToSvgStr(flatImg, border, padding,
+                    wScale, hScale, 0, 0, palette)
                 layerStrsArr[1] = layerStr
 
                 if usePixelLabels then
-                    labelsStrArr[1] = genLabelSvgStr("pixellabels", pixelDict,
+                    labelsStrArr[1] = genLabelSvgStr("pixellabels", hexArr, idcsArr,
                         flatImg.width, border, padding, wScale, hScale, 0, 0)
                 end
             end
