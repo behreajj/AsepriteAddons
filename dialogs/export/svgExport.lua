@@ -55,6 +55,19 @@ local function blendModeToStr(bm)
     end
 end
 
+---@param aIdx integer
+---@param bIdx integer
+---@param imgWidth integer
+---@return boolean
+local function comparator(aIdx, bIdx, imgWidth)
+    local ay <const> = aIdx // imgWidth
+    local by <const> = bIdx // imgWidth
+    if ay < by then return true end
+    if ay > by then return false end
+    return (aIdx % imgWidth) < (bIdx % imgWidth)
+end
+
+
 ---@param img Image image
 ---@param border integer border size
 ---@param padding integer margin size
@@ -162,23 +175,12 @@ local function imgToSvgStr(
         idcsArr[lenUniques] = idcs
     end
 
-    ---@param aIdx integer
-    ---@param bIdx integer
-    ---@return boolean
-    local comparator <const> = function(aIdx, bIdx)
-        local ay <const> = aIdx // imgWidth
-        local by <const> = bIdx // imgWidth
-        if ay < by then return true end
-        if ay > by then return false end
-        return (aIdx % imgWidth) < (bIdx % imgWidth)
-    end
-
     table.sort(hexArr, function(a, b)
-        return comparator(pixelDict[a][1], pixelDict[b][1])
+        return comparator(pixelDict[a][1], pixelDict[b][1], imgWidth)
     end)
 
     table.sort(idcsArr, function(a, b)
-        return comparator(a[1], b[1])
+        return comparator(a[1], b[1], imgWidth)
     end)
 
     ---@type string[]

@@ -652,7 +652,14 @@ dlg:combobox {
     id = "layerTarget",
     label = "Layers:",
     option = defaults.layerTarget,
-    options = layerTargetOptions
+    options = layerTargetOptions,
+    onchange = function()
+        local args <const> = dlg.data
+        local target <const> = args.layerTarget
+        local state = target == "ACTIVE"
+        dlg:modify { id = "bringToFrontButton", visible = state }
+        dlg:modify { id = "sendToBackButton", visible = state }
+    end
 }
 
 dlg:newrow { always = false }
@@ -748,7 +755,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "alignTopButton",
-    text = "&TOP",
+    text = "TO&P",
     label = "Y:",
     onclick = function()
         alignCels(dlg, "TOP")
@@ -796,16 +803,71 @@ dlg:newrow { always = false }
 dlg:check {
     id = "sortCels",
     label = "Sort:",
-    text = "&Position",
+    text = "Position",
     selected = defaults.sortCels
 }
 
 dlg:separator { id = "distrSep", text = "Stack" }
 
 dlg:button {
+    id = "bringToFrontButton",
+    label = "Active:",
+    text = "FRONT",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+        local activeLayer <const> = site.layer
+        if not activeLayer then return end
+
+        local layer = activeLayer
+        while layer.parent.__name ~= "doc::Sprite"
+            and layer.stackIndex == #layer.parent.layers do
+            layer = layer.parent --[[@as Layer]]
+        end
+
+        app.transaction("Bring To Front", function()
+            layer.stackIndex = #layer.parent.layers
+        end)
+
+        app.layer = activeLayer
+    end,
+    visible = defaults.layerTarget == "ACTIVE"
+}
+
+dlg:button {
+    id = "sendToBackButton",
+    text = "BACK",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+        local activeLayer <const> = site.layer
+        if not activeLayer then return end
+
+        local layer = activeLayer
+        while layer.parent.__name ~= "doc::Sprite"
+            and layer.stackIndex == 1 do
+            layer = layer.parent --[[@as Layer]]
+        end
+
+        app.transaction("Send To Back", function()
+            layer.stackIndex = 1
+        end)
+
+        app.layer = activeLayer
+    end,
+    visible = defaults.layerTarget == "ACTIVE"
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
     id = "stackxButton",
     text = "X",
-    label = "Criterion:",
+    label = "Sort:",
     focus = false,
     onclick = function()
         restackLayers("X")
