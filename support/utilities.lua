@@ -933,6 +933,82 @@ function Utilities.rotatePixels270(source, w, h, bpp)
     return table.concat(rotated)
 end
 
+---Rotates an image's bytes by an angle around the x axis.
+---The angle is given as a pre calculated cosine and sine.
+---Returns the byte string, the width and height of the rotated image.
+---If the rotated image's height is zero, then returns width x 1 pixels.
+---@param source string source bytes
+---@param wSrc integer source image width
+---@param hSrc integer source image height
+---@param cosa number sine of angle
+---@param sina number cosine of angle
+---@param bpp integer bits per pixel
+---@param alphaIndex integer alpha index
+---@return string rotated
+---@return integer wTrg
+---@return integer hTrg
+function Utilities.rotatePixelsXNearest(
+    source, wSrc, hSrc, cosa, sina, bpp, alphaIndex)
+    local hTrgSigned <const> = Utilities.round(cosa * hSrc)
+    if hTrgSigned == 0 then
+        ---@type string[]
+        local rotated <const> = {}
+        local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+        local i = 0
+        while i < wSrc do
+            i = i + 1
+            rotated[i] = alphaStr
+        end
+        return table.concat(rotated, ""), wSrc, 1
+    end
+
+    local hTrgAbs <const> = math.abs(hTrgSigned)
+    local resized = Utilities.resizePixelsNearest(
+        source, wSrc, hSrc, wSrc, hTrgAbs, bpp)
+    if hTrgSigned < 0 then
+        resized = Utilities.flipPixelsY(resized, wSrc, hTrgAbs, bpp)
+    end
+    return resized, wSrc, hTrgAbs
+end
+
+---Rotates an image's bytes by an angle around the y axis.
+---The angle is given as a pre calculated cosine and sine.
+---Returns the byte string, the width and height of the rotated image.
+---If the rotated image's width is zero, then returns 1 x height pixels.
+---@param source string source bytes
+---@param wSrc integer source image width
+---@param hSrc integer source image height
+---@param cosa number sine of angle
+---@param sina number cosine of angle
+---@param bpp integer bits per pixel
+---@param alphaIndex integer alpha index
+---@return string rotated
+---@return integer wTrg
+---@return integer hTrg
+function Utilities.rotatePixelsYNearest(
+    source, wSrc, hSrc, cosa, sina, bpp, alphaIndex)
+    local wTrgSigned <const> = Utilities.round(cosa * wSrc)
+    if wTrgSigned == 0 then
+        ---@type string[]
+        local rotated <const> = {}
+        local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+        local i = 0
+        while i < hSrc do
+            i = i + 1
+            rotated[i] = alphaStr
+        end
+        return table.concat(rotated, ""), 1, hSrc
+    end
+
+    local wTrgAbs <const> = math.abs(wTrgSigned)
+    local resized = Utilities.resizePixelsNearest(
+        source, wSrc, hSrc, wTrgAbs, hSrc, bpp)
+    if wTrgSigned < 0 then
+        resized = Utilities.flipPixelsX(resized, wTrgAbs, hSrc, bpp)
+    end
+    return resized, wTrgAbs, hSrc
+end
+
 ---Rotates an image's bytes by an angle counter clockwise around the z axis.
 ---The angle is given as a pre calculated cosine and sine.
 ---Returns the byte string, the width and height of the rotated image.

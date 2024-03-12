@@ -6,6 +6,7 @@ local angleTypes <const> = {
     "CW",
     "NEAR"
 }
+local axes <const> = { "X", "Y", "Z" }
 local facTypes <const> = { "FRAME", "TIME" }
 local modes <const> = { "ADD", "MIX" }
 
@@ -16,6 +17,7 @@ local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 local defaults <const> = {
     mode = "MIX",
     facType = "TIME",
+    axis = "Z",
     angleType = "NEAR",
     trimCel = true,
     alpSampleCount = 96,
@@ -73,6 +75,15 @@ dlg:combobox {
     option = defaults.angleType,
     options = angleTypes,
     visible = defaults.mode == "MIX"
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "axis",
+    label = "Axis:",
+    option = defaults.axis,
+    options = axes
 }
 
 dlg:newrow { always = false }
@@ -343,8 +354,16 @@ dlg:button {
             tlySrc = tlySrc + tlyTrm
         end
 
-        -- Cache methods used in loop.
+        local axis <const> = args.axis
+            or defaults.axis --[[@as string]]
         local rotateImage = AseUtilities.rotateImageZNearest
+        if axis == "X" then
+            rotateImage = AseUtilities.rotateImageXNearest
+        elseif axis == "Y" then
+            rotateImage = AseUtilities.rotateImageYNearest
+        end
+
+        -- Cache methods used in loop.
         local floor <const> = math.floor
         local eval <const> = Curve2.eval
 

@@ -2390,10 +2390,82 @@ function AseUtilities.rotateImage270(source)
     return target
 end
 
+---Returns a copy of the source image that has been rotated around the x axis
+---by an angle in degrees. Uses nearest neighbor sampling.
+---If the angle is 0 degrees, then returns the source image by reference.
+---@param source Image source image
+---@param angle number angle in degrees
+---@return Image
+---@nodiscard
+function AseUtilities.rotateImageXNearest(source, angle)
+    local deg <const> = Utilities.round(angle) % 360
+    if deg == 0 then
+        return source
+    elseif deg == 180 then
+        return AseUtilities.flipImageY(source)
+    end
+
+    local cosa <const> = math.cos(angle * 0.017453292519943)
+    local srcSpec <const> = source.spec
+    local trgBytes <const>,
+    wTrg <const>,
+    hTrg <const> = Utilities.rotatePixelsXNearest(
+        source.bytes, srcSpec.width, srcSpec.height,
+        cosa, 0, source.bytesPerPixel,
+        srcSpec.transparentColor)
+
+    local trgSpec <const> = ImageSpec {
+        width = wTrg,
+        height = hTrg,
+        colorMode = srcSpec.colorMode,
+        transparentColor = srcSpec.transparentColor
+    }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target <const> = Image(trgSpec)
+    target.bytes = trgBytes
+    return target
+end
+
+---Returns a copy of the source image that has been rotated around the y axis
+---by an angle in degrees. Uses nearest neighbor sampling.
+---If the angle is 0 degrees, then returns the source image by reference.
+---@param source Image source image
+---@param angle number angle in degrees
+---@return Image
+---@nodiscard
+function AseUtilities.rotateImageYNearest(source, angle)
+    local deg <const> = Utilities.round(angle) % 360
+    if deg == 0 then
+        return source
+    elseif deg == 180 then
+        return AseUtilities.flipImageX(source)
+    end
+
+    local cosa <const> = math.cos(angle * 0.017453292519943)
+    local srcSpec <const> = source.spec
+    local trgBytes <const>,
+    wTrg <const>,
+    hTrg <const> = Utilities.rotatePixelsYNearest(
+        source.bytes, srcSpec.width, srcSpec.height,
+        cosa, 0, source.bytesPerPixel,
+        srcSpec.transparentColor)
+
+    local trgSpec <const> = ImageSpec {
+        width = wTrg,
+        height = hTrg,
+        colorMode = srcSpec.colorMode,
+        transparentColor = srcSpec.transparentColor
+    }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target <const> = Image(trgSpec)
+    target.bytes = trgBytes
+    return target
+end
+
 ---Returns a copy of the source image that has been rotated counter clockwise
----by the angle in degrees. Uses nearest neighbor sampling. If the angle is 0
----degrees, then returns the source image by reference. If the angle is 90, 180
----or 270 degrees, then defers to orthogonal rotations.
+---around the z axis by an angle in degrees. Uses nearest neighbor sampling.
+---If the angle is 0 degrees, then returns the source image by reference.
+---If the angle is 90, 180 or 270 degrees, then defers to orthogonal rotations.
 ---@param source Image source image
 ---@param angle number angle in degrees
 ---@return Image
