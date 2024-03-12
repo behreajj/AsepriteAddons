@@ -657,14 +657,12 @@ dlg:button {
                     local srcImg <const> = cel.image
                     if not srcImg:isEmpty() then
                         local celPos <const> = cel.position
-                        local tlxSrc <const> = celPos.x
-                        local tlySrc <const> = celPos.y
-                        local xSrcCenter <const> = tlxSrc + srcImg.width * 0.5
-                        local ySrcCenter <const> = tlySrc + srcImg.height * 0.5
+                        local xSrcCtr <const> = celPos.x + srcImg.width * 0.5
+                        local ySrcCtr <const> = celPos.y + srcImg.height * 0.5
 
                         local trgImg = rotz(srcImg, cosa, sina)
-                        local xtlTrg = xSrcCenter - trgImg.width * 0.5
-                        local ytlTrg = ySrcCenter - trgImg.height * 0.5
+                        local xtlTrg = xSrcCtr - trgImg.width * 0.5
+                        local ytlTrg = ySrcCtr - trgImg.height * 0.5
 
                         local xTrim = 0
                         local yTrim = 0
@@ -890,7 +888,7 @@ dlg:button {
             false, false, false, false)
         local lenCels = #cels
 
-        local sample <const> = sampleNear
+        local resize <const> = AseUtilities.resizeImageNearest
 
         app.transaction("Scale Cels", function()
             app.command.InvertMask()
@@ -902,57 +900,23 @@ dlg:button {
                 local cel <const> = cels[o]
                 local srcImg <const> = cel.image
                 if not srcImg:isEmpty() then
-                    local srcSpec <const> = srcImg.spec
-                    local wSrc <const> = srcSpec.width
-                    local hSrc <const> = srcSpec.height
-                    local alphaIndex <const> = srcSpec.transparentColor
-
-                    local srcBytes <const> = srcImg.bytes
-                    local srcBpp <const> = srcImg.bytesPerPixel
-                    local pxAlpha <const> = strpack(">I" .. srcBpp, alphaIndex)
+                    local celPos <const> = cel.position
+                    local xSrcCtr <const> = celPos.x + srcImg.width * 0.5
+                    local ySrcCtr <const> = celPos.y + srcImg.height * 0.5
 
                     local wTrg = wPxl
                     local hTrg = hPxl
                     if usePercent then
-                        wTrg = max(1, floor(0.5 + wSrc * wPrc))
-                        hTrg = max(1, floor(0.5 + hSrc * hPrc))
+                        wTrg = max(1, floor(0.5 + srcImg.width * wPrc))
+                        hTrg = max(1, floor(0.5 + srcImg.height * hPrc))
                     end
 
-                    if wSrc ~= wTrg or hSrc ~= hTrg then
-                        -- Right-bottom edges were clipped
-                        -- using wSrc / wTrg and hSrc / hTrg .
-                        local tx <const> = wTrg > 1
-                            and (wSrc - 1.0) / (wTrg - 1.0) or 0.0
-                        local ty <const> = hTrg > 1
-                            and (hSrc - 1.0) / (hTrg - 1.0) or 0.0
+                    local trgImg <const> = resize(srcImg, wTrg, hTrg)
+                    local xtlTrg <const> = xSrcCtr - trgImg.width * 0.5
+                    local ytlTrg <const> = ySrcCtr - trgImg.height * 0.5
 
-                        local trgSpec <const> = createSpec(
-                            wTrg, hTrg, srcSpec.colorMode,
-                            srcSpec.colorSpace, alphaIndex)
-                        local trgImg <const> = Image(trgSpec)
-
-                        ---@type string[]
-                        local byteArr <const> = {}
-                        local lenFlat <const> = wTrg * hTrg
-                        local j = 0
-                        while j < lenFlat do
-                            local xTrg <const> = (j % wTrg) * tx
-                            local yTrg <const> = (j // wTrg) * ty
-                            j = j + 1
-                            byteArr[j] = sample(xTrg, yTrg,
-                                wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
-                        end
-                        trgImg.bytes = tconcat(byteArr)
-
-                        local celPos <const> = cel.position
-                        local xCenter <const> = celPos.x + wSrc * 0.5
-                        local yCenter <const> = celPos.y + hSrc * 0.5
-
-                        cel.position = Point(
-                            floor(xCenter - wTrg * 0.5),
-                            floor(yCenter - hTrg * 0.5))
-                        cel.image = trgImg
-                    end
+                    cel.position = Point(floor(xtlTrg), floor(ytlTrg))
+                    cel.image = trgImg
                 end
             end
         end)
