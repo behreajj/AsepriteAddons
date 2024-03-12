@@ -513,7 +513,7 @@ dlg:button {
         local nextPow2 <const> = Utilities.nextPowerOf2
         local verifName <const> = Utilities.validateFilename
         local createSpec <const> = AseUtilities.createSpec
-        local resize <const> = AseUtilities.resizeImageNearest
+        local upscale <const> = AseUtilities.upscaleImageForExport
 
         -- If you wanted to include an option to target the layers in a range,
         -- then you'd have to perform this on all tilesets in the sprite, not
@@ -606,8 +606,7 @@ dlg:button {
                     local tileImage <const> = tile.image
                     local tileScaled = tileImage
                     if useResize then
-                        tileScaled = resize(tileImage,
-                            wTileTrg, hTileTrg)
+                        tileScaled = upscale(tileImage, wScale, hScale)
                     end
 
                     local column <const> = k % columns
@@ -857,7 +856,6 @@ dlg:button {
                         spriteGrid.height))
                     local wSprGridScaled <const> = wScale * wSprGrd
                     local hSprGridScaled <const> = hScale * hSprGrd
-                    local warningFlag = false
 
                     local wSprInTiles <const> = math.max(1, math.ceil(
                         (wScale * spriteSpec.width) / wSprGridScaled))
@@ -919,11 +917,6 @@ dlg:button {
                                 usedTileSets[tileSetId] = firstgid
                                 local sheetPacket <const> = sheetPackets[tileSetId]
                                 local lenTileSet <const> = sheetPacket.lenTileSet
-                                local wTile <const> = sheetPacket.wTile
-                                local hTile <const> = sheetPacket.hTile
-                                if wTile ~= wSprGrd or hTile ~= hSprGrd then
-                                    warningFlag = true
-                                end
                                 firstgid = firstgid + lenTileSet
                             end
 
@@ -994,16 +987,9 @@ dlg:button {
                             tmxFile:close()
                         end
                     end -- End frame dict loop.
-
-                    if warningFlag then
-                        app.alert {
-                            title = "Warning",
-                            text = { "Mismatch found between sprite grid and tile set grids." }
-                        }
-                    end
-                end -- End include maps check.
-            end     -- End Tiled format check.
-        end         -- End write meta data check.
+                end     -- End include maps check.
+            end         -- End Tiled format check.
+        end             -- End write meta data check.
 
         app.alert {
             title = "Success",

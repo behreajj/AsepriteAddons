@@ -2310,9 +2310,6 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
     local srcSpec <const> = source.spec
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
-
-    -- This validation routine could be changed, since resizePixelsNearest
-    -- now accepts negative target dimensions.
     local wVrf <const> = math.max(1, math.abs(wTrg))
     local hVrf <const> = math.max(1, math.abs(hTrg))
 
@@ -2946,6 +2943,67 @@ function AseUtilities.trimMapAlpha(
     end
 
     return target, lft * wTile, top * hTile
+end
+
+---Returns a copy of the source image that has been scaled up for export. Uses
+---integer arithmetic only. If the scales are both 1, then returns the source
+---by reference.
+---@param source Image source image
+---@param wScale integer width scalar
+---@param hScale integer height scalar
+---@return Image
+---@nodiscard
+function AseUtilities.upscaleImageForExport(source, wScale, hScale)
+    local wScaleVrf <const> = math.max(1, math.abs(wScale))
+    local hScaleVrf <const> = math.max(1, math.abs(hScale))
+    if wScaleVrf == 1 and hScaleVrf == 1 then
+        return source
+    end
+
+    local srcByteStr <const> = source.bytes
+    local bpp <const> = source.bytesPerPixel
+    local srcSpec <const> = source.spec
+    local wSrc <const> = srcSpec.width
+    local hSrc <const> = srcSpec.height
+
+    ---@type string[]
+    local resized <const> = {}
+    local lenKernel <const> = wScaleVrf * hScaleVrf
+    local lenSrc <const> = wSrc * hSrc
+    local wTrg <const> = wSrc * wScaleVrf
+    local hTrg <const> = hSrc * hScaleVrf
+
+    local trgSpec <const> = ImageSpec {
+        width = wTrg,
+        height = hTrg,
+        colorMode = srcSpec.colorMode,
+        transparentColor = srcSpec.transparentColor
+    }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target <const> = Image(trgSpec)
+
+    -- This doesn't rely on a Utilities method because it is specific to
+    -- pixel art export from Aseprite vs. resizing an image for a
+    -- transformation on the canvas.
+    local strsub <const> = string.sub
+    local i = 0
+    while i < lenSrc do
+        local xTrg <const> = wScaleVrf * (i % wSrc)
+        local yTrg <const> = hScaleVrf * (i // wSrc)
+        local ibpp <const> = i * bpp
+        local srcStr <const> = strsub(srcByteStr, 1 + ibpp, bpp + ibpp)
+        local j = 0
+        while j < lenKernel do
+            local xKernel <const> = xTrg + j % wScaleVrf
+            local yKernel <const> = yTrg + j // wScaleVrf
+            resized[1 + yKernel * wTrg + xKernel] = srcStr
+            j = j + 1
+        end
+        i = i + 1
+    end
+
+    target.bytes = table.concat(resized)
+    return target
 end
 
 ---Converts a Vec2 to an Aseprite Point.

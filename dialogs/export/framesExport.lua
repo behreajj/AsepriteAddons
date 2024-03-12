@@ -257,11 +257,8 @@ local function genPacket(
     -- If user wants an empty image, give it to them.
 
     if useResize then
-        local wr <const> = flat.width * wScale
-        local hr <const> = flat.height * hScale
-        local resized <const> = AseUtilities.resizeImageNearest(
-            flat, wr, hr)
-
+        local resized <const> = AseUtilities.upscaleImageForExport(
+            flat, wScale, hScale)
         flat = resized
     end
 

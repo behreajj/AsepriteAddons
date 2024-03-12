@@ -362,7 +362,7 @@ dlg:button {
         local expandPow2 <const> = AseUtilities.expandImageToPow2
         local nameVerify <const> = Utilities.validateFilename
         local padImage <const> = AseUtilities.padImage
-        local resize <const> = AseUtilities.resizeImageNearest
+        local upscale <const> = AseUtilities.upscaleImageForExport
         local trimAlpha <const> = AseUtilities.trimImageAlpha
 
         local chosenFrames <const> = Utilities.flatArr2(AseUtilities.getFrames(
@@ -601,9 +601,8 @@ dlg:button {
                     if not image:isEmpty() then
                         -- print("Image is not clear")
                         if useResize then
-                            local imgResized <const> = resize(image,
-                                image.width * wScale,
-                                image.height * hScale)
+                            local imgResized <const> = upscale(image,
+                                wScale, hScale)
                             image = imgResized
                         end
 
