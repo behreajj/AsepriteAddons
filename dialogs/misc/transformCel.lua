@@ -629,14 +629,9 @@ dlg:button {
             end)
         else
             -- Cache methods.
-            local ceil <const> = math.ceil
-            local createSpec <const> = AseUtilities.createSpec
+            local floor <const> = math.floor
             local trimAlpha <const> = AseUtilities.trimImageAlpha
-            local strpack <const> = string.pack
-            local tconcat <const> = table.concat
-            local round <const> = Utilities.round
-
-            local sample <const> = sampleNear
+            local rotz <const> = AseUtilities.rotateImageZInternal
 
             -- Unpack angle.
             degrees = 360 - degrees
@@ -649,13 +644,7 @@ dlg:button {
             -- vector rotation.
             local cosa <const> = math.cos(radians)
             local sina <const> = -math.sin(radians)
-            local absCosa <const> = math.abs(cosa)
-            local absSina <const> = math.abs(sina)
-
-            -- Adapted from:
-            -- http://polymathprogrammer.com/2010/04/05/
-            -- image-rotation-with-bilinear-interpolation-
-            -- and-no-clipping/
+            local alphaIndex <const> = activeSprite.transparentColor
 
             app.transaction("Rotate Cels", function()
                 app.command.InvertMask()
@@ -667,62 +656,23 @@ dlg:button {
                     local cel <const> = cels[i]
                     local srcImg <const> = cel.image
                     if not srcImg:isEmpty() then
-                        local srcSpec <const> = srcImg.spec
-                        local wSrc <const> = srcSpec.width
-                        local hSrc <const> = srcSpec.height
-                        local alphaIndex <const> = srcSpec.transparentColor
+                        local celPos <const> = cel.position
+                        local tlxSrc <const> = celPos.x
+                        local tlySrc <const> = celPos.y
+                        local xSrcCenter <const> = tlxSrc + srcImg.width * 0.5
+                        local ySrcCenter <const> = tlySrc + srcImg.height * 0.5
 
-                        local srcBytes <const> = srcImg.bytes
-                        local srcBpp <const> = srcImg.bytesPerPixel
-                        local pxAlpha <const> = strpack(">I" .. srcBpp, alphaIndex)
-
-                        local wTrgf <const> = hSrc * absSina + wSrc * absCosa
-                        local hTrgf <const> = hSrc * absCosa + wSrc * absSina
-
-                        -- Just in case, ceil this instead of floor.
-                        local wTrgi <const> = ceil(wTrgf)
-                        local hTrgi <const> = ceil(hTrgf)
-
-                        local xSrcCenter <const> = wSrc * 0.5
-                        local ySrcCenter <const> = hSrc * 0.5
-                        local xTrgCenter <const> = wTrgf * 0.5
-                        local yTrgCenter <const> = hTrgf * 0.5
-
-                        -- Try to minimize drift in the cel's position.
-                        local wDiffHalf <const> = round((wTrgf - wSrc) * 0.5)
-                        local hDiffHalf <const> = round((hTrgf - hSrc) * 0.5)
-
-                        local trgSpec <const> = createSpec(
-                            wTrgi, hTrgi, srcSpec.colorMode,
-                            srcSpec.colorSpace, alphaIndex)
-                        local trgImg = Image(trgSpec)
-
-                        ---@type string[]
-                        local byteArr <const> = {}
-                        local lenFlat <const> = wTrgi * hTrgi
-                        local j = 0
-                        while j < lenFlat do
-                            local xSgn <const> = (j % wTrgi) - xTrgCenter
-                            local ySgn <const> = (j // wTrgi) - yTrgCenter
-                            local xRot <const> = cosa * xSgn - sina * ySgn
-                            local yRot <const> = cosa * ySgn + sina * xSgn
-                            local xSrc <const> = xSrcCenter + xRot
-                            local ySrc <const> = ySrcCenter + yRot
-
-                            j = j + 1
-                            byteArr[j] = sample(xSrc, ySrc,
-                                wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
-                        end
-                        trgImg.bytes = tconcat(byteArr)
+                        local trgImg = rotz(srcImg, cosa, sina)
+                        local xtlTrg = xSrcCenter - trgImg.width * 0.5
+                        local ytlTrg = ySrcCenter - trgImg.height * 0.5
 
                         local xTrim = 0
                         local yTrim = 0
                         trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaIndex)
+                        xtlTrg = xtlTrg + xTrim
+                        ytlTrg = ytlTrg + yTrim
 
-                        local srcPos <const> = cel.position
-                        cel.position = Point(
-                            xTrim + srcPos.x - wDiffHalf,
-                            yTrim + srcPos.y - hDiffHalf)
+                        cel.position = Point(floor(xtlTrg), floor(ytlTrg))
                         cel.image = trgImg
                     end
                 end

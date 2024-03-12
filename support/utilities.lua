@@ -947,7 +947,7 @@ end
 ---@return string rotated
 ---@return integer wTrg
 ---@return integer hTrg
-function Utilities.rotatePixelsXNearest(
+function Utilities.rotatePixelsX(
     source, wSrc, hSrc, cosa, sina, bpp, alphaIndex)
     local hTrgSigned <const> = Utilities.round(cosa * hSrc)
     if hTrgSigned == 0 then
@@ -985,7 +985,7 @@ end
 ---@return string rotated
 ---@return integer wTrg
 ---@return integer hTrg
-function Utilities.rotatePixelsYNearest(
+function Utilities.rotatePixelsY(
     source, wSrc, hSrc, cosa, sina, bpp, alphaIndex)
     local wTrgSigned <const> = Utilities.round(cosa * wSrc)
     if wTrgSigned == 0 then
@@ -1022,7 +1022,7 @@ end
 ---@return string rotated
 ---@return integer wTrg
 ---@return integer hTrg
-function Utilities.rotatePixelsZNearest(
+function Utilities.rotatePixelsZ(
     source, wSrc, hSrc, cosa, sina, bpp, alphaIndex)
     ---@type string[]
     local rotated <const> = {}

@@ -356,11 +356,11 @@ dlg:button {
 
         local axis <const> = args.axis
             or defaults.axis --[[@as string]]
-        local rotateImage = AseUtilities.rotateImageZNearest
+        local rotateImage = AseUtilities.rotateImageZ
         if axis == "X" then
-            rotateImage = AseUtilities.rotateImageXNearest
+            rotateImage = AseUtilities.rotateImageX
         elseif axis == "Y" then
-            rotateImage = AseUtilities.rotateImageYNearest
+            rotateImage = AseUtilities.rotateImageY
         end
 
         -- Cache methods used in loop.

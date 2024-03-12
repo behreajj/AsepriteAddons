@@ -2397,7 +2397,7 @@ end
 ---@param angle number angle in degrees
 ---@return Image
 ---@nodiscard
-function AseUtilities.rotateImageXNearest(source, angle)
+function AseUtilities.rotateImageX(source, angle)
     local deg <const> = Utilities.round(angle) % 360
     if deg == 0 then
         return source
@@ -2409,7 +2409,7 @@ function AseUtilities.rotateImageXNearest(source, angle)
     local srcSpec <const> = source.spec
     local trgBytes <const>,
     wTrg <const>,
-    hTrg <const> = Utilities.rotatePixelsXNearest(
+    hTrg <const> = Utilities.rotatePixelsX(
         source.bytes, srcSpec.width, srcSpec.height,
         cosa, 0, source.bytesPerPixel,
         srcSpec.transparentColor)
@@ -2433,7 +2433,7 @@ end
 ---@param angle number angle in degrees
 ---@return Image
 ---@nodiscard
-function AseUtilities.rotateImageYNearest(source, angle)
+function AseUtilities.rotateImageY(source, angle)
     local deg <const> = Utilities.round(angle) % 360
     if deg == 0 then
         return source
@@ -2445,7 +2445,7 @@ function AseUtilities.rotateImageYNearest(source, angle)
     local srcSpec <const> = source.spec
     local trgBytes <const>,
     wTrg <const>,
-    hTrg <const> = Utilities.rotatePixelsYNearest(
+    hTrg <const> = Utilities.rotatePixelsY(
         source.bytes, srcSpec.width, srcSpec.height,
         cosa, 0, source.bytesPerPixel,
         srcSpec.transparentColor)
@@ -2470,7 +2470,7 @@ end
 ---@param angle number angle in degrees
 ---@return Image
 ---@nodiscard
-function AseUtilities.rotateImageZNearest(source, angle)
+function AseUtilities.rotateImageZ(source, angle)
     local deg <const> = Utilities.round(angle) % 360
 
     if deg == 0 then
@@ -2483,17 +2483,26 @@ function AseUtilities.rotateImageZNearest(source, angle)
         return AseUtilities.rotateImage270(source)
     end
 
-    local srcSpec <const> = source.spec
     local rad <const> = angle * 0.017453292519943
     local cosa <const> = math.cos(rad)
     local sina <const> = math.sin(rad)
 
-    -- This could be split into a variant which accepts cosine and sine
-    -- like the pixel version, that way you don't have to recalculate for
-    -- multiple images?
+    return AseUtilities.rotateImageZInternal(source, cosa, sina)
+end
+
+---Internal helper function to rotateZ. Accepts pre-calculated cosine and sine
+---of an angle.
+---@param source Image source image
+---@param cosa number sine of angle
+---@param sina number cosine of angle
+---@return Image
+---@nodiscard
+function AseUtilities.rotateImageZInternal(source, cosa, sina)
+    local srcSpec <const> = source.spec
+
     local trgBytes <const>,
     wTrg <const>,
-    hTrg <const> = Utilities.rotatePixelsZNearest(
+    hTrg <const> = Utilities.rotatePixelsZ(
         source.bytes, srcSpec.width, srcSpec.height,
         cosa, sina, source.bytesPerPixel,
         srcSpec.transparentColor)
