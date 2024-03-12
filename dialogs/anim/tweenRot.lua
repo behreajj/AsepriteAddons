@@ -370,8 +370,8 @@ dlg:button {
         local trgLayer = nil
         app.transaction("New Layer", function()
             trgLayer = activeSprite:newLayer()
-            trgLayer.name = string.format("Rotate %s At %d From %d To %d",
-                srcLayer.name,
+            trgLayer.name = string.format("Rotate%s %s At %d From %d To %d",
+                axis, srcLayer.name,
                 srcFrame.frameNumber + frameUiOffset,
                 frIdxOrigVerif + frameUiOffset,
                 frIdxDestVerif + frameUiOffset)

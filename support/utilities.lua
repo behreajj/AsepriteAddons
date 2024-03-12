@@ -978,7 +978,7 @@ function Utilities.rotatePixelsX(
 
     local hTrgAbs <const> = math.abs(hTrgSigned)
     local resized = Utilities.resizePixelsNearest(
-        source, wSrc, hSrc, wSrc, hTrgAbs, bpp)
+        source, wSrc, hSrc, wSrc, hTrgAbs, bpp, alphaIndex)
     if hTrgSigned < 0 then
         resized = Utilities.flipPixelsY(resized, wSrc, hTrgAbs, bpp)
     end
@@ -1016,7 +1016,7 @@ function Utilities.rotatePixelsY(
 
     local wTrgAbs <const> = math.abs(wTrgSigned)
     local resized = Utilities.resizePixelsNearest(
-        source, wSrc, hSrc, wTrgAbs, hSrc, bpp)
+        source, wSrc, hSrc, wTrgAbs, hSrc, bpp, alphaIndex)
     if wTrgSigned < 0 then
         resized = Utilities.flipPixelsX(resized, wTrgAbs, hSrc, bpp)
     end

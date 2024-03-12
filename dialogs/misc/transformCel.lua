@@ -639,7 +639,7 @@ dlg:button {
             local radians = degrees * 0.017453292519943
             if query then radians = query end
 
-            -- Avoid trigonmetric functions in while loop below.
+            -- Avoid trigonometric functions in while loop below.
             -- Cache sine and cosine here, then use formula for
             -- vector rotation.
             local cosa <const> = math.cos(radians)
