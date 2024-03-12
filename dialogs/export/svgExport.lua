@@ -150,6 +150,12 @@ local function imgToSvgStr(
         end
     end
 
+    -- TODO: Ideally, pixelDict would be copied into two arrays, both of which
+    -- are sorted according to either color rgb or first occurence from top
+    -- left corner. These arrays would then be returned from this function to
+    -- be used by the label function below. This way a cross-stitcher would
+    -- have an easier time finding the next color to use.
+
     ---@type string[]
     local pathsArr <const> = {}
     for hex, idcs in pairs(pixelDict) do
@@ -238,7 +244,9 @@ local function genLabelSvgStr(
         local webHex <const> = hsi > 127 and 0 or 0xffffff
 
         incr = incr + 1
-        labelsArr[#labelsArr + 1] = strfmt("<g id=\"color%d\">", incr - 1)
+        labelsArr[#labelsArr + 1] = strfmt(
+            "<g id=\"color%d\" fill=\"#%06X\">",
+            incr - 1, webHex)
         local lenIdcs <const> = #idcs
         local i = 0
         while i < lenIdcs do
@@ -251,8 +259,8 @@ local function genLabelSvgStr(
             local cy <const> = borderPad + y0 * hScalePad + hScaleHalf
 
             local textStr <const> = strfmt(
-                "<text id=\"pixel%d_%d_%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#%06X\">%d</text>",
-                incr - 1, x0, y0, cx, cy, webHex, incr)
+                "<text id=\"pixel%d_%d_%d\" x=\"%.1f\" y=\"%.1f\">%d</text>",
+                incr - 1, x0, y0, cx, cy, incr)
             labelsArr[#labelsArr + 1] = textStr
         end
         labelsArr[#labelsArr + 1] = "</g>"
@@ -1030,7 +1038,7 @@ dlg:button {
             local xRowLabel <const> = wnBorder + border + wScaleHalf
             local yColLabel <const> = hnBorder + border + hScaleHalf
 
-            labelsStrArr[#labelsStrArr + 1] = "<g id=\"rowlabels\">"
+            labelsStrArr[#labelsStrArr + 1] = "<g id=\"rowlabels\" fill=\"#000000\">"
             local i = 0
             while i < hNative do
                 local y1mrg <const> = borderPad + i * padding
@@ -1039,14 +1047,14 @@ dlg:button {
                     and " font-weight=\"bold\""
                     or ""
                 local labelStr <const> = strfmt(
-                    "<text id=\"rowlabel%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#000000\"%s>%d</text>",
+                    "<text id=\"rowlabel%d\" x=\"%.1f\" y=\"%.1f\"%s>%d</text>",
                     i, xRowLabel, cy, fwStr, i % lblReset)
                 labelsStrArr[#labelsStrArr + 1] = labelStr
                 i = i + 1
             end
             labelsStrArr[#labelsStrArr + 1] = "</g>"
 
-            labelsStrArr[#labelsStrArr + 1] = "<g id=\"collabels\">"
+            labelsStrArr[#labelsStrArr + 1] = "<g id=\"collabels\" fill=\"#000000\">"
             local j = 0
             while j < wNative do
                 local x1mrg <const> = borderPad + j * padding
@@ -1055,7 +1063,7 @@ dlg:button {
                     and " font-weight=\"bold\""
                     or ""
                 local labelStr <const> = strfmt(
-                    "<text id=\"collabel%d\" x=\"%.1f\" y=\"%.1f\" fill=\"#000000\"%s>%d</text>",
+                    "<text id=\"collabel%d\" x=\"%.1f\" y=\"%.1f\"%s>%d</text>",
                     j, cx, yColLabel, fwStr, j % lblReset)
                 labelsStrArr[#labelsStrArr + 1] = labelStr
                 j = j + 1

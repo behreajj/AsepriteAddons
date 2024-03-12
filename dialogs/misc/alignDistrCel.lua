@@ -13,7 +13,7 @@ local defaults <const> = {
     includeTiles = true,
     includeBkg = false,
     frameTarget = "ACTIVE",
-    referTo = "CELS",
+    referTo = "SPRITE",
     inOut = "INSIDE",
     sortCels = true,
 }
