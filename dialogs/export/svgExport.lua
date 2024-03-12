@@ -1074,22 +1074,6 @@ dlg:button {
             local xRowLabel <const> = wnBorder + border + wScaleHalf
             local yColLabel <const> = hnBorder + border + hScaleHalf
 
-            labelsStrArr[#labelsStrArr + 1] = "<g id=\"rowlabels\" fill=\"#000000\">"
-            local i = 0
-            while i < hNative do
-                local y1mrg <const> = borderPad + i * padding
-                local cy <const> = y1mrg + i * hScale + hScaleHalf
-                local fwStr <const> = i % lblBold == 0
-                    and " font-weight=\"bold\""
-                    or ""
-                local labelStr <const> = strfmt(
-                    "<text id=\"rowlabel%d\" x=\"%.1f\" y=\"%.1f\"%s>%d</text>",
-                    i, xRowLabel, cy, fwStr, i % lblReset)
-                labelsStrArr[#labelsStrArr + 1] = labelStr
-                i = i + 1
-            end
-            labelsStrArr[#labelsStrArr + 1] = "</g>"
-
             labelsStrArr[#labelsStrArr + 1] = "<g id=\"collabels\" fill=\"#000000\">"
             local j = 0
             while j < wNative do
@@ -1103,6 +1087,24 @@ dlg:button {
                     j, cx, yColLabel, fwStr, j % lblReset)
                 labelsStrArr[#labelsStrArr + 1] = labelStr
                 j = j + 1
+            end
+            labelsStrArr[#labelsStrArr + 1] = "</g>"
+
+            -- Since these are on the bottom edge of the SVG, draw them after
+            -- columns, so that elements are sorted top to bottom.
+            labelsStrArr[#labelsStrArr + 1] = "<g id=\"rowlabels\" fill=\"#000000\">"
+            local i = 0
+            while i < hNative do
+                local y1mrg <const> = borderPad + i * padding
+                local cy <const> = y1mrg + i * hScale + hScaleHalf
+                local fwStr <const> = i % lblBold == 0
+                    and " font-weight=\"bold\""
+                    or ""
+                local labelStr <const> = strfmt(
+                    "<text id=\"rowlabel%d\" x=\"%.1f\" y=\"%.1f\"%s>%d</text>",
+                    i, xRowLabel, cy, fwStr, i % lblReset)
+                labelsStrArr[#labelsStrArr + 1] = labelStr
+                i = i + 1
             end
             labelsStrArr[#labelsStrArr + 1] = "</g>"
         end
