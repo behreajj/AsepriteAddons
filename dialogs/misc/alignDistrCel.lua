@@ -652,14 +652,7 @@ dlg:combobox {
     id = "layerTarget",
     label = "Layers:",
     option = defaults.layerTarget,
-    options = layerTargetOptions,
-    onchange = function()
-        local args <const> = dlg.data
-        local target <const> = args.layerTarget
-        local state = target == "ACTIVE"
-        dlg:modify { id = "bringToFrontButton", visible = state }
-        dlg:modify { id = "sendToBackButton", visible = state }
-    end
+    options = layerTargetOptions
 }
 
 dlg:newrow { always = false }
@@ -832,8 +825,7 @@ dlg:button {
         end)
 
         app.layer = activeLayer
-    end,
-    visible = defaults.layerTarget == "ACTIVE"
+    end
 }
 
 dlg:button {
@@ -858,8 +850,7 @@ dlg:button {
         end)
 
         app.layer = activeLayer
-    end,
-    visible = defaults.layerTarget == "ACTIVE"
+    end
 }
 
 dlg:newrow { always = false }
