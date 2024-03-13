@@ -390,8 +390,6 @@ dlg:button {
             return
         end
 
-        local sample <const> = sampleNear
-
         -- Cache methods.
         local ceil <const> = math.ceil
         local createSpec <const> = AseUtilities.createSpec
@@ -461,7 +459,7 @@ dlg:button {
                             + (j % wTrgi) + tana * (ySrc - yCenter)
 
                         j = j + 1
-                        byteArr[j] = sample(xSrc, ySrc,
+                        byteArr[j] = sampleNear(xSrc, ySrc,
                             wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
                     end
                     trgImg.bytes = tconcat(byteArr)
@@ -502,8 +500,6 @@ dlg:button {
             or degrees == 90 or degrees == 270 then
             return
         end
-
-        local sample <const> = sampleNear
 
         -- Cache methods.
         local ceil <const> = math.ceil
@@ -574,7 +570,7 @@ dlg:button {
                             + tana * (xSrc - xTrgCenter)
 
                         j = j + 1
-                        byteArr[j] = sample(xSrc, ySrc,
+                        byteArr[j] = sampleNear(xSrc, ySrc,
                             wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
                     end
                     trgImg.bytes = tconcat(byteArr)
@@ -880,9 +876,6 @@ dlg:button {
         local abs <const> = math.abs
         local max <const> = math.max
         local floor <const> = math.floor
-        local strpack <const> = string.pack
-        local tconcat <const> = table.concat
-        local createSpec <const> = AseUtilities.createSpec
 
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -905,10 +898,6 @@ dlg:button {
         hPxl = floor(0.5 + abs(hPxl))
         wPrc = 0.01 * abs(wPrc)
         hPrc = 0.01 * abs(hPrc)
-
-        -- print(string.format(
-        --     "wPxl: %.3f, hPxl: %.3f, wPrc: %.3f, hPrc: %.3f",
-        --     wPxl, hPxl, wPrc, hPrc))
 
         if usePercent then
             if (wPrc < 0.000001 or hPrc < 0.000001)

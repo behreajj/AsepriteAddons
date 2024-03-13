@@ -1,6 +1,6 @@
 dofile("../../support/gradientutilities.lua")
 
-local inputTypes <const> = { "COUNT", "MANUAL", "SPAN" }
+local inputTypes <const> = { "COUNT", "MANUAL", "RANGE", "SPAN" }
 
 local aniDirs <const> = {
     "FORWARD",
@@ -280,7 +280,7 @@ dlg:button {
             end
         else
             frIdcs2 = AseUtilities.getFrames(
-                activeSprite, "MANUAL",
+                activeSprite, inputType,
                 true, rangeStr, nil)
         end
         local lenOuter <const> = #frIdcs2
