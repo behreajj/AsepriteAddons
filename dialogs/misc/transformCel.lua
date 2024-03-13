@@ -110,9 +110,8 @@ local function sampleNear(
     if yr >= 0 and yr < hSrc
         and xr >= 0 and xr < wSrc then
         local j <const> = yr * wSrc + xr
-        local orig <const> = 1 + j * bpp
-        local dest <const> = orig + bpp - 1
-        return string.sub(sourceBytes, orig, dest)
+        local jbpp <const> = j * bpp
+        return string.sub(sourceBytes, 1 + jbpp, bpp + jbpp)
     end
     return defaultValue
 end
@@ -154,6 +153,50 @@ dlg:button {
         local dy <const> = args.yTranslate
             or defaults.yTranslate --[[@as integer]]
         translateCels(dlg, dx, dy)
+    end
+}
+
+dlg:button {
+    id = "setPosButton",
+    text = "SE&T",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+        local activeLayer <const> = site.layer
+
+        local args <const> = dlg.data
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
+        local x <const> = args.xTranslate
+            or defaults.xTranslate --[[@as integer]]
+        local y <const> = args.yTranslate
+            or defaults.yTranslate --[[@as integer]]
+        local point <const> = Point(x, y)
+
+        local filterFrames = activeSprite.frames
+        if target == "ACTIVE" then
+            local activeFrame <const> = site.frame
+            if not activeFrame then return end
+            filterFrames = { activeFrame }
+        end
+
+        local cels <const> = AseUtilities.filterCels(
+            activeSprite, activeLayer, filterFrames, target,
+            false, false, false, false)
+        local lenCels <const> = #cels
+
+        app.transaction("Set Cels Position", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+
+            local i = 0
+            while i < lenCels do
+                i = i + 1
+                cels[i].position = point
+            end
+        end)
     end
 }
 
