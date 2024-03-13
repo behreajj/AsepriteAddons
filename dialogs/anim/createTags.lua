@@ -12,7 +12,7 @@ local aniDirs <const> = {
 local colorOptions <const> = { "ALL", "NEW" }
 
 local defaults <const> = {
-    inputType = "MANUAL",
+    inputType = "COUNT",
     totalCount = 1,
     spanCount = 6,
     rangeStr = "",
