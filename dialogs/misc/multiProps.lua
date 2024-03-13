@@ -3,6 +3,13 @@ or 1 (0 to 100), some dialogs have wait=true and others wait=false, meaning the
 preference could be changed after the dialog window is opened.
 --]]
 
+local aniDirs <const> = {
+    "FORWARD",
+    "REVERSE",
+    "PING_PONG",
+    "PING_PONG_REVERSE"
+}
+
 local blendModes <const> = {
     "NORMAL",
 
@@ -29,6 +36,16 @@ local blendModes <const> = {
     "HSL_COLOR",
     "HSL_LUMINOSITY",
 }
+
+---@param aniDir AniDir
+---@return string
+local function aniDirToStr(aniDir)
+    if aniDir == AniDir.PING_PONG then return "PING_PONG" end
+    if aniDir == AniDir.PING_PONG_REVERSE then return "PING_PONG_REVERSE" end
+    if aniDir == AniDir.REVERSE then return "REVERSE" end
+
+    return "FORWARD"
+end
 
 ---@param bm BlendMode
 ---@return string
@@ -72,12 +89,16 @@ end
 local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
+
 local layer <const> = site.layer or sprite.layers[1]
 local isBkg <const> = layer.isBackground
 local isTilemap <const> = layer.isTilemap
 local isGroup <const> = layer.isGroup
+
 local frame <const> = site.frame or sprite.frames[1]
 local cel <const> = layer:cel(frame)
+local tag <const> = app.tag
+
 local docPrefs <const> = app.preferences.document(sprite)
 local tlPrefs <const> = docPrefs.timeline
 local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
@@ -259,6 +280,7 @@ if cel then
             celBounds.width, celBounds.height)
         or string.format("Cel %d x %d",
             celImage.width, celImage.height)
+
     dlg:separator {
         id = "celSep",
         text = celText
@@ -326,6 +348,99 @@ if cel then
             local args <const> = dlg.data
             local celUserData <const> = args.celUserData --[[@as string]]
             cel.data = celUserData
+            app.refresh()
+        end
+    }
+end
+
+if tag then
+    -- Problem with making to and from frames editable is that an app.tag
+    -- that begins as the active will no longer be as its range moves.
+    local toFrObj <const> = tag.toFrame
+    local fromFrObj <const> = tag.fromFrame
+    local tagText <const> = (toFrObj and fromFrObj)
+        and string.format("Tag %02d to %02d",
+            fromFrObj.frameNumber + frameUiOffset,
+            toFrObj.frameNumber + frameUiOffset)
+        or "Tag"
+
+    dlg:separator {
+        id = "tagSep",
+        text = tagText
+    }
+
+    dlg:entry {
+        id = "tagName",
+        label = "Name:",
+        text = tag.name,
+        focus = false,
+        onchange = function()
+            local args <const> = dlg.data
+            local tagName <const> = args.tagName --[[@as string]]
+            tag.name = tagName
+            app.refresh()
+        end
+    }
+
+    dlg:newrow { always = false }
+
+    dlg:combobox {
+        id = "tagAniDir",
+        label = "Direction:",
+        option = aniDirToStr(tag.aniDir),
+        options = aniDirs,
+        focus = false,
+        onchange = function()
+                local args <const> = dlg.data
+                local aniDirStr <const> = args.tagAniDir --[[@as string]]
+                tag.aniDir = AniDir[aniDirStr]
+                app.refresh()
+        end
+    }
+
+    dlg:newrow { always = false }
+
+    dlg:number {
+        id = "tagRepeats",
+        label = "Repeats:",
+        text = string.format("%d", tag.repeats),
+        decimals = 0,
+        focus = false,
+        onchange = function()
+            local args <const> = dlg.data
+            local tagRepeats <const> = args.tagRepeats --[[@as integer]]
+            tag.repeats = math.min(math.max(math.abs(
+                tagRepeats), 0), 65535)
+            app.refresh()
+        end
+    }
+
+    dlg:newrow { always = false }
+
+    dlg:color {
+        id = "tagColor",
+        label = "UI:",
+        color = tag.color,
+        focus = false,
+        onchange = function()
+            local args <const> = dlg.data
+            local tagColor <const> = args.tagColor --[[@as Color]]
+            tag.color = tagColor
+            app.refresh()
+        end
+    }
+
+    dlg:newrow { always = false }
+
+    dlg:entry {
+        id = "tagUserData",
+        label = "User Data:",
+        text = tag.data,
+        focus = false,
+        onchange = function()
+            local args <const> = dlg.data
+            local tagUserData <const> = args.tagUserData --[[@as string]]
+            tag.data = tagUserData
             app.refresh()
         end
     }
