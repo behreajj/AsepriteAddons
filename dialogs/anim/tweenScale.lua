@@ -13,7 +13,9 @@ local defaults <const> = {
     mode = "MIX",
     facType = "TIME",
     trimCel = true,
+
     alpSampleCount = 96,
+    preIncr = false,
 
     frameOrig = 1,
     pxwOrig = 64,
@@ -524,9 +526,14 @@ dlg:button {
                 or defaults.wIncr --[[@as integer]]
             local hIncr <const> = args.hIncr
                 or defaults.hIncr --[[@as integer]]
+            local preIncr <const> = defaults.preIncr --[[@as boolean]]
 
             local wCurr = pxwSrc
             local hCurr = pxhSrc
+            if preIncr then
+                wCurr = max(1, wCurr + wIncr)
+                hCurr = max(1, hCurr + hIncr)
+            end
 
             local j = 0
             while j < countFrames do
@@ -553,12 +560,17 @@ dlg:button {
                 or defaults.wIncr --[[@as number]]
             local hScale <const> = args.hScale
                 or defaults.hScale --[[@as number]]
+            local preIncr <const> = defaults.preIncr --[[@as boolean]]
 
             local wScaleAbs <const> = math.max(0.000001, math.abs(wScale))
             local hScaleAbs <const> = math.max(0.000001, math.abs(hScale))
 
             local wCurr = pxwSrc
             local hCurr = pxhSrc
+            if preIncr then
+                wCurr = max(1, floor(0.5 + wCurr * wScaleAbs))
+                hCurr = max(1, floor(0.5 + hCurr * hScaleAbs))
+            end
 
             local j = 0
             while j < countFrames do

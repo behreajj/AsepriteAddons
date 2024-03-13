@@ -12,7 +12,9 @@ local defaults <const> = {
     mode = "MIX",
     facType = "TIME",
     trimCel = true,
+
     alpSampleCount = 96,
+    preIncr = false,
 
     frameOrig = 1,
     xPosOrig = 0.0,
@@ -410,9 +412,14 @@ dlg:button {
                 or defaults.xIncr --[[@as integer]]
             local yIncr <const> = args.yIncr
                 or defaults.yIncr --[[@as integer]]
+            local preIncr <const> = defaults.preIncr --[[@as boolean]]
 
             local xCurr = tlxSrc
             local yCurr = tlySrc
+            if preIncr then
+                xCurr = xCurr + xIncr
+                yCurr = yCurr - yIncr
+            end
 
             app.transaction("Move Cels", function()
                 local j = 0

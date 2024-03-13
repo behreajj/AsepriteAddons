@@ -20,7 +20,9 @@ local defaults <const> = {
     axis = "Z",
     angleType = "NEAR",
     trimCel = true,
+
     alpSampleCount = 96,
+    preIncr = false,
 
     frameOrig = 1,
     rotOrig = 0,
@@ -388,7 +390,12 @@ dlg:button {
         if mode == "ADD" then
             local rotIncrDeg <const> = args.rotIncr
                 or defaults.rotIncr --[[@as integer]]
+            local preIncr <const> = defaults.preIncr --[[@as boolean]]
+
             local currDeg = 0
+            if preIncr then
+                currDeg = currDeg + rotIncrDeg
+            end
 
             app.transaction("Rotate Cels", function()
                 local j = 0
