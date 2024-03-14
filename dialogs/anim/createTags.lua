@@ -36,9 +36,10 @@ dlg:combobox {
     options = inputTypes,
     onchange = function()
         local args <const> = dlg.data
-        local isManual <const> = args.inputType == "MANUAL"
-        local isSpan <const> = args.inputType == "SPAN"
-        local isCount <const> = args.inputType == "COUNT"
+        local inputType <const> = args.inputType --[[@as string]]
+        local isManual <const> = inputType == "MANUAL"
+        local isSpan <const> = inputType == "SPAN"
+        local isCount <const> = inputType == "COUNT"
         dlg:modify { id = "rangeStr", visible = isManual }
         dlg:modify { id = "strExample", visible = false }
         dlg:modify { id = "spanCount", visible = isSpan }

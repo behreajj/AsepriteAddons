@@ -7,13 +7,10 @@ local modes <const> = {
     "MIX",
     "MULTIPLY",
     "SET",
-    "SUBTRACT",
+    "SUBTRACT"
 }
 
-local targets <const> = {
-    -- TODO: Add widgets for manual frame entry.
-    "ACTIVE", "ALL", "RANGE"
-}
+local targets <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 
 local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
 local curveColor <const> = app.theme.color.text --[[@as Color]]
@@ -30,6 +27,8 @@ local defaults <const> = {
     durDest = 100,
 
     target = "ALL",
+    rangeStr = "",
+    strExample = "4,6:9,13",
 
     lbDur = 0.001,
     ubDur = 65.535,
@@ -68,6 +67,8 @@ dlg:combobox {
     onchange = function()
         local args <const> = dlg.data
         local mode <const> = args.mode --[[@as string]]
+        local target <const> = args.target --[[@as string]]
+        local isManual <const> = target == "MANUAL"
         local isMix <const> = mode == "MIX"
         local isOp <const> = not isMix
 
@@ -84,6 +85,8 @@ dlg:combobox {
 
         dlg:modify { id = "target", visible = isOp }
         dlg:modify { id = "opNum", visible = isOp }
+        dlg:modify { id = "rangeStr", visible = isOp and isManual }
+        dlg:modify { id = "strExample", visible = false }
     end
 }
 
@@ -99,7 +102,6 @@ dlg:number {
 dlg:number {
     id = "durOrig",
     label = "Duration:",
-    -- text = string.format("%d", math.floor(1000.0 * frame.duration + 0.5)),
     text = string.format("%d", defaults.durOrig),
     decimals = 0,
     focus = false,
@@ -175,7 +177,36 @@ dlg:combobox {
     option = defaults.target,
     options = targets,
     focus = false,
-    visible = defaults.mode ~= "MIX"
+    visible = defaults.mode ~= "MIX",
+    onchange = function()
+        local args <const> = dlg.data
+        local target <const> = args.target --[[@as string]]
+        local isManual <const> = target == "MANUAL"
+        dlg:modify { id = "rangeStr", visible = isManual }
+        dlg:modify { id = "strExample", visible = false }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "rangeStr",
+    label = "Frames:",
+    text = defaults.rangeStr,
+    focus = false,
+    visible = defaults.target == "MANUAL",
+    onchange = function()
+        dlg:modify { id = "strExample", visible = true }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "strExample",
+    label = "Example:",
+    text = defaults.strExample,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -344,15 +375,11 @@ dlg:button {
             local frIdxDestVerif = math.min(math.max(
                 frIdxDest - frameUiOffset, 1), lenFrames)
 
-            if frIdxOrigVerif == frIdxDestVerif then
-                -- TODO: Handle this case differently for assign time
-                -- than for tweening?
-                frIdxOrigVerif = 1
-                frIdxDestVerif = lenFrames
-            end
+            -- Unlike tween functions, do not assume all sprite
+            -- frames when origin and destination are equal.
             if frIdxDestVerif < frIdxOrigVerif then
                 frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
-                durOrig, durDest =  durDest, durOrig
+                durOrig, durDest = durDest, durOrig
             end
             local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
@@ -382,8 +409,7 @@ dlg:button {
                 curve, totalLength, arcLengths, alpSampleCount)
 
             local jToFac <const> = countFrames > 1
-                and 1.0 / (countFrames - 1.0)
-                or 0.0
+                and 1.0 / (countFrames - 1.0) or 0.0
             local jFacOff <const> = countFrames > 1 and 0.0 or 0.5
 
             app.transaction("Tween Duration", function()
@@ -411,9 +437,11 @@ dlg:button {
             local target <const> = args.target
                 or defaults.target --[[@as string]]
             local opNum <const> = args.opNum --[[@as number]]
+            local rangeStr <const> = args.rangeStr
+                or defaults.rangeStr --[[@as string]]
 
             local frIdcs <const> = Utilities.flatArr2(
-                AseUtilities.getFrames(activeSprite, target))
+                AseUtilities.getFrames(activeSprite, target, false, rangeStr, nil))
             local lenFrIdcs <const> = #frIdcs
 
             if mode == "ADD" then
