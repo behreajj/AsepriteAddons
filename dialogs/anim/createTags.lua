@@ -315,14 +315,14 @@ dlg:button {
                 local idxFirst <const> = frIdcs1[1]
                 local idxLast <const> = frIdcs1[lenInner]
 
-                local start <const> = min(idxFirst, idxLast)
-                local stop <const> = max(idxFirst, idxLast)
+                local orig <const> = min(idxFirst, idxLast)
+                local dest <const> = max(idxFirst, idxLast)
+                local uiOrig <const> = frameUiOffset + orig
+                local uiDest <const> = frameUiOffset + dest
 
-                transact("New Tag", function()
-                    local tag <const> = activeSprite:newTag(start, stop)
-                    tag.name = strfmt(nameFormat,
-                        frameUiOffset + start,
-                        frameUiOffset + stop)
+                transact(strfmt("New Tag %d to %d", uiOrig, uiDest), function()
+                    local tag <const> = activeSprite:newTag(orig, dest)
+                    tag.name = strfmt(nameFormat, uiOrig, uiDest)
                     tag.aniDir = aniDirEnum
                     tag.repeats = repeats
 

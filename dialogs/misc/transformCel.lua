@@ -173,7 +173,7 @@ dlg:button {
             or defaults.xTranslate --[[@as integer]]
         local y <const> = args.yTranslate
             or defaults.yTranslate --[[@as integer]]
-        local point <const> = Point(x, y)
+        -- local point <const> = Point(x, y)
 
         local filterFrames = activeSprite.frames
         if target == "ACTIVE" then
@@ -194,7 +194,11 @@ dlg:button {
             local i = 0
             while i < lenCels do
                 i = i + 1
-                cels[i].position = point
+                local cel <const> = cels[i]
+                local image <const> = cel.image
+                cels[i].position = Point(
+                    x - image.width // 2,
+                    y - image.height // 2)
             end
         end)
     end
