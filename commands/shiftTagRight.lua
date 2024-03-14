@@ -1,11 +1,11 @@
 local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
-local activeFrObj <const> = site.frame
-if not activeFrObj then return end
+local frObj <const> = site.frame
+if not frObj then return end
 
 local transact <const> = app.transaction
-local activeFrIdx <const> = activeFrObj.frameNumber
+local frIdx <const> = frObj.frameNumber
 local frObjs <const> = sprite.frames
 local lenFrObjs <const> = #frObjs
 
@@ -23,8 +23,8 @@ while i < lenTags do
         local toFrIdx <const> = toFrObj.frameNumber
         local fromFrIdx <const> = fromFrObj.frameNumber
         if toFrIdx < lenFrObjs
-            and fromFrIdx <= activeFrIdx
-            and toFrIdx >= activeFrIdx then
+            and fromFrIdx <= frIdx
+            and toFrIdx >= frIdx then
             chosenTags[#chosenTags + 1] = tag
         end
     end
@@ -36,15 +36,11 @@ while j < lenChosenTags do
     j = j + 1
     local tag <const> = chosenTags[j]
     transact("Move Tag Right", function()
-        -- Change +1 to -1 for move left
         tag.toFrame = frObjs[tag.toFrame.frameNumber + 1]
         tag.fromFrame = frObjs[tag.fromFrame.frameNumber + 1]
     end)
 end
 
-if activeFrIdx < lenFrObjs --[[and lenChosenTags > 0]] then
-    app.frame = frObjs[activeFrIdx + 1]
-end
-
+app.frame = frObjs[1 + frIdx % lenFrObjs]
 app.refresh()
 app.layer = app.layer

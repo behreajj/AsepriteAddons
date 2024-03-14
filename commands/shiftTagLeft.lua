@@ -1,11 +1,11 @@
 local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
-local activeFrObj <const> = site.frame
-if not activeFrObj then return end
+local frObj <const> = site.frame
+if not frObj then return end
 
 local transact <const> = app.transaction
-local activeFrIdx <const> = activeFrObj.frameNumber
+local frIdx <const> = frObj.frameNumber
 local frObjs <const> = sprite.frames
 local lenFrObjs <const> = #frObjs
 
@@ -23,8 +23,8 @@ while i < lenTags do
         local toFrIdx <const> = toFrObj.frameNumber
         local fromFrIdx <const> = fromFrObj.frameNumber
         if fromFrIdx > 1
-            and fromFrIdx <= activeFrIdx
-            and toFrIdx >= activeFrIdx then
+            and fromFrIdx <= frIdx
+            and toFrIdx >= frIdx then
             chosenTags[#chosenTags + 1] = tag
         end
     end
@@ -41,9 +41,6 @@ while j < lenChosenTags do
     end)
 end
 
-if activeFrIdx > 1 --[[and lenChosenTags > 0]] then
-    app.frame = frObjs[activeFrIdx - 1]
-end
-
+app.frame = frObjs[1 + (frIdx - 2) % lenFrObjs]
 app.refresh()
 app.layer = app.layer
