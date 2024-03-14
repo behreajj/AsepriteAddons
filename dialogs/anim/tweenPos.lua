@@ -321,8 +321,9 @@ dlg:button {
             frIdxDestVerif = lenFrames
         end
         if frIdxDestVerif < frIdxOrigVerif then
-            -- TODO: Swap origin and dest points as well?
             frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
+            xPosOrig, xPosDest = xPosDest, xPosOrig
+            yPosOrig, yPosDest = yPosDest, yPosOrig
         end
         local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 

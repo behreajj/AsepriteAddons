@@ -351,8 +351,8 @@ dlg:button {
                 frIdxDestVerif = lenFrames
             end
             if frIdxDestVerif < frIdxOrigVerif then
-                -- TODO: Swap durations as well?
                 frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
+                durOrig, durDest =  durDest, durOrig
             end
             local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
