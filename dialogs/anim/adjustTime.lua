@@ -1,104 +1,181 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/clrgradient.lua")
 
-local targets <const> = { "ACTIVE", "ALL", "RANGE" }
-
-local defaults <const> = {
-    target = "ALL",
-    opNum = 0
+local modes <const> = {
+    "ADD",
+    "DIVIDE",
+    "MIX",
+    "MULTIPLY",
+    "SET",
+    "SUBTRACT",
 }
 
----@param sprite Sprite|nil
----@param target string
----@param opFlag string
----@param opNum number
-local function adjustDuration(sprite, target, opFlag, opNum)
-    if not sprite then
-        app.alert {
-            title = "Error",
-            text = "There is no active sprite."
-        }
-        return
+local targets <const> = {
+    -- TODO: Add widgets for manual frame entry.
+    "ACTIVE", "ALL", "RANGE"
+}
+
+local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
+local curveColor <const> = app.theme.color.text --[[@as Color]]
+local gridColor <const> = Color { r = 128, g = 128, b = 128 }
+
+local defaults <const> = {
+    mode = "SET",
+    alpSampleCount = 96,
+
+    frameOrig = 1,
+    durOrig = 100,
+
+    frameDest = 1,
+    durDest = 100,
+
+    target = "ALL",
+
+    lbDur = 0.001,
+    ubDur = 65.535,
+}
+
+---@return integer frIdx
+---@return number duration
+local function getDurAtFrame()
+    local site <const> = app.site
+    local activeSprite <const> = site.sprite
+    if not activeSprite then return 1, 0.1 end
+
+    local docPrefs <const> = app.preferences.document(activeSprite)
+    local tlPrefs <const> = docPrefs.timeline
+    local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
+    local frIdx = frameUiOffset + 1
+    local xCenter = activeSprite.width * 0.5
+    local yCenter = activeSprite.height * 0.5
+
+    local activeFrame <const> = site.frame
+    if activeFrame then
+        frIdx = activeFrame.frameNumber + frameUiOffset
+        return frIdx, activeFrame.duration
     end
-
-    if opNum == 0.0 then return end
-
-    local frIdcs <const> = Utilities.flatArr2(
-        AseUtilities.getFrames(sprite, target))
-    local lenFrIdcs <const> = #frIdcs
-    local frObjs <const> = sprite.frames
-
-    local lb <const> = 0.001
-    local ub <const> = 65.535
-
-    local abs <const> = math.abs
-    local floor <const> = math.floor
-    local max <const> = math.max
-    local min <const> = math.min
-
-    if opFlag == "ADD" then
-        app.transaction("Add Duration", function()
-            local i = 0
-            while i < lenFrIdcs do
-                i = i + 1
-                local frObj <const> = frObjs[frIdcs[i]]
-                local durms <const> = floor(frObj.duration * 1000.0 + 0.5)
-                frObj.duration = min(max((durms + opNum) * 0.001, lb), ub)
-            end
-        end)
-    elseif opFlag == "SUBTRACT" then
-        app.transaction("Subtract Duration", function()
-            local i = 0
-            while i < lenFrIdcs do
-                i = i + 1
-                local frObj <const> = frObjs[frIdcs[i]]
-                local durms <const> = floor(frObj.duration * 1000.0 + 0.5)
-                frObj.duration = min(max((durms - opNum) * 0.001, lb), ub)
-            end
-        end)
-    elseif opFlag == "MULTIPLY" then
-        local opNumAbs <const> = abs(opNum)
-        app.transaction("Multiply Duration", function()
-            local i = 0
-            while i < lenFrIdcs do
-                i = i + 1
-                local frObj <const> = frObjs[frIdcs[i]]
-                frObj.duration = min(max(frObj.duration * opNumAbs, lb), ub)
-            end
-        end)
-    elseif opFlag == "DIVIDE" then
-        local opNumAbs <const> = abs(opNum)
-        app.transaction("Divide Duration", function()
-            local i = 0
-            while i < lenFrIdcs do
-                i = i + 1
-                local frObj <const> = frObjs[frIdcs[i]]
-                frObj.duration = min(max(frObj.duration / opNumAbs, lb), ub)
-            end
-        end)
-    else
-        -- Default to set.
-        local opNumVrf <const> = min(max(abs(opNum) * 0.001, lb), ub)
-        app.transaction("Set Duration", function()
-            local i = 0
-            while i < lenFrIdcs do
-                i = i + 1
-                frObjs[frIdcs[i]].duration = opNumVrf
-            end
-        end)
-    end
-
-    app.refresh()
+    return frIdx, 0.1
 end
 
 local dlg <const> = Dialog { title = "Adjust Time" }
+
+dlg:combobox {
+    id = "mode",
+    label = "Mode:",
+    option = defaults.mode,
+    options = modes,
+    onchange = function()
+        local args <const> = dlg.data
+        local mode <const> = args.mode --[[@as string]]
+        local isMix <const> = mode == "MIX"
+        local isOp <const> = not isMix
+
+        dlg:modify { id = "easeCurve", visible = isMix }
+        dlg:modify { id = "easeCurve_easeFuncs", visible = isMix }
+
+        dlg:modify { id = "frameOrig", visible = isMix }
+        dlg:modify { id = "durOrig", visible = isMix }
+        dlg:modify { id = "getOrig", visible = isMix }
+
+        dlg:modify { id = "frameDest", visible = isMix }
+        dlg:modify { id = "durDest", visible = isMix }
+        dlg:modify { id = "getDest", visible = isMix }
+
+        dlg:modify { id = "target", visible = isOp }
+        dlg:modify { id = "opNum", visible = isOp }
+    end
+}
+
+dlg:number {
+    id = "frameOrig",
+    label = "From:",
+    text = string.format("%d", defaults.frameOrig),
+    decimals = 0,
+    focus = false,
+    visible = defaults.mode == "MIX"
+}
+
+dlg:number {
+    id = "durOrig",
+    label = "Duration:",
+    -- text = string.format("%d", math.floor(1000.0 * frame.duration + 0.5)),
+    text = string.format("%d", defaults.durOrig),
+    decimals = 0,
+    focus = false,
+    visible = defaults.mode == "MIX"
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "getOrig",
+    label = "Get:",
+    text = "&FROM",
+    onclick = function()
+        local frIdx <const>, dur <const> = getDurAtFrame()
+        dlg:modify { id = "frameOrig", text = string.format("%d", frIdx) }
+        dlg:modify {
+            id = "durOrig",
+            text = string.format("%d", math.floor(1000.0 * dur + 0.5))
+        }
+    end,
+    visible = defaults.mode == "MIX"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "frameDest",
+    label = "To:",
+    text = string.format("%d", defaults.frameDest),
+    decimals = 0,
+    focus = false,
+    visible = defaults.mode == "MIX"
+}
+
+dlg:number {
+    id = "durDest",
+    label = "Duration:",
+    text = string.format("%d", defaults.durDest),
+    decimals = 0,
+    focus = false,
+    visible = defaults.mode == "MIX"
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "getDest",
+    label = "Get:",
+    text = "&TO",
+    onclick = function()
+        local frIdx <const>, dur <const> = getDurAtFrame()
+        dlg:modify { id = "frameDest", text = string.format("%d", frIdx) }
+        dlg:modify {
+            id = "durDest",
+            text = string.format("%d", math.floor(1000.0 * dur + 0.5))
+        }
+    end,
+    visible = defaults.mode == "MIX"
+}
+
+CanvasUtilities.graphBezier(
+    dlg, "easeCurve", "Easing:",
+    128 // screenScale,
+    128 // screenScale,
+    defaults.mode == "MIX",
+    false, false, true, false,
+    5, 0.25, 0.1, 0.25, 1.0,
+    curveColor, gridColor)
 
 dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
     options = targets,
-    focus = false
+    focus = false,
+    visible = defaults.mode ~= "MIX"
 }
 
 dlg:newrow { always = false }
@@ -106,75 +183,13 @@ dlg:newrow { always = false }
 dlg:number {
     id = "opNum",
     label = "Number:",
-    text = string.format("%d", defaults.opNum),
+    text = string.format("%d",
+        (defaults.mode == "ADD" or defaults.mode == "SUBTRACT")
+        and 0 or ((defaults.mode == "MULTIPLY" or defaults.mode == "DIVIDE")
+            and 1 or 100)),
     decimals = 0,
-    focus = false
-}
-
-dlg:newrow { always = false }
-
-dlg:button {
-    id = "addButton",
-    text = "&ADD",
     focus = false,
-    onclick = function()
-        local args <const> = dlg.data
-        local target <const> = args.target --[[@as string]]
-        local opNum <const> = args.opNum --[[@as number]]
-        adjustDuration(app.site.sprite, target, "ADD", opNum)
-    end
-}
-
-dlg:button {
-    id = "subButton",
-    text = "&SUBTRACT",
-    focus = false,
-    onclick = function()
-        local args <const> = dlg.data
-        local target <const> = args.target --[[@as string]]
-        local opNum <const> = args.opNum --[[@as number]]
-        adjustDuration(app.site.sprite, target, "SUBTRACT", opNum)
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:button {
-    id = "mulButton",
-    text = "&MULTIPLY",
-    focus = false,
-    onclick = function()
-        local args <const> = dlg.data
-        local target <const> = args.target --[[@as string]]
-        local opNum <const> = args.opNum --[[@as number]]
-        adjustDuration(app.site.sprite, target, "MULTIPLY", opNum)
-    end
-}
-
-dlg:button {
-    id = "divButton",
-    text = "&DIVIDE",
-    focus = false,
-    onclick = function()
-        local args <const> = dlg.data
-        local target <const> = args.target --[[@as string]]
-        local opNum <const> = args.opNum --[[@as number]]
-        adjustDuration(app.site.sprite, target, "DIVIDE", opNum)
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:button {
-    id = "setButton",
-    text = "S&ET",
-    focus = false,
-    onclick = function()
-        local args <const> = dlg.data
-        local target <const> = args.target --[[@as string]]
-        local opNum <const> = args.opNum --[[@as number]]
-        adjustDuration(app.site.sprite, target, "SET", opNum)
-    end
+    visible = defaults.mode ~= "MIX"
 }
 
 dlg:newrow { always = false }
@@ -182,6 +197,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "heatMap",
     text = "&HEAT MAP",
+    label = "Diagnostic:",
     focus = false,
     onclick = function()
         local sprite <const> = app.site.sprite
@@ -257,11 +273,6 @@ dlg:button {
                 local dur <const> = durations[i]
                 local fac <const> = (dur - durMin) * durToFac
                 local clr <const> = cgeval(cg, fac, easing)
-                -- local hex <const> = toHex(clr)
-                -- local img <const> = Image(spriteSpec)
-                -- img:clear(hex)
-                -- sprite:newCel(mapLyr, i, img, Point(0, 0))
-
                 local ase <const> = clrToAseColor(clr)
                 local j = 0
                 while j < lenLeaves do
@@ -274,6 +285,189 @@ dlg:button {
                 end
             end
         end)
+
+        app.refresh()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "confirm",
+    text = "&OK",
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite."
+            }
+            return
+        end
+
+        local lbDur <const> = defaults.lbDur
+        local ubDur <const> = defaults.ubDur
+
+        local abs <const> = math.abs
+        local floor <const> = math.floor
+        local max <const> = math.max
+        local min <const> = math.min
+        local eval <const> = Curve2.eval
+
+        local frObjs <const> = activeSprite.frames
+        local lenFrames <const> = #frObjs
+
+        local args <const> = dlg.data
+        local mode <const> = args.mode
+        if mode == "MIX" then
+            local docPrefs <const> = app.preferences.document(activeSprite)
+            local tlPrefs <const> = docPrefs.timeline
+            local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
+            local frIdxOrig <const> = args.frameOrig
+                or defaults.frameOrig --[[@as integer]]
+            local frIdxDest <const> = args.frameDest
+                or defaults.frameDest --[[@as integer]]
+            local durOrigMillis <const> = args.durOrig
+                or defaults.durOrig --[[@as integer]]
+            local durDestMillis <const> = args.durDest
+                or defaults.durDest --[[@as integer]]
+
+            local durOrig = math.min(math.max(
+                durOrigMillis * 0.001, 0.001), 65.535)
+            local durDest = math.min(math.max(
+                durDestMillis * 0.001, 0.001), 65.535)
+
+            local frIdxOrigVerif = math.min(math.max(
+                frIdxOrig - frameUiOffset, 1), lenFrames)
+            local frIdxDestVerif = math.min(math.max(
+                frIdxDest - frameUiOffset, 1), lenFrames)
+
+            if frIdxOrigVerif == frIdxDestVerif then
+                -- TODO: Handle this case differently for assign time
+                -- than for tweening?
+                frIdxOrigVerif = 1
+                frIdxDestVerif = lenFrames
+            end
+            if frIdxDestVerif < frIdxOrigVerif then
+                -- TODO: Swap durations as well?
+                frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
+            end
+            local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
+
+            local ap0x <const> = args.easeCurve_ap0x --[[@as number]]
+            local ap0y <const> = args.easeCurve_ap0y --[[@as number]]
+            local cp0x <const> = args.easeCurve_cp0x --[[@as number]]
+            local cp0y <const> = args.easeCurve_cp0y --[[@as number]]
+            local cp1x <const> = args.easeCurve_cp1x --[[@as number]]
+            local cp1y <const> = args.easeCurve_cp1y --[[@as number]]
+            local ap1x <const> = args.easeCurve_ap1x --[[@as number]]
+            local ap1y <const> = args.easeCurve_ap1y --[[@as number]]
+
+            local kn0 <const> = Knot2.new(
+                Vec2.new(ap0x, ap0y),
+                Vec2.new(cp0x, cp0y),
+                Vec2.new(0.0, ap0y))
+            local kn1 <const> = Knot2.new(
+                Vec2.new(ap1x, ap1y),
+                Vec2.new(1.0, ap1y),
+                Vec2.new(cp1x, cp1y))
+            local curve = Curve2.new(false, { kn0, kn1 }, "pos easing")
+
+            local alpSampleCount <const> = defaults.alpSampleCount
+            local totalLength <const>, arcLengths <const> = Curve2.arcLength(
+                curve, alpSampleCount)
+            local samples <const> = Curve2.paramPoints(
+                curve, totalLength, arcLengths, alpSampleCount)
+
+            local jToFac <const> = countFrames > 1
+                and 1.0 / (countFrames - 1.0)
+                or 0.0
+            local jFacOff <const> = countFrames > 1 and 0.0 or 0.5
+
+            app.transaction("Tween Duration", function()
+                local j = 0
+                while j < countFrames do
+                    local frObj <const> = frObjs[frIdxOrigVerif + j]
+                    local fac <const> = j * jToFac + jFacOff
+                    local t = eval(curve, fac).x
+                    if fac > 0.0 and fac < 1.0 then
+                        local tScale <const> = t * (alpSampleCount - 1)
+                        local tFloor <const> = floor(tScale)
+                        local tFrac <const> = tScale - tFloor
+                        local left <const> = samples[1 + tFloor].y
+                        local right <const> = samples[2 + tFloor].y
+                        t = (1.0 - tFrac) * left + tFrac * right
+                    end
+                    local u <const> = 1.0 - t
+                    local dur <const> = u * durOrig + t * durDest
+                    frObj.duration = dur
+
+                    j = j + 1
+                end
+            end)
+        else
+            local target <const> = args.target
+                or defaults.target --[[@as string]]
+            local opNum <const> = args.opNum --[[@as number]]
+
+            local frIdcs <const> = Utilities.flatArr2(
+                AseUtilities.getFrames(activeSprite, target))
+            local lenFrIdcs <const> = #frIdcs
+
+            if mode == "ADD" then
+                app.transaction("Add Duration", function()
+                    local i = 0
+                    while i < lenFrIdcs do
+                        i = i + 1
+                        local frObj <const> = frObjs[frIdcs[i]]
+                        local durms <const> = floor(frObj.duration * 1000.0 + 0.5)
+                        frObj.duration = min(max((durms + opNum) * 0.001, lbDur), ubDur)
+                    end
+                end)
+            elseif mode == "SUBTRACT" then
+                app.transaction("Subtract Duration", function()
+                    local i = 0
+                    while i < lenFrIdcs do
+                        i = i + 1
+                        local frObj <const> = frObjs[frIdcs[i]]
+                        local durms <const> = floor(frObj.duration * 1000.0 + 0.5)
+                        frObj.duration = min(max((durms - opNum) * 0.001, lbDur), ubDur)
+                    end
+                end)
+            elseif mode == "MULTIPLY" then
+                local opNumAbs <const> = abs(opNum)
+                app.transaction("Multiply Duration", function()
+                    local i = 0
+                    while i < lenFrIdcs do
+                        i = i + 1
+                        local frObj <const> = frObjs[frIdcs[i]]
+                        frObj.duration = min(max(frObj.duration * opNumAbs, lbDur), ubDur)
+                    end
+                end)
+            elseif mode == "DIVIDE" then
+                local opNumAbs <const> = abs(opNum)
+                app.transaction("Divide Duration", function()
+                    local i = 0
+                    while i < lenFrIdcs do
+                        i = i + 1
+                        local frObj <const> = frObjs[frIdcs[i]]
+                        frObj.duration = min(max(frObj.duration / opNumAbs, lbDur), ubDur)
+                    end
+                end)
+            else
+                -- Default to set.
+                local opNumVrf <const> = min(max(abs(opNum) * 0.001, lbDur), ubDur)
+                app.transaction("Set Duration", function()
+                    local i = 0
+                    while i < lenFrIdcs do
+                        i = i + 1
+                        frObjs[frIdcs[i]].duration = opNumVrf
+                    end
+                end) -- End set transaction.
+            end      -- End operation.
+        end          -- End mix check.
 
         app.refresh()
     end

@@ -404,6 +404,24 @@ dlg:button {
         local frIdxDest <const> = args.frameDest
             or defaults.frameDest --[[@as integer]]
 
+        local pxwOrig = args.pxwOrig
+            or defaults.pxwOrig --[[@as number]]
+        local pxhOrig = args.pxhOrig
+            or defaults.pxhOrig --[[@as number]]
+        local prcwOrig = args.prcwOrig
+            or defaults.prcwOrig --[[@as number]]
+        local prchOrig = args.prchOrig
+            or defaults.prchOrig --[[@as number]]
+
+        local pxwDest = args.pxwDest
+            or defaults.pxwDest --[[@as number]]
+        local pxhDest = args.pxhDest
+            or defaults.pxhDest --[[@as number]]
+        local prcwDest = args.prcwDest
+            or defaults.prcwDest --[[@as number]]
+        local prchDest = args.prchDest
+            or defaults.prchDest --[[@as number]]
+
         local docPrefs <const> = app.preferences.document(activeSprite)
         local tlPrefs <const> = docPrefs.timeline
         local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
@@ -418,6 +436,7 @@ dlg:button {
             frIdxDestVerif = lenFrames
         end
         if frIdxDestVerif < frIdxOrigVerif then
+            -- TODO: Swap origin and dest sizes as well?
             frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
         end
         local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
@@ -657,25 +676,6 @@ dlg:button {
                 curve, alpSampleCount)
             local samples <const> = Curve2.paramPoints(
                 curve, totalLength, arcLengths, alpSampleCount)
-
-            -- Should these be swapped as well when dest frame is gt orig?
-            local pxwOrig = args.pxwOrig
-                or defaults.pxwOrig --[[@as number]]
-            local pxhOrig = args.pxhOrig
-                or defaults.pxhOrig --[[@as number]]
-            local prcwOrig = args.prcwOrig
-                or defaults.prcwOrig --[[@as number]]
-            local prchOrig = args.prchOrig
-                or defaults.prchOrig --[[@as number]]
-
-            local pxwDest = args.pxwDest
-                or defaults.pxwDest --[[@as number]]
-            local pxhDest = args.pxhDest
-                or defaults.pxhDest --[[@as number]]
-            local prcwDest = args.prcwDest
-                or defaults.prcwDest --[[@as number]]
-            local prchDest = args.prchDest
-                or defaults.prchDest --[[@as number]]
 
             pxwOrig = math.max(1.0, math.abs(pxwOrig))
             pxhOrig = math.max(1.0, math.abs(pxhOrig))

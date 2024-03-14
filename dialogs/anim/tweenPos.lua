@@ -30,7 +30,7 @@ local defaults <const> = {
 
 ---@return integer frIdx
 ---@return number xCenter
----@return number  yCenter
+---@return number yCenter
 local function getCelPosAtFrame()
     local site <const> = app.site
     local activeSprite <const> = site.sprite
@@ -298,6 +298,15 @@ dlg:button {
         local frIdxDest <const> = args.frameDest
             or defaults.frameDest --[[@as integer]]
 
+        local xPosOrig = args.xPosOrig
+            or defaults.xPosOrig --[[@as number]]
+        local yPosOrig = args.yPosOrig
+            or defaults.yPosOrig --[[@as number]]
+        local xPosDest = args.xPosDest
+            or defaults.xPosDest --[[@as number]]
+        local yPosDest = args.yPosDest
+            or defaults.yPosOrig --[[@as number]]
+
         local docPrefs <const> = app.preferences.document(activeSprite)
         local tlPrefs <const> = docPrefs.timeline
         local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
@@ -312,6 +321,7 @@ dlg:button {
             frIdxDestVerif = lenFrames
         end
         if frIdxDestVerif < frIdxOrigVerif then
+            -- TODO: Swap origin and dest points as well?
             frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
         end
         local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
@@ -499,16 +509,6 @@ dlg:button {
                 curve, alpSampleCount)
             local samples <const> = Curve2.paramPoints(
                 curve, totalLength, arcLengths, alpSampleCount)
-
-            -- Should these be swapped as well when dest frame is gt orig?
-            local xPosOrig = args.xPosOrig
-                or defaults.xPosOrig --[[@as number]]
-            local yPosOrig = args.yPosOrig
-                or defaults.yPosOrig --[[@as number]]
-            local xPosDest = args.xPosDest
-                or defaults.xPosDest --[[@as number]]
-            local yPosDest = args.yPosDest
-                or defaults.yPosOrig --[[@as number]]
 
             local wImgHalf <const> = srcImg.width * 0.5
             local hImgHalf <const> = srcImg.height * 0.5

@@ -114,22 +114,6 @@ dlg:button {
         local count <const> = args.count
             or defaults.count --[[@as integer]]
 
-        local hexesProfile = {}
-        local hexesSrgb = {}
-        hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-            palType, palFile, startIndex, count, true)
-
-        local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
-        if uniquesOnly then
-            local uniques <const>, _ <const> = Utilities.uniqueColors(
-                hexesSrgb, true)
-            hexesSrgb = uniques
-        end
-
-        if prependMask then
-            Utilities.prependMask(hexesSrgb)
-        end
-
         ---@type Sprite[]
         local candidatesApprox <const> = {}
         ---@type Sprite[]
@@ -174,6 +158,22 @@ dlg:button {
             end
         end
 
+        local hexesProfile = {}
+        local hexesSrgb = {}
+        hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
+            palType, palFile, startIndex, count, true)
+
+        local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
+        if uniquesOnly then
+            local uniques <const>, _ <const> = Utilities.uniqueColors(
+                hexesSrgb, true)
+            hexesSrgb = uniques
+        end
+
+        if prependMask then
+            Utilities.prependMask(hexesSrgb)
+        end
+
         local i = 0
         while i < candLenApprox do
             i = i + 1
@@ -185,6 +185,8 @@ dlg:button {
             local j = 0
             while j < lenPals do
                 j = j + 1
+                -- For some reason this is creating a bunch of transactions
+                -- rather than wrapping them in a single named one.
                 AseUtilities.setPalette(hexesSrgb, candidate, j)
             end
         end

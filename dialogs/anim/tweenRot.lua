@@ -264,6 +264,11 @@ dlg:button {
         local frIdxDest <const> = args.frameDest
             or defaults.frameDest --[[@as integer]]
 
+        local rotOrigDeg = args.rotOrig
+            or defaults.rotOrig --[[@as integer]]
+        local rotDestDeg = args.rotDest
+            or defaults.rotDest --[[@as integer]]
+
         local docPrefs <const> = app.preferences.document(activeSprite)
         local tlPrefs <const> = docPrefs.timeline
         local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
@@ -278,6 +283,7 @@ dlg:button {
             frIdxDestVerif = lenFrames
         end
         if frIdxDestVerif < frIdxOrigVerif then
+            -- TODO: Swap origin and dest angles as well?
             frIdxOrigVerif, frIdxDestVerif = frIdxDestVerif, frIdxOrigVerif
         end
         local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
@@ -478,10 +484,7 @@ dlg:button {
             local samples <const> = Curve2.paramPoints(
                 curve, totalLength, arcLengths, alpSampleCount)
 
-            local rotOrigDeg <const> = args.rotOrig
-                or defaults.rotOrig --[[@as integer]]
-            local rotDestDeg <const> = args.rotDest
-                or defaults.rotDest --[[@as integer]]
+
             local angleType <const> = args.angleType
                 or defaults.angleType --[[@as string]]
 
