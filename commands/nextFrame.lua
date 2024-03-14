@@ -25,13 +25,13 @@ end
 local activeFrame <const> = site.frame
 if activeFrame then
     -- Modulo arithmetic is easier to understand when index starts at 0.
-    local frameNo <const> = activeFrame.frameNumber - 1
+    local frIdx <const> = activeFrame.frameNumber - 1
     local lenFrames <const> = #activeSprite.frames
     if app.preferences.editor.play_once then
         app.frame = activeSprite.frames[1
-        + math.min(math.max(frameNo + 1, 0), lenFrames - 1)]
+        + math.min(math.max(frIdx + 1, 0), lenFrames - 1)]
     else
-        app.frame = activeSprite.frames[1 + (frameNo + 1) % lenFrames]
+        app.frame = activeSprite.frames[1 + (frIdx + 1) % lenFrames]
     end
 else
     app.frame = activeSprite.frames[1]

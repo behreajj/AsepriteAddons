@@ -196,7 +196,7 @@ dlg:button {
                 i = i + 1
                 local cel <const> = cels[i]
                 local image <const> = cel.image
-                cels[i].position = Point(
+                cel.position = Point(
                     x - image.width // 2,
                     y - image.height // 2)
             end
