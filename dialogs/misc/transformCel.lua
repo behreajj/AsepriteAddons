@@ -242,6 +242,11 @@ dlg:button {
         local alphaIndex <const> = spriteSpec.transparentColor
         local blendModeSrc <const> = BlendMode.SRC
 
+        -- This is a hack to deal with issues of background being moved.
+        -- Sprite.backgroundLayer is not reliable due to how backgrounds can
+        -- be childed to groups. Maybe handle the background separately? Or
+        -- get layers and frames separately like align distribute does?
+        local noBkg <const> = activeSprite.backgroundLayer == nil
         local docPrefs <const> = app.preferences.document(activeSprite)
         local tiledMode <const> = docPrefs.tiled.mode --[[@as integer]]
         if tiledMode == 3 then
@@ -264,7 +269,7 @@ dlg:button {
                     cel.position = Point(xTrg, yTrg)
                 end
             end)
-        elseif tiledMode == 2 then
+        elseif noBkg and tiledMode == 2 then
             -- Vertical tiling.
             app.transaction("Wrap V", function()
                 app.command.InvertMask()
@@ -284,7 +289,7 @@ dlg:button {
                     cel.position = Point(xTrg + dx, yTrg)
                 end
             end)
-        elseif tiledMode == 1 then
+        elseif noBkg and tiledMode == 1 then
             -- Horizontal tiling.
             app.transaction("Wrap H", function()
                 app.command.InvertMask()
@@ -305,7 +310,7 @@ dlg:button {
                 end
             end)
         else
-            --No tiling.
+            -- No tiling.
             app.transaction("Wrap Cels", function()
                 app.command.InvertMask()
                 app.command.InvertMask()

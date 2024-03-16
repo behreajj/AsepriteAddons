@@ -1,18 +1,22 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
+--[[
+Standardization is not the same as normalization.
+For standardization, a range's average must be found,
+then its standard deviation must be found:
+sqrt ( sum( ( arr[i] - mean ) ^ 2 / len ) )
+Then each element must be recalculated:
+elm[i]' = (elm[i] - mean) / std .
+--]]
+
 local screenScale <const> = app.preferences.general.screen_scale
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local modes <const> = { "LAB", "LCH" }
 
 local defaults <const> = {
-    -- Note: standardization is not the same as normalization.
-    -- For standardization, a range's average must be found,
-    -- then its standard deviation must be found:
-    -- sqrt ( sum( ( arr[i] - mean ) ^ 2 / len ) )
-    -- Then each element must be recalculated:
-    -- elm[i]' = (elm[i] - mean) / std .
+    -- TODO: Separate frame target and layer target.
     target = "ACTIVE",
     mode = "LCH",
     contrast = 0,
@@ -35,6 +39,7 @@ local defaults <const> = {
     hIncrScale = 15,
     abIncrScale = 10,
     tIncrScale = 16,
+    rangeLumEps = 0.07
 }
 
 local active <const> = {
@@ -737,6 +742,10 @@ dlg:button {
             tileSet = srcLayer.tileset
         end
 
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
         -- Unpack arguments.
         local mode <const> = args.mode
             or defaults.mode --[[@as string]]
@@ -786,15 +795,47 @@ dlg:button {
         local absNormFac <const> = math.abs(normFac)
         local complNormFac <const> = 1.0 - absNormFac
         local contrastFac <const> = 1.0 + contrast * 0.01
-        local aSign = 1.0
-        local bSign = 1.0
-        if aInvert then aSign = -1.0 end
-        if bInvert then bSign = -1.0 end
+        local aSign <const> = aInvert and -1.0 or 1.0
+        local bSign <const> = bInvert and -1.0 or 1.0
+
+        -- Cache methods used in loops.
+        local abs <const> = math.abs
+
+        local tilesToImage <const> = AseUtilities.tileMapToImage
+
+        local clrnew <const> = Clr.new
+        local toHex <const> = Clr.toHex
+        local labTosRgba <const> = Clr.srLab2TosRgb
+        local labToLch <const> = Clr.srLab2ToSrLch
+        local lchToLab <const> = Clr.srLchToSrLab2
+        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+
+        local strbyte <const> = string.byte
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+
+        local tconcat <const> = table.concat
+
+        local rgbColorMode <const> = ColorMode.RGB
+        local blendModeSrc <const> = BlendMode.SRC
+
+        ---@type Cel[]
+        local trgCels <const> = {}
+
+        ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
+        local srcLabDict <const> = {}
+        srcLabDict[0] = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+
+        local minLum = 100.0
+        local maxLum = 0.0
+        local sumLum = 0.0
+        local lumCount = 0
+        local lenTrgCels = 0
 
         -- Create target layer.
-        local trgLayer = nil
         app.transaction("Adjustment Layer", function()
-            trgLayer = activeSprite:newLayer()
+            local trgLayer <const> = activeSprite:newLayer()
             local srcLayerName = "Layer"
             if #srcLayer.name > 0 then
                 srcLayerName = srcLayer.name
@@ -804,220 +845,181 @@ dlg:button {
             trgLayer.parent = srcLayer.parent
             trgLayer.opacity = srcLayer.opacity
             trgLayer.blendMode = srcLayer.blendMode
+
+            local h = 0
+            while h < lenFrames do
+                h = h + 1
+                local srcFrame <const> = frames[h]
+                local srcCel <const> = srcLayer:cel(srcFrame)
+                if srcCel then
+                    local srcImg = srcCel.image
+                    if isTileMap then
+                        srcImg = tilesToImage(srcImg, tileSet, rgbColorMode)
+                    end
+
+                    local srcBytes <const> = srcImg.bytes
+                    local srcSpec <const> = srcImg.spec
+                    local wSrc <const> = srcSpec.width
+                    local hSrc <const> = srcSpec.height
+                    local lenSrc <const> = wSrc * hSrc
+
+                    local j = 0
+                    while j < lenSrc do
+                        local r8 = 0
+                        local g8 = 0
+                        local b8 = 0
+                        local hex32 = 0
+
+                        local j4 <const> = j * 4
+                        local a8 <const> = strbyte(srcBytes, 4 + j4)
+                        if a8 > 0 then
+                            r8 = strbyte(srcBytes, 1 + j4)
+                            g8 = strbyte(srcBytes, 2 + j4)
+                            b8 = strbyte(srcBytes, 3 + j4)
+                            hex32 = a8 << 0x18 | b8 << 0x10 | g8 << 0x08 | r8
+                        end
+
+                        if not srcLabDict[hex32] then
+                            local srgbSrc <const> = clrnew(
+                                r8 / 255.0,
+                                g8 / 255.0,
+                                b8 / 255.0,
+                                a8 / 255.0)
+                            local labSrc <const> = sRgbaToLab(srgbSrc)
+                            srcLabDict[hex32] = labSrc
+                            if a8 > 0 then
+                                local lum <const> = labSrc.l
+                                if lum < minLum then minLum = lum end
+                                if lum > maxLum then maxLum = lum end
+                                sumLum = sumLum + lum
+                                lumCount = lumCount + 1
+                            end
+                        end
+                        j = j + 1
+                    end
+
+                    local srcPos <const> = srcCel.position
+                    local trgPos = srcPos
+                    local trgImg = nil
+
+                    if alphaInvert then
+                        trgImg = Image(activeSpec)
+                        trgImg:drawImage(srcImg, srcPos, 255, blendModeSrc)
+                        trgPos = Point(0, 0)
+                    else
+                        trgImg = srcImg:clone()
+                    end
+
+                    lenTrgCels = lenTrgCels + 1
+                    local trgCel = activeSprite:newCel(
+                        trgLayer, srcFrame,
+                        trgImg, trgPos)
+                    trgCel.opacity = srcCel.opacity
+                    trgCels[lenTrgCels] = trgCel
+                end
+            end
         end)
 
-        -- Cache methods used in loops.
-        local abs <const> = math.abs
-        local tilesToImage <const> = AseUtilities.tileMapToImage
-        local fromHex <const> = Clr.fromHex
-        local toHex <const> = Clr.toHex
-        local sRgbaToLab <const> = Clr.sRgbToSrLab2
-        local labTosRgba <const> = Clr.srLab2TosRgb
-        local labToLch <const> = Clr.srLab2ToSrLch
-        local lchToLab <const> = Clr.srLchToSrLab2
-        local transact <const> = app.transaction
-        local strfmt <const> = string.format
+        -- For normalizing image.
+        local tDenom = 0.0
+        local lumMintDenom = 0.0
+        local avgLum = 50.0
+        local rangeLum <const> = abs(maxLum - minLum)
+        if rangeLum > defaults.rangeLumEps then
+            if lumCount > 0 then avgLum = sumLum / lumCount end
+            avgLum = absNormFac * avgLum
+            tDenom = absNormFac * (100.0 / rangeLum)
+            lumMintDenom = minLum * tDenom
+        end
 
-        local rgbColorMode <const> = ColorMode.RGB
-        local blendModeSrc <const> = BlendMode.SRC
+        ---@type table<integer, integer>
+        local srcToTrgHexDict <const> = {}
+        for srcHex, srcLab in pairs(srcLabDict) do
+            local lSrc <const> = srcLab.l
+            local aSrc <const> = srcLab.a
+            local bSrc <const> = srcLab.b
+            local tSrc <const> = srcLab.alpha
 
-        local i = 0
-        while i < lenFrames do
-            i = i + 1
-            local srcFrame <const> = frames[i]
-            local srcCel <const> = srcLayer:cel(srcFrame)
-            if srcCel then
-                local srcImg = srcCel.image
-                if isTileMap then
-                    srcImg = tilesToImage(srcImg, tileSet, rgbColorMode)
+            local lTrg = lSrc
+            local aTrg = aSrc
+            local bTrg = bSrc
+            local tTrg = tSrc
+
+            if useNormalize and tTrg > 0.0 then
+                if normGtZero then
+                    lTrg = complNormFac * lSrc
+                        + tDenom * lSrc - lumMintDenom
+                elseif normLtZero then
+                    lTrg = complNormFac * lSrc + avgLum
                 end
-
-                -- Find unique colors in image.
-                -- A cel image may contain only opaque pixels, but
-                -- occupy a small part of the canvas. Ensure that
-                -- there is always a zero key for alpha invert.
-                ---@type table<integer, boolean>
-                local srcDict <const> = {}
-                local srcPxItr <const> = srcImg:pixels()
-                for pixel in srcPxItr do
-                    local h = pixel()
-                    if (h & 0xff000000) == 0 then h = 0x0 end
-                    srcDict[h] = true
-                end
-                srcDict[0x0] = true
-
-                -- Convert unique colors to LAB.
-                -- Normalization should ignore transparent pixels.
-                ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
-                local labDict = {}
-                local minLum = 100.0
-                local maxLum = 0.0
-                local sumLum = 0.0
-                local countLum = 0
-                for key, _ in pairs(srcDict) do
-                    local srgb <const> = fromHex(key)
-                    local lab <const> = sRgbaToLab(srgb)
-                    labDict[key] = lab
-
-                    if key ~= 0 then
-                        local lum <const> = lab.l
-                        if lum < minLum then minLum = lum end
-                        if lum > maxLum then maxLum = lum end
-                        sumLum = sumLum + lum
-                        countLum = countLum + 1
-                    end
-                end
-
-                if useNormalize then
-                    local rangeLum <const> = abs(maxLum - minLum)
-                    if rangeLum > 0.07 then
-                        -- When factor is less than zero, the average lum
-                        -- can be multiplied by the factor prior to the loop.
-                        local avgLum = 50.0
-                        if countLum > 0 then avgLum = sumLum / countLum end
-                        avgLum = absNormFac * avgLum
-
-                        -- When factor is greater than zero.
-                        local tDenom <const> = absNormFac * (100.0 / rangeLum)
-                        local lumMintDenom <const> = minLum * tDenom
-
-                        ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
-                        local normDict <const> = {}
-                        for key, value in pairs(labDict) do
-                            local lOld <const> = value.l
-                            local lNew = lOld
-                            if key ~= 0 then
-                                if normGtZero then
-                                    lNew = complNormFac * lOld
-                                        + tDenom * lOld - lumMintDenom
-                                elseif normLtZero then
-                                    lNew = complNormFac * lOld + avgLum
-                                end
-                            end
-
-                            normDict[key] = {
-                                l = lNew,
-                                a = value.a,
-                                b = value.b,
-                                alpha = value.alpha
-                            }
-                        end
-                        labDict = normDict
-                    end
-                end
-
-                if alphaInvert then
-                    ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
-                    local aInvDict <const> = {}
-                    for key, value in pairs(labDict) do
-                        aInvDict[key] = {
-                            l = value.l,
-                            a = value.a,
-                            b = value.b,
-                            alpha = 1.0 - value.alpha
-                        }
-                    end
-                    labDict = aInvDict
-                end
-
-                if useContrast then
-                    ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
-                    local contrDict <const> = {}
-                    for key, value in pairs(labDict) do
-                        contrDict[key] = {
-                            l = (value.l - 50.0) * contrastFac + 50.0,
-                            a = value.a,
-                            b = value.b,
-                            alpha = value.alpha
-                        }
-                    end
-                    labDict = contrDict
-                end
-
-                if useLabAdj then
-                    ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
-                    local labAdjDict <const> = {}
-                    for key, value in pairs(labDict) do
-                        local al = value.alpha
-                        if al > 0.0 then al = al + alphaAdj end
-                        labAdjDict[key] = {
-                            l = value.l + lAdj,
-                            a = value.a + aAdj,
-                            b = value.b + bAdj,
-                            alpha = al
-                        }
-                    end
-                    labDict = labAdjDict
-                elseif useLchAdj then
-                    ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
-                    local lchAdjDict <const> = {}
-                    for key, value in pairs(labDict) do
-                        local lch <const> = labToLch(
-                            value.l,
-                            value.a,
-                            value.b,
-                            value.alpha)
-                        local al = lch.a
-                        if al > 0.0 then al = al + alphaAdj end
-                        lchAdjDict[key] = lchToLab(
-                            lch.l + lAdj,
-                            lch.c + cAdj,
-                            lch.h + hAdj, al)
-                    end
-                    labDict = lchAdjDict
-                end
-
-                if useLabInvert then
-                    ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
-                    local labInvDict <const> = {}
-                    for key, value in pairs(labDict) do
-                        local lNew = value.l
-                        if lInvert then lNew = 100.0 - lNew end
-                        labInvDict[key] = {
-                            l = lNew,
-                            a = value.a * aSign,
-                            b = value.b * bSign,
-                            alpha = value.alpha
-                        }
-                    end
-                    labDict = labInvDict
-                end
-
-                ---@type table<integer, integer>
-                local trgDict <const> = {}
-                for key, value in pairs(labDict) do
-                    trgDict[key] = toHex(labTosRgba(
-                        value.l, value.a, value.b,
-                        value.alpha))
-                end
-
-                local srcPos <const> = srcCel.position
-                local trgPos = srcPos
-                local trgImg = nil
-                if alphaInvert then
-                    trgImg = Image(activeSpec)
-                    trgImg:drawImage(srcImg, srcPos, 255, blendModeSrc)
-                    trgPos = Point(0, 0)
-                else
-                    trgImg = srcImg:clone()
-                end
-
-                local trgPxItr <const> = trgImg:pixels()
-                for pixel in trgPxItr do
-                    local h = pixel()
-                    if (h & 0xff000000) == 0 then h = 0x0 end
-                    pixel(trgDict[h])
-                end
-
-                transact(
-                    strfmt("Color Adjust %d", srcFrame),
-                    function()
-                        local trgCel = activeSprite:newCel(
-                            trgLayer, srcFrame,
-                            trgImg, trgPos)
-                        trgCel.opacity = srcCel.opacity
-                    end)
             end
+
+            if useContrast then
+                lTrg = (lTrg - 50.0) * contrastFac + 50.0
+            end
+
+            if alphaInvert then
+                tTrg = 1.0 - tTrg
+            end
+
+            if useLabAdj then
+                tTrg = tTrg + alphaAdj
+                lTrg = lTrg + lAdj
+                aTrg = aTrg + aAdj
+                bTrg = bTrg + bAdj
+            elseif useLchAdj then
+                local lch <const> = labToLch(lTrg, aTrg, bTrg, tTrg)
+                local labAdj <const> = lchToLab(
+                    lch.l + lAdj,
+                    lch.c + cAdj,
+                    lch.h + hAdj, tTrg)
+
+                tTrg = tTrg + alphaAdj
+                lTrg = labAdj.l
+                aTrg = labAdj.a
+                bTrg = labAdj.b
+            end
+
+            if useLabInvert then
+                if lInvert then lTrg = 100.0 - lTrg end
+                aTrg = aTrg * aSign
+                bTrg = bTrg * bSign
+            end
+
+            if tTrg > 0.0 then
+                srcToTrgHexDict[srcHex] = toHex(labTosRgba(
+                    lTrg, aTrg, bTrg, tTrg))
+            else
+                srcToTrgHexDict[srcHex] = 0
+            end
+        end
+
+        local j = 0
+        while j < lenTrgCels do
+            j = j + 1
+            local trgCel <const> = trgCels[j]
+            local trgImg <const> = trgCel.image
+            local trgSpec <const> = trgImg.spec
+            local wTrg <const> = trgSpec.width
+            local hTrg <const> = trgSpec.height
+            local lenTrg <const> = wTrg * hTrg
+            local srcBytes <const> = trgImg.bytes
+
+            ---@type string[]
+            local trgByteArr <const> = {}
+            local k = 0
+            while k < lenTrg do
+                local k4 <const> = k * 4
+                local srcStr <const> = strsub(srcBytes, 1 + k4, 4 + k4)
+                local srcHex <const> = strunpack("I4", srcStr)
+                local trgHex <const> = srcToTrgHexDict[srcHex]
+                local trgStr <const> = strpack("I4", trgHex)
+                k = k + 1
+                trgByteArr[k] = trgStr
+            end
+
+            -- Doesn't require a transaction wrapper?
+            trgImg.bytes = tconcat(trgByteArr)
         end
 
         if isSelect then
