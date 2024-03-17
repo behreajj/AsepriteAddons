@@ -7,6 +7,18 @@ local paletteTypes <const> = {
     "FILE"
 }
 
+local defaults <const> = {
+    removeBkg = true,
+    trimCels = true,
+    palType = "EMBEDDED",
+    uniquesOnly = true,
+    prependMask = true,
+    xGrid = 0,
+    yGrid = 0,
+    wGrid = 32,
+    hGrid = 32
+}
+
 ---@param filePath string
 ---@return Sprite|nil
 local function loadSprite(filePath)
@@ -55,18 +67,6 @@ local function loadSprite(filePath)
 
     return sprite
 end
-
-local defaults <const> = {
-    removeBkg = false,
-    trimCels = true,
-    palType = "EMBEDDED",
-    uniquesOnly = true,
-    prependMask = true,
-    xGrid = 0,
-    yGrid = 0,
-    wGrid = 32,
-    hGrid = 32
-}
 
 local dlg <const> = Dialog { title = "Open Sprite +" }
 

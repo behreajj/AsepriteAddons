@@ -743,10 +743,6 @@ dlg:button {
             tileSet = srcLayer.tileset
         end
 
-        local docPrefs <const> = app.preferences.document(activeSprite)
-        local tlPrefs <const> = docPrefs.timeline
-        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
-
         -- Unpack arguments.
         local mode <const> = args.mode
             or defaults.mode --[[@as string]]
