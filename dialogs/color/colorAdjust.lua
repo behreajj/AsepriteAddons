@@ -16,7 +16,8 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local modes <const> = { "LAB", "LCH" }
 
 local defaults <const> = {
-    -- TODO: Separate frame target and layer target.
+    -- TODO: Separate frame target and layer target
+    -- at least for selections...
     target = "ACTIVE",
     mode = "LCH",
     contrast = 0,

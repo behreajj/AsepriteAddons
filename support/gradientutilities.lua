@@ -569,46 +569,53 @@ function GradientUtilities.imageToMatrix(image)
         return GradientUtilities.BAYER_MATRICES[2], 4, 4
     end
 
-    local colorMode <const> = spec.colorMode
-    local pxItr <const> = image:pixels()
     ---@type number[]
     local matrix <const> = {}
-    local lenMat = 0
+    local lenMat <const> = width * height
+    local bytes <const> = image.bytes
+    local strbyte <const> = string.byte
 
+    local colorMode <const> = spec.colorMode
     if colorMode == ColorMode.RGB then
         -- Problem with this approach is that no one will agree on RGB to gray
         -- conversion. To unpack colors to floats, you could try, e.g.,
-        -- string.unpack("f", string.pack("i", 0x40490FDB))
-        local fromHex <const> = Clr.fromHex
+        -- string.unpack("f", string.pack("i", 0x40490FDB)) to read,
+        -- string.unpack("i", string.pack("f", 3.1415927410126)) to write.
         local sRgbToLab <const> = Clr.sRgbToSrLab2
+        local clrnew <const> = Clr.new
 
-        for pixel in pxItr do
-            local hex <const> = pixel()
-            local srgb <const> = fromHex(hex)
+        local h = 0
+        while h < lenMat do
+            local h4 <const> = h * 4
+            local r <const> = strbyte(bytes, 1 + h4)
+            local g <const> = strbyte(bytes, 2 + h4)
+            local b <const> = strbyte(bytes, 3 + h4)
+            local srgb <const> = clrnew(r / 255.0, g / 255.0, b / 255.0, 1.0)
             local lab <const> = sRgbToLab(srgb)
             local v <const> = lab.l * 0.01
-            lenMat = lenMat + 1
-            matrix[lenMat] = v
+            h = h + 1
+            matrix[h] = v
         end
     elseif colorMode == ColorMode.GRAY then
-        for pixel in pxItr do
-            local hex <const> = pixel()
-            local v <const> = (hex & 0xff) * 0.003921568627451
-            lenMat = lenMat + 1
-            matrix[lenMat] = v
+        local h = 0
+        while h < lenMat do
+            local h2 <const> = h * 2
+            local v <const> = strbyte(bytes, 1 + h2) / 255.0
+            h = h + 1
+            matrix[h] = v
         end
     elseif colorMode == ColorMode.INDEXED then
-        -- https://github.com/aseprite/aseprite/
-        -- issues/2573#issuecomment-736074731
+        -- https://github.com/aseprite/aseprite/issues/2573#issuecomment-736074731
         local mxElm = -2147483648
         local mnElm = 2147483647
 
-        for pixel in pxItr do
-            local i <const> = pixel()
-            if i > mxElm then mxElm = i end
-            if i < mnElm then mnElm = i end
-            lenMat = lenMat + 1
-            matrix[lenMat] = i
+        local h = 0
+        while h < lenMat do
+            local idx <const> = strbyte(bytes, 1 + h)
+            if idx > mxElm then mxElm = idx end
+            if idx < mnElm then mnElm = idx end
+            h = h + 1
+            matrix[h] = idx
         end
 
         -- Normalize. Include half edges.
