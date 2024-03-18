@@ -228,6 +228,8 @@ dlg:button {
         -- should go before or after RGB conversion.
         local removeBkg <const> = args.removeBkg --[[@as boolean]]
         if removeBkg then
+            -- Do this automatically for pngs, gifs, jpgs, jpegs, etc.
+            -- but not ase or aseprite file extensions?
             app.transaction("Background to Layer", function()
                 AseUtilities.bkgToLayer(openSprite, true)
             end)

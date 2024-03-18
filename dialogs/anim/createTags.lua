@@ -201,6 +201,11 @@ dlg:button {
             nameFormat = "[%02d,%02d]"
         end
 
+        app.transaction("Commit Mask", function()
+            app.command.InvertMask()
+            app.command.InvertMask()
+        end)
+
         if deleteExisting then
             local oldTags <const> = activeSprite.tags
             local lenOldTags <const> = #oldTags

@@ -206,6 +206,8 @@ dlg:button {
                     srcImg = tilesToImage(srcImg, tileSet, rgbColorMode)
                 end
 
+                -- TODO: Use image bytes string.
+
                 ---@type integer[]
                 local pxArr <const> = {}
                 local lenPxArr = 0
@@ -362,10 +364,11 @@ dlg:button {
                             labAverage.alpha = tSum * kToAverage
 
                             -- Find the standard deviation for the quadrant.
-                            -- For each quadrant, subtract the arithmetic mean
-                            -- from the sample. Square the difference. Sum the
-                            -- squared differences. Divide the sums by the
-                            -- the number of elements, then take the square root.
+                            -- Subtract the arithmetic mean from the sample.
+                            -- Square the difference.
+                            -- Sum the squared differences.
+                            -- Divide the sums by the the number of elements,
+                            -- then take the square root.
                             local lDevSqSum = 0.0
                             local aDevSqSum = 0.0
                             local bDevSqSum = 0.0
