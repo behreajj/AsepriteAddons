@@ -76,7 +76,7 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "lbThresh",
-    label = "Treshold:",
+    label = "Threshold:",
     min = 0,
     max = 100,
     value = defaults.lbThresh,
