@@ -54,11 +54,13 @@ local function auditImage(srcImg)
 
     ---@type table<integer, {l: number, a: number, b: number, alpha: number}>
     local hexToLabDict <const> = {}
+    local labZero <const> = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
     local aMin = 2147483647
     local bMin = 2147483647
     local aMax = -2147483648
     local bMax = -2147483648
 
+    -- TODO: Switch to using string bytes method.
     -- Since a and b are unbounded, gather the relative
     -- bounds for this image.
     local srcItr <const> = srcImg:pixels()
@@ -66,7 +68,8 @@ local function auditImage(srcImg)
         local srcHex <const> = srcPixel()
         if not hexToLabDict[srcHex] then
             local srcClr <const> = fromHex(srcHex)
-            local srcLab <const> = sRgbToLab(srcClr)
+            local srcLab <const> = srcClr.a <= 0.0 and labZero
+                or sRgbToLab(srcClr)
 
             local aSrc <const> = srcLab.a
             local bSrc <const> = srcLab.b
