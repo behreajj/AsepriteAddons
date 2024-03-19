@@ -256,10 +256,6 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
-        -- This is consistent with dialogs like gradientMap, but not with
-        -- colorAdjust, which has the option to create a new layer from
-        -- selection, and which does auto color mode convert.
-
         -- Begin timing the function elapsed.
         local args <const> = dlg.data
         local printElapsed <const> = args.printElapsed --[[@as boolean]]
@@ -513,8 +509,7 @@ dlg:button {
                     trgPixel(srcToTrgDict[trgPixel()])
                 end
 
-                transact(
-                    strfmt("Levels Adjust %d", srcFrame),
+                transact(strfmt("Levels Adjust %d", srcFrame),
                     function()
                         local trgCel <const> = activeSprite:newCel(
                             trgLayer, srcFrame, trgImg, srcCel.position)
