@@ -862,19 +862,15 @@ dlg:button {
 
                     local j = 0
                     while j < lenSrc do
-                        local r8 = 0
-                        local g8 = 0
-                        local b8 = 0
-                        local hex32 = 0
-
                         local j4 <const> = j * 4
                         local a8 <const> = strbyte(srcBytes, 4 + j4)
-                        if a8 > 0 then
-                            r8 = strbyte(srcBytes, 1 + j4)
-                            g8 = strbyte(srcBytes, 2 + j4)
-                            b8 = strbyte(srcBytes, 3 + j4)
-                            hex32 = a8 << 0x18 | b8 << 0x10 | g8 << 0x08 | r8
-                        end
+                        local r8 <const> = strbyte(srcBytes, 1 + j4)
+                        local g8 <const> = strbyte(srcBytes, 2 + j4)
+                        local b8 <const> = strbyte(srcBytes, 3 + j4)
+                        local hex32 <const> = a8 << 0x18
+                            | b8 << 0x10
+                            | g8 << 0x08
+                            | r8
 
                         if not srcLabDict[hex32] then
                             local srgbSrc <const> = clrnew(
