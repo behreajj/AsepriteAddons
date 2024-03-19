@@ -49,8 +49,9 @@ local dlg <const> = Dialog { title = "Color Curves" }
 ---@return number bMin
 ---@return number bMax
 local function auditImage(srcImg)
-    local fromHex <const> = Clr.fromHex
-    local sRgbToLab <const> = Clr.sRgbToSrLab2
+    local sRgbaToLab <const> = Clr.sRgbToSrLab2
+    local strbyte <const> = string.byte
+    local clrnew <const> = Clr.new
 
     ---@type table<integer, {l: number, a: number, b: number, alpha: number}>
     local hexToLabDict <const> = {}
@@ -60,27 +61,42 @@ local function auditImage(srcImg)
     local aMax = -2147483648
     local bMax = -2147483648
 
-    -- TODO: Switch to using string bytes method.
-    -- Since a and b are unbounded, gather the relative
-    -- bounds for this image.
-    local srcItr <const> = srcImg:pixels()
-    for srcPixel in srcItr do
-        local srcHex <const> = srcPixel()
-        if not hexToLabDict[srcHex] then
-            local srcClr <const> = fromHex(srcHex)
-            local srcLab <const> = srcClr.a <= 0.0 and labZero
-                or sRgbToLab(srcClr)
+    local srcBytes <const> = srcImg.bytes
+    local lenSrcImg <const> = srcImg.width * srcImg.height
+    local j = 0
+    while j < lenSrcImg do
+        local j4 <const> = j * 4
+        local r8 <const> = strbyte(srcBytes, 1 + j4)
+        local g8 <const> = strbyte(srcBytes, 2 + j4)
+        local b8 <const> = strbyte(srcBytes, 3 + j4)
+        local a8 <const> = strbyte(srcBytes, 4 + j4)
 
-            local aSrc <const> = srcLab.a
-            local bSrc <const> = srcLab.b
+        local h32 <const> = a8 << 0x18 | b8 << 0x10 | g8 << 0x08 | r8
 
-            if aSrc < aMin then aMin = aSrc end
-            if aSrc > aMax then aMax = aSrc end
-            if bSrc < bMin then bMin = bSrc end
-            if bSrc > bMax then bMax = bSrc end
+        if not hexToLabDict[h32] then
+            hexToLabDict[h32] = labZero
+            if a8 > 0 then
+                -- This could be placed outside of the a8 > 0 check if you
+                -- wanted zero alpha colors to preserve their RGB components.
+                -- See colorAdjust for consistency.
+                local srgbSrc <const> = clrnew(
+                    r8 / 255.0,
+                    g8 / 255.0,
+                    b8 / 255.0,
+                    a8 / 255.0)
+                local labSrc <const> = sRgbaToLab(srgbSrc)
+                hexToLabDict[h32] = labSrc
 
-            hexToLabDict[srcHex] = srcLab
+                local aSrc <const> = labSrc.a
+                local bSrc <const> = labSrc.b
+
+                if aSrc < aMin then aMin = aSrc end
+                if aSrc > aMax then aMax = aSrc end
+                if bSrc < bMin then bMin = bSrc end
+                if bSrc > bMax then bMax = bSrc end
+            end
         end
+        j = j + 1
     end
 
     return hexToLabDict, aMin, aMax, bMin, bMax
