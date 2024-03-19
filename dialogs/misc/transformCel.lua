@@ -54,9 +54,6 @@ local function translateCels(dialog, x, y)
         local round <const> = Utilities.round
 
         app.transaction("Move Cels Snap", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -77,9 +74,6 @@ local function translateCels(dialog, x, y)
         end)
     else
         app.transaction("Move Cels", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -188,9 +182,6 @@ dlg:button {
         local lenCels <const> = #cels
 
         app.transaction("Set Cels Position", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -252,9 +243,6 @@ dlg:button {
         if tiledMode == 3 then
             -- Tiling on both axes.
             app.transaction("Wrap Cels", function()
-                app.command.InvertMask()
-                app.command.InvertMask()
-
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -272,9 +260,6 @@ dlg:button {
         elseif noBkg and tiledMode == 2 then
             -- Vertical tiling.
             app.transaction("Wrap V", function()
-                app.command.InvertMask()
-                app.command.InvertMask()
-
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -292,9 +277,6 @@ dlg:button {
         elseif noBkg and tiledMode == 1 then
             -- Horizontal tiling.
             app.transaction("Wrap H", function()
-                app.command.InvertMask()
-                app.command.InvertMask()
-
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -312,9 +294,6 @@ dlg:button {
         else
             -- No tiling.
             app.transaction("Wrap Cels", function()
-                app.command.InvertMask()
-                app.command.InvertMask()
-
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -429,9 +408,6 @@ dlg:button {
         local absTan <const> = math.abs(tana)
 
         app.transaction("Skew X", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -540,9 +516,6 @@ dlg:button {
         local absTan <const> = math.abs(tana)
 
         app.transaction("Skew Y", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -640,9 +613,6 @@ dlg:button {
             end
 
             app.transaction("Rotate Cels", function()
-                app.command.InvertMask()
-                app.command.InvertMask()
-
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -665,9 +635,6 @@ dlg:button {
         elseif degrees == 180 then
             local rot180 <const> = AseUtilities.rotateImage180
             app.transaction("Rotate Cels", function()
-                app.command.InvertMask()
-                app.command.InvertMask()
-
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -695,9 +662,6 @@ dlg:button {
             local alphaIndex <const> = activeSprite.transparentColor
 
             app.transaction("Rotate Cels", function()
-                app.command.InvertMask()
-                app.command.InvertMask()
-
                 local i = 0
                 while i < lenCels do
                     i = i + 1
@@ -809,9 +773,6 @@ dlg:button {
 
         local fliph <const> = FlipType.HORIZONTAL
         app.transaction("Flip H", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -853,9 +814,6 @@ dlg:button {
 
         local flipv <const> = FlipType.VERTICAL
         app.transaction("Flip V", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-
             local i = 0
             while i < lenCels do
                 i = i + 1
@@ -932,9 +890,6 @@ dlg:button {
         local resize <const> = AseUtilities.resizeImageNearest
 
         app.transaction("Scale Cels", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-
             local o = 0
             while o < lenCels do
                 o = o + 1

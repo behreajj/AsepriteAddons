@@ -201,14 +201,6 @@ dlg:button {
             nameFormat = "[%02d,%02d]"
         end
 
-        -- This doesn't work to cancel out drop pixels because it is wrapped in
-        -- a transaction. If pixels are moved after the dialog is opened, then
-        -- the usual error will result.
-        -- app.transaction("Commit Mask", function()
-        --     app.command.InvertMask()
-        --     app.command.InvertMask()
-        -- end)
-
         if deleteExisting then
             local oldTags <const> = activeSprite.tags
             local lenOldTags <const> = #oldTags

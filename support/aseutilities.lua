@@ -1932,11 +1932,10 @@ end
 function AseUtilities.getSelection(sprite)
     -- If a selection is moved, but the drag and drop pixels checkmark is not
     -- pressed, then a crash will result. MoveMask doesn't work because move
-    -- quantity has a minimum of 1.
-    app.transaction("Commit Mask", function()
-        app.command.InvertMask()
-        app.command.InvertMask()
-    end)
+    -- quantity has a minimum of 1. For this to work, it cannot be wrapped in
+    -- a transaction.
+    app.command.InvertMask()
+    app.command.InvertMask()
 
     local srcSel <const> = sprite.selection
     if (not srcSel) or srcSel.isEmpty then

@@ -469,11 +469,6 @@ local function alignCels(dialog, preset)
         xMaxRef = xMinRef + math.max(1, math.abs(selBounds.width)) - 1
         yMinRef = selBounds.y
         yMaxRef = yMinRef + math.max(1, math.abs(selBounds.height)) - 1
-    else
-        app.transaction("Commit Mask", function()
-            app.command.InvertMask()
-            app.command.InvertMask()
-        end)
     end
 
     local docPrefs <const> = app.preferences.document(activeSprite)
