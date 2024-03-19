@@ -188,7 +188,9 @@ local dlg = Dialog { title = "Normal Picker" }
 local function setAzimMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.azBarWidth
-        local mxtau <const> = 6.2831853071796 * event.x / (bw - 1.0)
+        local mxtau <const> = bw > 1
+            and (6.2831853071796 * event.x / (bw - 1.0))
+            or 0.0
         if event.ctrlKey then
             active.azimuth = 0.0
         elseif event.shiftKey then
@@ -218,7 +220,9 @@ local function setInclMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.inBarWidth
         local halfPi <const> = 1.5707963267949
-        local mxIncl <const> = math.pi * event.x / (bw - 1.0) - halfPi
+        local mxIncl <const> = bw > 1
+            and (math.pi * event.x / (bw - 1.0) - halfPi)
+            or 0.0
         if event.ctrlKey then
             active.inclination = 0.0
         elseif event.shiftKey then
@@ -439,7 +443,7 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.azBarWidth = barWidth
 
-        local xToAzimuth <const> = 6.2831853071796 / (barWidth - 1.0)
+        local xToAzimuth <const> = barWidth > 1 and 6.2831853071796 / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
@@ -492,7 +496,7 @@ dlg:canvas {
         active.inBarWidth = barWidth
 
         local halfPi <const> = 1.5707963267949
-        local xToIncl <const> = math.pi / (barWidth - 1.0)
+        local xToIncl <const> = barWidth > 1 and math.pi / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
         local pxItr <const> = img:pixels()
         for pixel in pxItr do

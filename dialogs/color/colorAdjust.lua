@@ -64,7 +64,7 @@ local dlg <const> = Dialog { title = "Adjust Color" }
 local function setAlphaMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.tBarWidth
-        local mx01 <const> = event.x / (bw - 1.0)
+        local mx01 <const> = bw > 1 and (event.x / (bw - 1.0)) or 0.0
         local mxalpha <const> = mx01 + mx01 - 1.0
         if event.ctrlKey then
             active.alphaAdj = 0.0
@@ -88,7 +88,9 @@ end
 local function setLightMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.lBarWidth
-        local mx100 <const> = 200.0 * event.x / (bw - 1.0) - 100.0
+        local mx100 <const> = bw > 1
+            and (200.0 * event.x / (bw - 1.0) - 100.0)
+            or 0.0
         if event.ctrlKey then
             active.lAdj = 0.0
         elseif event.shiftKey then
@@ -113,7 +115,7 @@ local function setChromaMouseListen(event)
         local bw <const> = active.cBarWidth
         local clb <const> = -defaults.maxChroma
         local cub <const> = defaults.maxChroma
-        local mx01 <const> = event.x / (bw - 1.0)
+        local mx01 <const> = bw > 1 and (event.x / (bw - 1.0)) or 0.0
         local mxc <const> = (1.0 - mx01) * clb + mx01 * cub
         if event.ctrlKey then
             active.cAdj = 0.0
@@ -137,7 +139,7 @@ end
 local function setHueMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.hBarWidth
-        local mx01 <const> = event.x / (bw - 1.0)
+        local mx01 <const> = bw > 1 and (event.x / (bw - 1.0)) or 0.0
         if event.ctrlKey then
             active.hAdj = 0.5
         elseif event.shiftKey then
@@ -160,7 +162,7 @@ local function setAMouseListen(event)
         local bw <const> = active.aBarWidth
         local alb <const> = defaults.labAxisMin
         local aub <const> = defaults.labAxisMax
-        local mx01 <const> = event.x / (bw - 1.0)
+        local mx01 <const> = bw > 1 and (event.x / (bw - 1.0)) or 0.0
         local mxa <const> = (1.0 - mx01) * alb + mx01 * aub
         if event.ctrlKey then
             active.aAdj = 0.0
@@ -186,7 +188,7 @@ local function setBMouseListen(event)
         local bw <const> = active.bBarWidth
         local blb <const> = defaults.labAxisMin
         local bub <const> = defaults.labAxisMax
-        local mx01 <const> = event.x / (bw - 1.0)
+        local mx01 <const> = bw > 1 and (event.x / (bw - 1.0)) or 0.0
         local mxb <const> = (1.0 - mx01) * blb + mx01 * bub
         if event.ctrlKey then
             active.bAdj = 0.0
@@ -278,7 +280,7 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.lBarWidth = barWidth
 
-        local xToLight <const> = 100.0 / (barWidth - 1.0)
+        local xToLight <const> = barWidth > 1 and 100.0 / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
@@ -335,7 +337,7 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.cBarWidth = barWidth
 
-        local xToChroma <const> = cub / (barWidth - 1.0)
+        local xToChroma <const> = barWidth > 1 and cub / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
@@ -384,7 +386,7 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.hBarWidth = barWidth
 
-        local xToHue <const> = 1.0 / (barWidth - 1.0)
+        local xToHue <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
         local hAdj <const> = active.hAdj - 0.5
         local img <const> = Image(barWidth, 2, ColorMode.RGB)
         local pxItr <const> = img:pixels()
@@ -437,7 +439,7 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.aBarWidth = barWidth
 
-        local xToFac <const> = 1.0 / (barWidth - 1.0)
+        local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
@@ -490,7 +492,7 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.bBarWidth = barWidth
 
-        local xToFac <const> = 1.0 / (barWidth - 1.0)
+        local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
@@ -562,7 +564,7 @@ dlg:canvas {
         active.tBarWidth = barWidth
 
         local floor <const> = math.floor
-        local xToFac <const> = 1.0 / (barWidth - 1.0)
+        local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
