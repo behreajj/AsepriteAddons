@@ -1,7 +1,7 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
-local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local channels <const> = { "L", "A", "B", "Alpha" }
 
 local idPrefixes <const> = {
@@ -287,36 +287,47 @@ dlg:button {
             return
         end
 
-        local srcLayer <const> = site.layer
-        if not srcLayer then
-            app.alert {
-                title = "Error",
-                text = "There is no active layer."
-            }
-            return
-        end
-
-        if srcLayer.isGroup then
-            app.alert {
-                title = "Error",
-                text = "Group layers are not supported."
-            }
-            return
-        end
-
-        if srcLayer.isReference then
-            app.alert {
-                title = "Error",
-                text = "Reference layers are not supported."
-            }
-            return
-        end
-
-        -- Get frames from target.
         local target <const> = args.target
             or defaults.target --[[@as string]]
+
+        -- This needs to be done first, otherwise range will be lost.
+        local isSelect <const> = target == "SELECTION"
         local frames <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(activeSprite, target))
+            AseUtilities.getFrames(activeSprite,
+                isSelect and "ALL" or target))
+        local lenFrames <const> = #frames
+
+        -- If isSelect is true, then a new layer will be created.
+        local srcLayer = site.layer --[[@as Layer]]
+
+        if isSelect then
+            AseUtilities.filterCels(activeSprite, srcLayer, frames, "SELECTION")
+            srcLayer = activeSprite.layers[#activeSprite.layers]
+        else
+            if not srcLayer then
+                app.alert {
+                    title = "Error",
+                    text = "There is no active layer."
+                }
+                return
+            end
+
+            if srcLayer.isGroup then
+                app.alert {
+                    title = "Error",
+                    text = "Group layers are not supported."
+                }
+                return
+            end
+
+            if srcLayer.isReference then
+                app.alert {
+                    title = "Error",
+                    text = "Reference layers are not supported."
+                }
+                return
+            end
+        end
 
         -- Check for tile maps.
         local isTilemap <const> = srcLayer.isTilemap
@@ -409,7 +420,6 @@ dlg:button {
         local min <const> = math.min
         local max <const> = math.max
 
-        local lenFrames <const> = #frames
         local k = 0
         while k < lenFrames do
             k = k + 1
@@ -516,6 +526,12 @@ dlg:button {
                         trgCel.opacity = srcCel.opacity
                     end)
             end
+        end
+
+        if isSelect then
+            app.transaction("Delete Layer", function()
+                activeSprite:deleteLayer(srcLayer)
+            end)
         end
 
         app.refresh()

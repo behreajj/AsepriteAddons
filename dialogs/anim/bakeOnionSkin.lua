@@ -391,7 +391,8 @@ dlg:button {
                 local trgPos <const> = Point(xMin, yMin)
                 local wTrg <const> = 1 + xMax - xMin
                 local hTrg <const> = 1 + yMax - yMin
-                local trgSpec = createSpec(wTrg, hTrg, rgbColorMode, colorSpace, alphaIndex)
+                local trgSpec = createSpec(wTrg, hTrg, rgbColorMode,
+                    colorSpace, alphaIndex)
                 local trgImg <const> = Image(trgSpec)
                 local pxTrg <const> = getPixels(trgImg)
 

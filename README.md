@@ -16,7 +16,7 @@ To use, go to `File > Scripts` and choose from entries in the `dialogs` or `comm
 
 Scripts can be assigned shortcuts in `Edit > Keyboard Shortcuts`. Dialog buttons can be called by holding down the `Alt` key and pressing the underlined letter of the button's label. For example, `Alt+C` will close dialogs, per the 'C' in "CANCEL".
 
-In dialogs that use custom sliders -- such as the LCH picker, color adjustment and normal picker -- holding down `Ctrl` and clicking will return the slider to a default value, holding down `Shift` and moving the mouse will increment the slider value.
+Most scripts dealing with color assume [standard RGB](https://en.wikipedia.org/wiki/SRGB) is the working color profile. The window profile is set under `Edit > Preferences > Color`. The sprite profile is set under `Sprite > Properties`.
 
 ## References
 

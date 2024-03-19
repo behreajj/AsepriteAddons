@@ -201,6 +201,10 @@ dlg:button {
             nameFormat = "[%02d,%02d]"
         end
 
+        -- A selection transformation preview state will stop this script at
+        -- this point, even though there's no reason for it to. You could
+        -- insert double InvertMask commands if you wanted to counter that.
+
         if deleteExisting then
             local oldTags <const> = activeSprite.tags
             local lenOldTags <const> = #oldTags
