@@ -822,7 +822,8 @@ dlg:button {
 
         ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
         local srcLabDict <const> = {}
-        srcLabDict[0] = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+        local labZero <const> = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+        srcLabDict[0] = labZero
 
         local minLum = 100.0
         local maxLum = 0.0
@@ -863,24 +864,30 @@ dlg:button {
                     local j = 0
                     while j < lenSrc do
                         local j4 <const> = j * 4
-                        local a8 <const> = strbyte(srcBytes, 4 + j4)
                         local r8 <const> = strbyte(srcBytes, 1 + j4)
                         local g8 <const> = strbyte(srcBytes, 2 + j4)
                         local b8 <const> = strbyte(srcBytes, 3 + j4)
+                        local a8 <const> = strbyte(srcBytes, 4 + j4)
+
                         local hex32 <const> = a8 << 0x18
                             | b8 << 0x10
                             | g8 << 0x08
                             | r8
 
                         if not srcLabDict[hex32] then
-                            local srgbSrc <const> = clrnew(
-                                r8 / 255.0,
-                                g8 / 255.0,
-                                b8 / 255.0,
-                                a8 / 255.0)
-                            local labSrc <const> = sRgbaToLab(srgbSrc)
-                            srcLabDict[hex32] = labSrc
+                            srcLabDict[hex32] = labZero
                             if a8 > 0 then
+                                -- This could be placed outside of the a8 > 0
+                                -- check if you wanted zero alpha colors to
+                                -- preserve their RGB components.
+                                local srgbSrc <const> = clrnew(
+                                    r8 / 255.0,
+                                    g8 / 255.0,
+                                    b8 / 255.0,
+                                    a8 / 255.0)
+                                local labSrc <const> = sRgbaToLab(srgbSrc)
+                                srcLabDict[hex32] = labSrc
+
                                 local lum <const> = labSrc.l
                                 if lum < minLum then minLum = lum end
                                 if lum > maxLum then maxLum = lum end
