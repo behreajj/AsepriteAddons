@@ -192,6 +192,8 @@ dlg:button {
                     y - image.height // 2)
             end
         end)
+
+        app.refresh()
     end
 }
 
