@@ -137,20 +137,6 @@ dlg:number {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "translateButton",
-    text = "&MOVE",
-    focus = false,
-    onclick = function()
-        local args <const> = dlg.data
-        local dx <const> = args.xTranslate
-            or defaults.xTranslate --[[@as integer]]
-        local dy <const> = args.yTranslate
-            or defaults.yTranslate --[[@as integer]]
-        translateCels(dlg, dx, dy)
-    end
-}
-
-dlg:button {
     id = "setPosButton",
     text = "SE&T",
     focus = false,
@@ -194,6 +180,20 @@ dlg:button {
         end)
 
         app.refresh()
+    end
+}
+
+dlg:button {
+    id = "translateButton",
+    text = "&MOVE",
+    focus = false,
+    onclick = function()
+        local args <const> = dlg.data
+        local dx <const> = args.xTranslate
+            or defaults.xTranslate --[[@as integer]]
+        local dy <const> = args.yTranslate
+            or defaults.yTranslate --[[@as integer]]
+        translateCels(dlg, dx, dy)
     end
 }
 
