@@ -153,7 +153,6 @@ dlg:button {
             or defaults.xTranslate --[[@as integer]]
         local y <const> = args.yTranslate
             or defaults.yTranslate --[[@as integer]]
-        -- local point <const> = Point(x, y)
 
         local filterFrames = activeSprite.frames
         if target == "ACTIVE" then
@@ -224,9 +223,16 @@ dlg:button {
             filterFrames = { activeFrame }
         end
 
+        -- Only include background if wrapping on both edges.
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tiledMode <const> = docPrefs.tiled.mode --[[@as integer]]
+        local includeBkg <const> = (tiledMode == 2 and dx == 0)
+            or (tiledMode == 1 and dy == 0)
+            or tiledMode == 3
+            or tiledMode == 0
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, filterFrames, target,
-            false, false, false, true)
+            false, false, false, includeBkg)
         local lenCels <const> = #cels
 
         local trimAlpha <const> = AseUtilities.trimImageAlpha
@@ -235,13 +241,6 @@ dlg:button {
         local alphaIndex <const> = spriteSpec.transparentColor
         local blendModeSrc <const> = BlendMode.SRC
 
-        -- This is a hack to deal with issues of background being moved.
-        -- Sprite.backgroundLayer is not reliable due to how backgrounds can
-        -- be childed to groups. Maybe handle the background separately? Or
-        -- get layers and frames separately like align distribute does?
-        local noBkg <const> = activeSprite.backgroundLayer == nil
-        local docPrefs <const> = app.preferences.document(activeSprite)
-        local tiledMode <const> = docPrefs.tiled.mode --[[@as integer]]
         if tiledMode == 3 then
             -- Tiling on both axes.
             app.transaction("Wrap Cels", function()
@@ -259,7 +258,7 @@ dlg:button {
                     cel.position = Point(xTrg, yTrg)
                 end
             end)
-        elseif noBkg and tiledMode == 2 then
+        elseif tiledMode == 2 then
             -- Vertical tiling.
             app.transaction("Wrap V", function()
                 local i = 0
@@ -276,7 +275,7 @@ dlg:button {
                     cel.position = Point(xTrg + dx, yTrg)
                 end
             end)
-        elseif noBkg and tiledMode == 1 then
+        elseif tiledMode == 1 then
             -- Horizontal tiling.
             app.transaction("Wrap H", function()
                 local i = 0
