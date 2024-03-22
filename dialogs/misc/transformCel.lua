@@ -6,6 +6,8 @@ local unitOptions <const> = { "PERCENT", "PIXEL" }
 local defaults <const> = {
     -- TODO: Option to make movement progressive across frames, as in
     -- frIdx * vx, frIdx * vy ?
+
+    -- TODO: Options to move in Cartesian vs. polar coordinates?
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,
@@ -151,10 +153,6 @@ dlg:button {
         local args <const> = dlg.data
         local target <const> = args.target
             or defaults.target --[[@as string]]
-        local x <const> = args.xTranslate
-            or defaults.xTranslate --[[@as integer]]
-        local y <const> = args.yTranslate
-            or defaults.yTranslate --[[@as integer]]
 
         local filterFrames = activeSprite.frames
         if target == "ACTIVE" then
@@ -163,20 +161,36 @@ dlg:button {
             filterFrames = { activeFrame }
         end
 
+        local x <const> = args.xTranslate
+            or defaults.xTranslate --[[@as integer]]
+        local y <const> = args.yTranslate
+            or defaults.yTranslate --[[@as integer]]
+
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local symPrefs <const> = docPrefs.symmetry
+        local symMode <const> = symPrefs.mode
+
+        local xCenter <const> = (symMode == 1 or symMode == 3)
+            and math.floor(symPrefs.x_axis)
+            or activeSprite.width // 2
+        local yCenter <const> = (symMode == 2 or symMode == 3)
+            and math.floor(symPrefs.y_axis)
+            or activeSprite.height // 2
+
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, filterFrames, target,
             false, false, false, false)
         local lenCels <const> = #cels
 
-        app.transaction("Set Cels Position", function()
+        app.transaction("Relocate Cels", function()
             local i = 0
             while i < lenCels do
                 i = i + 1
                 local cel <const> = cels[i]
                 local image <const> = cel.image
                 cel.position = Point(
-                    x - image.width // 2,
-                    y - image.height // 2)
+                    xCenter + x - image.width // 2,
+                    yCenter - y - image.height // 2)
             end
         end)
 
@@ -604,19 +618,21 @@ dlg:button {
             filterFrames = { activeFrame }
         end
 
-        local includeBkg <const> = degrees == 180
+        local is90 <const> = degrees == 90
+        local is180 <const> = degrees == 180
+        local is270 <const> = degrees == 270
+
+        local includeBkg <const> = is180
             or (activeSprite.width == activeSprite.height
-                and (degrees == 90 or degrees == 270))
+                and (is90 or is270))
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, filterFrames, target,
             false, false, false, includeBkg)
         local lenCels <const> = #cels
 
-        if degrees == 90 or degrees == 270 then
-            local rotFunc = AseUtilities.rotateImage90
-            if degrees == 270 then
-                rotFunc = AseUtilities.rotateImage270
-            end
+        if is90 or is270 then
+            local rotFunc <const> = is270 and AseUtilities.rotateImage270
+                or AseUtilities.rotateImage90
 
             app.transaction("Rotate Cels", function()
                 local i = 0
@@ -638,7 +654,7 @@ dlg:button {
                         celPos.y + ySrcHalf - xSrcHalf)
                 end
             end)
-        elseif degrees == 180 then
+        elseif is180 then
             local rot180 <const> = AseUtilities.rotateImage180
             app.transaction("Rotate Cels", function()
                 local i = 0
