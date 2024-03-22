@@ -2,12 +2,15 @@ dofile("../../support/aseutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local unitOptions <const> = { "PERCENT", "PIXEL" }
+local coordSystems <const> = { "CENTER", "TOP_LEFT" }
 
 local defaults <const> = {
     -- TODO: Option to make movement progressive across frames, as in
     -- frIdx * vx, frIdx * vy ?
 
     -- TODO: Options to move in Cartesian vs. polar coordinates?
+
+    -- TODO: Flip h and v, move cel position across symmetry axis?
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,
@@ -16,7 +19,8 @@ local defaults <const> = {
     pxHeight = 64,
     prcWidth = 100,
     prcHeight = 100,
-    units = "PERCENT"
+    units = "PERCENT",
+    coordSystem = "TOP_LEFT",
 }
 
 ---@param dialog Dialog
@@ -140,6 +144,16 @@ dlg:number {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "coordSystem",
+    label = "System:",
+    option = defaults.coordSystem,
+    options = coordSystems,
+    visible = false
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "setPosButton",
     text = "SE&T",
@@ -161,38 +175,51 @@ dlg:button {
             filterFrames = { activeFrame }
         end
 
+        local coordSystem <const> = args.coordSystem or
+            defaults.coordSystem --[[@as string]]
         local x <const> = args.xTranslate
             or defaults.xTranslate --[[@as integer]]
         local y <const> = args.yTranslate
             or defaults.yTranslate --[[@as integer]]
-
-        local docPrefs <const> = app.preferences.document(activeSprite)
-        local symPrefs <const> = docPrefs.symmetry
-        local symMode <const> = symPrefs.mode
-
-        local xCenter <const> = (symMode == 1 or symMode == 3)
-            and math.floor(symPrefs.x_axis)
-            or activeSprite.width // 2
-        local yCenter <const> = (symMode == 2 or symMode == 3)
-            and math.floor(symPrefs.y_axis)
-            or activeSprite.height // 2
 
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, filterFrames, target,
             false, false, false, false)
         local lenCels <const> = #cels
 
-        app.transaction("Relocate Cels", function()
-            local i = 0
-            while i < lenCels do
-                i = i + 1
-                local cel <const> = cels[i]
-                local image <const> = cel.image
-                cel.position = Point(
-                    xCenter + x - image.width // 2,
-                    yCenter - y - image.height // 2)
-            end
-        end)
+        if coordSystem == "CENTER" then
+            local docPrefs <const> = app.preferences.document(activeSprite)
+            local symPrefs <const> = docPrefs.symmetry
+            local symMode <const> = symPrefs.mode
+
+            local xCenter <const> = (symMode == 1 or symMode == 3)
+                and math.floor(symPrefs.x_axis)
+                or activeSprite.width // 2
+            local yCenter <const> = (symMode == 2 or symMode == 3)
+                and math.floor(symPrefs.y_axis)
+                or activeSprite.height // 2
+
+            app.transaction("Relocate Cels", function()
+                local i = 0
+                while i < lenCels do
+                    i = i + 1
+                    local cel <const> = cels[i]
+                    local image <const> = cel.image
+                    cel.position = Point(
+                        xCenter + x - image.width // 2,
+                        yCenter - y - image.height // 2)
+                end
+            end)
+        else
+            local pt <const> = Point(x, y)
+            app.transaction("Relocate Cels", function()
+                local i = 0
+                while i < lenCels do
+                    i = i + 1
+                    cels[i].position = pt
+                end
+            end)
+        end
 
         app.refresh()
     end
