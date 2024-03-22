@@ -9,6 +9,8 @@ local defaults <const> = {
     -- frIdx * vx, frIdx * vy ?
 
     -- TODO: Options to move in Cartesian vs. polar coordinates?
+
+    -- TODO: Flip h and v, move cel position across symmetry axis?
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,
@@ -813,14 +815,9 @@ dlg:button {
             filterFrames = { activeFrame }
         end
 
-        local docPrefs <const> = app.preferences.document(activeSprite)
-        local symPrefs <const> = docPrefs.symmetry
-        local symMode <const> = symPrefs.mode
-        local flipPos <const> = symMode == 1 or symMode == 3
-
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, filterFrames, target,
-            false, false, false, not flipPos)
+            false, false, false, true)
         local lenCels <const> = #cels
 
         local fliph <const> = FlipType.HORIZONTAL
@@ -834,26 +831,6 @@ dlg:button {
                 cel.image = flipped
             end
         end)
-
-        if flipPos then
-            local round <const> = Utilities.round
-            local xOrig <const> = symPrefs.x_axis
-            app.transaction("Flip Position", function()
-                local i = 0
-                while i < lenCels do
-                    i = i + 1
-                    local cel <const> = cels[i]
-                    local celBounds <const> = cel.bounds
-                    local xtl <const> = celBounds.x
-                    local ytl <const> = celBounds.y
-                    local wHalf <const> = celBounds.width * 0.5
-                    local xCenter <const> = xtl + wHalf
-                    local xFlip <const> = xOrig - (xCenter - xOrig)
-                    local xtlFlip <const> = round(xFlip - wHalf)
-                    cel.position = Point(xtlFlip, ytl)
-                end
-            end)
-        end
 
         app.refresh()
     end
@@ -879,14 +856,9 @@ dlg:button {
             filterFrames = { activeFrame }
         end
 
-        local docPrefs <const> = app.preferences.document(activeSprite)
-        local symPrefs <const> = docPrefs.symmetry
-        local symMode <const> = symPrefs.mode
-        local flipPos <const> = symMode == 2 or symMode == 3
-
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, filterFrames, target,
-            false, false, false, not flipPos)
+            false, false, false, true)
         local lenCels <const> = #cels
 
         local flipv <const> = FlipType.VERTICAL
@@ -900,26 +872,6 @@ dlg:button {
                 cel.image = flipped
             end
         end)
-
-        if flipPos then
-            local round <const> = Utilities.round
-            local yOrig <const> = symPrefs.y_axis
-            app.transaction("Flip Position", function()
-                local i = 0
-                while i < lenCels do
-                    i = i + 1
-                    local cel <const> = cels[i]
-                    local celBounds <const> = cel.bounds
-                    local xtl <const> = celBounds.x
-                    local ytl <const> = celBounds.y
-                    local hHalf <const> = celBounds.height * 0.5
-                    local yCenter <const> = ytl + hHalf
-                    local yFlip <const> = yOrig - (yCenter - yOrig)
-                    local ytlFlip <const> = round(yFlip - hHalf)
-                    cel.position = Point(xtl, ytlFlip)
-                end
-            end)
-        end
 
         app.refresh()
     end
