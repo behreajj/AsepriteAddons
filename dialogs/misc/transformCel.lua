@@ -4,6 +4,8 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local unitOptions <const> = { "PERCENT", "PIXEL" }
 
 local defaults <const> = {
+    -- TODO: Option to make movement progressive across frames, as in
+    -- frIdx * vx, frIdx * vy ?
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,
@@ -602,9 +604,12 @@ dlg:button {
             filterFrames = { activeFrame }
         end
 
+        local includeBkg <const> = degrees == 180
+            or (activeSprite.width == activeSprite.height
+                and (degrees == 90 or degrees == 270))
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, filterFrames, target,
-            false, false, false, false)
+            false, false, false, includeBkg)
         local lenCels <const> = #cels
 
         if degrees == 90 or degrees == 270 then
