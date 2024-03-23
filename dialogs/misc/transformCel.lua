@@ -1,25 +1,29 @@
 dofile("../../support/aseutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
-local unitOptions <const> = { "PERCENT", "PIXEL" }
+local scaleUnitOptions <const> = { "PERCENT", "PIXEL" }
 local coordSystems <const> = { "CENTER", "TOP_LEFT" }
+local vecTypes <const> = { "CARTESIAN", "POLAR" }
 
 local defaults <const> = {
     -- TODO: Option to make movement progressive across frames, as in
     -- frIdx * vx, frIdx * vy ?
 
-    -- TODO: Options to move in Cartesian vs. polar coordinates?
-
-    -- TODO: Flip h and v, move cel position across symmetry axis?
+    -- Flipping cel position when symmetry axes are on doesn't work well for
+    -- cels that are large enough to fill canvas. See commit
+    -- f8adad7ce334553e16701cae83cdf5a4657f8c4a .
     target = "ACTIVE",
+    vecType = "CARTESIAN",
     xTranslate = 0,
     yTranslate = 0,
+    angleTranslate = 0,
+    magTranslate = 0,
     degrees = 90,
     pxWidth = 64,
     pxHeight = 64,
     prcWidth = 100,
     prcHeight = 100,
-    units = "PERCENT",
+    scaleUnits = "PERCENT",
     coordSystem = "TOP_LEFT",
 }
 
@@ -118,6 +122,33 @@ local function sampleNear(
     return defaultValue
 end
 
+---@param dialog Dialog
+local function updateCartesian(dialog)
+    local args <const> = dialog.data
+    local angleTranslate <const> = args.angleTranslate --[[@as integer]]
+    local magTranslate <const> = args.magTranslate --[[@as number]]
+    local theta <const> = angleTranslate * 0.017453292519943
+    local x <const> = magTranslate * math.cos(theta)
+    local y <const> = magTranslate * math.sin(theta)
+    dialog:modify { id = "xTranslate", text = string.format("%d",
+        Utilities.round(x)) }
+    dialog:modify { id = "yTranslate", text = string.format("%d",
+        Utilities.round(y)) }
+end
+
+---@param dialog Dialog
+local function updatePolar(dialog)
+    local args <const> = dialog.data
+    local xTranslate <const> = args.xTranslate --[[@as integer]]
+    local yTranslate <const> = args.yTranslate --[[@as integer]]
+    local sqMag <const> = xTranslate * xTranslate + yTranslate * yTranslate
+    local mag <const> = sqMag ~= 0.0 and math.sqrt(sqMag) or 0.0
+    local theta <const> = math.atan(yTranslate, xTranslate)
+    local angle <const> = Utilities.round(theta * 57.295779513082) % 360
+    dialog:modify { id = "angleTranslate", value = angle }
+    dialog:modify { id = "magTranslate", text = string.format("%.3f", mag) }
+end
+
 local dlg <const> = Dialog { title = "Transform Cel" }
 
 dlg:combobox {
@@ -129,17 +160,71 @@ dlg:combobox {
 
 dlg:separator { id = "translateSep" }
 
+dlg:combobox {
+    id = "vecType",
+    label = "Type:",
+    option = defaults.vecType,
+    options = vecTypes,
+    onchange = function()
+        local args <const> = dlg.data
+        local vecType <const> = args.vecType --[[@as string]]
+        local isCart <const> = vecType == "CARTESIAN"
+        local isPolar <const> = vecType == "POLAR"
+        dlg:modify { id = "xTranslate", visible = isCart }
+        dlg:modify { id = "yTranslate", visible = isCart }
+        dlg:modify { id = "angleTranslate", visible = isPolar }
+        dlg:modify { id = "magTranslate", visible = isPolar }
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:number {
     id = "xTranslate",
     label = "Vector:",
     text = string.format("%d", defaults.xTranslate),
-    decimals = 0
+    decimals = 0,
+    visible = defaults.vecType == "CARTESIAN",
+    onchange = function()
+        updatePolar(dlg)
+    end
 }
 
 dlg:number {
     id = "yTranslate",
     text = string.format("%d", defaults.yTranslate),
-    decimals = 0
+    decimals = 0,
+    visible = defaults.vecType == "CARTESIAN",
+    onchange = function()
+        updatePolar(dlg)
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "angleTranslate",
+    label = "Degrees:",
+    min = 0,
+    max = 360,
+    value = defaults.angleTranslate,
+    visible = defaults.vecType == "POLAR",
+    onchange = function()
+        updateCartesian(dlg)
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "magTranslate",
+    label = "Radius:",
+    text = string.format("%.3f", defaults.magTranslate),
+    decimals = AseUtilities.DISPLAY_DECIMAL,
+    visible = defaults.vecType == "POLAR",
+    onchange = function()
+        updateCartesian(dlg)
+    end
 }
 
 dlg:newrow { always = false }
@@ -749,14 +834,14 @@ dlg:number {
     label = "Pixels:",
     text = string.format("%d", app.preferences.new_file.width),
     decimals = 0,
-    visible = defaults.units == "PIXEL"
+    visible = defaults.scaleUnits == "PIXEL"
 }
 
 dlg:number {
     id = "pxHeight",
     text = string.format("%d", app.preferences.new_file.height),
     decimals = 0,
-    visible = defaults.units == "PIXEL"
+    visible = defaults.scaleUnits == "PIXEL"
 }
 
 dlg:number {
@@ -764,26 +849,26 @@ dlg:number {
     label = "Percent:",
     text = string.format("%.2f", defaults.prcWidth),
     decimals = 6,
-    visible = defaults.units == "PERCENT"
+    visible = defaults.scaleUnits == "PERCENT"
 }
 
 dlg:number {
     id = "prcHeight",
     text = string.format("%.2f", defaults.prcHeight),
     decimals = 6,
-    visible = defaults.units == "PERCENT"
+    visible = defaults.scaleUnits == "PERCENT"
 }
 
 dlg:newrow { always = false }
 
 dlg:combobox {
-    id = "units",
+    id = "scaleUnits",
     label = "Units:",
-    option = defaults.units,
-    options = unitOptions,
+    option = defaults.scaleUnits,
+    options = scaleUnitOptions,
     onchange = function()
         local args <const> = dlg.data
-        local unitType <const> = args.units --[[@as string]]
+        local unitType <const> = args.scaleUnits --[[@as string]]
         local ispx <const> = unitType == "PIXEL"
         local ispc <const> = unitType == "PERCENT"
         dlg:modify { id = "pxWidth", visible = ispx }
@@ -897,8 +982,8 @@ dlg:button {
         local args <const> = dlg.data
         local target <const> = args.target
             or defaults.target --[[@as string]]
-        local unitType <const> = args.units
-            or defaults.units --[[@as string]]
+        local unitType <const> = args.scaleUnits
+            or defaults.scaleUnits --[[@as string]]
 
         local usePercent <const> = unitType == "PERCENT"
         local wPrc = args.prcWidth
