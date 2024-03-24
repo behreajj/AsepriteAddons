@@ -339,13 +339,13 @@ dlg:separator { id = "colorSep" }
 dlg:color {
     id = "fromColor",
     label = "From:",
-    color = Color { r = 106, g = 32, b = 121, a = 255 }
+    color = Color { r = 125, g = 64, b = 136, a = 255 }
 }
 
 dlg:color {
     id = "toColor",
     label = "To:",
-    color = Color { r = 243, g = 206, b = 82, a = 255 }
+    color = Color { r = 172, g = 118, b = 49, a = 255 }
 }
 
 dlg:newrow { always = false }
