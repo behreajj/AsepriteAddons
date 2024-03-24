@@ -127,6 +127,16 @@ dlg:combobox {
 
 dlg:separator { id = "translateSep" }
 
+dlg:combobox {
+    id = "coordSystem",
+    label = "System:",
+    option = defaults.coordSystem,
+    options = coordSystems,
+    visible = true
+}
+
+dlg:newrow { always = false }
+
 dlg:number {
     id = "xTranslate",
     label = "Vector:",
@@ -138,16 +148,6 @@ dlg:number {
     id = "yTranslate",
     text = string.format("%d", defaults.yTranslate),
     decimals = 0
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "coordSystem",
-    label = "System:",
-    option = defaults.coordSystem,
-    options = coordSystems,
-    visible = false
 }
 
 dlg:newrow { always = false }
