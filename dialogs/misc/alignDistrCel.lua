@@ -484,12 +484,20 @@ local function alignCels(dialog, preset)
             local xAxis <const> = symPrefs.x_axis --[[@as number]]
             xMinRef = math.floor(xAxis)
             xMaxRef = math.ceil(xAxis)
+            if xMinRef == xMaxRef then
+                xMinRef = xMinRef - 1
+                xMaxRef = xMaxRef + 1
+            end
         end
 
         if symMode == 2 or symMode == 3 then
             local yAxis <const> = symPrefs.y_axis --[[@as number]]
             yMinRef = math.floor(yAxis)
             yMaxRef = math.ceil(yAxis)
+            if yMinRef == yMaxRef then
+                yMinRef = yMinRef - 1
+                yMaxRef = yMaxRef + 1
+            end
         end
     end
 
