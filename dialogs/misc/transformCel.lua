@@ -5,12 +5,10 @@ local unitOptions <const> = { "PERCENT", "PIXEL" }
 local coordSystems <const> = { "CENTER", "TOP_LEFT" }
 
 local defaults <const> = {
-    -- TODO: Option to make movement progressive across frames, as in
-    -- frIdx * vx, frIdx * vy ?
-
-    -- TODO: Options to move in Cartesian vs. polar coordinates?
-
-    -- TODO: Flip h and v, move cel position across symmetry axis?
+    -- Polar and Cartesian coordinates tried in commit
+    -- 650a11ebc57a7e4539b5113297f5e2c404978e02 .
+    -- Flip h and v tried in commit
+    -- f8adad7ce334553e16701cae83cdf5a4657f8c4a .
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,

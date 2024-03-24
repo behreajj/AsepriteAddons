@@ -482,7 +482,9 @@ dlg:button {
                                 cc = aLch.c
                                 ch = mixer(aLch.h, bLch.h, t)
                             elseif useHueShift then
-                                local sum <const> = aLch.h + bLch.h
+                                local sum <const> = v > 0.0
+                                    and aLch.h + bLch.h
+                                    or bLch.h
                                 cl = aLch.l
                                 cc = aLch.c
                                 ch = mixer(aLch.h, sum, t)

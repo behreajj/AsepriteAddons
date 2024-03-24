@@ -324,10 +324,10 @@ dlg:button {
                             local trgImg <const> = Image(trgSpec)
                             trgImg.bytes = tconcat(trgByteStrs)
                             tile.image = trgImg
-                        end
-                    end
-                end)
-            end
+                        end -- End tile exists check.
+                    end     -- End tile in tile set loop.
+                end)        -- End transaction.
+            end             -- End all tile sets loop.
         else
             if (not exactSearch) and colorMode ~= ColorMode.RGB then
                 app.alert {
@@ -344,7 +344,7 @@ dlg:button {
 
             if exactSearch then
                 local useExpand = (frInt == alphaIndex)
-                    or (switchColors and ((toInt == alphaIndex)))
+                    or (switchColors and (toInt == alphaIndex))
 
                 app.transaction("Replace Color Exact", function()
                     local i = 0
@@ -394,7 +394,6 @@ dlg:button {
                 end)    -- End exact transaction.
             else
                 -- Fuzzy tolerance search.
-
                 local fromHex <const> = Clr.fromHex
                 local sRgbaToLab <const> = Clr.sRgbToSrLab2
                 local strunpack <const> = string.unpack

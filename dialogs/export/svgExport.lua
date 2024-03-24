@@ -67,7 +67,6 @@ local function comparator(aIdx, bIdx, imgWidth)
     return (aIdx % imgWidth) < (bIdx % imgWidth)
 end
 
-
 ---@param img Image image
 ---@param border integer border size
 ---@param padding integer margin size
