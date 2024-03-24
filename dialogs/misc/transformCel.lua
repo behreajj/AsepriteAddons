@@ -189,12 +189,14 @@ dlg:button {
             local docPrefs <const> = app.preferences.document(activeSprite)
             local symPrefs <const> = docPrefs.symmetry
             local symMode <const> = symPrefs.mode
+            local xAxis <const> = symPrefs.x_axis --[[@as number]]
+            local yAxis <const> = symPrefs.y_axis --[[@as number]]
 
             local xCenter <const> = (symMode == 1 or symMode == 3)
-                and math.floor(symPrefs.x_axis)
+                and math.floor(xAxis)
                 or activeSprite.width // 2
             local yCenter <const> = (symMode == 2 or symMode == 3)
-                and math.floor(symPrefs.y_axis)
+                and math.floor(yAxis)
                 or activeSprite.height // 2
 
             app.transaction("Relocate Cels", function()

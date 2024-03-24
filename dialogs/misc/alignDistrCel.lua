@@ -2,7 +2,7 @@ dofile("../../support/aseutilities.lua")
 
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "RANGE" }
 local layerTargetOptions <const> = { "ACTIVE", "ALL", "RANGE" }
-local referToOptions <const> = { "CELS", "SELECTION", "SPRITE" }
+local referToOptions <const> = { "CELS", "SELECTION", "SPRITE", "SYMMETRY" }
 local inOutOptions <const> = { "INSIDE", "OUTSIDE" }
 
 local defaults <const> = {
@@ -426,6 +426,10 @@ local function alignCels(dialog, preset)
         or defaults.inOut --[[@as string]]
     local sortCels <const> = args.sortCels --[[@as boolean]]
 
+    local docPrefs <const> = app.preferences.document(activeSprite)
+    local tlPrefs <const> = docPrefs.timeline
+    local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
     local selFrames <const> = Utilities.flatArr2(AseUtilities.getFrames(
         activeSprite, frameTarget))
     local lenSelFrames = #selFrames
@@ -451,6 +455,7 @@ local function alignCels(dialog, preset)
 
     local useAbsRef = referTo ~= "CELS"
     local referToMask = referTo == "SELECTION"
+    local referToSym = referTo == "SYMMETRY"
 
     local xMinRef = 0
     local xMaxRef = wSprite - 1
@@ -471,13 +476,26 @@ local function alignCels(dialog, preset)
         yMaxRef = yMinRef + math.max(1, math.abs(selBounds.height)) - 1
     end
 
-    local docPrefs <const> = app.preferences.document(activeSprite)
-    local tlPrefs <const> = docPrefs.timeline
-    local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+    if referToSym then
+        local symPrefs <const> = docPrefs.symmetry
+        local symMode <const> = symPrefs.mode
+
+        if symMode == 1 or symMode == 3 then
+            local xAxis <const> = symPrefs.x_axis --[[@as number]]
+            xMinRef = math.floor(xAxis)
+            xMaxRef = math.ceil(xAxis)
+        end
+
+        if symMode == 2 or symMode == 3 then
+            local yAxis <const> = symPrefs.y_axis --[[@as number]]
+            yMinRef = math.floor(yAxis)
+            yMaxRef = math.ceil(yAxis)
+        end
+    end
 
     local celFunc = nil
     local transactPrefix = "Transaction"
-    local isOutside = referToMask and inOut == "OUTSIDE"
+    local isOutside = (referToMask or referToSym) and inOut == "OUTSIDE"
     if preset == "LEFT" then
         if isOutside then
             celFunc = alignLeftOutside
@@ -699,7 +717,8 @@ dlg:combobox {
         local args <const> = dlg.data
         local referTo <const> = args.referTo --[[@as string]]
         local isSel <const> = referTo == "SELECTION"
-        dlg:modify { id = "inOut", visible = isSel }
+        local isSym <const> = referTo == "SYMMETRY"
+        dlg:modify { id = "inOut", visible = isSel or isSym }
     end
 }
 
@@ -710,6 +729,7 @@ dlg:combobox {
     option = defaults.inOut,
     options = inOutOptions,
     visible = defaults.referTo == "SELECTION"
+        or defaults.referTo == "SYMMETRY"
 }
 
 dlg:separator { id = "alignSep", text = "Align" }
