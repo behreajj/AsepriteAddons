@@ -104,8 +104,9 @@ function AseUtilities.new()
     return inst
 end
 
----Appends the child layers of a layer if it is a group to an array. If the
----layer is not a group, then whether it's appended depends on the arguments.
+---If a layer is a group, appends its children to an array. If the layer
+---is not a group, then whether it's appended depends on the filter booleans.
+---Reference layers are excluded.
 ---@param layer Layer parent layer
 ---@param array Layer[] leaves array
 ---@param includeLocked? boolean include locked layers
@@ -113,9 +114,7 @@ end
 ---@param includeTiles? boolean include tile maps
 ---@param includeBkg? boolean include backgrounds
 ---@return Layer[]
-function AseUtilities.appendLeaves(
-    layer, array,
-    includeLocked, includeHidden,
+function AseUtilities.appendLeaves(layer, array, includeLocked, includeHidden,
     includeTiles, includeBkg)
     -- First, check properties passed by parents to their children.
     if (includeLocked or layer.isEditable)
@@ -136,7 +135,7 @@ function AseUtilities.appendLeaves(
             and (includeBkg or (not layer.isBackground)) then
             -- Leaf order should be what's ideal for composition, with
             -- ascending stack indices.
-            table.insert(array, layer)
+            array[#array + 1] = layer
         end
     end
     return array
@@ -1880,11 +1879,7 @@ function AseUtilities.getLayerHierarchy(
     local i = 0
     while i < lenLayers do
         i = i + 1
-        append(
-            layers[i], array,
-            includeLocked,
-            includeHidden,
-            includeTiles,
+        append(layers[i], array, includeLocked, includeHidden, includeTiles,
             includeBkg)
     end
     return array
