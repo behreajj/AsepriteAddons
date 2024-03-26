@@ -104,6 +104,30 @@ function AseUtilities.new()
     return inst
 end
 
+---If a layer is a group, appends the layer and any child groups to an array.
+---@param layer Layer layer
+---@param array Layer[] groups array
+---@param includeLocked? boolean include locked groups
+---@param includeHidden? boolean include hidden groups
+---@return Layer[]
+function AseUtilities.appendGroups(layer, array, includeLocked, includeHidden)
+    if layer.isGroup
+        and (includeLocked or layer.isEditable)
+        and (includeHidden or layer.isVisible) then
+        array[#array + 1] = layer
+
+        local append <const> = AseUtilities.appendGroups
+        local childLayers <const> = layer.layers --[=[@as Layer[]]=]
+        local lenChildLayers <const> = #childLayers
+        local i = 0
+        while i < lenChildLayers do
+            i = i + 1
+            append(childLayers[i], array, includeLocked, includeHidden)
+        end
+    end
+    return array
+end
+
 ---If a layer is a group, appends its children to an array. If the layer
 ---is not a group, then whether it's appended depends on the filter booleans.
 ---Reference layers are excluded.
@@ -1859,8 +1883,29 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
     end
 end
 
----Appends a sprite's layer hierarchy to an array. If no array is provided, one
----is created. Whether layers are appended depends on the arguments provided.
+---Gets a sprite's groups as a flat array. Whether layers are appended depends
+---on the arguments provided.
+---@param sprite Sprite sprite
+---@param includeLocked? boolean include locked layers
+---@param includeHidden? boolean include hidden layers
+---@return Layer[]
+---@nodiscard
+function AseUtilities.getGroups(sprite, includeLocked, includeHidden)
+    ---@type Layer[]
+    local array <const> = {}
+    local append <const> = AseUtilities.appendGroups
+    local layers <const> = sprite.layers
+    local lenLayers <const> = #layers
+    local i = 0
+    while i < lenLayers do
+        i = i + 1
+        append(layers[i], array, includeLocked, includeHidden)
+    end
+    return array
+end
+
+---Gets the sprite's hierarchy of content-holding layers as a flat array.
+---Whether layers are appended depends on the arguments provided.
 ---@param sprite Sprite sprite
 ---@param includeLocked? boolean include locked layers
 ---@param includeHidden? boolean include hidden layers
@@ -1868,12 +1913,11 @@ end
 ---@param includeBkg? boolean include backgrounds
 ---@return Layer[]
 ---@nodiscard
-function AseUtilities.getLayerHierarchy(
-    sprite,
-    includeLocked, includeHidden,
+function AseUtilities.getLayerHierarchy(sprite, includeLocked, includeHidden,
     includeTiles, includeBkg)
-    local append <const> = AseUtilities.appendLeaves
+    ---@type Layer[]
     local array <const> = {}
+    local append <const> = AseUtilities.appendLeaves
     local layers <const> = sprite.layers
     local lenLayers <const> = #layers
     local i = 0

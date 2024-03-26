@@ -6,6 +6,8 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `brushFromMask`: Creates a brush from a selection. If snap to grid is enabled, sets the center to top-left. If a tile map is active, sets the brush alignment.
 
+- `collapseGroups`: Collapses all group layers in the timeline. If the active layer is a child, sets its top-level ancestor to the active layer.
+
 - `correctPalette`: Prepends `0x00000000`, clear black, to a palette at index 0 if it doesn't already exist. Removes duplicate palette entries. Converts a sprite to and from RGB color mode and sets its `transparentColor` to `0`. This is to avoid a number of issues in indexed color mode, e.g., with the outline tool or with exporting.
 
 - `correctTags`: Removes tags with out-of-bounds frames. Tags with duplicate names have a number appended to the end of the name.
@@ -23,6 +25,8 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 - `cycleSwatchLeft`: If the foreground color has an exact palette match, moves the palette swatch to the left. Does not trigger a palette remap.
  
 - `cycleSwatchRight`: If the foreground color has an exact palette match, moves the palette swatch to the right. Does not trigger a palette remap.
+
+- `expandGroups`: Opens all group layers in the timeline.
 
 - `dereference`: Converts a reference layer to a normal layer. Transfers the reference layer's parent to the new layer.
 
@@ -43,5 +47,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 - `prevTab`: Moves the active sprite to the previous tab. Converts the fore- and background colors to RGB.
 
 - `selectCelsRange`: Creates a selection based on the timeline range, or the active cel if the range is empty. Finds the union of images in the range. Equivalent to holding down `Ctrl` and clicking on an inactive layer in the timeline.
+
+- `toggleGroups`: Toggles the collapsed or expanded state of group folders in the timeline. The active layer's hierarchy remains expanded.
 
 - `ungroupLayers`: Sets the parent of layers in the active layer to their grandparent, if any.
