@@ -1,5 +1,26 @@
 dofile("../../support/gradientutilities.lua")
 
+local defaults <const> = {
+    -- TODO: More options to target layers, including
+    -- to exclude or include locked, hidden, etc.? Problem
+    -- is that you have groups and leaves separate, and
+    -- tint applies to both groups and leaves but opacity
+    -- only to leaves...
+
+    -- TODO: Tint near, CCW, CW direction.
+
+    -- TODO: Bulk lock, contiguous and hide per range buttons?
+
+    -- TODO: Option to select in a range layers based on lock, visible, contiguous
+    -- status?
+
+    -- Blend mode is not included because it would require more
+    -- of the same as in multiProps file -- converting to and
+    -- from strings.
+    nameEntry = "Layer",
+    reverse = false
+}
+
 ---@param sprite Sprite|nil
 ---@param range Range
 ---@param opFlag string
@@ -161,15 +182,13 @@ local function swapColors(dialog)
     }
 end
 
--- Blend mode is not included because it would require more of the same
--- as in multiProps file -- converting to and from strings.
 local dlg <const> = Dialog { title = "Bulk Edit Layers" }
 
 dlg:entry {
     id = "nameEntry",
     label = "Name:",
     focus = true,
-    text = "Layer"
+    text = defaults.nameEntry
 }
 
 dlg:newrow { always = false }
@@ -178,7 +197,7 @@ dlg:check {
     id = "reverse",
     label = "Order:",
     text = "&Reverse",
-    selected = false
+    selected = defaults.reverse
 }
 
 dlg:newrow { always = false }
