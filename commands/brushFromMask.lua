@@ -40,8 +40,8 @@ end
 local appPrefs <const> = app.preferences
 local brushPrefs <const> = appPrefs.brush
 local maskPrefs <const> = appPrefs.selection
-local maskPivot <const> = maskPrefs.pivot_position
-local useSnap <const> = appPrefs.document(sprite).grid.snap
+local maskPivot <const> = maskPrefs.pivot_position --[[@as integer]]
+local useSnap <const> = appPrefs.document(sprite).grid.snap --[[@as boolean]]
 
 -- Ideally, this would also turn off strict tile alignment mode,
 -- but unsure how to do this, as there's only the command to toggle,

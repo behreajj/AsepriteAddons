@@ -48,7 +48,7 @@ if not updateSprite() then return end
 
 local function updatePrefsShowPath()
     prefs = app.preferences
-    showFullPath = prefs.general.show_full_path
+    showFullPath = prefs.general.show_full_path --[[@as boolean]]
 end
 
 updatePrefsShowPath()

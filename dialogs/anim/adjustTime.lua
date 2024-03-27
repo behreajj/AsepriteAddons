@@ -46,9 +46,6 @@ local function getDurAtFrame()
     local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
 
     local frIdx = frameUiOffset + 1
-    local xCenter = activeSprite.width * 0.5
-    local yCenter = activeSprite.height * 0.5
-
     local activeFrame <const> = site.frame
     if activeFrame then
         frIdx = activeFrame.frameNumber + frameUiOffset

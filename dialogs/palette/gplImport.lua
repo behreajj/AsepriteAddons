@@ -64,7 +64,7 @@ dlg:slider {
     label = "Swatch:",
     min = 4,
     max = 32,
-    value = app.preferences.color_bar.box_size,
+    value = app.preferences.color_bar.box_size --[[@as integer]],
     onchange = function()
         local args <const> = dlg.data
         local size <const> = args.swatchSize --[[@as integer]]
@@ -78,7 +78,7 @@ dlg:check {
     id = "useSeparator",
     label = "Display:",
     text = "Separator",
-    value = app.preferences.color_bar.entries_separator,
+    value = app.preferences.color_bar.entries_separator --[[@as boolean]],
     onclick = function()
         local args <const> = dlg.data
         local useSep <const> = args.useSeparator --[[@as boolean]]

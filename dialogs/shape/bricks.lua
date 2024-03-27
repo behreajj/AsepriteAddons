@@ -218,7 +218,7 @@ dlg:button {
 
         local docPrefs <const> = app.preferences.document(sprite)
         local symmetryPrefs <const> = docPrefs.symmetry
-        local oldSymmetry <const> = symmetryPrefs.mode
+        local oldSymmetry <const> = symmetryPrefs.mode --[[@as integer]]
         symmetryPrefs.mode = 0
 
         if vari100 > 0 then

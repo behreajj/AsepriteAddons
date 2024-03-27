@@ -384,7 +384,6 @@ dlg:button {
             or fileExtLc == "tsx" then
             -- Now that this exporter works with Tiled, it has to use a
             -- narrower band of supported extensions.
-            -- fileExt = app.preferences.export_file.image_default_extension
             fileExt = "png"
             fileExtLc = string.lower(fileExt)
             filename = string.sub(filename, 1, -(#fileExtLc) - 1) .. fileExt

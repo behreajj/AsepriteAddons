@@ -10,7 +10,7 @@ Then each element must be recalculated:
 elm[i]' = (elm[i] - mean) / std .
 --]]
 
-local screenScale <const> = app.preferences.general.screen_scale
+local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local modes <const> = { "LAB", "LCH" }

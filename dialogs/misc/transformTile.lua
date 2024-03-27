@@ -63,7 +63,7 @@ local function cycleActive(target, shift)
 
     local access <const> = target == "BACK_TILE" and "bg_tile" or "fg_tile"
     local colorBarPrefs <const> = app.preferences.color_bar
-    local tifCurr <const> = colorBarPrefs[access]
+    local tifCurr <const> = colorBarPrefs[access] --[[@as integer]]
     local tiCurr <const> = app.pixelColor.tileI(tifCurr)
     if tiCurr > lenTileSet - 1 or tiCurr < 0 then
         colorBarPrefs[access] = 0
@@ -326,7 +326,7 @@ local function transformCel(dialog, preset)
         local access <const> = target == "BACK_TILE" and "bg_tile" or "fg_tile"
 
         local colorBarPrefs <const> = app.preferences.color_bar
-        local tifCurr <const> = colorBarPrefs[access]
+        local tifCurr <const> = colorBarPrefs[access] --[[@as integer]]
         local tiCurr <const> = pxTilei(tifCurr)
         if tiCurr > lenTileSet - 1 or tiCurr < 0 then
             colorBarPrefs[access] = 0
@@ -664,14 +664,14 @@ dlg:button {
 
         local selIndices = {}
         if target == "FORE_TILE" then
-            local tifFore <const> = colorBarPrefs["fg_tile"]
+            local tifFore <const> = colorBarPrefs["fg_tile"] --[[@as integer]]
             local tiFore = app.pixelColor.tileI(tifFore)
             if tiFore > lenTileSet - 1 or tiFore < 0 then
                 tiFore = 0
             end
             selIndices[1] = tiFore
         elseif target == "BACK_TILE" then
-            local tifBack <const> = colorBarPrefs["bg_tile"]
+            local tifBack <const> = colorBarPrefs["bg_tile"] --[[@as integer]]
             local tiBack = app.pixelColor.tileI(tifBack)
             if tiBack > lenTileSet - 1 or tiBack < 0 then
                 tiBack = 0
@@ -1032,18 +1032,18 @@ dlg:button {
 
         -- Reassign sorted images to tile set tiles.
         app.transaction("Sort Tile Set", function()
-                local j = 1
-                while j < lenTileSet do
-                    j = j + 1
-                    local tile <const> = tileSet:tile(j - 1)
-                    if tile then
-                        local packet <const> = sortedTsPackets[j]
-                        tile.color = packet.color
-                        tile.data = packet.data
-                        tile.image = packet.image
-                    end
+            local j = 1
+            while j < lenTileSet do
+                j = j + 1
+                local tile <const> = tileSet:tile(j - 1)
+                if tile then
+                    local packet <const> = sortedTsPackets[j]
+                    tile.color = packet.color
+                    tile.data = packet.data
+                    tile.image = packet.image
                 end
-            end)
+            end
+        end)
 
         local uniqueCels <const> = AseUtilities.getUniqueCelsFromLeaves(
             { activeLayer }, activeSprite.frames)

@@ -139,7 +139,7 @@ end
 ---@param includeBkg? boolean include backgrounds
 ---@return Layer[]
 function AseUtilities.appendLeaves(layer, array, includeLocked, includeHidden,
-    includeTiles, includeBkg)
+                                   includeTiles, includeBkg)
     -- First, check properties passed by parents to their children.
     if (includeLocked or layer.isEditable)
         and (includeHidden or layer.isVisible) then
@@ -1535,7 +1535,7 @@ function AseUtilities.filterLayers(
         ---@type Layer[]
         local trgLayers = {}
 
-        local tlHidden <const> = not app.preferences.general.visible_timeline
+        local tlHidden <const> = not app.preferences.general.visible_timeline --[[@as boolean]]
         if tlHidden then
             app.command.Timeline { open = true }
         end
@@ -1811,7 +1811,7 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
     if target == "ALL" then
         return { AseUtilities.frameObjsToIdcs(sprite.frames) }
     elseif target == "RANGE" then
-        local tlHidden <const> = not app.preferences.general.visible_timeline
+        local tlHidden <const> = not app.preferences.general.visible_timeline --[[@as boolean]]
         if tlHidden then
             app.command.Timeline { open = true }
         end
@@ -1914,7 +1914,7 @@ end
 ---@return Layer[]
 ---@nodiscard
 function AseUtilities.getLayerHierarchy(sprite, includeLocked, includeHidden,
-    includeTiles, includeBkg)
+                                        includeTiles, includeBkg)
     ---@type Layer[]
     local array <const> = {}
     local append <const> = AseUtilities.appendLeaves

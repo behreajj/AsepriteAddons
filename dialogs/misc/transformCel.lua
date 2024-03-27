@@ -188,7 +188,7 @@ dlg:button {
         if coordSystem == "CENTER" then
             local docPrefs <const> = app.preferences.document(activeSprite)
             local symPrefs <const> = docPrefs.symmetry
-            local symMode <const> = symPrefs.mode
+            local symMode <const> = symPrefs.mode --[[@as integer]]
             local xAxis <const> = symPrefs.x_axis --[[@as number]]
             local yAxis <const> = symPrefs.y_axis --[[@as number]]
 

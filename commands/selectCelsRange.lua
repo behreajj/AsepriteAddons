@@ -4,7 +4,7 @@ local site <const> = app.site
 local activeSprite <const> = site.sprite
 if not activeSprite then return end
 
-local tlHidden <const> = not app.preferences.general.visible_timeline
+local tlHidden <const> = not app.preferences.general.visible_timeline --[[@as boolean]]
 if tlHidden then
     app.command.Timeline { open = true }
 end

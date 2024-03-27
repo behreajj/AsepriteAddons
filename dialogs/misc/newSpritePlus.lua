@@ -1,7 +1,7 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
-local screenScale <const> = app.preferences.general.screen_scale
+local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
 
 -- New Sprite Plus doesn't support Color Space conversion
 -- because setting color space via script interferes with

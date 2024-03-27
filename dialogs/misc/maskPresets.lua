@@ -251,7 +251,7 @@ dlg:button {
 
         local docPrefs <const> = app.preferences.document(sprite)
         local symPrefs <const> = docPrefs.symmetry
-        local symMode <const> = symPrefs.mode
+        local symMode <const> = symPrefs.mode --[[@as integer]]
 
         local w = math.ceil(spec.width * 0.5)
         if symMode == 1 or symMode == 3 then
@@ -281,7 +281,7 @@ dlg:button {
 
         local docPrefs <const> = app.preferences.document(sprite)
         local symPrefs <const> = docPrefs.symmetry
-        local symMode <const> = symPrefs.mode
+        local symMode <const> = symPrefs.mode --[[@as integer]]
 
         local x = spec.width // 2
         local w = math.ceil(spec.width * 0.5)
@@ -315,7 +315,7 @@ dlg:button {
 
         local docPrefs <const> = app.preferences.document(sprite)
         local symPrefs <const> = docPrefs.symmetry
-        local symMode <const> = symPrefs.mode
+        local symMode <const> = symPrefs.mode --[[@as integer]]
 
         local h = math.ceil(spec.height * 0.5)
         if symMode == 2 or symMode == 3 then
@@ -345,7 +345,7 @@ dlg:button {
 
         local docPrefs <const> = app.preferences.document(sprite)
         local symPrefs <const> = docPrefs.symmetry
-        local symMode <const> = symPrefs.mode
+        local symMode <const> = symPrefs.mode --[[@as integer]]
 
         local y = spec.height // 2
         local h = math.ceil(spec.height * 0.5)

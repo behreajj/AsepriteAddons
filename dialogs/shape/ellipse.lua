@@ -129,7 +129,7 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    color = app.preferences.color_bar.fg_color,
+    color = app.preferences.color_bar.fg_color --[[@as Color]],
     visible = defaults.useStroke
 }
 
@@ -153,7 +153,7 @@ dlg:check {
 
 dlg:color {
     id = "fillClr",
-    color = app.preferences.color_bar.bg_color,
+    color = app.preferences.color_bar.bg_color --[[@as Color]],
     enabled = false,
     visible = defaults.useFill
 }
@@ -236,7 +236,7 @@ dlg:button {
 
         local docPrefs <const> = app.preferences.document(sprite)
         local symmetryPrefs <const> = docPrefs.symmetry
-        local oldSymmetry <const> = symmetryPrefs.mode
+        local oldSymmetry <const> = symmetryPrefs.mode --[[@as integer]]
         symmetryPrefs.mode = 0
 
         -- Technically, this shouldn't work, but a Curve3

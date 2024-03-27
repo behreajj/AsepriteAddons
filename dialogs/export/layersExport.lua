@@ -287,7 +287,7 @@ dlg:button {
         -- Validate file name.
         local fileExt = app.fs.fileExtension(filename)
         if string.lower(fileExt) == "json" then
-            fileExt = app.preferences.export_file.image_default_extension
+            fileExt = app.preferences.export_file.image_default_extension --[[@as string]]
             filename = string.sub(filename, 1, -5) .. fileExt
         end
 

@@ -1,7 +1,7 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
-local screenScale <const> = app.preferences.general.screen_scale
+local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
 
 local edgeTypes <const> = { "CLAMP", "OMIT", "WRAP" }
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
