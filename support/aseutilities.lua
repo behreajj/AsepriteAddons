@@ -138,8 +138,8 @@ end
 ---@param includeTiles? boolean include tile maps
 ---@param includeBkg? boolean include backgrounds
 ---@return Layer[]
-function AseUtilities.appendLeaves(layer, array, includeLocked, includeHidden,
-                                   includeTiles, includeBkg)
+function AseUtilities.appendLeaves(
+    layer, array, includeLocked, includeHidden, includeTiles, includeBkg)
     -- First, check properties passed by parents to their children.
     if (includeLocked or layer.isEditable)
         and (includeHidden or layer.isVisible) then
@@ -1913,8 +1913,8 @@ end
 ---@param includeBkg? boolean include backgrounds
 ---@return Layer[]
 ---@nodiscard
-function AseUtilities.getLayerHierarchy(sprite, includeLocked, includeHidden,
-                                        includeTiles, includeBkg)
+function AseUtilities.getLayerHierarchy(
+    sprite, includeLocked, includeHidden, includeTiles, includeBkg)
     ---@type Layer[]
     local array <const> = {}
     local append <const> = AseUtilities.appendLeaves
