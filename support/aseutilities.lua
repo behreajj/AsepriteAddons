@@ -2719,16 +2719,6 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
         srcSpec.transparentColor))
     local blendModeSrc <const> = BlendMode.SRC
 
-    -- Separate a tile's index from the meta-data. See
-    -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
-    local maskFlipX <const> = 0x80000000
-    local maskFlipY <const> = 0x40000000
-    local maskFlipD <const> = 0x20000000
-    local maskRot90ccw <const> = maskFlipD | maskFlipY
-    local maskRot180 <const> = maskFlipX | maskFlipY
-    local maskRot90cw <const> = maskFlipD | maskFlipX
-    local maskAll <const> = maskFlipD | maskFlipX | maskFlipY
-
     local pixelColor <const> = app.pixelColor
     local pxTilei <const> = pixelColor.tileI
     local pxTilef <const> = pixelColor.tileF
@@ -2741,21 +2731,24 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
         local tile <const> = tileSet:tile(i)
         if tile then
             local tileImage = tile.image
+
+            -- Separate a tile's index from the meta-data. See
+            -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
             local meta <const> = pxTilef(mapif)
-            if meta == maskRot90ccw then
-                tileImage = AseUtilities.rotateImage90(tileImage)
-            elseif meta == maskRot180 then
-                tileImage = AseUtilities.rotateImage180(tileImage)
-            elseif meta == maskRot90cw then
+            if meta == 0x20000000 then -- Transpose (Diagonal)
                 tileImage = AseUtilities.rotateImage270(tileImage)
-            elseif meta == maskFlipY then
+                tileImage = AseUtilities.flipImageX(tileImage)
+            elseif meta == 0x40000000 then -- Y
                 tileImage = AseUtilities.flipImageY(tileImage)
-            elseif meta == maskFlipX then
+            elseif meta == 0x60000000 then -- Y | D
+                tileImage = AseUtilities.rotateImage90(tileImage)
+            elseif meta == 0x80000000 then -- X
                 tileImage = AseUtilities.flipImageX(tileImage)
-            elseif meta == maskFlipD then
+            elseif meta == 0xa0000000 then -- X | D
                 tileImage = AseUtilities.rotateImage270(tileImage)
-                tileImage = AseUtilities.flipImageX(tileImage)
-            elseif meta == maskAll then
+            elseif meta == 0xc0000000 then -- X | Y
+                tileImage = AseUtilities.rotateImage180(tileImage)
+            elseif meta == 0xe0000000 then -- X | Y | D
                 tileImage = AseUtilities.rotateImage90(tileImage)
                 tileImage = AseUtilities.flipImageX(tileImage)
             end
