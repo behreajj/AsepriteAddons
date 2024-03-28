@@ -9,10 +9,8 @@ local defaults <const> = {
 
     -- TODO: Tint near, CCW, CW direction.
 
-    -- TODO: Bulk lock, contiguous and hide per range buttons?
-
-    -- TODO: Option to select in a range layers based on lock, visible, contiguous
-    -- status?
+    -- TODO: Option to select in a range layers based on lock, visible,
+    -- contiguous status?
 
     -- Blend mode is not included because it would require more
     -- of the same as in multiProps file -- converting to and
@@ -26,13 +24,7 @@ local defaults <const> = {
 ---@param opFlag string
 ---@param opNum integer
 local function adjustOpacity(sprite, range, opFlag, opNum)
-    if not sprite then
-        app.alert {
-            title = "Error",
-            text = "There is no active sprite."
-        }
-        return
-    end
+    if not sprite then return end
 
     if range.sprite ~= sprite then
         app.alert {
@@ -187,7 +179,7 @@ local dlg <const> = Dialog { title = "Bulk Edit Layers" }
 dlg:entry {
     id = "nameEntry",
     label = "Name:",
-    focus = true,
+    focus = false,
     text = defaults.nameEntry
 }
 
@@ -208,13 +200,7 @@ dlg:button {
     focus = false,
     onclick = function()
         local sprite <const> = app.sprite
-        if not sprite then
-            app.alert {
-                title = "Error",
-                text = "There is no active sprite."
-            }
-            return
-        end
+        if not sprite then return end
 
         local range <const> = app.range
         if range.sprite ~= sprite then
@@ -276,6 +262,125 @@ dlg:button {
                 layer.name = strfmt(format, nameEntry, n)
             end
         end)
+
+        app.refresh()
+    end
+}
+
+dlg:separator { id = "toggleSep" }
+
+dlg:button {
+    id = "hideButton",
+    label = "Toggle:",
+    text = "&HIDE",
+    focus = true,
+    onclick = function()
+        local sprite <const> = app.sprite
+        if not sprite then return end
+
+        local range <const> = app.range
+        if range.sprite ~= sprite then
+            app.alert {
+                title = "Error",
+                text = "Range sprite doesn't match active sprite."
+            }
+            return
+        end
+
+        local rangeLayers <const> = range.layers
+        local lenRangeLayers <const> = #rangeLayers
+        if lenRangeLayers <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No layers selected."
+            }
+            return
+        end
+
+        local i = 0
+        while i < lenRangeLayers do
+            i = i + 1
+            local layer <const> = rangeLayers[i]
+            layer.isVisible = not layer.isVisible
+        end
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "lockButton",
+    text = "&LOCK",
+    focus = false,
+    onclick = function()
+        local sprite <const> = app.sprite
+        if not sprite then return end
+
+        local range <const> = app.range
+        if range.sprite ~= sprite then
+            app.alert {
+                title = "Error",
+                text = "Range sprite doesn't match active sprite."
+            }
+            return
+        end
+
+        local rangeLayers <const> = range.layers
+        local lenRangeLayers <const> = #rangeLayers
+        if lenRangeLayers <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No layers selected."
+            }
+            return
+        end
+
+        local i = 0
+        while i < lenRangeLayers do
+            i = i + 1
+            local layer <const> = rangeLayers[i]
+            layer.isEditable = not layer.isEditable
+        end
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "contigButton",
+    text = "C&ONTIG",
+    focus = false,
+    onclick = function()
+        local sprite <const> = app.sprite
+        if not sprite then return end
+
+        local range <const> = app.range
+        if range.sprite ~= sprite then
+            app.alert {
+                title = "Error",
+                text = "Range sprite doesn't match active sprite."
+            }
+            return
+        end
+
+        local rangeLayers <const> = range.layers
+        local lenRangeLayers <const> = #rangeLayers
+        if lenRangeLayers <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No layers selected."
+            }
+            return
+        end
+
+        local i = 0
+        while i < lenRangeLayers do
+            i = i + 1
+            local layer <const> = rangeLayers[i]
+            if not layer.isGroup then
+                layer.isContinuous = not layer.isContinuous
+            end
+        end
 
         app.refresh()
     end
@@ -382,13 +487,7 @@ dlg:button {
     focus = false,
     onclick = function()
         local sprite <const> = app.sprite
-        if not sprite then
-            app.alert {
-                title = "Error",
-                text = "There is no active sprite."
-            }
-            return
-        end
+        if not sprite then return end
 
         local range <const> = app.range
         if range.sprite ~= sprite then
