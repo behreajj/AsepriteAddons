@@ -590,7 +590,7 @@ dlg:combobox {
     visible = defaults.target ~= "TILES"
 }
 
--- dlg:newrow { always = false }
+dlg:newrow { always = false }
 
 dlg:check {
     id = "useXFlip",
@@ -930,15 +930,15 @@ dlg:button {
         local tileSet <const> = activeLayer.tileset
         if not tileSet then return end
 
-        local spriteSpec <const> = activeSprite.spec
-        local alphaIndex <const> = spriteSpec.transparentColor
-        local colorMode <const> = spriteSpec.colorMode
-        local colorSpace <const> = spriteSpec.colorSpace
-
         local lenTileSet <const> = #tileSet
         local tileSize <const> = tileSet.grid.tileSize
         local wTile <const> = math.max(1, math.abs(tileSize.width))
         local hTile <const> = math.max(1, math.abs(tileSize.height))
+
+        local spriteSpec <const> = activeSprite.spec
+        local alphaIndex <const> = spriteSpec.transparentColor
+        local colorMode <const> = spriteSpec.colorMode
+        local colorSpace <const> = spriteSpec.colorSpace
 
         -- Cache methods used in a for loop.
         local pixelColor <const> = app.pixelColor
@@ -1072,6 +1072,109 @@ dlg:button {
                 uniqueCel.image = reordered
             end)
         end
+
+        app.refresh()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "bakeFlipsButton",
+    label = "Flips:",
+    text = "BA&KE",
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+
+        local activeFrame <const> = site.frame
+        if not activeFrame then return end
+
+        local activeLayer <const> = site.layer
+        if not activeLayer then return end
+        if not activeLayer.isTilemap then return end
+
+        local activeCel <const> = activeLayer:cel(activeFrame)
+        if not activeCel then return end
+
+        local tileSet <const> = activeLayer.tileset
+        if not tileSet then return end
+
+        local lenTileSet <const> = #tileSet
+        local tileSize <const> = tileSet.grid.tileSize
+        local wTile <const> = math.max(1, math.abs(tileSize.width))
+        local hTile <const> = math.max(1, math.abs(tileSize.height))
+        if wTile ~= hTile then
+            app.alert {
+                title = "Error",
+                text = "Tile size is nonuniform."
+            }
+        end
+
+        -- Cache methods used in a for loop.
+        local pixelColor <const> = app.pixelColor
+        local pxTilei <const> = pixelColor.tileI
+        local pxTilef <const> = pixelColor.tileF
+        local pxTileCompose <const> = pixelColor.tile
+
+        ---@type table<integer, integer>
+        local srcToTrgIf <const> = {}
+
+        local srcMap <const> = activeCel.image
+        local srcItr <const> = srcMap:pixels()
+
+        app.transaction("Bake Flips", function()
+            for mapEntry in srcItr do
+                local trgMapIf = 0
+                local srcMapIf <const> = mapEntry() --[[@as integer]]
+                local srcIdx <const> = pxTilei(srcMapIf)
+                if srcIdx > 0 and srcIdx < lenTileSet then
+                    trgMapIf = srcMapIf
+                    local srcFlag <const> = pxTilef(srcMapIf)
+                    if srcFlag ~= 0 then
+                        trgMapIf = srcToTrgIf[srcMapIf]
+                        if not trgMapIf then
+                            local srcTile <const> = tileSet:tile(srcIdx)
+                            if srcTile then
+                                local srcImage <const> = srcTile.image
+                                local trgImage = nil
+                                if srcFlag == 0x20000000 then -- Transpose (Diagonal)
+                                    trgImage = AseUtilities.rotateImage270(srcImage)
+                                    trgImage = AseUtilities.flipImageX(trgImage)
+                                elseif srcFlag == 0x40000000 then -- Y
+                                    trgImage = AseUtilities.flipImageY(srcImage)
+                                elseif srcFlag == 0x60000000 then -- Y | D
+                                    trgImage = AseUtilities.rotateImage90(srcImage)
+                                elseif srcFlag == 0x80000000 then -- X
+                                    trgImage = AseUtilities.flipImageX(srcImage)
+                                elseif srcFlag == 0xa0000000 then -- X | D
+                                    trgImage = AseUtilities.rotateImage270(srcImage)
+                                elseif srcFlag == 0xc0000000 then -- X | Y
+                                    trgImage = AseUtilities.rotateImage180(srcImage)
+                                elseif srcFlag == 0xe0000000 then -- X | Y | D
+                                    trgImage = AseUtilities.rotateImage90(srcImage)
+                                    trgImage = AseUtilities.flipImageX(trgImage)
+                                else
+                                    -- This case should not happen.
+                                    trgImage = srcImage:clone()
+                                end
+
+                                local trgTile <const> = activeSprite:newTile(tileSet)
+                                trgTile.image = trgImage
+                                trgMapIf = pxTileCompose(trgTile.index, 0)
+                            else
+                                trgMapIf = 0
+                            end
+
+                            srcToTrgIf[srcMapIf] = trgMapIf
+                        end
+                    end
+                end
+
+                mapEntry(trgMapIf)
+            end
+        end)
 
         app.refresh()
     end
