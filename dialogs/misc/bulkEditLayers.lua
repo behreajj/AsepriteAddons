@@ -1,14 +1,6 @@
 dofile("../../support/gradientutilities.lua")
 
 local defaults <const> = {
-    -- TODO: More options to target layers, including
-    -- to exclude or include locked, hidden, etc.? Problem
-    -- is that you have groups and leaves separate, and
-    -- tint applies to both groups and leaves but opacity
-    -- only to leaves...
-
-    -- TODO: Tint near, CCW, CW direction.
-
     -- TODO: Option to select in a range layers based on lock, visible,
     -- contiguous status?
 
@@ -474,6 +466,15 @@ dlg:color {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "huePreset",
+    label = "Easing:",
+    option = GradientUtilities.DEFAULT_HUE_EASING,
+    options = GradientUtilities.HUE_EASING_PRESETS
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "swapColors",
     text = "S&WAP",
@@ -512,6 +513,7 @@ dlg:button {
         local args <const> = dlg.data
         local fromColor <const> = args.fromColor --[[@as Color]]
         local toColor <const> = args.toColor --[[@as Color]]
+        local huePreset <const> = args.huePreset --[[@as string]]
 
         if lenRangeLayers <= 1 then
             app.transaction("Tint Layer", function()
@@ -534,7 +536,7 @@ dlg:button {
             return idLayerDict[a.id] < idLayerDict[b.id]
         end)
 
-        local hueFunc <const> = GradientUtilities.lerpHueCw
+        local hueFunc <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
         local mixer <const> = Clr.mixSrLch
         local clrToAse <const> = AseUtilities.clrToAseColor
         local fromClr = AseUtilities.aseColorToClr(fromColor)
