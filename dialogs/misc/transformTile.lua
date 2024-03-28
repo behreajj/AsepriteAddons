@@ -1117,14 +1117,14 @@ dlg:button {
         local pxTilei <const> = pixelColor.tileI
         local pxTilef <const> = pixelColor.tileF
         local pxTileCompose <const> = pixelColor.tile
+        local bakeFlag <const> = AseUtilities.bakeFlag
 
         ---@type table<integer, integer>
         local srcToTrgIf <const> = {}
-
         local srcMap <const> = activeCel.image
-        local srcItr <const> = srcMap:pixels()
 
         app.transaction("Bake Flips", function()
+            local srcItr <const> = srcMap:pixels()
             for mapEntry in srcItr do
                 local trgMapIf = 0
                 local srcMapIf <const> = mapEntry() --[[@as integer]]
@@ -1138,42 +1138,27 @@ dlg:button {
                             local srcTile <const> = tileSet:tile(srcIdx)
                             if srcTile then
                                 local srcImage <const> = srcTile.image
-                                local trgImage = nil
-                                if srcFlag == 0x20000000 then -- Transpose (Diagonal)
-                                    trgImage = AseUtilities.rotateImage270(srcImage)
-                                    trgImage = AseUtilities.flipImageX(trgImage)
-                                elseif srcFlag == 0x40000000 then -- Y
-                                    trgImage = AseUtilities.flipImageY(srcImage)
-                                elseif srcFlag == 0x60000000 then -- Y | D
-                                    trgImage = AseUtilities.rotateImage90(srcImage)
-                                elseif srcFlag == 0x80000000 then -- X
-                                    trgImage = AseUtilities.flipImageX(srcImage)
-                                elseif srcFlag == 0xa0000000 then -- X | D
-                                    trgImage = AseUtilities.rotateImage270(srcImage)
-                                elseif srcFlag == 0xc0000000 then -- X | Y
-                                    trgImage = AseUtilities.rotateImage180(srcImage)
-                                elseif srcFlag == 0xe0000000 then -- X | Y | D
-                                    trgImage = AseUtilities.rotateImage90(srcImage)
-                                    trgImage = AseUtilities.flipImageX(trgImage)
-                                else
-                                    -- This case should not happen.
-                                    trgImage = srcImage:clone()
-                                end
-
+                                local trgImage <const>, _ <const> = bakeFlag(srcImage, srcFlag)
                                 local trgTile <const> = activeSprite:newTile(tileSet)
                                 trgTile.image = trgImage
                                 trgMapIf = pxTileCompose(trgTile.index, 0)
                             else
                                 trgMapIf = 0
-                            end
+                            end -- End tile is valid.
+                        end     -- End map entry not in dictionary.
+                    end         -- End non zero source flag.
+                end             -- End source index is valid.
+                srcToTrgIf[srcMapIf] = trgMapIf
+            end                 -- End map iterator loop.
+        end)                    -- End transaction.
 
-                            srcToTrgIf[srcMapIf] = trgMapIf
-                        end
-                    end
-                end
-
-                mapEntry(trgMapIf)
+        app.transaction("Update Map", function()
+            local trgMap <const> = srcMap:clone()
+            local trgItr <const> = trgMap:pixels()
+            for mapEntry in trgItr do
+                mapEntry(srcToTrgIf[mapEntry()])
             end
+            activeCel.image = trgMap
         end)
 
         app.refresh()

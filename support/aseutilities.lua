@@ -619,6 +619,33 @@ function AseUtilities.averageNormal(sprite, frame)
     return Vec3.up()
 end
 
+---Transforms a source image according to a flipping flag. If the flag is valid,
+---returns a transformed copy of the image and a boolean true. If not, returns
+---the source image by reference and a boolean false.
+---@param source Image source image
+---@param flag integer flipping flag
+---@return Image
+---@return boolean
+function AseUtilities.bakeFlag(source, flag)
+    -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
+    if flag == 0x20000000 then     -- Transpose (Diagonal)
+        return AseUtilities.transposeImage(source), true
+    elseif flag == 0x40000000 then -- Y
+        return AseUtilities.flipImageY(source), true
+    elseif flag == 0x60000000 then -- Y | D
+        return AseUtilities.rotateImage90(source), true
+    elseif flag == 0x80000000 then -- X
+        return AseUtilities.flipImageX(source), true
+    elseif flag == 0xa0000000 then -- X | D
+        return AseUtilities.rotateImage270(source), true
+    elseif flag == 0xc0000000 then -- X | Y
+        return AseUtilities.rotateImage180(source), true
+    elseif flag == 0xe0000000 then -- X | Y | D
+        return AseUtilities.flipImageAll(source), true
+    end
+    return source, false
+end
+
 ---Converts a sprite's background layer, if any, to a normal layer. Uses the
 ---method Sprite.backgroundLayer to determine this; if a background has been
 ---childed to a group, this may fail. Returns true if a background was found
@@ -1740,6 +1767,28 @@ function AseUtilities.flattenGroup(
     return image, bounds
 end
 
+---Returns a copy of the source image that has been flipped and transposed.
+---@param source Image source image
+---@return Image
+---@nodiscard
+function AseUtilities.flipImageAll(source)
+    local srcSpec <const> = source.spec
+    local w <const> = srcSpec.width
+    local h <const> = srcSpec.height
+
+    local trgSpec <const> = ImageSpec {
+        width = h,
+        height = w,
+        colorMode = srcSpec.colorMode,
+        transparentColor = srcSpec.transparentColor
+    }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target <const> = Image(trgSpec)
+    target.bytes = Utilities.flipPixelsAll(
+        source.bytes, w, h, source.bytesPerPixel)
+    return target
+end
+
 ---Returns a copy of the source image that has been flipped horizontally.
 ---@param source Image source image
 ---@return Image
@@ -2722,6 +2771,7 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
     local pixelColor <const> = app.pixelColor
     local pxTilei <const> = pixelColor.tileI
     local pxTilef <const> = pixelColor.tileF
+    local bakeFlag <const> = AseUtilities.bakeFlag
 
     local mapItr <const> = imgSrc:pixels()
     for mapEntry in mapItr do
@@ -2730,29 +2780,8 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
         -- Tileset:tile method returns nil if the index is out of bounds.
         local tile <const> = tileSet:tile(i)
         if tile then
-            local tileImage = tile.image
-
-            -- Separate a tile's index from the meta-data. See
-            -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
             local meta <const> = pxTilef(mapif)
-            if meta == 0x20000000 then -- Transpose (Diagonal)
-                tileImage = AseUtilities.rotateImage270(tileImage)
-                tileImage = AseUtilities.flipImageX(tileImage)
-            elseif meta == 0x40000000 then -- Y
-                tileImage = AseUtilities.flipImageY(tileImage)
-            elseif meta == 0x60000000 then -- Y | D
-                tileImage = AseUtilities.rotateImage90(tileImage)
-            elseif meta == 0x80000000 then -- X
-                tileImage = AseUtilities.flipImageX(tileImage)
-            elseif meta == 0xa0000000 then -- X | D
-                tileImage = AseUtilities.rotateImage270(tileImage)
-            elseif meta == 0xc0000000 then -- X | Y
-                tileImage = AseUtilities.rotateImage180(tileImage)
-            elseif meta == 0xe0000000 then -- X | Y | D
-                tileImage = AseUtilities.rotateImage90(tileImage)
-                tileImage = AseUtilities.flipImageX(tileImage)
-            end
-
+            local tileImage <const>, _ <const> = bakeFlag(tile.image, meta)
             imgTrg:drawImage(
                 tileImage,
                 Point(mapEntry.x * tileWidth,
@@ -2762,6 +2791,28 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
     end
 
     return imgTrg
+end
+
+---Returns a copy of the source image that has been transposed.
+---@param source Image source image
+---@return Image
+---@nodiscard
+function AseUtilities.transposeImage(source)
+    local srcSpec <const> = source.spec
+    local w <const> = srcSpec.width
+    local h <const> = srcSpec.height
+
+    local trgSpec <const> = ImageSpec {
+        width = h,
+        height = w,
+        colorMode = srcSpec.colorMode,
+        transparentColor = srcSpec.transparentColor
+    }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target <const> = Image(trgSpec)
+    target.bytes = Utilities.transposePixels(
+        source.bytes, w, h, source.bytesPerPixel)
+    return target
 end
 
 ---Trims a cel's image and position to a selection. An image's pixel is cleared

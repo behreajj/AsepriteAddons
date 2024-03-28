@@ -148,6 +148,34 @@ function Utilities.flatArr2(arr2)
     return flat
 end
 
+---Transposes an image's bytes and flips them horizontally and vertically.
+---@param source string source bytes
+---@param w integer image width
+---@param h integer image height
+---@param bpp integer bits per pixel
+---@return string
+---@nodiscard
+function Utilities.flipPixelsAll(source, w, h, bpp)
+    ---@type string[]
+    local transposed <const> = {}
+    local strsub <const> = string.sub
+    local len <const> = w * h
+    local wn1 <const> = w - 1
+    local hn1 <const> = h - 1
+
+    local i = 0
+    while i < len do
+        local y <const> = i // w
+        local x <const> = i % w
+        local j <const> = 1 + (wn1 - x) * h + hn1 - y
+        local ibpp <const> = i * bpp
+        transposed[j] = strsub(source, 1 + ibpp, bpp + ibpp)
+        i = i + 1
+    end
+
+    return table.concat(transposed)
+end
+
 ---Flips an image's bytes horizontally.
 ---@param source string source bytes
 ---@param w integer image width
@@ -160,7 +188,6 @@ function Utilities.flipPixelsX(source, w, h, bpp)
     local flipped <const> = {}
     local strsub <const> = string.sub
     local len <const> = w * h
-    local bppn1 <const> = bpp - 1
     local wn1 <const> = w - 1
 
     local i = 0
@@ -168,9 +195,8 @@ function Utilities.flipPixelsX(source, w, h, bpp)
         local y <const> = i // w
         local x <const> = i % w
         local j <const> = 1 + y * w + wn1 - x
-        local orig <const> = 1 + i * bpp
-        local dest <const> = orig + bppn1
-        flipped[j] = strsub(source, orig, dest)
+        local ibpp <const> = i * bpp
+        flipped[j] = strsub(source, 1 + ibpp, bpp + ibpp)
         i = i + 1
     end
 
@@ -189,17 +215,16 @@ function Utilities.flipPixelsY(source, w, h, bpp)
     local flipped <const> = {}
     local strsub <const> = string.sub
     local len <const> = w * h
-    local bppn1 <const> = bpp - 1
     local hn1 <const> = h - 1
 
     local i = 0
     while i < len do
         local y <const> = i // w
         local x <const> = i % w
+        -- You could multiply hn1 * w before the loop then just y * w within?
         local j <const> = 1 + (hn1 - y) * w + x
-        local orig <const> = 1 + i * bpp
-        local dest <const> = orig + bppn1
-        flipped[j] = strsub(source, orig, dest)
+        local ibpp <const> = i * bpp
+        flipped[j] = strsub(source, 1 + ibpp, bpp + ibpp)
         i = i + 1
     end
 
@@ -875,7 +900,6 @@ function Utilities.rotatePixels90(source, w, h, bpp)
     local rotated <const> = {}
     local strsub <const> = string.sub
     local len <const> = w * h
-    local bppn1 <const> = bpp - 1
     local lennh <const> = w * h - h
 
     local i = 0
@@ -883,9 +907,8 @@ function Utilities.rotatePixels90(source, w, h, bpp)
         local y <const> = i // w
         local x <const> = i % w
         local j <const> = 1 + lennh + y - x * h
-        local orig <const> = 1 + i * bpp
-        local dest <const> = orig + bppn1
-        rotated[j] = strsub(source, orig, dest)
+        local ibpp <const> = i * bpp
+        rotated[j] = strsub(source, 1 + ibpp, bpp + ibpp)
         i = i + 1
     end
 
@@ -904,14 +927,12 @@ function Utilities.rotatePixels180(source, w, h, bpp)
     local rotated <const> = {}
     local strsub <const> = string.sub
     local len <const> = w * h
-    local bppn1 <const> = bpp - 1
 
     local i = 0
     while i < len do
         local j <const> = len - i
-        local orig <const> = 1 + i * bpp
-        local dest <const> = orig + bppn1
-        rotated[j] = strsub(source, orig, dest)
+        local ibpp <const> = i * bpp
+        rotated[j] = strsub(source, 1 + ibpp, bpp + ibpp)
         i = i + 1
     end
 
@@ -930,7 +951,6 @@ function Utilities.rotatePixels270(source, w, h, bpp)
     local rotated <const> = {}
     local strsub <const> = string.sub
     local len <const> = w * h
-    local bppn1 <const> = bpp - 1
     local hn1 <const> = h - 1
 
     local i = 0
@@ -938,9 +958,8 @@ function Utilities.rotatePixels270(source, w, h, bpp)
         local y <const> = i // w
         local x <const> = i % w
         local j <const> = 1 + x * h + hn1 - y
-        local orig <const> = 1 + i * bpp
-        local dest <const> = orig + bppn1
-        rotated[j] = strsub(source, orig, dest)
+        local ibpp <const> = i * bpp
+        rotated[j] = strsub(source, 1 + ibpp, bpp + ibpp)
         i = i + 1
     end
 
@@ -1048,7 +1067,6 @@ function Utilities.rotatePixelsZ(
     local wTrgi <const> = math.ceil(wTrgf)
     local hTrgi <const> = math.ceil(hTrgf)
     local lenTrg <const> = wTrgi * hTrgi
-    local bppn1 <const> = bpp - 1
     local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
 
     local xSrcCenter <const> = wSrc * 0.5
@@ -1070,9 +1088,8 @@ function Utilities.rotatePixelsZ(
         if ySrci >= 0 and ySrci < hSrc
             and xSrci >= 0 and xSrci < wSrc then
             local j <const> = ySrci * wSrc + xSrci
-            local orig <const> = 1 + j * bpp
-            local dest <const> = orig + bppn1
-            rotated[1 + i] = strsub(source, orig, dest)
+            local jbpp <const> = j * bpp
+            rotated[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)
         else
             rotated[1 + i] = alphaStr
         end
@@ -1206,6 +1223,32 @@ function Utilities.toScreen(modelview, projection, pt3, width, height)
     return Vec3.new(x, y, z)
 end
 
+---Transposes an image's bytes.
+---@param source string source bytes
+---@param w integer image width
+---@param h integer image height
+---@param bpp integer bits per pixel
+---@return string
+---@nodiscard
+function Utilities.transposePixels(source, w, h, bpp)
+    ---@type string[]
+    local transposed <const> = {}
+    local strsub <const> = string.sub
+    local len <const> = w * h
+
+    local i = 0
+    while i < len do
+        local y <const> = i // w
+        local x <const> = i % w
+        local j <const> = 1 + x * h + y
+        local ibpp <const> = i * bpp
+        transposed[j] = strsub(source, 1 + ibpp, bpp + ibpp)
+        i = i + 1
+    end
+
+    return table.concat(transposed)
+end
+
 ---Removes white spaces from the end, or right edge, of a table of characters.
 ---Mutates the table in place.
 ---@param chars string[] characters
@@ -1285,7 +1328,6 @@ function Utilities.wrapPixels(source, xt, yt, w, h, bpp)
     local wrapped <const> = {}
     local strsub <const> = string.sub
     local len <const> = w * h
-    local bppn1 <const> = bpp - 1
 
     local i = 0
     while i < len do
@@ -1294,13 +1336,12 @@ function Utilities.wrapPixels(source, xt, yt, w, h, bpp)
         local yShift <const> = (y + yt) % h
         local xShift <const> = (x - xt) % w
         local j <const> = yShift * w + xShift
-        local orig <const> = 1 + j * bpp
-        local dest <const> = orig + bppn1
-        wrapped[1 + i] = strsub(source, orig, dest)
+        local jbpp <const> = j * bpp
+        wrapped[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)
         i = i + 1
     end
 
-    return table.concat(wrapped, "")
+    return table.concat(wrapped)
 end
 
 return Utilities
