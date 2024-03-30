@@ -5,6 +5,9 @@ local unitOptions <const> = { "PERCENT", "PIXEL" }
 local coordSystems <const> = { "CENTER", "TOP_LEFT" }
 
 local defaults <const> = {
+    -- TODO: Skew by integer shift for angles like 45, 135, 225, 315 and
+    -- dimetric angles. See Camzup methods.
+
     -- Polar and Cartesian coordinates tried in commit
     -- 650a11ebc57a7e4539b5113297f5e2c404978e02 .
     -- Flip h and v position tried in commit
