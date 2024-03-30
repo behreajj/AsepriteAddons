@@ -34,9 +34,12 @@ local tsxAligns <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Redo sprite properties to leave out frame and duration or
-    -- to append to what's already there? Might have to make writeProps return
-    -- array of strings, rather than concatenated string...
+    -- TODO: Write all sprite properties to map? Might have to make writeProps
+    -- return array of strings, rather than concatenated string... Problem is
+    -- that a map is not 1:1 a sprite. On the other hand, frames don't have
+    -- properties.
+
+    -- TODO: Option to write tile map background color?
     target = "ALL",
     border = 0,
     padding = 0,
@@ -66,7 +69,8 @@ local tmxMapFormat <const> = table.concat({
     "height=\"%d\" ",
     "tilewidth=\"%d\" ",
     "tileheight=\"%d\" ",
-    "infinite=\"0\">\n",
+    "infinite=\"0\" ",
+    "backgroundcolor=\"#%08x\">\n",
     "%s\n", -- custom properties
     "%s\n", -- tsx use ref array
     "%s\n", -- layer array
@@ -116,6 +120,7 @@ local tsxFormat <const> = table.concat({
     "margin=\"%d\" ",
     "tilecount=\"%d\" ",
     "columns=\"%d\" ",
+    "backgroundcolor=\"#%08x\" ",
     "objectalignment=\"%s\" ",
     "tilerendersize=\"%s\" ",
     "fillmode=\"%s\">\n",
@@ -324,11 +329,21 @@ dlg:combobox {
         local useTsx <const> = metaData == "TILED"
 
         dlg:modify { id = "includeMaps", visible = usemd }
+        dlg:modify { id = "bkgColor", visible = useTsx }
         dlg:modify { id = "tsxAlign", visible = useTsx }
         dlg:modify { id = "tsxRender", visible = useTsx }
         dlg:modify { id = "tsxFill", visible = useTsx }
         dlg:modify { id = "tmxRenderOrder", visible = useTsx and inclMaps }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "bkgColor",
+    label = "Bkg:",
+    color = Color { r = 0, g = 0, b = 0, a = 0 },
+    visible = defaults.metaData == "TILED"
 }
 
 dlg:newrow { always = false }
@@ -567,6 +582,8 @@ dlg:button {
         local createSpec <const> = AseUtilities.createSpec
         local upscale <const> = AseUtilities.upscaleImageForExport
 
+        local blendModeSrc <const> = BlendMode.SRC
+
         -- If you wanted to include an option to target the layers in a range,
         -- then you'd have to perform this on all tilesets in the sprite, not
         -- just the tilesets chosen by the user.
@@ -647,7 +664,6 @@ dlg:button {
                 wSheet, hSheet, spriteColorMode, spriteColorSpace,
                 spriteAlphaIndex)
             local sheetImage <const> = Image(sheetSpec)
-            local blendModeSrc <const> = BlendMode.SRC
 
             -- The first tile in a tile set is empty.
             -- Include this empty tile, and all others, to
@@ -863,6 +879,15 @@ dlg:button {
                     end
                 end
 
+                local bkgArgb = 0x00000000
+                local bkgColor <const> = args.bkgColor --[[@as Color]]
+                if bkgColor.alpha > 0 then
+                    bkgArgb = bkgColor.alpha << 0x18
+                        | bkgColor.red << 0x10
+                        | bkgColor.green << 0x08
+                        | bkgColor.blue
+                end
+
                 local tmxVersion <const> = defaults.tmxVersion
                 local tmxTiledVersion <const> = defaults.tmxTiledVersion
                 local tsxAlign <const> = string.lower(args.tsxAlign
@@ -892,7 +917,7 @@ dlg:button {
                         tsxFormat,
                         tmxVersion, tmxTiledVersion, fileName,
                         wTile, hTile, padding, margin, lenTileSet, columns,
-                        tsxAlign, tsxRender, tsxFill,
+                        bkgArgb, tsxAlign, tsxRender, tsxFill,
                         1, 1, 1, 0,
                         writeProps(tsProps),
                         strfmt("%s.%s", fileName, fileExt),
@@ -1031,6 +1056,7 @@ dlg:button {
                             hSprInTiles,
                             wSprGridScaled,
                             hSprGridScaled,
+                            bkgArgb,
                             mapPropsString,
                             tconcat(tsxRefStrs, "\n"),
                             tconcat(tmxLayerStrs, "\n"))
