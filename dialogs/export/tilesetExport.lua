@@ -34,6 +34,9 @@ local tsxAligns <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Redo sprite properties to leave out frame and duration or
+    -- to append to what's already there? Might have to make writeProps return
+    -- array of strings, rather than concatenated string...
     target = "ALL",
     border = 0,
     padding = 0,
@@ -68,7 +71,7 @@ local tmxMapFormat <const> = table.concat({
     "%s\n", -- tsx use ref array
     "%s\n", -- layer array
     "</map>"
-}, "")
+})
 
 local tmxMapPropsFormat <const> = table.concat({
     "<properties>",
@@ -90,15 +93,16 @@ local tmxLayerFormat <const> = table.concat({
     "visible=\"%d\" ",
     "locked=\"%d\" ",
     "opacity=\"%.2f\">\n",
+    "<properties>\n%s\n</properties>\n",
     "<data encoding=\"csv\">\n%s\n</data>\n",
     "</layer>"
-}, "")
+})
 
-local tilsetRefFormat <const> = table.concat({
+local tilesetRefFormat <const> = table.concat({
     "<tileset ",
     "firstgid=\"%d\" ",
     "source=\"%s.tsx\"/>"
-}, "")
+})
 
 local tsxFormat <const> = table.concat({
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
@@ -120,6 +124,7 @@ local tsxFormat <const> = table.concat({
     "vflip=\"%d\" ",
     "rotate=\"%d\" ",
     "preferuntransformed=\"%d\"/>\n",
+    "<properties>\n%s\n</properties>\n",
     "<image ",
     "source=\"%s\" ",
     "%s", -- transparency string
@@ -172,6 +177,54 @@ local function writeCsv(mapPacket, idxOffset)
     end
 
     return csvData, wMap, hMap
+end
+
+---@param properties table<string, any>
+---@return string
+local function writeProps(properties)
+    ---@type string[]
+    local propStrs <const> = {}
+    local strfmt <const> = string.format
+    local mathtype <const> = math.type
+    local tconcat <const> = table.concat
+    local isFile <const> = app.fs.isFile
+    for k, v in pairs(properties) do
+        -- Ignore script export ID.
+        if k ~= "id" then
+            local tStr = ""
+            local vStr = ""
+
+            -- Other TMX types: "color", "file", "object".
+            -- Color is "#AARRGGBB" hexadecimal formatted string with hash.
+            -- Aseprite doesn't seem to support Color userdata in properties.
+            local typev <const> = type(v)
+            if typev == "boolean" then
+                tStr = "bool"
+                vStr = v and "true" or "false"
+            elseif typev == "number" then
+                if mathtype(v) == "integer" then
+                    tStr = "int"
+                    vStr = strfmt("%d", v)
+                else
+                    tStr = "float"
+                    vStr = strfmt("%.6f", v)
+                end
+            elseif typev == "string" then
+                tStr = isFile(v) and "file" or "string"
+                vStr = v
+            elseif typev == "table" then
+                -- Ideally this would be recursive...
+                tStr = "string"
+                vStr = tconcat(v, ", ")
+            end
+
+            local propStr <const> = strfmt(
+                "<property name=\"%s\" type=\"%s\" value=\"%s\" />",
+                k, tStr, vStr)
+            propStrs[#propStrs + 1] = propStr
+        end
+    end
+    return tconcat(propStrs, "\n")
 end
 
 local dlg <const> = Dialog { title = "Export Tilesets" }
@@ -522,13 +575,13 @@ dlg:button {
             while h < lenTileSets do
                 h = h + 1
                 local tileSet <const> = tileSets[h]
-                local tileId = 0
+                local tsId = 0
                 local tileSetProps <const> = tileSet.properties
                 if tileSetProps["id"] then
-                    tileId = tileSetProps["id"] --[[@as integer]]
+                    tsId = tileSetProps["id"] --[[@as integer]]
                 else
-                    tileId = rng(minint64, maxint64)
-                    tileSet.properties["id"] = tileId
+                    tsId = rng(minint64, maxint64)
+                    tileSet.properties["id"] = tsId
                 end
             end
         end)
@@ -544,7 +597,8 @@ dlg:button {
             local lenTileSet <const> = #tileSet
             local tileSetName <const> = tileSet.name
             local tileSetBaseIndex <const> = tileSet.baseIndex
-            local tileId <const> = tileSet.properties["id"]
+            local tsProps <const> = tileSet.properties
+            local tsId <const> = tsProps["id"]
 
             local tileGrid <const> = tileSet.grid
             local tileDim <const> = tileGrid.tileSize
@@ -602,6 +656,7 @@ dlg:button {
             while k < lenTileSet do
                 local tile <const> = tileSet:tile(k)
                 if tile then
+                    -- TODO: Both Aseprite and Tiled support tile properties.
                     local tileImage <const> = tile.image
                     local tileScaled = tileImage
                     if useResize then
@@ -633,18 +688,19 @@ dlg:button {
             }
 
             local sheetPacket <const> = {
-                id = tileId,
+                id = tsId,
                 fileName = fileNameShort,
                 baseIndex = tileSetBaseIndex,
                 columns = columns,
                 height = hSheet,
                 hTile = hTileTrg,
+                properties = tsProps,
                 rows = rows,
                 lenTileSet = lenTileSet,
                 width = wSheet,
                 wTile = wTileTrg
             }
-            sheetPackets[tileId] = sheetPacket
+            sheetPackets[tsId] = sheetPacket
         end
 
         if metaData ~= "NONE" then
@@ -717,6 +773,7 @@ dlg:button {
                             isVisible = tmLayer.isVisible,
                             name = tmLayer.name,
                             opacity = tmLayer.opacity or 255,
+                            properties = tmLayer.properties,
                             tileset = tileSetId
                         }
                         layerPackets[#layerPackets + 1] = layerPacket
@@ -827,6 +884,7 @@ dlg:button {
                     local lenTileSet <const> = sheet.lenTileSet
                     local width <const> = sheet.width
                     local wTile <const> = sheet.wTile
+                    local tsProps <const> = sheet.properties
 
                     -- Currently the allowed flips and rotations don't seem
                     -- accessible from Lua API, so default to 1, 1, 1, 0.
@@ -836,6 +894,7 @@ dlg:button {
                         wTile, hTile, padding, margin, lenTileSet, columns,
                         tsxAlign, tsxRender, tsxFill,
                         1, 1, 1, 0,
+                        writeProps(tsProps),
                         strfmt("%s.%s", fileName, fileExt),
                         alphaStr, width, height)
 
@@ -907,6 +966,7 @@ dlg:button {
                             local layerName <const> = layerPacket.name
                             local layerOpacity <const> = layerPacket.opacity / 255.0
                             local tileSetId <const> = layerPacket.tileset
+                            local layerProps <const> = layerPacket.properties
 
                             local idxOffset = 0
                             if usedTileSets[tileSetId] then
@@ -943,6 +1003,7 @@ dlg:button {
                                 xOffset, yOffset,
                                 isVisible, isLocked,
                                 compOpacity,
+                                writeProps(layerProps),
                                 tconcat(csvData, ",\n"))
                             tmxLayerStrs[m] = tmxLayerStr
                         end
@@ -952,7 +1013,7 @@ dlg:button {
                         for tsId, tsGid in pairs(usedTileSets) do
                             local sheet <const> = sheetPackets[tsId]
                             tsxRefStrs[#tsxRefStrs + 1] = strfmt(
-                                tilsetRefFormat,
+                                tilesetRefFormat,
                                 tsGid,
                                 sheet.fileName)
                         end
