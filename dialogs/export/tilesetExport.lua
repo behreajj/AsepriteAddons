@@ -34,12 +34,6 @@ local tsxAligns <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Write all sprite properties to map? Might have to make writeProps
-    -- return array of strings, rather than concatenated string... Problem is
-    -- that a map is not 1:1 a sprite. On the other hand, frames don't have
-    -- properties.
-
-    -- TODO: Option to write tile map background color?
     target = "ALL",
     border = 0,
     padding = 0,
@@ -71,18 +65,11 @@ local tmxMapFormat <const> = table.concat({
     "tileheight=\"%d\" ",
     "infinite=\"0\" ",
     "backgroundcolor=\"#%08x\">\n",
-    "%s\n", -- custom properties
+    "<properties>\n%s\n</properties>\n",
     "%s\n", -- tsx use ref array
     "%s\n", -- layer array
     "</map>"
 })
-
-local tmxMapPropsFormat <const> = table.concat({
-    "<properties>",
-    "<property name=\"duration\" type=\"int\" value=\"%d\"/>",
-    "<property name=\"frameNumber\" type=\"int\" value=\"%d\"/>",
-    "</properties>",
-}, "\n")
 
 -- This doesn't record blend modes in custom properties because the cost of
 -- another blendMode enum const to string function outweighs the benefit.
@@ -168,7 +155,6 @@ local function writeCsv(mapPacket, idxOffset)
                 local comp = 0
                 if index ~= 0 then
                     comp = idxOffVrf + index
-                    -- Option to omit flipping flags?
                     local flag <const> = flags[flat]
                     comp = flag | comp
                 end
@@ -185,7 +171,7 @@ local function writeCsv(mapPacket, idxOffset)
 end
 
 ---@param properties table<string, any>
----@return string
+---@return string[]
 local function writeProps(properties)
     ---@type string[]
     local propStrs <const> = {}
@@ -218,7 +204,7 @@ local function writeProps(properties)
                 tStr = isFile(v) and "file" or "string"
                 vStr = v
             elseif typev == "table" then
-                -- Ideally this would be recursive...
+                -- Ideally this would be recursive.
                 tStr = "string"
                 vStr = tconcat(v, ", ")
             end
@@ -229,7 +215,7 @@ local function writeProps(properties)
             propStrs[#propStrs + 1] = propStr
         end
     end
-    return tconcat(propStrs, "\n")
+    return propStrs
 end
 
 local dlg <const> = Dialog { title = "Export Tilesets" }
@@ -570,6 +556,7 @@ dlg:button {
         local maxint64 <const> = 0x7fffffffffffffff
 
         -- Cache methods used in loops.
+        local ioOpen <const> = io.open
         local ceil <const> = math.ceil
         local floor <const> = math.floor
         local max <const> = math.max
@@ -868,25 +855,21 @@ dlg:button {
                 if spriteColorMode == ColorMode.INDEXED then
                     local trColor <const> = sheetPalette:getColor(spriteAlphaIndex)
                     local aTr <const> = trColor.alpha
-                    if aTr > 0 then
-                        local rTr <const> = trColor.red
-                        local gTr <const> = trColor.green
-                        local bTr <const> = trColor.blue
+                    local rTr <const> = trColor.red
+                    local gTr <const> = trColor.green
+                    local bTr <const> = trColor.blue
 
-                        -- TMX format is AARRGGBB.
-                        alphaStr = string.format("trans=\"%08x\" ",
-                            aTr << 0x18 | rTr << 0x10 | gTr << 0x08 | bTr)
-                    end
+                    -- Format is slightly different than other colors,
+                    -- as it doesn't use hashtag.
+                    alphaStr = string.format("trans=\"%08x\" ",
+                        aTr << 0x18 | rTr << 0x10 | gTr << 0x08 | bTr)
                 end
 
-                local bkgArgb = 0x00000000
                 local bkgColor <const> = args.bkgColor --[[@as Color]]
-                if bkgColor.alpha > 0 then
-                    bkgArgb = bkgColor.alpha << 0x18
-                        | bkgColor.red << 0x10
-                        | bkgColor.green << 0x08
-                        | bkgColor.blue
-                end
+                local bkgArgb <const> = bkgColor.alpha << 0x18
+                    | bkgColor.red << 0x10
+                    | bkgColor.green << 0x08
+                    | bkgColor.blue
 
                 local tmxVersion <const> = defaults.tmxVersion
                 local tmxTiledVersion <const> = defaults.tmxTiledVersion
@@ -907,9 +890,9 @@ dlg:button {
                     local height <const> = sheet.height
                     local hTile <const> = sheet.hTile
                     local lenTileSet <const> = sheet.lenTileSet
+                    local tsProps <const> = sheet.properties
                     local width <const> = sheet.width
                     local wTile <const> = sheet.wTile
-                    local tsProps <const> = sheet.properties
 
                     -- Currently the allowed flips and rotations don't seem
                     -- accessible from Lua API, so default to 1, 1, 1, 0.
@@ -919,12 +902,12 @@ dlg:button {
                         wTile, hTile, padding, margin, lenTileSet, columns,
                         bkgArgb, tsxAlign, tsxRender, tsxFill,
                         1, 1, 1, 0,
-                        writeProps(tsProps),
+                        tconcat(writeProps(tsProps), "\n"),
                         strfmt("%s.%s", fileName, fileExt),
                         alphaStr, width, height)
 
                     local tsxFilePath <const> = strfmt("%s%s.tsx", filePath, fileName)
-                    local tsxFile <const>, _ <const> = io.open(tsxFilePath, "w")
+                    local tsxFile <const>, _ <const> = ioOpen(tsxFilePath, "w")
                     if tsxFile then
                         tsxFile:write(tsxStr)
                         tsxFile:close()
@@ -932,11 +915,24 @@ dlg:button {
                 end
 
                 if includeMaps then
-                    local spriteGrid <const> = activeSprite.gridBounds
-                    local wSprGrd <const> = math.max(1, math.abs(
-                        spriteGrid.width))
-                    local hSprGrd <const> = math.max(1, math.abs(
-                        spriteGrid.height))
+                    -- Aseprite and Tiled handle tile sets of variable sizes in
+                    -- the same sprite / map differently. Avoid extra issues by
+                    -- using the tile set grid size if there's only one. Other
+                    -- wise, use the sprite grid.
+                    local wSprGrd = 1
+                    local hSprGrd = 1
+                    if lenTileSets == 1 then
+                        local tileSet <const> = tileSets[1]
+                        local tileGrid <const> = tileSet.grid
+                        local tileDim <const> = tileGrid.tileSize
+                        wSprGrd = math.max(1, math.abs(tileDim.width))
+                        hSprGrd = math.max(1, math.abs(tileDim.height))
+                    else
+                        local spriteGrid <const> = activeSprite.gridBounds
+                        wSprGrd = math.max(1, math.abs(spriteGrid.width))
+                        hSprGrd = math.max(1, math.abs(spriteGrid.height))
+                    end
+
                     local wSprGridScaled <const> = wScale * wSprGrd
                     local hSprGridScaled <const> = hScale * hSprGrd
 
@@ -948,6 +944,13 @@ dlg:button {
                     local lenLayerPackets <const> = #layerPackets
                     local lenCelPackets <const> = #celPackets
                     local lenMapPackets <const> = #mapPackets
+
+                    -- Append frame duration and number to sprite properties.
+                    local mapPropsStrs <const> = writeProps(activeSprite.properties)
+                    local durPropIdx <const> = #mapPackets + 1
+                    local frNoPropIdx <const> = durPropIdx + 1
+                    mapPropsStrs[durPropIdx] = ""
+                    mapPropsStrs[frNoPropIdx] = ""
 
                     for _, frame in pairs(framePackets) do
                         local frIdx <const> = frame.frameNumber
@@ -990,8 +993,8 @@ dlg:button {
                             local isVisible <const> = layerPacket.isVisible and 1 or 0
                             local layerName <const> = layerPacket.name
                             local layerOpacity <const> = layerPacket.opacity / 255.0
-                            local tileSetId <const> = layerPacket.tileset
                             local layerProps <const> = layerPacket.properties
+                            local tileSetId <const> = layerPacket.tileset
 
                             local idxOffset = 0
                             if usedTileSets[tileSetId] then
@@ -1028,7 +1031,7 @@ dlg:button {
                                 xOffset, yOffset,
                                 isVisible, isLocked,
                                 compOpacity,
-                                writeProps(layerProps),
+                                tconcat(writeProps(layerProps), "\n"),
                                 tconcat(csvData, ",\n"))
                             tmxLayerStrs[m] = tmxLayerStr
                         end
@@ -1043,9 +1046,12 @@ dlg:button {
                                 sheet.fileName)
                         end
 
-                        local mapPropsString <const> = strfmt(
-                            tmxMapPropsFormat,
-                            floor(frame.duration * 1000),
+                        mapPropsStrs[durPropIdx] = strfmt(
+                            "<property name=\"duration\" type=\"int\" value=\"%d\"/>",
+                            floor(frame.duration * 1000)
+                        )
+                        mapPropsStrs[frNoPropIdx] = strfmt(
+                            "<property name=\"frameNumber\" type=\"int\" value=\"%d\"/>",
                             frame.frameNumber - 1)
 
                         local tmxString <const> = strfmt(
@@ -1057,7 +1063,7 @@ dlg:button {
                             wSprGridScaled,
                             hSprGridScaled,
                             bkgArgb,
-                            mapPropsString,
+                            tconcat(mapPropsStrs, "\n"),
                             tconcat(tsxRefStrs, "\n"),
                             tconcat(tmxLayerStrs, "\n"))
 
@@ -1067,7 +1073,7 @@ dlg:button {
                         end
                         tmxFilepath = strfmt("%s_%03d.tmx", tmxFilepath, frIdx - 1)
 
-                        local tmxFile <const>, _ <const> = io.open(tmxFilepath, "w")
+                        local tmxFile <const>, _ <const> = ioOpen(tmxFilepath, "w")
                         if tmxFile then
                             tmxFile:write(tmxString)
                             tmxFile:close()
