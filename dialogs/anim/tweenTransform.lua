@@ -834,7 +834,8 @@ dlg:button {
                     floor(yCurr - trgImg.height * 0.5))
 
                 transact("Anim Cel", function()
-                    local cel <const> = activeSprite:newCel(trgLayer, frObj, trgImg, trgPoint)
+                    local cel <const> = activeSprite:newCel(
+                        trgLayer, frObj, trgImg, trgPoint)
                     cel.properties[rotPropId] = round(currDeg)
                 end)
 
@@ -910,7 +911,7 @@ dlg:button {
             local samples <const> = Curve2.paramPoints(
                 curve, totalLength, arcLengths, alpSampleCount)
 
-            --Easing functions default to using degrees.
+            -- Easing functions default to using degrees.
             local angleMixDeg = Utilities.lerpAngleNear
             local angleType <const> = args.angleType
                 or defaults.angleType --[[@as string]]
@@ -949,7 +950,9 @@ dlg:button {
                 local frObj <const> = frObjs[frIdxOrigVerif + j]
                 local fac <const> = factors[1 + j]
                 local t = eval(curve, fac).x
-                if fac > 0.0 and fac < 1.0 then
+                -- Can go out of bounds with 0.0 and 1.0 as boundaries
+                -- with ease types like circ in and out.
+                if fac > 0.000001 and fac < 0.999999 then
                     local tScale <const> = t * (alpSampleCount - 1)
                     local tFloor <const> = floor(tScale)
                     local tFrac <const> = tScale - tFloor
