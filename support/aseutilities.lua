@@ -1327,12 +1327,18 @@ function AseUtilities.createSprite(spec, fileName)
     local sprite <const> = Sprite(spec)
     if fileName then sprite.filename = fileName end
 
+    local appPrefs <const> = app.preferences
+
+    -- https://community.aseprite.org/t/vertical-skewing-broken-when-pivot-is-set-to-the-right/
+    -- https://steamcommunity.com/app/431730/discussions/2/4356743320309073149/
+    appPrefs.selection.pivot_position = 4
+
     -- It's overkill to handle sprite.pixelRatio (a Size) here. Handle it in
     -- newSpritePlus and spriteProps, if at all. See also
-    -- app.preferences.new_file.pixel_ratio, a string, "1:2", "2:1", "1:1" .
+    -- appPrefs.new_file.pixel_ratio, a string, "1:2", "2:1", "1:1" .
 
     -- https://steamcommunity.com/app/431730/discussions/2/3803906367798695226/
-    local docPrefs <const> = app.preferences.document(sprite)
+    local docPrefs <const> = appPrefs.document(sprite)
     local onionSkinPrefs <const> = docPrefs.onionskin
     onionSkinPrefs.loop_tag = false
 
