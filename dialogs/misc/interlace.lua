@@ -2,6 +2,7 @@ dofile("../../support/aseutilities.lua")
 
 local dirTypes <const> = {
     "AND",
+    "CIRCLE",
     "DIAGONAL",
     "HORIZONTAL",
     "RANDOM",
@@ -236,6 +237,12 @@ dlg:button {
         if dirType == "AND" then
             eval = function(x, y, p, a)
                 return (x % a < p) and (y % a < p)
+            end
+        elseif dirType == "CIRCLE" then
+            eval = function(x, y, p, a)
+                local dx <const> = x - activeSprite.width // 2
+                local dy <const> = y - activeSprite.height // 2
+                return math.sqrt(dx * dx + dy * dy) % a < p
             end
         elseif dirType == "DIAGONAL" then
             -- Distinguish between (x - y) and (x + y)?
