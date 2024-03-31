@@ -415,7 +415,7 @@ dlg:button {
                     local frObj <const> = frObjs[frIdxOrigVerif + j]
                     local fac <const> = j * jToFac + jFacOff
                     local t = eval(curve, fac).x
-                    if fac > 0.0 and fac < 1.0 then
+                    if fac > 0.000001 and fac < 0.999999 then
                         local tScale <const> = t * (alpSampleCount - 1)
                         local tFloor <const> = floor(tScale)
                         local tFrac <const> = tScale - tFloor
