@@ -1,14 +1,13 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
---[[
-Standardization is not the same as normalization.
+--[[Standardization is not the same as normalization.
 For standardization, a range's average must be found,
 then its standard deviation must be found:
 sqrt ( sum( ( arr[i] - mean ) ^ 2 / len ) )
 Then each element must be recalculated:
 elm[i]' = (elm[i] - mean) / std .
---]]
+]]
 
 local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
 

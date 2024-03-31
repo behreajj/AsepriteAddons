@@ -1,7 +1,7 @@
 --[[This could respond to app.preferences.range.opacity being 0 (0 to 255)
 or 1 (0 to 100), some dialogs have wait=true and others wait=false, meaning the
 preference could be changed after the dialog window is opened.
---]]
+]]
 
 local aniDirs <const> = {
     "FORWARD",

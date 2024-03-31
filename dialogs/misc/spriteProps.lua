@@ -1,7 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
---[[
-To fix filepath display in Aseprite source:
+--[[To fix filepath display in Aseprite source:
 Go to src/app/commands/cmd_sprite_properties.cpp
 Around line 288:
     if (Preferences::instance().general.showFullPath()) {
@@ -9,7 +8,7 @@ Around line 288:
     } else {
         window.name()->setText(document->name());
     }
---]]
+]]
 
 local defaults <const> = {
     -- TODO: Show start and end time of each frame?
