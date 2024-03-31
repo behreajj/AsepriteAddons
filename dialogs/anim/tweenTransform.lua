@@ -773,6 +773,9 @@ dlg:button {
                 frIdxOrigVerif + frameUiOffset,
                 frIdxDestVerif + frameUiOffset)
             trgLayer.parent = srcLayer.parent
+            trgLayer.opacity = srcLayer.opacity or 255
+            trgLayer.blendMode = srcLayer.blendMode
+                or BlendMode.NORMAL
         end)
 
         -- Cache methods used in loop.

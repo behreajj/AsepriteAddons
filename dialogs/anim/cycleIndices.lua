@@ -182,8 +182,9 @@ dlg:button {
             trgLayer.name = string.format(
                 "%s Cycled", srcLayerName)
             trgLayer.parent = srcLayer.parent
-            trgLayer.opacity = srcLayer.opacity
+            trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.blendMode = srcLayer.blendMode
+                or BlendMode.NORMAL
         end)
 
         local usePerFrame <const> = incrType == "PER_FRAME"

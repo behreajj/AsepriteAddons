@@ -276,7 +276,7 @@ dlg:button {
             trgLayer = activeSprite:newLayer()
             trgLayer.name = srcLayer.name .. " Onion"
             trgLayer.parent = srcLayer.parent
-            trgLayer.opacity = srcLayer.opacity
+            trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.stackIndex = srcLayer.stackIndex
         end)
 

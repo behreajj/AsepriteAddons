@@ -601,8 +601,9 @@ dlg:button {
                 "%s Dither %s %03d",
                 srcLayerName, dmStr, factor100)
             trgLayer.parent = srcLayer.parent
-            trgLayer.opacity = srcLayer.opacity
+            trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.blendMode = srcLayer.blendMode
+                or BlendMode.NORMAL
         end)
 
         -- Cache global methods.

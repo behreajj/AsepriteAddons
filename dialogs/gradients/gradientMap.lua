@@ -131,7 +131,7 @@ dlg:button {
         app.transaction("New Layer", function()
             trgLayer = activeSprite:newLayer()
             trgLayer.parent = srcLayer.parent
-            trgLayer.opacity = srcLayer.opacity
+            trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.name = "Gradient Map"
             if useMixed then
                 trgLayer.name = trgLayer.name

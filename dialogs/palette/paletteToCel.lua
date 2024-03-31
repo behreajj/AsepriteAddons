@@ -330,8 +330,9 @@ dlg:button {
             trgLayer.name = string.format("%s %s %03d",
                 srcLayerName, clrSpacePreset, hexesSrgbLen)
             trgLayer.parent = srcLayer.parent
-            trgLayer.opacity = srcLayer.opacity
+            trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.blendMode = srcLayer.blendMode
+                or BlendMode.NORMAL
         end)
 
         local rgbColorMode <const> = ColorMode.RGB
