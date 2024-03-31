@@ -17,13 +17,15 @@ local defaults <const> = {
     target = "ACTIVE",
     delLyr = "HIDE",
     dirType = "HORIZONTAL",
+    xOrig = 0,
+    yOrig = 0,
     skip = 1,
-    xSkip = 0.0,
-    ySkip = 0.0,
+    xSkip = 0,
+    ySkip = 0,
     aSkip = 170,
     pick = 1,
-    xPick = 0.0,
-    yPick = 0.0,
+    xPick = 0,
+    yPick = 0,
     aPick = 255,
     pullFocus = false
 }
@@ -52,7 +54,34 @@ dlg:combobox {
     id = "dirType",
     label = "Method:",
     option = defaults.dirType,
-    options = dirTypes
+    options = dirTypes,
+    onchange = function()
+        local args <const> = dlg.data
+        local dirType <const> = args.dirType --[[@as string]]
+        local useOrig <const> = dirType == "CIRCLE"
+            or dirType == "SQUARE"
+        dlg:modify { id = "xOrig", visible = useOrig }
+        dlg:modify { id = "yOrig", visible = useOrig }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "xOrig",
+    label = "Center:",
+    text = string.format("%d", defaults.xOrig),
+    decimals = 0,
+    visible = defaults.dirType == "CIRCLE"
+        or defaults.dirType == "SQUARE"
+}
+
+dlg:number {
+    id = "yOrig",
+    text = string.format("%d", defaults.yOrig),
+    decimals = 0,
+    visible = defaults.dirType == "CIRCLE"
+        or defaults.dirType == "SQUARE"
 }
 
 dlg:separator {
@@ -189,6 +218,8 @@ dlg:button {
         local target <const> = args.target or defaults.target --[[@as string]]
         local dirType <const> = args.dirType or defaults.dirType --[[@as string]]
         local delSrcStr <const> = args.delLyr or defaults.delLyr --[[@as string]]
+        local xOrig <const> = args.xOrig or defaults.xOrig --[[@as integer]]
+        local yOrig <const> = args.yOrig or defaults.yOrig --[[@as integer]]
 
         local skip <const> = args.skip or defaults.skip --[[@as integer]]
         local xSkip <const> = args.xSkip or defaults.xSkip --[[@as integer]]
@@ -240,8 +271,8 @@ dlg:button {
             end
         elseif dirType == "CIRCLE" then
             eval = function(x, y, p, a)
-                local dx <const> = x - activeSprite.width // 2
-                local dy <const> = y - activeSprite.height // 2
+                local dx <const> = x - xOrig
+                local dy <const> = y - yOrig
                 return math.sqrt(dx * dx + dy * dy) % a < p
             end
         elseif dirType == "DIAGONAL" then
@@ -256,8 +287,8 @@ dlg:button {
         elseif dirType == "SQUARE" then
             eval = function(x, y, p, a)
                 return math.max(
-                    math.abs(x - activeSprite.width // 2),
-                    math.abs(y - activeSprite.height // 2)) % a < p
+                    math.abs(x - xOrig),
+                    math.abs(y - yOrig)) % a < p
             end
         elseif dirType == "VERTICAL" then
             eval = function(x, y, p, a)
