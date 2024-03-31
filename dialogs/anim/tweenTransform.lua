@@ -836,7 +836,7 @@ dlg:button {
                 transact("Anim Cel", function()
                     local cel <const> = activeSprite:newCel(
                         trgLayer, frObj, trgImg, trgPoint)
-                    cel.properties[rotPropId] = round(currDeg)
+                    cel.properties[rotPropId] = round(currDeg) % 360
                 end)
 
                 j = j + 1
@@ -986,7 +986,7 @@ dlg:button {
                 transact("Anim Cel", function()
                     local cel <const> = activeSprite:newCel(
                         trgLayer, frObj, trgImg, trgPoint)
-                    cel.properties[rotPropId] = round(degTrg)
+                    cel.properties[rotPropId] = round(degTrg) % 360
                 end)
 
                 j = j + 1
