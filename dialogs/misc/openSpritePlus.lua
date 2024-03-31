@@ -53,7 +53,10 @@ local function loadSprite(filePath)
     else
         sprite = Sprite { fromFile = filePath }
         if fileExtLower ~= "ase" and fileExtLower ~= "aseprite" then
-            local docPrefs <const> = app.preferences.document(sprite)
+            local appPrefs <const> = app.preferences
+            appPrefs.selection.pivot_position = 4
+
+            local docPrefs <const> = appPrefs.document(sprite)
             local onionSkinPrefs <const> = docPrefs.onionskin
             onionSkinPrefs.loop_tag = false
 
