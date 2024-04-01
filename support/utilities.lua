@@ -1059,6 +1059,8 @@ function Utilities.rotatePixelsZ(
     source, wSrc, hSrc, cosa, sina, bpp, alphaIndex)
     ---@type string[]
     local rotated <const> = {}
+    local strsub <const> = string.sub
+    local round <const> = Utilities.round
 
     local absCosa <const> = math.abs(cosa)
     local absSina <const> = math.abs(sina)
@@ -1073,9 +1075,6 @@ function Utilities.rotatePixelsZ(
     local ySrcCenter <const> = hSrc * 0.5
     local xTrgCenter <const> = wTrgf * 0.5
     local yTrgCenter <const> = hTrgf * 0.5
-
-    local strsub <const> = string.sub
-    local round <const> = Utilities.round
 
     local i = 0
     while i < lenTrg do
@@ -1148,6 +1147,194 @@ function Utilities.sequential(arr)
     end
 
     return seqs
+end
+
+---Skews an image's bytes by a tangent on the x axis.
+---The angle is given as a pre calculated tangent.
+---Returns the byte string, the width and height of the rotated image.
+---@param source string source bytes
+---@param wSrc integer source image width
+---@param hSrc integer source image height
+---@param tana number tangent of angle
+---@param bpp integer bits per pixel
+---@param alphaIndex integer alpha index
+---@return string rotated
+---@return integer wTrg
+---@return integer hTrg
+function Utilities.skewPixelsX(
+    source, wSrc, hSrc, tana, bpp, alphaIndex)
+    ---@type string[]
+    local skewed <const> = {}
+    local strsub <const> = string.sub
+    local round <const> = Utilities.round
+
+    local absTan <const> = math.abs(tana)
+    local wTrgf <const> = wSrc + absTan * hSrc
+    local wTrgi <const> = math.ceil(wTrgf)
+    local xDiff <const> = (wSrc - wTrgf) * 0.5
+    local lenTrg <const> = wTrgi * hSrc
+    local ySrcCenter <const> = hSrc * 0.5
+    local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+
+    local i = 0
+    while i < lenTrg do
+        local ySrci <const> = i // wTrgi
+        local xSrcf <const> = xDiff + (i % wTrgi)
+            + tana * (ySrci - ySrcCenter)
+        local xSrci <const> = round(xSrcf)
+        if xSrci >= 0 and xSrci < wSrc then
+            local j <const> = ySrci * wSrc + xSrci
+            local jbpp <const> = j * bpp
+            skewed[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)
+        else
+            skewed[1 + i] = alphaStr
+        end
+        i = i + 1
+    end
+
+    return table.concat(skewed), wTrgi, hSrc
+end
+
+---Skews an image's bytes horizontally by an integer rise. The run specifies
+---the number of pixels to skip on the y axis for each rise. Assumes both rise
+---and run are non zero.
+---Returns the byte string, the width and height of the rotated image.
+---@param source string source bytes
+---@param wSrc integer source image width
+---@param hSrc integer source image height
+---@param rise integer rise, or step
+---@param run integer run, or skip
+---@param bpp integer bits per pixel
+---@param alphaIndex integer alpha index
+---@return string skewed
+---@return integer wTrg
+---@return integer hTrg
+function Utilities.skewPixelsXInt(
+    source, wSrc, hSrc, rise, run, bpp, alphaIndex)
+    ---@type string[]
+    local skewed <const> = {}
+    local strsub <const> = string.sub
+
+    local absRun <const> = math.abs(run)
+    local sgnRise <const> = run < 0 and -rise or rise
+    local absRise <const> = math.abs(sgnRise)
+    local hn1Run <const> = (hSrc - 1) // absRun
+    local offset <const> = sgnRise < 0 and 0 or hn1Run * sgnRise
+    local wTrg <const> = wSrc + hn1Run * absRise
+    local lenTrg <const> = wTrg * hSrc
+    local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+
+    local i = 0
+    while i < lenTrg do
+        local xTrg <const> = i % wTrg
+        local yTrg <const> = i // wTrg
+        local shift <const> = sgnRise * (yTrg // absRun)
+        local xSrc <const> = xTrg + shift - offset
+        if xSrc >= 0 and xSrc < wSrc then
+            local j <const> = yTrg * wSrc + xSrc
+            local jbpp <const> = j * bpp
+            skewed[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)
+        else
+            skewed[1 + i] = alphaStr
+        end
+        i = i + 1
+    end
+
+    return table.concat(skewed), wTrg, hSrc
+end
+
+---Skews an image's bytes by a tangent on the y axis.
+---The angle is given as a pre calculated tangent.
+---Returns the byte string, the width and height of the rotated image.
+---@param source string source bytes
+---@param wSrc integer source image width
+---@param hSrc integer source image height
+---@param tana number tangent of angle
+---@param bpp integer bits per pixel
+---@param alphaIndex integer alpha index
+---@return string rotated
+---@return integer wTrg
+---@return integer hTrg
+function Utilities.skewPixelsY(
+    source, wSrc, hSrc, tana, bpp, alphaIndex)
+    ---@type string[]
+    local skewed <const> = {}
+    local strsub <const> = string.sub
+    local round <const> = Utilities.round
+
+    local absTan <const> = math.abs(tana)
+    local hTrgf <const> = hSrc + absTan * wSrc
+    local hTrgi <const> = math.ceil(hTrgf)
+    local yDiff <const> = (hSrc - hTrgf) * 0.5
+    local lenTrg <const> = wSrc * hTrgi
+    local xSrcCenter <const> = wSrc * 0.5
+    local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+
+    local i = 0
+    while i < lenTrg do
+        local xSrci <const> = i % wSrc
+        local ySrcf <const> = yDiff + (i // wSrc)
+            + tana * (xSrci - xSrcCenter)
+        local ySrci <const> = round(ySrcf)
+        if ySrci >= 0 and ySrci < hSrc then
+            local j <const> = ySrci * wSrc + xSrci
+            local jbpp <const> = j * bpp
+            skewed[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)
+        else
+            skewed[1 + i] = alphaStr
+        end
+        i = i + 1
+    end
+
+    return table.concat(skewed), wSrc, hTrgi
+end
+
+---Skews an image's bytes vertically by an integer rise. The run specifies
+---the number of pixels to skip on the x axis for each rise. Assumes both rise
+---and run are non zero.
+---Returns the byte string, the width and height of the rotated image.
+---@param source string source bytes
+---@param wSrc integer source image width
+---@param hSrc integer source image height
+---@param rise integer rise, or step
+---@param run integer run, or skip
+---@param bpp integer bits per pixel
+---@param alphaIndex integer alpha index
+---@return string skewed
+---@return integer wTrg
+---@return integer hTrg
+function Utilities.skewPixelsYInt(
+    source, wSrc, hSrc, rise, run, bpp, alphaIndex)
+    ---@type string[]
+    local skewed <const> = {}
+    local strsub <const> = string.sub
+
+    local absRun <const> = math.abs(run)
+    local sgnRise <const> = run < 0 and -rise or rise
+    local absRise <const> = math.abs(sgnRise)
+    local wn1Run <const> = (wSrc - 1) // absRun
+    local offset <const> = sgnRise < 0 and 0 or wn1Run * sgnRise
+    local hTrg <const> = hSrc + wn1Run * absRise
+    local lenTrg <const> = wSrc * hTrg
+    local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+
+    local i = 0
+    while i < lenTrg do
+        local xTrg <const> = i % wSrc
+        local yTrg <const> = i // wSrc
+        local shift <const> = sgnRise * (xTrg // absRun)
+        local ySrc <const> = yTrg + shift - offset
+        if ySrc >= 0 and ySrc < hSrc then
+            local j <const> = ySrc * wSrc + xTrg
+            local jbpp <const> = j * bpp
+            skewed[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)
+        else
+            skewed[1 + i] = alphaStr
+        end
+        i = i + 1
+    end
+
+    return table.concat(skewed), wSrc, hTrg
 end
 
 ---Decomposes a string containing byte data into an array of integers.

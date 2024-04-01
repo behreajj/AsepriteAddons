@@ -2614,6 +2614,135 @@ function AseUtilities.rotateImageZInternal(source, cosa, sina)
     return target
 end
 
+---Returns a copy of the source image that has been skewed on the x axis by an
+---angle in degrees. Uses nearest neighbor sampling.
+---If the angle is 0 degrees, then returns the source image by reference.
+---If the angle is approximately 90 degrees, then returns a blank image.
+---@param source Image source image
+---@param angle number angle in degrees
+---@return Image
+---@nodiscard
+function AseUtilities.skewImageX(source, angle)
+    -- This doesn't have an internal version because it's not worth making
+    -- a seprate method for skewing by integer rise and run.
+    local srcBytes <const> = source.bytes
+    local srcBpp <const> = source.bytesPerPixel
+    local srcSpec <const> = source.spec
+    local wSrc <const> = srcSpec.width
+    local hSrc <const> = srcSpec.height
+    local srcAlphaIndex <const> = srcSpec.transparentColor
+
+    local trgBytes = ""
+    local wTrg = 0
+    local hTrg = 0
+
+    local deg <const> = Utilities.round(angle) % 180
+    if deg == 0 then
+        return source
+    elseif deg >= 26 and deg <= 27 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
+            1, 2, srcBpp, srcAlphaIndex)
+    elseif deg == 45 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
+            1, 1, srcBpp, srcAlphaIndex)
+    elseif deg >= 63 and deg <= 64 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
+            2, 1, srcBpp, srcAlphaIndex)
+    elseif deg >= 88 and deg <= 92 then
+        return Image(srcSpec)
+    elseif deg >= 116 and deg <= 117 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
+            -2, 1, srcBpp, srcAlphaIndex)
+    elseif deg == 135 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
+            -1, 1, srcBpp, srcAlphaIndex)
+    elseif deg >= 153 and deg <= 154 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
+            -1, 2, srcBpp, srcAlphaIndex)
+    else
+        local radians <const> = angle * 0.017453292519943
+        local tana <const> = math.tan(radians)
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsX(srcBytes, wSrc, hSrc,
+            tana, srcBpp, srcAlphaIndex)
+    end
+
+    local trgSpec <const> = ImageSpec {
+        width = wTrg,
+        height = hTrg,
+        colorMode = srcSpec.colorMode,
+        transparentColor = srcAlphaIndex
+    }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target <const> = Image(trgSpec)
+    target.bytes = trgBytes
+    return target
+end
+
+---Returns a copy of the source image that has been skewed on the y axis by an
+---angle in degrees. Uses nearest neighbor sampling.
+---If the angle is 0 degrees, then returns the source image by reference.
+---If the angle is approximately 90 degrees, then returns a blank image.
+---@param source Image source image
+---@param angle number angle in degrees
+---@return Image
+---@nodiscard
+function AseUtilities.skewImageY(source, angle)
+    -- This doesn't have an internal version because it's not worth making
+    -- a seprate method for skewing by integer rise and run.
+    local srcBytes <const> = source.bytes
+    local srcBpp <const> = source.bytesPerPixel
+    local srcSpec <const> = source.spec
+    local wSrc <const> = srcSpec.width
+    local hSrc <const> = srcSpec.height
+    local srcAlphaIndex <const> = srcSpec.transparentColor
+
+    local trgBytes = ""
+    local wTrg = 0
+    local hTrg = 0
+
+    -- TODO: Does the sign of the rise need to be inverted?
+    local deg <const> = Utilities.round(angle) % 180
+    if deg == 0 then
+        return source
+    elseif deg >= 26 and deg <= 27 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
+            1, 2, srcBpp, srcAlphaIndex)
+    elseif deg == 45 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
+            1, 1, srcBpp, srcAlphaIndex)
+    elseif deg >= 63 and deg <= 64 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
+            2, 1, srcBpp, srcAlphaIndex)
+    elseif deg >= 88 and deg <= 92 then
+        return Image(srcSpec)
+    elseif deg >= 116 and deg <= 117 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
+            -2, 1, srcBpp, srcAlphaIndex)
+    elseif deg == 135 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
+            -1, 1, srcBpp, srcAlphaIndex)
+    elseif deg >= 153 and deg <= 154 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
+            -1, 2, srcBpp, srcAlphaIndex)
+    else
+        local radians <const> = angle * 0.017453292519943
+        local tana <const> = math.tan(radians)
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsY(srcBytes, wSrc, hSrc,
+            tana, srcBpp, srcAlphaIndex)
+    end
+
+    local trgSpec <const> = ImageSpec {
+        width = wTrg,
+        height = hTrg,
+        colorMode = srcSpec.colorMode,
+        transparentColor = srcAlphaIndex
+    }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target <const> = Image(trgSpec)
+    target.bytes = trgBytes
+    return target
+end
+
 ---Selects the non-zero pixels of a cel's image. Intersects the selection with
 ---the sprite bounds, if provided, for cases where cel may be partially outside
 ---the canvas edges. For tile map layers, selects the cel's bounds.

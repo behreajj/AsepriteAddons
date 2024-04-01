@@ -5,9 +5,6 @@ local unitOptions <const> = { "PERCENT", "PIXEL" }
 local coordSystems <const> = { "CENTER", "TOP_LEFT" }
 
 local defaults <const> = {
-    -- TODO: Skew by integer shift for angles like 45, 135, 225, 315 and
-    -- dimetric angles. See Camzup methods.
-
     -- Polar and Cartesian coordinates tried in commit
     -- 650a11ebc57a7e4539b5113297f5e2c404978e02 .
     -- Flip h and v position tried in commit
@@ -94,29 +91,6 @@ local function translateCels(dialog, x, y)
     end
 
     app.refresh()
-end
-
----@param xSrc number
----@param ySrc number
----@param wSrc integer
----@param hSrc integer
----@param sourceBytes string
----@param bpp integer
----@param defaultValue string
----@return string
-local function sampleNear(
-    xSrc, ySrc, wSrc, hSrc,
-    sourceBytes, bpp,
-    defaultValue)
-    local xr <const> = Utilities.round(xSrc)
-    local yr <const> = Utilities.round(ySrc)
-    if yr >= 0 and yr < hSrc
-        and xr >= 0 and xr < wSrc then
-        local j <const> = yr * wSrc + xr
-        local jbpp <const> = j * bpp
-        return string.sub(sourceBytes, 1 + jbpp, bpp + jbpp)
-    end
-    return defaultValue
 end
 
 local dlg <const> = Dialog { title = "Transform Cel" }
@@ -420,18 +394,14 @@ dlg:button {
         local args <const> = dlg.data
         local degrees <const> = args.degrees
             or defaults.degrees --[[@as integer]]
-        if degrees == 0 or degrees == 180 or degrees == 360
-            or degrees == 90 or degrees == 270 then
+        if degrees == 0 or degrees == 180 or degrees == 360 then
             return
         end
 
         -- Cache methods.
-        local ceil <const> = math.ceil
-        local createSpec <const> = AseUtilities.createSpec
+        local floor <const> = math.floor
+        local skewx <const> = AseUtilities.skewImageX
         local trimAlpha <const> = AseUtilities.trimImageAlpha
-        local round <const> = Utilities.round
-        local strpack <const> = string.pack
-        local tconcat <const> = table.concat
 
         local target <const> = args.target
             or defaults.target --[[@as string]]
@@ -443,16 +413,11 @@ dlg:button {
             filterFrames = { activeFrame }
         end
 
+        local alphaIndex <const> = activeSprite.transparentColor
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, filterFrames, target,
             false, false, false, false)
         local lenCels <const> = #cels
-
-        local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
-        local radians = degrees * 0.017453292519943
-        if query then radians = query end
-        local tana <const> = math.tan(radians)
-        local absTan <const> = math.abs(tana)
 
         app.transaction("Skew X", function()
             local i = 0
@@ -461,49 +426,20 @@ dlg:button {
                 local cel <const> = cels[i]
                 local srcImg <const> = cel.image
                 if not srcImg:isEmpty() then
-                    local srcSpec <const> = srcImg.spec
-                    local wSrc <const> = srcSpec.width
-                    local hSrc <const> = srcSpec.height
-                    local alphaIndex <const> = srcSpec.transparentColor
+                    local celPos <const> = cel.position
+                    local xSrcCtr <const> = celPos.x + srcImg.width * 0.5
+                    local trgImg = skewx(srcImg, degrees)
 
-                    local srcBytes <const> = srcImg.bytes
-                    local srcBpp <const> = srcImg.bytesPerPixel
-                    local pxAlpha <const> = strpack(">I" .. srcBpp, alphaIndex)
-
-                    local wTrgf <const> = wSrc + absTan * hSrc
-                    local wTrgi <const> = ceil(wTrgf)
-                    local yCenter <const> = hSrc * 0.5
-                    local xDiff <const> = (wSrc - wTrgf) * 0.5
-                    local wDiffHalf <const> = round((wTrgf - wSrc) * 0.5)
-
-                    local trgSpec <const> = createSpec(
-                        wTrgi, hSrc, srcSpec.colorMode,
-                        srcSpec.colorSpace, alphaIndex)
-                    local trgImg = Image(trgSpec)
-
-                    ---@type string[]
-                    local byteArr <const> = {}
-                    local lenFlat <const> = wTrgi * hSrc
-                    local j = 0
-                    while j < lenFlat do
-                        local ySrc <const> = j // wTrgi
-                        local xSrc <const> = xDiff
-                            + (j % wTrgi) + tana * (ySrc - yCenter)
-
-                        j = j + 1
-                        byteArr[j] = sampleNear(xSrc, ySrc,
-                            wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
-                    end
-                    trgImg.bytes = tconcat(byteArr)
+                    local xtlTrg = xSrcCtr - trgImg.width * 0.5
+                    local ytlTrg = celPos.y
 
                     local xTrim = 0
                     local yTrim = 0
                     trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaIndex)
+                    xtlTrg = xtlTrg + xTrim
+                    ytlTrg = ytlTrg + yTrim
 
-                    local srcPos <const> = cel.position
-                    cel.position = Point(
-                        xTrim + srcPos.x - wDiffHalf,
-                        yTrim + srcPos.y)
+                    cel.position = Point(floor(xtlTrg), ytlTrg)
                     cel.image = trgImg
                 end
             end
@@ -528,18 +464,14 @@ dlg:button {
         local args <const> = dlg.data
         local degrees <const> = args.degrees
             or defaults.degrees --[[@as integer]]
-        if degrees == 0 or degrees == 180 or degrees == 360
-            or degrees == 90 or degrees == 270 then
+        if degrees == 0 or degrees == 180 or degrees == 360 then
             return
         end
 
         -- Cache methods.
-        local ceil <const> = math.ceil
-        local createSpec <const> = AseUtilities.createSpec
+        local floor <const> = math.floor
+        local skewy <const> = AseUtilities.skewImageY
         local trimAlpha <const> = AseUtilities.trimImageAlpha
-        local round <const> = Utilities.round
-        local strpack <const> = string.pack
-        local tconcat <const> = table.concat
 
         local target <const> = args.target
             or defaults.target --[[@as string]]
@@ -551,16 +483,11 @@ dlg:button {
             filterFrames = { activeFrame }
         end
 
+        local alphaIndex <const> = activeSprite.transparentColor
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, filterFrames, target,
             false, false, false, false)
         local lenCels <const> = #cels
-
-        local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
-        local radians = degrees * 0.017453292519943
-        if query then radians = query end
-        local tana <const> = math.tan(radians)
-        local absTan <const> = math.abs(tana)
 
         app.transaction("Skew Y", function()
             local i = 0
@@ -569,49 +496,20 @@ dlg:button {
                 local cel <const> = cels[i]
                 local srcImg <const> = cel.image
                 if not srcImg:isEmpty() then
-                    local srcSpec <const> = srcImg.spec
-                    local wSrc <const> = srcSpec.width
-                    local hSrc <const> = srcSpec.height
-                    local alphaIndex <const> = srcSpec.transparentColor
+                    local celPos <const> = cel.position
+                    local ySrcCtr <const> = celPos.y + srcImg.height * 0.5
+                    local trgImg = skewy(srcImg, degrees)
 
-                    local srcBytes <const> = srcImg.bytes
-                    local srcBpp <const> = srcImg.bytesPerPixel
-                    local pxAlpha <const> = strpack(">I" .. srcBpp, alphaIndex)
-
-                    local hTrgf <const> = hSrc + absTan * wSrc
-                    local hTrgi <const> = ceil(hTrgf)
-                    local xTrgCenter <const> = wSrc * 0.5
-                    local yDiff <const> = (hSrc - hTrgf) * 0.5
-                    local hDiffHalf <const> = round((hTrgf - hSrc) * 0.5)
-
-                    local trgSpec <const> = createSpec(
-                        wSrc, hTrgi, srcSpec.colorMode,
-                        srcSpec.colorSpace, alphaIndex)
-                    local trgImg = Image(trgSpec)
-
-                    ---@type string[]
-                    local byteArr <const> = {}
-                    local lenFlat <const> = wSrc * hTrgi
-                    local j = 0
-                    while j < lenFlat do
-                        local xSrc <const> = j % wSrc
-                        local ySrc <const> = yDiff + (j // wSrc)
-                            + tana * (xSrc - xTrgCenter)
-
-                        j = j + 1
-                        byteArr[j] = sampleNear(xSrc, ySrc,
-                            wSrc, hSrc, srcBytes, srcBpp, pxAlpha)
-                    end
-                    trgImg.bytes = tconcat(byteArr)
+                    local xtlTrg = celPos.x
+                    local ytlTrg = ySrcCtr - trgImg.height * 0.5
 
                     local xTrim = 0
                     local yTrim = 0
                     trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, alphaIndex)
+                    xtlTrg = xtlTrg + xTrim
+                    ytlTrg = ytlTrg + yTrim
 
-                    local srcPos <const> = cel.position
-                    cel.position = Point(
-                        xTrim + srcPos.x,
-                        yTrim + srcPos.y - hDiffHalf)
+                    cel.position = Point(xtlTrg, floor(ytlTrg))
                     cel.image = trgImg
                 end
             end
