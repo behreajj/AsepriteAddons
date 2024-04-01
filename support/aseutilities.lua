@@ -628,7 +628,7 @@ end
 ---@return boolean
 function AseUtilities.bakeFlag(source, flag)
     -- https://github.com/aseprite/aseprite/blob/main/src/doc/tile.h#L24
-    if flag == 0x20000000 then     -- Transpose (Diagonal)
+    if flag == 0x20000000 then     -- D
         return AseUtilities.transposeImage(source), true
     elseif flag == 0x40000000 then -- Y
         return AseUtilities.flipImageY(source), true
@@ -2700,7 +2700,6 @@ function AseUtilities.skewImageY(source, angle)
     local wTrg = 0
     local hTrg = 0
 
-    -- TODO: Does the sign of the rise need to be inverted?
     local deg <const> = Utilities.round(angle) % 180
     if deg == 0 then
         return source

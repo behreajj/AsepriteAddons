@@ -88,6 +88,39 @@ dlg:combobox {
     end
 }
 
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "getOrig",
+    label = "Get:",
+    text = "&FROM",
+    onclick = function()
+        local frIdx <const>, dur <const> = getDurAtFrame()
+        dlg:modify { id = "frameOrig", text = string.format("%d", frIdx) }
+        dlg:modify {
+            id = "durOrig",
+            text = string.format("%d", math.floor(1000.0 * dur + 0.5))
+        }
+    end,
+    visible = defaults.mode == "MIX"
+}
+
+dlg:button {
+    id = "getDest",
+    text = "&TO",
+    onclick = function()
+        local frIdx <const>, dur <const> = getDurAtFrame()
+        dlg:modify { id = "frameDest", text = string.format("%d", frIdx) }
+        dlg:modify {
+            id = "durDest",
+            text = string.format("%d", math.floor(1000.0 * dur + 0.5))
+        }
+    end,
+    visible = defaults.mode == "MIX"
+}
+
+dlg:newrow { always = false }
+
 dlg:number {
     id = "frameOrig",
     label = "From:",
@@ -108,23 +141,6 @@ dlg:number {
 
 dlg:newrow { always = false }
 
-dlg:button {
-    id = "getOrig",
-    label = "Get:",
-    text = "&FROM",
-    onclick = function()
-        local frIdx <const>, dur <const> = getDurAtFrame()
-        dlg:modify { id = "frameOrig", text = string.format("%d", frIdx) }
-        dlg:modify {
-            id = "durOrig",
-            text = string.format("%d", math.floor(1000.0 * dur + 0.5))
-        }
-    end,
-    visible = defaults.mode == "MIX"
-}
-
-dlg:newrow { always = false }
-
 dlg:number {
     id = "frameDest",
     label = "To:",
@@ -140,23 +156,6 @@ dlg:number {
     text = string.format("%d", defaults.durDest),
     decimals = 0,
     focus = false,
-    visible = defaults.mode == "MIX"
-}
-
-dlg:newrow { always = false }
-
-dlg:button {
-    id = "getDest",
-    label = "Get:",
-    text = "&TO",
-    onclick = function()
-        local frIdx <const>, dur <const> = getDurAtFrame()
-        dlg:modify { id = "frameDest", text = string.format("%d", frIdx) }
-        dlg:modify {
-            id = "durDest",
-            text = string.format("%d", math.floor(1000.0 * dur + 0.5))
-        }
-    end,
     visible = defaults.mode == "MIX"
 }
 
