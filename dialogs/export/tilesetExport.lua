@@ -50,8 +50,7 @@ local defaults <const> = {
     tmxRenderOrder = "RIGHT-DOWN",
     tsxAlign = "TOPLEFT",
     tsxRender = "TILE",
-    tsxFill = "PRESERVE-ASPECT-FIT",
-    tileProbability = 1.0
+    tsxFill = "PRESERVE-ASPECT-FIT"
 }
 
 local tmxMapFormat <const> = table.concat({
@@ -451,7 +450,6 @@ dlg:button {
         local metaData <const> = args.metaData
             or defaults.metaData --[[@as string]]
         local includeMaps <const> = args.includeMaps --[[@as boolean]]
-        local defaultTileProb <const> = defaults.tileProbability
 
         -- Unpack sprite spec.
         local spriteSpec <const> = activeSprite.spec
@@ -603,6 +601,7 @@ dlg:button {
         local upscale <const> = AseUtilities.upscaleImageForExport
 
         local blendModeSrc <const> = BlendMode.SRC
+        local tileProbability <const> = 1.0
 
         -- If you wanted to include an option to target the layers in a range,
         -- then you'd have to perform this on all tilesets in the sprite, not
@@ -636,9 +635,6 @@ dlg:button {
             local tileSetBaseIndex <const> = tileSet.baseIndex
             local tsProps <const> = tileSet.properties
             local tileData <const> = {}
-            local tileProb <const> = lenTileSet > 1
-                and 1.0 / (lenTileSet - 1.0)
-                or defaultTileProb
             local tsId <const> = tsProps["id"]
 
             local tileGrid <const> = tileSet.grid
@@ -714,7 +710,7 @@ dlg:button {
                     local props <const> = tile.properties
                     tileData[#tileData + 1] = {
                         id = tile.index,
-                        probability = tileProb,
+                        probability = tileProbability,
                         properties = props
                     }
                 end
