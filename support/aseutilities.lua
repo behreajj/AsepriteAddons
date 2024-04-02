@@ -2099,7 +2099,6 @@ function AseUtilities.getSelectedTiles(
         local index <const> = pxTilei(mapif)
         if index > 0 and index < lenTileSet
             and (not visitedTiles[index]) then
-            visitedTiles[index] = true
 
             local xMap <const> = mapEntry.x
             local yMap <const> = mapEntry.y
@@ -2122,6 +2121,7 @@ function AseUtilities.getSelectedTiles(
                 -- print(string.format(
                 --     "[%d, %d]: [%d, %d]: %d",
                 --     xMap, yMap, xtlTile, ytlTile, index))
+                visitedTiles[index] = true
                 tiles[index] = tileSet:tile(index)
             end
         end

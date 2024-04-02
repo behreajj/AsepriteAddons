@@ -34,6 +34,11 @@ local tsxAligns <const> = {
 }
 
 local defaults <const> = {
+    -- Would be cool if user could select a range string,
+    -- then a probability for picked indices and one for
+    -- skipped indices. However, the target would have to
+    -- be active only, since different sets have different
+    -- lengths and base indices.
     target = "ALL",
     border = 0,
     padding = 0,
@@ -191,43 +196,41 @@ local function writeProps(properties)
     local tconcat <const> = table.concat
     local isFile <const> = app.fs.isFile
     for k, v in pairs(properties) do
-        -- Ignore script export ID.
-        -- if k ~= "id" then
-        local typev <const> = type(v)
-        -- Checking for nil doesn't seem necessary.
-        -- if typev ~= "nil" then
-        local tStr = ""
-        local vStr = ""
+        -- Ignore script export ID and tile probability.
+        if k ~= "id" and k ~= "probability" then
+            local typev <const> = type(v)
+            -- Checking typev for nil doesn't seem necessary.
+            local tStr = ""
+            local vStr = ""
 
-        -- Other TMX types: "color", "file", "object".
-        -- Color is "#AARRGGBB" hexadecimal formatted string with hash.
-        -- Aseprite doesn't support Color userdata in properties?
-        if typev == "boolean" then
-            tStr = "bool"
-            vStr = v and "true" or "false"
-        elseif typev == "number" then
-            if mathtype(v) == "integer" then
-                tStr = "int"
-                vStr = strfmt("%d", v)
-            else
-                tStr = "float"
-                vStr = strfmt("%.6f", v)
+            -- Other TMX types: "color", "file", "object".
+            -- Color is "#AARRGGBB" hexadecimal formatted string with hash.
+            -- Aseprite doesn't support Color userdata in properties?
+            if typev == "boolean" then
+                tStr = "bool"
+                vStr = v and "true" or "false"
+            elseif typev == "number" then
+                if mathtype(v) == "integer" then
+                    tStr = "int"
+                    vStr = strfmt("%d", v)
+                else
+                    tStr = "float"
+                    vStr = strfmt("%.6f", v)
+                end
+            elseif typev == "string" then
+                tStr = isFile(v) and "file" or "string"
+                vStr = v
+            elseif typev == "table" then
+                -- Ideally this would be recursive.
+                tStr = "string"
+                vStr = tconcat(v, ", ")
             end
-        elseif typev == "string" then
-            tStr = isFile(v) and "file" or "string"
-            vStr = v
-        elseif typev == "table" then
-            -- Ideally this would be recursive.
-            tStr = "string"
-            vStr = tconcat(v, ", ")
-        end
 
-        local propStr <const> = strfmt(
-            "<property name=\"%s\" type=\"%s\" value=\"%s\" />",
-            k, tStr, vStr)
-        propStrs[#propStrs + 1] = propStr
-        -- end
-        -- end
+            local propStr <const> = strfmt(
+                "<property name=\"%s\" type=\"%s\" value=\"%s\" />",
+                k, tStr, vStr)
+            propStrs[#propStrs + 1] = propStr
+        end
     end
     return propStrs
 end
@@ -601,7 +604,6 @@ dlg:button {
         local upscale <const> = AseUtilities.upscaleImageForExport
 
         local blendModeSrc <const> = BlendMode.SRC
-        local tileProbability <const> = 1.0
 
         -- If you wanted to include an option to target the layers in a range,
         -- then you'd have to perform this on all tilesets in the sprite, not
@@ -707,10 +709,15 @@ dlg:button {
                     sheetImage:drawImage(tileScaled, Point(xTrg, yTrg),
                         255, blendModeSrc)
 
+                    local id <const> = tile.index
                     local props <const> = tile.properties
+                    local tileChance = id > 0 and 1.0 or 0.0
+                    if props["probability"] then
+                        tileChance = props["probability"]
+                    end
                     tileData[#tileData + 1] = {
-                        id = tile.index,
-                        probability = tileProbability,
+                        id = id,
+                        probability = tileChance,
                         properties = props
                     }
                 end
@@ -940,9 +947,7 @@ dlg:button {
                     local tPropStrs <const> = {}
                     local lenTileData = #tileData
 
-                    -- Skip the first tile. For some reason, it copies the id
-                    -- property from the tile set.
-                    local j = 1
+                    local j = 0
                     while j < lenTileData do
                         j = j + 1
                         local td <const> = tileData[j]
