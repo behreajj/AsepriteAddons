@@ -14,12 +14,14 @@ end
 
 app.transaction("Dereference Layer", function()
     local derefLayer <const> = sprite:newLayer()
+
     derefLayer.name = "Ref"
-    derefLayer.blendMode = refLayer.blendMode
+    derefLayer.blendMode = refLayer.blendMode or BlendMode.NORMAL
     derefLayer.color = refLayer.color
     derefLayer.data = refLayer.data
-    derefLayer.opacity = refLayer.opacity
+    derefLayer.opacity = refLayer.opacity or 255
     derefLayer.parent = refLayer.parent
+    derefLayer.properties = refLayer.properties
     derefLayer.stackIndex = refLayer.stackIndex
 
     derefLayer.isContinuous = refLayer.isContinuous

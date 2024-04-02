@@ -35,6 +35,7 @@ if activeLayer then
             nextLayer = nextLayer.layers[1]
         end
         app.layer = nextLayer
+    ---@diagnostic disable-next-line: undefined-field
     elseif activeParent.__name == "doc::Sprite" then
         app.layer = activeSprite.layers[#activeSprite.layers]
     else

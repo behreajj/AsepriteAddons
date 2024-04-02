@@ -32,9 +32,11 @@ if activeLayer then
     elseif stackIndex > 1 then
         -- Needed for group layers with no children.
         app.layer = activeLayer.parent.layers[stackIndex - 1]
+    ---@diagnostic disable-next-line: undefined-field
     elseif activeLayer.parent.__name == "doc::Sprite" then
         app.layer = activeSprite.layers[1]
     else
+        ---@diagnostic disable-next-line: undefined-field
         while activeLayer.__name ~= "doc::Sprite"
             and stackIndex < 2 do
             stackIndex = activeLayer.stackIndex

@@ -663,6 +663,7 @@ function AseUtilities.bkgToLayer(sprite, overrideLock)
         unBkgLayer.isEditable = bkgLayer.isEditable
         unBkgLayer.isVisible = bkgLayer.isVisible
         unBkgLayer.isContinuous = bkgLayer.isContinuous
+        unBkgLayer.properties = bkgLayer.properties
         unBkgLayer.name = "Bkg"
 
         local frObjs <const> = sprite.frames
