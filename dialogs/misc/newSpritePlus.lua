@@ -184,7 +184,7 @@ dlg:combobox {
 
 CanvasUtilities.spectrum(
     dlg, "bkgSpectrum", "Background:",
-    180 / screenScale, 56 / screenScale,
+    180 // screenScale, 56 // screenScale,
     defaults.colorMode == "RGB",
     97.0, 18.0, 0.275, 0.0)
 

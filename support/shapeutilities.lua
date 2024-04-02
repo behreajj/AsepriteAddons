@@ -71,6 +71,7 @@ function ShapeUtilities.drawCurve2(
     end
 
     -- Draw fill.
+    ---@diagnostic disable-next-line: deprecated
     local useTool <const> = app.useTool
     if isLoop and useFill then
         app.transaction("Draw Curve Fill", function()
@@ -167,6 +168,7 @@ function ShapeUtilities.drawKnot2(
 
     app.transaction("Draw Knot Handles", function()
         -- Line from rear handle to coordinate.
+        ---@diagnostic disable-next-line: deprecated
         app.useTool {
             tool = "line",
             color = lnClrVal,
@@ -177,6 +179,7 @@ function ShapeUtilities.drawKnot2(
         }
 
         -- Line from coordinate to fore handle.
+        ---@diagnostic disable-next-line: deprecated
         app.useTool {
             tool = "line",
             color = lnClrVal,
@@ -187,6 +190,7 @@ function ShapeUtilities.drawKnot2(
         }
 
         -- Rear handle point.
+        ---@diagnostic disable-next-line: deprecated
         app.useTool {
             tool = "pencil",
             color = rhClrVal,
@@ -197,6 +201,7 @@ function ShapeUtilities.drawKnot2(
         }
 
         -- Coordinate point.
+        ---@diagnostic disable-next-line: deprecated
         app.useTool {
             tool = "pencil",
             color = coClrVal,
@@ -207,6 +212,7 @@ function ShapeUtilities.drawKnot2(
         }
 
         -- Fore handle point.
+        ---@diagnostic disable-next-line: deprecated
         app.useTool {
             tool = "pencil",
             color = fhClrVal,
@@ -266,6 +272,7 @@ function ShapeUtilities.drawMesh2(
     end
 
     -- Group fills into one transaction.
+    ---@diagnostic disable-next-line: deprecated
     local useTool <const> = app.useTool
     if useFill then
         app.transaction("Mesh Fill", function()
