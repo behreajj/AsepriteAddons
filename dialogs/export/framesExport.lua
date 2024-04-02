@@ -283,7 +283,8 @@ local function genPacket(
         image = flat,
         layer = -1,
         opacity = 255,
-        zIndex = 0
+        zIndex = 0,
+        properties = {}
     }
 
     return {

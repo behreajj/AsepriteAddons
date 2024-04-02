@@ -7,6 +7,7 @@ local groups <const> = AseUtilities.getGroups(sprite, true, true)
 local lenGroups <const> = #groups
 
 local activeLayer = app.layer or sprite.layers[1]
+---@diagnostic disable-next-line: undefined-field
 while activeLayer.parent.__name ~= "doc::Sprite" do
     activeLayer = activeLayer.parent --[[@as Layer]]
 end

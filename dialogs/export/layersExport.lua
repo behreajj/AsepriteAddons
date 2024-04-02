@@ -508,6 +508,8 @@ dlg:button {
                 local bounds = nil
 
                 -- For JSON packets.
+                ---@type table<string, any>
+                local celProps = {}
                 local celData = nil
                 local celOpacity = 255
                 local zIndex = 0
@@ -534,6 +536,7 @@ dlg:button {
                         -- print("Cel was found.")
                         celData = cel.data
                         celOpacity = cel.opacity
+                        celProps = cel.properties
 
                         -- Beware that this property is not shared between
                         -- linked cels.
@@ -644,6 +647,7 @@ dlg:button {
                             if not layerPackets[layerId] then
                                 local parent <const> = chosenLayer.parent
                                 local parentId = -1
+                                ---@diagnostic disable-next-line: undefined-field
                                 if parent.__name ~= "doc::Sprite" then
                                     parentId = parent.id
                                 end
@@ -656,6 +660,7 @@ dlg:button {
                                     opacity = layerOpacity,
                                     parent = parentId,
                                     stackIndex = chosenLayer.stackIndex,
+                                    properties = chosenLayer.properties
                                 }
                                 layerPackets[layerId] = layerPacket
                             end
@@ -667,7 +672,8 @@ dlg:button {
                                 frameNumber = frIdx,
                                 layer = layerId,
                                 opacity = celOpacity,
-                                zIndex = zIndex
+                                zIndex = zIndex,
+                                properties = celProps
                             }
                             celPackets[#celPackets + 1] = celPacket
                         end -- End of saveJson check

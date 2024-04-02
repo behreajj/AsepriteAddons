@@ -838,6 +838,7 @@ dlg:button {
         if not activeLayer then return end
 
         local layer = activeLayer
+        ---@diagnostic disable-next-line: undefined-field
         while layer.parent.__name ~= "doc::Sprite"
             and layer.stackIndex == #layer.parent.layers do
             layer = layer.parent --[[@as Layer]]
@@ -863,6 +864,7 @@ dlg:button {
         if not activeLayer then return end
 
         local layer = activeLayer
+        ---@diagnostic disable-next-line: undefined-field
         while layer.parent.__name ~= "doc::Sprite"
             and layer.stackIndex == 1 do
             layer = layer.parent --[[@as Layer]]

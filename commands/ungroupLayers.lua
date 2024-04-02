@@ -36,6 +36,7 @@ app.transaction("Ungroup Layers", function()
         i = i + 1
         local layer <const> = layers[i]
         local parent <const> = layer.parent
+        ---@diagnostic disable-next-line: undefined-field
         if parent.__name ~= "doc::Sprite" then
             local grandparent <const> = parent.parent
             layer.parent = grandparent

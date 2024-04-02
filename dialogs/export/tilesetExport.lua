@@ -182,13 +182,15 @@ local function writeProps(properties)
     for k, v in pairs(properties) do
         -- Ignore script export ID.
         if k ~= "id" then
+            local typev <const> = type(v)
+            -- Checking for nil doesn't seem necessary.
+            -- if typev ~= "nil" then
             local tStr = ""
             local vStr = ""
 
             -- Other TMX types: "color", "file", "object".
             -- Color is "#AARRGGBB" hexadecimal formatted string with hash.
-            -- Aseprite doesn't seem to support Color userdata in properties.
-            local typev <const> = type(v)
+            -- Aseprite doesn't support Color userdata in properties?
             if typev == "boolean" then
                 tStr = "bool"
                 vStr = v and "true" or "false"
@@ -213,6 +215,7 @@ local function writeProps(properties)
                 "<property name=\"%s\" type=\"%s\" value=\"%s\" />",
                 k, tStr, vStr)
             propStrs[#propStrs + 1] = propStr
+            -- end
         end
     end
     return propStrs

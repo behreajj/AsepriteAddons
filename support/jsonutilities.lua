@@ -15,7 +15,8 @@ JsonUtilities.CEL_FORMAT = table.concat({
     "\"frame\":%d",
     "\"layer\":%d",
     "\"opacity\":%d",
-    "\"zIndex\":%d}"
+    "\"zIndex\":%d",
+    "\"properties\":{%s}}",
 }, ",")
 
 ---Format string for frames.
@@ -33,7 +34,8 @@ JsonUtilities.LAYER_FORMAT = table.concat({
     "\"opacity\":%d",
     "\"parent\":%d",
     "\"stackIndex\":%d",
-    "\"tileset\":%d}",
+    "\"tileset\":%d",
+    "\"properties\":{%s}}",
 }, ",")
 
 ---Rectangle origin formatting presets.
@@ -53,7 +55,8 @@ JsonUtilities.SPRITE_FORMAT = table.concat({
     "\"colorSpace\":\"%s\"",
     "\"data\":%s",
     "\"pixelAspect\":%s",
-    "\"size\":%s}"
+    "\"size\":%s",
+    "\"properties\":{%s}}",
 }, ",")
 
 ---Format string for tags.
@@ -64,7 +67,8 @@ JsonUtilities.TAG_FORMAT = table.concat({
     "\"data\":%s",
     "\"fromFrame\":%d",
     "\"toFrame\":%d",
-    "\"repeats\":%d}"
+    "\"repeats\":%d",
+    "\"properties\":{%s}}",
 }, ",")
 
 ---Format string for app version.
@@ -161,7 +165,8 @@ function JsonUtilities.celToJson(cel, fileName, originFormat)
         cel.frameNumber - 1,
         layerVrf,
         cel.opacity,
-        cel.zIndex)
+        cel.zIndex,
+        JsonUtilities.propsToJson(cel.properties))
 end
 
 ---Formats a frame, or table containing the same properties, as a JSON string.
@@ -227,7 +232,8 @@ function JsonUtilities.layerToJson(layer)
         layer.opacity,
         parentVrf,
         layer.stackIndex,
-        tileSetVrf)
+        tileSetVrf,
+        JsonUtilities.propsToJson(layer.properties))
 end
 
 ---Formats a point as a JSON string.
@@ -245,6 +251,40 @@ function JsonUtilities.pointToJson(x, y)
     return string.format(
         "{\"x\":%d,\"y\":%d}",
         x, y)
+end
+
+---Formats properties as a JSON string.
+---@param properties table<string, any>
+---@return string
+function JsonUtilities.propsToJson(properties)
+    ---@type string[]
+    local propStrs <const> = {}
+    local strfmt <const> = string.format
+    local mathtype <const> = math.type
+    local propsToJson <const> = JsonUtilities.propsToJson
+    for k, v in pairs(properties) do
+        local vStr = ""
+        local typev <const> = type(v)
+        if typev == "boolean" then
+            vStr = v and "true" or "false"
+        elseif typev == "nil" then
+            -- This is an extra precaution, nil entries don't appear.
+            vStr = "null"
+        elseif typev == "number" then
+            vStr = mathtype(v) == "integer"
+                and strfmt("%d", v)
+                or strfmt("%.6f", v)
+        elseif typev == "string" then
+            vStr = strfmt("\"%s\"", v)
+        elseif typev == "table" then
+            vStr = strfmt("{%s}", propsToJson(v))
+        end
+
+        local propStr <const> = strfmt("\"%s\":%s", k, vStr)
+        propStrs[#propStrs + 1] = propStr
+    end
+
+    return table.concat(propStrs, ",")
 end
 
 ---Formats a rectangle, or table containing the same properties, as a JSON
@@ -301,7 +341,8 @@ function JsonUtilities.spriteToJson(sprite)
         spec.colorSpace.name,
         spriteDataVrf,
         JsonUtilities.pointToJson(pxa.width, pxa.height),
-        JsonUtilities.pointToJson(spec.width, spec.height))
+        JsonUtilities.pointToJson(spec.width, spec.height),
+        JsonUtilities.propsToJson(sprite.properties))
 end
 
 ---Fomats a tag, or table containing the same properties, as a JSON string.
@@ -330,7 +371,8 @@ function JsonUtilities.tagToJson(tag, fileName)
         tagDataVrf,
         tag.fromFrame.frameNumber - 1,
         tag.toFrame.frameNumber - 1,
-        tag.repeats)
+        tag.repeats,
+        JsonUtilities.propsToJson(tag.properties))
 end
 
 ---Formats the Aseprite version as a JSON string.
