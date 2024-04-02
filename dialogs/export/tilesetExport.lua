@@ -1000,7 +1000,7 @@ dlg:button {
 
                     -- Append frame duration and number to sprite properties.
                     local mapPropsStrs <const> = writeProps(activeSprite.properties)
-                    local durPropIdx <const> = #mapPackets + 1
+                    local durPropIdx <const> = #mapPropsStrs + 1
                     local frNoPropIdx <const> = durPropIdx + 1
                     mapPropsStrs[durPropIdx] = ""
                     mapPropsStrs[frNoPropIdx] = ""
