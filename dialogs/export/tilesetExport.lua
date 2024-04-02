@@ -132,7 +132,7 @@ local tsxFormat <const> = table.concat({
     "</tileset>"
 })
 
--- TODO: See https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#tile
+-- See https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#tile
 local tsxTileFormat <const> = table.concat({
     "<tile ",
     "id=\"%d\" ",

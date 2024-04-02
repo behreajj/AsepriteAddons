@@ -306,6 +306,10 @@ local function transformCel(dialog, preset)
     local pxTilei <const> = pixelColor.tileI
     local pxTilef <const> = pixelColor.tileF
     local pxTileCompose <const> = pixelColor.tile
+    local strpack <const> = string.pack
+    local strunpack <const> = string.unpack
+    local strsub <const> = string.sub
+    local tconcat <const> = table.concat
 
     -- Decide on meta transform function.
     ---@type fun(flag: integer): integer
@@ -342,6 +346,15 @@ local function transformCel(dialog, preset)
     if not activeLayer.isVisible then return end
     if not activeLayer.isEditable then return end
 
+    local srcMap <const> = activeCel.image
+    local srcBpp <const> = srcMap.bytesPerPixel
+    local unpackFmt <const> = "I" .. srcBpp
+    local srcBytes <const> = srcMap.bytes
+    local srcSpec <const> = srcMap.spec
+    local wSrcMap <const> = srcSpec.width
+    local hSrcMap <const> = srcSpec.height
+    local lenSrcMap <const> = wSrcMap * hSrcMap
+
     if target == "TILE_MAP" then
         ---@type fun(source: Image): Image
         local mapTrFunc = function(source) return source end
@@ -368,9 +381,8 @@ local function transformCel(dialog, preset)
         end
 
         app.transaction(transactionName, function()
-            local srcMap <const> = activeCel.image
+            -- TODO: Switch to string bytes approach.
             local trgMap <const> = mapTrFunc(srcMap)
-
             local trgItr <const> = trgMap:pixels()
             for mapEntry in trgItr do
                 local mapif <const> = mapEntry() --[[@as integer]]
@@ -417,27 +429,43 @@ local function transformCel(dialog, preset)
     -- uniform tile size. This will lead to getSelectedTiles omitting tiles
     -- because tiles must be entirely contained.
     local selection <const>, _ <const> = AseUtilities.getSelection(activeSprite)
-    local containedTiles <const> = AseUtilities.getSelectedTiles(
+    local contained <const>, coords <const> = AseUtilities.getSelectedTiles(
         activeCel.image, tileSet, selection,
         xtlCel, ytlCel)
 
     local srcToTrgIdcs <const> = transformTiles(
-        preset, containedTiles, inPlace,
+        preset, contained, inPlace,
         activeSprite, tileSet)
 
     if not inPlace then
-        local trgMap <const> = activeCel.image:clone()
-        local trgItr <const> = trgMap:pixels()
-        for mapEntry in trgItr do
-            local tileData <const> = mapEntry()
-            local srcIdx <const> = pxTilei(tileData)
+        ---@type string[]
+        local trgByteStrs <const> = {}
+        local i = 0
+        while i < lenSrcMap do
+            local ibpp <const> = i * srcBpp
+            i = i + 1
+            trgByteStrs[i] = strsub(srcBytes, 1 + ibpp, srcBpp + ibpp)
+        end
+
+        local lenCoords = #coords
+        local j = 0
+        while j < lenCoords do
+            j = j + 1
+            local coord <const> = coords[j]
+            local srcByteStr <const> = trgByteStrs[1 + coord]
+            local srcMapif <const> = strunpack(unpackFmt, srcByteStr)
+            local srcIdx = pxTilei(srcMapif)
             if srcToTrgIdcs[srcIdx] then
                 local trgIdx <const> = srcToTrgIdcs[srcIdx]
-                local srcFlags <const> = pxTilef(tileData)
-                mapEntry(pxTileCompose(trgIdx, srcFlags))
+                local srcFlags <const> = pxTilef(srcMapif)
+                local trgMapif <const> = pxTileCompose(trgIdx, srcFlags)
+                local trgMapStr <const> = strpack(unpackFmt, trgMapif)
+                trgByteStrs[1 + coord] = trgMapStr
             end
         end
 
+        local trgMap <const> = Image(srcSpec)
+        trgMap.bytes = tconcat(trgByteStrs)
         app.transaction("Update Map", function()
             activeCel.image = trgMap
         end)

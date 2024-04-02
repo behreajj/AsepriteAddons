@@ -2056,7 +2056,8 @@ end
 
 ---Gets tiles from a tile map that are entirely contained by a selection.
 ---Returns a dictionary where the tile map index serves as the key and the Tile
----object is the value.
+---object is the value. The second return is an array of selected coordinates,
+---in the format coord = y * w + x.
 ---
 ---Assumes that tile map and tile set have been vetted to confirm their
 ---association.
@@ -2065,15 +2066,16 @@ end
 ---@param selection Selection selection
 ---@param xtlCel integer? cel top left corner x
 ---@param ytlCel integer? cel top left corner y
----@return table<integer, Tile>
----@nodiscard
+---@return table<integer, Tile> tiles
+---@return integer[] coords
 function AseUtilities.getSelectedTiles(
     tileMap, tileSet, selection, xtlCel, ytlCel)
-    -- Results.
     ---@type table<integer, Tile>
     local tiles <const> = {}
+    ---@type integer[]
+    local coords <const> = {}
     if tileMap.colorMode ~= ColorMode.TILEMAP then
-        return tiles
+        return tiles, coords
     end
 
     -- Validate optional arguments.
@@ -2090,44 +2092,53 @@ function AseUtilities.getSelectedTiles(
 
     -- Cache methods used in loop.
     local pxTilei <const> = app.pixelColor.tileI
+    local strunpack <const> = string.unpack
+    local strsub <const> = string.sub
 
-    ---@type table<integer, boolean>
-    local visitedTiles <const> = {}
-    local mapItr <const> = tileMap:pixels()
-    for mapEntry in mapItr do
-        local mapif <const> = mapEntry() --[[@as integer]]
-        local index <const> = pxTilei(mapif)
-        if index > 0 and index < lenTileSet
-            and (not visitedTiles[index]) then
+    local bpp <const> = tileMap.bytesPerPixel
+    local unpackFmt <const> = "I" .. bpp
+    local bytes <const> = tileMap.bytes
+    local wMap <const> = tileMap.width
+    local hMap <const> = tileMap.height
+    local lenMap <const> = wMap * hMap
 
-            local xMap <const> = mapEntry.x
-            local yMap <const> = mapEntry.y
+    local i = 0
+    while i < lenMap do
+        local ibpp <const> = i * bpp
+        local mapif <const> = strunpack(unpackFmt, strsub(
+            bytes, 1 + ibpp, bpp + ibpp))
+        local idx <const> = pxTilei(mapif)
+        if idx > 0 and idx < lenTileSet then
+            local xMap <const> = i % wMap
+            local yMap <const> = i // wMap
             local xtlTile <const> = vxtlCel + xMap * wTile
             local ytlTile <const> = vytlCel + yMap * hTile
 
-            local contained = true
-            local i = 0
-            while contained and i < flatDimTile do
-                local xLocal <const> = i % wTile
-                local yLocal <const> = i // wTile
+            local isContained = true
+            local j = 0
+            while isContained and j < flatDimTile do
+                local xLocal <const> = j % wTile
+                local yLocal <const> = j // wTile
                 local xPixel <const> = xtlTile + xLocal
                 local yPixel <const> = ytlTile + yLocal
-                contained = contained and selection:contains(
+                isContained = isContained and selection:contains(
                     Point(xPixel, yPixel))
-                i = i + 1
+                j = j + 1
             end
 
-            if contained then
-                -- print(string.format(
-                --     "[%d, %d]: [%d, %d]: %d",
-                --     xMap, yMap, xtlTile, ytlTile, index))
-                visitedTiles[index] = true
-                tiles[index] = tileSet:tile(index)
+            -- print(string.format(
+            --     "%d: [%d, %d]: [%d, %d]",
+            --     index, xMap, yMap, xtlTile, ytlTile))
+
+            if isContained then
+                if not tiles[idx] then tiles[idx] = tileSet:tile(idx) end
+                coords[#coords + 1] = i
             end
         end
+        i = i + 1
     end
 
-    return tiles
+    return tiles, coords
 end
 
 ---Get unique cels from layers that have already been verified as leaves and
