@@ -578,6 +578,10 @@ dlg:button {
         end
 
         -- For generating a Tileset id.
+        -- The integers in Tiled's custom properties only handle 32-bits, so
+        -- the id is truncated to lower bits when viewed there.
+        -- It doesn't matter too much, since a tileset's ID may change with
+        -- the use of correctTilesets anyway.
         math.randomseed(os.time())
         local minint64 <const> = 0x1000000000000000
         local maxint64 <const> = 0x7fffffffffffffff
@@ -705,6 +709,7 @@ dlg:button {
 
                     local props <const> = tile.properties
                     tileData[#tileData + 1] = {
+                        id = tile.index,
                         probability = tileProbability,
                         properties = props
                     }
@@ -942,7 +947,7 @@ dlg:button {
                         j = j + 1
                         local td <const> = tileData[j]
                         tPropStrs[#tPropStrs + 1] = strfmt(
-                            tsxTileFormat, j - 1, td.probability,
+                            tsxTileFormat, td.id, td.probability,
                             tconcat(writeProps(td.properties), "\n"))
                     end
 
