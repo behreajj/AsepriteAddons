@@ -130,7 +130,8 @@ local tsxFormat <const> = table.concat({
 -- TODO: See https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#tile
 local tsxTileFormat <const> = table.concat({
     "<tile ",
-    "id=\"%d\">\n",
+    "id=\"%d\" ",
+    "probability=\"%.6f\">\n",
     "<properties>\n%s\n</properties>\n",
     "</tile>"
 })
@@ -191,42 +192,42 @@ local function writeProps(properties)
     local isFile <const> = app.fs.isFile
     for k, v in pairs(properties) do
         -- Ignore script export ID.
-        if k ~= "id" then
-            local typev <const> = type(v)
-            -- Checking for nil doesn't seem necessary.
-            -- if typev ~= "nil" then
-            local tStr = ""
-            local vStr = ""
+        -- if k ~= "id" then
+        local typev <const> = type(v)
+        -- Checking for nil doesn't seem necessary.
+        -- if typev ~= "nil" then
+        local tStr = ""
+        local vStr = ""
 
-            -- Other TMX types: "color", "file", "object".
-            -- Color is "#AARRGGBB" hexadecimal formatted string with hash.
-            -- Aseprite doesn't support Color userdata in properties?
-            if typev == "boolean" then
-                tStr = "bool"
-                vStr = v and "true" or "false"
-            elseif typev == "number" then
-                if mathtype(v) == "integer" then
-                    tStr = "int"
-                    vStr = strfmt("%d", v)
-                else
-                    tStr = "float"
-                    vStr = strfmt("%.6f", v)
-                end
-            elseif typev == "string" then
-                tStr = isFile(v) and "file" or "string"
-                vStr = v
-            elseif typev == "table" then
-                -- Ideally this would be recursive.
-                tStr = "string"
-                vStr = tconcat(v, ", ")
+        -- Other TMX types: "color", "file", "object".
+        -- Color is "#AARRGGBB" hexadecimal formatted string with hash.
+        -- Aseprite doesn't support Color userdata in properties?
+        if typev == "boolean" then
+            tStr = "bool"
+            vStr = v and "true" or "false"
+        elseif typev == "number" then
+            if mathtype(v) == "integer" then
+                tStr = "int"
+                vStr = strfmt("%d", v)
+            else
+                tStr = "float"
+                vStr = strfmt("%.6f", v)
             end
-
-            local propStr <const> = strfmt(
-                "<property name=\"%s\" type=\"%s\" value=\"%s\" />",
-                k, tStr, vStr)
-            propStrs[#propStrs + 1] = propStr
-            -- end
+        elseif typev == "string" then
+            tStr = isFile(v) and "file" or "string"
+            vStr = v
+        elseif typev == "table" then
+            -- Ideally this would be recursive.
+            tStr = "string"
+            vStr = tconcat(v, ", ")
         end
+
+        local propStr <const> = strfmt(
+            "<property name=\"%s\" type=\"%s\" value=\"%s\" />",
+            k, tStr, vStr)
+        propStrs[#propStrs + 1] = propStr
+        -- end
+        -- end
     end
     return propStrs
 end
@@ -596,6 +597,7 @@ dlg:button {
         local upscale <const> = AseUtilities.upscaleImageForExport
 
         local blendModeSrc <const> = BlendMode.SRC
+        local tileProbability <const> = 1.0
 
         -- If you wanted to include an option to target the layers in a range,
         -- then you'd have to perform this on all tilesets in the sprite, not
@@ -628,8 +630,7 @@ dlg:button {
             local tileSetName <const> = tileSet.name
             local tileSetBaseIndex <const> = tileSet.baseIndex
             local tsProps <const> = tileSet.properties
-            ---@type table<integer, table<string, any>>
-            local tProps <const> = {}
+            local tileData <const> = {}
             local tsId <const> = tsProps["id"]
 
             local tileGrid <const> = tileSet.grid
@@ -702,14 +703,11 @@ dlg:button {
                     sheetImage:drawImage(tileScaled, Point(xTrg, yTrg),
                         255, blendModeSrc)
 
-                    -- TODO: There may come a time when you want all tile
-                    -- metadata listed, no matter whether it has custom props.
-                    local tileNo <const> = tile.index
                     local props <const> = tile.properties
-                    local lenProps <const> = #props
-                    if tileNo > 0 and lenProps > 0 then
-                        tProps[tileNo] = props
-                    end
+                    tileData[#tileData + 1] = {
+                        probability = tileProbability,
+                        properties = props
+                    }
                 end
                 k = k + 1
             end
@@ -736,7 +734,7 @@ dlg:button {
                 properties = tsProps,
                 rows = rows,
                 lenTileSet = lenTileSet,
-                tileProperties = tProps,
+                tileData = tileData,
                 width = wSheet,
                 wTile = wTileTrg
             }
@@ -929,15 +927,23 @@ dlg:button {
                     local hTile <const> = sheet.hTile
                     local lenTileSet <const> = sheet.lenTileSet
                     local tsProps <const> = sheet.properties
-                    local tProps <const> = sheet.tileProperties
+                    local tileData <const> = sheet.tileData
                     local width <const> = sheet.width
                     local wTile <const> = sheet.wTile
 
                     ---@type string[]
                     local tPropStrs <const> = {}
-                    for k, v in pairs(tProps) do
+                    local lenTileData = #tileData
+
+                    -- Skip the first tile. For some reason, it copies the id
+                    -- property from the tile set.
+                    local j = 1
+                    while j < lenTileData do
+                        j = j + 1
+                        local td <const> = tileData[j]
                         tPropStrs[#tPropStrs + 1] = strfmt(
-                            tsxTileFormat, k, tconcat(writeProps(v), "\n"))
+                            tsxTileFormat, j - 1, td.probability,
+                            tconcat(writeProps(td.properties), "\n"))
                     end
 
                     -- Currently the allowed flips and rotations don't seem
