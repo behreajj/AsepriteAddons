@@ -17,7 +17,6 @@ local curveColor <const> = app.theme.color.text --[[@as Color]]
 local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 
 local defaults <const> = {
-    -- TODO: Make get set buttons UI consistent with tweenTransform dialog.
     mode = "SET",
     alpSampleCount = 96,
 

@@ -43,6 +43,7 @@ local defaults <const> = {
     potUniform = false,
     metaData = "TILED",
     includeMaps = true,
+    tmxInfinite = true,
     tmxVersion = "1.10",
     tmxTiledVersion = "1.10.2",
     tmxOrientation = "orthogonal",
@@ -63,7 +64,7 @@ local tmxMapFormat <const> = table.concat({
     "height=\"%d\" ",
     "tilewidth=\"%d\" ",
     "tileheight=\"%d\" ",
-    "infinite=\"0\" ",
+    "infinite=\"%d\" ",
     "backgroundcolor=\"#%08x\">\n",
     "<properties>\n%s\n</properties>\n",
     "%s\n", -- tsx use ref array
@@ -322,6 +323,7 @@ dlg:combobox {
         dlg:modify { id = "tsxAlign", visible = useTsx }
         dlg:modify { id = "tsxRender", visible = useTsx }
         dlg:modify { id = "tsxFill", visible = useTsx }
+        dlg:modify { id = "tmxInfinite", visible = useTsx and inclMaps }
         dlg:modify { id = "tmxRenderOrder", visible = useTsx and inclMaps }
     end
 }
@@ -378,8 +380,20 @@ dlg:check {
         local metaData <const> = args.metaData --[[@as string]]
         local inclMaps <const> = args.includeMaps --[[@as boolean]]
         local useTsx <const> = metaData == "TILED"
+        dlg:modify { id = "tmxInfinite", visible = useTsx and inclMaps }
         dlg:modify { id = "tmxRenderOrder", visible = useTsx and inclMaps }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "tmxInfinite",
+    label = "Extent:",
+    text = "&Infinite",
+    selected = defaults.tmxInfinite,
+    visible = defaults.metaData == "TILED"
+        and defaults.includeMaps
 }
 
 dlg:newrow { always = false }
@@ -883,6 +897,7 @@ dlg:button {
                 local tsxFill <const> = string.lower(args.tsxFill
                     or defaults.tsxFill --[[@as string]])
 
+                local tmxInfinite <const> = args.tmxInfinite and 1 or 0
                 local tmxOrientation <const> = defaults.tmxOrientation
                 local tmxRenderOrder <const> = string.lower(args.tmxRenderOrder
                     or defaults.tmxRenderOrder --[[@as string]])
@@ -1065,6 +1080,7 @@ dlg:button {
                             hSprInTiles,
                             wSprGridScaled,
                             hSprGridScaled,
+                            tmxInfinite,
                             bkgArgb,
                             tconcat(mapPropsStrs, "\n"),
                             tconcat(tsxRefStrs, "\n"),
