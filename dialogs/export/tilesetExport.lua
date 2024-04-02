@@ -704,12 +704,11 @@ dlg:button {
 
                     -- TODO: There may come a time when you want all tile
                     -- metadata listed, no matter whether it has custom props.
-                    -- Also, tile index 0 writes a properties field even though
-                    -- it's empty.
+                    local tileNo <const> = tile.index
                     local props <const> = tile.properties
                     local lenProps <const> = #props
-                    if lenProps > 0 then
-                        tProps[tile.index] = props
+                    if tileNo > 0 and lenProps > 0 then
+                        tProps[tileNo] = props
                     end
                 end
                 k = k + 1
