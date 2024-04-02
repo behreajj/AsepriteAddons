@@ -348,7 +348,7 @@ local function transformCel(dialog, preset)
 
     local srcMap <const> = activeCel.image
     local srcBpp <const> = srcMap.bytesPerPixel
-    local unpackFmt <const> = "I" .. srcBpp
+    local packFmt <const> = "I" .. srcBpp
     local srcBytes <const> = srcMap.bytes
     local srcSpec <const> = srcMap.spec
     local wSrcMap <const> = srcSpec.width
@@ -381,22 +381,26 @@ local function transformCel(dialog, preset)
         end
 
         app.transaction(transactionName, function()
-            -- TODO: Switch to string bytes approach.
-            local trgMap <const> = mapTrFunc(srcMap)
-            local trgItr <const> = trgMap:pixels()
-            for mapEntry in trgItr do
-                local mapif <const> = mapEntry() --[[@as integer]]
-                local i <const> = pxTilei(mapif)
+            local trMap <const> = mapTrFunc(srcMap)
+            local trBytes <const> = trMap.bytes
+
+            ---@type string[]
+            local trgByteStrs <const> = {}
+            local i = 0
+            while i < lenSrcMap do
+                local ibpp <const> = i * srcBpp
+                local srcMapif <const> = strunpack(packFmt,
+                    strsub(trBytes, 1 + ibpp, srcBpp + ibpp))
+                local srcIdx <const> = pxTilei(srcMapif)
                 -- Built-in Aseprite flags allow for rotations of index zero
                 -- and for rotations of non-uniform tiles.
-                -- if i > 0 and i < lenTileSet then
-                local meta <const> = pxTilef(mapif)
-                local trMeta <const> = flgTrFunc(meta)
-                mapEntry(pxTileCompose(i, trMeta))
-                -- else
-                -- mapEntry(0)
-                -- end
+                local trgFlags <const> = flgTrFunc(pxTilef(srcMapif))
+                local trgByteStr <const> = strpack(packFmt,
+                    pxTileCompose(srcIdx, trgFlags))
+                i = i + 1
+                trgByteStrs[i] = trgByteStr
             end
+            trMap.bytes = tconcat(trgByteStrs)
 
             if updateCelPos then
                 local wSrcPixels <const> = srcMap.width * wTile
@@ -404,8 +408,8 @@ local function transformCel(dialog, preset)
                 local wSrcHalf <const> = wSrcPixels // 2
                 local hSrcHalf <const> = hSrcPixels // 2
 
-                local wTrgPixels <const> = trgMap.width * wTile
-                local hTrgPixels <const> = trgMap.height * hTile
+                local wTrgPixels <const> = trMap.width * wTile
+                local hTrgPixels <const> = trMap.height * hTile
                 local wTrgHalf <const> = wTrgPixels // 2
                 local hTrgHalf <const> = hTrgPixels // 2
 
@@ -414,7 +418,7 @@ local function transformCel(dialog, preset)
                     ytlCel + hSrcHalf - hTrgHalf)
             end
 
-            activeCel.image = trgMap
+            activeCel.image = trMap
         end)
 
         app.refresh()
@@ -447,20 +451,17 @@ local function transformCel(dialog, preset)
             trgByteStrs[i] = strsub(srcBytes, 1 + ibpp, srcBpp + ibpp)
         end
 
-        local lenCoords = #coords
+        local lenCoords <const> = #coords
         local j = 0
         while j < lenCoords do
             j = j + 1
             local coord <const> = coords[j]
-            local srcByteStr <const> = trgByteStrs[1 + coord]
-            local srcMapif <const> = strunpack(unpackFmt, srcByteStr)
+            local srcMapif <const> = strunpack(packFmt, trgByteStrs[1 + coord])
             local srcIdx = pxTilei(srcMapif)
             if srcToTrgIdcs[srcIdx] then
-                local trgIdx <const> = srcToTrgIdcs[srcIdx]
-                local srcFlags <const> = pxTilef(srcMapif)
-                local trgMapif <const> = pxTileCompose(trgIdx, srcFlags)
-                local trgMapStr <const> = strpack(unpackFmt, trgMapif)
-                trgByteStrs[1 + coord] = trgMapStr
+                local trgMapif <const> = pxTileCompose(srcToTrgIdcs[srcIdx],
+                    pxTilef(srcMapif))
+                trgByteStrs[1 + coord] = strpack(packFmt, trgMapif)
             end
         end
 

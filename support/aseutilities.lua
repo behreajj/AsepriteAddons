@@ -2057,7 +2057,7 @@ end
 ---Gets tiles from a tile map that are entirely contained by a selection.
 ---Returns a dictionary where the tile map index serves as the key and the Tile
 ---object is the value. The second return is an array of selected coordinates,
----in the format coord = y * w + x.
+---in the format coord = y * w + x. Coordinates are in map space, not pixels.
 ---
 ---Assumes that tile map and tile set have been vetted to confirm their
 ---association.
