@@ -43,7 +43,7 @@ local defaults <const> = {
     potUniform = false,
     metaData = "TILED",
     includeMaps = true,
-    tmxInfinite = true,
+    tmxInfinite = false,
     tmxVersion = "1.10",
     tmxTiledVersion = "1.10.2",
     tmxOrientation = "orthogonal",
@@ -123,7 +123,16 @@ local tsxFormat <const> = table.concat({
     "%s", -- transparency string
     "width=\"%d\" ",
     "height=\"%d\"/>\n",
+    "%s\n", -- tile properties
     "</tileset>"
+})
+
+-- TODO: See https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#tile
+local tsxTileFormat <const> = table.concat({
+    "<tile ",
+    "id=\"%d\">\n",
+    "<properties>\n%s\n</properties>\n",
+    "</tile>"
 })
 
 ---@param mapPacket table
@@ -619,6 +628,8 @@ dlg:button {
             local tileSetName <const> = tileSet.name
             local tileSetBaseIndex <const> = tileSet.baseIndex
             local tsProps <const> = tileSet.properties
+            ---@type table<integer, table<string, any>>
+            local tProps <const> = {}
             local tsId <const> = tsProps["id"]
 
             local tileGrid <const> = tileSet.grid
@@ -676,7 +687,6 @@ dlg:button {
             while k < lenTileSet do
                 local tile <const> = tileSet:tile(k)
                 if tile then
-                    -- TODO: Both Aseprite and Tiled support tile properties.
                     local tileImage <const> = tile.image
                     local tileScaled = tileImage
                     if useResize then
@@ -691,6 +701,16 @@ dlg:button {
                     local yTrg <const> = yOff + row * hTileTrg
                     sheetImage:drawImage(tileScaled, Point(xTrg, yTrg),
                         255, blendModeSrc)
+
+                    -- TODO: There may come a time when you want all tile
+                    -- metadata listed, no matter whether it has custom props.
+                    -- Also, tile index 0 writes a properties field even though
+                    -- it's empty.
+                    local props <const> = tile.properties
+                    local lenProps <const> = #props
+                    if lenProps > 0 then
+                        tProps[tile.index] = props
+                    end
                 end
                 k = k + 1
             end
@@ -717,6 +737,7 @@ dlg:button {
                 properties = tsProps,
                 rows = rows,
                 lenTileSet = lenTileSet,
+                tileProperties = tProps,
                 width = wSheet,
                 wTile = wTileTrg
             }
@@ -909,8 +930,16 @@ dlg:button {
                     local hTile <const> = sheet.hTile
                     local lenTileSet <const> = sheet.lenTileSet
                     local tsProps <const> = sheet.properties
+                    local tProps <const> = sheet.tileProperties
                     local width <const> = sheet.width
                     local wTile <const> = sheet.wTile
+
+                    ---@type string[]
+                    local tPropStrs <const> = {}
+                    for k, v in pairs(tProps) do
+                        tPropStrs[#tPropStrs + 1] = strfmt(
+                            tsxTileFormat, k, tconcat(writeProps(v), "\n"))
+                    end
 
                     -- Currently the allowed flips and rotations don't seem
                     -- accessible from Lua API, so default to 1, 1, 1, 0.
@@ -922,7 +951,8 @@ dlg:button {
                         1, 1, 1, 0,
                         tconcat(writeProps(tsProps), "\n"),
                         strfmt("%s.%s", fileName, fileExt),
-                        alphaStr, width, height)
+                        alphaStr, width, height,
+                        tconcat(tPropStrs, "\n"))
 
                     local tsxFilePath <const> = strfmt("%s%s.tsx", filePath, fileName)
                     local tsxFile <const>, _ <const> = ioOpen(tsxFilePath, "w")
