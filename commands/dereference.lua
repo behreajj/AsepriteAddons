@@ -21,7 +21,6 @@ app.transaction("Dereference Layer", function()
     derefLayer.data = refLayer.data
     derefLayer.opacity = refLayer.opacity or 255
     derefLayer.parent = refLayer.parent
-    derefLayer.properties = refLayer.properties
     derefLayer.stackIndex = refLayer.stackIndex
 
     derefLayer.isContinuous = refLayer.isContinuous

@@ -24,26 +24,22 @@ if activeLayer.isBackground then
         local origImg <const> = Image(origCel.image)
         local origData <const> = origCel.data
         local origColor <const> = origCel.color
-        local origProps <const> = origCel.properties
         local origzIndex <const> = origCel.zIndex
 
         local destImg <const> = Image(destCel.image)
         local destData <const> = destCel.data
         local destColor <const> = destCel.color
-        local destProps <const> = destCel.properties
         local destzIndex <const> = destCel.zIndex
 
         app.transaction("Cycle Cel Left", function()
             origCel.image = destImg
             origCel.data = destData
             origCel.color = destColor
-            origCel.properties = destProps
             origCel.zIndex = destzIndex
 
             destCel.image = origImg
             destCel.data = origData
             destCel.color = origColor
-            destCel.properties = origProps
             destCel.zIndex = origzIndex
 
             app.frame = destFrObj

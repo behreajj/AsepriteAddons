@@ -658,12 +658,12 @@ function AseUtilities.bkgToLayer(sprite, overrideLock)
     local bkgLayer <const> = sprite.backgroundLayer
     if bkgLayer and (overrideLock or bkgLayer.isEditable) then
         local unBkgLayer <const> = sprite:newLayer()
+        -- Attempting to copy properties field by reference would cause crash.
         unBkgLayer.color = bkgLayer.color
         unBkgLayer.data = bkgLayer.data
         unBkgLayer.isEditable = bkgLayer.isEditable
         unBkgLayer.isVisible = bkgLayer.isVisible
         unBkgLayer.isContinuous = bkgLayer.isContinuous
-        unBkgLayer.properties = bkgLayer.properties
         unBkgLayer.name = "Bkg"
 
         local frObjs <const> = sprite.frames
