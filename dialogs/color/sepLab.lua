@@ -314,16 +314,16 @@ dlg:button {
 
             if aGreens and aMagentas then
                 responseFunc = splitResponse
-                biasLabel = ".A.Extrema"
+                biasLabel = " A Extrema"
             elseif aGreens then
                 responseFunc = lowHalfResponse
-                biasLabel = ".Greens"
+                biasLabel = " Greens"
             elseif aMagentas then
                 responseFunc = highHalfResponse
-                biasLabel = ".Reds"
+                biasLabel = " Reds"
             else
                 responseFunc = midResponse
-                biasLabel = ".A.Central"
+                biasLabel = " A Central"
             end
         elseif channel == "B" then
             toFac = function(lab)
@@ -335,16 +335,16 @@ dlg:button {
 
             if bBlues and bYellows then
                 responseFunc = splitResponse
-                biasLabel = ".B.Extrema"
+                biasLabel = " B Extrema"
             elseif bBlues then
                 responseFunc = lowHalfResponse
-                biasLabel = ".Blues"
+                biasLabel = " Blues"
             elseif bYellows then
                 responseFunc = highHalfResponse
-                biasLabel = ".Yellows"
+                biasLabel = " Yellows"
             else
                 responseFunc = midResponse
-                biasLabel = ".B.Central"
+                biasLabel = " B Central"
             end
         else
             -- Default to lightness.
@@ -356,25 +356,25 @@ dlg:button {
 
             if lShadows and lMidtones and lHighlights then
                 responseFunc = fullResponse
-                biasLabel = ".L"
+                biasLabel = " L"
             elseif lShadows and lHighlights then
                 responseFunc = splitResponse
-                biasLabel = ".SH"
+                biasLabel = " SH"
             elseif lShadows and lMidtones then
                 responseFunc = lowHalfResponse
-                biasLabel = ".SM"
+                biasLabel = " SM"
             elseif lMidtones and lHighlights then
                 responseFunc = highHalfResponse
-                biasLabel = ".MH"
+                biasLabel = " MH"
             elseif lShadows then
                 responseFunc = lowThirdResponse
-                biasLabel = ".Shadows"
+                biasLabel = " Shadows"
             elseif lMidtones then
                 responseFunc = midResponse
-                biasLabel = ".Midtones"
+                biasLabel = " Midtones"
             elseif lHighlights then
                 responseFunc = highThirdResponse
-                biasLabel = ".Highlights"
+                biasLabel = " Highlights"
             else
                 app.alert {
                     title = "Error",

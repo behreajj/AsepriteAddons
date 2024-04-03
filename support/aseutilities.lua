@@ -2117,10 +2117,8 @@ function AseUtilities.getSelectedTiles(
             local isContained = true
             local j = 0
             while isContained and j < flatDimTile do
-                local xLocal <const> = j % wTile
-                local yLocal <const> = j // wTile
-                local xPixel <const> = xtlTile + xLocal
-                local yPixel <const> = ytlTile + yLocal
+                local xPixel <const> = xtlTile + j % wTile
+                local yPixel <const> = ytlTile + j // wTile
                 isContained = isContained and selection:contains(
                     Point(xPixel, yPixel))
                 j = j + 1

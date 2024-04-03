@@ -292,8 +292,7 @@ local function transformCel(dialog, preset)
     local wTile <const> = tileDim.width
     local hTile <const> = tileDim.height
     if wTile ~= hTile
-        and (preset == "90"
-            or preset == "270") then
+        and (preset == "90" or preset == "270") then
         app.alert {
             title = "Error",
             text = "Tile size is nonuniform."
