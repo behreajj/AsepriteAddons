@@ -379,15 +379,15 @@ dlg:button {
 
         local pxRect <const> = Rectangle(0, 0, 1, 1)
         local floor <const> = math.floor
-        local xtl <const> = (w == short) and 0.0 or (w - short) * 0.5
-        local ytl <const> = (h == short) and 0.0 or (h - short) * 0.5
+        local xtl <const> = (w == short) and 0.0 or (w - short) // 2
+        local ytl <const> = (h == short) and 0.0 or (h - short) // 2
         local trgSel <const> = Selection(Rectangle(
             floor(xtl), floor(ytl), short, short))
 
         local radius <const> = short * 0.5
         local rsq <const> = radius * radius
-        local cx <const> = w * 0.5
-        local cy <const> = h * 0.5
+        local cx <const> = w // 2
+        local cy <const> = h // 2
 
         local i = 0
         while i < len do
