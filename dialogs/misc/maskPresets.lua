@@ -52,6 +52,18 @@ local function extrude(dx, dy, trim)
     local activeSprite <const> = site.sprite
     if not activeSprite then return end
 
+    -- This makes undoing with Ctrl+Z tedious, but in other cases the double
+    -- mask invert needed to be outside a transaction anyway.
+    local selCurr <const>, _ <const> = AseUtilities.getSelection(activeSprite)
+    local selNext <const> = Selection()
+    selNext:add(selCurr)
+    local selOrigin <const> = selCurr.origin
+    selNext.origin = Point(selOrigin.x + dx, selOrigin.y - dy)
+    app.transaction("Nudge Mask", function()
+        activeSprite.selection = selNext
+    end)
+    app.refresh()
+
     local activeFrame <const> = site.frame
     if not activeFrame then return end
 
@@ -73,7 +85,7 @@ local function extrude(dx, dy, trim)
 
     local srcImg = activeCel.image
 
-    app.transaction("Extrude", function()
+    app.transaction("Extrude Cel", function()
         local celBounds <const> = activeCel.bounds
         local xCel = celBounds.x
         local yCel = celBounds.y
@@ -86,15 +98,6 @@ local function extrude(dx, dy, trim)
             yCel = yCel + tmy
         end
 
-        local selCurr <const>, _ <const> = AseUtilities.getSelection(activeSprite)
-        local selOrigin <const> = selCurr.origin
-
-        local selNext <const> = Selection()
-        selNext:add(selCurr)
-        selNext.origin = Point(
-            selOrigin.x + dx,
-            selOrigin.y - dy)
-
         local trgImg <const>, tlx <const>, tly <const> = AseUtilities.blendImage(
             srcImg, srcImg,
             xCel, yCel, xCel + dx, yCel - dy,
@@ -102,31 +105,30 @@ local function extrude(dx, dy, trim)
 
         activeCel.image = trgImg
         activeCel.position = Point(tlx, tly)
-        activeSprite.selection = selNext
     end)
 
     app.refresh()
 end
 
+---@param sprite Sprite
+---@param trgSel Selection
+---@param selMode string
 local function updateSel(sprite, trgSel, selMode)
     if selMode ~= "REPLACE" then
-        local activeSel <const>, selIsValid <const> = AseUtilities.getSelection(sprite)
-
-        if selMode == "INTERSECT" then
-            activeSel:intersect(trgSel)
-            sprite.selection = activeSel
-        elseif selMode == "SUBTRACT" then
-            activeSel:subtract(trgSel)
+        local activeSel <const>,
+        selIsValid <const> = AseUtilities.getSelection(sprite)
+        if selIsValid then
+            if selMode == "INTERSECT" then
+                activeSel:intersect(trgSel)
+            elseif selMode == "SUBTRACT" then
+                activeSel:subtract(trgSel)
+            else
+                -- See https://github.com/aseprite/aseprite/issues/4045 .
+                activeSel:add(trgSel)
+            end
             sprite.selection = activeSel
         else
-            -- Additive selection.
-            -- See https://github.com/aseprite/aseprite/issues/4045 .
-            if selIsValid then
-                activeSel:add(trgSel)
-                sprite.selection = activeSel
-            else
-                sprite.selection = trgSel
-            end
+            sprite.selection = trgSel
         end
     else
         sprite.selection = trgSel
@@ -298,8 +300,6 @@ dlg:button {
     end
 }
 
-dlg:newrow { always = false }
-
 dlg:button {
     id = "topHalfButton",
     text = "&TOP",
@@ -325,6 +325,84 @@ dlg:button {
 
         local trgSel <const> = Selection(Rectangle(
             0, 0, spec.width, h))
+        updateSel(sprite, trgSel, selMode)
+        app.refresh()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "inSquareButton",
+    text = "S&QUARE",
+    focus = false,
+    visible = true,
+    onclick = function()
+        -- https://en.wikipedia.org/wiki/Rabatment_of_the_rectangle
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+        local spec <const> = sprite.spec
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+        local w <const> = spec.width
+        local h <const> = spec.height
+        local short <const> = math.min(w, h)
+        local xtl <const> = (w == short) and 0 or (w - short) // 2
+        local ytl <const> = (h == short) and 0 or (h - short) // 2
+        local trgSel <const> = Selection(Rectangle(
+            xtl, ytl, short, short))
+        updateSel(sprite, trgSel, selMode)
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "inCircButton",
+    text = "C&IRCLE",
+    focus = false,
+    visible = true,
+    onclick = function()
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+        local spec <const> = sprite.spec
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+
+        local w <const> = spec.width
+        local h <const> = spec.height
+        local short <const> = math.min(w, h)
+        local len <const> = short * short
+
+        local pxRect <const> = Rectangle(0, 0, 1, 1)
+        local floor <const> = math.floor
+        local xtl <const> = (w == short) and 0.0 or (w - short) * 0.5
+        local ytl <const> = (h == short) and 0.0 or (h - short) * 0.5
+        local trgSel <const> = Selection(Rectangle(
+            floor(xtl), floor(ytl), short, short))
+
+        local radius <const> = short * 0.5
+        local rsq <const> = radius * radius
+        local cx <const> = w * 0.5
+        local cy <const> = h * 0.5
+
+        local i = 0
+        while i < len do
+            local x <const> = xtl + i % short
+            local y <const> = ytl + i // short
+            local dx <const> = x - cx
+            local dy <const> = y - cy
+            if (dx * dx + dy * dy) >= rsq then
+                pxRect.x = floor(x)
+                pxRect.y = floor(y)
+                trgSel:subtract(pxRect)
+            end
+            i = i + 1
+        end
+
         updateSel(sprite, trgSel, selMode)
         app.refresh()
     end
@@ -365,35 +443,36 @@ dlg:button {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "centerButton",
-    text = "CENTER",
-    focus = false,
-    visible = false,
+    id = "frameSelectButton",
+    text = "&FRAME",
+    focus = true,
     onclick = function()
         local site <const> = app.site
-        local sprite <const> = site.sprite
-        if not sprite then return end
-        local spec <const> = sprite.spec
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+
+        local activeFrame <const> = site.frame
+        if not activeFrame then return end
+
+        local flat <const> = Image(activeSprite.spec)
+        flat:drawSprite(activeSprite, activeFrame)
+        local trgSel <const> = AseUtilities.selectImage(flat, 0, 0)
+
         local args <const> = dlg.data
         local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
-        local w <const> = spec.width
-        local h <const> = spec.height
-        local xtl <const> = math.floor(w * 0.5 - w / 6.0)
-        local ytl <const> = math.floor(h * 0.5 - h / 6.0)
-        local trgSel <const> = Selection(Rectangle(
-            xtl, ytl, w - xtl * 2, h - ytl * 2))
-        updateSel(sprite, trgSel, selMode)
+
+        app.transaction("Select Cel", function()
+            updateSel(activeSprite, trgSel, selMode)
+        end)
         app.refresh()
     end
 }
 
-
 dlg:button {
-    id = "contentButton",
+    id = "celSelectButton",
     text = "C&EL",
-    focus = true,
-    visible = true,
+    focus = false,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite
@@ -418,32 +497,6 @@ dlg:button {
         app.transaction("Select Cel", function()
             updateSel(activeSprite, trgSel, selMode)
         end)
-        app.refresh()
-    end
-}
-
-dlg:button {
-    id = "inSquareButton",
-    text = "INS&QUARE",
-    focus = false,
-    visible = true,
-    onclick = function()
-        -- https://en.wikipedia.org/wiki/Rabatment_of_the_rectangle
-        local site <const> = app.site
-        local sprite <const> = site.sprite
-        if not sprite then return end
-        local spec <const> = sprite.spec
-        local args <const> = dlg.data
-        local selMode <const> = args.selMode
-            or defaults.selMode --[[@as string]]
-        local w <const> = spec.width
-        local h <const> = spec.height
-        local short <const> = math.min(w, h)
-        local xtl <const> = (w == short) and 0 or (w - short) // 2
-        local ytl <const> = (h == short) and 0 or (h - short) // 2
-        local trgSel <const> = Selection(Rectangle(
-            xtl, ytl, short, short))
-        updateSel(sprite, trgSel, selMode)
         app.refresh()
     end
 }
@@ -490,8 +543,6 @@ dlg:button {
         }
     end
 }
-
-dlg:newrow { always = false }
 
 dlg:button {
     id = "borderButton",

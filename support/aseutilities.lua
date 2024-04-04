@@ -2747,57 +2747,58 @@ end
 
 ---Selects the non-zero pixels of a cel's image. Intersects the selection with
 ---the sprite bounds, if provided, for cases where cel may be partially outside
----the canvas edges. For tile map layers, selects the cel's bounds.
+---the canvas edges.
 ---@param cel Cel cel
 ---@param spriteBounds Rectangle? sprite bounds
 ---@return Selection
 ---@nodiscard
 function AseUtilities.selectCel(cel, spriteBounds)
-    local celBounds <const> = cel.bounds
-    local xCel <const> = celBounds.x
-    local yCel <const> = celBounds.y
+    local celPos <const> = cel.position
+    return AseUtilities.selectImage(cel.image, celPos.x, celPos.y,
+        cel.layer.tileset, spriteBounds)
+end
 
-    local celImage <const> = cel.image
-    local bpp <const> = celImage.bytesPerPixel
-    local bytes <const> = celImage.bytes
+---Selects the non-zero pixels of an image. Intersects the selection with
+---the sprite bounds, if provided, for cases where cel may be partially outside
+---the canvas edges.
+---@param image Image source image
+---@param xtl integer cel position x
+---@param ytl integer cel position y
+---@param tileSet Tileset? tile set
+---@param spriteBounds Rectangle? sprite bounds
+---@return Selection
+---@nodiscard
+function AseUtilities.selectImage(image, xtl, ytl, tileSet, spriteBounds)
+    local bpp <const> = image.bytesPerPixel
+    local bytes <const> = image.bytes
 
-    local celSpec <const> = celImage.spec
+    local celSpec <const> = image.spec
     local wImage <const> = celSpec.width
     local hImage <const> = celSpec.height
     local colorMode <const> = celSpec.colorMode
     local alphaIndex <const> = celSpec.transparentColor
 
     -- Beware naming, 'select' is a method built-in to Lua.
-    local mask <const> = Selection(celBounds)
     local pxRect <const> = Rectangle(0, 0, 1, 1)
     local lenImage <const> = wImage * hImage
 
-    if colorMode == ColorMode.RGB
-        or colorMode == ColorMode.GRAY
-        or colorMode == ColorMode.INDEXED then
-        local strbyte <const> = string.byte
-        local i = 0
-        while i < lenImage do
-            if strbyte(bytes, i * bpp + bpp) == alphaIndex then
-                pxRect.x = (i % wImage) + xCel
-                pxRect.y = (i // wImage) + yCel
-                mask:subtract(pxRect)
-            end
-            i = i + 1
-        end
-    elseif colorMode == ColorMode.TILEMAP then
-        local layer <const> = cel.layer
-        local tileSet <const> = layer.tileset
+    local mask = nil
+    if colorMode == ColorMode.TILEMAP then
         if tileSet then
             local tileGrid <const> = tileSet.grid
             local tileDim <const> = tileGrid.tileSize
             local wTile <const> = tileDim.width
             local hTile <const> = tileDim.height
+
+            mask = Selection(Rectangle(xtl, ytl,
+                wTile * wImage, hTile * hImage))
             pxRect.width = wTile
             pxRect.height = hTile
+
             local pxTilei <const> = app.pixelColor.tileI
             local strsub <const> = string.sub
             local strunpack <const> = string.unpack
+
             local i = 0
             while i < lenImage do
                 local ibpp <const> = i * bpp
@@ -2805,12 +2806,26 @@ function AseUtilities.selectCel(cel, spriteBounds)
                 local mapIf <const> = strunpack("I4", str)
                 local idx <const> = pxTilei(mapIf)
                 if idx == 0 then
-                    pxRect.x = wTile * (i % wImage) + xCel
-                    pxRect.y = hTile * (i // wImage) + yCel
+                    pxRect.x = wTile * (i % wImage) + xtl
+                    pxRect.y = hTile * (i // wImage) + ytl
                     mask:subtract(pxRect)
                 end
                 i = i + 1
             end
+        else
+            mask = Selection()
+        end
+    else
+        mask = Selection(Rectangle(xtl, ytl, wImage, hImage))
+        local strbyte <const> = string.byte
+        local i = 0
+        while i < lenImage do
+            if strbyte(bytes, i * bpp + bpp) == alphaIndex then
+                pxRect.x = (i % wImage) + xtl
+                pxRect.y = (i // wImage) + ytl
+                mask:subtract(pxRect)
+            end
+            i = i + 1
         end
     end
 

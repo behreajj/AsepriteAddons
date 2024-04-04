@@ -26,23 +26,23 @@ app.transaction("Correct tile sets", function()
         i = i + 1
         local tileSet <const> = tileSets[i]
 
-        local tileId <const> = rng(minint64, maxint64)
-        tileSet.properties["id"] = tileId
+        local tsId <const> = rng(minint64, maxint64)
+        tileSet.properties["id"] = tsId
 
         local origName <const> = tileSet.name
         local tsNameVerif = ""
         if origName and #origName > 0 then
             tsNameVerif = verifName(origName)
         else
-            tsNameVerif = strfmt("%16x", tileId)
+            tsNameVerif = strfmt("%16x", tsId)
         end
 
         local attempts = 0
         while (uniques[tsNameVerif] or #tsNameVerif <= 0)
             and attempts < 16 do
-            local newTileId <const> = rng(minint64, maxint64)
-            tileSet.properties["id"] = newTileId
-            tsNameVerif = strfmt("%16x", newTileId)
+            local newTsId <const> = rng(minint64, maxint64)
+            tileSet.properties["id"] = newTsId
+            tsNameVerif = strfmt("%16x", newTsId)
             attempts = attempts + 1
         end
 
