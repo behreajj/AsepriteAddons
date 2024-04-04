@@ -14,6 +14,9 @@ local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 local defaults <const> = {
     -- Last commit before tween position, rotation, scale were removed:
     -- 759a3838381c91393a77d7b3aedc5de134790e6f .
+
+    -- Rotation is no longer set as a cel property because properties would be
+    -- a pain to deep copy when a cel is swapped or a layer converted.
     mode = "MIX",
     facType = "TIME",
     axis = "Z",
@@ -99,27 +102,6 @@ local function getCelDataAtFrame(axis)
                         local tileDim <const> = tileGrid.tileSize
                         wTile = math.max(1, math.abs(tileDim.width))
                         hTile = math.max(1, math.abs(tileDim.height))
-                    end
-                else
-                    -- TODO: Treat scale percentage the same way as rotation?
-
-                    -- Treat all tile maps as having zero degrees rotation,
-                    -- even if a cel property is present.
-                    local celProps <const> = activeCel.properties
-                    if axis == "X" then
-                        if celProps["xRotation"] then
-                            rotDeg = celProps["xRotation"] --[[@as integer]]
-                        end
-                    elseif axis == "Y" then
-                        if celProps["yRotation"] then
-                            rotDeg = celProps["yRotation"] --[[@as integer]]
-                        end
-                    else
-                        if celProps["zRotation"] then
-                            rotDeg = celProps["zRotation"] --[[@as integer]]
-                        elseif celProps["rotation"] then
-                            rotDeg = celProps["rotation"] --[[@as integer]]
-                        end
                     end
                 end
 
@@ -837,9 +819,8 @@ dlg:button {
                     floor(yCurr - trgImg.height * 0.5))
 
                 transact("Anim Cel", function()
-                    local cel <const> = activeSprite:newCel(
+                    activeSprite:newCel(
                         trgLayer, frObj, trgImg, trgPoint)
-                    cel.properties[rotPropId] = round(currDeg) % 360
                 end)
 
                 j = j + 1
@@ -987,9 +968,8 @@ dlg:button {
                 local trgPoint <const> = Point(xtlInt, ytlInt)
 
                 transact("Anim Cel", function()
-                    local cel <const> = activeSprite:newCel(
+                    activeSprite:newCel(
                         trgLayer, frObj, trgImg, trgPoint)
-                    cel.properties[rotPropId] = round(degTrg) % 360
                 end)
 
                 j = j + 1
