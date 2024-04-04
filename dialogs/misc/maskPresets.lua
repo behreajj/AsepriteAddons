@@ -112,8 +112,10 @@ end
 
 ---@param sprite Sprite
 ---@param trgSel Selection
----@param selMode string
+---@param selMode "REPLACE"|"ADD"|"SUBTRACT"|"INTERSECT"
 local function updateSel(sprite, trgSel, selMode)
+    -- TODO: Generalize this to an AseUtilities method to keep
+    -- consistency with colorSelect and transformTile?
     if selMode ~= "REPLACE" then
         local activeSel <const>,
         selIsValid <const> = AseUtilities.getSelection(sprite)
@@ -379,8 +381,8 @@ dlg:button {
 
         local pxRect <const> = Rectangle(0, 0, 1, 1)
         local floor <const> = math.floor
-        local xtl <const> = (w == short) and 0.0 or (w - short) // 2
-        local ytl <const> = (h == short) and 0.0 or (h - short) // 2
+        local xtl <const> = (w == short) and 0 or (w - short) // 2
+        local ytl <const> = (h == short) and 0 or (h - short) // 2
         local trgSel <const> = Selection(Rectangle(
             floor(xtl), floor(ytl), short, short))
 

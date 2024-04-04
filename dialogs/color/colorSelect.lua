@@ -360,7 +360,7 @@ dlg:button {
         local selIsReplace <const> = selMode == "REPLACE"
 
         -- Minimize pointless searches outside the current selection.
-        -- See https://community.aseprite.org/t/selecting-pixels-on-a-large-canvas/21541 .
+        -- See https://community.aseprite.org/t/selecting-pixels-on-a-large-canvas/ .
         local blitIntersect <const> = selIsValid and (selIsInter or selIsSub)
 
         local image = nil
@@ -483,6 +483,8 @@ dlg:button {
         local aseColorToClr <const> = AseUtilities.aseColorToClr
         local aseColorToHex <const> = AseUtilities.aseColorToHex
 
+        -- TODO: Subtracting mask color from selection.
+        -- See https://community.aseprite.org/t/the-tool-select-color-range-does-not-subtract-mask-color/ .
         local refClr <const> = aseColorToClr(refColor)
         local refInt <const> = aseColorToHex(refColor, colorMode)
         local refLab <const> = sRgbaToLab(refClr)
@@ -674,25 +676,20 @@ dlg:button {
         end
 
         app.transaction("Select Colors", function()
+            -- TODO: Generalize this to an AseUtilities method to keep
+            -- consistency with transformTile and maskPresets?
             if not selIsReplace then
-                if selIsInter then
-                    activeSel:intersect(trgSel)
-                    activeSprite.selection = activeSel
-                elseif selIsSub then
-                    -- Any way to mitigate this kind of problem when
-                    -- alpha index is the search color?
-                    -- https://community.aseprite.org/t/the-tool-select-color-range-does-not-subtract-mask-color/21456
-                    activeSel:subtract(trgSel)
+                if selIsValid then
+                    if selIsInter then
+                        activeSel:intersect(trgSel)
+                    elseif selIsSub then
+                        activeSel:subtract(trgSel)
+                    else
+                        activeSel:add(trgSel)
+                    end
                     activeSprite.selection = activeSel
                 else
-                    -- Additive selection.
-                    -- See https://github.com/aseprite/aseprite/issues/4045 .
-                    if selIsValid then
-                        activeSel:add(trgSel)
-                        activeSprite.selection = activeSel
-                    else
-                        activeSprite.selection = trgSel
-                    end
+                    activeSprite.selection = trgSel
                 end
             else
                 activeSprite.selection = trgSel

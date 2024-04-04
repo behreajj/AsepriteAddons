@@ -19,30 +19,29 @@ local defaults <const> = {
     inPlace = true
 }
 
----@param activeSprite Sprite
+---@param sprite Sprite
 ---@param trgSel Selection
 ---@param selMode "REPLACE"|"ADD"|"SUBTRACT"|"INTERSECT"
-local function selectWithMode(activeSprite, trgSel, selMode)
+local function updateSel(sprite, trgSel, selMode)
+    -- TODO: Generalize this to an AseUtilities method to keep
+    -- consistency with colorSelect and maskPresets?
     if selMode ~= "REPLACE" then
         local activeSel <const>,
-        selIsValid <const> = AseUtilities.getSelection(activeSprite)
-        if selMode == "INTERSECT" then
-            activeSel:intersect(trgSel)
-            activeSprite.selection = activeSel
-        elseif selMode == "SUBTRACT" then
-            activeSel:subtract(trgSel)
-            activeSprite.selection = activeSel
-        else
-            -- Additive selection.
-            if selIsValid then
-                activeSel:add(trgSel)
-                activeSprite.selection = activeSel
+        selIsValid <const> = AseUtilities.getSelection(sprite)
+        if selIsValid then
+            if selMode == "INTERSECT" then
+                activeSel:intersect(trgSel)
+            elseif selMode == "SUBTRACT" then
+                activeSel:subtract(trgSel)
             else
-                activeSprite.selection = trgSel
+                activeSel:add(trgSel)
             end
+            sprite.selection = activeSel
+        else
+            sprite.selection = trgSel
         end
     else
-        activeSprite.selection = trgSel
+        sprite.selection = trgSel
     end
 end
 
@@ -783,7 +782,7 @@ dlg:button {
             local selMode <const> = args.selMode
                 or defaults.selMode --[[@as string]]
             app.transaction("Select Tiles", function()
-                selectWithMode(activeSprite, trgSel, selMode)
+                updateSel(activeSprite, trgSel, selMode)
             end)
         end
 
@@ -846,7 +845,7 @@ dlg:button {
         local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
         app.transaction("Select Tiles", function()
-            selectWithMode(activeSprite, trgSel, selMode)
+            updateSel(activeSprite, trgSel, selMode)
         end)
 
         app.refresh()
