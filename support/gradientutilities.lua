@@ -587,9 +587,7 @@ function GradientUtilities.imageToMatrix(image)
         local h = 0
         while h < lenMat do
             local h4 <const> = h * 4
-            local r <const> = strbyte(bytes, 1 + h4)
-            local g <const> = strbyte(bytes, 2 + h4)
-            local b <const> = strbyte(bytes, 3 + h4)
+            local r <const>, g <const>, b <const> = strbyte(bytes, 1 + h4, 3 + h4)
             local srgb <const> = clrnew(r / 255.0, g / 255.0, b / 255.0, 1.0)
             local lab <const> = sRgbToLab(srgb)
             local v <const> = lab.l * 0.01

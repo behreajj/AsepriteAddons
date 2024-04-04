@@ -66,10 +66,8 @@ local function auditImage(srcImg)
     local j = 0
     while j < lenSrcImg do
         local j4 <const> = j * 4
-        local r8 <const> = strbyte(srcBytes, 1 + j4)
-        local g8 <const> = strbyte(srcBytes, 2 + j4)
-        local b8 <const> = strbyte(srcBytes, 3 + j4)
-        local a8 <const> = strbyte(srcBytes, 4 + j4)
+        local r8 <const>, g8 <const>, b8 <const>, a8 <const> = strbyte(
+            srcBytes, 1 + j4, 4 + j4)
 
         local h32 <const> = a8 << 0x18 | b8 << 0x10 | g8 << 0x08 | r8
 

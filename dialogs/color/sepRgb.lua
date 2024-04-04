@@ -307,10 +307,10 @@ dlg:button {
                     local j = 0
                     while j < srcPxLen do
                         local j4 <const> = j * 4
-                        local rSrc <const> = strbyte(srcBytes, 1 + j4)
-                        local gSrc <const> = strbyte(srcBytes, 2 + j4)
-                        local bSrc <const> = strbyte(srcBytes, 3 + j4)
-                        local aSrc <const> = strbyte(srcBytes, 4 + j4)
+                        local rSrc <const>,
+                        gSrc <const>,
+                        bSrc <const>,
+                        aSrc <const> = strbyte(srcBytes, 1 + j4, 4 + j4)
 
                         j = j + 1
                         rBytesArr[j] = strpack("B B B B", rSrc, 0, 0, aSrc)

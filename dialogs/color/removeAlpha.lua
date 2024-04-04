@@ -42,12 +42,10 @@ local function opaque(srcImg, absOpaque)
             local r8 = 0
             local g8 = 0
             local b8 = 0
-            local a8 = strbyte(bytes, 4 + i4, 4 + i4)
+            local a8 = strbyte(bytes, 4 + i4)
 
             if absOpaque or a8 > 0 then
-                r8 = strbyte(bytes, 1 + i4, 1 + i4)
-                g8 = strbyte(bytes, 2 + i4, 2 + i4)
-                b8 = strbyte(bytes, 3 + i4, 3 + i4)
+                r8, g8, b8 = strbyte(bytes, 1 + i4, 3 + i4)
                 a8 = 255
             end
 
@@ -60,10 +58,10 @@ local function opaque(srcImg, absOpaque)
             local i2 <const> = i * 2
 
             local v8 = 0
-            local a8 = strbyte(bytes, 2 + i2, 2 + i2)
+            local a8 = strbyte(bytes, 2 + i2)
 
             if absOpaque or a8 > 0 then
-                v8 = strbyte(bytes, 1 + i2, 1 + i2)
+                v8 = strbyte(bytes, 1 + i2)
                 a8 = 255
             end
 

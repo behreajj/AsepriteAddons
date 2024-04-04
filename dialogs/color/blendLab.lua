@@ -379,10 +379,7 @@ dlg:button {
                     if ays >= 0 and ays < aHeight
                         and axs >= 0 and axs < aWidth then
                         local aIdx <const> = (axs + ays * aWidth) * abpp
-                        aRed = strbyte(apx, 1 + aIdx)
-                        aGreen = strbyte(apx, 2 + aIdx)
-                        aBlue = strbyte(apx, 3 + aIdx)
-                        aAlpha = strbyte(apx, 4 + aIdx)
+                        aRed, aGreen, aBlue, aAlpha = strbyte(apx, 1 + aIdx, 4 + aIdx)
                     end
 
                     local bRed = 0
@@ -395,10 +392,7 @@ dlg:button {
                     if bys >= 0 and bys < bHeight
                         and bxs >= 0 and bxs < bWidth then
                         local bIdx <const> = (bxs + bys * bWidth) * bbpp
-                        bRed = strbyte(bpx, 1 + bIdx)
-                        bGreen = strbyte(bpx, 2 + bIdx)
-                        bBlue = strbyte(bpx, 3 + bIdx)
-                        bAlpha = strbyte(bpx, 4 + bIdx)
+                        bRed, bGreen, bBlue, bAlpha = strbyte(bpx, 1 + bIdx, 4 + bIdx)
                     end
 
                     local cRed = 0

@@ -248,7 +248,7 @@ function AseUtilities.aseColorToHex(clr, clrMode)
 end
 
 ---Loads a palette based on a string. The string is expected to be either
----"FILE", "PRESET" or "ACTIVE". The correctZeroAlpha flag replaces zero alpha
+---"FILE" or "ACTIVE". The correctZeroAlpha flag replaces zero alpha
 ---colors with clear black, regardless of RGB channel values.
 ---
 ---Returns a tuple of tables. The first table is an array of hexadecimals
@@ -302,9 +302,7 @@ function AseUtilities.asePaletteLoad(
                 if profileAct then
                     -- Tests a number of color profile components for
                     -- approximate equality. See
-                    -- https://github.com/aseprite/laf/blob/
-                    -- 11ffdbd9cc6232faaff5eecd8cc628bb5a2c706f/
-                    -- gfx/color_space.cpp#L142
+                    -- https://github.com/aseprite/laf/blob/main/gfx/color_space.cpp#L107
 
                     -- It might be safer not to treat the NONE color space as
                     -- equivalent to SRGB, as the user could have a display
@@ -315,11 +313,11 @@ function AseUtilities.asePaletteLoad(
                         hexesSrgb = AseUtilities.asePalettesToHexArr(
                             palActSpr.palettes)
                         palActSpr:convertColorSpace(profileAct)
-                    end
-                end
-            end
-        end
-    end
+                    end -- End unequal profiles.
+                end     -- End profile exists.
+            end         -- End color mode check.
+        end             -- End sprite exists.
+    end                 -- End pal type block.
 
     -- Malformed file path could lead to nil.
     if hexesProfile == nil then
@@ -490,7 +488,7 @@ function AseUtilities.averageColor(sprite, frame)
         palette = AseUtilities.getPalette(frame, sprite.palettes)
 
         eval = function(idx, d, pal)
-            if idx > -1 and idx < #pal then
+            if idx >= 0 and idx < #pal then
                 local aseColor <const> = pal:getColor(idx)
                 local a <const> = aseColor.alpha
                 if a > 0 then
@@ -591,9 +589,8 @@ function AseUtilities.averageNormal(sprite, frame)
             local i4 <const> = i * 4
             local a8 <const> = strbyte(bytes, 4 + i4)
             if a8 >= 0 then
-                local r8 <const> = strbyte(bytes, 1 + i4)
-                local g8 <const> = strbyte(bytes, 2 + i4)
-                local b8 <const> = strbyte(bytes, 3 + i4)
+                local r8 <const>, g8 <const>, b8 <const> = strbyte(
+                    bytes, 1 + i4, 3 + i4)
 
                 local x = (r8 + r8 - 255) / 255.0
                 local y = (g8 + g8 - 255) / 255.0
@@ -861,8 +858,8 @@ function AseUtilities.blendImage(
             j = j + 1
             local uStr <const> = uStrs[j]
             local oStr <const> = oStrs[j]
-            local ag <const>, aa <const> = strbyte(uStr, 1, 4)
-            local bg <const>, ba <const> = strbyte(oStr, 1, 4)
+            local ag <const>, aa <const> = strbyte(uStr, 1, 2)
+            local bg <const>, ba <const> = strbyte(oStr, 1, 2)
             local cg <const>, ca <const> = blend(ag, aa, bg, ba)
             trgBytes[j] = strpack("B B", cg, ca)
         end
@@ -1286,19 +1283,15 @@ function AseUtilities.createSpec(
     local cmVerif <const> = colorMode or ColorMode.RGB
 
     local newFilePrefs <const> = app.preferences.new_file
+    local wVerif = newFilePrefs.width --[[@as integer]]
+    local hVerif = newFilePrefs.height --[[@as integer]]
 
-    local wVerif = 0
     if width then
         wVerif = math.min(math.max(math.abs(width), 1), 65535)
-    else
-        wVerif = newFilePrefs.width --[[@as integer]]
     end
 
-    local hVerif = 0
     if height then
         hVerif = math.min(math.max(math.abs(height), 1), 65535)
-    else
-        hVerif = newFilePrefs.height --[[@as integer]]
     end
 
     local spec <const> = ImageSpec {
