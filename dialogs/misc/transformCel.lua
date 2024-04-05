@@ -745,7 +745,30 @@ dlg:check {
     id = "lockAspect",
     label = "Lock:",
     text = "&Aspect",
-    selected = defaults.lockAspect
+    selected = defaults.lockAspect,
+    onclick = function()
+        local args <const> = dlg.data
+        local lockAspect <const> = args.lockAspect --[[@as boolean]]
+        if lockAspect then
+            local pxWidth <const> = args.pxWidth --[[@as integer]]
+            local pxHeight <const> = args.pxHeight --[[@as integer]]
+            if pxWidth ~= pxHeight then
+                local mx <const> = math.max(pxWidth, pxHeight)
+                local mxStr <const> = string.format("%d", mx)
+                dlg:modify { id = "pxWidth", text = mxStr }
+                dlg:modify { id = "pxHeight", text = mxStr }
+            end
+
+            local prcWidth <const> = args.prcWidth --[[@as number]]
+            local prcHeight <const> = args.prcHeight --[[@as number]]
+            if prcWidth ~= prcHeight then
+                local mx <const> = math.max(prcWidth, prcHeight)
+                local mxStr <const> = string.format("%.2f", mx)
+                dlg:modify { id = "prcWidth", text = mxStr }
+                dlg:modify { id = "prcHeight", text = mxStr }
+            end
+        end
+    end
 }
 
 dlg:newrow { always = false }
