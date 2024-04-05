@@ -138,14 +138,11 @@ dlg:combobox {
         local ispx <const> = unitType == "PIXEL"
         local ispc <const> = unitType == "PERCENT"
 
-        dlg:modify { id = "facType", visible = isMix }
+        -- dlg:modify { id = "facType", visible = isMix }
         dlg:modify { id = "angleType", visible = isMix }
         dlg:modify { id = "units", visible = isMix }
         dlg:modify { id = "easeCurve", visible = isMix }
         dlg:modify { id = "easeCurve_easeFuncs", visible = isMix }
-
-        -- dlg:modify { id = "getOrig", visible = isMix }
-        -- dlg:modify { id = "getDest", visible = isMix }
 
         dlg:modify { id = "xPosOrig", visible = isMix }
         dlg:modify { id = "yPosOrig", visible = isMix }
@@ -180,7 +177,8 @@ dlg:combobox {
     label = "Factor:",
     option = defaults.facType,
     options = facTypes,
-    visible = defaults.mode == "MIX"
+    -- visible = defaults.mode == "MIX"
+    visible = false
 }
 
 dlg:newrow { always = false }
