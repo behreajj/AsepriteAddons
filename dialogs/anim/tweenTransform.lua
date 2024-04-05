@@ -12,6 +12,10 @@ local curveColor <const> = app.theme.color.text --[[@as Color]]
 local gridColor <const> = Color { r = 128, g = 128, b = 128 }
 
 local defaults <const> = {
+    -- With default theme, 200% screen scaling, 100% UI, dialog is too tall to
+    -- fit on screen without a scrollbar. Selecting certain GUI elements causes
+    -- the dialog to collapse in size.
+
     -- Last commit before tween position, rotation, scale were removed:
     -- 759a3838381c91393a77d7b3aedc5de134790e6f .
 

@@ -820,6 +820,7 @@ dlg:button {
         local wTile <const> = tileSize.width
         local hTile <const> = tileSize.height
 
+        local tileMap <const> = activeCel.image
         local trgSel <const> = Selection()
         local selRect <const> = Rectangle(0, 0, wTile, hTile)
 
@@ -828,7 +829,6 @@ dlg:button {
 
         ---@type table<integer, boolean>
         local visited <const> = {}
-        local tileMap <const> = activeCel.image
         local mapItr <const> = tileMap:pixels()
         for mapEntry in mapItr do
             local mapif <const> = mapEntry() --[[@as integer]]

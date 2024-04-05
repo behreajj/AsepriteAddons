@@ -13,6 +13,7 @@ local defaults <const> = {
     xTranslate = 0,
     yTranslate = 0,
     degrees = 90,
+    lockAspect = true,
     pxWidth = 64,
     pxHeight = 64,
     prcWidth = 100,
@@ -648,31 +649,75 @@ dlg:separator { id = "scaleSep" }
 dlg:number {
     id = "pxWidth",
     label = "Pixels:",
-    text = string.format("%d", app.preferences.new_file.width),
+    text = string.format("%d", defaults.pxWidth),
     decimals = 0,
-    visible = defaults.units == "PIXEL"
+    visible = defaults.units == "PIXEL",
+    onchange = function()
+        local args <const> = dlg.data
+        local lockAspect <const> = args.lockAspect --[[@as boolean]]
+        if lockAspect then
+            local pxWidth <const> = args.pxWidth --[[@as integer]]
+            dlg:modify {
+                id = "pxHeight",
+                text = string.format("%d", pxWidth)
+            }
+        end
+    end
 }
 
 dlg:number {
     id = "pxHeight",
-    text = string.format("%d", app.preferences.new_file.height),
+    text = string.format("%d", defaults.pxHeight),
     decimals = 0,
-    visible = defaults.units == "PIXEL"
+    visible = defaults.units == "PIXEL",
+    onchange = function()
+        local args <const> = dlg.data
+        local lockAspect <const> = args.lockAspect --[[@as boolean]]
+        if lockAspect then
+            local pxHeight <const> = args.pxHeight --[[@as integer]]
+            dlg:modify {
+                id = "pxWidth",
+                text = string.format("%d", pxHeight)
+            }
+        end
+    end
 }
 
 dlg:number {
     id = "prcWidth",
     label = "Percent:",
     text = string.format("%.2f", defaults.prcWidth),
-    decimals = 6,
-    visible = defaults.units == "PERCENT"
+    decimals = 2,
+    visible = defaults.units == "PERCENT",
+    onchange = function()
+        local args <const> = dlg.data
+        local lockAspect <const> = args.lockAspect --[[@as boolean]]
+        if lockAspect then
+            local prcWidth <const> = args.prcWidth --[[@as number]]
+            dlg:modify {
+                id = "prcHeight",
+                text = string.format("%.2f", prcWidth)
+            }
+        end
+    end
 }
 
 dlg:number {
     id = "prcHeight",
     text = string.format("%.2f", defaults.prcHeight),
-    decimals = 6,
-    visible = defaults.units == "PERCENT"
+    decimals = 2,
+    visible = defaults.units == "PERCENT",
+    onchange = function()
+        local args <const> = dlg.data
+        local lockAspect <const> = args.lockAspect --[[@as boolean]]
+        if lockAspect then
+            local prcHeight <const> = args.prcHeight --[[@as number]]
+            dlg:modify {
+                id = "prcWidth",
+                text = string.format("%.2f", prcHeight)
+            }
+        end
+    end
 }
 
 dlg:newrow { always = false }
@@ -692,6 +737,15 @@ dlg:combobox {
         dlg:modify { id = "prcWidth", visible = ispc }
         dlg:modify { id = "prcHeight", visible = ispc }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "lockAspect",
+    label = "Lock:",
+    text = "&Aspect",
+    selected = defaults.lockAspect
 }
 
 dlg:newrow { always = false }

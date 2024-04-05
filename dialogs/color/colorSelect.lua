@@ -677,7 +677,9 @@ dlg:button {
 
         app.transaction("Select Colors", function()
             -- TODO: Generalize this to an AseUtilities method to keep
-            -- consistency with transformTile and maskPresets?
+            -- consistency with transformTile and maskPresets? Problem is
+            -- that this does not create an active selection, it has already
+            -- been created.
             if not selIsReplace then
                 if selIsValid then
                     if selIsInter then

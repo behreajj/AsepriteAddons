@@ -321,7 +321,7 @@ dlg:button {
 
         local h = math.ceil(spec.height * 0.5)
         if symMode == 2 or symMode == 3 then
-            local yAxis <const> = symPrefs.y_axis
+            local yAxis <const> = symPrefs.y_axis --[[@as number]]
             h = math.ceil(yAxis)
         end
 
@@ -430,7 +430,7 @@ dlg:button {
         local y = spec.height // 2
         local h = math.ceil(spec.height * 0.5)
         if symMode == 2 or symMode == 3 then
-            local yAxis <const> = symPrefs.y_axis
+            local yAxis <const> = symPrefs.y_axis --[[@as number]]
             y = math.floor(yAxis)
             h = math.ceil(spec.height - yAxis)
         end
