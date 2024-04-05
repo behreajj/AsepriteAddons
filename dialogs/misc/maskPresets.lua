@@ -302,6 +302,8 @@ dlg:button {
     end
 }
 
+dlg:newrow { always = false }
+
 dlg:button {
     id = "topHalfButton",
     text = "&TOP",
@@ -332,13 +334,11 @@ dlg:button {
     end
 }
 
-dlg:newrow { always = false }
-
 dlg:button {
     id = "inSquareButton",
     text = "S&QUARE",
     focus = false,
-    visible = true,
+    visible = false,
     onclick = function()
         -- https://en.wikipedia.org/wiki/Rabatment_of_the_rectangle
         local site <const> = app.site
@@ -364,7 +364,7 @@ dlg:button {
     id = "inCircButton",
     text = "C&IRCLE",
     focus = false,
-    visible = true,
+    visible = false,
     onclick = function()
         local site <const> = app.site
         local sprite <const> = site.sprite
@@ -545,6 +545,8 @@ dlg:button {
         }
     end
 }
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "borderButton",
