@@ -1359,15 +1359,11 @@ end
 ---@return string[]
 ---@nodiscard
 function Utilities.stringToCharArr(str)
-    -- For more on different methods, see
-    -- https://stackoverflow.com/a/49222705
     local chars <const> = {}
-    local strsub <const> = string.sub
-    local lenStr <const> = #str
-    local i = 0
-    while i < lenStr do
-        i = i + 1
-        chars[i] = strsub(str, i, i)
+    local utf8codes <const> = utf8.codes
+    local utf8char <const> = utf8.char
+    for _, c in utf8codes(str) do
+        chars[#chars + 1] = utf8char(c)
     end
     return chars
 end
