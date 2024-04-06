@@ -105,7 +105,7 @@ dlg:check {
 
 dlg:check {
     id = "usePlainText",
-    text = "C&haracter",
+    text = "&UTF8",
     selected = defaults.usePlainText,
     focus = false
 }
