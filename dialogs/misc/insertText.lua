@@ -315,14 +315,16 @@ dlg:button {
         local maxLineWidth = 0
         local lineCount <const> = #charTableStill
         local totalCharCount = 0
-        for i = 1, lineCount, 1 do
-            local charsLine <const> = charTableStill[i]
+        local g = 0
+        while g < lineCount do
+            g = g + 1
+            local charsLine <const> = charTableStill[g]
             local lineWidth <const> = #charsLine
             if lineWidth > maxLineWidth then
                 maxLineWidth = lineWidth
             end
             totalCharCount = totalCharCount + lineWidth
-            lineWidths[i] = lineWidth
+            lineWidths[g] = lineWidth
         end
 
         -- Calculate display width and height from
@@ -350,6 +352,8 @@ dlg:button {
 
             sprite = AseUtilities.createSprite(
                 AseUtilities.createSpec(widthImg, heightImg), "Text")
+            app.tool = "hand"
+
             app.transaction("Set Palette", function()
                 if app.defaultPalette then
                     sprite:setPalette(app.defaultPalette)
