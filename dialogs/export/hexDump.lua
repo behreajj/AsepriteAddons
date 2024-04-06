@@ -404,13 +404,14 @@ dlg:button {
             end
 
             if useUtf8 then
+                local utf8char<const> = utf8.char
                 local lenBytes <const> = #bytes
                 local j = 0
                 while j < lenBytes do
                     j = j + 1
                     local byte <const> = bytes[j]
-                    if byte > 0x20 and byte ~= 0x7f then
-                        local char <const> = strchar(byte)
+                    if byte > 0x20 and (byte < 0x7f or byte > 0xa0) then
+                        local char <const> = utf8char(byte)
                         colStrs[#colStrs + 1] = char
                     else
                         colStrs[#colStrs + 1] = "."
