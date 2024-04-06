@@ -30,8 +30,8 @@ local defaults <const> = {
     fillClr = Color { r = 255, g = 255, b = 255 },
     shdColor = Color { r = 0, g = 0, b = 0, a = 204 },
     bkgColor = Color { r = 0, g = 0, b = 0, a = 0 },
-    xOrigin = 0,
-    yOrigin = 0,
+    xOrig = 0,
+    yOrig = 0,
     useShadow = true,
     alignLine = "LEFT",
     alignChar = "TOP",
@@ -120,18 +120,18 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "xOrigin",
+    id = "xOrig",
     label = "Origin:",
     min = 0,
     max = 100,
-    value = defaults.xOrigin
+    value = defaults.xOrig
 }
 
 dlg:slider {
-    id = "yOrigin",
+    id = "yOrig",
     min = 0,
     max = 100,
-    value = defaults.yOrigin
+    value = defaults.yOrig
 }
 
 dlg:newrow { always = false }
@@ -245,12 +245,12 @@ dlg:button {
         local charLimit <const> = args.charLimit or defaults.charLimit --[[@as integer]]
         local animate <const> = args.animate --[[@as boolean]]
         local fps <const> = args.fps or defaults.fps --[[@as integer]]
-        local xOrigin = args.xOrigin or defaults.xOrigin --[[@as integer]]
-        local yOrigin = args.yOrigin or defaults.yOrigin --[[@as integer]]
+        local xOrig = args.xOrig or defaults.xOrig --[[@as integer]]
+        local yOrig = args.yOrig or defaults.yOrig --[[@as integer]]
         local scale <const> = args.scale or defaults.scale --[[@as integer]]
         local leading <const> = args.leading or defaults.leading --[[@as integer]]
-        local alignLine <const> = args.alignHoriz or defaults.alignLine --[[@as string]]
-        local alignChar <const> = args.alignVert or defaults.alignChar --[[@as string]]
+        local alignLine = args.alignHoriz or defaults.alignLine --[[@as string]]
+        local alignChar = args.alignVert or defaults.alignChar --[[@as string]]
         local aseFill <const> = args.fillClr --[[@as Color]]
         local aseShd <const> = args.shdColor --[[@as Color]]
         local aseBkg <const> = args.bkgColor --[[@as Color]]
@@ -341,6 +341,13 @@ dlg:button {
         local site <const> = app.site
         local sprite = site.sprite
         if not sprite then
+            -- If you need to create a new sprite, you might as well put the
+            -- text in the canvas.
+            alignLine = "LEFT"
+            alignChar = "TOP"
+            xOrig = 0
+            yOrig = 0
+
             sprite = AseUtilities.createSprite(
                 AseUtilities.createSpec(widthImg, heightImg), "Text")
             app.transaction("Set Palette", function()
@@ -382,8 +389,8 @@ dlg:button {
         end
 
         -- Convert from percentage to pixel dimensions.
-        xOrigin = math.floor(0.5 + xOrigin * 0.01 * widthSprite)
-        yOrigin = math.floor(0.5 + yOrigin * 0.01 * heightSprite)
+        xOrig = math.floor(0.5 + xOrig * 0.01 * widthSprite)
+        yOrig = math.floor(0.5 + yOrig * 0.01 * heightSprite)
 
         -- Find the display width and center of a line.
         local dispWidth <const> = maxLineWidth * dw
@@ -392,7 +399,7 @@ dlg:button {
         -- For static text, the cel position can be set.
         -- The numbers in lineOffsets use characters as a measure,
         -- so they need to be multiplied by dw (display width) later.
-        local stillPos <const> = Point(xOrigin, yOrigin)
+        local stillPos <const> = Point(xOrig, yOrig)
         ---@type integer[]
         local lineOffsets <const> = {}
         if alignLine == "CENTER" then

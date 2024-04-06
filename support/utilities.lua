@@ -167,6 +167,7 @@ function Utilities.flipPixelsAll(source, w, h, bpp)
     while i < len do
         local y <const> = i // w
         local x <const> = i % w
+        -- You could multiply wn1 * h before the loop then just x * h within?
         local j <const> = 1 + (wn1 - x) * h + hn1 - y
         local ibpp <const> = i * bpp
         transposed[j] = strsub(source, 1 + ibpp, bpp + ibpp)
@@ -192,9 +193,7 @@ function Utilities.flipPixelsX(source, w, h, bpp)
 
     local i = 0
     while i < len do
-        local y <const> = i // w
-        local x <const> = i % w
-        local j <const> = 1 + y * w + wn1 - x
+        local j <const> = 1 + (i // w) * w + wn1 - (i % w)
         local ibpp <const> = i * bpp
         flipped[j] = strsub(source, 1 + ibpp, bpp + ibpp)
         i = i + 1
@@ -904,9 +903,7 @@ function Utilities.rotatePixels90(source, w, h, bpp)
 
     local i = 0
     while i < len do
-        local y <const> = i // w
-        local x <const> = i % w
-        local j <const> = 1 + lennh + y - x * h
+        local j <const> = 1 + lennh + (i // w) - (i % w) * h
         local ibpp <const> = i * bpp
         rotated[j] = strsub(source, 1 + ibpp, bpp + ibpp)
         i = i + 1
@@ -955,9 +952,7 @@ function Utilities.rotatePixels270(source, w, h, bpp)
 
     local i = 0
     while i < len do
-        local y <const> = i // w
-        local x <const> = i % w
-        local j <const> = 1 + x * h + hn1 - y
+        local j <const> = 1 + (i % w) * h + hn1 - (i // w)
         local ibpp <const> = i * bpp
         rotated[j] = strsub(source, 1 + ibpp, bpp + ibpp)
         i = i + 1
@@ -1226,10 +1221,9 @@ function Utilities.skewPixelsXInt(
 
     local i = 0
     while i < lenTrg do
-        local xTrg <const> = i % wTrg
         local yTrg <const> = i // wTrg
         local shift <const> = sgnRise * (yTrg // absRun)
-        local xSrc <const> = xTrg + shift - offset
+        local xSrc <const> = (i % wTrg) + shift - offset
         if xSrc >= 0 and xSrc < wSrc then
             local j <const> = yTrg * wSrc + xSrc
             local jbpp <const> = j * bpp
@@ -1321,9 +1315,8 @@ function Utilities.skewPixelsYInt(
     local i = 0
     while i < lenTrg do
         local xTrg <const> = i % wSrc
-        local yTrg <const> = i // wSrc
         local shift <const> = sgnRise * (xTrg // absRun)
-        local ySrc <const> = yTrg + shift - offset
+        local ySrc <const> = (i // wSrc) + shift - offset
         if ySrc >= 0 and ySrc < hSrc then
             local j <const> = ySrc * wSrc + xTrg
             local jbpp <const> = j * bpp
@@ -1359,6 +1352,7 @@ end
 ---@return string[]
 ---@nodiscard
 function Utilities.stringToCharArr(str)
+    ---@type string[]
     local chars <const> = {}
     local utf8codes <const> = utf8.codes
     local utf8char <const> = utf8.char
@@ -1421,9 +1415,7 @@ function Utilities.transposePixels(source, w, h, bpp)
 
     local i = 0
     while i < len do
-        local y <const> = i // w
-        local x <const> = i % w
-        local j <const> = 1 + x * h + y
+        local j <const> = 1 + (i % w) * h + (i // w)
         local ibpp <const> = i * bpp
         transposed[j] = strsub(source, 1 + ibpp, bpp + ibpp)
         i = i + 1
