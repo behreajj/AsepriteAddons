@@ -19,7 +19,8 @@ local importFileExts <const> = {
     "lbm",  -- IFF image
     "pbm",  -- Binary PNM
     "pgm",  -- Gray PNM
-    "ppm"   -- Color PNM
+    "ppm",  -- Color PNM
+    "txt"
 }
 
 local outputTypes <const> = { "FILE", "PRINT" }
