@@ -45,7 +45,6 @@ dlg:combobox {
     label = "Input:",
     option = defaults.inputType,
     options = inputTypes,
-    focus = true,
     onchange = function()
         local args <const> = dlg.data
         local inputType <const> = args.inputType --[[@as string]]
@@ -83,14 +82,14 @@ dlg:newrow { always = false }
 dlg:check {
     id = "useColLabel",
     label = "Labels:",
-    text = "Columns",
+    text = "Co&lumns",
     selected = defaults.useColLabel,
     focus = false
 }
 
 dlg:check {
     id = "useRowLabel",
-    text = "Rows",
+    text = "&Rows",
     selected = defaults.useRowLabel,
     focus = false
 }
@@ -99,14 +98,14 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "useFilename",
-    text = "Filename",
+    text = "Filena&me",
     selected = defaults.useFilename,
     focus = false
 }
 
 dlg:check {
     id = "usePlainText",
-    text = "Character",
+    text = "C&haracter",
     selected = defaults.usePlainText,
     focus = false
 }
@@ -140,8 +139,20 @@ dlg:file {
 dlg:newrow { always = false }
 
 dlg:button {
+    id = "openConsole",
+    text = "CO&NSOLE",
+    focus = true,
+    onclick = function()
+        app.command.DeveloperConsole()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
     id = "confirm",
     text = "&OK",
+    focus = false,
     onclick = function()
         local args <const> = dlg.data
         local inputType <const> = args.inputType
