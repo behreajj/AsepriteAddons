@@ -843,8 +843,7 @@ dlg:button {
                 "%s Adjusted", srcLayerName)
             trgLayer.parent = srcLayer.parent
             trgLayer.opacity = srcLayer.opacity or 255
-            trgLayer.blendMode = srcLayer.blendMode
-                or BlendMode.NORMAL
+            -- Do not copy blend mode, it only confuses things.
 
             local h = 0
             while h < lenFrames do
