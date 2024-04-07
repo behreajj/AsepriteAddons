@@ -13,13 +13,10 @@ local labComps <const> = {
     "CH",
     "LCH",
 
-    "ADDITION",
+    "ADD",
     "SUBTRACT",
     "MULTIPLY",
     "DIVIDE",
-
-    "DARKEN",
-    "LIGHTEN",
     "SCREEN"
 }
 
@@ -135,40 +132,6 @@ end
 ---@return number cl
 ---@return number ca
 ---@return number cb
-local function blendDarken(aLab, bLab, t, u)
-    local bIsDarker <const> = bLab.l < aLab.l
-    local dl <const> = bIsDarker and bLab.l or aLab.l
-    local da <const> = bIsDarker and bLab.a or aLab.a
-    local db <const> = bIsDarker and bLab.b or aLab.b
-    return u * aLab.l + t * dl,
-        u * aLab.a + t * da,
-        u * aLab.b + t * db
-end
-
----@param aLab { l: number, a: number, b: number, alpha: number }
----@param bLab { l: number, a: number, b: number, alpha: number }
----@param t number
----@param u number
----@return number cl
----@return number ca
----@return number cb
-local function blendLighten(aLab, bLab, t, u)
-    local bIsLighter <const> = aLab.l < bLab.l
-    local dl <const> = bIsLighter and bLab.l or aLab.l
-    local da <const> = bIsLighter and bLab.a or aLab.a
-    local db <const> = bIsLighter and bLab.b or aLab.b
-    return u * aLab.l + t * dl,
-        u * aLab.a + t * da,
-        u * aLab.b + t * db
-end
-
----@param aLab { l: number, a: number, b: number, alpha: number }
----@param bLab { l: number, a: number, b: number, alpha: number }
----@param t number
----@param u number
----@return number cl
----@return number ca
----@return number cb
 local function blendAdd(aLab, bLab, t, u)
     local dl <const> = aLab.l + bLab.l
     local da <const> = (aLab.a + bLab.a) * 0.5
@@ -217,11 +180,10 @@ end
 ---@return number cl
 ---@return number ca
 ---@return number cb
-local function blendScreen(aLab, bLab, t, u)
-    local dl <const> = 100.0 - ((1.0 - aLab.l * 0.01)
-        * (1.0 - bLab.l * 0.01)) * 100.0
-    local da <const> = (aLab.a + bLab.a) * 0.5
-    local db <const> = (aLab.b + bLab.b) * 0.5
+local function blendDivide(aLab, bLab, t, u)
+    local dl <const> = ((aLab.l * 0.01) / (bLab.l * 0.01)) * 100.0
+    local da <const> = (aLab.a - bLab.a) * 0.5
+    local db <const> = (aLab.b - bLab.b) * 0.5
     return u * aLab.l + t * dl,
         u * aLab.a + t * da,
         u * aLab.b + t * db
@@ -234,10 +196,11 @@ end
 ---@return number cl
 ---@return number ca
 ---@return number cb
-local function blendDivide(aLab, bLab, t, u)
-    local dl <const> = ((aLab.l * 0.01) / (bLab.l * 0.01)) * 100.0
-    local da <const> = (aLab.a - bLab.a) * 0.5
-    local db <const> = (aLab.b - bLab.b) * 0.5
+local function blendScreen(aLab, bLab, t, u)
+    local dl <const> = 100.0 - ((1.0 - aLab.l * 0.01)
+        * (1.0 - bLab.l * 0.01)) * 100.0
+    local da <const> = (aLab.a + bLab.a) * 0.5
+    local db <const> = (aLab.b + bLab.b) * 0.5
     return u * aLab.l + t * dl,
         u * aLab.a + t * da,
         u * aLab.b + t * db
@@ -465,11 +428,7 @@ dlg:button {
         elseif labComp == "CH" or labComp == "COLOR" then
             blendFuncLch = blendCH
             useLch = true
-        elseif labComp == "DARKEN" then
-            blendFuncLab = blendDarken
-        elseif labComp == "LIGHTEN" then
-            blendFuncLab = blendLighten
-        elseif labComp == "ADDITION" then
+        elseif labComp == "ADD" then
             blendFuncLab = blendAdd
         elseif labComp == "SUBTRACT" then
             blendFuncLab = blendSubtract
