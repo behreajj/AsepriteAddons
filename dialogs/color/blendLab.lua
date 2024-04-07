@@ -165,7 +165,7 @@ end
 ---@return number ca
 ---@return number cb
 local function blendMultiply(aLab, bLab, t, u)
-    local dl <const> = (aLab.l * 0.01 * bLab.l * 0.01) * 100.0
+    local dl <const> = ((aLab.l * 0.01) * (bLab.l * 0.01)) * 100.0
     local da <const> = (aLab.a + bLab.a) * 0.5
     local db <const> = (aLab.b + bLab.b) * 0.5
     return u * aLab.l + t * dl,
@@ -181,7 +181,8 @@ end
 ---@return number ca
 ---@return number cb
 local function blendDivide(aLab, bLab, t, u)
-    local dl <const> = ((aLab.l * 0.01) / (bLab.l * 0.01)) * 100.0
+    local den <const> = bLab.l * 0.01
+    local dl <const> = (den ~= 0.0 and (aLab.l * 0.01) / den or 0.0) * 100.0
     local da <const> = (aLab.a - bLab.a) * 0.5
     local db <const> = (aLab.b - bLab.b) * 0.5
     return u * aLab.l + t * dl,
