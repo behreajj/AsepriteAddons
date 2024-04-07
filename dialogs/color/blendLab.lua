@@ -4,14 +4,23 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 local alphaComps <const> = { "BLEND", "MAX", "MIN", "OVER", "UNDER" }
 local labComps <const> = {
+    "L",
     "AB",
-    "CHROMA",
-    "COLOR",
-    "HUE",
-    "HUE_SHIFT",
     "LAB",
+
+    "C",
+    "H",
+    "CH",
     "LCH",
-    "LIGHTNESS",
+
+    "ADDITION",
+    "SUBTRACT",
+    "MULTIPLY",
+    "DIVIDE",
+
+    "DARKEN",
+    "LIGHTEN",
+    "SCREEN"
 }
 
 local defaults <const> = {
@@ -23,6 +32,216 @@ local defaults <const> = {
     delUnder = "HIDE",
     printElapsed = false,
 }
+
+---@param aLab { l: number, a: number, b: number, alpha: number }
+---@param bLab { l: number, a: number, b: number, alpha: number }
+---@param t number
+---@param u number
+---@return number cl
+---@return number ca
+---@return number cb
+local function blendLab(aLab, bLab, t, u)
+    return u * aLab.l + t * bLab.l,
+        u * aLab.a + t * bLab.a,
+        u * aLab.b + t * bLab.b
+end
+
+---@param aLab { l: number, a: number, b: number, alpha: number }
+---@param bLab { l: number, a: number, b: number, alpha: number }
+---@param t number
+---@param u number
+---@return number cl
+---@return number ca
+---@return number cb
+local function blendL(aLab, bLab, t, u)
+    return u * aLab.l + t * bLab.l,
+        aLab.a,
+        aLab.b
+end
+
+---@param aLab { l: number, a: number, b: number, alpha: number }
+---@param bLab { l: number, a: number, b: number, alpha: number }
+---@param t number
+---@param u number
+---@return number cl
+---@return number ca
+---@return number cb
+local function blendAb(aLab, bLab, t, u)
+    return aLab.l,
+        u * aLab.a + t * bLab.a,
+        u * aLab.b + t * bLab.b
+end
+
+---@param aLch { l: number, c: number, h: number, a: number }
+---@param bLch { l: number, c: number, h: number, a: number }
+---@param t number
+---@param u number
+---@param mixer fun(o: number, d: number, t: number): number
+---@return number cl
+---@return number cc
+---@return number ch
+local function blendLch(aLch, bLch, t, u, mixer)
+    return u * aLch.l + t * bLch.l,
+        u * aLch.c + t * bLch.c,
+        mixer(aLch.h, bLch.h, t)
+end
+
+---@param aLch { l: number, c: number, h: number, a: number }
+---@param bLch { l: number, c: number, h: number, a: number }
+---@param t number
+---@param u number
+---@param mixer fun(o: number, d: number, t: number): number
+---@return number cl
+---@return number cc
+---@return number ch
+local function blendC(aLch, bLch, t, u, mixer)
+    return aLch.l,
+        u * aLch.c + t * bLch.c,
+        aLch.h
+end
+
+---@param aLch { l: number, c: number, h: number, a: number }
+---@param bLch { l: number, c: number, h: number, a: number }
+---@param t number
+---@param u number
+---@param mixer fun(o: number, d: number, t: number): number
+---@return number cl
+---@return number cc
+---@return number ch
+local function blendH(aLch, bLch, t, u, mixer)
+    return aLch.l,
+        aLch.c,
+        mixer(aLch.h, bLch.h, t)
+end
+
+---@param aLch { l: number, c: number, h: number, a: number }
+---@param bLch { l: number, c: number, h: number, a: number }
+---@param t number
+---@param u number
+---@param mixer fun(o: number, d: number, t: number): number
+---@return number cl
+---@return number cc
+---@return number ch
+local function blendCH(aLch, bLch, t, u, mixer)
+    return aLch.l,
+        u * aLch.c + t * bLch.c,
+        mixer(aLch.h, bLch.h, t)
+end
+
+---@param aLab { l: number, a: number, b: number, alpha: number }
+---@param bLab { l: number, a: number, b: number, alpha: number }
+---@param t number
+---@param u number
+---@return number cl
+---@return number ca
+---@return number cb
+local function blendDarken(aLab, bLab, t, u)
+    local bIsDarker <const> = bLab.l < aLab.l
+    local dl <const> = bIsDarker and bLab.l or aLab.l
+    local da <const> = bIsDarker and bLab.a or aLab.a
+    local db <const> = bIsDarker and bLab.b or aLab.b
+    return u * aLab.l + t * dl,
+        u * aLab.a + t * da,
+        u * aLab.b + t * db
+end
+
+---@param aLab { l: number, a: number, b: number, alpha: number }
+---@param bLab { l: number, a: number, b: number, alpha: number }
+---@param t number
+---@param u number
+---@return number cl
+---@return number ca
+---@return number cb
+local function blendLighten(aLab, bLab, t, u)
+    local bIsLighter <const> = aLab.l < bLab.l
+    local dl <const> = bIsLighter and bLab.l or aLab.l
+    local da <const> = bIsLighter and bLab.a or aLab.a
+    local db <const> = bIsLighter and bLab.b or aLab.b
+    return u * aLab.l + t * dl,
+        u * aLab.a + t * da,
+        u * aLab.b + t * db
+end
+
+---@param aLab { l: number, a: number, b: number, alpha: number }
+---@param bLab { l: number, a: number, b: number, alpha: number }
+---@param t number
+---@param u number
+---@return number cl
+---@return number ca
+---@return number cb
+local function blendAdd(aLab, bLab, t, u)
+    local dl <const> = aLab.l + bLab.l
+    local da <const> = (aLab.a + bLab.a) * 0.5
+    local db <const> = (aLab.b + bLab.b) * 0.5
+    return u * aLab.l + t * dl,
+        u * aLab.a + t * da,
+        u * aLab.b + t * db
+end
+
+---@param aLab { l: number, a: number, b: number, alpha: number }
+---@param bLab { l: number, a: number, b: number, alpha: number }
+---@param t number
+---@param u number
+---@return number cl
+---@return number ca
+---@return number cb
+local function blendSubtract(aLab, bLab, t, u)
+    local dl <const> = aLab.l - bLab.l
+    local da <const> = (aLab.a - bLab.a) * 0.5
+    local db <const> = (aLab.b - bLab.b) * 0.5
+    return u * aLab.l + t * dl,
+        u * aLab.a + t * da,
+        u * aLab.b + t * db
+end
+
+---@param aLab { l: number, a: number, b: number, alpha: number }
+---@param bLab { l: number, a: number, b: number, alpha: number }
+---@param t number
+---@param u number
+---@return number cl
+---@return number ca
+---@return number cb
+local function blendMultiply(aLab, bLab, t, u)
+    local dl <const> = (aLab.l * 0.01 * bLab.l * 0.01) * 100.0
+    local da <const> = (aLab.a + bLab.a) * 0.5
+    local db <const> = (aLab.b + bLab.b) * 0.5
+    return u * aLab.l + t * dl,
+        u * aLab.a + t * da,
+        u * aLab.b + t * db
+end
+
+---@param aLab { l: number, a: number, b: number, alpha: number }
+---@param bLab { l: number, a: number, b: number, alpha: number }
+---@param t number
+---@param u number
+---@return number cl
+---@return number ca
+---@return number cb
+local function blendScreen(aLab, bLab, t, u)
+    local dl <const> = 100.0 - ((1.0 - aLab.l * 0.01)
+        * (1.0 - bLab.l * 0.01)) * 100.0
+    local da <const> = (aLab.a + bLab.a) * 0.5
+    local db <const> = (aLab.b + bLab.b) * 0.5
+    return u * aLab.l + t * dl,
+        u * aLab.a + t * da,
+        u * aLab.b + t * db
+end
+
+---@param aLab { l: number, a: number, b: number, alpha: number }
+---@param bLab { l: number, a: number, b: number, alpha: number }
+---@param t number
+---@param u number
+---@return number cl
+---@return number ca
+---@return number cb
+local function blendDivide(aLab, bLab, t, u)
+    local dl <const> = ((aLab.l * 0.01) / (bLab.l * 0.01)) * 100.0
+    local da <const> = (aLab.a - bLab.a) * 0.5
+    local db <const> = (aLab.b - bLab.b) * 0.5
+    return u * aLab.l + t * dl,
+        u * aLab.a + t * da,
+        u * aLab.b + t * db
+end
 
 local dlg <const> = Dialog { title = "Blend LAB" }
 
@@ -43,8 +262,8 @@ dlg:combobox {
     onchange = function()
         local args <const> = dlg.data
         local labComp <const> = args.labComp --[[@as string]]
-        local isHue <const> = labComp == "HUE"
-        local isColor <const> = labComp == "COLOR"
+        local isHue <const> = labComp == "H"
+        local isColor <const> = labComp == "CH"
         local isLch <const> = labComp == "LCH"
         dlg:modify { id = "huePreset", visible = isHue or isColor or isLch }
     end
@@ -57,8 +276,8 @@ dlg:combobox {
     label = "Easing:",
     option = defaults.hueMix,
     options = GradientUtilities.HUE_EASING_PRESETS,
-    visible = defaults.labComp == "HUE"
-        or defaults.labComp == "COLOR"
+    visible = defaults.labComp == "H"
+        or defaults.labComp == "CH"
         or defaults.labComp == "LCH"
 }
 
@@ -226,16 +445,41 @@ dlg:button {
         local useAlphaUnder <const> = alphaComp == "UNDER"
 
         -- print(string.format("labComp: %s", labComp))
-        local useLight <const> = labComp == "LIGHTNESS"
-        local useAb <const> = labComp == "AB"
-        local useChroma <const> = labComp == "CHROMA"
-        local useHue <const> = labComp == "HUE"
-        local useHueShift <const> = labComp == "HUE_SHIFT"
-        local useColor <const> = labComp == "COLOR"
-        local useLch <const> = useChroma or useHue or useHueShift or useColor
-            or labComp == "LCH"
-
-        local mixer <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
+        local useLch = false
+        local hueMix <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
+        local blendFuncLab = blendLab
+        local blendFuncLch = blendLch
+        if labComp == "L" or labComp == "LIGHTNESS" then
+            blendFuncLab = blendL
+        elseif labComp == "AB" then
+            blendFuncLab = blendAb
+        elseif labComp == "LCH" then
+            blendFuncLch = blendLch
+            useLch = true
+        elseif labComp == "C" or labComp == "CHROMA" then
+            blendFuncLch = blendC
+            useLch = true
+        elseif labComp == "H" or labComp == "HUE" then
+            blendFuncLch = blendH
+            useLch = true
+        elseif labComp == "CH" or labComp == "COLOR" then
+            blendFuncLch = blendCH
+            useLch = true
+        elseif labComp == "DARKEN" then
+            blendFuncLab = blendDarken
+        elseif labComp == "LIGHTEN" then
+            blendFuncLab = blendLighten
+        elseif labComp == "ADDITION" then
+            blendFuncLab = blendAdd
+        elseif labComp == "SUBTRACT" then
+            blendFuncLab = blendSubtract
+        elseif labComp == "MULTIPLY" then
+            blendFuncLab = blendMultiply
+        elseif labComp == "DIVIDE" then
+            blendFuncLab = blendDivide
+        elseif labComp == "SCREEN" then
+            blendFuncLab = blendScreen
+        end
 
         local overIsTile <const> = bLayer.isTilemap
         local tileSetOver = nil
@@ -463,50 +707,14 @@ dlg:button {
 
                             local cc = 0.0
                             local ch = 0.0
-                            if useColor then
-                                cl = aLch.l
-                                cc = u * aLch.c + t * bLch.c
-                                ch = mixer(aLch.h, bLch.h, t)
-                            elseif useChroma then
-                                cl = aLch.l
-                                cc = u * aLch.c + t * bLch.c
-                                ch = aLch.h
-                            elseif useHue then
-                                cl = aLch.l
-                                cc = aLch.c
-                                ch = mixer(aLch.h, bLch.h, t)
-                            elseif useHueShift then
-                                local sum <const> = v > 0.0
-                                    and aLch.h + bLch.h
-                                    or bLch.h
-                                cl = aLch.l
-                                cc = aLch.c
-                                ch = mixer(aLch.h, sum, t)
-                            else
-                                cl = u * aLab.l + t * bLab.l
-                                cc = u * aLch.c + t * bLch.c
-                                ch = mixer(aLch.h, bLch.h, t)
-                            end
+                            cl, cc, ch = blendFuncLch(aLch, bLch, t, u, hueMix)
 
                             local cLab <const> = srLchToSrLab2(cl, cc, ch, 1.0)
-                            cl = cLab.l
                             ca = cLab.a
                             cb = cLab.b
                         else
                             -- Default to LAB.
-                            if useLight then
-                                cl = u * aLab.l + t * bLab.l
-                                ca = aLab.a
-                                cb = aLab.b
-                            elseif useAb then
-                                cl = aLab.l
-                                ca = u * aLab.a + t * bLab.a
-                                cb = u * aLab.b + t * bLab.b
-                            else
-                                cl = u * aLab.l + t * bLab.l
-                                ca = u * aLab.a + t * bLab.a
-                                cb = u * aLab.b + t * bLab.b
-                            end
+                            cl, ca, cb = blendFuncLab(aLab, bLab, t, u)
                         end
                     end
 

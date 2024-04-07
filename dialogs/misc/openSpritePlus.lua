@@ -8,6 +8,8 @@ local paletteTypes <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Option to open sequences from directory?
+
     removeBkg = true,
     trimCels = true,
     palType = "EMBEDDED",
