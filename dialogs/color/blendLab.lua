@@ -181,8 +181,9 @@ end
 ---@return number ca
 ---@return number cb
 local function blendDivide(aLab, bLab, t, u)
+    local dl = 0.0
     local den <const> = bLab.l * 0.01
-    local dl <const> = (den ~= 0.0 and (aLab.l * 0.01) / den or 0.0) * 100.0
+    if den ~= 0.0 then dl = ((aLab.l * 0.01) / den) * 100.0 end
     local da <const> = (aLab.a - bLab.a) * 0.5
     local db <const> = (aLab.b - bLab.b) * 0.5
     return u * aLab.l + t * dl,
@@ -456,15 +457,8 @@ dlg:button {
             AseUtilities.getFrames(activeSprite, target))
 
         -- Unpack layer opacity.
-        local overLyrOpacity = 255
-        local underLyrOpacity = 255
-
-        if bLayer.opacity then
-            overLyrOpacity = bLayer.opacity
-        end
-        if aLayer.opacity then
-            underLyrOpacity = aLayer.opacity
-        end
+        local overLyrOpacity <const> = bLayer.opacity or 255
+        local underLyrOpacity <const> = aLayer.opacity or 255
         local bLayerOpac01 <const> = overLyrOpacity / 255.0
         local aLayerOpac01 <const> = underLyrOpacity / 255.0
 

@@ -1,9 +1,6 @@
 dofile("../../support/gradientutilities.lua")
 
 local defaults <const> = {
-    -- TODO: Option to select in a range layers based on lock, visible,
-    -- contiguous status?
-
     -- Blend mode is not included because it would require more
     -- of the same as in multiProps file -- converting to and
     -- from strings.

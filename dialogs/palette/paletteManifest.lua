@@ -11,7 +11,6 @@ local sortOrders <const> = { "ASCENDING", "DESCENDING" }
 local numBases <const> = { "PROFILE", "S_RGB" }
 
 local defaults <const> = {
-    -- TODO: Support Normal map azim, incl, vector?
     maxCount = 512,
     count = 512,
     title = "Manifest",
