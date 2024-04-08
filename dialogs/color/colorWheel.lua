@@ -218,19 +218,19 @@ dlg:button {
                     palType, palFile, palStart, palCount, true)
             else
                 -- As of circa apiVersion 24, version v1.3-rc4.
-                local defaultPalette <const> = app.defaultPalette
-                if defaultPalette then
-                    hexesProfile = AseUtilities.asePaletteToHexArr(
-                        defaultPalette, 0, #defaultPalette)
-                else
-                    local hexesDefault <const> = AseUtilities.DEFAULT_PAL_ARR
-                    local lenHexesDef <const> = #hexesDefault
-                    local i = 0
-                    while i < lenHexesDef do
-                        i = i + 1
-                        hexesProfile[i] = hexesDefault[i]
-                    end
+                -- local defaultPalette <const> = app.defaultPalette
+                -- if defaultPalette then
+                -- hexesProfile = AseUtilities.asePaletteToHexArr(
+                -- defaultPalette, 0, #defaultPalette)
+                -- else
+                local hexesDefault <const> = AseUtilities.DEFAULT_PAL_ARR
+                local lenHexesDef <const> = #hexesDefault
+                local i = 0
+                while i < lenHexesDef do
+                    i = i + 1
+                    hexesProfile[i] = hexesDefault[i]
                 end
+                -- end
 
                 hexesSrgb = hexesProfile
             end

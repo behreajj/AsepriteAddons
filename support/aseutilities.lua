@@ -288,8 +288,8 @@ function AseUtilities.asePaletteLoad(
             end
         end
     elseif palType == "ACTIVE" then
-        local palActSpr <const> = app.site.sprite
-        if palActSpr then
+        local palActSpr <const> = app.sprite
+        if palActSpr ~= nil then
             local modeAct <const> = palActSpr.colorMode
             if modeAct == ColorMode.GRAY then
                 local grCntVrf = AseUtilities.GRAY_COUNT

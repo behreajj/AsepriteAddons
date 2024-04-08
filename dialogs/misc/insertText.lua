@@ -355,15 +355,15 @@ dlg:button {
             app.tool = "hand"
 
             app.transaction("Set Palette", function()
-                if app.defaultPalette then
-                    sprite:setPalette(app.defaultPalette)
-                else
-                    local pal <const> = sprite.palettes[1]
-                    pal:resize(3)
-                    pal:setColor(0, hexBkg)
-                    pal:setColor(1, hexShd)
-                    pal:setColor(2, hexFill)
-                end
+                -- if app.defaultPalette then
+                -- sprite:setPalette(app.defaultPalette)
+                -- else
+                local pal <const> = sprite.palettes[1]
+                pal:resize(3)
+                pal:setColor(0, hexBkg)
+                pal:setColor(1, hexShd)
+                pal:setColor(2, hexFill)
+                -- end
             end)
 
             layer = sprite.layers[1]
