@@ -90,21 +90,18 @@ dlg:slider {
     value = defaults.charLimit
 }
 
--- For now, this is not worth the
--- hassle that it creates.
--- dlg:newrow { always = false }
+dlg:newrow { always = false }
 
--- dlg:check {
---     id = "animate",
---     label = "Animate:",
---     selected = defaults.animate,
---     onclick = function()
---         dlg:modify {
---             id = "fps",
---             visible = dlg.data.animate
---         }
---     end
--- }
+dlg:check {
+    id = "animate",
+    label = "Animate:",
+    selected = defaults.animate,
+    onclick = function()
+        local args <const> = dlg.data
+        local animate <const> = args.animate --[[@as boolean]]
+        dlg:modify { id = "fps", visible = animate }
+    end
+}
 
 dlg:newrow { always = false }
 
@@ -352,7 +349,6 @@ dlg:button {
 
             sprite = AseUtilities.createSprite(
                 AseUtilities.createSpec(widthImg, heightImg), "Text")
-            app.tool = "hand"
 
             app.transaction("Set Palette", function()
                 -- if app.defaultPalette then

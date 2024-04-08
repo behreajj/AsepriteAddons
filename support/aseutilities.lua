@@ -1331,7 +1331,7 @@ function AseUtilities.createSprite(spec, fileName)
     end
 
     local sprite <const> = Sprite(spec)
-    if fileName then sprite.filename = fileName end
+    if fileName and #fileName > 0 then sprite.filename = fileName end
 
     local appPrefs <const> = app.preferences
 
