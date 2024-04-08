@@ -195,7 +195,7 @@ dlg:color {
     onchange = function()
         local args <const> = dlg.data
         local layerColor <const> = args.layerColor --[[@as Color]]
-        layer.color = layerColor
+        layer.color = AseUtilities.aseColorCopy(layerColor, "")
         app.refresh()
     end
 }
@@ -323,7 +323,7 @@ if cel then
         onchange = function()
             local args <const> = dlg.data
             local celColor <const> = args.celColor --[[@as Color]]
-            cel.color = celColor
+            cel.color = AseUtilities.aseColorCopy(celColor, "")
             app.refresh()
         end
     }
@@ -382,10 +382,10 @@ if tag then
         options = aniDirs,
         focus = false,
         onchange = function()
-                local args <const> = dlg.data
-                local aniDirStr <const> = args.tagAniDir --[[@as string]]
-                tag.aniDir = AniDir[aniDirStr]
-                app.refresh()
+            local args <const> = dlg.data
+            local aniDirStr <const> = args.tagAniDir --[[@as string]]
+            tag.aniDir = AniDir[aniDirStr]
+            app.refresh()
         end
     }
 
@@ -416,7 +416,7 @@ if tag then
         onchange = function()
             local args <const> = dlg.data
             local tagColor <const> = args.tagColor --[[@as Color]]
-            tag.color = tagColor
+            tag.color = AseUtilities.aseColorCopy(tagColor, "")
             app.refresh()
         end
     }

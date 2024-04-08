@@ -514,7 +514,7 @@ dlg:button {
 
         if lenRangeLayers <= 1 then
             app.transaction("Tint Layer", function()
-                rangeLayers[1].color = toColor
+                rangeLayers[1].color = AseUtilities.aseColorCopy(toColor, "")
             end)
             app.refresh()
             return

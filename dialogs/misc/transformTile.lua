@@ -973,6 +973,7 @@ dlg:button {
         local pxTilef <const> = pixelColor.tileF
         local pxTileCompose <const> = pixelColor.tile
         local createSpec <const> = AseUtilities.createSpec
+        local colorCopy <const> = AseUtilities.aseColorCopy
 
         -- Contains the first usage of a tile in the set by the active map.
         -- Ignores index 0. Because all tile maps in the layer have to be
@@ -1039,7 +1040,7 @@ dlg:button {
             local packet = nil
             if tile then
                 packet = {
-                    color = tile.color,
+                    color = colorCopy(tile.color, ""),
                     data = tile.data,
                     image = tile.image:clone()
                 }

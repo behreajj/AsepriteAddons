@@ -48,7 +48,7 @@ app.transaction("Flatten Group", function()
     end
     flattened.name = layerName
 
-    flattened.color = activeLayer.color
+    flattened.color = AseUtilities.aseColorCopy(activeLayer.color, "")
     flattened.data = activeLayer.data
     flattened.parent = activeLayer.parent
     flattened.stackIndex = activeLayer.stackIndex

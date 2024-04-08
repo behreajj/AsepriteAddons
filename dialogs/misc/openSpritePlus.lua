@@ -172,6 +172,10 @@ dlg:button {
             return
         end
 
+        -- Do not allow slices UI interface to be active.
+        -- Since this will be set to hand later on anyway, simplify.
+        app.tool = "hand"
+
         -- Do not ask to open animation sequences.
         -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L125
         local openFilePrefs <const> = app.preferences.open_file
@@ -305,7 +309,6 @@ dlg:button {
 
         openFilePrefs.open_sequence = oldOpSeqPref
         app.layer = openSprite.layers[#openSprite.layers]
-        app.tool = "hand"
         app.refresh()
         dlg:close()
     end

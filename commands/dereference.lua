@@ -14,10 +14,11 @@ end
 
 app.transaction("Dereference Layer", function()
     local derefLayer <const> = sprite:newLayer()
+    local colorCopy <const> = AseUtilities.aseColorCopy
 
     derefLayer.name = "Ref"
     derefLayer.blendMode = refLayer.blendMode or BlendMode.NORMAL
-    derefLayer.color = refLayer.color
+    derefLayer.color = colorCopy(refLayer.color, "")
     derefLayer.data = refLayer.data
     derefLayer.opacity = refLayer.opacity or 255
     derefLayer.parent = refLayer.parent
@@ -39,7 +40,7 @@ app.transaction("Dereference Layer", function()
                 derefLayer, frObj,
                 refCel.image,
                 refCel.position)
-            derefCel.color = refCel.color
+            derefCel.color = colorCopy(refCel.color, "")
             derefCel.data = refCel.data
             derefCel.opacity = refCel.opacity
             derefCel.zIndex = refCel.zIndex

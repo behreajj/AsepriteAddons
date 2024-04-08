@@ -23,12 +23,12 @@ if activeLayer.isBackground then
     if origCel and destCel then
         local origImg <const> = Image(origCel.image)
         local origData <const> = origCel.data
-        local origColor <const> = origCel.color
+        local origColor <const> = AseUtilities.aseColorCopy(origCel.color, "")
         local origzIndex <const> = origCel.zIndex
 
         local destImg <const> = Image(destCel.image)
         local destData <const> = destCel.data
-        local destColor <const> = destCel.color
+        local destColor <const> = AseUtilities.aseColorCopy(destCel.color, "")
         local destzIndex <const> = destCel.zIndex
 
         app.transaction("Cycle Cel Left", function()

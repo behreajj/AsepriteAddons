@@ -289,7 +289,7 @@ function AseUtilities.asePaletteLoad(
         end
     elseif palType == "ACTIVE" then
         local palActSpr <const> = app.sprite
-        if palActSpr ~= nil then
+        if palActSpr and palActSpr ~= nil then
             local modeAct <const> = palActSpr.colorMode
             if modeAct == ColorMode.GRAY then
                 local grCntVrf = AseUtilities.GRAY_COUNT
@@ -654,14 +654,17 @@ end
 function AseUtilities.bkgToLayer(sprite, overrideLock)
     local bkgLayer <const> = sprite.backgroundLayer
     if bkgLayer and (overrideLock or bkgLayer.isEditable) then
+        local colorCopy <const> = AseUtilities.aseColorCopy
+
         local unBkgLayer <const> = sprite:newLayer()
-        -- Attempting to copy properties field by reference would cause crash.
-        unBkgLayer.color = bkgLayer.color
+
+        unBkgLayer.color = colorCopy(bkgLayer.color, "")
         unBkgLayer.data = bkgLayer.data
         unBkgLayer.isEditable = bkgLayer.isEditable
         unBkgLayer.isVisible = bkgLayer.isVisible
         unBkgLayer.isContinuous = bkgLayer.isContinuous
         unBkgLayer.name = "Bkg"
+        -- Attempting to copy properties field by reference will cause crash.
 
         local frObjs <const> = sprite.frames
         local lenFrObjs <const> = #frObjs
@@ -674,7 +677,7 @@ function AseUtilities.bkgToLayer(sprite, overrideLock)
                 local bkgImage <const> = bkgCel.image
                 local unBkgCel <const> = sprite:newCel(unBkgLayer, i,
                     bkgImage, bkgCelPos)
-                unBkgCel.color = bkgCel.color
+                unBkgCel.color = colorCopy(bkgCel.color, "")
                 unBkgCel.data = bkgCel.data
                 unBkgCel.zIndex = bkgCel.zIndex
             end
@@ -1318,6 +1321,15 @@ end
 ---@return Sprite
 ---@nodiscard
 function AseUtilities.createSprite(spec, fileName)
+    -- Do not allow slices UI interface to be active.
+    local appTool <const> = app.tool
+    if appTool then
+        local toolName <const> = appTool.id
+        if toolName == "slice" then
+            app.tool = "hand"
+        end
+    end
+
     local sprite <const> = Sprite(spec)
     if fileName then sprite.filename = fileName end
 
@@ -1325,7 +1337,7 @@ function AseUtilities.createSprite(spec, fileName)
 
     -- https://community.aseprite.org/t/vertical-skewing-broken-when-pivot-is-set-to-the-right/
     -- https://steamcommunity.com/app/431730/discussions/2/4356743320309073149/
-    appPrefs.selection.pivot_position = 4
+    -- appPrefs.selection.pivot_position = 4
 
     -- It's overkill to handle sprite.pixelRatio (a Size) here. Handle it in
     -- newSpritePlus and spriteProps, if at all. See also
