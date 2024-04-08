@@ -1325,7 +1325,7 @@ function AseUtilities.createSprite(spec, fileName)
 
     -- https://community.aseprite.org/t/vertical-skewing-broken-when-pivot-is-set-to-the-right/
     -- https://steamcommunity.com/app/431730/discussions/2/4356743320309073149/
-    -- appPrefs.selection.pivot_position = 4
+    appPrefs.selection.pivot_position = 4
 
     -- It's overkill to handle sprite.pixelRatio (a Size) here. Handle it in
     -- newSpritePlus and spriteProps, if at all. See also

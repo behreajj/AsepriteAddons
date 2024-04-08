@@ -1,6 +1,8 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
+local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
+
 -- New Sprite Plus doesn't support Color Space conversion
 -- because setting color space via script interferes with
 -- Aseprite's routine to ask the user what to do when
@@ -10,7 +12,6 @@ local palTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
 local sizeModes <const> = { "ASPECT", "CUSTOM" }
 
 local defaults <const> = {
-    -- This has been causing crashes recently.
     filename = "Sprite",
     sizeMode = "CUSTOM",
     width = 320,
@@ -98,14 +99,16 @@ dlg:newrow { always = false }
 
 dlg:number {
     id = "width",
-    text = string.format("%d", 320),
+    text = string.format("%d",
+        app.preferences.new_file.width),
     decimals = 0,
     visible = defaults.sizeMode == "CUSTOM"
 }
 
 dlg:number {
     id = "height",
-    text = string.format("%d", 180),
+    text = string.format("%d",
+        app.preferences.new_file.height),
     decimals = 0,
     visible = defaults.sizeMode == "CUSTOM"
 }
@@ -181,7 +184,7 @@ dlg:combobox {
 
 CanvasUtilities.spectrum(
     dlg, "bkgSpectrum", "Background:",
-    180, 56,
+    180 // screenScale, 56 // screenScale,
     defaults.colorMode == "RGB",
     97.0, 18.0, 0.275, 0.0)
 
@@ -388,10 +391,10 @@ dlg:button {
         if height > dfms then height = dfms end
 
         -- Store new dimensions in preferences.
-        -- local newFilePrefs <const> = app.preferences.new_file
-        -- newFilePrefs.width = width
-        -- newFilePrefs.height = height
-        -- newFilePrefs.color_mode = colorModeInt
+        local newFilePrefs <const> = app.preferences.new_file
+        newFilePrefs.width = width
+        newFilePrefs.height = height
+        newFilePrefs.color_mode = colorModeInt
 
         AseUtilities.preserveForeBack()
 
