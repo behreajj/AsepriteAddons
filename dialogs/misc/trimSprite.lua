@@ -308,6 +308,7 @@ dlg:button {
         end
 
         app.layer = activeSprite.layers[#activeSprite.layers]
+        app.command.FitScreen()
         app.refresh()
     end
 }
