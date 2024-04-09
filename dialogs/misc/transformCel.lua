@@ -9,6 +9,8 @@ local defaults <const> = {
     -- 650a11ebc57a7e4539b5113297f5e2c404978e02 .
     -- Flip h and v position tried in commit
     -- f8adad7ce334553e16701cae83cdf5a4657f8c4a .
+    -- Scaling with a pivot tried in commit
+    -- 27bacf304eae29d0ecb4c2780ab77b59789af7ff .
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,

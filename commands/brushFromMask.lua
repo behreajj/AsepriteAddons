@@ -71,6 +71,7 @@ else
     if appPrefs then
         local maskPrefs <const> = appPrefs.selection
         if maskPrefs then
+            -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L81
             local maskPivot <const> = maskPrefs.pivot_position --[[@as integer]]
             if maskPivot == 0 then
                 center = Point(0, 0)

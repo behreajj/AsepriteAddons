@@ -11,8 +11,8 @@ if app.preferences then
         end
 
         local sepCand <const> = colorBarPrefs.entries_separator --[[@as boolean]]
-        if sepCand then
-            setBoxSep = true
+        if sepCand ~= nil then
+            setBoxSep = sepCand
         end
     end
 end

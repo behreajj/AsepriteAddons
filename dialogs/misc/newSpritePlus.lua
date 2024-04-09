@@ -36,7 +36,6 @@ local palTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
 local sizeModes <const> = { "ASPECT", "CUSTOM" }
 
 local defaults <const> = {
-    -- Recently, crashes were happening when palType was "ACTIVE".
     filename = "Sprite",
     sizeMode = "CUSTOM",
     aRatio = 16,
@@ -412,7 +411,6 @@ dlg:button {
         if height > dfms then height = dfms end
 
         -- Store new dimensions in preferences.
-
         local appPrefs <const> = app.preferences
         if appPrefs then
             local newFilePrefs <const> = appPrefs.new_file
