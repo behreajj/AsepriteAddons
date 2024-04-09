@@ -22,36 +22,6 @@ local defaults <const> = {
     coordSystem = "TOP_LEFT",
 }
 
----@param preset integer preset
----@param x integer x top left
----@param y integer y top left
----@param w integer width
----@param h integer height
----@return integer xPivot
----@return integer yPivot
-local function getPivot(preset, x, y, w, h)
-    if preset == 0 then
-        return x, y
-    elseif preset == 1 then
-        return x + w // 2, y
-    elseif preset == 2 then
-        return x + w - 1, y
-    elseif preset == 3 then
-        return x, y + h // 2
-    elseif preset == 5 then
-        return x + w - 1, y + h // 2
-    elseif preset == 6 then
-        return x, y + h - 1
-    elseif preset == 7 then
-        return x + w // 2, y + h - 1
-    elseif preset == 8 then
-        return x + w - 1, y + h - 1
-    else
-        -- Default to center.
-        return x + w // 2, y + h // 2
-    end
-end
-
 ---@param dialog Dialog
 ---@param x integer
 ---@param y integer
@@ -946,15 +916,6 @@ dlg:button {
 
         local resize <const> = AseUtilities.resizeImageNearest
 
-        local maskPivot = 4
-        local appPrefs <const> = app.preferences
-        if appPrefs then
-            local maskPrefs <const> = appPrefs.selection
-            if maskPrefs then
-                maskPivot = maskPrefs.pivot_position --[[@as integer]]
-            end
-        end
-
         app.transaction("Scale Cels", function()
             local o = 0
             while o < lenCels do
@@ -963,28 +924,21 @@ dlg:button {
                 local srcImg <const> = cel.image
                 if not srcImg:isEmpty() then
                     local celPos <const> = cel.position
-                    local xtlSrc <const> = celPos.x
-                    local ytlSrc <const> = celPos.y
-                    local wSrc <const> = srcImg.width
-                    local hSrc <const> = srcImg.height
+                    local xSrcCtr <const> = celPos.x + srcImg.width * 0.5
+                    local ySrcCtr <const> = celPos.y + srcImg.height * 0.5
 
                     local wTrg = wPxl
                     local hTrg = hPxl
                     if usePercent then
-                        wTrg = max(1, floor(0.5 + wSrc * wPrc))
-                        hTrg = max(1, floor(0.5 + hSrc * hPrc))
+                        wTrg = max(1, floor(0.5 + srcImg.width * wPrc))
+                        hTrg = max(1, floor(0.5 + srcImg.height * hPrc))
                     end
 
                     local trgImg <const> = resize(srcImg, wTrg, hTrg)
+                    local xtlTrg <const> = xSrcCtr - trgImg.width * 0.5
+                    local ytlTrg <const> = ySrcCtr - trgImg.height * 0.5
 
-                    local xPivot <const>, yPivot <const> = getPivot(
-                        maskPivot, xtlSrc, ytlSrc, wSrc, hSrc)
-                    local xRatio <const> = wTrg // wSrc
-                    local yRatio <const> = hTrg // hSrc
-                    local xtlTrg <const> = xPivot - xRatio * (xPivot - xtlSrc)
-                    local ytlTrg <const> = yPivot - yRatio * (yPivot - ytlSrc)
-
-                    cel.position = Point(xtlTrg, ytlTrg)
+                    cel.position = Point(floor(xtlTrg), floor(ytlTrg))
                     cel.image = trgImg
                 end
             end
