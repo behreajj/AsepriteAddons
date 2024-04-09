@@ -1,5 +1,22 @@
 dofile("../../support/aseutilities.lua")
 
+local setBoxSize = 13
+local setBoxSep = true
+if app.preferences then
+    local colorBarPrefs <const> = app.preferences.color_bar
+    if colorBarPrefs then
+        local boxSizeCand <const> = colorBarPrefs.box_size --[[@as integer]]
+        if boxSizeCand and boxSizeCand > 0 then
+            setBoxSize = boxSizeCand
+        end
+
+        local sepCand <const> = colorBarPrefs.entries_separator --[[@as boolean]]
+        if sepCand then
+            setBoxSep = true
+        end
+    end
+end
+
 local defaults <const> = {
     uniquesOnly = false,
     prependMask = true,
@@ -59,13 +76,12 @@ dlg:slider {
 
 dlg:separator { id = "uiSep", text = "Display" }
 
--- TODO: Replace all calls to preferences with constants that have defaults.
 dlg:slider {
     id = "swatchSize",
     label = "Swatch:",
     min = 4,
     max = 32,
-    value = app.preferences.color_bar.box_size --[[@as integer]],
+    value = setBoxSize,
     onchange = function()
         local args <const> = dlg.data
         local size <const> = args.swatchSize --[[@as integer]]
@@ -75,17 +91,21 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
--- TODO: Replace all calls to preferences with constants that have defaults.
--- TODO: This especially is a problem since it did not register as initially true.
 dlg:check {
     id = "useSeparator",
     label = "Display:",
     text = "Separator",
-    value = app.preferences.color_bar.entries_separator --[[@as boolean]],
+    selected = setBoxSep,
     onclick = function()
         local args <const> = dlg.data
         local useSep <const> = args.useSeparator --[[@as boolean]]
-        app.preferences.color_bar.entries_separator = useSep
+        local appPrefs <const> = app.preferences
+        if appPrefs then
+            local colorBarPrefs <const> = appPrefs.color_bar
+            if colorBarPrefs then
+                colorBarPrefs.entries_separator = useSep
+            end
+        end
     end
 }
 

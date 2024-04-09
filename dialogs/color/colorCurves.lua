@@ -42,7 +42,7 @@ if app.theme then
     if theme then
         local themeColor <const> = theme.color
         if themeColor then
-            local textColor <const> = themeColor.text
+            local textColor <const> = themeColor.text --[[@as Color]]
             if textColor and textColor.alpha > 0 then
                 curveColor = AseUtilities.aseColorCopy(textColor, "")
             end
