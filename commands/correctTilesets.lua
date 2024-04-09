@@ -20,7 +20,7 @@ local maxint64 <const> = 0x7fffffffffffffff
 local uniques <const> = {}
 
 app.transaction("Correct tile sets", function()
-    local tileSum = 0
+    -- local tileSum = 0
     local i = 0
     while i < lenTileSets do
         i = i + 1
@@ -52,37 +52,45 @@ app.transaction("Correct tile sets", function()
         -- Because Tiled uses a firstgid offset based on count of tile set
         -- references in a map, not in the tile set file itself, it's not as
         -- necessary to do this.
-        tileSet.baseIndex = 1 + tileSum
-        tileSum = tileSum + #tileSet
+        -- Even were it done, this would need to be a separate loop after
+        -- unused tile sets are deleted, since that would shift the sum.
+        -- tileSet.baseIndex = 1 + tileSum
+        -- tileSum = tileSum + #tileSet
     end
 end)
 
-if not app.preferences.tilemap.show_delete_unused_tileset_alert then
-    app.transaction("Remove unused tile sets", function()
-        local leaves <const> = AseUtilities.getLayerHierarchy(
-            activeSprite, true, true, true, false)
-        local lenLeaves <const> = #leaves
-        ---@type table<integer, boolean>
-        local usedTileSets <const> = {}
-        local i = 0
-        while i < lenLeaves do
-            i = i + 1
-            local leaf <const> = leaves[i]
-            if leaf.isTilemap then
-                local id <const> = leaf.tileset.properties["id"]
-                usedTileSets[id] = true
-            end
-        end
+local appPrefs <const> = app.preferences
+if appPrefs then
+    local tileMapPrefs <const> = appPrefs.tilemap
+    if tileMapPrefs then
+        if not tileMapPrefs.show_delete_unused_tileset_alert then
+            app.transaction("Remove unused tile sets", function()
+                local leaves <const> = AseUtilities.getLayerHierarchy(
+                    activeSprite, true, true, true, false)
+                local lenLeaves <const> = #leaves
+                ---@type table<integer, boolean>
+                local usedTileSets <const> = {}
+                local i = 0
+                while i < lenLeaves do
+                    i = i + 1
+                    local leaf <const> = leaves[i]
+                    if leaf.isTilemap then
+                        local id <const> = leaf.tileset.properties["id"]
+                        usedTileSets[id] = true
+                    end
+                end
 
-        local j = lenTileSets + 1
-        while j > 1 do
-            j = j - 1
-            local tileSet <const> = tileSets[j]
-            if not usedTileSets[tileSet.properties.id] then
-                activeSprite:deleteTileset(tileSet)
-            end
+                local j = lenTileSets + 1
+                while j > 1 do
+                    j = j - 1
+                    local tileSet <const> = tileSets[j]
+                    if not usedTileSets[tileSet.properties.id] then
+                        activeSprite:deleteTileset(tileSet)
+                    end
+                end
+            end)
         end
-    end)
+    end
 end
 
 app.refresh()

@@ -1285,9 +1285,20 @@ function AseUtilities.createSpec(
     local tcVerif <const> = alphaIndex or 0
     local cmVerif <const> = colorMode or ColorMode.RGB
 
-    local newFilePrefs <const> = app.preferences.new_file
-    local wVerif = newFilePrefs.width --[[@as integer]]
-    local hVerif = newFilePrefs.height --[[@as integer]]
+    local wVerif = 320
+    local hVerif = 180
+    local appPrefs <const> = app.preferences
+    if appPrefs then
+        local newFilePrefs <const> = appPrefs.new_file
+        if newFilePrefs then
+            if newFilePrefs.width then
+                wVerif = newFilePrefs.width --[[@as integer]]
+            end
+            if newFilePrefs.height then
+                hVerif = newFilePrefs.height --[[@as integer]]
+            end
+        end
+    end
 
     if width then
         wVerif = math.min(math.max(math.abs(width), 1), 65535)
@@ -1345,14 +1356,20 @@ function AseUtilities.createSprite(spec, fileName)
 
     -- https://steamcommunity.com/app/431730/discussions/2/3803906367798695226/
     local docPrefs <const> = appPrefs.document(sprite)
-    local onionSkinPrefs <const> = docPrefs.onionskin
-    onionSkinPrefs.loop_tag = false
+    if docPrefs then
+        local onionSkinPrefs <const> = docPrefs.onionskin
+        if onionSkinPrefs then
+            onionSkinPrefs.loop_tag = false
+        end
 
-    -- Default overlay_size is 5.
-    local thumbPrefs <const> = docPrefs.thumbnails
-    thumbPrefs.enabled = true
-    thumbPrefs.zoom = 1
-    thumbPrefs.overlay_enabled = true
+        -- Default overlay_size is 5.
+        local thumbPrefs <const> = docPrefs.thumbnails
+        if thumbPrefs then
+            thumbPrefs.enabled = true
+            thumbPrefs.zoom = 1
+            thumbPrefs.overlay_enabled = true
+        end
+    end
 
     return sprite
 end

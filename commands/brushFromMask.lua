@@ -38,10 +38,19 @@ for pixel in pxItr do
 end
 
 local appPrefs <const> = app.preferences
-local brushPrefs <const> = appPrefs.brush
-local maskPrefs <const> = appPrefs.selection
-local maskPivot <const> = maskPrefs.pivot_position --[[@as integer]]
-local useSnap <const> = appPrefs.document(sprite).grid.snap --[[@as boolean]]
+local useSnap = false
+if appPrefs then
+    local docPrefs <const> = appPrefs.document(sprite)
+    if docPrefs then
+        local gridPrefs <const> = docPrefs.grid
+        if gridPrefs then
+            local snapPref <const> = gridPrefs.snap --[[@as boolean]]
+            if snapPref then
+                useSnap = snapPref
+            end
+        end
+    end
+end
 
 -- Ideally, this would also turn off strict tile alignment mode,
 -- but unsure how to do this, as there's only the command to toggle,
@@ -59,29 +68,41 @@ local center = Point(wMask // 2, hMask // 2)
 if useSnap then
     center = Point(0, 0)
 else
-    if maskPivot == 0 then
-        center = Point(0, 0)
-    elseif maskPivot == 1 then
-        center = Point(wMask // 2, 0)
-    elseif maskPivot == 2 then
-        center = Point(wMask - 1, 0)
-    elseif maskPivot == 3 then
-        center = Point(0, hMask // 2)
-    elseif maskPivot == 4 then
-        center = Point(wMask // 2, hMask // 2)
-    elseif maskPivot == 5 then
-        center = Point(wMask - 1, hMask // 2)
-    elseif maskPivot == 6 then
-        center = Point(0, hMask - 1)
-    elseif maskPivot == 7 then
-        center = Point(wMask // 2, hMask - 1)
-    elseif maskPivot == 8 then
-        center = Point(wMask - 1, hMask - 1)
+    if appPrefs then
+        local maskPrefs <const> = appPrefs.selection
+        if maskPrefs then
+            local maskPivot <const> = maskPrefs.pivot_position --[[@as integer]]
+            if maskPivot == 0 then
+                center = Point(0, 0)
+            elseif maskPivot == 1 then
+                center = Point(wMask // 2, 0)
+            elseif maskPivot == 2 then
+                center = Point(wMask - 1, 0)
+            elseif maskPivot == 3 then
+                center = Point(0, hMask // 2)
+            elseif maskPivot == 4 then
+                center = Point(wMask // 2, hMask // 2)
+            elseif maskPivot == 5 then
+                center = Point(wMask - 1, hMask // 2)
+            elseif maskPivot == 6 then
+                center = Point(0, hMask - 1)
+            elseif maskPivot == 7 then
+                center = Point(wMask // 2, hMask - 1)
+            elseif maskPivot == 8 then
+                center = Point(wMask - 1, hMask - 1)
+            end
+        end
     end
 end
 
 app.transaction("Brush From Mask", function()
-    brushPrefs.pattern = brushPattern
+    if appPrefs then
+        local brushPrefs <const> = appPrefs.brush
+        if brushPrefs then
+            brushPrefs.pattern = brushPattern
+        end
+    end
+
     sprite.selection:deselect()
     app.brush = Brush {
         type = BrushType.IMAGE,

@@ -7,18 +7,39 @@ app.transaction("Background to Layer", function()
     AseUtilities.bkgToLayer(activeSprite, false)
 end)
 
-local docPref <const> = app.preferences.document(activeSprite)
-local bgPref <const> = docPref.bg
-local size <const> = bgPref.size --[[@as Size]]
+local wCheck = 8
+local hCheck = 8
+local aAse = Color { r = 28, g = 28, b = 28, a = 255 }
+local bAse = Color { r = 10, g = 10, b = 10, a = 255 }
 
-local wCheck <const> = math.max(1, math.abs(size.width))
-local hCheck <const> = math.max(1, math.abs(size.height))
+local appPrefs <const> = app.preferences
+if appPrefs then
+    local docPrefs <const> = appPrefs.document(activeSprite)
+    if docPrefs then
+        local bgPrefs <const> = docPrefs.bg
+        if bgPrefs then
+            local checkSize <const> = bgPrefs.size --[[@as Size]]
+            if checkSize then
+                wCheck = math.max(1, math.abs(checkSize.width))
+                hCheck = math.max(1, math.abs(checkSize.height))
+            end
+
+            local bgPrefColor1 <const> = bgPrefs.color1 --[[@as Color]]
+            if bgPrefColor1 then
+                aAse = bgPrefColor1 --[[@as Color]]
+            end
+
+            local bgPrefColor2 <const> = bgPrefs.color2 --[[@as Color]]
+            if bgPrefColor2 then
+                bAse = bgPrefColor2
+            end
+        end
+    end
+end
 
 local activeSpec <const> = activeSprite.spec
 local colorMode <const> = activeSpec.colorMode
 
-local aAse <const> = bgPref.color1 --[[@as Color]]
-local bAse <const> = bgPref.color2 --[[@as Color]]
 local a = AseUtilities.aseColorToHex(aAse, colorMode)
 local b = AseUtilities.aseColorToHex(bAse, colorMode)
 
