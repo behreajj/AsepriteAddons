@@ -1,7 +1,16 @@
 dofile("../../support/gradientutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
-local screenScale <const> = app.preferences.general.screen_scale
+local screenScale = 1
+if app.preferences then
+    local generalPrefs <const> = app.preferences.general
+    if generalPrefs then
+        local ssCand <const> = generalPrefs.screen_scale --[[@as integer]]
+        if ssCand and ssCand > 0 then
+            screenScale = ssCand
+        end
+    end
+end
 
 local defaults <const> = {
     pullFocus = true

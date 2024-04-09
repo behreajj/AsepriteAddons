@@ -1,7 +1,31 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
--- local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
+local screenScale = 1
+local setWidth = 320
+local setHeight = 180
+if app.preferences then
+    local generalPrefs <const> = app.preferences.general
+    if generalPrefs then
+        local ssCand <const> = generalPrefs.screen_scale --[[@as integer]]
+        if ssCand and ssCand ~= 0 then
+            screenScale = ssCand
+        end
+    end
+
+    local newFilePrefs <const> = app.preferences.new_file
+    if newFilePrefs then
+        local wCand <const> = newFilePrefs.width
+        if wCand and wCand > 0 then
+            setWidth = wCand
+        end
+
+        local hCand <const> = newFilePrefs.height
+        if hCand and hCand > 0 then
+            setHeight = hCand
+        end
+    end
+end
 
 -- New Sprite Plus doesn't support Color Space conversion
 -- because setting color space via script interferes with
@@ -15,8 +39,6 @@ local defaults <const> = {
     -- Recently, crashes were happening when palType was "ACTIVE".
     filename = "Sprite",
     sizeMode = "CUSTOM",
-    width = 320,
-    height = 180,
     aRatio = 16,
     bRatio = 9,
     aspectScale = 20,
@@ -102,7 +124,7 @@ dlg:number {
     id = "width",
     -- text = string.format("%d",
     --     app.preferences.new_file.width),
-    text = string.format("%d", 320),
+    text = string.format("%d", setWidth),
     decimals = 0,
     visible = defaults.sizeMode == "CUSTOM"
 }
@@ -111,7 +133,7 @@ dlg:number {
     id = "height",
     -- text = string.format("%d",
     --     app.preferences.new_file.height),
-    text = string.format("%d", 180),
+    text = string.format("%d", setHeight),
     decimals = 0,
     visible = defaults.sizeMode == "CUSTOM"
 }
@@ -187,8 +209,7 @@ dlg:combobox {
 
 CanvasUtilities.spectrum(
     dlg, "bkgSpectrum", "Background:",
-    -- 180 // screenScale, 56 // screenScale,
-    180, 56,
+    180 // screenScale, 56 // screenScale,
     defaults.colorMode == "RGB",
     97.0, 18.0, 0.275, 0.0)
 

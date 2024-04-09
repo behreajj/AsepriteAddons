@@ -145,8 +145,18 @@ function CanvasUtilities.graphBezier(
     allowApMove, gridCount,
     cp0xDef, cp0yDef, cp1xDef, cp1yDef,
     curveColor, gridColor, cp0Color, cp1Color)
+    local screenScale = 1
+    if app.preferences then
+        local generalPrefs <const> = app.preferences.general
+        if generalPrefs then
+            local ssCand <const> = generalPrefs.screen_scale --[[@as integer]]
+            if ssCand and ssCand > 0 then
+                screenScale = ssCand
+            end
+        end
+    end
+
     -- Constants.
-    local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
     local swCurve <const> = 2
     local hotSpot <const> = 16 / screenScale
     local hotSpotSq <const> = hotSpot * hotSpot
@@ -714,7 +724,17 @@ function CanvasUtilities.graphLine(
             local yVec <const> = ydSigned - yoSigned
             local rot <const> = math.atan(yVec, xVec)
 
-            local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
+            local screenScale = 1
+            if app.preferences then
+                local generalPrefs <const> = app.preferences.general
+                if generalPrefs then
+                    local ssCand <const> = generalPrefs.screen_scale --[[@as integer]]
+                    if ssCand and ssCand > 0 then
+                        screenScale = ssCand
+                    end
+                end
+            end
+
             local polyRadius <const> = 4 * context.strokeWidth / screenScale
             CanvasUtilities.drawPolygon(context, 4, polyRadius, xoPx, yoPx, rot)
             context:fill()

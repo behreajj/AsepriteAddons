@@ -59,6 +59,7 @@ dlg:slider {
 
 dlg:separator { id = "uiSep", text = "Display" }
 
+-- TODO: Replace all calls to preferences with constants that have defaults.
 dlg:slider {
     id = "swatchSize",
     label = "Swatch:",
@@ -74,6 +75,8 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+-- TODO: Replace all calls to preferences with constants that have defaults.
+-- TODO: This especially is a problem since it did not register as initially true.
 dlg:check {
     id = "useSeparator",
     label = "Display:",

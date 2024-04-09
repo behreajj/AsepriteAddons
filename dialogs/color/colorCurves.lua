@@ -24,9 +24,31 @@ local coPostfixes <const> = {
 }
 local lenCoPostfixes <const> = #coPostfixes
 
-local screenScale <const> = app.preferences.general.screen_scale --[[@as integer]]
-local curveColor <const> = app.theme.color.text --[[@as Color]]
+local screenScale = 1
+if app.preferences then
+    local generalPrefs <const> = app.preferences.general
+    if generalPrefs then
+        local ssCand <const> = generalPrefs.screen_scale --[[@as integer]]
+        if ssCand and ssCand > 0 then
+            screenScale = ssCand
+        end
+    end
+end
+
+local curveColor = Color { r = 13, g = 13, b = 13 }
 local gridColor <const> = Color { r = 128, g = 128, b = 128 }
+if app.theme then
+    local theme <const> = app.theme
+    if theme then
+        local themeColor <const> = theme.color
+        if themeColor then
+            local textColor <const> = themeColor.text
+            if textColor and textColor.alpha > 0 then
+                curveColor = AseUtilities.aseColorCopy(textColor, "")
+            end
+        end
+    end
+end
 
 local defaults <const> = {
     target = "ACTIVE",
