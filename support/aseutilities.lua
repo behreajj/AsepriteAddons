@@ -1341,13 +1341,15 @@ function AseUtilities.createSprite(spec, fileName)
             app.tool = "hand"
         end
 
-        -- Set ink to simple. If it's set after sprite creation
-        -- then the UI won't update.
-        if appPrefs then
+        -- Set ink to simple. If it's set after sprite creation then the UI
+        -- won't update. Problem here is that multiple tools use an ink.
+        -- If one of these tools isn't active, then its ink type won't be
+        -- changed. Also, "share across tools" setting may or may not be true.
+        -- if appPrefs then
             -- This should use the current tool, not the cached one.
-            local toolPrefs <const> = appPrefs.tool(app.tool)
-            if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
-        end
+            -- local toolPrefs <const> = appPrefs.tool(app.tool)
+            -- if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
+        -- end
     end
 
     local sprite <const> = Sprite(spec)
