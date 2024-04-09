@@ -1344,7 +1344,8 @@ function AseUtilities.createSprite(spec, fileName)
         -- Set ink to simple. If it's set after sprite creation
         -- then the UI won't update.
         if appPrefs then
-            local toolPrefs <const> = appPrefs.tool(appTool)
+            -- This should use the current tool, not the cached one.
+            local toolPrefs <const> = appPrefs.tool(app.tool)
             if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
         end
     end
