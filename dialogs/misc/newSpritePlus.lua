@@ -412,8 +412,7 @@ dlg:button {
         if height > dfms then height = dfms end
 
         -- Store new dimensions in preferences.
-        -- Set ink to simple. If it's set later in the control flow,
-        -- then the UI won't update.
+
         local appPrefs <const> = app.preferences
         if appPrefs then
             local newFilePrefs <const> = appPrefs.new_file
@@ -433,9 +432,6 @@ dlg:button {
                 --     end)
                 -- end
             end
-
-            local toolPrefs <const> = appPrefs.tool(app.tool)
-            if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
         end
 
         AseUtilities.preserveForeBack()

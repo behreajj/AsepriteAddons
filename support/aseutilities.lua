@@ -1334,40 +1334,48 @@ end
 function AseUtilities.createSprite(spec, fileName)
     -- Do not allow slices UI interface to be active.
     local appTool <const> = app.tool
+    local appPrefs <const> = app.preferences
     if appTool then
         local toolName <const> = appTool.id
         if toolName == "slice" then
             app.tool = "hand"
+        end
+
+        -- Set ink to simple. If it's set after sprite creation
+        -- then the UI won't update.
+        if appPrefs then
+            local toolPrefs <const> = appPrefs.tool(appTool)
+            if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
         end
     end
 
     local sprite <const> = Sprite(spec)
     if fileName and #fileName > 0 then sprite.filename = fileName end
 
-    local appPrefs <const> = app.preferences
+    if appPrefs then
+        -- https://community.aseprite.org/t/vertical-skewing-broken-when-pivot-is-set-to-the-right/
+        -- https://steamcommunity.com/app/431730/discussions/2/4356743320309073149/
+        -- appPrefs.selection.pivot_position = 4
 
-    -- https://community.aseprite.org/t/vertical-skewing-broken-when-pivot-is-set-to-the-right/
-    -- https://steamcommunity.com/app/431730/discussions/2/4356743320309073149/
-    -- appPrefs.selection.pivot_position = 4
+        -- It's overkill to handle sprite.pixelRatio (a Size) here. Handle it in
+        -- newSpritePlus and spriteProps, if at all. See also
+        -- appPrefs.new_file.pixel_ratio, a string, "1:2", "2:1", "1:1" .
 
-    -- It's overkill to handle sprite.pixelRatio (a Size) here. Handle it in
-    -- newSpritePlus and spriteProps, if at all. See also
-    -- appPrefs.new_file.pixel_ratio, a string, "1:2", "2:1", "1:1" .
+        -- https://steamcommunity.com/app/431730/discussions/2/3803906367798695226/
+        local docPrefs <const> = appPrefs.document(sprite)
+        if docPrefs then
+            local onionSkinPrefs <const> = docPrefs.onionskin
+            if onionSkinPrefs then
+                onionSkinPrefs.loop_tag = false
+            end
 
-    -- https://steamcommunity.com/app/431730/discussions/2/3803906367798695226/
-    local docPrefs <const> = appPrefs.document(sprite)
-    if docPrefs then
-        local onionSkinPrefs <const> = docPrefs.onionskin
-        if onionSkinPrefs then
-            onionSkinPrefs.loop_tag = false
-        end
-
-        -- Default overlay_size is 5.
-        local thumbPrefs <const> = docPrefs.thumbnails
-        if thumbPrefs then
-            thumbPrefs.enabled = true
-            thumbPrefs.zoom = 1
-            thumbPrefs.overlay_enabled = true
+            -- Default overlay_size is 5.
+            local thumbPrefs <const> = docPrefs.thumbnails
+            if thumbPrefs then
+                thumbPrefs.enabled = true
+                thumbPrefs.zoom = 1
+                thumbPrefs.overlay_enabled = true
+            end
         end
     end
 

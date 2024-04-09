@@ -56,17 +56,24 @@ local function loadSprite(filePath)
         sprite = Sprite { fromFile = filePath }
         if fileExtLower ~= "ase" and fileExtLower ~= "aseprite" then
             local appPrefs <const> = app.preferences
-            appPrefs.selection.pivot_position = 4
+            if appPrefs then
+                -- appPrefs.selection.pivot_position = 4
 
-            local docPrefs <const> = appPrefs.document(sprite)
-            local onionSkinPrefs <const> = docPrefs.onionskin
-            onionSkinPrefs.loop_tag = false
+                local docPrefs <const> = appPrefs.document(sprite)
+                if docPrefs then
+                    local onionSkinPrefs <const> = docPrefs.onionskin
+                    if onionSkinPrefs then
+                        onionSkinPrefs.loop_tag = false
+                    end
 
-            -- Default overlay_size is 5.
-            local thumbPrefs <const> = docPrefs.thumbnails
-            thumbPrefs.enabled = true
-            thumbPrefs.zoom = 1
-            thumbPrefs.overlay_enabled = true
+                    local thumbPrefs <const> = docPrefs.thumbnails
+                    if thumbPrefs then
+                        thumbPrefs.enabled = true
+                        thumbPrefs.zoom = 1
+                        thumbPrefs.overlay_enabled = true
+                    end
+                end
+            end
         end
     end
 
