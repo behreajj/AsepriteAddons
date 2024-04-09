@@ -122,8 +122,6 @@ dlg:newrow { always = false }
 
 dlg:number {
     id = "width",
-    -- text = string.format("%d",
-    --     app.preferences.new_file.width),
     text = string.format("%d", setWidth),
     decimals = 0,
     visible = defaults.sizeMode == "CUSTOM"
@@ -131,8 +129,6 @@ dlg:number {
 
 dlg:number {
     id = "height",
-    -- text = string.format("%d",
-    --     app.preferences.new_file.height),
     text = string.format("%d", setHeight),
     decimals = 0,
     visible = defaults.sizeMode == "CUSTOM"
@@ -416,10 +412,31 @@ dlg:button {
         if height > dfms then height = dfms end
 
         -- Store new dimensions in preferences.
-        -- local newFilePrefs <const> = app.preferences.new_file
-        -- newFilePrefs.width = width
-        -- newFilePrefs.height = height
-        -- newFilePrefs.color_mode = colorModeInt
+        -- Set ink to simple. If it's set later in the control flow,
+        -- then the UI won't update.
+        local appPrefs <const> = app.preferences
+        if appPrefs then
+            local newFilePrefs <const> = appPrefs.new_file
+            if newFilePrefs then
+                newFilePrefs.width = width
+                newFilePrefs.height = height
+
+                -- Maintain default pixel aspect ratio?
+                -- local pxRatioStr <const> = newFilePrefs.pixel_ratio
+                -- if pxRatioStr ~= "1:1" then
+                --     app.transaction("Set Pixel Aspect", function()
+                --         if pxRatioStr == "2:1" then
+                --             newSprite.pixelRatio = Size(2, 1)
+                --         elseif pxRatioStr == "1:2" then
+                --             newSprite.pixelRatio = Size(1, 2)
+                --         end
+                --     end)
+                -- end
+            end
+
+            local toolPrefs <const> = appPrefs.tool(app.tool)
+            if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
+        end
 
         AseUtilities.preserveForeBack()
 
@@ -433,18 +450,6 @@ dlg:button {
         local spec = AseUtilities.createSpec(width, height)
         local newSprite <const> = AseUtilities.createSprite(spec, filename)
         app.sprite = newSprite
-
-        -- Maintain default pixel aspect ratio.
-        -- local pxRatioStr <const> = newFilePrefs.pixel_ratio
-        -- if pxRatioStr ~= "1:1" then
-        --     app.transaction("Set Pixel Aspect", function()
-        --         if pxRatioStr == "2:1" then
-        --             newSprite.pixelRatio = Size(2, 1)
-        --         elseif pxRatioStr == "1:2" then
-        --             newSprite.pixelRatio = Size(1, 2)
-        --         end
-        --     end)
-        -- end
 
         -- Only assign palette here if not gray.
         if not useGray then
@@ -491,10 +496,6 @@ dlg:button {
         if useGray then
             AseUtilities.setPalette(hexesProfile, newSprite, 1)
         end
-
-        -- Could help to change ink to simple, but the UI doesn't update.
-        -- local toolPrefs = app.preferences.tool(app.tool)
-        -- if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
 
         app.frame = firstFrame
         app.refresh()

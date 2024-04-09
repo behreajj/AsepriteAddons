@@ -26,7 +26,7 @@ if appPrefs then
 
             local bgPrefColor1 <const> = bgPrefs.color1 --[[@as Color]]
             if bgPrefColor1 then
-                aAse = bgPrefColor1 --[[@as Color]]
+                aAse = bgPrefColor1
             end
 
             local bgPrefColor2 <const> = bgPrefs.color2 --[[@as Color]]
