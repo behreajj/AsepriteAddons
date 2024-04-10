@@ -587,7 +587,7 @@ dlg:button {
             app.transaction("Set Sprite Props", function()
                 sprite.gridBounds = Rectangle(xGrid, yGrid, wGrid, hGrid)
                 sprite.pixelRatio = Size(aPxRatio, bPxRatio)
-                sprite.color = AseUtilities.copyColor(sprColor, "")
+                sprite.color = AseUtilities.aseColorCopy(sprColor, "")
                 sprite.data = userData
 
                 if aPxRatio == 1 and bPxRatio == 1 then
