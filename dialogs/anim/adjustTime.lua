@@ -1,4 +1,5 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/canvasutilities.lua")
 dofile("../../support/clrgradient.lua")
 
 local modes <const> = {
