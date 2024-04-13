@@ -252,18 +252,20 @@ dlg:button {
         while g < lenHexesProfile do
             g = g + 1
             local hexProfile <const> = hexesProfile[g]
-            if (hexProfile & 0xff000000) ~= 0x0 then
-                if not hexLabDict[hexProfile] then
-                    lenUniqueHexes = lenUniqueHexes + 1
-                    uniqueHexes[lenUniqueHexes] = hexProfile
+            -- It may be advantageous to create a brush from a swatch which
+            -- includes alpha.
+            -- if (hexProfile & 0xff000000) ~= 0x0 then
+            if not hexLabDict[hexProfile] then
+                lenUniqueHexes = lenUniqueHexes + 1
+                uniqueHexes[lenUniqueHexes] = hexProfile
 
-                    local hexSrgb <const> = hexesSrgb[g]
-                    local clr <const> = Clr.fromHex(hexSrgb)
-                    local lab <const> = Clr.sRgbToSrLab2(clr)
-                    hexLabDict[hexProfile] = lab
-                    hexWebDict[hexProfile] = Clr.toHexWeb(clr)
-                end
+                local hexSrgb <const> = hexesSrgb[g]
+                local clr <const> = Clr.fromHex(hexSrgb)
+                local lab <const> = Clr.sRgbToSrLab2(clr)
+                hexLabDict[hexProfile] = lab
+                hexWebDict[hexProfile] = Clr.toHexWeb(clr)
             end
+            -- end
         end
 
         -- Create sprite.

@@ -59,19 +59,19 @@ end
 ---@return number
 ---@return number
 local function colorToVec(color)
-    local r255 = 127.5
-    local g255 = 127.5
-    local b255 = 255.0
+    local r8 = 127.5
+    local g8 = 127.5
+    local b8 = 255.0
 
     if color.alpha > 0 then
-        r255 = color.red
-        g255 = color.green
-        b255 = color.blue
+        r8 = color.red
+        g8 = color.green
+        b8 = color.blue
     end
 
-    local x <const> = (r255 + r255 - 255) / 255.0
-    local y <const> = (g255 + g255 - 255) / 255.0
-    local z <const> = (b255 + b255 - 255) / 255.0
+    local x <const> = (r8 + r8 - 255) / 255.0
+    local y <const> = (g8 + g8 - 255) / 255.0
+    local z <const> = (b8 + b8 - 255) / 255.0
 
     -- The square magnitude for the color #808080
     -- is 0.000046 . Have to account for how 255
