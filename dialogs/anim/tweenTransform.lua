@@ -115,6 +115,7 @@ local function getCelDataAtFrame(axis)
     local spriteSpec <const> = activeSprite.spec
     local wSprite <const> = spriteSpec.width
     local hSprite <const> = spriteSpec.height
+    local alphaIndex <const> = spriteSpec.transparentColor
 
     local frIdx = frameUiOffset + 1
     local pxWidth = wSprite
@@ -136,23 +137,34 @@ local function getCelDataAtFrame(axis)
             local ytl <const> = celPos.y
 
             local celImage <const> = activeCel.image
-            local wTile = 1
-            local hTile = 1
 
             if activeLayer.isTilemap then
                 local tileSet <const> = activeLayer.tileset
                 if tileSet then
                     local tileGrid <const> = tileSet.grid
                     local tileDim <const> = tileGrid.tileSize
-                    wTile = math.max(1, math.abs(tileDim.width))
-                    hTile = math.max(1, math.abs(tileDim.height))
+                    local wTile <const> = math.max(1, math.abs(tileDim.width))
+                    local hTile <const> = math.max(1, math.abs(tileDim.height))
+
+                    pxWidth = celImage.width * wTile
+                    pxHeight = celImage.height * hTile
+                    xCenter = xtl + pxWidth * 0.5
+                    yCenter = ytl + pxHeight * 0.5
+                end
+            else
+                local rect <const> = celImage:shrinkBounds(alphaIndex)
+                if rect.width > 0 and rect.height > 0 then
+                    pxWidth = rect.width
+                    pxHeight = rect.height
+                    xCenter = xtl + rect.x + pxWidth * 0.5
+                    yCenter = ytl + rect.y + pxHeight * 0.5
+                else
+                    pxWidth = celImage.width
+                    pxHeight = celImage.height
+                    xCenter = xtl + pxWidth * 0.5
+                    yCenter = ytl + pxHeight * 0.5
                 end
             end
-
-            pxWidth = celImage.width * wTile
-            pxHeight = celImage.height * hTile
-            xCenter = xtl + pxWidth * 0.5
-            yCenter = ytl + pxHeight * 0.5
         else
             getFlat = true
         end
@@ -161,18 +173,15 @@ local function getCelDataAtFrame(axis)
     end
 
     if getFlat then
-        local alphaIndex <const> = spriteSpec.transparentColor
         local flat <const> = Image(spriteSpec)
         flat:drawSprite(activeSprite, activeFrame, Point(0, 0))
-        local trimmed <const>,
-        xtl <const>,
-        ytl <const> = AseUtilities.trimImageAlpha(flat, 0, alphaIndex,
-            wSprite, hSprite)
-
-        pxWidth = trimmed.width
-        pxHeight = trimmed.height
-        xCenter = xtl + pxWidth * 0.5
-        yCenter = ytl + pxHeight * 0.5
+        local rect <const> = flat:shrinkBounds(alphaIndex)
+        if rect.width > 0 and rect.height > 0 then
+            pxWidth = rect.width
+            pxHeight = rect.height
+            xCenter = rect.x + pxWidth * 0.5
+            yCenter = rect.y + pxHeight * 0.5
+        end
     end
 
     return frIdx, xCenter, yCenter, rotDeg, pxWidth, pxHeight
