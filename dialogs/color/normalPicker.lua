@@ -13,8 +13,8 @@ if app.preferences then
 end
 
 local defaults <const> = {
-    barWidth = 240 / screenScale,
-    barHeight = 16 / screenScale,
+    barWidth = 240 // screenScale,
+    barHeight = 16 // screenScale,
     reticleSize = 3 / screenScale,
     textShadow = 0xffe7e7e7,
     textColor = 0xff181818,
