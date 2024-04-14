@@ -82,62 +82,98 @@ local defaults <const> = {
 ---@return integer pxWidth
 ---@return integer pxHeight
 local function getCelDataAtFrame(axis)
+    -- Axis was needed to retrieve custom cel properties. However, because
+    -- properties cannot be copied between cels without creating a custom
+    -- deep-copy-by-value method, that was removed.
+
     local site <const> = app.site
     local activeSprite <const> = site.sprite
     local appPrefs <const> = app.preferences
     if not activeSprite then
-        local newFilePrefs <const> = appPrefs.new_file
-        local wNfp <const> = newFilePrefs.width --[[@as integer]]
-        local hNfp <const> = newFilePrefs.height --[[@as integer]]
-        return 1, wNfp * 0.5, hNfp * 0.5, -1, wNfp, hNfp
+        if appPrefs then
+            local newFilePrefs <const> = appPrefs.new_file
+            if newFilePrefs then
+                local wNfp <const> = newFilePrefs.width --[[@as integer]]
+                local hNfp <const> = newFilePrefs.height --[[@as integer]]
+                return 1, wNfp * 0.5, hNfp * 0.5, -1, wNfp, hNfp
+            end
+        end
+        return 1, 0.0, 0.0, -1, 0, 0
     end
 
-    local docPrefs <const> = appPrefs.document(activeSprite)
-    local tlPrefs <const> = docPrefs.timeline
-    local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+    local frameUiOffset = 0
+    if appPrefs then
+        local docPrefs <const> = appPrefs.document(activeSprite)
+        if docPrefs then
+            local tlPrefs <const> = docPrefs.timeline
+            if tlPrefs then
+                frameUiOffset = tlPrefs.first_frame - 1 --[[@as integer]]
+            end
+        end
+    end
+
+    local spriteSpec <const> = activeSprite.spec
+    local wSprite <const> = spriteSpec.width
+    local hSprite <const> = spriteSpec.height
 
     local frIdx = frameUiOffset + 1
-    local pxWidth = activeSprite.width
-    local pxHeight = activeSprite.height
+    local pxWidth = wSprite
+    local pxHeight = hSprite
     local rotDeg = -1
     local xCenter = pxWidth * 0.5
     local yCenter = pxHeight * 0.5
 
-    local activeFrame <const> = site.frame
-    if activeFrame then
-        frIdx = activeFrame.frameNumber + frameUiOffset
+    local activeFrame <const> = site.frame or activeSprite.frames[1]
+    frIdx = activeFrame.frameNumber + frameUiOffset
+
+    local getFlat = false
+    local activeLayer <const> = site.layer or activeSprite.layers[1]
+    if not activeLayer.isReference then
+        local activeCel <const> = activeLayer:cel(activeFrame)
+        if activeCel then
+            local celPos <const> = activeCel.position
+            local xtl <const> = celPos.x
+            local ytl <const> = celPos.y
+
+            local celImage <const> = activeCel.image
+            local wTile = 1
+            local hTile = 1
+
+            if activeLayer.isTilemap then
+                local tileSet <const> = activeLayer.tileset
+                if tileSet then
+                    local tileGrid <const> = tileSet.grid
+                    local tileDim <const> = tileGrid.tileSize
+                    wTile = math.max(1, math.abs(tileDim.width))
+                    hTile = math.max(1, math.abs(tileDim.height))
+                end
+            end
+
+            pxWidth = celImage.width * wTile
+            pxHeight = celImage.height * hTile
+            xCenter = xtl + pxWidth * 0.5
+            yCenter = ytl + pxHeight * 0.5
+        else
+            getFlat = true
+        end
+    else
+        getFlat = true
     end
 
-    local activeLayer <const> = site.layer
-    if activeLayer and activeFrame then
-        if not activeLayer.isReference then
-            local activeCel <const> = activeLayer:cel(activeFrame)
-            if activeCel then
-                local celPos <const> = activeCel.position
-                local xtl <const> = celPos.x
-                local ytl <const> = celPos.y
+    if getFlat then
+        local alphaIndex <const> = spriteSpec.transparentColor
+        local flat <const> = Image(spriteSpec)
+        flat:drawSprite(activeSprite, activeFrame, Point(0, 0))
+        local trimmed <const>,
+        xtl <const>,
+        ytl <const> = AseUtilities.trimImageAlpha(flat, 0, alphaIndex,
+            wSprite, hSprite)
 
-                local celImage <const> = activeCel.image
-                local wTile = 1
-                local hTile = 1
-
-                if activeLayer.isTilemap then
-                    local tileSet <const> = activeLayer.tileset
-                    if tileSet then
-                        local tileGrid <const> = tileSet.grid
-                        local tileDim <const> = tileGrid.tileSize
-                        wTile = math.max(1, math.abs(tileDim.width))
-                        hTile = math.max(1, math.abs(tileDim.height))
-                    end
-                end
-
-                pxWidth = celImage.width * wTile
-                pxHeight = celImage.height * hTile
-                xCenter = xtl + pxWidth * 0.5
-                yCenter = ytl + pxHeight * 0.5
-            end -- End cel exists check.
-        end     -- End not reference layer check.
-    end         -- End layer and frame exist check.
+        pxWidth = trimmed.width
+        pxHeight = trimmed.height
+        xCenter = xtl + pxWidth * 0.5
+        yCenter = ytl + pxHeight * 0.5
+    end
 
     return frIdx, xCenter, yCenter, rotDeg, pxWidth, pxHeight
 end
