@@ -23,7 +23,11 @@ local harmonyTypes <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Scrollbar support (onwheel)?
+    -- This does not support scroll wheel support because the directionality is
+    -- reversed and because there is too much debugging needed to stop mouse
+    -- down from interfereing with scroll wheel, particularly in normal wheel
+    -- picker I.e., scrool wheel should only work when mouse button is up.
+    -- That means separate functions would need to be made for scroll.
     lchTosRgb = Clr.srLchTosRgb,
     sRgbToLch = Clr.sRgbToSrLch,
     sRgbToLab = Clr.sRgbToSrLab2,
