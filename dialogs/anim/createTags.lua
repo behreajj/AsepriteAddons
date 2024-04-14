@@ -233,9 +233,18 @@ dlg:button {
             aniDirEnum = AniDir.PING_PONG_REVERSE
         end
 
-        local docPrefs <const> = app.preferences.document(activeSprite)
-        local tlPrefs <const> = docPrefs.timeline
-        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+        -- TODO: Standardize this across dialogs.
+        local frameUiOffset = 0
+        local appPrefs <const> = app.preferences
+        if appPrefs then
+            local docPrefs <const> = appPrefs.document(activeSprite)
+            if docPrefs then
+                local tlPrefs <const> = docPrefs.timeline
+                if tlPrefs then
+                    frameUiOffset = tlPrefs.first_frame - 1 --[[@as integer]]
+                end
+            end
+        end
 
         ---@type integer[][]
         local frIdcs2 = {}
