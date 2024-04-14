@@ -142,11 +142,19 @@ local function setAlphaMouseListen(event)
             if math.abs(mx01 - active.a) > incr then
                 if event.altKey then incr = incr * defaults.tIncrScale end
                 if mx01 < active.a then incr = -incr end
-                active.a = math.min(math.max(
-                    active.a + incr, 0.0), 1.0)
+                active.a = math.min(math.max(active.a + incr, 0.0), 1.0)
             end
         else
             active.a = math.min(math.max(mx01, 0.0), 1.0)
+        end
+        dlg:repaint()
+    elseif event.deltaY then
+        local dy <const> = event.deltaY
+        local incr <const> = 0.003921568627451
+        if dy < 0.0 then
+            active.a = math.min(math.max(active.a + incr, 0.0), 1.0)
+        elseif dy > 0.0 then
+            active.a = math.min(math.max(active.a - incr, 0.0), 1.0)
         end
         dlg:repaint()
     end
@@ -164,11 +172,20 @@ local function setLightMouseListen(event)
             if math.abs(mx100 - active.l) > incr then
                 if event.altKey then incr = incr * defaults.lIncrScale end
                 if mx100 < active.l then incr = -incr end
-                active.l = math.min(math.max(
-                    active.l + incr, 0.0), 100.0)
+                active.l = math.min(math.max(active.l + incr, 0.0), 100.0)
             end
         else
             active.l = math.min(math.max(mx100, 0.0), 100.0)
+        end
+        dlg:repaint()
+        updateHexCode(dlg, active.l, active.c, active.h)
+    elseif event.deltaY then
+        local dy <const> = event.deltaY
+        local incr <const> = 1.0
+        if dy < 0.0 then
+            active.l = math.min(math.max(active.l + incr, 0.0), 100.0)
+        elseif dy > 0.0 then
+            active.l = math.min(math.max(active.l - incr, 0.0), 100.0)
         end
         dlg:repaint()
         updateHexCode(dlg, active.l, active.c, active.h)
@@ -177,9 +194,9 @@ end
 
 ---@param event MouseEvent
 local function setChromaMouseListen(event)
+    local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA + 0.5
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.cBarWidth
-        local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA + 0.5
         local mx120 <const> = bw > 1
             and (maxChroma * event.x / (bw - 1.0))
             or 0.0
@@ -214,6 +231,16 @@ local function setChromaMouseListen(event)
         end
         dlg:repaint()
         updateHexCode(dlg, active.l, active.c, active.h)
+    elseif event.deltaY then
+        local dy <const> = event.deltaY
+        local incr <const> = 1.0
+        if dy < 0.0 then
+            active.c = math.min(math.max(active.c + incr, 0.0), maxChroma)
+        elseif dy > 0.0 then
+            active.c = math.min(math.max(active.c - incr, 0.0), maxChroma)
+        end
+        dlg:repaint()
+        updateHexCode(dlg, active.l, active.c, active.h)
     end
 end
 
@@ -233,6 +260,16 @@ local function setHueMouseListen(event)
             end
         else
             active.h = mx01 % 1.0
+        end
+        dlg:repaint()
+        updateHexCode(dlg, active.l, active.c, active.h)
+    elseif event.deltaY then
+        local dy <const> = event.deltaY
+        local incr <const> = 0.0027777777777778
+        if dy < 0.0 then
+            active.h = (active.h + incr) % 1.0
+        elseif dy > 0.0 then
+            active.h = (active.h - incr) % 1.0
         end
         dlg:repaint()
         updateHexCode(dlg, active.l, active.c, active.h)
@@ -440,7 +477,8 @@ dlg:canvas {
             fill, reticleSize)
     end,
     onmousedown = setLightMouseListen,
-    onmousemove = setLightMouseListen
+    onmousemove = setLightMouseListen,
+    onwheel = setLightMouseListen
 }
 
 dlg:newrow { always = false }
@@ -505,7 +543,8 @@ dlg:canvas {
             fill, reticleSize)
     end,
     onmousedown = setChromaMouseListen,
-    onmousemove = setChromaMouseListen
+    onmousemove = setChromaMouseListen,
+    onwheel = setChromaMouseListen
 }
 
 dlg:newrow { always = false }
@@ -569,7 +608,8 @@ dlg:canvas {
             fill, reticleSize)
     end,
     onmousedown = setHueMouseListen,
-    onmousemove = setHueMouseListen
+    onmousemove = setHueMouseListen,
+    onwheel = setHueMouseListen
 }
 
 dlg:newrow { always = false }
@@ -640,7 +680,8 @@ dlg:canvas {
             fill, reticleSize)
     end,
     onmousedown = setAlphaMouseListen,
-    onmousemove = setAlphaMouseListen
+    onmousemove = setAlphaMouseListen,
+    onwheel = setAlphaMouseListen
 }
 
 dlg:newrow { always = false }
