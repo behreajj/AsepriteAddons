@@ -13,8 +13,8 @@ if app.preferences then
 end
 
 local defaults <const> = {
-    barWidth = 240 // screenScale,
-    barHeight = 16 // screenScale,
+    barWidth = 240 / screenScale,
+    barHeight = 16 / screenScale,
     reticleSize = 3 / screenScale,
     textShadow = 0xffe7e7e7,
     textColor = 0xff181818,
@@ -195,27 +195,21 @@ local dlg = Dialog { title = "Normal Picker" }
 
 ---@param event MouseEvent
 local function setAzimMouseListen(event)
-    local dy <const> = event.deltaY or 0.0
-    if event.button ~= MouseButton.NONE or dy ~= 0.0 then
-        -- Increment is math.pi / 180.
-        local incr = 0.017453292519943
+    if event.button ~= MouseButton.NONE then
         local bw <const> = active.azBarWidth
         local mxtau <const> = bw > 1
             and (6.2831853071796 * event.x / (bw - 1.0))
             or 0.0
-
         if event.ctrlKey then
             active.azimuth = 0.0
         elseif event.shiftKey then
+            -- Increment is math.pi / 180.
+            local incr = 0.017453292519943
             if event.altKey then incr = incr * defaults.azimIncrScale end
             if math.abs(mxtau - active.azimuth) > incr then
                 if mxtau < active.azimuth then incr = -incr end
                 active.azimuth = (active.azimuth + incr) % 6.2831853071796
             end
-        elseif dy < 0.0 then
-            active.azimuth = (active.azimuth + incr) % 6.2831853071796
-        elseif dy > 0.0 then
-            active.azimuth = (active.azimuth - incr) % 6.2831853071796
         else
             active.azimuth = mxtau % 6.2831853071796
         end
@@ -232,10 +226,7 @@ end
 
 ---@param event MouseEvent
 local function setInclMouseListen(event)
-    local dy <const> = event.deltaY or 0.0
-    if event.button ~= MouseButton.NONE or dy ~= 0.0 then
-        -- Increment is math.pi / 180.
-        local incr = 0.017453292519943
+    if event.button ~= MouseButton.NONE then
         local bw <const> = active.inBarWidth
         local halfPi <const> = 1.5707963267949
         local mxIncl <const> = bw > 1
@@ -244,6 +235,8 @@ local function setInclMouseListen(event)
         if event.ctrlKey then
             active.inclination = 0.0
         elseif event.shiftKey then
+            -- Increment is math.pi / 180.
+            local incr = 0.017453292519943
             if event.altKey then incr = incr * defaults.inclIncrScale end
             if math.abs(mxIncl - active.inclination) > incr then
                 if mxIncl < active.inclination then incr = -incr end
@@ -251,14 +244,6 @@ local function setInclMouseListen(event)
                     active.inclination + incr,
                     -halfPi), halfPi)
             end
-        elseif dy < 0.0 then
-            active.inclination = math.min(math.max(
-                active.inclination + incr,
-                -halfPi), halfPi)
-        elseif dy > 0.0 then
-            active.inclination = math.min(math.max(
-                active.inclination - incr,
-                -halfPi), halfPi)
         else
             active.inclination = math.min(math.max(
                 mxIncl, -halfPi), halfPi)
@@ -489,8 +474,7 @@ dlg:canvas {
             fill, reticleSize)
     end,
     onmousedown = setAzimMouseListen,
-    onmousemove = setAzimMouseListen,
-    onwheel = setAzimMouseListen
+    onmousemove = setAzimMouseListen
 }
 
 dlg:canvas {
@@ -544,8 +528,7 @@ dlg:canvas {
             fill, reticleSize)
     end,
     onmousedown = setInclMouseListen,
-    onmousemove = setInclMouseListen,
-    onwheel = setInclMouseListen
+    onmousemove = setInclMouseListen
 }
 
 dlg:newrow { always = false }

@@ -23,6 +23,7 @@ local harmonyTypes <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Scrollbar support (onwheel)?
     lchTosRgb = Clr.srLchTosRgb,
     sRgbToLch = Clr.sRgbToSrLch,
     sRgbToLab = Clr.sRgbToSrLab2,
