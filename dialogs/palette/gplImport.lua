@@ -304,12 +304,42 @@ dlg:button {
                 app.alert {
                     title = "Warning",
                     text = {
-                        "Sprite uses a custom color profile.",
-                        "Palette may not appear as intended."
+                        "Palette may not appear as intended.",
+                        "Sprite uses a custom color profile."
                     }
                 }
             end
-        end
+
+            -- TODO: Additonal warning flags for display and working profiles
+            -- in preferences?
+            local appPrefs <const> = app.preferences
+            if appPrefs then
+                local cmPrefs <const> = appPrefs.color
+                if cmPrefs then
+                    local useMgmt <const> = cmPrefs.manage
+                    if useMgmt then
+                        local working <const> = cmPrefs.working_rgb_space --[[@as string]]
+                        local windowConst <const> = cmPrefs.window_profile
+
+                        local windowStr = "sRGB"
+                        if windowConst ~= 1 then
+                            windowStr = cmPrefs.window_profile_name --[[@as string]]
+                        end
+
+                        if windowStr ~= "sRGB" or working ~= "sRGB" then
+                            app.alert {
+                                title = "Warning",
+                                text = {
+                                    "Palette may not appear as intended.",
+                                    "Aseprite's working and window color profiles are not sRGB.",
+                                    "See Edit > Preferences > Color ."
+                                }
+                            }
+                        end
+                    end
+                end
+            end
+        end -- File is not nil.
 
         if err ~= nil then
             app.alert { title = "Error", text = err }

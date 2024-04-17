@@ -530,7 +530,32 @@ function GradientUtilities.ditherFromPreset(
 
         if ditherPath and #ditherPath > 0
             and app.fs.isFile(ditherPath) then
+
+            -- Disable asking about color profiles when loading these images.
+            local oldAskProfile = 0
+            local oldAskMissing = 0
+            local appPrefs <const> = app.preferences
+            if appPrefs then
+                local cmPrefs <const> = appPrefs.color
+                if cmPrefs then
+                    oldAskProfile = cmPrefs.files_with_profile or 0 --[[@as integer]]
+                    oldAskMissing = cmPrefs.missing_profile or 0 --[[@as integer]]
+
+                    cmPrefs.files_with_profile = 0
+                    cmPrefs.missing_profile = 0
+                end
+            end
+
             local image <const> = Image { fromFile = ditherPath }
+
+            if appPrefs then
+                local cmPrefs <const> = appPrefs.color
+                if cmPrefs then
+                    cmPrefs.files_with_profile = oldAskProfile
+                    cmPrefs.missing_profile = oldAskMissing
+                end
+            end
+
             if image then
                 matrix, c, r = GradientUtilities.imageToMatrix(image)
             end -- End image exists check.

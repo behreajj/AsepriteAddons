@@ -239,6 +239,8 @@ function AseUtilities.aseColorToHex(clr, clrMode)
         local sg <const> = clr.green
         local sb <const> = clr.blue
         -- Prioritize consistency with grayscale convert over correctness.
+        -- For comparison, see lum function with .3, .59, .11 coefficients
+        -- https://www.w3.org/TR/compositing-1/#blendingnonseparable .
         local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
         return (clr.alpha << 0x08) | gray
     elseif clrMode == ColorMode.INDEXED then
