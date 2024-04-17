@@ -185,9 +185,28 @@ dlg:button {
 
         -- Do not ask to open animation sequences.
         -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L125
-        local openFilePrefs <const> = app.preferences.open_file
-        local oldOpSeqPref <const> = openFilePrefs.open_sequence --[[@as integer]]
-        openFilePrefs.open_sequence = 2
+        -- Do not automatically handle any color profiles.
+        -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L107
+        local appPrefs <const> = app.preferences
+        local oldOpSeqPref = 0 -- Ask
+        local oldAskProfile = 4 -- Ask
+        local oldAskMissing = 4 -- Ask
+        if appPrefs then
+            local openFilePrefs <const> = appPrefs.open_file
+            if openFilePrefs then
+                oldOpSeqPref = openFilePrefs.open_sequence or 0 --[[@as integer]]
+                openFilePrefs.open_sequence = 2
+            end
+
+            local cmPrefs <const> = appPrefs.color
+            if cmPrefs then
+                oldAskProfile = cmPrefs.files_with_profile or 4 --[[@as integer]]
+                oldAskMissing = cmPrefs.missing_profile or 4 --[[@as integer]]
+
+                cmPrefs.files_with_profile = 0
+                cmPrefs.missing_profile = 0
+            end
+        end
 
         -- Palettes need to be retrieved before a new sprite is created in case
         -- it sets the app.sprite to the new sprite. Unfortunately, that
@@ -314,7 +333,19 @@ dlg:button {
             end)
         end
 
-        openFilePrefs.open_sequence = oldOpSeqPref
+        if appPrefs then
+            local openFilePrefs <const> = appPrefs.open_file
+            if openFilePrefs then
+                openFilePrefs.open_sequence = oldOpSeqPref
+            end
+
+            local cmPrefs <const> = appPrefs.color
+            if cmPrefs then
+                cmPrefs.files_with_profile = oldAskProfile
+                cmPrefs.missing_profile = oldAskMissing
+            end
+        end
+
         app.layer = openSprite.layers[#openSprite.layers]
         app.refresh()
         dlg:close()
