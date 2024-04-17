@@ -310,8 +310,6 @@ dlg:button {
                 }
             end
 
-            -- TODO: Additonal warning flags for display and working profiles
-            -- in preferences?
             local appPrefs <const> = app.preferences
             if appPrefs then
                 local cmPrefs <const> = appPrefs.color
