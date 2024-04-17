@@ -309,34 +309,6 @@ dlg:button {
                     }
                 }
             end
-
-            local appPrefs <const> = app.preferences
-            if appPrefs then
-                local cmPrefs <const> = appPrefs.color
-                if cmPrefs then
-                    local useMgmt <const> = cmPrefs.manage
-                    if useMgmt then
-                        local working <const> = cmPrefs.working_rgb_space --[[@as string]]
-                        local windowConst <const> = cmPrefs.window_profile
-
-                        local windowStr = "sRGB"
-                        if windowConst ~= 1 then
-                            windowStr = cmPrefs.window_profile_name --[[@as string]]
-                        end
-
-                        if windowStr ~= "sRGB" or working ~= "sRGB" then
-                            app.alert {
-                                title = "Warning",
-                                text = {
-                                    "Palette may not appear as intended.",
-                                    "Aseprite's working and window color profiles are not sRGB.",
-                                    "See Edit > Preferences > Color ."
-                                }
-                            }
-                        end
-                    end
-                end
-            end
         end -- File is not nil.
 
         if err ~= nil then
