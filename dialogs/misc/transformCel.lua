@@ -11,6 +11,8 @@ local defaults <const> = {
     -- f8adad7ce334553e16701cae83cdf5a4657f8c4a .
     -- Scaling with a pivot tried in commit
     -- 27bacf304eae29d0ecb4c2780ab77b59789af7ff .
+    -- Setting cel position with shrink bounds tried in commit
+    -- 67d333c2e9cd9ab2724091d9044cae87117eca8c .
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,
@@ -180,7 +182,7 @@ dlg:button {
                 and math.floor(yAxis)
                 or activeSprite.height // 2
 
-            -- This uses shrink bounds instead of image dimensions because
+            -- This could use shrink bounds instead of image dimensions because
             -- cut and paste to new layer doesn't trim bounds.
             app.transaction("Relocate Cels", function()
                 local i = 0
@@ -188,16 +190,16 @@ dlg:button {
                     i = i + 1
                     local cel <const> = cels[i]
                     local image <const> = cel.image
-                    local rect <const> = image:shrinkBounds(alphaIndex)
-                    if rect.width > 0 and rect.height > 0 then
-                        cel.position = Point(
-                            xCenter + (x - rect.x) - rect.width // 2,
-                            yCenter - (y + rect.y) - rect.height // 2)
-                    else
-                        cel.position = Point(
-                            xCenter + x - image.width // 2,
-                            yCenter - y - image.height // 2)
-                    end
+                    -- local rect <const> = image:shrinkBounds(alphaIndex)
+                    -- if rect.width > 0 and rect.height > 0 then
+                    --     cel.position = Point(
+                    --         xCenter + (x - rect.x) - rect.width // 2,
+                    --         yCenter - (y + rect.y) - rect.height // 2)
+                    -- else
+                    cel.position = Point(
+                        xCenter + x - image.width // 2,
+                        yCenter - y - image.height // 2)
+                    -- end
                 end
             end)
         else
@@ -207,13 +209,13 @@ dlg:button {
                 while i < lenCels do
                     i = i + 1
                     local cel <const> = cels[i]
-                    local image <const> = cel.image
-                    local rect <const> = image:shrinkBounds(alphaIndex)
-                    if rect.width > 0 and rect.height > 0 then
-                        cel.position = Point(x - rect.x, y - rect.y)
-                    else
-                        cel.position = pt
-                    end
+                    -- local image <const> = cel.image
+                    -- local rect <const> = image:shrinkBounds(alphaIndex)
+                    -- if rect.width > 0 and rect.height > 0 then
+                    --     cel.position = Point(x - rect.x, y - rect.y)
+                    -- else
+                    cel.position = pt
+                    -- end
                 end
             end)
         end
