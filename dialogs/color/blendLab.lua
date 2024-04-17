@@ -3,6 +3,8 @@ dofile("../../support/gradientutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 local alphaComps <const> = { "BLEND", "MAX", "MIN", "OVER", "UNDER" }
+
+-- See https://www.w3.org/TR/compositing-1 .
 local labComps <const> = {
     "L",
     "AB",

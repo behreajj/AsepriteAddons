@@ -160,6 +160,7 @@ dlg:button {
         local y <const> = args.yTranslate
             or defaults.yTranslate --[[@as integer]]
 
+        local alphaIndex <const> = activeSprite.transparentColor
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, filterFrames, target,
             false, false, false, false)
@@ -179,15 +180,24 @@ dlg:button {
                 and math.floor(yAxis)
                 or activeSprite.height // 2
 
+            -- This uses shrink bounds instead of image dimensions because
+            -- cut and paste to new layer doesn't trim bounds.
             app.transaction("Relocate Cels", function()
                 local i = 0
                 while i < lenCels do
                     i = i + 1
                     local cel <const> = cels[i]
                     local image <const> = cel.image
-                    cel.position = Point(
-                        xCenter + x - image.width // 2,
-                        yCenter - y - image.height // 2)
+                    local rect <const> = image:shrinkBounds(alphaIndex)
+                    if rect.width > 0 and rect.height > 0 then
+                        cel.position = Point(
+                            xCenter + (x - rect.x) - rect.width // 2,
+                            yCenter - (y + rect.y) - rect.height // 2)
+                    else
+                        cel.position = Point(
+                            xCenter + x - image.width // 2,
+                            yCenter - y - image.height // 2)
+                    end
                 end
             end)
         else
@@ -196,7 +206,14 @@ dlg:button {
                 local i = 0
                 while i < lenCels do
                     i = i + 1
-                    cels[i].position = pt
+                    local cel <const> = cels[i]
+                    local image <const> = cel.image
+                    local rect <const> = image:shrinkBounds(alphaIndex)
+                    if rect.width > 0 and rect.height > 0 then
+                        cel.position = Point(x - rect.x, y - rect.y)
+                    else
+                        cel.position = pt
+                    end
                 end
             end)
         end

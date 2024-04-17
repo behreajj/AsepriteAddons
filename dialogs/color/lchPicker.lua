@@ -23,9 +23,9 @@ local harmonyTypes <const> = {
 }
 
 local defaults <const> = {
-    -- This does not support scroll wheel support because the directionality is
+    -- This does not support scroll wheel because the directionality is
     -- reversed and because there is too much debugging needed to stop mouse
-    -- down from interfereing with scroll wheel, particularly in normal wheel
+    -- down from interfering with scroll wheel, particularly in normal wheel
     -- picker I.e., scrool wheel should only work when mouse button is up.
     -- That means separate functions would need to be made for scroll.
     lchTosRgb = Clr.srLchTosRgb,
