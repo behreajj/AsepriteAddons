@@ -188,14 +188,14 @@ dlg:button {
         -- Do not automatically handle any color profiles.
         -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L107
         local appPrefs <const> = app.preferences
-        local oldOpSeqPref = 0 -- Ask
+        local oldOpSeqPref = 0  -- Ask
         local oldAskProfile = 4 -- Ask
         local oldAskMissing = 4 -- Ask
         if appPrefs then
             local openFilePrefs <const> = appPrefs.open_file
             if openFilePrefs then
                 oldOpSeqPref = openFilePrefs.open_sequence or 0 --[[@as integer]]
-                openFilePrefs.open_sequence = 2
+                openFilePrefs.open_sequence = 2 -- No
             end
 
             local cmPrefs <const> = appPrefs.color
@@ -203,8 +203,8 @@ dlg:button {
                 oldAskProfile = cmPrefs.files_with_profile or 4 --[[@as integer]]
                 oldAskMissing = cmPrefs.missing_profile or 4 --[[@as integer]]
 
-                cmPrefs.files_with_profile = 0
-                cmPrefs.missing_profile = 0
+                cmPrefs.files_with_profile = 1 -- Embedded
+                cmPrefs.missing_profile = 0    -- Disable
             end
         end
 

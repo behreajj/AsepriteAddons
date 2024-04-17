@@ -3,6 +3,8 @@ dofile("../../support/aseutilities.lua")
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 
 local defaults <const> = {
+    -- TODO: Warning on appearance when color profile of sprite is not
+    -- sRGB or working/display profile are not sRGB?
     flattenImage = true,
     frameTarget = "ACTIVE",
     rangeStr = "",
