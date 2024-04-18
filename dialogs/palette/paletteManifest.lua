@@ -192,16 +192,7 @@ dlg:check {
 dlg:check {
     id = "hexDisplay",
     text = "He&x",
-    selected = defaults.hexDisplay,
-    onclick = function()
-        local args <const> = dlg.data
-        local hexDisplay <const> = args.hexDisplay --[[@as boolean]]
-        local rgbDisplay <const> = args.rgbDisplay --[[@as boolean]]
-        dlg:modify {
-            id = "numBasis",
-            visible = hexDisplay or rgbDisplay
-        }
-    end
+    selected = defaults.hexDisplay
 }
 
 dlg:check {
@@ -215,16 +206,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "rgbDisplay",
     text = "&RGB",
-    selected = defaults.rgbDisplay,
-    onclick = function()
-        local args <const> = dlg.data
-        local hexDisplay <const> = args.hexDisplay --[[@as boolean]]
-        local rgbDisplay <const> = args.rgbDisplay --[[@as boolean]]
-        dlg:modify {
-            id = "numBasis",
-            visible = hexDisplay or rgbDisplay
-        }
-    end
+    selected = defaults.rgbDisplay
 }
 
 dlg:check {
@@ -251,9 +233,7 @@ dlg:combobox {
     id = "numBasis",
     label = "Basis:",
     option = defaults.numBasis,
-    options = numBases,
-    visible = defaults.hexDisplay
-        or defaults.rgbDisplay
+    options = numBases
 }
 
 dlg:newrow { always = false }
@@ -387,14 +367,14 @@ dlg:button {
         -- Set manifest profile.
         -- This should be done BEFORE the manifest sprite is
         -- created, while the reference sprite is active.
-        local mnfstClrPrf = nil
+        local cpSrgb <const> = ColorSpace { sRGB = true }
+
+        local cpSource = cpSrgb
         if palType == "ACTIVE" and app.site.sprite then
-            mnfstClrPrf = app.site.sprite.colorSpace
-            if mnfstClrPrf == nil then
-                mnfstClrPrf = ColorSpace()
+            cpSource = app.site.sprite.colorSpace
+            if cpSource == nil then
+                cpSource = ColorSpace()
             end
-        else
-            mnfstClrPrf = ColorSpace { sRGB = true }
         end
 
         -- Cache global functions to locals.
@@ -726,17 +706,24 @@ dlg:button {
         end
 
         -- Create background image.
-        local bkgImg <const> = Image(spriteWidth, spriteHeight, ColorMode.RGB)
+        local numBasis <const> = args.numBasis
+            or defaults.numBasis --[[@as string]]
+        local nbIsSrgb <const> = numBasis == "S_RGB"
+        local cpManifest <const> = nbIsSrgb and cpSrgb or cpSource
+        local mnfstSpec <const> = AseUtilities.createSpec(
+            spriteWidth, spriteHeight, ColorMode.RGB, cpManifest, 0)
+        local bkgImg <const> = Image(mnfstSpec)
         bkgImg:clear(bkgHex)
 
         -- Create footer to display profile name.
-        local footImg <const> = Image(entryWidth, entryHeight, ColorMode.RGB)
+        local entrySpec <const> = AseUtilities.createSpec(
+            entryWidth, entryHeight, ColorMode.RGB, cpManifest, 0)
+        local footImg <const> = Image(entrySpec)
         local footText = "NONE"
-        if mnfstClrPrf then
-            if mnfstClrPrf.name and #mnfstClrPrf.name > 0 then
-                footText = string.upper(string.sub(mnfstClrPrf.name, 1, 14))
-            end
+        if cpSource.name and #cpSource.name > 0 then
+            footText = string.upper(string.sub(cpSource.name, 1, 14))
         end
+
         footText = "PROFILE: " .. footText
         local footChars <const> = strToChars(footText)
         drawCharsHorizShd(
@@ -752,7 +739,7 @@ dlg:button {
         if #mnfstTitle < 1 then mnfstTitle = defaults.title end
         local mnfstTitleDisp = string.sub(mnfstTitle, 1, 14)
         mnfstTitleDisp = string.upper(mnfstTitleDisp)
-        local titleImg <const> = Image(entryWidth, entryHeight, ColorMode.RGB)
+        local titleImg <const> = Image(entrySpec)
         local titleChars <const> = strToChars(mnfstTitleDisp)
         local titleHalfLen <const> = dw * #titleChars // 2
         drawCharsHorizShd(
@@ -763,14 +750,14 @@ dlg:button {
             gw, gh, txtDispScl)
 
         -- Create templates for alternating rows.
-        local row0Tmpl <const> = Image(entryWidth, entryHeight, ColorMode.RGB)
+        local row0Tmpl <const> = Image(entrySpec)
         row0Tmpl:clear(row0Hex)
 
-        local row1Tmpl <const> = Image(entryWidth, entryHeight, ColorMode.RGB)
+        local row1Tmpl <const> = Image(entrySpec)
         row1Tmpl:clear(row1Hex)
 
         -- Create header image.
-        local hdrImg <const> = Image(entryWidth, entryHeight, ColorMode.RGB)
+        local hdrImg <const> = Image(entrySpec)
         hdrImg:clear(hdrBkgHex)
 
         local xCrtHdr = swchSizeTotal + entryPadding
@@ -839,8 +826,6 @@ dlg:button {
         end
 
         -- Create sprite.
-        local mnfstSpec <const> = AseUtilities.createSpec(
-            spriteWidth, spriteHeight)
         local manifestSprite <const> = AseUtilities.createSprite(
             mnfstSpec, mnfstTitle)
 
@@ -865,11 +850,6 @@ dlg:button {
                 spriteHeight - spriteMargin - entryHeight))
         yCaret = yCaret - entryHeight
 
-        -- Proceed in reverse order, from bottom to top, so
-        -- layers in stack read from top to bottom.
-        local numBasis <const> = args.numBasis or defaults.numBasis
-        local nbIsSrgb <const> = numBasis == "S_RGB"
-
         local grayHue <const> = args.grayHue
             or defaults.grayHue --[[@as string]]
         local grIsZero <const> = grayHue == "ZERO"
@@ -880,8 +860,11 @@ dlg:button {
         if noAlpha then swatchMask = 0xff000000 end
 
         app.transaction("Manifest", function()
-            -- TODO: Replace for loop.
-            for i = lenPalData, 1, -1 do
+            -- Proceed in reverse order, from bottom to top, so
+            -- layers in stack read from top to bottom.
+            local i = lenPalData + 1
+            while i > 1 do
+                i = i - 1
                 local palEntry <const> = palData[i]
                 local palIdx <const> = palEntry.palIdx
                 local hexSrgb <const> = palEntry.hexSrgb
@@ -909,8 +892,10 @@ dlg:button {
                     palIdx, strsub(hexWeb, 2))
 
                 if hexSrgb ~= hexProfile then
-                    local back <const> = swatchMask | hexSrgb
-                    local fore <const> = swatchMask | hexProfile
+                    local back <const> = swatchMask
+                        | (nbIsSrgb and hexProfile or hexSrgb)
+                    local fore <const> = swatchMask
+                        | (nbIsSrgb and hexSrgb or hexProfile)
 
                     drawSwatch(rowImg, back,
                         entryPadding + swchOffs, entryPadding + swchOffs,
@@ -1082,8 +1067,13 @@ dlg:button {
         -- Create and set the manifest palette.
         -- Wait to do this until the end, so we have greater
         -- assurance that the manifestSprite is active.
-        AseUtilities.setPalette(hexesProfile,
-            manifestSprite, 1)
+        if nbIsSrgb then
+            AseUtilities.setPalette(hexesSrgb,
+                manifestSprite, 1)
+        else
+            AseUtilities.setPalette(hexesProfile,
+                manifestSprite, 1)
+        end
         app.refresh()
     end
 }

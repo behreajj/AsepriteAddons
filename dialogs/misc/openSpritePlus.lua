@@ -222,7 +222,6 @@ dlg:button {
             hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
                 palType, palFile, 0, 512, true)
         else
-            -- As of circa apiVersion 24, version v1.3-rc4.
             -- local defaultPalette = app.defaultPalette
             -- if defaultPalette then
             -- hexesProfile = AseUtilities.asePaletteToHexArr(

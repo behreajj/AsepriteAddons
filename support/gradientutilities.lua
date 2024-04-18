@@ -530,7 +530,6 @@ function GradientUtilities.ditherFromPreset(
 
         if ditherPath and #ditherPath > 0
             and app.fs.isFile(ditherPath) then
-
             -- Disable asking about color profiles when loading these images.
             local oldAskProfile = 0
             local oldAskMissing = 0
