@@ -457,7 +457,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
     dlg:file {
         id = "ditherPath",
         label = "File:",
-        filetypes = AseUtilities.FILE_FORMATS,
+        filetypes = AseUtilities.FILE_FORMATS_OPEN,
         open = true,
         focus = false,
         visible = showStyle

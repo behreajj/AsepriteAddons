@@ -73,10 +73,17 @@ AseUtilities.DIMETRIC_ANGLES = {
 ---Number of decimals to display when printing real numbers to the console.
 AseUtilities.DISPLAY_DECIMAL = 3
 
----Table of file extensions supported for open and save file dialogs.
-AseUtilities.FILE_FORMATS = {
+---Table of file extensions supported for open file dialogs.
+AseUtilities.FILE_FORMATS_OPEN = {
     "ase", "aseprite", "bmp", "flc", "fli",
     "gif", "ico", "jpeg", "jpg", "pcc", "pcx",
+    "png", "tga", "webp"
+}
+
+---Table of file extensions supported for save file dialogs.
+AseUtilities.FILE_FORMATS_SAVE = {
+    "aseprite", "bmp", "flc", "fli",
+    "gif", "ico", "pcc", "pcx",
     "png", "tga", "webp"
 }
 

@@ -192,7 +192,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "filename",
     label = "File:",
-    filetypes = AseUtilities.FILE_FORMATS,
+    filetypes = AseUtilities.FILE_FORMATS_SAVE,
     save = true,
     focus = true
 }

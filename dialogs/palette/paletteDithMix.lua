@@ -72,7 +72,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "ditherPath",
     label = "File:",
-    filetypes = AseUtilities.FILE_FORMATS,
+    filetypes = AseUtilities.FILE_FORMATS_SAVE,
     open = true,
     focus = false,
     visible = defaults.ditherType == "CUSTOM"

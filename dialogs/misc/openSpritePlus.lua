@@ -85,7 +85,7 @@ local dlg <const> = Dialog { title = "Open Sprite +" }
 dlg:file {
     id = "spriteFile",
     label = "File:",
-    filetypes = AseUtilities.FILE_FORMATS,
+    filetypes = AseUtilities.FILE_FORMATS_OPEN,
     open = true,
     focus = true
 }
