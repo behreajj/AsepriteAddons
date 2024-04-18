@@ -246,8 +246,9 @@ function AseUtilities.aseColorToHex(clr, clrMode)
         local sg <const> = clr.green
         local sb <const> = clr.blue
         -- Prioritize consistency with grayscale convert over correctness.
-        -- For comparison, see lum function with .3, .59, .11 coefficients
+        -- For comparison, see
         -- https://www.w3.org/TR/compositing-1/#blendingnonseparable .
+        -- local gray <const> = (sr * 30 + sg * 59 + sb * 11) // 100
         local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
         return (clr.alpha << 0x08) | gray
     elseif clrMode == ColorMode.INDEXED then
@@ -1355,9 +1356,9 @@ function AseUtilities.createSprite(spec, fileName)
         -- If one of these tools isn't active, then its ink type won't be
         -- changed. Also, "share across tools" setting may or may not be true.
         -- if appPrefs then
-            -- This should use the current tool, not the cached one.
-            -- local toolPrefs <const> = appPrefs.tool(app.tool)
-            -- if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
+        -- This should use the current tool, not the cached one.
+        -- local toolPrefs <const> = appPrefs.tool(app.tool)
+        -- if toolPrefs.ink then toolPrefs.ink = Ink.SIMPLE end
         -- end
     end
 

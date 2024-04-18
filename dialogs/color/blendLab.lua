@@ -1,213 +1,248 @@
 dofile("../../support/gradientutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local compModes <const> = { "LAB", "LCH" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
-local alphaComps <const> = { "BLEND", "MAX", "MIN", "OVER", "UNDER" }
 
--- See https://www.w3.org/TR/compositing-1 .
-local labComps <const> = {
-    "L",
-    "AB",
-    "LAB",
-
-    "C",
-    "H",
-    "CH",
-    "LCH",
-
+local abCompOptions <const> = {
     "ADD",
+    "BLEND",
+    "OVER",
     "SUBTRACT",
-    "MULTIPLY",
+    "UNDER"
+}
+
+local cCompOptions <const> = {
+    "BLEND",
+    "OVER",
+    "UNDER"
+}
+
+local hCompOptions <const> = {
+    "CCW",
+    "CW",
+    "NEAR",
+    "OVER",
+    "UNDER"
+}
+
+local lCompOptions <const> = {
+    "ADD",
+    "BLEND",
     "DIVIDE",
-    "SCREEN"
+    "MULTIPLY",
+    "OVER",
+    "SUBTRACT",
+    "UNDER"
+}
+
+local tCompOptions <const> = {
+    "BLEND",
+    "MAX",
+    "MIN",
+    "OVER",
+    "UNDER"
 }
 
 local defaults <const> = {
     target = "ACTIVE",
-    alphaComp = "BLEND",
-    labComp = "LAB",
+    compMode = "LAB",
+    lComp = "BLEND",
+    abComp = "BLEND",
+    cComp = "BLEND",
     hueMix = "CCW",
+    alphaComp = "BLEND",
     delOver = "HIDE",
     delUnder = "HIDE",
     printElapsed = false,
 }
 
----@param aLab { l: number, a: number, b: number, alpha: number }
----@param bLab { l: number, a: number, b: number, alpha: number }
----@param t number
----@param u number
----@return number cl
+---@param ua number under a
+---@param ub number under b
+---@param oa number over a
+---@param ob number over b
+---@param ut number under alpha
+---@param ot number over alpha
 ---@return number ca
 ---@return number cb
-local function blendLab(aLab, bLab, t, u)
-    return u * aLab.l + t * bLab.l,
-        u * aLab.a + t * bLab.a,
-        u * aLab.b + t * bLab.b
+local function abCompAdd(ua, ub, oa, ob, ut, ot)
+    local nt <const> = 1.0 - ot
+    local utgt0 <const> = ut > 0.0
+    local da <const> = utgt0 and ua + oa or oa
+    local db <const> = utgt0 and ub + ob or ob
+    return nt * ua + ot * da,
+        nt * ub + ot * db
 end
 
----@param aLab { l: number, a: number, b: number, alpha: number }
----@param bLab { l: number, a: number, b: number, alpha: number }
----@param t number
----@param u number
----@return number cl
+---@param ua number under a
+---@param ub number under b
+---@param oa number over a
+---@param ob number over b
+---@param ut number under alpha
+---@param ot number over alpha
 ---@return number ca
 ---@return number cb
-local function blendL(aLab, bLab, t, u)
-    return u * aLab.l + t * bLab.l,
-        aLab.a,
-        aLab.b
+local function abCompMix(ua, ub, oa, ob, ut, ot)
+    local nt <const> = 1.0 - ot
+    return nt * ua + ot * oa,
+        nt * ub + ot * ob
 end
 
----@param aLab { l: number, a: number, b: number, alpha: number }
----@param bLab { l: number, a: number, b: number, alpha: number }
----@param t number
----@param u number
----@return number cl
+---@param ua number under a
+---@param ub number under b
+---@param oa number over a
+---@param ob number over b
+---@param ut number under alpha
+---@param ot number over alpha
 ---@return number ca
 ---@return number cb
-local function blendAb(aLab, bLab, t, u)
-    return aLab.l,
-        u * aLab.a + t * bLab.a,
-        u * aLab.b + t * bLab.b
+local function abCompOver(ua, ub, oa, ob, ut, ot)
+    return oa, ob
 end
 
----@param aLch { l: number, c: number, h: number, a: number }
----@param bLch { l: number, c: number, h: number, a: number }
----@param t number
----@param u number
----@param mixer fun(o: number, d: number, t: number): number
+---@param ua number under a
+---@param ub number under b
+---@param oa number over a
+---@param ob number over b
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number ca
+---@return number cb
+local function abCompSub(ua, ub, oa, ob, ut, ot)
+    local nt <const> = 1.0 - ot
+    local utgt0 <const> = ut > 0.0
+    local da <const> = utgt0 and ua - oa or oa
+    local db <const> = utgt0 and ub - ob or ob
+    return nt * ua + ot * da,
+        nt * ub + ot * db
+end
+
+---@param ua number under a
+---@param ub number under b
+---@param oa number over a
+---@param ob number over b
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number ca
+---@return number cb
+local function abCompUnder(ua, ub, oa, ob, ut, ot)
+    return ua, ub
+end
+
+---@param uc number under chroma
+---@param oc number over chroma
+---@param ut number under alpha
+---@param ot number over alpha
 ---@return number cl
----@return number cc
+local function cCompMix(uc, oc, ut, ot)
+    return (1.0 - ot) * uc + ot * oc
+end
+
+---@param uc number under chroma
+---@param oc number over chroma
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number cl
+local function cCompOver(uc, oc, ut, ot)
+    return oc
+end
+
+---@param uc number under chroma
+---@param oc number over chroma
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number cl
+local function cCompUnder(uc, oc, ut, ot)
+    return uc
+end
+
+---@param o number origin
+---@param d number destination
+---@param t number factor
 ---@return number ch
-local function blendLch(aLch, bLch, t, u, mixer)
-    return u * aLch.l + t * bLch.l,
-        u * aLch.c + t * bLch.c,
-        mixer(aLch.h, bLch.h, t)
+local function hCompOver(o, d, t)
+    return d
 end
 
----@param aLch { l: number, c: number, h: number, a: number }
----@param bLch { l: number, c: number, h: number, a: number }
----@param t number
----@param u number
----@param mixer fun(o: number, d: number, t: number): number
----@return number cl
----@return number cc
+---@param o number origin
+---@param d number destination
+---@param t number factor
 ---@return number ch
-local function blendC(aLch, bLch, t, u, mixer)
-    return aLch.l,
-        u * aLch.c + t * bLch.c,
-        aLch.h
+local function hCompUnder(o, d, t)
+    return o
 end
 
----@param aLch { l: number, c: number, h: number, a: number }
----@param bLch { l: number, c: number, h: number, a: number }
----@param t number
----@param u number
----@param mixer fun(o: number, d: number, t: number): number
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
 ---@return number cl
----@return number cc
----@return number ch
-local function blendH(aLch, bLch, t, u, mixer)
-    return aLch.l,
-        aLch.c,
-        mixer(aLch.h, bLch.h, t)
+local function lCompAdd(ul, ol, ut, ot)
+    local dl <const> = ut > 0.0 and ul + ol or ol
+    return (1.0 - ot) * ul + ot * dl
 end
 
----@param aLch { l: number, c: number, h: number, a: number }
----@param bLch { l: number, c: number, h: number, a: number }
----@param t number
----@param u number
----@param mixer fun(o: number, d: number, t: number): number
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
 ---@return number cl
----@return number cc
----@return number ch
-local function blendCH(aLch, bLch, t, u, mixer)
-    return aLch.l,
-        u * aLch.c + t * bLch.c,
-        mixer(aLch.h, bLch.h, t)
+local function lCompDiv(ul, ol, ut, ot)
+    local dl <const> = ut > 0.0
+        and (ol ~= 0.0
+            and ((ul * 0.01) / (ol * 0.01)) * 100.0
+            or 0.0)
+        or ol
+    return (1.0 - ot) * ul + ot * dl
 end
 
----@param aLab { l: number, a: number, b: number, alpha: number }
----@param bLab { l: number, a: number, b: number, alpha: number }
----@param t number
----@param u number
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
 ---@return number cl
----@return number ca
----@return number cb
-local function blendAdd(aLab, bLab, t, u)
-    local dl <const> = aLab.l + bLab.l
-    local da <const> = (aLab.a + bLab.a) * 0.5
-    local db <const> = (aLab.b + bLab.b) * 0.5
-    return u * aLab.l + t * dl,
-        u * aLab.a + t * da,
-        u * aLab.b + t * db
+local function lCompMul(ul, ol, ut, ot)
+    local dl <const> = ut > 0.0
+        and ((ul * 0.01) * (ol * 0.01)) * 100.0
+        or ol
+    return (1.0 - ot) * ul + ot * dl
 end
 
----@param aLab { l: number, a: number, b: number, alpha: number }
----@param bLab { l: number, a: number, b: number, alpha: number }
----@param t number
----@param u number
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
 ---@return number cl
----@return number ca
----@return number cb
-local function blendSubtract(aLab, bLab, t, u)
-    local dl <const> = aLab.l - bLab.l
-    local da <const> = (aLab.a - bLab.a) * 0.5
-    local db <const> = (aLab.b - bLab.b) * 0.5
-    return u * aLab.l + t * dl,
-        u * aLab.a + t * da,
-        u * aLab.b + t * db
+local function lCompMix(ul, ol, ut, ot)
+    return (1.0 - ot) * ul + ot * ol
 end
 
----@param aLab { l: number, a: number, b: number, alpha: number }
----@param bLab { l: number, a: number, b: number, alpha: number }
----@param t number
----@param u number
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
 ---@return number cl
----@return number ca
----@return number cb
-local function blendMultiply(aLab, bLab, t, u)
-    local dl <const> = ((aLab.l * 0.01) * (bLab.l * 0.01)) * 100.0
-    local da <const> = (aLab.a + bLab.a) * 0.5
-    local db <const> = (aLab.b + bLab.b) * 0.5
-    return u * aLab.l + t * dl,
-        u * aLab.a + t * da,
-        u * aLab.b + t * db
+local function lCompOver(ul, ol, ut, ot)
+    return ol
 end
 
----@param aLab { l: number, a: number, b: number, alpha: number }
----@param bLab { l: number, a: number, b: number, alpha: number }
----@param t number
----@param u number
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
 ---@return number cl
----@return number ca
----@return number cb
-local function blendDivide(aLab, bLab, t, u)
-    local dl = 0.0
-    local den <const> = bLab.l * 0.01
-    if den ~= 0.0 then dl = ((aLab.l * 0.01) / den) * 100.0 end
-    local da <const> = (aLab.a - bLab.a) * 0.5
-    local db <const> = (aLab.b - bLab.b) * 0.5
-    return u * aLab.l + t * dl,
-        u * aLab.a + t * da,
-        u * aLab.b + t * db
+local function lCompSub(ul, ol, ut, ot)
+    local dl <const> = ut > 0.0 and ul - ol or ol
+    return (1.0 - ot) * ul + ot * dl
 end
 
----@param aLab { l: number, a: number, b: number, alpha: number }
----@param bLab { l: number, a: number, b: number, alpha: number }
----@param t number
----@param u number
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
 ---@return number cl
----@return number ca
----@return number cb
-local function blendScreen(aLab, bLab, t, u)
-    local dl <const> = 100.0 - ((1.0 - aLab.l * 0.01)
-        * (1.0 - bLab.l * 0.01)) * 100.0
-    local da <const> = (aLab.a + bLab.a) * 0.5
-    local db <const> = (aLab.b + bLab.b) * 0.5
-    return u * aLab.l + t * dl,
-        u * aLab.a + t * da,
-        u * aLab.b + t * db
+local function lCompUnder(ul, ol, ut, ot)
+    return ul
 end
 
 local dlg <const> = Dialog { title = "Blend LAB" }
@@ -222,30 +257,62 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:combobox {
-    id = "labComp",
-    label = "Blend:",
-    option = defaults.labComp,
-    options = labComps,
+    id = "compMode",
+    label = "Mode:",
+    option = defaults.compMode,
+    options = compModes,
+    focus = false,
     onchange = function()
         local args <const> = dlg.data
-        local labComp <const> = args.labComp --[[@as string]]
-        local isHue <const> = labComp == "H"
-        local isColor <const> = labComp == "CH"
-        local isLch <const> = labComp == "LCH"
-        dlg:modify { id = "huePreset", visible = isHue or isColor or isLch }
+        local compMode <const> = args.compMode --[[@as string]]
+        local isLab <const> = compMode == "LAB"
+        local isLch <const> = compMode == "LCH"
+        dlg:modify { id = "abComp", visible = isLab }
+        dlg:modify { id = "cComp", visible = isLch }
+        dlg:modify { id = "huePreset", visible = isLch }
     end
+}
+
+dlg:separator { id = "blendsSep" }
+
+dlg:combobox {
+    id = "lComp",
+    label = "L:",
+    option = defaults.lComp,
+    options = lCompOptions,
+    focus = false
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "abComp",
+    label = "AB:",
+    option = defaults.abComp,
+    options = abCompOptions,
+    focus = false,
+    visible = defaults.compMode == "LAB"
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "cComp",
+    label = "C:",
+    option = defaults.cComp,
+    options = cCompOptions,
+    focus = false,
+    visible = defaults.compMode == "LCH"
 }
 
 dlg:newrow { always = false }
 
 dlg:combobox {
     id = "huePreset",
-    label = "Easing:",
+    label = "H:",
     option = defaults.hueMix,
-    options = GradientUtilities.HUE_EASING_PRESETS,
-    visible = defaults.labComp == "H"
-        or defaults.labComp == "CH"
-        or defaults.labComp == "LCH"
+    options = hCompOptions,
+    visible = defaults.compMode == "LCH"
 }
 
 dlg:newrow { always = false }
@@ -254,10 +321,10 @@ dlg:combobox {
     id = "alphaComp",
     label = "Alpha:",
     option = defaults.alphaComp,
-    options = alphaComps
+    options = tCompOptions
 }
 
-dlg:newrow { always = false }
+dlg:separator { id = "sourceSep" }
 
 dlg:combobox {
     id = "delOver",
@@ -394,10 +461,8 @@ dlg:button {
         -- Unpack arguments.
         local target <const> = args.target
             or defaults.target --[[@as string]]
-        local labComp <const> = args.labComp
-            or defaults.labComp --[[@as string]]
-        local huePreset <const> = args.huePreset
-            or defaults.hueMix --[[@as string]]
+        local compMode <const> = args.compMode
+            or defaults.compMode --[[@as string]]
         local alphaComp <const> = args.alphaComp
             or defaults.alphaComp --[[@as string]]
         local delOverStr <const> = args.delOver
@@ -411,37 +476,59 @@ dlg:button {
         local useAlphaOver <const> = alphaComp == "OVER"
         local useAlphaUnder <const> = alphaComp == "UNDER"
 
-        -- print(string.format("labComp: %s", labComp))
-        local useLch = false
-        local hueMix <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
-        local blendFuncLab = blendLab
-        local blendFuncLch = blendLch
-        if labComp == "L" or labComp == "LIGHTNESS" then
-            blendFuncLab = blendL
-        elseif labComp == "AB" then
-            blendFuncLab = blendAb
-        elseif labComp == "LCH" then
-            blendFuncLch = blendLch
-            useLch = true
-        elseif labComp == "C" or labComp == "CHROMA" then
-            blendFuncLch = blendC
-            useLch = true
-        elseif labComp == "H" or labComp == "HUE" then
-            blendFuncLch = blendH
-            useLch = true
-        elseif labComp == "CH" or labComp == "COLOR" then
-            blendFuncLch = blendCH
-            useLch = true
-        elseif labComp == "ADD" then
-            blendFuncLab = blendAdd
-        elseif labComp == "SUBTRACT" then
-            blendFuncLab = blendSubtract
-        elseif labComp == "MULTIPLY" then
-            blendFuncLab = blendMultiply
-        elseif labComp == "DIVIDE" then
-            blendFuncLab = blendDivide
-        elseif labComp == "SCREEN" then
-            blendFuncLab = blendScreen
+        local lBlendFunc = lCompMix
+        local abBlendFunc = abCompMix
+        local cBlendFunc = cCompMix
+        local hBlendFunc = GradientUtilities.lerpHueNear
+
+        local lPreset <const> = args.lComp
+            or defaults.lComp --[[@as string]]
+        local cPreset <const> = args.cComp
+        local abPreset <const> = args.abComp
+            or defaults.abComp --[[@as string]]
+            or defaults.cComp --[[@as string]]
+        local hPreset <const> = args.huePreset
+            or defaults.hueMix --[[@as string]]
+
+        if lPreset == "ADD" then
+            lBlendFunc = lCompAdd
+        elseif lPreset == "DIVIDE" then
+            lBlendFunc = lCompDiv
+        elseif lPreset == "MULTIPLY" then
+            lBlendFunc = lCompMul
+        elseif lPreset == "OVER" then
+            lBlendFunc = lCompOver
+        elseif lPreset == "SUBTRACT" then
+            lBlendFunc = lCompSub
+        elseif lPreset == "UNDER" then
+            lBlendFunc = lCompUnder
+        end
+
+        local useLch = compMode == "LCH"
+        if useLch then
+            if cPreset == "OVER" then
+                cBlendFunc = cCompOver
+            elseif cPreset == "UNDER" then
+                cBlendFunc = cCompUnder
+            end
+
+            if hPreset == "OVER" then
+                hBlendFunc = hCompOver
+            elseif hPreset == "UNDER" then
+                hBlendFunc = hCompUnder
+            else
+                hBlendFunc = GradientUtilities.hueEasingFuncFromPreset(hPreset)
+            end
+        else
+            if abPreset == "ADD" then
+                abBlendFunc = abCompAdd
+            elseif abPreset == "OVER" then
+                abBlendFunc = abCompOver
+            elseif abPreset == "SUBTRACT" then
+                abBlendFunc = abCompSub
+            elseif abPreset == "UNDER" then
+                abBlendFunc = abCompUnder
+            end
         end
 
         local overIsTile <const> = bLayer.isTilemap
@@ -469,8 +556,17 @@ dlg:button {
         local compLayer = activeSprite.layers[1]
         app.transaction("New Layer", function()
             compLayer = activeSprite:newLayer()
-            compLayer.name = string.format("Comp %s %s %s %s",
-                bLayer.name, aLayer.name, labComp, alphaComp)
+            if useLch then
+                compLayer.name = string.format(
+                    "Comp %s %s L %s C %s H %s T %s",
+                    bLayer.name, aLayer.name,
+                    lPreset, cPreset, hPreset, alphaComp)
+            else
+                compLayer.name = string.format(
+                    "Comp %s %s L %s AB %s T %s",
+                    bLayer.name, aLayer.name,
+                    lPreset, abPreset, alphaComp)
+            end
             compLayer.parent = parent
         end)
 
@@ -655,6 +751,8 @@ dlg:button {
                     -- Timeline overlays display colors that are transparent,
                     -- but have non-zero RGB channels.
                     if tuv > 0.0 then
+                        cl = lBlendFunc(aLab.l, bLab.l, v, t)
+
                         if useLch then
                             local aLch <const> = srLab2ToSrLch(
                                 aLab.l, aLab.a, aLab.b, 1.0)
@@ -663,14 +761,19 @@ dlg:button {
 
                             local cc = 0.0
                             local ch = 0.0
-                            cl, cc, ch = blendFuncLch(aLch, bLch, t, u, hueMix)
+
+                            cc = cBlendFunc(aLch.c, bLch.c, v, t)
+                            ch = hBlendFunc(aLch.h, bLch.h, t)
 
                             local cLab <const> = srLchToSrLab2(cl, cc, ch, 1.0)
                             ca = cLab.a
                             cb = cLab.b
                         else
                             -- Default to LAB.
-                            cl, ca, cb = blendFuncLab(aLab, bLab, t, u)
+                            ca, cb = abBlendFunc(
+                                aLab.a, aLab.b,
+                                bLab.a, bLab.b,
+                                v, t)
                         end
                     end
 
