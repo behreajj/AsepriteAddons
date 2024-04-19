@@ -83,7 +83,7 @@ AseUtilities.FILE_FORMATS_OPEN = {
 ---Table of file extensions supported for save file dialogs.
 AseUtilities.FILE_FORMATS_SAVE = {
     "aseprite", "bmp", "flc", "fli",
-    "gif", "ico", "pcc", "pcx",
+    "gif", "pcc", "pcx",
     "png", "tga", "webp"
 }
 
