@@ -2,9 +2,9 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `appendFrame`: Adds a new empty frame after the active frame. The active frame *remains* active.
 
-- `bakeChecker`: Creates a layer that replicates the size and color of Aseprite's background checker. In most cases, this will be the background layer. Ignores the checker zoom preference.
+- `bakeChecker`: Creates a layer that replicates the size and color of Aseprite's background checker. Ignores the checker zoom preference.
 
-- `brushFromMask`: Creates a brush from a selection. If snap to grid is enabled, sets the center to top-left. If a tile map is active, sets the brush alignment.
+- `brushFromMask`: Creates a brush from a selection. If snap to grid is enabled, sets the brush center to top-left; otherwise, uses the selection pivot. If a tile map is active, sets the brush alignment.
 
 - `collapseGroups`: Collapses all group layers in the timeline. If the active layer is a child, sets its top-level ancestor to the active layer.
 
@@ -12,7 +12,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `correctTags`: Removes tags with out-of-bounds frames. Tags with duplicate names have a number appended to the end of the name.
 
-- `correctTilesets`: Checks tile set names for empty names, invalid characters in file paths, and duplicates. Renames tile sets as needed. Assigns a unique ID to each set's `properties`.
+- `correctTilesets`: Checks tile set names for empty strings, invalid characters in file paths, and duplicates. Renames tile sets as needed. Assigns a unique ID to each set's `properties`.
 
 - `cycleCelLeft`: Moves a cel to the previous frame. If the previous frame is occupied by another cel, swaps the other cel into the active cel's frame. Loops around at the first and last frame. Ignores reference layers.
 
@@ -46,7 +46,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `prevTab`: Moves the active sprite to the previous tab. Converts the fore- and background colors to RGB.
 
-- `selectCelsRange`: Creates a selection based on the timeline range, or the active cel if the range is empty. Finds the union of images in the range. Equivalent to holding down `Ctrl` and clicking on an inactive layer in the timeline.
+- `selectCelsRange`: Creates a selection based on the timeline range, or the active cel if the range is empty. Finds the union of images in the range. Ignores reference layers. Selects tile map layers based on non-empty tiles. Equivalent to holding down `Ctrl` and clicking on an inactive layer in the timeline.
 
 - `toggleGroups`: Toggles the collapsed or expanded state of group folders in the timeline. The active layer's hierarchy remains expanded.
 
