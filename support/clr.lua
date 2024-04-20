@@ -576,7 +576,7 @@ function Clr.mixSrLch(o, d, t, hueFunc)
         return Clr.new(d.r, d.g, d.b, d.a)
     end
 
-    local f = hueFunc or function(oh, dh, x)
+    local f <const> = hueFunc or function(oh, dh, x)
         local diff <const> = dh - oh
         if diff ~= 0.0 then
             local y <const> = 1.0 - x
