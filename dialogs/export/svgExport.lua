@@ -22,20 +22,19 @@ local defaults <const> = {
     useChecker = false,
     usePixelAspect = true,
     lblReset = 100,
-    lblBold = 5,
-    renderHintStr = "shape-rendering=\"crispEdges\" "
+    lblBold = 5
 }
 
 local roundedRectFormat <const> = table.concat({
-    "M %.3f %d ",
-    "L %.3f %d ",
-    "C %.3f %d, %d %.3f, %d %.3f ",
-    "L %d %.3f ",
-    "C %d %.3f, %.3f %d, %.3f %d ",
-    "L %.3f %d ",
-    "C %.3f %d, %d %.3f, %d %.3f ",
-    "L %d %.3f ",
-    "C %d %.3f, %.3f %d, %.3f %d ",
+    "M %.3f %.3f ",
+    "L %.3f %.3f ",
+    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
+    "L %.3f %.3f ",
+    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
+    "L %.3f %.3f ",
+    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
+    "L %.3f %.3f ",
+    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
     "Z"
 })
 
@@ -1202,7 +1201,10 @@ dlg:button {
         -- If there were any diagonal guidelines, then this shape rendering
         -- is no longer a suitable choice. However, geometricPrecision causes
         -- problems with background checker pattern.
-        local renderHintStr <const> = defaults.renderHintStr
+        local renderHintStr = "shape-rendering=\"crispEdges\" "
+        if (not useChecker) and (useLabels or rounding > 0) then
+            renderHintStr = "shape-rendering=\"geometricPrecision\" "
+        end
 
         local svgStr <const> = tconcat({
             "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n",
