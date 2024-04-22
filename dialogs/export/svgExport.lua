@@ -5,8 +5,6 @@ local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 local defaults <const> = {
     -- TODO: Warning on appearance when color profile of sprite is not
     -- sRGB or working/display profile are not sRGB?
-
-    -- TODO: Rounded corners when border is zero?
     flattenImage = true,
     frameTarget = "ACTIVE",
     rangeStr = "",
@@ -19,6 +17,7 @@ local defaults <const> = {
     includeBkg = true,
     border = 0,
     padding = 0,
+    rounding = 0,
     scale = 1,
     useChecker = false,
     usePixelAspect = true,
@@ -26,6 +25,19 @@ local defaults <const> = {
     lblBold = 5,
     renderHintStr = "shape-rendering=\"crispEdges\" "
 }
+
+local roundedRectFormat <const> = table.concat({
+    "M %.3f %d ",
+    "L %.3f %d ",
+    "C %.3f %d, %d %.3f, %d %.3f ",
+    "L %d %.3f ",
+    "C %d %.3f, %.3f %d, %.3f %d ",
+    "L %.3f %d ",
+    "C %.3f %d, %d %.3f, %d %.3f ",
+    "L %d %.3f ",
+    "C %d %.3f, %.3f %d, %.3f %d ",
+    "Z"
+})
 
 ---@param bm BlendMode blend mode
 ---@return string
@@ -75,6 +87,7 @@ end
 ---@param img Image image
 ---@param border integer border size
 ---@param padding integer margin size
+---@param rounding number rounding
 ---@param wPixel integer scale width
 ---@param hPixel integer scale height
 ---@param xOff integer x offset
@@ -84,9 +97,9 @@ end
 ---@return integer[]
 ---@return integer[][]
 local function imgToSvgStr(
-    img, border, padding,
-    wPixel, hPixel,
-    xOff, yOff,
+    img,
+    border, padding, rounding,
+    wPixel, hPixel, xOff, yOff,
     palette)
     -- https://github.com/aseprite/aseprite/issues/3561
     -- SVGs displayed in Firefox and Inkscape have thin gaps between squares at
@@ -103,6 +116,7 @@ local function imgToSvgStr(
     local borderPad <const> = border + padding
     local wScalePad <const> = wPixel + padding
     local hScalePad <const> = hPixel + padding
+    local kr <const> = 0.55228474983079 * rounding
 
     ---@type table<integer, integer[]>
     local pixelDict <const> = {}
@@ -198,26 +212,63 @@ local function imgToSvgStr(
         ---@type string[]
         local subPathsArr <const> = {}
         local lenIdcs <const> = #idcs
-        local i = 0
-        while i < lenIdcs do
-            i = i + 1
-            local idx <const> = idcs[i]
-            local x0 <const> = xOff + (idx % imgWidth)
-            local y0 <const> = yOff + (idx // imgWidth)
 
-            local ax <const> = borderPad + x0 * wScalePad
-            local ay <const> = borderPad + y0 * hScalePad
-            local bx <const> = ax + wPixel
-            local by <const> = ay + hPixel
+        if rounding > 0 then
+            local i = 0
+            while i < lenIdcs do
+                i = i + 1
+                local idx <const> = idcs[i]
+                local x <const> = xOff + (idx % imgWidth)
+                local y <const> = yOff + (idx // imgWidth)
 
-            subPathsArr[i] = strfmt(
-                "M %d %d L %d %d L %d %d L %d %d Z",
-                ax, ay, bx, ay, bx, by, ax, by)
+                local x0 <const> = borderPad + x * wScalePad
+                local y0 <const> = borderPad + y * hScalePad
+                local x1 <const> = x0 + wPixel
+                local y1 <const> = y0 + hPixel
 
-            -- More compressed version:
-            -- subPathsArr[i] = strfmt(
-            --     "M%d %dh%dv%dh%dv%dZ",
-            --     ax, ay, wScale, hScale, -wScale, -hScale)
+                local xIn0 <const> = x0 + rounding
+                local xIn1 <const> = x1 - rounding
+                local xIn2 <const> = x1 - rounding
+                local xIn3 <const> = x0 + rounding
+                local yIn0 <const> = y0 + rounding
+                local yIn1 <const> = y0 + rounding
+                local yIn2 <const> = y1 - rounding
+                local yIn3 <const> = y1 - rounding
+
+                local cp0x <const> = xIn1 + kr
+                local cp1y <const> = yIn1 - kr
+                local cp2y <const> = yIn2 + kr
+                local cp3x <const> = xIn2 + kr
+                local cp4x <const> = xIn3 - kr
+                local cp5y <const> = yIn3 + kr
+                local cp6y <const> = yIn0 - kr
+                local cp7x <const> = xIn0 - kr
+
+                subPathsArr[i] = strfmt(
+                    roundedRectFormat,
+                    xIn0, y0,
+                    xIn1, y0, cp0x, y0, x1, cp1y, x1, yIn1,
+                    x1, yIn2, x1, cp2y, cp3x, y1, xIn2, y1,
+                    xIn3, y1, cp4x, y1, x0, cp5y, x0, yIn3,
+                    x0, yIn0, x0, cp6y, cp7x, y0, xIn0, y0)
+            end
+        else
+            local i = 0
+            while i < lenIdcs do
+                i = i + 1
+                local idx <const> = idcs[i]
+                local x <const> = xOff + (idx % imgWidth)
+                local y <const> = yOff + (idx // imgWidth)
+
+                local x0 <const> = borderPad + x * wScalePad
+                local y0 <const> = borderPad + y * hScalePad
+                local x1 <const> = x0 + wPixel
+                local y1 <const> = y0 + hPixel
+
+                subPathsArr[i] = strfmt(
+                    "M %d %d L %d %d L %d %d L %d %d Z",
+                    x0, y0, x1, y0, x1, y1, x0, y1)
+            end
         end
 
         local lenSubPaths <const> = #subPathsArr
@@ -316,9 +367,9 @@ end
 ---@param frame Frame|integer
 ---@param border integer
 ---@param padding integer
+---@param rounding number
 ---@param wPixel integer
 ---@param hPixel integer
----@param spriteBounds Rectangle
 ---@param includeLocked boolean
 ---@param includeHidden boolean
 ---@param includeTiles boolean
@@ -328,8 +379,8 @@ end
 ---@param layersStrArr string[]
 local function layerToSvgStr(
     layer, frame,
-    border, padding, wPixel, hPixel,
-    spriteBounds,
+    border, padding, rounding,
+    wPixel, hPixel,
     includeLocked, includeHidden,
     includeTiles, includeBkg,
     colorMode, palette,
@@ -365,8 +416,8 @@ local function layerToSvgStr(
                     i = i + 1
                     local child <const> = children[i]
                     layerToSvgStr(
-                        child, frame, border, padding, wPixel, hPixel,
-                        spriteBounds, includeLocked, includeHidden,
+                        child, frame, border, padding, rounding, wPixel, hPixel,
+                        includeLocked, includeHidden,
                         includeTiles, includeBkg, colorMode, palette,
                         childStrs)
                 end
@@ -409,20 +460,13 @@ local function layerToSvgStr(
                     local bmStr <const> = blendModeToStr(layer.blendMode
                         or BlendMode.NORMAL)
 
-                    -- TODO: This intersection was never used. Is it worth
-                    -- clipping to bounds?
-                    -- local celBounds <const> = cel.bounds
-                    -- local xCel <const> = celBounds.x
-                    -- local yCel <const> = celBounds.y
-                    -- local intersect <const> = celBounds:intersect(spriteBounds)
-                    -- intersect.x = intersect.x - xCel
-                    -- intersect.y = intersect.y - yCel
                     local celPos <const> = cel.position
                     local xCel <const> = celPos.x
                     local yCel <const> = celPos.y
 
                     local imgStr <const>, _ <const>, _ <const> = imgToSvgStr(
-                        celImg, border, padding,
+                        celImg,
+                        border, padding, rounding,
                         wPixel, hPixel, xCel, yCel,
                         palette)
 
@@ -578,7 +622,13 @@ dlg:slider {
     label = "Scale:",
     min = 1,
     max = 32,
-    value = defaults.scale
+    value = defaults.scale,
+    onchange = function()
+        local args <const> = dlg.data
+        local padding <const> = args.padding --[[@as integer]]
+        local scale <const> = args.scale --[[@as integer]]
+        dlg:modify { id = "rounding", visible = scale >= 3 and padding <= 0 }
+    end
 }
 
 dlg:newrow { always = false }
@@ -616,8 +666,10 @@ dlg:slider {
     onchange = function()
         local args <const> = dlg.data
         local padding <const> = args.padding --[[@as integer]]
+        local scale <const> = args.scale --[[@as integer]]
         local gtz <const> = padding > 0
         dlg:modify { id = "paddingClr", visible = gtz }
+        dlg:modify { id = "rounding", visible = scale >= 3 and (not gtz) }
     end
 }
 
@@ -627,6 +679,18 @@ dlg:color {
     id = "paddingClr",
     color = Color { r = 255, g = 255, b = 255 },
     visible = defaults.padding > 0
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "rounding",
+    label = "Rounding:",
+    min = 0,
+    max = 64,
+    value = defaults.rounding,
+    visible = defaults.padding <= 0
+        and defaults.scale >= 3
 }
 
 dlg:newrow { always = false }
@@ -712,6 +776,8 @@ dlg:button {
         local padding <const> = args.padding
             or defaults.padding --[[@as integer]]
         local paddingClr <const> = args.paddingClr --[[@as Color]]
+        local rounding <const> = args.rounding
+            or defaults.rounding --[[@as number]]
         local scale <const> = args.scale or defaults.scale --[[@as integer]]
         local useChecker <const> = args.useChecker --[[@as boolean]]
         local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
@@ -724,6 +790,15 @@ dlg:button {
             local pxRatio <const> = activeSprite.pixelRatio
             wPixel = wPixel * math.max(1, math.abs(pxRatio.width))
             hPixel = hPixel * math.max(1, math.abs(pxRatio.height))
+        end
+
+        -- Verify rounding. If there's a border, then don't use.
+        local rdVerif = rounding
+        if border > 0 then
+            rdVerif = 0.0
+        else
+            local shortEdge <const> = 0.5 * math.min(wPixel, hPixel)
+            rdVerif = math.min(shortEdge, math.abs(rdVerif))
         end
 
         -- Process space for labels
@@ -921,7 +996,8 @@ dlg:button {
                     -- and a palette display on the side would also need to be
                     -- animated.
                     local imgStr <const>, _ <const>, _ <const> = imgToSvgStr(
-                        flatImg, border, padding,
+                        flatImg,
+                        border, padding, rdVerif,
                         wPixel, hPixel, 0, 0,
                         palette)
 
@@ -964,8 +1040,11 @@ dlg:button {
                 flatImg:drawSprite(activeSprite, activeFrame)
                 local layerStr <const>,
                 hexArr <const>,
-                idcsArr <const> = imgToSvgStr(flatImg, border, padding,
-                    wPixel, hPixel, 0, 0, palette)
+                idcsArr <const> = imgToSvgStr(
+                    flatImg,
+                    border, padding, rdVerif,
+                    wPixel, hPixel, 0, 0,
+                    palette)
                 layerStrsArr[1] = layerStr
 
                 if usePixelLabels then
@@ -979,7 +1058,6 @@ dlg:button {
             local includeTiles <const> = args.includeTiles --[[@as boolean]]
             local includeBkg <const> = args.includeBkg --[[@as boolean]]
 
-            local spriteBounds <const> = activeSprite.bounds
             local spriteLayers <const> = activeSprite.layers
             local lenSpriteLayers <const> = #spriteLayers
 
@@ -1000,8 +1078,9 @@ dlg:button {
                 j = j + 1
                 local layer <const> = spriteLayers[j]
                 layerToSvgStr(
-                    layer, activeFrame, border, padding, wPixel, hPixel,
-                    spriteBounds, includeLocked, includeHidden, includeTiles,
+                    layer, activeFrame, border, padding, rdVerif,
+                    wPixel, hPixel,
+                    includeLocked, includeHidden, includeTiles,
                     includeBkg, colorMode, palette, layerStrsArr)
             end
         end
